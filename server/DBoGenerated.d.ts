@@ -11,21 +11,6 @@ export type TxCB = {
 
 
 /* SCHEMA DEFINITON. Table names have been altered to work with Typescript */
-export type BATXBT_46csv = { 
-  "c1"?: string;
-  "c2"?: string;
-  "c3"?: string;
-}
-export type EOSXBT_46csv = { 
-  "c1"?: string;
-  "c2"?: string;
-  "c3"?: string;
-}
-export type XDGUSD_46csv = { 
-  "c1"?: string;
-  "c2"?: string;
-  "c3"?: string;
-}
 export type Connections = { 
   "created"?: Date;
   "db_conn"?: string;
@@ -153,9 +138,6 @@ export type JoinMakerTables = {
 
 /* DBO Definition. Isomorphic */
 export type DBObj = {
-  "BATXBT.csv": TableHandler<BATXBT_46csv> 
-  "EOSXBT.csv": TableHandler<EOSXBT_46csv> 
-  "XDGUSD.csv": TableHandler<XDGUSD_46csv> 
   "connections": TableHandler<Connections> 
   "geography_columns": ViewHandler<Geography_columns> 
   "geometry_columns": ViewHandler<Geometry_columns> 
@@ -177,15 +159,6 @@ type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]>; };
 export type I18N_DBO_CONFIG<LANG_IDS = { en: 1, fr: 1 }> = { 
   fallbackLang: keyof LANG_IDS; 
   column_labels?: DeepPartial<{ 
-    "BATXBT.csv": { 
-      [key in "c1" | "c2" | "c3"]: { [lang_id in keyof LANG_IDS]: string }; 
-    }; 
-    "EOSXBT.csv": { 
-      [key in "c1" | "c2" | "c3"]: { [lang_id in keyof LANG_IDS]: string }; 
-    }; 
-    "XDGUSD.csv": { 
-      [key in "c1" | "c2" | "c3"]: { [lang_id in keyof LANG_IDS]: string }; 
-    }; 
     "connections": { 
       [key in "created" | "db_conn" | "db_host" | "db_name" | "db_pass" | "db_port" | "db_ssl" | "db_user" | "db_watch_shema" | "id" | "last_updated" | "name" | "prgl_params" | "prgl_url" | "type" | "user_id"]: { [lang_id in keyof LANG_IDS]: string }; 
     }; 
