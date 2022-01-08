@@ -2,19 +2,20 @@
 
 Web dashboard and SQL Editor for Postgres
 
-### Demo
+### Screenshots
 
 [More](https://prostgles.com/ui)
 <p float="left">
   <img src="https://prostgles.com/ui-vids/screenshot2.png" />  
+  <img src="https://prostgles.com/ui-vids/mobile2.png"  />  
 </p>
 
 ### Features
 
 * SQL Editor with schema auto-completion and useful hints
 * Data edit and exploration dashboard
-* Sort, Filtering and Cross-Filtering joined tables
-* Search with auto-completion
+* Sorting, Filtering and Cross-Filtering joined tables
+* Search with field and searchterm auto-completion
 * Multimedia (audio/video/image) display
 * HTML display
 * SVG display
@@ -22,7 +23,7 @@ Web dashboard and SQL Editor for Postgres
 * Realtime data
 * Customiseable layout. Tab and side-by-side view
 * Functions and Aggregations
-* Map and Time charts
+* Map and Time charts with aggregations
 * PostGIS support
 * Mobile friendly
 * LISTEN NOTIFY support
