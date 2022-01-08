@@ -1,0 +1,24 @@
+{
+	"files": ["./index.ts"],
+	"compilerOptions": {
+		"outDir": "dist",
+		// "target": "es2019",
+		// "lib": [ "es2019" ],
+		"target": "ES2017",
+		"lib": [ "ES2017" ],
+		"esModuleInterop" : true,
+		"allowSyntheticDefaultImports": true,
+		"allowJs": true,
+		"module": "commonjs",
+		"sourceMap": true,
+		// "rootDir": ".",
+		"declaration": true,
+		"declarationMap": true,
+	},
+	"exclude": [
+		"dist",
+		"DBoGenerated.ts",
+		"*.conf"
+	],
+	"include": ["init.sql"]
+} 
