@@ -22,7 +22,7 @@ body:
     attributes:
       label: Requested Behavior
       description: What do you want to be able to do
-      value: " "
+      value: "I need to "
     validations:
       required: true
   - type: textarea
@@ -30,7 +30,7 @@ body:
     attributes:
       label: How to achieve this now
       description: Current work arounds to accomplish requested behavior
-      value: " "
+      value: "You have to "
     validations:
       required: true
       
