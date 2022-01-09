@@ -39,6 +39,16 @@ body:
   - type: dropdown
     id: browsers
     attributes:
+      label: What OS are you seeing the problem on?
+      multiple: true
+      options:
+        - Android
+        - iOS
+        - Windows
+        - Linux
+  - type: dropdown
+    id: browsers
+    attributes:
       label: What browsers are you seeing the problem on?
       multiple: true
       options:
