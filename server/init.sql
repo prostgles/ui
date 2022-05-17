@@ -2,17 +2,30 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS postgis;
 
 /* AUTH */
+    --DROP TABLE IF EXISTS user_types CASCADE;
+    CREATE TABLE IF NOT EXISTS user_types (
+        id              TEXT PRIMARY KEY
+    );
+    INSERT INTO user_types (id) VALUES ('admin'), ('default') ON CONFLICT DO NOTHING;
+
+    --DROP TABLE IF EXISTS user_statuses CASCADE;
+    CREATE TABLE IF NOT EXISTS user_statuses (
+        id              TEXT PRIMARY KEY
+    );
+    INSERT INTO user_statuses (id) VALUES ('active'), ('disabled') ON CONFLICT DO NOTHING;
+
     --DROP TABLE IF EXISTS users CASCADE;
     CREATE TABLE IF NOT EXISTS users (
         id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         username        TEXT NOT NULL,
         password        TEXT NOT NULL DEFAULT gen_random_uuid(),
-        type            TEXT NOT NULL DEFAULT 'z',
+        type            TEXT NOT NULL DEFAULT 'default' REFERENCES user_types (id),
         created         TIMESTAMP DEFAULT NOW(),
         last_updated    BIGINT,
-        status          TEXT DEFAULT NULL,
+        status          TEXT NOT NULL DEFAULT 'active' REFERENCES user_statuses (id),
         UNIQUE(username)
     );
+    
     -- DROP TABLE IF EXISTS sessions CASCADE;
     CREATE TABLE IF NOT EXISTS sessions (
         id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -29,17 +42,50 @@ CREATE EXTENSION IF NOT EXISTS postgis;
  
 
 /* DASHBOARD */
+
+    --DROP TABLE IF EXISTS connections CASCADE; 
+    CREATE TABLE IF NOT EXISTS connections (
+        id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id     UUID NOT NULL REFERENCES users(id), -- dependency
+
+        name        TEXT,
+
+        db_name     TEXT DEFAULT 'postgres',
+        db_host     TEXT DEFAULT 'localhost',
+        db_port     INTEGER DEFAULT 5432,
+        db_user     TEXT DEFAULT '',
+        db_pass     TEXT DEFAULT '',
+        db_ssl      TEXT NOT NULL DEFAULT 'disable' CHECK (db_ssl IN ('disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full')),
+
+        db_conn         TEXT DEFAULT '',
+        db_watch_shema  BOOLEAN DEFAULT TRUE,
+        
+        prgl_url            TEXT,
+        prgl_params         JSON,
+
+        type     TEXT NOT NULL DEFAULT 'Standard' CHECK (type IN ('Standard', 'Connection URI', 'Prostgles')),
+
+        created             TIMESTAMP DEFAULT NOW(),
+
+        last_updated        BIGINT NOT NULL DEFAULT 0,
+        UNIQUE(name, user_id)
+    );
+
     -- DROP TABLE IF EXISTS workspaces CASCADE; 
     CREATE TABLE IF NOT EXISTS workspaces (
         id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id         UUID NOT NULL REFERENCES users(id), -- dependency
-        name            TEXT,
+        connection_id   UUID NOT NULL REFERENCES connections(id), -- dependency
+        name            TEXT NOT NULL DEFAULT 'default',
         created         TIMESTAMP DEFAULT NOW(),
         active_row      JSON DEFAULT '{}'::json,
         layout          JSON,
         options         JSON DEFAULT '{}'::json,
         last_updated    BIGINT NOT NULL,
-        UNIQUE(user_id, name)
+        deleted         BOOLEAN NOT NULL DEFAULT FALSE,
+        url_path        TEXT,
+        UNIQUE(url_path),
+        UNIQUE(connection_id, name)
     );
 
     -- DROP TABLE IF EXISTS windows CASCADE; 
@@ -84,30 +130,3 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 /* EOF DASHBOARD */
 
 
---DROP TABLE IF EXISTS connections CASCADE; 
-CREATE TABLE IF NOT EXISTS connections (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id     UUID NOT NULL REFERENCES users(id), -- dependency
-
-    name        TEXT,
-
-    db_name     TEXT DEFAULT 'postgres',
-    db_host     TEXT DEFAULT 'localhost',
-    db_port     INTEGER DEFAULT 5432,
-    db_user     TEXT DEFAULT '',
-    db_pass     TEXT DEFAULT '',
-    db_ssl      TEXT NOT NULL DEFAULT 'disable' CHECK (db_ssl IN ('disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full')),
-
-    db_conn         TEXT DEFAULT '',
-    db_watch_shema  BOOLEAN DEFAULT TRUE,
-    
-    prgl_url            TEXT,
-    prgl_params         JSON,
-
-    type     TEXT NOT NULL DEFAULT 'Standard' CHECK (type IN ('Standard', 'Connection URI', 'Prostgles')),
-
-    created             TIMESTAMP DEFAULT NOW(),
-
-    last_updated        BIGINT NOT NULL DEFAULT 0,
-    UNIQUE(name, user_id)
-);

@@ -1155,6 +1155,25 @@ textarea:focus {
   border-bottom-width: 1px;
 }
 
+.b-blue-100 {
+  border-color: var(--blue-100);
+}
+.b-blue-200 {
+  border-color: var(--blue-200);
+}
+.b-blue-300 {
+  border-color: var(--blue-300);
+}
+.b-blue-400 {
+  border-color: var(--blue-400);
+}
+.b-blue-300-hover:hover {
+  border-color: var(--blue-300);
+}
+.b-blue-400-hover:hover {
+  border-color: var(--blue-400);
+}
+
 .b-gray-100 {
   border-color: var(--gray-100);
 }
@@ -1608,7 +1627,7 @@ button {
   background-image: none;
   cursor: pointer;
   --bg-opacity: 1;
-  background-color: rgba(88,80,236,var(--bg-opacity));
+  /* background-color: rgba(88,80,236,var(--bg-opacity)); */
   border-color: transparent;
   border-radius: .375rem;
   border-width: 1px;

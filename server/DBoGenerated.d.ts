@@ -84,6 +84,12 @@ export type Spatial_ref_sys = {
   "srid"?: number;
   "srtext"?: string;
 }
+export type User_statuses = { 
+  "id"?: string;
+}
+export type User_types = { 
+  "id"?: string;
+}
 export type Users = { 
   "created"?: Date;
   "id"?: string;
@@ -119,18 +125,25 @@ export type Windows = {
 }
 export type Workspaces = { 
   "active_row"?: Object;
+  "connection_id"?: string;
   "created"?: Date;
+  "deleted"?: boolean;
   "id"?: string;
   "last_updated"?: number;
   "layout"?: Object;
   "name"?: string;
   "options"?: Object;
+  "url_path"?: string;
   "user_id"?: string;
 }
 
 export type JoinMakerTables = {
  "connections": JoinMaker<Connections>;
  "links": JoinMaker<Links>;
+ "magic_links": JoinMaker<Magic_links>;
+ "sessions": JoinMaker<Sessions>;
+ "user_statuses": JoinMaker<User_statuses>;
+ "user_types": JoinMaker<User_types>;
  "users": JoinMaker<Users>;
  "windows": JoinMaker<Windows>;
  "workspaces": JoinMaker<Workspaces>;
@@ -145,6 +158,8 @@ export type DBObj = {
   "magic_links": TableHandler<Magic_links> 
   "sessions": TableHandler<Sessions> 
   "spatial_ref_sys": TableHandler<Spatial_ref_sys> 
+  "user_statuses": TableHandler<User_statuses> 
+  "user_types": TableHandler<User_types> 
   "users": TableHandler<Users> 
   "windows": TableHandler<Windows> 
   "workspaces": TableHandler<Workspaces> 
@@ -180,6 +195,12 @@ export type I18N_DBO_CONFIG<LANG_IDS = { en: 1, fr: 1 }> = {
     "spatial_ref_sys": { 
       [key in "auth_name" | "auth_srid" | "proj4text" | "srid" | "srtext"]: { [lang_id in keyof LANG_IDS]: string }; 
     }; 
+    "user_statuses": { 
+      [key in "id"]: { [lang_id in keyof LANG_IDS]: string }; 
+    }; 
+    "user_types": { 
+      [key in "id"]: { [lang_id in keyof LANG_IDS]: string }; 
+    }; 
     "users": { 
       [key in "created" | "id" | "last_updated" | "password" | "status" | "type" | "username"]: { [lang_id in keyof LANG_IDS]: string }; 
     }; 
@@ -187,7 +208,7 @@ export type I18N_DBO_CONFIG<LANG_IDS = { en: 1, fr: 1 }> = {
       [key in "closed" | "columns" | "created" | "deleted" | "filter" | "fullscreen" | "id" | "last_updated" | "layout" | "limit" | "name" | "nested_tables" | "options" | "selected_sql" | "show_menu" | "sort" | "sql" | "table_name" | "table_oid" | "type" | "user_id" | "workspace_id"]: { [lang_id in keyof LANG_IDS]: string }; 
     }; 
     "workspaces": { 
-      [key in "active_row" | "created" | "id" | "last_updated" | "layout" | "name" | "options" | "user_id"]: { [lang_id in keyof LANG_IDS]: string }; 
+      [key in "active_row" | "connection_id" | "created" | "deleted" | "id" | "last_updated" | "layout" | "name" | "options" | "url_path" | "user_id"]: { [lang_id in keyof LANG_IDS]: string }; 
     }; 
   }> 
 } 

@@ -14,7 +14,7 @@ process.on('unhandledRejection', (reason, p) => {
   console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
   // application specific logging, throwing an error, or other logic here
 });
- 
+
 const _http = require("http");
 const http = _http.createServer(app);
 const exec = require('child_process').exec; 
@@ -52,7 +52,7 @@ const testDBConnection = (opts: {
         database: db_name, 
         user: db_user, 
         password: db_pass, 
-        host: db_host, 
+        host: db_host,
         port: db_port,
         ssl: Boolean(db_ssl && db_ssl !== "disable")
       };
@@ -318,18 +318,25 @@ const getDBS = async () => {
       io,
       tsGeneratedTypesDir: path.join(__dirname + '/../'),
       transactions: true,
-      onSocketConnect: async (_, dbo: DBObj) => {
+      onSocketConnect: async (_, dbo: DBObj, db) => {
         log("onSocketConnect", (_ as any)?.conn?.remoteAddress);
 
-        
-        const wids = await dbo.windows.find({ $or: [{ deleted: true }, { closed: true }] }, { select: { id: 1 }, returnType: "values" });
+        // await db.any("ALTER TABLE workspaces ADD COLUMN deleted boolean DEFAULT FALSE")
+        const wrkids =  await dbo.workspaces.find({ deleted: true }, { select: { id: 1 }, returnType: "values" });
+        const wkspsFilter = wrkids.length? { workspace_id: { $in: wrkids } } : {};
+        const wids = await dbo.windows.find({ $or: [
+          { deleted: true }, 
+          { closed: true },
+          wkspsFilter
+        ] }, { select: { id: 1 }, returnType: "values" });
         if(wids.length){
           await dbo.links.delete({ $or: [
             { w1_id: { $in: wids } }, 
             { w2_id: { $in: wids } },
             { deleted: true }
           ] })
-          await dbo.windows.delete({ deleted: true });
+          await dbo.windows.delete({ $or: [ { deleted: true }, wkspsFilter] });
+          await dbo.workspaces.delete({ deleted: true });
   
         }
         return true; 
@@ -644,7 +651,7 @@ const getDBS = async () => {
           /* DASHBOARD */
           ...dashboardConfig,
 
-          users: {
+          users: user?.type === "admin"? "*" : {
             select: {
               fields: "*",
               forcedFilter: { id: user_id }
@@ -681,7 +688,7 @@ const getDBS = async () => {
           }
           console.log((await db.users.count({ username })))
           try {
-            await db.users.insert({ username, password }, { returning: "*" }) as Users;
+            await db.users.insert({ username, password, type: "admin" }, { returning: "*" }) as Users;
             await _db.any("UPDATE users SET password = crypt(password, id::text), status = 'active' WHERE status IS NULL;");
 
           } catch(e){
