@@ -11,7 +11,7 @@ WORKDIR /usr/src/app/client
 
 
 WORKDIR /usr/src/app/server
-RUN npm run build
+RUN npm i
 
 
 
