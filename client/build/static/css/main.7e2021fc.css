@@ -538,6 +538,13 @@ ul {
   opacity: 1;
 }
 
+.d-row .show-on-row-hover {
+  opacity: 0;
+}
+.d-row:hover  .show-on-row-hover {
+  opacity: 1;
+}
+
 .show-on-hover {
   opacity: 0;
 }
