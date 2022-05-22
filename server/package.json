@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "npm i && tsc",
+    "build": "npm i && NODE_OPTIONS=--max-old-space-size=8192 tsc",
     "start": "npm run build && node dist/index.js",
     "rollup": "rollup -c",
     "dev": "NODE_OPTIONS='--max-old-space-size=12048' npm i && tsc-watch --onSuccess \"node dist/index.js\"",
