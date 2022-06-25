@@ -1,0 +1,13 @@
+{
+    "name": "@types/socket.io",
+    "version": "3.0.2",
+    "typings": null,
+    "description": "Stub TypeScript definitions entry for socket.io, which provides its own types definitions",
+    "main": "",
+    "scripts": {},
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "socket.io": "*"
+    }
+}
