@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED='0'
+process.env.NODE_TLS_REJECT_UNAUTHORIZED='0';
 
 // console.log("Connecting to state database" , process.env)
 
@@ -47,7 +47,7 @@ const testDBConnection = (opts: {
 
   return new Promise((resolve, reject) => {
     const connOpts = 
-      (type === "Connection URI" || db_conn)? {
+      (type === "Connection URI")? {
         connectionString: db_conn
       } : {
         database: db_name, 
