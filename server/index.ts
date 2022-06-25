@@ -41,7 +41,7 @@ const getConnectionDetails = (c: Connections): pg.IConnectionParameters<pg.IClie
     port: c.db_port,
     ssl: !(c.db_ssl && c.db_ssl !== "disable")? undefined : {
       rejectUnauthorized: false 
-    }
+    },
   };
 }
  
@@ -58,24 +58,11 @@ const testDBConnection = (opts: {
       OR \
       db_user: string; db_pass: string; db_host: string; db_port: number; db_name: string, db_ssl: string";
   }
-  const { type, db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } = opts;
   
   // console.log(db_conn)
 
   return new Promise((resolve, reject) => {
-    const connOpts = getConnectionDetails(opts);
-      // (type === "Connection URI")? {
-      //   connectionString: db_conn
-      // } : {
-      //   database: db_name, 
-      //   user: db_user, 
-      //   password: db_pass, 
-      //   host: db_host,
-      //   port: db_port,
-      //   ssl: !(db_ssl && db_ssl !== "disable")? undefined : {
-      //     rejectUnauthorized: false 
-      //   }
-      // };
+    const connOpts = getConnectionDetails(opts as any);
       
       const db = pgp(connOpts);
       db.connect()
@@ -146,7 +133,7 @@ http.listen(PORT);
 
 import { DBSchemaGenerated } from "./DBoGenerated";
 // type DBObj = any;
-type Files= any; type Projects= any; type Sessions= any; type Users= any; type Connections = any;
+type Users = DBSchemaGenerated["users"]["columns"]; type Connections = DBSchemaGenerated["connections"]["columns"]
 import { DB, PGP } from 'prostgles-server/dist/Prostgles';
 
 const log = (msg: string, extra?: any) => {
@@ -409,7 +396,7 @@ const getDBS = async () => {
         
         return {
           testDBConnection: async (opts) => testDBConnection(opts),
-          createConnection: async (con) => {
+          createConnection: async (con: Connections) => {
             const row = { 
                 ...con, 
                 user_id: user.id,
@@ -417,7 +404,7 @@ const getDBS = async () => {
             delete row.type;
             // console.log("createConnection", row)
             try {
-              await testDBConnection(con);
+              await testDBConnection(con as any);
               let res;
               if(con.id){
                 delete row.id;
@@ -551,7 +538,7 @@ const getDBS = async () => {
                     if(user){
                       if(user.type === "admin") return "*";
                       
-                      const ac = await getRule(user);
+                      const ac = await getRule(user as any);
                       console.log(user.type, ac)
                       if(ac?.rule){
                         const rule = ac.rule;
@@ -579,7 +566,7 @@ const getDBS = async () => {
                     if(user?.type === "admin"){
                       return true;
                     }
-                    const ac = await getRule(user);
+                    const ac = await getRule(user as any);
                     if(ac?.rule?.type === "Run SQL" && ac.rule.allowSQL){
                       return true;
                     }

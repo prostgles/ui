@@ -39,7 +39,7 @@ const getConnectionDetails = (c) => {
         port: c.db_port,
         ssl: !(c.db_ssl && c.db_ssl !== "disable") ? undefined : {
             rejectUnauthorized: false
-        }
+        },
     };
 };
 const testDBConnection = (opts, isSuperUser = false) => {
@@ -50,22 +50,9 @@ const testDBConnection = (opts, isSuperUser = false) => {
       OR \
       db_user: string; db_pass: string; db_host: string; db_port: number; db_name: string, db_ssl: string";
     }
-    const { type, db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } = opts;
     // console.log(db_conn)
     return new Promise((resolve, reject) => {
         const connOpts = getConnectionDetails(opts);
-        // (type === "Connection URI")? {
-        //   connectionString: db_conn
-        // } : {
-        //   database: db_name, 
-        //   user: db_user, 
-        //   password: db_pass, 
-        //   host: db_host,
-        //   port: db_port,
-        //   ssl: !(db_ssl && db_ssl !== "disable")? undefined : {
-        //     rejectUnauthorized: false 
-        //   }
-        // };
         const db = pgp(connOpts);
         db.connect()
             .then(async function (c) {
