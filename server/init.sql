@@ -118,7 +118,7 @@ CREATE EXTENSION IF NOT EXISTS postgis;
         user_id         UUID NOT NULL REFERENCES users(id), -- dependency
         workspace_id    UUID NOT NULL REFERENCES workspaces(id), -- dependency
         type            TEXT CHECK(type IN ('map', 'sql', 'table', 'timechart', 'card')),
-        table_name      TEXT CHECK(type == "table" AND table_name IS NOT NULL),
+        table_name      TEXT CHECK(type == 'table' AND table_name IS NOT NULL),
         table_oid       INTEGER,
         sql             TEXT NOT NULL DEFAULT '',
         selected_sql    TEXT NOT NULL DEFAULT '',
