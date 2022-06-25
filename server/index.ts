@@ -1,7 +1,7 @@
 import path from 'path';
 import express from 'express';
 import prostgles from "prostgles-server";
-import { AnyObject } from "prostgles-types";
+import { tableConfig } from "./tableConfig";
 const app = express();
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100mb" }));
@@ -25,6 +25,7 @@ import { Server }  from "socket.io";
 const io = new Server(http, { path: ioPath, maxHttpBufferSize: 100e100 });
 const pgp = require("pg-promise")();
 
+import { publish } from "./publish"
 // const dns = require('dns');
  
 const testDBConnection = (opts: {
@@ -94,7 +95,17 @@ const dotenv = require('dotenv')
 
 const EMPTY_USERNAME = "prostgles-no-auth-user",
   EMPTY_PASSWORD = "prostgles";
-let HAS_EMPTY_USERNAME = false;
+const HAS_EMPTY_USERNAME = async (db: DBOFullyTyped<DBSchemaGenerated>) => {
+  if(
+    !PRGL_USERNAME || !PRGL_PASSWORD
+  ){
+    if(await db.users.count({ username: EMPTY_USERNAME, status: "active" })){
+      return true
+    }
+  }
+  return false
+};
+
 
 const result = dotenv.config({ path: path.join(__dirname+'/../../.env') })
 const {
@@ -113,10 +124,10 @@ const {
 
 http.listen(+process.env.PRGL_PORT || 3004);
 
-import {  DBObj } from "./DBoGenerated";
+import { DBSchemaGenerated } from "./DBoGenerated";
 // type DBObj = any;
 type Files= any; type Projects= any; type Sessions= any; type Users= any; type Connections = any;
-import { DB, DbHandler, PGP } from 'prostgles-server/dist/Prostgles';
+import { DB, PGP } from 'prostgles-server/dist/Prostgles';
 
 const log = (msg: string, extra?: any) => {
   console.log(...[`(server): ${(new Date()).toISOString()} ` + msg, extra].filter(v => v));
@@ -125,7 +136,7 @@ const log = (msg: string, extra?: any) => {
 app.use(express.static(path.join(__dirname, "../../client/build"), { index: false }));
 app.use(express.static(path.join(__dirname, "../../client/static"), { index: false }));
 
-const makeSession = async (user: Users, dbo: DBObj , expires: number) => {
+const makeSession = async (user: Users, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number) => {
 
   if(user){
     const session = await dbo.sessions.insert({ 
@@ -143,6 +154,8 @@ const makeSession = async (user: Users, dbo: DBObj , expires: number) => {
 /* AUTH */ 
 import cookieParser from 'cookie-parser';
 import { Auth, BasicSession } from 'prostgles-server/dist/AuthHandler';
+import { DBHandlerServer, isPlainObject } from "prostgles-server/dist/DboBuilder";
+import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 
 app.use(cookieParser());
 
@@ -151,36 +164,29 @@ let authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_CO
   sameSite: "lax"    //  "none"
 };
 
-const auth: Auth<DBObj> = {
+const auth: Auth<DBSchemaGenerated> = {
 	sidKeyName: "sid_token",
-	getClientUser: async (sid: string, db: DBObj, _db: DB) => {
-    log("getClientUser", sid)
-    
-		const s = await db.sessions.findOne({ id: sid });
-		let result;
-		if(s){
-			const u = await db.users.findOne({ id: s.user_id });
-			if(u) result = { sid: s.id, uid: u.id, type: u.type };
-		}
-		return result
-	}, 
-	getUser: async (sid: string, db, _db: DB) => {
+	getUser: async (sid, db, _db: DB) => {
     log("getUser", sid);
 		const s = await db.sessions.findOne({ id: sid });
     let user;
 		if(s) {
-      /* Check if container_maintainer_token 
-        CHECK FOR remote_addr IP TO ENSURE IT IS FROM COMPUTE ONLY ??????
-      */
       user = await db.users.findOne({ id: s.user_id });
-      if(s.project_id && (await db.connections.count({ user_id: s.user_id, id: s.project_id }))){
-        user = { ...user, project_id: s.project_id }
+      if(user){
+        const state_db = await db.connections.findOne({ is_state_db: true });
+        return {
+          user,
+          clientUser: { sid: s.id, uid: user.id, type: user.type, state_db_id: state_db?.id }
+        }
       }
+      // if(s.project_id && (await db.connections.count({ user_id: s.user_id, id: s.project_id }))){
+      //   user = { ...user, project_id: s.project_id }
+      // }
     }
     // console.trace("getUser", { user, s })
-		return user;
+		return undefined;
 	},
-	login: async ({ username = null, password = null } = {}, db: DBObj, _db: DB) => {
+	login: async ({ username = null, password = null } = {}, db, _db: DB) => {
 		let u;
     log("login", username)
     /**
@@ -200,14 +206,14 @@ const auth: Auth<DBObj> = {
 			throw "something went wrong: " + JSON.stringify({ username, password });
 		}
 		let s = await db.sessions.findOne({ user_id: u.id })
-		if(!s){
+		if(!s || (+s.expires || 0) < Date.now()){
 			return makeSession(u, db, Date.now() + 1000 * 60 * 60 * 24)
      // would expire after 24 hours,
 		}
     
 		return { sid: s.id, expires: +s.expires }
 	},
-	logout: async (sid = null, db: DBObj, _db: DB) => {
+	logout: async (sid = null, db, _db: DB) => {
 		const s = await db.sessions.findOne({ id: sid });
 		if(!s) throw "err";
 		await db.sessions.delete({ id: sid })
@@ -249,7 +255,7 @@ let prgl_connections: Record<string,
 { 
   io?: any; 
   prgl?: {
-    db: DbHandler;
+    db: DBHandlerServer;
     _db: DB;
     pgp: PGP;
     io?: any;
@@ -266,20 +272,20 @@ let con, _io;
 let login_throttle;
 let child_pid;
 
-
+const DBS_CONNECTION_INFO = {
+  db_conn: process.env.POSTGRES_URL || POSTGRES_URL, 
+  db_name: process.env.POSTGRES_DB || POSTGRES_DB, 
+  db_user: process.env.POSTGRES_USER || POSTGRES_USER, 
+  db_pass: process.env.POSTGRES_PASSWORD || POSTGRES_PASSWORD, 
+  db_host: process.env.POSTGRES_HOST || POSTGRES_HOST, 
+  db_port: process.env.POSTGRES_PORT || POSTGRES_PORT, 
+  db_ssl:  process.env.POSTGRES_SSL || POSTGRES_SSL,
+};
 
 const getDBS = async () => {
   try {
 
-    const con = {
-      db_conn: process.env.POSTGRES_URL || POSTGRES_URL, 
-      db_name: process.env.POSTGRES_DB || POSTGRES_DB, 
-      db_user: process.env.POSTGRES_USER || POSTGRES_USER, 
-      db_pass: process.env.POSTGRES_PASSWORD || POSTGRES_PASSWORD, 
-      db_host: process.env.POSTGRES_HOST || POSTGRES_HOST, 
-      db_port: process.env.POSTGRES_PORT || POSTGRES_PORT, 
-      db_ssl:  process.env.POSTGRES_SSL || POSTGRES_SSL,
-    }
+    const con = DBS_CONNECTION_INFO;
     // console.log("Connecting to state database" , con, { POSTGRES_DB, POSTGRES_USER, POSTGRES_HOST }, process.env)
 
     if(!con.db_conn && !con.db_user && !con.db_name){
@@ -306,7 +312,7 @@ const getDBS = async () => {
     }
     await testDBConnection(con, true);
 
-    prostgles({
+    prostgles<DBSchemaGenerated>({
       dbConnection: {
         host: con.db_host,
         port: +con.db_port || 5432,
@@ -318,12 +324,12 @@ const getDBS = async () => {
       io,
       tsGeneratedTypesDir: path.join(__dirname + '/../'),
       transactions: true,
-      onSocketConnect: async (_, dbo: DBObj, db) => {
+      onSocketConnect: async (_, dbo, db) => {
         log("onSocketConnect", (_ as any)?.conn?.remoteAddress);
 
         // await db.any("ALTER TABLE workspaces ADD COLUMN deleted boolean DEFAULT FALSE")
         const wrkids =  await dbo.workspaces.find({ deleted: true }, { select: { id: 1 }, returnType: "values" });
-        const wkspsFilter = wrkids.length? { workspace_id: { $in: wrkids } } : {};
+        const wkspsFilter: Parameters<typeof dbo.windows.find>[0] = wrkids.length? { workspace_id: { $in: wrkids } } : {};
         const wids = await dbo.windows.find({ $or: [
           { deleted: true }, 
           { closed: true },
@@ -341,33 +347,23 @@ const getDBS = async () => {
         }
         return true; 
       },
-      onSocketDisconnect: (_, dbo: DBObj) => {
+      onSocketDisconnect: (_, dbo) => {
         // dbo.windows.delete({ deleted: true })
       },
       // DEBUG_MODE: true,
-      tableConfig: {
-        
-        magic_links: {
-          // dropIfExistsCascade: true,
-          columns: {
-            id:                  { sqlDefinition: `TEXT PRIMARY KEY DEFAULT gen_random_uuid()` },
-            user_id:             { sqlDefinition: `UUID REFERENCES users(id)` },
-            magic_link:          { sqlDefinition: `TEXT` },
-            magic_link_used:     { sqlDefinition: `TIMESTAMP` },
-            expires:             { sqlDefinition: `BIGINT NOT NULL` },
-          }
-        },
-      },
+      tableConfig,
       publishRawSQL: async (params) => {
         const { user } = params
         return Boolean(user && user.type === "admin")
       },
       auth,
       publishMethods: async (params) => { //  socket, db: DBObj, _db, user: Users
-        const { user, dbo: db, socket } = params
+        const { user, dbo: db, socket, db: _db } = params;
+        // await _db.any("ALTER TABLE workspaces DROP CONSTRAINT workspaces_connection_id_name_key");
+        // await _db.any("ALTER TABLE workspaces ADD CONSTRAINT constraintname UNIQUE (connection_id, user_id, name);");
         if(!user || !user.id) {
 
-          const makeMagicLink = async (user: Users, dbo: DBObj, returnURL: string) => {
+          const makeMagicLink = async (user: Users, dbo, returnURL: string) => {
             const mlink = await dbo.magic_links.insert({ 
               expires: Number.MAX_SAFE_INTEGER, // Date.now() + 24 * 3600 * 1000, 
               user_id: user.id,
@@ -380,7 +376,7 @@ const getDBS = async () => {
             };
           }
           /** If no user exists then make */
-          if(HAS_EMPTY_USERNAME){
+          if(await HAS_EMPTY_USERNAME(db)){
             const u = await db.users.findOne({ username: EMPTY_USERNAME });
             const mlink = await makeMagicLink(u, db, "/")
             socket.emit("redirect", mlink.magic_login_link_redirect);
@@ -486,6 +482,13 @@ const getDBS = async () => {
 
               const _io = new Server(http, { path: socket_path, maxHttpBufferSize: 1e8 });
 
+              const getRule = (user: Users): Promise<DBSchemaGenerated["access_control"]["columns"] | undefined>  => {
+                if(user){
+                  return db.access_control.findOne({ connection_id: con.id, $existsJoined: { access_control_user_types: { user_type: user.type } } }) //  user_groups: { $contains: [user.type] }
+                }
+                return undefined
+              }
+
               try {
                 
                 const prgl = await prostgles({
@@ -499,11 +502,20 @@ const getDBS = async () => {
                       password:  con.db_pass,
                     },
                   io: _io,
-                  // onSocketConnect: (socket) => {
-                  //   log("onSocketConnect");
+                  auth: {
+                    ...auth as any,
+                    getUser: (sid, __, _, cl) => auth.getUser(sid, db, _db, cl),
+                    login: (sid, __, _) => auth.login(sid, db, _db),
+                    logout: (sid, __, _) => auth.logout(sid, db, _db),
+                    cacheSession: {
+                      getSession: (sid) => auth.cacheSession?.getSession(sid, db, _db)
+                    }
+                  },
+                  onSocketConnect: (socket) => {
+                    log("onSocketConnect");
                     
-                  //   return true; 
-                  // }, 
+                    return true; 
+                  }, 
                   // tsGeneratedTypesDir: path.join(__dirname + '/../connection_dbo/'),
 
                   watchSchema: Boolean(con.db_watch_shema), 
@@ -522,9 +534,44 @@ const getDBS = async () => {
                   // joins: [
 
                   // ],
-                  publish: "*",
+                  publish: async ({ user, dbo }) => {
+                    if(user){
+                      if(user.type === "admin") return "*";
+                      
+                      const ac = await getRule(user);
+                      console.log(user.type, ac)
+                      if(ac?.rule){
+                        const rule = ac.rule;
+                        if(ac.rule?.type === "Run SQL" && ac.rule.allowSQL){
+                          return "*" as "*";
+
+                        } else if(rule.type === 'All views/tables' && isPlainObject( rule.allowAllTables)){
+                          const { select, update, insert, delete: _delete } = rule.allowAllTables;
+                          if(select || update || insert || _delete){
+                            return Object.keys(dbo).filter(k => dbo[k].find).reduce((a, v) => ({ ...a, [v]: { 
+                                select: select? "*" : undefined, 
+                                ...(dbo[v].is_view? {} : {update: update? "*" : undefined, 
+                                insert: insert? "*" : undefined, 
+                                delete: _delete? "*" : undefined, })
+                              } 
+                            }), {})
+                          }
+                        }
+                      }
+                    }
+                    return undefined
+                  },
                   
-                  publishRawSQL: () => "*",
+                  publishRawSQL: async () => {
+                    if(user?.type === "admin"){
+                      return true;
+                    }
+                    const ac = await getRule(user);
+                    if(ac?.rule?.type === "Run SQL" && ac.rule.allowSQL){
+                      return true;
+                    }
+                    return undefined
+                  },
                   // publishMethods: (params) => {
 
                   //   return {
@@ -594,102 +641,29 @@ const getDBS = async () => {
           }
         }
       },
-      publish: async (params) => {
-        
-        const { dbo: db, user, db: _db } = params;
-
-        if(!user || !user.id){
-          return null;
-        }
-        const { id: user_id } = user;
-        // _db.any("ALTER TABLE workspaces ADD COLUMN options         JSON DEFAULT '{}'::json")
-
-        /** Add state db */
-        if(!(await db.connections.count({ user_id }))){ // , name: "Prostgles state database"
-          await db.connections.insert({  
-            ...con, 
-            user_id, 
-            name: "Prostgles state database", 
-            type: !con.db_conn? 'Standard' : 'Connection URI',
-            db_port: con.db_port || 5432,
-            db_ssl: con.db_ssl || "disable"
-          })
-        }
-
-        const dashboardConfig = ["windows", "links", "workspaces"]
-          .reduce((a: any, v: string) => ({ 
-            ...a, 
-            [v]: {
-              select: {
-                fields: "*",
-                forcedFilter: { user_id  }
-              },
-              sync: {
-                id_fields: ["id"],
-                synced_field: "last_updated",
-                allow_delete: true
-              },
-
-              update: {
-                fields: "*",
-                forcedData: { user_id },
-                forcedFilter: { user_id },
-              }, 
-              insert: {
-                fields: "*",
-                forcedData: { user_id }
-              },
-              delete: {
-                filterFields: "*",
-                forcedFilter: { user_id }
-              }
-          },
-        }) ,{});
-
-        let res = {
-
-          /* DASHBOARD */
-          ...dashboardConfig,
-
-          users: user?.type === "admin"? "*" : {
-            select: {
-              fields: "*",
-              forcedFilter: { id: user_id }
-            }
-          },
-        }
-
-        const curTables = Object.keys(res);
-        const remainingTables = Object.keys(db).filter(k => db[k].find).filter(t => !curTables.includes(t));
-        const adminExtra = remainingTables.reduce((a, v) => ({ ...a, [v]: "*" }), {});
-        res = {
-          ...res,
-          ...adminExtra
-        }
-        return res;
-      },
+      publish: params => publish(params, con) as any,
       joins: "inferred",
-      onReady: async (db: DBObj, _db: DB) => {
+      onReady: async (db, _db: DB) => {
         
         let username = PRGL_USERNAME,
           password = PRGL_PASSWORD;
         if(
           !PRGL_USERNAME || !PRGL_PASSWORD
         ){
-          HAS_EMPTY_USERNAME = true;
           username = EMPTY_USERNAME;
           password = EMPTY_PASSWORD;
         }
 
         // await db.users.delete(); 
+        
         if(!(await db.users.count({ username }))){
-          if(HAS_EMPTY_USERNAME){
+          if(await HAS_EMPTY_USERNAME(db)){
             console.warn(`PRGL_USERNAME or PRGL_PASSWORD missing. Creating default user: ${username} with default password: ${password}`);
           }
           console.log((await db.users.count({ username })))
           try {
-            await db.users.insert({ username, password, type: "admin" }, { returning: "*" }) as Users;
-            await _db.any("UPDATE users SET password = crypt(password, id::text), status = 'active' WHERE status IS NULL;");
+            const u = await db.users.insert({ username, password, type: "admin" }, { returning: "*" }) as Users;
+            await _db.any("UPDATE users SET password = crypt(password, id::text), status = 'active' WHERE status IS NULL AND id = ${id};", u);
 
           } catch(e){
             console.error(e)
@@ -709,7 +683,7 @@ const getDBS = async () => {
 (async () => {
   let error, tries = 0
   let interval = setInterval(async () => {
-
+    
     try {
       await getDBS();
       tries = 6;
@@ -723,7 +697,7 @@ const getDBS = async () => {
 
     if(tries > 5){
       clearInterval(interval);
-      console.log("app.get")
+      
       app.get("/dbs", (req, res) => {    
         if(error){
           res.json({ err: error })
