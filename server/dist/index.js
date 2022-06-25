@@ -38,7 +38,7 @@ const testDBConnection = (opts, isSuperUser = false) => {
     const { type, db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } = opts;
     // console.log(db_conn)
     return new Promise((resolve, reject) => {
-        const connOpts = (type === "Connection URI" || db_conn) ? {
+        const connOpts = (type === "Connection URI") ? {
             connectionString: db_conn
         } : {
             database: db_name,
