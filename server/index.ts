@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED='0';
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED='0';
 
 // console.log("Connecting to state database" , process.env)
 
@@ -23,10 +23,27 @@ const ioPath = process.env.PRGL_IOPATH || "/iosckt";
 
 import { Server }  from "socket.io";
 const io = new Server(http, { path: ioPath, maxHttpBufferSize: 100e100 });
-const pgp = require("pg-promise")();
+
+import pgPromise from 'pg-promise';
+const pgp = pgPromise();
 
 import { publish } from "./publish"
 // const dns = require('dns');
+
+const getConnectionDetails = (c: Connections): pg.IConnectionParameters<pg.IClient> => {
+  return (c.type === "Connection URI")? {
+    connectionString: c.db_conn
+  } : {
+    database: c.db_name, 
+    user: c.db_user, 
+    password: c.db_pass, 
+    host: c.db_host,
+    port: c.db_port,
+    ssl: !(c.db_ssl && c.db_ssl !== "disable")? undefined : {
+      rejectUnauthorized: false 
+    }
+  };
+}
  
 const testDBConnection = (opts: {
   type?: string; db_conn?: string; db_user: string; 
@@ -46,17 +63,19 @@ const testDBConnection = (opts: {
   // console.log(db_conn)
 
   return new Promise((resolve, reject) => {
-    const connOpts = 
-      (type === "Connection URI")? {
-        connectionString: db_conn
-      } : {
-        database: db_name, 
-        user: db_user, 
-        password: db_pass, 
-        host: db_host,
-        port: db_port,
-        ssl: Boolean(db_ssl && db_ssl !== "disable")
-      };
+    const connOpts = getConnectionDetails(opts);
+      // (type === "Connection URI")? {
+      //   connectionString: db_conn
+      // } : {
+      //   database: db_name, 
+      //   user: db_user, 
+      //   password: db_pass, 
+      //   host: db_host,
+      //   port: db_port,
+      //   ssl: !(db_ssl && db_ssl !== "disable")? undefined : {
+      //     rejectUnauthorized: false 
+      //   }
+      // };
       
       const db = pgp(connOpts);
       db.connect()
@@ -157,6 +176,7 @@ import cookieParser from 'cookie-parser';
 import { Auth, BasicSession } from 'prostgles-server/dist/AuthHandler';
 import { DBHandlerServer, isPlainObject } from "prostgles-server/dist/DboBuilder";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import pg from "pg-promise/typescript/pg-subset";
 
 app.use(cookieParser());
 
@@ -493,15 +513,7 @@ const getDBS = async () => {
               try {
                 
                 const prgl = await prostgles({
-                  dbConnection: con.db_conn? 
-                    { connectionString: con.db_conn } :
-                    {
-                      host: con.db_host,
-                      port: con.db_port,
-                      database: con.db_name,
-                      user: con.db_user,
-                      password:  con.db_pass,
-                    },
+                  dbConnection: getConnectionDetails(con),
                   io: _io,
                   auth: {
                     ...auth as any,
