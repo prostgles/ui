@@ -1,0 +1,17 @@
+{
+	"files": ["./index.ts"],
+	"compilerOptions": {
+		"target": "es2019",
+		"lib": [ "es2019" ],
+		"esModuleInterop" : true,
+		"module": "commonjs",
+		"sourceMap": true,
+		"rootDir": ".",
+		"declaration": true,
+		"declarationMap": true
+	},
+	"exclude": [
+		"dist",
+		"DBoGenerated.ts"
+	]
+}

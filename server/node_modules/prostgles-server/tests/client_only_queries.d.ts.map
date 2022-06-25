@@ -1,0 +1,1 @@
+{"version":3,"file":"client_only_queries.d.ts","sourceRoot":"","sources":["client_only_queries.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,eAAe,EAAE,IAAI,EAAE,MAAM,gBAAgB,CAAC;AACvD,OAAO,EAAE,aAAa,EAAa,MAAM,4CAA4C,CAAC;AAGtF,wBAA8B,WAAW,CAAC,EAAE,EAAE,eAAe,EAAE,IAAI,EAAE,IAAI,EAAE,GAAG,EAAE,CAAC,GAAG,IAAI,EAAE,GAAG,EAAE,KAAK,GAAG,EAAE,OAAO,KAAA,EAAE,WAAW,EAAE,aAAa,EAAE,iBA6S7I"}
