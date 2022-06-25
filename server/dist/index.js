@@ -12,7 +12,7 @@ const tableConfig_1 = require("./tableConfig");
 const app = (0, express_1.default)();
 app.use(express_1.default.json({ limit: "100mb" }));
 app.use(express_1.default.urlencoded({ extended: true, limit: "100mb" }));
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED='0';
 // console.log("Connecting to state database" , process.env)
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
@@ -24,9 +24,24 @@ const exec = require('child_process').exec;
 const ioPath = process.env.PRGL_IOPATH || "/iosckt";
 const socket_io_1 = require("socket.io");
 const io = new socket_io_1.Server(http, { path: ioPath, maxHttpBufferSize: 100e100 });
-const pgp = require("pg-promise")();
+const pg_promise_1 = __importDefault(require("pg-promise"));
+const pgp = (0, pg_promise_1.default)();
 const publish_1 = require("./publish");
 // const dns = require('dns');
+const getConnectionDetails = (c) => {
+    return (c.type === "Connection URI") ? {
+        connectionString: c.db_conn
+    } : {
+        database: c.db_name,
+        user: c.db_user,
+        password: c.db_pass,
+        host: c.db_host,
+        port: c.db_port,
+        ssl: !(c.db_ssl && c.db_ssl !== "disable") ? undefined : {
+            rejectUnauthorized: false
+        }
+    };
+};
 const testDBConnection = (opts, isSuperUser = false) => {
     if (typeof opts !== "object" || !("db_host" in opts) && !("db_conn" in opts)) {
         throw "Incorrect database connection info provided. " +
@@ -38,16 +53,19 @@ const testDBConnection = (opts, isSuperUser = false) => {
     const { type, db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } = opts;
     // console.log(db_conn)
     return new Promise((resolve, reject) => {
-        const connOpts = (type === "Connection URI") ? {
-            connectionString: db_conn
-        } : {
-            database: db_name,
-            user: db_user,
-            password: db_pass,
-            host: db_host,
-            port: db_port,
-            ssl: Boolean(db_ssl && db_ssl !== "disable")
-        };
+        const connOpts = getConnectionDetails(opts);
+        // (type === "Connection URI")? {
+        //   connectionString: db_conn
+        // } : {
+        //   database: db_name, 
+        //   user: db_user, 
+        //   password: db_pass, 
+        //   host: db_host,
+        //   port: db_port,
+        //   ssl: !(db_ssl && db_ssl !== "disable")? undefined : {
+        //     rejectUnauthorized: false 
+        //   }
+        // };
         const db = pgp(connOpts);
         db.connect()
             .then(async function (c) {
@@ -406,15 +424,7 @@ const getDBS = async () => {
                             };
                             try {
                                 const prgl = await (0, prostgles_server_1.default)({
-                                    dbConnection: con.db_conn ?
-                                        { connectionString: con.db_conn } :
-                                        {
-                                            host: con.db_host,
-                                            port: con.db_port,
-                                            database: con.db_name,
-                                            user: con.db_user,
-                                            password: con.db_pass,
-                                        },
+                                    dbConnection: getConnectionDetails(con),
                                     io: _io,
                                     auth: Object.assign(Object.assign({}, auth), { getUser: (sid, __, _, cl) => auth.getUser(sid, db, _db, cl), login: (sid, __, _) => auth.login(sid, db, _db), logout: (sid, __, _) => auth.logout(sid, db, _db), cacheSession: {
                                             getSession: (sid) => { var _a; return (_a = auth.cacheSession) === null || _a === void 0 ? void 0 : _a.getSession(sid, db, _db); }
