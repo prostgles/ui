@@ -6,9 +6,8 @@ Web dashboard and SQL Editor for Postgres
 
 [More](https://prostgles.com/ui)
 <p float="left">
-  <img src="https://prostgles.com/ui-vids/screenshot2.png" width="100%"/>  
+  <img src="https://prostgles.com/ui-vids/screenshot2.png" width="100%%"/>  
 </p>
-Mobile  
 <img src="https://prostgles.com/ui-vids/mobile2.png" width="33%" />  
 
 ### Features
@@ -36,14 +35,14 @@ Mobile
 ```
 git clone https://github.com/prostgles/ui.git
 cd ui
-docker-compose up 
+docker compose up 
 ```
 
 By default the app will be accessible at localhost:3004.
-To use a custom port (3099 for example):
+To use a custom port (3099 for example) and/or a custom binding address (0.0.0.0 for example):
 
 ```
 git clone https://github.com/prostgles/ui.git
 cd ui
-PRGL_DOCKER_PORT=3099 docker-compose up 
+PRGL_DOCKER_IP=0.0.0.0 PRGL_DOCKER_PORT=3099 docker compose up 
 ```

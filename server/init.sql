@@ -1,7 +1,20 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS postgis;
 
+/* Global preferences and options */
+-- CREATE TABLE IF NOT EXISTS globals (
+--    onerow_id bool PRIMARY KEY DEFAULT TRUE
+--  , user_groups JSONB
+--  , CONSTRAINT onerow_uni CHECK (onerow_id) --Allow only one row in this table
+-- );
+
 /* AUTH */
+    DROP TABLE IF EXISTS user_groups CASCADE;
+    CREATE TABLE IF NOT EXISTS user_groups (
+        id              TEXT PRIMARY KEY,
+        filter  JSONB   DEFAULT '{}'::jsonb
+    );
+
     --DROP TABLE IF EXISTS user_types CASCADE;
     CREATE TABLE IF NOT EXISTS user_types (
         id              TEXT PRIMARY KEY
@@ -65,10 +78,21 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 
         type     TEXT NOT NULL DEFAULT 'Standard' CHECK (type IN ('Standard', 'Connection URI', 'Prostgles')),
 
+        /* If true then this DB is used to run the dashboard */
+        is_state_db         BOOLEAN,
+
         created             TIMESTAMP DEFAULT NOW(),
 
         last_updated        BIGINT NOT NULL DEFAULT 0,
         UNIQUE(name, user_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS access_control (
+        id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        connection_id   UUID NOT NULL REFERENCES connections(id), -- dependency
+        user_groups     TEXT[],
+        rule            JSONB,
+        created         TIMESTAMP DEFAULT NOW()
     );
 
     -- DROP TABLE IF EXISTS workspaces CASCADE; 
@@ -85,7 +109,7 @@ CREATE EXTENSION IF NOT EXISTS postgis;
         deleted         BOOLEAN NOT NULL DEFAULT FALSE,
         url_path        TEXT,
         UNIQUE(url_path),
-        UNIQUE(connection_id, name)
+        UNIQUE(connection_id, user_id, name)
     );
 
     -- DROP TABLE IF EXISTS windows CASCADE; 
@@ -94,7 +118,7 @@ CREATE EXTENSION IF NOT EXISTS postgis;
         user_id         UUID NOT NULL REFERENCES users(id), -- dependency
         workspace_id    UUID NOT NULL REFERENCES workspaces(id), -- dependency
         type            TEXT CHECK(type IN ('map', 'sql', 'table', 'timechart', 'card')),
-        table_name      TEXT,
+        table_name      TEXT CHECK(type == "table" AND table_name IS NOT NULL),
         table_oid       INTEGER,
         sql             TEXT NOT NULL DEFAULT '',
         selected_sql    TEXT NOT NULL DEFAULT '',
