@@ -122,7 +122,8 @@ const {
   PROSTGLES_STRICT_COOKIE,
 } = result?.parsed || {};
 
-http.listen(+process.env.PRGL_PORT || 3004);
+const PORT = +process.env.PRGL_PORT ?? 3004
+http.listen(PORT);
 
 import { DBSchemaGenerated } from "./DBoGenerated";
 // type DBObj = any;
@@ -672,6 +673,7 @@ const getDBS = async () => {
           console.log("Added users: ", await db.users.find({ username }))
         }
 
+        console.log("Prostgles UI is running on port ", PORT)
       },  
     });
   } catch(err){

@@ -2,6 +2,7 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.get = void 0;
 const path_1 = __importDefault(require("path"));
@@ -89,7 +90,8 @@ const HAS_EMPTY_USERNAME = async (db) => {
 };
 const result = dotenv.config({ path: path_1.default.join(__dirname + '/../../.env') });
 const { PRGL_USERNAME, PRGL_PASSWORD, POSTGRES_URL, POSTGRES_DB, POSTGRES_HOST, POSTGRES_PASSWORD, POSTGRES_PORT, POSTGRES_USER, POSTGRES_SSL, PROSTGLES_STRICT_COOKIE, } = (result === null || result === void 0 ? void 0 : result.parsed) || {};
-http.listen(+process.env.PRGL_PORT || 3004);
+const PORT = (_a = +process.env.PRGL_PORT) !== null && _a !== void 0 ? _a : 3004;
+http.listen(PORT);
 const log = (msg, extra) => {
     console.log(...[`(server): ${(new Date()).toISOString()} ` + msg, extra].filter(v => v));
 };
@@ -553,6 +555,7 @@ const getDBS = async () => {
                     }
                     console.log("Added users: ", await db.users.find({ username }));
                 }
+                console.log("Prostgles UI is running on port ", PORT);
             },
         });
     }
