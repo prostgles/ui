@@ -20,7 +20,7 @@
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
     "pg-promise": "^10.11.0",
-    "prostgles-server": "^2.0.186",
+    "prostgles-server": "^2.0.187",
     "socket.io": "^4.5.1"
   },
   "devDependencies": {
