@@ -2,6 +2,11 @@
 import { Publish, PublishParams } from "prostgles-server/dist/PublishParser";
 import { DBSchemaGenerated } from "./DBoGenerated";
 
+type DBS_PermissionRules = {
+  userTypesThatCanManageUsers?: string[];
+  userTypesThatCanManageConnections?: string[];
+}
+
 export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omit<DBSchemaGenerated["connections"]["columns"], "user_id">): Promise<Publish> => {
         
   const { dbo: db, user, db: _db } = params;
@@ -9,6 +14,9 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
   if(!user || !user.id){
     return null;
   }
+
+  /** If user is NOT ADMIN then get the access rules */
+
   const { id: user_id } = user;
   // _db.any("ALTER TABLE workspaces ADD COLUMN options         JSON DEFAULT '{}'::json")
 
@@ -94,15 +102,27 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
 
     /* DASHBOARD */
     ...(dashboardConfig as object),
+    access_control_user_types: user?.type === "admin"? "*" : {
+      select: true
+    },
+    credentials: user?.type === "admin"? {
+      select: {
+        fields: { key_secret: 0 }
+      },
+      delete: "*",
+      insert: "*",
+      update: "*",
+    } : undefined,
     connections: {
       select: {
         fields: "*",
-        // forcedFilter: user?.type === "admin"? {} : { $existsJoined: { "access_control.access_control_user_types": { user_groups: { $contains: [user.type] } } } }
-        forcedFilter: user?.type === "admin"? {} : { $existsJoined: { "access_control.access_control_user_types": { user_type: user.type } } as any }
+        forcedFilter: user?.type === "admin"? 
+          {} : 
+          { $existsJoined: { "access_control.access_control_user_types": { user_type: user.type } } as any }
       },
-      update: {
+      update: user.type !== "admin"? undefined : {
         fields: {
-          name: 1
+          name: 1, table_config: 1
         }
       }
     },
@@ -144,6 +164,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
       },
       update: {
         fields: { password: 1 },
+        forcedFilter: { id: user_id },
         validate,
       }
     },
@@ -154,7 +175,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
   const adminExtra = remainingTables.reduce((a, v) => ({ ...a, [v]: "*" }), {});
   res = {
     ...(res as object),
-    ...adminExtra
+    ...(user.type === "admin"? adminExtra : {}),
   }
   return res;
 }

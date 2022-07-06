@@ -2,7 +2,7 @@
 */ 
 
  /* SCHEMA DEFINITON. Table names have been altered to work with Typescript */
-/* DBO Definition. Isomorphic */
+/* DBO Definition */
 
 export type DBSchemaGenerated = {
   access_control: {
@@ -52,8 +52,24 @@ export type DBSchemaGenerated = {
       name?: string | null;
       prgl_params?: any | null;
       prgl_url?: string | null;
+      table_config?: any | null;
       type?: string;
       user_id: string
+    };
+  };
+  credentials: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      connection_id: string;
+      id?: number;
+      key_id: string;
+      key_secret: string;
+      type: string;
+      user_id?: string | null
     };
   };
   geography_columns: {
