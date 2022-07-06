@@ -6,6 +6,7 @@ const publish = async (params, con) => {
     if (!user || !user.id) {
         return null;
     }
+    /** If user is NOT ADMIN then get the access rules */
     const { id: user_id } = user;
     // _db.any("ALTER TABLE workspaces ADD COLUMN options         JSON DEFAULT '{}'::json")
     /** Add state db */
@@ -64,15 +65,25 @@ const publish = async (params, con) => {
         }
         return update;
     };
-    let res = Object.assign(Object.assign({}, dashboardConfig), { connections: {
+    let res = Object.assign(Object.assign({}, dashboardConfig), { access_control_user_types: (user === null || user === void 0 ? void 0 : user.type) === "admin" ? "*" : {
+            select: true
+        }, credentials: (user === null || user === void 0 ? void 0 : user.type) === "admin" ? {
+            select: {
+                fields: { key_secret: 0 }
+            },
+            delete: "*",
+            insert: "*",
+            update: "*",
+        } : undefined, connections: {
             select: {
                 fields: "*",
-                // forcedFilter: user?.type === "admin"? {} : { $existsJoined: { "access_control.access_control_user_types": { user_groups: { $contains: [user.type] } } } }
-                forcedFilter: (user === null || user === void 0 ? void 0 : user.type) === "admin" ? {} : { $existsJoined: { "access_control.access_control_user_types": { user_type: user.type } } }
+                forcedFilter: (user === null || user === void 0 ? void 0 : user.type) === "admin" ?
+                    {} :
+                    { $existsJoined: { "access_control.access_control_user_types": { user_type: user.type } } }
             },
-            update: {
+            update: user.type !== "admin" ? undefined : {
                 fields: {
-                    name: 1
+                    name: 1, table_config: 1
                 }
             }
         }, user_types: (user === null || user === void 0 ? void 0 : user.type) === "admin" ? {
@@ -113,13 +124,14 @@ const publish = async (params, con) => {
             },
             update: {
                 fields: { password: 1 },
+                forcedFilter: { id: user_id },
                 validate,
             }
         } });
     const curTables = Object.keys(res);
     const remainingTables = Object.keys(db).filter(k => db[k].find).filter(t => !curTables.includes(t));
     const adminExtra = remainingTables.reduce((a, v) => (Object.assign(Object.assign({}, a), { [v]: "*" })), {});
-    res = Object.assign(Object.assign({}, res), adminExtra);
+    res = Object.assign(Object.assign({}, res), (user.type === "admin" ? adminExtra : {}));
     return res;
 };
 exports.publish = publish;

@@ -5,8 +5,7 @@ import { tableConfig } from "./tableConfig";
 const app = express();
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100mb" }));
-
-// process.env.NODE_TLS_REJECT_UNAUTHORIZED='0';
+import fs from "fs";
 
 // console.log("Connecting to state database" , process.env)
 
@@ -15,9 +14,9 @@ process.on('unhandledRejection', (reason, p) => {
   // application specific logging, throwing an error, or other logic here
 });
 
-const _http = require("http");
+import _http from "http";
 const http = _http.createServer(app);
-const exec = require('child_process').exec; 
+// const exec = require('child_process').exec; 
 
 const ioPath = process.env.PRGL_IOPATH || "/iosckt";
 
@@ -30,7 +29,7 @@ const pgp = pgPromise();
 import { publish } from "./publish"
 // const dns = require('dns');
 
-const getConnectionDetails = (c: Connections): pg.IConnectionParameters<pg.IClient> => {
+export const getConnectionDetails = (c: BareConnectionDetails): pg.IConnectionParameters<pg.IClient> => {
   return (c.type === "Connection URI")? {
     connectionString: c.db_conn
   } : {
@@ -44,12 +43,10 @@ const getConnectionDetails = (c: Connections): pg.IConnectionParameters<pg.IClie
     },
   };
 }
- 
-const testDBConnection = (opts: {
-  type?: string; db_conn?: string; db_user: string; 
-  db_pass: string; db_host: string; db_port: number; 
-  db_name: string, db_ssl?: string 
-}, isSuperUser = false) => {
+
+type BareConnectionDetails = Pick<Connections, "type" | "db_conn" | "db_host" | "db_name" | "db_pass" | "db_port" | "db_user" | "db_ssl">
+
+export const testDBConnection = (opts: BareConnectionDetails, isSuperUser = false) => {
   
   if(typeof opts !== "object" || !("db_host" in opts) && !("db_conn" in opts)) {
     throw "Incorrect database connection info provided. " + 
@@ -62,7 +59,7 @@ const testDBConnection = (opts: {
   // console.log(db_conn)
 
   return new Promise((resolve, reject) => {
-    const connOpts = getConnectionDetails(opts as any);
+    const connOpts = getConnectionDetails(opts);
       
       const db = pgp(connOpts);
       db.connect()
@@ -133,7 +130,8 @@ http.listen(PORT);
 
 import { DBSchemaGenerated } from "./DBoGenerated";
 // type DBObj = any;
-type Users = DBSchemaGenerated["users"]["columns"]; type Connections = DBSchemaGenerated["connections"]["columns"]
+export type Users = DBSchemaGenerated["users"]["columns"]; 
+export type Connections = DBSchemaGenerated["connections"]["columns"]
 import { DB, PGP } from 'prostgles-server/dist/Prostgles';
 
 const log = (msg: string, extra?: any) => {
@@ -161,7 +159,6 @@ const makeSession = async (user: Users, dbo: DBOFullyTyped<DBSchemaGenerated> , 
 /* AUTH */ 
 import cookieParser from 'cookie-parser';
 import { Auth, BasicSession } from 'prostgles-server/dist/AuthHandler';
-import { DBHandlerServer, isPlainObject } from "prostgles-server/dist/DboBuilder";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import pg from "pg-promise/typescript/pg-subset";
 
@@ -172,7 +169,9 @@ let authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_CO
   sameSite: "lax"    //  "none"
 };
 
-const auth: Auth<DBSchemaGenerated> = {
+export const MEDIA_ROUTE_PREFIX = `/prostgles_media`
+ 
+export const auth: Auth<DBSchemaGenerated> = {
 	sidKeyName: "sid_token",
 	getUser: async (sid, db, _db: DB) => {
     log("getUser", sid);
@@ -241,7 +240,11 @@ const auth: Auth<DBSchemaGenerated> = {
     onGetRequestOK: (req, res) => {
       console.log("onGetRequestOK", req.path);
 
-      res.sendFile(path.join(__dirname + '/../../client/build/index.html'));
+      if(req.path.startsWith(MEDIA_ROUTE_PREFIX)){
+        (req as any).next();
+      } else {
+        res.sendFile(path.join(__dirname + '/../../client/build/index.html'));
+      }
     },
     cookieOptions: authCookieOpts,
     magicLinks: {
@@ -259,26 +262,6 @@ const auth: Auth<DBSchemaGenerated> = {
   }
 };
 
-let prgl_connections: Record<string,
-{ 
-  io?: any; 
-  prgl?: {
-    db: DBHandlerServer;
-    _db: DB;
-    pgp: PGP;
-    io?: any;
-    destroy: () => Promise<boolean>;
-  }; 
-  socket_path: string; 
-  con: Connections; 
-  error?: any 
-}> = {};
-
-
-let con, _io;
-
-let login_throttle;
-let child_pid;
 
 const DBS_CONNECTION_INFO = {
   db_conn: process.env.POSTGRES_URL || POSTGRES_URL, 
@@ -289,6 +272,9 @@ const DBS_CONNECTION_INFO = {
   db_port: process.env.POSTGRES_PORT || POSTGRES_PORT, 
   db_ssl:  process.env.POSTGRES_SSL || POSTGRES_SSL,
 };
+
+import { ConnectionManager } from "./ConnectionManager";
+const connMgr = new ConnectionManager(http, app);
 
 const getDBS = async () => {
   try {
@@ -367,8 +353,7 @@ const getDBS = async () => {
       auth,
       publishMethods: async (params) => { //  socket, db: DBObj, _db, user: Users
         const { user, dbo: db, socket, db: _db } = params;
-        // await _db.any("ALTER TABLE workspaces DROP CONSTRAINT workspaces_connection_id_name_key");
-        // await _db.any("ALTER TABLE workspaces ADD CONSTRAINT constraintname UNIQUE (connection_id, user_id, name);");
+
         if(!user || !user.id) {
 
           const makeMagicLink = async (user: Users, dbo, returnURL: string) => {
@@ -390,11 +375,24 @@ const getDBS = async () => {
             socket.emit("redirect", mlink.magic_login_link_redirect);
           }
 
-
           return null;
         }
-        
-        return {
+
+        const adminMethods = {
+          getFileFolderSizeInBytes: (conId?: string) => {
+            const dirSize = async (directory: string) => {
+              const files = fs.readdirSync( directory );
+              const stats = files.map( file => fs.statSync( path.join( directory, file ) ) );
+            
+              return stats.reduce( ( accumulator, { size } ) => accumulator + size, 0 );
+            }
+            
+            if(conId && (typeof conId !== "string" || !connMgr.getConnection(conId))){
+              throw "Invalid/Inexisting connection id provided"
+            }
+            const dir = connMgr.getFileFolderPath(conId);
+            return dirSize(dir);
+          },
           testDBConnection: async (opts) => testDBConnection(opts),
           createConnection: async (con: Connections) => {
             const row = { 
@@ -426,218 +424,15 @@ const getDBS = async () => {
           deleteConnection: async (id) => {
             return db.connections.delete({ id, user_id: user.id }, { returning: "*" });
           },
+          reStartConnection: async (con_id) => {
+            return connMgr.startConnection(con_id, socket, db, _db, true);
+          }
+        }
+        
+        return {
+          ...(user.type === "admin"? adminMethods : undefined),
           startConnection: async (con_id) => {
-
-            const con = await db.connections.findOne({ id: con_id });
-            if(!con) throw "Connection not found";
-
-            // @ts-ignore
-            await testDBConnection(con)
-
-            const socket_path = `/prj/${con_id}-dashboard/s`;
-
-            try {
-              if(prgl_connections[con.id]){
-                if(prgl_connections[con.id].socket_path !== socket_path ){
-
-                  restartProc(() => {
-                    socket?.emit("pls-restart", true)
-                  })
-                  
-                  if(prgl_connections[con.id].prgl){
-                    console.log("destroying prgl", Object.keys(prgl_connections[con.id]));
-                    prgl_connections[con.id].prgl.destroy()
-                  }
-                } else {
-                  console.log("reusing prgl", Object.keys( prgl_connections[con.id]));
-                  if(prgl_connections[con.id].error) throw  prgl_connections[con.id].error;
-                  return socket_path;
-                }
-              }
-              console.log("creating prgl", Object.keys( prgl_connections[con.id] || {}))
-              prgl_connections[con.id] = {
-                socket_path, con
-              }
-
-            } catch(e) {
-              console.error(e);
-              throw e;
-            }
-
-            return new Promise(async (resolve, reject) => {
-              
-              /**
-               * Separate process
-               */
-              // if(child_pid) {
-              //   console.log("Killing process: ", child_pid)
-              //   process.kill(child_pid);
-              // }
-
-              // let proc = exec('node ./proj-prgl.js ', {
-              //   env: {
-              //     app_port: 3002,
-              //     ...con,
-              //     socket_path
-              //   }
-              // });
-              // logProcess(proc)
-              // child_pid = proc.pid
-              // console.log(`Launched child process: PID: ${child_pid}`, {socket_path, ...con,});
-              // resolve(socket_path);
-              // return ;
- 
-
-              const _io = new Server(http, { path: socket_path, maxHttpBufferSize: 1e8 });
-
-              const getRule = (user: Users): Promise<DBSchemaGenerated["access_control"]["columns"] | undefined>  => {
-                if(user){
-                  return db.access_control.findOne({ connection_id: con.id, $existsJoined: { access_control_user_types: { user_type: user.type } } }) //  user_groups: { $contains: [user.type] }
-                }
-                return undefined
-              }
-
-              try {
-                
-                const prgl = await prostgles({
-                  dbConnection: getConnectionDetails(con),
-                  io: _io,
-                  auth: {
-                    ...auth as any,
-                    getUser: (sid, __, _, cl) => auth.getUser(sid, db, _db, cl),
-                    login: (sid, __, _) => auth.login(sid, db, _db),
-                    logout: (sid, __, _) => auth.logout(sid, db, _db),
-                    cacheSession: {
-                      getSession: (sid) => auth.cacheSession?.getSession(sid, db, _db)
-                    }
-                  },
-                  onSocketConnect: (socket) => {
-                    log("onSocketConnect");
-                    
-                    return true; 
-                  }, 
-                  // tsGeneratedTypesDir: path.join(__dirname + '/../connection_dbo/'),
-
-                  watchSchema: Boolean(con.db_watch_shema), 
-                  // watchSchema: "hotReloadMode", 
-
-                  // transactions: true,
-                  // DEBUG_MODE: true,
-                  // fileTable: { 
-                  //   tableName:"filetable",
-                  //   expressApp: app,
-                  //   localConfig: {
-                  //     localFolderPath: path.join(__dirname + `../${con.id}/media`)
-                  //   },
-                  // },
-                  joins: "inferred",
-                  // joins: [
-
-                  // ],
-                  publish: async ({ user, dbo }) => {
-                    if(user){
-                      if(user.type === "admin") return "*";
-                      
-                      const ac = await getRule(user as any);
-                      console.log(user.type, ac)
-                      if(ac?.rule){
-                        const rule = ac.rule;
-                        if(ac.rule?.type === "Run SQL" && ac.rule.allowSQL){
-                          return "*" as "*";
-
-                        } else if(rule.type === 'All views/tables' && isPlainObject( rule.allowAllTables)){
-                          const { select, update, insert, delete: _delete } = rule.allowAllTables;
-                          if(select || update || insert || _delete){
-                            return Object.keys(dbo).filter(k => dbo[k].find).reduce((a, v) => ({ ...a, [v]: { 
-                                select: select? "*" : undefined, 
-                                ...(dbo[v].is_view? {} : {update: update? "*" : undefined, 
-                                insert: insert? "*" : undefined, 
-                                delete: _delete? "*" : undefined, })
-                              } 
-                            }), {})
-                          }
-                        }
-                      }
-                    }
-                    return undefined
-                  },
-                  
-                  publishRawSQL: async () => {
-                    if(user?.type === "admin"){
-                      return true;
-                    }
-                    const ac = await getRule(user as any);
-                    if(ac?.rule?.type === "Run SQL" && ac.rule.allowSQL){
-                      return true;
-                    }
-                    return undefined
-                  },
-                  // publishMethods: (params) => {
-
-                  //   return {
-                  //     sendObj: async (obj) => {
-                  //       console.log(obj);
-                  //       const { rows, statements } = obj;
-                  //       for (let i = 0; i < rows.length; i++){
-                  //         try {
-                  //           await params.db.any(statements[i], rows[i]);
-                  //           // console.log(rows[i])
-                  //         } catch(e){
-                  //           console.error(e);
-                  //         }
-                  //       }
-                  //     }
-                  //   }
-
-                  // },
-                  onReady: async (db, _db) => {
-                    console.log("onReady connection", Object.keys(db));
-
-                    // const term = "e1"
-                    // const filter = { $term_highlight: ["*", term, { matchCase: false, edgeTruncate: 30, returnType: "boolean" } ] }
-                    // const s = { $term_highlight: ["*", term, { matchCase: false, edgeTruncate: 30, returnType: "object" } ] }
-
-                    // try {
-                    //   const rows = await db.codepointopen_london_201709.find(filter, { select: { s } }, { returnQuery: true })
-                    //   console.log(rows)
-                    // } catch(e){
-                    //   console.error(e)
-                    // }
-
-                    // _db.any("SELECT current_database()").then(console.log)
-                    resolve(socket_path);
-                    console.log("dbProj ready", con.db_name)
-                  }
-                });
-                prgl_connections[con.id] = {
-                  prgl, 
-                  io,
-                  socket_path,
-                  con,
-                }
-
-              } catch(e) {
-                reject(e)
-                prgl_connections[con.id] = {
-                  error: e, 
-                  io,
-                  socket_path,
-                  con,
-                }
-              }
-
-            })
-
-
-            // prgl_connection = {
-            //   prgl: {}, 
-            //   io: _io,
-            //   socket_path,
-            //   con,
-            // }
-
-            return socket_path
-            
+            return connMgr.startConnection(con_id, socket, db, _db);
           }
         }
       },
@@ -707,28 +502,17 @@ const getDBS = async () => {
         }
       })
     
-      if(error) app.get("*", (req, res) => {
-        console.log(req.originalUrl ,req)
-        res.sendFile(path.join(__dirname + '/../../client/build/index.html'));
-      })
+      if(error) {
+        app.get("*", (req, res) => {
+          console.log(req.originalUrl ,req)
+          res.sendFile(path.join(__dirname + '/../../client/build/index.html'));
+        })
+      }
       return
     }
 
   }, 2000);
   
-
-  // app.get("/dbs", (req, res) => {    
-  //   if(error){
-  //     res.json({ err: error })
-  //   } else {
-  //     res.json({ ok: true })
-  //   }
-  // })
-
-  // if(error) app.get("*", (req, res) => {
-  //   console.log(req.originalUrl ,req)
-  //   res.sendFile(path.join(__dirname + '/../../client/build/index.html'));
-  // })
 })()
 
 app.post("/dbs", async (req, res) => {
@@ -785,7 +569,7 @@ function logProcess(proc){
 }
 
 const spawn = require('child_process').spawn;
-function restartProc(cb?: Function){
+export function restartProc(cb?: Function){
   console.warn("Restarting process")
   if (process.env.process_restarting) {
     delete process.env.process_restarting;

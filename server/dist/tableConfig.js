@@ -30,7 +30,7 @@ exports.tableConfig = {
         }
     },
     access_control: {
-        dropIfExistsCascade: true,
+        // dropIfExistsCascade: true,
         columns: {
             id: { sqlDefinition: `UUID PRIMARY KEY DEFAULT gen_random_uuid()` },
             connection_id: { sqlDefinition: `UUID NOT NULL REFERENCES connections(id)` },
@@ -40,7 +40,7 @@ exports.tableConfig = {
         }
     },
     access_control_user_types: {
-        dropIfExists: true,
+        // dropIfExists: true,
         columns: {
             access_control_id: { sqlDefinition: `UUID NOT NULL REFERENCES access_control(id)` },
             user_type: { sqlDefinition: `TEXT NOT NULL REFERENCES user_types(id)` }
@@ -58,6 +58,17 @@ exports.tableConfig = {
             magic_link_used: { sqlDefinition: `TIMESTAMP` },
             expires: { sqlDefinition: `BIGINT NOT NULL` },
         }
+    },
+    credentials: {
+        // dropIfExists: true,
+        columns: {
+            id: { sqlDefinition: `SERIAL PRIMARY KEY` },
+            user_id: { sqlDefinition: `UUID REFERENCES users(id)` },
+            connection_id: { sqlDefinition: `UUID NOT NULL REFERENCES connections(id)` },
+            type: { sqlDefinition: `TEXT NOT NULL` },
+            key_id: { sqlDefinition: `TEXT NOT NULL` },
+            key_secret: { sqlDefinition: `TEXT NOT NULL` },
+        },
     },
     /*
     

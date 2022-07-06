@@ -81,6 +81,9 @@ CREATE EXTENSION IF NOT EXISTS postgis;
         /* If true then this DB is used to run the dashboard */
         is_state_db         BOOLEAN,
 
+        /* File and User configurations */
+        table_config        JSONB,
+
         created             TIMESTAMP DEFAULT NOW(),
 
         last_updated        BIGINT NOT NULL DEFAULT 0,

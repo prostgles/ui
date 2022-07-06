@@ -312,7 +312,7 @@
 }
 
 .pb-0 {
-  padding-bottom: 0;
+  padding-bottom: 0 !important;
 }
 .pb-1 {
   padding-bottom: 1em;
@@ -913,11 +913,25 @@ textarea:focus {
   border-color: var(--gray-300);
 }
 
+.b-white {
+  border-color: white;
+}
+.b-black {
+  border-color: black;
+}
+
 .b-action,
 .b-active {
   border-color: var(--blue-500);
 }
 
+.bg-black {
+  background-color: black;
+}
+
+.bg-red-10 {
+  background-color: #fffafa;
+}
 .bg-red-50 {
   background-color: var(--red-50);
 }
@@ -1013,7 +1027,12 @@ textarea:focus {
 }
 
 
-
+.bg-yellow-10 {
+  background-color: #fffff7;
+}
+.bg-yellow-50 {
+  background-color: var(--yellow-50);
+}
 .bg-yellow-100 {
   background-color: var(--yellow-100);
 }
@@ -1177,6 +1196,9 @@ textarea:focus {
   border-bottom-width: 1px;
 }
 
+.b-blue-50 {
+  border-color: var(--blue-50);
+}
 .b-blue-100 {
   border-color: var(--blue-100);
 }
@@ -1202,6 +1224,9 @@ textarea:focus {
   border-color: var(--blue-400);
 }
 
+.b-gray-50 {
+  border-color: var(--gray-50);
+}
 .b-gray-100 {
   border-color: var(--gray-100);
 }
@@ -1226,6 +1251,54 @@ textarea:focus {
 .b-gray-600 {
   border-color: var(--gray-600);
 }
+.b-gray-700 {
+  border-color: var(--gray-700);
+}
+.b-gray-800 {
+  border-color: var(--gray-800);
+}
+.b-gray-900 {
+  border-color: var(--gray-900);
+}
+
+
+.b-yellow-50 {
+  border-color: var(--yellow-50);
+}
+.b-yellow-100 {
+  border-color: var(--yellow-100);
+}
+.b-yellow-200 {
+  border-color: var(--yellow-200);
+}
+.b-yellow-300 {
+  border-color: var(--yellow-300);
+}
+.b-yellow-400 {
+  border-color: var(--yellow-400);
+}
+.b-yellow-300-hover:hover {
+  border-color: var(--yellow-300);
+}
+.b-yellow-400-hover:hover {
+  border-color: var(--yellow-400);
+}
+.b-yellow-500 {
+  border-color: var(--yellow-500);
+}
+.b-yellow-600 {
+  border-color: var(--yellow-600);
+}
+.b-yellow-700 {
+  border-color: var(--yellow-700);
+}
+.b-yellow-800 {
+  border-color: var(--yellow-800);
+}
+.b-yellow-900 {
+  border-color: var(--yellow-900);
+}
+
 
 .border-gray-200 {
   border-color: var(--gray-200);
