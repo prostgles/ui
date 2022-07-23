@@ -1,6 +1,8 @@
 # Prostgles UI
 
-Web dashboard and SQL Editor for Postgres
+Web dashboard and SQL Editor for Postgres  
+
+[Live demo](https://play.prostgles.com/)  
 
 ### Screenshots
 

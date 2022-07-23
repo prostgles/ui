@@ -5,8 +5,9 @@ import { tableConfig } from "./tableConfig";
 const app = express();
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100mb" }));
-import fs from "fs";
+import { BACKUP_FOLDERNAME, getFileMgr, publishMethods } from "./publishMethods"
 
+import { DBSchemaGenerated } from "./DBoGenerated";
 // console.log("Connecting to state database" , process.env)
 
 process.on('unhandledRejection', (reason, p) => {
@@ -30,21 +31,21 @@ import { publish } from "./publish"
 // const dns = require('dns');
 
 export const getConnectionDetails = (c: BareConnectionDetails): pg.IConnectionParameters<pg.IClient> => {
-  return (c.type === "Connection URI")? {
+  return (c.type === "Connection URI" && c.db_conn)? {
     connectionString: c.db_conn
   } : {
-    database: c.db_name, 
-    user: c.db_user, 
-    password: c.db_pass, 
-    host: c.db_host,
-    port: c.db_port,
+    database: c.db_name!, 
+    user: c.db_user!, 
+    password: c.db_pass!, 
+    host: c.db_host!,
+    port: c.db_port!,
     ssl: !(c.db_ssl && c.db_ssl !== "disable")? undefined : {
       rejectUnauthorized: false 
     },
   };
 }
 
-type BareConnectionDetails = Pick<Connections, "type" | "db_conn" | "db_host" | "db_name" | "db_pass" | "db_port" | "db_user" | "db_ssl">
+export type BareConnectionDetails = Pick<Connections, "type" | "db_conn" | "db_host" | "db_name" | "db_pass" | "db_port" | "db_user" | "db_ssl">
 
 export const testDBConnection = (opts: BareConnectionDetails, isSuperUser = false) => {
   
@@ -96,9 +97,9 @@ export const testDBConnection = (opts: BareConnectionDetails, isSuperUser = fals
 
 const dotenv = require('dotenv')
 
-const EMPTY_USERNAME = "prostgles-no-auth-user",
+export const EMPTY_USERNAME = "prostgles-no-auth-user",
   EMPTY_PASSWORD = "prostgles";
-const HAS_EMPTY_USERNAME = async (db: DBOFullyTyped<DBSchemaGenerated>) => {
+export const HAS_EMPTY_USERNAME = async (db: DBOFullyTyped<DBSchemaGenerated>) => {
   if(
     !PRGL_USERNAME || !PRGL_PASSWORD
   ){
@@ -125,13 +126,12 @@ const {
   PROSTGLES_STRICT_COOKIE,
 } = result?.parsed || {};
 
-const PORT = +process.env.PRGL_PORT ?? 3004
+const PORT = +(process.env.PRGL_PORT ?? 3004)
 http.listen(PORT);
 
-import { DBSchemaGenerated } from "./DBoGenerated";
 // type DBObj = any;
-export type Users = DBSchemaGenerated["users"]["columns"]; 
-export type Connections = DBSchemaGenerated["connections"]["columns"]
+export type Users = Required<DBSchemaGenerated["users"]["columns"]>; 
+export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 import { DB, PGP } from 'prostgles-server/dist/Prostgles';
 
 const log = (msg: string, extra?: any) => {
@@ -141,7 +141,7 @@ const log = (msg: string, extra?: any) => {
 app.use(express.static(path.join(__dirname, "../../client/build"), { index: false }));
 app.use(express.static(path.join(__dirname, "../../client/static"), { index: false }));
 
-const makeSession = async (user: Users, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number) => {
+const makeSession = async (user: Users | undefined, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number = 0) => {
 
   if(user){
     const session = await dbo.sessions.insert({ 
@@ -220,7 +220,8 @@ export const auth: Auth<DBSchemaGenerated> = {
     
 		return { sid: s.id, expires: +s.expires }
 	},
-	logout: async (sid = null, db, _db: DB) => {
+	logout: async (sid, db, _db: DB) => {
+		if(!sid) throw "err";
 		const s = await db.sessions.findOne({ id: sid });
 		if(!s) throw "err";
 		await db.sessions.delete({ id: sid })
@@ -230,18 +231,53 @@ export const auth: Auth<DBSchemaGenerated> = {
     getSession: async (sid, db) => {
       let s = await db.sessions.findOne({ id: sid });
       if(s) return { sid: s.id, ...s } as BasicSession;
-      return undefined;
+      // throw "dwada"
+      return undefined as any;
     }
   },
   expressConfig: {
     app,
     // userRoutes: ["/", "/connection", "/connections", "/profile", "/jobs", "/chats", "/chat", "/account", "/dashboard", "/registrations"],
     publicRoutes: ["/manifest.json", "/favicon.ico"], // ["/"],
-    onGetRequestOK: (req, res) => {
+    onGetRequestOK: async (req, res, { getUser, db, dbo: dbs }) => {
       console.log("onGetRequestOK", req.path);
 
-      if(req.path.startsWith(MEDIA_ROUTE_PREFIX)){
-        (req as any).next();
+      const BKP_PREFFIX = "/"+BACKUP_FOLDERNAME;
+      if(req.path.startsWith(BKP_PREFFIX)){
+        const userData = await getUser();
+        if(userData?.user?.type !== "admin"){
+          res.sendStatus(401);
+        } else {
+          const bkpId = req.path.slice(BKP_PREFFIX.length + 1);
+          if(!bkpId) {
+            res.sendStatus(404);
+          } else {
+            const bkp = await dbs.backups.findOne({ id: bkpId  });
+            if(!bkp){
+              res.sendStatus(404);
+            } else {
+              const { fileMgr } = await getFileMgr(dbs, bkp.credential_id);
+              if(bkp.credential_id){
+                /* Allow access at a download rate of 50KBps */
+                const presignedURL = await fileMgr.getFileS3URL(bkp.id, (bkp.sizeInBytes ?? 1e6)/50);
+                if(!presignedURL){
+                  res.sendStatus(404);
+                } else {
+                  res.redirect(presignedURL)
+                }
+              } else {
+                try {
+                  res.type("text/plain")
+                  res.sendFile(path.join(__dirname + '/../../server' + BKP_PREFFIX + "/" + bkp.id));
+                } catch(err){
+                  res.sendStatus(404);
+                }
+              }
+            }
+          }
+        }
+      } else if(req.path.startsWith(MEDIA_ROUTE_PREFIX)){
+        req.next?.();
       } else {
         res.sendFile(path.join(__dirname + '/../../client/build/index.html'));
       }
@@ -253,9 +289,9 @@ export const auth: Auth<DBSchemaGenerated> = {
         
         if(mlink){
           if(mlink.expires < Date.now()) throw "Expired magic link";
-        }
+        } else throw new Error("Magic link not found")
         const user = await dbo.users.findOne({ id: mlink.user_id });
-  
+        if(!user) throw new Error("User from Magic link not found")
         return makeSession(user, dbo , mlink.expires);
       }
     }
@@ -274,8 +310,10 @@ const DBS_CONNECTION_INFO = {
 };
 
 import { ConnectionManager } from "./ConnectionManager";
-const connMgr = new ConnectionManager(http, app);
+import { ChildProcessWithoutNullStreams } from "child_process";
+export const connMgr = new ConnectionManager(http, app);
 
+let dbs: DBOFullyTyped<DBSchemaGenerated> | undefined;
 const getDBS = async () => {
   try {
 
@@ -304,7 +342,7 @@ const getDBS = async () => {
 
       `;
     }
-    await testDBConnection(con, true);
+    await testDBConnection(con as any, true);
 
     prostgles<DBSchemaGenerated>({
       dbConnection: {
@@ -351,95 +389,11 @@ const getDBS = async () => {
         return Boolean(user && user.type === "admin")
       },
       auth,
-      publishMethods: async (params) => { //  socket, db: DBObj, _db, user: Users
-        const { user, dbo: db, socket, db: _db } = params;
-
-        if(!user || !user.id) {
-
-          const makeMagicLink = async (user: Users, dbo, returnURL: string) => {
-            const mlink = await dbo.magic_links.insert({ 
-              expires: Number.MAX_SAFE_INTEGER, // Date.now() + 24 * 3600 * 1000, 
-              user_id: user.id,
-          
-            }, {returning: "*"});
-                    
-            return {
-              id: user.id,
-              magic_login_link_redirect: `/magic-link/${mlink.id}?returnURL=${returnURL}`
-            };
-          }
-          /** If no user exists then make */
-          if(await HAS_EMPTY_USERNAME(db)){
-            const u = await db.users.findOne({ username: EMPTY_USERNAME });
-            const mlink = await makeMagicLink(u, db, "/")
-            socket.emit("redirect", mlink.magic_login_link_redirect);
-          }
-
-          return null;
-        }
-
-        const adminMethods = {
-          getFileFolderSizeInBytes: (conId?: string) => {
-            const dirSize = async (directory: string) => {
-              const files = fs.readdirSync( directory );
-              const stats = files.map( file => fs.statSync( path.join( directory, file ) ) );
-            
-              return stats.reduce( ( accumulator, { size } ) => accumulator + size, 0 );
-            }
-            
-            if(conId && (typeof conId !== "string" || !connMgr.getConnection(conId))){
-              throw "Invalid/Inexisting connection id provided"
-            }
-            const dir = connMgr.getFileFolderPath(conId);
-            return dirSize(dir);
-          },
-          testDBConnection: async (opts) => testDBConnection(opts),
-          createConnection: async (con: Connections) => {
-            const row = { 
-                ...con, 
-                user_id: user.id,
-              }
-            delete row.type;
-            // console.log("createConnection", row)
-            try {
-              await testDBConnection(con as any);
-              let res;
-              if(con.id){
-                delete row.id;
-                res = await db.connections.update({ id: con.id }, row, { returning: "*" });
-              } else {
-                res = await db.connections.insert(row, { returning: "*" });
-              }
-              return res;
-            } catch(e){
-              console.error(e);
-              if(e && e.code === "23502"){
-                throw { err_msg: ` ${e.column} cannot be empty` }
-              } else if(e && e.code === "23505"){
-                throw { err_msg: `Connection ${JSON.stringify(con.name)} already exists` }
-              }
-              throw e;
-            }
-          },
-          deleteConnection: async (id) => {
-            return db.connections.delete({ id, user_id: user.id }, { returning: "*" });
-          },
-          reStartConnection: async (con_id) => {
-            return connMgr.startConnection(con_id, socket, db, _db, true);
-          }
-        }
-        
-        return {
-          ...(user.type === "admin"? adminMethods : undefined),
-          startConnection: async (con_id) => {
-            return connMgr.startConnection(con_id, socket, db, _db);
-          }
-        }
-      },
+      publishMethods,
       publish: params => publish(params, con) as any,
       joins: "inferred",
       onReady: async (db, _db: DB) => {
-        
+        dbs = db;
         let username = PRGL_USERNAME,
           password = PRGL_PASSWORD;
         if(
@@ -477,7 +431,7 @@ const getDBS = async () => {
 
 
 (async () => {
-  let error, tries = 0
+  let error: any, tries = 0
   let interval = setInterval(async () => {
     
     try {
@@ -513,7 +467,14 @@ const getDBS = async () => {
 
   }, 2000);
   
-})()
+})();
+
+
+// app.get("/"+BACKUP_FOLDERNAME+"/:id", (req, res) => {
+//   console.log(req.originalUrl ,req);
+//   if(dbs)
+//   res.sendFile(path.join(__dirname + '/../../server/' + BACKUP_FOLDERNAME + "/" + req.params.id));
+// })
 
 app.post("/dbs", async (req, res) => {
   const { db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } = req.body;
@@ -522,7 +483,7 @@ app.post("/dbs", async (req, res) => {
   }
 
   try {
-    await testDBConnection({ db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl });
+    await testDBConnection({ db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } as any);
 
     res.json({ msg: "DBS changed. Restart system" })
   } catch(err){
@@ -552,18 +513,18 @@ export function get(obj: any, propertyPath: string | string[]): any{
 }
 
 
-function logProcess(proc){
+function logProcess(proc: ChildProcessWithoutNullStreams){
 
   const p = `PID ${proc.pid}`;
-  proc.stdout.on('data', function (data) {
+  proc.stdout.on('data', function (data: any) {
     console.log(p + ' stdout: ' + data);
   });
   
-  proc.stderr.on('data', function (data) {
+  proc.stderr.on('data', function (data: any) {
     console.log(p + ' stderr: ' + data);
   });
   
-  proc.on('close', function (code) {
+  proc.on('close', function (code: any) {
     console.log(p + ' child process exited with code ' + code);
   });
 }

@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.publish = void 0;
+const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
+const prostgles_types_1 = require("prostgles-types");
 const publish = async (params, con) => {
     const { dbo: db, user, db: _db } = params;
     if (!user || !user.id) {
@@ -22,7 +24,7 @@ const publish = async (params, con) => {
                 if (!databases.includes(SAMPLE_DB_NAME)) {
                     await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
                 }
-                await db.connections.insert(Object.assign(Object.assign({}, state_db), { is_state_db: false, name: SAMPLE_DB_NAME }));
+                await db.connections.insert(Object.assign(Object.assign({}, (0, PubSubManager_1.omitKeys)(state_db, ["id"])), { is_state_db: false, name: SAMPLE_DB_NAME }));
             }
         }
         catch (err) {
@@ -72,7 +74,7 @@ const publish = async (params, con) => {
                 fields: { key_secret: 0 }
             },
             delete: "*",
-            insert: "*",
+            insert: { fields: "*", forcedData: { user_id: user.id } },
             update: "*",
         } : undefined, connections: {
             select: {
@@ -107,7 +109,7 @@ const publish = async (params, con) => {
             },
             update: {
                 fields: "*",
-                validate,
+                validate: validate,
                 dynamicFields: [{
                         fields: { username: 1, password: 1, status: 1 },
                         filter: { id: user.id }
@@ -125,11 +127,14 @@ const publish = async (params, con) => {
             update: {
                 fields: { password: 1 },
                 forcedFilter: { id: user_id },
-                validate,
+                validate: validate,
             }
+        }, backups: {
+            select: true,
         } });
     const curTables = Object.keys(res);
-    const remainingTables = Object.keys(db).filter(k => db[k].find).filter(t => !curTables.includes(t));
+    // @ts-ignore
+    const remainingTables = (0, prostgles_types_1.getKeys)(db).filter(k => { var _a; return (_a = db[k]) === null || _a === void 0 ? void 0 : _a.find; }).filter(t => !curTables.includes(t));
     const adminExtra = remainingTables.reduce((a, v) => (Object.assign(Object.assign({}, a), { [v]: "*" })), {});
     res = Object.assign(Object.assign({}, res), (user.type === "admin" ? adminExtra : {}));
     return res;

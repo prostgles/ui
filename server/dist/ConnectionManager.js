@@ -10,11 +10,30 @@ const socket_io_1 = require("socket.io");
 const prostgles_server_1 = __importDefault(require("prostgles-server"));
 const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
 const path_1 = __importDefault(require("path"));
+const ws_1 = __importDefault(require("ws"));
 class ConnectionManager {
     constructor(http, app) {
         this.prgl_connections = {};
         this.http = http;
         this.app = app;
+        this.setUpWSS();
+    }
+    setUpWSS() {
+        if (!this.wss) {
+            this.wss = new ws_1.default.Server({ port: 7071 });
+        }
+        const clients = new Map();
+        this.wss.on('connection', (ws) => {
+            const id = Date.now() + "." + Math.random();
+            const color = Math.floor(Math.random() * 360);
+            const metadata = { id, color };
+            clients.set(ws, metadata);
+            ws.on("message", console.log);
+            ws.on("close", () => {
+                clients.delete(ws);
+            });
+        });
+        return this.wss;
     }
     getFileFolderPath(conId) {
         let rootPath = path_1.default.resolve(`${__dirname}/../${index_1.MEDIA_ROUTE_PREFIX}`);
@@ -26,7 +45,7 @@ class ConnectionManager {
         return this.prgl_connections[conId];
     }
     async startConnection(con_id, socket, dbs, _dbs, restartIfExists = false) {
-        var _a;
+        var _a, _b;
         const { http } = this;
         if (this.prgl_connections[con_id]) {
             if (restartIfExists) {
@@ -51,7 +70,7 @@ class ConnectionManager {
                     });
                     if (this.prgl_connections[con.id].prgl) {
                         console.log("destroying prgl", Object.keys(this.prgl_connections[con.id]));
-                        this.prgl_connections[con.id].prgl.destroy();
+                        (_b = this.prgl_connections[con.id].prgl) === null || _b === void 0 ? void 0 : _b.destroy();
                     }
                 }
                 else {
@@ -71,8 +90,9 @@ class ConnectionManager {
             throw e;
         }
         return new Promise(async (resolve, reject) => {
+            var _a, _b;
             const _io = new socket_io_1.Server(http, { path: socket_path, maxHttpBufferSize: 1e8 });
-            const getRule = (user) => {
+            const getRule = async (user) => {
                 if (user) {
                     return dbs.access_control.findOne({ connection_id: con.id, $existsJoined: { access_control_user_types: { user_type: user.type } } }); //  user_groups: { $contains: [user.type] }
                 }
@@ -81,10 +101,17 @@ class ConnectionManager {
             try {
                 const tableConfig = con.table_config;
                 console.log("RESTART CONNECTION ON TABLECONFIG CHANGE");
+                const s3Creds = await dbs.credentials.findOne({ connection_id: con_id, type: "s3" });
+                if (s3Creds && ((_a = tableConfig === null || tableConfig === void 0 ? void 0 : tableConfig.storageType) === null || _a === void 0 ? void 0 : _a.type) === "S3") {
+                    tableConfig.storageType.accessKeyId = s3Creds.key_id;
+                    tableConfig.storageType.secretAccessKey = s3Creds.key_secret;
+                    tableConfig.storageType.bucket = s3Creds.bucket;
+                    tableConfig.storageType.region = s3Creds.region;
+                }
                 const prgl = await (0, prostgles_server_1.default)({
                     dbConnection: (0, index_1.getConnectionDetails)(con),
                     io: _io,
-                    auth: Object.assign(Object.assign({}, index_1.auth), { getUser: (sid, __, _, cl) => index_1.auth.getUser(sid, dbs, _dbs, cl), login: (sid, __, _) => index_1.auth.login(sid, dbs, _dbs), logout: (sid, __, _) => index_1.auth.logout(sid, dbs, _dbs), cacheSession: {
+                    auth: Object.assign(Object.assign({}, index_1.auth), { getUser: (sid, __, _, cl) => index_1.auth.getUser(sid, dbs, _dbs, cl), login: (sid, __, _) => { var _a; return (_a = index_1.auth.login) === null || _a === void 0 ? void 0 : _a.call(index_1.auth, sid, dbs, _dbs); }, logout: (sid, __, _) => { var _a; return (_a = index_1.auth.logout) === null || _a === void 0 ? void 0 : _a.call(index_1.auth, sid, dbs, _dbs); }, cacheSession: {
                             getSession: (sid) => { var _a; return (_a = index_1.auth.cacheSession) === null || _a === void 0 ? void 0 : _a.getSession(sid, dbs, _dbs); }
                         } }),
                     onSocketConnect: (socket) => {
@@ -92,7 +119,7 @@ class ConnectionManager {
                         return true;
                     },
                     // tsGeneratedTypesDir: path.join(__dirname + '/../connection_dbo/'),
-                    fileTable: !(tableConfig === null || tableConfig === void 0 ? void 0 : tableConfig.fileTable) ? undefined : Object.assign(Object.assign({ tableName: tableConfig.fileTable, expressApp: this.app, fileServeRoute: `${index_1.MEDIA_ROUTE_PREFIX}/${con_id}` }, (tableConfig.storageType.type === "local" ? {
+                    fileTable: !(tableConfig === null || tableConfig === void 0 ? void 0 : tableConfig.fileTable) ? undefined : Object.assign(Object.assign({ tableName: tableConfig.fileTable, expressApp: this.app, fileServeRoute: `${index_1.MEDIA_ROUTE_PREFIX}/${con_id}` }, (((_b = tableConfig.storageType) === null || _b === void 0 ? void 0 : _b.type) === "local" ? {
                         localConfig: {
                             /* Use path.resolve when using a relative path. Otherwise will get 403 forbidden */
                             localFolderPath: this.getFileFolderPath(con_id)
@@ -186,7 +213,7 @@ class ConnectionManager {
                                 }
                                 else if (rule.type === "Custom" && rule.customTables) {
                                     return rule.customTables
-                                        .filter(t => dbo[t.tableName])
+                                        .filter((t) => dbo[t.tableName])
                                         .reduce((a, v) => (Object.assign(Object.assign({}, a), { [v.tableName]: parseTableRules((0, PubSubManager_1.omitKeys)(v, ["tableName"]), dbo[v.tableName].is_view) })), {});
                                 }
                                 else {
@@ -205,7 +232,7 @@ class ConnectionManager {
                         if (((_a = ac === null || ac === void 0 ? void 0 : ac.rule) === null || _a === void 0 ? void 0 : _a.type) === "Run SQL" && ac.rule.allowSQL) {
                             return true;
                         }
-                        return undefined;
+                        return false;
                     },
                     onReady: async (db, _db) => {
                         console.log("onReady connection", Object.keys(db));
