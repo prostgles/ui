@@ -1,7 +1,8 @@
 
 import { Publish, PublishParams } from "prostgles-server/dist/PublishParser";
+import { omitKeys } from "prostgles-server/dist/PubSubManager";
 import { DBSchemaGenerated } from "./DBoGenerated";
-
+import { AnyObject, getKeys } from "prostgles-types"
 type DBS_PermissionRules = {
   userTypesThatCanManageUsers?: string[];
   userTypesThatCanManageConnections?: string[];
@@ -43,7 +44,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
           await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
         }
         await db.connections.insert({ 
-          ...state_db,
+          ...omitKeys(state_db, ["id"]),
           is_state_db: false,
           name: SAMPLE_DB_NAME
         })
@@ -83,7 +84,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
     },
   }) ,{});
 
-  const validate = async ({ filter, update }) => {
+  const validate = async ({ filter, update }: { filter: AnyObject; update: AnyObject }) => {
     if("password" in update){
       const users = await db.users.find(filter);
       if(users.length !== 1){
@@ -110,7 +111,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
         fields: { key_secret: 0 }
       },
       delete: "*",
-      insert: "*",
+      insert: { fields: "*", forcedData: { user_id: user.id } },
       update: "*",
     } : undefined,
     connections: {
@@ -147,7 +148,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
       },
       update: {
         fields: "*",
-        validate,
+        validate: validate as any,
         dynamicFields: [{
           fields: { username: 1, password: 1, status: 1 },
           filter: { id: user.id }
@@ -165,13 +166,18 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
       update: {
         fields: { password: 1 },
         forcedFilter: { id: user_id },
-        validate,
+        validate: validate as any,
       }
     },
+
+    backups: {
+      select: true,
+    }
   }
 
   const curTables = Object.keys(res);
-  const remainingTables = Object.keys(db).filter(k => db[k].find).filter(t => !curTables.includes(t));
+  // @ts-ignore
+  const remainingTables = getKeys(db).filter(k => db[k]?.find).filter(t => !curTables.includes(t));
   const adminExtra = remainingTables.reduce((a, v) => ({ ...a, [v]: "*" }), {});
   res = {
     ...(res as object),

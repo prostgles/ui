@@ -14,7 +14,8 @@
 		// "rootDir": ".",
 		"declaration": true,
 		"declarationMap": true,
-		"keyofStringsOnly": true
+		"keyofStringsOnly": true,
+		"strict": true
 	},
 	"exclude": [
 		"dist",

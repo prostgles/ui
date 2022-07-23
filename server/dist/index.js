@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.restartProc = exports.get = exports.auth = exports.MEDIA_ROUTE_PREFIX = exports.testDBConnection = exports.getConnectionDetails = void 0;
+exports.restartProc = exports.get = exports.connMgr = exports.auth = exports.MEDIA_ROUTE_PREFIX = exports.HAS_EMPTY_USERNAME = exports.EMPTY_PASSWORD = exports.EMPTY_USERNAME = exports.testDBConnection = exports.getConnectionDetails = void 0;
 const path_1 = __importDefault(require("path"));
 const express_1 = __importDefault(require("express"));
 const prostgles_server_1 = __importDefault(require("prostgles-server"));
@@ -12,7 +12,7 @@ const tableConfig_1 = require("./tableConfig");
 const app = (0, express_1.default)();
 app.use(express_1.default.json({ limit: "100mb" }));
 app.use(express_1.default.urlencoded({ extended: true, limit: "100mb" }));
-const fs_1 = __importDefault(require("fs"));
+const publishMethods_1 = require("./publishMethods");
 // console.log("Connecting to state database" , process.env)
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
@@ -29,7 +29,7 @@ const pgp = (0, pg_promise_1.default)();
 const publish_1 = require("./publish");
 // const dns = require('dns');
 const getConnectionDetails = (c) => {
-    return (c.type === "Connection URI") ? {
+    return (c.type === "Connection URI" && c.db_conn) ? {
         connectionString: c.db_conn
     } : {
         database: c.db_name,
@@ -86,25 +86,26 @@ const testDBConnection = (opts, isSuperUser = false) => {
 };
 exports.testDBConnection = testDBConnection;
 const dotenv = require('dotenv');
-const EMPTY_USERNAME = "prostgles-no-auth-user", EMPTY_PASSWORD = "prostgles";
+exports.EMPTY_USERNAME = "prostgles-no-auth-user", exports.EMPTY_PASSWORD = "prostgles";
 const HAS_EMPTY_USERNAME = async (db) => {
     if (!PRGL_USERNAME || !PRGL_PASSWORD) {
-        if (await db.users.count({ username: EMPTY_USERNAME, status: "active" })) {
+        if (await db.users.count({ username: exports.EMPTY_USERNAME, status: "active" })) {
             return true;
         }
     }
     return false;
 };
+exports.HAS_EMPTY_USERNAME = HAS_EMPTY_USERNAME;
 const result = dotenv.config({ path: path_1.default.join(__dirname + '/../../.env') });
 const { PRGL_USERNAME, PRGL_PASSWORD, POSTGRES_URL, POSTGRES_DB, POSTGRES_HOST, POSTGRES_PASSWORD, POSTGRES_PORT, POSTGRES_USER, POSTGRES_SSL, PROSTGLES_STRICT_COOKIE, } = (result === null || result === void 0 ? void 0 : result.parsed) || {};
-const PORT = (_a = +process.env.PRGL_PORT) !== null && _a !== void 0 ? _a : 3004;
+const PORT = +((_a = process.env.PRGL_PORT) !== null && _a !== void 0 ? _a : 3004);
 http.listen(PORT);
 const log = (msg, extra) => {
     console.log(...[`(server): ${(new Date()).toISOString()} ` + msg, extra].filter(v => v));
 };
 app.use(express_1.default.static(path_1.default.join(__dirname, "../../client/build"), { index: false }));
 app.use(express_1.default.static(path_1.default.join(__dirname, "../../client/static"), { index: false }));
-const makeSession = async (user, dbo, expires) => {
+const makeSession = async (user, dbo, expires = 0) => {
     if (user) {
         const session = await dbo.sessions.insert({
             user_id: user.id,
@@ -174,7 +175,9 @@ exports.auth = {
         }
         return { sid: s.id, expires: +s.expires };
     },
-    logout: async (sid = null, db, _db) => {
+    logout: async (sid, db, _db) => {
+        if (!sid)
+            throw "err";
         const s = await db.sessions.findOne({ id: sid });
         if (!s)
             throw "err";
@@ -186,6 +189,7 @@ exports.auth = {
             let s = await db.sessions.findOne({ id: sid });
             if (s)
                 return Object.assign({ sid: s.id }, s);
+            // throw "dwada"
             return undefined;
         }
     },
@@ -193,10 +197,52 @@ exports.auth = {
         app,
         // userRoutes: ["/", "/connection", "/connections", "/profile", "/jobs", "/chats", "/chat", "/account", "/dashboard", "/registrations"],
         publicRoutes: ["/manifest.json", "/favicon.ico"],
-        onGetRequestOK: (req, res) => {
+        onGetRequestOK: async (req, res, { getUser, db, dbo: dbs }) => {
+            var _a, _b, _c;
             console.log("onGetRequestOK", req.path);
-            if (req.path.startsWith(exports.MEDIA_ROUTE_PREFIX)) {
-                req.next();
+            const BKP_PREFFIX = "/" + publishMethods_1.BACKUP_FOLDERNAME;
+            if (req.path.startsWith(BKP_PREFFIX)) {
+                const userData = await getUser();
+                if (((_a = userData === null || userData === void 0 ? void 0 : userData.user) === null || _a === void 0 ? void 0 : _a.type) !== "admin") {
+                    res.sendStatus(401);
+                }
+                else {
+                    const bkpId = req.path.slice(BKP_PREFFIX.length + 1);
+                    if (!bkpId) {
+                        res.sendStatus(404);
+                    }
+                    else {
+                        const bkp = await dbs.backups.findOne({ id: bkpId });
+                        if (!bkp) {
+                            res.sendStatus(404);
+                        }
+                        else {
+                            const { fileMgr } = await (0, publishMethods_1.getFileMgr)(dbs, bkp.credential_id);
+                            if (bkp.credential_id) {
+                                /* Allow access at a download rate of 50KBps */
+                                const presignedURL = await fileMgr.getFileS3URL(bkp.id, ((_b = bkp.sizeInBytes) !== null && _b !== void 0 ? _b : 1e6) / 50);
+                                if (!presignedURL) {
+                                    res.sendStatus(404);
+                                }
+                                else {
+                                    res.redirect(presignedURL);
+                                }
+                            }
+                            else {
+                                try {
+                                    res.type("text/plain");
+                                    res.sendFile(path_1.default.join(__dirname + '/../../server' + BKP_PREFFIX + "/" + bkp.id));
+                                }
+                                catch (err) {
+                                    res.sendStatus(404);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (req.path.startsWith(exports.MEDIA_ROUTE_PREFIX)) {
+                (_c = req.next) === null || _c === void 0 ? void 0 : _c.call(req);
             }
             else {
                 res.sendFile(path_1.default.join(__dirname + '/../../client/build/index.html'));
@@ -210,7 +256,11 @@ exports.auth = {
                     if (mlink.expires < Date.now())
                         throw "Expired magic link";
                 }
+                else
+                    throw new Error("Magic link not found");
                 const user = await dbo.users.findOne({ id: mlink.user_id });
+                if (!user)
+                    throw new Error("User from Magic link not found");
                 return makeSession(user, dbo, mlink.expires);
             }
         }
@@ -226,7 +276,8 @@ const DBS_CONNECTION_INFO = {
     db_ssl: process.env.POSTGRES_SSL || POSTGRES_SSL,
 };
 const ConnectionManager_1 = require("./ConnectionManager");
-const connMgr = new ConnectionManager_1.ConnectionManager(http, app);
+exports.connMgr = new ConnectionManager_1.ConnectionManager(http, app);
+let dbs;
 const getDBS = async () => {
     try {
         const con = DBS_CONNECTION_INFO;
@@ -298,90 +349,19 @@ const getDBS = async () => {
                 return Boolean(user && user.type === "admin");
             },
             auth: exports.auth,
-            publishMethods: async (params) => {
-                const { user, dbo: db, socket, db: _db } = params;
-                if (!user || !user.id) {
-                    const makeMagicLink = async (user, dbo, returnURL) => {
-                        const mlink = await dbo.magic_links.insert({
-                            expires: Number.MAX_SAFE_INTEGER,
-                            user_id: user.id,
-                        }, { returning: "*" });
-                        return {
-                            id: user.id,
-                            magic_login_link_redirect: `/magic-link/${mlink.id}?returnURL=${returnURL}`
-                        };
-                    };
-                    /** If no user exists then make */
-                    if (await HAS_EMPTY_USERNAME(db)) {
-                        const u = await db.users.findOne({ username: EMPTY_USERNAME });
-                        const mlink = await makeMagicLink(u, db, "/");
-                        socket.emit("redirect", mlink.magic_login_link_redirect);
-                    }
-                    return null;
-                }
-                const adminMethods = {
-                    getFileFolderSizeInBytes: (conId) => {
-                        const dirSize = async (directory) => {
-                            const files = fs_1.default.readdirSync(directory);
-                            const stats = files.map(file => fs_1.default.statSync(path_1.default.join(directory, file)));
-                            return stats.reduce((accumulator, { size }) => accumulator + size, 0);
-                        };
-                        if (conId && (typeof conId !== "string" || !connMgr.getConnection(conId))) {
-                            throw "Invalid/Inexisting connection id provided";
-                        }
-                        const dir = connMgr.getFileFolderPath(conId);
-                        return dirSize(dir);
-                    },
-                    testDBConnection: async (opts) => (0, exports.testDBConnection)(opts),
-                    createConnection: async (con) => {
-                        const row = Object.assign(Object.assign({}, con), { user_id: user.id });
-                        delete row.type;
-                        // console.log("createConnection", row)
-                        try {
-                            await (0, exports.testDBConnection)(con);
-                            let res;
-                            if (con.id) {
-                                delete row.id;
-                                res = await db.connections.update({ id: con.id }, row, { returning: "*" });
-                            }
-                            else {
-                                res = await db.connections.insert(row, { returning: "*" });
-                            }
-                            return res;
-                        }
-                        catch (e) {
-                            console.error(e);
-                            if (e && e.code === "23502") {
-                                throw { err_msg: ` ${e.column} cannot be empty` };
-                            }
-                            else if (e && e.code === "23505") {
-                                throw { err_msg: `Connection ${JSON.stringify(con.name)} already exists` };
-                            }
-                            throw e;
-                        }
-                    },
-                    deleteConnection: async (id) => {
-                        return db.connections.delete({ id, user_id: user.id }, { returning: "*" });
-                    },
-                    reStartConnection: async (con_id) => {
-                        return connMgr.startConnection(con_id, socket, db, _db, true);
-                    }
-                };
-                return Object.assign(Object.assign({}, (user.type === "admin" ? adminMethods : undefined)), { startConnection: async (con_id) => {
-                        return connMgr.startConnection(con_id, socket, db, _db);
-                    } });
-            },
+            publishMethods: publishMethods_1.publishMethods,
             publish: params => (0, publish_1.publish)(params, con),
             joins: "inferred",
             onReady: async (db, _db) => {
+                dbs = db;
                 let username = PRGL_USERNAME, password = PRGL_PASSWORD;
                 if (!PRGL_USERNAME || !PRGL_PASSWORD) {
-                    username = EMPTY_USERNAME;
-                    password = EMPTY_PASSWORD;
+                    username = exports.EMPTY_USERNAME;
+                    password = exports.EMPTY_PASSWORD;
                 }
                 // await db.users.delete(); 
                 if (!(await db.users.count({ username }))) {
-                    if (await HAS_EMPTY_USERNAME(db)) {
+                    if (await (0, exports.HAS_EMPTY_USERNAME)(db)) {
                         console.warn(`PRGL_USERNAME or PRGL_PASSWORD missing. Creating default user: ${username} with default password: ${password}`);
                     }
                     console.log((await db.users.count({ username })));
@@ -436,6 +416,11 @@ const getDBS = async () => {
         }
     }, 2000);
 })();
+// app.get("/"+BACKUP_FOLDERNAME+"/:id", (req, res) => {
+//   console.log(req.originalUrl ,req);
+//   if(dbs)
+//   res.sendFile(path.join(__dirname + '/../../server/' + BACKUP_FOLDERNAME + "/" + req.params.id));
+// })
 app.post("/dbs", async (req, res) => {
     const { db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } = req.body;
     if (!db_conn || !db_host) {

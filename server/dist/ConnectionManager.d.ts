@@ -23,13 +23,16 @@ declare type PRGLInstance = {
     prgl?: Unpromise<ReturnType<typeof prostgles>>;
     error?: any;
 };
+import WebSocket from 'ws';
 export declare class ConnectionManager {
     prgl_connections: Record<string, PRGLInstance>;
     http: any;
     app: any;
+    wss?: WebSocket.Server<WebSocket.WebSocket>;
     constructor(http: any, app: any);
+    setUpWSS(): WebSocket.Server<WebSocket.WebSocket>;
     getFileFolderPath(conId?: string): string;
-    getConnection(conId: string): PRGLInstance;
+    getConnection(conId: string): PRGLInstance | undefined;
     startConnection(con_id: string, socket: PRGLIOSocket, dbs: DBOFullyTyped<DBSchemaGenerated>, _dbs: DB, restartIfExists?: boolean): Promise<string | undefined>;
 }
 export {};

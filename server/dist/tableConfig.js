@@ -53,7 +53,7 @@ exports.tableConfig = {
         // dropIfExistsCascade: true,
         columns: {
             id: { sqlDefinition: `TEXT PRIMARY KEY DEFAULT gen_random_uuid()` },
-            user_id: { sqlDefinition: `UUID REFERENCES users(id)` },
+            user_id: { sqlDefinition: `UUID NOT NULL REFERENCES users(id)` },
             magic_link: { sqlDefinition: `TEXT` },
             magic_link_used: { sqlDefinition: `TIMESTAMP` },
             expires: { sqlDefinition: `BIGINT NOT NULL` },
@@ -63,12 +63,38 @@ exports.tableConfig = {
         // dropIfExists: true,
         columns: {
             id: { sqlDefinition: `SERIAL PRIMARY KEY` },
+            name: { sqlDefinition: `TEXT NOT NULL DEFAULT random()` },
             user_id: { sqlDefinition: `UUID REFERENCES users(id)` },
             connection_id: { sqlDefinition: `UUID NOT NULL REFERENCES connections(id)` },
             type: { sqlDefinition: `TEXT NOT NULL` },
             key_id: { sqlDefinition: `TEXT NOT NULL` },
             key_secret: { sqlDefinition: `TEXT NOT NULL` },
+            bucket: { sqlDefinition: `TEXT` },
+            region: { sqlDefinition: `TEXT` },
         },
+        constraints: {
+            "Bucket or Region missing": "CHECK(type <> 's3' OR (bucket IS NOT NULL AND region IS NOT NULL))"
+        }
+    },
+    backups: {
+        // dropIfExists: true,
+        columns: {
+            id: { sqlDefinition: `UUID PRIMARY KEY DEFAULT gen_random_uuid()` },
+            connection_id: { sqlDefinition: `UUID NOT NULL REFERENCES connections(id)` },
+            credential_id: { sqlDefinition: `INTEGER REFERENCES credentials(id)` },
+            destination: { sqlDefinition: `TEXT NOT NULL` },
+            dump_command: { sqlDefinition: `TEXT NOT NULL` },
+            restore_command: { sqlDefinition: `TEXT` },
+            details: { sqlDefinition: `JSONB` },
+            status: { sqlDefinition: `JSONB` },
+            uploaded: { sqlDefinition: `TIMESTAMP` },
+            restore_status: { sqlDefinition: `JSONB` },
+            restore_start: { sqlDefinition: `TIMESTAMP` },
+            restore_end: { sqlDefinition: `TIMESTAMP` },
+            dbSizeInBytes: { sqlDefinition: `BIGINT NOT NULL` },
+            sizeInBytes: { sqlDefinition: `BIGINT` },
+            created: { sqlDefinition: `TIMESTAMP NOT NULL DEFAULT NOW()` },
+        }
     },
     /*
     

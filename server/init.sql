@@ -42,7 +42,7 @@ CREATE EXTENSION IF NOT EXISTS postgis;
     -- DROP TABLE IF EXISTS sessions CASCADE;
     CREATE TABLE IF NOT EXISTS sessions (
         id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id     UUID REFERENCES users(id),
+        user_id     UUID NOT NULL REFERENCES users(id),
         user_type   TEXT NOT NULL,
         is_mobile   BOOLEAN DEFAULT FALSE,
         active      BOOLEAN DEFAULT TRUE,

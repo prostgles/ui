@@ -20,11 +20,13 @@
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
     "pg-promise": "^10.11.0",
-    "prostgles-server": "^2.0.195",
-    "socket.io": "^4.5.1"
+    "prostgles-server": "^2.0.223",
+    "socket.io": "^4.5.1",
+    "socket.io-stream": "^0.9.1"
   },
   "devDependencies": {
     "@types/node": "^14.14.21",
+    "@types/ws": "^8.5.3",
     "monaco-editor": "^0.29.1",
     "tsc-watch": "^5.0.3",
     "typescript": "^4.7.4"
