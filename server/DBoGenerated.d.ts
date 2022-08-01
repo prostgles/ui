@@ -50,6 +50,7 @@ export type DBSchemaGenerated = {
       initiator?: null | string;
       last_updated?: Date;
       options?:       { 
+        command: 'pg_dump' | 'pg_dumpall';
         clean: boolean;
         format: 'p' | 't' | 'c';
         dumpAll?: boolean;
@@ -72,6 +73,7 @@ export type DBSchemaGenerated = {
       };
       restore_start?: null | Date;
       restore_status?: 
+        | null
         | {  ok: string; }
         | {  err: string; }
         | {  loading: {  loaded: number; total: number; }; }

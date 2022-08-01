@@ -105,7 +105,8 @@ class BackupManager {
             return Number.isFinite(+result) ? result : 0;
         };
         this.pgDump = async (conId, credId, dumpOpts) => {
-            const { format = "c", dumpAll = false, clean = true, initiator = "manual_backup", ifExists } = dumpOpts || {};
+            const { command, format = "c", clean = true, initiator = "manual_backup", ifExists } = dumpOpts || {};
+            const dumpAll = command === "pg_dumpall";
             const con = await this.dbs.connections.findOne({ id: conId });
             if (!con)
                 throw new Error("Could not find the connection");
@@ -158,6 +159,7 @@ class BackupManager {
                     destination: credId ? "Cloud" : "Local",
                     dump_command: dumpCommand.command + " " + dumpCommand.opts.join(" "),
                     status: { loading: { loaded: 0, total: 0 } },
+                    options: dumpOpts,
                     content_type,
                 }, { returning: "*" });
                 const bkpForId = await this.dbs.backups.findOne({ id: backup.id }, { select: { created: "$datetime_" } });
@@ -303,6 +305,11 @@ class BackupManager {
                 credential_id: null,
                 destination: "None (temp stream)",
                 dump_command: "pg_dump --format=c --clean --if-exists",
+                options: {
+                    command: "pg_dump",
+                    clean: true,
+                    format: "c",
+                },
                 status: { loading: { total: sizeBytes, loaded: 0 } }
             }, { returning: "*" });
             let lastChunk = Date.now();

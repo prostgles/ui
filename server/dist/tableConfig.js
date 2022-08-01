@@ -185,13 +185,14 @@ exports.tableConfig = {
             last_updated: { sqlDefinition: `TIMESTAMP NOT NULL DEFAULT NOW()` },
             options: {
                 jsonbSchema: {
+                    command: { oneOf: ["pg_dump", "pg_dumpall"] },
                     clean: { type: "boolean" },
                     format: { oneOf: ["p", "t", "c"] },
                     dumpAll: { type: "boolean", optional: true },
                     ifExists: { type: "boolean", optional: true },
                     keepLogs: { type: "boolean", optional: true },
                 },
-                defaultValue: "{}"
+                // defaultValue: "{}"
             },
             restore_options: {
                 jsonbSchema: {

@@ -39,13 +39,16 @@ export default class BackupManager {
         initiator?: string | null | undefined;
         last_updated?: Date | undefined;
         options?: {
+            command: "pg_dump" | "pg_dumpall";
             clean: boolean;
             format: "p" | "c" | "t";
             dumpAll?: boolean | undefined;
             ifExists?: boolean | undefined;
             keepLogs?: boolean | undefined;
         } | undefined;
-        restore_command?: string | null | undefined;
+        restore_command?: string | null | undefined; /**
+         * If provided then will do the backup during that hour (1-7: Mon to Sun). Unless the backup frequency is less than a day
+         */
         restore_end?: Date | null | undefined;
         restore_logs?: string | null | undefined;
         restore_options?: {
@@ -57,6 +60,9 @@ export default class BackupManager {
             command: "pg_restore" | "psql";
             format: "p" | "c" | "t";
             ifExists?: boolean | undefined;
+            /**
+             * If provided then will keep the latest N backups and delete the older ones
+             */
             keepLogs?: boolean | undefined;
         } | undefined;
         restore_start?: Date | null | undefined;
@@ -69,7 +75,7 @@ export default class BackupManager {
                 loaded: number;
                 total: number;
             };
-        } | undefined;
+        } | null | undefined;
         sizeInBytes?: number | null | undefined;
         status?: {
             ok: string;
