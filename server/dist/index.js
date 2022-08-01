@@ -70,14 +70,14 @@ const getConnectionDetails = (c) => {
      * Cannot use connection uri without having ssl issues
      * https://github.com/brianc/node-postgres/issues/2281
      */
-    const getSSLOpts = (sslmode, rejectUnauthorized) => {
+    const getSSLOpts = (sslmode) => {
         var _a, _b, _d, _e;
-        return ({
+        return sslmode && sslmode !== "disable" ? ({
             ca: (_a = c.ssl_certificate) !== null && _a !== void 0 ? _a : undefined,
             cert: (_b = c.ssl_client_certificate) !== null && _b !== void 0 ? _b : undefined,
             key: (_d = c.ssl_client_certificate_key) !== null && _d !== void 0 ? _d : undefined,
             rejectUnauthorized: (_e = c.ssl_reject_unauthorized) !== null && _e !== void 0 ? _e : (sslmode === "require" && !!c.ssl_certificate || sslmode === "verify-ca" || sslmode === "verify-full")
-        });
+        }) : undefined;
     };
     if (c.type === "Connection URI") {
         const cs = new connection_string_1.ConnectionString(c.db_conn);
@@ -130,7 +130,7 @@ const testDBConnection = (_c, expectSuperUser = false) => {
             c.done(); // success, release connection;
             resolve(true);
         }).catch(err => {
-            console.error("testDBConnection fail", { err });
+            console.error("testDBConnection fail", { err, connOpts, con });
             reject(err instanceof Error ? err.message : JSON.stringify(err));
         });
         /**

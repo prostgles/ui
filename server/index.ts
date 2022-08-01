@@ -81,12 +81,12 @@ export const getConnectionDetails = (c: Connections): pg.IConnectionParameters<p
    * Cannot use connection uri without having ssl issues
    * https://github.com/brianc/node-postgres/issues/2281
    */
-  const getSSLOpts = (sslmode: string, rejectUnauthorized?: boolean): pg.IConnectionParameters<pg.IClient>["ssl"] => ({
+  const getSSLOpts = (sslmode: Connections["db_ssl"]): pg.IConnectionParameters<pg.IClient>["ssl"] => sslmode && sslmode !== "disable"? ({
     ca: c.ssl_certificate ?? undefined,
     cert: c.ssl_client_certificate ?? undefined,
     key: c.ssl_client_certificate_key ?? undefined,
     rejectUnauthorized: c.ssl_reject_unauthorized ?? (sslmode === "require" && !!c.ssl_certificate || sslmode === "verify-ca" || sslmode === "verify-full")
-  })
+  }) : undefined;
 
   if(c.type === "Connection URI"){
     const cs = new ConnectionString(c.db_conn);
@@ -144,7 +144,7 @@ export const testDBConnection = (_c: Connections, expectSuperUser = false): Prom
           
           resolve(true);
         }).catch(err => {
-          console.error("testDBConnection fail", {err})
+          console.error("testDBConnection fail", {err, connOpts, con})
           reject(err instanceof Error? err.message : JSON.stringify(err))
         });
     /**
@@ -368,7 +368,7 @@ export const auth: Auth<DBSchemaGenerated> = {
 };
 
 
-const DBS_CONNECTION_INFO = {
+const DBS_CONNECTION_INFO: Pick<Required<Connections>, "type" | "db_conn" | "db_name" | "db_user" | "db_pass" | "db_host" | "db_port" | "db_ssl"> = {
   type: !(process.env.POSTGRES_URL || POSTGRES_URL)? "Standard" : "Connection URI",
   db_conn: process.env.POSTGRES_URL || POSTGRES_URL, 
   db_name: process.env.POSTGRES_DB || POSTGRES_DB, 
@@ -417,11 +417,11 @@ const getDBS = async () => {
 
     prostgles<DBSchemaGenerated>({
       dbConnection: {
-        host: con.db_host,
-        port: +con.db_port || 5432,
-        database: con.db_name,
-        user: con.db_user,
-        password:  con.db_pass,
+        host: con.db_host!,
+        port: +con.db_port! || 5432,
+        database: con.db_name!,
+        user: con.db_user!,
+        password:  con.db_pass!,
       },
       sqlFilePath: path.join(__dirname+'/../init.sql'),
       io,
