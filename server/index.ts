@@ -63,13 +63,13 @@ export const validateConnection = (c: Connections): Connections => {
     cs.password = c.db_pass!;
     cs.user = c.db_user!;
     cs.path = [c.db_name!];
-    cs.params = { sslmode: c.db_ssl ?? "prefer" };
+    cs.params = c.db_ssl? { sslmode: c.db_ssl ?? "prefer" } : undefined;
     result.db_conn = cs.toString()
   } else throw "Not supported"
 
   result.db_user = result.db_user || "postgres";
   result.db_host = result.db_host || "localhost";
-  result.db_ssl = result.db_ssl || "prefer";
+  result.db_ssl = result.db_ssl;
   result.db_port = result.db_port ?? 5432;
 
 
@@ -140,7 +140,7 @@ export const testDBConnection = (_c: Connections, expectSuperUser = false): Prom
               return
             }
           }
-          c.done(); // success, release connection;
+          await c.done(); // success, release connection;
           
           resolve(true);
         }).catch(err => {
