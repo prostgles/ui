@@ -101,70 +101,70 @@ CREATE EXTENSION IF NOT EXISTS postgis;
     --     UNIQUE(db_conn, user_id)
     -- );
 
-    CREATE TABLE IF NOT EXISTS access_control (
-        id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        connection_id   UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE, -- dependency
-        user_groups     TEXT[],
-        rule            JSONB,
-        created         TIMESTAMP DEFAULT NOW()
-    );
+    -- CREATE TABLE IF NOT EXISTS access_control (
+    --     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    --     connection_id   UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE, -- dependency
+    --     user_groups     TEXT[],
+    --     rule            JSONB,
+    --     created         TIMESTAMP DEFAULT NOW()
+    -- );
 
-    -- DROP TABLE IF EXISTS workspaces CASCADE; 
-    CREATE TABLE IF NOT EXISTS workspaces (
-        id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id         UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE, -- dependency
-        connection_id   UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE, -- dependency
-        name            TEXT NOT NULL DEFAULT 'default',
-        created         TIMESTAMP DEFAULT NOW(),
-        active_row      JSON DEFAULT '{}'::json,
-        layout          JSON,
-        options         JSON DEFAULT '{}'::json,
-        last_updated    BIGINT NOT NULL,
-        deleted         BOOLEAN NOT NULL DEFAULT FALSE,
-        url_path        TEXT,
-        UNIQUE(url_path),
-        UNIQUE(connection_id, user_id, name)
-    );
+    -- -- DROP TABLE IF EXISTS workspaces CASCADE; 
+    -- CREATE TABLE IF NOT EXISTS workspaces (
+    --     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    --     user_id         UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE, -- dependency
+    --     connection_id   UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE, -- dependency
+    --     name            TEXT NOT NULL DEFAULT 'default',
+    --     created         TIMESTAMP DEFAULT NOW(),
+    --     active_row      JSON DEFAULT '{}'::json,
+    --     layout          JSON,
+    --     options         JSON DEFAULT '{}'::json,
+    --     last_updated    BIGINT NOT NULL,
+    --     deleted         BOOLEAN NOT NULL DEFAULT FALSE,
+    --     url_path        TEXT,
+    --     UNIQUE(url_path),
+    --     UNIQUE(connection_id, user_id, name)
+    -- );
 
-    -- DROP TABLE IF EXISTS windows CASCADE; 
-    CREATE TABLE IF NOT EXISTS windows (
-        id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id         UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE, -- dependency
-        workspace_id    UUID NOT NULL REFERENCES workspaces(id)  ON DELETE CASCADE, -- dependency
-        type            TEXT CHECK(type IN ('map', 'sql', 'table', 'timechart', 'card')),
-        table_name      TEXT ,
-        table_oid       INTEGER,
-        sql             TEXT NOT NULL DEFAULT '',
-        selected_sql    TEXT NOT NULL DEFAULT '',
-        name            TEXT,
-        "limit"           INTEGER,
-        closed          BOOLEAN DEFAULT FALSE,
-        deleted         BOOLEAN DEFAULT FALSE,
-        show_menu       BOOLEAN DEFAULT FALSE,
-        layout          JSON,
-        fullscreen      BOOLEAN DEFAULT TRUE,
-        sort            JSON,
-        filter          JSON,
-        options         JSON DEFAULT '{}'::json,
-        columns         JSON,
-        nested_tables   JSON,
-        created         TIMESTAMP DEFAULT NOW(),
-        last_updated    BIGINT NOT NULL
-    );
+    -- -- DROP TABLE IF EXISTS windows CASCADE; 
+    -- CREATE TABLE IF NOT EXISTS windows (
+    --     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    --     user_id         UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE, -- dependency
+    --     workspace_id    UUID NOT NULL REFERENCES workspaces(id)  ON DELETE CASCADE, -- dependency
+    --     type            TEXT CHECK(type IN ('map', 'sql', 'table', 'timechart', 'card')),
+    --     table_name      TEXT ,
+    --     table_oid       INTEGER,
+    --     sql             TEXT NOT NULL DEFAULT '',
+    --     selected_sql    TEXT NOT NULL DEFAULT '',
+    --     name            TEXT,
+    --     "limit"           INTEGER,
+    --     closed          BOOLEAN DEFAULT FALSE,
+    --     deleted         BOOLEAN DEFAULT FALSE,
+    --     show_menu       BOOLEAN DEFAULT FALSE,
+    --     layout          JSON,
+    --     fullscreen      BOOLEAN DEFAULT TRUE,
+    --     sort            JSON,
+    --     filter          JSON,
+    --     options         JSON DEFAULT '{}'::json,
+    --     columns         JSON,
+    --     nested_tables   JSON,
+    --     created         TIMESTAMP DEFAULT NOW(),
+    --     last_updated    BIGINT NOT NULL
+    -- );
 
-    -- DROP TABLE IF EXISTS links CASCADE; 
-    CREATE TABLE IF NOT EXISTS links (
-        id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id         UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE, -- dependency
-        w1_id           UUID NOT NULL REFERENCES windows(id)  ON DELETE CASCADE, -- dependency
-        w2_id           UUID NOT NULL REFERENCES windows(id)  ON DELETE CASCADE, -- dependency
-        workspace_id    UUID NOT NULL REFERENCES workspaces(id)  ON DELETE CASCADE, -- dependency
-        options         JSON NOT NULL DEFAULT '{}'::json,
-        closed          BOOLEAN DEFAULT FALSE,
-        deleted         BOOLEAN DEFAULT FALSE,
-        created         TIMESTAMP DEFAULT NOW(),
-        last_updated    BIGINT NOT NULL
-    );
+    -- -- DROP TABLE IF EXISTS links CASCADE; 
+    -- CREATE TABLE IF NOT EXISTS links (
+    --     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    --     user_id         UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE, -- dependency
+    --     w1_id           UUID NOT NULL REFERENCES windows(id)  ON DELETE CASCADE, -- dependency
+    --     w2_id           UUID NOT NULL REFERENCES windows(id)  ON DELETE CASCADE, -- dependency
+    --     workspace_id    UUID NOT NULL REFERENCES workspaces(id)  ON DELETE CASCADE, -- dependency
+    --     options         JSON NOT NULL DEFAULT '{}'::json,
+    --     closed          BOOLEAN DEFAULT FALSE,
+    --     deleted         BOOLEAN DEFAULT FALSE,
+    --     created         TIMESTAMP DEFAULT NOW(),
+    --     last_updated    BIGINT NOT NULL
+    -- );
 /* EOF DASHBOARD */
 
 

@@ -51,11 +51,11 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
   access_control: {
     // dropIfExistsCascade: true,
     columns: {
-      id:              { sqlDefinition: `UUID PRIMARY KEY DEFAULT gen_random_uuid()` },
-      connection_id:   { sqlDefinition: `UUID NOT NULL REFERENCES connections(id)` },
-      // user_groups:     { sqlDefinition: `TEXT[]` },
-      rule:            { sqlDefinition: `JSONB` },
-      created:         { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
+      id              : { sqlDefinition: `UUID PRIMARY KEY DEFAULT gen_random_uuid()` },
+      connection_id   : { sqlDefinition: `UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE` },
+      user_groups     : { sqlDefinition: `TEXT[]` },
+      rule            : { sqlDefinition: `JSONB` },
+      created         : { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
     }
   },
   access_control_user_types: {
@@ -218,6 +218,71 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     constraints: {
       uniqueConName: `UNIQUE(name, user_id)`,
       // uniqueConURI: `UNIQUE(db_conn, user_id)`
+    }
+  },
+
+  
+  workspaces: {
+    columns: {
+      id              : { sqlDefinition: `UUID PRIMARY KEY DEFAULT gen_random_uuid()` },
+      user_id         : { sqlDefinition: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE` },
+      connection_id   : { sqlDefinition: `UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE` },
+      name            : { sqlDefinition: `TEXT NOT NULL DEFAULT 'default'` },
+      created         : { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
+      active_row      : { sqlDefinition: `JSONB DEFAULT '{}'::json` },
+      layout          : { sqlDefinition: `JSONB` },
+      options         : { sqlDefinition: `JSON DEFAULT '{}'::json` },
+      last_updated    : { sqlDefinition: `BIGINT NOT NULL` },
+      deleted         : { sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE` },
+      url_path        : { sqlDefinition: `TEXT` },
+    },
+    constraints: {
+      unique_url_path: `UNIQUE(url_path)`,
+      unique_name_per_user_perCon: `UNIQUE(connection_id, user_id, name)`
+    }
+  },
+
+  windows: {
+    columns: {
+
+      id              : { sqlDefinition: `UUID PRIMARY KEY DEFAULT gen_random_uuid()` },
+      user_id         : { sqlDefinition: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE` },
+      workspace_id    : { sqlDefinition: `UUID NOT NULL REFERENCES workspaces(id)  ON DELETE CASCADE` },
+      type            : { sqlDefinition: `TEXT CHECK(type IN ('map', 'sql', 'table', 'timechart', 'card'))` },
+      table_name      : { sqlDefinition: `TEXT` },
+      table_oid       : { sqlDefinition: `INTEGER` },
+      sql             : { sqlDefinition: `TEXT NOT NULL DEFAULT ''` },
+      selected_sql    : { sqlDefinition: `TEXT NOT NULL DEFAULT ''` },
+      name            : { sqlDefinition: `TEXT` },
+      "limit"         : { sqlDefinition: `INTEGER` },
+      closed          : { sqlDefinition: `BOOLEAN DEFAULT FALSE` },
+      deleted         : { sqlDefinition: `BOOLEAN DEFAULT FALSE` },
+      show_menu       : { sqlDefinition: `BOOLEAN DEFAULT FALSE` },
+      layout          : { sqlDefinition: `JSON` },
+      fullscreen      : { sqlDefinition: `BOOLEAN DEFAULT TRUE` },
+      sort            : { sqlDefinition: `JSON` },
+      filter          : { sqlDefinition: `JSON` },
+      options         : { sqlDefinition: `JSON DEFAULT '{}'::json` },
+      columns         : { sqlDefinition: `JSON` },
+      nested_tables   : { sqlDefinition: `JSON` },
+      created         : { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
+      last_updated    : { sqlDefinition: `BIGINT NOT NULL` },
+    }
+  },
+
+  links: {
+    columns: {
+      id              : { sqlDefinition: `UUID PRIMARY KEY DEFAULT gen_random_uuid()` },
+      user_id         : { sqlDefinition: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE` },
+      w1_id           : { sqlDefinition: `UUID NOT NULL REFERENCES windows(id)  ON DELETE CASCADE` },
+      w2_id           : { sqlDefinition: `UUID NOT NULL REFERENCES windows(id)  ON DELETE CASCADE` },
+      workspace_id    : { sqlDefinition: `UUID NOT NULL REFERENCES workspaces(id)  ON DELETE CASCADE` },
+      options         : { sqlDefinition: `JSON NOT NULL DEFAULT '{}'::json` },
+      closed          : { sqlDefinition: `BOOLEAN DEFAULT FALSE` },
+      deleted         : { sqlDefinition: `BOOLEAN DEFAULT FALSE` },
+      created         : { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
+      last_updated    : { sqlDefinition: `BIGINT NOT NULL` },
+      
     }
   }
 
