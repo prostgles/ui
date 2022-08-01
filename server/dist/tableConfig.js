@@ -46,6 +46,42 @@ exports.tableConfig = {
             expires: { sqlDefinition: `BIGINT NOT NULL` },
         }
     },
+    connections: {
+        columns: {
+            id: { sqlDefinition: `UUID PRIMARY KEY DEFAULT gen_random_uuid()` },
+            user_id: { sqlDefinition: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE` },
+            name: { sqlDefinition: `TEXT` },
+            db_name: { sqlDefinition: `TEXT DEFAULT ''` },
+            db_host: { sqlDefinition: `TEXT DEFAULT 'localhost'` },
+            db_port: { sqlDefinition: `INTEGER DEFAULT 5432` },
+            db_user: { sqlDefinition: `TEXT DEFAULT ''` },
+            db_pass: { sqlDefinition: `TEXT DEFAULT ''` },
+            db_ssl: { sqlDefinition: `TEXT NOT NULL DEFAULT 'disable' CHECK (db_ssl IN ('disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'))` },
+            ssl_certificate: { sqlDefinition: `TEXT` },
+            ssl_client_certificate: { sqlDefinition: `TEXT` },
+            ssl_client_certificate_key: { sqlDefinition: `TEXT` },
+            ssl_reject_unauthorized: { sqlDefinition: `BOOLEAN` },
+            db_conn: { sqlDefinition: `TEXT DEFAULT ''` },
+            db_watch_shema: { sqlDefinition: `BOOLEAN DEFAULT TRUE` },
+            prgl_url: { sqlDefinition: `TEXT` },
+            prgl_params: { sqlDefinition: `JSON` },
+            type: { sqlDefinition: `TEXT NOT NULL DEFAULT 'Standard' CHECK (
+              type IN ('Standard', 'Connection URI', 'Prostgles') 
+              AND (type <> 'Connection URI' OR length(db_conn) > 1) 
+              AND (type <> 'Standard' OR length(db_host) > 1) 
+              AND (type <> 'Prostgles' OR length(prgl_url) > 0)
+          )` },
+            is_state_db: { sqlDefinition: `BOOLEAN`, info: { hint: `If true then this DB is used to run the dashboard` } },
+            table_config: { sqlDefinition: `JSONB`, info: { hint: `File and User configurations` } },
+            backups_config: { sqlDefinition: `JSONB`, info: { hint: `Automatic backups configurations` } },
+            created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
+            last_updated: { sqlDefinition: `BIGINT NOT NULL DEFAULT 0` },
+        },
+        constraints: {
+            uniqueConName: `UNIQUE(name, user_id)`,
+            // uniqueConURI: `UNIQUE(db_conn, user_id)`
+        }
+    },
     access_control: {
         // dropIfExistsCascade: true,
         columns: {
@@ -171,42 +207,6 @@ exports.tableConfig = {
                 },
                 defaultValue: `{ "clean": true, "format": "c", "command": "pg_restore" }`
             }
-        }
-    },
-    connections: {
-        columns: {
-            id: { sqlDefinition: `UUID PRIMARY KEY DEFAULT gen_random_uuid()` },
-            user_id: { sqlDefinition: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE` },
-            name: { sqlDefinition: `TEXT` },
-            db_name: { sqlDefinition: `TEXT DEFAULT ''` },
-            db_host: { sqlDefinition: `TEXT DEFAULT 'localhost'` },
-            db_port: { sqlDefinition: `INTEGER DEFAULT 5432` },
-            db_user: { sqlDefinition: `TEXT DEFAULT ''` },
-            db_pass: { sqlDefinition: `TEXT DEFAULT ''` },
-            db_ssl: { sqlDefinition: `TEXT NOT NULL DEFAULT 'disable' CHECK (db_ssl IN ('disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'))` },
-            ssl_certificate: { sqlDefinition: `TEXT` },
-            ssl_client_certificate: { sqlDefinition: `TEXT` },
-            ssl_client_certificate_key: { sqlDefinition: `TEXT` },
-            ssl_reject_unauthorized: { sqlDefinition: `BOOLEAN` },
-            db_conn: { sqlDefinition: `TEXT DEFAULT ''` },
-            db_watch_shema: { sqlDefinition: `BOOLEAN DEFAULT TRUE` },
-            prgl_url: { sqlDefinition: `TEXT` },
-            prgl_params: { sqlDefinition: `JSON` },
-            type: { sqlDefinition: `TEXT NOT NULL DEFAULT 'Standard' CHECK (
-              type IN ('Standard', 'Connection URI', 'Prostgles') 
-              AND (type <> 'Connection URI' OR length(db_conn) > 1) 
-              AND (type <> 'Standard' OR length(db_host) > 1) 
-              AND (type <> 'Prostgles' OR length(prgl_url) > 0)
-          )` },
-            is_state_db: { sqlDefinition: `BOOLEAN`, info: { hint: `If true then this DB is used to run the dashboard` } },
-            table_config: { sqlDefinition: `JSONB`, info: { hint: `File and User configurations` } },
-            backups_config: { sqlDefinition: `JSONB`, info: { hint: `Automatic backups configurations` } },
-            created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
-            last_updated: { sqlDefinition: `BIGINT NOT NULL DEFAULT 0` },
-        },
-        constraints: {
-            uniqueConName: `UNIQUE(name, user_id)`,
-            // uniqueConURI: `UNIQUE(db_conn, user_id)`
         }
     },
     workspaces: {
