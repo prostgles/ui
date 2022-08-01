@@ -161,7 +161,7 @@ exports.tableConfig = {
                 }
             },
             uploaded: { sqlDefinition: `TIMESTAMP` },
-            restore_status: {
+            restore_status: { nullable: true,
                 jsonbSchema: {
                     oneOfTypes: [
                         { ok: { type: "string" } },

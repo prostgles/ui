@@ -173,7 +173,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         }
       },
       uploaded:        { sqlDefinition: `TIMESTAMP` },
-      restore_status:  {
+      restore_status:  { nullable: true,
         jsonbSchema: {
           oneOfTypes: [
             { ok: { type: "string" } },
