@@ -8,7 +8,8 @@ COPY . .
 # Install pg_dump
 RUN apt-get update && \
     apt-get upgrade && \
-    apt-get -y install postgresql postgresql-client 
+    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - &&\
+    apt-get -y install postgresql-14
 
 WORKDIR /usr/src/app/server
 RUN npm i
