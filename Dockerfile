@@ -9,7 +9,9 @@ COPY . .
 RUN apt-get update && \
     apt-get upgrade && \
     wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
-    apt-get -y install postgresql-14
+    apt-get update && \
+    apt-get -y upgrade && \
+    apt-get -y install postgresql
 
 WORKDIR /usr/src/app/server
 RUN npm i
