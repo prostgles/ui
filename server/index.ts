@@ -32,8 +32,8 @@ import { ConnectionString } from 'connection-string';
 import { publish } from "./publish"
 // const dns = require('dns');
 
-export const validateConnection = (c: Connections): Connections => {
-  let result = { ...c };
+export const validateConnection = (c: DBSchemaGenerated["connections"]["columns"]): Connections => {
+  let result: Connections = { ...c } as any;
   
   if(c.type === "Connection URI"){
     if(!c.db_conn){
@@ -114,7 +114,7 @@ export const getConnectionDetails = (c: Connections): pg.IConnectionParameters<p
 }
 export type BareConnectionDetails = Pick<Connections, "type" | "db_conn" | "db_host" | "db_name" | "db_pass" | "db_port" | "db_user" | "db_ssl" | "ssl_certificate">
 
-export const testDBConnection = (_c: Connections, expectSuperUser = false): Promise<true> => {
+export const testDBConnection = (_c: DBSchemaGenerated["connections"]["columns"], expectSuperUser = false): Promise<true> => {
   const con = validateConnection(_c);
   if(typeof con !== "object" || !("db_host" in con) && !("db_conn" in con)) {
     throw "Incorrect database connection info provided. " + 
@@ -626,7 +626,7 @@ export function restartProc(cb?: Function){
   }).unref();
 }
 
-export const upsertConnection = async (con: Connections, user: Users, dbs: DBS) => {
+export const upsertConnection = async (con: DBSchemaGenerated["connections"]["columns"], user: Users, dbs: DBS) => {
   if(user?.type !== "admin" || !user.id){
     throw "User missing or not admin"
   }

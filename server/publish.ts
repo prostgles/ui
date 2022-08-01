@@ -47,8 +47,9 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
         await upsertConnection({ 
           ...omitKeys(state_db, ["id"]),
           is_state_db: false,
-          name: SAMPLE_DB_NAME
-        } as any, user as any, db)
+          name: SAMPLE_DB_LABEL,
+          db_name: SAMPLE_DB_NAME,
+        }, user as any, db)
       }
     } catch(err: any){
       console.error("Failed to create sample database: ", err)
