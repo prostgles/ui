@@ -33,7 +33,9 @@ export default class BackupManager {
         details?: any;
         dump_command: string;
         dump_logs?: string | null | undefined;
-        id?: string | undefined;
+        id?: string | undefined; /**
+         * If not provided then save to current server
+         */
         initiator?: string | null | undefined;
         last_updated?: Date | undefined;
         options?: {

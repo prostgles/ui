@@ -16,6 +16,7 @@ export type DBSchemaGenerated = {
       created?: null | Date;
       id?: string;
       rule?: null | any;
+      user_groups?: null | Array<string>;
     };
   };
   access_control_user_types: {
