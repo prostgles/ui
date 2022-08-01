@@ -25,7 +25,7 @@ const publish = async (params, con) => {
                 if (!databases.includes(SAMPLE_DB_NAME)) {
                     await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
                 }
-                await (0, _1.upsertConnection)(Object.assign(Object.assign({}, (0, PubSubManager_1.omitKeys)(state_db, ["id"])), { is_state_db: false, name: SAMPLE_DB_NAME }), user, db);
+                await (0, _1.upsertConnection)(Object.assign(Object.assign({}, (0, PubSubManager_1.omitKeys)(state_db, ["id"])), { is_state_db: false, name: SAMPLE_DB_LABEL, db_name: SAMPLE_DB_NAME }), user, db);
             }
         }
         catch (err) {

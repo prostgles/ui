@@ -1,8 +1,8 @@
 import { DBSchemaGenerated } from "./DBoGenerated";
-export declare const validateConnection: (c: Connections) => Connections;
+export declare const validateConnection: (c: DBSchemaGenerated["connections"]["columns"]) => Connections;
 export declare const getConnectionDetails: (c: Connections) => pg.IConnectionParameters<pg.IClient>;
 export declare type BareConnectionDetails = Pick<Connections, "type" | "db_conn" | "db_host" | "db_name" | "db_pass" | "db_port" | "db_user" | "db_ssl" | "ssl_certificate">;
-export declare const testDBConnection: (_c: Connections, expectSuperUser?: boolean) => Promise<true>;
+export declare const testDBConnection: (_c: DBSchemaGenerated["connections"]["columns"], expectSuperUser?: boolean) => Promise<true>;
 export declare type DBS = DBOFullyTyped<DBSchemaGenerated>;
 export declare const EMPTY_USERNAME = "prostgles-no-auth-user", EMPTY_PASSWORD = "prostgles";
 export declare const HAS_EMPTY_USERNAME: (db: DBS) => Promise<boolean>;
@@ -17,7 +17,7 @@ import { ConnectionManager } from "./ConnectionManager";
 export declare const connMgr: ConnectionManager;
 export declare function get(obj: any, propertyPath: string | string[]): any;
 export declare function restartProc(cb?: Function): void;
-export declare const upsertConnection: (con: Connections, user: Users, dbs: DBS) => Promise<Required<{
+export declare const upsertConnection: (con: DBSchemaGenerated["connections"]["columns"], user: Users, dbs: DBS) => Promise<Required<{
     access_control?: any;
     backups_config?: any;
     created?: Date | null | undefined;
