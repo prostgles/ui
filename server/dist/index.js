@@ -52,14 +52,14 @@ const validateConnection = (c) => {
         cs.password = c.db_pass;
         cs.user = c.db_user;
         cs.path = [c.db_name];
-        cs.params = { sslmode: (_h = c.db_ssl) !== null && _h !== void 0 ? _h : "prefer" };
+        cs.params = c.db_ssl ? { sslmode: (_h = c.db_ssl) !== null && _h !== void 0 ? _h : "prefer" } : undefined;
         result.db_conn = cs.toString();
     }
     else
         throw "Not supported";
     result.db_user = result.db_user || "postgres";
     result.db_host = result.db_host || "localhost";
-    result.db_ssl = result.db_ssl || "prefer";
+    result.db_ssl = result.db_ssl;
     result.db_port = (_j = result.db_port) !== null && _j !== void 0 ? _j : 5432;
     return result;
 };
@@ -127,7 +127,7 @@ const testDBConnection = (_c, expectSuperUser = false) => {
                     return;
                 }
             }
-            c.done(); // success, release connection;
+            await c.done(); // success, release connection;
             resolve(true);
         }).catch(err => {
             console.error("testDBConnection fail", { err, connOpts, con });
