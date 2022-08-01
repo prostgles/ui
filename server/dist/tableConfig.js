@@ -9,9 +9,12 @@ exports.tableConfig = {
         }
     },
     user_types: {
-        columns: {
-            id: { sqlDefinition: `TEXT PRIMARY KEY`, label: "Type" }
+        isLookupTable: {
+            values: { admin: {} }
         }
+        // columns: {
+        //   id: { sqlDefinition: `TEXT PRIMARY KEY`, label: "Type" }
+        // }
     },
     user_statuses: {
         columns: {
