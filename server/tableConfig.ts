@@ -11,13 +11,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     isLookupTable: {
       values: { admin: {} }
     }
-    // columns: {
-    //   id: { sqlDefinition: `TEXT PRIMARY KEY`, label: "Type" }
-    // }
   },
   user_statuses: {
-    columns: {
-      id: { sqlDefinition: `TEXT PRIMARY KEY` }
+    isLookupTable: {
+      values: { active: {} }
     }
   },
   users: {
