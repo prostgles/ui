@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.publish = void 0;
 const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
 const prostgles_types_1 = require("prostgles-types");
+const _1 = require(".");
 const publish = async (params, con) => {
     const { dbo: db, user, db: _db } = params;
     if (!user || !user.id) {
@@ -13,7 +14,7 @@ const publish = async (params, con) => {
     // _db.any("ALTER TABLE workspaces ADD COLUMN options         JSON DEFAULT '{}'::json")
     /** Add state db */
     if (!(await db.connections.count())) { // , name: "Prostgles state database" // { user_id }
-        const state_db = await db.connections.insert(Object.assign(Object.assign({}, con), { user_id, name: "Prostgles state database", type: !con.db_conn ? 'Standard' : 'Connection URI', db_port: con.db_port || 5432, db_ssl: con.db_ssl || "disable", is_state_db: true }), { returning: "*" });
+        const state_db = await (0, _1.upsertConnection)(Object.assign(Object.assign({}, con), { user_id, name: "Prostgles state database", type: !con.db_conn ? 'Standard' : 'Connection URI', db_port: con.db_port || 5432, db_ssl: con.db_ssl || "disable", is_state_db: true }), user, db);
         try {
             const SAMPLE_DB_LABEL = "Sample database";
             const SAMPLE_DB_NAME = "sample_database";
@@ -24,7 +25,7 @@ const publish = async (params, con) => {
                 if (!databases.includes(SAMPLE_DB_NAME)) {
                     await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
                 }
-                await db.connections.insert(Object.assign(Object.assign({}, (0, PubSubManager_1.omitKeys)(state_db, ["id"])), { is_state_db: false, name: SAMPLE_DB_NAME }));
+                await (0, _1.upsertConnection)(Object.assign(Object.assign({}, (0, PubSubManager_1.omitKeys)(state_db, ["id"])), { is_state_db: false, name: SAMPLE_DB_NAME }), user, db);
             }
         }
         catch (err) {
@@ -74,9 +75,9 @@ const publish = async (params, con) => {
                 fields: { key_secret: 0 }
             },
             delete: "*",
-            insert: { fields: "*", forcedData: { user_id: user.id } },
+            insert: { fields: { id: 0 }, forcedData: { user_id: user.id } },
             update: "*",
-        } : undefined, connections: {
+        } : undefined, credential_types: (user === null || user === void 0 ? void 0 : user.type) === "admin" ? { select: "*" } : undefined, connections: {
             select: {
                 fields: "*",
                 forcedFilter: (user === null || user === void 0 ? void 0 : user.type) === "admin" ?
@@ -85,7 +86,7 @@ const publish = async (params, con) => {
             },
             update: user.type !== "admin" ? undefined : {
                 fields: {
-                    name: 1, table_config: 1
+                    name: 1, table_config: 1, backups_config: 1
                 }
             }
         }, user_types: (user === null || user === void 0 ? void 0 : user.type) === "admin" ? {
@@ -111,7 +112,8 @@ const publish = async (params, con) => {
                 fields: "*",
                 validate: validate,
                 dynamicFields: [{
-                        fields: { username: 1, password: 1, status: 1 },
+                        /* For own user can only change these fields */
+                        fields: { username: 1, password: 1, status: 1, options: 1 },
                         filter: { id: user.id }
                     }]
             },

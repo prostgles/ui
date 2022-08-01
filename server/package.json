@@ -7,7 +7,7 @@
     "build": "npm i && NODE_OPTIONS=--max-old-space-size=8192 tsc",
     "start": "npm run build && node dist/index.js",
     "rollup": "rollup -c",
-    "dev": "NODE_OPTIONS='--max-old-space-size=12048' npm i && tsc-watch --onSuccess \"node --inspect  dist/index.js\"",
+    "dev": " NODE_OPTIONS='--max-old-space-size=12048' npm i && tsc-watch --onSuccess \"node --inspect  dist/index.js\"",
     "devall": "npm run dev & cd ../client && npm i && npm run dev"
   },
   "author": "",
@@ -15,17 +15,18 @@
   "dependencies": {
     "@types/cookie-parser": "^1.4.2",
     "@types/socket.io": "^3.0.2",
+    "check-disk-space": "^3.3.1",
+    "connection-string": "^4.3.5",
     "cookie-parser": "^1.4.5",
     "csvtojson": "^2.0.10",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "pg-promise": "^10.11.0",
-    "prostgles-server": "^2.0.223",
-    "socket.io": "^4.5.1",
-    "socket.io-stream": "^0.9.1"
+    "prostgles-server": "^2.0.239",
+    "socket.io": "^4.5.1"
   },
   "devDependencies": {
     "@types/node": "^14.14.21",
+    "@types/pg": "^8.6.5",
     "@types/ws": "^8.5.3",
     "monaco-editor": "^0.29.1",
     "tsc-watch": "^5.0.3",

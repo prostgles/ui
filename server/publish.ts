@@ -3,6 +3,7 @@ import { Publish, PublishParams } from "prostgles-server/dist/PublishParser";
 import { omitKeys } from "prostgles-server/dist/PubSubManager";
 import { DBSchemaGenerated } from "./DBoGenerated";
 import { AnyObject, getKeys } from "prostgles-types"
+import { upsertConnection } from ".";
 type DBS_PermissionRules = {
   userTypesThatCanManageUsers?: string[];
   userTypesThatCanManageConnections?: string[];
@@ -23,15 +24,15 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
 
   /** Add state db */
   if(!(await db.connections.count())){ // , name: "Prostgles state database" // { user_id }
-    const state_db = await db.connections.insert({  
+    const state_db = await upsertConnection({  
       ...con, 
       user_id, 
       name: "Prostgles state database", 
       type: !con.db_conn? 'Standard' : 'Connection URI',
       db_port: con.db_port || 5432,
       db_ssl: con.db_ssl || "disable",
-      is_state_db: true
-    }, { returning: "*" });
+      is_state_db: true,      
+    } as any, user as any, db);
 
     try {
       const SAMPLE_DB_LABEL = "Sample database";
@@ -43,11 +44,11 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
         if(!databases.includes(SAMPLE_DB_NAME)) {
           await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
         }
-        await db.connections.insert({ 
+        await upsertConnection({ 
           ...omitKeys(state_db, ["id"]),
           is_state_db: false,
           name: SAMPLE_DB_NAME
-        })
+        } as any, user as any, db)
       }
     } catch(err: any){
       console.error("Failed to create sample database: ", err)
@@ -111,9 +112,10 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
         fields: { key_secret: 0 }
       },
       delete: "*",
-      insert: { fields: "*", forcedData: { user_id: user.id } },
+      insert: { fields: { id: 0 }, forcedData: { user_id: user.id } },
       update: "*",
     } : undefined,
+    credential_types: user?.type === "admin"? { select: "*" } : undefined,
     connections: {
       select: {
         fields: "*",
@@ -123,7 +125,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
       },
       update: user.type !== "admin"? undefined : {
         fields: {
-          name: 1, table_config: 1
+          name: 1, table_config: 1, backups_config: 1
         }
       }
     },
@@ -150,7 +152,8 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
         fields: "*",
         validate: validate as any,
         dynamicFields: [{
-          fields: { username: 1, password: 1, status: 1 },
+          /* For own user can only change these fields */
+          fields: { username: 1, password: 1, status: 1, options: 1 },
           filter: { id: user.id }
         }]
       },

@@ -1,16 +1,40 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ConnectionManager = void 0;
+exports.ConnectionManager = exports.PROSTGLES_CERTS_FOLDER = void 0;
 const DboBuilder_1 = require("prostgles-server/dist/DboBuilder");
 const index_1 = require("./index");
 const socket_io_1 = require("socket.io");
 const prostgles_server_1 = __importDefault(require("prostgles-server"));
 const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
 const path_1 = __importDefault(require("path"));
-const ws_1 = __importDefault(require("ws"));
+const fs = __importStar(require("fs"));
+exports.PROSTGLES_CERTS_FOLDER = "prostgles_certificates";
 class ConnectionManager {
     constructor(http, app) {
         this.prgl_connections = {};
@@ -18,22 +42,50 @@ class ConnectionManager {
         this.app = app;
         this.setUpWSS();
     }
-    setUpWSS() {
-        if (!this.wss) {
-            this.wss = new ws_1.default.Server({ port: 7071 });
-        }
-        const clients = new Map();
-        this.wss.on('connection', (ws) => {
-            const id = Date.now() + "." + Math.random();
-            const color = Math.floor(Math.random() * 360);
-            const metadata = { id, color };
-            clients.set(ws, metadata);
-            ws.on("message", console.log);
-            ws.on("close", () => {
-                clients.delete(ws);
-            });
+    getCertPath(conId, type) {
+        return path_1.default.resolve(`${__dirname}/../${exports.PROSTGLES_CERTS_FOLDER}/${conId}` + (type ? `/${type}.pem` : ""));
+    }
+    saveCertificates(connections) {
+        connections.forEach(c => {
+            const hasCerts = c.ssl_certificate || c.ssl_client_certificate_key || c.ssl_client_certificate;
+            if (hasCerts) {
+                const folder = this.getCertPath(c.id);
+                try {
+                    fs.rmSync(folder, { recursive: true });
+                    fs.mkdirSync(folder, { recursive: true, mode: 0o600 });
+                    const utfOpts = { encoding: "utf-8", mode: 0o600 }; //
+                    if (c.ssl_certificate) {
+                        fs.writeFileSync(this.getCertPath(c.id, "ca"), c.ssl_certificate, utfOpts);
+                    }
+                    if (c.ssl_client_certificate) {
+                        fs.writeFileSync(this.getCertPath(c.id, "cert"), c.ssl_client_certificate, utfOpts);
+                    }
+                    if (c.ssl_client_certificate_key) {
+                        fs.writeFileSync(this.getCertPath(c.id, "key"), c.ssl_client_certificate_key, utfOpts);
+                    }
+                }
+                catch (err) {
+                    console.error("Failed writing ssl certificates:", err);
+                }
+            }
         });
-        return this.wss;
+    }
+    setUpWSS() {
+        // if(!this.wss){
+        //   this.wss = new WebSocket.Server({ port: 3004, path: "/here" });
+        // }
+        // const clients = new Map();
+        // this.wss.on('connection', (ws) => {
+        //   const id = Date.now() + "." + Math.random()
+        //   const color = Math.floor(Math.random() * 360);
+        //   const metadata = { id, color };
+        //   clients.set(ws, metadata);
+        //   ws.on("message", console.log)
+        //   ws.on("close", () => {
+        //     clients.delete(ws);
+        //   });
+        // });
+        // return this.wss;
     }
     getFileFolderPath(conId) {
         let rootPath = path_1.default.resolve(`${__dirname}/../${index_1.MEDIA_ROUTE_PREFIX}`);
@@ -43,6 +95,15 @@ class ConnectionManager {
     }
     getConnection(conId) {
         return this.prgl_connections[conId];
+    }
+    async disconnect(conId) {
+        var _a;
+        if (this.prgl_connections[conId]) {
+            await ((_a = this.prgl_connections[conId].prgl) === null || _a === void 0 ? void 0 : _a.destroy());
+            delete this.prgl_connections[conId];
+            return true;
+        }
+        return false;
     }
     async startConnection(con_id, socket, dbs, _dbs, restartIfExists = false) {
         var _a, _b;
@@ -90,7 +151,7 @@ class ConnectionManager {
             throw e;
         }
         return new Promise(async (resolve, reject) => {
-            var _a, _b;
+            var _a, _b, _c;
             const _io = new socket_io_1.Server(http, { path: socket_path, maxHttpBufferSize: 1e8 });
             const getRule = async (user) => {
                 if (user) {
@@ -99,14 +160,29 @@ class ConnectionManager {
                 return undefined;
             };
             try {
+                let tableConfigOk = false;
                 const tableConfig = con.table_config;
                 console.log("RESTART CONNECTION ON TABLECONFIG CHANGE");
-                const s3Creds = await dbs.credentials.findOne({ connection_id: con_id, type: "s3" });
-                if (s3Creds && ((_a = tableConfig === null || tableConfig === void 0 ? void 0 : tableConfig.storageType) === null || _a === void 0 ? void 0 : _a.type) === "S3") {
-                    tableConfig.storageType.accessKeyId = s3Creds.key_id;
-                    tableConfig.storageType.secretAccessKey = s3Creds.key_secret;
-                    tableConfig.storageType.bucket = s3Creds.bucket;
-                    tableConfig.storageType.region = s3Creds.region;
+                let awsS3Config;
+                if (((_a = tableConfig === null || tableConfig === void 0 ? void 0 : tableConfig.storageType) === null || _a === void 0 ? void 0 : _a.type) === "S3") {
+                    if (tableConfig.storageType.credentials_id) {
+                        const s3Creds = await dbs.credentials.findOne({ id: tableConfig === null || tableConfig === void 0 ? void 0 : tableConfig.storageType.credentials_id, type: "s3" });
+                        if (s3Creds) {
+                            tableConfigOk = true;
+                            awsS3Config = {
+                                accessKeyId: s3Creds.key_id,
+                                secretAccessKey: s3Creds.key_secret,
+                                bucket: s3Creds.bucket,
+                                region: s3Creds.region
+                            };
+                        }
+                    }
+                    if (!tableConfigOk) {
+                        console.error("Could not find S3 credentials for fileTable config. File storage will not be set up");
+                    }
+                }
+                else if (((_b = tableConfig === null || tableConfig === void 0 ? void 0 : tableConfig.storageType) === null || _b === void 0 ? void 0 : _b.type) === "local" && tableConfig.fileTable) {
+                    tableConfigOk = true;
                 }
                 const prgl = await (0, prostgles_server_1.default)({
                     dbConnection: (0, index_1.getConnectionDetails)(con),
@@ -119,13 +195,13 @@ class ConnectionManager {
                         return true;
                     },
                     // tsGeneratedTypesDir: path.join(__dirname + '/../connection_dbo/'),
-                    fileTable: !(tableConfig === null || tableConfig === void 0 ? void 0 : tableConfig.fileTable) ? undefined : Object.assign(Object.assign({ tableName: tableConfig.fileTable, expressApp: this.app, fileServeRoute: `${index_1.MEDIA_ROUTE_PREFIX}/${con_id}` }, (((_b = tableConfig.storageType) === null || _b === void 0 ? void 0 : _b.type) === "local" ? {
+                    fileTable: (!(tableConfig === null || tableConfig === void 0 ? void 0 : tableConfig.fileTable) || !tableConfigOk) ? undefined : Object.assign(Object.assign({ tableName: tableConfig.fileTable, expressApp: this.app, fileServeRoute: `${index_1.MEDIA_ROUTE_PREFIX}/${con_id}` }, (((_c = tableConfig.storageType) === null || _c === void 0 ? void 0 : _c.type) === "local" ? {
                         localConfig: {
                             /* Use path.resolve when using a relative path. Otherwise will get 403 forbidden */
                             localFolderPath: this.getFileFolderPath(con_id)
                         }
                     } : {
-                        awsS3Config: Object.assign({}, (0, PubSubManager_1.omitKeys)(tableConfig.storageType, ["type"]))
+                        awsS3Config
                     })), { referencedTables: tableConfig.referencedTables }),
                     // fileTable: con.id === "173ec813-f025-4233-8e8d-d6f66e86852b"? {
                     //   expressApp: this.app,

@@ -1472,7 +1472,7 @@ textarea:focus {
 
   align-items: center;
   /* text-transform: capitalize; */
-  border-radius: 9999px;
+  border-radius: 1em;
   white-space: nowrap;
 
   width: fit-content;
@@ -1591,6 +1591,9 @@ textarea:focus {
 
 .ws-pre {
   white-space: pre;
+}
+.ws-pre-line {
+  white-space: pre-line;
 }
 .ws-pre-wrap {
   white-space: pre-wrap;

@@ -12,10 +12,10 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      connection_id: string
-      created?: Date | null;
-      id?: string
-      rule?: any | null;
+      connection_id: string;
+      created?: null | Date;
+      id?: string;
+      rule?: null | any;
     };
   };
   access_control_user_types: {
@@ -25,8 +25,8 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      access_control_id: string
-      user_type: string
+      access_control_id: string;
+      user_type: string;
     };
   };
   backups: {
@@ -36,21 +36,50 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      connection_id: string
-      created?: Date
-      credential_id?: number | null;
-      dbSizeInBytes: number
-      destination: string
-      details?: any | null;
-      dump_command: string
-      id?: string
-      restore_command?: string | null;
-      restore_end?: Date | null;
-      restore_start?: Date | null;
-      restore_status?: any | null;
-      sizeInBytes?: number | null;
-      status?: any | null;
-      uploaded?: Date | null;
+      connection_id: string;
+      content_type?: string;
+      created?: Date;
+      credential_id?: null | number;
+      dbSizeInBytes: number;
+      destination: string;
+      details?: null | any;
+      dump_command: string;
+      dump_logs?: null | string;
+      id?: string;
+      initiator?: null | string;
+      last_updated?: Date;
+      options?:       { 
+        clean: boolean;
+        format: 'p' | 't' | 'c';
+        dumpAll?: boolean;
+        ifExists?: boolean;
+        keepLogs?: boolean; 
+      };
+      restore_command?: null | string;
+      restore_end?: null | Date;
+      restore_logs?: null | string;
+      restore_options?:       { 
+        clean: boolean;
+        create?: boolean;
+        dataOnly?: boolean;
+        noOwner?: boolean;
+        newDbName?: string;
+        command: 'pg_restore' | 'psql';
+        format: 'p' | 't' | 'c';
+        ifExists?: boolean;
+        keepLogs?: boolean; 
+      };
+      restore_start?: null | Date;
+      restore_status?: 
+        | {  ok: string; }
+        | {  err: string; }
+        | {  loading: {  loaded: number; total: number; }; }
+      sizeInBytes?: null | number;
+      status?: 
+        | {  ok: string; }
+        | {  err: string; }
+        | {  loading?: {  loaded: number; total: number; }; }
+      uploaded?: null | Date;
     };
   };
   connections: {
@@ -60,25 +89,40 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      access_control?: any | null;
-      created?: Date | null;
-      db_conn?: string | null;
-      db_host?: string | null;
-      db_name?: string | null;
-      db_pass?: string | null;
-      db_port?: number | null;
-      db_ssl?: string
-      db_user?: string | null;
-      db_watch_shema?: boolean | null;
-      id?: string
-      is_state_db?: boolean | null;
-      last_updated?: number
-      name?: string | null;
-      prgl_params?: any | null;
-      prgl_url?: string | null;
-      table_config?: any | null;
-      type?: string
-      user_id: string
+      access_control?: null | any;
+      backups_config?: null | any;
+      created?: null | Date;
+      db_conn?: null | string;
+      db_host?: null | string;
+      db_name?: null | string;
+      db_pass?: null | string;
+      db_port?: null | number;
+      db_ssl?: string;
+      db_user?: null | string;
+      db_watch_shema?: null | boolean;
+      id?: string;
+      is_state_db?: null | boolean;
+      last_updated?: number;
+      name?: null | string;
+      prgl_params?: null | any;
+      prgl_url?: null | string;
+      ssl_certificate?: null | string;
+      ssl_client_certificate?: null | string;
+      ssl_client_certificate_key?: null | string;
+      ssl_reject_unauthorized?: null | boolean;
+      table_config?: null | any;
+      type?: string;
+      user_id: string;
+    };
+  };
+  credential_types: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      id: string;
     };
   };
   credentials: {
@@ -88,15 +132,14 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      bucket?: string | null;
-      connection_id: string
-      id?: number
-      key_id: string
-      key_secret: string
-      name?: string
-      region?: string | null;
-      type: string
-      user_id?: string | null;
+      bucket?: null | string;
+      id?: number;
+      key_id: string;
+      key_secret: string;
+      name?: string;
+      region?: null | string;
+      type: string;
+      user_id?: null | string;
     };
   };
   geography_columns: {
@@ -106,13 +149,13 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      coord_dimension?: number | null;
-      f_geography_column?: string | null;
-      f_table_catalog?: string | null;
-      f_table_name?: string | null;
-      f_table_schema?: string | null;
-      srid?: number | null;
-      type?: string | null;
+      coord_dimension?: null | number;
+      f_geography_column?: null | string;
+      f_table_catalog?: null | string;
+      f_table_name?: null | string;
+      f_table_schema?: null | string;
+      srid?: null | number;
+      type?: null | string;
     };
   };
   geometry_columns: {
@@ -122,13 +165,13 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      coord_dimension?: number | null;
-      f_geometry_column?: string | null;
-      f_table_catalog?: string | null;
-      f_table_name?: string | null;
-      f_table_schema?: string | null;
-      srid?: number | null;
-      type?: string | null;
+      coord_dimension?: null | number;
+      f_geometry_column?: null | string;
+      f_table_catalog?: null | string;
+      f_table_name?: null | string;
+      f_table_schema?: null | string;
+      srid?: null | number;
+      type?: null | string;
     };
   };
   globals: {
@@ -138,8 +181,8 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      onerow_id?: boolean
-      user_groups?: any | null;
+      onerow_id?: boolean;
+      user_groups?: null | any;
     };
   };
   links: {
@@ -149,16 +192,16 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      closed?: boolean | null;
-      created?: Date | null;
-      deleted?: boolean | null;
-      id?: string
-      last_updated: number
-      options?: any
-      user_id: string
-      w1_id: string
-      w2_id: string
-      workspace_id: string
+      closed?: null | boolean;
+      created?: null | Date;
+      deleted?: null | boolean;
+      id?: string;
+      last_updated: number;
+      options?: any;
+      user_id: string;
+      w1_id: string;
+      w2_id: string;
+      workspace_id: string;
     };
   };
   magic_links: {
@@ -168,11 +211,11 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      expires: number
-      id?: string
-      magic_link?: string | null;
-      magic_link_used?: Date | null;
-      user_id: string
+      expires: number;
+      id?: string;
+      magic_link?: null | string;
+      magic_link_used?: null | Date;
+      user_id: string;
     };
   };
   sessions: {
@@ -182,15 +225,15 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      active?: boolean | null;
-      created?: Date | null;
-      expires: number
-      id?: string
-      is_mobile?: boolean | null;
-      project_id?: string | null;
-      type?: string | null;
-      user_id: string
-      user_type: string
+      active?: null | boolean;
+      created?: null | Date;
+      expires: number;
+      id?: string;
+      is_mobile?: null | boolean;
+      project_id?: null | string;
+      type?: null | string;
+      user_id: string;
+      user_type: string;
     };
   };
   spatial_ref_sys: {
@@ -200,11 +243,11 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      auth_name?: string | null;
-      auth_srid?: number | null;
-      proj4text?: string | null;
-      srid: number
-      srtext?: string | null;
+      auth_name?: null | string;
+      auth_srid?: null | number;
+      proj4text?: null | string;
+      srid: number;
+      srtext?: null | string;
     };
   };
   user_groups: {
@@ -214,8 +257,8 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      filter?: any | null;
-      id: string
+      filter?: null | any;
+      id: string;
     };
   };
   user_statuses: {
@@ -225,7 +268,7 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      id: string
+      id: string;
     };
   };
   user_types: {
@@ -235,7 +278,7 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      id: string
+      id: string;
     };
   };
   users: {
@@ -245,13 +288,16 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      created?: Date | null;
-      id?: string
-      last_updated?: number | null;
-      password?: string
-      status?: string
-      type?: string
-      username: string
+      created?: null | Date;
+      id?: string;
+      last_updated?: null | number;
+      options?: null |       { 
+        showStateDB?: boolean; 
+      };
+      password?: string;
+      status?: string;
+      type?: string;
+      username: string;
     };
   };
   windows: {
@@ -261,28 +307,28 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      closed?: boolean | null;
-      columns?: any | null;
-      created?: Date | null;
-      deleted?: boolean | null;
-      filter?: any | null;
-      fullscreen?: boolean | null;
-      id?: string
-      last_updated: number
-      layout?: any | null;
-      limit?: number | null;
-      name?: string | null;
-      nested_tables?: any | null;
-      options?: any | null;
-      selected_sql?: string
-      show_menu?: boolean | null;
-      sort?: any | null;
-      sql?: string
-      table_name?: string | null;
-      table_oid?: number | null;
-      type?: string | null;
-      user_id: string
-      workspace_id: string
+      closed?: null | boolean;
+      columns?: null | any;
+      created?: null | Date;
+      deleted?: null | boolean;
+      filter?: null | any;
+      fullscreen?: null | boolean;
+      id?: string;
+      last_updated: number;
+      layout?: null | any;
+      limit?: null | number;
+      name?: null | string;
+      nested_tables?: null | any;
+      options?: null | any;
+      selected_sql?: string;
+      show_menu?: null | boolean;
+      sort?: null | any;
+      sql?: string;
+      table_name?: null | string;
+      table_oid?: null | number;
+      type?: null | string;
+      user_id: string;
+      workspace_id: string;
     };
   };
   workspaces: {
@@ -292,17 +338,17 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      active_row?: any | null;
-      connection_id: string
-      created?: Date | null;
-      deleted?: boolean
-      id?: string
-      last_updated: number
-      layout?: any | null;
-      name?: string
-      options?: any | null;
-      url_path?: string | null;
-      user_id: string
+      active_row?: null | any;
+      connection_id: string;
+      created?: null | Date;
+      deleted?: boolean;
+      id?: string;
+      last_updated: number;
+      layout?: null | any;
+      name?: string;
+      options?: null | any;
+      url_path?: null | string;
+      user_id: string;
     };
   };
   
