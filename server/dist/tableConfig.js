@@ -86,7 +86,7 @@ exports.tableConfig = {
         // dropIfExists: true,
         columns: {
             id: { sqlDefinition: `SERIAL PRIMARY KEY` },
-            name: { sqlDefinition: `TEXT NOT NULL DEFAULT` },
+            name: { sqlDefinition: `TEXT NOT NULL DEFAULT ''` },
             user_id: { sqlDefinition: `UUID REFERENCES users(id)` },
             type: { sqlDefinition: `TEXT NOT NULL REFERENCES credential_types(id)` },
             key_id: { sqlDefinition: `TEXT NOT NULL` },
