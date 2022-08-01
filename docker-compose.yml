@@ -4,8 +4,8 @@ version: "3.7"
 services:
   postgres:
     
-    # image: postgres
-    image: mdillon/postgis
+    image: postgis/postgis:14-master
+    # image: mdillon/postgis
     
     # Survive server reboot
     restart: always
@@ -45,9 +45,10 @@ services:
       - postgres
 
 
-    command: node /usr/src/app/server/dist/index.js
+    command: node --inspect /usr/src/app/server/dist/index.js
     ports:
       - '${PRGL_DOCKER_IP:-127.0.0.1}:${PRGL_DOCKER_PORT-3004}:3004'
+      - '${PRGL_DOCKER_IP:-127.0.0.1}:${9229}:9229'
         
 volumes:
   prgl-db:
