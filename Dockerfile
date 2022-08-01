@@ -8,7 +8,7 @@ COPY . .
 # Install pg_dump
 RUN apt-get update && \
     apt-get upgrade && \
-    apt-get install postgresql postgresql-client -Y
+    apt-get -Y install postgresql postgresql-client
 
 WORKDIR /usr/src/app/client
 RUN npm i && rm -rf ./src
