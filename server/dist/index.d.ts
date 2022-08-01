@@ -29,7 +29,10 @@ export declare const upsertConnection: (con: DBSchemaGenerated["connections"]["c
     db_ssl?: string | undefined;
     db_user?: string | null | undefined;
     db_watch_shema?: boolean | null | undefined;
-    id?: string | undefined;
+    id?: string | undefined; /**
+     * Cannot use connection uri without having ssl issues
+     * https://github.com/brianc/node-postgres/issues/2281
+     */
     is_state_db?: boolean | null | undefined;
     last_updated?: number | undefined;
     name?: string | null | undefined;
