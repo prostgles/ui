@@ -5,7 +5,8 @@ import { tableConfig } from "./tableConfig";
 const app = express();
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100mb" }));
-import { BACKUP_FOLDERNAME, getFileMgr, publishMethods } from "./publishMethods"
+import { publishMethods } from "./publishMethods";
+import { ChildProcessWithoutNullStreams, exec } from "child_process";
 
 import { DBSchemaGenerated } from "./DBoGenerated";
 // console.log("Connecting to state database" , process.env)
@@ -14,10 +15,10 @@ process.on('unhandledRejection', (reason, p) => {
   console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
   // application specific logging, throwing an error, or other logic here
 });
+import { SubscriptionHandler } from "prostgles-types";
 
 import _http from "http";
 const http = _http.createServer(app);
-// const exec = require('child_process').exec; 
 
 const ioPath = process.env.PRGL_IOPATH || "/iosckt";
 
@@ -26,30 +27,96 @@ const io = new Server(http, { path: ioPath, maxHttpBufferSize: 100e100 });
 
 import pgPromise from 'pg-promise';
 const pgp = pgPromise();
+import { ConnectionString } from 'connection-string';
 
 import { publish } from "./publish"
 // const dns = require('dns');
 
-export const getConnectionDetails = (c: BareConnectionDetails): pg.IConnectionParameters<pg.IClient> => {
-  return (c.type === "Connection URI" && c.db_conn)? {
-    connectionString: c.db_conn
-  } : {
+export const validateConnection = (c: Connections): Connections => {
+  let result = { ...c };
+  
+  if(c.type === "Connection URI"){
+    if(!c.db_conn){
+      result.db_conn = validateConnection({ ...result, type: "Standard" }).db_conn
+    }
+    const cs = new ConnectionString(result.db_conn);
+    const params = cs.params ?? {};
+    const { 
+      sslmode,
+      host,
+      port,
+      dbname,
+      user,
+      password,
+    } = params;
+
+    result.db_host = cs.hosts![0].name ?? host;
+    result.db_port = cs.hosts![0].port ?? +port;
+    result.db_user = cs.user ?? user;
+    result.db_pass = cs.password ?? password;
+    result.db_name = cs.path![0] ?? dbname;
+    result.db_ssl = sslmode;
+    // result.type = "Standard"
+  } else if(c.type === "Standard" || c.db_host){
+    const cs = new ConnectionString(null, { protocol: "postgres" });
+    cs.hosts = [{ name: c.db_host!, port: c.db_port! }];
+    cs.password = c.db_pass!;
+    cs.user = c.db_user!;
+    cs.path = [c.db_name!];
+    cs.params = { sslmode: c.db_ssl ?? "prefer" };
+    result.db_conn = cs.toString()
+  } else throw "Not supported"
+
+  result.db_user = result.db_user || "postgres";
+  result.db_host = result.db_host || "localhost";
+  result.db_ssl = result.db_ssl || "prefer";
+  result.db_port = result.db_port ?? 5432;
+
+
+  return result;
+}
+
+export const getConnectionDetails = (c: Connections): pg.IConnectionParameters<pg.IClient> => {
+  /**
+   * Cannot use connection uri without having ssl issues
+   * https://github.com/brianc/node-postgres/issues/2281
+   */
+  const getSSLOpts = (sslmode: string, rejectUnauthorized?: boolean): pg.IConnectionParameters<pg.IClient>["ssl"] => ({
+    ca: c.ssl_certificate ?? undefined,
+    cert: c.ssl_client_certificate ?? undefined,
+    key: c.ssl_client_certificate_key ?? undefined,
+    rejectUnauthorized: c.ssl_reject_unauthorized ?? (sslmode === "require" && !!c.ssl_certificate || sslmode === "verify-ca" || sslmode === "verify-full")
+  })
+
+  if(c.type === "Connection URI"){
+    const cs = new ConnectionString(c.db_conn);
+    const params = cs.params ?? {};
+    const { sslmode, application_name = "prostgles" } = params;
+    return {
+      // connectionString: c.db_conn,
+      application_name,
+      host: cs.hosts![0].name,
+      port: cs.hosts![0].port,
+      user: cs.user,
+      password: cs.password,
+      database: cs.path![0],
+      ssl: getSSLOpts(sslmode)
+    }
+  }
+  return {
     database: c.db_name!, 
     user: c.db_user!, 
     password: c.db_pass!, 
     host: c.db_host!,
     port: c.db_port!,
-    ssl: !(c.db_ssl && c.db_ssl !== "disable")? undefined : {
-      rejectUnauthorized: false 
-    },
+    ssl: getSSLOpts(c.db_ssl)
   };
 }
+export type BareConnectionDetails = Pick<Connections, "type" | "db_conn" | "db_host" | "db_name" | "db_pass" | "db_port" | "db_user" | "db_ssl" | "ssl_certificate">
 
-export type BareConnectionDetails = Pick<Connections, "type" | "db_conn" | "db_host" | "db_name" | "db_pass" | "db_port" | "db_user" | "db_ssl">
-
-export const testDBConnection = (opts: BareConnectionDetails, isSuperUser = false) => {
-  
-  if(typeof opts !== "object" || !("db_host" in opts) && !("db_conn" in opts)) {
+export const testDBConnection = (_c: Connections, expectSuperUser = false): Promise<true> => {
+  const con = validateConnection(_c);
+  if(typeof con !== "object" || !("db_host" in con) && !("db_conn" in con)) {
     throw "Incorrect database connection info provided. " + 
     "\nExpecting: \
       db_conn: string; \
@@ -59,15 +126,14 @@ export const testDBConnection = (opts: BareConnectionDetails, isSuperUser = fals
   
   // console.log(db_conn)
 
-  return new Promise((resolve, reject) => {
-    const connOpts = getConnectionDetails(opts);
-      
-      const db = pgp(connOpts);
+  return new Promise(async (resolve, reject) => {
+    let connOpts = getConnectionDetails(con);
+      const db = pgp({ ...connOpts, connectionTimeoutMillis: 1000 });
       db.connect()
         .then(async function (c) {
           // console.log(connOpts, "success, release connectio ", await db.any("SELECT current_database(), current_user, (select usesuper from pg_user where usename = CURRENT_USER)"))
           
-          if(isSuperUser){
+          if(expectSuperUser){
             const yes = await c.oneOrNone(`select usesuper from pg_user where usename = CURRENT_USER;`);
             if(!yes?.usesuper){
               reject("Provided user must be a superuser");
@@ -78,8 +144,8 @@ export const testDBConnection = (opts: BareConnectionDetails, isSuperUser = fals
           
           resolve(true);
         }).catch(err => {
-          console.error("testDBConnection fail", {connOpts, err})
-          reject(err)
+          console.error("testDBConnection fail", {err})
+          reject(err instanceof Error? err.message : JSON.stringify(err))
         });
     /**
      * Used to prevent connecting to localhost or internal networks
@@ -95,11 +161,12 @@ export const testDBConnection = (opts: BareConnectionDetails, isSuperUser = fals
   })
 }
 
-const dotenv = require('dotenv')
+const dotenv = require('dotenv');
+export type DBS = DBOFullyTyped<DBSchemaGenerated>
 
 export const EMPTY_USERNAME = "prostgles-no-auth-user",
   EMPTY_PASSWORD = "prostgles";
-export const HAS_EMPTY_USERNAME = async (db: DBOFullyTyped<DBSchemaGenerated>) => {
+export const HAS_EMPTY_USERNAME = async (db: DBS) => {
   if(
     !PRGL_USERNAME || !PRGL_PASSWORD
   ){
@@ -171,6 +238,8 @@ let authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_CO
 
 export const MEDIA_ROUTE_PREFIX = `/prostgles_media`
  
+import BackupManager, { BACKUP_FOLDERNAME, getFileMgr } from "./BackupManager";
+
 export const auth: Auth<DBSchemaGenerated> = {
 	sidKeyName: "sid_token",
 	getUser: async (sid, db, _db: DB) => {
@@ -183,12 +252,9 @@ export const auth: Auth<DBSchemaGenerated> = {
         const state_db = await db.connections.findOne({ is_state_db: true });
         return {
           user,
-          clientUser: { sid: s.id, uid: user.id, type: user.type, state_db_id: state_db?.id }
+          clientUser: { sid: s.id, uid: user.id, state_db_id: state_db?.id, ...omitKeys(user, ["password"]) }
         }
       }
-      // if(s.project_id && (await db.connections.count({ user_id: s.user_id, id: s.project_id }))){
-      //   user = { ...user, project_id: s.project_id }
-      // }
     }
     // console.trace("getUser", { user, s })
 		return undefined;
@@ -238,7 +304,7 @@ export const auth: Auth<DBSchemaGenerated> = {
   expressConfig: {
     app,
     // userRoutes: ["/", "/connection", "/connections", "/profile", "/jobs", "/chats", "/chat", "/account", "/dashboard", "/registrations"],
-    publicRoutes: ["/manifest.json", "/favicon.ico"], // ["/"],
+    publicRoutes: ["/manifest.json", "/favicon.ico", "/prj"], // ["/"],
     onGetRequestOK: async (req, res, { getUser, db, dbo: dbs }) => {
       console.log("onGetRequestOK", req.path);
 
@@ -278,6 +344,9 @@ export const auth: Auth<DBSchemaGenerated> = {
         }
       } else if(req.path.startsWith(MEDIA_ROUTE_PREFIX)){
         req.next?.();
+      /* Must be socket io reconnecting */
+      } else if(req.query.transport === "polling"){
+        req.next?.()
       } else {
         res.sendFile(path.join(__dirname + '/../../client/build/index.html'));
       }
@@ -300,6 +369,7 @@ export const auth: Auth<DBSchemaGenerated> = {
 
 
 const DBS_CONNECTION_INFO = {
+  type: !(process.env.POSTGRES_URL || POSTGRES_URL)? "Standard" : "Connection URI",
   db_conn: process.env.POSTGRES_URL || POSTGRES_URL, 
   db_name: process.env.POSTGRES_DB || POSTGRES_DB, 
   db_user: process.env.POSTGRES_USER || POSTGRES_USER, 
@@ -310,10 +380,11 @@ const DBS_CONNECTION_INFO = {
 };
 
 import { ConnectionManager } from "./ConnectionManager";
-import { ChildProcessWithoutNullStreams } from "child_process";
+import { omitKeys } from "prostgles-server/dist/PubSubManager";
 export const connMgr = new ConnectionManager(http, app);
 
-let dbs: DBOFullyTyped<DBSchemaGenerated> | undefined;
+let conSub: SubscriptionHandler<Connections> | undefined;
+
 const getDBS = async () => {
   try {
 
@@ -393,7 +464,13 @@ const getDBS = async () => {
       publish: params => publish(params, con) as any,
       joins: "inferred",
       onReady: async (db, _db: DB) => {
-        dbs = db;
+        // db.backups.update({}, {restore_options: { "clean": true }});
+
+        await conSub?.unsubscribe();
+        conSub = await db.connections.subscribe({}, {}, connections => {
+          connMgr.saveCertificates(connections)
+        });
+
         let username = PRGL_USERNAME,
           password = PRGL_PASSWORD;
         if(
@@ -458,7 +535,7 @@ const getDBS = async () => {
     
       if(error) {
         app.get("*", (req, res) => {
-          console.log(req.originalUrl ,req)
+          console.log(req.originalUrl)
           res.sendFile(path.join(__dirname + '/../../client/build/index.html'));
         })
       }
@@ -470,11 +547,9 @@ const getDBS = async () => {
 })();
 
 
-// app.get("/"+BACKUP_FOLDERNAME+"/:id", (req, res) => {
-//   console.log(req.originalUrl ,req);
-//   if(dbs)
-//   res.sendFile(path.join(__dirname + '/../../server/' + BACKUP_FOLDERNAME + "/" + req.params.id));
-// })
+app.post("/testupload", (req, res) => {
+  console.log(req.body)
+})
 
 app.post("/dbs", async (req, res) => {
   const { db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } = req.body;
@@ -549,4 +624,34 @@ export function restartProc(cb?: Function){
     env: { process_restarting: 1 },
     stdio: 'ignore'
   }).unref();
+}
+
+export const upsertConnection = async (con: Connections, user: Users, dbs: DBS) => {
+  if(user?.type !== "admin" || !user.id){
+    throw "User missing or not admin"
+  }
+  const c: Connections = validateConnection({ 
+    ...con, 
+    user_id: user.id,
+    last_updated: Date.now()
+  });
+  await testDBConnection(con);
+  try {
+    let res;
+    if(con.id){
+      if(!(await dbs.connections.findOne({ id: con.id }))){
+        throw "Connection not found: " + con.id
+      }
+      res = await dbs.connections.update({ id: con.id }, omitKeys(c, ["id"]) , { returning: "*" });
+    } else {
+      res = await dbs.connections.insert(c, { returning: "*" });
+    }
+    return res;
+  } catch(e: any){
+    console.error(e);
+    if(e && e.code === "23502"){
+      throw { err_msg: ` ${e.column} cannot be empty` }
+    }
+    throw e;
+  }
 }

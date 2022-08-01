@@ -1,19 +1,23 @@
 "use strict";
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getFileMgr = exports.BACKUP_FOLDERNAME = exports.publishMethods = void 0;
+exports.publishMethods = exports.bkpManager = void 0;
 const index_1 = require("./index");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
-const child_process_1 = __importDefault(require("child_process"));
-// import ss from 'socket.io-stream';
-const FileManager_1 = __importDefault(require("prostgles-server/dist/FileManager"));
-const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
-const getConnectionUri = (c) => c.db_conn || `postgres://${c.db_user}:${c.db_pass || ""}@${c.db_host || "localhost"}:${c.db_port || "5432"}/${c.db_name}`;
+const BackupManager_1 = __importDefault(require("./BackupManager"));
 const publishMethods = async (params) => {
     const { user, dbo: dbs, socket, db: _dbs } = params;
+    exports.bkpManager !== null && exports.bkpManager !== void 0 ? exports.bkpManager : (exports.bkpManager = new BackupManager_1.default(dbs));
     if (!user || !user.id) {
         const makeMagicLink = async (user, dbo, returnURL) => {
             const mlink = await dbo.magic_links.insert({
@@ -54,138 +58,77 @@ const publishMethods = async (params) => {
             const dir = index_1.connMgr.getFileFolderPath(conId);
             return dirSize(dir);
         },
-        testDBConnection: async (opts) => (0, index_1.testDBConnection)(opts),
+        testDBConnection: index_1.testDBConnection,
+        validateConnection: async (c) => {
+            const connection = (0, index_1.validateConnection)(c);
+            let warn = "";
+            if (connection.db_ssl) {
+                warn = "";
+            }
+            return { connection, warn };
+        },
         createConnection: async (con) => {
-            const row = Object.assign(Object.assign({}, (0, PubSubManager_1.omitKeys)(con, ["type"])), { user_id: user.id });
-            // console.log("createConnection", row)
-            try {
-                await (0, index_1.testDBConnection)(con);
-                let res;
-                if (con.id) {
-                    res = await dbs.connections.update({ id: con.id }, (0, PubSubManager_1.omitKeys)(row, ["id"]), { returning: "*" });
-                }
-                else {
-                    res = await dbs.connections.insert(row, { returning: "*" });
-                }
-                return res;
-            }
-            catch (e) {
-                console.error(e);
-                if (e && e.code === "23502") {
-                    throw { err_msg: ` ${e.column} cannot be empty` };
-                }
-                else if (e && e.code === "23505") {
-                    throw { err_msg: `Connection ${JSON.stringify(con.name)} already exists` };
-                }
-                throw e;
-            }
+            return (0, index_1.upsertConnection)(con, user, dbs);
         },
         deleteConnection: async (id) => {
-            return dbs.connections.delete({ id, user_id: user.id }, { returning: "*" });
+            return dbs.tx(async (t) => {
+                var e_1, _a;
+                const conFilter = { connection_id: id };
+                await t.workspaces.delete(conFilter);
+                await t.access_control.delete(conFilter);
+                const bkps = await t.backups.find(conFilter);
+                try {
+                    for (var bkps_1 = __asyncValues(bkps), bkps_1_1; bkps_1_1 = await bkps_1.next(), !bkps_1_1.done;) {
+                        const b = bkps_1_1.value;
+                        await exports.bkpManager.bkpDelete(b.id);
+                    }
+                }
+                catch (e_1_1) { e_1 = { error: e_1_1 }; }
+                finally {
+                    try {
+                        if (bkps_1_1 && !bkps_1_1.done && (_a = bkps_1.return)) await _a.call(bkps_1);
+                    }
+                    finally { if (e_1) throw e_1.error; }
+                }
+                await t.backups.delete(conFilter);
+                return dbs.connections.delete({ id, user_id: user.id }, { returning: "*" });
+            });
         },
         reStartConnection: async (conId) => {
             return index_1.connMgr.startConnection(conId, socket, dbs, _dbs, true);
         },
-        pgDump: async (conId, credId) => {
-            var _a, _b, _c, _d;
-            const con = await dbs.connections.findOne({ id: conId });
-            if (!con)
-                throw new Error("Could not find the connection");
-            const setError = (err) => {
-                if (backup_id) {
-                    dbs.backups.update({ id: backup_id }, { status: { err } });
-                }
-                else {
-                    throw err;
-                }
-            };
-            const { fileMgr } = await getFileMgr(dbs, credId);
-            let backup_id;
-            const uri = getConnectionUri(con);
-            const dumpCommand = {
-                command: "pg_dump",
-                opts: [uri, "--clean"]
-            };
-            try {
-                const db = index_1.connMgr.getConnection(conId);
-                const backup = await dbs.backups.insert({
-                    dbSizeInBytes: (_d = (await ((_c = (_b = (_a = db === null || db === void 0 ? void 0 : db.prgl) === null || _a === void 0 ? void 0 : _a.db) === null || _b === void 0 ? void 0 : _b.sql) === null || _c === void 0 ? void 0 : _c.call(_b, "SELECT pg_database_size(current_database())  ", {}, { returnType: "value" })))) !== null && _d !== void 0 ? _d : 0,
-                    connection_id: con.id,
-                    credential_id: credId !== null && credId !== void 0 ? credId : null,
-                    destination: credId ? "Cloud" : "Local",
-                    dump_command: dumpCommand.command + " " + dumpCommand.opts.join(" "),
-                    status: { loading: {} }
-                }, { returning: "*" });
-                backup_id = backup.id;
-                // const stream = ss.createStream();
-                // ss(socket).emit('pg_dump', stream);
-                const destStream = fileMgr.uploadStream(backup_id, "text/sql", async (loading) => {
-                    const bkp = await dbs.backups.findOne({ id: backup_id });
-                    if (!bkp || !bkp.status.err && !bkp.status.ok) {
-                        dbs.backups.update({ id: backup_id }, { status: { loading } });
-                    }
-                }, setError, async (item) => {
-                    dbs.backups.update({ id: backup_id }, { sizeInBytes: item.content_length, uploaded: new Date(), status: { ok: 1 } });
-                });
-                // pipeFromCommand('pg_dump', [command, "--format", "custom", "-O", "-v"], destStream, setError);
-                const proc = pipeFromCommand(dumpCommand.command, dumpCommand.opts, destStream, setError);
-                let interval = setInterval(async () => {
-                    const bkp = await dbs.backups.findOne({ id: backup_id });
-                    if (!bkp || (bkp === null || bkp === void 0 ? void 0 : bkp.status.err)) {
-                        destStream.end();
-                        // destStream.pause();
-                        clearInterval(interval);
-                    }
-                    else if (bkp.uploaded) {
-                        clearInterval(interval);
-                    }
-                }, 2000);
-                return backup_id;
-            }
-            catch (err) {
-                setError(err);
-            }
+        disconnect: async (conId) => {
+            return index_1.connMgr.disconnect(conId);
         },
-        pgRestore: async (bkpId) => {
-            const { fileMgr, bkp, cred } = await getBkp(dbs, bkpId);
-            const con = await dbs.connections.findOne({ id: bkp.connection_id });
-            const setError = (err) => {
-                dbs.backups.update({ id: bkpId }, { restore_status: { err } });
-            };
-            try {
-                const bkpStream = await fileMgr.getFileStream(bkp.id);
-                const restoreCmd = {
-                    command: "psql",
-                    opts: [getConnectionUri(con)]
-                };
-                await dbs.backups.update({ id: bkpId }, { restore_start: new Date(), restore_command: restoreCmd.command + " " + restoreCmd.opts.join(" "), restore_status: { loading: 1 } });
-                // pipeToCommand("pg_restore", ["-c", "-C",`-d '${getConnectionUri(con)}'`, "-v"], bkpStream, err => {
-                pipeToCommand(restoreCmd.command, restoreCmd.opts, bkpStream, err => {
-                    if (err) {
-                        console.error(err);
-                        bkpStream.destroy();
-                        setError(err);
-                    }
-                    else {
-                        dbs.backups.update({ id: bkpId }, { restore_end: new Date(), restore_status: { ok: new Date() } });
-                    }
+        pgDump: exports.bkpManager.pgDump,
+        pgRestore: async (bkpId, opts) => exports.bkpManager.pgRestore(bkpId, undefined, opts),
+        bkpDelete: exports.bkpManager.bkpDelete,
+        streamBackupFile: async (c, id, conId, chunk, sizeBytes, restore_options) => {
+            // socket.on("stream", console.log)
+            // console.log(arguments);
+            if (c === "start" && id && conId && sizeBytes) {
+                const s = exports.bkpManager.getTempFileStream(id, user.id);
+                await exports.bkpManager.pgRestoreStream(id, conId, s.stream, sizeBytes, restore_options);
+                // s.stream.on("close", () => console.log(1232132));
+                return s.streamId;
+            }
+            else if (c === "chunk" && id && chunk) {
+                return new Promise((resolve, reject) => {
+                    exports.bkpManager.pushToStream(id, chunk, (err) => {
+                        if (err) {
+                            reject(err);
+                        }
+                        else {
+                            resolve(1);
+                        }
+                    });
                 });
             }
-            catch (err) {
-                setError(err);
+            else if (c === "end" && id) {
+                exports.bkpManager.closeStream(id);
             }
-        },
-        bkpDelete: async (bkpId, force = false) => {
-            const { fileMgr, bkp } = await getBkp(dbs, bkpId);
-            try {
-                await fileMgr.deleteFile(bkp.id);
-            }
-            catch (err) {
-                if (!force)
-                    throw err;
-            }
-            await dbs.backups.delete({ id: bkp.id });
-            return bkp.id;
+            else
+                throw new Error("Not expected");
         }
     };
     return Object.assign(Object.assign({}, (user.type === "admin" ? adminMethods : undefined)), { startConnection: async (con_id) => {
@@ -193,69 +136,7 @@ const publishMethods = async (params) => {
         } });
 };
 exports.publishMethods = publishMethods;
-exports.BACKUP_FOLDERNAME = "prostgles_backups";
-async function getFileMgr(dbs, credId) {
-    let cred;
-    if (credId) {
-        cred = await dbs.credentials.findOne({ id: credId, type: "s3" });
-        if (!cred)
-            throw new Error("Could not find the credentials");
-    }
-    const fileMgr = new FileManager_1.default(cred ? { accessKeyId: cred.key_id, secretAccessKey: cred.key_secret, bucket: cred.bucket, region: cred.region } : { localFolderPath: path_1.default.resolve(__dirname + '/../' + exports.BACKUP_FOLDERNAME) });
-    return { fileMgr, cred };
-}
-exports.getFileMgr = getFileMgr;
-async function getBkp(dbs, bkpId) {
-    const bkp = await dbs.backups.findOne({ id: bkpId });
-    if (!bkp)
-        throw new Error("Could not find the backup");
-    const { cred, fileMgr } = await getFileMgr(dbs, bkp.credential_id);
-    return {
-        bkp, cred, fileMgr
-    };
-}
-function pipeFromCommand(command, opts, destination, onEnd, onSuccess) {
-    const proc = child_process_1.default.spawn(command, opts);
-    // myREPL.stdout.on('data', (data) => {
-    //   console.log(`stdout: ${data}`);
-    // });
-    let errored = false;
-    proc.stderr.on('data', (data) => {
-        errored = true;
-        console.error(`stderr: ${data.toString()}`);
-        onEnd(data.toString());
-    });
-    proc.stdout.pipe(destination, { end: false });
-    proc.on('exit', function (code, signal) {
-        if (errored && code) {
-        }
-        else {
-            onSuccess === null || onSuccess === void 0 ? void 0 : onSuccess();
-            destination.end();
-        }
-    });
-    return proc;
-}
-function pipeToCommand(command, opts, source, onEnd) {
-    const proc = child_process_1.default.spawn(command, opts);
-    // myREPL.stdout.on('data', (data) => {
-    //   console.log(`stdout: ${data}`);
-    // });
-    let errored = false;
-    proc.stderr.on('data', (data) => {
-        var _a;
-        errored = true;
-        console.error(`stderr: ${data.toString()}`);
-        onEnd((_a = data.toString()) !== null && _a !== void 0 ? _a : "error");
-    });
-    source.pipe(proc.stdin);
-    proc.on('exit', function (code, signal) {
-        if (errored && code) {
-        }
-        else {
-            onEnd === null || onEnd === void 0 ? void 0 : onEnd();
-        }
-    });
-    return proc;
-}
+process.on("exit", code => {
+    console.log(code);
+});
 //# sourceMappingURL=publishMethods.js.map
