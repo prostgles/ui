@@ -33,36 +33,50 @@ export default class BackupManager {
         details?: any;
         dump_command: string;
         dump_logs?: string | null | undefined;
-        id?: string | undefined; /**
-         * If not provided then save to current server
-         */
+        id?: string | undefined;
         initiator?: string | null | undefined;
         last_updated?: Date | undefined;
         options?: {
-            command: "pg_dump" | "pg_dumpall";
+            command: "pg_dumpall";
             clean: boolean;
+            dataOnly?: boolean | undefined;
+            globalsOnly?: boolean | undefined;
+            rolesOnly?: boolean | undefined;
+            schemaOnly?: boolean | undefined;
+            /**
+             * If provided then will do the backup during that hour (24 hour format). Unless the backup frequency is less than a day
+             */
+            ifExists?: boolean | undefined;
+            encoding?: string | undefined;
+            keepLogs?: boolean | undefined;
+        } | {
+            command: "pg_dump";
             format: "p" | "c" | "t";
-            dumpAll?: boolean | undefined;
+            dataOnly?: boolean | undefined;
+            clean?: boolean | undefined; /**
+             * If provided then will do the backup during that hour (1-7: Mon to Sun). Unless the backup frequency is less than a day
+             */
+            create?: boolean | undefined;
+            encoding?: string | undefined;
+            numberOfJobs?: number | undefined;
+            noOwner?: boolean | undefined;
+            compressionLevel?: number | undefined;
             ifExists?: boolean | undefined;
             keepLogs?: boolean | undefined;
         } | undefined;
-        restore_command?: string | null | undefined; /**
-         * If provided then will do the backup during that hour (1-7: Mon to Sun). Unless the backup frequency is less than a day
-         */
+        restore_command?: string | null | undefined;
         restore_end?: Date | null | undefined;
         restore_logs?: string | null | undefined;
         restore_options?: {
+            command: "pg_restore" | "psql";
+            format: "p" | "c" | "t";
             clean: boolean;
+            newDbName?: string | undefined;
             create?: boolean | undefined;
             dataOnly?: boolean | undefined;
             noOwner?: boolean | undefined;
-            newDbName?: string | undefined;
-            command: "pg_restore" | "psql";
-            format: "p" | "c" | "t";
+            numberOfJobs?: number | undefined;
             ifExists?: boolean | undefined;
-            /**
-             * If provided then will keep the latest N backups and delete the older ones
-             */
             keepLogs?: boolean | undefined;
         } | undefined;
         restore_start?: Date | null | undefined;
@@ -95,8 +109,8 @@ export default class BackupManager {
     destroy(): Promise<void>;
     private checkIfEnoughSpace;
     private getDBSizeInBytes;
-    pgDump: (conId: string, credId: number | null, dumpOpts: DumpOptsServer) => Promise<string | undefined>;
-    pgRestore: (bkpId: string, stream: Readable | undefined, restore_options: Backups["restore_options"]) => Promise<void>;
+    pgDump: (conId: string, credId: number | null, o: DumpOptsServer) => Promise<string | undefined>;
+    pgRestore: (bkpId: string, stream: Readable | undefined, o: Backups["restore_options"]) => Promise<void>;
     pgRestoreStream: (fileName: string, conId: string, stream: PassThrough, sizeBytes: number, restore_options: Backups["restore_options"]) => Promise<void>;
     bkpDelete: (bkpId: string, force?: boolean) => Promise<string>;
 }
@@ -114,7 +128,8 @@ export declare function getFileMgr(dbs: DBS, credId: number | null): Promise<{
         user_id?: string | null | undefined;
     }> | undefined;
 }>;
-export declare function pipeFromCommand(command: string, opts: string[], destination: internal.Writable, onEnd: (err?: any) => void, onStdout?: (data: any, isStdErr?: boolean) => void, useExec?: boolean): child.ChildProcess;
-export declare function pipeToCommand(command: string, opts: string[], source: internal.Readable, onEnd: (err?: any) => void, onStdout?: (data: any, isStdErr?: boolean) => void, useExed?: boolean): child.ChildProcess;
+declare type EnvVars = Record<string, string> | {};
+export declare function pipeFromCommand(command: string, opts: string[], envVars: EnvVars | undefined, destination: internal.Writable, onEnd: (err?: any) => void, onStdout?: (data: any, isStdErr?: boolean) => void, useExec?: boolean): child.ChildProcess;
+export declare function pipeToCommand(command: string, opts: string[], envVars: EnvVars | undefined, source: internal.Readable, onEnd: (err?: any) => void, onStdout?: (data: any, isStdErr?: boolean) => void, useExec?: boolean): child.ChildProcess;
 export {};
 //# sourceMappingURL=BackupManager.d.ts.map

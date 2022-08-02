@@ -5,7 +5,7 @@ WORKDIR /usr/src/app
 
 
 COPY . .
-# Install pg_dump
+# Install pg_dump  (psql v14)
 RUN apt-get update && \
     apt-get install -y lsb-release && apt-get clean all && \
     apt-get upgrade && \

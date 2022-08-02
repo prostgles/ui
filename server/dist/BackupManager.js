@@ -18,6 +18,7 @@ const child_process_1 = __importDefault(require("child_process"));
 const stream_1 = require("stream");
 const prostgles_types_1 = require("prostgles-types");
 const FileManager_1 = __importDefault(require("prostgles-server/dist/FileManager"));
+const prostgles_types_2 = require("prostgles-types");
 const getConnectionUri = (c) => c.db_conn || `postgres://${c.db_user}:${c.db_pass || ""}@${c.db_host || "localhost"}:${c.db_port || "5432"}/${c.db_name}`;
 const check_disk_space_1 = __importDefault(require("check-disk-space"));
 const HOUR = 3600 * 1000;
@@ -104,9 +105,7 @@ class BackupManager {
             const result = (await ((_c = (_b = (_a = db === null || db === void 0 ? void 0 : db.prgl) === null || _a === void 0 ? void 0 : _a.db) === null || _b === void 0 ? void 0 : _b.sql) === null || _c === void 0 ? void 0 : _c.call(_b, "SELECT pg_database_size(current_database())  ", {}, { returnType: "value" })));
             return Number.isFinite(+result) ? result : 0;
         };
-        this.pgDump = async (conId, credId, dumpOpts) => {
-            const { command, format = "c", clean = true, initiator = "manual_backup", ifExists } = dumpOpts || {};
-            const dumpAll = command === "pg_dumpall";
+        this.pgDump = async (conId, credId, o) => {
             const con = await this.dbs.connections.findOne({ id: conId });
             if (!con)
                 throw new Error("Could not find the connection");
@@ -129,27 +128,40 @@ class BackupManager {
             if (currentBackup) {
                 throw "Cannot backup while another backup is in progress";
             }
+            const ENV_VARS = getSSLEnvVars(con);
             let backup_id;
             const uri = getConnectionUri(con);
+            const dumpAll = o.command === "pg_dumpall";
             const dumpCommand = dumpAll ? {
-                command: getSSLEnvVars(con),
-                opts: ["pg_dumpall", "-d", uri]
-                    .concat(clean ? ["--clean"] : [])
-                    .concat(ifExists ? ["--if-exists"] : [])
-                    .concat(["-v"])
+                command: "pg_dumpall",
+                opts: addOptions(["-d", uri], [
+                    [o.clean, "--clean"],
+                    [o.ifExists, "--if-exists"],
+                    [o.globalsOnly, "--globals-only"],
+                    [o.rolesOnly, "--roles-only"],
+                    [o.dataOnly, "--data-only"],
+                    [o.schemaOnly, "--schema-only"],
+                    [!!o.encoding, ["--encoding", o.encoding]],
+                    [true, "-v"]
+                ])
             } : {
-                command: getSSLEnvVars(con),
-                opts: ["pg_dump", uri]
-                    .concat(clean ? ["--clean"] : [])
-                    .concat(format ? ["--format", format] : []) // Will be validated on update
-                    .concat(ifExists ? ["--if-exists"] : [])
-                    // .concat(create? ["--create"] : [])
-                    // .concat(noOwner? ["--no-owner"] : [])
-                    // .concat(dataOnly? ["--data-only"] : [])
-                    .concat(["-v"])
+                command: "pg_dump",
+                opts: addOptions([uri], [
+                    [!!o.format, ["--format", o.format]],
+                    [o.clean, "--clean"],
+                    [o.create, "--create"],
+                    [o.noOwner, "--no-owner"],
+                    [o.ifExists, "--if-exists"],
+                    [o.dataOnly, "--data-only"],
+                    [!!o.encoding, ["--encoding", o.encoding]],
+                    [Number.isInteger(o.compressionLevel), ["--compress", o.compressionLevel]],
+                    [Number.isInteger(o.numberOfJobs), ["--jobs", o.numberOfJobs]],
+                    [true, "-v"]
+                ])
             };
             try {
-                const content_type = (format === "p" || dumpAll) ? "text/sql" : "application/gzip";
+                const { initiator = "manual_backup" } = o;
+                const content_type = (dumpAll || o.format === "p") ? "text/sql" : "application/gzip";
                 const backup = await this.dbs.backups.insert({
                     created: new Date(),
                     dbSizeInBytes: await this.getDBSizeInBytes(conId),
@@ -157,15 +169,15 @@ class BackupManager {
                     connection_id: con.id,
                     credential_id: credId !== null && credId !== void 0 ? credId : null,
                     destination: credId ? "Cloud" : "Local",
-                    dump_command: dumpCommand.command + " " + dumpCommand.opts.join(" "),
+                    dump_command: envToStr(ENV_VARS) + dumpCommand.command + " " + dumpCommand.opts.join(" "),
                     status: { loading: { loaded: 0, total: 0 } },
-                    options: dumpOpts,
+                    options: o,
                     content_type,
                 }, { returning: "*" });
                 const bkpForId = await this.dbs.backups.findOne({ id: backup.id }, { select: { created: "$datetime_" } });
                 if (!bkpForId)
                     throw "Internal error";
-                backup_id = `${con.db_name}__${bkpForId.created}_pg_dump${dumpAll ? "all" : ""}_${backup.id}.${content_type === "text/sql" ? "sql" : "gzip"}`;
+                backup_id = `${con.db_name}__${bkpForId.created}_pg_dump${dumpAll ? "all" : ""}_${backup.id}.${content_type === "text/sql" ? "sql" : "dump"}`;
                 await this.dbs.backups.update({ id: backup.id }, { id: backup_id });
                 const getBkp = () => this.dbs.backups.findOne({ id: backup_id });
                 const destStream = fileMgr.uploadStream(backup_id, content_type, async (loading) => {
@@ -186,20 +198,19 @@ class BackupManager {
                         this.dbs.backups.update({ id: backup_id }, { sizeInBytes: item.content_length, uploaded: new Date(), status: { ok: "1" }, last_updated: new Date() });
                     }
                 });
-                pipeFromCommand(dumpCommand.command, dumpCommand.opts, destStream, err => {
+                pipeFromCommand(dumpCommand.command, dumpCommand.opts, ENV_VARS, destStream, err => {
                     if (err) {
                         setError(err);
                     }
-                }, !dumpOpts.keepLogs ? undefined : (dump_logs, isStdErr) => {
+                }, !o.keepLogs ? undefined : (dump_logs, isStdErr) => {
                     if (!isStdErr)
                         return;
                     this.dbs.backups.update({ id: backup_id, "status->>ok": null }, { dump_logs, last_updated: new Date() });
-                }, true);
+                }, false);
                 let interval = setInterval(async () => {
                     const bkp = await this.dbs.backups.findOne({ id: backup_id });
                     if (!bkp || bkp && "err" in bkp.status) {
                         destStream.end();
-                        // destStream.pause();
                         clearInterval(interval);
                     }
                     else if (bkp.uploaded) {
@@ -212,44 +223,50 @@ class BackupManager {
                 setError(err);
             }
         };
-        this.pgRestore = async (bkpId, stream, restore_options) => {
-            const { newDbName, clean, create, command, format, dataOnly, ifExists, noOwner } = restore_options;
+        this.pgRestore = async (bkpId, stream, o) => {
             const { fileMgr, bkp } = await getBkp(this.dbs, bkpId);
             const con = await this.dbs.connections.findOne({ id: bkp.connection_id });
             if (!con)
                 throw "Connection not found";
+            if (!o)
+                throw "Restore options missing";
             const setError = (err) => {
                 this.dbs.backups.update({ id: bkpId }, { restore_status: { err: (err !== null && err !== void 0 ? err : "").toString() }, last_updated: new Date() });
             };
-            if (newDbName) {
+            if (o.newDbName) {
+                if (o.create)
+                    throw "Cannot use 'newDbName' together with 'create'. --create option will still restore into the database specified within the dump file";
                 try {
                     if (!this.dbs.sql)
                         throw new Error("db.sql not allowed");
-                    await this.dbs.sql(`CREATE DATABASE ${(0, prostgles_types_1.asName)(newDbName)}`);
+                    await this.dbs.sql(`CREATE DATABASE ${(0, prostgles_types_1.asName)(o.newDbName)}`);
                 }
                 catch (err) {
                     setError(err);
                 }
             }
             try {
+                const ENV_VARS = getSSLEnvVars(con);
                 const bkpStream = stream !== null && stream !== void 0 ? stream : await fileMgr.getFileStream(bkp.id);
-                const restoreCmd = (command === "psql" || format === "p") ? {
-                    command: getSSLEnvVars(con),
-                    opts: ["psql", getConnectionUri(con)]
+                const restoreCmd = (o.command === "psql" || o.format === "p") ? {
+                    command: "psql",
+                    opts: [getConnectionUri(con)]
                 } : {
-                    command: getSSLEnvVars(con),
-                    opts: ["pg_restore", "-d", getConnectionUri(con)]
-                        .concat(clean ? ["--clean"] : [])
-                        .concat(create ? ["--create"] : [])
-                        .concat(format ? ["--format", format] : []) // Will be validated on update
-                        .concat(dataOnly ? ["--data-only"] : [])
-                        .concat(ifExists ? ["--if-exists"] : [])
-                        .concat(noOwner ? ["--no-owner"] : [])
-                        .concat(["-v"])
+                    command: "pg_restore",
+                    opts: addOptions(["-d", getConnectionUri(con)], [
+                        [o.clean, "--clean"],
+                        [o.create, "--create"],
+                        [o.noOwner, "--no-owner"],
+                        [!!o.format, ["--format", o.format]],
+                        [o.dataOnly, "--data-only"],
+                        [o.ifExists, "--if-exists"],
+                        [Number.isInteger(o.numberOfJobs), "--jobs"],
+                        [true, "-v"]
+                    ])
                 };
                 await this.dbs.backups.update({ id: bkpId }, {
                     restore_start: new Date(),
-                    restore_command: restoreCmd.command + " " + restoreCmd.opts.join(" "),
+                    restore_command: envToStr(ENV_VARS) + restoreCmd.command + " " + restoreCmd.opts.join(" "),
                     restore_status: { loading: { loaded: 0, total: 0 } },
                     last_updated: new Date()
                 });
@@ -267,7 +284,7 @@ class BackupManager {
                         }
                     }
                 });
-                pipeToCommand(restoreCmd.command, restoreCmd.opts, bkpStream, err => {
+                pipeToCommand(restoreCmd.command, restoreCmd.opts, ENV_VARS, bkpStream, err => {
                     if (err) {
                         console.error("pipeToCommand ERR:", err);
                         bkpStream.destroy();
@@ -286,7 +303,7 @@ class BackupManager {
                     else {
                         this.dbs.backups.update({ id: bkpId }, { restore_end: new Date(), restore_logs, last_updated: new Date() });
                     }
-                }, true);
+                }, false);
             }
             catch (err) {
                 setError(err);
@@ -344,8 +361,9 @@ class BackupManager {
                 for (var connections_1 = __asyncValues(connections), connections_1_1; connections_1_1 = await connections_1.next(), !connections_1_1.done;) {
                     const con = connections_1_1.value;
                     const AUTO_INITIATOR = "automatic_backups";
+                    // const bkpConf: BackupsConfig = con.backups_config;
                     const bkpConf = con.backups_config;
-                    if (!(bkpConf === null || bkpConf === void 0 ? void 0 : bkpConf.options))
+                    if (!(bkpConf === null || bkpConf === void 0 ? void 0 : bkpConf.dump_options))
                         return;
                     const bkpFilter = { connection_id: con.id, initiator: AUTO_INITIATOR };
                     const dump = async () => {
@@ -355,7 +373,7 @@ class BackupManager {
                         if (bkpConf === null || bkpConf === void 0 ? void 0 : bkpConf.frequency) {
                             const hourIsOK = () => {
                                 if (Number.isInteger(bkpConf.hour)) {
-                                    if (now.getHours() === bkpConf.hour) {
+                                    if (now.getHours() >= bkpConf.hour) {
                                         return true;
                                     }
                                 }
@@ -366,7 +384,7 @@ class BackupManager {
                             };
                             const dowIsOK = () => {
                                 if (Number.isInteger(bkpConf.dayOfWeek)) {
-                                    if ((now.getDay() || 7) === bkpConf.dayOfWeek) {
+                                    if ((now.getDay() || 7) >= bkpConf.dayOfWeek) {
                                         return true;
                                     }
                                 }
@@ -377,10 +395,9 @@ class BackupManager {
                             };
                             const dateIsOK = () => {
                                 const date = new Date();
-                                // const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
                                 const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
                                 if (bkpConf.dayOfMonth && Number.isInteger(bkpConf.dayOfMonth)) {
-                                    if (now.getDate() === bkpConf.dayOfMonth || bkpConf.dayOfMonth > lastDay.getDate() && now.getDate() === lastDay.getDate()) {
+                                    if (now.getDate() >= bkpConf.dayOfMonth || bkpConf.dayOfMonth > lastDay.getDate() && now.getDate() === lastDay.getDate()) {
                                         return true;
                                     }
                                 }
@@ -408,7 +425,7 @@ class BackupManager {
                                 shouldDump = true;
                             }
                             if (shouldDump) {
-                                await this.pgDump(con.id, null, Object.assign(Object.assign({}, bkpConf.options), { initiator: AUTO_INITIATOR }));
+                                await this.pgDump(con.id, null, Object.assign(Object.assign({}, bkpConf.dump_options), { initiator: AUTO_INITIATOR }));
                                 if (bkpConf.keepLast && bkpConf.keepLast > 0) {
                                     const toKeepIds = (await this.dbs.backups.find(bkpFilter, { select: { id: 1 }, orderBy: { created: -1 }, limit: bkpConf.keepLast })).map(c => c.id);
                                     await this.dbs.backups.delete(Object.assign({ "id.$nin": toKeepIds }, bkpFilter));
@@ -470,11 +487,15 @@ async function getBkp(dbs, bkpId) {
         bkp, cred, fileMgr
     };
 }
+function envToStr(vars) {
+    return (0, prostgles_types_2.getKeys)(vars).map(k => `${k}=${JSON.stringify(vars[k])}`).join(" ") + " ";
+}
 function pipeFromCommand(command, 
 // opts: SpawnOptionsWithoutStdio | string[], 
-opts, destination, onEnd, onStdout, useExec = false) {
-    const execCommand = `${command} ${opts.join(" ")}`;
-    const proc = useExec ? child_process_1.default.exec(execCommand, console.log) : child_process_1.default.spawn(command, opts);
+opts, envVars = {}, destination, onEnd, onStdout, useExec = false) {
+    const execCommand = `${envToStr(envVars)} ${command} ${opts.join(" ")}`;
+    const env = !envVars ? undefined : envVars;
+    const proc = useExec ? child_process_1.default.exec(execCommand) : child_process_1.default.spawn(command, opts, { env });
     const getUTFText = (v) => v.toString(); //.replaceAll(/[^\x00-\x7F]/g, ""); //.replaceAll("\\", "[escaped backslash]");   // .replaceAll("\\u0000", "");
     let fullLog = "";
     const lastSent = Date.now();
@@ -502,6 +523,7 @@ opts, destination, onEnd, onStdout, useExec = false) {
     proc.stdout.pipe(destination, { end: false });
     proc.on('exit', function (code, signal) {
         if (code) {
+            console.error({ execCommand, err: fullLog.slice(fullLog.length - 100) });
             onEnd(log !== null && log !== void 0 ? log : "Error");
         }
         else {
@@ -512,15 +534,16 @@ opts, destination, onEnd, onStdout, useExec = false) {
     return proc;
 }
 exports.pipeFromCommand = pipeFromCommand;
-function pipeToCommand(command, opts, source, onEnd, onStdout, useExed = false) {
-    const proc = useExed ? child_process_1.default.exec(`${command} ${opts.join(" ")}`) : child_process_1.default.spawn(command, opts);
+function pipeToCommand(command, opts, envVars = {}, source, onEnd, onStdout, useExec = false) {
+    const execCommand = `${envToStr(envVars)} ${command} ${opts.join(" ")}`;
+    const env = !envVars ? undefined : envVars;
+    const proc = useExec ? child_process_1.default.exec(execCommand) : child_process_1.default.spawn(command, opts, { env });
     let log;
     let fullLog = "";
     proc.stderr.on('data', (data) => {
         log = data.toString();
         fullLog += log;
         onStdout === null || onStdout === void 0 ? void 0 : onStdout(fullLog, true);
-        console.error(`stderr: ${data.toString()}`);
     });
     proc.stdout.on('data', (data) => {
         const log = data.toString();
@@ -538,11 +561,12 @@ function pipeToCommand(command, opts, source, onEnd, onStdout, useExed = false) 
     });
     source.pipe(proc.stdin);
     proc.on('exit', function (code, signal) {
-        console.error({ proc, code });
+        const err = fullLog.slice(fullLog.length - 100);
         if (code) {
+            console.error({ execCommand, err });
             source.destroy();
         }
-        onEnd === null || onEnd === void 0 ? void 0 : onEnd(code ? (log !== null && log !== void 0 ? log : "Error") : undefined);
+        onEnd === null || onEnd === void 0 ? void 0 : onEnd(code ? (err !== null && err !== void 0 ? err : "Error") : undefined);
     });
     return proc;
 }
@@ -555,23 +579,26 @@ function bytesToSize(bytes) {
     return Math.round(bytes / Math.pow(1024, i)) + ' ' + sizes[i];
 }
 function getSSLEnvVars(c) {
-    let result = "";
+    let result = {};
     if (c.db_ssl) {
-        result += ` PGSSLMODE=${JSON.stringify(c.db_ssl)} `;
+        result.PGSSLMODE = c.db_ssl;
     }
     if (c.db_pass) {
-        result += ` PGPASSWORD=${JSON.stringify(c.db_pass)} `;
+        result.PGPASSWORD = c.db_pass;
     }
     if (c.ssl_client_certificate) {
-        result += ` PGSSLCERT=${JSON.stringify(index_1.connMgr.getCertPath(c.id, "cert"))}`;
+        result.PGSSLCERT = index_1.connMgr.getCertPath(c.id, "cert");
     }
     if (c.ssl_client_certificate_key) {
-        result += ` PGSSLKEY=${JSON.stringify(index_1.connMgr.getCertPath(c.id, "key"))} `;
+        result.PGSSLKEY = index_1.connMgr.getCertPath(c.id, "key");
     }
     if (c.ssl_certificate) {
-        result += ` PGSSLROOTCERT=${JSON.stringify(index_1.connMgr.getCertPath(c.id, "ca"))} `;
+        result.PGSSLROOTCERT = index_1.connMgr.getCertPath(c.id, "ca");
     }
     return result;
+}
+function addOptions(opts, extra) {
+    return opts.concat(extra.filter(e => e[0]).flatMap(e => e[1]).map(e => e.toString()));
 }
 // process.stdout.on("error", (err) => {
 //   debugger

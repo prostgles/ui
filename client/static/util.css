@@ -757,7 +757,9 @@ textarea:focus {
   /* border: 1px solid rgb(0, 183, 255); */
   /* box-shadow: 0 0 0 3px rgb(0 183 255 / 15%); */
 }
-
+.not-allowed{
+  cursor: not-allowed;
+}
 .pointer {
   cursor: pointer;
 }

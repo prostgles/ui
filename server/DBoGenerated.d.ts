@@ -49,25 +49,21 @@ export type DBSchemaGenerated = {
       id?: string;
       initiator?: null | string;
       last_updated?: Date;
-      options?:       { 
-        command: 'pg_dump' | 'pg_dumpall';
-        clean: boolean;
-        format: 'p' | 't' | 'c';
-        dumpAll?: boolean;
-        ifExists?: boolean;
-        keepLogs?: boolean; 
-      };
+      options?: 
+        | {  command: 'pg_dumpall'; clean: boolean; dataOnly?: boolean; globalsOnly?: boolean; rolesOnly?: boolean; schemaOnly?: boolean; ifExists?: boolean; encoding?: string; keepLogs?: boolean; }
+        | {  command: 'pg_dump'; format: 'p' | 't' | 'c'; dataOnly?: boolean; clean?: boolean; create?: boolean; encoding?: string; numberOfJobs?: number; noOwner?: boolean; compressionLevel?: number; ifExists?: boolean; keepLogs?: boolean; }
       restore_command?: null | string;
       restore_end?: null | Date;
       restore_logs?: null | string;
       restore_options?:       { 
+        command: 'pg_restore' | 'psql';
+        format: 'p' | 't' | 'c';
         clean: boolean;
+        newDbName?: string;
         create?: boolean;
         dataOnly?: boolean;
         noOwner?: boolean;
-        newDbName?: string;
-        command: 'pg_restore' | 'psql';
-        format: 'p' | 't' | 'c';
+        numberOfJobs?: number;
         ifExists?: boolean;
         keepLogs?: boolean; 
       };
@@ -93,14 +89,26 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       access_control?: null | any;
-      backups_config?: null | any;
+      backups_config?: null |       { 
+        enabled?: boolean;
+        cloudConfig: {  credential_id?: null | number; };
+        frequency: 'daily' | 'monthly' | 'weekly' | 'hourly';
+        hour?: number;
+        dayOfWeek?: number;
+        dayOfMonth?: number;
+        keepLast?: number;
+        err?: null | string;
+        dump_options: 
+        | {  command: 'pg_dumpall'; clean: boolean; dataOnly?: boolean; globalsOnly?: boolean; rolesOnly?: boolean; schemaOnly?: boolean; ifExists?: boolean; encoding?: string; keepLogs?: boolean; }
+        | {  command: 'pg_dump'; format: 'p' | 't' | 'c'; dataOnly?: boolean; clean?: boolean; create?: boolean; encoding?: string; numberOfJobs?: number; noOwner?: boolean; compressionLevel?: number; ifExists?: boolean; keepLogs?: boolean; }; 
+      };
       created?: null | Date;
       db_conn?: null | string;
       db_host?: null | string;
       db_name?: null | string;
       db_pass?: null | string;
       db_port?: null | number;
-      db_ssl?: string;
+      db_ssl?: "disable" | "allow" | "prefer" | "require" | "verify-ca" | "verify-full"
       db_user?: null | string;
       db_watch_shema?: null | boolean;
       id?: string;
