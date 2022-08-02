@@ -1,5 +1,36 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig";
 
+const DUMP_OPTIONS_SCHEMA = {
+  jsonbSchema: {
+    oneOfTypes: [{
+      command: { oneOf: ["pg_dumpall"]  },
+      clean: { type: "boolean" },
+      dataOnly: { type: "boolean", optional: true },
+      globalsOnly: { type: "boolean", optional: true },
+      rolesOnly: { type: "boolean", optional: true },
+      schemaOnly: { type: "boolean", optional: true },
+      ifExists: { type: "boolean", optional: true },
+      encoding: { type: "string", optional: true },
+      keepLogs: { type: "boolean", optional: true },
+    }, {
+      command: { oneOf: ["pg_dump"]  },
+      format: { oneOf: ["p", "t", "c"] },
+      dataOnly: { type: "boolean", optional: true },
+      clean: { type: "boolean", optional: true },
+      create: { type: "boolean", optional: true },
+      encoding: { type: "string", optional: true },
+      numberOfJobs: { type: "integer", optional: true },
+      noOwner: { type: "boolean", optional: true },
+
+      compressionLevel: { type: "integer", optional: true },
+      ifExists: { type: "boolean", optional: true },
+
+      keepLogs: { type: "boolean", optional: true },
+    }]
+  },
+  // defaultValue: "{}"
+} as const;
+
 export const tableConfig: TableConfig<{ en: 1; }> = {
   user_groups: {
     columns: {
@@ -61,7 +92,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       db_port:                 { sqlDefinition: `INTEGER DEFAULT 5432` },
       db_user:                 { sqlDefinition: `TEXT DEFAULT ''` },
       db_pass:                 { sqlDefinition: `TEXT DEFAULT ''` },
-      db_ssl:                  { sqlDefinition: `TEXT NOT NULL DEFAULT 'disable' CHECK (db_ssl IN ('disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'))` },
+      db_ssl:                  { oneOf: ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'], nullable: false, defaultValue: "disable" },
       ssl_certificate:         { sqlDefinition: `TEXT` },
       ssl_client_certificate:  { sqlDefinition: `TEXT` },
       ssl_client_certificate_key:  { sqlDefinition: `TEXT` },
@@ -79,7 +110,45 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
 
       is_state_db:         { sqlDefinition: `BOOLEAN`, info: { hint: `If true then this DB is used to run the dashboard` }  },
       table_config:        { sqlDefinition: `JSONB`, info: { hint: `File and User configurations` } },
-      backups_config:        { sqlDefinition: `JSONB`, info: { hint: `Automatic backups configurations` } },
+      backups_config:      { nullable: true, info: { hint: `Automatic backups configurations` }, jsonbSchema: {
+    
+        enabled:{ type: "boolean", optional: true },
+        cloudConfig: { type: {
+          /**
+           * If not provided then save to current server
+           */
+          credential_id: { type: "number", nullable: true, optional: true }
+        } },
+        frequency: { oneOf: ["daily", "monthly", "weekly", "hourly"] },
+
+        /**
+         * If provided then will do the backup during that hour (24 hour format). Unless the backup frequency is less than a day
+         */
+        hour: { type: "integer", optional: true },
+
+        /**
+         * If provided then will do the backup during that hour (1-7: Mon to Sun). Unless the backup frequency is less than a day
+         */
+        dayOfWeek: { type: "integer", optional: true },
+
+        /**
+         * If provided then will do the backup during that day (1-31) or earlier if the month is shorter. Unless the backup frequency is not monthly
+         */
+        dayOfMonth: { type: "integer", optional: true },
+
+        /**
+         * If provided then will keep the latest N backups and delete the older ones
+         */
+        keepLast: { type: "integer", optional: true },
+
+        /**
+         * If not enough space will show this error
+         */
+        err: { type: "string", optional: true, nullable: true },
+
+        dump_options: DUMP_OPTIONS_SCHEMA.jsonbSchema
+ 
+      } },
       created:             { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
       last_updated:        { sqlDefinition: `BIGINT NOT NULL DEFAULT 0` },
 
@@ -195,28 +264,18 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       sizeInBytes:     { sqlDefinition: `BIGINT`, label: "Backup file size" },
       created:         { sqlDefinition: `TIMESTAMP NOT NULL DEFAULT NOW()` },
       last_updated:    { sqlDefinition: `TIMESTAMP NOT NULL DEFAULT NOW()` },
-      options: {
-        jsonbSchema: {
-          command: { oneOf: ["pg_dump", "pg_dumpall"] },
-          clean: { type: "boolean" },
-          format: { oneOf: ["p", "t", "c"] },
-          dumpAll: { type: "boolean", optional: true },
-          ifExists: { type: "boolean", optional: true },
-
-          keepLogs: { type: "boolean", optional: true },
-        },
-        // defaultValue: "{}"
-      },
+      options: DUMP_OPTIONS_SCHEMA,
       restore_options: {
         jsonbSchema: {
+          command: { oneOf: ["pg_restore", "psql"] },
+          format: { oneOf: ["p", "t", "c"] },
           clean: { type: "boolean" },
+          newDbName: { type: "string", optional: true },
           create: { type: "boolean", optional: true },
           dataOnly: { type: "boolean", optional: true },
           noOwner: { type: "boolean", optional: true },
-          newDbName: { type: "string", optional: true },
+          numberOfJobs: { type: "integer", optional: true },
 
-          command: { oneOf: ["pg_restore", "psql"] },
-          format: { oneOf: ["p", "t", "c"] },
           ifExists: { type: "boolean", optional: true },
           
           keepLogs: { type: "boolean", optional: true },

@@ -19,20 +19,51 @@ export declare function get(obj: any, propertyPath: string | string[]): any;
 export declare function restartProc(cb?: Function): void;
 export declare const upsertConnection: (con: DBSchemaGenerated["connections"]["columns"], user: Users, dbs: DBS) => Promise<Required<{
     access_control?: any;
-    backups_config?: any;
+    backups_config?: {
+        enabled?: boolean | undefined;
+        cloudConfig: {
+            credential_id?: number | null | undefined;
+        };
+        frequency: "daily" | "weekly" | "monthly" | "hourly";
+        hour?: number | undefined;
+        dayOfWeek?: number | undefined;
+        dayOfMonth?: number | undefined;
+        keepLast?: number | undefined;
+        err?: string | null | undefined;
+        dump_options: {
+            command: "pg_dumpall";
+            clean: boolean;
+            dataOnly?: boolean | undefined;
+            globalsOnly?: boolean | undefined;
+            rolesOnly?: boolean | undefined;
+            schemaOnly?: boolean | undefined;
+            ifExists?: boolean | undefined;
+            encoding?: string | undefined;
+            keepLogs?: boolean | undefined;
+        } | {
+            command: "pg_dump";
+            format: "p" | "c" | "t";
+            dataOnly?: boolean | undefined;
+            clean?: boolean | undefined;
+            create?: boolean | undefined;
+            encoding?: string | undefined;
+            numberOfJobs?: number | undefined;
+            noOwner?: boolean | undefined;
+            compressionLevel?: number | undefined;
+            ifExists?: boolean | undefined;
+            keepLogs?: boolean | undefined;
+        };
+    } | null | undefined;
     created?: Date | null | undefined;
     db_conn?: string | null | undefined;
     db_host?: string | null | undefined;
     db_name?: string | null | undefined;
     db_pass?: string | null | undefined;
     db_port?: number | null | undefined;
-    db_ssl?: string | undefined;
+    db_ssl?: "allow" | "require" | "verify-ca" | "verify-full" | "disable" | "prefer" | undefined;
     db_user?: string | null | undefined;
     db_watch_shema?: boolean | null | undefined;
-    id?: string | undefined; /**
-     * Cannot use connection uri without having ssl issues
-     * https://github.com/brianc/node-postgres/issues/2281
-     */
+    id?: string | undefined;
     is_state_db?: boolean | null | undefined;
     last_updated?: number | undefined;
     name?: string | null | undefined;
