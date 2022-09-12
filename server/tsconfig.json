@@ -1,10 +1,10 @@
 {
-	"files": ["./index.ts"],
+	"files": ["./src/index.ts"],
 	"compilerOptions": {
 		"outDir": "dist",
 		// "target": "es2019",
 		// "lib": [ "es2019" ],
-		"target": "ES2017",
+		"target": "ES2022",
 		"lib": [ "ES2017", "es2019", "ES2021.String" ],
 		"esModuleInterop" : true,
 		"allowSyntheticDefaultImports": true,
@@ -12,10 +12,14 @@
 		"module": "commonjs",
 		"sourceMap": true,
 		// "rootDir": ".",
+		"moduleResolution": "node",
 		"declaration": true,
 		"declarationMap": true,
 		"keyofStringsOnly": true,
 		"strict": true,
+		"paths": { 
+			"@common/*": ["../commonTypes/*"], 
+		},
 	},
 	"exclude": [
 		"dist",
