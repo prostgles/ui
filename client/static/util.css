@@ -76,6 +76,9 @@
   --indigo-700: #5145cd;
   --indigo-800: #42389d;
   --indigo-900: #362f78;
+
+  --active: #00a1ff;
+  --active-hover: #51bfff;
 }
 
 
@@ -674,6 +677,9 @@
   box-shadow: 0 0 0 2px currentColor
 }
 
+.shadow1 {
+  box-shadow: 0px 2px 1px -1px rgb(0 0 0 / 20%), 0px 1px 1px 0px rgb(0 0 0 / 14%), 0px 1px 3px 0px rgb(0 0 0 / 12%);
+}
 
 .bg-white {
   background-color: white;
@@ -901,7 +907,7 @@ textarea:focus {
   border-top: 1px solid var(--gray-300);
 }
 .bb {
-  border-top: 1px solid var(--gray-300);
+  border-bottom: 1px solid var(--gray-300);
 }
 
 .b-0 {
@@ -2081,4 +2087,37 @@ nav.left-nav-list a.active {
   .w-600 { width: 320px; }
   .w-500 { width: 320px; }
   .w-400 { width: 320px; }
+}
+
+.text-active {
+  color: var(--active);
+}
+.b-active {
+  border-color: var(--active);
+}
+.bg-active {
+  background-color: var(--active);
+}
+
+.text-active.hover:hover {
+  color: var(--active-hover);
+}
+.b-active.hover:hover {
+  border-color: var(--active-hover);
+}
+.bg-active.hover:hover {
+  background-color: var(--active-hover);
+}
+
+
+.show-on-parent-hover {
+  opacity: 0;
+}
+.show-on-parent-hover:focus-within {
+  opacity: 1 !important;
+}
+
+
+.parent-hover:hover .show-on-parent-hover {
+  opacity: 1;
 }

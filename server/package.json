@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "npm i && NODE_OPTIONS=--max-old-space-size=8192 tsc",
-    "start": "npm run build && node dist/index.js",
+    "build": "npm i && NODE_OPTIONS=--max-old-space-size=2048 tsc",
+    "start": "npm run build && node dist/server/src/index.js",
     "rollup": "rollup -c",
-    "dev": " NODE_OPTIONS='--max-old-space-size=12048' npm i && tsc-watch --onSuccess \"node --inspect  dist/index.js\"",
+    "dev": " NODE_OPTIONS='--max-old-space-size=2048' npm i && tsc-watch --onSuccess \"node --inspect  dist/server/src/index.js\"",
     "devall": "npm run dev & cd ../client && npm i && npm run dev"
   },
   "author": "",
@@ -21,7 +21,9 @@
     "csvtojson": "^2.0.10",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "prostgles-server": "^2.0.240",
+    "otplib": "^12.0.1",
+    "prostgles-server": "^2.0.275",
+    "qrcode": "^1.5.1",
     "socket.io": "^4.5.1"
   },
   "devDependencies": {
