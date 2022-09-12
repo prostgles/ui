@@ -44,10 +44,12 @@ services:
     depends_on:
       - postgres
 
-
-    command: node --inspect /usr/src/app/server/dist/index.js
+    ## DEBUG
+    command: node --inspect=0.0.0.0:9229 /usr/src/app/server/dist/server/src/index.js
+    # command: node /usr/src/app/server/dist/server/src/index.js
     ports:
       - '${PRGL_DOCKER_IP:-127.0.0.1}:${PRGL_DOCKER_PORT-3004}:3004'
+      # DEBUG
       - '${PRGL_DOCKER_IP:-127.0.0.1}:9229:9229'
         
 volumes:
