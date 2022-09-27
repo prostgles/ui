@@ -15,7 +15,14 @@ export type DBSchemaGenerated = {
       connection_id: string;
       created?: null | Date;
       id?: string;
-      rule?: null | any;
+      rule?:       { 
+        userGroupNames: string[];
+        dbsPermissions?: {  createWorkspaces?: boolean; viewPublishedWorkspaces?: {  workspaceIds: string[]; }; };
+        dbPermissions: 
+        | {  type: 'Run SQL'; allowSQL?: boolean; }
+        | {  type: 'All views/tables'; allowAllTables: string[]; }
+        | {  type: 'Custom'; customTables: any[]; }; 
+      };
       user_groups?: null | Array<string>;
     };
   };
@@ -357,6 +364,18 @@ export type DBSchemaGenerated = {
       status?: string;
       type?: string;
       username: string;
+    };
+  };
+  usrs: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      id?: number;
+      status?: null | string;
+      type?: null | string;
     };
   };
   windows: {

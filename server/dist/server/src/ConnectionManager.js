@@ -29,11 +29,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ConnectionManager = exports.PROSTGLES_CERTS_FOLDER = exports.DB_TRANSACTION_KEY = void 0;
 const index_1 = require("./index");
 const socket_io_1 = require("socket.io");
+const publishUtils_1 = require("../../commonTypes/publishUtils");
 const prostgles_server_1 = __importDefault(require("prostgles-server"));
 const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
 const path_1 = __importDefault(require("path"));
-const PublishAccessControlParser_1 = require("./PublishAccessControlParser");
-const prostgles_types_1 = require("prostgles-types");
 const authConfig_1 = require("./authConfig");
 const fs = __importStar(require("fs"));
 exports.DB_TRANSACTION_KEY = "dbTransactionProstgles";
@@ -105,6 +104,9 @@ class ConnectionManager {
     getConnection(conId) {
         return this.prgl_connections[conId];
     }
+    getConnections() {
+        return this.prgl_connections;
+    }
     async disconnect(conId) {
         if (this.prgl_connections[conId]) {
             await this.prgl_connections[conId].prgl?.destroy();
@@ -124,7 +126,10 @@ class ConnectionManager {
                 return this.prgl_connections[con_id].socket_path;
             }
         }
-        const con = await dbs.connections.findOne({ id: con_id });
+        const con = await dbs.connections.findOne({ id: con_id }).catch(e => {
+            console.error(142, e);
+            return undefined;
+        });
         if (!con)
             throw "Connection not found";
         await (0, index_1.testDBConnection)(con);
@@ -162,7 +167,7 @@ class ConnectionManager {
             const _io = new socket_io_1.Server(http, { path: socket_path, maxHttpBufferSize: 1e8, cors: { origin: "*" } });
             const getRule = async (user) => {
                 if (user) {
-                    return dbs.access_control.findOne({ connection_id: con.id, $existsJoined: { access_control_user_types: { user_type: user.type } } }); //  user_groups: { $contains: [user.type] }
+                    return await dbs.access_control.findOne({ connection_id: con.id, $existsJoined: { access_control_user_types: { user_type: user.type } } }); //  user_groups: { $contains: [user.type] }
                 }
                 return undefined;
             };
@@ -235,79 +240,43 @@ class ConnectionManager {
                     // },
                     transactions: exports.DB_TRANSACTION_KEY,
                     joins: "inferred",
-                    publish: async ({ user, dbo }) => {
+                    publish: async ({ user, dbo, tables }) => {
                         if (user) {
                             if (user.type === "admin")
                                 return "*";
-                            const parseTableRules = (rules, isView = false) => {
-                                const parseMethodFields = (obj) => {
-                                    if (obj === true || obj === "*") {
-                                        return obj;
-                                    }
-                                    else if ((0, prostgles_types_1.isObject)(obj)) {
-                                        const forcedFilter = (0, PublishAccessControlParser_1.getACFilter)(obj);
-                                        const { fields } = obj;
-                                        if ((0, prostgles_types_1.isObject)(fields)) {
-                                            const vals = Object.values(fields);
-                                            if (!vals.length) {
-                                                throw "Invalid fields: empty object";
-                                            }
-                                            if (!(vals.every(v => v === 1 || v === true) ||
-                                                vals.every(v => v === 0 || v === false))) {
-                                            }
-                                            else {
-                                                throw "Invalid fields: must have only include or exclude. Cannot have both";
-                                            }
-                                        }
-                                        return { fields, forcedFilter };
-                                    }
-                                    return undefined;
-                                };
-                                if (rules === true || rules === "*") {
-                                    return true;
-                                }
-                                else if ((0, prostgles_types_1.isObject)(rules)) {
-                                    return {
-                                        select: parseMethodFields(rules.select),
-                                        ...(!isView ? {
-                                            insert: parseMethodFields(rules.insert),
-                                            update: parseMethodFields(rules.update),
-                                            delete: !!rules.delete,
-                                        } : {})
-                                    };
-                                }
-                            };
                             const ac = await getRule(user);
-                            console.log(user.type, ac);
                             if (ac?.rule) {
-                                const rule = ac.rule;
-                                if (ac.rule?.type === "Run SQL" && ac.rule.allowSQL) {
+                                const { dbPermissions } = ac.rule;
+                                if (dbPermissions.type === "Run SQL" && dbPermissions.allowSQL) {
                                     return "*";
                                 }
-                                else if (rule.type === 'All views/tables' && (0, prostgles_types_1.isObject)(rule.allowAllTables)) {
-                                    const { select, update, insert, delete: _delete } = rule.allowAllTables;
-                                    if (select || update || insert || _delete) {
-                                        return Object.keys(dbo).filter(k => dbo[k].find).reduce((a, v) => ({ ...a, [v]: {
-                                                select: select ? "*" : undefined,
-                                                ...(dbo[v].is_view ? {} : {
-                                                    update: update ? "*" : undefined,
-                                                    insert: insert ? "*" : undefined,
-                                                    delete: _delete ? "*" : undefined,
-                                                })
-                                            }
-                                        }), {});
-                                    }
-                                }
-                                else if (rule.type === "Custom" && rule.customTables) {
-                                    return rule.customTables
-                                        .filter((t) => dbo[t.tableName])
-                                        .reduce((a, v) => ({
-                                        ...a,
-                                        [v.tableName]: parseTableRules((0, PubSubManager_1.omitKeys)(v, ["tableName"]), dbo[v.tableName].is_view)
+                                else if (dbPermissions.type === 'All views/tables' && dbPermissions.allowAllTables.length) {
+                                    return Object.keys(dbo).filter(k => dbo[k].find).reduce((a, v) => ({ ...a, [v]: {
+                                            select: dbPermissions.allowAllTables.includes("select") ? "*" : undefined,
+                                            ...(dbo[v].is_view ? {} : {
+                                                update: dbPermissions.allowAllTables.includes("update") ? "*" : undefined,
+                                                insert: dbPermissions.allowAllTables.includes("insert") ? "*" : undefined,
+                                                delete: dbPermissions.allowAllTables.includes("delete") ? "*" : undefined,
+                                            })
+                                        }
                                     }), {});
                                 }
+                                else if (dbPermissions.type === "Custom" && dbPermissions.customTables) {
+                                    // return (rule as CustomTableRules).customTables
+                                    return dbPermissions.customTables
+                                        .filter((t) => dbo[t.tableName])
+                                        .reduce((a, v) => {
+                                        const table = tables.find(({ name }) => name === v.tableName);
+                                        if (!table)
+                                            return {};
+                                        return {
+                                            ...a,
+                                            [v.tableName]: (0, publishUtils_1.parseTableRules)((0, PubSubManager_1.omitKeys)(v, ["tableName"]), dbo[v.tableName].is_view, table.columns.map(c => c.name), { user: user })
+                                        };
+                                    }, {});
+                                }
                                 else {
-                                    console.error("Unexpected access control rule: ", rule);
+                                    console.error("Unexpected access control rule: ", ac.rule);
                                 }
                             }
                         }

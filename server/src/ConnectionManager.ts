@@ -1,15 +1,14 @@
 
 import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
-import { testDBConnection, restartProc, getConnectionDetails, Connections, MEDIA_ROUTE_PREFIX, ROOT_DIR, API_PATH } from "./index";
+import { testDBConnection, restartProc, getConnectionDetails, Connections, MEDIA_ROUTE_PREFIX, ROOT_DIR, API_PATH, DBS } from "./index";
 import { Server }  from "socket.io";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import { CustomTableRules, DBSSchema, parseForcedFilter, parseTableRules, TableRules } from "../../commonTypes/publishUtils";
 import prostgles from "prostgles-server";
 import { omitKeys, pickKeys } from "prostgles-server/dist/PubSubManager";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import { PublishedResult } from "prostgles-server/dist/PublishParser";
 import { DB, FileTableConfig } from "prostgles-server/dist/Prostgles";
 import path from "path";
-import { getACFilter} from "./PublishAccessControlParser";
 import { isObject } from "prostgles-types";
 import { getAuth } from "./authConfig"
 import WebSocket from 'ws';
@@ -106,6 +105,10 @@ export class ConnectionManager {
     return this.prgl_connections[conId];
   }
 
+  getConnections(){
+    return this.prgl_connections;
+  }
+
   async disconnect(conId: string): Promise<boolean> {
     if(this.prgl_connections[conId]){
       
@@ -134,7 +137,10 @@ export class ConnectionManager {
       }
     }
 
-    const con = await dbs.connections.findOne({ id: con_id });
+    const con = await dbs.connections.findOne({ id: con_id }).catch(e => {
+      console.error(142,e);
+      return undefined
+    });
     if(!con) throw "Connection not found";
   
     await testDBConnection(con)
@@ -176,9 +182,9 @@ export class ConnectionManager {
   
       const _io = new Server(http, { path: socket_path, maxHttpBufferSize: 1e8, cors: { origin: "*"  } });
   
-      const getRule = async (user: DBSchemaGenerated["users"]["columns"]): Promise<DBSchemaGenerated["access_control"]["columns"] | undefined>  => {
+      const getRule = async (user: DBSSchema["users"]): Promise<DBSSchema["access_control"] | undefined>  => {
         if(user){
-          return dbs.access_control.findOne({ connection_id: con.id, $existsJoined: { access_control_user_types: { user_type: user.type } } }) //  user_groups: { $contains: [user.type] }
+          return await dbs.access_control.findOne({ connection_id: con.id, $existsJoined: { access_control_user_types: { user_type: user.type } } }) //  user_groups: { $contains: [user.type] }
         }
         return undefined
       }
@@ -257,81 +263,46 @@ export class ConnectionManager {
           // },
           transactions: DB_TRANSACTION_KEY,
           joins: "inferred",
-          publish: async ({ user, dbo }) => {
+          publish: async ({ user, dbo, tables }) => {
             if(user){
               if(user.type === "admin") return "*";
               
               
-              const parseTableRules = (rules: any, isView = false): PublishedResult | undefined => {
-                const parseMethodFields = (obj: any) => {
-                  if(obj === true || obj === "*"){
-                    return obj;
-                  } else if(isObject(obj)){
-                    const forcedFilter = getACFilter(obj)
-
-                    const { fields } = obj;
-                    if(isObject(fields)){
-                      const vals = Object.values(fields);
-                      if(!vals.length){
-                        throw "Invalid fields: empty object";
-                      }
-                      
-                      if(
-                        !(vals.every(v => v === 1 || v === true) ||
-                        vals.every(v => v === 0 || v === false))
-                      ){
-                      } else {
-                        throw "Invalid fields: must have only include or exclude. Cannot have both";
-                      }
-                    }
-                    return { fields, forcedFilter }
-                  }
-                  return undefined;
-                }
-  
-                if(rules === true || rules === "*"){
-                  return true;
-                } else if(isObject(rules)){
-                  return {
-                    select: parseMethodFields(rules.select),
-                    ...(!isView? {
-                      insert: parseMethodFields(rules.insert),
-                      update: parseMethodFields(rules.update),
-                      delete: !!rules.delete,
-                    } : {})
-                  }
-                }
-              }
-              
               const ac = await getRule(user as any);
-              console.log(user.type, ac)
+              
               if(ac?.rule){
-                const rule = ac.rule;
-                if(ac.rule?.type === "Run SQL" && ac.rule.allowSQL){
+                const { dbPermissions } = ac.rule;
+
+                if(dbPermissions.type === "Run SQL" && dbPermissions.allowSQL){
                   return "*" as "*";
   
-                } else if(rule.type === 'All views/tables' && isObject( rule.allowAllTables)){
-                  const { select, update, insert, delete: _delete } = rule.allowAllTables;
-                  if(select || update || insert || _delete){
-                    return Object.keys(dbo).filter(k => dbo[k].find).reduce((a, v) => ({ ...a, [v]: { 
-                        select: select? "*" : undefined, 
-                        ...(dbo[v].is_view? {} : {
-                          update: update? "*" : undefined, 
-                          insert: insert? "*" : undefined, 
-                          delete: _delete? "*" : undefined, 
-                        })
-                      } 
-                    }), {})
-                  }
-                } else if(rule.type === "Custom" && rule.customTables){
-                  return rule.customTables
+                } else if(dbPermissions.type === 'All views/tables' && dbPermissions.allowAllTables.length){
+
+                  return Object.keys(dbo).filter(k => dbo[k].find).reduce((a, v) => ({ ...a, [v]: { 
+                      select: dbPermissions.allowAllTables.includes("select")? "*" : undefined, 
+                      ...(dbo[v].is_view? {} : {
+                        update: dbPermissions.allowAllTables.includes("update")? "*" : undefined, 
+                        insert: dbPermissions.allowAllTables.includes("insert")? "*" : undefined, 
+                        delete: dbPermissions.allowAllTables.includes("delete")? "*" : undefined, 
+                      })
+                    } 
+                  }), {})
+                } else if(dbPermissions.type === "Custom" && dbPermissions.customTables){
+
+                  // return (rule as CustomTableRules).customTables
+                  return dbPermissions.customTables
                     .filter((t: any) => dbo[t.tableName])
-                    .reduce((a: any, v: any) => ({ 
-                      ...a, 
-                      [v.tableName]: parseTableRules(omitKeys(v, ["tableName"]), dbo[v.tableName].is_view) 
-                    }) ,{})
+                    .reduce((a: any, v: CustomTableRules["customTables"][number]) => {
+                      const table = tables.find(({ name }) => name === v.tableName);
+                      if(!table) return {};
+
+                      return { 
+                        ...a, 
+                        [v.tableName]: parseTableRules(omitKeys(v, ["tableName"]), dbo[v.tableName].is_view, table.columns.map(c => c.name), { user: user as DBSSchema["users"] }) 
+                      }
+                   } ,{})
                 } else {
-                  console.error("Unexpected access control rule: ", rule)
+                  console.error("Unexpected access control rule: ", (ac as any).rule)
                 }
               }
             }
@@ -342,7 +313,7 @@ export class ConnectionManager {
             if(user?.type === "admin"){
               return true;
             }
-            const ac = await getRule(user as any);
+            const ac = await getRule(user as any) as any;
             if(ac?.rule?.type === "Run SQL" && ac.rule.allowSQL){
               return true;
             }

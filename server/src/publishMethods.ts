@@ -20,6 +20,7 @@ import { ConnectionTableConfig, DB_TRANSACTION_KEY } from "./ConnectionManager";
 import { DBHandlerServer, isPojoObject } from "prostgles-server/dist/DboBuilder";
 import { deepStrictEqual } from "assert";
 import { pickKeys } from "prostgles-server/dist/PubSubManager";
+import { DBSSchema } from "../../commonTypes/publishUtils";
 export let bkpManager: BackupManager;
 
 export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params) => { //  socket, dbs: DBObj, _dbs, user: Users
@@ -57,6 +58,9 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
   };
 
   const adminMethods = {
+    getConnectedIds: async (): Promise<string[]> => {
+      return Object.keys(connMgr.getConnections());
+    },
     getDBSize: async (conId: string) => {
       const db = connMgr.getConnection(conId);
       const size: string = await db?.prgl?.db?.sql?.("SELECT pg_size_pretty( pg_database_size(current_database()) ) ", { }, { returnType: "value" });
@@ -214,6 +218,13 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
         await dbs.connections.update({ id: connId }, { table_config: null });
       }
       await reStartConnection?.(connId);
+    },
+    deleteAccessRule: (id: string) => {
+      return dbs.access_control.delete({ id })
+    },
+    upsertAccessRule: (ac: DBSSchema["access_control"]) => {
+      if(!ac) return dbs.access_control.insert(ac);
+      return dbs.access_control.update({ id: ac.id }, ac);
     }
   }
 

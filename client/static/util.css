@@ -1225,6 +1225,14 @@ textarea:focus {
 .b-blue-600 {
   border-color: var(--blue-600);
 }
+
+
+.b-blue-100-hover:hover {
+  border-color: var(--blue-100);
+}
+.b-blue-200-hover:hover {
+  border-color: var(--blue-200);
+}
 .b-blue-300-hover:hover {
   border-color: var(--blue-300);
 }
@@ -1569,6 +1577,11 @@ textarea:focus {
 
 .to-ellipsis {
   text-overflow: ellipsis;
+}
+
+.min-s-0 {
+  min-height: 0;
+  min-width: 0;
 }
 
 .min-h-0 {
@@ -1943,6 +1956,12 @@ button.toggle:focus {
   padding-top: 0;
 }
 
+.pl-3 {
+  padding-left: 3em;
+}
+.pl-2 {
+  padding-left: 2em;
+}
 .pl-1 {
   padding-left: 1em;
 }
@@ -2118,6 +2137,23 @@ nav.left-nav-list a.active {
 }
 
 
-.parent-hover:hover .show-on-parent-hover {
+.parent-hover:hover .show-on-parent-hover,
+*:hover > .show-on-parent-hover
+{
   opacity: 1;
+}
+
+
+
+.bg-blue-100-hover:hover {
+  background-color: var(--blue-100);
+}
+.bg-blue-200-hover:hover {
+  background-color: var(--blue-200);
+}
+.bg-blue-300-hover:hover {
+  background-color: var(--blue-300);
+}
+.bg-blue-400-hover:hover {
+  background-color: var(--blue-400);
 }
