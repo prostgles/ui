@@ -1,3 +1,5 @@
+import { ContextDataObject, ContextValue } from "./publishUtils";
+export declare const isDefined: <T>(v: void | T | undefined) => v is T;
 export declare const CORE_FILTER_TYPES: readonly [{
     readonly key: "=";
     readonly label: "=";
@@ -73,6 +75,7 @@ export declare type DetailedFilterBase = BaseFilter & {
     fieldName: string;
     type?: FilterType;
     value?: any;
+    contextValue?: ContextValue;
     complexFilter?: {
         argsLeftToRight: boolean;
         comparator: string;
@@ -88,7 +91,8 @@ export declare type SimpleFilter = DetailedFilterBase | JoinedFilter;
 export declare type SmartGroupFilter = SimpleFilter[];
 export declare const isJoinedFilter: (f: SimpleFilter) => f is JoinedFilter;
 export declare const isDetailedFilter: (f: SimpleFilter) => f is DetailedFilterBase;
-export declare const getFinalFilter: (detailedFilter: SimpleFilter) => {
+export declare const getFinalFilterInfo: (fullFilter?: FullDetailedFilter, context?: ContextDataObject, depth?: number) => string;
+export declare const getFinalFilter: (detailedFilter: SimpleFilter, context?: ContextDataObject, forInfoOnly?: boolean) => {
     $filter: any[];
 } | {
     [x: string]: any;

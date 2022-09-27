@@ -28,6 +28,7 @@ export declare class ConnectionManager {
     getFileFolderPath(conId?: string): string;
     getConnectionDb(conId: string): Required<PRGLInstance>["prgl"]["db"] | undefined;
     getConnection(conId: string): PRGLInstance | undefined;
+    getConnections(): Record<string, PRGLInstance>;
     disconnect(conId: string): Promise<boolean>;
     startConnection(con_id: string, socket: PRGLIOSocket, dbs: DBOFullyTyped<DBSchemaGenerated>, _dbs: DB, restartIfExists?: boolean): Promise<string | undefined>;
 }

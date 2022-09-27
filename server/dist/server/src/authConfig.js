@@ -63,15 +63,17 @@ const getAuth = (app) => {
             //   password = EMPTY_PASSWORD;
             // }
             try {
-                u = await _db.one("SELECT * FROM users WHERE username = ${username} AND password = crypt(${password}, id::text) AND status = 'active';", { username, password });
+                u = await _db.one("SELECT * FROM users WHERE username = ${username} AND password = crypt(${password}, id::text);", { username, password });
             }
             catch (e) {
-                throw "User and password not matching anything";
+                throw "no match";
             }
             if (!u) {
                 // console.log( await db.users.find())
                 throw "something went wrong: " + JSON.stringify({ username, password });
             }
+            if (u && u.status !== "active")
+                throw "inactive";
             if (u["2fa"]?.enabled) {
                 if (totp_recovery_code && typeof totp_recovery_code === "string") {
                     const areMatching = await _db.any("SELECT * FROM users WHERE id = ${id} AND \"2fa\"->>'recoveryCode' = crypt(${code}, id::text) ", { id: u.id, code: totp_recovery_code.trim() });

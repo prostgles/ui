@@ -1,4 +1,6 @@
-import { isDefined } from "prostgles-types";
+import { ContextDataObject, ContextValue } from "./publishUtils";
+
+export const isDefined = <T>(v: T | undefined | void): v is T => v !== undefined && v !== null;
 
 export const CORE_FILTER_TYPES = [
   { key: "=", label: "="},
@@ -54,6 +56,7 @@ export type DetailedFilterBase = BaseFilter & {
   fieldName: string;
   type?: FilterType;
   value?: any;
+  contextValue?: ContextValue;
   complexFilter?: {
     argsLeftToRight: boolean;
     comparator: string;
@@ -72,12 +75,48 @@ export type SmartGroupFilter = SimpleFilter[];
 export const isJoinedFilter = (f: SimpleFilter): f is JoinedFilter => Boolean(f.type && JOINED_FILTER_TYPES.includes(f.type as any));
 export const isDetailedFilter = (f: SimpleFilter): f is DetailedFilterBase => !isJoinedFilter(f.type as any);
 
-export const getFinalFilter = (detailedFilter: SimpleFilter) => { 
+export const getFinalFilterInfo = (fullFilter?: FullDetailedFilter, context?: ContextDataObject, depth = 0): string => {
+  const filterToString = (filter: SimpleFilter): string | undefined => {
+    const f = getFinalFilter(filter, context, true);
+    if(!f) return undefined;
+    const fieldNameAndOperator: keyof typeof f = Object.keys(f)[0] as any;
+    return `${fieldNameAndOperator} ${JSON.stringify(f[fieldNameAndOperator])}`.split(".$").join(" "); //.split(" ").map((v, i) => i? v.toUpperCase() : v).join(" ");
+  }
+
+  let result = "";
+  if(fullFilter){
+    const isAnd = "$and" in fullFilter
+    if(isAnd || "$or" in fullFilter){
+      // @ts-ignore
+      const finalFilters = fullFilter[isAnd? "$and" : "$or"].map(f => getFinalFilterInfo(f, context, depth + 1)).filter(isDefined);
+      const finalFilterStr = finalFilters.join(isAnd? " AND " : " OR ");
+      return (finalFilters.length > 1 && depth > 1)? `( ${finalFilterStr} )` : finalFilterStr
+    }
+
+    return filterToString(fullFilter) ?? ""
+  }
+
+  return result
+}
+
+export const getFinalFilter = (detailedFilter: SimpleFilter, context?: ContextDataObject, forInfoOnly = false) => { 
 
   if("fieldName" in detailedFilter && detailedFilter.disabled || isJoinedFilter(detailedFilter) && detailedFilter.filter.disabled) return undefined;
 
-  const getF = (f: DetailedFilterBase) => {
-    let val = ({ ...f }).value;
+  const parseContextVal = (f: DetailedFilterBase): any => {
+    if((context || forInfoOnly) && f.contextValue){
+      if(forInfoOnly){
+        return `{{${f.contextValue.objectName}.${f.contextValue.objectPropertyName}}}`
+      }
+      //@ts-ignore
+      return context[f.contextValue.objectName]?.[f.contextValue.objectPropertyName];
+    }
+    return ({...f}).value;
+  }
+
+  const getFilter = (f: DetailedFilterBase) => {
+    const val = parseContextVal(f);
+
     if(f.type === "$age" || f.type === "$duration"){
       const { comparator, argsLeftToRight = true, otherField } = f.complexFilter ?? {};
       const $age = f.type === "$age"? [f.fieldName] : [f.fieldName, otherField].filter(isDefined);
@@ -86,7 +125,7 @@ export const getFinalFilter = (detailedFilter: SimpleFilter) => {
         $filter: [
           { $age },
           comparator,
-          f.value
+          val
         ]
       }
     }
@@ -108,23 +147,24 @@ export const getFinalFilter = (detailedFilter: SimpleFilter) => {
   if(FTS_FILTER_TYPES.some(f => f.key === detailedFilter.type) && "fieldName" in detailedFilter){
     return {
       [`${detailedFilter.fieldName}.${detailedFilter.type}`]: [
-        detailedFilter.value
+        parseContextVal(detailedFilter)
       ]
     }
   } else if(isJoinedFilter(detailedFilter)){
     
     return {
       [detailedFilter.type]: {
-        [`${detailedFilter.path.join(".")}`]: getF(detailedFilter.filter)
+        [`${detailedFilter.path.join(".")}`]: getFilter(detailedFilter.filter)
       }
     };
   } else if(detailedFilter.type === "$term_highlight"){
 
     return {
-      $term_highlight: [[detailedFilter.fieldName || "*"], detailedFilter.value, { matchCase: false, edgeTruncate: 30, returnType: "boolean" } ]
+      $term_highlight: [[detailedFilter.fieldName || "*"], parseContextVal(detailedFilter), { matchCase: false, edgeTruncate: 30, returnType: "boolean" } ]
     };
-  }
-  return getF(detailedFilter)
+  };
+
+  return getFilter(detailedFilter)
 }
 
 

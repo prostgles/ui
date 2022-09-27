@@ -9,6 +9,7 @@ const publish = async (params, con) => {
     if (!user || !user.id) {
         return null;
     }
+    const isAdmin = user.type === "admin";
     /** If user is NOT ADMIN then get the access rules */
     const { id: user_id } = user;
     // _db.any("ALTER TABLE workspaces ADD COLUMN options         JSON DEFAULT '{}'::json")
@@ -92,11 +93,12 @@ const publish = async (params, con) => {
         }
         return update;
     };
+    const userTypeFilter = { "access_control_user_types": { user_type: user.type } };
     let res = {
         /* DASHBOARD */
         ...dashboardConfig,
-        access_control_user_types: user?.type === "admin" ? "*" : undefined,
-        credentials: user?.type === "admin" ? {
+        access_control_user_types: isAdmin && "*",
+        credentials: isAdmin ? {
             select: {
                 fields: { key_secret: 0 }
             },
@@ -104,21 +106,23 @@ const publish = async (params, con) => {
             insert: { fields: { id: 0 }, forcedData: { user_id: user.id } },
             update: "*",
         } : undefined,
-        credential_types: user?.type === "admin" ? { select: "*" } : undefined,
+        access_control: isAdmin ? "*" : { select: { fields: "*", forcedFilter: { $existsJoined: userTypeFilter } } },
+        credential_types: isAdmin && { select: "*" },
         connections: {
             select: {
-                fields: "*",
-                forcedFilter: user?.type === "admin" ?
+                fields: isAdmin ? "*" : { id: 1, name: 1, created: 1 },
+                orderByFields: { db_conn: 1, created: 1 },
+                forcedFilter: isAdmin ?
                     {} :
-                    { $existsJoined: { "access_control.access_control_user_types": { user_type: user.type } } }
+                    { $existsJoined: { "access_control.access_control_user_types": userTypeFilter["access_control_user_types"] } }
             },
-            update: user.type !== "admin" ? undefined : {
+            update: user.type === "admin" && {
                 fields: {
                     name: 1, table_config: 1, backups_config: 1
                 }
             }
         },
-        user_types: user?.type === "admin" ? {
+        user_types: isAdmin && {
             insert: "*",
             select: {
                 fields: "*",
@@ -131,8 +135,8 @@ const publish = async (params, con) => {
                         throw "Cannot delete the admin value";
                 })
             }
-        } : false,
-        users: user?.type === "admin" ? {
+        },
+        users: isAdmin ? {
             select: "*",
             insert: {
                 fields: "*",
@@ -169,14 +173,14 @@ const publish = async (params, con) => {
         backups: {
             select: true,
         },
-        magic_links: user?.type === "admin" ? {
+        magic_links: isAdmin && {
             insert: {
                 fields: { magic_link: 0 }
             },
             select: true,
             update: true,
             delete: true,
-        } : false
+        }
     };
     const curTables = Object.keys(res || {});
     // @ts-ignore
@@ -184,7 +188,7 @@ const publish = async (params, con) => {
     const adminExtra = remainingTables.reduce((a, v) => ({ ...a, [v]: "*" }), {});
     res = {
         ...res,
-        ...(user.type === "admin" ? adminExtra : {})
+        ...(isAdmin ? adminExtra : {})
     };
     return res;
 };

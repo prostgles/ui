@@ -65,6 +65,22 @@ exports.tableConfig = {
                 }
             },
             status: { sqlDefinition: `TEXT NOT NULL DEFAULT 'active' REFERENCES user_statuses (id)` },
+        },
+        triggers: {
+            atLeastOneActiveAdmin: {
+                actions: ["delete", "update"],
+                type: "after",
+                forEach: "statement",
+                query: `
+          BEGIN
+            IF NOT EXISTS(SELECT * FROM users WHERE type = 'admin' AND status = 'active') THEN
+              RAISE EXCEPTION 'Must have at least one active admin user';
+            END IF;
+
+            RETURN NULL;
+          END;
+        `
+            }
         }
     },
     sessions: {
@@ -174,8 +190,30 @@ exports.tableConfig = {
         columns: {
             id: { sqlDefinition: `SERIAL PRIMARY KEY` },
             connection_id: { sqlDefinition: `UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE` },
-            user_groups: { sqlDefinition: `TEXT[] NOT NULL` },
-            rule: { sqlDefinition: `JSONB` },
+            rule: { nullable: false, jsonbSchema: {
+                    userGroupNames: { type: "string[]" },
+                    dbsPermissions: { optional: true, type: {
+                            createWorkspaces: { type: "boolean", optional: true },
+                            viewPublishedWorkspaces: { type: {
+                                    workspaceIds: { type: "string[]" }
+                                }, optional: true },
+                        } },
+                    dbPermissions: { oneOfTypes: [
+                            {
+                                type: { oneOf: ["Run SQL"] },
+                                allowSQL: { type: "boolean", optional: true },
+                            },
+                            {
+                                type: { oneOf: ["All views/tables"] },
+                                allowAllTables: { type: "string[]" },
+                            },
+                            {
+                                type: { oneOf: ["Custom"] },
+                                customTables: { type: "any[]" },
+                            }
+                        ] }
+                    //   CustomTableRules
+                } },
             created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
         }
     },

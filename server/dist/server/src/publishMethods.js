@@ -65,6 +65,9 @@ const publishMethods = async (params) => {
         return index_1.connMgr.startConnection(conId, socket, dbs, _dbs, true);
     };
     const adminMethods = {
+        getConnectedIds: async () => {
+            return Object.keys(index_1.connMgr.getConnections());
+        },
         getDBSize: async (conId) => {
             const db = index_1.connMgr.getConnection(conId);
             const size = await db?.prgl?.db?.sql?.("SELECT pg_size_pretty( pg_database_size(current_database()) ) ", {}, { returnType: "value" });
@@ -218,6 +221,14 @@ const publishMethods = async (params) => {
                 await dbs.connections.update({ id: connId }, { table_config: null });
             }
             await reStartConnection?.(connId);
+        },
+        deleteAccessRule: (id) => {
+            return dbs.access_control.delete({ id });
+        },
+        upsertAccessRule: (ac) => {
+            if (!ac)
+                return dbs.access_control.insert(ac);
+            return dbs.access_control.update({ id: ac.id }, ac);
         }
     };
     const userMethods = !user.id ? {} : {
