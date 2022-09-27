@@ -220,8 +220,8 @@ exports.tableConfig = {
     access_control_user_types: {
         // dropIfExists: true,
         columns: {
-            access_control_id: { sqlDefinition: `INTEGER NOT NULL REFERENCES access_control(id)` },
-            user_type: { sqlDefinition: `TEXT NOT NULL REFERENCES user_types(id)` }
+            access_control_id: { sqlDefinition: `INTEGER NOT NULL REFERENCES access_control(id)  ON DELETE CASCADE` },
+            user_type: { sqlDefinition: `TEXT NOT NULL REFERENCES user_types(id)  ON DELETE CASCADE` }
         },
         constraints: {
             NoDupes: "UNIQUE(access_control_id, user_type)"

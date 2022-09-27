@@ -87,7 +87,7 @@ export const validateConnection = (c: DBSchemaGenerated["connections"]["columns"
 
   result.db_user = result.db_user || "postgres";
   result.db_host = result.db_host || "localhost";
-  result.db_ssl = result.db_ssl;
+  result.db_ssl = result.db_ssl || "prefer";
   result.db_port = result.db_port ?? 5432;
 
 
