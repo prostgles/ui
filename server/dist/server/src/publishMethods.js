@@ -242,6 +242,7 @@ const publishMethods = async (params) => {
             await dbs.users.update({ id: user.id }, { "2fa": { secret, recoveryCode: hashedRecoveryCode, enabled: false } });
             return {
                 url: otpauth,
+                secret,
                 recoveryCode
             };
         },
