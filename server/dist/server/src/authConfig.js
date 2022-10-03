@@ -13,6 +13,9 @@ let authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || index_1.PROSTGLES_S
     secure: false,
     sameSite: "lax" //  "none"
 };
+const getBasicSession = (s) => {
+    return { ...s, sid: s.id, expires: +s.expires, onExpiration: s.type === "api_token" ? "show_error" : "redirect" };
+};
 const makeSession = async (user, dbo, expires = 0) => {
     if (user) {
         const session = await dbo.sessions.insert({
@@ -20,7 +23,7 @@ const makeSession = async (user, dbo, expires = 0) => {
             user_type: user.type,
             expires,
         }, { returning: "*" });
-        return { sid: session.id, expires: +session.expires }; //60*60*60 }; 
+        return getBasicSession(session); //60*60*60 }; 
     }
     else {
         throw "Invalid user";
@@ -92,10 +95,10 @@ const getAuth = (app) => {
             }
             let s = await db.sessions.findOne({ user_id: u.id });
             if (!s || (+s.expires || 0) < Date.now()) {
+                // will expire after 24 hours,
                 return makeSession(u, db, Date.now() + 1000 * 60 * 60 * 24);
-                // would expire after 24 hours,
             }
-            return { sid: s.id, expires: +s.expires };
+            return getBasicSession(s);
         },
         logout: async (sid, db, _db) => {
             if (!sid)
@@ -110,7 +113,7 @@ const getAuth = (app) => {
             getSession: async (sid, db) => {
                 let s = await db.sessions.findOne({ id: sid });
                 if (s)
-                    return { sid: s.id, ...s };
+                    return getBasicSession(s);
                 // throw "dwada"
                 return undefined;
             }

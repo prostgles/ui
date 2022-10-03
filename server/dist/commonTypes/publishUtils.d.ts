@@ -92,12 +92,12 @@ export declare const parseFieldFilter: (args: {
     columns: string[];
     fieldFilter: FieldFilter;
 }) => string[];
-export declare const parseFullFilter: (filter: FullDetailedFilter, context: ContextDataObject) => {
+export declare const parseFullFilter: (filter: FullDetailedFilter, context: ContextDataObject, columns: string[] | undefined) => {
     $and: AnyObject[];
 } | {
     $or: AnyObject[];
 } | undefined;
-export declare const parseForcedFilter: (rule: TableRules[keyof TableRules], context: ContextDataObject) => {
+export declare const parseForcedFilter: (rule: TableRules[keyof TableRules], context: ContextDataObject, columns: string[] | undefined) => {
     forcedFilter: {
         $and: AnyObject[];
     } | {
@@ -108,10 +108,14 @@ export declare type ContextDataObject = {
     user: DBSSchema["users"];
 };
 export declare const parseTableRules: (rules: TableRules, isView: boolean | undefined, columns: string[], context: ContextDataObject) => PublishedResult | undefined;
+export declare type TableRulesErrors = Partial<Record<keyof TableRules, any>> & {
+    all?: string;
+};
+export declare const getTableRulesErrors: (rules: TableRules, tableColumns: string[], contextData: ContextDataObject) => Promise<TableRulesErrors>;
 export declare const validateDynamicFields: (dynamicFields: UpdateRule["dynamicFields"], db: {
     find: any;
     findOne: any;
-}, context: ContextDataObject) => Promise<{
+}, context: ContextDataObject, columns: string[]) => Promise<{
     error?: any;
 }>;
 export {};

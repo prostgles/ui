@@ -38,7 +38,8 @@ const ConnectionManager_1 = require("./ConnectionManager");
 const DboBuilder_1 = require("prostgles-server/dist/DboBuilder");
 const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
 const publishMethods = async (params) => {
-    const { user, dbo: dbs, socket, db: _dbs } = params;
+    const { dbo: dbs, socket, db: _dbs } = params;
+    const user = params.user;
     exports.bkpManager ??= new BackupManager_1.default(dbs);
     if (!user || !user.id) {
         const makeMagicLink = async (user, dbo, returnURL) => {
@@ -232,6 +233,12 @@ const publishMethods = async (params) => {
         }
     };
     const userMethods = !user.id ? {} : {
+        generateToken: async (days) => {
+            if (!Number.isInteger(days))
+                throw "Expecting an integer days but got: " + days;
+            const session = await dbs.sessions.insert({ expires: Date.now() + days * 24 * 3600 * 1000, user_id: user.id, user_type: user.type, type: "api_token" }, { returning: "*" });
+            return session.id;
+        },
         create2FA: async () => {
             const userName = user.username;
             const service = 'Prostgles UI';
