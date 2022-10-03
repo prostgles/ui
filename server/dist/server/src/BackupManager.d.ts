@@ -40,7 +40,7 @@ export default class BackupManager {
         options?: {
             command: "pg_dumpall";
             clean: boolean;
-            dataOnly?: boolean | undefined;
+            dataOnly?: boolean | undefined; /** Delete stale streams */
             globalsOnly?: boolean | undefined;
             rolesOnly?: boolean | undefined;
             schemaOnly?: boolean | undefined;

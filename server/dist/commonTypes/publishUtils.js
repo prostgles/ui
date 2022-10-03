@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateDynamicFields = exports.parseTableRules = exports.parseForcedFilter = exports.parseFullFilter = exports.parseFieldFilter = exports.isObject = void 0;
+exports.validateDynamicFields = exports.getTableRulesErrors = exports.parseTableRules = exports.parseForcedFilter = exports.parseFullFilter = exports.parseFieldFilter = exports.isObject = void 0;
 const filterUtils_1 = require("./filterUtils");
 function isObject(obj) {
     return Boolean(obj && typeof obj === "object" && !Array.isArray(obj));
@@ -25,17 +25,17 @@ const parseFieldFilter = (args) => {
     return [];
 };
 exports.parseFieldFilter = parseFieldFilter;
-const parseFullFilter = (filter, context) => {
+const parseFullFilter = (filter, context, columns) => {
     const isAnd = "$and" in filter;
     const filters = isAnd ? filter.$and : filter.$or;
-    const finalFilters = filters.map(f => (0, filterUtils_1.getFinalFilter)(f, context)).filter(filterUtils_1.isDefined);
+    const finalFilters = filters.map(f => (0, filterUtils_1.getFinalFilter)(f, context, { columns })).filter(filterUtils_1.isDefined);
     const f = isAnd ? { $and: finalFilters } : { $or: finalFilters };
     return f;
 };
 exports.parseFullFilter = parseFullFilter;
-const parseForcedFilter = (rule, context) => {
+const parseForcedFilter = (rule, context, columns) => {
     if (isObject(rule) && "forcedFilterDetailed" in rule && rule.forcedFilterDetailed) {
-        const forcedFilter = (0, exports.parseFullFilter)(rule.forcedFilterDetailed, context);
+        const forcedFilter = (0, exports.parseFullFilter)(rule.forcedFilterDetailed, context, columns);
         if (forcedFilter)
             return { forcedFilter };
     }
@@ -48,16 +48,16 @@ const getValidatedFieldFilter = (value, columns, expectAtLeastOne = true) => {
     const values = Object.values(value);
     const keys = Object.keys(value);
     if (!keys.length && expectAtLeastOne)
-        throw "Must select at least a field";
+        throw new Error("Must select at least a field");
     if (values.some(v => v) && values.some(v => !v)) {
-        throw "Invalid field filter: must have only include or exclude. Cannot have both";
+        throw new Error("Invalid field filter: must have only include or exclude. Cannot have both");
     }
     if (!values.every(v => [0, 1, true, false].includes(v))) {
-        throw "Invalid field filter: field values can only be one of 0,1,true,false";
+        throw new Error("Invalid field filter: field values can only be one of 0,1,true,false");
     }
     const badCols = keys.filter(c => !columns.includes(c));
     if (badCols.length) {
-        throw `Invalid columns provided: ${badCols}`;
+        throw new Error(`Invalid columns provided: ${badCols}`);
     }
     return value;
 };
@@ -67,18 +67,18 @@ const parseForcedData = (value, context, columns) => {
     let forcedData = {};
     value?.forcedDataDetail.forEach(v => {
         if (!columns.includes(v.fieldName))
-            `Invalid fieldName in forced data ${v.fieldName}`;
+            new Error(`Invalid fieldName in forced data ${v.fieldName}`);
         if (v.fieldName in forcedData)
-            throw `Duplicate forced data (${v.fieldName}) found in ${JSON.stringify(value)}`;
+            throw new Error(`Duplicate forced data (${v.fieldName}) found in ${JSON.stringify(value)}`);
         if (v.type === "fixed") {
             forcedData[v.fieldName] = v.value;
         }
         else {
             const obj = context[v.objectName];
             if (!obj)
-                throw `Invalid objectName (${v.objectName}) found in forcedData`;
+                throw new Error(`Missing objectName (${v.objectName}) in forcedData`);
             if (!(v.objectPropertyName in obj))
-                throw `Invalid/missing objectPropertyName (${v.objectPropertyName}) found in forcedData`;
+                throw new Error(`Invalid/missing objectPropertyName (${v.objectPropertyName}) found in forcedData`);
             forcedData[v.fieldName] = obj[v.objectPropertyName];
         }
     });
@@ -89,7 +89,7 @@ const parseSelect = (rule, columns, context) => {
         return rule;
     return {
         fields: getValidatedFieldFilter(rule.fields, columns),
-        ...(0, exports.parseForcedFilter)(rule, context),
+        ...(0, exports.parseForcedFilter)(rule, context, columns),
         ...(rule.orderByFields && { orderByFields: getValidatedFieldFilter(rule.orderByFields, columns, false) }),
         ...(rule.filterFields && { filterFields: getValidatedFieldFilter(rule.filterFields, columns, false) })
     };
@@ -99,13 +99,13 @@ const parseUpdate = (rule, columns, context) => {
         return rule;
     return {
         fields: getValidatedFieldFilter(rule.fields, columns),
-        ...(0, exports.parseForcedFilter)(rule, context),
+        ...(0, exports.parseForcedFilter)(rule, context, columns),
         ...parseForcedData(rule, context, columns),
         ...(rule.filterFields && { filterFields: getValidatedFieldFilter(rule.filterFields, columns, false) }),
         ...(rule.dynamicFields?.length && {
             dynamicFields: rule.dynamicFields.map(v => ({
                 fields: getValidatedFieldFilter(v.fields, columns),
-                filter: (0, exports.parseFullFilter)(v.filterDetailed, context)
+                filter: (0, exports.parseFullFilter)(v.filterDetailed, context, columns)
             }))
         })
     };
@@ -122,7 +122,7 @@ const parseDelete = (rule, columns, context) => {
     if (!rule || rule === true)
         return rule;
     return {
-        ...(0, exports.parseForcedFilter)(rule, context),
+        ...(0, exports.parseForcedFilter)(rule, context, columns),
         filterFields: getValidatedFieldFilter(rule.filterFields, columns),
     };
 };
@@ -143,18 +143,33 @@ const parseTableRules = (rules, isView = false, columns, context) => {
     return false;
 };
 exports.parseTableRules = parseTableRules;
-const validateDynamicFields = async (dynamicFields, db, context) => {
+const getTableRulesErrors = async (rules, tableColumns, contextData) => {
+    let result = {};
+    await Promise.all(Object.keys(rules).map(async (ruleKey) => {
+        const key = ruleKey;
+        const rule = rules[key];
+        try {
+            (0, exports.parseTableRules)({ [key]: rule }, false, tableColumns, contextData);
+        }
+        catch (err) {
+            result[key] = err;
+        }
+    }));
+    return result;
+};
+exports.getTableRulesErrors = getTableRulesErrors;
+const validateDynamicFields = async (dynamicFields, db, context, columns) => {
     if (!dynamicFields)
         return {};
     for await (const [dfIndex, dfRule] of dynamicFields.entries()) {
-        const filter = await (0, exports.parseFullFilter)(dfRule.filterDetailed, context);
+        const filter = await (0, exports.parseFullFilter)(dfRule.filterDetailed, context, columns);
         if (!filter)
-            throw "dynamicFields.filter cannot be empty: " + JSON.stringify(dfRule);
+            throw new Error("dynamicFields.filter cannot be empty: " + JSON.stringify(dfRule));
         await db.find(filter, { limit: 0 });
         /** Ensure dynamicFields filters do not overlap */
         for await (const [_dfIndex, _dfRule] of dynamicFields.entries()) {
             if (dfIndex !== _dfIndex) {
-                const _filter = await (0, exports.parseFullFilter)(_dfRule.filterDetailed, context);
+                const _filter = await (0, exports.parseFullFilter)(_dfRule.filterDetailed, context, columns);
                 if (await db.findOne({ $and: [filter, _filter] }, { select: "" })) {
                     const error = `dynamicFields.filter cannot overlap each other. \n
           Overlapping dynamicFields rules:

@@ -38,7 +38,7 @@ export const isDetailedFilter = (f) => !isJoinedFilter(f.type);
 export const getFinalFilterInfo = (fullFilter, context, depth = 0) => {
     var _a;
     const filterToString = (filter) => {
-        const f = getFinalFilter(filter, context, true);
+        const f = getFinalFilter(filter, context, { forInfoOnly: true });
         if (!f)
             return undefined;
         const fieldNameAndOperator = Object.keys(f)[0];
@@ -57,7 +57,14 @@ export const getFinalFilterInfo = (fullFilter, context, depth = 0) => {
     }
     return result;
 };
-export const getFinalFilter = (detailedFilter, context, forInfoOnly = false) => {
+export const getFinalFilter = (detailedFilter, context, opts) => {
+    const { forInfoOnly = false } = opts !== null && opts !== void 0 ? opts : {};
+    const checkFieldname = (f, columns) => {
+        if ((columns === null || columns === void 0 ? void 0 : columns.length) && !columns.includes(f)) {
+            throw new Error(`${f} is not a valid field name. \nExpecting one of: ${columns.join(", ")}`);
+        }
+        return f;
+    };
     if ("fieldName" in detailedFilter && detailedFilter.disabled || isJoinedFilter(detailedFilter) && detailedFilter.filter.disabled)
         return undefined;
     const parseContextVal = (f) => {
@@ -71,12 +78,13 @@ export const getFinalFilter = (detailedFilter, context, forInfoOnly = false) => 
         }
         return (Object.assign({}, f)).value;
     };
-    const getFilter = (f) => {
+    const getFilter = (f, columns) => {
         var _a;
         const val = parseContextVal(f);
+        const fieldName = checkFieldname(f.fieldName, columns);
         if (f.type === "$age" || f.type === "$duration") {
             const { comparator, argsLeftToRight = true, otherField } = (_a = f.complexFilter) !== null && _a !== void 0 ? _a : {};
-            const $age = f.type === "$age" ? [f.fieldName] : [f.fieldName, otherField].filter(isDefined);
+            const $age = f.type === "$age" ? [fieldName] : [fieldName, otherField].filter(isDefined);
             if (!argsLeftToRight)
                 $age.reverse();
             return {
@@ -89,21 +97,22 @@ export const getFinalFilter = (detailedFilter, context, forInfoOnly = false) => 
         }
         if (f.type === "not null") {
             return {
-                [f.fieldName + ".<>"]: null
+                [fieldName + ".<>"]: null
             };
         }
         if (f.type === "null") {
             return {
-                [f.fieldName]: null
+                [fieldName]: null
             };
         }
         return {
-            [[f.fieldName, f.type === "=" ? null : f.type].filter(v => v).join(".")]: val
+            [[fieldName, f.type === "=" ? null : f.type].filter(v => v).join(".")]: val
         };
     };
     if (FTS_FILTER_TYPES.some(f => f.key === detailedFilter.type) && "fieldName" in detailedFilter) {
+        const fieldName = checkFieldname(detailedFilter.fieldName, opts === null || opts === void 0 ? void 0 : opts.columns);
         return {
-            [`${detailedFilter.fieldName}.${detailedFilter.type}`]: [
+            [`${fieldName}.${detailedFilter.type}`]: [
                 parseContextVal(detailedFilter)
             ]
         };
@@ -116,10 +125,11 @@ export const getFinalFilter = (detailedFilter, context, forInfoOnly = false) => 
         };
     }
     else if (detailedFilter.type === "$term_highlight") {
+        const fieldName = detailedFilter.fieldName ? checkFieldname(detailedFilter.fieldName, opts === null || opts === void 0 ? void 0 : opts.columns) : "*";
         return {
-            $term_highlight: [[detailedFilter.fieldName || "*"], parseContextVal(detailedFilter), { matchCase: false, edgeTruncate: 30, returnType: "boolean" }]
+            $term_highlight: [[fieldName], parseContextVal(detailedFilter), { matchCase: false, edgeTruncate: 30, returnType: "boolean" }]
         };
     }
     ;
-    return getFilter(detailedFilter);
+    return getFilter(detailedFilter, opts === null || opts === void 0 ? void 0 : opts.columns);
 };

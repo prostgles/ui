@@ -8,6 +8,7 @@ import { DB } from "prostgles-server/dist/Prostgles";
 import { authenticator } from "otplib";
 import { Express } from "express"
 import path from "path";
+import { DBSSchema } from "../../commonTypes/publishUtils";
 
 
 let authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_COOKIE)? {} : {
@@ -15,7 +16,11 @@ let authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_CO
   sameSite: "lax"    //  "none"
 };
 
-const makeSession = async (user: Users | undefined, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number = 0) => {
+const getBasicSession = (s: DBSSchema["sessions"]): BasicSession => {
+  return { ...s, sid: s.id, expires: +s.expires, onExpiration: s.type === "api_token"? "show_error" : "redirect" };
+}
+
+const makeSession = async (user: Users | undefined, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number = 0): Promise<BasicSession> => {
 
   if(user){
     const session = await dbo.sessions.insert({ 
@@ -24,7 +29,7 @@ const makeSession = async (user: Users | undefined, dbo: DBOFullyTyped<DBSchemaG
       expires, 
     }, { returning: "*" }) as any;
     
-    return { sid: session.id, expires: +session.expires }; //60*60*60 }; 
+    return getBasicSession(session); //60*60*60 }; 
   } else {
     throw "Invalid user";
   }
@@ -96,11 +101,11 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated> => {
 
       let s = await db.sessions.findOne({ user_id: u.id })
       if(!s || (+s.expires || 0) < Date.now()){
+        // will expire after 24 hours,
         return makeSession(u, db, Date.now() + 1000 * 60 * 60 * 24)
-      // would expire after 24 hours,
       }
       
-      return { sid: s.id, expires: +s.expires }
+      return getBasicSession(s)
     },
     logout: async (sid, db, _db: DB) => {
       if(!sid) throw "err";
@@ -112,7 +117,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated> => {
     cacheSession: {
       getSession: async (sid, db) => {
         let s = await db.sessions.findOne({ id: sid });
-        if(s) return { sid: s.id, ...s } as BasicSession;
+        if(s) return getBasicSession(s)
         // throw "dwada"
         return undefined as any;
       }

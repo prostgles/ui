@@ -15,6 +15,7 @@ export type DBSchemaGenerated = {
       connection_id: string;
       created?: null | Date;
       id?: string;
+      name?: null | string;
       rule?:       { 
         userGroupNames: string[];
         dbsPermissions?: {  createWorkspaces?: boolean; viewPublishedWorkspaces?: {  workspaceIds: string[]; }; };
@@ -279,10 +280,12 @@ export type DBSchemaGenerated = {
       expires: number;
       id?: string;
       is_mobile?: null | boolean;
+      name?: null | string;
       project_id?: null | string;
-      type?: null | string;
+      type?: "web" | "api_token"
       user_id: string;
       user_type: string;
+      usname?: null | string;
     };
   };
   spatial_ref_sys: {
@@ -425,6 +428,7 @@ export type DBSchemaGenerated = {
       layout?: null | any;
       name?: string;
       options?: null | any;
+      published?: boolean;
       url_path?: null | string;
       user_id: string;
     };

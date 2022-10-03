@@ -92,7 +92,10 @@ export declare type SmartGroupFilter = SimpleFilter[];
 export declare const isJoinedFilter: (f: SimpleFilter) => f is JoinedFilter;
 export declare const isDetailedFilter: (f: SimpleFilter) => f is DetailedFilterBase;
 export declare const getFinalFilterInfo: (fullFilter?: FullDetailedFilter, context?: ContextDataObject, depth?: number) => string;
-export declare const getFinalFilter: (detailedFilter: SimpleFilter, context?: ContextDataObject, forInfoOnly?: boolean) => {
+export declare const getFinalFilter: (detailedFilter: SimpleFilter, context?: ContextDataObject, opts?: {
+    forInfoOnly?: boolean;
+    columns?: string[];
+}) => {
     $filter: any[];
 } | {
     [x: string]: any;

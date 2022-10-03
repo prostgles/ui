@@ -234,6 +234,9 @@
 .gap-1 {
   gap: 1em;
 }
+.gap-1p5 {
+  gap: 1.5em;
+}
 .gap-2 {
   gap: 2em;
 }
@@ -1605,6 +1608,12 @@ textarea:focus {
 }
 
 
+.max-w-700 {
+  max-width: 700px;
+}
+.max-w-800 {
+  max-width: 800px;
+}
 
 .bold {
   font-weight: bold;

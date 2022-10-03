@@ -24,10 +24,7 @@ export declare const upsertConnection: (con: DBSchemaGenerated["connections"]["c
     backups_config?: {
         enabled?: boolean | undefined;
         cloudConfig: {
-            credential_id?: number | null | undefined; /**
-             * Cannot use connection uri without having ssl issues
-             * https://github.com/brianc/node-postgres/issues/2281
-             */
+            credential_id?: number | null | undefined;
         } | null;
         frequency: "daily" | "weekly" | "monthly" | "hourly";
         hour?: number | undefined;
