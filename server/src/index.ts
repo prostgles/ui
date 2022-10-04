@@ -161,8 +161,25 @@ export const testDBConnection = (_c: DBSchemaGenerated["connections"]["columns"]
           
           resolve(true);
         }).catch(err => {
+          let errRes = err instanceof Error? err.message : JSON.stringify(err);
+          if(process.env.IS_DOCKER){
+
+            if(con.db_host === "localhost" || con.db_host === "127.0.0.1"){
+              errRes += `\nHint: to connect to a localhost database from docker you need to:\n `+
+`1) Ensure extra_hosts is enabled in docker-compose.yml:  
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+ 2) postgresql.conf contains:
+    listen_addresses = '*'
+ 3) pg_hba.conf contains:
+    host  all   all   0.0.0.0/0 md5
+ 4) Ensure the user you connect with has an encrypted password. 
+ 5) use "host.docker.internal" instead of "localhost" in the above connection details
+`
+            }
+          }
           // console.error("testDBConnection fail", {err, connOpts, con})
-          reject(err instanceof Error? err.message : JSON.stringify(err))
+          reject(errRes)
         });
     /**
      * Used to prevent connecting to localhost or internal networks

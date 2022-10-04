@@ -117,7 +117,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       ssl_certificate:         { sqlDefinition: `TEXT` },
       ssl_client_certificate:  { sqlDefinition: `TEXT` },
       ssl_client_certificate_key:  { sqlDefinition: `TEXT` },
-      ssl_reject_unauthorized: { sqlDefinition: `BOOLEAN` },
+      ssl_reject_unauthorized: { sqlDefinition: `BOOLEAN`, info: { hint: `If true, the server certificate is verified against the list of supplied CAs. \nAn error event is emitted if verification fails` } },
       db_conn:                 { sqlDefinition: `TEXT DEFAULT ''` },
       db_watch_shema:          { sqlDefinition: `BOOLEAN DEFAULT TRUE` },
       prgl_url:                { sqlDefinition: `TEXT` },
