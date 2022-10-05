@@ -360,7 +360,7 @@ exports.tableConfig = {
             sql: `TEXT NOT NULL DEFAULT ''`,
             selected_sql: `TEXT NOT NULL DEFAULT ''`,
             name: `TEXT`,
-            limit: `INTEGER DEFAULT 100`,
+            limit: `INTEGER`,
             closed: `BOOLEAN DEFAULT FALSE`,
             deleted: `BOOLEAN DEFAULT FALSE`,
             show_menu: `BOOLEAN DEFAULT FALSE`,

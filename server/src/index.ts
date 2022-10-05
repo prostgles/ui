@@ -166,7 +166,7 @@ export const testDBConnection = (_c: DBSchemaGenerated["connections"]["columns"]
 
             if(con.db_host === "localhost" || con.db_host === "127.0.0.1"){
               errRes += `\nHint: to connect to a localhost database from docker you need to:\n `+
-`1) Ensure extra_hosts is enabled in docker-compose.yml:  
+`1) Uncomment extra_hosts in docker-compose.yml:  
     extra_hosts:
       - "host.docker.internal:host-gateway"
  2) postgresql.conf contains:
