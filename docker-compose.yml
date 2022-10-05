@@ -45,8 +45,9 @@ services:
     depends_on:
       - postgres
 
-    # Used to allow connecting to a database from the host
-    network_mode: '${PRGL_NETWORK_MODE}'
+    ## Used to allow connecting to a database from the host
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
 
     ## DEBUG
     # command: node --inspect=0.0.0.0:9229 /usr/src/app/server/dist/server/src/index.js
