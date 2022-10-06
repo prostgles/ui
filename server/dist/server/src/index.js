@@ -98,7 +98,7 @@ const getConnectionDetails = (c) => {
             user: cs.user,
             password: cs.password,
             database: cs.path[0],
-            ssl: getSSLOpts(sslmode)
+            ssl: getSSLOpts(sslmode),
         };
     }
     return {
