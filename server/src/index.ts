@@ -117,7 +117,7 @@ export const getConnectionDetails = (c: Connections): pg.IConnectionParameters<p
       user: cs.user,
       password: cs.password,
       database: cs.path![0],
-      ssl: getSSLOpts(sslmode)
+      ssl: getSSLOpts(sslmode),
     }
   }
   return {
