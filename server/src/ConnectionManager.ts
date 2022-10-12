@@ -1,6 +1,7 @@
 
 import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
 import { testDBConnection, restartProc, getConnectionDetails, Connections, MEDIA_ROUTE_PREFIX, ROOT_DIR, API_PATH, DBS } from "./index";
+import { WithOrigin } from "./ConnectionChecker";
 import { Server }  from "socket.io";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { CustomTableRules, DBSSchema, parseForcedFilter, parseTableRules, TableRules } from "../../commonTypes/publishUtils";
@@ -35,10 +36,12 @@ export class ConnectionManager {
   http: any; 
   app: Express;
   wss?: WebSocket.Server<WebSocket.WebSocket>;
+  withOrigin: WithOrigin
 
-  constructor(http: any, app: Express){
+  constructor(http: any, app: Express, withOrigin: WithOrigin){
     this.http = http;
     this.app = app;
+    this.withOrigin = withOrigin;
     this.setUpWSS()
   }
 
@@ -180,7 +183,7 @@ export class ConnectionManager {
     return new Promise(async (resolve, reject) => {
       
   
-      const _io = new Server(http, { path: socket_path, maxHttpBufferSize: 1e8, cors: { origin: "*"  } });
+      const _io = new Server(http, { path: socket_path, maxHttpBufferSize: 1e8, cors: this.withOrigin });
   
       const getRule = async (user: DBSSchema["users"]): Promise<DBSSchema["access_control"] | undefined>  => {
         if(user){
@@ -229,11 +232,6 @@ export class ConnectionManager {
               getSession: (sid) => auth.cacheSession?.getSession(sid, dbs, _dbs)
             }
           },
-          onSocketConnect: (socket) => {
-            // log("onSocketConnect");
-            
-            return true; 
-          }, 
           // tsGeneratedTypesDir: path.join(ROOT_DIR + '/connection_dbo/' + conId),
 
           fileTable: (!tableConfig?.fileTable || !tableConfigOk)? undefined : {

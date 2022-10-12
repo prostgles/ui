@@ -184,3 +184,6 @@ export const validateDynamicFields = async (dynamicFields, db, context, columns)
     }
     return {};
 };
+export const getCIDRRangesQuery = (arg) => "select \
+  host(${cidr}::cidr) AS \"from\",  \
+  host(broadcast(${cidr}::cidr)) AS \"to\" ";

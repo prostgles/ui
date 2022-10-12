@@ -28,6 +28,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.checkIf = exports.is = exports.publishMethods = exports.bkpManager = void 0;
 const index_1 = require("./index");
+const ConnectionChecker_1 = require("./ConnectionChecker");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const crypto = __importStar(require("crypto"));
@@ -53,8 +54,8 @@ const publishMethods = async (params) => {
             };
         };
         /** If no user exists then make */
-        if (await (0, index_1.HAS_EMPTY_USERNAME)(dbs)) {
-            const u = await dbs.users.findOne({ username: index_1.EMPTY_USERNAME });
+        if (await (0, ConnectionChecker_1.ADMIN_ACCESS_WITHOUT_PASSWORD)(dbs)) {
+            const u = await dbs.users.findOne({ username: ConnectionChecker_1.EMPTY_USERNAME });
             if (!u)
                 throw "User found for magic link";
             const mlink = await makeMagicLink(u, dbs, "/");
@@ -66,6 +67,9 @@ const publishMethods = async (params) => {
         return index_1.connMgr.startConnection(conId, socket, dbs, _dbs, true);
     };
     const adminMethods = {
+        getMyIP: () => {
+            return index_1.connectionChecker.checkClientIP({ socket });
+        },
         getConnectedIds: async () => {
             return Object.keys(index_1.connMgr.getConnections());
         },

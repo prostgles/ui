@@ -1,5 +1,6 @@
 import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
 import { Connections } from "./index";
+import { WithOrigin } from "./ConnectionChecker";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import prostgles from "prostgles-server";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
@@ -21,7 +22,8 @@ export declare class ConnectionManager {
     http: any;
     app: Express;
     wss?: WebSocket.Server<WebSocket.WebSocket>;
-    constructor(http: any, app: Express);
+    withOrigin: WithOrigin;
+    constructor(http: any, app: Express, withOrigin: WithOrigin);
     getCertPath(conId: string, type?: "ca" | "cert" | "key"): string;
     saveCertificates(connections: Connections[]): void;
     setUpWSS(): void;

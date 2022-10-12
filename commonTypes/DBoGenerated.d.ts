@@ -224,15 +224,18 @@ export type DBSchemaGenerated = {
       type?: null | string;
     };
   };
-  globals: {
+  global_settings: {
     is_view: false;
     select: true;
     insert: true;
     update: true;
     delete: true;
     columns: {
-      onerow_id?: boolean;
-      user_groups?: null | any;
+      allowed_ips?: null | Array<string>;
+      allowed_origin?: null | string;
+      id?: number;
+      trust_proxy?: boolean;
+      updated_by?: "user" | "app"
     };
   };
   links: {
@@ -302,18 +305,6 @@ export type DBSchemaGenerated = {
       srtext?: null | string;
     };
   };
-  tbl_cursors: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
-    columns: {
-      id: string;
-      last_updated?: null | number;
-      pos: any;
-    };
-  };
   user_groups: {
     is_view: false;
     select: true;
@@ -369,18 +360,6 @@ export type DBSchemaGenerated = {
       username: string;
     };
   };
-  usrs: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
-    columns: {
-      id?: number;
-      status?: null | string;
-      type?: null | string;
-    };
-  };
   windows: {
     is_view: false;
     select: true;
@@ -405,6 +384,10 @@ export type DBSchemaGenerated = {
       show_menu?: null | boolean;
       sort?: null | any;
       sql?: string;
+      sql_options?:       { 
+        executeOptions: 'full' | 'block';
+        errorMessageDisplay: 'tooltip' | 'bottom' | 'both'; 
+      };
       table_name?: null | string;
       table_oid?: null | number;
       type?: null | string;

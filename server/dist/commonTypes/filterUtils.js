@@ -47,6 +47,12 @@ const getFinalFilterInfo = (fullFilter, context, depth = 0) => {
         if (!f)
             return undefined;
         const fieldNameAndOperator = Object.keys(f)[0];
+        // console.log(fieldNameAndOperator)
+        if (fieldNameAndOperator === "$term_highlight") {
+            const [fields, value, args] = f[fieldNameAndOperator];
+            const { matchCase } = args;
+            return `${fields} contain ${matchCase ? "(case sensitive)" : ""} ${value}`;
+        }
         return `${fieldNameAndOperator} ${JSON.stringify(f[fieldNameAndOperator])}`.split(".$").join(" "); //.split(" ").map((v, i) => i? v.toUpperCase() : v).join(" ");
     };
     let result = "";

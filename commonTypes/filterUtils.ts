@@ -75,11 +75,17 @@ export type SmartGroupFilter = SimpleFilter[];
 export const isJoinedFilter = (f: SimpleFilter): f is JoinedFilter => Boolean(f.type && JOINED_FILTER_TYPES.includes(f.type as any));
 export const isDetailedFilter = (f: SimpleFilter): f is DetailedFilterBase => !isJoinedFilter(f.type as any);
 
-export const getFinalFilterInfo = (fullFilter?: FullDetailedFilter, context?: ContextDataObject, depth = 0): string => {
+export const getFinalFilterInfo = (fullFilter?: FullDetailedFilter | SimpleFilter, context?: ContextDataObject, depth = 0): string => {
   const filterToString = (filter: SimpleFilter): string | undefined => {
     const f = getFinalFilter(filter, context, { forInfoOnly: true });
-    if(!f) return undefined;
+      if(!f) return undefined;
     const fieldNameAndOperator: keyof typeof f = Object.keys(f)[0] as any;
+    // console.log(fieldNameAndOperator)
+    if(fieldNameAndOperator === "$term_highlight" as any){
+      const [fields, value , args] = f[fieldNameAndOperator] as any
+      const { matchCase } = args;
+      return `${fields} contain ${matchCase? "(case sensitive)" : ""} ${value}`
+    }
     return `${fieldNameAndOperator} ${JSON.stringify(f[fieldNameAndOperator])}`.split(".$").join(" "); //.split(" ").map((v, i) => i? v.toUpperCase() : v).join(" ");
   }
 
