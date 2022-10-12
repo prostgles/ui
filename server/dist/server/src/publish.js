@@ -4,8 +4,9 @@ exports.publish = void 0;
 const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
 const prostgles_types_1 = require("prostgles-types");
 const _1 = require(".");
+const publishUtils_1 = require("../../commonTypes/publishUtils");
 const publish = async (params, con) => {
-    const { dbo: db, user, db: _db } = params;
+    const { dbo: db, user, db: _db, socket } = params;
     if (!user || !user.id) {
         return null;
     }
@@ -94,7 +95,7 @@ const publish = async (params, con) => {
         return update;
     };
     const userTypeFilter = { "access_control_user_types": { user_type: user.type } };
-    let res = {
+    let dashboardTables = {
         /* DASHBOARD */
         ...dashboardConfig,
         access_control_user_types: isAdmin && "*",
@@ -172,6 +173,7 @@ const publish = async (params, con) => {
         },
         backups: {
             select: true,
+            insert: { fields: ["status", "options"] }
         },
         magic_links: isAdmin && {
             insert: {
@@ -180,17 +182,37 @@ const publish = async (params, con) => {
             select: true,
             update: true,
             delete: true,
+        },
+        global_settings: isAdmin && {
+            select: "*",
+            update: {
+                fields: {
+                    allowed_origin: 1,
+                    allowed_ips: 1,
+                    trust_proxy: 1,
+                },
+                postValidate: async (row, dbsTX) => {
+                    if (!row.allowed_ips?.length) {
+                        throw "Must include at least one allowed IP CIDR";
+                    }
+                    const ranges = await Promise.all(row.allowed_ips?.map(cidr => db.sql((0, publishUtils_1.getCIDRRangesQuery)({ cidr, returns: ["from", "to"] }), { cidr }, { returnType: "row" })));
+                    const { isAllowed, ip } = await _1.connectionChecker.checkClientIP({ socket, dbsTX });
+                    if (!isAllowed)
+                        throw `Cannot update to a rule that will block your current IP.  \n Must allow ${ip} within Allowed IPs`;
+                    return row;
+                }
+            }
         }
     };
-    const curTables = Object.keys(res || {});
+    const curTables = Object.keys(dashboardTables || {});
     // @ts-ignore
     const remainingTables = (0, prostgles_types_1.getKeys)(db).filter(k => db[k]?.find).filter(t => !curTables.includes(t));
     const adminExtra = remainingTables.reduce((a, v) => ({ ...a, [v]: "*" }), {});
-    res = {
-        ...res,
+    dashboardTables = {
+        ...dashboardTables,
         ...(isAdmin ? adminExtra : {})
     };
-    return res;
+    return dashboardTables;
 };
 exports.publish = publish;
 //# sourceMappingURL=publish.js.map

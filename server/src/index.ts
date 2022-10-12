@@ -3,18 +3,17 @@ import express from 'express';
 import prostgles from "prostgles-server";
 import { tableConfig } from "./tableConfig";
 const app = express();
-app.use(express.json({ limit: "100mb" }));
-app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 import { publishMethods } from "./publishMethods";
 import { ChildProcessWithoutNullStreams } from "child_process";
-import { ConnectionManager } from "./ConnectionManager";
+import { ConnectionManager, Unpromise } from "./ConnectionManager";
 import { getAuth } from "./authConfig";
 
 export const API_PATH = "/api";
 
-/** Required to enable API access */
-import cors from 'cors';
-app.use(cors({ origin: '*' }));
+
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ extended: true, limit: "100mb" }));
+
 
 // use it before all route definitions
 
@@ -34,11 +33,6 @@ const http = _http.createServer(app);
 
 const ioPath = process.env.PRGL_IOPATH || "/iosckt";
 
-import { Server }  from "socket.io";
-const io = new Server(http, { 
-  path: ioPath, 
-  maxHttpBufferSize: 100e100,  
-});
 
 import pgPromise from 'pg-promise';
 const pgp = pgPromise();
@@ -198,18 +192,6 @@ export const testDBConnection = (_c: DBSchemaGenerated["connections"]["columns"]
 const dotenv = require('dotenv');
 export type DBS = DBOFullyTyped<DBSchemaGenerated>
 
-export const EMPTY_USERNAME = "prostgles-no-auth-user",
-  EMPTY_PASSWORD = "prostgles";
-export const HAS_EMPTY_USERNAME = async (db: DBS) => {
-  if(
-    !PRGL_USERNAME || !PRGL_PASSWORD
-  ){
-    if(await db.users.count({ username: EMPTY_USERNAME, status: "active" })){
-      return true
-    }
-  }
-  return false
-};
 
 console.log(ROOT_DIR)
 const result = dotenv.config({ path: path.join(ROOT_DIR+'/../.env') })
@@ -266,9 +248,23 @@ const DBS_CONNECTION_INFO: Pick<Required<Connections>, "type" | "db_conn" | "db_
 };
 
 import { omitKeys } from "prostgles-server/dist/PubSubManager";
-export const connMgr = new ConnectionManager(http, app);
+import { DBSSchema } from "../../commonTypes/publishUtils";
 
 let conSub: SubscriptionHandler<Connections> | undefined;
+
+
+import { ConnectionChecker, ADMIN_ACCESS_WITHOUT_PASSWORD, EMPTY_USERNAME, EMPTY_PASSWORD } from "./ConnectionChecker";
+export const connectionChecker = new ConnectionChecker(app);
+
+import { Server }  from "socket.io";
+const io = new Server(http, { 
+  path: ioPath, 
+  maxHttpBufferSize: 100e100,
+  cors: connectionChecker.withOrigin
+});
+
+
+export const connMgr = new ConnectionManager(http, app, connectionChecker.withOrigin);
 
 const getDBS = async () => {
   try {
@@ -298,6 +294,7 @@ const getDBS = async () => {
 
       `;
     }
+    
     await testDBConnection(con as any, true);
 
     const auth = getAuth(app);
@@ -314,8 +311,15 @@ const getDBS = async () => {
       io,
       tsGeneratedTypesDir: path.join(ROOT_DIR + '/../commonTypes/'),
       transactions: true,
-      onSocketConnect: async (_, dbo, db) => {
-        log("onSocketConnect", (_ as any)?.conn?.remoteAddress);
+      onSocketConnect: async (socket, dbo, db) => {
+        const remoteAddress = (socket as any)?.conn?.remoteAddress;
+        log("onSocketConnect", remoteAddress);
+
+        console.error("CHECK CORS");
+        // if(await checkIfNoPWD(dbo) && remoteAddress.includes("127.0.0.1")) { //  === "::ffff:127.0.0.1"
+        //   const errMsg = "Reject foreign requests if there is no auth";
+        //   throw errMsg;
+        // }
 
         // await db.any("ALTER TABLE workspaces ADD COLUMN deleted boolean DEFAULT FALSE")
         const wrkids =  await dbo.workspaces.find({ deleted: true }, { select: { id: 1 }, returnType: "values" });
@@ -325,6 +329,7 @@ const getDBS = async () => {
           { closed: true },
           wkspsFilter
         ] }, { select: { id: 1 }, returnType: "values" });
+
         if(wids.length){
           await dbo.links.delete({ $or: [
             { w1_id: { $in: wids } }, 
@@ -335,11 +340,9 @@ const getDBS = async () => {
           await dbo.workspaces.delete({ deleted: true });
   
         }
-        return true; 
+        
       },
-      onSocketDisconnect: (_, dbo) => {
-        // dbo.windows.delete({ deleted: true })
-      },
+      
       // DEBUG_MODE: true,
       tableConfig,
       publishRawSQL: async (params) => {
@@ -364,7 +367,9 @@ const getDBS = async () => {
         //   returnType: "statement"
         // });
         
-        // console.log(q)
+        // console.log(q);
+
+        await connectionChecker.init(db);
 
         await conSub?.unsubscribe();
         conSub = await db.connections.subscribe({}, {}, connections => {
@@ -383,7 +388,7 @@ const getDBS = async () => {
         // await db.users.delete(); 
         
         if(!(await db.users.count({ username }))){
-          if(await HAS_EMPTY_USERNAME(db)){
+          if(await ADMIN_ACCESS_WITHOUT_PASSWORD(db)){
             console.warn(`PRGL_USERNAME or PRGL_PASSWORD missing. Creating default user: ${username} with default password: ${password}`);
           }
           console.log((await db.users.count({ username })))
@@ -447,24 +452,20 @@ const getDBS = async () => {
 })();
 
 
-app.post("/testupload", (req, res) => {
-  console.log(req.body)
-})
+// app.post("/dbs", async (req, res) => {
+//   const { db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } = req.body;
+//   if(!db_conn || !db_host){
+//     res.json({ ok: false })
+//   }
 
-app.post("/dbs", async (req, res) => {
-  const { db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } = req.body;
-  if(!db_conn || !db_host){
-    res.json({ ok: false })
-  }
+//   try {
+//     await testDBConnection({ db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } as any);
 
-  try {
-    await testDBConnection({ db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } as any);
-
-    res.json({ msg: "DBS changed. Restart system" })
-  } catch(err){
-    res.json({ err })
-  }
-});
+//     res.json({ msg: "DBS changed. Restart system" })
+//   } catch(err){
+//     res.json({ err })
+//   }
+// });
 
 
  

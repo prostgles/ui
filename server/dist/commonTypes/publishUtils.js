@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateDynamicFields = exports.getTableRulesErrors = exports.parseTableRules = exports.parseForcedFilter = exports.parseFullFilter = exports.parseFieldFilter = exports.isObject = void 0;
+exports.getCIDRRangesQuery = exports.validateDynamicFields = exports.getTableRulesErrors = exports.parseTableRules = exports.parseForcedFilter = exports.parseFullFilter = exports.parseFieldFilter = exports.isObject = void 0;
 const filterUtils_1 = require("./filterUtils");
 function isObject(obj) {
     return Boolean(obj && typeof obj === "object" && !Array.isArray(obj));
@@ -185,4 +185,8 @@ const validateDynamicFields = async (dynamicFields, db, context, columns) => {
     return {};
 };
 exports.validateDynamicFields = validateDynamicFields;
+const getCIDRRangesQuery = (arg) => "select \
+  host(${cidr}::cidr) AS \"from\",  \
+  host(broadcast(${cidr}::cidr)) AS \"to\" ";
+exports.getCIDRRangesQuery = getCIDRRangesQuery;
 //# sourceMappingURL=publishUtils.js.map

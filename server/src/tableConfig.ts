@@ -2,8 +2,8 @@ import type { TableConfig } from "prostgles-server/dist/TableConfig";
 
 const DUMP_OPTIONS_SCHEMA = {
   jsonbSchema: {
-    oneOfTypes: [{
-      command: { oneOf: ["pg_dumpall"]  },
+    oneOf: [{
+      command: { enum: ["pg_dumpall"]  },
       clean: { type: "boolean" },
       dataOnly: { type: "boolean", optional: true },
       globalsOnly: { type: "boolean", optional: true },
@@ -13,8 +13,8 @@ const DUMP_OPTIONS_SCHEMA = {
       encoding: { type: "string", optional: true },
       keepLogs: { type: "boolean", optional: true },
     }, {
-      command: { oneOf: ["pg_dump"]  },
-      format: { oneOf: ["p", "t", "c"] },
+      command: { enum: ["pg_dump"]  },
+      format: { enum: ["p", "t", "c"] },
       dataOnly: { type: "boolean", optional: true },
       clean: { type: "boolean", optional: true },
       create: { type: "boolean", optional: true },
@@ -95,7 +95,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       is_mobile:   `BOOLEAN DEFAULT FALSE` ,
       active:      `BOOLEAN DEFAULT TRUE` ,
       project_id:  `TEXT` ,
-      type:        { oneOf: ["web", "api_token"], defaultValue: "web" } ,
+      type:        { enum: ["web", "api_token"], defaultValue: "web" } ,
       created:     `TIMESTAMP DEFAULT NOW()` ,
       expires:     `BIGINT NOT NULL` ,
     }
@@ -113,7 +113,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       db_port:                 `INTEGER DEFAULT 5432`,
       db_user:                 `TEXT DEFAULT ''`,
       db_pass:                 `TEXT DEFAULT ''`,
-      db_ssl:                  { oneOf: ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'], nullable: false, defaultValue: "disable" },
+      db_ssl:                  { enum: ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'], nullable: false, defaultValue: "disable" },
       ssl_certificate:         { sqlDefinition: `TEXT` },
       ssl_client_certificate:  { sqlDefinition: `TEXT` },
       ssl_client_certificate_key:  { sqlDefinition: `TEXT` },
@@ -134,10 +134,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         nullable: true,
         jsonbSchema: {
           fileTable: { type: "string", optional: true },
-          storageType: { oneOfTypes: [
-            { type: { oneOf: ["local"] } },
+          storageType: { oneOf: [
+            { type: { enum: ["local"] } },
             { 
-              type: { oneOf: ["S3"] },
+              type: { enum: ["S3"] },
               credential_id: { type: "number" }
             }
           ]},
@@ -169,7 +169,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
            */
           credential_id: { type: "number", nullable: true, optional: true }
         } },
-        frequency: { oneOf: ["daily", "monthly", "weekly", "hourly"] },
+        frequency: { enum: ["daily", "monthly", "weekly", "hourly"] },
 
         /**
          * If provided then will do the backup during that hour (24 hour format). Unless the backup frequency is less than a day
@@ -224,17 +224,17 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
             workspaceIds: { type: "string[]" }
           }, optional: true },
         } },
-        dbPermissions: { oneOfTypes: [
+        dbPermissions: { oneOf: [
           { 
-            type: { oneOf: ["Run SQL"] },
+            type: { enum: ["Run SQL"] },
             allowSQL: { type: "boolean", optional: true },
           },
           { 
-            type: { oneOf: ["All views/tables"] },
+            type: { enum: ["All views/tables"] },
             allowAllTables: { type: "string[]" },
           },
           { 
-            type: { oneOf: ["Custom"] },
+            type: { enum: ["Custom"] },
             customTables: { type: "any[]" },
           }
         ] }
@@ -304,7 +304,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       details:          { sqlDefinition: `JSONB` },
       status: { 
         jsonbSchema: {
-          oneOfTypes: [
+          oneOf: [
             { ok: { type: "string" } },
             { err: { type: "string" } },
             { 
@@ -319,7 +319,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       uploaded:        { sqlDefinition: `TIMESTAMP` },
       restore_status:  { nullable: true,
         jsonbSchema: {
-          oneOfTypes: [
+          oneOf: [
             { ok: { type: "string" } },
             { err: { type: "string" } },
             { 
@@ -342,8 +342,8 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       options: DUMP_OPTIONS_SCHEMA,
       restore_options: {
         jsonbSchema: {
-          command: { oneOf: ["pg_restore", "psql"] },
-          format: { oneOf: ["p", "t", "c"] },
+          command: { enum: ["pg_restore", "psql"] },
+          format: { enum: ["p", "t", "c"] },
           clean: { type: "boolean" },
           newDbName: { type: "string", optional: true },
           create: { type: "boolean", optional: true },
@@ -403,10 +403,31 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       sort            : `JSONB`,
       filter          : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
       options         : `JSONB NOT NULL DEFAULT '{}'::jsonb` ,
-      columns         : `JSONB` ,
+      sql_options     : { defaultValue: { executeOptions: "block", errorMessageDisplay: "both"  }, jsonbSchema: {
+        "executeOptions": {
+          description: "Behaviour of execute (CTR+E). Defaults to 'block' \nfull = run entire sql   \nblock = run code block where the cursor is",
+          enum: ["full", "block"]
+        },
+        "errorMessageDisplay": {
+          description: "Error display locations. Defaults to 'both' \ntooltip = show within tooltip only   \nbottom = show in bottom control bar only   \nboth = show in both locations",
+          enum: ["tooltip", "bottom", "both"]
+        },
+      }} ,
+      columns         : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
       nested_tables   : `JSONB` ,
       created         : `TIMESTAMP DEFAULT NOW()` ,
       last_updated    : `BIGINT NOT NULL` ,
+    }
+  },
+
+  global_settings: {
+    dropIfExistsCascade: true,
+    columns: {
+      id: "INTEGER GENERATED ALWAYS AS IDENTITY",
+      allowed_origin: { sqlDefinition: "TEXT", label: "Allow-Origin", info: { hint: "Specifies which domains can access the this app in a cross-origin manner. \nSets the Access-Control-Allow-Origin header. Use '*' to allow all" } },
+      allowed_ips: { sqlDefinition: `cidr[]`, label: "Allowed IPs", info: { hint: "List of allowed IP addresses in ipv4 or ipv6 format" } },
+      trust_proxy: { sqlDefinition: `boolean NOT NULL DEFAULT FALSE`, info: { hint: "If true then will use the IP from 'X-Forwarded-For' header" } },
+      updated_by: { enum: ["user", "app"], defaultValue: "app" },
     }
   },
 

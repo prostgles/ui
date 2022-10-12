@@ -118,5 +118,9 @@ export declare const validateDynamicFields: (dynamicFields: UpdateRule["dynamicF
 }, context: ContextDataObject, columns: string[]) => Promise<{
     error?: any;
 }>;
+export declare const getCIDRRangesQuery: (arg: {
+    cidr: string;
+    returns: ["from", "to"];
+}) => string;
 export {};
 //# sourceMappingURL=publishUtils.d.ts.map

@@ -7,8 +7,6 @@ export declare const getConnectionDetails: (c: Connections) => pg.IConnectionPar
 export declare type BareConnectionDetails = Pick<Connections, "type" | "db_conn" | "db_host" | "db_name" | "db_pass" | "db_port" | "db_user" | "db_ssl" | "ssl_certificate">;
 export declare const testDBConnection: (_c: DBSchemaGenerated["connections"]["columns"], expectSuperUser?: boolean) => Promise<true>;
 export declare type DBS = DBOFullyTyped<DBSchemaGenerated>;
-export declare const EMPTY_USERNAME = "prostgles-no-auth-user", EMPTY_PASSWORD = "prostgles";
-export declare const HAS_EMPTY_USERNAME: (db: DBS) => Promise<boolean>;
 export declare const PRGL_USERNAME: any, PRGL_PASSWORD: any, POSTGRES_URL: any, POSTGRES_DB: any, POSTGRES_HOST: any, POSTGRES_PASSWORD: any, POSTGRES_PORT: any, POSTGRES_USER: any, POSTGRES_SSL: any, PROSTGLES_STRICT_COOKIE: any;
 export declare type Users = Required<DBSchemaGenerated["users"]["columns"]>;
 export declare type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
@@ -16,6 +14,8 @@ export declare const log: (msg: string, extra?: any) => void;
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import pg from "pg-promise/typescript/pg-subset";
 export declare const MEDIA_ROUTE_PREFIX = "/prostgles_media";
+import { ConnectionChecker } from "./ConnectionChecker";
+export declare const connectionChecker: ConnectionChecker;
 export declare const connMgr: ConnectionManager;
 export declare function get(obj: any, propertyPath: string | string[]): any;
 export declare function restartProc(cb?: Function): void;

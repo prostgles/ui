@@ -42,9 +42,11 @@ class ConnectionManager {
     http;
     app;
     wss;
-    constructor(http, app) {
+    withOrigin;
+    constructor(http, app, withOrigin) {
         this.http = http;
         this.app = app;
+        this.withOrigin = withOrigin;
         this.setUpWSS();
     }
     getCertPath(conId, type) {
@@ -164,7 +166,7 @@ class ConnectionManager {
             throw e;
         }
         return new Promise(async (resolve, reject) => {
-            const _io = new socket_io_1.Server(http, { path: socket_path, maxHttpBufferSize: 1e8, cors: { origin: "*" } });
+            const _io = new socket_io_1.Server(http, { path: socket_path, maxHttpBufferSize: 1e8, cors: this.withOrigin });
             const getRule = async (user) => {
                 if (user) {
                     return await dbs.access_control.findOne({ connection_id: con.id, $existsJoined: { access_control_user_types: { user_type: user.type } } }); //  user_groups: { $contains: [user.type] }
@@ -208,10 +210,6 @@ class ConnectionManager {
                         cacheSession: {
                             getSession: (sid) => auth.cacheSession?.getSession(sid, dbs, _dbs)
                         }
-                    },
-                    onSocketConnect: (socket) => {
-                        // log("onSocketConnect");
-                        return true;
                     },
                     // tsGeneratedTypesDir: path.join(ROOT_DIR + '/connection_dbo/' + conId),
                     fileTable: (!tableConfig?.fileTable || !tableConfigOk) ? undefined : {

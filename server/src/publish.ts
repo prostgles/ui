@@ -4,7 +4,8 @@ import { omitKeys } from "prostgles-server/dist/PubSubManager";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { getKeys } from "prostgles-types";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import { upsertConnection } from ".";
+import { connectionChecker, upsertConnection } from ".";
+import { getCIDRRangesQuery } from "../../commonTypes/publishUtils";
 type DBS_PermissionRules = {
   userTypesThatCanManageUsers?: string[];
   userTypesThatCanManageConnections?: string[];
@@ -12,7 +13,7 @@ type DBS_PermissionRules = {
 
 export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omit<DBSchemaGenerated["connections"]["columns"], "user_id">): Promise<Publish<DBSchemaGenerated>> => {
         
-  const { dbo: db, user, db: _db } = params;
+  const { dbo: db, user, db: _db, socket } = params;
 
   if(!user || !user.id){
     return null;
@@ -109,7 +110,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
 
   const userTypeFilter = { "access_control_user_types": { user_type: user.type } }
   
-  let res: Publish<DBSchemaGenerated> = {
+  let dashboardTables: Publish<DBSchemaGenerated> = {
 
     /* DASHBOARD */
     ...(dashboardConfig as object),
@@ -188,6 +189,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
 
     backups: {
       select: true,
+      insert: { fields: ["status", "options"] }
     },
     magic_links: isAdmin && {
       insert: {
@@ -196,17 +198,46 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
       select: true,
       update: true,
       delete: true,
+    },
+
+    global_settings: isAdmin && {
+      select: "*",
+      update: {
+        fields: {
+          allowed_origin: 1,
+          allowed_ips: 1,
+          trust_proxy: 1,
+        },
+        postValidate: async (row, dbsTX) => {
+          if(!row.allowed_ips?.length){
+            throw "Must include at least one allowed IP CIDR"
+          }
+          const ranges = await Promise.all(
+            row.allowed_ips?.map(
+              cidr => db.sql!(
+                getCIDRRangesQuery({ cidr, returns: ["from", "to"] }), 
+                { cidr }, 
+                { returnType: "row" }
+              )
+            )
+          )
+          const { isAllowed, ip } = await connectionChecker.checkClientIP({ socket, dbsTX });
+
+          if(!isAllowed) throw `Cannot update to a rule that will block your current IP.  \n Must allow ${ip} within Allowed IPs`
+          return row;
+        }
+      }
     }
   }
 
-  const curTables = Object.keys(res || {});
+  const curTables = Object.keys(dashboardTables || {});
   // @ts-ignore
   const remainingTables = getKeys(db).filter(k => db[k]?.find).filter(t => !curTables.includes(t));
   const adminExtra = remainingTables.reduce((a, v) => ({ ...a, [v]: "*" }), {});
-  res = {
-    ...(res as object),
+  dashboardTables = {
+    ...(dashboardTables as object),
     ...(isAdmin? adminExtra : {})
   }
   
-  return res;
+  return dashboardTables;
 }

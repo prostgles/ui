@@ -304,3 +304,9 @@ export const validateDynamicFields = async (dynamicFields: UpdateRule["dynamicFi
   
   return {};
 }
+
+
+
+export const getCIDRRangesQuery = (arg: { cidr: string; returns: ["from", "to"] }) => "select \
+  host(${cidr}::cidr) AS \"from\",  \
+  host(broadcast(${cidr}::cidr)) AS \"to\" "

@@ -1,5 +1,6 @@
 
-import { HAS_EMPTY_USERNAME, EMPTY_USERNAME, connMgr, testDBConnection, BareConnectionDetails, validateConnection, upsertConnection } from "./index";
+import { connMgr, testDBConnection, connectionChecker, validateConnection, upsertConnection } from "./index";
+import { ADMIN_ACCESS_WITHOUT_PASSWORD, EMPTY_USERNAME } from "./ConnectionChecker";
 import { PublishMethods } from "prostgles-server/dist/PublishParser";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import fs from "fs";
@@ -45,7 +46,7 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       };
     }
     /** If no user exists then make */
-    if(await HAS_EMPTY_USERNAME(dbs)){
+    if(await ADMIN_ACCESS_WITHOUT_PASSWORD(dbs)){
       const u = await dbs.users.findOne({ username: EMPTY_USERNAME });
       if(!u) throw "User found for magic link"
       const mlink = await makeMagicLink(u, dbs, "/")
@@ -60,6 +61,9 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
   };
 
   const adminMethods = {
+    getMyIP: () => {
+      return connectionChecker.checkClientIP({ socket })
+    },
     getConnectedIds: async (): Promise<string[]> => {
       return Object.keys(connMgr.getConnections());
     },
