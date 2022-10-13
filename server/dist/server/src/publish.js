@@ -4,7 +4,6 @@ exports.publish = void 0;
 const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
 const prostgles_types_1 = require("prostgles-types");
 const _1 = require(".");
-const publishUtils_1 = require("../../commonTypes/publishUtils");
 const publish = async (params, con) => {
     const { dbo: db, user, db: _db, socket } = params;
     if (!user || !user.id) {
@@ -195,7 +194,15 @@ const publish = async (params, con) => {
                     if (!row.allowed_ips?.length) {
                         throw "Must include at least one allowed IP CIDR";
                     }
-                    const ranges = await Promise.all(row.allowed_ips?.map(cidr => db.sql((0, publishUtils_1.getCIDRRangesQuery)({ cidr, returns: ["from", "to"] }), { cidr }, { returnType: "row" })));
+                    // const ranges = await Promise.all(
+                    //   row.allowed_ips?.map(
+                    //     cidr => db.sql!(
+                    //       getCIDRRangesQuery({ cidr, returns: ["from", "to"] }), 
+                    //       { cidr }, 
+                    //       { returnType: "row" }
+                    //     )
+                    //   )
+                    // )
                     const { isAllowed, ip } = await _1.connectionChecker.checkClientIP({ socket, dbsTX });
                     if (!isAllowed)
                         throw `Cannot update to a rule that will block your current IP.  \n Must allow ${ip} within Allowed IPs`;

@@ -212,15 +212,15 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
           if(!row.allowed_ips?.length){
             throw "Must include at least one allowed IP CIDR"
           }
-          const ranges = await Promise.all(
-            row.allowed_ips?.map(
-              cidr => db.sql!(
-                getCIDRRangesQuery({ cidr, returns: ["from", "to"] }), 
-                { cidr }, 
-                { returnType: "row" }
-              )
-            )
-          )
+          // const ranges = await Promise.all(
+          //   row.allowed_ips?.map(
+          //     cidr => db.sql!(
+          //       getCIDRRangesQuery({ cidr, returns: ["from", "to"] }), 
+          //       { cidr }, 
+          //       { returnType: "row" }
+          //     )
+          //   )
+          // )
           const { isAllowed, ip } = await connectionChecker.checkClientIP({ socket, dbsTX });
 
           if(!isAllowed) throw `Cannot update to a rule that will block your current IP.  \n Must allow ${ip} within Allowed IPs`
