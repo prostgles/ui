@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.upsertConnection = exports.restartProc = exports.get = exports.connMgr = exports.connectionChecker = exports.MEDIA_ROUTE_PREFIX = exports.log = exports.PROSTGLES_STRICT_COOKIE = exports.POSTGRES_SSL = exports.POSTGRES_USER = exports.POSTGRES_PORT = exports.POSTGRES_PASSWORD = exports.POSTGRES_HOST = exports.POSTGRES_DB = exports.POSTGRES_URL = exports.PRGL_PASSWORD = exports.PRGL_USERNAME = exports.testDBConnection = exports.getConnectionDetails = exports.validateConnection = exports.ROOT_DIR = exports.API_PATH = void 0;
+exports.tout = exports.upsertConnection = exports.restartProc = exports.get = exports.connMgr = exports.connectionChecker = exports.getBackupManager = exports.MEDIA_ROUTE_PREFIX = exports.log = exports.PROSTGLES_STRICT_COOKIE = exports.POSTGRES_SSL = exports.POSTGRES_USER = exports.POSTGRES_PORT = exports.POSTGRES_PASSWORD = exports.POSTGRES_HOST = exports.POSTGRES_DB = exports.POSTGRES_URL = exports.PRGL_PASSWORD = exports.PRGL_USERNAME = exports.ROOT_DIR = exports.API_PATH = void 0;
 const path_1 = __importDefault(require("path"));
 const express_1 = __importDefault(require("express"));
 const prostgles_server_1 = __importDefault(require("prostgles-server"));
@@ -25,150 +25,15 @@ exports.ROOT_DIR = path_1.default.join(__dirname, "/../../..");
 const http_1 = __importDefault(require("http"));
 const http = http_1.default.createServer(app);
 const ioPath = process.env.PRGL_IOPATH || "/iosckt";
-const pg_promise_1 = __importDefault(require("pg-promise"));
-const pgp = (0, pg_promise_1.default)();
-const connection_string_1 = require("connection-string");
 const publish_1 = require("./publish");
-// const dns = require('dns');
-const validateConnection = (c) => {
-    let result = { ...c };
-    if (c.type === "Connection URI") {
-        if (!c.db_conn) {
-            result.db_conn = (0, exports.validateConnection)({ ...result, type: "Standard" }).db_conn;
-        }
-        const cs = new connection_string_1.ConnectionString(result.db_conn);
-        const params = cs.params ?? {};
-        const { sslmode, host, port, dbname, user, password, } = params;
-        // if(!cs.hosts?.length) throw `Host missing`
-        // if(!cs.path?.length) throw `DB name missing`
-        result.db_host = cs.hosts?.[0].name ?? host;
-        result.db_port = cs.hosts?.[0].port ?? +port;
-        result.db_user = cs.user ?? user;
-        result.db_pass = cs.password ?? password;
-        result.db_name = cs.path?.[0] ?? dbname;
-        result.db_ssl = sslmode;
-        // result.type = "Standard"
-    }
-    else if (c.type === "Standard" || c.db_host) {
-        const cs = new connection_string_1.ConnectionString(null, { protocol: "postgres" });
-        cs.hosts = [{ name: c.db_host, port: c.db_port }];
-        cs.password = c.db_pass;
-        cs.user = c.db_user;
-        cs.path = [c.db_name];
-        cs.params = c.db_ssl ? { sslmode: c.db_ssl ?? "prefer" } : undefined;
-        result.db_conn = cs.toString();
-    }
-    else
-        throw "Not supported";
-    result.db_user = result.db_user || "postgres";
-    result.db_host = result.db_host || "localhost";
-    result.db_ssl = result.db_ssl || "disable";
-    result.db_port = result.db_port ?? 5432;
-    return result;
-};
-exports.validateConnection = validateConnection;
-const getConnectionDetails = (c) => {
-    /**
-     * Cannot use connection uri without having ssl issues
-     * https://github.com/brianc/node-postgres/issues/2281
-     */
-    const getSSLOpts = (sslmode) => sslmode && sslmode !== "disable" ? ({
-        ca: c.ssl_certificate ?? undefined,
-        cert: c.ssl_client_certificate ?? undefined,
-        key: c.ssl_client_certificate_key ?? undefined,
-        rejectUnauthorized: c.ssl_reject_unauthorized ?? (sslmode === "require" && !!c.ssl_certificate || sslmode === "verify-ca" || sslmode === "verify-full")
-    }) : undefined;
-    if (c.type === "Connection URI") {
-        const cs = new connection_string_1.ConnectionString(c.db_conn);
-        const params = cs.params ?? {};
-        const { sslmode, application_name = "prostgles" } = params;
-        return {
-            // connectionString: c.db_conn,
-            application_name,
-            host: cs.hosts[0].name,
-            port: cs.hosts[0].port,
-            user: cs.user,
-            password: cs.password,
-            database: cs.path[0],
-            ssl: getSSLOpts(sslmode),
-        };
-    }
-    return {
-        database: c.db_name,
-        user: c.db_user,
-        password: c.db_pass,
-        host: c.db_host,
-        port: c.db_port,
-        ssl: getSSLOpts(c.db_ssl)
-    };
-};
-exports.getConnectionDetails = getConnectionDetails;
-const testDBConnection = (_c, expectSuperUser = false) => {
-    const con = (0, exports.validateConnection)(_c);
-    if (typeof con !== "object" || !("db_host" in con) && !("db_conn" in con)) {
-        throw "Incorrect database connection info provided. " +
-            "\nExpecting: \
-      db_conn: string; \
-      OR \
-      db_user: string; db_pass: string; db_host: string; db_port: number; db_name: string, db_ssl: string";
-    }
-    // console.log(db_conn)
-    return new Promise(async (resolve, reject) => {
-        let connOpts = (0, exports.getConnectionDetails)(con);
-        const db = pgp({ ...connOpts, connectionTimeoutMillis: 1000 });
-        db.connect()
-            .then(async function (c) {
-            // console.log(connOpts, "success, release connectio ", await db.any("SELECT current_database(), current_user, (select usesuper from pg_user where usename = CURRENT_USER)"))
-            if (expectSuperUser) {
-                const usessuper = await (0, Prostgles_1.isSuperUser)(c);
-                if (!usessuper) {
-                    reject("Provided user must be a superuser");
-                    return;
-                }
-            }
-            await c.done(); // success, release connection;
-            resolve(true);
-        }).catch(err => {
-            let errRes = err instanceof Error ? err.message : JSON.stringify(err);
-            if (process.env.IS_DOCKER) {
-                if (con.db_host === "localhost" || con.db_host === "127.0.0.1") {
-                    errRes += `\nHint: to connect to a localhost database from docker you need to:\n ` +
-                        `1) Uncomment extra_hosts in docker-compose.yml:  
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
- 2) postgresql.conf contains:
-    listen_addresses = '*'
- 3) pg_hba.conf contains:
-    host  all   all   0.0.0.0/0 md5
- 4) Ensure the user you connect with has an encrypted password. 
- 5) use "host.docker.internal" instead of "localhost" in the above connection details
-`;
-                }
-            }
-            // console.error("testDBConnection fail", {err, connOpts, con})
-            reject(errRes);
-        });
-        /**
-         * Used to prevent connecting to localhost or internal networks
-         */
-        // dns.lookup(host, function(err, result) {
-        //   if(err) return reject(err);
-        //   else if(["127.0.0.1"].includes(result)){
-        //     return reject("localhost not allowed");
-        //   } else {
-        //     resolve(pgp({ user: username, password, host, port, databse, ssl }).connect());
-        //   }
-        // });
-    });
-};
-exports.testDBConnection = testDBConnection;
 const dotenv = require('dotenv');
+const testDBConnection_1 = require("./connectionUtils/testDBConnection");
+const validateConnection_1 = require("./connectionUtils/validateConnection");
 console.log(exports.ROOT_DIR);
 const result = dotenv.config({ path: path_1.default.join(exports.ROOT_DIR + '/../.env') });
 _a = result?.parsed || {}, exports.PRGL_USERNAME = _a.PRGL_USERNAME, exports.PRGL_PASSWORD = _a.PRGL_PASSWORD, exports.POSTGRES_URL = _a.POSTGRES_URL, exports.POSTGRES_DB = _a.POSTGRES_DB, exports.POSTGRES_HOST = _a.POSTGRES_HOST, exports.POSTGRES_PASSWORD = _a.POSTGRES_PASSWORD, exports.POSTGRES_PORT = _a.POSTGRES_PORT, exports.POSTGRES_USER = _a.POSTGRES_USER, exports.POSTGRES_SSL = _a.POSTGRES_SSL, exports.PROSTGLES_STRICT_COOKIE = _a.PROSTGLES_STRICT_COOKIE;
 const PORT = +(process.env.PRGL_PORT ?? 3004);
 http.listen(PORT);
-const Prostgles_1 = require("prostgles-server/dist/Prostgles");
 const log = (msg, extra) => {
     console.log(...[`(server): ${(new Date()).toISOString()} ` + msg, extra].filter(v => v));
 };
@@ -190,7 +55,10 @@ const DBS_CONNECTION_INFO = {
     db_ssl: process.env.POSTGRES_SSL || exports.POSTGRES_SSL,
 };
 const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
-let conSub;
+const BackupManager_1 = __importDefault(require("./BackupManager"));
+let bkpManager;
+const getBackupManager = () => bkpManager;
+exports.getBackupManager = getBackupManager;
 const ConnectionChecker_1 = require("./ConnectionChecker");
 exports.connectionChecker = new ConnectionChecker_1.ConnectionChecker(app);
 const socket_io_1 = require("socket.io");
@@ -226,7 +94,7 @@ const getDBS = async () => {
 
       `;
         }
-        await (0, exports.testDBConnection)(con, true);
+        await (0, testDBConnection_1.testDBConnection)(con, true);
         const auth = (0, authConfig_1.getAuth)(app);
         (0, prostgles_server_1.default)({
             dbConnection: {
@@ -241,7 +109,7 @@ const getDBS = async () => {
             io,
             tsGeneratedTypesDir: path_1.default.join(exports.ROOT_DIR + '/../commonTypes/'),
             transactions: true,
-            onSocketConnect: async (socket, dbo, db) => {
+            onSocketConnect: async ({ socket, dbo, db }) => {
                 const remoteAddress = socket?.conn?.remoteAddress;
                 (0, exports.log)("onSocketConnect", remoteAddress);
                 console.error("CHECK CORS");
@@ -279,41 +147,9 @@ const getDBS = async () => {
             joins: "inferred",
             onReady: async (db, _db) => {
                 // db.backups.update({}, {restore_options: { "clean": true }});
-                // const q = await db.connections.find({}, { 
-                //   orderBy: [{ db_conn: 1 }, { created: -1 }], 
-                //   select: { 
-                //     "*": 1, 
-                //     crtd: { "$datetime": ["created"] },
-                //     access_control_user_types: { ids: { "$countAll": [] } }
-                //   },  
-                //   returnType: "statement"
-                // });
-                // console.log(q);
-                await exports.connectionChecker.init(db);
-                await conSub?.unsubscribe();
-                conSub = await db.connections.subscribe({}, {}, connections => {
-                    exports.connMgr.saveCertificates(connections);
-                });
-                let username = exports.PRGL_USERNAME, password = exports.PRGL_PASSWORD;
-                if (!exports.PRGL_USERNAME || !exports.PRGL_PASSWORD) {
-                    username = ConnectionChecker_1.EMPTY_USERNAME;
-                    password = ConnectionChecker_1.EMPTY_PASSWORD;
-                }
-                // await db.users.delete(); 
-                if (!(await db.users.count({ username }))) {
-                    if (await (0, ConnectionChecker_1.ADMIN_ACCESS_WITHOUT_PASSWORD)(db)) {
-                        console.warn(`PRGL_USERNAME or PRGL_PASSWORD missing. Creating default user: ${username} with default password: ${password}`);
-                    }
-                    console.log((await db.users.count({ username })));
-                    try {
-                        const u = await db.users.insert({ username, password, type: "admin" }, { returning: "*" });
-                        await _db.any("UPDATE users SET password = crypt(password, id::text), status = 'active' WHERE status IS NULL AND id = ${id};", u);
-                    }
-                    catch (e) {
-                        console.error(e);
-                    }
-                    console.log("Added users: ", await db.users.find({ username }));
-                }
+                await exports.connectionChecker.init(db, _db);
+                await exports.connMgr.init(db);
+                bkpManager ??= new BackupManager_1.default(db);
                 console.log("Prostgles UI is running on port ", PORT);
             },
         });
@@ -421,12 +257,12 @@ const upsertConnection = async (con, user, dbs) => {
     if (user?.type !== "admin" || !user.id) {
         throw "User missing or not admin";
     }
-    const c = (0, exports.validateConnection)({
+    const c = (0, validateConnection_1.validateConnection)({
         ...con,
         user_id: user.id,
         last_updated: Date.now()
     });
-    await (0, exports.testDBConnection)(con);
+    await (0, testDBConnection_1.testDBConnection)(con);
     try {
         let res;
         if (con.id) {
@@ -449,4 +285,12 @@ const upsertConnection = async (con, user, dbs) => {
     }
 };
 exports.upsertConnection = upsertConnection;
+const tout = (timeout) => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve(true);
+        }, timeout);
+    });
+};
+exports.tout = tout;
 //# sourceMappingURL=index.js.map

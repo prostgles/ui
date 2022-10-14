@@ -40,7 +40,10 @@ const getAuth = (app) => {
                 user = await db.users.findOne({ id: s.user_id });
                 if (user) {
                     const state_db = await db.connections.findOne({ is_state_db: true });
-                    return {
+                    if (!state_db)
+                        throw "Statedb missing internal error";
+                    const suser = {
+                        sid: s.id,
                         user,
                         clientUser: {
                             sid: s.id,
@@ -50,6 +53,7 @@ const getAuth = (app) => {
                             ...(0, PubSubManager_1.omitKeys)(user, ["password", "2fa"])
                         }
                     };
+                    return suser;
                 }
             }
             // console.trace("getUser", { user, s })
@@ -58,13 +62,6 @@ const getAuth = (app) => {
         login: async ({ username = null, password = null, totp_token = null, totp_recovery_code = null } = {}, db, _db) => {
             let u;
             (0, index_1.log)("login", username);
-            /**
-             * If no login config provided then login automatically
-             */
-            // if(!PRGL_USERNAME){
-            //   username = EMPTY_USERNAME; 
-            //   password = EMPTY_PASSWORD;
-            // }
             try {
                 u = await _db.one("SELECT * FROM users WHERE username = ${username} AND password = crypt(${password}, id::text);", { username, password });
             }
@@ -121,49 +118,44 @@ const getAuth = (app) => {
         expressConfig: {
             app,
             // userRoutes: ["/", "/connection", "/connections", "/profile", "/jobs", "/chats", "/chat", "/account", "/dashboard", "/registrations"],
+            use: index_1.connectionChecker.onUse,
             publicRoutes: ["/manifest.json", "/favicon.ico", index_1.API_PATH],
             onGetRequestOK: async (req, res, { getUser, db, dbo: dbs }) => {
                 console.log("onGetRequestOK", req.path);
-                const BKP_PREFFIX = "/" + BackupManager_1.BACKUP_FOLDERNAME;
-                if (req.path.startsWith(BKP_PREFFIX)) {
+                if (req.path.startsWith(BackupManager_1.BKP_PREFFIX)) {
                     const userData = await getUser();
-                    if (userData?.user?.type !== "admin") {
-                        res.sendStatus(401);
-                    }
-                    else {
-                        const bkpId = req.path.slice(BKP_PREFFIX.length + 1);
-                        if (!bkpId) {
-                            res.sendStatus(404);
-                        }
-                        else {
-                            const bkp = await dbs.backups.findOne({ id: bkpId });
-                            if (!bkp) {
-                                res.sendStatus(404);
-                            }
-                            else {
-                                const { fileMgr } = await (0, BackupManager_1.getFileMgr)(dbs, bkp.credential_id);
-                                if (bkp.credential_id) {
-                                    /* Allow access at a download rate of 50KBps */
-                                    const presignedURL = await fileMgr.getFileS3URL(bkp.id, (bkp.sizeInBytes ?? 1e6) / 50);
-                                    if (!presignedURL) {
-                                        res.sendStatus(404);
-                                    }
-                                    else {
-                                        res.redirect(presignedURL);
-                                    }
-                                }
-                                else {
-                                    try {
-                                        res.type("text/plain");
-                                        res.sendFile(path_1.default.join(index_1.ROOT_DIR + BKP_PREFFIX + "/" + bkp.id));
-                                    }
-                                    catch (err) {
-                                        res.sendStatus(404);
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    await (0, index_1.getBackupManager)().onRequestBackupFile(res, !userData?.user ? undefined : userData, req);
+                    // if(userData?.user?.type !== "admin"){
+                    //   res.sendStatus(401);
+                    // } else {
+                    //   const bkpId = req.path.slice(BKP_PREFFIX.length + 1);
+                    //   if(!bkpId) {
+                    //     res.sendStatus(404);
+                    //   } else {
+                    //     const bkp = await dbs.backups.findOne({ id: bkpId  });
+                    //     if(!bkp){
+                    //       res.sendStatus(404);
+                    //     } else {
+                    //       const { fileMgr } = await getFileMgr(dbs, bkp.credential_id);
+                    //       if(bkp.credential_id){
+                    //         /* Allow access to file for a period equivalent to a download rate of 50KBps */
+                    //         const presignedURL = await fileMgr.getFileS3URL(bkp.id, (bkp.sizeInBytes ?? 1e6)/50);
+                    //         if(!presignedURL){
+                    //           res.sendStatus(404);
+                    //         } else {
+                    //           res.redirect(presignedURL)
+                    //         }
+                    //       } else {
+                    //         try {
+                    //           res.type(bkp.content_type)
+                    //           res.sendFile(path.join(ROOT_DIR + BKP_PREFFIX + "/" + bkp.id));
+                    //         } catch(err){
+                    //           res.sendStatus(404);
+                    //         }
+                    //       }
+                    //     }
+                    //   }
+                    // }
                 }
                 else if (req.path.startsWith(index_1.MEDIA_ROUTE_PREFIX)) {
                     req.next?.();

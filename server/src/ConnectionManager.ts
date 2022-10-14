@@ -1,6 +1,6 @@
 
 import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
-import { testDBConnection, restartProc, getConnectionDetails, Connections, MEDIA_ROUTE_PREFIX, ROOT_DIR, API_PATH, DBS } from "./index";
+import { restartProc, Connections, MEDIA_ROUTE_PREFIX, ROOT_DIR, API_PATH, DBS } from "./index";
 import { WithOrigin } from "./ConnectionChecker";
 import { Server }  from "socket.io";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
@@ -10,12 +10,14 @@ import { omitKeys, pickKeys } from "prostgles-server/dist/PubSubManager";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { DB, FileTableConfig } from "prostgles-server/dist/Prostgles";
 import path from "path";
-import { isObject } from "prostgles-types";
+import { SubscriptionHandler } from "prostgles-types";
 import { getAuth } from "./authConfig"
 import WebSocket from 'ws';
 import * as fs from "fs";
 import { S3Config } from "prostgles-server/dist/FileManager";
-import { Express } from "express"
+import { Express } from "express";
+import { testDBConnection } from "./connectionUtils/testDBConnection";
+import { getConnectionDetails } from "./connectionUtils/getConnectionDetails";
 
 export type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
 
@@ -36,13 +38,24 @@ export class ConnectionManager {
   http: any; 
   app: Express;
   wss?: WebSocket.Server<WebSocket.WebSocket>;
-  withOrigin: WithOrigin
+  withOrigin: WithOrigin;
+  dbs?: DBS;
 
   constructor(http: any, app: Express, withOrigin: WithOrigin){
     this.http = http;
     this.app = app;
     this.withOrigin = withOrigin;
     this.setUpWSS()
+  }
+
+  conSub?: SubscriptionHandler<Connections> | undefined;
+  init = async (dbs: DBS) => {
+    this.dbs = dbs;
+
+    await this.conSub?.unsubscribe();
+    this.conSub = await this.dbs.connections.subscribe({}, {}, connections => {
+      this.saveCertificates(connections)
+    });
   }
 
   getCertPath(conId: string, type?: "ca" | "cert" | "key"){

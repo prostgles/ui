@@ -1,6 +1,6 @@
-import { BACKUP_FOLDERNAME, getFileMgr } from "./BackupManager";
+import { BACKUP_FOLDERNAME, BKP_PREFFIX, getFileMgr } from "./BackupManager";
 import { Auth, BasicSession } from 'prostgles-server/dist/AuthHandler';
-import { MEDIA_ROUTE_PREFIX, PROSTGLES_STRICT_COOKIE, ROOT_DIR, log, Users, API_PATH } from "./index";
+import { MEDIA_ROUTE_PREFIX, PROSTGLES_STRICT_COOKIE, ROOT_DIR, log, Users, API_PATH, getBackupManager, connectionChecker } from "./index";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { omitKeys } from "prostgles-server/dist/PubSubManager";
@@ -35,19 +35,32 @@ const makeSession = async (user: Users | undefined, dbo: DBOFullyTyped<DBSchemaG
   }
 }
 
-export const getAuth = (app: Express): Auth<DBSchemaGenerated> => {
+export type SUser = {
+  sid: string;
+  user: Users;
+  clientUser: { 
+    sid: string;
+    uid: string; 
+    state_db_id: string;
+    has_2fa: boolean;
+  } & Omit<Users, "password"| "2fa">
+}
+
+export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
   
-  const auth: Auth<DBSchemaGenerated> = {
+  const auth: Auth<DBSchemaGenerated, SUser> = {
     sidKeyName: "sid_token",
     getUser: async (sid, db, _db: DB) => {
       log("getUser", sid);
       const s = await db.sessions.findOne({ id: sid });
-      let user;
+      let user: Users | undefined;
       if(s) {
         user = await db.users.findOne({ id: s.user_id });
         if(user){
           const state_db = await db.connections.findOne({ is_state_db: true });
-          return {
+          if(!state_db) throw "Statedb missing internal error"
+          const suser: SUser = {
+            sid: s.id, 
             user,
             clientUser: { 
               sid: s.id, 
@@ -57,6 +70,8 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated> => {
               ...omitKeys(user, ["password", "2fa"]) 
             }
           }
+
+          return suser;
         }
       }
       // console.trace("getUser", { user, s })
@@ -65,13 +80,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated> => {
     login: async ({ username = null, password = null, totp_token = null, totp_recovery_code = null } = {}, db, _db: DB) => {
       let u: Users | undefined;
       log("login", username)
-      /**
-       * If no login config provided then login automatically
-       */
-      // if(!PRGL_USERNAME){
-      //   username = EMPTY_USERNAME; 
-      //   password = EMPTY_PASSWORD;
-      // }
+      
       try {
         u = await _db.one("SELECT * FROM users WHERE username = ${username} AND password = crypt(${password}, id::text);", { username, password });
       } catch(e){
@@ -125,49 +134,54 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated> => {
     expressConfig:  {
       app,
       // userRoutes: ["/", "/connection", "/connections", "/profile", "/jobs", "/chats", "/chat", "/account", "/dashboard", "/registrations"],
+      use: connectionChecker.onUse,
       publicRoutes: ["/manifest.json", "/favicon.ico", API_PATH], // ["/"],
       onGetRequestOK: async (req, res, { getUser, db, dbo: dbs }) => {
         console.log("onGetRequestOK", req.path);
 
-        const BKP_PREFFIX = "/"+BACKUP_FOLDERNAME;
         if(req.path.startsWith(BKP_PREFFIX)){
           const userData = await getUser();
-          if(userData?.user?.type !== "admin"){
-            res.sendStatus(401);
-          } else {
-            const bkpId = req.path.slice(BKP_PREFFIX.length + 1);
-            if(!bkpId) {
-              res.sendStatus(404);
-            } else {
-              const bkp = await dbs.backups.findOne({ id: bkpId  });
-              if(!bkp){
-                res.sendStatus(404);
-              } else {
-                const { fileMgr } = await getFileMgr(dbs, bkp.credential_id);
-                if(bkp.credential_id){
-                  /* Allow access at a download rate of 50KBps */
-                  const presignedURL = await fileMgr.getFileS3URL(bkp.id, (bkp.sizeInBytes ?? 1e6)/50);
-                  if(!presignedURL){
-                    res.sendStatus(404);
-                  } else {
-                    res.redirect(presignedURL)
-                  }
-                } else {
-                  try {
-                    res.type("text/plain")
-                    res.sendFile(path.join(ROOT_DIR + BKP_PREFFIX + "/" + bkp.id));
-                  } catch(err){
-                    res.sendStatus(404);
-                  }
-                }
-              }
-            }
-          }
+          await getBackupManager().onRequestBackupFile(res, !userData?.user? undefined : userData, req);
+
+          // if(userData?.user?.type !== "admin"){
+          //   res.sendStatus(401);
+          // } else {
+          //   const bkpId = req.path.slice(BKP_PREFFIX.length + 1);
+          //   if(!bkpId) {
+          //     res.sendStatus(404);
+          //   } else {
+          //     const bkp = await dbs.backups.findOne({ id: bkpId  });
+          //     if(!bkp){
+          //       res.sendStatus(404);
+          //     } else {
+          //       const { fileMgr } = await getFileMgr(dbs, bkp.credential_id);
+          //       if(bkp.credential_id){
+          //         /* Allow access to file for a period equivalent to a download rate of 50KBps */
+          //         const presignedURL = await fileMgr.getFileS3URL(bkp.id, (bkp.sizeInBytes ?? 1e6)/50);
+          //         if(!presignedURL){
+          //           res.sendStatus(404);
+          //         } else {
+          //           res.redirect(presignedURL)
+          //         }
+          //       } else {
+          //         try {
+          //           res.type(bkp.content_type)
+          //           res.sendFile(path.join(ROOT_DIR + BKP_PREFFIX + "/" + bkp.id));
+          //         } catch(err){
+          //           res.sendStatus(404);
+          //         }
+          //       }
+          //     }
+          //   }
+          // }
+          
         } else if(req.path.startsWith(MEDIA_ROUTE_PREFIX)){
           req.next?.();
+
         /* Must be socket io reconnecting */
         } else if(req.query.transport === "polling"){
           req.next?.()
+
         } else {
           res.sendFile(path.join(ROOT_DIR + '/../client/build/index.html'));
         }

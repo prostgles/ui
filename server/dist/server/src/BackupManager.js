@@ -3,8 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pipeToCommand = exports.pipeFromCommand = exports.getFileMgr = exports.BACKUP_FOLDERNAME = void 0;
-// @ts-nocheckd
+exports.pipeToCommand = exports.pipeFromCommand = exports.getFileMgr = exports.BKP_PREFFIX = exports.BACKUP_FOLDERNAME = void 0;
 const index_1 = require("./index");
 const path_1 = __importDefault(require("path"));
 const child_process_1 = __importDefault(require("child_process"));
@@ -12,6 +11,8 @@ const stream_1 = require("stream");
 const prostgles_types_1 = require("prostgles-types");
 const FileManager_1 = __importDefault(require("prostgles-server/dist/FileManager"));
 const prostgles_types_2 = require("prostgles-types");
+exports.BACKUP_FOLDERNAME = "prostgles_backups";
+exports.BKP_PREFFIX = "/" + exports.BACKUP_FOLDERNAME;
 const getConnectionUri = (c) => c.db_conn || `postgres://${c.db_user}:${c.db_pass || ""}@${c.db_host || "localhost"}:${c.db_port || "5432"}/${c.db_name}`;
 const check_disk_space_1 = __importDefault(require("check-disk-space"));
 const HOUR = 3600 * 1000;
@@ -150,7 +151,7 @@ class BackupManager {
                         }
                     }
                 };
-                /** Local backup, check for space */
+                /** Local backup, check if enough space */
                 if (!bkpConf?.cloudConfig?.credential_id) {
                     const space = await this.checkIfEnoughSpace(con.id);
                     if (space.err) {
@@ -444,9 +445,47 @@ class BackupManager {
         await this.dbs.backups.delete({ id: bkp.id });
         return bkp.id;
     };
+    onRequestBackupFile = async (res, userData, req) => {
+        if (userData?.user?.type !== "admin") {
+            res.sendStatus(401);
+        }
+        else {
+            const bkpId = req.path.slice(exports.BKP_PREFFIX.length + 1);
+            if (!bkpId) {
+                res.sendStatus(404);
+            }
+            else {
+                const bkp = await this.dbs.backups.findOne({ id: bkpId });
+                if (!bkp) {
+                    res.sendStatus(404);
+                }
+                else {
+                    const { fileMgr } = await getFileMgr(this.dbs, bkp.credential_id);
+                    if (bkp.credential_id) {
+                        /* Allow access to file for a period equivalent to a download rate of 50KBps */
+                        const presignedURL = await fileMgr.getFileS3URL(bkp.id, (bkp.sizeInBytes ?? 1e6) / 50);
+                        if (!presignedURL) {
+                            res.sendStatus(404);
+                        }
+                        else {
+                            res.redirect(presignedURL);
+                        }
+                    }
+                    else {
+                        try {
+                            res.type(bkp.content_type);
+                            res.sendFile(path_1.default.join(index_1.ROOT_DIR + exports.BKP_PREFFIX + "/" + bkp.id));
+                        }
+                        catch (err) {
+                            res.sendStatus(404);
+                        }
+                    }
+                }
+            }
+        }
+    };
 }
 exports.default = BackupManager;
-exports.BACKUP_FOLDERNAME = "prostgles_backups";
 const localFolderPath = path_1.default.resolve(index_1.ROOT_DIR + '/' + exports.BACKUP_FOLDERNAME);
 async function getFileMgr(dbs, credId) {
     let cred;

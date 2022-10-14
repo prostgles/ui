@@ -50,8 +50,15 @@ exports.tableConfig = {
         columns: {
             id: { sqlDefinition: `UUID PRIMARY KEY DEFAULT gen_random_uuid()` },
             username: { sqlDefinition: `TEXT NOT NULL UNIQUE` },
-            password: { sqlDefinition: `TEXT NOT NULL DEFAULT gen_random_uuid()`, info: { hint: "On update will be hashed with the user id" } },
+            password: {
+                sqlDefinition: `TEXT NOT NULL DEFAULT gen_random_uuid()`,
+                info: { hint: "On update will be hashed with the user id" }
+            },
             type: { sqlDefinition: `TEXT NOT NULL DEFAULT 'default' REFERENCES user_types (id)` },
+            no_password: {
+                sqlDefinition: `BOOLEAN CHECK( COALESCE(no_password, false) = FALSE OR type = 'admin' )`,
+                info: { hint: "If checked then everyone has passwordless admin access, provided their IP is whitelisted. Only applies to admin accounts" }
+            },
             created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
             last_updated: { sqlDefinition: `BIGINT` },
             options: { nullable: true, jsonbSchema: {
@@ -389,10 +396,28 @@ exports.tableConfig = {
         dropIfExistsCascade: true,
         columns: {
             id: "INTEGER GENERATED ALWAYS AS IDENTITY",
-            allowed_origin: { sqlDefinition: "TEXT", label: "Allow-Origin", info: { hint: "Specifies which domains can access the this app in a cross-origin manner. \nSets the Access-Control-Allow-Origin header. Use '*' to allow all" } },
-            allowed_ips: { sqlDefinition: `cidr[]`, label: "Allowed IPs", info: { hint: "List of allowed IP addresses in ipv4 or ipv6 format" } },
-            trust_proxy: { sqlDefinition: `boolean NOT NULL DEFAULT FALSE`, info: { hint: "If true then will use the IP from 'X-Forwarded-For' header" } },
-            updated_by: { enum: ["user", "app"], defaultValue: "app" },
+            allowed_origin: {
+                sqlDefinition: "TEXT",
+                label: "Allow-Origin",
+                info: { hint: "Specifies which domains can access the this app in a cross-origin manner. \nSets the Access-Control-Allow-Origin header. \nUse '*' or specific URL to allow API access" }
+            },
+            allowed_ips: {
+                sqlDefinition: `cidr[] NOT NULL DEFAULT '{}'`,
+                label: "Allowed IPs",
+                info: { hint: "List of allowed IP addresses in ipv4 or ipv6 format" }
+            },
+            allowed_ips_enabled: {
+                sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE CHECK(allowed_ips_enabled = FALSE OR array_length(allowed_ips, 1) > 0)`,
+                info: { hint: "If enabled then only allowed IPs can connect" }
+            },
+            trust_proxy: {
+                sqlDefinition: `boolean NOT NULL DEFAULT FALSE`,
+                info: { hint: "If true then will use the IP from 'X-Forwarded-For' header" }
+            },
+            updated_by: {
+                enum: ["user", "app"],
+                defaultValue: "app"
+            },
         }
     },
     links: {

@@ -1,4 +1,3 @@
-// @ts-nocheckd
 import { connMgr, ROOT_DIR } from "./index";
 import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import path from 'path';
@@ -8,6 +7,10 @@ import { asName } from "prostgles-types"
 import FileManager from "prostgles-server/dist/FileManager";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { getKeys, isDefined } from "prostgles-types"
+
+
+export const BACKUP_FOLDERNAME = "prostgles_backups";
+export const BKP_PREFFIX = "/"+BACKUP_FOLDERNAME;
 
 export type Backups = Required<DBSchemaGenerated["backups"]>["columns"];
 type DumpOpts = Backups["options"];
@@ -19,6 +22,8 @@ export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 type DBS = DBOFullyTyped<DBSchemaGenerated>;
 
 import checkDiskSpace from 'check-disk-space';
+import { Request, Response } from "express";
+import { SUser } from "./authConfig";
 
 
 const HOUR = 3600 * 1000;
@@ -164,7 +169,7 @@ export default class BackupManager {
           }
         }
         
-        /** Local backup, check for space */
+        /** Local backup, check if enough space */
         if(!bkpConf?.cloudConfig?.credential_id){
 
           const space = await this.checkIfEnoughSpace(con.id);
@@ -476,10 +481,43 @@ export default class BackupManager {
     
     return bkp.id;
   }
+
+  onRequestBackupFile = async (res: Response, userData: SUser | undefined, req: Request) => {
+
+    if(userData?.user?.type !== "admin"){
+      res.sendStatus(401);
+    } else {
+      const bkpId = req.path.slice(BKP_PREFFIX.length + 1);
+      if(!bkpId) {
+        res.sendStatus(404);
+      } else {
+        const bkp = await this.dbs.backups.findOne({ id: bkpId  });
+        if(!bkp){
+          res.sendStatus(404);
+        } else {
+          const { fileMgr } = await getFileMgr(this.dbs, bkp.credential_id);
+          if(bkp.credential_id){
+            /* Allow access to file for a period equivalent to a download rate of 50KBps */
+            const presignedURL = await fileMgr.getFileS3URL(bkp.id, (bkp.sizeInBytes ?? 1e6)/50);
+            if(!presignedURL){
+              res.sendStatus(404);
+            } else {
+              res.redirect(presignedURL)
+            }
+          } else {
+            try {
+              res.type(bkp.content_type)
+              res.sendFile(path.join(ROOT_DIR + BKP_PREFFIX + "/" + bkp.id));
+            } catch(err){
+              res.sendStatus(404);
+            }
+          }
+        }
+      }
+    }
+  }
 } 
 
-
-export const BACKUP_FOLDERNAME = "prostgles_backups";
 
 const localFolderPath = path.resolve(ROOT_DIR + '/' + BACKUP_FOLDERNAME);
 
