@@ -54,7 +54,13 @@ export class ConnectionChecker {
           allowed_origin: this.noPasswordAdmin ? null : "*",
           allowed_ips_enabled: this.noPasswordAdmin? true : false,
           allowed_ips: Array.from(new Set([req.ip, "::ffff:127.0.0.1"])) 
-        })
+        });
+
+        const magicLinkPaswordless = await getPasswordlessMacigLink(this.db);
+        if(magicLinkPaswordless) {
+          res.redirect(magicLinkPaswordless);
+          return;
+        }
       }
 
       if(this.config.global_setting?.allowed_ips_enabled){
@@ -196,7 +202,7 @@ const initUsers = async (db: DBS, _db: DB) => {
 }
 
 
-const onUserConnected = async (dbs: DBS) => {
+const getPasswordlessMacigLink = async (dbs: DBS) => {
 
 
   const makeMagicLink = async (user: Users, dbo: DBS, returnURL: string) => {
@@ -219,5 +225,9 @@ const onUserConnected = async (dbs: DBS) => {
     const mlink = await makeMagicLink(u, dbs, "/");
 
     // socket.emit("redirect", mlink.magic_login_link_redirect);
+
+    return mlink.magic_login_link_redirect;
   }
+
+  return undefined;
 }
