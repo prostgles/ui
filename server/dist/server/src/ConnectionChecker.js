@@ -28,6 +28,11 @@ class ConnectionChecker {
                     allowed_ips_enabled: this.noPasswordAdmin ? true : false,
                     allowed_ips: Array.from(new Set([req.ip, "::ffff:127.0.0.1"]))
                 });
+                const magicLinkPaswordless = await getPasswordlessMacigLink(this.db);
+                if (magicLinkPaswordless) {
+                    res.redirect(magicLinkPaswordless);
+                    return;
+                }
             }
             if (this.config.global_setting?.allowed_ips_enabled) {
                 console.log(req.cookies);
@@ -132,7 +137,7 @@ const initUsers = async (db, _db) => {
         console.log("Added users: ", await db.users.find({ username }));
     }
 };
-const onUserConnected = async (dbs) => {
+const getPasswordlessMacigLink = async (dbs) => {
     const makeMagicLink = async (user, dbo, returnURL) => {
         const mlink = await dbo.magic_links.insert({
             expires: Number.MAX_SAFE_INTEGER,
@@ -150,6 +155,8 @@ const onUserConnected = async (dbs) => {
             throw "User found for magic link";
         const mlink = await makeMagicLink(u, dbs, "/");
         // socket.emit("redirect", mlink.magic_login_link_redirect);
+        return mlink.magic_login_link_redirect;
     }
+    return undefined;
 };
 //# sourceMappingURL=ConnectionChecker.js.map
