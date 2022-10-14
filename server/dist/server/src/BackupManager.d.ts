@@ -6,6 +6,8 @@ import child from 'child_process';
 import internal, { PassThrough, Readable } from "stream";
 import FileManager from "prostgles-server/dist/FileManager";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+export declare const BACKUP_FOLDERNAME = "prostgles_backups";
+export declare const BKP_PREFFIX: string;
 export declare type Backups = Required<DBSchemaGenerated["backups"]>["columns"];
 declare type DumpOpts = Backups["options"];
 export declare type DumpOptsServer = DumpOpts & {
@@ -14,6 +16,8 @@ export declare type DumpOptsServer = DumpOpts & {
 export declare type Users = Required<DBSchemaGenerated["users"]["columns"]>;
 export declare type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 declare type DBS = DBOFullyTyped<DBSchemaGenerated>;
+import { Request, Response } from "express";
+import { SUser } from "./authConfig";
 export default class BackupManager {
     private tempStreams;
     private timeout?;
@@ -40,7 +44,7 @@ export default class BackupManager {
         options?: {
             command: "pg_dumpall";
             clean: boolean;
-            dataOnly?: boolean | undefined; /** Delete stale streams */
+            dataOnly?: boolean | undefined;
             globalsOnly?: boolean | undefined;
             rolesOnly?: boolean | undefined;
             schemaOnly?: boolean | undefined;
@@ -112,8 +116,8 @@ export default class BackupManager {
     }, stream: Readable | undefined, o: Backups["restore_options"]) => Promise<void>;
     pgRestoreStream: (fileName: string, conId: string, stream: PassThrough, sizeBytes: number, restore_options: Backups["restore_options"]) => Promise<void>;
     bkpDelete: (bkpId: string, force?: boolean) => Promise<string>;
+    onRequestBackupFile: (res: Response, userData: SUser | undefined, req: Request) => Promise<void>;
 }
-export declare const BACKUP_FOLDERNAME = "prostgles_backups";
 export declare function getFileMgr(dbs: DBS, credId: number | null): Promise<{
     fileMgr: FileManager;
     cred: Required<{

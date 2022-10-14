@@ -35,6 +35,8 @@ const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
 const path_1 = __importDefault(require("path"));
 const authConfig_1 = require("./authConfig");
 const fs = __importStar(require("fs"));
+const testDBConnection_1 = require("./connectionUtils/testDBConnection");
+const getConnectionDetails_1 = require("./connectionUtils/getConnectionDetails");
 exports.DB_TRANSACTION_KEY = "dbTransactionProstgles";
 exports.PROSTGLES_CERTS_FOLDER = "prostgles_certificates";
 class ConnectionManager {
@@ -43,12 +45,21 @@ class ConnectionManager {
     app;
     wss;
     withOrigin;
+    dbs;
     constructor(http, app, withOrigin) {
         this.http = http;
         this.app = app;
         this.withOrigin = withOrigin;
         this.setUpWSS();
     }
+    conSub;
+    init = async (dbs) => {
+        this.dbs = dbs;
+        await this.conSub?.unsubscribe();
+        this.conSub = await this.dbs.connections.subscribe({}, {}, connections => {
+            this.saveCertificates(connections);
+        });
+    };
     getCertPath(conId, type) {
         return path_1.default.resolve(`${index_1.ROOT_DIR}/${exports.PROSTGLES_CERTS_FOLDER}/${conId}` + (type ? `/${type}.pem` : ""));
     }
@@ -134,7 +145,7 @@ class ConnectionManager {
         });
         if (!con)
             throw "Connection not found";
-        await (0, index_1.testDBConnection)(con);
+        await (0, testDBConnection_1.testDBConnection)(con);
         console.log("testDBConnection ok");
         const socket_path = `${index_1.API_PATH}/${con_id}-dashboard/s`;
         try {
@@ -200,7 +211,7 @@ class ConnectionManager {
                 }
                 const auth = (0, authConfig_1.getAuth)(this.app);
                 const prgl = await (0, prostgles_server_1.default)({
-                    dbConnection: (0, index_1.getConnectionDetails)(con),
+                    dbConnection: (0, getConnectionDetails_1.getConnectionDetails)(con),
                     io: _io,
                     auth: {
                         ...auth,

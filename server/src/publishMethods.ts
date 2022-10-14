@@ -1,6 +1,5 @@
 
-import { connMgr, testDBConnection, connectionChecker, validateConnection, upsertConnection } from "./index";
-import { ADMIN_ACCESS_WITHOUT_PASSWORD, EMPTY_USERNAME } from "./ConnectionChecker";
+import { connMgr, connectionChecker, upsertConnection, getBackupManager } from "./index";
 import { PublishMethods } from "prostgles-server/dist/PublishParser";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import fs from "fs";
@@ -14,44 +13,25 @@ export type Users = Required<DBSchemaGenerated["users"]["columns"]>;
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 type DBS = DBOFullyTyped<DBSchemaGenerated>;
 
-import BackupManager, { Backups } from "./BackupManager";
-import { ConnectionString } from "connection-string";
 import { isSuperUser } from "prostgles-server/dist/Prostgles";
 import { ConnectionTableConfig, DB_TRANSACTION_KEY } from "./ConnectionManager";
 import { DBHandlerServer, isPojoObject } from "prostgles-server/dist/DboBuilder";
-import { deepStrictEqual } from "assert";
 import { pickKeys } from "prostgles-server/dist/PubSubManager";
 import { DBSSchema } from "../../commonTypes/publishUtils";
-export let bkpManager: BackupManager;
+
+
+import { testDBConnection } from "./connectionUtils/testDBConnection";
+import { validateConnection } from "./connectionUtils/validateConnection";
+import { Backups } from "./BackupManager";
 
 export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params) => { //  socket, dbs: DBObj, _dbs, user: Users
   const { dbo: dbs, socket, db: _dbs } = params;
 
   const user: DBSSchema["users"] | undefined = params.user as any;
 
-  bkpManager ??= new BackupManager(dbs);
 
+  const bkpManager = getBackupManager();
   if(!user || !user.id) {
-
-    const makeMagicLink = async (user: Users, dbo: DBS, returnURL: string) => {
-      const mlink = await dbo.magic_links.insert({ 
-        expires: Number.MAX_SAFE_INTEGER, // Date.now() + 24 * 3600 * 1000, 
-        user_id: user.id,
-    
-      }, {returning: "*"});
-              
-      return {
-        id: user.id,
-        magic_login_link_redirect: `/magic-link/${mlink.id}?returnURL=${returnURL}`
-      };
-    }
-    /** If no user exists then make */
-    if(await ADMIN_ACCESS_WITHOUT_PASSWORD(dbs)){
-      const u = await dbs.users.findOne({ username: EMPTY_USERNAME });
-      if(!u) throw "User found for magic link"
-      const mlink = await makeMagicLink(u, dbs, "/")
-      socket.emit("redirect", mlink.magic_login_link_redirect);
-    }
 
     return {};
   }

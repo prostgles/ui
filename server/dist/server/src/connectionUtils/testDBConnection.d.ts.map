@@ -1,0 +1,1 @@
+{"version":3,"file":"testDBConnection.d.ts","sourceRoot":"","sources":["../../../../src/connectionUtils/testDBConnection.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,iBAAiB,EAAE,MAAM,mCAAmC,CAAC;AAEtE,oBAAY,WAAW,GAAG,QAAQ,CAAC,iBAAiB,CAAC,aAAa,CAAC,CAAC,SAAS,CAAC,CAAC,CAAC;AAOhF,eAAO,MAAM,gBAAgB,OAAQ,iBAAiB,CAAC,aAAa,CAAC,CAAC,SAAS,CAAC,gCAA4B,QAAQ,IAAI,CA8DvH,CAAA"}

@@ -231,7 +231,8 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      allowed_ips?: null | Array<string>;
+      allowed_ips?: Array<string>;
+      allowed_ips_enabled?: boolean;
       allowed_origin?: null | string;
       id?: number;
       trust_proxy?: boolean;
@@ -351,6 +352,7 @@ export type DBSchemaGenerated = {
       created?: null | Date;
       id?: string;
       last_updated?: null | number;
+      no_password?: null | boolean;
       options?: null |       { 
         showStateDB?: boolean; 
       };

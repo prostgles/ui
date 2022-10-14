@@ -26,41 +26,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkIf = exports.is = exports.publishMethods = exports.bkpManager = void 0;
+exports.checkIf = exports.is = exports.publishMethods = void 0;
 const index_1 = require("./index");
-const ConnectionChecker_1 = require("./ConnectionChecker");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const crypto = __importStar(require("crypto"));
 const preset_default_1 = require("@otplib/preset-default");
-const BackupManager_1 = __importDefault(require("./BackupManager"));
 const Prostgles_1 = require("prostgles-server/dist/Prostgles");
 const ConnectionManager_1 = require("./ConnectionManager");
 const DboBuilder_1 = require("prostgles-server/dist/DboBuilder");
 const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
+const testDBConnection_1 = require("./connectionUtils/testDBConnection");
+const validateConnection_1 = require("./connectionUtils/validateConnection");
 const publishMethods = async (params) => {
     const { dbo: dbs, socket, db: _dbs } = params;
     const user = params.user;
-    exports.bkpManager ??= new BackupManager_1.default(dbs);
+    const bkpManager = (0, index_1.getBackupManager)();
     if (!user || !user.id) {
-        const makeMagicLink = async (user, dbo, returnURL) => {
-            const mlink = await dbo.magic_links.insert({
-                expires: Number.MAX_SAFE_INTEGER,
-                user_id: user.id,
-            }, { returning: "*" });
-            return {
-                id: user.id,
-                magic_login_link_redirect: `/magic-link/${mlink.id}?returnURL=${returnURL}`
-            };
-        };
-        /** If no user exists then make */
-        if (await (0, ConnectionChecker_1.ADMIN_ACCESS_WITHOUT_PASSWORD)(dbs)) {
-            const u = await dbs.users.findOne({ username: ConnectionChecker_1.EMPTY_USERNAME });
-            if (!u)
-                throw "User found for magic link";
-            const mlink = await makeMagicLink(u, dbs, "/");
-            socket.emit("redirect", mlink.magic_login_link_redirect);
-        }
         return {};
     }
     const reStartConnection = async (conId) => {
@@ -98,9 +80,9 @@ const publishMethods = async (params) => {
             const dir = index_1.connMgr.getFileFolderPath(conId);
             return dirSize(dir);
         },
-        testDBConnection: index_1.testDBConnection,
+        testDBConnection: testDBConnection_1.testDBConnection,
         validateConnection: async (c) => {
-            const connection = (0, index_1.validateConnection)(c);
+            const connection = (0, validateConnection_1.validateConnection)(c);
             let warn = "";
             if (connection.db_ssl) {
                 warn = "";
@@ -125,7 +107,7 @@ const publishMethods = async (params) => {
                     else {
                         const bkps = await t.backups.find(conFilter);
                         for await (const b of bkps) {
-                            await exports.bkpManager.bkpDelete(b.id);
+                            await bkpManager.bkpDelete(b.id);
                         }
                         await t.backups.delete(conFilter);
                     }
@@ -141,21 +123,21 @@ const publishMethods = async (params) => {
         disconnect: async (conId) => {
             return index_1.connMgr.disconnect(conId);
         },
-        pgDump: exports.bkpManager.pgDump,
-        pgRestore: async (arg1, opts) => exports.bkpManager.pgRestore(arg1, undefined, opts),
-        bkpDelete: exports.bkpManager.bkpDelete,
+        pgDump: bkpManager.pgDump,
+        pgRestore: async (arg1, opts) => bkpManager.pgRestore(arg1, undefined, opts),
+        bkpDelete: bkpManager.bkpDelete,
         streamBackupFile: async (c, id, conId, chunk, sizeBytes, restore_options) => {
             // socket.on("stream", console.log)
             // console.log(arguments);
             if (c === "start" && id && conId && sizeBytes) {
-                const s = exports.bkpManager.getTempFileStream(id, user.id);
-                await exports.bkpManager.pgRestoreStream(id, conId, s.stream, sizeBytes, restore_options);
+                const s = bkpManager.getTempFileStream(id, user.id);
+                await bkpManager.pgRestoreStream(id, conId, s.stream, sizeBytes, restore_options);
                 // s.stream.on("close", () => console.log(1232132));
                 return s.streamId;
             }
             else if (c === "chunk" && id && chunk) {
                 return new Promise((resolve, reject) => {
-                    exports.bkpManager.pushToStream(id, chunk, (err) => {
+                    bkpManager.pushToStream(id, chunk, (err) => {
                         if (err) {
                             reject(err);
                         }
@@ -166,7 +148,7 @@ const publishMethods = async (params) => {
                 });
             }
             else if (c === "end" && id) {
-                exports.bkpManager.closeStream(id);
+                bkpManager.closeStream(id);
             }
             else
                 throw new Error("Not expected");
