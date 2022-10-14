@@ -17,7 +17,7 @@ export declare const connectionChecker: ConnectionChecker;
 export declare const connMgr: ConnectionManager;
 export declare function get(obj: any, propertyPath: string | string[]): any;
 export declare function restartProc(cb?: Function): void;
-export declare const upsertConnection: (con: DBSchemaGenerated["connections"]["columns"], user: Users, dbs: DBS) => Promise<Required<{
+export declare const upsertConnection: (con: DBSchemaGenerated["connections"]["columns"], user_id: Users["id"] | null, dbs: DBS) => Promise<Required<{
     access_control?: any;
     backups_config?: {
         enabled?: boolean | undefined;
@@ -88,7 +88,7 @@ export declare const upsertConnection: (con: DBSchemaGenerated["connections"]["c
         } | undefined;
     } | null | undefined;
     type?: string | undefined;
-    user_id: string;
+    user_id?: string | null | undefined;
 }> | undefined>;
 export declare const tout: (timeout: number) => Promise<unknown>;
 //# sourceMappingURL=index.d.ts.map

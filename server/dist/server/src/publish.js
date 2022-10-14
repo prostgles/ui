@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.publish = void 0;
-const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
 const prostgles_types_1 = require("prostgles-types");
 const _1 = require(".");
 const publish = async (params, con) => {
@@ -13,39 +12,6 @@ const publish = async (params, con) => {
     /** If user is NOT ADMIN then get the access rules */
     const { id: user_id } = user;
     // _db.any("ALTER TABLE workspaces ADD COLUMN options         JSON DEFAULT '{}'::json")
-    /** Add state db */
-    if (!(await db.connections.count())) { // , name: "Prostgles state database" // { user_id }
-        const state_db = await (0, _1.upsertConnection)({
-            ...con,
-            user_id,
-            name: "Prostgles state database",
-            type: !con.db_conn ? 'Standard' : 'Connection URI',
-            db_port: con.db_port || 5432,
-            db_ssl: con.db_ssl || "disable",
-            is_state_db: true,
-        }, user, db);
-        try {
-            const SAMPLE_DB_LABEL = "Sample database";
-            const SAMPLE_DB_NAME = "sample_database";
-            const databases = await _db.any(`SELECT datname FROM pg_database WHERE datistemplate = false;`);
-            if (!(await db.connections.findOne({ name: SAMPLE_DB_LABEL, db_name: SAMPLE_DB_NAME }))) {
-                if (!state_db)
-                    throw "state_db not found";
-                if (!databases.includes(SAMPLE_DB_NAME)) {
-                    await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
-                }
-                await (0, _1.upsertConnection)({
-                    ...(0, PubSubManager_1.omitKeys)(state_db, ["id"]),
-                    is_state_db: false,
-                    name: SAMPLE_DB_LABEL,
-                    db_name: SAMPLE_DB_NAME,
-                }, user, db);
-            }
-        }
-        catch (err) {
-            console.error("Failed to create sample database: ", err);
-        }
-    }
     const dashboardConfig = ["windows", "links", "workspaces"]
         .reduce((a, v) => ({
         ...a,
