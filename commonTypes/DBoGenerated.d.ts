@@ -139,7 +139,7 @@ export type DBSchemaGenerated = {
         delayedDelete?: {  deleteAfterNDays: number; checkIntervalHours?: number; }; 
       };
       type?: string;
-      user_id: string;
+      user_id?: null | string;
     };
   };
   credential_types: {

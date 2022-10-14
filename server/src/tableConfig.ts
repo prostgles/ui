@@ -113,7 +113,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
   connections: {
     columns: {
       id:                      `UUID PRIMARY KEY DEFAULT gen_random_uuid()` ,
-      user_id:                 `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE` ,
+      user_id:                 `UUID REFERENCES users(id) ON DELETE CASCADE` ,
       name:                    `TEXT` ,
       db_name:                 `TEXT DEFAULT ''` ,
       db_host:                 `TEXT DEFAULT 'localhost'`,

@@ -147,6 +147,7 @@ const getDBS = async () => {
             joins: "inferred",
             onReady: async (db, _db) => {
                 // db.backups.update({}, {restore_options: { "clean": true }});
+                await insertStateDatabase(db, _db, con);
                 await exports.connectionChecker.init(db, _db);
                 await exports.connMgr.init(db);
                 bkpManager ??= new BackupManager_1.default(db);
@@ -156,6 +157,41 @@ const getDBS = async () => {
     }
     catch (err) {
         throw err;
+    }
+};
+/** Add state db if missing */
+const insertStateDatabase = async (db, _db, con) => {
+    if (!(await db.connections.count())) { // , name: "Prostgles state database" // { user_id }
+        const state_db = await (0, exports.upsertConnection)({
+            ...con,
+            user_id: null,
+            name: "Prostgles state database",
+            type: !con.db_conn ? 'Standard' : 'Connection URI',
+            db_port: con.db_port || 5432,
+            db_ssl: con.db_ssl || "disable",
+            is_state_db: true,
+        }, null, db);
+        try {
+            const SAMPLE_DB_LABEL = "Sample database";
+            const SAMPLE_DB_NAME = "sample_database";
+            const databases = await _db.any(`SELECT datname FROM pg_database WHERE datistemplate = false;`);
+            if (!(await db.connections.findOne({ name: SAMPLE_DB_LABEL, db_name: SAMPLE_DB_NAME }))) {
+                if (!state_db)
+                    throw "state_db not found";
+                if (!databases.includes(SAMPLE_DB_NAME)) {
+                    await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
+                }
+                await (0, exports.upsertConnection)({
+                    ...(0, PubSubManager_1.omitKeys)(state_db, ["id"]),
+                    is_state_db: false,
+                    name: SAMPLE_DB_LABEL,
+                    db_name: SAMPLE_DB_NAME,
+                }, null, db);
+            }
+        }
+        catch (err) {
+            console.error("Failed to create sample database: ", err);
+        }
     }
 };
 (async () => {
@@ -253,13 +289,10 @@ function restartProc(cb) {
     }).unref();
 }
 exports.restartProc = restartProc;
-const upsertConnection = async (con, user, dbs) => {
-    if (user?.type !== "admin" || !user.id) {
-        throw "User missing or not admin";
-    }
+const upsertConnection = async (con, user_id, dbs) => {
     const c = (0, validateConnection_1.validateConnection)({
         ...con,
-        user_id: user.id,
+        user_id,
         last_updated: Date.now()
     });
     await (0, testDBConnection_1.testDBConnection)(con);
