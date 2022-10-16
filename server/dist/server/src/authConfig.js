@@ -165,7 +165,7 @@ const getAuth = (app) => {
                     req.next?.();
                 }
                 else {
-                    res.sendFile(path_1.default.join(index_1.ROOT_DIR + '/../client/build/index.html'));
+                    res.sendFile(path_1.default.resolve(index_1.ROOT_DIR + '/../client/build/index.html'));
                 }
             },
             cookieOptions: authCookieOpts,

@@ -50,7 +50,7 @@ import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
 
 console.log(ROOT_DIR)
-const result = dotenv.config({ path: path.join(ROOT_DIR+'/../.env') })
+const result = dotenv.config({ path: path.resolve(ROOT_DIR+'/../.env') })
 export const {
   PRGL_USERNAME,
   PRGL_PASSWORD,
@@ -68,17 +68,16 @@ export const {
 const PORT = +(process.env.PRGL_PORT ?? 3004)
 http.listen(PORT);
 
-// type DBObj = any;
 export type Users = Required<DBSchemaGenerated["users"]["columns"]>; 
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
-import { DB, isSuperUser, PGP } from 'prostgles-server/dist/Prostgles';
+import { DB } from 'prostgles-server/dist/Prostgles';
 
 export const log = (msg: string, extra?: any) => {
   console.log(...[`(server): ${(new Date()).toISOString()} ` + msg, extra].filter(v => v));
 }
 
-app.use(express.static(path.join(ROOT_DIR, "../client/build"), { index: false }));
-app.use(express.static(path.join(ROOT_DIR, "../client/static"), { index: false }));
+app.use(express.static(path.resolve(ROOT_DIR + "/../client/build"), { index: false }));
+app.use(express.static(path.resolve(ROOT_DIR + "/../client/static"), { index: false }));
 
  
 /* AUTH */ 
@@ -88,7 +87,7 @@ import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 app.use(cookieParser());
 
 export const MEDIA_ROUTE_PREFIX = `/prostgles_media`
- 
+
 
 
 const DBS_CONNECTION_INFO: Pick<Required<Connections>, "type" | "db_conn" | "db_name" | "db_user" | "db_pass" | "db_host" | "db_port" | "db_ssl"> = {
@@ -298,7 +297,7 @@ const insertStateDatabase = async (db: DBS, _db: DB, con: typeof DBS_CONNECTION_
       if(error) {
         app.get("*", (req, res) => {
           console.log(req.originalUrl)
-          res.sendFile(path.join(ROOT_DIR + '../client/build/index.html'));
+          res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
         })
       }
       return

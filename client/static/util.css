@@ -79,6 +79,8 @@
 
   --active: #00a1ff;
   --active-hover: #51bfff;
+
+  --danger: var(--red-700)
 }
 
 
@@ -796,6 +798,17 @@ textarea:focus {
 .fit {
   width: fit-content;
   height: fit-content;
+}
+
+.max-w-fit {
+  max-width: fit-content;
+}
+.max-h-fit {
+  max-height: fit-content;
+}
+.max-s-fit {
+  max-height: fit-content;
+  max-width: fit-content;
 }
 
 .max-w {
@@ -1856,7 +1869,34 @@ button.toggle.toggled,
   box-shadow: inset 0 0 0 3px rgb(0 183 255 / 15%);
 }
 
+
 .focusable:focus,
+input.input:focus,
+.button:not(.toggle, .select-button, .btn-color-danger):focus,
+button:not(.toggle, .select-button, .btn-color-danger):focus,
+.input-focus:focus,
+/* input.custom-input:focus, */
+.focus-border:focus-within {
+  -webkit-appearance: none !important;
+  border: 1px solid rgb(0, 183, 255);
+  box-shadow: 0 0 0 1px rgb(0, 183, 255);
+  outline: none;
+  /* -webkit-box-shadow: 0 0 0 3px rgba(0, 183, 255, 0.151);
+  box-shadow: 0 0 0 3px rgba(0, 183, 255, 0.151); */
+} 
+
+input::placeholder {
+  text-align: left; 
+}
+
+.button.btn-color-danger:focus,
+button.btn-color-danger:focus {
+  border: 1px solid var(--danger) !important;
+  box-shadow: 0 0 0 1px var(--danger) !important;
+  outline: none;
+}
+
+/* .focusable:focus,
 input.input:focus,
 .button:not(.toggle, .select-button):focus,
 button:not(.toggle, .select-button):focus {
@@ -1865,7 +1905,8 @@ button:not(.toggle, .select-button):focus {
   border: 1px solid rgb(0, 183, 255) !important;
   outline: none;
   box-shadow: 0 0 0 3px rgb(0 183 255 / 15%);
-}
+} */
+
 button.toggle:focus {
   outline: 0;
 }
@@ -2139,8 +2180,21 @@ nav.left-nav-list a.active {
 
 
 .show-on-parent-hover {
-  opacity: 0;
+  opacity: 1;
 }
+
+/* Disable on mobile because there's no hover */
+@media (min-width:320px)  { 
+  .show-on-parent-hover {
+    opacity: 1;
+  } 
+}
+@media (min-width:820px)  { 
+  .show-on-parent-hover {
+    opacity: 0;
+  }
+}
+
 .show-on-parent-hover:focus-within {
   opacity: 1 !important;
 }
@@ -2165,4 +2219,15 @@ nav.left-nav-list a.active {
 }
 .bg-blue-400-hover:hover {
   background-color: var(--blue-400);
+}
+
+
+.shrink-label {
+  max-width: fit-content;
+  max-height: fit-content;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }

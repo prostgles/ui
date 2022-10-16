@@ -38,7 +38,7 @@ export declare class ConnectionChecker {
     }>;
     withOrigin: WithOrigin;
 }
-export declare const EMPTY_USERNAME = "prostgles-no-auth-user";
+export declare const EMPTY_USERNAME = "prostgles-admin-user";
 export declare const EMPTY_PASSWORD = "";
 export declare const ADMIN_ACCESS_WITHOUT_PASSWORD: (db: DBS) => Promise<Required<{
     "2fa"?: {

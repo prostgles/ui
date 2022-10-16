@@ -111,7 +111,7 @@ const publishMethods = async (params) => {
                         }
                         await t.backups.delete(conFilter);
                     }
-                    const result = await t.connections.delete({ id, user_id: user.id }, { returning: "*" });
+                    const result = await t.connections.delete({ id }, { returning: "*" });
                     return result;
                 });
             }

@@ -30,7 +30,7 @@ const dotenv = require('dotenv');
 const testDBConnection_1 = require("./connectionUtils/testDBConnection");
 const validateConnection_1 = require("./connectionUtils/validateConnection");
 console.log(exports.ROOT_DIR);
-const result = dotenv.config({ path: path_1.default.join(exports.ROOT_DIR + '/../.env') });
+const result = dotenv.config({ path: path_1.default.resolve(exports.ROOT_DIR + '/../.env') });
 _a = result?.parsed || {}, exports.PRGL_USERNAME = _a.PRGL_USERNAME, exports.PRGL_PASSWORD = _a.PRGL_PASSWORD, exports.POSTGRES_URL = _a.POSTGRES_URL, exports.POSTGRES_DB = _a.POSTGRES_DB, exports.POSTGRES_HOST = _a.POSTGRES_HOST, exports.POSTGRES_PASSWORD = _a.POSTGRES_PASSWORD, exports.POSTGRES_PORT = _a.POSTGRES_PORT, exports.POSTGRES_USER = _a.POSTGRES_USER, exports.POSTGRES_SSL = _a.POSTGRES_SSL, exports.PROSTGLES_STRICT_COOKIE = _a.PROSTGLES_STRICT_COOKIE;
 const PORT = +(process.env.PRGL_PORT ?? 3004);
 http.listen(PORT);
@@ -38,8 +38,8 @@ const log = (msg, extra) => {
     console.log(...[`(server): ${(new Date()).toISOString()} ` + msg, extra].filter(v => v));
 };
 exports.log = log;
-app.use(express_1.default.static(path_1.default.join(exports.ROOT_DIR, "../client/build"), { index: false }));
-app.use(express_1.default.static(path_1.default.join(exports.ROOT_DIR, "../client/static"), { index: false }));
+app.use(express_1.default.static(path_1.default.resolve(exports.ROOT_DIR + "/../client/build"), { index: false }));
+app.use(express_1.default.static(path_1.default.resolve(exports.ROOT_DIR + "/../client/static"), { index: false }));
 /* AUTH */
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 app.use((0, cookie_parser_1.default)());
@@ -221,7 +221,7 @@ const insertStateDatabase = async (db, _db, con) => {
             if (error) {
                 app.get("*", (req, res) => {
                     console.log(req.originalUrl);
-                    res.sendFile(path_1.default.join(exports.ROOT_DIR + '../client/build/index.html'));
+                    res.sendFile(path_1.default.resolve(exports.ROOT_DIR + '/../client/build/index.html'));
                 });
             }
             return;

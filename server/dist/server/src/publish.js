@@ -155,6 +155,7 @@ const publish = async (params, con) => {
                     allowed_origin: 1,
                     allowed_ips: 1,
                     trust_proxy: 1,
+                    allowed_ips_enabled: 1,
                 },
                 postValidate: async (row, dbsTX) => {
                     if (!row.allowed_ips?.length) {

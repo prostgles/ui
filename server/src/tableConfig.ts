@@ -93,6 +93,11 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     }
   },
 
+  session_types: {
+    isLookupTable: {
+      values: { web: { }, api_token: {} }
+    }
+  },
   sessions: {
     columns: {
       id:          `UUID PRIMARY KEY DEFAULT gen_random_uuid()` ,
@@ -102,8 +107,9 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       is_mobile:   `BOOLEAN DEFAULT FALSE` ,
       active:      `BOOLEAN DEFAULT TRUE` ,
       project_id:  `TEXT` ,
-      type:        { enum: ["web", "api_token"], defaultValue: "web" } ,
+      type:        `TEXT NOT NULL REFERENCES session_types DEFAULT 'web'`,
       created:     `TIMESTAMP DEFAULT NOW()` ,
+      last_used:    `TIMESTAMP DEFAULT NOW()` ,
       expires:     `BIGINT NOT NULL` ,
     }
   },
@@ -224,24 +230,24 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       name:   "TEXT",
       connection_id   : `UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE`,
       rule            : { nullable: false, jsonbSchema: {
-        userGroupNames: { type: "string[]" },
-        dbsPermissions: { optional: true, type: {
+        userGroupNames: { type: "string[]", description: "List of user types that this rule applies to" },
+        dbsPermissions: { description: "Permission types and rules for the state database", optional: true, type: {
           createWorkspaces: { type: "boolean", optional: true },
           viewPublishedWorkspaces: { type: {
             workspaceIds: { type: "string[]" }
           }, optional: true },
         } },
-        dbPermissions: { oneOf: [
+        dbPermissions: { description: "Permission types and rules for this (connection_id) database", oneOf: [
           { 
-            type: { enum: ["Run SQL"] },
+            type: { enum: ["Run SQL"], description: "Allows complete access to the database" },
             allowSQL: { type: "boolean", optional: true },
           },
           { 
-            type: { enum: ["All views/tables"] },
-            allowAllTables: { type: "string[]" },
+            type: { enum: ["All views/tables"], description: "Custom access (View/Edit/Remove) to all tables" },
+            allowAllTables: { type: "string[]" }, // NEED TO IMPLEMENT ALLOWED VALUES, oneOf: ["select", "insert", "update", "delete"] 
           },
           { 
-            type: { enum: ["Custom"] },
+            type: { enum: ["Custom"], description: "Fine grained access to specific tables" },
             customTables: { type: "any[]" },
           }
         ] }
@@ -410,7 +416,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       sort            : `JSONB`,
       filter          : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
       options         : `JSONB NOT NULL DEFAULT '{}'::jsonb` ,
-      sql_options     : { defaultValue: { executeOptions: "block", errorMessageDisplay: "both"  }, jsonbSchema: {
+      sql_options     : { defaultValue: { executeOptions: "block", errorMessageDisplay: "both", tabSize: 2  }, jsonbSchema: {
         "executeOptions": {
           description: "Behaviour of execute (CTR+E). Defaults to 'block' \nfull = run entire sql   \nblock = run code block where the cursor is",
           enum: ["full", "block"]
@@ -419,6 +425,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           description: "Error display locations. Defaults to 'both' \ntooltip = show within tooltip only   \nbottom = show in bottom control bar only   \nboth = show in both locations",
           enum: ["tooltip", "bottom", "both"]
         },
+        "tabSize": {
+          type: "integer",
+          optional: true
+        }
       }} ,
       columns         : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
       nested_tables   : `JSONB` ,
@@ -438,7 +448,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       },
       allowed_ips: { 
         sqlDefinition: `cidr[] NOT NULL DEFAULT '{}'`, 
-        label: "Allowed IPs", 
+        label: "Allowed IPs and subnets", 
         info: { hint: "List of allowed IP addresses in ipv4 or ipv6 format" } 
       },
       allowed_ips_enabled: { 
