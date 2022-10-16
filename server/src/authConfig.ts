@@ -183,7 +183,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
           req.next?.()
 
         } else {
-          res.sendFile(path.join(ROOT_DIR + '/../client/build/index.html'));
+          res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
         }
       },
       cookieOptions: authCookieOpts,

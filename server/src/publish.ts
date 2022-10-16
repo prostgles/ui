@@ -174,6 +174,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
           allowed_origin: 1,
           allowed_ips: 1,
           trust_proxy: 1,
+          allowed_ips_enabled: 1,
         },
         postValidate: async (row, dbsTX) => {
           if(!row.allowed_ips?.length){

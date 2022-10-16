@@ -474,7 +474,7 @@ class BackupManager {
                     else {
                         try {
                             res.type(bkp.content_type);
-                            res.sendFile(path_1.default.join(index_1.ROOT_DIR + exports.BKP_PREFFIX + "/" + bkp.id));
+                            res.sendFile(path_1.default.resolve(path_1.default.join(index_1.ROOT_DIR + exports.BKP_PREFFIX + "/" + bkp.id)));
                         }
                         catch (err) {
                             res.sendStatus(404);

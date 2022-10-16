@@ -507,7 +507,7 @@ export default class BackupManager {
           } else {
             try {
               res.type(bkp.content_type)
-              res.sendFile(path.join(ROOT_DIR + BKP_PREFFIX + "/" + bkp.id));
+              res.sendFile(path.resolve(path.join(ROOT_DIR + BKP_PREFFIX + "/" + bkp.id)));
             } catch(err){
               res.sendStatus(404);
             }

@@ -272,6 +272,27 @@ export type DBSchemaGenerated = {
       user_id: string;
     };
   };
+  mytbl: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      id?: number;
+      line?: null | any;
+    };
+  };
+  session_types: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      id: string;
+    };
+  };
   sessions: {
     is_view: false;
     select: true;
@@ -284,9 +305,10 @@ export type DBSchemaGenerated = {
       expires: number;
       id?: string;
       is_mobile?: null | boolean;
+      last_used?: null | Date;
       name?: null | string;
       project_id?: null | string;
-      type?: "web" | "api_token"
+      type?: string;
       user_id: string;
       user_type: string;
       usname?: null | string;
@@ -388,7 +410,8 @@ export type DBSchemaGenerated = {
       sql?: string;
       sql_options?:       { 
         executeOptions: 'full' | 'block';
-        errorMessageDisplay: 'tooltip' | 'bottom' | 'both'; 
+        errorMessageDisplay: 'tooltip' | 'bottom' | 'both';
+        tabSize?: number; 
       };
       table_name?: null | string;
       table_oid?: null | number;

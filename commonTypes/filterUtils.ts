@@ -37,6 +37,7 @@ export const NUMERIC_FILTER_TYPES = [
 
 export const DATE_FILTER_TYPES = [
   { key: "$age", label: "Age"},
+  { key: "$ageNow", label: "Age exact"},
   { key: "$duration", label: "Duration"},
 ] as const;
 

@@ -25,7 +25,8 @@ class ConnectionChecker {
                 await this.db.global_settings.insert({
                     /** Origin "*" is required to enable API access */
                     allowed_origin: this.noPasswordAdmin ? null : "*",
-                    allowed_ips_enabled: this.noPasswordAdmin ? true : false,
+                    // allowed_ips_enabled: this.noPasswordAdmin? true : false,
+                    allowed_ips_enabled: false,
                     allowed_ips: Array.from(new Set([req.ip, "::ffff:127.0.0.1"]))
                 });
                 const magicLinkPaswordless = await getPasswordlessMacigLink(this.db);
@@ -34,12 +35,16 @@ class ConnectionChecker {
                     return;
                 }
             }
+            if (this.noPasswordAdmin) {
+                // need to ensure that only 1 session is allowed for the passwordless admin
+            }
             if (this.config.global_setting?.allowed_ips_enabled) {
-                console.log(req.cookies);
-                const c = await this.checkClientIP({ req });
-                if (!c.isAllowed) {
-                    res.status(403).json({ error: "Your IP is not allowed" });
-                    return;
+                if (this.config.global_setting?.allowed_ips_enabled) {
+                    const c = await this.checkClientIP({ req });
+                    if (!c.isAllowed) {
+                        res.status(403).json({ error: "Your IP is not allowed" });
+                        return;
+                    }
                 }
             }
         }
@@ -93,7 +98,7 @@ class ConnectionChecker {
     };
 }
 exports.ConnectionChecker = ConnectionChecker;
-exports.EMPTY_USERNAME = "prostgles-no-auth-user";
+exports.EMPTY_USERNAME = "prostgles-admin-user";
 exports.EMPTY_PASSWORD = "";
 const NoInitialAdminPasswordProvided = Boolean(!index_1.PRGL_USERNAME || !index_1.PRGL_PASSWORD);
 const ADMIN_ACCESS_WITHOUT_PASSWORD = async (db) => {
@@ -128,7 +133,7 @@ const initUsers = async (db, _db) => {
             console.warn(`PRGL_USERNAME or PRGL_PASSWORD missing. Creating a passwordless admin user: ${username}`);
         }
         try {
-            const u = await db.users.insert({ username, password, type: "admin" }, { returning: "*" });
+            const u = await db.users.insert({ username, password, type: "admin", no_password: Boolean(NoInitialAdminPasswordProvided) }, { returning: "*" });
             await _db.any("UPDATE users SET password = crypt(password, id::text), status = 'active' WHERE status IS NULL AND id = ${id};", u);
         }
         catch (e) {

@@ -34,6 +34,7 @@ exports.NUMERIC_FILTER_TYPES = [
 ];
 exports.DATE_FILTER_TYPES = [
     { key: "$age", label: "Age" },
+    { key: "$ageNow", label: "Age exact" },
     { key: "$duration", label: "Duration" },
 ];
 exports.JOINED_FILTER_TYPES = ["$existsJoined", "$notExistsJoined"];
