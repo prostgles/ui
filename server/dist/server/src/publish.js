@@ -40,7 +40,7 @@ const publish = async (params, con) => {
             }
         },
     }), {});
-    const validate = async ({ filter, update }, _dbo, mustUpdate = false) => {
+    const validateAndHashUserPassword = async ({ filter, update }, _dbo, mustUpdate = false) => {
         if ("password" in update) {
             const users = await _dbo.users.find(filter);
             if (users.length !== 1) {
@@ -107,11 +107,11 @@ const publish = async (params, con) => {
             insert: {
                 fields: "*",
                 // validate: async (row, _dbo) => validate({ update: row, filter: row }, _dbo),
-                postValidate: async (row, _dbo) => validate({ update: row, filter: { id: row.id } }, _dbo, true),
+                postValidate: async (row, _dbo) => validateAndHashUserPassword({ update: row, filter: { id: row.id } }, _dbo, true),
             },
             update: {
                 fields: "*",
-                validate: validate,
+                validate: validateAndHashUserPassword,
                 dynamicFields: [{
                         /* For own user can only change these fields */
                         fields: { username: 1, password: 1, status: 1, options: 1 },
@@ -133,7 +133,17 @@ const publish = async (params, con) => {
             update: {
                 fields: { password: 1 },
                 forcedFilter: { id: user_id },
-                validate: validate,
+                validate: validateAndHashUserPassword,
+            }
+        },
+        sessions: {
+            select: {
+                fields: "*",
+                forcedFilter: { id: user_id }
+            },
+            update: {
+                fields: { active: 1 },
+                forcedFilter: { id: user_id },
             }
         },
         backups: {

@@ -56,7 +56,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
     },
   }) ,{});
   type User = DBSchemaGenerated["users"]["columns"]
-  const validate = async ({ filter, update }: { filter: User; update: User }, _dbo: DBOFullyTyped<DBSchemaGenerated>, mustUpdate = false): Promise<User> => {
+  const validateAndHashUserPassword = async ({ filter, update }: { filter: User; update: User }, _dbo: DBOFullyTyped<DBSchemaGenerated>, mustUpdate = false): Promise<User> => {
     if("password" in update){
       const users = await _dbo.users.find(filter);
       if(users.length !== 1){
@@ -124,11 +124,11 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
       insert: {
         fields: "*",
         // validate: async (row, _dbo) => validate({ update: row, filter: row }, _dbo),
-        postValidate: async(row, _dbo) => validate({ update: row, filter: { id: row.id } as any }, _dbo, true) as any,
+        postValidate: async(row, _dbo) => validateAndHashUserPassword({ update: row, filter: { id: row.id } as any }, _dbo, true) as any,
       },
       update: {
         fields: "*",
-        validate: validate as any,
+        validate: validateAndHashUserPassword as any,
         dynamicFields: [{
           /* For own user can only change these fields */
           fields: { username: 1, password: 1, status: 1, options: 1 },
@@ -150,10 +150,20 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
       update: {
         fields: { password: 1 },
         forcedFilter: { id: user_id },
-        validate: validate as any,
+        validate: validateAndHashUserPassword as any,
       }
     },
+    sessions: {
 
+      select: {
+        fields: "*",
+        forcedFilter: { id: user_id }
+      },
+      update: {
+        fields: { active: 1 },
+        forcedFilter: { id: user_id },
+      }
+    },
     backups: {
       select: true,
       insert: { fields: ["status", "options"] }

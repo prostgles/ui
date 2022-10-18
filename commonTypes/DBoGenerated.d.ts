@@ -376,7 +376,8 @@ export type DBSchemaGenerated = {
       last_updated?: null | number;
       no_password?: null | boolean;
       options?: null |       { 
-        showStateDB?: boolean; 
+        showStateDB?: boolean;
+        hideNonSSLWarning?: boolean; 
       };
       password?: string;
       status?: string;

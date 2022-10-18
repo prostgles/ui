@@ -52,6 +52,7 @@ export declare const ADMIN_ACCESS_WITHOUT_PASSWORD: (db: DBS) => Promise<Require
     no_password?: boolean | null | undefined;
     options?: {
         showStateDB?: boolean | undefined;
+        hideNonSSLWarning?: boolean | undefined;
     } | null | undefined;
     password?: string | undefined;
     status?: string | undefined;
