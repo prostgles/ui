@@ -62,7 +62,8 @@ exports.tableConfig = {
             created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
             last_updated: { sqlDefinition: `BIGINT` },
             options: { nullable: true, jsonbSchema: {
-                    showStateDB: { type: "boolean", optional: true }
+                    showStateDB: { type: "boolean", optional: true },
+                    hideNonSSLWarning: { type: "boolean", optional: true },
                 }
             },
             "2fa": { nullable: true, jsonbSchema: {
@@ -98,7 +99,7 @@ exports.tableConfig = {
     sessions: {
         columns: {
             id: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
-            user_id: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,
+            user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE SET NULL`,
             name: `TEXT`,
             user_type: `TEXT NOT NULL`,
             is_mobile: `BOOLEAN DEFAULT FALSE`,
@@ -246,7 +247,7 @@ exports.tableConfig = {
         // dropIfExistsCascade: true,
         columns: {
             id: `TEXT PRIMARY KEY DEFAULT gen_random_uuid()`,
-            user_id: `UUID NOT NULL REFERENCES users(id)`,
+            user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE SET NULL`,
             magic_link: `TEXT`,
             magic_link_used: `TIMESTAMP`,
             expires: `BIGINT NOT NULL`,
