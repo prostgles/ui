@@ -412,7 +412,9 @@ export type DBSchemaGenerated = {
       sql_options?:       { 
         executeOptions: 'full' | 'block';
         errorMessageDisplay: 'tooltip' | 'bottom' | 'both';
-        tabSize?: number; 
+        tabSize?: number;
+        lineNumbers: 'on' | 'off';
+        minimap?: {  enabled: boolean; }; 
       };
       table_name?: null | string;
       table_oid?: null | number;
@@ -436,7 +438,11 @@ export type DBSchemaGenerated = {
       last_updated: number;
       layout?: null | any;
       name?: string;
-      options?: null | any;
+      options?:       { 
+        hideCounts?: boolean;
+        showAllMyQueries?: boolean;
+        defaultLayoutType?: 'row' | 'tab' | 'col'; 
+      };
       published?: boolean;
       url_path?: null | string;
       user_id: string;
