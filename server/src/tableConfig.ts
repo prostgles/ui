@@ -64,14 +64,14 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       created:  { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
       last_updated: { sqlDefinition: `BIGINT` },
       options: { nullable: true, jsonbSchema: {
-          showStateDB: { type: "boolean", optional: true },
-          hideNonSSLWarning: { type: "boolean", optional: true },
+          showStateDB: { type: "boolean", optional: true, description: "Show the prostgles database in the connections list" },
+          hideNonSSLWarning: { type: "boolean", optional: true, description: "Hides the top warning when accessing the website over an insecure connection (non-HTTPS)" },
         }
       },
       "2fa": { nullable: true, jsonbSchema: {
-        secret: { type: "string" },
-        recoveryCode: { type: "string" },
-        enabled: { type: "boolean" }
+          secret: { type: "string" },
+          recoveryCode: { type: "string" },
+          enabled: { type: "boolean" }
         }
       },
       status:   { sqlDefinition: `TEXT NOT NULL DEFAULT 'active' REFERENCES user_statuses (id)` }, 
@@ -384,7 +384,21 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       created:        `TIMESTAMP DEFAULT NOW()`,
       active_row:     `JSONB DEFAULT '{}'::jsonb`,
       layout:         `JSONB`,
-      options:        `JSONB DEFAULT '{}'::jsonb`,
+      options:        { defaultValue: { defaultLayoutType: "col" }, jsonbSchema: {
+        hideCounts: {
+          optional: true,
+          type: "boolean"
+        },
+        showAllMyQueries: {
+          optional: true,
+          type: "boolean"
+        },
+        defaultLayoutType: {
+          optional: true,
+          enum: ["row", "tab", "col"]
+        }
+      }
+      },
       last_updated:   `BIGINT NOT NULL`,
       deleted:        `BOOLEAN NOT NULL DEFAULT FALSE`,
       url_path:       `TEXT`,
@@ -429,7 +443,11 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         "tabSize": {
           type: "integer",
           optional: true
-        }
+        },
+        "lineNumbers": {
+          enum: ["on", "off"]
+        },
+        "minimap": { optional: true, type: { enabled: { type: "boolean" } } },
       }} ,
       columns         : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
       nested_tables   : `JSONB` ,
