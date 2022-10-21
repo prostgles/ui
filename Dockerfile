@@ -15,4 +15,5 @@ RUN apt-get update && \
     apt-get -y install postgresql-14
 
 WORKDIR /usr/src/app/server
-RUN npm i
+
+#RUN npm i
