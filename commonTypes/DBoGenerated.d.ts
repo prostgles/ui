@@ -410,10 +410,10 @@ export type DBSchemaGenerated = {
       sort?: null | any;
       sql?: string;
       sql_options?:       { 
-        executeOptions: 'full' | 'block';
-        errorMessageDisplay: 'tooltip' | 'bottom' | 'both';
+        executeOptions?: 'full' | 'block';
+        errorMessageDisplay?: 'tooltip' | 'bottom' | 'both';
         tabSize?: number;
-        lineNumbers: 'on' | 'off';
+        lineNumbers?: 'on' | 'off';
         minimap?: {  enabled: boolean; }; 
       };
       table_name?: null | string;

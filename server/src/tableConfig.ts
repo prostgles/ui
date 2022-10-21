@@ -433,10 +433,12 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       options         : `JSONB NOT NULL DEFAULT '{}'::jsonb` ,
       sql_options     : { defaultValue: { executeOptions: "block", errorMessageDisplay: "both", tabSize: 2  }, jsonbSchema: {
         "executeOptions": {
+          optional: true, 
           description: "Behaviour of execute (CTR+E). Defaults to 'block' \nfull = run entire sql   \nblock = run code block where the cursor is",
           enum: ["full", "block"]
         },
         "errorMessageDisplay": {
+          optional: true, 
           description: "Error display locations. Defaults to 'both' \ntooltip = show within tooltip only   \nbottom = show in bottom control bar only   \nboth = show in both locations",
           enum: ["tooltip", "bottom", "both"]
         },
@@ -445,9 +447,13 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           optional: true
         },
         "lineNumbers": {
+          optional: true, 
           enum: ["on", "off"]
         },
-        "minimap": { optional: true, type: { enabled: { type: "boolean" } } },
+        "minimap": { 
+          optional: true, 
+          type: { enabled: { type: "boolean" } } 
+        },
       }} ,
       columns         : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
       nested_tables   : `JSONB` ,
