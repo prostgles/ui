@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.publish = void 0;
 const prostgles_types_1 = require("prostgles-types");
 const _1 = require(".");
+const ConnectionManager_1 = require("./ConnectionManager");
+const filterUtils_1 = require("../../commonTypes/filterUtils");
 const publish = async (params, con) => {
     const { dbo: db, user, db: _db, socket } = params;
     if (!user || !user.id) {
@@ -10,15 +12,18 @@ const publish = async (params, con) => {
     }
     const isAdmin = user.type === "admin";
     /** If user is NOT ADMIN then get the access rules */
-    const { id: user_id } = user;
+    const { id: user_id, type: user_type } = user;
     // _db.any("ALTER TABLE workspaces ADD COLUMN options         JSON DEFAULT '{}'::json")
+    const acs = isAdmin ? undefined : await (0, ConnectionManager_1.getACRules)(db, user);
+    const publishedWspIDs = acs?.flatMap(ac => ac.rule.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds).filter(filterUtils_1.isDefined) || []; // ac?.rule.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds;
+    // const publishedWorkspaces = db.workspaces.find({ "id.$in": })
     const dashboardConfig = ["windows", "links", "workspaces"]
         .reduce((a, v) => ({
         ...a,
         [v]: {
             select: {
                 fields: "*",
-                forcedFilter: { user_id }
+                forcedFilter: { $or: [{ user_id }, { [v === "workspaces" ? "id" : "workspace_id"]: { $in: publishedWspIDs } }] }
             },
             sync: {
                 id_fields: ["id"],
@@ -64,16 +69,19 @@ const publish = async (params, con) => {
         /* DASHBOARD */
         ...dashboardConfig,
         access_control_user_types: isAdmin && "*",
-        credentials: isAdmin ? {
+        credentials: isAdmin && {
             select: {
                 fields: { key_secret: 0 }
             },
             delete: "*",
-            insert: { fields: { id: 0 }, forcedData: { user_id: user.id } },
+            insert: {
+                fields: { id: 0 },
+                forcedData: { user_id: user.id }
+            },
             update: "*",
-        } : undefined,
-        access_control: isAdmin ? "*" : { select: { fields: "*", forcedFilter: { $existsJoined: userTypeFilter } } },
+        },
         credential_types: isAdmin && { select: "*" },
+        access_control: isAdmin ? "*" : { select: { fields: "*", forcedFilter: { $existsJoined: userTypeFilter } } },
         connections: {
             select: {
                 fields: isAdmin ? "*" : { id: 1, name: 1, created: 1 },
@@ -114,7 +122,7 @@ const publish = async (params, con) => {
                 validate: validateAndHashUserPassword,
                 dynamicFields: [{
                         /* For own user can only change these fields */
-                        fields: { username: 1, password: 1, status: 1, options: 1 },
+                        fields: { username: 1, password: 1, status: 1, options: 1, ...(user?.no_password && { no_password: 1 }) },
                         filter: { id: user.id }
                     }]
             },
@@ -139,16 +147,16 @@ const publish = async (params, con) => {
         sessions: {
             select: {
                 fields: "*",
-                forcedFilter: { id: user_id }
+                forcedFilter: { user_id }
             },
             update: {
                 fields: { active: 1 },
-                forcedFilter: { id: user_id },
+                forcedFilter: { user_id, active: false },
             }
         },
         backups: {
             select: true,
-            insert: { fields: ["status", "options"] }
+            // insert: { fields: ["status", "options"] }
         },
         magic_links: isAdmin && {
             insert: {

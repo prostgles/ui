@@ -159,13 +159,13 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      bucket?: null | string;
+      bucket: string;
       id?: number;
       key_id: string;
       key_secret: string;
-      name?: string;
+      name: string;
       region?: null | string;
-      type: string;
+      type?: string;
       user_id?: null | string;
     };
   };
@@ -283,16 +283,6 @@ export type DBSchemaGenerated = {
       line?: null | any;
     };
   };
-  session_types: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
-    columns: {
-      id: string;
-    };
-  };
   sessions: {
     is_view: false;
     select: true;
@@ -304,11 +294,13 @@ export type DBSchemaGenerated = {
       created?: null | Date;
       expires: number;
       id?: string;
+      ip_address: string;
+      is_connected?: null | boolean;
       is_mobile?: null | boolean;
       last_used?: null | Date;
       name?: null | string;
       project_id?: null | string;
-      type?: string;
+      type?: "web" | "api_token"
       user_id: string;
       user_type: string;
       usname?: null | string;

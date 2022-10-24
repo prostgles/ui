@@ -16,4 +16,4 @@ RUN apt-get update && \
 
 WORKDIR /usr/src/app/server
 
-#RUN npm i
+RUN npm i

@@ -25,6 +25,19 @@ export type ConnectionTableConfig = Pick<FileTableConfig, "referencedTables"> & 
 
 export const DB_TRANSACTION_KEY = "dbTransactionProstgles" as const;
 
+export const getACRule = async (dbs: DBOFullyTyped<DBSchemaGenerated>, user: DBSSchema["users"], connection_id: string): Promise<DBSSchema["access_control"] | undefined>  => {
+  if(user){
+    return await dbs.access_control.findOne({ connection_id, $existsJoined: { access_control_user_types: { user_type: user.type } } }) //  user_groups: { $contains: [user.type] }
+  }
+  return undefined
+}
+export const getACRules = async (dbs: DBOFullyTyped<DBSchemaGenerated>, user: Pick<DBSSchema["users"], "type">): Promise<DBSSchema["access_control"][]>  => {
+  if(user){
+    return await dbs.access_control.find({ $existsJoined: { access_control_user_types: { user_type: user.type } } }) //  user_groups: { $contains: [user.type] }
+  }
+  return []
+}
+
 type PRGLInstance = {
   socket_path: string;
   con: Connections;
@@ -198,12 +211,6 @@ export class ConnectionManager {
   
       const _io = new Server(http, { path: socket_path, maxHttpBufferSize: 1e8, cors: this.withOrigin });
   
-      const getRule = async (user: DBSSchema["users"]): Promise<DBSSchema["access_control"] | undefined>  => {
-        if(user){
-          return await dbs.access_control.findOne({ connection_id: con.id, $existsJoined: { access_control_user_types: { user_type: user.type } } }) //  user_groups: { $contains: [user.type] }
-        }
-        return undefined
-      }
   
       try {
 
@@ -239,7 +246,7 @@ export class ConnectionManager {
           auth: {
             ...auth as any,
             getUser: (sid, __, _, cl) => auth.getUser(sid, dbs, _dbs, cl),
-            login: (sid, __, _) => auth.login?.(sid, dbs, _dbs),
+            login: (sid, __, _, ip_address) => auth.login?.(sid, dbs, _dbs, ip_address),
             logout: (sid, __, _) => auth.logout?.(sid, dbs, _dbs),
             cacheSession: {
               getSession: (sid) => auth.cacheSession?.getSession(sid, dbs, _dbs)
@@ -279,7 +286,7 @@ export class ConnectionManager {
               if(user.type === "admin") return "*";
               
               
-              const ac = await getRule(user as any);
+              const ac = await getACRule(dbs, user as any, con.id);
               
               if(ac?.rule){
                 const { dbPermissions } = ac.rule;
@@ -324,8 +331,8 @@ export class ConnectionManager {
             if(user?.type === "admin"){
               return true;
             }
-            const ac = await getRule(user as any) as any;
-            if(ac?.rule?.type === "Run SQL" && ac.rule.allowSQL){
+            const ac = await getACRule(dbs, user as any, con.id);
+            if(ac?.rule?.dbPermissions.type === "Run SQL" && ac.rule.dbPermissions.allowSQL){
               return true;
             }
             return false

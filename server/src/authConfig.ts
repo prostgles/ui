@@ -20,13 +20,18 @@ const getBasicSession = (s: DBSSchema["sessions"]): BasicSession => {
   return { ...s, sid: s.id, expires: +s.expires, onExpiration: s.type === "api_token"? "show_error" : "redirect" };
 }
 
-const makeSession = async (user: Users | undefined, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number = 0): Promise<BasicSession> => {
+const makeSession = async (user: Users | undefined, ip_address: string, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number = 0): Promise<BasicSession> => {
 
   if(user){
+
+    /** Disable all other web sessions for user */
+    await dbo.sessions.update({ user_id: user.id, type: "web" }, { type: "web", active: false });
+
     const session = await dbo.sessions.insert({ 
       user_id: user.id, 
       user_type: user.type, 
       expires, 
+      ip_address,
     }, { returning: "*" }) as any;
     
     return getBasicSession(session); //60*60*60 }; 
@@ -41,7 +46,7 @@ export type SUser = {
   clientUser: { 
     sid: string;
     uid: string; 
-    state_db_id: string;
+    state_db_id?: string;
     has_2fa: boolean;
   } & Omit<Users, "password"| "2fa">
 }
@@ -65,7 +70,10 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
             clientUser: { 
               sid: s.id, 
               uid: user.id, 
-              state_db_id: state_db?.id,
+              
+              /** For security reasons provide state_db_id only to admin users */
+              state_db_id: user.type === "admin"? state_db?.id : undefined,
+
               has_2fa: !!user["2fa"]?.enabled,
               ...omitKeys(user, ["password", "2fa"]) 
             }
@@ -77,7 +85,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       // console.trace("getUser", { user, s })
       return undefined;
     },
-    login: async ({ username = null, password = null, totp_token = null, totp_recovery_code = null } = {}, db, _db: DB) => {
+    login: async ({ username = null, password = null, totp_token = null, totp_recovery_code = null } = {}, db, _db: DB, ip_address) => {
       let u: Users | undefined;
       log("login", username)
       
@@ -111,7 +119,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       let s = await db.sessions.findOne({ user_id: u.id })
       if(!s || (+s.expires || 0) < Date.now()){
         // will expire after 24 hours,
-        return makeSession(u, db, Date.now() + 1000 * 60 * 60 * 24)
+        return makeSession(u, ip_address, db, Date.now() + 1000 * 60 * 60 * 24)
       }
       
       return getBasicSession(s)
@@ -188,15 +196,16 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       },
       cookieOptions: authCookieOpts,
       magicLinks: {
-        check: async (id, dbo, db) => {
+        check: async (id, dbo, db, ip_address) => {
           const mlink = await dbo.magic_links.findOne({ id });
           
           if(mlink){
             if(mlink.expires < Date.now()) throw "Expired magic link";
           } else throw new Error("Magic link not found")
           const user = await dbo.users.findOne({ id: mlink.user_id });
-          if(!user) throw new Error("User from Magic link not found")
-          return makeSession(user, dbo , mlink.expires);
+          if(!user) throw new Error("User from Magic link not found");
+
+          return makeSession(user, ip_address, dbo , mlink.expires);
         }
       }
     }

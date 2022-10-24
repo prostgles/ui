@@ -6,6 +6,8 @@ import { getKeys } from "prostgles-types";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { connectionChecker, upsertConnection } from ".";
 import { getCIDRRangesQuery } from "../../commonTypes/publishUtils";
+import { getACRule, getACRules } from "./ConnectionManager";
+import { isDefined } from "../../commonTypes/filterUtils";
 type DBS_PermissionRules = {
   userTypesThatCanManageUsers?: string[];
   userTypesThatCanManageConnections?: string[];
@@ -22,9 +24,12 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
 
   /** If user is NOT ADMIN then get the access rules */
 
-  const { id: user_id } = user;
+  const { id: user_id, type: user_type } = user;
   // _db.any("ALTER TABLE workspaces ADD COLUMN options         JSON DEFAULT '{}'::json")
 
+  const acs = isAdmin? undefined : await getACRules(db, user as any)
+  const publishedWspIDs = acs?.flatMap(ac => ac.rule.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds).filter(isDefined) || [];// ac?.rule.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds;
+  // const publishedWorkspaces = db.workspaces.find({ "id.$in": })
 
   const dashboardConfig: Publish<DBSchemaGenerated> = ["windows", "links", "workspaces"]
     .reduce((a: any, v: string) => ({ 
@@ -32,7 +37,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
       [v]: {
         select: {
           fields: "*",
-          forcedFilter: { user_id  }
+          forcedFilter: { $or: [{ user_id  }, { [v === "workspaces"? "id" : "workspace_id"]: { $in: publishedWspIDs } }] }
         },
         sync: {
           id_fields: ["id"],
@@ -82,16 +87,19 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
     /* DASHBOARD */
     ...(dashboardConfig as object),
     access_control_user_types: isAdmin && "*",
-    credentials: isAdmin? {
+    credentials: isAdmin && {
       select: {
         fields: { key_secret: 0 }
       },
       delete: "*",
-      insert: { fields: { id: 0 }, forcedData: { user_id: user.id } },
+      insert: { 
+        fields: { id: 0 }, 
+        forcedData: { user_id: user.id } 
+      },
       update: "*",
-    } : undefined,
-    access_control: isAdmin? "*" : { select: { fields: "*", forcedFilter: { $existsJoined: userTypeFilter } } },
+    },
     credential_types: isAdmin && { select: "*" },
+    access_control: isAdmin? "*" : { select: { fields: "*", forcedFilter: { $existsJoined: userTypeFilter } } },
     connections: {
       select: {
         fields: isAdmin? "*" : { id: 1, name: 1, created: 1 },
@@ -131,7 +139,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
         validate: validateAndHashUserPassword as any,
         dynamicFields: [{
           /* For own user can only change these fields */
-          fields: { username: 1, password: 1, status: 1, options: 1 },
+          fields: { username: 1, password: 1, status: 1, options: 1, ...(user?.no_password && { no_password: 1 }) },
           filter: { id: user.id }
         }]
       },
@@ -157,16 +165,16 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
 
       select: {
         fields: "*",
-        forcedFilter: { id: user_id }
+        forcedFilter: { user_id }
       },
       update: {
         fields: { active: 1 },
-        forcedFilter: { id: user_id },
+        forcedFilter: { user_id, active: false },
       }
     },
     backups: {
       select: true,
-      insert: { fields: ["status", "options"] }
+      // insert: { fields: ["status", "options"] }
     },
     magic_links: isAdmin && {
       insert: {

@@ -23,9 +23,11 @@ import { DBSSchema } from "../../commonTypes/publishUtils";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
 import { Backups } from "./BackupManager";
+import { ADMIN_ACCESS_WITHOUT_PASSWORD } from "./ConnectionChecker";
 
 export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params) => { //  socket, dbs: DBObj, _dbs, user: Users
   const { dbo: dbs, socket, db: _dbs } = params;
+  const ip_address = (socket as any).conn.remoteAddress;
 
   const user: DBSSchema["users"] | undefined = params.user as any;
 
@@ -41,6 +43,15 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
   };
 
   const adminMethods = {
+    disablePasswordless: async (newAdmin: { username: string; password: string }) => {
+
+      const noPwdAdmin = await ADMIN_ACCESS_WITHOUT_PASSWORD(dbs);
+      if(!noPwdAdmin) throw "No passwordless admin found";
+
+      await dbs.users.insert({ username: newAdmin.username, password: newAdmin.password, type: "admin" });
+      await dbs.users.update({ id: noPwdAdmin.id }, { status: "disabled" });
+      await dbs.sessions.delete({});
+    },
     getMyIP: () => {
       return connectionChecker.checkClientIP({ socket })
     },
@@ -217,7 +228,7 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
   const userMethods = !user.id? {} : {
     generateToken: async (days: number) => {
       if(!Number.isInteger(days)) throw "Expecting an integer days but got: " + days;
-      const session = await dbs.sessions.insert({ expires: Date.now() + days * 24 * 3600 * 1000, user_id: user.id, user_type: user.type, type: "api_token" }, { returning: "*" });
+      const session = await dbs.sessions.insert({ expires: Date.now() + days * 24 * 3600 * 1000, user_id: user.id, user_type: user.type, type: "api_token", ip_address }, { returning: "*" });
       return session.id;
     },
     create2FA: async () => {

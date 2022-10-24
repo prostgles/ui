@@ -168,15 +168,17 @@ const getDBS = async () => {
       io,
       tsGeneratedTypesDir: path.join(ROOT_DIR + '/../commonTypes/'),
       transactions: true,
-      onSocketConnect: async ({ socket, dbo, db }) => {
-        const remoteAddress = (socket as any)?.conn?.remoteAddress;
-        log("onSocketConnect", remoteAddress);
+      onSocketConnect: async ({ socket, dbo, db, getUser }) => {
 
-        console.error("CHECK CORS");
-        // if(await checkIfNoPWD(dbo) && remoteAddress.includes("127.0.0.1")) { //  === "::ffff:127.0.0.1"
-        //   const errMsg = "Reject foreign requests if there is no auth";
-        //   throw errMsg;
-        // }
+        const user = await getUser();
+        const sid = user?.sid
+        if(sid){
+          dbo.sessions.update({ id: sid }, { is_connected: true })
+        }
+        const remoteAddress = (socket as any)?.conn?.remoteAddress;
+        log("onSocketConnect", { remoteAddress });
+
+        await connectionChecker.onSocketConnected(sid);
 
         // await db.any("ALTER TABLE workspaces ADD COLUMN deleted boolean DEFAULT FALSE")
         const wrkids =  await dbo.workspaces.find({ deleted: true }, { select: { id: 1 }, returnType: "values" });
@@ -195,9 +197,15 @@ const getDBS = async () => {
           ] })
           await dbo.windows.delete({ $or: [ { deleted: true }, wkspsFilter] });
           await dbo.workspaces.delete({ deleted: true });
-  
         }
         
+      },
+      onSocketDisconnect: async ({ dbo, getUser }) => {
+        const user = await getUser();
+        const sid = user?.sid
+        if(sid){
+          dbo.sessions.update({ id: sid }, { is_connected: false })
+        }
       },
       
       // DEBUG_MODE: true,

@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ConnectionManager = exports.PROSTGLES_CERTS_FOLDER = exports.DB_TRANSACTION_KEY = void 0;
+exports.ConnectionManager = exports.PROSTGLES_CERTS_FOLDER = exports.getACRules = exports.getACRule = exports.DB_TRANSACTION_KEY = void 0;
 const index_1 = require("./index");
 const socket_io_1 = require("socket.io");
 const publishUtils_1 = require("../../commonTypes/publishUtils");
@@ -38,6 +38,20 @@ const fs = __importStar(require("fs"));
 const testDBConnection_1 = require("./connectionUtils/testDBConnection");
 const getConnectionDetails_1 = require("./connectionUtils/getConnectionDetails");
 exports.DB_TRANSACTION_KEY = "dbTransactionProstgles";
+const getACRule = async (dbs, user, connection_id) => {
+    if (user) {
+        return await dbs.access_control.findOne({ connection_id, $existsJoined: { access_control_user_types: { user_type: user.type } } }); //  user_groups: { $contains: [user.type] }
+    }
+    return undefined;
+};
+exports.getACRule = getACRule;
+const getACRules = async (dbs, user) => {
+    if (user) {
+        return await dbs.access_control.find({ $existsJoined: { access_control_user_types: { user_type: user.type } } }); //  user_groups: { $contains: [user.type] }
+    }
+    return [];
+};
+exports.getACRules = getACRules;
 exports.PROSTGLES_CERTS_FOLDER = "prostgles_certificates";
 class ConnectionManager {
     prgl_connections = {};
@@ -178,12 +192,6 @@ class ConnectionManager {
         }
         return new Promise(async (resolve, reject) => {
             const _io = new socket_io_1.Server(http, { path: socket_path, maxHttpBufferSize: 1e8, cors: this.withOrigin });
-            const getRule = async (user) => {
-                if (user) {
-                    return await dbs.access_control.findOne({ connection_id: con.id, $existsJoined: { access_control_user_types: { user_type: user.type } } }); //  user_groups: { $contains: [user.type] }
-                }
-                return undefined;
-            };
             try {
                 let tableConfigOk = false;
                 const tableConfig = con.table_config;
@@ -216,7 +224,7 @@ class ConnectionManager {
                     auth: {
                         ...auth,
                         getUser: (sid, __, _, cl) => auth.getUser(sid, dbs, _dbs, cl),
-                        login: (sid, __, _) => auth.login?.(sid, dbs, _dbs),
+                        login: (sid, __, _, ip_address) => auth.login?.(sid, dbs, _dbs, ip_address),
                         logout: (sid, __, _) => auth.logout?.(sid, dbs, _dbs),
                         cacheSession: {
                             getSession: (sid) => auth.cacheSession?.getSession(sid, dbs, _dbs)
@@ -253,7 +261,7 @@ class ConnectionManager {
                         if (user) {
                             if (user.type === "admin")
                                 return "*";
-                            const ac = await getRule(user);
+                            const ac = await (0, exports.getACRule)(dbs, user, con.id);
                             if (ac?.rule) {
                                 const { dbPermissions } = ac.rule;
                                 if (dbPermissions.type === "Run SQL" && dbPermissions.allowSQL) {
@@ -295,8 +303,8 @@ class ConnectionManager {
                         if (user?.type === "admin") {
                             return true;
                         }
-                        const ac = await getRule(user);
-                        if (ac?.rule?.type === "Run SQL" && ac.rule.allowSQL) {
+                        const ac = await (0, exports.getACRule)(dbs, user, con.id);
+                        if (ac?.rule?.dbPermissions.type === "Run SQL" && ac.rule.dbPermissions.allowSQL) {
                             return true;
                         }
                         return false;

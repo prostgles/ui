@@ -8,7 +8,7 @@ export declare type SUser = {
     clientUser: {
         sid: string;
         uid: string;
-        state_db_id: string;
+        state_db_id?: string;
         has_2fa: boolean;
     } & Omit<Users, "password" | "2fa">;
 };
