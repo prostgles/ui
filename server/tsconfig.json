@@ -2,8 +2,6 @@
 	"files": ["./src/index.ts"],
 	"compilerOptions": {
 		"outDir": "dist",
-		// "target": "es2019",
-		// "lib": [ "es2019" ],
 		"target": "ES2022",
 		"lib": [ "ES2017", "es2019", "ES2021.String" ],
 		"esModuleInterop" : true,

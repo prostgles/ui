@@ -14,6 +14,12 @@ declare type OnUse = Required<Auth<DBSchemaGenerated, SUser>>["expressConfig"]["
 export declare class ConnectionChecker {
     app: Express;
     constructor(app: Express);
+    onSocketConnected: (sid?: string) => Promise<void>;
+    initialised: {
+        users: boolean;
+        config: boolean;
+    };
+    withConfig: () => Promise<unknown>;
     onUse: OnUse;
     noPasswordAdmin?: DBSSchema["users"];
     db?: DBS;
@@ -21,6 +27,7 @@ export declare class ConnectionChecker {
         loaded: boolean;
         global_setting?: DBSSchema["global_settings"];
     };
+    usersSub?: SubscriptionHandler<DBSSchema["users"]>;
     configSub?: SubscriptionHandler<DBSSchema["global_settings"]>;
     init: (db: DBS, _db: DB) => Promise<void>;
     /**

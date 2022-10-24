@@ -94,28 +94,23 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     }
   },
 
-  session_types: {
-    isLookupTable: {
-      values: { web: { }, api_token: {} }
-    }
-  },
   sessions: {
     columns: {
       id:          `UUID PRIMARY KEY DEFAULT gen_random_uuid()` ,
       user_id:     `UUID NOT NULL REFERENCES users(id) ON DELETE SET NULL` ,
-      name:         `TEXT` ,
+      name:        `TEXT` ,
       user_type:   `TEXT NOT NULL` ,
       is_mobile:   `BOOLEAN DEFAULT FALSE` ,
+      is_connected:`BOOLEAN DEFAULT FALSE` ,
       active:      `BOOLEAN DEFAULT TRUE` ,
       project_id:  `TEXT` ,
-      type:        `TEXT NOT NULL REFERENCES session_types DEFAULT 'web'`,
+      ip_address:  `INET NOT NULL`,
+      type:         { enum: ["web", "api_token"], defaultValue: "web", nullable: false },
       created:     `TIMESTAMP DEFAULT NOW()` ,
-      last_used:    `TIMESTAMP DEFAULT NOW()` ,
+      last_used:   `TIMESTAMP DEFAULT NOW()` ,
       expires:     `BIGINT NOT NULL` ,
     }
   },
-
-
 
   connections: {
     columns: {
@@ -292,7 +287,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       id:             `SERIAL PRIMARY KEY`,
       name:           `TEXT NOT NULL DEFAULT ''`,
       user_id:        `UUID REFERENCES users(id) ON DELETE SET NULL`,
-      type:           `TEXT NOT NULL REFERENCES credential_types(id)`,
+      type:           `TEXT NOT NULL REFERENCES credential_types(id) DEFAULT 's3'`,
       key_id:         `TEXT NOT NULL` ,
       key_secret:     `TEXT NOT NULL` ,
       bucket:         `TEXT` ,

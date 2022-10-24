@@ -2,6 +2,7 @@ import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
 import { Connections, DBS } from "./index";
 import { WithOrigin } from "./ConnectionChecker";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import { DBSSchema } from "../../commonTypes/publishUtils";
 import prostgles from "prostgles-server";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { DB, FileTableConfig } from "prostgles-server/dist/Prostgles";
@@ -11,6 +12,8 @@ import { Express } from "express";
 export declare type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
 export declare type ConnectionTableConfig = Pick<FileTableConfig, "referencedTables"> & Connections["table_config"];
 export declare const DB_TRANSACTION_KEY: "dbTransactionProstgles";
+export declare const getACRule: (dbs: DBOFullyTyped<DBSchemaGenerated>, user: DBSSchema["users"], connection_id: string) => Promise<DBSSchema["access_control"] | undefined>;
+export declare const getACRules: (dbs: DBOFullyTyped<DBSchemaGenerated>, user: Pick<DBSSchema["users"], "type">) => Promise<DBSSchema["access_control"][]>;
 declare type PRGLInstance = {
     socket_path: string;
     con: Connections;

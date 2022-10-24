@@ -16,12 +16,15 @@ let authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || index_1.PROSTGLES_S
 const getBasicSession = (s) => {
     return { ...s, sid: s.id, expires: +s.expires, onExpiration: s.type === "api_token" ? "show_error" : "redirect" };
 };
-const makeSession = async (user, dbo, expires = 0) => {
+const makeSession = async (user, ip_address, dbo, expires = 0) => {
     if (user) {
+        /** Disable all other web sessions for user */
+        await dbo.sessions.update({ user_id: user.id, type: "web" }, { type: "web", active: false });
         const session = await dbo.sessions.insert({
             user_id: user.id,
             user_type: user.type,
             expires,
+            ip_address,
         }, { returning: "*" });
         return getBasicSession(session); //60*60*60 }; 
     }
@@ -48,7 +51,8 @@ const getAuth = (app) => {
                         clientUser: {
                             sid: s.id,
                             uid: user.id,
-                            state_db_id: state_db?.id,
+                            /** For security reasons provide state_db_id only to admin users */
+                            state_db_id: user.type === "admin" ? state_db?.id : undefined,
                             has_2fa: !!user["2fa"]?.enabled,
                             ...(0, PubSubManager_1.omitKeys)(user, ["password", "2fa"])
                         }
@@ -59,7 +63,7 @@ const getAuth = (app) => {
             // console.trace("getUser", { user, s })
             return undefined;
         },
-        login: async ({ username = null, password = null, totp_token = null, totp_recovery_code = null } = {}, db, _db) => {
+        login: async ({ username = null, password = null, totp_token = null, totp_recovery_code = null } = {}, db, _db, ip_address) => {
             let u;
             (0, index_1.log)("login", username);
             try {
@@ -93,7 +97,7 @@ const getAuth = (app) => {
             let s = await db.sessions.findOne({ user_id: u.id });
             if (!s || (+s.expires || 0) < Date.now()) {
                 // will expire after 24 hours,
-                return makeSession(u, db, Date.now() + 1000 * 60 * 60 * 24);
+                return makeSession(u, ip_address, db, Date.now() + 1000 * 60 * 60 * 24);
             }
             return getBasicSession(s);
         },
@@ -170,7 +174,7 @@ const getAuth = (app) => {
             },
             cookieOptions: authCookieOpts,
             magicLinks: {
-                check: async (id, dbo, db) => {
+                check: async (id, dbo, db, ip_address) => {
                     const mlink = await dbo.magic_links.findOne({ id });
                     if (mlink) {
                         if (mlink.expires < Date.now())
@@ -181,7 +185,7 @@ const getAuth = (app) => {
                     const user = await dbo.users.findOne({ id: mlink.user_id });
                     if (!user)
                         throw new Error("User from Magic link not found");
-                    return makeSession(user, dbo, mlink.expires);
+                    return makeSession(user, ip_address, dbo, mlink.expires);
                 }
             }
         }

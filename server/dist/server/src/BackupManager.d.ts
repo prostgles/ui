@@ -121,13 +121,13 @@ export default class BackupManager {
 export declare function getFileMgr(dbs: DBS, credId: number | null): Promise<{
     fileMgr: FileManager;
     cred: Required<{
-        bucket?: string | null | undefined;
+        bucket: string;
         id?: number | undefined;
         key_id: string;
         key_secret: string;
-        name?: string | undefined;
+        name: string;
         region?: string | null | undefined;
-        type: string;
+        type?: string | undefined;
         user_id?: string | null | undefined;
     }> | undefined;
 }>;

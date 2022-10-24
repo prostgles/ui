@@ -14,6 +14,7 @@ import { DB } from "prostgles-server/dist/Prostgles";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { Auth, AuthRequestParams } from "prostgles-server/dist/AuthHandler";
 import { SUser } from "./authConfig";
+import { Socket } from "socket.io";
 
 
 
@@ -34,6 +35,70 @@ export class ConnectionChecker {
     );
   }
 
+  onSocketConnected = async (sid?: string) => {
+    /** Ensure that only 1 session is allowed for the passwordless admin */
+
+    await this.withConfig();
+
+    if(this.noPasswordAdmin){
+      const pwdLessSession = await this.db?.sessions.findOne({ user_id: this.noPasswordAdmin.id, active: true });
+      if(pwdLessSession && pwdLessSession.id !== sid){
+        throw "Only 1 session is allowed for the passwordless admin"
+      }
+    }
+  }
+
+  initialised = {
+    users: false,
+    config: false
+  }
+  withConfig = async () => {
+    if(!this.db) throw "dbs missing";
+
+    if(this.config.loaded) return this.config;
+
+    return new Promise(async (resolve, reject) => {
+      if(!this.db) throw "dbs missing";
+
+      const initialise = (what: "users" | "config") => {
+        if(what === "users") this.initialised.users = true;
+        if(what === "config") this.initialised.config = true;
+        const { users, config } = this.initialised;
+        if(users && config){
+          resolve(this.config);
+        }
+      }
+
+      await this.usersSub?.unsubscribe();
+      this.usersSub = await this.db.users.subscribe({}, { limit: 1 }, async users => {
+        this.noPasswordAdmin = await ADMIN_ACCESS_WITHOUT_PASSWORD(this.db!);
+        initialise("users");
+      })
+      
+      await this.configSub?.unsubscribe();
+      this.configSub = await this.db.global_settings.subscribeOne({}, {}, async gconfigs => {
+        
+        this.config.global_setting = gconfigs;
+        this.config.loaded = true;
+
+        this.app.set("trust proxy", this.config.global_setting?.trust_proxy ?? false);
+
+        // const cidrRequests = (gconfigs.allowed_ips ?? []).map(cidr => 
+        //   db.sql!(
+        //     getCIDRRangesQuery({ cidr, returns: ["from", "to"]  }),
+        //     { cidr },
+        //     { returnType: "row" }
+        //   )
+        // ) as any
+
+        // this.ipRanges = await Promise.all(cidrRequests);
+
+
+        initialise("config");
+      });
+    })
+  }
+
   onUse: OnUse = async ({ req, res, next, getUser }) => {
     
     if(!this.config.loaded || !this.db){
@@ -43,8 +108,8 @@ export class ConnectionChecker {
       res.redirect(req.originalUrl);
       return;
     } 
-    
     if(this.config.loaded) {
+      console.error("PASSWORDLESS AUTH MUST KEEP ONLY ONE SESSION ID THAT NEVER EXPIRES ");
 
       /** Add cors config if missing */
       if (!this.config.global_setting) {
@@ -98,38 +163,14 @@ export class ConnectionChecker {
     loaded: false
   }
 
+  usersSub?: SubscriptionHandler<DBSSchema["users"]>;
   configSub?: SubscriptionHandler<DBSSchema["global_settings"]>;
   init = async (db: DBS, _db: DB) => {
     this.db = db;
 
     await initUsers(db, _db);
     
-    this.noPasswordAdmin = await ADMIN_ACCESS_WITHOUT_PASSWORD(db);
-
-    this.config = {
-      global_setting: await db.global_settings.findOne(),
-      loaded: true
-    }
-    
-    await this.configSub?.unsubscribe();
-    this.configSub = await db.global_settings.subscribeOne({}, {}, async gconfigs => {
-      
-      this.config.global_setting = gconfigs;
-      this.config.loaded = true;
-
-      this.app.set("trust proxy", this.config.global_setting?.trust_proxy ?? false);
-
-      // const cidrRequests = (gconfigs.allowed_ips ?? []).map(cidr => 
-      //   db.sql!(
-      //     getCIDRRangesQuery({ cidr, returns: ["from", "to"]  }),
-      //     { cidr },
-      //     { returnType: "row" }
-      //   )
-      // ) as any
-
-      // this.ipRanges = await Promise.all(cidrRequests);
-
-    });
+    await this.withConfig();
   }
 
   /**
@@ -163,7 +204,7 @@ export const EMPTY_PASSWORD = "";
 const NoInitialAdminPasswordProvided = Boolean( !PRGL_USERNAME || !PRGL_PASSWORD )
 export const ADMIN_ACCESS_WITHOUT_PASSWORD = async (db: DBS) => {
   if (NoInitialAdminPasswordProvided) {
-    return await db.users.findOne({ username: EMPTY_USERNAME, status: "active" });
+    return await db.users.findOne({ username: EMPTY_USERNAME, status: "active", no_password: true });
   }
   return undefined
 };
@@ -210,26 +251,27 @@ const initUsers = async (db: DBS, _db: DB) => {
 }
 
 
+const makeMagicLink = async (user: Users, dbo: DBS, returnURL: string) => {
+  const DAY = 24 * 3600 * 1000
+  const mlink = await dbo.magic_links.insert({ 
+    expires: Date.now() + 1 * 365 * DAY, 
+    user_id: user.id,
+
+  }, {returning: "*"});
+          
+  return {
+    id: user.id,
+    magic_login_link_redirect: `/magic-link/${mlink.id}?returnURL=${returnURL}`
+  };
+};
+
 const getPasswordlessMacigLink = async (dbs: DBS) => {
 
-
-  const makeMagicLink = async (user: Users, dbo: DBS, returnURL: string) => {
-    const mlink = await dbo.magic_links.insert({ 
-      expires: Number.MAX_SAFE_INTEGER, // Date.now() + 24 * 3600 * 1000, 
-      user_id: user.id,
-  
-    }, {returning: "*"});
-            
-    return {
-      id: user.id,
-      magic_login_link_redirect: `/magic-link/${mlink.id}?returnURL=${returnURL}`
-    };
-  }
-
   /** Create session for passwordless admin */
-  if(await ADMIN_ACCESS_WITHOUT_PASSWORD(dbs)){
-    const u = await dbs.users.findOne({ username: EMPTY_USERNAME });
-    if(!u) throw "User found for magic link"
+  const u = await ADMIN_ACCESS_WITHOUT_PASSWORD(dbs);
+  if(u){
+    const existingLink = await dbs.magic_links.findOne({ user_id: u.id, "magic_link_used.<>": null });
+    if(existingLink) throw "Only one magic links allowed for passwordless admin";
     const mlink = await makeMagicLink(u, dbs, "/");
 
     // socket.emit("redirect", mlink.magic_login_link_redirect);

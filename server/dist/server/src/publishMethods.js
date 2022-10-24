@@ -38,8 +38,10 @@ const DboBuilder_1 = require("prostgles-server/dist/DboBuilder");
 const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
 const testDBConnection_1 = require("./connectionUtils/testDBConnection");
 const validateConnection_1 = require("./connectionUtils/validateConnection");
+const ConnectionChecker_1 = require("./ConnectionChecker");
 const publishMethods = async (params) => {
     const { dbo: dbs, socket, db: _dbs } = params;
+    const ip_address = socket.conn.remoteAddress;
     const user = params.user;
     const bkpManager = (0, index_1.getBackupManager)();
     if (!user || !user.id) {
@@ -49,6 +51,14 @@ const publishMethods = async (params) => {
         return index_1.connMgr.startConnection(conId, socket, dbs, _dbs, true);
     };
     const adminMethods = {
+        disablePasswordless: async (newAdmin) => {
+            const noPwdAdmin = await (0, ConnectionChecker_1.ADMIN_ACCESS_WITHOUT_PASSWORD)(dbs);
+            if (!noPwdAdmin)
+                throw "No passwordless admin found";
+            await dbs.users.insert({ username: newAdmin.username, password: newAdmin.password, type: "admin" });
+            await dbs.users.update({ id: noPwdAdmin.id }, { status: "disabled" });
+            await dbs.sessions.delete({});
+        },
         getMyIP: () => {
             return index_1.connectionChecker.checkClientIP({ socket });
         },
@@ -222,7 +232,7 @@ const publishMethods = async (params) => {
         generateToken: async (days) => {
             if (!Number.isInteger(days))
                 throw "Expecting an integer days but got: " + days;
-            const session = await dbs.sessions.insert({ expires: Date.now() + days * 24 * 3600 * 1000, user_id: user.id, user_type: user.type, type: "api_token" }, { returning: "*" });
+            const session = await dbs.sessions.insert({ expires: Date.now() + days * 24 * 3600 * 1000, user_id: user.id, user_type: user.type, type: "api_token", ip_address }, { returning: "*" });
             return session.id;
         },
         create2FA: async () => {
