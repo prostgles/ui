@@ -55,7 +55,7 @@ const publishMethods = async (params) => {
             const noPwdAdmin = await (0, ConnectionChecker_1.ADMIN_ACCESS_WITHOUT_PASSWORD)(dbs);
             if (!noPwdAdmin)
                 throw "No passwordless admin found";
-            await dbs.users.insert({ username: newAdmin.username, password: newAdmin.password, type: "admin" });
+            await (0, ConnectionChecker_1.insertUser)(dbs, _dbs, { username: newAdmin.username, password: newAdmin.password, type: "admin" });
             await dbs.users.update({ id: noPwdAdmin.id }, { status: "disabled" });
             await dbs.sessions.delete({});
         },
