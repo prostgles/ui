@@ -66,5 +66,42 @@ export declare const ADMIN_ACCESS_WITHOUT_PASSWORD: (db: DBS) => Promise<Require
     type?: string | undefined;
     username: string;
 }> | undefined>;
+export declare const insertUser: (db: DBS, _db: DB, u: {
+    "2fa"?: {
+        secret: string;
+        recoveryCode: string;
+        enabled: boolean;
+    } | null | undefined;
+    created?: Date | null | undefined;
+    id?: string | undefined;
+    last_updated?: number | null | undefined;
+    no_password?: boolean | null | undefined;
+    options?: {
+        showStateDB?: boolean | undefined;
+        hideNonSSLWarning?: boolean | undefined;
+    } | null | undefined;
+    password?: string | undefined;
+    status?: string | undefined;
+    type?: string | undefined;
+    username: string;
+} | {
+    "2fa"?: {
+        secret: string;
+        recoveryCode: string;
+        enabled: boolean;
+    } | null | undefined;
+    created?: Date | null | undefined;
+    id?: string | undefined;
+    last_updated?: number | null | undefined;
+    no_password?: boolean | null | undefined;
+    options?: {
+        showStateDB?: boolean | undefined;
+        hideNonSSLWarning?: boolean | undefined;
+    } | null | undefined;
+    password?: string | undefined;
+    status?: string | undefined;
+    type?: string | undefined;
+    username: string;
+}[]) => Promise<void>;
 export {};
 //# sourceMappingURL=ConnectionChecker.d.ts.map

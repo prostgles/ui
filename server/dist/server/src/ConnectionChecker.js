@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ADMIN_ACCESS_WITHOUT_PASSWORD = exports.EMPTY_PASSWORD = exports.EMPTY_USERNAME = exports.ConnectionChecker = void 0;
+exports.insertUser = exports.ADMIN_ACCESS_WITHOUT_PASSWORD = exports.EMPTY_PASSWORD = exports.EMPTY_USERNAME = exports.ConnectionChecker = void 0;
 const index_1 = require("./index");
 const cors_1 = __importDefault(require("cors"));
 class ConnectionChecker {
@@ -180,6 +180,13 @@ const initUsers = async (db, _db) => {
         console.log("Added users: ", await db.users.find({ username }));
     }
 };
+const insertUser = async (db, _db, u) => {
+    const user = await db.users.insert(u, { returning: "*" });
+    if (!user.id)
+        throw "User id missing";
+    await _db.any("UPDATE users SET password = crypt(password, id::text) WHERE id = ${id};", user);
+};
+exports.insertUser = insertUser;
 const makeMagicLink = async (user, dbo, returnURL) => {
     const DAY = 24 * 3600 * 1000;
     const mlink = await dbo.magic_links.insert({

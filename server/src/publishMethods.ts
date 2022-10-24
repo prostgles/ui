@@ -23,7 +23,7 @@ import { DBSSchema } from "../../commonTypes/publishUtils";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
 import { Backups } from "./BackupManager";
-import { ADMIN_ACCESS_WITHOUT_PASSWORD } from "./ConnectionChecker";
+import { ADMIN_ACCESS_WITHOUT_PASSWORD, insertUser } from "./ConnectionChecker";
 
 export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params) => { //  socket, dbs: DBObj, _dbs, user: Users
   const { dbo: dbs, socket, db: _dbs } = params;
@@ -48,7 +48,7 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       const noPwdAdmin = await ADMIN_ACCESS_WITHOUT_PASSWORD(dbs);
       if(!noPwdAdmin) throw "No passwordless admin found";
 
-      await dbs.users.insert({ username: newAdmin.username, password: newAdmin.password, type: "admin" });
+      await insertUser(dbs, _dbs, { username: newAdmin.username, password: newAdmin.password, type: "admin" });
       await dbs.users.update({ id: noPwdAdmin.id }, { status: "disabled" });
       await dbs.sessions.delete({});
     },

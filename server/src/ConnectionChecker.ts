@@ -250,6 +250,11 @@ const initUsers = async (db: DBS, _db: DB) => {
   }
 }
 
+export const insertUser = async (db: DBS, _db: DB, u: Parameters<typeof db.users.insert>[0]) => {
+  const user = await db.users.insert(u, { returning: "*" }) as Users;
+  if(!user.id) throw "User id missing";
+  await _db.any("UPDATE users SET password = crypt(password, id::text) WHERE id = ${id};", user);
+}
 
 const makeMagicLink = async (user: Users, dbo: DBS, returnURL: string) => {
   const DAY = 24 * 3600 * 1000
