@@ -9,6 +9,7 @@ const index_1 = require("./index");
 const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
 const otplib_1 = require("otplib");
 const path_1 = __importDefault(require("path"));
+const electronConfig_1 = require("./electronConfig");
 let authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || index_1.PROSTGLES_STRICT_COOKIE) ? {} : {
     secure: false,
     sameSite: "lax" //  "none"
@@ -169,7 +170,7 @@ const getAuth = (app) => {
                     req.next?.();
                 }
                 else {
-                    res.sendFile(path_1.default.resolve(index_1.ROOT_DIR + '/../client/build/index.html'));
+                    res.sendFile(path_1.default.resolve(electronConfig_1.ROOT_DIR + '/../client/build/index.html'));
                 }
             },
             cookieOptions: authCookieOpts,

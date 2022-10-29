@@ -1,6 +1,11 @@
 
 import * as fs from "fs";
-import { DBSConnectionInfo, ROOT_DIR } from "./index";
+import * as path from "path";
+import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+export const ROOT_DIR = path.join(__dirname, "/../../.." ); 
+
+export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
+export type DBSConnectionInfo = Pick<Required<Connections>, "type" | "db_conn" | "db_name" | "db_user" | "db_pass" | "db_host" | "db_port" | "db_ssl" | "type">;
 
 
 interface SafeStorage extends NodeJS.EventEmitter {
@@ -45,7 +50,7 @@ export const getElectronConfig = () => {
   if(!safeStorage || ![safeStorage.encryptString, safeStorage.decryptString].every(v => typeof v === "function")){
     throw "Invalid safeStorage provided. encryptString or decryptString is not a function"
   } 
-  
+
   const electronConfigPath = `${ROOT_DIR}/.electron-auth.json`;
   
   return {

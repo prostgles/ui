@@ -18,6 +18,7 @@ export declare type Connections = Required<DBSchemaGenerated["connections"]["col
 declare type DBS = DBOFullyTyped<DBSchemaGenerated>;
 import { Request, Response } from "express";
 import { SUser } from "./authConfig";
+import { ConnectionManager } from "./ConnectionManager";
 export default class BackupManager {
     private tempStreams;
     private timeout?;
@@ -105,7 +106,8 @@ export default class BackupManager {
     }> | undefined>;
     private dbs;
     interval: NodeJS.Timeout;
-    constructor(dbs: DBS);
+    connMgr: ConnectionManager;
+    constructor(dbs: DBS, connMgr: ConnectionManager);
     destroy(): Promise<void>;
     private checkIfEnoughSpace;
     private getDBSizeInBytes;

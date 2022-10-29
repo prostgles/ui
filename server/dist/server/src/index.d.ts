@@ -1,5 +1,4 @@
 import { ConnectionManager } from "./ConnectionManager";
-export declare const ROOT_DIR: string;
 export declare const API_PATH = "/api";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 export declare type BareConnectionDetails = Pick<Connections, "type" | "db_conn" | "db_host" | "db_name" | "db_pass" | "db_port" | "db_user" | "db_ssl" | "ssl_certificate">;
@@ -10,7 +9,6 @@ export declare type Connections = Required<DBSchemaGenerated["connections"]["col
 export declare const log: (msg: string, extra?: any) => void;
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 export declare const MEDIA_ROUTE_PREFIX = "/prostgles_media";
-export declare type DBSConnectionInfo = Pick<Required<Connections>, "type" | "db_conn" | "db_name" | "db_user" | "db_pass" | "db_host" | "db_port" | "db_ssl" | "type">;
 import BackupManager from "./BackupManager";
 export declare const getBackupManager: () => BackupManager;
 import { ConnectionChecker } from "./ConnectionChecker";
