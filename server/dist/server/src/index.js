@@ -288,7 +288,7 @@ let electronConfig = (0, electronConfig_1.getElectronConfig)?.();
 setTimeout(() => {
     electronConfig = (0, electronConfig_1.getElectronConfig)?.();
     if (electronConfig) {
-        PORT ??= electronConfig.port ?? 3099;
+        PORT = electronConfig.port ?? 3099;
         prostglesInitState.isElectron = true;
         const creds = electronConfig.getCredentials();
         if (creds) {
