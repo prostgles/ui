@@ -13,6 +13,7 @@ const app = (0, express_1.default)();
 const publishMethods_1 = require("./publishMethods");
 const ConnectionManager_1 = require("./ConnectionManager");
 const authConfig_1 = require("./authConfig");
+const electronConfig_1 = require("./electronConfig");
 exports.API_PATH = "/api";
 app.use(express_1.default.json({ limit: "100mb" }));
 app.use(express_1.default.urlencoded({ extended: true, limit: "100mb" }));
@@ -65,7 +66,6 @@ const io = new socket_io_1.Server(http, {
     cors: exports.connectionChecker.withOrigin
 });
 exports.connMgr = new ConnectionManager_1.ConnectionManager(http, app, exports.connectionChecker.withOrigin);
-const electronConfig_1 = require("./electronConfig");
 const startProstgles = async (con = DBS_CONNECTION_INFO) => {
     try {
         // console.log("Connecting to state database" , con, { POSTGRES_DB, POSTGRES_USER, POSTGRES_HOST }, process.env)

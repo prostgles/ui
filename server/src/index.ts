@@ -7,6 +7,7 @@ import { publishMethods } from "./publishMethods";
 import { ChildProcessWithoutNullStreams } from "child_process";
 import { ConnectionManager, Unpromise } from "./ConnectionManager";
 import { getAuth } from "./authConfig";
+import { DBSConnectionInfo, getElectronConfig, ROOT_DIR } from "./electronConfig";
 
 
 export const API_PATH = "/api";
@@ -118,7 +119,6 @@ const io = new Server(http, {
 
 export const connMgr = new ConnectionManager(http, app, connectionChecker.withOrigin);
 
-import { DBSConnectionInfo, getElectronConfig, ROOT_DIR } from "./electronConfig";
 
 const startProstgles = async (con = DBS_CONNECTION_INFO) => {
   try {
