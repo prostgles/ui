@@ -29,7 +29,6 @@ const publish_1 = require("./publish");
 const dotenv = require('dotenv');
 const testDBConnection_1 = require("./connectionUtils/testDBConnection");
 const validateConnection_1 = require("./connectionUtils/validateConnection");
-console.log(electronConfig_1.ROOT_DIR);
 const result = dotenv.config({ path: path_1.default.resolve(electronConfig_1.ROOT_DIR + '/../.env') });
 _a = result?.parsed || {}, exports.PRGL_USERNAME = _a.PRGL_USERNAME, exports.PRGL_PASSWORD = _a.PRGL_PASSWORD, exports.POSTGRES_URL = _a.POSTGRES_URL, exports.POSTGRES_DB = _a.POSTGRES_DB, exports.POSTGRES_HOST = _a.POSTGRES_HOST, exports.POSTGRES_PASSWORD = _a.POSTGRES_PASSWORD, exports.POSTGRES_PORT = _a.POSTGRES_PORT, exports.POSTGRES_USER = _a.POSTGRES_USER, exports.POSTGRES_SSL = _a.POSTGRES_SSL, exports.PROSTGLES_STRICT_COOKIE = _a.PROSTGLES_STRICT_COOKIE;
 const log = (msg, extra) => {
@@ -93,7 +92,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
         }
         await (0, testDBConnection_1.testDBConnection)(con, true);
         const auth = (0, authConfig_1.getAuth)(app);
-        (0, prostgles_server_1.default)({
+        await (0, prostgles_server_1.default)({
             dbConnection: {
                 connectionTimeoutMillis: 1000,
                 host: con.db_host,
@@ -209,6 +208,7 @@ const tryStartProstgles = async (con = DBS_CONNECTION_INFO) => {
     let interval = setInterval(async () => {
         try {
             await startProstgles(con);
+            console.log("startProstgles success! ");
             tries = 6;
             error = null;
             // clearInterval(interval)
@@ -227,10 +227,13 @@ const tryStartProstgles = async (con = DBS_CONNECTION_INFO) => {
         }
     }, 2000);
 };
-const setDBSRoutes = (serveIndex = false) => {
-    app.get("/dbs", (req, res) => {
-        res.json(prostglesInitState);
+app.get("/dbs", (req, res) => {
+    res.json({
+        ...prostglesInitState,
+        electronCredsProvided: !!((0, electronConfig_1.getElectronConfig)?.())?.getCredentials()
     });
+});
+const setDBSRoutes = (serveIndex) => {
     if (serveIndex) {
         app.get("*", (req, res) => {
             console.log(req.originalUrl);
@@ -241,16 +244,18 @@ const setDBSRoutes = (serveIndex = false) => {
         return;
     app.post("/dbs", async (req, res) => {
         const creds = (0, PubSubManager_1.pickKeys)(req.body, ["db_conn", "db_user", "db_pass", "db_host", "db_port", "db_name", "db_ssl", "type"]);
-        if (!creds.db_conn || !creds.db_host) {
-            res.json({ ok: false });
-        }
         if (req.body.validate) {
             try {
-                res.json((0, validateConnection_1.validateConnection)(creds));
+                const connection = (0, validateConnection_1.validateConnection)(creds);
+                res.json({ connection });
             }
-            catch (err) {
-                res.json({ err });
+            catch (warning) {
+                res.json({ warning });
             }
+            return;
+        }
+        if (!creds.db_conn || !creds.db_host) {
+            res.json({ warning: "db_conn or db_host Missing" });
             return;
         }
         try {
@@ -259,8 +264,8 @@ const setDBSRoutes = (serveIndex = false) => {
             tryStartProstgles(creds);
             res.json({ msg: "DBS changed. Restart system" });
         }
-        catch (err) {
-            res.json({ err });
+        catch (warning) {
+            res.json({ warning });
         }
     });
 };
@@ -271,8 +276,9 @@ const setDBSRoutes = (serveIndex = false) => {
  *  - start prostgles IF or WHEN creds provided
  *
  * If docker/default
+ *  - serve prostglesInitState
  *  - try start prostgles
- *  - If failed to connect then serve prostglesInitState
+ *  - If failed to connect then also serve index
  */
 let PORT = +(process.env.PRGL_PORT ?? 3004);
 let electronConfig = (0, electronConfig_1.getElectronConfig)?.();
@@ -280,18 +286,23 @@ let electronConfig = (0, electronConfig_1.getElectronConfig)?.();
  * Timeout added due to circular dependencies
  */
 setTimeout(() => {
-    console.log({ getElectronConfig: electronConfig_1.getElectronConfig });
+    electronConfig = (0, electronConfig_1.getElectronConfig)?.();
     if (electronConfig) {
-        PORT = 3099;
+        PORT ??= electronConfig.port ?? 3099;
         prostglesInitState.isElectron = true;
         const creds = electronConfig.getCredentials();
         if (creds) {
             tryStartProstgles(creds);
         }
-        setDBSRoutes();
+        else {
+            console.log("No credentials");
+        }
+        setDBSRoutes(true);
+        console.log("Starting electron on port: ", PORT);
     }
     else {
         tryStartProstgles();
+        console.log("Starting non-electron on port: ", PORT);
     }
     http.listen(PORT);
 }, 10);

@@ -35,14 +35,15 @@ interface SafeStorage extends NodeJS.EventEmitter {
   isEncryptionAvailable(): boolean;
 }
 
-// let isElectron = false;// process.env.PRGL_IS_ELECTRON;
-// let safeStorage: SafeStorage | undefined;
+let isElectron = false;// process.env.PRGL_IS_ELECTRON;
+let safeStorage: SafeStorage | undefined;
+let port: number | undefined;
 
-let isElectron = true;
-let safeStorage: Pick<SafeStorage, "decryptString" | "encryptString" > = {
-  encryptString: v => Buffer.from(v),
-  decryptString: v => v.toString()
-};
+// let isElectron = true;
+// let safeStorage: Pick<SafeStorage, "decryptString" | "encryptString" > = {
+//   encryptString: v => Buffer.from(v),
+//   decryptString: v => v.toString()
+// };
 
 export const getElectronConfig = () => {
   if(!isElectron) return undefined;
@@ -54,6 +55,7 @@ export const getElectronConfig = () => {
   const electronConfigPath = `${ROOT_DIR}/.electron-auth.json`;
   
   return {
+    port,
     getCredentials: (): DBSConnectionInfo | undefined => {
 
       try {
@@ -73,8 +75,9 @@ export const getElectronConfig = () => {
   }
 }
 
-export const start = (sStorage: SafeStorage) => {
+export const start = (sStorage: SafeStorage, _port?: number) => {
   isElectron = true;
+  port = _port;
   safeStorage = sStorage;
   require("./index");
 }
