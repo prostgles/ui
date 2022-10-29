@@ -486,8 +486,8 @@ class BackupManager {
     };
 }
 exports.default = BackupManager;
-const localFolderPath = path_1.default.resolve(index_1.ROOT_DIR + '/' + exports.BACKUP_FOLDERNAME);
 async function getFileMgr(dbs, credId) {
+    const localFolderPath = path_1.default.resolve(index_1.ROOT_DIR + '/' + exports.BACKUP_FOLDERNAME);
     let cred;
     if (credId) {
         cred = await dbs.credentials.findOne({ id: credId, type: "s3" });

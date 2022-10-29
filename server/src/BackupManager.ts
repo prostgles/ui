@@ -519,9 +519,10 @@ export default class BackupManager {
 } 
 
 
-const localFolderPath = path.resolve(ROOT_DIR + '/' + BACKUP_FOLDERNAME);
 
 export async function getFileMgr(dbs: DBS, credId: number | null){
+  const localFolderPath = path.resolve(ROOT_DIR + '/' + BACKUP_FOLDERNAME);
+  
   let cred;
   if(credId){
     cred = await dbs.credentials.findOne({ id: credId, type: "s3" });

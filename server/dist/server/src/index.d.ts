@@ -1,7 +1,7 @@
 import { ConnectionManager } from "./ConnectionManager";
+export declare const ROOT_DIR: string;
 export declare const API_PATH = "/api";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
-export declare const ROOT_DIR: string;
 export declare type BareConnectionDetails = Pick<Connections, "type" | "db_conn" | "db_host" | "db_name" | "db_pass" | "db_port" | "db_user" | "db_ssl" | "ssl_certificate">;
 export declare type DBS = DBOFullyTyped<DBSchemaGenerated>;
 export declare const PRGL_USERNAME: any, PRGL_PASSWORD: any, POSTGRES_URL: any, POSTGRES_DB: any, POSTGRES_HOST: any, POSTGRES_PASSWORD: any, POSTGRES_PORT: any, POSTGRES_USER: any, POSTGRES_SSL: any, PROSTGLES_STRICT_COOKIE: any;
