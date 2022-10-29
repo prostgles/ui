@@ -1,4 +1,4 @@
-import { connMgr, ROOT_DIR } from "./index";
+
 import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import path from 'path';
 import child from 'child_process';
@@ -24,6 +24,8 @@ type DBS = DBOFullyTyped<DBSchemaGenerated>;
 import checkDiskSpace from 'check-disk-space';
 import { Request, Response } from "express";
 import { SUser } from "./authConfig";
+import { ROOT_DIR } from "./electronConfig";
+import { ConnectionManager } from "./ConnectionManager";
 
 
 const HOUR = 3600 * 1000;
@@ -90,8 +92,10 @@ export default class BackupManager {
 
   private dbs: DBS;
   interval: NodeJS.Timeout;
-  constructor(dbs: DBS){
+  connMgr: ConnectionManager;
+  constructor(dbs: DBS, connMgr: ConnectionManager){
     this.dbs = dbs;
+    this.connMgr = connMgr;
     this.interval = setInterval(async () => {
       const connections = await this.dbs.connections.find({ "backups_config->>enabled": 'true' } as any);
       for await(const con of connections){
@@ -210,7 +214,7 @@ export default class BackupManager {
   } 
 
   private getDBSizeInBytes = async (conId: string) => {
-    const db = connMgr.getConnection(conId);
+    const db = this.connMgr.getConnection(conId);
     const result = (await db?.prgl?.db?.sql?.("SELECT pg_database_size(current_database())  ", { }, { returnType: "value" }))
     return Number.isFinite(+result)? result : 0;
   }
@@ -241,7 +245,7 @@ export default class BackupManager {
       throw "Cannot backup while another backup is in progress";
     }
 
-    const ENV_VARS = getSSLEnvVars(con);
+    const ENV_VARS = getSSLEnvVars(con, this.connMgr);
 
     let backup_id: string | undefined;
     const uri = getConnectionUri(con);
@@ -370,7 +374,7 @@ export default class BackupManager {
       }
     }
     try {
-      const ENV_VARS = getSSLEnvVars(con);
+      const ENV_VARS = getSSLEnvVars(con, this.connMgr);
       const bkpStream = stream ?? await fileMgr.getFileStream(bkp.id);
       const restoreCmd = (o.command === "psql" || o.format === "p")? {
         command: "psql",
@@ -522,7 +526,7 @@ export default class BackupManager {
 
 export async function getFileMgr(dbs: DBS, credId: number | null){
   const localFolderPath = path.resolve(ROOT_DIR + '/' + BACKUP_FOLDERNAME);
-  
+
   let cred;
   if(credId){
     cred = await dbs.credentials.findOne({ id: credId, type: "s3" });
@@ -660,7 +664,7 @@ function bytesToSize(bytes: number) {
   return Math.round(bytes / Math.pow(1024, i)) + ' ' + sizes[i];
 }
 
-function getSSLEnvVars(c: Connections): EnvVars {
+function getSSLEnvVars(c: Connections, connMgr: ConnectionManager): EnvVars {
   let result = {} as any;
   if(c.db_ssl){
     result.PGSSLMODE = c.db_ssl;

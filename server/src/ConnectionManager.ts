@@ -1,6 +1,6 @@
 
 import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
-import { restartProc, Connections, MEDIA_ROUTE_PREFIX, ROOT_DIR, API_PATH, DBS } from "./index";
+import { restartProc, Connections, MEDIA_ROUTE_PREFIX, API_PATH, DBS } from "./index";
 import { WithOrigin } from "./ConnectionChecker";
 import { Server }  from "socket.io";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
@@ -18,6 +18,7 @@ import { S3Config } from "prostgles-server/dist/FileManager";
 import { Express } from "express";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { getConnectionDetails } from "./connectionUtils/getConnectionDetails";
+import { ROOT_DIR } from "./electronConfig";
 
 export type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
 

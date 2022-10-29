@@ -8,7 +8,6 @@ import { ChildProcessWithoutNullStreams } from "child_process";
 import { ConnectionManager, Unpromise } from "./ConnectionManager";
 import { getAuth } from "./authConfig";
 
-export const ROOT_DIR = path.join(__dirname, "/../../.." ); 
 
 export const API_PATH = "/api";
 
@@ -86,8 +85,6 @@ app.use(cookieParser());
 
 export const MEDIA_ROUTE_PREFIX = `/prostgles_media`
 
-export type DBSConnectionInfo = Pick<Required<Connections>, "type" | "db_conn" | "db_name" | "db_user" | "db_pass" | "db_host" | "db_port" | "db_ssl" | "type">
-
 const DBS_CONNECTION_INFO: DBSConnectionInfo = {
   type: !(process.env.POSTGRES_URL || POSTGRES_URL)? "Standard" : "Connection URI",
   db_conn: process.env.POSTGRES_URL || POSTGRES_URL, 
@@ -121,7 +118,7 @@ const io = new Server(http, {
 
 export const connMgr = new ConnectionManager(http, app, connectionChecker.withOrigin);
 
-import { getElectronConfig } from "./electronConfig";
+import { DBSConnectionInfo, getElectronConfig, ROOT_DIR } from "./electronConfig";
 
 const startProstgles = async (con = DBS_CONNECTION_INFO) => {
   try {
@@ -225,7 +222,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
         await connectionChecker.init(db, _db);
 
         await connMgr.init(db);
-        bkpManager ??= new BackupManager(db);
+        bkpManager ??= new BackupManager(db, connMgr);
 
 
         console.log("Prostgles UI is running on port ", PORT)

@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tout = exports.upsertConnection = exports.restartProc = exports.get = exports.connMgr = exports.connectionChecker = exports.getBackupManager = exports.MEDIA_ROUTE_PREFIX = exports.log = exports.PROSTGLES_STRICT_COOKIE = exports.POSTGRES_SSL = exports.POSTGRES_USER = exports.POSTGRES_PORT = exports.POSTGRES_PASSWORD = exports.POSTGRES_HOST = exports.POSTGRES_DB = exports.POSTGRES_URL = exports.PRGL_PASSWORD = exports.PRGL_USERNAME = exports.API_PATH = exports.ROOT_DIR = void 0;
+exports.tout = exports.upsertConnection = exports.restartProc = exports.get = exports.connMgr = exports.connectionChecker = exports.getBackupManager = exports.MEDIA_ROUTE_PREFIX = exports.log = exports.PROSTGLES_STRICT_COOKIE = exports.POSTGRES_SSL = exports.POSTGRES_USER = exports.POSTGRES_PORT = exports.POSTGRES_PASSWORD = exports.POSTGRES_HOST = exports.POSTGRES_DB = exports.POSTGRES_URL = exports.PRGL_PASSWORD = exports.PRGL_USERNAME = exports.API_PATH = void 0;
 const path_1 = __importDefault(require("path"));
 const express_1 = __importDefault(require("express"));
 const prostgles_server_1 = __importDefault(require("prostgles-server"));
@@ -13,7 +13,6 @@ const app = (0, express_1.default)();
 const publishMethods_1 = require("./publishMethods");
 const ConnectionManager_1 = require("./ConnectionManager");
 const authConfig_1 = require("./authConfig");
-exports.ROOT_DIR = path_1.default.join(__dirname, "/../../..");
 exports.API_PATH = "/api";
 app.use(express_1.default.json({ limit: "100mb" }));
 app.use(express_1.default.urlencoded({ extended: true, limit: "100mb" }));
@@ -29,15 +28,15 @@ const publish_1 = require("./publish");
 const dotenv = require('dotenv');
 const testDBConnection_1 = require("./connectionUtils/testDBConnection");
 const validateConnection_1 = require("./connectionUtils/validateConnection");
-console.log(exports.ROOT_DIR);
-const result = dotenv.config({ path: path_1.default.resolve(exports.ROOT_DIR + '/../.env') });
+console.log(electronConfig_1.ROOT_DIR);
+const result = dotenv.config({ path: path_1.default.resolve(electronConfig_1.ROOT_DIR + '/../.env') });
 _a = result?.parsed || {}, exports.PRGL_USERNAME = _a.PRGL_USERNAME, exports.PRGL_PASSWORD = _a.PRGL_PASSWORD, exports.POSTGRES_URL = _a.POSTGRES_URL, exports.POSTGRES_DB = _a.POSTGRES_DB, exports.POSTGRES_HOST = _a.POSTGRES_HOST, exports.POSTGRES_PASSWORD = _a.POSTGRES_PASSWORD, exports.POSTGRES_PORT = _a.POSTGRES_PORT, exports.POSTGRES_USER = _a.POSTGRES_USER, exports.POSTGRES_SSL = _a.POSTGRES_SSL, exports.PROSTGLES_STRICT_COOKIE = _a.PROSTGLES_STRICT_COOKIE;
 const log = (msg, extra) => {
     console.log(...[`(server): ${(new Date()).toISOString()} ` + msg, extra].filter(v => v));
 };
 exports.log = log;
-app.use(express_1.default.static(path_1.default.resolve(exports.ROOT_DIR + "/../client/build"), { index: false }));
-app.use(express_1.default.static(path_1.default.resolve(exports.ROOT_DIR + "/../client/static"), { index: false }));
+app.use(express_1.default.static(path_1.default.resolve(electronConfig_1.ROOT_DIR + "/../client/build"), { index: false }));
+app.use(express_1.default.static(path_1.default.resolve(electronConfig_1.ROOT_DIR + "/../client/static"), { index: false }));
 /* AUTH */
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 app.use((0, cookie_parser_1.default)());
@@ -103,9 +102,9 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
                 user: con.db_user,
                 password: con.db_pass,
             },
-            sqlFilePath: path_1.default.join(exports.ROOT_DIR + '/src/init.sql'),
+            sqlFilePath: path_1.default.join(electronConfig_1.ROOT_DIR + '/src/init.sql'),
             io,
-            tsGeneratedTypesDir: path_1.default.join(exports.ROOT_DIR + '/../commonTypes/'),
+            tsGeneratedTypesDir: path_1.default.join(electronConfig_1.ROOT_DIR + '/../commonTypes/'),
             transactions: true,
             onSocketConnect: async ({ socket, dbo, db, getUser }) => {
                 const user = await getUser();
@@ -156,7 +155,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
                 await insertStateDatabase(db, _db, con);
                 await exports.connectionChecker.init(db, _db);
                 await exports.connMgr.init(db);
-                bkpManager ??= new BackupManager_1.default(db);
+                bkpManager ??= new BackupManager_1.default(db, exports.connMgr);
                 console.log("Prostgles UI is running on port ", PORT);
             },
         });
@@ -235,7 +234,7 @@ const setDBSRoutes = (serveIndex = false) => {
     if (serveIndex) {
         app.get("*", (req, res) => {
             console.log(req.originalUrl);
-            res.sendFile(path_1.default.resolve(exports.ROOT_DIR + '/../client/build/index.html'));
+            res.sendFile(path_1.default.resolve(electronConfig_1.ROOT_DIR + '/../client/build/index.html'));
         });
     }
     if (!prostglesInitState.isElectron)

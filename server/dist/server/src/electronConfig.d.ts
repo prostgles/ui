@@ -1,6 +1,9 @@
 /// <reference types="node" />
 /// <reference types="node" />
-import { DBSConnectionInfo } from "./index";
+import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+export declare const ROOT_DIR: string;
+export declare type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
+export declare type DBSConnectionInfo = Pick<Required<Connections>, "type" | "db_conn" | "db_name" | "db_user" | "db_pass" | "db_host" | "db_port" | "db_ssl" | "type">;
 interface SafeStorage extends NodeJS.EventEmitter {
     /**
      * the decrypted string. Decrypts the encrypted buffer obtained  with

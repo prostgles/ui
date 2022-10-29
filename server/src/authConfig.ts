@@ -1,6 +1,6 @@
 import { BKP_PREFFIX } from "./BackupManager";
 import { Auth, BasicSession } from 'prostgles-server/dist/AuthHandler';
-import { MEDIA_ROUTE_PREFIX, PROSTGLES_STRICT_COOKIE, ROOT_DIR, log, Users, API_PATH, getBackupManager, connectionChecker } from "./index";
+import { MEDIA_ROUTE_PREFIX, PROSTGLES_STRICT_COOKIE, log, Users, API_PATH, getBackupManager, connectionChecker } from "./index";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { omitKeys } from "prostgles-server/dist/PubSubManager";
@@ -9,6 +9,7 @@ import { authenticator } from "otplib";
 import { Express } from "express"
 import path from "path";
 import { DBSSchema } from "../../commonTypes/publishUtils";
+import { ROOT_DIR } from "./electronConfig";
 
 
 let authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_COOKIE)? {} : {

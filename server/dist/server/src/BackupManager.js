@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.pipeToCommand = exports.pipeFromCommand = exports.getFileMgr = exports.BKP_PREFFIX = exports.BACKUP_FOLDERNAME = void 0;
-const index_1 = require("./index");
 const path_1 = __importDefault(require("path"));
 const child_process_1 = __importDefault(require("child_process"));
 const stream_1 = require("stream");
@@ -15,6 +14,7 @@ exports.BACKUP_FOLDERNAME = "prostgles_backups";
 exports.BKP_PREFFIX = "/" + exports.BACKUP_FOLDERNAME;
 const getConnectionUri = (c) => c.db_conn || `postgres://${c.db_user}:${c.db_pass || ""}@${c.db_host || "localhost"}:${c.db_port || "5432"}/${c.db_name}`;
 const check_disk_space_1 = __importDefault(require("check-disk-space"));
+const electronConfig_1 = require("./electronConfig");
 const HOUR = 3600 * 1000;
 class BackupManager {
     tempStreams = {};
@@ -73,8 +73,10 @@ class BackupManager {
     });
     dbs;
     interval;
-    constructor(dbs) {
+    connMgr;
+    constructor(dbs, connMgr) {
         this.dbs = dbs;
+        this.connMgr = connMgr;
         this.interval = setInterval(async () => {
             const connections = await this.dbs.connections.find({ "backups_config->>enabled": 'true' });
             for await (const con of connections) {
@@ -190,7 +192,7 @@ class BackupManager {
         }
     };
     getDBSizeInBytes = async (conId) => {
-        const db = index_1.connMgr.getConnection(conId);
+        const db = this.connMgr.getConnection(conId);
         const result = (await db?.prgl?.db?.sql?.("SELECT pg_database_size(current_database())  ", {}, { returnType: "value" }));
         return Number.isFinite(+result) ? result : 0;
     };
@@ -217,7 +219,7 @@ class BackupManager {
         if (currentBackup) {
             throw "Cannot backup while another backup is in progress";
         }
-        const ENV_VARS = getSSLEnvVars(con);
+        const ENV_VARS = getSSLEnvVars(con, this.connMgr);
         let backup_id;
         const uri = getConnectionUri(con);
         const dumpAll = o.command === "pg_dumpall";
@@ -339,7 +341,7 @@ class BackupManager {
             }
         }
         try {
-            const ENV_VARS = getSSLEnvVars(con);
+            const ENV_VARS = getSSLEnvVars(con, this.connMgr);
             const bkpStream = stream ?? await fileMgr.getFileStream(bkp.id);
             const restoreCmd = (o.command === "psql" || o.format === "p") ? {
                 command: "psql",
@@ -474,7 +476,7 @@ class BackupManager {
                     else {
                         try {
                             res.type(bkp.content_type);
-                            res.sendFile(path_1.default.resolve(path_1.default.join(index_1.ROOT_DIR + exports.BKP_PREFFIX + "/" + bkp.id)));
+                            res.sendFile(path_1.default.resolve(path_1.default.join(electronConfig_1.ROOT_DIR + exports.BKP_PREFFIX + "/" + bkp.id)));
                         }
                         catch (err) {
                             res.sendStatus(404);
@@ -487,7 +489,7 @@ class BackupManager {
 }
 exports.default = BackupManager;
 async function getFileMgr(dbs, credId) {
-    const localFolderPath = path_1.default.resolve(index_1.ROOT_DIR + '/' + exports.BACKUP_FOLDERNAME);
+    const localFolderPath = path_1.default.resolve(electronConfig_1.ROOT_DIR + '/' + exports.BACKUP_FOLDERNAME);
     let cred;
     if (credId) {
         cred = await dbs.credentials.findOne({ id: credId, type: "s3" });
@@ -598,7 +600,7 @@ function bytesToSize(bytes) {
     var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)) + "");
     return Math.round(bytes / Math.pow(1024, i)) + ' ' + sizes[i];
 }
-function getSSLEnvVars(c) {
+function getSSLEnvVars(c, connMgr) {
     let result = {};
     if (c.db_ssl) {
         result.PGSSLMODE = c.db_ssl;
@@ -607,13 +609,13 @@ function getSSLEnvVars(c) {
         result.PGPASSWORD = c.db_pass;
     }
     if (c.ssl_client_certificate) {
-        result.PGSSLCERT = index_1.connMgr.getCertPath(c.id, "cert");
+        result.PGSSLCERT = connMgr.getCertPath(c.id, "cert");
     }
     if (c.ssl_client_certificate_key) {
-        result.PGSSLKEY = index_1.connMgr.getCertPath(c.id, "key");
+        result.PGSSLKEY = connMgr.getCertPath(c.id, "key");
     }
     if (c.ssl_certificate) {
-        result.PGSSLROOTCERT = index_1.connMgr.getCertPath(c.id, "ca");
+        result.PGSSLROOTCERT = connMgr.getCertPath(c.id, "ca");
     }
     return result;
 }
