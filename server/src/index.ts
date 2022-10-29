@@ -88,9 +88,9 @@ app.use(cookieParser());
 
 export const MEDIA_ROUTE_PREFIX = `/prostgles_media`
 
+export type DBSConnectionInfo = Pick<Required<Connections>, "type" | "db_conn" | "db_name" | "db_user" | "db_pass" | "db_host" | "db_port" | "db_ssl" | "type">
 
-
-const DBS_CONNECTION_INFO: Pick<Required<Connections>, "type" | "db_conn" | "db_name" | "db_user" | "db_pass" | "db_host" | "db_port" | "db_ssl"> = {
+const DBS_CONNECTION_INFO: DBSConnectionInfo = {
   type: !(process.env.POSTGRES_URL || POSTGRES_URL)? "Standard" : "Connection URI",
   db_conn: process.env.POSTGRES_URL || POSTGRES_URL, 
   db_name: process.env.POSTGRES_DB || POSTGRES_DB, 
@@ -101,7 +101,7 @@ const DBS_CONNECTION_INFO: Pick<Required<Connections>, "type" | "db_conn" | "db_
   db_ssl:  process.env.POSTGRES_SSL || POSTGRES_SSL,
 };
 
-import { omitKeys } from "prostgles-server/dist/PubSubManager";
+import { omitKeys, pickKeys } from "prostgles-server/dist/PubSubManager";
 
 
 import BackupManager, { Backups } from "./BackupManager";
@@ -123,10 +123,11 @@ const io = new Server(http, {
 
 export const connMgr = new ConnectionManager(http, app, connectionChecker.withOrigin);
 
-const getDBS = async () => {
-  try {
+import { getElectronConfig,  } from "./electronConfig";
 
-    const con = DBS_CONNECTION_INFO;
+const startProstgles = async (con = DBS_CONNECTION_INFO) => {
+  try {
+    
     // console.log("Connecting to state database" , con, { POSTGRES_DB, POSTGRES_USER, POSTGRES_HOST }, process.env)
 
     if(!con.db_conn && !con.db_user && !con.db_name){
@@ -169,7 +170,7 @@ const getDBS = async () => {
       tsGeneratedTypesDir: path.join(ROOT_DIR + '/../commonTypes/'),
       transactions: true,
       onSocketConnect: async ({ socket, dbo, db, getUser }) => {
-
+        
         const user = await getUser();
         const sid = user?.sid
         if(sid){
@@ -275,61 +276,107 @@ const insertStateDatabase = async (db: DBS, _db: DB, con: typeof DBS_CONNECTION_
   }
 }
 
+import type { ProstglesInitState } from "../../commonTypes/electronInit";
+console.log("REMOVE")
 
-(async () => {
+const prostglesInitState: ProstglesInitState = {
+  isElectron: false,
+  ok: false
+}
+const tryStartProstgles = async (con: DBSConnectionInfo = DBS_CONNECTION_INFO) => {
   let error: any, tries = 0
   let interval = setInterval(async () => {
     
     try {
-      await getDBS();
+      await startProstgles(con);
       tries = 6;
       error = null;
       // clearInterval(interval)
     } catch(err){
-      console.log("getDBS", err)
+      console.error("startProstgles fail: ", err)
       error = err;
       tries++;
     }
+    prostglesInitState.err = error;
+    prostglesInitState.ok = !error;
 
     if(tries > 5){
       clearInterval(interval);
       
-      app.get("/dbs", (req, res) => {    
-        if(error){
-          res.json({ err: error })
-        } else {
-          res.json({ ok: true })
-        }
-      })
-    
-      if(error) {
-        app.get("*", (req, res) => {
-          console.log(req.originalUrl)
-          res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
-        })
-      }
+      setDBSRoutes(!!prostglesInitState.err);
       return
     }
 
   }, 2000);
+
+}
+
+const setDBSRoutes = (serveIndex = false) => {
+  app.get("/dbs", (req, res) => {
+    res.json(prostglesInitState)
+  });
+
+  if(serveIndex){
+    app.get("*", (req, res) => {
+      console.log(req.originalUrl)
+      res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
+    });
+  }
+
+  if(!prostglesInitState.isElectron) return;
+
+  app.post("/dbs", async (req, res) => {
+    const creds = pickKeys(req.body, ["db_conn", "db_user", "db_pass", "db_host", "db_port", "db_name", "db_ssl", "type"]);
+    if(!creds.db_conn || !creds.db_host){
+      res.json({ ok: false })
+    }
+
+    if(req.body.validate){
+      try {
+        res.json(validateConnection(creds));
+
+      } catch(err){
+        res.json({ err })
+      }
+      return;
+    }
   
-})();
+    try {
+      await testDBConnection(creds);
+      electronConfig?.setCredentials(creds);
+      tryStartProstgles(creds);
+      res.json({ msg: "DBS changed. Restart system" });
+    } catch(err){
+      res.json({ err })
+    }
+  });
+}
 
 
-// app.post("/dbs", async (req, res) => {
-//   const { db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } = req.body;
-//   if(!db_conn || !db_host){
-//     res.json({ ok: false })
-//   }
+/** Startup procedure
+ * If electron:
+ *  - serve index
+ *  - serve prostglesInitState
+ *  - start prostgles IF or WHEN creds provided
+ * 
+ * If docker/default
+ *  - try start prostgles
+ *  - If failed to connect then serve prostglesInitState
+ */
 
-//   try {
-//     await testDBConnection({ db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } as any);
+const electronConfig = getElectronConfig();
+if(electronConfig){
+  prostglesInitState.isElectron = true;
+  const creds = electronConfig.getCredentials();
+  if(creds){
+    tryStartProstgles(creds);
+  }
+  setDBSRoutes();
+} else {
+  tryStartProstgles();
+}
 
-//     res.json({ msg: "DBS changed. Restart system" })
-//   } catch(err){
-//     res.json({ err })
-//   }
-// });
+
 
 
  

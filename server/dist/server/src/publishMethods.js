@@ -100,7 +100,7 @@ const publishMethods = async (params) => {
             return { connection, warn };
         },
         createConnection: async (con) => {
-            return (0, index_1.upsertConnection)(con, user, dbs);
+            return (0, index_1.upsertConnection)(con, user.id, dbs);
         },
         deleteConnection: async (id, opts) => {
             try {

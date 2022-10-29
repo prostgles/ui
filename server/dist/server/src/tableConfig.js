@@ -361,6 +361,10 @@ exports.tableConfig = {
                     defaultLayoutType: {
                         optional: true,
                         enum: ["row", "tab", "col"]
+                    },
+                    pinnedMenu: {
+                        optional: true,
+                        type: "boolean"
                     }
                 }
             },

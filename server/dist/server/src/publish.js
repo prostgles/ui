@@ -15,6 +15,7 @@ const publish = async (params, con) => {
     const { id: user_id, type: user_type } = user;
     // _db.any("ALTER TABLE workspaces ADD COLUMN options         JSON DEFAULT '{}'::json")
     const acs = isAdmin ? undefined : await (0, ConnectionManager_1.getACRules)(db, user);
+    const createEditDashboards = isAdmin || acs?.some(({ rule: { dbsPermissions } }) => dbsPermissions?.createWorkspaces);
     const publishedWspIDs = acs?.flatMap(ac => ac.rule.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds).filter(filterUtils_1.isDefined) || []; // ac?.rule.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds;
     // const publishedWorkspaces = db.workspaces.find({ "id.$in": })
     const dashboardConfig = ["windows", "links", "workspaces"]
@@ -30,19 +31,21 @@ const publish = async (params, con) => {
                 synced_field: "last_updated",
                 allow_delete: true
             },
-            update: {
-                fields: { user_id: 0 },
-                forcedData: { user_id },
-                forcedFilter: { user_id },
-            },
-            insert: {
-                fields: "*",
-                forcedData: { user_id }
-            },
-            delete: {
-                filterFields: "*",
-                forcedFilter: { user_id }
-            }
+            ...(createEditDashboards && {
+                update: {
+                    fields: { user_id: 0 },
+                    forcedData: { user_id },
+                    forcedFilter: { user_id },
+                },
+                insert: {
+                    fields: "*",
+                    forcedData: { user_id }
+                },
+                delete: {
+                    filterFields: "*",
+                    forcedFilter: { user_id }
+                }
+            })
         },
     }), {});
     const validateAndHashUserPassword = async ({ filter, update }, _dbo, mustUpdate = false) => {
