@@ -1,6 +1,6 @@
 /// <reference types="node" />
 /// <reference types="node" />
-import { DBSConnectionInfo } from ".";
+import { DBSConnectionInfo } from "./index";
 interface SafeStorage extends NodeJS.EventEmitter {
     /**
      * the decrypted string. Decrypts the encrypted buffer obtained  with
@@ -28,6 +28,6 @@ export declare const getElectronConfig: () => {
     getCredentials: () => DBSConnectionInfo | undefined;
     setCredentials: (connection: DBSConnectionInfo) => void;
 } | undefined;
-export default function start(sStorage: SafeStorage): void;
+export declare const start: (sStorage: SafeStorage) => void;
 export {};
 //# sourceMappingURL=electronConfig.d.ts.map

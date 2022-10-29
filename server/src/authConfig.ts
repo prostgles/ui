@@ -1,4 +1,4 @@
-import { BACKUP_FOLDERNAME, BKP_PREFFIX, getFileMgr } from "./BackupManager";
+import { BKP_PREFFIX } from "./BackupManager";
 import { Auth, BasicSession } from 'prostgles-server/dist/AuthHandler';
 import { MEDIA_ROUTE_PREFIX, PROSTGLES_STRICT_COOKIE, ROOT_DIR, log, Users, API_PATH, getBackupManager, connectionChecker } from "./index";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";

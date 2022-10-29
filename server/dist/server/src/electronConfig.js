@@ -23,10 +23,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getElectronConfig = void 0;
+exports.start = exports.getElectronConfig = void 0;
 const fs = __importStar(require("fs"));
-const _1 = require(".");
-const electronConfigPath = `${_1.ROOT_DIR}/.electron-auth.json`;
+const index_1 = require("./index");
 // let isElectron = false;// process.env.PRGL_IS_ELECTRON;
 // let safeStorage: SafeStorage | undefined;
 let isElectron = true;
@@ -40,6 +39,7 @@ const getElectronConfig = () => {
     if (!safeStorage || ![safeStorage.encryptString, safeStorage.decryptString].every(v => typeof v === "function")) {
         throw "Invalid safeStorage provided. encryptString or decryptString is not a function";
     }
+    const electronConfigPath = `${index_1.ROOT_DIR}/.electron-auth.json`;
     return {
         getCredentials: () => {
             try {
@@ -59,10 +59,10 @@ const getElectronConfig = () => {
     };
 };
 exports.getElectronConfig = getElectronConfig;
-function start(sStorage) {
+const start = (sStorage) => {
     isElectron = true;
     safeStorage = sStorage;
     require("./index");
-}
-exports.default = start;
+};
+exports.start = start;
 //# sourceMappingURL=electronConfig.js.map

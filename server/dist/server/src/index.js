@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tout = exports.upsertConnection = exports.restartProc = exports.get = exports.connMgr = exports.connectionChecker = exports.getBackupManager = exports.MEDIA_ROUTE_PREFIX = exports.log = exports.PROSTGLES_STRICT_COOKIE = exports.POSTGRES_SSL = exports.POSTGRES_USER = exports.POSTGRES_PORT = exports.POSTGRES_PASSWORD = exports.POSTGRES_HOST = exports.POSTGRES_DB = exports.POSTGRES_URL = exports.PRGL_PASSWORD = exports.PRGL_USERNAME = exports.ROOT_DIR = exports.API_PATH = void 0;
+exports.tout = exports.upsertConnection = exports.restartProc = exports.get = exports.connMgr = exports.connectionChecker = exports.getBackupManager = exports.MEDIA_ROUTE_PREFIX = exports.log = exports.PROSTGLES_STRICT_COOKIE = exports.POSTGRES_SSL = exports.POSTGRES_USER = exports.POSTGRES_PORT = exports.POSTGRES_PASSWORD = exports.POSTGRES_HOST = exports.POSTGRES_DB = exports.POSTGRES_URL = exports.PRGL_PASSWORD = exports.PRGL_USERNAME = exports.API_PATH = exports.ROOT_DIR = void 0;
 const path_1 = __importDefault(require("path"));
 const express_1 = __importDefault(require("express"));
 const prostgles_server_1 = __importDefault(require("prostgles-server"));
@@ -13,6 +13,7 @@ const app = (0, express_1.default)();
 const publishMethods_1 = require("./publishMethods");
 const ConnectionManager_1 = require("./ConnectionManager");
 const authConfig_1 = require("./authConfig");
+exports.ROOT_DIR = path_1.default.join(__dirname, "/../../..");
 exports.API_PATH = "/api";
 app.use(express_1.default.json({ limit: "100mb" }));
 app.use(express_1.default.urlencoded({ extended: true, limit: "100mb" }));
@@ -21,7 +22,6 @@ process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
     // application specific logging, throwing an error, or other logic here
 });
-exports.ROOT_DIR = path_1.default.join(__dirname, "/../../..");
 const http_1 = __importDefault(require("http"));
 const http = http_1.default.createServer(app);
 const ioPath = process.env.PRGL_IOPATH || "/iosckt";
@@ -32,8 +32,6 @@ const validateConnection_1 = require("./connectionUtils/validateConnection");
 console.log(exports.ROOT_DIR);
 const result = dotenv.config({ path: path_1.default.resolve(exports.ROOT_DIR + '/../.env') });
 _a = result?.parsed || {}, exports.PRGL_USERNAME = _a.PRGL_USERNAME, exports.PRGL_PASSWORD = _a.PRGL_PASSWORD, exports.POSTGRES_URL = _a.POSTGRES_URL, exports.POSTGRES_DB = _a.POSTGRES_DB, exports.POSTGRES_HOST = _a.POSTGRES_HOST, exports.POSTGRES_PASSWORD = _a.POSTGRES_PASSWORD, exports.POSTGRES_PORT = _a.POSTGRES_PORT, exports.POSTGRES_USER = _a.POSTGRES_USER, exports.POSTGRES_SSL = _a.POSTGRES_SSL, exports.PROSTGLES_STRICT_COOKIE = _a.PROSTGLES_STRICT_COOKIE;
-const PORT = +(process.env.PRGL_PORT ?? 3004);
-http.listen(PORT);
 const log = (msg, extra) => {
     console.log(...[`(server): ${(new Date()).toISOString()} ` + msg, extra].filter(v => v));
 };
@@ -277,18 +275,27 @@ const setDBSRoutes = (serveIndex = false) => {
  *  - try start prostgles
  *  - If failed to connect then serve prostglesInitState
  */
-const electronConfig = (0, electronConfig_1.getElectronConfig)();
-if (electronConfig) {
-    prostglesInitState.isElectron = true;
-    const creds = electronConfig.getCredentials();
-    if (creds) {
-        tryStartProstgles(creds);
+let PORT = +(process.env.PRGL_PORT ?? 3004);
+let electronConfig = (0, electronConfig_1.getElectronConfig)?.();
+/**
+ * Timeout added due to circular dependencies
+ */
+setTimeout(() => {
+    console.log({ getElectronConfig: electronConfig_1.getElectronConfig });
+    if (electronConfig) {
+        PORT = 3099;
+        prostglesInitState.isElectron = true;
+        const creds = electronConfig.getCredentials();
+        if (creds) {
+            tryStartProstgles(creds);
+        }
+        setDBSRoutes();
     }
-    setDBSRoutes();
-}
-else {
-    tryStartProstgles();
-}
+    else {
+        tryStartProstgles();
+    }
+    http.listen(PORT);
+}, 10);
 /* Get nested property from an object */
 function get(obj, propertyPath) {
     let p = propertyPath, o = obj;

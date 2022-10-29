@@ -1,7 +1,6 @@
 
 import * as fs from "fs";
-import { DBSConnectionInfo, ROOT_DIR } from ".";
-const electronConfigPath = `${ROOT_DIR}/.electron-auth.json`;
+import { DBSConnectionInfo, ROOT_DIR } from "./index";
 
 
 interface SafeStorage extends NodeJS.EventEmitter {
@@ -47,6 +46,8 @@ export const getElectronConfig = () => {
     throw "Invalid safeStorage provided. encryptString or decryptString is not a function"
   } 
   
+  const electronConfigPath = `${ROOT_DIR}/.electron-auth.json`;
+  
   return {
     getCredentials: (): DBSConnectionInfo | undefined => {
 
@@ -67,7 +68,7 @@ export const getElectronConfig = () => {
   }
 }
 
-export default function start(sStorage: SafeStorage) {
+export const start = (sStorage: SafeStorage) => {
   isElectron = true;
   safeStorage = sStorage;
   require("./index");

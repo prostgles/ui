@@ -8,6 +8,7 @@ import { ChildProcessWithoutNullStreams } from "child_process";
 import { ConnectionManager, Unpromise } from "./ConnectionManager";
 import { getAuth } from "./authConfig";
 
+export const ROOT_DIR = path.join(__dirname, "/../../.." ); 
 
 export const API_PATH = "/api";
 
@@ -29,7 +30,6 @@ process.on('unhandledRejection', (reason, p) => {
   // application specific logging, throwing an error, or other logic here
 });
 
-export const ROOT_DIR = path.join(__dirname, "/../../.." ); 
 
 import _http from "http";
 const http = _http.createServer(app);
@@ -65,8 +65,6 @@ export const {
   PROSTGLES_STRICT_COOKIE,
 } = result?.parsed || {};
 
-const PORT = +(process.env.PRGL_PORT ?? 3004)
-http.listen(PORT);
 
 export type Users = Required<DBSchemaGenerated["users"]["columns"]>; 
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
@@ -123,7 +121,7 @@ const io = new Server(http, {
 
 export const connMgr = new ConnectionManager(http, app, connectionChecker.withOrigin);
 
-import { getElectronConfig,  } from "./electronConfig";
+import { getElectronConfig } from "./electronConfig";
 
 const startProstgles = async (con = DBS_CONNECTION_INFO) => {
   try {
@@ -364,17 +362,31 @@ const setDBSRoutes = (serveIndex = false) => {
  *  - If failed to connect then serve prostglesInitState
  */
 
-const electronConfig = getElectronConfig();
-if(electronConfig){
-  prostglesInitState.isElectron = true;
-  const creds = electronConfig.getCredentials();
-  if(creds){
-    tryStartProstgles(creds);
+let PORT = +(process.env.PRGL_PORT ?? 3004)
+
+let electronConfig = getElectronConfig?.();
+
+/**
+ * Timeout added due to circular dependencies
+ */
+setTimeout(() => {
+
+  console.log({ getElectronConfig })
+  if(electronConfig){
+    PORT = 3099;
+    prostglesInitState.isElectron = true;
+    const creds = electronConfig.getCredentials();
+    if(creds){
+      tryStartProstgles(creds);
+    }
+    setDBSRoutes();
+  } else {
+    tryStartProstgles();
   }
-  setDBSRoutes();
-} else {
-  tryStartProstgles();
-}
+  
+  http.listen(PORT);
+}, 10)
+
 
 
 
