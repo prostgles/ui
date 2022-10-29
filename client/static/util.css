@@ -2168,8 +2168,8 @@ nav.left-nav-list a.active {
   background-color: var(--active);
 }
 
-.text-active.hover:hover {
-  color: var(--active-hover);
+.text-active-hover:hover {
+  color: var(--blue-600);
 }
 .b-active.hover:hover {
   border-color: var(--active-hover);

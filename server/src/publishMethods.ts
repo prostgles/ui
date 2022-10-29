@@ -93,7 +93,7 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       return { connection, warn }
     },
     createConnection: async (con: Connections) => {
-      return upsertConnection(con, user as any, dbs);
+      return upsertConnection(con, user.id, dbs);
     },
     deleteConnection: async (id: string, opts?: { keepBackups: boolean }) => {
 

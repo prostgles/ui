@@ -391,6 +391,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         defaultLayoutType: {
           optional: true,
           enum: ["row", "tab", "col"]
+        },
+        pinnedMenu: {
+          optional: true,
+          type: "boolean"
         }
       }
       },

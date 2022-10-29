@@ -10,6 +10,7 @@ export declare type Connections = Required<DBSchemaGenerated["connections"]["col
 export declare const log: (msg: string, extra?: any) => void;
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 export declare const MEDIA_ROUTE_PREFIX = "/prostgles_media";
+export declare type DBSConnectionInfo = Pick<Required<Connections>, "type" | "db_conn" | "db_name" | "db_user" | "db_pass" | "db_host" | "db_port" | "db_ssl" | "type">;
 import BackupManager from "./BackupManager";
 export declare const getBackupManager: () => BackupManager;
 import { ConnectionChecker } from "./ConnectionChecker";

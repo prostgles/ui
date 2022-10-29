@@ -68,9 +68,9 @@ const io = new socket_io_1.Server(http, {
     cors: exports.connectionChecker.withOrigin
 });
 exports.connMgr = new ConnectionManager_1.ConnectionManager(http, app, exports.connectionChecker.withOrigin);
-const getDBS = async () => {
+const electronConfig_1 = require("./electronConfig");
+const startProstgles = async (con = DBS_CONNECTION_INFO) => {
     try {
-        const con = DBS_CONNECTION_INFO;
         // console.log("Connecting to state database" , con, { POSTGRES_DB, POSTGRES_USER, POSTGRES_HOST }, process.env)
         if (!con.db_conn && !con.db_user && !con.db_name) {
             console.trace(con);
@@ -202,52 +202,93 @@ const insertStateDatabase = async (db, _db, con) => {
         }
     }
 };
-(async () => {
+console.log("REMOVE");
+const prostglesInitState = {
+    isElectron: false,
+    ok: false
+};
+const tryStartProstgles = async (con = DBS_CONNECTION_INFO) => {
     let error, tries = 0;
     let interval = setInterval(async () => {
         try {
-            await getDBS();
+            await startProstgles(con);
             tries = 6;
             error = null;
             // clearInterval(interval)
         }
         catch (err) {
-            console.log("getDBS", err);
+            console.error("startProstgles fail: ", err);
             error = err;
             tries++;
         }
+        prostglesInitState.err = error;
+        prostglesInitState.ok = !error;
         if (tries > 5) {
             clearInterval(interval);
-            app.get("/dbs", (req, res) => {
-                if (error) {
-                    res.json({ err: error });
-                }
-                else {
-                    res.json({ ok: true });
-                }
-            });
-            if (error) {
-                app.get("*", (req, res) => {
-                    console.log(req.originalUrl);
-                    res.sendFile(path_1.default.resolve(exports.ROOT_DIR + '/../client/build/index.html'));
-                });
-            }
+            setDBSRoutes(!!prostglesInitState.err);
             return;
         }
     }, 2000);
-})();
-// app.post("/dbs", async (req, res) => {
-//   const { db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } = req.body;
-//   if(!db_conn || !db_host){
-//     res.json({ ok: false })
-//   }
-//   try {
-//     await testDBConnection({ db_conn, db_user, db_pass, db_host, db_port, db_name, db_ssl } as any);
-//     res.json({ msg: "DBS changed. Restart system" })
-//   } catch(err){
-//     res.json({ err })
-//   }
-// });
+};
+const setDBSRoutes = (serveIndex = false) => {
+    app.get("/dbs", (req, res) => {
+        res.json(prostglesInitState);
+    });
+    if (serveIndex) {
+        app.get("*", (req, res) => {
+            console.log(req.originalUrl);
+            res.sendFile(path_1.default.resolve(exports.ROOT_DIR + '/../client/build/index.html'));
+        });
+    }
+    if (!prostglesInitState.isElectron)
+        return;
+    app.post("/dbs", async (req, res) => {
+        const creds = (0, PubSubManager_1.pickKeys)(req.body, ["db_conn", "db_user", "db_pass", "db_host", "db_port", "db_name", "db_ssl", "type"]);
+        if (!creds.db_conn || !creds.db_host) {
+            res.json({ ok: false });
+        }
+        if (req.body.validate) {
+            try {
+                res.json((0, validateConnection_1.validateConnection)(creds));
+            }
+            catch (err) {
+                res.json({ err });
+            }
+            return;
+        }
+        try {
+            await (0, testDBConnection_1.testDBConnection)(creds);
+            electronConfig?.setCredentials(creds);
+            tryStartProstgles(creds);
+            res.json({ msg: "DBS changed. Restart system" });
+        }
+        catch (err) {
+            res.json({ err });
+        }
+    });
+};
+/** Startup procedure
+ * If electron:
+ *  - serve index
+ *  - serve prostglesInitState
+ *  - start prostgles IF or WHEN creds provided
+ *
+ * If docker/default
+ *  - try start prostgles
+ *  - If failed to connect then serve prostglesInitState
+ */
+const electronConfig = (0, electronConfig_1.getElectronConfig)();
+if (electronConfig) {
+    prostglesInitState.isElectron = true;
+    const creds = electronConfig.getCredentials();
+    if (creds) {
+        tryStartProstgles(creds);
+    }
+    setDBSRoutes();
+}
+else {
+    tryStartProstgles();
+}
 /* Get nested property from an object */
 function get(obj, propertyPath) {
     let p = propertyPath, o = obj;

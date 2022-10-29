@@ -433,7 +433,8 @@ export type DBSchemaGenerated = {
       options?:       { 
         hideCounts?: boolean;
         showAllMyQueries?: boolean;
-        defaultLayoutType?: 'row' | 'tab' | 'col'; 
+        defaultLayoutType?: 'row' | 'tab' | 'col';
+        pinnedMenu?: boolean; 
       };
       published?: boolean;
       url_path?: null | string;

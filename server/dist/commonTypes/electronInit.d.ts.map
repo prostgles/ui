@@ -1,0 +1,1 @@
+{"version":3,"file":"electronInit.d.ts","sourceRoot":"","sources":["../../../commonTypes/electronInit.ts"],"names":[],"mappings":"AAAA,oBAAY,kBAAkB,GAAG,CAAC;IAChC,UAAU,EAAE,OAAO,CAAC;IACpB,qBAAqB,CAAC,EAAE,OAAO,CAAC;IAChC,GAAG,CAAC,EAAE,GAAG,CAAC;IACV,EAAE,EAAE,OAAO,CAAC;CACb,CAAC,CAAA"}

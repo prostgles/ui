@@ -27,7 +27,9 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
   const { id: user_id, type: user_type } = user;
   // _db.any("ALTER TABLE workspaces ADD COLUMN options         JSON DEFAULT '{}'::json")
 
-  const acs = isAdmin? undefined : await getACRules(db, user as any)
+  const acs = isAdmin? undefined : await getACRules(db, user as any);
+  const createEditDashboards = isAdmin || acs?.some(({ rule: { dbsPermissions } }) => dbsPermissions?.createWorkspaces);
+
   const publishedWspIDs = acs?.flatMap(ac => ac.rule.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds).filter(isDefined) || [];// ac?.rule.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds;
   // const publishedWorkspaces = db.workspaces.find({ "id.$in": })
 
@@ -44,20 +46,21 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
           synced_field: "last_updated",
           allow_delete: true
         },
-
-        update: {
-          fields: { user_id: 0 },
-          forcedData: { user_id },
-          forcedFilter: { user_id },
-        }, 
-        insert: {
-          fields: "*",
-          forcedData: { user_id }
-        },
-        delete: {
-          filterFields: "*",
-          forcedFilter: { user_id }
-        }
+        ...(createEditDashboards && {
+          update: {
+            fields: { user_id: 0 },
+            forcedData: { user_id },
+            forcedFilter: { user_id },
+          }, 
+          insert: {
+            fields: "*",
+            forcedData: { user_id }
+          },
+          delete: {
+            filterFields: "*",
+            forcedFilter: { user_id }
+          }
+        })
     },
   }) ,{});
   type User = DBSchemaGenerated["users"]["columns"]
