@@ -49,7 +49,6 @@ export type DBS = DBOFullyTyped<DBSchemaGenerated>
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
 
-console.log(ROOT_DIR)
 const result = dotenv.config({ path: path.resolve(ROOT_DIR+'/../.env') })
 export const {
   PRGL_USERNAME,
@@ -151,7 +150,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
     await testDBConnection(con as any, true);
 
     const auth = getAuth(app);
-    prostgles<DBSchemaGenerated>({
+    await prostgles<DBSchemaGenerated>({
       dbConnection: {
         connectionTimeoutMillis: 1000, 
         host: con.db_host!,
@@ -284,6 +283,7 @@ const tryStartProstgles = async (con: DBSConnectionInfo = DBS_CONNECTION_INFO) =
     
     try {
       await startProstgles(con);
+      console.log("startProstgles success! ")
       tries = 6;
       error = null;
       // clearInterval(interval)
@@ -306,10 +306,14 @@ const tryStartProstgles = async (con: DBSConnectionInfo = DBS_CONNECTION_INFO) =
 
 }
 
-const setDBSRoutes = (serveIndex = false) => {
-  app.get("/dbs", (req, res) => {
-    res.json(prostglesInitState)
-  });
+app.get("/dbs", (req, res) => {
+  res.json({
+    ...prostglesInitState,
+    electronCredsProvided: !!getElectronConfig?.()?.getCredentials()
+  })
+});
+
+const setDBSRoutes = (serveIndex: boolean) => {
 
   if(serveIndex){
     app.get("*", (req, res) => {
@@ -322,18 +326,21 @@ const setDBSRoutes = (serveIndex = false) => {
 
   app.post("/dbs", async (req, res) => {
     const creds = pickKeys(req.body, ["db_conn", "db_user", "db_pass", "db_host", "db_port", "db_name", "db_ssl", "type"]);
-    if(!creds.db_conn || !creds.db_host){
-      res.json({ ok: false })
-    }
 
     if(req.body.validate){
       try {
-        res.json(validateConnection(creds));
+        const connection = validateConnection(creds)
+        res.json({ connection });
 
-      } catch(err){
-        res.json({ err })
+      } catch(warning){
+        res.json({ warning })
       }
       return;
+    }
+
+    if(!creds.db_conn || !creds.db_host){
+      res.json({ warning: "db_conn or db_host Missing" });
+      return
     }
   
     try {
@@ -341,8 +348,8 @@ const setDBSRoutes = (serveIndex = false) => {
       electronConfig?.setCredentials(creds);
       tryStartProstgles(creds);
       res.json({ msg: "DBS changed. Restart system" });
-    } catch(err){
-      res.json({ err })
+    } catch(warning){
+      res.json({ warning })
     }
   });
 }
@@ -355,30 +362,35 @@ const setDBSRoutes = (serveIndex = false) => {
  *  - start prostgles IF or WHEN creds provided
  * 
  * If docker/default
+ *  - serve prostglesInitState
  *  - try start prostgles
- *  - If failed to connect then serve prostglesInitState
+ *  - If failed to connect then also serve index 
  */
 
 let PORT = +(process.env.PRGL_PORT ?? 3004)
 
-let electronConfig = getElectronConfig?.();
 
+let electronConfig = getElectronConfig?.();
 /**
  * Timeout added due to circular dependencies
  */
 setTimeout(() => {
 
-  console.log({ getElectronConfig })
+  electronConfig = getElectronConfig?.();
   if(electronConfig){
-    PORT = 3099;
+    PORT ??= electronConfig.port ?? 3099;
     prostglesInitState.isElectron = true;
     const creds = electronConfig.getCredentials();
     if(creds){
       tryStartProstgles(creds);
+    } else {
+      console.log("No credentials");
     }
-    setDBSRoutes();
+    setDBSRoutes(true);
+    console.log("Starting electron on port: ", PORT);
   } else {
     tryStartProstgles();
+    console.log("Starting non-electron on port: ", PORT);
   }
   
   http.listen(PORT);

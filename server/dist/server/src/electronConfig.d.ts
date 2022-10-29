@@ -28,9 +28,10 @@ interface SafeStorage extends NodeJS.EventEmitter {
     isEncryptionAvailable(): boolean;
 }
 export declare const getElectronConfig: () => {
+    port: number | undefined;
     getCredentials: () => DBSConnectionInfo | undefined;
     setCredentials: (connection: DBSConnectionInfo) => void;
 } | undefined;
-export declare const start: (sStorage: SafeStorage) => void;
+export declare const start: (sStorage: SafeStorage, _port?: number) => void;
 export {};
 //# sourceMappingURL=electronConfig.d.ts.map

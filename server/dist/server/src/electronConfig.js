@@ -27,13 +27,14 @@ exports.start = exports.getElectronConfig = exports.ROOT_DIR = void 0;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 exports.ROOT_DIR = path.join(__dirname, "/../../..");
-// let isElectron = false;// process.env.PRGL_IS_ELECTRON;
-// let safeStorage: SafeStorage | undefined;
-let isElectron = true;
-let safeStorage = {
-    encryptString: v => Buffer.from(v),
-    decryptString: v => v.toString()
-};
+let isElectron = false; // process.env.PRGL_IS_ELECTRON;
+let safeStorage;
+let port;
+// let isElectron = true;
+// let safeStorage: Pick<SafeStorage, "decryptString" | "encryptString" > = {
+//   encryptString: v => Buffer.from(v),
+//   decryptString: v => v.toString()
+// };
 const getElectronConfig = () => {
     if (!isElectron)
         return undefined;
@@ -42,6 +43,7 @@ const getElectronConfig = () => {
     }
     const electronConfigPath = `${exports.ROOT_DIR}/.electron-auth.json`;
     return {
+        port,
         getCredentials: () => {
             try {
                 const file = !fs.existsSync(electronConfigPath) ? undefined : fs.readFileSync(electronConfigPath); //, { encoding: "utf-8" });
@@ -60,8 +62,9 @@ const getElectronConfig = () => {
     };
 };
 exports.getElectronConfig = getElectronConfig;
-const start = (sStorage) => {
+const start = (sStorage, _port) => {
     isElectron = true;
+    port = _port;
     safeStorage = sStorage;
     require("./index");
 };
