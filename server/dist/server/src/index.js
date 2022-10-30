@@ -198,67 +198,6 @@ const insertStateDatabase = async (db, _db, con) => {
         }
     }
 };
-console.log("REMOVE");
-let _initState = {
-    ok: false
-};
-const getInitState = () => ({
-    ...(0, electronConfig_1.getElectronConfig)?.(),
-    ..._initState,
-});
-const tryStartProstgles = async (con = DBS_CONNECTION_INFO) => {
-    let tries = 0;
-    _initState.error = null;
-    let interval = setInterval(async () => {
-        try {
-            await startProstgles(con);
-            console.log("startProstgles success! ");
-            tries = 6;
-            _initState.error = null;
-            // clearInterval(interval)
-        }
-        catch (err) {
-            console.error("startProstgles fail: ", err);
-            _initState.error = err;
-            tries++;
-        }
-        _initState.ok = !_initState.error;
-        if (tries > 5) {
-            clearInterval(interval);
-            setDBSRoutes(!!_initState.error);
-            return;
-        }
-    }, 2000);
-};
-/**
- * Serve prostglesInitState
- */
-app.get("/dbs", (req, res) => {
-    res.json(getInitState());
-});
-// const serveIndexFunc: RequestHandler = (req, res) => {
-//   if(prostglesInitState.isElectron && prostglesInitState.ok){
-//     // routes.forEach(route => {
-//     //   console.log(route.handle.name)
-//     // });
-//   }
-//   const routes: any[] = app._router.stack;
-//   const idx = routes.findIndex((s: any) => s.handle === serveIndexFunc )
-//   console.log({ idx, routes });
-//   res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
-// }
-const sendIndexIfNoCredentials = (req, res, next) => {
-    const { isElectron, ok, hasCredentials, error } = getInitState();
-    if (error || isElectron && !hasCredentials) {
-        if (req.method === "GET" && !req.path.startsWith("/dbs")) {
-            console.log(req.method, req.path);
-            res.sendFile(path_1.default.resolve(electronConfig_1.ROOT_DIR + '/../client/build/index.html'));
-            return;
-        }
-    }
-    next();
-};
-app.use(sendIndexIfNoCredentials);
 const setDBSRoutes = (serveIndex) => {
     // if(serveIndex){
     //   app.get("*", serveIndexFunc);
@@ -293,6 +232,68 @@ const setDBSRoutes = (serveIndex) => {
         }
     });
 };
+let _initState = {
+    ok: false,
+    started: false
+};
+const getInitState = () => ({
+    ...(0, electronConfig_1.getElectronConfig)?.(),
+    ..._initState,
+});
+let isTrying;
+const tryStartProstgles = async (con = DBS_CONNECTION_INFO) => {
+    isTrying = new Promise((resolve, reject) => {
+        let tries = 0;
+        _initState.error = null;
+        _initState.started = true;
+        let interval = setInterval(async () => {
+            try {
+                await startProstgles(con);
+                console.log("startProstgles success! ");
+                tries = 6;
+                _initState.error = null;
+                // clearInterval(interval)
+            }
+            catch (err) {
+                console.error("startProstgles fail: ", err);
+                _initState.error = err;
+                tries++;
+            }
+            _initState.ok = !_initState.error;
+            if (tries > 5) {
+                clearInterval(interval);
+                setDBSRoutes(!!_initState.error);
+                if (_initState.error) {
+                    reject(_initState.error);
+                }
+                else {
+                    resolve(_initState);
+                }
+                return;
+            }
+        }, 2000);
+    });
+};
+/**
+ * Serve prostglesInitState
+ */
+app.get("/dbs", (req, res) => {
+    res.json(getInitState());
+});
+/* Must provide index.html if there is an error */
+const sendIndexIfNoCredentials = async (req, res, next) => {
+    const { isElectron, ok, hasCredentials, error } = getInitState();
+    if (error || isElectron && !hasCredentials?.()) {
+        await isTrying;
+        if (req.method === "GET" && !req.path.startsWith("/dbs")) {
+            console.log(req.method, req.path);
+            res.sendFile(path_1.default.resolve(electronConfig_1.ROOT_DIR + '/../client/build/index.html'));
+            return;
+        }
+    }
+    next();
+};
+app.use(sendIndexIfNoCredentials);
 /** Startup procedure
  * If electron:
  *  - serve index
@@ -306,11 +307,6 @@ const setDBSRoutes = (serveIndex) => {
  *  - If failed to connect then also serve index
  */
 let PORT = +(process.env.PRGL_PORT ?? 3004);
-// let electronConfig = getElectronConfig?.();
-/**
- * Timeout added due to circular dependencies
- */
-// setTimeout(() => {
 const electronConfig = (0, electronConfig_1.getElectronConfig)?.();
 if (electronConfig) {
     PORT = electronConfig.port ?? 3099;
@@ -328,6 +324,11 @@ else {
     tryStartProstgles();
     console.log("Starting non-electron on port: ", PORT);
 }
+// let electronConfig = getElectronConfig?.();
+/**
+ * Timeout added due to circular dependencies
+ */
+// setTimeout(() => {
 http.listen(PORT);
 // }, 10)
 /* Get nested property from an object */
