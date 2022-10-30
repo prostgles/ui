@@ -17,6 +17,7 @@ export declare const connMgr: ConnectionManager;
 export declare function get(obj: any, propertyPath: string | string[]): any;
 export declare function restartProc(cb?: Function): void;
 export declare const upsertConnection: (con: DBSchemaGenerated["connections"]["columns"], user_id: Users["id"] | null, dbs: DBS) => Promise<Required<{
+    access_control?: any;
     backups_config?: {
         enabled?: boolean | undefined;
         cloudConfig: {
