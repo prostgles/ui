@@ -313,10 +313,12 @@ const setDBSRoutes = (serveIndex: boolean) => {
 let _initState: {
   error?: any;
   ok: boolean;
-  started: boolean;
+  loading: boolean;
+  loaded: boolean;
 } = {
   ok: false,
-  started: false
+  loading: false,
+  loaded: false,
 }
 const getInitState = () => ({
   ...getElectronConfig?.(),
@@ -324,15 +326,29 @@ const getInitState = () => ({
   ..._initState,
 });
 
-let isTrying: any;
+
+const awaitInit = () => {
+  return new Promise((resolve, reject) => {
+    if(!_initState.loaded){
+      const interval = setInterval(() => {
+        if(_initState.loaded){
+          resolve(_initState);
+        }
+      }, 200)
+    } else {
+      resolve(_initState)
+    }
+  });
+}
+
 const tryStartProstgles = async (con: DBSConnectionInfo = DBS_CONNECTION_INFO) => {
 
-  isTrying = new Promise((resolve, reject) => {
+  new Promise((resolve, reject) => {
 
     let tries = 0;
 
     _initState.error = null;
-    _initState.started = true;
+    _initState.loading = true;
     let interval = setInterval(async () => {
       
       try {
@@ -352,6 +368,8 @@ const tryStartProstgles = async (con: DBSConnectionInfo = DBS_CONNECTION_INFO) =
       if(tries > 5){
         clearInterval(interval);
         setDBSRoutes(!!_initState.error);
+        _initState.loading = false;
+        _initState.loaded = true;
 
         if(_initState.error){
           reject(_initState.error)
@@ -378,7 +396,7 @@ const sendIndexIfNoCredentials = async (req: Request, res: Response, next: NextF
 
   const { isElectron, ok, electronCredsProvided, error } = getInitState();
   if(error || isElectron && !electronCredsProvided){
-    await isTrying;
+    await awaitInit();
     if(req.method === "GET" && !req.path.startsWith("/dbs")){
       console.log(req.method, req.path);
       res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
