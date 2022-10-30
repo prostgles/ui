@@ -280,7 +280,6 @@ let _initState: {
   ok: false
 }
 const getInitState = () => ({
-  isElectron: false,
   ...getElectronConfig?.(),
   ..._initState,
 });
@@ -412,7 +411,7 @@ let PORT = +(process.env.PRGL_PORT ?? 3004)
 /**
  * Timeout added due to circular dependencies
  */
-setTimeout(() => {
+// setTimeout(() => {
 
   const electronConfig = getElectronConfig?.();
   if(electronConfig){
@@ -432,7 +431,7 @@ setTimeout(() => {
   }
   
   http.listen(PORT);
-}, 10)
+// }, 10)
 
 
 
