@@ -42,20 +42,22 @@ const getElectronConfig = () => {
         throw "Invalid safeStorage provided. encryptString or decryptString is not a function";
     }
     const electronConfigPath = `${exports.ROOT_DIR}/.electron-auth.json`;
+    const getCredentials = () => {
+        try {
+            const file = !fs.existsSync(electronConfigPath) ? undefined : fs.readFileSync(electronConfigPath); //, { encoding: "utf-8" });
+            if (file) {
+                return JSON.parse(safeStorage.decryptString(file));
+            }
+        }
+        catch (e) {
+            console.error(e);
+        }
+        return undefined;
+    };
     return {
         port,
-        getCredentials: () => {
-            try {
-                const file = !fs.existsSync(electronConfigPath) ? undefined : fs.readFileSync(electronConfigPath); //, { encoding: "utf-8" });
-                if (file) {
-                    return JSON.parse(safeStorage.decryptString(file));
-                }
-            }
-            catch (e) {
-                console.error(e);
-            }
-            return undefined;
-        },
+        hasCredentials: () => !!getCredentials(),
+        getCredentials,
         setCredentials: (connection) => {
             fs.writeFileSync(electronConfigPath, safeStorage.encryptString(JSON.stringify(connection)));
         }

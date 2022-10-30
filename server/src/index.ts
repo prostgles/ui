@@ -273,32 +273,43 @@ const insertStateDatabase = async (db: DBS, _db: DB, con: typeof DBS_CONNECTION_
 import type { ProstglesInitState } from "../../commonTypes/electronInit";
 console.log("REMOVE")
 
-const prostglesInitState: ProstglesInitState = {
-  isElectron: false,
+let _initState: {
+  error?: any;
+  ok: boolean;
+} = {
   ok: false
 }
+const getInitState = () => ({
+  isElectron: false,
+  ...getElectronConfig?.(),
+  ..._initState,
+});
+
+
 const tryStartProstgles = async (con: DBSConnectionInfo = DBS_CONNECTION_INFO) => {
-  let error: any, tries = 0
+  let tries = 0;
+
+  _initState.error = null;
   let interval = setInterval(async () => {
     
     try {
       await startProstgles(con);
       console.log("startProstgles success! ")
       tries = 6;
-      error = null;
+      _initState.error = null;
       // clearInterval(interval)
     } catch(err){
       console.error("startProstgles fail: ", err)
-      error = err;
+      _initState.error = err;
       tries++;
     }
-    prostglesInitState.err = error;
-    prostglesInitState.ok = !error;
+    
+    _initState.ok = !_initState.error;
 
     if(tries > 5){
       clearInterval(interval);
       
-      setDBSRoutes(!!prostglesInitState.err);
+      setDBSRoutes(!!_initState.error);
       return
     }
 
@@ -310,10 +321,7 @@ const tryStartProstgles = async (con: DBSConnectionInfo = DBS_CONNECTION_INFO) =
  * Serve prostglesInitState
  */
 app.get("/dbs", (req, res) => {
-  prostglesInitState.electronCredsProvided = !!getElectronConfig?.()?.getCredentials()
-  res.json({
-    ...prostglesInitState,
-  })
+  res.json(getInitState())
 });
 
 // const serveIndexFunc: RequestHandler = (req, res) => {
@@ -330,8 +338,8 @@ app.get("/dbs", (req, res) => {
 
 const sendIndexIfNoCredentials = (req: Request, res: Response, next: NextFunction) => {
 
-  const { isElectron, ok, electronCredsProvided, err } = prostglesInitState;
-  if(err || isElectron && !electronCredsProvided){
+  const { isElectron, ok, hasCredentials, error } = getInitState();
+  if(error || isElectron && !hasCredentials){
     if(req.method === "GET" && !req.path.startsWith("/dbs")){
       console.log(req.method, req.path);
       res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
@@ -350,7 +358,7 @@ const setDBSRoutes = (serveIndex: boolean) => {
   //   app.get("*", serveIndexFunc);
   // }
 
-  if(!prostglesInitState.isElectron) return;
+  if(!getInitState().isElectron) return;
 
   app.post("/dbs", async (req, res) => {
     const creds = pickKeys(req.body, ["db_conn", "db_user", "db_pass", "db_host", "db_port", "db_name", "db_ssl", "type"]);
@@ -373,6 +381,7 @@ const setDBSRoutes = (serveIndex: boolean) => {
   
     try {
       await testDBConnection(creds);
+      const electronConfig = getElectronConfig?.();
       electronConfig?.setCredentials(creds);
       tryStartProstgles(creds);
       res.json({ msg: "DBS changed. Restart system" });
@@ -399,16 +408,16 @@ const setDBSRoutes = (serveIndex: boolean) => {
 let PORT = +(process.env.PRGL_PORT ?? 3004)
 
 
-let electronConfig = getElectronConfig?.();
+// let electronConfig = getElectronConfig?.();
 /**
  * Timeout added due to circular dependencies
  */
 setTimeout(() => {
 
-  electronConfig = getElectronConfig?.();
+  const electronConfig = getElectronConfig?.();
   if(electronConfig){
     PORT = electronConfig.port ?? 3099;
-    prostglesInitState.isElectron = true;
+    
     const creds = electronConfig.getCredentials();
     if(creds){
       tryStartProstgles(creds);

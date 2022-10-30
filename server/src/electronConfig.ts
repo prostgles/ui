@@ -53,22 +53,25 @@ export const getElectronConfig = () => {
   } 
 
   const electronConfigPath = `${ROOT_DIR}/.electron-auth.json`;
+
+  const getCredentials = (): DBSConnectionInfo | undefined => {
+
+    try {
+      const file = !fs.existsSync(electronConfigPath)? undefined : fs.readFileSync(electronConfigPath);//, { encoding: "utf-8" });
+      if(file){
+        return JSON.parse(safeStorage!.decryptString(file));
+      }
+    } catch(e){
+      console.error(e);
+    }
+
+    return undefined;
+  }
   
   return {
     port,
-    getCredentials: (): DBSConnectionInfo | undefined => {
-
-      try {
-        const file = !fs.existsSync(electronConfigPath)? undefined : fs.readFileSync(electronConfigPath);//, { encoding: "utf-8" });
-        if(file){
-          return JSON.parse(safeStorage!.decryptString(file));
-        }
-      } catch(e){
-        console.error(e);
-      }
-
-      return undefined;
-    },
+    hasCredentials: () => !!getCredentials(),
+    getCredentials,
     setCredentials: (connection: DBSConnectionInfo) => {
       fs.writeFileSync(electronConfigPath, safeStorage!.encryptString(JSON.stringify(connection)));
     }
