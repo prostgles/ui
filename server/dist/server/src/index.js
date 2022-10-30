@@ -238,6 +238,7 @@ let _initState = {
 };
 const getInitState = () => ({
     ...(0, electronConfig_1.getElectronConfig)?.(),
+    electronCredsProvided: !!((0, electronConfig_1.getElectronConfig)?.())?.hasCredentials(),
     ..._initState,
 });
 let isTrying;
@@ -282,8 +283,8 @@ app.get("/dbs", (req, res) => {
 });
 /* Must provide index.html if there is an error */
 const sendIndexIfNoCredentials = async (req, res, next) => {
-    const { isElectron, ok, hasCredentials, error } = getInitState();
-    if (error || isElectron && !hasCredentials?.()) {
+    const { isElectron, ok, electronCredsProvided, error } = getInitState();
+    if (error || isElectron && !electronCredsProvided) {
         await isTrying;
         if (req.method === "GET" && !req.path.startsWith("/dbs")) {
             console.log(req.method, req.path);
