@@ -5,7 +5,7 @@ import {
   Users,
   tout,
 } from "./index";
-import { Express, NextFunction, Request, Response } from 'express';
+import { Express, Request, Response } from 'express';
 import { SubscriptionHandler } from "prostgles-types";
 import { DBSSchema, getCIDRRangesQuery } from "../../commonTypes/publishUtils";
 import cors from 'cors';

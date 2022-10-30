@@ -1,5 +1,5 @@
 import path from 'path';
-import express from 'express';
+import express, { NextFunction, Request, RequestHandler, Response } from 'express';
 import prostgles from "prostgles-server";
 import { tableConfig } from "./tableConfig";
 const app = express();
@@ -83,7 +83,7 @@ import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 
 app.use(cookieParser());
 
-export const MEDIA_ROUTE_PREFIX = `/prostgles_media`
+export const MEDIA_ROUTE_PREFIX = `/prostgles_media`;
 
 const DBS_CONNECTION_INFO: DBSConnectionInfo = {
   type: !(process.env.POSTGRES_URL || POSTGRES_URL)? "Standard" : "Connection URI",
@@ -306,20 +306,49 @@ const tryStartProstgles = async (con: DBSConnectionInfo = DBS_CONNECTION_INFO) =
 
 }
 
+/**
+ * Serve prostglesInitState
+ */
 app.get("/dbs", (req, res) => {
+  prostglesInitState.electronCredsProvided = !!getElectronConfig?.()?.getCredentials()
   res.json({
     ...prostglesInitState,
-    electronCredsProvided: !!getElectronConfig?.()?.getCredentials()
   })
 });
 
+// const serveIndexFunc: RequestHandler = (req, res) => {
+//   if(prostglesInitState.isElectron && prostglesInitState.ok){
+//     // routes.forEach(route => {
+//     //   console.log(route.handle.name)
+//     // });
+//   }
+//   const routes: any[] = app._router.stack;
+//   const idx = routes.findIndex((s: any) => s.handle === serveIndexFunc )
+//   console.log({ idx, routes });
+//   res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
+// }
+
+const sendIndexIfNoCredentials = (req: Request, res: Response, next: NextFunction) => {
+
+  const { isElectron, ok, electronCredsProvided, err } = prostglesInitState;
+  if(err || isElectron && !electronCredsProvided){
+    if(req.method === "GET" && !req.path.startsWith("/dbs")){
+      console.log(req.method, req.path);
+      res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
+      return;
+    }
+  }
+
+  next();
+}
+
+app.use(sendIndexIfNoCredentials)
+
 const setDBSRoutes = (serveIndex: boolean) => {
 
-  if(serveIndex){
-    app.get("*", (req, res) => {
-      res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
-    });
-  }
+  // if(serveIndex){
+  //   app.get("*", serveIndexFunc);
+  // }
 
   if(!prostglesInitState.isElectron) return;
 
@@ -359,6 +388,7 @@ const setDBSRoutes = (serveIndex: boolean) => {
  *  - serve index
  *  - serve prostglesInitState
  *  - start prostgles IF or WHEN creds provided
+ *  - remove serve index after prostgles is ready
  * 
  * If docker/default
  *  - serve prostglesInitState
