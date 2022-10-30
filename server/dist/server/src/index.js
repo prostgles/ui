@@ -59,6 +59,7 @@ exports.getBackupManager = getBackupManager;
 const ConnectionChecker_1 = require("./ConnectionChecker");
 exports.connectionChecker = new ConnectionChecker_1.ConnectionChecker(app);
 const socket_io_1 = require("socket.io");
+const publishUtils_1 = require("../../commonTypes/publishUtils");
 const io = new socket_io_1.Server(http, {
     path: ioPath,
     maxHttpBufferSize: 100e100,
@@ -335,18 +336,22 @@ if (electronConfig) {
         console.log("Electron: No credentials");
     }
     setDBSRoutes(true);
-    console.log("Starting electron on port: ", PORT);
+    // console.log("Starting electron on port: ", PORT);
 }
 else {
     tryStartProstgles();
-    console.log("Starting non-electron on port: ", PORT);
+    // console.log("Starting non-electron on port: ", PORT);
 }
 // let electronConfig = getElectronConfig?.();
 /**
  * Timeout added due to circular dependencies
  */
 // setTimeout(() => {
-http.listen(PORT);
+const server = http.listen(PORT, () => {
+    const address = server.address();
+    const port = (0, publishUtils_1.isObject)(address) ? address.port : PORT;
+    console.log('Listening on port:', port);
+});
 // }, 10)
 /* Get nested property from an object */
 function get(obj, propertyPath) {
