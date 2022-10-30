@@ -109,6 +109,7 @@ import { ConnectionChecker } from "./ConnectionChecker";
 export const connectionChecker = new ConnectionChecker(app);
 
 import { Server }  from "socket.io";
+import { isObject } from "../../commonTypes/publishUtils";
 const io = new Server(http, { 
   path: ioPath, 
   maxHttpBufferSize: 100e100,
@@ -433,10 +434,10 @@ if(electronConfig){
     console.log("Electron: No credentials");
   }
   setDBSRoutes(true);
-  console.log("Starting electron on port: ", PORT);
+  // console.log("Starting electron on port: ", PORT);
 } else {
   tryStartProstgles();
-  console.log("Starting non-electron on port: ", PORT);
+  // console.log("Starting non-electron on port: ", PORT);
 }
 
 
@@ -450,7 +451,11 @@ if(electronConfig){
 // setTimeout(() => {
 
   
-http.listen(PORT);
+const server = http.listen(PORT, () => {
+  const address = server.address();
+  const port = isObject(address)? address.port : PORT;
+  console.log('Listening on port:', port);
+});
 // }, 10)
 
 
