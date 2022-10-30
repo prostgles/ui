@@ -69,6 +69,7 @@ export const getElectronConfig = () => {
   }
   
   return {
+    isElectron: true,
     port,
     hasCredentials: () => !!getCredentials(),
     getCredentials,
@@ -78,7 +79,7 @@ export const getElectronConfig = () => {
   }
 }
 
-export const start = (sStorage: SafeStorage, _port?: number) => {
+export const start = async (sStorage: SafeStorage, _port?: number) => {
   isElectron = true;
   port = _port;
   safeStorage = sStorage;

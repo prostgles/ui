@@ -55,6 +55,7 @@ const getElectronConfig = () => {
         return undefined;
     };
     return {
+        isElectron: true,
         port,
         hasCredentials: () => !!getCredentials(),
         getCredentials,
@@ -64,7 +65,7 @@ const getElectronConfig = () => {
     };
 };
 exports.getElectronConfig = getElectronConfig;
-const start = (sStorage, _port) => {
+const start = async (sStorage, _port) => {
     isElectron = true;
     port = _port;
     safeStorage = sStorage;

@@ -203,7 +203,6 @@ let _initState = {
     ok: false
 };
 const getInitState = () => ({
-    isElectron: false,
     ...(0, electronConfig_1.getElectronConfig)?.(),
     ..._initState,
 });
@@ -311,26 +310,26 @@ let PORT = +(process.env.PRGL_PORT ?? 3004);
 /**
  * Timeout added due to circular dependencies
  */
-setTimeout(() => {
-    const electronConfig = (0, electronConfig_1.getElectronConfig)?.();
-    if (electronConfig) {
-        PORT = electronConfig.port ?? 3099;
-        const creds = electronConfig.getCredentials();
-        if (creds) {
-            tryStartProstgles(creds);
-        }
-        else {
-            console.log("Electron: No credentials");
-        }
-        setDBSRoutes(true);
-        console.log("Starting electron on port: ", PORT);
+// setTimeout(() => {
+const electronConfig = (0, electronConfig_1.getElectronConfig)?.();
+if (electronConfig) {
+    PORT = electronConfig.port ?? 3099;
+    const creds = electronConfig.getCredentials();
+    if (creds) {
+        tryStartProstgles(creds);
     }
     else {
-        tryStartProstgles();
-        console.log("Starting non-electron on port: ", PORT);
+        console.log("Electron: No credentials");
     }
-    http.listen(PORT);
-}, 10);
+    setDBSRoutes(true);
+    console.log("Starting electron on port: ", PORT);
+}
+else {
+    tryStartProstgles();
+    console.log("Starting non-electron on port: ", PORT);
+}
+http.listen(PORT);
+// }, 10)
 /* Get nested property from an object */
 function get(obj, propertyPath) {
     let p = propertyPath, o = obj;
