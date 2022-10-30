@@ -129,6 +129,10 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       if(!sid) throw "err";
       const s = await db.sessions.findOne({ id: sid });
       if(!s) throw "err";
+      const u = await db.users.findOne({ id: s.user_id });
+      if(u?.no_password){
+        return true
+      }
       await db.sessions.delete({ id: sid })
       return true; 
     },
