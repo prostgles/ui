@@ -270,86 +270,6 @@ const insertStateDatabase = async (db: DBS, _db: DB, con: typeof DBS_CONNECTION_
   }
 }
 
-import type { ProstglesInitState } from "../../commonTypes/electronInit";
-console.log("REMOVE")
-
-let _initState: {
-  error?: any;
-  ok: boolean;
-} = {
-  ok: false
-}
-const getInitState = () => ({
-  ...getElectronConfig?.(),
-  ..._initState,
-});
-
-
-const tryStartProstgles = async (con: DBSConnectionInfo = DBS_CONNECTION_INFO) => {
-  let tries = 0;
-
-  _initState.error = null;
-  let interval = setInterval(async () => {
-    
-    try {
-      await startProstgles(con);
-      console.log("startProstgles success! ")
-      tries = 6;
-      _initState.error = null;
-      // clearInterval(interval)
-    } catch(err){
-      console.error("startProstgles fail: ", err)
-      _initState.error = err;
-      tries++;
-    }
-    
-    _initState.ok = !_initState.error;
-
-    if(tries > 5){
-      clearInterval(interval);
-      
-      setDBSRoutes(!!_initState.error);
-      return
-    }
-
-  }, 2000);
-
-}
-
-/**
- * Serve prostglesInitState
- */
-app.get("/dbs", (req, res) => {
-  res.json(getInitState())
-});
-
-// const serveIndexFunc: RequestHandler = (req, res) => {
-//   if(prostglesInitState.isElectron && prostglesInitState.ok){
-//     // routes.forEach(route => {
-//     //   console.log(route.handle.name)
-//     // });
-//   }
-//   const routes: any[] = app._router.stack;
-//   const idx = routes.findIndex((s: any) => s.handle === serveIndexFunc )
-//   console.log({ idx, routes });
-//   res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
-// }
-
-const sendIndexIfNoCredentials = (req: Request, res: Response, next: NextFunction) => {
-
-  const { isElectron, ok, hasCredentials, error } = getInitState();
-  if(error || isElectron && !hasCredentials){
-    if(req.method === "GET" && !req.path.startsWith("/dbs")){
-      console.log(req.method, req.path);
-      res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
-      return;
-    }
-  }
-
-  next();
-}
-
-app.use(sendIndexIfNoCredentials)
 
 const setDBSRoutes = (serveIndex: boolean) => {
 
@@ -390,6 +310,85 @@ const setDBSRoutes = (serveIndex: boolean) => {
   });
 }
 
+let _initState: {
+  error?: any;
+  ok: boolean;
+  started: boolean;
+} = {
+  ok: false,
+  started: false
+}
+const getInitState = () => ({
+  ...getElectronConfig?.(),
+  ..._initState,
+});
+
+let isTrying: any;
+const tryStartProstgles = async (con: DBSConnectionInfo = DBS_CONNECTION_INFO) => {
+
+  isTrying = new Promise((resolve, reject) => {
+
+    let tries = 0;
+
+    _initState.error = null;
+    _initState.started = true;
+    let interval = setInterval(async () => {
+      
+      try {
+        await startProstgles(con);
+        console.log("startProstgles success! ")
+        tries = 6;
+        _initState.error = null;
+        // clearInterval(interval)
+      } catch(err){
+        console.error("startProstgles fail: ", err)
+        _initState.error = err;
+        tries++;
+      }
+      
+      _initState.ok = !_initState.error;
+  
+      if(tries > 5){
+        clearInterval(interval);
+        setDBSRoutes(!!_initState.error);
+
+        if(_initState.error){
+          reject(_initState.error)
+        } else {
+          resolve(_initState);
+        }
+        return
+      }
+  
+    }, 2000);
+  
+  })
+}
+
+/**
+ * Serve prostglesInitState
+ */
+app.get("/dbs", (req, res) => {
+  res.json(getInitState())
+});
+
+/* Must provide index.html if there is an error */
+const sendIndexIfNoCredentials = async (req: Request, res: Response, next: NextFunction) => {
+
+  const { isElectron, ok, hasCredentials, error } = getInitState();
+  if(error || isElectron && !hasCredentials?.()){
+    await isTrying;
+    if(req.method === "GET" && !req.path.startsWith("/dbs")){
+      console.log(req.method, req.path);
+      res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
+      return;
+    }
+  }
+
+  next();
+}
+
+app.use(sendIndexIfNoCredentials)
 
 /** Startup procedure
  * If electron:
@@ -403,8 +402,26 @@ const setDBSRoutes = (serveIndex: boolean) => {
  *  - try start prostgles
  *  - If failed to connect then also serve index 
  */
-
 let PORT = +(process.env.PRGL_PORT ?? 3004)
+const electronConfig = getElectronConfig?.();
+if(electronConfig){
+  PORT = electronConfig.port ?? 3099;
+  
+  const creds = electronConfig.getCredentials();
+  if(creds){
+    tryStartProstgles(creds);
+  } else {
+    console.log("Electron: No credentials");
+  }
+  setDBSRoutes(true);
+  console.log("Starting electron on port: ", PORT);
+} else {
+  tryStartProstgles();
+  console.log("Starting non-electron on port: ", PORT);
+}
+
+
+
 
 
 // let electronConfig = getElectronConfig?.();
@@ -413,24 +430,8 @@ let PORT = +(process.env.PRGL_PORT ?? 3004)
  */
 // setTimeout(() => {
 
-  const electronConfig = getElectronConfig?.();
-  if(electronConfig){
-    PORT = electronConfig.port ?? 3099;
-    
-    const creds = electronConfig.getCredentials();
-    if(creds){
-      tryStartProstgles(creds);
-    } else {
-      console.log("Electron: No credentials");
-    }
-    setDBSRoutes(true);
-    console.log("Starting electron on port: ", PORT);
-  } else {
-    tryStartProstgles();
-    console.log("Starting non-electron on port: ", PORT);
-  }
   
-  http.listen(PORT);
+http.listen(PORT);
 // }, 10)
 
 
