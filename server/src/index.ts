@@ -317,7 +317,6 @@ const setDBSRoutes = (serveIndex: boolean) => {
 
   if(serveIndex){
     app.get("*", (req, res) => {
-      console.log(req.originalUrl)
       res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
     });
   }
@@ -384,7 +383,7 @@ setTimeout(() => {
     if(creds){
       tryStartProstgles(creds);
     } else {
-      console.log("No credentials");
+      console.log("Electron: No credentials");
     }
     setDBSRoutes(true);
     console.log("Starting electron on port: ", PORT);

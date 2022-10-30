@@ -236,7 +236,6 @@ app.get("/dbs", (req, res) => {
 const setDBSRoutes = (serveIndex) => {
     if (serveIndex) {
         app.get("*", (req, res) => {
-            console.log(req.originalUrl);
             res.sendFile(path_1.default.resolve(electronConfig_1.ROOT_DIR + '/../client/build/index.html'));
         });
     }
@@ -295,7 +294,7 @@ setTimeout(() => {
             tryStartProstgles(creds);
         }
         else {
-            console.log("No credentials");
+            console.log("Electron: No credentials");
         }
         setDBSRoutes(true);
         console.log("Starting electron on port: ", PORT);
