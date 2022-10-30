@@ -1,2 +1,4 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
-CREATE EXTENSION IF NOT EXISTS postgis;
+
+/* Not sure postgis is used anywhere?! */
+--CREATE EXTENSION IF NOT EXISTS postgis;
