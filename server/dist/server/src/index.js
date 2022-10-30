@@ -227,18 +227,42 @@ const tryStartProstgles = async (con = DBS_CONNECTION_INFO) => {
         }
     }, 2000);
 };
+/**
+ * Serve prostglesInitState
+ */
 app.get("/dbs", (req, res) => {
+    prostglesInitState.electronCredsProvided = !!((0, electronConfig_1.getElectronConfig)?.())?.getCredentials();
     res.json({
         ...prostglesInitState,
-        electronCredsProvided: !!((0, electronConfig_1.getElectronConfig)?.())?.getCredentials()
     });
 });
-const setDBSRoutes = (serveIndex) => {
-    if (serveIndex) {
-        app.get("*", (req, res) => {
+// const serveIndexFunc: RequestHandler = (req, res) => {
+//   if(prostglesInitState.isElectron && prostglesInitState.ok){
+//     // routes.forEach(route => {
+//     //   console.log(route.handle.name)
+//     // });
+//   }
+//   const routes: any[] = app._router.stack;
+//   const idx = routes.findIndex((s: any) => s.handle === serveIndexFunc )
+//   console.log({ idx, routes });
+//   res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
+// }
+const sendIndexIfNoCredentials = (req, res, next) => {
+    const { isElectron, ok, electronCredsProvided, err } = prostglesInitState;
+    if (err || isElectron && !electronCredsProvided) {
+        if (req.method === "GET" && !req.path.startsWith("/dbs")) {
+            console.log(req.method, req.path);
             res.sendFile(path_1.default.resolve(electronConfig_1.ROOT_DIR + '/../client/build/index.html'));
-        });
+            return;
+        }
     }
+    next();
+};
+app.use(sendIndexIfNoCredentials);
+const setDBSRoutes = (serveIndex) => {
+    // if(serveIndex){
+    //   app.get("*", serveIndexFunc);
+    // }
     if (!prostglesInitState.isElectron)
         return;
     app.post("/dbs", async (req, res) => {
@@ -273,6 +297,7 @@ const setDBSRoutes = (serveIndex) => {
  *  - serve index
  *  - serve prostglesInitState
  *  - start prostgles IF or WHEN creds provided
+ *  - remove serve index after prostgles is ready
  *
  * If docker/default
  *  - serve prostglesInitState
