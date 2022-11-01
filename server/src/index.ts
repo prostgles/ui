@@ -16,11 +16,6 @@ export const API_PATH = "/api";
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 
-// app.use((req, res, next) => {
-//   console.log(req.originalUrl);
-//   next()
-// })
-// use it before all route definitions
 
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 // console.log("Connecting to state database" , process.env)
@@ -274,10 +269,6 @@ const insertStateDatabase = async (db: DBS, _db: DB, con: typeof DBS_CONNECTION_
 
 const setDBSRoutes = (serveIndex: boolean) => {
 
-  // if(serveIndex){
-  //   app.get("*", serveIndexFunc);
-  // }
-
   if(!getInitState().isElectron) return;
 
   app.post("/dbs", async (req, res) => {
@@ -321,19 +312,24 @@ let _initState: {
   loading: false,
   loaded: false,
 }
+
+const eConfig = getElectronConfig?.();
+
 const getInitState = () => ({
   ...getElectronConfig?.(),
   electronCredsProvided: !!getElectronConfig?.()?.hasCredentials(),
   ..._initState,
+  loaded: !eConfig?.isElectron || eConfig.hasCredentials()
 });
 
-
+/** During page load we wait for init */
 const awaitInit = () => {
   return new Promise((resolve, reject) => {
-    if(!_initState.loaded){
+    if(!_initState.loaded && _initState){
       const interval = setInterval(() => {
         if(_initState.loaded){
           resolve(_initState);
+          clearInterval(interval);
         }
       }, 200)
     } else {
@@ -393,7 +389,7 @@ app.get("/dbs", (req, res) => {
 });
 
 /* Must provide index.html if there is an error */
-const sendIndexIfNoCredentials = async (req: Request, res: Response, next: NextFunction) => {
+const serveIndexIfNoCredentials = async (req: Request, res: Response, next: NextFunction) => {
 
   const { isElectron, ok, electronCredsProvided, error } = getInitState();
   if(error || isElectron && !electronCredsProvided){
@@ -407,8 +403,7 @@ const sendIndexIfNoCredentials = async (req: Request, res: Response, next: NextF
 
   next();
 }
-
-app.use(sendIndexIfNoCredentials)
+app.use(serveIndexIfNoCredentials)
 
 /** Startup procedure
  * If electron:
@@ -443,20 +438,11 @@ if(electronConfig){
 
 
 
-
-// let electronConfig = getElectronConfig?.();
-/**
- * Timeout added due to circular dependencies
- */
-// setTimeout(() => {
-
-  
 const server = http.listen(PORT, () => {
   const address = server.address();
   const port = isObject(address)? address.port : PORT;
   console.log('Listening on port:', port);
 });
-// }, 10)
 
 
 
