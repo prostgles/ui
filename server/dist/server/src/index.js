@@ -200,9 +200,6 @@ const insertStateDatabase = async (db, _db, con) => {
     }
 };
 const setDBSRoutes = (serveIndex) => {
-    // if(serveIndex){
-    //   app.get("*", serveIndexFunc);
-    // }
     if (!getInitState().isElectron)
         return;
     app.post("/dbs", async (req, res) => {
@@ -238,17 +235,21 @@ let _initState = {
     loading: false,
     loaded: false,
 };
+const eConfig = (0, electronConfig_1.getElectronConfig)?.();
 const getInitState = () => ({
     ...(0, electronConfig_1.getElectronConfig)?.(),
     electronCredsProvided: !!((0, electronConfig_1.getElectronConfig)?.())?.hasCredentials(),
     ..._initState,
+    loaded: !eConfig?.isElectron || eConfig.hasCredentials()
 });
+/** During page load we wait for init */
 const awaitInit = () => {
     return new Promise((resolve, reject) => {
-        if (!_initState.loaded) {
+        if (!_initState.loaded && _initState) {
             const interval = setInterval(() => {
                 if (_initState.loaded) {
                     resolve(_initState);
+                    clearInterval(interval);
                 }
             }, 200);
         }
@@ -299,7 +300,7 @@ app.get("/dbs", (req, res) => {
     res.json(getInitState());
 });
 /* Must provide index.html if there is an error */
-const sendIndexIfNoCredentials = async (req, res, next) => {
+const serveIndexIfNoCredentials = async (req, res, next) => {
     const { isElectron, ok, electronCredsProvided, error } = getInitState();
     if (error || isElectron && !electronCredsProvided) {
         await awaitInit();
@@ -311,7 +312,7 @@ const sendIndexIfNoCredentials = async (req, res, next) => {
     }
     next();
 };
-app.use(sendIndexIfNoCredentials);
+app.use(serveIndexIfNoCredentials);
 /** Startup procedure
  * If electron:
  *  - serve index
@@ -342,17 +343,11 @@ else {
     tryStartProstgles();
     // console.log("Starting non-electron on port: ", PORT);
 }
-// let electronConfig = getElectronConfig?.();
-/**
- * Timeout added due to circular dependencies
- */
-// setTimeout(() => {
 const server = http.listen(PORT, () => {
     const address = server.address();
     const port = (0, publishUtils_1.isObject)(address) ? address.port : PORT;
     console.log('Listening on port:', port);
 });
-// }, 10)
 /* Get nested property from an object */
 function get(obj, propertyPath) {
     let p = propertyPath, o = obj;
