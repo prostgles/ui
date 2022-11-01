@@ -236,7 +236,7 @@ const insertStateDatabase = async (db: DBS, _db: DB, con: typeof DBS_CONNECTION_
     const state_db = await upsertConnection({  
       ...con,
       user_id: null, 
-      name: "Prostgles state database", 
+      name: "Prostgles UI state database", 
       type: !con.db_conn? 'Standard' : 'Connection URI',
       db_port: con.db_port || 5432,
       db_ssl: con.db_ssl || "disable",
@@ -252,13 +252,13 @@ const insertStateDatabase = async (db: DBS, _db: DB, con: typeof DBS_CONNECTION_
 
         if(!databases.includes(SAMPLE_DB_NAME)) {
           await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
+          await upsertConnection({ 
+            ...omitKeys(state_db, ["id"]),
+            is_state_db: false,
+            name: SAMPLE_DB_LABEL,
+            db_name: SAMPLE_DB_NAME,
+          }, null, db)
         }
-        await upsertConnection({ 
-          ...omitKeys(state_db, ["id"]),
-          is_state_db: false,
-          name: SAMPLE_DB_LABEL,
-          db_name: SAMPLE_DB_NAME,
-        }, null, db)
       }
     } catch(err: any){
       console.error("Failed to create sample database: ", err)
