@@ -299,10 +299,10 @@ const tryStartProstgles = async (con = DBS_CONNECTION_INFO) => {
 app.get("/dbs", (req, res) => {
     res.json(getInitState());
 });
-/* Must provide index.html if there is an error */
+/* Must provide index.html if there is an error OR prostgles is loading */
 const serveIndexIfNoCredentials = async (req, res, next) => {
     const { isElectron, ok, electronCredsProvided, error } = getInitState();
-    if (error || isElectron && !electronCredsProvided) {
+    if (error || isElectron && !electronCredsProvided || _initState.loading) {
         await awaitInit();
         if (req.method === "GET" && !req.path.startsWith("/dbs")) {
             console.log(req.method, req.path);
