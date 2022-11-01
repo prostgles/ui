@@ -7,7 +7,7 @@ import { publishMethods } from "./publishMethods";
 import { ChildProcessWithoutNullStreams } from "child_process";
 import { ConnectionManager, Unpromise } from "./ConnectionManager";
 import { getAuth } from "./authConfig";
-import { DBSConnectionInfo, getElectronConfig, ROOT_DIR } from "./electronConfig";
+import { DBSConnectionInfo, getElectronConfig, OnServerReadyCallback, ROOT_DIR } from "./electronConfig";
 
 
 export const API_PATH = "/api";
@@ -307,6 +307,9 @@ let _initState: {
   ok: boolean;
   loading: boolean;
   loaded: boolean;
+  httpListening?: {
+    port: number;
+  }
 } = {
   ok: false,
   loading: false,
@@ -438,15 +441,28 @@ if(electronConfig){
 
 
 
+
+const onServerReadyListeners: OnServerReadyCallback[] = [];
+export const onServerReady = async (cb: OnServerReadyCallback) => {
+  if(_initState.httpListening){
+    cb(_initState.httpListening.port)
+  } else {
+    onServerReadyListeners.push(cb);
+  }
+}
+
+
 const server = http.listen(PORT, () => {
   const address = server.address();
   const port = isObject(address)? address.port : PORT;
+  _initState.httpListening = {
+    port
+  };
+  onServerReadyListeners.forEach(cb => {
+    cb(port)
+  })
   console.log('Listening on port:', port);
 });
-
-
-
-
 
  
 

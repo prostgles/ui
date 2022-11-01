@@ -65,11 +65,12 @@ const getElectronConfig = () => {
     };
 };
 exports.getElectronConfig = getElectronConfig;
-const start = async (sStorage, _port) => {
+const start = async (sStorage, _port, onReady) => {
     isElectron = true;
     port = _port;
     safeStorage = sStorage;
-    require("./index");
+    const { onServerReady } = require("./index");
+    onServerReady(onReady);
 };
 exports.start = start;
 //# sourceMappingURL=electronConfig.js.map
