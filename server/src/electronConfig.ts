@@ -6,7 +6,7 @@ export const ROOT_DIR = path.join(__dirname, "/../../.." );
 
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 export type DBSConnectionInfo = Pick<Required<Connections>, "type" | "db_conn" | "db_name" | "db_user" | "db_pass" | "db_host" | "db_port" | "db_ssl" | "type">;
-
+export type OnServerReadyCallback = (portNumber: number) => void;
 
 interface SafeStorage extends NodeJS.EventEmitter {
 
@@ -79,9 +79,10 @@ export const getElectronConfig = () => {
   }
 }
 
-export const start = async (sStorage: SafeStorage, _port?: number) => {
+export const start = async (sStorage: SafeStorage, _port: number, onReady: OnServerReadyCallback) => {
   isElectron = true;
   port = _port;
   safeStorage = sStorage;
-  require("./index");
+  const { onServerReady } = require("./index");
+  onServerReady(onReady)
 }
