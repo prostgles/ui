@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.start = exports.getElectronConfig = exports.ROOT_DIR = void 0;
+exports.start = exports.getMagicSid = exports.getElectronConfig = exports.ROOT_DIR = void 0;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 exports.ROOT_DIR = path.join(__dirname, "/../../..");
@@ -65,9 +65,13 @@ const getElectronConfig = () => {
     };
 };
 exports.getElectronConfig = getElectronConfig;
-const start = async (sStorage, _port, onReady) => {
+let magicSid = "";
+const getMagicSid = () => magicSid;
+exports.getMagicSid = getMagicSid;
+const start = async (sStorage, args, onReady) => {
     isElectron = true;
-    port = _port;
+    port = args.port;
+    magicSid = args.sid;
     safeStorage = sStorage;
     const { onServerReady } = require("./index");
     onServerReady(onReady);

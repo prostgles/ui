@@ -57,7 +57,7 @@ exports.tableConfig = {
             type: { sqlDefinition: `TEXT NOT NULL DEFAULT 'default' REFERENCES user_types (id)` },
             no_password: {
                 sqlDefinition: `BOOLEAN CHECK( COALESCE(no_password, false) = FALSE OR type = 'admin' )`,
-                info: { hint: "If checked then everyone has passwordless admin access, provided their IP is whitelisted. Only applies to admin accounts" }
+                info: { hint: "If true then the first connected client will have perpetual admin access and no other users are allowed" }
             },
             created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
             last_updated: { sqlDefinition: `BIGINT` },
@@ -73,6 +73,14 @@ exports.tableConfig = {
                 }
             },
             status: { sqlDefinition: `TEXT NOT NULL DEFAULT 'active' REFERENCES user_statuses (id)` },
+        },
+        indexes: {
+            "Only one no_password admin account allowed": {
+                replace: true,
+                unique: true,
+                columns: `no_password`,
+                where: `no_password = true`
+            }
         },
         triggers: {
             atLeastOneActiveAdmin: {

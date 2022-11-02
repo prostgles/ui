@@ -1,11 +1,11 @@
-import { DBS } from "./index";
+import { DBS, Users } from "./index";
 import { Express, Request } from 'express';
 import { SubscriptionHandler } from "prostgles-types";
 import { DBSSchema } from "../../commonTypes/publishUtils";
 import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
 import { DB } from "prostgles-server/dist/Prostgles";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
-import { Auth } from "prostgles-server/dist/AuthHandler";
+import { Auth, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
 import { SUser } from "./authConfig";
 export declare type WithOrigin = {
     origin?: (requestOrigin: string | undefined, callback: (err: Error | null, origin?: string) => void) => void;
@@ -14,7 +14,10 @@ declare type OnUse = Required<Auth<DBSchemaGenerated, SUser>>["expressConfig"]["
 export declare class ConnectionChecker {
     app: Express;
     constructor(app: Express);
-    onSocketConnected: (sid?: string) => Promise<void>;
+    onSocketConnected: ({ sid, getUser }: {
+        sid?: string | undefined;
+        getUser: () => Promise<AuthResult<SessionUser<Users, Users>>>;
+    }) => Promise<void>;
     initialised: {
         users: boolean;
         config: boolean;
