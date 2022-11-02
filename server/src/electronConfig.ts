@@ -10,28 +10,8 @@ export type OnServerReadyCallback = (portNumber: number) => void;
 
 interface SafeStorage extends NodeJS.EventEmitter {
 
-  // Docs: https://electronjs.org/docs/api/safe-storage
-
-  /**
-   * the decrypted string. Decrypts the encrypted buffer obtained  with
-   * `safeStorage.encryptString` back into a string.
-   *
-   * This function will throw an error if decryption fails.
-   */
   decryptString(encrypted: Buffer): string;
-  /**
-   * An array of bytes representing the encrypted string.
-   *
-   * This function will throw an error if encryption fails.
-   */
   encryptString(plainText: string): Buffer;
-  /**
-   * Whether encryption is available.
-   *
-   * On Linux, returns true if the app has emitted the `ready` event and the secret
-   * key is available. On MacOS, returns true if Keychain is available. On Windows,
-   * returns true once the app has emitted the `ready` event.
-   */
   isEncryptionAvailable(): boolean;
 }
 
@@ -78,10 +58,12 @@ export const getElectronConfig = () => {
     }
   }
 }
-
-export const start = async (sStorage: SafeStorage, _port: number, onReady: OnServerReadyCallback) => {
+let magicSid = "";
+export const getMagicSid = () => magicSid;
+export const start = async (sStorage: SafeStorage, args: { port: number; sid: string; }, onReady: OnServerReadyCallback) => {
   isElectron = true;
-  port = _port;
+  port = args.port;
+  magicSid = args.sid;
   safeStorage = sStorage;
   const { onServerReady } = require("./index");
   onServerReady(onReady)

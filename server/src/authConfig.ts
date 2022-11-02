@@ -34,7 +34,7 @@ const makeSession = async (user: Users | undefined, ip_address: string, dbo: DBO
       expires, 
       ip_address,
     }, { returning: "*" }) as any;
-    
+    console.log({makeSession: session})
     return getBasicSession(session); //60*60*60 }; 
   } else {
     throw "Invalid user";
@@ -130,9 +130,12 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       const s = await db.sessions.findOne({ id: sid });
       if(!s) throw "err";
       const u = await db.users.findOne({ id: s.user_id });
+
+      /** Passwordless admin cannot logout */
       if(u?.no_password){
         return true
       }
+      
       await db.sessions.delete({ id: sid })
       return true; 
     },

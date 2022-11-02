@@ -169,7 +169,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
         const remoteAddress = (socket as any)?.conn?.remoteAddress;
         log("onSocketConnect", { remoteAddress });
 
-        await connectionChecker.onSocketConnected(sid);
+        await connectionChecker.onSocketConnected({ sid, getUser: getUser as any });
 
         // await db.any("ALTER TABLE workspaces ADD COLUMN deleted boolean DEFAULT FALSE")
         const wrkids =  await dbo.workspaces.find({ deleted: true }, { select: { id: 1 }, returnType: "values" });
@@ -328,7 +328,7 @@ const getInitState = () => ({
 /** During page load we wait for init */
 const awaitInit = () => {
   return new Promise((resolve, reject) => {
-    if(!_initState.loaded && _initState){
+    if(!_initState.loaded && _initState && getInitState().electronCredsProvided){
       const interval = setInterval(() => {
         if(_initState.loaded){
           resolve(_initState);

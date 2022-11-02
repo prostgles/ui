@@ -27,6 +27,7 @@ const makeSession = async (user, ip_address, dbo, expires = 0) => {
             expires,
             ip_address,
         }, { returning: "*" });
+        console.log({ makeSession: session });
         return getBasicSession(session); //60*60*60 }; 
     }
     else {
@@ -109,6 +110,7 @@ const getAuth = (app) => {
             if (!s)
                 throw "err";
             const u = await db.users.findOne({ id: s.user_id });
+            /** Passwordless admin cannot logout */
             if (u?.no_password) {
                 return true;
             }
