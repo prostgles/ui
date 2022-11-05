@@ -2,6 +2,7 @@ import { Auth } from 'prostgles-server/dist/AuthHandler';
 import { Users } from "./index";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { Express } from "express";
+export declare const HOUR = 3600000;
 export declare type SUser = {
     sid: string;
     user: Users;

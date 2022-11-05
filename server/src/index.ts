@@ -4,7 +4,7 @@ import prostgles from "prostgles-server";
 import { tableConfig } from "./tableConfig";
 const app = express();
 import { publishMethods } from "./publishMethods";
-import { ChildProcessWithoutNullStreams } from "child_process";
+import { ChildProcessWithoutNullStreams, spawnSync, execSync } from "child_process";
 import { ConnectionManager, Unpromise } from "./ConnectionManager";
 import { getAuth } from "./authConfig";
 import { DBSConnectionInfo, getElectronConfig, OnServerReadyCallback, ROOT_DIR } from "./electronConfig";
@@ -162,16 +162,28 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
       onSocketConnect: async ({ socket, dbo, db, getUser }) => {
         
         const user = await getUser();
-        const sid = user?.sid
+        const sid = user?.sid;
         if(sid){
           dbo.sessions.update({ id: sid }, { is_connected: true })
         }
+
         const remoteAddress = (socket as any)?.conn?.remoteAddress;
+
         log("onSocketConnect", { remoteAddress });
 
         await connectionChecker.onSocketConnected({ sid, getUser: getUser as any });
 
-        // await db.any("ALTER TABLE workspaces ADD COLUMN deleted boolean DEFAULT FALSE")
+        if(sid){
+          const s = await dbo.sessions.findOne({ id: sid });
+          if(!s){
+            console.log("onSocketConnect session missing ?!")
+          } else if(Date.now() > +(new Date(+s?.expires))){
+            console.log("onSocketConnect session expired ?!", s.id, Date.now())
+          } else {
+            await dbo.sessions.update({ id: sid }, { last_used: new Date() });
+          }
+        }
+
         const wrkids =  await dbo.workspaces.find({ deleted: true }, { select: { id: 1 }, returnType: "values" });
         const wkspsFilter: Parameters<typeof dbo.windows.find>[0] = wrkids.length? { workspace_id: { $in: wrkids } } : {};
         const wids = await dbo.windows.find({ $or: [
@@ -317,12 +329,30 @@ let _initState: {
 }
 
 const eConfig = getElectronConfig?.();
+let installedPrograms: ProstglesInitState["canDumpAndRestore"] = {
+  psql: "",
+  pg_dump: "",
+  pg_restore: "",
+};
 
-const getInitState = () => ({
+try {
+  installedPrograms = {
+    psql: execSync("which psql").toString() && execSync("psql --version").toString(),
+    pg_dump: execSync("which pg_dump").toString() && execSync("pg_dump --version").toString(),
+    pg_restore: execSync("which pg_restore").toString() && execSync("pg_restore --version").toString(),
+  };
+} catch(e){
+  installedPrograms = undefined;
+}
+
+import type { ProstglesInitState, ServerState } from "../../commonTypes/electronInit";
+const getInitState = (): ProstglesInitState  => ({ // : ProstglesInitState 
+  isElectron: false,
   ...getElectronConfig?.(),
   electronCredsProvided: !!getElectronConfig?.()?.hasCredentials(),
   ..._initState,
-  loaded: !eConfig?.isElectron || eConfig.hasCredentials()
+  canTryStartProstgles: !eConfig?.isElectron || eConfig.hasCredentials(),
+  canDumpAndRestore: installedPrograms
 });
 
 /** During page load we wait for init */
@@ -388,7 +418,8 @@ const tryStartProstgles = async (con: DBSConnectionInfo = DBS_CONNECTION_INFO) =
  * Serve prostglesInitState
  */
 app.get("/dbs", (req, res) => {
-  res.json(getInitState())
+  const serverState: ServerState = getInitState()
+  res.json(serverState);
 });
 
 /* Must provide index.html if there is an error OR prostgles is loading */
@@ -398,7 +429,6 @@ const serveIndexIfNoCredentials = async (req: Request, res: Response, next: Next
   if(error || isElectron && !electronCredsProvided || _initState.loading){
     await awaitInit();
     if(req.method === "GET" && !req.path.startsWith("/dbs")){
-      console.log(req.method, req.path);
       res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
       return;
     }

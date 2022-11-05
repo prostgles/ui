@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tableConfig = void 0;
+const PASSWORDLESS_ADMIN_USERNAME = "passwordless_admin";
 const DUMP_OPTIONS_SCHEMA = {
     jsonbSchema: {
         oneOf: [{
@@ -29,6 +30,11 @@ const DUMP_OPTIONS_SCHEMA = {
     },
     // defaultValue: "{}"
 };
+const SESSION_TYPE = {
+    enum: ["web", "api_token", "desktop", "mobile"],
+    defaultValue: "web",
+    nullable: false
+};
 exports.tableConfig = {
     user_groups: {
         columns: {
@@ -55,15 +61,17 @@ exports.tableConfig = {
                 info: { hint: "On update will be hashed with the user id" }
             },
             type: { sqlDefinition: `TEXT NOT NULL DEFAULT 'default' REFERENCES user_types (id)` },
-            no_password: {
-                sqlDefinition: `BOOLEAN CHECK( COALESCE(no_password, false) = FALSE OR type = 'admin' )`,
-                info: { hint: "If true then the first connected client will have perpetual admin access and no other users are allowed" }
+            passwordless_admin: {
+                sqlDefinition: `BOOLEAN`,
+                info: { hint: "If true and status is active: enables passwordless access for default install. First connected client will have perpetual admin access and no other users are allowed " }
             },
             created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
             last_updated: { sqlDefinition: `BIGINT` },
             options: { nullable: true, jsonbSchema: {
                     showStateDB: { type: "boolean", optional: true, description: "Show the prostgles database in the connections list" },
                     hideNonSSLWarning: { type: "boolean", optional: true, description: "Hides the top warning when accessing the website over an insecure connection (non-HTTPS)" },
+                    viewedSQLTips: { type: "boolean", optional: true, description: "Will hide SQL tips if true" },
+                    viewedAccessInfo: { type: "boolean", optional: true, description: "Will hide passwordless user tips if true" },
                 }
             },
             "2fa": { nullable: true, jsonbSchema: {
@@ -74,12 +82,15 @@ exports.tableConfig = {
             },
             status: { sqlDefinition: `TEXT NOT NULL DEFAULT 'active' REFERENCES user_statuses (id)` },
         },
+        constraints: {
+            [`passwordless_admin=true ONLY FOR username=${PASSWORDLESS_ADMIN_USERNAME}`]: `CHECK(COALESCE(passwordless_admin, false) = FALSE OR type = 'admin' AND username = '${PASSWORDLESS_ADMIN_USERNAME}') `
+        },
         indexes: {
-            "Only one no_password admin account allowed": {
+            "Only one passwordless_admin admin account allowed": {
                 replace: true,
                 unique: true,
-                columns: `no_password`,
-                where: `no_password = true`
+                columns: `passwordless_admin`,
+                where: `passwordless_admin = true`
             }
         },
         triggers: {
@@ -110,10 +121,23 @@ exports.tableConfig = {
             active: `BOOLEAN DEFAULT TRUE`,
             project_id: `TEXT`,
             ip_address: `INET NOT NULL`,
-            type: { enum: ["web", "api_token"], defaultValue: "web", nullable: false },
+            type: SESSION_TYPE,
+            user_agent: "TEXT",
             created: `TIMESTAMP DEFAULT NOW()`,
             last_used: `TIMESTAMP DEFAULT NOW()`,
             expires: `BIGINT NOT NULL`,
+        }
+    },
+    failed_login_attempts: {
+        dropIfExists: true,
+        columns: {
+            id: `BIGSERIAL PRIMARY KEY`,
+            ip_address: `INET NOT NULL`,
+            type: SESSION_TYPE,
+            created: `TIMESTAMP DEFAULT NOW()`,
+            username: "TEXT",
+            user_agent: "TEXT",
+            info: "TEXT",
         }
     },
     connections: {
@@ -135,12 +159,13 @@ exports.tableConfig = {
             db_watch_shema: { sqlDefinition: `BOOLEAN DEFAULT TRUE` },
             prgl_url: { sqlDefinition: `TEXT` },
             prgl_params: { sqlDefinition: `JSONB` },
-            type: { sqlDefinition: `TEXT NOT NULL DEFAULT 'Standard' CHECK (
-              type IN ('Standard', 'Connection URI', 'Prostgles') 
-              AND (type <> 'Connection URI' OR length(db_conn) > 1) 
-              AND (type <> 'Standard' OR length(db_host) > 1) 
-              AND (type <> 'Prostgles' OR length(prgl_url) > 0)
-          )` },
+            type: { enum: ["Standard", "Connection URI", "Prostgles"], nullable: false },
+            // type:                    { sqlDefinition: `TEXT NOT NULL DEFAULT 'Standard' CHECK (
+            //         type IN ('Standard', 'Connection URI', 'Prostgles') 
+            //         AND (type <> 'Connection URI' OR length(db_conn) > 1) 
+            //         AND (type <> 'Standard' OR length(db_host) > 1) 
+            //         AND (type <> 'Prostgles' OR length(prgl_url) > 0)
+            //     )` },
             is_state_db: { sqlDefinition: `BOOLEAN`, info: { hint: `If true then this DB is used to run the dashboard` } },
             table_config: { info: { hint: `File and User configurations` },
                 nullable: true,
@@ -202,7 +227,12 @@ exports.tableConfig = {
         },
         constraints: {
             uniqueConName: `UNIQUE(name, user_id)`,
-            // uniqueConURI: `UNIQUE(db_conn, user_id)`
+            "Check connection type": `CHECK (
+          type IN ('Standard', 'Connection URI', 'Prostgles') 
+          AND (type <> 'Connection URI' OR length(db_conn) > 1) 
+          AND (type <> 'Standard' OR length(db_host) > 1) 
+          AND (type <> 'Prostgles' OR length(prgl_url) > 0)
+        )`
         }
     },
     access_control: {

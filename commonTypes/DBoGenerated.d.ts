@@ -138,7 +138,7 @@ export type DBSchemaGenerated = {
         referencedTables?: {  };
         delayedDelete?: {  deleteAfterNDays: number; checkIntervalHours?: number; }; 
       };
-      type?: string;
+      type?: "Standard" | "Connection URI" | "Prostgles"
       user_id?: null | string;
     };
   };
@@ -167,6 +167,22 @@ export type DBSchemaGenerated = {
       region?: null | string;
       type?: string;
       user_id?: null | string;
+    };
+  };
+  failed_login_attempts: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      created?: null | Date;
+      id?: number;
+      info?: null | string;
+      ip_address: string;
+      type?: "web" | "api_token" | "desktop" | "mobile"
+      user_agent?: null | string;
+      username?: null | string;
     };
   };
   files: {
@@ -258,6 +274,22 @@ export type DBSchemaGenerated = {
       workspace_id: string;
     };
   };
+  login_attempts: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      created?: null | Date;
+      id?: number;
+      info?: null | string;
+      ip_address: string;
+      session_id?: null | string;
+      type?: string;
+      user_id?: null | string;
+    };
+  };
   magic_links: {
     is_view: false;
     select: true;
@@ -300,7 +332,8 @@ export type DBSchemaGenerated = {
       last_used?: null | Date;
       name?: null | string;
       project_id?: null | string;
-      type?: "web" | "api_token"
+      type?: "web" | "api_token" | "desktop" | "mobile"
+      user_agent?: null | string;
       user_id: string;
       user_type: string;
       usname?: null | string;
@@ -366,12 +399,14 @@ export type DBSchemaGenerated = {
       created?: null | Date;
       id?: string;
       last_updated?: null | number;
-      no_password?: null | boolean;
       options?: null |       { 
         showStateDB?: boolean;
-        hideNonSSLWarning?: boolean; 
+        hideNonSSLWarning?: boolean;
+        viewedSQLTips?: boolean;
+        viewedAccessInfo?: boolean; 
       };
       password?: string;
+      passwordless_admin?: null | boolean;
       status?: string;
       type?: string;
       username: string;

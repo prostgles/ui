@@ -88,7 +88,7 @@ export declare const upsertConnection: (con: DBSchemaGenerated["connections"]["c
             checkIntervalHours?: number | undefined;
         } | undefined;
     } | null | undefined;
-    type?: string | undefined;
+    type?: "Standard" | "Connection URI" | "Prostgles" | undefined;
     user_id?: string | null | undefined;
 }> | undefined>;
 export declare const tout: (timeout: number) => Promise<unknown>;
