@@ -207,7 +207,7 @@ export const EMPTY_PASSWORD = "";
 const NoInitialAdminPasswordProvided = Boolean( !PRGL_USERNAME || !PRGL_PASSWORD )
 export const ADMIN_ACCESS_WITHOUT_PASSWORD = async (db: DBS) => {
   if (NoInitialAdminPasswordProvided) {
-    return await db.users.findOne({ username: EMPTY_USERNAME, status: "active", no_password: true });
+    return await db.users.findOne({ username: EMPTY_USERNAME, status: "active", passwordless_admin: true });
   }
   return undefined
 };
@@ -242,7 +242,7 @@ const initUsers = async (db: DBS, _db: DB) => {
     }
     
     try {
-      const u = await db.users.insert({ username, password, type: "admin", no_password: Boolean(NoInitialAdminPasswordProvided) }, { returning: "*" }) as Users;
+      const u = await db.users.insert({ username, password, type: "admin", passwordless_admin: Boolean(NoInitialAdminPasswordProvided) }, { returning: "*" }) as Users;
       await _db.any("UPDATE users SET password = crypt(password, id::text), status = 'active' WHERE status IS NULL AND id = ${id};", u);
 
     } catch(e){

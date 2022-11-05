@@ -11,17 +11,19 @@ import path from "path";
 import { DBSSchema } from "../../commonTypes/publishUtils";
 import { ROOT_DIR } from "./electronConfig";
 
+export const HOUR = 3600e3;
+
 
 let authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_COOKIE)? {} : {
   secure: false,
   sameSite: "lax"    //  "none"
 };
 
-const getBasicSession = (s: DBSSchema["sessions"]): BasicSession => {
+const parseAsBasicSession = (s: DBSSchema["sessions"]): BasicSession => {
   return { ...s, sid: s.id, expires: +s.expires, onExpiration: s.type === "api_token"? "show_error" : "redirect" };
 }
 
-const makeSession = async (user: Users | undefined, ip_address: string, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number = 0): Promise<BasicSession> => {
+const makeSession = async (user: Users | undefined, client: {ip_address: string, user_agent?: string }, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number = 0): Promise<BasicSession> => {
 
   if(user){
 
@@ -32,10 +34,11 @@ const makeSession = async (user: Users | undefined, ip_address: string, dbo: DBO
       user_id: user.id, 
       user_type: user.type, 
       expires, 
-      ip_address,
+      ip_address: client.ip_address,
+      user_agent: client.user_agent,
     }, { returning: "*" }) as any;
     console.log({makeSession: session})
-    return getBasicSession(session); //60*60*60 }; 
+    return parseAsBasicSession(session); //60*60*60 }; 
   } else {
     throw "Invalid user";
   }
@@ -86,10 +89,20 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       // console.trace("getUser", { user, s })
       return undefined;
     },
-    login: async ({ username = null, password = null, totp_token = null, totp_recovery_code = null } = {}, db, _db: DB, ip_address) => {
+
+    login: async ({ username = null, password = null, totp_token = null, totp_recovery_code = null } = {}, db, _db: DB, { ip_address, user_agent }) => {
       let u: Users | undefined;
-      log("login", username)
+      log("login", username);
       
+      const loginAttempt = await db.failed_login_attempts.insert({ ip_address, username, user_agent }, { returning: { id: 1 } });
+      try {
+        const previousFails = await db.failed_login_attempts.count({ ip_address, "created.>=": new Date(Date.now() - 1 * HOUR) })
+        if(+previousFails > 3){
+          throw "Too many failed attempts within the last hour";
+        }
+      } catch(err) {
+        console.error(err);
+      }
       try {
         u = await _db.one("SELECT * FROM users WHERE username = ${username} AND password = crypt(${password}, id::text);", { username, password });
       } catch(e){
@@ -117,14 +130,19 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
         }
       }
 
+      if(loginAttempt){
+        await db.failed_login_attempts.delete({ id: loginAttempt.id })
+      }
+
       let s = await db.sessions.findOne({ user_id: u.id })
       if(!s || (+s.expires || 0) < Date.now()){
         // will expire after 24 hours,
-        return makeSession(u, ip_address, db, Date.now() + 1000 * 60 * 60 * 24)
+        return makeSession(u, {ip_address, user_agent}, db, Date.now() + 1000 * 60 * 60 * 24)
       }
-      
-      return getBasicSession(s)
+      await db.sessions.update({ id: s.id }, { last_used: new Date() });
+      return parseAsBasicSession(s);
     },
+
     logout: async (sid, db, _db: DB) => {
       if(!sid) throw "err";
       const s = await db.sessions.findOne({ id: sid });
@@ -132,21 +150,23 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       const u = await db.users.findOne({ id: s.user_id });
 
       /** Passwordless admin cannot logout */
-      if(u?.no_password){
+      if(u?.passwordless_admin){
         return true
       }
       
       await db.sessions.delete({ id: sid })
       return true; 
     },
+
     cacheSession: {
       getSession: async (sid, db) => {
         let s = await db.sessions.findOne({ id: sid });
-        if(s) return getBasicSession(s)
+        if(s) return parseAsBasicSession(s)
         // throw "dwada"
         return undefined as any;
       }
     },
+
     expressConfig:  {
       app,
       // userRoutes: ["/", "/connection", "/connections", "/profile", "/jobs", "/chats", "/chat", "/account", "/dashboard", "/registrations"],
@@ -204,7 +224,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       },
       cookieOptions: authCookieOpts,
       magicLinks: {
-        check: async (id, dbo, db, ip_address) => {
+        check: async (id, dbo, db, { ip_address, user_agent }) => {
           const mlink = await dbo.magic_links.findOne({ id });
           
           if(mlink){
@@ -213,7 +233,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
           const user = await dbo.users.findOne({ id: mlink.user_id });
           if(!user) throw new Error("User from Magic link not found");
 
-          return makeSession(user, ip_address, dbo , mlink.expires);
+          return makeSession(user, { ip_address, user_agent }, dbo , mlink.expires);
         }
       }
     }

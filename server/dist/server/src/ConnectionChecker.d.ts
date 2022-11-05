@@ -59,12 +59,14 @@ export declare const ADMIN_ACCESS_WITHOUT_PASSWORD: (db: DBS) => Promise<Require
     created?: Date | null | undefined;
     id?: string | undefined;
     last_updated?: number | null | undefined;
-    no_password?: boolean | null | undefined;
     options?: {
         showStateDB?: boolean | undefined;
         hideNonSSLWarning?: boolean | undefined;
+        viewedSQLTips?: boolean | undefined;
+        viewedAccessInfo?: boolean | undefined;
     } | null | undefined;
     password?: string | undefined;
+    passwordless_admin?: boolean | null | undefined;
     status?: string | undefined;
     type?: string | undefined;
     username: string;
@@ -78,12 +80,14 @@ export declare const insertUser: (db: DBS, _db: DB, u: {
     created?: Date | null | undefined;
     id?: string | undefined;
     last_updated?: number | null | undefined;
-    no_password?: boolean | null | undefined;
     options?: {
         showStateDB?: boolean | undefined;
         hideNonSSLWarning?: boolean | undefined;
+        viewedSQLTips?: boolean | undefined;
+        viewedAccessInfo?: boolean | undefined;
     } | null | undefined;
     password?: string | undefined;
+    passwordless_admin?: boolean | null | undefined;
     status?: string | undefined;
     type?: string | undefined;
     username: string;
@@ -96,12 +100,14 @@ export declare const insertUser: (db: DBS, _db: DB, u: {
     created?: Date | null | undefined;
     id?: string | undefined;
     last_updated?: number | null | undefined;
-    no_password?: boolean | null | undefined;
     options?: {
         showStateDB?: boolean | undefined;
         hideNonSSLWarning?: boolean | undefined;
+        viewedSQLTips?: boolean | undefined;
+        viewedAccessInfo?: boolean | undefined;
     } | null | undefined;
     password?: string | undefined;
+    passwordless_admin?: boolean | null | undefined;
     status?: string | undefined;
     type?: string | undefined;
     username: string;

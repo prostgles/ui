@@ -15,6 +15,7 @@ exports.BKP_PREFFIX = "/" + exports.BACKUP_FOLDERNAME;
 const getConnectionUri = (c) => c.db_conn || `postgres://${c.db_user}:${c.db_pass || ""}@${c.db_host || "localhost"}:${c.db_port || "5432"}/${c.db_name}`;
 const check_disk_space_1 = __importDefault(require("check-disk-space"));
 const electronConfig_1 = require("./electronConfig");
+const getConnectionDetails_1 = require("./connectionUtils/getConnectionDetails");
 const HOUR = 3600 * 1000;
 class BackupManager {
     tempStreams = {};
@@ -219,9 +220,11 @@ class BackupManager {
         if (currentBackup) {
             throw "Cannot backup while another backup is in progress";
         }
-        const ENV_VARS = getSSLEnvVars(con, this.connMgr);
+        const SSL_ENV_VARS = getSSLEnvVars(con, this.connMgr);
         let backup_id;
         const uri = getConnectionUri(con);
+        const ConnectionEnvVars = getConnectionEnvVars(con);
+        const ENV_VARS = { ...SSL_ENV_VARS, ...ConnectionEnvVars };
         const dumpAll = o.command === "pg_dumpall";
         const dumpCommand = dumpAll ? {
             command: "pg_dumpall",
@@ -237,7 +240,8 @@ class BackupManager {
             ])
         } : {
             command: "pg_dump",
-            opts: addOptions([uri], [
+            // opts: addOptions([uri_NOT_SAFE_-> VISIBLE TO ps aux], [
+            opts: addOptions([], [
                 [!!o.format, ["--format", o.format]],
                 [o.clean, "--clean"],
                 [o.create, "--create"],
@@ -341,14 +345,21 @@ class BackupManager {
             }
         }
         try {
-            const ENV_VARS = getSSLEnvVars(con, this.connMgr);
+            const SSL_ENV_VARS = getSSLEnvVars(con, this.connMgr);
+            const ConnectionEnvVars = getConnectionEnvVars(con);
+            const ENV_VARS = { ...SSL_ENV_VARS, ...ConnectionEnvVars };
             const bkpStream = stream ?? await fileMgr.getFileStream(bkp.id);
             const restoreCmd = (o.command === "psql" || o.format === "p") ? {
                 command: "psql",
-                opts: [getConnectionUri(con)]
+                // opts: [getConnectionUri(con as any)] // NOT SAFE ps aux
+                opts: []
             } : {
                 command: "pg_restore",
-                opts: addOptions(["-d", getConnectionUri(con)], [
+                opts: addOptions(
+                // ["-d", getConnectionUri(con as any) NOT SAFE FROM ps aux], 
+                [], [
+                    [true, "--dbname=" + ConnectionEnvVars.PGDATABASE],
+                    [true, "-w"],
                     [o.clean, "--clean"],
                     [o.create, "--create"],
                     [o.noOwner, "--no-owner"],
@@ -356,7 +367,7 @@ class BackupManager {
                     [o.dataOnly, "--data-only"],
                     [o.ifExists, "--if-exists"],
                     [Number.isInteger(o.numberOfJobs), "--jobs"],
-                    [true, "-v"]
+                    [true, "-v"],
                 ])
             };
             await this.dbs.backups.update({ id: bkpId }, {
@@ -622,11 +633,14 @@ function getSSLEnvVars(c, connMgr) {
 function addOptions(opts, extra) {
     return opts.concat(extra.filter(e => e[0]).flatMap(e => e[1]).map(e => e.toString()));
 }
-// process.stdout.on("error", (err) => {
-//   debugger
-// });
-// process.on('uncaughtException', function (err) {
-//   console.error(err);
-//   console.log("Node NOT Exiting...");
-// });
+const getConnectionEnvVars = (c) => {
+    const conDetails = (0, getConnectionDetails_1.getConnectionDetails)(c);
+    return {
+        PGHOST: conDetails.host,
+        PGPORT: conDetails.port + "",
+        PGDATABASE: conDetails.database,
+        PGUSER: conDetails.user,
+        PGPASSWORD: conDetails.password,
+    };
+};
 //# sourceMappingURL=BackupManager.js.map

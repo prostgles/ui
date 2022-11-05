@@ -125,7 +125,7 @@ const publish = async (params, con) => {
                 validate: validateAndHashUserPassword,
                 dynamicFields: [{
                         /* For own user can only change these fields */
-                        fields: { username: 1, password: 1, status: 1, options: 1, ...(user?.no_password && { no_password: 1 }) },
+                        fields: { username: 1, password: 1, status: 1, options: 1, passwordless_admin: 1 },
                         filter: { id: user.id }
                     }]
             },

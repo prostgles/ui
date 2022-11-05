@@ -26,6 +26,7 @@ import { Request, Response } from "express";
 import { SUser } from "./authConfig";
 import { ROOT_DIR } from "./electronConfig";
 import { ConnectionManager } from "./ConnectionManager";
+import { getConnectionDetails } from "./connectionUtils/getConnectionDetails";
 
 
 const HOUR = 3600 * 1000;
@@ -245,10 +246,12 @@ export default class BackupManager {
       throw "Cannot backup while another backup is in progress";
     }
 
-    const ENV_VARS = getSSLEnvVars(con, this.connMgr);
+    const SSL_ENV_VARS = getSSLEnvVars(con, this.connMgr);
 
     let backup_id: string | undefined;
     const uri = getConnectionUri(con);
+    const ConnectionEnvVars = getConnectionEnvVars(con);
+    const ENV_VARS = { ...SSL_ENV_VARS, ...ConnectionEnvVars };
     const dumpAll = o.command === "pg_dumpall";
     const dumpCommand = dumpAll? {
       command: "pg_dumpall",
@@ -265,7 +268,8 @@ export default class BackupManager {
 
     } : {
       command: "pg_dump",
-      opts: addOptions([uri], [
+      // opts: addOptions([uri_NOT_SAFE_-> VISIBLE TO ps aux], [
+      opts: addOptions([], [
         [!!o.format, ["--format", o.format]],
         [o.clean, "--clean"],
         [o.create, "--create"],
@@ -374,23 +378,33 @@ export default class BackupManager {
       }
     }
     try {
-      const ENV_VARS = getSSLEnvVars(con, this.connMgr);
+      const SSL_ENV_VARS = getSSLEnvVars(con, this.connMgr);
+      const ConnectionEnvVars = getConnectionEnvVars(con);
+      const ENV_VARS = { ...SSL_ENV_VARS, ...ConnectionEnvVars };
       const bkpStream = stream ?? await fileMgr.getFileStream(bkp.id);
       const restoreCmd = (o.command === "psql" || o.format === "p")? {
         command: "psql",
-        opts: [getConnectionUri(con as any)]
+        // opts: [getConnectionUri(con as any)] // NOT SAFE ps aux
+        opts: []
       } : {
         command: "pg_restore",
-        opts: addOptions(["-d", getConnectionUri(con as any)], [
-          [o.clean, "--clean"],
-          [o.create, "--create"],
-          [o.noOwner, "--no-owner"],
-          [!!o.format, ["--format", o.format]],
-          [o.dataOnly, "--data-only"],
-          [o.ifExists, "--if-exists"],
-          [Number.isInteger(o.numberOfJobs) , "--jobs"],
-          [true, "-v"]
-        ]) 
+        opts: addOptions(
+          // ["-d", getConnectionUri(con as any) NOT SAFE FROM ps aux], 
+          [],
+          [
+            [true, "--dbname=" + ConnectionEnvVars.PGDATABASE], // Prevent error: "d -f/--file must be specified"
+            [true, "-w"], // Do not ask for password
+
+            [o.clean, "--clean"],
+            [o.create, "--create"],
+            [o.noOwner, "--no-owner"],
+            [!!o.format, ["--format", o.format]],
+            [o.dataOnly, "--data-only"],
+            [o.ifExists, "--if-exists"],
+            [Number.isInteger(o.numberOfJobs) , "--jobs"],
+            [true, "-v"],
+          ]
+        ) 
       }
       await this.dbs.backups.update({ id: bkpId }, { 
         restore_start: new Date(), 
@@ -696,3 +710,22 @@ function addOptions(opts: string[], extra: [add: boolean | undefined, val: Basic
 //   console.error(err);
 //   console.log("Node NOT Exiting...");
 // });
+
+type ConnectionEnvVars = {
+  PGHOST: string;
+  PGPORT: string;
+  PGDATABASE: string;
+  PGUSER: string;
+  PGPASSWORD: string;
+}
+
+const getConnectionEnvVars = (c: Connections): ConnectionEnvVars => {
+  const conDetails = getConnectionDetails(c);
+  return {
+    PGHOST: conDetails.host,
+    PGPORT: conDetails.port + "",
+    PGDATABASE: conDetails.database,
+    PGUSER: conDetails.user,
+    PGPASSWORD: conDetails.password,
+  }
+}
