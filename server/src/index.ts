@@ -270,12 +270,20 @@ const insertStateDatabase = async (db: DBS, _db: DB, con: typeof DBS_CONNECTION_
         if(!state_db) throw "state_db not found";
 
         if(!databases.includes(SAMPLE_DB_NAME)) {
+          const stateCon = { ...omitKeys(state_db, ["id"]) };
           await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
-          await upsertConnection({ 
-            ...omitKeys(state_db, ["id"]),
-            is_state_db: false,
+          const validatedConnection = validateConnection({
+            ...stateCon,
+            type: "Standard",
             name: SAMPLE_DB_LABEL,
             db_name: SAMPLE_DB_NAME,
+
+          })
+          await upsertConnection({ 
+            ...stateCon,
+            ...validatedConnection,
+            is_state_db: false,
+            name: SAMPLE_DB_LABEL,
           }, null, db)
         }
       }
