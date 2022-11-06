@@ -13,12 +13,12 @@ const validateConnection = (c) => {
         const { sslmode, host, port, dbname, user, password, } = params;
         // if(!cs.hosts?.length) throw `Host missing`
         // if(!cs.path?.length) throw `DB name missing`
-        result.db_host = cs.hosts?.[0].name ?? host;
-        result.db_port = cs.hosts?.[0].port ?? +port;
-        result.db_user = cs.user ?? user;
+        result.db_host = cs.hosts?.[0].name || (host || "localhost");
+        result.db_port = cs.hosts?.[0].port || (+port ?? 5432);
+        result.db_user = cs.user ?? (user || "postgres");
         result.db_pass = cs.password ?? password;
         result.db_name = cs.path?.[0] ?? dbname;
-        result.db_ssl = sslmode;
+        result.db_ssl = sslmode || "disable";
         // result.type = "Standard"
     }
     else if (c.type === "Standard" || c.db_host) {

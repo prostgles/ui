@@ -1,0 +1,657 @@
+[
+  {
+    "cmd": "\\d",
+    "opts": "[S+]",
+    "desc": "list tables, views, and sequences",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\nWHERE c.relkind IN ('r','p','v','m','S','f','')\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname !~ '^pg_toast'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dS",
+    "opts": "[S+]",
+    "desc": "list tables, views, and sequences",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\nWHERE c.relkind IN ('r','p','t','v','m','S','s','f','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dS+",
+    "opts": "[S+]",
+    "desc": "list tables, views, and sequences",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\",\n  CASE c.relpersistence WHEN 'p' THEN 'permanent' WHEN 't' THEN 'temporary' WHEN 'u' THEN 'unlogged' END as \"Persistence\",\n  am.amname as \"Access method\",\n  pg_catalog.pg_size_pretty(pg_catalog.pg_table_size(c.oid)) as \"Size\",\n  pg_catalog.obj_description(c.oid, 'pg_class') as \"Description\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\nWHERE c.relkind IN ('r','p','t','v','m','S','s','f','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\d",
+    "opts": "[S+]",
+    "desc": "describe table, view, sequence, or index",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\nWHERE c.relkind IN ('r','p','v','m','S','f','')\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname !~ '^pg_toast'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dS",
+    "opts": "[S+]",
+    "desc": "describe table, view, sequence, or index",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\nWHERE c.relkind IN ('r','p','t','v','m','S','s','f','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dS+",
+    "opts": "[S+]",
+    "desc": "describe table, view, sequence, or index",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\",\n  CASE c.relpersistence WHEN 'p' THEN 'permanent' WHEN 't' THEN 'temporary' WHEN 'u' THEN 'unlogged' END as \"Persistence\",\n  am.amname as \"Access method\",\n  pg_catalog.pg_size_pretty(pg_catalog.pg_table_size(c.oid)) as \"Size\",\n  pg_catalog.obj_description(c.oid, 'pg_class') as \"Description\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\nWHERE c.relkind IN ('r','p','t','v','m','S','s','f','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\da",
+    "opts": "[S]",
+    "desc": "list aggregates",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  p.proname AS \"Name\",\n  pg_catalog.format_type(p.prorettype, NULL) AS \"Result data type\",\n  CASE WHEN p.pronargs = 0\n    THEN CAST('*' AS pg_catalog.text)\n    ELSE pg_catalog.pg_get_function_arguments(p.oid)\n  END AS \"Argument data types\",\n  pg_catalog.obj_description(p.oid, 'pg_proc') as \"Description\"\nFROM pg_catalog.pg_proc p\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\nWHERE p.prokind = 'a'\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_function_is_visible(p.oid)\nORDER BY 1, 2, 4;\n"
+  },
+  {
+    "cmd": "\\daS",
+    "opts": "[S]",
+    "desc": "list aggregates",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  p.proname AS \"Name\",\n  pg_catalog.format_type(p.prorettype, NULL) AS \"Result data type\",\n  CASE WHEN p.pronargs = 0\n    THEN CAST('*' AS pg_catalog.text)\n    ELSE pg_catalog.pg_get_function_arguments(p.oid)\n  END AS \"Argument data types\",\n  pg_catalog.obj_description(p.oid, 'pg_proc') as \"Description\"\nFROM pg_catalog.pg_proc p\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\nWHERE p.prokind = 'a'\n  AND pg_catalog.pg_function_is_visible(p.oid)\nORDER BY 1, 2, 4;\n"
+  },
+  {
+    "cmd": "\\dA",
+    "opts": "[+]",
+    "desc": "list access methods",
+    "query": "\nSELECT amname AS \"Name\",\n  CASE amtype WHEN 'i' THEN 'Index' WHEN 't' THEN 'Table' END AS \"Type\"\nFROM pg_catalog.pg_am\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dA+",
+    "opts": "[+]",
+    "desc": "list access methods",
+    "query": "\nSELECT amname AS \"Name\",\n  CASE amtype WHEN 'i' THEN 'Index' WHEN 't' THEN 'Table' END AS \"Type\",\n  amhandler AS \"Handler\",\n  pg_catalog.obj_description(oid, 'pg_am') AS \"Description\"\nFROM pg_catalog.pg_am\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dAc",
+    "opts": "[+]",
+    "desc": "list operator classes",
+    "query": "\nSELECT\n  am.amname AS \"AM\",\n  pg_catalog.format_type(c.opcintype, NULL) AS \"Input type\",\n  CASE\n    WHEN c.opckeytype <> 0 AND c.opckeytype <> c.opcintype\n    THEN pg_catalog.format_type(c.opckeytype, NULL)\n    ELSE NULL\n  END AS \"Storage type\",\n  CASE\n    WHEN pg_catalog.pg_opclass_is_visible(c.oid)\n    THEN pg_catalog.format('%I', c.opcname)\n    ELSE pg_catalog.format('%I.%I', n.nspname, c.opcname)\n  END AS \"Operator class\",\n  (CASE WHEN c.opcdefault\n    THEN 'yes'\n    ELSE 'no'\n  END) AS \"Default?\"\nFROM pg_catalog.pg_opclass c\n  LEFT JOIN pg_catalog.pg_am am on am.oid = c.opcmethod\n  LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.opcnamespace\n  LEFT JOIN pg_catalog.pg_type t ON t.oid = c.opcintype\n  LEFT JOIN pg_catalog.pg_namespace tn ON tn.oid = t.typnamespace\nORDER BY 1, 2, 4;\n"
+  },
+  {
+    "cmd": "\\dAc+",
+    "opts": "[+]",
+    "desc": "list operator classes",
+    "query": "\nSELECT\n  am.amname AS \"AM\",\n  pg_catalog.format_type(c.opcintype, NULL) AS \"Input type\",\n  CASE\n    WHEN c.opckeytype <> 0 AND c.opckeytype <> c.opcintype\n    THEN pg_catalog.format_type(c.opckeytype, NULL)\n    ELSE NULL\n  END AS \"Storage type\",\n  CASE\n    WHEN pg_catalog.pg_opclass_is_visible(c.oid)\n    THEN pg_catalog.format('%I', c.opcname)\n    ELSE pg_catalog.format('%I.%I', n.nspname, c.opcname)\n  END AS \"Operator class\",\n  (CASE WHEN c.opcdefault\n    THEN 'yes'\n    ELSE 'no'\n  END) AS \"Default?\",\n  CASE\n    WHEN pg_catalog.pg_opfamily_is_visible(of.oid)\n    THEN pg_catalog.format('%I', of.opfname)\n    ELSE pg_catalog.format('%I.%I', ofn.nspname, of.opfname)\n  END AS \"Operator family\",\n pg_catalog.pg_get_userbyid(c.opcowner) AS \"Owner\"\n\nFROM pg_catalog.pg_opclass c\n  LEFT JOIN pg_catalog.pg_am am on am.oid = c.opcmethod\n  LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.opcnamespace\n  LEFT JOIN pg_catalog.pg_type t ON t.oid = c.opcintype\n  LEFT JOIN pg_catalog.pg_namespace tn ON tn.oid = t.typnamespace\n  LEFT JOIN pg_catalog.pg_opfamily of ON of.oid = c.opcfamily\n  LEFT JOIN pg_catalog.pg_namespace ofn ON ofn.oid = of.opfnamespace\nORDER BY 1, 2, 4;\n"
+  },
+  {
+    "cmd": "\\dAf",
+    "opts": "[+]",
+    "desc": "list operator families",
+    "query": "\nSELECT\n  am.amname AS \"AM\",\n  CASE\n    WHEN pg_catalog.pg_opfamily_is_visible(f.oid)\n    THEN pg_catalog.format('%I', f.opfname)\n    ELSE pg_catalog.format('%I.%I', n.nspname, f.opfname)\n  END AS \"Operator family\",\n  (SELECT\n     pg_catalog.string_agg(pg_catalog.format_type(oc.opcintype, NULL), ', ')\n   FROM pg_catalog.pg_opclass oc\n   WHERE oc.opcfamily = f.oid) \"Applicable types\"\nFROM pg_catalog.pg_opfamily f\n  LEFT JOIN pg_catalog.pg_am am on am.oid = f.opfmethod\n  LEFT JOIN pg_catalog.pg_namespace n ON n.oid = f.opfnamespace\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dAf+",
+    "opts": "[+]",
+    "desc": "list operator families",
+    "query": "\nSELECT\n  am.amname AS \"AM\",\n  CASE\n    WHEN pg_catalog.pg_opfamily_is_visible(f.oid)\n    THEN pg_catalog.format('%I', f.opfname)\n    ELSE pg_catalog.format('%I.%I', n.nspname, f.opfname)\n  END AS \"Operator family\",\n  (SELECT\n     pg_catalog.string_agg(pg_catalog.format_type(oc.opcintype, NULL), ', ')\n   FROM pg_catalog.pg_opclass oc\n   WHERE oc.opcfamily = f.oid) \"Applicable types\",\n  pg_catalog.pg_get_userbyid(f.opfowner) AS \"Owner\"\n\nFROM pg_catalog.pg_opfamily f\n  LEFT JOIN pg_catalog.pg_am am on am.oid = f.opfmethod\n  LEFT JOIN pg_catalog.pg_namespace n ON n.oid = f.opfnamespace\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dAo",
+    "opts": "[+]",
+    "desc": "list operators of operator families",
+    "query": "\nSELECT\n  am.amname AS \"AM\",\n  CASE\n    WHEN pg_catalog.pg_opfamily_is_visible(of.oid)\n    THEN pg_catalog.format('%I', of.opfname)\n    ELSE pg_catalog.format('%I.%I', nsf.nspname, of.opfname)\n  END AS \"Operator family\",\n  o.amopopr::pg_catalog.regoperator AS \"Operator\"\n,  o.amopstrategy AS \"Strategy\",\n  CASE o.amoppurpose\n    WHEN 'o' THEN 'ordering'\n    WHEN 's' THEN 'search'\n  END AS \"Purpose\"\nFROM pg_catalog.pg_amop o\n  LEFT JOIN pg_catalog.pg_opfamily of ON of.oid = o.amopfamily\n  LEFT JOIN pg_catalog.pg_am am ON am.oid = of.opfmethod AND am.oid = o.amopmethod\n  LEFT JOIN pg_catalog.pg_namespace nsf ON of.opfnamespace = nsf.oid\nORDER BY 1, 2,\n  o.amoplefttype = o.amoprighttype DESC,\n  pg_catalog.format_type(o.amoplefttype, NULL),\n  pg_catalog.format_type(o.amoprighttype, NULL),\n  o.amopstrategy;\n"
+  },
+  {
+    "cmd": "\\dAo+",
+    "opts": "[+]",
+    "desc": "list operators of operator families",
+    "query": "\nSELECT\n  am.amname AS \"AM\",\n  CASE\n    WHEN pg_catalog.pg_opfamily_is_visible(of.oid)\n    THEN pg_catalog.format('%I', of.opfname)\n    ELSE pg_catalog.format('%I.%I', nsf.nspname, of.opfname)\n  END AS \"Operator family\",\n  o.amopopr::pg_catalog.regoperator AS \"Operator\"\n,  o.amopstrategy AS \"Strategy\",\n  CASE o.amoppurpose\n    WHEN 'o' THEN 'ordering'\n    WHEN 's' THEN 'search'\n  END AS \"Purpose\"\n, ofs.opfname AS \"Sort opfamily\"\nFROM pg_catalog.pg_amop o\n  LEFT JOIN pg_catalog.pg_opfamily of ON of.oid = o.amopfamily\n  LEFT JOIN pg_catalog.pg_am am ON am.oid = of.opfmethod AND am.oid = o.amopmethod\n  LEFT JOIN pg_catalog.pg_namespace nsf ON of.opfnamespace = nsf.oid\n  LEFT JOIN pg_catalog.pg_opfamily ofs ON ofs.oid = o.amopsortfamily\nORDER BY 1, 2,\n  o.amoplefttype = o.amoprighttype DESC,\n  pg_catalog.format_type(o.amoplefttype, NULL),\n  pg_catalog.format_type(o.amoprighttype, NULL),\n  o.amopstrategy;\n"
+  },
+  {
+    "cmd": "\\dAp",
+    "opts": "[+]",
+    "desc": "list support functions of operator families",
+    "query": "\nSELECT\n  am.amname AS \"AM\",\n  CASE\n    WHEN pg_catalog.pg_opfamily_is_visible(of.oid)\n    THEN pg_catalog.format('%I', of.opfname)\n    ELSE pg_catalog.format('%I.%I', ns.nspname, of.opfname)\n  END AS \"Operator family\",\n  pg_catalog.format_type(ap.amproclefttype, NULL) AS \"Registered left type\",\n  pg_catalog.format_type(ap.amprocrighttype, NULL) AS \"Registered right type\",\n  ap.amprocnum AS \"Number\"\n, p.proname AS \"Function\"\nFROM pg_catalog.pg_amproc ap\n  LEFT JOIN pg_catalog.pg_opfamily of ON of.oid = ap.amprocfamily\n  LEFT JOIN pg_catalog.pg_am am ON am.oid = of.opfmethod\n  LEFT JOIN pg_catalog.pg_namespace ns ON of.opfnamespace = ns.oid\n  LEFT JOIN pg_catalog.pg_proc p ON ap.amproc = p.oid\nORDER BY 1, 2,\n  ap.amproclefttype = ap.amprocrighttype DESC,\n  3, 4, 5;\n"
+  },
+  {
+    "cmd": "\\dAp+",
+    "opts": "[+]",
+    "desc": "list support functions of operator families",
+    "query": "\nSELECT\n  am.amname AS \"AM\",\n  CASE\n    WHEN pg_catalog.pg_opfamily_is_visible(of.oid)\n    THEN pg_catalog.format('%I', of.opfname)\n    ELSE pg_catalog.format('%I.%I', ns.nspname, of.opfname)\n  END AS \"Operator family\",\n  pg_catalog.format_type(ap.amproclefttype, NULL) AS \"Registered left type\",\n  pg_catalog.format_type(ap.amprocrighttype, NULL) AS \"Registered right type\",\n  ap.amprocnum AS \"Number\"\n, ap.amproc::pg_catalog.regprocedure AS \"Function\"\nFROM pg_catalog.pg_amproc ap\n  LEFT JOIN pg_catalog.pg_opfamily of ON of.oid = ap.amprocfamily\n  LEFT JOIN pg_catalog.pg_am am ON am.oid = of.opfmethod\n  LEFT JOIN pg_catalog.pg_namespace ns ON of.opfnamespace = ns.oid\n  LEFT JOIN pg_catalog.pg_proc p ON ap.amproc = p.oid\nORDER BY 1, 2,\n  ap.amproclefttype = ap.amprocrighttype DESC,\n  3, 4, 5;\n"
+  },
+  {
+    "cmd": "\\db",
+    "opts": "[+]",
+    "desc": "list tablespaces",
+    "query": "\nSELECT spcname AS \"Name\",\n  pg_catalog.pg_get_userbyid(spcowner) AS \"Owner\",\n  pg_catalog.pg_tablespace_location(oid) AS \"Location\"\nFROM pg_catalog.pg_tablespace\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\db+",
+    "opts": "[+]",
+    "desc": "list tablespaces",
+    "query": "\nSELECT spcname AS \"Name\",\n  pg_catalog.pg_get_userbyid(spcowner) AS \"Owner\",\n  pg_catalog.pg_tablespace_location(oid) AS \"Location\",\n  pg_catalog.array_to_string(spcacl, E'\\n') AS \"Access privileges\",\n  spcoptions AS \"Options\",\n  pg_catalog.pg_size_pretty(pg_catalog.pg_tablespace_size(oid)) AS \"Size\",\n  pg_catalog.shobj_description(oid, 'pg_tablespace') AS \"Description\"\nFROM pg_catalog.pg_tablespace\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dc",
+    "opts": "[S+]",
+    "desc": "list conversions",
+    "query": "\nSELECT n.nspname AS \"Schema\",\n       c.conname AS \"Name\",\n       pg_catalog.pg_encoding_to_char(c.conforencoding) AS \"Source\",\n       pg_catalog.pg_encoding_to_char(c.contoencoding) AS \"Destination\",\n       CASE WHEN c.condefault THEN 'yes'\n       ELSE 'no' END AS \"Default?\"\nFROM pg_catalog.pg_conversion c\n     JOIN pg_catalog.pg_namespace n ON n.oid = c.connamespace\nWHERE true\n  AND n.nspname <> 'pg_catalog'\n  AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_conversion_is_visible(c.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dcS",
+    "opts": "[S+]",
+    "desc": "list conversions",
+    "query": "\nSELECT n.nspname AS \"Schema\",\n       c.conname AS \"Name\",\n       pg_catalog.pg_encoding_to_char(c.conforencoding) AS \"Source\",\n       pg_catalog.pg_encoding_to_char(c.contoencoding) AS \"Destination\",\n       CASE WHEN c.condefault THEN 'yes'\n       ELSE 'no' END AS \"Default?\"\nFROM pg_catalog.pg_conversion c\n     JOIN pg_catalog.pg_namespace n ON n.oid = c.connamespace\nWHERE true\n  AND pg_catalog.pg_conversion_is_visible(c.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dcS+",
+    "opts": "[S+]",
+    "desc": "list conversions",
+    "query": "\nSELECT n.nspname AS \"Schema\",\n       c.conname AS \"Name\",\n       pg_catalog.pg_encoding_to_char(c.conforencoding) AS \"Source\",\n       pg_catalog.pg_encoding_to_char(c.contoencoding) AS \"Destination\",\n       CASE WHEN c.condefault THEN 'yes'\n       ELSE 'no' END AS \"Default?\",\n       d.description AS \"Description\"\nFROM pg_catalog.pg_conversion c\n     JOIN pg_catalog.pg_namespace n ON n.oid = c.connamespace\nLEFT JOIN pg_catalog.pg_description d ON d.classoid = c.tableoid\n          AND d.objoid = c.oid AND d.objsubid = 0\nWHERE true\n  AND pg_catalog.pg_conversion_is_visible(c.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dC",
+    "opts": "[+]",
+    "desc": "list casts",
+    "query": "\nSELECT pg_catalog.format_type(castsource, NULL) AS \"Source type\",\n       pg_catalog.format_type(casttarget, NULL) AS \"Target type\",\n       CASE WHEN c.castmethod = 'b' THEN '(binary coercible)'\n            WHEN c.castmethod = 'i' THEN '(with inout)'\n            ELSE p.proname\n       END AS \"Function\",\n       CASE WHEN c.castcontext = 'e' THEN 'no'\n            WHEN c.castcontext = 'a' THEN 'in assignment'\n            ELSE 'yes'\n       END AS \"Implicit?\"\nFROM pg_catalog.pg_cast c LEFT JOIN pg_catalog.pg_proc p\n     ON c.castfunc = p.oid\n     LEFT JOIN pg_catalog.pg_type ts\n     ON c.castsource = ts.oid\n     LEFT JOIN pg_catalog.pg_namespace ns\n     ON ns.oid = ts.typnamespace\n     LEFT JOIN pg_catalog.pg_type tt\n     ON c.casttarget = tt.oid\n     LEFT JOIN pg_catalog.pg_namespace nt\n     ON nt.oid = tt.typnamespace\nWHERE ( (true  AND pg_catalog.pg_type_is_visible(ts.oid)\n) OR (true  AND pg_catalog.pg_type_is_visible(tt.oid)\n) )\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dC+",
+    "opts": "[+]",
+    "desc": "list casts",
+    "query": "\nSELECT pg_catalog.format_type(castsource, NULL) AS \"Source type\",\n       pg_catalog.format_type(casttarget, NULL) AS \"Target type\",\n       CASE WHEN c.castmethod = 'b' THEN '(binary coercible)'\n            WHEN c.castmethod = 'i' THEN '(with inout)'\n            ELSE p.proname\n       END AS \"Function\",\n       CASE WHEN c.castcontext = 'e' THEN 'no'\n            WHEN c.castcontext = 'a' THEN 'in assignment'\n            ELSE 'yes'\n       END AS \"Implicit?\",\n       d.description AS \"Description\"\nFROM pg_catalog.pg_cast c LEFT JOIN pg_catalog.pg_proc p\n     ON c.castfunc = p.oid\n     LEFT JOIN pg_catalog.pg_type ts\n     ON c.castsource = ts.oid\n     LEFT JOIN pg_catalog.pg_namespace ns\n     ON ns.oid = ts.typnamespace\n     LEFT JOIN pg_catalog.pg_type tt\n     ON c.casttarget = tt.oid\n     LEFT JOIN pg_catalog.pg_namespace nt\n     ON nt.oid = tt.typnamespace\n     LEFT JOIN pg_catalog.pg_description d\n     ON d.classoid = c.tableoid AND d.objoid = c.oid AND d.objsubid = 0\nWHERE ( (true  AND pg_catalog.pg_type_is_visible(ts.oid)\n) OR (true  AND pg_catalog.pg_type_is_visible(tt.oid)\n) )\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dd",
+    "opts": "[S]",
+    "desc": "show object descriptions not displayed elsewhere",
+    "query": "\nSELECT DISTINCT tt.nspname AS \"Schema\", tt.name AS \"Name\", tt.object AS \"Object\", d.description AS \"Description\"\nFROM (\n  SELECT pgc.oid as oid, pgc.tableoid AS tableoid,\n  n.nspname as nspname,\n  CAST(pgc.conname AS pg_catalog.text) as name,  CAST('table constraint' AS pg_catalog.text) as object\n  FROM pg_catalog.pg_constraint pgc\n    JOIN pg_catalog.pg_class c ON c.oid = pgc.conrelid\n    LEFT JOIN pg_catalog.pg_namespace n     ON n.oid = c.relnamespace\nWHERE n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nUNION ALL\n  SELECT pgc.oid as oid, pgc.tableoid AS tableoid,\n  n.nspname as nspname,\n  CAST(pgc.conname AS pg_catalog.text) as name,  CAST('domain constraint' AS pg_catalog.text) as object\n  FROM pg_catalog.pg_constraint pgc\n    JOIN pg_catalog.pg_type t ON t.oid = pgc.contypid\n    LEFT JOIN pg_catalog.pg_namespace n     ON n.oid = t.typnamespace\nWHERE n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_type_is_visible(t.oid)\nUNION ALL\n  SELECT o.oid as oid, o.tableoid as tableoid,\n  n.nspname as nspname,\n  CAST(o.opcname AS pg_catalog.text) as name,\n  CAST('operator class' AS pg_catalog.text) as object\n  FROM pg_catalog.pg_opclass o\n    JOIN pg_catalog.pg_am am ON o.opcmethod = am.oid\n    JOIN pg_catalog.pg_namespace n ON n.oid = o.opcnamespace\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_opclass_is_visible(o.oid)\nUNION ALL\n  SELECT opf.oid as oid, opf.tableoid as tableoid,\n  n.nspname as nspname,\n  CAST(opf.opfname AS pg_catalog.text) AS name,\n  CAST('operator family' AS pg_catalog.text) as object\n  FROM pg_catalog.pg_opfamily opf\n    JOIN pg_catalog.pg_am am ON opf.opfmethod = am.oid\n    JOIN pg_catalog.pg_namespace n ON opf.opfnamespace = n.oid\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_opfamily_is_visible(opf.oid)\nUNION ALL\n  SELECT r.oid as oid, r.tableoid as tableoid,\n  n.nspname as nspname,\n  CAST(r.rulename AS pg_catalog.text) as name,  CAST('rule' AS pg_catalog.text) as object\n  FROM pg_catalog.pg_rewrite r\n       JOIN pg_catalog.pg_class c ON c.oid = r.ev_class\n       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n  WHERE r.rulename != '_RETURN'\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nUNION ALL\n  SELECT t.oid as oid, t.tableoid as tableoid,\n  n.nspname as nspname,\n  CAST(t.tgname AS pg_catalog.text) as name,  CAST('trigger' AS pg_catalog.text) as object\n  FROM pg_catalog.pg_trigger t\n       JOIN pg_catalog.pg_class c ON c.oid = t.tgrelid\n       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\n) AS tt\n  JOIN pg_catalog.pg_description d ON (tt.oid = d.objoid AND tt.tableoid = d.classoid AND d.objsubid = 0)\nORDER BY 1, 2, 3;\n"
+  },
+  {
+    "cmd": "\\ddS",
+    "opts": "[S]",
+    "desc": "show object descriptions not displayed elsewhere",
+    "query": "\nSELECT DISTINCT tt.nspname AS \"Schema\", tt.name AS \"Name\", tt.object AS \"Object\", d.description AS \"Description\"\nFROM (\n  SELECT pgc.oid as oid, pgc.tableoid AS tableoid,\n  n.nspname as nspname,\n  CAST(pgc.conname AS pg_catalog.text) as name,  CAST('table constraint' AS pg_catalog.text) as object\n  FROM pg_catalog.pg_constraint pgc\n    JOIN pg_catalog.pg_class c ON c.oid = pgc.conrelid\n    LEFT JOIN pg_catalog.pg_namespace n     ON n.oid = c.relnamespace\nWHERE pg_catalog.pg_table_is_visible(c.oid)\nUNION ALL\n  SELECT pgc.oid as oid, pgc.tableoid AS tableoid,\n  n.nspname as nspname,\n  CAST(pgc.conname AS pg_catalog.text) as name,  CAST('domain constraint' AS pg_catalog.text) as object\n  FROM pg_catalog.pg_constraint pgc\n    JOIN pg_catalog.pg_type t ON t.oid = pgc.contypid\n    LEFT JOIN pg_catalog.pg_namespace n     ON n.oid = t.typnamespace\nWHERE pg_catalog.pg_type_is_visible(t.oid)\nUNION ALL\n  SELECT o.oid as oid, o.tableoid as tableoid,\n  n.nspname as nspname,\n  CAST(o.opcname AS pg_catalog.text) as name,\n  CAST('operator class' AS pg_catalog.text) as object\n  FROM pg_catalog.pg_opclass o\n    JOIN pg_catalog.pg_am am ON o.opcmethod = am.oid\n    JOIN pg_catalog.pg_namespace n ON n.oid = o.opcnamespace\n  AND pg_catalog.pg_opclass_is_visible(o.oid)\nUNION ALL\n  SELECT opf.oid as oid, opf.tableoid as tableoid,\n  n.nspname as nspname,\n  CAST(opf.opfname AS pg_catalog.text) AS name,\n  CAST('operator family' AS pg_catalog.text) as object\n  FROM pg_catalog.pg_opfamily opf\n    JOIN pg_catalog.pg_am am ON opf.opfmethod = am.oid\n    JOIN pg_catalog.pg_namespace n ON opf.opfnamespace = n.oid\n  AND pg_catalog.pg_opfamily_is_visible(opf.oid)\nUNION ALL\n  SELECT r.oid as oid, r.tableoid as tableoid,\n  n.nspname as nspname,\n  CAST(r.rulename AS pg_catalog.text) as name,  CAST('rule' AS pg_catalog.text) as object\n  FROM pg_catalog.pg_rewrite r\n       JOIN pg_catalog.pg_class c ON c.oid = r.ev_class\n       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n  WHERE r.rulename != '_RETURN'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nUNION ALL\n  SELECT t.oid as oid, t.tableoid as tableoid,\n  n.nspname as nspname,\n  CAST(t.tgname AS pg_catalog.text) as name,  CAST('trigger' AS pg_catalog.text) as object\n  FROM pg_catalog.pg_trigger t\n       JOIN pg_catalog.pg_class c ON c.oid = t.tgrelid\n       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE pg_catalog.pg_table_is_visible(c.oid)\n) AS tt\n  JOIN pg_catalog.pg_description d ON (tt.oid = d.objoid AND tt.tableoid = d.classoid AND d.objsubid = 0)\nORDER BY 1, 2, 3;\n"
+  },
+  {
+    "cmd": "\\dD",
+    "opts": "[S+]",
+    "desc": "list domains",
+    "query": "\nSELECT n.nspname as \"Schema\",\n       t.typname as \"Name\",\n       pg_catalog.format_type(t.typbasetype, t.typtypmod) as \"Type\",\n       (SELECT c.collname FROM pg_catalog.pg_collation c, pg_catalog.pg_type bt\n        WHERE c.oid = t.typcollation AND bt.oid = t.typbasetype AND t.typcollation <> bt.typcollation) as \"Collation\",\n       CASE WHEN t.typnotnull THEN 'not null' END as \"Nullable\",\n       t.typdefault as \"Default\",\n       pg_catalog.array_to_string(ARRAY(\n         SELECT pg_catalog.pg_get_constraintdef(r.oid, true) FROM pg_catalog.pg_constraint r WHERE t.oid = r.contypid\n       ), ' ') as \"Check\"\nFROM pg_catalog.pg_type t\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\nWHERE t.typtype = 'd'\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_type_is_visible(t.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dDS",
+    "opts": "[S+]",
+    "desc": "list domains",
+    "query": "\nSELECT n.nspname as \"Schema\",\n       t.typname as \"Name\",\n       pg_catalog.format_type(t.typbasetype, t.typtypmod) as \"Type\",\n       (SELECT c.collname FROM pg_catalog.pg_collation c, pg_catalog.pg_type bt\n        WHERE c.oid = t.typcollation AND bt.oid = t.typbasetype AND t.typcollation <> bt.typcollation) as \"Collation\",\n       CASE WHEN t.typnotnull THEN 'not null' END as \"Nullable\",\n       t.typdefault as \"Default\",\n       pg_catalog.array_to_string(ARRAY(\n         SELECT pg_catalog.pg_get_constraintdef(r.oid, true) FROM pg_catalog.pg_constraint r WHERE t.oid = r.contypid\n       ), ' ') as \"Check\"\nFROM pg_catalog.pg_type t\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\nWHERE t.typtype = 'd'\n  AND pg_catalog.pg_type_is_visible(t.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dDS+",
+    "opts": "[S+]",
+    "desc": "list domains",
+    "query": "\nSELECT n.nspname as \"Schema\",\n       t.typname as \"Name\",\n       pg_catalog.format_type(t.typbasetype, t.typtypmod) as \"Type\",\n       (SELECT c.collname FROM pg_catalog.pg_collation c, pg_catalog.pg_type bt\n        WHERE c.oid = t.typcollation AND bt.oid = t.typbasetype AND t.typcollation <> bt.typcollation) as \"Collation\",\n       CASE WHEN t.typnotnull THEN 'not null' END as \"Nullable\",\n       t.typdefault as \"Default\",\n       pg_catalog.array_to_string(ARRAY(\n         SELECT pg_catalog.pg_get_constraintdef(r.oid, true) FROM pg_catalog.pg_constraint r WHERE t.oid = r.contypid\n       ), ' ') as \"Check\",\n  pg_catalog.array_to_string(t.typacl, E'\\n') AS \"Access privileges\",\n       d.description as \"Description\"\nFROM pg_catalog.pg_type t\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\n     LEFT JOIN pg_catalog.pg_description d ON d.classoid = t.tableoid AND d.objoid = t.oid AND d.objsubid = 0\nWHERE t.typtype = 'd'\n  AND pg_catalog.pg_type_is_visible(t.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\ddp",
+    "desc": "list default privileges",
+    "query": "\nSELECT pg_catalog.pg_get_userbyid(d.defaclrole) AS \"Owner\",\n  n.nspname AS \"Schema\",\n  CASE d.defaclobjtype WHEN 'r' THEN 'table' WHEN 'S' THEN 'sequence' WHEN 'f' THEN 'function' WHEN 'T' THEN 'type' WHEN 'n' THEN 'schema' END AS \"Type\",\n  pg_catalog.array_to_string(d.defaclacl, E'\\n') AS \"Access privileges\"\nFROM pg_catalog.pg_default_acl d\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = d.defaclnamespace\nORDER BY 1, 2, 3;\n"
+  },
+  {
+    "cmd": "\\dE",
+    "opts": "[S+]",
+    "desc": "list foreign tables",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE c.relkind IN ('f','')\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname !~ '^pg_toast'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dES",
+    "opts": "[S+]",
+    "desc": "list foreign tables",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE c.relkind IN ('s','f','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dES+",
+    "opts": "[S+]",
+    "desc": "list foreign tables",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\",\n  CASE c.relpersistence WHEN 'p' THEN 'permanent' WHEN 't' THEN 'temporary' WHEN 'u' THEN 'unlogged' END as \"Persistence\",\n  pg_catalog.pg_size_pretty(pg_catalog.pg_table_size(c.oid)) as \"Size\",\n  pg_catalog.obj_description(c.oid, 'pg_class') as \"Description\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE c.relkind IN ('s','f','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\des",
+    "opts": "[+]",
+    "desc": "list foreign servers",
+    "query": "\nSELECT s.srvname AS \"Name\",\n  pg_catalog.pg_get_userbyid(s.srvowner) AS \"Owner\",\n  f.fdwname AS \"Foreign-data wrapper\"\nFROM pg_catalog.pg_foreign_server s\n     JOIN pg_catalog.pg_foreign_data_wrapper f ON f.oid=s.srvfdw\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\des+",
+    "opts": "[+]",
+    "desc": "list foreign servers",
+    "query": "\nSELECT s.srvname AS \"Name\",\n  pg_catalog.pg_get_userbyid(s.srvowner) AS \"Owner\",\n  f.fdwname AS \"Foreign-data wrapper\",\n  pg_catalog.array_to_string(s.srvacl, E'\\n') AS \"Access privileges\",\n  s.srvtype AS \"Type\",\n  s.srvversion AS \"Version\",\n  CASE WHEN srvoptions IS NULL THEN '' ELSE   '(' || pg_catalog.array_to_string(ARRAY(SELECT   pg_catalog.quote_ident(option_name) ||  ' ' ||   pg_catalog.quote_literal(option_value)  FROM   pg_catalog.pg_options_to_table(srvoptions)),  ', ') || ')'   END AS \"FDW options\",\n  d.description AS \"Description\"\nFROM pg_catalog.pg_foreign_server s\n     JOIN pg_catalog.pg_foreign_data_wrapper f ON f.oid=s.srvfdw\nLEFT JOIN pg_catalog.pg_description d\n       ON d.classoid = s.tableoid AND d.objoid = s.oid AND d.objsubid = 0\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\det",
+    "opts": "[+]",
+    "desc": "list foreign tables",
+    "query": "\nSELECT n.nspname AS \"Schema\",\n  c.relname AS \"Table\",\n  s.srvname AS \"Server\"\nFROM pg_catalog.pg_foreign_table ft\n  INNER JOIN pg_catalog.pg_class c ON c.oid = ft.ftrelid\n  INNER JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n  INNER JOIN pg_catalog.pg_foreign_server s ON s.oid = ft.ftserver\nWHERE pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\det+",
+    "opts": "[+]",
+    "desc": "list foreign tables",
+    "query": "\nSELECT n.nspname AS \"Schema\",\n  c.relname AS \"Table\",\n  s.srvname AS \"Server\",\n CASE WHEN ftoptions IS NULL THEN '' ELSE   '(' || pg_catalog.array_to_string(ARRAY(SELECT   pg_catalog.quote_ident(option_name) ||  ' ' ||   pg_catalog.quote_literal(option_value)  FROM   pg_catalog.pg_options_to_table(ftoptions)),  ', ') || ')'   END AS \"FDW options\",\n  d.description AS \"Description\"\nFROM pg_catalog.pg_foreign_table ft\n  INNER JOIN pg_catalog.pg_class c ON c.oid = ft.ftrelid\n  INNER JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n  INNER JOIN pg_catalog.pg_foreign_server s ON s.oid = ft.ftserver\n   LEFT JOIN pg_catalog.pg_description d\n          ON d.classoid = c.tableoid AND d.objoid = c.oid AND d.objsubid = 0\nWHERE pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\deu",
+    "opts": "[+]",
+    "desc": "list user mappings",
+    "query": "\nSELECT um.srvname AS \"Server\",\n  um.usename AS \"User name\"\nFROM pg_catalog.pg_user_mappings um\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\deu+",
+    "opts": "[+]",
+    "desc": "list user mappings",
+    "query": "\nSELECT um.srvname AS \"Server\",\n  um.usename AS \"User name\",\n CASE WHEN umoptions IS NULL THEN '' ELSE   '(' || pg_catalog.array_to_string(ARRAY(SELECT   pg_catalog.quote_ident(option_name) ||  ' ' ||   pg_catalog.quote_literal(option_value)  FROM   pg_catalog.pg_options_to_table(umoptions)),  ', ') || ')'   END AS \"FDW options\"\nFROM pg_catalog.pg_user_mappings um\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dew",
+    "opts": "[+]",
+    "desc": "list foreign-data wrappers",
+    "query": "\nSELECT fdw.fdwname AS \"Name\",\n  pg_catalog.pg_get_userbyid(fdw.fdwowner) AS \"Owner\",\n  fdw.fdwhandler::pg_catalog.regproc AS \"Handler\",\n  fdw.fdwvalidator::pg_catalog.regproc AS \"Validator\"\nFROM pg_catalog.pg_foreign_data_wrapper fdw\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dew+",
+    "opts": "[+]",
+    "desc": "list foreign-data wrappers",
+    "query": "\nSELECT fdw.fdwname AS \"Name\",\n  pg_catalog.pg_get_userbyid(fdw.fdwowner) AS \"Owner\",\n  fdw.fdwhandler::pg_catalog.regproc AS \"Handler\",\n  fdw.fdwvalidator::pg_catalog.regproc AS \"Validator\",\n  pg_catalog.array_to_string(fdwacl, E'\\n') AS \"Access privileges\",\n CASE WHEN fdwoptions IS NULL THEN '' ELSE   '(' || pg_catalog.array_to_string(ARRAY(SELECT   pg_catalog.quote_ident(option_name) ||  ' ' ||   pg_catalog.quote_literal(option_value)  FROM   pg_catalog.pg_options_to_table(fdwoptions)),  ', ') || ')'   END AS \"FDW options\",\n  d.description AS \"Description\" \nFROM pg_catalog.pg_foreign_data_wrapper fdw\nLEFT JOIN pg_catalog.pg_description d\n       ON d.classoid = fdw.tableoid AND d.objoid = fdw.oid AND d.objsubid = 0\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\df",
+    "opts": "[anptw]",
+    "desc": "list [only agg/normal/procedure/trigger/window]",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  p.proname as \"Name\",\n  pg_catalog.pg_get_function_result(p.oid) as \"Result data type\",\n  pg_catalog.pg_get_function_arguments(p.oid) as \"Argument data types\",\n CASE p.prokind\n  WHEN 'a' THEN 'agg'\n  WHEN 'w' THEN 'window'\n  WHEN 'p' THEN 'proc'\n  ELSE 'func'\n END as \"Type\"\nFROM pg_catalog.pg_proc p\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\nWHERE pg_catalog.pg_function_is_visible(p.oid)\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\nORDER BY 1, 2, 4;\n"
+  },
+  {
+    "cmd": "\\dfa",
+    "opts": "[anptw]",
+    "desc": "list [only agg/normal/procedure/trigger/window]",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  p.proname as \"Name\",\n  pg_catalog.pg_get_function_result(p.oid) as \"Result data type\",\n  pg_catalog.pg_get_function_arguments(p.oid) as \"Argument data types\",\n CASE p.prokind\n  WHEN 'a' THEN 'agg'\n  WHEN 'w' THEN 'window'\n  WHEN 'p' THEN 'proc'\n  ELSE 'func'\n END as \"Type\"\nFROM pg_catalog.pg_proc p\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\nWHERE (\n       p.prokind = 'a'\n      )\n  AND pg_catalog.pg_function_is_visible(p.oid)\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\nORDER BY 1, 2, 4;\n"
+  },
+  {
+    "cmd": "\\dfan",
+    "opts": "[anptw]",
+    "desc": "list [only agg/normal/procedure/trigger/window]",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  p.proname as \"Name\",\n  pg_catalog.pg_get_function_result(p.oid) as \"Result data type\",\n  pg_catalog.pg_get_function_arguments(p.oid) as \"Argument data types\",\n CASE p.prokind\n  WHEN 'a' THEN 'agg'\n  WHEN 'w' THEN 'window'\n  WHEN 'p' THEN 'proc'\n  ELSE 'func'\n END as \"Type\"\nFROM pg_catalog.pg_proc p\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\nWHERE p.prokind <> 'p'\n      AND p.prorettype <> 'pg_catalog.trigger'::pg_catalog.regtype\n      AND p.prokind <> 'w'\n  AND pg_catalog.pg_function_is_visible(p.oid)\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\nORDER BY 1, 2, 4;\n"
+  },
+  {
+    "cmd": "\\dfanp",
+    "opts": "[anptw]",
+    "desc": "list [only agg/normal/procedure/trigger/window]",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  p.proname as \"Name\",\n  pg_catalog.pg_get_function_result(p.oid) as \"Result data type\",\n  pg_catalog.pg_get_function_arguments(p.oid) as \"Argument data types\",\n CASE p.prokind\n  WHEN 'a' THEN 'agg'\n  WHEN 'w' THEN 'window'\n  WHEN 'p' THEN 'proc'\n  ELSE 'func'\n END as \"Type\"\nFROM pg_catalog.pg_proc p\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\nWHERE p.prorettype <> 'pg_catalog.trigger'::pg_catalog.regtype\n      AND p.prokind <> 'w'\n  AND pg_catalog.pg_function_is_visible(p.oid)\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\nORDER BY 1, 2, 4;\n"
+  },
+  {
+    "cmd": "\\dfanpt",
+    "opts": "[anptw]",
+    "desc": "list [only agg/normal/procedure/trigger/window]",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  p.proname as \"Name\",\n  pg_catalog.pg_get_function_result(p.oid) as \"Result data type\",\n  pg_catalog.pg_get_function_arguments(p.oid) as \"Argument data types\",\n CASE p.prokind\n  WHEN 'a' THEN 'agg'\n  WHEN 'w' THEN 'window'\n  WHEN 'p' THEN 'proc'\n  ELSE 'func'\n END as \"Type\"\nFROM pg_catalog.pg_proc p\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\nWHERE p.prokind <> 'w'\n  AND pg_catalog.pg_function_is_visible(p.oid)\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\nORDER BY 1, 2, 4;\n"
+  },
+  {
+    "cmd": "\\dfanptw",
+    "opts": "[anptw]",
+    "desc": "list [only agg/normal/procedure/trigger/window]",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  p.proname as \"Name\",\n  pg_catalog.pg_get_function_result(p.oid) as \"Result data type\",\n  pg_catalog.pg_get_function_arguments(p.oid) as \"Argument data types\",\n CASE p.prokind\n  WHEN 'a' THEN 'agg'\n  WHEN 'w' THEN 'window'\n  WHEN 'p' THEN 'proc'\n  ELSE 'func'\n END as \"Type\"\nFROM pg_catalog.pg_proc p\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\nWHERE pg_catalog.pg_function_is_visible(p.oid)\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\nORDER BY 1, 2, 4;\n"
+  },
+  {
+    "cmd": "\\dF",
+    "opts": "[+]",
+    "desc": "list text search configurations",
+    "query": "\nSELECT\n   n.nspname as \"Schema\",\n   c.cfgname as \"Name\",\n   pg_catalog.obj_description(c.oid, 'pg_ts_config') as \"Description\"\nFROM pg_catalog.pg_ts_config c\nLEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.cfgnamespace\nWHERE pg_catalog.pg_ts_config_is_visible(c.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dF+",
+    "opts": "[+]",
+    "desc": "list text search configurations",
+    "query": "\nSELECT c.oid, c.cfgname,\n   n.nspname,\n   p.prsname,\n   np.nspname as pnspname\nFROM pg_catalog.pg_ts_config c\n   LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.cfgnamespace,\n pg_catalog.pg_ts_parser p\n   LEFT JOIN pg_catalog.pg_namespace np ON np.oid = p.prsnamespace\nWHERE  p.oid = c.cfgparser\n  AND pg_catalog.pg_ts_config_is_visible(c.oid)\nORDER BY 3, 2;\n"
+  },
+  {
+    "cmd": "\\dFd",
+    "opts": "[+]",
+    "desc": "list text search dictionaries",
+    "query": "\nSELECT\n  n.nspname as \"Schema\",\n  d.dictname as \"Name\",\n  pg_catalog.obj_description(d.oid, 'pg_ts_dict') as \"Description\"\nFROM pg_catalog.pg_ts_dict d\nLEFT JOIN pg_catalog.pg_namespace n ON n.oid = d.dictnamespace\nWHERE pg_catalog.pg_ts_dict_is_visible(d.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dFd+",
+    "opts": "[+]",
+    "desc": "list text search dictionaries",
+    "query": "\nSELECT\n  n.nspname as \"Schema\",\n  d.dictname as \"Name\",\n  ( SELECT COALESCE(nt.nspname, '(null)')::pg_catalog.text || '.' || t.tmplname FROM\n    pg_catalog.pg_ts_template t\n    LEFT JOIN pg_catalog.pg_namespace nt ON nt.oid = t.tmplnamespace\n    WHERE d.dicttemplate = t.oid ) AS  \"Template\",\n  d.dictinitoption as \"Init options\",\n  pg_catalog.obj_description(d.oid, 'pg_ts_dict') as \"Description\"\nFROM pg_catalog.pg_ts_dict d\nLEFT JOIN pg_catalog.pg_namespace n ON n.oid = d.dictnamespace\nWHERE pg_catalog.pg_ts_dict_is_visible(d.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dFp",
+    "opts": "[+]",
+    "desc": "list text search parsers",
+    "query": "\nSELECT\n  n.nspname as \"Schema\",\n  p.prsname as \"Name\",\n  pg_catalog.obj_description(p.oid, 'pg_ts_parser') as \"Description\"\nFROM pg_catalog.pg_ts_parser p\nLEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.prsnamespace\nWHERE pg_catalog.pg_ts_parser_is_visible(p.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dFp+",
+    "opts": "[+]",
+    "desc": "list text search parsers",
+    "query": "\nSELECT p.oid,\n  n.nspname,\n  p.prsname\nFROM pg_catalog.pg_ts_parser p\nLEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.prsnamespace\nWHERE pg_catalog.pg_ts_parser_is_visible(p.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dFt",
+    "opts": "[+]",
+    "desc": "list text search templates",
+    "query": "\nSELECT\n  n.nspname AS \"Schema\",\n  t.tmplname AS \"Name\",\n  pg_catalog.obj_description(t.oid, 'pg_ts_template') AS \"Description\"\nFROM pg_catalog.pg_ts_template t\nLEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.tmplnamespace\nWHERE pg_catalog.pg_ts_template_is_visible(t.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dFt+",
+    "opts": "[+]",
+    "desc": "list text search templates",
+    "query": "\nSELECT\n  n.nspname AS \"Schema\",\n  t.tmplname AS \"Name\",\n  t.tmplinit::pg_catalog.regproc AS \"Init\",\n  t.tmpllexize::pg_catalog.regproc AS \"Lexize\",\n  pg_catalog.obj_description(t.oid, 'pg_ts_template') AS \"Description\"\nFROM pg_catalog.pg_ts_template t\nLEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.tmplnamespace\nWHERE pg_catalog.pg_ts_template_is_visible(t.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dg",
+    "opts": "[S+]",
+    "desc": "list roles",
+    "query": "\nSELECT r.rolname, r.rolsuper, r.rolinherit,\n  r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,\n  r.rolconnlimit, r.rolvaliduntil,\n  ARRAY(SELECT b.rolname\n        FROM pg_catalog.pg_auth_members m\n        JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)\n        WHERE m.member = r.oid) as memberof\n, r.rolreplication\n, r.rolbypassrls\nFROM pg_catalog.pg_roles r\nWHERE r.rolname !~ '^pg_'\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dgS",
+    "opts": "[S+]",
+    "desc": "list roles",
+    "query": "\nSELECT r.rolname, r.rolsuper, r.rolinherit,\n  r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,\n  r.rolconnlimit, r.rolvaliduntil,\n  ARRAY(SELECT b.rolname\n        FROM pg_catalog.pg_auth_members m\n        JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)\n        WHERE m.member = r.oid) as memberof\n, r.rolreplication\n, r.rolbypassrls\nFROM pg_catalog.pg_roles r\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dgS+",
+    "opts": "[S+]",
+    "desc": "list roles",
+    "query": "\nSELECT r.rolname, r.rolsuper, r.rolinherit,\n  r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,\n  r.rolconnlimit, r.rolvaliduntil,\n  ARRAY(SELECT b.rolname\n        FROM pg_catalog.pg_auth_members m\n        JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)\n        WHERE m.member = r.oid) as memberof\n, pg_catalog.shobj_description(r.oid, 'pg_authid') AS description\n, r.rolreplication\n, r.rolbypassrls\nFROM pg_catalog.pg_roles r\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\di",
+    "opts": "[S+]",
+    "desc": "list indexes",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\",\n  c2.relname as \"Table\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\n     LEFT JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid\n     LEFT JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid\nWHERE c.relkind IN ('i','I','')\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname !~ '^pg_toast'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\diS",
+    "opts": "[S+]",
+    "desc": "list indexes",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\",\n  c2.relname as \"Table\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\n     LEFT JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid\n     LEFT JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid\nWHERE c.relkind IN ('i','I','s','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\diS+",
+    "opts": "[S+]",
+    "desc": "list indexes",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\",\n  c2.relname as \"Table\",\n  CASE c.relpersistence WHEN 'p' THEN 'permanent' WHEN 't' THEN 'temporary' WHEN 'u' THEN 'unlogged' END as \"Persistence\",\n  am.amname as \"Access method\",\n  pg_catalog.pg_size_pretty(pg_catalog.pg_table_size(c.oid)) as \"Size\",\n  pg_catalog.obj_description(c.oid, 'pg_class') as \"Description\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\n     LEFT JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid\n     LEFT JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid\nWHERE c.relkind IN ('i','I','s','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dl",
+    "desc": "list large objects, same as lo_list",
+    "query": "\nSELECT oid as \"ID\",\n  pg_catalog.pg_get_userbyid(lomowner) as \"Owner\",\n  pg_catalog.obj_description(oid, 'pg_largeobject') as \"Description\"\n  FROM pg_catalog.pg_largeobject_metadata   ORDER BY oid\n"
+  },
+  {
+    "cmd": "\\dL",
+    "opts": "[S+]",
+    "desc": "list procedural languages",
+    "query": "\nSELECT l.lanname AS \"Name\",\n       pg_catalog.pg_get_userbyid(l.lanowner) as \"Owner\",\n       l.lanpltrusted AS \"Trusted\",\n       d.description AS \"Description\"\nFROM pg_catalog.pg_language l\nLEFT JOIN pg_catalog.pg_description d\n  ON d.classoid = l.tableoid AND d.objoid = l.oid\n  AND d.objsubid = 0\nWHERE l.lanplcallfoid != 0\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dLS",
+    "opts": "[S+]",
+    "desc": "list procedural languages",
+    "query": "\nSELECT l.lanname AS \"Name\",\n       pg_catalog.pg_get_userbyid(l.lanowner) as \"Owner\",\n       l.lanpltrusted AS \"Trusted\",\n       d.description AS \"Description\"\nFROM pg_catalog.pg_language l\nLEFT JOIN pg_catalog.pg_description d\n  ON d.classoid = l.tableoid AND d.objoid = l.oid\n  AND d.objsubid = 0\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dLS+",
+    "opts": "[S+]",
+    "desc": "list procedural languages",
+    "query": "\nSELECT l.lanname AS \"Name\",\n       pg_catalog.pg_get_userbyid(l.lanowner) as \"Owner\",\n       l.lanpltrusted AS \"Trusted\",\n       NOT l.lanispl AS \"Internal language\",\n       l.lanplcallfoid::pg_catalog.regprocedure AS \"Call handler\",\n       l.lanvalidator::pg_catalog.regprocedure AS \"Validator\",\n       l.laninline::pg_catalog.regprocedure AS \"Inline handler\",\n       pg_catalog.array_to_string(l.lanacl, E'\\n') AS \"Access privileges\",\n       d.description AS \"Description\"\nFROM pg_catalog.pg_language l\nLEFT JOIN pg_catalog.pg_description d\n  ON d.classoid = l.tableoid AND d.objoid = l.oid\n  AND d.objsubid = 0\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dm",
+    "opts": "[S+]",
+    "desc": "list materialized views",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\nWHERE c.relkind IN ('m','')\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname !~ '^pg_toast'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dmS",
+    "opts": "[S+]",
+    "desc": "list materialized views",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\nWHERE c.relkind IN ('m','s','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dmS+",
+    "opts": "[S+]",
+    "desc": "list materialized views",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\",\n  CASE c.relpersistence WHEN 'p' THEN 'permanent' WHEN 't' THEN 'temporary' WHEN 'u' THEN 'unlogged' END as \"Persistence\",\n  am.amname as \"Access method\",\n  pg_catalog.pg_size_pretty(pg_catalog.pg_table_size(c.oid)) as \"Size\",\n  pg_catalog.obj_description(c.oid, 'pg_class') as \"Description\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\nWHERE c.relkind IN ('m','s','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dn",
+    "opts": "[S+]",
+    "desc": "list schemas",
+    "query": "\nSELECT n.nspname AS \"Name\",\n  pg_catalog.pg_get_userbyid(n.nspowner) AS \"Owner\"\nFROM pg_catalog.pg_namespace n\nWHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dnS",
+    "opts": "[S+]",
+    "desc": "list schemas",
+    "query": "\nSELECT n.nspname AS \"Name\",\n  pg_catalog.pg_get_userbyid(n.nspowner) AS \"Owner\"\nFROM pg_catalog.pg_namespace n\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dnS+",
+    "opts": "[S+]",
+    "desc": "list schemas",
+    "query": "\nSELECT n.nspname AS \"Name\",\n  pg_catalog.pg_get_userbyid(n.nspowner) AS \"Owner\",\n  pg_catalog.array_to_string(n.nspacl, E'\\n') AS \"Access privileges\",\n  pg_catalog.obj_description(n.oid, 'pg_namespace') AS \"Description\"\nFROM pg_catalog.pg_namespace n\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\do",
+    "opts": "[S+]",
+    "desc": "list operators",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  o.oprname AS \"Name\",\n  CASE WHEN o.oprkind='l' THEN NULL ELSE pg_catalog.format_type(o.oprleft, NULL) END AS \"Left arg type\",\n  CASE WHEN o.oprkind='r' THEN NULL ELSE pg_catalog.format_type(o.oprright, NULL) END AS \"Right arg type\",\n  pg_catalog.format_type(o.oprresult, NULL) AS \"Result type\",\n  coalesce(pg_catalog.obj_description(o.oid, 'pg_operator'),\n           pg_catalog.obj_description(o.oprcode, 'pg_proc')) AS \"Description\"\nFROM pg_catalog.pg_operator o\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = o.oprnamespace\nWHERE n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_operator_is_visible(o.oid)\nORDER BY 1, 2, 3, 4;\n"
+  },
+  {
+    "cmd": "\\doS",
+    "opts": "[S+]",
+    "desc": "list operators",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  o.oprname AS \"Name\",\n  CASE WHEN o.oprkind='l' THEN NULL ELSE pg_catalog.format_type(o.oprleft, NULL) END AS \"Left arg type\",\n  CASE WHEN o.oprkind='r' THEN NULL ELSE pg_catalog.format_type(o.oprright, NULL) END AS \"Right arg type\",\n  pg_catalog.format_type(o.oprresult, NULL) AS \"Result type\",\n  coalesce(pg_catalog.obj_description(o.oid, 'pg_operator'),\n           pg_catalog.obj_description(o.oprcode, 'pg_proc')) AS \"Description\"\nFROM pg_catalog.pg_operator o\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = o.oprnamespace\nWHERE pg_catalog.pg_operator_is_visible(o.oid)\nORDER BY 1, 2, 3, 4;\n"
+  },
+  {
+    "cmd": "\\doS+",
+    "opts": "[S+]",
+    "desc": "list operators",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  o.oprname AS \"Name\",\n  CASE WHEN o.oprkind='l' THEN NULL ELSE pg_catalog.format_type(o.oprleft, NULL) END AS \"Left arg type\",\n  CASE WHEN o.oprkind='r' THEN NULL ELSE pg_catalog.format_type(o.oprright, NULL) END AS \"Right arg type\",\n  pg_catalog.format_type(o.oprresult, NULL) AS \"Result type\",\n  o.oprcode AS \"Function\",\n  coalesce(pg_catalog.obj_description(o.oid, 'pg_operator'),\n           pg_catalog.obj_description(o.oprcode, 'pg_proc')) AS \"Description\"\nFROM pg_catalog.pg_operator o\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = o.oprnamespace\nWHERE pg_catalog.pg_operator_is_visible(o.oid)\nORDER BY 1, 2, 3, 4;\n"
+  },
+  {
+    "cmd": "\\dO",
+    "opts": "[S+]",
+    "desc": "list collations",
+    "query": "\nSELECT n.nspname AS \"Schema\",\n       c.collname AS \"Name\",\n       c.collcollate AS \"Collate\",\n       c.collctype AS \"Ctype\",\n       CASE c.collprovider WHEN 'd' THEN 'default' WHEN 'c' THEN 'libc' WHEN 'i' THEN 'icu' END AS \"Provider\",\n       CASE WHEN c.collisdeterministic THEN 'yes' ELSE 'no' END AS \"Deterministic?\"\nFROM pg_catalog.pg_collation c, pg_catalog.pg_namespace n\nWHERE n.oid = c.collnamespace\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\n      AND c.collencoding IN (-1, pg_catalog.pg_char_to_encoding(pg_catalog.getdatabaseencoding()))\n  AND pg_catalog.pg_collation_is_visible(c.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dOS",
+    "opts": "[S+]",
+    "desc": "list collations",
+    "query": "\nSELECT n.nspname AS \"Schema\",\n       c.collname AS \"Name\",\n       c.collcollate AS \"Collate\",\n       c.collctype AS \"Ctype\",\n       CASE c.collprovider WHEN 'd' THEN 'default' WHEN 'c' THEN 'libc' WHEN 'i' THEN 'icu' END AS \"Provider\",\n       CASE WHEN c.collisdeterministic THEN 'yes' ELSE 'no' END AS \"Deterministic?\"\nFROM pg_catalog.pg_collation c, pg_catalog.pg_namespace n\nWHERE n.oid = c.collnamespace\n      AND c.collencoding IN (-1, pg_catalog.pg_char_to_encoding(pg_catalog.getdatabaseencoding()))\n  AND pg_catalog.pg_collation_is_visible(c.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dOS+",
+    "opts": "[S+]",
+    "desc": "list collations",
+    "query": "\nSELECT n.nspname AS \"Schema\",\n       c.collname AS \"Name\",\n       c.collcollate AS \"Collate\",\n       c.collctype AS \"Ctype\",\n       CASE c.collprovider WHEN 'd' THEN 'default' WHEN 'c' THEN 'libc' WHEN 'i' THEN 'icu' END AS \"Provider\",\n       CASE WHEN c.collisdeterministic THEN 'yes' ELSE 'no' END AS \"Deterministic?\",\n       pg_catalog.obj_description(c.oid, 'pg_collation') AS \"Description\"\nFROM pg_catalog.pg_collation c, pg_catalog.pg_namespace n\nWHERE n.oid = c.collnamespace\n      AND c.collencoding IN (-1, pg_catalog.pg_char_to_encoding(pg_catalog.getdatabaseencoding()))\n  AND pg_catalog.pg_collation_is_visible(c.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dp",
+    "desc": "list table, view, and sequence access privileges",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'S' THEN 'sequence' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' END as \"Type\",\n  pg_catalog.array_to_string(c.relacl, E'\\n') AS \"Access privileges\",\n  pg_catalog.array_to_string(ARRAY(\n    SELECT attname || E':\\n  ' || pg_catalog.array_to_string(attacl, E'\\n  ')\n    FROM pg_catalog.pg_attribute a\n    WHERE attrelid = c.oid AND NOT attisdropped AND attacl IS NOT NULL\n  ), E'\\n') AS \"Column privileges\",\n  pg_catalog.array_to_string(ARRAY(\n    SELECT polname\n    || CASE WHEN NOT polpermissive THEN\n       E' (RESTRICTIVE)'\n       ELSE '' END\n    || CASE WHEN polcmd != '*' THEN\n           E' (' || polcmd || E'):'\n       ELSE E':'\n       END\n    || CASE WHEN polqual IS NOT NULL THEN\n           E'\\n  (u): ' || pg_catalog.pg_get_expr(polqual, polrelid)\n       ELSE E''\n       END\n    || CASE WHEN polwithcheck IS NOT NULL THEN\n           E'\\n  (c): ' || pg_catalog.pg_get_expr(polwithcheck, polrelid)\n       ELSE E''\n       END    || CASE WHEN polroles <> '{0}' THEN\n           E'\\n  to: ' || pg_catalog.array_to_string(\n               ARRAY(\n                   SELECT rolname\n                   FROM pg_catalog.pg_roles\n                   WHERE oid = ANY (polroles)\n                   ORDER BY 1\n               ), E', ')\n       ELSE E''\n       END\n    FROM pg_catalog.pg_policy pol\n    WHERE polrelid = c.oid), E'\\n')\n    AS \"Policies\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE c.relkind IN ('r','v','m','S','f','p')\n  AND n.nspname !~ '^pg_' AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dP",
+    "opts": "[itn+]",
+    "desc": "list [only index/table] partitioned relations [n=nested]",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\",\n  CASE c.relkind WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n c2.oid::pg_catalog.regclass as \"Table\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid\n     LEFT JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid\nWHERE c.relkind IN ('p','I','')\n AND NOT c.relispartition\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname !~ '^pg_toast'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY \"Schema\", \"Type\" DESC, \"Name\";\n"
+  },
+  {
+    "cmd": "\\dPi",
+    "opts": "[itn+]",
+    "desc": "list [only index/table] partitioned relations [n=nested]",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\",\n c2.oid::pg_catalog.regclass as \"Table\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid\n     LEFT JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid\nWHERE c.relkind IN ('I','')\n AND NOT c.relispartition\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname !~ '^pg_toast'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY \"Schema\", \"Name\";\n"
+  },
+  {
+    "cmd": "\\dPit",
+    "opts": "[itn+]",
+    "desc": "list [only index/table] partitioned relations [n=nested]",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\",\n  CASE c.relkind WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n c2.oid::pg_catalog.regclass as \"Table\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid\n     LEFT JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid\nWHERE c.relkind IN ('p','I','')\n AND NOT c.relispartition\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname !~ '^pg_toast'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY \"Schema\", \"Type\" DESC, \"Name\";\n"
+  },
+  {
+    "cmd": "\\dPitn",
+    "opts": "[itn+]",
+    "desc": "list [only index/table] partitioned relations [n=nested]",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\",\n  CASE c.relkind WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  inh.inhparent::pg_catalog.regclass as \"Parent name\",\n c2.oid::pg_catalog.regclass as \"Table\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid\n     LEFT JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid\n     LEFT JOIN pg_catalog.pg_inherits inh ON c.oid = inh.inhrelid\nWHERE c.relkind IN ('p','I','')\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname !~ '^pg_toast'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY \"Schema\", \"Type\" DESC, \"Parent name\" NULLS FIRST, \"Name\";\n"
+  },
+  {
+    "cmd": "\\dPitn+",
+    "opts": "[itn+]",
+    "desc": "list [only index/table] partitioned relations [n=nested]",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\",\n  CASE c.relkind WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  inh.inhparent::pg_catalog.regclass as \"Parent name\",\n c2.oid::pg_catalog.regclass as \"Table\",\n  s.dps as \"Leaf partition size\",\n  s.tps as \"Total size\",\n  pg_catalog.obj_description(c.oid, 'pg_class') as \"Description\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid\n     LEFT JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid\n     LEFT JOIN pg_catalog.pg_inherits inh ON c.oid = inh.inhrelid,\n     LATERAL (SELECT pg_catalog.pg_size_pretty(sum(\n                 CASE WHEN ppt.isleaf AND ppt.level = 1\n                      THEN pg_catalog.pg_table_size(ppt.relid) ELSE 0 END)) AS dps,\n                     pg_catalog.pg_size_pretty(sum(pg_catalog.pg_table_size(ppt.relid))) AS tps\n              FROM pg_catalog.pg_partition_tree(c.oid) ppt) s\nWHERE c.relkind IN ('p','I','')\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname !~ '^pg_toast'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY \"Schema\", \"Type\" DESC, \"Parent name\" NULLS FIRST, \"Name\";\n"
+  },
+  {
+    "cmd": "\\drds",
+    "desc": "list per-database role settings",
+    "query": "\nSELECT rolname AS \"Role\", datname AS \"Database\",\npg_catalog.array_to_string(setconfig, E'\\n') AS \"Settings\"\nFROM pg_catalog.pg_db_role_setting s\nLEFT JOIN pg_catalog.pg_database d ON d.oid = setdatabase\nLEFT JOIN pg_catalog.pg_roles r ON r.oid = setrole\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dRp",
+    "opts": "[+]",
+    "desc": "list replication publications",
+    "query": "\nSELECT pubname AS \"Name\",\n  pg_catalog.pg_get_userbyid(pubowner) AS \"Owner\",\n  puballtables AS \"All tables\",\n  pubinsert AS \"Inserts\",\n  pubupdate AS \"Updates\",\n  pubdelete AS \"Deletes\",\n  pubtruncate AS \"Truncates\"\nFROM pg_catalog.pg_publication\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dRs",
+    "opts": "[+]",
+    "desc": "list replication subscriptions",
+    "query": "\nSELECT subname AS \"Name\"\n,  pg_catalog.pg_get_userbyid(subowner) AS \"Owner\"\n,  subenabled AS \"Enabled\"\n,  subpublications AS \"Publication\"\nFROM pg_catalog.pg_subscription\nWHERE subdbid = (SELECT oid\n                 FROM pg_catalog.pg_database\n                 WHERE datname = pg_catalog.current_database())ORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dRs+",
+    "opts": "[+]",
+    "desc": "list replication subscriptions",
+    "query": "\nSELECT subname AS \"Name\"\n,  pg_catalog.pg_get_userbyid(subowner) AS \"Owner\"\n,  subenabled AS \"Enabled\"\n,  subpublications AS \"Publication\"\n,  subsynccommit AS \"Synchronous commit\"\n,  subconninfo AS \"Conninfo\"\nFROM pg_catalog.pg_subscription\nWHERE subdbid = (SELECT oid\n                 FROM pg_catalog.pg_database\n                 WHERE datname = pg_catalog.current_database())ORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\ds",
+    "opts": "[S+]",
+    "desc": "list sequences",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE c.relkind IN ('S','')\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname !~ '^pg_toast'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dsS",
+    "opts": "[S+]",
+    "desc": "list sequences",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE c.relkind IN ('S','s','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dsS+",
+    "opts": "[S+]",
+    "desc": "list sequences",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\",\n  CASE c.relpersistence WHEN 'p' THEN 'permanent' WHEN 't' THEN 'temporary' WHEN 'u' THEN 'unlogged' END as \"Persistence\",\n  pg_catalog.pg_size_pretty(pg_catalog.pg_table_size(c.oid)) as \"Size\",\n  pg_catalog.obj_description(c.oid, 'pg_class') as \"Description\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE c.relkind IN ('S','s','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dt",
+    "opts": "[S+]",
+    "desc": "list tables",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\nWHERE c.relkind IN ('r','p','')\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname !~ '^pg_toast'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dtS",
+    "opts": "[S+]",
+    "desc": "list tables",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\nWHERE c.relkind IN ('r','p','t','s','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dtS+",
+    "opts": "[S+]",
+    "desc": "list tables",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\",\n  CASE c.relpersistence WHEN 'p' THEN 'permanent' WHEN 't' THEN 'temporary' WHEN 'u' THEN 'unlogged' END as \"Persistence\",\n  am.amname as \"Access method\",\n  pg_catalog.pg_size_pretty(pg_catalog.pg_table_size(c.oid)) as \"Size\",\n  pg_catalog.obj_description(c.oid, 'pg_class') as \"Description\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n     LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam\nWHERE c.relkind IN ('r','p','t','s','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dT",
+    "opts": "[S+]",
+    "desc": "list data types",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  pg_catalog.format_type(t.oid, NULL) AS \"Name\",\n  pg_catalog.obj_description(t.oid, 'pg_type') as \"Description\"\nFROM pg_catalog.pg_type t\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\nWHERE (t.typrelid = 0 OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid))\n  AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type el WHERE el.oid = t.typelem AND el.typarray = t.oid)\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_type_is_visible(t.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dTS",
+    "opts": "[S+]",
+    "desc": "list data types",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  pg_catalog.format_type(t.oid, NULL) AS \"Name\",\n  pg_catalog.obj_description(t.oid, 'pg_type') as \"Description\"\nFROM pg_catalog.pg_type t\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\nWHERE (t.typrelid = 0 OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid))\n  AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type el WHERE el.oid = t.typelem AND el.typarray = t.oid)\n  AND pg_catalog.pg_type_is_visible(t.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dTS+",
+    "opts": "[S+]",
+    "desc": "list data types",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  pg_catalog.format_type(t.oid, NULL) AS \"Name\",\n  t.typname AS \"Internal name\",\n  CASE WHEN t.typrelid != 0\n      THEN CAST('tuple' AS pg_catalog.text)\n    WHEN t.typlen < 0\n      THEN CAST('var' AS pg_catalog.text)\n    ELSE CAST(t.typlen AS pg_catalog.text)\n  END AS \"Size\",\n  pg_catalog.array_to_string(\n      ARRAY(\n          SELECT e.enumlabel\n          FROM pg_catalog.pg_enum e\n          WHERE e.enumtypid = t.oid\n          ORDER BY e.enumsortorder\n      ),\n      E'\\n'\n  ) AS \"Elements\",\n  pg_catalog.pg_get_userbyid(t.typowner) AS \"Owner\",\npg_catalog.array_to_string(t.typacl, E'\\n') AS \"Access privileges\",\n    pg_catalog.obj_description(t.oid, 'pg_type') as \"Description\"\nFROM pg_catalog.pg_type t\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace\nWHERE (t.typrelid = 0 OR (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c WHERE c.oid = t.typrelid))\n  AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type el WHERE el.oid = t.typelem AND el.typarray = t.oid)\n  AND pg_catalog.pg_type_is_visible(t.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\du",
+    "opts": "[S+]",
+    "desc": "list roles",
+    "query": "\nSELECT r.rolname, r.rolsuper, r.rolinherit,\n  r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,\n  r.rolconnlimit, r.rolvaliduntil,\n  ARRAY(SELECT b.rolname\n        FROM pg_catalog.pg_auth_members m\n        JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)\n        WHERE m.member = r.oid) as memberof\n, r.rolreplication\n, r.rolbypassrls\nFROM pg_catalog.pg_roles r\nWHERE r.rolname !~ '^pg_'\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\duS",
+    "opts": "[S+]",
+    "desc": "list roles",
+    "query": "\nSELECT r.rolname, r.rolsuper, r.rolinherit,\n  r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,\n  r.rolconnlimit, r.rolvaliduntil,\n  ARRAY(SELECT b.rolname\n        FROM pg_catalog.pg_auth_members m\n        JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)\n        WHERE m.member = r.oid) as memberof\n, r.rolreplication\n, r.rolbypassrls\nFROM pg_catalog.pg_roles r\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\duS+",
+    "opts": "[S+]",
+    "desc": "list roles",
+    "query": "\nSELECT r.rolname, r.rolsuper, r.rolinherit,\n  r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,\n  r.rolconnlimit, r.rolvaliduntil,\n  ARRAY(SELECT b.rolname\n        FROM pg_catalog.pg_auth_members m\n        JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)\n        WHERE m.member = r.oid) as memberof\n, pg_catalog.shobj_description(r.oid, 'pg_authid') AS description\n, r.rolreplication\n, r.rolbypassrls\nFROM pg_catalog.pg_roles r\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dv",
+    "opts": "[S+]",
+    "desc": "list views",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE c.relkind IN ('v','')\n      AND n.nspname <> 'pg_catalog'\n      AND n.nspname !~ '^pg_toast'\n      AND n.nspname <> 'information_schema'\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dvS",
+    "opts": "[S+]",
+    "desc": "list views",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE c.relkind IN ('v','s','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dvS+",
+    "opts": "[S+]",
+    "desc": "list views",
+    "query": "\nSELECT n.nspname as \"Schema\",\n  c.relname as \"Name\",\n  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 't' THEN 'TOAST table' WHEN 'f' THEN 'foreign table' WHEN 'p' THEN 'partitioned table' WHEN 'I' THEN 'partitioned index' END as \"Type\",\n  pg_catalog.pg_get_userbyid(c.relowner) as \"Owner\",\n  CASE c.relpersistence WHEN 'p' THEN 'permanent' WHEN 't' THEN 'temporary' WHEN 'u' THEN 'unlogged' END as \"Persistence\",\n  pg_catalog.pg_size_pretty(pg_catalog.pg_table_size(c.oid)) as \"Size\",\n  pg_catalog.obj_description(c.oid, 'pg_class') as \"Description\"\nFROM pg_catalog.pg_class c\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\nWHERE c.relkind IN ('v','s','')\n  AND pg_catalog.pg_table_is_visible(c.oid)\nORDER BY 1,2;\n"
+  },
+  {
+    "cmd": "\\dx",
+    "opts": "[+]",
+    "desc": "list extensions",
+    "query": "\nSELECT e.extname AS \"Name\", e.extversion AS \"Version\", n.nspname AS \"Schema\", c.description AS \"Description\"\nFROM pg_catalog.pg_extension e LEFT JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace LEFT JOIN pg_catalog.pg_description c ON c.objoid = e.oid AND c.classoid = 'pg_catalog.pg_extension'::pg_catalog.regclass\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dx+",
+    "opts": "[+]",
+    "desc": "list extensions",
+    "query": "\nSELECT e.extname, e.oid\nFROM pg_catalog.pg_extension e\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\dX",
+    "desc": "list extended statistics",
+    "query": "\nSELECT \nes.stxnamespace::pg_catalog.regnamespace::pg_catalog.text AS \"Schema\", \nes.stxname AS \"Name\", \npg_catalog.format('%s FROM %s', \n  (SELECT pg_catalog.string_agg(pg_catalog.quote_ident(a.attname),', ') \n   FROM pg_catalog.unnest(es.stxkeys) s(attnum) \n   JOIN pg_catalog.pg_attribute a \n   ON (es.stxrelid = a.attrelid \n   AND a.attnum = s.attnum \n   AND NOT a.attisdropped)), \nes.stxrelid::pg_catalog.regclass) AS \"Definition\",\nCASE WHEN 'd' = any(es.stxkind) THEN 'defined' \nEND AS \"Ndistinct\", \nCASE WHEN 'f' = any(es.stxkind) THEN 'defined' \nEND AS \"Dependencies\",\nCASE WHEN 'm' = any(es.stxkind) THEN 'defined' \nEND AS \"MCV\"  \nFROM pg_catalog.pg_statistic_ext es \nWHERE pg_catalog.pg_statistics_obj_is_visible(es.oid)\nORDER BY 1, 2;\n"
+  },
+  {
+    "cmd": "\\dy",
+    "opts": "[+]",
+    "desc": "list event triggers",
+    "query": "\nSELECT evtname as \"Name\", evtevent as \"Event\", pg_catalog.pg_get_userbyid(e.evtowner) as \"Owner\",\n case evtenabled when 'O' then 'enabled'  when 'R' then 'replica'  when 'A' then 'always'  when 'D' then 'disabled' end as \"Enabled\",\n e.evtfoid::pg_catalog.regproc as \"Function\", pg_catalog.array_to_string(array(select x from pg_catalog.unnest(evttags) as t(x)), ', ') as \"Tags\"\nFROM pg_catalog.pg_event_trigger e ORDER BY 1\n"
+  },
+  {
+    "cmd": "\\dy+",
+    "opts": "[+]",
+    "desc": "list event triggers",
+    "query": "\nSELECT evtname as \"Name\", evtevent as \"Event\", pg_catalog.pg_get_userbyid(e.evtowner) as \"Owner\",\n case evtenabled when 'O' then 'enabled'  when 'R' then 'replica'  when 'A' then 'always'  when 'D' then 'disabled' end as \"Enabled\",\n e.evtfoid::pg_catalog.regproc as \"Function\", pg_catalog.array_to_string(array(select x from pg_catalog.unnest(evttags) as t(x)), ', ') as \"Tags\",\npg_catalog.obj_description(e.oid, 'pg_event_trigger') as \"Description\"\nFROM pg_catalog.pg_event_trigger e ORDER BY 1\n"
+  },
+  {
+    "cmd": "\\l",
+    "opts": "[+]",
+    "desc": "list databases",
+    "query": "\nSELECT d.datname as \"Name\",\n       pg_catalog.pg_get_userbyid(d.datdba) as \"Owner\",\n       pg_catalog.pg_encoding_to_char(d.encoding) as \"Encoding\",\n       d.datcollate as \"Collate\",\n       d.datctype as \"Ctype\",\n       pg_catalog.array_to_string(d.datacl, E'\\n') AS \"Access privileges\"\nFROM pg_catalog.pg_database d\nORDER BY 1;\n"
+  },
+  {
+    "cmd": "\\l+",
+    "opts": "[+]",
+    "desc": "list databases",
+    "query": "\nSELECT d.datname as \"Name\",\n       pg_catalog.pg_get_userbyid(d.datdba) as \"Owner\",\n       pg_catalog.pg_encoding_to_char(d.encoding) as \"Encoding\",\n       d.datcollate as \"Collate\",\n       d.datctype as \"Ctype\",\n       pg_catalog.array_to_string(d.datacl, E'\\n') AS \"Access privileges\",\n       CASE WHEN pg_catalog.has_database_privilege(d.datname, 'CONNECT')\n            THEN pg_catalog.pg_size_pretty(pg_catalog.pg_database_size(d.datname))\n            ELSE 'No Access'\n       END as \"Size\",\n       t.spcname as \"Tablespace\",\n       pg_catalog.shobj_description(d.oid, 'pg_database') as \"Description\"\nFROM pg_catalog.pg_database d\n  JOIN pg_catalog.pg_tablespace t on d.dattablespace = t.oid\nORDER BY 1;\n"
+  }
+]

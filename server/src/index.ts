@@ -11,7 +11,7 @@ import { DBSConnectionInfo, getElectronConfig, OnServerReadyCallback, ROOT_DIR }
 
 
 export const API_PATH = "/api";
-
+import { COMMANDS, getPSQLQueries } from "./getPSQLQueries"
 
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100mb" }));
@@ -114,7 +114,6 @@ const io = new Server(http, {
 
 export const connMgr = new ConnectionManager(http, app, connectionChecker.withOrigin);
 
-
 const startProstgles = async (con = DBS_CONNECTION_INFO) => {
   try {
     
@@ -145,16 +144,22 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
     
     await testDBConnection(con as any, true);
 
+    /**
+     * Manual process
+     */
+    // await getPSQLQueries(con);
+
     const auth = getAuth(app);
+    const dbConnection = {
+      connectionTimeoutMillis: 1000, 
+      host: con.db_host!,
+      port: +con.db_port! || 5432,
+      database: con.db_name!,
+      user: con.db_user!,
+      password:  con.db_pass!,
+    };
     await prostgles<DBSchemaGenerated>({
-      dbConnection: {
-        connectionTimeoutMillis: 1000, 
-        host: con.db_host!,
-        port: +con.db_port! || 5432,
-        database: con.db_name!,
-        user: con.db_user!,
-        password:  con.db_pass!,
-      },
+      dbConnection,
       sqlFilePath: path.join(ROOT_DIR+'/src/init.sql'),
       io,
       tsGeneratedTypesDir: path.join(ROOT_DIR + '/../commonTypes/'),
@@ -162,6 +167,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
       onSocketConnect: async ({ socket, dbo, db, getUser }) => {
         
         const user = await getUser();
+        
         const sid = user?.sid;
         if(sid){
           dbo.sessions.update({ id: sid }, { is_connected: true })
@@ -223,6 +229,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
       joins: "inferred",
       onReady: async (db, _db: DB) => {
         // db.backups.update({}, {restore_options: { "clean": true }});
+
 
         await insertStateDatabase(db, _db, con);
 
@@ -345,7 +352,12 @@ try {
   installedPrograms = undefined;
 }
 
+if(installedPrograms?.psql){
+
+}
+
 import type { ProstglesInitState, ServerState } from "../../commonTypes/electronInit";
+import { fileURLToPath } from "url";
 const getInitState = (): ProstglesInitState  => ({ // : ProstglesInitState 
   isElectron: false,
   ...getElectronConfig?.(),
