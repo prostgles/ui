@@ -93,16 +93,21 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
       `;
         }
         await (0, testDBConnection_1.testDBConnection)(con, true);
+        /**
+         * Manual process
+         */
+        // await getPSQLQueries(con);
         const auth = (0, authConfig_1.getAuth)(app);
+        const dbConnection = {
+            connectionTimeoutMillis: 1000,
+            host: con.db_host,
+            port: +con.db_port || 5432,
+            database: con.db_name,
+            user: con.db_user,
+            password: con.db_pass,
+        };
         await (0, prostgles_server_1.default)({
-            dbConnection: {
-                connectionTimeoutMillis: 1000,
-                host: con.db_host,
-                port: +con.db_port || 5432,
-                database: con.db_name,
-                user: con.db_user,
-                password: con.db_pass,
-            },
+            dbConnection,
             sqlFilePath: path_1.default.join(electronConfig_1.ROOT_DIR + '/src/init.sql'),
             io,
             tsGeneratedTypesDir: path_1.default.join(electronConfig_1.ROOT_DIR + '/../commonTypes/'),
@@ -262,6 +267,8 @@ try {
 }
 catch (e) {
     installedPrograms = undefined;
+}
+if (installedPrograms?.psql) {
 }
 const getInitState = () => ({
     isElectron: false,
