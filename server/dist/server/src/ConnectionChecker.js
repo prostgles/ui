@@ -190,7 +190,7 @@ const initUsers = async (db, _db) => {
         if (!user)
             throw `Unexpected: Electron passwordless_admin misssing`;
         await db.sessions.delete({});
-        await (0, authConfig_1.makeSession)(user, { ip_address: "", user_agent: "" }, db, Date.now() + 10 * authConfig_1.HOUR);
+        await (0, authConfig_1.makeSession)(user, { ip_address: "::1", user_agent: "" }, db, Date.now() + 10 * authConfig_1.HOUR);
     }
 };
 const insertUser = async (db, _db, u) => {
