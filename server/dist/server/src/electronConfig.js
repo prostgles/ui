@@ -23,14 +23,17 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.start = exports.getMagicSid = exports.getElectronConfig = exports.ROOT_DIR = void 0;
+exports.start = exports.getElectronConfig = exports.ROOT_DIR = void 0;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 exports.ROOT_DIR = path.join(__dirname, "/../../..");
 let isElectron = false; // process.env.PRGL_IS_ELECTRON;
 let safeStorage;
 let port;
-let electronSid = "";
+let sidConfig = {
+    electronSid: "",
+    onSidWasSet: () => { }
+};
 // let isElectron = true;
 // let safeStorage: Pick<SafeStorage, "decryptString" | "encryptString" > = {
 //   encryptString: v => Buffer.from(v),
@@ -58,7 +61,7 @@ const getElectronConfig = () => {
     return {
         isElectron: true,
         port,
-        electronSid,
+        sidConfig,
         hasCredentials: () => !!getCredentials(),
         getCredentials,
         setCredentials: (connection) => {
@@ -72,15 +75,16 @@ const getElectronConfig = () => {
     };
 };
 exports.getElectronConfig = getElectronConfig;
-const getMagicSid = () => electronSid;
-exports.getMagicSid = getMagicSid;
 const start = async (sStorage, args, onReady) => {
     isElectron = true;
     port = args.port;
-    if (!args.electronSid || typeof args.electronSid !== "string") {
-        throw "Must provide a valid electronSid";
+    if (!args.electronSid || typeof args.electronSid !== "string" || typeof args.onSidWasSet !== "function") {
+        throw "Must provide a valid electronSid: string and onSidWasSet: ()=>void";
     }
-    electronSid = args.electronSid;
+    sidConfig = {
+        electronSid: args.electronSid,
+        onSidWasSet: args.onSidWasSet
+    };
     safeStorage = sStorage;
     const { onServerReady } = require("./index");
     onServerReady(onReady);

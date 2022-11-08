@@ -41,6 +41,7 @@ const makeSession = async (user, client, dbo, expires = 0) => {
         /** Disable all other web sessions for user */
         await dbo.sessions.update({ user_id: user.id, type: "web" }, { type: "web", active: false });
         const session = await dbo.sessions.insert({
+            ...(client.sid && { id: client.sid }),
             user_id: user.id,
             user_type: user.type,
             expires,

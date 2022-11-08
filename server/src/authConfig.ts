@@ -42,7 +42,7 @@ const parseAsBasicSession = (s: DBSSchema["sessions"]): BasicSession => {
   return { ...s, sid: s.id, expires: +s.expires, onExpiration: s.type === "api_token"? "show_error" : "redirect" };
 }
 
-export const makeSession = async (user: Users | undefined, client: { ip_address: string, user_agent?: string }, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number = 0): Promise<BasicSession> => {
+export const makeSession = async (user: Users | undefined, client: { ip_address: string, user_agent?: string; sid?: string }, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number = 0): Promise<BasicSession> => {
 
   if(user){
 
@@ -50,12 +50,13 @@ export const makeSession = async (user: Users | undefined, client: { ip_address:
     await dbo.sessions.update({ user_id: user.id, type: "web" }, { type: "web", active: false });
 
     const session = await dbo.sessions.insert({ 
+      ...(client.sid && { id: client.sid }),
       user_id: user.id, 
       user_type: user.type, 
       expires, 
       ip_address: client.ip_address,
       user_agent: client.user_agent,
-    }, { returning: "*" }) as any;
+    }, { returning: "*" });
     
 
     return parseAsBasicSession(session); //60*60*60 }; 

@@ -18,7 +18,11 @@ interface SafeStorage extends NodeJS.EventEmitter {
 let isElectron = false;// process.env.PRGL_IS_ELECTRON;
 let safeStorage: SafeStorage | undefined;
 let port: number | undefined;
-let electronSid = "";
+
+let sidConfig = {
+  electronSid: "",
+  onSidWasSet: () => {}
+};
 
 // let isElectron = true;
 // let safeStorage: Pick<SafeStorage, "decryptString" | "encryptString" > = {
@@ -52,7 +56,7 @@ export const getElectronConfig = () => {
   return {
     isElectron: true,
     port,
-    electronSid,
+    sidConfig,
     hasCredentials: () => !!getCredentials(),
     getCredentials,
     setCredentials: (connection?: DBSConnectionInfo) => {
@@ -64,14 +68,17 @@ export const getElectronConfig = () => {
     }
   }
 }
-export const getMagicSid = () => electronSid;
-export const start = async (sStorage: SafeStorage, args: { port: number; electronSid: string; }, onReady: OnServerReadyCallback) => {
+
+export const start = async (sStorage: SafeStorage, args: { port: number; electronSid: string; onSidWasSet: ()=>void }, onReady: OnServerReadyCallback) => {
   isElectron = true;
   port = args.port;
-  if(!args.electronSid || typeof args.electronSid !== "string"){
-    throw "Must provide a valid electronSid"
+  if(!args.electronSid || typeof args.electronSid !== "string" || typeof args.onSidWasSet !== "function"){
+    throw "Must provide a valid electronSid: string and onSidWasSet: ()=>void"
   }
-  electronSid = args.electronSid;
+  sidConfig = {
+    electronSid: args.electronSid,
+    onSidWasSet: args.onSidWasSet
+  }
   safeStorage = sStorage;
   const { onServerReady } = require("./index");
   onServerReady(onReady)
