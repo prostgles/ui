@@ -180,6 +180,7 @@ export type DBSchemaGenerated = {
       id?: number;
       info?: null | string;
       ip_address: string;
+      magic_link_id?: null | string;
       type?: "web" | "api_token" | "desktop" | "mobile"
       user_agent?: null | string;
       username?: null | string;

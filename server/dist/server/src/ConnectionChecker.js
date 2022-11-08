@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.insertUser = exports.ADMIN_ACCESS_WITHOUT_PASSWORD = exports.EMPTY_PASSWORD = exports.EMPTY_USERNAME = exports.ConnectionChecker = void 0;
+exports.insertUser = exports.ADMIN_ACCESS_WITHOUT_PASSWORD = exports.EMPTY_PASSWORD = exports.PASSWORDLESS_ADMIN_USERNAME = exports.ConnectionChecker = void 0;
 const index_1 = require("./index");
 const cors_1 = __importDefault(require("cors"));
 const electronConfig_1 = require("./electronConfig");
@@ -17,9 +17,9 @@ class ConnectionChecker {
         /** Ensure that only 1 session is allowed for the passwordless admin */
         await this.withConfig();
         if (this.noPasswordAdmin) {
-            const me = await getUser();
             // const mySession = await this.db?.sessions.findOne({ id: sid });
-            console.log(me);
+            // const me = await getUser();
+            // console.log(me)
             const pwdLessSession = await this.db?.sessions.findOne({ user_id: this.noPasswordAdmin.id, active: true });
             if (pwdLessSession && pwdLessSession.id !== sid) {
                 throw "Only 1 session is allowed for the passwordless admin";
@@ -140,12 +140,12 @@ class ConnectionChecker {
     };
 }
 exports.ConnectionChecker = ConnectionChecker;
-exports.EMPTY_USERNAME = "prostgles-admin-user";
+exports.PASSWORDLESS_ADMIN_USERNAME = "passwordless_admin";
 exports.EMPTY_PASSWORD = "";
 const NoInitialAdminPasswordProvided = Boolean(!index_1.PRGL_USERNAME || !index_1.PRGL_PASSWORD);
 const ADMIN_ACCESS_WITHOUT_PASSWORD = async (db) => {
     if (NoInitialAdminPasswordProvided) {
-        return await db.users.findOne({ username: exports.EMPTY_USERNAME, status: "active", passwordless_admin: true });
+        return await db.users.findOne({ username: exports.PASSWORDLESS_ADMIN_USERNAME, status: "active", passwordless_admin: true });
     }
     return undefined;
 };
@@ -163,7 +163,7 @@ exports.ADMIN_ACCESS_WITHOUT_PASSWORD = ADMIN_ACCESS_WITHOUT_PASSWORD;
 const initUsers = async (db, _db) => {
     let username = index_1.PRGL_USERNAME, password = index_1.PRGL_PASSWORD;
     if (NoInitialAdminPasswordProvided) {
-        username = exports.EMPTY_USERNAME;
+        username = exports.PASSWORDLESS_ADMIN_USERNAME;
         password = exports.EMPTY_PASSWORD;
     }
     // await db.users.delete(); 

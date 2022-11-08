@@ -30,6 +30,7 @@ exports.ROOT_DIR = path.join(__dirname, "/../../..");
 let isElectron = false; // process.env.PRGL_IS_ELECTRON;
 let safeStorage;
 let port;
+let electronSid = "";
 // let isElectron = true;
 // let safeStorage: Pick<SafeStorage, "decryptString" | "encryptString" > = {
 //   encryptString: v => Buffer.from(v),
@@ -57,21 +58,29 @@ const getElectronConfig = () => {
     return {
         isElectron: true,
         port,
+        electronSid,
         hasCredentials: () => !!getCredentials(),
         getCredentials,
         setCredentials: (connection) => {
-            fs.writeFileSync(electronConfigPath, safeStorage.encryptString(JSON.stringify(connection)));
+            if (!connection) {
+                fs.unlinkSync(electronConfigPath);
+            }
+            else {
+                fs.writeFileSync(electronConfigPath, safeStorage.encryptString(JSON.stringify(connection)));
+            }
         }
     };
 };
 exports.getElectronConfig = getElectronConfig;
-let magicSid = "";
-const getMagicSid = () => magicSid;
+const getMagicSid = () => electronSid;
 exports.getMagicSid = getMagicSid;
 const start = async (sStorage, args, onReady) => {
     isElectron = true;
     port = args.port;
-    magicSid = args.sid;
+    if (!args.electronSid || typeof args.electronSid !== "string") {
+        throw "Must provide a valid electronSid";
+    }
+    electronSid = args.electronSid;
     safeStorage = sStorage;
     const { onServerReady } = require("./index");
     onServerReady(onReady);

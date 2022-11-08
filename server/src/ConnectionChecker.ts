@@ -23,8 +23,8 @@ export type WithOrigin = {
   origin?: (requestOrigin: string | undefined, callback: (err: Error | null, origin?: string) => void) => void;
 }
 
-type OnUse = Required<Auth<DBSchemaGenerated, SUser>>["expressConfig"]["use"]
-type IPRange = { from: string; to: string }
+type OnUse = Required<Auth<DBSchemaGenerated, SUser>>["expressConfig"]["use"];
+
 export class ConnectionChecker {
 
   app: Express;
@@ -41,9 +41,10 @@ export class ConnectionChecker {
     /** Ensure that only 1 session is allowed for the passwordless admin */
     await this.withConfig();
     if(this.noPasswordAdmin){
-      const me = await getUser();
       // const mySession = await this.db?.sessions.findOne({ id: sid });
-      console.log(me)
+      // const me = await getUser();
+      // console.log(me)
+
       const pwdLessSession = await this.db?.sessions.findOne({ user_id: this.noPasswordAdmin.id, active: true });
       if(pwdLessSession && pwdLessSession.id !== sid){
         throw "Only 1 session is allowed for the passwordless admin"
@@ -201,13 +202,13 @@ export class ConnectionChecker {
 }
 
 
-export const EMPTY_USERNAME = "prostgles-admin-user";
+export const PASSWORDLESS_ADMIN_USERNAME = "passwordless_admin";
 export const EMPTY_PASSWORD = "";
 
 const NoInitialAdminPasswordProvided = Boolean( !PRGL_USERNAME || !PRGL_PASSWORD )
 export const ADMIN_ACCESS_WITHOUT_PASSWORD = async (db: DBS) => {
   if (NoInitialAdminPasswordProvided) {
-    return await db.users.findOne({ username: EMPTY_USERNAME, status: "active", passwordless_admin: true });
+    return await db.users.findOne({ username: PASSWORDLESS_ADMIN_USERNAME, status: "active", passwordless_admin: true });
   }
   return undefined
 };
@@ -227,7 +228,7 @@ const initUsers = async (db: DBS, _db: DB) => {
   let username = PRGL_USERNAME,
   password = PRGL_PASSWORD;
   if(NoInitialAdminPasswordProvided){
-    username = EMPTY_USERNAME;
+    username = PASSWORDLESS_ADMIN_USERNAME;
     password = EMPTY_PASSWORD;
   }
 

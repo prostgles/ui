@@ -15,6 +15,23 @@ let authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || index_1.PROSTGLES_S
     secure: false,
     sameSite: "lax" //  "none"
 };
+const loginAttempt = async ({ db, ip_address, user_agent, username, magic_link_id }) => {
+    try {
+        const previousFails = await db.failed_login_attempts.count({ ip_address, "created.>=": new Date(Date.now() - 1 * exports.HOUR) });
+        if (+previousFails > 3) {
+            throw "Too many failed attempts within the last hour";
+        }
+    }
+    catch (err) {
+        console.error(err);
+    }
+    const loginAttempt = await db.failed_login_attempts.insert({ ip_address, username, user_agent, magic_link_id }, { returning: { id: 1 } });
+    return {
+        onSuccess: async () => {
+            await db.failed_login_attempts.delete({ id: loginAttempt.id });
+        }
+    };
+};
 const parseAsBasicSession = (s) => {
     return { ...s, sid: s.id, expires: +s.expires, onExpiration: s.type === "api_token" ? "show_error" : "redirect" };
 };
@@ -29,7 +46,6 @@ const makeSession = async (user, client, dbo, expires = 0) => {
             ip_address: client.ip_address,
             user_agent: client.user_agent,
         }, { returning: "*" });
-        console.log({ makeSession: session });
         return parseAsBasicSession(session); //60*60*60 }; 
     }
     else {
@@ -70,16 +86,7 @@ const getAuth = (app) => {
         login: async ({ username = null, password = null, totp_token = null, totp_recovery_code = null } = {}, db, _db, { ip_address, user_agent }) => {
             let u;
             (0, index_1.log)("login", username);
-            const loginAttempt = await db.failed_login_attempts.insert({ ip_address, username, user_agent }, { returning: { id: 1 } });
-            try {
-                const previousFails = await db.failed_login_attempts.count({ ip_address, "created.>=": new Date(Date.now() - 1 * exports.HOUR) });
-                if (+previousFails > 3) {
-                    throw "Too many failed attempts within the last hour";
-                }
-            }
-            catch (err) {
-                console.error(err);
-            }
+            const { onSuccess } = await loginAttempt({ db, username, ip_address, user_agent });
             try {
                 u = await _db.one("SELECT * FROM users WHERE username = ${username} AND password = crypt(${password}, id::text);", { username, password });
             }
@@ -108,9 +115,7 @@ const getAuth = (app) => {
                     throw "Token missing";
                 }
             }
-            if (loginAttempt) {
-                await db.failed_login_attempts.delete({ id: loginAttempt.id });
-            }
+            await onSuccess();
             let s = await db.sessions.findOne({ user_id: u.id });
             if (!s || (+s.expires || 0) < Date.now()) {
                 // will expire after 24 hours,
@@ -126,9 +131,8 @@ const getAuth = (app) => {
             if (!s)
                 throw "err";
             const u = await db.users.findOne({ id: s.user_id });
-            /** Passwordless admin cannot logout */
             if (u?.passwordless_admin) {
-                return true;
+                throw `Passwordless admin cannot logout`;
             }
             await db.sessions.delete({ id: sid });
             return true;
@@ -152,37 +156,6 @@ const getAuth = (app) => {
                 if (req.path.startsWith(BackupManager_1.BKP_PREFFIX)) {
                     const userData = await getUser();
                     await (0, index_1.getBackupManager)().onRequestBackupFile(res, !userData?.user ? undefined : userData, req);
-                    // if(userData?.user?.type !== "admin"){
-                    //   res.sendStatus(401);
-                    // } else {
-                    //   const bkpId = req.path.slice(BKP_PREFFIX.length + 1);
-                    //   if(!bkpId) {
-                    //     res.sendStatus(404);
-                    //   } else {
-                    //     const bkp = await dbs.backups.findOne({ id: bkpId  });
-                    //     if(!bkp){
-                    //       res.sendStatus(404);
-                    //     } else {
-                    //       const { fileMgr } = await getFileMgr(dbs, bkp.credential_id);
-                    //       if(bkp.credential_id){
-                    //         /* Allow access to file for a period equivalent to a download rate of 50KBps */
-                    //         const presignedURL = await fileMgr.getFileS3URL(bkp.id, (bkp.sizeInBytes ?? 1e6)/50);
-                    //         if(!presignedURL){
-                    //           res.sendStatus(404);
-                    //         } else {
-                    //           res.redirect(presignedURL)
-                    //         }
-                    //       } else {
-                    //         try {
-                    //           res.type(bkp.content_type)
-                    //           res.sendFile(path.join(ROOT_DIR + BKP_PREFFIX + "/" + bkp.id));
-                    //         } catch(err){
-                    //           res.sendStatus(404);
-                    //         }
-                    //       }
-                    //     }
-                    //   }
-                    // }
                 }
                 else if (req.path.startsWith(index_1.MEDIA_ROUTE_PREFIX)) {
                     req.next?.();
@@ -203,8 +176,10 @@ const getAuth = (app) => {
                         if (mlink.expires < Date.now())
                             throw "Expired magic link";
                     }
-                    else
+                    else {
+                        await loginAttempt({ db: dbo, magic_link_id: id, ip_address, user_agent });
                         throw new Error("Magic link not found");
+                    }
                     const user = await dbo.users.findOne({ id: mlink.user_id });
                     if (!user)
                         throw new Error("User from Magic link not found");
