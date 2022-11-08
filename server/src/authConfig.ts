@@ -12,7 +12,7 @@ import { DBSSchema } from "../../commonTypes/publishUtils";
 import { ROOT_DIR } from "./electronConfig";
 
 export const HOUR = 3600e3;
-
+export const YEAR = 365 * HOUR * 24;
 
 let authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_COOKIE)? {} : {
   secure: false,
@@ -42,7 +42,7 @@ const parseAsBasicSession = (s: DBSSchema["sessions"]): BasicSession => {
   return { ...s, sid: s.id, expires: +s.expires, onExpiration: s.type === "api_token"? "show_error" : "redirect" };
 }
 
-const makeSession = async (user: Users | undefined, client: {ip_address: string, user_agent?: string }, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number = 0): Promise<BasicSession> => {
+export const makeSession = async (user: Users | undefined, client: { ip_address: string, user_agent?: string }, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number = 0): Promise<BasicSession> => {
 
   if(user){
 

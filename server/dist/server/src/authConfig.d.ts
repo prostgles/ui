@@ -1,8 +1,14 @@
-import { Auth } from 'prostgles-server/dist/AuthHandler';
+import { Auth, BasicSession } from 'prostgles-server/dist/AuthHandler';
 import { Users } from "./index";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { Express } from "express";
 export declare const HOUR = 3600000;
+export declare const YEAR: number;
+export declare const makeSession: (user: Users | undefined, client: {
+    ip_address: string;
+    user_agent?: string;
+}, dbo: DBOFullyTyped<DBSchemaGenerated>, expires?: number) => Promise<BasicSession>;
 export declare type SUser = {
     sid: string;
     user: Users;
