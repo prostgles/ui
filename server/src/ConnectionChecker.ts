@@ -15,7 +15,7 @@ import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { Auth, AuthRequestParams, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
 import { HOUR, makeSession, SUser } from "./authConfig";
 import { Socket } from "socket.io";
-import { getElectronConfig, getMagicSid } from "./electronConfig";
+import { getElectronConfig } from "./electronConfig";
 
 
 
@@ -289,12 +289,8 @@ const getPasswordlessMacigLink = async (dbs: DBS, req: Request) => {
   const u = await ADMIN_ACCESS_WITHOUT_PASSWORD(dbs);
   if(u){
     const existingLink = await dbs.magic_links.findOne({ user_id: u.id, "magic_link_used.<>": null });
-    const electronSid = req.params.sid;
-    if(electronSid === getMagicSid()){
-      console.error("Finish this")
-      debugger;
-    }
-    console.log({ electronSid })
+    
+    
     if(existingLink) throw "Only one magic links allowed for passwordless admin";
     const mlink = await makeMagicLink(u, dbs, "/");
 
