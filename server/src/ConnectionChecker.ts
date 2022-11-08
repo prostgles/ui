@@ -258,7 +258,7 @@ const initUsers = async (db: DBS, _db: DB) => {
     const user = await ADMIN_ACCESS_WITHOUT_PASSWORD(db);
     if(!user) throw `Unexpected: Electron passwordless_admin misssing`;
     await db.sessions.delete({});
-    await makeSession(user, { ip_address: "", user_agent: "" }, db, Date.now() + 10 * HOUR)
+    await makeSession(user, { ip_address: "::1", user_agent: "" }, db, Date.now() + 10 * HOUR)
   }
 }
 
