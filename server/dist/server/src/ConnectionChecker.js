@@ -217,12 +217,6 @@ const getPasswordlessMacigLink = async (dbs, req) => {
     const u = await (0, exports.ADMIN_ACCESS_WITHOUT_PASSWORD)(dbs);
     if (u) {
         const existingLink = await dbs.magic_links.findOne({ user_id: u.id, "magic_link_used.<>": null });
-        const electronSid = req.params.sid;
-        if (electronSid === (0, electronConfig_1.getMagicSid)()) {
-            console.error("Finish this");
-            debugger;
-        }
-        console.log({ electronSid });
         if (existingLink)
             throw "Only one magic links allowed for passwordless admin";
         const mlink = await makeMagicLink(u, dbs, "/");
