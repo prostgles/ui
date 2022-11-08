@@ -172,7 +172,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
       },
       update: {
         fields: { active: 1 },
-        forcedFilter: { user_id, active: false },
+        forcedFilter: { user_id, active: true },
       }
     },
     backups: {

@@ -112,7 +112,9 @@ export class ConnectionChecker {
       res.redirect(req.originalUrl);
       return;
     } 
-    if(this.config.loaded) {
+    
+    if(!getElectronConfig?.()?.isElectron && this.config.loaded) {
+
       console.error("PASSWORDLESS AUTH MUST KEEP ONLY ONE SESSION ID THAT NEVER EXPIRES ");
 
       /** Add cors config if missing */
@@ -258,7 +260,7 @@ const initUsers = async (db: DBS, _db: DB) => {
     const user = await ADMIN_ACCESS_WITHOUT_PASSWORD(db);
     if(!user) throw `Unexpected: Electron passwordless_admin misssing`;
     await db.sessions.delete({});
-    await makeSession(user, { ip_address: "::1", user_agent: "", sid: electron.sidConfig.electronSid}, db, Date.now() + 10 * HOUR);
+    await makeSession(user, { ip_address: "::1", user_agent: "electron", sid: electron.sidConfig.electronSid}, db, Date.now() + 10 * HOUR);
     electron.sidConfig.onSidWasSet();
   }
 }

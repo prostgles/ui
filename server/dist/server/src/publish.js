@@ -154,7 +154,7 @@ const publish = async (params, con) => {
             },
             update: {
                 fields: { active: 1 },
-                forcedFilter: { user_id, active: false },
+                forcedFilter: { user_id, active: true },
             }
         },
         backups: {

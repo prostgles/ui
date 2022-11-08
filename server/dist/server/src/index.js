@@ -18,6 +18,12 @@ const electronConfig_1 = require("./electronConfig");
 exports.API_PATH = "/api";
 app.use(express_1.default.json({ limit: "100mb" }));
 app.use(express_1.default.urlencoded({ extended: true, limit: "100mb" }));
+app.use(function (req, res, next) {
+    res.setHeader('Content-Security-Policy', 
+    // "default-src 'self'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; frame-src 'self'"
+    " script-src 'self'; frame-src 'self'");
+    next();
+});
 // console.log("Connecting to state database" , process.env)
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
@@ -229,7 +235,7 @@ const insertStateDatabase = async (db, _db, con) => {
         }
     }
 };
-const setDBSRoutes = (serveIndex) => {
+const setDBSRoutes = () => {
     if (!getInitState().isElectron)
         return;
     app.post("/dbs", async (req, res) => {
@@ -340,7 +346,7 @@ const tryStartProstgles = async (con = DBS_CONNECTION_INFO) => {
             const result = (0, PubSubManager_1.pickKeys)(_initState, ["ok", "connectionError", "initError"]);
             if (tries > 5) {
                 clearInterval(interval);
-                setDBSRoutes(!!error);
+                setDBSRoutes();
                 _initState.loading = false;
                 _initState.loaded = true;
                 if (!_initState.ok) {
@@ -398,7 +404,7 @@ if (electronConfig) {
     else {
         console.log("Electron: No credentials");
     }
-    setDBSRoutes(true);
+    setDBSRoutes();
     // console.log("Starting electron on port: ", PORT);
 }
 else {
