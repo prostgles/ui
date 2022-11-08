@@ -1,5 +1,5 @@
 import path from 'path';
-import express, { NextFunction, Request, RequestHandler, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import prostgles from "prostgles-server";
 import { tableConfig } from "./tableConfig";
 const app = express();
@@ -11,10 +11,17 @@ import { DBSConnectionInfo, getElectronConfig, OnServerReadyCallback, ROOT_DIR }
 
 
 export const API_PATH = "/api";
-import { COMMANDS, getPSQLQueries } from "./getPSQLQueries"
 
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100mb" }));
+app.use(function (req, res, next) {
+  res.setHeader(
+    'Content-Security-Policy',
+    // "default-src 'self'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; frame-src 'self'"
+    " script-src 'self'; frame-src 'self'"
+  );
+  next();
+});
 
 
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
@@ -259,7 +266,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO): Promise<ProstglesStart
 }
 
 
-  /** Add state db if missing */
+/** Add state db if missing */
 const insertStateDatabase = async (db: DBS, _db: DB, con: typeof DBS_CONNECTION_INFO) => {
 
   if(!(await db.connections.count())){ // , name: "Prostgles state database" // { user_id }
@@ -305,7 +312,7 @@ const insertStateDatabase = async (db: DBS, _db: DB, con: typeof DBS_CONNECTION_
 }
 
 
-const setDBSRoutes = (serveIndex: boolean) => {
+const setDBSRoutes = () => {
 
   if(!getInitState().isElectron) return;
 
@@ -440,7 +447,7 @@ const tryStartProstgles = async (con: DBSConnectionInfo = DBS_CONNECTION_INFO): 
   
       if(tries > 5){
         clearInterval(interval);
-        setDBSRoutes(!!error);
+        setDBSRoutes();
         _initState.loading = false;
         _initState.loaded = true;
 
@@ -505,7 +512,7 @@ if(electronConfig){
   } else {
     console.log("Electron: No credentials");
   }
-  setDBSRoutes(true);
+  setDBSRoutes();
   // console.log("Starting electron on port: ", PORT);
 } else {
   tryStartProstgles();

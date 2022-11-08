@@ -810,6 +810,16 @@ textarea:focus {
   max-height: fit-content;
   max-width: fit-content;
 }
+.max-w-full {
+  max-width: 100%;
+}
+.max-h-full {
+  max-height: 100%;
+}
+.max-s-full {
+  max-height: 100%;
+  max-width: 100%;
+}
 
 .max-w {
   max-width: 900px;
