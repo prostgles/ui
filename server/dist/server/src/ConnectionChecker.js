@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.insertUser = exports.ADMIN_ACCESS_WITHOUT_PASSWORD = exports.EMPTY_PASSWORD = exports.PASSWORDLESS_ADMIN_USERNAME = exports.ConnectionChecker = void 0;
 const index_1 = require("./index");
 const cors_1 = __importDefault(require("cors"));
+const authConfig_1 = require("./authConfig");
 const electronConfig_1 = require("./electronConfig");
 class ConnectionChecker {
     app;
@@ -153,7 +154,7 @@ exports.ADMIN_ACCESS_WITHOUT_PASSWORD = ADMIN_ACCESS_WITHOUT_PASSWORD;
 /**
  * If PRGL_USERNAME and PRGL_PASSWORD are specified then create an admin user with these credentials AND allow any IP to connect
  * Otherwise:
- * Create a passwordless admin (EMPTY_USERNAME, EMPTY_PASSWORD) and allow the first IP to connect
+ * Create a passwordless admin (PASSWORDLESS_ADMIN_USERNAME, EMPTY_PASSWORD) and allow the first IP to connect
  *  then, the first user to connect must select between these options:
  *    1) Add an account with password (recommended)
  *    2) Continue to allow only the current IP
@@ -182,6 +183,14 @@ const initUsers = async (db, _db) => {
             console.error(e);
         }
         console.log("Added users: ", await db.users.find({ username }));
+    }
+    const electron = await (0, electronConfig_1.getElectronConfig)();
+    if (electron?.isElectron) {
+        const user = await (0, exports.ADMIN_ACCESS_WITHOUT_PASSWORD)(db);
+        if (!user)
+            throw `Unexpected: Electron passwordless_admin misssing`;
+        await db.sessions.delete({});
+        await (0, authConfig_1.makeSession)(user, { ip_address: "", user_agent: "" }, db, Date.now() + 10 * authConfig_1.HOUR);
     }
 };
 const insertUser = async (db, _db, u) => {

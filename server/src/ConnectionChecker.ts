@@ -13,9 +13,9 @@ import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
 import { DB } from "prostgles-server/dist/Prostgles";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { Auth, AuthRequestParams, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
-import { SUser } from "./authConfig";
+import { HOUR, makeSession, SUser } from "./authConfig";
 import { Socket } from "socket.io";
-import { getMagicSid } from "./electronConfig";
+import { getElectronConfig, getMagicSid } from "./electronConfig";
 
 
 
@@ -216,7 +216,7 @@ export const ADMIN_ACCESS_WITHOUT_PASSWORD = async (db: DBS) => {
 /**
  * If PRGL_USERNAME and PRGL_PASSWORD are specified then create an admin user with these credentials AND allow any IP to connect
  * Otherwise:
- * Create a passwordless admin (EMPTY_USERNAME, EMPTY_PASSWORD) and allow the first IP to connect
+ * Create a passwordless admin (PASSWORDLESS_ADMIN_USERNAME, EMPTY_PASSWORD) and allow the first IP to connect
  *  then, the first user to connect must select between these options:
  *    1) Add an account with password (recommended)
  *    2) Continue to allow only the current IP
@@ -251,6 +251,14 @@ const initUsers = async (db: DBS, _db: DB) => {
     }
     
     console.log("Added users: ", await db.users.find({ username }))
+  }
+
+  const electron = await getElectronConfig();
+  if(electron?.isElectron){
+    const user = await ADMIN_ACCESS_WITHOUT_PASSWORD(db);
+    if(!user) throw `Unexpected: Electron passwordless_admin misssing`;
+    await db.sessions.delete({});
+    await makeSession(user, { ip_address: "", user_agent: "" }, db, Date.now() + 10 * HOUR)
   }
 }
 
