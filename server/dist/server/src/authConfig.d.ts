@@ -8,6 +8,7 @@ export declare const YEAR: number;
 export declare const makeSession: (user: Users | undefined, client: {
     ip_address: string;
     user_agent?: string;
+    sid?: string;
 }, dbo: DBOFullyTyped<DBSchemaGenerated>, expires?: number) => Promise<BasicSession>;
 export declare type SUser = {
     sid: string;
