@@ -83,7 +83,7 @@ exports.tableConfig = {
             status: { sqlDefinition: `TEXT NOT NULL DEFAULT 'active' REFERENCES user_statuses (id)` },
         },
         constraints: {
-            [`passwordless_admin=true ONLY FOR username=${PASSWORDLESS_ADMIN_USERNAME}`]: `CHECK(COALESCE(passwordless_admin, false) = FALSE OR type = 'admin' AND username = '${PASSWORDLESS_ADMIN_USERNAME}') `
+            [`passwordless_admin type AND username CHECK`]: `CHECK(COALESCE(passwordless_admin, false) = FALSE OR type = 'admin' AND username = '${PASSWORDLESS_ADMIN_USERNAME}') `
         },
         indexes: {
             "Only one passwordless_admin admin account allowed": {
@@ -136,6 +136,7 @@ exports.tableConfig = {
             type: SESSION_TYPE,
             created: `TIMESTAMP DEFAULT NOW()`,
             username: "TEXT",
+            magic_link_id: "TEXT",
             user_agent: "TEXT",
             info: "TEXT",
         }

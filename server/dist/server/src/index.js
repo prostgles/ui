@@ -71,8 +71,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
     try {
         // console.log("Connecting to state database" , con, { POSTGRES_DB, POSTGRES_USER, POSTGRES_HOST }, process.env)
         if (!con.db_conn && !con.db_user && !con.db_name) {
-            console.trace(con);
-            throw `
+            const conn = `
         Make sure .env file contains superuser postgres credentials:
           POSTGRES_URL
           or
@@ -91,8 +90,14 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
           sudo -su postgres createdb mydatabase -O myusername
 
       `;
+            return { conn };
         }
-        await (0, testDBConnection_1.testDBConnection)(con, true);
+        try {
+            await (0, testDBConnection_1.testDBConnection)(con, true);
+        }
+        catch (conn) {
+            return { conn };
+        }
         /**
          * Manual process
          */
@@ -176,9 +181,10 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
                 console.log("Prostgles UI is running on port ", PORT);
             },
         });
+        return { ok: true };
     }
     catch (err) {
-        throw err;
+        return { init: err };
     }
 };
 /** Add state db if missing */
@@ -246,10 +252,14 @@ const setDBSRoutes = (serveIndex) => {
             await (0, testDBConnection_1.testDBConnection)(creds);
             const electronConfig = (0, electronConfig_1.getElectronConfig)?.();
             electronConfig?.setCredentials(creds);
-            tryStartProstgles(creds);
+            const startup = await tryStartProstgles(creds);
+            if (!startup.ok) {
+                throw startup;
+            }
             res.json({ msg: "DBS changed. Restart system" });
         }
         catch (warning) {
+            electronConfig?.setCredentials(undefined);
             res.json({ warning });
         }
     });
@@ -302,34 +312,42 @@ const awaitInit = () => {
     });
 };
 const tryStartProstgles = async (con = DBS_CONNECTION_INFO) => {
-    new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
         let tries = 0;
-        _initState.error = null;
+        _initState.connectionError = null;
         _initState.loading = true;
         let interval = setInterval(async () => {
             try {
-                await startProstgles(con);
-                console.log("startProstgles success! ");
-                tries = 6;
-                _initState.error = null;
+                const status = await startProstgles(con);
+                _initState.connectionError = status.conn;
+                _initState.initError = status.init;
+                if (status.ok) {
+                    console.log("startProstgles success! ");
+                    tries = 6;
+                }
+                else {
+                    tries++;
+                }
                 // clearInterval(interval)
             }
             catch (err) {
                 console.error("startProstgles fail: ", err);
-                _initState.error = err;
+                _initState.initError = err;
                 tries++;
             }
-            _initState.ok = !_initState.error;
+            const error = _initState.connectionError || _initState.initError;
+            _initState.ok = !error;
+            const result = (0, PubSubManager_1.pickKeys)(_initState, ["ok", "connectionError", "initError"]);
             if (tries > 5) {
                 clearInterval(interval);
-                setDBSRoutes(!!_initState.error);
+                setDBSRoutes(!!error);
                 _initState.loading = false;
                 _initState.loaded = true;
-                if (_initState.error) {
-                    reject(_initState.error);
+                if (!_initState.ok) {
+                    reject(result);
                 }
                 else {
-                    resolve(_initState);
+                    resolve(result);
                 }
                 return;
             }
@@ -345,7 +363,8 @@ app.get("/dbs", (req, res) => {
 });
 /* Must provide index.html if there is an error OR prostgles is loading */
 const serveIndexIfNoCredentials = async (req, res, next) => {
-    const { isElectron, ok, electronCredsProvided, error } = getInitState();
+    const { isElectron, ok, electronCredsProvided, connectionError, initError } = getInitState();
+    const error = connectionError || initError;
     if (error || isElectron && !electronCredsProvided || _initState.loading) {
         await awaitInit();
         if (req.method === "GET" && !req.path.startsWith("/dbs")) {

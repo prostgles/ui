@@ -1,7 +1,8 @@
 export declare type ProstglesInitState = ({
     isElectron: boolean;
     electronCredsProvided?: boolean;
-    error?: any;
+    initError?: any;
+    connectionError?: any;
     ok: boolean;
     canTryStartProstgles: boolean;
     canDumpAndRestore: {

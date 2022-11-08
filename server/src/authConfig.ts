@@ -19,6 +19,25 @@ let authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_CO
   sameSite: "lax"    //  "none"
 };
 
+const loginAttempt = async ({ db, ip_address, user_agent, username, magic_link_id }: { db: DBOFullyTyped<DBSchemaGenerated>; ip_address: string; username?: string; user_agent?: string; magic_link_id?: string; }) => {
+
+  try {
+    const previousFails = await db.failed_login_attempts.count({ ip_address, "created.>=": new Date(Date.now() - 1 * HOUR) })
+    if(+previousFails > 3){
+      throw "Too many failed attempts within the last hour";
+    }
+  } catch(err) {
+    console.error(err);
+  }
+  const loginAttempt = await db.failed_login_attempts.insert({ ip_address, username, user_agent, magic_link_id }, { returning: { id: 1 } });
+
+  return { 
+    onSuccess: async () => {
+      await db.failed_login_attempts.delete({ id: loginAttempt.id })
+    } 
+  }
+}
+
 const parseAsBasicSession = (s: DBSSchema["sessions"]): BasicSession => {
   return { ...s, sid: s.id, expires: +s.expires, onExpiration: s.type === "api_token"? "show_error" : "redirect" };
 }
@@ -37,7 +56,8 @@ const makeSession = async (user: Users | undefined, client: {ip_address: string,
       ip_address: client.ip_address,
       user_agent: client.user_agent,
     }, { returning: "*" }) as any;
-    console.log({makeSession: session})
+    
+
     return parseAsBasicSession(session); //60*60*60 }; 
   } else {
     throw "Invalid user";
@@ -94,15 +114,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       let u: Users | undefined;
       log("login", username);
       
-      const loginAttempt = await db.failed_login_attempts.insert({ ip_address, username, user_agent }, { returning: { id: 1 } });
-      try {
-        const previousFails = await db.failed_login_attempts.count({ ip_address, "created.>=": new Date(Date.now() - 1 * HOUR) })
-        if(+previousFails > 3){
-          throw "Too many failed attempts within the last hour";
-        }
-      } catch(err) {
-        console.error(err);
-      }
+      const { onSuccess } = await loginAttempt({ db, username, ip_address, user_agent })
       try {
         u = await _db.one("SELECT * FROM users WHERE username = ${username} AND password = crypt(${password}, id::text);", { username, password });
       } catch(e){
@@ -130,9 +142,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
         }
       }
 
-      if(loginAttempt){
-        await db.failed_login_attempts.delete({ id: loginAttempt.id })
-      }
+      await onSuccess();
 
       let s = await db.sessions.findOne({ user_id: u.id })
       if(!s || (+s.expires || 0) < Date.now()){
@@ -149,9 +159,8 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       if(!s) throw "err";
       const u = await db.users.findOne({ id: s.user_id });
 
-      /** Passwordless admin cannot logout */
       if(u?.passwordless_admin){
-        return true
+        throw `Passwordless admin cannot logout`
       }
       
       await db.sessions.delete({ id: sid })
@@ -178,38 +187,6 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
         if(req.path.startsWith(BKP_PREFFIX)){
           const userData = await getUser();
           await getBackupManager().onRequestBackupFile(res, !userData?.user? undefined : userData, req);
-
-          // if(userData?.user?.type !== "admin"){
-          //   res.sendStatus(401);
-          // } else {
-          //   const bkpId = req.path.slice(BKP_PREFFIX.length + 1);
-          //   if(!bkpId) {
-          //     res.sendStatus(404);
-          //   } else {
-          //     const bkp = await dbs.backups.findOne({ id: bkpId  });
-          //     if(!bkp){
-          //       res.sendStatus(404);
-          //     } else {
-          //       const { fileMgr } = await getFileMgr(dbs, bkp.credential_id);
-          //       if(bkp.credential_id){
-          //         /* Allow access to file for a period equivalent to a download rate of 50KBps */
-          //         const presignedURL = await fileMgr.getFileS3URL(bkp.id, (bkp.sizeInBytes ?? 1e6)/50);
-          //         if(!presignedURL){
-          //           res.sendStatus(404);
-          //         } else {
-          //           res.redirect(presignedURL)
-          //         }
-          //       } else {
-          //         try {
-          //           res.type(bkp.content_type)
-          //           res.sendFile(path.join(ROOT_DIR + BKP_PREFFIX + "/" + bkp.id));
-          //         } catch(err){
-          //           res.sendStatus(404);
-          //         }
-          //       }
-          //     }
-          //   }
-          // }
           
         } else if(req.path.startsWith(MEDIA_ROUTE_PREFIX)){
           req.next?.();
@@ -225,11 +202,16 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       cookieOptions: authCookieOpts,
       magicLinks: {
         check: async (id, dbo, db, { ip_address, user_agent }) => {
+
           const mlink = await dbo.magic_links.findOne({ id });
           
           if(mlink){
             if(mlink.expires < Date.now()) throw "Expired magic link";
-          } else throw new Error("Magic link not found")
+          } else {
+            await loginAttempt({ db: dbo, magic_link_id: id, ip_address, user_agent })
+            throw new Error("Magic link not found");
+          }
+
           const user = await dbo.users.findOne({ id: mlink.user_id });
           if(!user) throw new Error("User from Magic link not found");
 
