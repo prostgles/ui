@@ -270,16 +270,12 @@ export class ConnectionManager {
             referencedTables: tableConfig.referencedTables,
           },
           watchSchema: Boolean(con.db_watch_shema),
+          // watchSchema: (a) => {
+          //   console.log(a);
+          // },
   
           // transactions: true,
           // DEBUG_MODE: true,
-          // fileTable: { 
-          //   tableName:"filetable",
-          //   expressApp: app,
-          //   localConfig: {
-          //     localFolderPath: path.join(__dirname + `../${con.id}/media`)
-          //   },
-          // },
           transactions: DB_TRANSACTION_KEY,
           joins: "inferred",
           publish: async ({ user, dbo, tables }) => {
