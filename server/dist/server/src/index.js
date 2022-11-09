@@ -257,16 +257,16 @@ const setDBSRoutes = () => {
         try {
             await (0, testDBConnection_1.testDBConnection)(creds);
             const electronConfig = (0, electronConfig_1.getElectronConfig)?.();
-            electronConfig?.setCredentials(creds);
             const startup = await tryStartProstgles(creds);
             if (!startup.ok) {
                 throw startup;
             }
+            electronConfig?.setCredentials(creds);
             res.json({ msg: "DBS changed. Restart system" });
         }
         catch (warning) {
-            electronConfig?.setCredentials(undefined);
             res.json({ warning });
+            electronConfig?.setCredentials(undefined);
         }
     });
 };

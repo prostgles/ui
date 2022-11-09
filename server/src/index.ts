@@ -338,16 +338,16 @@ const setDBSRoutes = () => {
     try {
       await testDBConnection(creds);
       const electronConfig = getElectronConfig?.();
-      electronConfig?.setCredentials(creds);
       const startup = await tryStartProstgles(creds);
       
       if(!startup.ok){
         throw startup;
       }
+      electronConfig?.setCredentials(creds);
       res.json({ msg: "DBS changed. Restart system" });
     } catch(warning){
+      res.json({ warning });
       electronConfig?.setCredentials(undefined);
-      res.json({ warning })
     }
   });
 }
