@@ -6,7 +6,7 @@ const app = express();
 import { publishMethods } from "./publishMethods";
 import { ChildProcessWithoutNullStreams, spawnSync, execSync } from "child_process";
 import { ConnectionManager, Unpromise } from "./ConnectionManager";
-import { getAuth } from "./authConfig";
+import { getAuth, sidKeyName } from "./authConfig";
 import { DBSConnectionInfo, getElectronConfig, OnServerReadyCallback, ROOT_DIR } from "./electronConfig";
 
 
@@ -314,11 +314,22 @@ const insertStateDatabase = async (db: DBS, _db: DB, con: typeof DBS_CONNECTION_
 
 const setDBSRoutes = () => {
 
-  if(!getInitState().isElectron) return;
+  const initState = getInitState();
+  if(!initState.isElectron) return;
+
+  const ele = getElectronConfig();
+  if(!ele?.sidConfig.electronSid){
+    throw "Electron sid missing";
+  }
 
   app.post("/dbs", async (req, res) => {
-    const creds = pickKeys(req.body, ["db_conn", "db_user", "db_pass", "db_host", "db_port", "db_name", "db_ssl", "type"]);
+    const sid = req.cookies[sidKeyName];
+    if(ele?.sidConfig.electronSid !== sid){
+      res.json({ error: "Not authorized" });
+      return ;
+    }
 
+    const creds = pickKeys(req.body, ["db_conn", "db_user", "db_pass", "db_host", "db_port", "db_name", "db_ssl", "type"]);
     if(req.body.validate){
       try {
         const connection = validateConnection(creds)

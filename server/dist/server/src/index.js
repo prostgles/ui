@@ -236,9 +236,19 @@ const insertStateDatabase = async (db, _db, con) => {
     }
 };
 const setDBSRoutes = () => {
-    if (!getInitState().isElectron)
+    const initState = getInitState();
+    if (!initState.isElectron)
         return;
+    const ele = (0, electronConfig_1.getElectronConfig)();
+    if (!ele?.sidConfig.electronSid) {
+        throw "Electron sid missing";
+    }
     app.post("/dbs", async (req, res) => {
+        const sid = req.cookies[authConfig_1.sidKeyName];
+        if (ele?.sidConfig.electronSid !== sid) {
+            res.json({ error: "Not authorized" });
+            return;
+        }
         const creds = (0, PubSubManager_1.pickKeys)(req.body, ["db_conn", "db_user", "db_pass", "db_host", "db_port", "db_name", "db_ssl", "type"]);
         if (req.body.validate) {
             try {

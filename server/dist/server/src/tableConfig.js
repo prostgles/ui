@@ -384,7 +384,7 @@ exports.tableConfig = {
             id: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
             user_id: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,
             connection_id: `UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE`,
-            name: `TEXT NOT NULL DEFAULT 'default'`,
+            name: `TEXT NOT NULL DEFAULT 'default workspace'`,
             created: `TIMESTAMP DEFAULT NOW()`,
             active_row: `JSONB DEFAULT '{}'::jsonb`,
             layout: `JSONB`,
