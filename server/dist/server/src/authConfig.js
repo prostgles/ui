@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAuth = exports.makeSession = exports.YEAR = exports.HOUR = void 0;
+exports.getAuth = exports.sidKeyName = exports.makeSession = exports.YEAR = exports.HOUR = void 0;
 const BackupManager_1 = require("./BackupManager");
 const index_1 = require("./index");
 const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
@@ -55,9 +55,10 @@ const makeSession = async (user, client, dbo, expires = 0) => {
     }
 };
 exports.makeSession = makeSession;
+exports.sidKeyName = "sid_token";
 const getAuth = (app) => {
     const auth = {
-        sidKeyName: "sid_token",
+        sidKeyName: exports.sidKeyName,
         getUser: async (sid, db, _db) => {
             (0, index_1.log)("getUser", sid);
             const s = await db.sessions.findOne({ id: sid });

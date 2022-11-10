@@ -34,18 +34,13 @@ let sidConfig = {
     electronSid: "",
     onSidWasSet: () => { }
 };
-// let isElectron = true;
-// let safeStorage: Pick<SafeStorage, "decryptString" | "encryptString" > = {
-//   encryptString: v => Buffer.from(v),
-//   decryptString: v => v.toString()
-// };
 const getElectronConfig = () => {
     if (!isElectron)
         return undefined;
     if (!safeStorage || ![safeStorage.encryptString, safeStorage.decryptString].every(v => typeof v === "function")) {
         throw "Invalid safeStorage provided. encryptString or decryptString is not a function";
     }
-    const electronConfigPath = `${exports.ROOT_DIR}/.electron-auth.json`;
+    const electronConfigPath = path.resolve(`${exports.ROOT_DIR}/../../.electron-auth.json`);
     const getCredentials = () => {
         try {
             const file = !fs.existsSync(electronConfigPath) ? undefined : fs.readFileSync(electronConfigPath); //, { encoding: "utf-8" });

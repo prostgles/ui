@@ -20,5 +20,6 @@ export declare type SUser = {
         has_2fa: boolean;
     } & Omit<Users, "password" | "2fa">;
 };
+export declare const sidKeyName: "sid_token";
 export declare const getAuth: (app: Express) => Auth<DBSchemaGenerated, SUser>;
 //# sourceMappingURL=authConfig.d.ts.map

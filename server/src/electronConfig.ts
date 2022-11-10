@@ -24,12 +24,6 @@ let sidConfig = {
   onSidWasSet: () => {}
 };
 
-// let isElectron = true;
-// let safeStorage: Pick<SafeStorage, "decryptString" | "encryptString" > = {
-//   encryptString: v => Buffer.from(v),
-//   decryptString: v => v.toString()
-// };
-
 export const getElectronConfig = () => {
   if(!isElectron) return undefined;
 
@@ -37,7 +31,7 @@ export const getElectronConfig = () => {
     throw "Invalid safeStorage provided. encryptString or decryptString is not a function"
   } 
 
-  const electronConfigPath = `${ROOT_DIR}/.electron-auth.json`;
+  const electronConfigPath = path.resolve(`${ROOT_DIR}/../../.electron-auth.json`);
 
   const getCredentials = (): DBSConnectionInfo | undefined => {
 

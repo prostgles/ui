@@ -75,11 +75,12 @@ export type SUser = {
     has_2fa: boolean;
   } & Omit<Users, "password"| "2fa">
 }
+export const sidKeyName = "sid_token" as const;
 
 export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
   
   const auth: Auth<DBSchemaGenerated, SUser> = {
-    sidKeyName: "sid_token",
+    sidKeyName,
     getUser: async (sid, db, _db: DB) => {
       log("getUser", sid);
       const s = await db.sessions.findOne({ id: sid });
