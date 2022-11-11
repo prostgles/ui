@@ -28,7 +28,7 @@ import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 // console.log("Connecting to state database" , process.env)
 
 process.on('unhandledRejection', (reason, p) => {
-  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+  console.trace('Unhandled Rejection at: Promise', p, 'reason:', reason);
   // application specific logging, throwing an error, or other logic here
 });
 
@@ -323,11 +323,6 @@ const setDBSRoutes = () => {
   }
 
   app.post("/dbs", async (req, res) => {
-    const sid = req.cookies[sidKeyName];
-    if(ele?.sidConfig.electronSid !== sid){
-      res.json({ error: "Not authorized" });
-      return ;
-    }
 
     const creds = pickKeys(req.body, ["db_conn", "db_user", "db_pass", "db_host", "db_port", "db_name", "db_ssl", "type"]);
     if(req.body.validate){
@@ -376,7 +371,6 @@ let _initState: Pick<ProstglesInitState, "initError" | "connectionError"> & {
   loaded: false,
 }
 
-const eConfig = getElectronConfig?.();
 let installedPrograms: ProstglesInitState["canDumpAndRestore"] = {
   psql: "",
   pg_dump: "",
@@ -398,14 +392,16 @@ if(installedPrograms?.psql){
 }
 
 import type { ProstglesInitState, ServerState } from "../../commonTypes/electronInit";
-const getInitState = (): ProstglesInitState  => ({ // : ProstglesInitState 
-  isElectron: false,
-  ...getElectronConfig?.(),
-  electronCredsProvided: !!getElectronConfig?.()?.hasCredentials(),
-  ..._initState,
-  canTryStartProstgles: !eConfig?.isElectron || eConfig.hasCredentials(),
-  canDumpAndRestore: installedPrograms
-});
+const getInitState = (): ProstglesInitState  => {
+  const eConfig = getElectronConfig?.()!;
+  return {
+    isElectron: false,
+    electronCredsProvided: !!eConfig?.hasCredentials(),
+    ..._initState,
+    canTryStartProstgles: !eConfig?.isElectron || eConfig.hasCredentials(),
+    canDumpAndRestore: installedPrograms
+}
+};
 
 /** During page load we wait for init */
 const awaitInit = () => {

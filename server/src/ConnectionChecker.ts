@@ -13,7 +13,7 @@ import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
 import { DB } from "prostgles-server/dist/Prostgles";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { Auth, AuthRequestParams, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
-import { HOUR, makeSession, SUser } from "./authConfig";
+import { HOUR, makeSession, sidKeyName, SUser } from "./authConfig";
 import { Socket } from "socket.io";
 import { getElectronConfig } from "./electronConfig";
 
@@ -112,8 +112,17 @@ export class ConnectionChecker {
       res.redirect(req.originalUrl);
       return;
     } 
+
+    const electronConfig = getElectronConfig?.()
+
+
+    const sid = req.cookies[sidKeyName];
+    if(electronConfig?.isElectron && electronConfig?.sidConfig.electronSid !== sid){
+      res.json({ error: "Not authorized" });
+      return ;
+    }
     
-    if(!getElectronConfig?.()?.isElectron && this.config.loaded) {
+    if(!electronConfig?.isElectron && this.config.loaded) {
 
       console.error("PASSWORDLESS AUTH MUST KEEP ONLY ONE SESSION ID THAT NEVER EXPIRES ");
 
