@@ -26,7 +26,7 @@ app.use(function (req, res, next) {
 });
 // console.log("Connecting to state database" , process.env)
 process.on('unhandledRejection', (reason, p) => {
-    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    console.trace('Unhandled Rejection at: Promise', p, 'reason:', reason);
     // application specific logging, throwing an error, or other logic here
 });
 const http_1 = __importDefault(require("http"));
@@ -244,11 +244,6 @@ const setDBSRoutes = () => {
         throw "Electron sid missing";
     }
     app.post("/dbs", async (req, res) => {
-        const sid = req.cookies[authConfig_1.sidKeyName];
-        if (ele?.sidConfig.electronSid !== sid) {
-            res.json({ error: "Not authorized" });
-            return;
-        }
         const creds = (0, PubSubManager_1.pickKeys)(req.body, ["db_conn", "db_user", "db_pass", "db_host", "db_port", "db_name", "db_ssl", "type"]);
         if (req.body.validate) {
             try {
@@ -285,7 +280,6 @@ let _initState = {
     loading: false,
     loaded: false,
 };
-const eConfig = (0, electronConfig_1.getElectronConfig)?.();
 let installedPrograms = {
     psql: "",
     pg_dump: "",
@@ -303,14 +297,16 @@ catch (e) {
 }
 if (installedPrograms?.psql) {
 }
-const getInitState = () => ({
-    isElectron: false,
-    ...(0, electronConfig_1.getElectronConfig)?.(),
-    electronCredsProvided: !!((0, electronConfig_1.getElectronConfig)?.())?.hasCredentials(),
-    ..._initState,
-    canTryStartProstgles: !eConfig?.isElectron || eConfig.hasCredentials(),
-    canDumpAndRestore: installedPrograms
-});
+const getInitState = () => {
+    const eConfig = (0, electronConfig_1.getElectronConfig)?.();
+    return {
+        isElectron: false,
+        electronCredsProvided: !!eConfig?.hasCredentials(),
+        ..._initState,
+        canTryStartProstgles: !eConfig?.isElectron || eConfig.hasCredentials(),
+        canDumpAndRestore: installedPrograms
+    };
+};
 /** During page load we wait for init */
 const awaitInit = () => {
     return new Promise((resolve, reject) => {

@@ -78,7 +78,13 @@ class ConnectionChecker {
             res.redirect(req.originalUrl);
             return;
         }
-        if (!((0, electronConfig_1.getElectronConfig)?.())?.isElectron && this.config.loaded) {
+        const electronConfig = (0, electronConfig_1.getElectronConfig)?.();
+        const sid = req.cookies[authConfig_1.sidKeyName];
+        if (electronConfig?.isElectron && electronConfig?.sidConfig.electronSid !== sid) {
+            res.json({ error: "Not authorized" });
+            return;
+        }
+        if (!electronConfig?.isElectron && this.config.loaded) {
             console.error("PASSWORDLESS AUTH MUST KEEP ONLY ONE SESSION ID THAT NEVER EXPIRES ");
             /** Add cors config if missing */
             if (!this.config.global_setting) {
