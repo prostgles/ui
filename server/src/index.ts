@@ -393,14 +393,14 @@ if(installedPrograms?.psql){
 
 import type { ProstglesInitState, ServerState } from "../../commonTypes/electronInit";
 const getInitState = (): ProstglesInitState  => {
-  const eConfig = getElectronConfig?.()!;
+  const eConfig = getElectronConfig?.();
   return {
-    isElectron: false,
+    isElectron: !!eConfig?.isElectron,
     electronCredsProvided: !!eConfig?.hasCredentials(),
     ..._initState,
     canTryStartProstgles: !eConfig?.isElectron || eConfig.hasCredentials(),
     canDumpAndRestore: installedPrograms
-}
+  }
 };
 
 /** During page load we wait for init */
