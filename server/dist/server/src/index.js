@@ -300,7 +300,7 @@ if (installedPrograms?.psql) {
 const getInitState = () => {
     const eConfig = (0, electronConfig_1.getElectronConfig)?.();
     return {
-        isElectron: false,
+        isElectron: !!eConfig?.isElectron,
         electronCredsProvided: !!eConfig?.hasCredentials(),
         ..._initState,
         canTryStartProstgles: !eConfig?.isElectron || eConfig.hasCredentials(),
