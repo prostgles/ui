@@ -19,6 +19,7 @@ export declare const onServerReady: (cb: OnServerReadyCallback) => Promise<void>
 export declare function get(obj: any, propertyPath: string | string[]): any;
 export declare function restartProc(cb?: Function): void;
 export declare const upsertConnection: (con: DBSchemaGenerated["connections"]["columns"], user_id: Users["id"] | null, dbs: DBS) => Promise<Required<{
+    access_control?: any;
     backups_config?: {
         enabled?: boolean | undefined;
         cloudConfig: {
@@ -87,7 +88,7 @@ export declare const upsertConnection: (con: DBSchemaGenerated["connections"]["c
             checkIntervalHours?: number | undefined;
         } | undefined;
     } | null | undefined;
-    type: "Standard" | "Connection URI" | "Prostgles";
+    type?: "Standard" | "Connection URI" | "Prostgles" | undefined;
     user_id?: string | null | undefined;
 }> | undefined>;
 export declare const tout: (timeout: number) => Promise<unknown>;

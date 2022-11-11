@@ -42,7 +42,7 @@ export default class BackupManager {
         id?: string | undefined;
         initiator?: string | null | undefined;
         last_updated?: Date | undefined;
-        options: {
+        options?: {
             command: "pg_dumpall";
             clean: boolean;
             dataOnly?: boolean | undefined;
@@ -64,7 +64,7 @@ export default class BackupManager {
             compressionLevel?: number | undefined;
             ifExists?: boolean | undefined;
             keepLogs?: boolean | undefined;
-        };
+        } | undefined;
         restore_command?: string | null | undefined;
         restore_end?: Date | null | undefined;
         restore_logs?: string | null | undefined;
@@ -92,7 +92,7 @@ export default class BackupManager {
             };
         } | null | undefined;
         sizeInBytes?: number | null | undefined;
-        status: {
+        status?: {
             ok: string;
         } | {
             err: string;
@@ -101,7 +101,7 @@ export default class BackupManager {
                 loaded: number;
                 total: number;
             } | undefined;
-        };
+        } | undefined;
         uploaded?: Date | null | undefined;
     }> | undefined>;
     private dbs;
@@ -123,11 +123,11 @@ export default class BackupManager {
 export declare function getFileMgr(dbs: DBS, credId: number | null): Promise<{
     fileMgr: FileManager;
     cred: Required<{
-        bucket?: string | null | undefined;
+        bucket: string;
         id?: number | undefined;
         key_id: string;
         key_secret: string;
-        name?: string | undefined;
+        name: string;
         region?: string | null | undefined;
         type?: string | undefined;
         user_id?: string | null | undefined;
