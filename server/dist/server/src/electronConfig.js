@@ -61,7 +61,9 @@ const getElectronConfig = () => {
         getCredentials,
         setCredentials: (connection) => {
             if (!connection) {
-                fs.unlinkSync(electronConfigPath);
+                if (fs.existsSync(electronConfigPath)) {
+                    fs.unlinkSync(electronConfigPath);
+                }
             }
             else {
                 fs.writeFileSync(electronConfigPath, safeStorage.encryptString(JSON.stringify(connection)));
