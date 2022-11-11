@@ -213,21 +213,21 @@ const insertStateDatabase = async (db, _db, con) => {
                 if (!state_db)
                     throw "state_db not found";
                 if (!databases.includes(SAMPLE_DB_NAME)) {
-                    const stateCon = { ...(0, PubSubManager_1.omitKeys)(state_db, ["id"]) };
                     await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
-                    const validatedConnection = (0, validateConnection_1.validateConnection)({
-                        ...stateCon,
-                        type: "Standard",
-                        name: SAMPLE_DB_LABEL,
-                        db_name: SAMPLE_DB_NAME,
-                    });
-                    await (0, exports.upsertConnection)({
-                        ...stateCon,
-                        ...validatedConnection,
-                        is_state_db: false,
-                        name: SAMPLE_DB_LABEL,
-                    }, null, db);
                 }
+                const stateCon = { ...(0, PubSubManager_1.omitKeys)(state_db, ["id"]) };
+                const validatedConnection = (0, validateConnection_1.validateConnection)({
+                    ...stateCon,
+                    type: "Standard",
+                    name: SAMPLE_DB_LABEL,
+                    db_name: SAMPLE_DB_NAME,
+                });
+                await (0, exports.upsertConnection)({
+                    ...stateCon,
+                    ...validatedConnection,
+                    is_state_db: false,
+                    name: SAMPLE_DB_LABEL,
+                }, null, db);
             }
         }
         catch (err) {
