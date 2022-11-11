@@ -208,7 +208,7 @@ const insertStateDatabase = async (db, _db, con) => {
         try {
             const SAMPLE_DB_LABEL = "Sample database";
             const SAMPLE_DB_NAME = "sample_database";
-            const databases = await _db.any(`SELECT datname FROM pg_database WHERE datistemplate = false;`);
+            const databases = (await _db.any(`SELECT datname FROM pg_database WHERE datistemplate = false;`)).map(({ datname }) => datname);
             if (!(await db.connections.findOne({ name: SAMPLE_DB_LABEL, db_name: SAMPLE_DB_NAME }))) {
                 if (!state_db)
                     throw "state_db not found";

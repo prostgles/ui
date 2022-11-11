@@ -270,7 +270,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO): Promise<ProstglesStart
 const insertStateDatabase = async (db: DBS, _db: DB, con: typeof DBS_CONNECTION_INFO) => {
 
   if(!(await db.connections.count())){ // , name: "Prostgles state database" // { user_id }
-    const state_db = await upsertConnection({  
+    const state_db = await upsertConnection({
       ...con,
       user_id: null, 
       name: "Prostgles UI state database", 
@@ -283,7 +283,7 @@ const insertStateDatabase = async (db: DBS, _db: DB, con: typeof DBS_CONNECTION_
     try {
       const SAMPLE_DB_LABEL = "Sample database";
       const SAMPLE_DB_NAME = "sample_database";
-      const databases: string[] = await _db.any(`SELECT datname FROM pg_database WHERE datistemplate = false;`)
+      const databases: string[] = (await _db.any(`SELECT datname FROM pg_database WHERE datistemplate = false;`)).map(({ datname }) => datname)
       if(! (await db.connections.findOne({ name: SAMPLE_DB_LABEL, db_name: SAMPLE_DB_NAME })) ){
         if(!state_db) throw "state_db not found";
 
