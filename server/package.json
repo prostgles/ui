@@ -15,7 +15,6 @@
   "license": "ISC",
   "dependencies": {
     "@types/cookie-parser": "^1.4.2",
-    "@types/socket.io": "^3.0.2",
     "check-disk-space": "^3.3.1",
     "connection-string": "^4.3.5",
     "cookie-parser": "^1.4.5",

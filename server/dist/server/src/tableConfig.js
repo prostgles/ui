@@ -129,7 +129,7 @@ exports.tableConfig = {
         }
     },
     failed_login_attempts: {
-        dropIfExists: true,
+        // dropIfExists: true,
         columns: {
             id: `BIGSERIAL PRIMARY KEY`,
             ip_address: `INET NOT NULL`,
@@ -478,7 +478,7 @@ exports.tableConfig = {
         }
     },
     global_settings: {
-        dropIfExistsCascade: true,
+        // dropIfExistsCascade: true,
         columns: {
             id: "INTEGER GENERATED ALWAYS AS IDENTITY",
             allowed_origin: {
