@@ -134,7 +134,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
   },
 
   failed_login_attempts: {
-    dropIfExists: true,
+    // dropIfExists: true,
     columns: {
       id:          `BIGSERIAL PRIMARY KEY` ,
       ip_address:  `INET NOT NULL`,
@@ -513,7 +513,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
   },
 
   global_settings: {
-    dropIfExistsCascade: true,
+    // dropIfExistsCascade: true,
     columns: {
       id: "INTEGER GENERATED ALWAYS AS IDENTITY",
       allowed_origin: { 
