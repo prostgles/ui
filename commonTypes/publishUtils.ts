@@ -1,5 +1,5 @@
 import { DBSchemaGenerated } from "./DBoGenerated";
-import { FullDetailedFilter, getFinalFilter, isDefined, SimpleFilter } from "./filterUtils";
+import { GroupedDetailedFilter, getFinalFilter, isDefined, SimpleFilter } from "./filterUtils";
 
 export type CustomTableRules = {
   type: "Custom";
@@ -27,18 +27,18 @@ export type ForcedData = ({
 
 export type SelectRule = {
   fields: FieldFilter,
-  forcedFilterDetailed?: FullDetailedFilter;
+  forcedFilterDetailed?: GroupedDetailedFilter;
   filterFields?: FieldFilter;
   orderByFields?: FieldFilter;
 };
 export type UpdateRule = {
   fields: FieldFilter;
-  forcedFilterDetailed?: FullDetailedFilter;
+  forcedFilterDetailed?: GroupedDetailedFilter;
   filterFields?: FieldFilter;
   forcedDataDetail?: ForcedData[];
 
   dynamicFields?: {
-    filterDetailed: FullDetailedFilter;
+    filterDetailed: GroupedDetailedFilter;
     fields: FieldFilter;
   }[];
 };
@@ -49,7 +49,7 @@ export type InsertRule = {
 }
 export type DeleteRule = {
   filterFields: FieldFilter,
-  forcedFilterDetailed?: FullDetailedFilter;
+  forcedFilterDetailed?: GroupedDetailedFilter;
 };
 
 export type DBSSchema = {
@@ -134,7 +134,7 @@ export const parseFieldFilter = (args: { columns: string[]; fieldFilter: FieldFi
 }
 
 
-export const parseFullFilter = (filter: FullDetailedFilter, context: ContextDataObject, columns: string[] | undefined): { $and: AnyObject[] } | { $or: AnyObject[] } | undefined => {
+export const parseFullFilter = (filter: GroupedDetailedFilter, context: ContextDataObject, columns: string[] | undefined): { $and: AnyObject[] } | { $or: AnyObject[] } | undefined => {
   const isAnd = "$and" in filter;
   const filters = isAnd? filter.$and : filter.$or;
   const finalFilters = (filters as SimpleFilter[]).map(f => getFinalFilter(f, context, { columns })).filter(isDefined);

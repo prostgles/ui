@@ -76,7 +76,7 @@ export type SmartGroupFilter = SimpleFilter[];
 export const isJoinedFilter = (f: SimpleFilter): f is JoinedFilter => Boolean(f.type && JOINED_FILTER_TYPES.includes(f.type as any));
 export const isDetailedFilter = (f: SimpleFilter): f is DetailedFilterBase => !isJoinedFilter(f.type as any);
 
-export const getFinalFilterInfo = (fullFilter?: FullDetailedFilter | SimpleFilter, context?: ContextDataObject, depth = 0): string => {
+export const getFinalFilterInfo = (fullFilter?: GroupedDetailedFilter | SimpleFilter, context?: ContextDataObject, depth = 0): string => {
   const filterToString = (filter: SimpleFilter): string | undefined => {
     const f = getFinalFilter(filter, context, { forInfoOnly: true });
       if(!f) return undefined;
@@ -187,6 +187,6 @@ export const getFinalFilter = (detailedFilter: SimpleFilter, context?: ContextDa
 }
 
 
-export type FullDetailedFilter =
-| { $and: (SimpleFilter | FullDetailedFilter)[] } 
-| { $or: (SimpleFilter | FullDetailedFilter)[] } 
+export type GroupedDetailedFilter =
+| { $and: (SimpleFilter | GroupedDetailedFilter)[] } 
+| { $or: (SimpleFilter | GroupedDetailedFilter)[] } 
