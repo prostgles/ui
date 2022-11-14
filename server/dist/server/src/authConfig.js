@@ -60,7 +60,7 @@ const getAuth = (app) => {
     const auth = {
         sidKeyName: exports.sidKeyName,
         getUser: async (sid, db, _db) => {
-            (0, index_1.log)("getUser", sid);
+            // log("getUser", sid);
             const s = await db.sessions.findOne({ id: sid });
             let user;
             if (s) {
@@ -156,7 +156,7 @@ const getAuth = (app) => {
             use: index_1.connectionChecker.onUse,
             publicRoutes: ["/manifest.json", "/favicon.ico", index_1.API_PATH],
             onGetRequestOK: async (req, res, { getUser, db, dbo: dbs }) => {
-                console.log("onGetRequestOK", req.path);
+                // log("onGetRequestOK", req.path);
                 if (req.path.startsWith(BackupManager_1.BKP_PREFFIX)) {
                     const userData = await getUser();
                     await (0, index_1.getBackupManager)().onRequestBackupFile(res, !userData?.user ? undefined : userData, req);

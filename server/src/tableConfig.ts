@@ -515,7 +515,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
   global_settings: {
     // dropIfExistsCascade: true,
     columns: {
-      id: "INTEGER GENERATED ALWAYS AS IDENTITY",
+      id: "INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY",
       allowed_origin: { 
         sqlDefinition: "TEXT", 
         label: "Allow-Origin", 

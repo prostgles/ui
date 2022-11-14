@@ -18,7 +18,7 @@ app.use(function (req, res, next) {
   res.setHeader(
     'Content-Security-Policy',
     // "default-src 'self'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; frame-src 'self'"
-    " script-src 'self'; frame-src 'self'"
+    " script-src 'self'; frame-src 'self'; worker-src blob: 'self';" /* data import (papaparse) requires: worker-src blob: 'self' */
   );
   next();
 });
@@ -191,7 +191,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO): Promise<ProstglesStart
 
         const remoteAddress = (socket as any)?.conn?.remoteAddress;
 
-        log("onSocketConnect", { remoteAddress });
+        // log("onSocketConnect", { remoteAddress });
 
         await connectionChecker.onSocketConnected({ sid, getUser: getUser as any });
 

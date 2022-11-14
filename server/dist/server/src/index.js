@@ -21,7 +21,7 @@ app.use(express_1.default.urlencoded({ extended: true, limit: "100mb" }));
 app.use(function (req, res, next) {
     res.setHeader('Content-Security-Policy', 
     // "default-src 'self'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; frame-src 'self'"
-    " script-src 'self'; frame-src 'self'");
+    " script-src 'self'; frame-src 'self'; worker-src blob: 'self';" /* data import (papaparse) requires: worker-src blob: 'self' */);
     next();
 });
 // console.log("Connecting to state database" , process.env)
@@ -130,7 +130,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
                     dbo.sessions.update({ id: sid }, { is_connected: true });
                 }
                 const remoteAddress = socket?.conn?.remoteAddress;
-                (0, exports.log)("onSocketConnect", { remoteAddress });
+                // log("onSocketConnect", { remoteAddress });
                 await exports.connectionChecker.onSocketConnected({ sid, getUser: getUser });
                 if (sid) {
                     const s = await dbo.sessions.findOne({ id: sid });
