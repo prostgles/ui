@@ -82,7 +82,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
   const auth: Auth<DBSchemaGenerated, SUser> = {
     sidKeyName,
     getUser: async (sid, db, _db: DB) => {
-      log("getUser", sid);
+      // log("getUser", sid);
       const s = await db.sessions.findOne({ id: sid });
       let user: Users | undefined;
       if(s) {
@@ -184,7 +184,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       use: connectionChecker.onUse,
       publicRoutes: ["/manifest.json", "/favicon.ico", API_PATH], // ["/"],
       onGetRequestOK: async (req, res, { getUser, db, dbo: dbs }) => {
-        console.log("onGetRequestOK", req.path);
+        // log("onGetRequestOK", req.path);
 
         if(req.path.startsWith(BKP_PREFFIX)){
           const userData = await getUser();
