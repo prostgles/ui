@@ -78,6 +78,7 @@
   --indigo-900: #362f78;
 
   --active: #00a1ff;
+  --action: var(--blue-500);
   --active-hover: #51bfff;
 
   --danger: var(--red-700)

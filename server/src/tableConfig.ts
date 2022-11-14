@@ -281,7 +281,8 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           },
           { 
             type: { enum: ["All views/tables"], description: "Custom access (View/Edit/Remove) to all tables" },
-            allowAllTables: { type: "string[]" }, // NEED TO IMPLEMENT ALLOWED VALUES, oneOf: ["select", "insert", "update", "delete"] 
+            allowAllTables: { type: "string[]", allowedValues: ["select", "insert", "update", "delete"]   }  
+            // allowAllTables: { type: "string[]"  }  
           },
           { 
             type: { enum: ["Custom"], description: "Fine grained access to specific tables" },
@@ -289,7 +290,6 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           }
         ]}
         
-      //   CustomTableRules
       }},
       created         : { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
     }
@@ -474,7 +474,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       sql_options     : { defaultValue: { executeOptions: "block", errorMessageDisplay: "both", tabSize: 2  }, jsonbSchema: {
         "executeOptions": {
           optional: true, 
-          description: "Behaviour of execute (CTR+E). Defaults to 'block' \nfull = run entire sql   \nblock = run code block where the cursor is",
+          description: "Behaviour of execute (ALT + E). Defaults to 'block' \nfull = run entire sql   \nblock = run code block where the cursor is",
           enum: ["full", "block"]
         },
         "errorMessageDisplay": {
@@ -493,6 +493,16 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         "minimap": { 
           optional: true, 
           type: { enabled: { type: "boolean" } } 
+        },
+        "acceptSuggestionOnEnter": {
+          description: "Insert suggestions on Enter. Tab is the default key",
+          optional: true, 
+          enum: ["on", "smart", "off"]
+        },
+        "expandSuggestionDocs": {
+          optional: true, 
+          description: "Toggle suggestions documentation tab. Requires page refresh. Enabled by default",
+          type: "boolean"
         },
       }} ,
       columns         : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,

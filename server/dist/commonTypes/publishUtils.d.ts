@@ -1,5 +1,5 @@
 import { DBSchemaGenerated } from "./DBoGenerated";
-import { FullDetailedFilter } from "./filterUtils";
+import { GroupedDetailedFilter } from "./filterUtils";
 export declare type CustomTableRules = {
     type: "Custom";
     customTables: ({
@@ -21,17 +21,17 @@ export declare type ForcedData = ({
 } & ContextValue);
 export declare type SelectRule = {
     fields: FieldFilter;
-    forcedFilterDetailed?: FullDetailedFilter;
+    forcedFilterDetailed?: GroupedDetailedFilter;
     filterFields?: FieldFilter;
     orderByFields?: FieldFilter;
 };
 export declare type UpdateRule = {
     fields: FieldFilter;
-    forcedFilterDetailed?: FullDetailedFilter;
+    forcedFilterDetailed?: GroupedDetailedFilter;
     filterFields?: FieldFilter;
     forcedDataDetail?: ForcedData[];
     dynamicFields?: {
-        filterDetailed: FullDetailedFilter;
+        filterDetailed: GroupedDetailedFilter;
         fields: FieldFilter;
     }[];
 };
@@ -41,7 +41,7 @@ export declare type InsertRule = {
 };
 export declare type DeleteRule = {
     filterFields: FieldFilter;
-    forcedFilterDetailed?: FullDetailedFilter;
+    forcedFilterDetailed?: GroupedDetailedFilter;
 };
 export declare type DBSSchema = {
     [K in keyof DBSchemaGenerated]: Required<DBSchemaGenerated[K]["columns"]>;
@@ -92,7 +92,7 @@ export declare const parseFieldFilter: (args: {
     columns: string[];
     fieldFilter: FieldFilter;
 }) => string[];
-export declare const parseFullFilter: (filter: FullDetailedFilter, context: ContextDataObject, columns: string[] | undefined) => {
+export declare const parseFullFilter: (filter: GroupedDetailedFilter, context: ContextDataObject, columns: string[] | undefined) => {
     $and: AnyObject[];
 } | {
     $or: AnyObject[];

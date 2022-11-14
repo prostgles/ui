@@ -14,17 +14,16 @@ export type DBSchemaGenerated = {
     columns: {
       connection_id: string;
       created?: null | Date;
-      id?: string;
+      id?: number;
       name?: null | string;
-      rule?:       { 
+      rule:       { 
         userGroupNames: string[];
         dbsPermissions?: {  createWorkspaces?: boolean; viewPublishedWorkspaces?: {  workspaceIds: string[]; }; };
         dbPermissions: 
         | {  type: 'Run SQL'; allowSQL?: boolean; }
-        | {  type: 'All views/tables'; allowAllTables: string[]; }
+        | {  type: 'All views/tables'; allowAllTables:  ("select" | "insert" | "update" | "delete")[]; }
         | {  type: 'Custom'; customTables: any[]; }; 
       };
-      user_groups?: null | Array<string>;
     };
   };
   access_control_user_types: {
@@ -34,7 +33,7 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      access_control_id: string;
+      access_control_id: number;
       user_type: string;
     };
   };
@@ -167,6 +166,16 @@ export type DBSchemaGenerated = {
       region?: null | string;
       type?: string;
       user_id?: null | string;
+    };
+  };
+  dwadwa: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      id?: string;
     };
   };
   failed_login_attempts: {
@@ -442,7 +451,9 @@ export type DBSchemaGenerated = {
         errorMessageDisplay?: 'tooltip' | 'bottom' | 'both';
         tabSize?: number;
         lineNumbers?: 'on' | 'off';
-        minimap?: {  enabled: boolean; }; 
+        minimap?: {  enabled: boolean; };
+        acceptSuggestionOnEnter?: 'on' | 'smart' | 'off';
+        expandSuggestionDocs?: boolean; 
       };
       table_name?: null | string;
       table_oid?: null | number;

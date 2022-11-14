@@ -94,7 +94,7 @@ export declare type SimpleFilter = DetailedFilterBase | JoinedFilter;
 export declare type SmartGroupFilter = SimpleFilter[];
 export declare const isJoinedFilter: (f: SimpleFilter) => f is JoinedFilter;
 export declare const isDetailedFilter: (f: SimpleFilter) => f is DetailedFilterBase;
-export declare const getFinalFilterInfo: (fullFilter?: FullDetailedFilter | SimpleFilter, context?: ContextDataObject, depth?: number) => string;
+export declare const getFinalFilterInfo: (fullFilter?: GroupedDetailedFilter | SimpleFilter, context?: ContextDataObject, depth?: number) => string;
 export declare const getFinalFilter: (detailedFilter: SimpleFilter, context?: ContextDataObject, opts?: {
     forInfoOnly?: boolean;
     columns?: string[];
@@ -104,9 +104,9 @@ export declare const getFinalFilter: (detailedFilter: SimpleFilter, context?: Co
     [x: string]: any;
     $filter?: undefined;
 } | undefined;
-export declare type FullDetailedFilter = {
-    $and: (SimpleFilter | FullDetailedFilter)[];
+export declare type GroupedDetailedFilter = {
+    $and: (SimpleFilter | GroupedDetailedFilter)[];
 } | {
-    $or: (SimpleFilter | FullDetailedFilter)[];
+    $or: (SimpleFilter | GroupedDetailedFilter)[];
 };
 //# sourceMappingURL=filterUtils.d.ts.map

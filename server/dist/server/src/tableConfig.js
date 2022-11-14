@@ -257,14 +257,14 @@ exports.tableConfig = {
                             },
                             {
                                 type: { enum: ["All views/tables"], description: "Custom access (View/Edit/Remove) to all tables" },
-                                allowAllTables: { type: "string[]" }, // NEED TO IMPLEMENT ALLOWED VALUES, oneOf: ["select", "insert", "update", "delete"] 
+                                allowAllTables: { type: "string[]", allowedValues: ["select", "insert", "update", "delete"] }
+                                // allowAllTables: { type: "string[]"  }  
                             },
                             {
                                 type: { enum: ["Custom"], description: "Fine grained access to specific tables" },
                                 customTables: { type: "any[]" },
                             }
                         ] }
-                    //   CustomTableRules
                 } },
             created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
         }
@@ -440,7 +440,7 @@ exports.tableConfig = {
             sql_options: { defaultValue: { executeOptions: "block", errorMessageDisplay: "both", tabSize: 2 }, jsonbSchema: {
                     "executeOptions": {
                         optional: true,
-                        description: "Behaviour of execute (CTR+E). Defaults to 'block' \nfull = run entire sql   \nblock = run code block where the cursor is",
+                        description: "Behaviour of execute (ALT + E). Defaults to 'block' \nfull = run entire sql   \nblock = run code block where the cursor is",
                         enum: ["full", "block"]
                     },
                     "errorMessageDisplay": {
@@ -459,6 +459,16 @@ exports.tableConfig = {
                     "minimap": {
                         optional: true,
                         type: { enabled: { type: "boolean" } }
+                    },
+                    "acceptSuggestionOnEnter": {
+                        description: "Insert suggestions on Enter. Tab is the default key",
+                        optional: true,
+                        enum: ["on", "smart", "off"]
+                    },
+                    "expandSuggestionDocs": {
+                        optional: true,
+                        description: "Toggle suggestions documentation tab. Requires page refresh. Enabled by default",
+                        type: "boolean"
                     },
                 } },
             columns: `JSONB NOT NULL DEFAULT '[]'::jsonb`,
