@@ -487,7 +487,7 @@ const serveIndexIfNoCredentials = async (req: Request, res: Response, next: Next
   if(error || isElectron && !electronCredsProvided || _initState.loading){
     await awaitInit();
     if(req.method === "GET" && !req.path.startsWith("/dbs")){
-      res.sendFile(path.resolve(getRootDir() + '/../client/build/index.html'));
+      res.sendFile(path.resolve(actualRootDir + '/../client/build/index.html'));
       return;
     }
   }
