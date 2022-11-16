@@ -36,14 +36,14 @@ const publish_1 = require("./publish");
 const dotenv = require('dotenv');
 const testDBConnection_1 = require("./connectionUtils/testDBConnection");
 const validateConnection_1 = require("./connectionUtils/validateConnection");
-const result = dotenv.config({ path: path_1.default.resolve((0, electronConfig_1.getRootDir)() + '/../.env') });
+const result = dotenv.config({ path: path_1.default.resolve(electronConfig_1.actualRootDir + '/../.env') });
 _a = result?.parsed || {}, exports.PRGL_USERNAME = _a.PRGL_USERNAME, exports.PRGL_PASSWORD = _a.PRGL_PASSWORD, exports.POSTGRES_URL = _a.POSTGRES_URL, exports.POSTGRES_DB = _a.POSTGRES_DB, exports.POSTGRES_HOST = _a.POSTGRES_HOST, exports.POSTGRES_PASSWORD = _a.POSTGRES_PASSWORD, exports.POSTGRES_PORT = _a.POSTGRES_PORT, exports.POSTGRES_USER = _a.POSTGRES_USER, exports.POSTGRES_SSL = _a.POSTGRES_SSL, exports.PROSTGLES_STRICT_COOKIE = _a.PROSTGLES_STRICT_COOKIE;
 const log = (msg, extra) => {
     console.log(...[`(server): ${(new Date()).toISOString()} ` + msg, extra].filter(v => v));
 };
 exports.log = log;
-app.use(express_1.default.static(path_1.default.resolve((0, electronConfig_1.getRootDir)() + "/../client/build"), { index: false }));
-app.use(express_1.default.static(path_1.default.resolve((0, electronConfig_1.getRootDir)() + "/../client/static"), { index: false }));
+app.use(express_1.default.static(path_1.default.resolve(electronConfig_1.actualRootDir + "/../client/build"), { index: false }));
+app.use(express_1.default.static(path_1.default.resolve(electronConfig_1.actualRootDir + "/../client/static"), { index: false }));
 /* AUTH */
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 app.use((0, cookie_parser_1.default)());
@@ -119,10 +119,10 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
         };
         await (0, prostgles_server_1.default)({
             dbConnection,
-            sqlFilePath: path_1.default.join((0, electronConfig_1.getRootDir)() + '/src/init.sql'),
+            sqlFilePath: path_1.default.join(electronConfig_1.actualRootDir + '/src/init.sql'),
             io,
             /** Prevent electron access denied error */
-            tsGeneratedTypesDir: process.env.NODE_ENV !== "production" ? path_1.default.join((0, electronConfig_1.getRootDir)() + '/../commonTypes/') : undefined,
+            tsGeneratedTypesDir: process.env.NODE_ENV !== "production" ? path_1.default.join(electronConfig_1.actualRootDir + '/../commonTypes/') : undefined,
             transactions: true,
             onSocketConnect: async ({ socket, dbo, db, getUser }) => {
                 const user = await getUser();

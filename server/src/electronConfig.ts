@@ -34,7 +34,8 @@ let sidConfig = {
   onSidWasSet: () => {}
 };
 
-let rootDir = path.join(__dirname, "/../../.." )
+export const actualRootDir = path.join(__dirname, "/../../.." );
+let rootDir = actualRootDir;
 export const getRootDir = () => rootDir; 
 
 export const getElectronConfig = () => {
@@ -97,7 +98,7 @@ export const start = async (
 ) => {
   isElectron = true;
   port = args.port;
-  if(!args.rootDir || typeof rootDir !== "string"){
+  if(!args.rootDir || typeof args.rootDir !== "string"){
     throw `Must provide a valid rootDir`;
   }
   if(!args.electronSid || typeof args.electronSid !== "string" || typeof args.onSidWasSet !== "function"){

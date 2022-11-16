@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.start = exports.getElectronConfig = exports.getRootDir = void 0;
+exports.start = exports.getElectronConfig = exports.getRootDir = exports.actualRootDir = void 0;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 let isElectron = false; // process.env.PRGL_IS_ELECTRON;
@@ -33,7 +33,8 @@ let sidConfig = {
     electronSid: "",
     onSidWasSet: () => { }
 };
-let rootDir = path.join(__dirname, "/../../..");
+exports.actualRootDir = path.join(__dirname, "/../../..");
+let rootDir = exports.actualRootDir;
 const getRootDir = () => rootDir;
 exports.getRootDir = getRootDir;
 const getElectronConfig = () => {
@@ -85,7 +86,7 @@ exports.getElectronConfig = getElectronConfig;
 const start = async (sStorage, args, onReady) => {
     isElectron = true;
     port = args.port;
-    if (!args.rootDir || typeof rootDir !== "string") {
+    if (!args.rootDir || typeof args.rootDir !== "string") {
         throw `Must provide a valid rootDir`;
     }
     if (!args.electronSid || typeof args.electronSid !== "string" || typeof args.onSidWasSet !== "function") {
