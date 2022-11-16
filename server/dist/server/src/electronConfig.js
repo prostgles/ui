@@ -23,10 +23,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.start = exports.getElectronConfig = exports.ROOT_DIR = void 0;
+exports.start = exports.getElectronConfig = exports.getRootDir = void 0;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
-exports.ROOT_DIR = path.join(__dirname, "/../../..");
 let isElectron = false; // process.env.PRGL_IS_ELECTRON;
 let safeStorage;
 let port;
@@ -34,13 +33,17 @@ let sidConfig = {
     electronSid: "",
     onSidWasSet: () => { }
 };
+let rootDir = path.join(__dirname, "/../../..");
+const getRootDir = () => rootDir;
+exports.getRootDir = getRootDir;
 const getElectronConfig = () => {
     if (!isElectron)
         return undefined;
     if (!safeStorage || ![safeStorage.encryptString, safeStorage.decryptString].every(v => typeof v === "function")) {
         throw "Invalid safeStorage provided. encryptString or decryptString is not a function";
     }
-    const electronConfigPath = path.resolve(`${exports.ROOT_DIR}/../../.electron-auth.json`);
+    // const electronConfigPath = path.resolve(`${getRootDir()}/../../.electron-auth.json`);
+    const electronConfigPath = path.resolve(`${(0, exports.getRootDir)()}/.electron-auth.json`);
     const getCredentials = () => {
         try {
             const file = !fs.existsSync(electronConfigPath) ? undefined : fs.readFileSync(electronConfigPath); //, { encoding: "utf-8" });
@@ -66,7 +69,14 @@ const getElectronConfig = () => {
                 }
             }
             else {
-                fs.writeFileSync(electronConfigPath, safeStorage.encryptString(JSON.stringify(connection)));
+                try {
+                    console.log("Writing auth file: " + electronConfigPath);
+                    fs.writeFileSync(electronConfigPath, safeStorage.encryptString(JSON.stringify(connection)));
+                }
+                catch (err) {
+                    console.error("Failed writing auth file: " + electronConfigPath, err);
+                    throw err;
+                }
             }
         }
     };
@@ -75,9 +85,13 @@ exports.getElectronConfig = getElectronConfig;
 const start = async (sStorage, args, onReady) => {
     isElectron = true;
     port = args.port;
+    if (!args.rootDir || typeof rootDir !== "string") {
+        throw `Must provide a valid rootDir`;
+    }
     if (!args.electronSid || typeof args.electronSid !== "string" || typeof args.onSidWasSet !== "function") {
         throw "Must provide a valid electronSid: string and onSidWasSet: ()=>void";
     }
+    rootDir = args.rootDir;
     sidConfig = {
         electronSid: args.electronSid,
         onSidWasSet: args.onSidWasSet

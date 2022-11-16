@@ -169,7 +169,7 @@ const getAuth = (app) => {
                     req.next?.();
                 }
                 else {
-                    res.sendFile(path_1.default.resolve(electronConfig_1.ROOT_DIR + '/../client/build/index.html'));
+                    res.sendFile(path_1.default.resolve((0, electronConfig_1.getRootDir)() + '/../client/build/index.html'));
                 }
             },
             cookieOptions: authCookieOpts,

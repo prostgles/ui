@@ -2,15 +2,15 @@
 import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import path from 'path';
 import child from 'child_process';
-import internal, { PassThrough, Readable, Writable } from "stream";
+import internal, { PassThrough, Readable } from "stream";
 import { asName } from "prostgles-types"
 import FileManager from "prostgles-server/dist/FileManager";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import { getKeys, isDefined } from "prostgles-types"
+import { getKeys } from "prostgles-types"
 
 
 export const BACKUP_FOLDERNAME = "prostgles_backups";
-export const BKP_PREFFIX = "/"+BACKUP_FOLDERNAME;
+export const BKP_PREFFIX = "/" + BACKUP_FOLDERNAME;
 
 export type Backups = Required<DBSchemaGenerated["backups"]>["columns"];
 type DumpOpts = Backups["options"];
@@ -24,7 +24,7 @@ type DBS = DBOFullyTyped<DBSchemaGenerated>;
 import checkDiskSpace from 'check-disk-space';
 import { Request, Response } from "express";
 import { SUser } from "./authConfig";
-import { ROOT_DIR } from "./electronConfig";
+import { getRootDir } from "./electronConfig";
 import { ConnectionManager } from "./ConnectionManager";
 import { getConnectionDetails } from "./connectionUtils/getConnectionDetails";
 
@@ -525,7 +525,7 @@ export default class BackupManager {
           } else {
             try {
               res.type(bkp.content_type)
-              res.sendFile(path.resolve(path.join(ROOT_DIR + BKP_PREFFIX + "/" + bkp.id)));
+              res.sendFile(path.resolve(path.join(getRootDir() + BKP_PREFFIX + "/" + bkp.id)));
             } catch(err){
               res.sendStatus(404);
             }
@@ -539,7 +539,7 @@ export default class BackupManager {
 
 
 export async function getFileMgr(dbs: DBS, credId: number | null){
-  const localFolderPath = path.resolve(ROOT_DIR + '/' + BACKUP_FOLDERNAME);
+  const localFolderPath = path.resolve(getRootDir() + '/' + BACKUP_FOLDERNAME);
 
   let cred;
   if(credId){

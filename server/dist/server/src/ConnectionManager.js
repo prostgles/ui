@@ -76,7 +76,7 @@ class ConnectionManager {
         });
     };
     getCertPath(conId, type) {
-        return path_1.default.resolve(`${electronConfig_1.ROOT_DIR}/${exports.PROSTGLES_CERTS_FOLDER}/${conId}` + (type ? `/${type}.pem` : ""));
+        return path_1.default.resolve(`${(0, electronConfig_1.getRootDir)()}/${exports.PROSTGLES_CERTS_FOLDER}/${conId}` + (type ? `/${type}.pem` : ""));
     }
     saveCertificates(connections) {
         connections.forEach(c => {
@@ -121,7 +121,7 @@ class ConnectionManager {
         // return this.wss;
     }
     getFileFolderPath(conId) {
-        let rootPath = path_1.default.resolve(`${electronConfig_1.ROOT_DIR}/${index_1.MEDIA_ROUTE_PREFIX}`);
+        let rootPath = path_1.default.resolve(`${(0, electronConfig_1.getRootDir)()}/${index_1.MEDIA_ROUTE_PREFIX}`);
         if (conId)
             return `${rootPath}/${conId}`;
         return rootPath;

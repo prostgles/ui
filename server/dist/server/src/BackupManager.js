@@ -487,7 +487,7 @@ class BackupManager {
                     else {
                         try {
                             res.type(bkp.content_type);
-                            res.sendFile(path_1.default.resolve(path_1.default.join(electronConfig_1.ROOT_DIR + exports.BKP_PREFFIX + "/" + bkp.id)));
+                            res.sendFile(path_1.default.resolve(path_1.default.join((0, electronConfig_1.getRootDir)() + exports.BKP_PREFFIX + "/" + bkp.id)));
                         }
                         catch (err) {
                             res.sendStatus(404);
@@ -500,7 +500,7 @@ class BackupManager {
 }
 exports.default = BackupManager;
 async function getFileMgr(dbs, credId) {
-    const localFolderPath = path_1.default.resolve(electronConfig_1.ROOT_DIR + '/' + exports.BACKUP_FOLDERNAME);
+    const localFolderPath = path_1.default.resolve((0, electronConfig_1.getRootDir)() + '/' + exports.BACKUP_FOLDERNAME);
     let cred;
     if (credId) {
         cred = await dbs.credentials.findOne({ id: credId, type: "s3" });

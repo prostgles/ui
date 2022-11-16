@@ -9,7 +9,7 @@ import { authenticator } from "otplib";
 import { Express } from "express"
 import path from "path";
 import { DBSSchema } from "../../commonTypes/publishUtils";
-import { ROOT_DIR } from "./electronConfig";
+import { getRootDir } from "./electronConfig";
 
 export const HOUR = 3600e3;
 export const YEAR = 365 * HOUR * 24;
@@ -198,7 +198,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
           req.next?.()
 
         } else {
-          res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
+          res.sendFile(path.resolve(getRootDir() + '/../client/build/index.html'));
         }
       },
       cookieOptions: authCookieOpts,
