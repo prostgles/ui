@@ -127,7 +127,7 @@ const parseDelete = (rule, columns, context) => {
     };
 };
 const parseTableRules = (rules, isView = false, columns, context) => {
-    if (rules === true || rules === "*") {
+    if ([true, "*"].includes(rules)) {
         return true;
     }
     if (isObject(rules)) {

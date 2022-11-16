@@ -236,7 +236,7 @@ const parseDelete = (rule: undefined | boolean | DeleteRule, columns: string[], 
 
 export const parseTableRules = (rules: TableRules, isView = false, columns: string[], context: ContextDataObject): PublishedResult | undefined => {
 
-  if(rules === true || rules === "*"){
+  if([true, "*"].includes(rules as any)){
     return true;
   } 
   
