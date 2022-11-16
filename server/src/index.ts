@@ -179,7 +179,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO): Promise<ProstglesStart
       sqlFilePath: path.join(actualRootDir + '/src/init.sql'),
       io,
       /** Prevent electron access denied error */
-      tsGeneratedTypesDir: process.env.NODE_ENV !== "production"? path.join(actualRootDir + '/../commonTypes/') : undefined,
+      tsGeneratedTypesDir: (process.env.NODE_ENV === "production" || getElectronConfig()?.isElectron)? undefined : path.join(actualRootDir + '/../commonTypes/'),
       transactions: true,
       onSocketConnect: async ({ socket, dbo, db, getUser }) => {
         
