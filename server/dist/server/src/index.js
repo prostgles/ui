@@ -122,7 +122,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
             sqlFilePath: path_1.default.join(electronConfig_1.actualRootDir + '/src/init.sql'),
             io,
             /** Prevent electron access denied error */
-            tsGeneratedTypesDir: process.env.NODE_ENV !== "production" ? path_1.default.join(electronConfig_1.actualRootDir + '/../commonTypes/') : undefined,
+            tsGeneratedTypesDir: (process.env.NODE_ENV === "production" || (0, electronConfig_1.getElectronConfig)()?.isElectron) ? undefined : path_1.default.join(electronConfig_1.actualRootDir + '/../commonTypes/'),
             transactions: true,
             onSocketConnect: async ({ socket, dbo, db, getUser }) => {
                 const user = await getUser();
