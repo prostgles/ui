@@ -1,7 +1,7 @@
 import { PublishMethods } from "prostgles-server/dist/PublishParser";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
-export type Users = Required<DBSchemaGenerated["users"]["columns"]>;
-export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
+export declare type Users = Required<DBSchemaGenerated["users"]["columns"]>;
+export declare type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 export declare const publishMethods: PublishMethods<DBSchemaGenerated>;
 export declare const is: {
     readonly string: (v: any, notEmtpy?: boolean) => v is string;

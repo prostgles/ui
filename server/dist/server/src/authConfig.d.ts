@@ -10,7 +10,7 @@ export declare const makeSession: (user: Users | undefined, client: {
     user_agent?: string;
     sid?: string;
 }, dbo: DBOFullyTyped<DBSchemaGenerated>, expires?: number) => Promise<BasicSession>;
-export type SUser = {
+export declare type SUser = {
     sid: string;
     user: Users;
     clientUser: {

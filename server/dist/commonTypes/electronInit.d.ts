@@ -1,4 +1,4 @@
-export type ProstglesInitState = ({
+export declare type ProstglesInitState = ({
     isElectron: boolean;
     electronCredsProvided?: boolean;
     initError?: any;
@@ -11,5 +11,5 @@ export type ProstglesInitState = ({
         pg_restore: string;
     } | undefined;
 });
-export type ServerState = Omit<ProstglesInitState, "canTryStartProstgles">;
+export declare type ServerState = Omit<ProstglesInitState, "canTryStartProstgles">;
 //# sourceMappingURL=electronInit.d.ts.map
