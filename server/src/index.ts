@@ -7,7 +7,7 @@ import { publishMethods } from "./publishMethods";
 import { ChildProcessWithoutNullStreams, execSync } from "child_process";
 import { ConnectionManager } from "./ConnectionManager";
 import { getAuth } from "./authConfig";
-import { DBSConnectionInfo, getElectronConfig, OnServerReadyCallback, getRootDir } from "./electronConfig";
+import { DBSConnectionInfo, getElectronConfig, OnServerReadyCallback, getRootDir, actualRootDir } from "./electronConfig";
 
 
 export const API_PATH = "/api";
@@ -51,7 +51,7 @@ export type DBS = DBOFullyTyped<DBSchemaGenerated>
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
 
-const result = dotenv.config({ path: path.resolve(getRootDir()+'/../.env') })
+const result = dotenv.config({ path: path.resolve(actualRootDir + '/../.env') })
 export const {
   PRGL_USERNAME,
   PRGL_PASSWORD,
@@ -75,8 +75,8 @@ export const log = (msg: string, extra?: any) => {
   console.log(...[`(server): ${(new Date()).toISOString()} ` + msg, extra].filter(v => v));
 }
 
-app.use(express.static(path.resolve(getRootDir() + "/../client/build"), { index: false }));
-app.use(express.static(path.resolve(getRootDir() + "/../client/static"), { index: false }));
+app.use(express.static(path.resolve(actualRootDir + "/../client/build"), { index: false }));
+app.use(express.static(path.resolve(actualRootDir + "/../client/static"), { index: false }));
 
  
 /* AUTH */ 
@@ -176,10 +176,10 @@ const startProstgles = async (con = DBS_CONNECTION_INFO): Promise<ProstglesStart
     };
     await prostgles<DBSchemaGenerated>({
       dbConnection,
-      sqlFilePath: path.join(getRootDir()+'/src/init.sql'),
+      sqlFilePath: path.join(actualRootDir + '/src/init.sql'),
       io,
       /** Prevent electron access denied error */
-      tsGeneratedTypesDir: process.env.NODE_ENV !== "production"? path.join(getRootDir() + '/../commonTypes/') : undefined,
+      tsGeneratedTypesDir: process.env.NODE_ENV !== "production"? path.join(actualRootDir + '/../commonTypes/') : undefined,
       transactions: true,
       onSocketConnect: async ({ socket, dbo, db, getUser }) => {
         

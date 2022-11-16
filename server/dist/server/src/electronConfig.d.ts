@@ -10,6 +10,7 @@ interface SafeStorage extends NodeJS.EventEmitter {
     isEncryptionAvailable(): boolean;
 }
 declare let port: number | undefined;
+export declare const actualRootDir: string;
 declare let rootDir: string;
 export declare const getRootDir: () => string;
 export declare const getElectronConfig: () => {
