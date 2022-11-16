@@ -18,7 +18,7 @@ import { S3Config } from "prostgles-server/dist/FileManager";
 import { Express } from "express";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { getConnectionDetails } from "./connectionUtils/getConnectionDetails";
-import { ROOT_DIR } from "./electronConfig";
+import { getRootDir } from "./electronConfig";
 
 export type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
 
@@ -73,7 +73,7 @@ export class ConnectionManager {
   }
 
   getCertPath(conId: string, type?: "ca" | "cert" | "key"){
-    return path.resolve(`${ROOT_DIR}/${PROSTGLES_CERTS_FOLDER}/${conId}` + (type? `/${type}.pem` : ""))
+    return path.resolve(`${getRootDir()}/${PROSTGLES_CERTS_FOLDER}/${conId}` + (type? `/${type}.pem` : ""))
   }
 
   saveCertificates(connections: Connections[]){
@@ -122,7 +122,7 @@ export class ConnectionManager {
   }
 
   getFileFolderPath(conId?: string){
-    let rootPath = path.resolve(`${ROOT_DIR}/${MEDIA_ROUTE_PREFIX}`);
+    let rootPath = path.resolve(`${getRootDir()}/${MEDIA_ROUTE_PREFIX}`);
     if(conId) return `${rootPath}/${conId}`;
     return rootPath;
   }

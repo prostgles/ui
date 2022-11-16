@@ -4,10 +4,10 @@ import prostgles from "prostgles-server";
 import { tableConfig } from "./tableConfig";
 const app = express();
 import { publishMethods } from "./publishMethods";
-import { ChildProcessWithoutNullStreams, spawnSync, execSync } from "child_process";
-import { ConnectionManager, Unpromise } from "./ConnectionManager";
-import { getAuth, sidKeyName } from "./authConfig";
-import { DBSConnectionInfo, getElectronConfig, OnServerReadyCallback, ROOT_DIR } from "./electronConfig";
+import { ChildProcessWithoutNullStreams, execSync } from "child_process";
+import { ConnectionManager } from "./ConnectionManager";
+import { getAuth } from "./authConfig";
+import { DBSConnectionInfo, getElectronConfig, OnServerReadyCallback, getRootDir } from "./electronConfig";
 
 
 export const API_PATH = "/api";
@@ -51,7 +51,7 @@ export type DBS = DBOFullyTyped<DBSchemaGenerated>
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
 
-const result = dotenv.config({ path: path.resolve(ROOT_DIR+'/../.env') })
+const result = dotenv.config({ path: path.resolve(getRootDir()+'/../.env') })
 export const {
   PRGL_USERNAME,
   PRGL_PASSWORD,
@@ -75,8 +75,8 @@ export const log = (msg: string, extra?: any) => {
   console.log(...[`(server): ${(new Date()).toISOString()} ` + msg, extra].filter(v => v));
 }
 
-app.use(express.static(path.resolve(ROOT_DIR + "/../client/build"), { index: false }));
-app.use(express.static(path.resolve(ROOT_DIR + "/../client/static"), { index: false }));
+app.use(express.static(path.resolve(getRootDir() + "/../client/build"), { index: false }));
+app.use(express.static(path.resolve(getRootDir() + "/../client/static"), { index: false }));
 
  
 /* AUTH */ 
@@ -176,9 +176,10 @@ const startProstgles = async (con = DBS_CONNECTION_INFO): Promise<ProstglesStart
     };
     await prostgles<DBSchemaGenerated>({
       dbConnection,
-      sqlFilePath: path.join(ROOT_DIR+'/src/init.sql'),
+      sqlFilePath: path.join(getRootDir()+'/src/init.sql'),
       io,
-      tsGeneratedTypesDir: path.join(ROOT_DIR + '/../commonTypes/'),
+      /** Prevent electron access denied error */
+      tsGeneratedTypesDir: process.env.NODE_ENV !== "production"? path.join(getRootDir() + '/../commonTypes/') : undefined,
       transactions: true,
       onSocketConnect: async ({ socket, dbo, db, getUser }) => {
         
@@ -486,7 +487,7 @@ const serveIndexIfNoCredentials = async (req: Request, res: Response, next: Next
   if(error || isElectron && !electronCredsProvided || _initState.loading){
     await awaitInit();
     if(req.method === "GET" && !req.path.startsWith("/dbs")){
-      res.sendFile(path.resolve(ROOT_DIR + '/../client/build/index.html'));
+      res.sendFile(path.resolve(getRootDir() + '/../client/build/index.html'));
       return;
     }
   }
