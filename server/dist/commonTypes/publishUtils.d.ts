@@ -1,17 +1,17 @@
 import { DBSchemaGenerated } from "./DBoGenerated";
 import { GroupedDetailedFilter } from "./filterUtils";
-export type CustomTableRules = {
+export declare type CustomTableRules = {
     type: "Custom";
     customTables: ({
         tableName: string;
     } & TableRules)[];
 };
-export type UserGroupRule = DBSSchema["access_control"]["rule"];
-export type ContextValue = {
+export declare type UserGroupRule = DBSSchema["access_control"]["rule"];
+export declare type ContextValue = {
     objectName: string;
     objectPropertyName: string;
 };
-export type ForcedData = ({
+export declare type ForcedData = ({
     type: "fixed";
     fieldName: string;
     value: any;
@@ -19,13 +19,13 @@ export type ForcedData = ({
     type: "context";
     fieldName: string;
 } & ContextValue);
-export type SelectRule = {
+export declare type SelectRule = {
     fields: FieldFilter;
     forcedFilterDetailed?: GroupedDetailedFilter;
     filterFields?: FieldFilter;
     orderByFields?: FieldFilter;
 };
-export type UpdateRule = {
+export declare type UpdateRule = {
     fields: FieldFilter;
     forcedFilterDetailed?: GroupedDetailedFilter;
     filterFields?: FieldFilter;
@@ -35,26 +35,26 @@ export type UpdateRule = {
         fields: FieldFilter;
     }[];
 };
-export type InsertRule = {
+export declare type InsertRule = {
     fields: FieldFilter;
     forcedDataDetail?: ForcedData[];
 };
-export type DeleteRule = {
+export declare type DeleteRule = {
     filterFields: FieldFilter;
     forcedFilterDetailed?: GroupedDetailedFilter;
 };
-export type DBSSchema = {
+export declare type DBSSchema = {
     [K in keyof DBSchemaGenerated]: Required<DBSchemaGenerated[K]["columns"]>;
 };
-export type TableRules = {
+export declare type TableRules = {
     select?: boolean | SelectRule;
     update?: boolean | UpdateRule;
     insert?: boolean | InsertRule;
     delete?: boolean | DeleteRule;
 };
-export type BasicTablePermissions = Partial<Record<keyof TableRules, boolean>>;
-type AnyObject = Record<string, any>;
-type PublishedResultUpdate = {
+export declare type BasicTablePermissions = Partial<Record<keyof TableRules, boolean>>;
+declare type AnyObject = Record<string, any>;
+declare type PublishedResultUpdate = {
     fields: FieldFilter;
     dynamicFields?: {
         filter: {
@@ -69,7 +69,7 @@ type PublishedResultUpdate = {
     filterFields?: FieldFilter;
     returningFields?: FieldFilter;
 };
-type PublishedResult = boolean | {
+declare type PublishedResult = boolean | {
     select?: boolean | {
         fields: FieldFilter;
         filterFields?: FieldFilter;
@@ -87,7 +87,7 @@ type PublishedResult = boolean | {
     };
 };
 export declare function isObject<T extends Record<string, any>>(obj: any): obj is T;
-export type FieldFilter = "" | "*" | string[] | Record<string, 1 | true> | Record<string, 0 | false>;
+export declare type FieldFilter = "" | "*" | string[] | Record<string, 1 | true> | Record<string, 0 | false>;
 export declare const parseFieldFilter: (args: {
     columns: string[];
     fieldFilter: FieldFilter;
@@ -104,11 +104,11 @@ export declare const parseForcedFilter: (rule: TableRules[keyof TableRules], con
         $or: AnyObject[];
     };
 } | undefined;
-export type ContextDataObject = {
+export declare type ContextDataObject = {
     user: DBSSchema["users"];
 };
 export declare const parseTableRules: (rules: TableRules, isView: boolean | undefined, columns: string[], context: ContextDataObject) => PublishedResult | undefined;
-export type TableRulesErrors = Partial<Record<keyof TableRules, any>> & {
+export declare type TableRulesErrors = Partial<Record<keyof TableRules, any>> & {
     all?: string;
 };
 export declare const getTableRulesErrors: (rules: TableRules, tableColumns: string[], contextData: ContextDataObject) => Promise<TableRulesErrors>;

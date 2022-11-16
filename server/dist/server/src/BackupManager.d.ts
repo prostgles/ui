@@ -8,14 +8,14 @@ import FileManager from "prostgles-server/dist/FileManager";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 export declare const BACKUP_FOLDERNAME = "prostgles_backups";
 export declare const BKP_PREFFIX: string;
-export type Backups = Required<DBSchemaGenerated["backups"]>["columns"];
-type DumpOpts = Backups["options"];
-export type DumpOptsServer = DumpOpts & {
+export declare type Backups = Required<DBSchemaGenerated["backups"]>["columns"];
+declare type DumpOpts = Backups["options"];
+export declare type DumpOptsServer = DumpOpts & {
     initiator: string;
 };
-export type Users = Required<DBSchemaGenerated["users"]["columns"]>;
-export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
-type DBS = DBOFullyTyped<DBSchemaGenerated>;
+export declare type Users = Required<DBSchemaGenerated["users"]["columns"]>;
+export declare type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
+declare type DBS = DBOFullyTyped<DBSchemaGenerated>;
 import { Request, Response } from "express";
 import { SUser } from "./authConfig";
 import { ConnectionManager } from "./ConnectionManager";
@@ -133,7 +133,7 @@ export declare function getFileMgr(dbs: DBS, credId: number | null): Promise<{
         user_id?: string | null | undefined;
     }> | undefined;
 }>;
-type EnvVars = Record<string, string> | {};
+declare type EnvVars = Record<string, string> | {};
 export declare function pipeFromCommand(command: string, opts: string[], envVars: EnvVars | undefined, destination: internal.Writable, onEnd: (err?: any) => void, onStdout?: (data: any, isStdErr?: boolean) => void, useExec?: boolean): child.ChildProcess;
 export declare function pipeToCommand(command: string, opts: string[], envVars: EnvVars | undefined, source: internal.Readable, onEnd: (err?: any) => void, onStdout?: (data: any, isStdErr?: boolean) => void, useExec?: boolean): child.ChildProcess;
 export {};

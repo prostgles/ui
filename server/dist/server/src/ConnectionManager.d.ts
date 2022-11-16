@@ -9,12 +9,12 @@ import { DB, FileTableConfig } from "prostgles-server/dist/Prostgles";
 import { SubscriptionHandler } from "prostgles-types";
 import WebSocket from 'ws';
 import { Express } from "express";
-export type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
-export type ConnectionTableConfig = Pick<FileTableConfig, "referencedTables"> & Connections["table_config"];
+export declare type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
+export declare type ConnectionTableConfig = Pick<FileTableConfig, "referencedTables"> & Connections["table_config"];
 export declare const DB_TRANSACTION_KEY: "dbTransactionProstgles";
 export declare const getACRule: (dbs: DBOFullyTyped<DBSchemaGenerated>, user: DBSSchema["users"], connection_id: string) => Promise<DBSSchema["access_control"] | undefined>;
 export declare const getACRules: (dbs: DBOFullyTyped<DBSchemaGenerated>, user: Pick<DBSSchema["users"], "type">) => Promise<DBSSchema["access_control"][]>;
-type PRGLInstance = {
+declare type PRGLInstance = {
     socket_path: string;
     con: Connections;
     prgl?: Unpromise<ReturnType<typeof prostgles>>;
