@@ -101,7 +101,7 @@ const DBS_CONNECTION_INFO: DBSConnectionInfo = {
 import { omitKeys, pickKeys } from "prostgles-server/dist/PubSubManager";
 
 
-import BackupManager, { Backups } from "./BackupManager";
+import BackupManager from "./BackupManager";
 let bkpManager: BackupManager;
 
 export const getBackupManager = () => bkpManager;
@@ -253,7 +253,19 @@ const startProstgles = async (con = DBS_CONNECTION_INFO): Promise<ProstglesStart
         await connectionChecker.init(db, _db);
 
         await connMgr.init(db);
-        bkpManager ??= new BackupManager(db, connMgr);
+
+        /** Windows postgres installs does not tend to add executables to PATH so will try to find and use full paths */
+
+        if(!installedPrograms?.pg_dump){
+          const installLocation = (await _db.oneOrNone("SHOW data_directory"))?.data_directory as string;
+          const binDir = installLocation.endsWith("data")? (installLocation.slice(0, -4) + "bin") : installLocation;
+          checkInstalledPrograms({ pref: binDir, ext: ".exe" })
+          bkpManager ??= new BackupManager(db, connMgr, { preffix: binDir, extension: ".exe" });
+
+        } else {
+          bkpManager ??= new BackupManager(db, connMgr, { preffix: "", extension: "" });
+        }
+
 
 
         console.log("Prostgles UI is running on port ", PORT)
@@ -377,19 +389,28 @@ let installedPrograms: ProstglesInitState["canDumpAndRestore"] = {
   pg_restore: "",
 };
 
-try {
-  installedPrograms = {
-    psql: execSync("which psql").toString() && execSync("psql --version").toString(),
-    pg_dump: execSync("which pg_dump").toString() && execSync("pg_dump --version").toString(),
-    pg_restore: execSync("which pg_restore").toString() && execSync("pg_restore --version").toString(),
-  };
-} catch(e){
-  installedPrograms = undefined;
+const checkInstalledPrograms = (args?: { pref: string; ext: string; }) => {
+  try {
+    if(args){
+      installedPrograms = {
+        psql: execSync(`${args.pref}psql${args.ext} --version`).toString(),
+        pg_dump: execSync(`${args.pref}pg_dump${args.ext} --version`).toString(),
+        pg_restore: execSync(`${args.pref}pg_restore${args.ext} --version`).toString(),
+      };
+    } else {
+      installedPrograms = {
+        psql: execSync("which psql").toString() && execSync("psql --version").toString(),
+        pg_dump: execSync("which pg_dump").toString() && execSync("pg_dump --version").toString(),
+        pg_restore: execSync("which pg_restore").toString() && execSync("pg_restore --version").toString(),
+      };
+    }
+  } catch(e){
+    installedPrograms = undefined;
+  }
 }
+checkInstalledPrograms();
 
-if(installedPrograms?.psql){
 
-}
 
 import type { ProstglesInitState, ServerState } from "../../commonTypes/electronInit";
 const getInitState = (): ProstglesInitState  => {

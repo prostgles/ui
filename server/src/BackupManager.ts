@@ -35,6 +35,9 @@ export default class BackupManager {
 
   private tempStreams: Record<string, { lastChunk: number; stream: PassThrough; }> = {};
 
+  private commandDirectoryPrefix: string;
+  private commandExt: string;
+
   private timeout?: NodeJS.Timeout;
   closeStream = (streamId: string) => {
     const s = this.tempStreams[streamId];
@@ -94,9 +97,11 @@ export default class BackupManager {
   private dbs: DBS;
   interval: NodeJS.Timeout;
   connMgr: ConnectionManager;
-  constructor(dbs: DBS, connMgr: ConnectionManager){
+  constructor(dbs: DBS, connMgr: ConnectionManager, windows: { preffix: string; extension: string; }){
     this.dbs = dbs;
     this.connMgr = connMgr;
+    this.commandDirectoryPrefix = windows.preffix;
+    this.commandExt = windows.extension;
     this.interval = setInterval(async () => {
       const connections = await this.dbs.connections.find({ "backups_config->>enabled": 'true' } as any);
       for await(const con of connections){
@@ -254,7 +259,7 @@ export default class BackupManager {
     const ENV_VARS = { ...SSL_ENV_VARS, ...ConnectionEnvVars };
     const dumpAll = o.command === "pg_dumpall";
     const dumpCommand = dumpAll? {
-      command: "pg_dumpall",
+      command: this.commandDirectoryPrefix + "pg_dumpall" + this.commandExt,
       opts: addOptions(["-d", uri], [
         [o.clean, "--clean"],
         [o.ifExists, "--if-exists"],
@@ -267,7 +272,7 @@ export default class BackupManager {
       ])
 
     } : {
-      command: "pg_dump",
+      command: this.commandDirectoryPrefix + "pg_dump" + this.commandExt,
       // opts: addOptions([uri_NOT_SAFE_-> VISIBLE TO ps aux], [
       opts: addOptions([], [
         [!!o.format, ["--format", o.format]],
@@ -383,11 +388,11 @@ export default class BackupManager {
       const ENV_VARS = { ...SSL_ENV_VARS, ...ConnectionEnvVars };
       const bkpStream = stream ?? await fileMgr.getFileStream(bkp.id);
       const restoreCmd = (o.command === "psql" || o.format === "p")? {
-        command: "psql",
+        command: this.commandDirectoryPrefix + "psql" + this.commandExt,
         // opts: [getConnectionUri(con as any)] // NOT SAFE ps aux
         opts: []
       } : {
-        command: "pg_restore",
+        command: this.commandDirectoryPrefix + "pg_restore" + this.commandExt,
         opts: addOptions(
           // ["-d", getConnectionUri(con as any) NOT SAFE FROM ps aux], 
           [],

@@ -21,6 +21,8 @@ import { SUser } from "./authConfig";
 import { ConnectionManager } from "./ConnectionManager";
 export default class BackupManager {
     private tempStreams;
+    private commandDirectoryPrefix;
+    private commandExt;
     private timeout?;
     closeStream: (streamId: string) => internal.PassThrough;
     pushToStream: (streamId: string, chunk: any, cb: (err: any) => void) => void;
@@ -64,7 +66,7 @@ export default class BackupManager {
             compressionLevel?: number | undefined;
             ifExists?: boolean | undefined;
             keepLogs?: boolean | undefined;
-        } | undefined;
+        } | undefined; /** Delete stale streams */
         restore_command?: string | null | undefined;
         restore_end?: Date | null | undefined;
         restore_logs?: string | null | undefined;
@@ -107,7 +109,10 @@ export default class BackupManager {
     private dbs;
     interval: NodeJS.Timeout;
     connMgr: ConnectionManager;
-    constructor(dbs: DBS, connMgr: ConnectionManager);
+    constructor(dbs: DBS, connMgr: ConnectionManager, windows: {
+        preffix: string;
+        extension: string;
+    });
     destroy(): Promise<void>;
     private checkIfEnoughSpace;
     private getDBSizeInBytes;
