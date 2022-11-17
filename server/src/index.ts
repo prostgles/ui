@@ -258,7 +258,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO): Promise<ProstglesStart
 
         if(!installedPrograms?.pg_dump){
           const installLocation = (await _db.oneOrNone("SHOW data_directory"))?.data_directory as string;
-          const binDir = installLocation.endsWith("data")? (installLocation.slice(0, -4) + "bin") : installLocation;
+          const binDir = installLocation.endsWith("data")? (installLocation.slice(0, -4) + "bin/") : installLocation;
           checkInstalledPrograms({ pref: binDir, ext: ".exe" })
           bkpManager ??= new BackupManager(db, connMgr, { preffix: binDir, extension: ".exe" });
 
