@@ -27,6 +27,7 @@ import { SUser } from "./authConfig";
 import { getRootDir } from "./electronConfig";
 import { ConnectionManager } from "./ConnectionManager";
 import { getConnectionDetails } from "./connectionUtils/getConnectionDetails";
+import { omitKeys } from "prostgles-server/dist/PubSubManager";
 
 
 const HOUR = 3600 * 1000;
@@ -378,8 +379,17 @@ export default class BackupManager {
     if(!con) throw "Connection not found"
     if(!o) throw "Restore options missing"
 
-    const setError = (err: any) => {
-      this.dbs.backups.update({ id: bkpId }, { restore_status: { err: (err ?? "").toString() }, last_updated: new Date() })
+    const setError = async (err: any) => {
+      const currBkp = await this.dbs.backups.findOne({ id: bkpId });
+      if(currBkp){
+        this.dbs.backups.update({ id: bkpId }, { 
+          restore_status: { 
+            ...omitKeys(currBkp.restore_status as any, ["ok"]),
+            err: (err ?? "").toString() 
+          }, 
+          last_updated: new Date() 
+        })
+      }
     }
     if(o.newDbName){
       if(o.create) throw "Cannot use 'newDbName' together with 'create'. --create option will still restore into the database specified within the dump file";
@@ -423,7 +433,7 @@ export default class BackupManager {
       await this.dbs.backups.update({ id: bkpId }, { 
         restore_start: new Date(), 
         restore_command: envToStr(ENV_VARS) + restoreCmd.command + " " + restoreCmd.opts.join(" "), 
-        restore_status: { loading: { loaded: 0, total: 0 } }, 
+        restore_status: { loading: { loaded: 0, total: 0, currChunk: "", currChunkLength: 0 } }, 
         last_updated: new Date() 
       });
 
@@ -436,7 +446,16 @@ export default class BackupManager {
           if(!(await this.dbs.backups.findOne({ id: bkpId }))){
             bkpStream.emit("error", "Backup file not found");
           } else {
-            this.dbs.backups.update({ id: bkpId }, { restore_status: { loading: { loaded: chunkSum, total: 0 } } })
+            this.dbs.backups.update({ id: bkpId }, { 
+              restore_status: { 
+                loading: { 
+                  loaded: chunkSum,
+                  currChunkLength: chunk.length, 
+                  currChunk: chunk as any,
+                  total: 0 
+                } 
+              } 
+            })
           }
         }
       })
@@ -493,7 +512,7 @@ export default class BackupManager {
       chunkSum += chunk.length
       if(Date.now() - lastChunk > 1000){
         lastChunk = Date.now();
-        this.dbs.backups.update({ id: bkp.id }, { restore_status: { loading: { total: sizeBytes, loaded: chunkSum } } } )
+        this.dbs.backups.update({ id: bkp.id }, { restore_status: { loading: { total: sizeBytes, loaded: chunkSum, currChunk: chunk as any, currChunkLength: chunk.length } } } )
       }
     });
 
