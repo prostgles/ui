@@ -375,7 +375,6 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
             { err: { type: "string" } },
             { 
               loading: { type: { 
-                currChunk: { type: "string" },
                 currChunkLength: { type: "any" },
                 loaded: { type: "number" },
                 total: { type: "number" } 
