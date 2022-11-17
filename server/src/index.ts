@@ -393,9 +393,9 @@ const checkInstalledPrograms = (args?: { pref: string; ext: string; }) => {
   try {
     if(args){
       installedPrograms = {
-        psql: execSync(`${args.pref}psql${args.ext} --version`).toString(),
-        pg_dump: execSync(`${args.pref}pg_dump${args.ext} --version`).toString(),
-        pg_restore: execSync(`${args.pref}pg_restore${args.ext} --version`).toString(),
+        psql: execSync(JSON.stringify(`${args.pref}psql${args.ext}`) + ` --version`).toString(),
+        pg_dump: execSync(JSON.stringify(`${args.pref}pg_dump${args.ext}`) + ` --version`).toString(),
+        pg_restore: execSync(JSON.stringify(`${args.pref}pg_restore${args.ext}`) + ` --version`).toString(),
       };
     } else {
       installedPrograms = {
