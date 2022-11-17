@@ -7,10 +7,10 @@ import { DB } from "prostgles-server/dist/Prostgles";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { Auth, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
 import { SUser } from "./authConfig";
-export declare type WithOrigin = {
+export type WithOrigin = {
     origin?: (requestOrigin: string | undefined, callback: (err: Error | null, origin?: string) => void) => void;
 };
-declare type OnUse = Required<Auth<DBSchemaGenerated, SUser>>["expressConfig"]["use"];
+type OnUse = Required<Auth<DBSchemaGenerated, SUser>>["expressConfig"]["use"];
 export declare class ConnectionChecker {
     app: Express;
     constructor(app: Express);

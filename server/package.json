@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "npm i --production && set  NODE_ENV=production && NODE_OPTIONS=--max-old-space-size=2048 tsc",
-    "buildw": "npm i --production && tsc",
+    "build": "npm i && set  NODE_ENV=production && NODE_OPTIONS=--max-old-space-size=2048 tsc",
+    "buildw": "npm i && tsc",
     "start": "npm run build && node dist/server/src/index.js",
     "rollup": "rollup -c",
     "dev": " NODE_OPTIONS='--max-old-space-size=2048' npm i && tsc-watch --onSuccess \"node --inspect  dist/server/src/index.js\"",

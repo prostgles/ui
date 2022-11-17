@@ -68,13 +68,13 @@ export declare const DATE_FILTER_TYPES: readonly [{
     readonly key: "$duration";
     readonly label: "Duration";
 }];
-export declare type FilterType = typeof CORE_FILTER_TYPES[number]["key"] | typeof FTS_FILTER_TYPES[number]["key"] | typeof TEXT_FILTER_TYPES[number]["key"] | typeof NUMERIC_FILTER_TYPES[number]["key"] | typeof DATE_FILTER_TYPES[number]["key"];
-export declare type BaseFilter = {
+export type FilterType = typeof CORE_FILTER_TYPES[number]["key"] | typeof FTS_FILTER_TYPES[number]["key"] | typeof TEXT_FILTER_TYPES[number]["key"] | typeof NUMERIC_FILTER_TYPES[number]["key"] | typeof DATE_FILTER_TYPES[number]["key"];
+export type BaseFilter = {
     minimised?: boolean;
     disabled?: boolean;
 };
 export declare const JOINED_FILTER_TYPES: readonly ["$existsJoined", "$notExistsJoined"];
-export declare type DetailedFilterBase = BaseFilter & {
+export type DetailedFilterBase = BaseFilter & {
     fieldName: string;
     type?: FilterType;
     value?: any;
@@ -85,13 +85,13 @@ export declare type DetailedFilterBase = BaseFilter & {
         otherField?: string | null;
     };
 };
-export declare type JoinedFilter = BaseFilter & {
+export type JoinedFilter = BaseFilter & {
     type: typeof JOINED_FILTER_TYPES[number];
     path: string[];
     filter: DetailedFilterBase;
 };
-export declare type SimpleFilter = DetailedFilterBase | JoinedFilter;
-export declare type SmartGroupFilter = SimpleFilter[];
+export type SimpleFilter = DetailedFilterBase | JoinedFilter;
+export type SmartGroupFilter = SimpleFilter[];
 export declare const isJoinedFilter: (f: SimpleFilter) => f is JoinedFilter;
 export declare const isDetailedFilter: (f: SimpleFilter) => f is DetailedFilterBase;
 export declare const getFinalFilterInfo: (fullFilter?: GroupedDetailedFilter | SimpleFilter, context?: ContextDataObject, depth?: number) => string;
@@ -104,7 +104,7 @@ export declare const getFinalFilter: (detailedFilter: SimpleFilter, context?: Co
     [x: string]: any;
     $filter?: undefined;
 } | undefined;
-export declare type GroupedDetailedFilter = {
+export type GroupedDetailedFilter = {
     $and: (SimpleFilter | GroupedDetailedFilter)[];
 } | {
     $or: (SimpleFilter | GroupedDetailedFilter)[];
