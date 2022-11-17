@@ -187,7 +187,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
                 /** Windows postgres installs does not tend to add executables to PATH so will try to find and use full paths */
                 if (!installedPrograms?.pg_dump) {
                     const installLocation = (await _db.oneOrNone("SHOW data_directory"))?.data_directory;
-                    const binDir = installLocation.endsWith("data") ? (installLocation.slice(0, -4) + "bin") : installLocation;
+                    const binDir = installLocation.endsWith("data") ? (installLocation.slice(0, -4) + "bin/") : installLocation;
                     checkInstalledPrograms({ pref: binDir, ext: ".exe" });
                     bkpManager ??= new BackupManager_1.default(db, exports.connMgr, { preffix: binDir, extension: ".exe" });
                 }
