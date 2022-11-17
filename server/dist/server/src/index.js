@@ -184,7 +184,16 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
                 await insertStateDatabase(db, _db, con);
                 await exports.connectionChecker.init(db, _db);
                 await exports.connMgr.init(db);
-                bkpManager ??= new BackupManager_1.default(db, exports.connMgr);
+                /** Windows postgres installs does not tend to add executables to PATH so will try to find and use full paths */
+                if (!installedPrograms?.pg_dump) {
+                    const installLocation = (await _db.oneOrNone("SHOW data_directory"))?.data_directory;
+                    const binDir = installLocation.endsWith("data") ? (installLocation.slice(0, -4) + "bin") : installLocation;
+                    checkInstalledPrograms({ pref: binDir, ext: ".exe" });
+                    bkpManager ??= new BackupManager_1.default(db, exports.connMgr, { preffix: binDir, extension: ".exe" });
+                }
+                else {
+                    bkpManager ??= new BackupManager_1.default(db, exports.connMgr, { preffix: "", extension: "" });
+                }
                 console.log("Prostgles UI is running on port ", PORT);
             },
         });
@@ -286,18 +295,28 @@ let installedPrograms = {
     pg_dump: "",
     pg_restore: "",
 };
-try {
-    installedPrograms = {
-        psql: (0, child_process_1.execSync)("which psql").toString() && (0, child_process_1.execSync)("psql --version").toString(),
-        pg_dump: (0, child_process_1.execSync)("which pg_dump").toString() && (0, child_process_1.execSync)("pg_dump --version").toString(),
-        pg_restore: (0, child_process_1.execSync)("which pg_restore").toString() && (0, child_process_1.execSync)("pg_restore --version").toString(),
-    };
-}
-catch (e) {
-    installedPrograms = undefined;
-}
-if (installedPrograms?.psql) {
-}
+const checkInstalledPrograms = (args) => {
+    try {
+        if (args) {
+            installedPrograms = {
+                psql: (0, child_process_1.execSync)(`${args.pref}psql${args.ext} --version`).toString(),
+                pg_dump: (0, child_process_1.execSync)(`${args.pref}pg_dump${args.ext} --version`).toString(),
+                pg_restore: (0, child_process_1.execSync)(`${args.pref}pg_restore${args.ext} --version`).toString(),
+            };
+        }
+        else {
+            installedPrograms = {
+                psql: (0, child_process_1.execSync)("which psql").toString() && (0, child_process_1.execSync)("psql --version").toString(),
+                pg_dump: (0, child_process_1.execSync)("which pg_dump").toString() && (0, child_process_1.execSync)("pg_dump --version").toString(),
+                pg_restore: (0, child_process_1.execSync)("which pg_restore").toString() && (0, child_process_1.execSync)("pg_restore --version").toString(),
+            };
+        }
+    }
+    catch (e) {
+        installedPrograms = undefined;
+    }
+};
+checkInstalledPrograms();
 const getInitState = () => {
     const eConfig = (0, electronConfig_1.getElectronConfig)?.();
     return {
