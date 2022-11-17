@@ -295,7 +295,13 @@ class BackupManager {
                     }
                 }
                 else {
-                    this.dbs.backups.update({ id: backup_id }, { sizeInBytes: item.content_length, uploaded: new Date(), status: { ok: "1" }, last_updated: new Date() });
+                    this.dbs.backups.update({ id: backup_id }, {
+                        sizeInBytes: item.content_length,
+                        uploaded: new Date(),
+                        status: { ok: "1" },
+                        last_updated: new Date(),
+                        local_filepath: item.filePath,
+                    });
                 }
             });
             pipeFromCommand(dumpCommand.command, dumpCommand.opts, ENV_VARS, destStream, err => {

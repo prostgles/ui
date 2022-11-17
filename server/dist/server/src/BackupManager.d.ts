@@ -44,6 +44,7 @@ export default class BackupManager {
         id?: string | undefined;
         initiator?: string | null | undefined;
         last_updated?: Date | undefined;
+        local_filepath?: string | null | undefined;
         options?: {
             command: "pg_dumpall";
             clean: boolean;
@@ -66,7 +67,7 @@ export default class BackupManager {
             compressionLevel?: number | undefined;
             ifExists?: boolean | undefined;
             keepLogs?: boolean | undefined;
-        } | undefined; /** Delete stale streams */
+        } | undefined;
         restore_command?: string | null | undefined;
         restore_end?: Date | null | undefined;
         restore_logs?: string | null | undefined;

@@ -57,6 +57,7 @@ export type DBSchemaGenerated = {
       id?: string;
       initiator?: null | string;
       last_updated?: Date;
+      local_filepath?: null | string;
       options?: 
         | {  command: 'pg_dumpall'; clean: boolean; dataOnly?: boolean; globalsOnly?: boolean; rolesOnly?: boolean; schemaOnly?: boolean; ifExists?: boolean; encoding?: string; keepLogs?: boolean; }
         | {  command: 'pg_dump'; format: 'p' | 't' | 'c'; dataOnly?: boolean; clean?: boolean; create?: boolean; encoding?: string; numberOfJobs?: number; noOwner?: boolean; compressionLevel?: number; ifExists?: boolean; keepLogs?: boolean; }
