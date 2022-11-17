@@ -24,7 +24,7 @@ type DBS = DBOFullyTyped<DBSchemaGenerated>;
 import checkDiskSpace from 'check-disk-space';
 import { Request, Response } from "express";
 import { SUser } from "./authConfig";
-import { getRootDir } from "./electronConfig";
+import { getElectronConfig, getRootDir } from "./electronConfig";
 import { ConnectionManager } from "./ConnectionManager";
 import { getConnectionDetails } from "./connectionUtils/getConnectionDetails";
 import { omitKeys } from "prostgles-server/dist/PubSubManager";
@@ -208,7 +208,6 @@ export default class BackupManager {
   private checkIfEnoughSpace = async(conId: string) => {
     const dbSizeInBytes = await this.getDBSizeInBytes(conId);
 
-    // const isWin = process.platform === "win32";
     
     const diskSpace = await checkDiskSpace(getRootDir());
     const minLimin = 100 * 1e6
@@ -401,6 +400,11 @@ export default class BackupManager {
         setError(err)
       }
     }
+
+
+    const isWin = process.platform === "win32";
+    const byBassStreamDueToWindowsUnrecognisedBlockTypeError = !!(isWin && bkp.local_filepath);
+
     try {
       const SSL_ENV_VARS = getSSLEnvVars(con, this.connMgr);
       const ConnectionEnvVars = getConnectionEnvVars(con);
@@ -427,6 +431,7 @@ export default class BackupManager {
             [o.ifExists, "--if-exists"],
             [Number.isInteger(o.numberOfJobs) , "--jobs"],
             [true, "-v"],
+            [byBassStreamDueToWindowsUnrecognisedBlockTypeError, bkp.local_filepath!],
           ]
         ) 
       }
@@ -440,6 +445,7 @@ export default class BackupManager {
       let lastChunk = Date.now(), chunkSum = 0;
       bkpStream.on("data", async chunk => {
         chunkSum += chunk.length;
+        console.log(chunk.toString(), { chunk })
         const now = Date.now();
         if(now - lastChunk > 1000){
           lastChunk = now;
@@ -689,7 +695,7 @@ export function pipeToCommand(
   proc.on('error', function (err) {
     onEnd(err ?? "proc 'error'")
   });
-
+  console.log({ source })
   source.pipe(proc.stdin!);
 
   proc.on('exit', function (code, signal) {
