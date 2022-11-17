@@ -16,6 +16,7 @@ const getConnectionUri = (c) => c.db_conn || `postgres://${c.db_user}:${c.db_pas
 const check_disk_space_1 = __importDefault(require("check-disk-space"));
 const electronConfig_1 = require("./electronConfig");
 const getConnectionDetails_1 = require("./connectionUtils/getConnectionDetails");
+const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
 const HOUR = 3600 * 1000;
 class BackupManager {
     tempStreams = {};
@@ -340,8 +341,17 @@ class BackupManager {
             throw "Connection not found";
         if (!o)
             throw "Restore options missing";
-        const setError = (err) => {
-            this.dbs.backups.update({ id: bkpId }, { restore_status: { err: (err ?? "").toString() }, last_updated: new Date() });
+        const setError = async (err) => {
+            const currBkp = await this.dbs.backups.findOne({ id: bkpId });
+            if (currBkp) {
+                this.dbs.backups.update({ id: bkpId }, {
+                    restore_status: {
+                        ...(0, PubSubManager_1.omitKeys)(currBkp.restore_status, ["ok"]),
+                        err: (err ?? "").toString()
+                    },
+                    last_updated: new Date()
+                });
+            }
         };
         if (o.newDbName) {
             if (o.create)
@@ -384,7 +394,7 @@ class BackupManager {
             await this.dbs.backups.update({ id: bkpId }, {
                 restore_start: new Date(),
                 restore_command: envToStr(ENV_VARS) + restoreCmd.command + " " + restoreCmd.opts.join(" "),
-                restore_status: { loading: { loaded: 0, total: 0 } },
+                restore_status: { loading: { loaded: 0, total: 0, currChunk: "", currChunkLength: 0 } },
                 last_updated: new Date()
             });
             let lastChunk = Date.now(), chunkSum = 0;
@@ -397,7 +407,16 @@ class BackupManager {
                         bkpStream.emit("error", "Backup file not found");
                     }
                     else {
-                        this.dbs.backups.update({ id: bkpId }, { restore_status: { loading: { loaded: chunkSum, total: 0 } } });
+                        this.dbs.backups.update({ id: bkpId }, {
+                            restore_status: {
+                                loading: {
+                                    loaded: chunkSum,
+                                    currChunkLength: chunk.length,
+                                    currChunk: chunk,
+                                    total: 0
+                                }
+                            }
+                        });
                     }
                 }
             });
@@ -452,7 +471,7 @@ class BackupManager {
             chunkSum += chunk.length;
             if (Date.now() - lastChunk > 1000) {
                 lastChunk = Date.now();
-                this.dbs.backups.update({ id: bkp.id }, { restore_status: { loading: { total: sizeBytes, loaded: chunkSum } } });
+                this.dbs.backups.update({ id: bkp.id }, { restore_status: { loading: { total: sizeBytes, loaded: chunkSum, currChunk: chunk, currChunkLength: chunk.length } } });
             }
         });
         return this.pgRestore({ bkpId: bkp.id }, stream, restore_options);

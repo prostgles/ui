@@ -81,7 +81,7 @@ export type DBSchemaGenerated = {
         | null
         | {  ok: string; }
         | {  err: string; }
-        | {  loading: {  loaded: number; total: number; }; }
+        | {  loading: {  currChunk: string; currChunkLength: any; loaded: number; total: number; }; }
       sizeInBytes?: null | number;
       status?: 
         | {  ok: string; }
