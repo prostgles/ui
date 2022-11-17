@@ -438,14 +438,14 @@ export default class BackupManager {
       await this.dbs.backups.update({ id: bkpId }, { 
         restore_start: new Date(), 
         restore_command: envToStr(ENV_VARS) + restoreCmd.command + " " + restoreCmd.opts.join(" "), 
-        restore_status: { loading: { loaded: 0, total: 0, currChunk: "", currChunkLength: 0 } }, 
+        restore_status: { loading: { loaded: 0, total: 0, currChunkLength: 0 } }, 
         last_updated: new Date() 
       });
 
       let lastChunk = Date.now(), chunkSum = 0;
       bkpStream.on("data", async chunk => {
         chunkSum += chunk.length;
-        console.log(chunk.toString(), { chunk })
+        // console.log(chunk.toString(), { chunk })
         const now = Date.now();
         if(now - lastChunk > 1000){
           lastChunk = now;
@@ -456,8 +456,7 @@ export default class BackupManager {
               restore_status: { 
                 loading: { 
                   loaded: chunkSum,
-                  currChunkLength: chunk.length, 
-                  currChunk: chunk as any,
+                  currChunkLength: chunk.length,  
                   total: 0 
                 } 
               } 
@@ -518,7 +517,7 @@ export default class BackupManager {
       chunkSum += chunk.length
       if(Date.now() - lastChunk > 1000){
         lastChunk = Date.now();
-        this.dbs.backups.update({ id: bkp.id }, { restore_status: { loading: { total: sizeBytes, loaded: chunkSum, currChunk: chunk as any, currChunkLength: chunk.length } } } )
+        this.dbs.backups.update({ id: bkp.id }, { restore_status: { loading: { total: sizeBytes, loaded: chunkSum,  currChunkLength: chunk.length } } } )
       }
     });
 
@@ -695,7 +694,7 @@ export function pipeToCommand(
   proc.on('error', function (err) {
     onEnd(err ?? "proc 'error'")
   });
-  console.log({ source })
+  // console.log({ source })
   source.pipe(proc.stdin!);
 
   proc.on('exit', function (code, signal) {
