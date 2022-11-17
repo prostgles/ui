@@ -182,7 +182,8 @@ class BackupManager {
     }
     checkIfEnoughSpace = async (conId) => {
         const dbSizeInBytes = await this.getDBSizeInBytes(conId);
-        const diskSpace = await (0, check_disk_space_1.default)('/');
+        // const isWin = process.platform === "win32";
+        const diskSpace = await (0, check_disk_space_1.default)((0, electronConfig_1.getRootDir)());
         const minLimin = 100 * 1e6;
         if (diskSpace.free < minLimin) {
             const err = `There is not enough space on server for local backups:\nTotal: ${bytesToSize(diskSpace.size)} \nRemaning: ${bytesToSize(diskSpace.free)} \nRequired: ${bytesToSize(minLimin)}`;

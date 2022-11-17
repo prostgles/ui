@@ -206,7 +206,10 @@ export default class BackupManager {
 
   private checkIfEnoughSpace = async(conId: string) => {
     const dbSizeInBytes = await this.getDBSizeInBytes(conId);
-    const diskSpace = await checkDiskSpace('/');
+
+    // const isWin = process.platform === "win32";
+    
+    const diskSpace = await checkDiskSpace(getRootDir());
     const minLimin = 100 * 1e6
     if(diskSpace.free < minLimin){
       const err =  `There is not enough space on server for local backups:\nTotal: ${bytesToSize(diskSpace.size)} \nRemaning: ${bytesToSize(diskSpace.free)} \nRequired: ${bytesToSize(minLimin)}`
