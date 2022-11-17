@@ -183,7 +183,6 @@ class BackupManager {
     }
     checkIfEnoughSpace = async (conId) => {
         const dbSizeInBytes = await this.getDBSizeInBytes(conId);
-        // const isWin = process.platform === "win32";
         const diskSpace = await (0, check_disk_space_1.default)((0, electronConfig_1.getRootDir)());
         const minLimin = 100 * 1e6;
         if (diskSpace.free < minLimin) {
@@ -365,6 +364,8 @@ class BackupManager {
                 setError(err);
             }
         }
+        const isWin = process.platform === "win32";
+        const byBassStreamDueToWindowsUnrecognisedBlockTypeError = !!(isWin && bkp.local_filepath);
         try {
             const SSL_ENV_VARS = getSSLEnvVars(con, this.connMgr);
             const ConnectionEnvVars = getConnectionEnvVars(con);
@@ -389,6 +390,7 @@ class BackupManager {
                     [o.ifExists, "--if-exists"],
                     [Number.isInteger(o.numberOfJobs), "--jobs"],
                     [true, "-v"],
+                    [byBassStreamDueToWindowsUnrecognisedBlockTypeError, bkp.local_filepath],
                 ])
             };
             await this.dbs.backups.update({ id: bkpId }, {
@@ -400,6 +402,7 @@ class BackupManager {
             let lastChunk = Date.now(), chunkSum = 0;
             bkpStream.on("data", async (chunk) => {
                 chunkSum += chunk.length;
+                console.log(chunk.toString(), { chunk });
                 const now = Date.now();
                 if (now - lastChunk > 1000) {
                     lastChunk = now;
@@ -622,6 +625,7 @@ function pipeToCommand(command, opts, envVars = {}, source, onEnd, onStdout, use
     proc.on('error', function (err) {
         onEnd(err ?? "proc 'error'");
     });
+    console.log({ source });
     source.pipe(proc.stdin);
     proc.on('exit', function (code, signal) {
         const err = fullLog.slice(fullLog.length - 100);
