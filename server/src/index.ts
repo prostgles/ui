@@ -405,6 +405,7 @@ const checkInstalledPrograms = (args?: { pref: string; ext: string; }) => {
       };
     }
   } catch(e){
+    console.warn(e);
     installedPrograms = undefined;
   }
 }

@@ -313,6 +313,7 @@ const checkInstalledPrograms = (args) => {
         }
     }
     catch (e) {
+        console.warn(e);
         installedPrograms = undefined;
     }
 };
