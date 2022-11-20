@@ -57,6 +57,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
   users: {
     columns: {
       id:       { sqlDefinition: `UUID PRIMARY KEY DEFAULT gen_random_uuid()` },
+      status:   { sqlDefinition: `TEXT NOT NULL DEFAULT 'active' REFERENCES user_statuses (id)`, info: { hint: "Only active users can use the system" } }, 
+      is_online: {
+        sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE` ,
+      },
       username: { sqlDefinition: `TEXT NOT NULL UNIQUE` },
       password: { 
         sqlDefinition: `TEXT NOT NULL DEFAULT gen_random_uuid()`, 
@@ -82,7 +86,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           enabled: { type: "boolean" }
         }
       },
-      status:   { sqlDefinition: `TEXT NOT NULL DEFAULT 'active' REFERENCES user_statuses (id)` }, 
+     
     },
     constraints: {
       [`passwordless_admin type AND username CHECK`]:
@@ -114,9 +118,17 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     }
   },
 
+  session_types: {
+    isLookupTable: {
+      values: { "web": {}, "api_token": {}, "desktop": {}, "mobile": {} }
+    }
+  },
+
   sessions: {
+    dropIfExistsCascade: true,
     columns: {
-      id:          `UUID PRIMARY KEY DEFAULT gen_random_uuid()` ,
+      id:          `UUID UNIQUE NOT NULL DEFAULT gen_random_uuid()` ,
+      id_num:      `SERIAL PRIMARY KEY` ,
       user_id:     `UUID NOT NULL REFERENCES users(id) ON DELETE SET NULL` ,
       name:        `TEXT` ,
       user_type:   `TEXT NOT NULL` ,
@@ -125,7 +137,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       active:      `BOOLEAN DEFAULT TRUE` ,
       project_id:  `TEXT` ,
       ip_address:  `INET NOT NULL`,
-      type:         SESSION_TYPE,
+      type:        `TEXT NOT NULL REFERENCES session_types`,
       user_agent:  "TEXT",
       created:     `TIMESTAMP DEFAULT NOW()` ,
       last_used:   `TIMESTAMP DEFAULT NOW()` ,
@@ -535,6 +547,14 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       trust_proxy: { 
         sqlDefinition: `boolean NOT NULL DEFAULT FALSE`, 
         info: { hint: "If true then will use the IP from 'X-Forwarded-For' header" } 
+      },
+      session_max_age_days: { 
+        sqlDefinition: `INTEGER NOT NULL DEFAULT 14 CHECK(session_max_age_days > 0)`, 
+        info: { hint: "Number of days a user will be logged in", min: 1, max: Number.MAX_SAFE_INTEGER } 
+      },
+      magic_link_validity_days: { 
+        sqlDefinition: `INTEGER NOT NULL DEFAULT 1 CHECK(magic_link_validity_days > 0)`, 
+        info: { hint: "Number of days a magic link can be used to log in", min: 1, max: Number.MAX_SAFE_INTEGER } 
       },
       updated_by: { 
         enum: ["user", "app"], 

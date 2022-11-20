@@ -148,8 +148,12 @@ const publish = async (params, con) => {
             }
         },
         sessions: {
+            delete: {
+                filterFields: "*",
+                forcedFilter: { user_id }
+            },
             select: {
-                fields: "*",
+                fields: { id: 0 },
                 forcedFilter: { user_id }
             },
             update: {
@@ -177,6 +181,7 @@ const publish = async (params, con) => {
                     allowed_ips: 1,
                     trust_proxy: 1,
                     allowed_ips_enabled: 1,
+                    session_max_age_days: 1,
                 },
                 postValidate: async (row, dbsTX) => {
                     if (!row.allowed_ips?.length) {

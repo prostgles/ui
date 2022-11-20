@@ -45,6 +45,7 @@ const makeSession = async (user, client, dbo, expires = 0) => {
             user_id: user.id,
             user_type: user.type,
             expires,
+            type: client.type,
             ip_address: client.ip_address,
             user_agent: client.user_agent,
         }, { returning: "*" });
@@ -56,36 +57,41 @@ const makeSession = async (user, client, dbo, expires = 0) => {
 };
 exports.makeSession = makeSession;
 exports.sidKeyName = "sid_token";
+const getActiveSession = (db, filter) => {
+    if (Object.values(filter).some(v => typeof v !== "string" || !v)) {
+        throw `Must provide a valid session filter`;
+    }
+    return db.sessions.findOne({ ...filter, "expires.>": Date.now(), active: true });
+};
 const getAuth = (app) => {
     const auth = {
         sidKeyName: exports.sidKeyName,
         getUser: async (sid, db, _db) => {
-            // log("getUser", sid);
-            const s = await db.sessions.findOne({ id: sid });
-            let user;
-            if (s) {
-                user = await db.users.findOne({ id: s.user_id });
-                if (user) {
-                    const state_db = await db.connections.findOne({ is_state_db: true });
-                    if (!state_db)
-                        throw "Statedb missing internal error";
-                    const suser = {
-                        sid: s.id,
-                        user,
-                        clientUser: {
-                            sid: s.id,
-                            uid: user.id,
-                            /** For security reasons provide state_db_id only to admin users */
-                            state_db_id: user.type === "admin" ? state_db?.id : undefined,
-                            has_2fa: !!user["2fa"]?.enabled,
-                            ...(0, PubSubManager_1.omitKeys)(user, ["password", "2fa"])
-                        }
-                    };
-                    return suser;
+            (0, index_1.log)("getUser", sid);
+            if (!sid)
+                return undefined;
+            const s = await getActiveSession(db, { id: sid });
+            if (!s)
+                return undefined;
+            const user = await db.users.findOne({ id: s.user_id });
+            if (!user)
+                return undefined;
+            const state_db = await db.connections.findOne({ is_state_db: true });
+            if (!state_db)
+                throw "Internal error: Statedb missing ";
+            const suser = {
+                sid: s.id,
+                user,
+                clientUser: {
+                    sid: s.id,
+                    uid: user.id,
+                    /** For security reasons provide state_db_id only to admin users */
+                    state_db_id: user.type === "admin" ? state_db?.id : undefined,
+                    has_2fa: !!user["2fa"]?.enabled,
+                    ...(0, PubSubManager_1.omitKeys)(user, ["password", "2fa"])
                 }
-            }
-            // console.trace("getUser", { user, s })
-            return undefined;
+            };
+            return suser;
         },
         login: async ({ username = null, password = null, totp_token = null, totp_recovery_code = null } = {}, db, _db, { ip_address, user_agent }) => {
             let u;
@@ -120,13 +126,15 @@ const getAuth = (app) => {
                 }
             }
             await onSuccess();
-            let s = await db.sessions.findOne({ user_id: u.id });
-            if (!s || (+s.expires || 0) < Date.now()) {
-                // will expire after 24 hours,
-                return (0, exports.makeSession)(u, { ip_address, user_agent }, db, Date.now() + 1000 * 60 * 60 * 24);
+            let activeSession = await db.sessions.findOne({ user_id: u.id });
+            if (!activeSession) {
+                const globalSettings = await db.global_settings.findOne();
+                const DAY = 24 * 60 * 60 * 1000;
+                const expires = Date.now() + (globalSettings?.session_max_age_days ?? 1) * DAY;
+                return (0, exports.makeSession)(u, { ip_address, user_agent: user_agent || null, type: (0, electronConfig_1.getElectronConfig)()?.isElectron ? "desktop" : "web" }, db, expires);
             }
-            await db.sessions.update({ id: s.id }, { last_used: new Date() });
-            return parseAsBasicSession(s);
+            await db.sessions.update({ id: activeSession.id }, { last_used: new Date() });
+            return parseAsBasicSession(activeSession);
         },
         logout: async (sid, db, _db) => {
             if (!sid)
@@ -187,7 +195,7 @@ const getAuth = (app) => {
                     const user = await dbo.users.findOne({ id: mlink.user_id });
                     if (!user)
                         throw new Error("User from Magic link not found");
-                    return (0, exports.makeSession)(user, { ip_address, user_agent }, dbo, mlink.expires);
+                    return (0, exports.makeSession)(user, { ip_address, user_agent: user_agent || null, type: (0, electronConfig_1.getElectronConfig)()?.isElectron ? "desktop" : "web" }, dbo, mlink.expires);
                 }
             }
         }

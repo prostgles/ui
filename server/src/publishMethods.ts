@@ -24,6 +24,7 @@ import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
 import { Backups } from "./BackupManager";
 import { ADMIN_ACCESS_WITHOUT_PASSWORD, insertUser } from "./ConnectionChecker";
+import { isDefined } from "../../commonTypes/filterUtils";
 
 export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params) => { //  socket, dbs: DBObj, _dbs, user: Users
   const { dbo: dbs, socket, db: _dbs } = params;
@@ -227,8 +228,18 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
 
   const userMethods = !user.id? {} : {
     generateToken: async (days: number) => {
-      if(!Number.isInteger(days)) throw "Expecting an integer days but got: " + days;
-      const session = await dbs.sessions.insert({ expires: Date.now() + days * 24 * 3600 * 1000, user_id: user.id, user_type: user.type, type: "api_token", ip_address }, { returning: "*" });
+      if(!Number.isInteger(days)) {
+        throw "Expecting an integer days but got: " + days;
+      }
+
+      const session = await dbs.sessions.insert({ 
+        expires: Date.now() + days * 24 * 3600 * 1000, 
+        user_id: user.id, 
+        user_type: user.type, 
+        type: "api_token", 
+        ip_address 
+      }, { returning: "*" });
+      
       return session.id;
     },
     create2FA: async () => {
@@ -260,6 +271,18 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     },
     disable2FA: () => {
       return dbs.users.update({ id: user.id }, { "2fa": null });
+    },
+    getAPITSDefinitions: () => {
+
+      /** Must install them into the server folder! */
+      const clientNodeModules = path.resolve(__dirname + "/../../../../client/node_modules/");
+      const prostglesTypes = path.resolve(clientNodeModules + "/prostgles-types/dist");
+      const prostglesClient = path.resolve(clientNodeModules + "/prostgles-client/dist");
+
+      return [
+        ...getTSFiles(prostglesClient).map(l => ({ ...l, name: "prostgles-client" })),
+        ...getTSFiles(prostglesTypes).map(l => ({ ...l, name: "prostgles-types" })),
+      ];
     }
   }
   
@@ -271,6 +294,19 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     }
   }
 }
+
+
+function getTSFiles(dirPath: string){
+  return fs.readdirSync(dirPath).map(path => {
+    if(path.endsWith(".d.ts")){
+      const content = fs.readFileSync(dirPath + "/" + path, { encoding: "utf8" });
+      console.log(path, content);
+      return { path, content };
+    }
+  }).filter(isDefined)
+}
+
+
 process.on("exit", code => {
   console.log(code)
 });

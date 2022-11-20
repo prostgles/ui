@@ -58,6 +58,7 @@ export declare const ADMIN_ACCESS_WITHOUT_PASSWORD: (db: DBS) => Promise<Require
     } | null | undefined;
     created?: Date | null | undefined;
     id?: string | undefined;
+    is_online?: boolean | undefined;
     last_updated?: number | null | undefined;
     options?: {
         showStateDB?: boolean | undefined;
@@ -79,6 +80,7 @@ export declare const insertUser: (db: DBS, _db: DB, u: {
     } | null | undefined;
     created?: Date | null | undefined;
     id?: string | undefined;
+    is_online?: boolean | undefined;
     last_updated?: number | null | undefined;
     options?: {
         showStateDB?: boolean | undefined;
@@ -99,6 +101,7 @@ export declare const insertUser: (db: DBS, _db: DB, u: {
     } | null | undefined;
     created?: Date | null | undefined;
     id?: string | undefined;
+    is_online?: boolean | undefined;
     last_updated?: number | null | undefined;
     options?: {
         showStateDB?: boolean | undefined;
@@ -112,5 +115,6 @@ export declare const insertUser: (db: DBS, _db: DB, u: {
     type?: string | undefined;
     username: string;
 }[]) => Promise<void>;
+export declare const DAY: number;
 export {};
 //# sourceMappingURL=ConnectionChecker.d.ts.map
