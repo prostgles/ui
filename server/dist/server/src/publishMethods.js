@@ -39,6 +39,7 @@ const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
 const testDBConnection_1 = require("./connectionUtils/testDBConnection");
 const validateConnection_1 = require("./connectionUtils/validateConnection");
 const ConnectionChecker_1 = require("./ConnectionChecker");
+const filterUtils_1 = require("../../commonTypes/filterUtils");
 const publishMethods = async (params) => {
     const { dbo: dbs, socket, db: _dbs } = params;
     const ip_address = socket.conn.remoteAddress;
@@ -230,9 +231,16 @@ const publishMethods = async (params) => {
     };
     const userMethods = !user.id ? {} : {
         generateToken: async (days) => {
-            if (!Number.isInteger(days))
+            if (!Number.isInteger(days)) {
                 throw "Expecting an integer days but got: " + days;
-            const session = await dbs.sessions.insert({ expires: Date.now() + days * 24 * 3600 * 1000, user_id: user.id, user_type: user.type, type: "api_token", ip_address }, { returning: "*" });
+            }
+            const session = await dbs.sessions.insert({
+                expires: Date.now() + days * 24 * 3600 * 1000,
+                user_id: user.id,
+                user_type: user.type,
+                type: "api_token",
+                ip_address
+            }, { returning: "*" });
             return session.id;
         },
         create2FA: async () => {
@@ -263,6 +271,16 @@ const publishMethods = async (params) => {
         },
         disable2FA: () => {
             return dbs.users.update({ id: user.id }, { "2fa": null });
+        },
+        getAPITSDefinitions: () => {
+            /** Must install them into the server folder! */
+            const clientNodeModules = path_1.default.resolve(__dirname + "/../../../../client/node_modules/");
+            const prostglesTypes = path_1.default.resolve(clientNodeModules + "/prostgles-types/dist");
+            const prostglesClient = path_1.default.resolve(clientNodeModules + "/prostgles-client/dist");
+            return [
+                ...getTSFiles(prostglesClient).map(l => ({ ...l, name: "prostgles-client" })),
+                ...getTSFiles(prostglesTypes).map(l => ({ ...l, name: "prostgles-types" })),
+            ];
         }
     };
     return {
@@ -274,6 +292,15 @@ const publishMethods = async (params) => {
     };
 };
 exports.publishMethods = publishMethods;
+function getTSFiles(dirPath) {
+    return fs_1.default.readdirSync(dirPath).map(path => {
+        if (path.endsWith(".d.ts")) {
+            const content = fs_1.default.readFileSync(dirPath + "/" + path, { encoding: "utf8" });
+            console.log(path, content);
+            return { path, content };
+        }
+    }).filter(filterUtils_1.isDefined);
+}
 process.on("exit", code => {
     console.log(code);
 });

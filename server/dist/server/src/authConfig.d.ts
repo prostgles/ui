@@ -3,11 +3,11 @@ import { Users } from "./index";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { Express } from "express";
+import { DBSSchema } from "../../commonTypes/publishUtils";
 export declare const HOUR = 3600000;
 export declare const YEAR: number;
-export declare const makeSession: (user: Users | undefined, client: {
-    ip_address: string;
-    user_agent?: string;
+export type Sessions = DBSSchema["sessions"];
+export declare const makeSession: (user: Users | undefined, client: Pick<Sessions, "user_agent" | "ip_address" | "type"> & {
     sid?: string;
 }, dbo: DBOFullyTyped<DBSchemaGenerated>, expires?: number) => Promise<BasicSession>;
 export type SUser = {

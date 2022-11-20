@@ -262,6 +262,8 @@ export type DBSchemaGenerated = {
       allowed_ips_enabled?: boolean;
       allowed_origin?: null | string;
       id?: number;
+      magic_link_validity_days?: number;
+      session_max_age_days?: number;
       trust_proxy?: boolean;
       updated_by?: "user" | "app"
     };
@@ -326,6 +328,16 @@ export type DBSchemaGenerated = {
       line?: null | any;
     };
   };
+  session_types: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      id: string;
+    };
+  };
   sessions: {
     is_view: false;
     select: true;
@@ -337,17 +349,17 @@ export type DBSchemaGenerated = {
       created?: null | Date;
       expires: number;
       id?: string;
+      id_num?: number;
       ip_address: string;
       is_connected?: null | boolean;
       is_mobile?: null | boolean;
       last_used?: null | Date;
       name?: null | string;
       project_id?: null | string;
-      type?: "web" | "api_token" | "desktop" | "mobile"
+      type: string;
       user_agent?: null | string;
       user_id: string;
       user_type: string;
-      usname?: null | string;
     };
   };
   spatial_ref_sys: {
@@ -409,6 +421,7 @@ export type DBSchemaGenerated = {
       };
       created?: null | Date;
       id?: string;
+      is_online?: boolean;
       last_updated?: null | number;
       options?: null |       { 
         showStateDB?: boolean;

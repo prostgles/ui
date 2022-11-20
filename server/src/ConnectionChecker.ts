@@ -124,8 +124,6 @@ export class ConnectionChecker {
     
     if(!electronConfig?.isElectron && this.config.loaded) {
 
-      console.error("PASSWORDLESS AUTH MUST KEEP ONLY ONE SESSION ID THAT NEVER EXPIRES ");
-
       /** Add cors config if missing */
       if (!this.config.global_setting) {
         await this.db.global_settings.insert({
@@ -269,7 +267,7 @@ const initUsers = async (db: DBS, _db: DB) => {
     const user = await ADMIN_ACCESS_WITHOUT_PASSWORD(db);
     if(!user) throw `Unexpected: Electron passwordless_admin misssing`;
     await db.sessions.delete({});
-    await makeSession(user, { ip_address: "::1", user_agent: "electron", sid: electron.sidConfig.electronSid}, db, Date.now() + 10 * HOUR);
+    await makeSession(user, { ip_address: "::1", user_agent: "electron", type: "desktop", sid: electron.sidConfig.electronSid}, db, Date.now() + 10 * HOUR);
     electron.sidConfig.onSidWasSet();
   }
 }
@@ -280,10 +278,11 @@ export const insertUser = async (db: DBS, _db: DB, u: Parameters<typeof db.users
   await _db.any("UPDATE users SET password = crypt(password, id::text) WHERE id = ${id};", user);
 }
 
+export const DAY = 24 * 3600 * 1000;
 const makeMagicLink = async (user: Users, dbo: DBS, returnURL: string) => {
-  const DAY = 24 * 3600 * 1000
+  const maxDays = (await dbo.global_settings.findOne())?.magic_link_validity_days ?? 2;
   const mlink = await dbo.magic_links.insert({ 
-    expires: Date.now() + 1 * 365 * DAY, 
+    expires: Date.now() + DAY * maxDays, 
     user_id: user.id,
 
   }, {returning: "*"});

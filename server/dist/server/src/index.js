@@ -126,6 +126,9 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
             transactions: true,
             onSocketConnect: async ({ socket, dbo, db, getUser }) => {
                 const user = await getUser();
+                if (user?.user) {
+                    await dbo.users.update({ id: user.user.id }, { is_online: true });
+                }
                 const sid = user?.sid;
                 if (sid) {
                     dbo.sessions.update({ id: sid }, { is_connected: true });
@@ -165,6 +168,9 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
             onSocketDisconnect: async ({ dbo, getUser }) => {
                 const user = await getUser();
                 const sid = user?.sid;
+                if (user?.user) {
+                    dbo.users.update({ id: user.user?.id }, { is_online: false });
+                }
                 if (sid) {
                     dbo.sessions.update({ id: sid }, { is_connected: false });
                 }

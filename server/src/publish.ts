@@ -165,9 +165,12 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
       }
     },
     sessions: {
-
+      delete: {
+        filterFields: "*",
+        forcedFilter: { user_id }
+      },
       select: {
-        fields: "*",
+        fields: { id: 0 },
         forcedFilter: { user_id }
       },
       update: {
@@ -196,6 +199,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
           allowed_ips: 1,
           trust_proxy: 1,
           allowed_ips_enabled: 1,
+          session_max_age_days: 1,
         },
         postValidate: async (row, dbsTX) => {
           if(!row.allowed_ips?.length){

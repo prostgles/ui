@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.insertUser = exports.ADMIN_ACCESS_WITHOUT_PASSWORD = exports.EMPTY_PASSWORD = exports.PASSWORDLESS_ADMIN_USERNAME = exports.ConnectionChecker = void 0;
+exports.DAY = exports.insertUser = exports.ADMIN_ACCESS_WITHOUT_PASSWORD = exports.EMPTY_PASSWORD = exports.PASSWORDLESS_ADMIN_USERNAME = exports.ConnectionChecker = void 0;
 const index_1 = require("./index");
 const cors_1 = __importDefault(require("cors"));
 const authConfig_1 = require("./authConfig");
@@ -85,7 +85,6 @@ class ConnectionChecker {
             return;
         }
         if (!electronConfig?.isElectron && this.config.loaded) {
-            console.error("PASSWORDLESS AUTH MUST KEEP ONLY ONE SESSION ID THAT NEVER EXPIRES ");
             /** Add cors config if missing */
             if (!this.config.global_setting) {
                 await this.db.global_settings.insert({
@@ -196,7 +195,7 @@ const initUsers = async (db, _db) => {
         if (!user)
             throw `Unexpected: Electron passwordless_admin misssing`;
         await db.sessions.delete({});
-        await (0, authConfig_1.makeSession)(user, { ip_address: "::1", user_agent: "electron", sid: electron.sidConfig.electronSid }, db, Date.now() + 10 * authConfig_1.HOUR);
+        await (0, authConfig_1.makeSession)(user, { ip_address: "::1", user_agent: "electron", type: "desktop", sid: electron.sidConfig.electronSid }, db, Date.now() + 10 * authConfig_1.HOUR);
         electron.sidConfig.onSidWasSet();
     }
 };
@@ -207,10 +206,11 @@ const insertUser = async (db, _db, u) => {
     await _db.any("UPDATE users SET password = crypt(password, id::text) WHERE id = ${id};", user);
 };
 exports.insertUser = insertUser;
+exports.DAY = 24 * 3600 * 1000;
 const makeMagicLink = async (user, dbo, returnURL) => {
-    const DAY = 24 * 3600 * 1000;
+    const maxDays = (await dbo.global_settings.findOne())?.magic_link_validity_days ?? 2;
     const mlink = await dbo.magic_links.insert({
-        expires: Date.now() + 1 * 365 * DAY,
+        expires: Date.now() + exports.DAY * maxDays,
         user_id: user.id,
     }, { returning: "*" });
     return {
