@@ -90,7 +90,6 @@ export default class BackupManager {
             err: string;
         } | {
             loading: {
-                currChunkLength: any;
                 loaded: number;
                 total: number;
             };

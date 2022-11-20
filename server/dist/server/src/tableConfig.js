@@ -357,7 +357,6 @@ exports.tableConfig = {
                         { err: { type: "string" } },
                         {
                             loading: { type: {
-                                    currChunkLength: { type: "any" },
                                     loaded: { type: "number" },
                                     total: { type: "number" }
                                 } }
