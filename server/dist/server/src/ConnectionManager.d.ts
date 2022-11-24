@@ -28,9 +28,11 @@ export declare class ConnectionManager {
     wss?: WebSocket.Server<WebSocket.WebSocket>;
     withOrigin: WithOrigin;
     dbs?: DBS;
+    db?: DB;
+    connections?: Connections[];
     constructor(http: any, app: Express, withOrigin: WithOrigin);
     conSub?: SubscriptionHandler<Connections> | undefined;
-    init: (dbs: DBS) => Promise<void>;
+    init: (dbs: DBS, db: DB) => Promise<void>;
     getCertPath(conId: string, type?: "ca" | "cert" | "key"): string;
     saveCertificates(connections: Connections[]): void;
     setUpWSS(): void;
@@ -39,7 +41,9 @@ export declare class ConnectionManager {
     getConnection(conId: string): PRGLInstance | undefined;
     getConnections(): Record<string, PRGLInstance>;
     disconnect(conId: string): Promise<boolean>;
-    startConnection(con_id: string, socket: PRGLIOSocket, dbs: DBOFullyTyped<DBSchemaGenerated>, _dbs: DB, restartIfExists?: boolean): Promise<string | undefined>;
+    reloadFileStorage: (connId: string) => Promise<void>;
+    getConnectionPath: (con_id: string) => string;
+    startConnection(con_id: string, dbs: DBOFullyTyped<DBSchemaGenerated>, _dbs: DB, socket?: PRGLIOSocket, restartIfExists?: boolean): Promise<string | undefined>;
 }
 export {};
 //# sourceMappingURL=ConnectionManager.d.ts.map

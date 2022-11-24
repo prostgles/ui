@@ -11,7 +11,6 @@ import { authenticator } from '@otplib/preset-default';
 
 export type Users = Required<DBSchemaGenerated["users"]["columns"]>; 
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
-type DBS = DBOFullyTyped<DBSchemaGenerated>;
 
 import { isSuperUser } from "prostgles-server/dist/Prostgles";
 import { ConnectionTableConfig, DB_TRANSACTION_KEY } from "./ConnectionManager";
@@ -40,7 +39,7 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
   }
 
   const reStartConnection = async (conId: string) => {
-    return connMgr.startConnection(conId, socket, dbs, _dbs, true);
+    return connMgr.startConnection(conId, dbs, _dbs, socket, true);
   };
 
   const adminMethods = {
@@ -215,7 +214,8 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
         })
         await dbs.connections.update({ id: connId }, { table_config: null });
       }
-      await reStartConnection?.(connId);
+      await connMgr.reloadFileStorage(connId)
+      // await reStartConnection?.(connId);
     },
     deleteAccessRule: (id: string) => {
       return dbs.access_control.delete({ id })
@@ -290,7 +290,7 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     ...userMethods,
     ...(user.type === "admin"? adminMethods : undefined),
     startConnection: async (con_id: string) => {
-      return connMgr.startConnection(con_id, socket, dbs, _dbs);
+      return connMgr.startConnection(con_id, dbs, _dbs, socket);
     }
   }
 }

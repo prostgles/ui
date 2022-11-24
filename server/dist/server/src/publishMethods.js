@@ -49,7 +49,7 @@ const publishMethods = async (params) => {
         return {};
     }
     const reStartConnection = async (conId) => {
-        return index_1.connMgr.startConnection(conId, socket, dbs, _dbs, true);
+        return index_1.connMgr.startConnection(conId, dbs, _dbs, socket, true);
     };
     const adminMethods = {
         disablePasswordless: async (newAdmin) => {
@@ -218,7 +218,8 @@ const publishMethods = async (params) => {
                 });
                 await dbs.connections.update({ id: connId }, { table_config: null });
             }
-            await reStartConnection?.(connId);
+            await index_1.connMgr.reloadFileStorage(connId);
+            // await reStartConnection?.(connId);
         },
         deleteAccessRule: (id) => {
             return dbs.access_control.delete({ id });
@@ -287,7 +288,7 @@ const publishMethods = async (params) => {
         ...userMethods,
         ...(user.type === "admin" ? adminMethods : undefined),
         startConnection: async (con_id) => {
-            return index_1.connMgr.startConnection(con_id, socket, dbs, _dbs);
+            return index_1.connMgr.startConnection(con_id, dbs, _dbs, socket);
         }
     };
 };

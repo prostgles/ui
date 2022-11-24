@@ -189,7 +189,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
                 // db.backups.update({}, {restore_options: { "clean": true }});
                 await insertStateDatabase(db, _db, con);
                 await exports.connectionChecker.init(db, _db);
-                await exports.connMgr.init(db);
+                await exports.connMgr.init(db, _db);
                 /** Windows postgres installs does not tend to add executables to PATH so will try to find and use full paths */
                 if (!installedPrograms?.pg_dump) {
                     const installLocation = (await _db.oneOrNone("SHOW data_directory"))?.data_directory;
