@@ -61,6 +61,8 @@ class ConnectionManager {
     wss;
     withOrigin;
     dbs;
+    db;
+    connections;
     constructor(http, app, withOrigin) {
         this.http = http;
         this.app = app;
@@ -68,11 +70,24 @@ class ConnectionManager {
         this.setUpWSS();
     }
     conSub;
-    init = async (dbs) => {
+    init = async (dbs, db) => {
         this.dbs = dbs;
+        this.db = db;
         await this.conSub?.unsubscribe();
         this.conSub = await this.dbs.connections.subscribe({}, {}, connections => {
             this.saveCertificates(connections);
+            this.connections = connections;
+        });
+        /** Start connections if accessed */
+        this.app.use(async (req, res, next) => {
+            const { url } = req;
+            if (this.connections && url.startsWith(index_1.API_PATH) && !Object.keys(this.prgl_connections).some(connId => url.includes(connId))) {
+                const offlineConnection = this.connections.find(c => url.includes(c.id));
+                if (offlineConnection && this.dbs && this.db) {
+                    await this.startConnection(offlineConnection.id, this.dbs, this.db);
+                }
+            }
+            next();
         });
     };
     getCertPath(conId, type) {
@@ -143,7 +158,16 @@ class ConnectionManager {
         }
         return false;
     }
-    async startConnection(con_id, socket, dbs, _dbs, restartIfExists = false) {
+    reloadFileStorage = async (connId) => {
+        const c = this.getConnection(connId);
+        const con = await this.dbs?.connections.findOne({ id: connId });
+        if (!con || !c?.prgl)
+            throw "Connection not found";
+        const { fileTable } = await parseTableConfig(this.dbs, con, this);
+        await c.prgl.update({ fileTable });
+    };
+    getConnectionPath = (con_id) => `${index_1.API_PATH}/${con_id}`;
+    async startConnection(con_id, dbs, _dbs, socket, restartIfExists = false) {
         const { http } = this;
         if (this.prgl_connections[con_id]) {
             if (restartIfExists) {
@@ -162,7 +186,7 @@ class ConnectionManager {
             throw "Connection not found";
         await (0, testDBConnection_1.testDBConnection)(con);
         console.log("testDBConnection ok");
-        const socket_path = `${index_1.API_PATH}/${con_id}-dashboard/s`;
+        const socket_path = `${this.getConnectionPath(con_id)}-dashboard/s`;
         try {
             if (this.prgl_connections[con.id]) {
                 // When does the socket path change??!!!
@@ -194,30 +218,7 @@ class ConnectionManager {
         return new Promise(async (resolve, reject) => {
             const _io = new socket_io_1.Server(http, { path: socket_path, maxHttpBufferSize: 1e8, cors: this.withOrigin });
             try {
-                let tableConfigOk = false;
-                const tableConfig = con.table_config;
-                console.log("RESTART CONNECTION ON TABLECONFIG CHANGE");
-                let awsS3Config;
-                if (tableConfig?.storageType?.type === "S3") {
-                    if (tableConfig.storageType.credential_id) {
-                        const s3Creds = await dbs.credentials.findOne({ id: tableConfig?.storageType.credential_id, type: "s3" });
-                        if (s3Creds) {
-                            tableConfigOk = true;
-                            awsS3Config = {
-                                accessKeyId: s3Creds.key_id,
-                                secretAccessKey: s3Creds.key_secret,
-                                bucket: s3Creds.bucket,
-                                region: s3Creds.region
-                            };
-                        }
-                    }
-                    if (!tableConfigOk) {
-                        console.error("Could not find S3 credentials for fileTable config. File storage will not be set up");
-                    }
-                }
-                else if (tableConfig?.storageType?.type === "local" && tableConfig.fileTable) {
-                    tableConfigOk = true;
-                }
+                const { fileTable } = await parseTableConfig(dbs, con, this);
                 const auth = (0, authConfig_1.getAuth)(this.app);
                 const prgl = await (0, prostgles_server_1.default)({
                     dbConnection: (0, getConnectionDetails_1.getConnectionDetails)(con),
@@ -232,20 +233,7 @@ class ConnectionManager {
                         }
                     },
                     // tsGeneratedTypesDir: path.join(ROOT_DIR + '/connection_dbo/' + conId),
-                    fileTable: (!tableConfig?.fileTable || !tableConfigOk) ? undefined : {
-                        tableName: tableConfig.fileTable,
-                        expressApp: this.app,
-                        fileServeRoute: `${index_1.MEDIA_ROUTE_PREFIX}/${con_id}`,
-                        ...(tableConfig.storageType?.type === "local" ? {
-                            localConfig: {
-                                /* Use path.resolve when using a relative path. Otherwise will get 403 forbidden */
-                                localFolderPath: this.getFileFolderPath(con_id)
-                            }
-                        } : {
-                            awsS3Config
-                        }),
-                        referencedTables: tableConfig.referencedTables,
-                    },
+                    fileTable,
                     watchSchema: Boolean(con.db_watch_shema),
                     // watchSchema: (a) => {
                     //   console.log(a);
@@ -333,4 +321,45 @@ class ConnectionManager {
     }
 }
 exports.ConnectionManager = ConnectionManager;
+const parseTableConfig = async (dbs, con, conMgr) => {
+    let tableConfigOk = false;
+    const con_id = con.id;
+    const tableConfig = con.table_config;
+    let awsS3Config;
+    if (tableConfig?.storageType?.type === "S3") {
+        if (tableConfig.storageType.credential_id) {
+            const s3Creds = await dbs.credentials.findOne({ id: tableConfig?.storageType.credential_id, type: "s3" });
+            if (s3Creds) {
+                tableConfigOk = true;
+                awsS3Config = {
+                    accessKeyId: s3Creds.key_id,
+                    secretAccessKey: s3Creds.key_secret,
+                    bucket: s3Creds.bucket,
+                    region: s3Creds.region
+                };
+            }
+        }
+        if (!tableConfigOk) {
+            console.error("Could not find S3 credentials for fileTable config. File storage will not be set up");
+        }
+    }
+    else if (tableConfig?.storageType?.type === "local" && tableConfig.fileTable) {
+        tableConfigOk = true;
+    }
+    const fileTable = (!tableConfig?.fileTable || !tableConfigOk) ? undefined : {
+        tableName: tableConfig.fileTable,
+        expressApp: conMgr.app,
+        fileServeRoute: `${index_1.MEDIA_ROUTE_PREFIX}/${con_id}`,
+        ...(tableConfig.storageType?.type === "local" ? {
+            localConfig: {
+                /* Use path.resolve when using a relative path. Otherwise will get 403 forbidden */
+                localFolderPath: conMgr.getFileFolderPath(con_id)
+            }
+        } : {
+            awsS3Config
+        }),
+        referencedTables: tableConfig.referencedTables,
+    };
+    return { tableConfig, tableConfigOk, fileTable };
+};
 //# sourceMappingURL=ConnectionManager.js.map

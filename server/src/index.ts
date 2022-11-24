@@ -257,10 +257,9 @@ const startProstgles = async (con = DBS_CONNECTION_INFO): Promise<ProstglesStart
 
         await connectionChecker.init(db, _db);
 
-        await connMgr.init(db);
+        await connMgr.init(db, _db);
 
         /** Windows postgres installs does not tend to add executables to PATH so will try to find and use full paths */
-
         if(!installedPrograms?.pg_dump){
           const installLocation = (await _db.oneOrNone("SHOW data_directory"))?.data_directory as string;
           const binDir = installLocation.endsWith("data")? (installLocation.slice(0, -4) + "bin/") : installLocation;
