@@ -1217,10 +1217,6 @@ textarea:focus {
 }
 
 
-.ws-no-wrap {
-  white-space: nowrap;
-}
-
 
 .tracking-wider {
   letter-spacing: .05em
@@ -1652,11 +1648,13 @@ textarea:focus {
 .ws-pre-wrap {
   white-space: pre-wrap;
 }
-
-
 .ws-nowrap {
   white-space: nowrap;
 }
+.ws-wrap {
+  white-space: normal;
+}
+
 
 .avatar {
   height: 46px;

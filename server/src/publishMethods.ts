@@ -4,7 +4,6 @@ import { PublishMethods } from "prostgles-server/dist/PublishParser";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import fs from "fs";
 import path from 'path';
-import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import * as crypto from "crypto";
 
 import { authenticator } from '@otplib/preset-default';
