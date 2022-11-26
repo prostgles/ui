@@ -1,4 +1,4 @@
-export declare type ProstglesInitState = ({
+export type ProstglesInitState = ({
     isElectron: boolean;
     electronCredsProvided?: boolean;
     initError?: any;
@@ -11,4 +11,4 @@ export declare type ProstglesInitState = ({
         pg_restore: string;
     } | undefined;
 });
-export declare type ServerState = Omit<ProstglesInitState, "canTryStartProstgles">;
+export type ServerState = Omit<ProstglesInitState, "canTryStartProstgles">;

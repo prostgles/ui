@@ -13,7 +13,7 @@ import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
 import { DB } from "prostgles-server/dist/Prostgles";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { Auth, AuthRequestParams, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
-import { HOUR, makeSession, sidKeyName, SUser } from "./authConfig";
+import { HOUR, makeSession, sidKeyName, SUser, YEAR } from "./authConfig";
 import { Socket } from "socket.io";
 import { getElectronConfig } from "./electronConfig";
 
@@ -74,7 +74,7 @@ export class ConnectionChecker {
       }
 
       await this.usersSub?.unsubscribe();
-      this.usersSub = await this.db.users.subscribe({}, { limit: 1 }, async users => {
+      this.usersSub = await this.db.users.subscribe({}, { limit: 1 }, async () => {
         this.noPasswordAdmin = await ADMIN_ACCESS_WITHOUT_PASSWORD(this.db!);
         initialise("users");
       })
@@ -247,7 +247,7 @@ const initUsers = async (db: DBS, _db: DB) => {
    * No user. Must create
    */
   if(!(await db.users.count({ username }))){
-    if(await ADMIN_ACCESS_WITHOUT_PASSWORD(db)){
+    if(NoInitialAdminPasswordProvided){
       console.warn(`PRGL_USERNAME or PRGL_PASSWORD missing. Creating a passwordless admin user: ${username}`);
     }
     
@@ -267,7 +267,7 @@ const initUsers = async (db: DBS, _db: DB) => {
     const user = await ADMIN_ACCESS_WITHOUT_PASSWORD(db);
     if(!user) throw `Unexpected: Electron passwordless_admin misssing`;
     await db.sessions.delete({});
-    await makeSession(user, { ip_address: "::1", user_agent: "electron", type: "desktop", sid: electron.sidConfig.electronSid}, db, Date.now() + 10 * HOUR);
+    await makeSession(user, { ip_address: "::1", user_agent: "electron", type: "desktop", sid: electron.sidConfig.electronSid}, db, Date.now() + 10 * YEAR);
     electron.sidConfig.onSidWasSet();
   }
 }
@@ -279,10 +279,10 @@ export const insertUser = async (db: DBS, _db: DB, u: Parameters<typeof db.users
 }
 
 export const DAY = 24 * 3600 * 1000;
-const makeMagicLink = async (user: Users, dbo: DBS, returnURL: string) => {
+const makeMagicLink = async (user: Users, dbo: DBS, returnURL: string, expires?: number) => {
   const maxDays = (await dbo.global_settings.findOne())?.magic_link_validity_days ?? 2;
   const mlink = await dbo.magic_links.insert({ 
-    expires: Date.now() + DAY * maxDays, 
+    expires: expires ?? Date.now() + DAY * maxDays, 
     user_id: user.id,
 
   }, {returning: "*"});
@@ -302,7 +302,7 @@ const getPasswordlessMacigLink = async (dbs: DBS, req: Request) => {
     
     
     if(existingLink) throw "Only one magic links allowed for passwordless admin";
-    const mlink = await makeMagicLink(u, dbs, "/");
+    const mlink = await makeMagicLink(u, dbs, "/", Date.now() + 10 * YEAR);
 
     // socket.emit("redirect", mlink.magic_login_link_redirect);
 
