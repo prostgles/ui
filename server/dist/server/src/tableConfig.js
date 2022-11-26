@@ -119,7 +119,6 @@ exports.tableConfig = {
         }
     },
     sessions: {
-        dropIfExistsCascade: true,
         columns: {
             id: `UUID UNIQUE NOT NULL DEFAULT gen_random_uuid()`,
             id_num: `SERIAL PRIMARY KEY`,
