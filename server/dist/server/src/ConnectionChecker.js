@@ -50,7 +50,7 @@ class ConnectionChecker {
                 }
             };
             await this.usersSub?.unsubscribe();
-            this.usersSub = await this.db.users.subscribe({}, { limit: 1 }, async (users) => {
+            this.usersSub = await this.db.users.subscribe({}, { limit: 1 }, async () => {
                 this.noPasswordAdmin = await (0, exports.ADMIN_ACCESS_WITHOUT_PASSWORD)(this.db);
                 initialise("users");
             });
@@ -177,7 +177,7 @@ const initUsers = async (db, _db) => {
      * No user. Must create
      */
     if (!(await db.users.count({ username }))) {
-        if (await (0, exports.ADMIN_ACCESS_WITHOUT_PASSWORD)(db)) {
+        if (NoInitialAdminPasswordProvided) {
             console.warn(`PRGL_USERNAME or PRGL_PASSWORD missing. Creating a passwordless admin user: ${username}`);
         }
         try {
@@ -195,7 +195,7 @@ const initUsers = async (db, _db) => {
         if (!user)
             throw `Unexpected: Electron passwordless_admin misssing`;
         await db.sessions.delete({});
-        await (0, authConfig_1.makeSession)(user, { ip_address: "::1", user_agent: "electron", type: "desktop", sid: electron.sidConfig.electronSid }, db, Date.now() + 10 * authConfig_1.HOUR);
+        await (0, authConfig_1.makeSession)(user, { ip_address: "::1", user_agent: "electron", type: "desktop", sid: electron.sidConfig.electronSid }, db, Date.now() + 10 * authConfig_1.YEAR);
         electron.sidConfig.onSidWasSet();
     }
 };
@@ -207,10 +207,10 @@ const insertUser = async (db, _db, u) => {
 };
 exports.insertUser = insertUser;
 exports.DAY = 24 * 3600 * 1000;
-const makeMagicLink = async (user, dbo, returnURL) => {
+const makeMagicLink = async (user, dbo, returnURL, expires) => {
     const maxDays = (await dbo.global_settings.findOne())?.magic_link_validity_days ?? 2;
     const mlink = await dbo.magic_links.insert({
-        expires: Date.now() + exports.DAY * maxDays,
+        expires: expires ?? Date.now() + exports.DAY * maxDays,
         user_id: user.id,
     }, { returning: "*" });
     return {
@@ -225,7 +225,7 @@ const getPasswordlessMacigLink = async (dbs, req) => {
         const existingLink = await dbs.magic_links.findOne({ user_id: u.id, "magic_link_used.<>": null });
         if (existingLink)
             throw "Only one magic links allowed for passwordless admin";
-        const mlink = await makeMagicLink(u, dbs, "/");
+        const mlink = await makeMagicLink(u, dbs, "/", Date.now() + 10 * authConfig_1.YEAR);
         // socket.emit("redirect", mlink.magic_login_link_redirect);
         return mlink.magic_login_link_redirect;
     }

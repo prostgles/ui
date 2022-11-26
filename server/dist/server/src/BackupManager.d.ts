@@ -107,6 +107,7 @@ export default class BackupManager {
         } | undefined;
         uploaded?: Date | null | undefined;
     }> | undefined>;
+    private checkAutomaticBackup;
     private dbs;
     interval: NodeJS.Timeout;
     connMgr: ConnectionManager;

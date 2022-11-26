@@ -111,7 +111,7 @@ const parseDelete = (rule, columns, context) => {
     return Object.assign(Object.assign({}, parseForcedFilter(rule, context, columns)), { filterFields: getValidatedFieldFilter(rule.filterFields, columns) });
 };
 export const parseTableRules = (rules, isView = false, columns, context) => {
-    if (rules === true || rules === "*") {
+    if ([true, "*"].includes(rules)) {
         return true;
     }
     if (isObject(rules)) {
@@ -138,47 +138,61 @@ export const getTableRulesErrors = async (rules, tableColumns, contextData) => {
     return result;
 };
 export const validateDynamicFields = async (dynamicFields, db, context, columns) => {
-    var e_1, _a, e_2, _b;
+    var _a, e_1, _b, _c, _d, e_2, _e, _f;
     if (!dynamicFields)
         return {};
     try {
-        for (var _c = __asyncValues(dynamicFields.entries()), _d; _d = await _c.next(), !_d.done;) {
-            const [dfIndex, dfRule] = _d.value;
-            const filter = await parseFullFilter(dfRule.filterDetailed, context, columns);
-            if (!filter)
-                throw new Error("dynamicFields.filter cannot be empty: " + JSON.stringify(dfRule));
-            await db.find(filter, { limit: 0 });
+        for (var _g = true, _h = __asyncValues(dynamicFields.entries()), _j; _j = await _h.next(), _a = _j.done, !_a;) {
+            _c = _j.value;
+            _g = false;
             try {
-                /** Ensure dynamicFields filters do not overlap */
-                for (var _e = (e_2 = void 0, __asyncValues(dynamicFields.entries())), _f; _f = await _e.next(), !_f.done;) {
-                    const [_dfIndex, _dfRule] = _f.value;
-                    if (dfIndex !== _dfIndex) {
-                        const _filter = await parseFullFilter(_dfRule.filterDetailed, context, columns);
-                        if (await db.findOne({ $and: [filter, _filter] }, { select: "" })) {
-                            const error = `dynamicFields.filter cannot overlap each other. \n
+                const [dfIndex, dfRule] = _c;
+                const filter = await parseFullFilter(dfRule.filterDetailed, context, columns);
+                if (!filter)
+                    throw new Error("dynamicFields.filter cannot be empty: " + JSON.stringify(dfRule));
+                await db.find(filter, { limit: 0 });
+                try {
+                    /** Ensure dynamicFields filters do not overlap */
+                    for (var _k = true, _l = (e_2 = void 0, __asyncValues(dynamicFields.entries())), _m; _m = await _l.next(), _d = _m.done, !_d;) {
+                        _f = _m.value;
+                        _k = false;
+                        try {
+                            const [_dfIndex, _dfRule] = _f;
+                            if (dfIndex !== _dfIndex) {
+                                const _filter = await parseFullFilter(_dfRule.filterDetailed, context, columns);
+                                if (await db.findOne({ $and: [filter, _filter] }, { select: "" })) {
+                                    const error = `dynamicFields.filter cannot overlap each other. \n
           Overlapping dynamicFields rules:
               ${JSON.stringify(dfRule)} 
               AND
               ${JSON.stringify(_dfRule)} 
           `;
-                            return { error };
+                                    return { error };
+                                }
+                            }
+                        }
+                        finally {
+                            _k = true;
                         }
                     }
                 }
-            }
-            catch (e_2_1) { e_2 = { error: e_2_1 }; }
-            finally {
-                try {
-                    if (_f && !_f.done && (_b = _e.return)) await _b.call(_e);
+                catch (e_2_1) { e_2 = { error: e_2_1 }; }
+                finally {
+                    try {
+                        if (!_k && !_d && (_e = _l.return)) await _e.call(_l);
+                    }
+                    finally { if (e_2) throw e_2.error; }
                 }
-                finally { if (e_2) throw e_2.error; }
+            }
+            finally {
+                _g = true;
             }
         }
     }
     catch (e_1_1) { e_1 = { error: e_1_1 }; }
     finally {
         try {
-            if (_d && !_d.done && (_a = _c.return)) await _a.call(_c);
+            if (!_g && !_a && (_b = _h.return)) await _b.call(_h);
         }
         finally { if (e_1) throw e_1.error; }
     }
