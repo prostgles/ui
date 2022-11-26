@@ -57,11 +57,22 @@ const makeSession = async (user, client, dbo, expires = 0) => {
 };
 exports.makeSession = makeSession;
 exports.sidKeyName = "sid_token";
-const getActiveSession = (db, filter) => {
+const getActiveSession = async (db, filter) => {
     if (Object.values(filter).some(v => typeof v !== "string" || !v)) {
         throw `Must provide a valid session filter`;
     }
-    return db.sessions.findOne({ ...filter, "expires.>": Date.now(), active: true });
+    let validSession = await db.sessions.findOne({ ...filter, "expires.>": Date.now(), active: true });
+    /**
+     * Always maintain a valid session for passwordless admin
+     */
+    const pwdlessUser = index_1.connectionChecker.noPasswordAdmin;
+    if (pwdlessUser && !validSession) {
+        const oldSession = await db.sessions.findOne({ user_id: pwdlessUser.id });
+        if (oldSession) {
+            return db.sessions.update({ id: oldSession.id }, { active: true, expires: Date.now() + 1 * exports.YEAR }, { returning: "*" });
+        }
+    }
+    return validSession;
 };
 const getAuth = (app) => {
     const auth = {
@@ -185,17 +196,24 @@ const getAuth = (app) => {
                 check: async (id, dbo, db, { ip_address, user_agent }) => {
                     const mlink = await dbo.magic_links.findOne({ id });
                     if (mlink) {
-                        if (mlink.expires < Date.now())
+                        if (mlink.expires < Date.now()) {
                             throw "Expired magic link";
+                        }
+                        if (mlink.magic_link_used) {
+                            throw "Magic link already used";
+                        }
                     }
                     else {
                         await loginAttempt({ db: dbo, magic_link_id: id, ip_address, user_agent });
                         throw new Error("Magic link not found");
                     }
                     const user = await dbo.users.findOne({ id: mlink.user_id });
-                    if (!user)
+                    if (!user) {
                         throw new Error("User from Magic link not found");
-                    return (0, exports.makeSession)(user, { ip_address, user_agent: user_agent || null, type: (0, electronConfig_1.getElectronConfig)()?.isElectron ? "desktop" : "web" }, dbo, mlink.expires);
+                    }
+                    const session = await (0, exports.makeSession)(user, { ip_address, user_agent: user_agent || null, type: (0, electronConfig_1.getElectronConfig)()?.isElectron ? "desktop" : "web" }, dbo, mlink.expires);
+                    await dbo.magic_links.update({ id: mlink.id }, { magic_link_used: new Date() });
+                    return session;
                 }
             }
         }
