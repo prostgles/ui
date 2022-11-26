@@ -5,18 +5,16 @@ import {
   Users,
   tout,
 } from "./index";
-import { Express, Request, Response } from 'express';
+import { Express, Request } from 'express';
 import { SubscriptionHandler } from "prostgles-types";
-import { DBSSchema, getCIDRRangesQuery } from "../../commonTypes/publishUtils";
+import { DBSSchema  } from "../../commonTypes/publishUtils";
 import cors from 'cors';
 import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
 import { DB } from "prostgles-server/dist/Prostgles";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
-import { Auth, AuthRequestParams, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
-import { HOUR, makeSession, sidKeyName, SUser, YEAR } from "./authConfig";
-import { Socket } from "socket.io";
+import { Auth, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
+import { makeSession, sidKeyName, SUser, YEAR } from "./authConfig";
 import { getElectronConfig } from "./electronConfig";
-
 
 
 export type WithOrigin = {
@@ -293,13 +291,21 @@ const makeMagicLink = async (user: Users, dbo: DBS, returnURL: string, expires?:
   };
 };
 
+// 10 years
+// /magic-link/9a755390-3b3b-4869-805a-59c04ee4d4d9
+
+// 12 months
+// /magic-link/60d9a450-0e08-4970-9c25-065ddcc14e86
+
+  
+// 1984853878528
+
 const getPasswordlessMacigLink = async (dbs: DBS, req: Request) => {
 
   /** Create session for passwordless admin */
   const u = await ADMIN_ACCESS_WITHOUT_PASSWORD(dbs);
   if(u){
     const existingLink = await dbs.magic_links.findOne({ user_id: u.id, "magic_link_used.<>": null });
-    
     
     if(existingLink) throw "Only one magic links allowed for passwordless admin";
     const mlink = await makeMagicLink(u, dbs, "/", Date.now() + 10 * YEAR);

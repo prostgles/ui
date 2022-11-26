@@ -218,6 +218,11 @@ const makeMagicLink = async (user, dbo, returnURL, expires) => {
         magic_login_link_redirect: `/magic-link/${mlink.id}?returnURL=${returnURL}`
     };
 };
+// 10 years
+// /magic-link/9a755390-3b3b-4869-805a-59c04ee4d4d9
+// 12 months
+// /magic-link/60d9a450-0e08-4970-9c25-065ddcc14e86
+// 1984853878528
 const getPasswordlessMacigLink = async (dbs, req) => {
     /** Create session for passwordless admin */
     const u = await (0, exports.ADMIN_ACCESS_WITHOUT_PASSWORD)(dbs);
