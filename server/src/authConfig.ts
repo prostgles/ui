@@ -139,6 +139,9 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       let u: Users | undefined;
       log("login", username);
       
+      if(password.length > 400){
+        throw "Password is too long";
+      }
       const { onSuccess } = await loginAttempt({ db, username, ip_address, user_agent })
       try {
         u = await _db.one("SELECT * FROM users WHERE username = ${username} AND password = crypt(${password}, id::text);", { username, password });
