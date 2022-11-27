@@ -133,12 +133,12 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
     users: isAdmin? {
       select: "*",
       insert: {
-        fields: "*",
+        fields: { is_online: 0, created: 0, "2fa": 0, last_updated: 0 },
         // validate: async (row, _dbo) => validate({ update: row, filter: row }, _dbo),
         postValidate: async(row, _dbo) => validateAndHashUserPassword({ update: row, filter: { id: row.id } as any }, _dbo, true) as any,
       },
       update: {
-        fields: "*",
+        fields: { is_online: 0 },
         validate: validateAndHashUserPassword as any,
         dynamicFields: [{
           /* For own user can only change these fields */
