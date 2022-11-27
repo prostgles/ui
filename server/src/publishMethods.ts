@@ -51,6 +51,16 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       await dbs.users.update({ id: noPwdAdmin.id }, { status: "disabled" });
       await dbs.sessions.delete({});
     },
+    getConnectionDBTypes: (conId: string) => {
+      const c = connMgr.getConnection(conId);
+      if(c){
+        return c.prgl?.getTSSchema();
+      }
+
+      console.error(`Not found`)
+
+      return undefined;
+    },
     getMyIP: () => {
       return connectionChecker.checkClientIP({ socket })
     },

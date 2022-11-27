@@ -107,6 +107,9 @@ const getAuth = (app) => {
         login: async ({ username = null, password = null, totp_token = null, totp_recovery_code = null } = {}, db, _db, { ip_address, user_agent }) => {
             let u;
             (0, index_1.log)("login", username);
+            if (password.length > 400) {
+                throw "Password is too long";
+            }
             const { onSuccess } = await loginAttempt({ db, username, ip_address, user_agent });
             try {
                 u = await _db.one("SELECT * FROM users WHERE username = ${username} AND password = crypt(${password}, id::text);", { username, password });
