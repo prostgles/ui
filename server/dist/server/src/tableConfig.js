@@ -398,7 +398,10 @@ exports.tableConfig = {
             created: `TIMESTAMP DEFAULT NOW()`,
             active_row: `JSONB DEFAULT '{}'::jsonb`,
             layout: `JSONB`,
-            options: { defaultValue: { defaultLayoutType: "col" }, jsonbSchema: {
+            options: { defaultValue: {
+                    defaultLayoutType: "col",
+                    hideCounts: true
+                }, jsonbSchema: {
                     hideCounts: {
                         optional: true,
                         type: "boolean"

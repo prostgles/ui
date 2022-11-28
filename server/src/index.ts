@@ -69,7 +69,7 @@ export const {
 
 export type Users = Required<DBSchemaGenerated["users"]["columns"]>; 
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
-import { DB } from 'prostgles-server/dist/Prostgles';
+import { DB, InitResult } from 'prostgles-server/dist/Prostgles';
 
 export const log = (msg: string, extra?: any) => {
   console.log(...[`(server): ${(new Date()).toISOString()} ` + msg, extra].filter(v => v));
@@ -123,6 +123,7 @@ export const connMgr = new ConnectionManager(http, app, connectionChecker.withOr
 
 type ProstglesStartupState = { ok: true; init?: undefined; conn?: undefined } | { ok?: undefined; init?: any; conn?: any; };
 
+export let statePrgl: InitResult | undefined;
 const startProstgles = async (con = DBS_CONNECTION_INFO): Promise<ProstglesStartupState> => {
   try {
     
@@ -174,7 +175,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO): Promise<ProstglesStart
       user: con.db_user!,
       password:  con.db_pass!,
     };
-    await prostgles<DBSchemaGenerated>({
+    statePrgl = await prostgles<DBSchemaGenerated>({
       dbConnection,
       sqlFilePath: path.join(actualRootDir + '/src/init.sql'),
       io,

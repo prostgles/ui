@@ -1,5 +1,5 @@
 
-import { connMgr, connectionChecker, upsertConnection, getBackupManager } from "./index";
+import { connMgr, connectionChecker, upsertConnection, getBackupManager, statePrgl } from "./index";
 import { PublishMethods } from "prostgles-server/dist/PublishParser";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import fs from "fs";
@@ -51,10 +51,19 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       await dbs.users.update({ id: noPwdAdmin.id }, { status: "disabled" });
       await dbs.sessions.delete({});
     },
-    getConnectionDBTypes: (conId: string) => {
+    getConnectionDBTypes: async (conId: string) => {
       const c = connMgr.getConnection(conId);
       if(c){
         return c.prgl?.getTSSchema();
+      }
+
+      /** Maybe state connection */
+      if(!c){
+        const con = await dbs.connections.findOne({ id: conId, is_state_db: true });
+        if(con){
+          if(!statePrgl) throw "statePrgl missing";
+          return statePrgl.getTSSchema()
+        }
       }
 
       console.error(`Not found`)
