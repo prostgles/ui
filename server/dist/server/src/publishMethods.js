@@ -60,10 +60,19 @@ const publishMethods = async (params) => {
             await dbs.users.update({ id: noPwdAdmin.id }, { status: "disabled" });
             await dbs.sessions.delete({});
         },
-        getConnectionDBTypes: (conId) => {
+        getConnectionDBTypes: async (conId) => {
             const c = index_1.connMgr.getConnection(conId);
             if (c) {
                 return c.prgl?.getTSSchema();
+            }
+            /** Maybe state connection */
+            if (!c) {
+                const con = await dbs.connections.findOne({ id: conId, is_state_db: true });
+                if (con) {
+                    if (!index_1.statePrgl)
+                        throw "statePrgl missing";
+                    return index_1.statePrgl.getTSSchema();
+                }
             }
             console.error(`Not found`);
             return undefined;

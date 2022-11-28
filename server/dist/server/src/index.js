@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.tout = exports.upsertConnection = exports.restartProc = exports.get = exports.onServerReady = exports.connMgr = exports.connectionChecker = exports.getBackupManager = exports.MEDIA_ROUTE_PREFIX = exports.log = exports.PROSTGLES_STRICT_COOKIE = exports.POSTGRES_SSL = exports.POSTGRES_USER = exports.POSTGRES_PORT = exports.POSTGRES_PASSWORD = exports.POSTGRES_HOST = exports.POSTGRES_DB = exports.POSTGRES_URL = exports.PRGL_PASSWORD = exports.PRGL_USERNAME = exports.API_PATH = void 0;
+exports.tout = exports.upsertConnection = exports.restartProc = exports.get = exports.onServerReady = exports.statePrgl = exports.connMgr = exports.connectionChecker = exports.getBackupManager = exports.MEDIA_ROUTE_PREFIX = exports.log = exports.PROSTGLES_STRICT_COOKIE = exports.POSTGRES_SSL = exports.POSTGRES_USER = exports.POSTGRES_PORT = exports.POSTGRES_PASSWORD = exports.POSTGRES_HOST = exports.POSTGRES_DB = exports.POSTGRES_URL = exports.PRGL_PASSWORD = exports.PRGL_USERNAME = exports.API_PATH = void 0;
 const path_1 = __importDefault(require("path"));
 const express_1 = __importDefault(require("express"));
 const prostgles_server_1 = __importDefault(require("prostgles-server"));
@@ -117,7 +117,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
             user: con.db_user,
             password: con.db_pass,
         };
-        await (0, prostgles_server_1.default)({
+        exports.statePrgl = await (0, prostgles_server_1.default)({
             dbConnection,
             sqlFilePath: path_1.default.join(electronConfig_1.actualRootDir + '/src/init.sql'),
             io,

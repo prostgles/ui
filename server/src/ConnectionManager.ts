@@ -149,6 +149,7 @@ export class ConnectionManager {
   }
 
   getConnection(conId: string): PRGLInstance | undefined {
+    
     return this.prgl_connections[conId];
   }
 
