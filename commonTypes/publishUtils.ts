@@ -134,7 +134,7 @@ export const parseFieldFilter = (args: { columns: string[]; fieldFilter: FieldFi
 }
 
 
-export const parseFullFilter = (filter: GroupedDetailedFilter, context: ContextDataObject, columns: string[] | undefined): { $and: AnyObject[] } | { $or: AnyObject[] } | undefined => {
+export const parseFullFilter = (filter: GroupedDetailedFilter, context: ContextDataObject | undefined, columns: string[] | undefined): { $and: AnyObject[] } | { $or: AnyObject[] } | undefined => {
   const isAnd = "$and" in filter;
   const filters = isAnd? filter.$and : filter.$or;
   const finalFilters = (filters as SimpleFilter[]).map(f => getFinalFilter(f, context, { columns })).filter(isDefined);
@@ -142,7 +142,7 @@ export const parseFullFilter = (filter: GroupedDetailedFilter, context: ContextD
   return f
 }
  
-export const parseForcedFilter = (rule: TableRules[keyof TableRules], context: ContextDataObject, columns: string[] | undefined): { forcedFilter: { $and: AnyObject[] } | { $or: AnyObject[] } } | undefined => {
+export const parseForcedFilter = (rule: TableRules[keyof TableRules], context: ContextDataObject | undefined, columns: string[] | undefined): { forcedFilter: { $and: AnyObject[] } | { $or: AnyObject[] } } | undefined => {
   if(isObject(rule) && "forcedFilterDetailed" in rule && rule.forcedFilterDetailed){
     const forcedFilter = parseFullFilter(rule.forcedFilterDetailed, context, columns);
     if(forcedFilter) return { forcedFilter }
@@ -190,7 +190,7 @@ const parseForcedData = (value: { forcedDataDetail?: ForcedData[] }, context: Co
   return { forcedData };
 }
 
-const parseSelect = (rule: undefined | boolean | SelectRule, columns: string[], context: ContextDataObject) => {
+const parseSelect = (rule: undefined | boolean | SelectRule, columns: string[], context: ContextDataObject | undefined) => {
   if(!rule || rule === true) return rule;
 
   return {

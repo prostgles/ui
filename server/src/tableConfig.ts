@@ -505,8 +505,14 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           optional: true, 
           enum: ["on", "off"]
         },
+        "renderMode": {
+          optional: true, 
+          description: "Show query results in a table or a JSON",
+          enum: ["table", "JSON"]
+        },
         "minimap": { 
           optional: true, 
+          description: "Shows a vertical code minimap to the right",
           type: { enabled: { type: "boolean" } } 
         },
         "acceptSuggestionOnEnter": {

@@ -92,12 +92,12 @@ export declare const parseFieldFilter: (args: {
     columns: string[];
     fieldFilter: FieldFilter;
 }) => string[];
-export declare const parseFullFilter: (filter: GroupedDetailedFilter, context: ContextDataObject, columns: string[] | undefined) => {
+export declare const parseFullFilter: (filter: GroupedDetailedFilter, context: ContextDataObject | undefined, columns: string[] | undefined) => {
     $and: AnyObject[];
 } | {
     $or: AnyObject[];
 } | undefined;
-export declare const parseForcedFilter: (rule: TableRules[keyof TableRules], context: ContextDataObject, columns: string[] | undefined) => {
+export declare const parseForcedFilter: (rule: TableRules[keyof TableRules], context: ContextDataObject | undefined, columns: string[] | undefined) => {
     forcedFilter: {
         $and: AnyObject[];
     } | {
