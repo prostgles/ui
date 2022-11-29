@@ -465,6 +465,7 @@ export type DBSchemaGenerated = {
         errorMessageDisplay?: 'tooltip' | 'bottom' | 'both';
         tabSize?: number;
         lineNumbers?: 'on' | 'off';
+        renderMode?: 'table' | 'JSON';
         minimap?: {  enabled: boolean; };
         acceptSuggestionOnEnter?: 'on' | 'smart' | 'off';
         expandSuggestionDocs?: boolean; 
