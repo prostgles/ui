@@ -1567,14 +1567,6 @@ textarea:focus {
   padding-bottom: .4rem;
 }
 
-.input-wrapper {
-  min-width: 150px;
-  border-radius: .375rem;
-  border: 1px solid #d2d6dc;
-  box-sizing: border-box;
-  /* overflow: hidden; */
-}
-
 .chip.green {
   color: var(--green-500);
   background-color: var(--green-100);
@@ -1622,6 +1614,14 @@ textarea:focus {
 .o-auto {
   overflow: auto;
 }
+
+.o-auto::-webkit-scrollbar {
+  opacity: .5;
+}
+.o-auto:hover ::-webkit-scrollbar {
+  opacity: .5;
+}
+
 .ox-auto {
   overflow-x: auto;
 }
@@ -1784,6 +1784,7 @@ select {
 select:hover {
   border-color: #888;
 }
+
 /* Focus style */
 .select-button:focus,
 select:focus {
@@ -1928,6 +1929,7 @@ input.input:focus,
 .button:not(.toggle, .select-button, .btn-color-danger):focus,
 button:not(.toggle, .select-button, .btn-color-danger):focus,
 .input-focus:focus,
+a.btn:focus,
 /* input.custom-input:focus, */
 .focus-border:focus-within {
   -webkit-appearance: none !important;
@@ -2010,8 +2012,8 @@ button.toggle:focus {
 .f-p5 {
   flex: .5;
 }
-
-/* ::-webkit-scrollbar {
+ 
+::-webkit-scrollbar {
   position: absolute;
   background: transparent;
   width: 12px;
@@ -2035,7 +2037,9 @@ button.toggle:focus {
 
 ::-webkit-scrollbar-thumb  {
   background-color:  rgba(0,0,0,0.2);
-} */
+} 
+
+
 
 .c--fit > * {
   width: fit-content;

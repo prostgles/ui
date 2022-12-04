@@ -31,6 +31,8 @@ const index_1 = require("./index");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const crypto = __importStar(require("crypto"));
+// import { faker } from "@faker-js/faker";
+const { faker } = require("@faker-js/faker");
 const preset_default_1 = require("@otplib/preset-default");
 const Prostgles_1 = require("prostgles-server/dist/Prostgles");
 const ConnectionManager_1 = require("./ConnectionManager");
@@ -52,6 +54,34 @@ const publishMethods = async (params) => {
         return index_1.connMgr.startConnection(conId, dbs, _dbs, socket, true);
     };
     const adminMethods = {
+        makeFakeData: async (connId) => {
+            const c = index_1.connMgr.getConnection(connId);
+            if (!c)
+                throw "bad connid";
+            const makeObj = (o) => {
+                return Object.keys(o).filter(k => typeof o[k] === "function").reduce((a, k) => ({ ...a, [k]: o[k]() }), {});
+            };
+            await c.prgl?._db.any("CREATE TABLE IF NOT EXISTS fake_data( data JSONB )");
+            const fakeData = Array(2000).fill(null).map(() => ({
+                data: {
+                    name: makeObj(faker.name),
+                    addres: makeObj(faker.address),
+                    commerce: makeObj(faker.commerce),
+                    company: makeObj(faker.company),
+                    finance: makeObj(faker.finance),
+                    image: makeObj(faker.image),
+                    vehicle: makeObj(faker.vehicle),
+                    internet: makeObj(faker.internet),
+                    lorem: makeObj(faker.lorem),
+                    phone: makeObj(faker.phone),
+                }
+            }));
+            const insert = DboBuilder_1.pgp.helpers.insert(fakeData, new DboBuilder_1.pgp.helpers.ColumnSet([
+                'data',
+            ], { table: 'fake_data' }));
+            // await _dbs.any("INSERT INTO fake_data(data) VALUES($1:csv)", [fakeData])
+            await c.prgl?._db.any(insert);
+        },
         disablePasswordless: async (newAdmin) => {
             const noPwdAdmin = await (0, ConnectionChecker_1.ADMIN_ACCESS_WITHOUT_PASSWORD)(dbs);
             if (!noPwdAdmin)
@@ -135,7 +165,7 @@ const publishMethods = async (params) => {
                     else {
                         const bkps = await t.backups.find(conFilter);
                         for await (const b of bkps) {
-                            await bkpManager.bkpDelete(b.id);
+                            await bkpManager.bkpDelete(b.id, true);
                         }
                         await t.backups.delete(conFilter);
                     }

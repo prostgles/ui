@@ -503,7 +503,7 @@ exports.tableConfig = {
             allowed_origin: {
                 sqlDefinition: "TEXT",
                 label: "Allow-Origin",
-                info: { hint: "Specifies which domains can access the this app in a cross-origin manner. \nSets the Access-Control-Allow-Origin header. \nUse '*' or specific URL to allow API access" }
+                info: { hint: "Specifies which domains can access the this app in a cross-origin manner. \nSets the Access-Control-Allow-Origin header. \nUse '*' or a specific URL to allow API access" }
             },
             allowed_ips: {
                 sqlDefinition: `cidr[] NOT NULL DEFAULT '{}'`,
