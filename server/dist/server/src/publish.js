@@ -163,6 +163,9 @@ const publish = async (params, con) => {
         },
         backups: {
             select: true,
+            update: isAdmin && {
+                fields: ["restore_status"]
+            }
             // insert: { fields: ["status", "options"] }
         },
         magic_links: isAdmin && {
@@ -172,6 +175,9 @@ const publish = async (params, con) => {
             select: true,
             update: true,
             delete: true,
+        },
+        failed_login_attempts: {
+            select: "*"
         },
         global_settings: isAdmin && {
             select: "*",

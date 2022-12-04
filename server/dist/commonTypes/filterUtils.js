@@ -6,8 +6,8 @@ exports.isDefined = isDefined;
 exports.CORE_FILTER_TYPES = [
     { key: "=", label: "=" },
     { key: "<>", label: "!=" },
-    { key: "not null", label: "NOT NULL" },
-    { key: "null", label: "NULL" },
+    { key: "not null", label: "IS NOT NULL" },
+    { key: "null", label: "IS NULL" },
     { key: "$in", label: "IN" },
     { key: "$nin", label: "NOT IN" },
 ];

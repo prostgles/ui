@@ -180,6 +180,9 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
     },
     backups: {
       select: true,
+      update: isAdmin && {
+        fields: ["restore_status"]
+      }
       // insert: { fields: ["status", "options"] }
     },
     magic_links: isAdmin && {
@@ -189,6 +192,10 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
       select: true,
       update: true,
       delete: true,
+    },
+
+    failed_login_attempts: {
+      select: "*"
     },
 
     global_settings: isAdmin && {

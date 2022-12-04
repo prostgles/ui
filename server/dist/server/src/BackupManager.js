@@ -284,14 +284,14 @@ class BackupManager {
             const bkpForId = await this.dbs.backups.findOne({ id: backup.id }, { select: { created: "$datetime_" } });
             if (!bkpForId)
                 throw "Internal error";
-            backup_id = `${con.db_name}__${bkpForId.created}_pg_dump${dumpAll ? "all" : ""}_${backup.id}.${content_type === "text/sql" ? "sql" : "dump"}`;
+            backup_id = `${(con.db_name || "").replace(/[\W]+/g, "_")}__${bkpForId.created}_pg_dump${dumpAll ? "all" : ""}_${backup.id}.${content_type === "text/sql" ? "sql" : "dump"}`;
             await this.dbs.backups.update({ id: backup.id }, { id: backup_id });
             const getBkp = () => this.dbs.backups.findOne({ id: backup_id });
             const destStream = fileMgr.uploadStream(backup_id, content_type, async (loading) => {
-                const bkp = await getBkp();
-                if (!bkp || "err" in bkp.status && bkp.status.err) {
-                    this.dbs.backups.update({ id: backup_id }, { status: { loading }, last_updated: new Date() });
-                }
+                // const bkp = await getBkp();
+                // if(!bkp || "err" in bkp.status && bkp.status.err){
+                this.dbs.backups.update({ $and: [{ id: backup_id }, { "status->>ok": null }, { "status->>err": null }] }, { status: { loading }, last_updated: new Date() });
+                // }
             }, setError, async (item) => {
                 const bkp = await getBkp();
                 if (bkp && "err" in bkp?.status) {
@@ -311,17 +311,33 @@ class BackupManager {
                     });
                 }
             });
-            pipeFromCommand(dumpCommand.command, dumpCommand.opts, ENV_VARS, destStream, err => {
-                if (err) {
-                    setError(err);
-                }
-            }, !o.keepLogs ? undefined : async (_dump_logs, isStdErr) => {
-                if (!isStdErr)
-                    return;
-                const currBkp = await this.dbs.backups.findOne({ id: backup_id });
-                const dump_logs = makeLogs(_dump_logs, currBkp?.dump_logs, currBkp?.created);
-                this.dbs.backups.update({ id: backup_id, "status->>ok": null }, { dump_logs, last_updated: new Date() });
-            }, false);
+            // const res = child.spawnSync(dumpCommand.command, dumpCommand.opts.concat(["-f", "-l"]) as any, { env: ENV_VARS });
+            /** Will not show pg_dump TOC list progress because generating a TOC list takes as long as the actual pg_dump in some cases */
+            const proc = pipeFromCommand({
+                ...dumpCommand,
+                envVars: ENV_VARS,
+                destination: destStream,
+                onEnd: err => {
+                    if (err) {
+                        setError(err);
+                    }
+                },
+                onStdout: !o.keepLogs ? undefined : async ({ chunk: _dump_logs, pipedLength }, isStdErr) => {
+                    if (!isStdErr)
+                        return;
+                    const currBkp = await this.dbs.backups.findOne({ id: backup_id });
+                    if (!currBkp) {
+                        proc.kill();
+                        return;
+                    }
+                    const dump_logs = makeLogs(_dump_logs, currBkp?.dump_logs, currBkp?.created);
+                    this.dbs.backups.update({ id: backup_id, "status->>ok": null }, {
+                        dump_logs,
+                        last_updated: new Date()
+                    });
+                },
+                useExec: false
+            });
             let interval = setInterval(async () => {
                 const bkp = await this.dbs.backups.findOne({ id: backup_id });
                 if (!bkp || bkp && "err" in bkp.status) {
@@ -403,6 +419,7 @@ class BackupManager {
                 ])
             };
             await this.dbs.backups.update({ id: bkpId }, {
+                restore_logs: "",
                 restore_start: new Date(),
                 restore_command: envToStr(ENV_VARS) + restoreCmd.command + " " + restoreCmd.opts.join(" "),
                 restore_status: { loading: { loaded: 0, total: 0 } },
@@ -423,14 +440,14 @@ class BackupManager {
                             restore_status: {
                                 loading: {
                                     loaded: chunkSum,
-                                    total: 0
+                                    total: +(bkp.sizeInBytes ?? bkp.dbSizeInBytes ?? 0)
                                 }
                             }
                         });
                     }
                 }
             });
-            pipeToCommand(restoreCmd.command, restoreCmd.opts, ENV_VARS, bkpStream, err => {
+            const proc = pipeToCommand(restoreCmd.command, restoreCmd.opts, ENV_VARS, bkpStream, err => {
                 if (err) {
                     console.error("pipeToCommand ERR:", err);
                     bkpStream.destroy();
@@ -439,16 +456,21 @@ class BackupManager {
                 else {
                     this.dbs.backups.update({ id: bkpId }, { restore_end: new Date(), restore_status: { ok: `${new Date()}` }, last_updated: new Date() });
                 }
-            }, async (_restore_logs, isStdErr) => {
+            }, async ({ chunk: _restore_logs }, isStdErr) => {
+                /** Full logs are always provided */
                 if (!isStdErr)
                     return;
                 const currBkp = await this.dbs.backups.findOne({ id: bkpId });
+                if (currBkp?.restore_status.err) {
+                    proc.kill();
+                    return;
+                }
                 if (!currBkp) {
                     bkpStream.emit("error", "Backup file not found");
                     bkpStream.destroy();
                 }
                 else {
-                    const restore_logs = makeLogs(_restore_logs, currBkp.restore_logs, currBkp.restore_start);
+                    const restore_logs = makeLogs(_restore_logs, currBkp.restore_logs, currBkp.restore_start); // currBkp.restore_logs
                     this.dbs.backups.update({ id: bkpId }, { restore_end: new Date(), restore_logs, last_updated: new Date() });
                 }
             }, false);
@@ -565,9 +587,8 @@ async function getBkp(dbs, bkpId) {
 function envToStr(vars) {
     return (0, prostgles_types_2.getKeys)(vars).map(k => `${k}=${JSON.stringify(vars[k])}`).join(" ") + " ";
 }
-function pipeFromCommand(command, 
-// opts: SpawnOptionsWithoutStdio | string[], 
-opts, envVars = {}, destination, onEnd, onStdout, useExec = false) {
+function pipeFromCommand(args) {
+    const { useExec = false, envVars = {}, onEnd, command, destination, opts, onStdout, onChunk } = args;
     const execCommand = `${envToStr(envVars)} ${command} ${opts.join(" ")}`;
     const env = !envVars ? undefined : envVars;
     const proc = useExec ? child_process_1.default.exec(execCommand) : child_process_1.default.spawn(command, opts, { env });
@@ -575,34 +596,39 @@ opts, envVars = {}, destination, onEnd, onStdout, useExec = false) {
     let fullLog = "";
     const lastSent = Date.now();
     let log;
+    let streamSize = 0;
     proc.stderr.on('data', (data) => {
         log = getUTFText(data);
         fullLog += log;
-        const now = Date.now();
-        if (lastSent > now - 1000) {
-            onStdout?.(fullLog, true);
-        }
+        // const now = Date.now();
+        // if(lastSent > now - 1000){
+        /** These are the pg_dump logs */
+        onStdout?.({ full: fullLog, chunk: log, pipedLength: streamSize }, true);
+        // }
     });
     proc.stdout.on('data', (data) => {
-        onStdout?.(getUTFText(data));
+        streamSize += data.length;
+        /** These is the pg_dump actual data */
+        onChunk?.(data, streamSize);
+        // onStdout?.({ chunk: getUTFText(data), full: fullLog });
     });
     proc.stdout.on('error', function (err) {
-        onEnd(err ?? "proc.stdout 'error'");
+        onEnd(err ?? "proc.stdout 'error'", fullLog);
     });
     proc.stdin.on('error', function (err) {
-        onEnd(err ?? "proc.stdin 'error'");
+        onEnd(err ?? "proc.stdin 'error'", fullLog);
     });
     proc.on('error', function (err) {
-        onEnd(err ?? "proc 'error'");
+        onEnd(err ?? "proc 'error'", fullLog);
     });
     proc.stdout.pipe(destination, { end: false });
     proc.on('exit', function (code, signal) {
         if (code) {
-            console.error({ execCommand, err: fullLog.slice(fullLog.length - 100) });
-            onEnd(log ?? "Error");
+            console.error({ execCommandErr: fullLog.slice(fullLog.length - 100) });
+            onEnd(log ?? "Error", fullLog);
         }
         else {
-            onEnd();
+            onEnd(undefined, fullLog);
             destination.end();
         }
     });
@@ -618,12 +644,12 @@ function pipeToCommand(command, opts, envVars = {}, source, onEnd, onStdout, use
     proc.stderr.on('data', (data) => {
         log = data.toString();
         fullLog += log;
-        onStdout?.(fullLog, true);
+        onStdout?.({ full: fullLog, chunk: log }, true);
     });
     proc.stdout.on('data', (data) => {
         const log = data.toString();
         fullLog += log;
-        onStdout?.(fullLog);
+        onStdout?.({ full: fullLog, chunk: log });
     });
     proc.stdout.on('error', function (err) {
         onEnd(err ?? "proc.stdout 'error'");
@@ -634,12 +660,11 @@ function pipeToCommand(command, opts, envVars = {}, source, onEnd, onStdout, use
     proc.on('error', function (err) {
         onEnd(err ?? "proc 'error'");
     });
-    // console.log({ source })
     source.pipe(proc.stdin);
     proc.on('exit', function (code, signal) {
-        const err = fullLog.slice(fullLog.length - 100);
+        const err = fullLog.split("\n").at(-1);
         if (code) {
-            console.error({ execCommand, err });
+            console.error({ execCommandErr: err });
             source.destroy();
         }
         onEnd?.(code ? (err ?? "Error") : undefined);
@@ -691,8 +716,8 @@ const makeLogs = (newLogs, oldLogs, startTime) => {
     if (startTime) {
         const age = (0, utils_1.getAge)(+startTime, Date.now(), true);
         const padd2 = (v) => v.toFixed(0).toString().padStart(2, "0");
-        restore_logs = newLogs.split("\n").map(v => `T+ ${[age.hours, age.minutes, age.seconds].map(padd2).join(":")}   ${v}`).join("\n");
+        restore_logs = newLogs.split("\n").filter(v => v).map(v => v.includes("T+") ? v : `T+ ${[age.hours, age.minutes, age.seconds].map(padd2).join(":")}   ${v}`).join("\n");
     }
-    return (oldLogs || "") + restore_logs;
+    return (oldLogs || "") + "\n" + restore_logs;
 };
 //# sourceMappingURL=BackupManager.js.map

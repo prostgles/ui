@@ -5,6 +5,9 @@ import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import fs from "fs";
 import path from 'path';
 import * as crypto from "crypto";
+// import { faker } from "@faker-js/faker";
+const { faker } = require("@faker-js/faker");
+
 
 import { authenticator } from '@otplib/preset-default';
 
@@ -13,7 +16,7 @@ export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 
 import { isSuperUser } from "prostgles-server/dist/Prostgles";
 import { ConnectionTableConfig, DB_TRANSACTION_KEY } from "./ConnectionManager";
-import { DBHandlerServer, isPojoObject } from "prostgles-server/dist/DboBuilder";
+import { DBHandlerServer, isPojoObject, pgp } from "prostgles-server/dist/DboBuilder";
 import { pickKeys } from "prostgles-server/dist/PubSubManager";
 import { DBSSchema } from "../../commonTypes/publishUtils";
 
@@ -42,6 +45,36 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
   };
 
   const adminMethods = {
+
+    makeFakeData: async (connId: string) => {
+      const c = connMgr.getConnection(connId);
+      if(!c) throw "bad connid";
+      const makeObj = (o: Record<string, any>) => {
+        return Object.keys(o).filter(k => typeof o[k] === "function").reduce((a, k) => ({ ...a, [k]: o[k]() }), {})
+      }
+
+      await c.prgl?._db.any("CREATE TABLE IF NOT EXISTS fake_data( data JSONB )");
+      const fakeData = Array(2000).fill(null).map(() => ({
+        data: {
+          name: makeObj(faker.name),
+          addres: makeObj(faker.address),
+          commerce: makeObj(faker.commerce),
+          company: makeObj(faker.company),
+          finance: makeObj(faker.finance),
+          image: makeObj(faker.image),
+          vehicle: makeObj(faker.vehicle),
+          internet: makeObj(faker.internet),
+          lorem: makeObj(faker.lorem),
+          phone: makeObj(faker.phone),
+        }
+      }));
+
+      const insert = pgp.helpers.insert(fakeData, new pgp.helpers.ColumnSet([
+        'data',
+    ], {table: 'fake_data'}));
+      // await _dbs.any("INSERT INTO fake_data(data) VALUES($1:csv)", [fakeData])
+      await c.prgl?._db.any(insert)
+    },
     disablePasswordless: async (newAdmin: { username: string; password: string }) => {
 
       const noPwdAdmin = await ADMIN_ACCESS_WITHOUT_PASSWORD(dbs);
@@ -128,7 +161,7 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
           } else {
             const bkps = await t.backups.find(conFilter);
             for await(const b of bkps){
-              await bkpManager.bkpDelete(b.id);
+              await bkpManager.bkpDelete(b.id, true);
             }
             await t.backups.delete(conFilter);
           }

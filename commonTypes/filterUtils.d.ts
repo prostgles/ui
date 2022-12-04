@@ -8,10 +8,10 @@ export declare const CORE_FILTER_TYPES: readonly [{
     readonly label: "!=";
 }, {
     readonly key: "not null";
-    readonly label: "NOT NULL";
+    readonly label: "IS NOT NULL";
 }, {
     readonly key: "null";
-    readonly label: "NULL";
+    readonly label: "IS NULL";
 }, {
     readonly key: "$in";
     readonly label: "IN";

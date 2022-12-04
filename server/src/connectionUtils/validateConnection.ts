@@ -28,7 +28,7 @@ export const validateConnection = (c: DBSchemaGenerated["connections"]["columns"
     result.db_port = cs.hosts?.[0].port || (+port ?? 5432);
     result.db_user = cs.user ?? (user || "postgres");
     result.db_pass = cs.password ?? password;
-    result.db_name = cs.path?.[0] ?? dbname;
+    result.db_name = cs.path?.join("/") ?? dbname;
     result.db_ssl = sslmode || "disable";
     // result.type = "Standard"
   } else if(c.type === "Standard" || c.db_host){

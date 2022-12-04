@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"outDir": "dist",
 		"target": "ES2022",
-		"lib": [ "ES2017", "es2019", "ES2021.String" ],
+		"lib": [ "ES2017", "es2019", "ES2021.String", "ES2022" ],
 		"esModuleInterop" : true,
 		"allowSyntheticDefaultImports": true,
 		"allowJs": true,

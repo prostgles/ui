@@ -141,7 +141,23 @@ export declare function getFileMgr(dbs: DBS, credId: number | null): Promise<{
     }> | undefined;
 }>;
 type EnvVars = Record<string, string> | {};
-export declare function pipeFromCommand(command: string, opts: string[], envVars: EnvVars | undefined, destination: internal.Writable, onEnd: (err?: any) => void, onStdout?: (data: any, isStdErr?: boolean) => void, useExec?: boolean): child.ChildProcess;
-export declare function pipeToCommand(command: string, opts: string[], envVars: EnvVars | undefined, source: internal.Readable, onEnd: (err?: any) => void, onStdout?: (data: any, isStdErr?: boolean) => void, useExec?: boolean): child.ChildProcess;
+export declare function pipeFromCommand(args: {
+    command: string;
+    opts: string[];
+    envVars: EnvVars;
+    destination: internal.Writable;
+    onEnd: (err: any | undefined, fullLog: string) => void;
+    onStdout?: (data: {
+        full: any;
+        chunk: any;
+        pipedLength: number;
+    }, isStdErr?: boolean) => void;
+    useExec?: boolean;
+    onChunk?: (chunk: any, streamSize: number) => void;
+}): child.ChildProcess;
+export declare function pipeToCommand(command: string, opts: string[], envVars: EnvVars | undefined, source: internal.Readable, onEnd: (err?: any) => void, onStdout?: (data: {
+    full: any;
+    chunk: any;
+}, isStdErr?: boolean) => void, useExec?: boolean): child.ChildProcess;
 export {};
 //# sourceMappingURL=BackupManager.d.ts.map
