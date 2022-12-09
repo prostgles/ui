@@ -494,6 +494,9 @@
 .ml-1 {
   margin-left: 1em;
 }
+.ml-1p5 {
+  margin-left: 1.5em;
+}
 .ml-2 {
   margin-left: 2em;
 }
@@ -1795,6 +1798,10 @@ select:focus {
   /* box-shadow: 0 0 0 3px -moz-mac-focusring; */
   color: #222; 
   outline: none;
+}
+
+.form-field .select-button:focus {
+  border-color: transparent !important; 
 }
 
 input[type=checkbox]:focus {    

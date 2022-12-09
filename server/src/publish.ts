@@ -33,13 +33,19 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
   const publishedWspIDs = acs?.flatMap(ac => ac.rule.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds).filter(isDefined) || [];// ac?.rule.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds;
   // const publishedWorkspaces = db.workspaces.find({ "id.$in": })
 
-  const dashboardConfig: Publish<DBSchemaGenerated> = ["windows", "links", "workspaces"]
-    .reduce((a: any, v: string) => ({ 
+  const dashboardConfig: Publish<DBSchemaGenerated> = (["windows", "links", "workspaces"] as const)
+    .reduce((a, v) => ({
       ...a, 
       [v]: {
         select: {
           fields: "*",
-          forcedFilter: { $or: [{ user_id  }, { [v === "workspaces"? "id" : "workspace_id"]: { $in: publishedWspIDs } }] }
+          forcedFilter: { 
+            $or: [
+              { user_id  }, 
+              /** User either owns the item or the item has been shared/published to the user */
+              { [v === "workspaces"? "id" : "workspace_id"]: { $in: publishedWspIDs } }
+            ] 
+          }
         },
         sync: {
           id_fields: ["id"],
@@ -63,6 +69,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
         })
     },
   }) ,{});
+
   type User = DBSchemaGenerated["users"]["columns"]
   const validateAndHashUserPassword = async ({ filter, update }: { filter: User; update: User }, _dbo: DBOFullyTyped<DBSchemaGenerated>, mustUpdate = false): Promise<User> => {
     if("password" in update){

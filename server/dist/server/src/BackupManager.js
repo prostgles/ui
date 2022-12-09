@@ -174,7 +174,7 @@ class BackupManager {
         this.connMgr = connMgr;
         this.commandDirectoryPrefix = windows.preffix;
         this.commandExt = windows.extension;
-        this.interval = setInterval(async () => {
+        const checkAutomaticBkps = async () => {
             const connections = await this.dbs.connections.find({ "backups_config->>enabled": 'true' });
             for await (const con of connections) {
                 await this.checkAutomaticBackup(con);
@@ -182,7 +182,9 @@ class BackupManager {
             connections.forEach(con => {
                 this.checkAutomaticBackup(con);
             });
-        }, HOUR / 4);
+        };
+        this.interval = setInterval(checkAutomaticBkps, HOUR / 4);
+        checkAutomaticBkps();
         // }, 5000)
     }
     async destroy() {
