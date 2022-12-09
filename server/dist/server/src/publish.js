@@ -24,7 +24,13 @@ const publish = async (params, con) => {
         [v]: {
             select: {
                 fields: "*",
-                forcedFilter: { $or: [{ user_id }, { [v === "workspaces" ? "id" : "workspace_id"]: { $in: publishedWspIDs } }] }
+                forcedFilter: {
+                    $or: [
+                        { user_id },
+                        /** User either owns the item or the item has been shared/published to the user */
+                        { [v === "workspaces" ? "id" : "workspace_id"]: { $in: publishedWspIDs } }
+                    ]
+                }
             },
             sync: {
                 id_fields: ["id"],

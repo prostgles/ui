@@ -169,16 +169,6 @@ export type DBSchemaGenerated = {
       user_id?: null | string;
     };
   };
-  dwadwa: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
-    columns: {
-      id?: string;
-    };
-  };
   failed_login_attempts: {
     is_view: false;
     select: true;
@@ -315,17 +305,6 @@ export type DBSchemaGenerated = {
       magic_link?: null | string;
       magic_link_used?: null | Date;
       user_id: string;
-    };
-  };
-  mytbl: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
-    columns: {
-      id?: number;
-      line?: null | any;
     };
   };
   session_types: {

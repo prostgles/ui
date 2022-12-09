@@ -172,7 +172,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
 
       await onSuccess();
 
-      let activeSession = await db.sessions.findOne({ user_id: u.id });
+      let activeSession = await db.sessions.findOne({ user_id: u.id, active: true });
       
       if(!activeSession){
         const globalSettings = await db.global_settings.findOne();
@@ -194,7 +194,10 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
         throw `Passwordless admin cannot logout`
       }
       
-      await db.sessions.delete({ id: sid })
+      await db.sessions.update({ id: sid }, { active: false });
+      // await db.sessions.delete({ id: sid });
+      /** Keep last 20 sessions */
+
       return true; 
     },
 
