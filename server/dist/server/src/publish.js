@@ -148,7 +148,7 @@ const publish = async (params, con) => {
                 forcedFilter: { id: user_id }
             },
             update: {
-                fields: { password: 1 },
+                fields: { password: 1, options: 1 },
                 forcedFilter: { id: user_id },
                 validate: validateAndHashUserPassword,
             }
