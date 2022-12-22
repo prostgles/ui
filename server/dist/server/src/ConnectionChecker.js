@@ -112,12 +112,28 @@ class ConnectionChecker {
                     }
                 }
             }
+            if (electronConfig_1.DEMO_MODE) {
+                /** If test mode and no sid then create a random account and redirect to magic login link */
+                if (!sid && this.db && this._db && !req.originalUrl.startsWith("/magic-link/")) {
+                    const randomUser = await (0, exports.insertUser)(this.db, this._db, {
+                        username: "user-" + Math.round(Math.random() * 1e8),
+                        password: "",
+                        type: "default"
+                    });
+                    if (randomUser) {
+                        const mlink = await makeMagicLink(randomUser, this.db, "/", Date.now() + exports.DAY * 2);
+                        res.redirect(mlink.magic_login_link_redirect);
+                        return;
+                    }
+                }
+            }
         }
         next();
     };
     noPasswordAdmin;
     // ipRanges: IPRange[] = [];
     db;
+    _db;
     config = {
         loaded: false
     };
@@ -125,6 +141,7 @@ class ConnectionChecker {
     configSub;
     init = async (db, _db) => {
         this.db = db;
+        this._db = _db;
         await initUsers(db, _db);
         await this.withConfig();
     };
@@ -204,6 +221,7 @@ const insertUser = async (db, _db, u) => {
     if (!user.id)
         throw "User id missing";
     await _db.any("UPDATE users SET password = crypt(password, id::text) WHERE id = ${id};", user);
+    return db.users.findOne({ id: user.id });
 };
 exports.insertUser = insertUser;
 exports.DAY = 24 * 3600 * 1000;

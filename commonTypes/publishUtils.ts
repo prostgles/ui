@@ -8,6 +8,10 @@ export type CustomTableRules = {
   } & TableRules)[];
 }
 
+type ACRule = {
+  
+}
+
 export type UserGroupRule = DBSSchema["access_control"]["rule"]
 
 export type ContextValue = {

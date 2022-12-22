@@ -113,3 +113,6 @@ export const start = async (
   const { onServerReady } = require("./index");
   onServerReady(onReady)
 }
+
+console.error("Must create DEMO_MODE user types and sample databases"); 
+export const DEMO_MODE = true;// !!process.env.DEMO_MODE;

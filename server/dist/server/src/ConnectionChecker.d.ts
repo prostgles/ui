@@ -26,6 +26,7 @@ export declare class ConnectionChecker {
     onUse: OnUse;
     noPasswordAdmin?: DBSSchema["users"];
     db?: DBS;
+    _db?: DB;
     config: {
         loaded: boolean;
         global_setting?: DBSSchema["global_settings"];
@@ -114,7 +115,28 @@ export declare const insertUser: (db: DBS, _db: DB, u: {
     status?: string | undefined;
     type?: string | undefined;
     username: string;
-}[]) => Promise<void>;
+}[]) => Promise<Required<{
+    "2fa"?: {
+        secret: string;
+        recoveryCode: string;
+        enabled: boolean;
+    } | null | undefined;
+    created?: Date | null | undefined;
+    id?: string | undefined;
+    is_online?: boolean | undefined;
+    last_updated?: number | null | undefined;
+    options?: {
+        showStateDB?: boolean | undefined;
+        hideNonSSLWarning?: boolean | undefined;
+        viewedSQLTips?: boolean | undefined;
+        viewedAccessInfo?: boolean | undefined;
+    } | null | undefined;
+    password?: string | undefined;
+    passwordless_admin?: boolean | null | undefined;
+    status?: string | undefined;
+    type?: string | undefined;
+    username: string;
+}> | undefined>;
 export declare const DAY: number;
 export {};
 //# sourceMappingURL=ConnectionChecker.d.ts.map
