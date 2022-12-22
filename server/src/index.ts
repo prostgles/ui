@@ -341,7 +341,7 @@ const insertStateDatabase = async (db: DBS, _db: DB, con: typeof DBS_CONNECTION_
             access_control_id: ac.id, 
             user_type: demoModeUserRole 
           });
-
+          
         }
       }
     } catch(err: any){
