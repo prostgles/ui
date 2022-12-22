@@ -232,18 +232,36 @@ const insertStateDatabase = async (db, _db, con) => {
                     await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
                 }
                 const stateCon = { ...(0, PubSubManager_1.omitKeys)(state_db, ["id"]) };
-                const validatedConnection = (0, validateConnection_1.validateConnection)({
+                const validatedSampleDBConnection = (0, validateConnection_1.validateConnection)({
                     ...stateCon,
                     type: "Standard",
                     name: SAMPLE_DB_LABEL,
                     db_name: SAMPLE_DB_NAME,
                 });
-                await (0, exports.upsertConnection)({
+                const con = await (0, exports.upsertConnection)({
                     ...stateCon,
-                    ...validatedConnection,
+                    ...validatedSampleDBConnection,
                     is_state_db: false,
                     name: SAMPLE_DB_LABEL,
                 }, null, db);
+                if (electronConfig_1.DEMO_MODE) {
+                    if (!con) {
+                        throw "Sample connection not created";
+                    }
+                    const demoModeUserRole = "default";
+                    const ac = await db.access_control.insert({
+                        connection_id: con.id,
+                        rule: {
+                            userGroupNames: [demoModeUserRole],
+                            dbPermissions: { allowSQL: true, type: "Run SQL" },
+                            dbsPermissions: { createWorkspaces: true }
+                        }
+                    }, { returning: "*" });
+                    await db.access_control_user_types.insert({
+                        access_control_id: ac.id,
+                        user_type: demoModeUserRole
+                    });
+                }
             }
         }
         catch (err) {
@@ -331,7 +349,8 @@ const getInitState = () => {
         electronCredsProvided: !!eConfig?.hasCredentials(),
         ..._initState,
         canTryStartProstgles: !eConfig?.isElectron || eConfig.hasCredentials(),
-        canDumpAndRestore: installedPrograms
+        canDumpAndRestore: installedPrograms,
+        isDemoMode: electronConfig_1.DEMO_MODE,
     };
 };
 /** During page load we wait for init */

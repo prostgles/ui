@@ -14,7 +14,7 @@ import { DB } from "prostgles-server/dist/Prostgles";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { Auth, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
 import { makeSession, sidKeyName, SUser, YEAR } from "./authConfig";
-import { getElectronConfig } from "./electronConfig";
+import { getElectronConfig, DEMO_MODE } from "./electronConfig";
 
 
 export type WithOrigin = {
@@ -156,6 +156,24 @@ export class ConnectionChecker {
 
         }
       }
+
+
+      if(DEMO_MODE){
+
+        /** If test mode and no sid then create a random account and redirect to magic login link */
+        if(!sid && this.db && this._db && !req.originalUrl.startsWith("/magic-link/")){
+          const randomUser = await insertUser(this.db, this._db, { 
+            username: "user-" + Math.round(Math.random() * 1e8), 
+            password: "", 
+            type: "default" 
+          });
+          if(randomUser){
+            const mlink = await makeMagicLink(randomUser, this.db, "/", Date.now() + DAY * 2);
+            res.redirect(mlink.magic_login_link_redirect);
+            return;
+          }
+        }
+      }
     }
     
     
@@ -166,6 +184,7 @@ export class ConnectionChecker {
   
   // ipRanges: IPRange[] = [];
   db?: DBS;
+  _db?: DB;
 
   config: {
     loaded: boolean;
@@ -178,7 +197,7 @@ export class ConnectionChecker {
   configSub?: SubscriptionHandler<DBSSchema["global_settings"]>;
   init = async (db: DBS, _db: DB) => {
     this.db = db;
-
+    this._db = _db;
     await initUsers(db, _db);
     
     await this.withConfig();
@@ -274,6 +293,7 @@ export const insertUser = async (db: DBS, _db: DB, u: Parameters<typeof db.users
   const user = await db.users.insert(u, { returning: "*" }) as Users;
   if(!user.id) throw "User id missing";
   await _db.any("UPDATE users SET password = crypt(password, id::text) WHERE id = ${id};", user);
+  return db.users.findOne({ id: user.id })!;
 }
 
 export const DAY = 24 * 3600 * 1000;

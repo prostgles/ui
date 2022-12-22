@@ -99,6 +99,7 @@ const getActiveSession = async (db: DBS, filter: { user_id: string; } | { id: st
 
   return validSession;
 }
+
 export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
   
   const auth: Auth<DBSchemaGenerated, SUser> = {
