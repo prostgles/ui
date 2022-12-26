@@ -31,17 +31,16 @@ const index_1 = require("./index");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const crypto = __importStar(require("crypto"));
-// import { faker } from "@faker-js/faker";
-const { faker } = require("@faker-js/faker");
 const preset_default_1 = require("@otplib/preset-default");
 const Prostgles_1 = require("prostgles-server/dist/Prostgles");
 const ConnectionManager_1 = require("./ConnectionManager");
-const DboBuilder_1 = require("prostgles-server/dist/DboBuilder");
 const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
+const publishUtils_1 = require("../../commonTypes/publishUtils");
 const testDBConnection_1 = require("./connectionUtils/testDBConnection");
 const validateConnection_1 = require("./connectionUtils/validateConnection");
 const ConnectionChecker_1 = require("./ConnectionChecker");
 const filterUtils_1 = require("../../commonTypes/filterUtils");
+const demoDataSetup_1 = require("./demoDataSetup");
 const publishMethods = async (params) => {
     const { dbo: dbs, socket, db: _dbs } = params;
     const ip_address = socket.conn.remoteAddress;
@@ -56,31 +55,10 @@ const publishMethods = async (params) => {
     const adminMethods = {
         makeFakeData: async (connId) => {
             const c = index_1.connMgr.getConnection(connId);
-            if (!c)
+            const con = await dbs.connections.findOne({ id: connId });
+            if (!c || !con)
                 throw "bad connid";
-            const makeObj = (o) => {
-                return Object.keys(o).filter(k => typeof o[k] === "function").reduce((a, k) => ({ ...a, [k]: o[k]() }), {});
-            };
-            await c.prgl?._db.any("CREATE TABLE IF NOT EXISTS fake_data( data JSONB )");
-            const fakeData = Array(2000).fill(null).map(() => ({
-                data: {
-                    name: makeObj(faker.name),
-                    addres: makeObj(faker.address),
-                    commerce: makeObj(faker.commerce),
-                    company: makeObj(faker.company),
-                    finance: makeObj(faker.finance),
-                    image: makeObj(faker.image),
-                    vehicle: makeObj(faker.vehicle),
-                    internet: makeObj(faker.internet),
-                    lorem: makeObj(faker.lorem),
-                    phone: makeObj(faker.phone),
-                }
-            }));
-            const insert = DboBuilder_1.pgp.helpers.insert(fakeData, new DboBuilder_1.pgp.helpers.ColumnSet([
-                'data',
-            ], { table: 'fake_data' }));
-            // await _dbs.any("INSERT INTO fake_data(data) VALUES($1:csv)", [fakeData])
-            await c.prgl?._db.any(insert);
+            return (0, demoDataSetup_1.demoDataSetup)(c.prgl?._db, con);
         },
         disablePasswordless: async (newAdmin) => {
             const noPwdAdmin = await (0, ConnectionChecker_1.ADMIN_ACCESS_WITHOUT_PASSWORD)(dbs);
@@ -356,7 +334,7 @@ exports.is = {
     string: (v, notEmtpy = true) => typeof v === "string" && (notEmtpy ? !!v.length : true),
     integer: (v) => Number.isInteger(v),
     number: (v) => Number.isFinite(v),
-    object: (v) => (0, DboBuilder_1.isPojoObject)(v),
+    object: (v) => (0, publishUtils_1.isObject)(v),
     oneOf: (v, vals) => vals.includes(v),
 };
 const checkIf = (obj, key, isType, arg1) => {

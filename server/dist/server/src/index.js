@@ -244,7 +244,7 @@ const insertStateDatabase = async (db, _db, con) => {
                     is_state_db: false,
                     name: SAMPLE_DB_LABEL,
                 }, null, db);
-                if (electronConfig_1.DEMO_MODE) {
+                if ((0, electronConfig_1.isDemoMode)()) {
                     if (!con) {
                         throw "Sample connection not created";
                     }
@@ -350,7 +350,7 @@ const getInitState = () => {
         ..._initState,
         canTryStartProstgles: !eConfig?.isElectron || eConfig.hasCredentials(),
         canDumpAndRestore: installedPrograms,
-        isDemoMode: electronConfig_1.DEMO_MODE,
+        isDemoMode: (0, electronConfig_1.isDemoMode)(),
     };
 };
 /** During page load we wait for init */

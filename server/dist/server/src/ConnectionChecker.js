@@ -112,7 +112,7 @@ class ConnectionChecker {
                     }
                 }
             }
-            if (electronConfig_1.DEMO_MODE) {
+            if ((0, electronConfig_1.isDemoMode)()) {
                 /** If test mode and no sid then create a random account and redirect to magic login link */
                 if (!sid && this.db && this._db && !req.originalUrl.startsWith("/magic-link/")) {
                     const randomUser = await (0, exports.insertUser)(this.db, this._db, {

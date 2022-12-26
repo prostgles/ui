@@ -5,8 +5,6 @@ import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import fs from "fs";
 import path from 'path';
 import * as crypto from "crypto";
-// import { faker } from "@faker-js/faker";
-const { faker } = require("@faker-js/faker");
 
 
 import { authenticator } from '@otplib/preset-default';
@@ -16,9 +14,9 @@ export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 
 import { isSuperUser } from "prostgles-server/dist/Prostgles";
 import { ConnectionTableConfig, DB_TRANSACTION_KEY } from "./ConnectionManager";
-import { DBHandlerServer, isPojoObject, pgp } from "prostgles-server/dist/DboBuilder";
+import { DBHandlerServer } from "prostgles-server/dist/DboBuilder";
 import { pickKeys } from "prostgles-server/dist/PubSubManager";
-import { DBSSchema } from "../../commonTypes/publishUtils";
+import { DBSSchema, isObject } from "../../commonTypes/publishUtils";
 
 
 import { testDBConnection } from "./connectionUtils/testDBConnection";
@@ -26,6 +24,7 @@ import { validateConnection } from "./connectionUtils/validateConnection";
 import { Backups } from "./BackupManager";
 import { ADMIN_ACCESS_WITHOUT_PASSWORD, insertUser } from "./ConnectionChecker";
 import { isDefined } from "../../commonTypes/filterUtils";
+import { demoDataSetup } from "./demoDataSetup";
 
 export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params) => { //  socket, dbs: DBObj, _dbs, user: Users
   const { dbo: dbs, socket, db: _dbs } = params;
@@ -45,36 +44,12 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
   };
 
   const adminMethods = {
- 
 
     makeFakeData: async (connId: string) => {
       const c = connMgr.getConnection(connId);
-      if(!c) throw "bad connid";
-      const makeObj = (o: Record<string, any>) => {
-        return Object.keys(o).filter(k => typeof o[k] === "function").reduce((a, k) => ({ ...a, [k]: o[k]() }), {})
-      }
-
-      await c.prgl?._db.any("CREATE TABLE IF NOT EXISTS fake_data( data JSONB )");
-      const fakeData = Array(2000).fill(null).map(() => ({
-        data: {
-          name: makeObj(faker.name),
-          addres: makeObj(faker.address),
-          commerce: makeObj(faker.commerce),
-          company: makeObj(faker.company),
-          finance: makeObj(faker.finance),
-          image: makeObj(faker.image),
-          vehicle: makeObj(faker.vehicle),
-          internet: makeObj(faker.internet),
-          lorem: makeObj(faker.lorem),
-          phone: makeObj(faker.phone),
-        }
-      }));
-
-      const insert = pgp.helpers.insert(fakeData, new pgp.helpers.ColumnSet([
-        'data',
-    ], {table: 'fake_data'}));
-      // await _dbs.any("INSERT INTO fake_data(data) VALUES($1:csv)", [fakeData])
-      await c.prgl?._db.any(insert)
+      const con = await dbs.connections.findOne({ id: connId });
+      if(!c || !con) throw "bad connid";
+      return demoDataSetup(c.prgl?._db!, con);
     },
     disablePasswordless: async (newAdmin: { username: string; password: string }) => {
 
@@ -367,7 +342,7 @@ export const is = {
   string: (v: any, notEmtpy = true): v is string => typeof v === "string" && (notEmtpy? !!v.length : true),
   integer: (v: any): v is number => Number.isInteger(v),
   number: (v: any): v is number => Number.isFinite(v),
-  object: (v: any): v is Record<string, any> => isPojoObject(v),
+  object: (v: any): v is Record<string, any> => isObject(v),
   oneOf: <T>(v: any, vals: T[]): v is T => vals.includes(v),
 } as const;
 
