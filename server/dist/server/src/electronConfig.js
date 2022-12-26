@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DEMO_MODE = exports.start = exports.getElectronConfig = exports.getRootDir = exports.actualRootDir = void 0;
+exports.isDemoMode = exports.start = exports.getElectronConfig = exports.getRootDir = exports.actualRootDir = void 0;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 let isElectron = false; // process.env.PRGL_IS_ELECTRON;
@@ -103,5 +103,12 @@ const start = async (sStorage, args, onReady) => {
 };
 exports.start = start;
 console.error("Must create DEMO_MODE user types and sample databases");
-exports.DEMO_MODE = true; // !!process.env.DEMO_MODE;
+const isDemoMode = () => {
+    const demoMode = true; // true;// !!process.env.DEMO_MODE && !isElectron;
+    if (isElectron && demoMode) {
+        throw "Demo mode not allowed with electron";
+    }
+    return demoMode;
+};
+exports.isDemoMode = isDemoMode;
 //# sourceMappingURL=electronConfig.js.map

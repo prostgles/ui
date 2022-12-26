@@ -153,7 +153,9 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
         // console.log( await db.users.find())
         throw "something went wrong: " + JSON.stringify({ username, password });
       }
-      if(u && u.status !== "active") throw "inactive";
+      if(u && u.status !== "active") {
+        throw "inactive";
+      }
 
       if(u["2fa"]?.enabled){
         if(totp_recovery_code && typeof totp_recovery_code === "string"){
@@ -164,7 +166,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
         } else if(totp_token && typeof totp_token === "string"){
 
           if(!authenticator.verify({ secret: u["2fa"].secret, token: totp_token })){
-            throw "Invalid token"
+            throw "Invalid token";
           }
         } else {
           throw "Token missing";
@@ -173,8 +175,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
 
       await onSuccess();
 
-      let activeSession = await db.sessions.findOne({ user_id: u.id, active: true });
-      
+      const activeSession = await getActiveSession(db, { user_id: u.id });
       if(!activeSession){
         const globalSettings = await db.global_settings.findOne();
         const DAY = 24 * 60 * 60 * 1000;
@@ -183,6 +184,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       }
       await db.sessions.update({ id: activeSession.id }, { last_used: new Date() });
       return parseAsBasicSession(activeSession);
+
     },
 
     logout: async (sid, db, _db: DB) => {

@@ -1930,6 +1930,9 @@ button.toggle.toggled,
   box-shadow: inset 0 0 0 3px rgb(0 183 255 / 15%);
 }
 
+button {
+  outline: none;
+}
 
 .focusable:focus,
 input.input:focus,
@@ -1937,15 +1940,12 @@ input.input:focus,
 button:not(.toggle, .select-button, .btn-color-danger):focus,
 .input-focus:focus,
 a.btn:focus,
-/* input.custom-input:focus, */
 .focus-border:focus-within {
   -webkit-appearance: none !important;
   border: 1px solid rgb(0, 183, 255);
   box-shadow: 0 0 0 1px rgb(0, 183, 255);
   outline: none;
-  /* -webkit-box-shadow: 0 0 0 3px rgba(0, 183, 255, 0.151);
-  box-shadow: 0 0 0 3px rgba(0, 183, 255, 0.151); */
-} 
+}  
 
 input::placeholder {
   text-align: left; 
@@ -1958,16 +1958,6 @@ button.btn-color-danger:focus {
   outline: none;
 }
 
-/* .focusable:focus,
-input.input:focus,
-.button:not(.toggle, .select-button):focus,
-button:not(.toggle, .select-button):focus {
-  border-width: 1px;
-  border-style: solid;
-  border: 1px solid rgb(0, 183, 255) !important;
-  outline: none;
-  box-shadow: 0 0 0 3px rgb(0 183 255 / 15%);
-} */
 
 button.toggle:focus {
   outline: 0;

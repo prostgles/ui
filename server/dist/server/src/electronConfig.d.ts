@@ -30,6 +30,6 @@ export declare const start: (sStorage: SafeStorage, args: {
     onSidWasSet: () => void;
     rootDir: string;
 }, onReady: OnServerReadyCallback) => Promise<void>;
-export declare const DEMO_MODE = true;
+export declare const isDemoMode: () => boolean;
 export {};
 //# sourceMappingURL=electronConfig.d.ts.map

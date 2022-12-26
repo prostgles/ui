@@ -14,7 +14,7 @@ import { DB } from "prostgles-server/dist/Prostgles";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { Auth, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
 import { makeSession, sidKeyName, SUser, YEAR } from "./authConfig";
-import { getElectronConfig, DEMO_MODE } from "./electronConfig";
+import { getElectronConfig, isDemoMode } from "./electronConfig";
 
 
 export type WithOrigin = {
@@ -158,7 +158,7 @@ export class ConnectionChecker {
       }
 
 
-      if(DEMO_MODE){
+      if(isDemoMode()){
 
         /** If test mode and no sid then create a random account and redirect to magic login link */
         if(!sid && this.db && this._db && !req.originalUrl.startsWith("/magic-link/")){

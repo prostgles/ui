@@ -7,7 +7,7 @@ import { publishMethods } from "./publishMethods";
 import { ChildProcessWithoutNullStreams, execSync } from "child_process";
 import { ConnectionManager } from "./ConnectionManager";
 import { getAuth } from "./authConfig";
-import { DBSConnectionInfo, getElectronConfig, OnServerReadyCallback, getRootDir, actualRootDir, DEMO_MODE } from "./electronConfig";
+import { DBSConnectionInfo, getElectronConfig, OnServerReadyCallback, getRootDir, actualRootDir, isDemoMode } from "./electronConfig";
 
 
 export const API_PATH = "/api";
@@ -322,7 +322,7 @@ const insertStateDatabase = async (db: DBS, _db: DB, con: typeof DBS_CONNECTION_
           name: SAMPLE_DB_LABEL,
         }, null, db);
 
-        if(DEMO_MODE){
+        if(isDemoMode()){
           if(!con) {
             throw "Sample connection not created";
           }
@@ -449,7 +449,7 @@ const getInitState = (): ProstglesInitState  => {
     ..._initState,
     canTryStartProstgles: !eConfig?.isElectron || eConfig.hasCredentials(),
     canDumpAndRestore: installedPrograms,
-    isDemoMode: DEMO_MODE,
+    isDemoMode: isDemoMode(),
   }
 };
 

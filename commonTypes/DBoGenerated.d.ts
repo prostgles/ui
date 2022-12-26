@@ -447,7 +447,8 @@ export type DBSchemaGenerated = {
         renderMode?: 'table' | 'JSON';
         minimap?: {  enabled: boolean; };
         acceptSuggestionOnEnter?: 'on' | 'smart' | 'off';
-        expandSuggestionDocs?: boolean; 
+        expandSuggestionDocs?: boolean;
+        maxCharsPerCell?: number; 
       };
       table_name?: null | string;
       table_oid?: null | number;

@@ -489,6 +489,11 @@ exports.tableConfig = {
                         description: "Toggle suggestions documentation tab. Requires page refresh. Enabled by default",
                         type: "boolean"
                     },
+                    "maxCharsPerCell": {
+                        type: "integer",
+                        optional: true,
+                        description: "Defaults to 1000. Maximum number of characters to display for each cell. Useful in improving performance",
+                    }
                 } },
             columns: `JSONB NOT NULL DEFAULT '[]'::jsonb`,
             nested_tables: `JSONB`,

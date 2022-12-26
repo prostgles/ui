@@ -121,8 +121,9 @@ const getAuth = (app) => {
                 // console.log( await db.users.find())
                 throw "something went wrong: " + JSON.stringify({ username, password });
             }
-            if (u && u.status !== "active")
+            if (u && u.status !== "active") {
                 throw "inactive";
+            }
             if (u["2fa"]?.enabled) {
                 if (totp_recovery_code && typeof totp_recovery_code === "string") {
                     const areMatching = await _db.any("SELECT * FROM users WHERE id = ${id} AND \"2fa\"->>'recoveryCode' = crypt(${code}, id::text) ", { id: u.id, code: totp_recovery_code.trim() });
@@ -140,7 +141,7 @@ const getAuth = (app) => {
                 }
             }
             await onSuccess();
-            let activeSession = await db.sessions.findOne({ user_id: u.id, active: true });
+            const activeSession = await getActiveSession(db, { user_id: u.id });
             if (!activeSession) {
                 const globalSettings = await db.global_settings.findOne();
                 const DAY = 24 * 60 * 60 * 1000;
