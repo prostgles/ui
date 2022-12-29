@@ -1935,6 +1935,7 @@ button {
 }
 
 .focusable:focus,
+.focusable:focus-within,
 input.input:focus,
 .button:not(.toggle, .select-button, .btn-color-danger):focus,
 button:not(.toggle, .select-button, .btn-color-danger):focus,

@@ -199,7 +199,9 @@ const publishMethods = async (params) => {
                 throw "db missing";
             /** Enable file storage */
             if (tableConfig) {
-                (0, exports.checkIf)(tableConfig, "referencedTables", "object");
+                if (typeof tableConfig?.referencedTables !== "undefined") {
+                    (0, exports.checkIf)(tableConfig, "referencedTables", "object");
+                }
                 if (tableConfig.referencedTables && Object.keys(tableConfig).length === 1) {
                     if (!c.table_config)
                         throw "Must enable file storage first";
