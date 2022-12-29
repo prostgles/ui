@@ -195,7 +195,9 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
 
       /** Enable file storage */
       if(tableConfig){
-        checkIf(tableConfig, "referencedTables", "object");
+        if(typeof tableConfig?.referencedTables !== "undefined") {
+          checkIf(tableConfig, "referencedTables", "object");
+        }
         if(tableConfig.referencedTables && Object.keys(tableConfig).length === 1){
           if(!c.table_config) throw "Must enable file storage first";
           await dbs.connections.update({ id: connId }, { table_config: { ...c.table_config, ...tableConfig } });
