@@ -450,7 +450,8 @@ exports.tableConfig = {
             sort: `JSONB`,
             filter: `JSONB NOT NULL DEFAULT '[]'::jsonb`,
             options: `JSONB NOT NULL DEFAULT '{}'::jsonb`,
-            sql_options: { defaultValue: { executeOptions: "block", errorMessageDisplay: "both", tabSize: 2 }, jsonbSchema: {
+            sql_options: { defaultValue: { executeOptions: "block", errorMessageDisplay: "both", tabSize: 2 },
+                jsonbSchema: {
                     "executeOptions": {
                         optional: true,
                         description: "Behaviour of execute (ALT + E). Defaults to 'block' \nfull = run entire sql   \nblock = run code block where the cursor is",
@@ -494,7 +495,8 @@ exports.tableConfig = {
                         optional: true,
                         description: "Defaults to 1000. Maximum number of characters to display for each cell. Useful in improving performance",
                     }
-                } },
+                }
+            },
             columns: `JSONB NOT NULL DEFAULT '[]'::jsonb`,
             nested_tables: `JSONB`,
             created: `TIMESTAMP DEFAULT NOW()`,

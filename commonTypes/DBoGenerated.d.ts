@@ -304,6 +304,7 @@ export type DBSchemaGenerated = {
       id?: string;
       magic_link?: null | string;
       magic_link_used?: null | Date;
+      rux?: null | string;
       user_id: string;
     };
   };

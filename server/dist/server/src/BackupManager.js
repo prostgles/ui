@@ -142,7 +142,7 @@ class BackupManager {
                     shouldDump = true;
                 }
                 if (shouldDump) {
-                    await this.pgDump(con.id, null, { ...bkpConf.dump_options, initiator: AUTO_INITIATOR });
+                    await this.pgDump(con.id, null, { options: { ...bkpConf.dump_options }, destination: bkpConf.cloudConfig ? "Cloud" : "Local", credentialID: bkpConf.cloudConfig?.credential_id, initiator: AUTO_INITIATOR });
                     if (bkpConf.keepLast && bkpConf.keepLast > 0) {
                         const toKeepIds = (await this.dbs.backups.find(bkpFilter, { select: { id: 1 }, orderBy: { created: -1 }, limit: bkpConf.keepLast })).map(c => c.id);
                         await this.dbs.backups.delete({ "id.$nin": toKeepIds, ...bkpFilter });
@@ -211,7 +211,7 @@ class BackupManager {
         const result = (await db?.prgl?.db?.sql?.("SELECT pg_database_size(current_database())  ", {}, { returnType: "value" }));
         return Number.isFinite(+result) ? result : 0;
     };
-    pgDump = async (conId, credId, o) => {
+    pgDump = async (conId, credId, { options: o, destination, credentialID, initiator = "manual_backup" }) => {
         const con = await this.dbs.connections.findOne({ id: conId });
         if (!con)
             throw new Error("Could not find the connection");
@@ -269,7 +269,6 @@ class BackupManager {
             ])
         };
         try {
-            const { initiator = "manual_backup" } = o;
             const content_type = (dumpAll || o.format === "p") ? "text/sql" : "application/gzip";
             const backup = await this.dbs.backups.insert({
                 created: new Date(),
@@ -280,7 +279,7 @@ class BackupManager {
                 destination: credId ? "Cloud" : "Local",
                 dump_command: envToStr(ENV_VARS) + dumpCommand.command + " " + dumpCommand.opts.join(" "),
                 status: { loading: { loaded: 0, total: 0 } },
-                options: o,
+                options: (0, PubSubManager_1.omitKeys)(o, ["credentialID"]),
                 content_type,
             }, { returning: "*" });
             const bkpForId = await this.dbs.backups.findOne({ id: backup.id }, { select: { created: "$datetime_" } });
@@ -393,6 +392,9 @@ class BackupManager {
         }
         const isWin = process.platform === "win32";
         const byBassStreamDueToWindowsUnrecognisedBlockTypeError = !!(isWin && bkp.local_filepath);
+        if (byBassStreamDueToWindowsUnrecognisedBlockTypeError && !bkp.local_filepath) {
+            throw "Cannot restore from cloud on Windows through the Desktop version";
+        }
         try {
             const SSL_ENV_VARS = getSSLEnvVars(con, this.connMgr);
             const ConnectionEnvVars = getConnectionEnvVars(con);

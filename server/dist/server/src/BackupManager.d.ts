@@ -6,6 +6,7 @@ import child from 'child_process';
 import internal, { PassThrough, Readable } from "stream";
 import FileManager from "prostgles-server/dist/FileManager";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import { PGDumpParams } from "../../commonTypes/utils";
 export declare const BACKUP_FOLDERNAME = "prostgles_backups";
 export declare const BKP_PREFFIX: string;
 export type Backups = Required<DBSchemaGenerated["backups"]>["columns"];
@@ -71,6 +72,7 @@ export default class BackupManager {
         restore_command?: string | null | undefined;
         restore_end?: Date | null | undefined;
         restore_logs?: string | null | undefined;
+        /** Delete stale streams */
         restore_options?: {
             command: "pg_restore" | "psql";
             format: "p" | "c" | "t";
@@ -118,7 +120,7 @@ export default class BackupManager {
     destroy(): Promise<void>;
     private checkIfEnoughSpace;
     private getDBSizeInBytes;
-    pgDump: (conId: string, credId: number | null, o: DumpOptsServer) => Promise<string | undefined>;
+    pgDump: (conId: string, credId: number | null, { options: o, destination, credentialID, initiator }: PGDumpParams) => Promise<string | undefined>;
     pgRestore: (arg1: {
         bkpId: string;
         connId?: string;

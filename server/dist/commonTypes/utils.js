@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAge = exports.YEAR = exports.MONTH = exports.DAY = exports.HOUR = exports.MINUTE = exports.SECOND = void 0;
+exports.DESTINATIONS = exports.getAge = exports.YEAR = exports.MONTH = exports.DAY = exports.HOUR = exports.MINUTE = exports.SECOND = void 0;
 exports.SECOND = 1000;
 exports.MINUTE = exports.SECOND * 60;
 exports.HOUR = exports.MINUTE * 60;
@@ -30,4 +30,8 @@ const getAge = (date1, date2, returnAll) => {
     }
 };
 exports.getAge = getAge;
+exports.DESTINATIONS = [
+    { key: "Local", subLabel: "Saved locally (server in address bar)" },
+    { key: "Cloud", subLabel: "Saved to Amazon S3" }
+];
 //# sourceMappingURL=utils.js.map
