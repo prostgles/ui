@@ -1,3 +1,4 @@
+import { DBSSchema } from "./publishUtils";
 
 export const SECOND = 1000;
 export const MINUTE = SECOND * 60;
@@ -42,3 +43,17 @@ export const getAge = <ReturnALL extends boolean = false>(date1: number, date2: 
     return { minutes, seconds } as any;
   }
 }
+
+export const DESTINATIONS = [
+  { key: "Local", subLabel: "Saved locally (server in address bar)" },
+  { key: "Cloud", subLabel: "Saved to Amazon S3" }
+] as const;
+
+export type DumpOpts = DBSSchema["backups"]["options"]; 
+
+export type PGDumpParams = { 
+  options: DumpOpts; 
+  credentialID?: DBSSchema["backups"]["credential_id"];
+  destination: typeof DESTINATIONS[number]["key"];
+  initiator?: string; 
+};

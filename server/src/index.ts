@@ -252,7 +252,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO): Promise<ProstglesStart
       joins: "inferred",
       onReady: async (db, _db: DB) => {
         // db.backups.update({}, {restore_options: { "clean": true }});
-
+         
 
         await insertStateDatabase(db, _db, con);
 

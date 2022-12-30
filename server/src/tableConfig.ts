@@ -487,51 +487,53 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       filter          : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
       options         : `JSONB NOT NULL DEFAULT '{}'::jsonb` ,
       
-      sql_options     : { defaultValue: { executeOptions: "block", errorMessageDisplay: "both", tabSize: 2  }, jsonbSchema: {
-        "executeOptions": {
-          optional: true, 
-          description: "Behaviour of execute (ALT + E). Defaults to 'block' \nfull = run entire sql   \nblock = run code block where the cursor is",
-          enum: ["full", "block"]
-        },
-        "errorMessageDisplay": {
-          optional: true, 
-          description: "Error display locations. Defaults to 'both' \ntooltip = show within tooltip only   \nbottom = show in bottom control bar only   \nboth = show in both locations",
-          enum: ["tooltip", "bottom", "both"]
-        },
-        "tabSize": {
-          type: "integer",
-          optional: true
-        },
-        "lineNumbers": {
-          optional: true, 
-          enum: ["on", "off"]
-        },
-        "renderMode": {
-          optional: true, 
-          description: "Show query results in a table or a JSON",
-          enum: ["table", "JSON"]
-        },
-        "minimap": { 
-          optional: true, 
-          description: "Shows a vertical code minimap to the right",
-          type: { enabled: { type: "boolean" } } 
-        },
-        "acceptSuggestionOnEnter": {
-          description: "Insert suggestions on Enter. Tab is the default key",
-          optional: true, 
-          enum: ["on", "smart", "off"]
-        },
-        "expandSuggestionDocs": {
-          optional: true, 
-          description: "Toggle suggestions documentation tab. Requires page refresh. Enabled by default",
-          type: "boolean"
-        },
-        "maxCharsPerCell": { 
-          type: "integer", 
-          optional: true, 
-          description: "Defaults to 1000. Maximum number of characters to display for each cell. Useful in improving performance", 
+      sql_options     : { defaultValue: { executeOptions: "block", errorMessageDisplay: "both", tabSize: 2  }, 
+        jsonbSchema: {
+          "executeOptions": {
+            optional: true, 
+            description: "Behaviour of execute (ALT + E). Defaults to 'block' \nfull = run entire sql   \nblock = run code block where the cursor is",
+            enum: ["full", "block"]
+          },
+          "errorMessageDisplay": {
+            optional: true, 
+            description: "Error display locations. Defaults to 'both' \ntooltip = show within tooltip only   \nbottom = show in bottom control bar only   \nboth = show in both locations",
+            enum: ["tooltip", "bottom", "both"]
+          },
+          "tabSize": {
+            type: "integer",
+            optional: true
+          },
+          "lineNumbers": {
+            optional: true, 
+            enum: ["on", "off"]
+          },
+          "renderMode": {
+            optional: true, 
+            description: "Show query results in a table or a JSON",
+            enum: ["table", "JSON"]
+          },
+          "minimap": { 
+            optional: true, 
+            description: "Shows a vertical code minimap to the right",
+            type: { enabled: { type: "boolean" } } 
+          },
+          "acceptSuggestionOnEnter": {
+            description: "Insert suggestions on Enter. Tab is the default key",
+            optional: true, 
+            enum: ["on", "smart", "off"]
+          },
+          "expandSuggestionDocs": {
+            optional: true, 
+            description: "Toggle suggestions documentation tab. Requires page refresh. Enabled by default",
+            type: "boolean"
+          },
+          "maxCharsPerCell": { 
+            type: "integer", 
+            optional: true, 
+            description: "Defaults to 1000. Maximum number of characters to display for each cell. Useful in improving performance", 
+          }
         }
-      }} ,
+      } ,
       columns         : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
       nested_tables   : `JSONB` ,
       created         : `TIMESTAMP DEFAULT NOW()` ,

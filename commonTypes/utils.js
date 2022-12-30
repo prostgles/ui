@@ -26,3 +26,7 @@ export const getAge = (date1, date2, returnAll) => {
         return { minutes, seconds };
     }
 };
+export const DESTINATIONS = [
+    { key: "Local", subLabel: "Saved locally (server in address bar)" },
+    { key: "Cloud", subLabel: "Saved to Amazon S3" }
+];

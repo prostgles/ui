@@ -7,7 +7,7 @@ import { asName } from "prostgles-types"
 import FileManager from "prostgles-server/dist/FileManager";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { getKeys } from "prostgles-types";
-import { getAge } from "../../commonTypes/utils";
+import { PGDumpParams, getAge } from "../../commonTypes/utils";
 
 
 export const BACKUP_FOLDERNAME = "prostgles_backups";
@@ -163,7 +163,7 @@ export default class BackupManager {
         }
 
         if(shouldDump){
-          await this.pgDump(con.id, null, { ...bkpConf.dump_options!, initiator: AUTO_INITIATOR });
+          await this.pgDump(con.id, null, { options: { ...bkpConf.dump_options! }, destination: bkpConf.cloudConfig? "Cloud" : "Local", credentialID: bkpConf.cloudConfig?.credential_id, initiator: AUTO_INITIATOR });
           if(bkpConf.keepLast && bkpConf.keepLast > 0){
             const toKeepIds: string[] = (await this.dbs.backups.find(bkpFilter, { select: { id: 1 }, orderBy: { created: -1 },  limit: bkpConf.keepLast  }) ).map(c => c.id)
             await this.dbs.backups.delete({ "id.$nin": toKeepIds, ...bkpFilter })
@@ -238,7 +238,7 @@ export default class BackupManager {
     return Number.isFinite(+result)? result : 0;
   }
 
-  pgDump = async (conId: string, credId: number | null, o: DumpOptsServer) => {
+  pgDump = async (conId: string, credId: number | null, { options: o, destination, credentialID, initiator = "manual_backup" }: PGDumpParams) => {
 
     const con = await this.dbs.connections.findOne({ id: conId });
     if(!con) throw new Error("Could not find the connection");
@@ -300,8 +300,7 @@ export default class BackupManager {
         [true, "-v"]
       ])
     }
-    try {
-      const { initiator = "manual_backup" } = o;
+    try { 
       const content_type = (dumpAll || o.format === "p")? "text/sql" : "application/gzip";
       const backup = await this.dbs.backups.insert({
         created: new Date(), 
@@ -311,8 +310,8 @@ export default class BackupManager {
         credential_id: credId ?? null, 
         destination: credId? "Cloud" : "Local", 
         dump_command: envToStr(ENV_VARS) + dumpCommand.command + " " + dumpCommand.opts.join(" "), 
-        status: { loading: {loaded: 0, total: 0} },
-        options: o,
+        status: { loading: {loaded: 0, total: 0} }, 
+        options: omitKeys(o as any, ["credentialID"]) as DumpOpts,
         content_type,
       },
       { returning: "*" });
@@ -439,6 +438,9 @@ export default class BackupManager {
 
     const isWin = process.platform === "win32";
     const byBassStreamDueToWindowsUnrecognisedBlockTypeError = !!(isWin && bkp.local_filepath);
+    if(byBassStreamDueToWindowsUnrecognisedBlockTypeError && !bkp.local_filepath){
+      throw "Cannot restore from cloud on Windows through the Desktop version";
+    }
 
     try {
       const SSL_ENV_VARS = getSSLEnvVars(con, this.connMgr);
