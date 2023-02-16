@@ -5,7 +5,7 @@ import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import fs from "fs";
 import path from 'path';
 import * as crypto from "crypto";
-
+import ts from "typescript";
 
 import { authenticator } from '@otplib/preset-default';
 
@@ -15,7 +15,7 @@ export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 import { isSuperUser } from "prostgles-server/dist/Prostgles";
 import { ConnectionTableConfig, DB_TRANSACTION_KEY } from "./ConnectionManager";
 import { DBHandlerServer } from "prostgles-server/dist/DboBuilder";
-import { pickKeys } from "prostgles-server/dist/PubSubManager";
+import { pickKeys } from "prostgles-types";
 import { DBSSchema, isObject } from "../../commonTypes/publishUtils";
 
 
@@ -43,13 +43,26 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     return connMgr.startConnection(conId, dbs, _dbs, socket, true);
   };
 
-  const adminMethods = {
-
+  const adminMethods: ReturnType<PublishMethods> = {
+    testing: {
+      input: {
+        a: { type: "number" },
+      },
+      run: (args) => { 
+        
+        return ts.transpile("const f = async () => { returnd 22; }", { 
+          noEmit: false, 
+          target: 9,
+          lib: ["ES2022"],
+          moduleResolution: 2,
+        }, "input.ts");
+      }
+    },
     makeFakeData: async (connId: string) => {
       const c = connMgr.getConnection(connId);
       const con = await dbs.connections.findOne({ id: connId });
       if(!c || !con) throw "bad connid";
-      return demoDataSetup(c.prgl?._db!, con);
+      return demoDataSetup(c.prgl?._db!, "sample");
     },
     disablePasswordless: async (newAdmin: { username: string; password: string }) => {
 

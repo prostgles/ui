@@ -21,11 +21,11 @@ const SAMPLE_DB_NAMES = [
     "sales",
     "sample",
 ];
-const demoDataSetup = async (_db, con) => {
+const demoDataSetup = async (_db, dbName) => {
     const makeObj = (o) => {
         return Object.keys(o).filter(k => typeof o[k] === "function").reduce((a, k) => ({ ...a, [k]: o[k]() }), {});
     };
-    const dbName = con.db_name;
+    // const dbName = con.db_name!;
     // const { dbname } = await _db.oneOrNone("SELECT current_database() as dbname");
     if (!SAMPLE_DB_NAMES.includes(dbName)) {
         throw "Invalid db name. Expecting one of: " + SAMPLE_DB_NAMES + " \n But got: " + dbName;
@@ -36,48 +36,27 @@ const demoDataSetup = async (_db, con) => {
     if (!sqlFile) {
         throw `SQL File from "${sqlFilePath}" not found`;
     }
+    await _db.any(`
+    DROP TABLE IF EXISTS fake_data; 
+    CREATE TABLE IF NOT EXISTS fake_data (id SERIAL PRIMARY KEY, data JSONB);
+  `);
+    const fakeData = Array(2000).fill(null).map(() => ({
+        data: {
+            name: makeObj(faker.name),
+            addres: makeObj(faker.address),
+            commerce: makeObj(faker.commerce),
+            company: makeObj(faker.company),
+            finance: makeObj(faker.finance),
+            image: makeObj(faker.image),
+            vehicle: makeObj(faker.vehicle),
+            internet: makeObj(faker.internet),
+            lorem: makeObj(faker.lorem),
+            phone: makeObj(faker.phone),
+        }
+    }));
+    const insert = DboBuilder_1.pgp.helpers.insert(fakeData, new DboBuilder_1.pgp.helpers.ColumnSet(['data',], { table: 'fake_data' }));
+    await _db.any(insert);
     await _db.multi(sqlFile);
-    await _db.any("CREATE TABLE IF NOT EXISTS fake_data( data JSONB )");
-    const { count } = await _db.oneOrNone("SELECT COUNT(*) as count FROM fake_data");
-    if (+count < 2000) {
-        const fakeData = Array(2000).fill(null).map(() => ({
-            data: {
-                name: makeObj(faker.name),
-                addres: makeObj(faker.address),
-                commerce: makeObj(faker.commerce),
-                company: makeObj(faker.company),
-                finance: makeObj(faker.finance),
-                image: makeObj(faker.image),
-                vehicle: makeObj(faker.vehicle),
-                internet: makeObj(faker.internet),
-                lorem: makeObj(faker.lorem),
-                phone: makeObj(faker.phone),
-            }
-        }));
-        const insert = DboBuilder_1.pgp.helpers.insert(fakeData, new DboBuilder_1.pgp.helpers.ColumnSet(['data',], { table: 'fake_data' }));
-        // await _dbs.any("INSERT INTO fake_data(data) VALUES($1:csv)", [fakeData])
-        await _db.any(insert);
-        await _db.any(`
-      INSERT INTO users  (
-        first_name, 
-        last_name, 
-        job_title, 
-        email, 
-        address_line1, 
-        city, 
-        country
-      )
-      SELECT 
-        data->'name'->>'firstName' as firstName
-      , data->'name'->>'lastName' as lastName
-      , data->'name'->>'jobTitle' as jobTitle
-      , data->'internet'->>'email' as email
-      , data->'addres'->>'streetAddress' as streetAddress
-      , data->'addres'->>'city' as city
-      , data->'addres'->>'country' as country
-      FROM fake_data
-    `);
-    }
 };
 exports.demoDataSetup = demoDataSetup;
 /**

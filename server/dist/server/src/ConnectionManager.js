@@ -31,13 +31,14 @@ const index_1 = require("./index");
 const socket_io_1 = require("socket.io");
 const publishUtils_1 = require("../../commonTypes/publishUtils");
 const prostgles_server_1 = __importDefault(require("prostgles-server"));
-const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
 const path_1 = __importDefault(require("path"));
+const prostgles_types_1 = require("prostgles-types");
 const authConfig_1 = require("./authConfig");
 const fs = __importStar(require("fs"));
 const testDBConnection_1 = require("./connectionUtils/testDBConnection");
 const getConnectionDetails_1 = require("./connectionUtils/getConnectionDetails");
 const electronConfig_1 = require("./electronConfig");
+const typescript_1 = __importStar(require("typescript"));
 exports.DB_TRANSACTION_KEY = "dbTransactionProstgles";
 const getACRule = async (dbs, user, connection_id) => {
     if (user) {
@@ -273,7 +274,7 @@ class ConnectionManager {
                                             return {};
                                         return {
                                             ...a,
-                                            [v.tableName]: (0, publishUtils_1.parseTableRules)((0, PubSubManager_1.omitKeys)(v, ["tableName"]), dbo[v.tableName].is_view, table.columns.map(c => c.name), { user: user })
+                                            [v.tableName]: (0, publishUtils_1.parseTableRules)((0, prostgles_types_1.omitKeys)(v, ["tableName"]), dbo[v.tableName].is_view, table.columns.map((c) => c.name), { user: user })
                                         };
                                     }, {});
                                 }
@@ -283,6 +284,49 @@ class ConnectionManager {
                             }
                         }
                         return undefined;
+                    },
+                    publishMethods: async ({ db, dbo, socket, tables, user }) => {
+                        let result = {};
+                        /** Admin has access to all methods */
+                        let allowedMethods = [];
+                        if (user?.type === "admin") {
+                            const acRules = await dbs.access_control.find({ connection_id: con.id });
+                            acRules.map(r => {
+                                r.rule.methods?.map(m => {
+                                    allowedMethods.push(m);
+                                });
+                            });
+                        }
+                        else {
+                            const ac = await (0, exports.getACRule)(dbs, user, con.id);
+                            if (ac?.rule.methods?.length) {
+                                allowedMethods = ac.rule.methods;
+                            }
+                        }
+                        allowedMethods.forEach(m => {
+                            result[m.name] = {
+                                input: m.args.reduce((a, v) => ({ ...a, [v.name]: v }), {}),
+                                outputTable: m.outputTable,
+                                run: async (args) => {
+                                    const sourceCode = typescript_1.default.transpile(m.func, {
+                                        noEmit: false,
+                                        target: typescript_1.ScriptTarget.ES2022,
+                                        lib: ["ES2022"],
+                                        module: typescript_1.ModuleKind.CommonJS,
+                                        moduleResolution: typescript_1.ModuleResolutionKind.NodeJs,
+                                    }, "input.ts");
+                                    try {
+                                        eval(sourceCode);
+                                        //@ts-ignore
+                                        return exports.run(args, { db, dbo, socket, tables, user });
+                                    }
+                                    catch (err) {
+                                        return Promise.reject(err);
+                                    }
+                                }
+                            };
+                        });
+                        return result;
                     },
                     publishRawSQL: async ({ user }) => {
                         if (user?.type === "admin") {

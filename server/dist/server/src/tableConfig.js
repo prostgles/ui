@@ -273,7 +273,12 @@ exports.tableConfig = {
                                 type: { enum: ["Custom"], description: "Fine grained access to specific tables" },
                                 customTables: { type: "any[]" },
                             }
-                        ] }
+                        ] },
+                    methods: {
+                        description: "Custom server-side functions",
+                        optional: true,
+                        type: "any[]",
+                    }
                 } },
             created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
         }
@@ -435,8 +440,9 @@ exports.tableConfig = {
             id: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
             user_id: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,
             workspace_id: `UUID NOT NULL REFERENCES workspaces(id)  ON DELETE CASCADE`,
-            type: `TEXT CHECK(type IN ('map', 'sql', 'table', 'timechart', 'card'))`,
+            type: `TEXT CHECK(type IN ('map', 'sql', 'table', 'timechart', 'card', 'method'))`,
             table_name: `TEXT`,
+            method_name: `TEXT`,
             table_oid: `INTEGER`,
             sql: `TEXT NOT NULL DEFAULT ''`,
             selected_sql: `TEXT NOT NULL DEFAULT ''`,

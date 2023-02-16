@@ -20,9 +20,9 @@ exports.FTS_FILTER_TYPES = [
 exports.TEXT_FILTER_TYPES = [
     { key: "$ilike", label: "ILIKE" },
     { key: "$like", label: "LIKE" },
+    { key: "$nilike", label: "NOT ILIKE" },
+    { key: "$nlike", label: "NOT LIKE" },
     { key: "$term_highlight", label: "CONTAINS" },
-    // { key: "$ilikeNOT", label: "NOT ILIKE"},
-    // { key: "$likeNOT", label: "NOT LIKE"},
     // { key: "$term_highlightNOT", label: "DOES NOT CONTAIN"},
 ];
 exports.NUMERIC_FILTER_TYPES = [
@@ -131,7 +131,8 @@ const getFinalFilter = (detailedFilter, context, opts) => {
     else if ((0, exports.isJoinedFilter)(detailedFilter)) {
         return {
             [detailedFilter.type]: {
-                [`${detailedFilter.path.join(".")}`]: getFilter(detailedFilter.filter)
+                path: detailedFilter.path,
+                filter: getFilter(detailedFilter.filter)
             }
         };
     }

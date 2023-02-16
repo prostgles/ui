@@ -4,14 +4,13 @@ import { restartProc, Connections, MEDIA_ROUTE_PREFIX, API_PATH, DBS } from "./i
 import { WithOrigin } from "./ConnectionChecker";
 import { Server }  from "socket.io";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
-import { CustomTableRules, DBSSchema, parseForcedFilter, parseTableRules, TableRules } from "../../commonTypes/publishUtils";
-import prostgles from "prostgles-server";
-import { omitKeys, pickKeys } from "prostgles-server/dist/PubSubManager";
+import { CustomTableRules, DBSSchema, MethodClientDef, parseForcedFilter, parseTableRules, TableRules } from "../../commonTypes/publishUtils";
+import prostgles from "prostgles-server"; 
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { DB, FileTableConfig } from "prostgles-server/dist/Prostgles";
 import path from "path";
-import { SubscriptionHandler } from "prostgles-types";
-import { getAuth } from "./authConfig"
+import { SubscriptionHandler, omitKeys, pickKeys} from "prostgles-types";
+import { getAuth, SUser } from "./authConfig"
 import WebSocket from 'ws';
 import * as fs from "fs";
 import { S3Config } from "prostgles-server/dist/FileManager";
@@ -19,6 +18,8 @@ import { Express } from "express";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { getConnectionDetails } from "./connectionUtils/getConnectionDetails";
 import { getRootDir } from "./electronConfig";
+import { MethodFullDef } from "prostgles-types";
+import ts, { ModuleKind, ModuleResolutionKind, ScriptTarget } from "typescript";
 
 export type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
 
@@ -26,13 +27,15 @@ export type ConnectionTableConfig = Pick<FileTableConfig, "referencedTables"> & 
 
 export const DB_TRANSACTION_KEY = "dbTransactionProstgles" as const;
 
-export const getACRule = async (dbs: DBOFullyTyped<DBSchemaGenerated>, user: DBSSchema["users"], connection_id: string): Promise<DBSSchema["access_control"] | undefined>  => {
+type User = DBSSchema["users"];
+
+export const getACRule = async (dbs: DBOFullyTyped<DBSchemaGenerated>, user: User, connection_id: string): Promise<DBSSchema["access_control"] | undefined>  => {
   if(user){
     return await dbs.access_control.findOne({ connection_id, $existsJoined: { access_control_user_types: { user_type: user.type } } }) //  user_groups: { $contains: [user.type] }
   }
   return undefined
 }
-export const getACRules = async (dbs: DBOFullyTyped<DBSchemaGenerated>, user: Pick<DBSSchema["users"], "type">): Promise<DBSSchema["access_control"][]>  => {
+export const getACRules = async (dbs: DBOFullyTyped<DBSchemaGenerated>, user: Pick<User, "type">): Promise<DBSSchema["access_control"][]>  => {
   if(user){
     return await dbs.access_control.find({ $existsJoined: { access_control_user_types: { user_type: user.type } } }) //  user_groups: { $contains: [user.type] }
   }
@@ -274,7 +277,7 @@ export class ConnectionManager {
               if(user.type === "admin") return "*";
               
               
-              const ac = await getACRule(dbs, user as any, con.id);
+              const ac = await getACRule(dbs, user, con.id);
               
               if(ac?.rule){
                 const { dbPermissions } = ac.rule;
@@ -299,12 +302,12 @@ export class ConnectionManager {
                   return dbPermissions.customTables
                     .filter((t: any) => dbo[t.tableName])
                     .reduce((a: any, v: CustomTableRules["customTables"][number]) => {
-                      const table = tables.find(({ name }) => name === v.tableName);
+                      const table = tables.find(({ name }) => name === v.tableName) as any;
                       if(!table) return {};
 
                       return { 
                         ...a, 
-                        [v.tableName]: parseTableRules(omitKeys(v, ["tableName"]), dbo[v.tableName].is_view, table.columns.map(c => c.name), { user: user as DBSSchema["users"] }) 
+                        [v.tableName]: parseTableRules(omitKeys(v, ["tableName"]), dbo[v.tableName].is_view, table.columns.map((c: any) => c.name), { user: user as DBSSchema["users"] }) 
                       }
                    } ,{})
                 } else {
@@ -313,6 +316,57 @@ export class ConnectionManager {
               }
             }
             return undefined
+          },
+
+          publishMethods: async ({ db, dbo, socket, tables, user }) => {
+            let result: Record<string, MethodFullDef> = {};
+
+            /** Admin has access to all methods */
+            let allowedMethods: MethodClientDef[] = []
+            if(user?.type === "admin"){
+              const acRules = await dbs.access_control.find({ connection_id: con.id });
+              acRules.map(r => {
+                r.rule.methods?.map(m => {
+                  allowedMethods.push(m);
+                })
+              })
+            } else {
+              const ac = await getACRule(dbs, user as any, con.id);
+              if(ac?.rule.methods?.length){
+                allowedMethods = ac.rule.methods;  
+              }
+            }
+
+            allowedMethods.forEach(m => {
+
+              result[m.name] = {
+                input: m.args.reduce((a, v) => ({ ...a, [v.name]: v }), {}),
+                outputTable: m.outputTable,
+                run: async (args) => { 
+
+                  const sourceCode = ts.transpile(m.func, { 
+                    noEmit: false, 
+                    target: ScriptTarget.ES2022,
+                    lib: ["ES2022"],
+                    module: ModuleKind.CommonJS,
+                    moduleResolution: ModuleResolutionKind.NodeJs,
+                  }, "input.ts");
+
+                  try {
+                    eval(sourceCode);
+
+                    //@ts-ignore
+                    return exports.run(args, { db, dbo, socket, tables, user });
+                  } catch(err: any){
+                    return Promise.reject(err);
+                  }
+                  
+                }
+              }
+            })
+
+
+            return result;
           },
           
           publishRawSQL: async ({ user }) => {

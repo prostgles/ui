@@ -6,6 +6,24 @@ export type CustomTableRules = {
         tableName: string;
     } & TableRules)[];
 };
+type ObjDef = {
+    type: "string" | "number" | "Date";
+    defaultValue?: string;
+    optional?: boolean;
+    references?: {
+        table: string;
+        column: string;
+    };
+};
+export type ArgDef = (ObjDef & {
+    name: string;
+});
+export type MethodClientDef = {
+    name: string;
+    func: string;
+    args: ArgDef[];
+    output: Omit<ArgDef, "references">[];
+};
 export type UserGroupRule = DBSSchema["access_control"]["rule"];
 export type ContextValue = {
     objectName: string;

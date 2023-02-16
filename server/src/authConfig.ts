@@ -4,7 +4,7 @@ import { Auth, BasicSession } from 'prostgles-server/dist/AuthHandler';
 import { MEDIA_ROUTE_PREFIX, PROSTGLES_STRICT_COOKIE, log, Users, API_PATH, getBackupManager, connectionChecker, DBS } from "./index";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import { omitKeys } from "prostgles-server/dist/PubSubManager";
+import { omitKeys } from "prostgles-types";
 import { DB } from "prostgles-server/dist/Prostgles";
 import { authenticator } from "otplib";
 import { Express } from "express"

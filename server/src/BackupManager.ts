@@ -28,7 +28,7 @@ import { SUser } from "./authConfig";
 import { getElectronConfig, getRootDir } from "./electronConfig";
 import { ConnectionManager } from "./ConnectionManager";
 import { getConnectionDetails } from "./connectionUtils/getConnectionDetails";
-import { omitKeys } from "prostgles-server/dist/PubSubManager";
+import { omitKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
 
 
 const HOUR = 3600 * 1000;
