@@ -39,6 +39,12 @@ export declare const TEXT_FILTER_TYPES: readonly [{
     readonly key: "$like";
     readonly label: "LIKE";
 }, {
+    readonly key: "$nilike";
+    readonly label: "NOT ILIKE";
+}, {
+    readonly key: "$nlike";
+    readonly label: "NOT LIKE";
+}, {
     readonly key: "$term_highlight";
     readonly label: "CONTAINS";
 }];

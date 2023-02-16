@@ -6,6 +6,36 @@ export type CustomTableRules = {
         tableName: string;
     } & TableRules)[];
 };
+type ObjDef = {
+    type: "string" | "number" | "Date";
+    defaultValue?: string;
+    optional?: boolean;
+    references?: {
+        table: string;
+        column: string;
+        /**
+         * If true then the argument will represent the entire row and
+         *  the specified column will only be used to display the chosen row
+         */
+        isFullRow?: boolean;
+        /**
+         * If true and isFullRow=true then a button will be shown
+         *  in the row edit card to display this action
+         */
+        showInRowCard?: {
+            actionLabel?: string;
+        };
+    };
+};
+export type ArgDef = (ObjDef & {
+    name: string;
+});
+export type MethodClientDef = {
+    name: string;
+    func: string;
+    args: ArgDef[];
+    outputTable?: string;
+};
 export type UserGroupRule = DBSSchema["access_control"]["rule"];
 export type ContextValue = {
     objectName: string;

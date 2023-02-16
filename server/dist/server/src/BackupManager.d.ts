@@ -72,7 +72,6 @@ export default class BackupManager {
         restore_command?: string | null | undefined;
         restore_end?: Date | null | undefined;
         restore_logs?: string | null | undefined;
-        /** Delete stale streams */
         restore_options?: {
             command: "pg_restore" | "psql";
             format: "p" | "c" | "t";

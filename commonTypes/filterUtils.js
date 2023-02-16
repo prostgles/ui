@@ -16,9 +16,9 @@ export const FTS_FILTER_TYPES = [
 export const TEXT_FILTER_TYPES = [
     { key: "$ilike", label: "ILIKE" },
     { key: "$like", label: "LIKE" },
+    { key: "$nilike", label: "NOT ILIKE" },
+    { key: "$nlike", label: "NOT LIKE" },
     { key: "$term_highlight", label: "CONTAINS" },
-    // { key: "$ilikeNOT", label: "NOT ILIKE"},
-    // { key: "$likeNOT", label: "NOT LIKE"},
     // { key: "$term_highlightNOT", label: "DOES NOT CONTAIN"},
 ];
 export const NUMERIC_FILTER_TYPES = [

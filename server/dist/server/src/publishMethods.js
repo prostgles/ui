@@ -31,10 +31,11 @@ const index_1 = require("./index");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const crypto = __importStar(require("crypto"));
+const typescript_1 = __importDefault(require("typescript"));
 const preset_default_1 = require("@otplib/preset-default");
 const Prostgles_1 = require("prostgles-server/dist/Prostgles");
 const ConnectionManager_1 = require("./ConnectionManager");
-const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
+const prostgles_types_1 = require("prostgles-types");
 const publishUtils_1 = require("../../commonTypes/publishUtils");
 const testDBConnection_1 = require("./connectionUtils/testDBConnection");
 const validateConnection_1 = require("./connectionUtils/validateConnection");
@@ -53,12 +54,25 @@ const publishMethods = async (params) => {
         return index_1.connMgr.startConnection(conId, dbs, _dbs, socket, true);
     };
     const adminMethods = {
+        testing: {
+            input: {
+                a: { type: "number" },
+            },
+            run: (args) => {
+                return typescript_1.default.transpile("const f = async () => { returnd 22; }", {
+                    noEmit: false,
+                    target: 9,
+                    lib: ["ES2022"],
+                    moduleResolution: 2,
+                }, "input.ts");
+            }
+        },
         makeFakeData: async (connId) => {
             const c = index_1.connMgr.getConnection(connId);
             const con = await dbs.connections.findOne({ id: connId });
             if (!c || !con)
                 throw "bad connid";
-            return (0, demoDataSetup_1.demoDataSetup)(c.prgl?._db, con);
+            return (0, demoDataSetup_1.demoDataSetup)(c.prgl?._db, "sample");
         },
         disablePasswordless: async (newAdmin) => {
             const noPwdAdmin = await (0, ConnectionChecker_1.ADMIN_ACCESS_WITHOUT_PASSWORD)(dbs);
@@ -218,7 +232,7 @@ const publishMethods = async (params) => {
                         }
                     }
                     const KEYS = ["fileTable", "storageType"];
-                    if (c.table_config && JSON.stringify((0, PubSubManager_1.pickKeys)(c.table_config, KEYS)) !== JSON.stringify((0, PubSubManager_1.pickKeys)(tableConfig, KEYS))) {
+                    if (c.table_config && JSON.stringify((0, prostgles_types_1.pickKeys)(c.table_config, KEYS)) !== JSON.stringify((0, prostgles_types_1.pickKeys)(tableConfig, KEYS))) {
                         throw "Cannot update " + KEYS.join("or");
                     }
                     await dbs.connections.update({ id: connId }, { table_config: tableConfig });

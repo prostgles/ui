@@ -17,7 +17,7 @@ const getConnectionUri = (c) => c.db_conn || `postgres://${c.db_user}:${c.db_pas
 const check_disk_space_1 = __importDefault(require("check-disk-space"));
 const electronConfig_1 = require("./electronConfig");
 const getConnectionDetails_1 = require("./connectionUtils/getConnectionDetails");
-const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
+const PubSubManager_1 = require("prostgles-server/dist/PubSubManager/PubSubManager");
 const HOUR = 3600 * 1000;
 class BackupManager {
     tempStreams = {};

@@ -22,7 +22,8 @@ export type DBSchemaGenerated = {
         dbPermissions: 
         | {  type: 'Run SQL'; allowSQL?: boolean; }
         | {  type: 'All views/tables'; allowAllTables:  ("select" | "insert" | "update" | "delete")[]; }
-        | {  type: 'Custom'; customTables: any[]; }; 
+        | {  type: 'Custom'; customTables: any[]; };
+        methods?: any[]; 
       };
     };
   };
@@ -433,6 +434,7 @@ export type DBSchemaGenerated = {
       last_updated: number;
       layout?: null | any;
       limit?: null | number;
+      method_name?: null | string;
       name?: null | string;
       nested_tables?: null | any;
       options?: null | any;

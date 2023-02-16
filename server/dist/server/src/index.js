@@ -58,7 +58,7 @@ const DBS_CONNECTION_INFO = {
     db_port: process.env.POSTGRES_PORT || exports.POSTGRES_PORT,
     db_ssl: process.env.POSTGRES_SSL || exports.POSTGRES_SSL,
 };
-const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
+const prostgles_types_1 = require("prostgles-types");
 const BackupManager_1 = __importDefault(require("./BackupManager"));
 let bkpManager;
 const getBackupManager = () => bkpManager;
@@ -231,7 +231,7 @@ const insertStateDatabase = async (db, _db, con) => {
                 if (!databases.includes(SAMPLE_DB_NAME)) {
                     await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
                 }
-                const stateCon = { ...(0, PubSubManager_1.omitKeys)(state_db, ["id"]) };
+                const stateCon = { ...(0, prostgles_types_1.omitKeys)(state_db, ["id"]) };
                 const validatedSampleDBConnection = (0, validateConnection_1.validateConnection)({
                     ...stateCon,
                     type: "Standard",
@@ -278,7 +278,7 @@ const setDBSRoutes = () => {
         throw "Electron sid missing";
     }
     app.post("/dbs", async (req, res) => {
-        const creds = (0, PubSubManager_1.pickKeys)(req.body, ["db_conn", "db_user", "db_pass", "db_host", "db_port", "db_name", "db_ssl", "type"]);
+        const creds = (0, prostgles_types_1.pickKeys)(req.body, ["db_conn", "db_user", "db_pass", "db_host", "db_port", "db_name", "db_ssl", "type"]);
         if (req.body.validate) {
             try {
                 const connection = (0, validateConnection_1.validateConnection)(creds);
@@ -395,7 +395,7 @@ const tryStartProstgles = async (con = DBS_CONNECTION_INFO) => {
             }
             const error = _initState.connectionError || _initState.initError;
             _initState.ok = !error;
-            const result = (0, PubSubManager_1.pickKeys)(_initState, ["ok", "connectionError", "initError"]);
+            const result = (0, prostgles_types_1.pickKeys)(_initState, ["ok", "connectionError", "initError"]);
             if (tries > 5) {
                 clearInterval(interval);
                 setDBSRoutes();
@@ -546,7 +546,7 @@ const upsertConnection = async (con, user_id, dbs) => {
             if (!(await dbs.connections.findOne({ id: con.id }))) {
                 throw "Connection not found: " + con.id;
             }
-            res = await dbs.connections.update({ id: con.id }, (0, PubSubManager_1.omitKeys)(c, ["id"]), { returning: "*" });
+            res = await dbs.connections.update({ id: con.id }, (0, prostgles_types_1.omitKeys)(c, ["id"]), { returning: "*" });
         }
         else {
             res = await dbs.connections.insert(c, { returning: "*" });

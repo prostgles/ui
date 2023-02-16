@@ -98,7 +98,7 @@ const DBS_CONNECTION_INFO: DBSConnectionInfo = {
   db_ssl:  process.env.POSTGRES_SSL || POSTGRES_SSL,
 };
 
-import { omitKeys, pickKeys } from "prostgles-server/dist/PubSubManager";
+import { omitKeys, pickKeys } from "prostgles-types";
 
 
 import BackupManager from "./BackupManager";

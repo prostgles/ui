@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAuth = exports.sidKeyName = exports.makeSession = exports.YEAR = exports.HOUR = void 0;
 const BackupManager_1 = require("./BackupManager");
 const index_1 = require("./index");
-const PubSubManager_1 = require("prostgles-server/dist/PubSubManager");
+const prostgles_types_1 = require("prostgles-types");
 const otplib_1 = require("otplib");
 const path_1 = __importDefault(require("path"));
 const electronConfig_1 = require("./electronConfig");
@@ -99,7 +99,7 @@ const getAuth = (app) => {
                     /** For security reasons provide state_db_id only to admin users */
                     state_db_id: user.type === "admin" ? state_db?.id : undefined,
                     has_2fa: !!user["2fa"]?.enabled,
-                    ...(0, PubSubManager_1.omitKeys)(user, ["password", "2fa"])
+                    ...(0, prostgles_types_1.omitKeys)(user, ["password", "2fa"])
                 }
             };
             return suser;

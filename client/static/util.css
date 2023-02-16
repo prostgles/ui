@@ -81,7 +81,9 @@
   --action: var(--blue-500);
   --active-hover: #51bfff;
 
-  --danger: var(--red-700)
+  --danger: var(--red-700);
+
+  --focus-color: rgb(0, 183, 255);
 }
 
 
@@ -556,6 +558,11 @@
   flex-direction: row;
 }
 
+.flex-row-reverse {
+  display: flex;
+  flex-direction: row-reverse;
+}
+
 .flex-col,
 .flex-column {
   display: flex;
@@ -780,9 +787,7 @@ textarea {
 }
 
 textarea:focus {
-  outline: none;
-  /* border: 1px solid rgb(0, 183, 255); */
-  /* box-shadow: 0 0 0 3px rgb(0 183 255 / 15%); */
+  outline: none; 
 }
 .not-allowed{
   cursor: not-allowed;
@@ -821,6 +826,9 @@ textarea:focus {
 }
 .max-h-fit {
   max-height: fit-content;
+}
+.max-h-500 {
+  max-height: 500px;
 }
 .max-s-fit {
   max-height: fit-content;
@@ -1791,8 +1799,8 @@ select:hover {
 /* Focus style */
 .select-button:focus,
 select:focus {
-  border: 1px solid rgb(0, 183, 255);
-  box-shadow: 0 0 0 1px rgb(0 183 255);
+  border: 1px solid var(--focus-color);
+  box-shadow: 0 0 0 1px var(--focus-color);
   /* It'd be nice to use -webkit-focus-ring-color here but it doesn't work on box-shadow */
   /* box-shadow: inset  0 0 5px 1px rgba(59, 153, 252, .7); */
   /* box-shadow: 0 0 0 3px -moz-mac-focusring; */
@@ -1805,7 +1813,7 @@ select:focus {
 }
 
 input[type=checkbox]:focus {    
-  border: 1px solid rgb(0, 183, 255);
+  border: 1px solid var(--focus-color);
   outline: none;
   box-shadow: 0 0 0 3px rgb(0 183 255 / 15%);
 }
@@ -1925,7 +1933,7 @@ button.toggle.toggled,
 .focusable-inset:focus {
   border-width: 1px;
   border-style: solid;
-  border: 1px solid rgb(0, 183, 255) !important;
+  border: 1px solid var(--focus-color) !important;
   outline: none;
   box-shadow: inset 0 0 0 3px rgb(0 183 255 / 15%);
 }
@@ -1935,7 +1943,9 @@ button {
 }
 
 .focusable:focus,
-.focusable:focus-within,
+/* .focusable:focus-within:not(:hover), */
+.focusable:focus-within:has(:focus-visible),
+.focusable:focus-visible,
 input.input:focus,
 .button:not(.toggle, .select-button, .btn-color-danger):focus,
 button:not(.toggle, .select-button, .btn-color-danger):focus,
@@ -1943,8 +1953,8 @@ button:not(.toggle, .select-button, .btn-color-danger):focus,
 a.btn:focus,
 .focus-border:focus-within {
   -webkit-appearance: none !important;
-  border: 1px solid rgb(0, 183, 255);
-  box-shadow: 0 0 0 1px rgb(0, 183, 255);
+  border: 1px solid var(--focus-color) !important;
+  box-shadow: 0 0 0 1px var(--focus-color) !important;
   outline: none;
 }  
 
@@ -2120,6 +2130,7 @@ h1,h2,h3,h4,h5,h6 {
 }
 
 ul.plain,
+li.no-decor,
 ul.left-nav-list {
   list-style: none;
   padding: 0;
@@ -2303,4 +2314,15 @@ nav.left-nav-list a.active {
   min-width: 0;
   text-overflow: ellipsis;
   overflow: hidden;
+}
+
+.disabled { 
+  /* pointer-events: none; 
+  touch-action: none;  */
+  opacity: .5;
+}
+
+.disabled,
+.disabled * {
+  cursor: not-allowed !important;
 }
