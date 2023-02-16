@@ -116,7 +116,7 @@ export const start = async (
 
 console.error("Must create DEMO_MODE user types and sample databases"); 
 export const isDemoMode = () => {
-  const demoMode = true;// true;// !!process.env.DEMO_MODE && !isElectron;
+  const demoMode = !!process.env.DEMO_MODE && !isElectron;
   if(isElectron && demoMode){
     throw "Demo mode not allowed with electron"
   }
