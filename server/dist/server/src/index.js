@@ -108,6 +108,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
          * Manual process
          */
         // await getPSQLQueries(con);
+        const tsGeneratedTypesDir = (process.env.NODE_ENV === "production" || (0, electronConfig_1.getElectronConfig)()?.isElectron) ? undefined : path_1.default.join(electronConfig_1.actualRootDir + '/../commonTypes/');
         const auth = (0, authConfig_1.getAuth)(app);
         const dbConnection = {
             connectionTimeoutMillis: 1000,
@@ -122,7 +123,9 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
             sqlFilePath: path_1.default.join(electronConfig_1.actualRootDir + '/src/init.sql'),
             io,
             /** Prevent electron access denied error */
-            tsGeneratedTypesDir: (process.env.NODE_ENV === "production" || (0, electronConfig_1.getElectronConfig)()?.isElectron) ? undefined : path_1.default.join(electronConfig_1.actualRootDir + '/../commonTypes/'),
+            tsGeneratedTypesDir,
+            watchSchema: true,
+            watchSchemaType: "DDL_trigger",
             transactions: true,
             onSocketConnect: async ({ socket, dbo, db, getUser }) => {
                 const user = await getUser();

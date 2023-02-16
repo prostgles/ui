@@ -98,7 +98,6 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      access_control?: null | any;
       backups_config?: null |       { 
         enabled?: boolean;
         cloudConfig: null | {  credential_id?: null | number; };
