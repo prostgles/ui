@@ -36,12 +36,6 @@ const SESSION_TYPE = {
     nullable: false
 };
 exports.tableConfig = {
-    user_groups: {
-        columns: {
-            id: { sqlDefinition: `TEXT PRIMARY KEY` },
-            filter: { sqlDefinition: `JSONB   DEFAULT '{}'::jsonb` },
-        }
-    },
     user_types: {
         isLookupTable: {
             values: { admin: {}, default: {} }
