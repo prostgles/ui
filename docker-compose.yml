@@ -25,9 +25,8 @@ services:
     volumes:
       - prgl-db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
+      test: ["CMD-SHELL", "sleep 4 && pg_isready"] 
+      timeout: 7s
       retries: 5
 
   prgl:
