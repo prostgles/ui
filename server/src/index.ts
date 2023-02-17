@@ -276,7 +276,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO): Promise<ProstglesStart
 
 
 
-        console.log("Prostgles UI is running on port ", PORT)
+        console.log("dbs:onReady: Prostgles UI is running on port ", PORT)
       },  
     });
 

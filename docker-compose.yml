@@ -24,6 +24,11 @@ services:
     # This affects user creation. Comment out to ensure user (POSTGRES_USER) is created
     volumes:
       - prgl-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U POSTGRES_USER"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   prgl:
     image: prgl
@@ -43,7 +48,8 @@ services:
       IS_DOCKER: 'yes'
 
     depends_on:
-      - postgres
+      postgres: 
+        condition: service_healthy
 
     ## Used to allow connecting to a database from the host
     # extra_hosts:

@@ -102,7 +102,6 @@ const start = async (sStorage, args, onReady) => {
     onServerReady(onReady);
 };
 exports.start = start;
-console.error("Must create DEMO_MODE user types and sample databases");
 const isDemoMode = () => {
     const demoMode = !!process.env.DEMO_MODE && !isElectron;
     if (isElectron && demoMode) {

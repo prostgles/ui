@@ -203,7 +203,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
                 else {
                     bkpManager ??= new BackupManager_1.default(db, exports.connMgr, { preffix: "", extension: "" });
                 }
-                console.log("Prostgles UI is running on port ", PORT);
+                console.log("dbs:onReady: Prostgles UI is running on port ", PORT);
             },
         });
         return { ok: true };
