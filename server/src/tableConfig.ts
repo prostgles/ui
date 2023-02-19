@@ -534,7 +534,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           }
         }
       } ,
-      columns         : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
+      columns         : `JSONB` ,
       nested_tables   : `JSONB` ,
       created         : `TIMESTAMP DEFAULT NOW()` ,
       last_updated    : `BIGINT NOT NULL` ,
