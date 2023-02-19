@@ -104,11 +104,12 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
         catch (conn) {
             return { conn };
         }
+        const IS_PROD = process.env.NODE_ENV === "production";
+        /** Prevent electron access denied error (cannot edit files in the install directory in electron) */
+        const tsGeneratedTypesDir = (IS_PROD || (0, electronConfig_1.getElectronConfig)()?.isElectron) ? undefined : path_1.default.join(electronConfig_1.actualRootDir + '/../commonTypes/');
         /**
          * Manual process
          */
-        // await getPSQLQueries(con);
-        const tsGeneratedTypesDir = (process.env.NODE_ENV === "production" || (0, electronConfig_1.getElectronConfig)()?.isElectron) ? undefined : path_1.default.join(electronConfig_1.actualRootDir + '/../commonTypes/');
         const auth = (0, authConfig_1.getAuth)(app);
         const dbConnection = {
             connectionTimeoutMillis: 1000,
@@ -122,9 +123,8 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
             dbConnection,
             sqlFilePath: path_1.default.join(electronConfig_1.actualRootDir + '/src/init.sql'),
             io,
-            /** Prevent electron access denied error */
             tsGeneratedTypesDir,
-            watchSchema: true,
+            watchSchema: !!tsGeneratedTypesDir,
             watchSchemaType: "DDL_trigger",
             transactions: true,
             onSocketConnect: async ({ socket, dbo, db, getUser }) => {
