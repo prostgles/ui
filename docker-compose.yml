@@ -26,7 +26,7 @@ services:
       - prgl-db:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "sleep 1 && pg_isready"] 
-      timeout: 7s
+      timeout: 3s
       retries: 5
 
   prgl:
@@ -44,8 +44,8 @@ services:
       POSTGRES_USER: "POSTGRES_USER" 
       POSTGRES_PASSWORD: "POSTGRES_PASSWORD" 
       POSTGRES_HOST: postgres
-      IS_DOCKER: 'yes'
-      NODE_ENV": 'production'
+      IS_DOCKER: "yes"
+      NODE_ENV: "production"
 
     depends_on:
       postgres: 
