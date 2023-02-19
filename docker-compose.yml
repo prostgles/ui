@@ -4,7 +4,7 @@ version: "3.7"
 services:
   postgres:
     
-    image: postgis/postgis:14-master
+    image: postgis/postgis:15-3.3
     # image: mdillon/postgis
     
     # Survive server reboot
@@ -25,7 +25,7 @@ services:
     volumes:
       - prgl-db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "sleep 4 && pg_isready"] 
+      test: ["CMD-SHELL", "sleep 1 && pg_isready"] 
       timeout: 7s
       retries: 5
 
@@ -45,6 +45,7 @@ services:
       POSTGRES_PASSWORD: "POSTGRES_PASSWORD" 
       POSTGRES_HOST: postgres
       IS_DOCKER: 'yes'
+      NODE_ENV": 'production'
 
     depends_on:
       postgres: 
@@ -54,7 +55,7 @@ services:
     # extra_hosts:
     #   - "host.docker.internal:host-gateway"
 
-    ## DEBUG
+    ## DEBUG -> Ensure NODE_ENV above is not set to 'production'
     # command: node --inspect=0.0.0.0:9229 /usr/src/app/server/dist/server/src/index.js
     command: node /usr/src/app/server/dist/server/src/index.js
     ports:
