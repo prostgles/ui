@@ -33,12 +33,20 @@ export const DATE_FILTER_TYPES = [
     { key: "$ageNow", label: "Age exact" },
     { key: "$duration", label: "Duration" },
 ];
+export const GEO_FILTER_TYPES = [
+    { key: "$ST_DWithin", label: "Within" },
+];
 export const JOINED_FILTER_TYPES = ["$existsJoined", "$notExistsJoined"];
 export const isJoinedFilter = (f) => Boolean(f.type && JOINED_FILTER_TYPES.includes(f.type));
 export const isDetailedFilter = (f) => !isJoinedFilter(f.type);
 export const getFinalFilterInfo = (fullFilter, context, depth = 0) => {
     var _a;
     const filterToString = (filter) => {
+        var _a;
+        if (filter.type === "$ST_DWithin") {
+            const v = filter.value;
+            return `${(v.distance / 1000).toFixed(3)}Km of ${(_a = v === null || v === void 0 ? void 0 : v.name) !== null && _a !== void 0 ? _a : [v.lat, v.lng].join(", ")}`;
+        }
         const f = getFinalFilter(filter, context, { forInfoOnly: true });
         if (!f)
             return undefined;
@@ -89,9 +97,17 @@ export const getFinalFilter = (detailedFilter, context, opts) => {
         var _a;
         const val = parseContextVal(f);
         const fieldName = checkFieldname(f.fieldName, columns);
-        if (f.type === "$age" || f.type === "$duration") {
+        if (f.type == "$ST_DWithin") {
+            return {
+                $filter: [
+                    { $ST_DWithin: [fieldName, val] },
+                ]
+            };
+        }
+        else if (f.type === "$age" || f.type === "$duration") {
             const { comparator, argsLeftToRight = true, otherField } = (_a = f.complexFilter) !== null && _a !== void 0 ? _a : {};
-            const $age = f.type === "$age" ? [fieldName] : [fieldName, otherField].filter(isDefined);
+            const $age = f.type === "$age" ? [fieldName] :
+                [fieldName, otherField].filter(isDefined);
             if (!argsLeftToRight)
                 $age.reverse();
             return {
@@ -127,7 +143,8 @@ export const getFinalFilter = (detailedFilter, context, opts) => {
     else if (isJoinedFilter(detailedFilter)) {
         return {
             [detailedFilter.type]: {
-                [`${detailedFilter.path.join(".")}`]: getFilter(detailedFilter.filter)
+                path: detailedFilter.path,
+                filter: getFilter(detailedFilter.filter)
             }
         };
     }

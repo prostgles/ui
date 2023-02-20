@@ -13,6 +13,18 @@ type ObjDef = {
     references?: {
         table: string;
         column: string;
+        /**
+         * If true then the argument will represent the entire row and
+         *  the specified column will only be used to display the chosen row
+         */
+        isFullRow?: boolean;
+        /**
+         * If true and isFullRow=true then a button will be shown
+         *  in the row edit card to display this action
+         */
+        showInRowCard?: {
+            actionLabel?: string;
+        };
     };
 };
 export type ArgDef = (ObjDef & {
@@ -22,7 +34,7 @@ export type MethodClientDef = {
     name: string;
     func: string;
     args: ArgDef[];
-    output: Omit<ArgDef, "references">[];
+    outputTable?: string;
 };
 export type UserGroupRule = DBSSchema["access_control"]["rule"];
 export type ContextValue = {

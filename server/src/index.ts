@@ -448,12 +448,12 @@ const getInitState = (): ProstglesInitState  => {
   return {
     isElectron: !!eConfig?.isElectron,
     electronCredsProvided: !!eConfig?.hasCredentials(),
-    ..._initState,
+    ..._initState, 
     canTryStartProstgles: !eConfig?.isElectron || eConfig.hasCredentials(),
     canDumpAndRestore: installedPrograms,
     isDemoMode: isDemoMode(),
   }
-};
+};    
 
 /** During page load we wait for init */
 const awaitInit = () => {
