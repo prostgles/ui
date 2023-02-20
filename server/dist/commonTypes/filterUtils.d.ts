@@ -74,7 +74,11 @@ export declare const DATE_FILTER_TYPES: readonly [{
     readonly key: "$duration";
     readonly label: "Duration";
 }];
-export type FilterType = typeof CORE_FILTER_TYPES[number]["key"] | typeof FTS_FILTER_TYPES[number]["key"] | typeof TEXT_FILTER_TYPES[number]["key"] | typeof NUMERIC_FILTER_TYPES[number]["key"] | typeof DATE_FILTER_TYPES[number]["key"];
+export declare const GEO_FILTER_TYPES: readonly [{
+    readonly key: "$ST_DWithin";
+    readonly label: "Within";
+}];
+export type FilterType = typeof CORE_FILTER_TYPES[number]["key"] | typeof FTS_FILTER_TYPES[number]["key"] | typeof TEXT_FILTER_TYPES[number]["key"] | typeof NUMERIC_FILTER_TYPES[number]["key"] | typeof DATE_FILTER_TYPES[number]["key"] | typeof GEO_FILTER_TYPES[number]["key"];
 export type BaseFilter = {
     minimised?: boolean;
     disabled?: boolean;

@@ -49,7 +49,7 @@ exports.tableConfig = {
     users: {
         columns: {
             id: { sqlDefinition: `UUID PRIMARY KEY DEFAULT gen_random_uuid()` },
-            status: { sqlDefinition: `TEXT NOT NULL DEFAULT 'active' REFERENCES user_statuses (id)`, info: { hint: "Only active users can use the system" } },
+            status: { sqlDefinition: `TEXT NOT NULL DEFAULT 'active' REFERENCES user_statuses (id)`, info: { hint: "Only active users can access the system" } },
             is_online: {
                 sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE`,
             },

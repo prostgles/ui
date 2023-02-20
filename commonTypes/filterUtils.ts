@@ -36,9 +36,13 @@ export const NUMERIC_FILTER_TYPES = [
 ] as const;
 
 export const DATE_FILTER_TYPES = [
-  { key: "$age", label: "Age"},
-  { key: "$ageNow", label: "Age exact"},
+  { key: "$age",      label: "Age"},
+  { key: "$ageNow",   label: "Age exact"},
   { key: "$duration", label: "Duration"},
+] as const;
+
+export const GEO_FILTER_TYPES = [
+  { key: "$ST_DWithin", label: "Within"}, 
 ] as const;
 
 export type FilterType =
@@ -46,7 +50,8 @@ export type FilterType =
 |  typeof FTS_FILTER_TYPES[number]["key"]
 |  typeof TEXT_FILTER_TYPES[number]["key"]
 |  typeof NUMERIC_FILTER_TYPES[number]["key"]
-|  typeof DATE_FILTER_TYPES[number]["key"];
+|  typeof DATE_FILTER_TYPES[number]["key"]
+|  typeof GEO_FILTER_TYPES[number]["key"];
 
 export type BaseFilter = {
   minimised?: boolean;
@@ -78,8 +83,15 @@ export const isDetailedFilter = (f: SimpleFilter): f is DetailedFilterBase => !i
 
 export const getFinalFilterInfo = (fullFilter?: GroupedDetailedFilter | SimpleFilter, context?: ContextDataObject, depth = 0): string => {
   const filterToString = (filter: SimpleFilter): string | undefined => {
+
+    if(filter.type === "$ST_DWithin"){
+      const v = filter.value;
+      return `${(v.distance/1000).toFixed(3)}Km of ${v?.name ?? [v.lat, v.lng].join(", ")}`
+    }
+
     const f = getFinalFilter(filter, context, { forInfoOnly: true });
-      if(!f) return undefined;
+    if(!f) return undefined;
+
     const fieldNameAndOperator: keyof typeof f = Object.keys(f)[0] as any;
     // console.log(fieldNameAndOperator)
     if(fieldNameAndOperator === "$term_highlight" as any){
@@ -128,6 +140,7 @@ export const getFinalFilter = (detailedFilter: SimpleFilter, context?: ContextDa
       //@ts-ignore
       return context[f.contextValue.objectName]?.[f.contextValue.objectPropertyName];
     }
+
     return ({...f}).value;
   }
 
@@ -135,9 +148,18 @@ export const getFinalFilter = (detailedFilter: SimpleFilter, context?: ContextDa
     const val = parseContextVal(f);
     const fieldName = checkFieldname(f.fieldName, columns);
 
-    if(f.type === "$age" || f.type === "$duration"){
+    if(f.type == "$ST_DWithin"){
+      return {
+        $filter: [
+          { $ST_DWithin: [fieldName, { ...val, distance: val.distance * 1000}] },
+        ]
+      }
+    } else if(f.type === "$age" || f.type === "$duration"){
       const { comparator, argsLeftToRight = true, otherField } = f.complexFilter ?? {};
-      const $age = f.type === "$age"? [fieldName] : [fieldName, otherField].filter(isDefined);
+
+      const $age = f.type === "$age"? [fieldName] : 
+        [fieldName, otherField].filter(isDefined);
+
       if(!argsLeftToRight) $age.reverse();
       return {
         $filter: [
