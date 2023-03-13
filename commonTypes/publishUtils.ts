@@ -8,10 +8,24 @@ export type CustomTableRules = {
   } & TableRules)[];
 }
 
-type ObjDef = {
-  type: "string" | "number" | "Date";
+const OBJ_DEF_TYPES = ["boolean", "string", "number", "Date", "string[]", "number[]", "Date[]", "boolean[]"] as const;
+type DataTypes = typeof OBJ_DEF_TYPES[number];
+
+type _ObjDef = 
+| DataTypes 
+| {
+  type: DataTypes;
+  allowedValues?: readonly string[] | readonly number[] | readonly Date[];
   defaultValue?: string;
   optional?: boolean;
+  label?: string; 
+
+  /** 
+   * These can only be used on client side  
+   * */
+  referencesFormatColumnContext?: {
+    columnFilter: AnyObject;
+  };
   references?: { 
     table: string; 
     column: string;
@@ -29,10 +43,24 @@ type ObjDef = {
       actionLabel?: string;
     }
   }
-}
+} 
+type ObjDef = 
+| _ObjDef 
+| { oneOf: readonly _ObjDef[]; }
+| { arrayOf: _ObjDef; }
+
 export type ArgDef = (ObjDef & {
-  name: string; 
-})
+  name: string;  
+});
+export type ParamDef = ObjDef;
+
+export type UXParamDefinition = {
+  param: Record<string, ArgDef>
+  paramOneOf? : undefined;
+} | {
+  param? : undefined;
+  paramOneOf: Record<string, ArgDef>[];
+}
 
 export type MethodClientDef = { 
   name: string;

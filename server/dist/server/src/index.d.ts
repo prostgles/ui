@@ -83,7 +83,7 @@ export declare const upsertConnection: (con: DBSchemaGenerated["connections"]["c
             type: "S3";
             credential_id: number;
         };
-        referencedTables?: {} | undefined;
+        referencedTables?: any;
         delayedDelete?: {
             deleteAfterNDays: number;
             checkIntervalHours?: number | undefined;

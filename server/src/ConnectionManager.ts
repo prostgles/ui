@@ -1,6 +1,6 @@
 
 import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
-import { restartProc, Connections, MEDIA_ROUTE_PREFIX, API_PATH, DBS } from "./index";
+import { restartProc, Connections, MEDIA_ROUTE_PREFIX, API_PATH, DBS, log } from "./index";
 import { WithOrigin } from "./ConnectionChecker";
 import { Server }  from "socket.io";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
@@ -20,6 +20,7 @@ import { getConnectionDetails } from "./connectionUtils/getConnectionDetails";
 import { getRootDir } from "./electronConfig";
 import { MethodFullDef } from "prostgles-types";
 import ts, { ModuleKind, ModuleResolutionKind, ScriptTarget } from "typescript";
+import { JSONBColumnDef } from "prostgles-server/dist/TableConfig";
 
 export type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
 
@@ -205,7 +206,7 @@ export class ConnectionManager {
     if(!con) throw "Connection not found";
   
     await testDBConnection(con)
-    console.log("testDBConnection ok")
+    log("testDBConnection ok")
   
     const socket_path = `${this.getConnectionPath(con_id)}-dashboard/s`;
   
@@ -219,16 +220,16 @@ export class ConnectionManager {
           })
           
           if(this.prgl_connections[con.id].prgl){
-            console.log("destroying prgl", Object.keys(this.prgl_connections[con.id]));
+            log("destroying prgl", Object.keys(this.prgl_connections[con.id]));
             this.prgl_connections[con.id].prgl?.destroy()
           }
         } else {
-          console.log("reusing prgl", Object.keys( this.prgl_connections[con.id]));
+          log("reusing prgl", Object.keys( this.prgl_connections[con.id]));
           if(this.prgl_connections[con.id].error) throw  this.prgl_connections[con.id].error;
           return socket_path;
         }
       }
-      console.log("creating prgl", Object.keys( this.prgl_connections[con.id] || {}))
+      log("creating prgl", Object.keys( this.prgl_connections[con.id] || {}))
       this.prgl_connections[con.id] = {
         socket_path, con
       }
@@ -274,10 +275,12 @@ export class ConnectionManager {
           joins: "inferred",
           publish: async ({ user, dbo, tables }) => {
             if(user){
-              if(user.type === "admin") return "*";
+              if(user.type === "admin") {
+                return "*";
+              }
               
               
-              const ac = await getACRule(dbs, user, con.id);
+              const ac = await getACRule(dbs, user as DBSSchema["users"], con.id);
               
               if(ac?.rule){
                 const { dbPermissions } = ac.rule;
@@ -298,18 +301,20 @@ export class ConnectionManager {
                   }), {})
                 } else if(dbPermissions.type === "Custom" && dbPermissions.customTables){
 
-                  // return (rule as CustomTableRules).customTables
+                  type ParsedTableRules = Record<string, TableRules>;
                   return dbPermissions.customTables
                     .filter((t: any) => dbo[t.tableName])
-                    .reduce((a: any, v: CustomTableRules["customTables"][number]) => {
+                    .reduce((a: any, _v) => {
+                      const v = _v as CustomTableRules["customTables"][number];
                       const table = tables.find(({ name }) => name === v.tableName) as any;
                       if(!table) return {};
 
-                      return { 
+                      const ptr: ParsedTableRules = { 
                         ...a, 
                         [v.tableName]: parseTableRules(omitKeys(v, ["tableName"]), dbo[v.tableName].is_view, table.columns.map((c: any) => c.name), { user: user as DBSSchema["users"] }) 
                       }
-                   } ,{})
+                      return ptr;
+                   } ,{} as ParsedTableRules)
                 } else {
                   console.error("Unexpected access control rule: ", (ac as any).rule)
                 }
@@ -322,29 +327,30 @@ export class ConnectionManager {
             let result: Record<string, MethodFullDef> = {};
 
             /** Admin has access to all methods */
-            let allowedMethods: MethodClientDef[] = []
+            let allowedMethods: DBSSchema["published_methods"][] = []
             if(user?.type === "admin"){
-              const acRules = await dbs.access_control.find({ connection_id: con.id });
-              acRules.map(r => {
-                r.rule.methods?.map(m => {
-                  allowedMethods.push(m);
-                })
-              })
+              allowedMethods = await dbs.published_methods.find({ connection_id: con.id })
+              // const acRules = await dbs.access_control.find({ connection_id: con.id });
+              // acRules.map(r => {
+              //   r.rule.methods?.map(m => {
+              //     allowedMethods.push(m);
+              //   })
+              // })
             } else {
               const ac = await getACRule(dbs, user as any, con.id);
               if(ac?.rule.methods?.length){
-                allowedMethods = ac.rule.methods;  
+                allowedMethods = await dbs.published_methods.find({ connection_id: con.id, $existsJoined: { access_control_methods: { access_control_id:  ac.id } } })
               }
             }
 
             allowedMethods.forEach(m => {
 
               result[m.name] = {
-                input: m.args.reduce((a, v) => ({ ...a, [v.name]: v }), {}),
-                outputTable: m.outputTable,
+                input: m.arguments.reduce((a, v) => ({ ...a, [v.name]: v }), {}), // v.type === "Lookup"? { lookup: v }: v
+                outputTable: m.outputTable ?? undefined,
                 run: async (args) => { 
 
-                  const sourceCode = ts.transpile(m.func, { 
+                  const sourceCode = ts.transpile(m.run, { 
                     noEmit: false, 
                     target: ScriptTarget.ES2022,
                     lib: ["ES2022"],
@@ -355,8 +361,44 @@ export class ConnectionManager {
                   try {
                     eval(sourceCode);
 
+                    let validatedArgs = undefined;
+                    if(m.arguments.length){
+                      /**
+                       * Validate args
+                       */
+                      for await(const arg of m.arguments){
+                        let argType = omitKeys(arg, ["name"]);
+                        if(arg.type === "Lookup" || arg.type === "Lookup[]"){
+                          argType = {
+                            ...omitKeys(arg, ["type", "name", "optional"]),
+                            lookup: {
+                              ...arg.lookup,
+                              type: "data"
+                            }
+                          } as any
+                        }
+                        const partialArgSchema: JSONBColumnDef["jsonbSchema"] = {
+                          //@ts-ignore
+                          type: { [arg.name]: argType }
+                        } 
+                        const partialValue = pickKeys(args, [arg.name]);
+
+                        try {
+                          await _dbs.any("SELECT validate_jsonb_schema(${argSchema}::TEXT, ${args})", { args: partialValue, argSchema: partialArgSchema });
+                        } catch(err){
+                          throw {
+                            message: "Could not validate argument against schema",
+                            argument: arg.name
+                          }
+                        }
+                      }
+                      validatedArgs = args;
+                    }
+ 
                     //@ts-ignore
-                    return exports.run(args, { db, dbo, socket, tables, user });
+                    const methodResult = await exports.run(validatedArgs, { db, dbo, socket, tables, user }); 
+
+                    return methodResult;
                   } catch(err: any){
                     return Promise.reject(err);
                   }

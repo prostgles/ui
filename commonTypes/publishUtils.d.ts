@@ -6,10 +6,20 @@ export type CustomTableRules = {
         tableName: string;
     } & TableRules)[];
 };
-type ObjDef = {
-    type: "string" | "number" | "Date";
+declare const OBJ_DEF_TYPES: readonly ["boolean", "string", "number", "Date", "string[]", "number[]", "Date[]", "boolean[]"];
+type DataTypes = typeof OBJ_DEF_TYPES[number];
+type _ObjDef = DataTypes | {
+    type: DataTypes;
+    allowedValues?: readonly string[] | readonly number[] | readonly Date[];
     defaultValue?: string;
     optional?: boolean;
+    label?: string;
+    /**
+     * These can only be used on client side
+     * */
+    referencesFormatColumnContext?: {
+        columnFilter: AnyObject;
+    };
     references?: {
         table: string;
         column: string;
@@ -27,9 +37,22 @@ type ObjDef = {
         };
     };
 };
+type ObjDef = _ObjDef | {
+    oneOf: readonly _ObjDef[];
+} | {
+    arrayOf: _ObjDef;
+};
 export type ArgDef = (ObjDef & {
     name: string;
 });
+export type ParamDef = ObjDef;
+export type UXParamDefinition = {
+    param: Record<string, ArgDef>;
+    paramOneOf?: undefined;
+} | {
+    param?: undefined;
+    paramOneOf: Record<string, ArgDef>[];
+};
 export type MethodClientDef = {
     name: string;
     func: string;

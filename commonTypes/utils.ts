@@ -57,3 +57,5 @@ export type PGDumpParams = {
   destination: typeof DESTINATIONS[number]["key"];
   initiator?: string; 
 };
+
+export type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> };

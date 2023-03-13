@@ -8,7 +8,7 @@ export const CORE_FILTER_TYPES = [
     { key: "$nin", label: "NOT IN" },
 ];
 export const FTS_FILTER_TYPES = [
-    { key: "@@.to_tsquery", label: "to_tsquery" },
+    { key: "@@.to_tsquery", subLabel: "to_tsquery", label: "Match" },
     { key: "@@.plainto_tsquery", label: "plainto_tsquery" },
     { key: "@@.phraseto_tsquery", label: "phraseto_tsquery" },
     { key: "@@.websearch_to_tsquery", label: "websearch_to_tsquery" },
@@ -100,7 +100,7 @@ export const getFinalFilter = (detailedFilter, context, opts) => {
         if (f.type == "$ST_DWithin") {
             return {
                 $filter: [
-                    { $ST_DWithin: [fieldName, val] },
+                    { $ST_DWithin: [fieldName, Object.assign(Object.assign({}, val), { distance: val.distance * 1000 })] },
                 ]
             };
         }
