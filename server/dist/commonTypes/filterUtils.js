@@ -12,7 +12,7 @@ exports.CORE_FILTER_TYPES = [
     { key: "$nin", label: "NOT IN" },
 ];
 exports.FTS_FILTER_TYPES = [
-    { key: "@@.to_tsquery", label: "to_tsquery" },
+    { key: "@@.to_tsquery", subLabel: "to_tsquery", label: "Match" },
     { key: "@@.plainto_tsquery", label: "plainto_tsquery" },
     { key: "@@.phraseto_tsquery", label: "phraseto_tsquery" },
     { key: "@@.websearch_to_tsquery", label: "websearch_to_tsquery" },

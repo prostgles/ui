@@ -458,15 +458,15 @@ const getInitState = (): ProstglesInitState  => {
 /** During page load we wait for init */
 const awaitInit = () => {
   return new Promise((resolve, reject) => {
-    if(!_initState.loaded && _initState && getInitState().electronCredsProvided){
+    if(_initState && !_initState.loaded && (!getInitState().isElectron || getInitState().electronCredsProvided)){
       const interval = setInterval(() => {
         if(_initState.loaded){
           resolve(_initState);
           clearInterval(interval);
         }
       }, 200)
-    } else {
-      resolve(_initState)
+    } else {   
+      resolve(_initState);
     }
   });
 }
@@ -508,7 +508,7 @@ const tryStartProstgles = async (con: DBSConnectionInfo = DBS_CONNECTION_INFO): 
         clearInterval(interval);
         setDBSRoutes();
         _initState.loading = false;
-        _initState.loaded = true;
+        _initState.loaded = true; 
 
         if(!_initState.ok){
           reject(result)

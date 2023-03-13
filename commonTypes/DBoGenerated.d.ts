@@ -16,15 +16,20 @@ export type DBSchemaGenerated = {
       created?: null | Date;
       id?: number;
       name?: null | string;
-      rule:       { 
-        userGroupNames: string[];
-        dbsPermissions?: {  createWorkspaces?: boolean; viewPublishedWorkspaces?: {  workspaceIds: string[]; }; };
-        dbPermissions: 
-        | {  type: 'Run SQL'; allowSQL?: boolean; }
-        | {  type: 'All views/tables'; allowAllTables:  ("select" | "insert" | "update" | "delete")[]; }
-        | {  type: 'Custom'; customTables: any[]; };
-        methods?: any[]; 
-      };
+      rule: {    userGroupNames: string[];   dbsPermissions?: {  createWorkspaces?: boolean;  viewPublishedWorkspaces?: {  workspaceIds: string[]; }; };   dbPermissions: |  {  type: 'Run SQL';  allowSQL?: boolean; }
+ |  {  type: 'All views/tables';  allowAllTables: ("select" | "insert" | "update" | "delete")[]; }
+ |  {  type: 'Custom';  customTables: (  {  tableName: string;  select?: | boolean |  {  fields: | boolean | string[] | '*' |  Record<string, 1 | 0>;  forcedFilterDetailed?: any;  filterFields?: | boolean | string[] | '*' |  Record<string, 1 | 0>;  orderByFields?: | boolean | string[] | '*' |  Record<string, 1 | 0>; };  update?: | boolean |  {  fields: | boolean | string[] | '*' |  Record<string, 1 | 0>;  forcedFilterDetailed?: any;  filterFields?: | boolean | string[] | '*' |  Record<string, 1 | 0>;  orderByFields?: | boolean | string[] | '*' |  Record<string, 1 | 0>;  forcedDataDetail?: any[];  dynamicFields?: (  {  filterDetailed: any;  fields: | boolean | string[] | '*' |  Record<string, 1 | 0>; } )[]; };  insert?: | boolean |  {  fields: | boolean | string[] | '*' |  Record<string, 1 | 0>;  forcedDataDetail?: any[]; };  delete?: | boolean |  {  filterFields: | boolean | string[] | '*' |  Record<string, 1 | 0>;  forcedFilterDetailed?: any; }; } )[]; };   methods?: any[];  };
+    };
+  };
+  access_control_methods: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      access_control_id: number;
+      published_method_id: number;
     };
   };
   access_control_user_types: {
@@ -60,34 +65,23 @@ export type DBSchemaGenerated = {
       last_updated?: Date;
       local_filepath?: null | string;
       options?: 
-        | {  command: 'pg_dumpall'; clean: boolean; dataOnly?: boolean; globalsOnly?: boolean; rolesOnly?: boolean; schemaOnly?: boolean; ifExists?: boolean; encoding?: string; keepLogs?: boolean; }
-        | {  command: 'pg_dump'; format: 'p' | 't' | 'c'; dataOnly?: boolean; clean?: boolean; create?: boolean; encoding?: string; numberOfJobs?: number; noOwner?: boolean; compressionLevel?: number; ifExists?: boolean; keepLogs?: boolean; }
+       |  {  command: 'pg_dumpall';  clean: boolean;  dataOnly?: boolean;  globalsOnly?: boolean;  rolesOnly?: boolean;  schemaOnly?: boolean;  ifExists?: boolean;  encoding?: string;  keepLogs?: boolean; }
+       |  {  command: 'pg_dump';  format: 'p' | 't' | 'c';  dataOnly?: boolean;  clean?: boolean;  create?: boolean;  encoding?: string;  numberOfJobs?: number;  noOwner?: boolean;  compressionLevel?: number;  ifExists?: boolean;  keepLogs?: boolean; }
       restore_command?: null | string;
       restore_end?: null | Date;
       restore_logs?: null | string;
-      restore_options?:       { 
-        command: 'pg_restore' | 'psql';
-        format: 'p' | 't' | 'c';
-        clean: boolean;
-        newDbName?: string;
-        create?: boolean;
-        dataOnly?: boolean;
-        noOwner?: boolean;
-        numberOfJobs?: number;
-        ifExists?: boolean;
-        keepLogs?: boolean; 
-      };
+      restore_options?: {    command: 'pg_restore' | 'psql';   format: 'p' | 't' | 'c';   clean: boolean;   newDbName?: string;   create?: boolean;   dataOnly?: boolean;   noOwner?: boolean;   numberOfJobs?: number;   ifExists?: boolean;   keepLogs?: boolean;  };
       restore_start?: null | Date;
       restore_status?: 
-        | null
-        | {  ok: string; }
-        | {  err: string; }
-        | {  loading: {  loaded: number; total: number; }; }
+       | null
+       |  {  ok: string; }
+       |  {  err: string; }
+       |  {  loading: {  loaded: number;  total: number; }; }
       sizeInBytes?: null | number;
       status?: 
-        | {  ok: string; }
-        | {  err: string; }
-        | {  loading?: {  loaded: number; total: number; }; }
+       |  {  ok: string; }
+       |  {  err: string; }
+       |  {  loading?: {  loaded: number;  total: number; }; }
       uploaded?: null | Date;
     };
   };
@@ -98,19 +92,8 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      backups_config?: null |       { 
-        enabled?: boolean;
-        cloudConfig: null | {  credential_id?: null | number; };
-        frequency: 'daily' | 'monthly' | 'weekly' | 'hourly';
-        hour?: number;
-        dayOfWeek?: number;
-        dayOfMonth?: number;
-        keepLast?: number;
-        err?: null | string;
-        dump_options: 
-        | {  command: 'pg_dumpall'; clean: boolean; dataOnly?: boolean; globalsOnly?: boolean; rolesOnly?: boolean; schemaOnly?: boolean; ifExists?: boolean; encoding?: string; keepLogs?: boolean; }
-        | {  command: 'pg_dump'; format: 'p' | 't' | 'c'; dataOnly?: boolean; clean?: boolean; create?: boolean; encoding?: string; numberOfJobs?: number; noOwner?: boolean; compressionLevel?: number; ifExists?: boolean; keepLogs?: boolean; }; 
-      };
+      backups_config?: null | {    enabled?: boolean;   cloudConfig: null |  {  credential_id?: null | number; };   frequency: 'daily' | 'monthly' | 'weekly' | 'hourly';   hour?: number;   dayOfWeek?: number;   dayOfMonth?: number;   keepLast?: number;   err?: null | string;   dump_options: |  {  command: 'pg_dumpall';  clean: boolean;  dataOnly?: boolean;  globalsOnly?: boolean;  rolesOnly?: boolean;  schemaOnly?: boolean;  ifExists?: boolean;  encoding?: string;  keepLogs?: boolean; }
+ |  {  command: 'pg_dump';  format: 'p' | 't' | 'c';  dataOnly?: boolean;  clean?: boolean;  create?: boolean;  encoding?: string;  numberOfJobs?: number;  noOwner?: boolean;  compressionLevel?: number;  ifExists?: boolean;  keepLogs?: boolean; };  };
       created?: null | Date;
       db_conn?: null | string;
       db_host?: null | string;
@@ -130,14 +113,8 @@ export type DBSchemaGenerated = {
       ssl_client_certificate?: null | string;
       ssl_client_certificate_key?: null | string;
       ssl_reject_unauthorized?: null | boolean;
-      table_config?: null |       { 
-        fileTable?: string;
-        storageType: 
-        | {  type: 'local'; }
-        | {  type: 'S3'; credential_id: number; };
-        referencedTables?: {  };
-        delayedDelete?: {  deleteAfterNDays: number; checkIntervalHours?: number; }; 
-      };
+      table_config?: null | {    fileTable?: string;   storageType: |  {  type: 'local'; }
+ |  {  type: 'S3';  credential_id: number; };   referencedTables?: any;   delayedDelete?: {  deleteAfterNDays: number;  checkIntervalHours?: number; };  };
       type?: "Standard" | "Connection URI" | "Prostgles"
       user_id?: null | string;
     };
@@ -308,6 +285,24 @@ export type DBSchemaGenerated = {
       user_id: string;
     };
   };
+  published_methods: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      arguments?:  ( 
+ |  {  name: string;  type: 'string' | 'number' | 'boolean' | 'Date' | 'time' | 'timestamp' | 'string[]' | 'number[]' | 'boolean[]' | 'Date[]' | 'time[]' | 'timestamp[]';  defaultValue?: string;  optional?: boolean;  allowedValues?: string[]; }
+ |  {  name: string;  type: 'Lookup' | 'Lookup[]';  defaultValue?: any;  optional?: boolean;  lookup:  {    table: string;   column: string;   filter?: Record<string, any>;   isArray?: boolean;   searchColumns?: string[];   isFullRow?: {  displayColumns?: string[]; };   showInRowCard?: Record<string, any>;  }; } )[]
+      connection_id?: null | string;
+      description?: string;
+      id?: number;
+      name?: string;
+      outputTable?: null | string;
+      run?: string;
+    };
+  };
   session_types: {
     is_view: false;
     select: true;
@@ -394,21 +389,12 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      "2fa"?: null |       { 
-        secret: string;
-        recoveryCode: string;
-        enabled: boolean; 
-      };
+      "2fa"?: null | {    secret: string;   recoveryCode: string;   enabled: boolean;  };
       created?: null | Date;
       id?: string;
       is_online?: boolean;
       last_updated?: null | number;
-      options?: null |       { 
-        showStateDB?: boolean;
-        hideNonSSLWarning?: boolean;
-        viewedSQLTips?: boolean;
-        viewedAccessInfo?: boolean; 
-      };
+      options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;  };
       password?: string;
       passwordless_admin?: null | boolean;
       status?: string;
@@ -441,17 +427,7 @@ export type DBSchemaGenerated = {
       show_menu?: null | boolean;
       sort?: null | any;
       sql?: string;
-      sql_options?:       { 
-        executeOptions?: 'full' | 'block';
-        errorMessageDisplay?: 'tooltip' | 'bottom' | 'both';
-        tabSize?: number;
-        lineNumbers?: 'on' | 'off';
-        renderMode?: 'table' | 'JSON';
-        minimap?: {  enabled: boolean; };
-        acceptSuggestionOnEnter?: 'on' | 'smart' | 'off';
-        expandSuggestionDocs?: boolean;
-        maxCharsPerCell?: number; 
-      };
+      sql_options?: {    executeOptions?: 'full' | 'block';   errorMessageDisplay?: 'tooltip' | 'bottom' | 'both';   tabSize?: number;   lineNumbers?: 'on' | 'off';   renderMode?: 'table' | 'JSON';   minimap?: {  enabled: boolean; };   acceptSuggestionOnEnter?: 'on' | 'smart' | 'off';   expandSuggestionDocs?: boolean;   maxCharsPerCell?: number;  };
       table_name?: null | string;
       table_oid?: null | number;
       type?: null | string;
@@ -474,12 +450,7 @@ export type DBSchemaGenerated = {
       last_updated: number;
       layout?: null | any;
       name?: string;
-      options?:       { 
-        hideCounts?: boolean;
-        showAllMyQueries?: boolean;
-        defaultLayoutType?: 'row' | 'tab' | 'col';
-        pinnedMenu?: boolean; 
-      };
+      options?: {    hideCounts?: boolean;   showAllMyQueries?: boolean;   defaultLayoutType?: 'row' | 'tab' | 'col';   pinnedMenu?: boolean;  };
       published?: boolean;
       url_path?: null | string;
       user_id: string;

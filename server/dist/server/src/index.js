@@ -359,7 +359,7 @@ const getInitState = () => {
 /** During page load we wait for init */
 const awaitInit = () => {
     return new Promise((resolve, reject) => {
-        if (!_initState.loaded && _initState && getInitState().electronCredsProvided) {
+        if (_initState && !_initState.loaded && (!getInitState().isElectron || getInitState().electronCredsProvided)) {
             const interval = setInterval(() => {
                 if (_initState.loaded) {
                     resolve(_initState);

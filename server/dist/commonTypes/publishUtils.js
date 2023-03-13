@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getCIDRRangesQuery = exports.validateDynamicFields = exports.getTableRulesErrors = exports.parseTableRules = exports.parseForcedFilter = exports.parseFullFilter = exports.parseFieldFilter = exports.isObject = void 0;
 const filterUtils_1 = require("./filterUtils");
+const OBJ_DEF_TYPES = ["boolean", "string", "number", "Date", "string[]", "number[]", "Date[]", "boolean[]"];
 function isObject(obj) {
     return Boolean(obj && typeof obj === "object" && !Array.isArray(obj));
 }

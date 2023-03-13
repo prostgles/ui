@@ -6,6 +6,7 @@ var __asyncValues = (this && this.__asyncValues) || function (o) {
     function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
 };
 import { getFinalFilter, isDefined } from "./filterUtils";
+const OBJ_DEF_TYPES = ["boolean", "string", "number", "Date", "string[]", "number[]", "Date[]", "boolean[]"];
 export function isObject(obj) {
     return Boolean(obj && typeof obj === "object" && !Array.isArray(obj));
 }

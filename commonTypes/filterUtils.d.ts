@@ -21,7 +21,8 @@ export declare const CORE_FILTER_TYPES: readonly [{
 }];
 export declare const FTS_FILTER_TYPES: readonly [{
     readonly key: "@@.to_tsquery";
-    readonly label: "to_tsquery";
+    readonly subLabel: "to_tsquery";
+    readonly label: "Match";
 }, {
     readonly key: "@@.plainto_tsquery";
     readonly label: "plainto_tsquery";

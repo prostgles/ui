@@ -186,7 +186,7 @@ class ConnectionManager {
         if (!con)
             throw "Connection not found";
         await (0, testDBConnection_1.testDBConnection)(con);
-        console.log("testDBConnection ok");
+        (0, index_1.log)("testDBConnection ok");
         const socket_path = `${this.getConnectionPath(con_id)}-dashboard/s`;
         try {
             if (this.prgl_connections[con.id]) {
@@ -196,18 +196,18 @@ class ConnectionManager {
                         socket?.emit("pls-restart", true);
                     });
                     if (this.prgl_connections[con.id].prgl) {
-                        console.log("destroying prgl", Object.keys(this.prgl_connections[con.id]));
+                        (0, index_1.log)("destroying prgl", Object.keys(this.prgl_connections[con.id]));
                         this.prgl_connections[con.id].prgl?.destroy();
                     }
                 }
                 else {
-                    console.log("reusing prgl", Object.keys(this.prgl_connections[con.id]));
+                    (0, index_1.log)("reusing prgl", Object.keys(this.prgl_connections[con.id]));
                     if (this.prgl_connections[con.id].error)
                         throw this.prgl_connections[con.id].error;
                     return socket_path;
                 }
             }
-            console.log("creating prgl", Object.keys(this.prgl_connections[con.id] || {}));
+            (0, index_1.log)("creating prgl", Object.keys(this.prgl_connections[con.id] || {}));
             this.prgl_connections[con.id] = {
                 socket_path, con
             };
@@ -245,8 +245,9 @@ class ConnectionManager {
                     joins: "inferred",
                     publish: async ({ user, dbo, tables }) => {
                         if (user) {
-                            if (user.type === "admin")
+                            if (user.type === "admin") {
                                 return "*";
+                            }
                             const ac = await (0, exports.getACRule)(dbs, user, con.id);
                             if (ac?.rule) {
                                 const { dbPermissions } = ac.rule;
@@ -265,17 +266,18 @@ class ConnectionManager {
                                     }), {});
                                 }
                                 else if (dbPermissions.type === "Custom" && dbPermissions.customTables) {
-                                    // return (rule as CustomTableRules).customTables
                                     return dbPermissions.customTables
                                         .filter((t) => dbo[t.tableName])
-                                        .reduce((a, v) => {
+                                        .reduce((a, _v) => {
+                                        const v = _v;
                                         const table = tables.find(({ name }) => name === v.tableName);
                                         if (!table)
                                             return {};
-                                        return {
+                                        const ptr = {
                                             ...a,
                                             [v.tableName]: (0, publishUtils_1.parseTableRules)((0, prostgles_types_1.omitKeys)(v, ["tableName"]), dbo[v.tableName].is_view, table.columns.map((c) => c.name), { user: user })
                                         };
+                                        return ptr;
                                     }, {});
                                 }
                                 else {
@@ -290,25 +292,26 @@ class ConnectionManager {
                         /** Admin has access to all methods */
                         let allowedMethods = [];
                         if (user?.type === "admin") {
-                            const acRules = await dbs.access_control.find({ connection_id: con.id });
-                            acRules.map(r => {
-                                r.rule.methods?.map(m => {
-                                    allowedMethods.push(m);
-                                });
-                            });
+                            allowedMethods = await dbs.published_methods.find({ connection_id: con.id });
+                            // const acRules = await dbs.access_control.find({ connection_id: con.id });
+                            // acRules.map(r => {
+                            //   r.rule.methods?.map(m => {
+                            //     allowedMethods.push(m);
+                            //   })
+                            // })
                         }
                         else {
                             const ac = await (0, exports.getACRule)(dbs, user, con.id);
                             if (ac?.rule.methods?.length) {
-                                allowedMethods = ac.rule.methods;
+                                allowedMethods = await dbs.published_methods.find({ connection_id: con.id, $existsJoined: { access_control_methods: { access_control_id: ac.id } } });
                             }
                         }
                         allowedMethods.forEach(m => {
                             result[m.name] = {
-                                input: m.args.reduce((a, v) => ({ ...a, [v.name]: v }), {}),
-                                outputTable: m.outputTable,
+                                input: m.arguments.reduce((a, v) => ({ ...a, [v.name]: v }), {}),
+                                outputTable: m.outputTable ?? undefined,
                                 run: async (args) => {
-                                    const sourceCode = typescript_1.default.transpile(m.func, {
+                                    const sourceCode = typescript_1.default.transpile(m.run, {
                                         noEmit: false,
                                         target: typescript_1.ScriptTarget.ES2022,
                                         lib: ["ES2022"],
@@ -317,8 +320,42 @@ class ConnectionManager {
                                     }, "input.ts");
                                     try {
                                         eval(sourceCode);
+                                        let validatedArgs = undefined;
+                                        if (m.arguments.length) {
+                                            /**
+                                             * Validate args
+                                             */
+                                            for await (const arg of m.arguments) {
+                                                let argType = (0, prostgles_types_1.omitKeys)(arg, ["name"]);
+                                                if (arg.type === "Lookup" || arg.type === "Lookup[]") {
+                                                    argType = {
+                                                        ...(0, prostgles_types_1.omitKeys)(arg, ["type", "name", "optional"]),
+                                                        lookup: {
+                                                            ...arg.lookup,
+                                                            type: "data"
+                                                        }
+                                                    };
+                                                }
+                                                const partialArgSchema = {
+                                                    //@ts-ignore
+                                                    type: { [arg.name]: argType }
+                                                };
+                                                const partialValue = (0, prostgles_types_1.pickKeys)(args, [arg.name]);
+                                                try {
+                                                    await _dbs.any("SELECT validate_jsonb_schema(${argSchema}::TEXT, ${args})", { args: partialValue, argSchema: partialArgSchema });
+                                                }
+                                                catch (err) {
+                                                    throw {
+                                                        message: "Could not validate argument against schema",
+                                                        argument: arg.name
+                                                    };
+                                                }
+                                            }
+                                            validatedArgs = args;
+                                        }
                                         //@ts-ignore
-                                        return exports.run(args, { db, dbo, socket, tables, user });
+                                        const methodResult = await exports.run(validatedArgs, { db, dbo, socket, tables, user });
+                                        return methodResult;
                                     }
                                     catch (err) {
                                         return Promise.reject(err);

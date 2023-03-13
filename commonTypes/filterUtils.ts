@@ -12,7 +12,7 @@ export const CORE_FILTER_TYPES = [
 ] as const;
 
 export const FTS_FILTER_TYPES = [
-  { key: "@@.to_tsquery", label: "to_tsquery" },
+  { key: "@@.to_tsquery", subLabel: "to_tsquery", label: "Match" },
   { key: "@@.plainto_tsquery", label: "plainto_tsquery" },
   { key: "@@.phraseto_tsquery", label: "phraseto_tsquery" },
   { key: "@@.websearch_to_tsquery", label: "websearch_to_tsquery" },
