@@ -186,14 +186,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       prgl_url:                { sqlDefinition: `TEXT` },
       prgl_params:             { sqlDefinition: `JSONB` },
       type:                    { enum: ["Standard", "Connection URI", "Prostgles"], nullable: false },
-      // type:                    { sqlDefinition: `TEXT NOT NULL DEFAULT 'Standard' CHECK (
-      //         type IN ('Standard', 'Connection URI', 'Prostgles') 
-      //         AND (type <> 'Connection URI' OR length(db_conn) > 1) 
-      //         AND (type <> 'Standard' OR length(db_host) > 1) 
-      //         AND (type <> 'Prostgles' OR length(prgl_url) > 0)
-      //     )` },
-
-      is_state_db:         { sqlDefinition: `BOOLEAN`, info: { hint: `If true then this DB is used to run the dashboard` }  },
+      is_state_db:             { sqlDefinition: `BOOLEAN`, info: { hint: `If true then this DB is used to run the dashboard` }  },
       table_config:        { info: { hint: `File and User configurations` },
         nullable: true,
         jsonbSchemaType: {
@@ -689,6 +682,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         enum: ["user", "app"], 
         defaultValue: "app" 
       },
+      tableConfig: {
+        info: { "hint": "Schema used to create prostgles-ui" },
+        sqlDefinition: "JSONB"
+      }
     }
   },
 
@@ -707,27 +704,4 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       
     }
   }
-
-
-/*
-
-
-  --DROP TABLE IF EXISTS user_statuses CASCADE;
-  CREATE TABLE IF NOT EXISTS user_statuses (
-      id              TEXT PRIMARY KEY
-  );
-  INSERT INTO user_statuses (id) VALUES ('active'), ('disabled') ON CONFLICT DO NOTHING;
-
-  --DROP TABLE IF EXISTS users CASCADE;
-  CREATE TABLE IF NOT EXISTS users (
-      id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      username        TEXT NOT NULL,
-      password        TEXT NOT NULL DEFAULT gen_random_uuid(),
-      type            TEXT NOT NULL DEFAULT 'default' REFERENCES user_types (id),
-      created         TIMESTAMP DEFAULT NOW(),
-      last_updated    BIGINT,
-      status          TEXT NOT NULL DEFAULT 'active' REFERENCES user_statuses (id),
-      UNIQUE(username)
-  );
-  */
 }

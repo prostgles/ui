@@ -9,7 +9,7 @@ const validateConnection_1 = require("./validateConnection");
 const Prostgles_1 = require("prostgles-server/dist/Prostgles");
 const pg_promise_1 = __importDefault(require("pg-promise"));
 const pgp = (0, pg_promise_1.default)();
-const testDBConnection = (_c, expectSuperUser = false) => {
+const testDBConnection = (_c, expectSuperUser = false, check) => {
     const con = (0, validateConnection_1.validateConnection)(_c);
     if (typeof con !== "object" || !("db_host" in con) && !("db_conn" in con)) {
         throw "Incorrect database connection info provided. " +
@@ -32,8 +32,15 @@ const testDBConnection = (_c, expectSuperUser = false) => {
                     return;
                 }
             }
+            await check?.(c);
+            try {
+                const { version: prostglesSchemaVersion } = (await c.oneOrNone("SELECT version FROM prostgles.versions"));
+                resolve({ prostglesSchemaVersion });
+            }
+            catch (e) {
+            }
+            resolve({});
             await c.done(); // success, release connection;
-            resolve(true);
         }).catch(err => {
             let errRes = err instanceof Error ? err.message : JSON.stringify(err);
             if (process.env.IS_DOCKER) {

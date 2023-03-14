@@ -8,6 +8,7 @@ const index_1 = require("./index");
 const cors_1 = __importDefault(require("cors"));
 const authConfig_1 = require("./authConfig");
 const electronConfig_1 = require("./electronConfig");
+const tableConfig_1 = require("./tableConfig");
 class ConnectionChecker {
     app;
     constructor(app) {
@@ -92,7 +93,8 @@ class ConnectionChecker {
                     allowed_origin: this.noPasswordAdmin ? null : "*",
                     // allowed_ips_enabled: this.noPasswordAdmin? true : false,
                     allowed_ips_enabled: false,
-                    allowed_ips: Array.from(new Set([req.ip, "::ffff:127.0.0.1"]))
+                    allowed_ips: Array.from(new Set([req.ip, "::ffff:127.0.0.1"])),
+                    tableConfig: tableConfig_1.tableConfig,
                 });
                 const magicLinkPaswordless = await getPasswordlessMacigLink(this.db, req);
                 if (magicLinkPaswordless) {

@@ -25,6 +25,7 @@ import { Backups } from "./BackupManager";
 import { ADMIN_ACCESS_WITHOUT_PASSWORD, insertUser } from "./ConnectionChecker";
 import { isDefined } from "../../commonTypes/filterUtils";
 import { demoDataSetup } from "./demoDataSetup";
+import { tableConfig } from "./tableConfig";
 
 export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params) => { //  socket, dbs: DBObj, _dbs, user: Users
   const { dbo: dbs, socket, db: _dbs } = params;
@@ -327,7 +328,8 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       ];
     }
   }
-  
+  // dbs.sql?.("alter table global_settings drop constraint")
+  await dbs.global_settings.update({}, { tableConfig }) 
   return {
     ...userMethods,
     ...(user.type === "admin"? adminMethods : undefined),

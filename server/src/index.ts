@@ -159,7 +159,7 @@ const startProstgles = async (con = DBS_CONNECTION_INFO): Promise<ProstglesStart
     } catch(conn){
       return { conn }
     }
-    const IS_PROD = process.env.NODE_ENV === "production"
+    const IS_PROD = process.env.NODE_ENV === "production";
 
     /** Prevent electron access denied error (cannot edit files in the install directory in electron) */
     const tsGeneratedTypesDir =  (IS_PROD || getElectronConfig()?.isElectron)? undefined : path.join(actualRootDir + '/../commonTypes/');
@@ -244,6 +244,14 @@ const startProstgles = async (con = DBS_CONNECTION_INFO): Promise<ProstglesStart
       
       // DEBUG_MODE: true,
       tableConfig,
+      tableConfigMigrations: {
+        version: 1,
+        onMigrate: async ({ db, getConstraints, oldVersion }) => {
+          if(!oldVersion){
+            return db.any("DROP TABLE IF EXISTS sessions CASCADE;")
+          }
+        }
+      },
       publishRawSQL: async (params) => {
         const { user } = params
         return Boolean(user && user.type === "admin")
@@ -399,7 +407,7 @@ const setDBSRoutes = () => {
   });
 }
 
-let _initState: Pick<ProstglesInitState, "initError" | "connectionError"> & {
+let _initState: Pick<ProstglesInitState, "initError" | "connectionError" | "electronIssue"> & {
   ok: boolean;
   loading: boolean;
   loaded: boolean;
@@ -552,7 +560,8 @@ app.use(serveIndexIfNoCredentials)
  * If electron:
  *  - serve index
  *  - serve prostglesInitState
- *  - start prostgles IF or WHEN creds provided
+ *  - Check for any existing older prostgles schema versions AND allow deleting curr db OR connect to new db 
+ *  - start prostgles IF or WHEN creds provided 
  *  - remove serve index after prostgles is ready
  * 
  * If docker/default
@@ -564,10 +573,31 @@ let PORT = +(process.env.PRGL_PORT ?? 3004)
 const electronConfig = getElectronConfig?.();
 if(electronConfig){
   PORT = electronConfig.port ?? 3099;
-  
+   
   const creds = electronConfig.getCredentials();
   if(creds){
-    tryStartProstgles(creds);
+    (async () => {
+      let matchingSchema;
+      try {
+        matchingSchema = await testDBConnection(creds, undefined, c => {
+          return c.oneOrNone(`SELECT * FROM global_settings WHERE "tableConfig" = \${tableConfig}`, { tableConfig })
+        });
+      } catch(e){
+
+      }
+      if(!matchingSchema){
+        _initState = {
+          loaded: true,
+          loading: false,
+          ok: false,
+          electronIssue: {
+            type: "Older schema"
+          }
+        }
+      } else {
+        tryStartProstgles(creds);
+      }
+    })()
   } else {
     console.log("Electron: No credentials");
   }
