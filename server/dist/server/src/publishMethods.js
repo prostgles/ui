@@ -327,9 +327,7 @@ const publishMethods = async (params) => {
     };
     // dbs.sql?.("alter table global_settings drop constraint")
     // await dbs.global_settings.update({}, { tableConfig });
-    console.error("REMOVE");
     return {
-        db: q => _dbs.multi(q),
         ...userMethods,
         ...(user.type === "admin" ? adminMethods : undefined),
         startConnection: async (con_id) => {
