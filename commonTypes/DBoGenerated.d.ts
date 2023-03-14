@@ -146,6 +146,17 @@ export type DBSchemaGenerated = {
       user_id?: null | string;
     };
   };
+  d: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      a?: null | string;
+      id?: number;
+    };
+  };
   failed_login_attempts: {
     is_view: false;
     select: true;
