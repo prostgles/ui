@@ -15,6 +15,7 @@ import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { Auth, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
 import { makeSession, sidKeyName, SUser, YEAR } from "./authConfig";
 import { getElectronConfig, isDemoMode } from "./electronConfig";
+import { tableConfig } from "./tableConfig";
 
 
 export type WithOrigin = {
@@ -130,7 +131,8 @@ export class ConnectionChecker {
           allowed_origin: this.noPasswordAdmin ? null : "*",
           // allowed_ips_enabled: this.noPasswordAdmin? true : false,
           allowed_ips_enabled: false,
-          allowed_ips: Array.from(new Set([req.ip, "::ffff:127.0.0.1"])) 
+          allowed_ips: Array.from(new Set([req.ip, "::ffff:127.0.0.1"])),
+          tableConfig,
         });
 
         const magicLinkPaswordless = await getPasswordlessMacigLink(this.db, req);

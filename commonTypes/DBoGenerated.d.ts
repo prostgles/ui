@@ -231,6 +231,7 @@ export type DBSchemaGenerated = {
       id?: number;
       magic_link_validity_days?: number;
       session_max_age_days?: number;
+      tableConfig?: null | any;
       trust_proxy?: boolean;
       updated_by?: "user" | "app"
     };
@@ -301,6 +302,17 @@ export type DBSchemaGenerated = {
       name?: string;
       outputTable?: null | string;
       run?: string;
+    };
+  };
+  schema_version: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      id: number;
+      table_config: any;
     };
   };
   session_types: {

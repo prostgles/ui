@@ -8,7 +8,7 @@ import pgPromise from 'pg-promise';
 const pgp = pgPromise();
 import pg from "pg-promise/typescript/pg-subset";
 
-export const testDBConnection = (_c: DBSchemaGenerated["connections"]["columns"], expectSuperUser = false): Promise<true> => {
+export const testDBConnection = (_c: DBSchemaGenerated["connections"]["columns"], expectSuperUser = false, check?: (c: pgPromise.IConnected<{}, pg.IClient>) => any): Promise<{ prostglesSchemaVersion?: string; }> => {
   const con = validateConnection(_c);
   if(typeof con !== "object" || !("db_host" in con) && !("db_conn" in con)) {
     throw "Incorrect database connection info provided. " + 
@@ -34,9 +34,16 @@ export const testDBConnection = (_c: DBSchemaGenerated["connections"]["columns"]
               return
             }
           }
-          await c.done(); // success, release connection;
+          await check?.(c);
+          try {
+            const { version: prostglesSchemaVersion } = (await c.oneOrNone("SELECT version FROM prostgles.versions"));
+            resolve({ prostglesSchemaVersion });
+          } catch(e) {
+
+          }
           
-          resolve(true);
+          resolve({});
+          await c.done(); // success, release connection;
         }).catch(err => {
           let errRes = err instanceof Error? err.message : JSON.stringify(err);
           if(process.env.IS_DOCKER){

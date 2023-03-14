@@ -1,6 +1,9 @@
 export type ProstglesInitState = ({
     isElectron: boolean;
     electronCredsProvided?: boolean;
+    electronIssue?: {
+        type: "Older schema";
+    };
     initError?: any;
     connectionError?: any;
     ok: boolean;

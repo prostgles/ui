@@ -44,7 +44,7 @@ export declare const upsertConnection: (con: DBSchemaGenerated["connections"]["c
             keepLogs?: boolean | undefined;
         } | {
             command: "pg_dump";
-            format: "p" | "c" | "t";
+            format: "c" | "p" | "t";
             dataOnly?: boolean | undefined;
             clean?: boolean | undefined;
             create?: boolean | undefined;

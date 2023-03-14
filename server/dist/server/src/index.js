@@ -180,6 +180,14 @@ const startProstgles = async (con = DBS_CONNECTION_INFO) => {
             },
             // DEBUG_MODE: true,
             tableConfig: tableConfig_1.tableConfig,
+            tableConfigMigrations: {
+                version: 1,
+                onMigrate: async ({ db, getConstraints, oldVersion }) => {
+                    if (!oldVersion) {
+                        return db.any("DROP TABLE IF EXISTS sessions CASCADE;");
+                    }
+                }
+            },
             publishRawSQL: async (params) => {
                 const { user } = params;
                 return Boolean(user && user.type === "admin");
@@ -440,6 +448,7 @@ app.use(serveIndexIfNoCredentials);
  * If electron:
  *  - serve index
  *  - serve prostglesInitState
+ *  - Check for any existing older prostgles schema versions AND allow deleting curr db OR connect to new db
  *  - start prostgles IF or WHEN creds provided
  *  - remove serve index after prostgles is ready
  *
@@ -454,7 +463,29 @@ if (electronConfig) {
     PORT = electronConfig.port ?? 3099;
     const creds = electronConfig.getCredentials();
     if (creds) {
-        tryStartProstgles(creds);
+        (async () => {
+            let matchingSchema;
+            try {
+                matchingSchema = await (0, testDBConnection_1.testDBConnection)(creds, undefined, c => {
+                    return c.oneOrNone(`SELECT * FROM global_settings WHERE "tableConfig" = \${tableConfig}`, { tableConfig: tableConfig_1.tableConfig });
+                });
+            }
+            catch (e) {
+            }
+            if (!matchingSchema) {
+                _initState = {
+                    loaded: true,
+                    loading: false,
+                    ok: false,
+                    electronIssue: {
+                        type: "Older schema"
+                    }
+                };
+            }
+            else {
+                tryStartProstgles(creds);
+            }
+        })();
     }
     else {
         console.log("Electron: No credentials");

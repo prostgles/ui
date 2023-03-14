@@ -58,7 +58,7 @@ export default class BackupManager {
             keepLogs?: boolean | undefined;
         } | {
             command: "pg_dump";
-            format: "p" | "c" | "t";
+            format: "c" | "p" | "t";
             dataOnly?: boolean | undefined;
             clean?: boolean | undefined;
             create?: boolean | undefined;
@@ -74,7 +74,7 @@ export default class BackupManager {
         restore_logs?: string | null | undefined;
         restore_options?: {
             command: "pg_restore" | "psql";
-            format: "p" | "c" | "t";
+            format: "c" | "p" | "t";
             clean: boolean;
             newDbName?: string | undefined;
             create?: boolean | undefined;
