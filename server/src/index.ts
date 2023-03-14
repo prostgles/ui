@@ -576,28 +576,7 @@ if(electronConfig){
    
   const creds = electronConfig.getCredentials();
   if(creds){
-    (async () => {
-      let matchingSchema;
-      try {
-        matchingSchema = await testDBConnection(creds, undefined, c => {
-          return c.oneOrNone(`SELECT * FROM global_settings WHERE "tableConfig" = \${tableConfig}`, { tableConfig })
-        });
-      } catch(e){
-
-      }
-      if(!matchingSchema){
-        _initState = {
-          loaded: true,
-          loading: false,
-          ok: false,
-          electronIssue: {
-            type: "Older schema"
-          }
-        }
-      } else {
-        tryStartProstgles(creds);
-      }
-    })()
+    tryStartProstgles(creds);
   } else {
     console.log("Electron: No credentials");
   }
