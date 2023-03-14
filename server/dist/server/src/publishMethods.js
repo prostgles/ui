@@ -42,7 +42,6 @@ const validateConnection_1 = require("./connectionUtils/validateConnection");
 const ConnectionChecker_1 = require("./ConnectionChecker");
 const filterUtils_1 = require("../../commonTypes/filterUtils");
 const demoDataSetup_1 = require("./demoDataSetup");
-const tableConfig_1 = require("./tableConfig");
 const publishMethods = async (params) => {
     const { dbo: dbs, socket, db: _dbs } = params;
     const ip_address = socket.conn.remoteAddress;
@@ -327,8 +326,10 @@ const publishMethods = async (params) => {
         }
     };
     // dbs.sql?.("alter table global_settings drop constraint")
-    await dbs.global_settings.update({}, { tableConfig: tableConfig_1.tableConfig });
+    // await dbs.global_settings.update({}, { tableConfig });
+    console.error("REMOVE");
     return {
+        db: q => _dbs.multi(q),
         ...userMethods,
         ...(user.type === "admin" ? adminMethods : undefined),
         startConnection: async (con_id) => {

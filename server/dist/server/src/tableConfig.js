@@ -321,15 +321,6 @@ exports.tableConfig = {
             created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
         }
     },
-    access_control_user_types: {
-        columns: {
-            access_control_id: `INTEGER NOT NULL REFERENCES access_control(id)  ON DELETE CASCADE`,
-            user_type: `TEXT NOT NULL REFERENCES user_types(id)  ON DELETE CASCADE`
-        },
-        constraints: {
-            NoDupes: "UNIQUE(access_control_id, user_type)",
-        },
-    },
     published_methods: {
         // dropIfExistsCascade: true, 
         columns: {
@@ -380,6 +371,15 @@ exports.tableConfig = {
             outputTable: `TEXT`
         },
         indexes: { "unique_name": { columns: "name, connection_id", replace: true } }
+    },
+    access_control_user_types: {
+        columns: {
+            access_control_id: `INTEGER NOT NULL REFERENCES access_control(id)  ON DELETE CASCADE`,
+            user_type: `TEXT NOT NULL REFERENCES user_types(id)  ON DELETE CASCADE`
+        },
+        constraints: {
+            NoDupes: "UNIQUE(access_control_id, user_type)",
+        },
     },
     access_control_methods: {
         // dropIfExistsCascade: true,
