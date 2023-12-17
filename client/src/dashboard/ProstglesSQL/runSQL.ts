@@ -1,0 +1,290 @@
+import { SQLResult } from "prostgles-client/dist/prostgles";
+import { SQLResultInfo, SocketSQLStreamHandlers } from "prostgles-types";
+import { WindowData } from "../Dashboard/dashboardUtils";
+import { STARTING_KEYWORDS } from "../SQLEditor/SQLCompletion/CommonMatchImports";
+import { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
+import W_SQL, { ProstglesSQLState, SQL_NOT_ALLOWED } from "./W_SQL";
+import { parseSQLError } from "./parseSQLError";
+import { getFieldsWithActions, parseSqlResultCols } from "./parseSqlResultCols";
+
+export async function runSQL(this: W_SQL, sort: ColumnSort[] = []) {
+  const { activeQuery } = this.state;
+  if (activeQuery?.state === "running") {
+    alert("Must stop active query first");
+    return;
+  }
+
+  const selected_sql = this.sqlRef?.getSelectedText() || this.sqlRef?.getCurrentCodeBlock()?.text;
+  const sql = selected_sql  || this.d.w?.sql || ""; 
+  if(selected_sql && this.state.selected_sql !== selected_sql){
+    this.setState({ selected_sql })
+  }
+
+  const { db } = this.props.prgl;
+  
+  const w = this.d.w;
+
+  if(!w || !db.sql) {
+    this.setState({ error: !db.sql? SQL_NOT_ALLOWED : "Internal error (w is missing). Try refreshing the page" });
+    return;
+  }
+
+  let trimmedSql = sql.trimEnd();
+
+  let isSelect = false;
+
+  const _query = `${sql}`.trim().toLowerCase().split("\n")
+    .filter((v, i) => i || !(v.trim().startsWith("/*") && v.trim().endsWith("*/")) ) /* Ignore psql top comments */
+    .map(v => v.split("--")[0]).join("\n").trim();
+  const knownCommands = STARTING_KEYWORDS.map(k => k.toLowerCase())
+  const firstCommand = knownCommands.find(c => _query === c || _query.startsWith(c));
+  if(firstCommand){
+    isSelect = firstCommand === "select" && !_query.slice(0, -1).includes(";") && !_query.replaceAll("\n", " ").includes(" into ")
+  } else {
+    try {
+      const ignoredCommands = ["copy", "comment"];
+      if(sql && !ignoredCommands.some(cmd => sql.toLowerCase().startsWith(`${cmd} `))){
+        try {
+          const expl = await db.sql("EXPLAIN " + sql);
+          isSelect = expl.command === "SELECT";
+
+        } catch(err) {
+          isSelect = false;
+          console.error(err)
+        }
+      }
+
+    } catch (error) {
+    }
+  }
+
+
+  if (isSelect && trimmedSql.endsWith(";")) trimmedSql = trimmedSql.slice(0, -1);
+
+  this.hashedSQL = sql;
+
+  let notifEventSub: ProstglesSQLState["notifEventSub"];
+
+  this.state.notifEventSub?.removeListener();
+  
+  try {
+
+    /* Show table automatically after running a query */
+    const o: WindowData<"sql">["options"] = w.options;
+    
+    if (o.hideTable) w.$update({ options: { ...o, hideTable: false } });
+
+    const limit = w.limit === null? null : (w.limit || 100);
+
+    let sqlSorted = trimmedSql;
+    if (isSelect) {
+
+      try {
+        
+        /**
+         * Test for errors first to ensure the wrapped LIMIT/ORDER BY does not introduce unrelated errors 
+         *  TODO: Better option to check for errors BUT need to Ensure the query ends with a ";"
+         *    this.hashedSQL = `DO $SYNTAX_CHECK$ BEGIN RETURN; \n ${_sqlLimited} \nEND; $SYNTAX_CHECK$;`
+         */
+        this.hashedSQL = `EXPLAIN ${sqlSorted}`;
+        await db.sql(this.hashedSQL);
+        this.hashedSQL = ` SELECT * FROM (\n ${sqlSorted} \n ) t LIMIT 0`;
+        const { fields } = await db.sql(this.hashedSQL);
+        
+        const orderBy = sort
+          .filter(s => fields[s.key])
+          .map(s => `${(s.key as number) + 1}` + ([1, true].includes(s.asc as any) ? " ASC " : " DESC ")).join(", ") || " TRUE::BOOLEAN ";
+
+        await db.sql(` SELECT * FROM (\n ${sqlSorted} \n ) t ORDER BY ${orderBy} LIMIT 0`);
+        sqlSorted = ` SELECT * FROM (\n ${sqlSorted} \n ) t ORDER BY ${orderBy}`;
+      } catch (error) {
+        sqlSorted = trimmedSql;
+        w.$update({ sort: [] });
+      }
+    }
+    this._queryHashAlias = `--prostgles-` + hashFnv32a(sqlSorted + Date.now(), true)
+    this.hashedSQL = this._queryHashAlias + " \n" + sqlSorted;
+    let rowCount: number | undefined;
+    const hashedSQL = this.hashedSQL;
+    const setRunningQuery = (extra?: { handler: SocketSQLStreamHandlers | undefined }) => {
+      this.streamData.set({ rows: [] });
+      this.setState({
+        rows: undefined,
+        cols: undefined,
+        sqlResult: false,
+        page: 0,
+        ...extra,
+        sort,
+        activeQuery: {
+          state: "running",
+          trimmedSql,
+          started: new Date(),
+          hashedSQL,
+        }
+      });
+
+    }
+    if(this.state.handler){
+      setRunningQuery();
+      await this.state.handler.run(hashedSQL);
+      return;
+    }
+    let fields: SQLResult<"stream">["fields"] | undefined = undefined;
+    let info: SQLResultInfo | undefined = undefined;
+    let rows: any[] = [];
+    const stream = await db.sql(hashedSQL, undefined, { returnType: "stream", persistStreamConnection: true, hasParams: false, streamLimit: limit || undefined });
+    const handler = await stream.start(async packet => {
+      const runningQuery = this.state.activeQuery?.state === "running"? this.state.activeQuery : undefined;
+      if(!runningQuery) {
+        alert("Something went wrong");
+        return
+      }
+      const { trimmedSql, hashedSQL } = runningQuery;
+      if(packet.type === "error"){
+        this.state.handler?.stop();
+        const sqlError = await parseSQLError.bind(this)({ sql, err: packet.error, trimmedSql });
+        this.setState({ 
+          handler: undefined,
+          queryEnded: Date.now(), 
+          activeQuery: {
+            ...runningQuery,
+            state: "error",
+            error: sqlError,
+            ended: new Date(),
+          },
+        });
+        w.$update({ options: { sqlResultCols: [] } }, { deepMerge: true })
+      } else {
+        rowCount ??= 0;
+        rowCount += packet.rows.length;
+        fields ??= packet.fields;
+        info ??= packet.info;
+        if(packet.rows){
+          rows.push(...packet.rows);
+          this.streamData.set({ rows });
+        }
+
+        /**
+         * First and last packets contain fields and info.command
+         */
+        if(packet.fields || packet.ended){
+          let cols: typeof this.state.cols | undefined = undefined;
+          if(packet.type === "data" && packet.fields){
+            cols = parseSqlResultCols.bind(this)({ fields: packet.fields, isSelect, rows: packet.rows, sql, trimmedSql })
+          }
+  
+          this.setState({
+            rows,
+            ...(cols? { cols } : {}),
+            loading: false,
+            onRowClick: null,
+            sql,
+            isSelect,
+            notifEventSub,
+            sqlResult: true,
+          });
+          if(packet.ended){
+  
+            if(packet.info?.command === "LISTEN"){
+              
+              const sqlRes = await db.sql!(hashedSQL, undefined, { returnType: "arrayMode", allowListen: true, hasParams: false });
+              
+              if ("addListener" in sqlRes) {
+                const fieldType = {  dataType: "json", udt_name: "json", tsDataType: "any" };
+  
+                this.setState({
+                  cols: getFieldsWithActions([{ ...fieldType, name: "payload" }, { ...fieldType , name: "received" }], isSelect),
+                  rows: [],
+                  activeQuery: undefined,
+                  notifEventSub: await sqlRes.addListener(ev => {
+                    console.log(ev);
+                    return this.notifEventListener(ev)
+                  }),
+                });
+                return;
+  
+              }
+            }
+   
+            const userQueriesNotPickedUpBySchemaWatchEventTrigger = ["create user ", "drop user ", "alter user ", "drop user if exists ", "create user if exists ", "alter user if exists "];
+            if(userQueriesNotPickedUpBySchemaWatchEventTrigger.some(query => trimmedSql.toLowerCase().replace(/\s\s+/g, ' ').includes(query))){
+              this.props.suggestions?.onRenew();
+            }
+  
+            let commandResult = "";
+            if (!fields?.length && packet.info) {
+              commandResult = `${packet.info.command} command finished successfully! ` + (Number.isFinite(packet.info.rowCount)? ` ${packet.info.rowCount || 0} rows affected` : "");
+            }
+  
+            this.setState({
+              queryEnded: Date.now(),
+              activeQuery: {
+                ...runningQuery,
+                state: "ended",
+                ended: new Date(),
+                commandResult,
+                rowCount,
+                info: packet.info,
+              },
+              rows, 
+            });
+  
+            rowCount = undefined;
+            fields = undefined;
+            info = undefined;
+            rows = [];
+          }
+
+        }
+      }
+    });
+    setRunningQuery({ handler });
+  } catch (err: any) {
+    const started = (this.state.activeQuery?.started || new Date())
+    this.state.handler?.stop();
+    this.setState({
+      isSelect: false,
+      notifEventSub: undefined,
+      activeQuery: {
+        started,
+        hashedSQL: this.hashedSQL,
+        trimmedSql,
+        state: "error",
+        ended: new Date(),
+        error: await parseSQLError.bind(this)({ sql, err, trimmedSql }),
+      },
+      rows: [],
+      cols: [],
+      handler: undefined,
+      sort: [],
+      queryEnded: Date.now(),
+      sqlResult: false,
+    });
+    w.$update({ options: { sqlResultCols: [] } }, { deepMerge: true })
+  }
+}
+
+
+export const parseError = (err: any) => {
+  if(typeof err === "string"){
+    return { message: err };
+  }
+
+  return err;
+}
+
+function hashFnv32a(str, asString, seed?) {
+  /*jshint bitwise:false */
+  let i, l,
+    hval = (seed === undefined) ? 0x811c9dc5 : seed;
+
+  for (i = 0, l = str.length; i < l; i++) {
+    hval ^= str.charCodeAt(i);
+    hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
+  }
+  if (asString) {
+    // Convert to 8 digit hex string
+    return ("0000000" + (hval >>> 0).toString(16)).substr(-8);
+  }
+  return hval >>> 0;
+}

@@ -1,0 +1,13 @@
+
+.hotkey {
+  border-radius: 6px;
+  background-color: var(--gray-100);
+  border: 1px solid var(--gray-300);
+  padding: 4px 5px;
+  min-width: 1.5em;
+  text-align: center;
+}
+
+.dark-theme .hotkey {
+  background-color: var(--gray-700);
+}

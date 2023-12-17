@@ -1,0 +1,289 @@
+import { mdiConnection, mdiDotsHorizontal, mdiPlus } from "@mdi/js";
+import { SQLHandler } from "prostgles-types";
+import React, { useEffect, useRef, useState } from "react";
+import { ExtraProps } from "../../App";
+import Btn from "../../components/Btn";
+import ButtonGroup from "../../components/ButtonGroup";
+import Chip from "../../components/Chip";
+import { ExpandSection } from "../../components/ExpandSection";
+import FormField from "../../components/FormField/FormField";
+import { InfoRow } from "../../components/InfoRow";
+import PopupMenu from "../../components/PopupMenu";
+import CodeExample from "../../dashboard/CodeExample";
+import { usePromise } from "../../dashboard/ProstglesMethod/hooks";
+import { FullExtraProps } from "../Project";
+import { Connection } from "./NewConnnection";
+import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
+import { SwitchToggle } from "../../components/SwitchToggle";
+import { FlexRow } from "../../components/Flex";
+
+const SSL_MODES = [
+  { key: 'disable',     subLabel: "only try a non-SSL connection" } , 
+  { key: 'allow',       subLabel: "first try a non-SSL connection; if that fails, try an SSL connection" } , 
+  { key: 'prefer',      subLabel: "(Default) first try an SSL connection; if that fails, try a non-SSL connection" } , 
+  { key: 'require',     subLabel: "only try an SSL connection. If a root CA file is present, verify the certificate in the same way as if verify-ca was specified" } ,  
+  { key: 'verify-ca',   subLabel: "only try an SSL connection, and verify that the server certificate is issued by a trusted certificate authority (CA)" } ,  
+  { key: 'verify-full', subLabel: "only try an SSL connection, verify that the server certificate is issued by a trusted CA and that the requested server host name matches that in the certificate" } , 
+] as const;
+
+type DBProps = { 
+  origCon: Partial<Connection>;
+  dbProject: FullExtraProps["dbProject"];
+  dbsTables: FullExtraProps["dbsTables"];
+  dbsMethods: FullExtraProps["dbsMethods"];
+}
+
+export type NewConnectionFormProps = {
+  c: Connection;
+  nameErr?: string;
+  updateConnection: (con: Partial<Connection>) => Promise<void>;
+  warning?: any;
+  mode: "clone" | "edit" | "insert";
+  isForStateDB?: boolean;
+
+  test: {
+    onTest?: () => Promise<void>;
+    status: string;
+    statusOK: boolean;
+  }
+
+  dbProps: DBProps | undefined;
+
+}
+
+export const NewConnectionForm = ({ c, updateConnection, nameErr, warning, test, mode, isForStateDB, dbProps }: NewConnectionFormProps) => {
+
+  const refStatus = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    refStatus.current?.scrollIntoView();
+  }, [test.status])
+  const sslmode = "db_ssl" in c? (c.db_ssl || "disable") : "disabled";
+
+  const { dbsTables, dbProject, origCon, dbsMethods } = dbProps ?? {};
+
+  const cTable = dbsTables?.find(t => t.name === "connections");
+  
+  const { type } = c;
+
+  const suggestions = usePromise(async () => {
+     
+    if(!dbProject?.sql) return {};
+
+    try { 
+      const databases = await dbProject.sql(`
+      SELECT datname
+      FROM pg_catalog.pg_database
+      `, {}, { returnType: "values" }) as string[];
+
+      const users = await dbProject.sql(`
+      SELECT rolname
+      FROM pg_catalog.pg_roles`, {}, { returnType: "values" }) as string[];
+
+      return { users, databases };
+    } catch (e){
+      console.error("Failed getting user & db suggestions", e);
+    } 
+  }, [dbProject])
+
+  return <>
+
+      {!isForStateDB && <FormField label="Connection name"
+        hint="Optional"
+        type="text" 
+        error={nameErr}
+        value={c.name}
+       
+        onChange={(name: string) => {
+          updateConnection({ name });
+        }}
+      />}
+
+      <div className="flex-col gap-p5 ta-left">
+        <label className="m-0 text-1 ">Connection type</label>
+        <ButtonGroup 
+          value={type} 
+          options={["Standard", "Connection URI"]} 
+          onChange={type => {
+            updateConnection({ type })
+          }} 
+        />
+      </div>
+
+      {type === "Prostgles"?
+        <>
+          <FormField label="Socket URL" type="url"  required={true}
+            value={c.prgl_url} onChange={(val: string) => { updateConnection({ prgl_url: val }) }}
+          />
+          <FormField label="Socket params (JSON)" type="text" required={true}
+            value={c.prgl_params} onChange={(val: string) => { updateConnection({ prgl_params: val }) }}
+            hint={`{ "path": "/socket" } `}
+          />
+
+        </> :
+        type === "Connection URI"?
+        <>
+          <FormFieldDebounced label="Connection URI" type="text" required={true}
+            value={c.db_conn} onChange={(db_conn: string) => { updateConnection({ db_conn }) }}
+            hint="postgres://user:pass@host:port/database?sslmode=require"
+          />
+        </> :
+        <>
+          <FormField id="u" value={c.db_user} options={suggestions?.users} label="User" type="text" autoComplete="off" onChange={db_user => updateConnection({ db_user }) } />
+          <FormField id="pass" value={c.db_pass} label="Password" type="text" autoComplete="off" onChange={db_pass => updateConnection({ db_pass }) }  />
+
+          <FormField id="d" value={c.db_name} label="Database" type="text"  options={suggestions?.databases} autoComplete="off" 
+            onChange={db_name => {
+              updateConnection({ db_name });
+            }}
+            rightContentAlwaysShow={true}
+            rightIcons={mode === "edit" && c.db_name && dbProject?.sql &&
+              <PopupMenu 
+                title={"Create database"}
+                positioning={undefined}
+                clickCatchStyle={{ opacity: .5 }}
+                button={<Btn iconPath={mdiPlus} title={"Create a new database"}></Btn>}
+                initialState={{ query: "", action: "create" } as { query: string; action: "create" | "clone"  }}
+                render={(pClose, { query, action } , setState) => {
+
+                  if(action === "clone" && origCon?.db_name){
+                    getDBCloneQuery(origCon.db_name, c.db_name!, dbProject.sql!).then(newQuery => {
+                      if(newQuery !== query) setState({ query: newQuery })
+                    })
+
+                  } else {
+                    const newQuery = `CREATE DATABASE ${c.db_name}; `;
+                    if(newQuery !== query) setState({ query: newQuery })
+                  }
+
+                  return <div className="flex-col gap-1"> 
+                    <ButtonGroup 
+                      value={action} 
+                      options={["create", "clone"]} 
+                      onChange={action => setState({ action }) } 
+                    />
+                    {action === "clone" && <InfoRow>You are about to clone the current database {origCon?.db_name} into {c.db_name}. This will close all existing connections to the current database!</InfoRow>}
+                    {action === "create" && <InfoRow color="action">You are about to create a new database: {c.db_name}</InfoRow>}
+                    <CodeExample value={query} language="sql" style={{ minHeight: "400px" }} suggestions={this} />
+                    <Btn variant="filled" color="action" onClickPromise={() => dbProject.sql!(query).then(pClose)}>Run</Btn>
+                  </div>
+                }}
+              /> 
+              
+            } 
+          />
+          
+          <FormField id="h" value={c.db_host} label="Host" type="text" autoComplete="off" onChange={db_host => updateConnection({ db_host }) }  />
+          <FormField id="p" value={c.db_port} label="Port" type="number" autoComplete="off" onChange={db_port => updateConnection({ db_port }) }  />
+          
+        </>
+      }
+
+      {warning && <Chip color="yellow" value={warning}/>}
+
+      {type !== "Prostgles" && <>
+        <ExpandSection label="SSL options" buttonProps={{ variant: undefined, color: "action", iconPath: mdiDotsHorizontal }} >
+          <FormField id="s" label="SSL Mode" 
+            fullOptions={SSL_MODES} required={true}
+            value={c.db_ssl} 
+            onChange={async (db_ssl: typeof SSL_MODES[number]["key"]) => { 
+              // if(c.type === "Connection URI"){
+              //   const con = await dbsMethods?.validateConnection?.({ ...c, db_ssl, type: "Standard" });
+              //   console.log(con);
+              // }
+              /** Switch to standard to ensure the db_conn is updated accordingly */
+              updateConnection({ db_ssl, type: "Standard" }) 
+            }}
+          />
+          {["verify-ca", "verify-full", "require", "prefer", "allow"].includes(sslmode!) && <>
+            <FormField id="ssl_cert" 
+              label="CA Certificate" 
+              type="file"
+              labelStyle={{ flex: "unset" }}
+              onChange={async files => { 
+                const file: File | null = files[0];
+                updateConnection({ ssl_certificate: (await file?.text()) ?? undefined }) 
+              }}
+            />
+            <FormField id="ssl_client_cert" 
+              label="Client Certificate" 
+              type="file"
+              labelStyle={{ flex: "unset" }}
+              onChange={async files => { 
+                const file: File | null = files[0];
+                updateConnection({ ssl_client_certificate: (await file?.text()) ?? undefined }) 
+              }}
+            />
+            <FormField id="ssl_client_cert_key" 
+              label="Client Key" 
+              type="file"
+              labelStyle={{ flex: "unset" }}
+              onChange={async files => { 
+                const file: File | null = files[0];
+                updateConnection({ ssl_client_certificate_key: (await file?.text()) ?? undefined }) 
+              }}
+            />
+            <FormField id="ssl_rejectUnauthorized" 
+              label="Reject unauthorized" 
+              type="checkbox"
+              labelStyle={{ flex: "unset" }}
+              value={c.ssl_reject_unauthorized}
+              onChange={ssl_reject_unauthorized => {
+                updateConnection({ ssl_reject_unauthorized }) 
+              }}
+              hint={cTable?.columns.find(c => c.name === "ssl_reject_unauthorized")?.hint}
+            />
+            </>}
+          </ExpandSection>
+          {!isForStateDB && <FlexRow className="mt-1">
+            <SwitchToggle 
+              id="swatch"
+              label={{
+                label: "Watch schema",
+                info: "Will reload on schema change. Requires superuser for best experience"
+              }}
+              checked={!!c.db_watch_shema} 
+              onChange={db_watch_shema => { updateConnection({ db_watch_shema }) }}
+            />
+            {dbsMethods?.reloadSchema && 
+              <Btn
+                onClickPromise={() => dbsMethods.reloadSchema!(c.id!)}
+                color="action"
+              >
+                Reload schema
+              </Btn>
+            }
+          </FlexRow>}
+          <div className="flex-col my-1 gap-1">
+            {test.onTest && <Btn variant="faded" color="default" 
+              iconPath={mdiConnection}
+              onClickPromise={test.onTest}
+            >Test connection</Btn>}
+            
+            {!!test.status && (
+              <div 
+                ref={refStatus}
+                style={{ padding: "1em", borderRadius: "8px" }} 
+                className={"chip flex-col p-1 " + (test.statusOK? "green" : "red")}
+              >
+                <span className="ws-pre">{test.status}</span> 
+              </div>
+            )}
+          
+          </div>
+        </>
+      }
+  </>
+}
+
+
+const getDBCloneQuery = (oldDb:string, newDb: string, sql: SQLHandler): Promise<string> => {
+  return sql("/* originaldb must be idle/not accessed by other users */ \n \
+  CREATE DATABASE ${newDb} WITH TEMPLATE ${oldDb} OWNER current_user; \n \
+  \n \
+  /* To make originaldb idle */ \n  \
+  SELECT pg_terminate_backend(pg_stat_activity.pid)   \n  \
+  FROM pg_stat_activity  \n  \
+  WHERE pg_stat_activity.datname = ${newDb}   \n  \
+  AND pid <> pg_backend_pid(); \n  \
+  ", { oldDb, newDb, }, { returnType: "statement" });
+}

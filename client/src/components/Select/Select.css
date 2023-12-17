@@ -1,0 +1,22 @@
+
+
+.select-wrapper {
+
+  /* border-color: #d2d6dc;
+  border-width: 1px;
+  border-style: solid; */
+  box-sizing: border-box;
+  border-radius: .375rem;
+  overflow: hidden;
+}
+
+.select-wrapper select {
+  background: white;
+  padding: .5rem .75rem;
+  border: none;
+  outline: 0;
+  flex: 1;
+  text-decoration: none;
+  cursor: pointer;
+
+}

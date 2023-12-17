@@ -11,9 +11,7 @@ export type CustomTableRules = {
 const OBJ_DEF_TYPES = ["boolean", "string", "number", "Date", "string[]", "number[]", "Date[]", "boolean[]"] as const;
 type DataTypes = typeof OBJ_DEF_TYPES[number];
 
-type _ObjDef = 
-| DataTypes 
-| {
+type ArgObjDef = {
   type: DataTypes;
   allowedValues?: readonly string[] | readonly number[] | readonly Date[];
   defaultValue?: string;
@@ -43,13 +41,23 @@ type _ObjDef =
       actionLabel?: string;
     }
   }
-} 
+};
+
+type _ObjDef = 
+| DataTypes 
+| ArgObjDef;
+
 type ObjDef = 
 | _ObjDef 
 | { oneOf: readonly _ObjDef[]; }
 | { arrayOf: _ObjDef; }
 
-export type ArgDef = (ObjDef & {
+// type ObjDefObj = 
+// | ArgObjDef 
+// | { oneOf: readonly ArgObjDef[]; }
+// | { arrayOf: ArgObjDef; }
+
+export type ArgDef = (ArgObjDef & {
   name: string;  
 });
 export type ParamDef = ObjDef;
@@ -70,8 +78,6 @@ export type MethodClientDef = {
 };
 
 
-export type UserGroupRule = DBSSchema["access_control"]["rule"]
-
 export type ContextValue = {
   objectName: string;
   objectPropertyName: string;
@@ -88,7 +94,7 @@ export type ForcedData = ({
 
 
 export type SelectRule = {
-  fields: FieldFilter,
+  fields: FieldFilter;
   forcedFilterDetailed?: GroupedDetailedFilter;
   filterFields?: FieldFilter;
   orderByFields?: FieldFilter;
@@ -98,20 +104,31 @@ export type UpdateRule = {
   forcedFilterDetailed?: GroupedDetailedFilter;
   filterFields?: FieldFilter;
   forcedDataDetail?: ForcedData[];
+  checkFilterDetailed?: GroupedDetailedFilter;
 
   dynamicFields?: {
     filterDetailed: GroupedDetailedFilter;
     fields: FieldFilter;
   }[];
+  forcedDataFrom?: "InsertRule";
+  checkFilterFrom?: "InsertRule";
+  fieldsFrom?: "SelectRule" | "InsertRule";
+  forcedFilterFrom?: "SelectRule" | "DeleteRule";
+  filterFieldsFrom?: "SelectRule" | "DeleteRule";
 };
 
 export type InsertRule = {
   fields: FieldFilter,
   forcedDataDetail?: ForcedData[];
+  checkFilterDetailed?: GroupedDetailedFilter;
+  checkFilterFrom?: "UpdateRule";
+  forcedDataFrom?: "InsertRule";
 }
 export type DeleteRule = {
-  filterFields: FieldFilter,
+  filterFields: FieldFilter;
   forcedFilterDetailed?: GroupedDetailedFilter;
+  filterFieldsFrom?: "SelectRule" | "UpdateRule";
+  forcedFilterFrom?: "SelectRule" | "UpdateRule";
 };
 
 export type DBSSchema = {
@@ -204,12 +221,30 @@ export const parseFullFilter = (filter: GroupedDetailedFilter, context: ContextD
   return f
 }
  
-export const parseForcedFilter = (rule: TableRules[keyof TableRules], context: ContextDataObject | undefined, columns: string[] | undefined): { forcedFilter: { $and: AnyObject[] } | { $or: AnyObject[] } } | undefined => {
-  if(isObject(rule) && "forcedFilterDetailed" in rule && rule.forcedFilterDetailed){
-    const forcedFilter = parseFullFilter(rule.forcedFilterDetailed, context, columns);
-    if(forcedFilter) return { forcedFilter }
+type ParsedFilter = { $and: AnyObject[] } | { $or: AnyObject[] };
+type ParsedRuleFilters = { 
+  forcedFilter?: ParsedFilter; 
+  checkFilter?: ParsedFilter;
+};
+export const parseCheckForcedFilters = (rule: TableRules[keyof TableRules], context: ContextDataObject | undefined, columns: string[] | undefined): ParsedRuleFilters | undefined => {
+  let parsedRuleFilters: ParsedRuleFilters | undefined; 
+  if(isObject(rule)){
+    if("forcedFilterDetailed" in rule && rule.forcedFilterDetailed){
+      const forcedFilter = parseFullFilter(rule.forcedFilterDetailed, context, columns);
+      if(forcedFilter) {
+        parsedRuleFilters ??= {};
+        parsedRuleFilters.forcedFilter = forcedFilter;
+      }
+    }
+    if("checkFilterDetailed" in rule && rule.checkFilterDetailed){
+      const checkFilter = parseFullFilter(rule.checkFilterDetailed, context, columns);
+      if(checkFilter) {
+        parsedRuleFilters ??= {};
+        parsedRuleFilters.checkFilter = checkFilter;
+      }
+    }
   }
-  return undefined
+  return parsedRuleFilters
 }
 
 const getValidatedFieldFilter = (value: FieldFilter, columns: string[], expectAtLeastOne = true): FieldFilter => {
@@ -257,7 +292,7 @@ const parseSelect = (rule: undefined | boolean | SelectRule, columns: string[], 
 
   return {
     fields: getValidatedFieldFilter(rule.fields, columns),
-    ...parseForcedFilter(rule, context, columns),
+    ...parseCheckForcedFilters(rule, context, columns),
     ...(rule.orderByFields && { orderByFields: getValidatedFieldFilter(rule.orderByFields, columns, false) }),
     ...(rule.filterFields && { filterFields: getValidatedFieldFilter(rule.filterFields, columns, false) })
   }
@@ -267,7 +302,7 @@ const parseUpdate = (rule: undefined | boolean | UpdateRule, columns: string[], 
 
   return {
     fields: getValidatedFieldFilter(rule.fields, columns),
-    ...parseForcedFilter(rule, context, columns),
+    ...parseCheckForcedFilters(rule, context, columns),
     ...parseForcedData(rule, context, columns),
     ...(rule.filterFields && { filterFields: getValidatedFieldFilter(rule.filterFields, columns, false) }),
     ...(rule.dynamicFields?.length && { 
@@ -284,13 +319,14 @@ const parseInsert = (rule: undefined | boolean | InsertRule, columns: string[], 
   return {
     fields: getValidatedFieldFilter(rule.fields, columns),
     ...parseForcedData(rule, context, columns),
+    ...parseCheckForcedFilters(rule, context, columns),
   }
 }
 const parseDelete = (rule: undefined | boolean | DeleteRule, columns: string[], context: ContextDataObject) => {
   if(!rule || rule === true) return rule;
 
   return {
-    ...parseForcedFilter(rule, context, columns),
+    ...parseCheckForcedFilters(rule, context, columns),
     filterFields: getValidatedFieldFilter(rule.filterFields, columns),
   }
 }

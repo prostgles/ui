@@ -1,0 +1,18 @@
+.workspace-list-item button:hover {
+  background: var(--gray-500) !important;
+  color: white !important;
+}
+
+.add-wsp-btn button:hover {
+  color: var(--action) !important;
+}
+
+#dashboard-menu-button {
+  background-color: rgb(240 254 255);
+  border: "1px solid #00d0ff";
+}
+
+.dark-theme #dashboard-menu-button {
+  background-color: #002537;
+  border-color: rgb(0 80 99);
+}

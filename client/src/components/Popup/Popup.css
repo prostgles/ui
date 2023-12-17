@@ -1,0 +1,16 @@
+.box {
+  clip-path: circle(15% at 50% 10%);
+  /* transition: clip-path 1s; */
+}
+
+.box:hover {
+  clip-path: circle(25%);
+}
+
+.popup-component-root {
+  background-color: white;
+}
+
+.dark-theme .popup-component-root {
+  background-color: #252525;
+}

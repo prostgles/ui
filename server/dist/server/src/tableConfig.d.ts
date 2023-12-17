@@ -1,4 +1,5 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig";
+import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+export declare const DB_SSL_ENUM: readonly ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"];
 export declare const tableConfig: TableConfig<{
     en: 1;
 }>;

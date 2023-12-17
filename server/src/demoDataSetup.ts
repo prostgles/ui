@@ -1,8 +1,7 @@
 import { readFileSync } from "fs";
 import path from "path";
 import { pgp } from "prostgles-server/dist/DboBuilder";
-import { DB } from "prostgles-server/dist/Prostgles"; 
-import { Connections } from ".";
+import { DB } from "prostgles-server/dist/Prostgles";  
 import { getRootDir } from "./electronConfig";
 // import { faker } from "@faker-js/faker";
 const { faker } = require("@faker-js/faker");
@@ -91,19 +90,36 @@ setInterval(async () => {
 
 Crypto realtime
 
-CREATE TABLE "ETHUSDT" (
+DROP TABLE IF EXISTS pairs;
+CREATE TABLE pairs (
+  id TEXT PRIMARY KEY
+);
+INSERT INTO pairs (id) VALUES('ETHUSDT');
+
+DROP TABLE IF EXISTS "options";
+CREATE TABLE "options" (
   id SERIAL PRIMARY KEY,
   e TEXT,
-  "E" TIMESTAMP WITHOUT TIME ZONE,
-  s TEXT,
+  "E" TIMESTAMP WITH TIME ZONE,
+  s TEXT NOT NULL REFERENCES pairs,
   p NUMERIC
 );
 
 (new WebSocket("wss://nbstream.binance.com/eoptions/stream?streams=ETHUSDT@index")).onmessage = async ({ data }) => {
   // d = { "e": "index", "E": 1672325226310, "s": "ETHUSDT", "p": "1202.87071862" }
   const d = (JSON.parse(data).data);
-  await db.ETHUSDT.insert({ ...d, E: new Date(+d.E) });
+  console.log(d);
+  await db.options.insert({ ...d, E: new Date(+d.E) });
 }
+
+(new WebSocket("wss://stream.binance.com:443/stream?streams=btcusdt@aggTrade")).onmessage = async ({ data }) => {
+  // d = { "e": "index", "E": 1672325226310, "s": "ETHUSDT", "p": "1202.87071862" }
+  const d = (JSON.parse(data).data);
+  console.log(d);
+  await db.options.insert({ ...d, E: new Date(+d.E) });
+}
+
+write a websocket subscription to btc usd binance stream below using this link: wss://stream.binance.com:9443 
 
  */
 

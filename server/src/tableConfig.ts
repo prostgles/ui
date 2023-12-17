@@ -1,5 +1,9 @@
 import { JSONB } from "prostgles-types";
-import type { TableConfig } from "prostgles-server/dist/TableConfig";
+import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+
+export const DB_SSL_ENUM = ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'] as const;
+ 
+const UNIQUE_DB_FIELDLIST = "db_name, db_host, db_port";
 const PASSWORDLESS_ADMIN_USERNAME = "passwordless_admin";
 const DUMP_OPTIONS_SCHEMA = {
   jsonbSchema: {
@@ -21,7 +25,7 @@ const DUMP_OPTIONS_SCHEMA = {
       create: { type: "boolean", optional: true },
       encoding: { type: "string", optional: true }, 
       numberOfJobs: { type: "integer", optional: true },
-      noOwner: { type: "boolean", optional: true }, 
+      noOwner: { type: "boolean", optional: true },
 
       compressionLevel: { type: "integer", optional: true },
       ifExists: { type: "boolean", optional: true },
@@ -34,22 +38,115 @@ const DUMP_OPTIONS_SCHEMA = {
 
 const FieldFilterSchema = {
   oneOf: [
-    "boolean",
     "string[]",
-    { enum: ["*"] },
+    { enum: ["*", ""] },
     { 
       record: {
-        values: { enum: [1, 0] }
+        values: { enum: [1, true ] }
       } 
-    }
+    },
+    { 
+      record: {
+        values: { enum: [0, false] }
+      } 
+    },
   ]
 } satisfies JSONB.FieldType;
 
-const SESSION_TYPE = { 
+const tableConfigSchema: JSONB.JSONBSchema<JSONB.FieldTypeObj> = {
+  record: {
+    values: { 
+      oneOfType: [
+        { 
+          isLookupTable: {
+            "type": {
+              values: { "record": { values: { "type": "string", optional: true } } },
+            }
+          } 
+        },
+        { 
+          columns: { description: "Column definitions and hints",
+            "record": {
+              values: { 
+                "oneOf": [
+                  "string",
+                  { 
+                    type: {
+                      hint: { type: "string", optional: true },
+                      nullable: { type: "boolean", optional: true }, 
+                      isText: { type: "boolean", optional: true }, 
+                      trimmed: { type: "boolean", optional: true }, 
+                      defaultValue: { type: "any", optional: true },
+                    },
+                  }, {
+                    type: {
+                      jsonbSchema: { 
+                        "oneOfType": [
+                          {
+                            "type": {
+                              enum: ["string", "number", "boolean", "Date", "time", "timestamp", "string[]", "number[]", "boolean[]", "Date[]", "time[]", "timestamp[]"]   
+                            },
+                            "optional": {  "type": "boolean", optional: true },
+                            "description": { type: "string", optional: true },
+                          },
+                          {
+                            "type": {
+                              "enum": ["Lookup","Lookup[]"]
+                            },
+                            "optional": {  "type": "boolean", optional: true },
+                            "description": { type: "string", optional: true },
+                          },
+                          {
+                            "type": {
+                              "enum": [
+                                "object"
+                              ]
+                            },
+                            "optional": {  "type": "boolean", optional: true },
+                            "description": { type: "string", optional: true },
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ] 
+              }
+            }
+          } 
+        },
+      ] 
+    }
+  }
+}
+
+const SESSION_TYPE = {
   enum: ["web", "api_token", "desktop", "mobile"], 
   defaultValue: "web", 
   nullable: false 
 } as const;
+
+const CommonLinkOpts = {
+  colorArr: { type: "number[]", optional: true },
+} as const;
+
+const filter = {
+  oneOfType: [
+    { $and: "any[]" },
+    { $or: "any[]" },
+  ],
+  optional: true,
+} as const; 
+
+const joinPath = { arrayOfType: { table: "string", on: { arrayOf: { record: { values: "any" } } } }, optional: true } as const satisfies JSONB.FieldTypeObj
+const CommonChartLinkOpts = { 
+  ...CommonLinkOpts,
+  smartGroupFilter: filter,
+  joinPath,
+  localTableName: { type: "string", optional: true, description: "If provided then this is a local layer (w1_id === w2_id === current chart window)" },
+  groupByColumn: { type: "string", optional: true, description: "Used by timechart only at the moment" },
+  fromSelected: { type: "boolean", optional: true, description: "True if chart links to SQL statement selection" },
+  sql: { type: "string", optional: true },
+} as const satisfies JSONB.ObjectType["type"] 
 
 export const tableConfig: TableConfig<{ en: 1; }> = { 
   user_types: {
@@ -86,6 +183,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           hideNonSSLWarning: { type: "boolean", optional: true, description: "Hides the top warning when accessing the website over an insecure connection (non-HTTPS)" },
           viewedSQLTips: { type: "boolean", optional: true, description: "Will hide SQL tips if true" },
           viewedAccessInfo: { type: "boolean", optional: true, description: "Will hide passwordless user tips if true" },
+          theme: { enum: ["dark", "light", "from-system"], optional: true, }
         }
       },
       "2fa": { nullable: true, jsonbSchemaType: {
@@ -94,15 +192,15 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           enabled: { type: "boolean" }
         }
       },
+      has_2fa_enbled: `BOOLEAN GENERATED ALWAYS AS ( ("2fa"->>'enabled')::BOOLEAN ) STORED`,
      
     },
-    constraints: {
+    constraints: { 
       [`passwordless_admin type AND username CHECK`]:
-        `CHECK(COALESCE(passwordless_admin, false) = FALSE OR type = 'admin' AND username = '${PASSWORDLESS_ADMIN_USERNAME}') `
+        `CHECK(COALESCE(passwordless_admin, false) = FALSE OR type = 'admin' AND username = '${PASSWORDLESS_ADMIN_USERNAME}')`
     },
     indexes: {
       "Only one passwordless_admin admin account allowed": {
-        replace: true,
         unique: true,
         columns: `passwordless_admin`,
         where: `passwordless_admin = true`
@@ -136,8 +234,9 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     columns: {
       id:          `UUID UNIQUE NOT NULL DEFAULT gen_random_uuid()` ,
       id_num:      `SERIAL PRIMARY KEY` ,
-      user_id:     `UUID NOT NULL REFERENCES users(id) ON DELETE SET NULL` ,
+      user_id:     `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE` ,
       name:        `TEXT` ,
+      socket_id:   `TEXT`,
       user_type:   `TEXT NOT NULL` ,
       is_mobile:   `BOOLEAN DEFAULT FALSE` ,
       is_connected:`BOOLEAN DEFAULT FALSE` ,
@@ -152,42 +251,45 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     }
   },
 
-  failed_login_attempts: {
-    // dropIfExists: true,
+  login_attempts: {
+    dropIfExists: true,
     columns: {
-      id:          `BIGSERIAL PRIMARY KEY` ,
-      ip_address:  `INET NOT NULL`,
-      type:         SESSION_TYPE,
-      created:     `TIMESTAMP DEFAULT NOW()` ,
-      username:    "TEXT",
+      id:               `BIGSERIAL PRIMARY KEY` ,
+      ip_address:       `INET NOT NULL`,
+      type:              SESSION_TYPE,
+      created:          `TIMESTAMP DEFAULT NOW()` ,
+      username:         "TEXT",
+      failed:           "BOOLEAN",
       magic_link_id:    "TEXT",
-      user_agent:  "TEXT",
-      info:        "TEXT",
+      sid:              "TEXT",
+      auth_type: { enum: ["session-id", "magic-link", "login"] },
+      ip_address_remote:  "TEXT",
+      x_real_ip:        "TEXT",
+      user_agent:       "TEXT",
+      info:             "TEXT",
     }
   },
 
-  connections: {
+  database_configs: {
+    constraints: {
+      uniqueDatabase: { type: "UNIQUE", content: UNIQUE_DB_FIELDLIST }
+    },
     columns: {
-      id:                      `UUID PRIMARY KEY DEFAULT gen_random_uuid()` ,
-      user_id:                 `UUID REFERENCES users(id) ON DELETE CASCADE` ,
-      name:                    `TEXT` ,
-      db_name:                 `TEXT DEFAULT ''` ,
-      db_host:                 `TEXT DEFAULT 'localhost'`,
-      db_port:                 `INTEGER DEFAULT 5432`,
-      db_user:                 `TEXT DEFAULT ''`,
-      db_pass:                 `TEXT DEFAULT ''`,
-      db_ssl:                  { enum: ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'], nullable: false, defaultValue: "disable" },
-      ssl_certificate:         { sqlDefinition: `TEXT` },
-      ssl_client_certificate:  { sqlDefinition: `TEXT` },
-      ssl_client_certificate_key:  { sqlDefinition: `TEXT` },
-      ssl_reject_unauthorized: { sqlDefinition: `BOOLEAN`, info: { hint: `If true, the server certificate is verified against the list of supplied CAs. \nAn error event is emitted if verification fails` } },
-      db_conn:                 { sqlDefinition: `TEXT DEFAULT ''` },
-      db_watch_shema:          { sqlDefinition: `BOOLEAN DEFAULT TRUE` },
-      prgl_url:                { sqlDefinition: `TEXT` },
-      prgl_params:             { sqlDefinition: `JSONB` },
-      type:                    { enum: ["Standard", "Connection URI", "Prostgles"], nullable: false },
-      is_state_db:             { sqlDefinition: `BOOLEAN`, info: { hint: `If true then this DB is used to run the dashboard` }  },
-      table_config:        { info: { hint: `File and User configurations` },
+      id:      `SERIAL PRIMARY KEY` ,
+      db_name: `TEXT NOT NULL` ,
+      db_host: `TEXT NOT NULL`,
+      db_port: `INTEGER NOT NULL`,
+      rest_api_enabled: `BOOLEAN DEFAULT FALSE`,
+      table_config: { 
+        info: { hint: `Table configurations` },
+        nullable: true,
+        jsonbSchema: tableConfigSchema
+      },
+      table_config_ts: {
+        sqlDefinition: "TEXT",
+        info: { hint: `Table configurations from typescript. Must export const tableConfig` },
+      },
+      file_table_config:            { info: { hint: `File storage configurations` },
         nullable: true,
         jsonbSchemaType: {
           fileTable: { type: "string", optional: true },
@@ -213,12 +315,11 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           
 
         }
-    
+
       },
 
-
       backups_config:      { nullable: true, info: { hint: `Automatic backups configurations` }, jsonbSchemaType: {
-    
+
         enabled:{ type: "boolean", optional: true },
         cloudConfig: { nullable: true, type: {
           /**
@@ -254,21 +355,52 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         err: { type: "string", optional: true, nullable: true },
 
         dump_options: DUMP_OPTIONS_SCHEMA.jsonbSchema
+
+        } 
+      },
+    }
+  },
+
+  connections: {
+    columns: {
+      id:                      `UUID PRIMARY KEY DEFAULT gen_random_uuid()` ,
+      user_id:                 `UUID REFERENCES users(id) ON DELETE CASCADE` ,
+      name:                    `TEXT` ,
+      db_name:                 `TEXT NOT NULL DEFAULT ''` ,
+      db_host:                 `TEXT NOT NULL DEFAULT 'localhost'`,
+      db_port:                 `INTEGER NOT NULL DEFAULT 5432`,
+      db_user:                 `TEXT NOT NULL DEFAULT ''`,
+      db_pass:                 `TEXT DEFAULT ''`,
+      db_ssl:                  { enum: DB_SSL_ENUM, nullable: false, defaultValue: "disable" },
+      ssl_certificate:         { sqlDefinition: `TEXT` },
+      ssl_client_certificate:  { sqlDefinition: `TEXT` },
+      ssl_client_certificate_key:  { sqlDefinition: `TEXT` },
+      ssl_reject_unauthorized: { sqlDefinition: `BOOLEAN`, info: { hint: `If true, the server certificate is verified against the list of supplied CAs. \nAn error event is emitted if verification fails` } },
+      db_conn:                 { sqlDefinition: `TEXT DEFAULT ''` },
+      db_watch_shema:          { sqlDefinition: `BOOLEAN DEFAULT TRUE` },
+      prgl_url:                { sqlDefinition: `TEXT` },
+      prgl_params:             { sqlDefinition: `JSONB` },
+      type:                    { enum: ["Standard", "Connection URI", "Prostgles"], nullable: false },
+      is_state_db:             { sqlDefinition: `BOOLEAN`, info: { hint: `If true then this DB is used to run the dashboard` }  },
  
-      } },
+      info: { jsonbSchemaType: {
+        canCreateDb: { type: "boolean", optional: true, description: "True if postgres user is allowed to create databases. Never gets updated" }
+      }, nullable: true },
       created:             { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
       last_updated:        { sqlDefinition: `BIGINT NOT NULL DEFAULT 0` },
 
     },
-    constraints: {
+    constraints: {  
       uniqueConName: `UNIQUE(name, user_id)`,
-        "Check connection type": `CHECK (
+      "Check connection type": 
+        `CHECK (
           type IN ('Standard', 'Connection URI', 'Prostgles') 
           AND (type <> 'Connection URI' OR length(db_conn) > 1) 
           AND (type <> 'Standard' OR length(db_host) > 1) 
           AND (type <> 'Prostgles' OR length(prgl_url) > 0)
-        )`
-    }
+        )`,
+      database_config_fkey: `FOREIGN KEY (${UNIQUE_DB_FIELDLIST}) REFERENCES database_configs( ${UNIQUE_DB_FIELDLIST} )`
+    },
   },
 
 
@@ -277,76 +409,71 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     columns: {
       id:    `SERIAL PRIMARY KEY`,
       name:   "TEXT",
-      connection_id   : `UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE`,
-      rule            : { nullable: false, jsonbSchemaType: {
-        userGroupNames: { type: "string[]", description: "List of user types that this rule applies to" },
-        dbsPermissions: { description: "Permission types and rules for the state database", optional: true, type: {
-          createWorkspaces: { type: "boolean", optional: true },
-          viewPublishedWorkspaces: { type: {
-            workspaceIds: "string[]"
-          }, optional: true },
-        } },
-        dbPermissions: { description: "Permission types and rules for this (connection_id) database", oneOfType: [
-          { 
-            type: { enum: ["Run SQL"], description: "Allows complete access to the database" },
-            allowSQL: { type: "boolean", optional: true },
-          },
-          { 
-            type: { enum: ["All views/tables"], description: "Custom access (View/Edit/Remove) to all tables" },
-            allowAllTables: { type: "string[]", allowedValues: ["select", "insert", "update", "delete"]   }   
-          },
-          { 
-            type: { enum: ["Custom"], description: "Fine grained access to specific tables" },
-            customTables: { arrayOfType: {
-              tableName: "string",
-              select: { description: "Allows viewing data", optional: true, oneOf: ["boolean", {
-                type: {
-                  fields: FieldFilterSchema,
-                  forcedFilterDetailed: { optional: true, type: "any" },
-                  filterFields: { optional: true, ...FieldFilterSchema },
-                  orderByFields: { optional: true, ...FieldFilterSchema }
-                }
-              }]} , 
-              update: { optional: true, oneOf: ["boolean", {
-                type: {
-                  fields: FieldFilterSchema,
-                  forcedFilterDetailed: { optional: true, type: "any" },
-                  filterFields: { optional: true, ...FieldFilterSchema },
-                  orderByFields: { optional: true, ...FieldFilterSchema },
-                  forcedDataDetail: { optional: true, type: "any[]" },
-                  dynamicFields: { optional: true, arrayOfType: {
-                    filterDetailed: "any",
-                    fields: FieldFilterSchema
-                  }}
-                }
-              }]},
-              insert: { optional: true, oneOf: [
-                "boolean", 
-                { "type": {
-                  fields: FieldFilterSchema,
-                  forcedDataDetail:  { optional: true, type: "any[]" },
-                }
-              }]},
-              delete: { optional: true, oneOf: [
-                "boolean", 
-                { "type": {
-                  filterFields: FieldFilterSchema,
-                  forcedFilterDetailed: { optional: true, type: "any" },
-                }
-              }]}
+      // connection_id   : `UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE`,
+      database_id     : `INTEGER NULL REFERENCES database_configs(id)  ON DELETE CASCADE`,
+      dbsPermissions: { info:{ hint: "Permission types and rules for the state database"}, nullable: true, jsonbSchemaType: {
+        createWorkspaces: { type: "boolean", optional: true },
+        viewPublishedWorkspaces: { type: {
+          workspaceIds: "string[]"
+        }, optional: true },
+      }},        
+      dbPermissions: { info: { hint: "Permission types and rules for this (connection_id) database" }, jsonbSchema: { oneOfType: [
+        { 
+          type: { enum: ["Run SQL"], description: "Allows complete access to the database" },
+          allowSQL: { type: "boolean", optional: true },
+        },
+        { 
+          type: { enum: ["All views/tables"], description: "Custom access (View/Edit/Remove) to all tables" },
+          allowAllTables: { type: "string[]", allowedValues: ["select", "insert", "update", "delete"]   }   
+        },
+        { 
+          type: { enum: ["Custom"], description: "Fine grained access to specific tables" },
+          customTables: { arrayOfType: {
+            tableName: "string",
+            select: { optional: true, description: "Allows viewing data", oneOf: ["boolean", {
+              type: {
+                fields: FieldFilterSchema,
+                forcedFilterDetailed: { optional: true, type: "any" },
+                filterFields: { optional: true, ...FieldFilterSchema },
+                orderByFields: { optional: true, ...FieldFilterSchema }
+              }
+            }]} , 
+            update: { optional: true, oneOf: ["boolean", {
+              type: {
+                fields: FieldFilterSchema,
+                forcedFilterDetailed: { optional: true, type: "any" },
+                checkFilterDetailed: { optional: true, type: "any" },
+                filterFields: { optional: true, ...FieldFilterSchema },
+                orderByFields: { optional: true, ...FieldFilterSchema },
+                forcedDataDetail: { optional: true, type: "any[]" },
+                dynamicFields: { optional: true, arrayOfType: {
+                  filterDetailed: "any",
+                  fields: FieldFilterSchema
+                }}
+              }
+            }]},
+            insert: { optional: true, oneOf: [
+              "boolean", 
+              { "type": {
+                fields: FieldFilterSchema,
+                forcedDataDetail:  { optional: true, type: "any[]" },
+                checkFilterDetailed: { optional: true, type: "any" },
+              }
+            }]},
+            delete: { optional: true, oneOf: [
+              "boolean", 
+              { "type": {
+                filterFields: FieldFilterSchema,
+                forcedFilterDetailed: { optional: true, type: "any" },
+              }
+            }]}
 
 
-            }},
-          }
-        ]},
-        methods: { 
-          description: "Custom server-side functions",
-          optional: true,
-          type: "any[]",
+          }},
         }
+      ]}},
         
-      }},
-      created         : { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
+      created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
     }
   },
   published_methods: {
@@ -376,21 +503,21 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
                 title: "Allowed values", 
                 optional: true, 
                 type: "string[]"  
-              }    
-            },  
-            {    
-              name: { type: "string" },  
-              type: { title: "Data type", enum: ["Lookup", "Lookup[]"]    }, 
-              defaultValue: { type: "any", optional: true },  
+              }
+            },
+            {
+              name: { title: "Argument name", type: "string" },  
+              type: { title: "Data type", enum: ["Lookup", "Lookup[]"] }, 
+              defaultValue: { type: "any", optional: true },   
               optional: { optional: true, type: "boolean" },   
               lookup: { 
                 title: "Table column",
-                lookup: {
+                lookup: { 
                   type: "data-def",
                   column: "",
                   table: ""      
                 } 
-              },
+              }, 
             },
           ]  
         } 
@@ -398,7 +525,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       run: "TEXT NOT NULL DEFAULT 'export const run: MyMethod = async (args, { db, dbo, user }) => {\n  \n}'",
       outputTable: `TEXT`
     },
-    indexes: { "unique_name": { columns: "name, connection_id", replace: true }}
+    indexes: { "unique_name": { columns: "name, connection_id" }}
   },
   access_control_user_types: {
     columns: {
@@ -413,8 +540,8 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
   access_control_methods: {
     // dropIfExistsCascade: true,
     columns: {
-      published_method_id: `INTEGER NOT NULL REFERENCES published_methods`,
-      access_control_id: `INTEGER NOT NULL REFERENCES access_control`,
+      published_method_id: `INTEGER NOT NULL REFERENCES published_methods  ON DELETE CASCADE`,
+      access_control_id: `INTEGER NOT NULL REFERENCES access_control  ON DELETE CASCADE`,
     },
     constraints: {
       pkey: { type: "PRIMARY KEY", content: "published_method_id, access_control_id" }
@@ -425,7 +552,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     // dropIfExistsCascade: true,
     columns: {
       id:                  `TEXT PRIMARY KEY DEFAULT gen_random_uuid()`,
-      user_id:             `UUID NOT NULL REFERENCES users(id) ON DELETE SET NULL`,
+      user_id:             `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
       magic_link:          `TEXT`,
       magic_link_used:     `TIMESTAMP`,
       expires:             `BIGINT NOT NULL`,
@@ -435,7 +562,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
   credential_types: {
     // dropIfExists: true,
     isLookupTable: {
-      values: { s3: {}}
+      values: { s3: {} }
     }
   },
   
@@ -459,26 +586,27 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
   backups: {
     // dropIfExists: true,
     columns: {
-      id:               { sqlDefinition: `TEXT PRIMARY KEY DEFAULT gen_random_uuid()`, info: { hint: "Format: dbname_datetime_uuid" } },
-      connection_id:    { sqlDefinition: `UUID REFERENCES connections(id) ON DELETE SET NULL`, info: { hint: "If null then connection was deleted"} },
+      id:                 { sqlDefinition: `TEXT PRIMARY KEY DEFAULT gen_random_uuid()`, info: { hint: "Format: dbname_datetime_uuid" } },
+      connection_id:      { sqlDefinition: `UUID REFERENCES connections(id) ON DELETE SET NULL`, info: { hint: "If null then connection was deleted"} },
       connection_details: { sqlDefinition: `TEXT NOT NULL DEFAULT 'unknown connection' ` },
-      credential_id:    { sqlDefinition: `INTEGER REFERENCES credentials(id) `, info: { hint: "If null then uploaded locally"}  },
-      destination:      { sqlDefinition: `TEXT NOT NULL` },
-      dump_command:     { sqlDefinition: `TEXT NOT NULL` },
-      restore_command:  { sqlDefinition: `TEXT` },
-      local_filepath:   { sqlDefinition: `TEXT` },
-      content_type:     { sqlDefinition: `TEXT NOT NULL DEFAULT 'application/gzip'` },
-      initiator:        { sqlDefinition: `TEXT` },
-      details:          { sqlDefinition: `JSONB` },
+      credential_id:      { sqlDefinition: `INTEGER REFERENCES credentials(id) `, info: { hint: "If null then uploaded locally"}  },
+      destination:        { enum: ["Local", "Cloud", "None (temp stream)"], nullable: false },
+      dump_command:       { sqlDefinition: `TEXT NOT NULL` },
+      restore_command:    { sqlDefinition: `TEXT` },
+      local_filepath:     { sqlDefinition: `TEXT` },
+      content_type:       { sqlDefinition: `TEXT NOT NULL DEFAULT 'application/gzip'` },
+      initiator:          { sqlDefinition: `TEXT` },
+      details:            { sqlDefinition: `JSONB` },
       status: { 
         jsonbSchema: {
           oneOfType: [
             { ok: { type: "string" } },
             { err: { type: "string" } },
+            // { cancelled: { type: "number" } },
             { 
               loading: { optional: true, type: { 
                 loaded: { type: "number" },
-                total: { type: "number" } 
+                total: { type: "number", optional: true, } 
               }}  
             },
           ]
@@ -524,8 +652,8 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           keepLogs: { type: "boolean", optional: true },
         },
         defaultValue: `{ "clean": true, "format": "c", "command": "pg_restore" }`
-      }
-    }
+      },
+    },
   },
 
   
@@ -540,7 +668,8 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       layout:         `JSONB`,
       options:        { defaultValue: { 
         defaultLayoutType: "col",
-        hideCounts: true
+        hideCounts: false,
+        pinnedMenu: true,
       }, jsonbSchemaType: {
         hideCounts: {
           optional: true,
@@ -557,10 +686,15 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         pinnedMenu: {
           optional: true,
           type: "boolean"
+        },
+        pinnedMenuWidth: {
+          optional: true,
+          type: "number"
         }
       }
       },
       last_updated:   `BIGINT NOT NULL`,
+      last_used:      `TIMESTAMP NOT NULL DEFAULT now()`,
       deleted:        `BOOLEAN NOT NULL DEFAULT FALSE`,
       url_path:       `TEXT`,
       published:      `BOOLEAN NOT NULL DEFAULT FALSE`
@@ -576,7 +710,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     columns: {
       id              : `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
       user_id         : `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,
-      workspace_id    : `UUID NOT NULL REFERENCES workspaces(id)  ON DELETE CASCADE`,
+      workspace_id    : `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,//   ON DELETE SET NULL is used to ensure we don't delete SQL queries for convenience
       type            : `TEXT CHECK(type IN ('map', 'sql', 'table', 'timechart', 'card', 'method'))` ,
       table_name      : `TEXT` ,
       method_name     : `TEXT` ,
@@ -584,13 +718,13 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       sql             : `TEXT NOT NULL DEFAULT ''` ,
       selected_sql    : `TEXT NOT NULL DEFAULT ''` ,
       name            : `TEXT` ,
-      limit           : `INTEGER`,
+      limit           : `INTEGER DEFAULT 100 CHECK("limit" > 1 AND "limit" < 10000)`,
       closed          : `BOOLEAN DEFAULT FALSE` ,
       deleted         : `BOOLEAN DEFAULT FALSE` ,
       show_menu       : `BOOLEAN DEFAULT FALSE` , 
       layout          : `JSONB`,
       fullscreen      : `BOOLEAN DEFAULT TRUE` , 
-      sort            : `JSONB`,
+      sort            : "JSONB DEFAULT '[]'::jsonb",
       filter          : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
       options         : `JSONB NOT NULL DEFAULT '{}'::jsonb` , 
       
@@ -599,7 +733,11 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           "executeOptions": {
             optional: true, 
             description: "Behaviour of execute (ALT + E). Defaults to 'block' \nfull = run entire sql   \nblock = run code block where the cursor is",
-            enum: ["full", "block"]
+            enum: [
+              "full", 
+              "block",
+              "smallest-block",
+            ]
           },
           "errorMessageDisplay": {
             optional: true, 
@@ -617,7 +755,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           "renderMode": {
             optional: true, 
             description: "Show query results in a table or a JSON",
-            enum: ["table", "JSON"]
+            enum: ["table", "csv", "JSON"]
           },
           "minimap": { 
             optional: true, 
@@ -638,6 +776,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
             type: "integer", 
             optional: true, 
             description: "Defaults to 1000. Maximum number of characters to display for each cell. Useful in improving performance", 
+          },
+          "theme": {
+            optional: true, 
+            enum: ['vs', 'vs-dark', 'hc-black', 'hc-light'],
           }
         }
       } ,
@@ -663,7 +805,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         info: { hint: "List of allowed IP addresses in ipv4 or ipv6 format" } 
       },
       allowed_ips_enabled: { 
-        sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE CHECK(allowed_ips_enabled = FALSE OR array_length(allowed_ips, 1) > 0)`, 
+        sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE CHECK(allowed_ips_enabled = FALSE OR cardinality(allowed_ips) > 0)`, 
         info: { hint: "If enabled then only allowed IPs can connect" } 
       },
       trust_proxy: { 
@@ -672,7 +814,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       },
       session_max_age_days: { 
         sqlDefinition: `INTEGER NOT NULL DEFAULT 14 CHECK(session_max_age_days > 0)`, 
-        info: { hint: "Number of days a user will be logged in", min: 1, max: Number.MAX_SAFE_INTEGER } 
+        info: { hint: "Number of days a user will stay logged in", min: 1, max: Number.MAX_SAFE_INTEGER } 
       },
       magic_link_validity_days: { 
         sqlDefinition: `INTEGER NOT NULL DEFAULT 1 CHECK(magic_link_validity_days > 0)`, 
@@ -688,20 +830,99 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       }
     }
   },
-
+     
   links: {
     columns: {
       id              : `UUID PRIMARY KEY DEFAULT gen_random_uuid()` ,
       user_id         : `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE` ,
       w1_id           : `UUID NOT NULL REFERENCES windows(id)  ON DELETE CASCADE` ,
       w2_id           : `UUID NOT NULL REFERENCES windows(id)  ON DELETE CASCADE` ,
-      workspace_id    : `UUID NOT NULL REFERENCES workspaces(id)  ON DELETE CASCADE` ,
-      options         : `JSONB NOT NULL DEFAULT '{}'::jsonb` ,
+      workspace_id    : `UUID REFERENCES workspaces(id) ON DELETE SET NULL`, 
+      disabled        : "boolean",
+      options: {
+        jsonbSchema: {
+          oneOfType: [
+            { 
+              type: { enum: ["table"] },
+              ...CommonLinkOpts,
+              tablePath: { ...joinPath, optional: false, description: "Table path from w1.table_name to w2.table_name" },
+            },
+            { 
+              type: { enum: ["map"] },
+              ...CommonChartLinkOpts,
+              columns: { 
+                arrayOfType: {
+                  name: { type: "string", description: "Geometry/Geography column" },
+                  colorArr: "number[]",
+                }, 
+              },
+            },
+            { 
+              type: { enum: ["timechart"] },
+              ...CommonChartLinkOpts,
+              columns: { 
+                arrayOfType: {
+                  name: { type: "string", description: "Date column" },
+                  colorArr: "number[]",
+                  statType: { optional: true, type: {
+                      funcName: { enum: ["$min", "$max", "$countAll", "$avg", "$sum"] },
+                      numericColumn: "string",
+                    }, 
+                  },
+                }, 
+              },
+            }
+          ]
+        }
+      },
       closed          : `BOOLEAN DEFAULT FALSE` ,
-      deleted         : `BOOLEAN DEFAULT FALSE` ,
+      deleted         : `BOOLEAN DEFAULT FALSE` , 
       created         : `TIMESTAMP DEFAULT NOW()` ,
       last_updated    : `BIGINT NOT NULL` ,
       
     }
-  }
+  },
+
+
+  stats: { 
+    // dropIfExists: true,
+    columns: {
+      connection_id:  `UUID REFERENCES connections(id) ON DELETE CASCADE`,
+
+      datid: "INTEGER",
+      datname: "TEXT",
+      pid: "INTEGER NOT NULL",
+      usesysid: "INTEGER",
+      usename: { sqlDefinition: "TEXT", info: { hint: `Name of the user logged into this backend` } },
+      application_name: { sqlDefinition: "TEXT NOT NULL", info: { hint: `Name of the application that is connected to this backend` }},
+      client_addr: { sqlDefinition: "TEXT", info: { hint: `IP address of the client connected to this backend. If this field is null, it indicates either that the client is connected via a Unix socket on the server machine or that this is an internal process such as autovacuum.` }},
+      client_hostname: { sqlDefinition: "TEXT", info: { hint: `Host name of the connected client, as reported by a reverse DNS lookup of client_addr. This field will only be non-null for IP connections, and only when log_hostname is enabled.` }},
+      client_port: { sqlDefinition: "INTEGER", info: { hint: `TCP port number that the client is using for communication with this backend, or -1 if a Unix socket is used. If this field is null, it indicates that this is an internal server process.` }},
+      backend_start: { sqlDefinition: "TEXT NOT NULL", info: { hint: `Time when this process was started. For client backends, this is the time the client connected to the server.` }},
+      xact_start: { sqlDefinition: "TEXT", info: { hint: `Time when this process' current transaction was started, or null if no transaction is active. If the current query is the first of its transaction, this column is equal to the query_start column.` }},
+      query_start: { sqlDefinition: "TIMESTAMP", info: { hint: `Time when the currently active query was started, or if state is not active, when the last query was started` }},
+      state_change: { sqlDefinition: "TEXT", info: { hint: `Time when the state was last changed` }},
+      wait_event_type: { sqlDefinition: "TEXT", info: { hint: `The type of event for which the backend is waiting, if any; otherwise NULL. See Table 28.4.` }},
+      wait_event: { sqlDefinition: "TEXT", info: { hint: `Wait event name if backend is currently waiting, otherwise NULL. See Table 28.5 through Table 28.13.` }},
+      state: { sqlDefinition: "TEXT", info: { hint: `Current overall state of this backend. Possible values are: active: The backend is executing a query. idle: The backend is waiting for a new client command. idle in transaction: The backend is in a transaction, but is not currently executing a query. idle in transaction (aborted): This state is similar to idle in transaction, except one of the statements in the transaction caused an error. fastpath function call: The backend is executing a fast-path function. disabled: This state is reported if track_activities is disabled in this backend.` }},
+      backend_xid: { sqlDefinition: "TEXT", info: { hint: `Top-level transaction identifier of this backend, if any.` }},
+      backend_xmin: { sqlDefinition: "TEXT", info: { hint: `The current backend's xmin horizon.` }},
+      query: { sqlDefinition: "TEXT NOT NULL", info: { hint: `Text of this backend's most recent query. If state is active this field shows the currently executing query. In all other states, it shows the last query that was executed. By default the query text is truncated at 1024 bytes; this value can be changed via the parameter track_activity_query_size.` }},
+      backend_type: { sqlDefinition: "TEXT NOT NULL", info: { hint: `Type of current backend. Possible types are autovacuum launcher, autovacuum worker, logical replication launcher, logical replication worker, parallel worker, background writer, client backend, checkpointer, archiver, startup, walreceiver, walsender and walwriter. In addition, background workers registered by extensions may have additional types.` }},
+      blocked_by: { sqlDefinition: "INTEGER[]", info: { hint: `Process ID(s) of the sessions that are blocking the server process with the specified process ID from acquiring a lock. One server process blocks another if it either holds a lock that conflicts with the blocked process's lock request (hard block), or is waiting for a lock that would conflict with the blocked process's lock request and is ahead of it in the wait queue (soft block). When using parallel queries the result always lists client-visible process IDs (that is, pg_backend_pid results) even if the actual lock is held or awaited by a child worker process. As a result of that, there may be duplicated PIDs in the result. Also note that when a prepared transaction holds a conflicting lock, it will be represented by a zero process ID.` } },
+      blocked_by_num: "INTEGER NOT NULL DEFAULT 0", 
+      id_query_hash: { sqlDefinition: "TEXT", info: { hint: `Computed query identifier (md5(pid || query)) used in stopping queries` } },
+
+      cpu: { sqlDefinition: "NUMERIC", info: { hint: `CPU Utilisation. CPU time used divided by the time the process has been running. It will not add up to 100% unless you are lucky` } },
+      mem: { sqlDefinition: "NUMERIC", info: { hint: `Ratio of the process's resident set size  to the physical memory on the machine, expressed as a percentage` } },
+      cmd: { sqlDefinition: "TEXT", info: { hint: `Command with all its arguments as a string` } },
+
+    },
+    // indexes: {
+    //   pkeys: {columns: "pid, connection_id"}
+    // },
+    constraints: {
+      stats_pkey: "PRIMARY KEY(pid, connection_id)"
+    }
+  },
 }

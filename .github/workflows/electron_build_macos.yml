@@ -1,0 +1,25 @@
+name: Electron build macOs
+on: workflow_dispatch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  electron_build_macos:
+    timeout-minutes: 20
+    runs-on: macos-12
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+
+    - name: Install dependencies
+      run: |
+        cd electron && npm run build-macos
+      
+    - uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: installers
+        path: electron/dist
+        retention-days: 10

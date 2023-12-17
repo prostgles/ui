@@ -1,0 +1,163 @@
+
+.chat-container.chat-component .active-color {
+  color: rgb(5, 149, 252);
+}
+
+.chat-container.chat-component .bg-active-hover:hover {
+  background:  rgba(5, 149, 252, 0.3);
+}
+
+.chat-container.chat-component {
+  flex: 1 1 0%; 
+  display: flex; 
+  flex-direction: column; 
+  background: var(--gray-100);
+  /* border: 1px solid var(--gray-300); */
+}
+
+.chat-container.chat-component .send-wrapper svg {
+  width: 1.5rem; 
+  height: 1.5rem;
+}
+
+.chat-container.chat-component .send-wrapper svg path {
+  fill: currentColor;
+}
+
+.chat-container.chat-component .message-list {
+  position: relative; 
+  flex: 1 1 0%; 
+  min-width: 0px; 
+  min-height: 200px;
+  display: flex; 
+  flex-direction: column; 
+  font-size: 15px; 
+  overflow: auto; 
+  padding: 1em; 
+  scroll-behavior: smooth;
+  background-color: white;
+}
+
+.chat-container.chat-component .message {
+  padding: 5px 8px; 
+  border-radius: 12px; 
+  background: rgb(5, 149, 252); 
+  margin-top: 3px; 
+  max-width: 70%; 
+  color: white; 
+  min-width: 2em; 
+  flex: 0 0 auto; 
+  opacity: 1; 
+  transition: all 0.5s ease 0s; 
+  text-align: start; 
+  margin-right: unset; 
+  margin-left: auto; 
+  overflow: hidden; 
+  text-overflow: ellipsis;
+}
+.chat-container.chat-component .message.incoming {
+  padding: 5px 8px; 
+  border-radius: 12px; 
+  margin-top: 3px; 
+  max-width: 70%; 
+  color: white; 
+  min-width: 2em; 
+  flex: 0 0 auto; 
+  opacity: 1; 
+  transition: all 0.5s ease 0s; 
+  text-align: start; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  background: rgb(97, 96, 99); 
+  margin-right: auto; 
+  margin-left: unset;
+}
+
+/* .chat-container.chat-component .message:not(.incoming) video::-webkit-media-controls-panel, */
+.chat-container.chat-component .message:not(.incoming) audio::-webkit-media-controls-panel {
+  background: rgb(5, 149, 252); 
+}
+
+.chat-container.chat-component .message:not(.incoming) audio::-webkit-media-controls-mute-button,
+.chat-container.chat-component .message:not(.incoming) audio::-webkit-media-controls-mute-button,
+
+.chat-container.chat-component .message:not(.incoming) audio::-webkit-media-controls-play-button,
+
+.chat-container.chat-component .message:not(.incoming) audio::-webkit-media-controls-timeline-container,
+
+.chat-container.chat-component .message:not(.incoming) audio::-webkit-media-controls-current-time-display,
+
+.chat-container.chat-component .message:not(.incoming) audio::-webkit-media-controls-time-remaining-display,
+
+.chat-container.chat-component .message:not(.incoming) audio::-webkit-media-controls-timeline,
+
+.chat-container.chat-component .message:not(.incoming) audio::-webkit-media-controls-volume-slider,
+
+.chat-container.chat-component .message:not(.incoming) audio::-webkit-media-controls-seek-back-button,
+
+.chat-container.chat-component .message:not(.incoming) audio::-webkit-media-controls-seek-forward-button,
+
+.chat-container.chat-component .message:not(.incoming) audio::-webkit-media-controls-fullscreen-button,
+
+.chat-container.chat-component .message:not(.incoming) audio::-webkit-media-controls-rewind-button,
+
+.chat-container.chat-component .message:not(.incoming) audio::-webkit-media-controls-return-to-realtime-button,
+
+.chat-container.chat-component .message:not(.incoming) audio::-webkit-media-controls-toggle-closed-captions-button,
+
+.chat-container.chat-component .message:not(.incoming) audio svg *
+{
+  color: white !important;
+  fill: white !important;
+  stroke: white !important;
+}
+
+
+
+
+.chat-container.chat-component .message.media {
+  padding: 0;
+  background: none;
+  width: fit-content;
+  max-width: unset;
+  height: fit-content;
+}
+
+.chat-container.chat-component .message video,
+.chat-container.chat-component .message audio {
+  outline: none;
+}
+
+.chat-container.chat-component .send-wrapper {
+  flex: 0 0 auto; 
+  min-width: 0px; 
+  min-height: 60px; 
+  display: flex; 
+  flex-direction: row; 
+  align-items: center; 
+  justify-content: center;
+}
+
+.chat-container.chat-component .send-wrapper textarea {
+  flex: 1 1 0%; 
+  margin-left: 1em; 
+  resize: none; 
+  background: var(--gray-200);
+  color: var(--gray-800);
+  border-radius: 12px; 
+  border: none; 
+  padding: 10px;
+  font-size: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+}
+
+.chat-container.chat-component .send-wrapper button {
+  flex: 0 0 auto; 
+  cursor: pointer;
+}
+
+.chat-container.chat-component .spinner {
+  position: relative; 
+  margin-left: 20px; 
+  display: none;
+}

@@ -1,0 +1,22 @@
+*, body, html {
+  box-sizing: border-box;
+}
+
+body {
+  overflow: hidden;
+}
+
+
+.page-content {
+  padding-top: 1em;
+}
+
+.active-code-block-decoration {
+  background: lightblue;
+  width: 5px !important;
+  margin-left: 3px;
+}  
+
+.dark-theme .active-code-block-decoration {
+  background: #14708f;
+}
