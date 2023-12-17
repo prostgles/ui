@@ -8,7 +8,7 @@ export type CustomTableRules = {
 };
 declare const OBJ_DEF_TYPES: readonly ["boolean", "string", "number", "Date", "string[]", "number[]", "Date[]", "boolean[]"];
 type DataTypes = typeof OBJ_DEF_TYPES[number];
-type _ObjDef = DataTypes | {
+type ArgObjDef = {
     type: DataTypes;
     allowedValues?: readonly string[] | readonly number[] | readonly Date[];
     defaultValue?: string;
@@ -37,12 +37,13 @@ type _ObjDef = DataTypes | {
         };
     };
 };
+type _ObjDef = DataTypes | ArgObjDef;
 type ObjDef = _ObjDef | {
     oneOf: readonly _ObjDef[];
 } | {
     arrayOf: _ObjDef;
 };
-export type ArgDef = (ObjDef & {
+export type ArgDef = (ArgObjDef & {
     name: string;
 });
 export type ParamDef = ObjDef;
@@ -59,7 +60,6 @@ export type MethodClientDef = {
     args: ArgDef[];
     outputTable?: string;
 };
-export type UserGroupRule = DBSSchema["access_control"]["rule"];
 export type ContextValue = {
     objectName: string;
     objectPropertyName: string;
@@ -83,18 +83,29 @@ export type UpdateRule = {
     forcedFilterDetailed?: GroupedDetailedFilter;
     filterFields?: FieldFilter;
     forcedDataDetail?: ForcedData[];
+    checkFilterDetailed?: GroupedDetailedFilter;
     dynamicFields?: {
         filterDetailed: GroupedDetailedFilter;
         fields: FieldFilter;
     }[];
+    forcedDataFrom?: "InsertRule";
+    checkFilterFrom?: "InsertRule";
+    fieldsFrom?: "SelectRule" | "InsertRule";
+    forcedFilterFrom?: "SelectRule" | "DeleteRule";
+    filterFieldsFrom?: "SelectRule" | "DeleteRule";
 };
 export type InsertRule = {
     fields: FieldFilter;
     forcedDataDetail?: ForcedData[];
+    checkFilterDetailed?: GroupedDetailedFilter;
+    checkFilterFrom?: "UpdateRule";
+    forcedDataFrom?: "InsertRule";
 };
 export type DeleteRule = {
     filterFields: FieldFilter;
     forcedFilterDetailed?: GroupedDetailedFilter;
+    filterFieldsFrom?: "SelectRule" | "UpdateRule";
+    forcedFilterFrom?: "SelectRule" | "UpdateRule";
 };
 export type DBSSchema = {
     [K in keyof DBSchemaGenerated]: Required<DBSchemaGenerated[K]["columns"]>;
@@ -150,13 +161,16 @@ export declare const parseFullFilter: (filter: GroupedDetailedFilter, context: C
 } | {
     $or: AnyObject[];
 } | undefined;
-export declare const parseForcedFilter: (rule: TableRules[keyof TableRules], context: ContextDataObject | undefined, columns: string[] | undefined) => {
-    forcedFilter: {
-        $and: AnyObject[];
-    } | {
-        $or: AnyObject[];
-    };
-} | undefined;
+type ParsedFilter = {
+    $and: AnyObject[];
+} | {
+    $or: AnyObject[];
+};
+type ParsedRuleFilters = {
+    forcedFilter?: ParsedFilter;
+    checkFilter?: ParsedFilter;
+};
+export declare const parseCheckForcedFilters: (rule: TableRules[keyof TableRules], context: ContextDataObject | undefined, columns: string[] | undefined) => ParsedRuleFilters | undefined;
 export type ContextDataObject = {
     user: DBSSchema["users"];
 };

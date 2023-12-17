@@ -1,0 +1,32 @@
+name: Electron build linux
+on: workflow_dispatch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  electron_build:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+
+    - name: Install dependencies, build and test
+      run: |
+        cd electron && npm run build-linux
+
+#        Error: Missing X server or $DISPLAY        
+#        sudo apt-get update && \
+#        sudo apt install gdebi-core && \
+#        sudo gdebi -n ./dist/Prostgles\ Desktop-1.0.0-amd64-linux.deb && \
+#        prostgles-desktop
+      
+    - uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: installers
+        path: electron/dist
+        retention-days: 10

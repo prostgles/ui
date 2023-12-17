@@ -7,7 +7,6 @@ export type ProstglesInitState = ({
     initError?: any;
     connectionError?: any;
     ok: boolean;
-    canTryStartProstgles: boolean;
     canDumpAndRestore: {
         psql: string;
         pg_dump: string;
@@ -15,5 +14,5 @@ export type ProstglesInitState = ({
     } | undefined;
     isDemoMode: boolean;
 });
-export type ServerState = Omit<ProstglesInitState, "canTryStartProstgles">;
+export type ServerState = ProstglesInitState;
 //# sourceMappingURL=electronInit.d.ts.map

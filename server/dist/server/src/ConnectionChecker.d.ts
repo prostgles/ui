@@ -31,8 +31,8 @@ export declare class ConnectionChecker {
         loaded: boolean;
         global_setting?: DBSSchema["global_settings"];
     };
-    usersSub?: SubscriptionHandler<DBSSchema["users"]>;
-    configSub?: SubscriptionHandler<DBSSchema["global_settings"]>;
+    usersSub?: SubscriptionHandler;
+    configSub?: SubscriptionHandler;
     init: (db: DBS, _db: DB) => Promise<void>;
     /**
      * This is mainly used to ensure that when there is passwordless admin access external IPs cannot connect
@@ -57,7 +57,8 @@ export declare const ADMIN_ACCESS_WITHOUT_PASSWORD: (db: DBS) => Promise<Require
         recoveryCode: string;
         enabled: boolean;
     } | null | undefined;
-    created?: Date | null | undefined;
+    created?: string | null | undefined;
+    has_2fa_enbled?: boolean | null | undefined;
     id?: string | undefined;
     is_online?: boolean | undefined;
     last_updated?: number | null | undefined;
@@ -66,6 +67,7 @@ export declare const ADMIN_ACCESS_WITHOUT_PASSWORD: (db: DBS) => Promise<Require
         hideNonSSLWarning?: boolean | undefined;
         viewedSQLTips?: boolean | undefined;
         viewedAccessInfo?: boolean | undefined;
+        theme?: "dark" | "light" | "from-system" | undefined;
     } | null | undefined;
     password?: string | undefined;
     passwordless_admin?: boolean | null | undefined;
@@ -73,13 +75,14 @@ export declare const ADMIN_ACCESS_WITHOUT_PASSWORD: (db: DBS) => Promise<Require
     type?: string | undefined;
     username: string;
 }> | undefined>;
-export declare const insertUser: (db: DBS, _db: DB, u: {
+export declare const insertUser: (db: DBS, _db: DB, u: import("prostgles-types").UpsertDataToPGCast<{
     "2fa"?: {
         secret: string;
         recoveryCode: string;
         enabled: boolean;
     } | null | undefined;
-    created?: Date | null | undefined;
+    created?: string | null | undefined;
+    has_2fa_enbled?: boolean | null | undefined;
     id?: string | undefined;
     is_online?: boolean | undefined;
     last_updated?: number | null | undefined;
@@ -88,19 +91,21 @@ export declare const insertUser: (db: DBS, _db: DB, u: {
         hideNonSSLWarning?: boolean | undefined;
         viewedSQLTips?: boolean | undefined;
         viewedAccessInfo?: boolean | undefined;
+        theme?: "dark" | "light" | "from-system" | undefined;
     } | null | undefined;
     password?: string | undefined;
     passwordless_admin?: boolean | null | undefined;
     status?: string | undefined;
     type?: string | undefined;
     username: string;
-} | {
+}> | import("prostgles-types").UpsertDataToPGCast<{
     "2fa"?: {
         secret: string;
         recoveryCode: string;
         enabled: boolean;
     } | null | undefined;
-    created?: Date | null | undefined;
+    created?: string | null | undefined;
+    has_2fa_enbled?: boolean | null | undefined;
     id?: string | undefined;
     is_online?: boolean | undefined;
     last_updated?: number | null | undefined;
@@ -109,19 +114,21 @@ export declare const insertUser: (db: DBS, _db: DB, u: {
         hideNonSSLWarning?: boolean | undefined;
         viewedSQLTips?: boolean | undefined;
         viewedAccessInfo?: boolean | undefined;
+        theme?: "dark" | "light" | "from-system" | undefined;
     } | null | undefined;
     password?: string | undefined;
     passwordless_admin?: boolean | null | undefined;
     status?: string | undefined;
     type?: string | undefined;
     username: string;
-}[]) => Promise<Required<{
+}>[]) => Promise<Required<{
     "2fa"?: {
         secret: string;
         recoveryCode: string;
         enabled: boolean;
     } | null | undefined;
-    created?: Date | null | undefined;
+    created?: string | null | undefined;
+    has_2fa_enbled?: boolean | null | undefined;
     id?: string | undefined;
     is_online?: boolean | undefined;
     last_updated?: number | null | undefined;
@@ -130,6 +137,7 @@ export declare const insertUser: (db: DBS, _db: DB, u: {
         hideNonSSLWarning?: boolean | undefined;
         viewedSQLTips?: boolean | undefined;
         viewedAccessInfo?: boolean | undefined;
+        theme?: "dark" | "light" | "from-system" | undefined;
     } | null | undefined;
     password?: string | undefined;
     passwordless_admin?: boolean | null | undefined;

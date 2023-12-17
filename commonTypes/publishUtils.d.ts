@@ -8,7 +8,7 @@ export type CustomTableRules = {
 };
 declare const OBJ_DEF_TYPES: readonly ["boolean", "string", "number", "Date", "string[]", "number[]", "Date[]", "boolean[]"];
 type DataTypes = typeof OBJ_DEF_TYPES[number];
-type _ObjDef = DataTypes | {
+type ArgObjDef = {
     type: DataTypes;
     allowedValues?: readonly string[] | readonly number[] | readonly Date[];
     defaultValue?: string;
@@ -37,12 +37,13 @@ type _ObjDef = DataTypes | {
         };
     };
 };
+type _ObjDef = DataTypes | ArgObjDef;
 type ObjDef = _ObjDef | {
     oneOf: readonly _ObjDef[];
 } | {
     arrayOf: _ObjDef;
 };
-export type ArgDef = (ObjDef & {
+export type ArgDef = (ArgObjDef & {
     name: string;
 });
 export type ParamDef = ObjDef;
@@ -59,7 +60,6 @@ export type MethodClientDef = {
     args: ArgDef[];
     outputTable?: string;
 };
-export type UserGroupRule = DBSSchema["access_control"]["rule"];
 export type ContextValue = {
     objectName: string;
     objectPropertyName: string;
@@ -83,6 +83,7 @@ export type UpdateRule = {
     forcedFilterDetailed?: GroupedDetailedFilter;
     filterFields?: FieldFilter;
     forcedDataDetail?: ForcedData[];
+    checkFilterDetailed?: GroupedDetailedFilter;
     dynamicFields?: {
         filterDetailed: GroupedDetailedFilter;
         fields: FieldFilter;
@@ -91,6 +92,7 @@ export type UpdateRule = {
 export type InsertRule = {
     fields: FieldFilter;
     forcedDataDetail?: ForcedData[];
+    checkFilterDetailed?: GroupedDetailedFilter;
 };
 export type DeleteRule = {
     filterFields: FieldFilter;

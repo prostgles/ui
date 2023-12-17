@@ -18,36 +18,41 @@ export declare const CORE_FILTER_TYPES: readonly [{
 }, {
     readonly key: "$nin";
     readonly label: "NOT IN";
+}, {
+    readonly key: "$term_highlight";
+    readonly label: "CONTAINS";
 }];
 export declare const FTS_FILTER_TYPES: readonly [{
     readonly key: "@@.to_tsquery";
-    readonly subLabel: "to_tsquery";
-    readonly label: "Match";
+    readonly label: "Search";
+    readonly subLabel: "(to_tsquery) normalizes each token into a lexeme using the specified or default configuration, and discards any tokens that are stop words according to the configuration";
 }, {
     readonly key: "@@.plainto_tsquery";
-    readonly label: "plainto_tsquery";
+    readonly label: "Plain search";
+    readonly subLabel: "(plainto_tsquery) The text is parsed and normalized much as for to_tsvector, then the & (AND) tsquery operator is inserted between surviving words";
 }, {
     readonly key: "@@.phraseto_tsquery";
-    readonly label: "phraseto_tsquery";
+    readonly label: "Phrase search";
+    readonly subLabel: "(phraseto_tsquery) phraseto_tsquery behaves much like plainto_tsquery, except that it inserts the <-> (FOLLOWED BY) operator between surviving words instead of the & (AND) operator. Also, stop words are not simply discarded, but are accounted for by inserting <N> operators rather than <-> operators. This function is useful when searching for exact lexeme sequences, since the FOLLOWED BY operators check lexeme order not just the presence of all the lexemes";
 }, {
     readonly key: "@@.websearch_to_tsquery";
-    readonly label: "websearch_to_tsquery";
+    readonly label: "Web search";
+    readonly subLabel: "(websearch_to_tsquery) Unlike plainto_tsquery and phraseto_tsquery, it also recognizes certain operators. Moreover, this function will never raise syntax errors, which makes it possible to use raw user-supplied input for search. The following syntax is supported";
 }];
 export declare const TEXT_FILTER_TYPES: readonly [{
     readonly key: "$ilike";
     readonly label: "ILIKE";
+    readonly subLabel: string;
 }, {
     readonly key: "$like";
     readonly label: "LIKE";
+    readonly subLabel: string;
 }, {
     readonly key: "$nilike";
     readonly label: "NOT ILIKE";
 }, {
     readonly key: "$nlike";
     readonly label: "NOT LIKE";
-}, {
-    readonly key: "$term_highlight";
-    readonly label: "CONTAINS";
 }];
 export declare const NUMERIC_FILTER_TYPES: readonly [{
     readonly key: "$between";
@@ -90,6 +95,9 @@ export type DetailedFilterBase = BaseFilter & {
     type?: FilterType;
     value?: any;
     contextValue?: ContextValue;
+    ftsFilterOptions?: {
+        lang: string;
+    };
     complexFilter?: {
         argsLeftToRight: boolean;
         comparator: string;
@@ -105,19 +113,18 @@ export type SimpleFilter = DetailedFilterBase | JoinedFilter;
 export type SmartGroupFilter = SimpleFilter[];
 export declare const isJoinedFilter: (f: SimpleFilter) => f is JoinedFilter;
 export declare const isDetailedFilter: (f: SimpleFilter) => f is DetailedFilterBase;
-export declare const getFinalFilterInfo: (fullFilter?: GroupedDetailedFilter | SimpleFilter, context?: ContextDataObject, depth?: number) => string;
+type InfoType = "pg";
+export declare const getFinalFilterInfo: (fullFilter?: GroupedDetailedFilter | SimpleFilter, context?: ContextDataObject, depth?: number, opts?: {
+    for: InfoType;
+}) => string;
 export declare const getFinalFilter: (detailedFilter: SimpleFilter, context?: ContextDataObject, opts?: {
-    forInfoOnly?: boolean;
+    forInfoOnly?: boolean | InfoType;
     columns?: string[];
-}) => {
-    $filter: any[];
-} | {
-    [x: string]: any;
-    $filter?: undefined;
-} | undefined;
+}) => Record<string, any> | undefined;
 export type GroupedDetailedFilter = {
     $and: (SimpleFilter | GroupedDetailedFilter)[];
 } | {
     $or: (SimpleFilter | GroupedDetailedFilter)[];
 };
+export {};
 //# sourceMappingURL=filterUtils.d.ts.map

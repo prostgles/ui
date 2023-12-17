@@ -143,50 +143,40 @@ export const validateDynamicFields = async (dynamicFields, db, context, columns)
     if (!dynamicFields)
         return {};
     try {
-        for (var _g = true, _h = __asyncValues(dynamicFields.entries()), _j; _j = await _h.next(), _a = _j.done, !_a;) {
+        for (var _g = true, _h = __asyncValues(dynamicFields.entries()), _j; _j = await _h.next(), _a = _j.done, !_a; _g = true) {
             _c = _j.value;
             _g = false;
+            const [dfIndex, dfRule] = _c;
+            const filter = await parseFullFilter(dfRule.filterDetailed, context, columns);
+            if (!filter)
+                throw new Error("dynamicFields.filter cannot be empty: " + JSON.stringify(dfRule));
+            await db.find(filter, { limit: 0 });
             try {
-                const [dfIndex, dfRule] = _c;
-                const filter = await parseFullFilter(dfRule.filterDetailed, context, columns);
-                if (!filter)
-                    throw new Error("dynamicFields.filter cannot be empty: " + JSON.stringify(dfRule));
-                await db.find(filter, { limit: 0 });
-                try {
-                    /** Ensure dynamicFields filters do not overlap */
-                    for (var _k = true, _l = (e_2 = void 0, __asyncValues(dynamicFields.entries())), _m; _m = await _l.next(), _d = _m.done, !_d;) {
-                        _f = _m.value;
-                        _k = false;
-                        try {
-                            const [_dfIndex, _dfRule] = _f;
-                            if (dfIndex !== _dfIndex) {
-                                const _filter = await parseFullFilter(_dfRule.filterDetailed, context, columns);
-                                if (await db.findOne({ $and: [filter, _filter] }, { select: "" })) {
-                                    const error = `dynamicFields.filter cannot overlap each other. \n
+                /** Ensure dynamicFields filters do not overlap */
+                for (var _k = true, _l = (e_2 = void 0, __asyncValues(dynamicFields.entries())), _m; _m = await _l.next(), _d = _m.done, !_d; _k = true) {
+                    _f = _m.value;
+                    _k = false;
+                    const [_dfIndex, _dfRule] = _f;
+                    if (dfIndex !== _dfIndex) {
+                        const _filter = await parseFullFilter(_dfRule.filterDetailed, context, columns);
+                        if (await db.findOne({ $and: [filter, _filter] }, { select: "" })) {
+                            const error = `dynamicFields.filter cannot overlap each other. \n
           Overlapping dynamicFields rules:
               ${JSON.stringify(dfRule)} 
               AND
               ${JSON.stringify(_dfRule)} 
           `;
-                                    return { error };
-                                }
-                            }
-                        }
-                        finally {
-                            _k = true;
+                            return { error };
                         }
                     }
-                }
-                catch (e_2_1) { e_2 = { error: e_2_1 }; }
-                finally {
-                    try {
-                        if (!_k && !_d && (_e = _l.return)) await _e.call(_l);
-                    }
-                    finally { if (e_2) throw e_2.error; }
                 }
             }
+            catch (e_2_1) { e_2 = { error: e_2_1 }; }
             finally {
-                _g = true;
+                try {
+                    if (!_k && !_d && (_e = _l.return)) await _e.call(_l);
+                }
+                finally { if (e_2) throw e_2.error; }
             }
         }
     }

@@ -33,7 +33,6 @@ Web dashboard and SQL Editor for Postgres
 
 ### Installation
 
-
 ```
 git clone https://github.com/prostgles/ui.git
 cd ui
@@ -48,3 +47,27 @@ git clone https://github.com/prostgles/ui.git
 cd ui
 PRGL_DOCKER_IP=0.0.0.0 PRGL_DOCKER_PORT=3099 docker compose up 
 ```
+
+### Development
+
+#### 1. Install dependencies:
+- [NodeJS](https://nodejs.org/en/download)
+- [Postgres](https://www.postgresql.org/download/): For full features **postgresql-15-postgis-3** is recommended
+
+#### 2. Create a database and user for the dashboard, ensuring `.env` has the apropriate values
+
+    sudo su - postgres
+
+    createuser --superuser usr
+    psql -c "alter user usr with password 'psw'"
+    createdb db -O usr
+
+#### 3. Start app in dev mode (will install npm packages)
+
+    ./start.sh
+
+### Testing
+
+  Ensure the app is running in development mode and:
+  
+    cd e2e && npm test-local

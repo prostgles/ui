@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "typeRoots": [
+      "node_modules/@types",
+      "./@types"
+    ],    
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": false,
+    "jsx": "react",
+    "strict": false,
+    "baseUrl": "./",
+    "declaration": true
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "public",
+    "typings/browser",
+    "typings/browser.d.ts"
+  ]
+}

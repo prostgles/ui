@@ -14,7 +14,10 @@
 		"declaration": true,
 		"declarationMap": true,
 		"keyofStringsOnly": true,
+		"ignoreDeprecations": "5.0",
 		"strict": true,
+		"skipLibCheck": true,
+		"noUncheckedIndexedAccess": true,
 		"paths": { 
 			"@common/*": ["../commonTypes/*"], 
 		},
@@ -24,5 +27,7 @@
 		"DBoGenerated.ts",
 		"*.conf"
 	],
-	"include": ["init.sql"]
+	"include": [
+		"src"
+	]
 } 

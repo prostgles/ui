@@ -1,0 +1,56 @@
+name: Dev setup tests
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  test_dev:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgis/postgis:15-3.3
+        env:
+          POSTGRES_DB: db        
+          POSTGRES_PASSWORD: psw
+          POSTGRES_USER: usr
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+
+    - name: Install dependencies (pg_dump version must be >= pg servers version to ensure backup/restore works)
+      run: |
+        cd client && npm ci && \
+        cd ../server && npm ci && \
+        cd ../e2e && npm ci && npx playwright install && \
+        sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && \
+        sudo apt-get -y install wget ca-certificates && \
+        wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - && \
+        sudo apt-get update && \
+        sudo apt-get -y install postgresql-client-15
+      
+    - name: Run test
+      run: |
+        ./e2e/test.sh
+
+    - uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: playwright-report
+        path: e2e/playwright-report/
+        retention-days: 10

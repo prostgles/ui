@@ -21,8 +21,8 @@ const getConnectionDetails = (c) => {
         return {
             // connectionString: c.db_conn,
             application_name,
-            host: cs.hosts[0].name,
-            port: cs.hosts[0].port,
+            host: cs.hosts[0]?.name,
+            port: cs.hosts[0]?.port,
             user: cs.user,
             password: cs.password,
             database: cs.path[0],

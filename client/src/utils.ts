@@ -1,0 +1,171 @@
+import { getKeys } from "./dashboard/SmartForm/SmartForm";
+import { AnyObject, isObject } from "prostgles-types"
+export const get = (nestedObj: any, pathArr: string | (string | number)[]) => {
+  if(typeof pathArr === "string") pathArr = pathArr.split(".");
+  return pathArr.reduce((obj, key) =>
+    (obj && obj[key] !== 'undefined') ? obj[key] : undefined, nestedObj);
+}
+
+/* Get only the specified properties of an object */
+export function filterObj<T extends AnyObject, K extends keyof T>(obj: T, keysToInclude: K[] = [], keysToExclude: readonly (keyof T)[] = []): Omit<T, typeof keysToInclude[number]> {
+  if(!keysToInclude.length && !keysToExclude.length) {
+      // console.warn("filterObj: returning empty object");
+      return {} as T;
+  }
+  const keys = Object.keys(obj) as Array<keyof typeof obj>
+  if(keys.length){
+      const res: Partial<T> = {};
+      keys.forEach(k => {
+          if(
+            keysToInclude.length && keysToInclude.includes(k as any) || 
+            keysToExclude.length && !keysToExclude.includes(k)
+          ){
+            res[k] = obj[k];
+          }
+      });
+      return res as T;
+  }
+
+  return obj;
+}
+
+export function isEmpty(v: any){
+  return Object.keys(v ?? {}).length === 0;
+}
+
+export function ifEmpty(v: any, replaceValue: any){
+  return isEmpty(v)? replaceValue : v;
+}
+
+export function omitKeys<T extends AnyObject, Exclude extends keyof T>(obj: T, exclude: Exclude[]): Omit<T, Exclude> {
+  return pickKeys(obj, getKeys(obj).filter(k => !exclude.includes(k as any)))
+}
+
+export function pickKeys<T extends AnyObject, Include extends keyof T>(obj: T, include: Include[] = [], onlyIfDefined = false): Pick<T, Include> {
+  const keys = include;
+  if (!keys.length) {
+    return {} as any;
+  }
+  if (keys.length) {
+    const res: AnyObject = {};
+    keys.forEach(k => {
+      if(onlyIfDefined && obj[k] === undefined){
+
+      } else {
+        res[k] = obj[k];
+      }
+    });
+    return res as any;
+  }
+
+  return obj;
+}
+
+export function nFormatter(num, digits) {
+  const si = [
+    { value: 1, symbol: "" },
+    { value: 1E3, symbol: "k" },
+    { value: 1E6, symbol: "M" },
+    { value: 1E9, symbol: "G" },
+    { value: 1E12, symbol: "T" },
+    { value: 1E15, symbol: "P" },
+    { value: 1E18, symbol: "E" }
+  ];
+  const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
+  let i;
+  for (i = si.length - 1; i > 0; i--) {
+    if (num >= si[i]!.value) {
+      break;
+    }
+  }
+  return (num / si[i]!.value).toFixed(digits).replace(rx, "$1") + si[i]!.symbol;
+}
+
+type StrFormat = {
+  idx: number;
+  len: number;
+  val: any;
+  decimalPlaces: number; 
+  type: "c" | "n" | "s";
+  // characted number symbol
+};
+export function getStringFormat(s: string | undefined): StrFormat[] {
+  if(s && typeof s === "string"){
+    const res: StrFormat[] = [];
+    let curF: StrFormat | undefined;
+    s.split("").map((c, idx)=> {
+      const mt = c.match(/[A-Za-z]/)? "c" :
+        c.match(/[0-9.]/)? "n" : "s";
+      const _cF: StrFormat = {
+        idx, len: 1, val: c, type: mt, decimalPlaces: 0
+      }
+      if(curF){
+        const differentFormat = curF.type !== mt;
+        const numberWithEnoughDots = !differentFormat && c === "." && (curF.val as string).includes(".");
+        if(differentFormat || numberWithEnoughDots){
+          res.push(curF);
+          if(numberWithEnoughDots) {
+            _cF.type === "s";
+            res.push(_cF);
+            curF = undefined;
+          } else {
+            curF = _cF;
+          }
+        } else {
+          curF.len = idx - curF.idx + 1;
+          curF.val += c;
+        }
+      } else {
+        curF = _cF;
+      }
+
+      if(curF && idx === s.length - 1){
+        curF.len = idx - curF.idx + 1;
+        res.push(curF);
+      }
+    });
+
+    return res.map(r => {
+      if(r.type === "n" && r.val.includes(".")){
+        r.decimalPlaces = r.len - 1 - r.val.indexOf(".")
+      }
+      return r;
+    });
+  }
+  return [];
+}
+
+
+export const isDefined = <T>(v: T | undefined | void): v is T => v !== undefined && v !== null;
+
+export function quickClone<T>(obj: T): T {
+  // @ts-ignore
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if(window !== undefined && "structuredClone" in window && typeof window.structuredClone === "function"){
+    // @ts-ignore
+    return window.structuredClone(obj);
+  }
+  if(isObject(obj)){
+    const result = {} as any;
+    getKeys(obj).map(k => {
+      result[k] = quickClone(obj[k]);
+    })
+    return result ;
+  } else if(Array.isArray(obj)){
+    return obj.slice(0).map(v => quickClone(v)) as any
+  }
+  return obj;
+}
+
+const comparableTypes = ["number", "string", "boolean"] as const;
+export const areEqual = <T extends AnyObject,>(obj1: T, obj2: T, keys?: (keyof T)[]): boolean => {
+  if(typeof obj1 !== typeof obj2) return false;
+  if([obj1, obj2].some(v => comparableTypes.includes(typeof v as any))){
+    return obj1 === obj2;
+  }
+  return !(keys ?? getKeys({ ...obj1, ...obj2 }))
+    .some(k => 
+      typeof obj1[k] !== typeof obj2[k] || 
+      JSON.stringify(obj1[k]) !== JSON.stringify(obj2[k])
+    )
+}

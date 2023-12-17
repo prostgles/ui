@@ -1,16 +1,18 @@
 
-import { BKP_PREFFIX } from "./BackupManager";
-import { Auth, BasicSession } from 'prostgles-server/dist/AuthHandler';
-import { MEDIA_ROUTE_PREFIX, PROSTGLES_STRICT_COOKIE, log, Users, API_PATH, getBackupManager, connectionChecker, DBS } from "./index";
-import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
-import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import { omitKeys } from "prostgles-types";
-import { DB } from "prostgles-server/dist/Prostgles";
+import { Express } from "express";
 import { authenticator } from "otplib";
-import { Express } from "express"
 import path from "path";
+import { Auth, AuthClientRequest, BasicSession, LoginClientInfo } from 'prostgles-server/dist/AuthHandler';
+import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import { DB } from "prostgles-server/dist/Prostgles";
+import { omitKeys } from "prostgles-types";
+import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { DBSSchema } from "../../commonTypes/publishUtils";
-import { actualRootDir, getElectronConfig, getRootDir } from "./electronConfig";
+import { BKP_PREFFIX } from "./BackupManager/BackupManager";
+import { actualRootDir, getElectronConfig } from "./electronConfig";
+import { PROSTGLES_STRICT_COOKIE } from "./envVars";
+import { API_PATH, DBS, MEDIA_ROUTE_PREFIX, Users, connectionChecker, log } from "./index";
+import { initBackupManager } from "./startProstgles";
 
 export const HOUR = 3600e3;
 export const YEAR = 365 * HOUR * 24;
@@ -20,22 +22,41 @@ let authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_CO
   sameSite: "lax"    //  "none"
 };
 
-const loginAttempt = async ({ db, ip_address, user_agent, username, magic_link_id }: { db: DBOFullyTyped<DBSchemaGenerated>; ip_address: string; username?: string; user_agent?: string; magic_link_id?: string; }) => {
+/**
+ * Used to prevent ip addresses from authentication for 1 hour after 3 failed attempts
+ */
+type AuthAttepmt = 
+| { auth_type: "login", username: string; }
+| { auth_type: "magic-link", magic_link_id: string; }
+| { auth_type: "session-id", sid: string; }
+const loginAttempt = async ({ db, ip_address, user_agent, ...attempt}: { db: DBOFullyTyped<DBSchemaGenerated>; } & LoginClientInfo & AuthAttepmt) => {
 
   try {
-    const previousFails = await db.failed_login_attempts.count({ ip_address, "created.>=": new Date(Date.now() - 1 * HOUR) })
-    if(+previousFails > 3){
+    const lastHour = (new Date(Date.now() - 1 * HOUR)).toISOString()
+    const previousFails = await db.login_attempts.find({ ip_address, failed: true, "created.>=": lastHour })
+    if(previousFails.length > 3){
       throw "Too many failed attempts within the last hour";
     }
   } catch(err) {
     console.error(err);
   }
-  const loginAttempt = await db.failed_login_attempts.insert({ ip_address, username, user_agent, magic_link_id }, { returning: { id: 1 } });
+
+  /** In case of a bad sid do not log it multiple times */
+  if(attempt.auth_type === "session-id"){
+    const prevFailOnSameSid = await db.login_attempts.findOne({ ip_address, failed: true, sid: attempt.sid }, { orderBy: { created: false } });
+    if(prevFailOnSameSid){
+      return {
+        onSuccess: async () => { }
+      }
+    }
+  }
+
+  const loginAttempt = await db.login_attempts.insert({ ip_address, failed: true, user_agent, ...attempt }, { returning: { id: 1 } });
 
   return { 
-    onSuccess: async () => {
-      await db.failed_login_attempts.delete({ id: loginAttempt.id })
-    } 
+    onSuccess: async () => { 
+      await db.login_attempts.update({ id: loginAttempt.id }, { failed: false })
+    }
   }
 }
 
@@ -80,11 +101,15 @@ export type SUser = {
 }
 export const sidKeyName = "sid_token" as const;
 
-const getActiveSession = async (db: DBS, filter: { user_id: string; } | { id: string; }) => {
-  if(Object.values(filter).some(v => typeof v !== "string" || !v)){
+type AuthType = 
+| { type: "session-id"; filter: { id: string; }; client: AuthClientRequest & LoginClientInfo }
+| { type: "login-success"; filter: { user_id: string; } };
+
+const getActiveSession = async (db: DBS, authType: AuthType) => {
+  if(Object.values(authType.filter).some(v => typeof v !== "string" || !v)){
     throw `Must provide a valid session filter`;
   }
-  let validSession = await db.sessions.findOne({ ...filter,  "expires.>": Date.now(), active: true });
+  let validSession = await db.sessions.findOne({ ...authType.filter,  "expires.>": Date.now(), active: true });
 
   /**
    * Always maintain a valid session for passwordless admin
@@ -93,23 +118,31 @@ const getActiveSession = async (db: DBS, filter: { user_id: string; } | { id: st
   if(pwdlessUser && !validSession){
     const oldSession = await db.sessions.findOne({ user_id: pwdlessUser.id });
     if(oldSession){
-      return db.sessions.update({ id: oldSession.id }, { active: true, expires: Date.now() + 1 * YEAR }, { returning: "*" })
+      return db.sessions.update({ id: oldSession.id }, { active: true, expires: Date.now() + 1 * YEAR }, { returning: "*", multi: false })
     }
+  }
+
+  if(!pwdlessUser && authType.type === "session-id" && !validSession){
+    const expiredSession = await db.sessions.findOne({ ...authType.filter });
+    if(!expiredSession){
+      const { ip_address, ip_address_remote, user_agent, x_real_ip } = authType.client;
+      await loginAttempt({ db, auth_type: "session-id", sid: authType.filter.id, ip_address, ip_address_remote, user_agent, x_real_ip })
+    } 
   }
 
   return validSession;
 }
 
-export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
+export const getAuth = (app: Express) => {
   
-  const auth: Auth<DBSchemaGenerated, SUser> = {
+  const auth = {
     sidKeyName,
-    getUser: async (sid, db, _db: DB) => {
-      log("getUser", sid);
+    getUser: async (sid, db, _db: DB, client) => {
+      // log("getUser", sid);
 
       if(!sid) return undefined;
 
-      const s = await getActiveSession(db, { id: sid });
+      const s = await getActiveSession(db, { type: "session-id", client, filter: { id: sid }});
       if(!s) return undefined;
 
       const user = await db.users.findOne({ id: s.user_id });
@@ -129,28 +162,27 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
           state_db_id: user.type === "admin"? state_db?.id : undefined,
 
           has_2fa: !!user["2fa"]?.enabled,
-          ...omitKeys(user, ["password", "2fa"]) 
+          ...omitKeys(user, ["password", "2fa"])
         }
       }
 
       return suser;
     },
 
-    login: async ({ username = null, password = null, totp_token = null, totp_recovery_code = null } = {}, db, _db: DB, { ip_address, user_agent }) => {
+    login: async ({ username = null, password = null, totp_token = null, totp_recovery_code = null } = {}, db, _db: DB, { ip_address, ip_address_remote, user_agent, x_real_ip }) => {
       let u: Users | undefined;
       log("login", username);
       
       if(password.length > 400){
         throw "Password is too long";
       }
-      const { onSuccess } = await loginAttempt({ db, username, ip_address, user_agent })
+      const { onSuccess } = await loginAttempt({ db, username, ip_address, ip_address_remote, user_agent, x_real_ip, auth_type: "login" })
       try {
         u = await _db.one("SELECT * FROM users WHERE username = ${username} AND password = crypt(${password}, id::text);", { username, password });
       } catch(e){
         throw "no match";
       }
       if(!u) {
-        // console.log( await db.users.find())
         throw "something went wrong: " + JSON.stringify({ username, password });
       }
       if(u && u.status !== "active") {
@@ -175,7 +207,7 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
 
       await onSuccess();
 
-      const activeSession = await getActiveSession(db, { user_id: u.id });
+      const activeSession = await getActiveSession(db, { type: "login-success", filter: { user_id: u.id }});
       if(!activeSession){
         const globalSettings = await db.global_settings.findOne();
         const DAY = 24 * 60 * 60 * 1000;
@@ -217,13 +249,13 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       app,
       // userRoutes: ["/", "/connection", "/connections", "/profile", "/jobs", "/chats", "/chat", "/account", "/dashboard", "/registrations"],
       use: connectionChecker.onUse,
-      publicRoutes: ["/manifest.json", "/favicon.ico", API_PATH], // ["/"],
+      publicRoutes: ["/manifest.json", "/favicon.ico", API_PATH],
       onGetRequestOK: async (req, res, { getUser, db, dbo: dbs }) => {
         // log("onGetRequestOK", req.path);
 
         if(req.path.startsWith(BKP_PREFFIX)){
           const userData = await getUser();
-          await getBackupManager().onRequestBackupFile(res, !userData?.user? undefined : userData, req);
+          await(await initBackupManager(db, dbs)).onRequestBackupFile(res, !userData?.user? undefined : userData, req);
           
         } else if(req.path.startsWith(MEDIA_ROUTE_PREFIX)){
           req.next?.();
@@ -238,8 +270,9 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
       },
       cookieOptions: authCookieOpts,
       magicLinks: {
-        check: async (id, dbo, db, { ip_address, user_agent }) => {
+        check: async (id, dbo, db, { ip_address, ip_address_remote, user_agent, x_real_ip }) => {
 
+          const onLoginAttempt = await loginAttempt({ db: dbo, magic_link_id: id, ip_address, ip_address_remote, user_agent, x_real_ip, auth_type: "magic-link" });
           const mlink = await dbo.magic_links.findOne({ id });
           
           if(mlink){
@@ -250,7 +283,6 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
               throw "Magic link already used";
             }
           } else {
-            await loginAttempt({ db: dbo, magic_link_id: id, ip_address, user_agent })
             throw new Error("Magic link not found");
           }
 
@@ -259,12 +291,16 @@ export const getAuth = (app: Express): Auth<DBSchemaGenerated, SUser> => {
             throw new Error("User from Magic link not found");
           }
 
+          const usedMagicLink = await dbo.magic_links.update({ id: mlink.id, magic_link_used: null }, { magic_link_used: new Date() }, { returning: "*" });
+          if(!usedMagicLink){
+            throw new Error("Magic link already used");
+          }
           const session = await makeSession(user, { ip_address, user_agent: user_agent || null, type: getElectronConfig()?.isElectron? "desktop" : "web" }, dbo , mlink.expires);
-          await dbo.magic_links.update({ id: mlink.id }, { magic_link_used: new Date() })
+          await onLoginAttempt.onSuccess();
           return session;
         }
       }
     }
-  }
+  } satisfies Auth<DBSchemaGenerated, SUser>
   return auth;
 };

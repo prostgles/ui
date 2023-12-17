@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.publish = void 0;
 const prostgles_types_1 = require("prostgles-types");
 const _1 = require(".");
-const ConnectionManager_1 = require("./ConnectionManager");
+const ConnectionManager_1 = require("./ConnectionManager/ConnectionManager");
 const filterUtils_1 = require("../../commonTypes/filterUtils");
 const publish = async (params, con) => {
     const { dbo: db, user, db: _db, socket } = params;
@@ -11,13 +11,11 @@ const publish = async (params, con) => {
         return null;
     }
     const isAdmin = user.type === "admin";
-    /** If user is NOT ADMIN then get the access rules */
-    const { id: user_id, type: user_type } = user;
-    // _db.any("ALTER TABLE workspaces ADD COLUMN options         JSON DEFAULT '{}'::json")
+    const { id: user_id, } = user;
+    /** Admin users are always allowed everything */
     const acs = isAdmin ? undefined : await (0, ConnectionManager_1.getACRules)(db, user);
-    const createEditDashboards = isAdmin || acs?.some(({ rule: { dbsPermissions } }) => dbsPermissions?.createWorkspaces);
-    const publishedWspIDs = acs?.flatMap(ac => ac.rule.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds).filter(filterUtils_1.isDefined) || []; // ac?.rule.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds;
-    // const publishedWorkspaces = db.workspaces.find({ "id.$in": })
+    const createEditDashboards = isAdmin || acs?.some(({ dbsPermissions }) => dbsPermissions?.createWorkspaces);
+    const publishedWspIDs = acs?.flatMap(ac => ac.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds).filter(filterUtils_1.isDefined) || [];
     const dashboardConfig = ["windows", "links", "workspaces"]
         .reduce((a, v) => ({
         ...a,
@@ -54,24 +52,29 @@ const publish = async (params, con) => {
             })
         },
     }), {});
-    const validateAndHashUserPassword = async ({ filter, update }, _dbo, mustUpdate = false) => {
-        if ("password" in update) {
-            const users = await _dbo.users.find(filter);
-            if (users.length !== 1) {
-                throw "Cannot update: update filter must match exactly one user";
+    const getValidateAndHashUserPassword = (mustUpdate = false) => {
+        const validateFunc = async ({ dbx, filter, update }) => {
+            if ("password" in update) {
+                //@ts-ignore
+                const [user, ...otherUsers] = await dbx.users.find(filter);
+                if (!user || otherUsers.length) {
+                    throw "Cannot update: update filter must match exactly one user";
+                }
+                const { password } = (await dbx.sql("SELECT crypt(${password}, ${id}::text) as password", { ...update, id: user.id }, { returnType: "row" }));
+                if (typeof password !== "string")
+                    throw "Not ok";
+                if (mustUpdate) {
+                    await dbx.users.update(filter, { password });
+                }
+                return {
+                    ...update,
+                    password
+                };
             }
-            const { password } = (await _dbo.sql("SELECT crypt(${password}, ${id}::text) as password", { ...update, id: users[0].id }, { returnType: "row" }));
-            if (typeof password !== "string")
-                throw "Not ok";
-            if (mustUpdate) {
-                await _dbo.users.update(filter, { password });
-            }
-            return {
-                ...update,
-                password
-            };
-        }
-        return update;
+            update.last_updated ??= Date.now();
+            return update;
+        };
+        return validateFunc;
     };
     const userTypeFilter = { "access_control_user_types": { user_type: user.type } };
     let dashboardTables = {
@@ -91,17 +94,20 @@ const publish = async (params, con) => {
         },
         credential_types: isAdmin && { select: "*" },
         access_control: isAdmin ? "*" : { select: { fields: "*", forcedFilter: { $existsJoined: userTypeFilter } } },
+        database_configs: isAdmin ? "*" : {
+            select: { fields: { id: 1 } }
+        },
         connections: {
             select: {
                 fields: isAdmin ? "*" : { id: 1, name: 1, created: 1 },
                 orderByFields: { db_conn: 1, created: 1 },
                 forcedFilter: isAdmin ?
                     {} :
-                    { $existsJoined: { "access_control.access_control_user_types": userTypeFilter["access_control_user_types"] } }
+                    { $existsJoined: { "database_configs.access_control.access_control_user_types": userTypeFilter["access_control_user_types"] } }
             },
             update: user.type === "admin" && {
                 fields: {
-                    name: 1, table_config: 1, backups_config: 1
+                    name: 1,
                 }
             }
         },
@@ -120,15 +126,15 @@ const publish = async (params, con) => {
             }
         },
         users: isAdmin ? {
-            select: "*",
+            select: { fields: { "2fa": 0, password: 0 } },
             insert: {
                 fields: { is_online: 0, created: 0, "2fa": 0, last_updated: 0 },
                 // validate: async (row, _dbo) => validate({ update: row, filter: row }, _dbo),
-                postValidate: async (row, _dbo) => validateAndHashUserPassword({ update: row, filter: { id: row.id } }, _dbo, true),
+                postValidate: async ({ row, dbx, localParams }) => { await getValidateAndHashUserPassword(true)({ localParams, update: row, dbx, filter: { id: row.id } }); },
             },
             update: {
                 fields: { is_online: 0 },
-                validate: validateAndHashUserPassword,
+                validate: getValidateAndHashUserPassword(),
                 dynamicFields: [{
                         /* For own user can only change these fields */
                         fields: { username: 1, password: 1, status: 1, options: 1, passwordless_admin: 1 },
@@ -143,26 +149,26 @@ const publish = async (params, con) => {
             select: {
                 fields: {
                     "2fa": false,
-                    // password: false
+                    password: false
                 },
                 forcedFilter: { id: user_id }
             },
             update: {
                 fields: { password: 1, options: 1 },
                 forcedFilter: { id: user_id },
-                validate: validateAndHashUserPassword,
+                validate: getValidateAndHashUserPassword(),
             }
         },
         sessions: {
-            delete: {
+            delete: isAdmin ? "*" : {
                 filterFields: "*",
                 forcedFilter: { user_id }
             },
             select: {
                 fields: { id: 0 },
-                forcedFilter: { user_id }
+                forcedFilter: isAdmin ? undefined : { user_id }
             },
-            update: {
+            update: isAdmin ? "*" : {
                 fields: { active: 1 },
                 forcedFilter: { user_id, active: true },
             }
@@ -172,7 +178,6 @@ const publish = async (params, con) => {
             update: isAdmin && {
                 fields: ["restore_status"]
             }
-            // insert: { fields: ["status", "options"] }
         },
         magic_links: isAdmin && {
             insert: {
@@ -182,7 +187,7 @@ const publish = async (params, con) => {
             update: true,
             delete: true,
         },
-        failed_login_attempts: {
+        login_attempts: {
             select: "*"
         },
         global_settings: isAdmin && {
@@ -195,7 +200,7 @@ const publish = async (params, con) => {
                     allowed_ips_enabled: 1,
                     session_max_age_days: 1,
                 },
-                postValidate: async (row, dbsTX) => {
+                postValidate: async ({ row, dbx: dbsTX }) => {
                     if (!row.allowed_ips?.length) {
                         throw "Must include at least one allowed IP CIDR";
                     }
@@ -211,7 +216,7 @@ const publish = async (params, con) => {
                     const { isAllowed, ip } = await _1.connectionChecker.checkClientIP({ socket, dbsTX });
                     if (!isAllowed)
                         throw `Cannot update to a rule that will block your current IP.  \n Must allow ${ip} within Allowed IPs`;
-                    return row;
+                    return undefined;
                 }
             }
         }

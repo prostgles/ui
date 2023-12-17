@@ -1,0 +1,40 @@
+::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+    color: var(--gray-400);
+    opacity: 1; /* Firefox */
+    user-select: none;
+}
+
+:-ms-input-placeholder { /* Internet Explorer 10-11 */
+    color: var(--gray-400);
+    user-select: none;
+}
+
+::-ms-input-placeholder { /* Microsoft Edge */
+    color: var(--gray-400);
+    user-select: none;
+}
+
+.SearchList {
+    background-color: white;
+}
+.dark-theme .SearchList {
+    background-color: #1e1e1e;
+}
+
+.SearchList_InputWrapper {
+    border-color: var(--gray-300);
+}
+.dark-theme .SearchList_InputWrapper {
+    border-color: var(--gray-800);
+}
+.dark-theme .SearchList_InputWrapper input {
+    background-color: var(--gray-800);
+    color: var(--gray-100)
+}
+
+.dark-theme .search-text-endings {
+    color: #969696;
+}
+.dark-theme .search-text-match {
+    color: #dddddd;
+}

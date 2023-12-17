@@ -1,0 +1,112 @@
+.Switch-root {
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%; 
+  color: white;
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0;
+  font-weight: 400; 
+  font-family: Arial;
+  display: inline-flex;
+  width: 58px;
+  height: 38px;
+  overflow: hidden;
+  padding: 12px;
+  box-sizing: border-box;
+  position: relative;
+  flex-shrink: 0;
+  z-index: 0;
+  vertical-align: middle; 
+} 
+
+.SwitchBase-root {
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  color-scheme: light; 
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0;
+  font-weight: 400; 
+  font-family: Arial;
+  display: inline-flex;
+  -webkit-box-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  justify-content: center;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  background-color: transparent;
+  outline: 0;
+  margin: 0; 
+  user-select: none;
+  vertical-align: middle;
+  -webkit-appearance: none;
+  text-decoration: none;
+  padding: 9px;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1; 
+  transition: left 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,transform 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+}
+
+
+.Switch-input { 
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  box-sizing: inherit;
+  cursor: inherit;
+  position: absolute;
+  opacity: 0;
+  height: 100%;
+  top: 0;
+  margin: 0;
+  padding: 0;
+  z-index: 1;
+  left: -100%;
+  width: 300%;
+}
+
+
+.Switch-thumb { 
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0;
+  font-weight: 400;
+  --google-font-color-materialiconstwotone: none;
+  font-family: Arial;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  user-select: none; 
+  box-sizing: inherit;
+  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);
+  background-color: currentColor;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.Switch-track {
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0;
+  font-weight: 400; 
+  font-family: Arial;
+  box-sizing: inherit;
+  height: 100%;
+  width: 100%;
+  border-radius: 7px;
+  opacity: .38;
+  z-index: -1;
+  transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms,background-color 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;  
+}
+
+
+.Switch-root.checked {
+  color: var(--blue-500); 
+}
+
+.Switch-root.checked > .SwitchBase-root {
+  transform: translateX(20px);
+}

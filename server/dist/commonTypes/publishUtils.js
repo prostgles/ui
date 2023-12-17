@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCIDRRangesQuery = exports.validateDynamicFields = exports.getTableRulesErrors = exports.parseTableRules = exports.parseForcedFilter = exports.parseFullFilter = exports.parseFieldFilter = exports.isObject = void 0;
+exports.getCIDRRangesQuery = exports.validateDynamicFields = exports.getTableRulesErrors = exports.parseTableRules = exports.parseCheckForcedFilters = exports.parseFullFilter = exports.parseFieldFilter = exports.isObject = void 0;
 const filterUtils_1 = require("./filterUtils");
 const OBJ_DEF_TYPES = ["boolean", "string", "number", "Date", "string[]", "number[]", "Date[]", "boolean[]"];
 function isObject(obj) {
@@ -34,15 +34,27 @@ const parseFullFilter = (filter, context, columns) => {
     return f;
 };
 exports.parseFullFilter = parseFullFilter;
-const parseForcedFilter = (rule, context, columns) => {
-    if (isObject(rule) && "forcedFilterDetailed" in rule && rule.forcedFilterDetailed) {
-        const forcedFilter = (0, exports.parseFullFilter)(rule.forcedFilterDetailed, context, columns);
-        if (forcedFilter)
-            return { forcedFilter };
+const parseCheckForcedFilters = (rule, context, columns) => {
+    let parsedRuleFilters;
+    if (isObject(rule)) {
+        if ("forcedFilterDetailed" in rule && rule.forcedFilterDetailed) {
+            const forcedFilter = (0, exports.parseFullFilter)(rule.forcedFilterDetailed, context, columns);
+            if (forcedFilter) {
+                parsedRuleFilters ??= {};
+                parsedRuleFilters.forcedFilter = forcedFilter;
+            }
+        }
+        if ("checkFilterDetailed" in rule && rule.checkFilterDetailed) {
+            const checkFilter = (0, exports.parseFullFilter)(rule.checkFilterDetailed, context, columns);
+            if (checkFilter) {
+                parsedRuleFilters ??= {};
+                parsedRuleFilters.checkFilter = checkFilter;
+            }
+        }
     }
-    return undefined;
+    return parsedRuleFilters;
 };
-exports.parseForcedFilter = parseForcedFilter;
+exports.parseCheckForcedFilters = parseCheckForcedFilters;
 const getValidatedFieldFilter = (value, columns, expectAtLeastOne = true) => {
     if (value === "*")
         return value;
@@ -90,7 +102,7 @@ const parseSelect = (rule, columns, context) => {
         return rule;
     return {
         fields: getValidatedFieldFilter(rule.fields, columns),
-        ...(0, exports.parseForcedFilter)(rule, context, columns),
+        ...(0, exports.parseCheckForcedFilters)(rule, context, columns),
         ...(rule.orderByFields && { orderByFields: getValidatedFieldFilter(rule.orderByFields, columns, false) }),
         ...(rule.filterFields && { filterFields: getValidatedFieldFilter(rule.filterFields, columns, false) })
     };
@@ -100,7 +112,7 @@ const parseUpdate = (rule, columns, context) => {
         return rule;
     return {
         fields: getValidatedFieldFilter(rule.fields, columns),
-        ...(0, exports.parseForcedFilter)(rule, context, columns),
+        ...(0, exports.parseCheckForcedFilters)(rule, context, columns),
         ...parseForcedData(rule, context, columns),
         ...(rule.filterFields && { filterFields: getValidatedFieldFilter(rule.filterFields, columns, false) }),
         ...(rule.dynamicFields?.length && {
@@ -117,13 +129,14 @@ const parseInsert = (rule, columns, context) => {
     return {
         fields: getValidatedFieldFilter(rule.fields, columns),
         ...parseForcedData(rule, context, columns),
+        ...(0, exports.parseCheckForcedFilters)(rule, context, columns),
     };
 };
 const parseDelete = (rule, columns, context) => {
     if (!rule || rule === true)
         return rule;
     return {
-        ...(0, exports.parseForcedFilter)(rule, context, columns),
+        ...(0, exports.parseCheckForcedFilters)(rule, context, columns),
         filterFields: getValidatedFieldFilter(rule.filterFields, columns),
     };
 };

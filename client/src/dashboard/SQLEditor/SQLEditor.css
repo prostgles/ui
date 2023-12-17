@@ -1,0 +1,11 @@
+
+.sqleditor .monaco-editor-overlaymessage .message {
+  background-color: var(--red-100) !important;
+  color: var(--red-900) !important;
+  border-color: var(--red-400) !important;
+  padding: 5px !important;
+}
+
+.sqleditor .monaco-editor-overlaymessage .anchor {
+  border-top-color: var(--red-900) !important;
+}

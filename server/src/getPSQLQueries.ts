@@ -54,8 +54,7 @@ export const COMMANDS = [
 
 
 import { execSync } from "child_process";
-import * as fs from "fs";
-import { version } from "punycode";
+import * as fs from "fs"; 
 import { validateConnection } from "./connectionUtils/validateConnection";
 import { DBSConnectionInfo } from "./electronConfig";
 let started = false;

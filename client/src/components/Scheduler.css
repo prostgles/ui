@@ -1,0 +1,7 @@
+.scheduler .item {
+  background: rgb(95, 180, 241);
+}
+.scheduler .item:hover,
+.scheduler .item:focus {
+  background: rgb(73 173 245);
+}

@@ -1,4 +1,4 @@
-import { PublishMethods } from "prostgles-server/dist/PublishParser";
+import { PublishMethods } from "prostgles-server/dist/PublishParser/PublishParser";
 import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 export type Users = Required<DBSchemaGenerated["users"]["columns"]>;
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;

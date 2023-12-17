@@ -1,12 +1,10 @@
 import {
-  DBS,
-  PRGL_USERNAME,
-  PRGL_PASSWORD,
+  DBS, 
   Users,
   tout,
 } from "./index";
 import { Express, Request } from 'express';
-import { SubscriptionHandler } from "prostgles-types";
+import { SubscriptionHandler, isDefined } from "prostgles-types";
 import { DBSSchema  } from "../../commonTypes/publishUtils";
 import cors from 'cors';
 import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
@@ -16,7 +14,7 @@ import { Auth, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler
 import { makeSession, sidKeyName, SUser, YEAR } from "./authConfig";
 import { getElectronConfig, isDemoMode } from "./electronConfig";
 import { tableConfig } from "./tableConfig";
-
+import { PRGL_PASSWORD, PRGL_USERNAME } from "./envVars";
 
 export type WithOrigin = {
   origin?: (requestOrigin: string | undefined, callback: (err: Error | null, origin?: string) => void) => void;
@@ -46,7 +44,7 @@ export class ConnectionChecker {
 
       const pwdLessSession = await this.db?.sessions.findOne({ user_id: this.noPasswordAdmin.id, active: true });
       if(pwdLessSession && pwdLessSession.id !== sid){
-        throw "Only 1 session is allowed for the passwordless admin"
+        throw "Only 1 session is allowed for the passwordless admin. If you're seeing this then the passwordless admin session has already been assigned to a different device/browser"
       }
     }
   }
@@ -131,7 +129,7 @@ export class ConnectionChecker {
           allowed_origin: this.noPasswordAdmin ? null : "*",
           // allowed_ips_enabled: this.noPasswordAdmin? true : false,
           allowed_ips_enabled: false,
-          allowed_ips: Array.from(new Set([req.ip, "::ffff:127.0.0.1"])),
+          allowed_ips: Array.from(new Set([req.ip, "::ffff:127.0.0.1"])).filter(isDefined),
           tableConfig,
         });
 
@@ -195,13 +193,12 @@ export class ConnectionChecker {
     loaded: false
   }
 
-  usersSub?: SubscriptionHandler<DBSSchema["users"]>;
-  configSub?: SubscriptionHandler<DBSSchema["global_settings"]>;
+  usersSub?: SubscriptionHandler;
+  configSub?: SubscriptionHandler;
   init = async (db: DBS, _db: DB) => {
     this.db = db;
     this._db = _db;
     await initUsers(db, _db);
-    
     await this.withConfig();
   }
 
@@ -271,7 +268,7 @@ const initUsers = async (db: DBS, _db: DB) => {
     }
     
     try {
-      const u = await db.users.insert({ username, password, type: "admin", passwordless_admin: Boolean(NoInitialAdminPasswordProvided) }, { returning: "*" }) as Users;
+      const u = await db.users.insert({ username, password, type: "admin", passwordless_admin: Boolean(NoInitialAdminPasswordProvided), is_online: true }, { returning: "*" }) as Users;
       await _db.any("UPDATE users SET password = crypt(password, id::text), status = 'active' WHERE status IS NULL AND id = ${id};", u);
 
     } catch(e){

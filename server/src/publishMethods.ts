@@ -1,31 +1,32 @@
 
-import { connMgr, connectionChecker, upsertConnection, getBackupManager, statePrgl } from "./index";
-import { PublishMethods } from "prostgles-server/dist/PublishParser";
-import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import * as crypto from "crypto";
 import fs from "fs";
 import path from 'path';
-import * as crypto from "crypto";
-import ts from "typescript";
+import { PublishMethods } from "prostgles-server/dist/PublishParser/PublishParser";
+import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import { DatabaseConfigs, connMgr, connectionChecker } from "./index";
 
 import { authenticator } from '@otplib/preset-default';
 
 export type Users = Required<DBSchemaGenerated["users"]["columns"]>; 
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 
-import { isSuperUser } from "prostgles-server/dist/Prostgles";
-import { ConnectionTableConfig, DB_TRANSACTION_KEY } from "./ConnectionManager";
 import { DBHandlerServer } from "prostgles-server/dist/DboBuilder";
-import { pickKeys } from "prostgles-types";
+import { isSuperUser } from "prostgles-server/dist/Prostgles";
+import { AnyObject, asName, pickKeys } from "prostgles-types";
 import { DBSSchema, isObject } from "../../commonTypes/publishUtils";
-
-
+import { ConnectionTableConfig, DB_TRANSACTION_KEY } from "./ConnectionManager/ConnectionManager";
+import { isDefined } from "../../commonTypes/filterUtils";
+import { Backups } from "./BackupManager/BackupManager";
+import { ADMIN_ACCESS_WITHOUT_PASSWORD, insertUser } from "./ConnectionChecker";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
-import { Backups } from "./BackupManager";
-import { ADMIN_ACCESS_WITHOUT_PASSWORD, insertUser } from "./ConnectionChecker";
-import { isDefined } from "../../commonTypes/filterUtils";
 import { demoDataSetup } from "./demoDataSetup";
-import { tableConfig } from "./tableConfig";
+import { getRootDir } from "./electronConfig";
+import { getCDB, getStatus, killPID } from "./methods/statusMonitor";
+import { initBackupManager, statePrgl } from "./startProstgles";
+import { upsertConnection } from "./upsertConnection";
+import { getCompiledTS, getDatabaseConfigFilter } from "./ConnectionManager/connectionManagerUtils";
 
 export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params) => { //  socket, dbs: DBObj, _dbs, user: Users
   const { dbo: dbs, socket, db: _dbs } = params;
@@ -34,31 +35,24 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
   const user: DBSSchema["users"] | undefined = params.user as any;
 
 
-  const bkpManager = getBackupManager();
+  const bkpManager = await initBackupManager(_dbs, dbs);
   if(!user || !user.id) {
-
     return {};
   }
 
-  const reStartConnection = async (conId: string) => {
-    return connMgr.startConnection(conId, dbs, _dbs, socket, true);
-  };
+  const getConnectionAndDbConf = async (connId: string) => {
+    checkIf({ connId }, "connId", "string")
+    const c = await dbs.connections.findOne({ id: connId });
+    if(!c) throw "Connection not found";
+    const dbConf = await dbs.database_configs.findOne(getDatabaseConfigFilter(c));
+    if(!dbConf) throw "Connection not found";
+    const db = connMgr.getConnectionDb(connId);
+    if(!db) throw "db missing";
+
+    return { c, dbConf, db };
+  }
 
   const adminMethods: ReturnType<PublishMethods> = {
-    testing: {
-      input: {
-        a: { type: "number" },
-      },
-      run: (args) => { 
-        
-        return ts.transpile("const f = async () => { returnd 22; }", { 
-          noEmit: false, 
-          target: 9,
-          lib: ["ES2022"],
-          moduleResolution: 2,
-        }, "input.ts");
-      }
-    },
     makeFakeData: async (connId: string) => {
       const c = connMgr.getConnection(connId);
       const con = await dbs.connections.findOne({ id: connId });
@@ -75,18 +69,17 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       await dbs.sessions.delete({});
     },
     getConnectionDBTypes: async (conId: string) => {
+
+      /** Maybe state connection */
+      const con = await dbs.connections.findOne({ id: conId, is_state_db: true });
+      if(con){
+        if(!statePrgl) throw "statePrgl missing";
+        return statePrgl.getTSSchema()
+      }
+
       const c = connMgr.getConnection(conId);
       if(c){
         return c.prgl?.getTSSchema();
-      }
-
-      /** Maybe state connection */
-      if(!c){
-        const con = await dbs.connections.findOne({ id: conId, is_state_db: true });
-        if(con){
-          if(!statePrgl) throw "statePrgl missing";
-          return statePrgl.getTSSchema()
-        }
       }
 
       console.error(`Not found`)
@@ -110,12 +103,19 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       return isSuperUser(db.prgl._db);
     },
     getFileFolderSizeInBytes: (conId?: string) => {
-      const dirSize = async (directory: string) => {
+      const dirSize = (directory: string): number => {
         if(!fs.existsSync(directory)) return 0;
-        const files = fs.readdirSync( directory );
-        const stats = files.map( file => fs.statSync( path.join( directory, file ) ) );
+        const files = fs.readdirSync(directory);
+        const stats = files.flatMap(file => {
+          const fileOrPathDir = path.join(directory, file) 
+          const stat = fs.statSync(fileOrPathDir);
+          if(stat.isDirectory()){
+            return dirSize(fileOrPathDir)
+          }
+          return stat.size;
+        });
       
-        return stats.reduce( ( accumulator, { size } ) => accumulator + size, 0 );
+        return stats.reduce( ( accumulator, size) => accumulator + size, 0 );
       }
       
       if(conId && (typeof conId !== "string" || !connMgr.getConnection(conId))){
@@ -126,8 +126,8 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     },
     testDBConnection,
     validateConnection: async (c: Connections) => {
-      const connection = validateConnection(c);
       let warn = "";
+      const connection = validateConnection(c);
       if(connection.db_ssl){
         warn = ""
       }
@@ -136,15 +136,55 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     createConnection: async (con: Connections) => {
       return upsertConnection(con, user.id, dbs);
     },
-    deleteConnection: async (id: string, opts?: { keepBackups: boolean }) => {
+    reloadSchema: async (conId: string) => {
+      const conn = connMgr.getConnection(conId)
+      if(conId && typeof conId !== "string" || !conn?.prgl){
+        throw "Invalid/Inexisting connection id provided"
+      }
+      await conn.prgl.restart();
+    },
+    deleteConnection: async (id: string, opts?: { keepBackups: boolean; dropDatabase: boolean; }) => {
 
       try {
         return dbs.tx!(async t => {
           const con = await t.connections.findOne({ id });
-          if(con?.is_state_db) throw "Cannot delete a prostgles state database connection"
-          const conFilter = { connection_id: id }
+          if(con?.is_state_db) throw "Cannot delete a prostgles state database connection";
+          if(opts?.dropDatabase){
+            if(!con?.db_name) throw "Unexpected: Database name missing";
+            const cdb = await getCDB(con.id, undefined, true);
+            const anotherDatabaseNames: { datname: string }[] = await cdb.any(`
+              SELECT * FROM pg_catalog.pg_database 
+              WHERE datname <> current_database() 
+              AND NOT datistemplate
+              ORDER BY datname = 'postgres' DESC
+            `);
+            cdb.$pool.end();
+            const [anotherDatabaseName] = anotherDatabaseNames;
+            if(!anotherDatabaseName) throw "Could not find another database";
+
+            const acdb = await getCDB(con.id, { database: anotherDatabaseName.datname }, true);
+            const killDbConnections = () => {
+              return acdb.manyOrNone(`
+                SELECT pg_terminate_backend(pid) 
+                FROM pg_stat_activity 
+                WHERE datname = \${db_name};
+              `, con).catch(e => 1)
+            }
+            await killDbConnections();
+            await killDbConnections();
+            await acdb.any(`
+              DROP DATABASE ${asName(con.db_name)};
+            `, con);
+            await connMgr.disconnect(con.id);
+          }
+          const conFilter = { connection_id: id };
           await t.workspaces.delete(conFilter);
-          await t.access_control.delete(conFilter);
+          await t.access_control.delete({ 
+            $existsJoined: {  
+              path: ["database_configs", "connections"],
+              filter: { id }
+            } 
+          });
 
           if(opts?.keepBackups){
             await t.backups.update(conFilter, { connection_id: null });
@@ -157,6 +197,9 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
           }
           
           const result = await t.connections.delete({ id }, { returning: "*" });
+
+          /** delete orphaned database_configs */
+          await t.database_configs.delete({ $notExistsJoined: { connections: {} } });
           return result;
         });
 
@@ -164,7 +207,6 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
         return Promise.reject(err);
       }
     },
-    reStartConnection,
     disconnect: async (conId: string) => {
       return connMgr.disconnect(conId);
     },
@@ -173,18 +215,15 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     bkpDelete: bkpManager.bkpDelete,
     
     streamBackupFile: async (c: "start" | "chunk" | "end", id: null | string, conId: string | null, chunk: any | undefined, sizeBytes: number | undefined, restore_options: Backups["restore_options"]) => {
-      // socket.on("stream", console.log)
-      // console.log(arguments);
 
       if(c === "start" && id && conId && sizeBytes){
         const s = bkpManager.getTempFileStream(id, user.id);
         await bkpManager.pgRestoreStream(id, conId, s.stream, sizeBytes, restore_options);
-        // s.stream.on("close", () => console.log(1232132));
         
         return s.streamId;
 
       } else if(c === "chunk" && id && chunk){
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => { 
           bkpManager.pushToStream(id, chunk, (err) => {
             if(err){
               reject(err)
@@ -199,13 +238,19 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
 
       } else  throw new Error("Not expected");
     },
-
+    setTableConfig: async (connId: string, tableConfig: DatabaseConfigs["table_config"] | undefined = undefined) => {
+      const { c, db, dbConf } = await getConnectionAndDbConf(connId);
+      await dbs.tx!(async t => {
+        await connMgr.getConnection(connId)?.prgl?.update ?.({ tableConfig: (tableConfig || undefined) as any });
+        await t.database_configs.update({ id: dbConf.id }, { table_config: tableConfig });
+      })
+    },
     setFileStorage: async (connId: string, tableConfig?: ConnectionTableConfig, opts?: { keepS3Data?: boolean; keepFileTable?: boolean }) => {
-      checkIf({ connId }, "connId", "string")
-      const c = await dbs.connections.findOne({ id: connId });
-      if(!c) throw "Connection not found";
-      const db = connMgr.getConnectionDb(connId);
-      if(!db) throw "db missing";
+      const { c, db, dbConf } = await getConnectionAndDbConf(connId);
+
+      let newTableConfig: ConnectionTableConfig | null = tableConfig? {
+        ...tableConfig
+      } : null;
 
       /** Enable file storage */
       if(tableConfig){
@@ -213,9 +258,8 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
           checkIf(tableConfig, "referencedTables", "object");
         }
         if(tableConfig.referencedTables && Object.keys(tableConfig).length === 1){
-          if(!c.table_config) throw "Must enable file storage first";
-          await dbs.connections.update({ id: connId }, { table_config: { ...c.table_config, ...tableConfig } });
-          
+          if(!dbConf.file_table_config) throw "Must enable file storage first"; 
+          newTableConfig = { ...dbConf.file_table_config, ...tableConfig }
         } else {
 
           checkIf(tableConfig, "fileTable", "string")
@@ -229,22 +273,22 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
             }
           }
           const KEYS = ["fileTable", "storageType"] as const;
-          if(c.table_config && JSON.stringify(pickKeys(c.table_config, KEYS as any)) !== JSON.stringify(pickKeys(tableConfig, KEYS as any))){
+          if(dbConf.file_table_config && JSON.stringify(pickKeys(dbConf.file_table_config, KEYS as any)) !== JSON.stringify(pickKeys(tableConfig, KEYS as any))){
             throw "Cannot update " + KEYS.join("or");
           }
-          
-          await dbs.connections.update({ id: connId }, { table_config: tableConfig });
+           
+          newTableConfig = tableConfig;
         }
 
       /** Disable current file storage */
       } else {
-        const fileTable = c.table_config?.fileTable;
+        const fileTable = dbConf.file_table_config?.fileTable;
         if(!fileTable) throw "Unexpected: fileTable already disabled";
         await (db[DB_TRANSACTION_KEY] as DBHandlerServer["tx"])!(async dbTX => {
 
           const fileTableHandler = dbTX[fileTable];
           if(!fileTableHandler) throw "Unexpected: fileTable table handler missing";
-          if(c.table_config?.fileTable && (c.table_config.storageType.type === "local" || c.table_config.storageType.type === "S3" && !opts?.keepS3Data)){
+          if(dbConf.file_table_config?.fileTable && (dbConf.file_table_config.storageType.type === "local" || dbConf.file_table_config.storageType.type === "S3" && !opts?.keepS3Data)){
             if(!fileTable || !fileTableHandler.delete) {
               throw "Unexpected error. fileTable handler not found";
             }
@@ -254,11 +298,18 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
           if(!opts?.keepFileTable){
             await dbTX.sql!("DROP TABLE ${fileTable:name} CASCADE", { fileTable })
           }
-        })
-        await dbs.connections.update({ id: connId }, { table_config: null });
+        });
+        newTableConfig = null;
       }
-      await connMgr.reloadFileStorage(connId)
-      // await reStartConnection?.(connId);
+      const con = await dbs.connections.findOne({ id: connId });
+      if(!con) throw "Connection not found";
+      await dbs.tx?.(async t => {
+        await connMgr.setFileTable(con, newTableConfig);
+        await t.database_configs.update({ id: dbConf.id }, { file_table_config: newTableConfig });
+      }).catch(err => {
+        console.log({err});
+        return Promise.reject(err)
+      });
     },
     deleteAccessRule: (id: string) => {
       return dbs.access_control.delete({ id })
@@ -266,7 +317,30 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     upsertAccessRule: (ac: DBSSchema["access_control"]) => {
       if(!ac) return dbs.access_control.insert(ac);
       return dbs.access_control.update({ id: ac.id }, ac);
-    }
+    },
+    getStatus: (connId: string) => getStatus(connId, dbs),
+    runConnectionQuery: async (connId: string, query: string, args?: AnyObject | any[]): Promise<AnyObject[]> => {
+      const cdb = await getCDB(connId);
+      return cdb.any(query, args);
+    },
+    getSampleSchemas: async (): Promise<{ name: string; file: string; type: "sql" | "ts" }[]> => {
+      const path = getRootDir() + `/sample_schemas`;
+      const files = fs.readdirSync(path);
+      return files.map(name => {
+        const extension = name.split(".").at(-1)?.toLowerCase() ?? "unknown";
+        if(["sql", "ts"].includes(extension)){
+          return {
+            name,
+            type: extension as "ts" | "sql",
+            file: fs.readFileSync(`${path}/${name}`, { encoding: "utf-8" }),
+          }
+        }
+      }).filter(isDefined);
+    }, 
+    getCompiledTS: async (ts: string) => {
+      return getCompiledTS(ts);
+    },
+    killPID,
   }
 
   const userMethods = !user.id? {} : {
@@ -328,14 +402,23 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       ];
     }
   }
-  // dbs.sql?.("alter table global_settings drop constraint")
-  // await dbs.global_settings.update({}, { tableConfig });
   
   return {
     ...userMethods,
     ...(user.type === "admin"? adminMethods : undefined),
     startConnection: async (con_id: string) => {
-      return connMgr.startConnection(con_id, dbs, _dbs, socket);
+      try {
+        const socketPath = await connMgr.startConnection(con_id, dbs, _dbs, socket);
+        return socketPath;
+      } catch (error){
+        console.error("Could not start connection " + con_id, error);
+        // Used to prevent data leak to client
+        if(user.type === "admin"){
+          throw error;
+        } else {
+          throw `Something went wrong when connecting to ${con_id}`;
+        }
+      }
     }
   }
 }
@@ -369,3 +452,4 @@ export const checkIf = <Obj, isType extends keyof typeof is>(obj: Obj, key: keyo
   if(!isOk) throw `${key} is not of type ${isType}${isType === "oneOf"? `(${arg1})` : ""}. Source object: ${JSON.stringify(obj, null, 2)}`;
   return true;
 }
+
