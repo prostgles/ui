@@ -46,7 +46,7 @@ export declare function getBkp(dbs: DBOFullyTyped<DBSchemaGenerated>, bkpId: str
             keepLogs?: boolean | undefined;
         } | {
             command: "pg_dump";
-            format: "p" | "t" | "c";
+            format: "c" | "p" | "t";
             dataOnly?: boolean | undefined;
             clean?: boolean | undefined;
             create?: boolean | undefined;
@@ -62,7 +62,7 @@ export declare function getBkp(dbs: DBOFullyTyped<DBSchemaGenerated>, bkpId: str
         restore_logs?: string | null | undefined;
         restore_options?: {
             command: "pg_restore" | "psql";
-            format: "p" | "t" | "c";
+            format: "c" | "p" | "t";
             clean: boolean;
             newDbName?: string | undefined;
             create?: boolean | undefined;

@@ -80,6 +80,8 @@ const io = new socket_io_1.Server(http, {
 exports.connMgr = new ConnectionManager_1.ConnectionManager(http, app, exports.connectionChecker.withOrigin);
 const electronConfig = (0, electronConfig_1.getElectronConfig)();
 const PORT = electronConfig ? (electronConfig.port ?? 3099) : +(process.env.PROSTGLES_UI_PORT ?? 3004);
+const LOCALHOST = "127.0.0.1";
+const HOST = electronConfig ? LOCALHOST : (process.env.PROSTGLES_UI_HOST || LOCALHOST);
 (0, setDBSRoutesForElectron_1.setDBSRoutesForElectron)(app, io, PORT);
 /** Make client wait for everything to load before serving page */
 const awaitInit = () => {
@@ -157,9 +159,10 @@ const onServerReady = async (cb) => {
     }
 };
 exports.onServerReady = onServerReady;
-const server = http.listen(PORT, () => {
+const server = http.listen(PORT, HOST, () => {
     const address = server.address();
     const port = (0, publishUtils_1.isObject)(address) ? address.port : PORT;
+    const host = (0, publishUtils_1.isObject)(address) ? address.address : HOST;
     const _initState = (0, startProstgles_1.getInitState)();
     _initState.httpListening = {
         port
@@ -167,7 +170,7 @@ const server = http.listen(PORT, () => {
     onServerReadyListeners.forEach(cb => {
         cb(port);
     });
-    console.log(`\n\nexpress listening on port ${port}\n\n`);
+    console.log(`\n\nexpress listening on port ${port} (${host}:${port})\n\n`);
 });
 const spawn = require("child_process").spawn;
 function restartProc(cb) {

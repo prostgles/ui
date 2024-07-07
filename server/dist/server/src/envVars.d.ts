@@ -10,10 +10,10 @@ export declare const DBS_CONNECTION_INFO: {
     db_port: number;
     db_ssl: "disable" | "allow" | "prefer" | "require" | "verify-ca" | "verify-full";
 } & Required<{
-    db_host: string;
     db_name: string;
-    db_port: number;
     db_user: string;
+    db_host: string;
+    db_port: number;
     db_ssl: "disable" | "allow" | "prefer" | "require" | "verify-ca" | "verify-full";
 }> & {
     db_conn: string;
