@@ -371,7 +371,6 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       
       const recoveryCode = crypto.randomBytes(26).toString("hex");
       const hashedRecoveryCode = getPasswordHash(user, recoveryCode);
-      // const hashedRecoveryCode = await dbs.sql!("SELECT crypt(${recoveryCode}, ${uid}::text)", { uid: user.id, recoveryCode }, { returnType: "value" })
       await dbs.users.update({ id: user.id }, { "2fa": { secret, recoveryCode: hashedRecoveryCode, enabled: false } })
       return { 
         url: otpauth,
