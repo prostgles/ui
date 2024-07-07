@@ -6,10 +6,10 @@ import type { InitResult } from "prostgles-server/dist/initProstgles";
 import { RELOAD_NOTIFICATION } from "../../commonTypes/utils";
 
 let showedMessage = false;
-export const startDevHotReloadNotifier = ({ io, port }: { io: InitResult["io"]; port: number }) => {
+export const startDevHotReloadNotifier = ({ io, port, host }: { io: InitResult["io"]; port: number; host: string }) => {
   const showMessage = () => {
     if(showedMessage) return
-    console.log(`\n\n${RELOAD_NOTIFICATION}:\n\n http://localhost:${port}`);
+    console.log(`\n\n${RELOAD_NOTIFICATION}:\n\n http://${host}:${port}`);
     showedMessage = true
   }
   if(process.env.NODE_ENV === "development"){

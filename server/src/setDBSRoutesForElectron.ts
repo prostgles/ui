@@ -6,7 +6,7 @@ import { getElectronConfig } from "./electronConfig";
 import { getInitState, tryStartProstgles } from "./startProstgles";
 import type { Server } from "socket.io";
 
-export const setDBSRoutesForElectron = (app: Express, io: Server, port: number) => {
+export const setDBSRoutesForElectron = (app: Express, io: Server, port: number, host: string) => {
 
   const initState = getInitState();
   if(!initState.isElectron) return;
@@ -45,7 +45,7 @@ export const setDBSRoutesForElectron = (app: Express, io: Server, port: number) 
 
       try {
         await testDBConnection(creds);
-        const startup = await tryStartProstgles({ app, io, con: creds, port });
+        const startup = await tryStartProstgles({ app, io, con: creds, port, host });
         
         if(!startup.ok){
           throw startup;

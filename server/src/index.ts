@@ -79,7 +79,7 @@ const electronConfig = getElectronConfig();
 const PORT = electronConfig? (electronConfig.port ?? 3099) : +(process.env.PROSTGLES_UI_PORT ?? 3004);
 const LOCALHOST = "127.0.0.1"
 const HOST = electronConfig? LOCALHOST : (process.env.PROSTGLES_UI_HOST || LOCALHOST);
-setDBSRoutesForElectron(app, io, PORT);
+setDBSRoutesForElectron(app, io, PORT, HOST);
 
 
 /** Make client wait for everything to load before serving page */
@@ -103,7 +103,7 @@ const awaitInit = () => {
 /**
  * Serve prostglesInitState
  */
-app.get("/dbs", (req, res) => {
+app.get("/dbs", (_req, res) => {
   const serverState: ServerState = getInitState()
   res.json(serverState);
 });
@@ -142,13 +142,13 @@ app.use(serveIndexIfNoCredentials)
 if(electronConfig){   
   const creds = electronConfig.getCredentials();
   if(creds){
-    tryStartProstgles({ app, io, con: creds, port: PORT });
+    tryStartProstgles({ app, io, con: creds, port: PORT, host: HOST });
   } else {
     console.log("Electron: No credentials");
   }
-  setDBSRoutesForElectron(app, io, PORT); 
+  setDBSRoutesForElectron(app, io, PORT, HOST); 
 } else {
-  tryStartProstgles({ app, io, port: PORT, con: undefined}); 
+  tryStartProstgles({ app, io, port: PORT, host: HOST, con: undefined}); 
 }
  
 
