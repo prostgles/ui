@@ -8,9 +8,9 @@ Web dashboard and SQL Editor for Postgres
 
 [More](https://prostgles.com/ui)
 <p float="left">
-  <img src="https://prostgles.com/ui-vids/screenshot2.png" width="100%%"/>  
+  <img src="https://prostgles.com/static/images/screenshot_crypto.png" width="100%%"/>  
 </p>
-<img src="https://prostgles.com/ui-vids/mobile2.png" width="33%" />  
+<img src="https://prostgles.com/static/images/screenshot_start_commands.png" width="33%" />  
 
 ### Features
 
