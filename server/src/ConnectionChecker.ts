@@ -128,8 +128,6 @@ export class ConnectionChecker {
     } 
 
     const electronConfig = getElectronConfig()
-
-
     const sid = req.cookies[sidKeyName];
     if(electronConfig?.isElectron && electronConfig.sidConfig.electronSid !== sid){
       res.json({ error: "Not authorized" });
@@ -162,9 +160,8 @@ export class ConnectionChecker {
       }
 
       if(this.config.global_setting?.allowed_ips_enabled){
-
-        const c = await this.checkClientIP({ req });
-        if(!c.isAllowed){
+        const ipCheck = await this.checkClientIP({ req });
+        if(!ipCheck.isAllowed){
           res.status(403).json({ error: "Your IP is not allowed" });
           return
         }
