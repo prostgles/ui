@@ -17,17 +17,14 @@ import { getInitState, tryStartProstgles } from "./startProstgles";
 
 const app = express();
 
-if(process.env.PRGL_TEST || true){
+// if(process.env.PRGL_TEST){
   app.use((req, res, next) => {
     res.on("finish", () => {
       console.log(`${(new Date()).toISOString()} ${req.method} ${res.statusCode} ${req.url} ${res.statusCode === 302? res.getHeader("Location") : ""}`);
     });
     next();
   });
-}
-// if(PubSubManager.EXCLUDE_QUERY_FROM_SCHEMA_WATCH_ID !== QUERY_WATCH_IGNORE){
-//   throw "Invalid QUERY_WATCH_IGNORE";
-// } 
+// }
 
 export const API_PATH = "/api";
  
@@ -80,6 +77,8 @@ export const connMgr = new ConnectionManager(http, app, connectionChecker.withOr
 
 const electronConfig = getElectronConfig();
 const PORT = electronConfig? (electronConfig.port ?? 3099) : +(process.env.PROSTGLES_UI_PORT ?? 3004);
+const LOCALHOST = "127.0.0.1"
+const HOST = electronConfig? LOCALHOST : (process.env.PROSTGLES_UI_HOST || LOCALHOST);
 setDBSRoutesForElectron(app, io, PORT);
 
 
@@ -164,17 +163,18 @@ export const onServerReady = async (cb: OnServerReadyCallback) => {
 }
 
 
-const server = http.listen(PORT, () => {
+const server = http.listen(PORT, HOST, () => {
   const address = server.address();
   const port = isObject(address)? address.port : PORT;
+  const host = isObject(address)? address.address : HOST;
   const _initState = getInitState();
   _initState.httpListening = {
     port
   };
   onServerReadyListeners.forEach(cb => {
     cb(port)
-  })
-  console.log(`\n\nexpress listening on port ${port}\n\n`);
+  });
+  console.log(`\n\nexpress listening on port ${port} (${host}:${port})\n\n`);
 });
    
 const spawn = require("child_process").spawn;  

@@ -1,1 +1,0 @@
-{"version":3,"file":"startDevHotReloadNotifier.d.ts","sourceRoot":"","sources":["../../../src/startDevHotReloadNotifier.ts"],"names":[],"mappings":"AAIA,OAAO,KAAK,EAAE,UAAU,EAAE,MAAM,qCAAqC,CAAC;AAItE,eAAO,MAAM,yBAAyB,iBAAkB;IAAE,EAAE,EAAE,UAAU,CAAC,IAAI,CAAC,CAAC;IAAC,IAAI,EAAE,MAAM,CAAA;CAAE,SAc7F,CAAA"}
