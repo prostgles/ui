@@ -22,7 +22,7 @@ import type { ConnectionTableConfig} from "../ConnectionManager/ConnectionManage
 import { DB_TRANSACTION_KEY, getCDB } from "../ConnectionManager/ConnectionManager";
 import { isDefined } from "../../../commonTypes/filterUtils";
 import type { Backups } from "../BackupManager/BackupManager";
-import { ADMIN_ACCESS_WITHOUT_PASSWORD, insertUser } from "../ConnectionChecker";
+import { getPasswordlessAdmin, insertUser } from "../ConnectionChecker";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
 import { demoDataSetup } from "../demoDataSetup";
@@ -68,7 +68,7 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     },
     disablePasswordless: async (newAdmin: { username: string; password: string }) => {
 
-      const noPwdAdmin = await ADMIN_ACCESS_WITHOUT_PASSWORD(dbs);
+      const noPwdAdmin = await getPasswordlessAdmin(dbs);
       if(!noPwdAdmin) throw "No passwordless admin found";
 
       await insertUser(dbs, _dbs, { username: newAdmin.username, password: newAdmin.password, type: "admin" });
