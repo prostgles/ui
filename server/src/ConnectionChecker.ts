@@ -1,26 +1,27 @@
+import cors from "cors";
+import type { Express, Request } from "express";
+import type { Auth, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
+import { getLoginClientInfo } from "prostgles-server/dist/AuthHandler";
+import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
+import type { DB } from "prostgles-server/dist/Prostgles";
+import type { SubscriptionHandler } from "prostgles-types";
+import { isDefined, tryCatch } from "prostgles-types";
+import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { DBSSchema } from "../../commonTypes/publishUtils";
+import type { SUser } from "./authConfig/authConfig";
+import { YEAR, getActiveSession, makeSession, sidKeyName } from "./authConfig/authConfig";
+import { getPasswordHash } from "./authConfig/authUtils";
+import { getElectronConfig, isDemoMode } from "./electronConfig";
+import { PRGL_PASSWORD, PRGL_USERNAME } from "./envVars";
 import type {
-  DBS, 
-  Users} from "./index";
+  DBS,
+  Users
+} from "./index";
 import {
   connMgr,
   tout,
 } from "./index";
-import type { Express, Request } from "express";
-import type { SubscriptionHandler} from "prostgles-types";
-import { isDefined, tryCatch } from "prostgles-types";
-import type { DBSSchema  } from "../../commonTypes/publishUtils";
-import cors from "cors";
-import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
-import type { DB } from "prostgles-server/dist/Prostgles";
-import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
-import type { Auth, AuthResult, SessionUser} from "prostgles-server/dist/AuthHandler";
-import { getLoginClientInfo } from "prostgles-server/dist/AuthHandler";
-import type { SUser} from "./authConfig/authConfig";
-import { getActiveSession, makeSession, sidKeyName, YEAR } from "./authConfig/authConfig";
-import { getElectronConfig, isDemoMode } from "./electronConfig";
 import { tableConfig } from "./tableConfig";
-import { PRGL_PASSWORD, PRGL_USERNAME } from "./envVars";
-import { getPasswordHash } from "./authConfig/authUtils";
 
 export type WithOrigin = {
   origin?: (requestOrigin: string | undefined, callback: (err: Error | null, origin?: string) => void) => void;
