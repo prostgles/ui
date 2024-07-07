@@ -1,0 +1,1 @@
+{"version":3,"file":"insertStateDatabase.d.ts","sourceRoot":"","sources":["../../../src/insertStateDatabase.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,EAAE,EAAE,MAAM,iCAAiC,CAAC;AAE1D,OAAO,KAAK,EAAE,GAAG,EAAE,MAAM,GAAG,CAAC;AAE7B,OAAO,KAAK,EAAE,iBAAiB,EAAC,MAAM,kBAAkB,CAAC;AAKzD,8BAA8B;AAC9B,eAAO,MAAM,mBAAmB,OAAc,GAAG,gBAAgB,iBAAiB,GAAG,QAAQ,iBAAiB,CAAC,kBAuE9G,CAAA"}

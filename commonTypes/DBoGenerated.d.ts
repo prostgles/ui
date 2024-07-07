@@ -365,6 +365,17 @@ export type DBSchemaGenerated = {
       wal_records?: null | string;
     };
   };
+  pg_stat_statements_info: {
+    is_view: true;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      dealloc?: null | string;
+      stats_reset?: null | string;
+    };
+  };
   published_methods: {
     is_view: false;
     select: true;
