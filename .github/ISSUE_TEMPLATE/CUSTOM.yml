@@ -1,0 +1,21 @@
+name: Feature request
+description: File a feature request
+title: ""
+assignees:
+  - prostgles
+body:
+  - type: textarea
+    id: details
+    attributes:
+      label: Issue details
+      value: " "
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://prostgles.com)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
