@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import RTComp from "./RTComp";
 
 type P = {
@@ -28,7 +28,7 @@ export default class TimeSeries extends RTComp<P, any> {
       layers
     } = this.props;
     return (
-      <div className={"timeseries-comp f-1 relative bg-0"} >
+      <div className={"timeseries-comp f-1 relative bg-color-0"} >
       </div>
     )
   }

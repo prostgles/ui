@@ -1,26 +1,29 @@
-
+import type { Express } from "express";
+import path from "path";
+import type pg from "pg-promise/typescript/pg-subset";
 import prostgles from "prostgles-server";
-import pg from "pg-promise/typescript/pg-subset";
-import { tableConfig } from "./tableConfig";
-import { publishMethods } from "./publishMethods";
-import { getAuth } from "./authConfig";
-import path from 'path';
-import { DBSConnectionInfo, getElectronConfig, actualRootDir, isDemoMode, } from "./electronConfig";
+import type { EventInfo } from "prostgles-server/dist/Logging";
+import type { DB } from "prostgles-server/dist/Prostgles";
+import { omitKeys, pickKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
+import type { InitResult } from "prostgles-server/dist/initProstgles";
+import type { Server } from "socket.io";
+import type { DBS } from ".";
+import { connMgr, connectionChecker } from ".";
+import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { ProstglesInitState } from "../../commonTypes/electronInit";
+import BackupManager from "./BackupManager/BackupManager";
+import { getAuth } from "./authConfig/authConfig";
+import { testDBConnection } from "./connectionUtils/testDBConnection";
+import type { DBSConnectionInfo } from "./electronConfig";
+import { actualRootDir, getElectronConfig, isDemoMode, } from "./electronConfig";
+import { DBS_CONNECTION_INFO } from "./envVars";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { publish } from "./publish";
-import { testDBConnection } from "./connectionUtils/testDBConnection";
-import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
-import { ProstglesInitState } from "../../commonTypes/electronInit";
+import { publishMethods } from "./publishMethods/publishMethods";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
-import { pickKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
-import type { Express } from "express";
-import { DB } from "prostgles-server/dist/Prostgles";
-import { Server } from "socket.io";
-import { connectionChecker, connMgr, DBS } from ".";
-import BackupManager from "./BackupManager/BackupManager";
-import { InitResult } from "prostgles-server/dist/initProstgles";
-import { DBS_CONNECTION_INFO } from "./envVars";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
+import { tableConfig } from "./tableConfig";
+import { addLog, setLoggerDBS } from "./Logger";
 
 type StartArguments = {
   app: Express; 
@@ -29,7 +32,7 @@ type StartArguments = {
   port: number;
 }
 
-let bkpManager: BackupManager;
+let bkpManager: BackupManager | undefined;
 export const initBackupManager = async (db: DB, dbs: DBS) => {
   bkpManager ??= await BackupManager.create(db, dbs, connMgr);
   return bkpManager;
@@ -37,7 +40,7 @@ export const initBackupManager = async (db: DB, dbs: DBS) => {
 
 export let statePrgl: InitResult | undefined;
    
-const isTesting = false;// !!process.env.PRGL_TEST;
+const isTesting = !!process.env.PRGL_TEST;
 
 type ProstglesStartupState = 
 | { ok: true; init?: undefined; conn?: undefined } 
@@ -82,9 +85,10 @@ export const startProstgles = async ({ app, port, io, con = DBS_CONNECTION_INFO}
     }
     const IS_PROD = process.env.NODE_ENV === "production";
 
+
     /** Prevent electron access denied error (cannot edit files in the install directory in electron) */
-    const tsGeneratedTypesDir =  (IS_PROD || getElectronConfig()?.isElectron)? undefined : path.join(actualRootDir + '/../commonTypes/');
- 
+    const tsGeneratedTypesDir =  (IS_PROD || getElectronConfig()?.isElectron)? undefined : path.join(actualRootDir + "/../commonTypes/");
+    const watchSchema = !!tsGeneratedTypesDir;
     const auth = getAuth(app);
     //@ts-ignore
     const prgl = await prostgles<DBSchemaGenerated>({
@@ -92,19 +96,19 @@ export const startProstgles = async ({ app, port, io, con = DBS_CONNECTION_INFO}
         ...validatedDbConnection,
         connectionTimeoutMillis: 10 * 1000, 
       },
-      sqlFilePath: path.join(actualRootDir + '/src/init.sql'),
+      sqlFilePath: path.join(actualRootDir + "/src/init.sql"),
       io,
       tsGeneratedTypesDir,
-      watchSchema: !!tsGeneratedTypesDir,
+      watchSchema,
       watchSchemaType: "DDL_trigger",
       transactions: true,
       onSocketConnect: async ({ socket, dbo, db, getUser }) => {
           
         const user = await getUser();
         const userId = user?.user?.id;
-        if(userId){
-          await dbo.users.update({ id: userId, is_online: false }, { is_online: true });
-        }
+        // if(userId){
+        //   await dbo.users.update({ id: userId, is_online: false }, { is_online: true });
+        // }
         const sid = user?.sid;   
 
         await connectionChecker.onSocketConnected({ sid, getUser: getUser as any });
@@ -112,9 +116,9 @@ export const startProstgles = async ({ app, port, io, con = DBS_CONNECTION_INFO}
         if(sid){
           const s = await dbo.sessions.findOne({ id: sid });
           if(!s){
-            console.log("onSocketConnect session missing ?!")
-          } else if(Date.now() > +(new Date(+s?.expires))){
-            console.log("onSocketConnect session expired ?!", s.id, Date.now())
+            console.log("onSocketConnect session missing ?!");
+          } else if(Date.now() > +(new Date(+s.expires))){
+            console.log("onSocketConnect session expired ?!", s.id, Date.now());
           } else {
             await dbo.sessions.update({ id: sid }, { last_used: new Date(), is_connected: true, socket_id: socket.id });
           }
@@ -143,33 +147,28 @@ export const startProstgles = async ({ app, port, io, con = DBS_CONNECTION_INFO}
 
         }
       },
-      onSocketDisconnect: async ({ dbo, getUser }) => {
+      onSocketDisconnect: async (params) => {
+        const { dbo, getUser } = params;
+
         //@ts-ignore
         const user = await getUser();
         const sid = user?.sid;
         if(sid){
           await dbo.sessions.update({ id: sid }, { is_connected: false })
         }
-        if(user?.user && !(await dbo.sessions.count({ user_id: user.user.id, is_connected: true }))){
-          dbo.users.update({ id: user.user.id }, { is_online: false })
-        }
       },
-      onLog: !isTesting? undefined : async (e) => {
-        const pref = [Date.now(),"server"];
-        if(e.type === "sync" && e.tableName === "windows"){
-          console.log(...pref, JSON.stringify(e));
-        } else if(e.type === "disconnect" || e.type === "connect"){
-          console.log(...pref, JSON.stringify(e));
-        }
+      // DEBUG_MODE: false, // This won't work because old_table is not available in the trigger
+      onLog: async (e) => {
+        // console.log(e);
+        addLog(e, null);
       },
-      // DEBUG_MODE: true,
       tableConfig,
       tableConfigMigrations: { silentFail: false,
         version: 3,
         onMigrate: async ({ db, oldVersion }) => {
           // if(!oldVersion){
           //   return db.any("DROP TABLE IF EXISTS sessions CASCADE;")
-          // }  
+          // }
           // console.log({oldVersion}) 
           // await db.any(`UPDATE connections SET backups_config = null;`);
           // await db.any(`DELETE FROM access_control WHERE rule->>'dbPermissions' ilike '%fake_data%' `);
@@ -182,19 +181,17 @@ export const startProstgles = async ({ app, port, io, con = DBS_CONNECTION_INFO}
       },
       auth: auth as any,
       publishMethods,
-      publish: params => publish(params, con) as any,
+      publish: params => publish(params) as any,
       joins: "inferred",
-      onReady: async (db, _db: DB) => {
-
+      onReady: async (params) => {
+        const { dbo: db } = params;
+        const _db: DB = params.db;
+        setLoggerDBS(params.dbo);
         /* Update stale data */
         await connectionChecker.init(db, _db); 
-        
-        await db.users.update({}, { is_online: false });  
-          
-
+                  
         await insertStateDatabase(db, _db, con);
 
- 
         await connMgr.init(db, _db);
 
         bkpManager ??= await BackupManager.create(_db, db, connMgr);
@@ -209,7 +206,7 @@ export const startProstgles = async ({ app, port, io, con = DBS_CONNECTION_INFO}
   }
 }
 
-let _initState: Pick<ProstglesInitState, "initError" | "connectionError" | "electronIssue"> & {
+const _initState: Pick<ProstglesInitState, "initError" | "connectionError" | "electronIssue"> & {
   ok: boolean;
   loading: boolean;
   loaded: boolean;
@@ -232,7 +229,7 @@ export const tryStartProstgles = async ({ app, io, port, con = DBS_CONNECTION_IN
 
     _initState.connectionError = null;
     _initState.loading = true;
-    let interval = setInterval(async () => {
+    const interval = setInterval(async () => {
       
       const connHistoryItem = JSON.stringify(con);
       if(connHistory.includes(connHistoryItem)){
@@ -281,7 +278,7 @@ export const tryStartProstgles = async ({ app, io, port, con = DBS_CONNECTION_IN
 }
 
 export const getInitState = (): typeof _initState & ProstglesInitState  => {
-  const eConfig = getElectronConfig?.();
+  const eConfig = getElectronConfig();
   return {
     isElectron: !!eConfig?.isElectron,
     electronCredsProvided: !!eConfig?.hasCredentials(),

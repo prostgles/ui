@@ -1,22 +1,22 @@
 
-import React, { useEffect, useState } from 'react'; 
-import { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { quickClone } from "../../../utils";
+import React, { useEffect, useMemo, useState } from "react"; 
+import type { DBHandlerClient} from "prostgles-client/dist/prostgles";
+import { usePromise } from "prostgles-client/dist/prostgles";
+import { omitKeys, quickClone } from "../../../utils";
 import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter";
 import Select from "../../../components/Select/Select";
-import { SimpleFilter } from '../../../../../commonTypes/filterUtils';
-import { mdiTableEye, mdiTableFilter } from "@mdi/js";
-import { MethodHandler, ValidatedColumnInfo } from "prostgles-types";
+import type { SimpleFilter } from "../../../../../commonTypes/filterUtils";
+import { mdiCheckAll, mdiTableEye, mdiTableFilter } from "@mdi/js";
+import type { MethodHandler, ValidatedColumnInfo } from "prostgles-types";
 import Btn from "../../../components/Btn";  
 import PopupMenu from "../../../components/PopupMenu";
 import SmartTable from "../../SmartTable";
 import { pluralise } from "../../../pages/Connections/Connection";
 import { Label } from "../../../components/Label";
-import { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
-import { RenderFilter } from "../../RenderFilter";
-import { usePromise, useReactiveState } from "../../ProstglesMethod/hooks";
+import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
+import { RenderFilter } from "../../RenderFilter"; 
 import { FlexCol, FlexRowWrap } from "../../../components/Flex";
-import { themeR } from "../../../App";
+import { appTheme, useReactiveState } from "../../../App";
 
 
 export type ContextDataSchema = { 
@@ -58,13 +58,13 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
   const { 
     onChange: setF, 
     detailedFilter: _detailedFilter, 
-    iconPath = mdiTableFilter, 
     label, info, title, containerClassname = "  ",
     tableName,
     db,
     mode = "forcedFilter",
   } = props;
-  const { state: theme } = useReactiveState(themeR);
+  const { state: theme } = useReactiveState(appTheme);
+  const iconPath = props.iconPath ?? (mode === "checkFilter"? mdiCheckAll :  mdiTableFilter)
 
   const detailedFilter = quickClone(_detailedFilter);
 
@@ -76,10 +76,14 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
   }, [detailedFilter]);
 
   const isAnd = detailedFilter && "$and" in detailedFilter;
-  const filters = !detailedFilter? [] : isAnd? detailedFilter.$and :  detailedFilter.$or;
+  const filters = useMemo(() => !detailedFilter? [] : isAnd? detailedFilter.$and :  detailedFilter.$or, [detailedFilter, isAnd]);
 
-  const tableHandler = db[tableName]
-  const rowCount = usePromise(async () => tableHandler!.count!(getSmartGroupFilter(filters, undefined, isAnd? "and" : "or")), [detailedFilter]);
+  const tableHandler = db[tableName];
+  const rowCount = usePromise(async () => {
+    const filter = getSmartGroupFilter(filters, undefined, isAnd? "and" : "or")
+    const rowCount = await tableHandler!.count!(filter);
+    return rowCount;
+  }, [tableHandler, filters, isAnd]);
   const isCheck = mode === "checkFilter";
   const ViewDataBtn = isCheck? null : <div className="ml-2  flex-row ">
 
@@ -99,7 +103,7 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
       render={pClose => (
         <SmartTable
           theme={theme}
-          title={({  filteredRows, totalRows }) => (<div className="flex-row ai-center gap-p25 ws-pre jc-center bg-1 p-1">
+          title={({  filteredRows, totalRows }) => (<div className="flex-row ai-center gap-p25 ws-pre jc-center bg-color-2 p-1">
             <div className="bold">{filteredRows.toLocaleString()} records</div>
             {filters.length > 0 && <>
               from a total of
@@ -146,13 +150,14 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
 
     {o !== "disabled" && 
       <FlexRowWrap 
-        className={"FilterList ai-center p-1 ml-3 " + containerClassname}
+        className={"FilterList ai-center p-1 ml-3 pointer " + containerClassname}
       > 
-        <RenderFilter {...props} 
+        <RenderFilter 
+          {...omitKeys(props, ["title"])}
+          selectedColumns={undefined}
           filter={detailedFilter}
-          asPopup={{
-            mode: "compact"
-          }}
+          itemName={mode === "forcedFilter"? "filter" : "condition"}
+          mode="compact"
           onChange={setF} 
         /> 
       </FlexRowWrap> 

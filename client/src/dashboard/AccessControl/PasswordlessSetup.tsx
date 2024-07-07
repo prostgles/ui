@@ -1,8 +1,9 @@
 import React, { useState } from "react"
-import { ClientUser, ExtraProps } from "../../App";
+import type { ClientUser, ExtraProps } from "../../App";
 import Btn from "../../components/Btn";
 import FormField from "../../components/FormField/FormField";
 import PopupMenu from "../../components/PopupMenu";
+import { pageReload } from "../../components/Loading";
 
 export const PasswordlessSetup = ({ dbsMethods }: ExtraProps) => {
   
@@ -45,9 +46,11 @@ export const PasswordlessSetup = ({ dbsMethods }: ExtraProps) => {
           variant: "filled",
           color: "action",
           onClickPromise: async () => {
-            if(!username || !password) throw "Username or Password missing"
+            if(!username || !password) {
+              throw "Username or Password missing";
+            }
             await dbsMethods.disablePasswordless!({ username, password });
-            window.location.reload();
+            pageReload("disablePasswordless")
           } 
         }
       ]}

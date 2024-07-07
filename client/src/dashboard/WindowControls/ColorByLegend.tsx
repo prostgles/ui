@@ -1,12 +1,14 @@
 import React from "react";
-import { DivProps, FlexRow, classOverride } from "../../components/Flex";
-import { CommonWindowProps } from "../Dashboard/Dashboard"
-import { PALETTE, WindowSyncItem } from "../Dashboard/dashboardUtils";
+import type { DivProps} from "../../components/Flex";
+import { FlexRow, classOverride } from "../../components/Flex";
+import type { CommonWindowProps } from "../Dashboard/Dashboard"
+import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
+import { PALETTE } from "../Dashboard/dashboardUtils";
 import { ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
 import { updateWCols } from "../W_Table/tableUtils/tableUtils";
 import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";
-import { setDefaultConditionalStyle } from "../W_Table/ColumnMenu/ColumnStyleControls";
-import { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
+import { type ColumnValue, setDefaultConditionalStyle } from "../W_Table/ColumnMenu/ColumnStyleControls";
+import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
 
 type P = DivProps & Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "prgl"> & {
   layerLinkId: string;
@@ -40,12 +42,18 @@ export const ColorByLegend = ({ className, style, onChanged, ...props}: P) => {
 
   if(!valueStyles?.length) return null;
 
+  const getConditionLabel = (condition: ColumnValue | ColumnValue[]): string => {
+    if(Array.isArray(condition)) return condition.map(c => getConditionLabel(c)).join(", ");
+    if(condition === null) return "null";
+    if(condition === undefined) return "undefined";
+    return condition.toString();
+  }
   return <FlexRow className={classOverride("ColorByLegend", className)} style={style}>
     {valueStyles.map((s, i) => 
       <ColorPicker 
         key={i} 
         value={getColor(s.condition, i)} 
-        label={s.condition.toString()}
+        label={getConditionLabel(s.condition)}
         variant="legend"
         onChange={newColor => {
           const currColStyle = (!currCol?.style || currCol.style.type !== "Conditional")? undefined : currCol.style

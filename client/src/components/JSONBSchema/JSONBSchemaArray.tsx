@@ -1,11 +1,12 @@
 import { mdiClose, mdiPlus } from "@mdi/js";
-import { JSONB } from "prostgles-types";
+import type { JSONB } from "prostgles-types";
 import React, { useState } from "react";
 import Btn from "../Btn";
 import { DraggableLI } from "../DraggableLI";
 import Popup from "../Popup/Popup";
 import { Section } from "../Section";
-import { JSONBSchema, JSONBSchemaCommonProps } from "./JSONBSchema";
+import type { JSONBSchemaCommonProps } from "./JSONBSchema";
+import { JSONBSchema } from "./JSONBSchema";
 
 
 type Schema = JSONB.ArrayOf; 
@@ -34,14 +35,13 @@ export const JSONBSchemaArray = ({ value, schema, onChange, ...oProps } : P) => 
     contentClassName="flex-col gap-p5 max-h-500 p-p25 o-auto"  
     title={schema.title ?? "Items"} 
     open={true}
-    btnProps={{ iconPath: "", variant: "text" }} 
   >
     {/* <Label info={schema.description}>{schema.title}</Label> */}
     <div className="JSONBSchemaArray_ItemsList flex-col gap-1">
       {Array.isArray(value) && value.map((item, itemIdx) => 
         <DraggableLI 
           key={itemIdx + orderAge} 
-          className={"no-decor flex-row gap-1 trigger-hover " + (itemIdx? "bt b-gray-200 " : "")}
+          className={"no-decor flex-row gap-1 trigger-hover " + (itemIdx? "bt b-color " : "")}
           style={{ 
             paddingTop: "16px",
             paddingBottom: "8px" 

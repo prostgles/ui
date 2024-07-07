@@ -7,17 +7,17 @@ export declare const CORE_FILTER_TYPES: readonly [{
     readonly key: "<>";
     readonly label: "!=";
 }, {
-    readonly key: "not null";
-    readonly label: "IS NOT NULL";
-}, {
-    readonly key: "null";
-    readonly label: "IS NULL";
-}, {
     readonly key: "$in";
     readonly label: "IN";
 }, {
     readonly key: "$nin";
     readonly label: "NOT IN";
+}, {
+    readonly key: "not null";
+    readonly label: "IS NOT NULL";
+}, {
+    readonly key: "null";
+    readonly label: "IS NULL";
 }, {
     readonly key: "$term_highlight";
     readonly label: "CONTAINS";
@@ -90,6 +90,16 @@ export type BaseFilter = {
     disabled?: boolean;
 };
 export declare const JOINED_FILTER_TYPES: readonly ["$existsJoined", "$notExistsJoined"];
+type ComplexFilterDetailed = {
+    type: "controlled";
+    funcName: string | undefined;
+    argsLeftToRight: boolean;
+    comparator: string;
+    otherField?: string | null;
+} | {
+    type: "$filter";
+    leftExpression: Record<string, any[]>;
+};
 export type DetailedFilterBase = BaseFilter & {
     fieldName: string;
     type?: FilterType;
@@ -98,15 +108,15 @@ export type DetailedFilterBase = BaseFilter & {
     ftsFilterOptions?: {
         lang: string;
     };
-    complexFilter?: {
-        argsLeftToRight: boolean;
-        comparator: string;
-        otherField?: string | null;
-    };
+    complexFilter?: ComplexFilterDetailed;
+};
+type JoinPath = {
+    table: string;
+    on?: Record<string, string>[] | undefined;
 };
 export type JoinedFilter = BaseFilter & {
     type: typeof JOINED_FILTER_TYPES[number];
-    path: string[];
+    path: (string | JoinPath)[];
     filter: DetailedFilterBase;
 };
 export type SimpleFilter = DetailedFilterBase | JoinedFilter;
@@ -117,10 +127,12 @@ type InfoType = "pg";
 export declare const getFinalFilterInfo: (fullFilter?: GroupedDetailedFilter | SimpleFilter, context?: ContextDataObject, depth?: number, opts?: {
     for: InfoType;
 }) => string;
-export declare const getFinalFilter: (detailedFilter: SimpleFilter, context?: ContextDataObject, opts?: {
+export declare const parseContextVal: (f: DetailedFilterBase, context: ContextDataObject | undefined, { forInfoOnly }?: GetFinalFilterOpts) => any;
+type GetFinalFilterOpts = {
     forInfoOnly?: boolean | InfoType;
     columns?: string[];
-}) => Record<string, any> | undefined;
+};
+export declare const getFinalFilter: (detailedFilter: SimpleFilter, context?: ContextDataObject, opts?: GetFinalFilterOpts) => Record<string, any> | undefined;
 export type GroupedDetailedFilter = {
     $and: (SimpleFilter | GroupedDetailedFilter)[];
 } | {

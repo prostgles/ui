@@ -1,26 +1,28 @@
 import React, { useEffect, useMemo, useState } from "react"
 import SearchList from "../../../components/SearchList";
-import { ColumnConfig } from "./ColumnMenu";
-import { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { ColumnConfig } from "./ColumnMenu";
+import { useMemoDeep, type DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { FlexRow } from "../../../components/Flex";
 import PopupMenu from "../../../components/PopupMenu";
 import { AlterColumn } from "./AlterColumn/AlterColumn";
 import Btn from "../../../components/Btn";
 import { mdiDelete, mdiFunction, mdiLink, mdiPencil } from "@mdi/js";
 import { getColumnListItem } from "./ColumnsMenu";
-import { ColumnConfigWInfo } from "../W_Table";
+import type { ColumnConfigWInfo } from "../W_Table";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
-import { DBSchemaTablesWJoins, LoadedSuggestions, WindowData } from "../../Dashboard/dashboardUtils";
-import { SyncDataItem } from "prostgles-client/dist/SyncedTable";
+import type { DBSchemaTablesWJoins, LoadedSuggestions, WindowData } from "../../Dashboard/dashboardUtils";
+import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import { SummariseColumn } from "./SummariseColumns";
-import { ValidatedColumnInfo } from "prostgles-types";
+import type { ValidatedColumnInfo } from "prostgles-types";
 import { omitKeys } from "../../../utils";
+import type { Prgl } from "../../../App";
 
 type P = {
   columns: ColumnConfigWInfo[];
   tableColumns: ValidatedColumnInfo[];
   onChange: (newCols: ColumnConfigWInfo[]) => void;
   mainMenuProps: undefined | {
+    prgl: Prgl;
     w: SyncDataItem<Required<WindowData<"table">>, true>;
     db: DBHandlerClient;
     suggestions: LoadedSuggestions | undefined;
@@ -31,8 +33,13 @@ type P = {
   showToggle?: boolean;
 }
 
-export const ColumnList = ({ columns, tableColumns, mainMenuProps, onChange, showToggle = true }: P) => {
+export const ColumnList = ({ columns: columnsWithoutInfo, tableColumns, mainMenuProps, onChange, showToggle = true }: P) => {
   const { db } = mainMenuProps ?? {};
+
+  const columns: ColumnConfigWInfo[] = useMemoDeep(() => columnsWithoutInfo.map(c => {
+    const col = tableColumns.find(tc => tc.name === c.name);
+    return { ...c, info: col }
+  }), [columnsWithoutInfo]);
 
   /** Ensure columns do not change order when toggling */
   const [order, setOrder] = useState<Record<string, number>>( Object.fromEntries(columns
@@ -57,7 +64,7 @@ export const ColumnList = ({ columns, tableColumns, mainMenuProps, onChange, sho
       .map(c => {
         const computedRemove = c.format? "Remove formatting" : c.computedConfig?.isColumn? "Remove Function" : (c.computedConfig || c.nested)? "Remove computed field" : undefined;
         return {
-          ...getColumnListItem({ ...c.info, name: c.name}, c),
+          ...getColumnListItem({ ...c.info, name: c.name }, c),
           ...(showToggle? {checked: c.show} : {}),
           data: c,
           rowClassname: "trigger-hover",

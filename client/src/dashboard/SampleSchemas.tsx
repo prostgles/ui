@@ -1,17 +1,17 @@
 import React from "react"
-import Select from "../components/Select/Select"
-import { usePromise } from "./ProstglesMethod/hooks"
-import { DBSMethods } from "./Dashboard/DBS"
+import Select from "../components/Select/Select" 
+import type { DBSMethods } from "./Dashboard/DBS"
 import { FlexCol } from "../components/Flex"
 import SQLEditor from "./SQLEditor/SQLEditor"
 import CodeExample from "./CodeExample"
-
-export type SampleSchemaDefinition = { name: string; file: string; type: "ts" | "sql" }
+import type { SampleSchema } from "../../../commonTypes/utils"
+import { usePromise } from "prostgles-client/dist/react-hooks"
+ 
 type P = {
   name?: string;
   title?: string;
   dbsMethods: Pick<DBSMethods, "getSampleSchemas">;
-  onChange: (schema: SampleSchemaDefinition) => void; 
+  onChange: (schema: SampleSchema) => void; 
 }
 export const SampleSchemas = ({ dbsMethods, onChange, name, title }: P) => {
 
@@ -21,23 +21,25 @@ export const SampleSchemas = ({ dbsMethods, onChange, name, title }: P) => {
     <Select
       label={title ?? "Create demo schema (optional)"}
       value={name}
+      data-command="ConnectionServer.SampleSchemas" 
       fullOptions={sampleSchemas?.map(s => ({ key: s.name, })) ?? []}
       onChange={name => onChange(sampleSchemas!.find(s => s.name === name)!)}
     />
-    {!schema? null : schema.type === "sql"? <SQLEditor 
-      value={schema.file}
-      sqlOptions={{ lineNumbers: "off" }}
-      style={{ 
-        minHeight: "200px",
-        minWidth: "600px",
-      }}
-      className="rounded b b-gray-300 "
-      onChange={() => {}}
-
-    /> : 
-    <CodeExample 
-      language="typescript" 
-      value={schema.file} 
-    />}
+    {!schema? null : schema.type === "sql"? 
+      <SQLEditor 
+        value={schema.file}
+        sqlOptions={{ lineNumbers: "off" }}
+        style={{ 
+          minHeight: "200px",
+          minWidth: "600px",
+        }}
+        className="rounded b b-color "
+        onChange={() => {}}
+      /> : 
+      <CodeExample 
+        language="typescript" 
+        value={schema.tableConfigTs + "\n\n" + schema.onMountTs} 
+      />
+    }
   </FlexCol>
 }

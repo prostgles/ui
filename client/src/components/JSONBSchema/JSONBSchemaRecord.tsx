@@ -1,9 +1,11 @@
 import { mdiPlus } from "@mdi/js";
-import { getKeys, isObject, JSONB, omitKeys } from "prostgles-types"
+import type { JSONB} from "prostgles-types";
+import { getKeys, isObject, omitKeys } from "prostgles-types"
 import React from "react" 
 import Btn from "../Btn"; 
 import { FormFieldDebounced } from "../FormField/FormFieldDebounced";
-import { JSONBSchema, JSONBSchemaCommonProps } from "./JSONBSchema";
+import type { JSONBSchemaCommonProps } from "./JSONBSchema";
+import { JSONBSchema } from "./JSONBSchema";
 
 
 type Schema = JSONB.RecordType; 
@@ -33,13 +35,13 @@ export const JSONBSchemaRecord = ({ value, schema, onChange, ...oProps } : P) =>
           }} 
         />
         <JSONBSchema 
-          value={value?.[propName]} 
+          value={value[propName]} 
           schema={propSchema} 
           //@ts-ignore
           onChange={(newVal) => {
             onChange(
               newVal === undefined? 
-                omitKeys(value ?? {}, [propName]) : 
+                omitKeys(value, [propName]) : 
                 { ...value, [propName]: newVal }
             )
           }} 

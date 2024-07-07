@@ -1,5 +1,5 @@
-import child from 'child_process';
-import internal from "stream"; 
+import child from "child_process";
+import type internal from "stream"; 
 import { getKeys } from "prostgles-types"; 
 
 
@@ -33,7 +33,7 @@ export function pipeFromCommand(args: {
   } = args;
 
   const execCommand = `${envToStr(envVars)} ${command} ${opts.join(" ")}`
-  const env: NodeJS.ProcessEnv | undefined = !envVars? undefined : envVars;
+  const env: NodeJS.ProcessEnv = envVars;
   const proc = useExec? child.exec(execCommand) : child.spawn(command, opts as any, { env });
   const getUTFText = (v: string) => v.toString(); //.replaceAll(/[^\x00-\x7F]/g, ""); //.replaceAll("\\", "[escaped backslash]");   // .replaceAll("\\u0000", "");
 
@@ -41,7 +41,7 @@ export function pipeFromCommand(args: {
   // const lastSent = Date.now();
   let log: string;
   let streamSize = 0;
-  proc.stderr!.on('data', (data) => {
+  proc.stderr!.on("data", (data) => {
     log = getUTFText(data);
     fullLog += log;
     // const now = Date.now();
@@ -52,7 +52,7 @@ export function pipeFromCommand(args: {
 
     // }
   });
-  proc.stdout!.on('data', (data) => {
+  proc.stdout!.on("data", (data) => {
     streamSize += data.length;
 
     /** These is the pg_dump actual data */
@@ -60,23 +60,23 @@ export function pipeFromCommand(args: {
     // onStdout?.({ chunk: getUTFText(data), full: fullLog });
   });
 
-  proc.stdout!.on('error', function (err) {
-    onEnd(err ?? "proc.stdout 'error'", fullLog)
+  proc.stdout!.on("error", function (err) {
+    onEnd(err, fullLog)
   });
-  proc.stdin!.on('error', function (err) {
-    onEnd(err ?? "proc.stdin 'error'", fullLog)
+  proc.stdin!.on("error", function (err) {
+    onEnd(err, fullLog)
   });
-  proc.on('error', function (err) {
-    onEnd(err ?? "proc 'error'", fullLog)
+  proc.on("error", function (err) {
+    onEnd(err, fullLog)
   });
 
 
   proc.stdout!.pipe(destination, { end: false });
 
-  proc.on('exit', function (code, signal) {
+  proc.on("exit", function (code, signal) {
     if(code){
       console.error({ execCommandErr: fullLog.slice(fullLog.length - 100) })
-      onEnd(log ?? "Error", fullLog)
+      onEnd(log, fullLog)
     } else {
       onEnd(undefined, fullLog);
       destination.end();

@@ -1,0 +1,1 @@
+DEBUG=pw:browser* npm run test-start

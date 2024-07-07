@@ -1,21 +1,20 @@
-import { mdiOpenInNew, mdiPencilOutline, mdiPlus } from "@mdi/js"; 
-import { AnyObject } from "prostgles-types";
+import { mdiOpenInNew, mdiPencilOutline } from "@mdi/js";
+import type { AnyObject } from "prostgles-types";
 
 import React from "react";
  
-import { isEmpty } from "../../../utils"; 
-import sanitizeHtml from 'sanitize-html';
+import { isEmpty } from "../../../utils";
 // const sanitizeHtml = _sanitizeHtml as any;
 
-import { TableHandlerClient } from "prostgles-client/dist/prostgles";
-import { ValidatedColumnInfo } from "prostgles-types/lib";  
+import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import Btn from "../../../components/Btn";
 
-import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter"; 
-import { DetailedFilterBase  } from '../../../../../commonTypes/filterUtils';
-import { ProstglesColumn } from "../W_Table";
-import { AddColumnMenu, AddColumnMenuProps } from "../ColumnMenu/AddColumnMenu";
-import { DBSchemaTablesWJoins, WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import type { DetailedFilterBase } from "../../../../../commonTypes/filterUtils";
+import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter";
+import type { AddColumnMenuProps } from "../ColumnMenu/AddColumnMenu";
+import { AddColumnMenu } from "../ColumnMenu/AddColumnMenu";
+import type { ProstglesColumn } from "../W_Table";
 
 export const getUnknownColInfo = (key: string, label: string, dataType: ValidatedColumnInfo["tsDataType"], computed): ProstglesColumn => ({
   key,
@@ -47,8 +46,11 @@ type GetMenuColumnArgs = {
   onClickRow: OnClickEditRow;
   addColumnProps?: AddColumnMenuProps;
 }
-export const getMenuColumn = ({
-  columns, tableHandler, onClickRow, addColumnProps
+export const getEditColumn = ({
+  columns, 
+  tableHandler, 
+  onClickRow, 
+  addColumnProps,
 }: GetMenuColumnArgs): ProstglesColumn => {
   const viewOnly = !tableHandler.update;
   const title = viewOnly? "View row" : "View/Edit row",
@@ -60,12 +62,12 @@ export const getMenuColumn = ({
     sortable: false,
 
     className: "ai-center jc-center",
-    label: addColumnProps? <AddColumnMenu { ...addColumnProps } /> : "",
+    label: addColumnProps && <AddColumnMenu { ...addColumnProps } />,
     hidden: false,
     width: 50,
     getCellStyle: () => ({ padding: 0 }),
     onRender: ({ row, nextRow, prevRow, rowIndex }) => (
-      <Btn className={"h-full h-fit w-fit" + (window.isMobileDevice? " text-gray-300 " : " show-on-row-hover  ")}
+      <Btn className={"h-full h-fit w-fit" + (window.isMobileDevice? " text-3 " : " show-on-row-hover  ")}
         title={title}
         data-command="dashboard.window.viewEditRow"
         iconPath={iconPath}

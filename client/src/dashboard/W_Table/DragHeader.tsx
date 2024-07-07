@@ -1,9 +1,9 @@
 import RTComp from "../RTComp";
-import { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import { getDistanceBetweenBoxes } from "../SilverGrid/SilverGridChild";
 import { getSmartGroupFilter } from "../SmartFilter/SmartFilter";
-import { CardViewProps, CardViewState, IndexedRow } from "./CardView";
-import { ValidatedColumnInfo } from "prostgles-types";
+import type { CardViewProps, CardViewState, IndexedRow } from "./CardView";
+import type { ValidatedColumnInfo } from "prostgles-types";
 import { Pan } from "../../components/Table/Table";
 import { getRowFilter } from "./tableUtils/getEditColumn";
 import React from "react";  
@@ -20,7 +20,7 @@ type DragHeaderProps = Pick<CardViewProps, "onDataChanged" | "onEditClickRow"> &
   columns: ValidatedColumnInfo[];
   tableHandler: Partial<TableHandlerClient>;
 };
-
+export const DragHeaderHeight = 30;
 export class DragHeader extends RTComp<DragHeaderProps> {
 
   render(): React.ReactNode {
@@ -45,10 +45,11 @@ export class DragHeader extends RTComp<DragHeaderProps> {
       const targetSibling = siblings.map(s => {
         const rTarget = s.n.getBoundingClientRect();
         return { ...s, d: getDistanceBetweenBoxes(rSource, rTarget) }
-      }).sort((a, b) => a.d - b.d)[0]
+      }).sort((a, b) => a.d - b.d)[0];
+      
       return {
         rowNode,
-        groupNode: rowNode?.parentElement ,
+        groupNode: rowNode.parentElement ,
         siblings: siblings.map(s => s.n),
         targetSibling: targetSibling?.isNotSelf? targetSibling : undefined,
         rootView,
@@ -57,12 +58,14 @@ export class DragHeader extends RTComp<DragHeaderProps> {
     const { padding } = this.props;
     return <Pan
       data-command="CardView.DragHeader" 
-      className="w-full "
+      className=" "
       style={{
-        height: "30px",
+        position: "absolute",
+        left: 0,
+        top: 0, 
+        right: "3em", // Space for edit button 
+        height: `${DragHeaderHeight}px`,
         cursor: "move",
-        margin: `-${padding}`,
-        marginTop: `calc( -${padding} - 10px)`,
       }}
       onPanStart={({ node }, e) => {
         e.preventDefault();
@@ -87,7 +90,7 @@ export class DragHeader extends RTComp<DragHeaderProps> {
 
 
         rowNode.style.position = "absolute";
-        rowNode.style.zIndex = '22';
+        rowNode.style.zIndex = "22";
         rowNode.style.transform = `translate(${isMoving.left + xDiff}px, ${isMoving.top + yDiff - (groupNode?.parentElement?.scrollTop ?? 0)}px)`;
         e.preventDefault();
         e.stopPropagation();
@@ -154,7 +157,7 @@ export class DragHeader extends RTComp<DragHeaderProps> {
                   this.props.onEditClickRow(filter, noSiblingData, this.props.indexedRow.index, newGroupFilter);
                 }
               }
-              let newGroupValue = targetGroupValue === sourceGroupValue? {} : { [groupByColumn.name]: targetGroupValue };
+              const newGroupValue = targetGroupValue === sourceGroupValue? {} : { [groupByColumn.name]: targetGroupValue };
               if(!isEmpty(newGroupValue) || !isEmpty(newOrderValue)){
                 try {
                   const finalFilter = getSmartGroupFilter(filter);
@@ -175,7 +178,7 @@ export class DragHeader extends RTComp<DragHeaderProps> {
           setTimeout(() => {
             rowNode.style.opacity = "";
             rowNode.style.position = "";
-            rowNode.style.zIndex = '';
+            rowNode.style.zIndex = "";
             rowNode.style.transform = ``;
             rowNode.style.transition = ""; 
           }, 22);

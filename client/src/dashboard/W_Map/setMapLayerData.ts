@@ -1,9 +1,11 @@
 import * as d3 from "d3";
-import { AnyObject, SelectParams } from "prostgles-types";
+import type { AnyObject, SelectParams } from "prostgles-types";
 import { pickKeys } from "../../utils";
-import { Extent, GeoJsonLayerProps } from "../Map/DeckGLMap";
-import W_Map, { W_MapState } from "./W_Map";
+import type { Extent, GeoJsonLayerProps } from "../Map/DeckGLMap";
+import type { W_MapState } from "./W_Map";
+import type W_Map from "./W_Map";
 import { MAP_SELECT_COLUMNS, getMapSelect, getSQLData } from "./getMapData";
+import { getOSMData } from "./OSM/getOSMData";
 
 export const setMapLayerData = async function(this: W_Map, dataAge: number ){
     const { prgl: {db }, layerQueries = [], tables } = this.props;
@@ -57,7 +59,21 @@ export const setMapLayerData = async function(this: W_Map, dataAge: number ){
             opts: SelectParams = {};
 
           let willAggregate = false;
-          if("tableName" in q){
+
+          if(q.type === "osm"){
+            const [b, a, b1, a1] = w.options.extent ?? [];
+            const osmBbox = w.options.extent? [a, b, a1, b1].join(",") : "";
+            const { features } = !osmBbox? { features: [] } : await getOSMData(q.query, osmBbox);
+            layers.push({
+              dataSignature,
+              id: "osm"+Date.now(),
+              features,
+              pickable: true,
+              stroked: true,
+              filled: true,
+            })
+
+          } else if("tableName" in q){
             
             const {  tableName,geomColumn } = { ...q };
             const { ...f } = this.getFilter(q, ext4326);
@@ -212,7 +228,7 @@ export const setMapLayerData = async function(this: W_Map, dataAge: number ){
               // console.log({ rows: rows?.length, size: await tableHandler.size(f.finalFilter, opts) })
               
               const radius = scale(zoom);
-              rows = rows?.map(r => ({ ...r, radius }));
+              rows = rows?.map(r => ({ ...r, type: "table", radius }));
             }
             if(aggs) aggs = aggs.filter(r => r[MAP_SELECT_COLUMNS.geoJson]?.coordinates?.length)
             if(rows) rows = rows.filter(r => r[MAP_SELECT_COLUMNS.geoJson]?.coordinates?.length)
@@ -234,7 +250,8 @@ export const setMapLayerData = async function(this: W_Map, dataAge: number ){
               return
             }
             
-            rows = await getSQLData(q, db, AGG_LIMIT)
+            rows = await getSQLData(q, db, AGG_LIMIT);
+            rows = rows.map(r => ({ ...r, type: "sql" }));
             
           }
 
@@ -322,5 +339,6 @@ export const setMapLayerData = async function(this: W_Map, dataAge: number ){
       this.loadAgain = false;
       setTimeout(() => this.setLayerData(this.state.dataAge), 0);
     }
+
     this.setState({ ...result, loadingLayers: false, error, bytesPerSec, dataAge });
 }

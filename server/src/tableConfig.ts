@@ -1,7 +1,8 @@
-import { JSONB } from "prostgles-types";
+import type { JSONB } from "prostgles-types";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import { loggerTableConfig } from "./Logger";
 
-export const DB_SSL_ENUM = ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'] as const;
+export const DB_SSL_ENUM = ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"] as const;
  
 const UNIQUE_DB_FIELDLIST = "db_name, db_host, db_port";
 const PASSWORDLESS_ADMIN_USERNAME = "passwordless_admin";
@@ -143,15 +144,42 @@ const CommonChartLinkOpts = {
   smartGroupFilter: filter,
   joinPath,
   localTableName: { type: "string", optional: true, description: "If provided then this is a local layer (w1_id === w2_id === current chart window)" },
+  osmLayerQuery: { type: "string", optional: true, description: "If provided then this is a OSM layer (w1_id === w2_id === current chart window)" },
   groupByColumn: { type: "string", optional: true, description: "Used by timechart only at the moment" },
   fromSelected: { type: "boolean", optional: true, description: "True if chart links to SQL statement selection" },
   sql: { type: "string", optional: true },
 } as const satisfies JSONB.ObjectType["type"] 
 
-export const tableConfig: TableConfig<{ en: 1; }> = { 
+export const tableConfig: TableConfig<{ en: 1; }> = {
   user_types: {
     isLookupTable: {
-      values: { admin: {}, default: {} }
+      values: { 
+        admin: {
+          description: "Highest access level"
+        }, 
+        public: {
+          description: "Public user. Account created on login and deleted on logout"
+        }, 
+        default: {}, 
+      }
+    },
+    triggers: {
+      atLeastOneAdminAndPublic: {
+        actions: ["delete", "update"],
+        type: "after",
+        forEach: "statement",
+        query: ` 
+          BEGIN
+            IF NOT EXISTS(SELECT * FROM user_types WHERE id = 'admin') 
+              OR NOT EXISTS(SELECT * FROM user_types WHERE id = 'public')
+            THEN
+              RAISE EXCEPTION 'admin and public user types cannot be deleted/modified';
+            END IF;
+  
+            RETURN NULL;
+          END;
+        `
+      }
     }
   },
   user_statuses: {
@@ -163,9 +191,6 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     columns: {
       id:       { sqlDefinition: `UUID PRIMARY KEY DEFAULT gen_random_uuid()` },
       status:   { sqlDefinition: `TEXT NOT NULL DEFAULT 'active' REFERENCES user_statuses (id)`, info: { hint: "Only active users can access the system" } }, 
-      is_online: {
-        sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE` ,
-      },
       username: { sqlDefinition: `TEXT NOT NULL UNIQUE` },
       password: { 
         sqlDefinition: `TEXT NOT NULL DEFAULT gen_random_uuid()`, 
@@ -177,7 +202,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         info: { hint: "If true and status is active: enables passwordless access for default install. First connected client will have perpetual admin access and no other users are allowed " } 
       },
       created:  { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
-      last_updated: { sqlDefinition: `BIGINT` },
+      last_updated: { sqlDefinition: `BIGINT DEFAULT EXTRACT(EPOCH FROM NOW()) * 1000` },
       options: { nullable: true, jsonbSchemaType: {
           showStateDB: { type: "boolean", optional: true, description: "Show the prostgles database in the connections list" },
           hideNonSSLWarning: { type: "boolean", optional: true, description: "Hides the top warning when accessing the website over an insecure connection (non-HTTPS)" },
@@ -192,7 +217,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           enabled: { type: "boolean" }
         }
       },
-      has_2fa_enbled: `BOOLEAN GENERATED ALWAYS AS ( ("2fa"->>'enabled')::BOOLEAN ) STORED`,
+      has_2fa_enabled: `BOOLEAN GENERATED ALWAYS AS ( ("2fa"->>'enabled')::BOOLEAN ) STORED`,
      
     },
     constraints: { 
@@ -269,7 +294,6 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       info:             "TEXT",
     }
   },
-
   database_configs: {
     constraints: {
       uniqueDatabase: { type: "UNIQUE", content: UNIQUE_DB_FIELDLIST }
@@ -280,6 +304,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       db_host: `TEXT NOT NULL`,
       db_port: `INTEGER NOT NULL`,
       rest_api_enabled: `BOOLEAN DEFAULT FALSE`,
+      sync_users: `BOOLEAN DEFAULT FALSE`,
       table_config: { 
         info: { hint: `Table configurations` },
         nullable: true,
@@ -288,6 +313,18 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       table_config_ts: {
         sqlDefinition: "TEXT",
         info: { hint: `Table configurations from typescript. Must export const tableConfig` },
+      },
+      table_config_ts_disabled: {
+        sqlDefinition: "BOOLEAN",
+        info: { hint: `If true then Table configurations will not be executed` },
+      },
+      on_mount_ts: {
+        sqlDefinition: "TEXT",
+        info: { hint: `On mount typescript function. Must export const onMount` },
+      },
+      on_mount_ts_disabled: {
+        sqlDefinition: "BOOLEAN",
+        info: { hint: `If true then On mount typescript will not be executed` },
       },
       file_table_config:            { info: { hint: `File storage configurations` },
         nullable: true,
@@ -360,13 +397,50 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       },
     }
   },
+  database_config_logs: {
+    columns: {
+      id:      `SERIAL PRIMARY KEY REFERENCES database_configs (id) ON DELETE CASCADE` ,
+      on_mount_logs: {
+        sqlDefinition: "TEXT",
+        info: { hint: `On mount logs` },
+      },
+      table_config_logs: {
+        sqlDefinition: "TEXT",
+        info: { hint: `On mount logs` },
+      },
+      on_run_logs: {
+        sqlDefinition: "TEXT",
+        info: { hint: `On mount logs` },
+      },
+
+    }
+  },
+  alerts: {
+    columns: {
+      id: `BIGSERIAL PRIMARY KEY`,
+      title: "TEXT",
+      message: "TEXT",
+      severity: { enum: ["info", "warning", "error"] },
+      database_config_id: "INTEGER REFERENCES database_configs(id) ON DELETE SET NULL",
+      data: "JSONB",
+      created: "TIMESTAMP DEFAULT NOW()",
+    }
+  },
+  alert_viewed_by: {
+    columns: {
+      id: `BIGSERIAL PRIMARY KEY`,
+      alert_id: "BIGINT REFERENCES alerts(id) ON DELETE CASCADE",
+      user_id: "UUID REFERENCES users(id) ON DELETE CASCADE",
+      viewed: "TIMESTAMP DEFAULT NOW()",
+    }
+  },
 
   connections: {
     columns: {
       id:                      `UUID PRIMARY KEY DEFAULT gen_random_uuid()` ,
       user_id:                 `UUID REFERENCES users(id) ON DELETE CASCADE` ,
-      name:                    `TEXT` ,
-      db_name:                 `TEXT NOT NULL DEFAULT ''` ,
+      name:                    `TEXT NOT NULL CHECK(LENGTH(name) > 0)`,
+      db_name:                 `TEXT NOT NULL CHECK(LENGTH(db_name) > 0)` ,
       db_host:                 `TEXT NOT NULL DEFAULT 'localhost'`,
       db_port:                 `INTEGER NOT NULL DEFAULT 5432`,
       db_user:                 `TEXT NOT NULL DEFAULT ''`,
@@ -378,6 +452,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       ssl_reject_unauthorized: { sqlDefinition: `BOOLEAN`, info: { hint: `If true, the server certificate is verified against the list of supplied CAs. \nAn error event is emitted if verification fails` } },
       db_conn:                 { sqlDefinition: `TEXT DEFAULT ''` },
       db_watch_shema:          { sqlDefinition: `BOOLEAN DEFAULT TRUE` },
+      disable_realtime:        { sqlDefinition: `BOOLEAN DEFAULT FALSE`, info: {  hint: `If true then subscriptions and syncs will not work. Used to ensure prostgles schema is not created and nothing is changed in the database` } },
       prgl_url:                { sqlDefinition: `TEXT` },
       prgl_params:             { sqlDefinition: `JSONB` },
       type:                    { enum: ["Standard", "Connection URI", "Prostgles"], nullable: false },
@@ -483,7 +558,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       name: `TEXT NOT NULL DEFAULT 'Method name'`,
       description: `TEXT NOT NULL DEFAULT 'Method description'`,
       connection_id:  { sqlDefinition: `UUID REFERENCES connections(id) ON DELETE SET NULL`, info: { hint: "If null then connection was deleted"} },
-      arguments:  { nullable: false, defaultValue: '[]', jsonbSchema: {  
+      arguments:  { nullable: false, defaultValue: "[]", jsonbSchema: {  
         title: "Arguments",
         arrayOf: {
           oneOfType: [
@@ -666,32 +741,44 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       created:        `TIMESTAMP DEFAULT NOW()`,
       active_row:     `JSONB DEFAULT '{}'::jsonb`,
       layout:         `JSONB`,
-      options:        { defaultValue: { 
-        defaultLayoutType: "col",
-        hideCounts: false,
-        pinnedMenu: true,
-      }, jsonbSchemaType: {
-        hideCounts: {
-          optional: true,
-          type: "boolean"
-        },
-        showAllMyQueries: {
-          optional: true,
-          type: "boolean"
-        },
-        defaultLayoutType: {
-          optional: true,
-          enum: ["row", "tab", "col"]
-        },
-        pinnedMenu: {
-          optional: true,
-          type: "boolean"
-        },
-        pinnedMenuWidth: {
-          optional: true,
-          type: "number"
+      options:        { 
+        defaultValue: { 
+          defaultLayoutType: "tab",
+          tableListEndInfo: "size",
+          tableListSortBy: "extraInfo",
+          hideCounts: false,
+          pinnedMenu: true,
+        }, 
+        jsonbSchemaType: {
+          hideCounts: {
+            optional: true,
+            type: "boolean"
+          },
+          tableListEndInfo: {
+            optional: true,
+            enum: ["none", "count", "size"]
+          },
+          tableListSortBy: {
+            optional: true,
+            enum: ["name", "extraInfo"]
+          },
+          showAllMyQueries: {
+            optional: true,
+            type: "boolean"
+          },
+          defaultLayoutType: {
+            optional: true,
+            enum: ["row", "tab", "col"]
+          },
+          pinnedMenu: {
+            optional: true,
+            type: "boolean"
+          },
+          pinnedMenuWidth: {
+            optional: true,
+            type: "number"
+          }
         }
-      }
       },
       last_updated:   `BIGINT NOT NULL`,
       last_used:      `TIMESTAMP NOT NULL DEFAULT now()`,
@@ -709,6 +796,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
   windows: {
     columns: {
       id              : `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
+      parent_window_id: { 
+        sqlDefinition: `UUID REFERENCES windows(id) ON DELETE CASCADE`,
+        info: { hint: "If defined then this is a chart for another window and will be rendered within that parent window" }
+      },
       user_id         : `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,
       workspace_id    : `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,//   ON DELETE SET NULL is used to ensure we don't delete SQL queries for convenience
       type            : `TEXT CHECK(type IN ('map', 'sql', 'table', 'timechart', 'card', 'method'))` ,
@@ -726,6 +817,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       fullscreen      : `BOOLEAN DEFAULT TRUE` , 
       sort            : "JSONB DEFAULT '[]'::jsonb",
       filter          : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
+      having          : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
       options         : `JSONB NOT NULL DEFAULT '{}'::jsonb` , 
       
       sql_options     : { defaultValue: { executeOptions: "block", errorMessageDisplay: "both", tabSize: 2  }, 
@@ -779,7 +871,12 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           },
           "theme": {
             optional: true, 
-            enum: ['vs', 'vs-dark', 'hc-black', 'hc-light'],
+            enum: ["vs", "vs-dark", "hc-black", "hc-light"],
+          },
+          "showRunningQueryStats": {
+            optional: true, 
+            description: "(Experimental) Display running query stats (CPU and Memory usage) in the bottom bar",
+            type: "boolean"
           }
         }
       } ,
@@ -797,7 +894,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       allowed_origin: { 
         sqlDefinition: "TEXT", 
         label: "Allow-Origin", 
-        info: { hint: "Specifies which domains can access the this app in a cross-origin manner. \nSets the Access-Control-Allow-Origin header. \nUse '*' or a specific URL to allow API access" } 
+        info: { hint: "Specifies which domains can access this app in a cross-origin manner. \nSets the Access-Control-Allow-Origin header. \nUse '*' or a specific URL to allow API access" } 
       },
       allowed_ips: { 
         sqlDefinition: `cidr[] NOT NULL DEFAULT '{}'`, 
@@ -915,6 +1012,8 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
 
       cpu: { sqlDefinition: "NUMERIC", info: { hint: `CPU Utilisation. CPU time used divided by the time the process has been running. It will not add up to 100% unless you are lucky` } },
       mem: { sqlDefinition: "NUMERIC", info: { hint: `Ratio of the process's resident set size  to the physical memory on the machine, expressed as a percentage` } },
+      memPretty: { sqlDefinition: "TEXT", info: { hint: `mem value as string` } },
+      mhz: { sqlDefinition: "TEXT", info: { hint: `Core MHz value` } },
       cmd: { sqlDefinition: "TEXT", info: { hint: `Command with all its arguments as a string` } },
 
     },
@@ -925,4 +1024,5 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       stats_pkey: "PRIMARY KEY(pid, connection_id)"
     }
   },
+  ...loggerTableConfig,
 }

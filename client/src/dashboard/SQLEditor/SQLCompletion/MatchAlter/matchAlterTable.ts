@@ -1,19 +1,28 @@
-import { ALTER_TABLE_ACTIONS, PG_TABLE_CONSTRAINTS, REFERENCE_CONSTRAINT_OPTIONS_KWDS } from "../TableKWDs";
+import { suggestSnippets } from "../CommonMatchImports";
+import { PG_TABLE_CONSTRAINTS, REFERENCE_CONSTRAINT_OPTIONS_KWDS } from "../TableKWDs";
 import { getExpected } from "../getExpected";
-import { ParsedSQLSuggestion, SQLMatchContext } from "../registerSuggestions";
-import { KWD, withKWDs } from "../withKWDs";
+import { type ParsedSQLSuggestion, type SQLMatchContext } from "../registerSuggestions";
+import type { KWD } from "../withKWDs";
+import { withKWDs } from "../withKWDs";
 
-export const matchAlterTable = ({ cb, ss, getKind }: SQLMatchContext): { suggestions: ParsedSQLSuggestion[] } => {
+export const matchAlterTable = async ({ cb, ss, sql, setS }: SQLMatchContext): Promise<{ suggestions: ParsedSQLSuggestion[] }> => {
   
+  if(cb.ltoken?.textLC === "trigger"){
+    const suggestions = ss.filter(s => s.triggerInfo && cb.prevTokens.some(t => t.text.includes(s.triggerInfo!.event_object_table)));
+    if(suggestions.length === 0){
+      return suggestSnippets([
+        { label: "No triggers found for this table", insertText: " " },
+      ])
+    }
+    return { 
+      suggestions
+    };
+  }
+
   if(cb.prevTokens.length === 2){
     return getExpected("table", cb, ss)
   }
-  // if (tokens.length === 3) {
-  //   return suggestSnippets(ALTER_TABLE_ACTIONS.map(d => ({ ...d, kind: getKind("keyword") })));
-  // }
-
-  // const kwd = ALTER_TABLE_KWD.concat(ALTER_TABLE_ACTIONS.filter(({ label }) => !ALTER_TABLE_KWD.some(atkwd => atkwd.kwd === label)).map(({ label, docs }) => ({ kwd: label, docs })) as any);
-  const k = withKWDs(ALTER_TABLE_KWD, cb, getKind, ss);
+  const k = withKWDs(ALTER_TABLE_KWD, { cb, ss, setS, sql });
 
   return k.getSuggestion(); 
 }
@@ -24,6 +33,11 @@ const AddOpts = [
 ]
 
 const ALTER_TABLE_KWD = [
+  {
+    kwd: "ALTER TABLE",
+    docs: "Alters a table",
+    expects: "table",
+  },
   { 
     kwd: "ADD", 
     justAfter: ["TABLE"],
@@ -48,12 +62,12 @@ const ALTER_TABLE_KWD = [
   {
     kwd: "ALTER COLUMN",
     expects: "column",
-    excludeIf: (cb) => cb.tokens.length > 3,
+    excludeIf: (cb) => cb.prevTokens.length > 3,
   },
   {
     kwd: "DROP COLUMN",
     expects: "column",
-    excludeIf: (cb) => cb.tokens.length > 3,
+    excludeIf: (cb) => cb.prevTokens.length > 3,
   },
   {
     kwd: "COLUMN",
@@ -64,31 +78,41 @@ const ALTER_TABLE_KWD = [
     kwd: "DISABLE TRIGGER",
     expects: "trigger",
     options: [{ label: "ALL" }],
-    excludeIf: (cb) => cb.tokens.length > 3,
+    excludeIf: (cb) => cb.prevTokens.length > 3,
   },
   {
     kwd: "ENABLE TRIGGER",
     expects: "trigger",
     options: [{ label: "ALL" }],
-    excludeIf: (cb) => cb.tokens.length > 3,
+    excludeIf: (cb) => cb.prevTokens.length > 3,
   },
   {
     kwd: "ENABLE ALWAYS TRIGGER",
     expects: "trigger",
     options: [{ label: "ALL" }],
-    excludeIf: (cb) => cb.tokens.length > 3,
+    excludeIf: (cb) => cb.prevTokens.length > 3,
   },
   {
     kwd: "RENAME TO",
     docs: "Rename the table",
-    excludeIf: (cb) => cb.tokens.length > 3,
+    excludeIf: (cb) => cb.prevTokens.length > 3,
   },
   {
     kwd: "ENABLE REPLICA TRIGGER",
     expects: "trigger",
     options: [{ label: "ALL" }],
-    excludeIf: (cb) => cb.tokens.length > 3,
+    excludeIf: (cb) => cb.prevTokens.length > 3,
   },
+  ...([
+    "ENABLE ROW LEVEL SECURITY;", 
+    "DISABLE ROW LEVEL SECURITY;",
+    "FORCE ROW LEVEL SECURITY;", 
+    "NO FORCE ROW LEVEL SECURITY;", 
+  ].map(kwd => ({
+    kwd,
+    docs: `These forms control the application of row security policies belonging to the table. If enabled and no policies exist for the table, then a default-deny policy is applied. Note that policies can exist for a table even if row-level security is disabled. In this case, the policies will not be applied and the policies will be ignored. See also CREATE POLICY.`,
+    excludeIf: (cb) => cb.prevTokens.length > 3,
+  }))),
   ...PG_TABLE_CONSTRAINTS.map(k => ({
     ...k,
     exactlyAfter: ["ADD"],

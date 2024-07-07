@@ -2,10 +2,11 @@ import { getKeys, isObject } from "prostgles-types";
 import React from "react";
 import ErrorComponent from "../../../components/ErrorComponent";
 
-import { DeleteRule, TableRules } from "../../../../../commonTypes/publishUtils";
-import FieldFilterControl from "../OptionControllers/FieldFilterControl";
-import { ContextDataSchema, FilterControl, SingleGroupFilter } from "../OptionControllers/FilterControl";
-import { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
+import type { DeleteRule, TableRules } from "../../../../../commonTypes/publishUtils";
+import { FieldFilterControl } from "../OptionControllers/FieldFilterControl";
+import type { ContextDataSchema, SingleGroupFilter } from "../OptionControllers/FilterControl";
+import { FilterControl } from "../OptionControllers/FilterControl";
+import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { ExampleComparablePolicy } from "./ExampleComparablePolicy";
 import { RuleToggle } from "./RuleToggle";
 import { RuleExpandSection } from "./SelectRuleControl";
@@ -67,7 +68,6 @@ export const DeleteRuleControl = ({ rule: rawRule, onChange, table, prgl, contex
           table={table}
           userTypes={userTypes}
           prgl={prgl}
-          contextDataSchema={contextData}
         />
       </RuleExpandSection>
     </>}

@@ -1,8 +1,8 @@
 import { isDefined } from "../../../utils";
-import { DBSchemaTablesWJoins, WindowData, WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import type { DBSchemaTablesWJoins, WindowData, WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import { getAllJoins } from "../ColumnMenu/JoinPathSelectorV2";
 import { getColWInfo } from "../tableUtils/getColWInfo"; 
-import { ParsedJoinPath, ValidatedColumnInfo } from "prostgles-types";
+import type { ParsedJoinPath, ValidatedColumnInfo } from "prostgles-types";
  
 export type ColInfo = Pick<ValidatedColumnInfo, "name" | "udt_name">;
 type JoinedChartColumn = {

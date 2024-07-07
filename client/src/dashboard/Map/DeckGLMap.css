@@ -35,3 +35,10 @@
 .map-controls-right:hover > * {
   transform: translate(0, 0);
 }
+
+.in-map-hover-control {
+  opacity: .45;
+}
+.in-map-hover-control:hover {
+  opacity: 1;
+}

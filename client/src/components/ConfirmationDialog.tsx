@@ -1,10 +1,11 @@
 import RTComp from "../dashboard/RTComp";
 import React from "react";
 import Btn from "./Btn";
-import Popup, { PopupProps } from "./Popup/Popup";
-import Icon from "@mdi/react";
+import type { PopupProps } from "./Popup/Popup";
+import Popup from "./Popup/Popup"; 
 import { FlexRowWrap } from "./Flex";
-import { Command } from "../Testing";
+import type { Command } from "../Testing";
+import { Icon } from "./Icon/Icon";
 
 export type ConfirmDialogProps = Pick<PopupProps, "anchorEl" | "positioning"> & {
   title?: string;
@@ -37,10 +38,10 @@ export default class ConfirmationDialog extends RTComp<ConfirmDialogProps, S> {
 
     const content = <div className={"flex-col " + className} style={style}>
       <div className="flex-row  jc-end p-1 gap-1">
-        {iconPath && <Icon path={iconPath} size={1} className="f-0 text-gray-400" />}
+        {iconPath && <Icon path={iconPath} size={1} className="f-0 text-2" />}
         <div className="">{message}</div>
       </div>
-      <FlexRowWrap className="p-p5 f-0 bt b-gray-400 jc-end ">
+      <FlexRowWrap className="p-p5 f-0 bt b-color jc-end ">
         <Btn 
           className="mr-1"
           variant="faded"

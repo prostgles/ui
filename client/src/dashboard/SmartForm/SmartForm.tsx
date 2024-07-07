@@ -1,11 +1,12 @@
 
 import { mdiChevronLeft, mdiChevronRight, mdiClose } from "@mdi/js";
-import { quickClone } from "prostgles-client/dist/SyncedTable";
-import { TableHandlerClient } from "prostgles-client/dist/prostgles";
-import { AnyObject, ProstglesError, SubscriptionHandler, TableInfo, ValidatedColumnInfo, isObject } from "prostgles-types";
+import { quickClone } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import type { AnyObject, ProstglesError, SubscriptionHandler, TableInfo, ValidatedColumnInfo } from "prostgles-types";
+import { isObject } from "prostgles-types";
 import React from "react";
-import { DetailedFilterBase, SmartGroupFilter } from '../../../../commonTypes/filterUtils';
-import { Prgl } from "../../App";
+import type { DetailedFilterBase, SmartGroupFilter } from "../../../../commonTypes/filterUtils";
+import type { Prgl } from "../../App";
 import { SuccessMessage } from "../../components/Animations";
 import Btn from "../../components/Btn";
 import Checkbox from "../../components/Checkbox";
@@ -13,16 +14,19 @@ import ErrorComponent from "../../components/ErrorComponent";
 import FileInput from "../../components/FileInput/FileInput";
 import { classOverride } from "../../components/Flex";
 import Loading from "../../components/Loading";
-import Popup, { PopupProps } from "../../components/Popup/Popup";
+import type { PopupProps } from "../../components/Popup/Popup";
+import Popup from "../../components/Popup/Popup";
 import { filterObj, ifEmpty, isDefined, isEmpty, omitKeys } from "../../utils";
 import RTComp from "../RTComp";
-import { getSmartGroupFilter, sliceText } from "../SmartFilter/SmartFilter";
-import SmartFormField, { SmartColumnInfo, columnIsReadOnly } from "./SmartFormField/SmartFormField";
+import { getSmartGroupFilter } from "../SmartFilter/SmartFilter";
+import type { SmartColumnInfo } from "./SmartFormField/SmartFormField";
+import SmartFormField, { columnIsReadOnly } from "./SmartFormField/SmartFormField";
 import { SmartFormFieldOptions } from "./SmartFormField/SmartFormFieldOptions";
 import { parseDefaultValue } from "./SmartFormField/fieldUtils";
 import { SmartFormFileSection } from "./SmartFormFileSection";
 import { SmartFormFooterButtons } from "./SmartFormFooterButtons";
 import { SmartFormUpperFooter } from "./SmartFormUpperFooter";
+import { sliceText } from "../../../../commonTypes/utils";
 
 export type getErrorsHook = (cb: (newRow: AnyObject) => SmartFormState["error"] | undefined) => void;
 
@@ -37,7 +41,7 @@ export type GetRefCB = (hooks: GetRefHooks) => void;
 
 
 export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods" | "theme"> & {
-  tableName: string; 
+  tableName: string;
 
   label?: string;
   /**
@@ -92,7 +96,7 @@ export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods" | "theme"> &
   /**
    * Fired after a successful update/insert
    */
-  onSuccess?: (action: "insert" | "update" | "delete", newData?: AnyObject) => void; 
+  onSuccess?: (action: "insert" | "update" | "delete", newData?: AnyObject) => void;
 
   className?: string;
 
@@ -153,7 +157,7 @@ type FormActionCommon = {
 export type FormAction = FormActionCommon & ({
   type: "view";
 } | {
-  type: "update"; 
+  type: "update";
   /**
    * New data
    */
@@ -191,8 +195,8 @@ export type SmartFormState = {
   referencedInsert?: { col: SmartColumnInfo; data?: AnyObject; }
 
   nestedInsertTable?: string;
-  searchReferencedRow?: { 
-    tableName: string; 
+  searchReferencedRow?: {
+    tableName: string;
     fcols: string[];
     col: ValidatedColumnInfo;
   }
@@ -220,8 +224,8 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
       initialised: false,
     }
   }
- 
-  get table(){
+
+  get table() {
     const { tableName, tables } = this.props;
     return tables.find(t => t.name === tableName)
   }
@@ -241,38 +245,38 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
 
     let action: FormAction = { type: "view", loading: true, dataItemLoaded: false, initialised: true }
     if ((rowFilter && (this.tableHandler.update || this.tableHandler.delete))) {
-      if(this.props.fixedData){
+      if (this.props.fixedData) {
         this.setState({ newRow: { ...this.props.fixedData } })
       }
-      action = { 
+      action = {
         type: "update", isMultiUpdate: !rowFilter.length, loading: true, data: {}, dataItemLoaded: false, initialised: true
       };
     } else if (this.tableHandler.insert && (!rowFilter)) {
-      action = { 
+      action = {
         type: "insert", data: {}, initialised: true
       };
     }
 
     let getColParams: Parameters<typeof tableHandler.getColumns>[1];
-    if(action.type === "update"){
+    if (action.type === "update") {
       getColParams = {
         rule: "update",
         filter: getSmartGroupFilter(rowFilter),
         data: { thisIsBad: 1 }
       }
     }
-    const _columns = !getColParams? table.columns : (await tableHandler.getColumns(lang, getColParams));
+    const _columns = !getColParams ? table.columns : (await tableHandler.getColumns(lang, getColParams));
 
-    this.setState({ 
+    this.setState({
       action,
-      dynamicValidatedColumns: _columns, 
+      dynamicValidatedColumns: _columns,
       tableInfo,
       // dataItemLoaded: this.state.dataItemLoaded || Boolean(!rowFilter),
-      error: "columns" in this.props && this.props.columns?.length && this.props.columns.some(c => !_columns.some(_c => _c.name === c))? "Some requested columns not found in the table" : undefined
+      error: "columns" in this.props && this.props.columns?.length && this.props.columns.some(c => !_columns.some(_c => _c.name === c)) ? "Some requested columns not found in the table" : undefined
     });
   }
 
-  get defaultColumnData(){
+  get defaultColumnData() {
     const { rowFilter } = this.props;
     const defaultColumnData = {};
     if (!rowFilter) {
@@ -284,11 +288,11 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     return defaultColumnData;
   }
 
-  get mediaTableInfo(){
+  get mediaTableInfo() {
     const { includeMedia = true, tables } = this.props;
 
     const tableInfo = this.table?.info;
-    if (tableInfo?.hasFiles && tableInfo.fileTableName && includeMedia ) {
+    if (tableInfo?.hasFiles && tableInfo.fileTableName && includeMedia) {
       return tables.find(t => t.info.isFileTable)?.info;
     }
   }
@@ -300,21 +304,21 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     let _errors: AnyObject | undefined;
 
     const { columns } = this;
-    
+
     this.getDisplayedColumns().filter(c => (c.insert || c.update)).forEach(c => {
 
       const val = data[c.name];
 
       /* Check against not null rules */
-      if(!c.is_nullable) {
+      if (!c.is_nullable) {
 
         const isNull = v => [undefined, null].includes(v);
-      
+
         const willInsertMedia = (tableInfo?.hasFiles && tableInfo.fileTableName && c.references?.some(r => r.ftable === tableInfo.fileTableName) && data[tableInfo.fileTableName]?.length);
         if (
           /* If it's an insert then ensure all non nullable cols are filled */
           (!rowFilter && isNull(val) && !c.has_default && !willInsertMedia) ||
-  
+
           /* If update then ensure not updating non nullable with null  */
           (val === null)
         ) {
@@ -324,14 +328,14 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
       }
 
       /** Ensure json fields are not string */
-      if(c.udt_name.startsWith("json") && typeof val === "string"){
+      if (c.udt_name.startsWith("json") && typeof val === "string") {
 
         try {
           data = {
             ...data,
             [c.name]: JSON.parse(val)
           }
-        } catch(error) {
+        } catch (error) {
           _errors ??= {};
           _errors[c.name] = "Must be a valid json"
         }
@@ -367,7 +371,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
   onDelta = async (dP?: Partial<SmartFormProps>, dS?: Partial<SmartFormState>) => {
     const { tableName, db, getRef } = this.props;
     const { action } = this.state;
-    
+
     if (getRef) {
       getRef({ getErrors: this.getErrors });
     }
@@ -376,7 +380,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     if (action.initialised && (action.type === "view" || action.type === "update") && (dS?.action || dP?.rowFilter || dS?.rowFilter) && this.rowSubFilterStr !== JSON.stringify(rowFilter || "")) {
       this.rowSubFilterStr = JSON.stringify(rowFilter || "");
       await this.rowSub?.unsubscribe();
-      if(!this.props.rowFilter?.length || !rowFilter) {
+      if (!this.props.rowFilter?.length || !rowFilter) {
         this.setState({
           action: {
             ...this.state.action,
@@ -390,9 +394,10 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
       const tableHandler = db[tableName];
 
       const findAndSetRow = async () => {
+        const select = await this.getSelect();
         const currentRow = await tableHandler?.findOne?.(
           rowFilter,
-          { select: await this.getSelect() }
+          { select }
         );
         const newAction = {
           ...this.state.action,
@@ -400,7 +405,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
           currentRow,
           dataItemLoaded: true
         };
-        
+
         this.setState({
           action: newAction
         }, () => {
@@ -457,7 +462,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
 
   getRowFilter = (): AnyObject | undefined => {
     const f = this.state.rowFilter || this.props.rowFilter;
-    if(!f) return undefined;
+    if (!f) return undefined;
     return getSmartGroupFilter(f);
   }
 
@@ -487,7 +492,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
       referencedInsertData: {
         ...referencedInsertData,
         [column.name]: newVal
-      } 
+      }
     })
   }
 
@@ -496,44 +501,44 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     const {
       db, tableName, rowFilter, onChange, onSuccess
     } = this.props;
-    
+
     const { localChanges,
       confirmUpdates = this.props.confirmUpdates ?? false,
       errors, action
     } = this.state;
-    
+
     const { currentRow = {} } = action;
 
     const newRow = {
-        // ...currentRow,
-        ...(this.state.newRow || {}),
-        [column.name]: newVal,
-      };
+      // ...currentRow,
+      ...(this.state.newRow || {}),
+      [column.name]: newVal,
+    };
     const oldRow = Object.keys(newRow)
-        .reduce((a, key) => ({
-          ...a,
-          [key]: currentRow[key]
-        }), {});
+      .reduce((a, key) => ({
+        ...a,
+        [key]: currentRow[key]
+      }), {});
     let newState = {};
 
-    if(action.type === "update"){
+    if (action.type === "update") {
       getKeys(newRow).forEach(key => {
         /* Remove updates that change nothing */
-        if(newRow[key] === currentRow[key] && key in currentRow){
+        if (newRow[key] === currentRow[key] && key in currentRow) {
           delete newRow[key];
         }
       })
     }
 
     /* Remove empty updates */
-    if(newRow[column.name] === "" && column.tsDataType !== "string"){
+    if (newRow[column.name] === "" && column.tsDataType !== "string") {
       delete newRow[column.name];
     }
 
     if (!onChange && rowFilter && !confirmUpdates) {
       try {
         const f = await this.getValidatedRowFilter();
-        if(!f) throw "No update filter provided";
+        if (!f) throw "No update filter provided";
         const newRow = await db[tableName]?.update?.(f, { [column.name]: newVal }, { returning: "*" });
         onSuccess?.("update", newRow as any);
       } catch (_e: any) {
@@ -588,16 +593,17 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
   getThisRow = (): AnyObject => {
     const { newRow, defaultColumnData = {}, action } = this.state;
     const { defaultData = {}, fixedData } = this.props;
-    
+
     return action.type === "insert" ? { ...this.defaultColumnData, ...defaultData, ...action.clonedRow, ...newRow, ...fixedData } : { ...action.currentRow, ...defaultColumnData, ...defaultData, ...(newRow), ...fixedData };
   }
 
   parseError = (error: ProstglesError) => {
-    let errState: Partial<SmartFormState> = { 
-      error: typeof error === "string"? error : ((error.table? `${error.table}: ` : "") + (error.message || error.txt || (error as any).detail)) 
+    let errState: Partial<SmartFormState> = {
+      error: typeof error === "string" ? error : ((error.table ? `${error.table}: ` : "") + (error.message || error.txt || (error as any).detail))
     };
-    if(isObject(error) && error.code === "23503" && error.table){
-      errState = { error: `Table ${error.table} has rows that reference this record (foreign_key_violation)` }
+    if (isObject(error) && error.code === "23503" && error.table) {
+      console.log(error)
+      errState = { error: error.detail };// `Table ${error.table} has rows that reference this record (foreign_key_violation)` }
     } else if (Object.keys(error).length && error.constraint) {
       let cols: string[] = [];
       const errors = {};
@@ -609,14 +615,14 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
       cols.forEach(c => {
         if (this.columns.find(col => col.name === c)) {
           let message = error.constraint;
-          if(error.code_info === "unique_violation"){
+          if (error.code_info === "unique_violation") {
             message = "Value already exists. \nConstraint: " + error.constraint;
           }
           errors[c] = message;
         }
       });
       if (Object.keys(errors).length) {
-        errState = { errors };
+        errState = { errors, error: error.message || error.detail };
       }
     }
 
@@ -626,35 +632,35 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
   get tableHandler(): Partial<TableHandlerClient<AnyObject, void>> {
     const { db, tableName } = this.props;
     const tableHandler = db[tableName];
-    if(!tableHandler) throw `${tableName} handler missing`;
+    if (!tableHandler) throw `${tableName} handler missing`;
     return tableHandler;
   }
 
-  get columns(): (ValidatedColumnInfo & {sectionHeader?: string})[]{
+  get columns(): (ValidatedColumnInfo & { sectionHeader?: string })[] {
     const { fixedData } = this.props;
     let validatedCols = quickClone((this.state.dynamicValidatedColumns || this.table?.columns || []));
-    if(fixedData){
+    if (fixedData) {
       const fixedFields = getKeys(fixedData);
-      validatedCols = validatedCols.map(c => ({ 
-        ...c, 
-        insert: fixedFields.includes(c.name)? false : c.insert
+      validatedCols = validatedCols.map(c => ({
+        ...c,
+        insert: fixedFields.includes(c.name) ? false : c.insert
       }));
     }
     let displayedCols = validatedCols as SmartColumnInfo[];
 
-    if("columns" in this.props){
+    if ("columns" in this.props) {
       const { columns } = this.props;
 
       /** Add headers */
       if (columns) {
         displayedCols = columns.map(cc => {
-  
+
           if (typeof cc === "string") {
             return validatedCols.find(c => c.name === cc)
           } else {
             const ec = validatedCols.find(c => c.name === cc.name);
-            if(!ec) return undefined;
-  
+            if (!ec) return undefined;
+
             if (cc.sectionHeader) {
               return { ...ec, ...cc }
             }
@@ -664,12 +670,12 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
       }
     }
 
-    if("columnFilter" in this.props && this.props.columnFilter){
+    if ("columnFilter" in this.props && this.props.columnFilter) {
       const { columnFilter } = this.props;
       displayedCols = displayedCols.filter(columnFilter)
     }
 
-    if(this.state.action.type === "update" && this.state.action.isMultiUpdate){
+    if (this.state.action.type === "update" && this.state.action.isMultiUpdate) {
       displayedCols = displayedCols.filter(c => c.update);
     }
 
@@ -679,7 +685,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
   getDisplayedColumns = () => {
     const { tableInfo, action } = this.state;
     const { hideNonUpdateableColumns = false } = this.props;
-    if(tableInfo?.isFileTable && action.type === "insert"){
+    if (tableInfo?.isFileTable && action.type === "insert") {
       return []
     }
 
@@ -687,9 +693,9 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     const displayedCols = validatedCols;
 
     return displayedCols
-      .filter(c =>  
-         action.type === "view" && c.select || 
-        (action.type === "update" && (c.update || (!hideNonUpdateableColumns && c.select))) || 
+      .filter(c =>
+        action.type === "view" && c.select ||
+        (action.type === "update" && (c.update || (!hideNonUpdateableColumns && c.select))) ||
         (action.type === "insert" && c.insert)
       )
   }
@@ -698,8 +704,8 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     const { tableName,
       onChange, showSuggestions, label,
       hideChangesOptions = false,
-      includeMedia = true, asPopup, enableInsert = true, 
-      db, tables, methods , className = "", onPrevOrNext, prevNext, contentClassname, theme
+      includeMedia = true, asPopup, enableInsert = true,
+      db, tables, methods, className = "", onPrevOrNext, prevNext, contentClassname, theme
     } = this.props;
 
     const { error, errors = {}, tableInfo,
@@ -712,59 +718,53 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
 
     const row = this.getThisRow();
 
-    let fileManager: React.ReactNode = null;
     let fileManagerTop: React.ReactNode = null;
-    let fileManagerBottom: React.ReactNode = null;
-    if (this.table && tableInfo?.isFileTable && includeMedia && tableInfo?.fileTableName ) {
-      fileManager = <SmartFormFileSection 
-        { ...this.props} 
+    if (this.table && tableInfo?.isFileTable && includeMedia && tableInfo.fileTableName) {
+      fileManagerTop = <SmartFormFileSection
+        {...this.props}
         table={this.table}
         setNewRow={newRow => this.setState({ newRow })}
         row={row}
         action={action}
-        getThisRow={this.getThisRow} 
-        setData={this.setData} 
-        mediaTableInfo={this.mediaTableInfo} 
-        mediaTableName={tableInfo.fileTableName} 
+        getThisRow={this.getThisRow}
+        setData={this.setData}
+        mediaTableInfo={this.mediaTableInfo}
+        mediaTableName={tableInfo.fileTableName}
       />
-      if(tableInfo.isFileTable){
-        fileManagerTop = fileManager;
-      } else {
-        fileManagerBottom = fileManager;
-      }
     }
 
     const maxWidth = "max-w-650" as const;
 
-    if(!tableInfo) return null;
+    if (!tableInfo) return null;
 
     const rowFilter = this.getRowFilter();
-    const filterKeys = rowFilter && "$and" in rowFilter? rowFilter.$and.flatMap(f => getKeys(f)) : getKeys(rowFilter ?? {});
+    const filterKeys = rowFilter && "$and" in rowFilter ? rowFilter.$and.flatMap(f => getKeys(f)) : getKeys(rowFilter ?? {});
     /** Do not show subTitle rowFilter if it's primary key and shows in columns */
     const knownJoinColumns = this.getDisplayedColumns().filter(c => c.is_pkey || c.references).map(c => c.name);
-    const titleEnd = rowFilter? filterKeys.every(col => knownJoinColumns.includes(col) )? undefined : 
-      sliceText( " (" + Object.keys(rowFilter).map(k => `${k}: ${JSON.stringify(rowFilter[k])}`).join(" AND ") + ")", 100) : "";
-    
-    const headerText = label ?? (((action.type === "insert" && action.clonedRow)? "[Cloned row] " : "") + (tableInfo.comment || tableName) );
-      
+    const titleEnd = rowFilter ? filterKeys.every(col => knownJoinColumns.includes(col)) ? undefined :
+      sliceText(" (" + Object.keys(rowFilter).map(k => `${k}: ${JSON.stringify(rowFilter[k])}`).join(" AND ") + ")", 100) : "";
+
+    const headerText = label ?? (((action.type === "insert" && action.clonedRow) ? "[Cloned row] " : "") + (tableInfo.comment || tableName));
+
     const formHeader = asPopup ? null : (!label && "label" in this.props) ? null : headerText ? <h4 className="font-24" style={{ margin: 0, padding: "1em", paddingBottom: ".5em" }}>{headerText}</h4> : null;
 
-    if(action.dataItemLoaded === false) {
-      return null;// <div className="bg-0 w-full f-1"></div>
+    if (action.dataItemLoaded === false) {
+      return null;// <div className="bg-color-0 w-full f-1"></div>
     }
-    
-    const renderResult = <div  
-      className={classOverride("SMARTFORM " + 
-        (asPopup? "" : maxWidth ) + 
-        " fade-in flex-col f-1 min-h-0 relative " + 
+
+    const renderResult = <div
+      style={asPopup ? { minWidth: "350px" } : {}}
+      className={classOverride("SMARTFORM " +
+        (asPopup ? "" : maxWidth) +
+        " fade-in flex-col f-1 min-h-0 relative " +
         (action.loading ? " no-pointer-events noselect " : " "),
         className)
-      } 
+      }
     >
       {action.loading && <Loading variant="cover" />}
 
       {formHeader}
-      <div className={classOverride("SMARTFORM_CONTENT flex-col f-1 o-auto min-h-0 min-w-0 p-1 gap-1 " + (window.isMobileDevice? "" : " px-2 "), contentClassname)} style={{ paddingTop: 0 }}>
+      <div className={classOverride("SMARTFORM_CONTENT flex-col f-1 o-auto min-h-0 min-w-0 p-1 gap-1 " + (window.isMobileDevice ? "" : " px-2 "), contentClassname)} style={{ paddingTop: 0 }}>
         {fileManagerTop}
         {this.getDisplayedColumns()
           .map((c, i) => {
@@ -774,11 +774,11 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
             const formFieldStyle: React.CSSProperties = !c.sectionHeader ? {} : { marginTop: "1em" }
 
             const refInsertData = this.state.referencedInsertData?.[c.name];
-            if(refInsertData){
-              if(c.file){
+            if (refInsertData) {
+              if (c.file) {
                 return <FileInput
                   key={i}
-                  className={"mt-p5 f-0 " + (tableInfo.isFileTable? "mt-2" : "")}
+                  className={"mt-p5 f-0 " + (tableInfo.isFileTable ? "mt-2" : "")}
                   label={c.label}
                   media={[refInsertData]}
                   minSize={470}
@@ -794,12 +794,12 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
               return <div key={i} className="form-field flex-col min-w-0 mt-1" style={formFieldStyle}>
                 <label className=" main-label ta-left noselect text-1p5  pointer " style={{ flex: `0.5 1 0%` }}>{c.label}</label>
                 <div className={"flex-row gap-1 ai-center  f-1"}>
-                  <Btn className="mr-auto  bg-0" variant="outline" color="action" title="View insert data" onClick={() => {
+                  <Btn className="mr-auto  bg-color-0" variant="outline" color="action" title="View insert data" onClick={() => {
                     this.setState({ referencedInsert: { col: c, data: refInsertData } })
                   }}>New data</Btn>
                   <Btn title="Remove nested insert" iconPath={mdiClose} onClick={() => {
                     this.setReferencedInsertData(c, undefined)
-                  }}/>
+                  }} />
                 </div>
               </div>
             }
@@ -814,23 +814,23 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
               tableName={tableName}
               action={action.type}
               column={c}
-              value={rawValue|| ""}
+              value={rawValue || ""}
               rawValue={rawValue}
               row={row}
               onChange={newVal => this.setData(c, newVal)}
               showSuggestions={showSuggestions}
-              error={errors[c.name] ?? (isObject(error) && error.column === c.name? error : undefined)}
+              error={errors[c.name] ?? (isObject(error) && error.column === c.name ? error : undefined)}
               rightContentAlwaysShow={false}
-              rightContent={columnIsReadOnly(action.type, c)? undefined : (
-                <SmartFormFieldOptions 
+              rightContent={columnIsReadOnly(action.type, c) ? undefined : (
+                <SmartFormFieldOptions
                   {...this.props}
                   action={action.type}
                   row={row}
-                  column={c}  
-                  tableInfo={tableInfo}  
-                  enableInsert={enableInsert} 
-                  hideNullBtn={hideNullBtn} 
-                  referencedInsertData={this.state.referencedInsertData} 
+                  column={c}
+                  tableInfo={tableInfo}
+                  enableInsert={enableInsert}
+                  hideNullBtn={hideNullBtn}
+                  referencedInsertData={this.state.referencedInsertData}
                   setData={this.setData}
                   setReferencedInsertData={this.setReferencedInsertData}
                 />
@@ -842,7 +842,6 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
             />)
           })
         }
-        {fileManagerBottom}
       </div>
 
       {(hideChangesOptions || action.type === "view") ? null : <>
@@ -873,32 +872,32 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
       <ErrorComponent className="f-0 b rounded" style={{ flex: "none", padding: "1em" }} withIcon={true}
         error={error || ifEmpty(omitKeys(errors, this.getDisplayedColumns().map(c => c.name)), undefined)} // .map(k => `${k}: ${JSON.stringify(errors[k])}`).join("\n")
       />
-      {(action.success && !error) ? 
-        <SuccessMessage 
+      {(action.success && !error) ?
+        <SuccessMessage
           message={`${action.success}!`}
           duration={{
             millis: 2e3,
             onEnd: () => {
               this.props.onClose?.(true);
-              this.setState({ 
+              this.setState({
                 action: {
                   ...this.state.action,
                   success: undefined,
-                } 
+                }
               })
             }
           }}
-          className="w-full h-full bg-0" 
-          style={{ position: "absolute", zIndex: 222 }} 
-        /> : 
-      null}
+          className="w-full h-full bg-color-0"
+          style={{ position: "absolute", zIndex: 222 }}
+        /> :
+        null}
 
-      <SmartFormFooterButtons 
-        state={this.state} 
-        props={this.props} 
-        action={action.type} 
-        columns={this.columns} 
-        getThisRow={this.getThisRow} 
+      <SmartFormFooterButtons
+        state={this.state}
+        props={this.props}
+        action={action.type}
+        columns={this.columns}
+        getThisRow={this.getThisRow}
         getErrors={this.getErrors}
         parseError={this.parseError}
         getRowFilter={this.getRowFilter}
@@ -908,7 +907,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
         }}
         setAction={newAction => {
           this.setState({ action: newAction });
-          if(newAction.success){
+          if (newAction.success) {
             this.setState({ newRow: undefined })
           }
         }}
@@ -918,27 +917,27 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     if (asPopup) {
       const prevNextClass = "smartformprevnext"
 
-      const extraProps: Pick<PopupProps, "onKeyDown" | "headerRightContent"> = !onPrevOrNext? {} : {
-        onKeyDown: (e, section)=> {
-          if(section !== "header") return;
-          
-          if(e.key === "ArrowLeft"){
+      const extraProps: Pick<PopupProps, "onKeyDown" | "headerRightContent"> = !onPrevOrNext ? {} : {
+        onKeyDown: (e, section) => {
+          if (section !== "header") return;
+
+          if (e.key === "ArrowLeft") {
             onPrevOrNext(-1);
           }
-          if(e.key === "ArrowRight"){
+          if (e.key === "ArrowRight") {
             onPrevOrNext(1)
           }
         },
         headerRightContent: (<div className={"flex-row mx-1 " + prevNextClass}>
-          <Btn iconPath={mdiChevronLeft} disabledInfo={prevNext?.prev === false? "Reached end" : undefined} onClick={({ currentTarget }) => { currentTarget.focus(); onPrevOrNext(-1)}}/>
-          <Btn iconPath={mdiChevronRight} disabledInfo={prevNext?.next === false? "Reached end" : undefined} onClick={({ currentTarget }) => { currentTarget.focus(); onPrevOrNext(1) }} />
+          <Btn iconPath={mdiChevronLeft} disabledInfo={prevNext?.prev === false ? "Reached end" : undefined} onClick={({ currentTarget }) => { currentTarget.focus(); onPrevOrNext(-1) }} />
+          <Btn iconPath={mdiChevronRight} disabledInfo={prevNext?.next === false ? "Reached end" : undefined} onClick={({ currentTarget }) => { currentTarget.focus(); onPrevOrNext(1) }} />
         </div>)
       }
 
       return <Popup
         title={headerText}
-        subTitle={titleEnd} 
-        autoFocusFirst={onPrevOrNext? "header" : "content"}
+        subTitle={titleEnd}
+        autoFocusFirst={onPrevOrNext ? "header" : "content"}
         {...extraProps}
         // rootStyle={rootPopupStyle}
         contentClassName={`${maxWidth} pt-1`}
@@ -946,7 +945,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
         onClose={this.onClose}
         clickCatchStyle={{ opacity: .2 }}
         showFullscreenToggle={{
-          getStyle: fullscreen => (fullscreen? {} : { maxWidth: "600px" })
+          getStyle: fullscreen => (fullscreen ? {} : { maxWidth: "600px" })
         }}
       >
         {renderResult}

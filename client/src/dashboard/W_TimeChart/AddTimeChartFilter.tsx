@@ -1,13 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import Btn from "../../components/Btn"
 import { mdiClose, mdiFilter, mdiFilterCogOutline, mdiGestureTap } from "@mdi/js"
-import { TimeChart } from "../Charts/TimeChart";
-import Popup, { PopupProps } from "../../components/Popup/Popup";
+import type { TimeChart } from "../Charts/TimeChart";
+import type { PopupProps } from "../../components/Popup/Popup";
+import Popup from "../../components/Popup/Popup";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
-import { ActiveRow } from "../W_Table/W_Table";
+import type { ActiveRow } from "../W_Table/W_Table";
 import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
+import { useEffectDeep } from "prostgles-client/dist/react-hooks";
 const filterColor = "rgba(5, 176, 223, 0.1)";
 const filterColorOpaque = "rgb(226 248 255)";
 type DateFilter = { min: Date; max: Date };
@@ -33,14 +35,16 @@ export const AddTimeChartFilter = ({ onStart, onEnd, chartRef, filter, myActiveR
   const divRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   
-  useEffect(() => {
+  useEffectDeep(() => {
 
     if(!newFilter || !chartRef.canv || !chartRef.data) return;
+    const canvasLeft = chartRef.canv.getBoundingClientRect().left;
     const onPointerMove = (e: PointerEvent) => {
       if(!divRef.current || newFilter.x1 === undefined) return;
-      const x2 = e.clientX;
-      const xLeft = Math.min(newFilter.x1, x2);
-      const width = Math.max(newFilter.x1, x2) - xLeft;
+      const x2 = e.clientX - canvasLeft;
+      const x1 = newFilter.x1;
+      const xLeft = Math.min(x1, x2);
+      const width = Math.max(x1, x2) - xLeft;
       divRef.current.style.left = `${xLeft}px`;
       divRef.current.style.width = `${width}px`;
       divRef.current.style.top = "0";
@@ -48,14 +52,15 @@ export const AddTimeChartFilter = ({ onStart, onEnd, chartRef, filter, myActiveR
       divRef.current.style.opacity = "1";
     }
     const onPointerDown = (e: PointerEvent) => {
+      const x = e.clientX - canvasLeft;
       if(newFilter.x1 === undefined){
-        setNewFilter({ x1: e.clientX });
+        setNewFilter({ x1: x });
       } else {
         if(!chartRef.data) return;
-        const x2 = e.clientX;
+        const x2 = x;
         const { x1 } = newFilter;
         setNewFilter({ 
-          x1: e.clientX, 
+          x1,
           x2,
           changed: true,
           anchor: {
@@ -84,7 +89,6 @@ export const AddTimeChartFilter = ({ onStart, onEnd, chartRef, filter, myActiveR
     onEnd(undefined);
     setNewFilter(undefined);
   }
-
   const activeRow = useMemo(() => {
     if(!myActiveRow?.timeChart || !chartRef.canv || !chartRef.data) return;
     const { min, max } = myActiveRow.timeChart;

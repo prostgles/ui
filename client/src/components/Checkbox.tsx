@@ -1,9 +1,9 @@
-import { mdiCheckBold } from '@mdi/js';
-import Icon from '@mdi/react';
-import React from 'react';
+import { mdiCheckBold } from "@mdi/js"; 
+import React from "react";
 import "./Checkbox.css";
 import { classOverride } from "./Flex";
-import { TestSelectors } from "../Testing";
+import type { TestSelectors } from "../Testing";
+import { Icon } from "./Icon/Icon";
 
 type P = TestSelectors & {
   id?: string;
@@ -40,16 +40,16 @@ export default class Checkbox extends React.Component<P, any> {
 
     const isBtn = variant === "button";
     const isMiniOrMicro = variant === "minimal" || variant === "micro";
-    const tickColorClass = checked? " text-blue-500 " : "text-gray-400";
-    const tickClass = (isMiniOrMicro || isBtn)? tickColorClass : "text-blue-500";
+    const tickColorClass = checked? " text-action " : "text-2";
+    const tickClass = (isMiniOrMicro || isBtn)? tickColorClass : "text-action";
     const tickStyle = (isMiniOrMicro || isBtn)? {} : {
       opacity: checked? 1 : 0
     };
 
-    const defaultInputClass = " Checkbox_inner_label flex-row-wrap noselect relative checkbox pointer ai-center jc-center w-fit w-fit h-fit "  + 
-      (!variant? " b b-gray-300 " : "" ) +
+    const defaultInputClass = " Checkbox_inner_label flex-row-wrap noselect relative checkbox pointer ai-center jc-center w-fit w-fit h-fit input-bg-color "  + 
+      (!variant? " b b-color " : "" ) +
       (variant === "micro"? "" : variant === "minimal"? " round " : " focusable ") + 
-      (isBtn? "bg-1 b-gray-100 p-p5 no-outline" : isMiniOrMicro? "bg-transparent b-unset no-outline" : "relative ");
+      (isBtn? "bg-color-2 b-gray-100 p-p5 no-outline" : isMiniOrMicro? "bg-transparent b-unset no-outline" : "relative ");
     const checkbox = (
       <div 
         className={classOverride(defaultInputClass, inputClassname)}
@@ -96,7 +96,7 @@ export default class Checkbox extends React.Component<P, any> {
       {...testSel}
     >
       {checkbox}
-      {!label? null : <div className={"ml-1 noselect f-1 text-ellipsis " +  tickColorClass + (isMiniOrMicro? "ml-p25" : "ml-p5")} style={{  }}>{label}</div>}
+      {!label? null : <div className={`ml-1 noselect f-1 text-ellipsis ${tickColorClass} ${(isMiniOrMicro? "ml-p25" : "ml-p5")}`}>{label}</div>}
     </label>
   }
 }

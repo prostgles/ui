@@ -356,7 +356,7 @@ export {}
 //         }))
 //         // console.log(bbox, cells)
 //       }
-//       const geoFilter = bbox? { [q.geo?.filterField as string]: { "&&ST_MakeEnvelope": bbox } } : undefined,
+//       const geoFilter = bbox? { [q.geo?.filterField as string]: { "&ST_MakeEnvelope": bbox } } : undefined,
 //         filter = !q.filter? geoFilter : { $and: [q.filter, geoFilter].filter(f => f) };
 
 //       let res = [];

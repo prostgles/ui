@@ -1,17 +1,17 @@
 import React from "react";
 import { CellBarchart } from "../../../components/ProgressBar";
-import { OnColRenderRowInfo } from "../../../components/Table/Table";
+import type { OnColRenderRowInfo } from "../../../components/Table/Table";
 import SmartFormField from "../../SmartForm/SmartFormField/SmartFormField";
-import { ProstglesTableColumn } from "./getTableCols";
-import { OnRenderColumnProps } from "./onRenderColumn";
-import { ColumnConfig } from "../ColumnMenu/ColumnMenu";
-import { AnyObject } from "prostgles-types"
-import { ChipStyle } from "../ColumnMenu/ColumnStyleControls";
+import type { ProstglesTableColumn } from "./getTableCols";
+import type { OnRenderColumnProps } from "./onRenderColumn";
+import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
+import type { AnyObject } from "prostgles-types"
+import type { ChipStyle } from "../ColumnMenu/ColumnStyleControls";
 import { blend } from "../colorBlend";
 import { _PG_date } from "prostgles-types";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import { FlexRowWrap } from "../../../components/Flex";
-import { MinMax } from "../W_Table";
+import type { MinMax } from "../W_Table";
 
 type P = OnColRenderRowInfo & Pick<OnRenderColumnProps, "maxCellChars" | "c" | "barchartVals">;
 
@@ -79,6 +79,7 @@ export const StyledCell = ({ style, renderedVal, className = "" }: {
           padding: "6px 8px",
           borderRadius: "26px",
           width: "fit-content",
+          whiteSpace: "nowrap",
         }),
         ...(style.cellColor && {
           backgroundColor: style.cellColor,

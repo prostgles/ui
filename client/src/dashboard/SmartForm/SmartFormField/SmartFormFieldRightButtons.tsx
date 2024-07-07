@@ -3,7 +3,7 @@ import { _PG_date } from "prostgles-types";
 import React from "react";
 import Btn from "../../../components/Btn";
 import PopupMenu from "../../../components/PopupMenu";
-import { SmartFormFieldProps } from "./SmartFormField";
+import type { SmartFormFieldProps } from "./SmartFormField";
 
 type P = Omit<SmartFormFieldProps, "onChange"> & {
   showDateInput: {
@@ -14,7 +14,7 @@ type P = Omit<SmartFormFieldProps, "onChange"> & {
 }
 export const getSmartFormFieldRightButtons = ({ column, onChange, showDateInput, }: P) => {
 
-  const isGeoData = column?.udt_name === "geometry" || column?.udt_name === "geography";
+  const isGeoData = column.udt_name === "geometry" || column.udt_name === "geography";
 
   if (_PG_date.some(v => v === column.udt_name)) {
     return (
@@ -86,12 +86,12 @@ export const getSmartFormFieldRightButtons = ({ column, onChange, showDateInput,
             onClick: () => {
               try {
                 navigator.geolocation.getCurrentPosition( (pos) => {
-                  var lat = pos.coords.latitude;
-                  var lng = pos.coords.longitude;
-                  if (lat == null) {
+                  const lat = pos.coords.latitude;
+                  const lng = pos.coords.longitude;
+                  if ((lat as any) === null) {
                     alert("GPS not activated!");
                   } else {
-                    onChange({ ST_GeomFromEWKT: [`SRID=4326;POINT(${lng} ${lat})`]  });
+                    onChange({ $ST_GeomFromEWKT: [`SRID=4326;POINT(${lng} ${lat})`]  });
                   }
                 });
 

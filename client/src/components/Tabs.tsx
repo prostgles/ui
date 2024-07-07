@@ -1,11 +1,13 @@
-import React from 'react';
-import MenuList, { MenuListitem } from "./MenuList";
-import Btn from "./Btn";
 import { mdiArrowLeft } from "@mdi/js";
-import Icon from '@mdi/react';
-import RTComp, { DeltaOf, DeltaOfData } from "../dashboard/RTComp";
+import React from "react";
 import { isObject } from "../../../commonTypes/publishUtils";
+import type { DeltaOf, DeltaOfData } from "../dashboard/RTComp";
+import RTComp from "../dashboard/RTComp";
+import Btn from "./Btn";
 import { classOverride } from "./Flex";
+import { Icon } from "./Icon/Icon";
+import type { MenuListitem } from "./MenuList";
+import { MenuList } from "./MenuList";
 
 export type TabItem = Partial<Omit<MenuListitem, "contentRight" | "onPress">> & { 
   content?: React.ReactNode;
@@ -34,6 +36,7 @@ export type TabsProps<T extends TabItems = any> = {
     controlsBreakpoint: number; 
     contentBreakpoint: number; 
   };
+
   /**
    * If true then non active controls will be hidden
    */
@@ -141,7 +144,7 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<TabsProp
       itemStyle = { borderColor: "transparent" }
     }
 
-    const activeItemStyle = { ...itemStyle, color: "var(--active)" }; 
+    const activeItemStyle = { ...itemStyle }; 
 
     let showBackBtn = false;
     if(compactMode && activeKey){
@@ -150,7 +153,7 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<TabsProp
     }
 
     const activeItemIconPath = activeKey? items[activeKey]?.leftIconPath : undefined;
-
+    const activeKeyAndContent = !!(activeKey && items[activeKey]?.content)
     return (
       <div 
         ref={rootDiv => {
@@ -172,7 +175,7 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<TabsProp
                 }
               }}
             >{activeKey}</Btn> 
-            {activeItemIconPath && <Icon className="text-gray-400 mr-1" path={activeItemIconPath} size={1} />}
+            {activeItemIconPath && <Icon className="text-2 mr-1" path={activeItemIconPath} size={1} />}
           </div> :  
           <MenuList 
             style={{ 
@@ -180,7 +183,8 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<TabsProp
               ...(isObject(this.props.variant) && { borderRadius: 0 }),
               ...menuStyle
             }}
-            className={`Tabs_Menu ${activeKey? "bg-0p5" : ""} f-0 w-full noselect ${activeKey? "shadow" : ""} ${listClassName}`}
+            /* Ensure active items without content do not take white space to right */
+            className={classOverride(`Tabs_Menu ${activeKeyAndContent? "bg-color-1 shadow" : "max-w-unset"} f-0 w-full noselect`, listClassName)}
             variant={controlsCollapsed? "dropdown" : variant?.replace("horizontal", "horizontal-tabs") as any}
             activeKey={activeKey}
             items={Object.keys(items).filter(k => !items[k]!.hide).map((key) => ({

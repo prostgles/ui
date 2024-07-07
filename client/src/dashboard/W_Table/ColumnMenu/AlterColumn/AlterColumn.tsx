@@ -1,25 +1,30 @@
-import { DBHandlerClient } from 'prostgles-client/dist/prostgles';
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type {
+  DBSchemaTable} from "prostgles-types";
 import {
-  DBSchemaTable,
   asName,
   getKeys
 } from "prostgles-types";
-import React from 'react';
+import React from "react";
 import Btn from "../../../../components/Btn";
-import ErrorComponent from '../../../../components/ErrorComponent';
+import ErrorComponent from "../../../../components/ErrorComponent";
 import { FlexCol, FlexRow } from "../../../../components/Flex";
 import { getStringFormat } from "../../../../utils";
-import { CommonWindowProps } from "../../../Dashboard/Dashboard";
-import { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
+import type { CommonWindowProps } from "../../../Dashboard/Dashboard";
+import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import { debounce } from "../../../Map/DeckGLWrapped";
-import RTComp, { DeltaOf } from "../../../RTComp";
+import type { DeltaOf } from "../../../RTComp";
+import RTComp from "../../../RTComp";
 import { SQLSmartEditor } from "../../../SQLEditor/SQLSmartEditor";
-import { ColumnConstraint, getColumnConstraints } from "../../TableMenu/W_TableMenu";
 import { ColumnEditor } from "./ColumnEditor";
-import { getAlterFkeyQuery } from './ReferenceEditor';
+import { getAlterFkeyQuery } from "./ReferenceEditor";
+import { AlterColumnFileOptions } from "./AlterColumnFileOptions";
+import type { Prgl } from "../../../../App";
+import { type ColumnConstraint, getColumnConstraints } from "./alterColumnUtilts";
 
 
-export type AlterColumnProps = Pick<CommonWindowProps, 'suggestions'> & {
+export type AlterColumnProps = Pick<CommonWindowProps, "suggestions"> & {
+  prgl: Prgl;
   table: DBSchemaTable;
   field: string;
   db: DBHandlerClient;
@@ -103,7 +108,6 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
     const  usingCol = ` NULLIF(${field}::TEXT, '') `;
     let using = `USING  ${usingCol}::${newType}`;
 
-
     const alterColQuery = 
       `ALTER TABLE ${tableName} \n` + 
       `ALTER COLUMN ${field} \n`
@@ -124,13 +128,13 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
             const format = getStringFormat(value);
             const formatStr = format.map(f => f.type === "n"? "N".repeat(f.len) : `${f.val}`.repeat(f.len)).join("")
             const knownFormats = [
-              { format: "NN NN NNNN", pg_format: 'DD MM YYYY HH24:MI:SS' },
-              { format: "NN NN NNNN NN:NN:NN", pg_format: 'DD MM YYYY HH24:MI:SS' },
-              { format: "NN NN NNNN NN:NN:NN.NNNZ", pg_format: 'DD MM YYYY HH24:MI:SS.MSZ' },
-              { format: "NNNN-NN-NN NN:NN:NN", pg_format: 'YYYY-MM-DD HH24:MI:SS' },
-              { format: "NNNN-NN-NNTNN:NN:NN", pg_format: 'YYYY-MM-DDTHH24:MI:SS' },
-              { format: "NNNN-NN-NN NN:NN:NN.NNNZ", pg_format: 'YYYY-MM-DD HH24:MI:SS.MSZ' },
-              { format: "NNNN-NN-NNTNN:NN:NN.NNNZ", pg_format: 'YYYY-MM-DDTHH24:MI:SS.MSZ' },
+              { format: "NN NN NNNN", pg_format: "DD MM YYYY HH24:MI:SS" },
+              { format: "NN NN NNNN NN:NN:NN", pg_format: "DD MM YYYY HH24:MI:SS" },
+              { format: "NN NN NNNN NN:NN:NN.NNNZ", pg_format: "DD MM YYYY HH24:MI:SS.MSZ" },
+              { format: "NNNN-NN-NN NN:NN:NN", pg_format: "YYYY-MM-DD HH24:MI:SS" },
+              { format: "NNNN-NN-NNTNN:NN:NN", pg_format: "YYYY-MM-DDTHH24:MI:SS" },
+              { format: "NNNN-NN-NN NN:NN:NN.NNNZ", pg_format: "YYYY-MM-DD HH24:MI:SS.MSZ" },
+              { format: "NNNN-NN-NNTNN:NN:NN.NNNZ", pg_format: "YYYY-MM-DDTHH24:MI:SS.MSZ" },
             ];
             const pgFormat = knownFormats.find(kf => formatStr === kf.format);
             const mask = (pgFormat ?? knownFormats[0]!).pg_format;
@@ -178,7 +182,8 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
     const { 
       table,
       db,
-      tables,
+      tables, 
+      prgl,
     } = this.props;
 
     const isCreate = !this.props.field;
@@ -295,6 +300,13 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
               }
             }}
           />
+          {table.info.fileTableName && 
+            <AlterColumnFileOptions 
+              columnName={col.name}
+              tableName={tableName}
+              {...prgl}
+            />
+          }
           <FlexRow>
             <Btn 
               onClick={this.props.onClose} 

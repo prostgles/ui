@@ -1,8 +1,9 @@
 
 import { mdiChevronDown, mdiChevronRight, mdiFullscreen } from "@mdi/js";
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { omitKeys } from "../utils";
-import Btn, { BtnProps } from "./Btn";
+import type { BtnProps } from "./Btn";
+import Btn from "./Btn";
 import { classOverride } from "./Flex";
 import Popup from "./Popup/Popup";
 
@@ -30,13 +31,15 @@ export function Section(props: SectionProps) {
   const [fullscreen, setfullscreen] = useState(false);
   const toggleFullScreen = () => { setfullscreen(v => !v) }
 
-  const content = <div className={classOverride("flex-col min-h-0 f-0 relative ", className)} style={("getStyle" in p)? p.getStyle?.(!!open) : "style" in p? p.style : undefined } >
-    <div className="flex-row ai-center noselect pointer f-0 bg-0"
+  const content = <div 
+    className={classOverride("flex-col min-h-0 f-0 relative bg-inherit ", className)} 
+    style={("getStyle" in p)? p.getStyle?.(!!open) : "style" in p? p.style : undefined } 
+  >
+    <div className="Section__Header flex-row ai-center noselect pointer f-0 bb b-color bg-inherit"
       style={!open ? undefined : {
         position: "sticky",
         top: 0,
         zIndex: 1,
-        borderBottom: "1px solid #cecece",
         marginBottom: ".5em",
       }}
     >
@@ -45,7 +48,7 @@ export function Section(props: SectionProps) {
         disabledInfo={disabledInfo}
         style={buttonStyle}
         iconPath={titleIconPath ?? (!open ? mdiChevronRight : mdiChevronDown)}
-        {...omitKeys(btnProps ?? {}, ["onClick"])}
+        {...omitKeys(btnProps ?? {}, ["onClick"]) as any}
         onClick={fullscreen? undefined : () => toggle(!open)}
       >
         {title}

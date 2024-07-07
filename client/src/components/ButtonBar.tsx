@@ -1,5 +1,6 @@
 import React from "react";
-import Btn, { BtnProps } from "./Btn"
+import type { BtnProps } from "./Btn";
+import Btn from "./Btn"
 import ErrorComponent from "./ErrorComponent";
 
 type P = {

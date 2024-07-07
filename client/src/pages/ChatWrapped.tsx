@@ -1,8 +1,9 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
-import Chat from '../components/Chat';
-import Loading from '../components/Loading';
-import { get } from '../utils';
+import type { FunctionComponent} from "react";
+import React, { useEffect, useState } from "react";
+import { NavLink } from "react-router-dom";
+import Chat from "../components/Chat";
+import Loading from "../components/Loading";
+import { get } from "../utils";
 
 type P = any;
 // {
@@ -131,12 +132,12 @@ const ChatWrapped:FunctionComponent<P> = (props) => {
     </div>
 
   return (
-    <div className="flex-col bg-0 h-fit shadow" style={{ maxHeight: "calc(99vh - 75px)", minWidth: 0 }}>
-      <div className="f-0 flex-row p-1 bg-gray-200 ai-center">
+    <div className="flex-col bg-color-0 h-fit shadow" style={{ maxHeight: "calc(99vh - 75px)", minWidth: 0 }}>
+      <div className="f-0 flex-row p-1 bg-color-1 ai-center">
         <div className="avatar mr-1 f-0">
           <img loading="lazy" className="w-full" src={chat.avatar_url}></img>
         </div>
-        <NavLink to={"/profile/1"} className="text-gray-800 font-medium">{chat.other_user}</NavLink>
+        <NavLink to={"/profile/1"} className="text-0p5 font-medium">{chat.other_user}</NavLink>
       </div>
       <Chat className="f-1" style={{ minHeight: 0 }} onSend={onSend} messages={messages} />
     </div>

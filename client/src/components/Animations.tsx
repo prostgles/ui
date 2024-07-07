@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import "./Animations.css";
-import { TestSelectors } from "../Testing";
+import type { TestSelectors } from "../Testing";
 import { classOverride } from "./Flex";
 import { useIsMounted } from "../dashboard/Backup/CredentialSelector";
 
@@ -62,10 +62,10 @@ export const SuccessMessage = ({ message, className = "", duration, ...divProps 
 
       return () => clearInterval(timeout);
     }
-  }, [duration]);
+  }, [duration, getIsMounted]);
 
-  return <div {...divProps} className={classOverride("SuccessMessage text-green-600 p-1 flex-col jc-center ai-center", className)}>
-    <div className={"text-green-600 p-1 flex-col mb-p5 capitalize"}>{message}</div>
+  return <div {...divProps} className={classOverride("SuccessMessage text-green p-1 flex-col jc-center ai-center", className)}>
+    <div className={"text-green p-1 flex-col mb-p5 capitalize"}>{message}</div>
     <Success />
   </div>
 }

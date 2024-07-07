@@ -6,17 +6,23 @@ concurrency:
 jobs:
   electron_build_macos:
     timeout-minutes: 20
-    runs-on: macos-12
+    runs-on: macos-12-large
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 16
-
+        node-version: 18 # node 20 is too slow
     - name: Install dependencies
       run: |
         cd electron && npm run build-macos
-      
+    - name: Test DMG file installations and run
+      run: |
+        hdiutil attach electron/dist/Prostgles-Desktop-1.0.0.dmg
+        ls -la /Volumes
+        sudo cp -r /Volumes/Prostgles-Desktop\ 1.0.0/Prostgles-Desktop.app /Applications
+        open /Applications/Prostgles-Desktop.app
+        sleep 10
+        screencapture electron/dist/picture.png
     - uses: actions/upload-artifact@v3
       if: always()
       with:

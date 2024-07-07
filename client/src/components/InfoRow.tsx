@@ -1,6 +1,6 @@
-import { mdiInformationOutline } from "@mdi/js";
-import Icon from "@mdi/react";
+import { mdiInformationOutline } from "@mdi/js"; 
 import React from "react";
+import { Icon } from "./Icon/Icon";
 
 type InfoRowProps = Pick<React.HTMLAttributes<HTMLDivElement>, "style" | "className" | "children"> & {
   variant?: "filled" | "naked";

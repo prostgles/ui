@@ -18,14 +18,15 @@ export const Tooltip = ({ children, tooltip }: P) => {
       setOpen(false); 
     };
 
-    ref.current?.addEventListener("mouseenter", onMouseEnter);
-    ref.current?.addEventListener("mouseleave", onMouseLeave);
+    const el = ref.current;
+    el?.addEventListener("mouseenter", onMouseEnter);
+    el?.addEventListener("mouseleave", onMouseLeave);
 
     return () => {
-      ref.current?.removeEventListener("mouseenter", onMouseEnter);
-      ref.current?.removeEventListener("mouseleave", onMouseLeave);
+      el?.removeEventListener("mouseenter", onMouseEnter);
+      el?.removeEventListener("mouseleave", onMouseLeave);
     }
-  }, [ref.current, setOpen])
+  }, [setOpen]);
 
 
   return <>

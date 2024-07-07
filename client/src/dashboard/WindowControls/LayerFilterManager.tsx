@@ -4,8 +4,8 @@ import React from "react";
 import Btn from "../../components/Btn"; 
 import PopupMenu from "../../components/PopupMenu";
 import { RenderFilter } from "../RenderFilter"; 
-import { MapLayerManagerProps } from "./ChartLayerManager"; 
-import { DBSSchema } from "@common/publishUtils";
+import type { MapLayerManagerProps } from "./ChartLayerManager"; 
+import type { DBSSchema } from "@common/publishUtils";
 
 export const LayerFilterManager = (props: MapLayerManagerProps & { linkId: string; }) => {
   const { prgl:{dbs}, myLinks, linkId } = props;
@@ -34,15 +34,15 @@ export const LayerFilterManager = (props: MapLayerManagerProps & { linkId: strin
 
   return <RenderFilter 
     {...props.prgl}  
+    title="Manage filters"
+    mode="micro"
+    selectedColumns={undefined}
+    itemName="filter"
     tableName={tableName}
     contextData={undefined}
     filter={andOrFilter} 
     onChange={andOrFilter => {
       setFilter(andOrFilter)
-    }}
-    asPopup={{ 
-      title: "Manage filters", 
-      mode: "micro" 
     }}
   />
 }

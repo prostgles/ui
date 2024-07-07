@@ -1,19 +1,12 @@
-import DeckGL from '@deck.gl/react/typed';
-import { RGBAColor } from 'deck.gl';
 import React from "react";
 import RTComp from "../RTComp";
 
- 
-import { Layer, WebMercatorViewport } from '@deck.gl/core/typed';
-import { GeoJsonLayer } from '@deck.gl/layers/typed';
-
 import { isDefined } from "prostgles-types";
-import { pickKeys } from "../../utils";
-import { MAP_PROJECTIONS } from "../W_Map/W_MapMenu";
-import { DeckGLFeatureEditor, DeckGLFeatureEditorProps } from "./DeckGLFeatureEditor";
+import type { MAP_PROJECTIONS } from "../W_Map/W_MapMenu";
+import type { DeckGLFeatureEditorProps } from "./DeckGLFeatureEditor";
 import "./DeckGLMap.css";
-import DeckWrapped, { Bounds } from "./DeckGLWrapped";
-import MapMenu from "./MapMenu";
+import type { Bounds, DeckGlLibs } from "./DeckGLWrapped";
+import { DeckWrapped, getDeckLibs, getViewState } from "./DeckGLWrapped";
 import { makeImageLayer, makeTileLayer } from "./mapUtils";
 
 export type Extent = [number, number, number, number];
@@ -32,7 +25,7 @@ type OnClickEvent = {
   object?: Record<string, any>;
 } 
 
-// import {_SunLight as SunLight, LightingEffect } from '@deck.gl/core';
+// import {_SunLight as SunLight, LightingEffect } from 'deck.gl';
 // const le = new LightingEffect({ 
 //   sunlight: new SunLight({
 //     timestamp: 1610455406000, 
@@ -43,42 +36,47 @@ type OnClickEvent = {
 // });
 
 /* global window */
-const devicePixelRatio = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+// const devicePixelRatio = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
 
 // source: Natural Earth http://www.naturalearthdata.com/ via geojson.xyz
 // const COUNTRIES = 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_admin_0_scale_rank.geojson'; //eslint-disable-line
 // const AIR_PORTS = 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_10m_airports.geojson';
 
 export type Point = [number, number]
+ 
+import type { GeoJsonLayer } from "deck.gl";
+import type { Feature } from "geojson";
+import type { MapExtent } from "../Dashboard/dashboardUtils";
+import type { MAP_SELECT_COLUMNS } from "../W_Map/getMapData";
+import { InMapControls } from "./InMapControls";
 
-// export type GeoJSONFeature = {
-//   type: 'Feature',
-//   geometry:
-//   | {
-//     type: "Point";
-//     coordinates: Point;
-//   }
-//   | {
-//     type: "LineString"
-//     coordinates: Point[];
-//   }
-//   | {
-//     type: "MultiLineString" | "Polygon"
-//     coordinates: Point[][];
-//   };
-//   properties?: any | undefined,
-//   id?: number | string | undefined;
-// };
-import { Feature } from "@nebula.gl/edit-modes";
-import { MapExtent } from "../Dashboard/dashboardUtils";
-export type GeoJSONFeature = Feature;
+export type DeckGlColor =
+  | [number, number, number]
+  | [number, number, number, number];
+
+export type GeoJSONFeature = Omit<Feature, "properties"> & {
+    properties: (
+      {
+        type: "table";
+        [MAP_SELECT_COLUMNS.idObj]: any;
+        [MAP_SELECT_COLUMNS.geoJson]: any;
+      } | {
+        type: "sql";
+        $rowhash: string;
+      }
+    ) & {
+      radius?: number;
+      fillColor?: DeckGlColor;
+      lineColor?: DeckGlColor;
+    }
+  }
 
 export type GeoJsonLayerProps = {
   id: string;
   features: GeoJSONFeature[];
   filled: boolean;
-  fillColor?: RGBAColor | ((f: any) => RGBAColor);
-  lineColor?: RGBAColor | ((f: any) => RGBAColor);
+  fillColor?: DeckGlColor | ((f: any) => DeckGlColor);
+  lineColor?: DeckGlColor | ((f: any) => DeckGlColor);
   elevation?: number;
   pickable?: boolean;
   stroked?: boolean;
@@ -86,7 +84,7 @@ export type GeoJsonLayerProps = {
   dataSignature: string;
   getLineWidth?: (f: any) => number;
   lineWidth?: number;
-  layerColor?: number[];
+  layerColor?: DeckGlColor;
 }
 
 export type MapState = {
@@ -116,8 +114,18 @@ export type HoverCoords = {
   screenCoordinates?: [number, number];
   coordinates?: [number, number];
 }
+export const MapExtentBehavior = [
+  { key: "autoZoomToData", label: "Follow data", subLabel: "Will zoom to data extent on data change" }, 
+  { key: "filterToMapBounds", label: "Follow map", subLabel: "Filters data to map bounds" }, 
+  { key: "freeRoam", label: "Free roam", subLabel: "Map bounds filter not applied" },
+] as const;
+
+export type MapExtentBehavior = typeof MapExtentBehavior[number]["key"];
 
 export type DecKGLMapProps = {
+  basemapOpacity: number;
+  basemapDesaturate: number;
+  dataOpacity: number;
   initialState?: MapState;
   geoJsonLayers?: GeoJsonLayerProps[];
   /**
@@ -148,7 +156,7 @@ export type DecKGLMapProps = {
   }
 
   options: {
-    filterExtent?: boolean;
+    extentBehavior?: "autoZoomToData" | "filterToMapBounds" | "freeRoam";
   }
 
   onOptionsChange: (newOpts: Partial<DecKGLMapProps["options"]>) => any;
@@ -165,11 +173,6 @@ export type DecKGLMapProps = {
 const vstateDebounce = 300;
 
 export type DeckGLMapState = {
-  basemap: {
-    opacity: number;
-    desaturate: number;
-  },
-  dataOpacity: number;
   initialView: {
     target: number[];
     latitude: number;
@@ -179,25 +182,38 @@ export type DeckGLMapState = {
     pitch: number;
   },
   mouseDown: boolean;
-  autoZoom: boolean;
-  showCursorCoords: boolean;
   cursorCoords?: string;
 
   editFeature?: GeoJSONFeature;
 }
 
 type D = {
-  editedFeaturesLayer?: Layer;
+  editedFeaturesLayer?: GeoJsonLayer;
+}
+
+export type DeckGLMapDivDemoControls = HTMLDivElement & {
+  getLatLngXY: (place: { latitude: number; longitude: number }) => { x: number; y: number };
+  zoomTo: (place: { latitude: number; longitude: number; zoom: number }) => void;
+}
+
+const setDemoHandles = (node: HTMLDivElement, dmap: DeckGLMap) => {
+  (node as DeckGLMapDivDemoControls).getLatLngXY = (place: { latitude: number; longitude: number }) => {
+    const [x = 0, y = 0] = dmap.deckW!.deck.getViewports()![0]!.project([place.longitude, place.latitude]);
+    const bbox = node.getBoundingClientRect();
+    return {
+      x: bbox.x + x, //   -.1456
+      y: bbox.y + y  //   51.526
+    }
+  }
+  (node as DeckGLMapDivDemoControls).zoomTo = (place: { latitude: number; longitude: number; zoom: number }) => {
+    dmap.deckW?.zoomTo({ type: "point", ...place });
+  }
+  node.classList.toggle("DeckGLMapDiv", true);
 }
 
 export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
 
   state: DeckGLMapState = {
-    basemap: {
-      opacity: .2,
-      desaturate: 0,
-    },
-    dataOpacity: .5,
     initialView: {
       target: [1,1,0],
       latitude: 51.47,
@@ -207,83 +223,76 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
       pitch: 0
     },
     mouseDown: false,
-    autoZoom: true,
-    showCursorCoords: false, 
   }
 
-  ref?: typeof DeckGL;
+  ref?: typeof import("deck.gl");
   refRoot?: HTMLDivElement;
   refCursor?: HTMLDivElement;
   rootResizeObserver?: ResizeObserver;
 
   dataExtent?: [[number, number], [number, number]];
+  deckGlLibs?: DeckGlLibs;
+  onDelta = async (dP: Partial<DecKGLMapProps> | undefined, dS: Partial<DeckGLMapState> = {}, dD: Partial<D> = {}) => {
 
-  
-  onDelta = (dP, dS: Partial<DeckGLMapState>, dD: Partial<D>) => {
-    // console.log(dP, dS)
-
-    if (dP?.geoJsonLayersDataFilterSignature && this.state.autoZoom && this.deckW) {
+    if (dP?.geoJsonLayersDataFilterSignature && this.props.options.extentBehavior === "autoZoomToData" && this.deckW) {
       this.fitBounds()
     }
 
     /** Init */
     if (this.refRoot && !this.rootResizeObserver) {
       this.rootResizeObserver = new ResizeObserver(() => {
-        if (this._rootSizeKey !== this.rootSizeKey) {
+        if (this._rootSizeKey !== this.rootSizeKey && this.mounted) {
           this.forceUpdate();
           this._rootSizeKey = this.rootSizeKey
         }
-      })
+      });
+      setDemoHandles(this.refRoot, this);
       this.rootResizeObserver.observe(this.refRoot);
 
       const { projection = "mercator", initialState: _initialState } = this.props;
-      
-
-      this.deckW = new DeckWrapped(this.refRoot, { 
-        initialViewState: _initialState as any,
-        type: projection, 
-        onLoad: () => {
-          
-          this.props.onLoad?.({
-            deck: this.deckW!,
-            fitBounds: this.fitBounds,
-            getExtent: () => {
-              const ext = this.deckW!.getExtent();
-              if(!ext) return;
-              return [ext.slice(0,2), ext.slice(2)] as any;
-            }
-          })
+      this.deckGlLibs = await getDeckLibs();
+      this.deckW = new DeckWrapped(
+        this.refRoot, 
+        { 
+          initialViewState: _initialState as any,
+          type: projection,
+          onLoad: () => {
+            
+            this.props.onLoad?.({
+              deck: this.deckW!,
+              fitBounds: this.fitBounds,
+              getExtent: () => {
+                const ext = this.deckW!.getExtent();
+                if(!ext) return;
+                return [ext.slice(0,2), ext.slice(2)] as any;
+              }
+            })
+          },
+          onViewStateChange: (viewState, bounds) => {
+            
+            const extent = bounds.flat();
+            const parsedViewState = getViewState(projection, viewState);
+            const newMapState = { ...parsedViewState, extent };
+            
+            this.props.onMapStateChange?.(newMapState as any)
+          },
+          onClickQuick: e => this.props.onClick?.(e as any),
+          onHoverItem: (obj, coords) => {
+            this.props.onHover?.(obj, coords)
+          },
+          onHover: e => {
+            this.props.onPointerMove?.({ ...e, coordinates: e.coordinate as any, screenCoordinates: e.pixel })
+          },
+          layers: this.getLayers().layers,
         },
-        onViewStateChange: (viewState, bounds) => {
-          
-          const extent = bounds.flat();
-          const parsedViewState = projection === "orthographic"? pickKeys(viewState, ["target", "zoom", "extent"]) : pickKeys(viewState, ["latitude", "longitude", "bearing", "pitch", "zoom"]);
-          const newMapState = { ...parsedViewState, extent };
-          
-          this.props.onMapStateChange?.(newMapState as any)
-        },
-        onClickQuick: e => this.props.onClick?.(e as any),
-        onHoverItem: (obj, coords) => {
-          this.props.onHover?.(obj, coords)
-        },
-        onHover: e => {
-          if(this.state.showCursorCoords && this.refCursor){
-            this.refCursor.innerText = `${e.coordinate?.map(v => v.toString().padStart(3, "0")).join("\n")}`;
-          }
-          this.props.onPointerMove?.({ ...e, coordinates: e.coordinate as any, screenCoordinates: e.pixel })
-        },
-        layers: this.getLayers(),
-      });
+        this.deckGlLibs.lib
+      );
       
     }
 
-    const eLayer = this.d.editedFeaturesLayer as any;
-    if(this.deckW && (dP?.geoJsonLayers && this.props.geoJsonLayers || dS.dataOpacity  || dS.basemap || dD.editedFeaturesLayer)){
+    if(this.deckW && (dP?.geoJsonLayers && this.props.geoJsonLayers || dP?.dataOpacity  || dP?.basemapDesaturate || dP?.basemapOpacity || "editedFeaturesLayer" in dD)){
       this.deckW.render({
-        ...(eLayer?.getCursor && {
-          getCursor: eLayer?.getCursor?.bind(eLayer),
-        }),
-        layers: this.getLayers()
+        layers: this.getLayers().layers
       });
     }
   }
@@ -297,10 +306,10 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
     this.rootResizeObserver?.unobserve(this.refRoot!);
   }
 
-  fitBounds = async (ext?: MapExtent) => {
+  fitBounds = async () => {
     const { projection } = this.props;
     const dataExtent = await this.props.onGetFullExtent();
-    if ( !dataExtent) { //} || (dataExtent || []).filter(v => Array.isArray(v) && !v.flat().some(_v => typeof _v !== "number") ).length !== 4) {
+    if (!dataExtent) {
       return;
     }
 
@@ -321,7 +330,8 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
   viewStateDebounce: any;
   onViewStateChange(viewState) {
     const { onMapStateChange, mapStateChangeDebounce = vstateDebounce, projection } = this.props;
-    if (!this.transitioning && onMapStateChange && viewState) {
+    const deckGlLibs = this.deckGlLibs;
+    if (!this.transitioning && onMapStateChange && viewState && deckGlLibs) {
 
       if (this.viewStateDebounce) window.clearTimeout(this.viewStateDebounce);
       this.viewStateDebounce = setTimeout(() => {
@@ -333,7 +343,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
           });
         } else {
 
-          const viewport = new WebMercatorViewport(viewState);
+          const viewport = new deckGlLibs.lib.WebMercatorViewport(viewState);
 
           const nw = viewport.unproject([0, 0]);
           const se = viewport.unproject([viewport.width, viewport.height]);
@@ -358,25 +368,30 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
   mouseDown = false;
 
   getLayers = () => {
-    const { basemap, dataOpacity = 1 } = this.state;
-    const { geoJsonLayers = [], tileURLs, tileSize, projection = "mercator", basemapImage } = this.props;
+    // const { basemap, dataOpacity = 1 } = this.state;
+    const { 
+      geoJsonLayers = [], tileURLs, tileSize, projection = "mercator", basemapImage,
+      dataOpacity, basemapDesaturate, basemapOpacity,
+    } = this.props;
+    const { deckGlLibs } = this;
+    if(!deckGlLibs) return { layers: [], dataLayers: [], tileLayers: [] };
 
-    const dataLayers = geoJsonLayers.map(g => new GeoJsonLayer<GeoJSONFeature>({
+    const dataLayers = geoJsonLayers.map(g => new deckGlLibs.lib.GeoJsonLayer<GeoJSONFeature["properties"]>({
       id: g.id,
       data: ({
         type: "FeatureCollection",
         features: g.features
-      } as any),
+      }),
       filled: true,
       pointRadiusMinPixels: 2,
       pointRadiusScale: 1,
       // pointType: 'circle',
-      getPointRadius: f => f.properties?.radius ?? 1,
+      getPointRadius: f => f.properties.radius ?? 1,
       extruded: Boolean(g.elevation),
       getElevation: g.elevation || 0,
 
-      getFillColor: f => f.properties?.fillColor || g.fillColor || [200, 0, 80, 255],
-      getLineColor: f => f.properties?.lineColor || g.lineColor || [200, 0, 80, 255],
+      getFillColor: f => f.properties.fillColor || (g.fillColor? typeof g.fillColor === "function"? g.fillColor(f) : g.fillColor : undefined) || [200, 0, 80, 255],
+      getLineColor: f => f.properties.lineColor || (g.lineColor? typeof g.lineColor === "function"? g.lineColor(f) : g.lineColor : undefined) || [200, 0, 80, 255],
       lineWidthMinPixels: 2,
       //@ts-ignore
       widthScale: 22,
@@ -397,84 +412,55 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
       // }
     }));
 
-    const tileLayers = projection === "mercator" ? [makeTileLayer({
-      ...basemap,
+    const tileLayers = !this.deckGlLibs? [] : projection === "mercator" ? [makeTileLayer({
+      opacity: basemapOpacity,
+      desaturate: basemapDesaturate,
       tileURLs,
       tileSize
-    })] : basemapImage ? [makeImageLayer(basemapImage.url, basemapImage.bounds, basemap.opacity, basemap.desaturate)] : []
+    }, this.deckGlLibs)] : basemapImage ? [makeImageLayer({ ...basemapImage, deckGlLibs: this.deckGlLibs })] : []
 
-    return [
+    const layers = [
       ...tileLayers,
       ...dataLayers,
-      this.d.editedFeaturesLayer
-    ].filter(isDefined);
-  }
+      ...(this.d.editedFeaturesLayer? [this.d.editedFeaturesLayer] : []),
+    ]
 
+    return {
+      layers,
+      tileLayers,
+      dataLayers,
+      geoJsonLayers
+    }
+  }
+  onRenderLayer = (editedFeaturesLayer: GeoJsonLayer<any, {}> | undefined) => {
+    this.setData({ editedFeaturesLayer })
+  }
   deckW?: DeckWrapped;
   render() {
-    const { tileAttribution, options, onOptionsChange, topLeftContent } = this.props;
-    const { basemap, dataOpacity = 1, showCursorCoords, autoZoom } = this.state;
- 
+    const { deckW, deckGlLibs } = this;
     return (
       <div className="relative flex-row f-1"
-        
         style={{
           overscrollBehavior: "contain"
         }}
         onMouseDown={() => {
-          // this.setState({ mouseDown: true });
           this.mouseDown = true;
         }}
         onMouseUp={() => {
-          // this.setState({ mouseDown: false })
           this.mouseDown = false;
         }}
       >
-        {showCursorCoords && <div ref={e => { if(e) this.refCursor = e; }} className="absolute bg-0 rounded p-p25" style={{ bottom: 0, left: 0, zIndex: 1 }} > </div>}
-
-        {tileAttribution?.title &&
-          <div className="text-ellipsis noselect rounded font-14"
-            style={{
-              position: "absolute", right: 0, bottom: 0,
-              maxHeight: "1.5em", zIndex: 1,
-              backdropFilter: "blur(6px)", padding: "4px"  // background: "#f0f8ff9e", 
-            }}>
-            <a href={tileAttribution.url} target="_blank">{tileAttribution.title}</a>
-          </div>
+        {deckW && deckGlLibs && 
+          <InMapControls 
+            {...this.props} 
+            fitBounds={this.fitBounds} 
+            deckGlLibs={deckGlLibs} 
+            deckW={deckW}
+            onRenderLayer={this.onRenderLayer}
+          />
         }
-
-        <div 
-          className="MapTopLeftControls ai-start flex-col gap-1 absolute ai-center jc-center" 
-          style={{ top: "1em", left: "1em", zIndex: 1 }}
-        >
-
-          {this.props.edit && <DeckGLFeatureEditor 
-            edit={this.props.edit} 
-            onRenderLayer={editedFeaturesLayer => {
-              this.setData({ editedFeaturesLayer });
-            }}
-          />}
-          {topLeftContent}
-        </div>
-
         <div ref={e => { if (e) this.refRoot = e; }}></div>
 
-        <MapMenu 
-          autoZoom={autoZoom} 
-          basemap={basemap} 
-          dataOpacity={dataOpacity} 
-          onAutoZoomChange={autoZoom => this.setState({ autoZoom })} 
-          onBaseMapChange={basemap => this.setState({ basemap })} 
-          onDataOpacityChange={dataOpacity => this.setState({ dataOpacity })} 
-          onFitBounds={this.fitBounds}
-          onOptionsChange={onOptionsChange}
-          options={options}
-          cursorCoords={{
-            show: showCursorCoords,
-            onChange: showCursorCoords => {
-              this.setState({ showCursorCoords })}
-          }}
-        />
       </div>
     )
 

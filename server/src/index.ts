@@ -1,39 +1,49 @@
-import { ChildProcessWithoutNullStreams } from "child_process";
-import express, { NextFunction, Request, Response, json, urlencoded } from 'express';
+import cookieParser from "cookie-parser";
+import type { NextFunction, Request, Response } from "express";
+import express, { json, urlencoded } from "express";
 import _http from "http";
-import path from 'path';
+import path from "path";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import { Server } from "socket.io";
+import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import type { ServerState } from "../../commonTypes/electronInit";
 import { isObject } from "../../commonTypes/publishUtils";
+import { ConnectionChecker } from "./ConnectionChecker";
 import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
-import { OnServerReadyCallback, actualRootDir, getElectronConfig } from "./electronConfig";
+import type { OnServerReadyCallback } from "./electronConfig";
+import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { getInitState, tryStartProstgles } from "./startProstgles";
-import { Server } from "socket.io";
-import { ConnectionChecker } from "./ConnectionChecker"; 
-import cookieParser from 'cookie-parser';
-import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 
 const app = express();
 
+if(process.env.PRGL_TEST || true){
+  app.use((req, res, next) => {
+    res.on("finish", () => {
+      console.log(`${(new Date()).toISOString()} ${req.method} ${res.statusCode} ${req.url} ${res.statusCode === 302? res.getHeader("Location") : ""}`);
+    });
+    next();
+  });
+}
 // if(PubSubManager.EXCLUDE_QUERY_FROM_SCHEMA_WATCH_ID !== QUERY_WATCH_IGNORE){
 //   throw "Invalid QUERY_WATCH_IGNORE";
-// }
+// } 
 
 export const API_PATH = "/api";
-
+ 
 app.use(json({ limit: "100mb" }));
 app.use(urlencoded({ extended: true, limit: "100mb" }));
 app.use(function (req, res, next) {
+  /* data import (papaparse) requires: worker-src blob: 'self' */
   res.setHeader(
-    'Content-Security-Policy',
-    " script-src 'self'; frame-src 'self'; worker-src blob: 'self';" /* data import (papaparse) requires: worker-src blob: 'self' */
+    "Content-Security-Policy",
+    " script-src 'self'; frame-src 'self'; worker-src blob: 'self';" 
   );
   next();
 });
 
-process.on('unhandledRejection', (reason, p) => {
-  console.trace('Unhandled Rejection at: Promise', p, 'reason:', reason);
+process.on("unhandledRejection", (reason, p) => {
+  console.trace("Unhandled Rejection at: Promise", p, "reason:", reason);
 });
 
 const http = _http.createServer(app);
@@ -68,8 +78,8 @@ const io = new Server(http, {
  
 export const connMgr = new ConnectionManager(http, app, connectionChecker.withOrigin);
 
-const electronConfig = getElectronConfig?.();
-let PORT = electronConfig? (electronConfig.port ?? 3099) : +(process.env.PRGL_PORT ?? 3004);
+const electronConfig = getElectronConfig();
+const PORT = electronConfig? (electronConfig.port ?? 3099) : +(process.env.PROSTGLES_UI_PORT ?? 3004);
 setDBSRoutesForElectron(app, io, PORT);
 
 
@@ -77,7 +87,7 @@ setDBSRoutesForElectron(app, io, PORT);
 const awaitInit = () => {
   return new Promise((resolve) => {
     const _initState = getInitState();
-    if(_initState && !_initState.loaded && (!_initState.isElectron || _initState.electronCredsProvided)){
+    if(!_initState.loaded && (!_initState.isElectron || _initState.electronCredsProvided)){
       const interval = setInterval(() => {
         if(getInitState().loaded){
           resolve(_initState);
@@ -107,7 +117,7 @@ const serveIndexIfNoCredentials = async (req: Request, res: Response, next: Next
   if(error || isElectron && !electronCredsProvided || loading){
     await awaitInit();
     if(req.method === "GET" && !req.path.startsWith("/dbs")){
-      res.sendFile(path.resolve(actualRootDir + '/../client/build/index.html'));
+      res.sendFile(path.resolve(actualRootDir + "/../client/build/index.html"));
       return;
     }
   }
@@ -166,44 +176,8 @@ const server = http.listen(PORT, () => {
   })
   console.log(`\n\nexpress listening on port ${port}\n\n`);
 });
-
- 
- 
-/* Get nested property from an object */
-export function get(obj: any, propertyPath: string | string[]): any{
-
-  let p = propertyPath,
-      o = obj;
-
-  if(!obj) return obj;
-  if(typeof p === "string") p = p.split(".");
-  return p.reduce((xs, x) =>{ 
-    if(xs && xs[x]) { 
-      return xs[x] 
-    } else {
-      return undefined; 
-    } 
-  }, o);
-}
-
-
-function logProcess(proc: ChildProcessWithoutNullStreams){
-
-  const p = `PID ${proc.pid}`;
-  proc.stdout.on('data', function (data: any) {
-    console.log(p + ' stdout: ' + data);
-  });
-  
-  proc.stderr.on('data', function (data: any) {
-    console.log(p + ' stderr: ' + data);
-  });
-  
-  proc.on('close', function (code: any) {
-    console.log(p + ' child process exited with code ' + code);
-  });  
-}
    
-const spawn = require('child_process').spawn;  
+const spawn = require("child_process").spawn;  
 export function restartProc(cb?: Function){
   console.warn("Restarting process")
   if (process.env.process_restarting) { 
@@ -219,7 +193,7 @@ export function restartProc(cb?: Function){
   // Restart process ...
   spawn(process.argv[0], process.argv.slice(1), {
     env: { process_restarting: 1 },
-    stdio: 'ignore'
+    stdio: "ignore"
   }).unref();
 }
 

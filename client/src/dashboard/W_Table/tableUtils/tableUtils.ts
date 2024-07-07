@@ -1,13 +1,13 @@
-import { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { AnyObject, DBSchemaTable, getKeys } from "prostgles-types";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { AnyObject, DBSchemaTable } from "prostgles-types";
+import { getKeys } from "prostgles-types";
 import { pickKeys } from "../../../utils";
-import { CommonWindowProps } from "../../Dashboard/Dashboard";
-import { Join, JoinV2, WindowData, WindowSyncItem } from "../../Dashboard/dashboardUtils";
-import { ColumnConfig, ColumnSort } from "../ColumnMenu/ColumnMenu";
-import { ColumnConfigWInfo } from "../W_Table";
+import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+import type { Join, JoinV2, WindowData, WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import type { ColumnConfig, ColumnSort } from "../ColumnMenu/ColumnMenu";
+import type { ColumnConfigWInfo } from "../W_Table";
 import { getColWInfo } from "./getColWInfo";
 import { getColWidth } from "./getColWidth";
-import { ProstglesTableColumn } from "./getTableCols";
 
 
 export const getFullColumnConfig = (
@@ -25,19 +25,17 @@ export const getFullColumnConfig = (
 
     let colsWInfo = getColWInfo(tables, w);
 
-    /* Enable file table url as Media format by default */
-    if(t?.info.isFileTable){
-      colsWInfo = colsWInfo.map(r => {
-
-        return {
-          ...r,
-          format: !r.format && r.name === "url"? {type: "Media", params: { type: "fromUrlEnding" }  } : r.format
-        }
-      })
-    }
+    /* Show file columns as Media format by default */
+    colsWInfo = colsWInfo.map(r => {
+      const isFileColumn = t?.info.isFileTable && r.name === "url" || r.info?.file;
+      return {
+        ...r,
+        format: !r.format && isFileColumn? { type: "Media", params: { type: "fromUrlEnding" }  } : r.format
+      }
+    })
 
     try {
-      //@ts-ignore
+      //@ts-ignore 
       colsWInfo = getColWidth(
           colsWInfo.map(r => ({ ...r, ...(r.info ?? { udt_name: "text", tsDataType: "string" }) })), 
           data, 
@@ -83,13 +81,26 @@ const COLUMN_CONFIG_KEYS: Record<keyof ColumnConfig, 1> = {
   width: 1,
   nested: 1,
 }
-const getMinimalColumnInfo = (columns: ColumnConfigWInfo[]): Pick<ProstglesTableColumn, keyof ColumnConfig>[] => {
+export const getMinimalColumnInfo = <CWI extends ColumnConfigWInfo>(columns: CWI[]): Pick<CWI, keyof ColumnConfig>[] => {
   const colconfigKeys = getKeys(COLUMN_CONFIG_KEYS);
-  return columns.map(c => pickKeys(c, colconfigKeys))
+  return columns.map(c => pickKeys(c, colconfigKeys, true))
 }
 
 export const updateWCols = (w: WindowSyncItem<"table">, newCols: WindowSyncItem<"table">["columns"] = null, nestedColumnName?: string) => {
-  const newMinimalCols = newCols? getMinimalColumnInfo(newCols) : null;
+  const newMinimalCols = newCols? getMinimalColumnInfo(newCols)
+    .map(c => {
+      if(c.nested) {
+        return { 
+          ...c, 
+          nested: { 
+            ...c.nested, 
+            columns: getMinimalColumnInfo(c.nested.columns) 
+          } 
+        };
+      }
+
+      return c;
+    }) : null;
   if(nestedColumnName){
     const currCols = w.$get().columns;
     if(!currCols){

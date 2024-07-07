@@ -8,11 +8,12 @@ import { InfoRow } from "../../components/InfoRow";
 import Popup from "../../components/Popup/Popup";
 import { isDefined } from "../../utils";
 import { SQLSmartEditor } from "../SQLEditor/SQLSmartEditor";
-import { ColumnEditor, ColumnOptions } from "../W_Table/ColumnMenu/AlterColumn/ColumnEditor";
+import type { ColumnOptions } from "../W_Table/ColumnMenu/AlterColumn/ColumnEditor";
+import { ColumnEditor } from "../W_Table/ColumnMenu/AlterColumn/ColumnEditor";
 import { getColumnDefinitionQuery } from "../W_Table/ColumnMenu/AlterColumn/CreateColumn";
 import { getReferencesQuery } from "../W_Table/ColumnMenu/AlterColumn/ReferenceEditor";
 import { getColumnIconPath } from "../W_Table/ColumnMenu/ColumnsMenu";
-import { DashboardMenuProps } from "./DashboardMenu";
+import type { DashboardMenuProps } from "./DashboardMenu";
 
 
 export const CreateTable = ({ prgl:{db, tables}, onClose, suggestions }: DashboardMenuProps & { onClose: VoidFunction; }) => {

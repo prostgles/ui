@@ -7,9 +7,9 @@ import { InfoRow } from "../../../../components/InfoRow";
 import { Label } from "../../../../components/Label";
 import Select from "../../../../components/Select/Select";
 import { REFERENCES_COL_OPTS } from "../../../SQLEditor/SQLCompletion/TableKWDs";
-import { ColumnOptions } from "./ColumnEditor";
+import type { ColumnOptions } from "./ColumnEditor";
 import { isDefined } from "../../../../utils";
-import { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
+import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 
 const FKEY_DOCS = "Constraint to ensure that every value from this column has a coresponding record in another table. The column in the other table must have unique values";
 
@@ -29,7 +29,7 @@ export const onUpdateOptions = REFERENCES_COL_OPTS.filter(d => d.kwd.startsWith(
 
 export const ReferenceEditor = ({ onChange, notNullErr, ...colOpts }: ReferenceEditorProps) => {
   const { fCol, ftable, onDelete, onUpdate } = colOpts;
-  return <FlexRowWrap className="rounded b b-gray-400 p-p5">
+  return <FlexRowWrap className="rounded b b-color p-p5">
     <Chip variant="header"
       label={"Foreign table"} 
       value={ftable}
@@ -40,7 +40,7 @@ export const ReferenceEditor = ({ onChange, notNullErr, ...colOpts }: ReferenceE
     />
     <Select 
       label="ON DELETE"
-      className={notNullErr === "d"?  "b-2 b-red-300 p-p25 rounded" : undefined}
+      className={notNullErr === "d"?  "b-2 b-danger p-p25 rounded" : undefined}
       value={onDelete || "NO ACTION"}
       fullOptions={onDeleteOptions}
       onChange={onDelete => {
@@ -49,7 +49,7 @@ export const ReferenceEditor = ({ onChange, notNullErr, ...colOpts }: ReferenceE
     />
     <Select 
       label="ON UPDATE" 
-      className={notNullErr === "u"?  "b-2 b-red-300 p-p25 rounded" : undefined}
+      className={notNullErr === "u"?  "b-2 b-danger p-p25 rounded" : undefined}
       value={onUpdate || "NO ACTION"}
       fullOptions={onUpdateOptions} 
       onChange={onUpdate => {
@@ -81,7 +81,7 @@ export const References = ({ onChange, tables, onAdd, tableName, ...opts }: P) =
     }
   })
 
-  return <FlexCol>
+  return <FlexCol className="References gap-p25">
      <Label label="References" variant="normal" info={FKEY_DOCS} />
     {references?.some(c => c.notNullErr) && <InfoRow color="danger">Some foreign keys contain a SET NULL option and this column is not nullable. This will lead to error</InfoRow>}
     {references?.map((r, index)=> <ReferenceEditor key={index} {...r} onChange={newRef => onChange(newRef, index)} />)}
@@ -128,6 +128,7 @@ export const AddColumnReference = ({ tables, variant, onAdd, tableName, columnNa
   }), [tables, existingReferences, dataType, tableName, columnName]);
 
   return <Select 
+    className="AddColumnReference mt-1"
     label={variant === "without-label"? undefined : { 
       label: "References", 
       info: FKEY_DOCS

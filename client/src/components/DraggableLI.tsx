@@ -1,5 +1,6 @@
-import React, { PropsWithChildren } from "react"
-import { TestSelectors } from "../Testing";
+import type { PropsWithChildren } from "react";
+import React from "react"
+import type { TestSelectors } from "../Testing";
 
 type P<T> = TestSelectors & PropsWithChildren<React.HTMLAttributes<HTMLLIElement> & { idx: number; items: T; onReorder?: (newList: T) => void; }>
 export const DraggableLI = <T extends any[]>({ children, onReorder, items, idx, ...props }: P<T>) => {

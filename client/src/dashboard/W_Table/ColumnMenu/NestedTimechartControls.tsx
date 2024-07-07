@@ -1,13 +1,14 @@
 import { mdiChartTimelineVariant } from "@mdi/js";
 import React from "react";
 import Btn from "../../../components/Btn";
-import { FlexCol, FlexRow } from "../../../components/Flex";
+import { FlexCol } from "../../../components/Flex";
 import PopupMenu from "../../../components/PopupMenu";
 import Select from "../../../components/Select/Select";
 import { SwitchToggle } from "../../../components/SwitchToggle";
-import { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
+import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import { TIMECHART_STAT_TYPES, TimechartRenderStyles } from "../../W_TimeChart/W_TimeChartMenu";
-import { ColumnConfigWInfo } from "../W_Table";
+import type { ColumnConfigWInfo } from "../W_Table";
+import { _PG_numbers } from "prostgles-types";
 
 export type ColTimeChart = Required<ColumnConfigWInfo>["nested"]["chart"]
 type P = {
@@ -24,7 +25,7 @@ export const NestedTimechartControls = ({ tableName, chart, tables, onChange }: 
   if(!table) return null;
 
   const dateCols = table.columns.filter(c => c.udt_name.startsWith("timestamp") || c.udt_name === "date");
-  const numericCols = table.columns.filter(c => c.tsDataType === "number");
+  const numericCols = table.columns.filter(c => _PG_numbers.includes(c.udt_name as any));
   const timeChartOpts = !dateCols.length? undefined : {
     dateCols,
     numericCols,
@@ -32,7 +33,7 @@ export const NestedTimechartControls = ({ tableName, chart, tables, onChange }: 
 
   if(!timeChartOpts) return null;
   
-  return <FlexRow>
+  return <>
     <div className="py-p75">OR</div>
     <PopupMenu 
       button={
@@ -114,5 +115,5 @@ export const NestedTimechartControls = ({ tableName, chart, tables, onChange }: 
       }
     />
     
-  </FlexRow>
+  </>
 }

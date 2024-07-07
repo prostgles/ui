@@ -1,8 +1,9 @@
 
-import { MinimalSnippet, PG_OBJECTS, suggestSnippets } from "../CommonMatchImports";
+import type { MinimalSnippet} from "../CommonMatchImports";
+import { PG_OBJECTS, suggestSnippets } from "../CommonMatchImports";
 import { cleanExpect, getExpected } from "../getExpected";
-import { isInsideFunction } from "../MatchSelect";
-import { ParsedSQLSuggestion, SQLMatcher } from "../registerSuggestions";
+import { getParentFunction } from "../MatchSelect";
+import { getKind, type ParsedSQLSuggestion, type SQLMatcher } from "../registerSuggestions";
 import { ALTER_COL_ACTIONS, getNewColumnDefinitions, PG_COLUMN_CONSTRAINTS } from "../TableKWDs";
 import { withKWDs } from "../withKWDs";
 import { matchAlterPolicy } from "./matchAlterPolicy";
@@ -11,7 +12,7 @@ import { matchAlterTable } from "./matchAlterTable";
 export const MatchAlter: SQLMatcher = {
   match: cb => cb.ftoken?.textLC === "alter",
   result: async (args) => {
-    const { cb, ss, setS, sql, getKind } = args;
+    const { cb, ss, setS, sql } = args;
     const { prevLC, prevTokens, ltoken,  } = cb;
     const lltoken = prevTokens.at(-2);
     const rawExpect = prevTokens[prevTokens.findIndex(t => t.textLC === "alter")+1]?.textLC ?? ""
@@ -54,14 +55,14 @@ export const MatchAlter: SQLMatcher = {
         return getExpected("dataType", cb, ss);
       }
 
-      const insideFun = isInsideFunction(cb);
+      const insideFun = getParentFunction(cb);
       if(insideFun?.func.textLC === "as"){
         if(insideFun.prevTokens?.slice(-3).map(t => t.textLC).join(" ") === "generated always as"){
           return getExpected("column", cb, ss);
         }
       }
 
-      return withKWDs(PG_COLUMN_CONSTRAINTS, cb, getKind, ss).getSuggestion(); 
+      return withKWDs(PG_COLUMN_CONSTRAINTS, { cb, ss, setS, sql }).getSuggestion(); 
 
     }
  
@@ -101,8 +102,11 @@ export const MatchAlter: SQLMatcher = {
       }
     }
 
-    if (prevLC.endsWith("alter database")) {
-      return suggestSnippets(ss.filter(s => s.type === "database").flatMap(s => ALTED_DB_ACTIONS.map(a => ({ label: `${s.label} ${a}` }))));
+    if (prevLC.startsWith("alter database")) {
+      if(prevLC.endsWith("alter database")){
+        return suggestSnippets(ss.filter(s => s.type === "database").flatMap(s => ALTED_DB_ACTIONS.map(a => ({ label: `${s.escapedIdentifier} ${a}`, kind: getKind("keyword") }))));
+      }
+      return suggestSnippets(ALTED_DB_ACTIONS.map(label => ({ label, kind: getKind("keyword") })));
     } else if (prevLC.endsWith("data type")) {
       return {
         suggestions: ss.filter(s => s.type === "dataType")
@@ -116,13 +120,13 @@ export const MatchAlter: SQLMatcher = {
       return { suggestions: cols };
 
     } else if (prevLC.includes("alter column")) {
-      return suggestSnippets(ALTER_COL_ACTIONS.map(({ kwd, docs }) => ({ label: kwd, insertText: `\n${kwd}`, docs, kind: getKind("keyword") })));
+      return withKWDs(ALTER_COL_ACTIONS, { cb, ss, setS, sql }).getSuggestion();
 
     } else if (prevLC.includes("drop column")) {
       return suggestSnippets(["CASCADE", "RESTRICT"].map(label => ({ label })));
     
     } else if(prevLC.startsWith("alter table")){
-      return matchAlterTable({ cb, ss, getKind, setS, sql });
+      return matchAlterTable({ cb, ss, setS, sql });
 
     } else if (prevLC.startsWith("alter system")) {
       if(prevLC.includes("set") && ltoken?.textLC !== "set"){

@@ -1,25 +1,26 @@
-import { mdiFilter, mdiFunction, mdiKey } from "@mdi/js";
-import Icon from "@mdi/react";
-import { AnyObject } from "prostgles-types";
+import { mdiFilter, mdiFunction, mdiKey } from "@mdi/js"; 
+import type { AnyObject } from "prostgles-types";
 
 import React from "react";
 
 import Btn from "../../../components/Btn";
  
-import { quickClone } from "prostgles-client/dist/SyncedTable";
-import { TableHeaderState } from "../../../components/Table/TableHeader";
-import { CommonWindowProps } from "../../Dashboard/Dashboard";
-import { WindowSyncItem } from "../../Dashboard/dashboardUtils";
-import { sliceText } from "../../SmartFilter/SmartFilter";
-import W_Table, { MinMaxVals, ColumnConfigWInfo, ProstglesColumn, W_TableProps } from "../W_Table";
-import { OnClickEditRow, getMenuColumn } from "./getEditColumn";
+import { quickClone } from "prostgles-client/dist/SyncedTable/SyncedTable"; 
+import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+import type { WindowSyncItem } from "../../Dashboard/dashboardUtils"; 
+import type { MinMaxVals, ColumnConfigWInfo, ProstglesColumn, W_TableProps } from "../W_Table";
+import type W_Table from "../W_Table";
+import type { OnClickEditRow} from "./getEditColumn";
+import { getEditColumn } from "./getEditColumn";
 import { onRenderColumn } from "./onRenderColumn";
 import { getFullColumnConfig } from "./tableUtils";
 import { getCellStyle } from "./StyledTableColumn";
+import { Icon } from "../../../components/Icon/Icon";
+import { sliceText } from "../../../../../commonTypes/utils";
 
 export type ProstglesTableColumn = ProstglesColumn & ColumnConfigWInfo
 
-type GetTableColsArgs = Pick<W_TableProps, "prgl"> & Pick<CommonWindowProps, 'suggestions'> & {
+type GetTableColsArgs = Pick<W_TableProps, "prgl"> & Pick<CommonWindowProps, "suggestions"> & {
   data?: AnyObject[];
   w?: WindowSyncItem<"table">;
   windowWidth?: number;
@@ -73,7 +74,7 @@ export const getTableCols = ({
         const nestedCols = !c.nested? null : 
           c.nested.chart? ` (${c.nested.chart.dateCol}, ${c.nested.chart.yAxis.isCountAll? "COUNT(*)" : 
             `${c.nested.chart.yAxis.funcName.slice(1).toUpperCase()}(${c.nested.chart.yAxis.colName})`})` : 
-            ` (${sliceText(c.nested.columns.filter(c => c.show).map(c => c.name).join(", "), 100)})`;
+            ` (${sliceText(c.nested.columns.filter(c => c.show).map(c => c.name).join(", "), 20)})`;
 
         const subLabel = (
           <div className="flex-row ai-center">
@@ -161,60 +162,15 @@ export const getTableCols = ({
       });
   }
 
-  /* Add cell styling */
-  // if (w.columns) {
-  //   if (Array.isArray(w.columns)) {
-
-  //     tblCols = tblCols.map(c => {
-
-  //       const wcol = c;
-
-  //       if (wcol.style?.type && wcol.style.type !== "None") {
-
-  //         /* Need to get min max */
-  //         if (
-  //           wcol.style.type === "Scale"
-  //         ) {
-  //           const { minValue, maxValue } = barchartVals?.[c.name] || {};
-  //           wcol.style.minValue = minValue ?? 0;
-  //           wcol.style.maxValue = maxValue ?? 0;
-  //         }
-
-  //         c.getCellStyle = (row, val, rv) => {
-  //           const style = StyleColumn.getStyle(wcol, c, row);
-  //           let res: React.CSSProperties = {}
-  //           if (style?.cellColor) {
-  //             res = { ...res, background: style.cellColor };
-  //           }
-  //           if (style?.textColor) {
-  //             res = { ...res, color: style.textColor };
-  //           }
-  //           if (wcol.style?.type === "Barchart") {
-  //             res = { ...res, border: "1px solid var(--gray-200)" };
-  //           }
-  //           return res;
-  //         }
-
-  //         c.onRender = ({ row, renderedVal }) => {
-  //           const style = StyleColumn.getStyle(wcol, c, row);
-  //           return <StyledCell style={style} renderedVal={renderedVal} />
-  //         }
-
-  //       }
-  //       return c;
-  //     })
-  //   } else console.warn("Bad w.columns format", w.columns)
-  // }
-
   const tableHandler = db[tableName];
 
   /* Can update table. Add update button */
   if (tableHandler && !hideEditRow && !w.options.hideEditRow) {
     const _columns = (columns ?? []).filter(c => !w.columns?.length || w.columns.some(wc => wc.name === c.name && wc.show !== false))
-    const editColumn = getMenuColumn({ 
+    const editColumn = getEditColumn({
       columns: _columns, 
       tableHandler, 
-      addColumnProps: { w, tables, db, suggestions, nestedColumnName: undefined }, 
+      addColumnProps: { w, tables, db, suggestions, nestedColumnOpts: undefined }, 
       onClickRow: onClickEditRow 
     });
     tblCols.unshift(editColumn)

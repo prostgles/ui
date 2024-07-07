@@ -1,6 +1,6 @@
-import { WindowSyncItem } from "../../Dashboard/dashboardUtils";
-import { ColumnConfigWInfo } from "../W_Table";
-import { ProstglesTableColumn } from "./getTableCols";
+import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import type { ColumnConfigWInfo } from "../W_Table";
+import type { ProstglesTableColumn } from "./getTableCols";
 
 export const prepareColsForRender = (cols: ProstglesTableColumn[], getWCols: () => ColumnConfigWInfo[], w: WindowSyncItem<"table">) => {
   return cols

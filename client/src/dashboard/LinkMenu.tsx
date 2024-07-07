@@ -1,14 +1,14 @@
-import { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { ParsedJoinPath } from "prostgles-types";
-import React from 'react';
-import Popup from '../components/Popup/Popup';
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { ParsedJoinPath } from "prostgles-types";
+import React from "react";
+import Popup from "../components/Popup/Popup";
 import { Chart } from "./Charts";
-import { CanvasChart, Shape } from './Charts/CanvasChart';
-import { DBS } from "./Dashboard/DBS";
-import { CommonWindowProps } from './Dashboard/Dashboard';
-import { Link, LinkSyncItem, WindowData, WindowSyncItem } from "./Dashboard/dashboardUtils";
-import RTComp from './RTComp';
-import { JoinPathSelectorV2 } from './W_Table/ColumnMenu/JoinPathSelectorV2';
+import type { CanvasChart, Shape } from "./Charts/CanvasChart";
+import type { DBS } from "./Dashboard/DBS";
+import type { CommonWindowProps } from "./Dashboard/Dashboard";
+import type { Link, LinkSyncItem, WindowData, WindowSyncItem } from "./Dashboard/dashboardUtils";
+import RTComp from "./RTComp";
+import { JoinPathSelectorV2 } from "./W_Table/ColumnMenu/JoinPathSelectorV2";
 import { getLinkColorV2 } from "./W_Map/getMapLayerQueries";
 
 type P = {
@@ -34,7 +34,7 @@ type S = {
   chartRef?: CanvasChart;
 }
 
-export default class LinkMenu extends RTComp<P, S> {
+export class LinkMenu extends RTComp<P, S> {
 
   state: S = {
     loading: true,
@@ -270,7 +270,7 @@ export default class LinkMenu extends RTComp<P, S> {
       </Popup>
         
       <Chart className=" h-full w-full"
-        style={{ position: "absolute", inset: 0, zIndex: 14, backdropFilter: "blur(1px)", backgroundColor: "#80808030" }}
+        style={{ position: "absolute", inset: 0, zIndex: 14, backdropFilter: "blur(1px)" }}
         setRef={chart => {
           this.chartRef = chart;
           this.setState({ chartRef: chart })

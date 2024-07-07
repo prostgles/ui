@@ -1,8 +1,8 @@
-import React from 'react';
-import Checkbox from './Checkbox';
+import React from "react";
+import Checkbox from "./Checkbox";
 import { DraggableLI } from "./DraggableLI";
-import Popup from './Popup/Popup';
-import { OptionKey } from "./Select/Select";
+import Popup from "./Popup/Popup";
+import type { OptionKey } from "./Select/Select";
 
 type Items = {
   key?: OptionKey;
@@ -76,13 +76,12 @@ export default class List extends React.Component<ListProps, any> {
             .map((d, i)=> (
               <DraggableLI key={i} 
                 role="listitem"
-                // tabIndex={0}
                 idx={i}
                 onReorder={onReorder} 
                 items={items.slice(0)}
                 className={"flex-row bg-li p-p5 pointer " + (d.key === selectedValue? " selected " : "")}
-                onClick={!d.onPress? undefined : e => d.onPress(e) }
-                onKeyUp={!d.onPress? undefined : e => {
+                onClick={e => d.onPress(e) }
+                onKeyUp={e => {
                   if(e.key === "Enter") d.onPress(e)
                 }}
               >
@@ -112,7 +111,7 @@ export default class List extends React.Component<ListProps, any> {
     
     if(anchorContent){
       popupAnchor = this.popupAnchor;
-      popupContent = <div className="list-comp w-fit flex-col bg-0"
+      popupContent = <div className="list-comp w-fit flex-col bg-color-0"
         style={{
           padding: 0,
           margin: 0,

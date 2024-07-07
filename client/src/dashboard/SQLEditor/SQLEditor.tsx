@@ -1,18 +1,26 @@
 
-import * as monaco from 'monaco-editor';
 import React from "react";
 import "./SQLEditor.css";
  
-import { MonacoSuggestion, registerSuggestions } from "./SQLCompletion/registerSuggestions";
+import ReactDOM from "react-dom";
+import type { MonacoSuggestion, SQLMatchContext } from "./SQLCompletion/registerSuggestions";
+import { registerSuggestions } from "./SQLCompletion/registerSuggestions";
  
-
-export const LANG = 'sql'
+export const LANG = "sql";
+/**
+ * This option seems to start downloading monaco (870.js) from the start: webpackPrefetch: true
+ */
+export const getMonaco = async () => { 
+  const monaco = import(/* webpackChunkName: "monaco_editorr" */  /*  webpackPrefetch: true */  "monaco-editor/esm/vs/editor/editor.api.js");
+  return monaco;
+};
 
 export const SUGGESTION_TYPES = [
   "table", "view", "mview", "column", "function", "dataType", "extension", "keyword", 
   "schema", "setting", "role", "database", "folder", "file", "snippet", 
-  "policy", "publication", "subscription", "index", "operator", "constraint", "trigger", "eventTrigger", "rule"
+  "policy", "publication", "subscription", "index", "operator", "constraint", "trigger", "eventTrigger", "rule", "user"
 ] as const;
+
 export const SUGGESTION_TYPE_DOCS: Record<typeof SUGGESTION_TYPES[number], string> = {
   column: "A set of data values of a particular type. Is part of a table or a view",
   constraint: "A way to limit the kind of data that can be stored in a table",
@@ -31,6 +39,7 @@ export const SUGGESTION_TYPE_DOCS: Record<typeof SUGGESTION_TYPES[number], strin
   policy: "A row-level security policy for a table",
   publication: "A publication is a set of changes generated from a table or a group of tables, and might also be described as a change set or replication set. Each publication exists in only one database. Publications are different from schemas and do not affect how the table is accessed.",
   role: "PostgreSQL manages database access permissions using the concept of roles. A role can be thought of as either a database user, or a group of database users, depending on how the role is set up. Roles can own database objects (for example, tables) and can assign privileges on those objects to other roles to control who has access to which objects. Furthermore, it is possible to grant membership in a role to another role, thus allowing the member role use of privileges assigned to the role it is a member of.",
+  user: "A user is a role with LOGIN permission",
   schema: "A database contains one or more named schemas, which in turn contain tables. Schemas also contain other kinds of named objects, including data types, functions, and operators. ",
   setting: "Server configuration parameters. Can be specified for SYSTEM, DATABASE or ROLE",
   snippet: "A prostgles snippet",
@@ -45,6 +54,11 @@ export const DB_OBJ_LABELS: Record<keyof typeof SUGGESTION_TYPES, string> = SUGG
   [v]: v === "mview"? "materialized view" : v
 }), {} as Record<keyof typeof SUGGESTION_TYPES, string>)
 
+type CodeBlockSignature = {
+  numberOfLineBreaks: number;
+  numberOfSemicolons: number;
+  currentLineNumber: number;
+};
 
 export type SQLSuggestion = {
   type: typeof SUGGESTION_TYPES[number];
@@ -107,81 +121,39 @@ export type SQLSuggestion = {
   ruleInfo?: PG_Rule;
 }
 
-export const MONACO_DEFAULT_STORAGE_SERVICE: editor.IEditorOverrideServices = {
-  get() {},
-  remove(key, val) {
-    // console.log(key, val)
-  }, 
-  getBoolean(key) {
-    if (key === "expandSuggestionDocs"){
-      return true;
-    }
+export const customLightThemeMonaco = "myCustomTheme";
 
-    return false;
-  },
-  store() {},
-  onWillSaveState() {},
-  onDidChangeStorage() {},
-  onDidChangeValue() {},
-
-}
-const getStorageService = (opts?: Partial<WindowData["sql_options"]>) => ({ 
-  ...MONACO_DEFAULT_STORAGE_SERVICE,
-  getBoolean(key) {
-    if (key === "expandSuggestionDocs" && opts?.expandSuggestionDocs !== false){
-      return true;
-    }
-
-    return false;
-  }, 
-});
-
-export const customLightThemeMonaco = 'myCustomTheme';
-
-monaco.editor.defineTheme(customLightThemeMonaco, {
-  base: 'vs', // can also be vs-dark or hc-black or vs
-  inherit: true, // can also be false to completely replace the builtin rules
-  colors: {
-    
-  },
-  rules: [
-    
-    // { token: 'predefined.sql', foreground: '#730000'},
-    { token: `string.${LANG}`, foreground: '#930000'}, // #e200e2
-    
-
-    /* Table names */
-    { token: 'identifier', foreground: '#6c06ab'},
-    { token: 'complexIdentifiers', foreground: '#6c06ab' },
-    
-    // { token: 'function', foreground: '94763a', fontStyle: 'bold'  },
-    // { token: 'keyword', foreground: '#696969' },
-  ]
-});
 
 export type MonacoError = Pick<editor.IMarkerData, "code" | "message" | "severity" | "relatedInformation"> &  {
   position?: number;
   length?: number;
 } 
 
-import { IRange, editor } from "monaco-editor";
-import { SQLHandler } from "prostgles-types";
-import { themeR } from "../../App";
+import { mdiPlay } from "@mdi/js";
+import { isEqual } from "prostgles-client/dist/react-hooks";
+import type { SQLHandler } from "prostgles-types";
+import Btn from "../../components/Btn";
+import { getDataTransferFiles } from "../../components/FileInput/DropZone";
 import { isEmpty, omitKeys } from "../../utils";
 import { SECOND } from "../Charts";
-import { DashboardState } from "../Dashboard/Dashboard";
-import { WindowData } from "../Dashboard/dashboardUtils";
-import { MonacoEditor } from "../ProstglesSQL/MonacoEditor";
+import type { DashboardState } from "../Dashboard/Dashboard";
+import type { WindowData } from "../Dashboard/dashboardUtils";
 import RTComp from "../RTComp";
-import { TopKeyword } from "./SQLCompletion/KEYWORDS";
-import { CodeBlock, getCurrentCodeBlock, highlightCurrentCodeBlock } from "./SQLCompletion/completionUtils/getCodeBlock";
-import { PGConstraint, PGOperator, PG_DataType, PG_EventTrigger, PG_Function, PG_Policy, PG_Role, PG_Rule, PG_Setting, PG_Table, PG_Trigger } from "./SQLCompletion/getPGObjects";
-import { GetFuncs, registerFunctionSuggestions } from "./registerFunctionSuggestions";
+import { MonacoEditor } from "../W_SQL/MonacoEditor";
+import type { IRange, editor } from "../W_SQL/monacoEditorTypes";
+import type { TopKeyword } from "./SQLCompletion/KEYWORDS";
+import type { CodeBlock } from "./SQLCompletion/completionUtils/getCodeBlock";
+import { getCurrentCodeBlock, highlightCurrentCodeBlock, playButtonglyphMarginClassName } from "./SQLCompletion/completionUtils/getCodeBlock";
+import type { PGConstraint, PGOperator, PG_DataType, PG_EventTrigger, PG_Function, PG_Policy, PG_Role, PG_Rule, PG_Setting, PG_Table, PG_Trigger } from "./SQLCompletion/getPGObjects";
+import { addSqlEditorFunctions, getSelectedText } from "./addSqlEditorFunctions";
+import { defineCustomSQLTheme } from "./defineCustomSQLTheme";
+import type { GetFuncs } from "./registerFunctionSuggestions";
+import { registerFunctionSuggestions } from "./registerFunctionSuggestions";
 
 export type SQLEditorRef = {
   editor: editor.IStandaloneCodeEditor;
   getSelectedText: () => string;
-  getCurrentCodeBlock: () => CodeBlock | undefined;
+  getCurrentCodeBlock: () => Promise<CodeBlock>  | undefined;
 } 
 
 type P = {
@@ -210,9 +182,9 @@ type P = {
 type S = {
   value: string;
   editorMounted: boolean;
+  themeAge: number;
+  activeCodeBlock: undefined | Pick<CodeBlock, "startLine" | "endLine">;
 };
-
-const getSelectedText = (editor): string => editor.getModel().getValueInRange(editor.getSelection());
 
 export default class SQLEditor extends RTComp<P, S> {
 
@@ -225,12 +197,18 @@ export default class SQLEditor extends RTComp<P, S> {
     super(props);
     this.state = {
       value: props.value ?? "",
-      editorMounted: false
+      editorMounted: false,
+      themeAge: 0,
+      activeCodeBlock: undefined,
     }
   }
   
-  onMount(){
+  async onMount(){
     document.addEventListener("keydown", this.onKeyDown, false);
+    const didupdate = await defineCustomSQLTheme();
+    if(didupdate){
+      this.setState({ themeAge: Date.now() })
+    }
     window.addEventListener("beforeunload", async (e) => {
       await this.onUnmount()
     }, false); 
@@ -239,7 +217,7 @@ export default class SQLEditor extends RTComp<P, S> {
   async onUnmount(){
     document.removeEventListener("keydown", this.onKeyDown, false);
     await this.props.onUnmount?.(this.editor, this.editor?.getPosition());
-    if(this.rootRef) this.resizeObserver?.unobserve(this.rootRef)
+    if(this.rootRef) this.resizeObserver?.unobserve(this.rootRef);
   } 
 
   scrollToLineIfNeeded = (lineNumber: number) => {
@@ -252,103 +230,41 @@ export default class SQLEditor extends RTComp<P, S> {
   }
 
   tooltipHandler: any;
-  loadedActions = false;
   loadedSuggestions: DashboardState["suggestions"];
   loadedFuncs = false;
   resizeObserver?: ResizeObserver;
   onDelta = async (dp, ds) => {
     const { error, getFuncDef, value, sql, autoFocus = false, sqlOptions } = { ...this.props }; 
-
-    if(value && !this.curVal){
+    const EOL = this.editor?.getModel()?.getEOL() || "\n";
+    const monaco = await getMonaco();
+    if(value && this.curVal === undefined){
       this.curVal = value;
       this.setState({ value })
     }
 
-
     if(!this.resizeObserver && this.rootRef){
       this.resizeObserver = new ResizeObserver(entries => {
-        this.editor?.revealLineInCenterIfOutsideViewport(this.editor.getPosition()?.lineNumber ?? value.split("/n").length);
+        this.editor?.revealLineInCenterIfOutsideViewport(this.editor.getPosition()?.lineNumber ?? value.split(EOL).length);
       });
       this.resizeObserver.observe(this.rootRef);
-
     }
 
-    if(this.editor && !this.loadedActions){
-      this.loadedActions = true;
-
-      this.editor.addAction({
-        id: "select1", 
-        label: "Select word", 
-        contextMenuGroupId: "selection", 
-        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD],
-        run: (editor) => {
-          const model = editor.getModel();
-          const position = editor.getPosition();
-
-          if(!model || !position) return;
-
-          const word = model.getWordAtPosition(position);
-          if(word){
-            editor.setSelection({ 
-              startColumn: word.startColumn, 
-              startLineNumber: position.lineNumber, 
-              endLineNumber: position.lineNumber, 
-              endColumn: word.endColumn 
-            });
-          }
-        }
-      });
-
-      this.editor.addAction({
-        id: "select2CB",
-        label: "Select code block", 
-        contextMenuGroupId: "selection",
-        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB],
-        run: (editor) => {
-          const model = editor.getModel();
-          const position = editor.getPosition();
-
-          if(!model || !position) return;
-
-          const cb = getCurrentCodeBlock(model, position);
-          if(cb.textLC.trim()){
-            editor.setSelection({ 
-              startColumn: 1, 
-              startLineNumber: cb.startLine, 
-              endLineNumber: cb.endLine, 
-              endColumn: cb.tokens.at(-1)!.end + 2, 
-            });
-          } 
-        }
-      });
-      
-
-      this.editor.addAction({
-        id: "googleSearch",
-        label: "Search with Google",
-        // keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KEY_V],
-        contextMenuGroupId: "navigation",
-        run: (editor) => {
-          window.open("https://www.google.com/search?q=" + getSelectedText(editor))
-        }
-      });
-      this.editor.addAction({
-        id: "googleSearchPG",
-        label: "Search with Google Postgres",
-        // keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KEY_V],
-        contextMenuGroupId: "navigation",
-        run: (editor) => {
-          window.open("https://www.google.com/search?q=postgres+" + getSelectedText(editor))
-        }
-      });
-    }
+      /** Enter newline only when not accepting a suggestion */
+      // this.editor?.addCommand(monaco.KeyCode.Enter, () => {
+      //   this.editor?.trigger('newline', 'type', { text: EOL });
+      // }, '!suggestWidgetVisible && !renameInputVisible && !inSnippetMode && !quickFixWidgetVisible');
 
     const { suggestions } = this.props;
 
     /* LOAD SUGGESTIONS */
     if(this.editor && suggestions && this.loadedSuggestions?.dbKey !== suggestions.dbKey){
       this.loadedSuggestions = { ...suggestions }
-      registerSuggestions({ ...suggestions, sql, editor: this.editor });
+      registerSuggestions({ 
+        ...suggestions, 
+        sql, 
+        editor: this.editor, 
+        monaco,
+      });
 
       /* SET FUNC AUTOCOMPLETE */
       if(getFuncDef && !this.loadedFuncs){
@@ -366,7 +282,7 @@ export default class SQLEditor extends RTComp<P, S> {
       this.error = error;
       const model = this.editor.getModel();
       if(!model) return;
-      if(!error) monaco.editor.setModelMarkers(model, 'test', []);
+      if(!error) monaco.editor.setModelMarkers(model, "test", []);
       else {
 
         let offset: Partial<IRange> = {};
@@ -390,7 +306,7 @@ export default class SQLEditor extends RTComp<P, S> {
           } 
           
           if(!selectionLength) {
-            const codeBlock = this.getCurrentCodeBlock();
+            const codeBlock = await this.getCurrentCodeBlock();
             if(codeBlock){
               selectionStartIndex = model.getOffsetAt({ 
                 column: 1,
@@ -422,7 +338,7 @@ export default class SQLEditor extends RTComp<P, S> {
         }
 
         if(sqlOptions?.errorMessageDisplay !== "bottom"){
-          const messageContribution = this.editor.getContribution('editor.contrib.messageController');
+          const messageContribution = this.editor.getContribution("editor.contrib.messageController");
           (messageContribution as any).showMessage(error.message, { 
             ...this.editor.getPosition(),
             lineNumber: offset.startLineNumber,
@@ -430,7 +346,7 @@ export default class SQLEditor extends RTComp<P, S> {
           });
         }
         
-        monaco.editor.setModelMarkers(model, 'test', [{
+        monaco.editor.setModelMarkers(model, "test", [{
           startLineNumber: 0,
           startColumn: 0,
           endLineNumber: 0,
@@ -458,16 +374,6 @@ export default class SQLEditor extends RTComp<P, S> {
     ){
       e.preventDefault();
       this.onRun()
-    } else if(e.ctrlKey && e.key === "b"){
-      // const codeBlock = this.getCurrentCodeBlock();
-      // if(codeBlock && this.editor){
-      //   this.editor.setSelection({
-      //     startLineNumber: codeBlock.startLine,
-      //     startColumn: 0,
-      //     endColumn: (codeBlock.lines.at(-1)?.v.length || 122) + 1,
-      //     endLineNumber: codeBlock.endLine
-      //   })
-      // }
     }
   }
 
@@ -488,23 +394,27 @@ export default class SQLEditor extends RTComp<P, S> {
 
   currentDecorations: editor.IEditorDecorationsCollection | undefined;
 
+  get canExecuteBlocks(){
+    const { executeOptions } = this.props.sqlOptions ?? {};
+    return executeOptions !== "full";
+  }
   getCurrentCodeBlock = () => {
     const { executeOptions } = this.props.sqlOptions ?? {};
     if(executeOptions !== "full"){
       const model = this.editor?.getModel()
       const position = this.editor?.getPosition()
-      if(model && position){
-        return getCurrentCodeBlock(model, position, undefined, executeOptions === "smallest-block")
+      if(model && !model.isDisposed() && position){
+        return getCurrentCodeBlock(model, position, undefined, { smallestBlock: executeOptions === "smallest-block" })
       }
 
       return undefined
     }
   }
 
-  onRun = () => {
+  onRun = async () => {
     if(!this.props.onRun) return;
     const selection = getSelectedText(this.editor);
-    const codeBlock = this.getCurrentCodeBlock();
+    const codeBlock = await this.getCurrentCodeBlock();
     const text = selection || codeBlock?.text;
     if(text){
       this.props.onRun(text, true);
@@ -514,13 +424,25 @@ export default class SQLEditor extends RTComp<P, S> {
 
   }
 
-  currentLineNumber?: number;
-  
+  codeBlockSignature?: CodeBlockSignature;
+  currentCodeBlock: CodeBlock | undefined
+
   render(){
-    const { value = "" } = this.state;
+    const { value = "", themeAge } = this.state;
     const { onMount, style = {}, className = "", sqlOptions } = this.props;
-    const theme = sqlOptions?.theme && sqlOptions.theme !== "vs"?  sqlOptions.theme : (themeR.get() === "dark"? "vs-dark" : customLightThemeMonaco as any);
-    const key = theme + JSON.stringify(sqlOptions);
+    const key = JSON.stringify(sqlOptions) + themeAge;
+
+    const glyphPlayBtnElem = document.querySelector(`.${playButtonglyphMarginClassName}`);
+    const glyphPlayBtn = (this.canExecuteBlocks && glyphPlayBtnElem)? ReactDOM.createPortal(
+      <Btn 
+        iconPath={mdiPlay} 
+        size="micro" 
+        onClick={this.onRun}
+        color="action" 
+      />,
+      glyphPlayBtnElem
+    ) : null;
+
     return <div key={key}
       className={"sqleditor f-1 min-h-0 min-w-0 flex-col relative " + className}
       ref={e => {
@@ -528,44 +450,64 @@ export default class SQLEditor extends RTComp<P, S> {
       }}
       style={style}
       onDragOver={e => {
-        e.preventDefault() ;
-        return false;
+        e.preventDefault();
+        e.stopPropagation();
       }}
-      // onDragEnter={e => {
-      //   // e.preventDefault() ;
-      //   return false;
-      // }}
       onDrop={e => {
         let text = e.dataTransfer.getData("text");
         if(text){
           text = ` ${text} `
-          this.editor?.trigger('keyboard', 'type', {text});
+          this.editor?.trigger("keyboard", "type", {text});
+        } else {
+          const [file, ...otherFiles] = getDataTransferFiles(e);
+          if(otherFiles.length){
+            alert("Only one file can be dropped at a time");
+          } else if(file?.type.includes("text")) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const text = event.target?.result;
+              if(!text || !this.editor || !this.mounted) return;
+              this.editor.setValue(text as string);
+            };
+            reader.readAsText(file);
+          }
         }
+        e.preventDefault() ;
+        e.stopPropagation() ;
+        return false;
       }}
     >
+      {glyphPlayBtn}
       <MonacoEditor 
         className="f-1 min-h-0"
         language={LANG}
-        value={value} 
+        value={value}
+        loadedSuggestions={this.props.suggestions}
         /** This is used to show documentation (expandSuggestionDocs) */
-        overrideServices={getStorageService(sqlOptions)}
+        expandSuggestionDocs={sqlOptions?.expandSuggestionDocs}
         options={{
-          acceptSuggestionOnEnter: "off",
           fixedOverflowWidgets: true,
-          theme,
           folding: true,
-          // glyphMargin: true,
           automaticLayout: true,
-          // ...stS,
           padding: {
-            top: 12
+            top: 12,
           },
-          parameterHints: { enabled: !window.isMobileDevice } ,
-          
+          parameterHints: { 
+            enabled: !window.isMobileDevice 
+          } ,
+          quickSuggestions: {
+            strings: true,
+          },
           ...(!sqlOptions? {} : omitKeys(sqlOptions, ["maxCharsPerCell", "renderMode", "executeOptions", "errorMessageDisplay"])),
+
+          ...(this.canExecuteBlocks && {
+            /** Needed for play button */
+            glyphMargin: true,
+            lineNumbersMinChars: 3,
+          })
         }} 
         onMount={(editor) => {
-          
+          addSqlEditorFunctions(editor, sqlOptions?.executeOptions === "smallest-block")
           this.setState({ editorMounted: true });
           if(onMount) {
             onMount({ 
@@ -575,17 +517,23 @@ export default class SQLEditor extends RTComp<P, S> {
             });
           }
           this.editor = editor;
-          editor.onDidChangeModelContent(ev => {
+          editor.onDidChangeModelContent(e => {
             this.onChange(editor.getValue());
+            setActiveCodeBlock.bind(this)(undefined);
           });
           editor.onDidChangeCursorPosition(async e => {
-            if(this.editor && this.currentLineNumber !== e.position.lineNumber && !document.getSelection()?.toString()){
-              this.currentLineNumber = e.position.lineNumber;
-              const codeBlock = this.getCurrentCodeBlock();
-              this.currentDecorations?.clear();
-              this.currentDecorations = highlightCurrentCodeBlock(this.editor, codeBlock);
+            if(e.source === "api") return;
+            setActiveCodeBlock.bind(this)(e);
+          });
+          
+          editor.onDidChangeModelDecorations(() => {
+            if(this.canExecuteBlocks && this.codeBlockSignature){
+              // setTimeout(() => {
+                if(!this.mounted) return;
+                this.setState({ activeCodeBlock: { startLine: 1, endLine: 2 } })
+              // }, 100)
             }
-          })
+          });
 
           const { cursorPosition } = this.props;
           if(cursorPosition && !isEmpty(cursorPosition)){
@@ -600,5 +548,31 @@ export default class SQLEditor extends RTComp<P, S> {
           
       }}/>
     </div>
+  }
+}
+
+const setActiveCodeBlock = async function (this: SQLEditor, e: editor.ICursorPositionChangedEvent | undefined) {
+  const editor = this.editor;
+  if(!editor) return;
+
+  /** Codeblock end line changes when going from empty line to content */
+  const model = editor.getModel();
+  const value = model?.getValue() ?? "";
+  const codeBlockSignature: CodeBlockSignature = {
+    numberOfLineBreaks: value.split(model?.getEOL() ?? "\n").length,
+    numberOfSemicolons: value.split(";").length,
+    currentLineNumber: e?.position.lineNumber ?? editor.getPosition()?.lineNumber ?? this.codeBlockSignature?.currentLineNumber ?? 0,
+  };
+  const signatureDiffers = !isEqual(this.codeBlockSignature, codeBlockSignature);
+  if(signatureDiffers && !document.getSelection()?.toString()){
+    this.codeBlockSignature = codeBlockSignature;
+    const codeBlock = await this.getCurrentCodeBlock();
+    this.currentCodeBlock = codeBlock;
+
+    const existingDecorations = editor.getLineDecorations(0)?.map(d => d.id) ?? [];
+    editor.removeDecorations(existingDecorations);
+    this.currentDecorations?.clear();
+
+    this.currentDecorations = await highlightCurrentCodeBlock(editor, codeBlock);
   }
 }

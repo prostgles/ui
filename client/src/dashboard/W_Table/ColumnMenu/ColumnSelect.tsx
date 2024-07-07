@@ -1,10 +1,11 @@
 import { mdiClose } from "@mdi/js";
-import { ValidatedColumnInfo, _PG_bool, _PG_date, _PG_geometric, _PG_interval, _PG_json, _PG_numbers, _PG_postgis, _PG_strings } from "prostgles-types";
+import type { ValidatedColumnInfo} from "prostgles-types";
+import { _PG_bool, _PG_date, _PG_geometric, _PG_interval, _PG_json, _PG_numbers, _PG_postgis, _PG_strings } from "prostgles-types";
 import React from "react"
 import Btn from "../../../components/Btn";
 import FormField from "../../../components/FormField/FormField"; 
 import { getColumnListItem } from "./ColumnsMenu";
-import { TestSelectors } from "../../../Testing";
+import type { TestSelectors } from "../../../Testing";
 type P = TestSelectors & {
   columns: (ValidatedColumnInfo & { disabledInfo?: string })[];
   onChange: (columnName?: string) => void;

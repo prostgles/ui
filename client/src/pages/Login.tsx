@@ -1,10 +1,12 @@
 import React from "react";
-import Popup, { PopupProps } from "../components/Popup/Popup";
+import type { PopupProps } from "../components/Popup/Popup";
+import Popup from "../components/Popup/Popup";
 import FormField from "../components/FormField/FormField";
 import Btn from "../components/Btn";
 import ErrorComponent from "../components/ErrorComponent";
 import RTComp from "../dashboard/RTComp";
 import { FlexCol } from "../components/Flex";
+import { tout } from "./ElectronSetup";
 
 type LoginState = {
   showTOTP?: "token" | "recovery";
@@ -46,9 +48,9 @@ export default class Login extends RTComp<any, LoginState> {
     } else {
       try {
         const { pathname, search } = window.location;
-        const content = await POST(pathname + search, { username, password, remember_me, totp_token, totp_recovery_code });// rawResponse.json();
+        const content = await POST(pathname + search, { username, password, remember_me, totp_token, totp_recovery_code });
         
-        if(content && content.status === 200){
+        if(content.status === 200){
           window.location.href = content.url;
         } else {
           const txtErr = await content.json();
@@ -91,8 +93,9 @@ export default class Login extends RTComp<any, LoginState> {
       const btns: PopupProps["footerButtons"] = [];
       if(didReset) {
         btns.push({
-          label: "Reset Password", onClick: async () => {
-            if(!didReset){
+          label: "Reset Password", 
+          onClick: async () => {
+            if(!this.state.didReset){
               if(!resetusername || !resetusername.trim()){
                 this.setState({ error: "Username is required" });
               } else {
@@ -125,7 +128,7 @@ export default class Login extends RTComp<any, LoginState> {
             }}
           />
           {ErrorComp}
-          {didReset && <div className="mt-1 text-green-600">
+          {didReset && <div className="mt-1 text-green">
             Thanks, we've sent you a password reset link to this username address (unless there is no account associated with it)
           </div>}
         </div>
@@ -134,9 +137,10 @@ export default class Login extends RTComp<any, LoginState> {
 
     return (
       <FlexCol 
-        className="Login card m-auto w-fit bg-0" 
+        className="Login rounded shadow p-2 m-auto w-fit bg-color-0" 
         style={{ 
           maxWidth: "400px",
+          paddingBottom: "3em"
         }}
       > 
         <div>
@@ -149,7 +153,7 @@ export default class Login extends RTComp<any, LoginState> {
           </p> */}
         </div>
         <form 
-          className="flex-col gap-0"
+          className="flex-col gap-1"
           onSubmit={e => {
             e.preventDefault();
           }}
@@ -211,15 +215,16 @@ export default class Login extends RTComp<any, LoginState> {
           {ErrorComp}
 
           <Btn type="submit" 
+            className="mt-1 w-full text-sm font-medium"
             onClickMessage={async (e, setM) => {
               setM({ loading: 1 });
               this.signIn().finally(() => {
                 setM({ loading: 0 });
               });
-            }} 
-            className="mt-2 w-full text-sm font-medium"
+            }}
+            size="large"
             variant="filled"
-            color="indigo"
+            color="action"
             style={{ width: "100%" }}
           >
             Sign in
@@ -233,13 +238,13 @@ export default class Login extends RTComp<any, LoginState> {
 } 
 
 
-export async function POST(path: string, data: object){
+export const POST = async (path: string, data: object) => {
   
   const rawResponse = await fetch(path, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
+      "Accept": "application/json",
+      "Content-Type": "application/json"
     },
     body: JSON.stringify(data)
   });

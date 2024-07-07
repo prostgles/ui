@@ -5,7 +5,7 @@ import Popup from "../../../components/Popup/Popup";
 import Select from "../../../components/Select/Select";
 import { SwitchToggle } from "../../../components/SwitchToggle";
 import { omitKeys } from "../../../utils";
-import { ArgumentDefinitionProps } from "./ArgumentDefinition";
+import type { ArgumentDefinitionProps } from "./ArgumentDefinition";
 
 export const ReferencesDefinition = ({ onChange, tables, ...arg }: ArgumentDefinitionProps) => {
 

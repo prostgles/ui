@@ -1,22 +1,33 @@
 import { mdiFormatLetterCase } from "@mdi/js";
-import { AnyObject } from "prostgles-types";
-import React from 'react';
-import { Command, TestSelectors } from "../Testing";
+import type { AnyObject } from "prostgles-types";
+import React from "react";
+import type { Command, TestSelectors } from "../Testing";
 import RTComp from "../dashboard/RTComp";
 import Btn from "./Btn";
-import Checkbox from './Checkbox';
+import Checkbox from "./Checkbox";
+import { ClickCatchOverlay } from "./ClickCatchOverlay";
 import { DraggableLI } from "./DraggableLI";
 import ErrorComponent from "./ErrorComponent";
 import { generateUniqueID } from "./FileInput/FileInput";
+import { classOverride } from "./Flex";
 import { Input } from "./Input";
 import { Label } from "./Label";
-import './List.css';
+import "./List.css";
 import Loading from "./Loading";
-import Popup, { POPUP_ROOT_CLASS } from "./Popup/Popup";
-import './SearchList.css';
-import { OptionKey } from "./Select/Select";
-import { classOverride } from "./Flex";
+import Popup, { POPUP_CLASSES } from "./Popup/Popup";
+import "./SearchList.css";
+import type { OptionKey } from "./Select/Select";
+import type { Primitive } from "d3";
 
+export type SearchListItemContent = (
+  {
+    content?: React.ReactNode;
+  } | {
+    contentLeft?: React.ReactNode;
+    contentRight?: React.ReactNode;
+    contentBottom?: React.ReactNode;
+  }
+);
 export type SearchListItem = TestSelectors & {
   key: OptionKey;
   label?: string | React.ReactNode;
@@ -36,17 +47,9 @@ export type SearchListItem = TestSelectors & {
     subLabel?: React.CSSProperties;
     labelRootWrapperStyle?: React.CSSProperties;
   };
-  data?: AnyObject;
+  data?: AnyObject | Primitive | null;
   disabledInfo?: string;
-} & (
-  {
-    content?: React.ReactNode;
-  } | {
-    contentLeft?: React.ReactNode;
-    contentRight?: React.ReactNode;
-    contentBottom?: React.ReactNode;
-  }
-);
+} & SearchListItemContent
 
 type ParsedListItem = SearchListItem & {
   node?: React.ReactNode;
@@ -87,7 +90,7 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   inputEl?: HTMLElement;
   dontHighlight?: boolean;
   label?: React.ReactNode;
-
+  wrapperStyle?: React.CSSProperties;
   variant?: "search" | "search-no-shadow" | "select";
   selectedKey?: OptionKey;
   rootStyle?: React.CSSProperties;
@@ -162,7 +165,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
         fontSize: "14px",
         marginTop: ".25em"
       },
-      rootColorClass = isSublabel? `SubLabel text-1` : `text-0p75`;
+      rootColorClass = isSublabel? `SubLabel text-1` : `text-0`;
 
       const rootStyle = { ...style, ...r.style }
       let rank = 0,
@@ -192,12 +195,13 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
             /** Join lines into one */
             label = label.split("\n").join(" ");
           }
+          const shortenText = label.length > 40;
           node = <div className="flex-col  f-1" style={rootStyle} title={text}>
             {prevLines !== undefined && prevLines.length > 0 && <span className="f-0 text-2 text-ellipsis">{prevLines.join("\n")}</span>}
             <div className="flex-row f-1" >
-              <span className="f-1 ta-right search-text-endings text-ellipsis" style={{maxWidth: "fit-content"}}>{label.slice(0, idx)}</span> 
+              <span className={`${shortenText? "f-1" : "f-0"} ta-right search-text-endings text-ellipsis`} style={{maxWidth: "fit-content"}}>{label.slice(0, idx)}</span> 
               <strong className="f-0 search-text-match">{label.slice(idx, idx + strm.length)}</strong>
-              <span className="f-1 search-text-endings text-ellipsis">{label.slice(idx + strm.length)}</span>
+              <span className={`${shortenText? "f-1" : "f-0"} f-1 search-text-endings text-ellipsis`}>{label.slice(idx + strm.length)}</span>
             </div>
             {nextLines !== undefined && nextLines.length > 0 && <span className="f-0 text-2 text-ellipsis">{nextLines.join("\n")}</span>}
           </div>
@@ -439,6 +443,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
       size = window.isLowWidthScreen? "small" : undefined,
       rowStyleVariant,
       inputProps,
+      wrapperStyle = {}
     } = this.props;
     
     const { 
@@ -517,30 +522,23 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
     const noShadow = variant?.includes("no-shadow")
     const isSelect = variant === "select";
 
-    const endSearch = () => {
-      if(isSearch && !searchClosed){
+    const endSearch = (force = false) => {
+      if(force || isSearch && !searchClosed){
         this.cancelCurrentSearch?.();
-        this.setState({ searchTerm: "" })
+        this.setState({ searchTerm: "" });
         this.setState({ searchClosed: true }); 
       }
     }
 
     const noList = (!renderedItems.length && !searchTerm || (isSearch && searchClosed)); 
-
     const list = error? <ErrorComponent error={error} /> : 
       noList? null : 
       (<div className={"SearchList_Suggestions  relative w-full f-1  min-h-0 min-w-0 no-scroll-bar " + (isSearch ?" o-visible " : " o-auto ")} 
         data-command={this.props["data-command"]}
         data-key={this.props["data-key"]}
       >
-        {(isSearch && !!renderedItems.length) && <div style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 1,
-          background: "#ebebeb38",
-          backdropFilter: "blur(1px)",
-        }}></div>}
-        <ul className={"f-1 max-h-fit o-auto min-h-0 min-w-0 ul-search-list " + ((isSearch) ?" no-scroll-bar shadow bg-0 " : "")}
+        {(isSearch && !!renderedItems.length) && <ClickCatchOverlay />}
+        <ul className={"f-1 max-h-fit o-auto min-h-0 min-w-0 ul-search-list " + ((isSearch) ?" no-scroll-bar shadow bg-color-0 " : "")}
           role="list" 
           ref={r => { if(r) this.refList = r; }}
           data-command={"SearchList.List" satisfies Command}
@@ -559,7 +557,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
                 const outlineSize = 1;
                 let top = bbox.top + bbox.height + outlineSize;
                 let left = bbox.left;
-                const popup = this.inputWrapper.closest<HTMLDivElement>("." + POPUP_ROOT_CLASS);
+                const popup = this.inputWrapper.closest<HTMLDivElement>(`.${POPUP_CLASSES.root}`);
                 if(popup && popup.style.transform){
                   const pRect = popup.getBoundingClientRect();
                   top -= Math.round(pRect.top);
@@ -578,7 +576,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
           }}
         >
           {(onSearch && !this.props.items)? null : 
-            (!(renderedItems.length) && !searchingItems)?
+            (!renderedItems.length && !searchingItems)?
             (<div className="p-p5 text-1 no-data">{this.props.onNoResultsContent?.(searchTerm) ?? (<div>No results</div>)}</div>) :
             renderedItems
               .map((d, i)=> { 
@@ -596,7 +594,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
                   rowContent = <div className="ROWINNER flex-row ai-center f-1 " style={d.styles?.rowInner}>
                     {contentLeft || null}
                     <div className="LABELWRAPPER flex-col ai-start f-1" style={d.styles?.labelWrapper}>
-                      <label className={"ws-pre mr-p5 f-1 flex-row noselect min-w-0 w-full " +  (d.disabledInfo? " not-allowed " : " pointer ")}
+                      <label className={"ws-pre mr-p5 f-1 flex-row noselect min-w-0 w-full " +  (d.disabledInfo? " not-allowed " : d.onPress? " pointer " : " ")}
                         style={d.style}
                       >
                         {d.node}
@@ -610,11 +608,21 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
                   </div>
                 }
 
+                const asStringIfPossible = (v: any) => {
+                  if(typeof v === "string" || typeof v === "number"){
+                    return v.toString();
+                  }
+                  if(v === null){
+                    return "null";
+                  }
+                  return "";
+                }
                 return (
                   <DraggableLI key={i} 
                     role="listitem"
                     data-command={d["data-command"]}
-                    data-key={d.key?.toString() ?? ""}
+                    data-key={asStringIfPossible(d.key)}
+                    data-label={asStringIfPossible(d.label)}
                     title={d.disabledInfo ?? d.title}
                     style={{
                       ...d.rowStyle,
@@ -629,10 +637,10 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
                     idx={i}
                     items={items.slice(0)}
                     onReorder={onReorder}
-                    className={classOverride("bg-li flex-row ai-start p-p5 pl-1 min-w-0 " + 
+                    className={classOverride("noselect bg-li flex-row ai-start p-p5 pl-1 min-w-0 " + 
                     (d.selected? " selected " : "") + 
-                    (d.disabledInfo? " not-allowed " : " pointer ") +
-                    (!d.onPress && !this.props.onChange && !this.props.onMultiToggle && !this.props.onPressEnter? " no-hover " : ""),
+                    (d.disabledInfo? " not-allowed " : (d.onPress)? " pointer " : "") +
+                    (!d.onPress && !this.props.onChange && !this.props.onMultiToggle && !this.props.onPressEnter? " no-hover " : " "),
                     d.rowClassname
                   )}
                     onClick={e => {
@@ -653,7 +661,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
     const inputClass = "search-list-comp-input";
     
     const content = (
-      <div className={"SearchList list-comp ta-left flex-col min-h-0 rounded " + className}
+      <div className={"SearchList list-comp ta-left flex-col min-h-0 " + className}
         ref={e => {
           if(e){
             this.refRoot = e;
@@ -688,7 +696,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
             e.preventDefault();
             if(onPressEnter && this.focusedRowIndex === undefined){
               onPressEnter(searchTerm);
-              endSearch();
+              endSearch(true);
             } else {
               firstChild.click();
             }
@@ -722,8 +730,14 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
         }} 
       >
         {/* {!!label && <div className={" noselect text-1p5 my-p5 " + (!isSearch? (" p-p75 " + (hasSearch? " pb-0 " : " ")) : " pb-p25 ")} style={{}}>{label}</div>} */}
-        {!!label && <Label className="mb-p25 " variant="normal">{label}</Label>}
-        <div className={"f-0 min-h-0 min-w-0 flex-row jc-start relative " + (!hasSearch && multiSelect? " bg-1 " : "") + ((isSearch || isSelect)? " " : "  ai-center  ") + ((!hasSearch && !multiSelect)?" hidden" : "")}
+        {!!label && <Label className="ml-p5" variant="normal">{label}</Label>}
+        <div 
+          className={
+            "f-0 min-h-0 min-w-0 flex-row jc-start relative " + 
+            (!hasSearch && multiSelect? " bg-color-2 " : "") + 
+            ((isSearch || isSelect)? " " : "  ai-center  ") + 
+            ((!hasSearch && !multiSelect)?" hidden" : "")
+          }
           style={searchStyle}
         >
           {!hasSearch? 
@@ -734,9 +748,9 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
                   this.inputWrapper = inputWrapper;
                 }
               }} 
-              className={"SearchList_InputWrapper flex-row h-fit f-1 relative o-hidden relative rounded focus-border b b-gray-300 " + ((isSearch && !noShadow)? " shadow " : " " ) }
+              className={"SearchList_InputWrapper bg-color-0 flex-row h-fit f-1 relative o-hidden relative rounded focus-border b b-color " + ((isSearch && !noShadow)? " shadow " : " " ) }
               style={{
-                
+                ...wrapperStyle,
                 ...((isSearch)? { zIndex: !list? "unset" : 2, } : 
                   isSelect? { margin: "8px", marginBottom: "2px" } : 
                   {
@@ -747,7 +761,6 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
                 )
               }}
               onClick={() => {
-                // this.setState({ searchClosed: false })
                 if(!list && searchEmpty){
                   this.onSetTerm(searchTerm || "", {});
                 }
@@ -770,6 +783,10 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
                     borderBottomRightRadius: 0,
                     zIndex: 3,
                   } : {}),
+                  ...(!this.props.matchCase?.hide? {
+                    borderTopRightRadius: 0,
+                    borderBottomRightRadius: 0,
+                  } : {}),
                   ...this.props.inputStyle,
                   ...(size !== "small" && { 
                     padding: "8px 1em", 
@@ -786,13 +803,14 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
                   this.onSetTerm(searchTerm, e);
                 }}
               />
-              <div className="relative rounded f-0 ai-center jc-center flex-row bg-0 " style={{ borderRadius: "3px", overflow: "visible", margin: "0px" }} >
+              <div className="relative rounded f-0 ai-center jc-center flex-row bg-color-0 " style={{ borderRadius: "3px", overflow: "visible", margin: "0px" }} >
                 {(isSearch && searchingItems) && 
-                  <Loading className="noselect mr-p5 bg-0" sizePx={24} variant="cover" /> 
+                  <Loading className="noselect mr-p5 bg-color-0" sizePx={24} variant="cover" /> 
                 }
 
                 {!this.props.matchCase?.hide && <Btn title={"Match case"}
                   iconPath={mdiFormatLetterCase}
+                  style={{ margin: "1px" }}
                   color={matchCase? "action" : undefined}
                   onClick={() => {
                     if(this.props.matchCase?.onChange){
@@ -855,10 +873,3 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
     return content
   }
 }
-
-// export class Input extends React.Component<React.HTMLProps<HTMLInputElement> , any> {
-
-//   render(){
-//     return <input className="custom-input" { ...this.props} />
-//   }
-// }

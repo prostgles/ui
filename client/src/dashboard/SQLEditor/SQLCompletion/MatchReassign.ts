@@ -1,4 +1,4 @@
-import { SQLMatcher } from "./registerSuggestions";
+import type { SQLMatcher } from "./registerSuggestions";
 import { withKWDs } from "./withKWDs";
 
 const KWDS = [
@@ -11,11 +11,11 @@ const KWDS = [
 
 export const MatchReassign: SQLMatcher = {
   match: cb => cb.prevLC.startsWith("reassign"),
-  result: async ({cb, ss, getKind}) => {
+  result: async ({ cb, ss, setS, sql }) => {
 
-    const { getSuggestion, remainingKWDS, prevKWD } = withKWDs(KWDS,cb,getKind, ss);
+    const { getSuggestion, prevKWD } = withKWDs(KWDS, { cb, ss, setS, sql });
     
-    const result = getSuggestion();
+    const result = await getSuggestion();
 
     if(prevKWD?.kwd === "TO" && result.suggestions.length){
       const prevUser = cb.tokens.find((t, i, arr) => {

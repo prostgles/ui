@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { PrglState } from "../../../App";
+import type { PrglState } from "../../../App";
 import { FlexCol } from "../../../components/Flex";
 import { getActiveTokensFilter } from "../../../pages/Sessions";
-import { useSubscribe } from "../../ProstglesMethod/hooks";
 import { APIDetailsHttp } from "./APIDetailsHttp";
 import { APIDetailsTokens } from "./APIDetailsTokens";
 import { APIDetailsWs } from "./APIDetailsWs";
@@ -25,6 +24,6 @@ export const APIDetails = (props: APIDetailsProps) => {
 }
 
 export const useAPITokens = ({ dbs, user }: Pick<PrglState, "dbs" | "user"> ) => {
-  const tokens = useSubscribe(dbs.sessions.subscribeHook(getActiveTokensFilter("api_token", user?.id)));
+  const { data: tokens } = dbs.sessions.useSubscribe(getActiveTokensFilter("api_token", user?.id));
   return tokens
 }

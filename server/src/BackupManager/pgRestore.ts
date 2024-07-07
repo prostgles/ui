@@ -1,7 +1,8 @@
 import { omitKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
 import { asName } from "prostgles-types";
-import { Readable } from "stream";
-import BackupManager, { Backups } from "./BackupManager";
+import type { Readable } from "stream";
+import type { Backups } from "./BackupManager";
+import type BackupManager from "./BackupManager";
 import { envToStr } from "./pipeFromCommand";
 import { addOptions, getBkp, getConnectionEnvVars, getSSLEnvVars, makeLogs } from "./utils";
 import { pipeToCommand } from "./pipeToCommand";
@@ -30,7 +31,6 @@ export async function pgRestore(this: BackupManager, arg1: { bkpId: string; conn
   if(o.newDbName){
     if(o.create) throw "Cannot use 'newDbName' together with 'create'. --create option will still restore into the database specified within the dump file";
     try {
-      if(!this.dbs.sql) throw new Error("db.sql not allowed")
       await this.dbs.sql(`CREATE DATABASE ${asName(o.newDbName)}`);
       
     } catch(err){
@@ -97,7 +97,7 @@ export async function pgRestore(this: BackupManager, arg1: { bkpId: string; conn
             restore_status: { 
               loading: { 
                 loaded: chunkSum,
-                total: +(bkp.sizeInBytes ?? bkp.dbSizeInBytes ?? 0) 
+                total: +(bkp.sizeInBytes ?? bkp.dbSizeInBytes) 
               } 
             } 
           })

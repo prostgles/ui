@@ -1,10 +1,11 @@
 import { mdiTextBoxSearchOutline } from "@mdi/js";
-import { FieldFilter, isObject } from "prostgles-types";
+import type { FieldFilter} from "prostgles-types";
+import { isObject } from "prostgles-types";
 import React from "react";
-import { CustomTableRules } from "../../../../commonTypes/publishUtils";
+import type { CustomTableRules } from "../../../../commonTypes/publishUtils";
 import Chip from "../../components/Chip";
 import { LabeledRow } from "../../components/LabeledRow";
-import { EditedAccessRule } from "./AccessControl";
+import type { EditedAccessRule } from "./AccessControl";
 
 type TableRuleSummary = { 
   tableName: string; 
@@ -19,14 +20,15 @@ type P = {
   className?: string;
   style?: React.CSSProperties;
 }
+export const ACCESS_RULE_METHODS = ["insert", "select", "update", "delete"] as const;
 
 export const AccessRuleSummary = ({ rule: r, style, className = ""}: P): JSX.Element => {
 
   const CLASSES = {
-    i: "text-green-400",
-    s: "text-gray-600",
-    u: "text-yellow-300",
-    d: "text-red-500",
+    i: "text-green",
+    s: "text-1p5",
+    u: "text-warning",
+    d: "text-danger",
   } as const;
 
   const summarizeFieldFilter = (f: FieldFilter | undefined) => {
@@ -36,7 +38,7 @@ export const AccessRuleSummary = ({ rule: r, style, className = ""}: P): JSX.Ele
     } else if(Array.isArray(f)){
       fieldList = f.join(", ");
     } else if(isObject(f)){
-      let fList = Object.keys(f).join(", ");
+      const fList = Object.keys(f).join(", ");
       fieldList = Object.values(f).some(v => !v)? `except ${fList}` : fList;
     }
     return fieldList;
@@ -46,14 +48,14 @@ export const AccessRuleSummary = ({ rule: r, style, className = ""}: P): JSX.Ele
     return <span className={"AccessRuleSummary bold " + className} style={style}>Full database access</span>;
 
   } else if(r.type === "All views/tables"){
+    const allowedMethods = (ACCESS_RULE_METHODS)
+          .filter(v => (r.allowAllTables).includes(v));
+
     return <div className={"AccessRuleSummary flex-row-wrap gap-p25 " + className} style={style}>
       <div className="flex-row gap-p25">
-        {(["insert", "select", "update", "delete"] as const)
-          .filter(v => (r.allowAllTables || []).includes(v))
-          .map(a => 
-            <div key={a} className={CLASSES[a[0] as any].replace("text", "bb-2 b")}>{a}</div> 
-          )
-        }
+        {allowedMethods.map(a => 
+          <div key={a} className={CLASSES[a[0] as any].replace("text", "bb-2 b")}>{a}</div> 
+        )}
       </div>  
       actions allowed to 
       <div className="bold">all tables/views</div> 

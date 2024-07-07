@@ -1,34 +1,60 @@
 import { omitKeys, pickKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
-import { DBS, Users } from ".";
-import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { Connections, DBS, Users } from ".";
+import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
+import { getSampleSchemas, runConnectionQuery } from "./publishMethods/publishMethods";
 
+const loadSampleSchema = async (dbs: DBS, sampleSchemaName: string, connId: string) => {
+  const schema = (await getSampleSchemas()).find(s => s.name === sampleSchemaName);
+  if(!schema){
+    throw "Sample schema not found: " + sampleSchemaName;
+  }
+  if(schema.type === "sql"){
+    await runConnectionQuery(connId, schema.file);
+  } else {
+    const { tableConfigTs, onMountTs, onInitSQL } = schema;
+    if(onInitSQL) {
+      await runConnectionQuery(connId, onInitSQL);
+    }
+    await dbs.database_configs.update(
+      { $existsJoined: { connections: { id: connId} } }, 
+      { 
+        table_config_ts: tableConfigTs, 
+        on_mount_ts: onMountTs, 
+      }
+    );
+  }
+}
 
-export const upsertConnection = async (con: DBSchemaGenerated["connections"]["columns"], user_id: Users["id"] | null, dbs: DBS) => {
+export const upsertConnection = async (con: DBSchemaGenerated["connections"]["columns"], user_id: Users["id"] | null, dbs: DBS, sampleSchemaName?: string) => {
   
-  const c = validateConnection({ 
+  const c = validateConnection({
     ...con, 
+    name: con.name || con.db_name,
     user_id,
-    last_updated: Date.now()
+    last_updated: Date.now().toString()
   });
   const { canCreateDb } = await testDBConnection(con);
   try {
-    let connection;
+    let connection: Connections | undefined;
     if(con.id){
       if(!(await dbs.connections.findOne({ id: con.id }))){
         throw "Connection not found: " + con.id
       }
-      connection = await dbs.connections.update({ id: con.id }, omitKeys(c, ["id"]) , { returning: "*", multi: false });
+      connection = await dbs.connections.update({ id: con.id }, omitKeys(c as any, ["id"]) , { returning: "*", multi: false });
     } else {
-      await dbs.database_configs.insert(pickKeys({ ...c }, ["db_host", "db_name", "db_port"]) as any, { fixIssues: true, returning: "*", onConflictDoNothing: true });
+      const dbConf = await dbs.database_configs.insert(pickKeys({ ...c }, ["db_host", "db_name", "db_port"]) as any , { fixIssues: true, returning: "*", onConflict: "DoNothing" });
       connection = await dbs.connections.insert({ ...c, info: { canCreateDb } }, { returning: "*" });
     }
 
     if(!connection){
       throw "Could not create connection"
     }
-    const database_config = await dbs.database_configs.findOne({ $existsJoined: { connections: { id: connection?.id } } });
+    if(sampleSchemaName){
+      await loadSampleSchema(dbs, sampleSchemaName, connection.id);
+    }
+    const database_config = await dbs.database_configs.findOne({ $existsJoined: { connections: { id: connection.id } } });
     if(!database_config){
       throw "Could not create database_config"
     }

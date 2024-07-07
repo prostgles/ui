@@ -1,12 +1,14 @@
-
-
-import React, { ReactElement } from 'react';
+import type { ReactElement } from "react";
+import React from "react";
 import RTComp from "../RTComp";
 
 
 import { SilverGridChild } from "./SilverGridChild";
 import { SilverGridResizer } from "./SilverGridResizer";
-import { TreeBuilder, TreeLayout } from "./TreeBuilder";
+import type { TreeLayout } from "./TreeBuilder";
+import { TreeBuilder } from "./TreeBuilder";
+import { FlexRow } from "../../components/Flex";
+import Btn from "../../components/Btn";
 
 
 export type LayoutItem = {
@@ -76,14 +78,13 @@ type S = {
 export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
 
   state: S = {
-    layout: undefined,// DEFAULT_LAYOUT as LayoutConfig,
+    layout: undefined,
     targetStyle: { display: "none" }
   }
 
   treeLayout?: TreeBuilder;
   onDelta = (dP: Partial<SilverGridProps> | undefined) => {
     const { layout, children = [], defaultLayoutType = "col" } = this.props;
-    // const layout = this.props.layout || { id: "1", size: 100, type: "col", items: [] }; 
 
     if(dP && ("layout" in dP || "children" in dP)){
 
@@ -144,10 +145,10 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
       if(orphans.length){
         setTimeout(() => {
           
-          let pl = { ...layout };
-          if(pl.type === defaultLayoutType){
-            const totalSize = (pl.items as LayoutConfig[]).reduce((a, v) => a + v.size, 0)
-            pl.items = [
+          let newLayout = { ...layout };
+          if(newLayout.type === defaultLayoutType){
+            const totalSize = (newLayout.items as LayoutConfig[]).reduce((a, v) => a + v.size, 0)
+            newLayout.items = [
               ...orphans.map((c, i) => ({
                 id: c.props["data-key"] || i,
                 title: c.props["data-title"],
@@ -155,11 +156,15 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
                 type: "item",
                 size: totalSize/orphans.length
               } satisfies LayoutItem)),
-              ...pl.items
-            ]
+              ...newLayout.items
+            ];
+            /** Ensure the newly added view is shown */
+            if(newLayout.type === "tab"){
+              newLayout.activeTabKey = orphans[0]?.props["data-key"]
+            }
           } else {
-            pl.size = 50;
-            pl = {
+            newLayout.size = 50;
+            newLayout = {
               id: "1",
               ...(defaultLayoutType === "tab" && { activeTabKey: undefined }),
               type: defaultLayoutType as any,
@@ -171,24 +176,18 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
                 tableName: c.props["data-table-name"],
                 type: "item",
                 size: 50/orphans.length
-              } satisfies LayoutItem)).concat(pl as any)
+              } satisfies LayoutItem)).concat(newLayout as any)
             }
           }
-          this.onChange(pl);
+          this.onChange(newLayout);
         }, 0)
       } 
       if(children.length && emptyItemIds.length){
         emptyItemIds.map(id => {
           this.treeLayout?.remove(id)
         });
-        // const newLayout = this.treeLayout.getLayout();
-        // this.onChange(newLayout);
-        return
       }
-
-
-    }
-    // debugger;
+    } 
   }
 
   setTarget = (targetStyle: React.CSSProperties) => {
@@ -208,21 +207,8 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
     const { onChange } = this.props;
     if(onChange && !isTemporary){
 
-      /*** Debounce updates to workspace layout */
-      // let delay = 0;
-      // if(this.isChangingLayout){
-      //   delay = 500;
-      //   clearTimeout(this.isChangingLayout.timeout)
-      // }
-      // this.isChangingLayout = {
-      //   layout: { ...newLayout },
-      //   timeout: setTimeout(() => {
-
-          onChange({ ...newLayout });
-          this.setState({ layout: undefined });
-
-      //   }, delay)
-      // }
+      onChange({ ...newLayout });
+      this.setState({ layout: undefined });
 
     } else {
       this.setState({ layout: newLayout });
@@ -244,13 +230,14 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
 
   ref?: HTMLDivElement;
   refTarget?: HTMLDivElement;
-  renderGrid = (layout: LayoutConfig | null = this.props.layout, _key?: string) => {
+  renderGrid = (layout: LayoutConfig | null = this.props.layout, _key?: string, _onChange?: (newLayout: LayoutConfig) => void) => {
     const { children: c, header, headerIcons = [], onClose, _ref, hideButtons } = this.props;
     const { minimized } = this.state;
     const children = React.Children.toArray(c) as ReactSilverGridNode[];
     let content: React.ReactNode = null;
     
     if(!children.length || !layout) return null;
+    const onChange = _onChange ?? this.onChange;
     const key = _key ?? layout.id;
 
     const getChildNode = (id: string | number) => {
@@ -276,13 +263,12 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
         moveTo={(sourceId, itemId, parentType, insertBefore) => {
           this.treeLayout?.moveTo(sourceId, itemId, parentType, insertBefore)
         }}
-        onChange={newLayout => {
-          this.onChange(newLayout)
-        }}
+        onChange={onChange}
         hasSiblings={children.some(c => c.props["data-key"] != layout.id)}
       >
         {child}
       </SilverGridChild>;
+
     } else {
       content = [];
 
@@ -293,12 +279,21 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
         }
         const activeItem = layout.items.find(d => d.id === layout.activeTabKey) ?? firstItem;
         const activeItemId = activeItem.id;
-        const child = getChildNode(activeItemId) ?? <div>Item not found</div>;
+        const child = getChildNode(activeItemId) ?? <FlexRow className="p-2 ai-center">
+          Item not found 
+          <Btn 
+            color="action" 
+            onClick={() => {
+              this.treeLayout?.remove(activeItemId)
+            }}
+          >
+            Click to remove
+          </Btn>
+        </FlexRow>;
         
         const headerIcon = headerIcons.find(c => c.props["data-key"] == activeItemId);
 
         const otherChildren: LayoutItem[] = layout.items
-          // .filter(c => c.id != activeItemId)
           .map(l => ({
             ...l,
             title: getChildNode(l.id)?.props["data-title"]
@@ -311,7 +306,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
           headerIcon={headerIcon}
           siblingTabs={otherChildren}
           onClickSibling={tabId => {
-            this.onChange({ ...layout, activeTabKey: tabId })
+            onChange({ ...layout, activeTabKey: tabId })
           }}
           hasSiblings={children.some(c => c.props["data-key"] != activeItemId)}
           layout={firstItem}
@@ -323,7 +318,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
             this.treeLayout?.moveTo(sourceId, itemId, parentType, insertBefore)
           }}
           onChange={newLayout => {
-            this.onChange(newLayout)
+            onChange(newLayout)
           }}
           minimize={{
             value: !!minimized,
@@ -336,7 +331,21 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
           {child}
         </SilverGridChild>
       } else {
-        const items = layout.items.map(l => this.renderGrid(l, l.id));
+        const items = layout.items.map(l => {
+          const nestedItemOnchange = (newLayout: LayoutConfig) => {
+            const newItems = layout.items.map(l => {
+              if(l.id === newLayout.id){
+                return newLayout
+              }
+              return l;
+            });
+            onChange({
+              ...layout,
+              items: newItems,
+            });
+          }
+          return this.renderGrid(l, l.id, nestedItemOnchange);
+        });
         items.map((c, i) => {
           (content as React.ReactNode[]).push(c);
           if(i < items.length - 1){
@@ -364,7 +373,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
       key={key}
       data-box-type={layout.type}
       data-box-id={layout.id}
-      className={" flex-" + layout.type + " silver-grid-box min-w-0 min-h-0"} 
+      className={"silver-grid-box  flex-" + layout.type + " min-w-0 min-h-0"} 
       style={{
         flex: layout.size,
         display: "flex",
@@ -400,7 +409,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
 }
 
 export function isTouchDevice() {
-  return (('ontouchstart' in window) ||
+  return (("ontouchstart" in window) ||
      (navigator.maxTouchPoints > 0) ||
      ((navigator as any).msMaxTouchPoints > 0));
 }

@@ -1,12 +1,12 @@
 
 import { mdiAlertCircleOutline, mdiCog } from "@mdi/js";
 import { getKeys, isObject } from "prostgles-types";
-import React, { useState } from 'react';
-import { GroupedDetailedFilter } from "../../../../../commonTypes/filterUtils";
-import { BasicTablePermissions, ContextDataObject, TableRules, TableRulesErrors } from "../../../../../commonTypes/publishUtils";
+import React, { useState } from "react";
+import type { GroupedDetailedFilter } from "../../../../../commonTypes/filterUtils";
+import type { BasicTablePermissions, ContextDataObject, SelectRule, TableRules, TableRulesErrors, UpdateRule } from "../../../../../commonTypes/publishUtils";
 import Btn from "../../../components/Btn";
-import { CommonWindowProps } from "../../Dashboard/Dashboard";
-import { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
+import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import { useFileTableRefTableRules } from "./FileTableAccessControlInfo";
 import { TableRulesPopup } from "./TableRulesPopup";
 import { useLocalTableRulesErrors } from "./useLocalTableRulesErrors";
@@ -70,15 +70,13 @@ export const TablePermissionControls = (props: TablePermissionControlsProps) => 
     className={"TablePermissionControls gap-p25 flex-row ai-center " + className} 
     style={{ 
       ...style, 
-      gap: fileTableRefRules.refTables? "18px" : "8px",
+      gap: fileTableRefRules.refTables? "14px" : "8px",
       paddingRight: fileTableRefRules.refTables? "8px" : 0 
     }}
   >
     {table && editedRuleType && 
       <TableRulesPopup 
         {...props}
-        // setLocalTableRules={setLocalTableRules}
-        // localRules={localRules}
         tableErrors={tableErrors}
         table={table}
         editedRuleType={editedRuleType}
@@ -117,6 +115,7 @@ export const TablePermissionControls = (props: TablePermissionControlsProps) => 
                 $and: [
                   {
                     fieldName: userIdField.name,
+                    type: "=",
                     contextValue: {
                       objectName: "user",
                       objectPropertyName: "id"
@@ -124,6 +123,7 @@ export const TablePermissionControls = (props: TablePermissionControlsProps) => 
                   }
                 ]
               };
+              const checkFilterDetailed: UpdateRule["checkFilterDetailed"] = forcedFilterDetailed;
               if(ruleType === "delete"){
                 onChange({ 
                   [ruleType]: { 
@@ -135,13 +135,11 @@ export const TablePermissionControls = (props: TablePermissionControlsProps) => 
                 onChange({ 
                   [ruleType]: {
                     fields: "*", 
+                    checkFilterDetailed,
                     ...(ruleType === "update" && {
                       forcedFilterDetailed
-                    }),
-                    forcedDataDetail: [
-                      { type: "context", fieldName: userIdField.name, objectName: "user", objectPropertyName: "id" }
-                    ] 
-                  } 
+                    })
+                  }
                 }) 
               } else if((ruleType as any) === "select"){
                 onChange({ 
@@ -149,7 +147,7 @@ export const TablePermissionControls = (props: TablePermissionControlsProps) => 
                     forcedFilterDetailed, 
                     fields: "*" 
                   } 
-                }) 
+                } satisfies { select: SelectRule }) 
               }
             } else {
               onChange({ [ruleType]: !rule })  

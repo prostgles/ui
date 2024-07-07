@@ -9,17 +9,20 @@ module.exports = merge(commonConfig, {
   mode: "production",
   entry: "./index.tsx",
   output: {
-    filename: "js/bundle.[contenthash].min.js",
+    filename: "js/[name].bundle.js",
     path: resolve(__dirname, "../build"),
     publicPath: "/",
     libraryTarget: 'umd',
-  },
-  // devtool: "source-map",
-  plugins: [],
-  optimization: {
+  }, 
+  plugins: [
+    // new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)()
+  ],
+  optimization: { 
+    splitChunks: {
+      chunks: 'all',
+    },
     minimize: true,
     minimizer: [new TerserPlugin({
-
       terserOptions: {
         keep_classnames: true,
       },

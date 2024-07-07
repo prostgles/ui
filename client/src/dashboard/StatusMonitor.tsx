@@ -1,8 +1,8 @@
-import { mdiCancel, mdiDotsHorizontal, mdiInformationOutline, mdiStopCircleOutline } from "@mdi/js";
+import { mdiCancel, mdiDotsHorizontal, mdiFilter, mdiInformationOutline, mdiStopCircleOutline } from "@mdi/js";
 import React, { useEffect, useState } from "react";
-import { DBSSchema } from "../../../commonTypes/publishUtils";
-import { ConnectionStatus } from "../../../commonTypes/utils";
-import { PrglState, Theme } from "../App";
+import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import type { ConnectionStatus } from "../../../commonTypes/utils";
+import type { PrglState, Theme } from "../App";
 import Btn from "../components/Btn";
 import ButtonGroup from "../components/ButtonGroup";
 import Chip from "../components/Chip";
@@ -12,17 +12,17 @@ import FormField from "../components/FormField/FormField";
 import { InfoRow } from "../components/InfoRow";
 import PopupMenu from "../components/PopupMenu";
 import Select from "../components/Select/Select";
-import { Table } from "../components/Table/Table";
 import { getServerCoreInfoStr } from "../pages/Connections/Connections";
 import { bytesToSize } from "./Backup/BackupsControls";
 import { useIsMounted } from "./Backup/CredentialSelector";
 import CodeExample from "./CodeExample";
-import { DBSMethods } from "./Dashboard/DBS";
-import { usePromise } from "./ProstglesMethod/hooks";
-import { StyledInterval } from "./ProstglesSQL/customRenderers";
-import SmartCardList, { SmartCardListProps } from "./SmartCard/SmartCardList";
+import type { DBSMethods } from "./Dashboard/DBS";
+import type { SmartCardListProps } from "./SmartCard/SmartCardList";
+import SmartCardList from "./SmartCard/SmartCardList";
+import { StatusMonitorConnections } from "./StatusMonitor/StatusMonitorConnections";
+import { StyledInterval } from "./W_SQL/customRenderers";
 
-type P = Pick<PrglState, "dbs" | "dbsMethods" | "dbsTables"> & {
+export type StatusMonitorProps = Pick<PrglState, "dbs" | "dbsMethods" | "dbsTables"> & {
   connectionId: string;
   theme: Theme
   getStatus: Required<DBSMethods>["getStatus"];
@@ -62,16 +62,29 @@ const getFixedFieldConfigs = (dbsMethods: PrglState["dbsMethods"], theme: Theme,
     { name: "cpu", hide: noBash, ...hideOverflowStyle, renderValue: (v: number) => <span className="">{v}%</span> }, 
     { name: "mem", hide: noBash, ...hideOverflowStyle, renderValue: (v: number) => <span className="">{v}%</span> },
     { 
-      name: "state", ...hideOverflowStyle, 
-      render: state => 
-        <Chip className="mt-p25"
+      name: "state", 
+      ...hideOverflowStyle,
+      label: "State",
+      render: (state) => {
+        return <Chip 
+          className="mt-p25"
           color={state === "idle"? "yellow" : state === "active"? "blue" : undefined}
         >
-          {state}
+          {state ?? "unknown"}
         </Chip> 
+      }
+    },
+    {
+      name: "blocked_by", ...hideOverflowStyle,
+      label: "Blocked by pids", 
+      hideIf: (value) => !value?.length,
+      render: (pids, row) => <FlexRow>
+        {pids?.map((pid, i) => <Chip key={pid} className="mt-p25" color="red">{pid}</Chip>)}
+      </FlexRow>
     },
     { 
-      name: "running_time", ...hideOverflowStyle, 
+      name: "running_time", ...hideOverflowStyle,
+      label: "Running time",
       select: { $ageNow: ["query_start"] },
       renderValue: value => 
         <StyledInterval
@@ -80,13 +93,6 @@ const getFixedFieldConfigs = (dbsMethods: PrglState["dbsMethods"], theme: Theme,
         />  
     },
     { name: "pid" },
-    {
-      name: "blocked_by", ...hideOverflowStyle, 
-      hideIf: (value) => !value?.length,
-      // render: (val, row) => <div>
-
-      // </div>
-    },
     actionRow,
     { 
       name: "query", 
@@ -117,14 +123,13 @@ const getFixedFieldConfigs = (dbsMethods: PrglState["dbsMethods"], theme: Theme,
 
 
   return { 
-    fieldConfigs, 
-    // actionRow 
+    fieldConfigs,
   };
 }
 
-export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTables, theme }: P ) => {
+export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTables, theme }: StatusMonitorProps ) => {
 
-  const [viewType, setViewType] = useState<ViewType>(ViewTypes[0]);
+  const [viewType, setViewType] = useState<ViewType>(ViewTypes[1]);
   const [refreshRate, setRefreshRate] = useState(1);
   const [c, setc] = useState<ConnectionStatus>();
   const getIsMounted = useIsMounted();
@@ -148,7 +153,7 @@ export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTab
     .filter(f => (f as any).render || (f as any).renderValue)
     .map(f => f.name).concat(["connection_id"]) as any;
   const statColumns = (dbsTables.find(t => t.name === "stats")?.columns ?? [])
-  const toggleableFields = statColumns.filter(c => !excludedFields.includes(c.name as any) );
+  // const toggleableFields = statColumns.filter(c => !excludedFields.includes(c.name as any) );
   const fieldConfigs = [
     ...fixedFields.filter(ff => !toggledFields.includes(ff.name)),
     ...toggledFields,
@@ -163,9 +168,9 @@ export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTab
   //   getPidStats(dbs.sql!, connectionId);
   // }
 
-  const connNum = c?.connections.length;
-  const maxConnNum = c?.maxConnections;
-  const connection = usePromise(() => dbs.connections.findOne({ id: connectionId }))
+  const { data: connection } = dbs.connections.useFindOne({ id: connectionId });
+  const [datidFilter, setDatidFilter] = useState<number | undefined>();
+  
 
   return <FlexCol className="StatusMonitor min-w-0 jc-start">
     <InfoRow>Some queries used for this view have been hidden</InfoRow>
@@ -188,24 +193,14 @@ export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTab
           {(100 * c.serverStatus.free_memoryKb/c.serverStatus.total_memoryKb).toFixed(1).padStart(2, "0")}% ({bytesToSize(1024 * c.serverStatus.free_memoryKb)})
         </Chip>
       }
-      {connNum !== undefined && maxConnNum !== undefined && 
-        <PopupMenu
-          className="f-0"
-          button={
-            <Chip 
-              className="noselect pointer"
-              label={"Connections"}
-              variant="header"
-              color={(maxConnNum-connNum)/maxConnNum > .5? "green" : "yellow"}
-            >
-              {c?.connections.length}/{c?.maxConnections}
-            </Chip>}
-        >
-          <Table
-            cols={Object.keys(c?.connections[0] ?? {}).map(key => ({ key, filter: false, label: key, name: key, sortable: true, tsDataType: "string", udt_name: "text" }))}
-            rows={c?.connections ?? []}
-          />
-        </PopupMenu>
+      {c && 
+        <StatusMonitorConnections 
+          c={c} 
+          datidFilter={datidFilter}
+          dbsMethods={dbsMethods} 
+          connectionId={connectionId} 
+          onSetDatidFilter={setDatidFilter} 
+        />
       }
       {c?.serverStatus && <PopupMenu
         title="Server info"
@@ -224,22 +219,28 @@ export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTab
           label={"CPU Model"}
           variant="header"
         >
-          {c.serverStatus.cpu_model}
-          <br>
-          </br>
-          {c.serverStatus.cpu_mhz}
+          <span className="ws-pre">
+            {c.serverStatus.cpu_model}
+            <br>
+            </br>
+            {c.serverStatus.cpu_mhz}
+          </span>
         </Chip>
         <Chip
           label={"CPU Frequency"}
           variant="header"
         >
-          {c.serverStatus.cpu_cores_mhz}
+          <div className="ws-pre ta-right">
+            {c.serverStatus.cpu_cores_mhz}
+          </div>
         </Chip>
         <Chip
           label={"Disk usage"}
           variant="header"
         >
-          {c.serverStatus.disk_space}
+          <span className="ws-pre">
+            {c.serverStatus.disk_space}
+          </span>
         </Chip>
       </PopupMenu>}
     </FlexRow>
@@ -272,14 +273,23 @@ export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTab
             options={ViewTypes} 
             onChange={setViewType} 
           />
-
+          {datidFilter && 
+            <Chip 
+              label="Connection filter" 
+              leftIcon={{ path: mdiFilter }} 
+              color="blue" 
+              onDelete={() => setDatidFilter(undefined)}
+            >
+              {datidFilter}
+            </Chip>
+          }
           <ExpandSection iconPath={mdiDotsHorizontal}>  
             <Select
               btnProps={{
                 children: "Fields..."
               }}
               multiSelect={true}
-              fullOptions={toggleableFields.map(c => ({
+              fullOptions={statColumns.map(c => ({
                 key: c.name,
                 label: c.label,
                 subLabel: c.hint,
@@ -306,6 +316,7 @@ export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTab
         $and: [
           { 
             connection_id: connectionId,
+            ...(datidFilter? { datid: datidFilter } : {}),
             ...(
               viewType === "Blocked queries"? 
                 { blocked_by_num: { ">" : 0 } } : 

@@ -1,12 +1,13 @@
 
 import { isObject } from "prostgles-types";
-import React, { useMemo } from 'react';
-import { FieldFilter, TableRules, parseFieldFilter } from "../../../../../commonTypes/publishUtils";
+import React, { useMemo } from "react";
+import type { FieldFilter, TableRules} from "../../../../../commonTypes/publishUtils";
+import { parseFieldFilter } from "../../../../../commonTypes/publishUtils";
 import { FlexCol } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
 import { isDefined } from "../../../utils";
-import { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
-import { TableInfoWithRules } from "./TablePermissionControls";
+import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
+import type { TableInfoWithRules } from "./TablePermissionControls";
 
 
 type FileTableAccessControlInfoProps = {

@@ -1,29 +1,31 @@
-import { isDefined, ValidatedColumnInfo } from "prostgles-types";
+import type { ValidatedColumnInfo } from "prostgles-types";
+import { isDefined } from "prostgles-types";
 import React from "react";
-import { pickKeys } from "../../utils";
-import { _Dashboard, DashboardData, DashboardProps, DashboardState, CommonWindowProps, } from "./Dashboard";
-import { ChartType, WindowData, WindowSyncItem, Link } from "./dashboardUtils";
-import { getCrossFilters } from "../joinUtils";
-import LinkMenu from "../LinkMenu";
-// import ProstglesCard from "../ProstglesCard";
-import W_Map from "../W_Map/W_Map";
-import W_SQL from "../ProstglesSQL/W_SQL";
-import { SQL_SNIPPETS } from "../ProstglesSQL/SQLSnippets";
-import W_Table, { ActiveRow } from "../W_Table/W_Table";
-import { W_TimeChart } from "../W_TimeChart/W_TimeChart";
-import RTComp from "../RTComp";
-import { findShortestPath, makeReversibleGraph } from "../shortestPath";
-import { SilverGridProps, SilverGridReact } from "../SilverGrid/SilverGrid";
-import { SmartGroupFilter } from '../../../../commonTypes/filterUtils'; 
-import { default as WNDOW } from "../Window";
-import { LocalSettings, useLocalSettings } from "../localSettings";
 import { useSearchParams } from "react-router-dom";
-import { ProstglesMethod } from "../ProstglesMethod/ProstglesMethod"; 
-import { getLinkColorV2, getMapLayerQueries } from "../W_Map/getMapLayerQueries"; 
-import { getViewRendererUtils } from "./getViewRendererUtils";
 import { ErrorTrap } from "../../components/ErrorComponent";
-import { DashboardHotkeys } from "../DashboardMenu/DashboardHotkeys";
 import { FlexCol } from "../../components/Flex";
+import { pickKeys } from "../../utils";
+import { DashboardHotkeys } from "../DashboardMenu/DashboardHotkeys";
+import { LinkMenu } from "../LinkMenu";
+import RTComp from "../RTComp";
+import type { SilverGridProps } from "../SilverGrid/SilverGrid";
+import { SilverGridReact } from "../SilverGrid/SilverGrid";
+import W_Map from "../W_Map/W_Map";
+import { getLinkColorV2, getMapLayerQueries } from "../W_Map/getMapLayerQueries";
+import { W_Method } from "../W_Method/W_Method";
+import { SQL_SNIPPETS } from "../W_SQL/SQLSnippets";
+import W_SQL from "../W_SQL/W_SQL";
+import type { ActiveRow } from "../W_Table/W_Table";
+import W_Table from "../W_Table/W_Table";
+import { W_TimeChart } from "../W_TimeChart/W_TimeChart";
+import { default as WNDOW } from "../Window";
+import { getCrossFilters } from "../joinUtils";
+import type { LocalSettings } from "../localSettings";
+import { useLocalSettings } from "../localSettings";
+import { findShortestPath, makeReversibleGraph } from "../shortestPath";
+import type { CommonWindowProps, DashboardData, DashboardProps, DashboardState, _Dashboard, } from "./Dashboard";
+import type { ChartType, Link, WindowData, WindowSyncItem } from "./dashboardUtils";
+import { getViewRendererUtils } from "./getViewRendererUtils";
 
 export type ViewRendererProps = 
   Pick<DashboardProps, "prgl"> & 
@@ -120,12 +122,11 @@ export class ViewRenderer extends RTComp<ViewRendererProps, ViewRendererState, D
     const {
       onClickRow,
       onAddChart,
-      addWindow,
       onLinkTable,
     } = getViewRendererUtils.bind(this)({ ...this.props, windows, links, workspace, tables });
   
-    const renderedWindows = windows.map((w, i)=> {
-      // q = q.$get() as WindowSyncItem;
+    const getRenderedWindow = (w: WindowSyncItem, childWindow?: React.ReactNode) => {
+
       const onClose: CommonWindowProps["onClose"] = async (e) => {
         if(!e) return;
         w = w.$get() as WindowSyncItem;
@@ -171,7 +172,6 @@ export class ViewRenderer extends RTComp<ViewRendererProps, ViewRendererState, D
             )
           );
         if(haveActiveLinks){
-          // this.d.windows = this.d.windows.map(w => w.$get()) as any;
           setTimeout(() => this.forceUpdate(), 1)
         }
       }
@@ -207,7 +207,7 @@ export class ViewRenderer extends RTComp<ViewRendererProps, ViewRendererState, D
  
       if(w.type === "method"){
 
-        result = <ProstglesMethod
+        result = <W_Method
           { ...commonProps }
           w={w}
         />
@@ -217,17 +217,10 @@ export class ViewRenderer extends RTComp<ViewRendererProps, ViewRendererState, D
           titleIcon={linkIcon}
           setLinkMenu={setLinkMenu}
           { ...commonProps }
+          childWindow={childWindow}
           w={w}
-        />
-      // } else if(w.type === "card"){
-      //   result = <ProstglesCard
-      //     table={tables.find(t => t.name === w.table_name)!}
-      //     titleIcon={linkIcon}
-      //     { ...commonProps }
-      //     w={w}
-      //   />
-      } else {
-        // const myLinkedWindows = windows.filter(w => myLinks.some(l => [l.w1_id, l.w2_id].includes(w.id)))
+        /> 
+      } else { 
    
         const { colorStr } = getLinkColorV2(myLinks.find(l => l.options.type !== "table"), 0.1);
         const active_row = this.state.active_row;
@@ -267,19 +260,18 @@ export class ViewRenderer extends RTComp<ViewRendererProps, ViewRendererState, D
             setLinkMenu={setLinkMenu}
             activeRowColor={colorStr}
             activeRow={(active_row?.window_id === w.id)? active_row : undefined} 
-            onAddTable={(args, filters: SmartGroupFilter) => addWindow({ ...args, type: "table" }, filters)}
             onLinkTable={this.props.isReadonly? undefined : async (tblName, path) => {
               onLinkTable(w, tblName, path)
             }}
             joinFilter={crossF.activeRowFilter}
             externalFilters={crossF.all}
             onClickRow={row => onClickRow(row, w.table_name!, w.id, { type: "table-row" })}
+            childWindow={childWindow}
             { ...commonProps }
             w={w as any}
           />;
         }
       }
-  
   
       const res = {
         id: w.id,
@@ -287,16 +279,20 @@ export class ViewRenderer extends RTComp<ViewRendererProps, ViewRendererState, D
         linkIcon,
         onClose: isReadonly? undefined : onClose,
         q: w,
-        // elem: <ErrorTrap>{result}</ErrorTrap> 
-        elem: result // <ErrorTrap>{result}</ErrorTrap> 
+        elem: result
       };
   
       return res;
+    }
+
+    const parentWindows = windows.filter(w => !w.parent_window_id);
+    const renderedWindows = parentWindows.map((w)=> {
+      const childWindow = windows.find(cw => cw.parent_window_id === w.id);
+      return getRenderedWindow(w, childWindow && getRenderedWindow(childWindow).elem);
     }).filter(isDefined);
 
     return <div className="ViewRenderer min-h-0 f-1 flex-row relative"
       ref={r => { if(r) this.gridWrapperRef = r; }}
-      
     >
       {!renderedWindows.length && 
       <FlexCol 
@@ -364,31 +360,3 @@ export const ViewRendererWrapped = (props: Omit<ViewRendererProps, "localSetting
       <ViewRenderer {...props} localSettings={localSettings} searchParams={searchParams} setSearchParams={setSearchParams} />
     </ErrorTrap>
 }
-
-    //const getActiveRowFilter = (window_id: string, isForMap = false): JoinFilter | undefined => {
-    //   let joinFilter: JoinFilter | undefined;
-      
-    //   const { active_row } = this.state;
-    //   if(active_row){
-    //     const filter = active_row.row_filter;
-  
-    //     /* ??? Shortest path? */
-    //     if(isForMap && active_row.window_id === window_id){
-    //       joinFilter = {
-    //         tablePath: [active_row.table_name],
-    //         filter
-    //       }
-    //     }
-  
-    //     const path = this.getTableChain(window_id, active_row.window_id);
-    //     if(path){
-    //       // console.log(path.reverse().join("."), path.reverse().join("."))
-    //       joinFilter = {
-    //         tablePath: path.slice(1),
-    //         filter
-    //       }
-    //     }
-    //   }
-  
-    //   return joinFilter;
-    // };

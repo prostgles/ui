@@ -1,13 +1,14 @@
 import { getKeys } from "prostgles-types";
-import { PG_OBJECTS, suggestSnippets } from "./CommonMatchImports";
-import { isInsideFunction } from "./MatchSelect";
+import { type MinimalSnippet, PG_OBJECTS, suggestSnippets } from "./CommonMatchImports";
+import { getParentFunction } from "./MatchSelect";
 import { getExpected } from "./getExpected";
-import { SQLMatcher } from "./registerSuggestions";
-import { KWD, withKWDs } from "./withKWDs";
+import { getKind, type SQLMatcher } from "./registerSuggestions";
+import type { KWD} from "./withKWDs";
+import { withKWDs } from "./withKWDs";
 
 export const MatchGrant: SQLMatcher = {
   match: cb => ["grant", "revoke"].includes(cb.ftoken?.textLC as string),
-  result: async ({ cb, ss, getKind, setS }) => {
+  result: async ({ cb, ss, setS, sql }) => {
     const isGrant = cb.ftoken?.textLC === "grant";
 
     if(cb.ltoken?.textLC === "parameter"){
@@ -27,21 +28,33 @@ export const MatchGrant: SQLMatcher = {
           kwd: isGrant? "TO" : "FROM",
           expects: "role",
         }
-      ] satisfies KWD[], cb, getKind, ss).getSuggestion();
+      ] satisfies KWD[], { cb, ss, setS, sql }).getSuggestion();
     }
 
-    const columnKwds = ["select", "update", "insert"];
-    const func = isInsideFunction(cb);
+    const columnKwds = ["select", "update", "insert", "all"];
+    const func = getParentFunction(cb);
     if(func?.func && columnKwds.includes(func.func.textLC)){
       return getExpected("column", cb, ss)
     }
     if(!func?.func && cb.ltoken?.textLC === "," && !cb.textLC.includes(" all ")){
 
-      const additional = Object.entries(PRIVILEGES).filter(([p, d]) => columnKwds.includes(p.toLowerCase())).map(([label, { docs }]) => ({ label, docs }));
+      const additional: MinimalSnippet[] = Object.entries(PRIVILEGES)
+        .filter(([p, d]) => 
+          columnKwds.includes(p.toLowerCase())
+        )
+        .map(([label, { docs }]) => 
+          ({ label, docs, kind: getKind("keyword") })
+        );
       return suggestSnippets(additional);
     }
     if(columnKwds.includes(cb.ltoken?.textLC as string)){
-      return getExpected("(column)", cb, ss)
+      const { suggestions } = getExpected("(column)", cb, ss);
+      return {
+        suggestions: [
+          ...suggestions.map(s => ({ ...s, insertText: `(${s.escapedIdentifier} ) ON ${s.escapedParentName}` })),
+          ...suggestSnippets([{ label: "ON" }]).suggestions.map(s => ({ ...s, sortText: "!" }))
+        ]
+      };
     }
 
     const allPrivilegeTypes = getKeys(PRIVILEGES);
@@ -57,11 +70,13 @@ export const MatchGrant: SQLMatcher = {
 
       return objects;
     }
-    const ON_options = [
+    type ONOption = Extract<{ label: string }, MinimalSnippet>;
+    const ON_options: ONOption[] = [
       { label: "ALL TABLES IN SCHEMA" },
       { label: "ALL FUNCTIONS IN SCHEMA" },
       { label: "ALL SEQUENCES IN SCHEMA" },
-      ...PG_OBJECTS.map(label => ({ label } as const)).filter(({ label }) => label !== "VIEW")
+      ...PG_OBJECTS.map(label => ({ label, kind: getKind((label as string).split(" ")[0]?.toLowerCase?.() as any) } as ONOption))
+        .filter(({ label }) => label !== "VIEW")
     ].filter(opt => {
       const objMatch = Object.entries(PRIVILEGES).find(([privilege, { objects }]) => {
         return cb.prevLC.includes(` ${privilege.toLowerCase()} `) && objects.some(objName => opt.label.toLowerCase().includes(objName.toLowerCase()));
@@ -69,19 +84,30 @@ export const MatchGrant: SQLMatcher = {
       return objMatch;
     });
 
+    if(cb.ltoken?.textLC === "on" && cb.prevTokens.some(t => columnKwds.includes(t.textLC))){
+      const { suggestions } = getExpected("table", cb, ss);
+      if(cb.l1token?.textLC === ")"){
+        const tableSuggestions = suggestions.map(s => {
+          const matchingColumnNames = s.tablesInfo?.cols.filter(c => cb.prevTokens.some(t => t.text === c.escaped_identifier)).length;
+          return { 
+            ...s, 
+            sortText: (s.schema === "public"? "a" : "b") + (matchingColumnNames? (100 - matchingColumnNames) : "a")
+          }
+        });
+        return { 
+          suggestions: tableSuggestions
+        }
+      }
+      return {
+        suggestions: [
+          ...suggestions,
+          ...suggestSnippets(ON_options).suggestions.map(s => ({ ...s, sortText: "!", kind: getKind("keyword") }))
+        ]
+      }
+    }
     if(cb.tokens.length <= 3 && (cb.prevLC.endsWith("all") || cb.prevLC.endsWith("all privileges"))){
       return suggestSnippets(ON_options.map(p => ({ label: `ON ${p.label}` })));
     }
-
-    const showOnOrIn = !cb.currToken &&
-      allPrivilegeTypes.some(priv => cb.textLC.includes(priv.toLowerCase())) && 
-      ON_options.some(opt => 
-        cb.prevTokens
-          .slice(0, -1)
-          .map(t => t.textLC)
-          .join(" ")
-          .includes(opt.label.toLowerCase())
-      );
 
     const excludePriviledge: Pick<KWD, "excludeIf"> = {
       excludeIf: cb => allPrivilegeTypes.some(v => cb.prevLC.includes(v.toLowerCase())),
@@ -90,7 +116,17 @@ export const MatchGrant: SQLMatcher = {
       { 
         kwd: isGrant? "GRANT" : "REVOKE",
         expects: "role",
-        options: Object.entries(PRIVILEGES).map(([label, { docs }]) => ({ label: `${label} ON`, docs })) 
+        options: Object.entries(PRIVILEGES).flatMap(([label, { docs }]) => {
+          const item = { 
+            label: `${label} ON`, 
+            docs, 
+            kind: getKind("keyword") 
+          }
+          if(columnKwds.includes(label.toLowerCase())) {
+            return [item, { ...item, label }]
+          }
+          return item
+        }) 
       },
       {
         kwd: "EXECUTE",
@@ -103,8 +139,7 @@ export const MatchGrant: SQLMatcher = {
         dependsOn: "ON"
       },
       { 
-        kwd: "ON", 
-        // expects: "table",
+        kwd: "ON",  
         exactlyAfter: allPrivilegeTypes,
         options: ON_options 
       },
@@ -112,7 +147,7 @@ export const MatchGrant: SQLMatcher = {
         kwd: `${kwd} ON`,
         ...excludePriviledge,
         expects: kwd.startsWith("ALL")? undefined : kwd.toLowerCase() as any,
-        options: addAll(objects),
+        options: addAll(objects).map(label => ({ label, kind: getKind((label as string).split(" ")[0]?.toLowerCase?.() as any) })),
       } satisfies KWD)),
 
       ...PG_OBJECTS.map(kwd => ({
@@ -122,17 +157,17 @@ export const MatchGrant: SQLMatcher = {
       })),
       { 
         kwd: "IN SCHEMA", 
-        include: cb => !cb.prevLC.includes(` in schema `) && cb.prevLC.includes(` all `),
+        include: cb => !cb.prevLC.includes(` in schema `) && cb.prevLC.includes(` on all `),
         expects: "schema", 
       },
       { 
         kwd: isGrant? "TO" : "FROM", 
         expects: "role",
         docs: ``,
-        include: cb => showOnOrIn
+        include: cb => cb.l1token?.textLC === "on" || cb.prevTokens.some(t => t.textLC === "on") && cb.ltoken?.textLC !== "on",
       },
     ] satisfies KWD[];
-    return withKWDs(kwds, cb, getKind, ss).getSuggestion();
+    return withKWDs(kwds, { cb, ss, setS, sql }).getSuggestion();
   }
 }
 

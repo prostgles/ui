@@ -1,8 +1,9 @@
  
 import { mdiPan } from "@mdi/js";
-import { PG_COLUMN_UDT_DATA_TYPE, TS_COLUMN_DATA_TYPES, _PG_date } from "prostgles-types"
-import React, { useEffect, useState } from "react"; 
-import Chip from "../../components/Chip";  
+import type { PG_COLUMN_UDT_DATA_TYPE, TS_COLUMN_DATA_TYPES} from "prostgles-types";
+import { _PG_date } from "prostgles-types";
+import React, { useState } from "react";
+import Chip from "../../components/Chip";
 import { DraggableLI } from "../../components/DraggableLI";
  
 type P = { 
@@ -72,15 +73,15 @@ const InputChip = ({ onChange, value, onRemove, placeholder, inputType, elemTsTy
 
   return (
     <Chip 
-      className="focus-border  b b-gray-300"
-      style={{ background: "transparent" }}
+      className="focus-border  b b-color text-color-0"
+      style={{ background: "var(--input-bg-color)" }}
       onDelete={onRemove}
       leftIcon={{
         path: mdiPan,
         className: "show-on-parent-hover",
       }}
     >
-      <input className="bg-transparent b b-b"
+      <input className="bg-transparent b b-b text-0"
         value={value} 
         type={inputType} 
         placeholder={placeholder}

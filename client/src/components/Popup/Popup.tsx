@@ -1,38 +1,45 @@
-import React, { ReactChild } from 'react';
-import ReactDOM from 'react-dom';
+import type { ReactChild } from "react";
+import React from "react";
+import ReactDOM from "react-dom";
 import "./Popup.css";
 
-import { mdiClose, mdiFullscreen, mdiUnfoldLessHorizontal, mdiUnfoldMoreHorizontal } from '@mdi/js';
-import RTComp from '../../dashboard/RTComp';
-import { omitKeys } from '../../utils';
-import Btn, { BtnProps } from '../Btn';
-import ClickCatch from '../ClickCatch';
-import { ErrorTrap } from "../ErrorComponent";
-import { FooterButtons } from "./FooterButtons";
-import { FlexCol, FlexRow, classOverride } from "../Flex";
-import { TestSelectors } from '../../Testing';
+import type { Command, TestSelectors } from "../../Testing";
+import RTComp, { type DeltaOf } from "../../dashboard/RTComp";
+import { ClickCatchOverlay } from "../ClickCatchOverlay";
+import ErrorComponent, { ErrorTrap } from "../ErrorComponent";
+import { FlexRow, classOverride } from "../Flex";
+import { FooterButtons, type FooterButton } from "./FooterButtons";
+import { PopupHeader } from "./PopupHeader";
+import { getPopupStyle } from "./getPopupStyle";
 import { popupCheckPosition } from "./popupCheckPosition";
-let modalRoot = document.getElementById('modal-root');
-if (!modalRoot) {
-  modalRoot = document.createElement('div');
-  modalRoot.setAttribute("id", 'modal-root');
-  document.body.appendChild(modalRoot);
+
+let modalRoot;
+export const getModalRoot = (forPointer = false) => {
+  const id = forPointer? "pointer-root" : "modal-root";
+  let node = document.getElementById(id);
+  if (!node) {
+    node = document.createElement("div");
+    node.setAttribute("id", id);
+    document.body.appendChild(node);
+  }
+  if(!forPointer){
+    modalRoot = node;
+  }
+  return node;
+}
+getModalRoot();
+
+export const POPUP_CLASSES = {
+  root: "popup-component-root",
+  rootChild: "popup-component-root-child",
+  title: "POPUP-TITLE",
+  content: "POPUP-CONTENT",
 }
 
-export type FooterButton = 
-  (
-    { node: React.ReactNode } 
-  | {
-    label: string;
-    onClickClose?: boolean;
-  } & BtnProps<void>
-  ) | undefined;
-
-export const POPUP_ROOT_CLASS = "popup-component-root";
-export const POPUP_TITLE_CLASS = "POPUP-TITLE" as const;
-export const POPUP_CONTENT_CLASS = "POPUP-CONTENT" as const;
-
-export const POPUP_ZINDEX = 4;
+/**
+ * Must be above monaco editor minimap (z-index: 5)
+ */
+export const POPUP_ZINDEX = 5;
 export type PopupProps = TestSelectors & {
   /**
    * On click away (click catch)
@@ -44,6 +51,7 @@ export type PopupProps = TestSelectors & {
   content?: ReactChild;
   footer?: React.ReactNode;
   contentClassName?: string;
+  rootChildClassname?: string;
   contentStyle?: React.CSSProperties;
 
   children?: React.ReactNode;
@@ -66,8 +74,6 @@ export type PopupProps = TestSelectors & {
   | "center" 
   | "top-center"
   | "beneath-center" 
-  | "beneath-fill" 
-  | "top-fill" 
   | "beneath-right" 
   | "beneath-left" 
   | "beneath-left-minfill" 
@@ -90,9 +96,10 @@ export type PopupProps = TestSelectors & {
   persistInitialSize?: boolean;
 }
 
-const FOCUSABLE_ELEMS_SELECTOR = 'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, *[tabindex], *[contenteditable]';
+const FOCUSABLE_ELEMS_SELECTOR = "a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, *[tabindex], *[contenteditable]";
 
 export type PopupState = {
+  prevStateStyle?: React.CSSProperties;
   stateStyle: React.CSSProperties;
   collapsed?: boolean;
   fullScreen?: boolean;
@@ -100,7 +107,7 @@ export type PopupState = {
 
 export default class Popup extends RTComp<PopupProps, PopupState> {
 
-  el: HTMLElement = document.createElement('div');
+  el: HTMLElement = document.createElement("div");
   ref?: HTMLDivElement;
   
   state: PopupState = {
@@ -118,10 +125,10 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
     }
 
     if (onKeyDown) {
-      onKeyDown(e, document.activeElement?.closest("header." + POPUP_TITLE_CLASS)? "header" : "content");
+      onKeyDown(e, document.activeElement?.closest("header." + POPUP_CLASSES.title)? "header" : "content");
     }
     if (focusTrap && e.key === "Tab") {
-      const fcsbl = this.el.querySelector("." + POPUP_ROOT_CLASS)?.querySelectorAll<HTMLDivElement>(FOCUSABLE_ELEMS_SELECTOR) ?? [];
+      const fcsbl = this.el.querySelector("." + POPUP_CLASSES.root)?.querySelectorAll<HTMLDivElement>(FOCUSABLE_ELEMS_SELECTOR) ?? [];
       if (e.shiftKey && document.activeElement === fcsbl[0] as Node) {
         e.preventDefault();
         if (fcsbl.length) (fcsbl[fcsbl.length - 1])?.focus();
@@ -151,7 +158,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
       const { autoFocusFirst } = this.props;
       if(!this.ref) return;
       if(autoFocusFirst){
-        const selector = typeof autoFocusFirst === "object"? autoFocusFirst.selector : ("." + (autoFocusFirst === "header"? POPUP_TITLE_CLASS : POPUP_CONTENT_CLASS)  )
+        const selector = typeof autoFocusFirst === "object"? autoFocusFirst.selector : ("." + (autoFocusFirst === "header"? POPUP_CLASSES.title : POPUP_CLASSES.content)  )
         const container = this.ref.querySelector<HTMLDivElement>(selector) ?? this.ref;
         const firstInputLike = Array.from(container.querySelectorAll<HTMLButtonElement | HTMLSelectElement | HTMLTextAreaElement>('input:not([type="hidden"]), textarea, button'))
         // const firstBtn = Array.from(container.querySelectorAll<HTMLButtonElement>('button:not([data-close-popup]),  a, [tabindex]:not([tabindex="-1"])'))
@@ -164,11 +171,19 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
 
     if(!this.ref) return; 
     this.rObserver = new ResizeObserver((a) => {
-      if(this.props.persistInitialSize) return;
+      const justToggledFullScreen = Date.now() - this.toggledFullScreen < 100;
+      if(this.props.persistInitialSize || justToggledFullScreen) return;
       this.checkPosition();
     });
 
     this.rObserver.observe(this.ref);
+  }
+  
+  toggledFullScreen = 0;
+  onDelta(deltaP: DeltaOf<PopupProps>, deltaS: DeltaOf<PopupState>): void {
+    if(deltaS && "fullScreen" in deltaS){
+      this.toggledFullScreen = Date.now();
+    }
   }
 
   onUnmount() {
@@ -193,74 +208,37 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
     yMin: number;
   };
   checkPosition = popupCheckPosition.bind(this);
-
+  prevStateStyles: PopupState["stateStyle"][] = [];
   render() {
+
+    const defaultContentClassName = this.props.title && !window.isLowWidthScreen? "p-1 pl-2" : "p-1" 
     const {
-      onClose, positioning, title, content, children,
-      clickCatchStyle = {}, rootStyle = {},
-      onClickClose, contentClassName = "p-1 pl-2", contentStyle = {},
-      collapsible, subTitle, showFullscreenToggle, headerRightContent
+      onClose, positioning, content, children,
+      clickCatchStyle = {}, rootStyle = {}, rootChildClassname,
+      onClickClose, contentClassName = defaultContentClassName, 
+      contentStyle = {},
+      showFullscreenToggle, 
     } = this.props;
 
     const { stateStyle, collapsed = false, fullScreen = showFullscreenToggle?.defaultValue } = this.state;
     const toggleContent = () => {
       this.setState({ collapsed: !collapsed })
     }
-
-    let rStyle = {};
-    if (positioning === "tooltip") {
-      rStyle = {
-        pointerEvents: "none",
-        touchAction: "none",
-      }
-    }
-    let style: React.CSSProperties = {
-      maxWidth: "100vw",
-      maxHeight: "100vh",
-      outline: "none",
-      position: "fixed",
-      // clipPath: "circle(1% at 50% 10%)",
-      // transition: "clip-path .5s",
-      zIndex: POPUP_ZINDEX,
-      padding: 0,
-      borderRadius: ".5em",
-      ...rStyle,
-      ...stateStyle,
-      ...rootStyle,
-    };
-
-    if(fullScreen){
-      style = {
-        ...omitKeys(style, ["transform", "top", "left", "right", "bottom", "position", "inset", "width", "height"]),
-        position: "fixed", 
-        inset: 0, 
-        width: "100vw", 
-        height: "100vh",
-      }
-    }
-
-    if(collapsed){
-      style = omitKeys(style, ["bottom", "height"]);
-    }
-
-    const showTitle = !!title; // Avoid showing close btn for select
-    if(title && !onClose){
-      console.warn("Popup title will not be shown because onClose is not defined");
-    }
+    const style = getPopupStyle({ positioning, collapsed, fullScreen, stateStyle, rootStyle });
+    const fullHeightPositions: PopupProps["positioning"][] = ["right-panel", "fullscreen"];
     
     const result = (
       <>
 
-        {!onClose ?
-          null :
-          <ClickCatch
-            style={{ position: "fixed", opacity: 0, zIndex: POPUP_ZINDEX, ...clickCatchStyle }} // POPUP_ZINDEX - 1
-            className="absolute inset-0 bg-gray-500 flex-col"
+        {onClose &&
+          <ClickCatchOverlay
+            style={{ position: "fixed", opacity: 0, zIndex: POPUP_ZINDEX, ...clickCatchStyle }}
+            className="ClickCatchOverlay absolute inset-0 flex-col"
             onClick={onClose}
           />
         }
 
-        <div className={POPUP_ROOT_CLASS + " card m-auto bg-0 flex-col shadow-xl  o-hidden"}
+        <div className={`${POPUP_CLASSES.root} positioning:${positioning} card m-auto bg-popup${positioning === "right-panel"? "-content" : ""} flex-col shadow-xl  o-hidden`}
           data-command={this.props["data-command"]}
           ref={r => { if (r) { this.ref = r; } }}
           onClick={!(onClickClose && onClose)? undefined : e => { 
@@ -269,66 +247,37 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
             }
             onClose(e); 
           }}
-          style={{ ...style, boxSizing: "content-box"}}
+          style={{ 
+            boxSizing: "content-box", 
+            ...style, 
+          }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-headline"
         >
-          <div className="w-full min-h-0 text-center flex-col f-1"
+          <div className={classOverride(`${POPUP_CLASSES.rootChild} w-full min-h-0 text-center flex-col bg-inherit ${fullHeightPositions.includes(positioning)? "f-1" : ""}`, rootChildClassname)}
             style={{
               ...showFullscreenToggle?.getStyle?.(!!fullScreen)
             }}
           >
-
-            {showTitle && 
-              <header className={POPUP_TITLE_CLASS + " ml-2 py-p5 pr-p5 flex-row ai-center bb b-gray-300 gap-1"}>
-                {collapsible && <Btn className="f-0" onClick={toggleContent} 
-                  iconPath={!collapsed? mdiUnfoldLessHorizontal : mdiUnfoldMoreHorizontal} 
-                  title="Collapse/Expand content" 
-                />}
-                  <FlexCol id="modal-headline"  
-                    className={"ai-none jc-none f-1 font-20 noselect font-medium text-0 o-hidden text-ellipsis ta-left m-0 ws-nowrap py-p25 " + (collapsible? " pointer " : " ") }
-                    onClick={collapsible? toggleContent : undefined}
-                  >
-
-                    <h4 className="m-0"
-                      style={{ 
-                        ...(collapsible? { paddingLeft: 0 } : {})
-                      }}
-                      title={typeof title === "string"? title : undefined}
-                    >
-                      {title}
-                    </h4>
-                    {subTitle && <h6 title={subTitle} className="font-14 m-0 text-ellipsis text-1" style={{ opacity: .7, maxWidth: "200px" }}>{subTitle}</h6>}
-                  </FlexCol>
-                  <FlexRow className="Popup-header-actions gap-0">
-                    {headerRightContent}
-                    {showFullscreenToggle && 
-                      <Btn className="f-0" 
-                        iconPath={mdiFullscreen} 
-                        color={fullScreen? "action" : undefined}
-                        onClick={() => {
-                          this.setState({ fullScreen: !fullScreen  })
-                        }} 
-                      />
-                    }
-                    <Btn 
-                      data-command="Popup.close"
-                      data-close-popup={true} 
-                      className="f-0" 
-                      style={{ margin: "1px" }} 
-                      iconPath={mdiClose} 
-                      onClick={onClose} 
-                    />
-                  </FlexRow>
-              </header>
-            }
-
-            {!collapsed && <div className={classOverride(POPUP_CONTENT_CLASS + " flex-col f-1 min-h-0 o-auto ", contentClassName)} //  o-auto 
-              style={{
-                borderRadius: ".5em",
-                ...contentStyle,
+            <PopupHeader 
+              {...this.props}
+              onToggleFullscreen={() => {
+                const newFullScreen = !fullScreen;
+                if(!newFullScreen){
+                  this.position = undefined;
+                }
+                this.setState({ fullScreen: newFullScreen });
               }}
+              toggleContent={toggleContent}
+              collapsed={collapsed}
+              fullScreen={fullScreen} 
+            />
+
+            {!collapsed && <div 
+              className={classOverride(POPUP_CLASSES.content + " bg-inherit flex-col f-1 min-h-0 o-auto ", contentClassName)}
+              style={contentStyle}
+              data-command={"Popup.content" satisfies Command}
             >
               <ErrorTrap>
                 {content || children}
@@ -352,11 +301,21 @@ type FooterProps = {
   children: React.ReactNode; 
   className?: string;
   style?: React.CSSProperties;
+  error?: any;
 }
-export const Footer = ({ children, className, style}: FooterProps) => {
+export const Footer = ({ children, className, style, error }: FooterProps) => {
   return <ErrorTrap>
-    <footer style={style} className={classOverride("popup-footer bt b-gray-200 flex-row-wrap p-1 jc-end " + (window.isMobileDevice? " gap-p5 " : " gap-1 "), className)}>
-      {children}
+    <footer style={style} className={classOverride("popup-footer bt b-color flex-row-wrap p-1 jc-end " + (window.isMobileDevice? " gap-p5 " : " gap-1 "), className)}>
+      <ErrorComponent 
+        className="f-1" 
+        withIcon={true} 
+        variant="outlined" 
+        error={error} 
+        style={{ maxHeight: "150px", minHeight: 0, overflow: "auto" }} 
+      /> 
+      <FlexRow>
+        {children}
+      </FlexRow>
     </footer>
   </ErrorTrap>
 }

@@ -1,14 +1,15 @@
 import { mdiPlay } from "@mdi/js";
-import { SQLHandler } from "prostgles-types";
+import type { SQLHandler } from "prostgles-types";
 import React, { useState } from "react";
 import ErrorComponent from "../../components/ErrorComponent";
 import { InfoRow } from "../../components/InfoRow";
 import Popup from "../../components/Popup/Popup";
 import { useIsMounted } from "../Backup/CredentialSelector";
-import { DashboardState } from "../Dashboard/Dashboard"; 
+import type { DashboardState } from "../Dashboard/Dashboard"; 
 import SQLEditor from "./SQLEditor" 
 import { FlexCol, FlexRow } from "../../components/Flex";
-import Btn, { BtnProps } from "../../components/Btn";
+import type { BtnProps } from "../../components/Btn";
+import Btn from "../../components/Btn";
 
 type SQLSmartEditorProps = {
   title: string;
@@ -52,7 +53,7 @@ export const SQLSmartEditor = ({ query: propsQuery, sql, hint, onSuccess, onCanc
     iconPath: mdiPlay, 
     onClick: () => onRunQuery(), 
     title: "Run query",
-    'data-command': "SQLSmartEditor.Run",
+    "data-command": "SQLSmartEditor.Run",
     style: { alignSelf: "flex-end" },
   }
 
@@ -61,11 +62,11 @@ export const SQLSmartEditor = ({ query: propsQuery, sql, hint, onSuccess, onCanc
     <Btn { ...runBtnProps}>Run</Btn>
   </FlexRow> : null
 
-  const content = <FlexCol className="f-1 min-h-0">
+  const content = <FlexCol className="f-1 min-h-0 gap-p5 mt-1">
     {contentTop}
     <SQLEditor
       suggestions={suggestions}
-      className="f-1 b b-gray-300 rounded o-hidden mt-1"
+      className="f-1 b b-color rounded o-hidden"
       autoFocus={false}
       value={query} 
       style={{

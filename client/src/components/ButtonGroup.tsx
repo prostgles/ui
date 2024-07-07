@@ -1,9 +1,11 @@
-import React from 'react';
+import React from "react";
 import { isObject } from "../../../commonTypes/publishUtils";
 import Btn from "./Btn";
 import { FlexCol } from "./Flex";
-import { Label, LabelProps } from "./Label";
-import Select, { FullOption } from "./Select/Select";
+import type { LabelProps } from "./Label";
+import { Label } from "./Label";
+import type { FullOption } from "./Select/Select";
+import Select from "./Select/Select";
 import { pickKeys } from "../utils";
 
 type P<Option extends string = never> = {
@@ -41,7 +43,7 @@ export default class ButtonGroup<Option extends string> extends React.Component<
 
     const fullOptions: readonly FullOption[] = "fullOptions" in this.props? this.props.fullOptions : this.props.options.map(key => ({ key, label: key }));
     const getStyle = (i: number, isActive = false) => {
-      let nb: React.CSSProperties = {
+      const nb: React.CSSProperties = {
         borderTopLeftRadius: 0,
         borderBottomLeftRadius: 0,
         borderTopRightRadius: 0,
@@ -81,7 +83,8 @@ export default class ButtonGroup<Option extends string> extends React.Component<
 
     const buttons = <div className={"bbutton-group flex-row o-auto  rounded-md w-fit "}>
     {fullOptions.map(({ key, label, disabledInfo, ...otherProps }, i) => (
-      <Btn key={key}  
+      <Btn key={key}
+        data-key={otherProps["data-key"] ?? key}
         color="action" 
         size={size}
         style={{...getStyle(i, value === key)}} 
@@ -89,7 +92,7 @@ export default class ButtonGroup<Option extends string> extends React.Component<
         disabledInfo={disabledInfo}
         onClick={e => key===value? undefined : onChange(key as any, e)} 
         value={key.toString()}
-        {...pickKeys(otherProps, ["data-command", "data-key", "id"])}
+        {...pickKeys(otherProps, ["data-command", "id"])}
       >
         {label ?? key}
       </Btn>

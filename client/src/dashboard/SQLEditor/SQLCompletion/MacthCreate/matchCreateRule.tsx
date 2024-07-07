@@ -1,9 +1,10 @@
 import { getCurrentCodeBlock } from "../completionUtils/getCodeBlock";
 import { getMatch } from "../getMatch";
-import { SQLMatchContext } from "../registerSuggestions";
-import { KWD, withKWDs } from "../withKWDs";
+import type { SQLMatchContext } from "../registerSuggestions";
+import type { KWD} from "../withKWDs";
+import { withKWDs } from "../withKWDs";
 
-export const matchCreateRule = async ({ cb, ss, getKind, sql, setS }: SQLMatchContext) => {
+export const matchCreateRule = async ({ cb, ss, sql, setS }: SQLMatchContext) => {
   const COMMANDS = [
     "SELECT", "INSERT", "UPDATE", "DELETE"
   ];
@@ -13,9 +14,9 @@ export const matchCreateRule = async ({ cb, ss, getKind, sql, setS }: SQLMatchCo
     const command = cb.tokens.find(t => COMMANDS.includes(t.text.toUpperCase()))?.textLC;
     if(startTkn && command){
 
-      const nestedCb = getCurrentCodeBlock(cb.model, cb.position, [startTkn.offset, endTkn?.offset ?? (cb.offset + 1)]);
+      const nestedCb = await getCurrentCodeBlock(cb.model, cb.position, [startTkn.offset, endTkn?.offset ?? (cb.offset + 1)]);
       const { firstTry, match } = await getMatch({ 
-        cb: nestedCb, ss, getKind, sql, setS, 
+        cb: nestedCb, ss, sql, setS,
         filter: [
           "MatchInsert",
           "MatchSelect", 
@@ -24,7 +25,7 @@ export const matchCreateRule = async ({ cb, ss, getKind, sql, setS }: SQLMatchCo
         ], 
       });
       
-      const res = firstTry ?? match?.result({ cb: nestedCb, ss, getKind, setS, sql }) ?? { 
+      const res = firstTry ?? match?.result({ cb: nestedCb, ss, setS, sql }) ?? { 
         suggestions: ss.filter(s => s.topKwd && COMMANDS.some(c => s.name.toUpperCase().startsWith(c))) 
       };
       return res;
@@ -57,5 +58,5 @@ export const matchCreateRule = async ({ cb, ss, getKind, sql, setS }: SQLMatchCo
       docs: `Specifies if the original commands get executed as well. If neither ALSO nor INSTEAD is specified, ALSO is the default.`,
       dependsOn: "TO"
     }
-  ] satisfies KWD[], cb, getKind, ss).getSuggestion();
+  ] satisfies KWD[], { cb, ss, setS, sql }).getSuggestion();
 }

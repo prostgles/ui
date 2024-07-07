@@ -1,11 +1,13 @@
-import { TableHandlerClient } from "prostgles-client/dist/prostgles";
-import { AnyObject } from "prostgles-types";
+import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import type { AnyObject } from "prostgles-types";
 import React from "react";
-import { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
-import { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
+import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import SmartForm from "../SmartForm/SmartForm";
-import { getRowSiblingData, RowSiblingData } from "./tableUtils/getEditColumn";
-import { ReactiveState, useReactiveState } from "../ProstglesMethod/hooks";
+import type { RowSiblingData } from "./tableUtils/getEditColumn";
+import { getRowSiblingData } from "./tableUtils/getEditColumn"; 
+import type { ReactiveState} from "../../appUtils";
+import { useReactiveState } from "../../appUtils";
 
 export type RowPanelProps = {
   type: "insert";

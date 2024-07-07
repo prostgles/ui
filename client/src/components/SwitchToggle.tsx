@@ -2,8 +2,9 @@ import "./SwitchToggle.css";
 import * as React from "react";
 import { generateUniqueID } from "./FileInput/FileInput";
 import { classOverride } from "./Flex";
-import { Label, LabelProps } from "./Label";
-import { TestSelectors } from "../Testing";
+import type { LabelProps } from "./Label";
+import { Label } from "./Label";
+import type { TestSelectors } from "../Testing";
 import { omitKeys, pickKeys } from "../utils";
 
 export type SwitchToggleProps = TestSelectors & { 
@@ -59,7 +60,7 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = ({
           />
           <span className={"Switch-thumb "}></span> 
         </span>
-        <span className={"Switch-track "  + (checked? "bg-blue-400" : "bg-gray-500")}></span>
+        <span className={"Switch-track"}></span>
       </div> 
     </div>
   );

@@ -1,22 +1,18 @@
-import { mdiFunction, mdiLink, mdiPlus, mdiTableColumnPlusAfter, mdiTableEdit } from "@mdi/js"
-import { DBHandlerClient } from "prostgles-client/dist/prostgles"
-import React, { useState } from "react"
-import Popup, { POPUP_CONTENT_CLASS } from "../../../components/Popup/Popup"
-import Select, { FullOption } from "../../../components/Select/Select"
-import { DBSchemaTablesWJoins, LoadedSuggestions, WindowSyncItem } from "../../Dashboard/dashboardUtils"
-import { AddComputedColMenu } from "./AddComputedColMenu"
-import { CreateColumn } from "./AlterColumn/CreateColumn"
-import { LinkedColumn } from "./LinkedColumn/LinkedColumn"
-import { Theme, themeR } from "../../../App"
-import { useReactiveState } from "../../ProstglesMethod/hooks"
+import { mdiFunction, mdiLink, mdiTableColumnPlusAfter, mdiTableEdit } from "@mdi/js";
+import { useMemoDeep, type DBHandlerClient } from "prostgles-client/dist/prostgles";
+import React, { useState } from "react";
+import { WithPrgl } from "../../../WithPrgl";
+import Popup, { POPUP_CLASSES } from "../../../components/Popup/Popup";
+import type { FullOption } from "../../../components/Select/Select";
+import Select from "../../../components/Select/Select";
+import type { DBSchemaTablesWJoins, LoadedSuggestions, WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import { CreateFileColumn } from "../../FileTableControls/CreateFileColumn";
+import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
+import { CreateColumn } from "./AlterColumn/CreateColumn";
+import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
+import type { NestedColumnOpts } from "./getNestedColumnTable";
 
 const options = [
-  { 
-    key: "Create", 
-    label: "Create New Column", 
-    subLabel: "Create a new column in this table", disabledInfo: undefined, 
-    iconPath: mdiTableEdit, 
-  },
   { 
     key: "Computed", 
     label: "Add Computed Field", 
@@ -29,6 +25,18 @@ const options = [
     subLabel: "Show data from a related table",
     iconPath: mdiLink,
   },
+  { 
+    key: "Create", 
+    label: "Create New Column", 
+    subLabel: "Create a new column in this table", disabledInfo: undefined, 
+    iconPath: mdiTableEdit, 
+  },
+  { 
+    key: "CreateFileColumn", 
+    label: "Create New File Column", 
+    subLabel: "Create a new file column in this table", disabledInfo: undefined, 
+    iconPath: mdiTableEdit, 
+  },
 ] as const satisfies readonly FullOption[];
 
 export type AddColumnMenuProps = {
@@ -37,14 +45,23 @@ export type AddColumnMenuProps = {
   db: DBHandlerClient;
   suggestions: LoadedSuggestions | undefined;
   variant?: "detailed";
-  nestedColumnName: string | undefined;
+  nestedColumnOpts: NestedColumnOpts | undefined;
 };
 
-export const AddColumnMenu = ({ w, tables, db, variant, nestedColumnName, suggestions }: AddColumnMenuProps) => {
+export const AddColumnMenu = ({ w, tables, db, variant, nestedColumnOpts, suggestions }: AddColumnMenuProps) => {
   const table = tables.find(t => t.name === w.table_name);
   const [colType, setColType] = useState<typeof options[number]["key"] | void>();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | void>();
-  const { state: theme } = useReactiveState(themeR);
+
+  /**
+   * Root query aggregation AND nested joins not allowed
+   */
+  const wCols = w.columns;
+  const dissallow = useMemoDeep(() => {
+    return wCols?.some(c => c.computedConfig?.funcDef.isAggregate || c.computedConfig?.funcDef.key.startsWith("$count")) ? "Referenced" : 
+      wCols?.some(c => c.nested) ? "aggs" : undefined;
+  }, [wCols]);
+
   if(!table){
     return <>Table {w.table_name} not found</>
   }
@@ -66,8 +83,10 @@ export const AddColumnMenu = ({ w, tables, db, variant, nestedColumnName, sugges
       fullOptions={options.map(o => ({
         ...o,
         disabledInfo: !table.joinsV2.length && o.key === "Referenced"? "No foreign keys to/from this table" : 
-          nestedColumnName && o.key === "Referenced"? "Not allowed for nested columns" : o.key !== "Create"? undefined : 
-          cannotCreateColumns
+          nestedColumnOpts && o.key === "Referenced"? "Not allowed for nested columns" : 
+          o.key === "Create"? cannotCreateColumns :
+          o.key === dissallow? "Aggregates and/or Count not allowed with linked " : 
+          undefined
       }))}
       onChange={(type) => setColType(type)}
     />
@@ -77,14 +96,26 @@ export const AddColumnMenu = ({ w, tables, db, variant, nestedColumnName, sugges
         w={w} 
         tables={tables} 
         onClose={onClose} 
-        nestedColumnName={nestedColumnName} 
+        nestedColumnOpts={nestedColumnOpts} 
       /> : 
+      colType === "CreateFileColumn"? <WithPrgl 
+        onRender={prgl => (
+          <CreateFileColumn 
+            db={db} 
+            tables={tables} 
+            fileTable={tables[0]?.info.fileTableName} 
+            tableName={table.name} 
+            prgl={prgl}
+            onClose={() => setColType(undefined)}
+          />
+        )}
+      /> :
       <Popup 
-        title={colType === "Create"?  `Create New Column` : "Add Referenced/Linked Fields"}
+        title={colType === "Create"?  `Create new column` : "Add Referenced/Linked Fields"}
         positioning="beneath-left"
         anchorEl={anchorEl}
         onClose={onClose}
-        autoFocusFirst={{ selector: `.${POPUP_CONTENT_CLASS} button` }}
+        autoFocusFirst={{ selector: `.${POPUP_CLASSES.content} input` }}
         clickCatchStyle={{ opacity: .5 }}
       >
         {colType === "Create"? 

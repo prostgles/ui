@@ -1,9 +1,9 @@
 import React from "react";
-import { W_TableMenuProps } from "./W_TableMenu";
+import type { W_TableMenuProps } from "./W_TableMenu";
 import FormField from "../../../components/FormField/FormField";
 import { ColumnSelect } from "../ColumnMenu/ColumnSelect";
 import Select from "../../../components/Select/Select";
-import { includes } from "../../ProstglesSQL/W_SQLBottomBar";
+import { includes } from "../../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
 type P = W_TableMenuProps;
 

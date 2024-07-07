@@ -1,17 +1,16 @@
-import React from "react";
-import FormField from "../../../components/FormField/FormField";
+import React from "react"; 
 import { InfoRow } from "../../../components/InfoRow";
 import { LabeledRow } from "../../../components/LabeledRow";
-import { areEqual } from "../../../utils";
-import { usePromise } from "../../ProstglesMethod/hooks";
-import { EditedAccessRule } from "../AccessControl";
-import { DBPermissionEditorProps } from "./PCustomTables";
+import { areEqual } from "../../../utils"; 
+import type { EditedAccessRule } from "../AccessControl";
+import type { DBPermissionEditorProps } from "./PCustomTables";
 import { SwitchToggle } from "../../../components/SwitchToggle";
+import { usePromise } from "prostgles-client/dist/react-hooks";
 
 
 export const getPRunSQLErrors = (rule: EditedAccessRule) => {
   if(rule.dbPermissions.type === "Run SQL" && !rule.dbPermissions.allowSQL){
-    return `Must tick "Enabled" checkbox`;
+    return `Must tick "Run SQL" checkbox`;
   }
 }
 

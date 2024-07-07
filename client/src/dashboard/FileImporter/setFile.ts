@@ -1,7 +1,10 @@
-import { AnyObject, asName, getKeys } from "prostgles-types";
-import { getFileText } from "../ProstglesSQL/W_SQLMenu";
-import FileImporter, { getRowsPerBatch } from "./FileImporter";
-import { Col, parseCSVFile } from "./parseCSVFile";
+import type { AnyObject} from "prostgles-types";
+import { asName, getKeys } from "prostgles-types";
+import { getFileText } from "../W_SQL/W_SQLMenu";
+import type FileImporter from "./FileImporter";
+import { getRowsPerBatch } from "./FileImporter";
+import type { Col} from "./parseCSVFile";
+import { parseCSVFile } from "./parseCSVFile";
 
   export const setFile = function(this: FileImporter, file: File){
     const lowerName = file.name.toLowerCase()
@@ -121,7 +124,7 @@ async function parseJSONFile(file: File): Promise<{
       
     })
   }
-  if(obj.type === 'FeatureCollection' && obj.features && Array.isArray(obj.features)){
+  if(obj.type === "FeatureCollection" && obj.features && Array.isArray(obj.features)){
     type = "geojson";
     _cols = { geometry: "geometry" };
     let hasID = false;

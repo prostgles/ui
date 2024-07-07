@@ -1,6 +1,7 @@
 import { mdiChevronDown,  } from "@mdi/js";
 import React, { useState } from "react"
-import Btn, { BtnProps } from "./Btn";
+import type { BtnProps } from "./Btn";
+import Btn from "./Btn";
 
 type ExpandSectionProps = {
   expanded?: boolean; 
@@ -11,7 +12,7 @@ type ExpandSectionProps = {
   label?: string;
   iconPath?: string | (( collapsed: boolean) => string);
   collapsible?: boolean;
-  buttonProps?: Omit<BtnProps, "onClick">;
+  buttonProps?: Omit<BtnProps<void>, "onClick">;
 }
 
 export const ExpandSection = ({ expanded = false, children, className = "", style, title = "Expand", label, iconPath: piconP, collapsible = false, buttonProps }: ExpandSectionProps): JSX.Element => {
@@ -26,7 +27,7 @@ export const ExpandSection = ({ expanded = false, children, className = "", styl
     title={title} 
     iconPath={typeof iconPath === "string"? iconPath : iconPath(collapsed)}
     children={label}
-    {...buttonProps}
+    {...buttonProps as any}
     onClick={() => { 
       setCollapsed(!collapsed) 
     }} 

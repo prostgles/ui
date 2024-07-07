@@ -1,20 +1,23 @@
-import React from 'react';
-import RTComp from '../../RTComp';
-import SmartCardList from '../../SmartCard/SmartCardList';
-import { mdiPlus, mdiTable } from '@mdi/js';
-import SmartForm, { GetRefHooks, SmartFormProps } from '../SmartForm';
+import React from "react";
+import RTComp from "../../RTComp";
+import SmartCardList from "../../SmartCard/SmartCardList";
+import { mdiPlus, mdiTable } from "@mdi/js";
+import type { GetRefHooks, SmartFormProps } from "../SmartForm";
+import SmartForm from "../SmartForm";
 import Btn from "../../../components/Btn"; 
 import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter";
-import { DetailedFilterBase } from '../../../../../commonTypes/filterUtils';
+import type { DetailedFilterBase } from "../../../../../commonTypes/filterUtils";
 import SmartTable from "../../SmartTable";
 import Popup from "../../../components/Popup/Popup";
-import { AnyObject } from "prostgles-types";
-import MediaViewer from "../../../components/MediaViewer"; 
+import type { AnyObject } from "prostgles-types";
+import { MediaViewer } from "../../../components/MediaViewer"; 
 import Loading from "../../../components/Loading";
-import { Prgl } from '../../../App';
+import type { Prgl } from "../../../App";
 import { getJoinFilter } from "./getJoinFilter";
 import { prepareJoinedRecordsSections } from "./prepareJoinedRecordsSections";
-import { FlexRow } from "../../../components/Flex";
+import { FlexRow, classOverride } from "../../../components/Flex";
+import { JoinPathSelectorV2 } from "../../W_Table/ColumnMenu/JoinPathSelectorV2";
+import type { TargetPath } from "../../W_Table/tableUtils/getJoinPaths";
 
 type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods" | "theme"> & Pick<SmartFormProps, "onSuccess"> & {
   className?: string; 
@@ -26,6 +29,7 @@ type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods" | "theme"> & Pi
   showRelated?: "descendants";
   action?: "update" | "insert" | "view";
   onToggle?: (expanded: boolean) => void;
+  showOnlyFKeyTables?: boolean;
   expanded?: boolean;
 }
 
@@ -49,6 +53,7 @@ export type JoinedRecordsState = {
     tableName: string;
     path: string[];
   };
+  extraSectionPaths: TargetPath[];
 
   nestedInsertTable?: string;
 }
@@ -56,12 +61,13 @@ export class JoinedRecords extends RTComp<JoinedRecordsProps, JoinedRecordsState
 
   state: JoinedRecordsState = {
     sections: [],
-    expanded: false
+    expanded: false,
+    extraSectionPaths: [],
   }
 
   getDataSignature = () => {
     const { tableName, rowFilter } = this.props;
-    return JSON.stringify({ tableName, rowFilter });
+    return JSON.stringify({ tableName, rowFilter, extraSectionPaths: this.state.extraSectionPaths });
   }
 
   getDetailedFilter = getJoinFilter.bind(this);
@@ -250,7 +256,7 @@ export class JoinedRecords extends RTComp<JoinedRecordsProps, JoinedRecordsState
     const dencendants = tables.filter(t => t.columns.some(c => c.references?.some(r => r.ftable === tableName)))
     const descendantInsertTables = dencendants.filter(t => db[t.name]?.insert).map(t => t.name);
 
-    return <div className={"flex-col b-top min-h-0 " + className} style={style}>
+    return <div className={classOverride("flex-col bt b-color min-h-0 bg-inherit ", className)} style={style}>
       <h4 title="Toggle section"
         onClick={() => {
           this.props.onToggle?.(!expanded); 
@@ -266,16 +272,33 @@ export class JoinedRecords extends RTComp<JoinedRecordsProps, JoinedRecordsState
             {sections.reduce((a, v) => a + v.existingDataCount, 0)}
           </span>
         }
+        {/* TODO allow customising Related data section */}
+        {/* <JoinPathSelectorV2 
+          onChange={path => {
+            this.setState({ extraSectionPaths: [ path, ...this.state.extraSectionPaths] });
+          }}
+          tableName={tableName}
+          tables={tables}
+          value={undefined}
+          btnProps={{
+            className: "ml-auto",
+            iconPath: mdiPlus,
+            size: "small",
+            children: "",
+            variant: undefined,
+            color: "action",
+          }}          
+        /> */}
       </h4>
       {quickViewPopup}
       {insertPopup}
       {this.getNestedInsertPopup()}
-      {expanded && <div className="flex-col o-auto f-1 px-1 ">
+      {expanded && <div className="flex-col o-auto f-1 px-1 bg-inherit">
         {sections.filter(s => !showRelated || dencendants.some(t => t.name === s.tableName) ).map((s, i) => {
-          const toggle: React.MouseEventHandler = ({ currentTarget }) => {
+          const onToggle: React.MouseEventHandler = ({ currentTarget }) => {
             const newSections = sections.map(_s => ({
               ..._s,
-              expanded: _s.tableName === s.tableName ? !_s.expanded : _s.expanded
+              expanded: _s.path.join() === s.path.join() ? !_s.expanded : _s.expanded
             }));
 
             this.setState({
@@ -345,10 +368,7 @@ export class JoinedRecords extends RTComp<JoinedRecordsProps, JoinedRecordsState
                       render: (url, row) => 
                         <MediaViewer 
                           style={{ maxWidth: "300px" }}
-                          url={url} 
-                          allowedContentTypes={
-                            [MediaViewer.getMimeFromURL(url)!]
-                          } 
+                          url={url}
                         /> 
                       }
                   ] : undefined} 
@@ -356,16 +376,16 @@ export class JoinedRecords extends RTComp<JoinedRecordsProps, JoinedRecordsState
             </div>)
           }
 
+          const key = s.path.join(".") + this.dataSignature
           return (
-            <div key={s.path.join(".") + this.dataSignature}
-              className="flex-col min-h-0 f-0 relative"
+            <div key={key}
+              className="flex-col min-h-0 f-0 relative bg-inherit"
             >
-              <div className="flex-row ai-center noselect pointer f-0 bg-0"
+              <div className="flex-row ai-center noselect pointer f-0 bg-inherit bt b-color"
                 style={!s.expanded ? undefined : {
                   position: "sticky",
                   top: 0,
                   zIndex: 432432,
-                  borderBottom: "1px solid #cecece",
                   marginBottom: ".5em",
                 }}
               >
@@ -374,7 +394,7 @@ export class JoinedRecords extends RTComp<JoinedRecordsProps, JoinedRecordsState
                   title="Expand section"
                   disabledInfo={s.error ?? disabledInfo}
                   color={s.error? "warn" : "action"}
-                  onClick={toggle}
+                  onClick={onToggle}
                 >
                   {s.path.join(".")}
                   {countNode}

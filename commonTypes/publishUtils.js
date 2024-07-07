@@ -35,13 +35,25 @@ export const parseFullFilter = (filter, context, columns) => {
     const f = isAnd ? { $and: finalFilters } : { $or: finalFilters };
     return f;
 };
-export const parseForcedFilter = (rule, context, columns) => {
-    if (isObject(rule) && "forcedFilterDetailed" in rule && rule.forcedFilterDetailed) {
-        const forcedFilter = parseFullFilter(rule.forcedFilterDetailed, context, columns);
-        if (forcedFilter)
-            return { forcedFilter };
+export const parseCheckForcedFilters = (rule, context, columns) => {
+    let parsedRuleFilters;
+    if (isObject(rule)) {
+        if ("forcedFilterDetailed" in rule && rule.forcedFilterDetailed) {
+            const forcedFilter = parseFullFilter(rule.forcedFilterDetailed, context, columns);
+            if (forcedFilter) {
+                parsedRuleFilters !== null && parsedRuleFilters !== void 0 ? parsedRuleFilters : (parsedRuleFilters = {});
+                parsedRuleFilters.forcedFilter = forcedFilter;
+            }
+        }
+        if ("checkFilterDetailed" in rule && rule.checkFilterDetailed) {
+            const checkFilter = parseFullFilter(rule.checkFilterDetailed, context, columns);
+            if (checkFilter) {
+                parsedRuleFilters !== null && parsedRuleFilters !== void 0 ? parsedRuleFilters : (parsedRuleFilters = {});
+                parsedRuleFilters.checkFilter = checkFilter;
+            }
+        }
     }
-    return undefined;
+    return parsedRuleFilters;
 };
 const getValidatedFieldFilter = (value, columns, expectAtLeastOne = true) => {
     if (value === "*")
@@ -63,8 +75,38 @@ const getValidatedFieldFilter = (value, columns, expectAtLeastOne = true) => {
     return value;
 };
 const parseForcedData = (value, context, columns) => {
-    if (!(value === null || value === void 0 ? void 0 : value.forcedDataDetail))
+    var _a;
+    /** TODO: retire forced data completely */
+    if (!((_a = value === null || value === void 0 ? void 0 : value.forcedDataDetail) === null || _a === void 0 ? void 0 : _a.length)) {
+        if (value === null || value === void 0 ? void 0 : value.checkFilterDetailed) {
+            const checkFilter = value === null || value === void 0 ? void 0 : value.checkFilterDetailed;
+            if ("$and" in checkFilter && checkFilter.$and.length) {
+                const forcedContextData = checkFilter.$and
+                    .map((f) => {
+                    var _a;
+                    if (f.type !== "=")
+                        return undefined;
+                    if (f.contextValue && ((_a = f.contextValue) === null || _a === void 0 ? void 0 : _a.objectName) === "user") {
+                        const userKey = f.contextValue.objectPropertyName;
+                        if (!(userKey in context.user))
+                            throw new Error(`Invalid objectPropertyName (${f.contextValue.objectPropertyName}) found in forcedData`);
+                        return [f.fieldName, context.user[userKey]];
+                    }
+                    else if (f.value !== undefined) {
+                        return [f.fieldName, f.value];
+                    }
+                    return undefined;
+                }).filter(isDefined);
+                if (!forcedContextData.length)
+                    return undefined;
+                const forcedData = Object.fromEntries(forcedContextData);
+                return {
+                    forcedData
+                };
+            }
+        }
         return undefined;
+    }
     let forcedData = {};
     value === null || value === void 0 ? void 0 : value.forcedDataDetail.forEach(v => {
         if (!columns.includes(v.fieldName))
@@ -88,13 +130,13 @@ const parseForcedData = (value, context, columns) => {
 const parseSelect = (rule, columns, context) => {
     if (!rule || rule === true)
         return rule;
-    return Object.assign(Object.assign(Object.assign({ fields: getValidatedFieldFilter(rule.fields, columns) }, parseForcedFilter(rule, context, columns)), (rule.orderByFields && { orderByFields: getValidatedFieldFilter(rule.orderByFields, columns, false) })), (rule.filterFields && { filterFields: getValidatedFieldFilter(rule.filterFields, columns, false) }));
+    return Object.assign(Object.assign(Object.assign({ fields: getValidatedFieldFilter(rule.fields, columns) }, parseCheckForcedFilters(rule, context, columns)), (rule.orderByFields && { orderByFields: getValidatedFieldFilter(rule.orderByFields, columns, false) })), (rule.filterFields && { filterFields: getValidatedFieldFilter(rule.filterFields, columns, false) }));
 };
 const parseUpdate = (rule, columns, context) => {
     var _a;
     if (!rule || rule === true)
         return rule;
-    return Object.assign(Object.assign(Object.assign(Object.assign({ fields: getValidatedFieldFilter(rule.fields, columns) }, parseForcedFilter(rule, context, columns)), parseForcedData(rule, context, columns)), (rule.filterFields && { filterFields: getValidatedFieldFilter(rule.filterFields, columns, false) })), (((_a = rule.dynamicFields) === null || _a === void 0 ? void 0 : _a.length) && {
+    return Object.assign(Object.assign(Object.assign(Object.assign({ fields: getValidatedFieldFilter(rule.fields, columns) }, parseCheckForcedFilters(rule, context, columns)), parseForcedData(rule, context, columns)), (rule.filterFields && { filterFields: getValidatedFieldFilter(rule.filterFields, columns, false) })), (((_a = rule.dynamicFields) === null || _a === void 0 ? void 0 : _a.length) && {
         dynamicFields: rule.dynamicFields.map(v => ({
             fields: getValidatedFieldFilter(v.fields, columns),
             filter: parseFullFilter(v.filterDetailed, context, columns)
@@ -104,12 +146,12 @@ const parseUpdate = (rule, columns, context) => {
 const parseInsert = (rule, columns, context) => {
     if (!rule || rule === true)
         return rule;
-    return Object.assign({ fields: getValidatedFieldFilter(rule.fields, columns) }, parseForcedData(rule, context, columns));
+    return Object.assign(Object.assign({ fields: getValidatedFieldFilter(rule.fields, columns) }, parseForcedData(rule, context, columns)), parseCheckForcedFilters(rule, context, columns));
 };
 const parseDelete = (rule, columns, context) => {
     if (!rule || rule === true)
         return rule;
-    return Object.assign(Object.assign({}, parseForcedFilter(rule, context, columns)), { filterFields: getValidatedFieldFilter(rule.filterFields, columns) });
+    return Object.assign(Object.assign({}, parseCheckForcedFilters(rule, context, columns)), { filterFields: getValidatedFieldFilter(rule.filterFields, columns) });
 };
 export const parseTableRules = (rules, isView = false, columns, context) => {
     if ([true, "*"].includes(rules)) {

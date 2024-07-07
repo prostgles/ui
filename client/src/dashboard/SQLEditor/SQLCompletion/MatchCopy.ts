@@ -1,11 +1,12 @@
-import { SQLHandler } from "prostgles-types";
+import type { SQLHandler } from "prostgles-types";
 import { isObject } from "../../../../../commonTypes/publishUtils";
 import { QUERY_WATCH_IGNORE } from "../../../../../commonTypes/utils";
 import { suggestSnippets } from "./CommonMatchImports";
 import { ENCODINGS } from "./PSQL";
-import { GetKind, ParsedSQLSuggestion, SQLMatcher } from "./registerSuggestions";
-import { KWD, withKWDs } from "./withKWDs"; 
-import { CodeBlock } from "./completionUtils/getCodeBlock";
+import { getKind, type GetKind, type ParsedSQLSuggestion, type SQLMatcher } from "./registerSuggestions";
+import type { KWD} from "./withKWDs";
+import { withKWDs } from "./withKWDs"; 
+import type { CodeBlock } from "./completionUtils/getCodeBlock";
 
 const KWDOptions = [
   { kwd: "FORMAT", 
@@ -42,7 +43,7 @@ const KWDOptions = [
 
 export const MatchCopy: SQLMatcher = {
   match: cb => cb.prevLC.startsWith("copy"),
-  result: async ({cb, ss, setS, sql, getKind}) => {
+  result: async ({cb, ss, setS, sql }) => {
 
     const { prevLC, prevTokens, prevText } = cb;
     
@@ -51,7 +52,7 @@ export const MatchCopy: SQLMatcher = {
       if(cb.ltoken?.type === "string.sql" || prevText.trim().endsWith("$")){
         return suggestSnippets([{ label: { label: "( options... )" }, docs: "Import options", insertText: "( $0 )" }])
       }
-      const { getSuggestion } = withKWDs(KWDOptions,cb, getKind, ss);
+      const { getSuggestion } = withKWDs(KWDOptions, { cb, ss, setS, sql });
       return getSuggestion(",", ["(", ")"]);
     }
 
@@ -93,7 +94,7 @@ export const MatchCopy: SQLMatcher = {
         exactlyAfter: ["FROM"],
         expects: "string",
       }
-    ] satisfies KWD[], cb, getKind, ss).getSuggestion();
+    ] satisfies KWD[], { cb, ss, setS, sql }).getSuggestion();
 
   }
 }
@@ -244,7 +245,7 @@ export const suggestDirsAndFiles = async (sql: SQLHandler, lastWord = ""): Promi
     }
     if(d.info?.firstRow){
       // if(d.path.includes("stateplane")) debugger;
-      documentation += '  \n\n**Headers:**  \n\n' + d.info.firstRow.split(",").map(v => `${v}   \`TEXT\``).join(",    \n")
+      documentation += "  \n\n**Headers:**  \n\n" + d.info.firstRow.split(",").map(v => `${v}   \`TEXT\``).join(",    \n")
     }
     return {
       ...d,

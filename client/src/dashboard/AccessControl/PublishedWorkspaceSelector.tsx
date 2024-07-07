@@ -1,18 +1,17 @@
+import { mdiViewQuilt } from "@mdi/js";
+import type { ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
 import { SwitchToggle } from "../../components/SwitchToggle";
-import { useIsMounted } from "../Backup/CredentialSelector";
-import { DBS } from "../Dashboard/DBS";
-import { CommonWindowProps } from "../Dashboard/Dashboard";
-import { DBSchemaTablesWJoins, WindowData } from "../Dashboard/dashboardUtils";
-import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";
-import { useSubscribe } from "../ProstglesMethod/hooks";
-import { DeepPartial } from "../RTComp";
-import { SmartSelect } from "../SmartSelect";
-import { AccessRule } from "./AccessControl";
-import { SectionHeader } from "./AccessControlRuleEditor";
-import { mdiViewQuilt } from "@mdi/js";
-import { ValidatedColumnInfo } from "prostgles-types"
 import { isDefined } from "../../utils";
+import { useIsMounted } from "../Backup/CredentialSelector";
+import type { DBS } from "../Dashboard/DBS";
+import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { DBSchemaTablesWJoins, WindowData } from "../Dashboard/dashboardUtils";
+import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";
+import type { DeepPartial } from "../RTComp";
+import { SmartSelect } from "../SmartSelect";
+import type { AccessRule } from "./AccessControl";
+import { SectionHeader } from "./AccessControlRuleEditor";
 
 type P = Pick<CommonWindowProps, "prgl" > & {
   dbsPermissions: DeepPartial<AccessRule["dbsPermissions"]>;
@@ -28,10 +27,10 @@ type P = Pick<CommonWindowProps, "prgl" > & {
 
 export const PublishedWorkspaceSelector = ({ prgl: {dbs , connectionId}, dbsPermissions, onChange, onChangeRule, dbPermissions, className = "", style, onSetError, tables} : P) => {
   
-  const workspaces = useSubscribe(dbs.workspaces.subscribeHook(
+  const { data: workspaces } = dbs.workspaces.useSubscribe(
     { published: true, connection_id: connectionId }, 
     {}
-  ));
+  );
   const getIsMounted = useIsMounted();
 
   useEffectAsync(async () => {
@@ -87,13 +86,15 @@ export const PublishedWorkspaceSelector = ({ prgl: {dbs , connectionId}, dbsPerm
     }
   });
 
+  if(!workspaces.length) return null;
+
   return <div className={"flex-col gap-1 " + className} style={style}>
     
     <SectionHeader icon={mdiViewQuilt} className="mb-p5">
       Workspace access
     </SectionHeader>
 
-    <div className="relative bg-0 rounded flex-row gap-2 ml-2 " >
+    <div className="relative bg-color-0 rounded flex-row gap-2 ml-2 " >
       <SwitchToggle 
         variant="col"
         data-command="config.ac.edit.createWorkspaces"

@@ -1,21 +1,21 @@
 
-import { DBSchemaGenerated } from "@common/DBoGenerated";
-import { SyncDataItem } from "prostgles-client/dist/SyncedTable";
-import { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
-import { DBSSchema } from "../../../../commonTypes/publishUtils";
-import { SearchAllProps } from "../SearchAll";
+import type { DBSchemaGenerated } from "@common/DBoGenerated";
+import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { SearchAllProps } from "../SearchAll";
 
-import { MissingBinsOption, TimechartRenderStyle, StatType, TimeChartBinSize, TooltipPosition, ShowBinLabelsMode } from '../W_TimeChart/W_TimeChartMenu';
-
-
-import { SQLSuggestion } from "../SQLEditor/SQLEditor";
-import { RefreshOptions } from "../W_Table/TableMenu/W_TableMenu";
+import type { MissingBinsOption, TimechartRenderStyle, StatType, TimeChartBinSize, TooltipPosition, ShowBinLabelsMode } from "../W_TimeChart/W_TimeChartMenu";
 
 
-import { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
-import { OmitDistributive } from "../../../../commonTypes/utils";
-import { Extent } from "../Map/DeckGLMap";
-import { ColumnConfig, ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { SQLSuggestion } from "../SQLEditor/SQLEditor";
+import type { RefreshOptions } from "../W_Table/TableMenu/W_TableMenu";
+
+
+import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
+import type { OmitDistributive } from "../../../../commonTypes/utils";
+import type { Extent, MapExtentBehavior } from "../Map/DeckGLMap";
+import type { ColumnConfig, ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 
 type ColorFunc = {
   (opacity: number, target: "deck"): number[];
@@ -118,6 +118,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
     showFilters?: boolean;
     showSubLabel?: boolean;
     filterOperand?: "AND" | "OR";
+    havingOperand?: "AND" | "OR";
   } :
   CType extends "method"? { 
     args?: Record<string, any>;
@@ -146,24 +147,21 @@ export type ChartOptions<CType extends ChartType = "table"> =
       title: string;
       url: string;
     }
-    filterExtent?: boolean;
+    extentBehavior?: MapExtentBehavior;
     projection?: "mercator" | "orthographic";
-    basemapImage?: {
-      url: string;
-      bounds: Extent;
-    }
     target?: [number, number, number];
     aggregationMode?: {
       type: "limit" | "wait";
       limit: number;
       wait: number;
     }
-  // basemap: {
-  //   opacity: number;
-  //   tileURLs: string[];
-  // },
-  // dataOpacity: number;
-
+    dataOpacity: number;
+    basemapDesaturate: number;
+    basemapOpacity: number;
+    basemapImage?: {
+      url: string;
+      bounds: Extent;
+    }
   }> :
   CType extends "timechart"? {
     //@deprecated - moving this to each layer
@@ -242,7 +240,7 @@ type Windows = Required<DBSSchema>["windows"];
 
 export const TopHeaderClassName = "TopHeader";
 
-export type WindowData<CType extends ChartType = ChartType> = Omit<Windows, "columns" | "options" | "sort" | "filter" | "type"> & {
+export type WindowData<CType extends ChartType = ChartType> = Omit<Windows, "columns" | "options" | "sort" | "filter" | "type" | "having"> & {
   type: CType;
   id: string;
   table_oid: number;
@@ -265,6 +263,7 @@ export type WindowData<CType extends ChartType = ChartType> = Omit<Windows, "col
   workspace_id?: string;
   options?: RefreshOptions & ChartOptions<CType>;
   filter?: SmartGroupFilter;
+  having?: SmartGroupFilter;
   columns?: ColumnConfig[] | null;
   selected_sql?: string;
 
@@ -337,9 +336,10 @@ export type Join = {
   hasFkeys?: boolean;
   on: [string, string][];
 };
-export type JoinV2 = Omit<Join, "on"> & { on: [string, string][][]; }
-export type DBSchemaTablesWJoins = (DBSchemaTable & {
+export type JoinV2 = Omit<Join, "on"> & { on: [string, string][][]; };
+export type DBSchemaTableWJoins = (DBSchemaTable & {
   count: string;
   joins: Join[];
   joinsV2: JoinV2[];
-})[];
+});
+export type DBSchemaTablesWJoins = DBSchemaTableWJoins[];

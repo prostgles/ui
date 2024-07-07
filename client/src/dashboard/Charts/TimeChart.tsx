@@ -1,16 +1,16 @@
 
 type ChartDate = { v: number; x: number; date: Date }
 
-import type { ScaleLinear } from 'd3-scale';
-import { ValidatedColumnInfo } from "prostgles-types";
+import type { ScaleLinear } from "d3-scale";
+import type { ValidatedColumnInfo } from "prostgles-types";
 
 import React from "react";
 import { classOverride } from "../../components/Flex";
-import { Point } from "../Charts";
-import { CanvasChart, Shape } from "../Charts/CanvasChart";
+import type { Point } from "../Charts";
+import type { CanvasChart, Shape } from "../Charts/CanvasChart";
 import RTComp from "../RTComp";
-import { ShowBinLabelsMode, TimechartRenderStyle, TooltipPosition } from "../W_TimeChart/W_TimeChartMenu";
-import { DateExtent } from "./getTimechartBinSize";
+import type { ShowBinLabelsMode, TimechartRenderStyle, TooltipPosition } from "../W_TimeChart/W_TimeChartMenu";
+import type { DateExtent } from "./getTimechartBinSize";
 import { getTimechartTooltipIntersections } from "./getTimechartTooltipIntersections";
 import { onDeltaTimechart } from "./onDeltaTimechart";
 import { prepareTimechartData } from "./prepareTimechartData"; 

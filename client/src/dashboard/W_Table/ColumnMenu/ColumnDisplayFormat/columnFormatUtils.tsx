@@ -1,12 +1,12 @@
-import { AnyObject, DBSchemaTable, JSONB, ValidatedColumnInfo } from "prostgles-types";
+import type { AnyObject, DBSchemaTable, JSONB, ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
-import MediaViewer, { ContentTypes } from "../../../../components/MediaViewer"; 
+import { MediaViewer, ContentTypes } from "../../../../components/MediaViewer"; 
 import { QRCodeImage } from "../../../../components/QRCodeImage";
 import SmartFormField from "../../../SmartForm/SmartFormField/SmartFormField";
-import { RenderedColumn } from "../../tableUtils/onRenderColumn";
-import sanitizeHtml from 'sanitize-html';
-import { ColumnConfig } from "../ColumnMenu";
-import { StyledInterval } from "../../../ProstglesSQL/customRenderers";
+import type { RenderedColumn } from "../../tableUtils/onRenderColumn";
+import sanitizeHtml from "sanitize-html";
+import type { ColumnConfig } from "../ColumnMenu";
+import { StyledInterval } from "../../../W_SQL/customRenderers";
 import { getAge } from "../../../../../../commonTypes/utils";
 
 const CurrencySchema = {
@@ -219,7 +219,7 @@ const removeQuotes = (value: string | number | null) => {
   return ["'", '"'].includes(v.at(0) ?? "") && ["'", '"'].includes(v.at(-1) ?? "") ? v.slice(1, -1) : v
 }; 
 
-const HREFRender: FormattedColRender<any>["render"] = (v, r, c) => <a href={(c.format?.type === "Email" ? "mailto:" : c.format?.type === "Tel" ? "tel:" : '') + removeQuotes(v)} target="_blank">{removeQuotes(v)}</a> 
+const HREFRender: FormattedColRender<any>["render"] = (v, r, c) => <a href={(c.format?.type === "Email" ? "mailto:" : c.format?.type === "Tel" ? "tel:" : "") + removeQuotes(v)} target="_blank">{removeQuotes(v)}</a> 
 
   
    
@@ -246,10 +246,10 @@ export const DISPLAY_FORMATS = [
       const mediaFormat = f;// ?? { params: {} } as Extract<ColumnFormat, { type: "Media" }>;
       const params = mediaFormat.params as any;
       return <MediaViewer url={v}
-        allowedContentTypes={
-          params.type === 'fixed'? [params.fixedContentType ?? "image"] :
-          params.type === 'fromColumn' && params.contentTypeColumnName? [row[params.contentTypeColumnName]] :
-          [MediaViewer.getMimeFromURL(v)]
+        content_type={
+          params.type === "fixed"? params.fixedContentType ?? "image" :
+          params.type === "fromColumn" && params.contentTypeColumnName? row[params.contentTypeColumnName] :
+          undefined
         }
         // onPrevOrNext={!allowMediaSkip ? undefined : (increment) => {
         //   console.error("MUST HAVE A PARENT VIEWER MANAGING NEXT AND PREV URLS")
@@ -326,7 +326,7 @@ export const DISPLAY_FORMATS = [
       try {
         const currencyCode = type === "Fixed"? p.currencyCode : row[p.currencyCodeField.column];
         const formatter = new Intl.NumberFormat(undefined, {
-          style: 'currency',
+          style: "currency",
           currency: currencyCode,
         
           // These options are needed to round to whole numbers if that's what you want.

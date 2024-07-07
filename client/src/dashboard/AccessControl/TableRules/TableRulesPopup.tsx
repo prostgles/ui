@@ -1,17 +1,18 @@
 
-import React, { useState } from 'react';
-import { TableRules, TableRulesErrors } from "../../../../../commonTypes/publishUtils";
+import React, { useState } from "react";
+import type { TableRules, TableRulesErrors } from "../../../../../commonTypes/publishUtils";
 import ErrorComponent from "../../../components/ErrorComponent";
-import MenuList from "../../../components/MenuList";
+import { MenuList } from "../../../components/MenuList";
 import Popup from "../../../components/Popup/Popup";
-import { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
+import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import { FlexCol, FlexRow } from "../../../components/Flex";
 import { FileTableAccessControlInfo } from "./FileTableAccessControlInfo";
 import { DeleteRuleControl } from "./../RuleTypeControls/DeleteRuleControl";
 import { InsertRuleControl } from "./../RuleTypeControls/InsertRuleControl";
 import { SelectRuleControl } from "./../RuleTypeControls/SelectRuleControl";
 import { UpdateRuleControl } from "./../RuleTypeControls/UpdateRuleControl";
-import { EditedRuleType, TABLE_RULE_LABELS, TablePermissionControlsProps } from "./TablePermissionControls";
+import type { EditedRuleType, TablePermissionControlsProps } from "./TablePermissionControls";
+import { TABLE_RULE_LABELS } from "./TablePermissionControls";
 import { Icon } from "../../../components/Icon/Icon";
 import { mdiFile, mdiTable, mdiTableEye } from "@mdi/js";
 
@@ -22,9 +23,16 @@ type TableRulesPopupProps = TablePermissionControlsProps & {
   onClose: VoidFunction;
 }
 export const TableRulesPopup = ({ 
-  contextData, tablesWithRules: allRules, 
-  tableRules, onChange, prgl, table, 
-  tableErrors, userTypes, onClose, ...props 
+  contextData, 
+  tablesWithRules: allRules, 
+  tableRules, 
+  onChange, 
+  prgl, 
+  table, 
+  tableErrors, 
+  userTypes, 
+  onClose, 
+  ...props 
 }: TableRulesPopupProps) => {
 
   const [editedRuleType, setEditedRuleType] = useState<EditedRuleType>(props.editedRuleType);
@@ -37,6 +45,7 @@ export const TableRulesPopup = ({
     
     setLocalTableRules({
       ...tableRules,
+      ...localTableRules,
       [editedRuleType]: newRule
     })
   }
@@ -64,7 +73,7 @@ export const TableRulesPopup = ({
         </FlexCol>
       </FlexRow>
     }
-    positioning="center"
+    positioning="right-panel"
     focusTrap={true}
     onClose={closePopup}
     clickCatchStyle={{ opacity: .5 }}
@@ -78,6 +87,7 @@ export const TableRulesPopup = ({
         label: "Done", 
         color: "action", 
         variant: "filled", 
+        "data-command": "TablePermissionControls.done",
         disabledInfo: ruleWasChanged? "Nothing to change" : undefined,
         onClick: closePopup
       }

@@ -1,3 +1,4 @@
+import { isDefined } from "./filterUtils";
 import { DBSSchema } from "./publishUtils";
 
 export const SECOND = 1000;
@@ -19,7 +20,19 @@ export type AGE = {
 
 export const QUERY_WATCH_IGNORE = "prostgles internal query that should be excluded from schema watch ";
 
+export const getAgeFromDiff = (millisecondDiff: number) => {
+  const roundFunc = millisecondDiff > 0 ? Math.floor : Math.ceil;
 
+  const years = roundFunc(millisecondDiff / YEAR);
+  const months = roundFunc((millisecondDiff % YEAR) / MONTH);
+  const days = roundFunc((millisecondDiff % MONTH) / DAY);
+  const hours = roundFunc((millisecondDiff % DAY) / HOUR);
+  const minutes = roundFunc((millisecondDiff % HOUR) / MINUTE);
+  const seconds = roundFunc((millisecondDiff % MINUTE) / SECOND);
+  const milliseconds = millisecondDiff % SECOND;
+
+  return { years, months, days, hours, minutes, seconds, milliseconds };
+}
 export const getAge = <ReturnALL extends boolean = false>(date1: number, date2: number, returnAll?: ReturnALL): ReturnALL extends true? Required<AGE> : AGE => {
   
   const diff = +date2 - +date1;
@@ -31,18 +44,8 @@ export const getAge = <ReturnALL extends boolean = false>(date1: number, date2: 
   const minutes = roundFunc(diff/MINUTE);
   const seconds = roundFunc(diff/SECOND);
 
-  if(returnAll && returnAll === true){
-    const diffInMs = diff;
-  
-    const years = roundFunc(diffInMs / YEAR);
-    const months = roundFunc((diffInMs % YEAR) / MONTH);
-    const days = roundFunc((diffInMs % MONTH) / DAY);
-    const hours = roundFunc((diffInMs % DAY) / HOUR);
-    const minutes = roundFunc((diffInMs % HOUR) / MINUTE);
-    const seconds = roundFunc((diffInMs % MINUTE) / SECOND);
-    const milliseconds = diffInMs % SECOND;
-
-    return { years, months, days, hours, minutes, seconds, milliseconds };
+  if(returnAll && returnAll === true){  
+    return getAgeFromDiff(diff) 
   }
 
   if(years >= 1){
@@ -152,3 +155,50 @@ export type ConnectionStatus = {
   noBash: boolean;
   serverStatus?: ServerStatus;
 }
+
+
+
+export type SampleSchema = {
+  name: string; 
+  path: string;
+} & ({ 
+  type: "sql";
+  file: string; 
+} | { 
+  type: "dir";
+  tableConfigTs: string;
+  onMountTs: string;
+  onInitSQL: string;
+  workspaceConfig: { workspaces: DBSSchema["workspaces"][]; } | undefined;
+});
+
+export type ProcStats = {
+  pid: number;
+  cpu: number;
+  mem: number;
+  uptime: number;
+};
+
+export function matchObj(obj1: AnyObject | undefined, obj2: AnyObject | undefined): boolean {
+  if (obj1 && obj2) {
+    return !Object.keys(obj1).some(k => obj1[k] !== obj2[k])
+  }
+  return false;
+}
+
+export function sliceText(v: string | undefined, maxLen: number, ellipseText = "...", midEllipse = false){
+  if(isDefined(v) && v.length > maxLen){ 
+    if(!midEllipse) return `${v.slice(0, maxLen)}${ellipseText}`;
+    return `${v.slice(0, maxLen/2)}${ellipseText}${v.slice(v.length - (maxLen/2) + 3)}`;
+  }
+
+  return v;
+}
+
+export type ColType = {
+  column_name: string;
+  data_type: string;
+  udt_name: string;
+  schema: string;
+}
+export const RELOAD_NOTIFICATION = "Prostgles UI accessible at";

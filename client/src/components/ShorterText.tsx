@@ -1,6 +1,6 @@
-import React, { useState } from 'react'; 
+import React, { useState } from "react"; 
 import { getColumnDataColor } from "../dashboard/SmartForm/SmartFormField/SmartFormField";
-import { ValidatedColumnInfo } from "prostgles-types";
+import type { ValidatedColumnInfo } from "prostgles-types";
 import { useIsMounted } from "../dashboard/Backup/CredentialSelector";
 
 type P = {
@@ -30,7 +30,7 @@ export const ShorterText = ({ value: guid, column, style }: P) => {
             }, 2000);
           }}
         >
-          {copied && <div className="absolute bg-0 w-full h-full" style={{ zIndex: 1, }}>Copied!</div> }
+          {copied && <div className="absolute bg-color-0 w-full h-full" style={{ zIndex: 1, }}>Copied!</div> }
 
           {guid.substring(0, 8)}
           ...

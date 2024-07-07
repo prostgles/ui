@@ -1,10 +1,13 @@
-import { HoverCoords } from "../Map/DeckGLMap";
-import W_Map, { LayerQuery } from "./W_Map";
-import { MapDataResult, getMapSelect, getSQLHoverRow } from "./getMapData";
-import { AnyObject, isObject } from "prostgles-types"
+import type { HoverCoords } from "../Map/DeckGLMap";
+import type { LayerQuery, LayerSQL } from "./W_Map";
+import type W_Map from "./W_Map";
+import type { MapDataResult} from "./getMapData";
+import { getMapFilter, getMapSelect, getSQLHoverRow } from "./getMapData";
+import type { AnyObject} from "prostgles-types";
+import { isObject } from "prostgles-types"
 
 export type HoveredObject ={
-  properties:  MapDataResult & {
+  properties: MapDataResult & {
     geomColumn: string;
     radius: number;
     tableName: string;
@@ -42,6 +45,11 @@ export async function onMapHover(this: W_Map, hoverObj?: AnyObject & HoveredObje
   /** If hovering then wait for the cursor to settle on an object before firing data request */
   } else {
 
+    if((hoverObj.properties as any)?._is_from_osm === true){
+      this.setState({ hoverObj, hoverCoords, hovData: hoverObj.properties });
+      return
+    }
+
     /** Throttle  */
     this.hovering = {
       hoverObj: { ...hoverObj },
@@ -61,22 +69,25 @@ export async function onMapHover(this: W_Map, hoverObj?: AnyObject & HoveredObje
             } else if(tableName) {
               const table = tables.find(t => t.name === tableName);
               if(table){
-                const select = table.columns
-                  .filter(c => ["geography", "geometry"].includes(c.udt_name))
-                  .reduce((a, v) => ({ ...a, [v.name]: 0 }), {});
-                const selectData = getMapSelect(layer, table.columns);
-                const filter = selectData.i.$jsonb_build_object? (i as AnyObject) : { 
-                  $filter: [
-                    selectData.i,
-                    "=",
-                    i
-                  ]
-                };
+                const selectCols = table.columns
+                  .filter(c => ["geography", "geometry"].includes(c.udt_name));
+                if(!selectCols.length){
+                  return;
+                }
+                const select = selectCols.reduce((a, v) => ({ ...a, [v.name]: 0 }), {});
+                const filter = getMapFilter(layer, table.columns, hoverObj.properties as any)?.filterValue;
+                // const filter = selectData.i.$jsonb_build_object? (i as AnyObject) : { 
+                //   $filter: [
+                //     selectData.i,
+                //     "=",
+                //     i
+                //   ]
+                // };
                 hovData = await prgl.db[tableName]?.findOne?.(filter, { select });
               }
             }
           } else if(i && typeof i === "string"){
-            hovData = (await getSQLHoverRow(layer, prgl.db, i))?.d;
+            hovData = (await getSQLHoverRow(layer as LayerSQL, prgl.db, i))?.d;
           }
           this.hovering = undefined;
  

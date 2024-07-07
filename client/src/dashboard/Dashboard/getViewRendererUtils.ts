@@ -1,12 +1,13 @@
-import { AnyObject, ParsedJoinPath } from "prostgles-types"; 
-import { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
-import { OmitDistributive } from "../../../../commonTypes/utils";
-import { matchObj } from "../ProstglesSQL/W_SQL"; 
-import { isEmpty } from "./Dashboard";
-import { ChartType, DBSchemaTablesWJoins, getDefaultLayout, Link, LinkSyncItem, NewChartOpts, PALETTE, WindowData, WindowSyncItem, WorkspaceSyncItem } from "./dashboardUtils";
-import {  ViewRenderer,ViewRendererProps } from "./ViewRenderer";
-import { ActiveRow } from "../W_Table/W_Table";
-import { DBSSchema } from "../../../../commonTypes/publishUtils";
+import { type AnyObject, type ParsedJoinPath, isEmpty } from "prostgles-types"; 
+import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
+import type { OmitDistributive} from "../../../../commonTypes/utils";
+import { matchObj } from "../../../../commonTypes/utils";
+import type { ChartType, DBSchemaTablesWJoins, Link, LinkSyncItem, NewChartOpts, WindowData, WindowSyncItem, WorkspaceSyncItem } from "./dashboardUtils";
+import { getDefaultLayout, PALETTE } from "./dashboardUtils";
+import type {  ViewRenderer,ViewRendererProps } from "./ViewRenderer";
+import type { ActiveRow } from "../W_Table/W_Table";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import { pageReload } from "../../components/Loading";
 
 type Args = ViewRendererProps & {
   links: LinkSyncItem[];
@@ -16,14 +17,13 @@ type Args = ViewRendererProps & {
 }
 export const getViewRendererUtils = function(this: ViewRenderer, { prgl, workspace, windows, links, tables }: Args){
 
-  const addWindow = async <CT extends ChartType,>(w: {
-    name?: string,
-    type: CT,
-    table_name?: string | null,
-    options?: WindowData["options"]
-  }, filter: SmartGroupFilter = []) => {
-    const { type, table_name, options = {}, name } = w;
+  const addWindow = async <CT extends ChartType,>(
+    w: { type: CT } & Partial<Pick<WindowData, "name" | "table_name" | "options" | "parent_window_id">>, 
+    filter: SmartGroupFilter = []
+  ) => {
+    const { options = { showFilters: false, refresh: { type: "Realtime", throttleSeconds: 1 } }, type, table_name, name, ...otherWindowOpts } = w;
     const res = await prgl.dbs.windows.insert({
+      ...otherWindowOpts,
       name,
       type,
       table_name,
@@ -33,15 +33,14 @@ export const getViewRendererUtils = function(this: ViewRenderer, { prgl, workspa
       fullscreen: false,
       workspace_id: workspace.id,
       limit: 500,
-
     } as DBSSchema["windows"],
       { returning: "*" }
     );
 
     setTimeout(() => {
-      if (!document.querySelector(`[data-box-id="${res.id}"]`)) {
+      if (!document.querySelector(`[data-box-id="${res.id}"]`) && !otherWindowOpts.parent_window_id) {
         console.error("SYNC FAIL BUG, REFRESHING");
-        location.reload();
+        pageReload("SYNC FAIL BUG")
       }
     }, 1000);
 
@@ -94,14 +93,20 @@ export const getViewRendererUtils = function(this: ViewRenderer, { prgl, workspa
     if (q.fullscreen) q.$update({ fullscreen: false });
   }
 
-  const onAddChart = (!prgl.dbs.windows.insert as boolean) ? undefined : async (args: NewChartOpts, q: WindowData) => {
+  const onAddChart = (!prgl.dbs.windows.insert as boolean) ? undefined : async (args: NewChartOpts, parentW: WindowData) => {
 
     const { name, linkOpts } = args;
     const type = args.linkOpts.type;
-    let extra: Partial<WindowData<"map">> | Partial<WindowData<"timechart">> = {};
+    let extra: Pick<WindowData<"map">, "parent_window_id" | "options"> | Pick<WindowData<"timechart">, "parent_window_id" | "options"> = {
+      parent_window_id: null,
+    };
     if (type === "map") {
-      extra = {
+      extra = {  
+        parent_window_id: parentW.id,
         options: {
+          dataOpacity: .5,
+          basemapOpacity: .25,
+          basemapDesaturate: 0,
           tileAttribution: {
             title: "© OpenStreetMap",
             url: "https://www.openstreetmap.org/"
@@ -111,21 +116,34 @@ export const getViewRendererUtils = function(this: ViewRenderer, { prgl, workspa
             limit: 2000,
             wait: 2
           },
+          refresh: {
+            type: "Realtime",
+            throttleSeconds: 1,
+            intervalSeconds: 1,
+          },
+          showCardOnClick: true,
+          showAddShapeBtn: true,
         }
       }
     } else if(type === "timechart"){
       extra = {
+        parent_window_id: parentW.id,
         options: {
           showBinLabels: "off",
           binValueLabelMaxDecimals: 3,
           statType: "Count All",
           missingBins: "show nearest",
+          refresh: {
+            type: "Realtime",
+            throttleSeconds: 1,
+            intervalSeconds: 1,
+          }
         }
       }
     }
     const w = await addWindow({ name, type, ...extra }) as WindowData;
 
-    addLink({ w1_id: q.id, w2_id: w.id, linkOpts });
+    addLink({ w1_id: parentW.id, w2_id: w.id, linkOpts });
   }
 
   type ClickRowOpts = { type: "table-row"; } | { type: "timechart"; value: ActiveRow["timeChart"] }
@@ -196,11 +214,6 @@ export const getViewRendererUtils = function(this: ViewRenderer, { prgl, workspa
   return {
     onClickRow,
     onAddChart,
-    addWindow,
     onLinkTable,
   }
-}
-
-function countDupes(arr: string[]){
-  return arr.reduce<{ [key: string]: number }>((a, v) => ({ ...a, [v]: (a[v] || 0)+1 }), {});
 }

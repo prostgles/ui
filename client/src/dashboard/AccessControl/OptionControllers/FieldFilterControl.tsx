@@ -1,10 +1,11 @@
 
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { isObject, ValidatedColumnInfo } from "prostgles-types";
+import React, { useCallback, useEffect, useMemo } from "react";
+import type { ValidatedColumnInfo } from "prostgles-types";
+import { isObject } from "prostgles-types";
 import Select from "../../../components/Select/Select";
 import { getKeys } from "../../SmartForm/SmartForm";
 import ErrorComponent from "../../../components/ErrorComponent";
-import { FieldFilter } from "../../../../../commonTypes/publishUtils"; 
+import type { FieldFilter } from "../../../../../commonTypes/publishUtils"; 
 import { mdiFilter } from "@mdi/js"; 
 import { Label } from "../../../components/Label";
 import { FlexCol, FlexRow } from "../../../components/Flex";
@@ -24,11 +25,11 @@ type FieldFilterControlProps = {
   title?: React.ReactNode;
 }
 
-function FieldFilterControl({ 
+export const FieldFilterControl = ({ 
   value, columns, onChange, label, 
   excluded, info, iconPath = mdiFilter, 
   expectAtLeastOne = false, title 
-}: FieldFilterControlProps){
+}: FieldFilterControlProps) => {
 
   const fieldOpts = [
     { key: "only these fields",       label: "Custom fields", ["data-command"]: "FieldFilterControl.type.custom" }, 
@@ -65,7 +66,7 @@ function FieldFilterControl({
       <Select className="mr-p5" 
         data-command="FieldFilterControl.type"
         fullOptions={fieldOpts} 
-        value={fieldOpt} 
+        value={fieldOpt}
         onChange={opt => {
           if(opt === "all fields"){
             setFields(true, true)
@@ -78,7 +79,8 @@ function FieldFilterControl({
     {(fieldOpt !== "all fields" || error) && 
       <FlexRow className="gap-0 p-1 ml-3" style={{ maxWidth: "min(800px, 100vw)"}}>
         {fieldOpt !== "all fields" && 
-          <Select id="Select" 
+          <Select
+            id="Select" 
             data-command="FieldFilterControl.select"
             value={fields} 
             fullOptions={fieldList} 
@@ -118,6 +120,4 @@ const getError = (v: FieldFilter, columns: ValidatedColumnInfo[], expectAtLeastO
       return "Cannot combine included and excluded fields";
     }
   }
-}
-
-export default FieldFilterControl;
+} 

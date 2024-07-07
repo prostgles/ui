@@ -1,13 +1,14 @@
-import { DB } from "prostgles-server/dist/Prostgles";
+import type { DB } from "prostgles-server/dist/Prostgles";
 import { omitKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
-import { DBS } from ".";
+import type { DBS } from ".";
 import { validateConnection } from "./connectionUtils/validateConnection";
-import { DBSConnectionInfo, isDemoMode } from "./electronConfig"; 
+import type { DBSConnectionInfo} from "./electronConfig";
+import { isDemoMode } from "./electronConfig"; 
 import { upsertConnection } from "./upsertConnection";
 import { tryCatch } from "prostgles-types";
 
 /** Add state db if missing */
-export const insertStateDatabase = async (db: DBS, _db: DB, con: DBSConnectionInfo) => {
+export const insertStateDatabase = async (db: DBS, _db: DB, con: DBSConnectionInfo | Partial<DBSConnectionInfo>) => {
 
   const connectionCount = await db.connections.count();
   if(!connectionCount){
@@ -17,7 +18,7 @@ export const insertStateDatabase = async (db: DBS, _db: DB, con: DBSConnectionIn
         ...con,
         user_id: null, 
         name: "Prostgles UI state database", 
-        type: !con.db_conn? 'Standard' : 'Connection URI',
+        type: !con.db_conn? "Standard" : "Connection URI",
         db_port: con.db_port || 5432,
         db_ssl: con.db_ssl || "disable",
         is_state_db: true,      
@@ -29,6 +30,8 @@ export const insertStateDatabase = async (db: DBS, _db: DB, con: DBSConnectionIn
     if(error){
       console.error("Failed to insert state database", error);
       throw error;
+    } else {
+      console.log("Inserted state database ", state_db?.db_name);
     }
 
     try {
@@ -55,11 +58,9 @@ export const insertStateDatabase = async (db: DBS, _db: DB, con: DBSConnectionIn
           is_state_db: false,
           name: SAMPLE_DB_LABEL,
         }, null, db);
+        console.log("Inserted sample connection for db ", con.db_name);
 
         if(isDemoMode()){
-          if(!con) {
-            throw "Sample connection not created";
-          }
 
           const demoModeUserRole = "default";
           const ac = await db.access_control.insert({ 
@@ -72,7 +73,6 @@ export const insertStateDatabase = async (db: DBS, _db: DB, con: DBSConnectionIn
             access_control_id: ac.id, 
             user_type: demoModeUserRole 
           });
-          
         }
       }
     } catch(err: any){

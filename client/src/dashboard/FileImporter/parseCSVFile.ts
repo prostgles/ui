@@ -1,6 +1,8 @@
-import { AnyObject, asName } from "prostgles-types";
+import type { AnyObject} from "prostgles-types";
+import { asName } from "prostgles-types";
 import { getStringFormat } from "../../utils";
-import { FileImporterState, getCSVFirstChunk } from "./FileImporter";
+import type { FileImporterState} from "./FileImporter";
+import { getCSVFirstChunk, getPapa } from "./FileImporter";
 
 export type Col = { key: string; dataType: string; escapedName: string; };
 
@@ -28,11 +30,12 @@ export async function parseCSVFile(file: File, config: FileImporterState["config
 
     return header;
   }
-
+  const papa = await getPapa();
   const { data } = await getCSVFirstChunk({
     file,
     preview: 4,
     skipEmptyLines: true,
+    papa,
   })
 
   const header = await hasHeaders(data);
@@ -41,6 +44,7 @@ export async function parseCSVFile(file: File, config: FileImporterState["config
     file,
     preview: 50,
     header,
+    papa,
   })    
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition

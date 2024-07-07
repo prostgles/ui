@@ -102,3 +102,21 @@ export const ENCODINGS = [
   "WIN1257", //	Windows CP1257	Baltic	Yes	Yes	1	 
   "WIN1258", //	Windows CP1258	Vietnamese	Yes	Yes	1	ABC, TCVN, TCVN5712, VSCII
 ]
+
+
+/*
+
+https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-ACTIVITY-VIEW
+document.querySelectorAll("div.table").forEach(n => {
+    const title = n.querySelector(".structname")
+    const tableName = title?.innerText;
+    if(!tableName) return;
+    const cols = Array.from(n.querySelectorAll("tbody tr")).map(c => ({
+        name: c.querySelector(".structname")?.innerText,c,
+        desc: c.querySelector("td:nth-child(2)")?.innerText,
+    }));
+    console.log(title, tableName, cols);
+});
+
+
+*/

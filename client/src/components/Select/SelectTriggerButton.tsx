@@ -1,7 +1,6 @@
 import React from "react"
 import Btn from "../Btn";
-import { FullOption, OptionKey, SelectProps, SelectState } from "./Select";
-import { sliceText } from "../../dashboard/SmartFilter/SmartFilter";
+import type { FullOption, OptionKey, SelectProps, SelectState } from "./Select"; 
 import SmartFormField from "../../dashboard/SmartForm/SmartFormField/SmartFormField";
 import { mdiClose, mdiMenuDown, mdiPencil } from "@mdi/js";
 
@@ -16,6 +15,7 @@ type P<O extends OptionKey, Multi extends boolean = false, Optional extends bool
   setState: (newState: SelectState) => void;
   setRef: (ref: HTMLButtonElement) => void;
   btnLabel: string;
+  showSelectedIcon: string | undefined;
 }
 export const SelectTriggerButton = <O extends OptionKey, Multi extends boolean = false, Optional extends boolean = false> (props: P<O, Multi, Optional>) => {
 
@@ -34,7 +34,7 @@ export const SelectTriggerButton = <O extends OptionKey, Multi extends boolean =
     disabledInfo,
     optional = false,
     onOpen,
-
+    showSelectedIcon,
     fullOptions,
     multiSelection,
     fixedBtnWidth,
@@ -73,9 +73,9 @@ export const SelectTriggerButton = <O extends OptionKey, Multi extends boolean =
     size={size}
     variant={chipMode? "icon" : "faded"}
     color={chipMode? "action" : "default"}
-    iconPath={iconPath ?? chipMode? mdiPencil : mdiMenuDown}
+    iconPath={showSelectedIcon ?? iconPath ?? (chipMode? mdiPencil : mdiMenuDown)}
     iconPosition={!btnProps?.iconPath? "right" : "left"} 
-    iconClassname={btnProps?.iconPath? "" : chipMode? undefined : "text-gray-400"}
+    iconClassname={(btnProps?.iconPath || showSelectedIcon)? "" : chipMode? undefined : "text-2"}
     disabledInfo={noOtherOption? "No other option" : disabledInfo}
     disabledVariant={noOtherOption? "no-fade" : undefined}
     {...btnProps}
@@ -106,15 +106,17 @@ export const SelectTriggerButton = <O extends OptionKey, Multi extends boolean =
         e.preventDefault();
       }
     }}
+    children={
+      (chipMode || showSelectedIcon)? null : (iconPath || btnProps?.children !== undefined)? (btnProps?.children ?? null) : <>
+        <div 
+          className={" text-ellipsis " + (value !== undefined? "text-color-0" : "text-color-1")} 
+          style={{ lineHeight: "18px"}}
+        >
+          {(!labelAsValue? btnLabel : SmartFormField.renderValue(undefined, btnLabel, !noOtherOption)) ?? emptyLabel}
+        </div>
+      </>
+    }
   >
-    {chipMode? null : (iconPath || btnProps?.children !== undefined)? (btnProps?.children ?? null) : <>
-      <div 
-        className={" text-ellipsis " + (value? "" : " text-gray-600")} 
-        style={{ lineHeight: "18px"}}
-      >
-        {(!labelAsValue? btnLabel : SmartFormField.renderValue(undefined, btnLabel, !noOtherOption)) ?? emptyLabel}
-      </div>
-    </>}
   </Btn>;
 
   const trigger = !optional? triggerButton : 

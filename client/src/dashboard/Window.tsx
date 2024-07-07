@@ -1,18 +1,20 @@
-import { mdiDotsVertical, } from "@mdi/js";
+import { mdiClose, mdiCog, mdiDotsVertical, mdiOpenInNew, } from "@mdi/js";
 
-import { SingleSyncHandles } from "prostgles-client/dist/SyncedTable";
-import React, { ReactNode } from "react";
-import ReactDOM from 'react-dom';
+import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import type { ReactNode } from "react";
+import React from "react";
+import ReactDOM from "react-dom";
 import Btn from "../components/Btn";
 import { ErrorTrap } from "../components/ErrorComponent";
+import { FlexCol, FlexRow } from "../components/Flex";
 import Popup from "../components/Popup/Popup";
-import { DBS } from "./Dashboard/DBS";
-import { CommonWindowProps } from "./Dashboard/Dashboard";
-import { OnAddChart, WindowData, WindowSyncItem } from "./Dashboard/dashboardUtils";
-import { ProstglesQuickMenu, ProstglesQuickMenuProps } from "./ProstglesQuickMenu";
-import RTComp, { DeepPartial } from "./RTComp";
-import { ReactSilverGridNode } from "./SilverGrid/SilverGrid";
-import { GridHeaderClassname } from "./SilverGrid/SilverGridChildHeader";
+import type { WindowData, WindowSyncItem } from "./Dashboard/dashboardUtils";
+import type { DeepPartial } from "./RTComp";
+import RTComp from "./RTComp";
+import type { ReactSilverGridNode } from "./SilverGrid/SilverGrid";
+import { getSilverGridTitleNode } from "./SilverGrid/SilverGridChildHeader";
+import type { ProstglesQuickMenuProps } from "./W_QuickMenu";
+import { W_QuickMenu } from "./W_QuickMenu";
 
 type P<W extends WindowSyncItem> = {
   w?: W;
@@ -22,12 +24,7 @@ type P<W extends WindowSyncItem> = {
   getMenu?: (w: W, onClose: () => any) => ReactNode;
 
 
-  quickMenuProps?: W extends WindowSyncItem<"table"> | WindowSyncItem<"sql">? {
-    tables?: CommonWindowProps["tables"];
-    setLinkMenu?: ProstglesQuickMenuProps["setLinkMenu"];
-    dbs: DBS;
-    onAddChart?: OnAddChart;
-  } : undefined
+  quickMenuProps?: W extends WindowSyncItem<"table"> | WindowSyncItem<"sql">? Omit<ProstglesQuickMenuProps, "w"> : undefined
 }
 
 type S<W extends WindowSyncItem> = {
@@ -50,7 +47,8 @@ export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W>
 
   }
 
-  static getTitle(w: WindowData){
+  static getTitle(_w: WindowSyncItem){
+    const w = _w.$get();
     return w.name || w.table_name || w.method_name || w.id || "Empty";
   }
 
@@ -58,7 +56,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W>
     const { w } = this.d;
     const { onWChange } = this.props;
     if(this.ref && w){
-      const titleDiv: HTMLDivElement | undefined = this.ref.parentElement?.querySelector(`:scope > .silver-grid-item-header > div > .${GridHeaderClassname}`) ?? undefined;
+      const titleDiv = getSilverGridTitleNode(w.id)
       const title = Window.getTitle(w);
       if(titleDiv && titleDiv.innerText !== title){
         titleDiv.innerText = title;
@@ -73,9 +71,9 @@ export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W>
     if(this.props.w && !this.d.wSync) {
 
       const wSync = this.props.w.$cloneSync((_w, delta) => {
-        const w = _w as any;// as any as W;
-        this.setData({ w }, { w: delta as any });
-        onWChange?.(w, delta as any)
+        const w = _w;
+        this.setData({ w }, { w: delta });
+        onWChange?.(w, delta)
         this.setState({ w })
       });
       
@@ -93,15 +91,10 @@ export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W>
     const { w } = this.d;
 
     if(!quickMenuProps || !w) return null;
-
-    const { setLinkMenu, dbs, tables, onAddChart  } = quickMenuProps;
     
-    return <ProstglesQuickMenu 
-        tables={tables} 
+    return <W_QuickMenu 
         w={w as any} 
-        dbs={dbs} 
-        setLinkMenu={setLinkMenu} 
-        onAddChart={onAddChart} 
+        {...quickMenuProps}
       />
   }
 
@@ -110,11 +103,9 @@ export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W>
   render(): ReactSilverGridNode | null {
     const { children, getMenu } = this.props;
     const { showMenu } = this.state;
-    const { w } = this.state;
+    const { w = this.props.w } = this.state;
 
-    if(!w) {
-      return null;
-    }
+    if(!w) return null;
 
     let menuPortal;
     const menuIconContainer = this.ref?.parentElement?.querySelector(":scope > .silver-grid-item-header > .silver-grid-item-header--icon");
@@ -139,7 +130,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W>
       this.setState({ showMenu: false })
     }
 
-    return <>
+    const windowContent = <>
       {menuPortal}
       <div key={w.id + "-content"} 
         className="flex-col f-1 min-h-0 min-w-0 relative"
@@ -157,20 +148,63 @@ export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W>
         <ErrorTrap>{children}</ErrorTrap>
       </div>
 
-      {showMenu && getMenu && <Popup
-        title={window.isLowWidthScreen? "Menu" : undefined} 
-        anchorEl={this.ref}
-        positioning={"inside"}
-        rootStyle={{ padding: 0 }}
-        clickCatchStyle={{ opacity: .5, backdropFilter: "blur(1px)" }}
-        contentClassName=""
-        contentStyle={{
-          overflow: "unset",
-        }}
-        onClose={closeMenu}
-      >
-        <ErrorTrap>{getMenu(w, closeMenu)}</ErrorTrap>
-      </Popup>}
+      {showMenu && getMenu && 
+        <Popup
+          title={window.isLowWidthScreen? "Menu" : undefined} 
+          fixedTopLeft={true}
+          anchorEl={this.ref}
+          positioning={"inside"}
+          rootStyle={{ padding: 0 }}
+          clickCatchStyle={{ opacity: .5, backdropFilter: "blur(1px)" }}
+          contentClassName=""
+          contentStyle={{
+            overflow: "unset",
+          }}
+          onClose={closeMenu}
+        >
+          <ErrorTrap>{getMenu(w, closeMenu)}</ErrorTrap>
+        </Popup>
+      }
     </>  
+
+    if(w.parent_window_id){
+      return <FlexCol className="f-1 gap-0 min-s-0 o-hidden">
+        <FlexRow className="p-p5">
+          <Btn className="f-0" 
+            title="Open menu"
+            variant="outline"
+            color="action"
+            iconPath={mdiCog}
+            data-command="dashboard.window.chartMenu"
+            onClick={() => {
+              this.setState({ showMenu: !showMenu })
+            }}
+          >
+            Chart options
+          </Btn>
+          <Btn
+            className="ml-auto"
+            variant="outline"
+            iconPath={mdiOpenInNew}
+            color="action"
+            data-command="dashboard.window.detachChart"
+            onClick={() => w.$update({ parent_window_id: null })}
+          >
+            Detach chart
+          </Btn>
+          <Btn 
+            variant="outline"
+            data-command="dashboard.window.closeChart"
+            iconPath={mdiClose}
+            onClick={() => w.$update({ closed: true })}
+          >
+            Close chart
+          </Btn>
+        </FlexRow>
+        {windowContent}
+      </FlexCol>
+    }
+
+    return windowContent;
   }
 }

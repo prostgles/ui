@@ -1,10 +1,12 @@
 import { isDefined } from "prostgles-types";
 import { parseFullFilter } from "../../../../commonTypes/publishUtils";
-import { Link, LinkSyncItem, PALETTE, windowIs, WindowSyncItem } from "../Dashboard/dashboardUtils";
-import { CrossFilters, getCrossFilters } from "../joinUtils";
+import type { Link, LinkSyncItem, WindowSyncItem } from "../Dashboard/dashboardUtils";
+import { PALETTE, windowIs } from "../Dashboard/dashboardUtils";
+import type { CrossFilters} from "../joinUtils";
+import { getCrossFilters } from "../joinUtils";
 import { getSmartGroupFilter } from "../SmartFilter/SmartFilter";
-import { LayerQuery, LayerSQL, LayerTable } from "./W_Map";
-import { ActiveRow } from "../W_Table/W_Table";
+import type { LayerOSM, LayerQuery, LayerSQL, LayerTable } from "./W_Map";
+import type { ActiveRow } from "../W_Table/W_Table";
 
 type Args = {
   links: LinkSyncItem[];
@@ -45,15 +47,37 @@ export const getMapLayerQueries = ({ links, myLinks, windows, active_row, w }: A
 
   const layerQueries: LayerQuery[] = myLinks.flatMap((l: Link)=> {
     const lOpts = l.options;
-    if(lOpts.type !== "map" || !lOpts.columns.length){
-      throw "columns missing from link"
+    if(lOpts.type !== "map" || (!lOpts.columns.length && !lOpts.osmLayerQuery)){
+      throw "columns/OSM query missing from link"
     }
     const isLocalLayerLink = l.w1_id === l.w2_id;
     const linkW = isLocalLayerLink? undefined : windows.find(_w => (windowIs(_w, "table") || windowIs(_w, "sql")) && _w.id !== w.id && [l.w1_id, l.w2_id].includes(_w.id));
     const joinEndTable = lOpts.joinPath?.at(-1);
     const tableName = isLocalLayerLink? lOpts.localTableName : (joinEndTable?.table ?? linkW?.table_name);
 
-    return lOpts.columns.flatMap(({ colorArr: _colorArr, name: geomColumn,  }, columnIndex) => {
+    if(lOpts.osmLayerQuery){
+      const { colorArr, colorStr } = getLinkColor(lOpts.colorArr);
+      const fillColor = colorArr; 
+      const lineColor = colorArr;
+      const color = colorStr;
+      const query = lOpts.osmLayerQuery;
+      return {
+        ...l.options,
+        disabled: !!l.disabled,
+        _id: `${l.id}`,
+        linkId: l.id,
+        // fillColor,
+        // lineColor,
+        color, 
+        // wid: linkW?.id, 
+        // path: undefined,
+        geomColumn: "",
+        type: "osm",
+        query,
+      } satisfies LayerOSM
+    }
+
+    const columnLayerQueries: LayerQuery[] = lOpts.columns.flatMap(({ colorArr: _colorArr, name: geomColumn,  }, columnIndex) => {
 
       const { colorArr, colorStr } = getLinkColor(_colorArr);
 
@@ -119,7 +143,9 @@ export const getMapLayerQueries = ({ links, myLinks, windows, active_row, w }: A
       } else {
         console.error("Why linkW is missing?");
       }
-    })
+    }).filter(isDefined);
+
+    return columnLayerQueries;
 
   }).filter(isDefined)
     

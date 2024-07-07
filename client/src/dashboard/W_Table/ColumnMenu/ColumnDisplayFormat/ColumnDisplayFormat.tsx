@@ -1,10 +1,11 @@
-import { DBSchemaTable } from "prostgles-types";
+import type { DBSchemaTable } from "prostgles-types";
 import React from "react";
-import { JSONBSchema, JSONBSchemaA } from "../../../../components/JSONBSchema/JSONBSchema";
-import { ColumnConfigWInfo } from "../../W_Table";
-import { DeepWriteable } from "../../../../../../commonTypes/utils";
-import { ColumnFormat, ColumnFormatSchema, getFormatOptions } from "./columnFormatUtils";
-import { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
+import { JSONBSchema } from "../../../../components/JSONBSchema/JSONBSchema";
+import type { ColumnConfigWInfo } from "../../W_Table";
+import type { DeepWriteable } from "../../../../../../commonTypes/utils";
+import type { ColumnFormat} from "./columnFormatUtils";
+import { ColumnFormatSchema, getFormatOptions } from "./columnFormatUtils";
+import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 
   
 type P = {

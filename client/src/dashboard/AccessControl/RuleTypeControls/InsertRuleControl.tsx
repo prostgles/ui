@@ -1,12 +1,12 @@
 import { mdiFileDocumentPlusOutline } from "@mdi/js";
 import { isObject } from "prostgles-types";
 import React from "react";
-import { InsertRule, TableRules } from "../../../../../commonTypes/publishUtils";
+import type { InsertRule, TableRules } from "../../../../../commonTypes/publishUtils";
 import ErrorComponent from "../../../components/ErrorComponent";
-import FieldFilterControl from "../OptionControllers/FieldFilterControl";
-import { ContextDataSchema, FilterControl, SingleGroupFilter } from "../OptionControllers/FilterControl";
-import { ForcedDataControl } from "../OptionControllers/ForcedDataControl";
-import { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
+import { FieldFilterControl } from "../OptionControllers/FieldFilterControl";
+import type { ContextDataSchema, SingleGroupFilter } from "../OptionControllers/FilterControl";
+import { FilterControl } from "../OptionControllers/FilterControl";
+import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { ExampleComparablePolicy } from "./ExampleComparablePolicy";
 import { RuleToggle } from "./RuleToggle";
 import { RuleExpandSection } from "./SelectRuleControl";
@@ -46,7 +46,7 @@ export const InsertRuleControl = ({ rule: rawRule, onChange, table, prgl, tableR
         }} 
       />
 
-      <ForcedDataControl
+      {/* <ForcedDataControl
         title="INSERT forced data"
         info={<div className="flex-col gap-1">
           <div>Data added to each insert. These fields cannot be inserted by the user</div>
@@ -59,14 +59,14 @@ export const InsertRuleControl = ({ rule: rawRule, onChange, table, prgl, tableR
         onChange={forcedDataDetail => {
           onChange({ ...rule, forcedDataDetail, })
         }}
-      />
+      /> */} 
 
       <FilterControl 
         label="Check"
         mode="checkFilter"
         info={
           <div className="flex-col gap-1">
-            <div>New records must satisfy this condition</div>
+            <div>New records must satisfy a condition</div>
           </div>
         }
         db={prgl.db}
@@ -89,8 +89,7 @@ export const InsertRuleControl = ({ rule: rawRule, onChange, table, prgl, tableR
           rule={rule}
           table={table}
           userTypes={userTypes}
-          prgl={prgl}
-          contextDataSchema={contextData}
+          prgl={prgl} 
         />
       </RuleExpandSection>
     </>}

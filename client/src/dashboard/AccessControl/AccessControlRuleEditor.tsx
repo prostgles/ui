@@ -1,26 +1,30 @@
-import React, { PropsWithChildren, useState } from 'react';
+import type { PropsWithChildren } from "react";
+import React, { useState } from "react";
 
-import { mdiAccount, mdiClose, mdiTableAccount, mdiTableLock } from "@mdi/js";
-import { ContextDataObject, DBSSchema, TableRulesErrors } from "../../../../commonTypes/publishUtils";
-import { dataCommand } from '../../Testing';
+import { mdiAccount, mdiArrowLeft, mdiClose, mdiTableAccount, mdiTableLock } from "@mdi/js";
+import { usePromise } from "prostgles-client/dist/react-hooks";
+import type { ContextDataObject, DBSSchema, TableRulesErrors } from "../../../../commonTypes/publishUtils";
+import { dataCommand } from "../../Testing";
 import Btn from "../../components/Btn";
 import ButtonGroup from "../../components/ButtonGroup";
 import ErrorComponent from "../../components/ErrorComponent";
 import { FlexCol, FlexRow, classOverride } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
-import Loading from '../../components/Loading';
-import { CommonWindowProps } from "../Dashboard/Dashboard";
-import { PublishedMethods } from "../ProstglesMethod/PublishedMethods";
-import { AccessControlAction, AccessControlState, AccessRule, EditedAccessRule } from "./AccessControl";
+import Loading from "../../components/Loading";
+import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import { PublishedMethods } from "../W_Method/PublishedMethods";
+import type { AccessControlAction, AccessRule, EditedAccessRule } from "./AccessControl";
 import { AccessRuleEditorFooter } from "./AccessRuleEditorFooter";
 import { PAllTables } from "./PermissionTypes/PAllTables";
 import { PCustomTables } from "./PermissionTypes/PCustomTables";
 import { PRunSQL } from "./PermissionTypes/PRunSQL";
 import { PublishedWorkspaceSelector } from "./PublishedWorkspaceSelector";
+import { ComparablePGPolicies } from "./RuleTypeControls/ComparablePGPolicies";
 import { UserStats } from "./UserStats";
 import { UserTypeSelect } from "./UserTypeSelect";
-import { ValidEditedAccessRuleState, useEditedAccessRule } from "./useEditedAccessRule";
-import { usePromise } from "../ProstglesMethod/hooks";
+import { useAccessControlSearchParams } from "./useAccessControlSearchParams";
+import type { ValidEditedAccessRuleState } from "./useEditedAccessRule";
+import { useEditedAccessRule } from "./useEditedAccessRule";
 
 
 const ACCESS_TYPES = ["Custom", "All views/tables", "Run SQL"] as const;
@@ -35,9 +39,9 @@ export type TableErrors = Record<string, TableRulesErrors> | string;
 
 type UserGroupRuleEditorProps = Pick<CommonWindowProps, "prgl">  & {
   action: AccessControlAction;
-  connection: Required<AccessControlState>["connection"];
+  connection: DBSSchema["connections"];
   database_config: DBSSchema["database_configs"];
-  dbsConnection: Required<AccessControlState>["connection"];  
+  dbsConnection: DBSSchema["connections"];
   onCancel: VoidFunction;
 }
 
@@ -49,23 +53,30 @@ export const AccessControlRuleEditor = ({
     dbs, dbsTables, dbsMethods, connection,  tables
   } = prgl;
   const editedRule = useEditedAccessRule({ action, prgl });
-  
+  const { setAction } = useAccessControlSearchParams();
   const [wspErrors, setWspErrors] = useState<string>();
  
   const currentSQLUser: string | undefined = usePromise(async () => await prgl.db.sql?.(`SELECT "current_user"()`, {}, { returnType: "value" }));
-
+  const type = editedRule?.type;
   if(!editedRule){
     return <Loading />;
   }
- 
-  if(editedRule.type === "edit-not-found"){
-    return <ErrorComponent error={`${action.selectedRuleId} was not found`} />
+  if(type === "edit-not-found"){
+    return <FlexCol className="f-1">  
+      <ErrorComponent error={`Access rule id ${action.selectedRuleId} was not found`} />
+      <Btn 
+        iconPath={mdiArrowLeft}
+        color="action"
+        variant="faded"
+        onClick={() => {
+          setAction(undefined)
+        }}
+      >Show all rules</Btn>
+    </FlexCol>
   }
 
   const { userTypes, onChange, newRule, rule } = editedRule;
   const title = action.selectedRuleId? `Edit rule` : action.type === "create-default"? "Create default rule" : "Create new rule";
-
-
   const { dbPermissions, dbsPermissions } = newRule ?? {};
 
   const tablesWithRules = tables.map(t => {
@@ -86,12 +97,12 @@ export const AccessControlRuleEditor = ({
     rule,
     editedRule,
   }
-    
+
   return <FlexCol 
     className={"AccessRuleEditor f-1 gap-2 min-s-0 jc-none"}
   >
 
-    <FlexRow className="bt b-gray-300 text-1p5"> 
+    <FlexRow className="bt b-color text-1"> 
       <div className="py-1 font-20 bold noselect f-1 ws-nowrap text-ellipsis">
         {title}
       </div>
@@ -103,7 +114,7 @@ export const AccessControlRuleEditor = ({
     </FlexRow>
      
     <FlexRow> 
-      <SectionHeader icon={mdiAccount} className=" mr-auto ">
+      <SectionHeader icon={mdiAccount} className=" ">
         Target user types
       </SectionHeader>
 
@@ -229,7 +240,7 @@ export const AccessControlRuleEditor = ({
               onChange={newDBPerm => onChange({ ...rule, dbPermissions: newDBPerm })}
             />
           }
-
+          {dbPermissions.type !== "Run SQL" && rule && <ComparablePGPolicies prgl={prgl} rule={rule}  />}
         </div>
       
         <PublishedMethods 
@@ -257,9 +268,12 @@ export const AccessControlRuleEditor = ({
   </FlexCol>
 }
 
-export const SectionHeader = ({ icon, children, className }: PropsWithChildren<{ icon: string; className?: string; }>) => {
-  return <div className={classOverride("SectionHeader flex-row gap-p5 ai-center", className)}>
-    <Icon path={icon} />
-    <h3 className="m-0 p-0">{children}</h3>
+export const SectionHeader = ({ icon, children, className, size }: PropsWithChildren<{ icon?: string; className?: string; size?: "small"; }>) => {
+  
+  const isSmall = size === "small";
+  const content = isSmall? <h4 className="m-0 p-0">{children}</h4> : <h3 className="m-0 p-0">{children}</h3>;
+  return <div className={classOverride(`SectionHeader flex-row gap-1 ai-center ${isSmall? "font-16" : ""}`, className)}>
+    {icon && <Icon path={icon} size={1} />}
+    {content}
   </div>
 }

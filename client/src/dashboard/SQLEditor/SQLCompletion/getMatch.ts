@@ -3,7 +3,7 @@ import { MatchAlter } from "./MatchAlter/MatchAlter";
 import { MatchCopy } from "./MatchCopy";
 import { MatchCreate } from "./MacthCreate/MatchCreate";
 import { MatchLast } from "./MatchLast";
-import { MaybeMatch } from "./MatchFirst";
+import { MatchFirst } from "./MatchFirst";
 import { MatchSelect } from "./MatchSelect";
 import { MatchDrop } from "./MatchDrop";
 import { MatchUpdate } from "./MatchUpdate";
@@ -13,7 +13,7 @@ import { MatchDelete } from "./MathDelete";
 import { MatchReassign } from "./MatchReassign"; 
 import { MatchWith } from "./MatchWith";
 import { MatchGrant } from "./MatchGrant";
-import { SQLMatchContext } from "./registerSuggestions";
+import type { SQLMatchContext } from "./registerSuggestions";
 import { MatchVacuum } from "./MatchVacuum";
 import { MatchReindex } from "./MatchReindex";
 import { MatchPublication } from "./MatchPublication";
@@ -42,8 +42,8 @@ export const SQLMatchers = {
 } as const; 
 type MatchFilter = (keyof typeof SQLMatchers)[];
 
-export const getMatch = async ({ cb, getKind, setS: settingS, sql, ss, filter }: SQLMatchContext & { filter?: MatchFilter }) => {
-  const firstTry = await MaybeMatch(cb, ss, settingS, sql, getKind);
+export const getMatch = async ({ cb, setS, sql, ss, filter }: SQLMatchContext & { filter?: MatchFilter }) => {
+  const firstTry = await MatchFirst({ cb, ss, setS, sql });
   if(firstTry) {
     return { firstTry, match: undefined };
   }

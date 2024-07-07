@@ -1,10 +1,11 @@
 
 import { setPan } from "../setPan";
-import React from 'react';
+import React from "react";
 
 import { vibrateFeedback } from "../Dashboard/dashboardUtils";
 import RTComp from "../RTComp";
-import { isTouchDevice, LayoutItem } from "./SilverGrid";
+import type { LayoutItem } from "./SilverGrid";
+import { isTouchDevice } from "./SilverGrid";
 
 type LayoutSize = Pick<LayoutItem, "id" | "size" >;
 
@@ -56,7 +57,6 @@ export class SilverGridResizer extends RTComp<SilverGridResizerProps, Record<str
           bottomOffset = nextRect.y + nextRect.height;
 
         let prevFlex, nextFlex;
-        console.log("prevRectHeight", prevRect.height)
 
         const rWh = this.ref.getBoundingClientRect().width/2,
           rHh = this.ref.getBoundingClientRect().height/2,
@@ -82,7 +82,7 @@ export class SilverGridResizer extends RTComp<SilverGridResizerProps, Record<str
         this.sizes = {
           prev: { id: prevS.dataset["boxId"]!, size: prevFlex },
           next: { id: nextS.dataset["boxId"]!, size: nextFlex }
-        }
+        };
       }
     })
   }

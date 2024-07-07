@@ -3,10 +3,11 @@ import {
   mdiBackupRestore, mdiDatabasePlusOutline, mdiDelete, mdiDownload,
   mdiFileUploadOutline, mdiGestureTapButton, mdiRefreshAuto, mdiStop
 } from "@mdi/js";
-import { AnyObject } from "prostgles-types";
+import type { AnyObject } from "prostgles-types";
 import React, { useState } from "react";
-import { PGDumpParams } from "../../../../commonTypes/utils";
-import { Prgl } from "../../App";
+import type { PGDumpParams} from "../../../../commonTypes/utils";
+import { sliceText } from "../../../../commonTypes/utils";
+import type { Prgl } from "../../App";
 import { dataCommand } from "../../Testing";
 import Btn from "../../components/Btn";
 import ButtonGroup from "../../components/ButtonGroup";
@@ -16,18 +17,17 @@ import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
 import PopupMenu from "../../components/PopupMenu";
 import { ProgressBar } from "../../components/ProgressBar";
-import CodeEditor from "../CodeEditor";
-import { DBS, DBSMethods } from "../Dashboard/DBS";
-import { Backups } from "../Dashboard/dashboardUtils";
-import { usePromise } from "../ProstglesMethod/hooks";
-import { StyledInterval } from "../ProstglesSQL/customRenderers";
-import { FieldConfig, FieldConfigRender } from "../SmartCard/SmartCard";
-import SmartCardList from "../SmartCard/SmartCardList";
-import { sliceText } from "../SmartFilter/SmartFilter";
+import CodeEditor from "../CodeEditor/CodeEditor";
+import type { DBS, DBSMethods } from "../Dashboard/DBS";
+import type { Backups } from "../Dashboard/dashboardUtils"; 
+import { StyledInterval } from "../W_SQL/customRenderers";
+import type { FieldConfig, FieldConfigRender } from "../SmartCard/SmartCard";
+import SmartCardList from "../SmartCard/SmartCardList"; 
 import { AutomaticBackups } from "./AutomaticBackups";
 import { CodeConfirmation } from "./CodeConfirmation";
 import { DEFAULT_DUMP_OPTS, DumpOptions } from "./DumpOptions";
-import RestoreOptions from "./RestoreOptions";
+import { RestoreOptions } from "./RestoreOptions";
+import { usePromise } from "prostgles-client/dist/react-hooks";
 
 const BACKUP_FILTER_OPTS = [
   { key: "This connection"     }, 
@@ -35,12 +35,11 @@ const BACKUP_FILTER_OPTS = [
   { key: "All connections"     }
 ] as const;
 
-function BackupsControls({ prgl: { connectionId, serverState, dbs, dbsTables, dbsMethods, theme } }: { prgl: Prgl; }){
+export const BackupsControls = ({ prgl: { connectionId, serverState, dbs, dbsTables, dbsMethods, theme, db } }: { prgl: Prgl; }) => {
 
   const connection_id = connectionId;
  
-  const [backupsFilterType, setBackupsFilterType] = useState<typeof BACKUP_FILTER_OPTS[number]["key"]>(BACKUP_FILTER_OPTS[0].key)
-  
+  const [backupsFilterType, setBackupsFilterType] = useState<typeof BACKUP_FILTER_OPTS[number]["key"]>(BACKUP_FILTER_OPTS[0].key);
   
   const [dumpOpts, setDumpOpts] = useState<PGDumpParams>(DEFAULT_DUMP_OPTS);
   const [hasBackups, sethasBackups] = useState(false);
@@ -110,10 +109,12 @@ function BackupsControls({ prgl: { connectionId, serverState, dbs, dbsTables, db
   const backupFilter = backupsFilterType === "This connection"? { connection_id } : 
     backupsFilterType === "Deleted connections"? { connection_id: null } : 
     {};
-  const completedBackupsFilter = { $and: [
-    backupFilter,
-    { "status->ok": { "<>": null } }
-  ]};
+  const completedBackupsFilter = { 
+    $and: [
+      backupFilter,
+      { "status->ok": { "<>": null } }
+    ]
+  };
   
   return <div className="flex-col gap-2 f-1 min-h-0 w-fit">
     
@@ -122,12 +123,17 @@ function BackupsControls({ prgl: { connectionId, serverState, dbs, dbsTables, db
 
       <PopupMenu 
         button={
-          <Btn variant="filled" color="action" iconPath={mdiDatabasePlusOutline} { ...dataCommand("config.bkp.create")}>
+          <Btn 
+            variant="filled" 
+            color="action" 
+            iconPath={mdiDatabasePlusOutline} 
+            { ...dataCommand("config.bkp.create")}
+          >
             Create backup
           </Btn>
-        } 
-        positioning="center"
+        }
         title="Create backup"
+        clickCatchStyle={{ opacity: .5 }}
         footerButtons={popupClose => [
           {
             label: "Cancel", onClickClose: true,
@@ -149,30 +155,17 @@ function BackupsControls({ prgl: { connectionId, serverState, dbs, dbsTables, db
           }
         ]}
         render={popupClose => (
-          <div className="flex-col gap-1 f-1 min-s-0">
+          <div className="flex-col gap-1 f-1 min-s-0 bg-inherit">
             <DumpOptions 
               theme={theme}
               connectionId={connection_id}
               dbsMethods={dbsMethods}
               dbs={dbs} 
+              dbProject={db}
               dbsTables={dbsTables}
               opts={dumpOpts} 
               onChange={setDumpOpts}
             />
-            {/* <div className="flex-row gap-1">
-              <Btn variant="outline" 
-                onClick={popupClose}
-              >
-                Cancel
-              </Btn>
-              <Btn variant="filled" 
-                color="action"
-                { }
-                onClickPromise={}
-              >
-                Start backup
-              </Btn>
-            </div> */}
           </div>
         )} 
       />   
@@ -180,12 +173,14 @@ function BackupsControls({ prgl: { connectionId, serverState, dbs, dbsTables, db
       {serverState.isElectron? <></> : <AutomaticBackups 
         theme={theme}
         dbs={dbs} 
+        db={db}
         dbsTables={dbsTables}
         connectionId={connection_id}
         dbsMethods={dbsMethods}
       />}
       
       <RestoreOptions
+        db={db}
         dbs={dbs}
         connectionId={connection_id}
         dbsMethods={dbsMethods}
@@ -374,9 +369,10 @@ function BackupsControls({ prgl: { connectionId, serverState, dbs, dbsTables, db
         <div className="flex-row-wrap gap-1 jc-end ai-center show-on-parent-hoverdd"> 
 
           <CodeConfirmation
+            title={"Delete the backup file from storage"}
             show={!row.uploaded? "confirmButton" : undefined}
             button={<Btn iconPath={mdiDelete} title="Will need to confirm" >Delete</Btn>} 
-            message={<InfoRow color="warning">Will delete the backup file from storage. This action is not reversible!</InfoRow>} 
+            message={<InfoRow color="warning">This action is not reversible!</InfoRow>} 
             confirmButton={(popupClose) =>
               <>
                 <Btn iconPath={mdiDelete} variant="outline" color="danger" onClickPromise={() => dbsMethods.bkpDelete!(row.id).then(popupClose)}>
@@ -401,6 +397,7 @@ function BackupsControls({ prgl: { connectionId, serverState, dbs, dbsTables, db
 
           <RestoreOptions 
             dbs={dbs}
+            db={db}
             backupId={row.id}
             connectionId={connection_id}
             dbsMethods={dbsMethods}
@@ -410,12 +407,16 @@ function BackupsControls({ prgl: { connectionId, serverState, dbs, dbsTables, db
                 title="Will need to confirm" 
                 variant="filled" 
                 color="action"
+                data-command="BackupControls.Restore"
               >
                 Restore...
               </Btn>
             }
             onReadyButton={(restoreOpts, popupClose) => 
-              <Btn iconPath={mdiBackupRestore}  variant="filled" color="action" 
+              <Btn 
+                iconPath={mdiBackupRestore}  
+                variant="filled" 
+                color="action" 
                 onClickPromise={() => dbsMethods.pgRestore!({ bkpId: row.id, connId: connectionId }, restoreOpts).then(popupClose)}
               >Restore</Btn>
             } 
@@ -424,23 +425,30 @@ function BackupsControls({ prgl: { connectionId, serverState, dbs, dbsTables, db
         </div>
       }
       noDataComponent={
-        <InfoRow className="" variant="filled" color="info" iconPath="" style={{ padding: "2em 2em", background: `var(--gray-200)` }}>No completed backups</InfoRow>
+        <InfoRow className="" variant="filled" color="info" iconPath="" style={{ padding: "2em 2em" }}>No completed backups</InfoRow>
       }
       // noDataComponentMode="hide-all"
     />
 
-    {hasBackups && <DeleteAllBackups dbs={dbs} dbsMethods={dbsMethods} filter={completedBackupsFilter} filterName={backupsFilterType} />}
+    {hasBackups && 
+      <DeleteAllBackups 
+        dbs={dbs} 
+        dbsMethods={dbsMethods} 
+        filter={completedBackupsFilter} 
+        filterName={backupsFilterType} 
+      />
+    }
 
   </div> 
-}
-export default BackupsControls;
+};
 
 type DeleteAllBackupsProps = {
   dbs: DBS;
   dbsMethods: DBSMethods;
   filter: AnyObject;
   filterName: string;
-}
+};
+
 const DeleteAllBackups = ({ dbs, filter, dbsMethods, filterName }: DeleteAllBackupsProps) => {
 
   const onDeleteAll = async (popupClose: VoidFunction) => {
@@ -457,6 +465,7 @@ const DeleteAllBackups = ({ dbs, filter, dbsMethods, filterName }: DeleteAllBack
 
   return <CodeConfirmation
     className="ml-p25"
+    positioning="center"
     button={<Btn iconPath={mdiDelete} color="danger" title="Will need to confirm" >Delete all...</Btn>} 
     message={<InfoRow style={{ alignItems: "center" }} color="danger">Will delete ALL backup files from storage for <strong>{filterName}</strong>. This action is not reversible!</InfoRow>} 
     confirmButton={(popupClose) =>
@@ -471,13 +480,13 @@ const DeleteAllBackups = ({ dbs, filter, dbsMethods, filterName }: DeleteAllBack
       </>
     }
   />
-} 
+};
   
 export function bytesToSize(bytes) {
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  if (bytes == 0) return '0 Byte';
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+  if (bytes == 0) return "0 Byte";
   const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)) + "");
-  return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i];
+  return (bytes / Math.pow(1024, i)).toFixed(2) + " " + sizes[i];
 }
 
 

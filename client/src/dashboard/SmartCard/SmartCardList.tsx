@@ -1,20 +1,24 @@
 import React from "react";
 
 import RTComp from "../RTComp"; 
-import { ValidatedColumnInfo, AnyObject, TableInfo, SubscriptionHandler, getKeys, FilterItem } from "prostgles-types";
+import type { ValidatedColumnInfo, AnyObject, TableInfo, SubscriptionHandler, FilterItem } from "prostgles-types";
+import { getKeys } from "prostgles-types";
 import Loading from "../../components/Loading";
-import SmartCard, { FieldConfig } from "./SmartCard";
-import { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { FieldConfig } from "./SmartCard";
+import SmartCard from "./SmartCard";
+import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import Btn from "../../components/Btn";
 import { mdiDelete } from "@mdi/js";
 import ErrorComponent from "../../components/ErrorComponent";
 import SortByControl from "../SmartFilter/SortByControl";
 import W_Table from "../W_Table/W_Table";
 import { InsertButton } from "../SmartForm/InsertButton";
-import { Pagination, PaginationProps } from "../../components/Table/Pagination";
-import { Prgl } from "../../App";
+import type { PaginationProps } from "../../components/Table/Pagination";
+import { Pagination } from "../../components/Table/Pagination";
+import type { Prgl } from "../../App";
 import { getSmartCardColumns } from "./getSmartCardColumns";
-import { SmartFormProps } from "../SmartForm/SmartForm";
+import type { SmartFormProps } from "../SmartForm/SmartForm";
+import { FlexCol } from "../../components/Flex";
 
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<Prgl, "db" | "tables" | "methods" | "theme"> & {
@@ -263,10 +267,13 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<SmartCard
       return (
         <div 
           key={getKey(defaultData)}
-          className={`${rowProps?.className ?? ""} relative`}
-          style={rowProps?.style}
+          className="relative"
+          // className={`${rowProps?.className ?? ""} relative`}
+          // style={rowProps?.style}
         >
           <SmartCard
+            contentClassname={rowProps?.className}
+            contentStyle={rowProps?.style}
             theme={theme}
             db={db as any}
             methods={methods} 
@@ -313,7 +320,7 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<SmartCard
 
       {sort && <>
         {!("data" in this.props) && this.props.orderByfields?.length !== 0 && 
-          <SortByControl //buttonClassName={ " bg-gray-500 " : "b b-gray-200"}
+          <SortByControl 
             btnProps={this.props.btnColor === "gray"? { color: "default", variant: "faded" } : {}}
             fields={this.props.orderByfields} 
             columns={columns} 
@@ -335,7 +342,8 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<SmartCard
       </>}
     </div> : null;
 
-    return <div className={"SmartCardList flex-col o-auto p-p25 gap-p5 relative " + className} 
+    return <FlexCol className={"SmartCardList o-auto p-p25 gap-p5 relative " + className} 
+      data-command="SmartCardList"
       style={{
         ...style,
         flex: "0 1 auto", // Allow the body to grow with content, ensuring height is always not greater than content 
@@ -350,7 +358,7 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<SmartCard
         onPageSizeChange={pageSize => this.setState({ pageSize })}
       />
       {footer}
-    </div>
+    </FlexCol>
   }
 }
 

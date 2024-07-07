@@ -1,14 +1,13 @@
-import React from "react";
-import { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
-import { W_TableInfo } from "./getTableMeta";
-import { asName } from "prostgles-types";
 import { mdiDatabaseRefreshOutline, mdiDelete, mdiPlus } from "@mdi/js";
+import { asName } from "prostgles-types";
+import React from "react";
 import Btn from "../../../components/Btn";
-import Chip from "../../../components/Chip";
 import { FlexCol, FlexRow } from "../../../components/Flex";
-import SmartCardList from "../../SmartCard/SmartCardList";
 import { InfoRow } from "../../../components/InfoRow";
 import Select from "../../../components/Select/Select";
+import SmartCardList from "../../SmartCard/SmartCardList";
+import type { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
+import type { W_TableInfo } from "./getTableMeta";
 
 type P = W_TableMenuProps & {
   tableMeta: W_TableInfo | undefined;
@@ -29,7 +28,7 @@ export const W_TableMenu_Indexes = ({ tableMeta, onSetQuery, w, cols, prgl }: P)
         sqlQuery: `
           SELECT tablename, indexname, indexdef
           FROM pg_indexes
-          WHERE schemaname = 'public' AND tablename = \${tableName}
+          WHERE schemaname = 'public' AND format('%I', tablename) = \${tableName}
         `,
         dataAge: prgl.dbKey,
         args: { tableName }
@@ -73,7 +72,11 @@ export const W_TableMenu_Indexes = ({ tableMeta, onSetQuery, w, cols, prgl }: P)
               onClick={() => { 
                 onSetQuery({
                   title: "Reindex",
-                  contentTop: `REINDEX is similar to a drop and recreate of the index in that the index contents are rebuilt from scratch. If "CONCURRENTLY" is used PostgreSQL will rebuild the index without taking any locks that prevent concurrent inserts, updates, or deletes on the table`,
+                  contentTop: <>
+                    REINDEX is similar to a drop and recreate of the index in that the index contents are rebuilt from scratch. 
+                    <br></br>
+                    If "CONCURRENTLY" is used PostgreSQL will rebuild the index without taking any locks that prevent concurrent inserts, updates, or deletes on the table
+                  </>,
                   sql: `REINDEX INDEX ${asName(indexname)}`,
                 }) 
               }} 
@@ -118,7 +121,7 @@ export const W_TableMenu_Indexes = ({ tableMeta, onSetQuery, w, cols, prgl }: P)
         onChange={val => {
           onSetQuery({
             title: "Create index",
-            sql: `CREATE INDEX ON public.${asName(tableName)} \nUSING ${val.toLowerCase().replaceAll("-", "")} (${cols.map(c => c.name).join(", ")}) `,
+            sql: `CREATE INDEX ON public.${tableName} \nUSING ${val.toLowerCase().replaceAll("-", "")} (${cols.map(c => c.name).join(", ")}) `,
           });
         }}
       />
@@ -127,7 +130,7 @@ export const W_TableMenu_Indexes = ({ tableMeta, onSetQuery, w, cols, prgl }: P)
         onClick={() => { 
           onSetQuery({
             title: "Reindex table",
-            sql: `REINDEX TABLE ${asName(tableName)} `,
+            sql: `REINDEX TABLE ${tableName} `,
             contentTop: `REINDEX is similar to a drop and recreate of the index in that the index contents are rebuilt from scratch`,
           }) 
         }}

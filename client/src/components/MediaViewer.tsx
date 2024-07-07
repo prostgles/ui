@@ -1,10 +1,13 @@
-import { mdiChevronLeft } from "@mdi/js";
-import Icon from "@mdi/react";
+import { mdiChevronLeft } from "@mdi/js"; 
 import React from "react";
 import RTComp from "../dashboard/RTComp";
 import Popup from "./Popup/Popup";
+import { Icon } from "./Icon/Icon";
+import { FlexCol } from "./Flex";
+import Chip from "./Chip";
 
 export const ContentTypes = ["image",  "video", "audio"] as const;
+type ValidContentType = typeof ContentTypes[number];
 
 type P = {
   url?: string;
@@ -20,19 +23,12 @@ type P = {
    * If present then check URL hostname before requesting
    */
   allowedHostnames?: string[];
-} & (
-
   /**
    * If present then use this
    */
-  { content_type?: typeof ContentTypes[number] } |
+  content_type?: ValidContentType;
+};
 
-
-  /**
-   * If present then fetch content_type from HEAD
-   */
-  { allowedContentTypes?: typeof ContentTypes[number][]; }
-)
 type S = {
 
   isFocused: boolean;
@@ -40,11 +36,12 @@ type S = {
   url?: {
     raw: string;
     validated: string;
-    content_type?: typeof ContentTypes[number]; // If undefined then show as URL
+    content_type?: string; // If undefined then show as URL
+    type?: ValidContentType;
   }
 }
 
-export default class MediaViewer extends RTComp<P, S> {
+export class MediaViewer extends RTComp<P, S> {
 
   state: S = {
     isFocused: false,
@@ -74,7 +71,7 @@ export default class MediaViewer extends RTComp<P, S> {
         webm: 1,
         mov: 1,
       }
-      const extension = url.split(".").slice(-1)?.[0]?.toLowerCase();
+      const extension = url.split(".").slice(-1)[0]?.toLowerCase();
       if(!extension) return undefined;
       if(images[extension]) return "image";
       if(audio[extension]) return "audio";
@@ -100,37 +97,19 @@ export default class MediaViewer extends RTComp<P, S> {
   setURL = async (url: string) => {
     if(!url) return;
 
-
-    let contentType;
-    if('allowedContentTypes' in this.props || !("content_type" in this.props)){
-
-      if('allowedContentTypes' in this.props && this.props.allowedContentTypes?.length === 1){
-        contentType = this.props.allowedContentTypes[0];
-
-      } else {
-        const mime = await getMimeFromURL(url);
-        const cType = mime?.split(";")?.[0]?.trim();
-        
-        if('allowedContentTypes' in this.props && !this.props.allowedContentTypes?.find(ct => cType?.startsWith(ct))){
-          throw `ContentType ${cType} is not allowed. Allowed ContentTypes: ${this.props.allowedContentTypes}`
-        }
-        contentType = cType;
-      }
-    } else if("content_type" in this.props) {
-      contentType = this.props.content_type;
-    }
-
-    // if(!contentType) throw "ContentType not found/provided";
-    const validCtype = ContentTypes.find(ct => contentType?.startsWith(ct))
-    if(contentType && !validCtype){
-      throw `ContentType prefix ${contentType} is not recognised/supported. Supported ContentTypes preffixes ${ContentTypes}`
+    const { content_type } = this.props;
+    let contentType: string | undefined = content_type;
+    if(!content_type){
+      const mime = await getMimeFromURL(url);
+      contentType = mime?.split(";")?.[0]?.trim();
     }
 
     this.setState({
       url: {
         raw: url,
         validated: url,
-        content_type: contentType,
+        type: ContentTypes.find(ct => contentType?.startsWith(ct)),
+        content_type: contentType
       }
     })
   }
@@ -161,45 +140,46 @@ export default class MediaViewer extends RTComp<P, S> {
     if(!this.state.url) return null;
 
     const { isFocused } = this.state;
-    const { validated: url, content_type: type } = this.state.url;
-    let mediaContent: React.ReactNode = null;
-    let showClickCover = true;
+    const { validated: url, type = "", content_type } = this.state.url;
+    let mediaContent: React.ReactNode = null; 
     if (url) {
       const commonProps = {
         style: {
           minHeight: 0,
-          flex: type?.startsWith("audio")? "none" : type?.startsWith("image")? undefined : 1,
+          flex: type === "audio"? "none" : type === "image" ? undefined : 1,
           maxWidth: "100%",
           maxHeight: "100%",
           objectFit: "contain",
           ...(isFocused && contentOnly? {} : this.props.style),
-          ...type?.startsWith("audio") && isFocused && ({
+          ...type === "audio" && isFocused && ({
             margin: "2em",
             border: "unset"
           }),
         },
-        // className: "b b-gray-300 "
+        // className: "b b-color "
       } as const;
-      if (type?.startsWith("image")) {
-        // showClickCover = true;
+      if (type === "image") { 
         mediaContent = <img loading="lazy" src={url} { ... commonProps } ></img>
-      } else if (type?.endsWith("video")) {
+      } else if (type === "video") {
         mediaContent = <video { ... commonProps } controls src={url} preload="metadata"></video>
-      } else if (type?.startsWith("audio")) {
+      } else if (type === "audio") {
         mediaContent = <audio { ... commonProps } controls src={url}></audio>
       } else if(!isFocused && url) {
-        mediaContent = <a href={url} target="_blank" className="p-1 f-0">{url}</a> 
+        mediaContent = <FlexCol className="f-0 p-p5 gap-p25">
+          {/* <a href={url} target="_blank" className="f-0">{url}</a>  */}
+          <Chip value={content_type ?? "Not found"} />
+        </FlexCol>
       }
     }
 
     if(!contentOnly){
       return <div className="MediaViewer relative f-1 noselect flex-row min-h-0" style={this.props.style}>
         {mediaContent}
-        {showClickCover && <div className={"absolute w-full h-full pointer"} style={{ zIndex: 1, inset: 0 }} onClick={e => {
+        <div className={"absolute w-full h-full pointer"} style={{ zIndex: 1, inset: 0 }} onClick={e => {
           e.stopPropagation();
           e.preventDefault();
           this.setState({ isFocused: true })
-        }}></div>}
+        }}></div>
       </div>
     }
     return mediaContent;
@@ -218,7 +198,6 @@ export default class MediaViewer extends RTComp<P, S> {
           this.setURL(url);
         }
       }
-
       return <>
         {this.renderMedia()}
         <Popup 
@@ -233,7 +212,7 @@ export default class MediaViewer extends RTComp<P, S> {
           title={!url? "" : (<a href={url.validated} target="_blank" className="p-1 f-0 text-1p5" style={{ fontWeight: 400 }}>{url.validated}</a> )}
           onKeyDown={!onPrevOrNext? undefined : this.onKeyDown}
         >
-          <div className="MEDIAVIEWER p-1 relative flex-col f-1 o-auto noselect ai-center">
+          <div className={"MEDIAVIEWER relative flex-col f-1 o-auto noselect ai-center " + url?.type === "image" ? "" : " p-1"}>
             {toggleClick && ToggleBtn(true, () => toggleClick(-1))}
             {this.renderMedia(true)}
             {toggleClick && ToggleBtn(false, () => toggleClick(1))}
@@ -242,28 +221,20 @@ export default class MediaViewer extends RTComp<P, S> {
         </Popup>
       </>
     }
-    //  {url && <FileInput minSize={50} media={[{ id: url.validated , content_type: url.content_type, url: url.validated }]} />}
 
     return this.renderMedia()
   }
 }
 
-function getMimeFromURL(url: string): Promise<string | null>{
-  return new Promise((resolve, reject) => { 
-
-    var xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("GET", url, true);
-    xmlhttp.setRequestHeader("Range", "bytes=0");
-    xmlhttp.onreadystatechange = function () {
-      if (this.readyState == this.DONE) {
-        resolve(this.getResponseHeader("Content-Type"));
-      } else {
-        reject(xmlhttp.statusText);
-      }
-    };
-    xmlhttp.send();
-
-  });
+export const getMimeFromURL = async (url: string): Promise<string | null> => {
+  try {
+    const resp = await fetch(url, { method: "HEAD" });
+    if(resp.status >= 400) return null;
+    return resp.headers.get("Content-Type");
+  } catch(e){
+    console.error(e)
+    return null;
+  }
 }
 
 

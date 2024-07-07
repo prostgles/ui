@@ -2,51 +2,56 @@ import {
   mdiAlertOutline,
   mdiPlus,
 } from "@mdi/js";
-import Icon from "@mdi/react";
-import { AnyObject, ParsedJoinPath, getKeys } from "prostgles-types";
+import type { AnyObject, ParsedJoinPath } from "prostgles-types";
+import { getKeys } from "prostgles-types";
 
 import React from "react";
 import Loading from "../../components/Loading";
-import { PAGE_SIZES, Table, TableColumn, TableProps, closest } from "../../components/Table/Table";
-import { OnAddChart, Query, WindowData, WindowSyncItem, WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
+import type { TableColumn, TableProps } from "../../components/Table/Table";
+import { PAGE_SIZES, Table, closest } from "../../components/Table/Table";
+import type { OnAddChart, Query, WindowSyncItem, WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
 import "./ProstglesTable.css";
 
-import type { MonacoError } from "../SQLEditor/SQLEditor";
+import type { DeltaOf, DeltaOfData } from "../RTComp";
+import RTComp from "../RTComp";
 
-import RTComp, { DeltaOf, DeltaOfData } from "../RTComp";
-
-import { SingleSyncHandles } from "prostgles-client/dist/SyncedTable";
-import { ValidatedColumnInfo } from "prostgles-types/lib"; //   TS_DATA_TYPE, 
+import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
-import { ColumnConfig, ColumnMenu, ColumnSort } from "./ColumnMenu/ColumnMenu";
+import type { ColumnConfig, ColumnSort } from "./ColumnMenu/ColumnMenu";
+import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
 
-import { DetailedFilterBase, SmartGroupFilter } from '../../../../commonTypes/filterUtils';
-import { PaginationProps } from "../../components/Table/Pagination";
-import CodeEditor from "../CodeEditor";
-import { CommonWindowProps } from "../Dashboard/Dashboard";
-import { createReactiveState } from "../ProstglesMethod/hooks";
-import { ProstglesQuickMenuProps } from "../ProstglesQuickMenu";
-import SmartFilterBar from "../SmartFilter/SmartFilterBar";
+import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
+import { matchObj } from "../../../../commonTypes/utils";
+import { createReactiveState } from "../../appUtils";
+import { Icon } from "../../components/Icon/Icon";
+import type { PaginationProps } from "../../components/Table/Pagination";
+import { isDefined } from "../../utils";
+import CodeEditor from "../CodeEditor/CodeEditor";
+import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import { SmartFilterBar } from "../SmartFilterBar/SmartFilterBar";
+import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
 import Window from "../Window";
 import { CardView } from "./CardView";
 import { NodeCountChecker } from "./NodeCountChecker";
-import { RowCard, RowPanelProps } from "./RowCard";
+import type { RowPanelProps } from "./RowCard";
+import { RowCard } from "./RowCard";
 import { W_TableMenu } from "./TableMenu/W_TableMenu";
 import { TooManyColumnsWarning } from "./TooManyColumnsWarning";
 import { getTableData } from "./getTableData";
-import { OnClickEditRow, RowSiblingData } from "./tableUtils/getEditColumn";
-import { ProstglesTableColumn, getTableCols } from "./tableUtils/getTableCols";
+import type { OnClickEditRow, RowSiblingData } from "./tableUtils/getEditColumn";
+import { getTableCols } from "./tableUtils/getTableCols";
 import { getTableSelect } from "./tableUtils/getTableSelect";
 import { prepareColsForRender } from "./tableUtils/prepareColsForRender";
 import { getFullColumnConfig, getSort, updateWCols } from "./tableUtils/tableUtils";
-import { isDefined } from "../../utils";
+import { W_Table_Content } from "./W_Table_Content";
 
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"table">;
   setLinkMenu: ProstglesQuickMenuProps["setLinkMenu"];
-
+  childWindow: React.ReactNode | undefined;
   onLinkTable?: (tableName: string, path: ParsedJoinPath[]) => any | void;
   onClickRow?: TableProps["onRowClick"];
   filter?: any;
@@ -55,9 +60,7 @@ export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   activeRow?: ActiveRow;
   onAddChart?: OnAddChart;
   activeRowColor?: React.CSSProperties["color"];
-
-  workspace: WorkspaceSyncItem; //SyncDataItem<Workspace>;
-  onAddTable: (args: { name: string, table_name: string, options?:  WindowData<"table">["options"] }, filters: SmartGroupFilter) => void;
+  workspace: WorkspaceSyncItem; 
 }
 export type ActiveRow = {
   window_id: string;
@@ -109,7 +112,7 @@ export type W_TableState = {
   pos?: { x: number; y: number };
   size?: { w: number; h: number };
   joins: string[];
-  runningQuery: boolean;
+  runningQuerySince: number | undefined;
   error?: string;
   duration: number;
   hideTable?: boolean;
@@ -148,7 +151,6 @@ export type ProstglesTableD = {
   dataAge?: number;
   wSync?: SingleSyncHandles;
 }
-// const COLUMN_SAVEABLE_KEYS = ["name", "computedConfig", "format", "width"] as const;
 
 export type ColumnConfigWInfo = ColumnConfig & ({ info?: ValidatedColumnInfo;  });
 
@@ -163,16 +165,10 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
   state: W_TableState = {
     barchartVals: {},
     rowsLoaded: 0,
-    runningQuery: false,
+    runningQuerySince: undefined,
     sql: "",
     loading: false,
-    // page: 0,
-
-    // pageSize: 10,
-    // minimised: false,
-    // fullScreen: false,
     totalRows: 0,
-    // rows: [],
     sort: [],
     joins: [],
     filter: {},
@@ -203,11 +199,7 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
     if(!this.d.wSync) {
 
       const wSync = w.$cloneSync((w, delta) => {
-        // if (w.table_name && !w.columns && !this.d.w) {
-        //   TableMenu.getWCols(db[w.table_name] as TableHandlerClient, w, true)
-        // } else {
-          this.setData({ w }, { w: delta });
-        // }
+        this.setData({ w }, { w: delta });
       });
       
       this.setData({ wSync })
@@ -227,6 +219,7 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
     args: {
       select?: AnyObject | any;
       filter?: AnyObject | any;
+      having?: AnyObject | any;
       barchartVals?: AnyObject;
       joinFilter?: AnyObject;
       externalFilters?: any;
@@ -260,7 +253,7 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
   }
 
   dataSub?: any;
-  dataSubFilter?: any;
+  dataSubFilter?: string;
   dataAge?: number = 0;
   autoRefresh?: any;
   activeRowStr?: string;
@@ -269,14 +262,9 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
     const { prgl: { db }, onClose, workspace } = this.props;
     const { w } = this.d;
     const { table_name: tableName, table_oid } = w || {};
-    // let filter = { ...rawFilter };
 
     let ns: Partial<W_TableState> | undefined;
     if (!w || !tableName) return;
-
-    // const _deltaW = Object.keys(delta.w || {});
-    // const _delta = Object.keys(delta);
-    // console.log(_delta, _deltaW, delta)
 
     const tableHandler = db[tableName];
 
@@ -312,12 +300,9 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
  
     if(!tableHandler) return;
     
-    if(delta.w && "filter" in delta.w){
+    if(delta.w && ("filter" in delta.w || "having" in delta.w)){
       this.props.onForceUpdate();
     }
-
-    // if (delta.db) console.log(Object.keys(delta.db))
-    // if(delta.cols) console.log(delta.cols);
 
     /* Simply re-render */
     if(["showSubLabel", "maxRowHeight"].some(key => delta.w?.options && key in delta.w.options)){
@@ -331,14 +316,14 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
     
     /** This is done to prevent errors due to renamed/altered columns */
     if(
-      (delta.w?.filter && !delta.w.id) && 
+      ((delta.w?.filter || delta.w?.having) && !delta.w.id) && 
       !w.options.showFilters
     ){
       w.$update({ options: { showFilters: true } }, { deepMerge: true })
     }
     
     /** This is done to prevent empty result due to page offset */
-    if(delta.w?.filter){
+    if((delta.w?.filter || delta.w?.having) && this.d.page !== 1){
       this.setData({ page: 1 });
     }
 
@@ -453,7 +438,7 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
     }
   }
 
-  rowPanelRState = createReactiveState<RowPanelProps | undefined>();
+  rowPanelRState = createReactiveState<RowPanelProps | undefined>(undefined);
 
   onColumnReorder = (newCols: ProstglesColumn[]) => {
     const { w } = this.d;
@@ -463,46 +448,65 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
     updateWCols(w, columns);
   }
 
-  columnMenuState = createReactiveState<{ column: string; clientX: number; clientY: number } | undefined>()
+  columnMenuState = createReactiveState<{ 
+    column: string; 
+    clientX: number; 
+    clientY: number 
+  } | undefined>(undefined)
 
   render() {
 
     const {
       loading,  
-      rows, 
-      // cols, 
-      runningQuery, 
+      rows,  
+      runningQuerySince, 
       error,
     } = this.state;
 
     const { w } = this.d;
     if(!w) return null;
-
     const { 
       setLinkMenu, 
       joinFilter, activeRow, onAddChart, 
-      activeRowColor, prgl
+      activeRowColor, prgl, childWindow,
     } = this.props;
     const { tables, db, dbs } = prgl;
     const activeRowStyle: React.CSSProperties = this.activeRowStr === JSON.stringify(joinFilter || {})? { background: activeRowColor } : {};
+ 
+    const FirstLoadCover = <div className="flex-col f-1 jc-center ai-center">
+      <Loading className='m-auto absolute' />
+    </div>;
 
-    // const canPrevOrNext = rowPanel?.type === "update" && Object.values(rowPanel.siblingData).some(v => v);
+    const wrapInWindow = (content: React.ReactNode) => {
+      return <Window 
+        w={w} 
+        quickMenuProps={{
+          tables, 
+          dbs, 
+          setLinkMenu,
+          onAddChart,
+          show: childWindow? { filter: true } : undefined
+        }} 
+        getMenu={this.getMenu}  
+      >{content}</Window>
+    }
+
     const cardOpts = w.options.viewAs?.type === "card"? w.options.viewAs : undefined; 
     let content: React.ReactNode = null;
     if (w.table_name && !db[w.table_name]) {
-      content = <div className=" p-2 flex-row ai-center text-red-700">
+      content = <div className=" p-2 flex-row ai-center text-danger">
         <Icon path={mdiAlertOutline} size={1} className="mr-p5 " />
         Table {JSON.stringify(w.table_name)} not found
       </div>
 
     } else if(loading || w.table_name && (!db[w.table_name])){
-      content = <div className="flex-col f-1 jc-center ai-center">
-        <Loading className='m-auto absolute' />
-      </div>;
+      content = FirstLoadCover
       
     } else {
 
-      if(!rows) return null;
+      if(!rows) {
+        return wrapInWindow(FirstLoadCover);
+      }
 
       const cols = getTableCols({ 
         data: this.state.rows,
@@ -514,11 +518,6 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
         suggestions: this.props.suggestions,
         columnMenuState: this.columnMenuState,
       });
-
-      /** Update w columns if schema changes */
-      if(w.columns?.length !== cols.length){ 
-        updateWCols(w, cols);
-      }
   
       const { table_name: tableName } = w;
       
@@ -532,7 +531,7 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
       const pkeys = cols.map(c => c.show && c.info?.is_pkey? c.info.name : undefined).filter(isDefined);
       const rowKeys = pkeys.length? pkeys : undefined
       content = <>
-        <div className={`flex-col f-1 min-h-0 min-w-0 relative`} 
+        <div className={`W_Table flex-col f-1 min-h-0 min-w-0 relative`} 
           ref={r => {
             if (r) this.ref = r;
           }}
@@ -541,7 +540,6 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
             prgl={prgl}
             db={db}
             dbs={dbs}
-            tableName={tableName}
             columnMenuState={this.columnMenuState}
             tables={tables}
             suggestions={this.props.suggestions}
@@ -558,7 +556,10 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
           <NodeCountChecker  parentNode={this.ref} dataAge={this.state.rowsLoaded} />
 
           {!!w.options.showFilters && 
-            <div className=" ai-center p-p5 bg-0p5"  
+            <div 
+              key={"W_Table_Filters"}
+              className={`ai-center p-p5 bg-color-1 ${(childWindow? " bb b-color " : "")}`}
+              style={{ zIndex: 1 }}
               title="Edit filters"
             >
               <SmartFilterBar
@@ -578,16 +579,13 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
             </div>
           }
   
-          <div 
-            className={"flex-col oy-auto f-1 relative "} 
-            style={{ 
-              /* ensure the header bottom shadow is visible */
-              marginTop: "2px" 
-            }}
+          <W_Table_Content
+            key={"W_Table_Content"}
+            runningQuerySince={runningQuerySince}
           >
-            {(runningQuery) ? <Loading variant="cover" delay={500} /> : null}
             {error && <ErrorComponent withIcon={true} style={{ flex: "unset", padding: "2em" }} error={error} />}
-            {cardOpts? 
+            {childWindow? childWindow :
+            cardOpts? 
               <CardView 
                 key={`${cardOpts.cardGroupBy}-${cardOpts.cardOrderBy}-${this.state.dataAge}`}
                 cols={cols}
@@ -601,7 +599,11 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
                 }}
               /> : 
             w.options.viewAs?.type === "json"?
-              <CodeEditor language="json" value={JSON.stringify(rows, null, 2)} /> :
+              <CodeEditor 
+                language="json" 
+                value={JSON.stringify(rows, null, 2)} 
+                className="b-unset"
+              /> :
               <Table
                 style={{ 
                   flex: 1, 
@@ -629,20 +631,26 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
               />
             }
 
-            {canInsert && <Btn iconPath={mdiPlus}
+            {canInsert && !childWindow &&
+              <Btn iconPath={mdiPlus}
                 data-command="dashboard.window.rowInsert"
                 data-key={w.table_name}
                 title="Insert row"
-                className="shadow w-fit h-fit bg-0"
+                className="shadow w-fit h-fit"
                 color="action"
                 variant="outline"
-                style={{ position: "absolute", right: "15px", bottom: "15px" }} //, background: "white"
+                style={{ 
+                  position: "absolute", 
+                  right: "15px", 
+                  bottom: "15px",
+                  zIndex: 1,
+                }}
                 onClick={async () => {
                   this.rowPanelRState.set({ type: "insert" });
                 }}
               />
             }
-          </div>
+          </W_Table_Content>
   
         </div>
   
@@ -664,33 +672,17 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
       </>; 
     }
 
-    return <Window 
-      w={w} 
-      quickMenuProps={{
-        tables, 
-        dbs, 
-        setLinkMenu,
-        onAddChart
-      }} 
-      getMenu={this.getMenu}  
-    >{content}</Window>
+    return wrapInWindow(content);
   }
 }
 
 
 export function kFormatter(num: number) {
   const abs = Math.abs(num);
-  if (abs > 1e12 - 1) return Math.sign(num) * (+(Math.abs(num) / 1e12).toFixed(1)) + 'T';
-  if (abs > 1e9 - 1) return Math.sign(num) * (+(Math.abs(num) / 1e9).toFixed(1)) + 'B';
-  if (abs > 1e6 - 1) return Math.sign(num) * (+(Math.abs(num) / 1e6).toFixed(1)) + 'm';
-  if (abs > 999) return Math.sign(num) * (+(Math.abs(num) / 1000).toFixed(1)) + 'k';
-  return num;
+  if (abs > 1e12 - 1) return Math.sign(num) * (+(Math.abs(num) / 1e12).toFixed(1)) + "T";
+  if (abs > 1e9 - 1) return Math.sign(num) * (+(Math.abs(num) / 1e9).toFixed(1)) + "B";
+  if (abs > 1e6 - 1) return Math.sign(num) * (+(Math.abs(num) / 1e6).toFixed(1)) + "m";
+  if (abs > 999) return Math.sign(num) * (+(Math.abs(num) / 1000).toFixed(1)) + "k";
+  return num.toString();
 }
-
-
-export function matchObj(obj1: AnyObject | undefined, obj2: AnyObject | undefined): boolean {
-  if (obj1 && obj2) {
-    return !Object.keys(obj1).some(k => obj1[k] !== obj2[k])
-  }
-  return false;
-}
+ 

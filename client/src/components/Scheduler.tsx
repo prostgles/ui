@@ -87,7 +87,7 @@
 //   const getDaySelector = () => (
 //     <div className="day-wrapper flex-row p-p25 f-0" style={{ overflow: "auto", maxWidth: "100vw" }}>
 //       {days.map((d, i) => (
-//         <button key={i} className={"day flex-col f-0 b " + (i? "ml-p5" : "") + (day === d? " active " : " secondary bg-0 ")}
+//         <button key={i} className={"day flex-col f-0 b " + (i? "ml-p5" : "") + (day === d? " active " : " secondary bg-color-0 ")}
 //           onClick={()=>{
 //             setDay(d);
 //           }}
@@ -109,8 +109,8 @@
 //         <div className={"flex-col f-1"}>
 //           {ticks.map((h, i) => (
 //             <div key={i} className="flex-row f-0" style={{ height: HOUR_HEIGHT + "px"}}>
-//               <div className="f-0 text-gray-600">{h === 24? "00" : h}:00</div> 
-//               <div className="f-1 bg-gray-300 ml-p5 mt-p5" style={{ height: "1px"}} ></div>    
+//               <div className="f-0 text-2">{h === 24? "00" : h}:00</div> 
+//               <div className="f-1  ml-p5 mt-p5" style={{ height: "1px"}} ></div>    
 //             </div>
 //           ))}
 //         </div>
@@ -123,7 +123,7 @@
 
 //           // debugger
 //           return (
-//             <button key={i} onClick={onClick} className="item rounded shadow-xl p-p5 absolute bg-0 w-fit flex-row text-white" 
+//             <button key={i} onClick={onClick} className="item rounded shadow-xl p-p5 absolute bg-color-0 w-fit flex-row text-white" 
 //             style={{
 //               left: "70px",
 //               top: `${topOffset + 2 + 24}px`,

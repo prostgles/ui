@@ -1,8 +1,8 @@
-import React from 'react';
-import { ExtraProps } from "../App";
+import React from "react";
+import type { ExtraProps } from "../App";
 import RTComp from "./RTComp";
 
-import { SubscriptionHandler } from "prostgles-types";
+import type { SubscriptionHandler } from "prostgles-types";
 import SmartTable from "./SmartTable";
 import { PasswordlessSetup } from "./AccessControl/PasswordlessSetup";
 

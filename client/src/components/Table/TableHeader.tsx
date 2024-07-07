@@ -1,11 +1,14 @@
 import React from "react";
-import { Pan, TableProps, TableRootClassname, TableState, onWheelScroll } from "./Table";
+import type { TableProps, TableState} from "./Table";
+import { Pan, TableRootClassname, onWheelScroll } from "./Table";
 import { isObject } from "prostgles-types";
 import { vibrateFeedback } from "../../dashboard/Dashboard/dashboardUtils";
 import { quickClone } from "../../utils";
-import { ProstglesColumn } from "../../dashboard/W_Table/W_Table";
-import { ColumnSortMenu, ColumnSortMenuProps } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
-import Popup, { PopupProps } from "../Popup/Popup";
+import type { ProstglesColumn } from "../../dashboard/W_Table/W_Table";
+import type { ColumnSortMenuProps } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
+import { ColumnSortMenu, getDefaultSort } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
+import type { PopupProps } from "../Popup/Popup";
+import Popup from "../Popup/Popup";
 import { classOverride } from "../Flex";
 
 type TableHeaderProps = Pick<TableProps, "cols" | "sort" | "onSort" | "whiteHeader" | "onColumnReorder" | "showSubLabel"> & {
@@ -67,7 +70,7 @@ export class TableHeader extends React.Component<TableHeaderProps, TableHeaderSt
           {popup.content}
         </Popup>
       }
-      <div role="row" className="noselect f-0 flex-row shadow bg-0p5d "
+      <div role="row" className="noselect f-0 flex-row shadow bg-color-1"
         onWheel={onWheelScroll(TableRootClassname)}
       >
         {cols.map((col, iCol) => {
@@ -76,7 +79,7 @@ export class TableHeader extends React.Component<TableHeaderProps, TableHeaderSt
             "flex-col h-full min-w-0 px-p5 py-p5 text-left font-14 relative " + 
             " font-medium text-0 tracking-wider to-ellipsis jc-center " + 
             ((onSort && col.sortable)? " pointer " : "") +
-            // (whiteHeader? " " : " bg-0p5  ") + 
+            // (whiteHeader? " " : " bg-color-1  ") + 
             (col.onContextMenu? " contextmenu " : "") +
             (col.width? " f-0 " : " f-1 " );
             
@@ -139,16 +142,16 @@ export class TableHeader extends React.Component<TableHeaderProps, TableHeaderSt
                 let newSort = quickClone(mySort);
                 if(!newSort) {
                   if(isObject(col.sortable)){
-                    const activeColumns = col.sortable.column.nested?.columns.filter(c => c.show);
-                    const onlyOneActiveColumn = activeColumns?.length === 1? activeColumns[0]! : undefined;
+                    const [col1, col2] = col.sortable.column.nested?.columns.filter(c => c.show) ?? [];
+                    const onlyOneActiveColumn = col1 && !col2;
                     if(onlyOneActiveColumn){
-                      newSort = { key: `${col.key}.${onlyOneActiveColumn.name}`, asc: true };
+                      newSort = getDefaultSort(`${col.key}.${col1.name}`);// { key: `${col.key}.${onlyOneActiveColumn.name}`, asc: true };
                     } else {
                       this.setState({ showNestedSortOptions: { anchorEl: e.currentTarget, ...col.sortable } });
                       return;
                     }
                   } else {
-                    newSort = { key: col.key, asc: true };
+                    newSort = getDefaultSort(col.key as string)
                   }
                 }
                 else if(newSort.asc) newSort.asc = false;
@@ -170,7 +173,7 @@ export class TableHeader extends React.Component<TableHeaderProps, TableHeaderSt
                     {col.label}
                   </div>
                   {(col.subLabel !== undefined && this.props.showSubLabel)? 
-                    <div className="table-column-sublabel text-gray-400 mt-p25 font-normal ws-nowrap text-ellipsis " title={col.subLabelTitle}>{col.subLabel}</div> : 
+                    <div className="table-column-sublabel text-2 mt-p25 font-normal ws-nowrap text-ellipsis " title={col.subLabelTitle}>{col.subLabel}</div> : 
                     null
                   } 
 

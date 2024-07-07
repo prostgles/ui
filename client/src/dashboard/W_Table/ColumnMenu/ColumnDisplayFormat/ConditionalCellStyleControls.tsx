@@ -4,10 +4,10 @@ import Btn from "../../../../components/Btn";
 import { FlexCol, FlexRow } from "../../../../components/Flex";
 import PopupMenu from "../../../../components/PopupMenu";
 import Select from "../../../../components/Select/Select";
-import SmartSearch from "../../../SmartFilter/SmartSearch";
+import { SmartSearch } from "../../../SmartFilter/SmartSearch/SmartSearch";
 import { StyledCell } from "../../tableUtils/StyledTableColumn";
 import { ColorPicker } from "../ColorPicker";
-import { ConditionalStyle, StyleColumnProps } from "../ColumnStyleControls";
+import type { ConditionalStyle, StyleColumnProps } from "../ColumnStyleControls";
 import { ChipStylePalette } from "./ChipStylePalette";
 
 export const CONDITION_OPERATORS = ["=", "<=", "<", ">", ">=", "!=", "in", "not in", "contains", "not null", "null"] as const;

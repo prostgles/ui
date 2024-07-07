@@ -8,9 +8,10 @@ import { FlexCol, FlexRow, FlexRowWrap } from "../../../../components/Flex";
 import { FormFieldDebounced } from "../../../../components/FormField/FormFieldDebounced";
 import Select from "../../../../components/Select/Select";
 import { SwitchToggle } from "../../../../components/SwitchToggle";
-import { CommonWindowProps } from "../../../Dashboard/Dashboard";
-import { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
-import { AddColumnReference, ColumnReference, References } from "./ReferenceEditor";
+import type { CommonWindowProps } from "../../../Dashboard/Dashboard";
+import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
+import type { ColumnReference} from "./ReferenceEditor";
+import { AddColumnReference, References } from "./ReferenceEditor";
 
 
 export type ColumnOptions = {
@@ -22,7 +23,7 @@ export type ColumnOptions = {
   references?: ColumnReference[];
 };
 
-type P = Pick<CommonWindowProps, 'suggestions'> & ColumnOptions & {
+type P = Pick<CommonWindowProps, "suggestions"> & ColumnOptions & {
   tables: DBSchemaTablesWJoins;
   tableName: string;
   onChange: (key: keyof ColumnOptions, change: ColumnOptions) => void;
@@ -36,7 +37,6 @@ export const ColumnEditorTestSelectors = {
 } as const;
 export const ColumnEditor = ({ onChange, onAddReference, tables, onEditReference, isAlter, suggestions, tableName, ...colOpts }: P) => {
   const { dataType, defaultValue, isPkey, name, notNull, references = [] } = colOpts;
-
 
   const DATA_TYPES = useMemo(() => {
     type Item = { key: string; label: string; subLabel?: string; }
@@ -59,7 +59,7 @@ export const ColumnEditor = ({ onChange, onAddReference, tables, onEditReference
     [suggestions]);
 
 
-  return <FlexCol className=" gap-2">
+  return <FlexCol className="ColumnEditor gap-2">
     <FlexRowWrap className="ai-end">
       <FormFieldDebounced
         label="Column name"

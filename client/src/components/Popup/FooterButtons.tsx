@@ -1,11 +1,23 @@
 import React from "react"
-import { Footer, PopupProps } from "./Popup"
+import type { PopupProps } from "./Popup";
+import { Footer } from "./Popup"
 import { isDefined, omitKeys } from "../../utils";
-import Btn from "../Btn";
+import Btn, { type BtnProps } from "../Btn";
+
+export type FooterButton = 
+  (
+    { node: React.ReactNode } 
+  | 
+  {
+    label: string;
+    onClickClose?: boolean;
+  } & Omit<BtnProps<void>, "label">
+  ) | undefined;
 
 type P = Pick<PopupProps, "footerButtons" | "footer" | "onClose"> & {
   className?: string;
   style?: React.CSSProperties;
+  error?: any;
 };
 export const FooterButtons = ({ footerButtons = [], footer, onClose, ...divProps }: P) => {
   const bottomBtns = (typeof footerButtons === "function"? footerButtons(onClose) : footerButtons).filter(isDefined);
@@ -18,7 +30,7 @@ export const FooterButtons = ({ footerButtons = [], footer, onClose, ...divProps
       if("node" in b) return <React.Fragment key={i}>{b.node}</React.Fragment>;
       return (
         <Btn key={i}
-          {...omitKeys(b, ["label", "onClickClose", "onClick"])}
+          {...omitKeys(b, ["label", "onClickClose", "onClick"]) as any}
           onClick={e => {
             if (b.onClickClose && onClose) onClose(e);
             else if (b.onClick) b.onClick(e);

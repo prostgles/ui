@@ -1,15 +1,18 @@
 import { isDefined } from "prostgles-types";
 import { SUGGESTION_TYPE_DOCS } from "../SQLEditor";
-import { MinimalSnippet, PG_OBJECTS, suggestSnippets } from "./CommonMatchImports";
-import { cleanExpect, cleanExpectFull, getExpected } from "./getExpected";
-import { SQLMatcher } from "./registerSuggestions";
-import { KWD, withKWDs } from "./withKWDs";
+import type { MinimalSnippet } from "./CommonMatchImports";
+import { PG_OBJECTS, suggestSnippets } from "./CommonMatchImports";
+import { cleanExpectFull } from "./getExpected";
+import type { SQLMatcher } from "./registerSuggestions";
+import { getKind } from "./registerSuggestions";
+import type { KWD } from "./withKWDs";
+import { withKWDs } from "./withKWDs";
 
 export const MatchDrop: SQLMatcher = {
   match: cb => cb.prevLC.startsWith("drop"),
-  result: async ({cb, ss, getKind}) => {
+  result: async ({cb, ss, setS, sql }) => {
 
-    const { prevLC, ltoken } = cb;
+    const { prevLC, ltoken, l1token } = cb;
  
     const expect = cb.tokens[1]?.textLC;
     const afterExpect = cb.tokens[2]?.textLC;
@@ -18,13 +21,21 @@ export const MatchDrop: SQLMatcher = {
       return suggestSnippets([{ label: "BY" }])
     }
 
+    if(l1token?.textLC === "database" || cb.prevTokens[1]?.textLC === "database" && l1token?.textLC === "exists"){
+      return suggestSnippets([{ 
+        label: "WITH (FORCE)", 
+        kind: getKind("keyword"), 
+        docs: `Attempt to terminate all existing connections to the target database. It doesn't terminate if prepared transactions, active logical replication slots or subscriptions are present in the target database.\n\nThis will fail if the current user has no permissions to terminate other connections. Required permissions are the same as with pg_terminate_backend, described in Section 9.27.2. This will also fail if we are not able to terminate connections.` 
+      }]);
+    }
+
     if (prevLC === "drop") {
       const r = suggestSnippets(PG_OBJECTS.flatMap<MinimalSnippet>(label => [" IF EXISTS", ""].map(ifEx => {
         const labelUpper = label.toUpperCase();
         return { 
           label: `${label}${ifEx}`, 
           docs: SUGGESTION_TYPE_DOCS[labelUpper], 
-          kind: getKind(label.toLowerCase() as any)
+          kind: getKind(label.toLowerCase() as any ?? "keyword")
         }
       })));
       return{
@@ -34,18 +45,21 @@ export const MatchDrop: SQLMatcher = {
       
       const kwds = getKWDS(expect, afterExpect);
       if(kwds){
-        return { 
-          suggestions: withKWDs(kwds as any, cb, getKind, ss).getSuggestion().suggestions.filter(s => (s.type !== "extension" || s.extensionInfo?.installed )).map(s => ({
-            ...s,
-            insertText: 
-              s.funcInfo && s.funcInfo.args.length? `${s.insertText}(${s.funcInfo.args.map(a => a.data_type).join(", ")})` :
-              s.type === "policy"? `${s.policyInfo?.escaped_identifier} ON ${s.policyInfo?.tablename_escaped}` : 
-              s.type === "trigger"? `${s.insertText} ON ${s.triggerInfo?.event_object_table}` : 
-              s.ruleInfo? `${s.insertText} ON ${s.ruleInfo.tablename_escaped}` : 
-              // s.type === "database"? `${s.insertText}\n\n${getDBInsertText(s.name)}` : 
-              s.insertText
-          }))
+        const result = { 
+          suggestions: (await withKWDs(kwds as any, { cb, ss, setS, sql }).getSuggestion()).suggestions.filter(s => (s.type !== "extension" || s.extensionInfo?.installed ))
+            .map(s => ({
+              ...s,
+              sortText: s.insertText.trim() === "IF EXISTS"? "Zzz" : s.sortText,
+              insertText: 
+                s.funcInfo && s.funcInfo.args.length? `${s.insertText}(${s.funcInfo.args.map(a => a.data_type).join(", ")})` :
+                s.type === "policy"? `${s.policyInfo?.escaped_identifier} ON ${s.policyInfo?.tablename_escaped}` : 
+                s.type === "trigger"? `${s.insertText} ON ${s.triggerInfo?.event_object_table}` : 
+                s.ruleInfo? `${s.insertText} ON ${s.ruleInfo.tablename_escaped}` : 
+                // s.type === "database"? `${s.insertText}\n\n${getDBInsertText(s.name)}` : 
+                s.insertText
+            }))
         };
+        return result;
       }
       
       // const expected = getExpected(expect, cb, ss).suggestions;
@@ -93,7 +107,7 @@ The REASSIGN OWNED command is an alternative that reassigns the ownership of all
       expects: expect, 
       excludeIf: [rawExpect.toUpperCase()], // exclude a case where rawExpect=ROLE and cleanExpect=[USER] creates a bug that allows DROP ROLE USER ...
       options: [
-        { label: "IF EXISTS", insertText: "IF EXISTS ", docs: `Do not throw an error if the ${objLabel} does not exist. A notice is issued in this case.` }
+        { label: "IF EXISTS", kind: getKind("keyword"), insertText: "IF EXISTS ", docs: `Do not throw an error if the ${objLabel} does not exist. A notice is issued in this case.` }
       ]
     },
     (expect === "table" ? { kwd: ",", expects: expect, canRepeat: true } : undefined ),

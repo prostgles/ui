@@ -1,18 +1,20 @@
 import React, { memo, useEffect, useRef, useState } from "react";
 import "./Table.css";
 
-import { AnyObject } from "prostgles-types";
-import { sliceText } from "../../dashboard/SmartFilter/SmartFilter";
-import { ColumnSort } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
-import { ColumnSortMenuProps } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
-import { ProstglesColumn } from "../../dashboard/W_Table/W_Table";
-import { PanListeners, setPan } from "../../dashboard/setPan";
+import type { AnyObject } from "prostgles-types"; 
+import type { ColumnSort } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortMenuProps } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
+import type { ProstglesColumn } from "../../dashboard/W_Table/W_Table";
+import type { PanListeners} from "../../dashboard/setPan";
+import { setPan } from "../../dashboard/setPan";
 import Btn from "../Btn";
 import { classOverride } from "../Flex";
-import { Pagination, PaginationProps } from "./Pagination";
-import { TableHeader, TableHeaderState, getDraggedTableColStyle } from "./TableHeader";
-import { TestSelectors } from "../../Testing";
-
+import type { PaginationProps } from "./Pagination";
+import { Pagination } from "./Pagination";
+import type { TableHeaderState} from "./TableHeader";
+import { TableHeader, getDraggedTableColStyle } from "./TableHeader";
+import type { TestSelectors } from "../../Testing";
+import { sliceText } from "../../../../commonTypes/utils";
 export const PAGE_SIZES = [5, 10, 15, 20, 25, 50, 100, 200] as const;
 export type PageSize = typeof PAGE_SIZES[number];
 export const TableRootClassname = "table-component";
@@ -107,7 +109,7 @@ export function useWhatChanged(props: { [prop: string]: unknown }) {
     }, {} as { [k: string]: any });
 
     if (Object.keys(changed).length > 0) {
-      console.group('Props That Changed');
+      console.group("Props That Changed");
       console.log(changed);
       console.groupEnd();
     }
@@ -120,7 +122,7 @@ export function useWhatChanged(props: { [prop: string]: unknown }) {
 export type TableState = {
   draggedCol?: { node: HTMLDivElement; idx: number; targetIdx?: number; };
 }
-export const Table = memo((props: TableProps & React.HTMLAttributes<HTMLDivElement>) => {
+export const Table = (props: TableProps & React.HTMLAttributes<HTMLDivElement>) => {
   const {
     rows = [],
     cols: c = [], 
@@ -147,7 +149,7 @@ export const Table = memo((props: TableProps & React.HTMLAttributes<HTMLDivEleme
 
   const maxCharsPerCell = !!rawMaxCharsPerCell && Number.isFinite(parseInt(rawMaxCharsPerCell + "")) ? parseInt(rawMaxCharsPerCell + "") : 100;
 
-  const cols = c.filter(c => !c.hidden)
+  const cols = c.filter(c => !c.hidden);
   const pagination = rawPagination === "virtual" ? undefined : rawPagination;
   const { page = 1 } = pagination || {};
   let { pageSize = 15 } = pagination || {};
@@ -166,11 +168,10 @@ export const Table = memo((props: TableProps & React.HTMLAttributes<HTMLDivEleme
       _rows = _rows.slice(0, maxRowsPerPage);
     }
   }
-
   const tableKey = cols.map(c => `${c.key}${c.width}`).join() + draggedCol?.idx;
   return (
     <div key={tableKey}
-      className={TableRootClassname + " o-auto flex-col f-1 min-h-0 min-w-0 " + className}
+      className={classOverride(TableRootClassname + " o-auto flex-col f-1 min-h-0 min-w-0 ", className)}
       ref={ref}
     >
       <div role="table" className={"min-w-fit min-h-0 b b-default flex-col h-full"} style={tableStyle}>
@@ -190,7 +191,7 @@ export const Table = memo((props: TableProps & React.HTMLAttributes<HTMLDivEleme
           }}
         >
           {
-            !_rows.length ? <div className="text-gray-300 p-2 noselect">No data</div> :
+            !_rows.length ? <div className="text-3 p-2 noselect">No data</div> :
               _rows.map((row, iRow) => {
                 const rowKey = rowKeys?.map(key => row[key]).join("-") || iRow + " " + Date.now();
                 return <div key={rowKey}
@@ -223,7 +224,8 @@ export const Table = memo((props: TableProps & React.HTMLAttributes<HTMLDivEleme
 
 
                     return (
-                      <div key={i}
+                      <div 
+                        key={i}
                         className={cellClassName}
                         style={{ ...getDraggedTableColStyle(col, i, draggedCol), ...(col.getCellStyle?.(row, row[col.key], cellText) || {}) }}
                         role="cell"
@@ -232,7 +234,7 @@ export const Table = memo((props: TableProps & React.HTMLAttributes<HTMLDivEleme
                         {col.onClick ?
                           (<Btn 
                               onClick={(e) => { col.onClick && col.onClick(row, col, e) }} 
-                              className="text-indigo-600 hover:text-indigo-900 h-fit w-fit b-gray-400"
+                              className="text-indigo-600 hover:text-indigo-900 h-fit w-fit b-color"
                             >
                               {cellTextVal}
                             </Btn>
@@ -251,14 +253,16 @@ export const Table = memo((props: TableProps & React.HTMLAttributes<HTMLDivEleme
               })}
 
           {(!pagination) ? null :
-            <Pagination {...pagination}
-              totalRows={pagination?.totalRows ?? rows.length}
+            <Pagination 
+              key="Pagination"
+              {...pagination}
+              totalRows={pagination.totalRows ?? rows.length}
             />}
         </div>
       </div>
     </div>
   );
-})
+}
 
 type PanProps = TestSelectors & PanListeners & {
     style?: React.CSSProperties;
@@ -327,7 +331,7 @@ const parseCell = <FT extends boolean = false>(d: any, maxCharsPerCell = 100, ge
 
   } else if (d === null) {
     txt = "NULL";
-    node = <i className="text-gray-300">NULL</i>
+    node = <i className="text-3">NULL</i>
 
   } else if (d === undefined) {
     txt = "";

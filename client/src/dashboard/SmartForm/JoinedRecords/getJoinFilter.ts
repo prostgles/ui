@@ -1,6 +1,6 @@
-import { SmartGroupFilter } from "../../../../../commonTypes/filterUtils";
+import type { SmartGroupFilter } from "../../../../../commonTypes/filterUtils";
 import { isDefined } from "../../../utils";
-import { JoinedRecords } from "./JoinedRecords";
+import type { JoinedRecords } from "./JoinedRecords";
 
 export const getJoinFilter = function (this: JoinedRecords, path: string[]): SmartGroupFilter {
   const { tableName, rowFilter = [] } = this.props;

@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import Btn from "../../../../components/Btn";
 import { FlexRow } from "../../../../components/Flex";
-import { ColumnConfigWInfo } from "../../W_Table";
+import type { ColumnConfigWInfo } from "../../W_Table";
 import { updateWCols } from "../../tableUtils/tableUtils";
-import { LinkedColumnProps } from "./LinkedColumn";
+import type { LinkedColumnProps } from "./LinkedColumn";
 import Select from "../../../../components/Select/Select";
+import { mdiCheck } from "@mdi/js";
 
 
 export const NEW_COL_POSITIONS = [
@@ -55,6 +56,7 @@ export const LinkedColumnFooter = ({ onClose, column, w, localColumn, disabledIn
         className="ml-auto"
         disabledInfo={disabledInfo}
         data-command="LinkedColumn.Add"
+        iconPath={mdiCheck}
         onClickMessage={async (e, setM) => {
           setM({ loading: 1 })
           if(!w.columns) throw "not possible";
@@ -73,7 +75,7 @@ export const LinkedColumnFooter = ({ onClose, column, w, localColumn, disabledIn
           onClose?.();
         }}
       >
-        {!column? "Add" : "Update"}
+        {!column? "Add" : "Update"} Linked Column
       </Btn>}
     </FlexRow>
     </>

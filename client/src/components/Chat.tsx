@@ -1,8 +1,9 @@
-import React, { FunctionComponent, ReactChild, useEffect, useState } from 'react';
+import type { FunctionComponent, ReactChild} from "react";
+import React, { useEffect, useState } from "react";
 import "./Chat.css";
 
-import { mdiAttachment, mdiFile, mdiMicrophone, mdiStop } from '@mdi/js';
-import Icon from '@mdi/react';
+import { mdiAttachment, mdiFile, mdiMicrophone, mdiStop } from "@mdi/js";
+import { Icon } from "./Icon/Icon";
 type Message = {
   message: ReactChild;
   sender_id: number | string;
@@ -28,22 +29,22 @@ class AudioRecorder {
 
   constructor(){
     this.mediaOptions = {
-      tag: 'audio',
-      type: 'audio/ogg',
-      ext: '.ogg',
+      tag: "audio",
+      type: "audio/ogg",
+      ext: ".ogg",
       gUM: {audio: true}
     };
     this.recorder = undefined; 
   }
 
   start(cb: (result: Blob) => any | void){
-    let chunks: any = [];
+    const chunks: any = [];
     navigator.mediaDevices.getUserMedia(this.mediaOptions.gUM).then(stream => {
      
-      this.recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+      this.recorder = new MediaRecorder(stream, { mimeType: "audio/webm;codecs=opus" });
       this.recorder.ondataavailable = (e: any) => {
         chunks.push(e.data);
-        if(this.recorder && this.recorder.state == 'inactive'){
+        if(this.recorder && this.recorder.state == "inactive"){
           cb(new Blob(chunks, { type: this.mediaOptions.type }));
         }
       };
@@ -79,22 +80,20 @@ const Chat:FunctionComponent<P> = (props) => {
     setRecording(true);
   }
   const stopRecording = () => {
-    if(audioRec && recording) {
+    if(recording) {
       audioRec.stop();
       setRecording(false);
     }
   }
 
   useEffect(() => {
-    if(scrollRef){
-      if(scrollRef.scrollTo) scrollRef.scrollTo(0, scrollRef.scrollHeight)
+    if(scrollRef){ 
+      scrollRef.scrollTo(0, scrollRef.scrollHeight)
     }
-  }, [messages]);
+  }, [messages, scrollRef]);
 
   const [msg, setMsg] = useState("");
-  
 
-  if(!messages) return null; 
 
   const spinner = (
     <div className="spinner">
@@ -111,10 +110,10 @@ const Chat:FunctionComponent<P> = (props) => {
     }
   }
 
-  let ref: HTMLTextAreaElement;
+  let ref: HTMLTextAreaElement | undefined;
 
   const makeMessage = (m: Message, i: number) => {
-    let content = m.message;
+    const content = m.message;
     if(m.media){
       if(typeof m.media.content_type !== "string"){ 
         console.error("Bad media content_type");
@@ -163,7 +162,7 @@ const Chat:FunctionComponent<P> = (props) => {
         <textarea ref={e => {
           if(e) ref = e;
         }}
-          className="no-scroll-bar bg-1 text-0" 
+          className="no-scroll-bar bg-color-2 text-0" 
           rows={1} 
           value={msg}
           onKeyDown={e => {

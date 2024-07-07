@@ -1,30 +1,34 @@
 
-import prostgles from  "prostgles-client";
-import io from "socket.io-client"; 
+import prostgles from "prostgles-client";
+import { useAsyncEffectQueue } from "prostgles-client/dist/prostgles";
 import { useState } from "react";
-import { AppState } from "./App";
+import type { Socket } from "socket.io-client";
+import io from "socket.io-client";
+import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { DBSSchema } from "../../commonTypes/publishUtils";
+import type { AppState } from "./App";
+import type { DBS } from "./dashboard/Dashboard/DBS";
+import { getTables } from "./dashboard/Dashboard/Dashboard";
 import { useEffectAsync } from "./dashboard/DashboardMenu/DashboardMenuSettings";
-import { _Dashboard } from "./dashboard/Dashboard/Dashboard"; 
-import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated"; 
-import { DBS } from "./dashboard/Dashboard/DBS";
-import { DBSSchema } from "@common/publishUtils";
-import { tryCatch } from "prostgles-types"; 
+import { pageReload } from "./components/Loading";
 
 export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void) => {
 
   const [state, setState] = useState<Pick<AppState, "serverState" | "prglState" | "prglStateErr" | "dbsKey">>();
   const [user, setUser] = useState<DBSSchema["users"]>();
   const { dbs, auth } = state?.prglState ?? {};
-  useEffectAsync(async () => {
+  useAsyncEffectQueue(async () => {
     if(!dbs || !auth?.user?.id) return;
-     
-    const userSub = await dbs.users.subscribeOne({ id: auth.user!.id }, {}, (user) => {
+    
+    const userSub = await dbs.users.subscribeOne({ id: auth.user.id }, {}, (user) => {
       setUser(user);
     });
 
     return userSub.unsubscribe;
 
   }, [dbs, auth])
+  // const user = dbs?.users.useSubscribeOne({ id: auth?.user!.id });
+
 
   const init = async () => {
 
@@ -47,9 +51,9 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
       }
       console.error(initError)
     }
-     
+
     let prglReady: AppState["prglState"] | { error: any };
-    let socket: SocketIOClient.Socket;
+    let socket: Socket;
     if(serverState?.isElectron && !serverState.electronCredsProvided){
       setState({
         serverState,
@@ -69,7 +73,9 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
 
         socket.on("infolog", console.log);
         socket.on("pls-restart", _sure => {
-          setTimeout(() => window.location.reload(), 2000)
+          setTimeout(() => {
+            pageReload("pls-restart")
+          }, 2000)
         });
         socket.on("redirect", newLocation => {
           window.location = newLocation;
@@ -103,7 +109,7 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
               (window as any).dbsMethods = dbsMethods;
               const uType = auth.user?.type; 
     
-              const { tables: dbsTables = [], error } = await  await _Dashboard.getTables(tableSchema ?? [], undefined, dbs as any);
+              const { tables: dbsTables = [], error } = await getTables(tableSchema ?? [], undefined, dbs as any);
               if(error){
                 resolve({ error });
               } else {

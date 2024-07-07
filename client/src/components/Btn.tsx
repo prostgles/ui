@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { omitKeys } from "../utils";
 import Loading from "./Loading";
 import "./Btn.css";
-import RTComp from '../dashboard/RTComp';
+import RTComp from "../dashboard/RTComp";
 import ErrorComponent from "./ErrorComponent";
 import { generateUniqueID } from "./FileInput/FileInput";
 import { NavLink } from "react-router-dom";
-import { mdiAlert, mdiCheck, mdiUpload } from "@mdi/js";
-import { IconProps } from "@mdi/react/dist/IconProps";
+import { mdiAlert, mdiCheck, mdiUpload } from "@mdi/js"; 
+import type { IconProps } from "./Icon/Icon";
 import { Icon } from "./Icon/Icon";
 import Chip from "./Chip";
 import { classOverride } from "./Flex";
-import { TestSelectors } from '../Testing';
+import type { TestSelectors } from "../Testing";
+import { tout } from "../pages/ElectronSetup";
+import { Label, type LabelProps } from "./Label";
 
 type ClickMessage = (
   { err: any } | 
@@ -29,6 +31,7 @@ type BtnCustomProps = {
   iconProps?: IconProps;
   iconClassname?: string;
   iconPosition?: "left" | "right";
+  label?: LabelProps;
 
   /**
    * If provided then the button is disabled and will display a tooltip with this message
@@ -37,7 +40,7 @@ type BtnCustomProps = {
   disabledVariant?: "no-fade";
   loading?: boolean; 
   fadeIn?: boolean;
-  _ref?: any;
+  _ref?: ((btnNode?: HTMLButtonElement) => void);
 
   /**
    * If provided will override existing top classname
@@ -48,13 +51,19 @@ type BtnCustomProps = {
   color?: "danger" | "warn" | "action" | "inherit" | "transparent" | "white" | "green" | "indigo" | "default";
   
   "data-id"?: string;
+  /**
+   * If true then title will be used as children
+   */
+  titleAsLabel?: boolean;
 } & (
   {
     onClickMessage?: (
       e: React.MouseEvent<HTMLButtonElement, MouseEvent>, 
       showMessage: ClickMessageArgs
     ) => void;
+    onClickPromise?: undefined;
   } | {
+    onClickMessage?: undefined;
     onClickPromise?: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => Promise<any>;
   }
 );
@@ -64,7 +73,7 @@ const CUSTOM_ATTRS: OmmitedKeys[] = [
   "iconPath", "children", "disabledInfo", "title", "disabledVariant",
   "onClick", "loading", "color", "fadeIn", 
   "_ref", "ref", "style", "size", "exactClassName", "iconProps", "iconPosition", "iconClassname",
-  "onClickMessage" as any, "onClickPromise" as any, "asNavLink" as any, "iconStyle"
+  "onClickMessage" as any, "onClickPromise" as any, "asNavLink" as any, "iconStyle", "titleAsLabel"
 ]
 
 export type BtnProps<HREF extends string | void = void> = TestSelectors & BtnCustomProps & {
@@ -140,9 +149,17 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
 
 
   setPromise = async (promise: Promise<any>) => {
-    this.clickMessage({ loading: 1 })
+    this.clickMessage({ loading: 1, delay: 0 })
+    const minDuration = 500;
+    const startTime = Date.now();
     try {
       await promise;
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      if(!this.mounted) return;
+      if(duration < minDuration){
+        await tout(Math.max(0, minDuration - duration));
+      }
       this.clickMessage({ ok: "" })
     } catch(err){
       this.clickMessage({ err })
@@ -152,14 +169,14 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
   render(){
     const { 
       iconPath, iconPosition = "left", className = "", style = {}, iconStyle = {}, disabledInfo, disabledVariant = "", title, 
-      fadeIn, exactClassName, variant = "default", iconProps, iconClassname = "", ...otherProps
+      fadeIn, exactClassName, variant = "default", iconProps, iconClassname = "", titleAsLabel, label, ...otherProps
     } = this.props;
     const { clickMessage } = this.state;
     let extraStyle: React.CSSProperties = {};
 
     const color = (clickMessage?.type === "err"? "danger"  : clickMessage?.type === "ok"? "action" : this.props.color) ?? "default";
     const loading = clickMessage?.type === "loading"? true : this.props.loading ?? false;
-    const children = clickMessage?.msg || this.props.children;
+    const children = clickMessage?.msg || (titleAsLabel? title : this.props.children);
 
     if(clickMessage?.replace) return clickMessage.msg;
 
@@ -170,17 +187,14 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
     if(!exactClassName){
       const hasBgClassname = (className + "").includes("bg-")
       _className = " f-0 flex-row gap-p5 ai-center  " + 
-        // (hasBgClassname? "" :  "  bg-transparent " ) + 
         ("href" in this.props? " button-css " : "  ") + 
         (variant === "outline"? " b ":  "");
 
       if(children){
         if(variant === "outline"){
-          if(!hasBgClassname) _className = _className.replace("bg-transparent", "") + " bg-0 "
+          if(!hasBgClassname) _className = _className.replace("bg-transparent", "") + " bg-color-0 "
           extraStyle = {
-            // border: "1px solid",
             borderColor: "currentcolor",
-            // paddingRight: "14px",
           }
         } 
 
@@ -205,10 +219,6 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
         extraStyle = {
           padding: "8px"
         };
-        
-        if(variant === "outline"){
-          // _className += `b${colorPart}`
-        }
 
         if(variant === "icon" || variant === "outline"){
           extraStyle.padding = "0.5em";
@@ -217,9 +227,6 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
           extraStyle.padding = "4px"
         }
       }
-  
-      // _className += ` ${variant === "filled"? "text-white bg" : "text"}${colorPart} `;  
-
     }
     
     _className += (fadeIn? " fade-in " : "") + 
@@ -228,8 +235,13 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
 
     _className = classOverride(_className, className);
 
-    const iconSize = size === "micro"? .5 : size === "small"? .75 : size === "medium"? .85 : 1;
-    const loadingSize = !size? 18 : size === "small"? 12 : 24
+    const iconSize = 1; //size === "micro"? .5 : size === "small"? .75 : size === "medium"? .85 : 1;
+    const loadingSize = { 
+      large: 22, 
+      medium: 18, 
+      small: 12, 
+      micro: 12 
+    }[size ?? "small"];
     const childrenContent = (children === undefined || children === null || children === "")? null : 
       loading? <div 
         className="min-w-0 ws-nowrap text-ellipsis f-1 o-hidden" 
@@ -253,7 +265,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
       }
       
       {loading? <Loading 
-        style={{ margin: "3px 6px 3px 0px"}} 
+        style={{ margin: "-3px 6px -3px 0px"}} 
         sizePx={loadingSize} 
         delay={0} 
         colorAnimation={false} 
@@ -261,7 +273,6 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
 
       {iconPosition === "left" && childrenContent}
     </>;
-    // text${variant === "filled"? "-white" : colorPart}
 
     type PropsOf<E> = React.HTMLAttributes<E> & { ref?: React.Ref<E> };
 
@@ -271,8 +282,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
       onClick = e => {
         this.setPromise(onClickPromise(e));
       }
-    } 
-    if("onClickMessage" in this.props && this.props.onClickMessage){
+    } else if("onClickMessage" in this.props && this.props.onClickMessage){
       const { onClickMessage } = this.props;
       onClick = e => {
         onClickMessage(e, this.clickMessage)
@@ -303,24 +313,36 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
       style: { ...extraStyle, display: "flex", lineHeight: "1em", width: "fit-content", ...style, fontSize: FontSizeMap[size ?? "medium"] },
       onMouseDown: e => e.preventDefault(),
       className: `${_className} btn btn-${variant} btn-size-${size} btn-color-${color} ws-nowrap w-fit `,
-      ref: this.props._ref,
+      ref: this.props._ref as any,
       ...({"data-id": otherProps["data-id"] as any}),
+    }
+
+    const withLabel = (content: React.ReactNode) => {
+      if(label){
+        return <div className="flex-col f-0 min-h-fit">
+          <Label { ...label} />
+          {content}
+        </div>
+      }
+      return content;
     }
 
     if("href" in this.props && this.props.href){
       if(this.props.asNavLink){
-        return <NavLink 
-          { ...(finalProps) as PropsOf<HTMLAnchorElement> }
-          onClick={!disabledInfo? undefined : e => {
-            e.preventDefault();
-          }}
-          to={this.props.href} 
-          tabIndex={-1} 
-        >
-          {content}
-        </NavLink>
+        return withLabel(
+          <NavLink 
+            { ...(finalProps) as PropsOf<HTMLAnchorElement> }
+            onClick={!disabledInfo? undefined : e => {
+              e.preventDefault();
+            }}
+            to={this.props.href} 
+            tabIndex={-1} 
+          >
+            {content}
+          </NavLink>
+        )
       }
-      return (
+      return withLabel(
         <a { ...finalProps as PropsOf<HTMLAnchorElement> } 
           target={this.props.target} 
           onClick={disabledInfo? undefined : () => false} {...(this.props.download && { download: true })
@@ -328,10 +350,11 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
           {content}
         </a>
       );
+        
     }
 
-    return (
-      <button { ...finalProps as PropsOf<HTMLButtonElement> } disabled={disabledInfo? true : undefined}  >{content}</button>
+    return withLabel(
+      <button { ...finalProps as PropsOf<HTMLButtonElement> } disabled={disabledInfo? true : undefined}>{content}</button>
     );
 
   }

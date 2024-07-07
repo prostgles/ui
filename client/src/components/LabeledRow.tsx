@@ -24,7 +24,7 @@ export const LabeledRow = (p: P) => {
     title={p.title}
   >
     <div className={"flex-row gap-p5 text-1 ai-center " + (p.labelClassName ?? "")} style={p.labelStyle}>
-      {p.icon && <Icon path={p.icon} className="text-gray-400" />}  
+      {p.icon && <Icon path={p.icon} className="text-2" />}  
       {p.label}
     </div>
     {p.noContentWrapper? p.children : <div className={"px-p5 font-medium " + (p.contentClassName ?? "")} style={p.contentStyle}>

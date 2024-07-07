@@ -1,8 +1,8 @@
 
 import { isDefined, pickKeys } from "prostgles-types";
 import { asSQL } from "./KEYWORDS";
-import { ParsedSQLSuggestion } from "./registerSuggestions";
-import { KWD } from "./withKWDs";
+import type { ParsedSQLSuggestion } from "./registerSuggestions";
+import type { KWD } from "./withKWDs";
  
 
 export const PG_COLUMN_CONSTRAINTS = [
@@ -27,7 +27,7 @@ export const PG_COLUMN_CONSTRAINTS = [
   { kwd: "NOT NULL", docs: "Constraint ensuring this column cannot be NULL. By default columns can have NULL values if no constraints are specified." }, 
   { kwd: "REFERENCES", expects: "table", docs: "A foreign key constraint specifies that the values in a column (or a group of columns) must match the values appearing in some row of another table. We say this maintains the referential integrity between two related tables. The referenced column/s must be unique.\nhttps://www.postgresql.org/docs/current/tutorial-fk.html\n\n" + asSQL("product_id INTEGER REFERENCES products (id) ") }, 
   { kwd: "PRIMARY KEY", docs: "A primary key constraint indicates that a column, or group of columns, can be used as a unique identifier for rows in the table. This requires that the values be both unique and not null." }, 
-  { kwd: "DEFAULT", expects: "function",  docs: "A column can be assigned a default value. When a new row is created and no values are specified for some of the columns, those columns will be filled with their respective default values. If no default value is declared explicitly, the default value is the null value. \n" + asSQL("created_at TIMESTAMP DEFAULT now()") }, 
+  { kwd: "DEFAULT", expects: "function",  docs: "A column can be assigned a default value. When a new row is created and no values are specified for some of the columns, those columns will be filled with their respective default values. If no default value is declared explicitly, the default value is the null value. \n" + asSQL("/* For example */\ncreated_at TIMESTAMP DEFAULT now()") }, 
   { kwd: "CHECK", expects: "(condition)", docs: "Specify that the value in a certain column must satisfy a Boolean (truth-value) expression. For instance, to require positive product prices, you could use: \n" + asSQL(`CHECK (price > 0)`) },
   { kwd: "UNIQUE", expects: "(column)", docs: "The UNIQUE constraint specifies that a group of one or more columns of a table can contain only unique values. For the purpose of a unique constraint, null values are not considered equal, unless NULLS NOT DISTINCT is specified.Adding a unique constraint will automatically create a unique btree index on the column or group of columns used in the constraint." },
 ] as const satisfies readonly KWD[];
@@ -227,13 +227,28 @@ There must also be matching child-table constraints for all CHECK constraints of
 
 
 export const ALTER_COL_ACTIONS = [
-  { kwd: "SET DATA TYPE $data_type", docs: `This form changes the type of a column of a table. 
+  { 
+    kwd: "SET DATA TYPE $data_type", 
+    expects: "dataType", 
+    docs: `This form changes the type of a column of a table. 
   
 Indexes and simple table constraints involving the column will be automatically converted to use the new column type by reparsing the originally supplied expression. The optional COLLATE clause specifies a collation for the new column; if omitted, the collation is the default for the new column type. The optional USING clause specifies how to compute the new column value from the old; if omitted, the default conversion is the same as an assignment cast from old data type to new. A USING clause must be provided if there is no implicit or assignment cast from old to new type.
 
 When this form is used, the column's statistics are removed, so running ANALYZE on the table afterwards is recommended.` },
-  { kwd: "SET DEFAULT $expression", docs: PG_COLUMN_CONSTRAINTS.find(d => d.kwd === "DEFAULT")?.docs },
-  { kwd: "DROP DEFAULT", docs: PG_COLUMN_CONSTRAINTS.find(d => d.kwd === "DEFAULT")?.docs },
+  { kwd: "SET DEFAULT", 
+    options: (ss, cb) => {
+      const col = ss.find(s => cb.prevIdentifiers.includes(s.escapedIdentifier ?? "") && cb.prevIdentifiers.includes(s.escapedParentName ?? ""));
+      const prioritisedFuncNames = ["now", "current_timestamp", `"current_user"`, "current_setting", "gen_random_uuid", "uuid_generate_v1", "uuid_generate_v4"];
+      const funcs = ss.filter(s => {
+        return !col || s.funcInfo?.restype_udt_name?.startsWith(col.colInfo?.udt_name ?? "invalid")
+      }).map(s => ({
+        ...s,
+        sortText: prioritisedFuncNames.includes(s.name)? "!" : (s.sortText ?? s.name),
+      }));
+      return funcs;
+    }, 
+    docs: PG_COLUMN_CONSTRAINTS.find(d => d.kwd === "DEFAULT")?.docs },
+  { kwd: "DROP DEFAULT", options: [{ label: ";" }], docs: PG_COLUMN_CONSTRAINTS.find(d => d.kwd === "DEFAULT")?.docs },
   { kwd: "SET NOT NULL", docs: PG_COLUMN_CONSTRAINTS.find(d => d.kwd === "NOT NULL")?.docs },
   { kwd: "DROP NOT NULL", docs: PG_COLUMN_CONSTRAINTS.find(d => d.kwd === "NOT NULL")?.docs },
   { kwd: "DROP EXPRESSION $1", docs: `This form turns a stored generated column into a normal base column. Existing data in the columns is retained, but future changes will no longer apply the generation expression.
@@ -266,9 +281,16 @@ SET STATISTICS acquires a SHARE UPDATE EXCLUSIVE lock.`
 
 Changing per-attribute options acquires a SHARE UPDATE EXCLUSIVE lock.`
   })),
-  { kwd: "SET STORAGE ${1|PLAIN,EXTERNAL,EXTENDED,MAIN|}", docs: `This form sets the storage mode for a column. This controls whether this column is held inline or in a secondary TOAST table, and whether the data should be compressed or not. PLAIN must be used for fixed-length values such as integer and is inline, uncompressed. MAIN is for inline, compressible data. EXTERNAL is for external, uncompressed data, and EXTENDED is for external, compressed data. EXTENDED is the default for most data types that support non-PLAIN storage. Use of EXTERNAL will make substring operations on very large text and bytea values run faster, at the penalty of increased storage space. Note that SET STORAGE doesn't itself change anything in the table, it just sets the strategy to be pursued during future table updates. See Section 73.2 for more information.` },
-  { kwd: "SET COMPRESSION $compression_method", docs: `This form sets the compression method for a column, determining how values inserted in future will be compressed (if the storage mode permits compression at all). This does not cause the table to be rewritten, so existing data may still be compressed with other compression methods. If the table is restored with pg_restore, then all values are rewritten with the configured compression method. However, when data is inserted from another relation (for example, by INSERT ... SELECT), values from the source table are not necessarily detoasted, so any previously compressed data may retain its existing compression method, rather than being recompressed with the compression method of the target column. The supported compression methods are pglz and lz4. (lz4 is available only if --with-lz4 was used when building PostgreSQL.) In addition, compression_method can be default, which selects the default behavior of consulting the default_toast_compression setting at the time of data insertion to determine the method to use.` },
-]
+  { 
+    kwd: "SET STORAGE ${1|PLAIN,EXTERNAL,EXTENDED,MAIN|}", 
+    options: [{ label: "PLAIN" }, { label: "EXTERNAL" }, { label: "EXTENDED" }, { label: "MAIN" }],
+    docs: `This form sets the storage mode for a column. This controls whether this column is held inline or in a secondary TOAST table, and whether the data should be compressed or not. PLAIN must be used for fixed-length values such as integer and is inline, uncompressed. MAIN is for inline, compressible data. EXTERNAL is for external, uncompressed data, and EXTENDED is for external, compressed data. EXTENDED is the default for most data types that support non-PLAIN storage. Use of EXTERNAL will make substring operations on very large text and bytea values run faster, at the penalty of increased storage space. Note that SET STORAGE doesn't itself change anything in the table, it just sets the strategy to be pursued during future table updates. See Section 73.2 for more information.` },
+  { 
+    kwd: "SET COMPRESSION", 
+    options: [{ label: "default" }, { label: "pglz" }, { label: "lz4" }],
+    docs: `This form sets the compression method for a column, determining how values inserted in future will be compressed (if the storage mode permits compression at all). This does not cause the table to be rewritten, so existing data may still be compressed with other compression methods. If the table is restored with pg_restore, then all values are rewritten with the configured compression method. However, when data is inserted from another relation (for example, by INSERT ... SELECT), values from the source table are not necessarily detoasted, so any previously compressed data may retain its existing compression method, rather than being recompressed with the compression method of the target column. The supported compression methods are pglz and lz4. (lz4 is available only if --with-lz4 was used when building PostgreSQL.) In addition, compression_method can be default, which selects the default behavior of consulting the default_toast_compression setting at the time of data insertion to determine the method to use.` 
+  },
+] satisfies readonly KWD[];
 
 
 

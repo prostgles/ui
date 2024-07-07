@@ -1,13 +1,14 @@
 
-import { SQLHandler } from "prostgles-types";
-import React from 'react';
-import { DBSSchema } from "../../../../commonTypes/publishUtils";
-import { Prgl } from "../../App";
-import Loading from "../../components/Loading"; 
-import { FileTableConfigReferences } from "./FileColumnConfigControls";
+import { useIsMounted, usePromise } from "prostgles-client/dist/react-hooks";
+import type { SQLHandler } from "prostgles-types";
+import React, { useState } from "react";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import { type Prgl } from "../../App";
+import Loading from "../../components/Loading";
+import type { FileTableConfigReferences } from "./FileColumnConfigControls";
 import { FileStorageControls } from "./FileStorageControls";
 import { FileStorageReferencedTablesConfig } from "./FileStorageReferencedTablesConfig";
-import { usePromise, useSubscribeOne } from "prostgles-client/dist/react-hooks";
+import { useFileTableConfigControls } from "./useFileTableConfigControls";
 
 
 type FileTableConfigControlsProps = {
@@ -20,13 +21,9 @@ export type ConnectionTableConfig = DBSSchema["database_configs"]["file_table_co
   referencedTables?: FileTableConfigReferences["referencedTables"];
 }
 
-export const FileTableConfigControls = ({ prgl: { tables, db, dbs, dbsTables, dbsMethods, connectionId, theme } }: FileTableConfigControlsProps) => {
-
-    const connectionFilter = {  id: connectionId };
-    const connection = useSubscribeOne(dbs.connections.subscribeOneHook(connectionFilter));
-    const database_config = useSubscribeOne(dbs.database_configs.subscribeOneHook({ $existsJoined: { connections: connectionFilter } }));
-    
-    const canCreateTables = usePromise(() => getCanCreateTables(db.sql!));
+export const FileTableConfigControls = ({ prgl }: FileTableConfigControlsProps) => {
+    const { tables, db, dbs, dbsTables, dbsMethods, connectionId, theme } = prgl;
+    const { connection, database_config, canCreateTables, setRefsConfig, updateRefsConfig, refsConfig, canUpdateRefColumns: canUpdate } = useFileTableConfigControls(prgl);
     if (!connection || !database_config) {
       return <Loading />
     }
@@ -45,12 +42,15 @@ export const FileTableConfigControls = ({ prgl: { tables, db, dbs, dbsTables, db
       />
 
       <FileStorageReferencedTablesConfig 
-        dbsMethods={dbsMethods} 
-        canCreateTables={!!canCreateTables} 
-        connection={connection}
+        setRefsConfig={setRefsConfig} 
+        updateRefsConfig={updateRefsConfig}
+        canCreateTables={!!canCreateTables}
+        canUpdateRefColumns={canUpdate}
+        refsConfig={refsConfig}
         file_table_config={database_config.file_table_config}
         tables={tables} 
         db={db}
+        prgl={prgl}
       />
 
     </div>

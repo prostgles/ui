@@ -1,8 +1,10 @@
-import { mdiAlertCircleOutline } from '@mdi/js';
-import Icon from '@mdi/react';
-import React, { ReactNode } from 'react';
-import { get, isEmpty } from '../utils';
-import { classOverride } from './Flex';
+import { mdiAlertCircleOutline } from "@mdi/js"; 
+import type { ReactNode } from "react";
+import React from "react";
+import { isEmpty } from "../utils";
+import { classOverride } from "./Flex";
+import { Icon } from "./Icon/Icon";
+import { isObject } from "../../../commonTypes/publishUtils";
 
 export default class ErrorComponent extends React.Component<{ 
   error: any; 
@@ -28,10 +30,10 @@ export default class ErrorComponent extends React.Component<{
 
     } else if(val && !isEmpty(val) && Object.keys(val).length) {
       if(findMsg) {
-        res = get(val, "err.err_msg") || get(val, "err.constraint") || get(val, "err.txt")| get(val, "err.message") || val.err_msg || JSON.stringify(val);
+        res = getErrorMessage(val);
       }
       if(!res) res = Object.keys(val).map(k => `${k}: ${JSON.stringify(val[k], null, 2)}`).join("\n");
-    } else if(get(val, "toString")) res = val.toString();
+    } else if(val?.toString) res = val.toString();
     else res = JSON.stringify(val);
     
     if(typeof res === "string" && res.length) {
@@ -74,17 +76,19 @@ export default class ErrorComponent extends React.Component<{
           display: !error? "none" : "flex",
           ...(!className.includes("p-") && { padding: "0 4px"}),
           ...style,
-          ...(noScroll && { overflow: "hidden" }),
           minWidth: "150px", // To ensure it shows on mobile
           ...(variant === "outlined" && {
             border: `1px solid var(--${colorClass})`,
             borderRadius: "var(--rounded)",
             padding: ".5em 1em"
           }),
+          ...(noScroll? { overflow: "hidden" } : {
+            alignItems: "unset",
+          }),
         }}
       >
         {withIcon && <Icon size={1} className="mr-1 as-start" path={mdiAlertCircleOutline} />}
-        <div className={"flex-col gap-1 " + (noScroll? "ws-break" : "")}>
+        <div className={"flex-col gap-1 " + (noScroll? "ws-break" : "o-auto")}>
           {title && <div className="font-18 bold">{title}</div>}
           {(ErrorComponent.parsedError(error, findMsg) + "").slice(0, maxTextLength)}
         </div>
@@ -107,16 +111,26 @@ export class ErrorTrap extends React.Component<{ children: ReactNode }, { error:
 
   render(){
     const { error, errorInfo } = this.state;
-    const compName = get(this.props, "children.type.name");
-    let errVal: any = { error, stack: get(errorInfo, "componentStack") || errorInfo }
+    const compName = (this.props.children as any)?.type?.name;
+    let errVal: any = { error, stack: (errorInfo as any)?.componentStack || errorInfo }
     if(compName){
       errVal = {
         component: compName,
         ...errVal,
       }
     }
-    if(error) return <ErrorComponent error={errVal} className="bg-0 p-2" />;
+    if(error) return <ErrorComponent error={errVal} className="bg-color-0 p-2" />;
 
     return this.props.children;
   }
+}
+
+export const getErrorMessage = (e: any) => {
+  const msgFields = ["err_msg", "message", "details", "constraint", "txt", "hint"];
+  if(typeof e === "string") return e;
+  if(isObject(e)) {
+    const errorMessage = msgFields.find(f => typeof (e[f] ?? e.err?.[f]) === "string");
+    if(errorMessage) return e[errorMessage] ?? e.err?.[errorMessage];
+  }
+  return e? JSON.stringify(e) : "Error";
 }

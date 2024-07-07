@@ -1,9 +1,10 @@
 import React from "react"
-import { DESTINATIONS, PGDumpParams } from "../../../../commonTypes/utils";
+import type { PGDumpParams } from "../../../../commonTypes/utils";
+import { DESTINATIONS } from "../../../../commonTypes/utils";
 import Select from "../../components/Select/Select";
 import { CredentialSelector } from "./CredentialSelector";
-import { DumpOptionsProps } from "./DumpOptions";
-import { Theme } from "../../App";
+import type { DumpOptionsProps } from "./DumpOptions";
+import type { Theme } from "../../App";
 
 type P = Pick<DumpOptionsProps, "dbs" | "dbsTables" | "dbsMethods"> & {
   currOpts: PGDumpParams;

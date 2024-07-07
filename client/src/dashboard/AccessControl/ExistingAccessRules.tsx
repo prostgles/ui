@@ -1,12 +1,13 @@
 import React from "react";
-import { AccessRule } from "./AccessControl";
+import type { AccessRule } from "./AccessControl";
 import Chip from "../../components/Chip";
 import { InfoRow } from "../../components/InfoRow";
 import { mdiAccount, mdiFunction, mdiViewCarousel } from "@mdi/js"; 
 import { LabeledRow } from "../../components/LabeledRow"; 
 import { pluralise } from "../../pages/Connections/Connection";
 import { AccessRuleSummary } from "./AccessRuleSummary"; 
-import { Workspace } from "../Dashboard/dashboardUtils";
+import type { Workspace } from "../Dashboard/dashboardUtils";
+import { NavLink } from "react-router-dom";
 
 type ExistingAccessRulesProps = {
   onSelect: (rule: AccessRule) => void;
@@ -19,7 +20,7 @@ export const AccessControlRules = ({ rules, onSelect, workspaces }: ExistingAcce
   const userTypesWithAccess = rules.flatMap(r => r.access_control_user_types.flatMap(u => u.ids));
 
   return <div className="ExistingAccessRules ">
-    <InfoRow variant="naked" color="info" style={{ alignItems: "center" }} iconPath="" >
+    <InfoRow variant="naked" color="info" style={{ alignItems: "center" }} iconPath="">
       <p>{!userTypesWithAccess.length? "Only users" : "Users"} of type <strong>"admin"</strong> have full access to this database.</p> 
       
       {!!userTypesWithAccess.length && <p>
@@ -28,15 +29,16 @@ export const AccessControlRules = ({ rules, onSelect, workspaces }: ExistingAcce
     </InfoRow>
 
   {!!rules.length && <>
-    <h3 className="m-0 mt-1 mb-1">Existing rules {rules.length > 5? `(${rules.length})` :""}</h3>
+    <h3 className="m-0 mt-1 mb-1">Access rules {rules.length > 5? `(${rules.length})` :""}</h3>
     <div className="flex-col gap-1 w-fit max-w-full">{rules.map((r, ri)=> {
 
       const publishedWorkspaceNames = workspaces.filter(w => r.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds.includes(w.id)).map(w => w.name)
       const userTypes = r.access_control_user_types[0]?.ids;
       return (
         <div key={ri} 
-          className={"ExistingAccessRules_Item flex-col active-shadow-hover gap-p5 pointer rounded p-p5 bg-0 shadow b b-gray-300 o-auto"} 
+          className={"ExistingAccessRules_Item flex-col active-shadow-hover gap-p5 pointer rounded p-p5 bg-color-0 shadow b b-color o-auto"} 
           // style={{ opacity: userTypes?.length? 1 : 0 }}
+          data-key={userTypes}
           onClick={() => onSelect(r)}
         >
           <LabeledRow 

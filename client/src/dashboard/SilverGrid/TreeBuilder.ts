@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
 import { isDefined } from "../../utils";
-import { LayoutConfig, LayoutGroup, LayoutItem } from "./SilverGrid";
+import type { LayoutConfig, LayoutGroup, LayoutItem } from "./SilverGrid";
 
 export type TreeLayout = LayoutConfig & { parent?: TreeLayout };
 export class TreeBuilder {
@@ -41,15 +41,12 @@ export class TreeBuilder {
   };
 
   remove = (itemId: string, noChange = false) => {
-    // console.log(itemId, JSON.stringify(this.getLayout(), null, 2));
-    // this.refresh(noChange);
     const items = this._filter(d => d.id === itemId && d.parent);
     
     items.map(item => {
       (item.parent as LayoutGroup).items = (item.parent as LayoutGroup).items.filter(d => d !== item);
     });
 
-    // console.log(JSON.stringify(this.getLayout(), null, 2));
     if(!noChange) {
       this.onChange(this.getLayout());
     }
@@ -176,14 +173,6 @@ export class TreeBuilder {
     if(source && target){
 
       if(!target.parent){
-        // if(parentType === "tab"){
-        //   debugger;
-        //   // targets will always be items
-
-        //   // if parent is type tab then do nothing. Otherwise:
-        //   //   if parent has only 1 child then transform into tab boxType AND Append source item
-        //   //   Otherwise replace target (parent.items.map ...) with source and target items nested into a TAB parent
-
         /* Target is a group with required layout */
         if(target.type === parentType && target.items){
           source.size = (target && target.items.length)? target.items[0]!.size : 50;
@@ -209,13 +198,6 @@ export class TreeBuilder {
       /* Target parent is a group with required layout */
       } else {
         const targetIdx = (target.parent  as LayoutGroup).items.findIndex(d => d.id == targetId);
-        // if(parentType === "tab"){
-        //   if(target.parent.type === parentType){
-        //     target.parent.items.unshift(source)
-        //   } else {
-
-        //   }
-        // } else 
         if(target.parent.type === parentType){
           target.parent.items.splice(insertBefore? targetIdx : targetIdx + 1, 0 , source);
           target.parent.items = target.parent.items.map(d => {
@@ -244,9 +226,7 @@ export class TreeBuilder {
       }
 
     }
-    // console.log(source, target);
-    // console.log(JSON.stringify(this.getLayout(), null, 2))
-    // this.onChange(this.getLayout());
+
     this.refresh();
   }
 }

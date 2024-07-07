@@ -1,6 +1,6 @@
-import { AnyObject } from "prostgles-types";
-import { DecKGLMapProps } from "../Map/DeckGLMap";
-import W_Map from "./W_Map";
+import type { AnyObject } from "prostgles-types";
+import type { DecKGLMapProps } from "../Map/DeckGLMap";
+import type W_Map from "./W_Map";
 
 /**
  * 
@@ -13,7 +13,9 @@ export const getMapDataExtent: DecKGLMapProps["onGetFullExtent"] = async functio
   let minLat, minLng, maxLat, maxLng, _xyExtent: { e: string; } | AnyObject | undefined;
   for await (const layer of layerQueries){
 
-    if("tableName" in layer){
+    if(layer.type === "osm"){
+      return undefined;
+    } else if("tableName" in layer){
       const { geomColumn, tableName } = layer;
       const { finalFilterWOextent } = this.getFilter(layer, []);
       if(!db[tableName]?.findOne) throw `db.${tableName}.find not allowed`;

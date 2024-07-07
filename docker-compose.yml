@@ -4,8 +4,7 @@ version: "3.7"
 services:
   postgres:
     
-    image: postgis/postgis:15-3.3
-    # image: mdillon/postgis
+    image: postgis/postgis:16-3.4
     
     # Survive server reboot
     restart: always
@@ -16,7 +15,8 @@ services:
       POSTGRES_PASSWORD: "POSTGRES_PASSWORD" 
 
     # Used to allow creating pg_stat_statements extension to track query performance
-    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c max_connections=200
+    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c max_connections=200 && \
+      apt-get update && apt-get install -y procps
 
     ports: 
       - 5432/tcp
@@ -52,8 +52,8 @@ services:
         condition: service_healthy
 
     ## Used to allow connecting to a database from the host
-    # extra_hosts:
-    #   - "host.docker.internal:host-gateway"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     ## DEBUG -> Ensure NODE_ENV above is not set to 'production'
     # command: node --inspect=0.0.0.0:9229 /usr/src/app/server/dist/server/src/index.js

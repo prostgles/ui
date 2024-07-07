@@ -1,0 +1,27 @@
+#prostgles-logo #eye {
+  -webkit-animation-name: prostgles-logo-animation;
+  -webkit-animation-duration: 5s;
+  -webkit-animation-timing-function: ease-in-out;
+  -webkit-animation-iteration-count: infinite;    
+  -webkit-animation-play-state: running;
+  
+  animation-name: prostgles-logo-animation;
+  animation-duration: 5s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;    
+  animation-play-state: running;
+}
+
+@-webkit-keyframes prostgles-logo-animation {
+  0%      { fill:#57a9e0;  }
+  25.0%   { fill:#a3a3a3;  }
+  50.0%   { fill:#f52424;             }
+  100.0%  { fill: initial;              }
+}
+
+@keyframes prostgles-logo-animation {
+  0%      { fill:#57a9e0;  }
+  25.0%   { fill:#a3a3a3;  }
+  50.0%   { fill:#f52424;             }
+  100.0%  { fill: initial;              }
+}

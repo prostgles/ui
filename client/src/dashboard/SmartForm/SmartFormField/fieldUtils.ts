@@ -1,26 +1,28 @@
-import { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { ValidatedColumnInfo, TableInfo, isObject, AnyObject, _PG_date, MethodHandler, TS_PG_Types } from "prostgles-types";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
+import { isObject } from "prostgles-types";
+import { renderInterval } from "../../W_SQL/customRenderers";
 import { colIs } from "../../W_Table/ColumnMenu/ColumnSelect";
-import { renderInterval } from "../../ProstglesSQL/customRenderers";
+import type { FilterColumn } from "../../SmartFilter/smartFilterUtils";
+import { getComputedColumnSelect } from "../../W_Table/tableUtils/getTableSelect";
 
 
 export const OPTIONS_LIMIT = 20;
 export const getSuggestions = async (args: {
   table: string;
   db: DBHandlerClient,
-  col: Pick<ValidatedColumnInfo, "name" | "tsDataType" | "udt_name">,
+  column: FilterColumn,
   term?: string;
   groupBy?: boolean;
   filter?: AnyObject;
 }): Promise<(string | null)[]> => {  //  { raw: any; text: string }
 
-  const { db, table, term: _term, col, groupBy = true, filter } = args;
+  const { db, table, term: _term, column: col, groupBy = true, filter } = args;
   const tableHandler = db[table]
   if (!tableHandler?.find) {
     console.error("Invalid column provided")
     return [];
   }
-  // const hasEmptyVals = 
   const term = (_term || "").trimStart();
 
   try {
@@ -34,7 +36,7 @@ export const getSuggestions = async (args: {
       finalFilter,
       {
         select: {
-          [col.name]: 1,
+          [col.name]: col.type === "computed"? getComputedColumnSelect(col.computedConfig) : 1,
           // [`${col}_sort`]: {
           //     $position_lower: [
           //         term || '', col
@@ -56,13 +58,18 @@ export const getSuggestions = async (args: {
       }
     )) as any;
 
-    if (!res.includes("") && !colIs(col, "_PG_date") && col.tsDataType === "string" && col.udt_name !== "uuid") {
-      const empty = await tableHandler.findOne?.({ [col.name]: '' }, { select: { [col.name]: "$trim" } });
-      if (empty) res.unshift("");
-    }
-    if (!res.includes(null)) {
-      const c = await tableHandler.count?.({ [col.name]: null }) ?? "0";
-      if (+c) res.unshift(null);
+    /**
+     * Prepend empty/null value options to the top if they exist
+     */
+    if(col.type === "column"){
+      if (!res.includes("") && !colIs(col, "_PG_date") && col.tsDataType === "string" && col.udt_name !== "uuid") {
+        const empty = await tableHandler.findOne?.({ [col.name]: "" }, { select: { [col.name]: "$trim" } });
+        if (empty) res.unshift("");
+      }
+      if (!res.includes(null)) {
+        const c = await tableHandler.count?.({ [col.name]: null }) ?? "0";
+        if (+c) res.unshift(null);
+      }
     }
 
     return res;
@@ -77,7 +84,7 @@ export const getSuggestions = async (args: {
 /**
  * Used in transforming a postgres/db value to a valid html <input /> OR <CodeEditor /> value 
  */
-export const parseValue = (c: ValidatedColumnInfo, value: any, reverseForServer = false) => {
+export const parseValue = (c: ValidatedColumnInfo | FilterColumn, value: any, reverseForServer = false) => {
 
   if(reverseForServer) {
     if((c.udt_name === "geography" || c.udt_name === "geometry") && typeof value === "string" && value.trim().startsWith("{")){
@@ -130,7 +137,7 @@ export const parseValue = (c: ValidatedColumnInfo, value: any, reverseForServer 
       return JSON.stringify(value);
     }
     const v = typeof value === "string" ? value : +value;
-    if (c.udt_name === "date") return (new Date(v)).toISOString().split('T')[0];
+    if (c.udt_name === "date") return (new Date(v)).toISOString().split("T")[0];
     if (c.udt_name.startsWith("timestamp")) return parseDateStr(v, c.udt_name === "timestamptz");
     if(Array.isArray(value) && !value.some(v => isObject(v))){
 
@@ -156,7 +163,7 @@ export const parseDefaultValue = (c: ValidatedColumnInfo, value: any, wasChanged
 
   if (c.has_default && typeof c.column_default === "string") {
 
-    if (c.column_default.endsWith('::text')) return c.column_default.slice(1, -7);
+    if (c.column_default.endsWith("::text")) return c.column_default.slice(1, -7);
     // if (["now()", "CURRENT_TIMESTAMP"].includes(c.column_default)) {
     //   if (c.udt_name === "date") return (new Date()).toISOString().split('T')[0];
     //   return (new Date()).toISOString().slice(0, -5);

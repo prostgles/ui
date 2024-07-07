@@ -1,12 +1,14 @@
 
-import { getKeys, isEmpty, isObject, JSONB, pickKeys } from "prostgles-types";
+import type { JSONB} from "prostgles-types";
+import { getKeys, isEmpty, isObject, pickKeys } from "prostgles-types";
 import React from "react";
-import SmartSearch from "../../dashboard/SmartFilter/SmartSearch";
+import { SmartSearch } from "../../dashboard/SmartFilter/SmartSearch/SmartSearch";
 import { areEqual } from "../../utils";
 import ErrorComponent from "../ErrorComponent";
 import Select from "../Select/Select";
 import { isCompleteJSONB } from "./isCompleteJSONB";
-import { JSONBSchema, JSONBSchemaCommonProps } from "./JSONBSchema";
+import type { JSONBSchemaCommonProps } from "./JSONBSchema";
+import { JSONBSchema } from "./JSONBSchema";
 
 
 type Schema = JSONB.Lookup; 
@@ -32,6 +34,7 @@ export const JSONBSchemaLookup = ({ value: rawValue, schema, onChange, db, table
     }
     const matchingTables = tables.filter(t => !tableFilter || t.name === tableFilter  );
     const delimiter = `||_prgl$_||?!#$@#@$@$#"4$`;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const needsCol = (lookup.type === "data-def" || lookup.type === "schema" && lookup.object === "column");
     const fullOptions = needsCol? 
       matchingTables.flatMap(t => {

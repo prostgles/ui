@@ -2,37 +2,23 @@ import { mdiPlus } from "@mdi/js";
 import React, { useState } from "react";
 import Select from "../../components/Select/Select";
 import FileImporter from "../FileImporter/FileImporter";
+import { NewMethod } from "../W_Method/NewMethod";
 import { CreateTable } from "./CreateTable";
-import { DashboardMenuProps } from "./DashboardMenu";
+import type { DashboardMenuProps } from "./DashboardMenu";
 
 const items = [
   { key: "New", label: "Create table" },
-  // { key: "SampleSchemas", label: "Create demo tables" },
   { key: "Import file", label: "Import file", subLabel: "Supported types: csv/geojson/json" },
+  { key: "newMethod", label: "Create TS Function", subLabel: "(Experimental)" },
 ] as const;
 
 export const NewTableMenu = (p: DashboardMenuProps) => {
   const  { prgl, tables, loadTable } = p;
   const sql = prgl.db.sql;
-
-  
   const [show, setShow] = useState<typeof items[number]["key"]>();
   
   if(!sql) return null;
 
-  // <Btn iconPath={mdiPlus}
-  //   className={" fit " }
-  //   // style={{ marginLeft: "6px", marginTop: "2em"}}
-  //   title="Import data from file"
-  //   data-command="import-data"
-  //   variant="outline"
-  //   onClick={() => {
-  //     setshowImportFile(true);
-  //     // pClose();
-  //   }}
-  // >Import data</Btn>
- 
-  
   return <><Select 
     emptyLabel="Create table"
     data-command="dashboard.menu.createTable"
@@ -63,15 +49,14 @@ export const NewTableMenu = (p: DashboardMenuProps) => {
       }}
     />
   }
-  {/* {show === "SampleSchemas" && 
-    <SampleSchemas 
-      title="Sample schemas" 
-      dbsMethods={prgl.dbsMethods}
-      onChange={(schema) => {
-        loadTable({ type: "sql", name: schema.name, sql: schema.sql });
-        setShow(undefined);
-      }} 
-    />
-  } */}
+  {
+    show === "newMethod" && 
+      <NewMethod
+        { ...prgl}
+        access_rule_id={undefined}
+        onClose={() => setShow(undefined)}
+        methodId={undefined}
+      />
+  }
   </>
 }

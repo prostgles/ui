@@ -1,16 +1,19 @@
 
-import { AnyObject, _PG_date } from "prostgles-types";
+import type { AnyObject} from "prostgles-types";
+import { _PG_date } from "prostgles-types";
 import React from "react";
-import { Pagination, PaginationProps } from "../../components/Table/Pagination";
-import { WindowSyncItem } from "../Dashboard/dashboardUtils";
-import { matchObj } from "../ProstglesSQL/W_SQL";
+import type { PaginationProps } from "../../components/Table/Pagination";
+import { Pagination } from "../../components/Table/Pagination";
+import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import RTComp from "../RTComp";
 import SmartFormField from "../SmartForm/SmartFormField/SmartFormField";
-import { W_TableProps, W_TableState } from "./W_Table";
-import { getMenuColumn, OnClickEditRow } from "./tableUtils/getEditColumn";
-import { DragHeader } from "./DragHeader";
-import { ProstglesTableColumn } from "./tableUtils/getTableCols";
+import type { W_TableProps, W_TableState } from "./W_Table";
+import type { OnClickEditRow } from "./tableUtils/getEditColumn";
+import { getEditColumn } from "./tableUtils/getEditColumn";
+import { DragHeader, DragHeaderHeight } from "./DragHeader";
+import type { ProstglesTableColumn } from "./tableUtils/getTableCols";
 import { FlexCol, FlexRowWrap } from "../../components/Flex";
+import { matchObj } from "../../../../commonTypes/utils";
 
 export type CardViewProps = { 
   props: W_TableProps;
@@ -98,8 +101,10 @@ export class CardView extends RTComp<CardViewProps, CardViewState> {
           const row = indexedRow.data;
 
           const itemMarginTop = (isMoving && indexedRow.index === isMoving.index + 1)? `calc(${isMoving.height}px + 1em)` : marginTop;
+          const isDragTarget = this.state.isMoving?.target?.index === indexedRow.index
           return (
-            <FlexRowWrap key={indexedRow.index} 
+            <FlexRowWrap 
+              key={indexedRow.index} 
               data-row-index={indexedRow.index}
               data-command="CardView.row"
               className={
@@ -108,8 +113,12 @@ export class CardView extends RTComp<CardViewProps, CardViewState> {
               }
               style={{
                 gap: padding,
-                background: this.state.isMoving?.target?.index === indexedRow.index? "var(--blue-100)" : "white",
+                background: isDragTarget? "var(--blue-100)" : "var(--bg-color-0)",
                 padding,
+                /** Used to ensure top right edit button is visible */
+                paddingRight: "3em",
+                /** Used to ensure cell header contextmenu is working */
+                paddingTop: `${DragHeaderHeight}px`,
                 ...(maxCardWidth !== "100%"? { 
                   width: maxCardWidth 
                 }: {
@@ -144,7 +153,7 @@ export class CardView extends RTComp<CardViewProps, CardViewState> {
                   position: "absolute",
                 }}
               >
-                {getMenuColumn({
+                {getEditColumn({
                   columns, 
                   tableHandler, 
                   onClickRow: (...args) => {
@@ -156,14 +165,14 @@ export class CardView extends RTComp<CardViewProps, CardViewState> {
 
               {cols.filter(c => 
                 !c.hidden && 
-                !(hideEmptyCardCells && [null, undefined, ''].includes(`${row[c.name] ?? ""}`.trim())) 
+                !(hideEmptyCardCells && [null, undefined, ""].includes(`${row[c.name] ?? ""}`.trim())) 
               ).map((c , ci)=> (
                 <div key={ci} 
                   title={c.udt_name}
                   className={"flex-col min-w-0 " + (cardRows > 1? " h-fit w-fit " : "")}
                   style={{ minWidth: cardCellMinWidth }}
                 >
-                  {!hideCardFieldNames && <div className=" text-gray-400 pointer noselect" onContextMenu={c.onContextMenu as any}>
+                  {!hideCardFieldNames && <div className=" text-2 pointer noselect" onContextMenu={c.onContextMenu as any}>
                     {c.name}
                   </div>}
                   <div className=" o-auto font-18"
@@ -226,7 +235,7 @@ export class CardView extends RTComp<CardViewProps, CardViewState> {
       content = getCardColumn(rows);
     }
     
-    return <div className={"CardView o-auto min-s-0 flex-col f-1 bg-gray-200  " + className } style={style}>
+    return <div className={"CardView o-auto min-s-0 flex-col f-1 bg-color-2  " + className } style={style}>
       {content}
       <Pagination { ...paginationProps } />
     </div>

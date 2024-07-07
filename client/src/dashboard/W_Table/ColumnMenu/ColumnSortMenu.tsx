@@ -1,9 +1,9 @@
 import React from "react";
 import { FlexCol } from "../../../components/Flex";
 import Select from "../../../components/Select/Select";
-import { ColumnSort } from "./ColumnMenu";
-import { ColumnConfigWInfo } from "../W_Table";
-import { DBSchemaTablesWJoins, WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import type { ColumnSort } from "./ColumnMenu";
+import type { ColumnConfigWInfo } from "../W_Table";
+import type { DBSchemaTablesWJoins, WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import FormField from "../../../components/FormField/FormField";
 
 const SORT_NULLS_OPTIONS = [
@@ -24,13 +24,21 @@ export type ColumnSortMenuProps = {
   tables: DBSchemaTablesWJoins;
 }
 
-export const ColumnSortMenu = ({ column, w, tables }: ColumnSortMenuProps) => {
+export const getDefaultSort = (columnName: string): ColumnSort => {
+  return {
+    key: columnName,
+    asc: true,
+    nulls: "last"
+  }
+}
+
+export const ColumnSortMenu = ({ column, w }: ColumnSortMenuProps) => {
   
   /**
    * w.$get is used because newest w is not propagated from Table.tsx
    */
   const existingSort = (w.$get().sort || []).find(s => column.nested? `${s.key}`.startsWith(`${column.name}.`) : s.key === column.name);
-  const sort: ColumnSort = existingSort || { key: column.name, asc: null };
+  const sort: ColumnSort = existingSort || { ...getDefaultSort(column.name), asc: null };
   const colIsText = column.info?.tsDataType === "string" || column.computedConfig?.funcDef.outType.tsDataType === "string";
   const updateSort = (newColSort: ColumnSort) => {
     let matched = false;

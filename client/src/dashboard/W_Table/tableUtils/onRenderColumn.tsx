@@ -1,14 +1,14 @@
-import { DBSchemaTable, ValidatedColumnInfo, isObject } from "prostgles-types";
+import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
-import MediaViewer from "../../../components/MediaViewer";
-import { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
-import SmartFormField from "../../SmartForm/SmartFormField/SmartFormField";
-import { NestedColumnRender, NestedTimeChartMeta } from "../ColumnMenu/ColumnDisplayFormat/NestedColumnRender";
-import { DISPLAY_FORMATS } from "../ColumnMenu/ColumnDisplayFormat/columnFormatUtils";
-import { MinMaxVals, ColumnConfigWInfo } from "../W_Table";
-import { StyledTableColumn } from "./StyledTableColumn";
-import { ProstglesTableColumn } from "./getTableCols";
+import { MediaViewer } from "../../../components/MediaViewer";
+import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
+import type { NestedTimeChartMeta } from "../ColumnMenu/ColumnDisplayFormat/NestedColumnRender";
+import { NestedColumnRender } from "../ColumnMenu/ColumnDisplayFormat/NestedColumnRender";
+import { DISPLAY_FORMATS } from "../ColumnMenu/ColumnDisplayFormat/columnFormatUtils";
+import type { ColumnConfigWInfo, MinMaxVals } from "../W_Table";
+import { StyledTableColumn } from "./StyledTableColumn";
+import type { ProstglesTableColumn } from "./getTableCols";
 
 export type RenderedColumn = 
   ColumnConfigWInfo &
@@ -61,15 +61,19 @@ export const onRenderColumn = ({ c, table, tables, maxCellChars = 500, barchartV
       /> :
 
     formatRender? ({ row }) => {
-      return formatRender.render(row[c.name], row, c, c.format!, maxCellChars)
+      let value = row[c.name];
+
+      const connectionId = location.pathname.split("/").find((p, i, arr) => arr[i - 1] === "connections");
+      if(c.info?.file){
+        if(!value && c.format?.type === "Media") return null;
+        value = `/prostgles_media/${connectionId}/${row[c.name]}`;
+      }
+      return formatRender.render(value, row, c, c.format!, maxCellChars)
     } :
     table?.info.isFileTable && c.name === "url"? ({ value, row }) => {
       return <MediaViewer
         key={value}
         url={value}
-        allowedContentTypes={
-          [MediaViewer.getMimeFromURL(value)!]
-        }
       />
     } :
     /** Not pretty enough */
@@ -78,8 +82,13 @@ export const onRenderColumn = ({ c, table, tables, maxCellChars = 500, barchartV
       ({ row }) => Object.keys(row[c.name] ?? {}).map(k => `${row[c.name][k]} ${k}`).join(", ") :
 
     /** c.tsDataType and c.udt_name SHOULD NOT BE MISSING AT THIS POINT! */ 
-    // ({ row }) => SmartFormField.renderValue(c, row[c.name], undefined, maxCellChars);
-    ({ value }) => <RenderValue column={c} value={value} showTitle={true} maxLength={maxCellChars} maximumFractionDigits={maximumFractionDigits} />;
+    ({ value }) => <RenderValue 
+      column={c.computedConfig?.funcDef.outType ?? c} 
+      value={value} 
+      showTitle={true} 
+      maxLength={maxCellChars} 
+      maximumFractionDigits={maximumFractionDigits} 
+    />;
 
   return onRender
 }

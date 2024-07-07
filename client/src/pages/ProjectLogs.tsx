@@ -7,7 +7,6 @@ export default { ____________d: 1 }
 // import Loading from '../components/Loading';
 // import XTerm from '../components/XTerm';
 
-// import Icon from '@mdi/react'
 // import { mdiDatabase, mdiLinkBoxVariantOutline, mdiTableMultiple, mdiAccountCheckOutline, mdiHome, mdiMicrosoftVisualStudioCode, mdiInformationOutline, mdiPulse } from '@mdi/js';
 
 // import { BrowserRouter, Switch, Route, Link, matchPath } from 'react-router-dom';
@@ -112,7 +111,7 @@ export default { ____________d: 1 }
 //     if(!this.sub) return <Loading />
 
 //     return (
-//       <div className="f-1 flex-col bg-0 h-fit min-h-0 " >
+//       <div className="f-1 flex-col bg-color-0 h-fit min-h-0 " >
 //         <ProjectResourceMonitor project_id={id} db={db} className="f-1 min-h-0 min-w-0" />
 //         <div className="f-0 mt-1">Console (read-only)</div>
 //         <XTerm className="o-auto f-1 w-full mt-p5 noselect pe-none" style={{ maxHeight: "200px", }} value={get(logs, "app.log")} />
@@ -226,7 +225,7 @@ export default { ____________d: 1 }
 
 //     return content;
 //     return (
-//       <div className={"f-1 flex-col bg-0 h-fit " + className}>
+//       <div className={"f-1 flex-col bg-color-0 h-fit " + className}>
 //         {content}
 //       </div>
 //     )

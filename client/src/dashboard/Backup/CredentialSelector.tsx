@@ -1,17 +1,17 @@
 
 import { mdiInformationOutline, mdiPlus } from "@mdi/js";
-import Icon from "@mdi/react";
-import { MarkerSeverity } from "monaco-editor";
+import { usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useCallback, useEffect, useRef } from "react";
+import type { Theme } from "../../App";
 import Btn from "../../components/Btn";
+import { Icon } from "../../components/Icon/Icon";
 import PopupMenu from "../../components/PopupMenu";
 import Select from "../../components/Select/Select";
-import CodeEditor from "../CodeEditor";
-import { DBS, DBSMethods } from "../Dashboard/DBS";
-import { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
-import { useSubscribe } from "../ProstglesMethod/hooks";
+import CodeEditor from "../CodeEditor/CodeEditor";
+import type { DBS, DBSMethods } from "../Dashboard/DBS";
+import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
+import { getMonaco } from "../SQLEditor/SQLEditor";
 import SmartForm from "../SmartForm/SmartForm";
-import { Theme } from "../../App";
 
 
 type P = { 
@@ -26,9 +26,8 @@ type P = {
 };
 
 export function CredentialSelector({ selectedId, onChange, dbs, dbsTables, pickFirst, dbsMethods, pickFirstIfNoOthers, theme }: P){
-
-  //@ts-ignore
-  const credentials = useSubscribe(dbs.credentials.subscribeHook({ type: "s3" }));
+  
+  const { data: credentials } = dbs.credentials.useSubscribe({ type: "s3" });
 
   useEffect(() => {
     const [firstCredential] = credentials ?? [];
@@ -41,6 +40,9 @@ export function CredentialSelector({ selectedId, onChange, dbs, dbsTables, pickF
     }
   }, [credentials, pickFirst, onChange, selectedId, pickFirstIfNoOthers])
 
+  const MarkerSeverity = usePromise(async () => (await getMonaco()).MarkerSeverity);
+
+  if(!MarkerSeverity) return null;
 
   return <div className="flex-row-wrap ai-end gap-1">
       <Select className=" "
@@ -100,7 +102,7 @@ export function CredentialSelector({ selectedId, onChange, dbs, dbsTables, pickF
           flex: "none"
         }}
         render={(pClose) => (
-          <div className="flex-col gap-p1 f-1 b b-gray-400 rounded o-hidden" >
+          <div className="flex-col gap-p1 f-1 b b-color rounded o-hidden" >
             
             <CodeEditor value={SAMPLE_BUCKET_POLICY} 
               language="json" 

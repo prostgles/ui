@@ -1,0 +1,7 @@
+.ClickCatchOverlay {
+  background: #2c2c2c6b;
+}
+
+.dark-theme .ClickCatchOverlay {
+  background: #0000002e;
+}

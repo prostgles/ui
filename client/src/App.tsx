@@ -1,34 +1,38 @@
-import React, { ReactChild, useEffect, useState } from 'react';
+import type { ReactChild } from "react";
+import React, { useState } from "react";
 import { NavLink, Navigate, Route, Routes as Switch } from "react-router-dom";
-import './App.css';
-import Loading from './components/Loading';
-import { CommonWindowProps } from './dashboard/Dashboard/Dashboard';
-import { Connections } from './pages/Connections/Connections';
-import Login from './pages/Login';
-import NewConnnection from './pages/NewConnection/NewConnnection';
+import "./App.css";
+import Loading from "./components/Loading";
+import type { CommonWindowProps } from "./dashboard/Dashboard/Dashboard";
+import { Connections } from "./pages/Connections/Connections";
+import Login from "./pages/Login";
+import NewConnnection from "./pages/NewConnection/NewConnnection";
 import NotFound from "./pages/NotFound";
-import { Project } from './pages/Project';
-import Register from './pages/Register';
+import { ProjectConnection } from "./pages/ProjectConnection/ProjectConnection";
 
-import { mdiAccountMultiple, mdiAlertBox, mdiServerNetwork, mdiServerSecurity, mdiThemeLightDark } from "@mdi/js";
-import { IDisposable } from "monaco-editor";
-import Btn from "./components/Btn";
-import ErrorComponent from './components/ErrorComponent';
-import { InfoRow } from "./components/InfoRow";
-import NavBar from "./components/NavBar";
+import { mdiAccountMultiple, mdiServerNetwork, mdiServerSecurity, mdiThemeLightDark } from "@mdi/js";
+import ErrorComponent from "./components/ErrorComponent";
+import { NavBar } from "./components/NavBar";
 import UserManager from "./dashboard/UserManager";
 import { Account } from "./pages/Account";
 import { ServerSettings } from "./pages/ServerSettings";
 
-import { DBHandlerClient, MethodHandler } from 'prostgles-client/dist/prostgles';
+import { type DBHandlerClient, type MethodHandler } from "prostgles-client/dist/prostgles";
 import type { ServerState } from "../../commonTypes/electronInit";
-import { DBSSchema } from "../../commonTypes/publishUtils";
-import { DBS, DBSMethods } from "./dashboard/Dashboard/DBS";
-import { ElectronSetup } from "./pages/ElectronSetup";
-import { useDBSConnection } from "./useDBSConnection";
+import type { DBSSchema } from "../../commonTypes/publishUtils";
+import { createReactiveState, useReactiveState } from "./appUtils";
+import { FlexCol } from "./components/Flex";
 import Select from "./components/Select/Select";
-import { createReactiveState } from "./dashboard/ProstglesMethod/hooks";
-
+import type { DBS, DBSMethods } from "./dashboard/Dashboard/DBS";
+import { ComponentList } from "./pages/ComponentList";
+import { ElectronSetup } from "./pages/ElectronSetup";
+import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
+import { useAppTheme } from "./useAppTheme";
+import { useDBSConnection } from "./useDBSConnection";
+import { isDefined } from "./utils";
+import { type Socket } from "socket.io-client";
+import { MousePointer } from "./demo/MousePointer";
+export * from "./appUtils";
 
 export type ClientUser = {
   sid: string;
@@ -49,7 +53,7 @@ export type ExtraProps = {
   dbsMethods: DBSMethods;
   user: DBSSchema["users"] | undefined;
   auth: ClientAuth | undefined;
-  dbsSocket: SocketIOClient.Socket;
+  dbsSocket: Socket;
   theme: Theme;
 } & Pick<Required<AppState>, "serverState">;
 
@@ -65,10 +69,12 @@ export type PrglCore = {
 export type PrglProject = PrglCore & {
   dbKey: string;
   connectionId: string;
+  databaseId: number;
   projectPath: string;
   connection: DBSSchema["connections"];
 };
 export type Prgl = PrglState & PrglProject;
+export const prgl_R = createReactiveState<Prgl | undefined>(undefined);
 
 export type AppState = {
   /**
@@ -79,7 +85,7 @@ export type AppState = {
     dbs: DBS;
     dbsTables: CommonWindowProps["tables"];
     dbsMethods: any;
-    dbsSocket: SocketIOClient.Socket;
+    dbsSocket: Socket;
     auth: ClientAuth;
     isAdminOrSupport: boolean;
     user?: DBSSchema["users"];
@@ -92,112 +98,41 @@ export type AppState = {
   isConnected: boolean;
 }
 
-declare global {
-  interface Window {
-    __prglIsImporting: any;
-    /**
-     * /Mobi/i.test(window.navigator.userAgent);
-     */
-    isMobileDevice: boolean;
-    /**
-     * window.matchMedia("(any-hover: none)").matches
-     */
-    isTouchOnlyDevice: boolean;
-    /**
-     * window.innerWidth < 700
-     */
-    isLowWidthScreen: boolean;
-    /**
-     * window.innerWidth < 1200
-     */
-    isMediumWidthScreen: boolean;
-    isIOSDevice: boolean;
-    sqlCompletionProvider: IDisposable;
-  }
-}
+export const r_useAppVideoDemo = createReactiveState({ demoStarted: false });
 
-export const themeR = createReactiveState<Theme>("light")
-
-function iOS() {
-  return [
-    'iPad Simulator',
-    'iPhone Simulator',
-    'iPod Simulator',
-    'iPad',
-    'iPhone',
-    'iPod'
-  ].includes(navigator.platform)
-    // iPad on iOS 13 detection
-    || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
-}
-window.isIOSDevice = iOS();
-
-window.isMobileDevice = /Mobi/i.test(window.navigator.userAgent);
-window.isTouchOnlyDevice = window.matchMedia("(any-hover: none)").matches;
-window.isLowWidthScreen = window.innerWidth < 700;
-window.isMediumWidthScreen = window.innerWidth < 1200;
-
-function App() {
-
+export const App = () => {
   const [isDisconnected, setIsDisconnected] = useState(false);
   const state = useDBSConnection(setIsDisconnected);
   const [title, setTitle] = useState<React.ReactNode>("");
+  const { state: { demoStarted } } = useReactiveState(r_useAppVideoDemo);
 
-  const user = state?.prglState?.user ?? state?.prglState?.auth.user;
-  const userTheme = getTheme(user?.options?.theme ?? "from-system");
-  const [theme, setTheme] = useState(userTheme);
-  themeR.set(theme);
+  const user = state.prglState?.user ?? state.prglState?.auth.user;
+  const { theme, userThemeOption } = useAppTheme(state);
 
-  useEffect(() => {
-    const listener = (event: MediaQueryListEvent) => {
-      const newColorScheme = event.matches ? "dark" : "light";
-      setTheme(newColorScheme)
-    }
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', listener);
-
-    return () => window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', listener);
-  }, [user]);
-
-  useEffect(() => {
-    if(!user?.options?.theme) return;
-    if(theme !== userTheme){
-      setTheme(userTheme);
-    }
-  }, [user, userTheme, theme]);
-  
-  useEffect(() => {
-    document.documentElement.classList.remove("dark-theme", "light-theme");
-    document.documentElement.classList.add(`${theme}-theme`);
-    document.body.classList.add("text-0");
-    if(!state.serverState?.isElectron){
-      document.body.classList.add("bg-1");
-    }
-  }, [theme])
-
-  if (state?.serverState?.isElectron && !state.prglState) {
+  if (state.serverState?.isElectron && !state.prglState) {
     return <ElectronSetup serverState={state.serverState} />
   }
 
-  const error = !state ? undefined : (state.serverState?.connectionError || state.serverState?.initError || state.prglStateErr);
+  const error = (state.serverState?.connectionError || state.serverState?.initError || state.prglStateErr);
 
-  if (!error && (!state || !state.dbsKey || !state.prglState)) {
+  if (!error && ( !state.dbsKey || !state.prglState)) {
     return <div className="flex-row m-auto ai-center jc-center  p-2">
       <Loading id="main" message="Connecting to state database..." />
     </div>;
   }
 
-  if (error || !state?.prglState) {
+  if (error || !state.prglState) {
     return <div className="flex-col m-auto ai-center jc-center  p-2" >
-      {state?.serverState?.connectionError && <div className="ml-1 text-lg font-bold mb-1 pre">Could not connect to state database. Ensure /server/.env file (or environment variables) point to a running and accessible postgres server database</div>}
-      {state?.serverState?.initError && <div className="ml-1 text-lg font-bold mb-1 pre">Failed to start Prostgles</div>}
+      {state.serverState?.connectionError && <div className="ml-1 text-lg font-bold mb-1 pre">
+        Could not connect to state database. Ensure /server/.env file (or environment variables) point to a running and accessible postgres server database
+      </div>}
+      {state.serverState?.initError && <div className="ml-1 text-lg font-bold mb-1 pre">Failed to start Prostgles</div>}
       <ErrorComponent error={error} withIcon={true} />
     </div>
   }
   const { dbsKey, prglState, serverState } = state;
   const { dbs, dbsTables, dbsMethods, auth, dbsSocket } = prglState;
   const authUser = auth.user;
-
-
   const extraProps: PrglState = {
     setTitle: (content: ReactChild) => {
       if (title !== content) setTitle(content);
@@ -212,7 +147,6 @@ function App() {
     serverState: serverState!
   };
 
-
   const withNavBar = (content: React.ReactNode, needsUser?: boolean) => <div className="flex-col ai-center w-full f-1 min-h-0">
     <NavBar
       dbs={dbs}
@@ -226,24 +160,27 @@ function App() {
           { label: "Server settings", to: "/server-settings", forAdmin: true, iconPath: mdiServerSecurity },
 
           // { label: "Permissions", to: "/access-management", forAdmin: true },
-        ].filter(o => (!o.forAdmin || extraProps.user?.type === "admin"))
+        ].filter(isDefined)
+        .filter(o => (!o.forAdmin || extraProps.user?.type === "admin"))
       }
       endContent={
         <Select  
           title="Theme"
+          className={window.isLowWidthScreen? "ml-2"  : ""}
           btnProps={{
             variant: "default",
             iconPath: mdiThemeLightDark,
-            children: ""
+            children: (window.isLowWidthScreen || serverState?.isElectron)? "Theme" : "",
           }}
-          value={userTheme}
+          data-command="App.colorScheme"
+          value={userThemeOption}
           fullOptions={[
             { key: "light", label: "Light"}, 
-            { key: "dark", label: "Dark", subLabel: "Work in progress"}, 
+            { key: "dark", label: "Dark" }, 
             { key: "from-system", label: "System"}
           ]}
           onChange={theme => {
-            dbs.users.update({ id: user?.id }, { options: { ...user?.options, theme } })
+            dbs.users.update({ id: user?.id }, { options: { $merge: [{ theme }]} })
           }}
         />
       }
@@ -255,15 +192,16 @@ function App() {
   </div>
 
   return (
-    <div key={dbsKey} className={`App flex-col f-1 min-h-0`}>
-      {isDisconnected && <Loading message="Reconnecting..." variant="cover" style={{ zIndex: 467887 }} />}
+    <FlexCol key={dbsKey} className={`App gap-0 f-1 min-h-0`}>
+      {demoStarted && <MousePointer />}
+      {isDisconnected && <Loading message="Reconnecting..." variant="cover" style={{ zIndex: 467887 }} coverOpacity={1} />}
       <NonHTTPSWarning {...prglState} />
       <Switch >
         <Route path="/" element={<Navigate to="/connections" replace />} />
         <Route path="/connections" element={withNavBar(<Connections {...extraProps} />, true)} />
         <Route key="1" path="/users" element={withNavBar(<UserManager {...extraProps} />)} />,
         <Route key="2" path="/account" element={withNavBar(<Account {...extraProps} />)} />,
-        <Route key="3" path="/connections/:cid" element={<Project prglState={extraProps} />} />,
+        <Route key="3" path="/connections/:cid" element={<ProjectConnection prglState={extraProps} />} />,
         <Route key="7" path="/new-connection" 
           element={(
             <NewConnnection 
@@ -284,41 +222,14 @@ function App() {
             />
           )} 
         />,
-        <Route key="10" path="/connection-config/:cid" element={<Project prglState={extraProps} showConnectionConfig={true} />} />,
+        <Route key="10" path="/connection-config/:cid" element={<ProjectConnection prglState={extraProps} showConnectionConfig={true} />} />,
         <Route key="11" path="/server-settings" element={withNavBar(<ServerSettings {...extraProps} />, true)} />
+        <Route key="12" path="/component-list" element={withNavBar(<ComponentList />, false)} />
         <Route path="/login" element={<Login {...extraProps} />} />
-        <Route path="/register" element={<Register {...extraProps} />} />
         <Route path="*" element={<NotFound />} />
       </Switch>
-    </div>
+    </FlexCol>
   );
 }
 
-const NonHTTPSWarning = ({ dbs, auth }: Required<AppState>["prglState"]) => {
-  const authUser = auth.user;
-  if (
-    location.protocol !== "https:" &&
-    location.hostname !== "localhost" &&
-    location.hostname !== "127.0.0.1" &&
-    !authUser?.options?.hideNonSSLWarning
-  ) {
-    const canUpdateUsers = !!dbs.users.update as boolean;
-    return <InfoRow color="danger" iconPath={mdiAlertBox} className="m-p5 bg-0">
-      Your are accessing this page over a non-HTTPS connection!
-      You should not enter any sensitive information on this site (passwords, secrets)
-      {canUpdateUsers && <Btn onClickPromise={async () => {
-        dbs.users.update({ id: authUser?.id }, { options: { ...authUser?.options, hideNonSSLWarning: true } });
-        location.reload();
-      }}>Do not show again</Btn>}
-    </InfoRow>
-  }
-
-  return null;
-}
  
-const getTheme = (desired: Theme | "from-system" = "from-system" ): Theme => {
-  if(desired !== "from-system") return desired;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches? "dark" : "light";
-}
-
-export default App

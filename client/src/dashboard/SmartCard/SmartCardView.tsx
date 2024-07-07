@@ -16,7 +16,7 @@ export const SmartCardView = () => {
 // import { CommonWindowProps, DashboardState, WindowData } from "src/dashboard/Dashboard";
 // import Loading from "../../components/Loading";
 // import SmartFilterBar from "../SmartFilter/SmartFilterBar";
-// import { SyncDataItem } from "prostgles-client/dist/SyncedTable";
+// import { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 
 // type NestedSmartCardProps = Pick<SmartCardProps, "footer" | "excludeNulls">;
 // type NestedSmartFormProps = Pick<SmartFormProps, "hideNullBtn" | "cannotBeNullMessage" | "enableInsert" | "columns" | "insertBtnText" | "label">;
@@ -335,7 +335,7 @@ export const SmartCardView = () => {
 //     }
 
 //     return <div key={i}
-//       className={"m-p5 relative flex-col b b-gray-300 "}
+//       className={"m-p5 relative flex-col b b-color "}
 //       style={{
 //         width: "150px",
 //         height: "150px",
@@ -534,7 +534,7 @@ export const SmartCardView = () => {
 //         <div className={"ml-auto flex-row min-h-0 f-0 relative ai-center pl-p5"}>
 //           <Select 
 //             id="orderbycomp"
-//             buttonClassName="shadow bg-0"
+//             buttonClassName="shadow bg-color-0"
 //             label="Sort by"
 //             asRow={true}
 //             value={orderByKey}
@@ -574,7 +574,7 @@ export const SmartCardView = () => {
 //         {(items.length && depth) ? <div className="bottom-fader" /> : null}
 //         {items.map((item, i) => (
 //         <div key={pkeyCol ? (item[pkeyCol.name] || i) : i} 
-//           className={"flex-col " + (i? " mt-1 " : "") + (parent ? "" : " card ") + (depth ? " b b-gray-300 " : "")} 
+//           className={"flex-col " + (i? " mt-1 " : "") + (parent ? "" : " card ") + (depth ? " b b-color " : "")} 
 //           style={{}}
 //         >
 //           <SmartCard

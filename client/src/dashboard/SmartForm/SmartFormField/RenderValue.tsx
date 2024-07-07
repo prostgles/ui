@@ -1,10 +1,11 @@
-import React from "react"
-import { sliceText } from "../../SmartFilter/SmartFilter";
+import React from "react" 
 import { ShorterText } from "../../../components/ShorterText";
 import { getColumnDataColor } from "./SmartFormField";
-import { renderInterval } from "../../ProstglesSQL/customRenderers";
+import { renderInterval } from "../../W_SQL/customRenderers";
 import { dateAsYMD_Time } from "../../Charts";
-import { ValidatedColumnInfo, isObject, _PG_date } from "prostgles-types";
+import type { ValidatedColumnInfo} from "prostgles-types";
+import { isObject, _PG_date } from "prostgles-types";
+import { sliceText } from "../../../../../commonTypes/utils";
 
 type P = {
   column: Pick<ValidatedColumnInfo, "udt_name" | "tsDataType"> | undefined;
@@ -17,7 +18,7 @@ type P = {
 export const RenderValue = ({ column: c, value, showTitle = true, maxLength, style, maximumFractionDigits = 3 }: P): JSX.Element => {
   const renderNull = (v: any) => {
     if ([null, undefined].includes(v)) {
-      return <i style={style} className="text-gray-400  noselect" title={showTitle ? "NULL" : undefined}>NULL</i>;
+      return <i style={style} className="text-2  noselect" title={showTitle ? "NULL" : undefined}>NULL</i>;
     }
 
     return null;
@@ -85,7 +86,7 @@ export const RenderValue = ({ column: c, value, showTitle = true, maxLength, sty
     return <span style={{ color: getColumnDataColor({ ...c, tsDataType: "boolean", udt_name: "bool" }),  ...style }}>{value.toString()}</span>
   }
   if (typeof value === "string") {
-    if (value === "") return <i style={style} className="text-gray-400 noselect" title={showTitle ? "&quot;&quot;" : undefined}>Empty String</i>
+    if (value === "") return <i style={style} className="text-2 noselect" title={showTitle ? "&quot;&quot;" : undefined}>Empty String</i>
     return <>{getSliced(value)}</>
   }
 

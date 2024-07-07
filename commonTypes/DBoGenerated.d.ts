@@ -45,6 +45,35 @@ export type DBSchemaGenerated = {
       user_type: string;
     };
   };
+  alert_viewed_by: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      alert_id?: null | string;
+      id?: string;
+      user_id?: null | string;
+      viewed?: null | string;
+    };
+  };
+  alerts: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      created?: null | string;
+      data?: null | any;
+      database_config_id?: null | number;
+      id?: string;
+      message?: null | string;
+      severity: "info" | "warning" | "error"
+      title?: null | string;
+    };
+  };
   backups: {
     is_view: false;
     select: true;
@@ -57,7 +86,7 @@ export type DBSchemaGenerated = {
       content_type?: string;
       created?: string;
       credential_id?: null | number;
-      dbSizeInBytes: number;
+      dbSizeInBytes: string;
       destination: "Local" | "Cloud" | "None (temp stream)"
       details?: null | any;
       dump_command: string;
@@ -79,7 +108,7 @@ export type DBSchemaGenerated = {
        |  {  ok: string; }
        |  {  err: string; }
        |  {  loading: {  loaded: number;  total: number; }; }
-      sizeInBytes?: null | number;
+      sizeInBytes?: null | string;
       status: 
        |  {  ok: string; }
        |  {  err: string; }
@@ -97,17 +126,18 @@ export type DBSchemaGenerated = {
       created?: null | string;
       db_conn?: null | string;
       db_host?: string;
-      db_name?: string;
+      db_name: string;
       db_pass?: null | string;
       db_port?: number;
       db_ssl?: "disable" | "allow" | "prefer" | "require" | "verify-ca" | "verify-full"
       db_user?: string;
       db_watch_shema?: null | boolean;
+      disable_realtime?: null | boolean;
       id?: string;
       info?: null | {    canCreateDb?: boolean;  };
       is_state_db?: null | boolean;
-      last_updated?: number;
-      name?: null | string;
+      last_updated?: string;
+      name: string;
       prgl_params?: null | any;
       prgl_url?: null | string;
       ssl_certificate?: null | string;
@@ -145,6 +175,19 @@ export type DBSchemaGenerated = {
       user_id?: null | string;
     };
   };
+  database_config_logs: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      id?: number;
+      on_mount_logs?: null | string;
+      on_run_logs?: null | string;
+      table_config_logs?: null | string;
+    };
+  };
   database_configs: {
     is_view: false;
     select: true;
@@ -160,11 +203,15 @@ export type DBSchemaGenerated = {
       file_table_config?: null | {    fileTable?: string;   storageType: |  {  type: 'local'; }
  |  {  type: 'S3';  credential_id: number; };   referencedTables?: any;   delayedDelete?: {  deleteAfterNDays: number;  checkIntervalHours?: number; };  };
       id?: number;
+      on_mount_ts?: null | string;
+      on_mount_ts_disabled?: null | boolean;
       rest_api_enabled?: null | boolean;
+      sync_users?: null | boolean;
       table_config?: null | Record<string, 
  |  {  isLookupTable: {  values: Record<string, string>; }; }
  |  {  columns: Record<string,  | string |  {  hint?: string;  nullable?: boolean;  isText?: boolean;  trimmed?: boolean;  defaultValue?: any; } |  {  jsonbSchema: |  {  type: 'string' | 'number' | 'boolean' | 'Date' | 'time' | 'timestamp' | 'string[]' | 'number[]' | 'boolean[]' | 'Date[]' | 'time[]' | 'timestamp[]';  optional?: boolean;  description?: string; } |  {  type: 'Lookup' | 'Lookup[]';  optional?: boolean;  description?: string; } |  {  type: 'object';  optional?: boolean;  description?: string; }; }>; }>
       table_config_ts?: null | string;
+      table_config_ts_disabled?: null | boolean;
     };
   };
   global_settings: {
@@ -197,11 +244,11 @@ export type DBSchemaGenerated = {
       deleted?: null | boolean;
       disabled?: null | boolean;
       id?: string;
-      last_updated: number;
+      last_updated: string;
       options: 
        |  {  type: 'table';  colorArr?: number[];  tablePath: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; }
-       |  {  type: 'map';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  groupByColumn?: string;  fromSelected?: boolean;  sql?: string;  columns: (  {  name: string;  colorArr: number[]; } )[]; }
-       |  {  type: 'timechart';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  groupByColumn?: string;  fromSelected?: boolean;  sql?: string;  columns: (  {  name: string;  colorArr: number[];  statType?: {  funcName: '$min' | '$max' | '$countAll' | '$avg' | '$sum';  numericColumn: string; }; } )[]; }
+       |  {  type: 'map';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  fromSelected?: boolean;  sql?: string;  columns: (  {  name: string;  colorArr: number[]; } )[]; }
+       |  {  type: 'timechart';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  fromSelected?: boolean;  sql?: string;  columns: (  {  name: string;  colorArr: number[];  statType?: {  funcName: '$min' | '$max' | '$countAll' | '$avg' | '$sum';  numericColumn: string; }; } )[]; }
       user_id: string;
       w1_id: string;
       w2_id: string;
@@ -218,7 +265,7 @@ export type DBSchemaGenerated = {
       auth_type: "session-id" | "magic-link" | "login"
       created?: null | string;
       failed?: null | boolean;
-      id?: number;
+      id?: string;
       info?: null | string;
       ip_address: string;
       ip_address_remote?: null | string;
@@ -230,6 +277,28 @@ export type DBSchemaGenerated = {
       x_real_ip?: null | string;
     };
   };
+  logs: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      command?: null | string;
+      connection_id?: null | string;
+      created?: null | string;
+      data?: null | any;
+      duration?: null | string;
+      error?: null | any;
+      has_error?: null | boolean;
+      id?: string;
+      sid?: null | string;
+      socket_id?: null | string;
+      table_name?: null | string;
+      tx_info?: null | any;
+      type?: null | string;
+    };
+  };
   magic_links: {
     is_view: false;
     select: true;
@@ -237,11 +306,63 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      expires: number;
+      expires: string;
       id?: string;
       magic_link?: null | string;
       magic_link_used?: null | string;
       user_id: string;
+    };
+  };
+  pg_stat_statements: {
+    is_view: true;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      blk_read_time?: null | number;
+      blk_write_time?: null | number;
+      calls?: null | string;
+      dbid?: null | number;
+      jit_emission_count?: null | string;
+      jit_emission_time?: null | number;
+      jit_functions?: null | string;
+      jit_generation_time?: null | number;
+      jit_inlining_count?: null | string;
+      jit_inlining_time?: null | number;
+      jit_optimization_count?: null | string;
+      jit_optimization_time?: null | number;
+      local_blks_dirtied?: null | string;
+      local_blks_hit?: null | string;
+      local_blks_read?: null | string;
+      local_blks_written?: null | string;
+      max_exec_time?: null | number;
+      max_plan_time?: null | number;
+      mean_exec_time?: null | number;
+      mean_plan_time?: null | number;
+      min_exec_time?: null | number;
+      min_plan_time?: null | number;
+      plans?: null | string;
+      query?: null | string;
+      queryid?: null | string;
+      rows?: null | string;
+      shared_blks_dirtied?: null | string;
+      shared_blks_hit?: null | string;
+      shared_blks_read?: null | string;
+      shared_blks_written?: null | string;
+      stddev_exec_time?: null | number;
+      stddev_plan_time?: null | number;
+      temp_blk_read_time?: null | number;
+      temp_blk_write_time?: null | number;
+      temp_blks_read?: null | string;
+      temp_blks_written?: null | string;
+      toplevel?: null | boolean;
+      total_exec_time?: null | number;
+      total_plan_time?: null | number;
+      userid?: null | number;
+      wal_bytes?: null | string;
+      wal_fpi?: null | string;
+      wal_records?: null | string;
     };
   };
   published_methods: {
@@ -269,7 +390,7 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      id: number;
+      id: string;
       table_config: any;
     };
   };
@@ -292,7 +413,7 @@ export type DBSchemaGenerated = {
     columns: {
       active?: null | boolean;
       created?: null | string;
-      expires: number;
+      expires: string;
       id?: string;
       id_num?: number;
       ip_address: string;
@@ -327,11 +448,13 @@ export type DBSchemaGenerated = {
       client_port?: null | number;
       cmd?: null | string;
       connection_id: string;
-      cpu?: null | number;
+      cpu?: null | string;
       datid?: null | number;
       datname?: null | string;
       id_query_hash?: null | string;
-      mem?: null | number;
+      mem?: null | string;
+      memPretty?: null | string;
+      mhz?: null | string;
       pid: number;
       query: string;
       query_start?: null | string;
@@ -373,10 +496,9 @@ export type DBSchemaGenerated = {
     columns: {
       "2fa"?: null | {    secret: string;   recoveryCode: string;   enabled: boolean;  };
       created?: null | string;
-      has_2fa_enbled?: null | boolean;
+      has_2fa_enabled?: null | boolean;
       id?: string;
-      is_online?: boolean;
-      last_updated?: null | number;
+      last_updated?: null | string;
       options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: 'dark' | 'light' | 'from-system';  };
       password?: string;
       passwordless_admin?: null | boolean;
@@ -398,19 +520,21 @@ export type DBSchemaGenerated = {
       deleted?: null | boolean;
       filter?: any;
       fullscreen?: null | boolean;
+      having?: any;
       id?: string;
-      last_updated: number;
+      last_updated: string;
       layout?: null | any;
       limit?: null | number;
       method_name?: null | string;
       name?: null | string;
       nested_tables?: null | any;
       options?: any;
+      parent_window_id?: null | string;
       selected_sql?: string;
       show_menu?: null | boolean;
       sort?: null | any;
       sql?: string;
-      sql_options?: {    executeOptions?: 'full' | 'block' | 'smallest-block';   errorMessageDisplay?: 'tooltip' | 'bottom' | 'both';   tabSize?: number;   lineNumbers?: 'on' | 'off';   renderMode?: 'table' | 'csv' | 'JSON';   minimap?: {  enabled: boolean; };   acceptSuggestionOnEnter?: 'on' | 'smart' | 'off';   expandSuggestionDocs?: boolean;   maxCharsPerCell?: number;   theme?: 'vs' | 'vs-dark' | 'hc-black' | 'hc-light';  };
+      sql_options?: {    executeOptions?: 'full' | 'block' | 'smallest-block';   errorMessageDisplay?: 'tooltip' | 'bottom' | 'both';   tabSize?: number;   lineNumbers?: 'on' | 'off';   renderMode?: 'table' | 'csv' | 'JSON';   minimap?: {  enabled: boolean; };   acceptSuggestionOnEnter?: 'on' | 'smart' | 'off';   expandSuggestionDocs?: boolean;   maxCharsPerCell?: number;   theme?: 'vs' | 'vs-dark' | 'hc-black' | 'hc-light';   showRunningQueryStats?: boolean;  };
       table_name?: null | string;
       table_oid?: null | number;
       type?: null | string;
@@ -430,11 +554,11 @@ export type DBSchemaGenerated = {
       created?: null | string;
       deleted?: boolean;
       id?: string;
-      last_updated: number;
+      last_updated: string;
       last_used?: string;
       layout?: null | any;
       name?: string;
-      options?: {    hideCounts?: boolean;   showAllMyQueries?: boolean;   defaultLayoutType?: 'row' | 'tab' | 'col';   pinnedMenu?: boolean;   pinnedMenuWidth?: number;  };
+      options?: {    hideCounts?: boolean;   tableListEndInfo?: 'none' | 'count' | 'size';   tableListSortBy?: 'name' | 'extraInfo';   showAllMyQueries?: boolean;   defaultLayoutType?: 'row' | 'tab' | 'col';   pinnedMenu?: boolean;   pinnedMenuWidth?: number;  };
       published?: boolean;
       url_path?: null | string;
       user_id: string;

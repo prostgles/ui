@@ -1,17 +1,18 @@
 
-import { isInsideFunction } from "./MatchSelect";
+import { getParentFunction } from "./MatchSelect";
 import { getExpected } from "./getExpected";
-import { SQLMatcher, getKind } from "./registerSuggestions";
-import { KWD, withKWDs } from "./withKWDs";
+import type { SQLMatcher } from "./registerSuggestions";
+import type { KWD } from "./withKWDs";
+import { withKWDs } from "./withKWDs";
 
 export const MatchPublication: SQLMatcher = {
   match: cb => cb.tokens[1]?.textLC === "publication",
-  result: async ({ cb, ss }) => {
+  result: async ({ cb, ss, setS, sql }) => {
 
     const command = cb.ftoken?.textLC;
     const newPubName = command === "create" && cb.tokens[1]?.textLC === "publication" && cb.tokens[2];
 
-    const isInfunc = isInsideFunction(cb);
+    const isInfunc = getParentFunction(cb);
     if(isInfunc?.func.textLC === "with"){
       return withKWDs([
         {
@@ -24,14 +25,14 @@ export const MatchPublication: SQLMatcher = {
           options: [``],
           docs: `This parameter determines whether changes in a partitioned table (or on its partitions) contained in the publication will be published using the identity and schema of the partitioned table rather than that of the individual partitions that are actually changed; the latter is the default. Enabling this allows the changes to be replicated into a non-partitioned table or a partitioned table consisting of a different set of partitions.\nIf this is enabled, TRUNCATE operations performed directly on partitions are not replicated.`
         },
-      ], cb, getKind, ss).getSuggestion(",", ["(", ")"])
+      ], { cb, ss, setS, sql }).getSuggestion(",", ["(", ")"])
     }
 
     if(newPubName){
       return withKWDs([
         ...Object.entries(options).map(([kwd, { docs, expects, optional }]) => ({ kwd, docs, expects, optional })),
       ] satisfies KWD[]
-      , cb, getKind, ss).getSuggestion()
+      , { cb, ss, setS, sql }).getSuggestion()
     }
 
     if(cb.prevLC.endsWith("if exists")){
@@ -46,7 +47,7 @@ export const MatchPublication: SQLMatcher = {
         options: command === "drop"? [{ label: "IF EXISTS"}] : command === "create"? [{ label: "$new_publication_name" }] : undefined,
         docs: "Adds a new publication into the current database. The publication name must be distinct from the name of any existing publication in the current database. A publication is essentially a group of tables whose data changes are intended to be replicated through logical replication."
       },
-    ] satisfies KWD[], cb, getKind, ss).getSuggestion()
+    ] satisfies KWD[], { cb, ss, setS, sql }).getSuggestion()
   }
 }
 

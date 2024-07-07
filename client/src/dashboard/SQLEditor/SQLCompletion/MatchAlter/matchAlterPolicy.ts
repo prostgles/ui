@@ -1,9 +1,10 @@
 import { asName } from "prostgles-types";
 import { KwdPolicy } from "../MacthCreate/matchCreatePolicy";
-import { ParsedSQLSuggestion, SQLMatchContext } from "../registerSuggestions";
-import { KWD, withKWDs } from "../withKWDs";
+import type { ParsedSQLSuggestion, SQLMatchContext } from "../registerSuggestions";
+import type { KWD} from "../withKWDs";
+import { withKWDs } from "../withKWDs";
 
-export const matchAlterPolicy = ({ cb, ss, getKind }: SQLMatchContext): { suggestions: ParsedSQLSuggestion[] } => {
+export const matchAlterPolicy = async ({ cb, ss, sql, setS }: SQLMatchContext): Promise<{ suggestions: ParsedSQLSuggestion[] }> => {
   
   if(cb.ltoken?.textLC === "policy"){
     return {
@@ -30,8 +31,8 @@ export const matchAlterPolicy = ({ cb, ss, getKind }: SQLMatchContext): { sugges
     },
 
   ] satisfies KWD[];
-  const { getSuggestion } = withKWDs(alterKwd, cb, getKind, ss);
+  const { getSuggestion } = withKWDs(alterKwd, { cb, ss, setS, sql });
 
-  const s = getSuggestion();
+  const s = await getSuggestion();
   return s;
 }

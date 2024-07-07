@@ -36,9 +36,7 @@ export const DragOverUpload = ({ onOpen }: P) => {
     }
   }, [setShow, onOpen]);
 
-  // if(!show) return null;
-
-  return <FlexCol className="DragOverUpload absolute inset-0 bg-red-400 p-2" style={{ zIndex: 1e3 }}>
+  return <FlexCol className="DragOverUpload absolute inset-0 bg-action p-2" style={{ zIndex: 1e3 }}>
     <FlexCol className="DragOverUpload_Border rotating-border rounded h-full w-full" style={{ borderStyle: "dashed" }}></FlexCol>
   </FlexCol>
 }

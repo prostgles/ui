@@ -1,6 +1,7 @@
 import React from "react";
 import RTComp from "../../dashboard/RTComp";
-import FormField, { FormFieldProps } from "./FormField";
+import type { FormFieldProps } from "./FormField";
+import FormField from "./FormField";
 
 type S = {
   value: any; 

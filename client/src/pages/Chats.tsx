@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from "react"; 
 import { NavLink } from "react-router-dom";
  
 function Chats(props: any) {
@@ -36,14 +36,14 @@ function Chats(props: any) {
   }, []);
 
   return (
-    <div className="bg-0">
+    <div className="bg-color-0">
       {chats.map((c: any)=> (
-        <NavLink key={c.id} to={"/chat/" + c.id} className="flex-row no-decor text-gray-800 p-1 b b-gray-300 b-gray-900-hover">
+        <NavLink key={c.id} to={"/chat/" + c.id} className="flex-row no-decor text-0p5 p-1 b b-color  ">
           <div className="avatar mr-1 f-0">
             <img loading="lazy" className="w-full" src={c.avatar_url}></img>
           </div>
           <div className="flex-col mr-1 f-1">
-            <div className="text-gray-800 font-medium">{c.other_user}</div>
+            <div className="text-0p5 font-medium">{c.other_user}</div>
             <div className="text-1 mt-p5">{c.last_message}</div>
           </div>
           <div className="text-1 f-0 mt-1">{c.last_sent}</div>

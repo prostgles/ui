@@ -1,16 +1,16 @@
-import { isObject, SQLHandler } from "prostgles-types";
-import { CodeBlock } from "./completionUtils/getCodeBlock";
+import { isObject } from "prostgles-types";
 import { suggestSnippets } from "./CommonMatchImports";
 import { asSQL } from "./KEYWORDS";
-import { ParsedSQLSuggestion } from "./registerSuggestions";
-
-export const jsonbPathSuggest = async (cb: CodeBlock, ss: ParsedSQLSuggestion[], getKind, sql?: SQLHandler) => {
-  const { currToken, prevText, ltoken, identifiers, offset } = cb;
+import { getTableExpressionSuggestions } from "./completionUtils/getTableExpressionReturnTypes";
+import { type SQLMatcherResultArgs, getKind } from "./registerSuggestions";
+import { isDefined } from "../../../utils";
+export const jsonbPathSuggest = async ({ cb, ss, parentCb, sql }: SQLMatcherResultArgs) => {
+  const { currToken, prevText, ltoken, offset } = cb;
 
     /** field->'path' */
     let lastTextContin = prevText.trim().split(" ").at(-1);
     const JSON_SELS = ["->", "->>", "#>"];
-    const isJsonPath = lastTextContin && JSON_SELS.some(sel => lastTextContin?.includes(sel));
+    const isJsonPath = ["operator.sql", "string.sql", "number.sql"].includes(cb.ltoken?.type ?? "") &&  lastTextContin && JSON_SELS.some(sel => lastTextContin?.includes(sel));
     const edgeToken = isJsonPath? undefined : 
       currToken?.type === "identifier.sql" && offset === currToken.end? currToken :
       ltoken?.type === "identifier.sql" && offset - 1 === ltoken.end? ltoken : undefined;
@@ -20,10 +20,12 @@ export const jsonbPathSuggest = async (cb: CodeBlock, ss: ParsedSQLSuggestion[],
        * json_col_name
        */
       const maybeJSON = edgeToken ?? cb.prevTokens.slice(0).reverse().find(t => t.type.includes("identifier"));
-      const table = ss.find(s => (s.type === "table" || s.type === "view") && identifiers.includes(s.escapedIdentifier!) && s.cols?.some(c => c.escaped_identifier === maybeJSON?.text && c.udt_name.startsWith("json")));
-      // console.log(maybeJSON, table);
-
-      if(maybeJSON && table){
+      const { columnsWithAliasInfo } = await getTableExpressionSuggestions({ parentCb, cb, ss, sql }, "columns");
+      const maybeJsonCol = columnsWithAliasInfo.find(c => 
+        (c.s.insertText === maybeJSON?.text || c.s.escapedIdentifier === maybeJSON?.text) && 
+        c.s.colInfo?.udt_name.startsWith("json")
+      );
+      if(maybeJSON && maybeJsonCol){
         if(isJsonPath){
           const ending = JSON_SELS.find(sel => lastTextContin!.endsWith(sel))
           if(ending){
@@ -34,23 +36,22 @@ export const jsonbPathSuggest = async (cb: CodeBlock, ss: ParsedSQLSuggestion[],
         /**
          * maybeJSON->path->path
          */
-        const selectorTokens = cb.prevTokens.filter(t => t.offset >= maybeJSON.offset).map((t, i, arr)=> {
-          /* Exclude last json operator */
-          return i === arr.length - 1 && JSON_SELS.includes(t.text)? "" : t.text
-        }).join("");
+        const selectorTokens = [...cb.prevTokens, cb.currToken]
+          .filter(t => t && t.offset >= maybeJSON.offset)
+          .filter(isDefined)
+          .map((t, i, arr)=> {
+            /* Exclude last json operator */
+            return i === arr.length - 1 && JSON_SELS.includes(t.text)? "" : t.text
+          })
+          .join("");
         const selector = edgeToken?.text ?? selectorTokens;
         try {
-          const rows = await sql?.(`
-            SELECT * 
-            FROM (
-              SELECT DISTINCT ${selector} as v 
-              FROM ${table.escapedIdentifier}
-            ) t 
-            WHERE v IS NOT NULL 
-            LIMIT 5`, { }, { returnType: "rows" }
-          );
+          const query = maybeJsonCol.getQuery(`DISTINCT ${selector} as v`) + 
+          `\nWHERE ${selector} IS NOT NULL 
+          LIMIT 5`;
+          const { rows } = !query? { rows: [] } : await sql?.(query, { }, { returnType: "default-with-rollback" }) ?? { rows: [] };
 
-          if(rows?.length){
+          if(rows.length){
             let suggestions: { label: string; type: string; vals: string[]; }[] = [];
             const firstVal = rows[0]?.v;
             const getType = (val: any) => Array.isArray(val)? "Array" : typeof val
@@ -62,7 +63,7 @@ export const jsonbPathSuggest = async (cb: CodeBlock, ss: ParsedSQLSuggestion[],
                 const val = v[key];
                 const type = getType(val);
                 const s = { 
-                  label: `->'${key}'`, 
+                  label: `->${type !== "object"? ">" : ""}'${key}'`, 
                   type,
                   vals: [getVal(val)]
                 };
@@ -80,12 +81,15 @@ export const jsonbPathSuggest = async (cb: CodeBlock, ss: ParsedSQLSuggestion[],
 
             if(suggestions.length){
               const sugs = suggestSnippets(suggestions.map(({ label: rawLabel, type, vals }) => {
-                const label = cb.currToken?.type === "operator.sql" && rawLabel.startsWith(cb.currToken.text)? rawLabel.slice(cb.currToken.text.length) : cb.currToken?.text.includes(">")? rawLabel.slice(1 + rawLabel.indexOf(">")) : rawLabel;
+                const label = cb.currToken?.type === "operator.sql" && rawLabel.startsWith(cb.currToken.text)? 
+                  rawLabel.slice(cb.currToken.text.length) : 
+                  cb.currToken?.text.includes(">") ? 
+                    rawLabel.slice(1 + rawLabel.indexOf(">")) : 
+                    rawLabel;
                 
                 return { 
                   label: { label, description: type },
-                  // docs: asSQL(`/* Sample values: */\n\n ${vals.map(v => v ?? !["number", "boolean", "object"].includes(type)? `'${v}'` : v).slice(0, 9).join("\n ")}`, "javascript"),
-                  docs: asSQL(`\n${vals.map(value => {
+                  docs: asSQL(`Values:\n\n${vals.map(value => {
                     const v = Array.isArray(value)? value.slice(0, 2) : value;
                     const res = JSON.stringify(v, null, 2);
                     if(res.length > 500){
@@ -105,7 +109,7 @@ export const jsonbPathSuggest = async (cb: CodeBlock, ss: ParsedSQLSuggestion[],
 
 
         } catch(err){
-          console.warn(err);
+          // console.warn(err);
         }
       }
     }

@@ -1,9 +1,11 @@
-import { getKeys } from "./dashboard/SmartForm/SmartForm";
-import { AnyObject, isObject } from "prostgles-types"
+import { getKeys, isEmpty } from "prostgles-types";
+export { getKeys, isEmpty };
+import type { AnyObject} from "prostgles-types";
+import { isObject } from "prostgles-types"
 export const get = (nestedObj: any, pathArr: string | (string | number)[]) => {
   if(typeof pathArr === "string") pathArr = pathArr.split(".");
   return pathArr.reduce((obj, key) =>
-    (obj && obj[key] !== 'undefined') ? obj[key] : undefined, nestedObj);
+    (obj && obj[key] !== "undefined") ? obj[key] : undefined, nestedObj);
 }
 
 /* Get only the specified properties of an object */
@@ -27,11 +29,7 @@ export function filterObj<T extends AnyObject, K extends keyof T>(obj: T, keysTo
   }
 
   return obj;
-}
-
-export function isEmpty(v: any){
-  return Object.keys(v ?? {}).length === 0;
-}
+} 
 
 export function ifEmpty(v: any, replaceValue: any){
   return isEmpty(v)? replaceValue : v;

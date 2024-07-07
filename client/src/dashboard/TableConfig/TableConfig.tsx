@@ -1,52 +1,43 @@
-import { useSubscribeOne } from 'prostgles-client/dist/react-hooks';
-import React from 'react';
-import { Prgl } from '../../App';
-import { FlexCol } from '../../components/Flex';
-import { InfoRow } from '../../components/InfoRow';
-import { FooterButtons } from '../../components/Popup/FooterButtons';
-import CodeEditor from '../CodeEditor';
+import React from "react";
+import type { Prgl } from "../../App";
+import { FlexCol } from "../../components/Flex";
+import { SmartCodeEditor } from "../CodeEditor/SmartCodeEditor";
+import { ProcessLogs } from "./ProcessLogs";
 
 type P = {
   prgl: Prgl;
 }
 
-export const TableConfig = ({ prgl: {dbs, connectionId, dbsMethods} }: P) => {
-  const dbConf = useSubscribeOne(dbs.database_configs.subscribeOneHook({ $existsJoined: { connections: { id: connectionId } } }));
-    
-  const [localTableConfigTs, setLocalTableConfigTs] = React.useState(dbConf?.table_config_ts);
-
-  const didChange = localTableConfigTs !== dbConf?.table_config_ts;
+export const TableConfig = ({ prgl: { dbs, connectionId, dbsMethods } }: P) => {
+  const { data: dbConf } = dbs.database_configs.useSubscribeOne({ $existsJoined: { connections: { id: connectionId } } });
 
   if(!dbConf) return null;
 
   return <FlexCol className="f-1">
-    <InfoRow>Table definitions and lifecycle methods that will be synced to schema</InfoRow>
-    <CodeEditor
+    <p className="m-0 p-0">
+      Table definitions and lifecycle methods that will be synced to schema
+    </p>
+    <SmartCodeEditor
+      key={"tableConfig"}
+      label="Table Config"
       tsLibraries={[{
+        filePath: "TableConfig.ts",
         content: TableConfigts,
-        path: "TableConfig.ts"
       }]}
       language="typescript"
-      value={localTableConfigTs ?? dbConf?.table_config_ts ?? ""}
-      onChange={(value) => {
-        setLocalTableConfigTs(value)
+      codePlaceholder={exampleConfig}
+      value={dbConf.table_config_ts}
+      onSave={async (value) => {
+        await dbsMethods.setOnMountAndTableConfig?.(connectionId, { table_config_ts: value });
       }}
+
     />
-    {didChange && <FooterButtons
-      footerButtons={[
-        {
-          label: "Cancel",
-        },
-        {
-          label: "Save",
-          color: "action",
-          variant: "filled",
-          onClickPromise: async () => {
-            await dbs.database_configs.update({ id: dbConf.id }, { table_config_ts: localTableConfigTs });
-          }
-        }
-      ]}
-    />}
+    <ProcessLogs 
+      type="tableConfig"
+      connectionId={connectionId}
+      dbsMethods={dbsMethods} 
+      dbs={dbs} 
+    />
   </FlexCol>
 }
 
@@ -57,11 +48,17 @@ type TableConfig = Record<
      * Column names and sql definitions
      * */
     columns: Record<string, string>; 
-    /**
-     * Function that will be called after the table is created and server started or schema changed
-     */
-    onMount?: (params: { dbo: any; db: any }) => Promise<void | { onUnmount: () => Promise<void> }>; 
   }
 >;
 `;
 
+const exampleConfig = `/* Example */
+export const tableConfig: TableConfig = {
+  my_table: {
+    columns: {
+      some_column: "TEXT",
+    },
+  },
+};
+
+`

@@ -1,0 +1,8 @@
+node_modules
+sample_schemas
+dist
+examples
+**/*.d.ts
+**/*.js
+tests
+.eslintrc.js

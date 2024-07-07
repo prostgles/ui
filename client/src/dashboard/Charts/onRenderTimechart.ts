@@ -1,9 +1,9 @@
 import { isDefined } from "prostgles-types";
-import { nFormatter, pickKeys } from '../../utils';
-import { Point } from "../Charts";
-import { ChartedText, Circle, GetShapes, MultiLine, Rectangle, Shape } from "../Charts/CanvasChart";
-import { DeepPartial } from "../RTComp";
-import { TimeChart, TimeChartD, TimeChartProps } from "./TimeChart";
+import { nFormatter, pickKeys } from "../../utils";
+import type { Point } from "../Charts";
+import type { ChartedText, Circle, GetShapes, MultiLine, Rectangle, Shape } from "../Charts/CanvasChart";
+import type { DeepPartial } from "../RTComp";
+import type { TimeChart, TimeChartD, TimeChartProps } from "./TimeChart";
 import { getTimeAxisTicks } from "./getTimeAxisTicks";
 import { getTimechartTooltipShapes } from "./getTimechartTooltipShapes";
 
@@ -30,7 +30,7 @@ export function onRenderTimechart (this: TimeChart, delta: Partial<TimeChartProp
     const { layers } = this.data;
     layers.map((layer)=> {
 
-      const {sortedParsedData: _data} = layer;
+      const { sortedParsedData: _data } = layer;
       const firstDataItem = _data?.[0];
       if(firstDataItem){
 
@@ -137,7 +137,7 @@ export function onRenderTimechart (this: TimeChart, delta: Partial<TimeChartProp
     });
   }
 
-  if((dd || "layers" in delta)){ //  && !(lineTooShort as boolean)
+  if((dd || "layers" in delta)){
     reRender = true;
     this.tooltips = getTimechartTooltipShapes.bind(this)();
   }
@@ -322,8 +322,8 @@ function getNicestVal(min: number, max: number): number {
   
 
   const roundVal = (val: string): number | undefined => {
-    const nv0 = Number(val.split("").concat('0').join(""));
-    const nv5 = Number(val.split("").concat('5').join(""));
+    const nv0 = Number(val.split("").concat("0").join(""));
+    const nv5 = Number(val.split("").concat("5").join(""));
     const preLastDigit = Number(val.split("").slice(0,-1).pop());
     const nv0Next = Number(val.split("").slice(0, -1).concat([`${preLastDigit-1}`]).join("") + "0");
     

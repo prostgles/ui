@@ -1,9 +1,11 @@
 import { mdiPlus } from "@mdi/js"
-import { AnyObject } from "prostgles-types";
+import type { AnyObject } from "prostgles-types";
 import React, { useState } from "react"
-import Btn, { BtnProps } from "../../components/Btn"
+import type { BtnProps } from "../../components/Btn";
+import Btn from "../../components/Btn"
 import FileInput from "../../components/FileInput/FileInput"; 
-import SmartForm, { SmartFormProps } from "./SmartForm";
+import type { SmartFormProps } from "./SmartForm";
+import SmartForm from "./SmartForm";
 
 
 type InsertButtonProps = {
@@ -21,20 +23,12 @@ export const InsertButton = ({ buttonProps, tables, db, methods, tableName, onSu
   if(table?.info.isFileTable && !defaultData){
     return <FileInput 
       maxFileCount={1}
+      showDropZone={false}
       onAdd={files => {
         if(!files.length) return;
 
         setDefaultData(files[0]);
-        setOpen(true)
-        // const currMedia = [
-        //   ...(newRow?.[mTblName] || []),
-        //   ...(action.currentRow?.[mTblName] || [])
-        // ].filter(isDefined)
-        // this.setData({
-        //   name: mTblName,
-        //   is_pkey: false,
-        //   tsDataType: "any[]"
-        // }, [...currMedia, ...files]);
+        setOpen(true);
       }}
     />
   }

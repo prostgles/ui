@@ -1,24 +1,26 @@
-import { mdiChatQuestion, mdiFileCogOutline, mdiFunction, mdiScriptTextPlay, mdiTable, mdiTableEdit } from '@mdi/js';
-import Icon from '@mdi/react';
-import { SyncDataItem } from 'prostgles-client/dist/SyncedTable';
-import { MethodFullDef, isDefined } from "prostgles-types";
-import React from 'react';
-import { SimpleFilter } from '../../../commonTypes/filterUtils';
+import { mdiChatQuestion, mdiFileCogOutline, mdiFunction, mdiScriptTextPlay, mdiTable, mdiTableEdit } from "@mdi/js"; 
+import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import type { MethodFullDef} from "prostgles-types";
+import { isDefined } from "prostgles-types";
+import React from "react";
+import type { SimpleFilter } from "../../../commonTypes/filterUtils";
 import { isObject } from "../../../commonTypes/publishUtils";
-import { Prgl } from '../App';
-import ButtonGroup from '../components/ButtonGroup';
-import Loading from '../components/Loading';
-import Popup from '../components/Popup/Popup';
-import SearchList, { SearchListProps } from '../components/SearchList';
-import Select from '../components/Select/Select';
-import { TableColumn } from '../components/Table/Table';
-import { _Dashboard } from './Dashboard/Dashboard';
-import { ChartOptions, WindowData } from './Dashboard/dashboardUtils';
-import { SQL_SNIPPETS } from './ProstglesSQL/SQLSnippets';
-import RTComp from './RTComp';
-import { SQLSuggestion } from './SQLEditor/SQLEditor';
-import { sliceText } from './SmartFilter/SmartFilter';
-import { AnyObject } from "prostgles-types";
+import type { Prgl } from "../App";
+import ButtonGroup from "../components/ButtonGroup";
+import Loading from "../components/Loading";
+import Popup from "../components/Popup/Popup";
+import type { SearchListProps } from "../components/SearchList";
+import SearchList from "../components/SearchList";
+import Select from "../components/Select/Select";
+import type { TableColumn } from "../components/Table/Table";
+import type { _Dashboard } from "./Dashboard/Dashboard";
+import type { ChartOptions, WindowData } from "./Dashboard/dashboardUtils";
+import { SQL_SNIPPETS } from "./W_SQL/SQLSnippets";
+import RTComp from "./RTComp";
+import type { SQLSuggestion } from "./SQLEditor/SQLEditor"; 
+import type { AnyObject } from "prostgles-types";
+import { Icon } from "../components/Icon/Icon";
+import { sliceText } from "../../../commonTypes/utils";
 
 export const SEARCH_TYPES = [
   { key: "views and queries", label: "Tables/Queries" },
@@ -130,15 +132,9 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
     if (deltaKeys.includes("searchType") && delta.searchType) {
       this.setState({ sType: delta.searchType })
     }
-    if (deltaKeys.includes("sType") && delta.sType && this.searchTerm) {
-      // this.search(this.searchTerm)
-    }
-    // if(deltaKeys?.some(k => ["tablesToSearch", "objTypesToSearch"].includes(k)) && this.searchTerm && this.state.sType && this.searchTerm){
-    //   this.setState({ sType: this.state.sType })
-    // }
   }
 
-  static renderRow = (matchRow: Match["match"], key: string | number) => {
+  static renderRow = (matchRow: Match["match"] | any, key: string | number) => {
     if (!(matchRow && Array.isArray(matchRow))) {
       return null;
     }
@@ -245,37 +241,25 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
                 key: m.$rowhash + i,
                 label: m.table,
                 content: <div className="f-1 flex-row ai-start" title="Open table at row">
-                  <div className="flex-col ai-start f-0 mr-p5 text-1p5">
+                  <div className="flex-col ai-start f-0 mr-p5 text-1">
                     <Icon path={db[m.table]?.insert ? mdiTableEdit : mdiTable} size={1.5} />
                   </div>
                   <div className="flex-col ai-start f-1">
                     <div className="font-18">{m.table}</div>
                     <div style={{ fontSize: "16px", opacity: 0.7, textAlign: "left", width: "100%", marginTop: ".25em" }}
-                      className={!this.searchType ? "text-gray-400" : ""}
+                      className={!this.searchType ? "text-2" : ""}
                     >
                       {SearchAll.renderRow(m.match, i)}</div>
                   </div>
                 </div>,
                 onPress: () => {
-                  const filter: SimpleFilter[] = [
-                    // { fieldName: "$rowhash", type: "=", value: m.$rowhash }
-                  ]
-                  // {    //: SimpleFilter
-                  //   $rowhash: m.$rowhash 
-                  // }
+                  const filter: SimpleFilter[] = [] 
                   if (m.colName) {
                     filter.push({
                       fieldName: m.colName,
                       type: "$term_highlight",
                       value: term
-                    })
-                    // filter = [
-                    //   { field, $rowhash: m.$rowhash },
-                    //   { [m.colName]: { $ilike: `%${term}%`} }
-                    // ] 
-                    // { 
-                    //   $and: 
-                    //   }
+                    }) 
                   }
                   onOpen({
                     table: m.table,
@@ -321,13 +305,13 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
 
     let items: SearchListProps["items"],
       dontHighlight = false,
-      onSearch: SearchListProps["onSearch"] = undefined,
-      onType: SearchListProps["onType"] = (term, setTerm) => {
-        if (sType !== "commands" && term === ">") {
-          setTerm("")
-          this.setState({ sType: "commands", searchTerm: "" });
-        }
-      };
+      onSearch: SearchListProps["onSearch"] = undefined;
+    const onType: SearchListProps["onType"] = (term, setTerm) => {
+      if (sType !== "commands" && term === ">") {
+        setTerm("")
+        this.setState({ sType: "commands", searchTerm: "" });
+      }
+    };
 
     const searchItems: SearchAllSuggestion[] = suggestions?.slice(0) ?? Object.entries(db).map(([tableName, handler]) => {
       if("find" in handler && handler.find){
@@ -349,7 +333,7 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
           label: s.name,
           subLabel: s.subLabel,
           contentLeft: (<div className="f-0">
-            <Icon className="text-1p5 p-p25" size={1.5} path={s.type === "table" ? mdiTable : s.type === "function" ? mdiFunction : mdiChatQuestion} />
+            <Icon className="text-1p5 p-p25" size={1.5} path={s.type === "table" ? mdiTable : (s.type as any) === "function" ? mdiFunction : mdiChatQuestion} />
           </div>),
           onPress: (e, term) => {
             this.props.onClose();
@@ -380,7 +364,7 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
         }))).concat(!objTypesToSearch.includes("actions") ?
           [] :
           Object.entries(this.props.methods as Record<string, MethodFullDef>)
-            .filter(([k, v]) => isObject(v) && v.run)
+            .filter(([k, v]) => isObject(v) && (v as any).run)
             .map(([methodKey, method]) => ({
               key: methodKey,
               label: methodKey,

@@ -1,12 +1,9 @@
-import { mdiAlertCircleOutline } from "@mdi/js";
-import React from "react"
+import React from "react";
 import Btn from "../../components/Btn";
-import PopupMenu from "../../components/PopupMenu";
 import { ProgressBar } from "../../components/ProgressBar";
-import CodeEditor from "../CodeEditor";
-import { FileImporterProps, FileImporterState } from "./FileImporter";
+import type { FileImporterProps, FileImporterState } from "./FileImporter";
 
-type P = FileImporterState & Pick<FileImporterProps, 'db' | 'openTable'> & {
+type P = FileImporterState & Pick<FileImporterProps, "db" | "openTable"> & {
   onCancel: VoidFunction;
   onImport: VoidFunction;
 }

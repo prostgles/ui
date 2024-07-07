@@ -1,7 +1,7 @@
 import { mdiPlus } from "@mdi/js";
-import { ValidatedColumnInfo } from "prostgles-types";
+import type { ValidatedColumnInfo } from "prostgles-types";
 import React, { useEffect, useState } from "react";
-import { FilterType, SimpleFilter } from "../../../../commonTypes/filterUtils";
+import type { FilterType, SimpleFilter } from "../../../../commonTypes/filterUtils";
 import Btn from "../../components/Btn";
 import PopupMenu from "../../components/PopupMenu";
 import Select from "../../components/Select/Select";
@@ -87,7 +87,7 @@ export const AddContextFilter = ({ columns, contextCols, onAdd }: AddContextFilt
   if(!contextCols.length) return <>No context columns</>;
 
   return <PopupMenu 
-    button={<Btn size="small" className="shadow bg-0" iconPath={mdiPlus}>User filter</Btn>}
+    button={<Btn size="small" className="shadow bg-color-0" iconPath={mdiPlus}>User filter</Btn>}
     positioning="beneath-left"
     clickCatchStyle={{ opacity: 0 }}
     render={pClose => <div className="flex-col gap-2">

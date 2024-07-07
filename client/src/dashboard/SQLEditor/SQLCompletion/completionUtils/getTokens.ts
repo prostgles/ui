@@ -1,7 +1,6 @@
-import { Token, editor } from "monaco-editor";
+import type { Monaco, Token } from "../../../W_SQL/monacoEditorTypes";
 import { LANG } from "../../SQLEditor";
 import { getTokenNesting } from "../getPrevTokensNoParantheses";
-import { quickClone } from "../../../../utils";
 
 export type TokenInfo = Pick<Token, "offset"> & {
   type: 
@@ -23,7 +22,10 @@ export type TokenInfo = Pick<Token, "offset"> & {
   text: string;
   textLC: string;
   lineNumber: number;
+  columnNumber: number;
   nestingId: string;
+  funcNestingId: string;
+  nestingFuncToken: TokenInfo | undefined;
 };
 
 type GetTokensArgs = {
@@ -33,27 +35,32 @@ type GetTokensArgs = {
   startLine?: number; 
   currOffset?: number;
   includeComments?: boolean;
+  editor: Monaco["editor"]
 };
 
 type GetTokensResult = { 
   tokens: TokenInfo[], 
   isCommenting: boolean; 
+  text: string;
 };
 
 export const getTokens = ({ 
   eol, 
   lines, 
   startOffset = 0, 
-  startLine = 0, 
+  startLine = 1, 
   currOffset = 0, 
+  editor,
   includeComments = false 
 }: GetTokensArgs): GetTokensResult => {
-  
+  if(startLine < 1) {
+    throw new Error("startLine must be greater than 0");
+  }
+
   let result: TokenInfo[] = [];
   let isCommenting = false;
-  const text = lines.join("\n") + " ";// model.getValue();
+  const text = lines.join(eol) + " ";
   const allTokens = editor.tokenize(text, LANG)
-    // .map(ts => ts.filter(t => t.type)); /** Sometimes at the begining the tokens come with no type */
 
   let lineStartOffset = startOffset;
   allTokens.forEach((lineTokens, lineIdx) => {
@@ -83,9 +90,12 @@ export const getTokens = ({
         end: offset + text.length,
         text,
         lineNumber: lineIdx + startLine,
+        columnNumber: start,
         textLC: text.toLowerCase(),
         type: getType(t0),
         nestingId: "",
+        nestingFuncToken: undefined,
+        funcNestingId: "",
       }
 
       const isCurrentToken = t.offset < currOffset && t.end >= currOffset;
@@ -100,14 +110,17 @@ export const getTokens = ({
           const text = line.slice(t1.offset);
           const offset = t1.offset + lineStartOffset;
   
-          const lastT = {
+          const lastT: TokenInfo = {
             offset,
             end: offset + text.length,
             text: text,
             lineNumber: t.lineNumber,
+            columnNumber: t1.offset,
             textLC: text.toLowerCase(),
             type: getType(t1),
             nestingId: "",
+            nestingFuncToken: undefined,
+            funcNestingId: "",
           }
           result.push(lastT);
         } else {
@@ -152,7 +165,10 @@ export const getTokens = ({
     const t2 = result[idx+2];
     if(
       t && t1 && t2 &&
-      t.type === "identifier.sql" && t1.text === "." && t2.type === "identifier.sql" && 
+      t.type === "identifier.sql" && 
+      t1.text === "." && 
+      // information_schema.columns has 'columns' being a keyword
+      (t2.type === "identifier.sql" || t2.type === "keyword.sql") && 
       t.end === t1.offset && t1.end === t2.offset
     ){
       result1.push({
@@ -195,7 +211,9 @@ export const getTokens = ({
   const tokens = getTokenNesting(result1);
   
   return {
+    text,
     tokens,
     isCommenting
   }
 }
+

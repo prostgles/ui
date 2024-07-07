@@ -1,8 +1,13 @@
 import React from "react";
 import "./Loading.css";
-import RTComp from '../dashboard/RTComp';
+import RTComp from "../dashboard/RTComp";
 import { classOverride, FlexRow } from "./Flex";
-
+import { tout } from "../pages/ElectronSetup";
+export const pageReload = async (reason: string) => {
+  console.log("pageReload due to: ", reason);
+  await tout(200);
+  window.location.reload();
+};
 
 type P = {
   /* If provided will ensure continuity to the applied delays */
@@ -11,6 +16,7 @@ type P = {
   className?: string;
   variant?: "top-bar" | "cover";
   sizePx?: number;
+  coverOpacity?: number;
   message?: string;
   colorAnimation?: boolean;
 } & (
@@ -48,7 +54,7 @@ export default class Loading extends RTComp<P, S> {
 
   get show(){
     const { delay = 500, id } = this.props;
-    const wasShownRecently = id && loaderIdLastShown[id] && (Date.now() - loaderIdLastShown[id]!) < delay;
+    const wasShownRecently = id !== undefined && loaderIdLastShown[id] && (Date.now() - loaderIdLastShown[id]!) < delay;
     return !delay || wasShownRecently || this.state.ready;
   }
 
@@ -88,7 +94,7 @@ export default class Loading extends RTComp<P, S> {
               this.setState({ timeoutMessage: this.props.onTimeout.message })
             }
           } else {
-            window.location.reload();
+            pageReload("Loader refreshPageTimeout")
           }
         }, onTimeout?.timeout ?? refreshPageTimeout!)
       }
@@ -96,7 +102,7 @@ export default class Loading extends RTComp<P, S> {
   }
 
   render() {
-    const { style = {}, className = "", variant, sizePx = 30, colorAnimation = true } = this.props;
+    const { style = {}, className = "", variant, sizePx = 30, colorAnimation = true, coverOpacity = .5 } = this.props;
     const { show = this.show } = this.props;
     const size = sizePx + "px";
 
@@ -106,7 +112,7 @@ export default class Loading extends RTComp<P, S> {
     // const delayStyle = { opacity: (!show) ? 0.0001 : 1 };
     const commonStyle = { 
       display: (!show) ? "none" : undefined,
-      cursor: 'wait'
+      cursor: "wait"
     };
 
     const spinner = <svg className="spinner f-0" width={size} height={size} viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
@@ -121,14 +127,15 @@ export default class Loading extends RTComp<P, S> {
         <div style={{
             position: "absolute",
             zIndex: 2, 
-            inset: 0, width: "100%", height: "100%", 
+            inset: 0, 
+            width: "100%", height: "100%", 
             ...commonStyle,
-            ...(!className.includes("bg-") && { background:  'rgb(255 255 255 / 73%)' }),
+            ...(!className.includes("bg-") && { background:  "var(--bg-color-0)", opacity: coverOpacity }),
             ...style, 
           }}
           className={classOverride("cover-loader flex-row ai-center jc-center gap-1", className)}
         >
-          <FlexRow className="bg-0 rounded p-1 shadow" >
+          <FlexRow className="bg-color-0 rounded p-1 shadow" >
             {spinner}
             {message}
           </FlexRow>
