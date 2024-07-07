@@ -30,6 +30,7 @@ type StartArguments = {
   io: Server; 
   con: DBSConnectionInfo | undefined;
   port: number;
+  host: string;
 }
 
 let bkpManager: BackupManager | undefined;
@@ -199,7 +200,7 @@ export const startProstgles = async ({ app, port, io, con = DBS_CONNECTION_INFO}
     });
 
     statePrgl = prgl;
-    startDevHotReloadNotifier({ io, port });
+    startDevHotReloadNotifier({ io, port, host });
     return { ok: true }
   } catch(err){
     return { init: err };
@@ -220,7 +221,7 @@ const _initState: Pick<ProstglesInitState, "initError" | "connectionError" | "el
 }
 
 let connHistory: string[] = [];
-export const tryStartProstgles = async ({ app, io, port, con = DBS_CONNECTION_INFO}: StartArguments): Promise<Pick<ProstglesInitState, "ok" | "initError" | "connectionError">> => {
+export const tryStartProstgles = async ({ app, io, port, host, con = DBS_CONNECTION_INFO}: StartArguments): Promise<Pick<ProstglesInitState, "ok" | "initError" | "connectionError">> => {
 
   const maxTries = 2;
   return new Promise((resolve, reject) => {
@@ -238,7 +239,7 @@ export const tryStartProstgles = async ({ app, io, port, con = DBS_CONNECTION_IN
       }
       connHistory.push(connHistoryItem); 
       try {
-        const status = await startProstgles({ app, io, con, port });
+        const status = await startProstgles({ app, io, con, port, host });
         _initState.connectionError = status.conn;
         _initState.initError = status.init;
         
