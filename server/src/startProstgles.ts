@@ -47,7 +47,7 @@ type ProstglesStartupState =
 | { ok: true; init?: undefined; conn?: undefined } 
 | { ok?: undefined; init?: any; conn?: any; };
 
-export const startProstgles = async ({ app, port, io, con = DBS_CONNECTION_INFO}: StartArguments): Promise<ProstglesStartupState> => {
+export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION_INFO}: StartArguments): Promise<ProstglesStartupState> => {
   try {
     if(!con.db_conn && !con.db_user && !con.db_name) {
       
@@ -261,7 +261,7 @@ export const tryStartProstgles = async ({ app, io, port, host, con = DBS_CONNECT
   
       if(tries > maxTries){
         clearInterval(interval);
-        setDBSRoutesForElectron(app, io, port);
+        setDBSRoutesForElectron(app, io, port, host);
         _initState.loading = false;
         _initState.loaded = true; 
 
