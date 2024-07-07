@@ -80,7 +80,7 @@ export class ConnectionChecker {
 
       await this.usersSub?.unsubscribe();
       const setNoPasswordAdmin = async () => {
-        this.noPasswordAdmin = await ADMIN_ACCESS_WITHOUT_PASSWORD(this.db!);
+        this.noPasswordAdmin = await getPasswordlessAdmin(this.db!);
         initialise("users");
       }
       await setNoPasswordAdmin();
@@ -128,8 +128,6 @@ export class ConnectionChecker {
     } 
 
     const electronConfig = getElectronConfig()
-
-
     const sid = req.cookies[sidKeyName];
     if(electronConfig?.isElectron && electronConfig.sidConfig.electronSid !== sid){
       res.json({ error: "Not authorized" });
@@ -149,7 +147,11 @@ export class ConnectionChecker {
           allowed_ips: Array.from(new Set([req.ip, "::ffff:127.0.0.1"])).filter(isDefined),
           tableConfig,
         });
+      }
 
+      const isAccessingMagicLink = req.originalUrl.startsWith("/magic-link/")
+      if(this.noPasswordAdmin && !sid && !isAccessingMagicLink){
+        // need to ensure that only 1 session is allowed for the passwordless admin
         const magicLinkPaswordless = await getPasswordlessMacigLink(this.db, req);
         if(magicLinkPaswordless) {
           res.redirect(magicLinkPaswordless);
@@ -162,9 +164,8 @@ export class ConnectionChecker {
       }
 
       if(this.config.global_setting?.allowed_ips_enabled){
-
-        const c = await this.checkClientIP({ req });
-        if(!c.isAllowed){
+        const ipCheck = await this.checkClientIP({ req });
+        if(!ipCheck.isAllowed){
           res.status(403).json({ error: "Your IP is not allowed" });
           return
         }
@@ -172,7 +173,7 @@ export class ConnectionChecker {
 
       const publicConnections = connMgr.getConnectionsWithPublicAccess();
       if(isDemoMode() || publicConnections.length){
-        const isLoggingIn = req.originalUrl.startsWith("/magic-link/") || req.originalUrl.startsWith("/login");
+        const isLoggingIn = isAccessingMagicLink || req.originalUrl.startsWith("/login");
         const client = getLoginClientInfo({ httpReq: req });
         const hasNoActiveSession = !sid || !(await getActiveSession(this.db, { type: "session-id", client, filter: { id: sid }  }));
 
@@ -246,7 +247,7 @@ export const PASSWORDLESS_ADMIN_USERNAME = "passwordless_admin";
 export const EMPTY_PASSWORD = "";
 
 const NoInitialAdminPasswordProvided = Boolean( !PRGL_USERNAME || !PRGL_PASSWORD )
-export const ADMIN_ACCESS_WITHOUT_PASSWORD = async (db: DBS) => {
+export const getPasswordlessAdmin = async (db: DBS) => {
   if (NoInitialAdminPasswordProvided) {
     return await db.users.findOne({ username: PASSWORDLESS_ADMIN_USERNAME, status: "active", passwordless_admin: true });
   }
@@ -294,7 +295,7 @@ const initUsers = async (db: DBS, _db: DB) => {
 
   const electron = await getElectronConfig();
   if(electron?.isElectron){
-    const user = await ADMIN_ACCESS_WITHOUT_PASSWORD(db);
+    const user = await getPasswordlessAdmin(db);
     if(!user) throw `Unexpected: Electron passwordless_admin misssing`;
     await db.sessions.delete({});
     await makeSession(user, { ip_address: "::1", user_agent: "electron", type: "desktop", sid: electron.sidConfig.electronSid}, db, Date.now() + 10 * YEAR);
@@ -339,7 +340,7 @@ const makeMagicLink = async (user: Users, dbo: DBS, returnURL: string, expires?:
 const getPasswordlessMacigLink = async (dbs: DBS, req: Request) => {
 
   /** Create session for passwordless admin */
-  const u = await ADMIN_ACCESS_WITHOUT_PASSWORD(dbs);
+  const u = await getPasswordlessAdmin(dbs);
   if(u){
     const existingLink = await dbs.magic_links.findOne({ user_id: u.id, "magic_link_used.<>": null });
     
