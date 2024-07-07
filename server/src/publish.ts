@@ -75,7 +75,6 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
         if(!update.password){
           throw "Password cannot be empty";
         }
-        // const { password: hashedPassword } = (await dbx.sql!("SELECT crypt(${password}, ${id}::text) as password", { ...update, id: user.id }, { returnType: "row" }))!
         const hashedPassword = getPasswordHash(user, update.password);
         if(typeof hashedPassword !== "string") throw "Not ok";
         if(mustUpdate){
