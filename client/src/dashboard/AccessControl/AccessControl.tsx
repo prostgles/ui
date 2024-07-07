@@ -1,0 +1,129 @@
+import React from "react";
+
+
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { Prgl } from "../../App";
+import Btn from "../../components/Btn";
+import { FlexCol, FlexRow } from "../../components/Flex";
+import { InfoRow } from "../../components/InfoRow";
+import Loading from "../../components/Loading";
+import { AccessControlRuleEditor } from "./AccessControlRuleEditor";
+import { AccessControlRules } from "./ExistingAccessRules";
+import type { useAccessControlSearchParams } from "./useAccessControlSearchParams";
+import { mdiAccountCog, mdiPlus } from "@mdi/js";
+import { UserSyncConfig } from "./UserSyncConfig";
+import { NavLink } from "react-router-dom";
+
+
+type P = ReturnType<typeof useAccessControlSearchParams> & {
+  prgl: Prgl;
+  className?: string;
+}
+
+export type AccessRule = Required<DBSSchema["access_control"]> & {
+  access_control_user_types: {
+    ids: string[]
+  }[];
+  published_methods: Required<DBSSchema["published_methods"]>[];
+};
+
+export type EditedAccessRule = Omit<AccessRule, "database_id" | "id">;
+
+export type AccessControlAction =
+  | {
+    type: "create";
+    selectedRuleId?: undefined;
+  }
+  | {
+    type: "create-default";
+    selectedRuleId?: undefined;
+  }
+  | {
+    type: "edit";
+    selectedRuleId: number;
+    tableName?: string;
+  };
+
+export const AccessControl = (props: P) => {
+
+  const { workspaces, connection, rules, dbsConnection, database_config } = useGetAccessRules(props.prgl);
+  const { className, prgl, action, setAction } = props;
+
+  if (!(prgl.dbs.access_control_user_types as any)?.subscribe) {
+    return <InfoRow className='f-0 h-fit'>Must be admin to access this section </InfoRow>
+  }
+  if (!connection || !dbsConnection || !database_config || !rules) return <Loading />;
+
+  return (<div className={"flex-col f-1 " + className}>
+
+    <div className="f-1 flex-row min-h-0 ">
+      {action ?
+        <AccessControlRuleEditor
+          {...props}
+          database_config={database_config}
+          action={action}
+          connection={connection}
+          dbsConnection={dbsConnection}
+          onCancel={() => {
+            setAction(undefined);
+          }}
+        /> :
+        <FlexCol className="f-1 relative">
+          <FlexRow>
+            <Btn variant="filled"
+              color="action"
+              data-command="config.ac.create"
+              onClick={() => {
+                setAction({ type: "create" });
+              }}
+              iconPath={mdiPlus}
+            >
+              Create new rule
+            </Btn>
+            <UserSyncConfig { ...props.prgl } />
+
+            <Btn 
+              iconPath={mdiAccountCog}
+              variant="faded" 
+              asNavLink={true} 
+              href={"/users"}
+            >
+              Manage users
+            </Btn>
+          </FlexRow>
+
+          <AccessControlRules
+            workspaces={workspaces ?? []}
+            rules={rules}
+            onSelect={r => {
+              setAction({ type: "edit", selectedRuleId: r.id });
+            }}
+          />
+
+        </FlexCol>
+      }
+
+    </div>
+  </div>
+
+  )
+}
+const useGetAccessRules = (prgl: Prgl) => {
+
+  const { connectionId, dbs } = prgl;
+  const { data: rules } = dbs.access_control.useSubscribe({ database_id: prgl.databaseId }, ACCESS_CONTROL_SELECT);
+  const { data: connection } = dbs.connections.useFindOne({ id: connectionId });
+  const { data: dbsConnection} = dbs.connections.useFindOne({ is_state_db: true });
+  const { data: database_config } = dbs.database_configs.useFindOne({ id: prgl.databaseId });
+  const { data: workspaces } = dbs.workspaces.useFind();
+
+  return { workspaces, connection, rules, dbsConnection, database_config }
+}
+
+export const ACCESS_CONTROL_SELECT = {
+  select: {
+    "*": 1,
+    access_control_user_types: { ids: { $array_agg: ["user_type"] } },
+    published_methods: "*"
+  },
+} as const;

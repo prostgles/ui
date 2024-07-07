@@ -1,0 +1,22 @@
+name: Electron build windows
+on: workflow_dispatch 
+jobs:
+  electron_build_windows:
+    timeout-minutes: 20
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 20
+
+    - name: Install dependencies
+      run: |
+        cd electron && npm run build-win
+      
+    - uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: installers
+        path: electron/dist
+        retention-days: 10

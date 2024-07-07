@@ -1,0 +1,7 @@
+{
+    "git.terminalAuthentication": false,
+    "git.autofetch": false,
+    "git.ignoreLimitWarning": true,
+
+    "typescript.tsdk": "./node_modules/typescript/lib"
+}

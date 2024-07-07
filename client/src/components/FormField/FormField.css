@@ -1,0 +1,102 @@
+
+
+.form-field input:not([type="checkbox"]) {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* background-color: #fff; */
+  border: none;
+  padding: 4px 6px 0px;
+  font-size: 1rem;
+  font-size: 16px;
+  line-height: 1;
+  width: 100%;
+  flex: 1;
+  box-sizing: border-box;
+  outline: none;
+
+  min-width: 80px;
+}
+
+
+.input-wrapper,
+/* .form-field .input-wrapper.focus-border:has(.ContentRight:focus-within) { 
+  Used to prevent input border active when the content right also has an active border.
+  Disabled because it is not working in firefox 
+*/
+.form-field .input-wrapper.focus-border {
+  /* min-width: 150px; <- not sure what this was for */
+  border-radius: var(--rounded);
+  border: 1px solid var(--gray-300);
+  box-sizing: border-box;
+}
+
+.dark-theme .form-field .input-wrapper.focus-border {
+  border: 1px solid var(--b-default);
+}
+
+
+.form-field .input-wrapper {
+  /* background-color: #fff; */
+  min-width: 80px;
+  border-radius: var(--rounded);
+  border-style: solid;
+  box-sizing: border-box;
+  overflow: hidden;
+  /* overflow: visible; */
+}
+.form-field .input-wrapper > :first-child:not(textarea, .ChipArrayEditor, .Checkbox)  {
+  border-radius: 0 !important;
+  color: var(--text-0);
+}
+
+.dark-theme .form-field .input-wrapper > :first-child:not(textarea, .ChipArrayEditor, .Checkbox)  { 
+  color: var(--gray-100);
+  background-color: var(--input-bg-color);
+}
+
+/* .form-field input:focus, */
+.form-field label.checkbox:focus {
+  outline: none;
+  /* box-shadow: inset 0 0 0 3px rgba(164,202,254,.45); */
+  box-shadow: inset  0 0 5px 1px rgba(59, 153, 252, .7);
+  border-color: #a4cafe;
+} 
+
+
+/* .form-field .input-wrapper.error input:focus, <- input-wrapper below already does this */
+.form-field .input-wrapper.error label.checkbox:focus,
+.form-field .input-wrapper.error {
+  border: 1px solid var(--red-700);
+  box-shadow: inset 0 0 5px 1px rgb(253 158 158 / 70%);
+}
+
+
+/* .form-field .input-wrapper.error input {
+  border: 1px solid var(--red-700);
+} */
+
+.form-field label.main-label {
+  flex: 1;
+  line-height: 2em;
+  min-width: 80px;
+}
+
+.form-field select {
+  background: white;
+  padding: .5rem .75rem;
+  border: none;
+  outline: 0;
+  flex: 1;
+
+  cursor: pointer;
+
+}
+
+.input-wrapper .SELECTCOMPONENT {
+  border-color: transparent !important;
+}
+
+html:not(.dark-theme) .FormField_Select {
+  background-color: white !important;
+}

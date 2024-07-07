@@ -1,32 +1,45 @@
 {
-  "name": "prgl_docker",
+  "name": "prgl_ui_server",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "npm i && NODE_OPTIONS=--max-old-space-size=8192 tsc",
-    "start": "npm run build && node dist/index.js",
+    "build-start": "npm i && tsc && npm prune --production",
+    "build": "bash ./build.sh",
+    "start": "npm run build && node dist/server/src/index.js",
     "rollup": "rollup -c",
-    "dev": "NODE_OPTIONS='--max-old-space-size=12048' npm i && tsc-watch --onSuccess \"node --inspect  dist/index.js\"",
-    "devall": "npm run dev & cd ../client && npm i && npm run dev"
+    "lint": "eslint . --ext .ts --quiet --fix",
+    "dev": "export NODE_ENV='development' && NODE_OPTIONS='--max-old-space-size=4048' && npm i && tsc-watch --onSuccess \"node --trace-warnings --inspect dist/server/src/index.js\""
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.374.0",
+    "@aws-sdk/lib-storage": "^3.374.0",
+    "@aws-sdk/s3-request-presigner": "^3.374.0",
+    "@faker-js/faker": "^7.6.0",
     "@types/cookie-parser": "^1.4.2",
-    "@types/socket.io": "^3.0.2",
+    "check-disk-space": "^3.3.1",
+    "connection-string": "^4.3.5",
     "cookie-parser": "^1.4.5",
-    "csvtojson": "^2.0.10",
     "dotenv": "^10.0.0",
-    "express": "^4.17.1",
-    "pg-promise": "^10.11.0",
-    "prostgles-server": "^2.0.186",
-    "socket.io": "^4.5.1"
+    "engine.io": "^6.5.5",
+    "express": "^4.19.2",
+    "otplib": "^12.0.1",
+    "prostgles-server": "^4.2.81",
+    "prostgles-types": "^4.0.22",
+    "qrcode": "^1.5.1",
+    "socket.io": "^4.7.5",
+    "typescript": "^5.4.5",
+    "ws": "^8.17.1"
   },
   "devDependencies": {
-    "@types/node": "^14.14.21",
-    "monaco-editor": "^0.29.1",
-    "tsc-watch": "^5.0.3",
-    "typescript": "^4.7.2"
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.9.1",
+    "@types/ws": "^8.5.3",
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "dts-bundle-generator": "^9.0.0",
+    "eslint": "^8.56.0",
+    "tsc-watch": "^5.0.3"
   }
 }

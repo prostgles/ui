@@ -1,0 +1,8 @@
+.box {
+  clip-path: circle(15% at 50% 10%);
+  /* transition: clip-path 1s; */
+}
+
+.box:hover {
+  clip-path: circle(25%);
+}

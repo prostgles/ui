@@ -1,0 +1,3825 @@
+{
+  "@aws-crypto/crc32@2.0.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-crypto-helpers",
+    "publisher": "AWS Crypto Tools Team",
+    "email": "aws-cryptools@amazon.com",
+    "url": "https://docs.aws.amazon.com/aws-crypto-tools/index.html?id=docs_gateway#lang/en_us",
+    "path": "/home/uiprgl/server/node_modules/@aws-crypto/crc32",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-crypto/crc32/LICENSE"
+  },
+  "@aws-crypto/ie11-detection@2.0.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-crypto-helpers",
+    "publisher": "AWS Crypto Tools Team",
+    "email": "aws-cryptools@amazon.com",
+    "url": "https://docs.aws.amazon.com/aws-crypto-tools/index.html?id=docs_gateway#lang/en_us",
+    "path": "/home/uiprgl/server/node_modules/@aws-crypto/ie11-detection",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-crypto/ie11-detection/LICENSE"
+  },
+  "@aws-crypto/sha256-browser@2.0.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-crypto-helpers",
+    "publisher": "AWS Crypto Tools Team",
+    "email": "aws-cryptools@amazon.com",
+    "url": "https://docs.aws.amazon.com/aws-crypto-tools/index.html?id=docs_gateway#lang/en_us",
+    "path": "/home/uiprgl/server/node_modules/@aws-crypto/sha256-browser",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-crypto/sha256-browser/LICENSE"
+  },
+  "@aws-crypto/sha256-js@2.0.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-crypto-helpers",
+    "publisher": "AWS Crypto Tools Team",
+    "email": "aws-cryptools@amazon.com",
+    "url": "https://docs.aws.amazon.com/aws-crypto-tools/index.html?id=docs_gateway#lang/en_us",
+    "path": "/home/uiprgl/server/node_modules/@aws-crypto/sha256-js",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-crypto/sha256-js/LICENSE"
+  },
+  "@aws-crypto/supports-web-crypto@2.0.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-crypto-helpers",
+    "publisher": "AWS Crypto Tools Team",
+    "email": "aws-cryptools@amazon.com",
+    "url": "https://docs.aws.amazon.com/aws-crypto-tools/index.html?id=docs_gateway#lang/en_us",
+    "path": "/home/uiprgl/server/node_modules/@aws-crypto/supports-web-crypto",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-crypto/supports-web-crypto/LICENSE"
+  },
+  "@aws-crypto/util@2.0.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-crypto-helpers",
+    "publisher": "AWS Crypto Tools Team",
+    "email": "aws-cryptools@amazon.com",
+    "url": "https://docs.aws.amazon.com/aws-crypto-tools/index.html?id=docs_gateway#lang/en_us",
+    "path": "/home/uiprgl/server/node_modules/@aws-crypto/util",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-crypto/util/LICENSE"
+  },
+  "@aws-sdk/abort-controller@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/abort-controller",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/abort-controller/LICENSE"
+  },
+  "@aws-sdk/chunked-blob-reader-native@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/chunked-blob-reader-native",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/chunked-blob-reader-native/LICENSE"
+  },
+  "@aws-sdk/chunked-blob-reader@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/chunked-blob-reader",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/chunked-blob-reader/LICENSE"
+  },
+  "@aws-sdk/client-s3@3.42.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/client-s3",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/client-s3/LICENSE"
+  },
+  "@aws-sdk/client-sso@3.41.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/client-sso",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/client-sso/LICENSE"
+  },
+  "@aws-sdk/client-sts@3.42.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/client-sts",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/client-sts/LICENSE"
+  },
+  "@aws-sdk/config-resolver@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/config-resolver",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/config-resolver/LICENSE"
+  },
+  "@aws-sdk/credential-provider-env@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/credential-provider-env",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/credential-provider-env/LICENSE"
+  },
+  "@aws-sdk/credential-provider-imds@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/credential-provider-imds",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/credential-provider-imds/LICENSE"
+  },
+  "@aws-sdk/credential-provider-ini@3.41.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/credential-provider-ini",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/credential-provider-ini/LICENSE"
+  },
+  "@aws-sdk/credential-provider-node@3.41.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/credential-provider-node",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/credential-provider-node/LICENSE"
+  },
+  "@aws-sdk/credential-provider-process@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/credential-provider-process",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/credential-provider-process/LICENSE"
+  },
+  "@aws-sdk/credential-provider-sso@3.41.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/credential-provider-sso",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/credential-provider-sso/LICENSE"
+  },
+  "@aws-sdk/credential-provider-web-identity@3.41.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/credential-provider-web-identity",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/credential-provider-web-identity/LICENSE"
+  },
+  "@aws-sdk/eventstream-marshaller@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/eventstream-marshaller",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/eventstream-marshaller/LICENSE"
+  },
+  "@aws-sdk/eventstream-serde-browser@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/eventstream-serde-browser",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/eventstream-serde-browser/LICENSE"
+  },
+  "@aws-sdk/eventstream-serde-config-resolver@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/eventstream-serde-config-resolver",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/eventstream-serde-config-resolver/LICENSE"
+  },
+  "@aws-sdk/eventstream-serde-node@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/eventstream-serde-node",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/eventstream-serde-node/LICENSE"
+  },
+  "@aws-sdk/eventstream-serde-universal@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/eventstream-serde-universal",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/eventstream-serde-universal/LICENSE"
+  },
+  "@aws-sdk/fetch-http-handler@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/fetch-http-handler",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/fetch-http-handler/LICENSE"
+  },
+  "@aws-sdk/hash-blob-browser@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/hash-blob-browser",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/hash-blob-browser/LICENSE"
+  },
+  "@aws-sdk/hash-node@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/hash-node",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/hash-node/LICENSE"
+  },
+  "@aws-sdk/hash-stream-node@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/hash-stream-node",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/hash-stream-node/LICENSE"
+  },
+  "@aws-sdk/invalid-dependency@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/invalid-dependency",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/invalid-dependency/LICENSE"
+  },
+  "@aws-sdk/is-array-buffer@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/is-array-buffer",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/is-array-buffer/LICENSE"
+  },
+  "@aws-sdk/md5-js@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/md5-js",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/md5-js/LICENSE"
+  },
+  "@aws-sdk/middleware-apply-body-checksum@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-apply-body-checksum",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-apply-body-checksum/LICENSE"
+  },
+  "@aws-sdk/middleware-bucket-endpoint@3.41.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-bucket-endpoint",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-bucket-endpoint/LICENSE"
+  },
+  "@aws-sdk/middleware-content-length@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-content-length",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-content-length/LICENSE"
+  },
+  "@aws-sdk/middleware-expect-continue@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-expect-continue",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-expect-continue/LICENSE"
+  },
+  "@aws-sdk/middleware-header-default@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-header-default",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-header-default/LICENSE"
+  },
+  "@aws-sdk/middleware-host-header@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-host-header",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-host-header/LICENSE"
+  },
+  "@aws-sdk/middleware-location-constraint@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-location-constraint",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-location-constraint/LICENSE"
+  },
+  "@aws-sdk/middleware-logger@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-logger",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-logger/LICENSE"
+  },
+  "@aws-sdk/middleware-retry@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-retry",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-retry/LICENSE"
+  },
+  "@aws-sdk/middleware-sdk-s3@3.41.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-sdk-s3",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-sdk-s3/LICENSE"
+  },
+  "@aws-sdk/middleware-sdk-sts@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-sdk-sts",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-sdk-sts/LICENSE"
+  },
+  "@aws-sdk/middleware-serde@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-serde",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-serde/LICENSE"
+  },
+  "@aws-sdk/middleware-signing@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-signing",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-signing/LICENSE"
+  },
+  "@aws-sdk/middleware-ssec@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-ssec",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-ssec/LICENSE"
+  },
+  "@aws-sdk/middleware-stack@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-stack",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-stack/LICENSE"
+  },
+  "@aws-sdk/middleware-user-agent@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-user-agent",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/middleware-user-agent/LICENSE"
+  },
+  "@aws-sdk/node-config-provider@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/node-config-provider",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/node-config-provider/LICENSE"
+  },
+  "@aws-sdk/node-http-handler@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/node-http-handler",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/node-http-handler/LICENSE"
+  },
+  "@aws-sdk/property-provider@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/property-provider",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/property-provider/LICENSE"
+  },
+  "@aws-sdk/protocol-http@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/protocol-http",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/protocol-http/LICENSE"
+  },
+  "@aws-sdk/querystring-builder@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/querystring-builder",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/querystring-builder/LICENSE"
+  },
+  "@aws-sdk/querystring-parser@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/querystring-parser",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/querystring-parser/LICENSE"
+  },
+  "@aws-sdk/service-error-classification@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/service-error-classification",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/service-error-classification/LICENSE"
+  },
+  "@aws-sdk/shared-ini-file-loader@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/shared-ini-file-loader",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/shared-ini-file-loader/LICENSE"
+  },
+  "@aws-sdk/signature-v4@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/signature-v4",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/signature-v4/LICENSE"
+  },
+  "@aws-sdk/smithy-client@3.41.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/smithy-client",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/smithy-client/LICENSE"
+  },
+  "@aws-sdk/types@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/types",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/types/LICENSE"
+  },
+  "@aws-sdk/url-parser@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/url-parser",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/url-parser/LICENSE"
+  },
+  "@aws-sdk/util-arn-parser@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-arn-parser",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-arn-parser/LICENSE"
+  },
+  "@aws-sdk/util-base64-browser@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-base64-browser",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-base64-browser/LICENSE"
+  },
+  "@aws-sdk/util-base64-node@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-base64-node",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-base64-node/LICENSE"
+  },
+  "@aws-sdk/util-body-length-browser@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-body-length-browser",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-body-length-browser/LICENSE"
+  },
+  "@aws-sdk/util-body-length-node@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-body-length-node",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-body-length-node/LICENSE"
+  },
+  "@aws-sdk/util-buffer-from@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-buffer-from",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-buffer-from/LICENSE"
+  },
+  "@aws-sdk/util-config-provider@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-config-provider",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-config-provider/LICENSE"
+  },
+  "@aws-sdk/util-credentials@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-credentials",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-credentials/LICENSE"
+  },
+  "@aws-sdk/util-hex-encoding@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-hex-encoding",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-hex-encoding/LICENSE"
+  },
+  "@aws-sdk/util-locate-window@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-locate-window",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-locate-window/LICENSE"
+  },
+  "@aws-sdk/util-uri-escape@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-uri-escape",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-uri-escape/LICENSE"
+  },
+  "@aws-sdk/util-user-agent-browser@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-user-agent-browser",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-user-agent-browser/LICENSE"
+  },
+  "@aws-sdk/util-user-agent-node@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-user-agent-node",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-user-agent-node/LICENSE"
+  },
+  "@aws-sdk/util-utf8-browser@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-utf8-browser",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-utf8-browser/LICENSE"
+  },
+  "@aws-sdk/util-utf8-node@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-utf8-node",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-utf8-node/LICENSE"
+  },
+  "@aws-sdk/util-waiter@3.40.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/util-waiter",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/util-waiter/LICENSE"
+  },
+  "@aws-sdk/xml-builder@3.37.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js-v3",
+    "publisher": "AWS SDK for JavaScript Team",
+    "url": "https://aws.amazon.com/javascript/",
+    "path": "/home/uiprgl/server/node_modules/@aws-sdk/xml-builder",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-sdk/xml-builder/LICENSE"
+  },
+  "@gar/promisify@1.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/wraithgar/gar-promisify",
+    "publisher": "Gar",
+    "email": "gar+npm@danger.computer",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@gar/promisify"
+  },
+  "@isaacs/string-locale-compare@1.1.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/string-locale-compare",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@isaacs/string-locale-compare",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/@isaacs/string-locale-compare/LICENSE"
+  },
+  "@npmcli/arborist@4.0.5": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/arborist",
+    "publisher": "GitHub Inc.",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/arborist",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/arborist/LICENSE.md"
+  },
+  "@npmcli/ci-detect@1.4.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/ci-detect",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/ci-detect",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/ci-detect/LICENSE"
+  },
+  "@npmcli/config@2.3.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/config",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/config",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/config/LICENSE"
+  },
+  "@npmcli/disparity-colors@1.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/disparity-colors",
+    "publisher": "npm Inc.",
+    "email": "support@npmjs.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/disparity-colors",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/disparity-colors/LICENSE"
+  },
+  "@npmcli/fs@1.0.0": {
+    "licenses": "ISC",
+    "publisher": "GitHub Inc.",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/fs",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/fs/LICENSE.md"
+  },
+  "@npmcli/git@2.1.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/git",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/git",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/git/LICENSE"
+  },
+  "@npmcli/installed-package-contents@1.0.7": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/installed-package-contents",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/installed-package-contents",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/installed-package-contents/LICENSE"
+  },
+  "@npmcli/map-workspaces@2.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/map-workspaces",
+    "publisher": "GitHub Inc.",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/map-workspaces",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/map-workspaces/LICENSE.md"
+  },
+  "@npmcli/metavuln-calculator@2.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/metavuln-calculator",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/metavuln-calculator",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/metavuln-calculator/LICENSE"
+  },
+  "@npmcli/move-file@1.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/npm/move-file",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/move-file",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/move-file/LICENSE.md"
+  },
+  "@npmcli/name-from-folder@1.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/name-from-folder",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/name-from-folder",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/name-from-folder/LICENSE"
+  },
+  "@npmcli/node-gyp@1.0.3": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/node-gyp",
+    "publisher": "Brian Jenkins",
+    "email": "bonkydog@bonkydog.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/node-gyp"
+  },
+  "@npmcli/package-json@1.0.1": {
+    "licenses": "ISC",
+    "publisher": "GitHub Inc.",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/package-json",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/package-json/LICENSE"
+  },
+  "@npmcli/promise-spawn@1.3.2": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/promise-spawn",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/promise-spawn",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/promise-spawn/LICENSE"
+  },
+  "@npmcli/run-script@2.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/run-script",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/run-script",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/@npmcli/run-script/LICENSE"
+  },
+  "@tokenizer/token@0.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Borewit/tokenizer-token",
+    "publisher": "Borewit",
+    "url": "https://github.com/Borewit",
+    "path": "/home/uiprgl/server/node_modules/@tokenizer/token",
+    "licenseFile": "/home/uiprgl/server/node_modules/@tokenizer/token/README.md"
+  },
+  "@tootallnate/once@1.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/TooTallNate/once",
+    "publisher": "Nathan Rajlich",
+    "email": "nathan@tootallnate.net",
+    "url": "http://n8.io/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/@tootallnate/once"
+  },
+  "@types/body-parser@1.19.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/home/uiprgl/server/node_modules/@types/body-parser",
+    "licenseFile": "/home/uiprgl/server/node_modules/@types/body-parser/LICENSE"
+  },
+  "@types/component-emitter@1.2.10": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/home/uiprgl/server/node_modules/@types/component-emitter",
+    "licenseFile": "/home/uiprgl/server/node_modules/@types/component-emitter/LICENSE"
+  },
+  "@types/connect@3.4.34": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/home/uiprgl/server/node_modules/@types/connect",
+    "licenseFile": "/home/uiprgl/server/node_modules/@types/connect/LICENSE"
+  },
+  "@types/cookie-parser@1.4.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/home/uiprgl/server/node_modules/@types/cookie-parser",
+    "licenseFile": "/home/uiprgl/server/node_modules/@types/cookie-parser/LICENSE"
+  },
+  "@types/cookie@0.4.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/home/uiprgl/server/node_modules/@types/cookie",
+    "licenseFile": "/home/uiprgl/server/node_modules/@types/cookie/LICENSE"
+  },
+  "@types/cors@2.8.10": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/home/uiprgl/server/node_modules/@types/cors",
+    "licenseFile": "/home/uiprgl/server/node_modules/@types/cors/LICENSE"
+  },
+  "@types/express-serve-static-core@4.17.19": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/home/uiprgl/server/node_modules/@types/express-serve-static-core",
+    "licenseFile": "/home/uiprgl/server/node_modules/@types/express-serve-static-core/LICENSE"
+  },
+  "@types/express@4.17.11": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/home/uiprgl/server/node_modules/@types/express",
+    "licenseFile": "/home/uiprgl/server/node_modules/@types/express/LICENSE"
+  },
+  "@types/mime@1.3.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/home/uiprgl/server/node_modules/@types/mime",
+    "licenseFile": "/home/uiprgl/server/node_modules/@types/mime/LICENSE"
+  },
+  "@types/node@14.14.41": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/home/uiprgl/server/node_modules/@types/node",
+    "licenseFile": "/home/uiprgl/server/node_modules/@types/node/LICENSE"
+  },
+  "@types/qs@6.9.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/home/uiprgl/server/node_modules/@types/qs",
+    "licenseFile": "/home/uiprgl/server/node_modules/@types/qs/LICENSE"
+  },
+  "@types/range-parser@1.2.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/home/uiprgl/server/node_modules/@types/range-parser",
+    "licenseFile": "/home/uiprgl/server/node_modules/@types/range-parser/LICENSE"
+  },
+  "@types/serve-static@1.13.9": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/home/uiprgl/server/node_modules/@types/serve-static",
+    "licenseFile": "/home/uiprgl/server/node_modules/@types/serve-static/LICENSE"
+  },
+  "@types/socket.io@3.0.2": {
+    "licenses": "MIT",
+    "path": "/home/uiprgl/server/node_modules/@types/socket.io",
+    "licenseFile": "/home/uiprgl/server/node_modules/@types/socket.io/LICENSE"
+  },
+  "abbrev@1.1.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/abbrev-js",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/abbrev",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/abbrev/LICENSE"
+  },
+  "accepts@1.3.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/accepts",
+    "path": "/home/uiprgl/server/node_modules/accepts",
+    "licenseFile": "/home/uiprgl/server/node_modules/accepts/LICENSE"
+  },
+  "agent-base@6.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/TooTallNate/node-agent-base",
+    "publisher": "Nathan Rajlich",
+    "email": "nathan@tootallnate.net",
+    "url": "http://n8.io/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/agent-base"
+  },
+  "agentkeepalive@4.1.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/node-modules/agentkeepalive",
+    "publisher": "fengmk2",
+    "email": "fengmk2@gmail.com",
+    "url": "https://fengmk2.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/agentkeepalive",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/agentkeepalive/LICENSE"
+  },
+  "aggregate-error@3.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/aggregate-error",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/aggregate-error",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/aggregate-error/license"
+  },
+  "ansi-regex@2.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/ansi-regex",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/ansi-regex",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/ansi-regex/license"
+  },
+  "ansi-regex@3.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/ansi-regex",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/string-width/node_modules/ansi-regex",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/string-width/node_modules/ansi-regex/license"
+  },
+  "ansi-regex@5.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/ansi-regex",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/cli-table3/node_modules/ansi-regex",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/cli-table3/node_modules/ansi-regex/license"
+  },
+  "ansi-regex@5.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/ansi-regex",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/cli-columns/node_modules/ansi-regex",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/cli-columns/node_modules/ansi-regex/license"
+  },
+  "ansi-styles@4.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/ansi-styles",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/ansi-styles",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/ansi-styles/license"
+  },
+  "ansicolors@0.3.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/thlorenz/ansicolors",
+    "publisher": "Thorsten Lorenz",
+    "email": "thlorenz@gmx.de",
+    "url": "thlorenz.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/ansicolors",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/ansicolors/LICENSE"
+  },
+  "ansistyles@0.1.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/thlorenz/ansistyles",
+    "publisher": "Thorsten Lorenz",
+    "email": "thlorenz@gmx.de",
+    "url": "thlorenz.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/ansistyles",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/ansistyles/LICENSE"
+  },
+  "aproba@1.2.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/iarna/aproba",
+    "publisher": "Rebecca Turner",
+    "email": "me@re-becca.org",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/node-gyp/node_modules/aproba",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/node-gyp/node_modules/aproba/LICENSE"
+  },
+  "aproba@2.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/iarna/aproba",
+    "publisher": "Rebecca Turner",
+    "email": "me@re-becca.org",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/aproba",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/aproba/LICENSE"
+  },
+  "archy@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/substack/node-archy",
+    "publisher": "James Halliday",
+    "email": "mail@substack.net",
+    "url": "http://substack.net",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/archy",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/archy/LICENSE"
+  },
+  "are-we-there-yet@1.1.6": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/are-we-there-yet",
+    "publisher": "GitHub Inc.",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/are-we-there-yet",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/are-we-there-yet/LICENSE.md"
+  },
+  "are-we-there-yet@1.1.7": {
+    "licenses": "ISC",
+    "repository": "https://github.com/iarna/are-we-there-yet",
+    "publisher": "Rebecca Turner",
+    "url": "http://re-becca.org",
+    "path": "/home/uiprgl/server/node_modules/are-we-there-yet",
+    "licenseFile": "/home/uiprgl/server/node_modules/are-we-there-yet/LICENSE"
+  },
+  "are-we-there-yet@2.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/are-we-there-yet",
+    "publisher": "GitHub Inc.",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/npmlog/node_modules/are-we-there-yet",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/npmlog/node_modules/are-we-there-yet/LICENSE.md"
+  },
+  "array-flatten@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/blakeembrey/array-flatten",
+    "publisher": "Blake Embrey",
+    "email": "hello@blakeembrey.com",
+    "url": "http://blakeembrey.me",
+    "path": "/home/uiprgl/server/node_modules/array-flatten",
+    "licenseFile": "/home/uiprgl/server/node_modules/array-flatten/LICENSE"
+  },
+  "asap@2.0.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/kriskowal/asap",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/asap",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/asap/LICENSE.md"
+  },
+  "assert-options@0.7.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/vitaly-t/assert-options",
+    "publisher": "Vitaly Tomilov",
+    "email": "vitaly.tomilov@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/assert-options",
+    "licenseFile": "/home/uiprgl/server/node_modules/assert-options/README.md"
+  },
+  "aws-sdk@2.1035.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/aws/aws-sdk-js",
+    "publisher": "Amazon Web Services",
+    "url": "https://aws.amazon.com/",
+    "path": "/home/uiprgl/server/node_modules/aws-sdk",
+    "licenseFile": "/home/uiprgl/server/node_modules/aws-sdk/LICENSE.txt",
+    "noticeFile": "/home/uiprgl/server/node_modules/aws-sdk/NOTICE.txt"
+  },
+  "balanced-match@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/juliangruber/balanced-match",
+    "publisher": "Julian Gruber",
+    "email": "mail@juliangruber.com",
+    "url": "http://juliangruber.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/balanced-match",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/balanced-match/LICENSE.md"
+  },
+  "base64-arraybuffer@0.1.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/niklasvh/base64-arraybuffer",
+    "publisher": "Niklas von Hertzen",
+    "email": "niklasvh@gmail.com",
+    "url": "http://hertzen.com",
+    "path": "/home/uiprgl/server/node_modules/base64-arraybuffer",
+    "licenseFile": "/home/uiprgl/server/node_modules/base64-arraybuffer/LICENSE-MIT"
+  },
+  "base64-js@1.5.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/beatgammit/base64-js",
+    "publisher": "T. Jameson Little",
+    "email": "t.jameson.little@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/base64-js",
+    "licenseFile": "/home/uiprgl/server/node_modules/base64-js/LICENSE"
+  },
+  "base64id@2.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/faeldt/base64id",
+    "publisher": "Kristian Faeldt",
+    "email": "faeldt_kristian@cyberagent.co.jp",
+    "path": "/home/uiprgl/server/node_modules/base64id",
+    "licenseFile": "/home/uiprgl/server/node_modules/base64id/LICENSE"
+  },
+  "bin-links@2.3.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/bin-links",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/bin-links",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/bin-links/LICENSE"
+  },
+  "binary-extensions@2.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/binary-extensions",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/binary-extensions",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/binary-extensions/license"
+  },
+  "bl@4.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/rvagg/bl",
+    "path": "/home/uiprgl/server/node_modules/bl",
+    "licenseFile": "/home/uiprgl/server/node_modules/bl/LICENSE.md"
+  },
+  "bluebird@3.7.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/petkaantonov/bluebird",
+    "publisher": "Petka Antonov",
+    "email": "petka_antonov@hotmail.com",
+    "url": "http://github.com/petkaantonov/",
+    "path": "/home/uiprgl/server/node_modules/bluebird",
+    "licenseFile": "/home/uiprgl/server/node_modules/bluebird/LICENSE"
+  },
+  "body-parser@1.19.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/expressjs/body-parser",
+    "path": "/home/uiprgl/server/node_modules/body-parser",
+    "licenseFile": "/home/uiprgl/server/node_modules/body-parser/LICENSE"
+  },
+  "bowser@2.11.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lancedikson/bowser",
+    "publisher": "Dustin Diaz",
+    "email": "dustin@dustindiaz.com",
+    "url": "http://dustindiaz.com",
+    "path": "/home/uiprgl/server/node_modules/bowser",
+    "licenseFile": "/home/uiprgl/server/node_modules/bowser/LICENSE"
+  },
+  "brace-expansion@1.1.11": {
+    "licenses": "MIT",
+    "repository": "https://github.com/juliangruber/brace-expansion",
+    "publisher": "Julian Gruber",
+    "email": "mail@juliangruber.com",
+    "url": "http://juliangruber.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/brace-expansion",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/brace-expansion/LICENSE"
+  },
+  "buffer-writer@2.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/brianc/node-buffer-writer",
+    "publisher": "Brian M. Carlson",
+    "path": "/home/uiprgl/server/node_modules/buffer-writer",
+    "licenseFile": "/home/uiprgl/server/node_modules/buffer-writer/LICENSE"
+  },
+  "buffer@4.9.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/feross/buffer",
+    "publisher": "Feross Aboukhadijeh",
+    "email": "feross@feross.org",
+    "url": "http://feross.org",
+    "path": "/home/uiprgl/server/node_modules/buffer",
+    "licenseFile": "/home/uiprgl/server/node_modules/buffer/LICENSE"
+  },
+  "buffer@5.7.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/feross/buffer",
+    "publisher": "Feross Aboukhadijeh",
+    "email": "feross@feross.org",
+    "url": "https://feross.org",
+    "path": "/home/uiprgl/server/node_modules/bl/node_modules/buffer",
+    "licenseFile": "/home/uiprgl/server/node_modules/bl/node_modules/buffer/LICENSE"
+  },
+  "builtins@1.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/juliangruber/builtins",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/builtins",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/builtins/License"
+  },
+  "bytes@3.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/visionmedia/bytes.js",
+    "publisher": "TJ Holowaychuk",
+    "email": "tj@vision-media.ca",
+    "url": "http://tjholowaychuk.com",
+    "path": "/home/uiprgl/server/node_modules/bytes",
+    "licenseFile": "/home/uiprgl/server/node_modules/bytes/LICENSE"
+  },
+  "cacache@15.3.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/cacache",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/cacache",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/cacache/LICENSE.md"
+  },
+  "chalk@4.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/chalk",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/chalk",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/chalk/license"
+  },
+  "chownr@1.1.4": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/chownr",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/chownr",
+    "licenseFile": "/home/uiprgl/server/node_modules/chownr/LICENSE"
+  },
+  "chownr@2.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/chownr",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/chownr",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/chownr/LICENSE"
+  },
+  "cidr-regex@3.1.1": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/silverwind/cidr-regex",
+    "publisher": "silverwind",
+    "email": "me@silverwind.io",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/cidr-regex",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/cidr-regex/LICENSE"
+  },
+  "clean-stack@2.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/clean-stack",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/clean-stack",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/clean-stack/license"
+  },
+  "cli-columns@4.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/shannonmoeller/cli-columns",
+    "publisher": "Shannon Moeller",
+    "email": "me@shannonmoeller",
+    "url": "http://shannonmoeller.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/cli-columns",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/cli-columns/LICENSE"
+  },
+  "cli-table3@0.6.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/cli-table/cli-table3",
+    "publisher": "James Talmage",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/cli-table3",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/cli-table3/LICENSE"
+  },
+  "clone@1.0.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/pvorb/node-clone",
+    "publisher": "Paul Vorbach",
+    "email": "paul@vorba.ch",
+    "url": "http://paul.vorba.ch/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/clone",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/clone/LICENSE"
+  },
+  "cmd-shim@4.1.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/cmd-shim",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/cmd-shim",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/cmd-shim/LICENSE"
+  },
+  "code-point-at@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/code-point-at",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/code-point-at",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/code-point-at/license"
+  },
+  "color-convert@2.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Qix-/color-convert",
+    "publisher": "Heather Arthur",
+    "email": "fayearthur@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/color-convert",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/color-convert/LICENSE"
+  },
+  "color-name@1.1.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/colorjs/color-name",
+    "publisher": "DY",
+    "email": "dfcreative@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/color-name",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/color-name/LICENSE"
+  },
+  "color-string@1.6.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Qix-/color-string",
+    "publisher": "Heather Arthur",
+    "email": "fayearthur@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/color-string",
+    "licenseFile": "/home/uiprgl/server/node_modules/color-string/LICENSE"
+  },
+  "color-support@1.1.3": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/color-support",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/color-support",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/color-support/LICENSE"
+  },
+  "color@4.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Qix-/color",
+    "path": "/home/uiprgl/server/node_modules/color",
+    "licenseFile": "/home/uiprgl/server/node_modules/color/LICENSE"
+  },
+  "colors@1.4.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Marak/colors.js",
+    "publisher": "Marak Squires",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/colors",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/colors/LICENSE"
+  },
+  "columnify@1.5.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/timoxley/columnify",
+    "publisher": "Tim Oxley",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/columnify",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/columnify/LICENSE"
+  },
+  "common-ancestor-path@1.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/common-ancestor-path",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/common-ancestor-path",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/common-ancestor-path/LICENSE"
+  },
+  "component-emitter@1.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/component/emitter",
+    "path": "/home/uiprgl/server/node_modules/component-emitter",
+    "licenseFile": "/home/uiprgl/server/node_modules/component-emitter/LICENSE"
+  },
+  "concat-map@0.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/substack/node-concat-map",
+    "publisher": "James Halliday",
+    "email": "mail@substack.net",
+    "url": "http://substack.net",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/concat-map",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/concat-map/LICENSE"
+  },
+  "console-control-strings@1.1.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/iarna/console-control-strings",
+    "publisher": "Rebecca Turner",
+    "email": "me@re-becca.org",
+    "url": "http://re-becca.org/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/console-control-strings",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/console-control-strings/LICENSE"
+  },
+  "content-disposition@0.5.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/content-disposition",
+    "publisher": "Douglas Christopher Wilson",
+    "email": "doug@somethingdoug.com",
+    "path": "/home/uiprgl/server/node_modules/content-disposition",
+    "licenseFile": "/home/uiprgl/server/node_modules/content-disposition/LICENSE"
+  },
+  "content-type@1.0.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/content-type",
+    "publisher": "Douglas Christopher Wilson",
+    "email": "doug@somethingdoug.com",
+    "path": "/home/uiprgl/server/node_modules/content-type",
+    "licenseFile": "/home/uiprgl/server/node_modules/content-type/LICENSE"
+  },
+  "cookie-parser@1.4.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/expressjs/cookie-parser",
+    "publisher": "TJ Holowaychuk",
+    "email": "tj@vision-media.ca",
+    "url": "http://tjholowaychuk.com",
+    "path": "/home/uiprgl/server/node_modules/cookie-parser",
+    "licenseFile": "/home/uiprgl/server/node_modules/cookie-parser/LICENSE"
+  },
+  "cookie-signature@1.0.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/visionmedia/node-cookie-signature",
+    "publisher": "TJ Holowaychuk",
+    "email": "tj@learnboost.com",
+    "path": "/home/uiprgl/server/node_modules/cookie-signature",
+    "licenseFile": "/home/uiprgl/server/node_modules/cookie-signature/Readme.md"
+  },
+  "cookie@0.4.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/cookie",
+    "publisher": "Roman Shtylman",
+    "email": "shtylman@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/cookie",
+    "licenseFile": "/home/uiprgl/server/node_modules/cookie/LICENSE"
+  },
+  "cookie@0.4.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/cookie",
+    "publisher": "Roman Shtylman",
+    "email": "shtylman@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/engine.io/node_modules/cookie",
+    "licenseFile": "/home/uiprgl/server/node_modules/engine.io/node_modules/cookie/LICENSE"
+  },
+  "core-util-is@1.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/isaacs/core-util-is",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/core-util-is",
+    "licenseFile": "/home/uiprgl/server/node_modules/core-util-is/LICENSE"
+  },
+  "cors@2.8.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/expressjs/cors",
+    "publisher": "Troy Goode",
+    "email": "troygoode@gmail.com",
+    "url": "https://github.com/troygoode/",
+    "path": "/home/uiprgl/server/node_modules/cors",
+    "licenseFile": "/home/uiprgl/server/node_modules/cors/LICENSE"
+  },
+  "cross-spawn@7.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/moxystudio/node-cross-spawn",
+    "publisher": "André Cruz",
+    "email": "andre@moxy.studio",
+    "path": "/home/uiprgl/server/node_modules/cross-spawn",
+    "licenseFile": "/home/uiprgl/server/node_modules/cross-spawn/LICENSE"
+  },
+  "csvtojson@2.0.10": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Keyang/node-csvtojson",
+    "publisher": "Keyang Xiang",
+    "email": "keyang.xiang@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/csvtojson",
+    "licenseFile": "/home/uiprgl/server/node_modules/csvtojson/LICENSE"
+  },
+  "debug@2.6.9": {
+    "licenses": "MIT",
+    "repository": "https://github.com/visionmedia/debug",
+    "publisher": "TJ Holowaychuk",
+    "email": "tj@vision-media.ca",
+    "path": "/home/uiprgl/server/node_modules/debug",
+    "licenseFile": "/home/uiprgl/server/node_modules/debug/LICENSE"
+  },
+  "debug@4.3.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/visionmedia/debug",
+    "publisher": "TJ Holowaychuk",
+    "email": "tj@vision-media.ca",
+    "path": "/home/uiprgl/server/node_modules/socket.io/node_modules/debug",
+    "licenseFile": "/home/uiprgl/server/node_modules/socket.io/node_modules/debug/LICENSE"
+  },
+  "debug@4.3.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/visionmedia/debug",
+    "publisher": "TJ Holowaychuk",
+    "email": "tj@vision-media.ca",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/debug",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/debug/LICENSE"
+  },
+  "debuglog@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sam-github/node-debuglog",
+    "publisher": "Sam Roberts",
+    "email": "sam@strongloop.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/debuglog",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/debuglog/LICENSE"
+  },
+  "decompress-response@6.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/decompress-response",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "https://sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/decompress-response",
+    "licenseFile": "/home/uiprgl/server/node_modules/decompress-response/license"
+  },
+  "deep-extend@0.6.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/unclechu/node-deep-extend",
+    "publisher": "Viacheslav Lotsmanov",
+    "email": "lotsmanov89@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/deep-extend",
+    "licenseFile": "/home/uiprgl/server/node_modules/deep-extend/LICENSE"
+  },
+  "defaults@1.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tmpvar/defaults",
+    "publisher": "Elijah Insua",
+    "email": "tmpvar@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/defaults",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/defaults/LICENSE"
+  },
+  "delegates@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/visionmedia/node-delegates",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/delegates",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/delegates/License"
+  },
+  "depd@1.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/dougwilson/nodejs-depd",
+    "publisher": "Douglas Christopher Wilson",
+    "email": "doug@somethingdoug.com",
+    "path": "/home/uiprgl/server/node_modules/depd",
+    "licenseFile": "/home/uiprgl/server/node_modules/depd/LICENSE"
+  },
+  "destroy@1.0.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/stream-utils/destroy",
+    "publisher": "Jonathan Ong",
+    "email": "me@jongleberry.com",
+    "url": "http://jongleberry.com",
+    "path": "/home/uiprgl/server/node_modules/destroy",
+    "licenseFile": "/home/uiprgl/server/node_modules/destroy/LICENSE"
+  },
+  "detect-libc@1.0.3": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/lovell/detect-libc",
+    "publisher": "Lovell Fuller",
+    "email": "npm@lovell.info",
+    "path": "/home/uiprgl/server/node_modules/detect-libc",
+    "licenseFile": "/home/uiprgl/server/node_modules/detect-libc/LICENSE"
+  },
+  "dezalgo@1.0.3": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/dezalgo",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/dezalgo",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/dezalgo/LICENSE"
+  },
+  "diff@5.0.0": {
+    "licenses": "BSD-3-Clause",
+    "repository": "https://github.com/kpdecker/jsdiff",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/diff",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/diff/LICENSE"
+  },
+  "dotenv@10.0.0": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/motdotla/dotenv",
+    "path": "/home/uiprgl/server/node_modules/dotenv",
+    "licenseFile": "/home/uiprgl/server/node_modules/dotenv/LICENSE"
+  },
+  "duplexer@0.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Raynos/duplexer",
+    "publisher": "Raynos",
+    "email": "raynos2@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/duplexer",
+    "licenseFile": "/home/uiprgl/server/node_modules/duplexer/LICENCE"
+  },
+  "ee-first@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jonathanong/ee-first",
+    "publisher": "Jonathan Ong",
+    "email": "me@jongleberry.com",
+    "url": "http://jongleberry.com",
+    "path": "/home/uiprgl/server/node_modules/ee-first",
+    "licenseFile": "/home/uiprgl/server/node_modules/ee-first/LICENSE"
+  },
+  "emoji-regex@8.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/mathiasbynens/emoji-regex",
+    "publisher": "Mathias Bynens",
+    "url": "https://mathiasbynens.be/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/emoji-regex",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/emoji-regex/LICENSE-MIT.txt"
+  },
+  "encodeurl@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/pillarjs/encodeurl",
+    "path": "/home/uiprgl/server/node_modules/encodeurl",
+    "licenseFile": "/home/uiprgl/server/node_modules/encodeurl/LICENSE"
+  },
+  "encoding@0.1.13": {
+    "licenses": "MIT",
+    "repository": "https://github.com/andris9/encoding",
+    "publisher": "Andris Reinman",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/encoding",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/encoding/LICENSE"
+  },
+  "end-of-stream@1.4.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/mafintosh/end-of-stream",
+    "publisher": "Mathias Buus",
+    "email": "mathiasbuus@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/end-of-stream",
+    "licenseFile": "/home/uiprgl/server/node_modules/end-of-stream/LICENSE"
+  },
+  "engine.io-parser@4.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/socketio/engine.io-parser",
+    "path": "/home/uiprgl/server/node_modules/engine.io-parser",
+    "licenseFile": "/home/uiprgl/server/node_modules/engine.io-parser/LICENSE"
+  },
+  "engine.io@4.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/socketio/engine.io",
+    "publisher": "Guillermo Rauch",
+    "email": "guillermo@learnboost.com",
+    "path": "/home/uiprgl/server/node_modules/engine.io",
+    "licenseFile": "/home/uiprgl/server/node_modules/engine.io/LICENSE"
+  },
+  "entities@2.2.0": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/fb55/entities",
+    "publisher": "Felix Boehm",
+    "email": "me@feedic.com",
+    "path": "/home/uiprgl/server/node_modules/entities",
+    "licenseFile": "/home/uiprgl/server/node_modules/entities/LICENSE"
+  },
+  "env-paths@2.2.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/env-paths",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/env-paths",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/env-paths/license"
+  },
+  "err-code@2.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/IndigoUnited/js-err-code",
+    "publisher": "IndigoUnited",
+    "email": "hello@indigounited.com",
+    "url": "http://indigounited.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/err-code"
+  },
+  "escape-html@1.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/component/escape-html",
+    "path": "/home/uiprgl/server/node_modules/escape-html",
+    "licenseFile": "/home/uiprgl/server/node_modules/escape-html/LICENSE"
+  },
+  "etag@1.8.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/etag",
+    "path": "/home/uiprgl/server/node_modules/etag",
+    "licenseFile": "/home/uiprgl/server/node_modules/etag/LICENSE"
+  },
+  "event-stream@3.3.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/dominictarr/event-stream",
+    "publisher": "Dominic Tarr",
+    "email": "dominic.tarr@gmail.com",
+    "url": "http://bit.ly/dominictarr",
+    "path": "/home/uiprgl/server/node_modules/event-stream",
+    "licenseFile": "/home/uiprgl/server/node_modules/event-stream/LICENCE"
+  },
+  "events@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Gozala/events",
+    "publisher": "Irakli Gozalishvili",
+    "email": "rfobic@gmail.com",
+    "url": "http://jeditoolkit.com",
+    "path": "/home/uiprgl/server/node_modules/events",
+    "licenseFile": "/home/uiprgl/server/node_modules/events/LICENSE"
+  },
+  "expand-template@2.0.3": {
+    "licenses": "(MIT OR WTFPL)",
+    "repository": "https://github.com/ralphtheninja/expand-template",
+    "publisher": "LM",
+    "email": "ralphtheninja@riseup.net",
+    "path": "/home/uiprgl/server/node_modules/expand-template",
+    "licenseFile": "/home/uiprgl/server/node_modules/expand-template/LICENSE"
+  },
+  "express@4.17.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/expressjs/express",
+    "publisher": "TJ Holowaychuk",
+    "email": "tj@vision-media.ca",
+    "path": "/home/uiprgl/server/node_modules/express",
+    "licenseFile": "/home/uiprgl/server/node_modules/express/LICENSE"
+  },
+  "fast-xml-parser@3.19.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/NaturalIntelligence/fast-xml-parser",
+    "publisher": "Amit Gupta",
+    "url": "https://amitkumargupta.work/",
+    "path": "/home/uiprgl/server/node_modules/fast-xml-parser",
+    "licenseFile": "/home/uiprgl/server/node_modules/fast-xml-parser/LICENSE"
+  },
+  "fastest-levenshtein@1.0.12": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ka-weihe/fastest-levenshtein",
+    "publisher": "Kasper U. Weihe",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/fastest-levenshtein",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/fastest-levenshtein/LICENSE.md"
+  },
+  "file-type@16.5.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/file-type",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "https://sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/file-type",
+    "licenseFile": "/home/uiprgl/server/node_modules/file-type/license"
+  },
+  "finalhandler@1.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/pillarjs/finalhandler",
+    "publisher": "Douglas Christopher Wilson",
+    "email": "doug@somethingdoug.com",
+    "path": "/home/uiprgl/server/node_modules/finalhandler",
+    "licenseFile": "/home/uiprgl/server/node_modules/finalhandler/LICENSE"
+  },
+  "forwarded@0.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/forwarded",
+    "path": "/home/uiprgl/server/node_modules/forwarded",
+    "licenseFile": "/home/uiprgl/server/node_modules/forwarded/LICENSE"
+  },
+  "fresh@0.5.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/fresh",
+    "publisher": "TJ Holowaychuk",
+    "email": "tj@vision-media.ca",
+    "url": "http://tjholowaychuk.com",
+    "path": "/home/uiprgl/server/node_modules/fresh",
+    "licenseFile": "/home/uiprgl/server/node_modules/fresh/LICENSE"
+  },
+  "from@0.1.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/dominictarr/from",
+    "publisher": "Dominic Tarr",
+    "email": "dominic.tarr@gmail.com",
+    "url": "dominictarr.com",
+    "path": "/home/uiprgl/server/node_modules/from",
+    "licenseFile": "/home/uiprgl/server/node_modules/from/LICENSE.APACHE2"
+  },
+  "fs-constants@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/mafintosh/fs-constants",
+    "publisher": "Mathias Buus",
+    "url": "@mafintosh",
+    "path": "/home/uiprgl/server/node_modules/fs-constants",
+    "licenseFile": "/home/uiprgl/server/node_modules/fs-constants/LICENSE"
+  },
+  "fs-minipass@2.1.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/fs-minipass",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/fs-minipass",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/fs-minipass/LICENSE"
+  },
+  "fs.realpath@1.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/fs.realpath",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/fs.realpath",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/fs.realpath/LICENSE"
+  },
+  "function-bind@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Raynos/function-bind",
+    "publisher": "Raynos",
+    "email": "raynos2@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/function-bind",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/function-bind/LICENSE"
+  },
+  "gauge@2.7.4": {
+    "licenses": "ISC",
+    "repository": "https://github.com/iarna/gauge",
+    "publisher": "Rebecca Turner",
+    "email": "me@re-becca.org",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/node-gyp/node_modules/gauge",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/node-gyp/node_modules/gauge/LICENSE"
+  },
+  "gauge@4.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/gauge",
+    "publisher": "GitHub Inc.",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/gauge",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/gauge/LICENSE.md"
+  },
+  "github-from-package@0.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/substack/github-from-package",
+    "publisher": "James Halliday",
+    "email": "mail@substack.net",
+    "url": "http://substack.net",
+    "path": "/home/uiprgl/server/node_modules/github-from-package",
+    "licenseFile": "/home/uiprgl/server/node_modules/github-from-package/LICENSE"
+  },
+  "glob@7.2.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/node-glob",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/glob",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/glob/LICENSE"
+  },
+  "graceful-fs@4.2.8": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/node-graceful-fs",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/graceful-fs",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/graceful-fs/LICENSE"
+  },
+  "has-flag@4.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/has-flag",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/has-flag",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/has-flag/license"
+  },
+  "has-unicode@2.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/iarna/has-unicode",
+    "publisher": "Rebecca Turner",
+    "email": "me@re-becca.org",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/has-unicode",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/has-unicode/LICENSE"
+  },
+  "has@1.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tarruda/has",
+    "publisher": "Thiago de Arruda",
+    "email": "tpadilha84@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/has",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/has/LICENSE-MIT"
+  },
+  "hosted-git-info@4.0.2": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/hosted-git-info",
+    "publisher": "Rebecca Turner",
+    "email": "me@re-becca.org",
+    "url": "http://re-becca.org",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/hosted-git-info",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/hosted-git-info/LICENSE"
+  },
+  "http-cache-semantics@4.1.0": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/kornelski/http-cache-semantics",
+    "publisher": "Kornel Lesiński",
+    "email": "kornel@geekhood.net",
+    "url": "https://kornel.ski/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/http-cache-semantics",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/http-cache-semantics/LICENSE"
+  },
+  "http-errors@1.7.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/http-errors",
+    "publisher": "Jonathan Ong",
+    "email": "me@jongleberry.com",
+    "url": "http://jongleberry.com",
+    "path": "/home/uiprgl/server/node_modules/http-errors",
+    "licenseFile": "/home/uiprgl/server/node_modules/http-errors/LICENSE"
+  },
+  "http-proxy-agent@4.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/TooTallNate/node-http-proxy-agent",
+    "publisher": "Nathan Rajlich",
+    "email": "nathan@tootallnate.net",
+    "url": "http://n8.io/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/http-proxy-agent"
+  },
+  "https-proxy-agent@5.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/TooTallNate/node-https-proxy-agent",
+    "publisher": "Nathan Rajlich",
+    "email": "nathan@tootallnate.net",
+    "url": "http://n8.io/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/https-proxy-agent"
+  },
+  "humanize-ms@1.2.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/node-modules/humanize-ms",
+    "publisher": "dead-horse",
+    "email": "dead_horse@qq.com",
+    "url": "http://deadhorse.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/humanize-ms",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/humanize-ms/LICENSE"
+  },
+  "i@0.3.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/pksunkara/inflect",
+    "publisher": "Pavan Kumar Sunkara",
+    "email": "pavan.sss1991@gmail.com",
+    "url": "pksunkara.github.com",
+    "path": "/home/uiprgl/server/node_modules/i",
+    "licenseFile": "/home/uiprgl/server/node_modules/i/LICENSE"
+  },
+  "iconv-lite@0.4.24": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ashtuchkin/iconv-lite",
+    "publisher": "Alexander Shtuchkin",
+    "email": "ashtuchkin@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/iconv-lite",
+    "licenseFile": "/home/uiprgl/server/node_modules/iconv-lite/LICENSE"
+  },
+  "iconv-lite@0.6.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ashtuchkin/iconv-lite",
+    "publisher": "Alexander Shtuchkin",
+    "email": "ashtuchkin@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/iconv-lite",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/iconv-lite/LICENSE"
+  },
+  "ieee754@1.1.13": {
+    "licenses": "BSD-3-Clause",
+    "repository": "https://github.com/feross/ieee754",
+    "publisher": "Feross Aboukhadijeh",
+    "email": "feross@feross.org",
+    "url": "http://feross.org",
+    "path": "/home/uiprgl/server/node_modules/ieee754",
+    "licenseFile": "/home/uiprgl/server/node_modules/ieee754/LICENSE"
+  },
+  "ieee754@1.2.1": {
+    "licenses": "BSD-3-Clause",
+    "repository": "https://github.com/feross/ieee754",
+    "publisher": "Feross Aboukhadijeh",
+    "email": "feross@feross.org",
+    "url": "https://feross.org",
+    "path": "/home/uiprgl/server/node_modules/token-types/node_modules/ieee754",
+    "licenseFile": "/home/uiprgl/server/node_modules/token-types/node_modules/ieee754/LICENSE"
+  },
+  "ignore-walk@4.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/ignore-walk",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/ignore-walk",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/ignore-walk/LICENSE"
+  },
+  "imurmurhash@0.1.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jensyt/imurmurhash-js",
+    "publisher": "Jens Taylor",
+    "email": "jensyt@gmail.com",
+    "url": "https://github.com/homebrewing",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/imurmurhash"
+  },
+  "indent-string@4.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/indent-string",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/indent-string",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/indent-string/license"
+  },
+  "infer-owner@1.0.4": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/infer-owner",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/infer-owner",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/infer-owner/LICENSE"
+  },
+  "inflight@1.0.6": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/inflight",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/inflight",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/inflight/LICENSE"
+  },
+  "inherits@2.0.3": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/inherits",
+    "path": "/home/uiprgl/server/node_modules/inherits",
+    "licenseFile": "/home/uiprgl/server/node_modules/inherits/LICENSE"
+  },
+  "inherits@2.0.4": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/inherits",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/inherits",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/inherits/LICENSE"
+  },
+  "ini@1.3.8": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/ini",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/ini",
+    "licenseFile": "/home/uiprgl/server/node_modules/ini/LICENSE"
+  },
+  "ini@2.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/ini",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/ini",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/ini/LICENSE"
+  },
+  "init-package-json@2.0.5": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/init-package-json",
+    "publisher": "GitHub Inc.",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/init-package-json",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/init-package-json/LICENSE.md"
+  },
+  "ip-regex@4.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/ip-regex",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/ip-regex",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/ip-regex/license"
+  },
+  "ip@1.1.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/indutny/node-ip",
+    "publisher": "Fedor Indutny",
+    "email": "fedor@indutny.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/ip"
+  },
+  "ipaddr.js@1.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/whitequark/ipaddr.js",
+    "publisher": "whitequark",
+    "email": "whitequark@whitequark.org",
+    "path": "/home/uiprgl/server/node_modules/ipaddr.js",
+    "licenseFile": "/home/uiprgl/server/node_modules/ipaddr.js/LICENSE"
+  },
+  "is-arrayish@0.3.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/qix-/node-is-arrayish",
+    "publisher": "Qix",
+    "url": "http://github.com/qix-",
+    "path": "/home/uiprgl/server/node_modules/is-arrayish",
+    "licenseFile": "/home/uiprgl/server/node_modules/is-arrayish/LICENSE"
+  },
+  "is-cidr@4.0.2": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/silverwind/is-cidr",
+    "publisher": "silverwind",
+    "email": "me@silverwind.io",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/is-cidr",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/is-cidr/LICENSE"
+  },
+  "is-core-module@2.7.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-core-module",
+    "publisher": "Jordan Harband",
+    "email": "ljharb@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/is-core-module",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/is-core-module/LICENSE"
+  },
+  "is-fullwidth-code-point@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/is-fullwidth-code-point",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/node-gyp/node_modules/is-fullwidth-code-point",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/node-gyp/node_modules/is-fullwidth-code-point/license"
+  },
+  "is-fullwidth-code-point@2.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/is-fullwidth-code-point",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/is-fullwidth-code-point",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/is-fullwidth-code-point/license"
+  },
+  "is-fullwidth-code-point@3.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/is-fullwidth-code-point",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/cli-columns/node_modules/is-fullwidth-code-point",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/cli-columns/node_modules/is-fullwidth-code-point/license"
+  },
+  "is-lambda@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/watson/is-lambda",
+    "publisher": "Thomas Watson Steen",
+    "email": "w@tson.dk",
+    "url": "https://twitter.com/wa7son",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/is-lambda",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/is-lambda/LICENSE"
+  },
+  "is-typedarray@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/hughsk/is-typedarray",
+    "publisher": "Hugh Kennedy",
+    "email": "hughskennedy@gmail.com",
+    "url": "http://hughsk.io/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/is-typedarray",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/is-typedarray/LICENSE.md"
+  },
+  "is-utf8@0.2.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/wayfind/is-utf8",
+    "publisher": "wayfind",
+    "path": "/home/uiprgl/server/node_modules/is-utf8",
+    "licenseFile": "/home/uiprgl/server/node_modules/is-utf8/LICENSE"
+  },
+  "isarray@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/juliangruber/isarray",
+    "publisher": "Julian Gruber",
+    "email": "mail@juliangruber.com",
+    "url": "http://juliangruber.com",
+    "path": "/home/uiprgl/server/node_modules/isarray",
+    "licenseFile": "/home/uiprgl/server/node_modules/isarray/README.md"
+  },
+  "isexe@2.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/isexe",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/isexe",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/isexe/LICENSE"
+  },
+  "jmespath@0.15.0": {
+    "licenses": "Apache 2.0",
+    "repository": "https://github.com/jmespath/jmespath.js",
+    "publisher": "James Saryerwinnie",
+    "email": "js@jamesls.com",
+    "url": "http://jamesls.com/",
+    "path": "/home/uiprgl/server/node_modules/jmespath",
+    "licenseFile": "/home/uiprgl/server/node_modules/jmespath/LICENSE"
+  },
+  "json-parse-even-better-errors@2.3.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/npm/json-parse-even-better-errors",
+    "publisher": "Kat Marchán",
+    "email": "kzm@zkat.tech",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/json-parse-even-better-errors",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/json-parse-even-better-errors/LICENSE.md"
+  },
+  "json-stringify-nice@1.1.4": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/json-stringify-nice",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/json-stringify-nice",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/json-stringify-nice/LICENSE"
+  },
+  "jsonparse@1.3.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/creationix/jsonparse",
+    "publisher": "Tim Caswell",
+    "email": "tim@creationix.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/jsonparse",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/jsonparse/LICENSE"
+  },
+  "just-diff-apply@3.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/angus-c/just",
+    "publisher": "Angus Croll",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/just-diff-apply",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/just-diff-apply/LICENSE"
+  },
+  "just-diff@3.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/angus-c/just",
+    "publisher": "Angus Croll",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/just-diff",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/just-diff/LICENSE"
+  },
+  "libnpmaccess@4.0.3": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/libnpmaccess",
+    "publisher": "Kat Marchán",
+    "email": "kzm@sykosomatic.org",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmaccess",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmaccess/LICENSE"
+  },
+  "libnpmdiff@2.0.4": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/libnpmdiff",
+    "publisher": "GitHub Inc.",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmdiff",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmdiff/LICENSE"
+  },
+  "libnpmexec@3.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/libnpmexec",
+    "publisher": "GitHub Inc.",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmexec",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmexec/LICENSE"
+  },
+  "libnpmfund@2.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/libnpmfund",
+    "publisher": "npm Inc.",
+    "email": "support@npmjs.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmfund",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmfund/LICENSE"
+  },
+  "libnpmhook@6.0.3": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/libnpmhook",
+    "publisher": "Kat Marchán",
+    "email": "kzm@sykosomatic.org",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmhook",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmhook/LICENSE.md"
+  },
+  "libnpmorg@2.0.3": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/libnpmorg",
+    "publisher": "Kat Marchán",
+    "email": "kzm@sykosomatic.org",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmorg",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmorg/LICENSE"
+  },
+  "libnpmpack@3.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/libnpmpack",
+    "publisher": "npm Inc.",
+    "email": "support@npmjs.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmpack",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmpack/LICENSE"
+  },
+  "libnpmpublish@4.0.2": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/libnpmpublish",
+    "publisher": "npm Inc.",
+    "email": "support@npmjs.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmpublish",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmpublish/LICENSE"
+  },
+  "libnpmsearch@3.1.2": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/libnpmsearch",
+    "publisher": "Kat Marchán",
+    "email": "kzm@sykosomatic.org",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmsearch",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmsearch/LICENSE"
+  },
+  "libnpmteam@2.0.4": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/libnpmteam",
+    "publisher": "Kat Marchán",
+    "email": "kzm@zkat.tech",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmteam",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmteam/LICENSE"
+  },
+  "libnpmversion@2.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/libnpmversion",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmversion",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/libnpmversion/LICENSE"
+  },
+  "lodash@4.17.21": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lodash/lodash",
+    "publisher": "John-David Dalton",
+    "email": "john.david.dalton@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/lodash",
+    "licenseFile": "/home/uiprgl/server/node_modules/lodash/LICENSE"
+  },
+  "lru-cache@6.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/node-lru-cache",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/lru-cache",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/lru-cache/LICENSE"
+  },
+  "make-fetch-happen@9.1.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/make-fetch-happen",
+    "publisher": "Kat Marchán",
+    "email": "kzm@zkat.tech",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/make-fetch-happen",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/make-fetch-happen/LICENSE"
+  },
+  "map-stream@0.1.0": {
+    "licenses": "Custom: https://github.com/dominictarr/event-stream",
+    "repository": "https://github.com/dominictarr/map-stream",
+    "publisher": "Dominic Tarr",
+    "email": "dominic.tarr@gmail.com",
+    "url": "http://dominictarr.com",
+    "path": "/home/uiprgl/server/node_modules/map-stream",
+    "licenseFile": "/home/uiprgl/server/node_modules/map-stream/LICENCE"
+  },
+  "media-typer@0.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/media-typer",
+    "publisher": "Douglas Christopher Wilson",
+    "email": "doug@somethingdoug.com",
+    "path": "/home/uiprgl/server/node_modules/media-typer",
+    "licenseFile": "/home/uiprgl/server/node_modules/media-typer/LICENSE"
+  },
+  "merge-descriptors@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/component/merge-descriptors",
+    "publisher": "Jonathan Ong",
+    "email": "me@jongleberry.com",
+    "url": "http://jongleberry.com",
+    "path": "/home/uiprgl/server/node_modules/merge-descriptors",
+    "licenseFile": "/home/uiprgl/server/node_modules/merge-descriptors/LICENSE"
+  },
+  "methods@1.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/methods",
+    "path": "/home/uiprgl/server/node_modules/methods",
+    "licenseFile": "/home/uiprgl/server/node_modules/methods/LICENSE"
+  },
+  "mime-db@1.47.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/mime-db",
+    "path": "/home/uiprgl/server/node_modules/mime-db",
+    "licenseFile": "/home/uiprgl/server/node_modules/mime-db/LICENSE"
+  },
+  "mime-types@2.1.30": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/mime-types",
+    "path": "/home/uiprgl/server/node_modules/mime-types",
+    "licenseFile": "/home/uiprgl/server/node_modules/mime-types/LICENSE"
+  },
+  "mime@1.6.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/broofa/node-mime",
+    "publisher": "Robert Kieffer",
+    "email": "robert@broofa.com",
+    "url": "http://github.com/broofa",
+    "path": "/home/uiprgl/server/node_modules/mime",
+    "licenseFile": "/home/uiprgl/server/node_modules/mime/LICENSE"
+  },
+  "mimic-response@3.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/mimic-response",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "https://sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/mimic-response",
+    "licenseFile": "/home/uiprgl/server/node_modules/mimic-response/license"
+  },
+  "minimatch@3.0.4": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/minimatch",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/minimatch",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/minimatch/LICENSE"
+  },
+  "minimist@1.2.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/substack/minimist",
+    "publisher": "James Halliday",
+    "email": "mail@substack.net",
+    "url": "http://substack.net",
+    "path": "/home/uiprgl/server/node_modules/minimist",
+    "licenseFile": "/home/uiprgl/server/node_modules/minimist/LICENSE"
+  },
+  "minipass-collect@1.0.2": {
+    "licenses": "ISC",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/minipass-collect",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/minipass-collect/LICENSE"
+  },
+  "minipass-fetch@1.4.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/npm/minipass-fetch",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/minipass-fetch",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/minipass-fetch/LICENSE"
+  },
+  "minipass-flush@1.0.5": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/minipass-flush",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/minipass-flush",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/minipass-flush/LICENSE"
+  },
+  "minipass-json-stream@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/npm/minipass-json-stream",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/minipass-json-stream",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/minipass-json-stream/LICENSE"
+  },
+  "minipass-pipeline@1.2.4": {
+    "licenses": "ISC",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/minipass-pipeline",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/minipass-pipeline/LICENSE"
+  },
+  "minipass-sized@1.0.3": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/minipass-sized",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/minipass-sized",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/minipass-sized/LICENSE"
+  },
+  "minipass@3.1.5": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/minipass",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/minipass",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/minipass/LICENSE"
+  },
+  "minizlib@2.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/isaacs/minizlib",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/minizlib",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/minizlib/LICENSE"
+  },
+  "mkdirp-classic@0.5.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/mafintosh/mkdirp-classic",
+    "publisher": "Mathias Buus",
+    "url": "@mafintosh",
+    "path": "/home/uiprgl/server/node_modules/mkdirp-classic",
+    "licenseFile": "/home/uiprgl/server/node_modules/mkdirp-classic/LICENSE"
+  },
+  "mkdirp-infer-owner@2.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/mkdirp-infer-owner",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/mkdirp-infer-owner",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/mkdirp-infer-owner/LICENSE"
+  },
+  "mkdirp@1.0.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/isaacs/node-mkdirp",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/mkdirp",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/mkdirp/LICENSE"
+  },
+  "monaco-editor@0.29.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/microsoft/monaco-editor",
+    "publisher": "Microsoft Corporation",
+    "path": "/home/uiprgl/server/node_modules/monaco-editor",
+    "licenseFile": "/home/uiprgl/server/node_modules/monaco-editor/LICENSE"
+  },
+  "ms@2.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/zeit/ms",
+    "path": "/home/uiprgl/server/node_modules/ms",
+    "licenseFile": "/home/uiprgl/server/node_modules/ms/license.md"
+  },
+  "ms@2.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/zeit/ms",
+    "path": "/home/uiprgl/server/node_modules/send/node_modules/ms",
+    "licenseFile": "/home/uiprgl/server/node_modules/send/node_modules/ms/license.md"
+  },
+  "ms@2.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/zeit/ms",
+    "path": "/home/uiprgl/server/node_modules/socket.io/node_modules/ms",
+    "licenseFile": "/home/uiprgl/server/node_modules/socket.io/node_modules/ms/license.md"
+  },
+  "ms@2.1.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/vercel/ms",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/ms",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/ms/license.md"
+  },
+  "mute-stream@0.0.8": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/mute-stream",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/mute-stream",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/mute-stream/LICENSE"
+  },
+  "napi-build-utils@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspiredware/napi-build-utils",
+    "publisher": "Jim Schlight",
+    "path": "/home/uiprgl/server/node_modules/napi-build-utils",
+    "licenseFile": "/home/uiprgl/server/node_modules/napi-build-utils/LICENSE"
+  },
+  "negotiator@0.6.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/negotiator",
+    "path": "/home/uiprgl/server/node_modules/negotiator",
+    "licenseFile": "/home/uiprgl/server/node_modules/negotiator/LICENSE"
+  },
+  "node-abi@3.5.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lgeiger/node-abi",
+    "publisher": "Lukas Geiger",
+    "path": "/home/uiprgl/server/node_modules/node-abi",
+    "licenseFile": "/home/uiprgl/server/node_modules/node-abi/LICENSE"
+  },
+  "node-addon-api@4.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/nodejs/node-addon-api",
+    "path": "/home/uiprgl/server/node_modules/node-addon-api",
+    "licenseFile": "/home/uiprgl/server/node_modules/node-addon-api/LICENSE.md"
+  },
+  "node-cleanup@2.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jtlapp/node-cleanup",
+    "path": "/home/uiprgl/server/node_modules/node-cleanup",
+    "licenseFile": "/home/uiprgl/server/node_modules/node-cleanup/LICENSE"
+  },
+  "node-gyp@8.4.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/nodejs/node-gyp",
+    "publisher": "Nathan Rajlich",
+    "email": "nathan@tootallnate.net",
+    "url": "http://tootallnate.net",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/node-gyp",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/node-gyp/LICENSE"
+  },
+  "nopt@5.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/nopt",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/nopt",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/nopt/LICENSE"
+  },
+  "normalize-package-data@3.0.3": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/npm/normalize-package-data",
+    "publisher": "Meryn Stol",
+    "email": "merynstol@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/normalize-package-data",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/normalize-package-data/LICENSE"
+  },
+  "npm-audit-report@2.1.5": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/npm-audit-report",
+    "publisher": "Adam Baldwin",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/npm-audit-report",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/npm-audit-report/LICENSE"
+  },
+  "npm-bundled@1.1.2": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/npm-bundled",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/npm-bundled",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/npm-bundled/LICENSE"
+  },
+  "npm-install-checks@4.0.0": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/npm/npm-install-checks",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/npm-install-checks",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/npm-install-checks/LICENSE"
+  },
+  "npm-normalize-package-bin@1.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/npm-normalize-package-bin",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/npm-normalize-package-bin",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/npm-normalize-package-bin/LICENSE"
+  },
+  "npm-package-arg@8.1.5": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/npm-package-arg",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/npm-package-arg",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/npm-package-arg/LICENSE"
+  },
+  "npm-packlist@3.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/npm-packlist",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/npm-packlist",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/npm-packlist/LICENSE"
+  },
+  "npm-pick-manifest@6.1.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/npm-pick-manifest",
+    "publisher": "Kat Marchán",
+    "email": "kzm@sykosomatic.org",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/npm-pick-manifest",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/npm-pick-manifest/LICENSE.md"
+  },
+  "npm-profile@5.0.4": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/npm-profile",
+    "publisher": "Rebecca Turner",
+    "email": "me@re-becca.org",
+    "url": "http://re-becca.org/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/npm-profile",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/npm-profile/LICENSE"
+  },
+  "npm-registry-fetch@11.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/npm-registry-fetch",
+    "publisher": "Kat Marchán",
+    "email": "kzm@sykosomatic.org",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/npm-registry-fetch",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/npm-registry-fetch/LICENSE.md"
+  },
+  "npm-user-validate@1.0.1": {
+    "licenses": "BSD-2-Clause",
+    "repository": "https://github.com/npm/npm-user-validate",
+    "publisher": "Robert Kowalski",
+    "email": "rok@kowalski.gd",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/npm-user-validate",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/npm-user-validate/LICENSE"
+  },
+  "npm@8.1.4": {
+    "licenses": "Artistic-2.0",
+    "repository": "https://github.com/npm/cli",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/LICENSE"
+  },
+  "npmlog@4.1.2": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/npmlog",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/node-gyp/node_modules/npmlog",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/node-gyp/node_modules/npmlog/LICENSE"
+  },
+  "npmlog@6.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/npmlog",
+    "publisher": "GitHub Inc.",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/npmlog",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/npmlog/LICENSE.md"
+  },
+  "number-is-nan@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/number-is-nan",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/number-is-nan",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/number-is-nan/license"
+  },
+  "object-assign@4.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/object-assign",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/object-assign",
+    "licenseFile": "/home/uiprgl/server/node_modules/object-assign/license"
+  },
+  "on-finished@2.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/on-finished",
+    "path": "/home/uiprgl/server/node_modules/on-finished",
+    "licenseFile": "/home/uiprgl/server/node_modules/on-finished/LICENSE"
+  },
+  "once@1.4.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/once",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/once",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/once/LICENSE"
+  },
+  "opener@1.5.2": {
+    "licenses": "(WTFPL OR MIT)",
+    "repository": "https://github.com/domenic/opener",
+    "publisher": "Domenic Denicola",
+    "email": "d@domenic.me",
+    "url": "https://domenic.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/opener",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/opener/LICENSE.txt"
+  },
+  "p-map@4.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/p-map",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "https://sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/p-map",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/p-map/license"
+  },
+  "packet-reader@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/brianc/node-packet-reader",
+    "publisher": "Brian M. Carlson",
+    "path": "/home/uiprgl/server/node_modules/packet-reader",
+    "licenseFile": "/home/uiprgl/server/node_modules/packet-reader/README.md"
+  },
+  "pacote@12.0.2": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/pacote",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/pacote",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/pacote/LICENSE"
+  },
+  "parse-conflict-json@1.1.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/parse-conflict-json",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/parse-conflict-json",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/parse-conflict-json/LICENSE"
+  },
+  "parseurl@1.3.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/pillarjs/parseurl",
+    "path": "/home/uiprgl/server/node_modules/parseurl",
+    "licenseFile": "/home/uiprgl/server/node_modules/parseurl/LICENSE"
+  },
+  "path-is-absolute@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/path-is-absolute",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/path-is-absolute",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/path-is-absolute/license"
+  },
+  "path-key@3.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/path-key",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/path-key",
+    "licenseFile": "/home/uiprgl/server/node_modules/path-key/license"
+  },
+  "path-to-regexp@0.1.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/component/path-to-regexp",
+    "path": "/home/uiprgl/server/node_modules/path-to-regexp",
+    "licenseFile": "/home/uiprgl/server/node_modules/path-to-regexp/LICENSE"
+  },
+  "pause-stream@0.0.11": {
+    "licenses": [
+      "MIT",
+      "Apache2"
+    ],
+    "repository": "https://github.com/dominictarr/pause-stream",
+    "publisher": "Dominic Tarr",
+    "email": "dominic.tarr@gmail.com",
+    "url": "dominictarr.com",
+    "path": "/home/uiprgl/server/node_modules/pause-stream",
+    "licenseFile": "/home/uiprgl/server/node_modules/pause-stream/LICENSE"
+  },
+  "peek-readable@4.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Borewit/peek-readable",
+    "publisher": "Borewit",
+    "url": "https://github.com/Borewit",
+    "path": "/home/uiprgl/server/node_modules/peek-readable",
+    "licenseFile": "/home/uiprgl/server/node_modules/peek-readable/LICENSE"
+  },
+  "pg-connection-string@2.5.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/brianc/node-postgres",
+    "publisher": "Blaine Bublitz",
+    "email": "blaine@iceddev.com",
+    "url": "http://iceddev.com/",
+    "path": "/home/uiprgl/server/node_modules/pg-connection-string",
+    "licenseFile": "/home/uiprgl/server/node_modules/pg-connection-string/LICENSE"
+  },
+  "pg-int8@1.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/charmander/pg-int8",
+    "path": "/home/uiprgl/server/node_modules/pg-int8",
+    "licenseFile": "/home/uiprgl/server/node_modules/pg-int8/LICENSE"
+  },
+  "pg-minify@1.6.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/vitaly-t/pg-minify",
+    "publisher": "Vitaly Tomilov",
+    "email": "vitaly.tomilov@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/pg-minify",
+    "licenseFile": "/home/uiprgl/server/node_modules/pg-minify/README.md"
+  },
+  "pg-pool@3.4.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/brianc/node-postgres",
+    "publisher": "Brian M. Carlson",
+    "path": "/home/uiprgl/server/node_modules/pg-pool",
+    "licenseFile": "/home/uiprgl/server/node_modules/pg-pool/LICENSE"
+  },
+  "pg-promise@10.11.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/vitaly-t/pg-promise",
+    "publisher": "Vitaly Tomilov",
+    "email": "vitaly.tomilov@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/pg-promise",
+    "licenseFile": "/home/uiprgl/server/node_modules/pg-promise/LICENSE"
+  },
+  "pg-protocol@1.5.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/brianc/node-postgres",
+    "path": "/home/uiprgl/server/node_modules/pg-protocol",
+    "licenseFile": "/home/uiprgl/server/node_modules/pg-protocol/LICENSE"
+  },
+  "pg-types@2.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/brianc/node-pg-types",
+    "publisher": "Brian M. Carlson",
+    "path": "/home/uiprgl/server/node_modules/pg-types",
+    "licenseFile": "/home/uiprgl/server/node_modules/pg-types/README.md"
+  },
+  "pg@8.7.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/brianc/node-postgres",
+    "publisher": "Brian Carlson",
+    "email": "brian.m.carlson@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/pg",
+    "licenseFile": "/home/uiprgl/server/node_modules/pg/LICENSE"
+  },
+  "pgpass@1.0.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/hoegaarden/pgpass",
+    "publisher": "Hannes Hörl",
+    "email": "hannes.hoerl+pgpass@snowreporter.com",
+    "path": "/home/uiprgl/server/node_modules/pgpass",
+    "licenseFile": "/home/uiprgl/server/node_modules/pgpass/README.md"
+  },
+  "postgres-array@2.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/bendrucker/postgres-array",
+    "publisher": "Ben Drucker",
+    "email": "bvdrucker@gmail.com",
+    "url": "bendrucker.me",
+    "path": "/home/uiprgl/server/node_modules/postgres-array",
+    "licenseFile": "/home/uiprgl/server/node_modules/postgres-array/license"
+  },
+  "postgres-bytea@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/bendrucker/postgres-bytea",
+    "publisher": "Ben Drucker",
+    "email": "bvdrucker@gmail.com",
+    "url": "bendrucker.me",
+    "path": "/home/uiprgl/server/node_modules/postgres-bytea",
+    "licenseFile": "/home/uiprgl/server/node_modules/postgres-bytea/license"
+  },
+  "postgres-date@1.0.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/bendrucker/postgres-date",
+    "publisher": "Ben Drucker",
+    "email": "bvdrucker@gmail.com",
+    "url": "bendrucker.me",
+    "path": "/home/uiprgl/server/node_modules/postgres-date",
+    "licenseFile": "/home/uiprgl/server/node_modules/postgres-date/license"
+  },
+  "postgres-interval@1.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/bendrucker/postgres-interval",
+    "publisher": "Ben Drucker",
+    "email": "bvdrucker@gmail.com",
+    "url": "bendrucker.me",
+    "path": "/home/uiprgl/server/node_modules/postgres-interval",
+    "licenseFile": "/home/uiprgl/server/node_modules/postgres-interval/license"
+  },
+  "prebuild-install@7.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/prebuild/prebuild-install",
+    "publisher": "Mathias Buus",
+    "url": "@mafintosh",
+    "path": "/home/uiprgl/server/node_modules/prebuild-install",
+    "licenseFile": "/home/uiprgl/server/node_modules/prebuild-install/LICENSE"
+  },
+  "prgl_docker@1.0.0": {
+    "licenses": "ISC",
+    "path": "/home/uiprgl/server"
+  },
+  "proc-log@1.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/proc-log",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/proc-log",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/proc-log/LICENSE"
+  },
+  "process-nextick-args@2.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/calvinmetcalf/process-nextick-args",
+    "path": "/home/uiprgl/server/node_modules/process-nextick-args",
+    "licenseFile": "/home/uiprgl/server/node_modules/process-nextick-args/license.md"
+  },
+  "promise-all-reject-late@1.0.1": {
+    "licenses": "ISC",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/promise-all-reject-late",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/promise-all-reject-late/LICENSE"
+  },
+  "promise-call-limit@1.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/promise-call-limit",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/promise-call-limit",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/promise-call-limit/LICENSE"
+  },
+  "promise-inflight@1.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/iarna/promise-inflight",
+    "publisher": "Rebecca Turner",
+    "email": "me@re-becca.org",
+    "url": "http://re-becca.org/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/promise-inflight",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/promise-inflight/LICENSE"
+  },
+  "promise-retry@2.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/IndigoUnited/node-promise-retry",
+    "publisher": "IndigoUnited",
+    "email": "hello@indigounited.com",
+    "url": "http://indigounited.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/promise-retry",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/promise-retry/LICENSE"
+  },
+  "promzard@0.3.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/promzard",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/promzard",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/promzard/LICENSE"
+  },
+  "prostgles-server@2.0.106": {
+    "licenses": "MIT",
+    "repository": "https://github.com/prostgles/prostgles-server-js",
+    "publisher": "Stefan L",
+    "path": "/home/uiprgl/server/node_modules/prostgles-server",
+    "licenseFile": "/home/uiprgl/server/node_modules/prostgles-server/LICENSE"
+  },
+  "prostgles-types@1.5.120": {
+    "licenses": "MIT",
+    "repository": "https://github.com/prostgles/prostgles-types",
+    "publisher": "Stefan L",
+    "path": "/home/uiprgl/server/node_modules/prostgles-types",
+    "licenseFile": "/home/uiprgl/server/node_modules/prostgles-types/LICENSE"
+  },
+  "proxy-addr@2.0.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/proxy-addr",
+    "publisher": "Douglas Christopher Wilson",
+    "email": "doug@somethingdoug.com",
+    "path": "/home/uiprgl/server/node_modules/proxy-addr",
+    "licenseFile": "/home/uiprgl/server/node_modules/proxy-addr/LICENSE"
+  },
+  "ps-tree@1.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/indexzero/ps-tree",
+    "publisher": "Charlie Robbins",
+    "email": "charlie.robbins@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/ps-tree",
+    "licenseFile": "/home/uiprgl/server/node_modules/ps-tree/LICENSE"
+  },
+  "pump@3.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/mafintosh/pump",
+    "publisher": "Mathias Buus Madsen",
+    "email": "mathiasbuus@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/pump",
+    "licenseFile": "/home/uiprgl/server/node_modules/pump/LICENSE"
+  },
+  "punycode@1.3.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/bestiejs/punycode.js",
+    "publisher": "Mathias Bynens",
+    "url": "https://mathiasbynens.be/",
+    "path": "/home/uiprgl/server/node_modules/punycode",
+    "licenseFile": "/home/uiprgl/server/node_modules/punycode/LICENSE-MIT.txt"
+  },
+  "qrcode-terminal@0.12.0": {
+    "licenses": "Apache 2.0",
+    "repository": "https://github.com/gtanner/qrcode-terminal",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/qrcode-terminal",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/qrcode-terminal/LICENSE"
+  },
+  "qs@6.7.0": {
+    "licenses": "BSD-3-Clause",
+    "repository": "https://github.com/ljharb/qs",
+    "path": "/home/uiprgl/server/node_modules/qs",
+    "licenseFile": "/home/uiprgl/server/node_modules/qs/LICENSE"
+  },
+  "querystring@0.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Gozala/querystring",
+    "publisher": "Irakli Gozalishvili",
+    "email": "rfobic@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/querystring",
+    "licenseFile": "/home/uiprgl/server/node_modules/querystring/License.md"
+  },
+  "range-parser@1.2.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/range-parser",
+    "publisher": "TJ Holowaychuk",
+    "email": "tj@vision-media.ca",
+    "url": "http://tjholowaychuk.com",
+    "path": "/home/uiprgl/server/node_modules/range-parser",
+    "licenseFile": "/home/uiprgl/server/node_modules/range-parser/LICENSE"
+  },
+  "raw-body@2.4.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/stream-utils/raw-body",
+    "publisher": "Jonathan Ong",
+    "email": "me@jongleberry.com",
+    "url": "http://jongleberry.com",
+    "path": "/home/uiprgl/server/node_modules/raw-body",
+    "licenseFile": "/home/uiprgl/server/node_modules/raw-body/LICENSE"
+  },
+  "rc@1.2.8": {
+    "licenses": "(BSD-2-Clause OR MIT OR Apache-2.0)",
+    "repository": "https://github.com/dominictarr/rc",
+    "publisher": "Dominic Tarr",
+    "email": "dominic.tarr@gmail.com",
+    "url": "dominictarr.com",
+    "path": "/home/uiprgl/server/node_modules/rc",
+    "licenseFile": "/home/uiprgl/server/node_modules/rc/LICENSE.APACHE2"
+  },
+  "read-cmd-shim@2.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/read-cmd-shim",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/read-cmd-shim",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/read-cmd-shim/LICENSE"
+  },
+  "read-package-json-fast@2.0.3": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/read-package-json-fast",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/read-package-json-fast",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/read-package-json-fast/LICENSE"
+  },
+  "read-package-json@4.1.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/read-package-json",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/read-package-json",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/read-package-json/LICENSE"
+  },
+  "read@1.0.7": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/read",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/read",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/read/LICENSE"
+  },
+  "readable-stream@2.3.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/nodejs/readable-stream",
+    "path": "/home/uiprgl/server/node_modules/are-we-there-yet/node_modules/readable-stream",
+    "licenseFile": "/home/uiprgl/server/node_modules/are-we-there-yet/node_modules/readable-stream/LICENSE"
+  },
+  "readable-stream@3.6.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/nodejs/readable-stream",
+    "path": "/home/uiprgl/server/node_modules/readable-stream",
+    "licenseFile": "/home/uiprgl/server/node_modules/readable-stream/LICENSE"
+  },
+  "readable-web-to-node-stream@3.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Borewit/readable-web-to-node-stream",
+    "publisher": "Borewit",
+    "url": "https://github.com/Borewit",
+    "path": "/home/uiprgl/server/node_modules/readable-web-to-node-stream",
+    "licenseFile": "/home/uiprgl/server/node_modules/readable-web-to-node-stream/README.md"
+  },
+  "readdir-scoped-modules@1.1.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/readdir-scoped-modules",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/readdir-scoped-modules",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/readdir-scoped-modules/LICENSE"
+  },
+  "retry@0.12.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tim-kos/node-retry",
+    "publisher": "Tim Koschützki",
+    "email": "tim@debuggable.com",
+    "url": "http://debuggable.com/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/retry",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/retry/License"
+  },
+  "rimraf@3.0.2": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/rimraf",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/rimraf",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/rimraf/LICENSE"
+  },
+  "safe-buffer@5.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/feross/safe-buffer",
+    "publisher": "Feross Aboukhadijeh",
+    "email": "feross@feross.org",
+    "url": "http://feross.org",
+    "path": "/home/uiprgl/server/node_modules/safe-buffer",
+    "licenseFile": "/home/uiprgl/server/node_modules/safe-buffer/LICENSE"
+  },
+  "safe-buffer@5.2.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/feross/safe-buffer",
+    "publisher": "Feross Aboukhadijeh",
+    "email": "feross@feross.org",
+    "url": "https://feross.org",
+    "path": "/home/uiprgl/server/node_modules/string_decoder/node_modules/safe-buffer",
+    "licenseFile": "/home/uiprgl/server/node_modules/string_decoder/node_modules/safe-buffer/LICENSE"
+  },
+  "safer-buffer@2.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ChALkeR/safer-buffer",
+    "publisher": "Nikita Skovoroda",
+    "email": "chalkerx@gmail.com",
+    "url": "https://github.com/ChALkeR",
+    "path": "/home/uiprgl/server/node_modules/safer-buffer",
+    "licenseFile": "/home/uiprgl/server/node_modules/safer-buffer/LICENSE"
+  },
+  "sax@1.2.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/sax-js",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/sax",
+    "licenseFile": "/home/uiprgl/server/node_modules/sax/LICENSE"
+  },
+  "semver@7.3.5": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/node-semver",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/semver",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/semver/LICENSE"
+  },
+  "send@0.17.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/pillarjs/send",
+    "publisher": "TJ Holowaychuk",
+    "email": "tj@vision-media.ca",
+    "path": "/home/uiprgl/server/node_modules/send",
+    "licenseFile": "/home/uiprgl/server/node_modules/send/LICENSE"
+  },
+  "serve-static@1.14.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/expressjs/serve-static",
+    "publisher": "Douglas Christopher Wilson",
+    "email": "doug@somethingdoug.com",
+    "path": "/home/uiprgl/server/node_modules/serve-static",
+    "licenseFile": "/home/uiprgl/server/node_modules/serve-static/LICENSE"
+  },
+  "set-blocking@2.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/yargs/set-blocking",
+    "publisher": "Ben Coe",
+    "email": "ben@npmjs.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/set-blocking",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/set-blocking/LICENSE.txt"
+  },
+  "setprototypeof@1.1.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/wesleytodd/setprototypeof",
+    "publisher": "Wes Todd",
+    "path": "/home/uiprgl/server/node_modules/setprototypeof",
+    "licenseFile": "/home/uiprgl/server/node_modules/setprototypeof/LICENSE"
+  },
+  "sharp@0.29.3": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/lovell/sharp",
+    "publisher": "Lovell Fuller",
+    "email": "npm@lovell.info",
+    "path": "/home/uiprgl/server/node_modules/sharp",
+    "licenseFile": "/home/uiprgl/server/node_modules/sharp/LICENSE"
+  },
+  "shebang-command@2.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/kevva/shebang-command",
+    "publisher": "Kevin Mårtensson",
+    "email": "kevinmartensson@gmail.com",
+    "url": "github.com/kevva",
+    "path": "/home/uiprgl/server/node_modules/shebang-command",
+    "licenseFile": "/home/uiprgl/server/node_modules/shebang-command/license"
+  },
+  "shebang-regex@3.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/shebang-regex",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/shebang-regex",
+    "licenseFile": "/home/uiprgl/server/node_modules/shebang-regex/license"
+  },
+  "signal-exit@3.0.6": {
+    "licenses": "ISC",
+    "repository": "https://github.com/tapjs/signal-exit",
+    "publisher": "Ben Coe",
+    "email": "ben@npmjs.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/signal-exit",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/signal-exit/LICENSE.txt"
+  },
+  "simple-concat@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/feross/simple-concat",
+    "publisher": "Feross Aboukhadijeh",
+    "email": "feross@feross.org",
+    "url": "https://feross.org",
+    "path": "/home/uiprgl/server/node_modules/simple-concat",
+    "licenseFile": "/home/uiprgl/server/node_modules/simple-concat/LICENSE"
+  },
+  "simple-get@4.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/feross/simple-get",
+    "publisher": "Feross Aboukhadijeh",
+    "email": "feross@feross.org",
+    "url": "https://feross.org",
+    "path": "/home/uiprgl/server/node_modules/simple-get",
+    "licenseFile": "/home/uiprgl/server/node_modules/simple-get/LICENSE"
+  },
+  "simple-swizzle@0.2.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/qix-/node-simple-swizzle",
+    "publisher": "Qix",
+    "url": "http://github.com/qix-",
+    "path": "/home/uiprgl/server/node_modules/simple-swizzle",
+    "licenseFile": "/home/uiprgl/server/node_modules/simple-swizzle/LICENSE"
+  },
+  "smart-buffer@4.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/JoshGlazebrook/smart-buffer",
+    "publisher": "Josh Glazebrook",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/smart-buffer",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/smart-buffer/LICENSE"
+  },
+  "socket.io-adapter@2.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/socketio/socket.io-adapter",
+    "path": "/home/uiprgl/server/node_modules/socket.io-adapter",
+    "licenseFile": "/home/uiprgl/server/node_modules/socket.io-adapter/LICENSE"
+  },
+  "socket.io-parser@4.0.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/socketio/socket.io-parser",
+    "path": "/home/uiprgl/server/node_modules/socket.io-parser",
+    "licenseFile": "/home/uiprgl/server/node_modules/socket.io-parser/LICENSE"
+  },
+  "socket.io@3.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/socketio/socket.io",
+    "path": "/home/uiprgl/server/node_modules/socket.io",
+    "licenseFile": "/home/uiprgl/server/node_modules/socket.io/LICENSE"
+  },
+  "socks-proxy-agent@6.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/TooTallNate/node-socks-proxy-agent",
+    "publisher": "Nathan Rajlich",
+    "email": "nathan@tootallnate.net",
+    "url": "http://n8.io/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/socks-proxy-agent"
+  },
+  "socks@2.6.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/JoshGlazebrook/socks",
+    "publisher": "Josh Glazebrook",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/socks",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/socks/LICENSE"
+  },
+  "spdx-correct@3.1.1": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/jslicense/spdx-correct.js",
+    "publisher": "Kyle E. Mitchell",
+    "email": "kyle@kemitchell.com",
+    "url": "https://kemitchell.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/spdx-correct",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/spdx-correct/LICENSE"
+  },
+  "spdx-exceptions@2.3.0": {
+    "licenses": "CC-BY-3.0",
+    "repository": "https://github.com/kemitchell/spdx-exceptions.json",
+    "publisher": "The Linux Foundation",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/spdx-exceptions"
+  },
+  "spdx-expression-parse@3.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jslicense/spdx-expression-parse.js",
+    "publisher": "Kyle E. Mitchell",
+    "email": "kyle@kemitchell.com",
+    "url": "https://kemitchell.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/spdx-expression-parse",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/spdx-expression-parse/LICENSE"
+  },
+  "spdx-license-ids@3.0.10": {
+    "licenses": "CC0-1.0",
+    "repository": "https://github.com/jslicense/spdx-license-ids",
+    "publisher": "Shinnosuke Watanabe",
+    "url": "https://github.com/shinnn",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/spdx-license-ids"
+  },
+  "spex@3.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/vitaly-t/spex",
+    "publisher": "Vitaly Tomilov",
+    "email": "vitaly.tomilov@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/spex",
+    "licenseFile": "/home/uiprgl/server/node_modules/spex/README.md"
+  },
+  "split2@3.2.2": {
+    "licenses": "ISC",
+    "repository": "https://github.com/mcollina/split2",
+    "publisher": "Matteo Collina",
+    "email": "hello@matteocollina.com",
+    "path": "/home/uiprgl/server/node_modules/split2",
+    "licenseFile": "/home/uiprgl/server/node_modules/split2/LICENSE"
+  },
+  "split@0.3.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/dominictarr/split",
+    "publisher": "Dominic Tarr",
+    "email": "dominic.tarr@gmail.com",
+    "url": "http://bit.ly/dominictarr",
+    "path": "/home/uiprgl/server/node_modules/split",
+    "licenseFile": "/home/uiprgl/server/node_modules/split/LICENCE"
+  },
+  "ssri@8.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/ssri",
+    "publisher": "Kat Marchán",
+    "email": "kzm@sykosomatic.org",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/ssri",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/ssri/LICENSE.md"
+  },
+  "statuses@1.5.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/statuses",
+    "path": "/home/uiprgl/server/node_modules/statuses",
+    "licenseFile": "/home/uiprgl/server/node_modules/statuses/LICENSE"
+  },
+  "stream-combiner@0.0.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/dominictarr/stream-combiner",
+    "publisher": "'Dominic Tarr'",
+    "email": "dominic.tarr@gmail.com",
+    "url": "http://dominictarr.com",
+    "path": "/home/uiprgl/server/node_modules/stream-combiner",
+    "licenseFile": "/home/uiprgl/server/node_modules/stream-combiner/LICENSE"
+  },
+  "string-argv@0.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/mccormicka/string-argv",
+    "publisher": "Anthony McCormick",
+    "email": "anthony.mccormick@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/string-argv",
+    "licenseFile": "/home/uiprgl/server/node_modules/string-argv/LICENSE"
+  },
+  "string-width@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/string-width",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/node-gyp/node_modules/string-width",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/node-gyp/node_modules/string-width/license"
+  },
+  "string-width@2.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/string-width",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/string-width",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/string-width/license"
+  },
+  "string-width@4.2.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/string-width",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/cli-table3/node_modules/string-width",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/cli-table3/node_modules/string-width/license"
+  },
+  "string-width@4.2.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/string-width",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/cli-columns/node_modules/string-width",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/cli-columns/node_modules/string-width/license"
+  },
+  "string_decoder@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/nodejs/string_decoder",
+    "path": "/home/uiprgl/server/node_modules/are-we-there-yet/node_modules/string_decoder",
+    "licenseFile": "/home/uiprgl/server/node_modules/are-we-there-yet/node_modules/string_decoder/LICENSE"
+  },
+  "string_decoder@1.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/nodejs/string_decoder",
+    "path": "/home/uiprgl/server/node_modules/string_decoder",
+    "licenseFile": "/home/uiprgl/server/node_modules/string_decoder/LICENSE"
+  },
+  "stringify-package@1.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/stringify-package",
+    "publisher": "Kat Marchán",
+    "email": "kzm@zkat.tech",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/stringify-package",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/stringify-package/LICENSE"
+  },
+  "strip-ansi@3.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/strip-ansi",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/strip-ansi",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/strip-ansi/license"
+  },
+  "strip-ansi@4.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/strip-ansi",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/string-width/node_modules/strip-ansi",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/string-width/node_modules/strip-ansi/license"
+  },
+  "strip-ansi@6.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/strip-ansi",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/cli-table3/node_modules/strip-ansi",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/cli-table3/node_modules/strip-ansi/license"
+  },
+  "strip-ansi@6.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/strip-ansi",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/cli-columns/node_modules/strip-ansi",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/cli-columns/node_modules/strip-ansi/license"
+  },
+  "strip-bom@2.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/strip-bom",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/strip-bom",
+    "licenseFile": "/home/uiprgl/server/node_modules/strip-bom/license"
+  },
+  "strip-json-comments@2.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/strip-json-comments",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/strip-json-comments",
+    "licenseFile": "/home/uiprgl/server/node_modules/strip-json-comments/license"
+  },
+  "strtok3@6.2.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Borewit/strtok3",
+    "publisher": "Borewit",
+    "url": "https://github.com/Borewit",
+    "path": "/home/uiprgl/server/node_modules/strtok3",
+    "licenseFile": "/home/uiprgl/server/node_modules/strtok3/LICENSE"
+  },
+  "supports-color@7.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/supports-color",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/supports-color",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/supports-color/license"
+  },
+  "tar-fs@2.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/mafintosh/tar-fs",
+    "publisher": "Mathias Buus",
+    "path": "/home/uiprgl/server/node_modules/tar-fs",
+    "licenseFile": "/home/uiprgl/server/node_modules/tar-fs/LICENSE"
+  },
+  "tar-stream@2.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/mafintosh/tar-stream",
+    "publisher": "Mathias Buus",
+    "email": "mathiasbuus@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/tar-stream",
+    "licenseFile": "/home/uiprgl/server/node_modules/tar-stream/LICENSE"
+  },
+  "tar@6.1.11": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/node-tar",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/tar",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/tar/LICENSE"
+  },
+  "text-table@0.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/substack/text-table",
+    "publisher": "James Halliday",
+    "email": "mail@substack.net",
+    "url": "http://substack.net",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/text-table",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/text-table/LICENSE"
+  },
+  "through@2.3.8": {
+    "licenses": "MIT",
+    "repository": "https://github.com/dominictarr/through",
+    "publisher": "Dominic Tarr",
+    "email": "dominic.tarr@gmail.com",
+    "url": "dominictarr.com",
+    "path": "/home/uiprgl/server/node_modules/through",
+    "licenseFile": "/home/uiprgl/server/node_modules/through/LICENSE.APACHE2"
+  },
+  "tiny-relative-date@1.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/wildlyinaccurate/relative-date",
+    "publisher": "Joseph Wynn",
+    "email": "joseph@wildlyinaccurate.com",
+    "url": "https://wildlyinaccurate.com/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/tiny-relative-date",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/tiny-relative-date/LICENSE.md"
+  },
+  "toidentifier@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/component/toidentifier",
+    "publisher": "Douglas Christopher Wilson",
+    "email": "doug@somethingdoug.com",
+    "path": "/home/uiprgl/server/node_modules/toidentifier",
+    "licenseFile": "/home/uiprgl/server/node_modules/toidentifier/LICENSE"
+  },
+  "token-types@4.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Borewit/token-types",
+    "publisher": "Borewit",
+    "url": "https://github.com/Borewit",
+    "path": "/home/uiprgl/server/node_modules/token-types",
+    "licenseFile": "/home/uiprgl/server/node_modules/token-types/LICENSE"
+  },
+  "treeverse@1.0.4": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/treeverse",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/treeverse",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/treeverse/LICENSE"
+  },
+  "tsc-watch@4.2.9": {
+    "licenses": "MIT",
+    "repository": "https://github.com/gilamran/tsc-watch",
+    "publisher": "Gil Amran",
+    "path": "/home/uiprgl/server/node_modules/tsc-watch",
+    "licenseFile": "/home/uiprgl/server/node_modules/tsc-watch/LICENSE"
+  },
+  "tslib@1.14.1": {
+    "licenses": "0BSD",
+    "repository": "https://github.com/Microsoft/tslib",
+    "publisher": "Microsoft Corp.",
+    "path": "/home/uiprgl/server/node_modules/@aws-crypto/ie11-detection/node_modules/tslib",
+    "licenseFile": "/home/uiprgl/server/node_modules/@aws-crypto/ie11-detection/node_modules/tslib/LICENSE.txt"
+  },
+  "tslib@2.3.1": {
+    "licenses": "0BSD",
+    "repository": "https://github.com/Microsoft/tslib",
+    "publisher": "Microsoft Corp.",
+    "path": "/home/uiprgl/server/node_modules/tslib",
+    "licenseFile": "/home/uiprgl/server/node_modules/tslib/LICENSE.txt"
+  },
+  "tunnel-agent@0.6.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/mikeal/tunnel-agent",
+    "publisher": "Mikeal Rogers",
+    "email": "mikeal.rogers@gmail.com",
+    "url": "http://www.futurealoof.com",
+    "path": "/home/uiprgl/server/node_modules/tunnel-agent",
+    "licenseFile": "/home/uiprgl/server/node_modules/tunnel-agent/LICENSE"
+  },
+  "type-is@1.6.18": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/type-is",
+    "path": "/home/uiprgl/server/node_modules/type-is",
+    "licenseFile": "/home/uiprgl/server/node_modules/type-is/LICENSE"
+  },
+  "typedarray-to-buffer@3.1.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/feross/typedarray-to-buffer",
+    "publisher": "Feross Aboukhadijeh",
+    "email": "feross@feross.org",
+    "url": "http://feross.org/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/typedarray-to-buffer",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/typedarray-to-buffer/LICENSE"
+  },
+  "typescript@4.2.4": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/Microsoft/TypeScript",
+    "publisher": "Microsoft Corp.",
+    "path": "/home/uiprgl/server/node_modules/typescript",
+    "licenseFile": "/home/uiprgl/server/node_modules/typescript/LICENSE.txt"
+  },
+  "unique-filename@1.1.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/iarna/unique-filename",
+    "publisher": "Rebecca Turner",
+    "email": "me@re-becca.org",
+    "url": "http://re-becca.org/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/unique-filename",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/unique-filename/LICENSE"
+  },
+  "unique-slug@2.0.2": {
+    "licenses": "ISC",
+    "repository": "https://github.com/iarna/unique-slug",
+    "publisher": "Rebecca Turner",
+    "email": "me@re-becca.org",
+    "url": "http://re-becca.org",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/unique-slug",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/unique-slug/LICENSE"
+  },
+  "unpipe@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/stream-utils/unpipe",
+    "publisher": "Douglas Christopher Wilson",
+    "email": "doug@somethingdoug.com",
+    "path": "/home/uiprgl/server/node_modules/unpipe",
+    "licenseFile": "/home/uiprgl/server/node_modules/unpipe/LICENSE"
+  },
+  "url@0.10.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/defunctzombie/node-url",
+    "path": "/home/uiprgl/server/node_modules/url",
+    "licenseFile": "/home/uiprgl/server/node_modules/url/LICENSE"
+  },
+  "util-deprecate@1.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/TooTallNate/util-deprecate",
+    "publisher": "Nathan Rajlich",
+    "email": "nathan@tootallnate.net",
+    "url": "http://n8.io/",
+    "path": "/home/uiprgl/server/node_modules/util-deprecate",
+    "licenseFile": "/home/uiprgl/server/node_modules/util-deprecate/LICENSE"
+  },
+  "utils-merge@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jaredhanson/utils-merge",
+    "publisher": "Jared Hanson",
+    "email": "jaredhanson@gmail.com",
+    "url": "http://www.jaredhanson.net/",
+    "path": "/home/uiprgl/server/node_modules/utils-merge",
+    "licenseFile": "/home/uiprgl/server/node_modules/utils-merge/LICENSE"
+  },
+  "uuid@3.3.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/kelektiv/node-uuid",
+    "path": "/home/uiprgl/server/node_modules/aws-sdk/node_modules/uuid",
+    "licenseFile": "/home/uiprgl/server/node_modules/aws-sdk/node_modules/uuid/LICENSE.md"
+  },
+  "uuid@8.3.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/uuidjs/uuid",
+    "path": "/home/uiprgl/server/node_modules/uuid",
+    "licenseFile": "/home/uiprgl/server/node_modules/uuid/LICENSE.md"
+  },
+  "validate-npm-package-license@3.0.4": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/kemitchell/validate-npm-package-license.js",
+    "publisher": "Kyle E. Mitchell",
+    "email": "kyle@kemitchell.com",
+    "url": "https://kemitchell.com",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/validate-npm-package-license",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/validate-npm-package-license/LICENSE"
+  },
+  "validate-npm-package-name@3.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/validate-npm-package-name",
+    "publisher": "zeke",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/validate-npm-package-name",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/validate-npm-package-name/LICENSE"
+  },
+  "vary@1.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/vary",
+    "publisher": "Douglas Christopher Wilson",
+    "email": "doug@somethingdoug.com",
+    "path": "/home/uiprgl/server/node_modules/vary",
+    "licenseFile": "/home/uiprgl/server/node_modules/vary/LICENSE"
+  },
+  "walk-up-path@1.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/walk-up-path",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "https://izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/walk-up-path",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/walk-up-path/LICENSE"
+  },
+  "wcwidth@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/timoxley/wcwidth",
+    "publisher": "Tim Oxley",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/wcwidth",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/wcwidth/LICENSE"
+  },
+  "which@2.0.2": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/node-which",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/which",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/which/LICENSE"
+  },
+  "wide-align@1.1.3": {
+    "licenses": "ISC",
+    "repository": "https://github.com/iarna/wide-align",
+    "publisher": "Rebecca Turner",
+    "email": "me@re-becca.org",
+    "url": "http://re-becca.org/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/wide-align",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/wide-align/LICENSE"
+  },
+  "wide-align@1.1.5": {
+    "licenses": "ISC",
+    "repository": "https://github.com/iarna/wide-align",
+    "publisher": "Rebecca Turner",
+    "email": "me@re-becca.org",
+    "url": "http://re-becca.org/",
+    "path": "/home/uiprgl/server/node_modules/wide-align",
+    "licenseFile": "/home/uiprgl/server/node_modules/wide-align/LICENSE"
+  },
+  "wrappy@1.0.2": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/wrappy",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/wrappy",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/wrappy/LICENSE"
+  },
+  "write-file-atomic@3.0.3": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/write-file-atomic",
+    "publisher": "Rebecca Turner",
+    "email": "me@re-becca.org",
+    "url": "http://re-becca.org",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/write-file-atomic",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/write-file-atomic/LICENSE"
+  },
+  "ws@7.4.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/websockets/ws",
+    "publisher": "Einar Otto Stangvik",
+    "email": "einaros@gmail.com",
+    "url": "http://2x.io",
+    "path": "/home/uiprgl/server/node_modules/ws",
+    "licenseFile": "/home/uiprgl/server/node_modules/ws/LICENSE"
+  },
+  "xml2js@0.4.19": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Leonidas-from-XIV/node-xml2js",
+    "publisher": "Marek Kubica",
+    "email": "marek@xivilization.net",
+    "url": "https://xivilization.net",
+    "path": "/home/uiprgl/server/node_modules/xml2js",
+    "licenseFile": "/home/uiprgl/server/node_modules/xml2js/LICENSE"
+  },
+  "xmlbuilder@9.0.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/oozcitak/xmlbuilder-js",
+    "publisher": "Ozgur Ozcitak",
+    "email": "oozcitak@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/xmlbuilder",
+    "licenseFile": "/home/uiprgl/server/node_modules/xmlbuilder/LICENSE"
+  },
+  "xtend@4.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Raynos/xtend",
+    "publisher": "Raynos",
+    "email": "raynos2@gmail.com",
+    "path": "/home/uiprgl/server/node_modules/xtend",
+    "licenseFile": "/home/uiprgl/server/node_modules/xtend/LICENSE"
+  },
+  "yallist@4.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/yallist",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "/home/uiprgl/server/node_modules/npm/node_modules/yallist",
+    "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/yallist/LICENSE"
+  }
+}
+
