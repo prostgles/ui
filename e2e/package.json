@@ -1,0 +1,19 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "setup": "cp ../client/src/Testing.ts ./tests",
+    "test": "npm run setup && playwright test main.spec.ts && playwright test demo_video_setup.spec.ts && playwright test demo_video.spec.ts",
+    "test-local": "bash test-local.sh",
+    "test_debug": "npm run setup && playwright test --debug"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.44.1",
+    "@types/node": "^20.4.4"
+  }
+}

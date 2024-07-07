@@ -1,25 +1,33 @@
 {
-	"files": ["./index.ts"],
+	"files": ["./src/index.ts"],
 	"compilerOptions": {
 		"outDir": "dist",
-		// "target": "es2019",
-		// "lib": [ "es2019" ],
-		"target": "ES2017",
-		"lib": [ "ES2017" ],
+		"target": "ES2022",
+		"lib": [ "ES2017", "es2019", "ES2021.String", "ES2022" ],
 		"esModuleInterop" : true,
 		"allowSyntheticDefaultImports": true,
 		"allowJs": true,
 		"module": "commonjs",
 		"sourceMap": true,
 		// "rootDir": ".",
+		"moduleResolution": "node",
 		"declaration": true,
 		"declarationMap": true,
-		"keyofStringsOnly": true
+		"keyofStringsOnly": true,
+		"ignoreDeprecations": "5.0",
+		"strict": true,
+		"skipLibCheck": true,
+		"noUncheckedIndexedAccess": true,
+		"paths": { 
+			"@common/*": ["../commonTypes/*"], 
+		},
 	},
 	"exclude": [
 		"dist",
 		"DBoGenerated.ts",
 		"*.conf"
 	],
-	"include": ["init.sql"]
+	"include": [
+		"src"
+	]
 } 

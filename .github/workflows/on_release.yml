@@ -1,0 +1,57 @@
+name: On Release
+on: push
+jobs:
+  build_linux:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v3 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - name: Build Linux
+        run: |
+          sudo apt-get install rpm -y && \
+          cd electron && npm run build-linux
+      - name: Release Linux
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            electron/dist/Prostgles-Desktop-1.0.0-amd64.deb
+            electron/dist/Prostgles-Desktop-1.0.0-x86_64.rpm
+  build_windows:
+    timeout-minutes: 20
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v3 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - name: Build Windows
+        run: |
+          cd electron && npm run build-win
+      - name: Release Windows
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            Release.txt
+            electron/dist/Prostgles-Desktop-1.0.0.exe
+  build_macos:
+    timeout-minutes: 20
+    runs-on: macos-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 18
+    - name: Build MacOS
+      run: |
+        cd electron && npm run build-macos
+    - name: Release MacOS
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          electron/dist/Prostgles-Desktop-1.0.0.dmg

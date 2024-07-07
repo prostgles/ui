@@ -1,0 +1,100 @@
+{
+  "name": "prostgles-desktop",
+  "version": "1.0.0",
+  "homepage": "https://prostgles.com/ui-desktop",
+  "description": "Realtime Dashboard and SQL editor for PostgreSQL",
+  "main": "build/main.js",
+  "icon": "images/icon.ico",
+  "scripts": {
+    "dev": " NODE_OPTIONS='--max-old-space-size=2048' npm i && tsc-watch  --onSuccess \"electron --inspect-brk=9228 ./build/main.js \"",
+    "start": "tsc && electron ./build/main.js .",
+    "package": "electron-forge package",
+    "postinstall": "electron-builder install-app-deps",
+    "make": "rm -rf ./out && rm -rf ./packed && npx tsc && rm -rf ./out && electron-forge make",
+    "build": "DEBUG=* electron-builder -l",
+    "build-tsc": "tsc",
+    "dist": "electron-builder",
+    "pack": "electron-packager . --out ./packed --overwrite true --icon ./image.ico",
+    "makew": "npx tsc && npm run pack && node win.js",
+    "publish": "electron-forge publish",
+    "build-linux": "./build.sh && electron-builder --linux && rm -rf ./dist/linux-unpacked",
+    "build-macos": "./build.sh && electron-builder --mac && rm -rf ./dist/mac && rm -rf ./dist/.icon-icns",
+    "build-win": "bash ./build.sh && electron-builder --win && rm -rf ./dist/win-unpacked",
+    "test-start": "playwright test",
+    "test": "bash ./test.sh",
+    "test-linux": "bash ./build.sh && bash ./test-linux.sh",
+    "test-macos": "bash ./build.sh && bash test-w-debug.sh"
+  },
+  "author": "Prostgles  <office@prostgles.com>",
+  "projectUrl": "https://github.com/prostgles/ui-desktop",
+  "license": "Apache-2.0",
+  "keywords": [
+    "postgres",
+    "postgis",
+    "sql",
+    "PostgreSQL",
+    "electron",
+    "react",
+    "typescript",
+    "dashboard"
+  ],
+  "bugs": {
+    "url": "https://github.com/prostgles/ui/issues/new/choose"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.1",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3",
+    "electron-squirrel-startup": "^1.0.1",
+    "tsc-watch": "^6.2.0",
+    "typescript": "^5.0.3"
+  },
+  "dependencies": {
+    "electron-unhandled": "^4.0.1"
+  },
+  "build": {
+    "asar": false,
+    "extraMetadata": {
+      "main": "build/main.js"
+    },
+    "includeSubNodeModules": true,
+    "productName": "Prostgles-Desktop",
+    "appId": "com.prostgles.desktop",
+    "files": [
+      "build/**/*",
+      "ui/**/*",
+      "images/**/*"
+    ],
+    "mac": {
+      "icon": "./images/rounded/icon512.png",
+      "artifactName": "${productName}-${version}.${ext}",
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg"
+      ]
+    },
+    "linux": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "icon": "./images/rounded/",
+      "maintainer": "prostgles",
+      "category": "Development",
+      "target": [
+        "deb",
+        "rpm"
+      ]
+    },
+    "win": {
+      "artifactName": "${productName}-${version}.${ext}",
+      "icon": "./images/icon.ico",
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "uninstallDisplayName": "${productName}"
+    }
+  }
+}

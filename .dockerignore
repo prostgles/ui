@@ -1,0 +1,9 @@
+**/node_modules
+**/dist
+node_modules
+**/prostgles_backups
+**/prostgles_media
+e2e
+electron
+.github
+.vscode

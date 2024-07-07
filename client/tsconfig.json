@@ -1,0 +1,48 @@
+{
+  "compilerOptions": {
+    "typeRoots": [
+      "node_modules/@types",
+      "./@types"
+    ],    
+    "target": "ES2022",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext",
+      "es2017",
+      "es2019",
+      "es2022", 
+    ],
+    "module": "ES2022",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react",
+    "strict": true,
+    "baseUrl": "./",
+    "noUncheckedIndexedAccess": true,
+    "noImplicitAny": false,
+    "declaration": true,
+    "keyofStringsOnly": true,
+		"ignoreDeprecations": "5.0",
+    "strictNullChecks": true,
+		"paths": { 
+      "@common/*": ["../commonTypes/*"] 
+    }
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "public",
+    "typings/browser",
+    "typings/browser.d.ts"
+  ]
+}

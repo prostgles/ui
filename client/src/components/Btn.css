@@ -1,0 +1,206 @@
+button.disabled {
+  cursor: not-allowed !important;
+}
+button.disabled:not(.no-fade):not(.hidden) {
+  opacity: 0.5 !important;
+}
+
+button {
+  background: transparent;
+}
+
+button.fade-in, .fade-in-2 {
+  -webkit-animation: fadein 2s; /* Safari, Chrome and Opera > 12.1 */
+  -moz-animation: fadein 2s; /* Firefox < 16 */
+   -ms-animation: fadein 2s; /* Internet Explorer */
+    -o-animation: fadein 2s; /* Opera < 12.1 */
+       animation: fadein 2s;
+}
+
+.fade-in  {
+  -webkit-animation: fadein .5s; /* Safari, Chrome and Opera > 12.1 */
+  -moz-animation: fadein .5s; /* Firefox < 16 */
+   -ms-animation: fadein .5s; /* Internet Explorer */
+    -o-animation: fadein .5s; /* Opera < 12.1 */
+       animation: fadein .5s;
+}
+
+
+@keyframes fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Firefox < 16 */
+@-moz-keyframes fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Safari, Chrome and Opera > 12.1 */
+@-webkit-keyframes fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Internet Explorer */
+@-ms-keyframes fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Opera < 12.1 */
+@-o-keyframes fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+
+.btn-color-default {
+  --color: var(--gray-600);
+  --filled-bg: var(--gray-400);
+  --border-color: var(--gray-400);
+  --faded-bg: #7d7d7d38;
+  --faded-bg-hover: #5252525e;
+}
+.dark-theme .btn-color-default {
+  --filled-bg: #5d5d5d;
+  --border-color: var(--gray-400);
+  --color: var(--gray-200);
+  --faded-bg: #7d7d7d61;
+  --faded-bg-hover: #7d7d7dc4;
+}
+
+.btn-color-action {
+  /* --color: #5dabff; */
+  --filled-bg: var(--blue-500);
+  --border-color: var(--blue-500);
+  --color: var(--blue-500);
+  --faded-bg: var(--blue-100);
+  --faded-bg-hover: var(--blue-200);
+}
+.dark-theme .btn-color-action {
+  --filled-bg: #3079c5;
+  --border-color: #5292d7;
+  --color: var(--blue-200);
+  /* --faded-bg: #3988ffa6; */
+  --faded-bg: #3988ff63;
+  --faded-bg-hover: #6195e4ee;
+}
+.dark-theme .btn-color-action.btn-faded {
+  --color: white;
+}
+
+.btn-outline.btn-color-action {
+  --color: #479dff;
+}
+.dark-theme .btn-default.btn-color-action {
+  --color: #5ba4ff;
+}
+
+.btn-color-green {
+  --border-color: var(--green-500);
+  --color: var(--green-800);
+  --faded-bg: var(--green-100);
+  --faded-bg-hover: var(--green-200);
+}
+.btn-color-danger {
+  --color: var(--text-danger);
+  --filled-bg: #b31010;
+  --border-color: var(--text-danger);
+  --faded-bg: var(--red-100);
+  --faded-bg-hover: #be181833;
+}
+
+.btn-color-warn {
+  --filled-bg: var(--yellow-500);
+  --border-color: var(--yellow-700);
+  --color: var(--yellow-800); 
+  --faded-bg: #f2eaa0;
+  --faded-bg-hover: #e6d96c;
+}
+.dark-theme .btn-color-danger {
+  --filled-bg: #890808;
+  --faded-bg: #5900003b;
+  --faded-bg-hover: #7e020288;
+  /* --color: #9c2a2a; */
+}
+
+
+.btn-color-inherit {
+  --color: inherit;
+  --filled-bg: inherit;
+  --border-color: inherit;
+  --faded-bg: inherit;
+  --faded-bg-hover: inherit;
+}
+.btn-color-transparent {
+  --color: transparent;
+  --filled-bg: transparent;
+  --border-color: transparent;
+  --faded-bg: transparent;
+  --faded-bg-hover: transparent;
+}
+.btn-color-white {
+  --color: white;
+  --filled-bg: white;
+  --border-color: white;
+  --faded-bg: white;
+  --faded-bg-hover: var(--gray-100);
+}
+.btn-color-indigo {
+  --filled-bg: var(--indigo-600);
+  --border-color: var(--indigo-400);
+  --color: var(--indigo-800);
+  --faded-bg: var(--indigo-200);
+  --faded-bg-hover: var(--indigo-300);
+}
+
+.btn-filled {
+  background: var(--filled-bg);
+  color: white;
+}
+.btn.btn-filled:hover {
+  filter: brightness(1.2);
+} 
+
+
+.btn-outline {
+  border: 1px solid var(--border-color);
+  color: var(--color);
+  background: var(--bg-color-0);
+}
+.btn-outline:hover {
+  background: var(--filled-bg);
+  border-color: var(--filled-bg) !important;
+  color: white;
+}
+
+:root {
+  --btn-hover-bg: #dbdbdb;
+}
+:root.dark-theme {
+  --btn-hover-bg: var(--li-hover-bg);
+}
+
+.btn-default,
+.btn-icon,
+.btn-text {
+  color: var(--color);
+}
+.btn-default:hover {
+  filter: brightness(1.5);
+}
+
+.btn-icon:hover {
+  background: var(--btn-hover-bg);
+}
+
+.btn-faded {
+  background: var(--faded-bg);
+  color: var(--color);
+}
+
+.btn.btn-faded:hover {
+  background-color: var(--faded-bg-hover);
+} 

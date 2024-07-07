@@ -1,0 +1,45 @@
+name: Electron build linux
+on: workflow_dispatch 
+jobs:
+  electron_build:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 20
+
+    - name: Install dependencies, build and test
+      run: |
+        sudo apt-get update && \
+        cd electron && npm run build-linux
+      
+    - name: Install dependencies for testing
+      run: | 
+        sudo apt-get update && \
+        cd electron && sudo apt install -y libnotify4  libnss3-dev libatk1.0-0 libatk-bridge2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0  && \
+        DEBIAN_FRONTEND=noninteractive apt install -y x11-apps imagemagick xvfb && \
+        ls /tmp/.X11-unix/ && \
+        sudo apt install gdebi-core
+        
+    - name: Install
+      run: | 
+        cd electron && \
+        sudo apt install ./dist/Prostgles-Desktop-1.0.0-amd64.deb
+    - name: Test installation file
+      run: | 
+        xvfb-run --auto-servernum -- prostgles-desktop & \
+        echo "Waiting for 10 seconds for the app to start" && \
+        sleep 10 && \ 
+        echo $DISPLAY && \ 
+        DISPLAY=:1 xterm 2>/dev/null && \ 
+        DISPLAY=:1 xwd -root -silent | convert xwd:- png:./dist/screenshot.png
+      # Xvfb :1 -screen 5 1024x768x8 & \ 
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: installers
+        path: electron/dist
+        retention-days: 10

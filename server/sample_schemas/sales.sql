@@ -1,0 +1,51 @@
+ 
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  password VARCHAR(100) NOT NULL,
+  first_name VARCHAR(50) NOT NULL,
+  last_name VARCHAR(50) NOT NULL,
+  phone_number VARCHAR(20) NOT NULL,
+  user_type VARCHAR(20) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ 
+CREATE TABLE accounts (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  owner_id INTEGER NOT NULL REFERENCES users(id),
+  industry VARCHAR(100) NOT NULL,
+  website VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ 
+CREATE TABLE contacts (
+  id SERIAL PRIMARY KEY,
+  account_id INTEGER NOT NULL REFERENCES accounts(id),
+  first_name VARCHAR(50) NOT NULL,
+  last_name VARCHAR(50) NOT NULL,
+  email VARCHAR(100) NOT NULL,
+  phone_number VARCHAR(20) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ 
+CREATE TABLE opportunities (
+  id SERIAL PRIMARY KEY,
+  account_id INTEGER NOT NULL REFERENCES accounts(id),
+  contact_id INTEGER NOT NULL REFERENCES contacts(id),
+  name VARCHAR(100) NOT NULL,
+  amount NUMERIC(10,2) NOT NULL,
+  stage VARCHAR(20) NOT NULL,
+  close_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+ 
+CREATE TABLE tasks (
+  id SERIAL PRIMARY KEY,
+  opportunity_id INTEGER NOT NULL REFERENCES opportunities(id),
+  assigned_to INTEGER NOT NULL REFERENCES users(id),
+  due_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  subject VARCHAR(100) NOT NULL,
+  status VARCHAR(20) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

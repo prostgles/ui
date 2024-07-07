@@ -4,8 +4,7 @@ version: "3.7"
 services:
   postgres:
     
-    # image: postgres
-    image: mdillon/postgis
+    image: postgis/postgis:16-3.4
     
     # Survive server reboot
     restart: always
@@ -16,7 +15,8 @@ services:
       POSTGRES_PASSWORD: "POSTGRES_PASSWORD" 
 
     # Used to allow creating pg_stat_statements extension to track query performance
-    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c max_connections=200
+    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c max_connections=200 && \
+      apt-get update && apt-get install -y procps
 
     ports: 
       - 5432/tcp
@@ -24,6 +24,10 @@ services:
     # This affects user creation. Comment out to ensure user (POSTGRES_USER) is created
     volumes:
       - prgl-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "sleep 1 && pg_isready"] 
+      timeout: 3s
+      retries: 5
 
   prgl:
     image: prgl
@@ -40,14 +44,24 @@ services:
       POSTGRES_USER: "POSTGRES_USER" 
       POSTGRES_PASSWORD: "POSTGRES_PASSWORD" 
       POSTGRES_HOST: postgres
+      IS_DOCKER: "yes"
+      NODE_ENV: "production"
 
     depends_on:
-      - postgres
+      postgres: 
+        condition: service_healthy
 
+    ## Used to allow connecting to a database from the host
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
-    command: node /usr/src/app/server/dist/index.js
+    ## DEBUG -> Ensure NODE_ENV above is not set to 'production'
+    # command: node --inspect=0.0.0.0:9229 /usr/src/app/server/dist/server/src/index.js
+    command: node /usr/src/app/server/dist/server/src/index.js
     ports:
       - '${PRGL_DOCKER_IP:-127.0.0.1}:${PRGL_DOCKER_PORT-3004}:3004'
+      # DEBUG
+      # - '${PRGL_DOCKER_IP:-127.0.0.1}:9229:9229'
         
 volumes:
   prgl-db:

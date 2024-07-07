@@ -1,0 +1,63 @@
+name: MacOS test
+on: workflow_dispatch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  test_macos:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 20
+    - name: Install curl inside postgres container for video needed for demo
+      run: |
+        ls -la /Applications/ 
+        
+    - name: Install dependencies (psql with pg_dump) pg_dump version must be >= pg servers version to ensure backup/restore works
+      run: |
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && \
+        brew install postgresql@14
+        brew services restart postgresql@14
+        export PATH="/opt/homebrew/opt/postgresql@14/bin:$PATH"
+        /opt/homebrew/opt/postgresql@14/bin/psql --version
+        /opt/homebrew/opt/postgresql@14/bin/pg_dump --version
+        until pg_isready
+        do
+          echo "Waiting for postgres to start..."
+          sleep 1
+        done
+        /opt/homebrew/opt/postgresql@14/bin/createuser -s postgres
+        sudo psql -U postgres -c "CREATE USER usr WITH LOGIN SUPERUSER ENCRYPTED PASSWORD 'psw'"
+        sudo psql -U postgres -c "CREATE DATABASE db OWNER usr"
+        brew install postgis
+        brew services restart postgresql 
+        
+        psql --version
+        cd client && npm ci && \
+        cd ../server && npm ci && \
+        cd ../e2e && npm ci && npx playwright install
+    - name: Run test
+      run: |
+        ./e2e/test.sh
+
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report
+        path: e2e/playwright-report/
+        retention-days: 10
+
+        # brew install pcre
+        # sudo ln -s /opt/homebrew/Cellar/postgresql@16/16.0/bin/postgres /usr/local/bin/postgres
+        # wget https://download.osgeo.org/postgis/source/postgis-3.4.0.tar.gz
+        # tar -xvzf postgis-3.4.0.tar.gz
+        # rm postgis-3.4.0.tar.gz
+        # cd postgis-3.4.0
+        # ./configure --with-projdir=/opt/homebrew/opt/proj --with-protobufdir=/opt/homebrew/opt/protobuf-c --with-pgconfig=/opt/homebrew/opt/postgresql@16/bin/pg_config --with-jsondir=/opt/homebrew/opt/json-c --with-sfcgal=/opt/homebrew/opt/sfcgal/bin/sfcgal-config --with-pcredir=/opt/homebrew/opt/pcre "LDFLAGS=$LDFLAGS -L/opt/homebrew/Cellar/gettext/0.22.2/lib" "CFLAGS=-I/opt/homebrew/Cellar/gettext/0.22.2/include"
+        # make
+        # make install
+
+        # export PATH="/opt/homebrew/opt/postgresql@16/bin:$PATH" && \

@@ -1,0 +1,29 @@
+{
+  "presets": [
+    [
+      "@babel/env",
+      {
+        "targets": {
+          "esmodules": true
+        },
+        "modules": false
+      }
+    ],
+    "@babel/preset-react",
+    "@babel/preset-typescript"
+  ],
+  "plugins": [ 
+    "dynamic-import-node"
+  ],
+  "env": {
+    "production": { 
+      "presets": [
+        ["minify", {
+          "builtIns": false,
+          "evaluate": false,
+          "mangle": false
+        }]
+      ]
+    }
+  }
+}
