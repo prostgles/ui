@@ -187,10 +187,7 @@ export declare const validateDynamicFields: (dynamicFields: UpdateRule["dynamicF
 }>;
 export declare const getCIDRRangesQuery: (arg: {
     cidr: string;
-    returns: [
-        "from",
-        "to"
-    ];
+    returns: ["from", "to"];
 }) => string;
 export {};
 //# sourceMappingURL=publishUtils.d.ts.map

@@ -67,7 +67,7 @@ export declare class ConnectionManager {
                 keepLogs?: boolean | undefined;
             } | {
                 command: "pg_dump";
-                format: "p" | "t" | "c";
+                format: "c" | "p" | "t";
                 dataOnly?: boolean | undefined;
                 clean?: boolean | undefined;
                 create?: boolean | undefined;
@@ -114,7 +114,7 @@ export declare class ConnectionManager {
                 defaultValue?: any;
             } | {
                 jsonbSchema: {
-                    type: "string" | "number" | "boolean" | "Date" | "time" | "timestamp" | "string[]" | "number[]" | "boolean[]" | "Date[]" | "time[]" | "timestamp[]";
+                    type: "string" | "number" | "boolean" | "Date" | "string[]" | "number[]" | "Date[]" | "boolean[]" | "time" | "timestamp" | "time[]" | "timestamp[]";
                     optional?: boolean | undefined;
                     description?: string | undefined;
                 } | {
@@ -206,6 +206,6 @@ export declare class ConnectionManager {
     startConnection: (con_id: string, dbs: DBOFullyTyped<DBSchemaGenerated>, _dbs: DB, socket?: import("prostgles-server/dist/DboBuilder").PRGLIOSocket | undefined, restartIfExists?: boolean | undefined) => Promise<string | undefined>;
 }
 export declare const cdbCache: Record<string, DB>;
-export declare const getCDB: (connId: string, opts?: pg.IConnectionParameters<pg.IClient>, isTemporary?: boolean) => Promise<DB>;
+export declare const getCDB: (connId: string, opts?: pg.IConnectionParameters<pg.IClient>, isTemporary?: boolean) => Promise<import("pg-promise").IDatabase<{}, pg.IClient>>;
 export {};
 //# sourceMappingURL=ConnectionManager.d.ts.map

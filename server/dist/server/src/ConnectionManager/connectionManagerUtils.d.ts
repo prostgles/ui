@@ -30,7 +30,7 @@ export declare const getDatabaseConfigFilter: (c: Connections) => Pick<Required<
     ssl_reject_unauthorized?: boolean | null | undefined;
     type: "Standard" | "Connection URI" | "Prostgles";
     user_id?: string | null | undefined;
-}>, "db_host" | "db_name" | "db_port">;
+}>, "db_name" | "db_host" | "db_port">;
 type ParseTableConfigArgs = {
     dbs: DBS;
     conMgr: ConnectionManager;

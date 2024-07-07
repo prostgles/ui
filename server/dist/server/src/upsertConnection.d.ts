@@ -52,7 +52,7 @@ export declare const upsertConnection: (con: DBSchemaGenerated["connections"]["c
                 keepLogs?: boolean | undefined;
             } | {
                 command: "pg_dump";
-                format: "p" | "t" | "c";
+                format: "c" | "p" | "t";
                 dataOnly?: boolean | undefined;
                 clean?: boolean | undefined;
                 create?: boolean | undefined;
@@ -99,7 +99,7 @@ export declare const upsertConnection: (con: DBSchemaGenerated["connections"]["c
                 defaultValue?: any;
             } | {
                 jsonbSchema: {
-                    type: "string" | "number" | "boolean" | "Date" | "time" | "timestamp" | "string[]" | "number[]" | "boolean[]" | "Date[]" | "time[]" | "timestamp[]";
+                    type: "string" | "number" | "boolean" | "Date" | "string[]" | "number[]" | "Date[]" | "boolean[]" | "time" | "timestamp" | "time[]" | "timestamp[]";
                     optional?: boolean | undefined;
                     description?: string | undefined;
                 } | {
