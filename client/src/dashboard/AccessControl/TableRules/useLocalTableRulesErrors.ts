@@ -1,7 +1,7 @@
+import { usePromise } from "prostgles-client/dist/react-hooks";
 import { getTableRulesErrors } from "../../../../../commonTypes/publishUtils";
-import { omitKeys } from "../../../utils";
-import { usePromise } from "../../ProstglesMethod/hooks";
-import { TablePermissionControlsProps } from "./TablePermissionControls";
+import { omitKeys } from "../../../utils"; 
+import type { TablePermissionControlsProps } from "./TablePermissionControls";
 
 type Args = Pick<TablePermissionControlsProps, "contextData" | "table"> & Pick<Partial<TablePermissionControlsProps>, "tableRules">;
 

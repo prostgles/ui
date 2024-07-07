@@ -1,12 +1,12 @@
-import { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { DBSchemaGenerated } from "../../../../commonTypes/DBoGenerated";
-import { ConnectionStatus, PGDumpParams } from "../../../../commonTypes/utils";
-import { Connection } from "../../pages/NewConnection/NewConnnection";
-import { FileTableConfigReferences } from "../FileTableControls/FileColumnConfigControls";
-import { ConnectionTableConfig } from "../FileTableControls/FileTableConfigControls";
-import { Backups } from "./dashboardUtils";
-import { AnyObject } from "prostgles-types/lib";
-import { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBSchemaGenerated } from "../../../../commonTypes/DBoGenerated";
+import type { ColType, ConnectionStatus, PGDumpParams, ProcStats, SampleSchema } from "../../../../commonTypes/utils";
+import type { Connection } from "../../pages/NewConnection/NewConnnection";
+import type { FileTableConfigReferences } from "../FileTableControls/FileColumnConfigControls";
+import type { ConnectionTableConfig } from "../FileTableControls/FileTableConfigControls";
+import type { Backups } from "./dashboardUtils";
+import type { AnyObject } from "prostgles-types/lib";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils"; 
 
 export type DBSMethods = Partial<{
   pgDump: (conId: string, credId: number | null | undefined, dumpParams: PGDumpParams) => Promise<void>;
@@ -18,7 +18,7 @@ export type DBSMethods = Partial<{
   startConnection: (conId: string) => Promise<string>;
   testDBConnection: (con: Connection) => Promise<true>;
   deleteConnection: (conId: string, opts: { dropDatabase: boolean }) => Promise<Connection>;
-  createConnection: (con: Connection) => Promise<{ connection: Required<Connection>; database_config: DBSSchema["database_configs"] }>;
+  createConnection: (con: Connection, sampleSchemaName?: string) => Promise<{ connection: Required<Connection>; database_config: DBSSchema["database_configs"] }>;
   getDBSize: (conId: string) => Promise<string>;
   getIsSuperUser: (conId: string) => Promise<boolean>;
   validateConnection: (con: Connection) => Promise<{ connection: Required<Connection>; warning?: string }>;
@@ -45,8 +45,23 @@ export type DBSMethods = Partial<{
   getStatus: (conId: string) => Promise<ConnectionStatus>;
   killPID: (connId: string, id_query_hash: string, type: "cancel" | "terminate") => Promise<any>;
   runConnectionQuery: (connId: string, query: string, args?: AnyObject | any[]) => Promise<AnyObject[]>;
-  getSampleSchemas: () => Promise<{ name: string; file: string; type: "sql" | "ts" }[]>;
-  getCompiledTS: (ts: string) => Promise<string>;
+  getSampleSchemas: () => Promise<SampleSchema[]>;
+  setOnMountAndTableConfig: (connId: string, changes: Partial<Pick<DBSSchema["database_configs"], "on_mount_ts" | "on_mount_ts_disabled" | "table_config_ts" | "table_config_ts_disabled">>) => Promise<void>;
+  getForkedProcStats: (connId: string) => Promise<{
+    server: {
+      mem: number;
+      freemem: number;
+    };
+    methodRunner: ProcStats | undefined;
+    onMountRunner: ProcStats | undefined;
+    tableConfigRunner: ProcStats | undefined;
+  }>;
+  getPsqlVersions: () => Promise<{
+    psql: string;
+    pg_dump: string;
+    pg_restore: string;
+    os: "" | "Linux" | "Mac" | "Windows";
+  }>;
 }>;
 
 export type DBS = DBHandlerClient<DBSchemaGenerated> & {

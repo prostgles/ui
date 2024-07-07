@@ -1,13 +1,14 @@
 import { mdiContentCopy, mdiDelete } from "@mdi/js";
-import { AnyObject, ProstglesError, ValidatedColumnInfo } from "prostgles-types";
+import type { AnyObject, ProstglesError, ValidatedColumnInfo } from "prostgles-types";
 import React, { useState } from "react";
 import { dataCommand } from "../../Testing";
 import Btn from "../../components/Btn";
-import ConfirmationDialog, { ConfirmDialogProps } from "../../components/ConfirmationDialog";
+import type { ConfirmDialogProps } from "../../components/ConfirmationDialog";
+import ConfirmationDialog from "../../components/ConfirmationDialog";
 import { Footer } from "../../components/Popup/Popup";
 import { isEmpty, pickKeys } from "../../utils";
 import { useIsMounted } from "../Backup/CredentialSelector";
-import { FormAction, SmartFormProps, SmartFormState, getErrorsHook } from "./SmartForm";
+import type { FormAction, SmartFormProps, SmartFormState, getErrorsHook } from "./SmartForm";
 
 type P = {
   props: SmartFormProps;
@@ -64,7 +65,7 @@ export const SmartFormFooterButtons = (p: P): JSX.Element => {
           zIndex: 1, // needed to be on top of focused code editors
         }}
       />
-      <ConfirmationDialog className="bg-0"
+      <ConfirmationDialog className="bg-color-0"
         style={{ zIndex: 2 }}
         onClose={() => {
           setConfirmPopup(undefined)
@@ -154,9 +155,8 @@ export const SmartFormFooterButtons = (p: P): JSX.Element => {
     
     footerContent = !(showExtraBtns || onClose)? <></> : <Footer>
       {props.onClose && 
-        <Btn className=" bg-0 mr-auto"
-          { ...dataCommand("SmartForm.close")} 
-          // variant="outline" 
+        <Btn className=" bg-color-0 mr-auto"
+          { ...dataCommand("SmartForm.close")}
           onClick={() => onClose?.(true)}
         >
           {action === "view"? `Close` : `Cancel`}

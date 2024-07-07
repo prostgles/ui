@@ -1,6 +1,8 @@
 import React from "react"
-import Btn, { BtnProps } from "./Btn"
-import MenuList, { MenuListitem } from "./MenuList"
+import type { BtnProps } from "./Btn";
+import Btn from "./Btn"
+import type { MenuListitem } from "./MenuList";
+import { MenuList } from "./MenuList"
 import PopupMenu from "./PopupMenu"
 
 type PopupMenuListProps = ({ btnProps: BtnProps<void> } | { button: React.ReactChild }) & {
@@ -20,7 +22,8 @@ export const PopupMenuList = (props: PopupMenuListProps) => {
     rootStyle={{ borderRadius: 0 }}
     button={theButton}
   >
-    <MenuList 
+    <MenuList
+      activeKey=""
       style={{  borderRadius: 0, ...props.listStyle }} 
       items={props.items}
     />

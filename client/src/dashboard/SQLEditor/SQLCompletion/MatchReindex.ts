@@ -1,11 +1,13 @@
 
 import { getExpected } from "./getExpected";
-import { SQLMatcher, getKind } from "./registerSuggestions";
-import { KWD, withKWDs } from "./withKWDs";
+import type { SQLMatcher} from "./registerSuggestions";
+import { getKind } from "./registerSuggestions";
+import type { KWD} from "./withKWDs";
+import { withKWDs } from "./withKWDs";
 
 export const MatchReindex: SQLMatcher = {
   match: cb => cb.ftoken?.textLC === "reindex",
-  result: async ({ cb, ss, setS }) => {
+  result: async ({ cb, ss, setS, sql }) => {
 
     if(cb.tokens.length === 2){
       const what = cb.tokens[1]!.textLC.replace("system", "database");
@@ -17,7 +19,7 @@ export const MatchReindex: SQLMatcher = {
         options: Object.entries(targets).map(([label, docs]) => ({ label, docs, kind: getKind("keyword") })),
       },
       
-    ] satisfies KWD[], cb, getKind, ss).getSuggestion()
+    ] satisfies KWD[], { cb, ss, setS, sql }).getSuggestion()
   }
 }
 

@@ -1,16 +1,16 @@
 import { mdiLaptop } from "@mdi/js";
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { getCIDRRangesQuery } from "../../../commonTypes/publishUtils";
 import Btn from "../components/Btn";
 import Chip from "../components/Chip";
 import FormField from "../components/FormField/FormField";
-import { InfoRow } from "../components/InfoRow";
-import { usePromise } from "../dashboard/ProstglesMethod/hooks";
+import { InfoRow } from "../components/InfoRow"; 
 import SmartCardList from "../dashboard/SmartCard/SmartCardList";
 import SmartForm from "../dashboard/SmartForm/SmartForm";
-import { FullExtraProps } from "./Project";
+import { usePromise } from "prostgles-client/dist/react-hooks";
+import type { Prgl } from "../App";
 
-export const ServerSettings = ({ theme, dbsMethods, dbs, dbsTables }: Pick<FullExtraProps, "dbsMethods" | "dbs" | "dbsTables" | "auth" | "theme">) => {
+export const ServerSettings = ({ theme, dbsMethods, dbs, dbsTables }: Pick<Prgl, "dbsMethods" | "dbs" | "dbsTables" | "auth" | "theme">) => {
 
   const [testCIDR, setCIDR] = useState<{ cidr?: string }>({});
   const [settingsLoaded, setSettingsLoaded] = useState(false);
@@ -38,7 +38,7 @@ export const ServerSettings = ({ theme, dbsMethods, dbs, dbsTables }: Pick<FullE
       <div className="flex-col gap-1 mt-2 max-w-800 min-w-0 f-1" style={{ alignSelf: "stretch" }}>
         <SmartForm 
           theme={theme}
-          className="bg-0 shadow "
+          className="bg-color-0 shadow "
           label="Network security" 
           db={dbs as any}
           methods={dbsMethods}
@@ -52,7 +52,7 @@ export const ServerSettings = ({ theme, dbsMethods, dbs, dbsTables }: Pick<FullE
           onLoaded={() => setSettingsLoaded(true)}
         />
 
-        <div className="flex-col gap-1 p-1 bg-0 shadow "> 
+        <div className="flex-col gap-1 p-1 bg-color-0 shadow "> 
           <FormField 
             label="Validate a CIDR" 
             value={testCIDR.cidr ?? ""} 
@@ -78,7 +78,7 @@ export const ServerSettings = ({ theme, dbsMethods, dbs, dbsTables }: Pick<FullE
 
         </div>
           
-        <div className="shadow bg-0 p-1" >
+        <div className="shadow bg-color-0 p-1" >
           <h4 className="font-20 mt-p25">Cloud credentials</h4>
           {/* <SmartTable db={dbs as any} tableName="credentials" tables={dbsTables}  />
           <CredentialSelector dbs={dbs} dbsTables={dbsTables} onChange={console.log} /> */}

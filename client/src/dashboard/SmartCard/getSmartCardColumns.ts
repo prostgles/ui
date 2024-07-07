@@ -1,5 +1,5 @@
-import { AnyObject, ValidatedColumnInfo } from "prostgles-types";
-import { SmartCardListProps } from "./SmartCardList";
+import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
+import type { SmartCardListProps } from "./SmartCardList";
 
 type Args = Pick<SmartCardListProps<AnyObject>, "tableName" | "tables" | "db" | "columns">;
 export const getSmartCardColumns = async ({ tableName, db, columns }: Args): Promise<ValidatedColumnInfo[] | undefined> => {

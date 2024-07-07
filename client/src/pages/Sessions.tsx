@@ -1,16 +1,17 @@
 import { mdiCellphone, mdiDelete, mdiLaptop } from "@mdi/js";
-import React from 'react'; 
+import type { AnyObject } from "prostgles-types";
+import React from "react";
+import type { Prgl } from "../App";
 import Btn from "../components/Btn";
+import type { DivProps } from "../components/Flex";
+import { classOverride } from "../components/Flex";
 import { InfoRow } from "../components/InfoRow";
-import PopupMenu from "../components/PopupMenu"; 
-import { renderInterval, StyledInterval } from "../dashboard/ProstglesSQL/customRenderers";
-import SmartCardList from "../dashboard/SmartCard/SmartCardList"; 
-import { FullExtraProps } from "./Project"; 
-import { AnyObject } from "prostgles-types";
-import { DivProps, classOverride } from "../components/Flex";
+import PopupMenu from "../components/PopupMenu";
+import SmartCardList from "../dashboard/SmartCard/SmartCardList";
+import { StyledInterval, renderInterval } from "../dashboard/W_SQL/customRenderers";
 
 
-type SessionsProps = Pick<FullExtraProps, "dbs" | "dbsTables" | "user" | "dbsMethods" | "theme"> & {
+type SessionsProps = Pick<Prgl, "dbs" | "dbsTables" | "user" | "dbsMethods" | "theme"> & {
   displayType: "web_session" | "api_token";
   className?: string;
 }

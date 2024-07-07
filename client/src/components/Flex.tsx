@@ -1,5 +1,5 @@
 import React from "react"
-import { TestSelectors } from "../Testing";
+import type { TestSelectors } from "../Testing";
 
 export type DivProps = React.HTMLAttributes<HTMLDivElement> & TestSelectors;
 

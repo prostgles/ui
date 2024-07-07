@@ -5,10 +5,10 @@ export const isDefined = <T>(v: T | undefined | void): v is T => v !== undefined
 export const CORE_FILTER_TYPES = [
   { key: "=", label: "="},
   { key: "<>", label: "!="},
-  { key: "not null", label: "IS NOT NULL"},
-  { key: "null", label: "IS NULL"},
   { key: "$in", label: "IN"},
   { key: "$nin", label: "NOT IN" },
+  { key: "not null", label: "IS NOT NULL"},
+  { key: "null", label: "IS NULL"},
   { key: "$term_highlight", label: "CONTAINS" },
 ] as const;
 
@@ -58,6 +58,16 @@ export type BaseFilter = {
   disabled?: boolean;
 }
 export const JOINED_FILTER_TYPES = ["$existsJoined", "$notExistsJoined"] as const;
+type ComplexFilterDetailed = {
+  type: "controlled";
+  funcName: string | undefined;
+  argsLeftToRight: boolean;
+  comparator: string;
+  otherField?: string | null;
+} | {
+  type: "$filter";
+  leftExpression: Record<string, any[]>;
+}
 export type DetailedFilterBase = BaseFilter & {
   fieldName: string;
   type?: FilterType;
@@ -66,16 +76,15 @@ export type DetailedFilterBase = BaseFilter & {
   ftsFilterOptions?: {
     lang: string;
   };
-  complexFilter?: {
-    argsLeftToRight: boolean;
-    comparator: string;
-    otherField?: string | null;
-  }
+  complexFilter?: ComplexFilterDetailed;
 }
-
+type JoinPath = {
+  table: string;
+  on?: Record<string, string>[] | undefined;
+}
 export type JoinedFilter = BaseFilter & {
   type: typeof JOINED_FILTER_TYPES[number];
-  path: string[];
+  path: (string | JoinPath)[];
   filter: DetailedFilterBase;
 }
 export type SimpleFilter = DetailedFilterBase | JoinedFilter;
@@ -103,6 +112,11 @@ export const getFinalFilterInfo = (
         return `ST_DWithin(${filter.fieldName}, 'SRID=4326;POINT(${v.lng} ${v.lat})', ${v.distance})`
       }
       return `${(v.distance/1000).toFixed(3)}Km of ${v?.name ?? [v.lat, v.lng].join(", ")}`
+    }
+
+    if(filter.type === "$existsJoined" || filter.type === "$notExistsJoined"){
+      const path = filter.path.map(p => typeof p === "string"? p : p.table).join(" -> ");
+      return `${filter.type === "$existsJoined"? "Exists" : "Does not exist"} in ${path} where ${filterToString(filter.filter)}`
     }
 
     const f = getFinalFilter(filter, context, { forInfoOnly: opts?.for ?? true });
@@ -150,7 +164,31 @@ export const getFinalFilterInfo = (
   return result
 }
 
-export const getFinalFilter = (detailedFilter: SimpleFilter, context?: ContextDataObject, opts?: { forInfoOnly?: boolean | InfoType; columns?: string[] }) => { 
+export const parseContextVal = (f: DetailedFilterBase, context: ContextDataObject | undefined, { forInfoOnly }: GetFinalFilterOpts = {}): any => {
+  if(f.contextValue){
+    if(forInfoOnly){
+      const objPath = `${f.contextValue.objectName}.${f.contextValue.objectPropertyName}`
+      if(forInfoOnly === "pg") {
+        if(f.contextValue.objectName === "user"){
+          return `prostgles.user('${f.contextValue.objectPropertyName}')`;
+        }
+        return `current_setting('${objPath}')`;
+      }
+      return `{{${objPath}}}`;
+    }
+    if(context){
+      //@ts-ignore
+      return context[f.contextValue.objectName]?.[f.contextValue.objectPropertyName];
+    }
+
+    return undefined
+  }
+
+  return ({ ...f }).value;
+}
+
+type GetFinalFilterOpts = { forInfoOnly?: boolean | InfoType; columns?: string[] }
+export const getFinalFilter = (detailedFilter: SimpleFilter, context?: ContextDataObject, opts?: GetFinalFilterOpts) => { 
   const { forInfoOnly = false } = opts ?? {};
 
   const checkFieldname = (f: string, columns?: string[]) => {
@@ -164,31 +202,9 @@ export const getFinalFilter = (detailedFilter: SimpleFilter, context?: ContextDa
 
   if("fieldName" in detailedFilter && detailedFilter.disabled || isJoinedFilter(detailedFilter) && detailedFilter.filter.disabled) return undefined;
 
-  const parseContextVal = (f: DetailedFilterBase): any => {
-    if(f.contextValue){
-      if(forInfoOnly){
-        const objPath = `${f.contextValue.objectName}.${f.contextValue.objectPropertyName}`
-        if(forInfoOnly === "pg") {
-          if(f.contextValue.objectName === "user"){
-            return `prostgles.user('${f.contextValue.objectPropertyName}')`;
-          }
-          return `current_setting('${objPath}')`;
-        }
-        return `{{${objPath}}}`;
-      }
-      if(context){
-        //@ts-ignore
-        return context[f.contextValue.objectName]?.[f.contextValue.objectPropertyName];
-      }
-
-      return undefined
-    }
-
-    return ({ ...f }).value;
-  }
 
   const getFilter = (f: DetailedFilterBase, columns?: string[]): Record<string, any> => {
-    const val = parseContextVal(f);
+    const val = parseContextVal(f, context, opts);
     const fieldName = checkFieldname(f.fieldName, columns);
 
     if(f.contextValue && !context && !forInfoOnly){
@@ -200,19 +216,38 @@ export const getFinalFilter = (detailedFilter: SimpleFilter, context?: ContextDa
           { $ST_DWithin: [fieldName, { ...val }] },
         ]
       }
-    } else if(f.type?.startsWith("$age") || f.type === "$duration"){
-      const { comparator, argsLeftToRight = true, otherField } = f.complexFilter ?? {};
+    } else if(f.complexFilter || f.type?.startsWith("$age") || f.type === "$duration"){
+      const isAgeOrDuration = f.type?.startsWith("$age") || f.type === "$duration"
+      if(isAgeOrDuration){
+        if(f.complexFilter && f.complexFilter.type !== "controlled"){
+          throw new Error("Only controlled complex filters are allowed for age and duration filters");
+        }
+        const { comparator, argsLeftToRight = true, otherField } = f.complexFilter ?? {};
+  
+        const $age = f.type === "$age"? [fieldName] : 
+          [fieldName, otherField].filter(isDefined);
+  
+        if(!argsLeftToRight) $age.reverse();
+        return {
+          $filter: [
+            { $age },
+            comparator,
+            val
+          ]
+        }
 
-      const $age = f.type === "$age"? [fieldName] : 
-        [fieldName, otherField].filter(isDefined);
+      } else if(f.complexFilter) {
+        if(f.complexFilter.type !== "$filter"){
+          throw new Error("Unexpected complex filter");
+        }
 
-      if(!argsLeftToRight) $age.reverse();
-      return {
-        $filter: [
-          { $age },
-          comparator,
-          val
-        ]
+        return {
+          $filter: [
+            f.complexFilter.leftExpression,
+            f.type,
+            val
+          ]
+        }
       }
     }
     if(f.type === "not null"){
@@ -236,7 +271,7 @@ export const getFinalFilter = (detailedFilter: SimpleFilter, context?: ContextDa
     return {
       [`${fieldName}.${detailedFilter.type}`]: [
         ...(ftsFilterOptions? [ftsFilterOptions.lang] : []),
-        parseContextVal(detailedFilter)
+        parseContextVal(detailedFilter, context, opts)
       ]
     }
   } else if(isJoinedFilter(detailedFilter)){
@@ -250,7 +285,7 @@ export const getFinalFilter = (detailedFilter: SimpleFilter, context?: ContextDa
   } else if(detailedFilter.type === "$term_highlight"){
     const fieldName = detailedFilter.fieldName? checkFieldname(detailedFilter.fieldName, opts?.columns) : "*"
     return {
-      $term_highlight: [[fieldName], parseContextVal(detailedFilter), { matchCase: false, edgeTruncate: 30, returnType: "boolean" } ]
+      $term_highlight: [[fieldName], parseContextVal(detailedFilter, context, opts), { matchCase: false, edgeTruncate: 30, returnType: "boolean" } ]
     };
   };
 

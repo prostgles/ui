@@ -1,5 +1,6 @@
 import React from "react"
-import { SwitchToggle, SwitchToggleProps } from "../../../components/SwitchToggle"
+import type { SwitchToggleProps } from "../../../components/SwitchToggle";
+import { SwitchToggle } from "../../../components/SwitchToggle"
 
 export const RuleToggle = ({ checked, onChange }: Pick<SwitchToggleProps, "checked" | "onChange">) => {
   return <SwitchToggle 

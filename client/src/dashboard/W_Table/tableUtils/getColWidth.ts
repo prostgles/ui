@@ -1,4 +1,4 @@
-import { ProstglesTableColumn } from "./getTableCols";
+import type { ProstglesTableColumn } from "./getTableCols";
 
 export const getColWidth = <T extends Pick<ProstglesTableColumn, "tsDataType" | "udt_name" | "width">, K extends keyof T>(
   cols: T[],
@@ -14,17 +14,19 @@ export const getColWidth = <T extends Pick<ProstglesTableColumn, "tsDataType" | 
   if(!cols.some(c => Number.isFinite(c.width))){
 
     const [firstCol] = cols;
+    const tableWidth = windowWidth ?? maxCW;
     if(cols.length === 1 && firstCol?.tsDataType !== "number"){
       return cols.map(c => {
         return {
           ...c,
-          width: (windowWidth ?? maxCW) - 10
+          width: tableWidth - 10
         }
       })
     }
 
     let totalAssignedWidth = 0, maxCols = 0;
-    return cols.map(c => {
+    return cols.map((c, i)=> {
+      const isLastColumn = i === cols.length - 1;
       let width = 20;
 
       const widths: Partial<Record<typeof c.udt_name, number>> = {
@@ -48,6 +50,7 @@ export const getColWidth = <T extends Pick<ProstglesTableColumn, "tsDataType" | 
           /** Must be within 100px and 300px */
           width = Math.min(
             Math.max(
+              width,
               textContentWidth,
               minCW,
               existingWidth,
@@ -55,6 +58,12 @@ export const getColWidth = <T extends Pick<ProstglesTableColumn, "tsDataType" | 
             maxCW
           )
         });
+        if(isLastColumn){
+          const remainingWidth = tableWidth - totalAssignedWidth;
+          if(remainingWidth > 20){
+            width = remainingWidth;
+          }
+        }
       }
       width = Math.max(width, minCW);
       if(width >= maxCW) maxCols++;

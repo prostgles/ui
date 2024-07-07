@@ -5,12 +5,12 @@ import { FlexCol } from "../../../components/Flex";
 import Tabs from "../../../components/Tabs";
 import { Zip } from "../../API/zip";
 import CodeExample from "../../CodeExample";
-import { download } from "../../ProstglesSQL/W_SQL";
+import { download } from "../../W_SQL/W_SQL";
 
 export const APICodeExamples = ({ token, projectPath, dbSchemaTypes }: { token: string; projectPath: string; dbSchemaTypes: string | undefined; }) => {
 
-  const { htmlExample } = getCodeSamples({ token, projectPath }, false)
-  const { tsExample } = getCodeSamples({ token, projectPath }, true);
+  const { htmlExample, indexTs, tsExample } = getCodeSamples({ token, projectPath })
+  // const { tsExample } = getCodeSamples({ token, projectPath }, "ts");
 
   const DownloadCodeSample = (isTS = false) => <Btn 
     variant="filled" 
@@ -42,20 +42,35 @@ export const APICodeExamples = ({ token, projectPath, dbSchemaTypes }: { token: 
       contentClass="pt-2 f-0"
       className="f-0"
       items={{
-        Typescript: {
+        "React (Typescript)": {
           content: (
             <FlexCol>
               <CodeExample 
                 key="t"
-                value={tsExample} 
-                language="javascript"  
+                value={indexTs} 
+                language="typescript"  
+                markers={[]}
                 style={{ minHeight: "400px"}} 
               />
              {DownloadCodeSample(true)}
             </FlexCol>
           )
         },
-        'Vanilla JS': {
+        Typescript: {
+          content: (
+            <FlexCol>
+              <CodeExample 
+                key="t"
+                value={tsExample} 
+                language="typescript"  
+                markers={[]}
+                style={{ minHeight: "400px"}} 
+              />
+             {DownloadCodeSample(true)}
+            </FlexCol>
+          )
+        },
+        "Vanilla JS": {
           content: (
             <FlexCol>
               <CodeExample 
@@ -75,15 +90,41 @@ export const APICodeExamples = ({ token, projectPath, dbSchemaTypes }: { token: 
 
 
 
-function getCodeSamples({ token, projectPath }: { token?: string; projectPath?: string; }, forServer: boolean){
+function getCodeSamples({ token, projectPath }: { token?: string; projectPath?: string; }){
   
   const authStr = !token? "" : `auth: { sid_token: ${JSON.stringify(token)} },`
+  const uri = JSON.stringify(window.location.origin);
+  const path = JSON.stringify(projectPath);
+  const indexTs = `import React from "react";
+import ReactDOM from "react-dom";
+import { useProstglesClient } from "prostgles-client/dist/prostgles";
+
+const App = () => {
+  const { dbo, isLoading } = useProstglesClient({
+    socketOptions: { 
+      uri: ${uri},
+      path: ${path}, 
+      query: { sid_token: ${JSON.stringify(token)} }, 
+    }, 
+  });
+
+  return <div>
+    {isLoading? "Loading..." : Object.keys(dbo).join(", ")}
+  </div>
+}
+
+ReactDOM.render(
+  <App />,
+  document.getElementById("root")
+);
+
+`;
 
   const initLogic = `const socket = io(${JSON.stringify(window.location.origin)}, { 
   ${authStr}
-  path: ${JSON.stringify(projectPath)} 
+  path: ${path} 
 });` 
-const commonLogic = `${initLogic}
+const getCommonLogic = (forServer: boolean) => `${initLogic}
 
 prostgles({
   socket,
@@ -94,7 +135,7 @@ prostgles({
   },
 });`;
 
-const clientLogic = forServer? "" : `
+const getClientLogic = (forServer: boolean) => forServer? "" : `
 if(typeof document !== 'undefined'){
   console.log(typeof document)
   document.body.append(info)
@@ -120,7 +161,7 @@ prostgles<DBSchemaGenerated>({
       auth 
     }, null, 2);
     console.log(info);
-    ${clientLogic}
+    ${getClientLogic(false)}
   },
 });
 
@@ -140,14 +181,14 @@ const htmlExample = `
 
 		<script>
 
-    ${commonLogic.split("\n").map((v, i) => !i? (`  ` + v) : (`      ` + v)).join("\n")}
+    ${getCommonLogic(false).split("\n").map((v, i) => !i? (`  ` + v) : (`      ` + v)).join("\n")}
 
 		</script>
 		
 	</body>
 </html>`;
 
-  return { htmlExample, tsExample}
+  return { htmlExample, tsExample, indexTs }
 }
 
 const packageJson = {

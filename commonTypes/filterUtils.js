@@ -2,10 +2,10 @@ export const isDefined = (v) => v !== undefined && v !== null;
 export const CORE_FILTER_TYPES = [
     { key: "=", label: "=" },
     { key: "<>", label: "!=" },
-    { key: "not null", label: "IS NOT NULL" },
-    { key: "null", label: "IS NULL" },
     { key: "$in", label: "IN" },
     { key: "$nin", label: "NOT IN" },
+    { key: "not null", label: "IS NOT NULL" },
+    { key: "null", label: "IS NULL" },
     { key: "$term_highlight", label: "CONTAINS" },
 ];
 export const FTS_FILTER_TYPES = [
@@ -55,6 +55,10 @@ export const getFinalFilterInfo = (fullFilter, context, depth = 0, opts) => {
             }
             return `${(v.distance / 1000).toFixed(3)}Km of ${(_a = v === null || v === void 0 ? void 0 : v.name) !== null && _a !== void 0 ? _a : [v.lat, v.lng].join(", ")}`;
         }
+        if (filter.type === "$existsJoined" || filter.type === "$notExistsJoined") {
+            const path = filter.path.map(p => typeof p === "string" ? p : p.table).join(" -> ");
+            return `${filter.type === "$existsJoined" ? "Exists" : "Does not exist"} in ${path} where ${filterToString(filter.filter)}`;
+        }
         const f = getFinalFilter(filter, context, { forInfoOnly: (_b = opts === null || opts === void 0 ? void 0 : opts.for) !== null && _b !== void 0 ? _b : true });
         if (!f)
             return undefined;
@@ -95,6 +99,27 @@ export const getFinalFilterInfo = (fullFilter, context, depth = 0, opts) => {
     }
     return result;
 };
+export const parseContextVal = (f, context, { forInfoOnly } = {}) => {
+    var _a;
+    if (f.contextValue) {
+        if (forInfoOnly) {
+            const objPath = `${f.contextValue.objectName}.${f.contextValue.objectPropertyName}`;
+            if (forInfoOnly === "pg") {
+                if (f.contextValue.objectName === "user") {
+                    return `prostgles.user('${f.contextValue.objectPropertyName}')`;
+                }
+                return `current_setting('${objPath}')`;
+            }
+            return `{{${objPath}}}`;
+        }
+        if (context) {
+            //@ts-ignore
+            return (_a = context[f.contextValue.objectName]) === null || _a === void 0 ? void 0 : _a[f.contextValue.objectPropertyName];
+        }
+        return undefined;
+    }
+    return (Object.assign({}, f)).value;
+};
 export const getFinalFilter = (detailedFilter, context, opts) => {
     const { forInfoOnly = false } = opts !== null && opts !== void 0 ? opts : {};
     const checkFieldname = (f, columns) => {
@@ -105,30 +130,9 @@ export const getFinalFilter = (detailedFilter, context, opts) => {
     };
     if ("fieldName" in detailedFilter && detailedFilter.disabled || isJoinedFilter(detailedFilter) && detailedFilter.filter.disabled)
         return undefined;
-    const parseContextVal = (f) => {
-        var _a;
-        if (f.contextValue) {
-            if (forInfoOnly) {
-                const objPath = `${f.contextValue.objectName}.${f.contextValue.objectPropertyName}`;
-                if (forInfoOnly === "pg") {
-                    if (f.contextValue.objectName === "user") {
-                        return `prostgles.user('${f.contextValue.objectPropertyName}')`;
-                    }
-                    return `current_setting('${objPath}')`;
-                }
-                return `{{${objPath}}}`;
-            }
-            if (context) {
-                //@ts-ignore
-                return (_a = context[f.contextValue.objectName]) === null || _a === void 0 ? void 0 : _a[f.contextValue.objectPropertyName];
-            }
-            return undefined;
-        }
-        return (Object.assign({}, f)).value;
-    };
     const getFilter = (f, columns) => {
-        var _a, _b;
-        const val = parseContextVal(f);
+        var _a, _b, _c;
+        const val = parseContextVal(f, context, opts);
         const fieldName = checkFieldname(f.fieldName, columns);
         if (f.contextValue && !context && !forInfoOnly) {
             return {};
@@ -140,19 +144,37 @@ export const getFinalFilter = (detailedFilter, context, opts) => {
                 ]
             };
         }
-        else if (((_a = f.type) === null || _a === void 0 ? void 0 : _a.startsWith("$age")) || f.type === "$duration") {
-            const { comparator, argsLeftToRight = true, otherField } = (_b = f.complexFilter) !== null && _b !== void 0 ? _b : {};
-            const $age = f.type === "$age" ? [fieldName] :
-                [fieldName, otherField].filter(isDefined);
-            if (!argsLeftToRight)
-                $age.reverse();
-            return {
-                $filter: [
-                    { $age },
-                    comparator,
-                    val
-                ]
-            };
+        else if (f.complexFilter || ((_a = f.type) === null || _a === void 0 ? void 0 : _a.startsWith("$age")) || f.type === "$duration") {
+            const isAgeOrDuration = ((_b = f.type) === null || _b === void 0 ? void 0 : _b.startsWith("$age")) || f.type === "$duration";
+            if (isAgeOrDuration) {
+                if (f.complexFilter && f.complexFilter.type !== "controlled") {
+                    throw new Error("Only controlled complex filters are allowed for age and duration filters");
+                }
+                const { comparator, argsLeftToRight = true, otherField } = (_c = f.complexFilter) !== null && _c !== void 0 ? _c : {};
+                const $age = f.type === "$age" ? [fieldName] :
+                    [fieldName, otherField].filter(isDefined);
+                if (!argsLeftToRight)
+                    $age.reverse();
+                return {
+                    $filter: [
+                        { $age },
+                        comparator,
+                        val
+                    ]
+                };
+            }
+            else if (f.complexFilter) {
+                if (f.complexFilter.type !== "$filter") {
+                    throw new Error("Unexpected complex filter");
+                }
+                return {
+                    $filter: [
+                        f.complexFilter.leftExpression,
+                        f.type,
+                        val
+                    ]
+                };
+            }
         }
         if (f.type === "not null") {
             return {
@@ -174,7 +196,7 @@ export const getFinalFilter = (detailedFilter, context, opts) => {
         return {
             [`${fieldName}.${detailedFilter.type}`]: [
                 ...(ftsFilterOptions ? [ftsFilterOptions.lang] : []),
-                parseContextVal(detailedFilter)
+                parseContextVal(detailedFilter, context, opts)
             ]
         };
     }
@@ -189,7 +211,7 @@ export const getFinalFilter = (detailedFilter, context, opts) => {
     else if (detailedFilter.type === "$term_highlight") {
         const fieldName = detailedFilter.fieldName ? checkFieldname(detailedFilter.fieldName, opts === null || opts === void 0 ? void 0 : opts.columns) : "*";
         return {
-            $term_highlight: [[fieldName], parseContextVal(detailedFilter), { matchCase: false, edgeTruncate: 30, returnType: "boolean" }]
+            $term_highlight: [[fieldName], parseContextVal(detailedFilter, context, opts), { matchCase: false, edgeTruncate: 30, returnType: "boolean" }]
         };
     }
     ;

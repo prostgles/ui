@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 import path from "path";
 import { pgp } from "prostgles-server/dist/DboBuilder";
-import { DB } from "prostgles-server/dist/Prostgles";  
+import type { DB } from "prostgles-server/dist/Prostgles";  
 import { getRootDir } from "./electronConfig";
 // import { faker } from "@faker-js/faker";
 const { faker } = require("@faker-js/faker");
@@ -56,7 +56,7 @@ export const demoDataSetup = async (_db: DB, dbName: string ) => {
     }
   }));
 
-  const insert = pgp.helpers.insert(fakeData, new pgp.helpers.ColumnSet(['data',], {table: 'fake_data'})); 
+  const insert = pgp.helpers.insert(fakeData, new pgp.helpers.ColumnSet(["data",], {table: "fake_data"})); 
   await _db.any(insert);
 
   await _db.multi(sqlFile);

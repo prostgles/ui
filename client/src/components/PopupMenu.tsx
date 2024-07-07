@@ -1,6 +1,9 @@
-import { AnyObject } from "prostgles-types";
-import React, { ReactChild, useState } from 'react';
-import Popup, { PopupProps, POPUP_ZINDEX } from './Popup/Popup';
+import type { AnyObject } from "prostgles-types";
+import type { ReactChild} from "react";
+import React, { useState } from "react";
+import type { PopupProps} from "./Popup/Popup";
+import Popup, { POPUP_ZINDEX } from "./Popup/Popup";
+import type { Command } from "../Testing";
 
 type P<State extends AnyObject> = {
   button: ReactChild;
@@ -50,8 +53,9 @@ export default function<S extends AnyObject>(props: P<S> & Partial<PopupProps>){
             setRefBtn(e);
           } 
         }}
-        style={{ ...style, ...raiseButton && open && ({ zIndex: POPUP_ZINDEX + 1}) }}
-        className={"h-fit w-fit " + className}
+        style={{ ...style, ...raiseButton && open && ({ zIndex: POPUP_ZINDEX + 1 }) }}
+        className={"PopupMenu_triggerWrapper h-fit w-fit " + className}
+        data-command={open? undefined : props["data-command"] satisfies Command | undefined}
         onClick={e => {
           if(refBtn?.contains(e.nativeEvent.target as HTMLElement)) {
             setRef(e.nativeEvent.target as HTMLElement);

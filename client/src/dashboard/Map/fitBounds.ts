@@ -1,4 +1,5 @@
-import { Bounds, OrthoViewState } from "./DeckGLWrapped";
+import type { OrthographicViewState } from "deck.gl";
+import type { Bounds } from "./DeckGLWrapped";
 
 export function fitBounds(options: {
   width: number,
@@ -8,7 +9,7 @@ export function fitBounds(options: {
   minExtent?: number,
   maxZoom?: number,
   offset?: [number,number]
-}): OrthoViewState {
+}): OrthographicViewState {
   const {
     width = 1,
     height = 1,
@@ -35,12 +36,12 @@ export function fitBounds(options: {
   return {
     target: center,
     zoom,
-    extent: bounds
+    // extent: bounds
   };
 }
 
 function getPaddingObject(padding = 0) {
-  if (typeof padding === 'number') {
+  if (typeof padding === "number") {
     return {
       top: padding,
       bottom: padding,

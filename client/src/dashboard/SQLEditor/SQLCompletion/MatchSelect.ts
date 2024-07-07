@@ -1,45 +1,60 @@
 import { missingKeywordDocumentation } from "../SQLEditorSuggestions";
-import { suggestSnippets } from "./CommonMatchImports";
-import { CodeBlock, getCurrentCodeBlock, getCurrentNestingOffsetLimits } from "./completionUtils/getCodeBlock";
+import { suggestSnippets, type MinimalSnippet } from "./CommonMatchImports";
+import type { CodeBlock } from "./completionUtils/getCodeBlock";
+import { getCurrentCodeBlock, getCurrentNestingOffsetLimits } from "./completionUtils/getCodeBlock";
 import { getExpected } from "./getExpected";
 import { jsonbPathSuggest } from "./jsonbPathSuggest";
-import { ParsedSQLSuggestion, SQLMatcher } from "./registerSuggestions";
+import { getKind, type ParsedSQLSuggestion, type SQLMatcher } from "./registerSuggestions";
 import { suggestColumnLike } from "./suggestColumnLike";
-import { KWD, withKWDs } from "./withKWDs";
+import { suggestTableLike } from "./suggestTableLike";
+import type { KWD } from "./withKWDs";
+import { withKWDs } from "./withKWDs";
 
 
+export const preSubQueryKwds = [
+  "in", 
+  "from", 
+  "join", 
+  "lateral"
+]
 export const MatchSelect: SQLMatcher = {
   match: ({ prevTopKWDs, ftoken }) => {
     
     return ftoken?.textLC === "select" || prevTopKWDs[0]?.text === "SELECT" && ftoken?.textLC !== "with";
   },
   result: async (args) => {
-    const {cb, ss, setS, sql, getKind, options } = args;
+    const { cb, ss, setS, sql, options } = args;
 
     const { ltoken, thisLineLC, prevLC, prevText, currToken, thisLinePrevTokens, offset } = cb;
-    const { prevKWD, suggestKWD, remainingKWDS } = withKWDs(getKWDSz(options?.MatchSelect?.excludeInto), cb, getKind, ss, { topResetKwd: "SELECT" });
-
+    const { prevKWD, suggestKWD, remainingKWDS } = withKWDs(getKWDSz(options?.MatchSelect?.excludeInto), { cb, ss, setS, sql, opts: { topResetKwd: "SELECT" } });
 
     /** Is inside IN (...) or FROM (...) */
-    const insideFunc = isInsideFunction(cb);
-    if(insideFunc?.func && ["in", "from", "join"].includes(insideFunc.func.textLC) && !options?.MatchSelect){
+    const insideFunc = getParentFunction(cb);
+    const isSelectSubQuery = insideFunc?.prevArgs.at(-1)?.textLC === "select" && [",", "select"].includes(insideFunc.func.textLC);
+    if(insideFunc?.func && (isSelectSubQuery || preSubQueryKwds.includes(insideFunc.func.textLC) && insideFunc.func.textLC !== "lateral") && !options?.MatchSelect){
       const nestedLimits = getCurrentNestingOffsetLimits(cb)
-      if(nestedLimits){        
-        const cbNested = getCurrentCodeBlock(
-          cb.model, 
+      if(nestedLimits){
+        const cbNested = await getCurrentCodeBlock(
+          cb.model,
           cb.position, 
           nestedLimits.limits
         );
-        return MatchSelect.result({ cb: cbNested, ss, setS, sql, getKind, options: { MatchSelect: { excludeInto: true } }});
+        return MatchSelect.result({
+          parentCb: cb,
+          cb: cbNested,
+          ss,
+          setS, 
+          sql,
+          options: { MatchSelect: { excludeInto: true } }
+        });
       }
     }
 
     if(insideFunc?.func.textLC === "over"){
-      return withKWDs([{ kwd: "ORDER BY", expects: "column" }, { kwd: "PARTITION BY", expects: "column" }], cb, getKind, ss).getSuggestion();
-    }
-
-    if(insideFunc?.func.textLC === "current_setting"){
-      return { suggestions: setS.map(s => ({ ...s, insertText: `'${s.insertText || s.name}'` })) };
+      return withKWDs([
+        { kwd: "ORDER BY", expects: "column" }, 
+        { kwd: "PARTITION BY", expects: "column" }
+      ], { cb, ss, setS, sql }).getSuggestion();
     }
 
     if(currToken?.type === "string.sql" && currToken.offset <= offset && currToken.end >= offset){
@@ -48,41 +63,31 @@ export const MatchSelect: SQLMatcher = {
       }
     }
 
-    const s = await jsonbPathSuggest(cb, ss, getKind, sql);
+    const s = await jsonbPathSuggest(args);
     if(s){
       return s;
     } 
 
-
     const { l1token: lltoken } = cb;
 
-
-    if(ltoken?.textLC === "(" && lltoken?.textLC.endsWith("join")){
+    if(ltoken?.textLC === "(" && lltoken && preSubQueryKwds.includes(lltoken.textLC)){
       return suggestSnippets([{ label: "SELECT" }]);
     }
-    const ltokenIsIdentifier = ltoken?.type === "identifier.quote.sql" || ltoken?.type === "identifier.sql" || ltoken?.textLC === "*";
 
-
-    const getColsAndFuncs = () => {
-
-      return suggestColumnLike(cb, ss); 
+    const getColsAndFuncs = async () => {
+      const colLikeSuggestions = await suggestColumnLike({ cb, ss, setS, parentCb: args.parentCb, sql });
+      return colLikeSuggestions;
     }
 
     if(prevLC.trim().endsWith(" group by ") || prevLC.trim().endsWith(" order by ") || prevLC.trim().endsWith(" having ") || prevLC.trim().endsWith(" where ") || prevLC.trim().endsWith(" when ")){
-      return getColsAndFuncs()
+      const colsAndFuncs = await getColsAndFuncs();
+      return colsAndFuncs;
     }
-
 
     /** Is inside func args */
     if(insideFunc?.func && !["lateral", "from"].includes(insideFunc.func.textLC)){
-      const funcSuggestions = getLastFuncSuggestions(cb, ss);
-      const colsAndFuncs = getColsAndFuncs();
-      const suggestions = colsAndFuncs.suggestions.map(c => ({
-        ...c,
-        sortText: c.type === "function"? c.sortText : 
-          c.colInfo && funcSuggestions.some(s => s.args?.some(({ data_type }) => data_type === "any" || data_type.toLowerCase().includes(c.colInfo!.data_type.toLowerCase()) ))? (cb.identifiers.includes(c.escapedParentName!)? "a0" : c.schema === "public"? "a1" : "a2") : 
-          c.colInfo? (prevText.includes(c.colInfo.escaped_identifier)? "b1" : "a3") : c.sortText
-      }));
+      const colsAndFuncs = await getColsAndFuncs();
+      const suggestions = colsAndFuncs.suggestions;
       
       return {
         suggestions
@@ -117,6 +122,18 @@ export const MatchSelect: SQLMatcher = {
       (ltoken?.text === "*" || (ltoken?.type !== "operator.sql" && ltoken?.text !== "." && currToken?.text !== ".")) && 
       (!thisLinePrevTokens.length || !SELKWDS.includes(ltoken?.text.toUpperCase() as any));
     const isMaybeTypingSchemaDotTable = currToken?.text === ".";
+    const ltokenIsIdentifier = ltoken?.type === "identifier.quote.sql" || ltoken?.type === "identifier.sql" || ltoken?.textLC === "*" || ltoken?.textLC === ")";
+
+    if(prevKWD?.kwd === "ORDER BY" && ltokenIsIdentifier && cb.currToken?.text !== "." && cb.thisLinePrevTokens.length){
+      return suggestSnippets([
+        { label: "ASC", kind: getKind("keyword") }, 
+        { label: "DESC", kind: getKind("keyword") },
+        { label: ",", kind: getKind("keyword") },
+        { label: "NULLS LAST", kind: getKind("keyword") },
+        { label: "NULLS FIRST", kind: getKind("keyword") },
+      ])
+    }
+
     if(remainingKWDS.length && !isMaybeTypingSchemaDotTable && (
       !cb.text.trim() ||
       SELKWDS.includes(prevKWD?.kwd as any) && selectIsComplete ||
@@ -126,18 +143,22 @@ export const MatchSelect: SQLMatcher = {
       prevKWD?.kwd === "WHERE" && !cb.thisLinePrevTokens.length ||
       prevKWD?.kwd === "LIMIT" && ltoken?.type === "number.sql" ||
       prevKWD?.kwd === "OFFSET" && ltoken?.type === "number.sql" ||
-      (prevKWD?.kwd === "GROUP BY" || prevKWD?.kwd === "ORDER BY") && ltoken?.text !== "," && ltoken?.textLC !== "by" && !cb.currToken  ||
+      (prevKWD?.kwd === "GROUP BY" || prevKWD?.kwd === "ORDER BY") && ltoken?.text !== "," && ltoken?.textLC !== "by" && (cb.currToken?.text.length ?? 0) <= 1  ||
       prevKWD?.kwd === "ON" && !thisLinePrevTokens.length
     )){
-      return suggestSnippets(remainingKWDS.map(k => ({ 
-          label: k.kwd, 
-          kind: getKind("keyword"), 
-          docs: k.docs, 
-          sortText: k.sortText 
-        }))
-      );
+      const extraOptions: MinimalSnippet[] = [];
+      if(prevKWD?.kwd === "WHERE"){
+        extraOptions.push({ label: "AND", kind: getKind("keyword") })
+        extraOptions.push({ label: "OR", kind: getKind("keyword") })
+      }
+      const options: MinimalSnippet[] = remainingKWDS.map(k => ({ 
+        label: k.kwd, 
+        kind: getKind("keyword"), 
+        docs: k.docs, 
+        sortText: k.sortText,
+      }));
+      return suggestSnippets([...options, ...extraOptions])
     }
-
 
     if(!thisLineLC && prevKWD?.kwd === "FROM" && ltoken?.textLC !== "from"){
       const kwds = suggestKWD(remainingKWDS.map(k => k.kwd), "0");
@@ -152,14 +173,7 @@ export const MatchSelect: SQLMatcher = {
     }
 
     if(prevKWD?.expects === "table"){
-      const tables = getExpected("tableOrView", cb, ss).suggestions;
-      const setofFuncs = ss.filter(s => s.funcInfo?.restype?.toLowerCase().includes("setof")).map(s => ({ ...s, sortText: "c" }));
-      return {
-        suggestions: [
-          ...tables,
-          ...setofFuncs
-        ]
-      }
+      return suggestTableLike({ cb, ss, sql });
     }
 
     if(cb.ftoken?.textLC === "select" && cb.nextTokens[0]?.textLC === "select"){
@@ -183,6 +197,7 @@ const getKWDSz = (excludeInto = false) => [
   { kwd: "FILTER",  expects: "column", dependsOn: "SELECT", include: ({ ltoken, l1token }) => [l1token?.textLC, ltoken?.textLC].some(v => ["max", "min", "agg", "sum"].includes(v as string) ) }, 
   { kwd: "FROM",    expects: "table", justAfter: ["SELECT"], docs: "Specifies a table/view or function with returns a table-like result" }, 
   { kwd: "JOIN",  expects: "table", docs: "Combine rows from one table with rows from a second table", canRepeat: true }, 
+  { kwd: "JOIN LATERAL",  expects: "table", docs: "Lateral join subquery can reference columns provided by preceding FROM items", canRepeat: true }, 
   { kwd: "INNER JOIN", dependsOn: "FROM",   expects: "table", docs: "Combine rows from one table with rows from a second table. Only matching records from both tables are returned", canRepeat: true }, 
   { kwd: "LEFT JOIN", dependsOn: "FROM",     expects: "table", docs: "Combine rows from one table with rows from a second table. Records from first table AND matching records are returned", canRepeat: true }, 
   { kwd: "RIGHT JOIN", dependsOn: "FROM",     expects: "table", docs: "Combine rows from one table with rows from a second table. Records from second table AND matching records are returned", canRepeat: true }, 
@@ -197,29 +212,38 @@ const getKWDSz = (excludeInto = false) => [
   { kwd: "OFFSET",  expects: "number", docs: `OFFSET says to skip that many rows before beginning to return rows. OFFSET 0 is the same as omitting the OFFSET clause, as is OFFSET with a NULL argument.` },
   { kwd: "UNION",  expects: undefined, options: ["SELECT"], docs: `UNION effectively appends the result of query2 to the result of query1 (although there is no guarantee that this is the order in which the rows are actually returned). Furthermore, it eliminates duplicate rows from its result, in the same way as DISTINCT, unless UNION ALL is used.` },
   { kwd: "UNION ALL", expects: undefined, options: ["SELECT"], docs: `UNION effectively appends the result of query2 to the result of query1 (although there is no guarantee that this is the order in which the rows are actually returned). Furthermore, it eliminates duplicate rows from its result, in the same way as DISTINCT, unless UNION ALL is used.` },
-  { kwd: ";",  expects: "number" }, 
 ] as const satisfies readonly KWD[] ;
 
 
 const rancDocs = `
 rank function produces a numerical rank for each distinct ORDER BY value in the current row's partition, using the order defined by the ORDER BY clause. rank needs no explicit parameter, because its behavior is entirely determined by the OVER clause.`
 
-const getCurrentFunction = (cb: Pick<CodeBlock, "currNestingId" | "getPrevTokensNoParantheses" | "currToken">) => {
-  const prevTokensNoParans = cb.getPrevTokensNoParantheses(true).slice(0).reverse();
-
-  const lastFuncTokenIdx = prevTokensNoParans.findIndex((t, i, arr) => {
-    const prevToken = arr[i - 1]
-    return (cb.currToken?.type === "delimiter.parenthesis.sql") && !i && t.type !== "delimiter.parenthesis.sql" ||
-      cb.currNestingId && t.type !== "delimiter.parenthesis.sql" && (prevToken?.type === "delimiter.parenthesis.sql")
-  });
-  const func = prevTokensNoParans[lastFuncTokenIdx];
-  if(func){
-    const prevArgs = prevTokensNoParans
-      .slice(0, Math.max(0, lastFuncTokenIdx -1))
-      .filter(t => t.type !== "white.sql" && t.type !== "delimiter.sql");
-    return { func, prevArgs }
-  }
-  return undefined
+const getCurrentFunction = (cb: Pick<CodeBlock, "currNestingId" | "getPrevTokensNoParantheses" | "currToken" | "ltoken" | "tokens" | "currOffset" | "currNestingFunc">) => {
+  if(!cb.currNestingId) return undefined;
+ 
+    /** prevTokens use end < currOffset */
+    const actuallyPrevTokens = cb.tokens
+      .slice(0)
+      .filter(t => t.end <= cb.currOffset)
+      .sort((a, b) => a.offset - b.offset);
+    const f = cb.currNestingFunc ?? actuallyPrevTokens.reverse().find((t, i) => {
+      const prevToken = actuallyPrevTokens[i-1];
+      return prevToken?.text === "(" && t.nestingId === cb.currNestingId.slice(1);
+    });
+    if(!f) return undefined;
+    const prevArgsWithDelimiters = actuallyPrevTokens.filter(t => {
+      return !["white.sql", "delimiter.parenthesis.sql"].includes(t.type) && 
+        t.offset > f.offset + 1 && 
+        t.nestingId === cb.currNestingId && 
+        t.offset <= cb.currOffset;
+    });
+    let prevArgs = prevArgsWithDelimiters.filter(t => t.type !== "delimiter.sql");
+    const prevDelimiters = prevArgsWithDelimiters.filter(t => t.type === "delimiter.sql");
+    const isWrittingDotColumn = cb.currToken?.text === "." && cb.ltoken?.end === cb.currToken.offset;
+    if(isWrittingDotColumn){
+      prevArgs = prevArgs.slice(1);
+    }
+    return { func: f, prevArgs, prevDelimiters }
 }
 
 export const getLastFuncSuggestions = (cb: CodeBlock, ss: ParsedSQLSuggestion[]) => {
@@ -228,12 +252,12 @@ export const getLastFuncSuggestions = (cb: CodeBlock, ss: ParsedSQLSuggestion[])
   return ss.filter(s => s.type === "function" && s.escapedIdentifier === funcName.func.text);
 }
 
-export const isInsideFunction = (cb: CodeBlock) => {
+export const getParentFunction = (cb: CodeBlock) => {
   
   const isInsidef = getCurrentFunction(cb);
   /** Is inside func args */
   if(isInsidef){
-    const { func, prevArgs } = isInsidef;
+    const { func, prevArgs, prevDelimiters } = isInsidef;
     const prevTokenIdx = cb.prevTokens.findIndex((t, i, arr)=> arr[i+1]?.offset === func.offset);
     const prevToken = prevTokenIdx? cb.prevTokens[prevTokenIdx] : undefined;
     const prevTokens = prevTokenIdx? cb.prevTokens.slice(0, prevTokenIdx + 2) : undefined;
@@ -243,7 +267,7 @@ export const isInsideFunction = (cb: CodeBlock) => {
     //   return undefined;
     // }
 
-    return { func, prevToken, prevTokens, prevArgs, prevTextLC }
+    return { func, prevToken, prevTokens, prevArgs, prevTextLC, prevDelimiters }
   }
 
   return undefined

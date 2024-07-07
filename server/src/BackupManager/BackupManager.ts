@@ -1,11 +1,12 @@
 
 import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
-import path from 'path'; 
+import path from "path"; 
 import { PassThrough } from "stream"; 
 import { pgDump } from "./pgDump";
 import { pgRestore } from "./pgRestore";
 import { getBkp, getFileMgr } from "./utils";
-import { getInstalledPrograms, InstalledPrograms } from "./getInstalledPrograms";
+import type { InstalledPrograms } from "./getInstalledPrograms";
+import { getInstalledPrograms } from "./getInstalledPrograms";
 
 export const BACKUP_FOLDERNAME = "prostgles_backups";
 export const BKP_PREFFIX = "/" + BACKUP_FOLDERNAME;
@@ -18,16 +19,16 @@ export type Users = Required<DBSchemaGenerated["users"]["columns"]>;
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 type DBS = DBOFullyTyped<DBSchemaGenerated>;
 
-import checkDiskSpace from 'check-disk-space';
-import { Request, Response } from "express";
-import { SUser } from "../authConfig";
+import checkDiskSpace from "check-disk-space";
+import type { Request, Response } from "express";
+import type { SUser } from "../authConfig/authConfig";
 import { getRootDir } from "../electronConfig";
-import { ConnectionManager } from "../ConnectionManager/ConnectionManager";
-import { DB } from "prostgles-server/dist/Prostgles";
+import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
+import type { DB } from "prostgles-server/dist/Prostgles";
 import { checkAutomaticBackup } from "./checkAutomaticBackup";
-import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { bytesToSize } from "prostgles-server/dist/FileManager/FileManager";
-import { SubscriptionHandler } from "prostgles-types";
+import type { SubscriptionHandler } from "prostgles-types";
 
 export const HOUR = 3600 * 1000;
 
@@ -46,13 +47,11 @@ export default class BackupManager {
   constructor(db: DB, dbs: DBS, connMgr: ConnectionManager, installedPrograms: InstalledPrograms){
     this.db = db;
     this.dbs = dbs;
-
     this.connMgr = connMgr;
     this.installedPrograms = installedPrograms;
  
-
     const checkAutomaticBkps = async () => {
-      const connections = await this.dbs.connections.find({ $existsJoined: { database_configs: { "backups_config->>enabled": 'true' }  }   } as any);
+      const connections = await this.dbs.connections.find({ $existsJoined: { database_configs: { "backups_config->>enabled": "true" }  }   } as any);
       for await(const con of connections){
         await this.checkAutomaticBackup(con)
       }
@@ -67,9 +66,13 @@ export default class BackupManager {
   }
 
   getCmd = (cmd: "pg_dump" | "pg_restore" | "pg_dumpall" | "psql") => {
-    if(!this.installedPrograms) throw new Error("No installed programs")
-    const { path = "", ext = "" } = this.installedPrograms.windowsOpts;
-    return `${path}${cmd}${ext}`;
+    if(!this.installedPrograms) throw new Error("No installed programs");
+    const { filePath, os } = this.installedPrograms;
+    if(os === "Windows"){
+      if(!filePath) throw new Error("No file path");
+      return `${filePath}${cmd}.exe`;
+    }
+    return `${filePath}${cmd}`;
   }
 
   static create = async (db: DB, dbs: DBS, connMgr: ConnectionManager) => {
@@ -83,9 +86,7 @@ export default class BackupManager {
   }
 
   checkIfEnoughSpace = async(conId: string) => {
-    const dbSizeInBytes = await this.getDBSizeInBytes(conId);
-
-    
+    const dbSizeInBytes = await this.getDBSizeInBytes(conId);    
     const diskSpace = await checkDiskSpace(getRootDir());
     const minLimin = 100 * 1e6
     if(diskSpace.free < minLimin){
@@ -117,7 +118,7 @@ export default class BackupManager {
     const bkp = await this.dbs.backups.insert({
       created: new Date(), 
       dbSizeInBytes: await this.getDBSizeInBytes(conId),
-      sizeInBytes: sizeBytes,
+      sizeInBytes: sizeBytes.toString(),
       initiator: "manual_restore_from_file: " + fileName,
       connection_id: con.id, 
       credential_id: null, 
@@ -160,7 +161,7 @@ export default class BackupManager {
 
   onRequestBackupFile = async (res: Response, userData: SUser | undefined, req: Request) => {
 
-    if(userData?.user?.type !== "admin"){
+    if(userData?.user.type !== "admin"){
       res.sendStatus(401);
     } else {
       const bkpId = req.path.slice(BKP_PREFFIX.length + 1);
@@ -174,7 +175,7 @@ export default class BackupManager {
           const { fileMgr } = await getFileMgr(this.dbs, bkp.credential_id);
           if(bkp.credential_id){
             /* Allow access to file for a period equivalent to a download rate of 50KBps */
-            const presignedURL = await fileMgr.getFileCloudDownloadURL(bkp.id, (bkp.sizeInBytes ?? 1e6)/50);
+            const presignedURL = await fileMgr.getFileCloudDownloadURL(bkp.id, +(bkp.sizeInBytes ?? 1e6)/50);
             if(!presignedURL){
               res.sendStatus(404);
             } else {

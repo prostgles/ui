@@ -1,5 +1,7 @@
-import { AnyObject, asName, DBHandler } from "prostgles-types";
-import { FileImporterState, streamBIGFile } from "./FileImporter";
+import type { AnyObject, DBHandler } from "prostgles-types";
+import { asName } from "prostgles-types";
+import type { FileImporterState} from "./FileImporter";
+import { getPapa, streamBIGFile } from "./FileImporter";
 
 
 type ImportProgress = {
@@ -182,7 +184,9 @@ export const importFile = async (args: Args) => {
       if (selectedFile.type === "csv") {
         let rowsImported = 0, importedSize = 0;
 
+        const papa = await getPapa()
         streamBIGFile({
+          papa,
           file: selectedFile.file, 
           streamBatchMb,
           header: selectedFile.header,

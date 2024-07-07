@@ -1,9 +1,11 @@
 import { mdiClose, mdiDotsHorizontal } from "@mdi/js";
-import { JSONB, getKeys, isObject, omitKeys } from "prostgles-types";
+import type { JSONB} from "prostgles-types";
+import { getKeys, isObject, omitKeys } from "prostgles-types";
 import React, { useState } from "react";
 import Btn from "../Btn";
 import { Label } from "../Label";
-import { JSONBSchema, JSONBSchemaCommonProps } from "./JSONBSchema";
+import type { JSONBSchemaCommonProps } from "./JSONBSchema";
+import { JSONBSchema } from "./JSONBSchema";
 import { getSchemaFromField } from "./isCompleteJSONB";
 
 

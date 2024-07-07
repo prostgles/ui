@@ -1,8 +1,9 @@
 import React from "react";
-import { ValidatedColumnInfo, getJSONBSchemaAsJSONSchema } from "prostgles-types";
-import CodeEditor, { CodeEditorProps } from "./CodeEditor";
-import { useReactiveState } from "./ProstglesMethod/hooks";
-import { themeR } from "../App";
+import type { ValidatedColumnInfo} from "prostgles-types";
+import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
+import type { CodeEditorProps } from "./CodeEditor/CodeEditor";
+import CodeEditor from "./CodeEditor/CodeEditor";
+import { appTheme, useReactiveState } from "../App";
 import ErrorComponent from "../components/ErrorComponent";
 
 type P = {
@@ -15,12 +16,12 @@ type P = {
 }
 export const JSONBColumnEditor = ({ value, column, tableName, onChange, style, className }: P) => {
 
-  const { state: theme } = useReactiveState(themeR);
+  const { state: theme } = useReactiveState(appTheme);
   if (!column.jsonbSchema) {
     return <ErrorComponent error={"Provided column is not of jsonbSchema type"} />
   }
 
-  const jsonSchema = column.jsonbSchema && getJSONBSchemaAsJSONSchema(tableName, column.name, column.jsonbSchema);
+  const jsonSchema = getJSONBSchemaAsJSONSchema(tableName, column.name, column.jsonbSchema);
   const codeEditorProps: CodeEditorProps = {
     style, 
     className,
@@ -29,12 +30,10 @@ export const JSONBColumnEditor = ({ value, column, tableName, onChange, style, c
       theme: `vs-${theme}`
     },
     value: (typeof value !== "string" && value ? JSON.stringify(value, null, 2) : value?.toString()) ?? "",
-    ...(column.jsonbSchema && {
-      jsonSchemas: [{
-        id: `${tableName}_${column.name}`,
-        schema: jsonSchema
-      }]
-    })
+    jsonSchemas: [{
+      id: `${tableName}_${column.name}`,
+      schema: jsonSchema
+    }]
   }
 
   return <CodeEditor 

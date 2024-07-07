@@ -1,15 +1,19 @@
-import { DAY, HOUR, MINUTE, MONTH, Point, SECOND, toDateStr } from "../Charts";
-import { ChartedText, Circle, MultiLine } from "../Charts/CanvasChart";
-import { TimeChart } from "./TimeChart";
+import { isDefined } from "../../utils";
+import type { Point} from "../Charts";
+import { DAY, HOUR, MINUTE, MONTH, SECOND, toDateStr } from "../Charts";
+import type { ChartedText, Circle, MultiLine } from "../Charts/CanvasChart";
+import type { TimeChart } from "./TimeChart";
 
 const HoursMinutes: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit",  };
 const HoursMinutesSeconds: Intl.DateTimeFormatOptions = { ...HoursMinutes,  second: "2-digit", };
 
 export const getTimechartTooltipShapes = function(this: TimeChart){
-
   const { tooltipPosition = "auto", binSize } = this.props;
   if(!this.chart || tooltipPosition === "hidden") return undefined;
   
+  const getCssVarValue = (name: string) => {
+    return getComputedStyle(window.document.documentElement).getPropertyValue(name);
+  }
   const { yMin, yMax } = this.getMargins();
   const { h } = this.chart.getWH();
   const { xCursor, yCursor } = this.d;
@@ -22,7 +26,9 @@ export const getTimechartTooltipShapes = function(this: TimeChart){
       return undefined;
     }
     
-    if(snapped_x) x = snapped_x;
+    if(snapped_x) {
+      x = snapped_x;
+    }
 
     const tooltipDate = new Date(this.data.xScale.invert(x));
     let tooltipBottomDateText;
@@ -58,20 +64,20 @@ export const getTimechartTooltipShapes = function(this: TimeChart){
     }
 
     const tooltipBottomDateLabel: ChartedText = {
-      id: "2111r",
+      id: "tooltipBottomDateLabel",
       type: "text",
-      fillStyle: "black",
+      fillStyle: getCssVarValue("--text-0"),
       textAlign: "center",
       text: tooltipBottomDateText,
       background: {
-        fillStyle: "white",
-        strokeStyle: "#cecece",
+        fillStyle:  getCssVarValue("--bg-color-1"),
+        strokeStyle: getCssVarValue("--b-color"),
         lineWidth: 1,
         padding: 6,
         borderRadius: 3
       },
       coords: [x, h - 10]
-    } ;
+    };
     
     const btmW = this.chart.measureText(tooltipBottomDateLabel);
     const { xMin, xMax } = this.getMargins();
@@ -86,9 +92,12 @@ export const getTimechartTooltipShapes = function(this: TimeChart){
     let maxLabelY: number | undefined;
     const labelTickCanvasX = xCursor + 14;
     let textLabels = iLayers.map(l => {
-
-      const text = (!this.data)? "" : (l.getYLabel({
-        value: +(l.snapped_data?.value ?? this.data.yScale.invert(l.y)),
+      if(!this.data || l.snapped_data?.value === undefined) {
+        return undefined;
+      }
+      const text = (l.getYLabel({
+        // value: +(l.snapped_data?.value ?? this.data.yScale.invert(l.y)), // Showing yScale.invert might not be useful and needs rounding/max length in some cases
+        value: l.snapped_data.value,
         min: this.data.yScale.invert(yMin),
         max: this.data.yScale.invert(yMax),
         
@@ -97,6 +106,7 @@ export const getTimechartTooltipShapes = function(this: TimeChart){
       })) + (this.props.layers.length > 1 && l.label? ` ${l.label}` : "");
 
       const coords: Point = [this.chart!.getDataXY(labelTickCanvasX, 0)[0]!, l.y + 5];
+
       minLabelY ??= coords[1];
       maxLabelY ??= coords[1];
       minLabelY = Math.min(minLabelY, coords[1])
@@ -104,13 +114,13 @@ export const getTimechartTooltipShapes = function(this: TimeChart){
       
 
       const res: ChartedText = {
-        id: "2111r" + Date.now(),
+        id: "tooltip-text-" + Date.now(),
         type: "text",
-        fillStyle: "black",
+        fillStyle: getCssVarValue("--text-0"),
         text,
         textAlign: "left",
         background: {
-          fillStyle: "white",
+          fillStyle:  getCssVarValue("--bg-color-1"),
           strokeStyle: l.color,
           lineWidth: 2,
           padding: 6,
@@ -125,7 +135,7 @@ export const getTimechartTooltipShapes = function(this: TimeChart){
       }
 
       return res;
-    });
+    }).filter(isDefined);
     
     // const closerToTop = isDefined(minLabelY) && isDefined(maxLabelY) && minLabelY < h - maxLabelY;
 
@@ -178,7 +188,7 @@ export const getTimechartTooltipShapes = function(this: TimeChart){
 
     const pointCircles: Circle[] = iLayers.flatMap(l => {
       const commonOpts: Pick<Circle, "id" | "type" | "coords" | "lineWidth"> = {
-        id: Date.now(),
+        id: `tooltip-${Date.now()}`,
         type: "circle",
         coords: [x, l.y], 
         lineWidth: 0,
@@ -199,7 +209,7 @@ export const getTimechartTooltipShapes = function(this: TimeChart){
     });
 
     const tooltipVertLine: MultiLine = {
-      id: "21111r",
+      id: "tooltipVertLine",
       type: "multiline",
       lineWidth: 1,
       strokeStyle: "#cecece",

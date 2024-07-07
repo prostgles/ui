@@ -4,8 +4,9 @@ import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
 import PopupMenu from "../../components/PopupMenu"; 
 import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";
-import { Workspace } from "../Dashboard/dashboardUtils";
-import { Prgl } from "../../App";
+import type { Workspace } from "../Dashboard/dashboardUtils";
+import type { Prgl } from "../../App";
+import { pageReload } from "../../components/Loading";
 
 type WorkspaceDeleteBtnProps = Pick<Prgl, "dbs"> & {
   w: Workspace;
@@ -17,7 +18,7 @@ export const WorkspaceDeleteBtn = ({ dbs, w, activeWorkspaceId }: WorkspaceDelet
   const [disabledDelete, setDisabledD] = useState("");
 
   useEffectAsync(async () => {
-    const cols = await dbs.workspaces.getColumns!({ rule: "update", data: { id: 'f6c03e9b-d66c-432b-b82c-e959bcbabf16' }} as any);
+    const cols = await dbs.workspaces.getColumns!({ rule: "update", data: { id: "f6c03e9b-d66c-432b-b82c-e959bcbabf16" }} as any);
     setDisabledD(cols.some(c => c.delete)? "" : "Not allowed to delete this workspace")
   }, [])
 
@@ -66,7 +67,7 @@ export const WorkspaceDeleteBtn = ({ dbs, w, activeWorkspaceId }: WorkspaceDelet
               window.location.href = path;
               
             } else {
-              window.location.reload();
+              pageReload("Workspace deleted")
             }
           } catch (newWspErr) {
             setError(error)

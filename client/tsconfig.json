@@ -4,7 +4,7 @@
       "node_modules/@types",
       "./@types"
     ],    
-    "target": "es2022",
+    "target": "ES2022",
     "lib": [
       "dom",
       "dom.iterable",
@@ -13,7 +13,7 @@
       "es2019",
       "es2022", 
     ],
-    "module": "ES2020",
+    "module": "ES2022",
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,

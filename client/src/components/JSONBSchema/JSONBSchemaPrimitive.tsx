@@ -1,9 +1,10 @@
-import { JSONB, ValidatedColumnInfo } from "prostgles-types";
+import type { JSONB, ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
 import SmartFormField from "../../dashboard/SmartForm/SmartFormField/SmartFormField";
-import FormField, { FormFieldProps } from "../FormField/FormField";
-import { FullOption } from "../Select/Select";
-import { JSONBSchemaCommonProps } from "./JSONBSchema";
+import type { FormFieldProps } from "../FormField/FormField";
+import FormField from "../FormField/FormField";
+import type { FullOption } from "../Select/Select";
+import type { JSONBSchemaCommonProps } from "./JSONBSchema";
 import { isCompleteJSONB } from "./isCompleteJSONB";
 import { type } from "os";
 

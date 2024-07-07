@@ -1,14 +1,14 @@
-import { mdiAlert, mdiDotsHorizontal, mdiPlus } from '@mdi/js';
-import { SubscriptionHandler } from "prostgles-types";
-import React from 'react';
-import { DBSSchema } from "../../../../commonTypes/publishUtils";
-import { PrglState } from "../../App";
-import Btn from '../../components/Btn';
+import { mdiAlert, mdiDotsHorizontal, mdiPlus } from "@mdi/js";
+import type { SubscriptionHandler } from "prostgles-types";
+import React from "react";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { PrglState } from "../../App";
+import Btn from "../../components/Btn";
 import ConfirmationDialog from "../../components/ConfirmationDialog";
-import { AnyObject } from "prostgles-types"
+import type { AnyObject } from "prostgles-types"
 import { InfoRow } from "../../components/InfoRow";
-import Loading from '../../components/Loading';
-import { UserData, Workspace } from "../../dashboard/Dashboard/dashboardUtils";
+import Loading from "../../components/Loading";
+import type { UserData, Workspace } from "../../dashboard/Dashboard/dashboardUtils";
 import RTComp from "../../dashboard/RTComp";
 import { pickKeys } from "../../utils";
 import { Connection } from "./Connection";
@@ -57,9 +57,11 @@ export class Connections extends RTComp<PrglState, S> {
         orderBy: [{ created: -1 }, { db_conn: 1 }],
         select: {
           "*": 1,
-          "access_control": {
-            count: { "$countAll": [] },
-          },
+          ...(user.type === "admin"? {
+            "access_control": {
+              count: { "$countAll": [] },
+            },
+          } : {}),
           workspaces: "*"
         },
       })
@@ -69,10 +71,10 @@ export class Connections extends RTComp<PrglState, S> {
 
           const connections = await Promise.all((_connections as IConnection[]).map(async c => {
             c.allowedUsers = 0;
-            if (c.access_control[0]?.count && (dbs.users as any).count) {
+            if ((c.access_control as any)?.[0]?.count && (dbs.users as any).count) {
               c.allowedUsers = await dbs.users.count({
                 $existsJoined: { "user_types.access_control_user_types.access_control.database_configs.connections": { id: c.id } }
-              } as any)
+              } as any);
             }
 
             return c;
@@ -122,7 +124,7 @@ export class Connections extends RTComp<PrglState, S> {
           this.setState({ showStateConfirm: undefined })
         }}
         onAccept={async () => {
-          await dbs.users.update({ id: user.id }, { options: { showStateDB: true } })
+          await dbs.users.update({ id: user.id }, { options: { $merge: [{ showStateDB: true }] } })
           this.setState({ showStateConfirm: undefined });
         }}
         acceptBtn={{ color: "action", text: "OK", dataCommand: "connections.add" }}
@@ -136,7 +138,7 @@ export class Connections extends RTComp<PrglState, S> {
     let serverUserGroupings: { name: string; conns: typeof connections; serverStr: string; serverUser: AnyObject; }[] = [];
     if (isAdmin) {
       const serverUsers: ServerUser[] = [];
-      const parseServer = (s: ServerUser): ServerUser => ({ db_host: s.db_host ?? "localhost", db_port: s.db_port ?? 5432, db_user: s.db_user })
+      const parseServer = (s: ServerUser): ServerUser => ({ db_host: s.db_host || "localhost", db_port: s.db_port || 5432, db_user: s.db_user })
       const sameServer = (_s1: ServerUser, _s2: ServerUser, sameUser = true): boolean => {
         const s1 = parseServer(_s1);
         const s2 = parseServer(_s2);
@@ -152,7 +154,7 @@ export class Connections extends RTComp<PrglState, S> {
       serverUserGroupings = serverUsers.map(serverUser => ({
         name: getServerCoreInfoStr(serverUser),
         serverUser,
-        serverStr: (serverUser.db_host ?? "") + (serverUser.db_port ?? ""),
+        serverStr: (serverUser.db_host || "") + (serverUser.db_port || ""),
         conns: renderedConnections.filter(c => sameServer(c as AdminConnectionModel, serverUser))
       }));
 
@@ -210,7 +212,7 @@ export class Connections extends RTComp<PrglState, S> {
                 if (checked) {
                   this.setState({ showStateConfirm: e.currentTarget })
                 } else {
-                  dbs.users.update({ id: user.id }, { options: { showStateDB: false } })
+                  dbs.users.update({ id: user.id }, { options: { $merge: [{ showStateDB: false }] } })
                 }
               }}
             />}
@@ -257,13 +259,13 @@ export class Connections extends RTComp<PrglState, S> {
 
 export const getServerInfoStr = (c: DBSSchema["connections"], showuser = false) => {
   const userInfo = showuser && c.db_user ? `${c.db_user}@` : "";
-  return `${userInfo}${c.db_host ?? "localhost"}:${c.db_port ?? "5432"}/${c.db_name}`
+  return `${userInfo}${c.db_host || "localhost"}:${c.db_port || "5432"}/${c.db_name}`
 }
 export const getServerInfo = (c: Pick<DBSSchema["connections"], "db_host" | "db_port" | "db_name">) => {
   return <>
-    <div className="shrink-label">{c.db_host ?? "localhost"}:{c.db_port ?? "5432"}/{c.db_name}</div>
+    <div className="shrink-label">{c.db_host || "localhost"}:{c.db_port || "5432"}/{c.db_name}</div>
     {/* <div>User: {c.db_user}</div> */}
   </>
 }
 
-export const getServerCoreInfoStr = <H extends Pick<DBSSchema["connections"], "db_host" | "db_port" | "db_user">>(h: H) => `${h.db_user}@${h.db_host ?? "localhost"}:${h.db_port}`;
+export const getServerCoreInfoStr = <H extends Pick<DBSSchema["connections"], "db_host" | "db_port" | "db_user">>(h: H) => `${h.db_user}@${h.db_host || "localhost"}:${h.db_port}`;

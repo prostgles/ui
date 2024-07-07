@@ -1,14 +1,19 @@
-import { mdiClose, mdiEye, mdiEyeOff, mdiLayers, mdiScript, mdiSetCenter, mdiTable } from "@mdi/js";
+import { mdiClose, mdiEye, mdiEyeOff, mdiLayers, mdiMap, mdiScript, mdiSetCenter, mdiTable } from "@mdi/js";
 import React from "react";
-import Btn, { BtnProps } from "../../components/Btn";
+import type { BtnProps } from "../../components/Btn";
+import Btn from "../../components/Btn";
+import { Label } from "../../components/Label";
 import PopupMenu from "../../components/PopupMenu";
-import { Link } from "../Dashboard/dashboardUtils";
-import { LayerQuery, W_MapProps } from "../W_Map/W_Map";
+import type { Link } from "../Dashboard/dashboardUtils";
+import type { LayerQuery, W_MapProps } from "../W_Map/W_Map";
 import type { ProstglesTimeChartLayer, ProstglesTimeChartProps } from "../W_TimeChart/W_TimeChart";
 import { AddChartLayer } from "./AddChartLayer";
 import { LayerColorPicker } from "./LayerColorPicker";
 import { LayerFilterManager } from "./LayerFilterManager";
 import { TimeChartLayerOptions } from "./TimeChartLayerOptions";
+import { FlexCol } from "../../components/Flex";
+import { MapOpacityMenu } from "../W_Map/MapOpacityMenu";
+import { MapBasemapOptions } from "../W_Map/MapBasemapOptions";
 
 export type MapLayerManagerProps = 
 (
@@ -25,14 +30,14 @@ export type MapLayerManagerProps =
 
 // TODO: Show columns grouped by their link
 export const ChartLayerManager = (props: MapLayerManagerProps) => {
-  const { myLinks, prgl: {dbs}, type, asMenuBtn, tables, getLinksAndWindows, w } = props;
+  const { myLinks, prgl: {dbs}, type, asMenuBtn, tables, getLinksAndWindows, w  } = props;
   const isMap = type === "map";
   
   const layerQueries = (props.layerQueries ?? []) as (ProstglesTimeChartLayer | LayerQuery)[];
-  const content = <div className="flex-col gap-p5">
+  const content = <FlexCol className="gap-p5">
     <div className="flex-col gap-1">
       {layerQueries.sort((a, b) => a._id.localeCompare(b._id))
-        .map((lqRaw, i)=> {
+        .map((lqRaw)=> {
           const lq = lqRaw as LayerQuery | ProstglesTimeChartLayer;
           const thisLink = myLinks.find(l => l.id === lq.linkId);
           if(!thisLink || thisLink.options.type === "table") return null;
@@ -45,47 +50,38 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
             const lq = lqRaw as ProstglesTimeChartLayer;
             column = lq.dateColumn;
           }
-  
 
           const lTypeInfo = lq.type === "sql"? { 
             type: "SQL" as const, 
             value: lq.sql 
+          } : lq.type === "osm"? {
+            type: "OSM" as const, 
+            value: lq.query,
           } : { 
             type: "Table" as const, 
             value: lq.tableName,  
             path: lq.path 
           };
           const isLocal = thisLink.w1_id === thisLink.w2_id;
-          // const chartCols = lTypeInfo.type === "Table" && lTypeInfo.cols;
 
-          return <div key={i} className={`LayerQuery ai-center flex-row-wrap gap-1 ta-left b b-gray-300 rounded ${window.isMobileDevice? "" : "p-1"}`}>
+          return <div 
+            key={lqRaw._id} 
+            className={`LayerQuery bg-color-0 ai-center flex-row-wrap gap-1 ta-left b b-color rounded ${window.isMobileDevice? "p-p5" : "p-1"}`}
+          >
             
             <LayerColorPicker title="Change color" column={column} link={thisLink} myLinks={myLinks} />
             
-            <Btn 
-              iconProps={{ 
-                path: lTypeInfo.type === "Table"? (isLocal? mdiTable : mdiSetCenter) : mdiScript,
-                style: isLocal? {} : {
-                  color: "var(--action)"
-                }
-              }} 
-              className={" ws-nowrap o-auto bg-1 rounded px-p75 py-p75 o-hidden"}  
+            <Label 
+              variant="header"
+              iconPath={lTypeInfo.type === "Table"? (isLocal? mdiTable : mdiSetCenter) : mdiScript}
+              info={lTypeInfo.type === "Table"? (isLocal? "Local table" : "Remote table") : "SQL Script"}
+              className={"ws-nowrap o-hidden"}  
               title={lTypeInfo.type === "Table"? `Table name` : "SQL Script"}
             >
-              {lTypeInfo.type === "Table"? `${lTypeInfo.path?.at(-1)?.table || lTypeInfo.value} (${column})` : lTypeInfo.value}
-            </Btn>
-            {/* {chartCols && <Select 
-              value={column}
-              btnProps={chartCols.length > 1? { color: "action" } : {}}
-              fullOptions={lTypeInfo.cols.map(c => ({ key: c.name, subLabel: c.udt_name }))}
-              onChange={col => {
-                const opts = quickClone(thisLink.options);
-                if(opts.type === "timechart"){
-                  opts.columns
-                }
-                thisLink.$update({ options: { type } })
-              }}
-            />} */}
+              <div className="text-ellipsis">
+                {lTypeInfo.type === "Table"? `${lTypeInfo.path?.at(-1)?.table || lTypeInfo.value} (${column})` : lTypeInfo.value}
+              </div>
+            </Label>
 
 
             <TimeChartLayerOptions 
@@ -132,16 +128,32 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
 
       <AddChartLayer { ...props } />
     </div>
-  </div>;
+    {props.type === "map" && 
+      <FlexCol className="mt-2">
+        <MapBasemapOptions {...props} asPopup={{ prgl: props.prgl }} />
+        <MapOpacityMenu {...props} />
+      </FlexCol>
+    }
+  </FlexCol>;
 
-  if(asMenuBtn){
-    const title = "Manage layers";
-    return <PopupMenu 
-      title={title}
-      button={<Btn iconPath={mdiLayers} title={title} { ...asMenuBtn } />}
-      render={pClose => content}
-    />
+  if(!asMenuBtn){
+    return content;
   }
 
-  return content;
+  const title = "Manage layers";
+  return <PopupMenu 
+    title={title}
+    data-command="ChartLayerManager"
+    button={
+      <Btn 
+        iconPath={mdiLayers}
+        title={title}  
+        color="action" 
+        { ...asMenuBtn } 
+      />
+    }
+    contentClassName="bg-color-1 p-1"
+    render={() => content}
+  />
+
 }

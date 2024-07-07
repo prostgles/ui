@@ -1,14 +1,15 @@
 import { mdiFile, mdiTable, mdiTableEye } from "@mdi/js";
 import { getKeys } from "prostgles-types";
 import React, { useState } from "react";
-import { TableRules } from "../../../../../commonTypes/publishUtils";
+import type { TableRules } from "../../../../../commonTypes/publishUtils";
 import { FlexCol } from "../../../components/Flex";
 import { Icon } from "../../../components/Icon/Icon";
 import SearchList from "../../../components/SearchList";
 import { SwitchToggle } from "../../../components/SwitchToggle";
-import { EditedAccessRule } from "../AccessControl";
-import { PermissionEditProps } from "../AccessControlRuleEditor";
-import { TableInfoWithRules, TablePermissionControls } from "../TableRules/TablePermissionControls";
+import type { EditedAccessRule } from "../AccessControl";
+import type { PermissionEditProps } from "../AccessControlRuleEditor";
+import type { TableInfoWithRules} from "../TableRules/TablePermissionControls";
+import { TablePermissionControls } from "../TableRules/TablePermissionControls";
 
 type  DBPermissionCustomTables<T extends EditedAccessRule["dbPermissions"]["type"]> = Extract<EditedAccessRule["dbPermissions"], { type: T }>; 
 
@@ -22,12 +23,19 @@ export const PCustomTables = ({ dbPermissions, onChange, contextData, prgl, user
   const { tables } = prgl;
   const [hideNoRules, setHideNoRules] = useState(false);
   
-  const tableRules = Object.fromEntries((["select", "insert", "update", "delete"] as const).map(key => [key, 
-    dbPermissions.customTables.length === tables.length && dbPermissions.customTables.every(ct => ct[key] === true)
-  ])); 
+  const tableRules = Object.fromEntries((["select", "insert", "update", "delete"] as const).map(ruleType => {
+    const allCustomTablesMatchRule = dbPermissions.customTables.length > 0 && dbPermissions.customTables.some(ct => {
+      const table = tables.find(t => t.name === ct.tableName);
+      const ruleIsPossible = table?.info.isView? ruleType ===  "select" : true;
+      return !ruleIsPossible || ct[ruleType];
+    })
+    return [
+      ruleType, 
+      allCustomTablesMatchRule  
+    ]   
+  }));
 
   const [initialOrder, setInitialOrder] = useState(tablesWithRules.map(t => t.name));
-
   return <FlexCol className="PCustomTables gap-0 min-h-0 h-fit" style={{ maxHeight: "60vh"}}>
     <div className="f-1 jc-end ai-end flex-row">
       <SwitchToggle label="Show allowed only" 
@@ -42,7 +50,7 @@ export const PCustomTables = ({ dbPermissions, onChange, contextData, prgl, user
       />
     </div>
     <div className="flex-row-wrap gap-p5 ai-center p-p5 py-1 ">
-      <div className="mr-auto bold text-gray-400 noselect">Toggle All ({tables.length} tables)</div>
+      <div className="mr-auto bold text-2 noselect">Toggle All ({tables.length} tables)</div>
       <TablePermissionControls
         prgl={prgl}
         userTypes={userTypes}
@@ -81,7 +89,12 @@ export const PCustomTables = ({ dbPermissions, onChange, contextData, prgl, user
       limit={200}
       items={
         tablesWithRules
-          .filter(t => !hideNoRules || t.rule || t.info.isFileTable)
+          .filter(t => {
+            if(!hideNoRules || t.info.isFileTable) return true;
+            return t.rule && ["select", "insert", "update", "delete"].some(ruleType => {
+              return t.rule?.[ruleType];
+            });
+          })
           .sort((a, b) => initialOrder.indexOf(a.name) - initialOrder.indexOf(b.name))
           .map(t => {
             const existingRule = dbPermissions.customTables.find(ct => ct.tableName === t.name)

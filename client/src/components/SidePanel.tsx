@@ -1,5 +1,5 @@
-import React from 'react';
-import Popup from './Popup/Popup';
+import React from "react";
+import Popup from "./Popup/Popup";
 
 type P = {
   onClose?: () => any;
@@ -23,7 +23,7 @@ export default class SidePanel extends React.Component<P, any> {
         onClose={onClose}
         positioning="as-is"
         title={title}
-        rootStyle={{ top: 0, right: 0, bottom: 0, overflow: "hidden", position: 'absolute' }}
+        rootStyle={{ top: 0, right: 0, bottom: 0, overflow: "hidden", position: "absolute" }}
       >
         {title? <div
           className="text-lg leading-6 font-medium p-1 noselect"

@@ -1,7 +1,8 @@
-import { ParsedSQLSuggestion, SQLMatchContext } from "../registerSuggestions";
-import { KWD, withKWDs } from "../withKWDs";
+import type { ParsedSQLSuggestion, SQLMatchContext } from "../registerSuggestions";
+import type { KWD} from "../withKWDs";
+import { withKWDs } from "../withKWDs";
 
-export const matchCreateTrigger = ({ cb, getKind, setS, sql, ss }: SQLMatchContext) => {
+export const matchCreateTrigger = ({ cb, setS, sql, ss }: SQLMatchContext) => {
 
   const getTriggerFuncs = (s: ParsedSQLSuggestion[]) =>{
     return s
@@ -58,5 +59,5 @@ A common use of an AFTER trigger is to populate an audit/history table with the 
       kwd: "EXECUTE PROCEDURE", options: getTriggerFuncs,  dependsOn: "FOR EACH",
       docs: `A user-supplied function that is declared as taking no arguments and returning type trigger, which is executed when the trigger fires.` 
     },
-  ] as const, cb, getKind, ss).getSuggestion();
+  ] as const, { cb, ss, setS, sql }).getSuggestion();
 }

@@ -1,7 +1,7 @@
 import { isObject } from "../../../../../commonTypes/publishUtils";
 import { withKWDs } from "./withKWDs";
-import { SQLMatcher } from "./registerSuggestions";
-import { isInsideFunction } from "./MatchSelect";
+import { getKind, type SQLMatcher } from "./registerSuggestions";
+import { getParentFunction } from "./MatchSelect";
 import { getExpected } from "./getExpected";
 import { suggestSnippets } from "./CommonMatchImports";
 
@@ -29,12 +29,12 @@ export const MatchInsert: SQLMatcher = {
   match: cb => {
     return cb.tokens[0]?.textLC === "insert"
   },
-  result: async ({cb, ss, getKind}) => {
+  result: async ({ cb, ss, setS, sql }) => {
 
     const { prevLC, prevIdentifiers } = cb;
 
     /** Is inside func args */
-    const insideFunc = isInsideFunction(cb);
+    const insideFunc = getParentFunction(cb);
     if(insideFunc){
       if(insideFunc.prevToken?.textLC === "into"){
         const cols = getExpected("column", cb, ss).suggestions;
@@ -70,7 +70,7 @@ export const MatchInsert: SQLMatcher = {
       }
     } 
     
-    const { getSuggestion } = withKWDs(KWDS, cb, getKind, ss)
+    const { getSuggestion } = withKWDs(KWDS, { cb, ss, setS, sql })
     return getSuggestion()
 
   }

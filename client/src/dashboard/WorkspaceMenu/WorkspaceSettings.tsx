@@ -2,9 +2,9 @@ import { mdiCog } from "@mdi/js";
 import React from "react";
 import Btn from "../../components/Btn"; 
 import PopupMenu from "../../components/PopupMenu"; 
-import { DBSchemaTablesWJoins, Workspace } from "../Dashboard/dashboardUtils";
+import type { DBSchemaTablesWJoins, Workspace } from "../Dashboard/dashboardUtils";
 import SmartForm from "../SmartForm/SmartForm";
-import { Prgl } from "../../App";
+import type { Prgl } from "../../App";
 
 type WorkspaceSettingsProps = Pick<Prgl, "dbs" | "dbsMethods" | "theme"> & {
   w: Workspace;

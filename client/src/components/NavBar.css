@@ -52,6 +52,9 @@ nav a:focus {
   nav {
     flex-direction: column;
   }
+  nav.mobile-expanded {
+    position: fixed;
+  }
   nav .navwrapper {
     margin: 0;
     flex-direction: column;
@@ -72,6 +75,7 @@ nav a:focus {
   .prgl-brand-icon {
     justify-content: start;
     margin-right: 0;
+    height: fit-content;
   }
 
   .prgl-brand-icon img {
@@ -79,6 +83,9 @@ nav a:focus {
   } 
   
   nav.mobile-collapsed .navwrapper  > * {
+    display: none !important;
+  }
+  nav.mobile-expanded .prgl-brand-icon {
     display: none !important;
   }
   

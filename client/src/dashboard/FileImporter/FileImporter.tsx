@@ -1,25 +1,26 @@
-import { mdiAlertCircleOutline, mdiFormatText } from '@mdi/js';
-import Papa from 'papaparse';
-import { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React from 'react';
-import Btn from '../../components/Btn';
-import ErrorComponent from '../../components/ErrorComponent';
-import FormField from '../../components/FormField/FormField';
-import Loading from '../../components/Loading';
-import Popup from '../../components/Popup/Popup';
+import { mdiAlertCircleOutline, mdiFormatText } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import React from "react";
+import Btn from "../../components/Btn";
+import ErrorComponent from "../../components/ErrorComponent";
+import FormField from "../../components/FormField/FormField";
+import Loading from "../../components/Loading";
+import Popup from "../../components/Popup/Popup";
 import PopupMenu from "../../components/PopupMenu";
-import { Table } from '../../components/Table/Table';
-import CodeEditor from "../CodeEditor";
-import { CommonWindowProps } from '../Dashboard/Dashboard';
-import { ProstglesColumn } from "../ProstglesSQL/W_SQL";
-import { getFileText } from '../ProstglesSQL/W_SQLMenu';
-import RTComp from '../RTComp';
+import { Table } from "../../components/Table/Table";
+import CodeEditor from "../CodeEditor/CodeEditor";
+import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { ProstglesColumn } from "../W_SQL/W_SQL";
+import { getFileText } from "../W_SQL/W_SQLMenu";
+import RTComp from "../RTComp";
 import { FileImporterFooter } from "./FileImporterFooter";
 import { importFile } from "./importFile";
 import { setFile } from "./setFile";
 const streamColumnDataTypes = ["TEXT", "JSON", "JSONB"] as const;
-import { AnyObject } from "prostgles-types";
+import type { AnyObject } from "prostgles-types";
  
+type Papa = typeof import("papaparse");
+export const getPapa = () => import(/* webpackChunkName: "papaparse" */ "papaparse")
 const camel_to_snake = str => {
   // str[0].toLowerCase() + str.slice(1, str.length).replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 
@@ -228,10 +229,10 @@ export default class FileImporter extends RTComp<FileImporterProps, FileImporter
 
   setFiles = async (files: File[]) => {
     if(files.length > 1){
-      const allowedTypes = ["txt", "svg", "html", "json"];
+      const allowedTypesForMultiImport = ["txt", "svg", "html", "json"];
       const arr = Array.from(files);
       const [firstFile] = arr;
-      if(firstFile && arr.every(f => allowedTypes.find(ext => f.name.toLowerCase().endsWith(`.${ext}`) ) && f.size < 1e6)){
+      if(firstFile && arr.every(f => allowedTypesForMultiImport.find(ext => f.name.toLowerCase().endsWith(`.${ext}`) ) && f.size < 1e6)){
         this.setState({ files });
 
         const multiImport = await this.parseFiles(arr.slice(0, 40))
@@ -241,7 +242,7 @@ export default class FileImporter extends RTComp<FileImporterProps, FileImporter
           multiImport, 
           selectedFile: {
             file: firstFile,
-            type: 'csv',
+            type: "csv",
             header: false,
             preview: {
               cols: [{
@@ -265,7 +266,7 @@ export default class FileImporter extends RTComp<FileImporterProps, FileImporter
           loadingFileName: undefined,
         })
       } else {
-        alert(`Multi import is only allowed for text files (${allowedTypes}) less than 1Mb each`)
+        alert(`Multi import is only allowed for text files (${allowedTypesForMultiImport}) less than 1Mb each`)
       }
     } else if(files.length){
       this.setFile(files[0]!)
@@ -454,7 +455,7 @@ export default class FileImporter extends RTComp<FileImporterProps, FileImporter
                   {selectedFile.preview?.rows && 
                     <Table 
                       maxCharsPerCell={500} 
-                      className="f-1 o-auto b-gray-400 " { ...selectedFile.preview } 
+                      className="f-1 o-auto b-color " { ...selectedFile.preview } 
                       cols={selectedFile.preview.cols.map(c => ({ 
                         ...c,
                         filter: false,
@@ -499,7 +500,7 @@ export default class FileImporter extends RTComp<FileImporterProps, FileImporter
               <span className="bold">
                 {importing.importedRows}
               </span> rows imported into 
-              <span className="text-yellow-700 ml-p5" >
+              <span className="text-warning ml-p5" >
                 {importing.tableName}
               </span>
             </div>
@@ -562,6 +563,7 @@ type StreamFileArgs = Omit<Papa.ParseLocalConfig<string[], Papa.LocalFile>, "chu
   onChunk: (result: Papa.ParseResult<string[]>, parser: Papa.Parser) => void;
   onDone?: VoidFunction;
   onError?: (error: any) => void;
+  papa: Papa;
 }
 
 export const streamBIGFile = ({
@@ -570,9 +572,10 @@ export const streamBIGFile = ({
   streamBatchMb = 1,
   onDone = () => {},
   onError,
+  papa,
   ...opts
 }: StreamFileArgs) => {
-  return Papa.parse<string[]>(file, {
+  return papa.parse<string[]>(file, {
     ...opts,
     chunkSize: 1024 * 1024 * streamBatchMb,
     chunk: function(results, parser) {
@@ -585,10 +588,11 @@ export const streamBIGFile = ({
 }
 
 export const getCSVFirstChunk = (args: Omit<StreamFileArgs, "onChunk" | "onError">): Promise<Papa.ParseResult<string[]>> => {
-  return new Promise((resolve, reject) => {
-
+  return new Promise(async (resolve, reject) => {
+    const papa = await getPapa()
     streamBIGFile({
       ...args,
+      papa,
       error: reject,
       onChunk: (results, parser) => {
         const { data } = results;

@@ -1,12 +1,14 @@
 
 
-import { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { AnyObject, getKeys, SQLHandler } from "prostgles-types";
-import { omitKeys, pickKeys } from "../../utils"; 
-import { asSQL, TopKeyword, TOP_KEYWORDS } from "./SQLCompletion/KEYWORDS";
-import { SQLSuggestion } from "./SQLEditor";
-import { getPGObjects, PGConstraint } from "./SQLCompletion/getPGObjects";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { AnyObject, SQLHandler } from "prostgles-types";
+import { getKeys } from "prostgles-types";
+import { omitKeys, pickKeys } from "../../utils";
+import { TOP_KEYWORDS, asSQL } from "./SQLCompletion/KEYWORDS";
+import { PRIORITISED_OPERATORS, getPGObjects } from "./SQLCompletion/getPGObjects";
+import type { SQLSuggestion } from "./SQLEditor";
 import { SQL_SNIPPETS } from "./SQL_SNIPPETS";
+import type { ParsedSQLSuggestion } from "./SQLCompletion/registerSuggestions";
 type DB = { sql: SQLHandler }
 
 
@@ -194,22 +196,24 @@ export async function getSqlSuggestions(db: DB): Promise< {
         tablesInfo: t,
         cols
       });
-      suggestions = suggestions.concat(cols.map(c => ({
-        label: { label: c.name, detail: "  " + c.data_type.toUpperCase(), description: t.name }, 
-        name: c.name, 
-        detail: "(column) ",// + (c.data_type === "ARRAY"? `${c.udt_name.slice(1)}[]` : c.data_type),
-        escapedParentName: t.escaped_identifier,
-        schema: t.schema,
-        parentName: t.name,
-        parentOID: t.oid,
-        escapedIdentifier: c.escaped_identifier,
-        insertText: c.escaped_identifier,
-        documentation: `${asListObject({ Table: t.escaped_identifier, Schema: t.schema, Comment: c.comment })}  \n` + 
-          asSQL(c.definition),
-        filterText: `${c.name} ${c.udt_name}`,
-        type: "column",
-        colInfo: c
-      })))
+      suggestions = suggestions.concat(cols.map(c => {
+        return {
+          label: getColumnSuggestionLabel(c, t.name),
+          name: c.name, 
+          detail: "(column) ",
+          escapedParentName: t.escaped_identifier,
+          schema: t.schema,
+          parentName: t.name,
+          parentOID: t.oid,
+          escapedIdentifier: c.escaped_identifier,
+          insertText: c.escaped_identifier,
+          documentation: `${asListObject({ Table: t.escaped_identifier, Schema: t.schema, Comment: c.comment })}  \n` + 
+            asSQL(c.definition),
+          filterText: `${c.name} ${c.udt_name}`,
+          type: "column",
+          colInfo: c
+        }
+      }))
     });
   
     suggestions = suggestions.concat(databases.map(r => ({ 
@@ -266,6 +270,17 @@ export async function getSqlSuggestions(db: DB): Promise< {
       schema: t.schema,
       dataTypeInfo: t,
       insertText: t.name.includes(" ")? t.udt_name.toUpperCase() : t.name, // use shorter notation where possible 
+      type: "dataType",
+    })));
+    suggestions = suggestions.concat(dataTypes.map(t => ({ 
+      label: { label: `${t.name}[]`, description: `ARRAY of ${t.desc}` }, 
+      name: `_${t.name}`, 
+      detail: `(data type)`,
+      documentation: `ARRAY of ${t.desc}  \n\nSchema:  \`${t.schema}\`  \n Type: \`${t.udt_name}[]\`  \n\n https://www.postgresql.org/docs/current/datatype.html`,
+      schema: t.schema,
+      dataTypeInfo: t,
+      insertText: `_${t.udt_name.toUpperCase()}`,
+      filterText: `${t.name} _${t.udt_name} ${t.udt_name}[]`,
       type: "dataType" 
     })));
      
@@ -306,11 +321,12 @@ export async function getSqlSuggestions(db: DB): Promise< {
         // detail: `   ${o.left_arg_type}`, 
         // description: o.description ,
         detail: `   ${o.description || ""}`, 
-        description: o.left_arg_type || "" 
+        description: o.left_arg_types?.join(", ") || "" 
       },
       operatorInfo: o,
+      sortText: PRIORITISED_OPERATORS.includes(o.name)? "a" : "b",
       documentation: o.description,
-      filterText: `${o.name} ${o.left_arg_type} ${o.description}`
+      filterText: `${o.name} ${o.left_arg_types?.join(", ")} ${o.description}`
     })));
    
     suggestions = suggestions.concat(publications.map(p => ({
@@ -356,14 +372,14 @@ export async function getSqlSuggestions(db: DB): Promise< {
     // });
    
     const settingSuggestions: SQLSuggestion[] = settings.map(s => ({
-      label: { label: s.name,  description: s.setting },
+      label: { label: s.name,  description: s.setting ?? "" },
       name: s.name,
       detail: "(setting)",
       type: "setting",
       insertText: s.name,
       settingInfo: s,
       documentation: `**${s.description}**  \n\n${
-        asListObject(pickKeys(s, ["category", "setting", "min_val", "max_val", "enumvals", "reset_val", "vartype", "pending_restart"]))
+        asListObject(pickKeys(s, ["category", "unit", "setting", "min_val", "max_val", "enumvals", "reset_val", "vartype", "pending_restart"]))
       } `, 
   
     }))
@@ -382,7 +398,16 @@ export async function getSqlSuggestions(db: DB): Promise< {
   }
 }
 
-
+export const getColumnSuggestionLabel = (c: { udt_name: string; data_type: string; name: string; }, tableName: string): ParsedSQLSuggestion["label"] => {
+  const dataType = c.udt_name.startsWith("_")? `${c.udt_name.slice(1)}[]` : 
+    c.data_type.toLowerCase().includes("timestamp")? c.udt_name : 
+    c.data_type;
+  return {
+    label: c.name, 
+    detail: "  " + dataType.toUpperCase(), 
+    description: tableName
+  };
+}
 
 
 const KEYWORD_TYPED = [

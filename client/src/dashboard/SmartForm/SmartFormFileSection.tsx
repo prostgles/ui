@@ -1,8 +1,10 @@
 
-import { AnyObject, TableInfo, DBSchemaTable, ValidatedColumnInfo, isObject, isDefined } from "prostgles-types";
+import type { AnyObject, TableInfo, DBSchemaTable, ValidatedColumnInfo} from "prostgles-types";
+import { isObject, isDefined } from "prostgles-types";
 import React from "react";
-import FileInput, { LocalMedia, Media } from "../../components/FileInput/FileInput";
-import { SmartFormProps, SmartFormState } from "./SmartForm";
+import type { LocalMedia, Media } from "../../components/FileInput/FileInput";
+import FileInput from "../../components/FileInput/FileInput";
+import type { SmartFormProps, SmartFormState } from "./SmartForm";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 
 
@@ -25,7 +27,7 @@ export const SmartFormFileSection = ({ db, table, newRow, defaultData, action, o
   const tableInfo = table.info;
   const { isFileTable } = table.info;
   const tableName = table.name;
-  let media: Media[] | undefined = usePromise(async () => {
+  const media: Media[] | undefined = usePromise(async () => {
     if(!isFileTable) throw "Must be a file table"
     if (action.type === "insert") {
       if (defaultData && isObject(defaultData) && !newRow) {
@@ -36,7 +38,7 @@ export const SmartFormFileSection = ({ db, table, newRow, defaultData, action, o
     } else {
       return newRow?.[tableName] ?? [row as Media];
     }
-  }, [row, db, mediaTableName, table]);
+  }, [row, mediaTableName, getThisRow, action.type, defaultData, isFileTable, newRow, tableName]);
 
   const fileManager = action.loading ? null : <FileInput
     key={tableName}

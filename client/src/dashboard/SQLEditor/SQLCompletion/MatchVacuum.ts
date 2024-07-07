@@ -1,16 +1,18 @@
 
-import { isInsideFunction } from "./MatchSelect";
+import { getParentFunction } from "./MatchSelect";
 import { getExpected } from "./getExpected";
-import { SQLMatcher, getKind } from "./registerSuggestions";
-import { KWD, withKWDs } from "./withKWDs";
+import type { SQLMatcher} from "./registerSuggestions";
+import { getKind } from "./registerSuggestions";
+import type { KWD} from "./withKWDs";
+import { withKWDs } from "./withKWDs";
 
 export const MatchVacuum: SQLMatcher = {
   match: cb => cb.ftoken?.textLC === "vacuum",
-  result: async ({ cb, ss, setS }) => {
+  result: async ({ cb, ss, setS, sql }) => {
 
-    const func = isInsideFunction(cb);
+    const func = getParentFunction(cb);
     if(func?.func.textLC === "vacuum"){
-      return withKWDs(Object.entries(options).map(([kwd, docs]) => ({ kwd, docs })), cb, getKind, ss, { notOrdered: true }).getSuggestion(",", ["(", ")"])
+      return withKWDs(Object.entries(options).map(([kwd, docs]) => ({ kwd, docs })), { cb, ss, setS, sql, opts: { notOrdered: true } }).getSuggestion(",", ["(", ")"])
     }
 
     if(cb.ltoken?.textLC === ")"){
@@ -27,7 +29,7 @@ export const MatchVacuum: SQLMatcher = {
         expects: ["table"],
         excludeIf: ["VACUUM"]
       }
-    ] satisfies KWD[], cb, getKind, ss).getSuggestion()
+    ] satisfies KWD[], { cb, ss, setS, sql }).getSuggestion()
   }
 }
 

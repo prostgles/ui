@@ -1,17 +1,19 @@
-import { ValidatedColumnInfo, AnyObject, TableInfo } from "prostgles-types";
+import type { ValidatedColumnInfo, AnyObject, TableInfo } from "prostgles-types";
 import RTComp from "../RTComp";
 import React from "react";
 import Loading from "../../components/Loading";
 import Btn from "../../components/Btn";
 import { mdiPencil, mdiResize } from "@mdi/js";
-import SmartForm, { SmartFormProps } from "../SmartForm/SmartForm";
+import type { SmartFormProps } from "../SmartForm/SmartForm";
+import SmartForm from "../SmartForm/SmartForm";
 import SmartFormField from "../SmartForm/SmartFormField/SmartFormField"; 
 import Checkbox from "../../components/Checkbox"; 
-import { DetailedFilterBase } from '../../../../commonTypes/filterUtils';
+import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
 import { Label } from "../../components/Label";
-import { Prgl } from "../../App";
-import { SmartCardListProps } from "./SmartCardList";
+import type { Prgl } from "../../App";
+import type { SmartCardListProps } from "./SmartCardList";
 import { getSmartCardColumns } from "./getSmartCardColumns";
+import { classOverride } from "../../components/Flex";
 
 type NestedSmartCardProps = Pick<SmartCardProps, "footer" | "excludeNulls">;
 type NestedSmartFormProps = Pick<SmartFormProps, "hideNullBtn" | "cannotBeNullMessage" | "enableInsert" | "insertBtnText" | "label" | "onSuccess">;
@@ -34,7 +36,7 @@ export type ParsedNestedFieldConfig = ParsedFieldConfig | FieldConfigTable;
 
 // export type BasicMedia = { content_type: string; name: string; url: string }
 
-export type FieldConfigBase<T = void> = {
+export type FieldConfigBase<T extends AnyObject | void = void> = {
   /* Is the column or table name */
   name: T extends AnyObject ? (keyof T | string) : string;
   style?: React.CSSProperties;
@@ -68,6 +70,8 @@ export type SmartCardProps<T extends AnyObject = any> = Pick<Prgl, "db" | "table
 
   className?: string;
   style?: React.CSSProperties;
+  contentClassname?: string;
+  contentStyle?: React.CSSProperties;
   variant?: "row" | "col" | "row-wrap";
   disableVariantToggle?: boolean;
 
@@ -231,7 +235,9 @@ export default class SmartCard<T extends AnyObject> extends RTComp<SmartCardProp
       tableName, onChange, className = "", style = {}, 
       disableVariantToggle = false, hideColumns, fieldConfigs: _fieldConfigs,
       footer = null, enableInsert = true, includeMedia, title, showViewEditBtn = true,
-      smartFormProps = {}, excludeNulls, onChanged, defaultData
+      smartFormProps = {}, excludeNulls, onChanged, defaultData,
+      contentClassname = "",
+      contentStyle = {},
     } = this.props;
 
     const { columns, editMode } = this.state;
@@ -307,7 +313,7 @@ export default class SmartCard<T extends AnyObject> extends RTComp<SmartCardProp
       /** Do not render if has nulls and no render and excludeNulls is true  */
       .filter(({ name, fc }) => !fc?.hideIf?.(defaultData[name], defaultData) && (fc?.render || !excludeNulls || defaultData[name] !== null))
       .map(({ name, fc, col: c }, i) => {
-        const labelText = fc?.label ?? c?.label ?? (fc?.renderValue? fc.name : null) ?? null;
+        const labelText = (fc?.render? fc.label : (fc?.label ?? c?.label ?? c?.name)) ?? null;
         return (
           <div 
             key={`${fc?.name ?? c?.name ?? labelText}`} 
@@ -315,7 +321,7 @@ export default class SmartCard<T extends AnyObject> extends RTComp<SmartCardProp
             style={{ maxHeight: "250px",  ...fc?.style}}
           >
             {labelText?.length? <Label size="small" variant="normal" title={c?.udt_name || ""} info={c?.hint}>{labelText}</Label> : null}
-            {/* <div className="font-12 text-gray-400 noselect" title={c?.udt_name || ""}>{fc?.label || c?.label}</div> */}
+            {/* <div className="font-12 text-2 noselect" title={c?.udt_name || ""}>{fc?.label || c?.label}</div> */}
             {fc?.render?.(defaultData[name], defaultData) || (<div className="font-16 text-0 mt-p5 o-auto">{fc?.renderValue?.(defaultData[name], defaultData) ?? (c && SmartFormField.renderValue(c, defaultData[name]))}</div>)}
           </div>
         )
@@ -324,8 +330,8 @@ export default class SmartCard<T extends AnyObject> extends RTComp<SmartCardProp
     return <>
       {popup}
       <div
-        className={"SmartCard card bg-0 relative " + variantClass + ` ${className} ` + (disableVariantToggle ? "" : " pointer ")}
-        style={{ padding: ".25em", ...style }} // padding: window.isMobileDevice? ".25em" : "1em", 
+        className={classOverride(`SmartCard card bg-color-0 relative ${variantClass} ${(disableVariantToggle ? "" : " pointer ")}`, className)}
+        style={{ padding: ".25em", ...style }}
         onClick={disableVariantToggle ? undefined : () => {
           const v = this.state.variant || "row";
           this.setState({
@@ -350,8 +356,8 @@ export default class SmartCard<T extends AnyObject> extends RTComp<SmartCardProp
         <div className="flex-col min-w-0 min-h-0 f-1">
           <div className="f-0">{title}</div>
           <div 
-            className={"SmartCardContent o-auto f-1 min-w-0 min-h-0 gap-p5 p-p5 parent-hover " + variantClass} 
-            style={{ columnGap: "1em"}}
+            className={classOverride(`SmartCardContent o-auto f-1 min-w-0 min-h-0 gap-p5 p-p5 parent-hover ${variantClass}`, contentClassname)} 
+            style={{ columnGap: "1em", ...contentStyle }}
           >
             {content}
           </div>

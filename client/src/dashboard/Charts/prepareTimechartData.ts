@@ -1,5 +1,5 @@
 import { scaleLinear } from "d3-scale";
-import { TimeChart, TimeChartLayer } from "./TimeChart";
+import type { TimeChart, TimeChartLayer } from "./TimeChart";
 
 export const prepareTimechartData = function(this: TimeChart){
 
@@ -24,7 +24,7 @@ export const prepareTimechartData = function(this: TimeChart){
   };
 
   const { w } = this.chart!.getWH();
-  const { layers } = this.props; //xPadding = 20, yPadding = 80 
+  const { layers } = this.props;
   if(!this.ref) {
     return;
   }
@@ -106,7 +106,6 @@ export const prepareTimechartData = function(this: TimeChart){
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if(minDate === null || maxDate === null || maxVal === null || minVal === null) {
-    // console.error("Null vals");
     minDate ??= 0;
     maxDate ??= Date.now(); 
     minVal ??= 0; 

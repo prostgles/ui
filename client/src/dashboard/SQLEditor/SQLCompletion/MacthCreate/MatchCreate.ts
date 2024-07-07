@@ -1,5 +1,6 @@
 import {
   CREATE_OR_REPLACE, CREATE_SNIPPETS,
+  type MinimalSnippet,
   PG_OBJECTS,
   createStatements,
   suggestSnippets
@@ -8,8 +9,9 @@ import { getUserOpts } from "../MatchAlter/MatchAlter";
 import { MatchSelect } from "../MatchSelect";
 import { ENCODINGS } from "../PSQL";
 import { getExpected } from "../getExpected";
-import { SQLMatcher } from "../registerSuggestions";
-import { withKWDs } from "../withKWDs";
+import { getKind, type SQLMatcher } from "../registerSuggestions";
+import { withKWDs, type KWD } from "../withKWDs";
+import { matchCreateView } from "./MatchCreateView";
 import { matchCreateIndex } from "./matchCreateIndex";
 import { matchCreatePolicy } from "./matchCreatePolicy";
 import { matchCreateRule } from "./matchCreateRule";
@@ -22,22 +24,26 @@ export const MatchCreate: SQLMatcher = {
     return cb.textLC.startsWith("create");
   },
   result: async (args) => {
-    const {cb, ss, setS, sql, getKind} = args;
+    const {cb, ss, setS, sql } = args;
     if(cb.textLC.startsWith("create trigger") || cb.textLC === "create or replace trigger"){
-      return matchCreateTrigger({ cb, getKind, ss, setS, sql })
+      return matchCreateTrigger({ cb, ss, setS, sql })
     }
 
     if(cb.textLC.startsWith("create index") || cb.textLC === "create or replace index"){
-      return matchCreateIndex({ cb, getKind, ss, setS, sql })
+      return matchCreateIndex({ cb, ss, setS, sql })
     }
 
-    if(cb.textLC.startsWith("create view") || cb.textLC.startsWith("create or replace view")){
-      if(cb.prevTokens.some(t => t.textLC === "select")){
-        return MatchSelect.result({cb, ss, setS, sql, getKind});
-      }
-      if(cb.prevLC.endsWith(" as") && cb.prevTokens.length < 5){
-        return suggestSnippets([{ label: "SELECT" }]);
-      }
+    const createViewStartingTexts = [
+      "create view", 
+      "create or replace view",
+      "create materialized view",
+      "create or replace materialized view",
+      "create recursive view", 
+      "create or replace recursive view",
+    ];
+    if(createViewStartingTexts.some(t => cb.textLC.startsWith(t))){
+      const res = await matchCreateView(args);
+      if(res) return res;
     }
 
     const expect = cb.tokens[1]?.textLC;
@@ -62,7 +68,7 @@ export const MatchCreate: SQLMatcher = {
       if(l1token?.textLC === "database"){
         return suggestSnippets([{ label: "WITH" }])
       }
-      const { getSuggestion } = withKWDs(CREATE_DB_KWDS, cb, getKind, ss, { notOrdered: true });
+      const { getSuggestion } = withKWDs(CREATE_DB_KWDS, { sql, cb, ss, setS, opts: { notOrdered: true } });
       return getSuggestion();
     }
 
@@ -74,7 +80,7 @@ export const MatchCreate: SQLMatcher = {
 
     const whatToReplace = prevLC.startsWith("create or replace") && PG_OBJECTS.filter(what => prevLC.endsWith(what.toLowerCase())).sort((a, b) => b.length - a.length)[0];
     if(whatToReplace){
-      if (whatToReplace === "FUNCTION") {
+      if (["FUNCTION", "PROCEDURE"].includes(whatToReplace)) {
         return {
           suggestions: ss.filter(s => s.type === "function").map(s => ({
             ...s,
@@ -106,7 +112,7 @@ export const MatchCreate: SQLMatcher = {
 
     const isInsideCreateTable = prevLC.startsWith("create table");
     if (isInsideCreateTable) {
-      return (await matchCreateTable({ cb, getKind, setS, sql, ss })) ?? { suggestions: [] };
+      return await matchCreateTable({ cb, setS, sql, ss });
     } 
     if ((prevLC.includes("create role") || prevLC.includes("create user"))) {
       if(prevTokens.length <= 2){
@@ -117,7 +123,7 @@ export const MatchCreate: SQLMatcher = {
 
     if(cb.prevLC === "create"){
       
-      return suggestSnippets(CREATE_SNIPPETS.map(s => ({ ...s, kind: getKind((s.label as string)?.split(" ")[0]?.toLowerCase?.() as any) })));
+      return suggestSnippets(CREATE_SNIPPETS.map(s => ({ ...s, kind: getKind((s.label as string).split(" ")[0]?.toLowerCase?.() as any) })));
     } else if(cb.prevTokens.length === 2 || cb.prevLC.endsWith("exists") && cb.ltoken?.type === "operator.sql"){
 
       return suggestSnippets([{ label: `$${expect}_name`  }])

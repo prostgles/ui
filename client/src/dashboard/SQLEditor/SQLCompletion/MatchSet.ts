@@ -2,15 +2,16 @@ import { omitKeys } from "../../../utils";
 import { asListObject } from "../SQLEditorSuggestions";
 import { suggestSnippets } from "./CommonMatchImports";
 import { getExpected } from "./getExpected";
-import { SQLMatcher } from "./registerSuggestions";
-import { KWD, suggestKWD, withKWDs } from "./withKWDs";
-import { SQLHandler } from "prostgles-types";
+import { getKind, type SQLMatcher } from "./registerSuggestions";
+import type { KWD} from "./withKWDs";
+import { suggestKWD, withKWDs } from "./withKWDs";
+import type { SQLHandler } from "prostgles-types";
 
 export const MatchSet: SQLMatcher = {
   match: ({ ftoken }) => ftoken?.textLC === "set" || ftoken?.textLC === "show",
   result: async (args) => {
 
-    const { cb, getKind, ss, setS: settingSuggestions, sql } = args;
+    const { cb, ss, setS: settingSuggestions, sql } = args;
     const { ltoken } = cb; 
     const _suggestKWD = (vals: string[], sortText?: string) => suggestKWD(getKind, vals, sortText);
 
@@ -72,7 +73,7 @@ export const MatchSet: SQLMatcher = {
         dependsOn: d.label,
         ...omitKeys(d, ["label"]),
       }))
-    ] satisfies KWD[], cb, getKind, ss).getSuggestion()
+    ] satisfies KWD[], { cb, ss, setS: settingSuggestions, sql }).getSuggestion()
 
   }
 }

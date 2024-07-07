@@ -1,11 +1,9 @@
-import { mdiAccount, mdiTable } from "@mdi/js";
-import React, { useState } from 'react';
-import { ExtraProps } from "../../App";
+import { mdiMagnify } from "@mdi/js";
+import { usePromise } from "prostgles-client/dist/react-hooks";
+import React from "react";
+import type { ExtraProps } from "../../App";
 import Btn from "../../components/Btn";
 import PopupMenu from "../../components/PopupMenu";
-import { Table } from "../../components/Table/Table";
-import { usePromise } from "../ProstglesMethod/hooks";
-import { getUnknownColInfo } from "../W_Table/tableUtils/getEditColumn";
 import SmartTable from "../SmartTable";
 
 type UserStatsProps = Pick<ExtraProps, "dbs" | "dbsTables" | "dbsMethods" | "theme">;
@@ -21,52 +19,42 @@ export const UserStats = ({ dbs, dbsTables, dbsMethods, theme }: UserStatsProps)
         count: number;
       }[]>
   );
-
-  const [viewAllUsers, setViewAllUsers] = useState(false);
-
+ 
+  const userCount = existingUserStats?.reduce((a, v) => a + +v.count, 0) ?? 0
 
   return <PopupMenu 
-    className="UserStats ml-auto"
+    className="UserStats"
     button={
-      <Btn iconPath={mdiAccount} color="action" size="small" title="Total number of users">
-        {existingUserStats?.reduce((a, v) => a + +v.count, 0) ?? 0}
-      </Btn>
+      <Btn 
+        title={`Search ${userCount} users`}
+        iconPath={mdiMagnify} 
+        color="action" 
+        size="small" 
+      />
     }
     onClickClose={false}
     positioning="center"
     clickCatchStyle={{ opacity: .5 }}
-    title={viewAllUsers? "All users" : "User type stats"}
-    footerButtons={viewAllUsers? undefined : [
+    title={"All users"}
+    footerButtons={[
       { 
-        label: "View/Edit users",
-        iconPath: mdiTable,
-        color: "action",
-        variant: "filled",
-        onClick: () => setViewAllUsers(true)
+        label: "Close",
+        onClickClose: true,
       }
     ]}
-    onClose={() => {
-      setViewAllUsers(false)
-    }}
     render={() => (
       <div className="UserStats flex-col gap-1 pb -1 o-auto" style={{ minWidth: "250px"}}>
-        {viewAllUsers? <SmartTable
+        <SmartTable
           theme={theme}
           key={"selectedRuleId"} 
           db={dbs as any} 
           methods={dbsMethods}
+          filter={[{ fieldName: "type", type: "$in", value: [], disabled: true }]}
           tableName="users" 
           tables={dbsTables} 
           allowEdit={true} 
           showInsert={true}
-        />  :
-        <Table 
-          cols={[
-            getUnknownColInfo("type", "User type", "string", false),
-            getUnknownColInfo("count", "User count", "string", true)
-          ]}
-          rows={existingUserStats ?? []}
-        />}
+        />
       </div>
 
     )} 

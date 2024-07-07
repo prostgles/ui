@@ -1,4 +1,5 @@
 import {
+  mdiAccountMultiple,
   mdiCog, mdiContentSaveCogOutline,
   mdiDatabaseSearch,
   mdiFlash,
@@ -8,44 +9,41 @@ import {
   mdiSyncCircle,
   mdiViewColumnOutline
 } from "@mdi/js";
-import { TableHandlerClient } from 'prostgles-client/dist/prostgles';
-import React from 'react';
-import Tabs, { TabItems } from '../../../components/Tabs';
-import RTComp from '../../RTComp';
+import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import React from "react";
+import type { TabItems } from "../../../components/Tabs";
+import Tabs from "../../../components/Tabs";
+import RTComp from "../../RTComp";
  
-import { SQLHandler, TableInfo, ParsedJoinPath } from "prostgles-types";
+import type { ParsedJoinPath, TableInfo } from "prostgles-types";
 import FormField from "../../../components/FormField/FormField";
-import { ColumnConfigWInfo, W_TableProps, } from "../W_Table";
+import type { ColumnConfigWInfo, W_TableProps, } from "../W_Table";
  
-import { OnAddChart, WindowSyncItem } from '../../Dashboard/dashboardUtils';
+import type { OnAddChart, WindowSyncItem } from "../../Dashboard/dashboardUtils";
  
-import Btn from '../../../components/Btn';
-import ErrorComponent from '../../../components/ErrorComponent';
-import { FlexCol } from '../../../components/Flex';
-import CodeExample from '../../CodeExample';
-import { CommonWindowProps } from "../../Dashboard/Dashboard";
+import ErrorComponent from "../../../components/ErrorComponent";
+import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import { SQLSmartEditor } from "../../SQLEditor/SQLSmartEditor";
-import ColumnsMenu from '../ColumnMenu/ColumnsMenu';
-import { getTableFilter } from "../getTableData";
-import { getSort } from "../tableUtils/tableUtils";
+import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
+import { ColumnsMenu } from "../ColumnMenu/ColumnsMenu";
+import { AutoRefreshMenu } from "./AutoRefreshMenu";
+import { W_TableMenu_AccessRules } from "./W_TableMenu_AccessRules";
 import { W_TableMenu_Constraints } from "./W_TableMenu_Constraints";
+import { W_TableMenu_CurrentQuery } from "./W_TableMenu_CurrentQuery";
 import { W_TableMenu_DisplayOptions } from "./W_TableMenu_DisplayOptions";
 import { W_TableMenu_Indexes } from "./W_TableMenu_Indexes";
 import { W_TableMenu_Policies } from "./W_TableMenu_Policies";
 import { W_TableMenu_TableInfo } from "./W_TableMenu_TableInfo";
 import { W_TableMenu_Triggers } from "./W_TableMenu_Triggers";
-import { ColumnsConfig, getColumnsConfig } from "./getColumnsConfig";
-import { getTableMeta } from "./getTableMeta";
-import { AutoRefreshMenu } from "./AutoRefreshMenu";
-import { getTableSelect } from "../tableUtils/getTableSelect";
-import ButtonGroup from "../../../components/ButtonGroup";
+import { getAndFixWColumnsConfig } from "./getAndFixWColumnsConfig";
+import { getTableMeta, type W_TableInfo } from "./getTableMeta";
 
  
 export type W_TableMenuProps = Pick<W_TableProps, "workspace" | "prgl" | "externalFilters" | "joinFilter"> & {
   onAddChart?: OnAddChart;
   w: WindowSyncItem< "table">;
   onLinkTable?: (tableName: string, path: ParsedJoinPath[]) => any;
-  cols: ColumnConfigWInfo[]; //Pick<ValidatedColumnInfo, "name" | "label" | "tsDataType" | "udt_name">[];
+  cols: ColumnConfigWInfo[];
   suggestions: CommonWindowProps["suggestions"];
   onClose: () => any;
 };
@@ -58,8 +56,8 @@ export type RefreshOptions =  {
     throttleSeconds: number; 
   }
 }
-const QUERY_TYPE = ["SQL", "Prostgles API"] as const;
 export type W_TableMenuState = {
+  schemaAge?: number;
   indexes?: {
     indexdef: string;
     indexname: string;
@@ -79,7 +77,7 @@ export type W_TableMenuState = {
   error?: any;
   initError?: any;
   hint?: string;
-  columnsConfig?: ColumnsConfig;
+  columnsConfig?: ColumnConfig[];
   infoQuery?: {
     label: string;
     query: string;
@@ -90,15 +88,17 @@ export type W_TableMenuState = {
   tableInfo?: TableInfo;
 
   linkTablePath?: string[];
-
-  currentQuery?: string;
-  currentQueryType: typeof QUERY_TYPE[number]
 }
 
 type D = {
   w?: WindowSyncItem<"table">;
 }
 
+
+export type W_TableMenuMetaProps = W_TableMenuProps & {
+  tableMeta: W_TableInfo | undefined;
+  onSetQuery: (newQuery: W_TableMenuState["query"]) => void;
+};
 
 export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
 
@@ -116,7 +116,6 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
     infoQuery: undefined,
     autoRefreshSeconds: undefined,
     tableMeta: undefined,
-    currentQueryType: "SQL"
   }
 
   d: D = {
@@ -128,9 +127,9 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
   }
 
   getTableInfo(){
-    const { prgl:{db}, w } = this.props;
+    const { prgl: { db, dbs, databaseId }, w } = this.props;
     if(w.table_name && db.sql){
-      getTableMeta(db, w.table_name, w.table_oid).then(async tableMeta => {
+      getTableMeta(db, dbs, databaseId, w.table_name, w.table_oid).then(async tableMeta => {
         this.setState({ tableMeta })
       }).catch(initError => {
         console.error(initError)
@@ -152,11 +151,6 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
         this.setData({ w }, { w: delta });
       });
       this.getTableInfo();
-      // if(!w.columns || !Array.isArray(w.columns)){
-
-      // updateWCols(w, cols.map(n => ({ name: n.name, tsDataType: n.tsDataType , show: true })));
-      //   w.$update({ columns:  })
-      // }
     }
 
 
@@ -171,6 +165,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
       w,
       prgl:{
         db, 
+        dbs,
         tables,
       },
       suggestions,
@@ -184,7 +179,6 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
     if(initError){
       return <div className="p-1 relative">
         <ErrorComponent error={initError} />
-        
       </div>
     }
 
@@ -204,7 +198,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
         suggestions={suggestions}
         onSuccess={() => {
           query.onSuccess?.();
-          this.setState({ query: undefined })
+          this.setState({ query: undefined, schemaAge: Date.now() })
           this.getTableInfo();
         }}
         onCancel={() => {
@@ -233,12 +227,19 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
 
         "Columns": {
           leftIconPath: mdiViewColumnOutline,
-          content: <ColumnsMenu w={w} db={db} tables={tables} onClose={onClose} suggestions={suggestions} />
+          content: <ColumnsMenu 
+            nestedColumnOpts={undefined} 
+            w={w} 
+            db={db} 
+            tables={tables} 
+            onClose={onClose} 
+            suggestions={suggestions} 
+          />
         },
 
         "Data Refresh": {
           leftIconPath: mdiSyncCircle,
-          style: (w.options.refresh?.type || "None") === "None" ? {} : { color: "var(--blue-600)" },
+          style: (w.options.refresh?.type || "None") === "None" ? {} : { color: "var(--active)" },
           content: <AutoRefreshMenu w={w} db={db} />
         },
 
@@ -270,48 +271,18 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
             leftIconPath: mdiShieldAccount,
             disabledText: db.sql? undefined : "Not enough privileges",
             content: <W_TableMenu_Policies {...commonProps } />
-            
+          },
+          
+          "Access rules": {
+            label: "Access rules " + tableMeta.accessRules.length,
+            leftIconPath: mdiAccountMultiple,
+            disabledText: (dbs.access_control as any).find? undefined : "Not enough privileges",
+            content: <W_TableMenu_AccessRules { ...commonProps } />
           },
 
           "Current Query": {
             leftIconPath: mdiScript,
-            content: <FlexCol>
-              <ButtonGroup 
-                value={this.state.currentQueryType} 
-                options={QUERY_TYPE} 
-                onChange={currentQueryType => this.setState({ currentQueryType, currentQuery: "" })} 
-              />
-              <Btn 
-                onClickPromise={async () => {
-                  const filter = getTableFilter(w, this.props);
-                  const { select } = await getTableSelect(w, tables, db, filter);
-                  const orderBy = getSort(tables, w);
-                  let currentQuery = "";
-                  const selectParams = { select, orderBy }
-                  if(this.state.currentQueryType === "SQL"){
-                    //@ts-ignore
-                    currentQuery = (await db[tableName]?.find?.(filter, selectParams, { returnQuery: true })) as unknown as string;
-                  } else {
-                    currentQuery = `await db['${w.table_name}'].find(\n  ${JSON.stringify(filter, null, 2)}, \n  ${JSON.stringify(selectParams, null, 2)}\n)`
-                  }
-                  this.setState({ currentQuery });
-                }}
-                variant="faded"
-                color="action"
-                disabledInfo={this.state.currentQuery? "Already shown" : undefined}
-              >Show current query</Btn>
-              
-              {this.state.currentQuery && 
-                <CodeExample
-                  style={{
-                    minWidth: "500px",
-                    minHeight: "500px"
-                  }}
-                  language={this.state.currentQueryType === "SQL"? "sql" : "javascript"}
-                  value={this.state.currentQuery}
-                />
-              }
-            </FlexCol>
+            content: <W_TableMenu_CurrentQuery {...commonProps } />
           }
   
         }),
@@ -332,8 +303,9 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
       >
         {queryForm}
         <Tabs
+          key={this.state.schemaAge}
           variant="vertical"
-          contentClass={" min-h-0 max-h-100v flex-col min-w-0 " + (l1Key !== "Columns"? " p-1 " : "") + (l1Key === "Columns"? " " : " ")}
+          contentClass={"max-w-700 min-h-0 max-h-100v flex-col min-w-0 " + (l1Key !== "Columns"? " p-1 " : "") + (l1Key === "Columns"? " " : " ")}
           items={l1Opts ?? {}}
           compactMode={window.isMobileDevice}
           activeKey={l1Key}
@@ -345,7 +317,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
               this.d.w.$update({ options: { viewAs: { type: "card" , maxCardWidth: cardOptions?.maxCardWidth ?? "700px" } }}, { deepMerge: true });
               
             } else if(l1Key === "Columns"){
-              const columnsConfig = await getColumnsConfig(db[tableName] as TableHandlerClient, w, true)
+              const columnsConfig = await getAndFixWColumnsConfig(tables, w)
               this.setState({ columnsConfig });
 
             } else if(l1Key === "Filter"){
@@ -371,49 +343,3 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
 }
 
 
-
-
-export type ColumnConstraint = {
-  constraint_name: string;
-  table_name: string;
-  column_name: string;
-  data_type: string;
-  constraint_type: "PRIMARY KEY" | "FOREIGN KEY" | "CHECK" | "UNIQUE";
-  delete_rule: string | null;
-  update_rule: string | null;
-  foreign_table_schema: string | null;
-  foreign_table_name: string | null;
-  foreign_column_name: string | null;
-}
-
-export const getColumnConstraints = (tableName: string, columnName: string, sql: SQLHandler): Promise<ColumnConstraint[]> => {
-  return sql(`
-    SELECT DISTINCT 
-      trim(constraint_type) as constraint_type, tc.constraint_name,
-      tc.table_schema, 
-      tc.table_name, 
-      kcu.column_name, 
-      c.data_type,
-      rc.delete_rule,
-      rc.update_rule,
-      ccu.table_schema AS foreign_table_schema,
-      ccu.table_name AS foreign_table_name,
-      ccu.column_name AS foreign_column_name 
-    FROM 
-      information_schema.table_constraints AS tc 
-      JOIN information_schema.key_column_usage AS kcu
-        ON tc.constraint_name = kcu.constraint_name
-        AND tc.table_schema = kcu.table_schema
-      JOIN information_schema.constraint_column_usage AS ccu
-        ON ccu.constraint_name = tc.constraint_name
-        AND ccu.table_schema = tc.table_schema
-      JOIN information_schema.columns AS c 
-        ON c.table_schema = tc.table_schema
-        AND tc.table_name = c.table_name AND kcu.column_name = c.column_name
-      LEFT JOIN information_schema.referential_constraints rc 
-        ON rc.constraint_name = tc.constraint_name 
-        AND tc.table_schema = rc.constraint_schema
-      WHERE tc.table_name = $1 AND c.column_name = $2
-  `, [tableName, columnName], { returnType: "rows" }) as any;
-
-}

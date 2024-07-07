@@ -1,8 +1,8 @@
 import { dateAsYMD, DAY, HOUR, MINUTE, MONTH, roundToNearest, SECOND, toDateStr, YEAR } from "../Charts";
 import { getAge } from "../../../../commonTypes/utils";
-import { XYFunc } from "./TimeChart";
-import { DateExtent } from "./getTimechartBinSize";
-import { ChartedText, TextMeasurement } from "./CanvasChart";
+import type { XYFunc } from "./TimeChart";
+import type { DateExtent } from "./getTimechartBinSize";
+import type { ChartedText, TextMeasurement } from "./CanvasChart";
 import { isDefined } from "prostgles-types"; 
 import { getCssVariableValue } from "./onRenderTimechart";
 
@@ -54,30 +54,30 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
       id: "100 Year",
       getStart: (d: Date) => new Date(roundToNearest(d.getFullYear(), 100, 3000), 0 ,1),
       dateDelta: 100 * MONTH * 12,
-      getLabel: (d: Date) => toDateStr(d, { year:'numeric' }),
+      getLabel: (d: Date) => toDateStr(d, { year:"numeric" }),
     },
     {
       id: "10 Year",
       getStart: (d: Date) => new Date(roundToNearest(d.getFullYear(), 10, 3000), 0 ,1),
       dateDelta: 10 * MONTH * 12,
-      getLabel: (d: Date) => toDateStr(d, { year:'numeric' }),
+      getLabel: (d: Date) => toDateStr(d, { year:"numeric" }),
     },
     {
       id: "Yearly",
       getStart: (d: Date) => new Date(d.getFullYear(), 0, 1),
       dateDelta: MONTH * 12,
-      getLabel: (d: Date) => toDateStr(d, { year:'numeric' }),
+      getLabel: (d: Date) => toDateStr(d, { year:"numeric" }),
     },
     {
       id: "Quarter Yearly",
       getStart: (d: Date) => new Date(d.getFullYear(), 0, 1),
       dateDelta: MONTH * 3,
-      getLabel: (d: Date) => toDateStr(d, { month: 'short' }),
+      getLabel: (d: Date) => toDateStr(d, { month: "short" }),
     },{
       id: "Monthly",
       getStart: (d: Date) => new Date(d.getFullYear(), d.getMonth() ,1),
       dateDelta: MONTH,
-      getLabel: (d: Date) => toDateStr(d, { month: 'short' }),
+      getLabel: (d: Date) => toDateStr(d, { month: "short" }),
     },{
       id: "Weekly",
       dateDelta:  DAY * 7,
@@ -257,26 +257,26 @@ export function getTimeAxisTicks(args: GetTimeTicksOpts): ChartedText[] {
   const lt: ChartedText = getTickText({
       id: "lt",
       textAlign: "start",
-      text: toDateStr(lDate, { month: 'short' }),
+      text: toDateStr(lDate, { month: "short" }),
       coords: [leftX, y_top] 
     }), 
     lb: ChartedText = getTickText({
       id: "lb",
       textAlign: "start",
-      text: toDateStr(lDate, { year: 'numeric' }), 
+      text: toDateStr(lDate, { year: "numeric" }), 
       font: "600 14px Arial",
       coords: [leftX, y_bottom] 
     }),
     rt: ChartedText = getTickText({
       id: "lt",
       textAlign: "end",
-      text: toDateStr(rDate, { month: 'short' }), 
+      text: toDateStr(rDate, { month: "short" }), 
       coords: [rightX, y_top] 
     }), 
     rb: ChartedText = getTickText({
       id: "lb",
       textAlign: "end",
-      text: toDateStr(rDate, { year: 'numeric' }), 
+      text: toDateStr(rDate, { year: "numeric" }), 
       font: "600 14px Arial",
       coords: [rightX, y_bottom] 
     });

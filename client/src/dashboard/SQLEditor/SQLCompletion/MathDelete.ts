@@ -1,4 +1,4 @@
-import { SQLMatcher } from "./registerSuggestions";
+import type { SQLMatcher } from "./registerSuggestions";
 import { withKWDs } from "./withKWDs";
 
 const KWDS = [
@@ -10,9 +10,9 @@ const KWDS = [
 
 export const MatchDelete: SQLMatcher = {
   match: cb => cb.prevLC.startsWith("delete"),
-  result: async ({cb, ss, getKind}) => {
+  result: async ({ cb, ss, setS, sql }) => {
 
-    const { getSuggestion } = withKWDs(KWDS,cb,getKind, ss);
+    const { getSuggestion } = withKWDs(KWDS, { cb, ss, setS, sql });
 
     return getSuggestion()
 

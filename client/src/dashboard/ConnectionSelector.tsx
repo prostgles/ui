@@ -2,9 +2,8 @@ import React from "react"
 import Select from "../components/Select/Select";
 import { getServerInfoStr } from "../pages/Connections/Connections";
 import { mdiDatabase } from "@mdi/js";
-import { Connection } from "../pages/NewConnection/NewConnnection";
-import { DBS } from "./Dashboard/DBS";
-import { usePromise } from "./ProstglesMethod/hooks";
+import type { Connection } from "../pages/NewConnection/NewConnnection";
+import type { DBS } from "./Dashboard/DBS"; 
 
 type P = {
   dbs: DBS;
@@ -13,13 +12,13 @@ type P = {
 }
 
 export const ConnectionSelector = ({ connection, dbs, location }: P) => {
-
-  const connections = usePromise(() => dbs.connections.find(), [dbs]);
-  return  <Select 
+  const { data: connections } = dbs.connections.useFind();
+  return  <Select
     title="Switch database"
+    data-command="ConnectionSelector"
     fullOptions={(connections ?? []).map(c => ({
       key: c.id,
-      label: c.name ?? c.db_name ?? c.id,
+      label: c.name || c.db_name || c.id,
       subLabel: getServerInfoStr(c, true),
     }))}
     onChange={cId => {
@@ -31,9 +30,8 @@ export const ConnectionSelector = ({ connection, dbs, location }: P) => {
     btnProps={{
       iconPath: mdiDatabase,
       iconPosition: "left",
+      variant: "faded",
       style: {
-        color: "var(--gray-100)",
-        background: "var(--gray-700)",
         flex: 1,
         minWidth: 0,
         maxWidth: "fit-content",

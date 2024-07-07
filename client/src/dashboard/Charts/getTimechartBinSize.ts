@@ -1,5 +1,5 @@
 import { DAY, HOUR, MILLISECOND, MINUTE, SECOND, YEAR } from "../Charts";
-import { TimeChartBinSize } from "../W_TimeChart/W_TimeChartMenu";
+import type { TimeChartBinSize } from "../W_TimeChart/W_TimeChartMenu";
 
 
 type Bin = { 

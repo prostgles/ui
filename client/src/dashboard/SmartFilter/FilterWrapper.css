@@ -1,0 +1,7 @@
+.filter-bg {
+  background: #f1faff;
+}
+
+.dark-theme .filter-bg {
+  background: #002445;
+}

@@ -5,8 +5,8 @@ import { FlexCol, FlexRow } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
 import Select from "../../../components/Select/Select";
 import SmartCardList from "../../SmartCard/SmartCardList";
-import { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
-import { W_TableInfo } from "./getTableMeta";
+import type { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
+import type { W_TableInfo } from "./getTableMeta";
 
 type P = W_TableMenuProps & {
   tableMeta: W_TableInfo | undefined;
@@ -50,7 +50,7 @@ export const W_TableMenu_Constraints = ({ tableMeta, onSetQuery, w, prgl }: P) =
             name: "definition",
             label: "",
             render: (definition, row) => <div className="ws-pre-line">
-              <span className="text-gray-400">
+              <span className="text-2">
                 ALTER TABLE {tableName} 
                 <br></br>
                 ADD CONSTRAINT {row.conname} 

@@ -88,15 +88,24 @@ export type UpdateRule = {
         filterDetailed: GroupedDetailedFilter;
         fields: FieldFilter;
     }[];
+    forcedDataFrom?: "InsertRule";
+    checkFilterFrom?: "InsertRule";
+    fieldsFrom?: "SelectRule" | "InsertRule";
+    forcedFilterFrom?: "SelectRule" | "DeleteRule";
+    filterFieldsFrom?: "SelectRule" | "DeleteRule";
 };
 export type InsertRule = {
     fields: FieldFilter;
     forcedDataDetail?: ForcedData[];
     checkFilterDetailed?: GroupedDetailedFilter;
+    checkFilterFrom?: "UpdateRule";
+    forcedDataFrom?: "InsertRule";
 };
 export type DeleteRule = {
     filterFields: FieldFilter;
     forcedFilterDetailed?: GroupedDetailedFilter;
+    filterFieldsFrom?: "SelectRule" | "UpdateRule";
+    forcedFilterFrom?: "SelectRule" | "UpdateRule";
 };
 export type DBSSchema = {
     [K in keyof DBSchemaGenerated]: Required<DBSchemaGenerated[K]["columns"]>;
@@ -152,13 +161,16 @@ export declare const parseFullFilter: (filter: GroupedDetailedFilter, context: C
 } | {
     $or: AnyObject[];
 } | undefined;
-export declare const parseForcedFilter: (rule: TableRules[keyof TableRules], context: ContextDataObject | undefined, columns: string[] | undefined) => {
-    forcedFilter: {
-        $and: AnyObject[];
-    } | {
-        $or: AnyObject[];
-    };
-} | undefined;
+type ParsedFilter = {
+    $and: AnyObject[];
+} | {
+    $or: AnyObject[];
+};
+type ParsedRuleFilters = {
+    forcedFilter?: ParsedFilter;
+    checkFilter?: ParsedFilter;
+};
+export declare const parseCheckForcedFilters: (rule: TableRules[keyof TableRules], context: ContextDataObject | undefined, columns: string[] | undefined) => ParsedRuleFilters | undefined;
 export type ContextDataObject = {
     user: DBSSchema["users"];
 };

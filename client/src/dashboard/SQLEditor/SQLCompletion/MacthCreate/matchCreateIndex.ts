@@ -1,12 +1,13 @@
 import { suggestSnippets } from "../CommonMatchImports";
 import { getExpected } from "../getExpected";
-import { isInsideFunction } from "../MatchSelect";
-import { SQLMatchContext } from "../registerSuggestions";
-import { KWD, suggestKWD, withKWDs } from "../withKWDs";
+import { getParentFunction } from "../MatchSelect";
+import { getKind, type SQLMatchContext } from "../registerSuggestions";
+import type { KWD} from "../withKWDs";
+import { suggestKWD, withKWDs } from "../withKWDs";
 
 
-export const matchCreateIndex = ({ cb, ss, getKind }: SQLMatchContext) => {
-  const insideF = isInsideFunction(cb);
+export const matchCreateIndex = ({ cb, ss, setS, sql }: SQLMatchContext) => {
+  const insideF = getParentFunction(cb);
   if(insideF){
     if(cb.ltoken?.text === "," || cb.ltoken?.text === "("){
       return getExpected("column", cb, ss);
@@ -73,7 +74,7 @@ ${indexInfoUrl}` },
         label: "gist", 
         docs: `GiST indexes are not a single kind of index, but rather an infrastructure within which many different indexing strategies can be implemented. Accordingly, the particular operators with which a GiST index can be used vary depending on the indexing strategy (the operator class). As an example, the standard distribution of PostgreSQL includes GiST operator classes for several two-dimensional geometric data types, which support indexed queries using these operators:
       
-      <<   &<   &>   >>   <<|   &<|   |&>   |>>   @>   <@   ~=   &&
+      <<   &<   &>   >>   <<|   &<|   |&>   |>>   @>   <@   ~=   &&  <->
       
 ${indexInfoUrl}` 
       }, 
@@ -136,5 +137,5 @@ ${indexInfoUrl}`
     },
     { kwd: "WHERE", expects: "condition", dependsOn: "USING" },
   ]
-  return withKWDs(kwds, cb, getKind, ss).getSuggestion();  
+  return withKWDs(kwds, { cb, ss, setS, sql }).getSuggestion();  
 }

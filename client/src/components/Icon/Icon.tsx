@@ -1,5 +1,5 @@
 import * as React from "react";
-import { FunctionComponent, CSSProperties } from "react";
+import type { FunctionComponent, CSSProperties } from "react";
 
 export type IconProps = {
   id?: string;
@@ -18,7 +18,7 @@ export type IconProps = {
   inStack?: boolean;
 } & React.AriaAttributes
 
-export { default as Stack } from './Stack';
+export { default as Stack } from "./Stack";
 
 let idCounter = 0;
 
@@ -28,7 +28,7 @@ export const Icon: FunctionComponent<IconProps> = React.forwardRef<SVGSVGElement
   title = null,
   description = null,
   size = 1,
-  color = 'currentColor',
+  color = "currentColor",
   horizontal = false,
   vertical = false,
   rotate = 0,
@@ -63,7 +63,7 @@ export const Icon: FunctionComponent<IconProps> = React.forwardRef<SVGSVGElement
   if (color !== null) {
     pathStyle.fill = color;
   }
-  let pathElement = (
+  const pathElement = (
     <path
       d={path}
       style={pathStyle}
@@ -71,8 +71,8 @@ export const Icon: FunctionComponent<IconProps> = React.forwardRef<SVGSVGElement
   );
   let transformElement = pathElement;
   if (transform.length > 0) {
-    style.transform = transform.join(' ');
-    style.transformOrigin = 'center';
+    style.transform = transform.join(" ");
+    style.transformOrigin = "center";
     if (inStack) {
       transformElement = (
         <g style={style}>
@@ -83,14 +83,14 @@ export const Icon: FunctionComponent<IconProps> = React.forwardRef<SVGSVGElement
     }
   }
   let spinElement = transformElement;
-  const spinSec = spin === true || typeof spin !== 'number' ? 2 : spin;
+  const spinSec = spin === true || typeof spin !== "number" ? 2 : spin;
   let inverse = !inStack && (horizontal || vertical);
   if (spinSec < 0) { inverse = !inverse }
   if (spin) {
     spinElement = (
       <g style={{
-          animation: `spin${inverse ? '-inverse' : ''} linear ${Math.abs(spinSec)}s infinite`,
-          transformOrigin: 'center'
+          animation: `spin${inverse ? "-inverse" : ""} linear ${Math.abs(spinSec)}s infinite`,
+          transformOrigin: "center"
         }}>
         {transformElement}
         {!(horizontal || vertical || rotate !== 0) && (
@@ -103,15 +103,15 @@ export const Icon: FunctionComponent<IconProps> = React.forwardRef<SVGSVGElement
     return spinElement;
   }
   let ariaLabelledby;
-  let labelledById = `icon_labelledby_${id}`;
-  let describedById = `icon_describedby_${id}`;
+  const labelledById = `icon_labelledby_${id}`;
+  const describedById = `icon_describedby_${id}`;
   let role;
   if (title) {
     ariaLabelledby = description
       ? `${labelledById} ${describedById}`
       : labelledById;
   } else {
-    role = 'presentation';
+    role = "presentation";
     if (description) {
       throw new Error("title attribute required when description is set");
     }
@@ -126,7 +126,7 @@ export const Icon: FunctionComponent<IconProps> = React.forwardRef<SVGSVGElement
       {...rest}>
       {title && <title id={labelledById}>{title}</title>}
       {description && <desc id={describedById}>{description}</desc>}
-      {!inStack && spin && (
+      {spin && (
         inverse
           ? <style>{"@keyframes spin-inverse { from { transform: rotate(0deg) } to { transform: rotate(-360deg) } }"}</style>
           : <style>{"@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }"}</style>

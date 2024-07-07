@@ -1,13 +1,14 @@
 
-import { Publish, PublishParams } from "prostgles-server/dist/PublishParser/PublishParser"; 
-import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { Publish, PublishParams } from "prostgles-server/dist/PublishParser/PublishParser"; 
+import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import { getKeys } from "prostgles-types"; 
 import { connectionChecker } from "."; 
 import { getACRules } from "./ConnectionManager/ConnectionManager";
 import { isDefined } from "../../commonTypes/filterUtils";
-import { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
+import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
+import { getPasswordHash } from "./authConfig/authUtils";
 
-export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omit<DBSchemaGenerated["connections"]["columns"], "user_id">): Promise<Publish<DBSchemaGenerated>> => {
+export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise<Publish<DBSchemaGenerated>> => {
         
   const { dbo: db, user, db: _db, socket } = params;
 
@@ -19,13 +20,13 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
   const { id: user_id, } = user;
 
   /** Admin users are always allowed everything */
-  const acs = isAdmin? undefined : await getACRules(db, user as any);
+  const acs = isAdmin? undefined : await getACRules(db, user);
   
   const createEditDashboards = isAdmin || acs?.some(({ dbsPermissions }) => dbsPermissions?.createWorkspaces);
 
   const publishedWspIDs = acs?.flatMap(ac => ac.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds).filter(isDefined) || []; 
 
-  const dashboardConfig: Publish<DBSchemaGenerated> = (["windows", "links", "workspaces"] as const)
+  const dashboardMainTables: Publish<DBSchemaGenerated> = (["windows", "links", "workspaces"] as const)
     .reduce((a, v) => ({
       ...a, 
       [v]: {
@@ -71,17 +72,21 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
         if(!user || otherUsers.length){
           throw "Cannot update: update filter must match exactly one user";
         }
-        const { password } = (await dbx.sql!("SELECT crypt(${password}, ${id}::text) as password", { ...update, id: user.id }, { returnType: "row" }))!
-        if(typeof password !== "string") throw "Not ok";
+        if(!update.password){
+          throw "Password cannot be empty";
+        }
+        // const { password: hashedPassword } = (await dbx.sql!("SELECT crypt(${password}, ${id}::text) as password", { ...update, id: user.id }, { returnType: "row" }))!
+        const hashedPassword = getPasswordHash(user, update.password);
+        if(typeof hashedPassword !== "string") throw "Not ok";
         if(mustUpdate){
-          await dbx.users.update(filter, { password })
+          await dbx.users.update(filter, { password: hashedPassword })
         }
         return {
           ...update,
-          password
+          password: hashedPassword
         } 
       }
-      update.last_updated ??= Date.now();
+      update.last_updated ??= Date.now().toString();
       return update  
     }
     return validateFunc;
@@ -92,7 +97,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
   let dashboardTables: Publish<DBSchemaGenerated> = {
 
     /* DASHBOARD */
-    ...(dashboardConfig as object),
+    ...(dashboardMainTables as object),
     access_control_user_types: isAdmin && "*",
     credentials: isAdmin && {
       select: {
@@ -106,7 +111,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
       update: "*",
     },
     credential_types: isAdmin && { select: "*" },
-    access_control: isAdmin? "*" : { select: { fields: "*", forcedFilter: { $existsJoined: userTypeFilter } } },
+    access_control: isAdmin? "*" : undefined,// { select: { fields: "*", forcedFilter: { $existsJoined: userTypeFilter } } },
     database_configs: isAdmin? "*" : {
       select: { fields: { id: 1 } }
     },
@@ -140,12 +145,13 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
     users: isAdmin? {
       select: { fields: { "2fa": 0, password: 0 } },
       insert: {
-        fields: { is_online: 0, created: 0, "2fa": 0, last_updated: 0 },
-        // validate: async (row, _dbo) => validate({ update: row, filter: row }, _dbo),
-        postValidate: async ({ row, dbx, localParams }) => { await getValidateAndHashUserPassword(true)({ localParams, update: row, dbx, filter: { id: row.id }}) },
+        fields: { created: 0, "2fa": 0, last_updated: 0 },
+        postValidate: async ({ row, dbx, localParams }) => { 
+          await getValidateAndHashUserPassword(true)({ localParams, update: row, dbx, filter: { id: row.id }}) 
+        },
       },
       update: {
-        fields: { is_online: 0 },
+        fields: "*",
         validate: getValidateAndHashUserPassword(),
         dynamicFields: [{
           /* For own user can only change these fields */
@@ -193,7 +199,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
     },
     magic_links: isAdmin && {
       insert: {
-        fields: { magic_link: 0 }
+        fields: { magic_link: 0, magic_link_used: 0 }
       },
       select: true,
       update: true,
@@ -215,7 +221,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
           session_max_age_days: 1,
         },
         postValidate: async ({ row, dbx: dbsTX }) => {
-          if(!row.allowed_ips?.length){
+          if(!row.allowed_ips.length){
             throw "Must include at least one allowed IP CIDR"
           }
           // const ranges = await Promise.all(
@@ -236,7 +242,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>, con: Omi
     }
   }
 
-  const curTables = Object.keys(dashboardTables || {});
+  const curTables = Object.keys(dashboardTables);
   // @ts-ignore
   const remainingTables = getKeys(db).filter(k => db[k]?.find).filter(t => !curTables.includes(t));
   const adminExtra = remainingTables.reduce((a, v) => ({ ...a, [v]: "*" }), {});

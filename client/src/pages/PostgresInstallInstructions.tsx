@@ -1,16 +1,16 @@
 import React from "react"
-import CodeEditor from "../dashboard/CodeEditor";
+import CodeEditor from "../dashboard/CodeEditor/CodeEditor";
 
 
 type P = {
   platform: 
-  | 'aix'
-  | 'darwin'
-  | 'freebsd'
-  | 'linux'
-  | 'openbsd'
-  | 'sunos'
-  | 'win32'
+  | "aix"
+  | "darwin"
+  | "freebsd"
+  | "linux"
+  | "openbsd"
+  | "sunos"
+  | "win32"
 };
 
 export const PostgresInstallInstructions = ({ platform }: P) => {

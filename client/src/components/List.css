@@ -32,11 +32,10 @@ ul {
   text-align: start;
 }
 
-.list-comp li:not(.no-hover):hover,
-.list-comp li:not(.no-hover):active,
-.list-comp li:not(.no-hover):focus,
-/* .list-comp:focus-within .ul-search-list:not(:hover) > *:first-child:not(.no-data), */
-.list-comp li.selected {
+.list-comp li:not(.no-hover, :active, :focus):hover 
+/* .list-comp li:not(.no-hover):active, */
+/* .list-comp li:not(.no-hover):focus { */
+{
   background-color: var(--li-hover-bg);
   border: none;
   outline: none;

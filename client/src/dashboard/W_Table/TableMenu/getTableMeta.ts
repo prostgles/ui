@@ -1,4 +1,7 @@
-import { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import { ACCESS_CONTROL_SELECT } from "../../AccessControl/AccessControl";
+import type { DBS } from "../../Dashboard/DBS";
 import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
 
 export type W_TableInfo = {
@@ -34,9 +37,12 @@ export type W_TableInfo = {
     function_def: string;
     disabled: boolean;
   }[];
+  accessRules:(DBSSchema["access_control"] & {
+    userTypes: string[];
+  })[]
 }
 
-export const getTableMeta = async (db: DBHandlerClient, tableName: string, tableOid: number): Promise<W_TableInfo> => {
+export const getTableMeta = async (db: DBHandlerClient, dbs: DBS, database_id: number, tableName: string, tableOid: number): Promise<W_TableInfo> => {
 
   if (!db.sql) throw "db.sql not allowed"
  
@@ -49,14 +55,14 @@ export const getTableMeta = async (db: DBHandlerClient, tableName: string, table
           INNER JOIN pg_catalog.pg_namespace nsp
           ON nsp.oid = connamespace
           WHERE nsp.nspname = 'public'
-              AND rel.relname = ` + "${tableName};",
+              AND format('%I', rel.relname) = \${tableName};`,
       { tableName },
       { returnType: "rows" }
     );
     const indexes: any = await db.sql(`
         SELECT tablename, indexname, indexdef
         FROM pg_indexes
-        WHERE schemaname = 'public' AND tablename=` + "${tableName}",
+        WHERE schemaname = 'public' AND format('%I', tablename) = \${tableName}`,
       { tableName },
       { returnType: "rows" }
     );
@@ -69,7 +75,7 @@ export const getTableMeta = async (db: DBHandlerClient, tableName: string, table
           pg_size_pretty(pg_relation_size(relid)) as "Actual Size",
           (SELECT COUNT(*) FROM ${tableName} ) as "Row count"
         FROM pg_catalog.pg_statio_user_tables 
-        WHERE relname =`+ "${tableName}" + `
+        WHERE format('%I', relname) = \${tableName}
         ORDER BY pg_total_relation_size(relid) DESC;
       `,
       { tableName },
@@ -87,7 +93,7 @@ export const getTableMeta = async (db: DBHandlerClient, tableName: string, table
         FROM  information_schema.triggers t
         LEFT JOIN pg_catalog.pg_trigger pt
         ON t.trigger_name = pt.tgname
-        WHERE event_object_table = `+ "${tableName}" + `
+        WHERE format('%I', event_object_table) = \${tableName}
         ORDER BY event_object_table
         ,event_manipulation
       `,
@@ -117,7 +123,7 @@ export const getTableMeta = async (db: DBHandlerClient, tableName: string, table
           JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE c.relkind in ('m', 'v', 'r', 'f', 'p')
         AND n.nspname = "current_schema"()
-        AND c.relname = \${tableName}
+        AND format('%I', c.relname) = \${tableName}
       `,
       { tableName },
       { returnType: "row" }
@@ -125,6 +131,28 @@ export const getTableMeta = async (db: DBHandlerClient, tableName: string, table
 
     const viewDefinition = await db.sql("SELECT pg_get_viewdef(${tableOid})", { tableOid }, { returnType: "value" });
 
+
+    const filter = {
+      $and: [
+        { database_id },
+        // {
+        //   $or: [
+        //     { "dbPermissions->>customTables": tableName },
+        //     { "dbPermissions->>type": "All views/tables" },
+        //     { "dbPermissions->>type": "Run SQL" },
+        //   ]
+        // }
+      ],
+    } 
+    const nonFilteredRules = await dbs.access_control.find(filter, ACCESS_CONTROL_SELECT);
+    const rules = nonFilteredRules.filter(r => r.dbPermissions.type !== "Custom" || r.dbPermissions.customTables.find(t => t.tableName === tableName));
+    const accessRules: W_TableInfo["accessRules"] = rules.map(r => {
+      const userTypes = r.access_control_user_types.flatMap(d => d.ids.flat())
+      return {
+        ...r,
+        userTypes,
+      }
+    })
     return {
       constraints,
       indexes,
@@ -134,6 +162,7 @@ export const getTableMeta = async (db: DBHandlerClient, tableName: string, table
       ...type,
       policiesCount,
       viewDefinition,
+      accessRules,
     }
 
   } catch (e) {

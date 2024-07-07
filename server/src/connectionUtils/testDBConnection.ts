@@ -1,14 +1,14 @@
 import { getConnectionDetails } from "./getConnectionDetails";
-import { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
-import { validateConnection } from "./validateConnection";
+import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import { type ConnectionInfo, validateConnection } from "./validateConnection";
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
-import { isSuperUser } from 'prostgles-server/dist/Prostgles';
 
-import pgPromise from 'pg-promise';
+import pgPromise from "pg-promise";
 const pgpNoWarnings = pgPromise({ noWarnings: true });
 const pgp = pgPromise();
-import pg from "pg-promise/typescript/pg-subset";
+import type pg from "pg-promise/typescript/pg-subset";
 import { tryCatch } from "prostgles-types";
+import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
 
 const NO_SSL_SUPPORT_ERROR = "The server does not support SSL connections";
 
@@ -24,7 +24,7 @@ const NO_SSL_SUPPORT_ERROR = "The server does not support SSL connections";
  *  verify-ca	  only try an SSL connection, and verify that the server certificate is issued by a trusted CA.
  *  verify-full	only try an SSL connection, verify that the server certificate is issued by a trusted CA and that the server hostname matches that in the certificate.
  */
-export const testDBConnection = (_c: DBSchemaGenerated["connections"]["columns"], expectSuperUser = false, check?: (c: pgPromise.IConnected<{}, pg.IClient>) => any): Promise<{ 
+export const testDBConnection = (_c: ConnectionInfo, expectSuperUser = false, check?: (c: pgPromise.IConnected<{}, pg.IClient>) => any): Promise<{ 
   prostglesSchemaVersion: string | undefined; 
   connectionInfo: pg.IConnectionParameters<pg.IClient>;
   canCreateDb: boolean | undefined;
@@ -47,7 +47,7 @@ export const testDBConnection = (_c: DBSchemaGenerated["connections"]["columns"]
       .then(async function (c: pgPromise.IConnected<{}, pg.IClient>) {
         
         if(expectSuperUser){
-          const usessuper = await isSuperUser(c as any);
+          const usessuper = await getIsSuperUser(c as any);
           if(!usessuper){
             reject("Provided user must be a superuser");
             return 
@@ -85,18 +85,20 @@ export const testDBConnection = (_c: DBSchemaGenerated["connections"]["columns"]
             )
             .then(res => ({ ...res, isSSLModeFallBack: true })));
         }
-        if(process.env.IS_DOCKER && (con.db_host === "localhost" || con.db_host === "127.0.0.1")){
+        const localHosts = ["host.docker.internal", "localhost", "127.0.0.1"];
+        if(process.env.IS_DOCKER && localHosts.includes(con.db_host)){
           errRes += [
             `\nHint: to connect to a localhost database from docker you need to:\n `,
             `1) Uncomment extra_hosts in docker-compose.yml:  `,
             `  extra_hosts:`,
             `    - "host.docker.internal:host-gateway"`,
-            `2) postgresql.conf contains:`,
+            `2) Ensure the target database postgresql.conf contains:`,
             `  listen_addresses = '*'`,
-            `3) pg_hba.conf contains:`,
-            `  host  all   all   0.0.0.0/0 md5`,
-            `4) Ensure the user you connect with has an encrypted password. `,
-            `5) use "host.docker.internal" instead of "localhost" in the above connection details`,
+            `3) Ensure the target database pg_hba.conf contains:`,
+            `  host  all   all   0.0.0.0/0  md5`,
+            `4) Restart the postgresql server to apply the changes.`,
+            `5) Ensure the user you connect with has an encrypted password. `,
+            `6) use "host.docker.internal" instead of "localhost" in the above connection details`,
           ].join("\n");
         }
         reject(errRes)

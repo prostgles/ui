@@ -1,28 +1,33 @@
-import React from 'react';
+import React from "react";
 import "./FormField.css";
 
 import ErrorComponent from "../ErrorComponent";
-import Select, { FullOption } from '../Select/Select'; 
-import Btn, { FileBtn } from '../Btn';
-import List from '../List';
-import Checkbox from '../Checkbox';
-import Icon from "@mdi/react";
-import { mdiAlertCircleOutline, mdiClose } from '@mdi/js';
+import type { FullOption } from "../Select/Select";
+import Select from "../Select/Select"; 
+import Btn, { FileBtn } from "../Btn";
+import List from "../List";
+import Checkbox from "../Checkbox"; 
+import { mdiAlertCircleOutline, mdiClose, mdiFullscreen } from "@mdi/js";
 import { InfoRow } from "../InfoRow";
-import CodeEditor, { CodeEditorProps } from "../../dashboard/CodeEditor";
+import type { CodeEditorProps } from "../../dashboard/CodeEditor/CodeEditor";
+import CodeEditor from "../../dashboard/CodeEditor/CodeEditor";
 import { generateUniqueID } from "../FileInput/FileInput";
 import { onFormFieldKeyDown } from "./onFormFieldKeyDown";
 import SmartFormField from "../../dashboard/SmartForm/SmartFormField/SmartFormField";
 import { ChipArrayEditor } from "../../dashboard/SmartForm/ChipArrayEditor";
-import { isDefined, isObject, ValidatedColumnInfo } from "prostgles-types";
-import { Label, LabelProps } from "../Label";
-import { TestSelectors } from "../../Testing";
+import type { ValidatedColumnInfo } from "prostgles-types";
+import { isDefined, isObject } from "prostgles-types";
+import type { LabelProps } from "../Label";
+import { Label } from "../Label";
+import type { TestSelectors } from "../../Testing";
 import { classOverride } from "../Flex";
+import { Icon } from "../Icon/Icon";
+import Popup from "../Popup/Popup";
 
 const INPUT_HINT_WRAPPER_CLASS = "input-hint-wrapper";
 const INPUT_WRAPPER_CLASS = "input-wrapper";
 
-export type FormFieldProps = Pick<TestSelectors, "data-command"> & {
+export type FormFieldProps = TestSelectors & {
   onChange?: (val: string | number | any, e?: any) => void;
   onInput?: (e: React.FormEvent<HTMLInputElement>) => void;
   error?: any;
@@ -65,6 +70,7 @@ export type FormFieldProps = Pick<TestSelectors, "data-command"> & {
   autoResize?: boolean;
   inputClassName?: string;
   style?: React.CSSProperties;
+  wrapperStyle?: React.CSSProperties;
   inputStyle?: React.CSSProperties;
   title?: string;
   multiSelect?: boolean;
@@ -88,6 +94,7 @@ type FormFieldState = {
   suggestions?: string[];
   options?: string[];
   numLockAlert?: boolean;
+  fullScreen?: boolean;
 }
 export default class FormField extends React.Component<FormFieldProps, FormFieldState> {
 
@@ -158,9 +165,9 @@ export default class FormField extends React.Component<FormFieldProps, FormField
       preverr = prevProps.error;
     if(this.rootDiv && (err || preverr) && err !== preverr){
       if((this.rootDiv as any).scrollIntoViewIfNeeded){
-        (this.rootDiv as any).scrollIntoViewIfNeeded({ block: 'end',  behavior: 'smooth' });
+        (this.rootDiv as any).scrollIntoViewIfNeeded({ block: "end",  behavior: "smooth" });
       } else {
-        this.rootDiv.scrollIntoView({ block: 'end',  behavior: 'smooth' });
+        this.rootDiv.scrollIntoView({ block: "end",  behavior: "smooth" });
       }
     }
     this.setResizer();
@@ -225,13 +232,13 @@ export default class FormField extends React.Component<FormFieldProps, FormField
   cursorPosition?: number = 0;
   inputRef?: HTMLInputElement;
   inputSelStart?: number;
+  id?: string;
   render(): React.ReactNode {
     const { 
       onChange, 
       label, 
       value,
       defaultValue,
-      id = this.props.type === "checkbox"? generateUniqueID() : undefined, // id used to ensure checkbox label click works as expected 
       required = false, 
       type = "text", // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input
       autoComplete = "on", // https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/autocomplete 
@@ -257,7 +264,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
       options = this.state.options,
       fullOptions,
       name = this.props.type,
-      inputProps: inpp = {},
+      inputProps: _inputProps = {},
       hideClearButton = false,
       maxWidth = "400px",
       rawValue: rval,
@@ -267,6 +274,9 @@ export default class FormField extends React.Component<FormFieldProps, FormField
       arrayType,
       rightContentAlwaysShow,
     } = this.props;
+
+    this.id ??= this.props.id ?? generateUniqueID();
+    const id = this.id;
 
     const inputContent = this.props.inputContent ?? (arrayType? <ChipArrayEditor 
       elemTsType={arrayType.tsDataType}
@@ -295,7 +305,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
     const disablePressStyle: React.CSSProperties = { pointerEvents: "none", touchAction: "none" };
 
     if((type === "checkbox") && readOnly){
-      wrapperStyle = { ...wrapperStyle, backgroundColor: "var(--gray-100)", ...disablePressStyle };
+      wrapperStyle = { ...wrapperStyle, backgroundColor: "var(--bg-color-2)", ...disablePressStyle };
     }
 
     let valProp: any = {
@@ -308,11 +318,8 @@ export default class FormField extends React.Component<FormFieldProps, FormField
 
     let inptClass = " font-semibold ";// "shadow-sm text-ellipsis ";
     if(type !== "checkbox"){
-      // inptClass += readOnly? " bg-1" : " bg-0 ";
-      // inptClass += " bg-0 ";
       wrapperStyle = {
         ...wrapperStyle,
-        // border: "none"
       }
     }
     
@@ -343,6 +350,10 @@ export default class FormField extends React.Component<FormFieldProps, FormField
       ref: e => {
         if(e){
           this.inputRef = e;
+          //@ts-ignore
+          e.forceDemoValue = (val: any) => {
+            this.props.onChange?.(val);
+          }
         }
       },
       required,
@@ -353,12 +364,12 @@ export default class FormField extends React.Component<FormFieldProps, FormField
       ...(type !=="file"? valProp : undefined),
       autoComplete,
       onInput,
-      placeholder, //: placeholder ?? (rawValue === null? "NULL" : ""),
+      placeholder,
       name,
       /** Why doesn't this happen by default ?! */
       ...({ autoCorrect: "off", autoCapitalize: "off" }),
-      ...inpp,
-      style: { ...extraInptStyle, ...inputStyle, ...inpp.style },
+      ..._inputProps,
+      style: { ...extraInptStyle, ...inputStyle, ..._inputProps.style },
       onChange: ({ currentTarget }) => {
         this.cursorPosition = currentTarget.selectionStart!;
         return this.onChange(currentTarget)
@@ -368,14 +379,14 @@ export default class FormField extends React.Component<FormFieldProps, FormField
         if(numLockAlert !== this.state.numLockAlert){
           this.setState({ numLockAlert })
         }
-        inpp.onKeyDown?.(e);
+        _inputProps.onKeyDown?.(e);
         const node = e.target as HTMLInputElement;
         if(!node.placeholder && !/^-?\d+$/.test(value)){
           node.placeholder = "Numbers only";
         }
       } : undefined,
-      onFocus: !inpp.onFocus? undefined : e => {
-        inpp.onFocus?.(e)
+      onFocus: !_inputProps.onFocus? undefined : e => {
+        _inputProps.onFocus?.(e)
       },
       ...(!type.startsWith("file")? {} : {
         onDragOver: e => {
@@ -412,12 +423,12 @@ export default class FormField extends React.Component<FormFieldProps, FormField
 
     const inputFinalStyle = {
       ...(inputProps.type !== "file"? { padding: window.isMobileDevice? "2px 6px" : ".5em .5em 4px .5em" } : { paddingBottom: "4px" }),  
-      minHeight: window.isLowWidthScreen? "28px" : "42px", 
+      minHeight: window.isLowWidthScreen? "36px" : "42px", 
       ...inputProps.style,
       ...(rval === null && { fontStyle: "italic" })
     }
     
-    const input = inputContent? inputContent : 
+    const inputNode = inputContent? inputContent : 
       asJSON? <CodeEditor 
         key={asJSON.schemas?.length? asJSON.schemas[0]!.id : undefined}
         className={inputProps.className}
@@ -428,6 +439,8 @@ export default class FormField extends React.Component<FormFieldProps, FormField
           flex: 1, 
           resize: "vertical", 
           overflow: "auto",
+          border: "unset",
+          borderRight: `1px solid var(--text-4)`,
           ...inputProps.style, 
         }}
         options={{ 
@@ -455,7 +468,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
       readOnly? <div className="pr-p5 py-p5 font-16 ta-left o-auto" style={{ fontWeight: 500, maxHeight: "30vh" }}>
         {SmartFormField.renderValue(undefined, rawValue)}
       </div> :
-      asTextArea? <textarea {...inputProps as any } className={classOverride(inputProps.className ?? "", "bg-1 text-0")} style={textareaStyle} /> : 
+      asTextArea? <textarea {...inputProps as any } className={classOverride(inputProps.className ?? "", "bg-color-2 text-0")} style={textareaStyle} /> : 
       <input 
         {...inputProps} 
         { ...( rval === null && { placeholder: "NULL" })}
@@ -498,10 +511,24 @@ export default class FormField extends React.Component<FormFieldProps, FormField
 
     const labelString = isObject(label)? label.label : label;
     const isEditableSelect = !readOnly && Array.isArray(options ?? fullOptions);
+
+    if(this.state.fullScreen && asJSON){
+      return <Popup
+        title={label}
+        positioning="fullscreen"
+        onClose={() => {
+          this.setState({ fullScreen: false });
+        }}
+      >
+        {inputNode}
+      </Popup>
+    }
+
     return (
       <div className={`form-field trigger-hover min-w-0 ${className} ${disabledInfo? "disabled" : ""}`}
-        data-command={this.props['data-command']}
+        data-command={isEditableSelect? undefined : this.props["data-command"]}
         data-label={labelString}
+        data-key={this.props["data-key"]}
         style={style}
         ref={e => {
           if(e) this.rootDiv = e;
@@ -514,7 +541,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
         title={disabledInfo}
         onKeyDown={e => onFormFieldKeyDown.bind(this)(e, selectSuggestion)}
       >
-        <div className={((type !== "checkbox" && !asColumn)? " ai-center " : " " ) + (!asColumn? " flex-row-wrap " : " flex-col ")}
+        <div className={`trigger-hover ${((type !== "checkbox" && !asColumn)? " ai-center " : " " ) + (!asColumn? " flex-row-wrap " : " flex-col ")}`}
           title={title}
           style={{ 
             ...(asJSON? { minWidth: "min(400px, 90vw)" } : {}),
@@ -522,14 +549,24 @@ export default class FormField extends React.Component<FormFieldProps, FormField
           }}
         >
           {!!label && isObject(label)? <Label className="mb-p25" {...label} variant="normal" style={{ zIndex:1 }}/> :
-            <label htmlFor={id} className={"main-label ta-left noselect text-1 " + (id? " pointer " : " ") + labelClass} 
+            <label htmlFor={id} 
+              className={"main-label ta-left noselect text-0p75 flex-row ai-center " + (id? " pointer " : " ") + labelClass} 
               style={{ 
                 flex: 0.5, 
+                justifyContent: "space-between",
                 ...((readOnly) && disablePressStyle),
                 ...labelStyle 
               }}
             >
               {label}
+              {asJSON && <Btn 
+                title="Click to toggle full screen" 
+                className="show-on-trigger-hover" 
+                iconPath={mdiFullscreen} 
+                onClick={() => {
+                  this.setState({ fullScreen: !this.state.fullScreen })
+                }}
+              />}
             </label>
           }
 
@@ -552,17 +589,19 @@ export default class FormField extends React.Component<FormFieldProps, FormField
                   ...wrapperStyle, 
                   maxWidth: asTextArea? "100%" : maxWidth , 
                   ...(asJSON && { minHeight: "42px" }),
-                  ...(readOnly && !asJSON && { border: "unset", boxShadow: "unset" })
+                  ...(readOnly && !asJSON && { border: "unset", boxShadow: "unset" }),
+                  ...this.props.wrapperStyle,
                 }}
               >
                 {isEditableSelect? 
                   <Select 
-                    className="FormField_Select noselect f-1 bg-0"
+                    className="FormField_Select noselect f-1 bg-color-0"
                     style={{ 
                       fontSize: "16px", 
                       fontWeight: 500, 
                       paddingLeft: "6px" 
                     }}
+                    data-command={this.props["data-command"]}
                     variant="div"
                     fullOptions={(options?.map(key => ({ key }))) ?? fullOptions ?? []}
                     onSearch={!this.props.onSearchOptions? undefined : (term) => this.searchOptions(term)} 
@@ -573,7 +612,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
                     labelAsValue={labelAsValue} 
                   />
                   :
-                  input
+                  inputNode
                 }
                 {(!this.props.onSuggest || !suggestions)? null : 
                   <List 
@@ -581,7 +620,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
                     selectedValue={suggestions[activeSuggestionIdx]}
                     items={suggestions.map(key => ({ 
                       key,
-                      node: ((key as any) === null? <i>NULL</i> : key.trim() === ''? <i>Empty</i> : null),
+                      node: ((key as any) === null? <i>NULL</i> : key.trim() === ""? <i>Empty</i> : null),
                       onPress: e => {
                         selectSuggestion(key);
                       }
@@ -593,8 +632,8 @@ export default class FormField extends React.Component<FormFieldProps, FormField
                 }
                 
                 {Boolean(rightIcons1 || rightIcons2) && 
-                  <div className={`RightIcons bg-0 ${rightContentAlwaysShow? "" : "show-on-trigger-hover"} flex-row ai-start jc-center ` + 
-                      ((type !== "checkbox" && !asTextArea && !inputContent)? "  bl b-gray-300 "  :" ") 
+                  <div className={`RightIcons bg-color-0 ${rightContentAlwaysShow? "" : "show-on-trigger-hover"} flex-row ai-start jc-center ` + 
+                      ((type !== "checkbox" && !asTextArea && !inputContent)? "  bl b-color "  :" ") 
                     }
                     style={{ right: "2px", top: 0, bottom: 0 }}
                   >
@@ -604,7 +643,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
                 }
                 {!!error && !type.toLowerCase().includes("date") && // do not show for date types because it occludes the picker drop down trigger
                   <Icon 
-                    className="text-red-500 absolute bg-0" 
+                    className="text-danger absolute bg-color-0" 
                     path={mdiAlertCircleOutline} 
                     style={{ width: "1.5rem", top: "2px", bottom: "2px", height: "calc(100% - 4px)", right: "6px", pointerEvents: "none" }} 
                   />
@@ -620,7 +659,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
             {!rightContent? null : <div className={`RightContent  ${rightContentAlwaysShow? "" : "show-on-trigger-hover"} f-0 as-start `} style={{ alignSelf: "start" }}>{rightContent}</div>}
           </div>
           {hint && 
-            <p className="ta-left text-gray-400 m-0 text-sm noselect ws-pre-line" 
+            <p className="ta-left text-2 m-0 text-sm noselect ws-pre-line" 
               onClick={e => { 
                 const input = e.currentTarget.closest(`.${INPUT_HINT_WRAPPER_CLASS}`)?.querySelector<HTMLInputElement>(`.${INPUT_WRAPPER_CLASS} > *`);
                 input?.click() 

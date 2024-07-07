@@ -1,9 +1,10 @@
-import { AnyObject, ParsedJoinPath, reverseParsedPath } from "prostgles-types";
+import type { AnyObject, ParsedJoinPath} from "prostgles-types";
+import { reverseParsedPath } from "prostgles-types";
 import { getFinalFilter } from "../../../commonTypes/filterUtils";
 import { isDefined } from "../utils";
-import { Link, WindowData, WindowSyncItem } from "./Dashboard/dashboardUtils";
+import type { Link, WindowData, WindowSyncItem } from "./Dashboard/dashboardUtils";
 import W_Map from "./W_Map/W_Map";
-import { ActiveRow } from "./W_Table/W_Table";
+import type { ActiveRow } from "./W_Table/W_Table";
 import { getTimeChartFilters } from "./W_TimeChart/getTimeChartLayersWithBins";
 
 
@@ -65,7 +66,7 @@ export const getJoinFilters = (
         let chartFilters: AnyObject[] = [];
         if(otherW.type === "map"){
           if(otherW.options.extent){
-            chartFilters = !otherW.options.filterExtent? [] : [W_Map.extentToFilter(otherW.options.extent, chartCol)]
+            chartFilters = otherW.options.extentBehavior !== "filterToMapBounds"? [] : [W_Map.extentToFilter(otherW.options.extent, chartCol)]
           }
         } else {
           chartFilters = getTimeChartFilters(otherW, chartCol);

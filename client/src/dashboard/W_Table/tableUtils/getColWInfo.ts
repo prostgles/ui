@@ -1,6 +1,6 @@
-import { CommonWindowProps } from "../../Dashboard/Dashboard";
-import { WindowData } from "../../Dashboard/dashboardUtils";
-import { ColumnConfigWInfo } from "../W_Table";
+import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+import type { WindowData } from "../../Dashboard/dashboardUtils";
+import type { ColumnConfigWInfo } from "../W_Table";
 
 export const getColWInfo = (
   tables: CommonWindowProps["tables"],

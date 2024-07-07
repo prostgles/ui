@@ -1,7 +1,6 @@
 const { resolve } = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-// const CopyWebpackPlugin = require("copy-webpack-plugin");
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const path = require('path');
 const webpack = require('webpack');
@@ -31,14 +30,40 @@ const getLoader = () => {
   ];
 }
 
+
+      /** Added m?js rules to ensure deck.gl community works. 
+       *  Error: failed to resolve only because it was resolved as fully specified (probably because the origin is strict EcmaScript Module, 
+       * e. g. a module with javascript mimetype, a '*.mjs' file, or a '*.js' file where the package.json contains '"type": "module"'). 
+       * 
+      {
+        test: /\.m?js/,
+        type: "javascript/auto",
+      },
+      {
+        test: /\.m?js/,
+        resolve: {
+          fullySpecified: false,
+        },
+      },
+      {
+        // webpackl 4 fix for broken turf module: https://github.com/uber/@deck.gl-community/editable-layers/issues/64
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: 'javascript/auto'
+      },
+      
+      */
 module.exports = {
   target: ["web", 'es2020'],
   resolve: {
-    extensions: [".js", ".jsx", ".ts", ".tsx"],
+    extensions: [
+      ".js", ".jsx", ".ts", ".tsx"
+    ],
   },
   context: resolve(__dirname, "../src"),
   module: {
     rules: [
+
       {
         test: /\.css$/,
         include: APP_DIR,
@@ -49,13 +74,7 @@ module.exports = {
           { loader: "postcss-loader" }
           // { loader: require.resolve('css-loader'), options: { importLoaders: 1, sourceMap: false } },
         ],
-        // use: ['style-loader', "css-loader"],
-
-      },
-			// {
-			// 	test: /\.ttf$/,
-			// 	use: ['file-loader']
-			// },
+      }, 
       {
 				test: /\.ttf$/,
         include: MONACO_DIR,
@@ -87,22 +106,13 @@ module.exports = {
     ],
   },
   plugins: [
-    // new CopyWebpackPlugin({
-    //   patterns: [
-    //     // { from: "public", to: "." },
-    //     { from: "../node_modules/monaco-editor/min/vs/", to: "vs" },
-    //     !PRODUCTION && { from: "../node_modules/monaco-editor/min-maps/vs/", to: "min-maps/vs" }
-    //   ].filter(Boolean)
-    // }),
     new HtmlWebpackPlugin({ template: "index.html.ejs" }),
-    new MiniCssExtractPlugin({
-      // Options similar to the same options in webpackOptions.output
-      // both options are optional
+    new MiniCssExtractPlugin({ 
       filename: 'static/css/[name].[contenthash:8].css',
       chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
     }),
     new MonacoWebpackPlugin({ 
-      // publicPath: "/monaco/" 
+      languages: ["typescript", "sql", "pgsql", "json"]
     }),
     new webpack.ProgressPlugin({
       activeModules: false,
@@ -121,14 +131,7 @@ module.exports = {
   output: {
     clean: true, // Clean the output directory before emit.
   },
-  /**
-   * This means to not use imports and expect these globally
-   */
-  // externals: {
-  //   react: "React",
-  //   "react-dom": "ReactDOM",
-  // },
   performance: {
-    hints: false,
+    hints: false, 
   },
 };

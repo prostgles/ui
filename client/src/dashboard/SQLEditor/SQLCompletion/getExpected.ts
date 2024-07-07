@@ -1,10 +1,11 @@
 import { isDefined } from "prostgles-types";
-import { SQLSuggestion, SUGGESTION_TYPES } from "../SQLEditor";
+import type { SQLSuggestion } from "../SQLEditor";
+import { SUGGESTION_TYPES } from "../SQLEditor";
 import { suggestSnippets } from "./CommonMatchImports";
-import { CodeBlock } from "./completionUtils/getCodeBlock";
+import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import { getJoinSuggestions } from "./getJoinSuggestions";
-import { ParsedSQLSuggestion, getKind } from "./registerSuggestions";
-
+import type { ParsedSQLSuggestion } from "./registerSuggestions";
+import { getKind } from "./registerSuggestions";
 
 export type RawExpect = string | string[] | readonly string[]
 
@@ -15,11 +16,10 @@ export const getExpected = (
   rawExpect: RawExpect, 
   cb: CodeBlock, 
   ss: ParsedSQLSuggestion[],
-): { suggestions: ParsedSQLSuggestion[]} => {
+): { suggestions: ParsedSQLSuggestion[] } => {
   if(!rawExpect) return { suggestions: [] };
 
-  const expect = rawExpect === "trigger" && cb.l1token?.textLC === "event"? "eventTrigger" : rawExpect
-
+  const expect = rawExpect === "trigger" && cb.l1token?.textLC === "event"? "eventTrigger" : rawExpect;
   const exp = Array.isArray(expect)? { expect, inParens: false } : cleanExpectFull(expect as string);
 
   const types = exp?.expect;
@@ -34,37 +34,28 @@ export const getExpected = (
       { label: "SESSION_USER", docs: "Session user name" },
     ]).suggestions :
     [] as ParsedSQLSuggestion[];
-  
-  const suggestions = ss.filter(s => types?.includes(s.type))
+
+  const maybeSchemaName = cb.currToken?.text === "."? cb.ltoken?.text : cb.currToken?.text.includes(".")? cb.currToken.text.split(" ")[0] : undefined;
+  const isSearchingSchemaTable = maybeSchemaName? ss.find(s => s.type === "schema" && s.name === maybeSchemaName)?.name : undefined;
+  const suggestions = ss.filter(s => types?.includes(s.type) && (!isSearchingSchemaTable || s.schema === isSearchingSchemaTable))
     .map(s => {
+      const schemaSort = s.schema === "public"? "a" : "b";
       const sortText = s.userInfo? s.userInfo.priority : 
         s.dataTypeInfo? s.dataTypeInfo.priority :
-        `${s.type === "column" && cb.tableIdentifiers.some(id => s.escapedParentName === id)? "a" : "b" }${(s.schema === "public"? "a" : "b") + s.name}`
+        s.funcInfo? `${schemaSort}${s.funcInfo.extension? "b" : "a"}` :
+        `${s.type === "column" && cb.tableIdentifiers.some(id => s.escapedParentName === id)? "a" : "b" }${schemaSort + s.name}`;
+
+      /** Do not add schema name again if it exists */
+      let insertText = s.insertText;
+      if(isSearchingSchemaTable && s.insertText.includes(`${isSearchingSchemaTable}.`)){
+        insertText = s.escapedName ?? s.escapedIdentifier ?? s.name;
+      }
       return {
         ...s,
         sortText,
-        insertText: exp?.inParens? `(${s.insertText || s.escapedIdentifier})` : s.insertText
+        insertText: exp?.inParens? `(${s.insertText || s.escapedIdentifier})` : insertText
       }
     }).concat(extra.map(s => ({ ...s, sortText: "a" })));
-
-  const isTable = (t: SQLSuggestion["type"]) => ["table", "view", "mview"].includes(t);
-  const schemas = ss.filter(s => s.type === "schema");
-  const { ltoken } = cb;
-  const maybeSchemaName = cb.currToken?.text === "."? cb.ltoken?.text : cb.currToken?.text.includes(".")? cb.currToken.text.split(" ")[0] : undefined;
-  const isSearchingSchemaTable = maybeSchemaName && schemas.some(s => s.name === maybeSchemaName);
-  if(isSearchingSchemaTable && ltoken){
-    const matchingTables = ss.filter(s => isTable(s.type) && s.schema === ltoken.text);
-    if(matchingTables.length){
-      return {
-        suggestions: matchingTables.map(t => ({
-          ...t,
-          insertText: t.escapedName ?? t.name
-        }))
-      }
-    } else {
-      return suggestSnippets([{ label: "No views/tables found for this schema", insertText: "" }])
-    }
-  }
 
   const { joinSuggestions = [] } = getJoinSuggestions({ ss, rawExpect, cb, tableSuggestions: suggestions }); 
   
@@ -86,6 +77,7 @@ export const cleanExpectFull = (expectRaw?: string, afterExpect?: string | undef
     expect = expectRaw.slice(1, -1);
   } 
   if(!expect) return undefined;
+  if(expect === "procedure") return { expect: ["function"], inParens }
   if(expectRaw?.toLowerCase() === "event" && afterExpect?.toLowerCase() === "trigger"){
     return { expect: ["eventTrigger"], inParens, kwd: "EVENT TRIGGER" }
   }

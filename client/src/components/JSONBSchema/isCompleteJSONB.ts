@@ -1,4 +1,5 @@
-import { getKeys, isObject, JSONB } from "prostgles-types";
+import type { JSONB } from "prostgles-types";
+import { getKeys, isObject } from "prostgles-types";
 
 
 export const getSchemaFromField = (s:  JSONB.FieldType): JSONB.FieldTypeObj => typeof s === "string"? { type: s } : s;

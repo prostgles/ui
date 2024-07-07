@@ -1,6 +1,7 @@
 import React from "react";
 import "./ProgressBar.css";
-import { DivProps, classOverride } from "./Flex";
+import type { DivProps} from "./Flex";
+import { classOverride } from "./Flex";
 
 type P = {
   message?: React.ReactNode;

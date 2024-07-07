@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import QRCode from 'qrcode';
+import QRCode from "qrcode";
 import PopupMenu from "./PopupMenu";
 
 type QRCodeImageProps = {
@@ -18,7 +18,7 @@ export const QRCodeImage = ({ size, url, variant }: QRCodeImageProps) => {
       const sizeOpts = Number.isFinite(size)? { width: size } : { width: Math.min(canvas.offsetWidth, canvas.offsetHeight) } as const
       QRCode.toCanvas(canvas, url, sizeOpts);
     } else {
-      const context = canvas.getContext('2d');
+      const context = canvas.getContext("2d");
       context?.clearRect(0, 0, canvas.width, canvas.height);
     }
   }, [size, url, canvasNode]);

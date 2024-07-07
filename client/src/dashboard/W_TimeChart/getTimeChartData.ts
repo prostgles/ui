@@ -1,10 +1,13 @@
-import { AnyObject, asName, isDefined } from "prostgles-types";
+import type { AnyObject} from "prostgles-types";
+import { asName, isDefined } from "prostgles-types";
 import { omitKeys } from "../../utils";
 import { SECOND } from "../Charts";
-import { DataItem, TimeChartLayer } from "../Charts/TimeChart";
-import { DateExtent, MainTimeBinSizes } from "../Charts/getTimechartBinSize";
-import { PALETTE, WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";
-import { W_TimeChart, ProstglesTimeChartLayer, ProstglesTimeChartState } from "./W_TimeChart";
+import type { DataItem, TimeChartLayer } from "../Charts/TimeChart";
+import type { DateExtent} from "../Charts/getTimechartBinSize";
+import { MainTimeBinSizes } from "../Charts/getTimechartBinSize";
+import type { WindowData} from "../Dashboard/dashboardUtils";
+import { PALETTE, WindowSyncItem } from "../Dashboard/dashboardUtils";
+import type { W_TimeChart, ProstglesTimeChartLayer, ProstglesTimeChartState } from "./W_TimeChart";
 import { TIMECHART_STAT_TYPES } from "./W_TimeChartMenu";
 import { getDesiredTimeChartBinSize, getTimeChartLayersWithBins } from "./getTimeChartLayersWithBins";
 import { getCellStyle } from "../W_Table/tableUtils/StyledTableColumn";
@@ -223,7 +226,7 @@ export async function getTimeChartData(this: W_TimeChart): Promise<Result | unde
               ` ORDER BY ${JSON.stringify(FIELD_NAMES.date)} `;
 
 
-            rows = await db.sql(dataQuery, { dateColumn, bin: (bin ?? "hour").replace(/[0-9]/g, ''), statField }, { returnType: "rows" }) as any;
+            rows = await db.sql(dataQuery, { dateColumn, bin: (bin ?? "hour").replace(/[0-9]/g, ""), statField }, { returnType: "rows" }) as any;
           }
 
           const renderedLayer: ProstglesTimeChartState["layers"][number] = {

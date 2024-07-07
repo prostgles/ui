@@ -1,8 +1,9 @@
-import React from 'react';
-import { DBS } from "../Dashboard/DBS";
+import { mdiAccountOutline, mdiAccountQuestion, mdiAccountStar } from "@mdi/js";
+import React from "react";
+import type { TestSelectors } from "../../Testing";
+import { Icon } from "../../components/Icon/Icon";
+import type { DBS } from "../Dashboard/DBS";
 import { SmartSelect } from "../SmartSelect";
-import { useSubscribe } from "../ProstglesMethod/hooks"; 
-import { TestSelectors } from '../../Testing'; 
 
 type P = {
   dbs: DBS;
@@ -21,12 +22,10 @@ export const UserTypeSelect = (props: P) => {
   
   const { dbs, userTypes = [], fromEditedRule, onChange,  database_id, ...selectors } = props;
   const subParams = { select: { user_type: 1 }, returnType: "values" } as const;
-  const existingACUserTypes = useSubscribe(
-      dbs.access_control_user_types.subscribeHook(
-        { $existsJoined: { access_control: { database_id} } }, 
-        subParams
-      ) as any
-    ) as string[] | undefined; 
+  const { data: existingACUserTypes } = dbs.access_control_user_types.useSubscribe(
+    { $existsJoined: { access_control: { database_id } } }, 
+    subParams
+  ); 
 
   return <SmartSelect 
     { ...selectors }
@@ -50,7 +49,16 @@ export const UserTypeSelect = (props: P) => {
         }
       }
 
-      return { subLabel, disabledInfo };
+      return { 
+        subLabel, 
+        disabledInfo, 
+        contentLeft: <Icon 
+          className="mr-1" 
+          style={{ opacity: .75 }} 
+          path={id === "admin"? mdiAccountStar : id === "public"? mdiAccountQuestion : mdiAccountOutline} 
+          size={1} 
+        />
+      }
     }}
   />
     

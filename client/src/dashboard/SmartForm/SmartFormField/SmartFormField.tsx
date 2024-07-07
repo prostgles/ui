@@ -1,20 +1,24 @@
 import { mdiDotsHorizontal } from "@mdi/js";
-import { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { AnyObject, MethodHandler, TS_PG_Types, TableInfo, ValidatedColumnInfo, _PG_date, getJSONBSchemaAsJSONSchema } from "prostgles-types";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { AnyObject, MethodHandler, TableInfo, ValidatedColumnInfo} from "prostgles-types";
+import { TS_PG_Types, _PG_date, getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import React from "react";
-import { Theme } from "../../../App";
+import type { Theme } from "../../../App";
 import Btn from "../../../components/Btn";
-import FormField, { FormFieldProps } from "../../../components/FormField/FormField";
+import type { FormFieldProps } from "../../../components/FormField/FormField";
+import FormField from "../../../components/FormField/FormField";
 import Loading from "../../../components/Loading";
 import { isEmpty } from "../../../utils";
-import { CodeEditorProps } from "../../CodeEditor";
-import { CommonWindowProps } from "../../Dashboard/Dashboard";
-import { renderInterval } from "../../ProstglesSQL/customRenderers";
+import type { CodeEditorProps } from "../../CodeEditor/CodeEditor";
+import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+import { renderInterval } from "../../W_SQL/customRenderers";
 import RTComp from "../../RTComp";
 import { SmartFormFieldFileSection } from "../SmartFormFieldFileSection";
 import { RenderValue } from "./RenderValue";
 import { getSmartFormFieldRightButtons } from "./SmartFormFieldRightButtons";
 import { OPTIONS_LIMIT, getSuggestions, parseValue } from "./fieldUtils";
+import type { FilterColumn } from "../../SmartFilter/smartFilterUtils";
+import { isObject } from "../../../../../commonTypes/publishUtils";
 
 export type SmartFormFieldProps = {
   id?: string;
@@ -122,32 +126,36 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
     let ns = {} as any;
     if (columnName !== column.name) {
 
-      const getData = async (args: { term: string; col: ValidatedColumnInfo; table: string; filter: AnyObject; }): Promise<(string | null)[]> => {
+      const getData = async (args: { term: string; col: FilterColumn; table: string; filter: AnyObject; }): Promise<(string | null)[]> => {
         const { term, col, table, filter } = args;
-        return getSuggestions({ db, table, col, term, filter });
+        return getSuggestions({ db, table, column: col, term, filter });
       }
       let options, onSearchOptions;
 
       if (column.references?.length && action !== "view") {
         const { cols, fcols, ftable } = column.references[0]!;
         if (ftable && db[ftable]?.find) {
-          const fcol = fcols[cols.indexOf(column.name)];
+          const currColIndex = cols.indexOf(column.name);
+          const fcol = fcols[currColIndex];
           const fcolumn = tables.find(t => t.name === ftable)?.columns.find(c => c.name === fcol);
           if(!fcolumn) return;
 
+          // TODO add cross filter toggle for compound primary keys
+          // const { row } = this.props;
+          // const filter = isEmpty(row)? {} : Object.fromEntries(fcols.filter((_, fi) => fi !== currColIndex).map((c, i) => [c, row![cols[i]!]]));
           const filter = {};
-
-          options = await getData({ term: "", col: fcolumn, table: ftable, filter });
+          const filterColumn: FilterColumn = { type: "column", ...fcolumn };
+          options = await getData({ term: "", col: filterColumn, table: ftable, filter });
           if (options.length > 1 && options.length >= OPTIONS_LIMIT) {
             onSearchOptions = async (term) => {
-              const opts: (string | null)[] = await getData({ term, col: fcolumn, table: ftable, filter })
+              const opts: (string | null)[] = await getData({ term, col: filterColumn, table: ftable, filter })
               this.setState({ options: opts });
             }
           }
         }
       } else if (column.tsDataType === "string" && showSuggestions && tableName && db[tableName]?.find) {
         this.onSuggest = async (term) => {
-          const opts = await getData({ term, col: column, table: tableName, filter: {} })
+          const opts = await getData({ term, col: { type: "column", ...column }, table: tableName, filter: {} })
           return opts;
         }
       }
@@ -272,6 +280,15 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
         })
       }
     }
+    if(column.udt_name === "geography" && tableName && isObject(value) && !isEmpty(value)){
+      codeEditorProps = {
+        language: "json",
+        options: {
+          theme: `vs-${theme}`
+        },
+        value: JSON.stringify(value, null, 2),
+      }
+    }
 
     const header = !sectionHeader ? null :<h4 className="noselect"
         style={{
@@ -297,6 +314,7 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
       {!loaded && <Loading variant="cover" />}
       <FormField
         id={tableName + "-" + column.name}
+        data-key={column.name}
         style={style}
         className={(cantUpdate? " cursor-default " : "")}// + (!isCompact ? "mt-1" : "")}
         inputClassName={(cantUpdate? " cursor-default " : "")}
@@ -369,7 +387,7 @@ export const getColumnDataColor = (c?: Pick<Partial<ValidatedColumnInfo>, "udt_n
   }
 
   if(c?.udt_name === "json" || c?.udt_name === "jsonb" || c?.tsDataType === "any") {
-    return "#0451a5";
+    return "var(--color-json)";
   }
 
   if(_PG_date.some(v => v === c?.udt_name)){
@@ -378,7 +396,7 @@ export const getColumnDataColor = (c?: Pick<Partial<ValidatedColumnInfo>, "udt_n
 
   const TS_COL_TYPE_TO_COLOR = {
     number: "var(--color-number)", 
-    boolean: "#0000ff"
+    boolean: "var(--color-boolean)"
   } as const;
 
   return (c?.tsDataType? TS_COL_TYPE_TO_COLOR[c.tsDataType] : undefined) ?? fallBackColor;

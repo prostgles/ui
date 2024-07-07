@@ -1,11 +1,14 @@
 
-import { editor, Position } from "monaco-editor";
+import type { editor, Position } from "../../../W_SQL/monacoEditorTypes";
 import { STARTING_KWDS } from "../KEYWORDS";
 
-import * as monaco from 'monaco-editor';
 import { getPrevTokensNoParantheses } from "../getPrevTokensNoParantheses";
-import { getTokens, TokenInfo } from "./getTokens";
+import type { TokenInfo } from "./getTokens";
+import { getTokens } from "./getTokens";
 import { isDefined } from "../../../../utils";
+import { getMonaco } from "../../SQLEditor";
+import { checkIfInsideDollarFunctionDefinition } from "./checkIfInsideDollarFunctionDefinition";
+import { checkIfUnfinishedParenthesis } from "./checkIfUnfinishedParenthesis";
 
 
 /**
@@ -30,11 +33,13 @@ export type CodeBlock = {
   l4token?: TokenInfo;
   ftoken?: TokenInfo;
   currNestingId: string;
+  currNestingFunc: TokenInfo | undefined;
   text: string;
   textLC: string;
   prevLC: string;
   prevText: string;
   nextLC: string;
+  thisLine: string;
   thisLineLC: string;
   prevIdentifiers: string[];
   identifiers: string[];
@@ -46,25 +51,39 @@ export type CodeBlock = {
   position: Position;
   isCommenting: boolean;
   currOffset: number;
+  /**
+   * Start offset of the block
+   */
+  blockStartOffset: number;
 };
 
 /** Disruptions within function body due to ";"  */
 // const isInterrupted = (line: string) => line.trim().includes(";") || line.trim() === "";
 
-export const getCurrentCodeBlock = (model: editor.ITextModel, pos: Position, offsetLimits?: [number, number], smallestBlock = false): CodeBlock => {
+type GetCurrentCodeBlockOpts = {
+  smallestBlock?: boolean;
+  expandFrom?: {
+    startLine: number;
+    endLine: number;
+  }
+}
+/**
+ * Get block of uninterrupted sql code around cursor position
+ */
+export const getCurrentCodeBlock = async (model: editor.ITextModel, pos: Position, offsetLimits?: [number, number], { smallestBlock = false, expandFrom }: GetCurrentCodeBlockOpts = {}): Promise<CodeBlock> => {
   const { lineNumber } = pos;
   const currOffset = model.getOffsetAt(pos);
   /** https://github.com/microsoft/monaco-editor/issues/1225 */
   const eol = model.getEOL();
   let allLines = model.getLinesContent().map((v, i) => ({ v, n: i + 1, isComment: false }));
-  const isInterrupted = (line: typeof allLines[number]) => {
-    const interrupted = !line.isComment && (line.v.trim() === "" || line.v.trim().endsWith(";"));
+  const isInterrupted = (line: typeof allLines[number], type: "empty" | "ended") => {
+    const interrupted = !line.isComment && (type === "empty" ?  line.v.trim() === "" : line.v.trim().endsWith(";"));
     return interrupted;
   };
-  
+  const editor = (await getMonaco()).editor;
   /** Ignore comments */
   if(allLines.some(l => l.v.includes(`/*`) || l.v.includes(`--`))){
-    const { tokens: allTokens } = getTokens({ eol, lines: allLines.map(l => l.v) });
+    const { tokens: allTokens } = getTokens({ editor, eol, lines: allLines.map(l => l.v) });
     const commentLineNumbers = Array.from(new Set(allTokens.filter(t => t.type.includes("comment")).map(t => t.lineNumber + 1)));
     allLines = allLines.map(l => {
       const isComment = commentLineNumbers.includes(l.n);
@@ -77,66 +96,58 @@ export const getCurrentCodeBlock = (model: editor.ITextModel, pos: Position, off
     });
   }
 
-  let endLine = allLines.slice(lineNumber - 1).find(l => l.n > lineNumber && isInterrupted(l))?.n ?? allLines.at(-1)?.n ?? 0;
-  let startLine = allLines.slice(0, lineNumber - 1).reverse().find(l => l.n < lineNumber && isInterrupted(l))?.n ?? allLines.at(0)?.n ?? 0;
-
-
+  const isCodeBlockEdge = (line: typeof allLines[number], nextLine: typeof allLines[number] | undefined, isEnd: boolean) => {
+    const nextLineIsInterrupted = !nextLine || isInterrupted(nextLine, "empty")
+    if(!isEnd && line.n === lineNumber){
+      return nextLineIsInterrupted || isInterrupted(nextLine, "ended");
+    }
+    const isCbEdge = (isEnd? line.n >= lineNumber : line.n <= lineNumber) && 
+    (
+      isInterrupted(line, "ended") || 
+      !isEnd && isInterrupted(line, "empty") || // isEnd=false starts at next line
+      nextLineIsInterrupted
+    );
+    return isCbEdge;
+  }
+  let startLineNumber = allLines.slice(0, lineNumber).reverse().find((l, i, arr)=> isCodeBlockEdge(l, arr[i+1], false))?.n ?? allLines.at(0)?.n ?? 1;
+  let endLineNumber = allLines.slice(lineNumber - 1).find((l, i, arr)=> isCodeBlockEdge(l, arr[i+1], true))?.n ?? allLines.at(-1)?.n ?? 1;
+  
   /** If inside function select function body so must disregard ";" */
-  if(allLines.some(l => l.v.includes("$"))){
-    let { tokens: allTokens } = getTokens({ eol, lines: allLines.map(l => l.v), currOffset });
-    if(offsetLimits){
-      const [minOffset, maxOffset] = offsetLimits;
-      allTokens = allTokens.filter(t => {
-        return t.offset >= minOffset && t.offset <= maxOffset;
-      })
-    }
-
-    const funcToken = allTokens.filter(t => t.offset <= currOffset && (["function", "do"].includes(t.textLC)) && t.type === "keyword.sql").at(-1);
-    if(funcToken){
-
-      const firstDollarQuote = allTokens.find(t => funcToken.offset <= t.offset && t.offset <= currOffset && t.text.startsWith("$") && t.text.endsWith("$"));
-      const secondDollarQuote = allTokens.find(t => firstDollarQuote && t.offset > firstDollarQuote.offset && t.text === firstDollarQuote.text);
-      if(firstDollarQuote && secondDollarQuote && secondDollarQuote.offset >= currOffset){
-        // const l0Idx = Math.max(0, firstDollarQuote.lineNumber - 1);
-        const l0Idx = Math.max(0, funcToken.lineNumber - 1);
-        const l1Idx = Math.min(allLines.length - 1, secondDollarQuote.lineNumber - 1);
-        
-        const l0 = allLines[l0Idx];
-        const l1 = allLines[l1Idx];
-        // if(!l0 && l0 === 0 && allLines.length){
-        //   throw "wtf"
-        // }
-        if(l0 && l1){
-          startLine = l0.n - 1;
-          endLine = l1.n + 1;
-        }
-      }
-    }
-
+  const funcLimits = checkIfInsideDollarFunctionDefinition({ lineNumber: pos.lineNumber, allLines, currOffset, offsetLimits, editor, eol, startLine: startLineNumber, endLine: endLineNumber });
+  if(funcLimits){
+    startLineNumber = funcLimits.startLine;
+    endLineNumber = funcLimits.endLine;
   }
 
-  const l0 = allLines.find(l => l.n === startLine);
-  const l1 = allLines.find(l => l.n === endLine);
+  /** If inside create table parenthesis */
+  const nestingLimits = checkIfUnfinishedParenthesis({ allLines, startLineNumber, endLineNumber });
+  if(nestingLimits){
+    startLineNumber = nestingLimits.startLineNumber;
+    endLineNumber = nestingLimits.endLineNumber;
+  }
+
+  const startLine = allLines.find(l => l.n === startLineNumber);
+  const endLine = allLines.find(l => l.n === endLineNumber);
    
   /** Skip empty lines */
   if(
-    l0 && isInterrupted(l0) && l0.n < lineNumber
+    startLine && isInterrupted(startLine, "empty") && startLine.n < lineNumber
   ){
-    startLine++
+    startLineNumber++
   }
-  if(l1 && !l1.v.trim()){ 
-    endLine--;
+  if(endLine && !endLine.v.trim() && endLineNumber !== lineNumber){ 
+    endLineNumber--;
   }
-  endLine = Math.max(startLine, endLine);
+  endLineNumber = Math.max(startLineNumber, endLineNumber);
 
   const lines = allLines.slice(
-    !startLine? 0 : startLine - 1,
-    !endLine? 0 : endLine
+    !startLineNumber? 0 : startLineNumber - 1,
+    !endLineNumber? 0 : endLineNumber
   );
-  const blockStartOffset = model.getOffsetAt({ column: 0, lineNumber: startLine });
+  const blockStartOffset = model.getOffsetAt({ column: 0, lineNumber: startLineNumber });
 
-  let text = lines.map(l => l.v).join("\n");
-  const _tokens = getTokens({ eol, lines: lines.map(l => l.v), startOffset: blockStartOffset, startLine, currOffset })
+  const _tokens = getTokens({ editor, eol, lines: lines.map(l => l.v), startOffset: blockStartOffset, startLine: startLineNumber, currOffset });
+  let { text } = _tokens;
   let tokens = _tokens.tokens
     .filter(t => t.text); /** Something is adding an empty token to the start */
   if(offsetLimits){
@@ -180,15 +191,15 @@ export const getCurrentCodeBlock = (model: editor.ITextModel, pos: Position, off
 
   let prevText = model.getValueInRange({
     startColumn: 0,
-    startLineNumber: startLine,
+    startLineNumber: startLineNumber,
     endLineNumber: pos.lineNumber,
     endColumn: pos.column,
   });
   if(offsetLimits){
     const startPos = model.getPositionAt(offsetLimits[0]);
     const endPos = model.getPositionAt(offsetLimits[1]);
-    startLine = startPos.lineNumber;
-    endLine = endPos.lineNumber;
+    startLineNumber = startPos.lineNumber;
+    endLineNumber = endPos.lineNumber;
     text = model.getValueInRange({
       startColumn: startPos.column,
       startLineNumber: startPos.lineNumber,
@@ -232,9 +243,12 @@ export const getCurrentCodeBlock = (model: editor.ITextModel, pos: Position, off
     currLtoken?.text === "("? `${currLtoken.nestingId}1` : !nextToken? 
     "" : 
     currToken?.nestingId ?? tokens.find(t => [t.offset, t.end].includes(currOffset))?.nestingId ?? ltoken?.nestingId ?? "";
+  const currNestingFunc = currLtoken?.text === "("? tokens.slice(0).reverse().find((_, i, arr) => arr[i-1]?.offset === currLtoken.offset) : currLtoken?.nestingFuncToken;
   
-  const { isCommenting } = getTokens({ eol, lines: model.getLinesContent(), includeComments: true, currOffset });
+  const { isCommenting } = getTokens({ editor, eol, lines: model.getLinesContent(), includeComments: true, currOffset });
 
+  // const thisLine = allLines[pos.lineNumber-1]?.v ?? model.getLineContent(pos.lineNumber)
+  const thisLine = model.getLineContent(pos.lineNumber)
   const result = {
     get prevTopKWDs (){
       return getPrevTokensNoParantheses(prevTokens, true).slice(0).reverse().filter(t => 
@@ -247,12 +261,14 @@ export const getCurrentCodeBlock = (model: editor.ITextModel, pos: Position, off
       }));
     },
     prevText,
-    startLine,
-    endLine,
+    blockStartOffset,
+    startLine: startLineNumber,
+    endLine: endLineNumber,
     text,
     textLC,
     prevLC,
     nextLC,
+    thisLine,
     thisLineLC,
     thisLinePrevTokens,
     lines,
@@ -268,6 +284,7 @@ export const getCurrentCodeBlock = (model: editor.ITextModel, pos: Position, off
     ltoken,
     prevIdentifiers,
     currNestingId,
+    currNestingFunc,
     identifiers,
     tableIdentifiers,
     getPrevTokensNoParantheses: (excludeParantheses?: boolean) => getPrevTokensNoParantheses(prevTokens, excludeParantheses),
@@ -277,16 +294,17 @@ export const getCurrentCodeBlock = (model: editor.ITextModel, pos: Position, off
     isCommenting,
     currOffset,
   }
-  
+
   if(smallestBlock && !offsetLimits && currNestingId){
-    const smallestBlockoffsetLimits = getCurrentNestingOffsetLimits({ currNestingId, currOffset, tokens })
+    const cbCurrOffset = expandFrom? model.getOffsetAt({ lineNumber: expandFrom.startLine, column: 1 }) : currOffset;
+    const cbNestingId = expandFrom? currNestingId.slice(0, -1) : currNestingId;
+    const smallestBlockoffsetLimits = getCurrentNestingOffsetLimits({ currNestingId: cbNestingId, currOffset: cbCurrOffset, tokens })
     
     if(smallestBlockoffsetLimits && !smallestBlockoffsetLimits.isEmpty){
-      const smallestCb = getCurrentCodeBlock(model, pos, smallestBlockoffsetLimits.limits);
+      const smallestCb = await getCurrentCodeBlock(model, pos, smallestBlockoffsetLimits.limits);
       return smallestCb;
     }
   }
-  
   return result;
 }
 
@@ -329,21 +347,22 @@ export const getCurrentNestingOffsetLimits = ({ currNestingId, currOffset, token
  */
 export const MAIN_KEYWORDS = ["JOIN", "SELECT", "ON", "CREATE", "TABLE", "SET", "UPDATE", "INTO", "FROM", "WHERE", ";", "\n", "ALTER", "COPY", "REFRESH", "REINDEX", "GRANT", "REVOKE"] as const;
 
-
-export const highlightCurrentCodeBlock = ( editor: editor.IStandaloneCodeEditor, curCodeBlock?: CodeBlock) => {  
-  
-  const noDecor = !curCodeBlock || editor.getModel()?.getValueInRange(editor.getSelection()!);
+export const playButtonglyphMarginClassName = "active-code-block-play";
+export const highlightCurrentCodeBlock = async (editor: editor.IStandaloneCodeEditor, currCodeBlock?: CodeBlock) => {  
+  const monaco = await getMonaco();
+  const model = editor.getModel();
+  const selection = editor.getSelection();
+  const modelContainsSelection = Boolean(selection && model?.getValueInRange(selection));
+  const noDecor = !currCodeBlock || modelContainsSelection;
   return editor.createDecorationsCollection(
     noDecor? [] : [
       {
-        range: new monaco.Range(curCodeBlock.startLine, 1, curCodeBlock.endLine, 1),
+        range: new monaco.Range(currCodeBlock.startLine, 1, currCodeBlock.endLine, 1),
         options: {
-          isWholeLine: false,
-          linesDecorationsClassName: 'active-code-block-decoration',
-          // hoverMessage: { value: "**Code block**\n\nOnly this section of the script will be executed unless text is selected.This behaviour can be changed in options\n\nExecute commands: ctrl+e, alt+e",  }
-          // glyphMarginClassName: 'myLineDecoration',
-          // glyphMarginHoverMessage: { value: "**Code block**\n\nOnly this section of the script will be executed unless text is selected.This behaviour can be changed in options\n\nExecute commands: ctrl+e, alt+e",  }
-          
+          isWholeLine: true,
+          linesDecorationsClassName: "active-code-block-decoration",
+          glyphMarginClassName: currCodeBlock.textLC? playButtonglyphMarginClassName : undefined,
+          glyphMarginHoverMessage: { value: "**Run this statement**\n\nOnly this section of the script will be executed unless text is selected. This behaviour can be changed in options\n\nExecute hot keys: ctrl+e, alt+e",  }
         }
       }
     ]

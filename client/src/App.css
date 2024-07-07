@@ -20,3 +20,7 @@ body {
 .dark-theme .active-code-block-decoration {
   background: #14708f;
 }
+
+.dark-theme * {
+  color-scheme: dark;
+}

@@ -1,19 +1,21 @@
-import { ValidatedColumnInfo } from "prostgles-types/lib";
-import React from 'react';
-import { Prgl } from '../../../App';
+import type { ValidatedColumnInfo } from "prostgles-types/lib";
+import React from "react";
+import type { Prgl } from "../../../App";
 import { FlexCol, FlexRowWrap } from "../../../components/Flex";
 import Select from "../../../components/Select/Select";
 import { ColorPicker } from "./ColorPicker";
-import { CONDITION_OPERATORS, ConditionalCellStyleControls } from "./ColumnDisplayFormat/ConditionalCellStyleControls";
-import { ColumnConfig } from "./ColumnMenu";
+import type { CONDITION_OPERATORS} from "./ColumnDisplayFormat/ConditionalCellStyleControls";
+import { ConditionalCellStyleControls } from "./ColumnDisplayFormat/ConditionalCellStyleControls";
+import type { ColumnConfig } from "./ColumnMenu";
 import { ChipStylePalette, chipColorsFadedBorder } from "./ColumnDisplayFormat/ChipStylePalette";
 import { MINI_BARCHART_COLOR } from "../../../components/ProgressBar";
-import { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
+export type ColumnValue = string | number | Date | null | undefined | boolean;
  
 type BasicConditionFilter = {
   operator: Exclude<typeof CONDITION_OPERATORS[number], "in" | "not in">;
-  condition: string | number | Date;
+  condition: ColumnValue;
 }
 
 type ConditionFilter = BasicConditionFilter | {

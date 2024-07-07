@@ -1,7 +1,7 @@
-import { ChildProcess } from "child_process";
+import type { ChildProcess } from "child_process";
 import { omitKeys, pickKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
-import { DumpOpts, PGDumpParams } from "../../../commonTypes/utils";
-import BackupManager from "./BackupManager";
+import type { DumpOpts, PGDumpParams } from "../../../commonTypes/utils";
+import type BackupManager from "./BackupManager";
 import { envToStr, pipeFromCommand } from "./pipeFromCommand";
 import { addOptions, getConnectionEnvVars, getConnectionUri, getFileMgr, getSSLEnvVars, makeLogs } from "./utils";
 
@@ -107,7 +107,7 @@ export async function pgDump(this: BackupManager, conId: string, credId: number 
         setError,
         async (item) => { 
           const bkp = await getBkp();
-          if(bkp && "err" in bkp?.status){
+          if(bkp && "err" in bkp.status){
             try {
               await fileMgr.deleteFile(bkp.id);
             } catch(err){
@@ -143,7 +143,7 @@ export async function pgDump(this: BackupManager, conId: string, credId: number 
             proc?.kill();
             return;
           }
-          const dump_logs = makeLogs(_dump_logs, currBkp?.dump_logs, currBkp?.created as any);
+          const dump_logs = makeLogs(_dump_logs, currBkp.dump_logs, currBkp.created as any);
           this.dbs.backups.update(
             { id: backup_id, "status->>ok": null } as any, 
             { 
@@ -155,9 +155,9 @@ export async function pgDump(this: BackupManager, conId: string, credId: number 
         useExec: false
       });
       
-      let interval = setInterval(async () => {
+      const interval = setInterval(async () => {
         const bkp = await this.dbs.backups.findOne({ id: backup_id });
-        if(!bkp || bkp && "err" in bkp.status){
+        if(!bkp || "err" in bkp.status){
           destStream.end();
           clearInterval(interval);
         } else if (bkp.uploaded){

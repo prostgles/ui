@@ -12,6 +12,9 @@ export type LabelProps = React.DetailedHTMLProps<React.LabelHTMLAttributes<HTMLL
   popupTitle?: React.ReactNode;
   size?: "small";
 } & ({
+  /**
+   * @default "normal"
+   */
   variant: "normal";  
   iconPath?: undefined;
   toggle?: {
@@ -31,10 +34,10 @@ export const Label = ({
 }: LabelProps) => {
 
   const isHeader = variant === "header";
-  let IconBtn: React.ReactNode = null;// <Icon path={iconPath} size={1} className="text-gray-400 mr-1" />;
+  let IconBtn: React.ReactNode = null;// <Icon path={iconPath} size={1} className="text-2 mr-1" />;
   
   if(info){
-    const headerButton = isHeader? <Btn iconPath={iconPath} className="text-gray-400 "></Btn> : null;
+    const headerButton = isHeader? <Btn iconPath={iconPath} className="text-2 "></Btn> : null;
     const questionBtn = isHeader? 
       <Icon path={mdiHelp} 
         className={"f-0 text-1p5 " + ( headerButton? " absolute show-on-parent-hover " : "" ) }
@@ -55,9 +58,10 @@ export const Label = ({
         maxWidth: "500px"
       }}
       className={headerButton? undefined : "show-on-parent-hover"}
+      contentClassName="p-1"
       button={!headerButton? questionBtn :
         <div className="relative ai-center" title="Click for more information" >
-          {questionBtn}
+          {isHeader? questionBtn : null}
           {headerButton}
         </div>
       }

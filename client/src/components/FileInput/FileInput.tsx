@@ -1,14 +1,13 @@
-import { mdiChevronLeft, mdiChevronRight, mdiClose, mdiFileOutline, mdiPlus } from '@mdi/js';
-import Icon from '@mdi/react';
-import React from 'react';
-import { Command } from "../../Testing";
-import RTComp from '../../dashboard/RTComp';
-import Btn from '../Btn';
+import { mdiChevronLeft, mdiChevronRight, mdiClose, mdiFileOutline, mdiPlus } from "@mdi/js"; 
+import React from "react";
+import type { Command } from "../../Testing";
+import RTComp from "../../dashboard/RTComp";
+import Btn from "../Btn";
 import Chip from "../Chip";
 import { FlexCol, classOverride } from "../Flex";
-import Popup from '../Popup/Popup';
-import { isDefined } from '../../utils';
-import { DropZone } from './DropZone';
+import Popup from "../Popup/Popup"; 
+import { DropZone } from "./DropZone";
+import { Icon } from "../Icon/Icon";
 
 export type SavedMedia = {
   id: string;
@@ -59,6 +58,8 @@ export default class FileInput extends RTComp<{
 
   accept?: string;
   maxFileCount?: number;
+
+  showDropZone?: boolean;
 
 }, S> {
 
@@ -120,7 +121,8 @@ export default class FileInput extends RTComp<{
 
     const { type, url, name } = file;
     let mediaPreview: React.ReactNode = null;
-    const isImageOrVideo = type.startsWith("image") || type.startsWith("video");
+    const isVideo = type.startsWith("video");
+    const isImageOrVideo = type.startsWith("image") || isVideo;
     if (url) {
       const style = {
         maxWidth: "100%",
@@ -148,7 +150,7 @@ export default class FileInput extends RTComp<{
         ...style
       }}
     >
-      <div className={(isImageOrVideo? "bg-black " : "bg-0") + " relative flex-col f-0 w-fit "}
+      <div className={(isVideo? "bg-black " : "bg-color-0") + " relative flex-col f-0 w-fit "}
         style={{
           ...(focused? {} : 
             {
@@ -169,7 +171,7 @@ export default class FileInput extends RTComp<{
         }}></div>}
 
         {!onDelete ? null : <Btn 
-          className={"shadow  b b-gray-500"}
+          className={"shadow  b b-color-2"}
           style={{ 
             position: "absolute",
             top: "10px", 
@@ -216,11 +218,10 @@ export default class FileInput extends RTComp<{
     const {
       className = "", style = {}, label, maxFileCount = 100,
       accept, id = this.state.id ?? "empty",
-      onAdd, media = [], onDelete, minSize = 150
+      onAdd, media = [], onDelete, minSize = 150, showDropZone = true
     } = this.props;
     const { focusedFile, isOverflowing } = this.state;
     const isViewerMode = this.isViewerMode();
-
     let popup;
     if (focusedFile) {
       const contentType = ("data" in focusedFile.file) ? focusedFile.file.data.type : focusedFile.file.content_type;
@@ -256,7 +257,7 @@ export default class FileInput extends RTComp<{
       >
         {this.renderMedia({
           file: focusedFile.file,
-          i: 'focused',
+          i: "focused",
           style: { width: "fit-content", height: "fit-content", border: "unset" },
           onClick: !contentType.startsWith("image") ? undefined : () => { this.setState({ focusedFile: undefined }) },
           focused: true
@@ -274,16 +275,17 @@ export default class FileInput extends RTComp<{
       this.props.onAdd?.(newFiles);
 
     }
-
+    
+    const inputText = !media.length && showDropZone? "Choose or paste a file" : "Choose a file";
     const AddBtn = (maxFileCount <= media.length || !onAdd) ? 
       null : 
       (<label 
         htmlFor={id} 
-        className="f-1 flex-row ai-center bg-0 pointer rounded text-blue-500 b b-active p-p25 gap-p25"
+        className="FileInput_AddBtn f-1 flex-row ws-nowrap ai-center bg-color-0 pointer rounded text-active b b-active py-p25 pl-p5 pr-1 gap-p25"
         data-command={"FileBtn" satisfies Command}
       >
         <Icon path={mdiPlus} size={1} title="Add files" className=" " />
-        <div>Choose or paste a file</div>
+        <div>{inputText}</div>
         <input id={id}
           style={{ width: 0, height: 0, position: "absolute" }}
           type="file"
@@ -320,7 +322,7 @@ export default class FileInput extends RTComp<{
 
     return (
       <div ref={e => { if (e) this.ref = e; }}
-        className={classOverride("flex-col  min-w-0 min-h-0 b-active ", className)}
+        className={classOverride("FileInput flex-col  min-w-0 min-h-0 b-active ", className)}
         style={{ ...style }}
         onDragOver={console.warn}
         onPaste={!AddBtn? undefined : (e => {
@@ -336,7 +338,7 @@ export default class FileInput extends RTComp<{
             <FlexCol className={"f-0 "} >
               {label && <div className="noselect text-1p5" style={{ textAlign: "start" }}>{label}</div>}
               {AddBtn}
-              <DropZone onChange={setFiles} />
+              {!media.length && showDropZone && <DropZone onChange={setFiles} />}
             </FlexCol>
           )} 
           <div className={(isViewerMode? " f-1 flex-row o-auto min-w-0 min-h-0 o-auto " : " flex-row-wrap gap-p25 ")}
@@ -364,7 +366,7 @@ export default class FileInput extends RTComp<{
             {media.map((mediaItem, i) => {
               return this.renderMedia({
                 file: mediaItem,
-                i: i + 'media',
+                i: i + "media",
                 onDelete: !onDelete ? undefined : () => {
                   onDelete(mediaItem)
                 },

@@ -1,47 +1,47 @@
 
-import { editor, IDisposable,  languages } from "monaco-editor";
-import { SQLHandler } from "prostgles-types"; 
-import { CodeBlock, getCurrentCodeBlock } from "./completionUtils/getCodeBlock";
-import { LANG, SQLSuggestion } from "../SQLEditor";
+import type { SQLHandler } from "prostgles-types";
+import type { editor, IDisposable, Monaco, Position, languages } from "../../W_SQL/monacoEditorTypes";
+import { getFormattedSql } from "../getFormattedSql";
+import type { SQLSuggestion } from "../SQLEditor";
+import { LANG } from "../SQLEditor";
 import { getKeywordDocumentation } from "../SQLEditorSuggestions";
-import { getMatch } from "./getMatch"; 
-import * as monaco from 'monaco-editor'; 
+import type { CodeBlock } from "./completionUtils/getCodeBlock";
+import { getCurrentCodeBlock } from "./completionUtils/getCodeBlock";
+import { getMatch } from "./getMatch";
+import { isObject } from "../../../../../commonTypes/publishUtils";
+import { isDefined } from "../../../utils";
 
 /**
  * Mobile devices can't press Ctrl + Space. Use space instead
  */
-export const triggerCharacters = [".", " ", "/", "?", "\\", "\n" ] as const;
+export const triggerCharacters = [".", " ", "/", "?", "\\" ] as const;
 
 export type MonacoSuggestion = PRGLMetaInfo & languages.CompletionItem & Pick<SQLSuggestion, "dataTypeInfo">;
 export type ParsedSQLSuggestion = MonacoSuggestion & Omit<SQLSuggestion, "documentation">;
 
-type EXPECT = "table" | "data type" | "column" | "keyword" | "command" | "objType" | "role" | "extension" | "funtion" | "any";
-
 export type SQLMatchContext = {
-  cb: CodeBlock, 
-  ss: ParsedSQLSuggestion[], 
-  setS: ParsedSQLSuggestion[], 
-  sql: SQLHandler | undefined,
-  getKind: (type: SQLSuggestion["type"]) => number
+  cb: CodeBlock;
+  ss: ParsedSQLSuggestion[]; 
+  setS: ParsedSQLSuggestion[]; 
+  sql: SQLHandler | undefined;
 }
 export type GetKind = (type: SQLSuggestion["type"]) => number;
+export type SuggestionItem = languages.CompletionItem | MonacoSuggestion | ParsedSQLSuggestion;
 export type SQLMatcherResultType = { 
-  suggestions: (languages.CompletionItem | MonacoSuggestion | ParsedSQLSuggestion)[] 
+  suggestions: SuggestionItem[] 
+};
+export type SQLMatcherResultArgs = SQLMatchContext & {
+  /** Used for lateral join subquery which can use columns from previous tables */
+  parentCb?: CodeBlock;
+  options?: {
+    MatchSelect?: {
+      excludeInto?: boolean;
+    }
+  }
 };
 export type SQLMatcher = {
   match: (cb: CodeBlock) => boolean;
-  result: (args: {
-    cb: CodeBlock, 
-    ss: ParsedSQLSuggestion[], 
-    setS: ParsedSQLSuggestion[], 
-    sql: SQLHandler | undefined,
-    getKind: (type: SQLSuggestion["type"]) => number;
-    options?: {
-      MatchSelect?: {
-        excludeInto?: boolean;
-      }
-    }
-  }) => Promise<SQLMatcherResultType>
+  result: (args: SQLMatcherResultArgs) => Promise<SQLMatcherResultType>
 }
 
 type PRGLMetaInfo = {
@@ -88,29 +88,133 @@ let sqlHoverProvider: IDisposable | undefined;
  * Used to ensure connecting to other databases will show the correct suggestions
  */
 let sqlCompletionProvider: IDisposable | undefined;
-export function registerSuggestions(args: { suggestions: SQLSuggestion[], settingSuggestions: SQLSuggestion[], sql?: SQLHandler, editor: editor.IStandaloneCodeEditor; }) {
-  const { suggestions, settingSuggestions, sql } = args;
+let sqlFormattingProvider: IDisposable | undefined;
+type Args = { 
+  suggestions: SQLSuggestion[]; 
+  settingSuggestions: SQLSuggestion[]; 
+  sql?: SQLHandler, editor: editor.IStandaloneCodeEditor;
+  monaco: Monaco;
+};
+
+
+export let KNDS: Kind = {} as any;
+
+export function registerSuggestions(args: Args) {
+  const { suggestions, settingSuggestions, sql, monaco } = args;
   const s = suggestions;
+  KNDS = monaco.languages.CompletionItemKind;
+
+  const provideCompletionItems = async (model: editor.ITextModel, position: Position, context: languages.CompletionContext): Promise<{ suggestions: (MonacoSuggestion | languages.CompletionItem)[] }> => {
+
+    /* TODO Add type checking within for func arg types && table cols && func return types*/
+    function parseSuggestions(sugests: SQLSuggestion[]): ParsedSQLSuggestion[] {
+      return sugests.map((s, i) => {
+
+        const res: ParsedSQLSuggestion = {
+          ...s,
+          range: undefined as any,
+          kind: getKind(s.type),
+          insertText: (s.insertText || s.name), // + (s.type === "function" ? " " : ""),
+          detail: s.detail || `(${s.type})`,
+          type: s.type,
+          escapedParentName: s.escapedParentName,
+          documentation: {
+            value: s.documentation || `${s.type} ${s.detail || ""}`,
+          },
+          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+        }
+
+
+        const info = getKeywordDocumentation(s.name);
+        if (info) {
+          res.documentation = {
+            value: info
+          }
+        }
+
+        return res;
+      });
+    }
+    const ss = parseSuggestions(s);
+
+    const setS = parseSuggestions(settingSuggestions);
+    
+    const cBlock = await getCurrentCodeBlock(model, position);
+    const isFormattingCode = context.triggerCharacter === "\n" && cBlock.thisLineLC.length > 0;
+    const isCommenting = cBlock.currToken?.type === "comment.sql"
+    if(isFormattingCode || isCommenting){
+      return { suggestions: [] };
+    }
+
+    const { firstTry, match } = await getMatch({ cb: cBlock, ss, setS, sql });
+    if(firstTry){
+      return firstTry
+    } else if(match) {
+      const res = await match.result({ cb: cBlock, ss, setS, sql });
+      return res
+    }
+
+    const suggestions = ss.filter(s => s.topKwd?.start_kwd)
+      .map(s => ({
+        ...s,
+        sortText: `a${s.topKwd!.priority ?? 99}`
+      }));
+    
+    return {
+      suggestions
+    }
+
+  }
+
+  sqlFormattingProvider?.dispose();
+  sqlFormattingProvider = monaco.languages.registerDocumentFormattingEditProvider(LANG, {
+    displayName: "SQL",
+    provideDocumentFormattingEdits: async (model) => {
+      const newText = await getFormattedSql(model);
+      return [{
+        range: model.getFullModelRange(),
+        text: newText
+      }]
+    }
+  });
 
   sqlHoverProvider?.dispose();
   sqlHoverProvider = monaco.languages.registerHoverProvider(LANG, {
-    provideHover: async function (model, position) {
+    provideHover: async function (model, position, token, context) {
       const curWord = model.getWordAtPosition(position);
 
       if(curWord && s.length){
-        const sm = s
+        const startOfWordPosition = new monaco.Position(position.lineNumber, curWord.startColumn);
+        const justAfterStartOfWordPosition = new monaco.Position(position.lineNumber, curWord.startColumn + 1);
+        const offset = model.getOffsetAt(startOfWordPosition);
+        const modelValue = model.getValue();
+        /* set current word to empty string to get all suggestions */
+        const val = modelValue.slice(0, offset) + " " + modelValue.slice(offset + curWord.word.length);
+        const newModel = monaco.editor.createModel(val, LANG);
+        const { suggestions } = await provideCompletionItems(
+          newModel, 
+          justAfterStartOfWordPosition, 
+          { triggerKind: monaco.languages.CompletionTriggerKind.Invoke, triggerCharacter: " " }
+        );
+        const [_matchingSuggestion, other] = suggestions.filter(s => 
+          s.insertText === curWord.word || 
+          s.insertText.toLowerCase() === curWord.word.toLowerCase() ||
+          (s as ParsedSQLSuggestion).escapedIdentifier === curWord.word
+        );
+        const matchingSuggestion = !other? _matchingSuggestion : undefined;
+        const sm = matchingSuggestion ?? s
           .find(s => s.type === "keyword" && s.name === curWord.word.toUpperCase());
-        // console.log(position, curWord.word, sm)
 
         if(sm){
+          const detail = "detail" in sm? sm.detail : "";
+          const documentationText = isObject(sm.documentation)? sm.documentation.value : typeof sm.documentation === "string"? sm.documentation : "";
           return {
             range: new monaco.Range(position.lineNumber, curWord.startColumn, position.lineNumber, curWord.endColumn),
-            // range: new monaco.Range(1, 1, model.getLineCount(), model.getLineMaxColumn(model.getLineCount())),
             contents: [
-              { value: `**${sm.detail}**` },
-              { value: sm.documentation || sm.type },
+              !detail? undefined : { value: `**${detail}**` },
+              { value: documentationText },
               // { value: '![my image](https://fdvsdfffdgdgdfg.com/favicon.ico)' }
-            ]
+            ].filter(isDefined)
           }
         }
 
@@ -121,116 +225,14 @@ export function registerSuggestions(args: { suggestions: SQLSuggestion[], settin
     }
   });
 
-
   sqlCompletionProvider?.dispose();
   sqlCompletionProvider = monaco.languages.registerCompletionItemProvider(LANG, {
     triggerCharacters: triggerCharacters.slice(0),
-    provideCompletionItems: async (model, position, context, token): Promise<{ suggestions: (MonacoSuggestion | languages.CompletionItem)[] }> => {
-      // console.error("DELETE");
-      // setTimeout(() => {
-      //   debugger
-      // }, 2000)
-      // const EOL = model.getEOL();
-
-      // console.log({ context, token })
-
-      // const _w = model.getWordUntilPosition(position);
-      // let word: string | undefined,
-      //   startsWithUpperCase = false;
-      
-
-      // if (_w.word) {
-      //   word = _w.word;
-      //   const l: string = word[0]!
-      //   startsWithUpperCase = l === l.toUpperCase() && l !== l.toLowerCase();
-      // }
- 
-
-      // const curIndex = model.getOffsetAt(position),
-      //   allText: string = model.getValue(), //.replace(/\n/g, " "), /* line breaks replaced with space */ 
-      //   prevLinesArr = allText.slice(0, curIndex - (word || "").length).split(EOL),
-      //   prvText: string = prevLinesArr.slice(-28).join(EOL), /* Limit the number of lines to improve performance for large queries */
-      //   prevText = " " + prvText + " ";
-
-      /* TODO Add type checking within for func arg types && table cols && func return types*/
-      function parseSuggestions(sugests: SQLSuggestion[]): ParsedSQLSuggestion[] {
-        return sugests.map((s, i) => {
-
-
-          const res: ParsedSQLSuggestion = {
-            ...s,
-            range: undefined as any,
-            kind: getKind(s.type),
-            insertText: (s.insertText || s.name), // + (s.type === "function" ? " " : ""),
-            detail: s.detail || `(${s.type})`,
-            type: s.type,
-            escapedParentName: s.escapedParentName,
-            documentation: {
-              value: s.documentation || `${s.type} ${s.detail || ""}`,
-              //isTrusted: true,
-            },
-            sortText: '',
-            // filterText: undefined,
-            // commitCharacters: [ '[' ],
-            // KeepWhitespace: 1,
-            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-          }
-
-
-          const info = getKeywordDocumentation(s.name);
-          if (info) {
-            res.documentation = {
-              value: info
-            }
-          }
-
-          return res;
-        })
-      }
-      const ss = parseSuggestions(s);
-
-      const setS = parseSuggestions(settingSuggestions);
-
-      const cBlock = getCurrentCodeBlock(model, position);
-      const isFormattingCode = context.triggerCharacter === "\n" && cBlock.thisLineLC.length > 0;
-      const isCommenting = cBlock.currToken?.type === "comment.sql"
-      if(isFormattingCode || isCommenting){
-        return { suggestions: [] };
-      }
-      const { firstTry, match } = await getMatch({ cb: cBlock, ss, setS, sql, getKind});
-      if(firstTry){
-        return firstTry
-      } else if(match) {
-        const _res = await match.result({ cb: cBlock, ss, setS, sql, getKind });
-        return _res;
-      }
-
-      // const lastLetter = allText.slice(0, curIndex).at(-1)
-      // if(lastLetter && isUpperCase(lastLetter)){
-      //   return {
-      //     suggestions: ss.filter(s => s.type === "keyword" && s.topKwd).map(s => ({
-      //       ...s,
-      //       sortText: s.topKwd? "a" : "b"
-      //     }))
-      //   }
-      // }
- 
-      // const isFreshStart = !prevText.trim() || prevText.replaceAll(" ", "").endsWith(EOL.repeat(2)) || prvText.trim().endsWith(";");
-      // if (true || isFreshStart || prevText.toLowerCase().includes("explain")) {
-      const suggestions = ss.filter(s => s.topKwd?.start_kwd).map(s => ({
-        ...s,
-        sortText: `a${s.topKwd!.priority ?? 99}`
-      }));
-      
-      return {
-        suggestions
-      }
+    provideCompletionItems: async (model, position, context): Promise<{ suggestions: (MonacoSuggestion | languages.CompletionItem)[] }> => {
+      return provideCompletionItems(model, position, context);
     }
   });
-
 }
-
-export const KNDS: Kind = monaco.languages.CompletionItemKind;
 export const getKind = (type: SQLSuggestion["type"]): number => {
   // return KNDS.Text
   if (type === "function") {
@@ -266,7 +268,6 @@ export const getKind = (type: SQLSuggestion["type"]): number => {
   } else if (type === "trigger" || type === "eventTrigger") {
     return KNDS.Event
   }
-
   return KNDS.Keyword
 }
  

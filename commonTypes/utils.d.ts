@@ -15,6 +15,15 @@ export type AGE = {
     milliseconds?: number;
 };
 export declare const QUERY_WATCH_IGNORE = "prostgles internal query that should be excluded from schema watch ";
+export declare const getAgeFromDiff: (millisecondDiff: number) => {
+    years: number;
+    months: number;
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+    milliseconds: number;
+};
 export declare const getAge: <ReturnALL extends boolean = false>(date1: number, date2: number, returnAll?: ReturnALL | undefined) => ReturnALL extends true ? Required<AGE> : AGE;
 export declare const DESTINATIONS: readonly [{
     readonly key: "Local";
@@ -105,4 +114,34 @@ export type ConnectionStatus = {
     noBash: boolean;
     serverStatus?: ServerStatus;
 };
+export type SampleSchema = {
+    name: string;
+    path: string;
+} & ({
+    type: "sql";
+    file: string;
+} | {
+    type: "dir";
+    tableConfigTs: string;
+    onMountTs: string;
+    onInitSQL: string;
+    workspaceConfig: {
+        workspaces: DBSSchema["workspaces"][];
+    } | undefined;
+});
+export type ProcStats = {
+    pid: number;
+    cpu: number;
+    mem: number;
+    uptime: number;
+};
+export declare function matchObj(obj1: AnyObject | undefined, obj2: AnyObject | undefined): boolean;
+export declare function sliceText(v: string | undefined, maxLen: number, ellipseText?: string, midEllipse?: boolean): string | undefined;
+export type ColType = {
+    column_name: string;
+    data_type: string;
+    udt_name: string;
+    schema: string;
+};
+export declare const RELOAD_NOTIFICATION = "Prostgles UI accessible at";
 export {};

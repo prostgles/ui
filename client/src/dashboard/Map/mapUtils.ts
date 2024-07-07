@@ -1,22 +1,17 @@
 
-import { COORDINATE_SYSTEM } from '@deck.gl/core';
 
-import GL from '@luma.gl/constants'; 
-import { BitmapLayer, PathLayer, TileLayerProps } from "deck.gl/typed";
-import { Extent } from "./DeckGLMap";
-import { GeoBoundingBox, TileLayer, _Tileset2D } from "@deck.gl/geo-layers/typed";
+import type { Extent } from "./DeckGLMap"; 
+import type { DeckGlLibs } from "./DeckGLWrapped";
+import type { TileLayer, TileLayerProps } from "deck.gl";
 
-
-
-// Stamen Design
 
 export const DEFAULT_TILE_URLS = [
   // 'http://{s}.tile.stamen.com/watercolor/{z}/{x}/{y}.jpg'
   // http://stamen-tiles-c.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg
 
-  'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+  "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png"
 ];
 
 export function makeTileLayer(
@@ -30,16 +25,16 @@ export function makeTileLayer(
 
     asMVT = false
   } = {},
-
-) {
+  deckGlLibs: DeckGlLibs
+): TileLayer {
 
   if (!Array.isArray(tileURLs) || !tileURLs.find(url => typeof url === "string")) {
     tileURLs = DEFAULT_TILE_URLS;
   }
 
-  return new TileLayer({
+  return new deckGlLibs.lib.TileLayer({
     id: "basemap",
-    TilesetClass: _Tileset2D,
+    TilesetClass: deckGlLibs.lib._Tileset2D,
     opacity,
 
     desaturate,
@@ -74,16 +69,16 @@ export function makeTileLayer(
     renderSubLayers: props => {
       const {
         bbox: { west, south, east, north }
-      } = (props.tile as { bbox: GeoBoundingBox });
+      } = (props.tile as { bbox: any });
 
       return [
-        new BitmapLayer(props, {
+        new deckGlLibs.lib.BitmapLayer(props as any, {
           data: undefined, // null
           image: props.data,
           bounds: [west, south, east, north],
         }),
         showBorder &&
-        new PathLayer({
+        new deckGlLibs.lib.PathLayer({
           id: `${props.id}-border`,
           visible: props.visible,
           data: [[[west, north], [west, south], [east, south], [east, north], [west, north]]],
@@ -96,12 +91,21 @@ export function makeTileLayer(
   } as TileLayerProps);
 } 
 
-export function makeImageLayer(url: string, bounds: Extent, opacity = 1, desaturate = 0, sharpImage = false) {
-  return new BitmapLayer({
+type MakeImageLayerArgs = {
+  url: string, 
+  bounds: Extent, 
+  opacity?: number; 
+  desaturate?: number; 
+  sharpImage?: boolean;
+  deckGlLibs: DeckGlLibs;
+}
+export function makeImageLayer({ bounds, url, opacity = 1, desaturate = 0, sharpImage = false, deckGlLibs }: MakeImageLayerArgs) {
+  const { GL } = deckGlLibs.luma
+  return new deckGlLibs.lib.BitmapLayer({
     opacity,
     transparentColor: [255, 255, 255, 255],
     desaturate,
-    id: 'bitmap-layer',
+    id: "bitmap-layer",
     bounds,
     image: url,
 
@@ -111,7 +115,7 @@ export function makeImageLayer(url: string, bounds: Extent, opacity = 1, desatur
       [GL.TEXTURE_MAG_FILTER]: GL.NEAREST
     },
 
-    coordinateSystem: COORDINATE_SYSTEM.CARTESIAN
+    coordinateSystem: deckGlLibs.lib.COORDINATE_SYSTEM.CARTESIAN
   });
 
 }

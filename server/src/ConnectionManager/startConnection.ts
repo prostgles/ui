@@ -1,21 +1,26 @@
 import prostgles from "prostgles-server";
-import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
-import { DB } from "prostgles-server/dist/Prostgles";
-import { JSONBColumnDef } from "prostgles-server/dist/TableConfig/TableConfig";
-import { AnyObject, MethodFullDef, omitKeys, pickKeys } from "prostgles-types";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
+import { getIsSuperUser, type DB } from "prostgles-server/dist/Prostgles";
+import type { JSONBColumnDef } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { AnyObject, MethodFullDef } from "prostgles-types";
+import { omitKeys, pickKeys } from "prostgles-types";
 import { Server } from "socket.io";
-import { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
-import { CustomTableRules, DBSSchema, TableRules, parseTableRules } from "../../../commonTypes/publishUtils";
-import { getAuth } from "../authConfig";
+import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { CustomTableRules, DBSSchema, TableRules } from "../../../commonTypes/publishUtils";
+import { parseTableRules } from "../../../commonTypes/publishUtils";
+import { getAuth } from "../authConfig/authConfig";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc } from "../index";
-import { ConnectionManager, DB_TRANSACTION_KEY, User, getReloadConfigs } from "./ConnectionManager";
-import { getCompiledTS } from "./connectionManagerUtils";
+import type { ConnectionManager, User } from "./ConnectionManager";
+import { DB_TRANSACTION_KEY, getReloadConfigs } from "./ConnectionManager";
+import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
+import { alertIfReferencedFileColumnsRemoved, getCompiledTS } from "./connectionManagerUtils";
+import { addLog } from "../Logger";
 
 export const startConnection = async function (
   this: ConnectionManager,
-  con_id: string,
+  con_id: string, 
   dbs: DBOFullyTyped<DBSchemaGenerated>,
   _dbs: DB,
   socket?: PRGLIOSocket,
@@ -53,15 +58,15 @@ export const startConnection = async function (
     const prglInstance = this.prgl_connections[con.id];
     if (prglInstance) {
       // When does the socket path change??!!!
-      if (prglInstance?.socket_path !== socket_path) {
+      if (prglInstance.socket_path !== socket_path) {
 
         restartProc(() => {
           socket?.emit("pls-restart", true)
         })
 
-        if (prglInstance?.prgl) {
+        if (prglInstance.prgl) {
           log("destroying prgl", Object.keys(prglInstance));
-          prglInstance.prgl?.destroy()
+          prglInstance.prgl.destroy()
         }
       } else {
         log("reusing prgl", Object.keys(prglInstance));
@@ -73,8 +78,15 @@ export const startConnection = async function (
     this.prgl_connections[con.id] = {
       socket_path,
       con,
+      dbConf,
       isReady: false,
-    }
+      connectionInfo,
+      methodRunner: undefined,
+      onMountRunner: undefined,
+      tableConfigRunner: undefined,
+      lastRestart: 0,
+      isSuperUser: undefined,
+    };
 
   } catch (e) {
     console.error(e);
@@ -88,6 +100,19 @@ export const startConnection = async function (
     try {
       const hotReloadConfig = await getReloadConfigs.bind(this)(con, dbConf, dbs);
       const auth = getAuth(this.app);
+      const watchSchema = con.db_watch_shema ? "*" : false; 
+      const forkedPrglProcRunner = await ForkedPrglProcRunner.create({ type: "run", dbConfId:dbConf.id, dbs ,initArgs: { dbConnection: connectionInfo, watchSchema } });
+
+      await this.setTableConfig(con.id, dbConf.table_config_ts, dbConf.table_config_ts_disabled)
+        .catch(e => {
+          dbs.alerts.insert({ severity: "error", message: "Table config was disabled due to error", database_config_id: dbConf.id });
+          dbs.database_configs.update({ id: dbConf.id }, { table_config_ts_disabled: true });
+        });
+      await this.setOnMount(con.id, dbConf.on_mount_ts, dbConf.on_mount_ts_disabled)
+        .catch(e => {
+          dbs.alerts.insert({ severity: "error", message: "On mount was disabled due to error", database_config_id: dbConf.id });
+          dbs.database_configs.update({ id: dbConf.id }, { on_mount_ts_disabled: true });
+        });
 
       //@ts-ignored
       const prgl = await prostgles({
@@ -96,32 +121,33 @@ export const startConnection = async function (
         auth: {
           sidKeyName: auth.sidKeyName,
           getUser: (sid, __, _, cl) => auth.getUser(sid, dbs, _dbs, cl),
-          login: (sid, __, _, ip_address) => auth.login?.(sid, dbs, _dbs, ip_address),
-          logout: (sid, __, _) => auth.logout?.(sid, dbs, _dbs),
+          login: (sid, __, _, ip_address) => auth.login(sid, dbs, _dbs, ip_address),
+          logout: (sid, __, _) => auth.logout(sid, dbs, _dbs),
           cacheSession: {
             getSession: (sid) => auth.cacheSession.getSession(sid, dbs)
           }
         },
         ...hotReloadConfig,
-        watchSchema: Boolean(con.db_watch_shema) ? "*" : false,
+        watchSchema,
+        disableRealtime: con.disable_realtime ?? undefined,
         transactions: DB_TRANSACTION_KEY,
         joins: "inferred",
+        //@ts-ignore
         publish: async ({ user, dbo, tables }) => {
           if (user) {
             if (user.type === "admin") {
               return "*";
             }
 
-
-            const ac = await getACRule(dbs, user as DBSSchema["users"], dbConf.id);
+            const ac = await getACRule(dbs, user, dbConf.id);
 
             if (ac) {
               const { dbPermissions } = ac;
 
               if (dbPermissions.type === "Run SQL" && dbPermissions.allowSQL) {
-                return "*" as "*";
+                return "*" as const;
 
-              } else if (dbPermissions.type === 'All views/tables' && dbPermissions.allowAllTables.length) {
+              } else if (dbPermissions.type === "All views/tables" && dbPermissions.allowAllTables.length) {
 
                 return Object.keys(dbo).filter(k => dbo[k]!.find).reduce((a, v) => ({
                   ...a, [v]: {
@@ -133,7 +159,7 @@ export const startConnection = async function (
                     })
                   }
                 }), {})
-              } else if (dbPermissions.type === "Custom" && dbPermissions.customTables) {
+              } else if (dbPermissions.type === "Custom") {
 
                 type ParsedTableRules = Record<string, TableRules>;
                 const publish = dbPermissions.customTables
@@ -159,8 +185,8 @@ export const startConnection = async function (
           return undefined
         },
 
-        publishMethods: async ({ db, dbo, socket, tables, user }) => {
-          let result: Record<string, MethodFullDef> = {};
+        publishMethods: async ({ user }) => {
+          const result: Record<string, MethodFullDef> = {};
 
           /** Admin has access to all methods */
           let allowedMethods: DBSSchema["published_methods"][] = []
@@ -168,7 +194,7 @@ export const startConnection = async function (
             allowedMethods = await dbs.published_methods.find({ connection_id: con.id });
 
           } else {
-            const ac = await getACRule(dbs, user as any, dbConf.id);
+            const ac = await getACRule(dbs, user, dbConf.id);
             if (ac) {
               allowedMethods = await dbs.published_methods.find({ connection_id: con.id, $existsJoined: { access_control_methods: { access_control_id: ac.id } } })
             }
@@ -220,14 +246,14 @@ export const startConnection = async function (
                     validatedArgs = args;
                   }
 
-                  /* We now expect the method to be: `exports.run = (args, { db, dbo, user }) => Promise<any>` */
-                  eval(sourceCode);
-
-                  const methodResult = await db.tx(dbTX => {
-                    return exports.run(validatedArgs, { db: db, dbo: dbTX, socket, tables, user });
+                  return forkedPrglProcRunner.run({
+                    type: "run",
+                    code: sourceCode,
+                    validatedArgs,
+                    //@ts-ignore
+                    user,
                   });
 
-                  return methodResult;
                 } catch (err: any) {
                   return Promise.reject(err);
                 }
@@ -239,19 +265,34 @@ export const startConnection = async function (
 
           return result;
         },
-
+        DEBUG_MODE: true,
         publishRawSQL: async ({ user }) => {
           if (user?.type === "admin") {
             return true;
           }
-          const ac = await getACRule(dbs, user as any, dbConf.id);
+          const ac = await getACRule(dbs, user, dbConf.id);
           if (ac?.dbPermissions.type === "Run SQL" && ac.dbPermissions.allowSQL) {
             return true;
           }
           return false
         },
+        onLog: async (e) => {
+          addLog(e, con_id);
+        },
+        onReady: async (params) => {
+          const { dbo: db, db: _db, reason, tables } = params;
+          if(this.prgl_connections[con.id]) {
+            if(this.prgl_connections[con.id]!.prgl){
+              this.prgl_connections[con.id]!.prgl!._db = _db;
+              this.prgl_connections[con.id]!.prgl!.db = db;
+            }
+            this.prgl_connections[con.id]!.lastRestart = Date.now();
+          }
+          if(reason.type !== "prgl.restart" && reason.type !== "init"){
+            this.onConnectionReload(con.id, dbConf.id);
+          }
 
-        onReady: async (db, _db, reason) => {
+          alertIfReferencedFileColumnsRemoved.bind(this)({ reason, tables, connId: con.id, db: _db });
           console.log("onReady connection", Object.keys(db));
 
           /**
@@ -284,20 +325,32 @@ export const startConnection = async function (
       });
       this.prgl_connections[con.id] = {
         prgl,
-        // io,
+        dbConf,
+        connectionInfo,
         socket_path,
         con,
         isReady: false,
-      }
-
+        methodRunner: forkedPrglProcRunner,
+        onMountRunner: this.prgl_connections[con.id]?.onMountRunner,
+        tableConfigRunner: this.prgl_connections[con.id]?.tableConfigRunner,
+        isSuperUser: await getIsSuperUser(prgl._db),
+        lastRestart: Date.now()
+      };
+      this.setSyncUserSub()
     } catch (e) {
       reject(e)
       this.prgl_connections[con.id] = {
         error: e,
-        // io,
+        connectionInfo,
+        dbConf,
         socket_path,
         con,
         isReady: false,
+        methodRunner: undefined,
+        onMountRunner: undefined,
+        tableConfigRunner: undefined,
+        lastRestart: 0,
+        isSuperUser: undefined
       }
     }
 
@@ -305,9 +358,7 @@ export const startConnection = async function (
 
 }
 
-export const getACRule = async (dbs: DBOFullyTyped<DBSchemaGenerated>, user: User, database_id: number): Promise<DBSSchema["access_control"] | undefined>  => {
-  if(user){
-    return await dbs.access_control.findOne({ database_id, $existsJoined: { access_control_user_types: { user_type: user.type } } });
-  }
-  return undefined
+export const getACRule = async (dbs: DBOFullyTyped<DBSchemaGenerated>, user: User | undefined, database_id: number): Promise<DBSSchema["access_control"] | undefined>  => {
+  if(!user) return undefined;
+  return await dbs.access_control.findOne({ database_id, $existsJoined: { access_control_user_types: { user_type: user.type } } });
 }

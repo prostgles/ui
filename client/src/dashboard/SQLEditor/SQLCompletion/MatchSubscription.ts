@@ -1,19 +1,22 @@
 
-import { isInsideFunction } from "./MatchSelect";
+import { getParentFunction } from "./MatchSelect";
 import { getExpected } from "./getExpected";
-import { SQLMatcher, getKind } from "./registerSuggestions";
-import { KWD, withKWDs } from "./withKWDs";
+import type { SQLMatcher } from "./registerSuggestions";
+import type { KWD } from "./withKWDs";
+import { withKWDs } from "./withKWDs";
 
 export const MatchSubscription: SQLMatcher = {
   match: cb => cb.tokens[1]?.textLC === "subscription",
-  result: async ({ cb, ss }) => {
+  result: async ({ cb, ss, setS, sql }) => {
 
     const command = cb.ftoken?.textLC;
     const newSubscriptionName = command === "create" && cb.tokens[1]?.textLC === "subscription" && cb.tokens[2];
 
-    const isInfunc = isInsideFunction(cb);
+    const isInfunc = getParentFunction(cb);
     if(isInfunc?.func.textLC === "with"){
-      return withKWDs(Object.entries(withOptions).map(([kwd, { docs, options }]) => ({ kwd, docs, options })), cb, getKind, ss).getSuggestion(",", ["(", ")"])
+      return withKWDs(Object.entries(withOptions)
+        .map(([kwd, { docs, options }]) => ({ kwd, docs, options })), { cb, ss, setS, sql })
+        .getSuggestion(",", ["(", ")"])
     }
 
     if(newSubscriptionName){
@@ -34,7 +37,7 @@ export const MatchSubscription: SQLMatcher = {
           docs: `Optional parameters for a subscription`
         }
       ] satisfies KWD[]
-      , cb, getKind, ss).getSuggestion()
+      , { cb, ss, setS, sql }).getSuggestion()
     }
 
     if(cb.prevLC.endsWith("if exists")){
@@ -49,7 +52,7 @@ export const MatchSubscription: SQLMatcher = {
         options: command === "drop"? [{ label: "IF EXISTS"}] : command === "create"? [{ label: "$new_subscription_name" }] : undefined,
         docs: "Adds a new logical-replication subscription. The user that creates a subscription becomes the owner of the subscription. The subscription name must be distinct from the name of any existing subscription in the current database."
       },
-    ] satisfies KWD[], cb, getKind, ss).getSuggestion()
+    ] satisfies KWD[], { cb, ss, setS, sql }).getSuggestion()
   }
 }
 

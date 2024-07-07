@@ -1,7 +1,7 @@
 import * as React from "react";
-import { FunctionComponent, ReactElement, CSSProperties } from "react";
-import type { StackProps } from './StackProps';
-import { IconProps } from "./Icon";
+import type { FunctionComponent, ReactElement, CSSProperties } from "react";
+import type { StackProps } from "./StackProps";
+import type { IconProps } from "./Icon";
 
 let id = 0;
 
@@ -9,7 +9,7 @@ const Stack: FunctionComponent<StackProps> = React.forwardRef<SVGSVGElement, Sta
   title = null,
   description = null,
   size = null,
-  color = 'currentColor',
+  color = "currentColor",
   horizontal = null,
   vertical = null,
   rotate = null,
@@ -26,7 +26,7 @@ const Stack: FunctionComponent<StackProps> = React.forwardRef<SVGSVGElement, Sta
       anySpin = (spin === null ? childElement.props.spin : spin) === true;
     }
     let scaledSize = childElement.props.size;
-    if (typeof size === 'number' && typeof childElement.props.size === 'number') {
+    if (typeof size === "number" && typeof childElement.props.size === "number") {
       scaledSize = childElement.props.size / size;
     }
     const props: Partial<IconProps> = {
@@ -46,15 +46,15 @@ const Stack: FunctionComponent<StackProps> = React.forwardRef<SVGSVGElement, Sta
       : `${size * 1.5}rem`;
   }
   let ariaLabelledby;
-  let labelledById = `stack_labelledby_${id}`;
-  let describedById = `stack_describedby_${id}`;
+  const labelledById = `stack_labelledby_${id}`;
+  const describedById = `stack_describedby_${id}`;
   let role;
   if (title) {
     ariaLabelledby = description
       ? `${labelledById} ${describedById}`
       : labelledById;
   } else {
-    role = 'presentation';
+    role = "presentation";
     if (description) {
       throw new Error("title attribute required when description is set");
     }

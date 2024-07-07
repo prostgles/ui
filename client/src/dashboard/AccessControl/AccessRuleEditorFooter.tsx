@@ -1,14 +1,14 @@
 import { isDefined, omitKeys } from "prostgles-types";
 import React, { useState } from "react";
 import { SuccessMessage } from "../../components/Animations";
-import { BtnProps } from "../../components/Btn";
+import type { BtnProps } from "../../components/Btn";
 import { ButtonBar } from "../../components/ButtonBar";
 import ClickCatch from "../../components/ClickCatch"; 
-import { DBS } from "../Dashboard/DBS";
-import { AccessControlAction, AccessRule, EditedAccessRule } from "./AccessControl";
+import type { DBS } from "../Dashboard/DBS";
+import type { AccessControlAction, AccessRule, EditedAccessRule } from "./AccessControl";
 import { FlexCol } from "../../components/Flex";
 import ErrorComponent from "../../components/ErrorComponent";
-import { ValidEditedAccessRuleState } from "./useEditedAccessRule";
+import type { ValidEditedAccessRuleState } from "./useEditedAccessRule";
  
 type P = { 
   onCancel: VoidFunction;  
@@ -33,7 +33,7 @@ export const AccessRuleEditorFooter = (props: P) => {
       <ClickCatch style={{ zIndex: 1 }}>
         <SuccessMessage 
           message={success} 
-          className="absolute-centered bg-0 rounded" 
+          className="absolute-centered bg-color-0 rounded" 
           style={{ padding: "4em" }} 
         />
       </ClickCatch>
@@ -49,6 +49,7 @@ export const AccessRuleEditorFooter = (props: P) => {
       buttons={([
         { 
           children: "Cancel", 
+          "data-command": "config.ac.cancel",
           onClick: onCancel, 
           variant: "faded" 
         },
@@ -56,6 +57,7 @@ export const AccessRuleEditorFooter = (props: P) => {
           children: "Remove rule",
           className: "ml-auto w-fit",
           variant: "faded",
+          "data-command": "config.ac.removeRule",
           color: "danger",
           onClickPromise: async () => {
             try {

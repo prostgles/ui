@@ -1,17 +1,20 @@
 import { mdiMenuDown } from "@mdi/js";
-import React from 'react';
-import { TestSelectors } from '../../Testing';
-import RTComp from '../../dashboard/RTComp';
-import { sliceText } from "../../dashboard/SmartFilter/SmartFilter";
-import Btn, { BtnProps } from '../Btn';
+import React from "react";
+import type { TestSelectors } from "../../Testing";
+import RTComp from "../../dashboard/RTComp"; 
+import type { BtnProps } from "../Btn";
+import Btn from "../Btn";
 import Chip from "../Chip";
-import { FlexRow } from "../Flex";
+import { FlexRow, classOverride } from "../Flex";
 import { Icon } from "../Icon/Icon";
-import { Label, LabelProps } from "../Label";
-import Popup from '../Popup/Popup';
-import SearchList, { SearchListItem } from '../SearchList';
+import type { LabelProps } from "../Label";
+import { Label } from "../Label";
+import Popup from "../Popup/Popup";
+import type { SearchListItem } from "../SearchList";
+import SearchList from "../SearchList";
 import "./Select.css";
 import { SelectTriggerButton } from "./SelectTriggerButton";
+import { sliceText } from "../../../../commonTypes/utils";
 
 export type OptionKey = string | number | boolean | Date | null | undefined;
 export type FullOption<O extends OptionKey = string> = Pick<SearchListItem, "ranking"> & {
@@ -38,6 +41,7 @@ export type SelectProps<O extends OptionKey, Multi extends boolean = false, Opti
   onChange?: (val: Multi extends true? O[] : (O | Optional extends true? undefined : O), e: E, option: FullOption<O> | undefined) => void;
   onSearch?: (term: string) => void;
   onOpen?: (buttonAnchorEl: HTMLButtonElement) => void;
+  onClose?: VoidFunction;
   name?: string;
   value?: any;
   style?: React.CSSProperties;
@@ -49,6 +53,7 @@ export type SelectProps<O extends OptionKey, Multi extends boolean = false, Opti
    * If true then will show the selected option sublabel underneath
    */
   showSelectedSublabel?: boolean;
+  showIconOnly?: boolean;
   title?: string;
   variant?: "search-list-only" | "div" | "pill" | "chips" | "chips-lg";
   multiSelect?: Multi;
@@ -122,6 +127,7 @@ export default class Select<O extends OptionKey, Multi extends boolean = false, 
       disabledInfo,
       optional = false,
       showSelectedSublabel = false,
+      showIconOnly,
     } = this.props;
 
     const value = this.state.multiSelection ?? _value;
@@ -189,11 +195,15 @@ export default class Select<O extends OptionKey, Multi extends boolean = false, 
 
     let select: React.ReactNode = null
     if(variant === "pill"){
-      select = <div className={"flex-row rounded bg-gray-200 o-hidden b b-gray-300 " + selectClass} style={selectStyle}>
+      select = <div 
+        style={selectStyle}
+        className={classOverride("flex-row rounded o-hidden b b-color bg-color-2", selectClass)} 
+      >
         {fullOptions.map((o, i)=> (
-          <Btn key={i}
-            color="inherit" 
-            style={{ borderRadius: 0, color: "var(--gray-600)", ...(value ===o.key? { color: "white", background: "rgb(0, 183, 255)" } : {  })}}
+          <Btn key={o.key}
+            color={value ===o.key? "action" : "default"}
+            variant={value ===o.key?  "filled" : undefined}
+            style={{ borderRadius: 0 }}
             onClick={e => {
               toggleOne(o.key, e);
             }}
@@ -242,6 +252,7 @@ export default class Select<O extends OptionKey, Multi extends boolean = false, 
         setRef={r => {
           this.btnRef = r;
         }}
+        showSelectedIcon={showIconOnly? selectedFullOptions[0]?.iconPath : undefined}
         onChange={onChange}
         optional={optional}
         selectClass={selectClass}
@@ -258,13 +269,15 @@ export default class Select<O extends OptionKey, Multi extends boolean = false, 
       />
       let chips: React.ReactNode = null;
       if(chipMode){
+        const chipValues = multiSelect && popupAnchor? fullOptions.filter(v => {4
+          return this.props.value.includes(v.key)
+        }) : selectedFullOptions;
         chips = <div className={"Select_Chips flex-row-wrap gap-p5 ai-center " + (className)} style={style}>
-          {selectedFullOptions.map(({ key, label }) => 
+          {chipValues.map(({ key, label }) => 
             <Chip 
               key={key} 
               color="blue"
               style={variant.endsWith("-lg")? {
-                color: "var(--blue-800",
                 fontSize: "18px"
               } : undefined}
               onDelete={e => { 
@@ -299,7 +312,7 @@ export default class Select<O extends OptionKey, Multi extends boolean = false, 
             label,
             subLabel,
             ranking,
-            contentLeft: iconPath? <Icon size={1} path={iconPath} className="text-gray-400 mr-p5" /> : undefined,
+            contentLeft: iconPath? <Icon size={1} path={iconPath} className="text-1 mr-p5" /> : undefined,
             styles: {
               subLabel: {
                 whiteSpace: "pre-wrap",
@@ -326,7 +339,7 @@ export default class Select<O extends OptionKey, Multi extends boolean = false, 
       select = <>
         {chips || trigger} 
         {popupAnchor? <Popup 
-          rootStyle={{ padding: 0, maxWidth: "600px" }}
+          rootStyle={{ padding: 0, maxWidth: "600px", boxSizing: "border-box" }}
           anchorEl={popupAnchor}
           positioning="beneath-left-minfill"
           clickCatchStyle={{ opacity: 0 }}
@@ -365,7 +378,7 @@ export default class Select<O extends OptionKey, Multi extends boolean = false, 
     else {
       return <div className={"Select w-fit " + (asRow? " flex-row ai-center " : " flex-col ") + className} style={style}>
         {typeof label === "string"? 
-          <label htmlFor={id} className={"noselect f-0 text-1p5 ta-left " + (asRow? " mr-p5 " : " mb-p5 ")}>{label}</label> :
+          <label htmlFor={id} className={"noselect f-0 text-1 ta-left " + (asRow? " mr-p5 " : " mb-p5 ")}>{label}</label> :
           <Label 
             {...label} 
             variant="normal"
@@ -373,9 +386,9 @@ export default class Select<O extends OptionKey, Multi extends boolean = false, 
           />
         }
         {select}
-        {showSelectedSublabel && !!selectedFullOption?.subLabel?.length && 
+        {showSelectedSublabel && selectedFullOption && !!selectedFullOption.subLabel?.length && 
           <FlexRow className="w-fit p-p5 text-1p5 gap-p5 font-14">
-            {/* <Icon path={mdiInformationVariant} size={1} /> */}
+            {!!selectedFullOption.iconPath && <Icon path={selectedFullOption.iconPath} size={1} />}
             {selectedFullOption.subLabel}
           </FlexRow>
         }

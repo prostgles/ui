@@ -1,15 +1,14 @@
+import { mdiCodeBraces } from "@mdi/js";
 import React from "react";
+import Btn from "../../../components/Btn";
 import { FlexCol } from "../../../components/Flex";
+import PopupMenu from "../../../components/PopupMenu";
 import { SwitchToggle } from "../../../components/SwitchToggle";
 import CodeExample from "../../CodeExample";
-import { APIDetailsProps } from "./APIDetails"; 
-import PopupMenu from "../../../components/PopupMenu";
-import Btn from "../../../components/Btn";
-import { mdiCodeBraces } from "@mdi/js";
-import { useSubscribeOne } from "prostgles-client/dist/react-hooks";
+import type { APIDetailsProps } from "./APIDetails";
 
 export const APIDetailsHttp = ({ dbs, connectionId, token }: APIDetailsProps & { token?: string }) => {
-  const dbConfig = useSubscribeOne(dbs.database_configs.subscribeOneHook({ $existsJoined: { connections: { id: connectionId } } }));
+  const { data: dbConfig } = dbs.database_configs.useSubscribeOne({ $existsJoined: { connections: { id: connectionId } } });
   const restPath = `${window.location.origin}/rest-api/${connectionId}`;
  
   return <FlexCol>

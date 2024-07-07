@@ -1,34 +1,43 @@
-import { DBHandlerClient } from 'prostgles-client/dist/prostgles';
-import React from 'react';
-import RTComp from '../RTComp';
-import { ValidatedColumnInfo } from "prostgles-types";
-import Btn from '../../components/Btn';
-import Select from '../../components/Select/Select';
-import Checkbox from "../../components/Checkbox";
 import { mdiCheckBold, mdiDelete } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { ValidatedColumnInfo } from "prostgles-types";
+import React from "react";
+import type { DetailedFilterBase, FilterType, JoinedFilter } from "../../../../commonTypes/filterUtils";
+import {
+  CORE_FILTER_TYPES, DATE_FILTER_TYPES, FTS_FILTER_TYPES,
+  GEO_FILTER_TYPES,
+  NUMERIC_FILTER_TYPES, TEXT_FILTER_TYPES,
+  getFinalFilter
+} from "../../../../commonTypes/filterUtils";
+import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
-import { 
-  CORE_FILTER_TYPES, DATE_FILTER_TYPES, DetailedFilterBase, FilterType, FTS_FILTER_TYPES, 
-  GEO_FILTER_TYPES, getFinalFilter, NUMERIC_FILTER_TYPES, TEXT_FILTER_TYPES 
-} from '../../../../commonTypes/filterUtils'; 
-import { CONTEXT_FILTER_OPERANDS } from "../AccessControl/ContextFilter";
-import { MinimisedFilter } from "./MinimisedFilter";
-import { colIs } from "../W_Table/ColumnMenu/ColumnSelect";
 import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
-import { GeoFilterTypes, getDefaultGeoFilter } from "./GeoFilter";
+import Select from "../../components/Select/Select";
+import { CONTEXT_FILTER_OPERANDS } from "../AccessControl/ContextFilter";
+import RTComp from "../RTComp";
+import { colIs } from "../W_Table/ColumnMenu/ColumnSelect";
+import { JOIN_FILTER_TYPES } from "./AddJoinFilter";
 import { AgeFilterTypes, getDefaultAgeFilter } from "./AgeFilter";
+import { GeoFilterTypes, getDefaultGeoFilter } from "./GeoFilter";
+import { MinimisedFilter } from "./MinimisedFilter";
+import { DEFAULT_VALIDATED_COLUMN_INFO, type FilterColumn } from "./smartFilterUtils";
+import "./FilterWrapper.css";
+import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
 
 export type FilterWrapperProps = {
   db: DBHandlerClient;
   tableName: string;
   onChange: (filter?: DetailedFilterBase) => void;
   filter?: DetailedFilterBase;
-  column: ValidatedColumnInfo;
+  column: FilterColumn;
+  selectedColumns: ColumnConfig[] | undefined;
   label?: string;
   className?: string;
   style?: React.CSSProperties;
   hideToggle?: boolean;
   variant?: "row";
+  error?: any;
+  rootFilter: { value: JoinedFilter; onChange: (value: JoinedFilter | undefined) => void; } | undefined;
 }
 
 type FilterWrapperState = {
@@ -46,33 +55,33 @@ export class FilterWrapper extends RTComp<FilterWrapperProps, FilterWrapperState
   }
 
   validatedFilterStr?: string;
-  validateFilter = () => {
-    const {
-      filter,
-      db,
-      tableName,
-    } = this.props;
+  // validateFilter = () => {
+  //   const {
+  //     filter,
+  //     db,
+  //     tableName,
+  //   } = this.props;
 
-    const tableHandler = db[tableName];
-    const validatedFilterStr = JSON.stringify(filter);
-    if (filter && tableHandler?.find && "fieldName" in filter && filter.value !== undefined && this.validatedFilterStr !== validatedFilterStr) {
-      this.validatedFilterStr = validatedFilterStr;
-      const finalFilter = getFinalFilter(filter);
-      tableHandler.find(finalFilter, { limit: 0 })
-        .then(() => {
-          this.setState({ error: undefined })
-        })
-        .catch(error => {
-          this.setState({ error })
-        })
-    }
-  }
+  //   const tableHandler = db[tableName];
+  //   const validatedFilterStr = JSON.stringify(filter);
+  //   if (filter && tableHandler?.find && "fieldName" in filter && filter.value !== undefined && this.validatedFilterStr !== validatedFilterStr) {
+  //     this.validatedFilterStr = validatedFilterStr;
+  //     const finalFilter = getFinalFilter(filter);
+  //     tableHandler.find(finalFilter, { limit: 0 })
+  //       .then(() => {
+  //         this.setState({ error: undefined })
+  //       })
+  //       .catch(error => {
+  //         this.setState({ error })
+  //       })
+  //   }
+  // }
 
-  onDelta = (dp) => {
-    if (dp?.filter) {
-      this.validateFilter();
-    }
-  }
+  // onDelta = (dp) => {
+  //   if (dp?.filter) {
+  //     // this.validateFilter();
+  //   }
+  // }
 
   render() {
     const {
@@ -84,8 +93,9 @@ export class FilterWrapper extends RTComp<FilterWrapperProps, FilterWrapperState
       style = {},
       label = column.name,
       hideToggle = false,
+      rootFilter,
     } = this.props;
-    const { error } = this.state;
+    const error = this.state.error ?? this.props.error;
     let variant: typeof this.props.variant = this.props.variant ?? "row";
     if(filter?.type === "$in" || filter?.type === "$nin" || window.isLowWidthScreen){
       variant = undefined;
@@ -105,67 +115,62 @@ export class FilterWrapper extends RTComp<FilterWrapperProps, FilterWrapperState
 
     const rowVariant = variant === "row";
 
-
-    const allowedTypes = [
-      ...CORE_FILTER_TYPES, 
-      ...(colIs(column, "_PG_date")? [ ...DATE_FILTER_TYPES, ...NUMERIC_FILTER_TYPES ] : []),
-      ...(colIs(column, "_PG_postgis")? GEO_FILTER_TYPES : []),
-      ...(colIs(column, "_PG_numbers")? NUMERIC_FILTER_TYPES : []),
-      ...(colIs(column, "_PG_strings")? [ ...TEXT_FILTER_TYPES, ...FTS_FILTER_TYPES ] : []),
-    ];
-
-    const isSearchAll = filter?.type === '$term_highlight' && fieldName === "*";
-    const allowedFilterTypes =  ((
-      // colIs(column, "_PG_geometric")? GEO_FILTER_TYPES : 
-      // (column.udt_name.startsWith("time") || colIs(column, "_PG_date"))? [...NUMERIC_FILTER_TYPES, ...DATE_FILTER_TYPES] : 
-      // isSearchAll? [CORE_FILTER_TYPES.find(f =>  f.key === "$term_highlight")] :  
-      // [...CORE_FILTER_TYPES, ...allowedTypes]
-      allowedTypes
-    ) as {
+    
+    const isSearchAll = column.type === "column" && fieldName === "*" && column.ordinal_position === DEFAULT_VALIDATED_COLUMN_INFO.ordinal_position;
+    const allowedTypes: {
       key: FilterType,
       label: string;
       subLabel?: string;
-    }[]).filter((v, i, arr) => !arr.some((_v, _i) => v.key === _v.key && i !== _i));
-
-    const disabledToggleMinimised = !hideToggle && filter && <Checkbox
-      title={(filter.disabled? "Enable" : "Disable") + " filter"}
-      checked={!filter.disabled}
-      className={`FILTERTOGGLE bg-0`}
-      inputClassname={`${minimised? "" : "rounded-l bg-blue-50"}`}
-      variant={minimised? "minimal" : "button"}
-      onChange={e => {
-        onChange({ ...filter, disabled: !e.target.checked });
-      }}
-    />
-
-    const disabledToggle = minimised? disabledToggleMinimised : !hideToggle && filter &&  
+    }[] = isSearchAll? CORE_FILTER_TYPES.filter(t => t.key === "$term_highlight") :
+      [
+        ...CORE_FILTER_TYPES, 
+        ...(colIs(column, "_PG_date")? [ ...DATE_FILTER_TYPES, ...NUMERIC_FILTER_TYPES ] : []),
+        ...(colIs(column, "_PG_postgis")? GEO_FILTER_TYPES : []),
+        ...(colIs(column, "_PG_numbers")? NUMERIC_FILTER_TYPES : []),
+        ...(colIs(column, "_PG_strings")? [ ...TEXT_FILTER_TYPES, ...FTS_FILTER_TYPES ] : []),
+      ]
+      .filter((v, i, arr) => !arr.some((_v, _i) => v.key === _v.key && i !== _i));
+ 
+    const btnColor = filter?.disabled? undefined : "action"
+    const disabledToggle = !hideToggle && filter &&  
       <Btn title={(filter.disabled? "Enable" : "Disable") + " filter"}
         iconPath={mdiCheckBold} 
-        className="DisableEnableToggle rounded-l"
+        className={`DisableEnableToggle ${minimised? "round" : "rounded-l"}`}
+        style={{
+          ...(minimised && {
+            background: "transparent",
+            padding: 0,
+          })
+        }}
         onClick={() => 
           onChange({ ...filter, disabled: !filter.disabled })
         }
-        color={filter.disabled? undefined : "action"}
-        variant="faded"
+        color={btnColor} 
       />;
 
     const toggleTitle = "Click to expand/collapse";
     if(minimised){
-      const filterTypeLabel = allowedFilterTypes.find(t => t.key === filter.type)?.label ?? filter.type;
+      const filterTypeLabel = allowedTypes.find(t => t.key === filter.type)?.label ?? filter.type;
       return <MinimisedFilter { ...this.props } 
         label={label}
         toggle={toggle} 
         toggleTitle={toggleTitle} 
-        filterTypeLabel={filterTypeLabel} 
-        disabledToggle={disabledToggle} 
+        filterTypeLabel={filterTypeLabel}
+        disabledToggle={disabledToggle}
       />
     }
 
-    const FilterTypeSelector = !allowedFilterTypes? null : <Select 
+    const FilterTypeSelector = <Select 
       className="FilterWrapper_Type"
       title="Choose filter type"
-      fullOptions={allowedFilterTypes.map(ft => ({ ...ft }))}
+      iconPath=""
+      fullOptions={allowedTypes.map(ft => ({ ...ft }))}
       value={filter?.type || ""}
+      btnProps={{
+        style: { borderRadius: 0 },
+        color: "default",
+        variant: "default",
+      }}
       onChange={(type) => {
         let newF: DetailedFilterBase = {
           ...filter,
@@ -221,30 +226,48 @@ export class FilterWrapper extends RTComp<FilterWrapperProps, FilterWrapperState
     const filterContentNode = (rowVariant && children && filterNeedsValue)? filterValueContent : null;
     const isWithoutControls = !filterContentNode;
 
-    return <FlexCol className={"FilterWrapper p-p5 bg-0 relative gap-p5 " + className}
+    return <FlexCol 
+      className={`FilterWrapper variant-${variant ?? ""} filter-bg relative gap-0 ${error? "b-danger" : ""} ${className}`}
       data-command="FilterWrapper"
+      data-key={filter?.fieldName}
       style={{
         maxWidth: rowVariant? undefined : "400px",
         maxHeight: "50vh",
-        opacity: filter?.disabled? ".8" : "1",
+        borderColor: error? "var(--danger)" : undefined,
         ...style, 
-      }}>
-        <FlexRow className={"gap-p5 " + (isWithoutControls? "p-pp5" : rowVariant? " ai-center pl-pp5 " : " ai-start mx-pp5 mt-p5 ")}>
+      }}
+    >
+        <FlexRow className={`gap-0 ${(isWithoutControls? " " : rowVariant? " ai-center" : " ai-start mt-p5 ")}`}>
           <FlexRowWrap 
-            title={toggleTitle} 
             style={rowVariant? { flex: "none" } : {}}
-            className="gap-p5 f-1 font-medium noselect pointer noselect  ai-center"
+            className="FilterWrapper__TypeLabelContainer gap-dp5 f-1 font-medium noselect pointer noselect  ai-center"
           >
-            <FlexRow style={{ gap: 0 }}>              
+            <FlexRow className="FilterWrapper__LabelContainer gap-0">              
               {disabledToggle}
-              <Btn className={`FilterWrapper_Field ${!hideToggle? "rounded-r" : ""} flex-row `}
-                onClick={toggle}
-                variant="faded"
-                style={{ 
-                  color: (filterHasValue || !filterNeedsValue) ? "var(--blue-800)" : "var(--gray-400)",
-                  fontSize: "18px",
+              {rootFilter && <Select 
+                fullOptions={JOIN_FILTER_TYPES}
+                value={rootFilter.value.type}
+                btnProps={{ 
+                  color: btnColor,
+                  variant: "default",
                 }}
-                color={filter?.disabled? undefined : "action"}
+                showIconOnly={true}
+                onChange={(type) => {
+                  rootFilter.onChange({
+                    ...rootFilter.value,
+                    type
+                  });
+                }}
+              />}
+              <Btn className={`FilterWrapper_Field ${(!hideToggle || rootFilter)? "rounded-r" : ""} flex-row `}
+                onClick={toggle}
+                variant="default"
+                title={toggleTitle} 
+                // style={{ 
+                //   color: (filterHasValue || !filterNeedsValue) ? "var(--blue-800)" : "var(--gray-400)",
+                //   fontSize: "18px",
+                // }}
+                color={btnColor}
               >
                 {label}
               </Btn>
@@ -264,7 +287,11 @@ export class FilterWrapper extends RTComp<FilterWrapperProps, FilterWrapperState
         </FlexRow>
 
       {rowVariant? null : filterValueContent}
-      <ErrorComponent error={error} />
+      <ErrorComponent 
+        className="FilterWrapper_Error bt b-danger p-p5" 
+        error={error} 
+        findMsg={true} 
+      />
     </FlexCol>
   }
 }

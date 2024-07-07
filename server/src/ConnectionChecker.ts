@@ -1,20 +1,26 @@
-import {
+import type {
   DBS, 
-  Users,
+  Users} from "./index";
+import {
+  connMgr,
   tout,
 } from "./index";
-import { Express, Request } from 'express';
-import { SubscriptionHandler, isDefined } from "prostgles-types";
-import { DBSSchema  } from "../../commonTypes/publishUtils";
-import cors from 'cors';
-import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
-import { DB } from "prostgles-server/dist/Prostgles";
-import { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
-import { Auth, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
-import { makeSession, sidKeyName, SUser, YEAR } from "./authConfig";
+import type { Express, Request } from "express";
+import type { SubscriptionHandler} from "prostgles-types";
+import { isDefined } from "prostgles-types";
+import type { DBSSchema  } from "../../commonTypes/publishUtils";
+import cors from "cors";
+import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
+import type { DB } from "prostgles-server/dist/Prostgles";
+import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { Auth, AuthResult, SessionUser} from "prostgles-server/dist/AuthHandler";
+import { getLoginClientInfo } from "prostgles-server/dist/AuthHandler";
+import type { SUser} from "./authConfig/authConfig";
+import { getActiveSession, makeSession, sidKeyName, YEAR } from "./authConfig/authConfig";
 import { getElectronConfig, isDemoMode } from "./electronConfig";
 import { tableConfig } from "./tableConfig";
 import { PRGL_PASSWORD, PRGL_USERNAME } from "./envVars";
+import { getPasswordHash } from "./authConfig/authUtils";
 
 export type WithOrigin = {
   origin?: (requestOrigin: string | undefined, callback: (err: Error | null, origin?: string) => void) => void;
@@ -61,20 +67,31 @@ export class ConnectionChecker {
     return new Promise(async (resolve, reject) => {
       if(!this.db) throw "dbs missing";
 
+      let resolved = false;
       const initialise = (what: "users" | "config") => {
         if(what === "users") this.initialised.users = true;
         if(what === "config") this.initialised.config = true;
         const { users, config } = this.initialised;
-        if(users && config){
+        if(users && config && !resolved){
+          resolved = true;
           resolve(this.config);
         }
       }
 
       await this.usersSub?.unsubscribe();
-      this.usersSub = await this.db.users.subscribe({}, { limit: 1 }, async () => {
+      const setNoPasswordAdmin = async () => {
         this.noPasswordAdmin = await ADMIN_ACCESS_WITHOUT_PASSWORD(this.db!);
         initialise("users");
-      })
+      }
+      await setNoPasswordAdmin();
+      let skippedFirst = false;
+      this.usersSub = await this.db.users.subscribe({ }, { limit: 1 }, async () => {
+        if(skippedFirst){
+          await setNoPasswordAdmin();
+        } else {
+          skippedFirst = true;
+        }
+      });
       
       await this.configSub?.unsubscribe();
       this.configSub = await this.db.global_settings.subscribeOne({}, {}, async gconfigs => {
@@ -104,22 +121,22 @@ export class ConnectionChecker {
     
     if(!this.config.loaded || !this.db){
       
-      console.warn("Delaying user request until server is ready")
+      console.warn("Delaying user request until server is ready. originalUrl: " + req.originalUrl)
       await tout(3000);
       res.redirect(req.originalUrl);
       return;
     } 
 
-    const electronConfig = getElectronConfig?.()
+    const electronConfig = getElectronConfig()
 
 
     const sid = req.cookies[sidKeyName];
-    if(electronConfig?.isElectron && electronConfig?.sidConfig.electronSid !== sid){
+    if(electronConfig?.isElectron && electronConfig.sidConfig.electronSid !== sid){
       res.json({ error: "Not authorized" });
       return ;
     }
     
-    if(!electronConfig?.isElectron && this.config.loaded) {
+    if(!electronConfig?.isElectron) {
 
       /** Add cors config if missing */
       if (!this.config.global_setting) {
@@ -146,36 +163,34 @@ export class ConnectionChecker {
 
       if(this.config.global_setting?.allowed_ips_enabled){
 
-        if(this.config.global_setting?.allowed_ips_enabled){
-
-          const c = await this.checkClientIP({ req });
-          if(!c.isAllowed){
-            res.status(403).json({ error: "Your IP is not allowed" });
-            return
-          }
-
+        const c = await this.checkClientIP({ req });
+        if(!c.isAllowed){
+          res.status(403).json({ error: "Your IP is not allowed" });
+          return
         }
       }
 
-
-      if(isDemoMode()){
+      const publicConnections = connMgr.getConnectionsWithPublicAccess();
+      if(isDemoMode() || publicConnections.length){
+        const isLoggingIn = req.originalUrl.startsWith("/magic-link/") || req.originalUrl.startsWith("/login");
+        const client = getLoginClientInfo({ httpReq: req });
+        const hasNoActiveSession = !sid || !(await getActiveSession(this.db, { type: "session-id", client, filter: { id: sid }  }));
 
         /** If test mode and no sid then create a random account and redirect to magic login link */
-        if(!sid && this.db && this._db && !req.originalUrl.startsWith("/magic-link/")){
-          const randomUser = await insertUser(this.db, this._db, { 
-            username: "user-" + Math.round(Math.random() * 1e8), 
-            password: "", 
-            type: "default" 
+        if(this._db && hasNoActiveSession && !isLoggingIn){
+          const newRandomUser = await insertUser(this.db, this._db, { 
+            username: `user-${(new Date).toISOString()}_${Math.round(Math.random() * 1e8)}`, 
+            password: "",
+            type: "public",
           });
-          if(randomUser){
-            const mlink = await makeMagicLink(randomUser, this.db, "/", Date.now() + DAY * 2);
+          if(newRandomUser){
+            const mlink = await makeMagicLink(newRandomUser, this.db, "/", Date.now() + DAY * 2);
             res.redirect(mlink.magic_login_link_redirect);
             return;
           }
         }
       }
     }
-    
     
     next()
   };
@@ -257,8 +272,6 @@ const initUsers = async (db: DBS, _db: DB) => {
     password = EMPTY_PASSWORD;
   }
 
-  // await db.users.delete(); 
-
   /**
    * No user. Must create
    */
@@ -268,8 +281,9 @@ const initUsers = async (db: DBS, _db: DB) => {
     }
     
     try {
-      const u = await db.users.insert({ username, password, type: "admin", passwordless_admin: Boolean(NoInitialAdminPasswordProvided), is_online: true }, { returning: "*" }) as Users;
-      await _db.any("UPDATE users SET password = crypt(password, id::text), status = 'active' WHERE status IS NULL AND id = ${id};", u);
+      const u = await db.users.insert({ username, password, type: "admin", passwordless_admin: Boolean(NoInitialAdminPasswordProvided) }, { returning: "*" }) as Users | undefined;
+      if(!u) throw "User not inserted";
+      await _db.any("UPDATE users SET password = ${hashedPassword}, status = 'active' WHERE status IS NULL AND id = ${id};", { id: u.id, hashedPassword: getPasswordHash(u, "") });
 
     } catch(e){
       console.error(e)
@@ -288,10 +302,13 @@ const initUsers = async (db: DBS, _db: DB) => {
   }
 }
 
-export const insertUser = async (db: DBS, _db: DB, u: Parameters<typeof db.users.insert>[0]) => {
+export const insertUser = async (db: DBS, _db: DB, u: Parameters<typeof db.users.insert>[0] & { password: string }) => {
   const user = await db.users.insert(u, { returning: "*" }) as Users;
   if(!user.id) throw "User id missing";
-  await _db.any("UPDATE users SET password = crypt(password, id::text) WHERE id = ${id};", user);
+  if(typeof user.password !== "string") throw "Password missing";
+  const hashedPassword = getPasswordHash(user, user.password);
+  // await _db.any("UPDATE users SET password = crypt(password, id::text) WHERE id = ${id};", user);
+  await _db.any("UPDATE users SET password = ${hashedPassword} WHERE id = ${id};", { id: user.id, hashedPassword });
   return db.users.findOne({ id: user.id })!;
 }
 

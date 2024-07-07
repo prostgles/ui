@@ -1,40 +1,42 @@
-import React from 'react';
-
-import Loading from '../../components/Loading';
-
-import Btn from "../../components/Btn";
-import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
-
-import { MultiSyncHandles, SingleSyncHandles } from 'prostgles-client/dist/SyncedTable';
-import { DBHandlerClient } from 'prostgles-client/dist/prostgles';
-import { DBSchemaTable } from "prostgles-types";
-import FormField from '../../components/FormField/FormField';
-import Popup, { PopupProps } from '../../components/Popup/Popup';
+import type { MultiSyncHandles, SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { DBSchemaTable } from "prostgles-types";
+import React from "react";
+import Loading, { pageReload } from "../../components/Loading";
 import RTComp from "../RTComp";
-import { DBObject } from '../SearchAll';
+import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
+import type { DBObject } from "../SearchAll";
 
-import { mdiContentSave, mdiDelete } from "@mdi/js";
-import { NavigateFunction, useNavigate } from "react-router-dom";
-import { SmartGroupFilter } from '../../../../commonTypes/filterUtils';
-import { Prgl } from '../../App';
-import { FlexCol } from '../../components/Flex';
+import type { NavigateFunction } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import type { Prgl } from "../../App";
+import { createReactiveState } from "../../App";
+import ErrorComponent from "../../components/ErrorComponent";
+import { FlexCol, FlexRow } from "../../components/Flex";
 import { TopControls } from "../../pages/TopControls";
-import { DashboardMenu } from '../DashboardMenu/DashboardMenu';
-import { ActiveRow } from "../W_Table/W_Table";
+import { DashboardMenu } from "../DashboardMenu/DashboardMenu";
+import type { ActiveRow } from "../W_Table/W_Table";
 import { getJoinedTables } from "../W_Table/tableUtils/tableUtils";
-import { LocalSettings, useLocalSettings } from "../localSettings";
-import { ViewRendererProps, ViewRendererWrapped } from "./ViewRenderer";
-import {
+import type { LocalSettings } from "../localSettings";
+import { useLocalSettings } from "../localSettings";
+import { CloseSaveSQLPopup } from "./CloseSaveSQLPopup";
+import { DashboardCenteredLayoutResizer } from "./DashboardCenteredLayoutResizer";
+import type { ViewRendererProps } from "./ViewRenderer";
+import { ViewRendererWrapped } from "./ViewRenderer";
+import type {
   ChartType, DBSchemaTablesWJoins,
   LinkSyncItem,
-  LoadedSuggestions, OnAddChart, TopHeaderClassName, WindowData, WindowSyncItem,
-  Workspace, WorkspaceSchema, WorkspaceSyncItem,
-  getDefaultLayout
+  LoadedSuggestions, OnAddChart, WindowData, WindowSyncItem,
+  Workspace, WorkspaceSchema, WorkspaceSyncItem
 } from "./dashboardUtils";
-import { createReactiveState } from '../ProstglesMethod/hooks';
-import ErrorComponent from '../../components/ErrorComponent';
+import {
+  TopHeaderClassName
+} from "./dashboardUtils";
+import { loadTable, type LoadTableArgs } from "./loadTable";
+import { isEmpty } from "prostgles-types"; 
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
+export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
 export type DashboardProps = {
   prgl: Prgl;
   workspaceId?: string;
@@ -89,30 +91,6 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
     linksSync: null
   }
 
-  static getTables = async (schemaTables: DBSchemaTable[], w: WorkspaceSyncItem | undefined, db: DBHandlerClient, ): Promise<{ tables: DBSchemaTablesWJoins; error?: undefined } | { error: any; tables?: undefined }> => {
-
-    try {
-      const tables = await Promise.all(schemaTables.map(async t => {
-        const countRequestedAndAllowed = w && !w.options.hideCounts && db[t.name]?.count;
-        const tableHasColumnsAndWillNotError = t.columns.length;
-        const shouldGetCount = countRequestedAndAllowed && tableHasColumnsAndWillNotError;
-        return {
-          ...t,
-          count: (shouldGetCount? await db[t.name]?.count?.() ?? "" : "").toString(),
-          ...getJoinedTables(schemaTables, t.name, db),
-        }
-      })).catch(e => {
-
-        console.error(e);
-        throw e;
-      });
-      return { tables }
-    } catch(error: any){
-      return {
-        error
-      }
-    }
-  }
 
   onUnmount(){
     const { workspaceSync, windowsSync, linksSync } = this.d;
@@ -136,7 +114,7 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
         onRenew: () => this.loadSchema(true),
       };
 
-      const { tables = [], error } = await _Dashboard.getTables(dbSchemaTables, workspace, db);
+      const { tables = [], error } = await getTables(dbSchemaTables, workspace, db);
 
       const ns: Pick<DashboardState, "tables" | "suggestions" | "loading" | "error"> = {
         tables,
@@ -148,10 +126,8 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
       try {
         if(db.sql){
           const { sql } = db;
-          
-          // console.time("getSuggestions")
-          const suggestions = await getSqlSuggestions({ sql });
-          // console.timeEnd("getSuggestions")
+           
+          const suggestions = await getSqlSuggestions({ sql }); 
           const schema = {
             ...suggestions,
             connectionId,
@@ -180,7 +156,7 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
     const { workspace } = this.d;
     let ns: Partial<DashboardState> = {};
 
-    const workspaces = dbs.workspaces;// as TableHandlerClient<WorkspaceSchema>;
+    const workspaces = dbs.workspaces; 
     if(workspaces.syncOne && !this.syncsSet && connectionId){
       this.syncsSet = true;
        
@@ -191,14 +167,16 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
         await workspaces.insert({ 
           connection_id: connectionId, 
           name: !defaultIsDeleted? "default" : `default ${Date.now()}`, 
-          options: { hideCounts: false, pinnedMenu: true }, 
           ...({} as Pick<WorkspaceSchema, "user_id" | "last_updated">) 
         }, { returning: "*" });
-        window.location.reload();
+        // await pageReload("default workspace created");
       }
       let wsp: Workspace | undefined;
       try {
-        wsp = await workspaces.findOne(workspaceId? { id: workspaceId, ...wspFilter } : wspFilter, { orderBy: { last_used: -1 } }) as Workspace;
+        wsp = await workspaces.findOne(
+          workspaceId? { id: workspaceId, ...wspFilter } : wspFilter, 
+          { orderBy: { last_used: -1 } }
+        ) as Workspace;
       } catch(e){
         this.setState({ wspError: e });
         return;
@@ -207,9 +185,6 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
       if(!wsp as any){
         this.setState({ wspError: true });
         return;
-      } else {
-        // TODO: why does this break things?
-        // workspaces.update({ id: wsp.id }, { last_used: new Date() as any })
       }
 
       const validatedCols = await this.props.prgl.dbs.workspaces.getColumns?.("en", {
@@ -219,7 +194,6 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
       }).catch(console.error) ?? [];
 
       const isReadonly = validatedCols.every(c => !c.update);
-      // console.log(validatedCols.map(c => pickKeys(c, ["name", "select", "update", "filter"] )));
       this.setState({
         isReadonly
       });
@@ -251,7 +225,6 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
       );
 
       const windowsSync = await dbs.windows.sync?.(
-        // { closed: false, workspace_id: wsp.id }, 
         { workspace_id: wsp.id }, 
         { handlesOnData: true, select: "*", patchText: false  }, 
         (_wnds, deltas) => {
@@ -259,27 +232,16 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
           if(!this.mounted) return;
           
           const windows = wnds.sort((a, b) => +a.last_updated - +b.last_updated);
-
-          /** Fix options update deepMerge bug */
-          // const deb = windows.find(w => w.name === "SCHEMA");
-          // console.error(deb?.options);
-
           const closedWindows = windows.filter(w => w.closed && !w.table_name && w.name);
           const openWindows = windows.filter(w => !w.closed);
 
-          // console.log(openWindows.map(w => w.table_name))
-          /* This seems to break show_menu?? */
-          // if(this.d.windows){
-
-            /** Dashboard only re-renders on window ids or names change OR linked windows filters change
-             * Maybe ....
-            */
-           const stringOpts = (w: WindowSyncItem) => `${w.id} ${w.type} ${w.fullscreen} ${JSON.stringify(w.filter)} `; // ${JSON.stringify((w as any).options?.extent ?? {})}
-            if(this.d.windows.map(stringOpts).sort().join() === openWindows.map(stringOpts).sort().join()){
-              return
-            }
-          // }
-
+          /** Dashboard only re-renders on window ids or names change OR linked windows filters change
+           * Maybe ....
+          */
+          const stringOpts = (w: WindowSyncItem) => `${w.id} ${w.type} ${w.fullscreen} ${JSON.stringify(w.filter)} ${JSON.stringify(w.having)} ${w.parent_window_id}`; // ${JSON.stringify((w as any).options?.extent ?? {})}
+          if(this.d.windows.map(stringOpts).sort().join() === openWindows.map(stringOpts).sort().join()){
+            return
+          } 
           this.setData({ allWindows: windows, windows: openWindows, closedWindows }, { windows: deltas as any });
 
         });
@@ -312,102 +274,13 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
   }
 
 
-  loadTable = async (args: { type: "sql" | "table" | "method"; table?: string; fullscreen?: boolean; filter?: SmartGroupFilter; sql?: string, name?: string; method_name?: string; }): Promise<string> => {
+  loadTable = async (args: Omit<LoadTableArgs, "db" | "dbs" | "workspace_id">): Promise<string> => {
     const { db, dbs } = this.props.prgl;
     const { workspace } = this.d;
-
-    const { type, table = null, filter = [], sql = "", name = table, method_name } = args;
-    let options: WindowData["options"] = { hideTable: true };
-    // const { queries } = this.state;
-    let table_oid: number | undefined;
-    if(table){
-      const tableHandler = db[table]
-      if(tableHandler?.getInfo){
-        if("getInfo" in tableHandler){
-          const info = await tableHandler.getInfo();
-          table_oid = info.oid;
-        }
-        options = {
-          maxCellChars: 500
-        }
-      } else {
-        const err = db[table]? "Not allowed to view data from this table" : "Table not found";
-        alert(err);
-        throw err;
-      }
-    }
-
-    const r: WindowData = await dbs.windows.insert(
-      {
-        sql, filter, options, type, table_name: table, 
-        table_oid,
-        name,
-        method_name,
-        layout: getDefaultLayout("111"), 
-        fullscreen: false, 
-        workspace_id: workspace?.id,
-      } as any,
-      { returning: "*" }
-    ) as any;
-    return r.id;
+    if(!workspace) throw new Error("Workspace not found");
+    return loadTable({ ...args, db, dbs, workspace_id: workspace.id });
   }
   
-
-  getNamePopupWindow(): PopupProps | undefined {
-
-    const nw = this.state.namePopupWindow;
-
-    const namePopupWindow = nw? this.d.windows.find(w => w.id === nw.w.id) : null;
-    if(namePopupWindow && nw){
-      const onClose = () => this.setState({ namePopupWindow: undefined });
-      return {
-        title: "Save query?",
-        onClose,
-        anchorEl: nw.node,
-        positioning: "beneath-left",
-        clickCatchStyle: { opacity: .2 },
-        content: (
-          <div className="flex-col">
-
-            <FormField type="text"
-              asColumn={true}
-              label="Name" 
-              defaultValue={namePopupWindow.name} 
-              required={true} 
-              onChange={(v) => {
-                namePopupWindow.$update({ name: v, options: { sqlWasSaved: true } }, { deepMerge: true }) 
-              }}
-            />
-            <div className="flex-row-wrap w-full mt-2 gap-1" >
-
-              <Btn className="mr-2" 
-                variant="outline" 
-                color="danger"
-                iconPath={mdiDelete} 
-                onClick={async () => {
-                  namePopupWindow.$update({ closed: true, deleted: true })
-                  onClose();
-                }}>Delete</Btn>
-
-              <Btn variant="filled" color="action"  
-                iconPath={mdiContentSave} 
-                onClick={() => {
-                  if(!namePopupWindow.name) alert("Cannot have an empty name");
-                  else namePopupWindow.$update({ closed: true, deleted: false, options: { sqlWasSaved: true } }, { deepMerge: true });
-                  setTimeout(() => {
-                    onClose()
-                  }, 500)
-
-                }}>Save</Btn>
-            </div>
-          </div>
-        )
-      }
-    }
-
-    return undefined;
-  }
-
   checkedIfNoOpenWindows = false;
   checkIfNoOpenWindows = async () => {
     const {workspaceId, prgl: { dbs} } = this.props;
@@ -424,7 +297,7 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
   /**
    * Used to reduce useless re-renders
    */
-  menuAnchorState = createReactiveState<HTMLElement | undefined>();
+  menuAnchorState = createReactiveState<HTMLElement | undefined>(undefined);
 
   isOk = false;
   render(){
@@ -435,7 +308,7 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
     const { connectionId } = prgl
     const { 
       tables, loading, isReadonly, 
-      suggestions, wspError, error
+      suggestions, wspError, error, namePopupWindow
     } = this.state;
   
     const { centeredLayout } = localSettings;
@@ -460,7 +333,7 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
       }
       
   
-      return <div className="absolute flex-row bg-0 " style={{ inset: 0 }}>
+      return <div className="absolute flex-row bg-color-0 " style={{ inset: 0 }}>
         <Loading id="main"
           message={loadingMessage} 
           className="m-auto" 
@@ -472,7 +345,7 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
     
     if(connectionId) {
       mainContent = <ViewRendererWrapped 
-        key={prgl.dbKey}
+        // key={prgl.dbKey}
         isReadonly={isReadonly}
         prgl={prgl}
         workspace={workspace} 
@@ -488,9 +361,8 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
     }
 
     this.isOk = true;
-    const popup = this.getNamePopupWindow();
 
-    const pinnedMenu = workspace.options.pinnedMenu && !window.isLowWidthScreen;
+    const pinnedMenu = getIsPinnedMenu(workspace)
     const dashboardMenu = <DashboardMenu
         menuAnchorState={this.menuAnchorState}
         prgl={prgl}
@@ -500,35 +372,34 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
         workspace={workspace}
       />;
     const pinnedDashboardMenu = pinnedMenu? dashboardMenu : null;
-    // const popupDashboard = pinnedDashboard? <DashboardMenuBtn disabledInfo="Pinned below" pinnedProps={{ user, connection }} /> : dashboardMenu;
     const popupDashboardMenu = pinnedDashboardMenu? null : dashboardMenu;
 
-    const centeredEdgeStyle: React.CSSProperties | undefined = !centeredLayout?.enabled? undefined : { 
+    const getCenteredEdgeStyle = (): React.CSSProperties | undefined => !centeredLayout?.enabled? undefined : ({ 
       flex: pinnedDashboardMenu? .5 : 0, 
       minWidth: pinnedDashboardMenu? "200px" : 0,
-      width: `calc((100% - ${centeredLayout.maxWidth}px)/2)`,
+      width: workspace.options.pinnedMenuWidth? `${workspace.options.pinnedMenuWidth}px` : "auto",
+      maxWidth: `calc((100% - var(${CENTERED_WIDTH_CSS_VAR}))/2)`,
       overflow: "hidden",
       display: "flex",
-      // flexDirection: "column",
-      // width: ((window.innerWidth - centeredLayout.maxWidth)/2) + "px" 
-    }
-    const centeredWidth = !centeredLayout?.enabled? undefined : centeredLayout.maxWidth + "px";
+    });
+
+    const centeredWidth = !centeredLayout?.enabled? undefined : `var(${CENTERED_WIDTH_CSS_VAR})`;
     const centerStyle: React.CSSProperties | undefined = !centeredWidth? undefined : {
       flex: 1000,
       minWidth: 0,
       width: centeredWidth,
       maxWidth: centeredWidth,
-      // marginLeft: "auto",
       margin: "0 auto",
     }
 
     return (
-      <FlexCol className={"Dashboard gap-0 f-1 min-w-0 min-h-0 w-full "} 
+      <FlexCol
+        className={"Dashboard gap-0 f-1 min-w-0 min-h-0 w-full "} 
         style={{ 
           maxWidth: "100vw", 
           opacity: connectionId? 1 : 0, 
           transition: "opacity .5s",
-          ...(centeredLayout && {"--centered-width": centeredLayout.maxWidth })
+          ...(centeredLayout?.enabled && { [CENTERED_WIDTH_CSS_VAR]: `${centeredLayout.maxWidth}px` })
         }}
       >
 
@@ -547,23 +418,30 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
           />
         </div>
 
+        <CloseSaveSQLPopup 
+          namePopupWindow={namePopupWindow} 
+          onClose={() => this.setState({ namePopupWindow: undefined })}
+          windows={this.d.windows}
+        />
 
-        {popup &&
-          <Popup { ...popup}>
-            {popup.content}
-          </Popup>
-        }
+        <div className="Dashboard_Wrapper min-h-0 f-1 flex-row relative" 
+          style={{ 
+            gap: "1px", 
+            marginTop: "2px", 
+          }}
+        >
+          <div style={getCenteredEdgeStyle()}>{pinnedDashboardMenu}</div>
 
-        <div className="Dashboard_Wrapper min-h-0 f-1 flex-row relative" style={{ gap: "1px" }}>
-          <div style={centeredEdgeStyle}>{pinnedDashboardMenu}</div>
-
-          <div style={centerStyle} className="Dashboard_MainContentWrapper f-1 flex-row relative">
-            {/* <DragOverUpload onOpen={console.error} /> */}
+          <FlexRow  
+            style={centerStyle} 
+            className="Dashboard_MainContentWrapper f-1 gap-0 relative ai-none jc-none"
+          >
+            <DashboardCenteredLayoutResizer />
             {mainContent}
-          </div>
+          </FlexRow>
 
           <div style={{
-            ...centeredEdgeStyle, 
+            ...getCenteredEdgeStyle(), 
             /** Ensure right section shrinks to 0 if the left dashboard menu is pinned and we have a centered layout */
             ...(!!pinnedDashboardMenu && {minWidth: 0})
           }}></div>
@@ -580,14 +458,6 @@ export const Dashboard = (p: Omit<DashboardProps, "localSettings" | "navigate">)
   const localSettings = useLocalSettings();
   const navigate = useNavigate();
   return <_Dashboard {...p} localSettings={localSettings} navigate={navigate} />
-}
-
-export type ValueOf<T> = T[keyof T];
-
-
-export function isEmpty(obj: any){
-  for (const field in obj ) return false;
-  return true;
 }
 
 export type CommonWindowProps<T extends ChartType = ChartType> = Pick<DashboardProps, "prgl"> & {
@@ -612,4 +482,34 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<DashboardP
   myLinks: LinkSyncItem[];
   onAddChart: OnAddChart;
   active_row: ActiveRow | undefined;
-} & Pick<ViewRendererProps, "searchParams" | "setSearchParams">
+} & Pick<ViewRendererProps, "searchParams" | "setSearchParams">;
+
+export const getTables = async (schemaTables: DBSchemaTable[], workspace: WorkspaceSyncItem | undefined, db: DBHandlerClient): Promise<{ tables: DBSchemaTablesWJoins; error?: undefined } | { error: any; tables?: undefined }> => {
+  try {
+    const tables = await Promise.all(schemaTables.map(async t => {
+      const countRequestedAndAllowed = workspace?.options.tableListEndInfo === "count" && db[t.name]?.count;
+      const tableHasColumnsAndWillNotError = !!t.columns.length;
+      const shouldGetCount = countRequestedAndAllowed && tableHasColumnsAndWillNotError;
+      const count = (shouldGetCount? await db[t.name]?.count?.() ?? "" : "").toString();
+      return {
+        ...t,
+        count,
+        ...getJoinedTables(schemaTables, t.name, db),
+      }
+    })).catch(e => {
+
+      console.error(e);
+      throw e;
+    });
+    return { tables }
+  } catch(error: any){
+    console.error(error);
+    return {
+      error
+    }
+  }
+}
+
+export const getIsPinnedMenu = (workspace: WorkspaceSyncItem) => {
+  return workspace.options.pinnedMenu && !window.isLowWidthScreen;
+}

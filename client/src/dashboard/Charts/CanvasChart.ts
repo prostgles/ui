@@ -1,6 +1,7 @@
-import { Coords, Point } from "../Charts";
-import { PanListeners, setPan } from "../setPan";
-import { XYFunc } from "./TimeChart";
+import type { Coords, Point } from "../Charts";
+import type { PanListeners} from "../setPan";
+import { setPan } from "../setPan";
+import type { XYFunc } from "./TimeChart";
 
 export type StrokeProps = {
   lineWidth: number;
@@ -100,6 +101,7 @@ type ChartOptions = {
   yPanLocked?: boolean;
   minXScale?: number;
   maxXScale?: number;
+  onResize: undefined | VoidFunction;
   events?: {
     disabled: true;
   } | TimeChartZoomPanEvents & { disabled?: undefined };
@@ -110,7 +112,6 @@ type ChartOptions = {
  */
 export class CanvasChart {
   node?: HTMLDivElement;
-  canvas?: HTMLCanvasElement;
   ctx?: CanvasRenderingContext2D;
   opts?:  ChartOptions;
   deckLayers?: any[];
@@ -154,8 +155,15 @@ export class CanvasChart {
 
         createHiPPICanvas(canvas, offsetWidth, offsetHeight);
 
-        // this.ctx.canvas.width  = offsetWidth;
-        // this.ctx.canvas.height = offsetHeight;
+        /**
+         * Why were this commented out
+         */
+        this.ctx.canvas.width  = offsetWidth;
+        this.ctx.canvas.height = offsetHeight;
+        const { onResize } = this.opts ?? {};
+        setTimeout(() => {
+          onResize?.();
+        }, 50);
         this.render();
       }
     });
@@ -435,7 +443,6 @@ export class CanvasChart {
         }
         const point = coords as Point;
         const [x, y] = this.getScreenXY(point[0], point[1]);
-        
         return [x, y] as C;
       }
       const coords: any = getCoords(s.coords);
@@ -458,6 +465,7 @@ export class CanvasChart {
         }
         ctx.fill();
         ctx.stroke();
+
       } else if(s.type === "circle"){
         ctx.fillStyle = s.fillStyle;
         ctx.lineWidth = s.lineWidth;
@@ -466,10 +474,12 @@ export class CanvasChart {
         ctx.arc(coords[0], coords[1], s.r, 0, 2 * Math.PI);
         ctx.fill();
         ctx.stroke();
+
       } else if(s.type === "multiline"){
-        ctx.lineCap = 'round';
+        ctx.lineCap = "round";
         ctx.lineWidth = s.lineWidth;
         ctx.strokeStyle = s.strokeStyle;
+
         if(s.variant === "smooth" && coords.length > 2){
           drawMonotoneXCurve(ctx, coords);
         } else {
@@ -483,6 +493,7 @@ export class CanvasChart {
           });
           ctx.stroke();
         }
+
       } else if(s.type === "polygon"){
         
         ctx.fillStyle = s.fillStyle;
@@ -595,10 +606,10 @@ function allLowerCase(str) {
   // if (typeof stroke === 'undefined') {
   //   stroke = true;
   // }
-  if (typeof radius === 'undefined') {
+  if (typeof radius === "undefined") {
     radius = 5;
   }
-  if (typeof radius === 'number') {
+  if (typeof radius === "number") {
     radius = {tl: radius, tr: radius, br: radius, bl: radius};
   } else {
     const defaultRadius = {tl: 0, tr: 0, br: 0, bl: 0};
@@ -641,13 +652,13 @@ function normalizeWheel(event): {
       pX = 0, pY = 0;       // pixelX, pixelY
 
   // Legacy
-  if ('detail'      in event) { sY = event.detail; }
-  if ('wheelDelta'  in event) { sY = -event.wheelDelta / 120; }
-  if ('wheelDeltaY' in event) { sY = -event.wheelDeltaY / 120; }
-  if ('wheelDeltaX' in event) { sX = -event.wheelDeltaX / 120; }
+  if ("detail"      in event) { sY = event.detail; }
+  if ("wheelDelta"  in event) { sY = -event.wheelDelta / 120; }
+  if ("wheelDeltaY" in event) { sY = -event.wheelDeltaY / 120; }
+  if ("wheelDeltaX" in event) { sX = -event.wheelDeltaX / 120; }
 
   // side scrolling on FF with DOMMouseScroll
-  if ( 'axis' in event && event.axis === event.HORIZONTAL_AXIS ) {
+  if ( "axis" in event && event.axis === event.HORIZONTAL_AXIS ) {
     sX = sY;
     sY = 0;
   }
@@ -655,8 +666,8 @@ function normalizeWheel(event): {
   pX = sX * PIXEL_STEP;
   pY = sY * PIXEL_STEP;
 
-  if ('deltaY' in event) { pY = event.deltaY; }
-  if ('deltaX' in event) { pX = event.deltaX; }
+  if ("deltaY" in event) { pY = event.deltaY; }
+  if ("deltaX" in event) { pX = event.deltaX; }
 
   if ((pX || pY) && event.deltaMode) {
     if (event.deltaMode == 1) {          // delta in LINE units

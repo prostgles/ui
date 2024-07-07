@@ -1,11 +1,12 @@
-import { CONTENT_TYPE_TO_EXT, FieldFilter, FileColumnConfig, getKeys, isDefined, isObject } from 'prostgles-types';
-import React from "react";
+import type { FieldFilter, FileColumnConfig} from "prostgles-types";
+import { CONTENT_TYPE_TO_EXT, getKeys, isDefined, isObject } from "prostgles-types";
+import React, { useEffect } from "react";
 import ButtonGroup from "../../components/ButtonGroup";
 import { FlexCol } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
 import SearchList from "../../components/SearchList";
-import { FileTableConfigReferences } from "./FileColumnConfigControls";
+import type { FileTableConfigReferences } from "./FileColumnConfigControls";
 
 const CONTENT_MODES = [
   { key: "By basic content type", subLabel: "image, video, audio ..." },
@@ -18,44 +19,27 @@ type FileColumnConfigProps = {
   columnName: string;
   refsConfig: FileTableConfigReferences;
   onChange: (newConfig: FileTableConfigReferences) => void;
+  onSetError: (error?: any) => void;
 };
-export const FileColumnConfigEditor = ({ tableName, columnName, refsConfig, onChange }: FileColumnConfigProps) => {
+export const FileColumnConfigEditor = ({ tableName, columnName, refsConfig, onChange, onSetError }: FileColumnConfigProps) => {
 
   let contentMode: typeof CONTENT_MODES[number]["key"] = CONTENT_MODES[0].key;
 
   const isChecked = (col: string, fieldFilter: FieldFilter): boolean => {
     return fieldFilter === "*" || Array.isArray(fieldFilter) && fieldFilter.includes(col) || isObject(fieldFilter) && fieldFilter[col]
   }
-  const colConfig: FileColumnConfig = refsConfig[tableName]?.referenceColumns?.[columnName] ?? { acceptedContent: "*" };
+  const colConfig: FileColumnConfig = refsConfig[tableName]?.referenceColumns[columnName] ?? { acceptedContent: "*" };
 
   let fullOptions: readonly { key: string; checked: boolean; }[] = [];
 
 
   const updateMergeColConfig = (colConfig: FileColumnConfig ) => {
-
-    const _refTableConfig = refsConfig[tableName];
-    const refTableConfig:  {
-      referenceColumns: Record<string, FileColumnConfig>;
-    } = isObject(_refTableConfig) ? _refTableConfig : { referenceColumns: {}  };
-
-    onChange({
-      ...refsConfig,
-      [tableName]: {
-        ...refTableConfig,
-        referenceColumns: {
-          ...(refTableConfig.referenceColumns ?? {}),
-          [columnName]: {
-            ...(refTableConfig.referenceColumns?.[columnName] ?? {}),
-            ...colConfig
-          }
-        }
-      }
-    } );
-
+    const newConfig = getMergedRefFileColConfig({ colConfig, columnName, tableName, refsConfig });
+    onChange(newConfig);
   }
 
   let onChangeOpts = (opts: string[]) => { };
-  if (!colConfig || getKeys(colConfig).every(k => k === "maxFileSizeMB") || "acceptedContent" in colConfig && colConfig.acceptedContent) {
+  if (getKeys(colConfig).every(k => (k as any) === "maxFileSizeMB") || "acceptedContent" in colConfig && colConfig.acceptedContent) {
     contentMode = "By basic content type";
     const CONTENT_OPTIONS = ["audio", "video", "image", "text", "application"] as const;
     fullOptions = CONTENT_OPTIONS.map(key => ({
@@ -81,7 +65,7 @@ export const FileColumnConfigEditor = ({ tableName, columnName, refsConfig, onCh
     contentMode = "By extension type";
     fullOptions = Object.values(CONTENT_TYPE_TO_EXT).flat().flatMap(key => ({
       key,
-      subLabel: getKeys(CONTENT_TYPE_TO_EXT).find(cType => CONTENT_TYPE_TO_EXT[cType]?.includes(key as never)),
+      subLabel: getKeys(CONTENT_TYPE_TO_EXT).find(cType => CONTENT_TYPE_TO_EXT[cType].includes(key as never)),
       checked: isChecked(key, colConfig.acceptedFileTypes)
     }));
     onChangeOpts = opts => {
@@ -93,6 +77,9 @@ export const FileColumnConfigEditor = ({ tableName, columnName, refsConfig, onCh
   const selectedOpts = fullOptions.filter(o => o.checked);
 
   const error = fullOptions.length && fullOptions.every(v => !v.checked)? "Must select at least one option" : undefined;
+  useEffect(() => {
+    onSetError(error);
+  }, [error, onSetError])
 
   return <FlexCol className="f-1 min-h-0 gap-2">
     <FormField
@@ -135,4 +122,27 @@ export const FileColumnConfigEditor = ({ tableName, columnName, refsConfig, onCh
     />
     {error && <InfoRow variant="filled" color="danger">{error}</InfoRow>}
   </FlexCol>
+}
+
+
+export const getMergedRefFileColConfig = ({ colConfig, columnName, refsConfig, tableName }: { refsConfig: FileTableConfigReferences; tableName: string; columnName: string; colConfig: FileColumnConfig }) => {
+
+  const _refTableConfig = refsConfig[tableName];
+  const refTableConfig:  {
+    referenceColumns: Record<string, FileColumnConfig>;
+  } = isObject(_refTableConfig) ? _refTableConfig : { referenceColumns: {}  };
+
+  return {
+    ...refsConfig,
+    [tableName]: {
+      ...refTableConfig,
+      referenceColumns: {
+        ...refTableConfig.referenceColumns,
+        [columnName]: {
+          ...(refTableConfig.referenceColumns[columnName] ?? {}),
+          ...colConfig
+        }
+      }
+    }
+  };
 }

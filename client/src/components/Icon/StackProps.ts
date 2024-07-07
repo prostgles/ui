@@ -1,5 +1,6 @@
-import { ReactElement, CSSProperties, RefObject, HTMLProps } from "react";
-import { IconProps } from "./Icon";
+import type { ReactElement, CSSProperties, RefObject} from "react";
+import { HTMLProps } from "react";
+import type { IconProps } from "./Icon";
 
 export interface StackPropsBase {
   ref?: RefObject<SVGSVGElement>;

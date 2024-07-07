@@ -1,6 +1,8 @@
 import React from "react";
+import { isDefined } from "../utils";
+import { FlexCol, classOverride } from "./Flex";
+import { Label } from "./Label";
 import "./Slider.css";
-import RTComp from '../dashboard/RTComp';
 
 
 type P = {
@@ -17,30 +19,29 @@ type P = {
   label?: string;
 }
 
-export default class Slider extends RTComp<P, any> {
-  state = {
-    ready: false
-  }
-
-  onMount() {
-    
-  }
-
-  onDeltaCombined = (delta, deltaKeys) => {
-    
-    
-  }
-
-  render() {
-    const { style = {}, className = "", min, max, value, label, onChange, step, defaultValue } = this.props;
-    
-    
-    return (
-      <div className={"slidecontainer flex-col"+ className}  style={style} >
-        {label && <div className="slider-label mb-p25 text-gray-400 noselect" onDoubleClick={!Number.isFinite(defaultValue)? undefined : () => { onChange(defaultValue!) }}>{label}</div>}
-        <input type="range" min={min} max={max} value={value ?? min ?? max} step={Math.min(1, step ?? Math.abs(min - max)/60)} className="slider pointer" onChange={e => onChange(+e.target.value, e) }/>
-      </div>
-    );
-
-  }
+export const Slider = (props: P) => {
+  const { style = {}, className = "", min, max, value, label, onChange, step, defaultValue } = props;
+  
+  const percentage = !isDefined(value)? 0 : (value - min) / (max - min) * 100;
+  return (
+    <FlexCol 
+      className={classOverride("slidecontainer gap-p25", className)}  
+      style={style}  
+      onDoubleClick={!Number.isFinite(defaultValue)? undefined : () => { onChange(defaultValue!) }}
+    >
+      {label && <Label label={label} variant="normal" />}
+      <input 
+        type="range" 
+        min={min} 
+        max={max} 
+        value={value ?? min } 
+        step={Math.min(1, step ?? Math.abs(min - max)/60)} 
+        className="slider pointer" 
+        style={{
+          background: `linear-gradient(to right, var(--action) ${percentage}%, var(--bg-color-3) ${percentage}%)`        
+        }}
+        onChange={e => onChange(+e.target.value, e) }
+      />
+    </FlexCol>
+  ); 
 }

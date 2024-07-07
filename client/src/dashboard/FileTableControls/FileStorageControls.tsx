@@ -1,29 +1,26 @@
 import { mdiContentSaveCogOutline, } from "@mdi/js";
-import React, { useEffect, useState } from 'react';
-import { DBSSchema } from "../../../../commonTypes/publishUtils";
-import { PrglCore } from "../../App";
+import { usePromise } from "prostgles-client/dist/react-hooks";
+import React, { useEffect, useState } from "react";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import Btn from "../../components/Btn";
 import Chip from "../../components/Chip";
 import ErrorComponent from "../../components/ErrorComponent";
 import { FlexRowWrap } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
-import Popup from "../../components/Popup/Popup";
 import Select from "../../components/Select/Select";
 import { SwitchToggle } from "../../components/SwitchToggle";
-import { FullExtraProps } from "../../pages/Project";
 import { pickKeys } from "../../utils";
-import { CodeChecker } from "../Backup/CodeConfirmation";
 import { CredentialSelector } from "../Backup/CredentialSelector";
-import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";
-import { usePromise } from "../ProstglesMethod/hooks";
+import { FileStorageDelete } from "./FileStorageDelete";
+import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
 
 const STORAGE_TYPES = [
   { key: "local", label: "Local", subLabel: "Files stored within the docker volume" }, 
   { key: "S3", label: "Amazon S3", subLabel: "Files stored in the cloud" }
 ] as const;
 
-type FileStorageControlsProps = Pick<FullExtraProps, "dbsMethods" | "dbTables" | "dbs" | "dbsTables" | "dbProject" | "theme"> & {
+export type FileStorageControlsProps = Pick<FullExtraProps, "dbsMethods" | "dbTables" | "dbs" | "dbsTables" | "dbProject" | "theme"> & {
   connection: DBSSchema["connections"];
   database_config: DBSSchema["database_configs"];
   canCreateTables?: boolean;
@@ -40,22 +37,22 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
 
   const { projectFolderSize = 0, totalFileFolderSize = 0 } = fileSizes ?? {}
 
-  const tc = database_config.file_table_config;
-  const [fileTable, setFileTable] = useState(tc?.fileTable);
+  const fileConfig = database_config.file_table_config;
+  const [fileTable, setFileTable] = useState(fileConfig?.fileTable);
 
   useEffect(() => {
-    setFileTable(tc?.fileTable);
-  }, [tc?.fileTable]);
+    setFileTable(fileConfig?.fileTable);
+  }, [fileConfig?.fileTable]);
 
-  const [storageType, setStorageType] = useState(tc?.storageType.type);
-  const [credentialId, setCredentialId] = useState(tc?.storageType && "credential_id" in tc.storageType? tc.storageType.credential_id : undefined);
+  const [storageType, setStorageType] = useState(fileConfig?.storageType.type);
+  const [credentialId, setCredentialId] = useState(fileConfig?.storageType && "credential_id" in fileConfig.storageType? fileConfig.storageType.credential_id : undefined);
   
   const fileTableNameClash = dbTables.some(t => t.name === fileTable && !t.columns.some(c => c.name === "signed_url_expires"));
 
-  const canEnable = !tc?.fileTable && storageType && (
+  const canEnable = !fileConfig?.fileTable && fileTable && storageType && (
     storageType === "local" || !!credentialId
   );
-
+ 
   const error = canCreateTables? undefined : `Cannot use this feature: Your account needs CREATE TABLE privilege`;
   const [enablingError, setEnablingError] = useState<any>()
 
@@ -77,7 +74,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
     </div>
 
     <SwitchToggle  
-      label={!fileTable? "Enable" : !tc?.fileTable? "Enabling..." : "Enabled"} 
+      label={!fileTable? "Enable" : !fileConfig?.fileTable? "Enabling..." : "Enabled"} 
       checked={!!fileTable}
       className=""
       data-command="config.files.toggle"
@@ -87,7 +84,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
           setFileTable("files");
           setStorageType("local");
         } else {
-          if(tc?.fileTable) {
+          if(fileConfig?.fileTable) {
             setShowDelete(true)
           } else {
             setFileTable(undefined);
@@ -102,19 +99,19 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
           type="text" 
           label={{ 
             label: "File table name",
-            info: tc?.fileTable? "Table that contains file metadata" : "Used for file metadata. Table created in the current database"
+            info: fileConfig?.fileTable? "Table that contains file metadata" : "Used for file metadata. Table created in the current database"
           }}
-          readOnly={!!tc?.fileTable}
-          title={tc?.fileTable? "Cannot be updated" : ""}
+          readOnly={!!fileConfig?.fileTable}
+          title={fileConfig?.fileTable? "Cannot be updated" : ""}
           value={fileTable} 
           onChange={setFileTable} 
           error={fileTableNameClash? "There is a table with this name in the database. Choose another name" : undefined} 
         />
       </>}
 
-      {!!storageType && <>
+      {!!fileTable && <>
       
-        {tc?.fileTable? 
+        {fileConfig?.fileTable? 
           <FormField
             readOnly={true}
             label="Storage type"
@@ -145,7 +142,7 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
       />
     </div> : 
     storageType === "local"? <>
-      {!!tc?.fileTable && <>
+      {!!fileConfig?.fileTable && <>
         <Chip variant="header" label="This file folder size" value={Math.round((projectFolderSize ?? 0)/1e6).toLocaleString() + " MB"} />
         <Chip variant="header" label="All file folders size" value={Math.round((totalFileFolderSize ?? 0)/1e6).toLocaleString() + " MB"} />
       </>}
@@ -185,63 +182,3 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
 }
 
 
-const FileStorageDelete = ({ dbsMethods, connection, db, onClose, database_config }: { onClose: VoidFunction; db: PrglCore["db"] } & Pick<FileStorageControlsProps, "connection" | "dbsMethods" | "database_config">) => {
-
-  const [keepS3Data, setkeepS3Data] = useState(false);
-  const [keepFileTable, setkeepFileTable] = useState(false);
-  const [hasConfirmed, setHasConfirmed] = useState(false);
-  const [error, setError] = useState<any>();
-
-  const [hasFiles, setHasFiles] = useState(false);
-  useEffectAsync(async () => {
-    
-    const ftable = database_config.file_table_config?.fileTable;
-    const hasFiles = ftable && db[ftable]? Boolean(await db[ftable]?.count?.()) : false;
-    setHasFiles(hasFiles);
-  }, [database_config.file_table_config?.fileTable, db])
-
-  const isLocalType = database_config.file_table_config?.storageType.type === "local"
-
-  return <Popup 
-    title="Disable file storage" 
-    onClose={onClose}
-    footerButtons={[
-        { label: "Cancel", onClick: onClose, variant: "outline"  },
-        { node: <Btn color="danger" 
-            variant="filled"
-            disabledInfo={hasConfirmed? undefined : "Must code confirm first"}
-            onClickMessage={async (_, setMsg) => {
-              try {
-                setMsg({ loading: 1 })
-                await dbsMethods.setFileStorage!(connection.id, undefined, { keepS3Data, keepFileTable });
-                setMsg({ ok: "Disabled!" }, onClose);
-
-              } catch(error) {
-                setError(error)
-              }
-            }}
-          >Disable File storage</Btn>
-        }
-      ]}
-      contentClassName="flex-col gap-1  p-1"
-    > 
-      <SwitchToggle 
-        label={`Keep the ${database_config.file_table_config?.fileTable} table`} 
-        checked={keepFileTable} 
-        onChange={setkeepFileTable}  
-        disabledInfo={hasFiles? undefined : "No files"}
-      />
-
-      <SwitchToggle 
-        label="Keep existing files" 
-        checked={keepS3Data && !isLocalType} 
-        onChange={isLocalType? ()=>{} : setkeepS3Data}
-        disabledInfo={!hasFiles? "No files" : isLocalType? "Local files cannot be kept" : undefined}
-      />
-
-      <InfoRow color="warning" variant="filled" >File storage will be disabled </InfoRow>
-
-      <CodeChecker className="ai-start pl-p25" onChange={setHasConfirmed} />
-      {error && <ErrorComponent error={error} />}
-    </Popup>
-}

@@ -1,7 +1,7 @@
 
 import { mdiRefreshAuto } from "@mdi/js";
 import React, { useState } from "react";
-import { ExtraProps } from "../../App";
+import type { ExtraProps, Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import { InfoRow } from "../../components/InfoRow";
 import PopupMenu from "../../components/PopupMenu";
@@ -28,22 +28,20 @@ const DAYS_OF_WEEK = [
   { key: 7, label: "Sunday"},
 ] as const;
  
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { PGDumpParams } from "../../../../commonTypes/utils";
 import FormField from "../../components/FormField/FormField";
 import { CredentialSelector } from "./CredentialSelector";
-import { DumpOptions, DEFAULT_DUMP_OPTS } from "./DumpOptions"; 
-import { PGDumpParams } from "../../../../commonTypes/utils";
-import { DBSSchema } from "../../../../commonTypes/publishUtils"; 
-import { useSubscribeOne } from "prostgles-client/dist/react-hooks";
+import { DEFAULT_DUMP_OPTS, DumpOptions } from "./DumpOptions";
 
-type P = Pick<ExtraProps, "dbs" | "dbsMethods" | "dbsTables" | "theme"> & { 
+type P = Pick<Prgl, "db" | "dbs" | "dbsMethods" | "dbsTables" | "theme"> & { 
   connectionId: string;
-  onClose: VoidFunction;
 };
-export const AutomaticBackups = ({ dbs, dbsTables, dbsMethods, connectionId: connection_id, theme, onClose }: P) => {
+export const AutomaticBackups = ({ dbs, dbsTables, dbsMethods, connectionId: connection_id, theme, db }: P) => {
 
   const [dumpOpts, setDumpOpts] = useState<PGDumpParams>(DEFAULT_DUMP_OPTS);
 
-  const database_config = useSubscribeOne(dbs.database_configs.subscribeOneHook({ $existsJoined: { connections:  { id: connection_id } } }, {}))
+  const { data: database_config } = dbs.database_configs.useSubscribeOne({ $existsJoined: { connections:  { id: connection_id } } }, {});
 
   const setBackupConf = (newBackupConfig: Partial<DBSSchema["database_configs"]["backups_config"]>, merge = true) => {
     if(!database_config) throw "database_config missing";
@@ -75,6 +73,7 @@ export const AutomaticBackups = ({ dbs, dbsTables, dbsMethods, connectionId: con
         {bkpConf?.enabled? `Automatic backups: ${bkpConf.frequency}` : `Enable automatic backups`}
       </Btn>
     } 
+    clickCatchStyle={{ opacity: 0.5 }}
     positioning="beneath-left"
     footerButtons={_popupClose => [
       { label: "Close", onClickClose: true },
@@ -93,11 +92,13 @@ export const AutomaticBackups = ({ dbs, dbsTables, dbsMethods, connectionId: con
       },
     ]}
     render={() => (
-      <div className="flex-col gap-1 p-1">
+      <div className="flex-col gap-1 p-1 bg-inherit">
 
         {noSpaceForAutomaticLocalBackups && <InfoRow color="danger">{bkpConf.err}</InfoRow>}
-        <Select className="mr-1"
+        <Select 
+          className="mr-1"
           label="Destination"
+          data-command="AutomaticBackups.destination"
           fullOptions={DESTINATIONS}
           value={database_config?.backups_config?.cloudConfig? "S3" : "Local"}
           onChange={o => {
@@ -114,7 +115,9 @@ export const AutomaticBackups = ({ dbs, dbsTables, dbsMethods, connectionId: con
             if(credential_id) setBackupConf({ cloudConfig: { credential_id } })
           }} 
         />}
-        <Select label="Frequency" 
+        <Select 
+          label="Frequency"
+          data-command="AutomaticBackups.frequency"
           fullOptions={BACKUP_FREQUENCIES} 
           value={database_config?.backups_config?.frequency} 
           onChange={frequency => {
@@ -122,7 +125,8 @@ export const AutomaticBackups = ({ dbs, dbsTables, dbsMethods, connectionId: con
           }}
         />
         {bkpConf?.frequency && <>
-          <FormField  type="number" 
+          <FormField  
+            type="number" 
             inputProps={{ min: 1, max: 200 }} 
             label="Keep last" 
             hint="Will delete older automatic backups except top N. 0 means nothing will get deleted" 
@@ -157,6 +161,7 @@ export const AutomaticBackups = ({ dbs, dbsTables, dbsMethods, connectionId: con
             connectionId={connection_id}
             dbsMethods={dbsMethods}
             dbs={dbs} 
+            dbProject={db}
             dbsTables={dbsTables}
             opts={dumpOpts}
             onChange={setDumpOpts}

@@ -1,27 +1,20 @@
-import { mdiDotsHorizontal, mdiHelp, mdiPlus } from "@mdi/js";
-import { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React, { useCallback, useMemo, useState } from "react";
-import { themeR } from "../../../../App";
-import Btn from "../../../../components/Btn";
+import { mdiDotsHorizontal } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import React, { useCallback, useState } from "react";
+import { appTheme, useReactiveState } from "../../../../App";
 import { ExpandSection } from "../../../../components/ExpandSection";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../../../components/Flex";
+import { FlexCol, FlexRowWrap } from "../../../../components/Flex";
 import { FormFieldDebounced } from "../../../../components/FormField/FormFieldDebounced";
 import { InfoRow } from "../../../../components/InfoRow";
-import { Label } from "../../../../components/Label";
-import PopupMenu from "../../../../components/PopupMenu";
 import Select from "../../../../components/Select/Select";
-import CodeExample from "../../../CodeExample";
-import { DBSchemaTablesWJoins, WindowSyncItem } from "../../../Dashboard/dashboardUtils";
-import { useReactiveState } from "../../../ProstglesMethod/hooks";
-import SmartFilterBar from "../../../SmartFilter/SmartFilterBar";
-import { ColumnConfigWInfo } from "../../W_Table";
+import type { DBSchemaTablesWJoins, WindowSyncItem } from "../../../Dashboard/dashboardUtils";
+import { SmartFilterBar } from "../../../SmartFilterBar/SmartFilterBar";
+import type { ColumnConfigWInfo } from "../../W_Table";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
-import { AddComputedColMenu } from "../AddComputedColMenu";
-import { ColumnList } from "../ColumnList";
-import { ColumnConfig } from "../ColumnMenu";
+import type { ColumnConfig } from "../ColumnMenu";
 import { JoinPathSelectorV2, getAllJoins } from "../JoinPathSelectorV2";
-import { NestedTimechartControls } from "../NestedTimechartControls";
 import { LinkedColumnFooter } from "./LinkedColumnFooter";
+import { LinkedColumnSelect } from "./LinkedColumnSelect";
 
 export type LinkedColumnProps = {
   tables: DBSchemaTablesWJoins;
@@ -43,9 +36,11 @@ export const NESTED_COLUMN_DISPLAY_MODES = [
 ] as const;
 
 
+console.error("MAKE IT EASIER TO ADD ROW COUNT/AGGREGATION");
+
 export const LinkedColumn = (props: LinkedColumnProps) => {
   const { w, tables, db } = props; 
-  const { state: theme } = useReactiveState(themeR);
+  const { state: theme } = useReactiveState(appTheme);
   const getCol = (name: string) => w.columns?.find(c => c.name === name)
 
   const [localColumn, setLocalColumn] = useState<ColumnConfigWInfo>();
@@ -64,35 +59,11 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
     return updateColumn({ nested: { ...(currentColumn).nested!,  ...newNested } })
   };
 
-  const updateNestedColumns = (newCols: ColumnConfigWInfo[]) => {
-    if(!table) throw "not ok"
-    updateNested({
-      columns: getColWInfo(tables, { table_name: table.name, columns: newCols })
-    });
-  }
-  const [showAddComputedCol, setShowAddComputedCol] = useState(false);
-  const nestedColumns = currentColumn?.nested?.columns
+  const nestedColumns = currentColumn?.nested?.columns;
   const disabledInfo = newColumnNameError ?? (!nestedColumns?.filter(c => c.show).length? "Must select columns" : !props.column?.nested && !currentColumn? "Must select a table" : undefined);
 
-  const nestedColumnQuery = useMemo(() => {
-    const { nested } = currentColumn ?? {};
-    if(!currentColumn || !nested) return;
-    const asName = v => JSON.stringify(v);
-    const rootTable = asName(w.table_name);
-    return [
-      `SELECT ${rootTable}.*, ${asName(currentColumn.name)}.*`,
-      `FROM ${rootTable}`,
-      ...nested.path
-        .map((path, index) => 
-          `${nested.joinType === "inner"? "INNER" : "LEFT"} JOIN ${asName(path.table)} \n  ON ${path.on.map(on => Object.entries(on).map(([k, v]) => {
-            const prevTable = !index? rootTable : asName(nested.path[index - 1]?.table);
-            return `${prevTable}.${k} = ${asName(path.table)}.${v}`
-          })).join(" AND ")}`),
-    ].join("\n");
-  }, [currentColumn]);
-
-  return <FlexCol className="LinkedColumn">
-    <InfoRow color="info" variant="naked" className="mb-1" iconPath="">
+  return <FlexCol className="LinkedColumn gap-2">
+    <InfoRow color="info" variant="naked" className=" " iconPath="">
       Join to and show data from tables that are related through a 
       <a className="ml-p25" href="https://www.postgresql.org/docs/current/tutorial-fk.html" target="_blank">FOREIGN KEY</a> 
     </InfoRow>
@@ -107,7 +78,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
         }} 
       />
     }
-    <FlexRowWrap className="ai-end">
+    <FlexRowWrap className="ai-end gap-p25">
       <JoinPathSelectorV2
         tableName={w.table_name}
         tables={tables}
@@ -140,107 +111,19 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
               path: targetPath.path,
               joinType: "left",
               limit: 20,
-            }
+            },
           };
           setLocalColumn(newCol);
         }}    
       />
-      {nestedColumnQuery && <PopupMenu 
-        title="Nested column join details"
-        positioning="center"
-        button={<Btn iconPath={mdiHelp}/>} 
-        render={() => 
-          <CodeExample 
-            language="sql" 
-            value={nestedColumnQuery} 
-            style={{ minWidth: "450px", minHeight: "250px" }} 
-          />
-        }
-      />}
     </FlexRowWrap>
-    <FlexRowWrap className="ai-end">
-      {nestedColumns && table &&
-        <PopupMenu 
-          data-command="LinkedColumn.ColumnListMenu"
-          title="Select columns"
-          contentClassName=""
-          clickCatchStyle={{ opacity: .1 }}
-          positioning="beneath-left"
-          button={
-            <FlexCol className="gap-p25">
-              <Label label="Columns" variant="normal"></Label>
-              <Btn variant="faded"  data-command="LinkedColumn.ColumnList.toggle" disabledInfo={currentColumn.nested?.chart? "Must disable time chart first" : undefined}>
-                {nestedColumns.filter(c => c.show).length} selected
-              </Btn>
-            </FlexCol>
-          }
-          render={(pClose) => {
-            return <FlexCol>
-              <ColumnList 
-                columns={nestedColumns}
-                tableColumns={table.columns}
-                // mainMenuProps={undefined}
-                mainMenuProps={{ db, onClose: pClose, suggestions: undefined, table, tables, w }}
-                onChange={updateNestedColumns}
-              />
-
-              <FlexRow className="p-1">
-                {/* <Btn 
-                  iconPath={mdiPlus}
-                  variant="faded" 
-                  color="action"
-                  disabledInfo={nestedColumns.some(c => c.computedConfig?.funcDef.key === "$countAll")? "Already added" : undefined }
-                  onClick={() => {
-                    const newCols: ColumnConfigWInfo[] = [
-                      {
-                        name: "Count of all rows",
-                        show: true,
-                        computedConfig: { 
-                          column: undefined,
-                          funcDef: { key: "$countAll", outType: { tsDataType: "number", udt_name: "int8" }, label: "Count all", subLabel: "", tsDataTypeCol: undefined, udtDataTypeCol: undefined },
-                        }
-                      },
-                      ...nestedColumns.map(c => ({ ...c, show: false }))
-                    ];
-                    updateNestedColumns(newCols)
-                  }}
-                >
-                  Show count of all rows
-                </Btn> */}
-                <Btn 
-                  variant="faded"
-                  iconPath={mdiPlus} 
-                  color="action" 
-                  onClick={() => setShowAddComputedCol(true)}
-                >
-                  Add computed column
-                </Btn>
-                {showAddComputedCol && 
-                  <AddComputedColMenu 
-                    db={db}
-                    nestedColumnName={currentColumn.name}
-                    tables={tables}
-                    w={w}
-                    onClose={() => setShowAddComputedCol(false)}
-                  />
-                }
-              </FlexRow>
-            </FlexCol>
-          }}
-        />
-      }
-      {table && 
-        <NestedTimechartControls
-          tableName={table.name} 
-          chart={currentColumn?.nested?.chart} 
-          onChange={chart => {
-            updateNested({ chart, limit: chart? 200 : 20 });
-          }} 
-          tables={tables} 
-        />
-      }
-      
-    </FlexRowWrap>
+    <LinkedColumnSelect 
+      { ...props } 
+      updateNested={updateNested} 
+      updateColumn={updateColumn} 
+      table={table} 
+      currentColumn={currentColumn} 
+    />
     {currentColumn && <>
       <ExpandSection iconPath={mdiDotsHorizontal} label="More options">
 
@@ -288,6 +171,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
               theme={theme}
               innerClassname="mt-1 px-0"
               filter={currentColumn.nested.detailedFilter}
+              having={currentColumn.nested.detailedHaving}
               table_name={table.name} 
               db={db} 
               tables={tables}
@@ -302,6 +186,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
               sort={currentColumn.nested.sort}
               onSortChange={sort => updateNested({ sort })}
               onChange={detailedFilter => updateNested({ detailedFilter })} 
+              onHavingChange={detailedHaving => updateNested({ detailedHaving })} 
             />
           </>
         }

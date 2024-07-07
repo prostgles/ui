@@ -3,12 +3,13 @@ import { getKeys, isObject } from "prostgles-types";
 import React, { useState } from "react";
 import ErrorComponent from "../../../components/ErrorComponent";
 
-import { SelectRule, TableRules } from "../../../../../commonTypes/publishUtils";
+import type { SelectRule, TableRules } from "../../../../../commonTypes/publishUtils";
 import { ExpandSection } from "../../../components/ExpandSection";
 import { FlexCol } from "../../../components/Flex";
-import FieldFilterControl from "../OptionControllers/FieldFilterControl";
-import { ContextDataSchema, FilterControl, SingleGroupFilter } from "../OptionControllers/FilterControl";
-import { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
+import { FieldFilterControl } from "../OptionControllers/FieldFilterControl";
+import type { ContextDataSchema, SingleGroupFilter } from "../OptionControllers/FilterControl";
+import { FilterControl } from "../OptionControllers/FilterControl";
+import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { ExampleComparablePolicy } from "./ExampleComparablePolicy";
 import { RuleToggle } from "./RuleToggle";
 
@@ -107,7 +108,6 @@ export const SelectRuleControl = ({ tableRules, onChange, table, prgl, contextDa
             table={table}
             userTypes={userTypes}
             prgl={prgl}
-            contextDataSchema={contextData}
           />
         </>
       </RuleExpandSection>

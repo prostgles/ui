@@ -12,35 +12,39 @@ import {
   mdiTools,
   mdiViewColumnOutline,
 } from "@mdi/js";
-import { DBHandlerClient, TableHandlerClient } from 'prostgles-client/dist/prostgles';
-import React, { useState } from 'react';
-import Tabs, { TabItems } from '../../../components/Tabs';
-import { DeepPartial } from '../../RTComp';
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import React, { useState } from "react";
+import type { TabItems } from "../../../components/Tabs";
+import Tabs from "../../../components/Tabs";
 
-import { TimechartRenderStyle, TIMECHART_STAT_TYPES } from "../../W_TimeChart/W_TimeChartMenu";
-import { AlterColumn } from './AlterColumn/AlterColumn';
-import { BarchartStyle, ConditionalStyle, FixedStyle, ScaleStyle, ColumnStyleControls } from './ColumnStyleControls';
+import type { TIMECHART_STAT_TYPES, TimechartRenderStyle } from "../../W_TimeChart/W_TimeChartMenu";
+import { AlterColumn } from "./AlterColumn/AlterColumn";
+import type { BarchartStyle, ConditionalStyle, FixedStyle, ScaleStyle } from "./ColumnStyleControls";
+import { ColumnStyleControls } from "./ColumnStyleControls";
 
-import { ParsedJoinPath } from "prostgles-types";
-import { SimpleFilter, SmartGroupFilter } from '../../../../../commonTypes/filterUtils';
-import { DBS } from "../../Dashboard/DBS";
-import { CommonWindowProps } from '../../Dashboard/Dashboard';
-import { WindowData, WindowSyncItem } from "../../Dashboard/dashboardUtils";
-import SmartFilter from '../../SmartFilter/SmartFilter';
-import { getColumnsConfig } from "../TableMenu/getColumnsConfig";
-import W_Table, { ColumnConfigWInfo } from '../W_Table';
-import { getFullColumnConfig, updateWCols } from "../tableUtils/tableUtils";
-import { AddComputedColMenu } from "./AddComputedColMenu";
-import { ColumnDisplayFormat } from "./ColumnDisplayFormat/ColumnDisplayFormat";
-import { ColumnFormat, getFormatOptions } from "./ColumnDisplayFormat/columnFormatUtils";
-import { ColumnSortMenu } from "./ColumnSortMenu";
-import ColumnsMenu from "./ColumnsMenu";
-import { NESTED_COLUMN_DISPLAY_MODES, LinkedColumn } from "./LinkedColumn/LinkedColumn";
-import { FuncDef, FunctionSelector } from "./FunctionSelector"; 
-import { useEffectAsync } from "../../DashboardMenu/DashboardMenuSettings";
-import { useIsMounted } from "../../Backup/CredentialSelector";
-import { useReactiveState } from "../../ProstglesMethod/hooks";
+import type { ParsedJoinPath } from "prostgles-types";
+import type { SimpleFilter, SmartGroupFilter } from "../../../../../commonTypes/filterUtils";
+import { useReactiveState } from "../../../appUtils";
 import Popup from "../../../components/Popup/Popup";
+import { useIsMounted } from "../../Backup/CredentialSelector";
+import type { DBS } from "../../Dashboard/DBS";
+import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import { useEffectAsync } from "../../DashboardMenu/DashboardMenuSettings";
+import { getAndFixWColumnsConfig } from "../TableMenu/getAndFixWColumnsConfig";
+import type W_Table from "../W_Table";
+import type { ColumnConfigWInfo } from "../W_Table";
+import { getFullColumnConfig, updateWCols } from "../tableUtils/tableUtils";
+import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
+import { ColumnDisplayFormat } from "./ColumnDisplayFormat/ColumnDisplayFormat";
+import type { ColumnFormat } from "./ColumnDisplayFormat/columnFormatUtils";
+import { getFormatOptions } from "./ColumnDisplayFormat/columnFormatUtils";
+import { ColumnSortMenu } from "./ColumnSortMenu";
+import { ColumnsMenu } from "./ColumnsMenu";
+import type { FuncDef } from "./FunctionSelector";
+import { FunctionSelector } from "./FunctionSelector";
+import type { NESTED_COLUMN_DISPLAY_MODES } from "./LinkedColumn/LinkedColumn";
+import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 
 
 export type ColumnConfig = {
@@ -54,6 +58,7 @@ export type ColumnConfig = {
     limit?: number;
     sort?: ColumnSort;
     detailedFilter?: SmartGroupFilter;
+    detailedHaving?: SmartGroupFilter;
     chart?: {
       type: "time";
       dateCol: string;
@@ -99,8 +104,7 @@ export type ColumnConfig = {
 };
 
 
-type P = Pick<CommonWindowProps, 'suggestions' | 'tables' | "prgl"> & {
-  tableName: string;
+type P = Pick<CommonWindowProps, "suggestions" | "tables" | "prgl"> & {
   db: DBHandlerClient; 
   dbs: DBS;
   w: WindowSyncItem<"table">;
@@ -115,17 +119,18 @@ export type ColumnSort = {
 }
 
 export const ColumnMenu = (props: P) => {
-
-  const [{ w, delta }, setW] = useState<{ w: WindowSyncItem<"table">; delta?: DeepPartial<WindowData<"table">>}>({ w: props.w, delta: undefined });
+  const { db, tables, prgl } = props;
+  const [w, setW] = useState<WindowSyncItem<"table">>(props.w);
+  const tableName = w.table_name;
   const [column, setColumn] = useState<ColumnConfigWInfo>();
   const [activeKey, setActiveKey] = useState<string>();
   const { state, setState } = useReactiveState(props.columnMenuState);
   const colName = state?.column;
   const getIsMounted = useIsMounted(); 
   useEffectAsync(async () => {
-    const wSub = await w.$cloneSync(async (w, delta)=> {
+    const wSub = await w.$cloneSync(async (w)=> {
       if(!getIsMounted()) return;
-      setW({ w, delta });
+      setW(w);
     });
     return wSub.$unsync;
   }, [setW]);
@@ -133,7 +138,7 @@ export const ColumnMenu = (props: P) => {
   useEffectAsync(async () => {
  
     if(!w.columns || !Array.isArray(w.columns)){
-      updateWCols(w, await getColumnsConfig(db[tableName] as TableHandlerClient, w, true))
+      updateWCols(w, await getAndFixWColumnsConfig(tables, w))
     } else if(colName) {
       const column = getFullColumnConfig(tables, w).find(c => c.name === colName);
       if(!column){
@@ -143,8 +148,7 @@ export const ColumnMenu = (props: P) => {
       }
     } 
 
-  }, [w, delta, colName]);
-
+  }, [w, colName]);
 
   const onUpdate = (nc: Partial<ColumnConfig> ) => {
     if(!column) return;
@@ -157,7 +161,6 @@ export const ColumnMenu = (props: P) => {
     updateWCols(w, newCols);
   }
 
-  const { db, tableName, tables, prgl: { theme } } = props;
   if(!column || !state) return null;
 
   const onClose = () => {
@@ -168,20 +171,21 @@ export const ColumnMenu = (props: P) => {
   const table = tables.find(t => t.name === w.table_name);
   const validatedColumn = table?.columns.find(c => c.name === colName);
   
-  const isComputed = !!((column.format && column.format.type !== "NONE") || column.computedConfig || column.nested);
+  const isComputed = Boolean(column.computedConfig || column.nested);
   const computedType = column.nested? "nested" : column.computedConfig && (column.computedConfig.isColumn ? "column" : "added");
+  const hasSort = w.sort?.some(s => !column.nested? s.key === column.name : column.nested.columns.some(nc => `${column.name}.${nc.name}`));
   const items = {
     "Sort": {
       leftIconPath: mdiSort,
       disabledText: (!validatedColumn?.orderBy && !column.nested)? "Not permitted" : undefined,
-      style: w.sort?.some(s => !column.nested? s.key === column.name : column.nested.columns.some(nc => `${column.name}.${nc.name}`))? { color: "var(--blue-600)" } : {},
+      style: hasSort? { color: "var(--active)" } : {},
       content: <ColumnSortMenu column={column} w={w} tables={tables} />
     },
     "Style": {
       leftIconPath: mdiFormatColorFill,
       hide: !!column.nested,
       disabledText: column.format?.type === "Media"? "Cannot style a media format column" : undefined,
-      style: (column.style?.type && column.style.type !== "None") ? { color: "var(--blue-600)" } : {},
+      style: (column.style?.type && column.style.type !== "None") ? { color: "var(--active)" } : {},
       content: <ColumnStyleControls db={db} 
         tableName={tableName} 
         tables={tables} 
@@ -191,7 +195,7 @@ export const ColumnMenu = (props: P) => {
       /> 
     },
     "Display format": {
-      style: column.format && column.format.type !== "NONE" ? { color: "var(--blue-600)" } : {},
+      style: column.format && column.format.type !== "NONE" ? { color: "var(--active)" } : {},
       leftIconPath: mdiFormatText,
       hide: !!column.nested,
       disabledText: getFormatOptions(column.info || column.computedConfig?.funcDef.outType).length <= 1? "Only text columns can have custom formats at the moment" : undefined,
@@ -203,16 +207,23 @@ export const ColumnMenu = (props: P) => {
           onUpdate({ format })
         }}
       />
-      },
+    },
     "Filter": {
       leftIconPath: mdiFilter,
       hide: !!column.nested,
       disabledText: !validatedColumn?.filter? "Not permitted" : isComputed? "Cannot filter a computed column" : undefined,
-      style: (w.filter.some(f => "fieldName" in f && f.fieldName === column.name)) ? { color: "var(--blue-600)" } : {},
+      style: (w.filter.some(f => "fieldName" in f && f.fieldName === column.name)) ? { color: "var(--active)" } : {},
     }, 
     "Columns": {
       leftIconPath: mdiViewColumnOutline,
-      content: <ColumnsMenu w={w} db={db} tables={tables} onClose={onClose} suggestions={props.suggestions} />
+      content: <ColumnsMenu 
+        w={w} 
+        db={db} 
+        tables={tables} 
+        onClose={onClose} 
+        suggestions={props.suggestions} 
+        nestedColumnOpts={undefined} 
+      />
     },
     "Add Computed Column": {
       hide: !!column.nested,
@@ -220,7 +231,7 @@ export const ColumnMenu = (props: P) => {
       leftIconPath: mdiTableColumnPlusAfter,
       content: <AddComputedColMenu 
         variant="no-popup"
-        nestedColumnName={column.nested && column.name}
+        nestedColumnOpts={column.nested? { type: "existing", config: column } : undefined}
         onClose={onClose}
         tables={tables}
         w={w}
@@ -230,8 +241,9 @@ export const ColumnMenu = (props: P) => {
       />
     },
     "Apply function": {
-      style: column.computedConfig? { color: "var(--blue-600)" } : {},
+      style: column.computedConfig? { color: "var(--active)" } : {},
       leftIconPath: mdiFunction,
+      hide: !!column.nested || column.computedConfig && !column.computedConfig.isColumn,
       content: table && w.columns && validatedColumn && 
         // <SummariseColumn 
         //   column={column}
@@ -254,7 +266,7 @@ export const ColumnMenu = (props: P) => {
         />
     },
     "Add Linked Data": {
-      style: column.nested? { color: "var(--blue-600)" } : {},
+      style: column.nested? { color: "var(--active)" } : {},
       leftIconPath: mdiLinkPlus,
       disabledText: !table?.joins.length? "No foreign keys to/from this table" : undefined,
       label: `${column.nested? "Edit" : "Add"} Linked Columns`,
@@ -275,6 +287,7 @@ export const ColumnMenu = (props: P) => {
         table={table} 
         field={column.name} 
         tables={tables} 
+        prgl={prgl}
         suggestions={props.suggestions} 
         onClose={onClose} 
       />
@@ -286,7 +299,7 @@ export const ColumnMenu = (props: P) => {
     "Remove": {
       label: "Remove computed column",
       leftIconPath: mdiEyeRemove,
-      style: { color: "var(--red-600)" },
+      style: { color: "var(--text-warning)" },
       hide: !computedType || computedType === "column"
     },
     "Hide Others": {
@@ -300,7 +313,7 @@ export const ColumnMenu = (props: P) => {
   }  as const satisfies TabItems
 
   const content = (
-    <div className="f-1 min-h-0 flex-col" > 
+    <div className="min-h-0 flex-col" > 
       <Tabs
         compactMode={window.isMobileDevice}
         variant="vertical"
@@ -315,7 +328,7 @@ export const ColumnMenu = (props: P) => {
             // onClose();
           } else if(v === "Filter"){
             
-            const nf: SimpleFilter = await SmartFilter.getDefaultFilter(column)
+            const nf: SimpleFilter = await getDefaultFilter(column)
             w.$update({ filter: [nf, ...w.filter] });
             onClose();
           } else if(v === "Remove"){
@@ -369,6 +382,15 @@ export const ColumnMenu = (props: P) => {
   >
     {content}
   </Popup>
-}
+} 
 
- 
+/** undefined value means filter is disabled (gray col name text) */
+const getDefaultFilter = async (col: ColumnConfigWInfo ): Promise<SimpleFilter> => {
+  const isNumeric = ["number", "Date"].includes(col.info?.tsDataType || col.computedConfig?.funcDef.tsDataTypeCol as any);
+  const nf: SimpleFilter = { 
+    fieldName: col.name,
+    type: isNumeric?  "$between" : "$in",
+  }
+
+  return nf;
+}

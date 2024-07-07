@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import "./NavBar.css";
-
-import Icon from '@mdi/react'
-import { mdiArrowLeft, mdiAccount, mdiServer, mdiMenu, mdiClose } from '@mdi/js'
+ 
+import { mdiArrowLeft, mdiAccount, mdiServer, mdiMenu, mdiClose } from "@mdi/js"
 import { useNavigate } from "react-router-dom";
 import { AccountMenu } from "../pages/AccountMenu";
-import { ClientUser, Prgl } from "../App";
-import { ServerState } from "../../../commonTypes/electronInit";
+import type { ClientUser, Prgl } from "../App";
+import type { ServerState } from "../../../commonTypes/electronInit";
 import { InfoRow } from "./InfoRow"; 
+import { Icon } from "./Icon/Icon";
  
 type P = {
   title?: string;
@@ -24,13 +24,15 @@ type P = {
   endContent?: React.ReactNode;
 } & Pick<Partial<Prgl>, "dbsMethods" | "dbs">;
 
-function NavBar(props: P){
+export const NavBar = (props: P) => {
   const [navCollapsed, setNavCollapsed] = useState(true);
   const navigate = useNavigate();
-  const { options = [], title, user, serverState, dbsMethods, dbs, endContent } = props;
+  const { options = [], title, user, serverState, dbsMethods, dbs, endContent: _endContent } = props;
+  const isPublicUser = user?.type === "public";
+  const endContent = _endContent? <div onClick={e => { e.stopPropagation(); e.preventDefault(); }}>{_endContent}</div> : null;
 
   const MenuButton = !title && 
-    <button className="hamburger hidden ml-auto" 
+    <button className="hamburger hidden ml-auto text-0" 
       style={{
         alignSelf: "flex-end"
       }}
@@ -44,7 +46,7 @@ function NavBar(props: P){
     </button>
 
   return (
-    <nav className={"flex-row jc-center noselect w-full text-1p5 shadow-l bg-0 " + (navCollapsed? " mobile-collapsed " : "")} 
+    <nav className={"flex-row jc-center noselect w-full text-1p5 shadow-l bg-color-0 " + (navCollapsed? " mobile-collapsed " : " mobile-expanded pb-1 ")} 
       style={{ 
         zIndex: 1, 
       }}
@@ -56,7 +58,7 @@ function NavBar(props: P){
           className="prgl-brand-icon flex-row ai-center jc-center"
         >
           <img className="p-p5 px-1 mr-2 " src="/prostgles-logo.svg"/>
-          {serverState?.isDemoMode && user?.type === "admin" && <div className="DemoMode rounded text-blue-600 b b-blue-400 px-p75 py-p5 mr-1" 
+          {serverState?.isDemoMode && user?.type === "admin" && <div className="DemoMode rounded text-action b b-action px-p75 py-p5 mr-1" 
             onClick={async () => {
               if(!dbs || !dbsMethods) return;
               const con = await dbs.connections.findOne({ db_name: "sales" });
@@ -66,8 +68,8 @@ function NavBar(props: P){
           >Demo mode</div>}
           {serverState?.isDemoMode && user?.passwordless_admin && <InfoRow color="danger">MUST DISABLE PASSWORDLESS ADMIN!!!</InfoRow>}
         </NavLink>}
-        <div className="flex-col f-1">
 
+        <div className={"flex-col " + (serverState?.isElectron? "f-0 ml-auto jc-center" : "f-1")}>
           <div className="navwrapper flex-row gap-p5 ai-center"
             style={{ order: 2 }}
             onClick={()=>{
@@ -86,25 +88,23 @@ function NavBar(props: P){
               <NavLink 
                 key={i} 
                 to={o.to as any} 
-                className={"text-0 hover gap-p5 flex-row ai-center f-0 px-1 pt-1 bb font-16 f-1 max-s-fit min-w-0 "}
+                className={"text-0 hover gap-p5 flex-row ai-center fs-1 px-1 pt-1 bb font-16"}
               >
                 {o.iconPath && <Icon size={1} className="f-0" path={o.iconPath} /> }
-                <div className="f-1 max-s-fit min-w-0 ws-no-wrap text-ellipsis ws-nowrap" >{o.label}</div> 
+                <div className="fs-1 ws-no-wrap text-ellipsis ws-nowrap" >{o.label}</div> 
               </NavLink>
             ))}
-
+            {/* spacer */}
+            <div className="f-1"></div>
             {!serverState?.isElectron && <AccountMenu user={user} forNavBar={true} />}
             {endContent}
           </div>
           {MenuButton}
         </div>
-
       </div>
     </nav>
   );
 }
-
-export default NavBar
 
 
 export class LeftNavBar extends React.Component<any, any> {
@@ -113,13 +113,13 @@ export class LeftNavBar extends React.Component<any, any> {
       <div className="flex-col">
         <ul className="plain flex-col">
           <li>
-            <NavLink to={"/projects"} className={"text-gray-800 text-white-hover flex-row  bb text-sm font-medium ml-8 transition-150 "}>
+            <NavLink to={"/projects"} className={"text-0p5 text-white-hover flex-row  bb text-sm font-medium ml-8 transition-150 "}>
               <Icon path={mdiServer} size={1}/>
               <div>Projects</div>
             </NavLink>
           </li>
           <li>
-            <NavLink to={"/account"} className={"text-gray-800 text-white-hover flex-row  bb text-sm font-medium ml-8 transition-150 "}>
+            <NavLink to={"/account"} className={"text-0p5 text-white-hover flex-row  bb text-sm font-medium ml-8 transition-150 "}>
               <Icon path={mdiAccount} size={1}/>
               <div>Account</div>
             </NavLink>

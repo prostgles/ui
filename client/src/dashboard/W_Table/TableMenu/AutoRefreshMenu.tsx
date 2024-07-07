@@ -1,11 +1,11 @@
 
-import { DBHandlerClient } from 'prostgles-client/dist/prostgles';
-import ButtonGroup from '../../../components/ButtonGroup';
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import ButtonGroup from "../../../components/ButtonGroup";
 import { InfoRow } from "../../../components/InfoRow";
-import { WindowSyncItem } from '../../Dashboard/dashboardUtils';
-import { RefreshOptions } from './W_TableMenu';
-import React from 'react';
-import FormField from '../../../components/FormField/FormField';
+import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import type { RefreshOptions } from "./W_TableMenu";
+import React from "react";
+import FormField from "../../../components/FormField/FormField";
 
 export const AutoRefreshMenu = ({ w, db }: {w: WindowSyncItem<"sql"> | WindowSyncItem<"map"> | WindowSyncItem<"table">, db?: DBHandlerClient}) => {
   const { refresh } = w.options;

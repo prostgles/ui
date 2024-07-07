@@ -1,10 +1,10 @@
 
 import { mdiClose } from "@mdi/js";
 import React from "react";
-import { ArgDef } from "../../../../../commonTypes/publishUtils";
+import type { ArgDef } from "../../../../../commonTypes/publishUtils";
 import Btn from "../../../components/Btn";
 import FormField from "../../../components/FormField/FormField";
-import { CommonWindowProps } from "../../Dashboard/Dashboard";
+import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import { ReferencesDefinition } from "./ReferencesDefinition";
 
 export type ArgumentDefinitionProps = ArgDef & { onChange: (newArg: ArgDef | undefined) => void } & Pick<CommonWindowProps, "tables">;

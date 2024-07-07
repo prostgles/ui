@@ -1,22 +1,27 @@
-import { AnyObject, getKeys, isDefined, isEmpty, ParsedJoinPath, reverseParsedPath } from "prostgles-types";
+import type { AnyObject, ParsedJoinPath} from "prostgles-types";
+import { getKeys, isDefined, isEmpty, reverseParsedPath } from "prostgles-types";
 import React from "react";
 import ErrorComponent from "../../components/ErrorComponent";
 import Loading from "../../components/Loading";
-import Popup from '../../components/Popup/Popup';
-import { CommonWindowProps } from "../Dashboard/Dashboard";
-import { WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";
-import { DeckGLMap, GeoJSONFeature, GeoJsonLayerProps, HoverCoords, MapHandler } from "../Map/DeckGLMap";
-import RTComp, { DeltaOfData } from "../RTComp";
-import W_Table, { ActiveRow } from "../W_Table/W_Table";
-import Window from '../Window';
+import Popup from "../../components/Popup/Popup";
+import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";
+import type { DeckGlColor, GeoJSONFeature, GeoJsonLayerProps, HoverCoords, MapHandler } from "../Map/DeckGLMap";
+import { DeckGLMap } from "../Map/DeckGLMap";
+import type { DeltaOfData } from "../RTComp";
+import RTComp from "../RTComp";
+import type { ActiveRow } from "../W_Table/W_Table";
+import W_Table from "../W_Table/W_Table";
+import Window from "../Window";
 import { ChartLayerManager } from "../WindowControls/ChartLayerManager";
-import ProstglesMapMenu from "./W_MapMenu";
+import { W_MapMenu } from "./W_MapMenu";
 import { getMapDataExtent } from "./getMapDataExtent";
-import { HoveredObject, onMapHover } from "./onMapHover";
+import type { HoveredObject} from "./onMapHover";
+import { onMapHover } from "./onMapHover";
 import { setMapLayerData } from "./setMapLayerData"; 
 import SmartForm from "../SmartForm/SmartForm";
 import { isObject } from "../../../../commonTypes/publishUtils";
-import { getMapSelect } from "./getMapData";
+import { getMapFilter } from "./getMapData";
  
 
 export type LayerBase = {
@@ -34,9 +39,9 @@ export type LayerBase = {
 
   /** If missing then it's a local layer */
   wid?: string;
-  fillColor?: number[];
-  lineColor?: number[];
-  getLineColor?: () => number[];
+  fillColor?: DeckGlColor;
+  lineColor?: DeckGlColor;
+  getLineColor?: () => DeckGlColor;
   elevation?: number;
   geomColumn: string;
   
@@ -48,6 +53,11 @@ export type LayerBase = {
   tooltipRender?: (row: AnyObject) => React.ReactNode;
 
   disabled: boolean;
+}
+
+export type LayerOSM = LayerBase & {
+  type: "osm";
+  query: string;
 }
 
 export type LayerSQL = LayerBase & {
@@ -70,7 +80,7 @@ export type LayerTable = LayerBase & {
   path: undefined;
 })
 
-export type LayerQuery = LayerTable | LayerSQL;
+export type LayerQuery = LayerTable | LayerSQL | LayerOSM;
 
 export type W_MapProps = CommonWindowProps<"map"> & {
   layerQueries?: LayerQuery[]; 
@@ -78,13 +88,14 @@ export type W_MapProps = CommonWindowProps<"map"> & {
   myActiveRow: ActiveRow | undefined;
 };
 
-export type MapLayerExtras = Record<string, { colorStr: string; color: [number, number, number];}>;
+export type MapLayerExtras = Record<string, { colorStr: string; color: [number, number, number]; }>;
 
-type ClickedItem =  GeoJSONFeature & {
-  properties: {
+type ClickedItem = GeoJSONFeature & {
+  properties: GeoJSONFeature["properties"] & {
+    $rowhash?: string;
     geomColumn: string;
     tableName: string;
-    l: GeoJSON.Geometry
+    l: GeoJSONFeature["geometry"]
   } & ({
     i: AnyObject | string;
   } | {
@@ -106,7 +117,6 @@ export type W_MapState = {
   hoverObj?: any;
   hoverCoords?: HoverCoords;
   hovData?: any;
-  tileURL?: string;
 
   bytesPerSec: number;
   dataAge: number;
@@ -238,7 +248,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
         }
       }
 
-      if(this.d.w.options.filterExtent && changedOpts.includes("extent") || changedOpts.includes("filterExtent")){
+      if(this.d.w.options.extentBehavior === "filterToMapBounds" && changedOpts.includes("extent") || changedOpts.includes("extentBehavior")){
         this.props.onForceUpdate();
       }
     }
@@ -256,9 +266,26 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
     sub: any;
   }[] = [];
 
-  static extentToFilter = (ext: number[], geomColumn: string): AnyObject => ({ [`${geomColumn}.&&.st_makeenvelope`]: ext  })
+  /**
+   * Deck GL values seems to go over limits
+   */
+  static extentToFilter = ([x1, y1, x2, y2]: [number, number, number, number], geomColumn: string): AnyObject => { 
+    const xMin = -180;
+    const yMin = -90;
+    const xMax = 180;
+    const yMax = 90;
+    const bboxCoords = [
+      Math.min(xMax, Math.max(xMin, x1)),
+      Math.min(yMax, Math.max(yMin, y1)),
+      Math.max(xMin, Math.min(xMax, x2)),
+      Math.max(yMin, Math.min(yMax, y2)),
+    ];
+    return { 
+      [`${geomColumn}.&&.st_makeenvelope`]: bboxCoords
+    };
+  }
 
-  getFilter = (lTable: LayerTable, ext4326: number[]): { finalFilter: AnyObject; finalFilterWOextent: AnyObject; isJoin: boolean; } => {
+  getFilter = (lTable: LayerTable, ext4326: [number, number, number, number]): { finalFilter: AnyObject; finalFilterWOextent: AnyObject; isJoin: boolean; } => {
     const { geomColumn,  externalFilters, path } = lTable;
     
     const isJoin = !!path?.length;
@@ -313,12 +340,10 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
   onHover = onMapHover.bind(this);
 
   getMenu = (w: D["w"]) => {
-    const { tileURL, bytesPerSec } = this.state;
-    return <ProstglesMapMenu 
+    const { bytesPerSec } = this.state;
+    return <W_MapMenu 
         { ...this.props }
         w={w} 
-        tileURL={tileURL} 
-        setTileURL={tileURL => this.setState({ tileURL })}
         bytesPerSec={bytesPerSec}
       />;
   }
@@ -341,10 +366,10 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
         features: [drawingShape], 
         filled: true, 
         id: "drawingSHAPE",
-        fillColor: [131, 56, 236, 255],
+        fillColor: [131, 56, 236, 255] satisfies DeckGlColor,
         getLineWidth: f => 1211,
-        layerColor: [131, 56, 236, 255],
-        lineColor: [131, 56, 236, 255],
+        layerColor: [131, 56, 236, 255] satisfies DeckGlColor,
+        lineColor: [131, 56, 236, 255] satisfies DeckGlColor,
         lineWidth: 1222,
         pickable: true,
         stroked: true,
@@ -367,10 +392,10 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
           positioning="tooltip"
           contentClassName="p-p5"
         >
-          <div className="bg-0 o-auto flex-col">
-            {Object.keys(hovData).map(k => {  //
-              let txt = ["string" , "number"].includes(typeof hovData[k])? `${hovData[k]}` : JSON.stringify(hovData[k], null, 2);
-              if(txt.length > 20) {
+          <div className="bg-color-0 o-auto flex-col">
+            {Object.entries(hovData).map(([k, v])=> {  //
+              let txt = ["string" , "number"].includes(typeof v)? `${v}` : JSON.stringify(v, null, 2) as string | undefined ;
+              if(txt && txt.length > 20) {
                 txt = txt.slice(0, 30) + "...";
               }
 
@@ -396,7 +421,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
  
     if(error){
       infoSection = (
-        <div className="f-1 flex-row relative m-2 ai-center jc-center absolute p-2 bg-0 rounded" >
+        <div className="f-1 flex-row relative m-2 ai-center jc-center absolute p-2 bg-color-0 rounded" >
           <ErrorComponent title="Map error" withIcon={true} error={error} />
         </div>
       )
@@ -406,10 +431,13 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
 
     geoJsonLayers = geoJsonLayers.map(l => {
       l.features = l.features.map(f => {
-        if(clickedItem?.properties.$rowhash && f.properties && f.properties.$rowhash ===  clickedItem.properties.$rowhash){
+        if(
+          clickedItem?.properties.$rowhash && 
+          (f.properties.type === "sql" && f.properties.$rowhash === clickedItem.properties.$rowhash)
+        ){
           f.properties.fillColor = [0,0,0, 255];// f.properties.fillColor.slice(0,3).map(v => 255 - v).concat([200]);
           f.properties.lineColor = [0,0,0, 255];//f.properties.fillColor.slice(0,3).map(v => 255 - v).concat([200]);
-        } else if (f.properties) {
+        } else {
           f.properties.fillColor = l.layerColor;
           f.properties.lineColor = l.layerColor;
         }
@@ -420,25 +448,32 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
     });
     
     const geoJsonLayersDataFilterSignature = JSON.stringify([layerQueries]);
-    const content = <>
-      
-      {w.options.showCardOnClick && clickedItem?.properties.i && <SmartForm
-          theme={prgl.theme}
-          asPopup={true}
-          confirmUpdates={true}
-          hideChangesOptions={true}
-          db={prgl.db}
-          methods={prgl.methods}
-          tables={prgl.tables}
-          tableName={clickedItem.properties.tableName} 
-          rowFilter={Object.entries(clickedItem.properties.i).map(([fieldName, value]) => ({ fieldName, value }))}
-          onSuccess={() => {
+    let form: React.ReactNode = null;
+    if(w.options.showCardOnClick && clickedItem?.properties.i){
+      const table = this.props.tables.find(t => t.name === clickedItem.properties.tableName);
+      if(table){
+        const filter = getMapFilter({ geomColumn: clickedItem.properties.geomColumn }, table.columns, clickedItem.properties);
+        form = !filter? null : <SmartForm
+            theme={prgl.theme}
+            asPopup={true}
+            confirmUpdates={true}
+            hideChangesOptions={true}
+            db={prgl.db}
+            methods={prgl.methods}
+            tables={prgl.tables}
+            tableName={clickedItem.properties.tableName}
+            rowFilter={filter.detailedFilter}
+            onSuccess={() => {
 
-            this.setState({ dataAge: Date.now() });
-          }}
-          onClose={() => this.setState({ clickedItem: undefined })}
-        />
+              this.setState({ dataAge: Date.now() });
+            }}
+            onClose={() => this.setState({ clickedItem: undefined })}
+          />
       }
+    }
+
+    const content = <>
+      {form} 
       {tooltipPopup} 
       {minimised? null : 
         <div className="relative f-1 flex-col o-hidden" 
@@ -467,11 +502,10 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
                   type="map"
                   asMenuBtn={{ 
                     color: "action", 
-                    variant: "faded",
-                    style: { background: "white" },
+                    variant: "filled",
                     size: "small",
                     className: "shadow",
-                  }} 
+                  }}
                 />      
             }
             basemapImage={w.options.basemapImage}
@@ -487,7 +521,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
                 } else {
                   const table = this.props.tables.find(t => t.name === object.properties.tableName);
                   if(table){
-                    rowFilter = { $filter: [getMapSelect({ geomColumn: object.properties.geomColumn }, table.columns)["i"], "=", filterOrHash ] }
+                    rowFilter = getMapFilter({ geomColumn: object.properties.geomColumn }, table.columns, object.properties)?.filterValue;
                   }
                 }
               }
@@ -500,17 +534,20 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
             }}
             tileURLs={(w.options.tileURLs ?? [])
               .map(v => 
-                v.replaceAll('{Z}', '{z}')
-                  .replaceAll('{X}', '{x}')
-                  .replaceAll('{Y}', '{y}') 
+                v.replaceAll("{Z}", "{z}")
+                  .replaceAll("{X}", "{x}")
+                  .replaceAll("{Y}", "{y}") 
               )
             }
             tileSize={w.options.tileSize || 256}
             tileAttribution={w.options.tileAttribution}
+            basemapOpacity={w.options.basemapOpacity ?? .2}
+            basemapDesaturate={w.options.basemapDesaturate ?? 0}
+            dataOpacity={w.options.dataOpacity ?? .5}
             initialState={w.options as any || {}}
             geoJsonLayers={geoJsonLayers}
             options={{
-              filterExtent: w.options.filterExtent
+              extentBehavior: w.options.extentBehavior,
             }}
             onOptionsChange={newOpts => {
               w.$update({ options: newOpts }, { deepMerge: true });
@@ -524,7 +561,6 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
             }}
             onHover={this.onHover}
             onGetFullExtent={this.getDataExtent}
-            // onPointerMove={c => c? this.shapeEvents?.onPointerMove(c) : undefined}
             edit={!w.options.showAddShapeBtn? undefined : {
               /** Exclude clicked aggregated shapes from edit feature */
               feature: this.state.clickedItem?.properties.$rowhash? this.state.clickedItem : undefined,
@@ -550,8 +586,6 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
           />
         </div>}
     </>
-
-
 
     return <Window
       w={w} 

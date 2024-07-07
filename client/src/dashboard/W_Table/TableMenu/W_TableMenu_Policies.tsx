@@ -1,11 +1,12 @@
 import React from "react";
-import { W_TableInfo } from "./getTableMeta";
-import { AnyObject, asName } from "prostgles-types";
+import type { W_TableInfo } from "./getTableMeta";
+import type { AnyObject} from "prostgles-types";
+import { asName } from "prostgles-types";
 import { mdiDelete, mdiPencil, mdiPlus } from "@mdi/js";
 import Btn from "../../../components/Btn";
 import SmartCardList from "../../SmartCard/SmartCardList";
-import { FlexCol } from "../../../components/Flex";
-import { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
+import { FlexCol, FlexRow, FlexRowWrap } from "../../../components/Flex";
+import type { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
 import { InfoRow } from "../../../components/InfoRow"; 
 import { SwitchToggle } from "../../../components/SwitchToggle";
 import Select from "../../../components/Select/Select";
@@ -18,7 +19,7 @@ type P = W_TableMenuProps & {
 export const W_TableMenu_Policies = ({ tableMeta, onSetQuery, prgl, w }: P) => {
   const tableName = w.table_name;
   if (!tableMeta || !tableName) return null;
-  const AlterQuery = `ALTER TABLE ${asName(tableName)}`;
+  const AlterQuery = `ALTER TABLE ${(tableName)}`;
   return (
     <FlexCol className="ai-start o-auto">
       <div className="ta-left p-p5">
@@ -29,24 +30,41 @@ export const W_TableMenu_Policies = ({ tableMeta, onSetQuery, prgl, w }: P) => {
         <br/>
         Table owners normally bypass row security as well, though a table owner can choose to be subject to row security with ALTER TABLE ... FORCE ROW LEVEL SECURITY.
       </div>
-      <SwitchToggle 
-        label="Row Level Security" 
-        checked={tableMeta.relrowsecurity} 
-        onChange={val => {
-          onSetQuery({
-            sql: `${AlterQuery}\n${val? "ENABLE" : "DISABLE"} ROW LEVEL SECURITY;`
-          })
-        }}
-      />
-      <SwitchToggle 
-        label="Forced Row Level Security" 
-        checked={tableMeta.relforcerowsecurity}
-        onChange={val => {
-          onSetQuery({
-            sql: `${AlterQuery}\n${val? "" : "NO "}FORCE ROW LEVEL SECURITY;`
-          })
-        }}
-      />
+      <FlexRowWrap>
+        <SwitchToggle 
+          label="Row Level Security"  
+          checked={tableMeta.relrowsecurity} 
+          onChange={val => {
+            onSetQuery({
+              label: "Row Level Security",
+              sql: `${AlterQuery}\n${val? "ENABLE" : "DISABLE"} ROW LEVEL SECURITY;`
+            })
+          }}
+        />
+        <SwitchToggle 
+          label="Forced Row Level Security" 
+          checked={tableMeta.relforcerowsecurity}
+          onChange={val => {
+            onSetQuery({
+              label: "Force Row Level Security",
+              sql: `${AlterQuery}\n${val? "" : "NO "}FORCE ROW LEVEL SECURITY;`
+            })
+          }}
+        />
+        <Select
+          emptyLabel={"Toggle RLS for all tables"}
+          fullOptions={[
+            { key: "ENABLE", subLabel: "ENABLE ROW LEVEL SECURITY for all tables" },
+            { key: "DISABLE", subLabel: "DISABLE ROW LEVEL SECURITY for all tables" },
+          ]}
+          onChange={val => {
+            onSetQuery({
+              title: `${val} Row Level Security for all tables in current schema`,
+              sql: getAllTableRLSQuery(val)
+            });          
+          }}
+        />
+      </FlexRowWrap>
       <SmartCardList
         theme={prgl.theme}
         db={prgl.db as any}
@@ -99,7 +117,7 @@ export const W_TableMenu_Policies = ({ tableMeta, onSetQuery, prgl, w }: P) => {
                   ]}
                   onChange={val => {
                     onSetQuery({ 
-                      sql: `ALTER POLICY ${row.escaped_identifier} ON ${asName(tableName)}\n${val} ` + 
+                      sql: `ALTER POLICY ${row.escaped_identifier} ON ${(tableName)}\n${val} ` + 
                         ( val === "WITH CHECK"? row.with_check : 
                           val === "USING"? (row.using ?? "") :
                           val === "TO"? (row.roles ?? "") :
@@ -113,7 +131,7 @@ export const W_TableMenu_Policies = ({ tableMeta, onSetQuery, prgl, w }: P) => {
                   iconPath={mdiDelete}
                   color="danger"
                   variant="faded"
-                  onClick={() => onSetQuery({ sql: `DROP POLICY ${row.escaped_identifier} ON ${asName(tableName)}` })}
+                  onClick={() => onSetQuery({ sql: `DROP POLICY ${row.escaped_identifier} ON ${(tableName)}` })}
                 />
               </FlexCol>
           }
@@ -128,7 +146,7 @@ export const W_TableMenu_Policies = ({ tableMeta, onSetQuery, prgl, w }: P) => {
           onSetQuery({
             sql: [
               `CREATE POLICY new_policy_name`,
-              `ON ${asName(tableName)}`,
+              `ON ${(tableName)}`,
               `FOR ALL`,
             ].join("\n")
           })
@@ -139,4 +157,17 @@ export const W_TableMenu_Policies = ({ tableMeta, onSetQuery, prgl, w }: P) => {
 
     </FlexCol>
   )
+}
+
+const getAllTableRLSQuery = (value: "ENABLE" | "DISABLE") => {
+  return `DO $$
+DECLARE
+  row record;
+BEGIN
+  FOR row IN SELECT tablename FROM pg_tables AS t
+    WHERE t.schemaname = CURRENT_SCHEMA -- Add custom filter here, if desired.
+  LOOP
+    EXECUTE format('ALTER TABLE %I ${value} ROW LEVEL SECURITY;', row.tablename); -- Toggle RLS for tables
+  END LOOP;
+END; $$;`
 }

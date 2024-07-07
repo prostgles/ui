@@ -220,7 +220,7 @@ export const parseFullFilter = (filter: GroupedDetailedFilter, context: ContextD
   const f = isAnd? { $and: finalFilters } : { $or: finalFilters  };
   return f
 }
- 
+
 type ParsedFilter = { $and: AnyObject[] } | { $or: AnyObject[] };
 type ParsedRuleFilters = { 
   forcedFilter?: ParsedFilter; 
@@ -269,8 +269,35 @@ export type ContextDataObject = {
   user: DBSSchema["users"];
 }
 
-const parseForcedData = (value: { forcedDataDetail?: ForcedData[] }, context: ContextDataObject, columns: string[]) : { forcedData: AnyObject } | undefined => {
-  if(!value?.forcedDataDetail) return undefined;
+const parseForcedData = (value: Pick<UpdateRule, "forcedDataDetail" | "checkFilterDetailed">, context: ContextDataObject, columns: string[]) : { forcedData: AnyObject } | undefined => {
+  /** TODO: retire forced data completely */
+  if(!value?.forcedDataDetail?.length) {
+    if(value?.checkFilterDetailed){
+      const checkFilter = value?.checkFilterDetailed;
+      if("$and" in checkFilter && checkFilter.$and.length){
+        const forcedContextData = (checkFilter.$and as SimpleFilter[])
+          .map((f)=> {
+            if(f.type !== "=") return undefined;
+
+            if(f.contextValue && f.contextValue?.objectName === "user"){
+              const userKey = f.contextValue.objectPropertyName;
+              if(!(userKey in context.user)) throw new Error(`Invalid objectPropertyName (${f.contextValue.objectPropertyName}) found in forcedData`);
+              return [f.fieldName, (context.user as any)[userKey]]
+            } else if(f.value !== undefined) {
+              return [f.fieldName, f.value]
+            }
+            
+            return undefined;
+          }).filter(isDefined);
+        if(!forcedContextData.length) return undefined;
+        const forcedData: AnyObject = Object.fromEntries(forcedContextData);
+        return { 
+          forcedData 
+        }
+      }
+    }
+    return undefined;
+  }
   let forcedData: AnyObject = {};
   value?.forcedDataDetail.forEach(v => {
     if(!columns.includes(v.fieldName)) new Error(`Invalid fieldName in forced data ${v.fieldName}`);
@@ -282,7 +309,7 @@ const parseForcedData = (value: { forcedDataDetail?: ForcedData[] }, context: Co
       if(!obj) throw new Error(`Missing objectName (${v.objectName}) in forcedData`);
       if(!(v.objectPropertyName in obj)) throw new Error(`Invalid/missing objectPropertyName (${v.objectPropertyName}) found in forcedData`);
       forcedData[v.fieldName] = obj[v.objectPropertyName];
-    }
+    } 
   })
   return { forcedData };
 }

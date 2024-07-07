@@ -1,76 +1,82 @@
+import { mdiCog, mdiFormatLetterMatches } from "@mdi/js";
 import { omitKeys } from "prostgles-types";
 import React from "react";
-import { FTS_FILTER_TYPES, getFinalFilter, SimpleFilter, TEXT_FILTER_TYPES } from "../../../../commonTypes/filterUtils";
-import ErrorComponent from "../../components/ErrorComponent";
-import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
-import { ContextDataSelector } from "../AccessControl/ContextDataSelector";
-import { colIs } from "../W_Table/ColumnMenu/ColumnSelect";
-import RTComp from "../RTComp";
-import SmartFormField from "../SmartForm/SmartFormField/SmartFormField";
-import { AgeFilter, AgeFilterTypes } from "./AgeFilter";
-import { FilterWrapper } from "./FilterWrapper";
-import { GeoFilter, GeoFilterTypes } from "./GeoFilter";
-import { ListFilter } from "./ListFilter";
-import NumberOrDateFilter from "./NumberOrDateFilter";
-import { BaseFilterProps } from "./SmartFilter";
-import SmartSearch from "./SmartSearch";
-import { FlexCol, FlexRow } from "../../components/Flex";
+import type { SimpleFilter } from "../../../../commonTypes/filterUtils";
+import { FTS_FILTER_TYPES, TEXT_FILTER_TYPES, getFinalFilter } from "../../../../commonTypes/filterUtils";
 import Btn from "../../components/Btn";
-import { mdiCog, mdiFormatLetterMatches, mdiSettingsHelper } from "@mdi/js";
+import { FlexCol, FlexRow } from "../../components/Flex";
+import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
 import PopupMenu from "../../components/PopupMenu";
 import Select from "../../components/Select/Select";
+import { ContextDataSelector } from "../AccessControl/ContextDataSelector";
+import RTComp from "../RTComp";
+import SmartFormField from "../SmartForm/SmartFormField/SmartFormField";
+import { colIs } from "../W_Table/ColumnMenu/ColumnSelect";
+import { AgeFilter, AgeFilterTypes } from "./AgeFilter";
+import { FilterWrapper, type FilterWrapperProps } from "./FilterWrapper";
+import { GeoFilter, GeoFilterTypes } from "./GeoFilter";
+import { ListFilter } from "./ListFilter/ListFilter";
+import { NumberOrDateFilter } from "./NumberOrDateFilter";
+import type { BaseFilterProps } from "./SmartFilter";
+import { SmartSearch } from "./SmartSearch/SmartSearch";
+import { getTableSelect } from "../W_Table/tableUtils/getTableSelect";
+import { isEqual } from "prostgles-client/dist/react-hooks";
 
-type FilterProps = BaseFilterProps & {
+type FilterProps = BaseFilterProps & Pick<FilterWrapperProps, "rootFilter" | "selectedColumns"> & {
   hideToggle?: boolean;
   minimised?: boolean;
 }
 
+const validateFilter = async (filter: SimpleFilter, { db, tableName, column, tables }: Pick<BaseFilterProps, "db" | "tableName" | "column" | "tables">) => {
+  try {
+    const tableHandler = db[tableName]; 
+    const finalFilter = getFinalFilter(filter);
+    const isHaving = column.type === "computed" && column.computedConfig.funcDef.isAggregate;
+    const select = column.type === "column"? "" : (await getTableSelect({ table_name: tableName, columns: column.columns }, tables, db, finalFilter ?? {})).select;
+    await tableHandler?.find?.(isHaving? {} : finalFilter, { select, having: isHaving? finalFilter : undefined, limit: 0 });
+    return {
+      hasError: false,
+      error: undefined,
+    }
+  } catch(error: any){
+    return {
+      hasError: true,
+      error,
+    }
+  }
+
+}
+
 export class Filter extends RTComp<FilterProps, { error?: any }> {
 
-  onChange = async (_newFilter: SimpleFilter | undefined) => {
+  /**
+   * Disable invalid filters
+   */
+  onChangeWithValidation = async (_newFilter: SimpleFilter | undefined) => {
     const {  
-      onChange: _onChange,
       db,
       tableName, 
+      column, 
+      tables,
     } = this.props;
 
-    const tableHandler = db[tableName]; 
 
     let newFilter = _newFilter;
     let newError;
     if(newFilter){
-      try {
-        const finalFilter = getFinalFilter(newFilter);
-        await tableHandler?.findOne?.(finalFilter, { select: "" });
-      } catch(err: any){
+      const { hasError, error } = await validateFilter(newFilter, { db, tableName, column, tables });
+      newError = error;
+      if(hasError){
         newFilter = {
           ...newFilter,
           disabled: true
         }
-        newError = err;
       }
     }
-    if(!!this.state.error !== !!newError){
+    if(!isEqual(this.state.error, newError )){
       this.setState({ error: newError })
     }
-    _onChange(newFilter);
-  }
-
-  inDebounce?: { 
-    timer: NodeJS.Timeout;
-    filter: any; 
-  }
-  onChangeDebounced = (_newFilter: SimpleFilter | undefined) => {
-    if(this.inDebounce){
-      clearTimeout(this.inDebounce.timer);
-    }
-    this.inDebounce = {
-      filter: _newFilter,
-      timer: setTimeout(() => {
-        this.onChange(_newFilter)
-        this.inDebounce = undefined;
-      }, 500)
-    }; 
+    this.props.onChange(newFilter);
   }
 
   render(){
@@ -80,16 +86,17 @@ export class Filter extends RTComp<FilterProps, { error?: any }> {
       onChange: _onChange,
       db,
       tableName,
-      contextData,
+      contextData, 
+      extraFilters,
     } = this.props;
     const { error } = this.state;
  
-    const onChange = this.onChange;
+    const onChange = this.onChangeWithValidation;
 
     const filter = {
       ...this.props.filter,
       fieldName: this.props.filter?.fieldName ?? column.name,
-      type: this.props.filter?.type ?? "="// "$in"
+      type: this.props.filter?.type ?? "=" 
     }
 
     /** There is a change the options */
@@ -98,8 +105,6 @@ export class Filter extends RTComp<FilterProps, { error?: any }> {
     const withContextFilter = (filterNode: React.ReactNode) => {
       if(contextData){
 
-        if(propsFilter?.contextValue){
-        }
         const ctxCols = contextData.flatMap(t => t.columns.filter(c => c.tsDataType === column.tsDataType).map(c => ({
           id: t.name+"."+c.name,
           tableName: t.name,
@@ -138,17 +143,23 @@ export class Filter extends RTComp<FilterProps, { error?: any }> {
     }
 
     let content: React.ReactNode;
-    if(GeoFilterTypes.includes(propsFilter?.type as any) && colIs(column, "_PG_postgis")){
-      content = <GeoFilter { ...this.props } error={error} />;
+
+    const filterProps = {
+      ...this.props,
+      onChange,
+    }
+
+    if(propsFilter && GeoFilterTypes.includes(propsFilter.type as any) && colIs(column, "_PG_postgis")){
+      content = <GeoFilter filter={propsFilter} { ...filterProps } error={error} />;
 
     } else if(AgeFilterTypes.includes(propsFilter?.type as any)){
-      content = <AgeFilter { ...this.props } error={error} />;
+      content = <AgeFilter { ...filterProps } error={error} />;
       
     } else if(propsFilter?.type === "not null" || propsFilter?.type === "null"){
       content = null;
 
     } else if(ListFilter.TYPES.includes(propsFilter?.type as any)){
-      content = <ListFilter {...this.props} error={error} />
+      content = <ListFilter {...filterProps} error={error} />
   
     } else {
 
@@ -191,37 +202,41 @@ export class Filter extends RTComp<FilterProps, { error?: any }> {
             /> 
           }
         />
-
-      // } else if(!isCategorical(column, filter) || filter.type === "$between"){
+ 
       } else if(filter.type === "$between"){
-        content = <NumberOrDateFilter {...this.props} 
+        content = <NumberOrDateFilter 
+          {...filterProps} 
           type={column.tsDataType.toLowerCase() as any} 
           inputType={SmartFormField.getInputType(column)}
         />
 
       /** Show suggestions */
       } else {
-        const key = JSON.stringify(filter.value) + Math.random();
+        const key = JSON.stringify(filter.value ?? "");
         
+        const filterItem = this.props.selectedColumns?.find(c => c.name === filter.fieldName);
         content = <SmartSearch 
           className=" "
           key={key}
-          db={db} 
+          db={db}
+          extraFilters={extraFilters}
+          selectedColumns={this.props.selectedColumns}
           tableName={tableName}
           variant="search-no-shadow"
           tables={tables}
           defaultValue={filter.value}
-          column={filter.fieldName}
+          column={filterItem ?? filter.fieldName}
           searchEmpty={true}
+          wrapperStyle={{ borderRadius: 0, borderTop: "unset", borderBottom: "unset" }}
           noResultsComponent={
             <FlexRow>
-              <div className="text-gray-700">No results</div>
-              <div className="text-gray-400">Press enter to confirm</div>
+              <div className="text-0p75">No results</div>
+              <div className="text-2">Press enter to confirm</div>
             </FlexRow>
           }
           onPressEnter={term => {
             const f = { ...filter };
-            f.value = term;// f.type === "$term_highlight"? term : columnValue
+            f.value = term;
             f.disabled = false;
             
             onChange(f)
@@ -244,19 +259,18 @@ export class Filter extends RTComp<FilterProps, { error?: any }> {
             f.disabled = false;
             
             onChange(f)
-          }}
+          }} 
         />
       }
 
     }
 
     return <FilterWrapper 
-      {...this.props}
+      error={error}
+      {...filterProps}
       filter={filter}
     >
-      {error && <ErrorComponent error={error} />}
       {withContextFilter(content)}
-      {/* {contextData?.some(t => t.columns.some(c => c.tsDataType === column.tsDataType))} */}
     </FilterWrapper>
 
   }

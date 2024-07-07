@@ -1,27 +1,32 @@
 import React from "react";
-import { CommonWindowProps  } from "../Dashboard/Dashboard";
+import type { CommonWindowProps  } from "../Dashboard/Dashboard";
 import Loading from "../../components/Loading";
-import { TimeChart, TimeChartLayer } from "../Charts/TimeChart"
-import Window from '../Window';
-import RTComp, { DeltaOfData } from "../RTComp";
+import type { TimeChartLayer } from "../Charts/TimeChart";
+import { TimeChart } from "../Charts/TimeChart"
+import Window from "../Window";
+import type { DeltaOfData } from "../RTComp";
+import RTComp from "../RTComp";
 import ErrorComponent from "../../components/ErrorComponent";
-import { mdiAlertCircleOutline, mdiFitToPageOutline, mdiUndo } from '@mdi/js';
+import { mdiAlertCircleOutline, mdiFitToPageOutline, mdiUndo } from "@mdi/js";
 import Btn from "../../components/Btn";
 import PopupMenu from "../../components/PopupMenu"; 
-import { AnyObject, getKeys, SubscriptionHandler, ParsedJoinPath } from "prostgles-types";  
+import type { AnyObject, SubscriptionHandler, ParsedJoinPath } from "prostgles-types";
+import { getKeys } from "prostgles-types";  
 import { getTimeChartData, getTimeChartSelectDate } from "./getTimeChartData";
-import { TimeChartBinSize, ProstglesTimeChartMenu } from "./W_TimeChartMenu";
-import { WindowSyncItem } from "../Dashboard/dashboardUtils";
-import { LayerBase } from "../W_Map/W_Map";
+import type { TimeChartBinSize} from "./W_TimeChartMenu";
+import { ProstglesTimeChartMenu } from "./W_TimeChartMenu";
+import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
+import type { LayerBase } from "../W_Map/W_Map";
 import { ChartLayerManager } from "../WindowControls/ChartLayerManager";
 import { getTimeChartLayerQueries } from "./getTimeChartLayers"; 
-import { DateExtent, MainTimeBinSizes } from "../Charts/getTimechartBinSize";
-import { MILLISECOND } from "../Charts";
-import { createReactiveState } from "../ProstglesMethod/hooks";
+import type { DateExtent} from "../Charts/getTimechartBinSize";
+import { MainTimeBinSizes } from "../Charts/getTimechartBinSize";
+import { MILLISECOND } from "../Charts"; 
 import { AddTimeChartFilter } from "./AddTimeChartFilter";
-import { ActiveRow } from "../W_Table/W_Table";
-import { Command } from "../../Testing";
+import type { ActiveRow } from "../W_Table/W_Table";
+import type { Command } from "../../Testing";
 import { ColorByLegend } from "../WindowControls/ColorByLegend";
+import { createReactiveState } from "../../appUtils";
 
 export type ProstglesTimeChartLayer = Pick<LayerBase, "_id" | "linkId" | "disabled"> & {
   
@@ -182,6 +187,7 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
 
             return {
               ...d,
+              value: +d.value,
               date: +new Date(d.date)
             }
           }).sort((a, b) => a.date - b.date);
@@ -337,48 +343,16 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
     if(error){
       errorPopup = (
         <PopupMenu
-          button={<Btn className="text-red-500" iconPath={mdiAlertCircleOutline} />} 
+          button={<Btn className="text-danger" iconPath={mdiAlertCircleOutline} />} 
           onClose={()=>{
             this.setState({ showError: false })
           }}>
-          <div className="bg-0">
+          <div className="bg-color-0">
             <ErrorComponent error={error} />
           </div>
         </PopupMenu>
       )
     }
-
-    const infoSection = <div className="flex-row relative f-1 m-auto " style={{ position: "absolute", top:"0", left:"0", zIndex: 2 }} >
-      <ChartLayerManager 
-        { ...this.props } 
-        w={w} 
-        type="timechart" 
-        asMenuBtn={{}} 
-        layerQueries={this.layerQueries} 
-      />
-      {!loadingLayers? null : <Loading className="m-auto f-1" delay={100} variant="cover" />}
-      {errorPopup}
-      {this.state.visibleDataExtent && <Btn 
-        title="Reset extent" 
-        iconPath={mdiUndo} 
-        onClick={() => 
-          this.setState({ 
-            visibleDataExtent: undefined, 
-            viewPortExtent: undefined,
-            resetExtent: Date.now() 
-          })
-        }
-      />}
-      {groupedByLayer && <ColorByLegend
-        className="ml-2"
-        { ...this.props}
-        layerLinkId={groupedByLayer.linkId}
-        groupByColumn={groupedByLayer.groupByColumn!}
-        onChanged={() => {
-          this.setData({ dataAge: Date.now() })
-        }}
-      />}
-    </div>
 
     const hasPanned = Boolean(extent && xExtent && Object.values(extent).join() !== xExtent.join())
     const resetExtent = () => {
@@ -389,6 +363,55 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
     } 
     const binSize = MainTimeBinSizes[this.state.binSize as string]?.size;
     const onCancelActiveRow = () => onClickRow(undefined, "", undefined)
+    const infoSection = <div 
+      className="W_TimeChart_TopBar flex-row relative f-1 m-auto " 
+      style={{ 
+        position: "absolute", 
+        top:"0", 
+        left:"0", 
+        right: "240px", 
+        zIndex: 1 // Ensure it doesn't cover the tooltip active row brush
+      }} 
+    >
+      <ChartLayerManager 
+        { ...this.props } 
+        w={w} 
+        type="timechart" 
+        asMenuBtn={{}} 
+        layerQueries={this.layerQueries} 
+      />
+      {!loadingLayers? null : <Loading className="m-auto f-1" delay={500} variant="cover" />}
+      {errorPopup}
+      <Btn 
+        title="Reset extent" 
+        style={{
+          opacity: this.state.visibleDataExtent? 1 : 0
+        }}
+        iconPath={mdiUndo} 
+        onClick={() => 
+          this.setState({ 
+            visibleDataExtent: undefined, 
+            viewPortExtent: undefined,
+            resetExtent: Date.now() 
+          })
+        }
+      />
+      {groupedByLayer && <ColorByLegend
+        { ...this.props}
+        layerLinkId={groupedByLayer.linkId}
+        groupByColumn={groupedByLayer.groupByColumn!}
+        onChanged={() => {
+          this.setData({ dataAge: Date.now() })
+        }}
+      />}
+{/* 
+      <Btn title="Zoom out to data extent"
+        style={{ position: "absolute", opacity: !hasPanned? 0 : undefined, right: 0, top: 0, zIndex: 1 }} 
+        iconPath={mdiFitToPageOutline} 
+        onClick={resetExtent} 
+      /> */}
+    </div>
+
     const content = <>
       <div 
         ref={r => {
@@ -406,14 +429,9 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
           if(r) this.ref = r;
         }} 
       >
-        {loadingData && <Loading variant="cover" delay={200} />}
+        {loadingData && <Loading variant="cover" delay={500} />}
         {infoSection}
-        {!hasPanned? null : 
-          <Btn title="Zoom out to data extent"
-            style={{ position: "absolute", right: 0, top: 0, zIndex: 1 }} 
-            iconPath={mdiFitToPageOutline} 
-            onClick={resetExtent} 
-          />}
+
         {this.chartRef && 
           <AddTimeChartFilter
             activeRowColor={activeRowColor}

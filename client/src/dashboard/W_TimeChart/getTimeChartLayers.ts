@@ -1,10 +1,10 @@
 import { isDefined } from "prostgles-types";
-import { LinkSyncItem, WindowSyncItem } from "../Dashboard/dashboardUtils";
+import type { LinkSyncItem, WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { getCrossFilters } from "../joinUtils";
 import { getLinkColor } from "../W_Map/getMapLayerQueries";
-import { ActiveRow } from "../W_Table/W_Table";
+import type { ActiveRow } from "../W_Table/W_Table";
 import { getSmartGroupFilter } from "../SmartFilter/SmartFilter";
-import { ProstglesTimeChartLayer } from "./W_TimeChart";
+import type { ProstglesTimeChartLayer } from "./W_TimeChart";
 
 type Args = {
   links: LinkSyncItem[];

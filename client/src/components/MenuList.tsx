@@ -1,14 +1,16 @@
 import { mdiMenu } from "@mdi/js";
-import { AnyObject } from "prostgles-types";
-import React from 'react';
+import type { AnyObject } from "prostgles-types";
+import React from "react";
 import { Icon } from "./Icon/Icon";
-import './List.css';
+import "./List.css";
 import PopupMenu from "./PopupMenu";
+import type { Command, TestSelectors } from "../Testing";
+import { classOverride } from "./Flex";
 
 
 export type MenuListitem = {
   key?: string;
-  label: string;
+  label: React.ReactNode;
   contentRight?: React.ReactNode;
   leftIconPath?: string;
   disabledText?: string;
@@ -20,7 +22,7 @@ export type MenuListitem = {
   hide?: boolean; 
   listProps?: React.DetailedHTMLProps<React.LiHTMLAttributes<HTMLLIElement>, HTMLLIElement> | AnyObject;
 }
-type P = {
+type P = TestSelectors & {
   items: MenuListitem[];
   style?: React.CSSProperties;
   className?: string;
@@ -34,7 +36,7 @@ type S = {
   collapsed: boolean;
 }
 
-export default class MenuList extends React.Component<P, S> {
+export class MenuList extends React.Component<P, S> {
   state: S = {
     collapsed: false
   }
@@ -48,14 +50,14 @@ export default class MenuList extends React.Component<P, S> {
       fontSize: "16px",
       fontWeight: "bold",
       cursor: "pointer",
-      borderBottomColor: "var(--gray-200)",
+      borderColor: "var(--b-default)",
       borderBottomStyle: "solid",
-      borderBottomWidth: "2px",
+      borderBottomWidth: "4px",
       flex: 1,
-      color: "var(--gray-600)",
+      color: "var(--text-0)",
       ...(activeKey === (d.key ?? d.label) && {
-        color: "var(--active)",
-        borderBottomColor: "var(--active)",
+        borderColor: "var(--active)",
+        backgroundColor: "var(--bg-color-0)",
       })
     } : {};
 
@@ -65,12 +67,13 @@ export default class MenuList extends React.Component<P, S> {
 
     return <li 
       {...d.listProps}
-      key={i} 
+      key={i}
+      data-key={d.key}
       role="listitem" 
       tabIndex={canPress? 0 : undefined}
       title={d.disabledText || d.title}
       style={{ ...variantStyle, ...(d.style || {}), ...(d.disabledText? { cursor: "not-allowed", opacity: 0.5 } : {})}}
-      className={"flex-row  p-p5  bg-li " + ((!d.disabledText && d.onPress)? " pointer " : " ")}
+      className={"flex-row  p-p5  bg-li " + ((!d.disabledText && d.onPress)? " pointer " : " ") + (d.key === activeKey? " selected " : "")}
       onClick={canPress? () => {
         d.onPress?.();
       } : undefined}
@@ -92,7 +95,7 @@ export default class MenuList extends React.Component<P, S> {
       className = "",
       style = {},
       items = [],
-      activeKey = this.props.items[0]?.key
+      activeKey = this.props.items[0]?.key,
     } = this.props;
 
     const isDropDown = this.props.variant === "dropdown"
@@ -104,11 +107,11 @@ export default class MenuList extends React.Component<P, S> {
       fontSize: "20px",
       fontWeight: "bold",
       cursor: "pointer",
-      color: "var(--gray-600)"
     } : {}
 
     const itemList = (
-      <div className={"MenuList list-comp rounded " + (variant === "vertical"? " f-1 max-w-fit min-w-fit " : "") + className} // 
+      <div className={classOverride("MenuList list-comp rounded " + (variant === "vertical"? " f-1 max-w-fit min-w-fit " : ""), className)}
+        data-command={this.props["data-command"] ?? "MenuList" satisfies Command}
         style={{ maxHeight: "99vh", padding: 0, ...variantStyle, ...style }}
         onKeyDown={e => {
           if(!this.refList) return;
@@ -155,7 +158,7 @@ export default class MenuList extends React.Component<P, S> {
         positioning="beneath-left"
         button={(
           <button 
-            className="bg-blue-300-hover:hover"
+            className="MenuList__button"
             style={{ width: "100%", borderRadius: 0 }}
           >
             <div className="flex-row ai-center">

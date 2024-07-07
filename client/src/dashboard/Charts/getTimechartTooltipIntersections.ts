@@ -1,4 +1,4 @@
-import { DataItem, TimeChart, TimeChartLayer } from "./TimeChart";
+import type { DataItem, TimeChart, TimeChartLayer } from "./TimeChart";
 
 type IntersectedLayers = { 
   layers: (TimeChartLayer & { y: number; snapped_data?: DataItem; })[];

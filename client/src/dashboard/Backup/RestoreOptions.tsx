@@ -1,19 +1,19 @@
 
-import { mdiBackupRestore } from "@mdi/js"; 
+import { mdiBackupRestore } from "@mdi/js";
+import { usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useEffect, useState } from "react";
-import { DBSSchema } from "../../../../commonTypes/publishUtils";
-import { ExtraProps } from "../../App";
-import Btn from "../../components/Btn"; 
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import { sliceText } from "../../../../commonTypes/utils";
+import type { Prgl } from "../../App";
+import Btn from "../../components/Btn";
 import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
 import { Section } from "../../components/Section";
 import Select from "../../components/Select/Select";
-import { DBS } from "../Dashboard/DBS";
-import { usePromise } from "../ProstglesMethod/hooks";
-import { sliceText } from "../SmartFilter/SmartFilter"; 
-import { CodeConfirmation } from "./CodeConfirmation"; 
+import type { DBS } from "../Dashboard/DBS";
+import { CodeConfirmation } from "./CodeConfirmation";
 import { FORMATS } from "./DumpOptions";
-import NonSuperUserAlert from "./NonSuperUserAlert";
+import { DumpRestoreAlerts } from "./DumpRestoreAlerts";
 
 export type RestoreOpts = DBSSchema["backups"]["restore_options"];
 
@@ -28,7 +28,7 @@ const DEFAULT_RESTORE_OPTS: RestoreOpts = {
   keepLogs: false
 }
 
-type RestoreOptionsProps = Pick<ExtraProps, "dbsMethods"> & {
+type RestoreOptionsProps = Pick<Prgl, "dbsMethods" | "db"> & {
   button: React.ReactChild;
   defaultOpts?: RestoreOpts;
   dbs: DBS;
@@ -41,11 +41,12 @@ type RestoreOptionsProps = Pick<ExtraProps, "dbsMethods"> & {
   fromFile?: undefined;
   onReadyButton: (opts: RestoreOpts, popupClose: ()=>void) => React.ReactChild;
 })
-export default function RestoreOptions(props: RestoreOptionsProps){
+export const RestoreOptions = (props: RestoreOptionsProps) => {
   const {
     defaultOpts ,
     button,
     dbs,
+    db,
     backupId,
     connectionId,
     dbsMethods,
@@ -93,7 +94,7 @@ export default function RestoreOptions(props: RestoreOptionsProps){
         })();
       },
       abort(reason) {
-        console.error('[abort]', reason);
+        console.error("[abort]", reason);
       },
     });
     stream.pipeTo(writableStream);
@@ -119,7 +120,7 @@ export default function RestoreOptions(props: RestoreOptionsProps){
     }
 
     return bkp;
-  }, [backupId, connectionId])
+  }, [backupId, dbs.backups, format, restoreOpts])
 
   let mainContent = <div className="flex-col gap-1">
     {!!fromFile && <FormField type="file" asColumn={true}
@@ -168,7 +169,7 @@ export default function RestoreOptions(props: RestoreOptionsProps){
       <FormField asColumn={true} value={keepLogs} type="checkbox" label="Keep logs" onChange={keepLogs => { setRestoreOpts({ ...restoreOpts, keepLogs }) }}
         hint="Save restore logs to the backup record. Useful for debugging" 
       />
-      {format !== "p" && <InfoRow color="info" className="noselect">For more info on options visit <a target="_blank" href="https://www.postgresql.org/docs/current/app-pgrestore.html">this site</a></InfoRow>}
+      {format !== "p" && <InfoRow color="info" className="noselect">For more info on options visit <a target="_blank" href="https://www.postgresql.org/docs/current/app-pgrestore.html">this official site</a></InfoRow>}
 
     </>)}
   </div>
@@ -184,9 +185,9 @@ export default function RestoreOptions(props: RestoreOptionsProps){
     </InfoRow>
     mainContent = <>
       {title}
-      <NonSuperUserAlert {...{dbsMethods, connectionId} } />
+      <DumpRestoreAlerts {...{dbsMethods, connectionId, dbProject: db } } />
       {plainFormatAlert}
-      <Section title="Options" className="w-full" contentClassName="p-1" buttonStyle={{ background: "white" }}>{mainContent}</Section>
+      <Section title="Options" className="w-full" contentClassName="p-1" buttonStyle={{ background: "var(--bg-color-0)" }}>{mainContent}</Section>
     </>
   } else { 
     title = <InfoRow variant="naked" iconPath={mdiBackupRestore} color="action" className="text-medium font-20 " style={{ fontWeight: 400 }}>
@@ -194,7 +195,7 @@ export default function RestoreOptions(props: RestoreOptionsProps){
     </InfoRow>
     mainContent = <>
       {title}
-      <NonSuperUserAlert {...{dbsMethods, connectionId} } />
+      <DumpRestoreAlerts {...{ dbsMethods, connectionId, dbProject: db } } />
       {plainFormatAlert}
       {mainContent}
     </>

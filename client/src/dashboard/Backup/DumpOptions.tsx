@@ -1,15 +1,15 @@
 
 import React, { useState } from "react";
-import { PGDumpParams } from "../../../../commonTypes/utils";
-import { ExtraProps } from "../../App";
+import type { PGDumpParams } from "../../../../commonTypes/utils";
 import ErrorComponent from "../../components/ErrorComponent";
 import { FlexRowWrap } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
 import { Section } from "../../components/Section";
 import Select from "../../components/Select/Select";
+import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
 import { DumpLocationOptions } from "./DumpLocationOptions";
-import NonSuperUserAlert from "./NonSuperUserAlert";
+import { DumpRestoreAlerts } from "./DumpRestoreAlerts";
 
 export const FORMATS = [
   { key: "p", label: "Plain",   subLabel: "Output a plain-text SQL script file" },
@@ -43,7 +43,7 @@ const DEFAULT_DUMP_ALL_OPTS: PGDumpParams = {
   destination: "Local",
 }
 
-export type DumpOptionsProps = Pick<ExtraProps, "dbs" |  "dbsTables" | "dbsMethods" | "theme"> & {
+export type DumpOptionsProps = Pick<FullExtraProps, "dbProject" | "dbs" |  "dbsTables" | "dbsMethods" | "theme"> & {
   onReadyButton?: (dumpOpts: PGDumpParams)=> React.ReactNode;
   opts?: PGDumpParams;
   onChange?: (newOpts: PGDumpParams) => void;
@@ -55,8 +55,8 @@ export const DumpOptions = (props: DumpOptionsProps) => {
     onReadyButton,
     onChange,
     dbsMethods,
+    dbProject,
     connectionId,
-    theme,
   } = props;
 
   const [currOpts, setCurrOpts] = useState(opts ?? DEFAULT_DUMP_OPTS);
@@ -78,8 +78,8 @@ export const DumpOptions = (props: DumpOptionsProps) => {
   const dumpAll = o.command === "pg_dumpall";
   const err = (destination === "Cloud" && !credentialID)? "Must select an S3 credential first" : null;
 
-  return <div className="DumpOptions flex-col gap-1 min-s-0 o-auto" style={{ maxHeight: "800px"}}>
-    <NonSuperUserAlert {...{dbsMethods, connectionId} } />
+  return <div className="DumpOptions flex-col gap-1 min-s-0 o-auto bg-inherit" style={{ maxHeight: "800px"}}>
+    <DumpRestoreAlerts {...{dbsMethods, connectionId, dbProject } } />
     <Select className="mr-1"
       label="Data from"
       fullOptions={DUMP_COMMANDS}
@@ -92,7 +92,7 @@ export const DumpOptions = (props: DumpOptionsProps) => {
     
     <DumpLocationOptions { ...props } currOpts={currOpts} onChangeCurrOpts={_onChange} />
 
-    <Section title="More options..." titleIconPath="" contentClassName="DumpOptionsMoreOptions flex-col p-1 gap-1 f-1 min-s-0" buttonStyle={{ background: "white" }}>
+    <Section title="More options..." titleIconPath="" contentClassName="DumpOptionsMoreOptions flex-col p-1 gap-1 f-1 min-s-0 bg-inherit" >
       {o.command === "pg_dump"? <>
         <FlexRowWrap>
           <Select 
@@ -161,7 +161,7 @@ export const DumpOptions = (props: DumpOptionsProps) => {
         hint="Save dump logs to the backup record. Useful for debugging" 
       />
 
-      <InfoRow color="info" className="noselect">For more info on options visit <a target="_blank" href={"https://www.postgresql.org/docs/current/" + (dumpAll? "app-pg-dumpall.html" : "app-pgdump.html")}>this site</a></InfoRow>
+      <InfoRow color="info" className="noselect">For more info on options visit <a target="_blank" href={"https://www.postgresql.org/docs/current/" + (dumpAll? "app-pg-dumpall.html" : "app-pgdump.html")}>the official site</a></InfoRow>
 
     </Section>
     {err? <ErrorComponent error={err} /> : onReadyButton?.({ options: o, destination, credentialID })}

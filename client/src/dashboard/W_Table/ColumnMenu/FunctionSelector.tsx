@@ -1,8 +1,9 @@
 import { mdiFunction, mdiSigma } from "@mdi/js";
-import { ValidatedColumnInfo, _PG_date, _PG_interval, _PG_numbers } from "prostgles-types";
+import type { ValidatedColumnInfo} from "prostgles-types";
+import { _PG_date, _PG_interval, _PG_numbers } from "prostgles-types";
 import React, { useMemo } from "react";
 import Select from "../../../components/Select/Select";
-import { ColumnConfig } from "./ColumnMenu";
+import type { ColumnConfig } from "./ColumnMenu";
 
 type P = {
   selectedFunction?: string;
@@ -94,11 +95,36 @@ export type FuncDef = {
 
 function getFuncs( ): FuncDef[] {
 
-  const GeometryFuncs = [
-    { key: "$ST_Length",      label: "ST_Length",  subLabel: "returns the 2D Cartesian length of the geometry if it is a LineString, MultiLineString, ST_Curve, ST_MultiCurve." },
-    { key: "$ST_AsText",      label: "ST_AsText",  subLabel: "Returns the OGC Well-Known Text (WKT) representation of the geometry/geography" },
-    { key: "$ST_AsGeoJSON",   label: "ST_AsGeoJSON",  subLabel: "Returns a geometry as a GeoJSON 'geometry', or a row as a GeoJSON 'feature'" },
-    { key: "$ST_SnapToGrid",  label: "ST_SnapToGrid",  subLabel: "Snap all points of the input geometry to the grid defined by its origin and cell size. Remove consecutive points falling on the same cell" },
+  const GeometryFuncs: {
+    key: string;
+    label: string;
+    subLabel: string;
+    outType: Pick<ValidatedColumnInfo, "tsDataType" | "udt_name">;
+  }[] = [
+    { 
+      key: "$ST_Length",      
+      label: "ST_Length",  
+      subLabel: "returns the 2D Cartesian length of the geometry if it is a LineString, MultiLineString, ST_Curve, ST_MultiCurve.",
+      outType: { udt_name: "numeric", tsDataType: "number" },
+    },
+    { 
+      key: "$ST_AsText",      
+      label: "ST_AsText",  
+      subLabel: "Returns the OGC Well-Known Text (WKT) representation of the geometry/geography",
+      outType: { udt_name: "text", tsDataType: "string" },
+    },
+    { 
+      key: "$ST_AsGeoJSON",   
+      label: "ST_AsGeoJSON",  
+      subLabel: "Returns a geometry as a GeoJSON 'geometry', or a row as a GeoJSON 'feature'",
+      outType: { udt_name: "json", tsDataType: "string" }, 
+    },
+    { 
+      key: "$ST_SnapToGrid",  
+      label: "ST_SnapToGrid",  
+      subLabel: "Snap all points of the input geometry to the grid defined by its origin and cell size. Remove consecutive points falling on the same cell",
+      outType: { udt_name: "geometry", tsDataType: "any" }, 
+    },
   ];
 
   const DateFuncs = [
@@ -162,7 +188,6 @@ function getFuncs( ): FuncDef[] {
   const res: FuncDef[] = [
     ...GeometryFuncs.map(f => ({
       ...f,
-      outType: infoTypes.geo,
       udtDataTypeCol: ["geography" ,"geometry"] as any
     })),
     ...DateFuncs.map(f => ({
@@ -185,29 +210,10 @@ function getFuncs( ): FuncDef[] {
       outType: infoTypes.string,
     })),
   ].map(f => ({
-    ...f,
-    // key: f.label,
-    // // label: capitalizeFirstLetter(f.label.slice(1))
-    // label: f.name
+    ...f, 
   }))
 
   return res;
-  // if (colInfo.udt_name === "geometry" || colInfo.udt_name === "geography") {
-  //   res = GeometryFuncs;
-
-  // } else if (colInfo.tsDataType === "Date") {
-  //   res = DateFuncs;
-
-  // } else if (colInfo.tsDataType === "string") {
-  //   res = StringFuncs;
-
-  // } else if (colInfo.tsDataType === "number") {
-  //   res = NumberFuncs;
-
-  // }
-
-  // // res.unshift({ label: "NONE", subLabel: "Display data as is" });
-  // return res;
 } 
 
 const numericOrDate: FuncDef["udtDataTypeCol"] = [..._PG_date, ..._PG_interval, ..._PG_numbers];
@@ -220,6 +226,7 @@ export const CountAllFunc: FuncDef & { name: string; } = {
   subLabel: "",
   tsDataTypeCol: undefined,
   outType: infoTypes.number,
+  isAggregate: true,
 }
 
 const aggFunctions = [

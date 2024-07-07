@@ -61,7 +61,7 @@ export class ColorPicker extends React.Component<{
     const { value, style = {}, className = "", onChange, label, variant } = this.props;
 
     const labelNode = label? <div className=" noselect f-d1">{label}</div> : null;
-    const colorNode = <div className={"round pointer shadow b b-gray-300"} 
+    const colorNode = <div className={"round pointer shadow b b-color f-0"} 
         style={{ width: "24px", height: "24px", backgroundColor: value }} 
         onClick={e => {
           this.setState({ anchorEl: e.currentTarget })
@@ -129,10 +129,10 @@ export const asHex = (v: string) => {
   return rgbToHex(r, g, b);
 }
 
-export const rgbToHex = (r, g, b) => '#' + [r, g, b].map(x => {
+export const rgbToHex = (r, g, b) => "#" + [r, g, b].map(x => {
   const hex = x.toString(16)
-  return hex.length === 1 ? '0' + hex : hex
-}).join('');
+  return hex.length === 1 ? "0" + hex : hex
+}).join("");
 
 const asRGB = (color: string): RGBA => {
 
@@ -156,7 +156,7 @@ const asRGB = (color: string): RGBA => {
 
 function rgba2hex(orig: string) {
   let a;
-  const rgb = orig.replace(/\s/g, '').match(/^rgba?\((\d+),(\d+),(\d+),?([^,\s)]+)?/i) as string[] | null;
+  const rgb = orig.replace(/\s/g, "").match(/^rgba?\((\d+),(\d+),(\d+),?([^,\s)]+)?/i) as string[] | null;
   const alpha = (rgb && rgb[4] || "").trim();
   let hex = rgb ?
     (rgb[1] as any | 1 << 8).toString(16).slice(1) +

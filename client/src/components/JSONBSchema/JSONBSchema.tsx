@@ -1,4 +1,5 @@
-import { isObject, JSONB } from "prostgles-types";
+import type { JSONB } from "prostgles-types";
+import { isObject } from "prostgles-types";
 import React, { useEffect, useState } from "react";
 import { areEqual } from "../../utils";
 import { isCompleteJSONB } from "./isCompleteJSONB";
@@ -9,7 +10,7 @@ import { JSONBSchemaObject, JSONBSchemaObjectMatch } from "./JSONBSchemaObject";
 import { JSONBSchemaOneOfTypeMatch, JSONBSchemaOneOfType } from "./JSONBSchemaOneOf";
 import { JSONBSchemaPrimitive, JSONBSchemaPrimitiveMatch } from "./JSONBSchemaPrimitive";
 import { JSONBSchemaRecord, JSONBSchemaRecordMatch } from "./JSONBSchemaRecord";
-import { Prgl } from "../../App";
+import type { Prgl } from "../../App";
 
 type Schema = JSONB.JSONBSchema & { optional?: boolean; };
 export type JSONBSchemaCommonProps = Pick<Prgl, "db" | "tables"> & {
@@ -46,7 +47,6 @@ export const JSONBSchema = <S extends Schema>({ style, className = "", value, sc
  
   useEffect(() => {
     if(otherProps.isNested) return;
-    console.warn(localValue, value)
     /** Fire onchange if data is complete */
     const shouldFireOnChange = otherProps.allowIncomplete || isCompleteJSONB(localValue, schema);
     const valueHasChanged = !areEqual(localValue ?? {}, value ?? {});

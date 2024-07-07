@@ -1,7 +1,9 @@
 import { mdiMagnify } from "@mdi/js";
-import { AnyObject, isDefined, isEmpty } from "prostgles-types";
+import type { AnyObject} from "prostgles-types";
+import { isDefined, isEmpty } from "prostgles-types";
 import React, { useState } from "react";
-import { DetailedFilterBase, GEO_FILTER_TYPES, getFinalFilter } from "../../../../commonTypes/filterUtils";
+import type { DetailedFilterBase} from "../../../../commonTypes/filterUtils";
+import { GEO_FILTER_TYPES, getFinalFilter } from "../../../../commonTypes/filterUtils";
 import Btn from "../../components/Btn";
 import { ExpandSection } from "../../components/ExpandSection";
 import { FlexRow } from "../../components/Flex";
@@ -9,9 +11,10 @@ import FormField from "../../components/FormField/FormField";
 import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
 import Popup from "../../components/Popup/Popup";
 import Select from "../../components/Select/Select";
-import { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
-import { BaseFilterProps } from "./SmartFilter";
-import SmartSearch, { SmartSearchOnChangeArgs } from "./SmartSearch";
+import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
+import type { BaseFilterProps } from "./SmartFilter";
+import type { SmartSearchOnChangeArgs } from "./SmartSearch/SmartSearch";
+import { SmartSearch } from "./SmartSearch/SmartSearch";
 
 export const GeoFilterTypes = GEO_FILTER_TYPES.map(f => f.key);
 export const getDefaultGeoFilter = (fieldName: string): DetailedFilterBase => ({
@@ -35,12 +38,7 @@ type ST_DWithinFilterValue = {
   /** Metres */
   distance: number;
 };
-export const GeoFilter = ({ filter, db, tables, onChange,  }: BaseFilterProps) => {
-
-  if(!filter){
-    return null;
-  }
-
+export const GeoFilter = ({ filter, db, tables, onChange,  }: BaseFilterProps & { filter: DetailedFilterBase } ) => {
   const args: Partial<ST_DWithinFilterValue> = filter.value;
 
   const updateValue = (newArgs: typeof args) => {
@@ -77,14 +75,14 @@ export const GeoFilter = ({ filter, db, tables, onChange,  }: BaseFilterProps) =
   const setRow = async (args: SmartSearchOnChangeArgs & {row: AnyObject; } | undefined) => {
     if(!args || !refPoint.table) return; 
     const { row, colName, columnValue } = args;
-    const firstGeoCol = refPoint.table?.columns[0]; //.find(c => c.udt_name === "geography") ?? refPoint.table?.columns.find(c => c.udt_name === "geometry");
+    const firstGeoCol = refPoint.table.columns[0]; //.find(c => c.udt_name === "geography") ?? refPoint.table?.columns.find(c => c.udt_name === "geometry");
     if(!firstGeoCol) return;
 
     const select = {
       c: { $ST_Centroid: [firstGeoCol.name] }
     };
     const filter = getRowFilterFromPkey(row, tables.find(t => t.name === refPoint.table!.name)!);
-    const rowRes = await db[refPoint.table?.name!]?.findOne!(filter, { select });
+    const rowRes = await db[refPoint.table.name!]?.findOne!(filter, { select });
     if(rowRes?.c && Array.isArray(rowRes.c.coordinates) && rowRes.c.coordinates.length === 2 && rowRes.c.coordinates.every(v => Number.isFinite(v))){
       const [lng, lat] = rowRes.c.coordinates;
       const name = (columnValue || `${lat} ${lng}`).toString();
@@ -107,7 +105,7 @@ export const GeoFilter = ({ filter, db, tables, onChange,  }: BaseFilterProps) =
       type="number" 
       maxWidth={"16ch"}
       rightContentAlwaysShow={true}
-      rightIcons={<div className="ai-center jc-center flex-col bg-1 f-1 h-full px-p5 noselect text-gray-600">Km</div>}
+      rightIcons={<div className="ai-center jc-center flex-col bg-color-2 f-1 h-full px-p5 noselect text-2">Km</div>}
       inputStyle={{ minHeight: "38px", }} 
       value={args.distance}
       onChange={distance => updateValue({ distance: Number(distance) })} 
@@ -147,16 +145,16 @@ export const GeoFilter = ({ filter, db, tables, onChange,  }: BaseFilterProps) =
           <Select 
             label="Table"
             fullOptions={geoTables.map(t => ({ key: t.name }))} 
-            value={refPoint?.table?.name} 
+            value={refPoint.table?.name} 
             labelAsValue={true}
             onChange={tableName => { 
               setRefPoint({ table: geoTables.find(t => t.name === tableName) }) 
             }} 
           />
-          {refPoint?.table && 
+          {refPoint.table && 
             <SmartSearch 
               db={db} 
-              tableName={refPoint?.table.name} 
+              tableName={refPoint.table.name} 
               tables={tables}
               onChange={async (val) => {
                 if(!val){
@@ -195,7 +193,7 @@ export const GeoFilter = ({ filter, db, tables, onChange,  }: BaseFilterProps) =
 }
 
 export const getRowFilterFromPkey = (row: AnyObject, table: DBSchemaTablesWJoins[number]) => {
-  let res = {};
+  const res = {};
   table.columns.map(c => {
     if(c.is_pkey){
       res[c.name] = row[c.name]

@@ -1,96 +1,70 @@
-import { Deck, DeckProps, FlyToInterpolator, OrthographicView, WebMercatorViewport, LinearInterpolator, MapView } from "deck.gl/typed";
+import type { Deck, DeckProps, MapView, MapViewState, OrthographicView, OrthographicViewState, WebMercatorViewport } from "deck.gl";
 import { isDefined, omitKeys, pickKeys } from "../../utils";
-import { Extent, HoverCoords } from "./DeckGLMap";
+import type { HoverCoords } from "./DeckGLMap";
 import { fitBounds } from "./fitBounds";
-
-
-
-type MercatorViewState = {
-  latitude: number;
-  longitude: number;
-  zoom?: number;
-  bearing?: number;
-  pitch?: number;
-  extent: Extent; //Bounds;
+import { createReactiveState } from "../../appUtils";
+export const getDeckLibs = async () => {
+  const lib = await import(/* webpackChunkName: "deckgl" */ "deck.gl");
+  return {
+    lib,
+    // core
+  }
 }
+export type DeckGlLib = Awaited<ReturnType<typeof getDeckLibs>>["lib"]
+export type DeckGlLibs = Awaited<ReturnType<typeof getDeckLibs>>;
 
-export type OrthoViewState = {
-  target: [number, number, number] | [number, number],
-  zoom?: number,
-  extent: Bounds;
-}
 
-export type ViewState = Parameters<Required<DeckProps>["onViewStateChange"]>[0]["viewState"];
-
+export type ViewState = MapViewState | OrthographicViewState;
 type DeckWrappedOpts = ({
   type: "orthographic";
-  initialViewState: OrthoViewState | undefined;
+  initialViewState: OrthographicViewState | undefined;
 } | {
   type: "mercator";
-  initialViewState: MercatorViewState | undefined;
+  initialViewState: MapViewState | undefined;
 }) & Pick<DeckProps, "onClick" | "onHover" | "layers" | "onLoad" > & { // | "onViewStateChange"
   onViewStateChange: (params: ViewState, extent: Bounds) => any;
   onHoverItem?: (row: Record<string, any>  | undefined, coords: HoverCoords)=>void;
   onClickQuick?: (info: PickingInfo)=>void;
 };
 
-export default class DeckWrapped {
+export class DeckWrapped {
 
   readonly opts: DeckWrappedOpts;
+  lib: DeckGlLib;
   private currHoverObjectStr?: string;
 
-  private currHover?: PickingInfo;
-
+  currHover?: PickingInfo;
+  currHoverRState = createReactiveState(this.currHover);
   private transitioning = false;
 
-  static getViews = (type: "orthographic" | "mercator") => {
-    return type === "orthographic" ?
-      [new OrthographicView({ 
-        id: '2d-scene', 
-        controller: true, 
-        flipY: false 
-      })] : [new MapView({})]
-  }
 
-  deck: Deck;
-  constructor(node: HTMLDivElement, opts: DeckWrappedOpts) {
+  deck: Deck<OrthographicView[] | MapView[]>;
+  constructor(node: HTMLDivElement, opts: DeckWrappedOpts, lib: DeckGlLib) {
 
-
+    this.lib = lib;
     this.opts = opts;
-    const { type, initialViewState: ivs } = this.opts;
-    const initialViewState = type === "mercator"? { 
-      latitude: ivs?.["latitude"] ?? 0,
-      longitude: ivs?.["longitude"] ?? 50,
-      zoom: ivs?.["zoom"] ?? 0,
-      ...(ivs && pickKeys(ivs, ["bearing", "pitch", "zoom", "extent"], true))
-    } : {
-      target: ivs?.["target"] ?? [1,1,0],
-      zoom: ivs?.["zoom"] ?? 0,
-      ...(ivs && pickKeys(ivs, ["extent"], true))
-    };
+    const { type, initialViewState } = this.opts;
 
-    this.deck = new Deck({
-      initialViewState,
+    this.deck = new lib.Deck({
+      ...getViews({ type, lib, initialViewState }) as any,
       parent: node,
-      views: DeckWrapped.getViews(opts.type),
       controller: true,
       ...omitKeys(opts, ["type", "onHoverItem", "onHover", "onClickQuick", "onViewStateChange", "initialViewState"]),
-      onHover: (opts.onHover || opts.onHoverItem || opts.onClickQuick)? (info, event) => {
+      onHover: (opts.onHover || opts.onHoverItem || opts.onClickQuick)? (info: PickingInfo, event) => {
         this.currHover = info;
-
+        this.currHoverRState.set(info);
         if(opts.onHoverItem && JSON.stringify(info.object ?? {}) !== this.currHoverObjectStr){
           this.currHoverObjectStr = JSON.stringify(info.object ?? {})
-          opts.onHoverItem(info.object, { x: info.x, y: info.y, coordinates: info.coordinate as any, screenCoordinates: info.pixel } );
+          opts.onHoverItem(info.object, { x: info.x, y: info.y, coordinates: info.coordinate, screenCoordinates: info.pixel } );
         }
         opts.onHover?.(info, event);
       } : undefined,
-      onViewStateChange: (viewState) => {
+      onViewStateChange: ({ viewState }) => {
         if(this.transitioning) return;
-        this.onViewStateChangeDebounced(viewState.viewState);
+        this.onViewStateChangeDebounced(viewState);
       }
-
     });
-
+    
     if(opts.onClickQuick){
       node.addEventListener("pointerdown", ev => {
         if(this.currHover) {
@@ -102,70 +76,43 @@ export default class DeckWrapped {
     this.onViewStateChangeDebounced = debounce(this.onViewStateChangeDebounced.bind(this), 200)
   }
 
-  static getViewState = <Type extends DeckWrappedOpts["type"]>(type: Type, state?: Partial<DeckWrappedOpts["initialViewState"]>): Type extends "orthographic"? OrthoViewState : MercatorViewState => {
-    return type === "orthographic"? {
-      target: [1,1,0],
-      zoom: 0,
-      ...(state as Partial<OrthoViewState>)
-    } : ({
-      longitude: 0,
-      latitude: 51,
-      zoom: 0,
-      ...pickKeys(state as Partial<MercatorViewState>, ["zoom", "bearing", "pitch", "latitude", "longitude"]),
-    } as any)
-  }
-
-  static get2DState(extent: Bounds, zoom = 0): OrthoViewState {
-    const [[x1, y1], [x2, y2]] = extent;
-    return {
-      zoom,
-      extent,
-      target: [(x2-x1)/2, (y2-y1)/2, 0],
-    }
-  }
-
-  // destroy(){
-  //   if(this.deck.isInitialized){
-  //     this.deck.vi
-  //   }
-  //   this.deck.isInitialized
-  // }
-
-  // getCoordsAtXY = () => {
-  //   this.deck.getViewports()?.[0].containsPixel({})
-  // }
-
   onViewStateChangeDebounced = (initialViewState: ViewState) => {
     const b = this.getExtent();
     if(!b) return;
     this.opts.onViewStateChange(initialViewState, b);
   }
 
-  zoomTo = (bounds: Bounds) => {
+  zoomTo = (bounds: Bounds | { type: "point"; latitude: number; longitude: number; zoom: number }) => {
     const viewport = this.deck.getViewports()[0];
     if(!viewport) return;
     
     try {
-      let viewState: OrthoViewState | MercatorViewState | undefined;
+      let viewState: OrthographicViewState | MapViewState | undefined;
       const OPTS = {
         padding: 20
       }
       if(this.opts.type !== "orthographic"){
-        const { longitude, latitude, zoom } = "fitBounds" in viewport?  (viewport as WebMercatorViewport).fitBounds(bounds, OPTS) as any : (new WebMercatorViewport({}).fitBounds(bounds, OPTS))
-        viewState = DeckWrapped.getViewState(this.opts.type, {
+        const { longitude, latitude, zoom } = !Array.isArray(bounds)? bounds : 
+          "fitBounds" in viewport?  
+            (viewport as WebMercatorViewport).fitBounds(bounds, OPTS) as any : 
+            (new this.lib.WebMercatorViewport({}).fitBounds(bounds, OPTS));
+        viewState = getViewState(this.opts.type, {
          longitude,
          latitude,
          zoom: Math.min(zoom, 15),
        });
       } else {
+        if(!Array.isArray(bounds)){
+          throw "Unexpected";
+        }
         viewState = {
           ...fitBounds({ padding: 50, bounds, width: viewport.width, height: viewport.height })
         }
       }
       
-      const initialViewState = {
+      const initialViewState: MapViewState | OrthographicViewState = {
         ...viewState,
-        transitionInterpolator: this.opts.type !== "orthographic" ? new FlyToInterpolator({ speed: 2 }) : new LinearInterpolator(['target', 'zoom']),
+        transitionInterpolator: this.opts.type !== "orthographic" ? new this.lib.FlyToInterpolator({ speed: 2 }) : new this.lib.LinearInterpolator(["target", "zoom"]),
         transitionDuration: 800,
         onTransitionStart: () => {
           this.transitioning = true;
@@ -176,7 +123,7 @@ export default class DeckWrapped {
         }
       };
 
-      this.deck.setProps({ initialViewState })
+      this.deck.setProps({ initialViewState } as any)
 
     } catch (err){
 
@@ -207,12 +154,11 @@ export default class DeckWrapped {
       const type = next2D? "orthographic" : "mercator"
       this.deck.setProps({
         ...props,
-        views: DeckWrapped.getViews(type),
-        initialViewState: DeckWrapped.getViewState(type),
+        ...getViews({ type, lib: this.lib, initialViewState: this.opts.initialViewState }),
         layers: props.layers
-      })
+      } as any)
     } else {
-      this.deck.setProps(props)
+      this.deck.setProps(props as any)
     }
   }
 }
@@ -229,7 +175,7 @@ type PickingInfo = {
   x: number;
   y: number;
   pixel?: [number, number];
-  coordinate?: number[];
+  coordinate?: [number, number];
   devicePixel?: [number, number];
   pixelRatio: number;
 }
@@ -249,3 +195,47 @@ export function debounce<Params extends any[]>(
   }
 }
 
+export const getViewState = <Type extends ViewType>(type: Type, state?: Partial<DeckWrappedOpts["initialViewState"]>): Type extends "orthographic"? OrthographicViewState : MapViewState => {
+  if(type === "orthographic"){
+    const initialViewState: OrthographicViewState = {
+      target: state?.["target"] ?? [1,1,0],
+      zoom: state?.["zoom"] ?? 0,
+    };
+    return initialViewState as any;
+  }
+  
+  const initialViewState: MapViewState = { 
+    latitude: state?.["latitude"] ?? 0,
+    longitude: state?.["longitude"] ?? 51,
+    zoom: typeof state?.["zoom"] === "number"? state["zoom"] : 0,
+    ...(state && pickKeys(state as any, ["bearing", "pitch", "extent"], true))
+  };
+  return initialViewState as any;
+}
+
+type ViewType = DeckWrappedOpts["type"]; 
+type  GetViewsResult<T extends ViewType> = { 
+  views: T extends "orthographic"? OrthographicView[] : MapView[];
+  initialViewState: T extends "orthographic"? OrthographicViewState : MapViewState;
+};
+
+const getViews = <T extends ViewType>({ type, initialViewState: ivs, lib }: {
+  type: T;
+  lib: DeckGlLib;
+  initialViewState: OrthographicViewState | MapViewState | undefined;
+}): GetViewsResult<T> => {
+  if(type === "orthographic"){
+    const views =  [new lib.OrthographicView({ 
+      id: "2d-scene", 
+      controller: true, 
+      flipY: false 
+    })];
+
+    const initialViewState = getViewState(type, ivs);
+    return { views, initialViewState } as GetViewsResult<T>;
+  }
+  
+  const initialViewState = getViewState(type, ivs);
+  const views = [new lib.MapView({})];
+  return { views, initialViewState } as GetViewsResult<T>;
+}

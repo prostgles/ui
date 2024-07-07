@@ -222,8 +222,10 @@ export function setPan(node: HTMLDivElement, evs: PanListeners){
       
       if(!_pointerdown.triggered && (_panning.xTravel >= threshold || _panning.yTravel > threshold) ){
         _pointerdown.triggered = true;
+        clearTextSelection();
         onPanStart?.({ ..._panning }, ev);
       } else if(_pointerdown.triggered){
+        clearTextSelection();
         onPan({ ..._panning }, ev);
       }
     }
@@ -274,4 +276,8 @@ export function addEvent(node: HTMLElement, type, func){
   return function(){
     node.removeEventListener(type, wrappedEvent);
   }
+}
+
+export const clearTextSelection = () => {
+  window.getSelection()?.empty();
 }

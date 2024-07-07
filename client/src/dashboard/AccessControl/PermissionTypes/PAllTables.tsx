@@ -1,11 +1,10 @@
 import { getKeys } from "prostgles-types";
 import React from "react" 
 import { getBasicPermissions, TablePermissionControls } from "../TableRules/TablePermissionControls";
-import { DBPermissionEditorProps } from "./PCustomTables";
+import type { DBPermissionEditorProps } from "./PCustomTables";
 
 
 export const PAllTables = ({ dbPermissions, onChange, contextData, prgl, userTypes, tablesWithRules  }: DBPermissionEditorProps<"All views/tables">) => {
-  if(!contextData?.user) return null;
   const {tables} = prgl;
   return <div className="flex-col gap-1">
     <h4 className="my-1">Allowed on {tables.length} tables:</h4>
@@ -28,9 +27,6 @@ export const PAllTables = ({ dbPermissions, onChange, contextData, prgl, userTyp
           allowAllTables,
         });
       }} 
-    />
-    {/* <div>
-      Selected actions will be allowed on all columns and data 
-    </div> */}
+    /> 
   </div>
 }

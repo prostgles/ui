@@ -1,8 +1,10 @@
-import { mdiClose, mdiFullscreen, mdiFullscreenExit, mdiUnfoldLessHorizontal, mdiUnfoldMoreHorizontal } from "@mdi/js";
+import { mdiClose, mdiFullscreen, mdiFullscreenExit, mdiMenu, mdiUnfoldLessHorizontal, mdiUnfoldMoreHorizontal } from "@mdi/js";
 import React from "react";
 import Btn from "../../components/Btn";
-import { SilverGridChildProps } from "./SilverGridChild"; 
+import type { SilverGridChildProps } from "./SilverGridChild"; 
 import { dataCommand } from "../../Testing";
+import { appTheme, useReactiveState } from "../../appUtils"; 
+import { FlexRow } from "../../components/Flex";
 export const GridHeaderClassname = "silver-grid-item-header--title" as const;
 
 type P = SilverGridChildProps & {
@@ -15,6 +17,25 @@ type P = SilverGridChildProps & {
   onSetHeaderRef: (ref: HTMLDivElement) => void;
 }
 
+const CloseButton = ({ tabId, onClose }: { tabId: string | undefined; } & Pick<P, "onClose">) => {
+  if(!onClose || !tabId) return null;
+  return <Btn 
+    className="show-on-parent-hover" 
+    style={{
+      width: "22px",
+      height: "22px",
+    }}
+    iconProps={{
+      size: .75,
+      path: mdiClose
+    }}
+    iconPath={mdiClose} 
+    onClick={e => onClose(tabId, e)} 
+  />
+}
+
+const TITLE_ID_ATTRNAME = "data-title-item-id" as const;
+export const getSilverGridTitleNode = (id: string) => document.body.querySelector<HTMLDivElement>(`[${TITLE_ID_ATTRNAME}=${JSON.stringify(id)}]`);
 export const SilverGridChildHeader = (props: P) => {
 
   const { 
@@ -25,9 +46,20 @@ export const SilverGridChildHeader = (props: P) => {
   const lineHeight = window.isMobileDevice? 16 : 24;
 
   const tabs = siblingTabs?.length? siblingTabs : [props.layout];
-  return <div className="silver-grid-item-header flex-row  bg-0p5 pointer f-0 noselect relative ai-center shadow">
-            
-    <div className="silver-grid-item-header--icon flex-row f-0 o-hidden f-1 ai-center" style={{ maxWidth: "fit-content" }}>
+
+  const { state: theme } = useReactiveState(appTheme);
+  const bgClass = theme === "dark"? "bg-color-0" : "bg-color-3"
+  const bgActiveClass = theme === "dark"? "bg-color-2" : "bg-color-0";
+
+  return <div className="silver-grid-item-header flex-row  bg-color-1 pointer f-0 noselect relative ai-center shadow">
+
+    <div 
+      className="silver-grid-item-header--icon flex-row f-0 o-hidden f-1 ai-center" 
+      style={{ 
+        maxWidth: "fit-content", 
+        minWidth: "42px" 
+      }
+    }>
       {headerIcon}
     </div>
 
@@ -40,47 +72,61 @@ export const SilverGridChildHeader = (props: P) => {
     >
 
       {tabs.map(tab => {
-        
+        const attrs = { [TITLE_ID_ATTRNAME]: tab.id };
         if(tab.id !== activeTabKey){
           const title = tab.title || tab.id;
-
+          const tabId = tab.id;
           return (
-            <div key={tab.id}
+            <FlexRow 
+              key={tab.id}
+              className={`gap-p25 pl-p5 pr-p25 ${bgClass}`}
               onClick={() => {
                 onClickSibling?.(tab.id!)
               }}
               style={{
                 height: "37px",
                 marginTop: "4px",
-                padding: ".5em .75em",
                 lineHeight: "21px",
-                maxWidth: "40%",
+                maxWidth: "40%", 
               }}
-              title={title + ""}
-              className="f-0 min-w-0 ws-nowrap text-ellipsis bg-gray-200 p-p5  "
+              title={title ?? ""}
             >
-              {title}
-            </div>
+              <div 
+                className={"f-1 min-w-0 ws-nowrap text-ellipsis py-p5 "}
+                style={{
+                  padding: ".5em 0 .5em .75em ",
+                }}
+                { ...attrs }
+              >
+                {title}
+              </div>
+              <CloseButton {...props} tabId={tabId} />
+            </FlexRow>
           )
         }
 
-        return <div key={tab.id}
+        return <FlexRow key={tab.id}
           ref={r => { 
             if(r){ 
               onSetHeaderRef(r); 
             }  
           }} 
-          className={`${GridHeaderClassname} p-p5 f-0 max-w-fit text-ellipsis bg-1 noselect `}
+          className={`gap-p25 pl-p5 pr-p25 ${bgActiveClass}`} 
           style={{
             height: `${height}px`,
             lineHeight: `${lineHeight + 2}px`,
             marginTop: "2px",
             maxWidth: "max(300px, 40%)",
-            // ...(!!siblingTabs?.length && {maxWidth: "60%"}),
           }}
         >
-          {tab.title}
-        </div>
+          <div 
+            className={`${GridHeaderClassname} py-p5 f-0 max-w-fit text-ellipsis noselect `} 
+            { ...attrs }
+          >
+            {tab.title}
+          </div>
+          <CloseButton {...props} tabId={tab.id} />
+        </FlexRow>
       })}
     </div>
 

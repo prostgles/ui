@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import Btn from "../../components/Btn";
 import FormField from "../../components/FormField/FormField";
 import Loading from "../../components/Loading";
-import { PopupProps } from "../../components/Popup/Popup";
+import type { PopupProps } from "../../components/Popup/Popup";
 import PopupMenu from "../../components/PopupMenu";
 import { useIsMounted } from "./CredentialSelector";
 
@@ -19,10 +19,14 @@ type CodeConfirmationProps = {
   contentClassName?: string;
   contentStyle?: React.CSSProperties;
   hideConfirm?: boolean;
-  positioning?: PopupProps["positioning"]
+  positioning?: PopupProps["positioning"];
+  fixedCode?: string;
 }
-export function CodeConfirmation({ button, confirmButton, message: rawMessage, show, topContent, className, style, contentClassName = "", contentStyle, hideConfirm = false, title, positioning = "center" }: CodeConfirmationProps): JSX.Element {
-
+export function CodeConfirmation({ 
+  button, confirmButton, message: rawMessage, show, 
+  topContent, className, style, contentClassName = "", contentStyle, 
+  hideConfirm = false, title, positioning = "beneath-left", fixedCode
+}: CodeConfirmationProps): JSX.Element {
 
   const [message, setMessage] = useState<React.ReactNode>();
 
@@ -66,7 +70,7 @@ export function CodeConfirmation({ button, confirmButton, message: rawMessage, s
         
         {!hideConfirm && <>
           {message ?? <Loading />}
-          <CodeChecker key={key} onChange={sethasConfirmed} />
+          <CodeChecker key={key} fixedCode={fixedCode} onChange={sethasConfirmed} />
           <div className="flex-row gap-1 ai-center mt-1  w-full">
             <Btn onClick={popupClose} variant="outline">Close</Btn>
             {hasConfirmed && confirmButton(popupClose)}
@@ -78,7 +82,10 @@ export function CodeConfirmation({ button, confirmButton, message: rawMessage, s
 }
 
 
-export function CodeChecker({ className, style, onChange }: Pick<CodeConfirmationProps, "style" | "className"> & { onChange: (hasConfirmed: boolean)=>void }): JSX.Element {
+type CodeCheckerProps = Pick<CodeConfirmationProps, "style" | "className" | "fixedCode"> & { 
+  onChange: (hasConfirmed: boolean) => void;
+};
+export function CodeChecker({ className, style, onChange, fixedCode }: CodeCheckerProps): JSX.Element {
 
   const getCode = () => {
     
@@ -90,12 +97,12 @@ export function CodeChecker({ className, style, onChange }: Pick<CodeConfirmatio
       return randomCharacter;
     }).join("");
   };
-  const [code, setCode] = useState(getCode());
+  const [code] = useState(fixedCode ?? getCode());
   const [confirmCode, setConfirmCode] = useState("");
 
 
   return <div className={"flex-col " + (className ?? "")} style={style}>
-    <p><span className="noselect">Confirm by typing this code: </span><strong title="confirmation-code">{code}</strong></p>
+    <p><span className="noselect">Confirm by typing this: </span><strong title="confirmation-code">{code}</strong></p>
     <FormField
       name="confirmation" 
       value={confirmCode} 

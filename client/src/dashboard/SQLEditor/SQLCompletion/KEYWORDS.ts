@@ -1,4 +1,4 @@
-import { missingKeywordDocumentation } from "../SQLEditorSuggestions";
+import type { missingKeywordDocumentation } from "../SQLEditorSuggestions";
 import { STARTING_KEYWORDS } from "./CommonMatchImports";
 
 export type TopKeyword = { 
@@ -10,9 +10,9 @@ export type TopKeyword = {
 };
 
 export const STARTING_KWDS = [
-  "SELECT", "REVOKE", "GRANT", "VACUUM", "EXPLAIN", "COPY", "REINDEX", "ROLLBACK", "WITH", "ALTER", "SET", "DO", "BEGIN", 
+  "SELECT", "REVOKE", "GRANT", "VACUUM", "EXPLAIN", "COPY", "REINDEX", "ROLLBACK", "WITH", "ALTER", "SET", "DO", "BEGIN", "CALL",
   "COMMENT", "DROP", "CREATE", "UPDATE", "INSERT INTO", "DELETE FROM", "NOTIFY", "LISTEN", "SHOW", "TRUNCATE", "REASSIGN",
-  "DELETE", "INSERT"
+  "DELETE", "INSERT", "PREPARE", "EXECUTE"
 ] as const;
 
 export const asSQL = (v: string, lang = "sql") => "```" + lang + "\n"+ v +"\n```";
@@ -39,6 +39,20 @@ TO { new_role | CURRENT_ROLE | CURRENT_USER | SESSION_USER }`)}`;
 Furthermore, it reclaims disk space immediately, rather than requiring a subsequent VACUUM operation. This is most useful on large tables.
 
 https://www.postgresql.org/docs/current/sql-truncate.html
+`
+  } else if(label === "PREPARE"){
+  priority = 14;
+  
+  info = `PREPARE creates a prepared statement. A prepared statement is a server-side object that can be used to optimize performance. When the PREPARE statement is executed, the specified statement is parsed, analyzed, and rewritten. When an EXECUTE command is subsequently issued, the prepared statement is planned and executed. This division of labor avoids repetitive parse analysis work, while allowing the execution plan to depend on the specific parameter values supplied.
+
+https://www.postgresql.org/docs/current/sql-prepare.html
+`
+  } else if(label === "EXECUTE"){
+  priority = 14;
+
+  info = `EXECUTE is used to execute a previously prepared statement. Since prepared statements only exist for the duration of a session, the prepared statement must have been created by a PREPARE statement executed earlier in the current session.
+
+https://www.postgresql.org/docs/current/sql-execute.html
 `
 
     } else if(label === "SELECT") {
@@ -229,6 +243,14 @@ UPDATE orders SET price = 2;
 COMMIT;
 \`\`\`
 `
+      
+  } else if(label === "CALL") {
+  info = `invoke a procedure
+  https://www.postgresql.org/docs/current/sql-call.html
+  \`\`\`sql
+  CALL my_procedure();
+  \`\`\`
+  `
       
     } else if(label === "DO") {
 insertText = `DO $$ 

@@ -1,37 +1,67 @@
-import React from 'react';
-import { FilterType, SimpleFilter } from '../../../../commonTypes/filterUtils';
+import React from "react";
+import type { FilterType, SimpleFilter } from "../../../../commonTypes/filterUtils";
 import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
-import RTComp from '../RTComp';
+import RTComp from "../RTComp";
 import { parseValue } from "../SmartForm/SmartFormField/fieldUtils";
 import { colIs } from "../W_Table/ColumnMenu/ColumnSelect";
-import { BaseFilterProps } from "./SmartFilter";
+import { getTableSelect } from "../W_Table/tableUtils/getTableSelect";
+import type { BaseFilterProps } from "./SmartFilter";
+import { _PG_numbers_num } from "prostgles-types";
+import { FlexRowWrap } from "../../components/Flex";
 
 
 type NumberOrDateFilterProps = BaseFilterProps & {
   type: "number" | "date";
   inputType: string; 
 }
+
+type Limits = {
+  min: number;
+  max: number;
+}; 
 type NumberOrDateFilterState = {
-  limits?: {
-    min: number;
-    max: number;
-  }
+  limits?: Limits;
 }
   
-export default class NumberOrDateFilter extends RTComp<NumberOrDateFilterProps, NumberOrDateFilterState > {
+export class NumberOrDateFilter extends RTComp<NumberOrDateFilterProps, NumberOrDateFilterState > {
   static TYPES: FilterType[] = ["$between"]
 
   state: NumberOrDateFilterState = {}
 
   onDelta = async (dP, dS, dD) => {
-    const { db, column, tableName, filter } = this.props;
+    const { db, column, tableName, filter, tables } = this.props;
 
-    const tableHandler = db?.[tableName]
+    const tableHandler = db[tableName]
     if(!this.state.limits && tableName && tableHandler?.findOne && !filter?.value?.length){
-      const limits: any = await tableHandler.findOne({}, { select: {
-        min: { $min: [column.name] },
-        max: { $max: [column.name] }
-      }})
+      let limits: Limits | undefined;
+
+      if(column.type === "column"){
+        limits = await tableHandler.findOne({}, { select: {
+          min: { $min: [column.name] },
+          max: { $max: [column.name] }
+        }}) as Limits | undefined;
+      } else {
+        const { select } = await getTableSelect({ table_name: tableName, columns: column.columns }, tables, db, {});
+        const _minVal = await tableHandler.findOne(
+          {}, 
+          { select, orderBy: { [column.name]: 1 } }
+        );
+        const _maxVal = await tableHandler.findOne(
+          {}, 
+          { select, orderBy: { [column.name]: -1 } }
+        );
+        
+        if(_minVal && _maxVal){
+          const isNumeric = _PG_numbers_num.includes(column.udt_name as any)
+          const minVal = _minVal[column.name];
+          const maxVal = _maxVal[column.name];
+          limits = { 
+            min: isNumeric? Number(minVal) : minVal, 
+            max: isNumeric? Number(maxVal) : maxVal, 
+          };
+        }
+      }
+      if(!limits) return;
       this.setState({ limits });
       this.setValue(limits);
     }
@@ -61,8 +91,8 @@ export default class NumberOrDateFilter extends RTComp<NumberOrDateFilterProps, 
       _val = new Date(_val)
     }
 
-    let type: SimpleFilter["type"] = this.props.filter?.type ?? "$between",
-      value: any = [min, max];
+    const type: SimpleFilter["type"] = this.props.filter?.type ?? "$between";
+    let value: any = [min, max];
 
     if(Object.values(val)[0] === "" as any){
 
@@ -116,24 +146,23 @@ export default class NumberOrDateFilter extends RTComp<NumberOrDateFilterProps, 
       type: dataType,
       inputType, 
     } = this.props;
-
-    if(!column) return null;
+ 
     const type = filter?.type ?? "=";
-    let min = type === "$between"? filter?.value?.[0] : type === ">=" ? filter?.value : null,
+    const min = type === "$between"? filter?.value?.[0] : type === ">=" ? filter?.value : null,
       max = type === "$between"? filter?.value?.[1] : type === "<=" ? filter?.value : null;
 
     const commonProps = { 
       className: "p-p25 mr-p5", 
       style: colIs(column, "_PG_date")? {} : { maxWidth: "125px" }, 
-      inputStyle: { padding: "4px" }, 
+      inputStyle: { padding: "4px 8px" }, 
       type: inputType ,
       asColumn: true,
     };
 
-    return  <div className="flex-row-wrap f-1 p-p5"  style={{ minWidth:"150px" }}>
+    return  <FlexRowWrap className="gap-0 f-1 p-p5"  style={{ minWidth:"150px" }}>
       <FormFieldDebounced {...commonProps} value={parseValue(column, min)} placeholder="Min" onChange={min => { this.setValue({ min }) }} />
       <FormFieldDebounced {...commonProps} value={parseValue(column, max)} placeholder="Max" onChange={max => { this.setValue({ max }) }} />
-    </div>
+    </FlexRowWrap>
   }
 }
   

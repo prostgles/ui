@@ -1,9 +1,11 @@
 import { mdiFilePlusOutline, mdiPlus, mdiSearchWeb } from "@mdi/js";
-import { AnyObject, CONTENT_TYPE_TO_EXT, TableInfo, ValidatedColumnInfo, getKeys } from "prostgles-types";
+import type { AnyObject, TableInfo, ValidatedColumnInfo} from "prostgles-types";
+import { CONTENT_TYPE_TO_EXT, getKeys } from "prostgles-types";
 import React, { useState } from "react";
 import Btn from "../../../components/Btn";
 import SmartTable from "../../SmartTable";
-import SmartForm, { SmartFormProps } from "../SmartForm";
+import type { SmartFormProps } from "../SmartForm";
+import SmartForm from "../SmartForm";
 import { columnIsReadOnly } from "./SmartFormField";
 
 type P = Pick<SmartFormProps, "db" | "tables" | "methods" | "hideNullBtn" | "enableInsert" | "onSuccess" | "tableName" | "theme"> & {

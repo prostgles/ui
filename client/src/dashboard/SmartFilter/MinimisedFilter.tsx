@@ -1,16 +1,19 @@
 import React from "react";
-import { getFinalFilterInfo, TEXT_FILTER_TYPES } from "../../../../commonTypes/filterUtils";
-import { FilterWrapperProps } from "./FilterWrapper";
-import { sliceText } from "./SmartFilter";
+import { getFinalFilterInfo, type JoinedFilter, TEXT_FILTER_TYPES } from "../../../../commonTypes/filterUtils";
+import type { FilterWrapperProps } from "./FilterWrapper"; 
+import { sliceText } from "../../../../commonTypes/utils";
+import "./MinimisedFilter.css";
+import { Icon } from "../../components/Icon/Icon";
+import { mdiSetCenter } from "@mdi/js";
 
-type P = FilterWrapperProps & { 
+type P = FilterWrapperProps & Pick<FilterWrapperProps, "rootFilter"> & { 
   toggle: VoidFunction; 
   toggleTitle: string;  
   disabledToggle: false | JSX.Element | undefined; 
-  filterTypeLabel: string | undefined; 
+  filterTypeLabel: string | undefined;
 }
 
-export const MinimisedFilter = ({ filter, label, column, style, toggle, toggleTitle, disabledToggle, className, filterTypeLabel }: P) => {
+export const MinimisedFilter = ({ filter, label, column, style, toggle, toggleTitle, disabledToggle, className, filterTypeLabel, rootFilter }: P) => {
     if(!filter) return null;
 
     const maxLen = 26;
@@ -56,7 +59,7 @@ export const MinimisedFilter = ({ filter, label, column, style, toggle, toggleTi
       if(v && v instanceof Date && (v as any).toLocaleDateString || isStringDate){
         const date = new Date(v);
         if(column.udt_name === "date" || date.toISOString().endsWith("00:00:00.000Z")){
-          return date.toISOString().split('T')[0] ?? ""
+          return date.toISOString().split("T")[0] ?? ""
         }
         return date.toLocaleDateString();
       }
@@ -70,39 +73,35 @@ export const MinimisedFilter = ({ filter, label, column, style, toggle, toggleTi
 
     const filterValue = getValueForDisplay(filter.value, false);
     const filterValueText = getValueForDisplay(filter.value, true);
-
     return <div
-      title={toggleTitle}
-      className={"FilterWrapper_MinimisedRoot flex-row ai-center noselect pointer relative o-hidden bg-blue-100 " + className}
+      className={"FilterWrapper_MinimisedRoot flex-row ai-center noselect pointer relative o-hidden " + className}
       style={{
         opacity: filter.disabled? ".8" : 1,
-        ...style,
-        // background: "rgb(236, 247, 255)",
-        // border: "1px solid rgb(226, 226, 226)",
+        ...style, 
         borderRadius: "1em",
         padding: window.isMobileDevice? "2px 6px" : "6px 12px",
       }}
     >
       {disabledToggle}
+      {rootFilter && <Icon title={rootFilter.value.type === "$existsJoined"? "Exists" : "Not exists"} path={mdiSetCenter} size={1} className="text-0"  />}
       <button
         className={disabledToggle? "ml-p5 " : ""}
         style={{
-          background: "transparent",
-          // border: "1px solid rgb(226, 226, 226)",
-          // borderRadius: "1em",
+          background: "transparent", 
+          opacity: (value === undefined || disabled) ? .75 : 1,
           padding: "0",
         }}
+        title={toggleTitle}
         onClick={toggle}
       >
         <div className={"flex-row ai-center noselect pointer relative o-hidden "} >
-          <div className={"FILTERLABEL  font-18 mr-p25 " + ((value === undefined || disabled) ? " text-1p5 " : " text-blue-800 ")} 
+          <div className={"FilterWrapper_FieldName  font-18 mr-p25 "} 
             style={{ fontWeight: 600 }}
           >
             {label}
           </div>
-          <div className="FILTERTYPELABEL mr-p25 font-14 " 
+          <div className="FilterWrapper_Type mr-p25 font-14 " 
             style={{ 
-              color: "rgb(126 126 126)", 
               textTransform: "uppercase",
               height: "18px",
             }}
@@ -115,8 +114,8 @@ export const MinimisedFilter = ({ filter, label, column, style, toggle, toggleTi
               style={{
                 whiteSpace: "nowrap",
                 fontWeight: 600,
-                color: disabled? "gray" :
-                  column.tsDataType === "string" ? "#810909" :
+                color: disabled? "var(--text-2)" :
+                  column.tsDataType === "string" ? "var(--color-text)" :
                     column.udt_name === "date" ? "#0000ad" :
                       column.tsDataType === "number" ? "var(--color-number)" :
                         "black"

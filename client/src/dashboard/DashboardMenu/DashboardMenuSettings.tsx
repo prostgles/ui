@@ -1,15 +1,20 @@
-import React, { useState } from 'react';
+import React from "react";
 import Btn from "../../components/Btn"; 
-import { mdiCog } from '@mdi/js'; 
-import type { SyncDataItem } from 'prostgles-client/dist/SyncedTable';
-import { useEffectAsync } from 'prostgles-client/dist/react-hooks';
+import { mdiAlbum, mdiCog, mdiSortAscending, mdiTable, mdiViewGridPlus } from "@mdi/js"; 
+import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import { useEffectAsync, usePromise } from "prostgles-client/dist/react-hooks";
 import FormField from "../../components/FormField/FormField";
-import PopupMenu from '../../components/PopupMenu';
+import PopupMenu from "../../components/PopupMenu";
 import { SwitchToggle } from "../../components/SwitchToggle";
-import { DashboardProps } from '../Dashboard/Dashboard';
-import { Workspace } from "../Dashboard/dashboardUtils";
+import type { DashboardProps } from "../Dashboard/Dashboard";
+import type { Workspace } from "../Dashboard/dashboardUtils";
 import { useLocalSettings } from "../localSettings";
 import { DashboardHotkeys } from "./DashboardHotkeys";
+import Select from "../../components/Select/Select";
+import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
+import { FlexCol } from "../../components/Flex";
+import { SettingsSection } from "./SettingsSection";
+import { pageReload } from "../../components/Loading";
 export { useEffectAsync };
 
 const layoutType = [
@@ -23,13 +28,8 @@ type P = Pick<DashboardProps, "prgl"> & {
 }
 
 export const DashboardMenuSettings = ({ workspace, prgl: { dbsMethods } }: P) => {
-  const [dbSize, setDbSize] = useState("");
 
-  useEffectAsync(async () => {
-    if(!dbsMethods.getDBSize) return;
-    setDbSize(await dbsMethods.getDBSize(workspace.connection_id));
-
-  }, [dbsMethods, setDbSize, workspace]);
+  const dbSize = usePromise(async () => dbsMethods.getDBSize?.(workspace.connection_id), [dbsMethods, workspace]);
 
   const localSettings = useLocalSettings();
   
@@ -38,63 +38,105 @@ export const DashboardMenuSettings = ({ workspace, prgl: { dbsMethods } }: P) =>
       <Btn iconPath={mdiCog}
         title="Show settings"
         className=""
+        data-command="dashboard.menu.settingsToggle"
       />
     )}
+    data-command="dashboard.menu.settings"
     positioning="beneath-left"
     clickCatchStyle={{ opacity: 0.2 }}
     title="Workspace settings"
+    contentClassName="p-0"
     render={() => {
       return <div className="flex-col gap-2 p-1"> 
-        <SwitchToggle label={{ variant: "normal",
-            label: "Hide all counts",
-            info: "This will disable counts for the dashboard menu and table headers. Usefull when there is a performance downgrade",
-            style: { color: "black" },
-          }}
-          style={{ marginLeft: "-.5em", color: "black" }}
-          checked={!!workspace.options.hideCounts} 
-          onChange={hideCounts => {
-            workspace.$update({ options: { hideCounts } }, { deepMerge: true }); 
-          }}
-        /> 
-
-        <SwitchToggle label={{ 
-            label: "Show all my queries",
-            info: "Will allow using queries from all your connections and not just the current one. Requires a page refresh",
-            style: { color: "black" },
-          }}
-          style={{ marginLeft: "-.5em" }}
-          checked={!!workspace.options.showAllMyQueries} 
-          onChange={showAllMyQueries => {
-            workspace.$update({ options: { showAllMyQueries  } }, { deepMerge: true });
-            setTimeout(() => {
-              window.location.reload()
-            }, 500)
-          }}
-        /> 
-
-        <FormField label={{ 
-            label: "Default layout type",
-            info: "Controls new window placement",
-            style: { color: "black" },
-          }}
-          asColumn={true}
-          fullOptions={layoutType} 
-          value={workspace.options.defaultLayoutType} 
-          onChange={defaultLayoutType => {
-            workspace.$update({ options: { defaultLayoutType } }, { deepMerge: true }); 
-          }} 
-        />
-
-        <div className="flex-row-wrap">
-    
-          <FormField label={{ 
-              label: "Centered layout", 
-              info: "Sets dashboard maximum width. Useful for wide screens. Will refresh page when changed",
-              style: { color: "black" },
+        <SettingsSection 
+          title="Dashboard menu" 
+          iconPath={mdiTable}
+        >
+          <FormField 
+            label={{
+              label: "Sort table list",
             }}
-            asColumn={true}
-            type="checkbox"
-            value={localSettings.centeredLayout?.enabled} 
+            fullOptions={[
+              {
+                key: "name",
+                label: "Name",
+                subLabel: "Sort by name"
+              },
+              {
+                key: "extraInfo",
+                label: "Extra info",
+                subLabel: "Sort by table list extra info (size/count)"
+              },
+            ]}
+            value={workspace.options.tableListSortBy}
+            onChange={tableListSortBy => {
+              workspace.$update({ options: { tableListSortBy } }, { deepMerge: true });
+            }}
+          />
+          <FormField 
+            label={{
+              label: "Table list extra info",
+              info: "Table/view information shown after the table name in the table list",
+            }}
+            fullOptions={[
+              {
+                key: "none",
+                label: "None",
+                subLabel: "No extra info"
+              },
+              {
+                key: "count",
+                label: "Count",
+                subLabel: "Total number of rows current user has access to"
+              },
+              {
+                key: "size",
+                label: "Size",
+                subLabel: "Total size of the table (must be superuser)"
+              },
+            ]}
+            value={workspace.options.tableListEndInfo}
+            onChange={tableListEndInfo => {
+              workspace.$update({ options: { tableListEndInfo } }, { deepMerge: true });
+            }}
+          />
+          <SwitchToggle 
+            label={{ 
+              label: "Show all my queries",
+              info: "Will allow using queries from all your connections and not just the current one. Requires a page refresh",
+            }}
+            style={{ marginLeft: "-.5em" }}
+            checked={!!workspace.options.showAllMyQueries} 
+            onChange={showAllMyQueries => {
+              workspace.$update({ options: { showAllMyQueries  } }, { deepMerge: true });
+            }}
+          /> 
+        </SettingsSection>
+
+        <SettingsSection 
+          title="Dashboard layout" 
+          iconPath={mdiViewGridPlus}
+        >
+          <SwitchToggle 
+            label={{ variant: "normal",
+              label: "Hide all counts",
+              info: "This will disable counts for the table/view headers. Usefull when there is a performance downgrade",
+            }}
+            style={{ 
+              marginLeft: "-.5em", 
+            }}
+            checked={!!workspace.options.hideCounts} 
+            onChange={hideCounts => {
+              workspace.$update({ options: { hideCounts } }, { deepMerge: true }); 
+            }}
+          />
+          <SwitchToggle 
+            label={{ 
+              label: "Centered layout", 
+              info: "Centered layout allows you to center align the dashboard area. This is particularly useful when working on a wide monitor",
+            }}  
+            style={{ marginLeft: "-.5em" }}
+            checked={!!localSettings.centeredLayout?.enabled} 
             onChange={enabled => {
               localSettings.$set({
                 centeredLayout: {
@@ -102,44 +144,27 @@ export const DashboardMenuSettings = ({ workspace, prgl: { dbsMethods } }: P) =>
                   maxWidth: localSettings.centeredLayout?.maxWidth ?? 1200
                 }
               })
-              window.location.reload();
+              pageReload("centeredLayout toggled")
             }}
+          /> 
+
+          <FormField 
+            label={{ 
+              label: "Default layout type",
+              info: "Controls new window placement",
+            }}
+            data-command="dashboard.menu.settings.defaultLayoutType"
+            fullOptions={layoutType} 
+            value={workspace.options.defaultLayoutType} 
+            onChange={defaultLayoutType => {
+              workspace.$update({ options: { defaultLayoutType } }, { deepMerge: true }); 
+            }} 
           />
-          {localSettings.centeredLayout && <FormField 
-              label={{ 
-                label: "Max width (px)",
-                style: { color: "black" }, 
-              }} 
-              asColumn={true}
-              type="number"
-              inputProps={{
-                min: 500,
-                max: 10000,
-                step: 1
-              }} 
-              value={localSettings.centeredLayout.maxWidth || 700} 
-              onChange={maxWidth => {
-                if(!Number.isInteger(+maxWidth)) return;
-                const maxAllowed = Math.round(.9 * window.innerWidth);
-                if(+maxWidth > maxAllowed){
-                  alert(`Cannot set a value higher than 90% (${maxAllowed}) of your current screen width`);
-                  return;
-                }
-                localSettings.$set({
-                  centeredLayout: {
-                    enabled: true,
-                    maxWidth: +maxWidth || 1200
-                  }
-                })
-                window.location.reload();
-              }} 
-            />
-            }
-        </div>
+        </SettingsSection>
         <div className="flex-col gap-1">
           <DashboardHotkeys />
         </div>
-        {dbSize && <div className="text-1p5 font-18 ta-left">Database total size: {dbSize}</div>}
+        {dbSize && <div className="mt-2 text-1 font-18 ta-left">Database total size: {dbSize}</div>}
       </div>
     }}
   >

@@ -3,7 +3,7 @@ import React from "react";
 import { FlexCol, FlexRow, } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import Select from "../../components/Select/Select";
-import { WindowSyncItem } from "../Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 
 type P = {
   w: WindowSyncItem<"timechart">;

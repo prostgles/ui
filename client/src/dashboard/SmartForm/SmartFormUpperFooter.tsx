@@ -1,11 +1,12 @@
 import { mdiDelete, mdiUnfoldLessHorizontal, mdiUnfoldMoreHorizontal } from "@mdi/js";
-import { AnyObject, ValidatedColumnInfo, getKeys, isDefined, isObject } from "prostgles-types";
+import type { AnyObject, ValidatedColumnInfo} from "prostgles-types";
+import { getKeys, isDefined, isObject } from "prostgles-types";
 import React, { useState } from "react";
 import Btn from "../../components/Btn";
 import Popup from "../../components/Popup/Popup";
-import { MethodControls } from "../ProstglesMethod/MethodControls";
+import { W_MethodControls } from "../W_Method/W_MethodControls";
 import { JoinedRecords } from "./JoinedRecords/JoinedRecords";
-import { SmartFormProps, SmartFormState } from "./SmartForm";
+import type { SmartFormProps, SmartFormState } from "./SmartForm";
 import SmartFormField from "./SmartFormField/SmartFormField";
 
 type P = SmartFormProps & {
@@ -61,9 +62,9 @@ export const SmartFormUpperFooter = (props: P) => {
     return null;
   }
 
-  return <div className={"SmartFormUpperFooter flex-col o-auto min-h-0 min-w-0 w-full f-0 "}
+  return <div className={"SmartFormUpperFooter flex-col o-auto min-h-0 min-w-0 w-full f-0 bg-popup-content"}
     style={{
-      boxShadow: "0px 3px 9px 0px #404040",
+      boxShadow: "0px 3px 9px 0px var(--shadow0)",
       clipPath: "inset(-10px 1px 0px 1px)",
       minHeight: "1px",
       ...(expandJoinedRecords ? {
@@ -80,7 +81,7 @@ export const SmartFormUpperFooter = (props: P) => {
         defaultValue: true,
       }}
     >
-      <MethodControls
+      <W_MethodControls
         theme={theme}
         method_name={method.name}
         fixedRowArgument={{
@@ -144,8 +145,8 @@ export const SmartFormUpperFooter = (props: P) => {
             return <div key={key} className="flex-row mb-p5 ai-center w-full">
               <div className="flex-col mb-p5 ta-left o-auto ">
                 <div className="text-1p5 font-14 mb-p25" >{c?.label || key}: </div>
-                {!!currentRow && <div title="Old value" className=" text-red-500 o-auto" style={{ maxHeight: "100px" }}>{oldVal}</div>}
-                <div title="New value" className=" text-green-500 o-auto" style={{ maxHeight: "100px" }}>{newVal}</div>
+                {!!currentRow && <div title="Old value" className=" text-danger o-auto" style={{ maxHeight: "100px" }}>{oldVal}</div>}
+                <div title="New value" className=" text-green o-auto" style={{ maxHeight: "100px" }}>{newVal}</div>
               </div>
               <Btn iconPath={mdiDelete}
                 title="Remove update"

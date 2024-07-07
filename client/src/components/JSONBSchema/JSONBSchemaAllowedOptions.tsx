@@ -1,9 +1,10 @@
-import { isObject, JSONB } from "prostgles-types"
+import type { JSONB } from "prostgles-types";
+import { isObject } from "prostgles-types"
 import React from "react"
 import FormField from "../FormField/FormField"
-import { FullOption } from "../Select/Select";
+import type { FullOption } from "../Select/Select";
 import { isCompleteJSONB } from "./isCompleteJSONB";
-import { JSONBSchemaCommonProps } from "./JSONBSchema";
+import type { JSONBSchemaCommonProps } from "./JSONBSchema";
  
 
 type Schema = JSONB.BasicType; 

@@ -1,9 +1,9 @@
 import { POLICY_FOR } from "../CommonMatchImports";
 import { asSQL } from "../KEYWORDS";
-import { SQLMatchContext } from "../registerSuggestions";
+import type { SQLMatchContext } from "../registerSuggestions";
 import { withKWDs } from "../withKWDs";
 
-export const matchCreatePolicy = ({ cb, ss, getKind }: SQLMatchContext) => {
+export const matchCreatePolicy = ({ cb, ss, setS, sql }: SQLMatchContext) => {
 
   if (cb.prevLC.includes("using")) {
     const onTokenIdx = cb.tokens.findIndex(t => t.textLC === "on");
@@ -20,7 +20,7 @@ export const matchCreatePolicy = ({ cb, ss, getKind }: SQLMatchContext) => {
     )
   }));
 
-  const { getSuggestion } = withKWDs(KwdPolicy, cb, getKind, _ss);
+  const { getSuggestion } = withKWDs(KwdPolicy, { cb, ss: _ss, setS, sql });
 
   const s = getSuggestion();
   return s;

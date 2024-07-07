@@ -1,5 +1,6 @@
-import React from 'react'; 
-import { CanvasChart, CanvasChartViewDataExtent } from "./Charts/CanvasChart";
+import React from "react"; 
+import type { CanvasChartViewDataExtent } from "./Charts/CanvasChart";
+import { CanvasChart } from "./Charts/CanvasChart";
 import RTComp from "./RTComp";
 import { classOverride } from "../components/Flex";
 
@@ -25,7 +26,7 @@ export const dateAsYMD_Time = (date: Date) => {
 export function onPinchZoom(el: HTMLElement, callback: (ratio: number, center: { x: number; y: number; e: TouchEvent }) => any) {
   let hypo: number | undefined = undefined;
 
-  el.addEventListener('touchmove', function(event) {
+  el.addEventListener("touchmove", function(event) {
 
     // Check if the two target touches are the same ones that started
     if (event.touches.length === 2 && event.targetTouches.length === 2) {
@@ -49,7 +50,7 @@ export function onPinchZoom(el: HTMLElement, callback: (ratio: number, center: {
   }, false);
 
 
-  el.addEventListener('touchend', function(event) {
+  el.addEventListener("touchend", function(event) {
     hypo = undefined;
   }, false);
 }
@@ -77,7 +78,7 @@ type ChartD = {
 }
 export class Chart extends RTComp<{
   className?: string;
-  style?: React.CSSProperties;
+  style?: Omit<React.CSSProperties, "backgroundColor" | "background">;
   setRef: (chart: CanvasChart) => void;
   onExtentChange?: (extent: CanvasChartViewDataExtent) => void
 }, {
@@ -102,6 +103,7 @@ export class Chart extends RTComp<{
       yScaleLocked: true, 
       yPanLocked: true,
       minXScale: 1,
+      onResize: undefined,
       events: {
         onExtentChange: (extent) => {
           onExtentChange?.(extent);
@@ -126,7 +128,6 @@ export class Chart extends RTComp<{
         }}
         style={{ 
           ...style,
-          backgroundColor: "var(--color-timechart-bg)"
         }}
         className={classOverride("charts-comp flex-col f-1 min-h-0 min-w-0 relative ", className)} 
         onMouseMove={e => {

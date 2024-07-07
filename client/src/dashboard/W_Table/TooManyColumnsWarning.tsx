@@ -3,7 +3,7 @@ import React from "react";
 import Btn from "../../components/Btn";
 import { InfoRow } from "../../components/InfoRow";
 import PopupMenu from "../../components/PopupMenu";
-import { WindowSyncItem } from "../Dashboard/dashboardUtils";
+import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 
 type P = {
   w: WindowSyncItem<"table">;

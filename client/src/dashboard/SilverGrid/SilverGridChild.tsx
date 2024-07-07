@@ -1,9 +1,10 @@
 
-import React, { ReactElement } from 'react';
+import type { ReactElement } from "react";
+import React from "react";
 import { setPan } from "../setPan";
 import { vibrateFeedback } from "../Dashboard/dashboardUtils";
 import RTComp from "../RTComp";
-import { CustomHeaderClassNames, LayoutConfig, LayoutGroup, LayoutItem, ReactSilverGridNode, SilverGridProps } from "./SilverGrid";
+import type { CustomHeaderClassNames, LayoutConfig, LayoutGroup, LayoutItem, ReactSilverGridNode, SilverGridProps } from "./SilverGrid";
 import { SilverGridChildHeader } from "./SilverGridChildHeader";
 
 export type SilverGridChildProps = {
@@ -304,7 +305,7 @@ export class SilverGridChild extends RTComp<SilverGridChildProps, SilverGridChil
 
     return <div 
       ref={r => { if(r) this.ref = r; }} 
-      className={"SilverGridChild silver-grid-box silver-grid-item bg-0p5 f-1 flex-col min-w-0 min-h-0 " + (fullscreen? " fullscreen " : " ")}
+      className={"SilverGridChild silver-grid-box silver-grid-item bg-color-1 f-1 flex-col min-w-0 min-h-0 " + (fullscreen? " fullscreen " : " ")}
       data-box-id={layout.id}
       data-box-type="item"
       data-table-name={layout.tableName}

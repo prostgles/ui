@@ -1,11 +1,11 @@
 import React from "react"; 
 import { TimeChart } from "../../../Charts/TimeChart";
-import MediaViewer from "../../../../components/MediaViewer";
+import { MediaViewer } from "../../../../components/MediaViewer";
 import { FlexRowWrap } from "../../../../components/Flex";
-import { AnyObject } from "prostgles-types";
-import { ColumnConfig } from "../ColumnMenu";
+import type { AnyObject } from "prostgles-types";
+import type { ColumnConfig } from "../ColumnMenu";
 import { omitKeys } from "../../../../utils";
-import { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
+import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
 import SmartFormField from "../../../SmartForm/SmartFormField/SmartFormField";
 import { getYLabelFunc } from "../../../W_TimeChart/getTimeChartData";
@@ -63,10 +63,7 @@ export const NestedColumnRender = ({ value, c, row, nestedTimeChartMeta, tables 
       return <MediaViewer
         style={{ height: "100%" }}
         key={nestedObj.url}
-        url={nestedObj.url}
-        allowedContentTypes={
-          [MediaViewer.getMimeFromURL(nestedObj.url)!]
-        }
+        url={nestedObj.url} 
       />
     }
     return <div key={idx} className="flex-row-wrap gap-p5 ws-pre mb-p5">
@@ -80,7 +77,7 @@ export const NestedColumnRender = ({ value, c, row, nestedTimeChartMeta, tables 
         }
         const { displayMode = "column" } = c.nested!;
         return <div key={key} className={`${displayModeClass[displayMode]} gap-0`}>
-          {displayMode !== "no-headers" && <div className="text-gray-400 font-12">{key}</div>}
+          {displayMode !== "no-headers" && <div className="text-2 font-12">{key}</div>}
           <div>{renderedValue}</div>
         </div>
       })}

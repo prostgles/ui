@@ -1,21 +1,25 @@
 import { mdiClose, mdiPlus, mdiTableFilter } from "@mdi/js";
 import React, { useEffect, useState } from "react";
-import { ContextDataObject, TableRules, UpdateRule, validateDynamicFields } from "../../../../../commonTypes/publishUtils";
+import type { ContextDataObject, TableRules, UpdateRule} from "../../../../../commonTypes/publishUtils";
+import { validateDynamicFields } from "../../../../../commonTypes/publishUtils";
 import Btn from "../../../components/Btn";
 import ErrorComponent from "../../../components/ErrorComponent";
 import { Label } from "../../../components/Label"; 
-import { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
-import FieldFilterControl from "./FieldFilterControl";
-import { FilterControl, ContextDataSchema } from "./FilterControl";
+import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
+import { FieldFilterControl } from "./FieldFilterControl";
+import type { ContextDataSchema } from "./FilterControl";
+import { FilterControl } from "./FilterControl";
 import { FlexRow } from "../../../components/Flex";
+import { useEffectAsync } from "prostgles-client/dist/react-hooks";
 
 type P = Pick<Required<TablePermissionControlsProps>, "prgl" | "table" | "tableRules"> & {
   rule: TableRules["update"];
   onChange: (rule: UpdateRule)=>void;
   contextDataSchema: ContextDataSchema;
   contextData: ContextDataObject;
-}
-export const DynamicFields = ({ rule: r, contextDataSchema, table, onChange, prgl: {db, tables, methods, theme}, contextData }: P) => {
+} 
+
+export const DynamicFields = ({ rule: r, contextDataSchema, table, onChange, prgl: {db, tables, methods }, contextData }: P) => {
 
   const rule: UpdateRule = (r === true || !r)? { fields: "*" } : r;
 
@@ -32,19 +36,20 @@ export const DynamicFields = ({ rule: r, contextDataSchema, table, onChange, prg
   }
 
   const [error, setError] = useState<any>();
-  useEffect(() => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffectAsync(async () => {
     (async () => {
       const valid = await validateDynamicFields(rule.dynamicFields, db[table.name] as any, contextData, table.columns.map(c => c.name));
       setError(valid.error);
     })()
-  }, [rule.dynamicFields])
+  }, [rule.dynamicFields, contextData, db, table.columns, table.name])
 
   return <div className="DynamicFields flex-col gap-p5 min-s-0 f-0">
       <FlexRow>
         <Label 
           label={"Dynamic fields"}
           iconPath={mdiTableFilter}  
-          info={`Any update targeting records from these filters will be allowed to update the custom fields provided\n\nExample use case: allow updating message.content if user.id = message.user_id. \n\nBy default only message.seen can be updated`}
+          info={`Any update targeting records matching these filters will be allowed to update the custom fields provided\n\nExample use case: allow updating message.content if user.id = message.user_id. \n\nBy default only message.seen can be updated`}
           popupTitle={"UPDATE dynamic fields rule"} 
         />
         <Btn iconPath={mdiPlus} 
@@ -67,8 +72,8 @@ export const DynamicFields = ({ rule: r, contextDataSchema, table, onChange, prg
         <ErrorComponent error={error} /> 
       </div>}
       <div className="flex-col gap-p5 o-auto  f-1 min-s-0 p-1 ml-3">
-        {rule.dynamicFields?.map(({ fields, filterDetailed }, i) => { // //  + (i%2? " bg-gray-50 " : " bg-1 ")
-          return <div key={i} className={"p-1 ml-1 shadow flex-row gap-p5 b b-gray-300  rounded "}> 
+        {rule.dynamicFields?.map(({ fields, filterDetailed }, i) => { 
+          return <div key={i} className={"p-1 shadow flex-row gap-p5 b b-color w-fit rounded "}> 
             <div className="flex-col gap-p5">
               <FieldFilterControl 
                 label="Fields" 
@@ -103,6 +108,5 @@ export const DynamicFields = ({ rule: r, contextDataSchema, table, onChange, prg
           </div>
         })}
       </div>
-
   </div>
 }

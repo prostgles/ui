@@ -1,5 +1,5 @@
-import { ParsedJoinPath } from "prostgles-types";
-import { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
+import type { ParsedJoinPath } from "prostgles-types";
+import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 
 export const flattenJoinPathsV2 = (tableName: string, tables: DBSchemaTablesWJoins, prevTables: string[] = [], maxDepth = 4): ParsedJoinPath[][] => {
 
@@ -36,7 +36,7 @@ export const flattenJoinPathsV2 = (tableName: string, tables: DBSchemaTablesWJoi
 export const getJoinPathStr = (jp: ParsedJoinPath[]) => {
   return jp.map(p => [
     p.table, 
-    p.on?.map(cond => Object.entries(cond).map((lrFields) => lrFields.join())).map(d => d.sort().join())
+    p.on.map(cond => Object.entries(cond).map((lrFields) => lrFields.join())).map(d => d.sort().join())
   ].join()).join()
 };
 export type TargetPath = { table: DBSchemaTablesWJoins[number]; path: ParsedJoinPath[]; pathStr: string; }

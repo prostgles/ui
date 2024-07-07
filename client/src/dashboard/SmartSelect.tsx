@@ -1,18 +1,19 @@
 import { mdiAlertCircleOutline, mdiPencil, mdiPlus } from "@mdi/js";
-import Icon from "@mdi/react";
-import { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import { isDefined } from "prostgles-types";
 import React, { useState } from "react";
-import { TestSelectors } from "../Testing";
+import type { TestSelectors } from "../Testing";
 import Btn from "../components/Btn";
 import Chip from "../components/Chip";
 import { FlexCol, FlexRowWrap } from "../components/Flex";
-import { Label, LabelProps } from "../components/Label";
+import { Icon } from "../components/Icon/Icon";
+import type { LabelProps } from "../components/Label";
+import { Label } from "../components/Label";
 import Loading from "../components/Loading";
 import PopupMenu from "../components/PopupMenu";
-import SearchList from "../components/SearchList";
+import SearchList, { type SearchListItemContent, type SearchListItem } from "../components/SearchList";
 import { useIsMounted } from "./Backup/CredentialSelector";
-import { useSubscribe } from "./ProstglesMethod/hooks";
+import { InfoRow } from "../components/InfoRow";
 
 type SmartSelectProps<THandler extends TableHandlerClient = TableHandlerClient> = {
   popupTitle?: string;
@@ -25,10 +26,7 @@ type SmartSelectProps<THandler extends TableHandlerClient = TableHandlerClient> 
    * Must be unique */
   fieldName: string;
   displayField?: string;
-  getLabel?: (value: string) => {
-    subLabel?: string; 
-    disabledInfo?: string;
-  };
+  getLabel?: (value: string) => Pick<Partial<SearchListItem>, "subLabel" | "disabledInfo"> & Partial<SearchListItemContent>;
   disabledInfo?: string;
   allowCreate?: boolean;
   placeholder?: string;
@@ -43,7 +41,7 @@ export const SmartSelect = <THandler extends TableHandlerClient = TableHandlerCl
     } = props;
   const limit = 21;
   const tableHandler = tableHandlerRaw as Partial<typeof tableHandlerRaw>;
-  const rows = useSubscribe(tableHandler.subscribeHook!(filter, { limit, select: [fieldName, displayField].filter(isDefined), groupBy: true }));
+  const { data: rows } = tableHandler.useSubscribe!(filter, { limit, select: [fieldName, displayField].filter(isDefined), groupBy: true });
   const items = rows?.map(r => ({ key: r[fieldName], label: displayField? r[displayField] : r[fieldName] }));
   const displayValues = values.map(value => items?.find(d => value === d.key)?.label).filter(isDefined)
   const [noExactSearchMatch, setNoExactSearchMatch] = useState<string | undefined>();
@@ -53,6 +51,7 @@ export const SmartSelect = <THandler extends TableHandlerClient = TableHandlerCl
   
   return <PopupMenu 
     title={title}
+    positioning="beneath-left"
     button={
       (
         <FlexCol 
@@ -64,23 +63,24 @@ export const SmartSelect = <THandler extends TableHandlerClient = TableHandlerCl
           {label && <Label { ...label } onClick={e => e.stopPropagation()} />}
 
           <FlexRowWrap 
-            data-command={props["data-command"]}
             className="SmartSelect relative  ai-center" 
           >
             {!items.length && <Loading variant="cover" />}
             <Values values={displayValues} />
             
             {(values.length === 1 && values[0] === "admin")? 
-              <div className="flex-row gap-1 text-yellow-600 ai-center ">
+              <InfoRow variant="naked" color="warning">
                 <Icon path={mdiAlertCircleOutline} size={1}/>
-                <div>There are no unnassigned user types left. Update existing rules to free up user types or create new user types</div>
-              </div> : 
+                <div>There are no unnassigned user types left. Update current access rules to free up user types or create new user types</div>
+              </InfoRow> : 
               <div className="flex-row gap-1">
                 <Btn 
+                  key={values.length.toString()}
+                  data-command={props["data-command"]}
                   iconPath={!values.length? mdiPlus :  mdiPencil}
                   variant={!values.length? "filled" : "icon"}
                   size={!values.length? "small" : undefined}
-                  className=" round " 
+                  // data-command="SmartSelect.Edit"
                   color="action"
                 />
               </div>
@@ -108,7 +108,8 @@ export const SmartSelect = <THandler extends TableHandlerClient = TableHandlerCl
         label: "Done", 
         variant: "filled", 
         color: "action", 
-        onClickClose: true, 
+        onClickClose: true,
+        "data-command": "SmartSelect.Done",
         className: "ml-auto",
       },
     ]}
@@ -122,7 +123,8 @@ export const SmartSelect = <THandler extends TableHandlerClient = TableHandlerCl
         onChange(items.filter(d => d.checked).map(d => d.key as string))
       }}
       style={{
-        maxHeight: "500px"
+        maxHeight: "500px",
+        background: "var(--bg-popup)",
       }}
       placeholder={placeholder}
       onType={sTerm => {
@@ -132,23 +134,23 @@ export const SmartSelect = <THandler extends TableHandlerClient = TableHandlerCl
         }
       }}
       autoFocus={true}
-      noSearchLimit={0}
-      // id={generateUniqueID}
+      noSearchLimit={0} 
       items={items.map(({ key, label }) => {
         return {
           key,
           label,
           checked: values.includes(key),
+          disabledInfo: undefined,
           ...getLabel?.(key),
           onPress: () => {
             onChange(
               values.includes(key)? values.filter(v => v !== key) : values.concat([key])
             );
           }
-        }
+        };
       }).sort((a, b) => +!!a.disabledInfo - +!!b.disabledInfo)}
       onNoResultsContent={searchTerm => {
-        return <div className="flex-row bg-0 ai-center">
+        return <div className="flex-row ai-center">
           <div className="p-p5">
             Not found
           </div>
@@ -166,7 +168,15 @@ const Values = ({ values }: Pick<SmartSelectProps, "values">) => {
 
   return <div className="flex-row-wrap gap-p5">
     {values.map(value => (
-      <Chip key={value}  value={value} style={{ padding: "8px", background: `var(--blue-100)` }} />
+      <Chip 
+        key={value}
+        value={value} 
+        variant="outline"
+        style={{ 
+          padding: "8px", 
+          // background: `var(--blue-100)` 
+        }} 
+      />
     ))}
   </div>
 }

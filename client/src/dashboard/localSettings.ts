@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export type LocalSettings = {
   centeredLayout?: {
@@ -21,7 +21,7 @@ const parseLocalSettings = () => {
       const _localSettings: LocalSettings | undefined = JSON.parse(_localSettingsStr);
       if(_localSettings){
         const _centeredLayout = _localSettings.centeredLayout;
-        if(_centeredLayout && _centeredLayout.enabled && Number.isInteger( _centeredLayout.maxWidth)){
+        if(_centeredLayout && typeof ((_centeredLayout as any).enabled ?? false) === "boolean" && Number.isFinite( _centeredLayout.maxWidth)){
           localSettings.centeredLayout = _centeredLayout;
         }
       }
@@ -34,7 +34,7 @@ const parseLocalSettings = () => {
   return {}
 }
 
-window.addEventListener('storage', function(event){
+window.addEventListener("storage", function(event){
   if (event.storageArea === localStorage) {
     const s = parseLocalSettings();
     localSettingsListeners.forEach(l => l(s))
@@ -65,9 +65,16 @@ export const localSettings = {
 export const useLocalSettings = () => {
   const [ls, setLS] = useState(localSettings.get());
 
-  const onChange = (_ls) => {
-    setLS(_ls);
-  }
+  useEffect(() => {
+
+    const onChange = (newSettings: LocalSettings) => {
+      setLS({ ...newSettings, $set: ls.$set });
+    }
+    localSettings.add(onChange);
+
+    return () => localSettings.remove(onChange);
+  }, []);
+ 
   
   return ls;
 }

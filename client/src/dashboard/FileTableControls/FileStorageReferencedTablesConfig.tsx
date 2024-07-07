@@ -1,32 +1,28 @@
-import React, { useState } from "react";
-import { DBSSchema } from "../../../../commonTypes/publishUtils";
-import { PrglCore } from "../../App";
+import React from "react";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { Prgl, PrglCore } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol } from "../../components/Flex";
-import { FullExtraProps } from "../../pages/Project";
-import { CreateReferencedColumn } from "./CreateReferencedColumn";
-import { FileColumnConfigControls, FileTableConfigReferences } from "./FileColumnConfigControls";
+import { CreateFileColumn } from "./CreateFileColumn";
+import { FileColumnConfigControls } from "./FileColumnConfigControls";
+import type { useFileTableConfigControls } from "./useFileTableConfigControls";
+import { pageReload } from "../../components/Loading";
 
-type FileStorageReferencedTablesConfigProps = Pick<PrglCore, "tables" | "db"> & Pick<FullExtraProps, "dbsMethods"> & {
-  canCreateTables: boolean;
-  connection: DBSSchema["connections"];
+type FileStorageReferencedTablesConfigProps = Pick<PrglCore, "tables" | "db"> & 
+Pick<ReturnType<typeof useFileTableConfigControls>, "canCreateTables" | "canUpdateRefColumns" | "setRefsConfig" | "updateRefsConfig" | "refsConfig"> & {  
   file_table_config: DBSSchema["database_configs"]["file_table_config"];
+  prgl: Prgl;
 }
 
-export const FileStorageReferencedTablesConfig = ({ connection, file_table_config, tables, db, dbsMethods }: FileStorageReferencedTablesConfigProps) => {
+export const FileStorageReferencedTablesConfig = ({ 
+  file_table_config, tables, db, 
+  setRefsConfig, refsConfig, updateRefsConfig, 
+  canUpdateRefColumns, prgl 
+}: FileStorageReferencedTablesConfigProps) => {
   const tc = file_table_config;
-
-  
-  
-  const [refsConfig, setRefsConfig] = useState<FileTableConfigReferences | undefined>(tc?.referencedTables) ;
-  const canUpdate = JSON.stringify(tc?.referencedTables) !== JSON.stringify(refsConfig)
-  // const disabledInfo= tc?.fileTable ? (canCreateTables ? undefined : "Your account does not have CREATE privileges") : "Need to configure file table first";
-
   if(!tc?.fileTable) return null;
   return <FlexCol
     className="f-1 mt-2"
-    
-    // contentClassName="pl-1 f-1 min-h-0 flex-col pb-2"
   >
     <h3 className="m-0 p-0">Referenced column limits</h3>
     <div>
@@ -38,23 +34,24 @@ export const FileStorageReferencedTablesConfig = ({ connection, file_table_confi
       refsConfig={refsConfig}
       onChange={setRefsConfig}
     />
-    <CreateReferencedColumn 
+    <CreateFileColumn 
       db={db} 
       tables={tables} 
-      file_table_config={file_table_config}
+      fileTable={file_table_config?.fileTable}
+      prgl={prgl}
     />
     
-    {canUpdate && <div className="my-1">
+    {canUpdateRefColumns && <div className="my-1">
       <Btn 
         variant="filled" 
         color="action" 
         onClickMessage={async (_, setMsg) => {
           setMsg({ loading: 1 });
           try {
-            await dbsMethods.setFileStorage!(connection.id, { referencedTables: refsConfig });
-            setMsg({ ok: "Updated!"})
+            await updateRefsConfig();
+            setMsg({ ok: "Updated!"});
             setTimeout(() => {
-              location.reload()
+              pageReload("FileStorageReferencedTablesConfig updateRefsConfig")
             }, 500)
           } catch(err) {
             setMsg({ err })

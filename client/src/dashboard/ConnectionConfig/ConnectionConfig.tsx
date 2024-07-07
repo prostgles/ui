@@ -4,38 +4,39 @@ import {
   mdiDatabaseSync, mdiImage, mdiLanguageTypescript, mdiPencil, mdiTableEdit,
 } from "@mdi/js";
 import React from "react";
-import { useSearchParams } from "react-router-dom";
-import { Prgl } from "../../App";
+import type { Prgl } from "../../App";
 import { dataCommand } from "../../Testing";
-import Tabs, { TabItems } from "../../components/Tabs";
-import NewConnection from "../../pages/NewConnection/NewConnnection";
-import { Connections } from "../../pages/Project";
-import { TopControls } from "../../pages/TopControls";
-import { APIDetails } from "../ConnectionConfig/APIDetails/APIDetails";
-import { AccessControl } from "../AccessControl/AccessControl";
-import BackupsControls from "../Backup/BackupsControls";
-import { PublishedMethods } from "../ProstglesMethod/PublishedMethods";
-import { getKeys } from "../SmartForm/SmartForm";
-import { StatusMonitor } from "../StatusMonitor";
-import { FileTableConfigControls } from "../FileTableControls/FileTableConfigControls";
-import { FlexRow } from "../../components/Flex";
+import { FlexCol, FlexRow } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
+import type { TabItems } from "../../components/Tabs";
+import Tabs from "../../components/Tabs";
+import NewConnection from "../../pages/NewConnection/NewConnnection";
+import type { Connections } from "../../pages/ProjectConnection/ProjectConnection";
+import { TopControls } from "../../pages/TopControls";
+import { AccessControl } from "../AccessControl/AccessControl";
+import { useAccessControlSearchParams } from "../AccessControl/useAccessControlSearchParams";
+import { BackupsControls } from "../Backup/BackupsControls";
+import { APIDetails } from "../ConnectionConfig/APIDetails/APIDetails";
+import { FileTableConfigControls } from "../FileTableControls/FileTableConfigControls";
+import { StatusMonitor } from "../StatusMonitor";
 import { TableConfig } from "../TableConfig/TableConfig";
-import { useSubscribeOne } from "prostgles-client/dist/react-hooks";
+import { PublishedMethods } from "../W_Method/PublishedMethods";
+import { OnMountFunction } from "./OnMountFunction";
+import { useConnectionConfigSearchParams } from "./useConnectionConfigSearchParams";
 
 type ConnectionConfigProps = Pick<React.HTMLAttributes<HTMLDivElement>, "style" | "className" | "children"> & {
   connection: Connections;
   prgl: Prgl;
 }
 
+
 export const ConnectionConfig = (props: ConnectionConfigProps) => {
   const { className = "", style = {}, prgl } = props;
   const { serverState, dbs, connectionId, db, dbsMethods } = prgl;
-  const [searchParams, setSearchParams] = useSearchParams();
-  const dbConfig = useSubscribeOne(dbs.database_configs.subscribeOneHook({ $existsJoined: { connections: { id: connectionId } } }));
-  const disabledText = (dbs as any).access_control?.update ? undefined : "Must be admin to access this";
+  const disabledText = (dbs.access_control as any)?.update ? undefined : "Must be admin to access this";
   const { isElectron } = serverState;
-  const sectionItems: TabItems = {
+  const acParams = useAccessControlSearchParams();
+  const sectionItems = {
     details: {
       label: "Connection details",
       leftIconPath: mdiPencil,
@@ -69,17 +70,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
       content: <AccessControl
         className="min-h-0"
         prgl={prgl}
-        searchParams={searchParams}
-        setSearchParams={setSearchParams}
-      />
-    },
-    methods: {
-      label: "TS Functions",
-      listProps: dataCommand("config.methods"),
-      leftIconPath: mdiLanguageTypescript,
-      content: <PublishedMethods
-        prgl={prgl}
-        forAccessRule={undefined}
+        {...acParams}
       />
     },
     file_storage: {
@@ -104,33 +95,46 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
       content: <APIDetails { ...props.prgl } />
     },
     table_config: {
-      label: "Table config (experimental)",
+      label: <>Table config  <span className="text-2 font-14">(experimental)</span></>,
       listProps: dataCommand("config.tableConfig"),
       leftIconPath: mdiTableEdit,
-      hide: (!dbsMethods.setTableConfig || !localStorage.getItem("featureFlags")) && !dbConfig?.table_config && !dbConfig?.table_config_ts,
       content: <TableConfig {...props} />
     },
-  }
-
-  const sectionItemKeys = getKeys(sectionItems);
-
-  return <div className={`flex-col f-1 min-s-0 bg-gray-800 ${className}`} style={style}>
-
+    methods: {
+      label: <>Server-side functions <span className="text-2 font-14">(experimental)</span></>,
+      listProps: dataCommand("config.methods"),
+      leftIconPath: mdiLanguageTypescript,
+      content: <FlexCol className="w-full" style={{ gap: "2em" }}>
+        <OnMountFunction { ...prgl } />
+        <PublishedMethods
+          prgl={prgl}
+          forAccessRule={undefined}
+        />
+      </FlexCol>
+    },
+  } as const satisfies TabItems;
+  const { activeSection, setSection } = useConnectionConfigSearchParams(Object.keys(sectionItems));
+  
+  return <div 
+    className={`flex-col f-1 min-s-0 ${className}`} 
+    style={{ 
+      background: "var(--gray-800)", ...style
+    }}>
     <TopControls
       location="config"
       prgl={props.prgl}
     />
 
-    <div className="flex-col f-1 min-h-0 as-center  bg-1 w-full pt-1">
+    <div className="flex-col f-1 min-h-0 as-center  bg-color-2 w-full pt-1">
       <Tabs variant={{ controlsBreakpoint: 200, contentBreakpoint: 500, controlsCollapseWidth: 350 }}
         className="f-1 as-center w-full shadow"
         style={{ maxWidth: "1200px" }}
-        activeKey={sectionItemKeys.find(s => s === searchParams.get("section")) ?? sectionItemKeys[0]}
-        onChange={section => { setSearchParams({ section: section as string }) }}
+        activeKey={activeSection}
+        onChange={section => { setSection({ section }) }}
         items={sectionItems}
-        contentClass="o-auto flex-row jc-center bg-1 f-1"
+        contentClass="o-auto flex-row jc-center bg-color-2 f-1"
         onRender={item =>
-          <div className="flex-col f-1  min-w-0 bg-0 shadow">
+          <div className="flex-col f-1  min-w-0 bg-color-0 shadow">
             <FlexRow
               className="w-full text-0"
               style={{

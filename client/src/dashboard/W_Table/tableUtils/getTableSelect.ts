@@ -1,13 +1,14 @@
-import { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { AnyObject, isDefined } from "prostgles-types";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { AnyObject} from "prostgles-types";
+import { isDefined } from "prostgles-types";
 import { isEmpty } from "../../../utils";
-import { CommonWindowProps } from "../../Dashboard/Dashboard";
-import { WindowData } from "../../Dashboard/dashboardUtils";
+import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+import type { WindowData } from "../../Dashboard/dashboardUtils";
 import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter";
 import { getTimeChartSelectParams } from "../../W_TimeChart/getTimeChartData";
 import { getDesiredTimeChartBinSize, getTimeChartMinMax } from "../../W_TimeChart/getTimeChartLayersWithBins";
-import { ColumnConfig } from "../ColumnMenu/ColumnMenu";
-import { MinMax, MinMaxVals } from "../W_Table";
+import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
+import type { MinMax, MinMaxVals } from "../W_Table";
 import { getFullColumnConfig } from "./tableUtils";
 
 
@@ -48,20 +49,7 @@ export const getTableSelect = async (
         }
         
         if (c.computedConfig) {
-          let funcName = c.computedConfig.funcDef.key;
-          let _args: any[] = [c.computedConfig.column].filter(isDefined);
-          if(c.computedConfig.column || c.computedConfig.args){
-            const { args } = c.computedConfig;
-            if(args?.$duration?.otherColumn){
-              _args = [c.computedConfig.column, args.$duration.otherColumn];
-              funcName = "$age";
-            } else if(args?.$string_agg?.separator){
-              _args = [c.computedConfig.column, args.$string_agg.separator]
-            } else if(args?.$template_string){
-              _args = [args.$template_string]
-            }
-          }
-          select[c.name] = { [funcName]: _args }
+          select[c.name] = getComputedColumnSelect(c.computedConfig);
           
         } else if(c.nested) {
           const nestedSel = await getNestedColumnSelect(c, db, tables, withoutData);
@@ -83,6 +71,23 @@ export const getTableSelect = async (
   }
 
   return { barchartVals, select }
+}
+
+export const getComputedColumnSelect = (computedConfig: Required<ColumnConfig>["computedConfig"]) => {
+  let funcName = computedConfig.funcDef.key;
+  let functionArgs: any[] = [computedConfig.column].filter(isDefined);
+  if(computedConfig.column || computedConfig.args){
+    const { args } = computedConfig;
+    if(args?.$duration?.otherColumn){
+      functionArgs = [computedConfig.column, args.$duration.otherColumn];
+      funcName = "$age";
+    } else if(funcName === "$string_agg"){
+      functionArgs = [computedConfig.column, args?.$string_agg?.separator || ", "]
+    } else if(args?.$template_string){
+      functionArgs = [args.$template_string]
+    }
+  }
+  return { [funcName]: functionArgs }
 }
 
 export const getNestedColumnSelect = async (
@@ -125,6 +130,8 @@ export const getNestedColumnSelect = async (
     }
   }
     
+  const filter = getSmartGroupFilter(c.nested.detailedFilter, undefined, "and");
+  const having = getSmartGroupFilter(c.nested.detailedHaving, undefined, "and");
   return {
     dateExtent,
     select: {
@@ -132,7 +139,8 @@ export const getNestedColumnSelect = async (
       limit: c.nested.limit,
       select: nestedSelect,
       orderBy: c.nested.sort && [c.nested.sort],
-      filter: getSmartGroupFilter(c.nested.detailedFilter, undefined, "and")
+      filter,
+      having,
     }
   };
 }

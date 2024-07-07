@@ -1,6 +1,7 @@
 import { mdiClose } from "@mdi/js";
 import React from "react";
 import "./Animations.css";
+import "./Chip.css";
 import Btn from "./Btn";
 import { FlexCol, classOverride } from "./Flex";
 import { Icon } from "./Icon/Icon";
@@ -8,7 +9,7 @@ import { Icon } from "./Icon/Icon";
 type ChipProps = Omit<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "children" | "color"> & {
   label?: string;
   subValues?: (string | number)[];
-  variant?: "naked" | "header";
+  variant?: "naked" | "header" | "outline" | "default";
   color?: "blue" | "yellow" | "red" | "green" | "gray"
   onDelete?: React.MouseEventHandler<HTMLButtonElement>;
   leftIcon?: {
@@ -82,15 +83,14 @@ export default class Chip extends React.Component<ChipProps> {
             e.preventDefault(); 
             onDelete(e); 
           }} 
-          className="ml-p5 round as-start" 
+          className="Chip_DeleteBtn ml-p5 round as-start text-1" 
           size="medium" 
           style={{ 
             padding: 0, 
             borderRadius: "1000%",
             background: "transparent",
-            color: "var(--gray-600)",
           }} 
-          variant="filled" 
+          color="action"
         />
       }
     </div>

@@ -1,34 +1,38 @@
 import { mdiPlus } from "@mdi/js";
 import React, { useCallback, useState } from "react";
-import Btn, { BtnProps } from "../../components/Btn";
+import type { BtnProps } from "../../components/Btn";
+import Btn from "../../components/Btn";
 import FormField from "../../components/FormField/FormField";
 import { isObject } from "prostgles-types"
 import PopupMenu from "../../components/PopupMenu";
-import { WorkspaceSchema } from "../Dashboard/dashboardUtils";
-import { Prgl } from "../../App";
-import { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { WorkspaceSchema } from "../Dashboard/dashboardUtils";
+import type { Prgl } from "../../App";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import { useIsMounted } from "prostgles-client/dist/react-hooks";
 
 type WorkspaceDeleteBtnProps = Pick<Prgl, "dbs"> & {
   connection_id: string;
-  setWorkspace(w?: Required<WorkspaceSchema> | undefined): void;
-  closePopup: ()=>void;
+  setWorkspace(w?: Required<WorkspaceSchema> | undefined): void; 
   btnProps?: BtnProps<void>;
   className?: string;
 }
-export const WorkspaceAddBtn = ({ dbs, connection_id, setWorkspace, closePopup, btnProps, className }: WorkspaceDeleteBtnProps) => {
+export const WorkspaceAddBtn = ({ dbs, connection_id, setWorkspace, btnProps, className }: WorkspaceDeleteBtnProps) => {
 
   const [error, setError] = useState<any | void>();
   const [name, setName] = useState("");
 
+  const getIsMounted = useIsMounted();
   const insertNewWorkspace = useCallback(async () => {
     try {
       const newWsp = await dbs.workspaces.insert(
-        { name, connection_id } as DBSSchema["workspaces"], 
+        { 
+          name, 
+          connection_id, 
+        } as DBSSchema["workspaces"], 
         { returning: "*" }
       );
-      
+      if(!getIsMounted()) return;
       setWorkspace(newWsp);
-      closePopup();
     } catch (newWspErr: any) {
       if(isObject(newWspErr) && newWspErr.columns?.join?.() === [
         "user_id",
@@ -40,7 +44,7 @@ export const WorkspaceAddBtn = ({ dbs, connection_id, setWorkspace, closePopup, 
         setError(newWspErr)
       }
     }
-  }, [dbs, name, connection_id, setError, setWorkspace, closePopup])
+  }, [dbs, name, connection_id, setError, setWorkspace, getIsMounted])
 
   return <PopupMenu
     style={{
@@ -87,6 +91,7 @@ export const WorkspaceAddBtn = ({ dbs, connection_id, setWorkspace, closePopup, 
         label: "Create",
         variant: "filled",
         iconPath: mdiPlus,
+        "data-command": "WorkspaceAddBtn.Create",
         onClickPromise: insertNewWorkspace
       }
     ]}

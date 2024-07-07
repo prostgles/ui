@@ -4,10 +4,12 @@ import Btn from "../../components/Btn";
 import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
 import PopupMenu from "../../components/PopupMenu";
 import Select from "../../components/Select/Select";
-import { LinkSyncItem, windowIs, WindowSyncItem } from "../Dashboard/dashboardUtils";
+import type { LinkSyncItem, WindowSyncItem } from "../Dashboard/dashboardUtils";
+import { windowIs } from "../Dashboard/dashboardUtils";
 import { getTimeChartLayer } from "../W_TimeChart/getTimeChartLayers";
 import { TIMECHART_STAT_TYPES } from "../W_TimeChart/W_TimeChartMenu";
-import { MapLayerManagerProps } from "./ChartLayerManager";
+import type { MapLayerManagerProps } from "./ChartLayerManager";
+import { _PG_numbers } from "prostgles-types"
 
 type TimeChartLayerOptionsProps = Pick<MapLayerManagerProps, "tables" | "myLinks" | "getLinksAndWindows"> & {
   link: LinkSyncItem;
@@ -34,7 +36,7 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
   const lq = getTimeChartLayer({ active_row: undefined, link, windows, links, myLinks, w }).find(l => l.dateColumn === column);
 
   const table = lq?.type === "table"? tables.find(t => t.name === lq.tableName) : undefined;
-  const numericCols = table?.columns.filter(c => c.tsDataType === "number") || [];
+  const numericCols = table?.columns.filter(c => _PG_numbers.includes(c.udt_name as any)) || [];
   const statType = colOpts.statType ?? { funcName: "$countAll", numericColumn: undefined };
   const linkOpts = link.options;
   if(linkOpts.type !== "timechart"){

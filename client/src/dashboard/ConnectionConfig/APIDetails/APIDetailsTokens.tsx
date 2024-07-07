@@ -5,7 +5,7 @@ import { FlexCol, FlexRow } from "../../../components/Flex";
 import FormField from "../../../components/FormField/FormField"; 
 import PopupMenu from "../../../components/PopupMenu";
 import { Sessions } from "../../../pages/Sessions";
-import { APIDetailsProps } from "./APIDetails";
+import type { APIDetailsProps } from "./APIDetails";
 
 export const APIDetailsTokens = ({ theme, dbs, dbsMethods, dbsTables, user, token, setToken, tokenCount }: APIDetailsProps & { token: string; tokenCount: number; setToken: (value: string) => void; }) => {
   return <FlexCol>
@@ -78,7 +78,7 @@ export const APIDetailsTokens = ({ theme, dbs, dbsMethods, dbsTables, user, toke
 const TokenCopy = ({ token, label }: { token: string; label: string }) => {
   return <div className="flex-col gap-p5 my-1 ta-start">
     <div className="text-1">{label}</div>
-    <div className="b b-gray-300 flex-row ai-center rounded w-fit">
+    <div className="b b-color flex-row ai-center rounded w-fit">
       <div className="p-p5 w-fit ">
         {token}
       </div>

@@ -1,10 +1,10 @@
 import { CanvasChart } from "../Charts/CanvasChart";
-import { DeepPartial } from "../RTComp";
-import { TimeChart, TimeChartD, TimeChartProps } from "./TimeChart";
+import type { DeepPartial } from "../RTComp";
+import type { TimeChart, TimeChartD, TimeChartProps } from "./TimeChart";
 import { onRenderTimechart } from "./onRenderTimechart";
 
 export const onDeltaTimechart = function(this: TimeChart, dp?: Partial<TimeChartProps>, ds?: never, dd?: DeepPartial<TimeChartD>){
-  const delta = {...dp, ...dd};
+  const delta = {...dp, ...dd };
   /** Chart cannot be reinstantiated because old handlers are not destroyed */
   if(this.ref && this.canv && !this.chart){
     const { onExtentChanged, chartRef, zoomPanDisabled } = this.props;
@@ -15,6 +15,10 @@ export const onDeltaTimechart = function(this: TimeChart, dp?: Partial<TimeChart
       yScaleLocked: true, 
       yPanLocked: true,
       minXScale: 1,
+      onResize: () => {
+        this.parseData();
+        this.onDelta({ layers: this.props.layers });
+      },
       events: zoomPanDisabled? { disabled: true } : {
         onExtentChange: () => {
           this.lastExtentChange = Date.now();

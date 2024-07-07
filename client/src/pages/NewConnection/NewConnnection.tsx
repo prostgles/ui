@@ -1,12 +1,12 @@
-import { mdiArrowLeft, mdiCheck, mdiContentDuplicate, mdiDeleteOutline, mdiPlus } from '@mdi/js';
-import Icon from '@mdi/react';
-import React from 'react';
-import { NavLink, useNavigate, useParams } from 'react-router-dom';
-import { DBSchemaGenerated } from "../../../../commonTypes/DBoGenerated";
-import { DBSSchema, isObject } from "../../../../commonTypes/publishUtils";
-import { ExtraProps } from "../../App";
-import Btn from '../../components/Btn';
-import ErrorComponent from "../../components/ErrorComponent"; 
+import { mdiArrowLeft, mdiCheck, mdiContentDuplicate, mdiDeleteOutline, mdiPlus } from "@mdi/js";
+import React from "react";
+import { NavLink, useNavigate, useParams } from "react-router-dom";
+import type { DBSchemaGenerated } from "../../../../commonTypes/DBoGenerated";
+import type { DBSSchema} from "../../../../commonTypes/publishUtils";
+import { isObject } from "../../../../commonTypes/publishUtils";
+import type { ExtraProps } from "../../App";
+import Btn from "../../components/Btn";
+import ErrorComponent, { getErrorMessage } from "../../components/ErrorComponent"; 
 import { InfoRow } from "../../components/InfoRow";
 import Loading from "../../components/Loading";
 import { CodeConfirmation } from "../../dashboard/Backup/CodeConfirmation";
@@ -14,13 +14,14 @@ import RTComp from "../../dashboard/RTComp";
 import { JoinedRecords } from "../../dashboard/SmartForm/JoinedRecords/JoinedRecords";
 import { get } from "../../utils";
 import { getServerInfo } from "../Connections/Connections";
-import { FullExtraProps } from "../Project";
 import { NewConnectionForm } from "./NewConnectionForm";
 import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
 import { getOS } from "../ElectronSetup";
 import { FlexCol } from "../../components/Flex";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import PopupMenu from "../../components/PopupMenu";
+import { Icon } from "../../components/Icon/Icon";
+import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 
 export const getSqlErrorText = (e: any) => {
   let objDetails: [string, any][] = [];
@@ -45,7 +46,7 @@ export type Connection = Omit<DBSchemaGenerated["connections"]["columns"], "user
 
 export const DEFAULT_CONNECTION = {
   id: undefined,
-  name: null,
+  name: "",
   type: "Standard" as Connection["type"],
   db_user: "",
   db_pass: "",
@@ -90,7 +91,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
     nameErr: "",
     connection: DEFAULT_CONNECTION,
     wasEdited: false,
-    status: '',
+    status: "",
     statusOK: false,
     dropDatabase: false,
     mode: "loading",
@@ -136,7 +137,10 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
         statusOK: true, 
       });
     } catch (err: any) {
-      this.setState({ status: err.err_msg, statusOK: false });
+      this.setState({ 
+        status: err.err_msg ?? err.message, 
+        statusOK: false, 
+      });
     }
   }
 
@@ -238,7 +242,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
         <div className="ml-p5">Connections</div>
       </NavLink>}
 
-      <div className={"flex-col bg-0  min-h-0 " + (contentOnly ? "" : " card p-1 ")} style={{ maxWidth: "100%" }}>
+      <div className={"flex-col bg-color-0  min-h-0 " + (contentOnly ? "" : " card p-1 ")} style={{ maxWidth: "100%" }}>
         <div 
           className="flex-col gap-1 f-1 o-auto min-h-0 p-p25 no-scroll-bar" 
           style={{ 
@@ -278,8 +282,9 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
         <div className="flex-row-wrap ai-center mt-1 gap-1 ">
 
           {mode === "edit" &&
-            <CodeConfirmation
+            <CodeConfirmation positioning="center"
               title={"Delete connection"}
+              fixedCode={c.db_name}
               button={
                 <Btn 
                   iconPath={mdiDeleteOutline} 
@@ -292,7 +297,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
               }
               message={
                 <div className="flex-col h-fit gap-1">
-                  <InfoRow variant="naked" iconPath="">Related dashboard content will also be deleted</InfoRow>
+                  <InfoRow variant="naked" iconPath="">Any related dashboard content will also be deleted</InfoRow>
 
                   <PopupMenu 
                     title="Related data"
@@ -310,6 +315,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                       tables={prglState.dbsTables}
                       methods={prglState.dbsMethods}
                       expanded={true}
+                      showOnlyFKeyTables={true}
                     />
                   </PopupMenu>
                   <SwitchToggle
@@ -318,13 +324,11 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                     checked={dropDatabase}
                     onChange={dropDatabase => this.setState({ dropDatabase })}
                   />
-                  {dropDatabase && 
-                    <InfoRow className="ws-pre">
-                      You are about to drop <strong>{c.db_name}</strong> database. 
-                      <br></br>
-                      Ensure data is backed up. This action is not reversible
-                    </InfoRow>
-                  }
+                  <InfoRow className="ws-pre" style={{ opacity: dropDatabase? 1 : 0 }}>
+                    You are about to drop <strong>{c.db_name}</strong> database. 
+                    <br></br>
+                    Ensure data is backed up. This action is not reversible
+                  </InfoRow>
                   <ErrorComponent error={error} />
                 </div>
               }
@@ -386,12 +390,12 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                 onUpserted?.();
                 setMsg({ ok: mode !== "edit" ? "Created!" : "Updated!" });
                 setTimeout(() => {
-                  window.location.href = '/connections';
+                  window.location.href = "/connections";
                 }, 500)
               } catch (e: any) {
                 console.log(e);
                 setMsg({ loading: 0 })
-                const status = get(e, "err_msg") || get(e, "err.err_msg") || get(e, "err.constraint") || get(e, "err.txt") || e.err_msg || JSON.stringify(e)
+                const status = getErrorMessage(e);
                 this.setState({ status, statusOK: false })
               }
             }}

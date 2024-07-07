@@ -4,7 +4,7 @@ import { validateConnection } from "./connectionUtils/validateConnection";
 import type { Express } from "express"
 import { getElectronConfig } from "./electronConfig"; 
 import { getInitState, tryStartProstgles } from "./startProstgles";
-import { Server } from "socket.io";
+import type { Server } from "socket.io";
 
 export const setDBSRoutesForElectron = (app: Express, io: Server, port: number) => {
 
@@ -41,11 +41,11 @@ export const setDBSRoutesForElectron = (app: Express, io: Server, port: number) 
     }
   
     try {
-      const electronConfig = getElectronConfig?.();
+      const electronConfig = getElectronConfig();
 
       try {
         await testDBConnection(creds);
-        const startup = await tryStartProstgles({app, io, con: creds, port });
+        const startup = await tryStartProstgles({ app, io, con: creds, port });
         
         if(!startup.ok){
           throw startup;

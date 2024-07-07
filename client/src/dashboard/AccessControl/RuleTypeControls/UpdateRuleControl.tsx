@@ -1,14 +1,15 @@
 import { mdiFileDocumentEditOutline } from "@mdi/js";
 import { getKeys, isObject } from "prostgles-types";
 import React from "react";
-import { ContextDataObject, TableRules, UpdateRule, parseFieldFilter } from "../../../../../commonTypes/publishUtils";
+import type { ContextDataObject, TableRules, UpdateRule } from "../../../../../commonTypes/publishUtils";
+import { parseFieldFilter } from "../../../../../commonTypes/publishUtils";
 import ErrorComponent from "../../../components/ErrorComponent";
 
 import { DynamicFields } from "../OptionControllers/DynamicFields";
-import FieldFilterControl from "../OptionControllers/FieldFilterControl";
-import { ContextDataSchema, FilterControl, SingleGroupFilter } from "../OptionControllers/FilterControl";
-import { ForcedDataControl } from "../OptionControllers/ForcedDataControl";
-import { TablePermissionControlsProps, } from "../TableRules/TablePermissionControls";
+import { FieldFilterControl } from "../OptionControllers/FieldFilterControl";
+import type { ContextDataSchema, SingleGroupFilter } from "../OptionControllers/FilterControl";
+import { FilterControl } from "../OptionControllers/FilterControl";
+import type { TablePermissionControlsProps, } from "../TableRules/TablePermissionControls";
 import { ExampleComparablePolicy } from "./ExampleComparablePolicy";
 import { RuleToggle } from "./RuleToggle";
 import { RuleExpandSection } from "./SelectRuleControl";
@@ -21,9 +22,9 @@ type P = Pick<Required<TablePermissionControlsProps>, "prgl" | "table" | "tableR
 };
 
 export const UpdateRuleControl = (props: P) => {
-  const { rule: rawRule, onChange, table,tableRules, contextDataSchema, contextData,  prgl, userTypes } = props;
+  const { rule: rawRule, onChange, table, contextDataSchema, contextData,  prgl, userTypes } = props;
   const rule: UpdateRule | undefined = rawRule === true? { fields: "*" } : isObject(rawRule)? rawRule : undefined
-  const error = getUpdateRuleError(props);
+  const error = !rawRule? undefined : getUpdateRuleError(props);
 
   return <div className="flex-col gap-2 min-h-0">
     <RuleToggle  
@@ -36,7 +37,7 @@ export const UpdateRuleControl = (props: P) => {
       <FieldFilterControl 
         iconPath={mdiFileDocumentEditOutline}
         label={"Can update"}
-        info={"List of fields that can be edited/updated. \nFields from forced data take precedence and cannot be updated by the user"}
+        info={"List of fields that can be edited/updated. \nIf the Check condition specifies only one possible value for a field then it will be pre-populated and hidden from user"}
         columns={table.columns} 
         value={rule.fields}
         onChange={fields => {
@@ -65,7 +66,7 @@ export const UpdateRuleControl = (props: P) => {
           });
         }}
         />
-
+{/* 
       <ForcedDataControl 
         info={
           <div className="flex-col gap-1">
@@ -78,14 +79,14 @@ export const UpdateRuleControl = (props: P) => {
         contextData={contextDataSchema}
         forcedDataDetail={rule.forcedDataDetail}
         onChange={forcedDataDetail => onChange({ ...rule, forcedDataDetail })}
-        />
+      /> */}
 
       <FilterControl 
         label="Check"
         mode="checkFilter"
         info={
           <div className="flex-col gap-1">
-            <div>New records must satisfy this condition</div>
+            <div>New records must satisfy a condition</div>
           </div>
         }
         db={prgl.db}
@@ -103,21 +104,18 @@ export const UpdateRuleControl = (props: P) => {
         }}
         />
 
-      <RuleExpandSection 
-        expanded={!!rule.dynamicFields?.length}
-        >
-        <DynamicFields 
-          {...props} 
-          contextDataSchema={contextDataSchema} 
-          contextData={contextData}  
-          />
+      <DynamicFields 
+        {...props} 
+        contextDataSchema={contextDataSchema} 
+        contextData={contextData}  
+      />
+      <RuleExpandSection>
         <ExampleComparablePolicy 
           command="UPDATE"
           rule={rule}
           table={table}
           userTypes={userTypes}
-          prgl={prgl}
-          contextDataSchema={contextDataSchema}
+          prgl={prgl} 
           />
       </RuleExpandSection>
     </>}

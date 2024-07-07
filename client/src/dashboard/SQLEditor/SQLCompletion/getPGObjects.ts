@@ -1,7 +1,9 @@
-import { SQLHandler, ValidatedColumnInfo } from "prostgles-types";
-import { TOP_KEYWORDS, TopKeyword } from "./KEYWORDS";
+import type { SQLHandler, ValidatedColumnInfo } from "prostgles-types";
+import type { TopKeyword } from "./KEYWORDS";
+import { TOP_KEYWORDS, asSQL } from "./KEYWORDS";
 import { missingKeywordDocumentation } from "../SQLEditorSuggestions";
 import { QUERY_WATCH_IGNORE } from "../../../../../commonTypes/utils";
+import { fixIndent } from "../../../demo/sqlVideoDemo";
 
 export type PGDatabase = { 
   "Name": string;
@@ -83,16 +85,16 @@ export type PG_Policy = {
   tablename: string; 
   tablename_escaped: string; 
   schemaname: string; 
-  type: 'PERMISSIVE' | 'RESTRICTIVE';
+  type: "PERMISSIVE" | "RESTRICTIVE";
   roles: string[] | null;
   definition: string;
   cmd: 
     | null 
-    | 'SELECT'
-    | 'INSERT'
-    | 'UPDATE'
-    | 'DELETE'
-    | 'ALL';
+    | "SELECT"
+    | "INSERT"
+    | "UPDATE"
+    | "DELETE"
+    | "ALL";
   using: string;
   with_check: string;
 };
@@ -172,10 +174,15 @@ export type PG_Function = {
     data_type: string;
   }[];
   restype: string | null;
+  restype_udt_name: string | null;
   arg_list_str: string;
   description: string | null;
   args_length: string;
   is_aggregate: string;
+  /**
+   * a = aggregate, f = function, p = procedure
+   */
+  prokind: "a" | "f" | "p";
   definition: string | null;
   func_signature: string;
   escaped_identifier: string;
@@ -200,19 +207,24 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
       FROM (
         SELECT *
           , upper(name) || '(' || concat_ws(',', arg_list_str) || ')' || ' => ' || restype || E'\n' || description as func_signature
-          , CASE WHEN is_aggregate THEN 'Could not get aggregate function definition' ELSE pg_get_functiondef(oid) END as definition
+          , CASE WHEN is_aggregate OR prolang IN (12, 13) THEN '' ELSE pg_get_functiondef(oid) END as definition
           , CASE WHEN schema IS NULL OR current_schema() = schema OR schema = 'pg_catalog' THEN format('%I', name) ELSE format('%I.%I', schema, name) END as escaped_identifier
         FROM (
           SELECT p.proname AS name
                 , pg_get_function_identity_arguments(p.oid) AS arg_list_str
                 , pg_catalog.pg_get_function_result(p.oid) as restype
+                , t.typname as restype_udt_name
                 , d.description
                 , n.nspname as schema
                 , pronargs as args_length
                 , prokind = 'a' as is_aggregate
+                , prokind
                 , p.oid
+                , p.prolang -- 12, 13 are internal,c languages
                 , ext.extension
-          FROM   pg_proc p
+          FROM pg_proc p
+          LEFT JOIN pg_type t 
+            ON p.prorettype = t.oid
           LEFT JOIN pg_description d ON d.objoid = p.oid
           LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
           LEFT JOIN (
@@ -234,7 +246,7 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
       `,
   distQ = `
     SELECT DISTINCT ON (length(name::text), name) 
-      name, arg_list_str, description, args_length, is_aggregate, restype, 
+      name, arg_list_str, description, args_length, is_aggregate, restype, restype_udt_name,
       schema, func_signature, definition, escaped_identifier, extension
     FROM (
       SELECT * 
@@ -255,9 +267,21 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
     d.rows.map((r: PG_Function)=> {
       
 
-      const args = (r.arg_list_str? r.arg_list_str.split(",") : []).map((a, i)=> ({ label: `arg${i}: ` + a.trim(), data_type: a.trim() }) );
+      const args = (r.arg_list_str? r.arg_list_str.split(",") : [])
+        .map((a, i) => {
+          const data_type = a.trim().split(" ").at(-1) ?? a;
+          return { label: `arg${i}: ${data_type}`, data_type } 
+        });
       r.arg_list_str = args.map(a => a.label).join(", ");
-      
+
+      if(
+        r.escaped_identifier.includes('"') && 
+        !r.escaped_identifier.includes("current_user") &&
+        // r.schema === "pg_catalog" && 
+        /^[a-z_]+$/.test(r.name)
+      ){
+        r.escaped_identifier = r.name;
+      }
       if(r.name === "format" && args.length > 1){
         r.description += [
           `\n arg1 format: %[position][flags][width]type`,
@@ -270,14 +294,21 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
           `Result: INSERT INTO locations VALUES('C:\\Program Files')`
         ].join("\n");
       }
+      if(r.name === "dblink"){
+        r.description = [
+          r.description || "",
+          `Executes a query in a remote database\n\n`,
+          asSQL(fixIndent(`SELECT * 
+          FROM dblink(
+            'dbname=mydb ',
+            'select proname, prosrc from pg_proc'
+          ) AS t1(proname name, prosrc text)
+          WHERE proname LIKE 'bytea%';`))
+        ].join("\n");
+      }
       return ({ ...r, args });
     })
   );
-
-  // return await db.sql(`SELECT format('%I.%I(%s)', ns.nspname, p.proname, oidvectortypes(p.proargtypes)) 
-  // FROM pg_proc p INNER JOIN pg_namespace ns ON (p.pronamespace = ns.oid)
-  // --WHERE ns.nspname = 'my_namespace';
-  // `);
 }
 
 
@@ -338,7 +369,7 @@ export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise
     format('%I', relname) as escaped_name,
     relkind IN ('v', 'm') AS is_view,
     CASE WHEN relkind IN ('v', 'm') THEN pg_get_viewdef(format('%I.%I', nspname, relname), true) END AS view_definition ,
-    obj_description((nspname || '.' || quote_ident(relname))::REGCLASS) as comment,
+    obj_description(format('%I.%I', nspname, relname)::REGCLASS) as comment,
     CASE WHEN current_schema() = nspname THEN format('%I', relname) ELSE format('%I.%I', nspname, relname) END as escaped_identifier,
     json_agg((
       SELECT x FROM (
@@ -353,7 +384,7 @@ export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise
         numeric_precision ,
         numeric_scale ,
         character_maximum_length,
-        col_description((nspname || '.' || quote_ident(relname))::REGCLASS, ordinal_position) as comment
+        col_description(format('%I.%I', nspname, relname)::REGCLASS, ordinal_position) as comment
       ) as x
     ) ORDER BY ordinal_position ) AS cols
     -- cols
@@ -475,7 +506,8 @@ export async function getDataTypes(db: DB): Promise<PG_DataType[]> {
 
 export type PG_Setting = {
   name: string;
-  setting: string;
+  unit: string | null;
+  setting: string | null;
   description: string;
   min_val?: string;
   max_val?: string;
@@ -493,8 +525,19 @@ const getSettings = (db: DB): Promise<PG_Setting[]> => {
     `
     --SHOW ALL;
 
-    SELECT name, setting, unit, short_desc as description, min_val, max_val, reset_val
-    ,format('%I', name) as escaped_identifier, enumvals, category, vartype
+    SELECT 
+      name, 
+      CASE 
+        WHEN unit ilike '%kb' AND setting IS NOT NULL 
+          THEN concat_ws('', setting, ' ( ', pg_size_pretty((1024 * (CASE WHEN LEFT(unit, 1) = '8' THEN 8 ELSE 1 END) * setting::NUMERIC)::BIGINT), ' )' )
+        ELSE setting 
+      END as setting,
+      unit, 
+      short_desc as description, 
+      min_val, 
+      max_val, 
+      reset_val
+    ,format('%I', name) as escaped_identifier, enumvals, category, vartype 
     FROM pg_catalog.pg_settings 
     order by name 
 
@@ -504,14 +547,22 @@ const getSettings = (db: DB): Promise<PG_Setting[]> => {
 export type PGOperator = {
   schema: string;
   name: string;
-  left_arg_type: string | null;
-  right_arg_type: string | null;
+  left_arg_types: string[] | null;
+  right_arg_types: string[] | null;
   result_type: string;
   description: string;
 }
+
+export const PRIORITISED_OPERATORS = ["=", ">", "LIKE", "ILIKE", "IN" ];
 export const getOperators = async (db: DB): Promise<PGOperator[]> => {
   const operators: PGOperator[] = await db.sql(`
-    SELECT *
+    SELECT 
+      schema, 
+      name, 
+      array_remove(array_agg(DISTINCT left_arg_type), NULL) as left_arg_types,
+      array_remove(array_agg(DISTINCT right_arg_type), NULL) as right_arg_types,
+      result_type, 
+      description
     FROM (
       SELECT n.nspname as schema,
         o.oprname AS name,
@@ -528,6 +579,10 @@ export const getOperators = async (db: DB): Promise<PGOperator[]> => {
       ORDER BY 1, 2, 3, 4
     ) t
     WHERE result_type = 'boolean'
+    GROUP BY  schema, 
+      name, 
+      result_type, 
+      description
   `, {}, { returnType: "rows" }) as any;
 
   const like = operators.find(o => o.name === "~~" && o.description.toLowerCase().includes(" like "));
@@ -542,6 +597,30 @@ export const getOperators = async (db: DB): Promise<PGOperator[]> => {
     operators.push({ ...ilike, name: "ILIKE", description: ilike.description + `.\n\n Same as ${ilike.name} operator`})
     operators.push({ ...nilike, name: "NOT ILIKE", description: nilike.description + `.\n\nSame as ${nilike.name} operator`})
   }
+  operators.push({
+    left_arg_types: ["any"],
+    result_type: "boolean",
+    right_arg_types: ["any"],
+    schema: "pg_catalog", 
+    name: "IN", 
+    description: `IN operator. Returns true if the left argument is equal to any element in the right argument or subquery.`,
+  })
+  operators.push({
+    left_arg_types: ["any"],
+    result_type: "boolean",
+    right_arg_types: ["any"],
+    schema: "pg_catalog", 
+    name: "BETWEEN", 
+    description: `BETWEEN operator. Returns true if the left argument is between/inclusive of the range endpoints.`,
+  })
+  operators.push({
+    left_arg_types: ["any"],
+    result_type: "boolean",
+    right_arg_types: ["any"],
+    schema: "pg_catalog", 
+    name: "DISTINCT FROM", 
+    description: `IS DISTINCT FROM operator. Returns true if the left argument is Not equal to the right expression, treating null as a comparable value.`,
+  })
   return operators;
 }
 
@@ -597,7 +676,7 @@ export const PG_OBJECT_QUERIES = {
       pg_catalog.array_to_string(n.nspacl, E'\n') AS "access_privileges",
       pg_catalog.obj_description(n.oid, 'pg_namespace') AS "comment" 
       FROM pg_catalog.pg_namespace n                                       
-      WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'      
+      --WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'      
       ORDER BY 1;
     `,
     type: {} as PG_Schema,
@@ -670,12 +749,12 @@ export const PG_OBJECT_QUERIES = {
         string_agg(table_schema || E'\n' ||  schema_table_privilege,  E'\n') as table_grants
         FROM (
           SELECT grantee, table_schema,
-            string_agg('    ' ||table_name || ': ' || table_privilege, E'\n') as schema_table_privilege
+            string_agg('    ' || table_name || ': ' || table_privilege, E'\n') as schema_table_privilege
           FROM 
           (
             SELECT grantee, table_schema, table_name,
             CASE WHEN COUNT(table_privilege) = 7 THEN 'ALL' ELSE 
-            string_agg(table_privilege, ', ') END as table_privilege
+            E'\n' || string_agg(repeat(' ', 6) || table_privilege, E',\n') END as table_privilege
             FROM 
             (
               SELECT cp.grantee, cp.table_schema, cp.table_name,
@@ -846,7 +925,7 @@ export const PG_OBJECT_QUERIES = {
         FROM pg_policy pol
           JOIN pg_class c ON c.oid = pol.polrelid
         LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
-        ${!tableName? "" : `WHERE c.relname = \${tableName}`}
+        ${!tableName? "" : `WHERE format('%I', c.relname) = \${tableName}`}
       ) t `
     },
     type: {} as PG_Policy,

@@ -1,18 +1,19 @@
-import { MinimalSnippet, suggestSnippets } from "../CommonMatchImports";
+import type { MinimalSnippet} from "../CommonMatchImports";
+import { suggestSnippets } from "../CommonMatchImports";
 import { getExpected } from "../getExpected";
-import { isInsideFunction } from "../MatchSelect";
-import { SQLMatchContext, SQLMatcherResultType } from "../registerSuggestions";
+import { getParentFunction } from "../MatchSelect";
+import { getKind, type SQLMatchContext, type SQLMatcherResultType } from "../registerSuggestions";
 import { suggestCondition } from "../suggestCondition";
 import { getNewColumnDefinitions, PG_COLUMN_CONSTRAINTS, REFERENCE_CONSTRAINT_OPTIONS_KWDS } from "../TableKWDs";
 import { suggestKWD, withKWDs } from "../withKWDs";
 
-export const matchCreateTable  = async ({ cb, ss, getKind, sql, setS }: SQLMatchContext): Promise<SQLMatcherResultType> => {
+export const matchCreateTable  = async ({ cb, ss, sql, setS }: SQLMatchContext): Promise<SQLMatcherResultType> => {
   const { prevLC, l2token, l1token, ltoken, thisLineLC, prevTokens } = cb;
 
 
-  const insideFunc = isInsideFunction(cb);
+  const insideFunc = getParentFunction(cb);
   if(insideFunc?.prevTextLC?.endsWith("generated always as")){
-    const res = await suggestCondition({ cb, ss, getKind, sql, setS }, true);
+    const res = await suggestCondition({ cb, ss, sql, setS }, true);
     if(res) return res; 
   }
   if(prevLC.endsWith("references")){
@@ -43,13 +44,13 @@ export const matchCreateTable  = async ({ cb, ss, getKind, sql, setS }: SQLMatch
     /** Table provided */
     if (ltoken?.text !== "references") {
 
-      return withKWDs(refKWDs, cb, getKind, ss).getSuggestion()
+      return withKWDs(refKWDs, { cb, ss, setS, sql }).getSuggestion()
 
     }
 
     if (prevTokens.at(-2)?.textLC === "on" && ["DELETE", "UPDATE"].includes(ltoken.text.toUpperCase()) ) { //  && REF_ACTIONS.map(a => a.label.split(" ")[1]?.toLowerCase()).includes(_pwl!)
       
-      return withKWDs(refKWDs, cb, getKind, ss).getSuggestion()
+      return withKWDs(refKWDs, { cb, ss, setS, sql }).getSuggestion()
     }
 
   } 
@@ -73,7 +74,7 @@ export const matchCreateTable  = async ({ cb, ss, getKind, sql, setS }: SQLMatch
   let snippetLines: { kwd: string; docs?: string }[] = []
   if (cb.thisLinePrevTokens.length) {
     snippetLines = PG_COLUMN_CONSTRAINTS.filter(v => !cb.thisLineLC.includes(v.kwd.toLowerCase()));
-    const res = withKWDs(PG_COLUMN_CONSTRAINTS, cb, getKind, ss).getSuggestion().suggestions;
+    const res = (await withKWDs(PG_COLUMN_CONSTRAINTS, { cb, ss, setS, sql }).getSuggestion()).suggestions;
     return { 
       suggestions: [
         ...res,

@@ -1,5 +1,5 @@
 
-import { SQLMatcher } from "./registerSuggestions";
+import type { SQLMatcher } from "./registerSuggestions";
 
 export const MatchLast: SQLMatcher = {
   match: cb => cb.prevLC.endsWith("extension"),

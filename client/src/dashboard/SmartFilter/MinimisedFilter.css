@@ -1,0 +1,13 @@
+.FilterWrapper_MinimisedRoot {
+  background-color: var(--blue-50);
+}
+.FilterWrapper_Type {
+  color:rgb(66, 66, 66);
+}
+
+.dark-theme .FilterWrapper_MinimisedRoot {
+  background-color: #12477f;
+}
+.dark-theme .FilterWrapper_Type {
+  color:rgb(196, 196, 196);
+}

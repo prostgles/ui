@@ -1,11 +1,14 @@
+import { useIsMounted, usePromise } from "prostgles-client/dist/react-hooks";
 import { isEmpty } from "prostgles-types";
-import { useState } from "react";
-import { ContextDataObject, getTableRulesErrors, TableRulesErrors } from "../../../../commonTypes/publishUtils";
-import { areEqual, quickClone } from "../../utils";  
-import { AccessControl, AccessControlAction, EditedAccessRule } from "./AccessControl";
-import { PermissionEditProps } from "./AccessControlRuleEditor";
-import { usePromise } from "../ProstglesMethod/hooks";
-import { getWorkspaceTables, WorspaceTableAndColumns } from "./PublishedWorkspaceSelector";
+import { useMemo, useState } from "react";
+import type { ContextDataObject, TableRulesErrors } from "../../../../commonTypes/publishUtils";
+import { getTableRulesErrors } from "../../../../commonTypes/publishUtils";
+import { areEqual, quickClone } from "../../utils";
+import type { AccessControlAction, EditedAccessRule } from "./AccessControl";
+import { ACCESS_CONTROL_SELECT } from "./AccessControl";
+import type { PermissionEditProps } from "./AccessControlRuleEditor";
+import type { WorspaceTableAndColumns } from "./PublishedWorkspaceSelector";
+import { getWorkspaceTables } from "./PublishedWorkspaceSelector";
 
 
 type P = Pick<PermissionEditProps, "action" | "prgl">;
@@ -61,17 +64,28 @@ export type EditedAccessRuleState = ValidEditedAccessRuleState | {
 export const useEditedAccessRule = ({ action, prgl, }: P): EditedAccessRuleState | undefined => {
   const {dbs, tables} = prgl;
   const [newRule, setNewRule] = useState<Partial<EditedAccessRule>>();
-  const userTypes = newRule?.access_control_user_types?.flatMap(d => d.ids) ?? [];
+  const userTypes = useMemo(() => newRule?.access_control_user_types?.flatMap(d => d.ids) ?? [], [newRule]);
  
+  const getIsMounted = useIsMounted();
   const ruleData = usePromise(async () => {
     if(action.type === "edit"){
-      const rule: EditedAccessRule | undefined = await dbs.access_control.findOne({ id: action.selectedRuleId }, AccessControl.ACCESS_CONTROL_SELECT);
+      const rule: EditedAccessRule | undefined = await dbs.access_control.findOne({ id: action.selectedRuleId }, ACCESS_CONTROL_SELECT);
       if(!rule){
         return "edit-not-found";
       }
       const userTypes = rule.access_control_user_types.flatMap(d => d.ids);
       const ruleUserFilter = userTypes.length? { type: { $in: userTypes } } : {};
-      const user = await dbs.users.findOne(ruleUserFilter);
+      let user = await dbs.users.findOne(ruleUserFilter);
+      /** If no users for the give types then fake an existing one */
+      if(!user){
+        user = await dbs.users.findOne({ });
+        if(user){
+          user.type = userTypes[0]!;
+        }
+      }
+      if(!getIsMounted()){
+        return undefined;
+      }
       const initialUserTypes = rule.access_control_user_types.flatMap(d => d.ids);
       setNewRule(quickClone(rule));
       return {
@@ -88,15 +102,15 @@ export const useEditedAccessRule = ({ action, prgl, }: P): EditedAccessRuleState
       rule: undefined,
       contextData: !user? undefined : { user },
     }
-  }, [action.type, action.selectedRuleId]);
+  }, [getIsMounted, action, dbs.access_control, dbs.users]);
 
-  const workspaceIds = newRule?.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds ?? [];
-  const wspTables = usePromise(async () => 
-    !newRule?.dbPermissions? undefined : 
+  const wspTables = usePromise(async () => {
+    const workspaceIds = newRule?.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds ?? [];
+    return !newRule?.dbPermissions? undefined : 
     await getWorkspaceTables(
       dbs, workspaceIds, newRule.dbPermissions, tables
-    ), 
-    [newRule, workspaceIds]
+    )}, 
+    [newRule, dbs, tables]
   );
 
   const tableErrors = usePromise(async () => {
@@ -104,7 +118,7 @@ export const useEditedAccessRule = ({ action, prgl, }: P): EditedAccessRuleState
       return await getAccessRuleTableErrors({ prgl }, newRule, userTypes); 
     }
     return undefined;
-  }, [userTypes.join(), newRule, tables, dbs]);
+  }, [newRule, action.selectedRuleId, prgl, userTypes]);
 
   if(!ruleData){
     return undefined;
@@ -149,7 +163,6 @@ export const useEditedAccessRule = ({ action, prgl, }: P): EditedAccessRuleState
   return result;
 }
 
-
 const getRuleErrorMessage = (newRule: EditedAccessRule | Partial<EditedAccessRule> ) => {
   const { dbPermissions } = newRule;
   if(dbPermissions && dbPermissions.type !== "Run SQL"){
@@ -162,7 +175,12 @@ const getRuleErrorMessage = (newRule: EditedAccessRule | Partial<EditedAccessRul
       return "Empty rule. Must allow at least one table";
     }
   } else if (dbPermissions?.type === "Run SQL" && !dbPermissions.allowSQL){
-    return `Must tick "Enabled" checkbox`;
+    return `Must tick "Run SQL" checkbox`;
+  }
+
+  const userTypes = newRule.access_control_user_types?.flatMap(d => d.ids) ?? [];
+  if(userTypes.includes("public") && userTypes.length !== 1){
+    return "Cannot mix 'public' and non-public user types";
   }
 
   return undefined;

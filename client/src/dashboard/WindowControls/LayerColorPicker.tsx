@@ -1,6 +1,7 @@
 import React from "react"
-import { LinkSyncItem } from "../Dashboard/dashboardUtils";
-import { ColorPicker, RGBA } from "../W_Table/ColumnMenu/ColorPicker";
+import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
+import type { RGBA } from "../W_Table/ColumnMenu/ColorPicker";
+import { ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
 
 type P = {
   link: LinkSyncItem;
@@ -20,7 +21,7 @@ export const LayerColorPicker = ({ link, column, myLinks, title }: P) => {
     // label="Layer color"
     title={title}
     required={true}
-    className="w-fit m-p5 text-gray-600"
+    className="w-fit m-p5 text-2"
     value={`rgba(${rgba})`} 
     onChange={(colorStr, colorArr) => {
       const thisLink = myLinks.find(l => l.id === link.id);

@@ -1,0 +1,24 @@
+name: Test docker-compose
+on: workflow_dispatch
+# on:
+#   push:
+#     branches: [ main, master ]
+#   pull_request:
+#     branches: [ main, master ]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  test_docker:
+    name: Run test suite
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Build docker images
+      run: docker compose up -d
+
+    - name: Run tests
+      run: sleep 5 && docker ps && curl localhost:3004 | grep -q "Prostgles UI"; echo $?

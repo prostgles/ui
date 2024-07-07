@@ -1,19 +1,13 @@
 import { mdiDatabaseRefreshOutline, mdiDeleteOutline, mdiPencil } from "@mdi/js";
 import { asName } from "prostgles-types";
 import React from "react"
-import { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
+import type { W_TableMenuMetaProps } from "./W_TableMenu";
 import Chip from "../../../components/Chip";
 import Btn from "../../../components/Btn";
-import { W_TableInfo } from "./getTableMeta";
 import CodeExample from "../../CodeExample";
 import { FlexCol, FlexRowWrap } from "../../../components/Flex";
 
-type P = W_TableMenuProps & {
-  tableMeta: W_TableInfo | undefined;
-  onSetQuery: (newQuery: W_TableMenuState["query"]) => void;
-};
-
-export const W_TableMenu_TableInfo = ({ w, tableMeta, onSetQuery, prgl }: P) => {
+export const W_TableMenu_TableInfo = ({ w, tableMeta, onSetQuery, prgl }: W_TableMenuMetaProps) => {
 
   const tableName = w.table_name;
   if (!tableMeta || !tableName) return null;
@@ -45,10 +39,10 @@ export const W_TableMenu_TableInfo = ({ w, tableMeta, onSetQuery, prgl }: P) => 
 
       </FlexRowWrap> 
       <FlexRowWrap className="w-full">
-        <Chip className="f-1" variant="header" label={"Actual Size"} value={tableMeta.sizeInfo?.['Actual Size']} />
-        <Chip className="f-1" variant="header" label={"Index Size"} value={tableMeta.sizeInfo?.['Index Size']} />
-        <Chip className="f-1" variant="header" label={"Total Size"} value={tableMeta.sizeInfo?.['Total Size']} />
-        <Chip className="f-1" variant="header" label={"Row count"} value={(+(tableMeta.sizeInfo?.['Row count'] || 0)).toLocaleString()} />
+        <Chip className="f-1" variant="header" label={"Actual Size"} value={tableMeta.sizeInfo?.["Actual Size"]} />
+        <Chip className="f-1" variant="header" label={"Index Size"} value={tableMeta.sizeInfo?.["Index Size"]} />
+        <Chip className="f-1" variant="header" label={"Total Size"} value={tableMeta.sizeInfo?.["Total Size"]} />
+        <Chip className="f-1" variant="header" label={"Row count"} value={(+(tableMeta.sizeInfo?.["Row count"] || 0)).toLocaleString()} />
       </FlexRowWrap>
       {tableMeta.viewDefinition && <FlexCol className="w-full" style={{ height: "400px" }}>
         <div className="bold p-0 w-fit mt-1">View definition</div>

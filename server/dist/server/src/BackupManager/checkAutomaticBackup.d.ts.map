@@ -1,1 +1,0 @@
-{"version":3,"file":"checkAutomaticBackup.d.ts","sourceRoot":"","sources":["../../../../src/BackupManager/checkAutomaticBackup.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,WAAW,EAAE,MAAM,IAAI,CAAC;AAEjC,OAAO,aAAuB,MAAM,iBAAiB,CAAC;AAEtD,wBAAsB,oBAAoB,CAAC,IAAI,EAAE,aAAa,EAAE,GAAG,EAAE,WAAW,iBA2F/E"}

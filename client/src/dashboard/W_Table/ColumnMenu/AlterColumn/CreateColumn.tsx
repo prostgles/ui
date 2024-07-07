@@ -1,20 +1,22 @@
-import { DBHandlerClient } from 'prostgles-client/dist/prostgles';
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type {
+  DBSchemaTable} from "prostgles-types";
 import {
-  DBSchemaTable,
   isDefined,
 } from "prostgles-types";
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import Btn from "../../../../components/Btn";
 import { FlexCol, FlexRow } from "../../../../components/Flex";
-import { CommonWindowProps } from "../../../Dashboard/Dashboard";
-import { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
+import type { CommonWindowProps } from "../../../Dashboard/Dashboard";
+import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import { SQLSmartEditor } from "../../../SQLEditor/SQLSmartEditor";
-import { ColumnEditor, ColumnOptions } from "./ColumnEditor";
-import { getAlterFkeyQuery } from './ReferenceEditor';
-import { colIs } from '../ColumnSelect';
+import type { ColumnOptions } from "./ColumnEditor";
+import { ColumnEditor } from "./ColumnEditor";
+import { getAlterFkeyQuery } from "./ReferenceEditor";
+import { colIs } from "../ColumnSelect";
 
 
-export type CreateColumnProps = Pick<CommonWindowProps, 'suggestions'> & {
+export type CreateColumnProps = Pick<CommonWindowProps, "suggestions"> & {
   table: DBSchemaTable;
   field: string | undefined;
   db: DBHandlerClient;

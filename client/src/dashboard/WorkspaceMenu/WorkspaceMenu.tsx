@@ -1,51 +1,41 @@
-import { mdiAccountMultiple, mdiViewCarousel } from '@mdi/js';
-import Icon from '@mdi/react';
-import { SyncDataItem } from 'prostgles-client/dist/SyncedTable';
-import React, { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Prgl } from '../../App';
+import { mdiAccountMultiple, mdiChevronDown, mdiViewCarousel } from "@mdi/js";
+import React, { useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
-import { FlexCol } from '../../components/Flex';
-import PopupMenu from '../../components/PopupMenu';
-import SearchList from '../../components/SearchList';
+import { FlexCol, FlexRow, classOverride } from "../../components/Flex";
+import { Icon } from "../../components/Icon/Icon";
+import PopupMenu from "../../components/PopupMenu";
+import SearchList from "../../components/SearchList";
 import { onWheelScroll } from "../../components/Table/Table";
-import { WspIconPath } from "../AccessControl/ExistingAccessRules";
-import { useIsMounted } from '../Backup/CredentialSelector';
-import { Workspace, WorkspaceSyncItem } from '../Dashboard/dashboardUtils';
-import { useEffectAsync } from '../DashboardMenu/DashboardMenuSettings';
+import type { Workspace, WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
 import { WorkspaceAddBtn } from "./WorkspaceAddBtn";
 import { WorkspaceDeleteBtn } from "./WorkspaceDeleteBtn";
 import "./WorkspaceMenu.css";
 import { WorkspaceSettings } from "./WorkspaceSettings";
 
-// type P = DashboardProps & {
 type P = {
-  workspace: WorkspaceSyncItem; //SyncDataItem<Workspace>;
+  workspace: WorkspaceSyncItem;
   prgl: Prgl;
+  className?: string;
 }
 
 export const WorkspaceMenu = (props: P) => {
-  const { workspace, prgl: { dbs, dbsTables, dbsMethods } } = props;
-
-  const [workspaces, setWorkspaces] = useState<SyncDataItem<Workspace>[]>([]);
+  const { workspace, className, prgl: { dbs, dbsTables, dbsMethods } } = props;
   const listRef = useRef<HTMLDivElement>(null);
-  const getIsMounted = useIsMounted();
-  useEffectAsync(async () => {
-    const workspacesSync = await dbs.workspaces.sync?.(
-      { connection_id: workspace.connection_id, deleted: false },
-      { handlesOnData: true, select: "*", patchText: false },
-      (workspaces, deltas) => {
-        if (!getIsMounted()) return;
 
-        setWorkspaces(workspaces);
+  const { data: unsortedWorkspaces = []} = dbs.workspaces.useSync!(
+    { connection_id: workspace.connection_id, deleted: false },
+    { handlesOnData: true, select: "*", patchText: false }
+  );
 
-        setTimeout(() => {
-          listRef.current?.querySelector("li.active")?.scrollIntoView()
-        }, 100)
-      }
-    );
-    return () => workspacesSync?.$unsync();
-  }, [dbs, listRef.current, workspace.connection_id]);
+  const workspaces = useMemo(() => {
+
+    setTimeout(() => {
+      listRef.current?.querySelector("li.active")?.scrollIntoView()
+    }, 100)
+    return unsortedWorkspaces.slice(0).sort((a, b) => + new Date(a.created!) - + new Date(b.created!))
+  }, [unsortedWorkspaces]);
 
   const navigate = useNavigate();
   const setWorkspace = (w?: Workspace) => {
@@ -57,27 +47,22 @@ export const WorkspaceMenu = (props: P) => {
     navigate(path);
   }
 
-  const WorkspaceMenuDropDwon = <PopupMenu
+  const WorkspaceMenuDropDown = <PopupMenu
     title="Workspaces"
     rootStyle={{
       maxHeight: `100%`,
       marginRight: "1em"
     }}
-    positioning="beneath-left"
+    positioning="beneath-right"
     button={
       <Btn 
         title="Manage Workspaces" 
-        iconPath={WspIconPath} 
-        className={"ml-1 text-gray-300" + (window.isLowWidthScreen? "text-gray-100" : "")}
-        data-command="WorkspaceMenuDropDwon"
+        iconPath={mdiChevronDown} 
+        className={"text-0"}
+        data-command="WorkspaceMenuDropDown"
         style={{ 
-          padding: "8px",
-          ...(window.isLowWidthScreen && {
-            background: "var(--gray-600)",
-            color: "white",
-          })
+          padding: "12px",
         }}
-        children={window.isLowWidthScreen? workspaces.find(w => w.id === workspace.id)?.name : undefined }
       />
     }
     contentStyle={{
@@ -95,7 +80,7 @@ export const WorkspaceMenu = (props: P) => {
           }
         }}
       >
-        {!workspaces.length? <div className="text-gray-400">No other workspaces</div> :
+        {!workspaces.length? <div className="text-2">No other workspaces</div> :
           <SearchList
             id="search-list-queries"
             data-command="WorkspaceMenu.SearchList"
@@ -108,10 +93,10 @@ export const WorkspaceMenu = (props: P) => {
                 label: w.name,
                 labelStyle: {},
                 rowStyle: workspace.id === w.id ? { 
-                  background: "var(--blue-50)",
+                  background: "var(--bg-li-selected)",
                 } : {},
                 contentLeft: (
-                  <div className="flex-col ai-start f-0 mr-1 text-gray-400" 
+                  <div className="flex-col ai-start f-0 mr-1 text-2" 
                     style={workspace.id === w.id? { color: "var(--active)" } : undefined}
                   >
                     <Icon path={mdiViewCarousel} size={1} />
@@ -149,79 +134,53 @@ export const WorkspaceMenu = (props: P) => {
       <WorkspaceAddBtn  
         dbs={props.prgl.dbs} 
         connection_id={workspace.connection_id} 
-        setWorkspace={setWorkspace} 
-        closePopup={closePopup}
+        setWorkspace={setWorkspace}  
         btnProps={{
           children: "New workspace",
-          "data-command": "WorkspaceMenuDropDwon.WorkspaceAddBtn",
+          "data-command": "WorkspaceMenuDropDown.WorkspaceAddBtn",
         }}
       />
     )}
   />
 
-  const renderedWorkspaces = workspaces;
-  return <div 
+  const renderedWorkspaces = window.isLowWidthScreen? workspaces.filter(w => w.id === workspace.id) : workspaces;
+  return <FlexRow
     ref={listRef}
-    className="flex-row jc-center text-white ai-start f-1  min-w-0 o-auto h-fit" 
+    className={classOverride("WorkspaceMenu as-end jc-center text-white ai-start f-1  min-w-0 o-auto h-fit", className)} 
     style={{ 
       gap: "1px",
-      // marginLeft: window.isLowWidthScreen? undefined : "2em"
     }}
   >
-    {WorkspaceMenuDropDwon}
-    {!window.isLowWidthScreen && <>
-      <ul className={"o-auto f-1 min-w-0 max-w-fit flex-row no-scroll-bar "} onWheel={onWheelScroll()}>
-        {renderedWorkspaces.map(w => 
-          (<li key={w.id} 
-            className={"workspace-list-item relative " + (workspace.id === w.id? "active" : "")}
-          >
-            <Btn
-              style={{
-                ...(workspace.id !== w.id? {
-                  color: "var(--gray-300)",
-                  background: "var(--gray-700)",
-                } : {
-                  color: "white",
-                  fontWeight: 600,
-                  background: "var(--gray-600)",
-                }),
-                borderRadius: 0,
-                whiteSpace: "nowrap",
-              }}
-              onClick={() => {
-                setWorkspace(w)
-              }}
-            >
-              {w.name}
-            </Btn>
-          </li>)
-      )}
-      </ul>
-      {!!(dbs.workspaces as any).insert && <div 
-        key={"add-btn"} 
-        className="add-wsp-btn flex-col ai-center h-full"
-        style={{
-          // padding: "6px"
-        }}
-      >
-        <WorkspaceAddBtn  
-          dbs={props.prgl.dbs} 
-          connection_id={workspace.connection_id} 
-          setWorkspace={setWorkspace} 
-          closePopup={() => {}} 
-          className="flex-col f-1 ai-center"
-          btnProps={{
-            variant: "default",
-            "data-command": "WorkspaceMenu.WorkspaceAddBtn",
-            color: undefined,
-            style: { 
-              flex: !window.isMobileDevice? 1 : undefined, 
+    <ul 
+      className={"o-auto f-1 min-w-0 max-w-fit flex-row no-scroll-bar "} 
+      onWheel={onWheelScroll()}
+    >
+      {renderedWorkspaces.map(w => 
+        (<li key={w.id} 
+          className={"workspace-list-item text-1 relative " + (workspace.id === w.id? "active" : "")}
+        >
+          <Btn
+            style={{
+              padding: "16px",
+              borderBottomStyle: "solid",
+              borderBottomWidth: "4px",
+              borderBottomColor: "transparent",
+              ...(workspace.id === w.id && {
+                borderBottomColor: "var(--active)",
+                fontWeight: 600,
+              }),
               borderRadius: 0,
-              color: `white`
-            }
-          }}
-        />
-      </div>}
-    </>}
-  </div>
+              whiteSpace: "nowrap",
+            }}
+            onClick={() => {
+              setWorkspace(w)
+            }}
+          >
+            {w.name}
+          </Btn>
+        </li>)
+    )}
+    </ul>
+    {WorkspaceMenuDropDown}
+  </FlexRow>
 }

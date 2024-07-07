@@ -1,8 +1,7 @@
-import { IRange } from "monaco-editor";
 import { getKeys, isObject } from "prostgles-types";
-import { CodeBlock } from "./completionUtils/getCodeBlock";
-import { MonacoSuggestion, ParsedSQLSuggestion } from "./registerSuggestions";
-// import { asSQL } from "./KEYWORDS";
+import type { CodeBlock } from "./completionUtils/getCodeBlock";
+import type { MonacoSuggestion, ParsedSQLSuggestion } from "./registerSuggestions";
+import type { IRange } from "../../W_SQL/monacoEditorTypes";
 const asSQL = (v: string, lang = "sql") => "```" + lang + "\n"+ v +"\n```";
 
 export type MinimalSnippet = { 

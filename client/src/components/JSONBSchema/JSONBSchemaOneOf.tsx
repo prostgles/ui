@@ -1,6 +1,7 @@
-import { getKeys, isObject, JSONB, omitKeys, pickKeys } from "prostgles-types";
+import type { JSONB } from "prostgles-types";
+import { getKeys, isObject, omitKeys, pickKeys } from "prostgles-types";
 import React from "react";
-import { JSONBSchemaCommonProps } from "./JSONBSchema";
+import type { JSONBSchemaCommonProps } from "./JSONBSchema";
 import { JSONBSchemaObject } from "./JSONBSchemaObject";
 
 
@@ -22,7 +23,7 @@ export const JSONBSchemaOneOfType = ({ value, schema, onChange, ...oProps } : P)
   const firstSchemaKeys = getKeys(firstSchema ?? {});
   const commonRequiredPropertyNames = firstSchemaKeys.filter(propName => { 
     
-    const fPropS = getFieldObj(firstSchema?.[propName]!);
+    const fPropS = getFieldObj(firstSchema![propName]!);
     return !fPropS.optional && s.oneOfType.every(subSchema => {
       const objType = subSchema[propName];
       const propS = typeof objType === "string"? { type: objType } : objType;
@@ -90,9 +91,10 @@ export const JSONBSchemaOneOfType = ({ value, schema, onChange, ...oProps } : P)
        * If matching a different schema then keep only common properties
        */
       const newSchemaIdx = getOneOfSchemaIndex(newValue)
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if(newValue && newSchemaIdx !== matchingOneOfSchemaIdx){
         //@ts-ignore
-        onChange(pickKeys(newValue, getKeys(s.oneOfType[newSchemaIdx]) ?? commonRequiredPropertyNames));
+        onChange(pickKeys(newValue, getKeys(s.oneOfType[newSchemaIdx])));
 
       } else {
         onChange(newValue);

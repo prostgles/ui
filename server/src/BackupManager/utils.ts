@@ -1,23 +1,23 @@
 
 import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
-import path from 'path'; 
+import path from "path"; 
 import { FileManager } from "prostgles-server/dist/FileManager/FileManager";
-import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";  
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";  
 
 
 import { getRootDir } from "../electronConfig";
-import { ConnectionManager } from "../ConnectionManager/ConnectionManager";
+import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
 import { getConnectionDetails } from "../connectionUtils/getConnectionDetails"; 
 import { BACKUP_FOLDERNAME } from "./BackupManager";
-import { EnvVars } from "./pipeFromCommand";
+import type { EnvVars } from "./pipeFromCommand";
 import { getAge } from "../../../commonTypes/utils";
 import type { Connections, DBS } from ".."; 
-import { getCloudClient } from "../enterprise/cloudClients";
+import { getCloudClient } from "../cloudClients/cloudClients";
 
 export const getConnectionUri = (c: Connections) => c.db_conn || `postgres://${c.db_user}:${c.db_pass || ""}@${c.db_host || "localhost"}:${c.db_port || "5432"}/${c.db_name}`;
 
 export async function getFileMgr(dbs: DBS, credId: number | null){
-  const localFolderPath = path.resolve(getRootDir() + '/' + BACKUP_FOLDERNAME);
+  const localFolderPath = path.resolve(getRootDir() + "/" + BACKUP_FOLDERNAME);
   
   let cred;
   if(credId){
@@ -40,15 +40,15 @@ export async function getBkp(dbs: DBOFullyTyped<DBSchemaGenerated>, bkpId: strin
 }
 
 export function bytesToSize(bytes: number) {
-  var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  if (bytes == 0) return '0 Byte';
-  var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)) + "");
-  return Math.round(bytes / Math.pow(1024, i)) + ' ' + sizes[i];
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+  if (bytes == 0) return "0 Byte";
+  const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)) + "");
+  return Math.round(bytes / Math.pow(1024, i)) + " " + sizes[i];
 }
 
 export function getSSLEnvVars(c: Connections, connMgr: ConnectionManager): EnvVars {
-  let result = {} as any;
-  if(c.db_ssl){
+  const result = {} as any;
+  if((c as any).db_ssl){
     result.PGSSLMODE = c.db_ssl;
   }
   if(c.db_pass){

@@ -1,14 +1,15 @@
 
  
-import path from 'path';
+import path from "path";
 import * as fs from "fs";
-import { InitResult } from "prostgles-server/dist/initProstgles";
+import type { InitResult } from "prostgles-server/dist/initProstgles";
+import { RELOAD_NOTIFICATION } from "../../commonTypes/utils";
 
 let showedMessage = false;
 export const startDevHotReloadNotifier = ({ io, port }: { io: InitResult["io"]; port: number }) => {
   const showMessage = () => {
     if(showedMessage) return
-    console.log(`\n\nProstgles UI accessible at:\n\n http://localhost:${port}`);
+    console.log(`\n\n${RELOAD_NOTIFICATION}:\n\n http://localhost:${port}`);
     showedMessage = true
   }
   if(process.env.NODE_ENV === "development"){

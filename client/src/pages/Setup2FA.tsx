@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { SuccessMessage } from "../components/Animations";
 import Btn from "../components/Btn";
 import Chip from "../components/Chip";
@@ -8,10 +8,10 @@ import FormField from "../components/FormField/FormField";
 import { InfoRow } from "../components/InfoRow";
 import PopupMenu from "../components/PopupMenu";
 import { QRCodeImage } from "../components/QRCodeImage";
-import { UserData } from '../dashboard/Dashboard/dashboardUtils';
-import { FullExtraProps } from "./Project";
+import type { UserData } from "../dashboard/Dashboard/dashboardUtils";
+import type { Prgl } from "../App";
 
-export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<FullExtraProps, "dbsMethods"> & { user: UserData; onChange: VoidFunction }) => {
+export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<Prgl, "dbsMethods"> & { user: UserData; onChange: VoidFunction }) => {
 
   const [OTP, setOTP] = useState<{ url: string; secret: string; recoveryCode: string; }>();
 
@@ -41,7 +41,7 @@ export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<FullExtraProps, "d
     }
   }
   const imageSize = 250;
-  return user.has_2fa_enbled? 
+  return user.has_2fa_enabled? 
     <Btn  color="warn" 
       variant="faded"
       onClickMessage={async (_, setMsg) => { 
@@ -57,7 +57,7 @@ export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<FullExtraProps, "d
       render={(closePopup, state, setState) => (
         enabled? <SuccessMessage message="2FA Enabled"></SuccessMessage> :
         <div className="flex-col gap-1 ai-center" style={{ maxWidth: `${imageSize + 100}px` }}>
-          <div className={OTP?.url? "text-gray-400" : ""}>
+          <div className={OTP?.url? "text-2" : ""}>
             Along with your username and password, you will be asked to verify your identity using the code from authenticator app.
           </div>
 

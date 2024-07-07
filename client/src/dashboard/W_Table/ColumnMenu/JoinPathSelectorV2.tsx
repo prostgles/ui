@@ -1,12 +1,18 @@
 import React, { useMemo } from "react"
-import { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
-import { TargetPath, getJoinPathStr, getJoinPaths } from "../tableUtils/getJoinPaths";
-import { ParsedJoinPath } from "prostgles-types";
-import Select, { FullOption } from "../../../components/Select/Select";
+import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
+import type { TargetPath} from "../tableUtils/getJoinPaths";
+import { getJoinPathStr, getJoinPaths } from "../tableUtils/getJoinPaths";
+import type { ParsedJoinPath } from "prostgles-types";
+import type { FullOption } from "../../../components/Select/Select";
+import Select from "../../../components/Select/Select";
 import { isDefined } from "../../../utils";
+import CodeExample from "../../CodeExample";
+import { FlexCol } from "../../../components/Flex";
+import type { BtnProps } from "../../../components/Btn";
 type P = {
   tables: DBSchemaTablesWJoins;
   tableName: string;
+  btnProps?: BtnProps<void>;
   onChange: (
     targetPath: TargetPath,  
     multiJoin: {
@@ -19,6 +25,23 @@ type P = {
   variant?: "expanded"
 };
 
+export const getJoinPathLabel = (j: TargetPath, { tableName, tables }: Pick<P, "tableName" | "tables">) => {
+  const labels = j.path.map((p, pIdx) => {
+    const prevPath = j.path[pIdx-1];
+    const hasMultipleFkeyConstraints = !prevPath? hasMultiFkeys(tables, tableName, p.table) : hasMultiFkeys(tables, p.table, prevPath.table); 
+    let label = p.table;
+    if(hasMultipleFkeyConstraints){
+      label = `(${Object.entries(p.on![0]!).map(([l, r]) => `${l} = ${r}`).join(" AND ")}) ${p.table}`
+    }
+    return { label, multiJoin: hasMultipleFkeyConstraints && { value: hasMultipleFkeyConstraints, chosen: Object.entries(p.on![0]!) } };
+  });
+
+  return {
+    labels,
+    label: labels.map(d => d.label).join(" > ")
+  }
+}
+
 export const getAllJoins = ({ tableName, tables, value }: Pick<P, "tableName" | "tables" | "value">) => {
 
   const allJoins = getJoinPaths(tableName, tables);
@@ -26,16 +49,7 @@ export const getAllJoins = ({ tableName, tables, value }: Pick<P, "tableName" | 
   const targetPathIdx = allJoins.findIndex(j => j.pathStr === valueStr);
   const targetPath = allJoins[targetPathIdx];
   const allJoinsWithLabels = allJoins.map(j => {
-    const labels = j.path.map((p, pIdx) => {
-      const prevPath = j.path[pIdx-1];
-      const hasMultipleFkeyConstraints = !prevPath? hasMultiFkeys(tables, tableName, p.table) : hasMultiFkeys(tables, p.table, prevPath.table); 
-      let label = p.table;
-      if(hasMultipleFkeyConstraints){
-        label = `(${Object.entries(p.on![0]!).map(([l, r]) => `${l} = ${r}`).join(" AND ")}) ${p.table}`
-      }
-      return { label, multiJoin: hasMultipleFkeyConstraints && { value: hasMultipleFkeyConstraints, chosen: Object.entries(p.on![0]!) } };
-    });
-    const label = labels.map(d => d.label).join(" > ");
+    const { label, labels } = getJoinPathLabel(j, { tableName, tables })
 
     return {
       ...j,
@@ -62,12 +76,28 @@ export const getRankingFunc = (searchTerm: string, labels: string[]) => {
   return Infinity;
 }
 
-export const JoinPathSelectorV2 = ({ tables, tableName, value, onChange, variant, getFullOption }: P) => {
+export const JoinPathSelectorV2 = ({ tables, tableName, value, onChange, variant, getFullOption, btnProps }: P) => {
 
   const { allJoins, targetPathIdx } = useMemo(() => 
     getAllJoins({ tableName, tables, value }), 
     [tableName, tables, value]
   );
+
+  const nestedColumnQuery = useMemo(() => {
+    if(!value) return;
+    const asName = v => JSON.stringify(v);
+    const rootTable = asName(tableName);
+    return [
+      `SELECT ${rootTable}.*, ${asName(value.at(-1)!.table)}.*`,
+      `FROM ${rootTable}`,
+      ...value
+        .map((path, index) => 
+          `JOIN ${asName(path.table)} \n  ON ${path.on.map(on => Object.entries(on).map(([k, v]) => {
+            const prevTable = !index? rootTable : asName(value[index - 1]?.table);
+            return `${prevTable}.${k} = ${asName(path.table)}.${v}`
+          })).join(" AND ")}`),
+    ].join("\n");
+  }, [value, tableName]);
 
   const fullOptions = allJoins.map((j)=> {
     
@@ -80,8 +110,25 @@ export const JoinPathSelectorV2 = ({ tables, tableName, value, onChange, variant
     };
   });
   const targetValue = isDefined(targetPathIdx)? fullOptions[targetPathIdx] : undefined;
+
+  const infoNode = !nestedColumnQuery? undefined : <FlexCol>
+    <div>Join path details</div>
+    <CodeExample 
+      language="sql" 
+      value={nestedColumnQuery} 
+      style={{ 
+        minWidth: "400px", 
+        minHeight: "250px" 
+      }} 
+    />
+  </FlexCol>
+
   return <Select 
-    label={"Target table"}
+    label={btnProps? undefined : { 
+      label: "Target table",
+      info: infoNode,
+    }}
+    btnProps={btnProps}
     value={targetValue?.key}
     data-command="JoinPathSelectorV2"
     fullOptions={fullOptions}
@@ -96,6 +143,7 @@ export const JoinPathSelectorV2 = ({ tables, tableName, value, onChange, variant
       }
       onChange(targetPath, fullOpt.lastJoinLabel?.multiJoin);
     }}
+    
   />
 }
 

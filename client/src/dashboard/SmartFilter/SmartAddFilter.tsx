@@ -1,24 +1,31 @@
-import { mdiFilterPlus, mdiSetCenter } from "@mdi/js";
-import { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { ValidatedColumnInfo } from "prostgles-types";
-import React from 'react';
-import { FilterType, JoinedFilter, SimpleFilter, SmartGroupFilter } from '../../../../commonTypes/filterUtils';
-import Btn, { BtnProps } from '../../components/Btn';
-import Popup from '../../components/Popup/Popup';
-import SearchList, { SearchListProps } from '../../components/SearchList';
-import Select from "../../components/Select/Select";
-import { CommonWindowProps } from '../Dashboard/Dashboard';
-import RTComp from '../RTComp';
+import { mdiFilterPlus } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { ValidatedColumnInfo } from "prostgles-types";
+import React, { useState } from "react";
+import type { FilterType, JoinedFilter, SimpleFilter, SmartGroupFilter } from "../../../../commonTypes/filterUtils";
+import type { BtnProps } from "../../components/Btn";
+import Btn from "../../components/Btn";
+import Popup from "../../components/Popup/Popup";
+import SearchList from "../../components/SearchList";
+import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { JoinV2 } from "../Dashboard/dashboardUtils";
 import { getColumnDataColor } from "../SmartForm/SmartFormField/SmartFormField";
-import JoinPathSelector from '../W_Table/JoinPathSelector';
-import { getFilterableCols } from "./SmartSearch";
+import { AddJoinFilter } from "./AddJoinFilter";
+import { getFilterableCols } from "./SmartSearch/SmartSearch";
+import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
+import { isDefined } from "../../utils";
+import { getComputedColumnSelect } from "../W_Table/tableUtils/getTableSelect";
+import { getJoinPaths } from "../W_Table/tableUtils/getJoinPaths";
+import { FlexRow } from "../../components/Flex";
+import { SwitchToggle } from "../../components/SwitchToggle";
+import { getJoinPathLabel } from "../W_Table/ColumnMenu/JoinPathSelectorV2";
 
 export type SmartAddFilterProps = {
   db: DBHandlerClient;
   tableName: string;
-  tables: CommonWindowProps["tables"];
-  // columns: ValidatedColumnInfo[];
-  onChange?: (filter: SmartGroupFilter) => void;
+  tables: CommonWindowProps["tables"]; 
+  selectedColumns: ColumnConfig[] | undefined;
+  onChange: (filter: SmartGroupFilter, addedFilter: SimpleFilter, isAggregate: boolean) => void;
   detailedFilter?: SmartGroupFilter;
   className?: string;
   style?: React.CSSProperties;
@@ -26,191 +33,227 @@ export type SmartAddFilterProps = {
   variant?: "full";
   defaultType?: FilterType;
   btnProps?: BtnProps;
+  itemName?: "filter" | "condition";
 };
 
-type SmartFilterState = {
-  popupAnchor?: HTMLElement;
-  defaultSearch?: string;
-  searchTerm?: string;
-  options?: string[];
-  addFilter?: {
+export const SmartAddFilter = (props: SmartAddFilterProps) => {
+
+  const [addFilter, setAddFilter] = useState<{
     fieldName?: string;
     type?: SimpleFilter["type"];
-    path?: string[]
-  };
-  existsFilterType: JoinedFilter["type"];
-  searchItems?: SearchListProps["items"];
-}
+  }>();
+  const [joinOpts, setJoinOpts] = useState<{
+    path: JoinV2[];
+    type: JoinedFilter["type"];
+  }>();
+  const [popupAnchor, setPopupAnchor] = useState<HTMLElement>();
+  const {
+    tableName,
+    onChange, 
+    detailedFilter = [],
+    className = "",
+    style = {},
+    tables,
+    filterFields,
+    defaultType,
+    btnProps,
+    itemName = "filter",
+    variant,
+    selectedColumns = [],
+  } = props;
 
-export default class SmartAddFilter extends RTComp<SmartAddFilterProps, SmartFilterState> {
+  const [includeLinkedColumns, setIncludeLinkedColumns] = useState(false);
+  const isCategorical = (col: Pick<ValidatedColumnInfo, "tsDataType" | "references">) => Boolean(col.references?.length || !["number", "Date"].includes(col.tsDataType));
+  const lastPathItem = joinOpts?.path.at(-1);
+  const currentTable = lastPathItem?.tableName ?? tableName;
+  const filterableTableColumns = getFilterableCols(tables.find(t => t.name === currentTable)?.columns ?? [])
+    .filter(c => c.filter && (!filterFields || filterFields.includes(c.name)));
+  const joinableTables = tables.filter(t => getFilterableCols(t.columns).length)
+  if(!filterableTableColumns.length && !joinableTables.length){
+    return null;
+  }
+  const joinColumns = !includeLinkedColumns? [] : getJoinPaths(tableName, tables).flatMap((joinPath, i) => {
+    const { table, path } = joinPath;
+    const { label, labels } = getJoinPathLabel(joinPath, { tableName, tables });
+    return table.columns.flatMap((jc, idx) => {
+      return {
+        key: `${joinPath.pathStr}.${jc.name}`,
+        ranking: Number(`2.${labels.length}`),
+        label: `${table.name}.${jc.name}`,
+        subLabel: path.length > 1? label : undefined,
+        references: jc.references,
+        name: jc.name,
+        data_type: jc.tsDataType,
+        udt_name: jc.udt_name,
+        tsDataType: jc.tsDataType,
+        is_pkey: false,
+        computedConfig: undefined,
+        joinInfo: { ...joinPath, column: jc },
+      }
+    });
+  });
+  
+  const columns = [
+    ...selectedColumns
+      .map(c => {
+        const { computedConfig } = c;
+        if(!computedConfig) return undefined;
+        const { tsDataType, udt_name } = computedConfig.funcDef.outType
+        return {
+          key: c.name,
+          ranking: 0,
+          name: c.name,
+          label: c.name,
+          data_type: tsDataType,
+          subLabel: undefined,
+          udt_name,
+          tsDataType,
+          is_pkey: false,
+          computedConfig: c.computedConfig,
+          joinInfo: undefined,
+        }
+      }).filter(isDefined),
+    ...filterableTableColumns.map((c, i) => ({ 
+      ...c, 
+      key: c.name,
+      ranking: 1,
+      label: c.name, 
+      subLabel: undefined, 
+      computedConfig: undefined, 
+      joinInfo: undefined, 
+    })),
+    ...joinColumns,
+  ];
+  let popup;
 
-  state: SmartFilterState = {
-    searchTerm: "",
-    existsFilterType: "$existsJoined"
+  const resetState = () => {
+    setAddFilter(undefined);
+    setJoinOpts(undefined);
   }
 
-  render(){
-    const { addFilter, existsFilterType, popupAnchor } = this.state;
-    const {
-      tableName,
-      onChange, 
-      detailedFilter: df,
-      className = "",
-      style = {},
-      tables,
-      filterFields,
-      defaultType,
-      btnProps,
-    } = this.props;
-    const detailedFilter = df || [];
+  if(addFilter){
+    const onAddColumnFilter = (c: typeof columns[number]) => {
+      const fieldName = c.name;
+      const isGeo = c.udt_name.startsWith("geo");
+      const joinPath = c.joinInfo?.path ?? joinOpts?.path.map(j => {
+        const onObj = j.on.map(c => Object.fromEntries(c));
+        return { table: j.tableName, on: onObj }
+      });
+      const joinType = joinOpts?.type ?? c.joinInfo ? "$existsJoined" : undefined;
+      
+      const type = isGeo? "$ST_DWithin" : defaultType ?? (joinPath? "not null" : isCategorical(c)? "$in" : "$between")
+      const innerFilter: SimpleFilter = {
+        fieldName,
+        type,
+        value: [],
+        disabled: true,
+        complexFilter: c.computedConfig? {
+          type: "$filter",
+          leftExpression: getComputedColumnSelect(c.computedConfig)
+        } : undefined,
+      };
 
-    const columns = getFilterableCols(tables.find(t => t.name === tableName)?.columns ?? []).filter(c => !filterFields || filterFields.includes(c.name));
-    const isCategorical = (col: ValidatedColumnInfo) => Boolean(col.references?.length || !["number", "Date"].includes(col.tsDataType));
+      const newFilter: SimpleFilter = joinPath && joinType? {
+        type: joinType,
+        path: joinPath,
+        filter: innerFilter,
+        disabled: true
+      } : innerFilter;
 
-    const hasJoins = JoinPathSelector.hasJoins(tableName, tables);
+      onChange([
+        ...detailedFilter,
+        newFilter,
+      ], newFilter, c.computedConfig?.funcDef.isAggregate ?? false);
 
-    let lastTable;
-    if(addFilter?.path?.length){
-      lastTable = addFilter.path[addFilter.path.length-1]
+      resetState();
     }
-    const newFilterCols = (addFilter?.path?  (addFilter.path.length? tables.find(t => t.name === lastTable)?.columns : []) : columns) ?? [];
 
-    const joinableTables = tables.filter(t => getFilterableCols(t.columns).length)
-
-    if(!columns.length && !joinableTables.length){
-      return null;
-    }
-
-    let popup;
-    if(addFilter){
-      popup = <Popup 
-          positioning="beneath-left"
-          clickCatchStyle={{ opacity: 0 }}
-          anchorEl={popupAnchor}
-          onClose={() => {
-            this.setState({
-              addFilter: undefined
-            })
+    popup = <Popup 
+      positioning="beneath-left"
+      data-command="SmartAddFilter"
+      clickCatchStyle={{ opacity: 0.3 }}
+      anchorEl={popupAnchor}
+      onClose={() => {
+        resetState();
+      }}
+      contentStyle={{ padding: 0 }}
+    >
+      <FlexRow>
+        {!joinOpts && <SwitchToggle 
+          data-command="SmartAddFilter.toggleIncludeLinkedColumns"
+          className="mx-p5"
+          variant="row-reverse"
+          label={{
+            label: "Related/Linked columns",
+            info: "Include columns from tables that can be joined (through existing constraints) to this table"
           }}
-          contentStyle={{ padding: 0 }}
-        >
-          {!hasJoins? null : 
-          <Btn title={(addFilter.path? "Disable" : "Enable") + " Join filter"}
-            className="w-full"
-            style={{ width: "100%" }}
-            iconPath={mdiSetCenter}
-            color={addFilter.path? "action" : undefined}
-            onClick={() => {
-              this.setState({
-                addFilter: { 
-                  ...addFilter, 
-                  path: addFilter.path? undefined : []
-                }
-              })
-            }}
-          >
-            {(addFilter.path? "Disable" : "Enable") + " Join filter"}
-          </Btn>}
-          {addFilter.path && <Select
-            className="my-p5 m-auto"
-            title="Filter type"
-            fullOptions={[
-              { key: "$existsJoined", label: "Exists"}, 
-              { key: "$notExistsJoined",  label: "Not Exists"}
-            ]} 
-            value={existsFilterType} 
-            onChange={existsFilterType => {
-              this.setState({ existsFilterType })
-            }} 
-          />}
-          <div 
-            className={"min-s-0 " + 
-              (window.isMobileDevice? " flex-col " : " flex-row " ) + 
-              "  bt b-gray-200"
-            } 
-            style={{ maxHeight: "90vh"}}
-          >
-            {!!hasJoins && !!addFilter.path && <div className="flex-col f-1 o-auto br b-gray-200">
-              <JoinPathSelector 
-                tables={joinableTables} 
-                tableName={tableName} 
-                onSelect={(path) => {
-                  this.setState({ addFilter: { ...addFilter, path } })
-                }}
-              />
-            </div>}
-            {!newFilterCols.length? null : <SearchList 
-              // label={
-              //   <div className="pl-p5 pt-p5">
-              //     Choose column {(lastTable? ` (${lastTable})` : "")}
-              //   </div> 
-              // }
-              className="search-list-cols f-1"
-              style={{ maxHeight: "unset"}}
-              rowStyleVariant="row-wrap"
-              autoFocus={true}
-              items={newFilterCols.filter(c => c.filter).map(c => ({ 
-                key: c.name, 
-                label: c.name,
-                subLabel: c.data_type,
-                styles: {
-                  subLabel: {
-                    color: getColumnDataColor(c),
-                    fontWeight: 300,
-                  }
-                },
-                onPress: () => {
-                  const fieldName = c.name;
-                  const col = newFilterCols.find(c => c.name === fieldName);
-                  if(!col) return;
-
-                  const isGeo = col.udt_name.startsWith("geo")
-                  const innerFilter: SmartGroupFilter[number]  = {
-                    fieldName,
-                    type: isGeo? "$ST_DWithin" : defaultType ?? (addFilter.path? "not null" : isCategorical(col)? "$in" : "$between"),
-                    value: [],
-                    // disabled: isGeo
-                    disabled: true,
-                  };
-                  const newFilter = addFilter.path? {
-                    type: existsFilterType,
-                    path: addFilter.path,
-                    filter: innerFilter,
-                    disabled: true
-                  } : innerFilter;
-
-                  onChange?.([
-                    ...detailedFilter,
-                    newFilter,
-                  ]);
-
-                  this.setState({ addFilter: undefined })
-                }
-              }))}
-            />}
-          </div>
-        </Popup>
-
-    }
-
-    return <>
-      <Btn title="Add filter"
-        className={"shadow bg-0 " + className}
-        style={{  borderRadius: "6px", ...style }} // backgroundColor: "white",
-        color="action"
-        iconPath={mdiFilterPlus} 
-        onClick={(e) => {
-          this.setState({
-            addFilter: {},
-            popupAnchor: e.currentTarget
-          })
+          checked={includeLinkedColumns}
+          onChange={setIncludeLinkedColumns}
+        />}
+        <AddJoinFilter 
+          tableName={tableName}
+          tables={tables}
+          disabledInfo={
+            includeLinkedColumns? `Must disable Related/Linked columns` : undefined
+          }
+          {...joinOpts}
+          onChange={jo => {
+            setIncludeLinkedColumns(false);
+            setJoinOpts(jo);
+          }} 
+        />
+      </FlexRow>
+      <div 
+        className={"min-s-0 " + 
+          (window.isMobileDevice? " flex-col " : " flex-row " ) + 
+          " "
+        } 
+        style={{ 
+          maxHeight: "90vh",
         }}
-        children={this.props.variant === "full"? "Add filter" : undefined}
-        data-command={"SmartAddFilter"}
-        {...btnProps}
-      />
-      {popup}
-    </>
+      >
+        {!!columns.length && <SearchList 
+          className="search-list-cols f-1"
+          style={{ maxHeight: "unset"}}
+          autoFocus={true}
+          items={columns.map(c => ({ 
+            key: c.key, 
+            label: c.label,
+            /** 
+             * contentBottom used instead of subLabel to exclude 
+             * content from search for better experience 
+            */
+            contentBottom: <div className="mt-p25 text-1">{
+              c.subLabel
+            }</div>,
+            ranking: c.ranking,
+            contentRight: <div style={{
+              color: getColumnDataColor(c),
+              fontWeight: 300,
+            }}>{c.udt_name.toUpperCase()}</div>,
+            onPress: () => onAddColumnFilter(c)
+          }))}
+        />}
+      </div>
+    </Popup>
   }
-}
 
+  const title = `Add ${itemName}`;
+  return <>
+    <Btn title={title}
+      className={"shadow bg-color-0 " + className}
+      style={{  borderRadius: "6px", ...style }}
+      color="action"
+      iconPath={mdiFilterPlus} 
+      onClick={(e) => {
+        setPopupAnchor(e.currentTarget);
+        setAddFilter({});
+      }}
+      children={variant === "full"? title : undefined}
+      data-command={"SmartAddFilter"}
+      disabledInfo={!columns.length? "No filterable columns" : ""}
+      {...btnProps}
+    />
+    {popup}
+  </>
+}

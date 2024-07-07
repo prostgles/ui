@@ -1,15 +1,18 @@
 import { isDefined } from "prostgles-types";
-import { CodeBlock, getCurrentNestingOffsetLimits } from "./completionUtils/getCodeBlock";
-import { SQLSuggestion } from "../SQLEditor";
-import { MinimalSnippet, suggestSnippets } from "./CommonMatchImports";
+import type { CodeBlock} from "./completionUtils/getCodeBlock";
+import { getCurrentNestingOffsetLimits } from "./completionUtils/getCodeBlock";
+import type { SQLSuggestion } from "../SQLEditor";
+import type { MinimalSnippet} from "./CommonMatchImports";
+import { suggestSnippets } from "./CommonMatchImports";
 import { getExpected } from "./getExpected";
-import { GetKind, ParsedSQLSuggestion } from "./registerSuggestions";
+import { getKind, type GetKind, type ParsedSQLSuggestion, type SQLMatchContext } from "./registerSuggestions";
+import { suggestFuncArgs } from "./suggestFuncArgs";
 
 type ExpectString = SQLSuggestion["type"] | "condition" | "number" | "string";
 export type KWD = { 
   kwd: string;
   expects?: ExpectString | `(${ExpectString})` | readonly ExpectString[];
-  options?: readonly MinimalSnippet[] | readonly string[] | ((ss: ParsedSQLSuggestion[]) => ParsedSQLSuggestion[]);
+  options?: readonly MinimalSnippet[] | readonly string[] | ((ss: ParsedSQLSuggestion[], cb: CodeBlock) => ParsedSQLSuggestion[]);
 
   justAfter?: readonly string[];
   /**
@@ -44,12 +47,13 @@ type Opts = {
   topResetKwd?: string;
 }
 
+type WithKwdArgs = SQLMatchContext & {
+  opts?: Opts;
+}
+
 export const withKWDs = <KWDD extends KWD>(
-  kwds: readonly KWDD[], 
-  cb: CodeBlock,
-  getKind: GetKind,
-  ss: ParsedSQLSuggestion[],
-  opts?: Opts
+  kwds: readonly KWDD[],
+  { cb, ss, setS, opts, sql }: WithKwdArgs
 ): {
   suggestKWD: (vals: string[], sortText?: string) => {
     suggestions: ParsedSQLSuggestion[];
@@ -57,9 +61,9 @@ export const withKWDs = <KWDD extends KWD>(
   prevKWD: KWDD | undefined;
   prevIdentifiers: string[];
   remainingKWDS: (KWDD & { docs?: string; sortText: string; })[];
-  getSuggestion: (delimiter?: string, excludeIf?: string[]) => {
+  getSuggestion: (delimiter?: string, excludeIf?: string[]) => Promise<{
     suggestions: ParsedSQLSuggestion[];
-  };
+  }>;
 } => {
   const { notOrdered = false, topResetKwd } = opts ?? {};
  
@@ -77,7 +81,7 @@ export const withKWDs = <KWDD extends KWD>(
     const matchedStartingIndexes: number[] = [];
     currNestingTokens.forEach((t, i) => {
       if(kwdWords.every((kWord, kWordIdx) => {
-        return currNestingTokens[i + kWordIdx]?.text.toUpperCase() === kWord;
+        return currNestingTokens[i + kWordIdx]?.text.toUpperCase() === kWord.toUpperCase();
       })){
         matchedStartingIndexes.push(i);
       }
@@ -109,7 +113,7 @@ export const withKWDs = <KWDD extends KWD>(
       longerOverlapping.length > k.length  
     );
   }).sort((a, b) => a.start - b.start);
-  const prevKWDTokens = usedKeywords.filter(k => k.startingToken.offset <= cb.offset);
+  const prevKWDTokens = usedKeywords.filter(k => k.startingToken.end <= cb.offset);
   
   const prevTokens = cb.tokens.slice(startIndex).filter(t => t.offset < cb.offset && currNestingId === t.nestingId);
   const nextTokens = cb.tokens.filter(t => t.offset >= cb.offset && currNestingId === t.nestingId);
@@ -179,16 +183,25 @@ export const withKWDs = <KWDD extends KWD>(
     prevKWD,
     prevIdentifiers,
     remainingKWDS,
-    getSuggestion: (delimiter?: string, excludeIf?: string[]): {
+    getSuggestion: async (delimiter?: string, excludeIf?: string[]): Promise<{
       suggestions: ParsedSQLSuggestion[];
-    } => {
+    }> => {
+
+      /** TODO Add parentCb */
+      const funcArgs = await suggestFuncArgs({ cb, ss, setS, sql });
+      if(funcArgs) return funcArgs;
 
       if(cb.currToken?.text === ";"){
         return { suggestions: [] };
       }
 
       const [firstInputToken] = (prevKWDFull?.inputTokens ?? []).filter(t => t.type !== "delimiter.parenthesis.sql" && t.end <= cb.currOffset);
-      const prevKWDMissingInput = prevKWD && (!firstInputToken || kwds.some(k => k.kwd.toLowerCase() === firstInputToken.textLC) || cb.currToken)
+      const gapsInInputTokens = (prevKWDFull?.inputTokens ?? []).filter((t, i) => {
+        const prevT = prevKWDFull?.inputTokens[i - 1];
+        return prevT && prevT.end < t.offset;
+      });
+      const stillWritingInput = Boolean(prevKWD && firstInputToken && !gapsInInputTokens.length && cb.currToken);
+      const prevKWDMissingInput = stillWritingInput || !!prevKWD && (!firstInputToken || kwds.some(k => k.kwd.toLowerCase() === firstInputToken.textLC)); //  || cb.currToken);
       if((prevKWD?.expects || prevKWD?.options) && prevKWDMissingInput){
         
         let firstSuggestions: ParsedSQLSuggestion[] = [];
@@ -200,7 +213,7 @@ export const withKWDs = <KWDD extends KWD>(
             const parsedSuggestions = options1.filter(o => o.type)
             firstSuggestions = suggestSnippets(minimalSnippets).suggestions.concat(parsedSuggestions);
           } else if(typeof options === "function") {
-            firstSuggestions = options(ss);
+            firstSuggestions = options(ss, cb);
           }
         }
 
@@ -209,7 +222,7 @@ export const withKWDs = <KWDD extends KWD>(
 
           return {
             suggestions: [
-              ...firstSuggestions.map(s => ({ ...s, sortText: "0" })),
+              ...firstSuggestions.map(s => ({ ...s, sortText: "0" + (s.sortText ?? "")})),
               ...expectedSuggestions.map(s => ({
                 ...s,
                 sortText: (cb.prevTokens.some(prevT => s.insertText === prevT.text )? "b" : "a") + (s.sortText ?? ""),
@@ -220,11 +233,13 @@ export const withKWDs = <KWDD extends KWD>(
       }
 
       return suggestSnippets(remainingKWDS.map(k => {
+        const addDelimiter = delimiter && 
+        ![...(excludeIf ?? []), delimiter, "("]
+          .some(t => cb.ltoken?.text.trim().endsWith(t));
+
         const insertText = (
-          delimiter && 
-          ![...(excludeIf ?? []), delimiter]
-            .some(t => cb.ltoken?.text.trim().endsWith(t))? delimiter : "") + 
-            k.kwd;
+          addDelimiter? delimiter : ""
+        ) + k.kwd;
 
         return { 
           label: { label: k.kwd, detail: k.optional? " (optional)" : undefined }, 

@@ -1,9 +1,10 @@
 import { mdiClose } from "@mdi/js";
-import { AnyObject, DBHandler, DBSchema, TableSchema } from "prostgles-types";
+import type { AnyObject, DBHandler, TableSchema } from "prostgles-types";
+import { DBSchema } from "prostgles-types";
 import React from "react";
 import Btn from "../../components/Btn";
-import { DBS } from "../Dashboard/DBS";
-import { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
+import type { DBS } from "../Dashboard/DBS";
+import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 
 
 
