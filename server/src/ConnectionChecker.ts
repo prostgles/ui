@@ -159,6 +159,10 @@ export class ConnectionChecker {
         }
       }
 
+      if(this.noPasswordAdmin){
+        // need to ensure that only 1 session is allowed for the passwordless admin
+      }
+
       if(this.config.global_setting?.allowed_ips_enabled){
         const ipCheck = await this.checkClientIP({ req });
         if(!ipCheck.isAllowed){
@@ -304,6 +308,7 @@ export const insertUser = async (db: DBS, _db: DB, u: Parameters<typeof db.users
   if(!user.id) throw "User id missing";
   if(typeof user.password !== "string") throw "Password missing";
   const hashedPassword = getPasswordHash(user, user.password);
+  // await _db.any("UPDATE users SET password = crypt(password, id::text) WHERE id = ${id};", user);
   await _db.any("UPDATE users SET password = ${hashedPassword} WHERE id = ${id};", { id: user.id, hashedPassword });
   return db.users.findOne({ id: user.id })!;
 }
@@ -323,6 +328,15 @@ const makeMagicLink = async (user: Users, dbo: DBS, returnURL: string, expires?:
   };
 };
 
+// 10 years
+// /magic-link/9a755390-3b3b-4869-805a-59c04ee4d4d9
+
+// 12 months
+// /magic-link/60d9a450-0e08-4970-9c25-065ddcc14e86
+
+  
+// 1984853878528
+
 const getPasswordlessMacigLink = async (dbs: DBS, req: Request) => {
 
   /** Create session for passwordless admin */
@@ -332,6 +346,8 @@ const getPasswordlessMacigLink = async (dbs: DBS, req: Request) => {
     
     if(existingLink) throw "Only one magic links allowed for passwordless admin";
     const mlink = await makeMagicLink(u, dbs, "/", Date.now() + 10 * YEAR);
+
+    // socket.emit("redirect", mlink.magic_login_link_redirect);
 
     return mlink.magic_login_link_redirect;
   }
