@@ -7,7 +7,7 @@ import {
 } from "./index";
 import type { Express, Request } from "express";
 import type { SubscriptionHandler} from "prostgles-types";
-import { isDefined } from "prostgles-types";
+import { isDefined, tryCatch } from "prostgles-types";
 import type { DBSSchema  } from "../../commonTypes/publishUtils";
 import cors from "cors";
 import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
@@ -152,7 +152,11 @@ export class ConnectionChecker {
       const isAccessingMagicLink = req.originalUrl.startsWith("/magic-link/")
       if(this.noPasswordAdmin && !sid && !isAccessingMagicLink){
         // need to ensure that only 1 session is allowed for the passwordless admin
-        const magicLinkPaswordless = await getPasswordlessMacigLink(this.db, req);
+        const { magicLinkPaswordless, error } = await tryCatch(async () => ({ magicLinkPaswordless: await getPasswordlessMacigLink(this.db!, req)}) );
+        if(error){
+          res.status(401).json({ error });
+          return;
+        }
         if(magicLinkPaswordless) {
           res.redirect(magicLinkPaswordless);
           return;
