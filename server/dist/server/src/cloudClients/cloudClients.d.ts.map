@@ -1,1 +1,0 @@
-{"version":3,"file":"cloudClients.d.ts","sourceRoot":"","sources":["../../../../src/cloudClients/cloudClients.ts"],"names":[],"mappings":"AAKA,OAAO,KAAK,EAAE,WAAW,EAAqC,MAAM,+CAA+C,CAAC;AAGpH,KAAK,QAAQ,GAAG;IACd,MAAM,EAAE,MAAM,CAAC;IACf,MAAM,EAAE,MAAM,CAAC;IACf,WAAW,EAAE,MAAM,CAAC;IACpB,eAAe,EAAE,MAAM,CAAC;CACzB,CAAC;AAqGF,eAAO,MAAM,cAAc,WAAY,QAAQ,gBAA6B,CAAC"}

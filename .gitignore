@@ -4,3 +4,15 @@ prostgles_backups
 prostgles_certificates
 .electron-auth.json
 **/.electron-auth.json
+
+client/build
+server/dist
+server/media
+
+BACKUP
+.Trash-1000/
+.npmrc
+.npmignore
+media
+log.txt
+ui
