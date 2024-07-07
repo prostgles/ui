@@ -45,16 +45,10 @@ cp ./README.md ./ui/
 cp ./PRIVACY.md ./ui/
 cp ./server/.gitignore ./ui/
 cp ./Dockerfile ./ui/
+cp ./.env ./ui/
 
 mkdir -p ./ui/.github/ISSUE_TEMPLATE
 cp -R ./.github/ISSUE_TEMPLATE ./ui/.github/
-
-echo "
-POSTGRES_DB=db
-POSTGRES_USER=usr
-POSTGRES_PASSWORD=psw
-PROSTGLES_UI_PORT=3004" > ./ui/.env
-
 
 mv ./ui ./electron
 
