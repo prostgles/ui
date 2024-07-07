@@ -1,26 +1,27 @@
+import cors from "cors";
+import type { Express, Request } from "express";
+import type { Auth, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
+import { getLoginClientInfo } from "prostgles-server/dist/AuthHandler";
+import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
+import type { DB } from "prostgles-server/dist/Prostgles";
+import type { SubscriptionHandler } from "prostgles-types";
+import { isDefined, tryCatch } from "prostgles-types";
+import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { DBSSchema } from "../../commonTypes/publishUtils";
+import type { SUser } from "./authConfig/authConfig";
+import { YEAR, getActiveSession, makeSession, sidKeyName } from "./authConfig/authConfig";
+import { getPasswordHash } from "./authConfig/authUtils";
+import { getElectronConfig, isDemoMode } from "./electronConfig";
+import { PRGL_PASSWORD, PRGL_USERNAME } from "./envVars";
 import type {
-  DBS, 
-  Users} from "./index";
+  DBS,
+  Users
+} from "./index";
 import {
   connMgr,
   tout,
 } from "./index";
-import type { Express, Request } from "express";
-import type { SubscriptionHandler} from "prostgles-types";
-import { isDefined } from "prostgles-types";
-import type { DBSSchema  } from "../../commonTypes/publishUtils";
-import cors from "cors";
-import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
-import type { DB } from "prostgles-server/dist/Prostgles";
-import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
-import type { Auth, AuthResult, SessionUser} from "prostgles-server/dist/AuthHandler";
-import { getLoginClientInfo } from "prostgles-server/dist/AuthHandler";
-import type { SUser} from "./authConfig/authConfig";
-import { getActiveSession, makeSession, sidKeyName, YEAR } from "./authConfig/authConfig";
-import { getElectronConfig, isDemoMode } from "./electronConfig";
 import { tableConfig } from "./tableConfig";
-import { PRGL_PASSWORD, PRGL_USERNAME } from "./envVars";
-import { getPasswordHash } from "./authConfig/authUtils";
 
 export type WithOrigin = {
   origin?: (requestOrigin: string | undefined, callback: (err: Error | null, origin?: string) => void) => void;
@@ -28,6 +29,7 @@ export type WithOrigin = {
 
 type OnUse = Required<Auth<DBSchemaGenerated, SUser>>["expressConfig"]["use"];
 
+const PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR = "Only 1 session is allowed for the passwordless admin. If you're seeing this then the passwordless admin session has already been assigned to a different device/browser";
 export class ConnectionChecker {
 
   app: Express;
@@ -50,7 +52,7 @@ export class ConnectionChecker {
 
       const pwdLessSession = await this.db?.sessions.findOne({ user_id: this.noPasswordAdmin.id, active: true });
       if(pwdLessSession && pwdLessSession.id !== sid){
-        throw "Only 1 session is allowed for the passwordless admin. If you're seeing this then the passwordless admin session has already been assigned to a different device/browser"
+        throw PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR
       }
     }
   }
@@ -117,7 +119,7 @@ export class ConnectionChecker {
     })
   }
 
-  onUse: OnUse = async ({ req, res, next, getUser }) => {
+  onUse: OnUse = async ({ req, res, next }) => {
     
     if(!this.config.loaded || !this.db){
       
@@ -152,15 +154,15 @@ export class ConnectionChecker {
       const isAccessingMagicLink = req.originalUrl.startsWith("/magic-link/")
       if(this.noPasswordAdmin && !sid && !isAccessingMagicLink){
         // need to ensure that only 1 session is allowed for the passwordless admin
-        const magicLinkPaswordless = await getPasswordlessMacigLink(this.db, req);
+        const { magicLinkPaswordless, error } = await tryCatch(async () => ({ magicLinkPaswordless: await getPasswordlessMacigLink(this.db!)}) );
+        if(error){
+          res.status(401).json({ error });
+          return;
+        }
         if(magicLinkPaswordless) {
           res.redirect(magicLinkPaswordless);
           return;
         }
-      }
-
-      if(this.noPasswordAdmin){
-        // need to ensure that only 1 session is allowed for the passwordless admin
       }
 
       if(this.config.global_setting?.allowed_ips_enabled){
@@ -328,26 +330,14 @@ const makeMagicLink = async (user: Users, dbo: DBS, returnURL: string, expires?:
   };
 };
 
-// 10 years
-// /magic-link/9a755390-3b3b-4869-805a-59c04ee4d4d9
-
-// 12 months
-// /magic-link/60d9a450-0e08-4970-9c25-065ddcc14e86
-
-  
-// 1984853878528
-
-const getPasswordlessMacigLink = async (dbs: DBS, req: Request) => {
+const getPasswordlessMacigLink = async (dbs: DBS) => {
 
   /** Create session for passwordless admin */
   const u = await getPasswordlessAdmin(dbs);
   if(u){
     const existingLink = await dbs.magic_links.findOne({ user_id: u.id, "magic_link_used.<>": null });
-    
-    if(existingLink) throw "Only one magic links allowed for passwordless admin";
+    if(existingLink) throw PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR;
     const mlink = await makeMagicLink(u, dbs, "/", Date.now() + 10 * YEAR);
-
-    // socket.emit("redirect", mlink.magic_login_link_redirect);
 
     return mlink.magic_login_link_redirect;
   }
