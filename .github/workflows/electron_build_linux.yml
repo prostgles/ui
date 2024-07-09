@@ -24,7 +24,7 @@ jobs:
         ls /tmp/.X11-unix/ && \
         sudo apt-get install gdebi-core
         
-    - name: Install
+    - name: Install the app
       run: | 
         cd electron && \
         sudo apt install ./dist/Prostgles-Desktop-1.0.0-amd64.deb
