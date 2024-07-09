@@ -13,6 +13,7 @@ import { omitKeys } from "../../utils";
 import CodeEditor from "../CodeEditor/CodeEditor";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import SmartTable from "../SmartTable";
+import { tout } from "../../pages/ElectronSetup";
 
 type P = Pick<Prgl, "db" | "methods" | "tables" | "theme"> & {
   method_name: string;
@@ -109,9 +110,17 @@ export const W_MethodControls = ({ w, db, tables, methods, method_name, fixedRow
         />
       </div>
       <div className="flex-row gap-2">
+        <Btn 
+          iconPath={mdiPlay}
+          size="micro" 
+          color="action"
+          variant="filled"
+          onClickPromise={async () => { await tout(5e3) }}
+        />
         <Btn  
           loading={loading}
           iconPath={mdiPlay}
+          size="micro"
           onClick={async () => {
             try {
               const params = omitKeys(args, [...disabledArgs, ...hiddenArgs]); 
