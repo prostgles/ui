@@ -40,7 +40,8 @@ export type TimeChartLayer = {
   }[];
   fullExtent: [Date, Date];
   variant?: "smooth"
-  cols: Pick<ValidatedColumnInfo, "name" | "label" | "tsDataType" | "udt_name">[]
+  cols: Pick<ValidatedColumnInfo, "name" | "label" | "tsDataType" | "udt_name">[];
+  groupByValue?: any;
 };
 export type TimeChartProps = {
   layers: Omit<TimeChartLayer, "yScale">[];

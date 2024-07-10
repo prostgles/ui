@@ -10,7 +10,7 @@ import { suggestTableLike } from "./suggestTableLike";
 import type { KWD } from "./withKWDs";
 import { withKWDs } from "./withKWDs";
 
-
+export const AGG_FUNC_NAMES = ["max", "min", "agg", "sum", "count", "string_agg", "json_object_agg", "array_agg", "jsonb_agg"];
 export const preSubQueryKwds = [
   "in", 
   "from", 
@@ -55,6 +55,15 @@ export const MatchSelect: SQLMatcher = {
         { kwd: "ORDER BY", expects: "column" }, 
         { kwd: "PARTITION BY", expects: "column" }
       ], { cb, ss, setS, sql }).getSuggestion();
+    }
+
+    if(insideFunc?.func.textLC && AGG_FUNC_NAMES.includes(insideFunc.func.textLC)){
+      if(cb.prevText.toLowerCase().trim().endsWith("order by")){
+        return suggestColumnLike({ cb, ss, setS, parentCb: args.parentCb, sql });
+      }
+      if(cb.prevText.endsWith(" ") && !cb.prevText.trim().endsWith(",") && !cb.prevText.trim().endsWith("(")){
+        return suggestSnippets([{ label: "ORDER BY", kind: getKind("keyword") }])
+      }
     }
 
     if(currToken?.type === "string.sql" && currToken.offset <= offset && currToken.end >= offset){
@@ -194,7 +203,9 @@ const getKWDSz = (excludeInto = false) => [
     [
       { kwd: "INTO",    expects: "table", justAfter: ["SELECT"], dependsOnAfter: "FROM", docs: "Creates a table from the result of the select statement" } as const
     ]),
-  { kwd: "FILTER",  expects: "column", dependsOn: "SELECT", include: ({ ltoken, l1token }) => [l1token?.textLC, ltoken?.textLC].some(v => ["max", "min", "agg", "sum"].includes(v as string) ) }, 
+  { kwd: "FILTER",  expects: "column", dependsOn: "SELECT", 
+    include: ({ ltoken, l1token }) => [l1token?.textLC, ltoken?.textLC].some(v => AGG_FUNC_NAMES.includes(v as string) ) 
+  }, 
   { kwd: "FROM",    expects: "table", justAfter: ["SELECT"], docs: "Specifies a table/view or function with returns a table-like result" }, 
   { kwd: "JOIN",  expects: "table", docs: "Combine rows from one table with rows from a second table", canRepeat: true }, 
   { kwd: "JOIN LATERAL",  expects: "table", docs: "Lateral join subquery can reference columns provided by preceding FROM items", canRepeat: true }, 

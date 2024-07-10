@@ -17,6 +17,7 @@ import { DB_TRANSACTION_KEY, getReloadConfigs } from "./ConnectionManager";
 import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
 import { alertIfReferencedFileColumnsRemoved, getCompiledTS } from "./connectionManagerUtils";
 import { addLog } from "../Logger";
+import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 
 export const startConnection = async function (
   this: ConnectionManager,
@@ -110,7 +111,11 @@ export const startConnection = async function (
         });
       await this.setOnMount(con.id, dbConf.on_mount_ts, dbConf.on_mount_ts_disabled)
         .catch(e => {
-          dbs.alerts.insert({ severity: "error", message: "On mount was disabled due to error", database_config_id: dbConf.id });
+          dbs.alerts.insert({ 
+            severity: "error", 
+            message: "On mount was disabled due to error" + `\n\n${getErrorAsObject(e)}`, 
+            database_config_id: dbConf.id 
+          });
           dbs.database_configs.update({ id: dbConf.id }, { on_mount_ts_disabled: true });
         });
 

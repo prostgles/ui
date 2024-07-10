@@ -114,12 +114,13 @@ export const MatchAlter: SQLMatcher = {
     } else if (prevLC.endsWith("owner to")) {
       const users = ss.filter(s => userFields.includes(s.type));
       return suggestSnippets(users.map(s => ({ label: s.name })));
-      
-    } else if (prevLC.endsWith("column")) {
-      const cols = ss.filter(s => s.type === "column" && identifiers.includes(s.escapedParentName!));
-      return { suggestions: cols };
 
     } else if (prevLC.includes("alter column")) {
+
+      if (prevLC.endsWith("column")) {
+        const cols = ss.filter(s => s.type === "column" && identifiers.includes(s.escapedParentName!));
+        return { suggestions: cols };
+      }
       return withKWDs(ALTER_COL_ACTIONS, { cb, ss, setS, sql }).getSuggestion();
 
     } else if (prevLC.includes("drop column")) {

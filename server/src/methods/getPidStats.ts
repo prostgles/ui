@@ -166,7 +166,7 @@ export const getStatus = async (connId: string, dbs: DBS) => {
     await tx.stats.insert(result.queries.map(q => ({ 
       ...q, 
       connection_id: connId,
-    })));
+    })), { onConflict: "DoNothing" });
     
     if(!procInfo) return;
     

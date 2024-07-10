@@ -131,7 +131,7 @@ export const getCurrentCodeBlock = async (model: editor.ITextModel, pos: Positio
    
   /** Skip empty lines */
   if(
-    startLine && isInterrupted(startLine, "empty") && startLine.n < lineNumber
+    startLine && (isInterrupted(startLine, "empty") || startLine.v.trim().endsWith(";"))&& startLine.n < lineNumber
   ){
     startLineNumber++
   }

@@ -164,7 +164,8 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
         addLog(e, null);
       },
       tableConfig,
-      tableConfigMigrations: { silentFail: false,
+      tableConfigMigrations: { 
+        silentFail: false,
         version: 3,
         onMigrate: async ({ db, oldVersion }) => {
           // if(!oldVersion){

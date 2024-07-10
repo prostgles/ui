@@ -205,6 +205,7 @@ export const COMMANDS = {
   "AutomaticBackups.frequency": "",
   "WorkspaceAddBtn.Create": "",
   "ChartLayerManager.AddChartLayer.addLayer": "",
+  "ConnectionSelector": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

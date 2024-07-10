@@ -1,14 +1,13 @@
 import { suggestSnippets } from "../CommonMatchImports";
 import { getExpected } from "../getExpected";
-import { getParentFunction } from "../MatchSelect";
 import { getKind, type SQLMatchContext } from "../registerSuggestions";
 import type { KWD} from "../withKWDs";
 import { suggestKWD, withKWDs } from "../withKWDs";
 
 
 export const matchCreateIndex = ({ cb, ss, setS, sql }: SQLMatchContext) => {
-  const insideF = getParentFunction(cb);
-  if(insideF){
+  // const insideF = getParentFunction(cb);
+  if(cb.currNestingFunc && cb.currNestingFunc.textLC !== "with"){
     if(cb.ltoken?.text === "," || cb.ltoken?.text === "("){
       return getExpected("column", cb, ss);
     }
@@ -22,16 +21,7 @@ export const matchCreateIndex = ({ cb, ss, setS, sql }: SQLMatchContext) => {
       ])
     }
   }
-  if(cb.prevTokens.some(t => t.text === ")")){
-    // return withKWDs([
-    //   { kwd:  }
-    // ], cb, getKind, ss).getSuggestion();  
-  }
-
-  // if(!cb.currToken && cb.prevTokens.at(-2)?.textLC === "using"){
-  //   return getExpected("(column)", cb, ss);
-  // }
-
+  
   if(cb.prevLC.endsWith("not exists")){
     return suggestKWD(getKind, ["$index_name"])
   }
@@ -53,7 +43,7 @@ export const matchCreateIndex = ({ cb, ss, setS, sql }: SQLMatchContext) => {
       options: crIdxOpts, 
       docs: `Constructs an index on the specified column(s) of the specified relation, which can be a table or a materialized view. Indexes are primarily used to enhance database performance (though inappropriate use can result in slower performance).` 
     },
-    { kwd: "CONCURRENTLY", options: crIdxOpts.filter(c => c.label !== "CONCURRENTLY") },
+    // { kwd: "CONCURRENTLY", options: crIdxOpts.filter(c => c.label !== "CONCURRENTLY") },
     { kwd: "ON", expects: "table", docs: `The table for which the index will be created` },
     { 
       kwd: "USING", 
@@ -126,6 +116,7 @@ ${indexInfoUrl}`
       kwd: "WITH",
       optional: true,
       docs: `The optional WITH clause specifies storage parameters for the index. Each index method has its own set of allowed storage parameters. The B-tree, hash, GiST and SP-GiST index methods all accept this parameter:`,
+      expects: "(options)",
       options: [
         { label: "fillfactor = 70", docs: `The fillfactor for an index is a percentage that determines how full the index method will try to pack index pages. For B-trees, leaf pages are filled to this percentage during initial index builds, and also when extending the index at the right (adding new largest key values). If pages subsequently become completely full, they will be split, leading to fragmentation of the on-disk index structure. B-trees use a default fillfactor of 90, but any integer value from 10 to 100 can be selected.` },
         { label: "fastupdate = off", docs: `This setting controls usage of the fast update technique described in Section 70.4.1. It is a Boolean parameter: ON enables fast update, OFF disables it. The default is ON.` },
@@ -135,7 +126,15 @@ ${indexInfoUrl}`
         { label: "autosummarize = on", docs: `Defines whether a summarization run is queued for the previous page range whenever an insertion is detected on the next one. See Section 71.1.1 for more details. The default is off.` },
       ]
     },
-    { kwd: "WHERE", expects: "condition", dependsOn: "USING" },
+    { 
+      kwd: "WHERE", 
+      expects: "condition", 
+      dependsOn: "ON",
+      docs: `When the WHERE clause is present, a partial index is created. A partial index is an index that contains entries for only a portion of a table, usually a portion that is more useful for indexing than the rest of the table. For example, if you have a table that contains both billed and unbilled orders where the unbilled orders take up a small fraction of the total table and yet that is an often used section, you can improve performance by creating an index on just that portion. Another possible application is to use WHERE with UNIQUE to enforce uniqueness over a subset of a table. See Section 11.8 for more discussion.
+
+The expression used in the WHERE clause can refer only to columns of the underlying table, but it can use all columns, not just the ones being indexed. Presently, subqueries and aggregate expressions are also forbidden in WHERE. The same restrictions apply to index fields that are expressions.`,
+      optional: true, 
+    },
   ]
   return withKWDs(kwds, { cb, ss, setS, sql }).getSuggestion();  
 }
