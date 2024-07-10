@@ -27,7 +27,7 @@ export const Alerts = (prgl: Prgl) => {
         />
       </div>
     }
-    positioning="beneath-left"
+    positioning="beneath-center"
     contentStyle={{
       background: "transparent",
     }}

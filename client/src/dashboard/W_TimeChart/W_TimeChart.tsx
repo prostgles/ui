@@ -27,6 +27,7 @@ import type { ActiveRow } from "../W_Table/W_Table";
 import type { Command } from "../../Testing";
 import { ColorByLegend } from "../WindowControls/ColorByLegend";
 import { createReactiveState } from "../../appUtils";
+import { debounce, throttle } from "../Map/DeckGLWrapped";
 
 export type ProstglesTimeChartLayer = Pick<LayerBase, "_id" | "linkId" | "disabled"> & {
   
@@ -160,19 +161,28 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
   };
 
   /* Throttle data updates */
-  settingDataAge: any;
   dataAge?: number;
   setDataAge = (dataAge: number) => {
     this.dataAge = dataAge;
-    if(!this.settingDataAge){
-      this.settingDataAge = setTimeout(() => {
-        this.setData({ dataAge: this.dataAge });
-        this.settingDataAge = null;
-      }, 300);
-    }
+    this._setDataAge();
   }
+  _setDataAge = throttle(() => {
+    this.setData({ dataAge: this.dataAge });
+  }, 300)
   
-  layerSubscriptions: Record<string, { filterStr: string; sub: SubscriptionHandler; dataAge: number; }> = {};
+  layerSubscriptions: Record<string, { 
+    filterStr: string; 
+    sub: SubscriptionHandler;
+    /**
+     * Data age of the fetched data
+     */
+    dataAge: number;
+    /**
+     * Received from subscription
+     */
+    latestDataAge: number; 
+    isLoading: boolean; 
+  }> = {};
 
   dataStr?: string;
   setLayerData = async () => {
@@ -321,8 +331,6 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
       layers = [], 
       loadingLayers, 
       error, 
-      xExtent, 
-      visibleDataExtent: extent, 
       loadingData,
       addingFilter = false,
     } = this.state;
@@ -354,7 +362,6 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
       )
     }
 
-    const hasPanned = Boolean(extent && xExtent && Object.values(extent).join() !== xExtent.join())
     const resetExtent = () => {
       if(this.chartRef?.chart){
         this.chartRef.chart.setView({ xO: 0, xScale: 1, yO: 0, yScale: 1 });
@@ -370,7 +377,8 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
         top:"0", 
         left:"0", 
         right: "240px", 
-        zIndex: 1 // Ensure it doesn't cover the tooltip active row brush
+        /* Ensure it doesn't cover the tooltip active row brush */
+        zIndex: 1 
       }} 
     >
       <ChartLayerManager 
@@ -380,7 +388,13 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
         asMenuBtn={{}} 
         layerQueries={this.layerQueries} 
       />
-      {!loadingLayers? null : <Loading className="m-auto f-1" delay={500} variant="cover" />}
+      {loadingLayers && 
+        <Loading 
+          className="m-auto f-1" 
+          delay={1500} 
+          variant="cover" 
+        />
+      }
       {errorPopup}
       <Btn 
         title="Reset extent" 
@@ -396,20 +410,17 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
           })
         }
       />
-      {groupedByLayer && <ColorByLegend
-        { ...this.props}
-        layerLinkId={groupedByLayer.linkId}
-        groupByColumn={groupedByLayer.groupByColumn!}
-        onChanged={() => {
-          this.setData({ dataAge: Date.now() })
-        }}
-      />}
-{/* 
-      <Btn title="Zoom out to data extent"
-        style={{ position: "absolute", opacity: !hasPanned? 0 : undefined, right: 0, top: 0, zIndex: 1 }} 
-        iconPath={mdiFitToPageOutline} 
-        onClick={resetExtent} 
-      /> */}
+      {groupedByLayer && 
+        <ColorByLegend
+          { ...this.props}
+          layers={this.state.layers}
+          layerLinkId={groupedByLayer.linkId}
+          groupByColumn={groupedByLayer.groupByColumn!}
+          onChanged={() => {
+            this.setData({ dataAge: Date.now() })
+          }}
+        />
+      }
     </div>
 
     const content = <>
@@ -429,7 +440,9 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
           if(r) this.ref = r;
         }} 
       >
-        {loadingData && <Loading variant="cover" delay={500} />}
+        {loadingData && 
+          <Loading variant="cover" delay={1500} />
+        }
         {infoSection}
 
         {this.chartRef && 
@@ -503,6 +516,11 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
     </>
 
 
-    return <Window w={w} getMenu={this.getMenu}>{content}</Window>; 
+    return <Window 
+      w={w} 
+      getMenu={this.getMenu}
+    >
+      {content}
+    </Window>; 
   }
 }
