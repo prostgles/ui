@@ -10,6 +10,8 @@ import { getCurrentCodeBlock } from "./completionUtils/getCodeBlock";
 import { getMatch } from "./getMatch";
 import { isObject } from "../../../../../commonTypes/publishUtils";
 import { isDefined } from "../../../utils";
+import { format } from "sql-formatter";
+
 
 /**
  * Mobile devices can't press Ctrl + Space. Use space instead
@@ -170,7 +172,17 @@ export function registerSuggestions(args: Args) {
   sqlFormattingProvider = monaco.languages.registerDocumentFormattingEditProvider(LANG, {
     displayName: "SQL",
     provideDocumentFormattingEdits: async (model) => {
-      const newText = await getFormattedSql(model);
+      // const newText = await getFormattedSql(model);
+
+      const tabWidth = model.getOptions().indentSize || 2;
+      const newText = format(model.getValue(), { 
+        language: "postgresql", 
+        expressionWidth: 80, 
+        indentStyle: "standard", 
+        tabWidth,
+        linesBetweenQueries: 2,
+        logicalOperatorNewline: "before"
+      });
       return [{
         range: model.getFullModelRange(),
         text: newText

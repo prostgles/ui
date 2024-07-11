@@ -75,18 +75,17 @@ export const getTokenNesting = (rawTokens: TokenInfo[]): (TokenInfo & { nestingI
   let nestingGroupId = 0;
   /** 111 */
   let nestingId = "";
-  let nestingFuncToken: TokenInfo | undefined;
+  const nestingFuncTokens: Record<string, TokenInfo | undefined> = {};
   const normalTokens = tokens.map((t, i) => {
 
     const maybeFuncToken = tokens[i-2];
     const prevToken = tokens[i-1];
     if(prevToken?.text === startNest){
       nestingId += "1";
-      nestingFuncToken = maybeFuncToken;
+      nestingFuncTokens[nestingId] = maybeFuncToken;
     }
     
     if(t.text === endNest){
-      nestingFuncToken = undefined;
       nestingId = nestingId.slice(0, -1);
       if(!nestingId){
         nestingGroupId++;
@@ -96,7 +95,7 @@ export const getTokenNesting = (rawTokens: TokenInfo[]): (TokenInfo & { nestingI
     return {
       ...t,
       nestingId,
-      nestingFuncToken,
+      nestingFuncToken: nestingFuncTokens[nestingId],
     }
   });
 
