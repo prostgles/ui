@@ -8,7 +8,10 @@ test.use({
     mode: "on",
     size: viewPortSize,
   },
-  trace: "on"
+  trace: "on",
+  launchOptions: {
+    args: ['--start-maximized'],
+  }
 });
 const videoTestDuration = 10 * 60e3;
 test.describe("Demo video", () => {

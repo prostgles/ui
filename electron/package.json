@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.44.1",
-    "electron": "^31.0.0",
+    "electron": "^31.2.0",
     "electron-builder": "^24.13.3",
     "electron-squirrel-startup": "^1.0.1",
     "tsc-watch": "^6.2.0",
@@ -58,8 +58,8 @@
       "main": "build/main.js"
     },
     "includeSubNodeModules": true,
-    "productName": "Prostgles-Desktop",
-    "appId": "com.prostgles.desktop",
+    "productName": "Prostgles Desktop",
+    "appId": "com.electron.${name}",
     "files": [
       "build/**/*",
       "ui/**/*",
@@ -80,6 +80,7 @@
       "maintainer": "prostgles",
       "category": "Development",
       "target": [
+        "AppImage",
         "deb",
         "rpm"
       ],

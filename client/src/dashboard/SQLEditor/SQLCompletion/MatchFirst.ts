@@ -50,7 +50,7 @@ export const MatchFirst = async ({
         docs: `**Timestamp Formatting**\n\n` + p.docs 
       })));
     }
-  } 
+  }
 
   if(l1token?.text === "?" || ltoken?.text === "?" || currToken?.text === "?"){
  
