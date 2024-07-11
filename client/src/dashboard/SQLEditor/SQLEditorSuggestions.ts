@@ -3,7 +3,7 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, SQLHandler } from "prostgles-types";
 import { getKeys } from "prostgles-types";
-import { omitKeys, pickKeys } from "../../utils";
+import { isDefined, omitKeys, pickKeys } from "../../utils";
 import { TOP_KEYWORDS, asSQL } from "./SQLCompletion/KEYWORDS";
 import { PRIORITISED_OPERATORS, getPGObjects } from "./SQLCompletion/getPGObjects";
 import type { SQLSuggestion } from "./SQLEditor";
@@ -272,17 +272,18 @@ export async function getSqlSuggestions(db: DB): Promise< {
       insertText: t.name.includes(" ")? t.udt_name.toUpperCase() : t.name, // use shorter notation where possible 
       type: "dataType",
     })));
-    suggestions = suggestions.concat(dataTypes.map(t => ({ 
+    const nonArrayTypes = [`"any"`, "void"];
+    suggestions = suggestions.concat(dataTypes.map(t =>  nonArrayTypes.includes(t.name.toLowerCase()) || t.name.toLowerCase().startsWith("any")? undefined : ({ 
       label: { label: `${t.name}[]`, description: `ARRAY of ${t.desc}` }, 
       name: `_${t.name}`, 
       detail: `(data type)`,
       documentation: `ARRAY of ${t.desc}  \n\nSchema:  \`${t.schema}\`  \n Type: \`${t.udt_name}[]\`  \n\n https://www.postgresql.org/docs/current/datatype.html`,
       schema: t.schema,
       dataTypeInfo: t,
-      insertText: `_${t.udt_name.toUpperCase()}`,
+      insertText: `${t.udt_name.toUpperCase()}[]`,
       filterText: `${t.name} _${t.udt_name} ${t.udt_name}[]`,
       type: "dataType" 
-    })));
+    } satisfies SQLSuggestion)).filter(isDefined));
      
     suggestions = suggestions.concat(keywords.map(kwd => ({ 
       detail: `(keyword)`, 
