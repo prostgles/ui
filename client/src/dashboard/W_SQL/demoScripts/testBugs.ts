@@ -2,7 +2,45 @@ import { fixIndent } from "../../../demo/sqlVideoDemo";
 import { tout } from "../../../pages/ElectronSetup";
 import type { DemoScript } from "../getDemoUtils";
 
-export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL }) => {
+export const testBugs: DemoScript = async ({ typeAuto, typeText, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL }) => {
+
+  const idxQ = "CREATE INDEX myidx ON pg_catalog.pg_class (  oid )"
+  await fromBeginning(false, "");
+  await typeAuto("cr");
+  await typeAuto(" in");
+  await typeAuto(" myidx", { triggerMode: "off" });
+  await typeAuto(" ");
+  await typeAuto(" pgcla");
+  await typeAuto(" ", { nth: 1 });
+  await typeAuto(" ");
+  await testResult(idxQ);
+  await moveCursor.lineEnd();
+  await typeAuto("\n ");
+  await typeAuto(" reln");
+  await typeAuto("\n whe");
+  await typeAuto(" reln");
+  await typeAuto(" ");
+  await testResult(idxQ + "\n INCLUDE (relname)\n  WHERE relname =");
+
+  const createViewWithOptions = fixIndent(`
+    CREATE OR REPLACE VIEW myview`
+  );
+  await fromBeginning(false, createViewWithOptions);
+  await typeAuto(" w");
+  await typeAuto(" ");
+  await typeAuto(" ");
+  await typeAuto(" ");
+  await typeAuto(" ");
+  await testResult(createViewWithOptions + " WITH (check_option =cascaded , security_barrier =false)");
+
+  const funcsColliding = fixIndent(`
+    SELECT *
+    FROM pg_stat_user_indexes ui
+    WHERE `
+  )
+  await fromBeginning(false, funcsColliding);
+  await typeAuto(` schem`);
+  await testResult(funcsColliding + " ui.schemaname");
 
   const quotedSchemaBug = `
 DROP SCHEMA IF EXISTS "MySchema" CASCADE;

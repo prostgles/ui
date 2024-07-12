@@ -11,7 +11,7 @@ import { suggestFuncArgs } from "./suggestFuncArgs";
 type ExpectString = SQLSuggestion["type"] | "condition" | "number" | "string";
 export type KWD = { 
   kwd: string;
-  expects?: ExpectString | `(${ExpectString})` | readonly ExpectString[] | "(options)";
+  expects?: ExpectString | `(${ExpectString})` | readonly ExpectString[] | "(options)" | "=option";
   options?: readonly MinimalSnippet[] | readonly string[] | ((ss: ParsedSQLSuggestion[], cb: CodeBlock) => ParsedSQLSuggestion[]);
 
   justAfter?: readonly string[];
@@ -215,10 +215,19 @@ export const withKWDs = <KWDD extends KWD>(
         if(prevKWD.options){
           const { options } = prevKWD;
           if(Array.isArray(options)){
-            const options1 = options.map(o => typeof o === "string"? ({ label: o }) : o);
+            const options1: ((MinimalSnippet & { type?: undefined }) | ParsedSQLSuggestion)[] = options.map(o => typeof o === "string"? ({ label: o }) : o);
             const minimalSnippets = options1.filter(o => !o.type)
-            const parsedSuggestions = options1.filter(o => o.type)
-            firstSuggestions = suggestSnippets(minimalSnippets).suggestions.concat(parsedSuggestions);
+            const parsedSuggestions = options1.filter(o => o.type) as ParsedSQLSuggestion[];
+            firstSuggestions = [
+              ...suggestSnippets(minimalSnippets).suggestions,
+              ...parsedSuggestions
+            ];
+            if(prevKWD.expects === "=option" && !cb.prevText.trim().endsWith("=")){
+              firstSuggestions = firstSuggestions.map(s => ({
+                ...s,
+                insertText: `=${s.label || s.escapedIdentifier || s.escapedName}`
+              }))
+            }
           } else if(typeof options === "function") {
             firstSuggestions = options(ss, cb);
           }
@@ -241,7 +250,7 @@ export const withKWDs = <KWDD extends KWD>(
             return {
               suggestions: result.suggestions.map(s => ({
                 ...s,
-                insertText: `(${s.insertText} )`
+                insertText: `(${s.insertText}$0)`
               }))
             };
           }
@@ -252,6 +261,7 @@ export const withKWDs = <KWDD extends KWD>(
 
       return suggestSnippets(remainingKWDS.map(k => {
         const addDelimiter = delimiter && 
+        cb.currToken?.textLC !== "(" &&
         ![...(excludeIf ?? []), delimiter, "("]
           .some(t => cb.ltoken?.text.trim().endsWith(t));
 

@@ -87,7 +87,7 @@ export const sqlVideoDemo: DemoScript = async ({
   await showScript(`Joins autocomplete`, async () => {
     await fromBeginning(false, `/* Joins autocomplete */\nSELECT * \nFROM users u`);
     await typeAuto(`\nleft`, { msPerChar: 40, waitAccept: 1e3 });
-    await typeAuto(` `, { msPerChar: 40, waitAccept: 1e3 });
+    await typeAuto(` `, { msPerChar: 40, waitAccept: 1e3, nth: 2 });
   });
   
   /** Current statement execution */
@@ -103,11 +103,15 @@ export const sqlVideoDemo: DemoScript = async ({
     fromBeginning(false, script);
     await actions.selectCodeBlock();
     await tout(700);
-    await moveCursor.up(4, 30);
+    await moveCursor.down(4, 30);
     await tout(500);
     await actions.selectCodeBlock();
     await tout(500);
     await moveCursor.up(4, 30);
+    await tout(500);
+    await actions.selectCodeBlock();
+    await tout(500);
+    await moveCursor.down(4, 30);
     await tout(500);
     await actions.selectCodeBlock();
     await tout(500);

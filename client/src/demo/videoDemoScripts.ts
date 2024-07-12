@@ -127,6 +127,12 @@ const closeAllViews = async () => {
 
 const dashboardDemo = async () => {
   await tout(2500);
+  
+  const DEMO_WSP_PREFIX = "Demo Workspace ";
+  const demoWspNameFilter = { "name.$like": `${DEMO_WSP_PREFIX} %` };
+  await (window as any).dbs.workspaces.update(demoWspNameFilter, { deleted: true });
+  await (window as any).dbs.workspaces.delete(demoWspNameFilter);
+
   await click("dashboard.goToConnections");
   await tout(500);
   document.querySelector<HTMLAnchorElement>("[data-key^=food_delivery] a")!.click();
@@ -137,7 +143,7 @@ const dashboardDemo = async () => {
   await click("WorkspaceMenuDropDown");
   await click("WorkspaceMenuDropDown.WorkspaceAddBtn");
   const wspName = getElement("Popup.content", "input");
-  (wspName as any)?.forceDemoValue("Workspace " + Math.random().toFixed(2));
+  (wspName as any)?.forceDemoValue(DEMO_WSP_PREFIX + Math.random().toFixed(2));
   await click("WorkspaceAddBtn.Create");
   await tout(1e3);
 

@@ -183,6 +183,14 @@ export type PG_Function = {
    * a = aggregate, f = function, p = procedure
    */
   prokind: "a" | "f" | "p";
+  /**
+   * provolatile tells whether the function's result depends only on its input arguments, or is affected by outside factors. 
+   * It is i for “immutable” functions, which always deliver the same result for the same inputs. 
+   * It is s for “stable” functions, whose results (for fixed inputs) do not change within a scan. 
+   * It is v for “volatile” functions, whose results might change at any time. 
+   * (Use v also for functions with side-effects, so that calls to them cannot get optimized away.)
+   */
+  provolatile: "i" | "s" | "v";
   definition: string | null;
   func_signature: string;
   escaped_identifier: string;
@@ -222,6 +230,7 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
                 , p.oid
                 , p.prolang -- 12, 13 are internal,c languages
                 , ext.extension
+                , provolatile
           FROM pg_proc p
           LEFT JOIN pg_type t 
             ON p.prorettype = t.oid
@@ -246,7 +255,7 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
       `,
   distQ = `
     SELECT DISTINCT ON (length(name::text), name) 
-      name, arg_list_str, description, args_length, is_aggregate, restype, restype_udt_name,
+      name, arg_list_str, description, args_length, is_aggregate, restype, restype_udt_name, provolatile,
       schema, func_signature, definition, escaped_identifier, extension
     FROM (
       SELECT * 

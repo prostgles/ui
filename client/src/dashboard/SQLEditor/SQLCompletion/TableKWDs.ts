@@ -240,12 +240,14 @@ When this form is used, the column's statistics are removed, so running ANALYZE 
       const col = ss.find(s => cb.prevIdentifiers.includes(s.escapedIdentifier ?? "") && cb.prevIdentifiers.includes(s.escapedParentName ?? ""));
       const prioritisedFuncNames = ["now", "current_timestamp", `"current_user"`, "current_setting", "gen_random_uuid", "uuid_generate_v1", "uuid_generate_v4"];
       const funcs = ss.filter(s => {
-        return !col || s.funcInfo?.restype_udt_name?.startsWith(col.colInfo?.udt_name ?? "invalid")
+        return !col || s.funcInfo?.restype_udt_name?.startsWith(col.colInfo?.udt_name ?? "invalid") && !s.funcInfo.args.length
       }).map(s => ({
         ...s,
         sortText: prioritisedFuncNames.includes(s.name)? "!" : (s.sortText ?? s.name),
       }));
-      return funcs;
+      return [
+        ...funcs,
+      ];
     }, 
     docs: PG_COLUMN_CONSTRAINTS.find(d => d.kwd === "DEFAULT")?.docs },
   { kwd: "DROP DEFAULT", options: [{ label: ";" }], docs: PG_COLUMN_CONSTRAINTS.find(d => d.kwd === "DEFAULT")?.docs },
