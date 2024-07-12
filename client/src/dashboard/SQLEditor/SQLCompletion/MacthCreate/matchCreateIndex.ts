@@ -6,10 +6,23 @@ import { suggestKWD, withKWDs } from "../withKWDs";
 
 
 export const matchCreateIndex = ({ cb, ss, setS, sql }: SQLMatchContext) => {
-  // const insideF = getParentFunction(cb);
+  const getColsAndFuncs = (inParens = false) => {
+    const prevCols = cb.tokens.filter(t => t.nestingId.length === 1).map(t => t.text);
+    const tableColumns = getExpected(inParens? "(column)" : "column", cb, ss)
+      .suggestions
+      .filter(s => !prevCols.includes(s.insertText) && cb.tableIdentifiers.includes(s.escapedParentName ?? s.parentName ?? undefined as any));
+    const immutableFuncs = ss.filter(s => s.funcInfo?.provolatile === "i");
+    return {
+      suggestions: [
+        ...tableColumns,
+        ...immutableFuncs.map(s => ({ ...s, sortText: "zz" }))
+      ]
+    }
+
+  }
   if(cb.currNestingFunc && cb.currNestingFunc.textLC !== "with"){
-    if(cb.ltoken?.text === "," || cb.ltoken?.text === "("){
-      return getExpected("column", cb, ss);
+    if(cb.ltoken?.text === "," || cb.ltoken?.text === "(" || cb.currToken?.text === "("){
+      return getColsAndFuncs();
     }
     if(cb.ltoken?.type === "identifier.sql"){
       return suggestSnippets([
@@ -27,14 +40,18 @@ export const matchCreateIndex = ({ cb, ss, setS, sql }: SQLMatchContext) => {
   }
 
   if(cb.l1token?.textLC === "using"){
-    return getExpected("(column)", cb, ss);
+    return getColsAndFuncs(true);
   }
 
+  const concurrentlyOpt = { 
+    label: "CONCURRENTLY", 
+    docs: `When this option is used, PostgreSQL will build the index without taking any locks that prevent concurrent inserts, updates, or deletes on the table; whereas a standard index build locks out writes (but not reads) on the table until it's done. ` 
+  } as const
   const crIdxOpts = [
     { label: "ON" }, 
     { label: "$index_name" },
     { label: "IF NOT EXISTS $index_name" },
-    { label: "CONCURRENTLY", docs: `When this option is used, PostgreSQL will build the index without taking any locks that prevent concurrent inserts, updates, or deletes on the table; whereas a standard index build locks out writes (but not reads) on the table until it's done. ` },
+    concurrentlyOpt
   ] as const;
 
   const indexInfoUrl = `https://www.postgresql.org/docs/current/indexes-types.html`;
@@ -43,10 +60,28 @@ export const matchCreateIndex = ({ cb, ss, setS, sql }: SQLMatchContext) => {
       options: crIdxOpts, 
       docs: `Constructs an index on the specified column(s) of the specified relation, which can be a table or a materialized view. Indexes are primarily used to enhance database performance (though inappropriate use can result in slower performance).` 
     },
-    // { kwd: "CONCURRENTLY", options: crIdxOpts.filter(c => c.label !== "CONCURRENTLY") },
-    { kwd: "ON", expects: "table", docs: `The table for which the index will be created` },
+    { 
+      kwd: "ON", 
+      expects: "table", 
+      docs: `The table for which the index will be created`,
+      include: () => cb.ltoken?.textLC === "index" || 
+        cb.l1token?.textLC === "index" ||
+        cb.l2token?.textLC === "index"
+    },
+    { 
+      kwd: "CONCURRENTLY",
+      options: [
+        { label: "$index_name" },
+        { label: "IF NOT EXISTS" }
+      ],
+      include: () => cb.ltoken?.textLC === "index",
+      optional: true,
+      docs: concurrentlyOpt.docs,
+    },
     { 
       kwd: "USING", 
+      optional: true,
+      include: () => cb.l1token?.textLC === "on",
       docs: `The name of the index method to be used. Choices are btree, hash, gist, spgist, gin, brin, or user-installed access methods like bloom. The default method is btree.`,
       options: [
       { label: "btree", docs: `B-trees can handle equality and range queries on data that can be sorted into some ordering. In particular, the PostgreSQL query planner will consider using a B-tree index whenever an indexed column is involved in a comparison using one of these operators: 
@@ -98,17 +133,20 @@ ${indexInfoUrl}`
     },
     {
       kwd: "( $0 )",
+      options: () => getColsAndFuncs(true).suggestions,
+      excludeIf: () => cb.prevTokens.some(t => !t.nestingId && t.text === ")"),
     },{
       kwd: "INCLUDE",
       expects: "(column)",
+      include: () => cb.prevTokens.some(t => t.text === ")"),
       docs: `The optional INCLUDE clause specifies a list of columns which will be included in the index as non-key columns. A non-key column cannot be used in an index scan search qualification, and it is disregarded for purposes of any uniqueness or exclusion constraint enforced by the index. However, an index-only scan can return the contents of non-key columns without having to visit the index's table, since they are available directly from the index entry. Thus, addition of non-key columns allows index-only scans to be used for queries that otherwise could not use them.`,
       optional: true,
     },{
       kwd: "NULLS",
       optional: true,
       options: [
-        { label: "FIRST", docs: `Specifies that nulls sort before non-nulls. This is the default when DESC is specified.` },
-        { label: "LAST", docs: `Specifies that nulls sort after non-nulls. This is the default when DESC is not specified.` },
+        // { label: "FIRST", docs: `Specifies that nulls sort before non-nulls. This is the default when DESC is specified.` },
+        // { label: "LAST", docs: `Specifies that nulls sort after non-nulls. This is the default when DESC is not specified.` },
         { label: "DISTINCT", docs: `Specifies whether for a unique index, null values should be considered distinct (not equal). The default is that they are distinct, so that a unique index could contain multiple null values in a column.` },
         { label: "NOT DISTINCT", docs: `Specifies whether for a unique index, null values should be considered distinct (not equal). The default is that they are distinct, so that a unique index could contain multiple null values in a column.` },
       ]

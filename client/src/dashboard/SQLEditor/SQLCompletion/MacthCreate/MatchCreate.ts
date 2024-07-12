@@ -33,6 +33,10 @@ export const MatchCreate: SQLMatcher = {
       return matchCreateIndex({ cb, ss, setS, sql })
     }
 
+    if(cb.textLC === "create or"){
+      return suggestSnippets([{label: "REPLACE"}])
+    }
+
     const createViewStartingTexts = [
       "create view", 
       "create or replace view",
@@ -42,8 +46,7 @@ export const MatchCreate: SQLMatcher = {
       "create or replace recursive view",
     ];
     if(createViewStartingTexts.some(t => cb.textLC.startsWith(t))){
-      const res = await matchCreateView(args);
-      if(res) return res;
+      return matchCreateView(args);
     }
 
     const expect = cb.tokens[1]?.textLC;

@@ -28,7 +28,9 @@ export const matchAlterTable = async ({ cb, ss, sql, setS }: SQLMatchContext): P
 }
 
 const AddOpts = [
-  { label: "COLUMN", docs: "Creates a new column in this table" },
+  { 
+    label: "COLUMN", 
+    docs: "Creates a new column in this table" },
   ...PG_TABLE_CONSTRAINTS.map(d => ({ ...d, label: d.kwd, docs: d.docs }))
 ]
 

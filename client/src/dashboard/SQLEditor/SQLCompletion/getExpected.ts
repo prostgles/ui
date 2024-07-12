@@ -35,7 +35,7 @@ export const getExpected = (
     ]).suggestions :
     [] as ParsedSQLSuggestion[];
 
-  const maybeSchemaName = cb.currToken?.text === "."? cb.ltoken?.text : cb.currToken?.text.includes(".")? cb.currToken.text.split(" ")[0] : undefined;
+  const maybeSchemaName = cb.currToken?.text === "."? cb.ltoken?.text : cb.currToken?.text.includes(".")? cb.currToken.text.split(".")[0] : undefined;
   const isSearchingSchemaTable = maybeSchemaName? ss.find(s => s.type === "schema" && s.name === maybeSchemaName)?.name : undefined;
   const suggestions = ss.filter(s => types?.includes(s.type) && (!isSearchingSchemaTable || s.schema === isSearchingSchemaTable))
     .map(s => {

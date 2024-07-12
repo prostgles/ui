@@ -16,7 +16,7 @@ import { format } from "sql-formatter";
 /**
  * Mobile devices can't press Ctrl + Space. Use space instead
  */
-export const triggerCharacters = [".", " ", "/", "?", "\\" ] as const;
+export const triggerCharacters = [".", " ", "/", "?", "\\", "=" ] as const;
 
 export type MonacoSuggestion = PRGLMetaInfo & languages.CompletionItem & Pick<SQLSuggestion, "dataTypeInfo">;
 export type ParsedSQLSuggestion = MonacoSuggestion & Omit<SQLSuggestion, "documentation">;

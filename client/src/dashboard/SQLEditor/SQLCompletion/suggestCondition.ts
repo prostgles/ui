@@ -170,11 +170,18 @@ export const suggestCondition = async (
     };
   } 
 
-  if(thisLineLC && expectsCondition && (getPreviousIdentifier() && cb.ltoken?.type !== "operator.sql" || (l1token?.type === "operator.sql"))){
+  if(
+    thisLineLC && expectsCondition && (getPreviousIdentifier() && cb.ltoken?.type !== "operator.sql" || (l1token?.type === "operator.sql"))
+  ){
     const maybeColumn = getPreviousIdentifier();
     let prevCol = await getPrevCol(maybeColumn);
   
     const { AndOr, ops } = getOperators();
+    if(cb.currToken && ops.some(s => s.name === cb.currToken?.text)){
+      return {
+        suggestions: []
+      }
+    }
     const isNotJSONBSelector = !l1token?.text.includes(">")
     if(isNotJSONBSelector && (l1token?.type === "operator.sql" && !["and", "or"].includes(l1token.textLC)) && prevText.endsWith(" ")){
       return {

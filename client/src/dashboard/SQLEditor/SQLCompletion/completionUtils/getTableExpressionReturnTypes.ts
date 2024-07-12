@@ -1,5 +1,5 @@
 import type { ColType } from "../../../../../../commonTypes/utils";
-import { asListObject, getColumnSuggestionLabel } from "../../SQLEditorSuggestions";
+import { getColumnSuggestionLabel } from "../../SQLEditorSuggestions";
 import { asSQL } from "../KEYWORDS";
 import { getKind, type ParsedSQLSuggestion, type SQLMatchContext } from "../registerSuggestions";
 import { getTableExpressionReturnType } from "./getQueryReturnType";
@@ -53,7 +53,7 @@ export const getTableExpressionSuggestions = async (args: GetTableExpressionSugg
       name: label,
       label: getColumnSuggestionLabel({ name: colName, ...c }, tableAlias ?? (cs.type === "s"? cs.s.tablesInfo!.name : "" )),
       insertText,
-      filterText: label,
+      filterText: colName,
       escapedIdentifier: colName,
       sortText: "-1",
     }

@@ -18,8 +18,8 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
   }
   const expressions = await getTableExpressionSuggestions({ parentCb, cb, ss, sql }, "columns");
 
-  const tableAlias = !cb.currToken? undefined : cb.currToken.text === "."? cb.ltoken?.text : cb.currToken.text.split(".")[0]!;
-  const activeAliasTable = !tableAlias? undefined : expressions.tablesWithAliasInfo.find(t => t.alias === tableAlias);
+  const maybeTableAlias = !cb.currToken? undefined : cb.currToken.text === "."? cb.ltoken?.text : cb.currToken.text.split(".")[0]!;
+  const activeAliasTable = !maybeTableAlias? undefined : expressions.tablesWithAliasInfo.find(t => t.alias === maybeTableAlias);
   if(activeAliasTable){
     const tableAliasCols = expressions.columns.filter(c => c.escapedParentName === activeAliasTable.s.escapedIdentifier)
     return { suggestions: tableAliasCols }
@@ -46,13 +46,13 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
       ;
 
     const sortText = isPrioritised? s.sortText : 
-      (s.type === "function"? "c" : (prioritiseColumn? "a" : "b")) + (s.schema === "public"? "a" : "b")
+      `${(s.type === "function"? (cb.textLC.startsWith("create index") && s.funcInfo?.provolatile === "i"? "c" : "d") : (prioritiseColumn? "a" : "b"))}${(s.schema === "public"? "a" : "b")}`;
 
     if (s.type === "column") {
       const delimiter = addTableInline? " " : "\n";
       return {
         ...s,
-        insertText: tableAlias? (s.escapedIdentifier ?? s.name) : s.insertText.trim(),
+        insertText: activeAliasTable? (s.escapedIdentifier ?? s.name) : s.insertText.trim(),
         sortText,
         ...(addTable && {
           insertTextRules: 4,
