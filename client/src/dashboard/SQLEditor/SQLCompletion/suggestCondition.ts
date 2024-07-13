@@ -108,15 +108,19 @@ export const suggestCondition = async (
 
   /** Convenient autocomplete */
   if(
-    prevKwdToken?.textLC === "where" && allowedOperands.includes(cb.ltoken?.text ?? "") && 
-    // (cb.l1token?.type === "identifier.sql" || cb.l1token?.type === "keyword.sql") &&
+    prevKwdToken?.textLC === "where" && 
+    (allowedOperands.includes(cb.ltoken?.textLC ?? "") || cb.currNestingFunc?.textLC === "in") && 
     getPreviousIdentifier() && 
     ["select", "with"].includes(cb.ftoken?.textLC ?? "") && 
     cb.currToken?.type === "string.sql"
   ){
     const columnName = getPreviousIdentifier();// cb.l1token.text;
     const currentFilter = `%${cb.currToken.text.slice(1, -1)}%`;
-    const [matchingTable, ...other] = ss.filter(s => (s.type === "table" || s.type === "view") && cb.tokens.some(t => s.escapedIdentifier === t.text)  && s.cols?.some(c => c.escaped_identifier === columnName));
+    const [matchingTable, ...other] = ss.filter(s => 
+      (s.type === "table" || s.type === "view") && 
+      cb.tokens.some(t => s.escapedIdentifier === t.text || s.schema === "pg_catalog" && s.escapedName === t.text) && 
+      s.cols?.some(c => c.escaped_identifier === columnName)
+    );
     const querySelect = `DISTINCT ${columnName}::TEXT`
     const queryFilter = ` WHERE ${columnName}::TEXT ilike \${currentFilter} LIMIT 20`
     let query = "";
