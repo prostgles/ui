@@ -15,7 +15,7 @@ import { matchCreateView } from "./MatchCreateView";
 import { matchCreateIndex } from "./matchCreateIndex";
 import { matchCreatePolicy } from "./matchCreatePolicy";
 import { matchCreateRule } from "./matchCreateRule";
-import { matchCreateTable } from "./matchCreateTable";
+import { getUserSchemaNames, matchCreateTable } from "./matchCreateTable";
 import { matchCreateTrigger } from "./matchCreateTrigger";
 
 export const MatchCreate: SQLMatcher = {
@@ -104,6 +104,15 @@ export const MatchCreate: SQLMatcher = {
       } else {
         whatToReplace
       }
+    }
+
+    if(prevLC === "create function" || prevLC === "create procedure"){
+      const userSchemas = getUserSchemaNames(ss);
+      const entity_name = prevLC === "create function"? "$function_name" : "$procedure_name";
+      return suggestSnippets([
+        entity_name, 
+        ...userSchemas.map(s => `${s}.${entity_name}`),
+      ].map(label => ({ label })));
     }
 
     if (prevLC.startsWith("create rule") || prevLC.startsWith("create or replace rule")) {

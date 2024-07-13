@@ -2,9 +2,9 @@ import { fixIndent } from "../../../demo/sqlVideoDemo";
 import { tout } from "../../../pages/ElectronSetup";
 import type { DemoScript } from "../getDemoUtils";
 
-export const testBugs: DemoScript = async ({ typeAuto, typeText, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL }) => {
+export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL }) => {
 
-  const idxQ = "CREATE INDEX myidx ON pg_catalog.pg_class (  oid )"
+  const idxQ = "CREATE INDEX myidx ON pg_catalog.pg_class (  oid )";
   await fromBeginning(false, "");
   await typeAuto("cr");
   await typeAuto(" in");
