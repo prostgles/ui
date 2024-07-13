@@ -1,13 +1,15 @@
-import { options } from "sanitize-html";
 import type { MinimalSnippet } from "../CommonMatchImports";
 import { suggestSnippets } from "../CommonMatchImports";
 import { getExpected } from "../getExpected";
 import { getParentFunction } from "../MatchSelect";
-import { getKind, type SQLMatchContext, type SQLMatcherResultType } from "../registerSuggestions";
+import { getKind, type ParsedSQLSuggestion, type SQLMatchContext, type SQLMatcherResultType } from "../registerSuggestions";
 import { suggestCondition } from "../suggestCondition";
 import { getNewColumnDefinitions, PG_COLUMN_CONSTRAINTS, REFERENCE_CONSTRAINT_OPTIONS_KWDS } from "../TableKWDs";
 import { type KWD, suggestKWD, withKWDs } from "../withKWDs";
 
+export const getUserSchemaNames = (ss: ParsedSQLSuggestion[]) => ss
+  .filter(s => s.type === "schema" && s.name !== "information_schema" && !s.name.startsWith ("pg_")).map(s => s.escapedIdentifier ?? s.escapedName ?? s.name);
+  
 export const matchCreateTable = async ({ cb, ss, sql, setS }: SQLMatchContext): Promise<SQLMatcherResultType> => {
   const { prevLC, l2token, l1token, ltoken, thisLineLC, prevTokens } = cb;
 
@@ -30,7 +32,7 @@ export const matchCreateTable = async ({ cb, ss, sql, setS }: SQLMatchContext): 
         ...["RANGE", "LIST", "HASH"].map(kwd => ({
           kwd,
           exactlyAfter: ["PARTITION BY"],
-          options: ["($column_name)", "($column_name) $data_type"],
+          options: ["($column_name)"],
           excludeIf: cb => cb.prevTokens.some(t => partitionTypes.some(pt => t.nestingFuncToken?.textLC === pt.toLowerCase()))
         } satisfies KWD)),
         {
@@ -41,7 +43,6 @@ export const matchCreateTable = async ({ cb, ss, sql, setS }: SQLMatchContext): 
         }
       ], { cb, ss, sql, setS }).getSuggestion();
     } else if(cb.currNestingFunc?.textLC === "with"){
-      // return suggestKWD(partitionTypes);{
       return withKWDs(withOptions.map(k => ({ 
         ...k, 
         expects: "=option", 
@@ -55,7 +56,12 @@ export const matchCreateTable = async ({ cb, ss, sql, setS }: SQLMatchContext): 
   }
 
   if (ltoken?.textLC === "table") {
-    return suggestKWD(getKind, ["$tableName", "IF NOT EXISTS"]);
+    const userSchemas = getUserSchemaNames(ss);
+    return suggestKWD(getKind, [
+      "$tableName", 
+      "IF NOT EXISTS",
+      ...userSchemas.map(s => `${s}.$table_name`),
+    ]);
   }
 
   if (thisLineLC.includes("references")) {

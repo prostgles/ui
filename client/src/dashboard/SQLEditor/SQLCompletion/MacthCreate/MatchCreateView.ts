@@ -5,6 +5,7 @@ import {
 import { MatchSelect } from "../MatchSelect";
 import type { SQLMatcherResultArgs } from "../registerSuggestions";
 import { withKWDs, type KWD } from "../withKWDs";
+import { getUserSchemaNames } from "./matchCreateTable";
 
 export const matchCreateView = async (args: SQLMatcherResultArgs) => { 
   const {cb, ss, setS, sql } = args;
@@ -17,7 +18,12 @@ export const matchCreateView = async (args: SQLMatcherResultArgs) => {
   }
 
   if(cb.ltoken?.textLC === "view"){
-    return suggestSnippets([{ label: "$view_name" }]);
+    const userSchemas = getUserSchemaNames(ss);
+    return suggestSnippets([
+      "$view_name", 
+      "IF NOT EXISTS",
+      ...userSchemas.map(s => `${s}.$view_name`),
+    ].map(label => ({ label })));
   }
 
   const withOptions = [
