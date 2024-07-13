@@ -2,7 +2,7 @@ import { mdiPlay, mdiPlayCircleOutline } from "@mdi/js";
 import React, { useRef, useState } from "react";
 import { r_useAppVideoDemo, useReactiveState, type Prgl } from "../App";
 import Btn from "../components/Btn";
-import { VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
+import { startWakeLock, VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
 import { VIDEO_DEMO_SCRIPTS } from "./videoDemoScripts";
 import { getKeys } from "../utils";
 import Popup from "../components/Popup/Popup";
@@ -21,15 +21,17 @@ export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
       throw new Error("Cannot start demo on a non-demo database");
     }
     r_useAppVideoDemo.set({ demoStarted: true });
+    const { stopWakeLock } = await startWakeLock();
     if(name) {
       await VIDEO_DEMO_SCRIPTS[name]();
-      return;
+    } else {
+      const { sqlDemo, acDemo, backupDemo, fileDemo, dashboardDemo } = VIDEO_DEMO_SCRIPTS;
+      await sqlDemo();
+      await acDemo();
+      await dashboardDemo();
+      await backupDemo();
     }
-    const { sqlDemo, acDemo, backupDemo, fileDemo, dashboardDemo } = VIDEO_DEMO_SCRIPTS;
-    await sqlDemo();
-    await acDemo();
-    await dashboardDemo();
-    await backupDemo();
+    stopWakeLock();
   }
  
   return <>
