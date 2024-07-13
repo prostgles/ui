@@ -1,4 +1,5 @@
 import type { SQLHandler, ValidatedColumnInfo } from "prostgles-types";
+import { tryCatch } from "prostgles-types";
 import type { TopKeyword } from "./KEYWORDS";
 import { TOP_KEYWORDS, asSQL } from "./KEYWORDS";
 import { missingKeywordDocumentation } from "../SQLEditorSuggestions";
@@ -50,8 +51,12 @@ export type PG_Index = {
   tablename: string;
   persistence: string;
   access_method: string;
-  size: string;
-  description: string | null; 
+  table_size: string;
+  description: string | null;
+  idx_scan: string;
+  idx_tup_read: string;
+  idx_tup_fetch: string;
+  index_size: string; 
 };
 
 export type PG_Trigger = { 
@@ -355,8 +360,22 @@ export type PG_Table = {
      * VARCHAR(character_maximum_length)
      */
     character_maximum_length: number | null;
-  }[]
+  }[];
+  tableStats?: TableStats;
 }
+
+type TableStats = { 
+  relid: number;
+  table_name: string;
+  seq_scans: string;
+  idx_scans: string | null;
+  n_live_tup: string;
+  n_dead_tup: string;
+  last_vacuum: string | null;
+  last_autovacuum: string | null;
+  table_size: string;
+  might_need_index: boolean; 
+};
 
 export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise<PG_Table[]> {
   /** Used to prevent permission erorrs */
@@ -410,7 +429,34 @@ export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise
     { returnType: "rows" }
   )) as PG_Table[];
 
+  const { tableAndViewsStats = [] } = await tryCatch(async () => {
+    const tableAndViewsStats = await db.sql(`
+      SELECT relid,
+        relname AS table_name,
+        to_char(seq_scan, '999,999,999,999') AS seq_scans,
+        to_char(idx_scan, '999,999,999,999') AS idx_scans,
+        to_char(n_live_tup, '999,999,999,999') AS n_live_tup,
+        to_char(n_dead_tup, '999,999,999,999') AS n_dead_tup,
+      --  TO_CHAR(age(current_date, last_vacuum), 'YY"yrs" mm"mts" DD"days" MI"mins" ago') AS last_vacuum,
+      --  TO_CHAR(age(current_date, last_autovacuum), 'YY"yrs" mm"mts" DD"days" MI"mins" ago') AS last_autovacuum,
+        TO_CHAR(now() - last_vacuum, 'YY"yrs" mm"mts" DD"days" MI"mins" ago') AS last_vacuum,
+        TO_CHAR(now() - last_autovacuum, 'YY"yrs" mm"mts" DD"days" MI"mins" ago') AS last_autovacuum,
+        pg_size_pretty(pg_relation_size(relid::regclass)) AS table_size,
+          (50 * seq_scan > idx_scan -- more than 2%
+          AND n_live_tup > 10000
+          AND pg_relation_size(relname :: regclass) > 5000000) as might_need_index
+      FROM pg_stat_all_tables
+      WHERE schemaname <> 'information_schema'
+      AND schemaname NOT ILIKE 'pg_%';
+      `, 
+      {}, 
+      { returnType: "rows" }
+    ) as TableStats[];
+    return { tableAndViewsStats }
+  })
+
   return tablesAndViews.map(t => {
+    t.tableStats = tableAndViewsStats.find(s => s.relid === t.oid);
     t.escaped_identifiers = search_schemas.map(schema => `${schema}.${t.escaped_name}`).concat([t.escaped_identifier])
     if([...search_schemas, "pg_catalog"].some(s => t.escaped_identifier.startsWith(`${s}.`))){ 
       t.escaped_identifiers.push(t.escaped_identifier.split(".")[1]!);
@@ -835,9 +881,15 @@ export const PG_OBJECT_QUERIES = {
         CASE c.relpersistence WHEN 'p' THEN 'permanent' WHEN 't' THEN 'temporary' 
         WHEN 'u' THEN 'unlogged' END as "persistence",
         am.amname as "access_method",
-        pg_catalog.pg_size_pretty(pg_catalog.pg_table_size(c.oid)) as "size",
+        pg_catalog.pg_size_pretty(pg_catalog.pg_table_size(c.oid)) as "table_size",
         pg_catalog.obj_description(c.oid, 'pg_class') as "description"
+        , to_char(idx_scan, '999,999,999,999') as idx_scan
+        , to_char(idx_tup_read, '999,999,999,999') as idx_tup_read
+        , to_char(idx_tup_fetch, '999,999,999,999') as idx_tup_fetch
+        , pg_size_pretty(pg_relation_size(stat.indexrelid::regclass)) as index_size
       FROM pg_catalog.pg_class c
+          LEFT JOIN pg_catalog.pg_stat_all_indexes stat
+            ON c.oid = stat.indexrelid
           LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
           LEFT JOIN pg_catalog.pg_am am ON am.oid = c.relam
           LEFT JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid
