@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router-dom";
 
-export const useConnectionConfigSearchParams = (connectionConfigItems: string[]) => {
+export const useConnectionConfigSearchParams = <ItemKey extends string>(connectionConfigItems: ItemKey[]) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const activeSection = connectionConfigItems.find(s => s === searchParams.get("section")) ?? connectionConfigItems[0];

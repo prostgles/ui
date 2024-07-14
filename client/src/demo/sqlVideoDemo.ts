@@ -5,9 +5,10 @@ import { QUERY_WATCH_IGNORE } from "../../../commonTypes/utils";
 export const sqlVideoDemo: DemoScript = async ({ 
   runDbSQL, fromBeginning, typeAuto, 
   moveCursor, triggerParamHints,  getEditor, 
-  actions, testResult, getEditors, runSQL, newLine
+  actions, testResult, triggerSuggest, runSQL, newLine
 }) => {
   const hasTable = await runDbSQL(`SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public' AND tablename = 'chats'`, { }, { returnType: "value" });
+  await runDbSQL(`UPDATE users SET options = options || '{ "theme": "dark" }'::JSONB`);
   const existingUsers: string[] = await runDbSQL(`SELECT usename FROM pg_catalog.pg_user `, { }, { returnType: "values" });
   if(!hasTable){
     // alert("Creating demo tables. Must run demo script again");
@@ -67,7 +68,7 @@ export const sqlVideoDemo: DemoScript = async ({
       LEFT JOIN LATERAL (
         SELECT *
         FROM orders o
-        WHERE
+        WHERE u
         LIMIT 10
       ) latest_orders
         ON TRUE
@@ -77,10 +78,10 @@ export const sqlVideoDemo: DemoScript = async ({
     await moveCursor.up(3, 300);
     await moveCursor.lineEnd();
     await tout(500);
-    await typeAuto(" u.i", { waitBeforeAccept: 1e3 });
+    await typeAuto(".i", { waitBeforeAccept: 1e3 });
     await typeAuto(` `);
     await typeAuto(" o.", { waitBeforeAccept: 1e3 });
-    testResult(script.replace("WHERE", "WHERE u.id = o.user_id"))
+    testResult(script.replace("WHERE u", "WHERE u.id = o.user_id"))
   });
 
   /** Join complete */
@@ -88,6 +89,13 @@ export const sqlVideoDemo: DemoScript = async ({
     await fromBeginning(false, `/* Joins autocomplete */\nSELECT * \nFROM users u`);
     await typeAuto(`\nleft`, { msPerChar: 40, waitAccept: 1e3 });
     await typeAuto(` `, { msPerChar: 40, waitAccept: 1e3, nth: 2 });
+    await newLine();
+    await moveCursor.left(2);
+    await typeAuto(`W`, { triggerMode: "firstChar" });
+    await typeAuto(` opt`);
+    await typeAuto(` the`);
+    await typeAuto(` `);
+    await typeAuto(` '`, { msPerChar: 1, triggerMode: "firstChar" });
   });
   
   /** Current statement execution */
@@ -118,31 +126,31 @@ export const sqlVideoDemo: DemoScript = async ({
   })
   
   /** Selection expansion */
-  await showScript(`Selection/statement expansion`, async () => {
-    const script = fixIndent(`
-      /* Selection/statement expansion */
-      SELECT *
-      FROM users u
-      LEFT JOIN (
-        SELECT *
-        FROM orders o
-        LEFT JOIN (
-          SELECT *
-          FROM order_items
-        ) oi
-        ON oi.order_id = o.id
-        GROUP BY user_id
-      ) o
-      ON o.user_id = u.id
-    `);
-    fromBeginning(false, script);
-    await moveCursor.up(4, 100);
-    await tout(500);
-    for (let i = 0; i < 3; i++) {
-      actions.selectCodeBlock();
-      await tout(500);
-    }
-  });
+  // await showScript(`Selection/statement expansion`, async () => {
+  //   const script = fixIndent(`
+  //     /* Selection/statement expansion */
+  //     SELECT *
+  //     FROM users u
+  //     LEFT JOIN (
+  //       SELECT *
+  //       FROM orders o
+  //       LEFT JOIN (
+  //         SELECT *
+  //         FROM order_items
+  //       ) oi
+  //       ON oi.order_id = o.id
+  //       GROUP BY user_id
+  //     ) o
+  //     ON o.user_id = u.id
+  //   `);
+  //   fromBeginning(false, script);
+  //   await moveCursor.up(4, 100);
+  //   await tout(500);
+  //   for (let i = 0; i < 3; i++) {
+  //     actions.selectCodeBlock();
+  //     await tout(500);
+  //   }
+  // });
 
   /** Documentation and ALL CATALOGS SUGGESTED */
   await showScript(`Schema and context aware suggestions`, async () => {

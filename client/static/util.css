@@ -1865,10 +1865,20 @@ nav.left-nav-list a.active {
   opacity: 1;
 }
 
+.display-on-trigger-hover {
+  width: 0;
+  margin-right: -10px;
+  transition: width .35s;
+  overflow: hidden;
+}
+.trigger-hover:hover .display-on-trigger-hover,
+.trigger-hover:focus .display-on-trigger-hover {
+  width: 250px;
+}
+
 .show-on-trigger-hover {
   opacity: 0;
 }
-
 .trigger-hover:hover .show-on-trigger-hover,
 .trigger-hover:focus .show-on-trigger-hover,
 .trigger-hover:focus-within .show-on-trigger-hover {

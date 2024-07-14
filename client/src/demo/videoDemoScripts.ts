@@ -106,7 +106,7 @@ const sqlDemo = async () => {
   const sqlWindow = getSqlWindow();
   const id = sqlWindow?.dataset!.boxId;
   if (!sqlWindow || !id) throw "not ok";
-  await (window as any).dbs.windows.update({ id }, { sql_options: { $merge: [{ "executeOptions": "smallest-block" }] } })
+  await (window as any).dbs.windows.update({ id }, { sql_options: { $merge: [{ "executeOptions": "smallest-block" }] } });
   const testUtils = getDemoUtils({ id });
 
   const currDbName = await testUtils.runDbSQL(`SELECT current_database() as db_name`, {}, { returnType: "value" });

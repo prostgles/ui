@@ -23,6 +23,7 @@ import { TableConfig } from "../TableConfig/TableConfig";
 import { PublishedMethods } from "../W_Method/PublishedMethods";
 import { OnMountFunction } from "./OnMountFunction";
 import { useConnectionConfigSearchParams } from "./useConnectionConfigSearchParams";
+import { getKeys } from "../../utils";
 
 type ConnectionConfigProps = Pick<React.HTMLAttributes<HTMLDivElement>, "style" | "className" | "children"> & {
   connection: Connections;
@@ -113,7 +114,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
       </FlexCol>
     },
   } as const satisfies TabItems;
-  const { activeSection, setSection } = useConnectionConfigSearchParams(Object.keys(sectionItems));
+  const { activeSection, setSection } = useConnectionConfigSearchParams(getKeys(sectionItems));
   
   return <div 
     className={`flex-col f-1 min-s-0 ${className}`} 
