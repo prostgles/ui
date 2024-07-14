@@ -304,7 +304,7 @@ export default class SmartCard<T extends AnyObject> extends RTComp<SmartCardProp
       col?: typeof columns[number]
     }[] = fieldConfigs.filter(fc => !fc.hide)
       .map((fc: ParsedFieldConfig) => ({
-        name: fc.name,
+        name: fc.name.toString(),
         col: displayedColumns.find(c => fc.name === c.name),
         fc
       }));

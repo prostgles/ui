@@ -9,7 +9,6 @@ import {
   mdiSyncCircle,
   mdiViewColumnOutline
 } from "@mdi/js";
-import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
 import type { TabItems } from "../../../components/Tabs";
 import Tabs from "../../../components/Tabs";

@@ -31,11 +31,14 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
     return !addTable? false : !expressions.tables.some(t => t.escapedIdentifier === s.escapedParentName);
   });
 
-  const funcs = ss.filter(s => s.type === "function");
+  const funcs = ss.filter(s => 
+    s.type === "function"
+  );
+ 
   const colAndFuncSuggestions = ([
     ...expressions.columns.map(s => ({ isPrioritised: true, s })), 
     ...otherColumns.map(s => ({ isPrioritised: false, s })),
-    ...funcs.map(s => ({ isPrioritised: false, s })),
+    ...funcs.map(s => ({ isPrioritised: false, s })) ,
   ])
   .map(({ s, isPrioritised }) => {
 
@@ -77,7 +80,6 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
     [ltoken?.textLC === "select"? "DISTINCT" : "", "COALESCE", "CASE", "NULLIF", "LEAST", "GREATEST"]
       .includes(s.name)).map(s => ({ 
         ...s, 
-        // sortText: "a", 
       })
   );
 
@@ -119,6 +121,7 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
       ...selectKwds as any,
     ];
   }
-
-  return { suggestions }
+  return { 
+    suggestions 
+  }
 }

@@ -41,22 +41,22 @@ export type TabsProps<T extends TabItems = any> = {
    * If true then non active controls will be hidden
    */
   compactMode?: boolean;
-  activeKey?: keyof T | string;
-  defaultActiveKey?: keyof T | string;
+  activeKey?: keyof T;
+  defaultActiveKey?: keyof T;
   onChange?: (itemLabel: keyof T | undefined) => void;
   contentClass?: string;
   onRender?: (activeItem: TabItem) => React.ReactNode;
 }
 
-type S = {
-  activeKey?: string | null;
+type S<T> = {
+  activeKey?: keyof T | null;
   variant?: "horizontal" | "vertical";
   controlsCollapsed: boolean;
 };
 
-export default class Tabs<T extends TabItems = TabItems> extends RTComp<TabsProps<T>, S> {
+export default class Tabs<T extends TabItems = TabItems> extends RTComp<TabsProps<T>, S<T>> {
 
-  state: S = {
+  state: S<T> = {
     controlsCollapsed: false
   }
 
@@ -92,7 +92,7 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<TabsProp
   }
   
   
-  onDelta(deltaP?: DeltaOf<TabsProps<T>>, deltaS?: DeltaOf<S>, deltaD?: DeltaOfData<{ [x: string]: any; }>): void {
+  onDelta(deltaP?: DeltaOf<TabsProps<T>>, deltaS?: DeltaOf<S<T>>, deltaD?: DeltaOfData<{ [x: string]: any; }>): void {
 
     const { variant = "horizontal" } = this.props;
     if(deltaP?.variant){
@@ -186,7 +186,8 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<TabsProp
             /* Ensure active items without content do not take white space to right */
             className={classOverride(`Tabs_Menu ${activeKeyAndContent? "bg-color-1 shadow" : "max-w-unset"} f-0 w-full noselect`, listClassName)}
             variant={controlsCollapsed? "dropdown" : variant?.replace("horizontal", "horizontal-tabs") as any}
-            activeKey={activeKey}
+            compactMode={true}
+            activeKey={activeKey as any}
             items={Object.keys(items).filter(k => !items[k]!.hide).map((key) => ({
               key,
               label: items[key]?.label || key,

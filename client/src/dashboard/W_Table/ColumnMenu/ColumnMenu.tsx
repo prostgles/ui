@@ -319,7 +319,7 @@ export const ColumnMenu = (props: P) => {
         variant="vertical"
         listClassName="o-auto"
         contentClass={" min-w-300 flex-col ml-p25 o-auto " + (activeKey === "Alter"? " o-auto " : " p-1 ")}
-        activeKey={activeKey}
+        activeKey={activeKey as any}
         items={items}
         menuStyle={{ borderRadius: 0  }}
         onChange={async v => {

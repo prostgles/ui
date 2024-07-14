@@ -21,7 +21,8 @@ export const suggestFuncArgs = async ({ cb, parentCb, ss, setS, sql }: Pick<SQLM
         const matchingTypeSuggestions = suggestions.map(s => {
           const matchingDataTypes = [
             ["json", "jsonb"],
-          ]
+            ["numeric", "decimal", "float", "real", "integer", "int4", "int8", "int2", "bigint", "smallint"],
+          ];
           const dataTypeMatches = activeArgs.some(activeArg => 
               [s.colInfo?.udt_name.toLowerCase(), s.colInfo?.data_type.toLowerCase()].includes(activeArg.data_type) ||
               matchingDataTypes.some(types => types.includes(activeArg.data_type) && types.some(type => [s.colInfo?.udt_name.toLowerCase(), s.colInfo?.data_type.toLowerCase()].includes(type))) ||

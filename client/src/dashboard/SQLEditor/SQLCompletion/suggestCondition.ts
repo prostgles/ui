@@ -1,4 +1,5 @@
 import { isDefined } from "../../../utils";
+import type { ColInfo } from "../../W_Table/TableMenu/getChartCols";
 import { suggestSnippets } from "./CommonMatchImports";
 import { getParentFunction } from "./MatchSelect";
 import { matchNested } from "./MatchWith";
@@ -102,8 +103,12 @@ export const suggestCondition = async (
     return jsonbPath;
   }
   const getPreviousIdentifier = () => {
-    const identifier = cb.prevTokens.slice(0).reverse().find(t => t.type === "identifier.sql" || t.type === "identifier.quote.sql");
-    return identifier?.text;
+    const reversedTokens = cb.prevTokens.slice(0).reverse()
+    const idx = reversedTokens.findIndex(t => t.type === "identifier.sql" || t.type === "identifier.quote.sql");
+    const identifier = reversedTokens[idx];
+    const colTokens = reversedTokens.slice(1, idx + 1);
+    if(!identifier) return undefined;
+    return { identifierText: identifier.text, colTokens: colTokens.slice(0).reverse() };
   }
 
   /** Convenient autocomplete */
@@ -114,23 +119,39 @@ export const suggestCondition = async (
     ["select", "with"].includes(cb.ftoken?.textLC ?? "") && 
     cb.currToken?.type === "string.sql"
   ){
-    const columnName = getPreviousIdentifier();// cb.l1token.text;
+    const { identifierText: columnName, colTokens } = getPreviousIdentifier()!;
     const currentFilter = `%${cb.currToken.text.slice(1, -1)}%`;
     const [matchingTable, ...other] = ss.filter(s => 
       (s.type === "table" || s.type === "view") && 
       cb.tokens.some(t => s.escapedIdentifier === t.text || s.schema === "pg_catalog" && s.escapedName === t.text) && 
       s.cols?.some(c => c.escaped_identifier === columnName)
     );
-    const querySelect = `DISTINCT ${columnName}::TEXT`
-    const queryFilter = ` WHERE ${columnName}::TEXT ilike \${currentFilter} LIMIT 20`
+    const getQueries = (udt_name: ColInfo["udt_name"]) => {
+      let expression = columnName;
+      if(
+        ["jsonb", "json"].includes(udt_name) &&
+        colTokens.some(t => t.text.includes("->")) &&
+        colTokens.at(-1)?.type === "string.sql"
+      ){
+        expression = `(${colTokens.map(t => t.text).join("")})`;
+      }
+      const querySelect = `DISTINCT LEFT(${expression}::TEXT, 500)`;
+      const queryFilter = ` WHERE LEFT(${expression}::TEXT, 500) ilike \${currentFilter} LIMIT 20`;
+      return {
+        querySelect,
+        queryFilter
+      }
+    }
     let query = "";
     if(!matchingTable){
       const { columnsWithAliasInfo } = await getTableExpressionSuggestions({ parentCb, cb, ss, sql }, "columns");
       const col = columnsWithAliasInfo.find(({ s }) => s.insertText === columnName);
       if(col){
+        const { queryFilter, querySelect } = getQueries(col.s.colInfo?.udt_name as any);
         query = col.getQuery(querySelect) + queryFilter;
       }
     } else if(!other.length){
+      const { queryFilter, querySelect } = getQueries(matchingTable.cols!.find(c => c.escaped_identifier === columnName)!.udt_name as any);
       query = `SELECT ${querySelect} FROM ${matchingTable.escapedIdentifier} ${queryFilter}`;
     }
     if(query){
@@ -177,7 +198,7 @@ export const suggestCondition = async (
   if(
     thisLineLC && expectsCondition && (getPreviousIdentifier() && cb.ltoken?.type !== "operator.sql" || (l1token?.type === "operator.sql"))
   ){
-    const maybeColumn = getPreviousIdentifier();
+    const { identifierText: maybeColumn } = getPreviousIdentifier() ?? {};
     let prevCol = await getPrevCol(maybeColumn);
   
     const { AndOr, ops } = getOperators();

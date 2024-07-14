@@ -3,7 +3,6 @@ import { customLightThemeMonaco, getMonaco } from "../SQLEditor/SQLEditor";
 import { loadPSQLLanguage } from "./MonacoLanguageRegister";
 import { appTheme, useReactiveState } from "../../App"; 
 import { useAsyncEffectQueue, useEffectDeep } from "prostgles-client/dist/react-hooks";
-
 import type { editor } from "../W_SQL/monacoEditorTypes"
 import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 export type MonacoEditorProps = {

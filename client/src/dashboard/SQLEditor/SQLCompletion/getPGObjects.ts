@@ -421,8 +421,10 @@ export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise
       ON c.relnamespace = ns.oid
     LEFT JOIN information_schema.columns cols /* FOR SOME REASON MAT VIEW COLS ARE NOT HERE (relkind=m)*/
     ON (cols.table_schema, cols.table_name) IN ((nspname, relname))
-    WHERE relkind IN ('r', 'v', 'm' ) AND nspname IN ${allowedSchemasQuery}
+    WHERE relkind IN ('r', 'v', 'm' ) 
+    AND nspname IN ${allowedSchemasQuery}
     ${tableName? " AND relname = ${tableName} " : ""}
+    AND relname NOT ILIKE 'prostgles_shell_%'
     GROUP BY c.oid, relkind, nspname, relname;
     `,
     { tableName }, 

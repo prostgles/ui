@@ -11,6 +11,7 @@ import { getMatch } from "./getMatch";
 import { isObject } from "../../../../../commonTypes/publishUtils";
 import { isDefined } from "../../../utils";
 import { format } from "sql-formatter";
+import { getStartingLetters } from "./getJoinSuggestions";
 
 
 /**
@@ -98,6 +99,46 @@ type Args = {
   monaco: Monaco;
 };
 
+const getRespectedSortText = (cb: CodeBlock, { suggestions }: { suggestions: (MonacoSuggestion | languages.CompletionItem | ParsedSQLSuggestion)[] }) => {
+  const currText = cb.currToken?.text;
+  if(!currText) return { suggestions };
+  const sortText = Array.from(new Set(suggestions.map(s => s.sortText))).sort();
+  if(sortText.length === 1) return { suggestions };
+  /**
+   *  SELECT name 
+   *  FROM pg_class
+   * 
+   *  yields unwanted list of "name" functions at the top, not respecting sortText
+   *  if user is searching for something that matches expression columns then 
+   *  add 5 other matching functions at most to not obfuscate the columns
+   */ 
+  const fixedSuggestions = suggestions.map(s => {
+    const sortIndex = sortText.indexOf(s.sortText);
+    if(sortIndex > 0) return s;
+    const itemText = "escapedIdentifier" in s && s.escapedIdentifier? s.escapedIdentifier : 
+      "escapedName" in s && s.escapedName? s.escapedName : 
+      "name" in s? s.name : 
+      typeof s.label === "string"? s.label : 
+      s.label.label;
+    let filterText: string | undefined;
+    if(itemText.includes(currText)){
+      filterText = itemText.slice(itemText.indexOf(currText));
+    } else {
+      const startingLetters = getStartingLetters(itemText);
+      if(startingLetters.includes(currText)){
+        filterText = startingLetters.slice(startingLetters.indexOf(currText)) + " " + itemText;
+      }
+    }
+    return {
+      ...s,
+      filterText,
+    }
+  });
+
+  return {
+    suggestions: fixedSuggestions
+  }
+}
 
 export let KNDS: Kind = {} as any;
 
@@ -126,7 +167,6 @@ export function registerSuggestions(args: Args) {
           insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
         }
 
-
         const info = getKeywordDocumentation(s.name);
         if (info) {
           res.documentation = {
@@ -150,10 +190,10 @@ export function registerSuggestions(args: Args) {
 
     const { firstTry, match } = await getMatch({ cb: cBlock, ss, setS, sql });
     if(firstTry){
-      return firstTry
+      return getRespectedSortText(cBlock, firstTry)
     } else if(match) {
       const res = await match.result({ cb: cBlock, ss, setS, sql });
-      return res
+      return getRespectedSortText(cBlock, res)
     }
 
     const suggestions = ss.filter(s => s.topKwd?.start_kwd)
