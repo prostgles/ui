@@ -8,7 +8,6 @@ export const sqlVideoDemo: DemoScript = async ({
   actions, testResult, triggerSuggest, runSQL, newLine
 }) => {
   const hasTable = await runDbSQL(`SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public' AND tablename = 'chats'`, { }, { returnType: "value" });
-  await runDbSQL(`UPDATE users SET options = options || '{ "theme": "dark" }'::JSONB`);
   const existingUsers: string[] = await runDbSQL(`SELECT usename FROM pg_catalog.pg_user `, { }, { returnType: "values" });
   if(!hasTable){
     // alert("Creating demo tables. Must run demo script again");
@@ -32,6 +31,9 @@ export const sqlVideoDemo: DemoScript = async ({
       `GRANT ALL ON ALL TABLES IN SCHEMA public TO mynewuser;`,
       existingUsers.includes("vid_demo_user")? "" : `CREATE USER vid_demo_user;`,
       usersTable,
+      `INSERT INTO users(id, status, username, password, type, options) VALUES (gen_random_uuid(), 'active', 'user78679', '****', 'default', '{ "theme": "light" }'::JSONB);`,
+      `INSERT INTO users(id, status, username, password, type, options) VALUES (gen_random_uuid(), 'active', 'user219', '****', 'customer', '{ "theme": "from-system" }'::JSONB);`,
+      `INSERT INTO users(id, status, username, password, type, options) VALUES (gen_random_uuid(), 'active', 'user219', '****', 'defaultl', '{ "theme": "dark" }'::JSONB);`,
       `CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, user_id UUID NOT NULL REFERENCES users, total_price DECIMAL(12,2) CHECK(total_price >= 0), created_at TIMESTAMP  DEFAULT now());`,
       `CREATE TABLE IF NOT EXISTS chats (id BIGSERIAL PRIMARY KEY);`,
       `CREATE TABLE IF NOT EXISTS chat_members (chat_id BIGINT NOT NULL REFERENCES chats, user_id UUID NOT NULL REFERENCES users, UNIQUE(chat_id, user_id));`,

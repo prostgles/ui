@@ -14,18 +14,16 @@ import { format } from "sql-formatter";
 import { getStartingLetters, removeQuotes } from "./getJoinSuggestions";
 
 
-/**
- * Mobile devices can't press Ctrl + Space. Use space instead
- */
-const allCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_\"";
 export const triggerCharacters = [
   ".", 
   "/", 
   "?", 
   "\\", 
   "=", 
+  /**
+   * Mobile devices can't press Ctrl + Space. Use space instead
+   */
   " ",
-  // ...allCharacters.split(""), 
 ] as const;
 
 export type MonacoSuggestion = PRGLMetaInfo & languages.CompletionItem & Pick<SQLSuggestion, "dataTypeInfo">;
