@@ -3,7 +3,7 @@ import PSQL_COMMANDS from "../../../../../commonTypes/psql_queries.json";
 import { getMonaco, SUGGESTION_TYPE_DOCS, SUGGESTION_TYPES } from "../SQLEditor";
 import { suggestSnippets } from "./CommonMatchImports";
 import { getExpected } from "./getExpected";
-import { asSQL } from "./KEYWORDS";
+import { asSQL, TOP_KEYWORDS } from "./KEYWORDS";
 import { getParentFunction } from "./MatchSelect";
 import { getKind, type MonacoSuggestion, type SQLMatchContext, type SuggestionItem } from "./registerSuggestions";
 import { suggestColumnLike } from "./suggestColumnLike";
@@ -87,12 +87,13 @@ export const MatchFirst = async ({
   }
 
   if(ftoken?.textLC === "explain"){
-    const func = getParentFunction(cb);
-    if(func?.func.textLC === "explain"){
+    if(cb.currNestingFunc?.textLC === "explain"){
       const { getSuggestion } = withKWDs(ExplainOptions, { cb, ss, setS, sql });
       return getSuggestion(",", ["(", ")"]);
     }
-    return withKWDs(EXPLAIN_KWDS, { cb, ss, setS, sql }).getSuggestion();
+    if(!TOP_KEYWORDS.some(kwd => !cb.text.toLowerCase().includes(kwd.label.toLowerCase()))){
+      return withKWDs(EXPLAIN_KWDS, { cb, ss, setS, sql }).getSuggestion();
+    }
   }
 
   if(ftoken?.textLC === "truncate"){

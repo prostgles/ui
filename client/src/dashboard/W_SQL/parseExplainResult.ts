@@ -5,7 +5,8 @@ export const parseExplainResult = ({ rows = [], cols = [], activeQuery }: Pick<W
   if(activeQuery?.state === "ended" && activeQuery.info?.command === "EXPLAIN"){
     const rowsWithInfo: {
       actionInfo: string;
-      cost: number;
+      startupCost: number;
+      totalCost: number;
       rows: number;
       width: number;
       plan: string;
@@ -16,13 +17,15 @@ export const parseExplainResult = ({ rows = [], cols = [], activeQuery }: Pick<W
         line.split("->")[1]?.split("(")[0]?.trim() :
         line.split("(cost=")[0]?.trim()
       ) ?? "";
-      const cost = Number(line.split("(cost=")[1]?.split(".")[0] ?? rowsWithInfo.at(-1)?.cost ?? 0);
-      const rowsNum = Number(line.split("rows=")[1]?.split(" ")[0] ?? rowsWithInfo.at(-1)?.cost ?? "");
-      const widthNum = Number(line.split("width=")[1]?.split(")")[0] ?? rowsWithInfo.at(-1)?.cost ?? "");
+      const startupCost = Number(line.split("(cost=")[1]?.split("..")[0] ?? rowsWithInfo.at(-1)?.startupCost ?? 0);
+      const totalCost = Number(line.split("(cost=")[1]?.split("..")[1]?.split(" ")[0] ?? startupCost);
+      const rowsNum = Number(line.split("rows=")[1]?.split(" ")[0] ?? startupCost);
+      const widthNum = Number(line.split("width=")[1]?.split(")")[0] ?? startupCost);
 
       rowsWithInfo.push({
         actionInfo,
-        cost,
+        startupCost,
+        totalCost,
         rows: rowsNum,
         width: widthNum,
         plan: line,
@@ -31,14 +34,16 @@ export const parseExplainResult = ({ rows = [], cols = [], activeQuery }: Pick<W
     
     const extraColumns = [
       // "Action", 
-      "Cost", 
+      "Startup Cost", 
+      "Total Cost", 
       // "Rows", 
       // "Width",
     ]
     return {
       rows: rowsWithInfo.map(r => [
         // r.actionInfo, 
-        r.cost, 
+        r.startupCost, 
+        r.totalCost, 
         // r.rows, 
         // r.width, 
         r.plan

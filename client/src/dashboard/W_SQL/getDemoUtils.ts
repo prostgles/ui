@@ -91,14 +91,14 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
       if(newLinePress && char === "\n"){ // disabled cause it affects inline constraint indentation
         newLine();
       } else { 
-        // getEditor().e.trigger("keyboard", "editorCommon.Handler.Type", { text: char });
+        
         getEditor().e.trigger("keyboard", "type", { text: char });
         if(
-          !triggerMode && triggerCharacters.includes(char as any) ||
-          triggerMode === "firstChar" && !triggered && char?.match(/^[a-z0-9]+$/i)
+          !triggered && !triggerMode && triggerCharacters.includes(char as any) ||
+          !triggered && triggerMode === "firstChar" && char?.match(/^[a-z0-9]+$/i)
         ){
           triggered++;
-          triggerSuggest();
+          // triggerSuggest();
           await tout(500);
         }
       }
@@ -112,10 +112,10 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
     press();
   } 
 
-  const typeAuto = (v: string, opts?: TypeAutoOpts) => {
+  const typeAuto = (text: string, opts?: TypeAutoOpts) => {
     const {nth = 0, wait = 0, waitAccept = 600, waitBeforeAccept = 0, dontAccept, onEnd, ...typeOpts } = opts ?? {};
     return new Promise((resolve, reject) => {
-      typeText(v, (triggeredSuggest) => {
+      typeText(text, (triggeredSuggest) => {
         if(nth > -1 && !triggeredSuggest){
           triggerSuggest();
         }

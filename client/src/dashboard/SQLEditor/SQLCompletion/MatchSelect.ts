@@ -88,7 +88,8 @@ export const MatchSelect: SQLMatcher = {
       return colLikeSuggestions;
     }
 
-    if(prevLC.trim().endsWith(" group by ") || prevLC.trim().endsWith(" order by ") || prevLC.trim().endsWith(" having ") || prevLC.trim().endsWith(" where ") || prevLC.trim().endsWith(" when ")){
+    const expectsColumn = prevLC.trim().endsWith(" group by") || prevLC.trim().endsWith(" order by") || prevLC.trim().endsWith(" having") || prevLC.trim().endsWith(" where") || prevLC.trim().endsWith(" when")
+    if(expectsColumn){
       const colsAndFuncs = await getColsAndFuncs();
       return colsAndFuncs;
     }
