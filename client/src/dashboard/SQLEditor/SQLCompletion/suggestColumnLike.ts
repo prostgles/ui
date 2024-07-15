@@ -9,7 +9,7 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
   suggestions: ParsedSQLSuggestion[];
 }> => {
   const { prevIdentifiers , ltoken, nextTokens } = cb;
-  const addTable = ltoken?.textLC === "select" && (!nextTokens.some(t => t.textLC === "from") || nextTokens[0]?.text === ")");
+  const addTable = ltoken?.textLC === "select" && (!nextTokens.some(t => t.textLC === "from" || t.text === "FROM ") || nextTokens[0]?.text === ")");
   const addTableInline = nextTokens[0]?.text === ")";
 
   if(withFuncArgs){
@@ -38,7 +38,14 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
   const colAndFuncSuggestions = ([
     ...expressions.columns.map(s => ({ isPrioritised: true, s })), 
     ...otherColumns.map(s => ({ isPrioritised: false, s })),
-    ...funcs.map(s => ({ isPrioritised: false, s })) ,
+    /**
+     * Slice is used to ensure columns are prioritised for cases when the middle of word matches:
+     * 
+     * SELECT *
+     * FROM pg_catalog.pg_class
+     * ORDER BY name -> relname
+     */
+    ...funcs.map(s => ({ isPrioritised: false, s })) .slice(...(cb.currToken? [0] : [0, 0])) ,
   ])
   .map(({ s, isPrioritised }) => {
 

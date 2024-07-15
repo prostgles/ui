@@ -43,7 +43,7 @@ export const getExpected = (
       const sortText = s.userInfo? s.userInfo.priority : 
         s.dataTypeInfo? s.dataTypeInfo.priority :
         s.funcInfo? `${schemaSort}${s.funcInfo.extension? "b" : "a"}` :
-        `${s.type === "column" && cb.tableIdentifiers.some(id => s.escapedParentName === id)? "a" : "b" }${schemaSort + s.name}`;
+        `${s.type === "column" && cb.tableIdentifiers.some(id => s.escapedParentName === id)? "a" : "b" }${schemaSort}`;
 
       /** Do not add schema name again if it exists */
       let insertText = s.insertText;
@@ -57,13 +57,22 @@ export const getExpected = (
       }
     }).concat(extra.map(s => ({ ...s, sortText: "a" })));
 
-  const { joinSuggestions = [] } = getJoinSuggestions({ ss, rawExpect, cb, tableSuggestions: suggestions }); 
+  const fixedTableQueries = ["create index", "create policy", "create trigger"];
+  const [tableName, ...otherTables] = cb.tableIdentifiers
+  if(rawExpect == "(column)" && fixedTableQueries.some(q => cb.textLC.trim().startsWith(q)) && tableName && !otherTables.length){
+    const tableColumns = suggestions.filter(s => s.type === "column" && s.escapedParentName === tableName);
+    if(tableColumns.length){
+      return { suggestions: tableColumns }
+    }
+  }
+
+  const { joinSuggestions = [] } = getJoinSuggestions({ ss, rawExpect, cb, tableSuggestions: suggestions });
   
   if(!suggestions.length && SUGGESTION_TYPES.some(ot => types?.includes(ot)) ){
     return suggestSnippets([{ label: `No ${types} found` }])
   }
 
-  return { suggestions: [ ...suggestions, ...joinSuggestions] }
+  return { suggestions: [...suggestions, ...joinSuggestions] }
 }
 
 /**

@@ -45,6 +45,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
     const monaco = await getMonaco();
     if (!container.current) return;
+    
     editor.current = monaco.editor.create(container.current, editorOptions);
     hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42(editor.current, expandSuggestionDocs)
     if (props.onChange) {
