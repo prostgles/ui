@@ -77,12 +77,12 @@ export const sqlVideoDemo: DemoScript = async ({
     `);
     fromBeginning(false, script);
     await moveCursor.lineEnd();
-    await moveCursor.up(3, 300);
+    await moveCursor.up(3);
     await moveCursor.lineEnd();
     await tout(500);
-    await typeAuto(".i", { waitBeforeAccept: 1e3 });
+    await typeAuto(".i", { waitBeforeAccept });
     await typeAuto(` `);
-    await typeAuto(" o.", { waitBeforeAccept: 1e3 });
+    await typeAuto(" o.", { waitBeforeAccept });
     testResult(script.replace("WHERE u", "WHERE u.id = o.user_id"))
   });
 
@@ -202,7 +202,7 @@ export const sqlVideoDemo: DemoScript = async ({
   await showScript("User access details", async () => {
     await typeAuto(`?user `, { msPerChar: 40, waitBeforeAccept: 1e3, nth: 1, dontAccept: true });
     await moveCursor.left();
-    await typeAuto(` mynew`);
+    await typeAuto(` mynew`, { waitBeforeAccept: 1e3 });
     testResult([
       "/* User access details */",
       "?user mynewuser"

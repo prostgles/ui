@@ -109,6 +109,12 @@ $$ LANGUAGE plpgsql;
   await typeAuto(`f`);
   testResult(`SELECT "MySchema"."MyFunction"() FROM "MySchema"."MyTable"`);
 
+  fromBeginning(false, `SELECT mycolum FROM "MySchema"."MyTable"`);
+  await moveCursor.lineStart();
+  await moveCursor.right(14);
+  await typeAuto(`n`);
+  testResult(`SELECT "MyColumn" FROM "MySchema"."MyTable"`);
+
 
   await fromBeginning(false, " CREATE INDEX myidx ON");
   await typeAuto(` myt`);

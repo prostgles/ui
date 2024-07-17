@@ -453,7 +453,7 @@ export const is = {
 
 export const checkIf = <Obj, isType extends keyof typeof is>(obj: Obj, key: keyof Obj, isType: isType, arg1?: Parameters<typeof is[isType]>[1]): true => {
   const isOk = is[isType](obj[key], arg1 as any);
-  if(!isOk) throw `${key} is not of type ${isType}${isType === "oneOf"? `(${arg1})` : ""}. Source object: ${JSON.stringify(obj, null, 2)}`;
+  if(!isOk) throw `${key.toString()} is not of type ${isType}${isType === "oneOf"? `(${arg1})` : ""}. Source object: ${JSON.stringify(obj, null, 2)}`;
   return true;
 }
 const tryReadFile = (path: string) => {

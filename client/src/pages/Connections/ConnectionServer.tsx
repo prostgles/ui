@@ -14,6 +14,8 @@ import type { DBS } from "../../dashboard/Dashboard/DBS";
 import { SampleSchemas } from "../../dashboard/SampleSchemas";
 import type { Connection } from "../NewConnection/NewConnnection";
 import type { SampleSchema } from "../../../../commonTypes/utils";
+import { ExpandSection } from "../../components/ExpandSection";
+import { SwitchToggle } from "../../components/SwitchToggle";
 
 type ConnectionServerProps = {
   name: string;
@@ -55,6 +57,7 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
 
   const navigate = useNavigate();
   const [error, setError] = useState<any>();
+  const [newOwner, setNewOwner] = useState({ name: "", password: "", create: false });
 
   if(!runConnectionQuery || !getSampleSchemas || !createConnection || !validateConnection || !connId) return null;
 
@@ -262,6 +265,16 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
           />
           {action.existingDatabaseName && ConnectionNameEditor}
         </> : "Something went wrong"}
+        <SwitchToggle 
+          label="Create a user for this database (optional)"
+          variant="col"
+          checked={newOwner.create}
+          onChange={create => setNewOwner({ ...newOwner, create })}
+        />
+        {newOwner.create && <>
+          <FormField label={"New username"} value={newOwner.name} onChange={name => setNewOwner({ ...newOwner, name })} />
+          <FormField label={"New username password"} value={newOwner.password} onChange={password => setNewOwner({ ...newOwner, password })}  />
+        </>}
         <ErrorComponent error={error} />
       </Popup>
     }

@@ -99,6 +99,7 @@ button.fade-in, .fade-in-2 {
 }
 
 .btn-color-green {
+  --filled-bg: var(--green-500);
   --border-color: var(--green-500);
   --color: var(--green-800);
   --faded-bg: var(--green-100);

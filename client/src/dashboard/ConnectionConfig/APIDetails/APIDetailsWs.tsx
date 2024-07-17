@@ -12,9 +12,48 @@ import type { APIDetailsProps } from "./APIDetails";
 import FormField from "../../../components/FormField/FormField";
 
 
+const AllowedOriginCheck = ({ dbs }: Pick<APIDetailsProps, "dbs">) => {
+  const { data: serverSettings } = dbs.global_settings.useSubscribeOne({});
+  const [allowed_origin, setAllowedOrigin] = React.useState(serverSettings?.allowed_origin);
+
+  if(serverSettings && !serverSettings.allowed_origin){
+    return <PopupMenu 
+      button={<Btn iconPath={mdiAlert} color="warn" variant="faded">Allowed origin not set</Btn>}
+      clickCatchStyle={{ opacity: .2 }}
+      contentStyle={{ maxWidth: "500px" }}
+      footerButtons={pClose => [
+        { label: "Close", onClick: pClose },
+        { 
+          label: "Confirm", 
+          color: "action", 
+          variant: "filled",
+          disabledInfo: !allowed_origin? "Allowed origin is required" : undefined, 
+          onClickPromise: () => {
+            return dbs.global_settings.update({}, { allowed_origin });
+          } 
+        },
+      ]}
+      render={() => <FlexCol>
+        <InfoRow className="ws-pre">
+          Allowed origin specifies which domains can access this app in a cross-origin manner. 
+          Sets the Access-Control-Allow-Origin header. 
+          Use '*' or a specific URL to allow API access
+        </InfoRow>
+        <p className="ta-left">For testing it is recommended to use "*" as the allowed origin value</p>
+        <FormField
+          label={"Allowed origin"}
+          value={allowed_origin}
+          onChange={setAllowedOrigin}
+        />
+      </FlexCol>}
+    />
+  }
+
+  return null;
+}
+
 export const APIDetailsWs = ({ dbs, dbsMethods, connectionId, token, projectPath }: APIDetailsProps & { token: string }) => {
 
-  const { data: serverSettings } = dbs.global_settings.useSubscribeOne({});
   const dbSchemaTypes = usePromise(async () => {
     if(dbsMethods.getAPITSDefinitions && connectionId){
       const dbSchemaTypes = await dbsMethods.getConnectionDBTypes?.(connectionId)
@@ -22,7 +61,6 @@ export const APIDetailsWs = ({ dbs, dbsMethods, connectionId, token, projectPath
     }
   }, [dbsMethods, connectionId]);
 
-  const [allowed_origin, setAllowedOrigin] = React.useState(serverSettings?.allowed_origin);
 
   return <FlexCol>
     <h4 className="m-0 p-0">
@@ -33,38 +71,7 @@ export const APIDetailsWs = ({ dbs, dbsMethods, connectionId, token, projectPath
       prostgles-client</a> library. End-to-end type-safety between client & server using the database Typescript schema provided below:
     </div>
 
-    {serverSettings && !serverSettings.allowed_origin && 
-      <PopupMenu 
-        button={<Btn iconPath={mdiAlert} color="warn" variant="faded">Allowed origin not set</Btn>}
-        clickCatchStyle={{ opacity: .2 }}
-        contentStyle={{ maxWidth: "500px" }}
-        footerButtons={pClose => [
-          { label: "Close", onClick: pClose },
-          { 
-            label: "Confirm", 
-            color: "action", 
-            variant: "filled",
-            disabledInfo: !allowed_origin? "Allowed origin is required" : undefined, 
-            onClickPromise: () => {
-              return dbs.global_settings.update({}, { allowed_origin });
-            } 
-          },
-        ]}
-        render={() => <FlexCol>
-          <InfoRow className="ws-pre">
-            Allowed origin specifies which domains can access this app in a cross-origin manner. 
-            Sets the Access-Control-Allow-Origin header. 
-            Use '*' or a specific URL to allow API access
-          </InfoRow>
-          <p className="ta-left">For testing it is recommended to use "*" as the allowed origin value</p>
-          <FormField
-            label={"Allowed origin"}
-            value={allowed_origin}
-            onChange={setAllowedOrigin}
-          />
-        </FlexCol>}
-      />
-    }
+    {!!(dbs as any).global_settings && <AllowedOriginCheck dbs={dbs} />}
     <FlexRow className="ai-end mb-1 ">
       <PopupMenu 
         title="Examples"

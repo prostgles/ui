@@ -24,6 +24,13 @@ export const MatchFirst = async ({
   }
   const _suggestKWD = (vals: string[], sortText?: string) => suggestKWD(getKind, vals, sortText);
 
+  if(cb.ftoken?.textLC === "cluster"){
+    return withKWDs([
+      { kwd: "CLUSTER", expects: "table" },
+      { kwd: "USING", expects: "index" }
+    ], {cb, ss, setS, sql}).getSuggestion();
+  }
+
   /** Suggest format function string template content */
   if(currToken?.type === "string.sql" && cb.ltoken?.text === "(" && cb.l1token?.textLC === "format"){
     const opts = {

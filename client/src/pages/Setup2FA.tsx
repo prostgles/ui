@@ -42,7 +42,7 @@ export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<Prgl, "dbsMethods"
   }
   const imageSize = 250;
   return user.has_2fa_enabled? 
-    <Btn  color="warn" 
+    <Btn color="warn" 
       variant="faded"
       onClickMessage={async (_, setMsg) => { 
         await dbsMethods.disable2FA?.();
