@@ -43,7 +43,7 @@ export const getExpected = (
       const sortText = s.userInfo? s.userInfo.priority : 
         s.dataTypeInfo? s.dataTypeInfo.priority :
         s.funcInfo? `${schemaSort}${s.funcInfo.extension? "b" : "a"}` :
-        `${s.type === "column" && cb.tableIdentifiers.some(id => s.escapedParentName === id)? "a" : "b" }${schemaSort}`;
+        `${(s.type === "column" || s.type === "index") && cb.tableIdentifiers.some(id => s.escapedParentName === id)? "a" : "b" }${schemaSort}`;
 
       /** Do not add schema name again if it exists */
       let insertText = s.insertText;

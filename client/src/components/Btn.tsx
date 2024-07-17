@@ -199,11 +199,11 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
         } 
         
         if(size === "micro"){
-          extraStyle.padding = (iconPath || loading)? `2px 6px` : "2px";
+          extraStyle.padding = (iconPath || loading)? `2px 6px` : "2px 4px";
         }
 
         if(size === "small"){
-          extraStyle.padding = (iconPath || loading)? `2px 8px` : "2px";
+          extraStyle.padding = (iconPath || loading)? `2px 8px` : "2px 8px";
         }
 
         if(size === "medium"){

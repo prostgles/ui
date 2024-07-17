@@ -83,6 +83,7 @@ export async function getSqlSuggestions(db: DB): Promise< {
       name: p.indexname,
       type: "index",
       insertText: p.escaped_identifier,
+      escapedParentName: p.escaped_tablename,
       indexInfo: p,
       documentation: asListObject(omitKeys(p, ["escaped_identifier", "indexdef"])) +
         `\n\n**Definition**: \n${asSQL(p.indexdef)

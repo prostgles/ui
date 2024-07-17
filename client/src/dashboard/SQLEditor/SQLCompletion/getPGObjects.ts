@@ -46,6 +46,7 @@ export type PG_Index = {
   indexname: string;
   indexdef: string;
   escaped_identifier: string;
+  escaped_tablename: string;
   type: string;
   owner: string;
   tablename: string;
@@ -870,6 +871,7 @@ export const PG_OBJECT_QUERIES = {
         c.relname as indexname,
         pg_get_indexdef(c.oid) as indexdef,
         format('%I', c.relname) as escaped_identifier,
+        CASE WHEN current_schema() = n.nspname THEN format('%I', c2.relname) ELSE format('%I.%I', n.nspname, c2.relname) END as escaped_tablename,
         CASE c.relkind WHEN 'r' 
           THEN 'table' WHEN 'v' 
           THEN 'view' WHEN 'm' 

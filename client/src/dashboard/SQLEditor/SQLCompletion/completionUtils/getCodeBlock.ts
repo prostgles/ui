@@ -226,7 +226,7 @@ export const getCurrentCodeBlock = async (model: editor.ITextModel, pos: Positio
       return undefined
     }
     const prevT = arr[i-1];
-    const tableKeyords = ["from", "join", "table", "on", "update", "truncate", "insert into", "analyze", "copy", "into"];
+    const tableKeyords = ["from", "join", "table", "on", "update", "truncate", "insert into", "analyze", "copy", "into", "cluster"];
     return { 
       type: tableKeyords.includes(prevT?.textLC as any)? "table" as const : undefined,  
       value: t.text

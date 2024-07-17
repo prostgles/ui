@@ -10,6 +10,19 @@ import { FlexCol } from "../components/Flex";
 const demoScripts = getKeys(VIDEO_DEMO_SCRIPTS);
 type DEMO_NAME = keyof typeof VIDEO_DEMO_SCRIPTS;
 
+const videoTimings: { videoName: string; start: number; end: number; }[] = [];
+let currVideo: typeof videoTimings[number] | undefined;
+const startVideoDemo = async (videoName: string) => {
+  if(currVideo){
+    videoTimings.push({ ...currVideo, end: Date.now() });
+  }
+  currVideo = {
+    videoName,
+    start: Date.now(),
+    end: 0
+  }
+}
+
 export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
 
   const isOnDemoDatabase = db_name === VIDEO_DEMO_DB_NAME;
@@ -26,10 +39,15 @@ export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
       await VIDEO_DEMO_SCRIPTS[name]();
     } else {
       const { sqlDemo, acDemo, backupDemo, fileDemo, dashboardDemo } = VIDEO_DEMO_SCRIPTS;
+      startVideoDemo("SQL");
       await sqlDemo();
+      startVideoDemo("Access Control");
       await acDemo();
+      startVideoDemo("Dashboard");
       await dashboardDemo();
+      startVideoDemo("Backups");
       await backupDemo();
+      startVideoDemo("the end");
     }
     stopWakeLock();
   }

@@ -94,16 +94,18 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
             //   }
             // },
             onReconnect: () => {
-              setState(currState => {
-                const newState = { 
-                  ...currState, 
-                  dbsKey: "dbs" + Date.now(),
-                }; 
-                return newState;
-              });
+              /** This might not be needed */
+              // setState(currState => {
+              //   const newState = { 
+              //     ...currState, 
+              //     dbsKey: "dbs" + Date.now(),
+              //   }; 
+              //   return newState;
+              // });
               onDisconnect(false);
             },
-            onReady: async (dbs: Partial<DBS>, dbsMethods, tableSchema: any, auth = {} ) => { 
+            onReady: async (dbs: Partial<DBS>, dbsMethods, tableSchema: any, auth = {}, isReconnect) => {
+              window.console.log({ isReconnect }); 
               (window as any).dbs = dbs;
               (window as any).dbsSocket = socket;
               (window as any).dbsMethods = dbsMethods;

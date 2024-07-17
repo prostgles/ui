@@ -11,7 +11,7 @@ export type TopKeyword = {
 
 export const STARTING_KWDS = [
   "SELECT", "REVOKE", "GRANT", "VACUUM", "EXPLAIN", "COPY", "REINDEX", "ROLLBACK", "WITH", "ALTER", "SET", "DO", "BEGIN", "CALL",
-  "COMMENT", "DROP", "CREATE", "UPDATE", "INSERT INTO", "DELETE FROM", "NOTIFY", "LISTEN", "SHOW", "TRUNCATE", "REASSIGN",
+  "COMMENT", "DROP", "CREATE", "UPDATE", "INSERT INTO", "DELETE FROM", "NOTIFY", "LISTEN", "SHOW", "TRUNCATE", "REASSIGN", "CLUSTER",
   "DELETE", "INSERT", "PREPARE", "EXECUTE"
 ] as const;
 
@@ -39,6 +39,20 @@ TO { new_role | CURRENT_ROLE | CURRENT_USER | SESSION_USER }`)}`;
 Furthermore, it reclaims disk space immediately, rather than requiring a subsequent VACUUM operation. This is most useful on large tables.
 
 https://www.postgresql.org/docs/current/sql-truncate.html
+`
+  } else if(label === "CLUSTER"){
+      priority = 16;
+      
+      info = `CLUSTER instructs PostgreSQL to cluster the table specified by table_name based on the index specified by index_name. The index must already have been defined on table_name.
+
+When a table is clustered, it is physically reordered based on the index information. Clustering is a one-time operation: when the table is subsequently updated, the changes are not clustered. That is, no attempt is made to store new or updated rows according to their index order. (If one wishes, one can periodically recluster by issuing the command again. Also, setting the table's fillfactor storage parameter to less than 100% can aid in preserving cluster ordering during updates, since updated rows are kept on the same page if enough space is available there.)
+
+When a table is clustered, PostgreSQL remembers which index it was clustered by. The form CLUSTER table_name reclusters the table using the same index as before. You can also use the CLUSTER or SET WITHOUT CLUSTER forms of ALTER TABLE to set the index to be used for future cluster operations, or to clear any previous setting.
+
+CLUSTER without a table_name reclusters all the previously-clustered tables in the current database that the calling user owns, or all such tables if called by a superuser. This form of CLUSTER cannot be executed inside a transaction block.
+
+When a table is being clustered, an ACCESS EXCLUSIVE lock is acquired on it. This prevents any other database operations (both reads and writes) from operating on the table until the CLUSTER is finished.
+https://www.postgresql.org/docs/current/sql-cluster.html
 `
   } else if(label === "PREPARE"){
   priority = 14;
