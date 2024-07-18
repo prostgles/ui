@@ -105,7 +105,7 @@ export const sidKeyName = "sid_token" as const;
 
 type AuthType = 
 | { type: "session-id"; filter: { id: string; }; client: AuthClientRequest & LoginClientInfo }
-| { type: "login-success"; filter: { user_id: string; } };
+| { type: "login-success"; filter: { user_id: string; type: "web" } };
 
 export const getActiveSession = async (db: DBS, authType: AuthType) => {
   if(Object.values(authType.filter).some(v => typeof v !== "string" || !v)){
@@ -215,7 +215,7 @@ export const getAuth = (app: Express) => {
 
       await onSuccess();
 
-      const activeSession = await getActiveSession(db, { type: "login-success", filter: { user_id: u.id }});
+      const activeSession = await getActiveSession(db, { type: "login-success", filter: { user_id: u.id, type: "web" }});
       if(!activeSession){
         const globalSettings = await db.global_settings.findOne();
         const DAY = 24 * 60 * 60 * 1000;
