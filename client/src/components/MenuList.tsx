@@ -89,8 +89,13 @@ export class MenuList extends React.Component<P, S> {
     </li>
   }
 
+  get variantOptions() {
+    const isDropDown = this.props.variant === "dropdown"
+    const variant = this.props.variant && !isDropDown? this.props.variant : "vertical";
+    return { variant, isDropDown };
+  }
   get isCompactMode(){
-    return this.props.compactMode && window.isMediumWidthScreen;
+    return this.props.compactMode && window.isMediumWidthScreen && this.variantOptions.variant === "vertical";
   }
 
   refList?: HTMLUListElement;
@@ -103,10 +108,7 @@ export class MenuList extends React.Component<P, S> {
       activeKey = this.props.items[0]?.key,
     } = this.props;
 
-    const isDropDown = this.props.variant === "dropdown"
-
-    const variant = this.props.variant && !isDropDown? this.props.variant : "vertical";
-
+    const { variant, isDropDown } = this.variantOptions;
     const variantStyle: React.CSSProperties = variant === "horizontal-tabs"? {
       borderRadius: 0,
       fontSize: "20px",

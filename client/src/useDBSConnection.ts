@@ -94,18 +94,9 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
             //   }
             // },
             onReconnect: () => {
-              /** This might not be needed */
-              // setState(currState => {
-              //   const newState = { 
-              //     ...currState, 
-              //     dbsKey: "dbs" + Date.now(),
-              //   }; 
-              //   return newState;
-              // });
               onDisconnect(false);
             },
-            onReady: async (dbs: Partial<DBS>, dbsMethods, tableSchema: any, auth = {}, isReconnect) => {
-              window.console.log({ isReconnect }); 
+            onReady: async (dbs: Partial<DBS>, dbsMethods, tableSchema: any, auth = {}) => {
               (window as any).dbs = dbs;
               (window as any).dbsSocket = socket;
               (window as any).dbsMethods = dbsMethods;
@@ -120,7 +111,7 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
                   dbsMethods, 
                   dbsTables,
                   auth,
-                  isAdminOrSupport: ["admin", "support"].includes(uType as any),
+                  isAdminOrSupport: ["admin", "support"].includes(uType),
                   dbsSocket: socket,
                   user: await dbs.users?.findOne({ id: auth.user?.id }),
                 });

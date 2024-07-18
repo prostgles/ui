@@ -50,8 +50,10 @@ export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<Prgl, "dbsMethods"
       }}
     >Disable 2FA</Btn> 
     :
-    <PopupMenu title={<div className="bold">Two-factor authentication</div>}
+    <PopupMenu 
+      title={<div className="bold">Two-factor authentication</div>}
       button={<Btn variant="filled" color="green">Enable 2FA</Btn>} 
+      clickCatchStyle={{ opacity: 0.5 }}
       initialState={{ enabled: false, canvasNode: null as HTMLCanvasElement | null }}
       onClose={reset}
       render={(closePopup, state, setState) => (
