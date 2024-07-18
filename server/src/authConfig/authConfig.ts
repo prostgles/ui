@@ -189,7 +189,6 @@ export const getAuth = (app: Express) => {
           throw "no match";
         }
         const hashedPassword = getPasswordHash(userFromUsername, password);
-        // u = await _db.one("SELECT * FROM users WHERE username = ${username} AND password = crypt(${password}, id::text);", { username, password });
         u = await _db.one("SELECT * FROM users WHERE username = ${username} AND password = ${hashedPassword};", { username, hashedPassword });
       } catch(e){
         throw "no match";
@@ -203,7 +202,8 @@ export const getAuth = (app: Express) => {
 
       if(u["2fa"]?.enabled){
         if(totp_recovery_code && typeof totp_recovery_code === "string"){
-          const areMatching = await _db.any("SELECT * FROM users WHERE id = ${id} AND \"2fa\"->>'recoveryCode' = crypt(${code}, id::text) ", { id: u.id, code: totp_recovery_code.trim() });
+          const hashedRecoveryCode = getPasswordHash(u, totp_recovery_code.trim());
+          const areMatching = await _db.any("SELECT * FROM users WHERE id = ${id} AND \"2fa\"->>'recoveryCode' = ${hashedRecoveryCode} ", { id: u.id, hashedRecoveryCode });
           if(!areMatching.length){
             throw "Invalid token"
           }

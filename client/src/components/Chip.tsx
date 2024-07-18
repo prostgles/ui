@@ -5,8 +5,9 @@ import "./Chip.css";
 import Btn from "./Btn";
 import { FlexCol, classOverride } from "./Flex";
 import { Icon } from "./Icon/Icon";
+import type { TestSelectors } from "../Testing";
 
-type ChipProps = Omit<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "children" | "color"> & {
+type ChipProps = TestSelectors & Omit<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "children" | "color"> & {
   label?: string;
   subValues?: (string | number)[];
   variant?: "naked" | "header" | "outline" | "default";

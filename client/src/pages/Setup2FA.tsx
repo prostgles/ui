@@ -44,6 +44,7 @@ export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<Prgl, "dbsMethods"
   return user.has_2fa_enabled? 
     <Btn color="warn" 
       variant="faded"
+      data-command="Setup2FA.Disable"
       onClickMessage={async (_, setMsg) => { 
         await dbsMethods.disable2FA?.();
         setMsg({ ok: "Disabled!"}, onChange);
@@ -52,22 +53,50 @@ export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<Prgl, "dbsMethods"
     :
     <PopupMenu 
       title={<div className="bold">Two-factor authentication</div>}
+      data-command="Setup2FA.Enable"
       button={<Btn variant="filled" color="green">Enable 2FA</Btn>} 
       clickCatchStyle={{ opacity: 0.5 }}
+      positioning="center"
       initialState={{ enabled: false, canvasNode: null as HTMLCanvasElement | null }}
       onClose={reset}
-      render={(closePopup, state, setState) => (
+      footer={!OTP? undefined : (closePopup => (
+        <div className="flex-col gap-1 w-full" onKeyDown={e => {
+          if(e.key === "Enter") enable2FA(closePopup)
+        }}>
+          <FormField
+            data-command="Setup2FA.Enable.ConfirmCode"
+            value={codeConfirm} 
+            type="number" 
+            label="Confirm code" 
+            onChange={codeConfirm => { setCodeConfirm(codeConfirm) }}
+            rightContent={(
+              <Btn variant="filled" 
+                color="action"
+                className="ml-2"
+                data-command="Setup2FA.Enable.Confirm"
+                onClickMessage={() => enable2FA(closePopup)}
+              >
+                Enable 2FA
+              </Btn>
+            )}
+          />
+        </div>
+      ))}
+      render={( ) => (
         enabled? <SuccessMessage message="2FA Enabled"></SuccessMessage> :
         <div className="flex-col gap-1 ai-center" style={{ maxWidth: `${imageSize + 100}px` }}>
-          <div className={OTP?.url? "text-2" : ""}>
+          {!OTP && <div >
             Along with your username and password, you will be asked to verify your identity using the code from authenticator app.
-          </div>
+          </div>}
 
           {!!OTP && <>
             <div>Scan <a href={OTP.url} target="_blank">or tap</a> the image below with the two-factor authentication app on your phone. </div>
             <ExpandSection 
               label="I can't scan the QR Code" 
-              buttonProps={{ variant: "outline"}} 
+              buttonProps={{ 
+                variant: "outline",
+                "data-command": "Setup2FA.Enable.CantScanQR",
+              }}
               iconPath=""
             >
               <div className="flex-col gap-p5 ai-start jc-start">
@@ -76,7 +105,7 @@ export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<Prgl, "dbsMethods"
                 <div className="flex-col ml-1 pl-2">
                   <Chip variant="naked" label="Name" value={user.username} />
                   <Chip variant="naked" label="Issuer" value={"Prostgles UI"} />
-                  <Chip variant="naked" label="Base64 secret" value={OTP.secret} />
+                  <Chip variant="naked" label="Base64 secret" value={OTP.secret} data-command="Setup2FA.Enable.Base64Secret" />
                   <Chip variant="naked" label="Type" value={"Time-based OTP"} />
                 </div>
             </div>
@@ -89,7 +118,7 @@ export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<Prgl, "dbsMethods"
             <InfoRow variant="naked" className="ai-start">
               <div className="flex-col gap-1">
                 <div>Save the Recovery code below. It will be used in case you lose access to your authenticator app:</div>
-                <div className="bold">{OTP.recoveryCode}</div>  
+                <div className="bold" id="totp_recovery_code">{OTP.recoveryCode}</div>  
               </div>
             </InfoRow>
           </div>}
@@ -97,6 +126,7 @@ export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<Prgl, "dbsMethods"
           {!OTP && 
             <Btn variant="filled"   
               color="action"
+              data-command="Setup2FA.Enable.GenerateQR"
               onClickPromise={async () => {
                 const setup = await dbsMethods.create2FA?.();
                 if(!setup?.url){
@@ -108,28 +138,7 @@ export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<Prgl, "dbsMethods"
             >
               Generate QR Code
             </Btn>
-          }
-
-          {OTP && <div className="flex-col gap-1 w-full" onKeyDown={e => {
-            if(e.key === "Enter") enable2FA(closePopup)
-          }}>
-            <FormField 
-              asColumn={true} 
-              value={codeConfirm} 
-              type="number" 
-              label="Confirm code" 
-              onChange={codeConfirm => { setCodeConfirm(codeConfirm) }}
-              rightContent={(
-                <Btn variant="filled" 
-                  color="action"
-                  className="ml-2"
-                  onClickMessage={() => enable2FA(closePopup)}
-                >
-                  Enable 2FA
-                </Btn>
-              )}
-            />
-          </div>}
+          } 
 
           {err && <ErrorComponent error={err} findMsg={true} /> }
           
