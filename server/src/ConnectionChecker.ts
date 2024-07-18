@@ -310,7 +310,6 @@ export const insertUser = async (db: DBS, _db: DB, u: Parameters<typeof db.users
   if(!user.id) throw "User id missing";
   if(typeof user.password !== "string") throw "Password missing";
   const hashedPassword = getPasswordHash(user, user.password);
-  // await _db.any("UPDATE users SET password = crypt(password, id::text) WHERE id = ${id};", user);
   await _db.any("UPDATE users SET password = ${hashedPassword} WHERE id = ${id};", { id: user.id, hashedPassword });
   return db.users.findOne({ id: user.id })!;
 }

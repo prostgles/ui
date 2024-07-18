@@ -19,6 +19,7 @@ import {
   typeConfirmationCode,
   uploadFile
 } from './utils';
+import { authenticator } from "otplib";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -66,6 +67,45 @@ test.describe("Main test", () => {
     /** Sample database exists and all config pages exist */
     await page.getByRole('link', { name: 'Connections' }).click();
   });
+
+  test('Test 2FA', async ({ page: p }) => {
+    const page = p as PageWIds;
+ 
+    await login(page);
+ 
+    await page.getByRole('link', { name: "test_user" }).click();
+    await page.getByTestId("MenuList").locator(`[data-key="security"]`).click();
+    await page.getByTestId("Setup2FA.Enable").click();
+    await page.getByTestId("Setup2FA.Enable.GenerateQR").click();
+    await page.getByTestId("Setup2FA.Enable.CantScanQR").click();
+    const Base64Secret = (await page.getByTestId("Setup2FA.Enable.Base64Secret").textContent())?.split(" ").at(-1);
+    const recoveryCode = await page.locator("#totp_recovery_code").textContent();
+    const code = authenticator.generate(Base64Secret ?? "");
+    await page.getByTestId("Setup2FA.Enable.ConfirmCode").locator("input").fill(code);
+    await page.getByTestId("Setup2FA.Enable.Confirm").click();
+
+    /** Using token */
+    await goTo(page, 'localhost:3004/logout');
+    await login(page);
+    await page.locator("#totp_token").fill(code);
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await page.getByRole('link', { name: 'Connections' }).waitFor({ state: "visible", timeout: 15e3 });
+
+    /** Using recovery code */
+    await goTo(page, 'localhost:3004/logout');
+    await login(page);
+    await page.getByRole('button', { name: 'Enter recovery code', exact: true }).click();
+    console.log({ recoveryCode})
+    await page.locator("#totp_recovery_code").fill(recoveryCode ?? "");
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await page.waitForTimeout(3e3);
+    await page.getByRole('link', { name: 'Connections' }).waitFor({ state: "visible", timeout: 15e3 });
+
+    await page.getByRole('link', { name: "test_user" }).click();
+    await page.getByTestId("MenuList").locator(`[data-key="security"]`).click();
+    await page.getByTestId("Setup2FA.Disable").click();
+  });
+
 
   test('Sample database backups', async ({ page: p }) => {
     const page = p as PageWIds;
