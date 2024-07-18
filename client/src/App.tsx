@@ -89,6 +89,7 @@ export type AppState = {
     auth: ClientAuth;
     isAdminOrSupport: boolean;
     user?: DBSSchema["users"];
+    sid: string;
   };
   prglStateErr?: any;
   serverState?: {

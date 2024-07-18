@@ -131,6 +131,7 @@ prostgles({
   onReload: () => {},
   onReady: async (db, methods, tableSchema, auth) => {
     console.log(db);
+    ${forServer? "" : "window.db = db;"}
     ${forServer? "" : "document.body.append(JSON.stringify({ db, methods, auth }, null, 2))"}
   },
 });`;

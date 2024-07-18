@@ -106,7 +106,7 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
               if(error){
                 resolve({ error });
               } else {
-                resolve({ 
+                resolve({
                   dbs: dbs as any, 
                   dbsMethods, 
                   dbsTables,
@@ -114,6 +114,7 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
                   isAdminOrSupport: ["admin", "support"].includes(uType),
                   dbsSocket: socket,
                   user: await dbs.users?.findOne({ id: auth.user?.id }),
+                  sid: auth.user?.sid,
                 });
               }
     

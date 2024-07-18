@@ -1,14 +1,15 @@
-import { mdiCellphone, mdiDelete, mdiLaptop } from "@mdi/js";
+import { mdiApple, mdiAppleSafari, mdiCellphone, mdiDelete, mdiFirefox, mdiGoogleChrome, mdiLaptop, mdiLinux, mdiMicrosoftEdge, mdiMicrosoftWindows } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
 import type { Prgl } from "../App";
 import Btn from "../components/Btn";
 import type { DivProps } from "../components/Flex";
-import { classOverride } from "../components/Flex";
+import { classOverride, FlexRow } from "../components/Flex";
 import { InfoRow } from "../components/InfoRow";
 import PopupMenu from "../components/PopupMenu";
 import SmartCardList from "../dashboard/SmartCard/SmartCardList";
 import { StyledInterval, renderInterval } from "../dashboard/W_SQL/customRenderers";
+import { Icon } from "../components/Icon/Icon";
 
 
 type SessionsProps = Pick<Prgl, "dbs" | "dbsTables" | "user" | "dbsMethods" | "theme"> & {
@@ -68,17 +69,37 @@ export const Sessions = ({ dbs, dbsTables, user, displayType, className = "", db
       { 
         name: "user_agent", 
         hide: displayType === "api_token",
-        render: (v, row) => <PopupMenu 
-          title="User agent"
-          button={
-            <Btn 
-              title={row.is_connected? "User is connected" : "User is offline"} 
-              style={{ color: row.is_connected? "green" : undefined }} 
-              iconPath={isMobileUserAgent(v)? mdiCellphone : mdiLaptop} 
-            />
-          }
-          render={() => <div className="">{v}</div>}
-        /> 
+        render: (v, row) => {
+          const os = (v.match(/Windows|Linux|Mac|Android|iOS/i)?.[0] ?? "").toLowerCase();
+          const browser = (v.match(/Chrome|Firefox|Safari|Edge|Opera/i)?.[0] ?? "").toLowerCase();
+          return <PopupMenu 
+            title="User agent"
+            button={
+              <FlexRow className="gap-0 pointer">
+                <Btn 
+                  title={row.is_connected? "User is connected" : "User is offline"} 
+                  style={{ color: row.is_connected? "green" : undefined }} 
+                  iconPath={isMobileUserAgent(v)? mdiCellphone : mdiLaptop} 
+                />
+                {!!os && 
+                  <Icon 
+                    title={os}
+                    size={1} 
+                    path={os === "linux"? mdiLinux : os === "windows"? mdiMicrosoftWindows : (os === "mac" || os === "ios")? mdiApple : ""} 
+                  />
+                }
+                {!!browser && 
+                  <Icon 
+                    title={browser}
+                    size={1} 
+                    path={browser === "chrome"? mdiGoogleChrome : browser === "firefox"? mdiFirefox : browser === "safari"? mdiAppleSafari : browser === "edge"? mdiMicrosoftEdge : ""} 
+                  />
+                }
+              </FlexRow>
+            }
+            render={() => <div className="">{v}</div>}
+          /> 
+        }
     
       }, 
       { 
