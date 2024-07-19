@@ -35,6 +35,7 @@ import type { SampleSchema } from "../../../commonTypes/utils";
 import { getInstalledPrograms } from "../BackupManager/getInstalledPrograms";
 import { getStatus } from "../methods/getPidStats";
 import { getPasswordHash } from "../authConfig/authUtils";
+import { createSessionSecret } from "../authConfig/authConfig";
 
 export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params) => { 
   const { dbo: dbs, socket, db: _dbs } = params;
@@ -358,7 +359,8 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
         user_id: user.id, 
         user_type: user.type, 
         type: "api_token", 
-        ip_address 
+        ip_address,
+        id: createSessionSecret(),
       }, { returning: "*" });
       
       return session.id;
