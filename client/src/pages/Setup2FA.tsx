@@ -59,10 +59,14 @@ export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<Prgl, "dbsMethods"
       positioning="center"
       initialState={{ enabled: false, canvasNode: null as HTMLCanvasElement | null }}
       onClose={reset}
+      contentClassName="p-1"
       footer={!OTP? undefined : (closePopup => (
-        <div className="flex-col gap-1 w-full" onKeyDown={e => {
-          if(e.key === "Enter") enable2FA(closePopup)
-        }}>
+        <div 
+          className="flex-col gap-1 w-full" 
+          onKeyDown={e => {
+            if(e.key === "Enter") enable2FA(closePopup)
+          }}
+        >
           <FormField
             data-command="Setup2FA.Enable.ConfirmCode"
             value={codeConfirm} 

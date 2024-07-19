@@ -65,7 +65,13 @@ const loginAttempt = async ({ db, ip_address, user_agent, ...attempt}: { db: DBO
 
 export type Sessions = DBSSchema["sessions"]
 const parseAsBasicSession = (s: Sessions): BasicSession => {
-  return { ...s, sid: s.id, expires: +s.expires, onExpiration: s.type === "api_token"? "show_error" : "redirect" };
+  // TODO send sid and set id as hash of sid
+  return {
+    ...s, 
+    sid: s.id, 
+    expires: +s.expires, 
+    onExpiration: s.type === "api_token"? "show_error" : "redirect" 
+  };
 }
 
 export const createSessionSecret = () => {
@@ -76,12 +82,12 @@ export const makeSession = async (user: Users | undefined, client: Pick<Sessions
 
   if(user){
 
-    /** Disable all other web sessions for user */
-    await dbo.sessions.update({ 
-      user_id: user.id, 
-      type: "web",
-      user_agent: client.user_agent, 
-    }, { type: "web", active: false });
+    // /** Disable all other web sessions for user. why? */
+    // await dbo.sessions.update({ 
+    //   user_id: user.id, 
+    //   type: "web",
+    //   user_agent: client.user_agent, 
+    // }, { type: "web", active: false });
 
     const session = await dbo.sessions.insert({ 
       ...(client.sid && { id: client.sid }),
@@ -94,8 +100,7 @@ export const makeSession = async (user: Users | undefined, client: Pick<Sessions
       user_agent: client.user_agent,
     }, { returning: "*" });
     
-
-    return parseAsBasicSession(session); //60*60*60 }; 
+    return parseAsBasicSession(session);
   } else {
     throw "Invalid user";
   }
@@ -257,7 +262,6 @@ export const getAuth = (app: Express) => {
       getSession: async (sid, db) => {
         const s = await db.sessions.findOne({ id: sid });
         if(s) return parseAsBasicSession(s)
-        // throw "dwada"
         return undefined as any;
       }
     },

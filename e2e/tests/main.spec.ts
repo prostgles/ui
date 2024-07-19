@@ -85,7 +85,7 @@ test.describe("Main test", () => {
     await page.getByTestId("Setup2FA.Enable.Confirm").click();
 
     /** Using token */
-    await goTo(page, 'localhost:3004/logout');
+    // await goTo(page, 'localhost:3004/logout');
     await login(page);
     await page.locator("#totp_token").fill(code);
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -104,7 +104,6 @@ test.describe("Main test", () => {
     await page.getByTestId("MenuList").locator(`[data-key="security"]`).click();
     await page.getByTestId("Setup2FA.Disable").click();
   });
-
 
   test('Sample database backups', async ({ page: p }) => {
     const page = p as PageWIds;

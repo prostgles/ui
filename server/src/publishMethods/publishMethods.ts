@@ -390,7 +390,13 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       
       if(!isValid) throw "Invalid code";
       await dbs.users.update({ id: user.id }, { "2fa": { ...latestUser["2fa"]!, enabled: true } });
-      return "ok"
+
+      /** Log out all web sessions after enabling 2fa */
+      await dbs.sessions.update({
+        user_id: user.id, 
+        type: "web",
+      }, { type: "web", active: false });
+      return "ok";
     },
     disable2FA: () => {
       return dbs.users.update({ id: user.id }, { "2fa": null });
