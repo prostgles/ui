@@ -257,7 +257,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
 
   sessions: {
     columns: {
-      id:          `UUID UNIQUE NOT NULL DEFAULT gen_random_uuid()` ,
+      id:          `TEXT UNIQUE NOT NULL` ,
       id_num:      `SERIAL PRIMARY KEY` ,
       user_id:     `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE` ,
       name:        `TEXT` ,

@@ -15,6 +15,7 @@ import type { DBS, Users} from "../index";
 import { API_PATH, MEDIA_ROUTE_PREFIX, connectionChecker, log } from "../index";
 import { initBackupManager } from "../startProstgles";
 import { getPasswordHash } from "./authUtils";
+import * as crypto from "crypto";
 
 export const HOUR = 3600e3;
 export const YEAR = 365 * HOUR * 24;
@@ -67,6 +68,10 @@ const parseAsBasicSession = (s: Sessions): BasicSession => {
   return { ...s, sid: s.id, expires: +s.expires, onExpiration: s.type === "api_token"? "show_error" : "redirect" };
 }
 
+export const createSessionSecret = () => {
+  return crypto.randomBytes(48).toString("hex");
+}
+
 export const makeSession = async (user: Users | undefined, client: Pick<Sessions, "user_agent" | "ip_address" | "type"> & { sid?: string }, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number = 0): Promise<BasicSession> => {
 
   if(user){
@@ -80,6 +85,7 @@ export const makeSession = async (user: Users | undefined, client: Pick<Sessions
 
     const session = await dbo.sessions.insert({ 
       ...(client.sid && { id: client.sid }),
+      id: createSessionSecret(),
       user_id: user.id, 
       user_type: user.type, 
       expires, 
@@ -224,7 +230,7 @@ export const getAuth = (app: Express) => {
         const globalSettings = await db.global_settings.findOne();
         const DAY = 24 * 60 * 60 * 1000;
         const expires = Date.now() + (globalSettings?.session_max_age_days ?? 1) * DAY;
-        return makeSession(u, { ip_address, user_agent: user_agent || null, type: getElectronConfig()?.isElectron? "desktop" : "web" }, db, expires)
+        return await makeSession(u, { ip_address, user_agent: user_agent || null, type: getElectronConfig()?.isElectron? "desktop" : "web" }, db, expires)
       }
       await db.sessions.update({ id: activeSession.id }, { last_used: new Date() });
       return parseAsBasicSession(activeSession);
