@@ -148,49 +148,52 @@ export const App = () => {
     serverState: serverState!
   };
 
-  const withNavBar = (content: React.ReactNode, needsUser?: boolean) => <div className="flex-col ai-center w-full f-1 min-h-0">
-    <NavBar
-      dbs={dbs}
-      dbsMethods={dbsMethods}
-      serverState={serverState}
-      user={authUser}
-      options={serverState?.isElectron ? [] :
-        [
-          { label: "Connections", to: "/connections", iconPath: mdiServerNetwork },
-          { label: "Users", to: "/users", forAdmin: true, iconPath: mdiAccountMultiple },
-          { label: "Server settings", to: "/server-settings", forAdmin: true, iconPath: mdiServerSecurity },
+  const withNavBar = (content: React.ReactNode, needsUser?: boolean) => {
+    const showLoginRegister = needsUser && !extraProps.user && !extraProps.auth?.user;
+    return <div className="flex-col ai-center w-full f-1 min-h-0">
+      <NavBar
+        dbs={dbs}
+        dbsMethods={dbsMethods}
+        serverState={serverState}
+        user={authUser}
+        options={serverState?.isElectron ? [] :
+          [
+            { label: "Connections", to: "/connections", iconPath: mdiServerNetwork },
+            { label: "Users", to: "/users", forAdmin: true, iconPath: mdiAccountMultiple },
+            { label: "Server settings", to: "/server-settings", forAdmin: true, iconPath: mdiServerSecurity },
 
-          // { label: "Permissions", to: "/access-management", forAdmin: true },
-        ].filter(isDefined)
-        .filter(o => (!o.forAdmin || extraProps.user?.type === "admin"))
-      }
-      endContent={
-        <Select  
-          title="Theme"
-          className={window.isLowWidthScreen? "ml-2"  : ""}
-          btnProps={{
-            variant: "default",
-            iconPath: mdiThemeLightDark,
-            children: (window.isLowWidthScreen || serverState?.isElectron)? "Theme" : "",
-          }}
-          data-command="App.colorScheme"
-          value={userThemeOption}
-          fullOptions={[
-            { key: "light", label: "Light"}, 
-            { key: "dark", label: "Dark" }, 
-            { key: "from-system", label: "System"}
-          ]}
-          onChange={theme => {
-            dbs.users.update({ id: user?.id }, { options: { $merge: [{ theme }]} })
-          }}
-        />
-      }
-    />
-    {(needsUser && (!extraProps.user)) ? (<div className="flex-col jc-center ai-center h-full gap-2 m-2">
-      <NavLink to="login">Login</NavLink>
-      <NavLink to="register">Register</NavLink>
-    </div>) : content}
-  </div>
+            // { label: "Permissions", to: "/access-management", forAdmin: true },
+          ].filter(isDefined)
+          .filter(o => (!o.forAdmin || extraProps.user?.type === "admin"))
+        }
+        endContent={
+          <Select  
+            title="Theme"
+            className={window.isLowWidthScreen? "ml-2"  : ""}
+            btnProps={{
+              variant: "default",
+              iconPath: mdiThemeLightDark,
+              children: (window.isLowWidthScreen || serverState?.isElectron)? "Theme" : "",
+            }}
+            data-command="App.colorScheme"
+            value={userThemeOption}
+            fullOptions={[
+              { key: "light", label: "Light"}, 
+              { key: "dark", label: "Dark" }, 
+              { key: "from-system", label: "System"}
+            ]}
+            onChange={theme => {
+              dbs.users.update({ id: user?.id }, { options: { $merge: [{ theme }]} })
+            }}
+          />
+        }
+      />
+      {showLoginRegister ? (<div className="flex-col jc-center ai-center h-full gap-2 m-2">
+        <NavLink to="login">Login</NavLink>
+        <NavLink to="register">Register</NavLink>
+      </div>) : content}
+    </div>
+  }
 
   return (
     <FlexCol key={dbsKey} className={`App gap-0 f-1 min-h-0`}>
