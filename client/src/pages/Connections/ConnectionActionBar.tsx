@@ -1,4 +1,4 @@
-import { mdiChartLine, mdiCog, mdiDotsVertical, mdiLadybug, mdiPencil } from "@mdi/js";
+import { mdiChartLine, mdiCog, mdiDotsHorizontal, mdiDotsVertical, mdiLadybug, mdiPencil } from "@mdi/js";
 import React from "react";
 import Btn from "../../components/Btn";
 import { FlexRow } from "../../components/Flex";
@@ -96,7 +96,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
       button={
         <Btn 
           size="medium" 
-          iconPath={mdiDotsVertical}
+          iconPath={mdiDotsHorizontal}
           style={{
             padding: "11px",
           }} 

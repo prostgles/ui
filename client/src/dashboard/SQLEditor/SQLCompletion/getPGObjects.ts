@@ -381,13 +381,24 @@ type TableStats = {
 export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise<PG_Table[]> {
   /** Used to prevent permission erorrs */
   const allowedSchemasQuery = `(SELECT schema_name FROM information_schema.schemata)`;
-  const current_user = await db.sql(`SELECT format('%I', "current_user"())`, {}, { returnType: "value" });
-  const search_schemas = await Promise.all((await db.sql(`SHOW search_path`, {}, { returnType: "value" })).split(",")
-    .map((v: string) => {
-      const schema = v.includes(`$user`)? current_user : v.trim();
-      return db.sql(`SELECT format('%I', \${v})`, { v: schema }, { returnType: "value" })
-    })
-  );
+  const search_schemas = await db.sql(`
+    WITH cte1 AS (
+      SELECT unnest(
+        string_to_array(
+          current_setting('search_path'), 
+          ','
+        )
+      ) as searchpath
+    )
+    SELECT quote_ident(schema_name) 
+    FROM information_schema.schemata
+    WHERE schema_name::TEXT IN ( 
+      SELECT trim(searchpath)
+      FROM cte1
+      UNION ALL 
+      SELECT 'pg_catalog'
+    ) 
+    `, {}, { returnType: "values" });
   const tablesAndViews = (await db.sql(
     `
     SELECT
@@ -439,9 +450,7 @@ export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise
         to_char(seq_scan, '999,999,999,999') AS seq_scans,
         to_char(idx_scan, '999,999,999,999') AS idx_scans,
         to_char(n_live_tup, '999,999,999,999') AS n_live_tup,
-        to_char(n_dead_tup, '999,999,999,999') AS n_dead_tup,
-      --  TO_CHAR(age(current_date, last_vacuum), 'YY"yrs" mm"mts" DD"days" MI"mins" ago') AS last_vacuum,
-      --  TO_CHAR(age(current_date, last_autovacuum), 'YY"yrs" mm"mts" DD"days" MI"mins" ago') AS last_autovacuum,
+        to_char(n_dead_tup, '999,999,999,999') AS n_dead_tup, 
         TO_CHAR(now() - last_vacuum, 'YY"yrs" mm"mts" DD"days" MI"mins" ago') AS last_vacuum,
         TO_CHAR(now() - last_autovacuum, 'YY"yrs" mm"mts" DD"days" MI"mins" ago') AS last_autovacuum,
         pg_size_pretty(pg_relation_size(relid::regclass)) AS table_size,
