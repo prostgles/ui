@@ -371,7 +371,6 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       
       const recoveryCode = crypto.randomBytes(26).toString("hex");
       const hashedRecoveryCode = getPasswordHash(user, recoveryCode);
-      // const hashedRecoveryCode = await dbs.sql!("SELECT crypt(${recoveryCode}, ${uid}::text)", { uid: user.id, recoveryCode }, { returnType: "value" })
       await dbs.users.update({ id: user.id }, { "2fa": { secret, recoveryCode: hashedRecoveryCode, enabled: false } })
       return { 
         url: otpauth,
@@ -453,7 +452,7 @@ export const is = {
 
 export const checkIf = <Obj, isType extends keyof typeof is>(obj: Obj, key: keyof Obj, isType: isType, arg1?: Parameters<typeof is[isType]>[1]): true => {
   const isOk = is[isType](obj[key], arg1 as any);
-  if(!isOk) throw `${key} is not of type ${isType}${isType === "oneOf"? `(${arg1})` : ""}. Source object: ${JSON.stringify(obj, null, 2)}`;
+  if(!isOk) throw `${key.toString()} is not of type ${isType}${isType === "oneOf"? `(${arg1})` : ""}. Source object: ${JSON.stringify(obj, null, 2)}`;
   return true;
 }
 const tryReadFile = (path: string) => {

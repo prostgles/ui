@@ -58,9 +58,8 @@ PRGL_DOCKER_IP=0.0.0.0 PRGL_DOCKER_PORT=3099 docker compose up
 #### 2. Create a database and user for the dashboard, ensuring `.env` has the apropriate values
 
     sudo su - postgres
-
     createuser --superuser usr
-    psql -c "alter user usr with password 'psw'"
+    psql -c "alter user usr with encrypted password 'psw'"
     createdb db -O usr
 
 #### 3. Start app in dev mode (will install npm packages)

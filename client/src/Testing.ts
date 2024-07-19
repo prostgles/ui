@@ -206,6 +206,13 @@ export const COMMANDS = {
   "WorkspaceAddBtn.Create": "",
   "ChartLayerManager.AddChartLayer.addLayer": "",
   "ConnectionSelector": "",
+  "Setup2FA.Enable": "",
+  "Setup2FA.Enable.GenerateQR": "",
+  "Setup2FA.Enable.CantScanQR": "",
+  "Setup2FA.Enable.Base64Secret": "",
+  "Setup2FA.Enable.ConfirmCode": "",
+  "Setup2FA.Enable.Confirm": "",
+  "Setup2FA.Disable": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

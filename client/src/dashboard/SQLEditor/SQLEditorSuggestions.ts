@@ -3,7 +3,7 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, SQLHandler } from "prostgles-types";
 import { getKeys } from "prostgles-types";
-import { omitKeys, pickKeys } from "../../utils";
+import { isDefined, omitKeys, pickKeys } from "../../utils";
 import { TOP_KEYWORDS, asSQL } from "./SQLCompletion/KEYWORDS";
 import { PRIORITISED_OPERATORS, getPGObjects } from "./SQLCompletion/getPGObjects";
 import type { SQLSuggestion } from "./SQLEditor";
@@ -79,10 +79,11 @@ export async function getSqlSuggestions(db: DB): Promise< {
     }
     suggestions = suggestions.concat(indexes.map(p => ({ 
       detail: "(index)",
-      label: { label: p.indexname, detail: `  ${p.size}`, description: extractIndexCols(p.indexdef) },
+      label: { label: p.indexname, detail: `  ${p.index_size}`, description: extractIndexCols(p.indexdef) },
       name: p.indexname,
       type: "index",
       insertText: p.escaped_identifier,
+      escapedParentName: p.escaped_tablename,
       indexInfo: p,
       documentation: asListObject(omitKeys(p, ["escaped_identifier", "indexdef"])) +
         `\n\n**Definition**: \n${asSQL(p.indexdef)
@@ -172,13 +173,30 @@ export async function getSqlSuggestions(db: DB): Promise< {
       });
       
       const tPolicies = policies.filter(p => p.tablename === t.name && p.schemaname === t.schema);
+      const parseIntervalStr = (str: string | null) => {
+        return str?.split(" ")
+          .filter((v, i, arr) =>  i === arr.length - 1 || !v.startsWith("00"))
+          .map(v => v.startsWith("0")? v.slice(1) : v)
+          .join(" ") ?? "Never"
+      }
       const documentation = t.is_view? 
       `**Definition:**  \n\n${asSQL(t.view_definition || "")}` : 
+
+      (!t.tableStats? "" : `\n ${asListObject({ 
+        oid: t.tableStats.relid, 
+        Size: t.tableStats.table_size,
+        "Live Tuples": t.tableStats.n_live_tup,
+        "Dead Tuples": t.tableStats.n_dead_tup,
+        "Last Vacuum": parseIntervalStr(t.tableStats.last_vacuum),
+        "Last AutoVacuum": parseIntervalStr(t.tableStats.last_autovacuum),
+        "Seq Scans": t.tableStats.seq_scans, 
+        "Idx Scans": t.tableStats.idx_scans,
+      })}\n` ) +
       `${t.comment? `\n**Comment:** \n\n ${t.comment}` : ""}\n\n**Columns (${cols.length}):**  \n${asSQL(cols.map(c => c.definition).join(",  \n"))} \n` + 
         `\n**Constraints (${tConstraints.length}):** \n ${asSQL(tConstraints.map(c => c.definition + ";").join("\n"))} \n` + 
         `**Indexes (${tIndexes.length}):** \n ${asSQL(tIndexes.map(d => d.indexdef + ";").join("\n"))}  \n` + 
         `**Triggers (${tableTriggers.length}):** \n ${asSQL(tableTriggers.map(d => d.trigger_name + ";").join("\n"))}  \n` + 
-        `**Policies (${tPolicies.length}):** \n ${asSQL(tPolicies.map(p => p.definition + ";").join("\n\n"))}`; 
+        `**Policies (${tPolicies.length}):** \n ${asSQL(tPolicies.map(p => p.definition + ";").join("\n\n"))}`;
       suggestions.push({
         type,
         label: { label: t.name,  description: t.schema },
@@ -272,17 +290,18 @@ export async function getSqlSuggestions(db: DB): Promise< {
       insertText: t.name.includes(" ")? t.udt_name.toUpperCase() : t.name, // use shorter notation where possible 
       type: "dataType",
     })));
-    suggestions = suggestions.concat(dataTypes.map(t => ({ 
+    const nonArrayTypes = [`"any"`, "void"];
+    suggestions = suggestions.concat(dataTypes.map(t =>  nonArrayTypes.includes(t.name.toLowerCase()) || t.name.toLowerCase().startsWith("any")? undefined : ({ 
       label: { label: `${t.name}[]`, description: `ARRAY of ${t.desc}` }, 
       name: `_${t.name}`, 
       detail: `(data type)`,
       documentation: `ARRAY of ${t.desc}  \n\nSchema:  \`${t.schema}\`  \n Type: \`${t.udt_name}[]\`  \n\n https://www.postgresql.org/docs/current/datatype.html`,
       schema: t.schema,
       dataTypeInfo: t,
-      insertText: `_${t.udt_name.toUpperCase()}`,
+      insertText: `${t.udt_name.toUpperCase()}[]`,
       filterText: `${t.name} _${t.udt_name} ${t.udt_name}[]`,
       type: "dataType" 
-    })));
+    } satisfies SQLSuggestion)).filter(isDefined));
      
     suggestions = suggestions.concat(keywords.map(kwd => ({ 
       detail: `(keyword)`, 

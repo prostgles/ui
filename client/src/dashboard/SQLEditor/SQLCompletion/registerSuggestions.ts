@@ -10,11 +10,21 @@ import { getCurrentCodeBlock } from "./completionUtils/getCodeBlock";
 import { getMatch } from "./getMatch";
 import { isObject } from "../../../../../commonTypes/publishUtils";
 import { isDefined } from "../../../utils";
+import { format } from "sql-formatter";
+import { getStartingLetters, removeQuotes } from "./getJoinSuggestions";
 
-/**
- * Mobile devices can't press Ctrl + Space. Use space instead
- */
-export const triggerCharacters = [".", " ", "/", "?", "\\" ] as const;
+
+export const triggerCharacters = [
+  ".", 
+  "/", 
+  "?", 
+  "\\", 
+  "=", 
+  /**
+   * Mobile devices can't press Ctrl + Space. Use space instead
+   */
+  " ",
+] as const;
 
 export type MonacoSuggestion = PRGLMetaInfo & languages.CompletionItem & Pick<SQLSuggestion, "dataTypeInfo">;
 export type ParsedSQLSuggestion = MonacoSuggestion & Omit<SQLSuggestion, "documentation">;
@@ -96,6 +106,93 @@ type Args = {
   monaco: Monaco;
 };
 
+const getRespectedSortText = (cb: CodeBlock, monaco: Monaco, { suggestions }: { suggestions: (MonacoSuggestion | languages.CompletionItem | ParsedSQLSuggestion)[] }) => {
+  const { currToken } = cb;
+  const currTextRaw = currToken?.text;
+  const range = new monaco.Range(
+    cb.position.lineNumber,
+    cb.position.column,
+    cb.position.lineNumber,
+    cb.position.column,
+  );
+  if(!currTextRaw) {
+    return { 
+      suggestions: suggestions.map(s => ({ 
+        ...s, 
+        range,
+      }))
+    };
+  }
+  const currTextLC = removeQuotes(currTextRaw).toLowerCase();
+  const sortText = Array.from(new Set(suggestions.map(s => s.sortText))).sort();
+  if(sortText.length === 1) return { suggestions };
+
+  const getRangeAndFilter = (rawFilterText: string | undefined): Pick<languages.CompletionItem, "range" | "filterText" | "insertTextRules"> => {
+    let range: languages.CompletionItem["range"] | undefined;
+    if(currTextRaw.startsWith(`"`)){
+      range = new monaco.Range(
+        currToken.lineNumber,
+        currToken.columnNumber,
+        currToken.lineNumber,
+        currToken.columnNumber + currTextRaw.length,
+      );
+      return {
+        range: range as any,
+        filterText: `"` + rawFilterText,
+      }
+    }
+    return {
+      range: range as any,
+      // insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+      filterText: rawFilterText
+    };
+  }
+  
+  /**
+   *  SELECT name 
+   *  FROM pg_class
+   * 
+   *  yields unwanted list of "name" functions at the top, not respecting sortText
+   *  if user is searching for something that matches expression columns then 
+   *  add 5 other matching functions at most to not obfuscate the columns
+   */ 
+  const fixedSuggestions = suggestions.map(s => {
+    const sortIndex = sortText.indexOf(s.sortText);
+    const itemTextRaw = "escapedIdentifier" in s && s.escapedIdentifier? s.escapedIdentifier : 
+      "escapedName" in s && s.escapedName? s.escapedName : 
+      "name" in s? s.name : 
+      typeof s.label === "string"? s.label : 
+      s.label.label;
+    const itemText = removeQuotes(itemTextRaw).toLowerCase();
+    if(sortIndex > 0) {
+      return {
+        ...s,
+        ...getRangeAndFilter(s.filterText),
+      }
+    }
+
+    let filterText: string | undefined;
+    const idxOfItemText = itemText.indexOf(currTextLC);
+    if(idxOfItemText > -1){
+      filterText = itemText.slice(idxOfItemText);
+    } else {
+      const startingLetters = getStartingLetters(itemText).toLowerCase();
+      const idxOfStartingLetters = startingLetters.indexOf(currTextLC);
+      if(idxOfStartingLetters > -1){
+        filterText = startingLetters.slice(idxOfStartingLetters) + " " + (itemText || "");
+      }
+    }
+    return {
+      ...s,
+      insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+      ...getRangeAndFilter(filterText),
+    }
+  });
+
+  return {
+    suggestions: fixedSuggestions
+  }
+}
 
 export let KNDS: Kind = {} as any;
 
@@ -105,7 +202,6 @@ export function registerSuggestions(args: Args) {
   KNDS = monaco.languages.CompletionItemKind;
 
   const provideCompletionItems = async (model: editor.ITextModel, position: Position, context: languages.CompletionContext): Promise<{ suggestions: (MonacoSuggestion | languages.CompletionItem)[] }> => {
-
     /* TODO Add type checking within for func arg types && table cols && func return types*/
     function parseSuggestions(sugests: SQLSuggestion[]): ParsedSQLSuggestion[] {
       return sugests.map((s, i) => {
@@ -114,7 +210,7 @@ export function registerSuggestions(args: Args) {
           ...s,
           range: undefined as any,
           kind: getKind(s.type),
-          insertText: (s.insertText || s.name), // + (s.type === "function" ? " " : ""),
+          insertText: (s.insertText || s.name),
           detail: s.detail || `(${s.type})`,
           type: s.type,
           escapedParentName: s.escapedParentName,
@@ -123,7 +219,6 @@ export function registerSuggestions(args: Args) {
           },
           insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
         }
-
 
         const info = getKeywordDocumentation(s.name);
         if (info) {
@@ -148,10 +243,10 @@ export function registerSuggestions(args: Args) {
 
     const { firstTry, match } = await getMatch({ cb: cBlock, ss, setS, sql });
     if(firstTry){
-      return firstTry
+      return getRespectedSortText(cBlock, monaco, firstTry)
     } else if(match) {
       const res = await match.result({ cb: cBlock, ss, setS, sql });
-      return res
+      return getRespectedSortText(cBlock, monaco, res)
     }
 
     const suggestions = ss.filter(s => s.topKwd?.start_kwd)
@@ -170,7 +265,17 @@ export function registerSuggestions(args: Args) {
   sqlFormattingProvider = monaco.languages.registerDocumentFormattingEditProvider(LANG, {
     displayName: "SQL",
     provideDocumentFormattingEdits: async (model) => {
-      const newText = await getFormattedSql(model);
+      // const newText = await getFormattedSql(model);
+
+      const tabWidth = model.getOptions().indentSize || 2;
+      const newText = format(model.getValue(), { 
+        language: "postgresql", 
+        expressionWidth: 80, 
+        indentStyle: "standard", 
+        tabWidth,
+        linesBetweenQueries: 2,
+        logicalOperatorNewline: "before"
+      });
       return [{
         range: model.getFullModelRange(),
         text: newText

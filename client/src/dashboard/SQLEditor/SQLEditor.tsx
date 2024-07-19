@@ -3,7 +3,7 @@ import React from "react";
 import "./SQLEditor.css";
  
 import ReactDOM from "react-dom";
-import type { MonacoSuggestion, SQLMatchContext } from "./SQLCompletion/registerSuggestions";
+import type { MonacoSuggestion } from "./SQLCompletion/registerSuggestions";
 import { registerSuggestions } from "./SQLCompletion/registerSuggestions";
  
 export const LANG = "sql";
@@ -11,7 +11,7 @@ export const LANG = "sql";
  * This option seems to start downloading monaco (870.js) from the start: webpackPrefetch: true
  */
 export const getMonaco = async () => { 
-  const monaco = import(/* webpackChunkName: "monaco_editorr" */  /*  webpackPrefetch: true */  "monaco-editor/esm/vs/editor/editor.api.js");
+  const monaco = import(/* webpackChunkName: "monaco_editorr" */  /*  webpackPrefetch: false */  "monaco-editor/esm/vs/editor/editor.api.js");
   return monaco;
 };
 

@@ -172,22 +172,15 @@ export const popupCheckPosition = function (this: Popup) {
   const bottomOverflow = y + height + PADDING_Y - window.innerHeight;
 
   // TODO ensure that this is + fixedTopLeft overflow compensation logic does not loop
-  // let bottomOverflowPath = "none";
   if (bottomOverflow > 0) {
-
-    // positioning?.includes("beneath") && 
+ 
     if (bottomOverflow < height / 9) {
       bottom = PADDING_Y;
-      // bottomOverflowPath = "bottom PADDING_Y";
-    } else {
-
-      y = Math.max(PADDING_Y, window.innerHeight - height - PADDING_Y);
-      // bottomOverflowPath = "y";
-    }
+    } 
+    y = Math.max(PADDING_Y, window.innerHeight - height - PADDING_Y);
 
   } else if (y < 0) {
     y = PADDING_Y;
-    // bottomOverflowPath = "y PADDING_Y";
   }
 
 

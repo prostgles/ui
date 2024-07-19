@@ -89,6 +89,7 @@ export type AppState = {
     auth: ClientAuth;
     isAdminOrSupport: boolean;
     user?: DBSSchema["users"];
+    sid: string;
   };
   prglStateErr?: any;
   serverState?: {
@@ -194,7 +195,14 @@ export const App = () => {
   return (
     <FlexCol key={dbsKey} className={`App gap-0 f-1 min-h-0`}>
       {demoStarted && <MousePointer />}
-      {isDisconnected && <Loading message="Reconnecting..." variant="cover" style={{ zIndex: 467887 }} coverOpacity={1} />}
+      {isDisconnected && 
+        <Loading 
+          message="Reconnecting..." 
+          variant="cover" 
+          style={{ zIndex: 467887, opacity: .5 }} 
+          coverOpacity={1} 
+        />
+      }
       <NonHTTPSWarning {...prglState} />
       <Switch >
         <Route path="/" element={<Navigate to="/connections" replace />} />

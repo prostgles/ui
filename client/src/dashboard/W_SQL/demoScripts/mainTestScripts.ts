@@ -115,7 +115,7 @@ export const mainTestScripts: DemoScript = async ({ testResult, fromBeginning, t
     await typeAuto(`gr` );
     await typeAuto(` al`, { msPerChar: 100 });
     await typeAuto(` `);
-    await typeAuto(`\ntables`, { nth: 2 });
+    await typeAuto(`\ntablesi`);
     await typeAuto(` pu` );
     await typeAuto(` ` );
     await typeAuto(` use` );

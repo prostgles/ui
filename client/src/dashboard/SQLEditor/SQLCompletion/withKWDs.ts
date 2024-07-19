@@ -11,7 +11,7 @@ import { suggestFuncArgs } from "./suggestFuncArgs";
 type ExpectString = SQLSuggestion["type"] | "condition" | "number" | "string";
 export type KWD = { 
   kwd: string;
-  expects?: ExpectString | `(${ExpectString})` | readonly ExpectString[];
+  expects?: ExpectString | `(${ExpectString})` | readonly ExpectString[] | "(options)" | "=option";
   options?: readonly MinimalSnippet[] | readonly string[] | ((ss: ParsedSQLSuggestion[], cb: CodeBlock) => ParsedSQLSuggestion[]);
 
   justAfter?: readonly string[];
@@ -71,11 +71,11 @@ export const withKWDs = <KWDD extends KWD>(
   const currNestLimits = getCurrentNestingOffsetLimits(cb);
   const currNestingTokens = cb.tokens.filter(t => 
     currNestLimits?.isEmpty === false? ( t.offset >= currNestLimits.limits[0] && t.end <= currNestLimits.limits[1] ) : 
-    currNestingId === t.nestingId
+    (currNestingId === t.nestingId || kwds.some(k => k.expects === "(options)" && cb.currNestingFunc?.textLC === k.kwd.toLowerCase()))
   );
   const startIndex = !topResetKwd? 0 : currNestingTokens.slice(0).map((t, idx) => ({ ...t, idx }))
     .findLast(t => t.offset <= cb.offset && t.textLC === topResetKwd.toLowerCase())?.idx;
-
+ 
   let usedKeywords = kwds.flatMap((kwd, kwdIdx) => {
     const kwdWords = kwd.kwd.split(" ");
     const matchedStartingIndexes: number[] = [];
@@ -85,7 +85,8 @@ export const withKWDs = <KWDD extends KWD>(
       })){
         matchedStartingIndexes.push(i);
       }
-    })
+    });
+
     
     return matchedStartingIndexes.map(startingTokenIdx => {
       const startingToken = currNestingTokens[startingTokenIdx];
@@ -113,7 +114,13 @@ export const withKWDs = <KWDD extends KWD>(
       longerOverlapping.length > k.length  
     );
   }).sort((a, b) => a.start - b.start);
-  const prevKWDTokens = usedKeywords.filter(k => k.startingToken.end <= cb.offset);
+  let prevKWDTokens = usedKeywords.filter(k => k.startingToken.end <= cb.offset);
+  if(cb.currNestingFunc){
+    const optionsKwd = prevKWDTokens.find(k => k.kwd.expects === "(options)" && cb.currNestingFunc!.textLC === k.kwd.kwd.toLowerCase());
+    if(optionsKwd){
+      prevKWDTokens = [optionsKwd]
+    }
+  }
   
   const prevTokens = cb.tokens.slice(startIndex).filter(t => t.offset < cb.offset && currNestingId === t.nestingId);
   const nextTokens = cb.tokens.filter(t => t.offset >= cb.offset && currNestingId === t.nestingId);
@@ -200,7 +207,7 @@ export const withKWDs = <KWDD extends KWD>(
         const prevT = prevKWDFull?.inputTokens[i - 1];
         return prevT && prevT.end < t.offset;
       });
-      const stillWritingInput = Boolean(prevKWD && firstInputToken && !gapsInInputTokens.length && cb.currToken);
+      const stillWritingInput = prevKWD?.expects === "(options)" || Boolean(prevKWD && firstInputToken && !gapsInInputTokens.length && cb.currToken);
       const prevKWDMissingInput = stillWritingInput || !!prevKWD && (!firstInputToken || kwds.some(k => k.kwd.toLowerCase() === firstInputToken.textLC)); //  || cb.currToken);
       if((prevKWD?.expects || prevKWD?.options) && prevKWDMissingInput){
         
@@ -208,19 +215,28 @@ export const withKWDs = <KWDD extends KWD>(
         if(prevKWD.options){
           const { options } = prevKWD;
           if(Array.isArray(options)){
-            const options1 = options.map(o => typeof o === "string"? ({ label: o }) : o);
+            const options1: ((MinimalSnippet & { type?: undefined }) | ParsedSQLSuggestion)[] = options.map(o => typeof o === "string"? ({ label: o }) : o);
             const minimalSnippets = options1.filter(o => !o.type)
-            const parsedSuggestions = options1.filter(o => o.type)
-            firstSuggestions = suggestSnippets(minimalSnippets).suggestions.concat(parsedSuggestions);
+            const parsedSuggestions = options1.filter(o => o.type) as ParsedSQLSuggestion[];
+            firstSuggestions = [
+              ...suggestSnippets(minimalSnippets).suggestions,
+              ...parsedSuggestions
+            ];
+            if(prevKWD.expects === "=option" && !cb.prevText.trim().endsWith("=")){
+              firstSuggestions = firstSuggestions.map(s => ({
+                ...s,
+                insertText: `=${s.label || s.escapedIdentifier || s.escapedName}`
+              }))
+            }
           } else if(typeof options === "function") {
             firstSuggestions = options(ss, cb);
           }
         }
 
-        const expectedSuggestions = !prevKWD.expects? [] : getExpected(prevKWD.expects, cb, ss).suggestions;
+        const expectedSuggestions = (!prevKWD.expects || prevKWD.expects === "(options)")? [] : getExpected(prevKWD.expects, cb, ss).suggestions;
         if(firstSuggestions.length || expectedSuggestions.length){
 
-          return {
+          const result = {
             suggestions: [
               ...firstSuggestions.map(s => ({ ...s, sortText: "0" + (s.sortText ?? "")})),
               ...expectedSuggestions.map(s => ({
@@ -229,11 +245,23 @@ export const withKWDs = <KWDD extends KWD>(
               }))
             ]
           };
+
+          if(prevKWD.expects === "(options)" && cb.currNestingFunc?.textLC !== prevKWD.kwd.toLowerCase()){
+            return {
+              suggestions: result.suggestions.map(s => ({
+                ...s,
+                insertText: `(${s.insertText}$0)`
+              }))
+            };
+          }
+
+          return result;
         }
       }
 
       return suggestSnippets(remainingKWDS.map(k => {
         const addDelimiter = delimiter && 
+        cb.currToken?.textLC !== "(" &&
         ![...(excludeIf ?? []), delimiter, "("]
           .some(t => cb.ltoken?.text.trim().endsWith(t));
 

@@ -28,6 +28,7 @@ type P = TestSelectors & {
   className?: string;
   id?: string;
   variant?: "horizontal-tabs" | "horizontal" | "vertical" | "dropdown";
+  compactMode?: boolean;
   activeKey?: string;
 }
 
@@ -73,7 +74,7 @@ export class MenuList extends React.Component<P, S> {
       tabIndex={canPress? 0 : undefined}
       title={d.disabledText || d.title}
       style={{ ...variantStyle, ...(d.style || {}), ...(d.disabledText? { cursor: "not-allowed", opacity: 0.5 } : {})}}
-      className={"flex-row  p-p5  bg-li " + ((!d.disabledText && d.onPress)? " pointer " : " ") + (d.key === activeKey? " selected " : "")}
+      className={`flex-row  p-p5  bg-li ${((!d.disabledText && d.onPress)? " pointer " : " ")} ${(d.key === activeKey? " selected " : "")}`}
       onClick={canPress? () => {
         d.onPress?.();
       } : undefined}
@@ -83,9 +84,18 @@ export class MenuList extends React.Component<P, S> {
     >
       <label className="mr-p5 f-1 flex-row ai-center noselect" style={{ ...labelVariantStyle, cursor: "inherit"  }}>  
         {!!d.leftIconPath && <Icon className="mr-p5 f-0" path={d.leftIconPath} size={1} style={d.iconStyle} />}
-        {d.label? <div style={d.labelStyle}>{d.label}</div> : d.label} {d.contentRight || null}
+        {d.label? <div className={this.isCompactMode? "display-on-trigger-hover" : ""} style={d.labelStyle}>{d.label}</div> : d.label} {d.contentRight || null}
       </label>
     </li>
+  }
+
+  get variantOptions() {
+    const isDropDown = this.props.variant === "dropdown"
+    const variant = this.props.variant && !isDropDown? this.props.variant : "vertical";
+    return { variant, isDropDown };
+  }
+  get isCompactMode(){
+    return this.props.compactMode && window.isMediumWidthScreen && this.variantOptions.variant === "vertical";
   }
 
   refList?: HTMLUListElement;
@@ -98,10 +108,7 @@ export class MenuList extends React.Component<P, S> {
       activeKey = this.props.items[0]?.key,
     } = this.props;
 
-    const isDropDown = this.props.variant === "dropdown"
-
-    const variant = this.props.variant && !isDropDown? this.props.variant : "vertical";
-
+    const { variant, isDropDown } = this.variantOptions;
     const variantStyle: React.CSSProperties = variant === "horizontal-tabs"? {
       borderRadius: 0,
       fontSize: "20px",
@@ -138,7 +145,7 @@ export class MenuList extends React.Component<P, S> {
           }
         }}
       >
-        <ul className={"f-1 o-auto min-h-0 min-w-0 " + (variant === "vertical"? " flex-col ws-nowrap " : "flex-row ")} 
+        <ul className={`f-1 o-auto min-h-0 min-w-0 ${this.isCompactMode? "trigger-hover" : ""} ${(variant === "vertical"? " flex-col ws-nowrap " : "flex-row ")}`} 
           role="list" 
           ref={r => { if(r) this.refList = r; }}
           style={{ padding: 0 }}

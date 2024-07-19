@@ -182,7 +182,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
 
     const isDisabled = disabledInfo || loading;
     let _className = exactClassName || "";
-    const { size = window.isLowWidthScreen? "small" : undefined } = this.props;
+    const { size = window.isLowWidthScreen? "small" : "large" } = this.props;
         
     if(!exactClassName){
       const hasBgClassname = (className + "").includes("bg-")
@@ -197,17 +197,20 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
             borderColor: "currentcolor",
           }
         } 
-
-        if(!size){
-          extraStyle.padding = (iconPath || loading)? `${iconPath? 8 : 8}px 12px` : "12px";
-        }
         
-        if(size === "small"){
-          extraStyle.padding = "5px 8px"
+        if(size === "micro"){
+          extraStyle.padding = (iconPath || loading)? `2px 6px` : "2px 4px";
         }
 
+        if(size === "small"){
+          extraStyle.padding = (iconPath || loading)? `2px 8px` : "2px 8px";
+        }
+
+        if(size === "medium"){
+          extraStyle.padding = (iconPath || loading)? `6px 10px` : "10px";
+        } 
         if(size === "large"){
-          extraStyle.padding = "12px 16px"
+          extraStyle.padding = (iconPath || loading)? `8px 12px` : "12px";
         } 
 
         if(variant === "text"){
@@ -217,14 +220,11 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
       /** Is icon Btn */
       } else {
         extraStyle = {
-          padding: "8px"
+          padding: size === "micro"? "2px" : size === "small"? "4px" : size === "medium"? "6px" : "8px"
         };
 
         if(variant === "icon" || variant === "outline"){
           extraStyle.padding = "0.5em";
-        }
-        if(size === "small"){
-          extraStyle.padding = "4px"
         }
       }
     }
@@ -235,13 +235,18 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
 
     _className = classOverride(_className, className);
 
-    const iconSize = 1; //size === "micro"? .5 : size === "small"? .75 : size === "medium"? .85 : 1;
     const loadingSize = { 
       large: 22, 
       medium: 18, 
-      small: 12, 
+      small: 12,
       micro: 12 
-    }[size ?? "small"];
+    }[size];
+    const loadingMargin = { 
+      large: 1, 
+      medium: 3, 
+      small: 4,
+      micro: 3
+    }[size];
     const childrenContent = (children === undefined || children === null || children === "")? null : 
       loading? <div 
         className="min-w-0 ws-nowrap text-ellipsis f-1 o-hidden" 
@@ -257,7 +262,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
       {(!(iconPath || iconProps?.path) || loading)? null : 
         <Icon 
           path={clickMessage?.type === "err"? mdiAlert : clickMessage?.type === "ok"? mdiCheck : (iconPath ?? iconProps!.path)} 
-          size={iconSize} 
+          size={size === "micro"? 0.75 : 1} 
           className={iconClassname + " f-0 " } 
           style={iconStyle}
           { ...iconProps }
@@ -265,7 +270,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
       }
       
       {loading? <Loading 
-        style={{ margin: "-3px 6px -3px 0px"}} 
+        style={{ margin: `${loadingMargin}px` }}
         sizePx={loadingSize} 
         delay={0} 
         colorAnimation={false} 
@@ -310,7 +315,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
         ) : (loading)? undefined : 
         onClick,
       title: disabledInfo || title,
-      style: { ...extraStyle, display: "flex", lineHeight: "1em", width: "fit-content", ...style, fontSize: FontSizeMap[size ?? "medium"] },
+      style: { ...extraStyle, display: "flex", lineHeight: "1em", width: "fit-content", ...style, fontSize: FontSizeMap[size] },
       onMouseDown: e => e.preventDefault(),
       className: `${_className} btn btn-${variant} btn-size-${size} btn-color-${color} ws-nowrap w-fit `,
       ref: this.props._ref as any,

@@ -260,8 +260,6 @@ export const AccessControlRuleEditor = ({
           connectionId={connection.id}
           error={wspErrors}
         />
-        {/* {(editedRule.type === "edit" || editedRule.type === "create-complete" || wspErrors) &&  
-        } */}
 
       </FlexCol>
     }

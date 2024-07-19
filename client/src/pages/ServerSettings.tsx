@@ -39,7 +39,7 @@ export const ServerSettings = ({ theme, dbsMethods, dbs, dbsTables }: Pick<Prgl,
         <SmartForm 
           theme={theme}
           className="bg-color-0 shadow "
-          label="Network security" 
+          label="Network security"
           db={dbs as any}
           methods={dbsMethods}
           tableName="global_settings" 

@@ -69,7 +69,7 @@ export const Account = (props: AccountProps) => {
 
   const sectionItemKeys = getKeys(sectionItems);
   
-  return <div className=" f-1 flex-col w-full o-auto ai-center " >
+  return <div className="Account f-1 flex-col w-full o-auto ai-center " >
 
     <div className="flex-col f-1 min-h-0 pt-1 w-full" style={{ maxWidth: "800px"}}>
       <Tabs variant={{ controlsBreakpoint: 200, contentBreakpoint: 500, controlsCollapseWidth: 350 }}

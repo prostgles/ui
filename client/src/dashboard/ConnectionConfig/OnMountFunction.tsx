@@ -15,6 +15,7 @@ export const OnMountFunction = ({ dbsMethods, dbs, connectionId, dbKey }: Prgl) 
       <h3>On mount</h3>
       <SwitchToggle 
         label={"Enabled"}
+        disabledInfo={!dbConf?.on_mount_ts? "No on mount function. Provide a function or edit and save the example" : undefined}
         checked={!!dbConf?.on_mount_ts && !dbConf.on_mount_ts_disabled}
         onChange={async (checked) => {
           await dbsMethods.setOnMountAndTableConfig?.(connectionId, { on_mount_ts_disabled: !checked });
@@ -45,14 +46,17 @@ export const OnMountFunction = ({ dbsMethods, dbs, connectionId, dbKey }: Prgl) 
   </FlexCol>
 } 
 const example = `/* Example */
+import { WebSocket } from "ws";
 export const onMount: OnMount = async ({ dbo }) => {
 
+  await dbo.sql('CREATE TABLE IF NOT EXISTS symbols(pair text primary key);');
+  await dbo.sql('CREATE TABLE IF NOT EXISTS futures (price float, symbol text, "timestamp" timestamptz);');
   const socket = new WebSocket("wss://fstream.binance.com/ws/!markPrice@arr@1s");
   
   socket.onmessage = async (rawData) => {
     const dataItems = JSON.parse(rawData.data as string);
-    const data = dataItems.map(data => ({ data, symbol: data.s, price: data.p, timestamp: new Date(data.E) }))
-    await dbo.symbols.insert(data.map(({ symbol }) => ({ pair: symbol })), { onConflict: "DoUpdate" });
+    const data = dataItems.map(data => ({ symbol: data.s, price: data.p, timestamp: new Date(data.E) }))
+    await dbo.symbols.insert(data.map(({ symbol }) => ({ pair: symbol })), { onConflict: "DoNothing" });
     await dbo.futures.insert(data);
   }
 }

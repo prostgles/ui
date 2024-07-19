@@ -163,10 +163,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
       bounds: Extent;
     }
   }> :
-  CType extends "timechart"? {
-    //@deprecated - moving this to each layer
-    // groupByColumn?: string;
-    
+  CType extends "timechart"? {    
     //@deprecated - moving this to each layer
     statType: StatType;
     /**

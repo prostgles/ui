@@ -30,7 +30,7 @@ const authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_
 type AuthAttepmt = 
 | { auth_type: "login", username: string; }
 | { auth_type: "magic-link", magic_link_id: string; }
-| { auth_type: "session-id", sid: string; }
+| { auth_type: "session-id", sid: string; };
 const loginAttempt = async ({ db, ip_address, user_agent, ...attempt}: { db: DBOFullyTyped<DBSchemaGenerated>; } & LoginClientInfo & AuthAttepmt) => {
 
   try {
@@ -72,7 +72,11 @@ export const makeSession = async (user: Users | undefined, client: Pick<Sessions
   if(user){
 
     /** Disable all other web sessions for user */
-    await dbo.sessions.update({ user_id: user.id, type: "web" }, { type: "web", active: false });
+    await dbo.sessions.update({ 
+      user_id: user.id, 
+      type: "web",
+      user_agent: client.user_agent, 
+    }, { type: "web", active: false });
 
     const session = await dbo.sessions.insert({ 
       ...(client.sid && { id: client.sid }),
@@ -105,7 +109,7 @@ export const sidKeyName = "sid_token" as const;
 
 type AuthType = 
 | { type: "session-id"; filter: { id: string; }; client: AuthClientRequest & LoginClientInfo }
-| { type: "login-success"; filter: { user_id: string; } };
+| { type: "login-success"; filter: { user_id: string; type: "web"; user_agent: string; } };
 
 export const getActiveSession = async (db: DBS, authType: AuthType) => {
   if(Object.values(authType.filter).some(v => typeof v !== "string" || !v)){
@@ -185,7 +189,6 @@ export const getAuth = (app: Express) => {
           throw "no match";
         }
         const hashedPassword = getPasswordHash(userFromUsername, password);
-        // u = await _db.one("SELECT * FROM users WHERE username = ${username} AND password = crypt(${password}, id::text);", { username, password });
         u = await _db.one("SELECT * FROM users WHERE username = ${username} AND password = ${hashedPassword};", { username, hashedPassword });
       } catch(e){
         throw "no match";
@@ -199,7 +202,8 @@ export const getAuth = (app: Express) => {
 
       if(u["2fa"]?.enabled){
         if(totp_recovery_code && typeof totp_recovery_code === "string"){
-          const areMatching = await _db.any("SELECT * FROM users WHERE id = ${id} AND \"2fa\"->>'recoveryCode' = crypt(${code}, id::text) ", { id: u.id, code: totp_recovery_code.trim() });
+          const hashedRecoveryCode = getPasswordHash(u, totp_recovery_code.trim());
+          const areMatching = await _db.any("SELECT * FROM users WHERE id = ${id} AND \"2fa\"->>'recoveryCode' = ${hashedRecoveryCode} ", { id: u.id, hashedRecoveryCode });
           if(!areMatching.length){
             throw "Invalid token"
           }
@@ -215,7 +219,7 @@ export const getAuth = (app: Express) => {
 
       await onSuccess();
 
-      const activeSession = await getActiveSession(db, { type: "login-success", filter: { user_id: u.id }});
+      const activeSession = await getActiveSession(db, { type: "login-success", filter: { user_id: u.id, type: "web", user_agent: user_agent ?? "" }});
       if(!activeSession){
         const globalSettings = await db.global_settings.findOne();
         const DAY = 24 * 60 * 60 * 1000;
@@ -224,7 +228,6 @@ export const getAuth = (app: Express) => {
       }
       await db.sessions.update({ id: activeSession.id }, { last_used: new Date() });
       return parseAsBasicSession(activeSession);
-
     },
 
     logout: async (sid, db, _db: DB) => {
