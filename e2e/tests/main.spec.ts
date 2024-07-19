@@ -95,7 +95,6 @@ test.describe("Main test", () => {
     await goTo(page, 'localhost:3004/logout');
     await login(page);
     await page.getByRole('button', { name: 'Enter recovery code', exact: true }).click();
-    console.log({ recoveryCode})
     await page.locator("#totp_recovery_code").fill(recoveryCode ?? "");
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
     await page.waitForTimeout(3e3);
