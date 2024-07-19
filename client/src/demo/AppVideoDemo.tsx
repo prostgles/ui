@@ -2,13 +2,26 @@ import { mdiPlay, mdiPlayCircleOutline } from "@mdi/js";
 import React, { useRef, useState } from "react";
 import { r_useAppVideoDemo, useReactiveState, type Prgl } from "../App";
 import Btn from "../components/Btn";
-import { VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
+import { startWakeLock, VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
 import { VIDEO_DEMO_SCRIPTS } from "./videoDemoScripts";
 import { getKeys } from "../utils";
 import Popup from "../components/Popup/Popup";
 import { FlexCol } from "../components/Flex";
 const demoScripts = getKeys(VIDEO_DEMO_SCRIPTS);
 type DEMO_NAME = keyof typeof VIDEO_DEMO_SCRIPTS;
+
+const videoTimings: { videoName: string; start: number; end: number; }[] = [];
+let currVideo: typeof videoTimings[number] | undefined;
+const startVideoDemo = async (videoName: string) => {
+  if(currVideo){
+    videoTimings.push({ ...currVideo, end: Date.now() });
+  }
+  currVideo = {
+    videoName,
+    start: Date.now(),
+    end: 0
+  }
+}
 
 export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
 
@@ -21,15 +34,22 @@ export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
       throw new Error("Cannot start demo on a non-demo database");
     }
     r_useAppVideoDemo.set({ demoStarted: true });
+    const { stopWakeLock } = await startWakeLock();
     if(name) {
       await VIDEO_DEMO_SCRIPTS[name]();
-      return;
+    } else {
+      const { sqlDemo, acDemo, backupDemo, fileDemo, dashboardDemo } = VIDEO_DEMO_SCRIPTS;
+      startVideoDemo("SQL");
+      await sqlDemo();
+      startVideoDemo("Access Control");
+      await acDemo();
+      startVideoDemo("Dashboard");
+      await dashboardDemo();
+      startVideoDemo("Backups");
+      await backupDemo();
+      startVideoDemo("the end");
     }
-    const { sqlDemo, acDemo, backupDemo, fileDemo, dashboardDemo } = VIDEO_DEMO_SCRIPTS;
-    await sqlDemo();
-    await acDemo();
-    await dashboardDemo();
-    await backupDemo();
+    stopWakeLock();
   }
  
   return <>

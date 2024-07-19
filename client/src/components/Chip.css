@@ -26,6 +26,9 @@
 .chip.green {
   color: var(--green-500);
 }
+.chip.variant-naked {
+  gap: 4px;
+}
 .chip.variant-default, 
 .chip.variant-outline {
   background-color: var(--bg-color-1);

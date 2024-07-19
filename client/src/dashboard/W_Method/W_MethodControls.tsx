@@ -13,6 +13,7 @@ import { omitKeys } from "../../utils";
 import CodeEditor from "../CodeEditor/CodeEditor";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import SmartTable from "../SmartTable";
+import { tout } from "../../pages/ElectronSetup";
 
 type P = Pick<Prgl, "db" | "methods" | "tables" | "theme"> & {
   method_name: string;

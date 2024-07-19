@@ -10,7 +10,7 @@ import { suggestTableLike } from "./suggestTableLike";
 import type { KWD } from "./withKWDs";
 import { withKWDs } from "./withKWDs";
 
-
+export const AGG_FUNC_NAMES = ["max", "min", "agg", "sum", "count", "string_agg", "json_object_agg", "array_agg", "jsonb_agg"];
 export const preSubQueryKwds = [
   "in", 
   "from", 
@@ -57,6 +57,15 @@ export const MatchSelect: SQLMatcher = {
       ], { cb, ss, setS, sql }).getSuggestion();
     }
 
+    if(insideFunc?.func.textLC && AGG_FUNC_NAMES.includes(insideFunc.func.textLC)){
+      if(cb.prevText.toLowerCase().trim().endsWith("order by")){
+        return suggestColumnLike({ cb, ss, setS, parentCb: args.parentCb, sql });
+      }
+      if(cb.prevText.endsWith(" ") && !cb.prevText.trim().endsWith(",") && !cb.prevText.trim().endsWith("(")){
+        return suggestSnippets([{ label: "ORDER BY", kind: getKind("keyword") }])
+      }
+    }
+
     if(currToken?.type === "string.sql" && currToken.offset <= offset && currToken.end >= offset){
       return {
         suggestions: []
@@ -79,7 +88,8 @@ export const MatchSelect: SQLMatcher = {
       return colLikeSuggestions;
     }
 
-    if(prevLC.trim().endsWith(" group by ") || prevLC.trim().endsWith(" order by ") || prevLC.trim().endsWith(" having ") || prevLC.trim().endsWith(" where ") || prevLC.trim().endsWith(" when ")){
+    const expectsColumn = prevLC.trim().endsWith(" group by") || prevLC.trim().endsWith(" order by") || prevLC.trim().endsWith(" having") || prevLC.trim().endsWith(" where") || prevLC.trim().endsWith(" when")
+    if(expectsColumn){
       const colsAndFuncs = await getColsAndFuncs();
       return colsAndFuncs;
     }
@@ -133,6 +143,8 @@ export const MatchSelect: SQLMatcher = {
         { label: "NULLS FIRST", kind: getKind("keyword") },
       ])
     }
+    const COND_KWDS = ["WHERE", "HAVING"] as const;
+    const conditionIsComplete = ltoken && ltoken.type !== "operator.sql" && !COND_KWDS.includes(ltoken.textLC as any) 
 
     if(remainingKWDS.length && !isMaybeTypingSchemaDotTable && (
       !cb.text.trim() ||
@@ -140,7 +152,7 @@ export const MatchSelect: SQLMatcher = {
       prevKWD?.kwd === "INTO" && ltokenIsIdentifier ||
       prevKWD?.kwd === "FROM" && ltokenIsIdentifier ||
       prevKWD?.kwd.endsWith("JOIN") && ltokenIsIdentifier ||
-      prevKWD?.kwd === "WHERE" && !cb.thisLinePrevTokens.length ||
+      prevKWD?.kwd === "WHERE" && conditionIsComplete || // !cb.thisLinePrevTokens.length ||
       prevKWD?.kwd === "LIMIT" && ltoken?.type === "number.sql" ||
       prevKWD?.kwd === "OFFSET" && ltoken?.type === "number.sql" ||
       (prevKWD?.kwd === "GROUP BY" || prevKWD?.kwd === "ORDER BY") && ltoken?.text !== "," && ltoken?.textLC !== "by" && (cb.currToken?.text.length ?? 0) <= 1  ||
@@ -194,7 +206,9 @@ const getKWDSz = (excludeInto = false) => [
     [
       { kwd: "INTO",    expects: "table", justAfter: ["SELECT"], dependsOnAfter: "FROM", docs: "Creates a table from the result of the select statement" } as const
     ]),
-  { kwd: "FILTER",  expects: "column", dependsOn: "SELECT", include: ({ ltoken, l1token }) => [l1token?.textLC, ltoken?.textLC].some(v => ["max", "min", "agg", "sum"].includes(v as string) ) }, 
+  { kwd: "FILTER",  expects: "column", dependsOn: "SELECT", 
+    include: ({ ltoken, l1token }) => [l1token?.textLC, ltoken?.textLC].some(v => AGG_FUNC_NAMES.includes(v as string) ) 
+  }, 
   { kwd: "FROM",    expects: "table", justAfter: ["SELECT"], docs: "Specifies a table/view or function with returns a table-like result" }, 
   { kwd: "JOIN",  expects: "table", docs: "Combine rows from one table with rows from a second table", canRepeat: true }, 
   { kwd: "JOIN LATERAL",  expects: "table", docs: "Lateral join subquery can reference columns provided by preceding FROM items", canRepeat: true }, 

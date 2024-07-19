@@ -1,16 +1,28 @@
 import { suggestSnippets } from "../CommonMatchImports";
 import { getExpected } from "../getExpected";
-import { getParentFunction } from "../MatchSelect";
 import { getKind, type SQLMatchContext } from "../registerSuggestions";
 import type { KWD} from "../withKWDs";
 import { suggestKWD, withKWDs } from "../withKWDs";
 
 
 export const matchCreateIndex = ({ cb, ss, setS, sql }: SQLMatchContext) => {
-  const insideF = getParentFunction(cb);
-  if(insideF){
-    if(cb.ltoken?.text === "," || cb.ltoken?.text === "("){
-      return getExpected("column", cb, ss);
+  const getColsAndFuncs = (inParens = false) => {
+    const prevCols = cb.tokens.filter(t => t.nestingId.length === 1).map(t => t.text);
+    const tableColumns = getExpected(inParens? "(column)" : "column", cb, ss)
+      .suggestions
+      .filter(s => !prevCols.includes(s.insertText) && cb.tableIdentifiers.includes(s.escapedParentName ?? s.parentName ?? undefined as any));
+    const immutableFuncs = ss.filter(s => s.funcInfo?.provolatile === "i");
+    return {
+      suggestions: [
+        ...tableColumns,
+        ...immutableFuncs.map(s => ({ ...s, sortText: "zz" }))
+      ]
+    }
+
+  }
+  if(cb.currNestingFunc && cb.currNestingFunc.textLC !== "with"){
+    if(cb.ltoken?.text === "," || cb.ltoken?.text === "(" || cb.currToken?.text === "("){
+      return getColsAndFuncs();
     }
     if(cb.ltoken?.type === "identifier.sql"){
       return suggestSnippets([
@@ -22,29 +34,24 @@ export const matchCreateIndex = ({ cb, ss, setS, sql }: SQLMatchContext) => {
       ])
     }
   }
-  if(cb.prevTokens.some(t => t.text === ")")){
-    // return withKWDs([
-    //   { kwd:  }
-    // ], cb, getKind, ss).getSuggestion();  
-  }
-
-  // if(!cb.currToken && cb.prevTokens.at(-2)?.textLC === "using"){
-  //   return getExpected("(column)", cb, ss);
-  // }
-
+  
   if(cb.prevLC.endsWith("not exists")){
     return suggestKWD(getKind, ["$index_name"])
   }
 
   if(cb.l1token?.textLC === "using"){
-    return getExpected("(column)", cb, ss);
+    return getColsAndFuncs(true);
   }
 
+  const concurrentlyOpt = { 
+    label: "CONCURRENTLY", 
+    docs: `When this option is used, PostgreSQL will build the index without taking any locks that prevent concurrent inserts, updates, or deletes on the table; whereas a standard index build locks out writes (but not reads) on the table until it's done. ` 
+  } as const
   const crIdxOpts = [
     { label: "ON" }, 
     { label: "$index_name" },
     { label: "IF NOT EXISTS $index_name" },
-    { label: "CONCURRENTLY", docs: `When this option is used, PostgreSQL will build the index without taking any locks that prevent concurrent inserts, updates, or deletes on the table; whereas a standard index build locks out writes (but not reads) on the table until it's done. ` },
+    concurrentlyOpt
   ] as const;
 
   const indexInfoUrl = `https://www.postgresql.org/docs/current/indexes-types.html`;
@@ -53,10 +60,28 @@ export const matchCreateIndex = ({ cb, ss, setS, sql }: SQLMatchContext) => {
       options: crIdxOpts, 
       docs: `Constructs an index on the specified column(s) of the specified relation, which can be a table or a materialized view. Indexes are primarily used to enhance database performance (though inappropriate use can result in slower performance).` 
     },
-    { kwd: "CONCURRENTLY", options: crIdxOpts.filter(c => c.label !== "CONCURRENTLY") },
-    { kwd: "ON", expects: "table", docs: `The table for which the index will be created` },
+    { 
+      kwd: "ON", 
+      expects: "table", 
+      docs: `The table for which the index will be created`,
+      include: () => cb.ltoken?.textLC === "index" || 
+        cb.l1token?.textLC === "index" ||
+        cb.l2token?.textLC === "index"
+    },
+    { 
+      kwd: "CONCURRENTLY",
+      options: [
+        { label: "$index_name" },
+        { label: "IF NOT EXISTS" }
+      ],
+      include: () => cb.ltoken?.textLC === "index",
+      optional: true,
+      docs: concurrentlyOpt.docs,
+    },
     { 
       kwd: "USING", 
+      optional: true,
+      include: () => cb.l1token?.textLC === "on",
       docs: `The name of the index method to be used. Choices are btree, hash, gist, spgist, gin, brin, or user-installed access methods like bloom. The default method is btree.`,
       options: [
       { label: "btree", docs: `B-trees can handle equality and range queries on data that can be sorted into some ordering. In particular, the PostgreSQL query planner will consider using a B-tree index whenever an indexed column is involved in a comparison using one of these operators: 
@@ -108,17 +133,20 @@ ${indexInfoUrl}`
     },
     {
       kwd: "( $0 )",
+      options: () => getColsAndFuncs(true).suggestions,
+      excludeIf: () => cb.prevTokens.some(t => !t.nestingId && t.text === ")"),
     },{
       kwd: "INCLUDE",
       expects: "(column)",
+      include: () => cb.prevTokens.some(t => t.text === ")"),
       docs: `The optional INCLUDE clause specifies a list of columns which will be included in the index as non-key columns. A non-key column cannot be used in an index scan search qualification, and it is disregarded for purposes of any uniqueness or exclusion constraint enforced by the index. However, an index-only scan can return the contents of non-key columns without having to visit the index's table, since they are available directly from the index entry. Thus, addition of non-key columns allows index-only scans to be used for queries that otherwise could not use them.`,
       optional: true,
     },{
       kwd: "NULLS",
       optional: true,
       options: [
-        { label: "FIRST", docs: `Specifies that nulls sort before non-nulls. This is the default when DESC is specified.` },
-        { label: "LAST", docs: `Specifies that nulls sort after non-nulls. This is the default when DESC is not specified.` },
+        // { label: "FIRST", docs: `Specifies that nulls sort before non-nulls. This is the default when DESC is specified.` },
+        // { label: "LAST", docs: `Specifies that nulls sort after non-nulls. This is the default when DESC is not specified.` },
         { label: "DISTINCT", docs: `Specifies whether for a unique index, null values should be considered distinct (not equal). The default is that they are distinct, so that a unique index could contain multiple null values in a column.` },
         { label: "NOT DISTINCT", docs: `Specifies whether for a unique index, null values should be considered distinct (not equal). The default is that they are distinct, so that a unique index could contain multiple null values in a column.` },
       ]
@@ -126,6 +154,7 @@ ${indexInfoUrl}`
       kwd: "WITH",
       optional: true,
       docs: `The optional WITH clause specifies storage parameters for the index. Each index method has its own set of allowed storage parameters. The B-tree, hash, GiST and SP-GiST index methods all accept this parameter:`,
+      expects: "(options)",
       options: [
         { label: "fillfactor = 70", docs: `The fillfactor for an index is a percentage that determines how full the index method will try to pack index pages. For B-trees, leaf pages are filled to this percentage during initial index builds, and also when extending the index at the right (adding new largest key values). If pages subsequently become completely full, they will be split, leading to fragmentation of the on-disk index structure. B-trees use a default fillfactor of 90, but any integer value from 10 to 100 can be selected.` },
         { label: "fastupdate = off", docs: `This setting controls usage of the fast update technique described in Section 70.4.1. It is a Boolean parameter: ON enables fast update, OFF disables it. The default is ON.` },
@@ -135,7 +164,15 @@ ${indexInfoUrl}`
         { label: "autosummarize = on", docs: `Defines whether a summarization run is queued for the previous page range whenever an insertion is detected on the next one. See Section 71.1.1 for more details. The default is off.` },
       ]
     },
-    { kwd: "WHERE", expects: "condition", dependsOn: "USING" },
+    { 
+      kwd: "WHERE", 
+      expects: "condition", 
+      dependsOn: "ON",
+      docs: `When the WHERE clause is present, a partial index is created. A partial index is an index that contains entries for only a portion of a table, usually a portion that is more useful for indexing than the rest of the table. For example, if you have a table that contains both billed and unbilled orders where the unbilled orders take up a small fraction of the total table and yet that is an often used section, you can improve performance by creating an index on just that portion. Another possible application is to use WHERE with UNIQUE to enforce uniqueness over a subset of a table. See Section 11.8 for more discussion.
+
+The expression used in the WHERE clause can refer only to columns of the underlying table, but it can use all columns, not just the ones being indexed. Presently, subqueries and aggregate expressions are also forbidden in WHERE. The same restrictions apply to index fields that are expressions.`,
+      optional: true, 
+    },
   ]
   return withKWDs(kwds, { cb, ss, setS, sql }).getSuggestion();  
 }

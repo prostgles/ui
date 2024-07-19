@@ -275,17 +275,7 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
     /* Table was renamed. Replace from oid or fail gracefully */
     if (tableName && !tableHandler) {
       if (table_oid) {
-        const tableInfos: { name: string; oid: number }[] = [];
-        await Promise.all(Object.keys(db).map(async k => {
-          if ((db[k] as any).getInfo) {
-            tableInfos.push({
-              name: k,
-              ...(await (db[k] as any).getInfo())
-            });
-          }
-        }));
-
-        const match = tableInfos.find(ti => ti.oid === table_oid);
+        const match = this.props.tables.find(ti => ti.info.oid === table_oid);
         if (match) {
           await w.$update({ table_name: match.name });
           return;
@@ -462,9 +452,21 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
       runningQuerySince, 
       error,
     } = this.state;
+    
+    const showTableNotFound = (tableName: string) => (
+      <div className=" p-2 flex-row ai-center text-danger">
+        <Icon path={mdiAlertOutline} size={1} className="mr-p5 " />
+        Table {JSON.stringify(tableName)} not found
+      </div>
+    )
 
     const { w } = this.d;
-    if(!w) return null;
+    if(!w) {
+      if(this.props.w.table_name && !this.props.prgl.db[this.props.w.table_name]){
+        return showTableNotFound(this.props.w.table_name);
+      }
+      return null;
+    }
     const { 
       setLinkMenu, 
       joinFilter, activeRow, onAddChart, 
@@ -494,10 +496,7 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
     const cardOpts = w.options.viewAs?.type === "card"? w.options.viewAs : undefined; 
     let content: React.ReactNode = null;
     if (w.table_name && !db[w.table_name]) {
-      content = <div className=" p-2 flex-row ai-center text-danger">
-        <Icon path={mdiAlertOutline} size={1} className="mr-p5 " />
-        Table {JSON.stringify(w.table_name)} not found
-      </div>
+      content = showTableNotFound(w.table_name)
 
     } else if(loading || w.table_name && (!db[w.table_name])){
       content = FirstLoadCover

@@ -5,7 +5,7 @@ import { QUERY_WATCH_IGNORE } from "../../../commonTypes/utils";
 export const sqlVideoDemo: DemoScript = async ({ 
   runDbSQL, fromBeginning, typeAuto, 
   moveCursor, triggerParamHints,  getEditor, 
-  actions, testResult, getEditors, runSQL, newLine
+  actions, testResult, triggerSuggest, runSQL, newLine
 }) => {
   const hasTable = await runDbSQL(`SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public' AND tablename = 'chats'`, { }, { returnType: "value" });
   const existingUsers: string[] = await runDbSQL(`SELECT usename FROM pg_catalog.pg_user `, { }, { returnType: "values" });
@@ -31,6 +31,9 @@ export const sqlVideoDemo: DemoScript = async ({
       `GRANT ALL ON ALL TABLES IN SCHEMA public TO mynewuser;`,
       existingUsers.includes("vid_demo_user")? "" : `CREATE USER vid_demo_user;`,
       usersTable,
+      `INSERT INTO users(id, status, username, password, type, options) VALUES (gen_random_uuid(), 'active', 'user78679', '****', 'default', '{ "theme": "light" }'::JSONB);`,
+      `INSERT INTO users(id, status, username, password, type, options) VALUES (gen_random_uuid(), 'active', 'user219', '****', 'customer', '{ "theme": "from-system" }'::JSONB);`,
+      `INSERT INTO users(id, status, username, password, type, options) VALUES (gen_random_uuid(), 'active', 'user219', '****', 'defaultl', '{ "theme": "dark" }'::JSONB);`,
       `CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, user_id UUID NOT NULL REFERENCES users, total_price DECIMAL(12,2) CHECK(total_price >= 0), created_at TIMESTAMP  DEFAULT now());`,
       `CREATE TABLE IF NOT EXISTS chats (id BIGSERIAL PRIMARY KEY);`,
       `CREATE TABLE IF NOT EXISTS chat_members (chat_id BIGINT NOT NULL REFERENCES chats, user_id UUID NOT NULL REFERENCES users, UNIQUE(chat_id, user_id));`,
@@ -67,27 +70,34 @@ export const sqlVideoDemo: DemoScript = async ({
       LEFT JOIN LATERAL (
         SELECT *
         FROM orders o
-        WHERE
+        WHERE u
         LIMIT 10
       ) latest_orders
         ON TRUE
     `);
     fromBeginning(false, script);
     await moveCursor.lineEnd();
-    await moveCursor.up(3, 300);
+    await moveCursor.up(3);
     await moveCursor.lineEnd();
     await tout(500);
-    await typeAuto(" u.i", { waitBeforeAccept: 1e3 });
+    await typeAuto(".i", { waitBeforeAccept });
     await typeAuto(` `);
-    await typeAuto(" o.", { waitBeforeAccept: 1e3 });
-    testResult(script.replace("WHERE", "WHERE u.id = o.user_id"))
+    await typeAuto(" o.", { waitBeforeAccept });
+    testResult(script.replace("WHERE u", "WHERE u.id = o.user_id"))
   });
 
   /** Join complete */
   await showScript(`Joins autocomplete`, async () => {
     await fromBeginning(false, `/* Joins autocomplete */\nSELECT * \nFROM users u`);
     await typeAuto(`\nleft`, { msPerChar: 40, waitAccept: 1e3 });
-    await typeAuto(` `, { msPerChar: 40, waitAccept: 1e3 });
+    await typeAuto(` `, { msPerChar: 40, waitAccept: 1e3, nth: 2 });
+    await newLine();
+    await moveCursor.left(2);
+    await typeAuto(`W`, { triggerMode: "firstChar" });
+    await typeAuto(` opt`);
+    await typeAuto(` the`);
+    await typeAuto(` `);
+    await typeAuto(` '`, { msPerChar: 1, triggerMode: "firstChar" });
   });
   
   /** Current statement execution */
@@ -103,42 +113,46 @@ export const sqlVideoDemo: DemoScript = async ({
     fromBeginning(false, script);
     await actions.selectCodeBlock();
     await tout(700);
-    await moveCursor.up(4, 30);
+    await moveCursor.down(4, 30);
     await tout(500);
     await actions.selectCodeBlock();
     await tout(500);
     await moveCursor.up(4, 30);
+    await tout(500);
+    await actions.selectCodeBlock();
+    await tout(500);
+    await moveCursor.down(4, 30);
     await tout(500);
     await actions.selectCodeBlock();
     await tout(500);
   })
   
   /** Selection expansion */
-  await showScript(`Selection/statement expansion`, async () => {
-    const script = fixIndent(`
-      /* Selection/statement expansion */
-      SELECT *
-      FROM users u
-      LEFT JOIN (
-        SELECT *
-        FROM orders o
-        LEFT JOIN (
-          SELECT *
-          FROM order_items
-        ) oi
-        ON oi.order_id = o.id
-        GROUP BY user_id
-      ) o
-      ON o.user_id = u.id
-    `);
-    fromBeginning(false, script);
-    await moveCursor.up(4, 100);
-    await tout(500);
-    for (let i = 0; i < 3; i++) {
-      actions.selectCodeBlock();
-      await tout(500);
-    }
-  });
+  // await showScript(`Selection/statement expansion`, async () => {
+  //   const script = fixIndent(`
+  //     /* Selection/statement expansion */
+  //     SELECT *
+  //     FROM users u
+  //     LEFT JOIN (
+  //       SELECT *
+  //       FROM orders o
+  //       LEFT JOIN (
+  //         SELECT *
+  //         FROM order_items
+  //       ) oi
+  //       ON oi.order_id = o.id
+  //       GROUP BY user_id
+  //     ) o
+  //     ON o.user_id = u.id
+  //   `);
+  //   fromBeginning(false, script);
+  //   await moveCursor.up(4, 100);
+  //   await tout(500);
+  //   for (let i = 0; i < 3; i++) {
+  //     actions.selectCodeBlock();
+  //     await tout(500);
+  //   }
+  // });
 
   /** Documentation and ALL CATALOGS SUGGESTED */
   await showScript(`Schema and context aware suggestions`, async () => {
@@ -188,7 +202,7 @@ export const sqlVideoDemo: DemoScript = async ({
   await showScript("User access details", async () => {
     await typeAuto(`?user `, { msPerChar: 40, waitBeforeAccept: 1e3, nth: 1, dontAccept: true });
     await moveCursor.left();
-    await typeAuto(` mynew`);
+    await typeAuto(` mynew`, { waitBeforeAccept: 1e3 });
     testResult([
       "/* User access details */",
       "?user mynewuser"

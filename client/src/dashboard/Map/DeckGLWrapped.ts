@@ -184,7 +184,7 @@ export type Bounds = [[number, number], [number, number]];
 
 export function debounce<Params extends any[]>(
   func: (...args: Params) => any,
-  timeout: number,
+  timeout: number
 ): (...args: Params) => void {
   let timer: NodeJS.Timeout
   return (...args: Params) => {
@@ -193,6 +193,29 @@ export function debounce<Params extends any[]>(
       func(...args)
     }, timeout)
   }
+}
+export function throttle<Params extends any[]>(
+  func: (...args: Params) => any,
+  timeout: number
+): (...args: Params) => void {
+  let timer: NodeJS.Timeout | undefined;
+  let lastCallArgs: Params | undefined;
+  const throttledFunc = (...args: Params) => {
+    if(timer !== undefined) {
+      lastCallArgs = args;
+      return;
+    } else {
+      lastCallArgs = undefined;
+    }
+    timer = setTimeout(() => {
+      func(...args);
+      timer = undefined;
+      if(lastCallArgs){
+        throttledFunc(...lastCallArgs);
+      }
+    }, timeout);
+  }
+  return throttledFunc;
 }
 
 export const getViewState = <Type extends ViewType>(type: Type, state?: Partial<DeckWrappedOpts["initialViewState"]>): Type extends "orthographic"? OrthographicViewState : MapViewState => {

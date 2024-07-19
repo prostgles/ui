@@ -50,7 +50,19 @@ export const getJoinSuggestions = ({ ss, tableSuggestions, rawExpect, cb }: Args
   }
 }
 
-export const getStartingLetters = (inputString) => {
+
+export const removeQuotes = (str: string) => {
+  if(str.startsWith('"')){
+    str = str.slice(1);
+  }
+  if(str.endsWith('"')){
+    str = str.slice(0, -1);
+  }
+  return str;
+}
+
+export const getStartingLetters = (rawString) => {
+  const inputString = removeQuotes(rawString);
   if (typeof inputString !== "string" || inputString.length === 0) {
     return "";
   }

@@ -1,14 +1,17 @@
 import { test } from '@playwright/test';
 import { PageWIds, USERS, createDatabase, goTo, login } from "./utils";
 // const viewPortSize = { width: 1920, height: 1080 };
-const viewPortSize = { width: 1280, height: 1080 };
+const viewPortSize = { width: 800, height: 1080 };
 test.use({ 
   viewport: viewPortSize,
   video: { 
     mode: "on",
     size: viewPortSize,
   },
-  trace: "on"
+  trace: "on",
+  launchOptions: {
+    args: ['--start-maximized'],
+  }
 });
 const videoTestDuration = 10 * 60e3;
 test.describe("Demo video", () => {

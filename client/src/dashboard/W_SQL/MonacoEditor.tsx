@@ -3,7 +3,6 @@ import { customLightThemeMonaco, getMonaco } from "../SQLEditor/SQLEditor";
 import { loadPSQLLanguage } from "./MonacoLanguageRegister";
 import { appTheme, useReactiveState } from "../../App"; 
 import { useAsyncEffectQueue, useEffectDeep } from "prostgles-client/dist/react-hooks";
-
 import type { editor } from "../W_SQL/monacoEditorTypes"
 import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 export type MonacoEditorProps = {
@@ -46,6 +45,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
     const monaco = await getMonaco();
     if (!container.current) return;
+    
     editor.current = monaco.editor.create(container.current, editorOptions);
     hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42(editor.current, expandSuggestionDocs)
     if (props.onChange) {

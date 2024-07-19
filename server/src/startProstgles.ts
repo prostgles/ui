@@ -117,7 +117,8 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
         if(sid){
           const s = await dbo.sessions.findOne({ id: sid });
           if(!s){
-            console.log("onSocketConnect session missing ?!");
+            /** Can happen to deleted sessions */
+            // console.log("onSocketConnect session missing ?!");
           } else if(Date.now() > +(new Date(+s.expires))){
             console.log("onSocketConnect session expired ?!", s.id, Date.now());
           } else {
@@ -164,7 +165,8 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
         addLog(e, null);
       },
       tableConfig,
-      tableConfigMigrations: { silentFail: false,
+      tableConfigMigrations: { 
+        silentFail: false,
         version: 3,
         onMigrate: async ({ db, oldVersion }) => {
           // if(!oldVersion){

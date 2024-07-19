@@ -5,6 +5,7 @@ prostgles_certificates
 .electron-auth.json
 **/.electron-auth.json
 
+demo_utils/dist
 client/build
 server/dist
 server/media

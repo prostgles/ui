@@ -160,8 +160,12 @@ export default class Login extends RTComp<any, LoginState> {
         >
           {showTOTP === "token"? <>
             <p>Open your authentication app and enter the code for Prostgles UI</p>
-            <FormField id="totp_token" 
-              value={totp_token} 
+            <FormField 
+              id="totp_token" 
+              value={totp_token}
+              inputProps={{
+                id: "totp_token",
+              }}
               type="number" 
               label="6-digit code" 
               error={error}
@@ -175,11 +179,22 @@ export default class Login extends RTComp<any, LoginState> {
             />
             <div className="flex-row ai-center mt-p25">
               <div className="text-1p5">Or</div> 
-              <Btn type="button" color="action" size="small" onClick={() => { this.setState({ showTOTP: "recovery" }) }}>Enter recovery code</Btn>
+              <Btn 
+                type="button" 
+                color="action" 
+                size="small" 
+                onClick={() => { this.setState({ showTOTP: "recovery" }) }}
+              >
+                Enter recovery code
+              </Btn>
             </div>
           </> : showTOTP === "recovery"? <>
             <p>Open your authentication app and enter the code for Prostgles UI</p>
-            <FormField id="totp_recovery_code" 
+            <FormField 
+              id="totp_recovery_code" 
+              inputProps={{
+                id: "totp_recovery_code",
+              }}
               value={totp_recovery_code} 
               type="text" 
               label="2FA Recovery code" 

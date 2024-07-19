@@ -58,7 +58,7 @@ export const initForkedProc = () => {
           transactions: true,
           onReady: (params) => {
             if(prglParams){
-              // console.error("reload", msg)
+              console.log("reload", params.reason)
               cb(undefined, "reload"); 
             } else {
               cb(undefined, "ready");

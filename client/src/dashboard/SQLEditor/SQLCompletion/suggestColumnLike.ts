@@ -9,7 +9,7 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
   suggestions: ParsedSQLSuggestion[];
 }> => {
   const { prevIdentifiers , ltoken, nextTokens } = cb;
-  const addTable = ltoken?.textLC === "select" && (!nextTokens.some(t => t.textLC === "from") || nextTokens[0]?.text === ")");
+  const addTable = ltoken?.textLC === "select" && (!nextTokens.some(t => t.textLC === "from" || t.text === "FROM ") || nextTokens[0]?.text === ")");
   const addTableInline = nextTokens[0]?.text === ")";
 
   if(withFuncArgs){
@@ -18,8 +18,8 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
   }
   const expressions = await getTableExpressionSuggestions({ parentCb, cb, ss, sql }, "columns");
 
-  const tableAlias = !cb.currToken? undefined : cb.currToken.text === "."? cb.ltoken?.text : cb.currToken.text.split(".")[0]!;
-  const activeAliasTable = !tableAlias? undefined : expressions.tablesWithAliasInfo.find(t => t.alias === tableAlias);
+  const maybeTableAlias = !cb.currToken? undefined : cb.currToken.text === "."? cb.ltoken?.text : cb.currToken.text.split(".")[0]!;
+  const activeAliasTable = !maybeTableAlias? undefined : expressions.tablesWithAliasInfo.find(t => t.alias === maybeTableAlias);
   if(activeAliasTable){
     const tableAliasCols = expressions.columns.filter(c => c.escapedParentName === activeAliasTable.s.escapedIdentifier)
     return { suggestions: tableAliasCols }
@@ -31,11 +31,21 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
     return !addTable? false : !expressions.tables.some(t => t.escapedIdentifier === s.escapedParentName);
   });
 
-  const funcs = ss.filter(s => s.type === "function");
+  const funcs = ss.filter(s => 
+    s.type === "function"
+  );
+ 
   const colAndFuncSuggestions = ([
     ...expressions.columns.map(s => ({ isPrioritised: true, s })), 
     ...otherColumns.map(s => ({ isPrioritised: false, s })),
-    ...funcs.map(s => ({ isPrioritised: false, s })),
+    /**
+     * Slice is used to ensure columns are prioritised for cases when the middle of word matches:
+     * 
+     * SELECT *
+     * FROM pg_catalog.pg_class
+     * ORDER BY name -> relname
+     */
+    ...funcs.map(s => ({ isPrioritised: false, s })) .slice(...(cb.currToken? [0] : [0, 0])) ,
   ])
   .map(({ s, isPrioritised }) => {
 
@@ -46,13 +56,13 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
       ;
 
     const sortText = isPrioritised? s.sortText : 
-      (s.type === "function"? "c" : (prioritiseColumn? "a" : "b")) + (s.schema === "public"? "a" : "b")
+      `${(s.type === "function"? (cb.textLC.startsWith("create index") && s.funcInfo?.provolatile === "i"? "c" : "d") : (prioritiseColumn? "a" : "b"))}${(s.schema === "public"? "a" : "b")}`;
 
     if (s.type === "column") {
       const delimiter = addTableInline? " " : "\n";
       return {
         ...s,
-        insertText: tableAlias? (s.escapedIdentifier ?? s.name) : s.insertText.trim(),
+        insertText: activeAliasTable? (s.escapedIdentifier ?? s.name) : s.insertText.trim(),
         sortText,
         ...(addTable && {
           insertTextRules: 4,
@@ -77,7 +87,6 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
     [ltoken?.textLC === "select"? "DISTINCT" : "", "COALESCE", "CASE", "NULLIF", "LEAST", "GREATEST"]
       .includes(s.name)).map(s => ({ 
         ...s, 
-        // sortText: "a", 
       })
   );
 
@@ -119,6 +128,7 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
       ...selectKwds as any,
     ];
   }
-
-  return { suggestions }
+  return { 
+    suggestions 
+  }
 }

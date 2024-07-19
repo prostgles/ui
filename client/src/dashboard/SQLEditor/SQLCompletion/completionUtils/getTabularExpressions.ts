@@ -133,13 +133,15 @@ const getExpressions = (tokens: TokenInfo[], cb: CodeBlock, ss: ParsedSQLSuggest
   const expressions: TabularExpression[] = []
   const isWith = tokens[0]?.textLC === "with";
   const isPolicy = tokens[1]?.textLC === "policy";
+  const isIndex = tokens[1]?.textLC === "index";
+  const indexOrPolicy = isIndex || isPolicy;
   let isWithAsSectionFinished = false;
   tokens.forEach((t, i) => {
     const prevToken = tokens[i-1];
     const nextToken = tokens[i+1];
     const tableKeywods = [
       ...tablePrecedingKeywords,
-      ...(isPolicy? policyTablePrecedingKeywords : (isWith && !isWithAsSectionFinished)? withTablePrecedingKeywords : [])
+      ...(indexOrPolicy? policyTablePrecedingKeywords : (isWith && !isWithAsSectionFinished)? withTablePrecedingKeywords : [])
     ];
     if(!isWithAsSectionFinished && t.textLC === "select" && !t.nestingId){
       isWithAsSectionFinished = true;
@@ -174,7 +176,7 @@ const getExpressions = (tokens: TokenInfo[], cb: CodeBlock, ss: ParsedSQLSuggest
         });
 
       /** Function */
-      } else if(nextToken?.textLC === "(" && !t.nestingId && !nextToken.nestingId){
+      } else if(!indexOrPolicy && nextToken?.textLC === "(" && !t.nestingId && !nextToken.nestingId){
         const [func, ...otherFuncs] = ss.filter(s => s.type === "function" && s.escapedIdentifier === t.text);
         if(func && !otherFuncs.length){
           const closing = getClosingParenthesis(i+2);

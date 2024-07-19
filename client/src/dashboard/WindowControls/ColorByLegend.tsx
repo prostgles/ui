@@ -9,14 +9,17 @@ import { updateWCols } from "../W_Table/tableUtils/tableUtils";
 import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";
 import { type ColumnValue, setDefaultConditionalStyle } from "../W_Table/ColumnMenu/ColumnStyleControls";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ProstglesTimeChartStateLayer } from "../W_TimeChart/W_TimeChart";
+import { isDefined } from "../../utils";
 
 type P = DivProps & Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "prgl"> & {
   layerLinkId: string;
   groupByColumn: string;
   onChanged: VoidFunction;
+  layers: ProstglesTimeChartStateLayer[];
 }
-export const ColorByLegend = ({ className, style, onChanged, ...props}: P) => {
-  const { prgl: { db }, groupByColumn } = props;
+export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
+  const { prgl: { db }, groupByColumn, layers } = props;
   const { getColor, valueStyles, oldLayerWindow } = getGroupByValueColor(props);
   const latestCols = oldLayerWindow?.$get().columns;
   const currCol = latestCols?.find(c => c.name === props.groupByColumn);
@@ -41,17 +44,28 @@ export const ColorByLegend = ({ className, style, onChanged, ...props}: P) => {
   }, [valueStyles]);
 
   if(!valueStyles?.length) return null;
+  const labels = [
+    ...layers.map(l => valueStyles.find(s => s.condition === l.groupByValue) ?? {
+      condition: l.groupByValue,
+      textColor: l.color,
+      operator: "=",
+    } satisfies typeof valueStyles[number]),
+    ...valueStyles.filter(s => !layers.some(l => l.groupByValue === s.condition)).slice(0, 3),
+  ].filter(isDefined)
 
   const getConditionLabel = (condition: ColumnValue | ColumnValue[]): string => {
     if(Array.isArray(condition)) return condition.map(c => getConditionLabel(c)).join(", ");
     if(condition === null) return "null";
     if(condition === undefined) return "undefined";
     return condition.toString();
-  }
+  };
+
   return <FlexRow className={classOverride("ColorByLegend", className)} style={style}>
-    {valueStyles.map((s, i) => 
-      <ColorPicker 
+    {labels.map((s, i) => {
+      const isInData = layers.some(l => l.groupByValue === s.condition);
+      return <ColorPicker 
         key={i} 
+        style={isInData? {} : { opacity: .25 }}
         value={getColor(s.condition, i)} 
         label={getConditionLabel(s.condition)}
         variant="legend"
@@ -67,11 +81,11 @@ export const ColorByLegend = ({ className, style, onChanged, ...props}: P) => {
           });
         }} 
       />
-    )}
+    })}
   </FlexRow>
 }
 
-export const getGroupByValueColor = ({ getLinksAndWindows, myLinks, layerLinkId, groupByColumn }: Omit<P, "onChanged">) => {
+export const getGroupByValueColor = ({ getLinksAndWindows, myLinks, layerLinkId, groupByColumn }: Pick<P, "getLinksAndWindows" | "myLinks" | "layerLinkId" | "groupByColumn">) => {
 
   const { windows } = getLinksAndWindows();
   const thisLink = myLinks.find(l => l.id === layerLinkId);

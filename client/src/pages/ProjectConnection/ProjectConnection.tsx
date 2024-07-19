@@ -15,6 +15,8 @@ import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { InfoRow } from "../../components/InfoRow";
 import { ConnectionConfig } from "../../dashboard/ConnectionConfig/ConnectionConfig";
 import { useProjectDb } from "./useProjectDb";
+import { FlexCol } from "../../components/Flex";
+import { useNavigate } from "react-router-dom";
 
 export type Connections = DBSSchema["connections"];
 export type ProjectProps = {
@@ -31,6 +33,7 @@ export type FullExtraProps = ExtraProps & {
 
 export const ProjectConnection = (props: ProjectProps) => {
   const [sParams] = useSearchParams();
+  const navigate = useNavigate();
   const workspaceId = sParams.get("workspaceId") ?? undefined;
   const params = useParams();
   const { prglState, showConnectionConfig } = props;
@@ -68,7 +71,14 @@ export const ProjectConnection = (props: ProjectProps) => {
   const { connection } = prglProject;
   if (showConnectionConfig && connectionId) {
     if (connection.is_state_db) {
-      return <InfoRow className="h-fit w-fit">This configuration page is not allowed for Prostgles state database</InfoRow>
+      return <FlexCol className="w-full h-full ai-center jc-center">
+        <InfoRow className="h-fit w-fit ">
+          This configuration page is not supported for Prostgles state database
+        </InfoRow>
+        <Btn onClick={() => navigate(-1)} variant="filled" iconPath={mdiArrowLeft} color="action">
+          Go back
+        </Btn>
+      </FlexCol> 
     }
     return <ConnectionConfig prgl={prgl} connection={connection} />
   }

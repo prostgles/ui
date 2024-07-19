@@ -48,7 +48,7 @@ export const NavBar = (props: P) => {
   return (
     <nav className={"flex-row jc-center noselect w-full text-1p5 shadow-l bg-color-0 " + (navCollapsed? " mobile-collapsed " : " mobile-expanded pb-1 ")} 
       style={{ 
-        zIndex: 1, 
+        zIndex: 2, 
       }}
     >
       <div className="flex-row f-1" style={{ maxWidth: "970px"}}>

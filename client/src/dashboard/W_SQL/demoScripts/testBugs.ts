@@ -4,6 +4,67 @@ import type { DemoScript } from "../getDemoUtils";
 
 export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL }) => {
 
+  /** Test explain */
+  await fromBeginning(false, "EXPLAIN SELECT * FROM");
+  await typeAuto(" class");
+  await testResult("EXPLAIN SELECT * FROM pg_catalog.pg_class");
+
+  await fromBeginning(false, "EXPLAIN UPDATE");
+  await typeAuto(" class");
+  await typeAuto(" ");
+  await typeAuto(" ");
+  await testResult("EXPLAIN UPDATE pg_catalog.pg_class SET oid");
+  
+  /**
+   * Works in manual tests but not here
+   */
+  const sortTextBug = fixIndent(`
+    SELECT *
+    FROM pg_catalog.pg_class
+    ORDER BY`
+  );
+  await fromBeginning(false, sortTextBug);
+  await typeAuto(" name");
+  await testResult(sortTextBug + " relname");
+
+  const idxQ = "CREATE INDEX myidx ON pg_catalog.pg_class (  oid )";
+  await fromBeginning(false, "");
+  await typeAuto("cr");
+  await typeAuto(" in");
+  await typeAuto(" myidx", { triggerMode: "off" });
+  await typeAuto(" ");
+  await typeAuto(" pgcla");
+  await typeAuto(" ", { nth: 1 });
+  await typeAuto(" ");
+  await testResult(idxQ);
+  await moveCursor.lineEnd();
+  await typeAuto("\n ");
+  await typeAuto(" nam");
+  await typeAuto("\n whe");
+  await typeAuto(" reln");
+  await typeAuto(" ");
+  await testResult(idxQ + "\n INCLUDE (relname)\n  WHERE relname =");
+
+  const createViewWithOptions = fixIndent(`
+    CREATE OR REPLACE VIEW myview`
+  );
+  await fromBeginning(false, createViewWithOptions);
+  await typeAuto(" w");
+  await typeAuto(" ");
+  await typeAuto(" ");
+  await typeAuto(" ");
+  await typeAuto(" ");
+  await testResult(createViewWithOptions + " WITH (check_option =cascaded , security_barrier =false)");
+
+  const funcsColliding = fixIndent(`
+    SELECT *
+    FROM pg_stat_user_indexes ui
+    WHERE `
+  )
+  await fromBeginning(false, funcsColliding);
+  await typeAuto(` schem`);
+  await testResult(funcsColliding + " ui.schemaname");
+
   const quotedSchemaBug = `
 DROP SCHEMA IF EXISTS "MySchema" CASCADE;
 CREATE SCHEMA "MySchema";
@@ -28,6 +89,41 @@ $$ LANGUAGE plpgsql;
     FROM "MySchema"."MyTable"
     LIMIT 200`
   ));
+
+  /** Ensure whitespace is kept, replacing quoted identifiers works as expected */
+  fromBeginning(false, `SELECT FROM "MySchema"."MyTable"`);
+  await moveCursor.lineStart();
+  await moveCursor.right(6);
+  await typeAuto(` `);
+  testResult(`SELECT "MyColumn" FROM "MySchema"."MyTable"`);
+
+  fromBeginning(false, `SELECT "m" FROM "MySchema"."MyTable"`);
+  await moveCursor.lineStart();
+  await moveCursor.right(9);
+  await typeAuto(`y`);
+  testResult(`SELECT "MyColumn" FROM "MySchema"."MyTable"`);
+
+  fromBeginning(false, `SELECT "m" FROM "MySchema"."MyTable"`);
+  await moveCursor.lineStart();
+  await moveCursor.right(9);
+  await typeAuto(`f`);
+  testResult(`SELECT "MySchema"."MyFunction"() FROM "MySchema"."MyTable"`);
+
+  fromBeginning(false, `SELECT mycolum FROM "MySchema"."MyTable"`);
+  await moveCursor.lineStart();
+  await moveCursor.right(14);
+  await typeAuto(`n`);
+  testResult(`SELECT "MyColumn" FROM "MySchema"."MyTable"`);
+
+
+  await fromBeginning(false, " CREATE INDEX myidx ON");
+  await typeAuto(` myt`);
+  await typeAuto(` `, { nth: 1 });
+  await typeAuto(` `);
+  await moveCursor.lineEnd();
+  await typeAuto(` `);
+  await typeAuto(` `);
+  await testResult(`CREATE INDEX myidx ON "MySchema"."MyTable" (  "MyColumn" ) INCLUDE ("MyColumn")`)
   await runDbSQL(`DROP SCHEMA IF EXISTS "MySchema" CASCADE;`)
 
   const codeBlockQueries = fixIndent(`
@@ -201,7 +297,7 @@ LIMIT 200`
   /** ALTER TABLE table name with schema */
   fromBeginning();
   await typeAuto(`ALTER TABLE prostgles`, { nth: -1 });
-  await typeAuto(`.app`);
+  await typeAuto(`.at`);
   testResult("ALTER TABLE prostgles.app_triggers");
 
   /** Documentation not showing */

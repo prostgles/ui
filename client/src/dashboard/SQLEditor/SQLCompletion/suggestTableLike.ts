@@ -8,25 +8,16 @@ export const suggestTableLike = async (args: Pick<SQLMatchContext, "cb" | "ss" |
   const isTableLike = (t: SQLSuggestion["type"]) => ["table", "view", "mview"].includes(t);
   const schemas = ss.filter(s => s.type === "schema");
   const { ltoken } = cb;
-  const maybeSchemaName = cb.currToken?.text === "."? cb.ltoken?.text : cb.currToken?.text.includes(".")? cb.currToken.text.split(" ")[0] : undefined;
+  const maybeSchemaName = cb.currToken?.text === "."? cb.ltoken?.text : cb.currToken?.text.includes(".")? cb.currToken.text.split(".")[0] : undefined;
   const isSearchingSchemaTable = maybeSchemaName && schemas.some(s => s.name === maybeSchemaName);
   let schemaMatchingTables: ParsedSQLSuggestion[] = [];
   if(isSearchingSchemaTable && ltoken){
     const matchingTables = ss.filter(s => isTableLike(s.type) && s.schema === maybeSchemaName);
     schemaMatchingTables = matchingTables.map(t => ({
       ...t,
-      insertText: t.escapedIdentifier ?? t.name
+      sortText: "a",
+      insertText: t.escapedName ?? t.escapedIdentifier ?? t.name
     }))
-    if(matchingTables.length){
-      
-      schemaMatchingTables = matchingTables.map(t => ({
-        ...t,
-        sortText: "a",
-        insertText: t.escapedIdentifier ?? t.name
-      }))
-    } else {
-      // schemaMatchingTables = suggestSnippets([{ label: "No views/tables found for this schema", insertText: "" }])
-    }
   }
 
   let aliasedTables: ParsedSQLSuggestion[] = [];

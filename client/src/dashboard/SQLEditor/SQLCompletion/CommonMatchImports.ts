@@ -163,12 +163,6 @@ export const createStatements = {
     "$$;",
     "*/"
   ].join("\n"),
-  // INDEX: [
-  //   "${1|CONCURRENTLY, |} ${2|IF NOT EXISTS, |} ${3:index_name} ",
-  //   "ON ${4:table_name} ",
-  //   "USING ${5|btree,hash,gist,spgist,gin,brin|} (${6:column_names})",
-  //   "${7|WHERE condition, |}"
-  // ].join("\n")
 }
 
 const orReplace = <T extends { label: string; }>(t: T): T[] => {
