@@ -43,9 +43,11 @@ export const DashboardMenuHeader = ({ prgl, loadTable, onClose, workspace, onCli
       prgl={prgl} 
       workspace={workspace}
     />
-    <Btn iconPath={!pinnedMenu? mdiPinOutline : mdiPinOffOutline}
+    <Btn 
+      iconPath={!pinnedMenu? mdiPinOutline : mdiPinOffOutline}
       disabledInfo={window.isLowWidthScreen? "Cannot be used in a low width device" : undefined}
       title="Pin/Unpin"
+      data-command="DashboardMenuHeader.togglePinned"
       className="ml-p25"
       onClick={() => {
         workspace.$update({ options: { pinnedMenu: !workspace.options.pinnedMenu } }, { deepMerge: true })

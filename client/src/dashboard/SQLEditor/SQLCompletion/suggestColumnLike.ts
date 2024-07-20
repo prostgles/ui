@@ -25,15 +25,18 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
     return { suggestions: tableAliasCols }
   }
 
+  const maybeWrittingSchema = !activeAliasTable && cb.currToken?.text === "." && cb.ltoken?.text? cb.ltoken?.text : undefined;
+  const activeSchema = !maybeWrittingSchema? undefined : ss.find(s => s.type === "schema" && s.escapedIdentifier === maybeWrittingSchema);
+
   /** Allow all other columns only if can add tablename to end */
   const otherColumns = ss.filter(s => {
     if(s.type !== "column") return false;
     return !addTable? false : !expressions.tables.some(t => t.escapedIdentifier === s.escapedParentName);
   });
-
-  const funcs = ss.filter(s => 
-    s.type === "function"
-  );
+ 
+  const funcs = ss.filter(s => {
+    return s.type === "function" && (!activeSchema || s.schema === activeSchema.escapedIdentifier);
+  });
  
   const colAndFuncSuggestions = ([
     ...expressions.columns.map(s => ({ isPrioritised: true, s })), 
@@ -56,7 +59,11 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
       ;
 
     const sortText = isPrioritised? s.sortText : 
-      `${(s.type === "function"? (cb.textLC.startsWith("create index") && s.funcInfo?.provolatile === "i"? "c" : "d") : (prioritiseColumn? "a" : "b"))}${(s.schema === "public"? "a" : "b")}`;
+      `${(s.type === "function"? (
+        cb.textLC.startsWith("create index") && s.funcInfo?.provolatile === "i"? "c" : 
+        cb.currToken?.text === "." && s.schema === cb.ltoken?.text? "a" :
+        "d"
+      ) : (prioritiseColumn? "a" : "b"))}${(s.schema === "public"? "a" : "b")}`;
 
     if (s.type === "column") {
       const delimiter = addTableInline? " " : "\n";
@@ -92,16 +99,19 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
 
   const prevKwd = cb.getPrevTokensNoParantheses().slice().reverse().find(t => t.type === "keyword.sql");
   if(prevKwd?.textLC === "select"){
-    selectKwds.unshift({
-      insertText: "*",
-      kind: getKind("keyword"),  
-      type: "keyword", 
-      label: "*",
-      name: "*",
-      detail: "(keyword)",
-      documentation: { value: "All columns" },
-      sortText: "a", 
-    } as any);
+
+    if(!(cb.currToken && !activeAliasTable)){
+      selectKwds.unshift({
+        insertText: "*",
+        kind: getKind("keyword"),  
+        type: "keyword", 
+        label: "*",
+        name: "*",
+        detail: "(keyword)",
+        documentation: { value: "All columns" },
+        sortText: "a", 
+      } as any);
+    }
 
     if(cb.prevText.endsWith(") ") && ltoken?.textLC === ")"){
       const prevFunc = cb.prevTokens.find((t, i)=> {
