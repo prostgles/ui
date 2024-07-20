@@ -257,26 +257,24 @@ export async function getSqlSuggestions(db: DB): Promise< {
           `\n\n**Table grants**:\n\n\n${asSQL(r.table_grants)}`),
       type: "role",
     })));
-     
+
     suggestions = suggestions.concat(functions.map(f => {
-      const overEnding = ["rank", "dense_rank", "row_number"].includes(f.escaped_identifier)? " over()" : ""
+      const overEnding = ["rank", "dense_rank", "row_number"].includes(f.escaped_identifier)? " over()" : "";
       return { 
         type: "function",
-        name: f.name,
-        label: { label: `${f.name}(${f.args.map(a => a.data_type).join(",")})`, description: f.extension }, // detail: " " + f.args.map(a => a.data_type).join(","), 
+        name: f.escaped_identifier,
+        label: { label: `${f.escaped_identifier}(${f.args.map(a => a.data_type).join(",")})`, description: f.extension },
         subLabel: f.func_signature,
         schema: f.schema,
         args: f.args,
         funcInfo: f,
-        // escapedIdentifier: f.schema === "pg_catalog" && f.name.startsWith("current")? f.name : f.escaped_identifier,
-        // insertText: f.schema === "pg_catalog" && f.name.startsWith("current")? f.name : f.escaped_identifier,
         escapedIdentifier: f.escaped_identifier,
         insertText: f.escaped_identifier + (f.arg_list_str? "" : (f.name === "count"? "(*)" : "()")) + overEnding,
         detail: `(${f.is_aggregate? "agg " : ""}function) \n${f.name}(${f.arg_list_str}) => ${f.restype}`, 
         documentation: `Schema: \`${f.schema}\`  \n\n${f.description?.trim() ?? ""}   \n\n${asSQL(f.definition ?? "")}`, 
         definition: f.definition ?? "",
         funcCallDefinition: `${f.name}(${f.arg_list_str}) => ${f.restype}`,
-        filterText: `${f.name} ${f.args.map(a => a.data_type).join(", ")} ${f.extension}`
+        filterText: `${f.escaped_identifier} ${f.args.map(a => a.data_type).join(", ")} ${f.extension}`
       }
     }));
      
@@ -322,11 +320,11 @@ export async function getSqlSuggestions(db: DB): Promise< {
         installed: ex.installed
       }
     })));
-    const schemasS = schemas.map(({ name: label, access_privileges, owner, comment }) => ({
+    const schemasS = schemas.map(({ name: label, access_privileges, owner, comment, is_in_search_path }) => ({
       label,
       name: label,
       detail: "(schema)",
-      documentation: makeDocumentation({ access_privileges, owner, comment }),
+      documentation: makeDocumentation({ access_privileges, owner, comment, is_in_search_path }),
       type: "schema" as const
     }));
     suggestions = suggestions.concat(schemasS);

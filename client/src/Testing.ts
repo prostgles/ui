@@ -213,6 +213,7 @@ export const COMMANDS = {
   "Setup2FA.Enable.ConfirmCode": "",
   "Setup2FA.Enable.Confirm": "",
   "Setup2FA.Disable": "",
+  "DashboardMenuHeader.togglePinned": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

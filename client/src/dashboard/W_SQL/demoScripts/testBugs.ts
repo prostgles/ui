@@ -106,7 +106,7 @@ $$ LANGUAGE plpgsql;
   fromBeginning(false, `SELECT "m" FROM "MySchema"."MyTable"`);
   await moveCursor.lineStart();
   await moveCursor.right(9);
-  await typeAuto(`f`);
+  await typeAuto(`yf`);
   testResult(`SELECT "MySchema"."MyFunction"() FROM "MySchema"."MyTable"`);
 
   fromBeginning(false, `SELECT mycolum FROM "MySchema"."MyTable"`);

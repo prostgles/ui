@@ -47,15 +47,15 @@ export const click = async (testId: Command | "", endSelector = "", { timeout = 
   const hideClassNode = elem.closest(hoverTriggerClasses.map(v => `.${v}`).join(", "))?.parentElement;
   hideClassNode?.classList.toggle("is_demo_mode", true);
   const bbox = elem.getBoundingClientRect();
-  await movePointer(
-    (bbox.left + bbox.width/2),
-    (bbox.top + bbox.height/2)
-  )
   
   if((elem as any).scrollIntoViewIfNeeded){
     (elem as any).scrollIntoViewIfNeeded({ behavior: "smooth" });
     await tout(200);
   }
+  await movePointer(
+    (bbox.left + bbox.width/2),
+    (bbox.top + bbox.height/2)
+  )
   elem.click();
   // hideClassNode?.classList.toggle("is_demo_mode", false);
 }

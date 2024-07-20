@@ -169,6 +169,8 @@ type PG_Schema = {
   owner: string;
   access_privileges: string | null;
   comment: string; 
+  escaped_identifier: string;
+  is_in_search_path: boolean;
 };
 
 
@@ -222,7 +224,10 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
         SELECT *
           , upper(name) || '(' || concat_ws(',', arg_list_str) || ')' || ' => ' || restype || E'\n' || description as func_signature
           , CASE WHEN is_aggregate OR prolang IN (12, 13) THEN '' ELSE pg_get_functiondef(oid) END as definition
-          , CASE WHEN schema IS NULL OR current_schema() = schema OR schema = 'pg_catalog' THEN format('%I', name) ELSE format('%I.%I', schema, name) END as escaped_identifier
+          , CASE 
+              WHEN schema IS NULL OR schema IN (${searchSchemas})
+                THEN format('%I', name) 
+              ELSE format('%I.%I', schema, name) END as escaped_identifier
         FROM (
           SELECT p.proname AS name
                 , pg_get_function_identity_arguments(p.oid) AS arg_list_str
@@ -278,7 +283,7 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
   
   const finalQuery = distinct? distQ : q;
   
-  return await db.sql( finalQuery, { name: name || "%", limit, minArgs }).then(d => 
+  return await db.sql(finalQuery, { name: name || "%", limit, minArgs }).then(d => 
     d.rows.map((r: PG_Function)=> {
       
 
@@ -291,8 +296,7 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
 
       if(
         r.escaped_identifier.includes('"') && 
-        !r.escaped_identifier.includes("current_user") &&
-        // r.schema === "pg_catalog" && 
+        !r.escaped_identifier.includes("current_user") && 
         /^[a-z_]+$/.test(r.name)
       ){
         r.escaped_identifier = r.name;
@@ -378,27 +382,43 @@ type TableStats = {
   might_need_index: boolean; 
 };
 
-export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise<PG_Table[]> {
-  /** Used to prevent permission erorrs */
-  const allowedSchemasQuery = `(SELECT schema_name FROM information_schema.schemata)`;
-  const search_schemas = await db.sql(`
-    WITH cte1 AS (
-      SELECT unnest(
-        string_to_array(
-          current_setting('search_path'), 
-          ','
-        )
-      ) as searchpath
+const searchSchemas = `
+SELECT btrim(
+  unnest(
+    string_to_array(
+      concat_ws(
+        ',', 
+        current_setting('search_path'),
+        'pg_catalog'
+      ), 
+      ','
     )
+  )
+)`;
+
+const searchSchemaQuery = `
+  WITH cte1 AS (
+    ${searchSchemas} as searchpath
+  )
+` as const;
+const getSearchSchemas = async (db: DB) => {
+  const query = `
+    ${searchSchemaQuery}
     SELECT quote_ident(schema_name) 
     FROM information_schema.schemata
     WHERE schema_name::TEXT IN ( 
-      SELECT trim(searchpath)
+      SELECT searchpath
       FROM cte1
-      UNION ALL 
-      SELECT 'pg_catalog'
     ) 
-    `, {}, { returnType: "values" });
+  `
+  const searchSchemas: string[] = await db.sql(query, {}, { returnType: "values" });
+  return { searchSchemas }
+}
+
+export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise<PG_Table[]> {
+  /** Used to prevent permission erorrs */
+  const allowedSchemasQuery = `(SELECT schema_name FROM information_schema.schemata)`;
+  const { searchSchemas } = await getSearchSchemas(db);
   const tablesAndViews = (await db.sql(
     `
     SELECT
@@ -469,8 +489,8 @@ export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise
 
   return tablesAndViews.map(t => {
     t.tableStats = tableAndViewsStats.find(s => s.relid === t.oid);
-    t.escaped_identifiers = search_schemas.map(schema => `${schema}.${t.escaped_name}`).concat([t.escaped_identifier])
-    if([...search_schemas, "pg_catalog"].some(s => t.escaped_identifier.startsWith(`${s}.`))){ 
+    t.escaped_identifiers = searchSchemas.map(schema => `${schema}.${t.escaped_name}`).concat([t.escaped_identifier])
+    if([...searchSchemas, "pg_catalog"].some(s => t.escaped_identifier.startsWith(`${s}.`))){ 
       t.escaped_identifiers.push(t.escaped_identifier.split(".")[1]!);
     }
 
@@ -738,10 +758,13 @@ export const PG_OBJECT_QUERIES = {
   },
   schemas: {
     sql: `
+      ${searchSchemaQuery}
       SELECT n.nspname AS "name",                                          
-      pg_catalog.pg_get_userbyid(n.nspowner) AS "owner",                 
-      pg_catalog.array_to_string(n.nspacl, E'\n') AS "access_privileges",
-      pg_catalog.obj_description(n.oid, 'pg_namespace') AS "comment" 
+        pg_catalog.pg_get_userbyid(n.nspowner) AS "owner",                 
+        pg_catalog.array_to_string(n.nspacl, E'\n') AS "access_privileges",
+        pg_catalog.obj_description(n.oid, 'pg_namespace') AS "comment",
+        format('%I', n.nspname) as escaped_identifier,
+        CASE WHEN n.nspname IN (select searchpath from cte1) THEN true ELSE false END as is_in_search_path
       FROM pg_catalog.pg_namespace n                                       
       --WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'      
       ORDER BY 1;
