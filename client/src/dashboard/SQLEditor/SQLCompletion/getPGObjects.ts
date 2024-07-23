@@ -181,6 +181,7 @@ export type PG_Function = {
     label: string;
     data_type: string;
   }[];
+  arg_udt_names: string[];
   restype: string | null;
   restype_udt_name: string | null;
   arg_list_str: string;
@@ -227,7 +228,8 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
           , CASE 
               WHEN schema IS NULL OR schema IN (${searchSchemas})
                 THEN format('%I', name) 
-              ELSE format('%I.%I', schema, name) END as escaped_identifier
+              ELSE format('%I.%I', schema, name) 
+          END as escaped_identifier
         FROM (
           SELECT p.proname AS name
                 , pg_get_function_identity_arguments(p.oid) AS arg_list_str
@@ -242,10 +244,20 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
                 , p.prolang -- 12, 13 are internal,c languages
                 , ext.extension
                 , provolatile
-          FROM pg_proc p
+                , arg_udt_names
+          FROM pg_catalog.pg_proc p
           LEFT JOIN pg_type t 
             ON p.prorettype = t.oid
-          LEFT JOIN pg_description d ON d.objoid = p.oid
+          LEFT JOIN (
+            SELECT p.oid, array_agg(t.typname ORDER BY argtypoid_idx)::_TEXT as arg_udt_names
+            FROM pg_catalog.pg_proc p, 
+              unnest(proargtypes) WITH ORDINALITY a(argtypoid, argtypoid_idx)
+            LEFT JOIN pg_catalog.pg_type t
+              ON argtypoid = t.oid
+            GROUP BY p.oid
+          ) at
+            ON at.oid = p.oid
+          LEFT JOIN pg_catalog.pg_description d ON d.objoid = p.oid
           LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
           LEFT JOIN (
             SELECT p.oid , (array_agg(e.extname))[1] as extension
@@ -265,9 +277,7 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
       WHERE (name ilike \${name} OR escaped_identifier = \${name})
       `,
   distQ = `
-    SELECT DISTINCT ON (length(name::text), name) 
-      name, arg_list_str, description, args_length, is_aggregate, restype, restype_udt_name, provolatile,
-      schema, func_signature, definition, escaped_identifier, extension
+    SELECT DISTINCT ON (length(name::text), name) *
     FROM (
       SELECT * 
       FROM (
@@ -836,10 +846,10 @@ export const PG_OBJECT_QUERIES = {
     sql: `
       WITH grants AS (
         SELECT grantee,
-        string_agg(table_schema || E'\n' ||  schema_table_privilege,  E'\n') as table_grants
+        string_agg(schema_table_privilege,  E'\n') as table_grants
         FROM (
           SELECT grantee, table_schema,
-            string_agg('    ' || table_name || ': ' || table_privilege, E'\n') as schema_table_privilege
+            string_agg(format('%I.%I', table_schema, table_name) || ': ' || table_privilege, E'\n') as schema_table_privilege
           FROM 
           (
             SELECT grantee, table_schema, table_name,
@@ -982,48 +992,49 @@ export const PG_OBJECT_QUERIES = {
       )::text[]`;
     
       return `
-    /*  ${QUERY_WATCH_IGNORE} */
-    SELECT *, 
-      concat_ws( 
-        E'\\n', 
-        'CREATE POLICY ' || escaped_identifier,
-        'ON ' || tablename,
-        'AS ' || "type",
-        'FOR ' || cmd,
-        'TO ' || array_to_string(roles, ', '),
-        CASE WHEN "using" IS NOT NULL THEN 'USING (' || "using" || ')' END,
-        CASE WHEN with_check IS NOT NULL THEN 'WITH CHECK (' || with_check || ')' END
-      ) as definition
-      FROM (
-        SELECT
-          CASE WHEN current_schema() = nspname THEN format('%I', polname) ELSE format('%I.%I', nspname, polname) END as escaped_identifier,
-          CASE WHEN current_schema() = nspname THEN format('%I', c.relname) ELSE format('%I.%I', nspname, c.relname) END as tablename_escaped,
-          n.nspname AS schemaname,
-          c.relname AS tablename,
-          pol.polname AS policyname,
-          CASE
-            WHEN pol.polpermissive THEN 'PERMISSIVE'::text
-            ELSE 'RESTRICTIVE'::text
-          END AS type,
-          CASE
-              WHEN pol.polroles = '{0}'::oid[] THEN string_to_array('public'::text, ''::text)::text[]
-              ${roles_query}
-            END AS roles,
-          CASE pol.polcmd
-              WHEN 'r'::"char" THEN 'SELECT'::text
-              WHEN 'a'::"char" THEN 'INSERT'::text
-              WHEN 'w'::"char" THEN 'UPDATE'::text
-              WHEN 'd'::"char" THEN 'DELETE'::text
-              WHEN '*'::"char" THEN 'ALL'::text
-              ELSE NULL::text
-          END AS cmd,
-          pg_get_expr(pol.polqual, pol.polrelid) AS "using",
-          pg_get_expr(pol.polwithcheck, pol.polrelid) AS with_check
-        FROM pg_policy pol
-          JOIN pg_class c ON c.oid = pol.polrelid
-        LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
-        ${!tableName? "" : `WHERE format('%I', c.relname) = \${tableName}`}
-      ) t `
+      /*  ${QUERY_WATCH_IGNORE} */
+      ${searchSchemaQuery}
+      SELECT *, 
+        concat_ws( 
+          E'\\n', 
+          'CREATE POLICY ' || escaped_identifier,
+          'ON ' || tablename,
+          'AS ' || "type",
+          'FOR ' || cmd,
+          'TO ' || array_to_string(roles, ', '),
+          CASE WHEN "using" IS NOT NULL THEN 'USING (' || trim("using", '()') || ')' END,
+          CASE WHEN with_check IS NOT NULL THEN 'WITH CHECK (' || trim(with_check, '()') || ')' END
+        ) as definition
+        FROM (
+          SELECT
+            CASE WHEN nspname IN (SELECT searchpath FROM cte1) THEN format('%I', polname) ELSE format('%I.%I', nspname, polname) END as escaped_identifier,
+            CASE WHEN nspname IN (SELECT searchpath FROM cte1) THEN format('%I', c.relname) ELSE format('%I.%I', nspname, c.relname) END as tablename_escaped,
+            n.nspname AS schemaname,
+            c.relname AS tablename,
+            pol.polname AS policyname,
+            CASE
+              WHEN pol.polpermissive THEN 'PERMISSIVE'::text
+              ELSE 'RESTRICTIVE'::text
+            END AS type,
+            CASE
+                WHEN pol.polroles = '{0}'::oid[] THEN NULL
+                ${roles_query}
+              END AS roles,
+            CASE pol.polcmd
+                WHEN 'r'::"char" THEN 'SELECT'::text
+                WHEN 'a'::"char" THEN 'INSERT'::text
+                WHEN 'w'::"char" THEN 'UPDATE'::text
+                WHEN 'd'::"char" THEN 'DELETE'::text
+                WHEN '*'::"char" THEN 'ALL'::text
+                ELSE NULL::text
+            END AS cmd,
+            pg_get_expr(pol.polqual, pol.polrelid) AS "using",
+            pg_get_expr(pol.polwithcheck, pol.polrelid) AS with_check
+          FROM pg_policy pol
+            JOIN pg_class c ON c.oid = pol.polrelid
+          LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
+          ${!tableName? "" : `WHERE quote_ident(c.relname) = \${tableName}`}
+        ) t `
     },
     type: {} as PG_Policy,
   },

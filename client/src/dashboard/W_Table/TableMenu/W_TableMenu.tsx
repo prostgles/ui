@@ -306,7 +306,7 @@ export class W_TableMenu extends RTComp<W_TableMenuProps, W_TableMenuState, D> {
           variant="vertical"
           contentClass={"max-w-700 min-h-0 max-h-100v flex-col min-w-0 " + (l1Key !== "Columns"? " p-1 " : "") + (l1Key === "Columns"? " " : " ")}
           items={l1Opts ?? {}}
-          compactMode={window.isMobileDevice}
+          compactMode={window.isMobileDevice? "hide-inactive" : undefined}
           activeKey={l1Key}
           onChange={async (l1Key: any) => {
             this.setState({ l1Key, query: undefined, infoQuery: undefined });

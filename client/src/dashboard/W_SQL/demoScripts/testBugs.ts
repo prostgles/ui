@@ -15,9 +15,6 @@ export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult
   await typeAuto(" ");
   await testResult("EXPLAIN UPDATE pg_catalog.pg_class SET oid");
   
-  /**
-   * Works in manual tests but not here
-   */
   const sortTextBug = fixIndent(`
     SELECT *
     FROM pg_catalog.pg_class
@@ -26,6 +23,11 @@ export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult
   await fromBeginning(false, sortTextBug);
   await typeAuto(" name");
   await testResult(sortTextBug + " relname");
+
+  await fromBeginning(false, "");
+  await typeAuto("SELECT unne");
+  testResult("SELECT unnest");
+
 
   const idxQ = "CREATE INDEX myidx ON pg_catalog.pg_class (  oid )";
   await fromBeginning(false, "");

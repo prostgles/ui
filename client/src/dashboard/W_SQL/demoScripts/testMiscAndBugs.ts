@@ -10,7 +10,7 @@ export const testMiscAndBugs: DemoScript = async ({ typeAuto, fromBeginning, run
   await typeAuto(" ");
   await typeAuto(" ");
   await tout(1200); 
-  testResult("SET statement_timeout TO 0");
+  testResult("SET statement_timeout TO '0ms'");
 
   fromBeginning();
   await typeAuto("va");

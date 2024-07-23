@@ -227,7 +227,7 @@ const getExpressions = (tokens: TokenInfo[], cb: CodeBlock, ss: ParsedSQLSuggest
       /** Table or view or CTE alias */
       } else if(t.type === "identifier.sql" && !t.nestingId){
         const [matchingTable, ...otherTables] = ss.filter(s => ["table", "view", "mview"].includes(s.type) && (s.escapedIdentifier === t.text || s.name === t.text));
-        const alias = getAliasToken(tokens, i)?.text;
+        const alias = indexOrPolicy? undefined : getAliasToken(tokens, i)?.text;
 
         /** Table or view */
         if(matchingTable && !otherTables.length){

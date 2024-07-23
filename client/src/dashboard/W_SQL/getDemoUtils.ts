@@ -71,6 +71,7 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
     lineEnd: getTriggerFor("cursorLineEnd"),
     lineStart: getTriggerFor("cursorLineStart"),
     pageDown: getTriggerFor("cursorPageDown"),
+    setPosition: (line: number, column: number) => getEditor().e.setPosition({ lineNumber: line, column }),
   }
   const triggerSuggest = () => {
     if(window.getSelection()?.toString()){

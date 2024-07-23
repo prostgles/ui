@@ -111,7 +111,7 @@ export const suggestCondition = async (
     return { identifierText: identifier.text, colTokens: colTokens.slice(0).reverse() };
   }
 
-  /** Convenient autocomplete */
+  /** Convenient autocomplete (column = 'value') */
   if(
     prevKwdToken?.textLC === "where" && 
     (allowedOperands.includes(cb.ltoken?.textLC ?? "") || cb.currNestingFunc?.textLC === "in") && 
@@ -145,7 +145,9 @@ export const suggestCondition = async (
     let query = "";
     if(!matchingTable){
       const { columnsWithAliasInfo } = await getTableExpressionSuggestions({ parentCb, cb, ss, sql }, "columns");
-      const col = columnsWithAliasInfo.find(({ s }) => s.insertText === columnName);
+      const col = columnsWithAliasInfo.find(({ s }) => s.insertText === columnName) ||
+        /** ensure "name" works */
+        columnsWithAliasInfo.find(({ s }) => JSON.stringify(s.insertText) === columnName);
       if(col){
         const { queryFilter, querySelect } = getQueries(col.s.colInfo?.udt_name as any);
         query = col.getQuery(querySelect) + queryFilter;
@@ -194,6 +196,15 @@ export const suggestCondition = async (
       suggestions: ops.concat(AndOr)
     };
   } 
+
+  /** First thing after condition keyword must ne column names  */
+  if(
+    cb.prevTokens.some(t => t.textLC === "policy")  
+  ){
+    if((cb.currNestingFunc?.textLC === "using" || cb.currNestingFunc?.textLC === "check") && cb.prevText.trim().endsWith("(")){
+      return await suggestColumnLike({ cb, ss, parentCb, setS, sql });
+    }
+  }
 
   if(
     thisLineLC && expectsCondition && (getPreviousIdentifier() && cb.ltoken?.type !== "operator.sql" || (l1token?.type === "operator.sql"))
