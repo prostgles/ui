@@ -37,18 +37,19 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
   const funcs = ss.filter(s => {
     return s.type === "function" && (!activeSchema || s.schema === activeSchema.escapedIdentifier);
   });
- 
+
   const colAndFuncSuggestions = ([
     ...expressions.columns.map(s => ({ isPrioritised: true, s })), 
     ...otherColumns.map(s => ({ isPrioritised: false, s })),
     /**
-     * Slice is used to ensure columns are prioritised for cases when the middle of word matches:
+     * This is now handled by fixMonacoSortFilter
+     * Slice WAS used to ensure columns are prioritised for cases when the middle of word matches:
      * 
      * SELECT *
      * FROM pg_catalog.pg_class
      * ORDER BY name -> relname
      */
-    ...funcs.map(s => ({ isPrioritised: false, s })) .slice(...(cb.currToken? [0] : [0, 0])) ,
+    ...funcs.map(s => ({ isPrioritised: false, s })) // .slice(...(cb.currToken? [0] : [0, 0])) ,
   ])
   .map(({ s, isPrioritised }) => {
 

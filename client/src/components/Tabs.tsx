@@ -23,7 +23,7 @@ export type TabsProps<T extends TabItems = any> = {
   className?: string;
   listClassName?: string;
   menuStyle?: React.CSSProperties;
-  variant?: "horizontal" | "vertical" | { 
+  variant?: "horizontal" | "vertical" | {
 
     /**
      * If available width is less than this then controls will use a select drop down
@@ -40,7 +40,7 @@ export type TabsProps<T extends TabItems = any> = {
   /**
    * If true then non active controls will be hidden
    */
-  compactMode?: boolean;
+  compactMode?: "hide-label" | "hide-inactive";
   activeKey?: keyof T;
   defaultActiveKey?: keyof T;
   onChange?: (itemLabel: keyof T | undefined) => void;
@@ -140,14 +140,14 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<TabsProp
       posClass = "flex-col ";
       itemStyle = { borderColor: "transparent", borderBottomStyle: "solid", borderBottomWidth: "2px" }
     }
-    if(compactMode){
+    if(compactMode === "hide-inactive"){
       itemStyle = { borderColor: "transparent" }
     }
 
     const activeItemStyle = { ...itemStyle }; 
 
     let showBackBtn = false;
-    if(compactMode && activeKey){
+    if(compactMode === "hide-inactive" && activeKey){
       posClass = "flex-col ";
       showBackBtn = true;
     }
@@ -186,7 +186,7 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<TabsProp
             /* Ensure active items without content do not take white space to right */
             className={classOverride(`Tabs_Menu ${activeKeyAndContent? "bg-color-1 shadow" : "max-w-unset"} f-0 w-full noselect`, listClassName)}
             variant={controlsCollapsed? "dropdown" : variant?.replace("horizontal", "horizontal-tabs") as any}
-            compactMode={true}
+            compactMode={this.props.compactMode === "hide-label"}
             activeKey={activeKey as any}
             items={Object.keys(items).filter(k => !items[k]!.hide).map((key) => ({
               key,

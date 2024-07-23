@@ -9,10 +9,13 @@ export type TopKeyword = {
   insertText: string | undefined;
 };
 
+/**
+ * https://www.postgresql.org/docs/16/sql-commands.html
+ */
 export const STARTING_KWDS = [
   "SELECT", "REVOKE", "GRANT", "VACUUM", "EXPLAIN", "COPY", "REINDEX", "ROLLBACK", "WITH", "ALTER", "SET", "DO", "BEGIN", "CALL",
   "COMMENT", "DROP", "CREATE", "UPDATE", "INSERT INTO", "DELETE FROM", "NOTIFY", "LISTEN", "SHOW", "TRUNCATE", "REASSIGN", "CLUSTER",
-  "DELETE", "INSERT", "PREPARE", "EXECUTE"
+  "DELETE", "INSERT", "PREPARE", "EXECUTE", "RESET"
 ] as const;
 
 export const asSQL = (v: string, lang = "sql") => "```" + lang + "\n"+ v +"\n```";
@@ -28,9 +31,7 @@ export function getTopKeywords(): TopKeyword[] {
       info = `REASSIGN OWNED instructs the system to change the ownership of database objects owned by any of the old_roles to new_role.
 https://www.postgresql.org/docs/current/sql-reassign-owned.html
 
-${asSQL(`REASSIGN OWNED 
-BY { old_role | CURRENT_ROLE | CURRENT_USER | SESSION_USER } [, ...]
-TO { new_role | CURRENT_ROLE | CURRENT_USER | SESSION_USER }`)}`;
+${asSQL(`REASSIGN OWNED BY CURRENT_ROLE TO new_role;`)}`;
 
     } else if(label === "TRUNCATE"){
       priority = 14;
@@ -283,18 +284,20 @@ ${insertText}
       priority = 7;
       
 info = `
-Used in updating column data:  
-https://www.postgresql.org/docs/current/sql-update.html
   
+Change a run-time parameter:
+https://www.postgresql.org/docs/current/sql-set.html  
 
 ${asSQL("SET datestyle TO postgres, dmy;")}  
-  
-  
-Or in changing a run-time parameter:
-https://www.postgresql.org/docs/current/sql-set.html   
-  
-  
-${asSQL("UPDATE mytable SET mycolumn = 1;")}  
+`
+    } else if(label === "RESET") {
+      priority = 7;
+      
+info = `
+Restore the value of a run-time parameter to the default value 
+https://www.postgresql.org/docs/current/sql-reset.html   
+
+${asSQL("RESET datestyle;\n\nRESET ALL;")}  
 
 `
 
