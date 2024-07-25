@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import "./NavBar.css";
  
@@ -45,8 +45,26 @@ export const NavBar = (props: P) => {
         <Icon path={mdiClose} size={1.5} />}
     </button>
 
+  const navRef = React.useRef<HTMLDivElement>(null);
+
+  /** Close menu when pressing outside */
+  useEffect(() => {
+    if(navCollapsed) return;
+    const listener = (e: MouseEvent) => {
+      if(navRef.current && !navRef.current.contains(e.target as Node)){
+        setNavCollapsed(true);
+      }
+    }
+    document.addEventListener("pointerdown", listener);
+    return () => {
+      document.removeEventListener("pointerdown", listener);
+    }
+  }, [navRef, navCollapsed]);
+
   return (
-    <nav className={"flex-row jc-center noselect w-full text-1p5 shadow-l bg-color-0 " + (navCollapsed? " mobile-collapsed " : " mobile-expanded pb-1 ")} 
+    <nav
+      ref={navRef} 
+      className={"flex-row jc-center noselect w-full text-1p5 shadow-l bg-color-0 " + (navCollapsed? " mobile-collapsed " : " mobile-expanded pb-1 ")} 
       style={{ 
         zIndex: 2, 
       }}

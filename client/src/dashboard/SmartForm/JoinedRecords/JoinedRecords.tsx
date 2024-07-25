@@ -1,23 +1,23 @@
+import { mdiPlus, mdiTable } from "@mdi/js";
+import type { AnyObject } from "prostgles-types";
 import React from "react";
+import type { DetailedFilterBase } from "../../../../../commonTypes/filterUtils";
+import type { Prgl } from "../../../App";
+import Btn from "../../../components/Btn";
+import { FlexRow, classOverride } from "../../../components/Flex";
+import Loading from "../../../components/Loading";
+import { MediaViewer } from "../../../components/MediaViewer";
+import Popup from "../../../components/Popup/Popup";
+import type { Command } from "../../../Testing";
 import RTComp from "../../RTComp";
 import SmartCardList from "../../SmartCard/SmartCardList";
-import { mdiPlus, mdiTable } from "@mdi/js";
+import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter";
+import SmartTable from "../../SmartTable";
+import type { TargetPath } from "../../W_Table/tableUtils/getJoinPaths";
 import type { GetRefHooks, SmartFormProps } from "../SmartForm";
 import SmartForm from "../SmartForm";
-import Btn from "../../../components/Btn"; 
-import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter";
-import type { DetailedFilterBase } from "../../../../../commonTypes/filterUtils";
-import SmartTable from "../../SmartTable";
-import Popup from "../../../components/Popup/Popup";
-import type { AnyObject } from "prostgles-types";
-import { MediaViewer } from "../../../components/MediaViewer"; 
-import Loading from "../../../components/Loading";
-import type { Prgl } from "../../../App";
 import { getJoinFilter } from "./getJoinFilter";
 import { prepareJoinedRecordsSections } from "./prepareJoinedRecordsSections";
-import { FlexRow, classOverride } from "../../../components/Flex";
-import { JoinPathSelectorV2 } from "../../W_Table/ColumnMenu/JoinPathSelectorV2";
-import type { TargetPath } from "../../W_Table/tableUtils/getJoinPaths";
 
 type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods" | "theme"> & Pick<SmartFormProps, "onSuccess"> & {
   className?: string; 
@@ -258,6 +258,7 @@ export class JoinedRecords extends RTComp<JoinedRecordsProps, JoinedRecordsState
 
     return <div className={classOverride("flex-col bt b-color min-h-0 bg-inherit ", className)} style={style}>
       <h4 title="Toggle section"
+        data-command={"JoinedRecords.toggle" satisfies Command}
         onClick={() => {
           this.props.onToggle?.(!expanded); 
           this.setState({ expanded: !expanded });

@@ -202,8 +202,7 @@ export const App = () => {
         <Loading 
           message="Reconnecting..." 
           variant="cover" 
-          style={{ zIndex: 467887, opacity: .5 }} 
-          coverOpacity={1} 
+          style={{ zIndex: 467887 }} 
         />
       }
       <NonHTTPSWarning {...prglState} />

@@ -216,6 +216,7 @@ export const COMMANDS = {
   "DashboardMenuHeader.togglePinned": "",
   "BackupControls.DeleteAll": "",
   "BackupControls.DeleteAll.Confirm": "",
+  "JoinedRecords.toggle": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 
