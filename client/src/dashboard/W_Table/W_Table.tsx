@@ -44,7 +44,7 @@ import type { OnClickEditRow, RowSiblingData } from "./tableUtils/getEditColumn"
 import { getTableCols } from "./tableUtils/getTableCols";
 import { getTableSelect } from "./tableUtils/getTableSelect";
 import { prepareColsForRender } from "./tableUtils/prepareColsForRender";
-import { getFullColumnConfig, getSort, updateWCols } from "./tableUtils/tableUtils";
+import { getFullColumnConfig, getSort, getSortColumn, updateWCols } from "./tableUtils/tableUtils";
 import { W_Table_Content } from "./W_Table_Content";
 
 
@@ -300,7 +300,7 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
     }
 
     /** This is done to prevent errors due to renamed/altered columns */
-    if(delta.w?.columns?.length && w.sort?.some(({ key }) => !delta.w?.columns?.some(c => c.name === key || c.nested && c.nested.columns.some(nc => `${key}`.startsWith(`${c.nested!.path.at(-1)?.table}.${nc.name}`))))){
+    if(delta.w?.columns?.length && w.sort?.some(sort => !getSortColumn(sort, delta.w?.columns ?? []) )){
       w.$update({ sort: [] })
     }
     

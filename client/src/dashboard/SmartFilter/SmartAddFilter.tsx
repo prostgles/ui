@@ -6,7 +6,7 @@ import type { FilterType, JoinedFilter, SimpleFilter, SmartGroupFilter } from ".
 import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";
 import Popup from "../../components/Popup/Popup";
-import SearchList from "../../components/SearchList";
+import SearchList from "../../components/SearchList/SearchList";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { JoinV2 } from "../Dashboard/dashboardUtils";
 import { getColumnDataColor } from "../SmartForm/SmartFormField/SmartFormField";

@@ -403,11 +403,12 @@ const fixMonacoSortFilter = debounce((editor: editor.IStandaloneCodeEditor) => {
   const allCompletionItems: ParsedSQLSuggestion[] | undefined = suggestWidget._value._completionModel?._items.map(d => d.completion);
   if(!allCompletionItems) return;
   // const shownCompletionItems = suggestWidget._value._list.view.items.map(e => e.element.completion);
+  const firstItem: ParsedSQLSuggestion | undefined = suggestWidget._value._list.view.items[0]?.element.completion;
   const focusedItem: { filterTextLow: string; word: string; completion: ParsedSQLSuggestion } = suggestWidget._value._focusedItem ?? {};
   const { filterTextLow, word, completion } = focusedItem;
   // console.log(filterTextLow, word, completion, allCompletionItems.filter(s => s.type === "column" && s.name.includes(word)));
-  if(allCompletionItems.length && word && filterTextLow){
-    if(allCompletionItems.some(s => s.name.includes(word) && s.sortText && s.sortText < (completion.sortText ?? "zzz"))){ // && !filterTextLow.includes(word)
+  if(allCompletionItems.length && word && filterTextLow && firstItem){
+    if(allCompletionItems.some(s => s.name.includes(word) && s.sortText && s.sortText < (firstItem.sortText ?? "zzz"))){ // && !filterTextLow.includes(word)
       editor.trigger("demo", "hideSuggestWidget", {});
       editor.trigger("demo", "editor.action.triggerSuggest", {});
     }

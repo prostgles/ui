@@ -466,13 +466,15 @@ const DeleteAllBackups = ({ dbs, filter, dbsMethods, filterName }: DeleteAllBack
   return <CodeConfirmation
     className="ml-p25"
     positioning="center"
-    button={<Btn iconPath={mdiDelete} color="danger" title="Will need to confirm" >Delete all...</Btn>} 
+    data-command="BackupControls.DeleteAll"
+    button={<Btn iconPath={mdiDelete} color="danger" title="Will need to confirm">Delete all...</Btn>} 
     message={<InfoRow style={{ alignItems: "center" }} color="danger">Will delete ALL backup files from storage for <strong>{filterName}</strong>. This action is not reversible!</InfoRow>} 
     confirmButton={(popupClose) =>
       <>
         <Btn iconPath={mdiDelete} 
           variant="outline" 
           color="danger" 
+          data-command="BackupControls.DeleteAll.Confirm"
           onClickPromise={() => onDeleteAll(popupClose) }
         >
           Force delete backups

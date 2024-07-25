@@ -56,8 +56,8 @@ export const MatchSet: SQLMatcher = {
             { label: "'$setting_string_value'", docs }
           ] : 
           settingInfo?.vartype === "integer"? [
-            { label: getVal(settingInfo.min_val), kind: KNDS.Value, docs: "Minimum value" + `\n\n${docs}` }, 
-            { label: getVal(settingInfo.max_val), kind: KNDS.Value, docs: "Maximum value" + `\n\n${docs}` }
+            { label: settingInfo.setting_pretty?.min_val ?? getVal(settingInfo.min_val), kind: KNDS.Value, docs: "Minimum value" + `\n\n${docs}` }, 
+            { label: settingInfo.setting_pretty?.max_val ?? getVal(settingInfo.max_val), kind: KNDS.Value, docs: "Maximum value" + `\n\n${docs}` }
           ] : 
           settingInfo?.enumvals?.length? settingInfo.enumvals.map(label => ({ label, docs: (settingInfo.reset_val === label? "Default" : "") + + `\n\n${docs}` })) : 
         []),

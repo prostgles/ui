@@ -12,7 +12,7 @@ import { dboLib } from "./monacoTsLibs";
 type P = {
   label: React.ReactNode;
   onSaveButton?: Pick<BtnProps, "children" | "iconPath" | "color" | "size">;
-  onSave: (value: string) => void;
+  onSave?: (value: string) => void;
   value: string | undefined | null;
   codePlaceholder?: string;
 } & Omit<CodeEditorProps, "onSave" | "onChange" | "value" | "style" | "className">;
@@ -28,7 +28,7 @@ export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceh
   }, [localValue, value]);
  
   const didChange = localValue !== value;
-  const onClickSave = async () => {
+  const onClickSave = !onSave? undefined : async () => {
     if(!didChange) return;
     try {
       await onSave(localValue ?? "");
@@ -42,9 +42,9 @@ export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceh
     className={classOverride("SmartCodeEditor gap-0 f-1 ", `${fullScreen? "min-h-0" : ""}`)}
   >
     <FlexRow>
-      <p className="m-0 py-1 f-1">
+      {<div className="m-0 py-1 f-1">
         {label}
-      </p>
+      </div>}
       <Btn iconPath={mdiFullscreen} onClick={() => setFullScreen(!fullScreen) } />
     </FlexRow>
     <FlexCol className={classOverride("relative f-1 gap-0 ", `${fullScreen? "min-h-0" : ""}`)}>
@@ -59,7 +59,7 @@ export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceh
         onChange={setLocalValue}
         onSave={onClickSave}
       />
-      {didChange && <FooterButtons 
+      {didChange && onClickSave && <FooterButtons 
         error={error}
         className="bg-color-1 b "
         style={{ 

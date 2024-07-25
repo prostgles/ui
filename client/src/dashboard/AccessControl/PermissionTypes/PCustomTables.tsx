@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import type { TableRules } from "../../../../../commonTypes/publishUtils";
 import { FlexCol } from "../../../components/Flex";
 import { Icon } from "../../../components/Icon/Icon";
-import SearchList from "../../../components/SearchList";
+import SearchList from "../../../components/SearchList/SearchList";
 import { SwitchToggle } from "../../../components/SwitchToggle";
 import type { EditedAccessRule } from "../AccessControl";
 import type { PermissionEditProps } from "../AccessControlRuleEditor";

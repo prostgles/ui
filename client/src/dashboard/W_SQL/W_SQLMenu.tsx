@@ -351,7 +351,7 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
           variant="vertical"
           contentClass={" o-auto min-h-0 max-h-100v " + (l1Key === "Alter"? " " : " p-1")}
           items={l1Opts}
-          compactMode={window.isMobileDevice}
+          compactMode={window.isMobileDevice? "hide-inactive" : undefined}
           // defaultActiveKey={"General"}
         />
       </div>

@@ -106,10 +106,11 @@ const getTableJoins = (tableTokenIdx: number, prevTableTokenIndexes: number[], {
             });
             const joinCondition = `${s.escapedIdentifier} ${ftableAlias}\n${" ".repeat(indentSize)}ON ${onCondition.join(" OR ")}`
             joins = suggestSnippets([{
-              label: joinCondition,
+              label: joinCondition.replaceAll("\n", ""),
+              insertText: joinCondition,
               sortText: "a",
               kind: getKind("table"),
-              docs: asSQL(joinCondition),
+              docs: s.documentation,
             }]).suggestions;
 
             /** referencing */
@@ -123,10 +124,11 @@ const getTableJoins = (tableTokenIdx: number, prevTableTokenIndexes: number[], {
 
             const joinCondition = `${s.escapedIdentifier} ${ftableAlias}\n${" ".repeat(indentSize)}ON ${onCondition.join(" OR ")}`
             joins = suggestSnippets([{
-              label: joinCondition,
+              label: joinCondition.replaceAll("\n", ""),
+              insertText: joinCondition,
               sortText: "a",
               kind: getKind("table"),
-              docs: asSQL(joinCondition),
+              docs: s.documentation,
             }]).suggestions;
           }                  
           joins.forEach(j => {

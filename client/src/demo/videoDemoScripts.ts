@@ -19,6 +19,16 @@ const backupDemo = async () => {
     return
   }
   await click("config.bkp");
+  await tout(500);
+  const deleteAllBtn = getElement<HTMLButtonElement>("BackupControls.DeleteAll", "button");
+  if(deleteAllBtn){
+    deleteAllBtn.click();
+    const code = getElement<HTMLDivElement>("", `[title="confirmation-code"]`)?.innerText;
+    const input = getElement<HTMLInputElement>("", `[name="confirmation"]`);
+    (input as any)?.forceDemoValue(code);
+    await click("BackupControls.DeleteAll.Confirm");
+  }
+
   await click("config.bkp.create");
   await click("config.bkp.create.start");
   await tout(1e3);

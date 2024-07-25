@@ -9,6 +9,7 @@ import Loading from "../../components/Loading";
 import CodeEditor from "../CodeEditor/CodeEditor";
 import { renderInterval } from "../W_SQL/customRenderers";
 import type { editor } from "../W_SQL/monacoEditorTypes";
+import { SmartCodeEditor } from "../CodeEditor/SmartCodeEditor";
 
 type P = Pick<Prgl, "dbsMethods" | "connectionId" | "dbs"> & {
   type: "tableConfig" | "onMount" | "methods";
@@ -71,22 +72,24 @@ export const ProcessLogs = ({ dbsMethods, connectionId, dbs, type, noMaxHeight }
 
   return <FlexCol className="f-1 relative">
     {isLoading && <Loading variant="cover" delay={250} />}
-    <FlexRow>
-      <h4 className="m-0 p-0">{isDisabled? "Log history" : "Log"}</h4>
-      {!isDisabled && <>
-        <Chip variant="naked" label="PID">{procStats?.pid ?? "?"}</Chip>
-        <Chip variant="naked" label="Cpu">{(procStats?.cpu ?? 0).toFixed(1)}%</Chip>
-        <Chip variant="naked" label="Mem">{Math.round((procStats?.mem ?? 0)/1e6).toLocaleString() + " MB"}</Chip>
-        <Chip variant="naked" label="Uptime">{!procStats? " " : renderInterval(getAgeFromDiff(Math.round(procStats.uptime) * 1e3), true, undefined, true)}</Chip>
-      </>}
-    </FlexRow>
-    <CodeEditor 
+    
+    <SmartCodeEditor 
       key={editorKey}
+      label={<FlexRow>
+        <h4 className="m-0 p-0">{isDisabled? "Log history" : "Log"}</h4>
+        {!isDisabled && <>
+          <Chip variant="naked" label="PID">{procStats?.pid ?? "?"}</Chip>
+          <Chip variant="naked" label="Cpu">{(procStats?.cpu ?? 0).toFixed(1)}%</Chip>
+          <Chip variant="naked" label="Mem">{Math.round((procStats?.mem ?? 0)/1e6).toLocaleString() + " MB"}</Chip>
+          <Chip variant="naked" label="Uptime">{!procStats? " " : renderInterval(getAgeFromDiff(Math.round(procStats.uptime) * 1e3), true, undefined, true)}</Chip>
+        </>}
+      </FlexRow>}
       onMount={editor => {
         editorRef.current = editor;
       }}
+      onSave={console.log}
       options={{ readOnly: true }}
-      style={{ minHeight: "200px", maxHeight: noMaxHeight? undefined : "300px" }}
+      // style={{ minHeight: "200px", maxHeight: noMaxHeight? undefined : "300px" }}
       language="bash"
       value={logs ?? ""}
     />

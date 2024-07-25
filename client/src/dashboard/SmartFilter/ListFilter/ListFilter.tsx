@@ -1,8 +1,8 @@
 
 import React from "react";
 import RTComp from "../../RTComp";
-import type { SearchListItem } from "../../../components/SearchList";
-import SearchList from "../../../components/SearchList";
+import type { SearchListItem } from "../../../components/SearchList/SearchList";
+import SearchList from "../../../components/SearchList/SearchList";
 import Loading from "../../../components/Loading";
 import type { BaseFilterProps} from "../SmartFilter";
 import { getSmartGroupFilter } from "../SmartFilter";

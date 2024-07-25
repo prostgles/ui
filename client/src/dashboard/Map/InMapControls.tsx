@@ -90,6 +90,7 @@ export const InMapControls = ({ tileAttribution, topLeftContent, onOptionsChange
           }}
         />
         <Btn 
+          title="Zoom to data"
           iconPath={mdiImageFilterCenterFocus}
           onClick={fitBounds}
           className="shadow "

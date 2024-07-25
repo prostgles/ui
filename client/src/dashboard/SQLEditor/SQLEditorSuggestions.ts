@@ -298,7 +298,7 @@ export async function getSqlSuggestions(db: DB): Promise< {
     }));
 
     suggestions = suggestions.concat(functions.map(f => {
-      const overEnding = ["rank", "dense_rank", "row_number"].includes(f.escaped_identifier)? " over()" : "";
+      const overEnding = ["rank", "dense_rank", "row_number"].includes(f.escaped_name)? " over()" : "";
       return { 
         type: "function",
         name: f.escaped_identifier,
@@ -308,6 +308,8 @@ export async function getSqlSuggestions(db: DB): Promise< {
         args: f.args,
         funcInfo: f,
         escapedIdentifier: f.escaped_identifier,
+        escapedName: f.escaped_name,
+        /** If func has arguments we exclude the parenthesis so that the user will write them and trigger func arg suggestions */
         insertText: f.escaped_identifier + (f.arg_list_str? "" : (f.name === "count"? "(*)" : "()")) + overEnding,
         detail: `(${f.is_aggregate? "agg " : ""}function) \n${f.name}(${f.arg_list_str}) => ${f.restype}`, 
         documentation: `Schema: \`${f.schema}\`  \n\n${f.description?.trim() ?? ""}   \n\n${asSQL(f.definition ?? "")}`, 
@@ -428,7 +430,7 @@ export async function getSqlSuggestions(db: DB): Promise< {
     // });
    
     const settingSuggestions: SQLSuggestion[] = settings.map(s => ({
-      label: { label: s.name,  description: s.setting ?? "" },
+      label: { label: s.name,  description: s.setting_pretty?.value ??  s.setting ?? "" },
       name: s.name,
       detail: "(setting)",
       type: "setting",

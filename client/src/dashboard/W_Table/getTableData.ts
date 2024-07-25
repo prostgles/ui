@@ -155,7 +155,9 @@ export async function getTableData(this: W_Table, dp: DeltaOf<W_TableProps>, ds:
         this.dataAge = dataAge;
         this.currentDataRequestSignature = qSig;
 
-        this.setState({ runningQuerySince: Date.now() });
+        if(!this.state.runningQuerySince){
+          this.setState({ runningQuerySince: Date.now() });
+        }
 
         const { select, barchartVals } = await getTableSelect(w ,tables, db, _f);
         if(barchartVals){
