@@ -14,10 +14,10 @@ export const suggestFuncArgs = async ({ cb, parentCb, ss, setS, sql }: Pick<SQLM
       if(insideFunc.func.textLC === "current_setting"){
         return { suggestions: setS.map(s => ({ ...s, insertText: `'${s.insertText || s.name}'` })) };
       }
-      if(funcDefs.some(f => f.funcInfo?.arg_udt_names.length)){
+      if(funcDefs.some(f => f.funcInfo?.arg_udt_names?.length)){
         const { suggestions } = await suggestColumnLike({ cb, parentCb, ss, setS, sql }, false) as { suggestions: ParsedSQLSuggestion[] };
         const activeArgIndex = insideFunc.prevArgs.length;
-        const activeArgs = funcDefs.map(f => f.funcInfo?.arg_udt_names[activeArgIndex]).filter(isDefined);
+        const activeArgs = funcDefs.map(f => f.funcInfo?.arg_udt_names?.[activeArgIndex]).filter(isDefined);
         const matchingTypeSuggestions = suggestions.map(s => {
           const matchingDataTypes = [
             ["json", "jsonb"],

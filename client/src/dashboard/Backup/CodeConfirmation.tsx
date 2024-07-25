@@ -6,8 +6,9 @@ import Loading from "../../components/Loading";
 import type { PopupProps } from "../../components/Popup/Popup";
 import PopupMenu from "../../components/PopupMenu";
 import { useIsMounted } from "./CredentialSelector";
+import type { TestSelectors } from "../../Testing";
 
-type CodeConfirmationProps = {
+type CodeConfirmationProps = TestSelectors & {
   button: React.ReactChild;
   message: React.ReactNode | (() => Promise< React.ReactNode>);
   confirmButton: (popupClose) => React.ReactNode;
@@ -25,7 +26,7 @@ type CodeConfirmationProps = {
 export function CodeConfirmation({ 
   button, confirmButton, message: rawMessage, show, 
   topContent, className, style, contentClassName = "", contentStyle, 
-  hideConfirm = false, title, positioning = "beneath-left", fixedCode
+  hideConfirm = false, title, positioning = "beneath-left", fixedCode, ...testSelectors
 }: CodeConfirmationProps): JSX.Element {
 
   const [message, setMessage] = useState<React.ReactNode>();
@@ -43,7 +44,7 @@ export function CodeConfirmation({
   const isMounted = useIsMounted();
   const getCode = () => Math.random().toFixed(3).slice(2, 5);
   const [key, setKey] = useState(getCode());
-  const [hasConfirmed, sethasConfirmed] = useState(false);
+  const [hasConfirmed, setHasConfirmed] = useState(false);
 
   if(show) return show === "button"? <>{button} </>:  <>{confirmButton(()=>{})} </>;
   
@@ -53,6 +54,7 @@ export function CodeConfirmation({
     className={className}
     style={style}
     button={button} 
+    {...testSelectors}
     initialState={{ ok: false, code: key, confirmCode: "" }}
     positioning={positioning}
     onClose={() => {
@@ -63,14 +65,15 @@ export function CodeConfirmation({
     render={(_popupClose) => {
       const popupClose = () => { 
         if(!isMounted()) return;
-        setKey(getCode()); 
+        setKey(getCode());
+        setHasConfirmed(false);
       }
       return <div className={"flex-col gap-1 ai-start o-auto p-p25 " + contentClassName} style={contentStyle}>
         {topContent?.(popupClose)}
         
         {!hideConfirm && <>
           {message ?? <Loading />}
-          <CodeChecker key={key} fixedCode={fixedCode} onChange={sethasConfirmed} />
+          <CodeChecker key={key} fixedCode={fixedCode} onChange={setHasConfirmed} />
           <div className="flex-row gap-1 ai-center mt-1  w-full">
             <Btn onClick={popupClose} variant="outline">Close</Btn>
             {hasConfirmed && confirmButton(popupClose)}
@@ -88,9 +91,6 @@ type CodeCheckerProps = Pick<CodeConfirmationProps, "style" | "className" | "fix
 export function CodeChecker({ className, style, onChange, fixedCode }: CodeCheckerProps): JSX.Element {
 
   const getCode = () => {
-    
-    // return Math.random().toFixed(3).slice(2, 5);
-
     const alphabet = "abcdefghijklmnopqrstuvwxyz";
     return [Math.random(), Math.random(), Math.random()].map(rand => {
       const randomCharacter = alphabet[Math.floor(rand * alphabet.length)];

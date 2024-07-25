@@ -10,6 +10,7 @@ import { ColumnSortMenu, getDefaultSort } from "../../dashboard/W_Table/ColumnMe
 import type { PopupProps } from "../Popup/Popup";
 import Popup from "../Popup/Popup";
 import { classOverride } from "../Flex";
+import { getSortColumn } from "../../dashboard/W_Table/tableUtils/tableUtils";
 
 type TableHeaderProps = Pick<TableProps, "cols" | "sort" | "onSort" | "whiteHeader" | "onColumnReorder" | "showSubLabel"> & {
   setDraggedCol: (newCol: TableState["draggedCol"]) => void;
@@ -74,7 +75,8 @@ export class TableHeader extends React.Component<TableHeaderProps, TableHeaderSt
         onWheel={onWheelScroll(TableRootClassname)}
       >
         {cols.map((col, iCol) => {
-          const mySort = sort.find((s: any)=> s.key === col.key) ?? sort.find(s => typeof s.key === "string" && s.key.startsWith(`${col.key}.`));
+          // const mySort = sort.find((s: any) => s.key === col.key) ?? sort.find(s => typeof s.key === "string" && s.key.startsWith(`${col.key}.`));
+          const mySort = sort.find(s => getSortColumn(s, [col]));
           const className = 
             "flex-col h-full min-w-0 px-p5 py-p5 text-left font-14 relative " + 
             " font-medium text-0 tracking-wider to-ellipsis jc-center " + 

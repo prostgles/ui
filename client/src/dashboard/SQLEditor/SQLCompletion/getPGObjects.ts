@@ -181,7 +181,7 @@ export type PG_Function = {
     label: string;
     data_type: string;
   }[];
-  arg_udt_names: string[];
+  arg_udt_names: string[] | null;
   restype: string | null;
   restype_udt_name: string | null;
   arg_list_str: string;
@@ -203,6 +203,7 @@ export type PG_Function = {
   definition: string | null;
   func_signature: string;
   escaped_identifier: string;
+  escaped_name: string;
   extension?: string;
 }
 
@@ -229,7 +230,8 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
               WHEN schema IS NULL OR schema IN (${searchSchemas})
                 THEN format('%I', name) 
               ELSE format('%I.%I', schema, name) 
-          END as escaped_identifier
+          END as escaped_identifier,
+        format('%I', name) as escaped_name
         FROM (
           SELECT p.proname AS name
                 , pg_get_function_identity_arguments(p.oid) AS arg_list_str
@@ -304,9 +306,11 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
         });
       r.arg_list_str = args.map(a => a.label).join(", ");
 
+      /** Some builtin functions (left, right) can be placed without double quotes.  */
       if(
-        r.escaped_identifier.includes('"') && 
-        !r.escaped_identifier.includes("current_user") && 
+        r.schema === "pg_catalog" &&
+        r.escaped_name.includes('"') && 
+        !r.escaped_name.endsWith(`_user"`) && 
         /^[a-z_]+$/.test(r.name)
       ){
         r.escaped_identifier = r.name;
@@ -605,6 +609,11 @@ export type PG_Setting = {
   name: string;
   unit: string | null;
   setting: string | null;
+  setting_pretty: {
+    value: string;
+    min_val: string;
+    max_val: string;
+  } | null;
   description: string;
   min_val?: string;
   max_val?: string;
@@ -617,18 +626,18 @@ export type PG_Setting = {
 }
 
 const getSettings = (db: DB): Promise<PG_Setting[]> => {
-  return db.sql(
-    
-    `
-    --SHOW ALL;
-
+  return db.sql(`
     SELECT 
       name, 
       CASE 
-        WHEN unit ilike '%kb' AND setting IS NOT NULL 
-          THEN concat_ws('', setting, ' ( ', pg_size_pretty((1024 * (CASE WHEN LEFT(unit, 1) = '8' THEN 8 ELSE 1 END) * setting::NUMERIC)::BIGINT), ' )' )
-        ELSE setting 
-      END as setting,
+        WHEN unit ilike '%kb' AND setting IS NOT NULL THEN 
+          jsonb_build_object(
+            'value', format('%L', pg_size_pretty((1024 * (CASE WHEN LEFT(unit, 1) = '8' THEN 8 ELSE 1 END) * setting::NUMERIC)::BIGINT)),
+            'min_val', format('%L', pg_size_pretty((1024 * (CASE WHEN LEFT(unit, 1) = '8' THEN 8 ELSE 1 END) * min_val::NUMERIC)::BIGINT)),
+            'max_val', format('%L', pg_size_pretty((1024 * (CASE WHEN LEFT(unit, 1) = '8' THEN 8 ELSE 1 END) * max_val::NUMERIC)::BIGINT))
+          )
+      END as setting_pretty,
+      setting,
       unit, 
       short_desc as description, 
       min_val, 

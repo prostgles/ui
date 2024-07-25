@@ -6,7 +6,7 @@ import Btn from "../../components/Btn";
 import { FlexCol } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
 import Popup from "../../components/Popup/Popup";
-import SearchList from "../../components/SearchList";
+import SearchList from "../../components/SearchList/SearchList";
 import { type CommonWindowProps } from "../Dashboard/Dashboard";
 import { FileColumnConfigEditor } from "./FileColumnConfigEditor";
 import { quickClone } from "../../utils";

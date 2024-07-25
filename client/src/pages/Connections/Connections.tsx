@@ -1,4 +1,4 @@
-import { mdiAlert, mdiDotsHorizontal, mdiPlus } from "@mdi/js";
+import { mdiAlert, mdiCog, mdiCogOff, mdiCogOutline, mdiDotsHorizontal, mdiPlus } from "@mdi/js";
 import type { SubscriptionHandler } from "prostgles-types";
 import React from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
@@ -22,7 +22,7 @@ type CommonConnectionInfo = Pick<DBSSchema["connections"], "created"> & {
   allowedUsers: number;
   workspaces: Workspace[];
 }
-type ServerUser = Pick<DBSSchema["connections"], "db_host" | "db_port" | "db_user">
+type ServerUser = Pick<DBSSchema["connections"], "db_host" | "db_port" | "db_user">;
 
 export type BasicConnectionModel = (
   | Pick<Required<DBSSchema["connections"]>, "id" | "name" | "is_state_db">)
@@ -192,7 +192,7 @@ export class Connections extends RTComp<PrglState, S> {
             </Btn>
           }
 
-          <PopupMenu
+          {isAdmin && <PopupMenu
             className="ml-auto"
             clickCatchStyle={{ opacity: 0 }}
             positioning="beneath-right"
@@ -201,7 +201,7 @@ export class Connections extends RTComp<PrglState, S> {
             button={
               <Btn 
                 title="Options" 
-                iconPath={mdiDotsHorizontal} 
+                iconPath={mdiCogOutline} 
               />
             }
           >
@@ -223,7 +223,7 @@ export class Connections extends RTComp<PrglState, S> {
                 this.setState({ showDbNames });
               }}
             />
-          </PopupMenu>
+          </PopupMenu>}
 
         </div>
         <div className="flex-col o-auto min-h-0 p-p5 pb-1 mt-1 gap-2 ai-center">

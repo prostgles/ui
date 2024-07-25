@@ -115,7 +115,7 @@ export const sqlVideoDemo: DemoScript = async ({
   //   await typeQuick("q" );
   // });
   
-  await showScript(`Data aware suggestions`, `SELECT`, async () => {
+  await showScript(`Data aware suggestions, jsonb support`, `SELECT`, async () => {
     await typeQuick(` opt`);
     await moveCursor.lineEnd();
     await typeQuick(`, age(cr`, { waitBeforeAccept: 1500 });
@@ -126,8 +126,8 @@ export const sqlVideoDemo: DemoScript = async ({
     await typeQuick(` opt`);
     await typeAuto(` the`, { waitAccept: 1e3 });
     await typeQuick(` `);
-    await typeAuto(` '`, { msPerChar: 55, waitAccept: 1e3, triggerMode: "firstChar", waitBeforeAccept: 1e3 });
-    testResult(`/* Data aware suggestions */\nSELECT options, age(created)\nFROM users\nWHERE options ->>'theme' = 'dark'\nLIMIT 200`);
+    await typeAuto(` '`, { msPerChar: 55, waitAccept: 500, triggerMode: "firstChar", waitBeforeAccept: 500 });
+    testResult(`/* Data aware suggestions, jsonb support */\nSELECT options, age(created)\nFROM users\nWHERE options ->>'theme' = 'dark'\nLIMIT 200`);
   });
   
   /** Current statement execution */
@@ -137,7 +137,7 @@ export const sqlVideoDemo: DemoScript = async ({
       FROM orders
       
       SELECT * 
-      FROM users`
+      FROM`
     ), async () => {
     // await actions.selectCodeBlock();
     await moveCursor.up(4, 30);
@@ -146,6 +146,8 @@ export const sqlVideoDemo: DemoScript = async ({
     await runSQL(); 
     focusEditor();
     await moveCursor.down(4, 30);
+    await moveCursor.lineEnd();
+    await typeAuto(" use");
     await actions.selectCodeBlock();
     await tout(500);
     await runSQL();
@@ -178,15 +180,50 @@ export const sqlVideoDemo: DemoScript = async ({
   //   }
   // });
 
-
-  await showScript("Documentation extracts", "", async () => {
+  await showScript("Documentation and schema extracts", "", async () => {
     await typeQuick(`cr`, { msPerChar: 40, waitAccept, waitBeforeAccept });
     await typeQuick(` us`, { msPerChar: 40, waitBeforeAccept });
     await typeQuick(` mynewuser`, { msPerChar: 4, dontAccept: true });
     await newLine()
     await typeQuick(`pass`, { msPerChar: 140, waitAccept, waitBeforeAccept });
+
+    await newLine(2);
+    await typeQuick(`gr`);
+    await typeQuick(` sel`);
+    await typeQuick(` usern`);
+    await typeQuick(` `);
+    await typeQuick(` myne`);
+    await runSQL();
+    await newLine(2);
+
+    await typeAuto(`cre`);
+    await typeAuto(` pol`);
+    await typeAuto(` read_own_data`, { dontAccept: true });
+    await typeAuto(`\n`);
+    await typeAuto(` us`);
+    await typeAuto(` f`);
+    await typeAuto(` se`);
+    await typeAuto(`\n`);
+    await typeAuto(` myn`);
+    await typeAuto(`\n`);
+    await typeAuto(` id`);
+    await typeAuto(`= prou`);
+    await typeAuto(`('id')::uuid`, { dontAccept: true });
+    await tout(1e3);
+    await runSQL();
   });
-  await showScript(`Schema extracts`, "", async () => {
+
+  await showScript("Schema extracts with access details", "", async () => {
+    await typeQuick(`?user `, { nth: 1, dontAccept: true });
+    await moveCursor.left();
+    await typeQuick(` mynew`, { waitBeforeAccept: 2e3 });
+    testResult([
+      "/* Schema extracts with access details */",
+      "?user mynewuser"
+    ].join("\n"));
+  });
+
+  await showScript(`Schema extracts with related objects`, "", async () => {
     await typeQuick(`a`, { msPerChar: 40, waitAccept, waitBeforeAccept });
     await typeQuick(` ta`, { msPerChar: 40 });
     await typeQuick(` us`, { msPerChar: 40, waitAccept, waitBeforeAccept });
@@ -196,41 +233,12 @@ export const sqlVideoDemo: DemoScript = async ({
     await typeQuick(`def`, { waitAccept });
     await typeQuick(` FALSE`, { dontAccept: true, nth: -1 });
     testResult(fixIndent(`
-      /* Schema extracts */
+      /* Schema extracts with related objects */
       ALTER TABLE users
       ALTER COLUMN passwordless_admin
       SET DEFAULT FALSE`
     ));
-  });
-
-  await showScript("User access details", "", async () => {
-    await typeQuick(`gr`);
-    await typeQuick(` sel`);
-    await typeQuick(` usern`);
-    await typeQuick(` `);
-    await typeQuick(` myne`);
-    await runSQL();
-    await newLine();
-    await newLine();
-    await typeQuick(fixIndent(`
-      CREATE POLICY read_own_data 
-      ON users FOR SELECT
-      TO mynewuser
-      USING ( id = prostgles.user('id')::uuid );`
-    ));
-    await tout(1e3);
-    await runSQL();
-  });
-
-  await showScript("User access details", "", async () => {
-    await typeQuick(`?user `, { nth: 1, dontAccept: true });
-    await moveCursor.left();
-    await typeQuick(` mynew`, { waitBeforeAccept: 2e3 });
-    testResult([
-      "/* User access details */",
-      "?user mynewuser"
-    ].join("\n"));
-  });
+  }); 
 
   /** Insert value suggestions */
   await showScript(`Argument hints`, "", async () => {
@@ -242,25 +250,25 @@ export const sqlVideoDemo: DemoScript = async ({
 
   await showScript(`Settings details`, "", async () => {
     await typeQuick(`SET`);
-    await typeQuick(` wm`);
+    await typeQuick(` wm`, { waitBeforeAccept: 2e3 });
     await typeQuick(` `);
-    await typeQuick(` `, { nth: -1 });
+    await typeQuick(` `, { waitBeforeAccept: 1e3 });
   });
 
-  await tout(1e3);
-  fromBeginning(false);
-  await typeQuick(`GRANT SE`, { nth: 1 });
-  await typeQuick(`\nall`);
-  await typeQuick(` pub`);
-  await typeQuick(`\n`);
-  await typeQuick(` myn`);
-  testResult(fixIndent(`
-    GRANT SELECT ON
-    ALL TABLES IN SCHEMA public
-    TO mynewuser`)
-  );
+  // await tout(1e3);
+  // fromBeginning(false);
+  // await typeQuick(`GRANT SE`, { nth: 1 });
+  // await typeQuick(`\nall`);
+  // await typeQuick(` pub`);
+  // await typeQuick(`\n`);
+  // await typeQuick(` myn`);
+  // testResult(fixIndent(`
+  //   GRANT SELECT ON
+  //   ALL TABLES IN SCHEMA public
+  //   TO mynewuser`)
+  // );
 
-  await runSQL();
+  // await runSQL();
 }
 
 /**

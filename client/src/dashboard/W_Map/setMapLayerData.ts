@@ -321,11 +321,6 @@ export const setMapLayerData = async function(this: W_Map, dataAge: number ){
         }));
   
         result = { layers } as any;
-        // if(dataRequest < this.lastDataRequest){
-        //   setTimeout(() => {
-            
-        //   })
-        // }
       } catch (err){
         error = err
       }

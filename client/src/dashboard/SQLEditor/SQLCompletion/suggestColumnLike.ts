@@ -18,14 +18,14 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
   }
   const expressions = await getTableExpressionSuggestions({ parentCb, cb, ss, sql }, "columns");
 
-  const maybeTableAlias = !cb.currToken? undefined : cb.currToken.text === "."? cb.ltoken?.text : cb.currToken.text.split(".")[0]!;
-  const activeAliasTable = !maybeTableAlias? undefined : expressions.tablesWithAliasInfo.find(t => t.alias === maybeTableAlias);
+  const dotPrefix = !cb.currToken? undefined : cb.currToken.text === "."? cb.ltoken?.text : cb.currToken.text.split(".")[0]!;
+  const activeAliasTable = !dotPrefix? undefined : expressions.tablesWithAliasInfo.find(t => t.alias === dotPrefix);
   if(activeAliasTable){
     const tableAliasCols = expressions.columns.filter(c => c.escapedParentName === activeAliasTable.s.escapedIdentifier)
     return { suggestions: tableAliasCols }
   }
 
-  const maybeWrittingSchema = !activeAliasTable && cb.currToken?.text === "." && cb.ltoken?.text? cb.ltoken?.text : undefined;
+  const maybeWrittingSchema = !activeAliasTable && cb.currToken?.text === "." && dotPrefix? dotPrefix : undefined;
   const activeSchema = !maybeWrittingSchema? undefined : ss.find(s => s.type === "schema" && s.escapedIdentifier === maybeWrittingSchema);
 
   /** Allow all other columns only if can add tablename to end */
@@ -82,6 +82,9 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
       
     return {
       ...s,
+      ...(s.type === "function" && s.insertText && activeSchema && {
+        insertText: s.insertText?.split(`${activeSchema}.`).join(""),
+      }),
       sortText
     }
 

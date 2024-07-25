@@ -2,7 +2,7 @@ import { mdiFormatListCheckbox, mdiPencil } from "@mdi/js";
 import React, { useState } from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import Btn from "../../components/Btn";
-import SearchList from "../../components/SearchList";
+import SearchList from "../../components/SearchList/SearchList";
 import Tabs from "../../components/Tabs";
 import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
 import type { W_MethodProps } from "./W_Method";
@@ -22,7 +22,7 @@ export const W_MethodMenu = (props: W_MethodProps & {  closeMenu: () => void; })
   return <Tabs 
     variant={"vertical"}
     contentClass="o-auto f-1 p-p25"
-    compactMode={window.isMobileDevice}
+    compactMode={window.isMobileDevice? "hide-inactive" : undefined}
     // defaultActiveKey={isAdmin? "edit" : undefined}
     defaultActiveKey={"args"}
     items={{

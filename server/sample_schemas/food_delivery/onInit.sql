@@ -1160,7 +1160,7 @@ BEGIN
         FROM v_restaurants r
         WHERE st_distance(u.geog, r.geog) < 7000
       )
-      ORDER BY last_order DESC
+      ORDER BY last_order
       LIMIT number_of_orders -- 1e4
     ) vu
     INNER JOIN (
@@ -1174,7 +1174,7 @@ BEGIN
     SELECT *, row_number() OVER( order by random()) as rnum
     FROM v_users
     WHERE type = 'rider'
-    ORDER BY last_delivery DESC
+    ORDER BY last_delivery
     LIMIT number_of_orders -- 1e4
   ) riders
   ON t.rnum = riders.rnum;

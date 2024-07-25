@@ -214,6 +214,8 @@ export const COMMANDS = {
   "Setup2FA.Enable.Confirm": "",
   "Setup2FA.Disable": "",
   "DashboardMenuHeader.togglePinned": "",
+  "BackupControls.DeleteAll": "",
+  "BackupControls.DeleteAll.Confirm": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

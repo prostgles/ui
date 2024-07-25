@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react"
-import SearchList from "../../../components/SearchList";
+import SearchList from "../../../components/SearchList/SearchList";
 import type { ColumnConfig } from "./ColumnMenu";
 import { useMemoDeep, type DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { FlexRow } from "../../../components/Flex";
