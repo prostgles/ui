@@ -68,6 +68,25 @@ test.describe("Main test", () => {
     await page.getByRole('link', { name: 'Connections' }).click();
   });
 
+  test('Login returnUrl', async ({ page: p }) => {
+    const page = p as PageWIds;
+    const requestedUrl = 'http://localhost:3004/connections/some-connection?a=b';
+    await login(page, undefined, requestedUrl);
+    await page.getByTestId("ProjectConnection.error").waitFor({ state: "visible", timeout: 15e3 });
+    const currentUrl = await page.url();
+    expect(currentUrl).toEqual(requestedUrl);
+  });
+
+  test('Open redirect returnUrl', async ({ page: p }) => {
+    const page = p as PageWIds;
+    const requestedUrl = 'http://localhost:3004/login?returnURL=/%2F%2Fwikipedia.org';
+    await login(page, undefined, requestedUrl);
+    await goTo(page, requestedUrl);
+    await goTo(page, requestedUrl);
+    const currentUrl = await page.url();
+    expect(currentUrl.startsWith("http://localhost:3004/")).toBe(true);
+  });
+
   test('Test 2FA', async ({ page: p }) => {
     const page = p as PageWIds;
  

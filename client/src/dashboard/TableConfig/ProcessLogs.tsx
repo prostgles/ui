@@ -87,7 +87,6 @@ export const ProcessLogs = ({ dbsMethods, connectionId, dbs, type, noMaxHeight }
       onMount={editor => {
         editorRef.current = editor;
       }}
-      onSave={console.log}
       options={{ readOnly: true }}
       // style={{ minHeight: "200px", maxHeight: noMaxHeight? undefined : "300px" }}
       language="bash"

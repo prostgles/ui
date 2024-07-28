@@ -17,6 +17,7 @@ import { ConnectionConfig } from "../../dashboard/ConnectionConfig/ConnectionCon
 import { useProjectDb } from "./useProjectDb";
 import { FlexCol } from "../../components/Flex";
 import { useNavigate } from "react-router-dom";
+import type { Command } from "../../Testing";
 
 export type Connections = DBSSchema["connections"];
 export type ProjectProps = {
@@ -52,14 +53,19 @@ export const ProjectConnection = (props: ProjectProps) => {
   }
 
   if (state === "error") {
-    return <div className="flex-col w-full h-full ai-center jc-center p-2 gap-1">
-      {connNotFound && <div className="p-1">This project was not found or you are not allowed to access it</div>}
-      {!!error && <>Database connection error:<ErrorComponent error={error} findMsg={true} /></>}
+    return (
+      <div 
+        className="flex-col w-full h-full ai-center jc-center p-2 gap-1"
+        data-command={"ProjectConnection.error" satisfies Command}
+      >
+        {connNotFound && <div className="p-1">This project was not found or you are not allowed to access it</div>}
+        {!!error && <>Database connection error:<ErrorComponent error={error} findMsg={true} /></>}
 
-      <Btn style={{ fontSize: "18px", fontWeight: "bold" }} className="mt-1" variant="outline" asNavLink={true} href={`/`} iconPath={mdiArrowLeft} color="action">
-        Connections
-      </Btn>
-    </div>
+        <Btn style={{ fontSize: "18px", fontWeight: "bold" }} className="mt-1" variant="outline" asNavLink={true} href={`/`} iconPath={mdiArrowLeft} color="action">
+          Connections
+        </Btn>
+      </div>
+    );
   }
 
   const prgl: Prgl = {

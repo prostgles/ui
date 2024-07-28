@@ -24,7 +24,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   React.useEffect(() => {
     loadPSQLLanguage(props.loadedSuggestions);
-  }, []);
+  }, [props.loadedSuggestions]);
 
   const editor = React.useRef<editor.IStandaloneCodeEditor>();
   const container = React.useRef<HTMLDivElement>(null);

@@ -35,7 +35,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
   const { dbsMethods: { startConnection } } = prglState;
   const connectionTableHandler = prglState.dbs.connections;
   const pathAndCon = usePromise(async () => {
-    const con = await connectionTableHandler.findOne({ id: connId });
+    const con = await connectionTableHandler.findOne({ id: connId }).catch(console.error);
     if(!connId) return undefined;
     if(!con) return { error: "Connection not found", path: undefined, con: undefined, connId };
     try {
@@ -56,7 +56,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
     },
     skip: !pathAndCon?.path,
   });
-
+  console.log(pathAndCon)  
   const dashboardDbState: undefined | PrglProjectState = usePromise(async () => {
 
     try {
