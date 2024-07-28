@@ -36,6 +36,7 @@ export const UserStats = ({ dbs, dbsTables, dbsMethods, theme }: UserStatsProps)
     positioning="center"
     clickCatchStyle={{ opacity: .5 }}
     title={"All users"}
+    showFullscreenToggle={{}}
     footerButtons={[
       { 
         label: "Close",

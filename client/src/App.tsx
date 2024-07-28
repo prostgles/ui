@@ -7,7 +7,7 @@ import type { CommonWindowProps } from "./dashboard/Dashboard/Dashboard";
 import { Connections } from "./pages/Connections/Connections";
 import Login from "./pages/Login";
 import NewConnnection from "./pages/NewConnection/NewConnnection";
-import NotFound from "./pages/NotFound";
+import { NotFound } from "./pages/NotFound";
 import { ProjectConnection } from "./pages/ProjectConnection/ProjectConnection";
 
 import { mdiAccountMultiple, mdiServerNetwork, mdiServerSecurity, mdiThemeLightDark } from "@mdi/js";

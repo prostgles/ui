@@ -125,7 +125,8 @@ export const goTo = async (page: PageWIds, url = "localhost:3004") => {
 export const login = async (page: PageWIds, userNameAndPassword = "test_user", url = 'localhost:3004') => {
   
   await goTo(page, url);
-  await page.waitForTimeout(2000);
+  // await page.waitForTimeout(2000);
+  await page.locator("#username").waitFor({ state: "visible", timeout: 30e3 });
   await page.locator("#username").fill(userNameAndPassword)
   await page.locator("#password").fill(userNameAndPassword)
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -427,7 +428,6 @@ export enum USERS {
 export const TEST_DB_NAME = "Prostgles UI automated tests database";
 
 export const localNoAuthSetup = !!process.env.PRGL_DEV_ENV;
-console.log({ localNoAuthSetup });
 export const queries = {
   orders: `CREATE TABLE orders ( id SERIAL PRIMARY KEY, user_id UUID NOT NULL, status TEXT );`,
 }

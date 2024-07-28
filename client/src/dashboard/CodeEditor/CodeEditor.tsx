@@ -339,6 +339,7 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
       <MonacoEditor
         className="f-1 min-h-0"
         language={language}
+        loadedSuggestions={undefined}
         value={value}
         options={{
           readOnly: !onChange,
