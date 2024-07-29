@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import type { PrglState } from "../../../App";
 import { FlexCol } from "../../../components/Flex";
-import { getActiveTokensFilter } from "../../../pages/Sessions";
+import { getActiveTokensFilter } from "../../../pages/Account/Sessions";
 import { APIDetailsHttp } from "./APIDetailsHttp";
 import { APIDetailsTokens } from "./APIDetailsTokens";
 import { APIDetailsWs } from "./APIDetailsWs";

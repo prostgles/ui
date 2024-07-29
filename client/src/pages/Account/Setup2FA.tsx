@@ -1,15 +1,15 @@
 import React, { useState } from "react";
-import { SuccessMessage } from "../components/Animations";
-import Btn from "../components/Btn";
-import Chip from "../components/Chip";
-import ErrorComponent from "../components/ErrorComponent";
-import { ExpandSection } from "../components/ExpandSection";
-import FormField from "../components/FormField/FormField";
-import { InfoRow } from "../components/InfoRow";
-import PopupMenu from "../components/PopupMenu";
-import { QRCodeImage } from "../components/QRCodeImage";
-import type { UserData } from "../dashboard/Dashboard/dashboardUtils";
-import type { Prgl } from "../App";
+import { SuccessMessage } from "../../components/Animations";
+import Btn from "../../components/Btn";
+import Chip from "../../components/Chip";
+import ErrorComponent from "../../components/ErrorComponent";
+import { ExpandSection } from "../../components/ExpandSection";
+import FormField from "../../components/FormField/FormField";
+import { InfoRow } from "../../components/InfoRow";
+import PopupMenu from "../../components/PopupMenu";
+import { QRCodeImage } from "../../components/QRCodeImage";
+import type { UserData } from "../../dashboard/Dashboard/dashboardUtils";
+import type { Prgl } from "../../App";
 
 export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<Prgl, "dbsMethods"> & { user: UserData; onChange: VoidFunction }) => {
 

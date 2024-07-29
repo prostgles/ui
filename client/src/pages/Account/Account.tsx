@@ -2,13 +2,15 @@ import { mdiAccount, mdiApplicationBracesOutline, mdiSecurity } from "@mdi/js";
 import { getKeys } from "prostgles-types";
 import React from "react";
 import { useSearchParams } from "react-router-dom";
-import type { ExtraProps } from "../App";
-import Tabs from "../components/Tabs";
-import { PasswordlessSetup } from "../dashboard/AccessControl/PasswordlessSetup";
-import { APIDetails } from "../dashboard/ConnectionConfig/APIDetails/APIDetails";
-import SmartForm from "../dashboard/SmartForm/SmartForm";
+import type { ExtraProps } from "../../App";
+import Tabs from "../../components/Tabs";
+import { PasswordlessSetup } from "../../dashboard/AccessControl/PasswordlessSetup";
+import { APIDetails } from "../../dashboard/ConnectionConfig/APIDetails/APIDetails";
+import SmartForm from "../../dashboard/SmartForm/SmartForm";
 import { Sessions } from "./Sessions";
 import { Setup2FA } from "./Setup2FA";
+import { FlexRow } from "../../components/Flex";
+import { ChangePassword } from "./ChangePassword";
 
 type AccountProps = ExtraProps;
  
@@ -52,7 +54,10 @@ export const Account = (props: AccountProps) => {
       label: "Security",
       leftIconPath: mdiSecurity, 
       content: <div className="flex-col gap-1 px-1 f-1">
-        <Setup2FA  {...{ user, dbsMethods }} onChange={console.log} />  
+        <FlexRow>
+          <Setup2FA user={user} dbsMethods={dbsMethods} onChange={console.log} />  
+          <ChangePassword dbsMethods={dbsMethods} />
+        </FlexRow>
 
         <Sessions displayType="web_session" { ...props } />
       </div>

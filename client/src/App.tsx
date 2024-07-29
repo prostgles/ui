@@ -14,7 +14,7 @@ import { mdiAccountMultiple, mdiServerNetwork, mdiServerSecurity, mdiThemeLightD
 import ErrorComponent from "./components/ErrorComponent";
 import { NavBar } from "./components/NavBar";
 import UserManager from "./dashboard/UserManager";
-import { Account } from "./pages/Account";
+import { Account } from "./pages/Account/Account";
 import { ServerSettings } from "./pages/ServerSettings";
 
 import { type DBHandlerClient, type MethodHandler } from "prostgles-client/dist/prostgles";

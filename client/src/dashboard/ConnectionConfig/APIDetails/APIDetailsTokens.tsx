@@ -4,7 +4,7 @@ import Btn from "../../../components/Btn";
 import { FlexCol, FlexRow } from "../../../components/Flex";
 import FormField from "../../../components/FormField/FormField"; 
 import PopupMenu from "../../../components/PopupMenu";
-import { Sessions } from "../../../pages/Sessions";
+import { Sessions } from "../../../pages/Account/Sessions";
 import type { APIDetailsProps } from "./APIDetails";
 
 export const APIDetailsTokens = ({ theme, dbs, dbsMethods, dbsTables, user, token, setToken, tokenCount }: APIDetailsProps & { token: string; tokenCount: number; setToken: (value: string) => void; }) => {
