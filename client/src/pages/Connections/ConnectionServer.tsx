@@ -47,6 +47,7 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
   const [connectionName, setConnectionName] = useState("");
   const [serverInfo, setServerInfo] = useState<{
     canCreateDb: boolean;
+    rolname: string;
     databases: string[];
     sampleSchemas: SampleSchema[];
     usedDatabases: string[];
@@ -72,11 +73,11 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
     const serverInfo = (await runConnectionQuery(
       connId,
       `
-        SELECT rolcreatedb OR rolsuper as "canCreateDb"
+        SELECT rolcreatedb OR rolsuper as "canCreateDb", rolname
         FROM pg_catalog.pg_roles
         WHERE rolname = "current_user"();
       `
-    ))[0]! as { canCreateDb: boolean, databases: string[] };
+    ))[0]! as { canCreateDb: boolean, databases: string[]; rolname: string; };
     const databases = (await runConnectionQuery(
       connId,
       `
@@ -118,7 +119,11 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
         }
         await runConnectionQuery(connId, `CREATE USER ${asName(newOwner.name)} WITH ENCRYPTED PASSWORD $1;`, [newOwner.password]);
       }
-      await runConnectionQuery(connId, `CREATE DATABASE ${asName(action.newDatabaseName!)};`);
+      const createDbQuery = [
+        `CREATE DATABASE ${asName(action.newDatabaseName!)}`,
+        newDbOwnerCredentials? `WITH OWNER ${JSON.stringify(newOwner.name)}` : "",
+      ].join("\n")
+      await runConnectionQuery(connId, createDbQuery);
       newDbName = action.newDatabaseName!;
       
     } else {
@@ -175,7 +180,7 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
         { key: Actions.create, 
           /** This is to ensure serverInfo is loaded before clicking  */
           "data-command": !serverInfo || cannotCreateDb? undefined : "ConnectionServer.add.newDatabase", 
-          disabledInfo: error?.toString() ?? (cannotCreateDb? `Not allowed to create databases` : undefined) 
+          disabledInfo: error?.toString() ?? (cannotCreateDb? `Not allowed to create databases with this user (${serverInfo?.rolname})` : undefined) 
         },
         { 
           key: Actions.add, 
@@ -289,18 +294,27 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
           <SwitchToggle 
             label="Create a user for this database (optional)"
             variant="col"
+            data-command="ConnectionServer.withNewOwnerToggle"
             checked={newOwner.create}
-            onChange={create => setNewOwner({ ...newOwner, create })}
+            onChange={create => {
+              setNewOwner({ 
+                ...newOwner,
+                ...(create && !newOwner.name && connectionName && { name: `${connectionName}_owner` }),
+                create, 
+              });
+            }}
           />
         }
         {newOwner.create && <>
           <FormFieldDebounced 
+            data-command="ConnectionServer.NewUserName"
             label={"New username"} 
             value={newOwner.name}
             error={newUsernameError}
             onChange={name => setNewOwner({ ...newOwner, name })} 
           />
           <FormField 
+            data-command="ConnectionServer.NewUserPassword"
             label={"New username password"} 
             value={newOwner.password} 
             error={newUserPasswordError}

@@ -8,7 +8,7 @@ export const sqlVideoDemo: DemoScript = async ({
   moveCursor, triggerParamHints,  getEditor, 
   actions, testResult, triggerSuggest, runSQL, newLine
 }) => {
-  const hasTable = await runDbSQL(`SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public' AND tablename = 'chats'`, { }, { returnType: "value" });
+  const hasTable = await runDbSQL(`SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = current_schema() AND tablename = 'chats'`, { }, { returnType: "value" });
   const existingUsers: string[] = await runDbSQL(`SELECT usename FROM pg_catalog.pg_user `, { }, { returnType: "values" });
   if(!hasTable){
     // alert("Creating demo tables. Must run demo script again");

@@ -150,11 +150,13 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
         },
       },
       update: {
-        fields: "*",
+        fields: {
+          options: 1,
+        },
         validate: getValidateAndHashUserPassword(),
         dynamicFields: [{
           /* For own user can only change these fields */
-          fields: { username: 1, password: 1, status: 1, options: 1, passwordless_admin: 1 },
+          fields: { username: 1, password: 1, status: 1, options: 1 },
           filter: { id: user.id }
         }]
       },
@@ -164,10 +166,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
       }
     } : {
       select: {
-        fields: {
-          "2fa": false,
-          password: false
-        },
+        fields: { id: 1, username: 1, type: 1, options: 1, created: 1 },
         forcedFilter: { id: user_id }
       },
       update: {

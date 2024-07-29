@@ -35,6 +35,10 @@ export const MatchSet: SQLMatcher = {
 
     if(ltoken?.textLC === "to"){
 
+      if(cb.l1token?.textLC === "search_path"){
+        return getExpected("schema", cb, ss);
+      }
+
       if(["timezone", "time zone"].some(v => cb.prevLC.includes(v)) && sql){
         const timeZones = await getTimeZones(sql);
         return suggestSnippets(timeZones.map(t => ({

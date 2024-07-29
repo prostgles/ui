@@ -158,7 +158,7 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<SmartCard
       const filter = (this.props.filter ?? {}) as AnyObject;
       const orderBy = this.state.orderBy ?? this.props.orderBy;
       const select = getSelectForFieldConfigs(fieldConfigs, columns_);
-      const dataSignature = W_Table.getDataRequestSignature({ 
+      const dataSignature = W_Table.getTableDataRequestSignature({ 
         filter, orderBy, limit: this.state.pageSize, offset: this.state.page ?? 1 
       }, 0, [throttle, tableName]);
 

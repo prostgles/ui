@@ -194,7 +194,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       username: { sqlDefinition: `TEXT NOT NULL UNIQUE` },
       password: { 
         sqlDefinition: `TEXT NOT NULL DEFAULT gen_random_uuid()`, 
-        info: { hint: "On update will be hashed with the user id" } 
+        info: { hint: "Hashed with the user id on insert/update" } 
       },
       type:     { sqlDefinition: `TEXT NOT NULL DEFAULT 'default' REFERENCES user_types (id)` },
       passwordless_admin: { 

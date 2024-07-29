@@ -162,11 +162,28 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
               AND NOT datistemplate
               ORDER BY datname = 'postgres' DESC
             `);
+            const _superUsers: { usename: string }[] = await cdb.any(`
+              SELECT usename 
+              FROM pg_user WHERE usesuper = true
+              `, {});
+            const superUsers = _superUsers.map(u => u.usename);
             cdb.$pool.end();
             const [anotherDatabaseName] = anotherDatabaseNames;
             if(!anotherDatabaseName) throw "Could not find another database";
 
-            const acdb = await getCDB(con.id, { database: anotherDatabaseName.datname }, true);
+            let superUser: { user: string; password: string; } | undefined;
+            if(!superUsers.includes(con.db_user)){
+              const conWithSuperUsers = await t.connections.findOne({ 
+                db_user: { $in: superUsers },
+                db_host: con.db_host,
+                db_port: con.db_port,
+                db_pass: { "<>": null },
+              });
+              if(conWithSuperUsers){
+                superUser = { user: conWithSuperUsers.db_user, password: conWithSuperUsers.db_pass! };
+              }
+            }
+            const acdb = await getCDB(con.id, { database: anotherDatabaseName.datname, ...superUser }, true);
             const killDbConnections = () => {
               return acdb.manyOrNone(`
                 SELECT pg_terminate_backend(pid) 
