@@ -1,7 +1,8 @@
 import { useProstglesClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
-import { prgl_R, type PrglProject, type PrglState } from "../../App";
+import type { PrglProject, PrglState } from "../../App";
 import { getTables } from "../../dashboard/Dashboard/Dashboard";
+import { prgl_R } from "../../WithPrgl";
 
 
 type PrglProjectState = {
@@ -56,7 +57,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
     },
     skip: !pathAndCon?.path,
   });
-  console.log(pathAndCon)  
+
   const dashboardDbState: undefined | PrglProjectState = usePromise(async () => {
 
     try {
@@ -104,7 +105,6 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
         });
         (window as any).db = db;
         (window as any).dbMethods = methods; 
-
         return {
           prglProject,
           state: "loaded",

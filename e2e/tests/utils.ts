@@ -330,11 +330,24 @@ export const setTableRule = async (
 }
 
 export const runDbsSql = async (page: PageWIds, query: string, args?: any, opts?: any) => {
-  const sqlResult = await page.evaluate(([query, args, opts]) => {
-    const { dbs } = window as any;
-    if(!dbs) throw "dbs is missing";
-    return dbs.sql(query, args, opts);
-  }, [query, args, opts]) as any;
+  return runDbSql(page, query, args, opts, "dbs");
+}
+
+export const runDbSql = async (page: PageWIds, query: string, args?: any, opts?: any, dbType: "db" | "dbs" = "db") => {
+  const [error, sqlResult] = await page.evaluate(async ([query, args, opts, dbType]) => {
+    try {
+      const db = (window as any)[dbType];
+      if(!db) throw dbType + " is missing";
+      const data = await db.sql(query, args, opts);
+      return [undefined, data];
+    } catch(error){
+      return [error];
+    }
+  }, [query, args, opts, dbType]) as any;
+  if(error){
+    console.error(`Error running sql:`, error);
+    throw error;
+  }
   return sqlResult
 }
 
@@ -358,7 +371,7 @@ export const openTable = async (page: PageWIds, namePartStart: string) => {
   await page.waitForTimeout(1000);
 }
 const MINUTE = 60e3;
-export const createDatabase = async (dbName: string, page: PageWIds, fromTemplates = false) => {
+export const createDatabase = async (dbName: string, page: PageWIds, fromTemplates = false, owner?: { name: string; pass: string; }) => {
   await goTo(page, 'localhost:3004/connections');
   await page.locator(`[data-command="ConnectionServer.add"][data-key^="usr@localhost"]`).first().click();
   // await page.waitForTimeout(3000);
@@ -370,7 +383,13 @@ export const createDatabase = async (dbName: string, page: PageWIds, fromTemplat
     await page.getByTestId("ConnectionServer.add.newDatabase").click();
     await page.getByTestId("ConnectionServer.NewDbName").locator("input").fill(dbName);
   }
-  // await page.waitForTimeout(1000);
+  if(owner){
+    await page.getByTestId("ConnectionServer.withNewOwnerToggle").click()
+    await page.waitForTimeout(500);
+    await page.getByTestId("ConnectionServer.NewUserName").locator("input").fill(owner.name);
+    await page.getByTestId("ConnectionServer.NewUserPassword").locator("input").fill(owner.pass);
+    await page.waitForTimeout(500);
+  }
   await page.getByTestId("ConnectionServer.add.confirm").click();
   /* Wait until db is created */
   const databaseCreationTime = (fromTemplates? 4 : 1) * MINUTE;

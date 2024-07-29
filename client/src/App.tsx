@@ -74,7 +74,6 @@ export type PrglProject = PrglCore & {
   connection: DBSSchema["connections"];
 };
 export type Prgl = PrglState & PrglProject;
-export const prgl_R = createReactiveState<Prgl | undefined>(undefined);
 
 export type AppState = {
   /**

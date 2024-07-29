@@ -72,7 +72,9 @@ export async function getTableData(this: W_Table, dp: DeltaOf<W_TableProps>, ds:
       const { select: selectWithoutData, barchartVals: barchartValsWithoutData } = await getTableSelect(w, tables, db, _f, true);
       const strFilter = JSON.stringify(tableFilterHaving);
 
-      const clearSub = () => this.dataSub?.unsubscribe?.();
+      const clearSub = () => {
+        return this.dataSub?.unsubscribe?.();
+      };
       const clearInterval = () => {
         if (this.autoRefresh) {
           clearTimeout(this.autoRefresh);
@@ -110,8 +112,7 @@ export async function getTableData(this: W_Table, dp: DeltaOf<W_TableProps>, ds:
       /** Resubscribe if filter changed or refresh cahnged */
       if (
         w.options.refresh?.type === "Realtime" && 
-        tableHandler.subscribe && 
-        (this.dataSubFilter !== strFilter)
+        tableHandler.subscribe
       ) {
         setSub(w.options.refresh.throttleSeconds);
       }
@@ -144,7 +145,7 @@ export async function getTableData(this: W_Table, dp: DeltaOf<W_TableProps>, ds:
 
       const dataAge = delta.dataAge ?? this.dataAge ?? 0;
       const cardOpts = w.options.viewAs?.type === "card"? w.options.viewAs : undefined;
-      const qSig = W_Table.getDataRequestSignature({ 
+      const qSig = W_Table.getTableDataRequestSignature({ 
         select: selectWithoutData, 
         barchartVals: barchartValsWithoutData, 
         orderBy, limit, offset, joinFilter, 

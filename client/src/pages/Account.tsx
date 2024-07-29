@@ -28,13 +28,14 @@ export const Account = (props: AccountProps) => {
     </div>
   }
 
+  const allowedColumns = ["id", "username", "type", "status", "options", "created_at"];
   const sectionItems = {
     details: {
       label: "Account details",
       leftIconPath: mdiAccount, 
       content: <SmartForm 
         theme={theme}
-        label="" 
+        label=""
         db={dbs as any} 
         methods={dbsMethods}
         tableName="users" 
@@ -42,6 +43,8 @@ export const Account = (props: AccountProps) => {
         rowFilter={[{ fieldName: "id", value: user.id }]}
         hideChangesOptions={true}
         confirmUpdates={true} 
+        columnFilter={c => allowedColumns.includes(c.name)}
+        // onChange={console.log}
         disabledActions={["clone", "delete"]}
       />
     },

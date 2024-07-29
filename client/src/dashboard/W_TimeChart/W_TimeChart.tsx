@@ -112,9 +112,7 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
     error: null,
     loadingData: true,
     columns: [],
-  }
-
-  
+  }  
 
   async onMount(){
     const { w } = this.props;
@@ -130,29 +128,24 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
   onUnmount(){
     this.state.wSync?.$unsync?.();
   }
- 
-
 
   onDelta = async (dp: DeltaOfData<ProstglesTimeChartProps>, ds: DeltaOfData<ProstglesTimeChartState>, dd: DeltaOfData<D>) => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const deltaKeys = getKeys({ ...dp, ...ds, ...dd } || {});
-    const filterChanged = dd?.w?.options && "filter" in dd.w.options
+    const filterChanged = dd?.w?.options && "filter" in dd.w.options;
     if(
       filterChanged ||
       dd?.w?.options?.binSize || 
       (["myLinks", "w", "resetExtent", "viewPortExtent", "prgl", "dataAge"] as const).find(k => deltaKeys.includes(k)) 
     ){
       this.setLayerData();
-    } 
+    }
 
     if(filterChanged){
       this.props.onForceUpdate();
     }
-     
   }
 
-
-  // okthere = false;
   d: D = { 
     lCols: {},
     w: undefined,

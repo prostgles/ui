@@ -9,7 +9,7 @@ import React from "react";
 import Loading from "../../components/Loading";
 import type { TableColumn, TableProps } from "../../components/Table/Table";
 import { PAGE_SIZES, Table, closest } from "../../components/Table/Table";
-import type { OnAddChart, Query, WindowSyncItem, WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
+import type { OnAddChart, Query, WindowData, WindowSyncItem, WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
 import "./ProstglesTable.css";
 
 import type { DeltaOf, DeltaOfData } from "../RTComp";
@@ -46,6 +46,9 @@ import { getTableSelect } from "./tableUtils/getTableSelect";
 import { prepareColsForRender } from "./tableUtils/prepareColsForRender";
 import { getFullColumnConfig, getSort, getSortColumn, updateWCols } from "./tableUtils/tableUtils";
 import { W_Table_Content } from "./W_Table_Content";
+import { getAndFixWColumnsConfig } from "./TableMenu/getAndFixWColumnsConfig";
+import { isEqual } from "prostgles-client/dist/react-hooks";
+import { Command } from "../../Testing";
 
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {
@@ -149,7 +152,7 @@ export type ProstglesTableD = {
   pageSize: Required<PaginationProps>["pageSize"];
   page: number;
   dataAge?: number;
-  wSync?: SingleSyncHandles;
+  wSync?: SingleSyncHandles<Required<WindowData<"table">>, true>;
 }
 
 export type ColumnConfigWInfo = ColumnConfig & ({ info?: ValidatedColumnInfo;  });
@@ -196,17 +199,14 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
     if(!Array.isArray(w.filter)){
       w.$update({ filter: [] })
     }
-    if(!this.d.wSync) {
 
-      const wSync = w.$cloneSync((w, delta) => {
-        this.setData({ w }, { w: delta });
-      });
-      
-      this.setData({ wSync })
-    }
+    this.d.wSync = w.$cloneSync((w, delta) => {
+      this.setData({ w }, { w: delta });
+    });
   }
 
   async onUnmount() {
+    this.d.wSync?.$unsync();
     await this.dataSub?.unsubscribe?.();
   }
 
@@ -215,7 +215,7 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
    * To reduce the number of unnecessary data requests let's save the query signature and allow new queries only if different
    */
   currentDataRequestSignature = "";
-  static getDataRequestSignature(
+  static getTableDataRequestSignature(
     args: {
       select?: AnyObject | any;
       filter?: AnyObject | any;
@@ -257,9 +257,11 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
   dataAge?: number = 0;
   autoRefresh?: any;
   activeRowStr?: string;
+  currDbKey?: string;
   onDelta = async (dp: DeltaOf<W_TableProps>, ds: DeltaOf<W_TableState>, dd: DeltaOfData<ProstglesTableD>) => {
     const delta = ({ ...dp, ...ds, ...dd }); 
-    const { prgl: { db }, onClose, workspace } = this.props;
+    const { workspace } = this.props;
+    const { db } = this.props.prgl;
     const { w } = this.d;
     const { table_name: tableName, table_oid } = w || {};
 
@@ -268,23 +270,22 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
 
     const tableHandler = db[tableName];
 
-
     /** Show count if user requires it  */
     const showCounts = !!(!workspace.options.hideCounts && !w.options.hideCount || workspace.options.hideCounts && w.options.hideCount === false);
 
     /* Table was renamed. Replace from oid or fail gracefully */
-    if (tableName && !tableHandler) {
-      if (table_oid) {
-        const match = this.props.tables.find(ti => ti.info.oid === table_oid);
-        if (match) {
-          await w.$update({ table_name: match.name });
-          return;
-        }
-
-      } else {
-        alert("Table not found. Removing...");
-        onClose(undefined);
+    if (tableName && table_oid && !tableHandler) {
+      const match = this.props.tables.find(ti => ti.info.oid === table_oid);
+      if (match) {
+        await w.$update({ table_name: match.name });
         return;
+      } else {
+        /** Reset schema related properties */
+        const emptyInfo = { columns: null, filter: [], having: [], sort: null };
+        const different = !this.d.w? undefined : Object.entries(emptyInfo).filter(([key, val]) => !isEqual(this.d.w![key], val))
+        if(different?.length){
+          await w.$update(emptyInfo);
+        }
       }
     }
  
@@ -292,6 +293,12 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
     
     if(delta.w && ("filter" in delta.w || "having" in delta.w)){
       this.props.onForceUpdate();
+    }
+
+    const { dbKey } = this.props.prgl;
+    if(this.currDbKey !== dbKey){
+      getAndFixWColumnsConfig(this.props.prgl.tables, w);
+      this.currDbKey = dbKey;
     }
 
     /* Simply re-render */
@@ -417,7 +424,8 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
     const tableHandler = db[tableName];
 
     try {
-      const orderBy = getSort(tables, { ...w, sort }) as any;
+      // const columnsConfig = await getAndFixWColumnsConfig(tables, w); //columns: columnsConfig,
+      const orderBy = getSort(tables, { ...w,  sort }) as any;
       /** Ensure the sort is valid */
       const { select } = await getTableSelect(w, tables, db, {}, true)
       await tableHandler?.find!({}, { select, limit: 0, orderBy })
@@ -445,7 +453,6 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
   } | undefined>(undefined)
 
   render() {
-
     const {
       loading,  
       rows,  
@@ -454,7 +461,7 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
     } = this.state;
     
     const showTableNotFound = (tableName: string) => (
-      <div className=" p-2 flex-row ai-center text-danger">
+      <div className=" p-2 flex-row ai-center text-danger" data-command={"W_Table.TableNotFound" satisfies Command}>
         <Icon path={mdiAlertOutline} size={1} className="mr-p5 " />
         Table {JSON.stringify(tableName)} not found
       </div>

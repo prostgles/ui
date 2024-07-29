@@ -301,7 +301,6 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
 
   isOk = false;
   render(){
-    
     const { 
       localSettings, prgl
     } = this.props;
@@ -345,6 +344,7 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
     
     if(connectionId) {
       mainContent = <ViewRendererWrapped 
+        /** Do not re-render on dbKey change because it breaks sql editor */
         // key={prgl.dbKey}
         isReadonly={isReadonly}
         prgl={prgl}

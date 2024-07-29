@@ -220,6 +220,10 @@ export const COMMANDS = {
   "ProjectConnection.error": "",
   "NotFound": "",
   "NotFound.goHome": "",
+  "ConnectionServer.NewUserName": "",
+  "ConnectionServer.NewUserPassword": "",
+  "ConnectionServer.withNewOwnerToggle": "",
+  "W_Table.TableNotFound": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 
