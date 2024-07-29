@@ -48,7 +48,7 @@ import { getFullColumnConfig, getSort, getSortColumn, updateWCols } from "./tabl
 import { W_Table_Content } from "./W_Table_Content";
 import { getAndFixWColumnsConfig } from "./TableMenu/getAndFixWColumnsConfig";
 import { isEqual } from "prostgles-client/dist/react-hooks";
-import { Command } from "../../Testing";
+import type { Command } from "../../Testing";
 
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {

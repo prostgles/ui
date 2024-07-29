@@ -4,7 +4,7 @@ import Btn from "../../components/Btn";
 import { FlexRow } from "../../components/Flex";
 import PopupMenu from "../../components/PopupMenu";
 import { StatusMonitor } from "../../dashboard/StatusMonitor";
-import { StatusDotCircleIcon } from "../Sessions";
+import { StatusDotCircleIcon } from "../Account/Sessions";
 import type { ConnectionProps } from "./Connection";
 
 export const ConnectionActionBar = (props: ConnectionProps) => {

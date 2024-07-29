@@ -418,6 +418,12 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     disable2FA: () => {
       return dbs.users.update({ id: user.id }, { "2fa": null });
     },
+    changePassword: async (oldPassword: string, newPassword: string) => {
+      const hashedCurrentPassword = getPasswordHash(user, oldPassword);
+      if(user.password !== hashedCurrentPassword) throw "Old password is incorrect"; 
+      const hashedNewPassword = getPasswordHash(user, newPassword);
+      await dbs.users.update({ id: user.id }, { password: hashedNewPassword });
+    },
     getAPITSDefinitions: () => {
 
       /** Must install them into the server folder! */

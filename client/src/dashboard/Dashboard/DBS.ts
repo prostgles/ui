@@ -62,6 +62,7 @@ export type DBSMethods = Partial<{
     pg_restore: string;
     os: "" | "Linux" | "Mac" | "Windows";
   }>;
+  changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
 }>;
 
 export type DBS = DBHandlerClient<DBSchemaGenerated> & {
