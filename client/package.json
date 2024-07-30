@@ -14,7 +14,7 @@
     "dotenv-expand": "5.1.0",
     "engine.io-client": "^6.5.4",
     "install": "^0.13.0",
-    "monaco-editor": "^0.49.0",
+    "monaco-editor": "^0.50.0",
     "npm": "^10.7.0",
     "papaparse": "^5.4.1",
     "postcss-flexbugs-fixes": "^5.0.2",

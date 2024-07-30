@@ -17,7 +17,7 @@ export const getPopupSize = (popup: Popup) => {
   const titleRef = rootChild?.querySelector<HTMLElement>(`:scope > header.${POPUP_CLASSES.title}`) ?? undefined;
   const footerRef = popup.ref.querySelector<HTMLElement>(`:scope > footer`) ?? undefined;
 
-  const size = [titleRef, contentRef, footerRef]
+  const { width, height } = [titleRef, contentRef, footerRef]
     .filter(isDefined)
     .reduce((a, { offsetHeight, offsetWidth, scrollHeight, scrollWidth }) => ({
       ...a,
@@ -25,6 +25,11 @@ export const getPopupSize = (popup: Popup) => {
       height: a.height + Math.max(offsetHeight, scrollHeight),
     }), { width: 0, height: 0 });
 
+  const size = {
+    width: Math.max(width, popup.prevSize?.width ?? 0),
+    height: Math.max(height, popup.prevSize?.height ?? 0),
+  };
+  popup.prevSize = size;
   return size;
 }
 

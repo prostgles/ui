@@ -213,6 +213,17 @@ export const COMMANDS = {
   "Setup2FA.Enable.ConfirmCode": "",
   "Setup2FA.Enable.Confirm": "",
   "Setup2FA.Disable": "",
+  "DashboardMenuHeader.togglePinned": "",
+  "BackupControls.DeleteAll": "",
+  "BackupControls.DeleteAll.Confirm": "",
+  "JoinedRecords.toggle": "",
+  "ProjectConnection.error": "",
+  "NotFound": "",
+  "NotFound.goHome": "",
+  "ConnectionServer.NewUserName": "",
+  "ConnectionServer.NewUserPassword": "",
+  "ConnectionServer.withNewOwnerToggle": "",
+  "W_Table.TableNotFound": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

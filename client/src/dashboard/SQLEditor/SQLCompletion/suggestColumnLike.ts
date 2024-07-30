@@ -18,34 +18,38 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
   }
   const expressions = await getTableExpressionSuggestions({ parentCb, cb, ss, sql }, "columns");
 
-  const maybeTableAlias = !cb.currToken? undefined : cb.currToken.text === "."? cb.ltoken?.text : cb.currToken.text.split(".")[0]!;
-  const activeAliasTable = !maybeTableAlias? undefined : expressions.tablesWithAliasInfo.find(t => t.alias === maybeTableAlias);
+  const dotPrefix = !cb.currToken? undefined : cb.currToken.text === "."? cb.ltoken?.text : cb.currToken.text.split(".")[0]!;
+  const activeAliasTable = !dotPrefix? undefined : expressions.tablesWithAliasInfo.find(t => t.alias === dotPrefix);
   if(activeAliasTable){
     const tableAliasCols = expressions.columns.filter(c => c.escapedParentName === activeAliasTable.s.escapedIdentifier)
     return { suggestions: tableAliasCols }
   }
+
+  const maybeWrittingSchema = !activeAliasTable && cb.currToken?.text === "." && dotPrefix? dotPrefix : undefined;
+  const activeSchema = !maybeWrittingSchema? undefined : ss.find(s => s.type === "schema" && s.escapedIdentifier === maybeWrittingSchema);
 
   /** Allow all other columns only if can add tablename to end */
   const otherColumns = ss.filter(s => {
     if(s.type !== "column") return false;
     return !addTable? false : !expressions.tables.some(t => t.escapedIdentifier === s.escapedParentName);
   });
-
-  const funcs = ss.filter(s => 
-    s.type === "function"
-  );
  
+  const funcs = ss.filter(s => {
+    return s.type === "function" && (!activeSchema || s.schema === activeSchema.escapedIdentifier);
+  });
+
   const colAndFuncSuggestions = ([
     ...expressions.columns.map(s => ({ isPrioritised: true, s })), 
     ...otherColumns.map(s => ({ isPrioritised: false, s })),
     /**
-     * Slice is used to ensure columns are prioritised for cases when the middle of word matches:
+     * This is now handled by fixMonacoSortFilter
+     * Slice WAS used to ensure columns are prioritised for cases when the middle of word matches:
      * 
      * SELECT *
      * FROM pg_catalog.pg_class
      * ORDER BY name -> relname
      */
-    ...funcs.map(s => ({ isPrioritised: false, s })) .slice(...(cb.currToken? [0] : [0, 0])) ,
+    ...funcs.map(s => ({ isPrioritised: false, s })) // .slice(...(cb.currToken? [0] : [0, 0])) ,
   ])
   .map(({ s, isPrioritised }) => {
 
@@ -56,7 +60,11 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
       ;
 
     const sortText = isPrioritised? s.sortText : 
-      `${(s.type === "function"? (cb.textLC.startsWith("create index") && s.funcInfo?.provolatile === "i"? "c" : "d") : (prioritiseColumn? "a" : "b"))}${(s.schema === "public"? "a" : "b")}`;
+      `${(s.type === "function"? (
+        cb.textLC.startsWith("create index") && s.funcInfo?.provolatile === "i"? "c" : 
+        cb.currToken?.text === "." && s.schema === cb.ltoken?.text? "a" :
+        "d"
+      ) : (prioritiseColumn? "a" : "b"))}${(s.schema === "public"? "a" : "b")}`;
 
     if (s.type === "column") {
       const delimiter = addTableInline? " " : "\n";
@@ -74,6 +82,9 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
       
     return {
       ...s,
+      ...(s.type === "function" && s.insertText && activeSchema && {
+        insertText: s.insertText?.split(`${activeSchema}.`).join(""),
+      }),
       sortText
     }
 
@@ -92,16 +103,19 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
 
   const prevKwd = cb.getPrevTokensNoParantheses().slice().reverse().find(t => t.type === "keyword.sql");
   if(prevKwd?.textLC === "select"){
-    selectKwds.unshift({
-      insertText: "*",
-      kind: getKind("keyword"),  
-      type: "keyword", 
-      label: "*",
-      name: "*",
-      detail: "(keyword)",
-      documentation: { value: "All columns" },
-      sortText: "a", 
-    } as any);
+
+    if(!(cb.currToken && !activeAliasTable)){
+      selectKwds.unshift({
+        insertText: "*",
+        kind: getKind("keyword"),  
+        type: "keyword", 
+        label: "*",
+        name: "*",
+        detail: "(keyword)",
+        documentation: { value: "All columns" },
+        sortText: "a", 
+      } as any);
+    }
 
     if(cb.prevText.endsWith(") ") && ltoken?.textLC === ")"){
       const prevFunc = cb.prevTokens.find((t, i)=> {

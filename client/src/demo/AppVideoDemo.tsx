@@ -1,12 +1,12 @@
 import { mdiPlay, mdiPlayCircleOutline } from "@mdi/js";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { r_useAppVideoDemo, useReactiveState, type Prgl } from "../App";
 import Btn from "../components/Btn";
-import { startWakeLock, VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
-import { VIDEO_DEMO_SCRIPTS } from "./videoDemoScripts";
-import { getKeys } from "../utils";
-import Popup from "../components/Popup/Popup";
 import { FlexCol } from "../components/Flex";
+import Popup from "../components/Popup/Popup";
+import { startWakeLock, VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
+import { getKeys } from "../utils";
+import { VIDEO_DEMO_SCRIPTS } from "./videoDemoScripts";
 const demoScripts = getKeys(VIDEO_DEMO_SCRIPTS);
 type DEMO_NAME = keyof typeof VIDEO_DEMO_SCRIPTS;
 
@@ -30,6 +30,7 @@ export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
   const [showDemoOptions, setShowDemoOptions] = useState<HTMLButtonElement | null>(null);
   const startDemo = async (name?: DEMO_NAME) => {
     setShowDemoOptions(null);
+
     if(!isOnDemoDatabase) {
       throw new Error("Cannot start demo on a non-demo database");
     }

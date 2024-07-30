@@ -1,23 +1,24 @@
 import { mdiFormatLetterCase } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
-import type { Command, TestSelectors } from "../Testing";
-import RTComp from "../dashboard/RTComp";
-import Btn from "./Btn";
-import Checkbox from "./Checkbox";
-import { ClickCatchOverlay } from "./ClickCatchOverlay";
-import { DraggableLI } from "./DraggableLI";
-import ErrorComponent from "./ErrorComponent";
-import { generateUniqueID } from "./FileInput/FileInput";
-import { classOverride } from "./Flex";
-import { Input } from "./Input";
-import { Label } from "./Label";
-import "./List.css";
-import Loading from "./Loading";
-import Popup, { POPUP_CLASSES } from "./Popup/Popup";
+import type { Command, TestSelectors } from "../../Testing";
+import RTComp from "../../dashboard/RTComp";
+import Btn from "../Btn";
+import Checkbox from "../Checkbox";
+import { ClickCatchOverlay } from "../ClickCatchOverlay";
+import { DraggableLI } from "../DraggableLI";
+import ErrorComponent from "../ErrorComponent";
+import { generateUniqueID } from "../FileInput/FileInput";
+import { classOverride } from "../Flex";
+import { Input } from "../Input";
+import { Label } from "../Label";
+import "../List.css";
+import Loading from "../Loading";
+import Popup, { POPUP_CLASSES } from "../Popup/Popup";
 import "./SearchList.css";
-import type { OptionKey } from "./Select/Select";
+import type { OptionKey } from "../Select/Select";
 import type { Primitive } from "d3";
+import { ScrollFade } from "./ScrollFade";
 
 export type SearchListItemContent = (
   {
@@ -533,7 +534,8 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
     const noList = (!renderedItems.length && !searchTerm || (isSearch && searchClosed)); 
     const list = error? <ErrorComponent error={error} /> : 
       noList? null : 
-      (<div className={"SearchList_Suggestions  relative w-full f-1  min-h-0 min-w-0 no-scroll-bar " + (isSearch ?" o-visible " : " o-auto ")} 
+      (<ScrollFade  
+        className={"SearchList_Suggestions  relative w-full f-1  min-h-0 min-w-0 no-scroll-bar " + (isSearch ?" o-visible " : " o-auto ")} 
         data-command={this.props["data-command"]}
         data-key={this.props["data-key"]}
       >
@@ -656,7 +658,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
                   </DraggableLI> )
               })}
         </ul>
-      </div>)
+      </ScrollFade>)
 
     const inputClass = "search-list-comp-input";
     

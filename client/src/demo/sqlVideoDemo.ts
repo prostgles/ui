@@ -1,13 +1,14 @@
 import { tout } from "../pages/ElectronSetup";
-import type { DemoScript } from "../dashboard/W_SQL/getDemoUtils";
+import type { DemoScript, TypeAutoOpts } from "../dashboard/W_SQL/getDemoUtils";
 import { QUERY_WATCH_IGNORE } from "../../../commonTypes/utils";
+import { getElement, movePointer } from "./demoUtils";
 
 export const sqlVideoDemo: DemoScript = async ({ 
   runDbSQL, fromBeginning, typeAuto, 
   moveCursor, triggerParamHints,  getEditor, 
   actions, testResult, triggerSuggest, runSQL, newLine
 }) => {
-  const hasTable = await runDbSQL(`SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public' AND tablename = 'chats'`, { }, { returnType: "value" });
+  const hasTable = await runDbSQL(`SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = current_schema() AND tablename = 'chats'`, { }, { returnType: "value" });
   const existingUsers: string[] = await runDbSQL(`SELECT usename FROM pg_catalog.pg_user `, { }, { returnType: "values" });
   if(!hasTable){
     // alert("Creating demo tables. Must run demo script again");
@@ -31,9 +32,9 @@ export const sqlVideoDemo: DemoScript = async ({
       `GRANT ALL ON ALL TABLES IN SCHEMA public TO mynewuser;`,
       existingUsers.includes("vid_demo_user")? "" : `CREATE USER vid_demo_user;`,
       usersTable,
-      `INSERT INTO users(id, status, username, password, type, options) VALUES (gen_random_uuid(), 'active', 'user78679', '****', 'default', '{ "theme": "light" }'::JSONB);`,
-      `INSERT INTO users(id, status, username, password, type, options) VALUES (gen_random_uuid(), 'active', 'user219', '****', 'customer', '{ "theme": "from-system" }'::JSONB);`,
-      `INSERT INTO users(id, status, username, password, type, options) VALUES (gen_random_uuid(), 'active', 'user219', '****', 'defaultl', '{ "theme": "dark" }'::JSONB);`,
+      `INSERT INTO users(id, status, username, password, type, options) VALUES (gen_random_uuid(), 'active', 'user78679', '****', 'default', '{ "theme": "light", "viewedSqlTips": true, "language": "en-US", "timeZone": "America/New_York" }'::JSONB);`,
+      `INSERT INTO users(id, status, username, password, type, options) VALUES (gen_random_uuid(), 'active', 'user219', '****', 'customer', '{ "theme": "from-system", "viewedSqlTips": false }'::JSONB);`,
+      `INSERT INTO users(id, status, username, password, type, options) VALUES (gen_random_uuid(), 'active', 'user219', '****', 'defaultl', '{ "theme": "dark", "viewedSqlTips": true }'::JSONB);`,
       `CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, user_id UUID NOT NULL REFERENCES users, total_price DECIMAL(12,2) CHECK(total_price >= 0), created_at TIMESTAMP  DEFAULT now());`,
       `CREATE TABLE IF NOT EXISTS chats (id BIGSERIAL PRIMARY KEY);`,
       `CREATE TABLE IF NOT EXISTS chat_members (chat_id BIGINT NOT NULL REFERENCES chats, user_id UUID NOT NULL REFERENCES users, UNIQUE(chat_id, user_id));`,
@@ -49,82 +50,107 @@ export const sqlVideoDemo: DemoScript = async ({
     await runDbSQL(demoSchema.join("\n"));  
   }
 
+  await runDbSQL(`DROP POLICY IF EXISTS read_own_data ON users;`)
+
+  const pinnToggle = getElement<HTMLButtonElement>("DashboardMenuHeader.togglePinned");
+  pinnToggle?.click();
+  await movePointer(0,0);
+
   /** Force monaco to show the text in docker */
-  getEditor().editor.querySelector<HTMLDivElement>(".monaco-editor")?.click();
+  const focusEditor = () => {
+    getEditor().editor.querySelector<HTMLDivElement>(".monaco-editor")?.click();
+  }
+  focusEditor();
 
   const waitAccept = 1e3;
   const waitBeforeAccept = .5e3;
-  const showScript = async (title: string, logic: () => Promise<void>) => {
-    fromBeginning(false, `/* ${title} */\n`);
+  const showScript = async (title: string, script: string, logic: () => Promise<void>) => {
+    fromBeginning(false, `/* ${title} */\n${script}`);
     await tout(1000);
     await logic();
     await tout(1e3);
   }
 
-  /** Context aware suggestions */
-  await showScript(`Context aware suggestions`, async () => {
-    const script = fixIndent(`
-      /* Context aware suggestions */
-      SELECT u.id, latest_orders.*
-      FROM users u
-      LEFT JOIN LATERAL (
-        SELECT *
-        FROM orders o
-        WHERE u
-        LIMIT 10
-      ) latest_orders
-        ON TRUE
-    `);
-    fromBeginning(false, script);
-    await moveCursor.lineEnd();
-    await moveCursor.up(3);
-    await moveCursor.lineEnd();
-    await tout(500);
-    await typeAuto(".i", { waitBeforeAccept });
-    await typeAuto(` `);
-    await typeAuto(" o.", { waitBeforeAccept });
-    testResult(script.replace("WHERE u", "WHERE u.id = o.user_id"))
-  });
+  const typeQuick = (text: string, opts?: TypeAutoOpts) => {
+    return typeAuto(text, { msPerChar: 0, waitBeforeAccept: .5e3, waitAccept: 0, ...opts });
+  }
 
   /** Join complete */
-  await showScript(`Joins autocomplete`, async () => {
-    await fromBeginning(false, `/* Joins autocomplete */\nSELECT * \nFROM users u`);
-    await typeAuto(`\nleft`, { msPerChar: 40, waitAccept: 1e3 });
-    await typeAuto(` `, { msPerChar: 40, waitAccept: 1e3, nth: 2 });
+  await showScript(`Joins autocomplete`, `SELECT * \nFROM users u`, async () => {
+    await typeQuick(`\nleft`);
+    await typeQuick(` `, { msPerChar: 40, waitAccept: 0, nth: 2 });
+  });
+
+  /** Context aware suggestions */
+  const script = fixIndent(`
+    /** Schema and context aware suggestions */
+    SELECT u.id, latest_orders.*
+    FROM users u
+    LEFT JOIN LATERAL (
+      SELECT *
+      FROM orders o
+      WHERE u.id = o.user_id
+      ORDER BY
+      LIMIT 10
+    ) latest_orders
+      ON TRUE
+    `);
+  await fromBeginning(false, script);
+  await moveCursor.lineEnd();
+  await moveCursor.up(3);
+  await moveCursor.lineEnd();
+  await tout(500);
+  await typeAuto(" o.");
+  await typeAuto(" d");
+  testResult(script.replace("ORDER BY", "ORDER BY o.created_at DESC"));
+
+  /** Documentation and ALL CATALOGS SUGGESTED */
+  // await showScript(`Schema and context aware suggestions`, "", async () => {
+  //   await typeQuick(`SEL` );
+  //   await typeQuick(` query`, { nth: 1 });
+  //   await typeQuick(`, md` );
+  //   await typeAuto(`(`, { dontAccept: true });
+  //   triggerParamHints();
+  //   await tout(500);
+  //   await typeQuick("q" );
+  // });
+  
+  await showScript(`Data aware suggestions, jsonb support`, `SELECT`, async () => {
+    await typeQuick(` opt`);
+    await moveCursor.lineEnd();
+    await typeQuick(`, age(cr`, { waitBeforeAccept: 1500 });
+    await moveCursor.down(1);
+    await moveCursor.lineEnd();
     await newLine();
-    await moveCursor.left(2);
-    await typeAuto(`W`, { triggerMode: "firstChar" });
-    await typeAuto(` opt`);
-    await typeAuto(` the`);
-    await typeAuto(` `);
-    await typeAuto(` '`, { msPerChar: 1, triggerMode: "firstChar" });
+    await typeQuick(`W`, { triggerMode: "firstChar", waitBeforeAccept: 500 });
+    await typeQuick(` opt`);
+    await typeAuto(` the`, { waitAccept: 1e3 });
+    await typeQuick(` `);
+    await typeAuto(` '`, { msPerChar: 55, waitAccept: 500, triggerMode: "firstChar", waitBeforeAccept: 500 });
+    testResult(`/* Data aware suggestions, jsonb support */\nSELECT options, age(created)\nFROM users\nWHERE options ->>'theme' = 'dark'\nLIMIT 200`);
   });
   
   /** Current statement execution */
-  await showScript(`Current statement execution`, async () => {
-    const script = fixIndent(`
-      /* Current statement execution */
+  await showScript(`Current statement execution`, 
+    fixIndent(`
       SELECT * 
-      FROM chat_members
+      FROM orders
       
       SELECT * 
-      FROM users
-    `);
-    fromBeginning(false, script);
-    await actions.selectCodeBlock();
-    await tout(700);
-    await moveCursor.down(4, 30);
-    await tout(500);
-    await actions.selectCodeBlock();
-    await tout(500);
+      FROM`
+    ), async () => {
+    // await actions.selectCodeBlock();
     await moveCursor.up(4, 30);
     await tout(500);
     await actions.selectCodeBlock();
-    await tout(500);
+    await runSQL(); 
+    focusEditor();
     await moveCursor.down(4, 30);
-    await tout(500);
+    await moveCursor.lineEnd();
+    await typeAuto(" use");
     await actions.selectCodeBlock();
     await tout(500);
+    await runSQL();
   })
   
   /** Selection expansion */
@@ -154,88 +180,95 @@ export const sqlVideoDemo: DemoScript = async ({
   //   }
   // });
 
-  /** Documentation and ALL CATALOGS SUGGESTED */
-  await showScript(`Schema and context aware suggestions`, async () => {
-    await typeAuto(`SEL`, { msPerChar: 40, waitAccept });
-    await typeAuto(` query`, { msPerChar: 40, waitAccept, nth: 1 });
-    await typeAuto(`, md`, { msPerChar: 40, waitAccept });
-    await typeAuto(`(`, { msPerChar: 40, waitAccept: 0, dontAccept: true });
-    triggerParamHints();
-    await tout(500);
-    await typeAuto("q", { waitBeforeAccept: 1e3 });
-  });
-
-  await showScript("Documentation extracts", async () => {
-    await typeAuto(`c`, { msPerChar: 40, waitAccept, waitBeforeAccept });
-    await typeAuto(` us`, { msPerChar: 40, waitBeforeAccept });
-    await typeAuto(` mynewuser`, { msPerChar: 4, dontAccept: true });
+  await showScript("Documentation and schema extracts", "", async () => {
+    await typeQuick(`cr`, { msPerChar: 40, waitAccept, waitBeforeAccept });
+    await typeQuick(` us`, { msPerChar: 40, waitBeforeAccept });
+    await typeQuick(` mynewuser`, { msPerChar: 4, dontAccept: true });
     await newLine()
-    await typeAuto(`pass`, { msPerChar: 140, waitAccept, waitBeforeAccept });
-  });
-  await showScript(`Schema extracts`, async () => {
-    await typeAuto(`a`, { msPerChar: 40, waitAccept, waitBeforeAccept });
-    await typeAuto(` ta`, { msPerChar: 40 });
-    await typeAuto(` us`, { msPerChar: 40, waitAccept, waitBeforeAccept });
-    await typeAuto(`\nalt`, { msPerChar: 40, waitAccept: 1e3 });
-    await typeAuto(` padm`, { waitAccept: 1e3 });
-    await newLine();
-    await typeAuto(`def`, { waitAccept });
-    await typeAuto(` FALSE`, { dontAccept: true, nth: -1 });
-    testResult(fixIndent(`
-      /* Schema extracts */
-      ALTER TABLE users
-      ALTER COLUMN passwordless_admin
-      SET DEFAULT FALSE`
-    ));
-  });
+    await typeQuick(`pass`, { msPerChar: 140, waitAccept, waitBeforeAccept });
 
-  await showScript("User access details", async () => {
-    await typeAuto(`gr`);
-    await typeAuto(` sel`);
-    await typeAuto(` usern`);
-    await typeAuto(` `);
-    await typeAuto(` myne`);
+    await newLine(2);
+    await typeQuick(`gr`);
+    await typeQuick(` sel`);
+    await typeQuick(` usern`);
+    await typeQuick(` `);
+    await typeQuick(` myne`);
     await runSQL();
+    await newLine(2);
+
+    await typeAuto(`cre`);
+    await typeAuto(` pol`);
+    await typeAuto(` read_own_data`, { dontAccept: true });
+    await typeAuto(`\n`);
+    await typeAuto(` us`);
+    await typeAuto(` f`);
+    await typeAuto(` se`);
+    await typeAuto(`\n`);
+    await typeAuto(` myn`);
+    await typeAuto(`\n`);
+    await typeAuto(` id`);
+    await typeAuto(`= prou`);
+    await typeAuto(`('id')::uuid`, { dontAccept: true });
     await tout(1e3);
+    await runSQL();
   });
 
-  await showScript("User access details", async () => {
-    await typeAuto(`?user `, { msPerChar: 40, waitBeforeAccept: 1e3, nth: 1, dontAccept: true });
+  await showScript("Schema extracts with access details", "", async () => {
+    await typeQuick(`?user `, { nth: 1, dontAccept: true });
     await moveCursor.left();
-    await typeAuto(` mynew`, { waitBeforeAccept: 1e3 });
+    await typeQuick(` mynew`, { waitBeforeAccept: 2e3 });
     testResult([
-      "/* User access details */",
+      "/* Schema extracts with access details */",
       "?user mynewuser"
     ].join("\n"));
   });
 
+  await showScript(`Schema extracts with related objects`, "", async () => {
+    await typeQuick(`a`, { msPerChar: 40, waitAccept, waitBeforeAccept });
+    await typeQuick(` ta`, { msPerChar: 40 });
+    await typeQuick(` us`, { msPerChar: 40, waitAccept, waitBeforeAccept });
+    await typeQuick(`\nalt`);
+    await typeQuick(` padm`, { waitAccept: 1e3 });
+    await newLine();
+    await typeQuick(`def`, { waitAccept });
+    await typeQuick(` FALSE`, { dontAccept: true, nth: -1 });
+    testResult(fixIndent(`
+      /* Schema extracts with related objects */
+      ALTER TABLE users
+      ALTER COLUMN passwordless_admin
+      SET DEFAULT FALSE`
+    ));
+  }); 
+
   /** Insert value suggestions */
-  await showScript(`Argument hints`, async () => {
-    await typeAuto(`INSE`, { msPerChar: 40, waitAccept: 1e3 });
-    await typeAuto(` users`, { msPerChar: 40, nth: 1 });
-    await typeAuto(`(`, { nth: -1 });
-    await typeAuto(`DEFAULT,`, { nth: -1 });
+  await showScript(`Argument hints`, "", async () => {
+    await typeQuick(`INSE`);
+    await typeQuick(` users`, { nth: 1 });
+    await typeQuick(`(`, { nth: -1 });
+    await typeQuick(`DEFAULT,`, { nth: -1 });
   });
 
-  await showScript(`Settings details`, async () => {
-    await typeAuto(`SET`, { msPerChar: 40, waitAccept: 1e3 });
-    await typeAuto(` wm`, { msPerChar: 40, waitAccept: 1e3 });
-    await typeAuto(` `);
-    await typeAuto(` `, { msPerChar: 40, waitAccept: 1e3, nth: -1 });
+  await showScript(`Settings details`, "", async () => {
+    await typeQuick(`SET`);
+    await typeQuick(` wm`, { waitBeforeAccept: 2e3 });
+    await typeQuick(` `);
+    await typeQuick(` `, { waitBeforeAccept: 1e3 });
   });
 
-  await tout(1e3);
-  fromBeginning(false);
-  await typeAuto(`GRANT SE`, { msPerChar: 40, waitAccept: 1e3, nth: 1 });
-  await typeAuto(`\nall`, { msPerChar: 40, waitAccept: 1e3 });
-  await typeAuto(` pub`, { msPerChar: 40, waitAccept: 1e3 });
-  await typeAuto(`\n`, { msPerChar: 40, waitAccept: 1e3 });
-  await typeAuto(` myn`, { msPerChar: 40, waitAccept: 1e3 });
-  testResult(fixIndent(`
-    GRANT SELECT ON
-    ALL TABLES IN SCHEMA public
-    TO mynewuser`)
-  );
+  // await tout(1e3);
+  // fromBeginning(false);
+  // await typeQuick(`GRANT SE`, { nth: 1 });
+  // await typeQuick(`\nall`);
+  // await typeQuick(` pub`);
+  // await typeQuick(`\n`);
+  // await typeQuick(` myn`);
+  // testResult(fixIndent(`
+  //   GRANT SELECT ON
+  //   ALL TABLES IN SCHEMA public
+  //   TO mynewuser`)
+  // );
+
+  // await runSQL();
 }
 
 /**

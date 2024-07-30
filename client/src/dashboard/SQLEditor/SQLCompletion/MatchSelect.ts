@@ -104,16 +104,25 @@ export const MatchSelect: SQLMatcher = {
       }
     }
 
-    /** Suggest aggregate filter funcs */
-    if(thisLineLC.trim().endsWith(")")){
-      const funcSuggestions = getLastFuncSuggestions(cb, ss);
-      if(funcSuggestions.some(s => s.name === "rank")){
+    const prevFunc = cb.thisLineLC.endsWith(")") && cb.ltoken?.text === ")" && cb.prevTokens.slice(0).reverse().find((_, i, arr) => {
+      const t = arr[i-1];
+      return t && t.text === "(" && t.nestingId === cb.ltoken?.nestingId;
+    });
+    if(prevFunc){
+      if(prevFunc.textLC === "unnest"){
+        return suggestSnippets([{ 
+          label: `WITH ORDINALITY $0`, 
+          docs: `If the WITH ORDINALITY clause is specified, an additional column of type bigint will be added to the function result columns. This column numbers the rows of the function result set, starting from 1.`, 
+          kind: getKind("function") 
+        }])
+      }
+      if(AGG_FUNC_NAMES.includes(prevFunc.textLC)){
+        return suggestSnippets([{ label: `FILTER ( WHERE $0 )`, docs: missingKeywordDocumentation.FILTER, kind: getKind("function") }])
+      }
+      if(prevFunc.textLC === "rank" || prevFunc.textLC === "row_number"){
         return suggestSnippets([{
           label: `OVER (PARTITION BY $0 ORDER BY $1 DESC)`, kind: getKind("function"), 
           docs: rancDocs }])
-      }
-      if(funcSuggestions.some(s => s.funcInfo?.is_aggregate)){
-        return suggestSnippets([{ label: `FILTER ( WHERE $0 )`, docs: missingKeywordDocumentation.FILTER, kind: getKind("function") }])
       }
     }
 
@@ -206,9 +215,6 @@ const getKWDSz = (excludeInto = false) => [
     [
       { kwd: "INTO",    expects: "table", justAfter: ["SELECT"], dependsOnAfter: "FROM", docs: "Creates a table from the result of the select statement" } as const
     ]),
-  { kwd: "FILTER",  expects: "column", dependsOn: "SELECT", 
-    include: ({ ltoken, l1token }) => [l1token?.textLC, ltoken?.textLC].some(v => AGG_FUNC_NAMES.includes(v as string) ) 
-  }, 
   { kwd: "FROM",    expects: "table", justAfter: ["SELECT"], docs: "Specifies a table/view or function with returns a table-like result" }, 
   { kwd: "JOIN",  expects: "table", docs: "Combine rows from one table with rows from a second table", canRepeat: true }, 
   { kwd: "JOIN LATERAL",  expects: "table", docs: "Lateral join subquery can reference columns provided by preceding FROM items", canRepeat: true }, 

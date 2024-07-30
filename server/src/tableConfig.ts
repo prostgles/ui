@@ -194,7 +194,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       username: { sqlDefinition: `TEXT NOT NULL UNIQUE` },
       password: { 
         sqlDefinition: `TEXT NOT NULL DEFAULT gen_random_uuid()`, 
-        info: { hint: "On update will be hashed with the user id" } 
+        info: { hint: "Hashed with the user id on insert/update" } 
       },
       type:     { sqlDefinition: `TEXT NOT NULL DEFAULT 'default' REFERENCES user_types (id)` },
       passwordless_admin: { 
@@ -257,7 +257,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
 
   sessions: {
     columns: {
-      id:          `UUID UNIQUE NOT NULL DEFAULT gen_random_uuid()` ,
+      id:          `TEXT UNIQUE NOT NULL` ,
       id_num:      `SERIAL PRIMARY KEY` ,
       user_id:     `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE` ,
       name:        `TEXT` ,

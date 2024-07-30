@@ -1,7 +1,8 @@
 import { useProstglesClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
-import { prgl_R, type PrglProject, type PrglState } from "../../App";
+import type { PrglProject, PrglState } from "../../App";
 import { getTables } from "../../dashboard/Dashboard/Dashboard";
+import { prgl_R } from "../../WithPrgl";
 
 
 type PrglProjectState = {
@@ -35,7 +36,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
   const { dbsMethods: { startConnection } } = prglState;
   const connectionTableHandler = prglState.dbs.connections;
   const pathAndCon = usePromise(async () => {
-    const con = await connectionTableHandler.findOne({ id: connId });
+    const con = await connectionTableHandler.findOne({ id: connId }).catch(console.error);
     if(!connId) return undefined;
     if(!con) return { error: "Connection not found", path: undefined, con: undefined, connId };
     try {
@@ -104,7 +105,6 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
         });
         (window as any).db = db;
         (window as any).dbMethods = methods; 
-
         return {
           prglProject,
           state: "loaded",

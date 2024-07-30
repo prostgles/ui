@@ -54,7 +54,7 @@ export const getTableMeta = async (db: DBHandlerClient, dbs: DBS, database_id: n
           ON rel.oid = c.conrelid
           INNER JOIN pg_catalog.pg_namespace nsp
           ON nsp.oid = connamespace
-          WHERE nsp.nspname = 'public'
+          WHERE nsp.nspname = current_schema()
               AND format('%I', rel.relname) = \${tableName};`,
       { tableName },
       { returnType: "rows" }
@@ -62,7 +62,7 @@ export const getTableMeta = async (db: DBHandlerClient, dbs: DBS, database_id: n
     const indexes: any = await db.sql(`
         SELECT tablename, indexname, indexdef
         FROM pg_indexes
-        WHERE schemaname = 'public' AND format('%I', tablename) = \${tableName}`,
+        WHERE schemaname = current_schema() AND format('%I', tablename) = \${tableName}`,
       { tableName },
       { returnType: "rows" }
     );
@@ -114,7 +114,7 @@ export const getTableMeta = async (db: DBHandlerClient, dbs: DBS, database_id: n
           END as "type",
           relowner,
           (SELECT pgs.usename 
-            FROM pg_shadow pgs 
+            FROM pg_user pgs 
             WHERE relowner = pgs.usesysid
           ) as relowner_name,
           relrowsecurity, 

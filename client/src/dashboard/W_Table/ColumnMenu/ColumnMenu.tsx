@@ -315,7 +315,7 @@ export const ColumnMenu = (props: P) => {
   const content = (
     <div className="min-h-0 flex-col" > 
       <Tabs
-        compactMode={window.isMobileDevice}
+        compactMode={window.isMobileDevice? "hide-inactive" : undefined}
         variant="vertical"
         listClassName="o-auto"
         contentClass={" min-w-300 flex-col ml-p25 o-auto " + (activeKey === "Alter"? " o-auto " : " p-1 ")}

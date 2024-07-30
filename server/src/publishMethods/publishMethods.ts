@@ -35,6 +35,7 @@ import type { SampleSchema } from "../../../commonTypes/utils";
 import { getInstalledPrograms } from "../BackupManager/getInstalledPrograms";
 import { getStatus } from "../methods/getPidStats";
 import { getPasswordHash } from "../authConfig/authUtils";
+import { createSessionSecret } from "../authConfig/authConfig";
 
 export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params) => { 
   const { dbo: dbs, socket, db: _dbs } = params;
@@ -161,11 +162,28 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
               AND NOT datistemplate
               ORDER BY datname = 'postgres' DESC
             `);
+            const _superUsers: { usename: string }[] = await cdb.any(`
+              SELECT usename 
+              FROM pg_user WHERE usesuper = true
+              `, {});
+            const superUsers = _superUsers.map(u => u.usename);
             cdb.$pool.end();
             const [anotherDatabaseName] = anotherDatabaseNames;
             if(!anotherDatabaseName) throw "Could not find another database";
 
-            const acdb = await getCDB(con.id, { database: anotherDatabaseName.datname }, true);
+            let superUser: { user: string; password: string; } | undefined;
+            if(!superUsers.includes(con.db_user)){
+              const conWithSuperUsers = await t.connections.findOne({ 
+                db_user: { $in: superUsers },
+                db_host: con.db_host,
+                db_port: con.db_port,
+                db_pass: { "<>": null },
+              });
+              if(conWithSuperUsers){
+                superUser = { user: conWithSuperUsers.db_user, password: conWithSuperUsers.db_pass! };
+              }
+            }
+            const acdb = await getCDB(con.id, { database: anotherDatabaseName.datname, ...superUser }, true);
             const killDbConnections = () => {
               return acdb.manyOrNone(`
                 SELECT pg_terminate_backend(pid) 
@@ -358,7 +376,8 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
         user_id: user.id, 
         user_type: user.type, 
         type: "api_token", 
-        ip_address 
+        ip_address,
+        id: createSessionSecret(),
       }, { returning: "*" });
       
       return session.id;
@@ -388,10 +407,22 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       
       if(!isValid) throw "Invalid code";
       await dbs.users.update({ id: user.id }, { "2fa": { ...latestUser["2fa"]!, enabled: true } });
-      return "ok"
+
+      /** Log out all web sessions after enabling 2fa */
+      await dbs.sessions.update({
+        user_id: user.id, 
+        type: "web",
+      }, { type: "web", active: false });
+      return "ok";
     },
     disable2FA: () => {
       return dbs.users.update({ id: user.id }, { "2fa": null });
+    },
+    changePassword: async (oldPassword: string, newPassword: string) => {
+      const hashedCurrentPassword = getPasswordHash(user, oldPassword);
+      if(user.password !== hashedCurrentPassword) throw "Old password is incorrect"; 
+      const hashedNewPassword = getPasswordHash(user, newPassword);
+      await dbs.users.update({ id: user.id }, { password: hashedNewPassword });
     },
     getAPITSDefinitions: () => {
 

@@ -1,5 +1,5 @@
 import React from "react";
-import type { SearchListProps } from "../../../components/SearchList";
+import type { SearchListProps } from "../../../components/SearchList/SearchList";
 import type { SmartSearch } from "./SmartSearch";
 import { getSmartSearchRows } from "./getSmartSearchRows";
 import type { SimpleFilter, SmartGroupFilter } from "../../../../../commonTypes/filterUtils";

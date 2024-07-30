@@ -268,6 +268,7 @@ export class ViewRenderer extends RTComp<ViewRendererProps, ViewRendererState, D
             onClickRow={row => onClickRow(row, w.table_name!, w.id, { type: "table-row" })}
             childWindow={childWindow}
             { ...commonProps }
+            key={commonProps.key + this.props.prgl.dbKey}
             w={w as any}
           />;
         }
@@ -357,6 +358,11 @@ export const ViewRendererWrapped = (props: Omit<ViewRendererProps, "localSetting
   const [searchParams, setSearchParams] = useSearchParams();
 
     return <ErrorTrap>
-      <ViewRenderer {...props} localSettings={localSettings} searchParams={searchParams} setSearchParams={setSearchParams} />
+      <ViewRenderer 
+        {...props} 
+        localSettings={localSettings} 
+        searchParams={searchParams} 
+        setSearchParams={setSearchParams} 
+      />
     </ErrorTrap>
 }

@@ -8,7 +8,7 @@ import { FlexCol, FlexRowWrap } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
 import Popup from "../../components/Popup/Popup";
-import SearchList from "../../components/SearchList";
+import SearchList from "../../components/SearchList/SearchList";
 import { getIsPinnedMenu } from "../Dashboard/Dashboard";
 import { SchemaGraph } from "../SchemaGraph/SchemaGraph";
 import { useLocalSettings } from "../localSettings";

@@ -1,10 +1,10 @@
-import { mdiChartLine, mdiCog, mdiDotsVertical, mdiLadybug, mdiPencil } from "@mdi/js";
+import { mdiChartLine, mdiCog, mdiDotsHorizontal, mdiDotsVertical, mdiLadybug, mdiPencil } from "@mdi/js";
 import React from "react";
 import Btn from "../../components/Btn";
 import { FlexRow } from "../../components/Flex";
 import PopupMenu from "../../components/PopupMenu";
 import { StatusMonitor } from "../../dashboard/StatusMonitor";
-import { StatusDotCircleIcon } from "../Sessions";
+import { StatusDotCircleIcon } from "../Account/Sessions";
 import type { ConnectionProps } from "./Connection";
 
 export const ConnectionActionBar = (props: ConnectionProps) => {
@@ -96,7 +96,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
       button={
         <Btn 
           size="medium" 
-          iconPath={mdiDotsVertical}
+          iconPath={mdiDotsHorizontal}
           style={{
             padding: "11px",
           }} 

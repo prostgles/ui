@@ -362,7 +362,7 @@ export type DBSchemaGenerated = {
       active?: null | boolean;
       created?: null | string;
       expires: string;
-      id?: string;
+      id: string;
       id_num?: number;
       ip_address: string;
       is_connected?: null | boolean;

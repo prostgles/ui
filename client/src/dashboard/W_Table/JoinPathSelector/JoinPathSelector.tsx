@@ -5,7 +5,7 @@ import Btn from "../../../components/Btn";
 import { FlexCol, FlexRow } from "../../../components/Flex";
 import Loading from "../../../components/Loading";
 import Popup from "../../../components/Popup/Popup";
-import SearchList from "../../../components/SearchList";
+import SearchList from "../../../components/SearchList/SearchList";
 import { SwitchToggle } from "../../../components/SwitchToggle";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { JoinV2 } from "../../Dashboard/dashboardUtils";

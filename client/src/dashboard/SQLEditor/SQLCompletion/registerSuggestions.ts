@@ -12,6 +12,7 @@ import { isObject } from "../../../../../commonTypes/publishUtils";
 import { isDefined } from "../../../utils";
 import { format } from "sql-formatter";
 import { getStartingLetters, removeQuotes } from "./getJoinSuggestions";
+import { debounce } from "../../Map/DeckGLWrapped";
 
 
 export const triggerCharacters = [
@@ -280,9 +281,9 @@ export function registerSuggestions(args: Args) {
         range: model.getFullModelRange(),
         text: newText
       }]
-    }
+    },
+    
   });
-
   sqlHoverProvider?.dispose();
   sqlHoverProvider = monaco.languages.registerHoverProvider(LANG, {
     provideHover: async function (model, position, token, context) {
@@ -334,7 +335,14 @@ export function registerSuggestions(args: Args) {
   sqlCompletionProvider = monaco.languages.registerCompletionItemProvider(LANG, {
     triggerCharacters: triggerCharacters.slice(0),
     provideCompletionItems: async (model, position, context): Promise<{ suggestions: (MonacoSuggestion | languages.CompletionItem)[] }> => {
-      return provideCompletionItems(model, position, context);
+      const res = await provideCompletionItems(model, position, context);
+
+      return res;
+    },
+    resolveCompletionItem: async (item, token) => {
+
+      fixMonacoSortFilter(args.editor);
+      return item;
     }
   });
 }
@@ -379,3 +387,64 @@ export const getKind = (type: SQLSuggestion["type"]): number => {
 export function isUpperCase(str) {
   return str == str.toUpperCase() && str != str.toLowerCase();
 }
+
+
+/**
+ * monaco filters items without caring about sortText too much (relname "-1" is not shown. name "b" is shown instead).
+ * Need to insure that sortText first group items are shown if they contain the word
+ * 
+ * SELECT *
+ * FROM pg_catalog.pg_class
+ * ORDER BY name -> relname
+ */
+const fixMonacoSortFilter = debounce((editor: editor.IStandaloneCodeEditor) => {
+  const suggestWidget = (editor as any).getContribution("editor.contrib.suggestController").widget;
+
+  const allCompletionItems: ParsedSQLSuggestion[] | undefined = suggestWidget._value._completionModel?._items.map(d => d.completion);
+  if(!allCompletionItems) return;
+  // const shownCompletionItems = suggestWidget._value._list.view.items.map(e => e.element.completion);
+  const firstItem: ParsedSQLSuggestion | undefined = suggestWidget._value._list.view.items[0]?.element.completion;
+  const focusedItem: { filterTextLow: string; word: string; completion: ParsedSQLSuggestion } = suggestWidget._value._focusedItem ?? {};
+  const { filterTextLow, word, completion } = focusedItem;
+  // console.log(filterTextLow, word, completion, allCompletionItems.filter(s => s.type === "column" && s.name.includes(word)));
+  if(allCompletionItems.length && word && filterTextLow && firstItem){
+    if(allCompletionItems.some(s => s.name.includes(word) && s.sortText && s.sortText < (firstItem.sortText ?? "zzz"))){ // && !filterTextLow.includes(word)
+      editor.trigger("demo", "hideSuggestWidget", {});
+      editor.trigger("demo", "editor.action.triggerSuggest", {});
+    }
+  }
+}, 500);
+
+// function searchObjectForValue(obj, searchValue) {
+//   const results = [];
+//   const visited = new WeakSet();
+
+//   function traverse(currentObj, path = '') {
+//     if (typeof currentObj !== 'object' || currentObj === null) {
+//       return;
+//     }
+
+//     // Check for circular reference
+//     if (visited.has(currentObj)) {
+//       return;
+//     }
+
+//     visited.add(currentObj);
+
+//     for (let key in currentObj) {
+//       if (currentObj.hasOwnProperty?.(key) && !Number.isFinite(+key)) {
+//         const newPath = path ? `${path}.${key}` : key;
+//         const value = currentObj[key];
+
+//         if (typeof value === 'string' && value === (searchValue)) {
+//           results.push({ path: newPath, value: value });
+//         } else if (typeof value === 'object' && value !== null) {
+//           traverse(value, newPath);
+//         }
+//       }
+//     }
+//   }
+
+//   traverse(obj);
+//   return results;
+// }

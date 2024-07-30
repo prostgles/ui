@@ -100,7 +100,7 @@ export const mainTestScripts: DemoScript = async ({ testResult, fromBeginning, t
 
     await typeAuto("\nu" ); 
     await typeAuto(" id" ); 
-    await typeAuto("= curu" ); 
+    await typeAuto("= curuse" ); 
 
     moveCursor.lineEnd();
     typeText(";");

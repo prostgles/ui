@@ -12,6 +12,7 @@ import { FooterButtons, type FooterButton } from "./FooterButtons";
 import { PopupHeader } from "./PopupHeader";
 import { getPopupStyle } from "./getPopupStyle";
 import { popupCheckPosition } from "./popupCheckPosition";
+import { debounce } from "../../dashboard/Map/DeckGLWrapped";
 
 let modalRoot;
 export const getModalRoot = (forPointer = false) => {
@@ -207,6 +208,13 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
     xMin: number;
     yMin: number;
   };
+  /**
+   * Used to prevent size change jiggle and things moving
+   */
+  prevSize?: {
+    width: number;
+    height: number;
+  }
   checkPosition = popupCheckPosition.bind(this);
   prevStateStyles: PopupState["stateStyle"][] = [];
   render() {

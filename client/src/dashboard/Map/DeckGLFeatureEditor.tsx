@@ -14,6 +14,7 @@ import { DrawModes, geometryToGeoEWKT } from "./mapDrawUtils";
 import type { Feature } from "geojson";
 import type { GeoJsonLayer } from "deck.gl";
 import { isDefined } from "../../utils";
+import { scaleLinear } from "d3-scale";
 
 export type DeckGLFeatureEditorProps = {
   deckW: DeckWrapped;
@@ -69,7 +70,7 @@ export const DeckGLFeatureEditor = ({ onRenderLayer, edit, deckGlLibs, deckW }: 
   }, [editMode]);
 
   const finishEditMode = useCallback(async (insert = false) => {
-    const layer = editMode?.geometry && getDrawnLayer({ deckGlLibs, shapes: [editMode.geometry] });
+    const layer = editMode?.geometry && getDrawnLayer({ deckGlLibs, shapes: [editMode.geometry], deckW });
     onRenderLayer(layer); 
     if(!(editMode && !editMode.finished)){
       return
@@ -90,7 +91,7 @@ export const DeckGLFeatureEditor = ({ onRenderLayer, edit, deckGlLibs, deckW }: 
 
       setEditMode({ ...editMode, finished: true });
     }
-  }, [editMode, defaultData, isUpdate, dbProject, onInsertOrUpdate, deckGlLibs, onRenderLayer]);
+  }, [editMode, defaultData, isUpdate, dbProject, onInsertOrUpdate, deckGlLibs, onRenderLayer, deckW]);
   const renderShapes = useCallback((cursorCoords: [number, number] | undefined) => {
 
     if(!editMode){
@@ -128,9 +129,9 @@ export const DeckGLFeatureEditor = ({ onRenderLayer, edit, deckGlLibs, deckW }: 
     /* Shows cursor position */
     renderedShapes.push({ type: "Point", coordinates: cursorCoords as [number, number] })
     
-    const layer = getDrawnLayer({ deckGlLibs, shapes: renderedShapes });
+    const layer = getDrawnLayer({ deckGlLibs, shapes: renderedShapes, deckW });
     onRenderLayer(layer); 
-  }, [onRenderLayer, deckGlLibs, editMode]);
+  }, [onRenderLayer, deckGlLibs, editMode, deckW]);
 
   useEffect(() => {
     if(!editMode || editMode.finished) {
@@ -365,8 +366,12 @@ export const DeckGLFeatureEditor = ({ onRenderLayer, edit, deckGlLibs, deckW }: 
 type GetDrawnLayerArgs = {
   shapes: DrawnShape[];
   deckGlLibs: DeckGlLibs;
+  deckW: DeckWrapped;
 }
-const getDrawnLayer = ({ deckGlLibs, shapes }: GetDrawnLayerArgs) => {
+const getDrawnLayer = ({ deckGlLibs, shapes, deckW }: GetDrawnLayerArgs) => {
+  const zoom = deckW.deck.getViewports()[0]?.zoom ?? 1;
+  const radiusScale = scaleLinear().domain([0, 20]).range([10, .01]);
+  const radius = radiusScale(zoom);
   const layer = new deckGlLibs.lib.GeoJsonLayer({
     id: "prostgles-geojson-editor",
     data: ({
@@ -378,15 +383,16 @@ const getDrawnLayer = ({ deckGlLibs, shapes }: GetDrawnLayerArgs) => {
         properties: {
           fillColor: geometry.type === "Polygon"? [200, 0, 80, 55] : [0, 129, 167, 255],
           lineColor: geometry.type === "Polygon"? [200, 0, 80, 255] : [0, 129, 167, 255],
-          radius: 80,
+          radius,
         }
       }))
     }),
     filled: true,
-    pointRadiusMinPixels: 2,
+    pointRadiusMinPixels: 5,
+    pointRadiusMaxPixels: 10,
     pointRadiusScale: 1,
     // pointType: 'circle',
-    getPointRadius: 80,
+    getPointRadius: radius,
     extruded: false,
     getElevation: 0,
 

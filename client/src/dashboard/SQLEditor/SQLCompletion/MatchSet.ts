@@ -2,18 +2,30 @@ import { omitKeys } from "../../../utils";
 import { asListObject } from "../SQLEditorSuggestions";
 import { suggestSnippets } from "./CommonMatchImports";
 import { getExpected } from "./getExpected";
-import { getKind, type SQLMatcher } from "./registerSuggestions";
+import { getKind, KNDS, type SQLMatcher } from "./registerSuggestions";
 import type { KWD} from "./withKWDs";
 import { suggestKWD, withKWDs } from "./withKWDs";
 import type { SQLHandler } from "prostgles-types";
 
 export const MatchSet: SQLMatcher = {
-  match: ({ ftoken }) => ftoken?.textLC === "set" || ftoken?.textLC === "show",
+  match: ({ ftoken }) => ftoken?.textLC === "set" || ftoken?.textLC === "show" || ftoken?.textLC === "reset",
   result: async (args) => {
 
     const { cb, ss, setS: settingSuggestions, sql } = args;
     const { ltoken } = cb; 
     const _suggestKWD = (vals: string[], sortText?: string) => suggestKWD(getKind, vals, sortText);
+
+    if(cb.ftoken?.textLC === "reset"){
+      return withKWDs([
+        {
+          kwd: "RESET",
+          options: [
+            { label: "ALL", docs: "Resets all parameters to their default values" },
+            ...settingSuggestions
+          ],
+        }
+      ], { cb, ss, setS: settingSuggestions, sql }).getSuggestion();
+    }
 
     if(cb.prevLC.startsWith("set session authorization")){
       return {
@@ -22,6 +34,10 @@ export const MatchSet: SQLMatcher = {
     }
 
     if(ltoken?.textLC === "to"){
+
+      if(cb.l1token?.textLC === "search_path"){
+        return getExpected("schema", cb, ss);
+      }
 
       if(["timezone", "time zone"].some(v => cb.prevLC.includes(v)) && sql){
         const timeZones = await getTimeZones(sql);
@@ -35,16 +51,17 @@ export const MatchSet: SQLMatcher = {
 
       const settingInfo = settingSuggestions.find(s => s.name === cb.identifiers.at(-1))?.settingInfo;
       const docs = settingInfo?.description;
+      const getVal = (v = "") => settingInfo?.unit? `'${v}${settingInfo.unit}'` : v;
       return suggestSnippets([
-        { label: "DEFAULT", docs },
+        { label: "DEFAULT", docs }, // docs: `${settingInfo?.reset_val ?? ""}${settingInfo?.unit ?? ""} \n\n${docs}`
         ...(
           settingInfo?.vartype === "bool"? [{ label: `ON`, docs }, { label: `OFF`, docs }] : 
           settingInfo?.vartype === "string"? [
             { label: "'$setting_string_value'", docs }
           ] : 
           settingInfo?.vartype === "integer"? [
-            { label: settingInfo.min_val ?? "", docs: "Minimum value" + `\n\n${docs}` }, 
-            { label: settingInfo.max_val ?? "", docs: "Maximum value" + `\n\n${docs}` }
+            { label: settingInfo.setting_pretty?.min_val ?? getVal(settingInfo.min_val), kind: KNDS.Value, docs: "Minimum value" + `\n\n${docs}` }, 
+            { label: settingInfo.setting_pretty?.max_val ?? getVal(settingInfo.max_val), kind: KNDS.Value, docs: "Maximum value" + `\n\n${docs}` }
           ] : 
           settingInfo?.enumvals?.length? settingInfo.enumvals.map(label => ({ label, docs: (settingInfo.reset_val === label? "Default" : "") + + `\n\n${docs}` })) : 
         []),

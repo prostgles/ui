@@ -74,7 +74,7 @@ export const Connection = (props: ConnectionProps) => {
     {(showWorkspaces || showAccessInfo) && 
       <FlexRowWrap 
         title="Workspaces"
-        className="ConnectionWorkspaceList  pl-1 p-p25 pt-0 ai-center " 
+        className="ConnectionWorkspaceList  pl-1 p-p25 pt-0 ai-center gap-0" 
       >
         {showWorkspaces && <>
           <Icon path={WspIconPath} size={.75} className="text-action mr-p5" />

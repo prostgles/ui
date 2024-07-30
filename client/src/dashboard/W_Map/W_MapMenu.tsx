@@ -54,8 +54,9 @@ export const W_MapMenu = (props: ProstglesMapMenuProps) => {
   }
 
    
-  return <Tabs variant="vertical"
-    compactMode={window.isMobileDevice}
+  return <Tabs 
+    variant="vertical"
+    compactMode={window.isMobileDevice? "hide-inactive" : undefined}
     contentClass="p-1"
     items={{
       "Data Refresh": {

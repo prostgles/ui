@@ -131,6 +131,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
         className="f-1 as-center w-full shadow"
         style={{ maxWidth: "1200px" }}
         activeKey={activeSection}
+        compactMode={window.isMediumWidthScreen? "hide-label" : undefined}
         onChange={section => { setSection({ section }) }}
         items={sectionItems}
         contentClass="o-auto flex-row jc-center bg-color-2 f-1"

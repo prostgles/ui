@@ -169,6 +169,8 @@ type PG_Schema = {
   owner: string;
   access_privileges: string | null;
   comment: string; 
+  escaped_identifier: string;
+  is_in_search_path: boolean;
 };
 
 
@@ -179,6 +181,7 @@ export type PG_Function = {
     label: string;
     data_type: string;
   }[];
+  arg_udt_names: string[] | null;
   restype: string | null;
   restype_udt_name: string | null;
   arg_list_str: string;
@@ -200,6 +203,7 @@ export type PG_Function = {
   definition: string | null;
   func_signature: string;
   escaped_identifier: string;
+  escaped_name: string;
   extension?: string;
 }
 
@@ -222,7 +226,12 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
         SELECT *
           , upper(name) || '(' || concat_ws(',', arg_list_str) || ')' || ' => ' || restype || E'\n' || description as func_signature
           , CASE WHEN is_aggregate OR prolang IN (12, 13) THEN '' ELSE pg_get_functiondef(oid) END as definition
-          , CASE WHEN schema IS NULL OR current_schema() = schema OR schema = 'pg_catalog' THEN format('%I', name) ELSE format('%I.%I', schema, name) END as escaped_identifier
+          , CASE 
+              WHEN schema IS NULL OR schema IN (${searchSchemas})
+                THEN format('%I', name) 
+              ELSE format('%I.%I', schema, name) 
+          END as escaped_identifier,
+        format('%I', name) as escaped_name
         FROM (
           SELECT p.proname AS name
                 , pg_get_function_identity_arguments(p.oid) AS arg_list_str
@@ -237,10 +246,20 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
                 , p.prolang -- 12, 13 are internal,c languages
                 , ext.extension
                 , provolatile
-          FROM pg_proc p
+                , arg_udt_names
+          FROM pg_catalog.pg_proc p
           LEFT JOIN pg_type t 
             ON p.prorettype = t.oid
-          LEFT JOIN pg_description d ON d.objoid = p.oid
+          LEFT JOIN (
+            SELECT p.oid, array_agg(t.typname ORDER BY argtypoid_idx)::_TEXT as arg_udt_names
+            FROM pg_catalog.pg_proc p, 
+              unnest(proargtypes) WITH ORDINALITY a(argtypoid, argtypoid_idx)
+            LEFT JOIN pg_catalog.pg_type t
+              ON argtypoid = t.oid
+            GROUP BY p.oid
+          ) at
+            ON at.oid = p.oid
+          LEFT JOIN pg_catalog.pg_description d ON d.objoid = p.oid
           LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
           LEFT JOIN (
             SELECT p.oid , (array_agg(e.extname))[1] as extension
@@ -260,9 +279,7 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
       WHERE (name ilike \${name} OR escaped_identifier = \${name})
       `,
   distQ = `
-    SELECT DISTINCT ON (length(name::text), name) 
-      name, arg_list_str, description, args_length, is_aggregate, restype, restype_udt_name, provolatile,
-      schema, func_signature, definition, escaped_identifier, extension
+    SELECT DISTINCT ON (length(name::text), name) *
     FROM (
       SELECT * 
       FROM (
@@ -278,7 +295,7 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
   
   const finalQuery = distinct? distQ : q;
   
-  return await db.sql( finalQuery, { name: name || "%", limit, minArgs }).then(d => 
+  return await db.sql(finalQuery, { name: name || "%", limit, minArgs }).then(d => 
     d.rows.map((r: PG_Function)=> {
       
 
@@ -289,10 +306,11 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
         });
       r.arg_list_str = args.map(a => a.label).join(", ");
 
+      /** Some builtin functions (left, right) can be placed without double quotes.  */
       if(
-        r.escaped_identifier.includes('"') && 
-        !r.escaped_identifier.includes("current_user") &&
-        // r.schema === "pg_catalog" && 
+        r.schema === "pg_catalog" &&
+        r.escaped_name.includes('"') && 
+        !r.escaped_name.endsWith(`_user"`) && 
         /^[a-z_]+$/.test(r.name)
       ){
         r.escaped_identifier = r.name;
@@ -378,16 +396,43 @@ type TableStats = {
   might_need_index: boolean; 
 };
 
+const searchSchemas = `
+SELECT btrim(
+  unnest(
+    string_to_array(
+      concat_ws(
+        ',', 
+        current_setting('search_path'),
+        'pg_catalog'
+      ), 
+      ','
+    )
+  )
+)`;
+
+const searchSchemaQuery = `
+  WITH cte1 AS (
+    ${searchSchemas} as searchpath
+  )
+` as const;
+const getSearchSchemas = async (db: DB) => {
+  const query = `
+    ${searchSchemaQuery}
+    SELECT quote_ident(schema_name) 
+    FROM information_schema.schemata
+    WHERE schema_name::TEXT IN ( 
+      SELECT searchpath
+      FROM cte1
+    ) 
+  `
+  const searchSchemas: string[] = await db.sql(query, {}, { returnType: "values" });
+  return { searchSchemas }
+}
+
 export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise<PG_Table[]> {
   /** Used to prevent permission erorrs */
   const allowedSchemasQuery = `(SELECT schema_name FROM information_schema.schemata)`;
-  const current_user = await db.sql(`SELECT format('%I', "current_user"())`, {}, { returnType: "value" });
-  const search_schemas = await Promise.all((await db.sql(`SHOW search_path`, {}, { returnType: "value" })).split(",")
-    .map((v: string) => {
-      const schema = v.includes(`$user`)? current_user : v.trim();
-      return db.sql(`SELECT format('%I', \${v})`, { v: schema }, { returnType: "value" })
-    })
-  );
+  const { searchSchemas } = await getSearchSchemas(db);
   const tablesAndViews = (await db.sql(
     `
     SELECT
@@ -439,9 +484,7 @@ export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise
         to_char(seq_scan, '999,999,999,999') AS seq_scans,
         to_char(idx_scan, '999,999,999,999') AS idx_scans,
         to_char(n_live_tup, '999,999,999,999') AS n_live_tup,
-        to_char(n_dead_tup, '999,999,999,999') AS n_dead_tup,
-      --  TO_CHAR(age(current_date, last_vacuum), 'YY"yrs" mm"mts" DD"days" MI"mins" ago') AS last_vacuum,
-      --  TO_CHAR(age(current_date, last_autovacuum), 'YY"yrs" mm"mts" DD"days" MI"mins" ago') AS last_autovacuum,
+        to_char(n_dead_tup, '999,999,999,999') AS n_dead_tup, 
         TO_CHAR(now() - last_vacuum, 'YY"yrs" mm"mts" DD"days" MI"mins" ago') AS last_vacuum,
         TO_CHAR(now() - last_autovacuum, 'YY"yrs" mm"mts" DD"days" MI"mins" ago') AS last_autovacuum,
         pg_size_pretty(pg_relation_size(relid::regclass)) AS table_size,
@@ -460,8 +503,8 @@ export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise
 
   return tablesAndViews.map(t => {
     t.tableStats = tableAndViewsStats.find(s => s.relid === t.oid);
-    t.escaped_identifiers = search_schemas.map(schema => `${schema}.${t.escaped_name}`).concat([t.escaped_identifier])
-    if([...search_schemas, "pg_catalog"].some(s => t.escaped_identifier.startsWith(`${s}.`))){ 
+    t.escaped_identifiers = searchSchemas.map(schema => `${schema}.${t.escaped_name}`).concat([t.escaped_identifier])
+    if([...searchSchemas, "pg_catalog"].some(s => t.escaped_identifier.startsWith(`${s}.`))){ 
       t.escaped_identifiers.push(t.escaped_identifier.split(".")[1]!);
     }
 
@@ -566,6 +609,11 @@ export type PG_Setting = {
   name: string;
   unit: string | null;
   setting: string | null;
+  setting_pretty: {
+    value: string;
+    min_val: string;
+    max_val: string;
+  } | null;
   description: string;
   min_val?: string;
   max_val?: string;
@@ -578,18 +626,18 @@ export type PG_Setting = {
 }
 
 const getSettings = (db: DB): Promise<PG_Setting[]> => {
-  return db.sql(
-    
-    `
-    --SHOW ALL;
-
+  return db.sql(`
     SELECT 
       name, 
       CASE 
-        WHEN unit ilike '%kb' AND setting IS NOT NULL 
-          THEN concat_ws('', setting, ' ( ', pg_size_pretty((1024 * (CASE WHEN LEFT(unit, 1) = '8' THEN 8 ELSE 1 END) * setting::NUMERIC)::BIGINT), ' )' )
-        ELSE setting 
-      END as setting,
+        WHEN unit ilike '%kb' AND setting IS NOT NULL THEN 
+          jsonb_build_object(
+            'value', format('%L', pg_size_pretty((1024 * (CASE WHEN LEFT(unit, 1) = '8' THEN 8 ELSE 1 END) * setting::NUMERIC)::BIGINT)),
+            'min_val', format('%L', pg_size_pretty((1024 * (CASE WHEN LEFT(unit, 1) = '8' THEN 8 ELSE 1 END) * min_val::NUMERIC)::BIGINT)),
+            'max_val', format('%L', pg_size_pretty((1024 * (CASE WHEN LEFT(unit, 1) = '8' THEN 8 ELSE 1 END) * max_val::NUMERIC)::BIGINT))
+          )
+      END as setting_pretty,
+      setting,
       unit, 
       short_desc as description, 
       min_val, 
@@ -729,10 +777,13 @@ export const PG_OBJECT_QUERIES = {
   },
   schemas: {
     sql: `
+      ${searchSchemaQuery}
       SELECT n.nspname AS "name",                                          
-      pg_catalog.pg_get_userbyid(n.nspowner) AS "owner",                 
-      pg_catalog.array_to_string(n.nspacl, E'\n') AS "access_privileges",
-      pg_catalog.obj_description(n.oid, 'pg_namespace') AS "comment" 
+        pg_catalog.pg_get_userbyid(n.nspowner) AS "owner",                 
+        pg_catalog.array_to_string(n.nspacl, E'\n') AS "access_privileges",
+        pg_catalog.obj_description(n.oid, 'pg_namespace') AS "comment",
+        format('%I', n.nspname) as escaped_identifier,
+        CASE WHEN n.nspname IN (select searchpath from cte1) THEN true ELSE false END as is_in_search_path
       FROM pg_catalog.pg_namespace n                                       
       --WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'      
       ORDER BY 1;
@@ -804,10 +855,10 @@ export const PG_OBJECT_QUERIES = {
     sql: `
       WITH grants AS (
         SELECT grantee,
-        string_agg(table_schema || E'\n' ||  schema_table_privilege,  E'\n') as table_grants
+        string_agg(schema_table_privilege,  E'\n') as table_grants
         FROM (
           SELECT grantee, table_schema,
-            string_agg('    ' || table_name || ': ' || table_privilege, E'\n') as schema_table_privilege
+            string_agg(format('%I.%I', table_schema, table_name) || ': ' || table_privilege, E'\n') as schema_table_privilege
           FROM 
           (
             SELECT grantee, table_schema, table_name,
@@ -950,48 +1001,49 @@ export const PG_OBJECT_QUERIES = {
       )::text[]`;
     
       return `
-    /*  ${QUERY_WATCH_IGNORE} */
-    SELECT *, 
-      concat_ws( 
-        E'\\n', 
-        'CREATE POLICY ' || escaped_identifier,
-        'ON ' || tablename,
-        'AS ' || "type",
-        'FOR ' || cmd,
-        'TO ' || array_to_string(roles, ', '),
-        CASE WHEN "using" IS NOT NULL THEN 'USING (' || "using" || ')' END,
-        CASE WHEN with_check IS NOT NULL THEN 'WITH CHECK (' || with_check || ')' END
-      ) as definition
-      FROM (
-        SELECT
-          CASE WHEN current_schema() = nspname THEN format('%I', polname) ELSE format('%I.%I', nspname, polname) END as escaped_identifier,
-          CASE WHEN current_schema() = nspname THEN format('%I', c.relname) ELSE format('%I.%I', nspname, c.relname) END as tablename_escaped,
-          n.nspname AS schemaname,
-          c.relname AS tablename,
-          pol.polname AS policyname,
-          CASE
-            WHEN pol.polpermissive THEN 'PERMISSIVE'::text
-            ELSE 'RESTRICTIVE'::text
-          END AS type,
-          CASE
-              WHEN pol.polroles = '{0}'::oid[] THEN string_to_array('public'::text, ''::text)::text[]
-              ${roles_query}
-            END AS roles,
-          CASE pol.polcmd
-              WHEN 'r'::"char" THEN 'SELECT'::text
-              WHEN 'a'::"char" THEN 'INSERT'::text
-              WHEN 'w'::"char" THEN 'UPDATE'::text
-              WHEN 'd'::"char" THEN 'DELETE'::text
-              WHEN '*'::"char" THEN 'ALL'::text
-              ELSE NULL::text
-          END AS cmd,
-          pg_get_expr(pol.polqual, pol.polrelid) AS "using",
-          pg_get_expr(pol.polwithcheck, pol.polrelid) AS with_check
-        FROM pg_policy pol
-          JOIN pg_class c ON c.oid = pol.polrelid
-        LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
-        ${!tableName? "" : `WHERE format('%I', c.relname) = \${tableName}`}
-      ) t `
+      /*  ${QUERY_WATCH_IGNORE} */
+      ${searchSchemaQuery}
+      SELECT *, 
+        concat_ws( 
+          E'\\n', 
+          'CREATE POLICY ' || escaped_identifier,
+          'ON ' || tablename,
+          'AS ' || "type",
+          'FOR ' || cmd,
+          'TO ' || array_to_string(roles, ', '),
+          CASE WHEN "using" IS NOT NULL THEN 'USING (' || trim("using", '()') || ')' END,
+          CASE WHEN with_check IS NOT NULL THEN 'WITH CHECK (' || trim(with_check, '()') || ')' END
+        ) as definition
+        FROM (
+          SELECT
+            CASE WHEN nspname IN (SELECT searchpath FROM cte1) THEN format('%I', polname) ELSE format('%I.%I', nspname, polname) END as escaped_identifier,
+            CASE WHEN nspname IN (SELECT searchpath FROM cte1) THEN format('%I', c.relname) ELSE format('%I.%I', nspname, c.relname) END as tablename_escaped,
+            n.nspname AS schemaname,
+            c.relname AS tablename,
+            pol.polname AS policyname,
+            CASE
+              WHEN pol.polpermissive THEN 'PERMISSIVE'::text
+              ELSE 'RESTRICTIVE'::text
+            END AS type,
+            CASE
+                WHEN pol.polroles = '{0}'::oid[] THEN NULL
+                ${roles_query}
+              END AS roles,
+            CASE pol.polcmd
+                WHEN 'r'::"char" THEN 'SELECT'::text
+                WHEN 'a'::"char" THEN 'INSERT'::text
+                WHEN 'w'::"char" THEN 'UPDATE'::text
+                WHEN 'd'::"char" THEN 'DELETE'::text
+                WHEN '*'::"char" THEN 'ALL'::text
+                ELSE NULL::text
+            END AS cmd,
+            pg_get_expr(pol.polqual, pol.polrelid) AS "using",
+            pg_get_expr(pol.polwithcheck, pol.polrelid) AS with_check
+          FROM pg_policy pol
+            JOIN pg_class c ON c.oid = pol.polrelid
+          LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
+          ${!tableName? "" : `WHERE quote_ident(c.relname) = \${tableName}`}
+        ) t `
     },
     type: {} as PG_Policy,
   },
