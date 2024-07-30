@@ -174,7 +174,10 @@ const dashboardDemo = async () => {
 
   await click("dashboard.window.viewEditRow", undefined, { nth: 0 });
   await click("JoinedRecords.toggle");
-  await tout(2e3);
+  await tout(1e3);
+  await click("JoinedRecords", `[data-key="orders"] button[data-label="Expand section"]`);
+  await tout(1e3);
+  await click("Popup.close");
 
   /** Add Map */
   await click("AddChartMenu.Map");

@@ -385,8 +385,8 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       application_name: string;
-      backend_start?: null | string;
-      backend_type?: null | string;
+      backend_start: string;
+      backend_type: string;
       backend_xid?: null | string;
       backend_xmin?: null | string;
       blocked_by?: null | number[];
@@ -432,7 +432,6 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      description?: null | string;
       id: string;
     };
   };

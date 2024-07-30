@@ -61,7 +61,7 @@ export const click = async (testId: Command | "", endSelector = "", opts: ClickO
     await tout(200);
   }
   await movePointer(
-    (bbox.left + Math.min(150, bbox.width/2)),
+    (bbox.left + Math.min(60, bbox.width/2)),
     (bbox.top + bbox.height/2)
   )
   elem.click();

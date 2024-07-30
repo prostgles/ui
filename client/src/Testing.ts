@@ -224,6 +224,7 @@ export const COMMANDS = {
   "ConnectionServer.NewUserPassword": "",
   "ConnectionServer.withNewOwnerToggle": "",
   "W_Table.TableNotFound": "",
+  "JoinedRecords" : "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 
