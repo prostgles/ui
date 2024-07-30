@@ -128,6 +128,14 @@ export const updateWCols = (w: WindowSyncItem<"table">, newCols: WindowSyncItem<
   return w.$update({ sort: [], columns: newMinimalCols })
 }
 
+export const getSortColumn = (sort: ColumnSort, columns: ColumnConfig[]): ColumnConfig | undefined => {
+  return columns.find(c => 
+    c.name === sort.key || 
+    c.nested?.chart?.sortableColumns.some(sortCol => sort.key === `${c.name}.${sortCol}`) ||
+    c.nested?.columns.some(nc => sort.key === `${c.name}.${nc.name}`)
+  );
+}
+
 export const getSort = (
   tables: CommonWindowProps["tables"],
   w: Pick<WindowSyncItem<"table">, "sort" | "columns" | "table_name">
@@ -136,7 +144,7 @@ export const getSort = (
   
   if(!sort) return [];
 
-  let _sort = sort.map(s => ({ ...s }));
+  let _sort: ColumnSort[] = sort.map(s => ({ ...s }));
   
   const cols = tables.find(t => t.name === w.table_name)?.columns;
   if(!cols) return [];
@@ -148,11 +156,7 @@ export const getSort = (
       return cols.some(c => c.name === s.key)
     } else {
 
-      const wcol = wcols.find(wc => 
-          wc.name === s.key || 
-          wc.nested?.chart?.sortableColumns.some(sc => s.key === `${wc.name}.${sc}`) ||
-          wc.nested?.columns.some(nc => s.key === `${wc.name}.${nc.name}`)
-        );
+      const wcol = getSortColumn(s, wcols);
       if(wcol?.nested){
         return true;
       }

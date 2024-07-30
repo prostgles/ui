@@ -16,7 +16,6 @@ type P = {
   className?: string;
   variant?: "top-bar" | "cover";
   sizePx?: number;
-  coverOpacity?: number;
   message?: string;
   colorAnimation?: boolean;
 } & (
@@ -102,7 +101,7 @@ export default class Loading extends RTComp<P, S> {
   }
 
   render() {
-    const { style = {}, className = "", variant, sizePx = 30, colorAnimation = true, coverOpacity = .5 } = this.props;
+    const { style = {}, className = "", variant, sizePx = 30, colorAnimation = true } = this.props;
     const { show = this.show } = this.props;
     const size = sizePx + "px";
 
@@ -130,7 +129,11 @@ export default class Loading extends RTComp<P, S> {
             inset: 0, 
             width: "100%", height: "100%", 
             ...commonStyle,
-            ...(!className.includes("bg-") && { background:  "var(--bg-color-0)", opacity: coverOpacity }),
+            ...(!className.includes("bg-") && { 
+              // background:  "var(--bg-color-0)", 
+              // opacity: coverOpacity 
+              background: "rgba(255, 255, 255, .5)"
+            }),
             ...style, 
           }}
           className={classOverride("cover-loader flex-row ai-center jc-center gap-1", className)}

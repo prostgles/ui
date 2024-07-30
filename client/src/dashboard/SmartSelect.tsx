@@ -11,7 +11,7 @@ import type { LabelProps } from "../components/Label";
 import { Label } from "../components/Label";
 import Loading from "../components/Loading";
 import PopupMenu from "../components/PopupMenu";
-import SearchList, { type SearchListItemContent, type SearchListItem } from "../components/SearchList";
+import SearchList, { type SearchListItemContent, type SearchListItem } from "../components/SearchList/SearchList";
 import { useIsMounted } from "./Backup/CredentialSelector";
 import { InfoRow } from "../components/InfoRow";
 

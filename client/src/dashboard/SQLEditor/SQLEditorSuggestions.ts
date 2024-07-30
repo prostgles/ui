@@ -5,12 +5,12 @@ import type { AnyObject, SQLHandler } from "prostgles-types";
 import { getKeys } from "prostgles-types";
 import { isDefined, omitKeys, pickKeys } from "../../utils";
 import { TOP_KEYWORDS, asSQL } from "./SQLCompletion/KEYWORDS";
-import { PRIORITISED_OPERATORS, getPGObjects } from "./SQLCompletion/getPGObjects";
+import { type PG_Policy, PRIORITISED_OPERATORS, getPGObjects } from "./SQLCompletion/getPGObjects";
+import type { ParsedSQLSuggestion } from "./SQLCompletion/registerSuggestions";
 import type { SQLSuggestion } from "./SQLEditor";
 import { SQL_SNIPPETS } from "./SQL_SNIPPETS";
-import type { ParsedSQLSuggestion } from "./SQLCompletion/registerSuggestions";
-type DB = { sql: SQLHandler }
 
+type DB = { sql: SQLHandler }
 
 const asList = (arr: { label: string; value?: string }[], boldStyle = false) => arr
   .filter(({ value }) => value !== undefined)
@@ -18,14 +18,12 @@ const asList = (arr: { label: string; value?: string }[], boldStyle = false) => 
     boldStyle? `${label}: ${`**${value}**`.replace("****", "")}  `:
       `${label}:  \`${value}\`  `
   ).join("\n");
+
 export const asListObject = (obj: AnyObject, excludeNulls = true, boldStyle?: boolean) => 
   asList(
     Object.entries(obj).filter(([k, v]) => !excludeNulls || v !== null).map(([label, value]) => ({ label, value})),
     boldStyle
   );
-
-
-
 
 export async function getSqlSuggestions(db: DB): Promise< {
   suggestions: SQLSuggestion[];
@@ -85,7 +83,7 @@ export async function getSqlSuggestions(db: DB): Promise< {
       insertText: p.escaped_identifier,
       escapedParentName: p.escaped_tablename,
       indexInfo: p,
-      documentation: asListObject(omitKeys(p, ["escaped_identifier", "indexdef"])) +
+      documentation: asListObject(omitKeys(p, ["escaped_identifier", "indexdef", "indexname", "escaped_tablename", "schemaname", "tablename"] as const)) +
         `\n\n**Definition**: \n${asSQL(p.indexdef)
           .split(" ON ").join(" \nON ")
           .split(" USING ").join(" \nUSING ")
@@ -244,39 +242,80 @@ export async function getSqlSuggestions(db: DB): Promise< {
       type: "database",
     })))
     
-    suggestions = suggestions.concat(roles.map(r => ({ 
-      label: { label: r.usename, description: [(r.is_current_user? "CURRENT_USER" : ""), (r.usesuper? "usesuper" : "")].join(" ") },
-      name: r.usename,
-      userInfo: r,
-      escapedIdentifier: r.escaped_identifier,
-      insertText: r.escaped_identifier,
-      detail: `(role)`, 
-      documentation: 
-        asListObject(omitKeys(r, ["escaped_identifier", "usename", "is_current_user", "priority", "table_grants"] )) + 
-        (!r.table_grants? "" :
-          `\n\n**Table grants**:\n\n\n${asSQL(r.table_grants)}`),
-      type: "role",
-    })));
-     
+    suggestions = suggestions.concat(roles.map(r => {
+      const userPolicies = policies.filter(p => !p.roles || p.roles.includes(r.usename));
+      type TP = Record<string, Partial<Record<Exclude<PG_Policy["cmd"], null>, 
+        {
+          using: string; 
+          check: string;
+          type: PG_Policy["type"];
+        }[]
+      >>>;
+      const tablePolicies = userPolicies.reduce((acc, p) => {
+        const schemaQualifiedTableName = `${p.schemaname}.${p.tablename}`;
+        const tablePolicy: TP[string] = acc[schemaQualifiedTableName] ?? {
+          [p.cmd ?? "ALL"]: []
+        };
+        tablePolicy[p.cmd ?? "ALL"] ??= [];
+        tablePolicy[p.cmd ?? "ALL"]?.push({
+          using: p.using,
+          check: p.with_check,
+          type: p.type
+        });
+        return {
+          ...acc,
+          [schemaQualifiedTableName]: tablePolicy
+        }
+      }, {} as TP);
+      const tablePoliciesSqlDefs = Object.entries(tablePolicies).map(([tablename_escaped, cmds]) => {
+        return `${tablename_escaped}  \n${Object.entries(cmds).map(([cmd, policies]) => {
+          return [
+            `  ${cmd}`,
+            ...policies.map(p => {
+              const typeStr=  p.type === "PERMISSIVE"? " " : " (RESTRICTIVE) ";
+              return [
+                `    USING${typeStr}${p.using}`,
+                `    WITH CHECK${typeStr}${p.check}`
+              ].join("\n")
+            }),
+          ].join("\n")
+        }).join("\n")}`
+      });
+      return { 
+        label: { label: r.usename, description: [(r.is_current_user? "CURRENT_USER" : ""), (r.usesuper? "usesuper" : "")].join(" ") },
+        name: r.usename,
+        userInfo: r,
+        escapedIdentifier: r.escaped_identifier,
+        insertText: r.escaped_identifier,
+        detail: `(role)`, 
+        documentation: 
+          asListObject(omitKeys(r, ["escaped_identifier", "usename", "is_current_user", "priority", "table_grants"] )) + 
+          (!r.table_grants? "" :
+            `\n\n**Table grants**:\n\n\n${asSQL(r.table_grants)}`) + 
+            `\n\n**Policies (${userPolicies.length}):**\n\n${asSQL(tablePoliciesSqlDefs.sort().join("\n\n"))}`,
+        type: "role",
+      }
+    }));
+
     suggestions = suggestions.concat(functions.map(f => {
-      const overEnding = ["rank", "dense_rank", "row_number"].includes(f.escaped_identifier)? " over()" : ""
+      const overEnding = ["rank", "dense_rank", "row_number"].includes(f.escaped_name)? " over()" : "";
       return { 
         type: "function",
-        name: f.name,
-        label: { label: `${f.name}(${f.args.map(a => a.data_type).join(",")})`, description: f.extension }, // detail: " " + f.args.map(a => a.data_type).join(","), 
+        name: f.escaped_identifier,
+        label: { label: `${f.escaped_identifier}(${f.args.map(a => a.data_type).join(",")})`, description: f.extension },
         subLabel: f.func_signature,
         schema: f.schema,
         args: f.args,
         funcInfo: f,
-        // escapedIdentifier: f.schema === "pg_catalog" && f.name.startsWith("current")? f.name : f.escaped_identifier,
-        // insertText: f.schema === "pg_catalog" && f.name.startsWith("current")? f.name : f.escaped_identifier,
         escapedIdentifier: f.escaped_identifier,
+        escapedName: f.escaped_name,
+        /** If func has arguments we exclude the parenthesis so that the user will write them and trigger func arg suggestions */
         insertText: f.escaped_identifier + (f.arg_list_str? "" : (f.name === "count"? "(*)" : "()")) + overEnding,
         detail: `(${f.is_aggregate? "agg " : ""}function) \n${f.name}(${f.arg_list_str}) => ${f.restype}`, 
         documentation: `Schema: \`${f.schema}\`  \n\n${f.description?.trim() ?? ""}   \n\n${asSQL(f.definition ?? "")}`, 
         definition: f.definition ?? "",
         funcCallDefinition: `${f.name}(${f.arg_list_str}) => ${f.restype}`,
-        filterText: `${f.name} ${f.args.map(a => a.data_type).join(", ")} ${f.extension}`
+        filterText: `${f.escaped_identifier} ${f.args.map(a => a.data_type).join(", ")} ${f.extension}`
       }
     }));
      
@@ -322,11 +361,11 @@ export async function getSqlSuggestions(db: DB): Promise< {
         installed: ex.installed
       }
     })));
-    const schemasS = schemas.map(({ name: label, access_privileges, owner, comment }) => ({
+    const schemasS = schemas.map(({ name: label, access_privileges, owner, comment, is_in_search_path }) => ({
       label,
       name: label,
       detail: "(schema)",
-      documentation: makeDocumentation({ access_privileges, owner, comment }),
+      documentation: makeDocumentation({ access_privileges, owner, comment, is_in_search_path }),
       type: "schema" as const
     }));
     suggestions = suggestions.concat(schemasS);
@@ -391,7 +430,7 @@ export async function getSqlSuggestions(db: DB): Promise< {
     // });
    
     const settingSuggestions: SQLSuggestion[] = settings.map(s => ({
-      label: { label: s.name,  description: s.setting ?? "" },
+      label: { label: s.name,  description: s.setting_pretty?.value ??  s.setting ?? "" },
       name: s.name,
       detail: "(setting)",
       type: "setting",

@@ -154,12 +154,12 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
   }
 
   getDataSignature(
-    args: Parameters<typeof W_Table.getDataRequestSignature>[0], 
+    args: Parameters<typeof W_Table.getTableDataRequestSignature>[0], 
     dataAge: number,
     layer: LayerQuery,
     other: any,
   ): { signature: string; cachedLayer?: GeoJsonLayerProps } {
-    const signature = W_Table.getDataRequestSignature(args, dataAge, [layer, other]);
+    const signature = W_Table.getTableDataRequestSignature(args, dataAge, [layer, other]);
     const cachedLayer = this.state.layers?.find(l => l.dataSignature === signature);
     
     return { signature, cachedLayer };

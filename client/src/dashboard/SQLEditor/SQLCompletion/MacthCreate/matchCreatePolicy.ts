@@ -1,17 +1,11 @@
-import { POLICY_FOR } from "../CommonMatchImports";
+import { POLICY_FOR, suggestSnippets } from "../CommonMatchImports";
+import { getExpected } from "../getExpected";
 import { asSQL } from "../KEYWORDS";
-import type { SQLMatchContext } from "../registerSuggestions";
-import { withKWDs } from "../withKWDs";
+import type { SQLMatchContext, SQLMatcher } from "../registerSuggestions";
+import { type KWD, suggestKWD, withKWDs } from "../withKWDs";
 
-export const matchCreatePolicy = ({ cb, ss, setS, sql }: SQLMatchContext) => {
-
-  if (cb.prevLC.includes("using")) {
-    const onTokenIdx = cb.tokens.findIndex(t => t.textLC === "on");
-    const table_name = cb.tokens[onTokenIdx + 1];
-    return {
-      suggestions: ss.filter(s => s.type === "column" && table_name && s.escapedParentName === table_name.text)
-    }
-  }
+export const matchCreatePolicy: SQLMatcher["result"] = async ({ cb, ss, setS, sql }: SQLMatchContext) => {
+ 
   const _ss = ss.map(s => ({
     ...s, ...(
       s.name === "FOR" ? { documentation: "" } :
@@ -21,6 +15,18 @@ export const matchCreatePolicy = ({ cb, ss, setS, sql }: SQLMatchContext) => {
   }));
 
   const { getSuggestion } = withKWDs(KwdPolicy, { cb, ss: _ss, setS, sql });
+
+  if(cb.thisLinePrevTokens[0]?.textLC === "to" && cb.ltoken?.textLC !== "to") {
+    if(cb.ltoken?.textLC === ","){
+      return getExpected("role", cb, ss);
+    }
+    return suggestSnippets([
+      {
+        label: ",",
+        docs: `The role(s) to which the policy is to be applied. The default is PUBLIC, which will apply the policy to all roles.`
+      }
+    ]);
+  }
 
   const s = getSuggestion();
   return s;
@@ -42,8 +48,8 @@ Note that there needs to be at least one permissive policy to grant access to re
     ],
     docs: `Specifies how multiple policies will be combined: either OR (for permissive policies, which are the default) or using AND (for restrictive policies). Policies are permissive by default.`
   },
-  { kwd: "TO", expects: "role", optional: true, dependsOn: "ON", docs: `The role(s) to which the policy is to be applied. The default is PUBLIC, which will apply the policy to all roles.` },
   { kwd: "FOR", options: POLICY_FOR, dependsOn: "ON", optional: true, docs: `The command to which the policy applies. Valid options are ALL, SELECT, INSERT, UPDATE, and DELETE. ALL is the default. See below for specifics regarding how these are applied.` },
+  { kwd: "TO", expects: "role", optional: true, dependsOn: "ON", docs: `The role(s) to which the policy is to be applied. The default is PUBLIC, which will apply the policy to all roles.` },
   { kwd: "USING", expects: "(condition)", dependsOn: "ON", optional: true, docs: `Any SQL conditional expression (returning boolean). The conditional expression cannot contain any aggregate or window functions. This expression will be added to queries that refer to the table if row-level security is enabled. Rows for which the expression returns true will be visible. Any rows for which the expression returns false or null will not be visible to the user (in a SELECT), and will not be available for modification (in an UPDATE or DELETE). Such rows are silently suppressed; no error is reported.` },
   { kwd: "WITH CHECK", expects: "(condition)", dependsOn: "ON", optional: true, docs: `Any SQL conditional expression (returning boolean). The conditional expression cannot contain any aggregate or window functions. This expression will be used in INSERT and UPDATE queries against the table if row-level security is enabled. Only rows for which the expression evaluates to true will be allowed. An error will be thrown if the expression evaluates to false or null for any of the records inserted or any of the records that result from the update. Note that the check_expression is evaluated against the proposed new contents of the row, not the original contents.`, }
-] as const;
+] as const satisfies KWD[];

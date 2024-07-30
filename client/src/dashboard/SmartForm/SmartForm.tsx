@@ -510,7 +510,6 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     const { currentRow = {} } = action;
 
     const newRow = {
-      // ...currentRow,
       ...(this.state.newRow || {}),
       [column.name]: newVal,
     };

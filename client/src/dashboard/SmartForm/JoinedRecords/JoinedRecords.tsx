@@ -1,23 +1,23 @@
+import { mdiPlus, mdiTable } from "@mdi/js";
+import type { AnyObject } from "prostgles-types";
 import React from "react";
+import type { DetailedFilterBase } from "../../../../../commonTypes/filterUtils";
+import type { Prgl } from "../../../App";
+import Btn from "../../../components/Btn";
+import { FlexCol, FlexRow, classOverride } from "../../../components/Flex";
+import Loading from "../../../components/Loading";
+import { MediaViewer } from "../../../components/MediaViewer";
+import Popup from "../../../components/Popup/Popup";
+import type { Command } from "../../../Testing";
 import RTComp from "../../RTComp";
 import SmartCardList from "../../SmartCard/SmartCardList";
-import { mdiPlus, mdiTable } from "@mdi/js";
+import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter";
+import SmartTable from "../../SmartTable";
+import type { TargetPath } from "../../W_Table/tableUtils/getJoinPaths";
 import type { GetRefHooks, SmartFormProps } from "../SmartForm";
 import SmartForm from "../SmartForm";
-import Btn from "../../../components/Btn"; 
-import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter";
-import type { DetailedFilterBase } from "../../../../../commonTypes/filterUtils";
-import SmartTable from "../../SmartTable";
-import Popup from "../../../components/Popup/Popup";
-import type { AnyObject } from "prostgles-types";
-import { MediaViewer } from "../../../components/MediaViewer"; 
-import Loading from "../../../components/Loading";
-import type { Prgl } from "../../../App";
 import { getJoinFilter } from "./getJoinFilter";
 import { prepareJoinedRecordsSections } from "./prepareJoinedRecordsSections";
-import { FlexRow, classOverride } from "../../../components/Flex";
-import { JoinPathSelectorV2 } from "../../W_Table/ColumnMenu/JoinPathSelectorV2";
-import type { TargetPath } from "../../W_Table/tableUtils/getJoinPaths";
 
 type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods" | "theme"> & Pick<SmartFormProps, "onSuccess"> & {
   className?: string; 
@@ -256,8 +256,13 @@ export class JoinedRecords extends RTComp<JoinedRecordsProps, JoinedRecordsState
     const dencendants = tables.filter(t => t.columns.some(c => c.references?.some(r => r.ftable === tableName)))
     const descendantInsertTables = dencendants.filter(t => db[t.name]?.insert).map(t => t.name);
 
-    return <div className={classOverride("flex-col bt b-color min-h-0 bg-inherit ", className)} style={style}>
+    return <FlexCol
+      data-command="JoinedRecords" 
+      className={classOverride("gap-0 bt b-color min-h-0 bg-inherit ", className)} 
+      style={style}
+    >
       <h4 title="Toggle section"
+        data-command={"JoinedRecords.toggle" satisfies Command}
         onClick={() => {
           this.props.onToggle?.(!expanded); 
           this.setState({ expanded: !expanded });
@@ -293,7 +298,8 @@ export class JoinedRecords extends RTComp<JoinedRecordsProps, JoinedRecordsState
       {quickViewPopup}
       {insertPopup}
       {this.getNestedInsertPopup()}
-      {expanded && <div className="flex-col o-auto f-1 px-1 bg-inherit">
+      {expanded && 
+      <FlexCol className="gap-0 o-auto f-1 px-1 bg-inherit">
         {sections.filter(s => !showRelated || dencendants.some(t => t.name === s.tableName) ).map((s, i) => {
           const onToggle: React.MouseEventHandler = ({ currentTarget }) => {
             const newSections = sections.map(_s => ({
@@ -379,6 +385,7 @@ export class JoinedRecords extends RTComp<JoinedRecordsProps, JoinedRecordsState
           const key = s.path.join(".") + this.dataSignature
           return (
             <div key={key}
+              data-key={s.path.join(".")}
               className="flex-col min-h-0 f-0 relative bg-inherit"
             >
               <div className="flex-row ai-center noselect pointer f-0 bg-inherit bt b-color"
@@ -391,6 +398,7 @@ export class JoinedRecords extends RTComp<JoinedRecordsProps, JoinedRecordsState
               >
                 <Btn className="f-1 p-p5 ta-left font-20 bold jc-start"
                   variant="text"
+                  data-label="Expand section"
                   title="Expand section"
                   disabledInfo={s.error ?? disabledInfo}
                   color={s.error? "warn" : "action"}
@@ -421,7 +429,7 @@ export class JoinedRecords extends RTComp<JoinedRecordsProps, JoinedRecordsState
             </div>
           )
         })}
-      </div>}
-    </div>
+      </FlexCol>}
+    </FlexCol>
   }
 }

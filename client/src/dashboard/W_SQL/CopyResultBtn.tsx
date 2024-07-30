@@ -61,7 +61,7 @@ export const CopyResultBtn = (props: { sql: SQLHandler; rows: any[][]; cols: Pic
         `  VALUES `,
           rows.map(values => {
             const rowStr = "    ("  + values.map(v => {
-              return typeof v === "string"? `'${(v).replaceAll("'", "''").replaceAll("\n", "\\n")}'` : v;
+              return v === null? "null" : typeof v === "string"? `'${(v).replaceAll("'", "''").replaceAll("\n", "\\n")}'` : v;
             }).join(", ") + ")";
             return rowStr;
           }).join(",\n"),

@@ -17,7 +17,8 @@ import {
   queries, runSql, selectAndInsertFile, setTableRule,
   setWspColLayout,
   typeConfirmationCode,
-  uploadFile
+  uploadFile,
+  runDbSql
 } from './utils';
 import { authenticator } from "otplib";
 
@@ -68,6 +69,62 @@ test.describe("Main test", () => {
     await page.getByRole('link', { name: 'Connections' }).click();
   });
 
+  test('Create db with owner', async ({ page: p }) => {
+    const page = p as PageWIds;
+    await login(page);
+    const dbName = "db_with_owner";
+    await createDatabase(dbName, page, false, { name: dbName, pass: dbName });
+    const currUser = await runDbSql(page, `SELECT current_user`, {}, { returnType: "value" });
+    expect(currUser).toEqual(dbName);
+
+    /** Ensure realtime works and is resilient to schema change */
+    const createTableQuery = `CREATE TABLE "table_name" ( id SERIAL PRIMARY KEY, title  VARCHAR(250), gencol TEXT GENERATED ALWAYS AS ( title || id::TEXT) stored);`
+    await runDbSql(page, createTableQuery);
+    await page.getByTestId("dashboard.menu.tablesSearchList").locator(`[data-key="table_name"]`).click();
+    await page.locator(`[role="columnheader"]`).nth(1).click();
+    await page.locator(`[role="columnheader"]`).nth(1).click();
+
+    await runDbSql(page, `INSERT INTO table_name (title) VALUES('my_new_value_')`);
+    await runDbSql(page, `INSERT INTO table_name (title) VALUES('my_new_value_')`);
+    await page.getByText("my_new_value_1").waitFor({ state: "visible", timeout: 15e3 });
+
+
+    await runDbSql(page, `DROP TABLE table_name;`);
+    await page.getByTestId("W_Table.TableNotFound").waitFor({ state: "visible", timeout: 15e3 });
+
+    await runDbSql(page, createTableQuery);
+    await runDbSql(page, `INSERT INTO table_name (title) VALUES('my_new_value_')`);
+    await runDbSql(page, `INSERT INTO table_name (title) VALUES('my_new_value_')`);
+    await runDbSql(page, `INSERT INTO table_name (title) VALUES('my_new_value_')`);
+    await runDbSql(page, `INSERT INTO table_name (title) VALUES('my_new_value_')`);
+    await page.getByText("my_new_value_1").waitFor({ state: "visible", timeout: 15e3 });
+    await page.getByText("my_new_value_3").waitFor({ state: "visible", timeout: 15e3 });
+
+    await goTo(page, 'localhost:3004/connections');
+    await dropConnectionAndDatabase(dbName, page);
+    await page.waitForTimeout(4e3);
+    await runDbsSql(page, `DROP USER db_with_owner;`);
+  });
+
+  test('Login returnUrl', async ({ page: p }) => {
+    const page = p as PageWIds;
+    const requestedUrl = 'http://localhost:3004/connections/some-connection?a=b';
+    await login(page, undefined, requestedUrl);
+    await page.getByTestId("ProjectConnection.error").waitFor({ state: "visible", timeout: 15e3 });
+    const currentUrl = await page.url();
+    expect(currentUrl).toEqual(requestedUrl);
+  });
+
+  test('Open redirect returnUrl', async ({ page: p }) => {
+    const page = p as PageWIds;
+    const requestedUrl = 'http://localhost:3004/login?returnURL=/%2F%2Fwikipedia.org';
+    await login(page, undefined, requestedUrl);
+    await goTo(page, requestedUrl);
+    await goTo(page, requestedUrl);
+    const currentUrl = await page.url();
+    expect(currentUrl.startsWith("http://localhost:3004/")).toBe(true);
+  });
+
   test('Test 2FA', async ({ page: p }) => {
     const page = p as PageWIds;
  
@@ -85,7 +142,7 @@ test.describe("Main test", () => {
     await page.getByTestId("Setup2FA.Enable.Confirm").click();
 
     /** Using token */
-    await goTo(page, 'localhost:3004/logout');
+    // await goTo(page, 'localhost:3004/logout');
     await login(page);
     await page.locator("#totp_token").fill(code);
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -104,7 +161,6 @@ test.describe("Main test", () => {
     await page.getByTestId("MenuList").locator(`[data-key="security"]`).click();
     await page.getByTestId("Setup2FA.Disable").click();
   });
-
 
   test('Sample database backups', async ({ page: p }) => {
     const page = p as PageWIds;

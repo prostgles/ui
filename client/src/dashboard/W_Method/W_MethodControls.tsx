@@ -1,6 +1,7 @@
 import { mdiChevronDown, mdiPlay } from "@mdi/js";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { AnyObject, JSONB, MethodFullDef } from "prostgles-types";
+import { isEmpty } from "prostgles-types";
 import { getKeys } from "prostgles-types";
 import React, { useState } from "react";
 import type { Prgl } from "../../App";
@@ -13,7 +14,6 @@ import { omitKeys } from "../../utils";
 import CodeEditor from "../CodeEditor/CodeEditor";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import SmartTable from "../SmartTable";
-import { tout } from "../../pages/ElectronSetup";
 
 type P = Pick<Prgl, "db" | "methods" | "tables" | "theme"> & {
   method_name: string;
@@ -141,12 +141,12 @@ export const W_MethodControls = ({ w, db, tables, methods, method_name, fixedRow
           disabledInfo={(hasErrors && showJSONBErrors)? "Errors/invalid values found" : undefined}
         >Run</Btn>
 
-        <Btn iconPath={mdiChevronDown}
+        {!isEmpty(inputSchema) && <Btn iconPath={mdiChevronDown}
           iconStyle={{ transform: `rotate(${!expandControls? 0 : 180}deg)`, transition: ".3s all" }}
           onClick={() => setExpandControls(v => !v)}
         >
           {!expandControls? "Expand" : "Collapse"} input
-        </Btn>
+        </Btn>}
 
         <SwitchToggle 
           label="Show results" 

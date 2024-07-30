@@ -1,8 +1,9 @@
 import { mdiPlus } from "@mdi/js";
-import { asName } from "prostgles-client/dist/prostgles";
+import { asName, usePromise } from "prostgles-client/dist/prostgles";
 import { pickKeys } from "prostgles-types";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { SampleSchema } from "../../../../commonTypes/utils";
 import type { PrglState } from "../../App";
 import ErrorComponent from "../../components/ErrorComponent";
 import { FlexCol, FlexRow } from "../../components/Flex";
@@ -10,12 +11,10 @@ import FormField from "../../components/FormField/FormField";
 import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
 import Popup from "../../components/Popup/Popup";
 import Select from "../../components/Select/Select";
+import { SwitchToggle } from "../../components/SwitchToggle";
 import type { DBS } from "../../dashboard/Dashboard/DBS";
 import { SampleSchemas } from "../../dashboard/SampleSchemas";
 import type { Connection } from "../NewConnection/NewConnnection";
-import type { SampleSchema } from "../../../../commonTypes/utils";
-import { ExpandSection } from "../../components/ExpandSection";
-import { SwitchToggle } from "../../components/SwitchToggle";
 
 type ConnectionServerProps = {
   name: string;
@@ -48,6 +47,7 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
   const [connectionName, setConnectionName] = useState("");
   const [serverInfo, setServerInfo] = useState<{
     canCreateDb: boolean;
+    rolname: string;
     databases: string[];
     sampleSchemas: SampleSchema[];
     usedDatabases: string[];
@@ -58,20 +58,28 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
   const navigate = useNavigate();
   const [error, setError] = useState<any>();
   const [newOwner, setNewOwner] = useState({ name: "", password: "", create: false });
+  const newUserName = newOwner.name;
+  const newUsernameError = usePromise(async () => {
+    if(!connId || !runConnectionQuery || !newUserName || !newOwner.create) return undefined;
+    if(!newUserName) return "Username is required";
+    const matchingUserNames = await runConnectionQuery(connId, `SELECT usename FROM pg_catalog.pg_user WHERE usename = $1`, [newUserName]);
+    return matchingUserNames.length > 0 ? "User already exists" : undefined;
+  }, [newUserName, connId, runConnectionQuery, newOwner.create]);
+  const newUserPasswordError = newOwner.create && !newOwner.password? "Password is required" : undefined;
 
   if(!runConnectionQuery || !getSampleSchemas || !createConnection || !validateConnection || !connId) return null;
 
   const onOpenActions = async () => {
     const serverInfo = (await runConnectionQuery(
-      connections[0]!.id!,
+      connId,
       `
-        SELECT rolcreatedb OR rolsuper as "canCreateDb"
+        SELECT rolcreatedb OR rolsuper as "canCreateDb", rolname
         FROM pg_catalog.pg_roles
         WHERE rolname = "current_user"();
       `
-    ))[0]! as { canCreateDb: boolean, databases: string[] };
+    ))[0]! as { canCreateDb: boolean, databases: string[]; rolname: string; };
     const databases = (await runConnectionQuery(
-      connections[0]!.id!,
+      connId,
       `
         SELECT datname FROM pg_catalog.pg_database
       `
@@ -100,8 +108,22 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
   const onCreateConnection = async (action: Action) => {
 
     let newDbName = "";
+    let newDbOwnerCredentials: undefined | Pick<Connection, "db_user" | "db_pass">;
     if(action.type === Actions.create){
-      await runConnectionQuery(connId, `CREATE DATABASE ${asName(action.newDatabaseName!)};`);
+      /** Create owner if required */
+      if(newOwner.create){
+        if(newUsernameError || newUserPasswordError) throw "User already exists or password is missing";
+        newDbOwnerCredentials = {
+          db_user: newOwner.name,
+          db_pass: newOwner.password,
+        }
+        await runConnectionQuery(connId, `CREATE USER ${asName(newOwner.name)} WITH ENCRYPTED PASSWORD $1;`, [newOwner.password]);
+      }
+      const createDbQuery = [
+        `CREATE DATABASE ${asName(action.newDatabaseName!)}`,
+        newDbOwnerCredentials? `WITH OWNER ${JSON.stringify(newOwner.name)}` : "",
+      ].join("\n")
+      await runConnectionQuery(connId, createDbQuery);
       newDbName = action.newDatabaseName!;
       
     } else {
@@ -111,10 +133,10 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
       ...pickKeys(serverInfo!.mainConnection!, [
         "db_conn", 
         "db_host", 
-        "db_pass", 
         "db_port",
         "db_ssl", 
         "db_user", 
+        "db_pass", 
         "db_ssl", 
         "ssl_certificate",
         "ssl_client_certificate", 
@@ -125,7 +147,8 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
       db_name: newDbName!,  
       type: "Standard", 
       db_conn: null,
-    })
+      ...newDbOwnerCredentials,
+    });
     const newConn = await createConnection(validatedConnection.connection, action.type === Actions.create? action.applySchema?.name : undefined);
     const { connection: newConnection } = newConn;
     if(action.type === Actions.create && action.applySchema?.type === "dir" && action.applySchema.workspaceConfig){
@@ -157,7 +180,7 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
         { key: Actions.create, 
           /** This is to ensure serverInfo is loaded before clicking  */
           "data-command": !serverInfo || cannotCreateDb? undefined : "ConnectionServer.add.newDatabase", 
-          disabledInfo: error?.toString() ?? (cannotCreateDb? `Not allowed to create databases` : undefined) 
+          disabledInfo: error?.toString() ?? (cannotCreateDb? `Not allowed to create databases with this user (${serverInfo?.rolname})` : undefined) 
         },
         { 
           key: Actions.add, 
@@ -186,7 +209,9 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
             disabledInfo: (
               action.type === Actions.create && !action.newDatabaseName && !connectionName || 
               action.type === Actions.add && !action.existingDatabaseName &&  !connectionName
-            )? "Some data is missing" : duplicateConnectionName? "Must fix connection name error" : undefined, 
+            )? "Some data is missing" : 
+              duplicateConnectionName? "Must fix connection name error" : 
+              (newUsernameError ?? newUserPasswordError ?? undefined), 
             onClickMessage: async (e, setMsg) => {
               setMsg({ loading: 1, delay: 0 });
               try {
@@ -265,15 +290,36 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
           />
           {action.existingDatabaseName && ConnectionNameEditor}
         </> : "Something went wrong"}
-        <SwitchToggle 
-          label="Create a user for this database (optional)"
-          variant="col"
-          checked={newOwner.create}
-          onChange={create => setNewOwner({ ...newOwner, create })}
-        />
+        {action.type === Actions.create && 
+          <SwitchToggle 
+            label="Create a user for this database (optional)"
+            variant="col"
+            data-command="ConnectionServer.withNewOwnerToggle"
+            checked={newOwner.create}
+            onChange={create => {
+              setNewOwner({ 
+                ...newOwner,
+                ...(create && !newOwner.name && connectionName && { name: `${connectionName}_owner` }),
+                create, 
+              });
+            }}
+          />
+        }
         {newOwner.create && <>
-          <FormField label={"New username"} value={newOwner.name} onChange={name => setNewOwner({ ...newOwner, name })} />
-          <FormField label={"New username password"} value={newOwner.password} onChange={password => setNewOwner({ ...newOwner, password })}  />
+          <FormFieldDebounced 
+            data-command="ConnectionServer.NewUserName"
+            label={"New username"} 
+            value={newOwner.name}
+            error={newUsernameError}
+            onChange={name => setNewOwner({ ...newOwner, name })} 
+          />
+          <FormField 
+            data-command="ConnectionServer.NewUserPassword"
+            label={"New username password"} 
+            value={newOwner.password} 
+            error={newUserPasswordError}
+            onChange={password => setNewOwner({ ...newOwner, password })}  
+          />
         </>}
         <ErrorComponent error={error} />
       </Popup>

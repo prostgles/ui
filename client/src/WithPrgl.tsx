@@ -1,7 +1,7 @@
 import React from "react";
 import type { Prgl } from "./App";
-import { prgl_R } from "./App";
-import { useReactiveState } from "./appUtils"
+import { createReactiveState, useReactiveState } from "./appUtils";
+export const prgl_R = createReactiveState<Prgl | undefined>(undefined);
 
 export const WithPrgl = ({ onRender }: { onRender: (prgl: Prgl) => React.ReactNode }): JSX.Element => {
   const { state: prgl } = useReactiveState(prgl_R);

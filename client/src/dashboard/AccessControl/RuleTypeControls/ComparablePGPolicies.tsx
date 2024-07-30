@@ -9,6 +9,7 @@ import CodeExample from "../../CodeExample"
 import type { EditedAccessRule } from "../AccessControl"
 import { ACCESS_RULE_METHODS } from "../AccessRuleSummary"
 import { getComparablePGPolicy } from "./getComparablePGPolicy"
+import { fixIndent } from "../../../demo/sqlVideoDemo"
 
 export const ComparablePGPolicies = ({ prgl, rule }: { prgl: Prgl; rule: EditedAccessRule; }) => {
   const policies = usePromise(async () => {
@@ -80,36 +81,39 @@ export const ComparablePGPolicies = ({ prgl, rule }: { prgl: Prgl; rule: EditedA
     }
   }, [prgl, rule]);
 
-const dropAllPolicies = `/* Drop all existing policies */
-DO
-$$
-DECLARE
-pol RECORD;
-BEGIN
-  FOR pol IN (SELECT polname AS name, polrelid::regclass AS table FROM pg_policy)
-  LOOP
-    EXECUTE format('DROP POLICY %I ON %I', pol.name, pol.table);
-  END LOOP;
-END;
-$$;
+  const query = fixIndent(`
+    /* Drop all existing policies */
+    DO
+    $$
+    DECLARE
+    pol RECORD;
+    BEGIN
+      FOR pol IN (SELECT polname AS name, polrelid::regclass AS table FROM pg_policy)
+      LOOP
+        EXECUTE format('DROP POLICY %I ON %I', pol.name, pol.table);
+      END LOOP;
+    END;
+    $$;
 
-/* Enable RLS for all tables */
-DO $$
-DECLARE
-  tbl record;
-BEGIN
-  FOR tbl IN SELECT tablename FROM pg_tables AS t
-    WHERE t.schemaname = CURRENT_SCHEMA 
-  LOOP
-    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY;', tbl.tablename); 
-  END LOOP;
-END; $$;
+    /* Enable RLS for all tables */
+    DO $$
+    DECLARE
+      tbl record;
+    BEGIN
+      FOR tbl IN SELECT tablename FROM pg_tables AS t
+        WHERE t.schemaname = CURRENT_SCHEMA 
+      LOOP
+        EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY;', tbl.tablename); 
+      END LOOP;
+    END; $$;
 
-/* It is recommended to create a non superuser pg account with read/write permissions to all relevant tables */
-CREATE USER my_user WITH ENCRYPTED PASSWORD 'my_password';
-GRANT ${ACCESS_RULE_METHODS.map(a => a.toUpperCase()).join(", ")} ON ALL TABLES IN SCHEMA public TO my_user;
-`
-  const query = `${dropAllPolicies}\n\n${policies?.join("\n\n") ?? ""}`;
+    /* It is recommended to create a non superuser pg account with read/write permissions to all relevant tables */
+    CREATE USER my_user WITH ENCRYPTED PASSWORD 'my_password';
+    GRANT ${ACCESS_RULE_METHODS.map(a => a.toUpperCase()).join(", ")} ON ALL TABLES IN SCHEMA public TO my_user;
+
+    /* Comparable policies */
+  `) + "\n" +
+  (policies ?? []).join("\n");
 
   return <PopupMenu 
     className="ComparablePGPolicies mt-1"

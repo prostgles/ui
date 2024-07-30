@@ -40,7 +40,7 @@ export default class RTComp<P = {}, S = { }, D = Record<string, any>> extends Re
     //empty
   }
 
-  componentWillUnmount(){
+  componentWillUnmount = () => {
     this.mounted = false;
     this.onUnmount(); 
   }
@@ -79,7 +79,7 @@ export default class RTComp<P = {}, S = { }, D = Record<string, any>> extends Re
     //empty
   }
 
-  setData(deltaD: DeepPartial<D>, deepDeltaD?: DeepPartial<D>){
+  setData = (deltaD: DeepPartial<D>, deepDeltaD?: DeepPartial<D>) => {
     this.d = { ...this.d, ...deltaD };
     try {
       this._onDelta(undefined, undefined, deepDeltaD || deltaD);

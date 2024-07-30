@@ -14,7 +14,13 @@ export type TypeAutoOpts = {
    * If true then will not accept any suggestion. Used for demos where we want to cycle through suggestions
    */
   dontAccept?: boolean;
-  wait?: number; 
+  /**
+   * Wait after accepting and before resolving the promise
+   */
+  wait?: number;
+  /**
+   * Wait after triggering the suggestions
+   */
   waitAccept?: number;
   /**
    * Wait before accepting the selected option
@@ -65,6 +71,7 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
     lineEnd: getTriggerFor("cursorLineEnd"),
     lineStart: getTriggerFor("cursorLineStart"),
     pageDown: getTriggerFor("cursorPageDown"),
+    setPosition: (line: number, column: number) => getEditor().e.setPosition({ lineNumber: line, column }),
   }
   const triggerSuggest = () => {
     if(window.getSelection()?.toString()){
@@ -113,7 +120,7 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
   } 
 
   const typeAuto = (text: string, opts?: TypeAutoOpts) => {
-    const {nth = 0, wait = 0, waitAccept = 600, waitBeforeAccept = 0, dontAccept, onEnd, ...typeOpts } = opts ?? {};
+    const { nth = 0, wait = 0, waitAccept = 600, waitBeforeAccept = 0, dontAccept, onEnd, ...typeOpts } = opts ?? {};
     return new Promise((resolve, reject) => {
       typeText(text, (triggeredSuggest) => {
         if(nth > -1 && !triggeredSuggest){
@@ -135,7 +142,7 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
             if(wait) await tout(wait);
             await onEnd?.();
             resolve(1);
-          }, 500)
+          }, 10)
         }, waitAccept);
       }, typeOpts);
     })

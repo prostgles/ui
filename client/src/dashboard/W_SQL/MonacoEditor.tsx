@@ -24,7 +24,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   React.useEffect(() => {
     loadPSQLLanguage(props.loadedSuggestions);
-  }, []);
+  }, [props.loadedSuggestions]);
 
   const editor = React.useRef<editor.IStandaloneCodeEditor>();
   const container = React.useRef<HTMLDivElement>(null);
@@ -89,7 +89,7 @@ const hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42 = (editor: edi
     }
     // I also wanted my widget to be shorter by default:
     if (suggestWidget && suggestWidget._persistedSize) {
-      suggestWidget._persistedSize.store({width: 200, height: 256});
+      // suggestWidget._persistedSize.store({width: 200, height: 256});
     }
   }
 }

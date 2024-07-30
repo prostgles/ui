@@ -2,6 +2,7 @@ import { isDefined } from "../../../utils";
 import { suggestSnippets } from "./CommonMatchImports";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import type { RawExpect } from "./getExpected";
+import { asSQL } from "./KEYWORDS";
 import type { ParsedSQLSuggestion } from "./registerSuggestions";
 import { getKind } from "./registerSuggestions";
 
@@ -103,10 +104,13 @@ const getTableJoins = (tableTokenIdx: number, prevTableTokenIndexes: number[], {
               const tableCol = `${fromTableAliasStr}.${fromTableS.cols?.find(c => c.ordinal_position === fromOrdPos)?.escaped_identifier}`;
               return `${fTableCol} = ${tableCol}`
             });
+            const joinCondition = `${s.escapedIdentifier} ${ftableAlias}\n${" ".repeat(indentSize)}ON ${onCondition.join(" OR ")}`
             joins = suggestSnippets([{
-              label: `${s.escapedIdentifier} ${ftableAlias}\n${" ".repeat(indentSize)}ON ${onCondition.join(" OR ")}`,
+              label: joinCondition.replaceAll("\n", ""),
+              insertText: joinCondition,
               sortText: "a",
               kind: getKind("table"),
+              docs: s.documentation,
             }]).suggestions;
 
             /** referencing */
@@ -117,10 +121,14 @@ const getTableJoins = (tableTokenIdx: number, prevTableTokenIndexes: number[], {
               const tableCol = `${fromTableAliasStr}.${fromTableS.cols?.find(c => c.ordinal_position === fromTableOrdPos)?.escaped_identifier}`;
               return `${fTableCol} = ${tableCol}`
             }).join(" AND "));
+
+            const joinCondition = `${s.escapedIdentifier} ${ftableAlias}\n${" ".repeat(indentSize)}ON ${onCondition.join(" OR ")}`
             joins = suggestSnippets([{
-              label: `${s.escapedIdentifier} ${ftableAlias}\n${" ".repeat(indentSize)}ON ${onCondition.join(" OR ")}`,
+              label: joinCondition.replaceAll("\n", ""),
+              insertText: joinCondition,
               sortText: "a",
               kind: getKind("table"),
+              docs: s.documentation,
             }]).suggestions;
           }                  
           joins.forEach(j => {

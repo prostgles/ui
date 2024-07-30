@@ -28,7 +28,7 @@ export const W_TableMenu_Indexes = ({ tableMeta, onSetQuery, w, cols, prgl }: P)
         sqlQuery: `
           SELECT tablename, indexname, indexdef
           FROM pg_indexes
-          WHERE schemaname = 'public' AND format('%I', tablename) = \${tableName}
+          WHERE schemaname = current_schema() AND format('%I', tablename) = \${tableName}
         `,
         dataAge: prgl.dbKey,
         args: { tableName }

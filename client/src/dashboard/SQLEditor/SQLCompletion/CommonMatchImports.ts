@@ -134,7 +134,7 @@ export const createStatements = {
     "/* Example trigger function ",
     "",
     "CREATE FUNCTION trigger_func_name()",
-    "  RETURNS TRIGGER AS $func$",
+    "  RETURNS TRIGGER AS $$",
     "BEGIN",
     "",
     "  IF NEW.col <> OLD.col THEN ",
@@ -144,7 +144,7 @@ export const createStatements = {
     "  RETURN NEW;",
     "",
     "END;",
-    "$func$ LANGUAGE plpgsql;",
+    "$$ LANGUAGE plpgsql;",
     "",
     "*/"
   ].join("\n"),

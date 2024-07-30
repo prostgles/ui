@@ -1,28 +1,25 @@
-import React, { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
-import { useIsMounted } from "../dashboard/Backup/CredentialSelector";
+import { mdiArrowLeft } from "@mdi/js";
+import React from "react";
+import Btn from "../components/Btn";
+import { FlexCol } from "../components/Flex";
 
-function NotFound() {
-
-  const [show, setShow] = useState(false);
-  const getIsMounted = useIsMounted();
-
-  useEffect(() => {
-    setTimeout(() => {
-      if(!getIsMounted()) return;
-      
-      setShow(true)
-    }, 1000)
-  }, [setShow, getIsMounted]);
-
-  if(!show) return null
-
+export const NotFound = () => {
   return (
-    <div className="bg-color-0 ta-center p-2 f-1 flex-col">
+    <FlexCol 
+      className="bg-color-0 ai-center p-2 f-1"
+      data-command="NotFound"
+    >
       <div className="p-1">404 page not found</div>
-      <NavLink to="/">Home</NavLink>
-    </div>
+      <Btn 
+        asNavLink={true}
+        href="/"
+        iconPath={mdiArrowLeft}
+        color="action"
+        variant="filled"
+        data-command="NotFound.goHome"
+      >
+        Home
+      </Btn>
+    </FlexCol>
   );
 }
-
-export default NotFound;

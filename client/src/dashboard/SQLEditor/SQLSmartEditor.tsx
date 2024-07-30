@@ -51,7 +51,7 @@ export const SQLSmartEditor = ({ query: propsQuery, sql, hint, onSuccess, onCanc
     color: "action",
     className: "ml-auto",
     iconPath: mdiPlay, 
-    onClick: () => onRunQuery(), 
+    onClickPromise: () => onRunQuery(), 
     title: "Run query",
     "data-command": "SQLSmartEditor.Run",
     style: { alignSelf: "flex-end" },
