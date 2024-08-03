@@ -55,8 +55,8 @@ export const parseExplainResult = ({ rows = [], cols = [], activeQuery }: Pick<W
           name: name,
           subLabel: "",
           sortable: false,
-          udt_name: "text",
-          tsDataType: "string",
+          udt_name: name.includes("Cost")? "numeric" : "text",
+          tsDataType: name.includes("Cost")? "number" : "string",
         } satisfies Required<W_SQLState>["cols"][number]),),
         {
           ...cols[0]!,

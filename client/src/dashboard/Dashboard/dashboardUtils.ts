@@ -335,7 +335,6 @@ export type Join = {
 };
 export type JoinV2 = Omit<Join, "on"> & { on: [string, string][][]; };
 export type DBSchemaTableWJoins = (DBSchemaTable & {
-  count: string;
   joins: Join[];
   joinsV2: JoinV2[];
 });

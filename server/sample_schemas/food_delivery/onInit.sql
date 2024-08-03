@@ -263,7 +263,7 @@ FROM (
 DROP FUNCTION IF EXISTS on_order_updates() CASCADE;
 
 DROP TABLE IF EXISTS fake_contacts CASCADE;
-SELECT first_name, last_name, replace(email, '@', round(random()*10) || '@') as email, '07' || round(random()*1e9) as phone_number
+SELECT first_name, last_name, email, '07' || round(random()*1e9) as phone_number
 INTO fake_contacts
 FROM (
   VALUES 
@@ -769,19 +769,25 @@ FROM (
     ('Chauncey', 'Motley', 'chauncey_motley@aol.com')
 ) AS result("first_name","last_name","email");
 
-CREATE OR REPLACE VIEW random_fake_contacts AS 
-SELECT first_name, last_name, replace(email, '@', round(random()*1e12) || '@') as email, phone_number
-FROM fake_contacts 
-ORDER BY random();
+
+CREATE OR REPLACE VIEW random_fake_contacts AS
+SELECT first_name, last_name, email, phone_number, row_number() over() as rnum
+FROM fake_contacts;
 
 
-CREATE OR REPLACE FUNCTION random_fake_contact() RETURNS SETOF fake_contacts AS $$
-  SELECT *
-  FROM random_fake_contacts 
-  ORDER BY random()
-  LIMIT 1;
+CREATE OR REPLACE FUNCTION setof_fake_contacts(num int4) RETURNS SETOF random_fake_contacts AS $$
+  SELECT first_name, last_name, replace(email, '@', round(extract('epoch' from now()) - 1722705653) || '_' || rnum || '@') as email, phone_number, rnum
+  FROM (
+    SELECT fc.*, row_number() over() as rnum
+    FROM (
+      SELECT first_name, last_name, email, phone_number
+      FROM random_fake_contacts
+    ) fc,
+    generate_series(1, ceil(num::float/500)::int4) 
+    ORDER BY random()
+    LIMIT num
+  ) t
 $$ LANGUAGE SQL; 
-
 
 CREATE TABLE user_types (
   id TEXT PRIMARY KEY, 
@@ -809,7 +815,7 @@ CREATE INDEX idx_addresses ON addresses USING gist (geog);
 
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
-  email VARCHAR(100) NOT NULL UNIQUE,
+  email VARCHAR(100) NOT NULL ,
   password VARCHAR(100) NOT NULL,
   first_name VARCHAR(50) NOT NULL,
   last_name VARCHAR(50) NOT NULL,
@@ -818,6 +824,11 @@ CREATE TABLE users (
   location GEOGRAPHY,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+create index idx_users_email on users (email);
+create index idx_users_id_email on users (id, email);
+create index idx_users_id_type on users (id, type);
+create index idx_users_type on users (type);
 
 CREATE TABLE user_addresses (
   user_id INTEGER NOT NULL REFERENCES users,
@@ -833,6 +844,10 @@ CREATE TABLE restaurants (
   address_id BIGINT NOT NULL REFERENCES addresses,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX idx_restaurants_address_id ON restaurants ( address_id );
+CREATE INDEX idx_restaurants_id_address_id ON restaurants ( id, address_id );
+
 CREATE TABLE restaurant_managers (
   restaurant_id INTEGER REFERENCES restaurants(id),
   manager_id INTEGER REFERENCES users(id),
@@ -890,6 +905,12 @@ CREATE TABLE orders (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX ON orders (restaurant_id);
+CREATE INDEX ON orders (customer_id);
+CREATE INDEX ON orders (deliverer_id);
+CREATE INDEX ON orders (created_at);
+CREATE INDEX ON orders (customer_id, created_at);
 
 CREATE TABLE order_items (
   id SERIAL PRIMARY KEY,
@@ -995,8 +1016,7 @@ SET geometry = st_point(lon, lat, 4326);
 
 
 CREATE TABLE IF NOT EXISTS "roads.geojson" (
-  rowid BIGSERIAL PRIMARY KEY,
-  id BIGINT,
+  id BIGINT PRIMARY KEY,
   geog GEOGRAPHY,
   deliverer_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
   geometry JSONB
@@ -1024,8 +1044,13 @@ ires AS (
   RETURNING *, id as restaurant_id
 ),
 new_users AS (
-  SELECT (random_fake_contact()).*, 'pwd' as pwd, 'restaurant_manager' as type
-  FROM ires
+  SELECT fk.*, 'pwd' as pwd, 'restaurant_manager' as type
+  FROM (
+    SELECT *, row_number() OVER() as rnum
+    FROM ires
+  ) r
+  INNER JOIN setof_fake_contacts((SELECT COUNT(*) FROM ires)::int4) fk
+    ON fk.rnum = r.rnum
 ),
 uins AS (
   INSERT INTO users (email, password, first_name, last_name, phone_number, type, created_at)
@@ -1040,6 +1065,8 @@ FROM uins;
 CREATE OR REPLACE PROCEDURE mock_users(number_of_users INTEGER DEFAULT 1e3, period INTERVAL DEFAULT '1 day')
 LANGUAGE plpgsql
 AS $$  
+  DECLARE 
+    number_of_riders INTEGER;
 BEGIN
 
   WITH uadd as (
@@ -1064,9 +1091,14 @@ BEGIN
     RETURNING *
   ), 
   new_users AS (
-    SELECT (random_fake_contact()).*, 'pwd' as pwd, 'customer' as type, 
+    SELECT fk.*, 'pwd' as pwd, 'customer' as type, 
       geog, id as address_id
-    FROM uadd
+    FROM (
+      SELECT *, row_number() OVER() as rnum
+      FROM uadd
+    ) u
+    INNER JOIN setof_fake_contacts(number_of_users) fk
+      ON fk.rnum = u.rnum
   ),
   uins AS (
     INSERT INTO users (email, password, first_name, last_name, phone_number, type, created_at)
@@ -1086,14 +1118,16 @@ BEGIN
   -- SELECT * FROM uains
   ;
 
-  /* Create 500 riders */
+  number_of_riders := GREATEST(CEIL(number_of_users / 5), 1);
+
+  /* Create 20% riders */
   INSERT INTO users (email, password, first_name, last_name, phone_number, type, created_at)
   SELECT email, 'pwd', first_name, last_name, phone_number, 'rider', now() + (random() * period)
-  FROM random_fake_contacts;
-  -- LIMIT MIN(CEIL(number_of_users / 20), 1);
+  FROM setof_fake_contacts(number_of_riders)
+  LIMIT number_of_riders;
 END $$;
 
-CALL mock_users(10000::integer, '1 year');
+CALL mock_users(1e5::integer, '1 year');
 
 CREATE OR REPLACE VIEW v_users AS
 WITH order_stats AS (
@@ -1145,39 +1179,50 @@ CREATE OR REPLACE PROCEDURE mock_orders(number_of_orders INTEGER DEFAULT 1e4)
 LANGUAGE plpgsql
 AS $$  
 BEGIN
-
-  /* Create number_of_orders orders */
-  INSERT INTO orders (customer_id, customer_address_id, restaurant_id, deliverer_id, status, delivery_fee, service_fee, total_price, created_at)
-  SELECT DISTINCT ON (t.rnum) user_id, t.address_id, restaurant_id, riders.id as deliverer_id, order_status, 0, 0, random() * 100, now() --+ (random() * interval '1 hour')
+  
+  /* Create orders */
+  INSERT INTO orders (
+    customer_id, 
+    customer_address_id, 
+    restaurant_id, 
+    deliverer_id, 
+    status, 
+    delivery_fee, 
+    service_fee, 
+    total_price, 
+    created_at
+  )
+  SELECT 
+    u.id as customer_id, 
+    u.address_id as customer_address_id, 
+    r.id as restaurant_id, 
+    rider.id as deliverer_id,  
+    CASE WHEN random() < 0.5 THEN 'preparing' ELSE 'picked_up' END as order_status,
+    round(r.dist/1000) as delivery_fee, 
+    1 as service_fee, 
+    round(random() * 100) as total_price, 
+    now() as created_at
   FROM (
-    SELECT  vu.id as user_id, vu.address_id, r.id as restaurant_id, rnum, CASE WHEN random() < 0.5 THEN 'preparing' ELSE 'picked_up' END as order_status
-    FROM (
-      SELECT *, row_number() OVER( order by random()) as rnum
-      FROM v_users u
-      WHERE type = 'customer'
-      AND EXISTS (
-        SELECT * 
-        FROM v_restaurants r
-        WHERE st_distance(u.geog, r.geog) < 7000
-      )
-      ORDER BY last_order
-      LIMIT number_of_orders -- 1e4
-    ) vu
-    INNER JOIN (
-      SELECT * 
-      FROM v_restaurants 
-      ORDER BY random()
-    ) r
-    ON st_distance(vu.geog, r.geog) < 7000
-  ) t
-  LEFT JOIN ( 
-    SELECT *, row_number() OVER(order by random()) as rnum
+    SELECT *, row_number() over() as rnum
+    FROM v_users
+    WHERE type = 'customer'
+    LIMIT number_of_orders
+  ) u
+  INNER JOIN ( 
+    SELECT *, row_number() over(ORDER BY random()) as rnum
     FROM v_users
     WHERE type = 'rider'
-    ORDER BY last_delivery
-    LIMIT number_of_orders -- 1e4
-  ) riders
-  ON t.rnum = riders.rnum;
+  ) rider
+  ON rider.rnum = u.rnum
+  LEFT JOIN LATERAL (
+    SELECT *
+      , st_distance(u.geog, ri.geog) as dist
+    FROM v_restaurants ri
+    WHERE st_distance(u.geog, ri.geog) < 7000
+    ORDER BY u.geog <-> ri.geog
+    LIMIT 1
+  ) r ON TRUE;
+ 
 
   /* Create 5 items per order  */
   INSERT INTO order_items (order_id, menu_item_id, quantity, price, created_at)
@@ -1220,7 +1265,7 @@ BEGIN
 
 END $$;
 
-CALL mock_orders(10e3::INTEGER);
+CALL mock_orders(1e5::INTEGER);
 
 
 

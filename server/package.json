@@ -26,7 +26,7 @@
     "engine.io": "^6.5.5",
     "express": "^4.19.2",
     "otplib": "^12.0.1",
-    "prostgles-server": "^4.2.99",
+    "prostgles-server": "^4.2.100",
     "prostgles-types": "^4.0.22",
     "qrcode": "^1.5.1",
     "socket.io": "^4.7.5",

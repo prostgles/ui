@@ -37,6 +37,13 @@ export const RenderValue = ({ column: c, value, showTitle = true, maxLength, sty
   if(c?.udt_name === "uuid" && value){ 
     return <ShorterText style={style} value={value} column={c} /> 
   }
+
+  if(c?.tsDataType !== "number" && c?.udt_name === "int8"){
+    return <span style={{color: getColumnDataColor({ udt_name: "int4", tsDataType: "number" }),  ...style }}>
+      {BigInt(value).toLocaleString()}
+    </span>
+  }
+
   if(c?.tsDataType === "number" && value !== undefined && value !== null){
     const countDecimals = (num: number) => {
       if(Math.floor(num.valueOf()) === num.valueOf()) return 0;
