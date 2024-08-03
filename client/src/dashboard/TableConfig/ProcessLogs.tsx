@@ -6,10 +6,9 @@ import type { Prgl } from "../../App";
 import Chip from "../../components/Chip";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import Loading from "../../components/Loading";
-import CodeEditor from "../CodeEditor/CodeEditor";
+import { SmartCodeEditor } from "../CodeEditor/SmartCodeEditor";
 import { renderInterval } from "../W_SQL/customRenderers";
 import type { editor } from "../W_SQL/monacoEditorTypes";
-import { SmartCodeEditor } from "../CodeEditor/SmartCodeEditor";
 
 type P = Pick<Prgl, "dbsMethods" | "connectionId" | "dbs"> & {
   type: "tableConfig" | "onMount" | "methods";

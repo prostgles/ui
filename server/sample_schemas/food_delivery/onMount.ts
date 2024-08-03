@@ -10,16 +10,15 @@ export const onMount: OnMount = async ({ dbo }) => {
 
     const mockLocations = async () => {
       try {
-        console.log("mock_locations");
+        await dbo.sql(`CALL mock_locations(); /* from fork */`);
+      } catch (error) {
+        console.error("Error calling mock_locations", error);
         const funcs = await dbo.sql(`
           SELECT proname, probin, pg_get_function_arguments(oid), current_database(), (SELECT string_agg(extname, '; ') FROM pg_catalog.pg_extension) as extensions
           FROM pg_catalog.pg_proc
           WHERE proname = 'st_lineinterpolatepoint'
         `, {}, { returnType: "rows" });
         console.error(funcs);
-        await dbo.sql(`CALL mock_locations(); /* from fork */`);
-      } catch (error) {
-        console.error("Error calling mock_locations", error);
         throw error;
       }
       mockLocations();

@@ -17,15 +17,15 @@ import { getInitState, tryStartProstgles } from "./startProstgles";
 
 const app = express();
 
-// if(process.env.PRGL_TEST){
+if(process.env.PRGL_TEST){
   app.use((req, res, next) => {
     res.on("finish", () => {
       console.log(`${(new Date()).toISOString()} ${req.method} ${res.statusCode} ${req.url} ${res.statusCode === 302? res.getHeader("Location") : ""}`);
     });
     next();
-  });
-// }
-
+  });   
+} 
+     
 export const API_PATH = "/api";
 
 app.use(json({ limit: "100mb" }));

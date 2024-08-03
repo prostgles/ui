@@ -348,6 +348,16 @@ export default class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
       </div>
     }
     const sqlError = (activeQuery?.state === "error" && !activeQuery.stopped)? activeQuery.error : undefined;
+    const clearActiveQueryError = () => {
+      if (this.state.activeQuery?.state === "error") {
+        this.setState({ 
+          activeQuery: {
+            ...this.state.activeQuery,
+            error: undefined,
+          } 
+        });
+      }
+    }
     const content =  <>
       <div className={"ProstglesSQL flex-col f-1 min-h-0 min-w-0 relative "} 
         ref={r => {
@@ -398,14 +408,7 @@ export default class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               newData.options = opts;
               this.d.w.$update(newData, { deepMerge: true });
               /** Clear error on type */
-              if (this.state.activeQuery?.state === "error") {
-                this.setState({ 
-                  activeQuery: {
-                    ...this.state.activeQuery,
-                    error: undefined,
-                  } 
-                });
-              }
+              clearActiveQueryError();
             }}
             onRun={async (sql, isSelected) => {
               
@@ -435,6 +438,7 @@ export default class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
             noticeEventListener={this.noticeEventListener}
             runSQL={this.runSQL}
             notifEventSub={this.state.notifEventSub}
+            clearActiveQueryError={clearActiveQueryError}
           />}
         </div> 
 

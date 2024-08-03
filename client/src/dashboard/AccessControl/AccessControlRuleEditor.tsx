@@ -182,34 +182,33 @@ export const AccessControlRuleEditor = ({
 
     {dbPermissions && 
       <FlexCol className={"_DataSection pb-4 " + (dbPermissions.type === "Custom"? " f-1 " : " f-0 ")}>
-        {dbPermissions.type === "Custom" && 
-          <PublishedWorkspaceSelector
-            tables={tables}
-            className="mb-1"
-            prgl={prgl} 
-            dbsPermissions={dbsPermissions ?? null}
-            onSetError={err => {
-              setWspErrors(err)
-            }}
-            wspError={wspErrors}
-            dbPermissions={dbPermissions}
-            onChange={newDbsPermissions => { 
-            
-              onChange({
-                dbsPermissions: {
-                  ...dbsPermissions,
-                  ...newDbsPermissions
-                },
-              })
-            }} 
-            onChangeRule={newRule => {
-              onChange({
-                ...rule,
-                ...newRule
-              } as any)
-            }}
-          />
-        }
+        {/* {dbPermissions.type !== "Run SQL" &&  <- no point. Must allow sharing dashboards with any user */}
+        <PublishedWorkspaceSelector
+          tables={tables}
+          className="mb-1"
+          prgl={prgl} 
+          dbsPermissions={dbsPermissions ?? null}
+          onSetError={err => {
+            setWspErrors(err)
+          }}
+          wspError={wspErrors}
+          dbPermissions={dbPermissions}
+          onChange={newDbsPermissions => { 
+          
+            onChange({
+              dbsPermissions: {
+                ...dbsPermissions,
+                ...newDbsPermissions
+              },
+            })
+          }} 
+          onChangeRule={newRule => {
+            onChange({
+              ...rule,
+              ...newRule
+            } as any)
+          }}
+        />
 
         {dbPermissions.type !== "Run SQL" && 
           <SectionHeader icon={mdiTableLock}>

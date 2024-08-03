@@ -138,6 +138,8 @@ export type DBSchemaGenerated = {
       is_state_db?: null | boolean;
       last_updated?: string;
       name: string;
+      on_mount_ts?: null | string;
+      on_mount_ts_disabled?: null | boolean;
       prgl_params?: null | any;
       prgl_url?: null | string;
       ssl_certificate?: null | string;
@@ -203,8 +205,6 @@ export type DBSchemaGenerated = {
       file_table_config?: null | {    fileTable?: string;   storageType: |  {  type: 'local'; }
  |  {  type: 'S3';  credential_id: number; };   referencedTables?: any;   delayedDelete?: {  deleteAfterNDays: number;  checkIntervalHours?: number; };  };
       id?: number;
-      on_mount_ts?: null | string;
-      on_mount_ts_disabled?: null | boolean;
       rest_api_enabled?: null | boolean;
       sync_users?: null | boolean;
       table_config?: null | Record<string, 
@@ -385,8 +385,8 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       application_name: string;
-      backend_start: string;
-      backend_type: string;
+      backend_start?: null | string;
+      backend_type?: null | string;
       backend_xid?: null | string;
       backend_xmin?: null | string;
       blocked_by?: null | number[];

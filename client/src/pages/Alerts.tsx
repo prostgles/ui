@@ -16,14 +16,16 @@ export const Alerts = (prgl: Prgl) => {
     $notExistsJoined: { "alert_viewed_by": { user_id: prgl.user?.id } } 
   });
 
+  if(!alerts?.length) return null;
+
   return <PopupMenu
     button={
       <div>
         <Btn
           variant="faded" 
-          color={alerts?.length? "action" : undefined}
-          iconPath={alerts?.length? mdiBellBadgeOutline : mdiBellBadgeOutline} 
-          disabledInfo={alerts?.length? undefined : "No alerts"}
+          color={alerts.length? "action" : undefined}
+          iconPath={alerts.length? mdiBellBadgeOutline : mdiBellBadgeOutline} 
+          disabledInfo={alerts.length? undefined : "No alerts"}
         />
       </div>
     }
@@ -38,7 +40,7 @@ export const Alerts = (prgl: Prgl) => {
       background: "transparent",
     }}
   >
-    {!!alerts?.length && <SmartCardList 
+    {!!alerts.length && <SmartCardList 
       db={dbs as any}
       theme={prgl.theme}
       methods={prgl.dbsMethods}

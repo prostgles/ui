@@ -76,7 +76,9 @@ export class ForkedPrglProcRunner {
   logs: any[] = [];
  
   databaseNotFound = false;
+  destroyed = false;
   destroy = (databaseNotFound = false) => {
+    this.destroyed = true;
     this.databaseNotFound = databaseNotFound;
     this.proc.kill("SIGKILL");
   }
@@ -89,7 +91,7 @@ export class ForkedPrglProcRunner {
 
   isRestarting = false;
   restartProc = debounce((error: any) => {
-    if(this.isRestarting || this.databaseNotFound) return;
+    if(this.isRestarting || this.databaseNotFound || this.destroyed) return;
     const logName = `ForkedPrglProcRunner (${this.opts.type})`;
     this.isRestarting = true;
     console.error(`${logName} restartProc. error:`, error);

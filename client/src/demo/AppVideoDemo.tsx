@@ -53,6 +53,9 @@ export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
     stopWakeLock();
   }
  
+  if(demoStarted && window.isLowWidthScreen || !isOnDemoDatabase){
+    return null;
+  }
   return <>
     <Btn
       _ref={(node: any) => {
@@ -65,7 +68,7 @@ export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
         e.preventDefault();
         setShowDemoOptions(e.currentTarget);
       }}
-      style={{ opacity: isOnDemoDatabase? 1 : 0 }}
+      // style={{ opacity: isOnDemoDatabase? 1 : 0 }}
       data-command="AppDemo.start"
       color={demoStarted? "action" : undefined} 
       onClick={() => startDemo()}

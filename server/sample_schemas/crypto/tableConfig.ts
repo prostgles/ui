@@ -53,8 +53,7 @@ export const tableConfig: TableConfig = {
       id:          "SERIAL PRIMARY KEY",
       symbol:      "TEXT NOT NULL REFERENCES symbols",
       price:       "NUMERIC NOT NULL",
-      timestamp:   "TIMESTAMPTZ NOT NULL",
-      data:        "JSONB NOT NULL"
+      timestamp:   "TIMESTAMPTZ NOT NULL"
     }, 
   },
   markets: {

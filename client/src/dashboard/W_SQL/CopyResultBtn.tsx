@@ -18,8 +18,8 @@ const getValidPGColumnNames = async (v: string[], sql: SQLHandler): Promise<{ na
 }
 
 type Outputs = { val: string; label: string; iconPath: string; fileName: string; }[]
-export const CopyResultBtn = (props: { sql: SQLHandler; rows: any[][]; cols: Pick<ValidatedColumnInfo, "name" | "tsDataType" | "udt_name">[] }) => {
-  const { cols, rows: rawValues, sql } = props;
+export const CopyResultBtn = (props: { queryEnded: boolean; sql: SQLHandler; rows: any[][]; cols: Pick<ValidatedColumnInfo, "name" | "tsDataType" | "udt_name">[] }) => {
+  const { cols, rows: rawValues, sql, queryEnded } = props;
   const rows = rawValues.map(row => getStringifiedObjects(row, cols))
   const res = usePromise(async () => {
 
@@ -90,7 +90,6 @@ export const CopyResultBtn = (props: { sql: SQLHandler; rows: any[][]; cols: Pic
 
   if(error) return <Label iconPath={mdiAlert} label="" popupTitle="Cannot copy result" info={<ErrorComponent error={error} />} />
 
-  if(!cols.length || !outputs?.length) return null;
   
   return <PopupMenuList 
     button={
@@ -98,14 +97,14 @@ export const CopyResultBtn = (props: { sql: SQLHandler; rows: any[][]; cols: Pic
         title={`Copy result (${rows.length} rows)`} 
         size="small"
         iconPath={mdiContentCopy} 
-        
+        style={{ visibility: queryEnded && outputs?.length? "visible" : "hidden" }}
       />
     }
     listStyle={{
       flex: 1,
       display: "flex"
     }}
-    items={outputs.map(o => ({
+    items={(outputs ?? []).map(o => ({
 
       leftIconPath: o.iconPath,
       label: o.label,

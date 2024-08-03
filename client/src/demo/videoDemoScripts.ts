@@ -139,7 +139,7 @@ const dashboardDemo = async () => {
   await tout(500);
   
   const DEMO_WSP_PREFIX = "Demo Workspace ";
-  const demoWspNameFilter = { "name.$like": `${DEMO_WSP_PREFIX} %` };
+  const demoWspNameFilter = { "name.$like": `${DEMO_WSP_PREFIX}%` };
   await (window as any).dbs.workspaces.update(demoWspNameFilter, { deleted: true });
   await (window as any).dbs.workspaces.delete(demoWspNameFilter);
 
@@ -176,7 +176,10 @@ const dashboardDemo = async () => {
   await click("JoinedRecords.toggle");
   await tout(1e3);
   await click("JoinedRecords", `[data-key="orders"] button[data-label="Expand section"]`);
-  await tout(1e3);
+  await tout(4e3);
+  await click("JoinedRecords", `[data-command="SmartCard.viewEditRow"]`, { nth: 0 });
+  await tout(2e3);
+  await click("Popup.close");
   await click("Popup.close");
 
   /** Add Map */
@@ -214,4 +217,4 @@ export const VIDEO_DEMO_SCRIPTS = {
   loadTest,
 }
 
-startRecordingDemo();
+// startRecordingDemo();

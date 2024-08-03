@@ -1,8 +1,8 @@
 import type { W_SQLState } from "./W_SQL";
 
 export const parseExplainResult = ({ rows = [], cols = [], activeQuery }: Pick<W_SQLState, "rows" | "cols" | "activeQuery">): Pick<W_SQLState, "rows" | "cols"> => {
-  
-  if(activeQuery?.state === "ended" && activeQuery.info?.command === "EXPLAIN"){
+  const isTextPlan = rows.some(([line]) => typeof line === "string" && line.includes("(cost="));
+  if(activeQuery?.state === "ended" && activeQuery.info?.command === "EXPLAIN" && isTextPlan){
     const rowsWithInfo: {
       actionInfo: string;
       startupCost: number;

@@ -225,6 +225,7 @@ export const COMMANDS = {
   "ConnectionServer.withNewOwnerToggle": "",
   "W_Table.TableNotFound": "",
   "JoinedRecords" : "",
+  "SmartCard.viewEditRow": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

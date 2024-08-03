@@ -23,11 +23,6 @@ export const getElement = <T extends Element>(testId: Command | "", endSelector 
   /** Only the last matching element is clicked to ensure only the top ClickCatchOverlay is clicked to maintain correct context */
   return allMatchingElements.at(nth);
 }
-const hoverTriggerClasses = [
-  "show-on-hover",
-  "show-on-parent-hover", 
-  "show-on-trigger-hover",
-];
 type ClickOpts = GetElemOpts & {
   timeout?: number;
 }
@@ -52,8 +47,7 @@ export const waitForElement = async <T extends Element>(testId: Command | "", en
 export const click = async (testId: Command | "", endSelector = "", opts: ClickOpts = {}) => {
   // window.document.body.classList.toggle("is_demo_mode", true);
   const elem = await waitForElement<HTMLButtonElement>(testId, endSelector, opts);
-  const hideClassNode = elem.closest(hoverTriggerClasses.map(v => `.${v}`).join(", "))?.parentElement;
-  hideClassNode?.classList.toggle("is_demo_mode", true);
+  // hideClassNode?.classList.toggle("is_demo_mode", true);
   const bbox = elem.getBoundingClientRect();
   
   if((elem as any).scrollIntoViewIfNeeded){
@@ -65,7 +59,6 @@ export const click = async (testId: Command | "", endSelector = "", opts: ClickO
     (bbox.top + bbox.height/2)
   )
   elem.click();
-  // hideClassNode?.classList.toggle("is_demo_mode", false);
 }
 
 export const type = async (value: string, testId: Command, endSelector = "") => {
@@ -86,6 +79,43 @@ export const type = async (value: string, testId: Command, endSelector = "") => 
   await tout(500); 
 }
 
+let lastHovered: { 
+  elem: Element;
+  hoverElem: Element | null;
+} | undefined;
+let hoverCheckInterval: NodeJS.Timeout;
 export const setPointer = (p: HTMLDivElement | null) => {
   pointer = p;
+
+  if(!p) return;
+  p.ontransitionstart = () => {
+    hoverCheckInterval = setInterval(() => {
+      const bbox = p.getBoundingClientRect();
+      const hovered = document.elementFromPoint(bbox.left + bbox.width/2, bbox.top + bbox.height/2);
+      if(hovered !== lastHovered?.elem){
+        lastHovered?.hoverElem?.classList.toggle("hover", false);
+        if(!hovered){
+          lastHovered = undefined;
+          return;
+        }
+        const hoverElem = getClosestHovereableElem(hovered);
+        lastHovered = { elem: hovered, hoverElem };
+        hoverElem?.classList.toggle("hover", true);
+      }
+    }, 100);
+  }
+  p.ontransitionend = (e) => {
+    clearInterval(hoverCheckInterval); 
+  }
+}
+
+const hoverTriggerClasses = [
+  "show-on-hover",
+  "show-on-row-hover",
+  "show-on-parent-hover", 
+  "show-on-trigger-hover",
+  "list-comp li",
+];
+const getClosestHovereableElem = (elem: Element) => {
+  return elem.closest(hoverTriggerClasses.map(v => `.${v}`).join(", "));
 }
