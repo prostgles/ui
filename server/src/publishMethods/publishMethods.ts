@@ -157,7 +157,8 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
             if(!con?.db_name) throw "Unexpected: Database name missing";
             const { db: cdb, destroy: destroyCdb } = await getCDB(con.id, undefined, true);
             const anotherDatabaseNames: { datname: string }[] = await cdb.any(`
-              SELECT * FROM pg_catalog.pg_database 
+              SELECT * 
+              FROM pg_catalog.pg_database 
               WHERE datname <> current_database() 
               AND NOT datistemplate
               ORDER BY datname = 'postgres' DESC
@@ -170,6 +171,9 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
             await destroyCdb();
             const [anotherDatabaseName] = anotherDatabaseNames;
             if(!anotherDatabaseName) throw "Could not find another database";
+            if(anotherDatabaseName.datname === con.db_name) {
+              throw "Not expected: Another database is the same as the one being deleted";
+            }
 
             let superUser: { user: string; password: string; } | undefined;
             if(!superUsers.includes(con.db_user)){
@@ -183,13 +187,14 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
                 superUser = { user: conWithSuperUsers.db_user, password: conWithSuperUsers.db_pass! };
               }
             }
-            const { db: acdb} = await getCDB(con.id, { database: anotherDatabaseName.datname, ...superUser }, true);
+            const { db: acdb } = await getCDB(con.id, { database: anotherDatabaseName.datname, ...superUser }, true);
             const killDbConnections = () => {
               return acdb.manyOrNone(`
                 SELECT pg_terminate_backend(pid) 
                 FROM pg_stat_activity 
-                WHERE datname = \${db_name};
-              `, con).catch(e => 1)
+                WHERE datname = \${db_name}
+                AND pid <> pg_backend_pid();
+              `, con);
             }
             await killDbConnections();
             await killDbConnections();
