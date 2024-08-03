@@ -15,7 +15,7 @@ export type MenuListitem = {
   leftIconPath?: string;
   disabledText?: string;
   title?: string;
-  onPress?: () => void;
+  onPress?: (e: React.MouseEvent<HTMLLIElement, MouseEvent> | React.KeyboardEvent<HTMLLIElement>) => void;
   style?: React.CSSProperties;
   iconStyle?: React.CSSProperties;
   labelStyle?: React.CSSProperties;
@@ -75,11 +75,11 @@ export class MenuList extends React.Component<P, S> {
       title={d.disabledText || d.title}
       style={{ ...variantStyle, ...(d.style || {}), ...(d.disabledText? { cursor: "not-allowed", opacity: 0.5 } : {})}}
       className={`flex-row  p-p5  bg-li ${((!d.disabledText && d.onPress)? " pointer " : " ")} ${(d.key === activeKey? " selected " : "")}`}
-      onClick={canPress? () => {
-        d.onPress?.();
+      onClick={canPress? (e) => {
+        d.onPress?.(e);
       } : undefined}
       onKeyUp={canPress?  e => {
-        if(e.key === "Enter") d.onPress?.()
+        if(e.key === "Enter") d.onPress?.(e)
       } : undefined}
     >
       <label className="mr-p5 f-1 flex-row ai-center noselect" style={{ ...labelVariantStyle, cursor: "inherit"  }}>  
