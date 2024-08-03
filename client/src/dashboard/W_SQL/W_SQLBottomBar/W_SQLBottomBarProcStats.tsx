@@ -27,7 +27,7 @@ export const W_SQLBottomBarProcStats = ({ dbsMethods, dbs, connectionId, activeQ
   return <FlexRow title={activeQuery?.pid? `PID ${activeQuery.pid}` : ""}>
     <Chip label="CPU" value={`${Number(procStats.cpu || 0).toFixed(1)}% ${procStats.mhz? `${procStats.mhz}Mhz` : ""}`}/>
     <Chip label="Mem" value={procStats.memPretty ?? ""} />
-    <Chip label="Wait Event" value={procStats.wait_event ?? ""} />
-    <Chip label="Wait Event Type" value={procStats.wait_event_type ?? ""} />
+    {procStats.wait_event && <Chip label="Wait Event" value={procStats.wait_event} />}
+    {procStats.wait_event_type && <Chip label="Wait Event Type" value={procStats.wait_event_type} />}
   </FlexRow>
 }

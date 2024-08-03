@@ -26,7 +26,8 @@ export const suggestTableLike = async (args: Pick<SQLMatchContext, "cb" | "ss" |
     aliasedTables = dw.tables.map(t => ({ ...t, sortText: "a" }));
   }
 
-  const schemaTables = isSearchingSchemaTable? schemaMatchingTables : ss.filter(s => isTableLike(s.type)).map(s => ({ ...s, sortText: s.schema === "public"? "b" : "c" }));
+  const schemaTables = isSearchingSchemaTable? schemaMatchingTables : 
+    ss.filter(s => isTableLike(s.type) && !(s.tablesInfo?.oid && aliasedTables.some(at => at.tablesInfo?.oid === s.tablesInfo?.oid))).map(s => ({ ...s, sortText: s.schema === "public"? "b" : "c" }));
   const tables = [
     ...schemaTables,
     ...aliasedTables,

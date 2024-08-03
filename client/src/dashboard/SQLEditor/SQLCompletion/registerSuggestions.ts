@@ -302,11 +302,18 @@ export function registerSuggestions(args: Args) {
           justAfterStartOfWordPosition, 
           { triggerKind: monaco.languages.CompletionTriggerKind.Invoke, triggerCharacter: " " }
         );
-        const [_matchingSuggestion, other] = suggestions.filter(s => 
+        let matches = suggestions.filter(s => 
           s.insertText === curWord.word || 
           s.insertText.toLowerCase() === curWord.word.toLowerCase() ||
           (s as ParsedSQLSuggestion).escapedIdentifier === curWord.word
         );
+        if(!matches.length){
+          matches = suggestions.filter(s => (s as ParsedSQLSuggestion).escapedIdentifier?.startsWith(`"`) && (s as ParsedSQLSuggestion).escapedIdentifier?.includes(curWord.word));
+        }
+        
+        const [_matchingSuggestion, other] = matches;
+        // TODO ensure escapeIdentifier works ("table name" ends up as two words (in curWord) and doesn't always match)
+        // console.log(curWord.word, _matchingSuggestion, other);
         const matchingSuggestion = !other? _matchingSuggestion : undefined;
         const sm = matchingSuggestion ?? s
           .find(s => s.type === "keyword" && s.name === curWord.word.toUpperCase());

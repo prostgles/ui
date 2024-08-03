@@ -136,7 +136,6 @@ export const DashboardMenuContent = (props: P) => {
             ),
             key: t.name,
             label: t.name,
-            // disabledInfo: t.columns.length? undefined : "Table has no columns",
             contentRight: t.endText.length > 0 && (
               <span title={t.endTitle} className="text-2 ml-auto">
                 {t.endText}

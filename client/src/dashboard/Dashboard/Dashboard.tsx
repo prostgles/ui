@@ -491,13 +491,13 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<DashboardP
 export const getTables = async (schemaTables: DBSchemaTable[], workspace: WorkspaceSyncItem | undefined, db: DBHandlerClient): Promise<{ tables: DBSchemaTablesWJoins; error?: undefined } | { error: any; tables?: undefined }> => {
   try {
     const tables = await Promise.all(schemaTables.map(async t => {
-      const countRequestedAndAllowed = workspace?.options.tableListEndInfo === "count" && db[t.name]?.count;
-      const tableHasColumnsAndWillNotError = !!t.columns.length;
-      const shouldGetCount = countRequestedAndAllowed && tableHasColumnsAndWillNotError;
-      const count = (shouldGetCount? await db[t.name]?.count?.() ?? "" : "").toString();
+      // const countRequestedAndAllowed = workspace?.options.tableListEndInfo === "count" && db[t.name]?.count;
+      // const tableHasColumnsAndWillNotError = !!t.columns.length;
+      // const shouldGetCount = countRequestedAndAllowed && tableHasColumnsAndWillNotError;
+      // const count = (shouldGetCount? await db[t.name]?.count?.() ?? "" : "").toString();
       return {
         ...t,
-        count,
+        // count,
         ...getJoinedTables(schemaTables, t.name, db),
       }
     })).catch(e => {

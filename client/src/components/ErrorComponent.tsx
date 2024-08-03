@@ -94,7 +94,16 @@ export default class ErrorComponent extends React.Component<{
           {title && <div className="font-18 bold">{title}</div>}
           {(ErrorComponent.parsedError(error, findMsg) + "").slice(0, maxTextLength)}
         </div>
-        {onClear && <Btn onClick={onClear} iconPath={mdiClose} variant="faded" color="danger" size="small" />}
+        {onClear && 
+          <Btn 
+            className="ml-p5"
+            onClick={onClear} 
+            iconPath={mdiClose} 
+            variant="faded" 
+            color="danger" 
+            size="small" 
+          />
+        }
       </div>
     )
   }
