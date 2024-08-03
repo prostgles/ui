@@ -81,8 +81,8 @@ export const getServerStatus = async (db: DB, connId: string): Promise<ServerSta
 export const killPID = async (connId: string, id_query_hash: string, type: "cancel" | "terminate" = "cancel") => {
   if(!id_query_hash) throw "id_query_hash missing";
 
-  const cdb = await getCDB(connId); 
-  return cdb.any(`
+  const { db } = await getCDB(connId); 
+  return db.any(`
     /* ${IGNORE_QUERY} */
     SELECT pid, query, pg_${type}_backend(pid) 
     FROM pg_catalog.pg_stat_activity

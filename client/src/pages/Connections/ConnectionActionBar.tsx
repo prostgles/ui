@@ -29,7 +29,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
     </Btn>
 
   const buttons = <>
-    {dbsMethods.getStatus && 
+    {dbsMethods.getStatus && dbsMethods.runConnectionQuery &&
       <PopupMenu
         title={"Activity status: " + (c.name || c.id)}
         positioning="fullscreen"
@@ -47,6 +47,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
           { ...props} 
           connectionId={c.id} 
           getStatus={dbsMethods.getStatus} 
+          runConnectionQuery={dbsMethods.runConnectionQuery} 
         />
       </PopupMenu> 
     }

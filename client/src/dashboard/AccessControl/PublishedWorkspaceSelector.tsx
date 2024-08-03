@@ -12,6 +12,7 @@ import type { DeepPartial } from "../RTComp";
 import { SmartSelect } from "../SmartSelect";
 import type { AccessRule } from "./AccessControl";
 import { SectionHeader } from "./AccessControlRuleEditor";
+import { FlexCol } from "../../components/Flex";
 
 type P = Pick<CommonWindowProps, "prgl" > & {
   dbsPermissions: DeepPartial<AccessRule["dbsPermissions"]>;
@@ -27,7 +28,7 @@ type P = Pick<CommonWindowProps, "prgl" > & {
 
 export const PublishedWorkspaceSelector = ({ prgl: {dbs , connectionId}, dbsPermissions, onChange, onChangeRule, dbPermissions, className = "", style, onSetError, tables} : P) => {
   
-  const { data: workspaces } = dbs.workspaces.useSubscribe(
+  const { data: publishedWorkspaces } = dbs.workspaces.useSubscribe(
     { published: true, connection_id: connectionId }, 
     {}
   );
@@ -69,14 +70,14 @@ export const PublishedWorkspaceSelector = ({ prgl: {dbs , connectionId}, dbsPerm
    *  - Create own workspaces (dbsPermissions?.createWorkspaces === true)
    */
   const selected = dbsPermissions?.viewPublishedWorkspaces?.workspaceIds;
-  const showWorkspaceSelect = !!(workspaces?.length || selected?.length);
+  const showWorkspaceSelect = !!(publishedWorkspaces?.length || selected?.length);
   const showCreateWorkspaces = !selected?.length || !dbsPermissions?.createWorkspaces;
 
-  if(!showWorkspaceSelect && !showCreateWorkspaces || !workspaces) {
+  if(!showWorkspaceSelect && !showCreateWorkspaces || !publishedWorkspaces) {
     return null;
   }
 
-  const workspaceOptions = workspaces.map(w => ({ key: w.id, label: w.name }));
+  const workspaceOptions = publishedWorkspaces.map(w => ({ key: w.id, label: w.name }));
   selected?.map(key => {
     if(!workspaceOptions.some(w => w.key === key)){
       workspaceOptions.push({
@@ -86,9 +87,8 @@ export const PublishedWorkspaceSelector = ({ prgl: {dbs , connectionId}, dbsPerm
     }
   });
 
-  if(!workspaces.length) return null;
 
-  return <div className={"flex-col gap-1 " + className} style={style}>
+  return <FlexCol className={"PublishedWorkspaceSelector " + className} style={style}>
     
     <SectionHeader icon={mdiViewQuilt} className="mb-p5">
       Workspace access
@@ -102,7 +102,7 @@ export const PublishedWorkspaceSelector = ({ prgl: {dbs , connectionId}, dbsPerm
         onChange={createWorkspaces => {
           onChange({ createWorkspaces })
         }}
-        disabledInfo={!workspaces.length? "Cannot change if no published workspaces" : undefined}
+        disabledInfo={!publishedWorkspaces.length? "Cannot change if no published workspaces" : undefined}
         label={{
           variant: "normal", 
           label: "Create own workspaces",
@@ -117,7 +117,7 @@ export const PublishedWorkspaceSelector = ({ prgl: {dbs , connectionId}, dbsPerm
           variant: "normal", 
         }}
         data-command="config.ac.edit.publishedWorkspaces"
-        disabledInfo={!workspaces.length? "No published workspaces" : undefined}
+        disabledInfo={!publishedWorkspaces.length? "No published workspaces" : undefined}
         tableHandler={dbs.workspaces as any}
         filter={{ published: true, connection_id: connectionId }}
         allowCreate={false}
@@ -143,7 +143,7 @@ export const PublishedWorkspaceSelector = ({ prgl: {dbs , connectionId}, dbsPerm
       />
       
     </div>
-  </div>
+  </FlexCol>
 }
 
 export type WorspaceTableAndColumns = {

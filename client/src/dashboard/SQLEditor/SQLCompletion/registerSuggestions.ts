@@ -408,7 +408,7 @@ const fixMonacoSortFilter = debounce((editor: editor.IStandaloneCodeEditor) => {
   const { filterTextLow, word, completion } = focusedItem;
   // console.log(filterTextLow, word, completion, allCompletionItems.filter(s => s.type === "column" && s.name.includes(word)));
   if(allCompletionItems.length && word && filterTextLow && firstItem){
-    if(allCompletionItems.some(s => s.name.includes(word) && s.sortText && s.sortText < (firstItem.sortText ?? "zzz"))){ // && !filterTextLow.includes(word)
+    if(allCompletionItems.some(s => (s.name as any)?.includes(word) && s.sortText && s.sortText < (firstItem.sortText ?? "zzz"))){ // && !filterTextLow.includes(word)
       editor.trigger("demo", "hideSuggestWidget", {});
       editor.trigger("demo", "editor.action.triggerSuggest", {});
     }

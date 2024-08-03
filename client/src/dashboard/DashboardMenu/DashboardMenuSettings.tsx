@@ -15,6 +15,7 @@ import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
 import { FlexCol } from "../../components/Flex";
 import { SettingsSection } from "./SettingsSection";
 import { pageReload } from "../../components/Loading";
+import ButtonGroup from "../../components/ButtonGroup";
 export { useEffectAsync };
 
 const layoutType = [
@@ -42,7 +43,7 @@ export const DashboardMenuSettings = ({ workspace, prgl: { dbsMethods } }: P) =>
       />
     )}
     data-command="dashboard.menu.settings"
-    positioning="beneath-left"
+    positioning="center"
     clickCatchStyle={{ opacity: 0.2 }}
     title="Workspace settings"
     contentClassName="p-0"
@@ -103,7 +104,7 @@ export const DashboardMenuSettings = ({ workspace, prgl: { dbsMethods } }: P) =>
           <SwitchToggle 
             label={{ 
               label: "Show all my queries",
-              info: "Will allow using queries from all your connections and not just the current one. Requires a page refresh",
+              info: "Will allow using queries from all your connections and not just the current one",
             }}
             style={{ marginLeft: "-.5em" }}
             checked={!!workspace.options.showAllMyQueries} 

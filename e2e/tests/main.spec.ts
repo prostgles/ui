@@ -142,9 +142,9 @@ test.describe("Main test", () => {
     await page.getByTestId("Setup2FA.Enable.Confirm").click();
 
     /** Using token */
-    // await goTo(page, 'localhost:3004/logout');
     await login(page);
-    await page.locator("#totp_token").fill(code);
+    const newCode = authenticator.generate(Base64Secret ?? "");
+    await page.locator("#totp_token").fill(newCode);
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
     await page.getByRole('link', { name: 'Connections' }).waitFor({ state: "visible", timeout: 15e3 });
 

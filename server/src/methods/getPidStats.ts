@@ -5,7 +5,7 @@ import { getPidStatsFromProc } from "./getPidStatsFromProc";
 import { IGNORE_QUERY, execPSQLBash, getServerStatus } from "./statusMonitorUtils";
 import { bytesToSize } from "../BackupManager/utils";
 import type { DBS } from "..";
-import { getCDB } from "../ConnectionManager/ConnectionManager";
+import { getCDB, getSuperUserCDB } from "../ConnectionManager/ConnectionManager";
 
 type PS_ProcInfo = { 
   pid: number; 
@@ -122,7 +122,7 @@ export const getPidStats = async (db: DB, connId: string): Promise<ServerLoadSta
 }
 
 export const getStatus = async (connId: string, dbs: DBS) => {
-  const cdb = await getCDB(connId); 
+  const { db: cdb } = await getSuperUserCDB(connId, dbs); 
   const result: ConnectionStatus = {
     queries: (await cdb.any(`
       /* ${IGNORE_QUERY} */
@@ -135,7 +135,7 @@ export const getStatus = async (connId: string, dbs: DBS) => {
         COALESCE(cardinality(pg_blocking_pids(pid)), 0) blocked_by_num,
         md5(pid || query) as id_query_hash
       FROM pg_catalog.pg_stat_activity
-      WHERE query NOT ILIKE '%' || \${queryName} || '%'
+      WHERE pid <> pg_backend_pid() -- query NOT ILIKE '%' || \${queryName} || '%'
     `, { queryName: IGNORE_QUERY })) as PG_STAT_ACTIVITY[],
     blockedQueries: [],
     topQueries: [],

@@ -11,7 +11,7 @@ import { blend } from "../colorBlend";
 import { _PG_date } from "prostgles-types";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import { FlexRowWrap } from "../../../components/Flex";
-import type { MinMax } from "../W_Table";
+import { kFormatter, type MinMax } from "../W_Table";
 
 type P = OnColRenderRowInfo & Pick<OnRenderColumnProps, "maxCellChars" | "c" | "barchartVals">;
 
@@ -25,7 +25,8 @@ export const StyledTableColumn = ({ c, value, row, maxCellChars, barchartVals, r
       barColor={c.style.barColor}
       textColor={c.style.textColor}
       value={value} 
-      message={SmartFormField.renderValue(c, row[c.name], undefined, maxCellChars)}
+      message={kFormatter(value)}
+      // message={SmartFormField.renderValue(c, row[c.name], undefined, maxCellChars)}
     />
   } else if (c.style?.type !== "None"){
 

@@ -1093,7 +1093,7 @@ BEGIN
   -- LIMIT MIN(CEIL(number_of_users / 20), 1);
 END $$;
 
-CALL mock_users(1000::integer, '1 year');
+CALL mock_users(10000::integer, '1 year');
 
 CREATE OR REPLACE VIEW v_users AS
 WITH order_stats AS (
@@ -1171,7 +1171,7 @@ BEGIN
     ON st_distance(vu.geog, r.geog) < 7000
   ) t
   LEFT JOIN ( 
-    SELECT *, row_number() OVER( order by random()) as rnum
+    SELECT *, row_number() OVER(order by random()) as rnum
     FROM v_users
     WHERE type = 'rider'
     ORDER BY last_delivery

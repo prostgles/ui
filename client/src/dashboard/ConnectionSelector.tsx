@@ -19,7 +19,7 @@ export const ConnectionSelector = ({ connection, dbs, location }: P) => {
     fullOptions={(connections ?? []).map(c => ({
       key: c.id,
       label: c.name || c.db_name || c.id,
-      subLabel: getServerInfoStr(c, true),
+      subLabel: !c.db_name? undefined : getServerInfoStr(c, true),
     }))}
     onChange={cId => {
       const subpath = location === "workspace"? "connections" : "connection-config"

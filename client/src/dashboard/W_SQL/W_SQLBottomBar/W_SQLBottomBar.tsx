@@ -35,15 +35,16 @@ export type W_SQLBottomBarProps = {
   w: WindowSyncItem<"sql">;
   onChangeState: (newState: Pick<W_SQLState, "noticeSub" | "notices" | "notifEventSub">) => void;
   toggleCodeEditor: VoidFunction;
+  clearActiveQueryError: VoidFunction
 } & Pick<W_SQLState, "loadingSuggestions" | "cols" | "rows" | "noticeSub" | "activeQuery" | "queryEnded" | "notifEventSub" | "hideCodeEditor">;
 
 export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
   const {
     db, killQuery, runSQL, w, activeQuery,
     notifEventSub, 
-    cols, loadingSuggestions, noticeSub, 
+    cols, loadingSuggestions, noticeSub, clearActiveQueryError,
     noticeEventListener, onChangeState, streamData,
-    hideCodeEditor, toggleCodeEditor, rows: allRows
+    hideCodeEditor, toggleCodeEditor 
   } = props;
   const myRef = useRef<HTMLDivElement>(null);
   const refRowCount = myRef.current;
@@ -69,7 +70,13 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
     activeQuery?.state === "ended" ? activeQuery.ended.getTime() - activeQuery.started.getTime() : 
     0;
   const queryIsRunning = activeQuery?.state === "running";
-  return <div className={"W_SQLBottomBar oy-hidden flex-row text-2 ai-center text-sm o-auto "} style={{ borderTop: "1px solid #0000000d" }}>
+  return <div 
+    className={"W_SQLBottomBar relative oy-hidden flex-row text-2 ai-center text-sm o-auto "} 
+    style={{ 
+      borderTop: "1px solid #0000000d", 
+      /** Ensure big error messages don't obscure the sql editor */
+      maxHeight: activeQuery?.state === "error"? "50%" : undefined,
+    }}>
     {showRunOptions && 
       <Popup contentClassName="flex-col gap-1 p-p5"
         positioning="beneath-left"
@@ -140,7 +147,8 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
             }}
             fadeIn={true}
           >Stop LISTEN</Btn> :
-          loopMode.show? <FlexRow>
+          loopMode.show? 
+          <FlexRow>
             <Btn color={loopMode.enabled? "action" : undefined} iconPath={mdiCancel} onClick={() => setLoopMode({ ...loopMode, show: false, enabled: false }) } />
             <label>repeat every</label>
             <input {...{ min: 0, max: 20, step: 0.1 }} type="number" style={{ fontSize: "12px" }} value={loopMode.seconds} onChange={v => setLoopMode({ ...loopMode, enabled: true, seconds: +v.target.value })} />
@@ -176,11 +184,11 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
 
     }
 
-    {activeQuery && activeQuery.state !== "error" && cols && 
+    
       <div ref={myRef}
         className="flex-row gap-p5 ai-center p-p5 noselect"
         style={{ marginRight: "1em" }}
-      >
+      >{activeQuery && activeQuery.state !== "error" && cols && <>
         <div className="text-1" >
           {(activeQuery.state === "running"? rows.length : activeQuery.rowCount).toLocaleString()} rows
         </div>
@@ -204,9 +212,16 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
               </InfoRow>
             } 
           />}
-        {activeQuery.state === "ended" && <CopyResultBtn cols={cols} rows={rows} sql={db.sql!} />}
+        </>}
+        {activeQuery?.state !== "error" && 
+          <CopyResultBtn 
+            cols={cols ?? []} 
+            rows={rows} 
+            sql={db.sql!} 
+            queryEnded={activeQuery?.state === "ended"} 
+        />}
       </div>
-    }
+    
 
     {loadingSuggestions && <Loading message="Loading suggestions" />}
 
@@ -215,7 +230,8 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
         noScroll={false}
         error={activeQuery?.state === "error"? activeQuery.error?.message : ""}
         color={activeQuery?.state === "error" && !activeQuery.stopped ? "info" : undefined}
-        style={{ padding: "1em", fontSize: "16px", whiteSpace: "pre", maxHeight: "300px" }}
+        style={{ padding: "1em", fontSize: "16px", whiteSpace: "pre", maxHeight: "min(100%, 300px)" }}
+        onClear={clearActiveQueryError}
       />
     }
 

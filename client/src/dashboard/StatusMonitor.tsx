@@ -1,4 +1,5 @@
-import { mdiCancel, mdiDotsHorizontal, mdiFilter, mdiInformationOutline, mdiStopCircleOutline } from "@mdi/js";
+import { mdiCancel, mdiChartLine, mdiDotsHorizontal, mdiFilter, mdiStopCircleOutline } from "@mdi/js";
+import { usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useEffect, useState } from "react";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import type { ConnectionStatus } from "../../../commonTypes/utils";
@@ -26,10 +27,235 @@ export type StatusMonitorProps = Pick<PrglState, "dbs" | "dbsMethods" | "dbsTabl
   connectionId: string;
   theme: Theme
   getStatus: Required<DBSMethods>["getStatus"];
-}
+  runConnectionQuery: Required<DBSMethods>["runConnectionQuery"];
+};
 
 const ViewTypes = ["Queries", "Active queries", "Blocked queries"] as const;
 type ViewType = typeof ViewTypes[number];
+
+export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTables, theme, runConnectionQuery }: StatusMonitorProps ) => {
+
+  const [viewType, setViewType] = useState<ViewType>(ViewTypes[1]);
+  const [refreshRate, setRefreshRate] = useState(1);
+  const [c, setc] = useState<ConnectionStatus>();
+  const getIsMounted = useIsMounted();
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const c = await getStatus(connectionId) 
+      if(!getIsMounted()){
+        return;
+      }
+      setc(c);
+    }, refreshRate * 1e3);
+
+    return () => clearInterval(interval);
+
+  }, [refreshRate, connectionId, getStatus, getIsMounted]);
+
+
+  const [toggledFields, setToggledFields] = useState<string[]>([]);
+  const { fieldConfigs: fixedFields } = getFixedFieldConfigs(dbsMethods, theme, connectionId, c?.noBash ?? true);
+  const excludedFields: (keyof DBSSchema["stats"])[] = fixedFields
+    .filter(f => (f as any).render || (f as any).renderValue)
+    .map(f => f.name).concat(["connection_id"]) as any;
+  const statColumns = (dbsTables.find(t => t.name === "stats")?.columns ?? [])
+  // const toggleableFields = statColumns.filter(c => !excludedFields.includes(c.name as any) );
+  const fieldConfigs = [
+    ...fixedFields.filter(ff => !toggledFields.includes(ff.name)),
+    ...toggledFields,
+  ];
+  const allToggledFields = fieldConfigs.filter(f => typeof f === "string" || !(f as any).hide && !(f as any).hideIf).map(f => typeof f === "string"? f : f.name);
+  
+  // const [shellResult, setShellResult] = useState("");
+  // const setShell = async (v: string) => {
+  //   const res = await execPSQLBash(dbs.sql!, connectionId, v);
+  //   console.log(res);
+  //   setShellResult(res.join("\n"));
+  //   getPidStats(dbs.sql!, connectionId);
+  // }
+
+  const { data: connection } = dbs.connections.useFindOne({ id: connectionId });
+  const [datidFilter, setDatidFilter] = useState<number | undefined>();
+
+  usePromise(async () => {
+    const datids = await runConnectionQuery(
+      connectionId, 
+      `SELECT datid
+      FROM pg_catalog.pg_stat_database
+      WHERE datname = current_database()
+    `);
+    if(datids.length === 1){
+      setDatidFilter(datids[0]?.datid);
+    }
+  }, [runConnectionQuery, connectionId]);
+  
+  return <FlexCol className="StatusMonitor min-w-0 jc-start">
+    <InfoRow>Some queries used for this view have been hidden</InfoRow>
+    
+    <FlexRow>
+      {connection && 
+        <Chip 
+          variant="header" 
+          label="Server"
+        >
+          {getServerCoreInfoStr(connection)}
+        </Chip>
+      }
+      {c?.serverStatus && 
+        <Chip 
+          className="f-0"
+          variant="header" 
+          label="Memory"
+        >
+          {(100 * c.serverStatus.free_memoryKb/c.serverStatus.total_memoryKb).toFixed(1).padStart(2, "0")}% ({bytesToSize(1024 * c.serverStatus.free_memoryKb)})
+        </Chip>
+      }
+      {c && 
+        <StatusMonitorConnections 
+          c={c} 
+          datidFilter={datidFilter}
+          dbsMethods={dbsMethods} 
+          connectionId={connectionId} 
+          onSetDatidFilter={setDatidFilter} 
+        />
+      }
+      {c?.serverStatus && <PopupMenu
+        title="Server info"
+        className="f-0"
+        positioning="center"
+        clickCatchStyle={{ opacity: .5 }}
+        contentClassName="flex-col gap-1 p-1"
+        button={
+          <Btn 
+            title="Server information" 
+            iconPath={mdiChartLine} 
+          />  
+        }
+      >
+        <Chip
+          label={"CPU Model"}
+          variant="header"
+        >
+          <span className="ws-pre">
+            {c.serverStatus.cpu_model}
+            <br>
+            </br>
+            {c.serverStatus.cpu_mhz}
+          </span>
+        </Chip>
+        <Chip
+          label={"CPU Frequency"}
+          variant="header"
+        >
+          <div className="ws-pre ta-right">
+            {c.serverStatus.cpu_cores_mhz}
+          </div>
+        </Chip>
+        <Chip
+          label={"Disk usage"}
+          variant="header"
+        >
+          <span className="ws-pre">
+            {c.serverStatus.disk_space}
+          </span>
+        </Chip>
+      </PopupMenu>}
+    </FlexRow>
+    
+    {/* <FormFieldDebounced onChange={setShell} />
+    <div className="ws-pre">{shellResult}</div> */}
+
+    <SmartCardList
+      theme={theme}
+      db={dbs as any}
+      methods={dbsMethods}
+      tables={dbsTables}
+      tableName="stats"
+      showEdit={false}
+      showTopBar={{ sort: true }}
+      orderBy={{ cpu: false }}
+      rowProps={{
+        style: {
+          borderRadius: 0
+        }
+      }}
+      noDataComponent={
+        <InfoRow color="info" variant="filled">No {viewType}</InfoRow>
+      }
+      title={
+        <FlexRowWrap className="f-1 ai-end">
+          <ButtonGroup 
+            variant="select"
+            value={viewType} 
+            options={ViewTypes} 
+            onChange={setViewType} 
+          />
+          {datidFilter && 
+            <Chip 
+              label="Database ID" 
+              leftIcon={{ path: mdiFilter }} 
+              color="blue" 
+              onDelete={() => setDatidFilter(undefined)}
+            >
+              {datidFilter}
+            </Chip>
+          }
+          <ExpandSection iconPath={mdiDotsHorizontal}>  
+            <Select
+              btnProps={{
+                children: "Fields..."
+              }}
+              multiSelect={true}
+              fullOptions={statColumns.map(c => ({
+                key: c.name,
+                label: c.label,
+                subLabel: c.hint,
+                disabledInfo: excludedFields.includes(c.name as any)? "Cannot toggle this field" : undefined,
+              }))}
+              value={allToggledFields}
+              onChange={setToggledFields}
+            />
+
+            <FormField 
+              className="ml-auto"
+              label={"Refresh rate"} 
+              type="number" 
+              value={refreshRate} 
+              onChange={v => v > 1? setRefreshRate(v) : undefined} 
+              inputProps={{ min: 1, max: 100, step: 1 }}
+            />
+          </ExpandSection>
+        </FlexRowWrap>
+      }
+      realtime={true}
+      throttle={500}
+      filter={{
+        $and: [
+          { 
+            connection_id: connectionId,
+            ...(datidFilter? { datid: datidFilter } : {}),
+            ...(
+              viewType === "Blocked queries"? 
+                { blocked_by_num: { ">" : 0 } } : 
+              viewType === "Active queries"? 
+                { state: "active" } : 
+                {}
+              )
+            // state: { "<>": "idle" }
+          },
+          ...(viewType === "Blocked queries"? [
+            { blocked_by_num: { ">" : 0 } }
+          ] : [
+
+          ]),
+        ] 
+      }}
+      fieldConfigs={fieldConfigs}
+    />
+    
+  </FlexCol>
+}
+
 
 type FieldConfigs = Required<SmartCardListProps>["fieldConfigs"];
 
@@ -125,216 +351,4 @@ const getFixedFieldConfigs = (dbsMethods: PrglState["dbsMethods"], theme: Theme,
   return { 
     fieldConfigs,
   };
-}
-
-export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTables, theme }: StatusMonitorProps ) => {
-
-  const [viewType, setViewType] = useState<ViewType>(ViewTypes[1]);
-  const [refreshRate, setRefreshRate] = useState(1);
-  const [c, setc] = useState<ConnectionStatus>();
-  const getIsMounted = useIsMounted();
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      const c = await getStatus(connectionId) 
-      if(!getIsMounted()){
-        return;
-      }
-      setc(c);
-    }, refreshRate * 1e3);
-
-    return () => clearInterval(interval);
-
-  }, [refreshRate, connectionId, getStatus, getIsMounted]);
-
-
-  const [toggledFields, setToggledFields] = useState<string[]>([]);
-  const { fieldConfigs: fixedFields } = getFixedFieldConfigs(dbsMethods, theme, connectionId, c?.noBash ?? true);
-  const excludedFields: (keyof DBSSchema["stats"])[] = fixedFields
-    .filter(f => (f as any).render || (f as any).renderValue)
-    .map(f => f.name).concat(["connection_id"]) as any;
-  const statColumns = (dbsTables.find(t => t.name === "stats")?.columns ?? [])
-  // const toggleableFields = statColumns.filter(c => !excludedFields.includes(c.name as any) );
-  const fieldConfigs = [
-    ...fixedFields.filter(ff => !toggledFields.includes(ff.name)),
-    ...toggledFields,
-  ];
-  const allToggledFields = fieldConfigs.filter(f => typeof f === "string" || !(f as any).hide && !(f as any).hideIf).map(f => typeof f === "string"? f : f.name);
-  
-  // const [shellResult, setShellResult] = useState("");
-  // const setShell = async (v: string) => {
-  //   const res = await execPSQLBash(dbs.sql!, connectionId, v);
-  //   console.log(res);
-  //   setShellResult(res.join("\n"));
-  //   getPidStats(dbs.sql!, connectionId);
-  // }
-
-  const { data: connection } = dbs.connections.useFindOne({ id: connectionId });
-  const [datidFilter, setDatidFilter] = useState<number | undefined>();
-  
-
-  return <FlexCol className="StatusMonitor min-w-0 jc-start">
-    <InfoRow>Some queries used for this view have been hidden</InfoRow>
-    
-    <FlexRow>
-      {connection && 
-        <Chip 
-          variant="header" 
-          label="Server"
-        >
-          {getServerCoreInfoStr(connection)}
-        </Chip>
-      }
-      {c?.serverStatus && 
-        <Chip 
-          className="f-0"
-          variant="header" 
-          label="Memory"
-        >
-          {(100 * c.serverStatus.free_memoryKb/c.serverStatus.total_memoryKb).toFixed(1).padStart(2, "0")}% ({bytesToSize(1024 * c.serverStatus.free_memoryKb)})
-        </Chip>
-      }
-      {c && 
-        <StatusMonitorConnections 
-          c={c} 
-          datidFilter={datidFilter}
-          dbsMethods={dbsMethods} 
-          connectionId={connectionId} 
-          onSetDatidFilter={setDatidFilter} 
-        />
-      }
-      {c?.serverStatus && <PopupMenu
-        title="Server info"
-        className="f-0"
-        positioning="center"
-        clickCatchStyle={{ opacity: .5 }}
-        contentClassName="flex-col gap-1 p-1"
-        button={
-          <Btn 
-            title="Server information" 
-            iconPath={mdiInformationOutline} 
-          />  
-        }
-      >
-        <Chip
-          label={"CPU Model"}
-          variant="header"
-        >
-          <span className="ws-pre">
-            {c.serverStatus.cpu_model}
-            <br>
-            </br>
-            {c.serverStatus.cpu_mhz}
-          </span>
-        </Chip>
-        <Chip
-          label={"CPU Frequency"}
-          variant="header"
-        >
-          <div className="ws-pre ta-right">
-            {c.serverStatus.cpu_cores_mhz}
-          </div>
-        </Chip>
-        <Chip
-          label={"Disk usage"}
-          variant="header"
-        >
-          <span className="ws-pre">
-            {c.serverStatus.disk_space}
-          </span>
-        </Chip>
-      </PopupMenu>}
-    </FlexRow>
-    
-    {/* <FormFieldDebounced onChange={setShell} />
-    <div className="ws-pre">{shellResult}</div> */}
-
-    <SmartCardList
-      theme={theme}
-      db={dbs as any}
-      methods={dbsMethods}
-      tables={dbsTables}
-      tableName="stats"
-      showEdit={false}
-      showTopBar={{ sort: true }}
-      orderBy={{ cpu: false }}
-      rowProps={{
-        style: {
-          borderRadius: 0
-        }
-      }}
-      noDataComponent={
-        <InfoRow color="info" variant="filled">No {viewType}</InfoRow>
-      }
-      title={
-        <FlexRowWrap className="f-1 ai-end">
-          <ButtonGroup 
-            variant="select"
-            value={viewType} 
-            options={ViewTypes} 
-            onChange={setViewType} 
-          />
-          {datidFilter && 
-            <Chip 
-              label="Connection filter" 
-              leftIcon={{ path: mdiFilter }} 
-              color="blue" 
-              onDelete={() => setDatidFilter(undefined)}
-            >
-              {datidFilter}
-            </Chip>
-          }
-          <ExpandSection iconPath={mdiDotsHorizontal}>  
-            <Select
-              btnProps={{
-                children: "Fields..."
-              }}
-              multiSelect={true}
-              fullOptions={statColumns.map(c => ({
-                key: c.name,
-                label: c.label,
-                subLabel: c.hint,
-                disabledInfo: excludedFields.includes(c.name as any)? "Cannot toggle this field" : undefined,
-              }))}
-              value={allToggledFields}
-              onChange={setToggledFields}
-            />
-
-            <FormField 
-              className="ml-auto"
-              label={"Refresh rate"} 
-              type="number" 
-              value={refreshRate} 
-              onChange={v => v > 1? setRefreshRate(v) : undefined} 
-              inputProps={{ min: 1, max: 100, step: 1 }}
-            />
-          </ExpandSection>
-        </FlexRowWrap>
-      }
-      realtime={true}
-      throttle={500}
-      filter={{
-        $and: [
-          { 
-            connection_id: connectionId,
-            ...(datidFilter? { datid: datidFilter } : {}),
-            ...(
-              viewType === "Blocked queries"? 
-                { blocked_by_num: { ">" : 0 } } : 
-              viewType === "Active queries"? 
-                { state: "active" } : 
-                {}
-              )
-            // state: { "<>": "idle" }
-          },
-          ...(viewType === "Blocked queries"? [
-            { blocked_by_num: { ">" : 0 } }
-          ] : [
-
-          ]),
-        ] 
-      }}
-      fieldConfigs={fieldConfigs}
-    />
-    
-  </FlexCol>
 }

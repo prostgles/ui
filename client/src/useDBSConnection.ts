@@ -95,6 +95,9 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
             // },
             onReconnect: () => {
               onDisconnect(false);
+              if(window.location.pathname.startsWith("/connections/")){
+                pageReload("sync reconnect bug");
+              }
             },
             onReady: async (dbs: Partial<DBS>, dbsMethods, tableSchema: any, auth = {}) => {
               (window as any).dbs = dbs;

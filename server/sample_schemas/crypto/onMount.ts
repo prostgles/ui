@@ -5,17 +5,7 @@ export const onMount: OnMount = async ({ dbo }) => {
  
   const getMarketCaps = async () => {
 
-    const marketCaps = await dbo.sql(`
-      DELETE FROM market_caps_import;
-      COPY market_caps_import FROM PROGRAM 'curl "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250"';
-
-      SELECT (jsonb_populate_record(null::market_caps, r)).*
-      FROM (
-        SELECT jsonb_array_elements(v) as r
-        FROM market_caps_import
-      ) t;
-    `, {}, { returnType: "rows" });
-
+    const marketCaps = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250").then(d => d.json());
     await dbo.market_caps.insert(marketCaps, { onConflict: "DoUpdate" });
 
   }
@@ -26,7 +16,7 @@ export const onMount: OnMount = async ({ dbo }) => {
       
   socket.onmessage = async (rawData) => {
     const dataItems = JSON.parse(rawData.data as string);
-    const data = dataItems.map(data => ({ data, symbol: data.s, price: data.p, timestamp: new Date(data.E) }))
+    const data = dataItems.map(data => ({ symbol: data.s, price: data.p, timestamp: new Date(data.E) }))
     await dbo.symbols.insert(data.map(({ symbol }) => ({ pair: symbol })), { onConflict: "DoNothing" });
     await dbo.futures.insert(data);
   }
@@ -44,6 +34,7 @@ export const onMount: OnMount = async ({ dbo }) => {
 
   const marketsCount = await dbo.markets.count();
   if (!marketsCount) {
+    // const marketAthCharts = Array.from({ length: 250 }, (_, i) => i + 1).map(i => ({
     await dbo.markets.insert(markets);
   }
 
