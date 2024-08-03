@@ -172,7 +172,7 @@ const dashboardDemo = async () => {
   await click("", `[role="columnheader"]:nth-child(2)`);
   await click("", `[role="columnheader"]:nth-child(2)`);
 
-  await click("dashboard.window.viewEditRow", undefined, { nth: 0 });
+  await click("dashboard.window.viewEditRow", undefined, { nth: 0, noTimeToWait: true });
   await click("JoinedRecords.toggle");
   await tout(1e3);
   await click("JoinedRecords", `[data-key="orders"] button[data-label="Expand section"]`);
@@ -187,13 +187,17 @@ const dashboardDemo = async () => {
   await click("AddChartMenu.Map", `[data-key="location"]`);
   await tout(2e3);
   const mapDiv = document.querySelector(".DeckGLMapDiv") as DeckGLMapDivDemoControls;
-  const park = { 
-    latitude: 51.536, 
-    longitude: -.1568 
+  const point = { 
+    /** Park */
+    // latitude: 51.536, 
+    // longitude: -.1568 
+    /** Maida Vale */
+    latitude: 51.5276,
+    longitude: -.1906
   }
-  const { x, y } = mapDiv.getLatLngXY(park);
+  const { x, y } = mapDiv.getLatLngXY(point);
   await movePointer(x, y);
-  await mapDiv.zoomTo({ ...park, zoom: 19 });
+  await mapDiv.zoomTo({ ...point, zoom: 19 });
   await tout(5e3);
   await click("ChartLayerManager");
   await click("ChartLayerManager.AddChartLayer.addLayer");

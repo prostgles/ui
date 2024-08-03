@@ -19,11 +19,23 @@ export const matchCreateView = async (args: SQLMatcherResultArgs) => {
 
   if(cb.ltoken?.textLC === "view"){
     const userSchemas = getUserSchemaNames(ss);
-    return suggestSnippets([
+    const ms: MinimalSnippet[] = [
       "$view_name", 
       "IF NOT EXISTS",
       ...userSchemas.map(s => `${s}.$view_name`),
-    ].map(label => ({ label })));
+    ].map(label => ({ label }));
+    if(cb.prevTokens.some(t => t.textLC === "replace")){
+      const views = await ss.filter(s => s.type === "view");
+      return suggestSnippets([
+        ...ms,
+        ...views.map(v => ({ 
+            ...v, 
+            insertText: `${v.escapedIdentifier} AS \n${v.view!.definition}`,
+            sortText: v.schema === "public" ? "0" : "1" 
+          }))
+      ]);
+    }
+    return suggestSnippets(ms);
   }
 
   const withOptions = [

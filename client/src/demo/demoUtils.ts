@@ -25,17 +25,19 @@ export const getElement = <T extends Element>(testId: Command | "", endSelector 
 }
 type ClickOpts = GetElemOpts & {
   timeout?: number;
+  noTimeToWait?: boolean;
 }
 
-export const waitForElement = async <T extends Element>(testId: Command | "", endSelector = "", { timeout = 10e5, ...otherOpts }: ClickOpts = { }) => {
-  await tout(100);
+export const waitForElement = async <T extends Element>(testId: Command | "", endSelector = "", { noTimeToWait, timeout = 10e5, ...otherOpts }: ClickOpts = { }) => {
+  !noTimeToWait && await tout(100);
   let elem = getElement<T>(testId, endSelector, otherOpts);
   if(!elem && timeout) {
+    const waitTime = noTimeToWait? 20 : 100;
     let timeoutLeft = timeout;
     while(!elem && timeoutLeft > 0){
-      await tout(100);
+      await tout(waitTime);
       elem = getElement<T>(testId, endSelector, otherOpts);
-      timeoutLeft -= 100;
+      timeoutLeft -= waitTime;
     }
   }
   if(!elem){
@@ -45,19 +47,19 @@ export const waitForElement = async <T extends Element>(testId: Command | "", en
 }
 
 export const click = async (testId: Command | "", endSelector = "", opts: ClickOpts = {}) => {
-  // window.document.body.classList.toggle("is_demo_mode", true);
   const elem = await waitForElement<HTMLButtonElement>(testId, endSelector, opts);
-  // hideClassNode?.classList.toggle("is_demo_mode", true);
   const bbox = elem.getBoundingClientRect();
-  
   if((elem as any).scrollIntoViewIfNeeded){
     (elem as any).scrollIntoViewIfNeeded({ behavior: "smooth" });
-    await tout(200);
+    !opts.noTimeToWait && await tout(200);
   }
   await movePointer(
     (bbox.left + Math.min(60, bbox.width/2)),
     (bbox.top + bbox.height/2)
   )
+  if(!elem.isConnected) {
+    return click(testId, endSelector, opts);
+  }
   elem.click();
 }
 

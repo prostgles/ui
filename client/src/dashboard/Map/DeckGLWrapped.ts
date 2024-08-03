@@ -67,7 +67,12 @@ export class DeckWrapped {
     
     if(opts.onClickQuick){
       node.addEventListener("pointerdown", ev => {
-        if(this.currHover) {
+        if(!ev.target) return;
+        const bbox = (ev.target as HTMLDivElement).getBoundingClientRect(),
+         x = ev.clientX - bbox.x,
+         y = ev.clientY - bbox.y,
+         maxDist = 4;
+        if(this.currHover && this.currHover.x - x < maxDist && this.currHover.y - y < maxDist){
           opts.onClickQuick?.(this.currHover)
         }
       })

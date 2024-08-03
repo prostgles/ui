@@ -55,7 +55,7 @@ export const CopyResultBtn = (props: { queryEnded: boolean; sql: SQLHandler; row
       const json = JSON.stringify(rows.map(r => r.reduce((a, v, ri) => ({ ...a, [cols[ri]!.name]: v }), {})));
       const jsonArray = cols.length === 1? JSON.stringify(rows.map(row => Object.values(row)).flat(), null, 2) : undefined;
       const sqlResult = [
-        `SELECT *`,
+        `SELECT ${cols.map(c => `${JSON.stringify(c.name)}::${c.udt_name} as ${JSON.stringify(c.name)}`).join("\n, ")}`,
         `INTO new_table_name`,
         `FROM (`,
         `  VALUES `,
@@ -111,7 +111,9 @@ export const CopyResultBtn = (props: { queryEnded: boolean; sql: SQLHandler; row
       title: sliceText(o.val, 100),
       // iconStyle: { color: "var(--gray-400)" },
       labelStyle: { width: "100%", flex: 1 },
-      onPress() {
+      onPress: (e) => {
+        e.stopPropagation();
+        e.preventDefault();
         navigator.clipboard.writeText(o.val); 
       },
       contentRight: (

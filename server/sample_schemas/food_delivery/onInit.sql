@@ -945,29 +945,29 @@ CREATE TABLE ratings (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE FUNCTION on_order_updates()
-  RETURNS TRIGGER AS $func$ 
-BEGIN
-  INSERT INTO order_updates (order_id, change, changed_by, created_at)
-  SELECT new.id, 
-    json_object_agg(pre.key, post.value) as change,
-    old.customer_id,
-    now()
-  FROM jsonb_each(to_jsonb(OLD)) AS pre
-  CROSS JOIN jsonb_each(to_jsonb(NEW)) AS post
-  WHERE pre.key = post.key 
-    AND pre.value IS DISTINCT FROM post.value;
-  -- VALUES(new.id)
-  RETURN NULL;
-END;
-$func$ LANGUAGE plpgsql;
+-- CREATE FUNCTION on_order_updates()
+--   RETURNS TRIGGER AS $func$ 
+-- BEGIN
+--   INSERT INTO order_updates (order_id, change, changed_by, created_at)
+--   SELECT new.id, 
+--     json_object_agg(pre.key, post.value) as change,
+--     old.customer_id,
+--     now()
+--   FROM jsonb_each(to_jsonb(OLD)) AS pre
+--   CROSS JOIN jsonb_each(to_jsonb(NEW)) AS post
+--   WHERE pre.key = post.key 
+--     AND pre.value IS DISTINCT FROM post.value;
+--   -- VALUES(new.id)
+--   RETURN NULL;
+-- END;
+-- $func$ LANGUAGE plpgsql;
 
-CREATE TRIGGER order_updates 
-AFTER UPDATE
-ON orders
-REFERENCING NEW TABLE AS new OLD TABLE AS old
-FOR EACH ROW 
-EXECUTE PROCEDURE on_order_updates();
+-- CREATE TRIGGER order_updates 
+-- AFTER UPDATE
+-- ON orders
+-- REFERENCING NEW TABLE AS new OLD TABLE AS old
+-- FOR EACH ROW 
+-- EXECUTE PROCEDURE on_order_updates();
  
 -- DROP TABLE IF EXISTS temp_json;
 -- CREATE TABLE temp_json (values text);
@@ -1131,14 +1131,12 @@ CALL mock_users(1e5::integer, '1 year');
 
 CREATE OR REPLACE VIEW v_users AS
 WITH order_stats AS (
-  SELECT customer_id, deliverer_id, max(created_at) as last_order, count(*) as total_orders
+  SELECT customer_id, max(created_at) as last_order, count(*) as total_orders
   FROM orders
-  GROUP BY customer_id, deliverer_id
+  GROUP BY 1 -- customer_id, deliverer_id
 )
   SELECT u.*, geog, a.id as address_id
     , oc.*
-    , o_r.last_order as last_delivery
-    , o_r.total_orders as total_delivered
   FROM users u
   LEFT JOIN user_addresses ua
     ON u.id = ua.user_id
@@ -1146,8 +1144,21 @@ WITH order_stats AS (
     ON a.id = ua.address_id
   LEFT JOIN order_stats oc
     ON oc.customer_id = u.id
+  WHERE u.type = 'customer';
+
+CREATE OR REPLACE VIEW v_riders AS
+WITH order_stats AS (
+  SELECT deliverer_id, max(created_at) as last_order, count(*) as total_orders
+  FROM orders
+  GROUP BY 1 
+)
+  SELECT u.*  
+    , o_r.last_order as last_delivery
+    , o_r.total_orders as total_delivered
+  FROM users u
   LEFT JOIN order_stats o_r
-    ON o_r.deliverer_id = u.id;
+    ON o_r.deliverer_id = u.id
+  WHERE u.type = 'rider';
 
 CREATE OR REPLACE  VIEW v_restaurants AS
   SELECT r.*, geog 
@@ -1205,13 +1216,12 @@ BEGIN
   FROM (
     SELECT *, row_number() over() as rnum
     FROM v_users
-    WHERE type = 'customer'
+    ORDER BY last_order DESC
     LIMIT number_of_orders
   ) u
   INNER JOIN ( 
     SELECT *, row_number() over(ORDER BY random()) as rnum
-    FROM v_users
-    WHERE type = 'rider'
+    FROM v_riders 
   ) rider
   ON rider.rnum = u.rnum
   LEFT JOIN LATERAL (
