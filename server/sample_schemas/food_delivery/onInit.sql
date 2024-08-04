@@ -1190,8 +1190,14 @@ CREATE OR REPLACE PROCEDURE mock_orders(number_of_orders INTEGER DEFAULT 1e4)
 LANGUAGE plpgsql
 AS $$  
 BEGIN
+
+
+  -- DROP TABLE IF EXISTS orders_batch;
+  -- CREATE TEMP TABLE orders_batch AS
   
-  /* Create orders */
+  
+
+  /* Insane bug -> 0 rows inserted from select statement. Must save into table first */
   INSERT INTO orders (
     customer_id, 
     customer_address_id, 
@@ -1231,7 +1237,7 @@ BEGIN
     WHERE st_distance(u.geog, ri.geog) < 7000
     ORDER BY u.geog <-> ri.geog
     LIMIT 1
-  ) r ON TRUE;
+  ) r ON TRUE; 
  
 
   /* Create 5 items per order  */
