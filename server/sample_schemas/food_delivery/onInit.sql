@@ -1190,14 +1190,7 @@ CREATE OR REPLACE PROCEDURE mock_orders(number_of_orders INTEGER DEFAULT 1e4)
 LANGUAGE plpgsql
 AS $$  
 BEGIN
-
-
-  -- DROP TABLE IF EXISTS orders_batch;
-  -- CREATE TEMP TABLE orders_batch AS
-  
-  
-
-  /* Insane bug -> 0 rows inserted from select statement. Must save into table first */
+ 
   INSERT INTO orders (
     customer_id, 
     customer_address_id, 
@@ -1220,7 +1213,7 @@ BEGIN
     round(random() * 100) as total_price, 
     now() as created_at
   FROM (
-    SELECT *, row_number() over() as rnum
+    SELECT *, row_number() over(ORDER BY last_order DESC) as rnum
     FROM v_users
     ORDER BY last_order DESC
     LIMIT number_of_orders
