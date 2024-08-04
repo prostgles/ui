@@ -214,6 +214,16 @@ export type DBSchemaGenerated = {
       table_config_ts_disabled?: null | boolean;
     };
   };
+  database_stats: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      database_config_id?: null | number;
+    };
+  };
   global_settings: {
     is_view: false;
     select: true;

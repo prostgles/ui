@@ -105,9 +105,9 @@ export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTab
         <Chip 
           className="f-0"
           variant="header" 
-          label="Memory"
+          label="Memory used"
         >
-          {(100 * c.serverStatus.free_memoryKb/c.serverStatus.total_memoryKb).toFixed(1).padStart(2, "0")}% ({bytesToSize(1024 * c.serverStatus.free_memoryKb)})
+          {(100 * (c.serverStatus.total_memoryKb - c.serverStatus.memAvailable)/c.serverStatus.total_memoryKb).toFixed(1).padStart(2, "0")}% ({bytesToSize(1024 * (c.serverStatus.total_memoryKb - c.serverStatus.memAvailable))})
         </Chip>
       }
       {c && 
@@ -159,6 +159,14 @@ export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTab
             {c.serverStatus.disk_space}
           </span>
         </Chip>
+        {(c.serverStatus.ioInfo?.length ?? 0) > 0 && <Chip
+          label={"IO (device, reads, writes)"}
+          variant="header"
+        >
+          <span className="ws-pre">
+            {c.serverStatus.ioInfo?.map(r => `${r.deviceName} ${bytesToSize(r.readsCompletedSuccessfully)} ${bytesToSize(r.writesCompleted)}`).join("\n")}
+          </span>
+        </Chip>}
       </PopupMenu>}
     </FlexRow>
     

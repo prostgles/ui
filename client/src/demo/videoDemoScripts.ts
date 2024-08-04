@@ -204,7 +204,10 @@ const dashboardDemo = async () => {
   // await click("ChartLayerManager.AddChartLayer.addLayer", `[data-key=${JSON.stringify(`"roads.geojson".geog`)}]`);
   await click("ChartLayerManager.AddChartLayer.addLayer", `[data-key=${JSON.stringify(`"london_restaurants.geojson".geometry`)}]`);
   await click("Popup.close");
-
+  await tout(2e3);
+  await click("dashboard.goToConnections");
+  await click("", "[data-key^=crypto] a")!.click();
+  await click("dashboard.menu.tablesSearchList", "[data-key=futures]");
 }
 
 const loadTest = async () => {
