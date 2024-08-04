@@ -79,7 +79,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
       }
       if(dbPrgl.isLoading || !pathAndCon) return;
       const { con, path } = pathAndCon;
-      const { dbo: db, methods, auth, tableSchema } = dbPrgl;
+      const { dbo: db, methods, auth, tableSchema, socket } = dbPrgl;
       const { dbs, dbsTables } = prglState;     
       const thisIstheStateDB = auth?.user?.state_db_id === con.id;
       const { tables : dbTables = [], error } =  await getTables(tableSchema ?? [], undefined, db);
@@ -104,6 +104,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
           ...prglState,
         });
         (window as any).db = db;
+        (window as any).dbSocket = socket;
         (window as any).dbMethods = methods; 
         return {
           prglProject,

@@ -1,6 +1,9 @@
 export const onMount: OnMount = async ({ dbo }) => {
 
-  const count = await dbo["\"roads.geojson\""].count();
+  const roadTableHandler = dbo["\"roads.geojson\""]
+  if(!roadTableHandler) return;
+
+  const count = await roadTableHandler.count();
   if(count) {
     // VACUUM ANALYZE "roads.geojson";
     // VACUUM ANALYZE users;

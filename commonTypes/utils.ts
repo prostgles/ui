@@ -135,6 +135,23 @@ export type PG_STAT_DATABASE = {
   stats_reset: string;
 }
 
+export type IOStats = {
+  majorNumber: number;
+  minorNumber: number;
+  deviceName: string;
+  readsCompletedSuccessfully: number;
+  readsMerged: number;
+  sectorsRead: number;
+  timeSpentReadingMs: number;
+  writesCompleted: number;
+  writesMerged: number;
+  sectorsWritten: number;
+  timeSpentWritingMs: number;
+  IOsCurrentlyInProgress: number;
+  timeSpentDoingIOms: number;
+  weightedTimeSpentDoingIOms: number;
+}
+
 export type ServerStatus = {
   clock_ticks: number;
   total_memoryKb: number;
@@ -144,6 +161,8 @@ export type ServerStatus = {
   cpu_cores_mhz: string;
   cpu_mhz: string;
   disk_space: string;
+  memAvailable: number;
+  ioInfo?: IOStats[];
 }
 
 export type ConnectionStatus = { 

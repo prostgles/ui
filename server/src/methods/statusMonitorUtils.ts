@@ -42,11 +42,13 @@ export const getServerStatus = async (db: DB, connId: string): Promise<ServerSta
     total_memory: total_memoryStr,
     uptime_array: uptimeStr,
     free_memory: free_memoryStr, 
-    cpu_model: cpu_modelStr, 
+    cpu_model: cpu_modelStr,
+    MemAvailableStr,
   } = await getBashQuery({
     clock_ticks: `getconf CLK_TCK`,
     total_memory: ` grep 'MemTotal' /proc/meminfo | grep -o -E "[0-9]+"`,
     free_memory: ` grep 'MemFree' /proc/meminfo | grep -o -E "[0-9]+"`,
+    MemAvailableStr: ` grep 'MemAvailable' /proc/meminfo | grep -o -E "[0-9]+"`,
     uptime_array: ` cat /proc/uptime`,
     cpu_model: `lscpu | grep "Model name"`, 
   });
@@ -65,6 +67,7 @@ export const getServerStatus = async (db: DB, connId: string): Promise<ServerSta
   const free_memoryKb = +free_memoryStr;
   const [uptimeTotalSecondsStr, idleSeconds] = uptimeStr.split(" ");
   const uptimeSeconds = +(uptimeTotalSecondsStr ?? "0");
+  const memAvailable = +MemAvailableStr;
 
   return {
     clock_ticks,
@@ -75,6 +78,7 @@ export const getServerStatus = async (db: DB, connId: string): Promise<ServerSta
     cpu_mhz,
     disk_space,
     cpu_cores_mhz,
+    memAvailable,
   }
 }
 

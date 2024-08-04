@@ -458,7 +458,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         sqlDefinition: "BOOLEAN",
         info: { hint: `If true then On mount typescript will not be executed` },
       },
-      info: { 
+      info: {
         jsonbSchemaType: {
           canCreateDb: { type: "boolean", optional: true, description: "True if postgres user is allowed to create databases. Never gets updated" }
         }, 
@@ -979,6 +979,12 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       created         : `TIMESTAMP DEFAULT NOW()` ,
       last_updated    : `BIGINT NOT NULL` ,
       
+    }
+  },
+
+  database_stats: {
+    columns: {
+      database_config_id: "INTEGER REFERENCES database_configs(id) ON DELETE SET NULL",
     }
   },
 

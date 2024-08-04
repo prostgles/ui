@@ -1,3 +1,4 @@
+import { getMonaco } from "../../SQLEditor";
 import {
   CREATE_OR_REPLACE, CREATE_SNIPPETS,
   type MinimalSnippet,
@@ -81,6 +82,7 @@ export const MatchCreate: SQLMatcher = {
       )
     }
 
+    const monaco = await getMonaco()
     const whatToReplace = prevLC.startsWith("create or replace") && PG_OBJECTS.filter(what => prevLC.endsWith(what.toLowerCase())).sort((a, b) => b.length - a.length)[0];
     if(whatToReplace){
       if (["FUNCTION", "PROCEDURE"].includes(whatToReplace)) {
@@ -89,7 +91,7 @@ export const MatchCreate: SQLMatcher = {
             ...s,
             sortText: s.schema === "public"? "a" : "b",
             insertText: s.definition!.slice(27)!,
-            insertTextRules: 1 // KeepWhitespace = 1,
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.None,
           }))
         }
       } else if (whatToReplace === "VIEW") {
@@ -98,7 +100,7 @@ export const MatchCreate: SQLMatcher = {
             ...s,
             sortText: s.schema === "public"? "a" : "b",
             insertText: `${s.escapedIdentifier}  AS \n ${s.view!.definition!}` ,
-            insertTextRules: 1 // KeepWhitespace = 1,
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.None,
           })).concat(suggestSnippets([{ label: "$name", insertText: createStatements.VIEW }]).suggestions as any)
         }
       } else {
