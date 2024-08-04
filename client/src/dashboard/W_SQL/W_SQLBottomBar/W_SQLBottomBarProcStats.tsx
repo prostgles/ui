@@ -29,5 +29,9 @@ export const W_SQLBottomBarProcStats = ({ dbsMethods, dbs, connectionId, activeQ
     <Chip label="Mem" value={procStats.memPretty ?? ""} />
     {procStats.wait_event && <Chip label="Wait Event" value={procStats.wait_event} />}
     {procStats.wait_event_type && <Chip label="Wait Event Type" value={procStats.wait_event_type} />}
+    {procStats.blocked_by?.length.toString() && 
+      <FlexRow>Blocked by:
+      {procStats.blocked_by.map((pid, i) => <Chip key={pid} className="mt-p25" color="red">{pid}</Chip>)}
+    </FlexRow>}
   </FlexRow>
 }
