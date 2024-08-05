@@ -1054,7 +1054,7 @@ new_users AS (
 ),
 uins AS (
   INSERT INTO users (email, password, first_name, last_name, phone_number, type, created_at)
-  SELECT email, pwd, first_name, last_name, phone_number, type,  now() + (random() * "interval"('1 year'))
+  SELECT email, pwd, first_name, last_name, phone_number, type,  now() - (random() * "interval"('1 year'))
   FROM new_users
   RETURNING *
 )
@@ -1102,7 +1102,7 @@ BEGIN
   ),
   uins AS (
     INSERT INTO users (email, password, first_name, last_name, phone_number, type, created_at)
-    SELECT email, pwd, first_name, last_name, phone_number, type,  now() + (random() * period)
+    SELECT email, pwd, first_name, last_name, phone_number, type,  now() - (random() * period)
     FROM new_users
     RETURNING *
   )
@@ -1122,7 +1122,7 @@ BEGIN
 
   /* Create 20% riders */
   INSERT INTO users (email, password, first_name, last_name, phone_number, type, created_at)
-  SELECT email, 'pwd', first_name, last_name, phone_number, 'rider', now() + (random() * period)
+  SELECT email, 'pwd', first_name, last_name, phone_number, 'rider', now() - (random() * period)
   FROM setof_fake_contacts(number_of_riders)
   LIMIT number_of_riders;
 END $$;
@@ -1186,7 +1186,7 @@ WHERE rnum < 50; --number of menu items per restaurant
 
 
 
-CREATE OR REPLACE PROCEDURE mock_orders(number_of_orders INTEGER DEFAULT 1e4)
+CREATE OR REPLACE PROCEDURE mock_orders(number_of_orders INTEGER DEFAULT 1e4, period INTERVAL DEFAULT '1 second')
 LANGUAGE plpgsql
 AS $$  
 BEGIN
@@ -1211,16 +1211,24 @@ BEGIN
     round(r.dist/1000) as delivery_fee, 
     1 as service_fee, 
     round(random() * 100) as total_price, 
-    now() as created_at
+    now() - (random() * period) as created_at
   FROM (
-    SELECT *, row_number() over(ORDER BY last_order DESC) as rnum
-    FROM v_users
-    ORDER BY last_order DESC
-    LIMIT number_of_orders
+    SELECT *, row_number() over() as rnum
+    FROM (
+      SELECT *
+      FROM v_users
+      ORDER BY last_order
+      LIMIT number_of_orders
+    ) unested
   ) u
   INNER JOIN ( 
     SELECT *, row_number() over(ORDER BY random()) as rnum
-    FROM v_riders 
+    FROM v_riders, 
+      generate_series(
+        1, 
+        greatest(ceil(number_of_orders/(select count(*) from v_riders)), 1)::BIGINT
+      )
+    LIMIT number_of_orders
   ) rider
   ON rider.rnum = u.rnum
   LEFT JOIN LATERAL (
@@ -1235,7 +1243,7 @@ BEGIN
 
   /* Create 5 items per order  */
   INSERT INTO order_items (order_id, menu_item_id, quantity, price, created_at)
-  SELECT id, item_id, 1, price, now()
+  SELECT id, item_id, 1, price, now() - (random() * period)
   FROM (
     SELECT  o.id, o.restaurant_id, mi.id as item_id, mi.price, row_number() over(PARTITION BY o.id ) as urnum
     FROM orders o
@@ -1274,7 +1282,8 @@ BEGIN
 
 END $$;
 
-CALL mock_orders(1e5::INTEGER);
+CALL mock_orders(1e5::INTEGER, '1 year'::INTERVAL);
+CALL mock_orders(35e3::INTEGER, '1 hour'::INTERVAL);
 
 
 
@@ -1299,6 +1308,7 @@ BEGIN
         AND ua.address_id = o.customer_address_id  
       INNER JOIN addresses a
         ON a.id = ua.address_id
+      WHERE o.status = 'picked_up'
     ), 
     locations AS (
       SELECT DISTINCT ON (o.id)
