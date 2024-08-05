@@ -206,9 +206,10 @@ const dashboardDemo = async () => {
   await click("Popup.close");
   await tout(2e3);
   await click("dashboard.goToConnections");
-  await click("", "[data-key^=crypto] a")!.click();
+  await click("", "[data-key^=crypto] a", { nth: 0 });
   await click("dashboard.menu.tablesSearchList", "[data-key=futures]");
 }
+
 
 const loadTest = async () => {
   const dbs: DBS = (window as any).dbs;

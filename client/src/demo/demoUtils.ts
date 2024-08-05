@@ -46,7 +46,7 @@ export const waitForElement = async <T extends Element>(testId: Command | "", en
   return elem
 }
 
-export const click = async (testId: Command | "", endSelector = "", opts: ClickOpts = {}) => {
+export const click = async (testId: Command | "", endSelector = "", opts: ClickOpts = {}): Promise<void> => {
   const elem = await waitForElement<HTMLButtonElement>(testId, endSelector, opts);
   const bbox = elem.getBoundingClientRect();
   if((elem as any).scrollIntoViewIfNeeded){
