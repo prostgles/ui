@@ -61,7 +61,9 @@ jobs:
     - name: Run electron test
       run: |
         sudo apt-get install xvfb -y &&
-        cd electron && npx playwright test
+        cd electron
+        ./build.sh
+        npx playwright test
 
     - name: Run test
       run: |
