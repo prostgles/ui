@@ -44,9 +44,9 @@ test('renders the first page', async () => {
     await page.screenshot({ path: `./dist/s-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
   }
 
-  await page.waitForTimeout(4000);
-  await page.waitForTimeout(12000);
-  await page.reload();
+  // await page.waitForTimeout(4000);
+  // await page.waitForTimeout(12000);
+  // await page.reload();
   await screenshot();
 
   /** Privacy */
@@ -66,7 +66,8 @@ test('renders the first page', async () => {
   /** State db connection details */
   await page.waitForTimeout(1000);
   await screenshot();
-  await page.getByLabel("password").fill("password");
+  await page.getByLabel("user").fill("usr");
+  await page.getByLabel("password").fill("psw");
   /** Ensure overflow does not obscure done button */
   await page.getByTestId("SSLOptionsToggle").click();
   const doneBtn = await page.getByTestId("ElectronSetup.Done");
