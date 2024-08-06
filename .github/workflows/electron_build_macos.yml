@@ -5,13 +5,13 @@ concurrency:
   cancel-in-progress: true
 jobs:
   electron_build_macos:
-    timeout-minutes: 20
+    timeout-minutes: 25
     runs-on: macos-12-large
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
       with:
-        node-version: 18 # node 20 is too slow
+        node-version: 22 # node 20 is too slow
     - name: Install dependencies
       run: |
         cd electron && npm run build-macos

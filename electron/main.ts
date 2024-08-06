@@ -15,7 +15,7 @@ let localCreds: any;
 const safeStorage = process.env.TEST_MODE === 'true'? {
   encryptString: (str: string) => { localCreds = str; return str },
   decryptString: (str: string) => { return localCreds }
-} : ss
+} : ss;
 
 const expressApp = require("../ui/server/dist/server/src/electronConfig");
 const iconPath = path.join(__dirname, '/../images/icon.ico');
