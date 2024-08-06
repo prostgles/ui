@@ -45,13 +45,12 @@ export const getElectronConfig = () => {
     throw "Invalid safeStorage provided. encryptString or decryptString is not a function"
   } 
 
-  // const electronConfigPath = path.resolve(`${getRootDir()}/../../.electron-auth.json`);
   const electronConfigPath = path.resolve(`${getRootDir()}/.electron-auth.json`);
 
   const getCredentials = (): DBSConnectionInfo | undefined => {
 
     try {
-      const file = !fs.existsSync(electronConfigPath)? undefined : fs.readFileSync(electronConfigPath);//, { encoding: "utf-8" });
+      const file = !fs.existsSync(electronConfigPath)? undefined : fs.readFileSync(electronConfigPath);
       if(file){
         return JSON.parse(safeStorage!.decryptString(file));
       }
@@ -98,6 +97,9 @@ export const start = async (
 ) => {
   isElectron = true;
   port = args.port;
+  if(!Number.isInteger(args.port)){
+    throw `Must provide a valid port`;
+  }
   if(!args.rootDir || typeof args.rootDir !== "string"){
     throw `Must provide a valid rootDir`;
   }

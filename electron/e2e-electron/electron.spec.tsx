@@ -32,37 +32,50 @@ test.afterAll(async () => {
 
 let page: Page | undefined;
 
-test.setTimeout(60e3)
+test.setTimeout(60e3);
+
 test('renders the first page', async () => {
   if(!electronApp) return;
+
   page = await electronApp.firstWindow();
-  await page.waitForTimeout(12000);
-  await page.waitForTimeout(1000);
+
+  const screenshot = async (name?: string) => {
+    if(!page) return;
+    await page.screenshot({ path: `./dist/s_${name ?? (new Date()).toISOString()}.png` });
+  }
+
+  await page.waitForTimeout(4000);
   await page.waitForTimeout(12000);
   await page.reload();
+  await screenshot();
 
   /** Privacy */
   await page.getByTestId("ElectronSetup.Next").waitFor({ state: "visible", timeout: 120e3 });
+  await screenshot();
   await page.getByTestId("ElectronSetup.Next").click();
 
   /** PG Installation info */
-  await page.waitForTimeout(1000);
+  await page.getByTestId("PostgresInstallationInstructions").waitFor({ state: "visible", timeout: 120e3 });
+  await screenshot();
   await page.getByTestId("PostgresInstallationInstructions").click();
   await page.waitForTimeout(1000);
+  await screenshot();
   await page.getByTestId("PostgresInstallationInstructions.Close").click();
   await page.getByTestId("ElectronSetup.Next").click();
 
   /** State db connection details */
   await page.waitForTimeout(1000);
+  await screenshot();
   await page.getByLabel("password").fill("password");
   /** Ensure overflow does not obscure done button */
   await page.getByTestId("SSLOptionsToggle").click();
   const doneBtn = await page.getByTestId("ElectronSetup.Done");
   await expect(doneBtn).toBeVisible();
+  await screenshot();
   await doneBtn.click();
   await page.waitForTimeout(1000);
 
-  await page.screenshot({ path: "./dist/s1.png" });
+  await screenshot();
   // await page.screenshot({ path: "./dist/s2.png" });
   // await page.waitForSelector('h1')
   // const text = await page.$eval('h1', (el) => el.textContent)

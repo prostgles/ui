@@ -27,7 +27,6 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
     return userSub.unsubscribe;
 
   }, [dbs, auth])
-  // const user = dbs?.users.useSubscribeOne({ id: auth?.user!.id });
 
 
   const init = async () => {
@@ -41,6 +40,13 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
       const resp = await fetch("/dbs");
       serverState = await resp.json();
       window.document.title = `Prostgles ${serverState?.isElectron? "Desktop" : "UI"}`;
+      if(serverState?.connectionError){
+        setState({ 
+          prglStateErr: undefined,
+          serverState,
+        });
+        return;
+      }
     } catch(initError) {
       serverState = {
         ok: false,
@@ -127,8 +133,7 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
             
           })
         })
-
-    } else {
+    } else if(!serverState?.connectionError){
       /** Maybe loading, try again */
       console.warn("Prostgles could not connect. Retrying in 1 second")
       setTimeout(() => {

@@ -108,7 +108,6 @@ export const App = () => {
 
   const user = state.prglState?.user ?? state.prglState?.auth.user;
   const { theme, userThemeOption } = useAppTheme(state);
-
   if (state.serverState?.isElectron && !state.prglState) {
     return <ElectronSetup serverState={state.serverState} />
   }

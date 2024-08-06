@@ -106,13 +106,15 @@ export default class Select<O extends OptionKey, Multi extends boolean = false, 
 
   btnRef?: HTMLButtonElement;
 
+  id = "select-" + Date.now();
+
   render(){
     const { 
       onChange: _onChange, 
       className = "",
       title,
       value: _value,
-      id = "select-" + Date.now(),
+      id = this.id,
       style = {},
       required,
       label,

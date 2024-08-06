@@ -25,7 +25,13 @@ export const Input = React.forwardRef<HTMLInputElement, P>((props, ref) => {
             e.focus();
             e.select();
           }
-        }, 40)
+        }, 40);
+
+        // @ts-ignore
+        e.forceDemoValue = (val: any) => {
+          // @ts-ignore
+          props.onChange?.({ currentTarget: { value: val } });
+        }
       }
     }}
     onKeyDown={(props.type === "number")? e => {

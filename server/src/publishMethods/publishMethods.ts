@@ -26,7 +26,7 @@ import { getPasswordlessAdmin, insertUser } from "../ConnectionChecker";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
 import { demoDataSetup } from "../demoDataSetup";
-import { getRootDir } from "../electronConfig";
+import { getElectronConfig, getRootDir } from "../electronConfig";
 import { killPID } from "../methods/statusMonitorUtils";
 import { initBackupManager, statePrgl } from "../startProstgles";
 import { upsertConnection } from "../upsertConnection";
@@ -135,6 +135,10 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     },
     createConnection: async (con: Connections, sampleSchemaName?: string) => {
       const res = await upsertConnection(con, user.id, dbs, sampleSchemaName);
+      const el = getElectronConfig();
+      if(res.connection.is_state_db && el?.isElectron){
+        await el.setCredentials(res.connection);
+      }
       return res;
     },
     reloadSchema: async (conId: string) => {

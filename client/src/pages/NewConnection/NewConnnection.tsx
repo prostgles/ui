@@ -238,7 +238,6 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
         minWidth: "450px",
       }}
     >
-
       {!contentOnly && <NavLink className="p-1 text-1 round flex-row ai-center" to={`/connections`}>
         <Icon path={mdiArrowLeft} size={1} />
         <div className="ml-p5">Connections</div>

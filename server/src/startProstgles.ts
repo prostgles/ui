@@ -24,6 +24,7 @@ import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { tableConfig } from "./tableConfig";
 import { addLog, setLoggerDBS } from "./Logger";
+import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 
 type StartArguments = {
   app: Express; 
@@ -81,8 +82,8 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
         console.warn("sslmode=prefer fallback. Connecting through non-ssl")
       }
       validatedDbConnection = tested.connectionInfo;
-    } catch(conn){
-      return { conn }
+    } catch(connError){
+      return { conn: getErrorAsObject(connError) };
     }
     const IS_PROD = process.env.NODE_ENV === "production";
 
@@ -245,7 +246,8 @@ export const tryStartProstgles = async ({ app, io, port, host, con = DBS_CONNECT
         _initState.connectionError = status.conn;
         _initState.initError = status.init;
         
-        if(status.ok){
+        const databaseDoesNotExist = status.conn?.code === "3D000";
+        if(status.ok || databaseDoesNotExist){
           tries = maxTries + 1;
         } else {
           tries++;

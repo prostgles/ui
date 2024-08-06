@@ -78,7 +78,7 @@
       "executableName": "prostgles-desktop",
       "icon": "./images/rounded/",
       "maintainer": "prostgles",
-      "category": "Development",
+      "category": "Development,IDE",
       "target": [
         "AppImage",
         "deb",
