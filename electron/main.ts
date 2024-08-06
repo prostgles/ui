@@ -1,11 +1,16 @@
 
 const unhandled = require('electron-unhandled');
 unhandled();
-import { app, BrowserWindow, safeStorage, Tray, shell, nativeImage } from 'electron';
+import { app, BrowserWindow, safeStorage as ss, Tray, shell, nativeImage } from 'electron';
 import * as path from "path";
 import * as fs from "fs";
 import * as crypto from "crypto";
 
+const safeStorage = ss;
+//  {
+//   encryptString: (str: string) => ss.encryptString(str).toString('base64'),
+//   decryptString: (str: string) => ss.decryptString(Buffer.from(str, 'base64'))
+// }
 
 const expressApp = require("../ui/server/dist/server/src/electronConfig");
 const iconPath = path.join(__dirname, '/../images/icon.ico');
