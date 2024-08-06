@@ -104,7 +104,12 @@ const awaitInit = () => {
  * Serve prostglesInitState
  */
 app.get("/dbs", (_req, res) => {
-  const serverState: ServerState = getInitState()
+  const serverState: ServerState = getInitState();
+  const electronCreds = electronConfig?.isElectron && electronConfig.hasCredentials()? electronConfig.getCredentials() : undefined;
+  /** Provide credentials if there is a connection error so the user can rectify it */
+  if(electronCreds && isObject(serverState.connectionError) && _req.cookies["sid_token"] === electronConfig?.sidConfig.electronSid){
+    serverState.electronCreds = electronCreds as any;
+  }
   res.json(serverState);
 });
 

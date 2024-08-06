@@ -11,7 +11,7 @@ export const LANG = "sql";
  * This option seems to start downloading monaco (870.js) from the start: webpackPrefetch: true
  */
 export const getMonaco = async () => { 
-  const monaco = import(/* webpackChunkName: "monaco_editorr" */  /*  webpackPrefetch: false */  "monaco-editor/esm/vs/editor/editor.api.js");
+  const monaco = import(/* webpackChunkName: "monaco_editorr" */  /*  webpackPrefetchNot */  "monaco-editor/esm/vs/editor/editor.api.js");
   return monaco;
 };
 

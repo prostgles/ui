@@ -81,17 +81,8 @@ export const createSessionSecret = () => {
 export const makeSession = async (user: Users | undefined, client: Pick<Sessions, "user_agent" | "ip_address" | "type"> & { sid?: string }, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number = 0): Promise<BasicSession> => {
 
   if(user){
-
-    // /** Disable all other web sessions for user. why? */
-    // await dbo.sessions.update({ 
-    //   user_id: user.id, 
-    //   type: "web",
-    //   user_agent: client.user_agent, 
-    // }, { type: "web", active: false });
-
     const session = await dbo.sessions.insert({ 
-      ...(client.sid && { id: client.sid }),
-      id: createSessionSecret(),
+      id: client.sid ?? createSessionSecret(),
       user_id: user.id, 
       user_type: user.type, 
       expires, 
@@ -235,7 +226,7 @@ export const getAuth = (app: Express) => {
         const globalSettings = await db.global_settings.findOne();
         const DAY = 24 * 60 * 60 * 1000;
         const expires = Date.now() + (globalSettings?.session_max_age_days ?? 1) * DAY;
-        return await makeSession(u, { ip_address, user_agent: user_agent || null, type: getElectronConfig()?.isElectron? "desktop" : "web" }, db, expires)
+        return await makeSession(u, { ip_address, user_agent: user_agent || null, type: "web" }, db, expires)
       }
       await db.sessions.update({ id: activeSession.id }, { last_used: new Date() });
       return parseAsBasicSession(activeSession);
@@ -316,7 +307,7 @@ export const getAuth = (app: Express) => {
           if(!usedMagicLink){
             throw new Error("Magic link already used");
           }
-          const session = await makeSession(user, { ip_address, user_agent: user_agent || null, type: getElectronConfig()?.isElectron? "desktop" : "web" }, dbo , Number(mlink.expires));
+          const session = await makeSession(user, { ip_address, user_agent: user_agent || null, type: "web" }, dbo , Number(mlink.expires));
           await onLoginAttempt.onSuccess();
           return session;
         }

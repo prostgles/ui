@@ -7,8 +7,9 @@ import pgPromise from "pg-promise";
 const pgpNoWarnings = pgPromise({ noWarnings: true });
 const pgp = pgPromise();
 import type pg from "pg-promise/typescript/pg-subset";
-import { tryCatch } from "prostgles-types";
+import { pickKeys, tryCatch } from "prostgles-types";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
+import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 
 const NO_SSL_SUPPORT_ERROR = "The server does not support SSL connections";
 
@@ -101,7 +102,7 @@ export const testDBConnection = (_c: ConnectionInfo, expectSuperUser = false, ch
             `6) use "host.docker.internal" instead of "localhost" in the above connection details`,
           ].join("\n");
         }
-        reject(errRes)
+        reject(pickKeys(getErrorAsObject(err), ["message", "code"]))
       });
   });
 }

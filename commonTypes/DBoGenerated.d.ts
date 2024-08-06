@@ -281,7 +281,7 @@ export type DBSchemaGenerated = {
       ip_address_remote?: null | string;
       magic_link_id?: null | string;
       sid?: null | string;
-      type?: "web" | "api_token" | "desktop" | "mobile"
+      type?: "web" | "api_token" | "mobile"
       user_agent?: null | string;
       username?: null | string;
       x_real_ip?: null | string;

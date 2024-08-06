@@ -4,7 +4,7 @@ import type { DeckGLMapDivDemoControls } from "../dashboard/Map/DeckGLMap";
 import { VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
 import { getDemoUtils } from "../dashboard/W_SQL/getDemoUtils";
 import { tout } from "../pages/ElectronSetup";
-import { click, getElement, movePointer, type } from "./demoUtils";
+import { click, getElement, movePointer, type, waitForElement } from "./demoUtils";
 import { startRecordingDemo } from "./recordDemoUtils";
 import { sqlVideoDemo } from "./sqlVideoDemo";
 import { videoDemoAccessControlScripts } from "./videoDemoAccessControlScripts";
@@ -149,13 +149,22 @@ const dashboardDemo = async () => {
 
   // await closeAllViews();
 
-  await click("WorkspaceMenuDropDown");
-  await click("WorkspaceMenuDropDown.WorkspaceAddBtn");
-  const wspName = getElement("Popup.content", "input");
-  (wspName as any)?.forceDemoValue(DEMO_WSP_PREFIX + Math.random().toFixed(2));
-  await click("WorkspaceAddBtn.Create");
+  const createWorkspace = async () => {
+    await click("WorkspaceMenuDropDown");
+    await click("WorkspaceMenuDropDown.WorkspaceAddBtn");
+    const wspName = getElement("Popup.content", "input");
+    (wspName as any)?.forceDemoValue(DEMO_WSP_PREFIX + Math.random().toFixed(2));
+    await click("WorkspaceAddBtn.Create");
+  }
+
+  await createWorkspace();
 
   await click("dashboard.menu.tablesSearchList", "[data-key=users]");
+  // const togglePinned = getElement("DashboardMenuHeader.togglePinned");
+  // if(togglePinned){
+    await click("DashboardMenuHeader.togglePinned");
+    await tout(500);
+  // }
   await click("AddColumnMenu");
   await click("AddColumnMenu", "[data-key=Referenced]");
   await click("JoinPathSelectorV2");
@@ -207,7 +216,27 @@ const dashboardDemo = async () => {
   await tout(2e3);
   await click("dashboard.goToConnections");
   await click("", "[data-key^=crypto] a", { nth: 0 });
+
+  await createWorkspace();
+  
   await click("dashboard.menu.tablesSearchList", "[data-key=futures]");
+  await click("DashboardMenuHeader.togglePinned");
+
+  await click("dashboard.window.toggleFilterBar");
+  const elem = waitForElement("", ".SmartFilterBar input");
+  await click("", ".SmartFilterBar input");
+  console.log(elem);
+  (elem as any).forceDemoValue("btc");
+  await click("", `[data-label="BTCUSDC"]`);
+  await click("AddChartMenu.Timechart");
+  await click("ChartLayerManager");
+  await click("TimeChartLayerOptions.aggFunc");
+  await click("TimeChartLayerOptions.aggFunc.select");
+  await click("TimeChartLayerOptions.aggFunc.select", `[data-key="$avg"]`);
+  await click("TimeChartLayerOptions.numericColumn");
+  await click("TimeChartLayerOptions.numericColumn", `[data-key="price"]`);
+  await click("Popup.close");
+  await click("Popup.close");
 }
 
 

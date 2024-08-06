@@ -122,7 +122,7 @@ const tableConfigSchema: JSONB.JSONBSchema<JSONB.FieldTypeObj> = {
 }
 
 const SESSION_TYPE = {
-  enum: ["web", "api_token", "desktop", "mobile"], 
+  enum: ["web", "api_token", "mobile"], 
   defaultValue: "web", 
   nullable: false 
 } as const;
@@ -252,7 +252,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
 
   session_types: {
     isLookupTable: {
-      values: { "web": {}, "api_token": {}, "desktop": {}, "mobile": {} }
+      values: { "web": {}, "api_token": {}, "mobile": {} }
     }
   },
 

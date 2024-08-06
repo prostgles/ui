@@ -2,18 +2,14 @@
 const unhandled = require('electron-unhandled');
 unhandled();
 import { app, BrowserWindow, safeStorage, Tray, shell, nativeImage } from 'electron';
-import { make } from "./win-inno-setup";
 import * as path from "path";
 import * as fs from "fs";
+import * as crypto from "crypto";
 
-/** File gets compiled */
-make;
 
-import { randomUUID } from 'crypto';
-const electronSid = randomUUID();
 const expressApp = require("../ui/server/dist/server/src/electronConfig");
-
 const iconPath = path.join(__dirname, '/../images/icon.ico');
+const electronSid = crypto.randomBytes(48).toString("hex");
 
 /** Limit to single instance */
 let mainWindow: BrowserWindow;
@@ -23,7 +19,7 @@ if (!gotTheLock) {
   app.quit();
 } else {
   app.on('second-instance', (event, commandLine, workingDirectory) => {
-    // Someone tried to run a second instance, we should focus our window.
+    // Tried to run a second instance - focus main window.
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore()
       mainWindow.focus()

@@ -141,7 +141,7 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
     const searchedItems = options.map(this.getParsedOption);
     let filterExtraItems: SearchListItem[] = [];
     let filterItems: SearchListItem[] = [];
-    if(!searchTerm && Array.isArray(filter.value) && filter.value.length){
+    if(Array.isArray(filter.value) && filter.value.length){
       filterItems = filter.value.map(this.getParsedOption);
       filterExtraItems = filterItems.filter(v => !searchedItems.map(o => o.key).includes(v.key));
     }

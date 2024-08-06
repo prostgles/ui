@@ -433,7 +433,7 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
           if(r) this.ref = r;
         }} 
       >
-        {loadingData && 
+        {loadingData && this.d.w?.options.refresh?.type !== "Realtime" && 
           <Loading variant="cover" delay={1500} />
         }
         {infoSection}

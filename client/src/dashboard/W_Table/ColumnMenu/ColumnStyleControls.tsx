@@ -58,11 +58,17 @@ export type StyleColumnProps = Pick<Prgl, "db" | "tables" > & {
   tableName: string;
 } 
 
-export const setDefaultConditionalStyle = async (db: DBHandlerClient, tableName: string, columnName: string, setStyle: (newStyle: ColumnConfig["style"]) => void) => {
+type DefaultConditionalStyleArgs = {
+  db: DBHandlerClient; 
+  tableName: string;
+  columnName: string;
+  filter?: any;
+}
+export const setDefaultConditionalStyle = async ({ columnName, db, tableName, filter = {} }: DefaultConditionalStyleArgs, setStyle: (newStyle: ColumnConfig["style"]) => void) => {
 
   const tableHandler = db[tableName];
   if(!tableHandler?.find) return undefined;
-  const rows = await tableHandler.find({}, { select: { [columnName]: 1 }, limit: 5, groupBy: true });
+  const rows = await tableHandler.find(filter, { select: { [columnName]: 1 }, limit: 5, groupBy: true });
   const values = rows.map(v => v[columnName]) as string[];
   setStyle({ 
     type: "Conditional", 
@@ -121,7 +127,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
         options={STYLE_MODES} 
         onChange={async (type) => { 
           if(type === "Conditional"){
-            setDefaultConditionalStyle(db, tableName, column.name, setStyle)
+            setDefaultConditionalStyle({ db, tableName, columnName: column.name}, setStyle)
           } else {
 
             setStyle(

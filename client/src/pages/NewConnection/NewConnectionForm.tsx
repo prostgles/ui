@@ -4,7 +4,6 @@ import type { SQLHandler } from "prostgles-types";
 import React, { useEffect, useRef } from "react";
 import Btn from "../../components/Btn";
 import ButtonGroup from "../../components/ButtonGroup";
-import Chip from "../../components/Chip";
 import { ExpandSection } from "../../components/ExpandSection";
 import { FlexRow } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
@@ -15,6 +14,7 @@ import { SwitchToggle } from "../../components/SwitchToggle";
 import CodeExample from "../../dashboard/CodeExample";
 import type { Connection } from "./NewConnnection";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
+import ErrorComponent from "../../components/ErrorComponent";
 
 const SSL_MODES = [
   { key: "disable", subLabel: "only try a non-SSL connection" },
@@ -200,16 +200,14 @@ export const NewConnectionForm = ({ c, updateConnection, nameErr, warning, test,
 
             }
           />
-
-
         </>
     }
 
-    {warning && <Chip color="yellow" value={warning} />}
+    {warning && <ErrorComponent error={warning} style={{ minWidth: 0 }} />}
 
     {type !== "Prostgles" && <>
       <ExpandSection label="SSL options" buttonProps={{ variant: undefined, color: "action", iconPath: mdiDotsHorizontal, "data-command": "SSLOptionsToggle" }} >
-        <FormField id="s" label="SSL Mode"
+        <FormField id="ssl_mode" label="SSL Mode"
           fullOptions={SSL_MODES} required={true}
           value={c.db_ssl}
           onChange={async (db_ssl: typeof SSL_MODES[number]["key"]) => {
