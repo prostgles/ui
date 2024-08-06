@@ -125,6 +125,7 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
             label="Group by field"
             variant="div" 
             className="w-fit "
+            data-command="TimeChartLayerOptions.groupBy"
             optional={true}
             btnProps={{
               iconPath: mdiTableColumn,

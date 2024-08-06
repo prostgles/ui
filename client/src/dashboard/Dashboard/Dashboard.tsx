@@ -34,6 +34,8 @@ import {
   TopHeaderClassName
 } from "./dashboardUtils";
 import { loadTable, type LoadTableArgs } from "./loadTable";
+import Btn from "../../components/Btn";
+import { mdiArrowLeft } from "@mdi/js";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -317,7 +319,11 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
     const { centeredLayout } = localSettings;
 
     if(wspError || error){
-      const errorNode = wspError? <>Workspace not found <a className='text-white' href={`/connections/${connectionId}`}>Go back</a></> : <ErrorComponent error={error} />
+      const errorNode = wspError? <FlexCol className="w-full h-full ai-center text-0 pt-2">
+        Workspace not found 
+        <Btn color="action" variant="filled" asNavLink={true} href={`/connections/${connectionId}`} iconPath={mdiArrowLeft}>Go back</Btn>
+      </FlexCol> : 
+        <ErrorComponent error={error} />
       return <div className="flex-col p-1 text-white">
         {errorNode}
       </div>

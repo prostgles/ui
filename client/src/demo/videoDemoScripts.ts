@@ -4,8 +4,7 @@ import type { DeckGLMapDivDemoControls } from "../dashboard/Map/DeckGLMap";
 import { VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
 import { getDemoUtils } from "../dashboard/W_SQL/getDemoUtils";
 import { tout } from "../pages/ElectronSetup";
-import { click, getElement, movePointer, type, waitForElement } from "./demoUtils";
-import { startRecordingDemo } from "./recordDemoUtils";
+import { click, getElement, movePointer, type } from "./demoUtils";
 import { sqlVideoDemo } from "./sqlVideoDemo";
 import { videoDemoAccessControlScripts } from "./videoDemoAccessControlScripts";
 
@@ -173,19 +172,19 @@ const dashboardDemo = async () => {
   await click("QuickAddComputedColumn");
   await click("QuickAddComputedColumn", `[data-key="$countAll`);
 
-  const inpt = document.querySelector("#nested-col-name") as any;
-  inpt?.forceDemoValue("Customer Order Count");
+  await type("Customer Order Count", "", "#nested-col-name")
   await click("LinkedColumn.Add");
 
   /** Descending order count */
   await click("", `[role="columnheader"]:nth-child(2)`);
   await click("", `[role="columnheader"]:nth-child(2)`);
+  await tout(1e3);
 
   await click("dashboard.window.viewEditRow", undefined, { nth: 0, noTimeToWait: true });
   await click("JoinedRecords.toggle");
   await tout(1e3);
   await click("JoinedRecords", `[data-key="orders"] button[data-label="Expand section"]`);
-  await tout(4e3);
+  await tout(2e3);
   await click("JoinedRecords", `[data-command="SmartCard.viewEditRow"]`, { nth: 0 });
   await tout(2e3);
   await click("Popup.close");
@@ -223,11 +222,14 @@ const dashboardDemo = async () => {
   await click("DashboardMenuHeader.togglePinned");
 
   await click("dashboard.window.toggleFilterBar");
-  const elem = waitForElement("", ".SmartFilterBar input");
-  await click("", ".SmartFilterBar input");
-  console.log(elem);
-  (elem as any).forceDemoValue("btc");
+  await type("btcusd", "", ".SmartFilterBar input");
   await click("", `[data-label="BTCUSDC"]`);
+  await click("", ".FilterWrapper_Type");
+  await click("", `[data-key="$in"]`);
+  await type("btcu",  "", ".FilterWrapper input.custom-input");
+  await click("", `[data-key="BTCUSDC"]`);
+  await click("", `[data-key="BTCUSDT"]`);
+  await click("", `[title="Expand/Collapse filters"]`);
   await click("AddChartMenu.Timechart");
   await click("ChartLayerManager");
   await click("TimeChartLayerOptions.aggFunc");
@@ -235,6 +237,8 @@ const dashboardDemo = async () => {
   await click("TimeChartLayerOptions.aggFunc.select", `[data-key="$avg"]`);
   await click("TimeChartLayerOptions.numericColumn");
   await click("TimeChartLayerOptions.numericColumn", `[data-key="price"]`);
+  await click("TimeChartLayerOptions.groupBy");
+  await click("TimeChartLayerOptions.groupBy", `[data-key="symbol"]`);
   await click("Popup.close");
   await click("Popup.close");
 }
