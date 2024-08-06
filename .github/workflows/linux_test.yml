@@ -31,12 +31,20 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 20
+    - name: Wait for PostgreSQL to be ready and create prostgles_desktop_db
+      run: |
+        until pg_isready -h localhost -U usr -d db; do
+          sleep 1
+        done
+        PGPASSWORD=psw psql -h localhost -U usr -d db -c "CREATE DATABASE prostgles_desktop_db;"
+
     - name: Install curl inside postgres container for video needed for demo
       run: |
         pg_container_name=$(docker ps --format '{{.Names}}\t{{.Image}}' | grep 'postgis' | head -1 | awk '{print $1}') && \
         echo $pg_container_name && \
         docker ps -a && \
         docker exec $pg_container_name /bin/sh -c "apt-get update && apt install curl -y"
+        docker exec $pg_container_name /bin/sh -c "createdb prostgles_desktop_db -U postgres"
 
     - name: Install dependencies (psql with pg_dump)
         pg_dump version must be >= pg servers version to ensure backup/restore works
@@ -52,7 +60,6 @@ jobs:
       
     - name: Run electron test
       run: |
-        sudo psql -U postgres -c "CREATE DATABASE prostgles_desktop_db OWNER usr"
         sudo apt-get install xvfb -y &&
         cd electron && npm run test-linux
 
