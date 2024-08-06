@@ -46,7 +46,7 @@ export const waitForElement = async <T extends Element>(testId: Command | "", en
   return elem
 }
 
-export const click = async (testId: Command | "", endSelector = "", opts: ClickOpts = {}): Promise<void> => {
+export const goToElem = async <ElemType = HTMLElement>(testId: Command | "", endSelector = "", opts: ClickOpts = {}): Promise<ElemType> => {
   const elem = await waitForElement<HTMLButtonElement>(testId, endSelector, opts);
   const bbox = elem.getBoundingClientRect();
   if((elem as any).scrollIntoViewIfNeeded){
@@ -58,26 +58,29 @@ export const click = async (testId: Command | "", endSelector = "", opts: ClickO
     (bbox.top + bbox.height/2)
   )
   if(!elem.isConnected) {
-    return click(testId, endSelector, opts);
+    return goToElem(testId, endSelector, opts);
   }
+  return elem as any;
+}
+export const click = async (testId: Command | "", endSelector = "", opts: ClickOpts = {}): Promise<void> => {
+  const elem = await goToElem(testId, endSelector, opts);
   elem.click();
 }
 
-export const type = async (value: string, testId: Command, endSelector = "") => {
-  const input = getElement<HTMLInputElement>(testId, endSelector);
-  if(!input) return;
+export const type = async (value: string, testId: Command | "", endSelector = "") => {
+  const input = await goToElem<HTMLInputElement>(testId, endSelector);
   input.focus();
-  input.value = "";
-  input.focus();
-  const chars = value.split("");
-  for (const char of chars) {
-    input.value += char;
-    await tout(100);
-  }
-  await tout(200); 
-  input.value = value;
+  // input.value = "";
+  // input.focus();
+  // const chars = value.split("");
+  // for (const char of chars) {
+  //   input.value += char;
+  //   await tout(100);
+  // }
+  // await tout(200); 
+  // input.value = value;
   //@ts-ignore
-  input.forceDemoValue?.(value); 
+  await input.forceDemoValue?.(value); 
   await tout(500); 
 }
 
