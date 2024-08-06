@@ -10,7 +10,10 @@ test.beforeAll(async () => {
       __dirname + "/../build/main.js",
       "--no-sandbox"
     ],
-    env: { ...process.env, NODE_ENV: 'development' },
+    env: { 
+      ...process.env, 
+      NODE_ENV: 'development' 
+    },
     // recordVideo: { dir: './dist' }
   });
   electronApp.on('window', async (page) => {

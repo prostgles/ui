@@ -6,14 +6,20 @@ import * as path from "path";
 import * as fs from "fs";
 import * as crypto from "crypto";
 
-const safeStorage = ss;
-//  {
-//   encryptString: (str: string) => ss.encryptString(str).toString('base64'),
-//   decryptString: (str: string) => ss.decryptString(Buffer.from(str, 'base64'))
-// }
+let localCreds: any;
+
+/**
+ * Safe storage encryption works only with a launched browser (electron.launch without "--no-sandbox") and launch without xvfb-run
+ * but this does not work within containers
+ */
+const safeStorage = process.env.TEST_MODE === 'true'? {
+  encryptString: (str: string) => { localCreds = str; return str },
+  decryptString: (str: string) => { return localCreds }
+} : ss
 
 const expressApp = require("../ui/server/dist/server/src/electronConfig");
 const iconPath = path.join(__dirname, '/../images/icon.ico');
+/* createSessionSecret */
 const electronSid = crypto.randomBytes(48).toString("hex");
 
 /** Limit to single instance */
@@ -59,7 +65,7 @@ function initApp(){
     expressApp.start(
       safeStorage, 
       { 
-        rootDir:  app.getPath('userData'),
+        rootDir: app.getPath('userData'),
         port: 0, 
         electronSid, 
         onSidWasSet: () => { 

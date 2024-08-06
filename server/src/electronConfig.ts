@@ -19,13 +19,12 @@ export type DBSConnectionInfo = Pick<
 export type OnServerReadyCallback = (portNumber: number) => void;
 
 interface SafeStorage extends NodeJS.EventEmitter {
-
   decryptString(encrypted: Buffer): string;
   encryptString(plainText: string): Buffer;
   isEncryptionAvailable(): boolean;
 }
 
-let isElectron = false;// process.env.PRGL_IS_ELECTRON;
+let isElectron = false;
 let safeStorage: SafeStorage | undefined;
 let port: number | undefined;
 
@@ -46,9 +45,8 @@ export const getElectronConfig = () => {
   } 
 
   const electronConfigPath = path.resolve(`${getRootDir()}/.electron-auth.json`);
-
   const getCredentials = (): DBSConnectionInfo | undefined => {
-
+    
     try {
       const file = !fs.existsSync(electronConfigPath)? undefined : fs.readFileSync(electronConfigPath);
       if(file){
