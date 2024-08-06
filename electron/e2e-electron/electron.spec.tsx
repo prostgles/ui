@@ -41,7 +41,7 @@ test('renders the first page', async () => {
 
   const screenshot = async (name?: string) => {
     if(!page) return;
-    await page.screenshot({ path: `./dist/s_${name ?? (new Date()).toISOString()}.png` });
+    await page.screenshot({ path: `./dist/s-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
   }
 
   await page.waitForTimeout(4000);
