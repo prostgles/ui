@@ -223,17 +223,6 @@ export class Connections extends RTComp<PrglState, S> {
                 this.setState({ showDbNames });
               }}
             />
-            {serverState.isElectron && 
-              <Btn 
-                color="danger" 
-                iconPath={mdiDelete}
-                onClickPromise={async () => {
-                  
-                }}
-              >
-                Delete state connection
-              </Btn>
-            }
           </PopupMenu>}
 
         </div>
