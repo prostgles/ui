@@ -44,7 +44,6 @@ test('renders the first page', async () => {
     await page.screenshot({ path: `./dist/s-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
   }
 
-  // await page.waitForTimeout(4000);
   // await page.waitForTimeout(12000);
   // await page.reload();
   await screenshot();
@@ -68,6 +67,8 @@ test('renders the first page', async () => {
   await screenshot();
   await page.getByLabel("user").fill("usr");
   await page.getByLabel("password").fill("psw");
+  await page.getByLabel("database").fill("prostgles_desktop_db");
+  
   /** Ensure overflow does not obscure done button */
   await page.getByTestId("SSLOptionsToggle").click();
   const doneBtn = await page.getByTestId("ElectronSetup.Done");
@@ -77,14 +78,9 @@ test('renders the first page', async () => {
   await page.waitForTimeout(1000);
 
   await screenshot();
-  // await page.screenshot({ path: "./dist/s2.png" });
-  // await page.waitForSelector('h1')
-  // const text = await page.$eval('h1', (el) => el.textContent)
-  // expect(text).toBe('Hello World!')
-  // const title = await page.title()
-  // expect(title).toBe('Window 1')
+  await page.getByTestId("ConnectionServer.add").waitFor({ state: "visible", timeout: 120e3 });
+  await screenshot();
+  await page.locator("a.LEFT-CONNECTIONINFO").click();
+  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
+  await screenshot();
 })
-
-// test(`"create new window" button exists`, async () => {
-//   expect(await page.$('#new-window')).toBeTruthy()
-// })

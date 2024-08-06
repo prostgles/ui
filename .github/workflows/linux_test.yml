@@ -50,9 +50,9 @@ jobs:
         sudo apt-get update && \
         sudo apt-get -y install postgresql-client-16
       
-
     - name: Run electron test
       run: |
+        sudo psql -U postgres -c "CREATE DATABASE prostgles_desktop_db OWNER usr"
         sudo apt-get install xvfb -y &&
         cd electron && npm run test-linux
 
