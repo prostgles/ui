@@ -11,7 +11,7 @@ test.beforeAll(async () => {
       "--no-sandbox"
     ],
     env: { ...process.env, NODE_ENV: 'development' },
-    recordVideo: { dir: './dist' }
+    // recordVideo: { dir: './dist' }
   });
   electronApp.on('window', async (page) => {
     console.log(`Window opened`)

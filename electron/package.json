@@ -42,8 +42,8 @@
     "url": "https://github.com/prostgles/ui/issues/new/choose"
   },
   "devDependencies": {
-    "@playwright/test": "^1.44.1",
-    "electron": "^31.2.0",
+    "@playwright/test": "^1.46.0",
+    "electron": "^31.3.1",
     "electron-builder": "^24.13.3",
     "electron-squirrel-startup": "^1.0.1",
     "tsc-watch": "^6.2.0",
