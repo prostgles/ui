@@ -86,4 +86,7 @@ test('renders the first page', async () => {
   await page.locator("a.LEFT-CONNECTIONINFO").click();
   await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
   await screenshot();
+  await page.reload();
+  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
+
 })
