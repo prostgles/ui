@@ -27,8 +27,7 @@ jobs:
     - name: Install the app
       run: | 
         cd electron
-        # sudo apt install ./dist/Prostgles-Desktop-1.0.0-amd64.deb
-        sudo dpkg -i ./dist/Prostgles-Desktop-1.0.0-amd64.deb
+        sudo dpkg -i ./dist/Prostgles\ Desktop-1.0.0-amd64.deb
     - name: Test installation file
       run: | 
         xvfb-run --auto-servernum -- prostgles-desktop & \
