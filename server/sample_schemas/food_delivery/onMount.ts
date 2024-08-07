@@ -5,11 +5,9 @@ export const onMount: OnMount = async ({ dbo }) => {
 
   const count = await roadTableHandler.count();
   if(count) {
-    // VACUUM ANALYZE "roads.geojson";
-    // VACUUM ANALYZE users;
     await dbo.sql(`
       VACUUM;
-    `);    
+    `);
 
     const mockLocations = async () => {
       try {

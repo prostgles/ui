@@ -176,8 +176,11 @@ const server = http.listen(PORT, HOST, () => {
   _initState.httpListening = {
     port
   };
-  onServerReadyListeners.forEach(cb => {
-    cb(port)
+
+  awaitInit().then(() => {
+    onServerReadyListeners.forEach(cb => {
+      cb(port)
+    });
   });
   console.log(`\n\nexpress listening on port ${port} (${host}:${port})\n\n`);
 });

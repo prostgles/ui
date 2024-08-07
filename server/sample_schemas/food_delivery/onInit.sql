@@ -1340,7 +1340,7 @@ BEGIN
   WHILE now() < end_time AND progress < 1 LOOP
 
     UPDATE users u
-    SET location = st_lineinterpolatepoint(r.geog, progress * GREATEST(0.2, random()), true)
+    SET location = st_lineinterpolatepoint(r.geog, progress - (random() * 0.1), true)
     FROM "roads.geojson" r
     WHERE u.id = r.deliverer_id;
     
