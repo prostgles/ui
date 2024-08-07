@@ -11,6 +11,11 @@ jobs:
       with:
         node-version: 20
 
+    - name: Install dependencies, build and test
+      run: |
+        sudo apt-get update && \
+        cd electron && npm run build-linux
+      
     - name: Install dependencies for testing
       run: | 
         sudo apt-get update && \
@@ -18,15 +23,6 @@ jobs:
         DEBIAN_FRONTEND=noninteractive sudo apt install -y x11-apps imagemagick xvfb && \
         ls /tmp/.X11-unix/ && \
         sudo apt-get install gdebi-core
-
-    - name: Install dependencies, build and test
-      run: |
-        echo which_sleep && which sleep
-        sleep 1
-        echo which_scrot && which scrot
-        sudo apt-get update && \
-        cd electron && npm run build-linux
-      
         
     - name: Install the app
       run: | 
@@ -35,7 +31,7 @@ jobs:
     - name: Test installation file
       run: | 
         cd electron
-        xvfb-run --auto-servernum -- prostgles-desktop & \
+        xvfb-run xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" -- prostgles-desktop & \
         echo "Waiting for 10 seconds for the app to start" 
         echo which_sleep && which sleep
         sleep 10
