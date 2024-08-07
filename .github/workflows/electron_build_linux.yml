@@ -33,7 +33,8 @@ jobs:
         cd electron
         xvfb-run --auto-servernum -- prostgles-desktop & \
         echo "Waiting for 10 seconds for the app to start" && \
-        sleep 10 && \ 
+        echo which_sleep && which sleep
+        sleep 10
         echo XDG_SESSION_TYPE=$XDG_SESSION_TYPE && \
         echo DISPLAY=$DISPLAY && \ 
         scrot ./dist/screenshot.png 
