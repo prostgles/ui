@@ -319,10 +319,19 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
     const { centeredLayout } = localSettings;
 
     if(wspError || error){
-      const errorNode = wspError? <FlexCol className="w-full h-full ai-center text-0 pt-2">
-        Workspace not found 
-        <Btn color="action" variant="filled" asNavLink={true} href={`/connections/${connectionId}`} iconPath={mdiArrowLeft}>Go back</Btn>
-      </FlexCol> : 
+      const errorNode = wspError? 
+        <FlexCol className="w-full h-full ai-center text-0 pt-2">
+          Workspace not found 
+          <Btn 
+            color="action" 
+            variant="filled" 
+            asNavLink={true} 
+            href={`/connections/${connectionId}`} 
+            iconPath={mdiArrowLeft}
+          >
+            Go back
+          </Btn>
+        </FlexCol> : 
         <ErrorComponent error={error} />
       return <div className="flex-col p-1 text-white">
         {errorNode}
