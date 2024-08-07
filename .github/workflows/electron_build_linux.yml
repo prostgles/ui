@@ -34,8 +34,8 @@ jobs:
         xvfb-run --auto-servernum -- prostgles-desktop & \
         echo "Waiting for 10 seconds for the app to start" && \
         sleep 10 && \ 
-        echo $XDG_SESSION_TYPE && \
-        echo $DISPLAY && \ 
+        echo XDG_SESSION_TYPE=$XDG_SESSION_TYPE && \
+        echo DISPLAY=$DISPLAY && \ 
         scrot ./dist/screenshot.png 
     - uses: actions/upload-artifact@v4
       if: always()
