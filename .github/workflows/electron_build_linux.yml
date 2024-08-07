@@ -30,6 +30,7 @@ jobs:
         sudo dpkg -i ./dist/Prostgles\ Desktop-1.0.0-amd64.deb
     - name: Test installation file
       run: | 
+        cd electron
         xvfb-run --auto-servernum -- prostgles-desktop & \
         echo "Waiting for 10 seconds for the app to start" && \
         sleep 10 && \ 
