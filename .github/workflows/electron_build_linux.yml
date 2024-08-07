@@ -36,10 +36,7 @@ jobs:
         sleep 10 && \ 
         echo $XDG_SESSION_TYPE && \
         echo $DISPLAY && \ 
-        scrot ./dist/screenshot.png && \
-        DISPLAY=:1 xterm 2>/dev/null && \ 
-        DISPLAY=:1 xwd -root -silent | convert xwd:- png:./dist/screenshot.png
-      # Xvfb :1 -screen 5 1024x768x8 & \ 
+        scrot ./dist/screenshot.png 
     - uses: actions/upload-artifact@v4
       if: always()
       with:
