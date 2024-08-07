@@ -14,6 +14,7 @@ test.beforeAll(async () => {
       ...process.env, 
       NODE_ENV: 'development' 
     },
+    tracesDir: './dist',
     // recordVideo: { dir: './dist' }
   });
   electronApp.on('window', async (page) => {
@@ -81,7 +82,13 @@ test('renders the first page', async () => {
   await page.waitForTimeout(1000);
 
   await screenshot();
+  let passed = false;
+  setInterval(() => {
+    if(passed) return;
+    screenshot();
+  }, 2e3);
   await page.getByTestId("ConnectionServer.add").waitFor({ state: "visible", timeout: 600e3 });
+  passed = true;
   await screenshot();
   await page.locator("a.LEFT-CONNECTIONINFO").click();
   await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });

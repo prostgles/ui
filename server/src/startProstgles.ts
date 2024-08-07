@@ -147,7 +147,6 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
             }
           );
           deletedWorkspaces;deletedWindows;
-
         }
       },
       onSocketDisconnect: async (params) => {

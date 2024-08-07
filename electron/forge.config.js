@@ -17,8 +17,8 @@ module.exports = {
       "name": "@electron-forge/maker-deb",
       "config": {
         "options": {
-          icon: "icon512.png",
-          "homepage": "https://prostgles.com/"
+          "icon": "icon512.png",
+          "homepage": "https://prostgles.com/desktop"
         }
       }
     }

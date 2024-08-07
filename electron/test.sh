@@ -1,1 +1,1 @@
-LIBGL_ALWAYS_INDIRECT=1 DISPLAY=:0 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 DEBUG=pw:browser xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test-start
+TEST_MODE=true LIBGL_ALWAYS_INDIRECT=1 DISPLAY=:0 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 DEBUG=pw:browser xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test-start

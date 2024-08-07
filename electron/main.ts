@@ -68,7 +68,7 @@ function initApp(){
         rootDir: app.getPath('userData'),
         port: 0, 
         electronSid, 
-        onSidWasSet: () => { 
+        onSidWasSet: () => {
           console.log("Express server ready, onSidWasSet, reloading..."); 
           tryLoadUrl(port ?? 0, electronSid, 0);
         },
@@ -86,19 +86,19 @@ function initApp(){
         console.log("Express server started on port " + actualPort); 
         port = actualPort;
         tryLoadUrl(actualPort, electronSid);
-        try {
-          new Tray(nativeImage.createFromPath(iconPath));
-        } catch(error){
-          console.error("Failed to create tray", error);
-        }
+        // try {
+        //   new Tray(nativeImage.createFromPath(iconPath));
+        // } catch(error){
+        //   console.error("Failed to create tray", error);
+        // }
       
-        app.on('activate', function () {
-          // On macOS it's common to re-create a window in the app when the
-          // dock icon is clicked and there are no other windows open.
-          if (BrowserWindow.getAllWindows().length === 0) {
-            tryLoadUrl(actualPort, electronSid)
-          }
-        })
+        // app.on('activate', function () {
+        //   // On macOS it's common to re-create a window in the app when the
+        //   // dock icon is clicked and there are no other windows open.
+        //   if (BrowserWindow.getAllWindows().length === 0) {
+        //     tryLoadUrl(actualPort, electronSid)
+        //   }
+        // })
     
       })
       .catch((err: any) => {
@@ -126,35 +126,62 @@ const createWindow = () => {
   });
   mainWindow.setMenuBarVisibility(false);
 }
+
 let mainWindowLoaded: {port: number};
+let didSetActivate = false;
 const tryLoadUrl = (port: number, sid: string, delay = 1100) => {
 
   if(!port) return;
+  const url = `http://localhost:${port}`;
+
+  /** 
+   * https://github.com/electron/electron/blob/c41b8d536b2d886abbe739374c0a46f99242a894/lib/browser/navigation-controller.ts#L53 
+      In some cases the app crashes for (errno: -3):
+    {
+      errno: -3,
+      code: 'ERR_ABORTED',
+      url: 'http://localhost:43909/'
+    }
+    Trace/breakpoint trap (core dumped)
+  */
+  let tries = 5;
+  const tryLoad = async (): Promise<void> => {
+    try {
+      try {
+        await mainWindow.webContents.stop();
+      } catch(error){
+        console.error("Failed to mainWindow.webContents.stop: ", error);
+      }
+      await mainWindow.loadURL(url);
+    } catch(error){
+      tries--;
+      if(tries > 0){
+        console.error(`Failed to mainWindow.loadURL: (${tries} tries left)`, error);
+        return tryLoad();
+      } else {
+        console.error("Failed to mainWindow.loadURL: ", error);
+        return;
+      }
+    }
+
+    try {
+      new Tray(nativeImage.createFromPath(iconPath));
+    } catch(error){
+      console.error("Failed to create tray", error);
+    }
+    if(didSetActivate) return;
+    didSetActivate = true;
+    app.on('activate', function () {
+      // On macOS it's common to re-create a window in the app when the
+      // dock icon is clicked and there are no other windows open.
+      if (BrowserWindow.getAllWindows().length === 0) {
+        tryLoadUrl(port, electronSid)
+      }
+    })
+  }
   console.log("tryLoadUrl", { port })
   createWindow();
   setTimeout(async () => {
-    const url = `http://localhost:${port}`;
-
-    /** https://github.com/electron/electron/blob/c41b8d536b2d886abbe739374c0a46f99242a894/lib/browser/navigation-controller.ts#L53 */
-    let tries = 5;
-    const tryLoad = async (): Promise<void> => {
-      try {
-        try {
-          await mainWindow.webContents.stop();
-        } catch(error){
-          console.error("Failed to mainWindow.webContents.stop: ", error);
-        }
-        await mainWindow.loadURL(url);
-      } catch(error){
-        tries--;
-        if(tries > 0){
-          console.error(`Failed to mainWindow.loadURL: (${tries} tries left)`, error);
-          return tryLoad();
-        } else {
-          console.error("Failed to mainWindow.loadURL: ", error);
-        }
-      }
-    }
     if(port !== mainWindowLoaded?.port){
       await tryLoad();
     }
