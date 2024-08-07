@@ -19,7 +19,7 @@ jobs:
     - name: Install dependencies for testing
       run: | 
         sudo apt-get update && \
-        cd electron && sudo apt-get install -y libnotify4  libnss3-dev libatk1.0-0 libatk-bridge2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0  && \
+        cd electron && sudo apt-get install -y xterm imagemagick-6.q16 scrot libnotify4  libnss3-dev libatk1.0-0 libatk-bridge2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0  && \
         DEBIAN_FRONTEND=noninteractive sudo apt install -y x11-apps imagemagick xvfb && \
         ls /tmp/.X11-unix/ && \
         sudo apt-get install gdebi-core
@@ -33,7 +33,9 @@ jobs:
         xvfb-run --auto-servernum -- prostgles-desktop & \
         echo "Waiting for 10 seconds for the app to start" && \
         sleep 10 && \ 
+        echo $XDG_SESSION_TYPE && \
         echo $DISPLAY && \ 
+        scrot ./dist/screenshot.png && \
         DISPLAY=:1 xterm 2>/dev/null && \ 
         DISPLAY=:1 xwd -root -silent | convert xwd:- png:./dist/screenshot.png
       # Xvfb :1 -screen 5 1024x768x8 & \ 
