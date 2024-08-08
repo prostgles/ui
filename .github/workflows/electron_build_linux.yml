@@ -32,7 +32,6 @@ jobs:
       run: | 
         uname -a
         cd electron
-        xhost +local:root
         XAUTHORITY=/tmp/xvfb.auth
         touch $XAUTHORITY
         xauth -f $XAUTHORITY generate :98 . trusted

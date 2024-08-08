@@ -17,7 +17,14 @@ jobs:
     - name: Test build
       run: |
         cd electron
-        ./dist/Prostgles\ Desktop-1.0.0.exe --silent
+        echo %DATE% %TIME%
+        dir "C:\Program Files (x86)\"
+        "./dist/Prostgles\ Desktop-1.0.0.exe" --silent
+        echo %DATE% %TIME%
+        dir "C:\Program Files (x86)\"
+        dir "C:\Program Files\"
+        "C:\Program Files (x86)\Prostgles Desktop-1.0.0\prostgles-desktop.exe"
+        timeout /t 10
         call screenCapture ./dist/screen.png
       
     - uses: actions/upload-artifact@v3
