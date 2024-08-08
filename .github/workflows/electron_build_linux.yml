@@ -31,12 +31,14 @@ jobs:
     - name: Test installation file
       run: | 
         cd electron
+        xhost +local:root
+        XAUTHORITY=/tmp/xvfb.auth
+        touch $XAUTHORITY
+        xauth -f $XAUTHORITY generate :98 . trusted
+        export XAUTHORITY
         DISPLAY=:0 xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" -- prostgles-desktop && echo $DISPLAY & \
         echo "Waiting for 10 seconds for the app to start" 
-        echo which_sleep && which sleep
         sleep 10
-        echo XDG_SESSION_TYPE=$XDG_SESSION_TYPE 
-        echo DISPLAY=$DISPLAY 
         scrot -D :99 ./dist/screenshot.png 
     - uses: actions/upload-artifact@v4
       if: always()
