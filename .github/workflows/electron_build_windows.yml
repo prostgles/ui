@@ -16,7 +16,7 @@ jobs:
         cd electron
         echo %DATE% %TIME%
         dir "C:\Program Files (x86)\"
-        curl screenCapture.bat https://github.com/npocmaka/batch.scripts/blob/master/hybrids/.net/c/screenCapture.bat
+        curl -o screenCapture.bat https://raw.githubusercontent.com/npocmaka/batch.scripts/master/hybrids/.net/c/screenCapture.bat
         waitfor SomethingThatIsNeverHappening /t 10 2>NUL
         screenCapture.bat .\dist\screen.png
 
