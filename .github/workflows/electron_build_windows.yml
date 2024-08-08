@@ -23,7 +23,7 @@ jobs:
         echo %DATE% %TIME%
         dir ".\dist"
         dir "C:\Program Files (x86)\"
-        start "" ".\dist\Prostgles Desktop-1.0.0.exe" /S --force-run
+        ".\dist\Prostgles Desktop-1.0.0.exe" /S --force-run
         waitfor SomethingThatIsNeverHappening /t 3 2>NUL
         screenCapture.bat .\dist\screen1.png
         call sendKeys.bat "Prostgles Desktop-1.0.0" "{ENTER}"
