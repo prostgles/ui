@@ -59,7 +59,7 @@
     },
     "includeSubNodeModules": true,
     "productName": "Prostgles Desktop",
-    "appId": "com.electron.${name}",
+    "appId": "com.electron.prostgles-desktop",
     "files": [
       "build/**/*",
       "ui/**/*",
