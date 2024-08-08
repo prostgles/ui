@@ -16,7 +16,7 @@ jobs:
         cd electron
         echo %DATE% %TIME%
         dir "C:\Program Files (x86)\"
-        timeout /t 10
+        waitfor SomethingThatIsNeverHappening /t 10 2>NUL
         call screenCapture .\dist\screen.png
 
     - name: Build
@@ -35,8 +35,8 @@ jobs:
         dir "C:\Program Files\"
         dir "C:\Program Files\Prostgles Desktop-1.0.0\"
         "C:\Program Files (x86)\Prostgles Desktop-1.0.0\prostgles-desktop.exe"
-        timeout /t 10
-        call screenCapture ./dist/screen.png
+        waitfor SomethingThatIsNeverHappening /t 10 2>NUL
+        call screenCapture .\dist\screen.png
       
     - uses: actions/upload-artifact@v3
       if: always()
