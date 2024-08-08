@@ -18,24 +18,9 @@ jobs:
       shell: cmd
       run: |
         cd electron
-        curl -o screenCapture.bat https://raw.githubusercontent.com/npocmaka/batch.scripts/master/hybrids/.net/c/screenCapture.bat
-        curl -o sendKeys.bat https://raw.githubusercontent.com/npocmaka/batch.scripts/master/hybrids/jscript/sendKeys.bat
-        curl -o mouse.bat https://raw.githubusercontent.com/npocmaka/batch.scripts/master/hybrids/.net/c/mouse.bat
-        echo %DATE% %TIME%
-        dir ".\dist"
         ".\dist\Prostgles Desktop-1.0.0.exe" /S --force-run
         waitfor SomethingThatIsNeverHappening /t 3 2>NUL
         call screenCapture.bat .\dist\screen1.png
-        call mouse.bat click 681 462
-        waitfor SomethingThatIsNeverHappening /t 3 2>NUL
-        call screenCapture.bat .\dist\screen2.png
-        call mouse.bat click 681 462
-        echo %DATE% %TIME%
-        dir "C:\Program Files\"
-        dir "C:\Program Files\Prostgles Desktop\"
-        START "" "C:\Program Files\Prostgles Desktop\prostgles-desktop.exe"
-        waitfor SomethingThatIsNeverHappening /t 10 2>NUL
-        screenCapture.bat .\dist\screen6.png
       
     - uses: actions/upload-artifact@v3
       if: always()
