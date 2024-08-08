@@ -21,7 +21,6 @@ jobs:
         sudo apt-get update
         cd electron && sudo apt-get install -y x11-xserver-utils xterm imagemagick-6.q16 scrot libnotify4  libnss3-dev libatk1.0-0 libatk-bridge2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0 gconf-service gconf2
         DEBIAN_FRONTEND=noninteractive sudo apt install -y x11-apps imagemagick xvfb gdebi-core lightdm ubuntu-desktop
-        reboot
     - name: Install the app
       run: | 
         cd electron
@@ -29,6 +28,7 @@ jobs:
     - name: Test installation file
       run: | 
         uname -a
+        startx &
         cd electron
         prostgles-desktop & \
         echo "Waiting for 10 seconds for the app to start" 

@@ -18,19 +18,20 @@ jobs:
       shell: cmd
       run: |
         cd electron
+        curl -o screenCapture.bat https://raw.githubusercontent.com/npocmaka/batch.scripts/master/hybrids/.net/c/screenCapture.bat
         echo %DATE% %TIME%
         dir ".\dist"
         dir "C:\Program Files (x86)\"
         start "" ".\dist\Prostgles Desktop-1.0.0.exe" --silent
         waitfor SomethingThatIsNeverHappening /t 100 2>NUL
+        screenCapture.bat .\dist\screen1.png
         echo %DATE% %TIME%
         dir "C:\Program Files (x86)\"
         dir "C:\Program Files\"
         dir "C:\Program Files\Prostgles Desktop-1.0.0\"
         START "" "C:\Program Files (x86)\Prostgles Desktop-1.0.0\prostgles-desktop.exe"
-        curl -o screenCapture.bat https://raw.githubusercontent.com/npocmaka/batch.scripts/master/hybrids/.net/c/screenCapture.bat
         waitfor SomethingThatIsNeverHappening /t 10 2>NUL
-        screenCapture.bat .\dist\screen.png
+        screenCapture.bat .\dist\screen2.png
       
     - uses: actions/upload-artifact@v3
       if: always()
