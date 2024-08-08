@@ -19,12 +19,24 @@ jobs:
       run: |
         cd electron
         curl -o screenCapture.bat https://raw.githubusercontent.com/npocmaka/batch.scripts/master/hybrids/.net/c/screenCapture.bat
+        curl -o sendKeys.bat https://raw.githubusercontent.com/npocmaka/batch.scripts/master/hybrids/jscript/sendKeys.bat
         echo %DATE% %TIME%
         dir ".\dist"
         dir "C:\Program Files (x86)\"
         start "" ".\dist\Prostgles Desktop-1.0.0.exe" --silent
-        waitfor SomethingThatIsNeverHappening /t 100 2>NUL
+        waitfor SomethingThatIsNeverHappening /t 3 2>NUL
         screenCapture.bat .\dist\screen1.png
+        call sendKeys.bat "Prostgles Desktop-1.0.0" "{ENTER}"
+        waitfor SomethingThatIsNeverHappening /t 3 2>NUL
+        screenCapture.bat .\dist\screen2.png
+        call sendKeys.bat "Prostgles Desktop-1.0.0" "{ENTER}"
+        waitfor SomethingThatIsNeverHappening /t 3 2>NUL
+        screenCapture.bat .\dist\screen3.png
+        call sendKeys.bat "Prostgles Desktop-1.0.0" "{ENTER}"
+        waitfor SomethingThatIsNeverHappening /t 3 2>NUL
+        screenCapture.bat .\dist\screen4.png
+        call sendKeys.bat "Prostgles Desktop-1.0.0" "{ENTER}"
+        screenCapture.bat .\dist\screen5.png
         echo %DATE% %TIME%
         dir "C:\Program Files (x86)\"
         dir "C:\Program Files\"
