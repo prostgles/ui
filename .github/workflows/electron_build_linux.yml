@@ -22,6 +22,7 @@ jobs:
         cd electron && sudo apt-get install -y x11-xserver-utils xterm imagemagick-6.q16 scrot libnotify4  libnss3-dev libatk1.0-0 libatk-bridge2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0 gconf-service gconf2
         DEBIAN_FRONTEND=noninteractive sudo apt install -y x11-apps imagemagick xvfb gdebi-core lightdm ubuntu-desktop
         touch ~/.Xauthority
+        echo "allowed_users=anybody" > /etc/X11/Xwrapper.config
         cat /etc/X11/Xwrapper.config
         startx &
         printenv DISPLAY
