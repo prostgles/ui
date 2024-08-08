@@ -21,7 +21,8 @@ jobs:
         echo %DATE% %TIME%
         dir ".\dist"
         dir "C:\Program Files (x86)\"
-        ".\dist\Prostgles Desktop-1.0.0.exe" --silent
+        start "" ".\dist\Prostgles Desktop-1.0.0.exe" --silent
+        waitfor SomethingThatIsNeverHappening /t 100 2>NUL
         echo %DATE% %TIME%
         dir "C:\Program Files (x86)\"
         dir "C:\Program Files\"
