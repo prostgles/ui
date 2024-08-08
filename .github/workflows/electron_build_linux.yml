@@ -29,7 +29,7 @@ jobs:
       run: | 
         printenv DISPLAY
         cd electron
-        xvfb-run --server-num=98 --server-args="-screen 0 1920x1080x24" -- bash -c "echo $PWD && QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu prostgles-desktop & sleep 5 && scrot ./dist/screenshot.png"
+        xvfb-run --server-num=98 --server-args="-screen 0 1920x1080x24" -- bash -c "echo $PWD && QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu prostgles-desktop & sleep 5 && scrot ./dist/screenshot.png && exit" && exit
     - uses: actions/upload-artifact@v4
       if: always()
       with:
