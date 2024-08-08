@@ -10,11 +10,21 @@ jobs:
       with:
         node-version: 20
 
+    - name: Test 
+      shell: cmd
+      run: |
+        cd electron
+        echo %DATE% %TIME%
+        dir "C:\Program Files (x86)\"
+        timeout /t 10
+        call screenCapture .\dist\screen.png
+
     - name: Build
       run: |
         cd electron && npm run build-win
 
     - name: Test build
+      shell: cmd
       run: |
         cd electron
         echo %DATE% %TIME%

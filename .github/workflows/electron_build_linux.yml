@@ -32,13 +32,13 @@ jobs:
       run: | 
         uname -a
         cd electron
+        xvfb-run --server-num=98 --server-args="-screen 0 1920x1080x24" -- prostgles-desktop & \
+        echo "Waiting for 10 seconds for the app to start" 
+        sleep 10
         XAUTHORITY=/tmp/xvfb.auth
         touch $XAUTHORITY
         xauth -f $XAUTHORITY generate :98 . trusted
         export XAUTHORITY
-        DISPLAY=:0 xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" -- prostgles-desktop && echo $DISPLAY & \
-        echo "Waiting for 10 seconds for the app to start" 
-        sleep 10
         scrot -D :99 ./dist/screenshot.png 
     - uses: actions/upload-artifact@v4
       if: always()
