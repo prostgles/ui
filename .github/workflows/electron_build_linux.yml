@@ -23,6 +23,7 @@ jobs:
         DEBIAN_FRONTEND=noninteractive sudo apt install -y x11-apps imagemagick xvfb gdebi-core lightdm ubuntu-desktop-minimal
         touch ~/.Xauthority
         sudo sh -c 'echo "allowed_users=anybody" > /etc/X11/Xwrapper.config'
+        sudo chmod g+r /dev/tty3
         cat /etc/X11/Xwrapper.config
         startx &
         printenv DISPLAY
