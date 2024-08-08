@@ -2,7 +2,7 @@ name: Electron build windows
 on: workflow_dispatch 
 jobs:
   electron_build_windows:
-    timeout-minutes: 20
+    timeout-minutes: 12
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
@@ -23,7 +23,6 @@ jobs:
         curl -o mouse.bat https://raw.githubusercontent.com/npocmaka/batch.scripts/master/hybrids/.net/c/mouse.bat
         echo %DATE% %TIME%
         dir ".\dist"
-        dir "C:\Program Files (x86)\"
         ".\dist\Prostgles Desktop-1.0.0.exe" /S --force-run
         waitfor SomethingThatIsNeverHappening /t 3 2>NUL
         call screenCapture.bat .\dist\screen1.png
@@ -32,10 +31,9 @@ jobs:
         call screenCapture.bat .\dist\screen2.png
         call mouse.bat click 681 462
         echo %DATE% %TIME%
-        dir "C:\Program Files (x86)\"
         dir "C:\Program Files\"
-        dir "C:\Program Files\Prostgles Desktop-1.0.0\"
-        START "" "C:\Program Files (x86)\Prostgles Desktop-1.0.0\prostgles-desktop.exe"
+        dir "C:\Program Files\Prostgles Desktop\"
+        START "" "C:\Program Files\Prostgles Desktop\prostgles-desktop.exe"
         waitfor SomethingThatIsNeverHappening /t 10 2>NUL
         screenCapture.bat .\dist\screen6.png
       
