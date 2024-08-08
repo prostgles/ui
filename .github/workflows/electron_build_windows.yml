@@ -26,11 +26,11 @@ jobs:
         dir "C:\Program Files (x86)\"
         ".\dist\Prostgles Desktop-1.0.0.exe" /S --force-run
         waitfor SomethingThatIsNeverHappening /t 3 2>NUL
-        screenCapture.bat .\dist\screen1.png
-        mouse.bat click 681 462
+        call screenCapture.bat .\dist\screen1.png
+        call mouse.bat click 681 462
         waitfor SomethingThatIsNeverHappening /t 3 2>NUL
-        screenCapture.bat .\dist\screen2.png
-        mouse.bat click 681 462
+        call screenCapture.bat .\dist\screen2.png
+        call mouse.bat click 681 462
         echo %DATE% %TIME%
         dir "C:\Program Files (x86)\"
         dir "C:\Program Files\"
