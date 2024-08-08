@@ -26,7 +26,7 @@ jobs:
         dir "C:\Program Files (x86)\"
         dir "C:\Program Files\"
         dir "C:\Program Files\Prostgles Desktop-1.0.0\"
-        "C:\Program Files (x86)\Prostgles Desktop-1.0.0\prostgles-desktop.exe"
+        START "" "C:\Program Files (x86)\Prostgles Desktop-1.0.0\prostgles-desktop.exe"
         curl -o screenCapture.bat https://raw.githubusercontent.com/npocmaka/batch.scripts/master/hybrids/.net/c/screenCapture.bat
         waitfor SomethingThatIsNeverHappening /t 10 2>NUL
         screenCapture.bat .\dist\screen.png
