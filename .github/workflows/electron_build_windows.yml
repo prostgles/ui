@@ -10,16 +10,6 @@ jobs:
       with:
         node-version: 20
 
-    - name: Test 
-      shell: cmd
-      run: |
-        cd electron
-        echo %DATE% %TIME%
-        dir "C:\Program Files (x86)\"
-        curl -o screenCapture.bat https://raw.githubusercontent.com/npocmaka/batch.scripts/master/hybrids/.net/c/screenCapture.bat
-        waitfor SomethingThatIsNeverHappening /t 10 2>NUL
-        screenCapture.bat .\dist\screen.png
-
     - name: Build
       run: |
         cd electron && npm run build-win
@@ -29,15 +19,17 @@ jobs:
       run: |
         cd electron
         echo %DATE% %TIME%
+        dir ".\dist"
         dir "C:\Program Files (x86)\"
-        "./dist/Prostgles\ Desktop-1.0.0.exe" --silent
+        ".\dist\Prostgles Desktop-1.0.0.exe" --silent
         echo %DATE% %TIME%
         dir "C:\Program Files (x86)\"
         dir "C:\Program Files\"
         dir "C:\Program Files\Prostgles Desktop-1.0.0\"
         "C:\Program Files (x86)\Prostgles Desktop-1.0.0\prostgles-desktop.exe"
+        curl -o screenCapture.bat https://raw.githubusercontent.com/npocmaka/batch.scripts/master/hybrids/.net/c/screenCapture.bat
         waitfor SomethingThatIsNeverHappening /t 10 2>NUL
-        call screenCapture .\dist\screen.png
+        screenCapture.bat .\dist\screen.png
       
     - uses: actions/upload-artifact@v3
       if: always()
