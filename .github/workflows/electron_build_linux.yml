@@ -20,12 +20,8 @@ jobs:
       run: | 
         sudo apt-get update
         cd electron && sudo apt-get install -y x11-xserver-utils xterm imagemagick-6.q16 scrot libnotify4  libnss3-dev libatk1.0-0 libatk-bridge2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0 gconf-service gconf2
-        DEBIAN_FRONTEND=noninteractive sudo apt install -y x11-apps imagemagick xvfb gdebi-core lightdm ubuntu-desktop-minimal
+        DEBIAN_FRONTEND=noninteractive sudo apt install -y x11-apps imagemagick xvfb gdebi-core lightdm 
         touch ~/.Xauthority
-        sudo sh -c 'echo "allowed_users=anybody" > /etc/X11/Xwrapper.config'
-        sudo chmod g+r /dev/tty3
-        cat /etc/X11/Xwrapper.config
-        sudo startx &
         printenv DISPLAY
     - name: Install the app
       run: | 
@@ -33,8 +29,6 @@ jobs:
         sudo dpkg -i ./dist/Prostgles\ Desktop-1.0.0-amd64.deb
     - name: Test installation file
       run: | 
-        uname -a
-        sudo startx &
         printenv DISPLAY
         cd electron
         prostgles-desktop & \
