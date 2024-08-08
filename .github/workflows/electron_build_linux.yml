@@ -21,8 +21,6 @@ jobs:
         sudo apt-get update
         cd electron && sudo apt-get install -y x11-xserver-utils xterm imagemagick-6.q16 scrot libnotify4  libnss3-dev libatk1.0-0 libatk-bridge2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0 gconf-service gconf2
         DEBIAN_FRONTEND=noninteractive sudo apt install -y x11-apps imagemagick xvfb gdebi-core  
-        touch ~/.Xauthority
-        printenv DISPLAY
     - name: Install the app
       run: | 
         cd electron
@@ -31,7 +29,7 @@ jobs:
       run: | 
         printenv DISPLAY
         cd electron
-        xvfb-run --server-num=98 --server-args="-screen 0 1920x1080x24" -- bash -c "echo $PWD && QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu prostgles-desktop & sleep 5 && scrot"
+        xvfb-run --server-num=98 --server-args="-screen 0 1920x1080x24" -- bash -c "echo $PWD && QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu prostgles-desktop & sleep 5 && scrot ./dist/screenshot.png"
     - uses: actions/upload-artifact@v4
       if: always()
       with:
