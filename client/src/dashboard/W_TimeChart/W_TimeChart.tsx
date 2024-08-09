@@ -27,7 +27,7 @@ import type { ActiveRow } from "../W_Table/W_Table";
 import type { Command } from "../../Testing";
 import { ColorByLegend } from "../WindowControls/ColorByLegend";
 import { createReactiveState } from "../../appUtils";
-import { debounce, throttle } from "../Map/DeckGLWrapped";
+import { throttle } from "../../../../commonTypes/utils";
 
 export type ProstglesTimeChartLayer = Pick<LayerBase, "_id" | "linkId" | "disabled"> & {
   

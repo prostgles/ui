@@ -423,7 +423,7 @@ export const FileBtn = React.forwardRef<HTMLInputElement, FileBtnProps & React.H
       />
     </Btn>
     <div className="flex-row-wrap gap-p5 text-1p5 px-1">
-      {!files?.length? "No file chosen" : Array.from(files).map(f => <Chip>{f.name}</Chip>)}
+      {!files?.length? "No file chosen" : Array.from(files).map(f => <Chip key={f.name}>{f.name}</Chip>)}
     </div>
   </div>)
 });

@@ -718,6 +718,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           command: { enum: ["pg_restore", "psql"] },
           format: { enum: ["p", "t", "c"] },
           clean: { type: "boolean" },
+          excludeSchema: { type: "string", optional: true },
           newDbName: { type: "string", optional: true },
           create: { type: "boolean", optional: true },
           dataOnly: { type: "boolean", optional: true },

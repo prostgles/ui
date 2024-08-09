@@ -1,33 +1,37 @@
-import { isDefined } from "./filterUtils";
-export const SECOND = 1000;
-export const MINUTE = SECOND * 60;
-export const HOUR = MINUTE * 60;
-export const DAY = HOUR * 24;
-export const MONTH = DAY * 30;
-export const YEAR = DAY * 365;
-export const QUERY_WATCH_IGNORE = "prostgles internal query that should be excluded from schema watch ";
-export const getAgeFromDiff = (millisecondDiff) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.throttle = exports.RELOAD_NOTIFICATION = exports.sliceText = exports.matchObj = exports.DESTINATIONS = exports.getAge = exports.getAgeFromDiff = exports.QUERY_WATCH_IGNORE = exports.YEAR = exports.MONTH = exports.DAY = exports.HOUR = exports.MINUTE = exports.SECOND = void 0;
+const filterUtils_1 = require("./filterUtils");
+exports.SECOND = 1000;
+exports.MINUTE = exports.SECOND * 60;
+exports.HOUR = exports.MINUTE * 60;
+exports.DAY = exports.HOUR * 24;
+exports.MONTH = exports.DAY * 30;
+exports.YEAR = exports.DAY * 365;
+exports.QUERY_WATCH_IGNORE = "prostgles internal query that should be excluded from schema watch ";
+const getAgeFromDiff = (millisecondDiff) => {
     const roundFunc = millisecondDiff > 0 ? Math.floor : Math.ceil;
-    const years = roundFunc(millisecondDiff / YEAR);
-    const months = roundFunc((millisecondDiff % YEAR) / MONTH);
-    const days = roundFunc((millisecondDiff % MONTH) / DAY);
-    const hours = roundFunc((millisecondDiff % DAY) / HOUR);
-    const minutes = roundFunc((millisecondDiff % HOUR) / MINUTE);
-    const seconds = roundFunc((millisecondDiff % MINUTE) / SECOND);
-    const milliseconds = millisecondDiff % SECOND;
+    const years = roundFunc(millisecondDiff / exports.YEAR);
+    const months = roundFunc((millisecondDiff % exports.YEAR) / exports.MONTH);
+    const days = roundFunc((millisecondDiff % exports.MONTH) / exports.DAY);
+    const hours = roundFunc((millisecondDiff % exports.DAY) / exports.HOUR);
+    const minutes = roundFunc((millisecondDiff % exports.HOUR) / exports.MINUTE);
+    const seconds = roundFunc((millisecondDiff % exports.MINUTE) / exports.SECOND);
+    const milliseconds = millisecondDiff % exports.SECOND;
     return { years, months, days, hours, minutes, seconds, milliseconds };
 };
-export const getAge = (date1, date2, returnAll) => {
+exports.getAgeFromDiff = getAgeFromDiff;
+const getAge = (date1, date2, returnAll) => {
     const diff = +date2 - +date1;
     const roundFunc = diff > 0 ? Math.floor : Math.ceil;
-    const years = roundFunc(diff / YEAR);
-    const months = roundFunc(diff / MONTH);
-    const days = roundFunc(diff / DAY);
-    const hours = roundFunc(diff / HOUR);
-    const minutes = roundFunc(diff / MINUTE);
-    const seconds = roundFunc(diff / SECOND);
+    const years = roundFunc(diff / exports.YEAR);
+    const months = roundFunc(diff / exports.MONTH);
+    const days = roundFunc(diff / exports.DAY);
+    const hours = roundFunc(diff / exports.HOUR);
+    const minutes = roundFunc(diff / exports.MINUTE);
+    const seconds = roundFunc(diff / exports.SECOND);
     if (returnAll && returnAll === true) {
-        return getAgeFromDiff(diff);
+        return (0, exports.getAgeFromDiff)(diff);
     }
     if (years >= 1) {
         return { years, months };
@@ -45,22 +49,47 @@ export const getAge = (date1, date2, returnAll) => {
         return { minutes, seconds };
     }
 };
-export const DESTINATIONS = [
+exports.getAge = getAge;
+exports.DESTINATIONS = [
     { key: "Local", subLabel: "Saved locally (server in address bar)" },
     { key: "Cloud", subLabel: "Saved to Amazon S3" }
 ];
-export function matchObj(obj1, obj2) {
+function matchObj(obj1, obj2) {
     if (obj1 && obj2) {
         return !Object.keys(obj1).some(k => obj1[k] !== obj2[k]);
     }
     return false;
 }
-export function sliceText(v, maxLen, ellipseText = "...", midEllipse = false) {
-    if (isDefined(v) && v.length > maxLen) {
+exports.matchObj = matchObj;
+function sliceText(v, maxLen, ellipseText = "...", midEllipse = false) {
+    if ((0, filterUtils_1.isDefined)(v) && v.length > maxLen) {
         if (!midEllipse)
             return `${v.slice(0, maxLen)}${ellipseText}`;
         return `${v.slice(0, maxLen / 2)}${ellipseText}${v.slice(v.length - (maxLen / 2) + 3)}`;
     }
     return v;
 }
-export const RELOAD_NOTIFICATION = "Prostgles UI accessible at";
+exports.sliceText = sliceText;
+exports.RELOAD_NOTIFICATION = "Prostgles UI accessible at";
+function throttle(func, timeout) {
+    let timer;
+    let lastCallArgs;
+    const throttledFunc = (...args) => {
+        if (timer !== undefined) {
+            lastCallArgs = args;
+            return;
+        }
+        else {
+            lastCallArgs = undefined;
+        }
+        timer = setTimeout(() => {
+            func(...args);
+            timer = undefined;
+            if (lastCallArgs) {
+                throttledFunc(...lastCallArgs);
+            }
+        }, timeout);
+    };
+    return throttledFunc;
+}
+exports.throttle = throttle;

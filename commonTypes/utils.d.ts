@@ -162,4 +162,5 @@ export type ColType = {
     schema: string;
 };
 export declare const RELOAD_NOTIFICATION = "Prostgles UI accessible at";
+export declare function throttle<Params extends any[]>(func: (...args: Params) => any, timeout: number): (...args: Params) => void;
 export {};

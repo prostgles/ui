@@ -1,11 +1,12 @@
 import { omitKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
 import { asName } from "prostgles-types";
 import type { Readable } from "stream";
-import type { Backups } from "./BackupManager";
+import { throttle } from "../../../commonTypes/utils";
 import type BackupManager from "./BackupManager";
+import type { Backups } from "./BackupManager";
 import { envToStr } from "./pipeFromCommand";
-import { addOptions, getBkp, getConnectionEnvVars, getSSLEnvVars, makeLogs } from "./utils";
 import { pipeToCommand } from "./pipeToCommand";
+import { addOptions, getBkp, getConnectionEnvVars, getSSLEnvVars, makeLogs } from "./utils";
 
 export async function pgRestore(this: BackupManager, arg1: { bkpId: string; connId?: string }, stream: Readable | undefined, o: Backups["restore_options"]){
   const { bkpId, connId } = arg1;
@@ -62,13 +63,13 @@ export async function pgRestore(this: BackupManager, arg1: { bkpId: string; conn
         [
           [true, "--dbname=" + ConnectionEnvVars.PGDATABASE], // Prevent error: "d -f/--file must be specified"
           [true, "-w"], // Do not ask for password
-
           [o.clean, "--clean"],
           [o.create, "--create"],
           [o.noOwner, "--no-owner"],
           [!!o.format, ["--format", o.format]],
           [o.dataOnly, "--data-only"],
           [o.ifExists, "--if-exists"],
+          [!!o.excludeSchema, ["--exclude-schema", o.excludeSchema!]],
           [Number.isInteger(o.numberOfJobs) , "--jobs"],
           [true, "-v"],
           [byBassStreamDueToWindowsUnrecognisedBlockTypeError, bkp.local_filepath!],
@@ -83,54 +84,78 @@ export async function pgRestore(this: BackupManager, arg1: { bkpId: string; conn
       last_updated: new Date() 
     });
 
-    let lastChunk = Date.now(), chunkSum = 0;
+    let chunkSum = 0;
+    const throttledUpdate = throttle(async () => {
+      if(!(await this.dbs.backups.findOne({ id: bkpId }))){
+        bkpStream.emit("error", "Backup file not found");
+      } else {
+        const finished = chunkSum >= +(bkp.sizeInBytes ?? bkp.dbSizeInBytes);
+        this.dbs.backups.update({ id: bkpId }, { 
+          restore_status: finished? {
+            ok: `${new Date()}`
+          } : { 
+            loading: { 
+              loaded: chunkSum,
+              total: +(bkp.sizeInBytes ?? bkp.dbSizeInBytes) 
+            },
+          },
+          ...(finished && !(bkp.status as any)?.ok ? { status: { ok: `${new Date()}` } } : {})
+        });
+
+        if(finished){
+          const dummyViewToReloadSchema = "prostgles_dummy_view_to_reload_schema";
+          this.connMgr.getConnection(con.id).prgl._db.any(`
+            CREATE VIEW ${dummyViewToReloadSchema} AS SELECT 1;
+          `).then(() => {
+            this.connMgr.getConnection(con.id).prgl._db.any(`
+              DROP VIEW ${dummyViewToReloadSchema};
+            `);
+          });
+        }
+      }      
+    }, 1000);
+
     bkpStream.on("data", async chunk => {
       chunkSum += chunk.length;
       // console.log(chunk.toString(), { chunk })
-      const now = Date.now();
-      if(now - lastChunk > 1000){
-        lastChunk = now;
-        if(!(await this.dbs.backups.findOne({ id: bkpId }))){
-          bkpStream.emit("error", "Backup file not found");
-        } else {
-          this.dbs.backups.update({ id: bkpId }, { 
-            restore_status: { 
-              loading: { 
-                loaded: chunkSum,
-                total: +(bkp.sizeInBytes ?? bkp.dbSizeInBytes) 
-              } 
-            } 
-          })
-        }
-      }
+      throttledUpdate();
     })
 
-    const proc = pipeToCommand(restoreCmd.command, restoreCmd.opts, ENV_VARS, bkpStream, err => {
-      if(err){
-        console.error("pipeToCommand ERR:", err);
-        bkpStream.destroy();
-        setError(err)
+    const proc = pipeToCommand(
+      restoreCmd.command, 
+      restoreCmd.opts, 
+      ENV_VARS, 
+      bkpStream, 
+      err => {
+        console.log(1, { err })
+        if(err){
+          console.error("pipeToCommand ERR:", err);
+          bkpStream.destroy();
+          setError(err)
 
-      } else {
-
-        this.dbs.backups.update({ id: bkpId }, { restore_end: new Date(), restore_status: { ok: `${new Date()}` }, last_updated: new Date() })
-      }
-    }, async ({ chunk: _restore_logs }, isStdErr) => {
-      /** Full logs are always provided */
-      if(!isStdErr) return;
-      const currBkp = await this.dbs.backups.findOne({ id: bkpId });
-      if((currBkp as any)?.restore_status.err) {
-        proc.kill();
-        return;
-      }
-      if(!currBkp){
-        bkpStream.emit("error", "Backup file not found");
-        bkpStream.destroy();
-      } else {
-        const restore_logs = makeLogs(_restore_logs, currBkp.restore_logs, currBkp.restore_start as any); // currBkp.restore_logs
-        this.dbs.backups.update({ id: bkpId }, { restore_end: new Date(), restore_logs, last_updated: new Date() });
-      }
-    }, false);
+        } else {
+          this.dbs.backups.update({ id: bkpId }, { restore_end: new Date(), restore_status: { ok: `${new Date()}` }, last_updated: new Date() });
+        }
+      }, 
+      async ({ chunk: _restore_logs }, isStdErr) => {
+        console.log(2, { isStdErr, _restore_logs })
+        /** Full logs are always provided */
+        if(!isStdErr) return;
+        const currBkp = await this.dbs.backups.findOne({ id: bkpId });
+        if((currBkp as any)?.restore_status.err) {
+          proc.kill();
+          return;
+        }
+        if(!currBkp){
+          bkpStream.emit("error", "Backup file not found");
+          bkpStream.destroy();
+        } else {
+          const restore_logs = makeLogs(_restore_logs, currBkp.restore_logs, currBkp.restore_start as any);
+          this.dbs.backups.update({ id: bkpId }, { restore_end: new Date(), restore_logs, last_updated: new Date() });
+        }
+      }, 
+      false
+    );
 
   } catch (err){
     setError(err)
