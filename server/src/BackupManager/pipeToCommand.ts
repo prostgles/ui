@@ -43,12 +43,12 @@ export const pipeToCommand = (
 
   proc.on("exit", function (code, signal) {
     const err = fullLog.split("\n").at(-1);
-    if(code){
-      console.error({ execCommandErr: err })
+    if((code || 0) > 1){
+      console.error({ code, signal, execCommandErr: err, logs: fullLog.slice(fullLog.length - 100) })
       source.destroy();
     }
     
-    onEnd(code? (err ?? "Error") : undefined);
+    onEnd((code || 0) > 1? (err ?? "Error") : undefined);
   });
 
   return proc;

@@ -1,0 +1,7 @@
+With the exception of the information you provide us through the "Send feedback" functionality, we (Prostgles) do not collect/send/store any of your data to our servers when you're using this app. 
+
+All of your data is stored within: 
+1. The state database that you provide and connect to (database connections, dashboard settings, sql queries)
+2. On the machine the software is installed on (backups, files, encrypted state database connection info for Prostgles Desktop) 
+
+To the best of our knowledge, libraries used in this software do not collect/send/store any of your data to their servers.

@@ -221,3 +221,29 @@ export type ColType = {
   schema: string;
 }
 export const RELOAD_NOTIFICATION = "Prostgles UI accessible at";
+
+export function throttle<Params extends any[]>(
+  func: (...args: Params) => any,
+  timeout: number
+): (...args: Params) => void {
+  //@ts-ignore
+  let timer: NodeJS.Timeout | undefined;
+  let lastCallArgs: Params | undefined;
+  const throttledFunc = (...args: Params) => {
+    if(timer !== undefined) {
+      lastCallArgs = args;
+      return;
+    } else {
+      lastCallArgs = undefined;
+    }
+    //@ts-ignore
+    timer = setTimeout(() => {
+      func(...args);
+      timer = undefined;
+      if(lastCallArgs){
+        throttledFunc(...lastCallArgs);
+      }
+    }, timeout);
+  }
+  return throttledFunc;
+}

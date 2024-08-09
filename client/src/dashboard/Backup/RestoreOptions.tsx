@@ -1,6 +1,6 @@
 
 import { mdiBackupRestore } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useEffect, useState } from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { sliceText } from "../../../../commonTypes/utils";
@@ -23,6 +23,7 @@ const DEFAULT_RESTORE_OPTS: RestoreOpts = {
   dataOnly: false,
   noOwner: false,
   command: "pg_restore",
+  excludeSchema: "prostgles",
   ifExists: true,
   format: "c", 
   keepLogs: false
@@ -57,15 +58,14 @@ export const RestoreOptions = (props: RestoreOptionsProps) => {
   type FileOrMaybeItsNothing = File | null | undefined
   const [file, setFile] = useState<FileOrMaybeItsNothing | void>();
   const [restoreOpts, setRestoreOpts] = useState(defaultOpts ?? DEFAULT_RESTORE_OPTS);
-  const { numberOfJobs, format, clean, create, dataOnly, noOwner, ifExists, keepLogs } = restoreOpts;
+  const { numberOfJobs, format, clean, create, dataOnly, noOwner, ifExists, keepLogs, excludeSchema } = restoreOpts;
 
-  useEffect(() => {
+  useEffectDeep(() => {
     if(file){
       setRestoreOpts({ ...restoreOpts, format: file.name.toLowerCase().endsWith(".sql")? "p" : "c" })
     }
   }, [file, restoreOpts]);
-
-
+  
   const restoreFile = async (popupClose: ()=>void) => {
     
     if(!dbsMethods.streamBackupFile) return;
@@ -145,6 +145,10 @@ export const RestoreOptions = (props: RestoreOptionsProps) => {
           options={[1,2,3,4,5,6,7,8,9,10]}
           onChange={numberOfJobs => { setRestoreOpts({ ...restoreOpts, numberOfJobs })  }} 
         />
+        <FormField value={excludeSchema} label="Exclude schema" 
+          hint="Do not restore objects that are in the named schema"
+          type="text" onChange={excludeSchema => { setRestoreOpts({ ...restoreOpts, excludeSchema }) }} 
+        />
         <FormField value={clean} label="Clean" 
           hint="Drop and Create commands for database objects. Will not delete objects that don't exist in the dump file"
           asColumn={true} type="checkbox" onChange={clean => { setRestoreOpts({ ...restoreOpts, clean }) }} 
@@ -174,8 +178,6 @@ export const RestoreOptions = (props: RestoreOptionsProps) => {
     </>)}
   </div>
   
-
-  // const conInfoStr = !connection? "" : getServerInfoStr(connection as any);
   const plainFormatAlert = format === "p" && <InfoRow color="warning">Data from this entire server (including user data) may be affected because this is a restore from a plain SQL file.</InfoRow>;
   let title: React.ReactNode;
   if(!fromFile){
@@ -205,11 +207,15 @@ export const RestoreOptions = (props: RestoreOptionsProps) => {
     contentStyle={{
       maxWidth: "700px"
     }}
+    positioning="center"
     message={<InfoRow color="warning">If you continue the current database and/or server information might be lost. This process is not reversible</InfoRow>}
     button={button}
     confirmButton={popupClose => 
       onReadyButton? onReadyButton(restoreOpts, popupClose) : 
-      <Btn iconPath={mdiBackupRestore} size="small" color="action" variant="filled"
+      <Btn 
+        iconPath={mdiBackupRestore} 
+        color="action" 
+        variant="filled"
         onClick={() => restoreFile(popupClose)} 
       >
         Restore
