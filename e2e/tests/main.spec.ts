@@ -101,6 +101,7 @@ test.describe("Main test", () => {
     await page.getByText("my_new_value_3").waitFor({ state: "visible", timeout: 15e3 });
 
     await goTo(page, 'localhost:3004/connections');
+    await page.waitForTimeout(4e3);
     await dropConnectionAndDatabase(dbName, page);
     await page.waitForTimeout(4e3);
     await runDbsSql(page, `DROP USER db_with_owner;`);
