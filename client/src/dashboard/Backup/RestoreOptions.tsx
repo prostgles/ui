@@ -14,6 +14,7 @@ import type { DBS } from "../Dashboard/DBS";
 import { CodeConfirmation } from "./CodeConfirmation";
 import { FORMATS } from "./DumpOptions";
 import { DumpRestoreAlerts } from "./DumpRestoreAlerts";
+import { FlexCol } from "../../components/Flex";
 
 export type RestoreOpts = DBSSchema["backups"]["restore_options"];
 
@@ -122,7 +123,7 @@ export const RestoreOptions = (props: RestoreOptionsProps) => {
     return bkp;
   }, [backupId, dbs.backups, format, restoreOpts])
 
-  let mainContent = <div className="flex-col gap-1">
+  let mainContent = <FlexCol style={{ maxHeight: "600px", overflow: "auto" }}>
     {!!fromFile && <FormField type="file" asColumn={true}
       label="File" 
       onChange={files => {
@@ -176,7 +177,7 @@ export const RestoreOptions = (props: RestoreOptionsProps) => {
       {format !== "p" && <InfoRow color="info" className="noselect">For more info on options visit <a target="_blank" href="https://www.postgresql.org/docs/current/app-pgrestore.html">this official site</a></InfoRow>}
 
     </>)}
-  </div>
+  </FlexCol>
   
   const plainFormatAlert = format === "p" && <InfoRow color="warning">Data from this entire server (including user data) may be affected because this is a restore from a plain SQL file.</InfoRow>;
   let title: React.ReactNode;
