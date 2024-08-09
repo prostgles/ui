@@ -19,8 +19,8 @@ jobs:
     - name: Install dependencies for testing
       run: | 
         sudo apt-get update
-        cd electron && sudo apt-get install -y x11-xserver-utils xterm imagemagick-6.q16 scrot libnotify4  libnss3-dev libatk1.0-0 libatk-bridge2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0 gconf-service gconf2
-        DEBIAN_FRONTEND=noninteractive sudo apt install -y x11-apps imagemagick xvfb gdebi-core  
+        cd electron && sudo apt-get install -y x11-xserver-utils scrot libnotify4  libnss3-dev libatk1.0-0 libatk-bridge2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0 gconf-service gconf2
+        DEBIAN_FRONTEND=noninteractive sudo apt install -y x11-apps xvfb gdebi-core  
     - name: Install the app
       run: | 
         cd electron
@@ -28,7 +28,7 @@ jobs:
     - name: Test installation file
       run: | 
         cd electron
-        xvfb-run --server-num=98 --server-args="-screen 0 1920x1080x24" -- bash -c "echo $PWD && QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu prostgles-desktop & sleep 5 && scrot ./dist/screenshot.png && exit" && exit
+        xvfb-run --server-num=98 --server-args="-screen 0 1920x1080x24" -- bash -c "QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu prostgles-desktop & sleep 5 && scrot ./dist/screenshot.png && exit" && exit
     - uses: actions/upload-artifact@v4
       if: always()
       with:
