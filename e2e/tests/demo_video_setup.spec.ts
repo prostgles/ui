@@ -21,6 +21,9 @@ test.describe("Demo video setup", () => {
       await createDatabase("prostgles_video_demo", page);
       await goTo(page, "http://localhost:3004/connections");
       await createDatabase("food_delivery", page, true);
+      await page.waitForTimeout(2000);
+      await goTo(page, "http://localhost:3004/connections");
+      await createDatabase("crypto", page, true);
     }
   });
 });

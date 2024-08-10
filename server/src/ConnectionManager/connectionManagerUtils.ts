@@ -72,7 +72,7 @@ export const parseTableConfig = async ({ con, conMgr, dbs, type, newTableConfig 
     ...(tableConfig.storageType.type === "local"? {
       localConfig: {
         /* Use path.resolve when using a relative path. Otherwise will get 403 forbidden */
-        localFolderPath: conMgr.getFileFolderPath(connectionId)
+        localFolderPath: await conMgr.getFileFolderPath(connectionId)
       }
     } : { cloudClient }),
     referencedTables: tableConfig.referencedTables,
@@ -138,7 +138,7 @@ type AlertIfReferencedFileColumnsRemovedArgs = {
 export const alertIfReferencedFileColumnsRemoved = async function(this: ConnectionManager, { connId, reason, tables, db }: AlertIfReferencedFileColumnsRemovedArgs) {
   
   /** Remove dropped referenced file columns */
-  const { dbConf, isSuperUser } = this.prgl_connections[connId] ?? {};
+  const { dbConf, isSuperUser } = this.prglConnections[connId] ?? {};
   const referencedTables = dbConf?.file_table_config?.referencedTables as FileTableConfigReferences | undefined;
   if(isSuperUser && dbConf && this.dbs && referencedTables && (reason.type === "schema change" || reason.type === "TableConfig")){
     const droppedFileColumns: { tableName: string; missingCols: string[]; }[] = [];

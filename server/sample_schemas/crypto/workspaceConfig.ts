@@ -43,7 +43,9 @@ export const workspaceConfig: WorkspaceConfig = {
       options: {
         "hideCounts": false,
         "pinnedMenu": true,
-        "defaultLayoutType": "col"
+        "tableListSortBy": "extraInfo",
+        "tableListEndInfo": "count",
+        "defaultLayoutType": "tab"
       },
       windows: [
         {

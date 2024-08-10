@@ -18,8 +18,8 @@ const getValidPGColumnNames = async (v: string[], sql: SQLHandler): Promise<{ na
 }
 
 type Outputs = { val: string; label: string; iconPath: string; fileName: string; }[]
-export const CopyResultBtn = (props: { sql: SQLHandler; rows: any[][]; cols: Pick<ValidatedColumnInfo, "name" | "tsDataType" | "udt_name">[] }) => {
-  const { cols, rows: rawValues, sql } = props;
+export const CopyResultBtn = (props: { queryEnded: boolean; sql: SQLHandler; rows: any[][]; cols: Pick<ValidatedColumnInfo, "name" | "tsDataType" | "udt_name">[] }) => {
+  const { cols, rows: rawValues, sql, queryEnded } = props;
   const rows = rawValues.map(row => getStringifiedObjects(row, cols))
   const res = usePromise(async () => {
 
@@ -55,7 +55,7 @@ export const CopyResultBtn = (props: { sql: SQLHandler; rows: any[][]; cols: Pic
       const json = JSON.stringify(rows.map(r => r.reduce((a, v, ri) => ({ ...a, [cols[ri]!.name]: v }), {})));
       const jsonArray = cols.length === 1? JSON.stringify(rows.map(row => Object.values(row)).flat(), null, 2) : undefined;
       const sqlResult = [
-        `SELECT *`,
+        `SELECT ${cols.map(c => `${JSON.stringify(c.name)}::${c.udt_name} as ${JSON.stringify(c.name)}`).join("\n, ")}`,
         `INTO new_table_name`,
         `FROM (`,
         `  VALUES `,
@@ -90,7 +90,6 @@ export const CopyResultBtn = (props: { sql: SQLHandler; rows: any[][]; cols: Pic
 
   if(error) return <Label iconPath={mdiAlert} label="" popupTitle="Cannot copy result" info={<ErrorComponent error={error} />} />
 
-  if(!cols.length || !outputs?.length) return null;
   
   return <PopupMenuList 
     button={
@@ -98,21 +97,23 @@ export const CopyResultBtn = (props: { sql: SQLHandler; rows: any[][]; cols: Pic
         title={`Copy result (${rows.length} rows)`} 
         size="small"
         iconPath={mdiContentCopy} 
-        
+        style={{ visibility: queryEnded && outputs?.length? "visible" : "hidden" }}
       />
     }
     listStyle={{
       flex: 1,
       display: "flex"
     }}
-    items={outputs.map(o => ({
+    items={(outputs ?? []).map(o => ({
 
       leftIconPath: o.iconPath,
       label: o.label,
       title: sliceText(o.val, 100),
       // iconStyle: { color: "var(--gray-400)" },
       labelStyle: { width: "100%", flex: 1 },
-      onPress() {
+      onPress: (e) => {
+        e.stopPropagation();
+        e.preventDefault();
         navigator.clipboard.writeText(o.val); 
       },
       contentRight: (

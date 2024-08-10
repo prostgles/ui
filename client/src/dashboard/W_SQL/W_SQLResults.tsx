@@ -28,6 +28,11 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
   const hideResults = !childWindow && (
     o.hideTable && !notices && !notifEventSub || !rows.length && !sqlResult && activeQuery?.state !== "running"
   );
+
+  if(activeQuery?.state === "running" && !rows.length){
+    return null;
+  }
+
   return <div className={
     "W_SQLResults flex-col oy-auto relative bt b-color " + 
     (commandResult? " f-0 " : " f-1 ") + 

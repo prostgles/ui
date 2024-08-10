@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
-import type { DatabaseConfigs} from "../index";
+import type { DatabaseConfigs, DBS} from "../index";
 import { connMgr, connectionChecker } from "../index";
 import * as os from "os";
 import { authenticator } from "@otplib/preset-default";
@@ -15,18 +15,18 @@ export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 import type { DBHandlerServer } from "prostgles-server/dist/DboBuilder";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
 import type { AnyObject} from "prostgles-types";
-import { asName, pickKeys } from "prostgles-types";
+import { asName, isEmpty, pickKeys } from "prostgles-types";
 import type { DBSSchema} from "../../../commonTypes/publishUtils";
 import { isObject } from "../../../commonTypes/publishUtils";
 import type { ConnectionTableConfig} from "../ConnectionManager/ConnectionManager";
-import { DB_TRANSACTION_KEY, getCDB } from "../ConnectionManager/ConnectionManager";
+import { DB_TRANSACTION_KEY, getCDB, getSuperUserCDB } from "../ConnectionManager/ConnectionManager";
 import { isDefined } from "../../../commonTypes/filterUtils";
 import type { Backups } from "../BackupManager/BackupManager";
 import { getPasswordlessAdmin, insertUser } from "../ConnectionChecker";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
 import { demoDataSetup } from "../demoDataSetup";
-import { getRootDir } from "../electronConfig";
+import { getElectronConfig, getRootDir } from "../electronConfig";
 import { killPID } from "../methods/statusMonitorUtils";
 import { initBackupManager, statePrgl } from "../startProstgles";
 import { upsertConnection } from "../upsertConnection";
@@ -53,7 +53,7 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     const c = await dbs.connections.findOne({ id: connId });
     if(!c) throw "Connection not found";
     const dbConf = await dbs.database_configs.findOne(getDatabaseConfigFilter(c));
-    if(!dbConf) throw "Connection not found";
+    if(!dbConf) throw "Connection database_config not found";
     const db = connMgr.getConnectionDb(connId);
     if(!db) throw "db missing";
 
@@ -103,7 +103,7 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       const c = connMgr.getConnection(conId);
       return getIsSuperUser(c.prgl._db);
     },
-    getFileFolderSizeInBytes: (conId?: string) => {
+    getFileFolderSizeInBytes: async (conId?: string) => {
       const dirSize = (directory: string): number => {
         if(!fs.existsSync(directory)) return 0;
         const files = fs.readdirSync(directory);
@@ -122,7 +122,7 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       if(conId && (typeof conId !== "string")){
         throw "Invalid/Inexisting connection id provided"
       }
-      const dir = connMgr.getFileFolderPath(conId);
+      const dir = await connMgr.getFileFolderPath(conId);
       return dirSize(dir);
     },
     testDBConnection,
@@ -135,6 +135,10 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     },
     createConnection: async (con: Connections, sampleSchemaName?: string) => {
       const res = await upsertConnection(con, user.id, dbs, sampleSchemaName);
+      const el = getElectronConfig();
+      if(res.connection.is_state_db && el?.isElectron){
+        await el.setCredentials(res.connection);
+      }
       return res;
     },
     reloadSchema: async (conId: string) => {
@@ -150,14 +154,15 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
         return dbs.tx!(async t => {
           const con = await t.connections.findOne({ id });
           if(con?.is_state_db) throw "Cannot delete a prostgles state database connection";
-          await connMgr.prgl_connections[id]?.methodRunner?.destroy();
-          await connMgr.prgl_connections[id]?.onMountRunner?.destroy();
-          await connMgr.prgl_connections[id]?.tableConfigRunner?.destroy();
+          await connMgr.prglConnections[id]?.methodRunner?.destroy();
+          await connMgr.prglConnections[id]?.onMountRunner?.destroy();
+          await connMgr.prglConnections[id]?.tableConfigRunner?.destroy();
           if(opts?.dropDatabase){
             if(!con?.db_name) throw "Unexpected: Database name missing";
-            const cdb = await getCDB(con.id, undefined, true);
+            const { db: cdb, destroy: destroyCdb } = await getCDB(con.id, undefined, true);
             const anotherDatabaseNames: { datname: string }[] = await cdb.any(`
-              SELECT * FROM pg_catalog.pg_database 
+              SELECT * 
+              FROM pg_catalog.pg_database 
               WHERE datname <> current_database() 
               AND NOT datistemplate
               ORDER BY datname = 'postgres' DESC
@@ -167,9 +172,12 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
               FROM pg_user WHERE usesuper = true
               `, {});
             const superUsers = _superUsers.map(u => u.usename);
-            cdb.$pool.end();
+            await destroyCdb();
             const [anotherDatabaseName] = anotherDatabaseNames;
             if(!anotherDatabaseName) throw "Could not find another database";
+            if(anotherDatabaseName.datname === con.db_name) {
+              throw "Not expected: Another database is the same as the one being deleted";
+            }
 
             let superUser: { user: string; password: string; } | undefined;
             if(!superUsers.includes(con.db_user)){
@@ -183,13 +191,14 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
                 superUser = { user: conWithSuperUsers.db_user, password: conWithSuperUsers.db_pass! };
               }
             }
-            const acdb = await getCDB(con.id, { database: anotherDatabaseName.datname, ...superUser }, true);
+            const { db: acdb } = await getCDB(con.id, { database: anotherDatabaseName.datname, ...superUser }, true);
             const killDbConnections = () => {
               return acdb.manyOrNone(`
                 SELECT pg_terminate_backend(pid) 
                 FROM pg_stat_activity 
-                WHERE datname = \${db_name};
-              `, con).catch(e => 1)
+                WHERE datname = \${db_name}
+                AND pid <> pg_backend_pid();
+              `, con);
             }
             await killDbConnections();
             await killDbConnections();
@@ -258,13 +267,6 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
         bkpManager.closeStream(id)
 
       } else  throw new Error("Not expected");
-    },
-    setTableConfig: async (connId: string, tableConfig: DatabaseConfigs["table_config"] | undefined = undefined) => {
-      const { dbConf } = await getConnectionAndDbConf(connId);
-      await dbs.tx!(async t => {
-        await connMgr.getConnection(connId).prgl.update({ tableConfig: (tableConfig || undefined) as any });
-        await t.database_configs.update({ id: dbConf.id }, { table_config: tableConfig });
-      })
     },
     setFileStorage: async (connId: string, tableConfig?: ConnectionTableConfig, opts?: { keepS3Data?: boolean; keepFileTable?: boolean }) => {
       const { db, dbConf } = await getConnectionAndDbConf(connId);
@@ -339,16 +341,23 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       return getCompiledTS(ts);
     }, 
     killPID,
-    setOnMountAndTableConfig: async (connId: string, changes: Partial<Pick<DBSSchema["database_configs"], "on_mount_ts" | "on_mount_ts_disabled" | "table_config_ts" | "table_config_ts_disabled">>) => {
+    setOnMount: async (connId: string, changes: Partial<Pick<DBSSchema["connections"], "on_mount_ts" | "on_mount_ts_disabled">>) => {
+      if(isEmpty(changes)){
+        throw "No changes provided";
+      }
+      const { c } = await getConnectionAndDbConf(connId);
+      const newConn = await dbs.connections.update({ id: c.id }, changes, { returning: "*", multi: false });
+      if(!newConn) throw "Unexpected: newConn missing";
+      await connMgr.setOnMount(connId, newConn.on_mount_ts, newConn.on_mount_ts_disabled);
+    },
+    setTableConfig: async (connId: string, changes: Partial<Pick<DBSSchema["database_configs"], "table_config_ts" | "table_config_ts_disabled">>) => {
+      if(isEmpty(changes)){
+        throw "No changes provided";
+      }
       const { dbConf } = await getConnectionAndDbConf(connId);
       const newDbConf = await dbs.database_configs.update({ id: dbConf.id }, changes, { returning: "*", multi: false });
       if(!newDbConf) throw "Unexpected: newDbConf missing";
-      if("on_mount_ts" in changes || "on_mount_ts_disabled" in changes){
-        await connMgr.setOnMount(connId, newDbConf.on_mount_ts, newDbConf.on_mount_ts_disabled);
-      }
-      if("table_config_ts" in changes || "table_config_ts_disabled" in changes){
-        await connMgr.setTableConfig(connId, newDbConf.table_config_ts, newDbConf.table_config_ts_disabled);
-      }
+      await connMgr.setTableConfig(connId, newDbConf.table_config_ts, newDbConf.table_config_ts_disabled);
     },
     getForkedProcStats: async (connId: string) => {
       const prgl = connMgr.getConnection(connId);
@@ -520,7 +529,7 @@ export const getSampleSchemas = async (): Promise<SampleSchema[]> => {
   }).filter(isDefined);
 }
 
-export const runConnectionQuery = async (connId: string, query: string, args?: AnyObject | any[]): Promise<AnyObject[]> => {
-  const cdb = await getCDB(connId);
-  return cdb.any(query, args);
+export const runConnectionQuery = async (connId: string, query: string, args?: AnyObject | any[], asAdminOpts?: { dbs: DBS; }): Promise<AnyObject[]> => {
+  const { db } = asAdminOpts? await getSuperUserCDB(connId, asAdminOpts.dbs) : await getCDB(connId);
+  return db.any(query, args);
 };

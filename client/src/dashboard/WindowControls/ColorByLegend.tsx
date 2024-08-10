@@ -1,18 +1,19 @@
 import React from "react";
-import type { DivProps} from "../../components/Flex";
+import type { DivProps } from "../../components/Flex";
 import { FlexRow, classOverride } from "../../components/Flex";
-import type { CommonWindowProps } from "../Dashboard/Dashboard"
+import { isDefined } from "../../utils";
+import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { PALETTE } from "../Dashboard/dashboardUtils";
-import { ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
-import { updateWCols } from "../W_Table/tableUtils/tableUtils";
 import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";
-import { type ColumnValue, setDefaultConditionalStyle } from "../W_Table/ColumnMenu/ColumnStyleControls";
+import { getSmartGroupFilter } from "../SmartFilter/smartFilterUtils";
+import { ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
+import { type ColumnValue, setDefaultConditionalStyle } from "../W_Table/ColumnMenu/ColumnStyleControls";
+import { updateWCols } from "../W_Table/tableUtils/tableUtils";
 import type { ProstglesTimeChartStateLayer } from "../W_TimeChart/W_TimeChart";
-import { isDefined } from "../../utils";
 
-type P = DivProps & Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "prgl"> & {
+type P = DivProps & Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "prgl" | "w"> & {
   layerLinkId: string;
   groupByColumn: string;
   onChanged: VoidFunction;
@@ -34,14 +35,19 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
     onChanged();
   }
 
+
   /** Add group by colors */
   useEffectAsync(async () => {
-    if(!valueStyles && oldLayerWindow?.table_name){
-      setDefaultConditionalStyle(db, oldLayerWindow.table_name, groupByColumn, newStyle => {
+    const missingLabels = !valueStyles? undefined : layers.filter(l => !valueStyles.some(s => s.condition === l.groupByValue)).map(l => l.groupByValue).join(", ");
+    if((!valueStyles || missingLabels) && oldLayerWindow?.table_name){
+      const parentW = props.getLinksAndWindows().windows.find(w => w.id === props.w.parent_window_id);
+      const filter = getSmartGroupFilter(parentW?.filter || []);
+      setDefaultConditionalStyle({ db, tableName: oldLayerWindow.table_name, columnName: groupByColumn, filter }, newStyle => {
         setColumnStyle(newStyle)
       });
     }
-  }, [valueStyles]);
+  }, [valueStyles, db, layers, oldLayerWindow?.table_name]);
+
 
   if(!valueStyles?.length) return null;
   const labels = [
@@ -52,7 +58,6 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
     } satisfies typeof valueStyles[number]),
     ...valueStyles.filter(s => !layers.some(l => l.groupByValue === s.condition)).slice(0, 3),
   ].filter(isDefined)
-
   const getConditionLabel = (condition: ColumnValue | ColumnValue[]): string => {
     if(Array.isArray(condition)) return condition.map(c => getConditionLabel(c)).join(", ");
     if(condition === null) return "null";

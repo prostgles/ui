@@ -11,18 +11,19 @@ const loadSampleSchema = async (dbs: DBS, sampleSchemaName: string, connId: stri
     throw "Sample schema not found: " + sampleSchemaName;
   }
   if(schema.type === "sql"){
-    await runConnectionQuery(connId, schema.file);
+    await runConnectionQuery(connId, schema.file, undefined, { dbs });
   } else {
     const { tableConfigTs, onMountTs, onInitSQL } = schema;
     if(onInitSQL) {
-      await runConnectionQuery(connId, onInitSQL);
+      await runConnectionQuery(connId, onInitSQL, undefined, { dbs });
     }
     await dbs.database_configs.update(
       { $existsJoined: { connections: { id: connId} } }, 
-      { 
-        table_config_ts: tableConfigTs, 
-        on_mount_ts: onMountTs, 
-      }
+      { table_config_ts: tableConfigTs },
+    );
+    await dbs.connections.update(
+      { id: connId }, 
+      { on_mount_ts: onMountTs },
     );
   }
 }

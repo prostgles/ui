@@ -46,13 +46,15 @@ export class ConnectionChecker {
     /** Ensure that only 1 session is allowed for the passwordless admin */
     await this.withConfig();
     if(this.noPasswordAdmin){
-      // const mySession = await this.db?.sessions.findOne({ id: sid });
-      // const me = await getUser();
-      // console.log(me)
+      const electronConfig = getElectronConfig();
 
       const pwdLessSession = await this.db?.sessions.findOne({ user_id: this.noPasswordAdmin.id, active: true });
       if(pwdLessSession && pwdLessSession.id !== sid){
-        throw PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR
+        if(electronConfig?.isElectron && electronConfig.sidConfig.electronSid === sid){
+          await this.db?.sessions.delete({ user_id: this.noPasswordAdmin.id });
+        } else {
+          throw PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR
+        }
       }
     }
   }
@@ -295,12 +297,12 @@ const initUsers = async (db: DBS, _db: DB) => {
     console.log("Added users: ", await db.users.find({ username }))
   }
 
-  const electron = await getElectronConfig();
+  const electron = getElectronConfig();
   if(electron?.isElectron){
     const user = await getPasswordlessAdmin(db);
     if(!user) throw `Unexpected: Electron passwordless_admin misssing`;
     await db.sessions.delete({});
-    await makeSession(user, { ip_address: "::1", user_agent: "electron", type: "desktop", sid: electron.sidConfig.electronSid}, db, Date.now() + 10 * YEAR);
+    await makeSession(user, { ip_address: "::1", user_agent: "electron", type: "web", sid: electron.sidConfig.electronSid}, db, Date.now() + 10 * YEAR);
     electron.sidConfig.onSidWasSet();
   }
 }

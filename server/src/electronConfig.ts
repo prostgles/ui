@@ -19,13 +19,12 @@ export type DBSConnectionInfo = Pick<
 export type OnServerReadyCallback = (portNumber: number) => void;
 
 interface SafeStorage extends NodeJS.EventEmitter {
-
   decryptString(encrypted: Buffer): string;
   encryptString(plainText: string): Buffer;
   isEncryptionAvailable(): boolean;
 }
 
-let isElectron = false;// process.env.PRGL_IS_ELECTRON;
+let isElectron = false;
 let safeStorage: SafeStorage | undefined;
 let port: number | undefined;
 
@@ -45,13 +44,11 @@ export const getElectronConfig = () => {
     throw "Invalid safeStorage provided. encryptString or decryptString is not a function"
   } 
 
-  // const electronConfigPath = path.resolve(`${getRootDir()}/../../.electron-auth.json`);
   const electronConfigPath = path.resolve(`${getRootDir()}/.electron-auth.json`);
-
   const getCredentials = (): DBSConnectionInfo | undefined => {
-
+    
     try {
-      const file = !fs.existsSync(electronConfigPath)? undefined : fs.readFileSync(electronConfigPath);//, { encoding: "utf-8" });
+      const file = !fs.existsSync(electronConfigPath)? undefined : fs.readFileSync(electronConfigPath);
       if(file){
         return JSON.parse(safeStorage!.decryptString(file));
       }
@@ -98,6 +95,9 @@ export const start = async (
 ) => {
   isElectron = true;
   port = args.port;
+  if(!Number.isInteger(args.port)){
+    throw `Must provide a valid port`;
+  }
   if(!args.rootDir || typeof args.rootDir !== "string"){
     throw `Must provide a valid rootDir`;
   }

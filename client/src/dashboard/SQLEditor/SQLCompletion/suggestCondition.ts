@@ -31,6 +31,9 @@ export const suggestCondition = async (
 
   const func = getParentFunction(cb);
   if(func?.func.textLC === "exists"){
+    if(cb.l1token?.textLC === cb.currNestingFunc?.textLC){
+      return suggestSnippets([{ label: "SELECT" }]);
+    }
     const res = await matchNested(args, ["MatchSelect"]);
     if(res) return res;
   }

@@ -1,4 +1,4 @@
-import { mdiAlert, mdiCog, mdiCogOff, mdiCogOutline, mdiDotsHorizontal, mdiPlus } from "@mdi/js";
+import { mdiAlert, mdiCog, mdiCogOff, mdiCogOutline, mdiDelete, mdiDotsHorizontal, mdiPlus } from "@mdi/js";
 import type { SubscriptionHandler } from "prostgles-types";
 import React from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
@@ -101,7 +101,7 @@ export class Connections extends RTComp<PrglState, S> {
   }
 
   render() {
-    const { dbs, dbsMethods } = this.props;
+    const { dbs, dbsMethods, serverState } = this.props;
     const { connections, showStateConfirm, user, showDbNames } = this.state;
     if (!user || !connections) return null;
 

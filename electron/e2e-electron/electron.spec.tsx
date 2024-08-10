@@ -10,8 +10,12 @@ test.beforeAll(async () => {
       __dirname + "/../build/main.js",
       "--no-sandbox"
     ],
-    env: { ...process.env, NODE_ENV: 'development' },
-    recordVideo: { dir: './dist' }
+    env: { 
+      ...process.env, 
+      NODE_ENV: 'development' 
+    },
+    tracesDir: './dist',
+    // recordVideo: { dir: './dist' }
   });
   electronApp.on('window', async (page) => {
     console.log(`Window opened`)
@@ -32,45 +36,64 @@ test.afterAll(async () => {
 
 let page: Page | undefined;
 
-test.setTimeout(60e3)
+test.setTimeout(60e3);
+
 test('renders the first page', async () => {
   if(!electronApp) return;
+
   page = await electronApp.firstWindow();
-  await page.waitForTimeout(12000);
-  await page.waitForTimeout(1000);
-  await page.waitForTimeout(12000);
-  await page.reload();
+
+  const screenshot = async (name?: string) => {
+    if(!page) return;
+    await page.screenshot({ path: `../e2e/playwright-report/s-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
+  }
+
+  // await page.waitForTimeout(12000);
+  // await page.reload();
+  await screenshot();
 
   /** Privacy */
   await page.getByTestId("ElectronSetup.Next").waitFor({ state: "visible", timeout: 120e3 });
+  await screenshot();
   await page.getByTestId("ElectronSetup.Next").click();
 
   /** PG Installation info */
-  await page.waitForTimeout(1000);
+  await page.getByTestId("PostgresInstallationInstructions").waitFor({ state: "visible", timeout: 120e3 });
+  await screenshot();
   await page.getByTestId("PostgresInstallationInstructions").click();
   await page.waitForTimeout(1000);
+  await screenshot();
   await page.getByTestId("PostgresInstallationInstructions.Close").click();
   await page.getByTestId("ElectronSetup.Next").click();
 
   /** State db connection details */
   await page.waitForTimeout(1000);
-  await page.getByLabel("password").fill("password");
+  await screenshot();
+  await page.getByLabel("user").fill("usr");
+  await page.getByLabel("password").fill("psw");
+  await page.getByLabel("database").fill("prostgles_desktop_db");
+  
   /** Ensure overflow does not obscure done button */
   await page.getByTestId("SSLOptionsToggle").click();
   const doneBtn = await page.getByTestId("ElectronSetup.Done");
   await expect(doneBtn).toBeVisible();
+  await screenshot();
   await doneBtn.click();
   await page.waitForTimeout(1000);
 
-  await page.screenshot({ path: "./dist/s1.png" });
-  // await page.screenshot({ path: "./dist/s2.png" });
-  // await page.waitForSelector('h1')
-  // const text = await page.$eval('h1', (el) => el.textContent)
-  // expect(text).toBe('Hello World!')
-  // const title = await page.title()
-  // expect(title).toBe('Window 1')
-})
+  await screenshot();
+  let passed = false;
+  setInterval(() => {
+    if(passed) return;
+    screenshot();
+  }, 2e3);
+  await page.getByTestId("ConnectionServer.add").waitFor({ state: "visible", timeout: 600e3 });
+  passed = true;
+  await screenshot();
+  await page.locator("a.LEFT-CONNECTIONINFO").click();
+  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
+  await screenshot();
+  await page.reload();
+  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
 
-// test(`"create new window" button exists`, async () => {
-//   expect(await page.$('#new-window')).toBeTruthy()
-// })
+})

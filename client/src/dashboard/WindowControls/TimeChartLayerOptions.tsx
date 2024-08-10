@@ -63,13 +63,14 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
   return <>
     <PopupMenu 
       title="Y-axis options"
+      data-command="TimeChartLayerOptions.yAxis"
       button={
-        <FlexRow style={{ gap: ".5em", fontSize: "14px" }}>
-          <Btn color="action" variant="faded" iconPath={mdiSigma} title="Aggregate function">
+        <FlexRow style={{ gap: ".5em", fontSize: "14px" }} >
+          <Btn color="action" variant="faded" iconPath={mdiSigma} data-command="TimeChartLayerOptions.aggFunc"  title="Aggregate function">
             {activeStatLabelDesc}
           </Btn>
           {lq?.groupByColumn && 
-            <Btn color="action" variant="faded" title="Group by column" iconPath={mdiTableColumn}>
+            <Btn color="action" variant="faded" title="Group by column" iconPath={mdiTableColumn} data-command="TimeChartLayerOptions.groupBy" >
               {lq.groupByColumn}
             </Btn>
           }
@@ -82,6 +83,7 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
               label="Aggregation type"
               variant="div" 
               className="w-fit"
+              data-command="TimeChartLayerOptions.aggFunc.select"
               btnProps={{
                 iconPath: mdiSigma,
                 color: "action",
@@ -105,6 +107,7 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
                 label="field"
                 variant="div" 
                 className="w-fit " 
+                data-command="TimeChartLayerOptions.numericColumn"
                 fullOptions={numericCols.map(c => ({
                   key: c.name,
                   subLabel: c.udt_name,
@@ -122,6 +125,7 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
             label="Group by field"
             variant="div" 
             className="w-fit "
+            data-command="TimeChartLayerOptions.groupBy"
             optional={true}
             btnProps={{
               iconPath: mdiTableColumn,

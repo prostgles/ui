@@ -27,7 +27,6 @@ export type DBSMethods = Partial<{
   enable2FA: (confirmationCode: string) => Promise<string>;
   disable2FA: () => Promise<string>;
   setFileStorage: (connId: string, tableConfig?: ConnectionTableConfig | { referencedTables?: FileTableConfigReferences }, opts?: { keepS3Data?: boolean; keepFileTable?: boolean }) => Promise<any>;
-  setTableConfig: (connId: string, tableConfig: DBSSchema["database_configs"]["table_config"] | undefined) => Promise<void>;
   getConnectedIds: () => Promise<string[]>;
   generateToken: (daysValidity: number) => Promise<string>;
   getMyIP: () => Promise<{ ip: string; isAllowed: boolean; }>;
@@ -46,7 +45,8 @@ export type DBSMethods = Partial<{
   killPID: (connId: string, id_query_hash: string, type: "cancel" | "terminate") => Promise<any>;
   runConnectionQuery: (connId: string, query: string, args?: AnyObject | any[]) => Promise<AnyObject[]>;
   getSampleSchemas: () => Promise<SampleSchema[]>;
-  setOnMountAndTableConfig: (connId: string, changes: Partial<Pick<DBSSchema["database_configs"], "on_mount_ts" | "on_mount_ts_disabled" | "table_config_ts" | "table_config_ts_disabled">>) => Promise<void>;
+  setOnMount: (connId: string, changes: Partial<Pick<DBSSchema["connections"], "on_mount_ts" | "on_mount_ts_disabled">>) => Promise<void>;
+  setTableConfig: (connId: string, changes: Partial<Pick<DBSSchema["database_configs"], "table_config_ts" | "table_config_ts_disabled">>) => Promise<void>;
   getForkedProcStats: (connId: string) => Promise<{
     server: {
       mem: number;

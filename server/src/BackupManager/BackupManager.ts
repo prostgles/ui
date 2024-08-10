@@ -129,7 +129,8 @@ export default class BackupManager {
         clean: true,
         format: "c",
       },
-      status: {  loading: { total: sizeBytes, loaded: 0 } } }, 
+      status: {  ok: `${new Date()}` } 
+    }, 
     { returning: "*" });
 
     let lastChunk = Date.now();

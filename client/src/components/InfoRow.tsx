@@ -2,11 +2,14 @@ import { mdiInformationOutline } from "@mdi/js";
 import React from "react";
 import { Icon } from "./Icon/Icon";
 
-type InfoRowProps = Pick<React.HTMLAttributes<HTMLDivElement>, "style" | "className" | "children"> & {
+type InfoRowProps = {
   variant?: "filled" | "naked";
   color?: "warning" | "danger" | "info" | "action";
   iconPath?: string;
   iconSize?: number;
+  style?: React.CSSProperties;
+  className?: string;
+  children?: React.ReactNode;
 }
 export function InfoRow(props: InfoRowProps){
   const { className, iconPath = mdiInformationOutline, style = {}, variant, children, color = "warning", iconSize = 1.25 } = props;

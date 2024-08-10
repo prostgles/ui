@@ -103,11 +103,7 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
     infoQuery: undefined,
     autoRefreshSeconds: undefined,
   }
-
-  // d: D = {
-  //   w: undefined
-  // }
-
+ 
   onUnmount = async () => {
     if(this.wSub) await this.wSub.$unsync();
   }
@@ -117,15 +113,6 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
   autoRefresh: any;
   loading = false;
   onDelta = async (dP?: Partial<P>, dS?: Partial<S>, dD?) => {
-    // const w = this.d.w || this.props.w;
-
-    // if(w?.$cloneSync && !this.loading){
-    //   this.loading = true;
-    //   this.wSub = await w.$cloneSync((w, delta)=> {
-    //     this.setData({ w }, { w: delta });
-    //   });
-    // }
-
 
     if(dS && ("query" in dS)){
       this.setState({ error: undefined })

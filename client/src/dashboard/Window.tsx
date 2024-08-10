@@ -48,8 +48,14 @@ export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W>
   }
 
   static getTitle(_w: WindowSyncItem){
-    const w = _w.$get();
-    return w.name || w.table_name || w.method_name || w.id || "Empty";
+    const w = _w.$get() as WindowSyncItem | undefined;
+    const title = !w? undefined : w.name || w.table_name || w.method_name || w.id;
+    // if(!w){
+    //   // TODO ensure on reconnect all syncs work as expected
+    //   console.warn("Window not found. Reloading...");
+    //   setTimeout(() => window.location.reload(), 500);
+    // } 
+    return title || "Empty";
   }
 
   onDelta = (dp) => {
@@ -179,9 +185,8 @@ export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W>
             onClick={() => {
               this.setState({ showMenu: !showMenu })
             }}
-          >
-            Chart options
-          </Btn>
+            children={window.isLowWidthScreen? null : "Chart options"}
+          />
           <Btn
             className="ml-auto"
             variant="outline"
@@ -189,17 +194,15 @@ export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W>
             color="action"
             data-command="dashboard.window.detachChart"
             onClick={() => w.$update({ parent_window_id: null })}
-          >
-            Detach chart
-          </Btn>
+            children={window.isLowWidthScreen? null : "Detach chart"}
+          />
           <Btn 
             variant="outline"
             data-command="dashboard.window.closeChart"
             iconPath={mdiClose}
             onClick={() => w.$update({ closed: true })}
-          >
-            Close chart
-          </Btn>
+            children={window.isLowWidthScreen? null : "Close chart"}
+          />
         </FlexRow>
         {windowContent}
       </FlexCol>

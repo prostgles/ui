@@ -5,7 +5,8 @@ import Btn from "../components/Btn"
 import { InfoRow } from "../components/InfoRow"
 import PopupMenu from "../components/PopupMenu"
 import SmartCardList from "../dashboard/SmartCard/SmartCardList"
-import { FlexCol } from "../components/Flex"
+import { FlexCol, FlexRow } from "../components/Flex"
+import { StyledInterval } from "../dashboard/W_SQL/customRenderers"
 
 export const Alerts = (prgl: Prgl) => {
   const { connectionId, dbs } = prgl
@@ -16,14 +17,16 @@ export const Alerts = (prgl: Prgl) => {
     $notExistsJoined: { "alert_viewed_by": { user_id: prgl.user?.id } } 
   });
 
+  if(!alerts?.length) return null;
+
   return <PopupMenu
     button={
       <div>
         <Btn
           variant="faded" 
-          color={alerts?.length? "action" : undefined}
-          iconPath={alerts?.length? mdiBellBadgeOutline : mdiBellBadgeOutline} 
-          disabledInfo={alerts?.length? undefined : "No alerts"}
+          color={alerts.length? "action" : undefined}
+          iconPath={alerts.length? mdiBellBadgeOutline : mdiBellBadgeOutline} 
+          disabledInfo={alerts.length? undefined : "No alerts"}
         />
       </div>
     }
@@ -38,7 +41,7 @@ export const Alerts = (prgl: Prgl) => {
       background: "transparent",
     }}
   >
-    {!!alerts?.length && <SmartCardList 
+    {!!alerts.length && <SmartCardList 
       db={dbs as any}
       theme={prgl.theme}
       methods={prgl.dbsMethods}
@@ -58,28 +61,40 @@ export const Alerts = (prgl: Prgl) => {
           hide: true,
         },
         {
+          name: "age",
+          select: {
+            $ageNow: ["created"]
+          },
+          hide: true,
+        },
+        {
           name: "message",
-          render: (message, { severity, title }: any) => 
-            <InfoRow 
-              variant="naked" 
-              color={severity === "error"? "danger" : severity === "warning"? "warning" : "info"}
-            >
-              <FlexCol>
-              {title && <div className="bold">{title}</div>}
-              <div>
-                {message}
-              </div>
-              </FlexCol>
-            </InfoRow>
+          render: (message, { severity, title, age, id: alert_id }: any) => (
+            <FlexRow className="ai-start">
+              <InfoRow 
+                variant="naked" 
+                color={severity === "error"? "danger" : severity === "warning"? "warning" : "info"}
+              >
+                <FlexCol>
+                  <StyledInterval value={age} style={{ color: "var(--text-0)"}} />
+                  {title && <div className="bold">{title}</div>}
+                  <div>
+                    {message}
+                  </div>
+                </FlexCol>
+              </InfoRow>
+              <Btn 
+                iconPath={mdiDelete}
+                onClickPromise={() => 
+                  dbs.alert_viewed_by.insert({ alert_id, user_id: prgl.user?.id })
+                }
+              />
+            </FlexRow>
+          )
         },
         {
           name: "id",
-          render: (alert_id) => <Btn 
-            iconPath={mdiDelete}
-            onClickPromise={() => 
-              dbs.alert_viewed_by.insert({ alert_id, user_id: prgl.user?.id })
-            }
-          />
+          hide: true,
         }
       ]}
     />}

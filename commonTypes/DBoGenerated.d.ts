@@ -101,7 +101,7 @@ export type DBSchemaGenerated = {
       restore_command?: null | string;
       restore_end?: null | string;
       restore_logs?: null | string;
-      restore_options?: {    command: 'pg_restore' | 'psql';   format: 'p' | 't' | 'c';   clean: boolean;   newDbName?: string;   create?: boolean;   dataOnly?: boolean;   noOwner?: boolean;   numberOfJobs?: number;   ifExists?: boolean;   keepLogs?: boolean;  };
+      restore_options?: {    command: 'pg_restore' | 'psql';   format: 'p' | 't' | 'c';   clean: boolean;   excludeSchema?: string;   newDbName?: string;   create?: boolean;   dataOnly?: boolean;   noOwner?: boolean;   numberOfJobs?: number;   ifExists?: boolean;   keepLogs?: boolean;  };
       restore_start?: null | string;
       restore_status?: 
        | null
@@ -138,6 +138,8 @@ export type DBSchemaGenerated = {
       is_state_db?: null | boolean;
       last_updated?: string;
       name: string;
+      on_mount_ts?: null | string;
+      on_mount_ts_disabled?: null | boolean;
       prgl_params?: null | any;
       prgl_url?: null | string;
       ssl_certificate?: null | string;
@@ -203,8 +205,6 @@ export type DBSchemaGenerated = {
       file_table_config?: null | {    fileTable?: string;   storageType: |  {  type: 'local'; }
  |  {  type: 'S3';  credential_id: number; };   referencedTables?: any;   delayedDelete?: {  deleteAfterNDays: number;  checkIntervalHours?: number; };  };
       id?: number;
-      on_mount_ts?: null | string;
-      on_mount_ts_disabled?: null | boolean;
       rest_api_enabled?: null | boolean;
       sync_users?: null | boolean;
       table_config?: null | Record<string, 
@@ -212,6 +212,16 @@ export type DBSchemaGenerated = {
  |  {  columns: Record<string,  | string |  {  hint?: string;  nullable?: boolean;  isText?: boolean;  trimmed?: boolean;  defaultValue?: any; } |  {  jsonbSchema: |  {  type: 'string' | 'number' | 'boolean' | 'Date' | 'time' | 'timestamp' | 'string[]' | 'number[]' | 'boolean[]' | 'Date[]' | 'time[]' | 'timestamp[]';  optional?: boolean;  description?: string; } |  {  type: 'Lookup' | 'Lookup[]';  optional?: boolean;  description?: string; } |  {  type: 'object';  optional?: boolean;  description?: string; }; }>; }>
       table_config_ts?: null | string;
       table_config_ts_disabled?: null | boolean;
+    };
+  };
+  database_stats: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      database_config_id?: null | number;
     };
   };
   global_settings: {
@@ -271,7 +281,7 @@ export type DBSchemaGenerated = {
       ip_address_remote?: null | string;
       magic_link_id?: null | string;
       sid?: null | string;
-      type?: "web" | "api_token" | "desktop" | "mobile"
+      type?: "web" | "api_token" | "mobile"
       user_agent?: null | string;
       username?: null | string;
       x_real_ip?: null | string;
@@ -385,8 +395,8 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       application_name: string;
-      backend_start: string;
-      backend_type: string;
+      backend_start?: null | string;
+      backend_type?: null | string;
       backend_xid?: null | string;
       backend_xmin?: null | string;
       blocked_by?: null | number[];

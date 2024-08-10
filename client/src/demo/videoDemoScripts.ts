@@ -5,7 +5,6 @@ import { VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
 import { getDemoUtils } from "../dashboard/W_SQL/getDemoUtils";
 import { tout } from "../pages/ElectronSetup";
 import { click, getElement, movePointer, type } from "./demoUtils";
-import { startRecordingDemo } from "./recordDemoUtils";
 import { sqlVideoDemo } from "./sqlVideoDemo";
 import { videoDemoAccessControlScripts } from "./videoDemoAccessControlScripts";
 
@@ -139,7 +138,7 @@ const dashboardDemo = async () => {
   await tout(500);
   
   const DEMO_WSP_PREFIX = "Demo Workspace ";
-  const demoWspNameFilter = { "name.$like": `${DEMO_WSP_PREFIX} %` };
+  const demoWspNameFilter = { "name.$like": `${DEMO_WSP_PREFIX}%` };
   await (window as any).dbs.workspaces.update(demoWspNameFilter, { deleted: true });
   await (window as any).dbs.workspaces.delete(demoWspNameFilter);
 
@@ -149,13 +148,22 @@ const dashboardDemo = async () => {
 
   // await closeAllViews();
 
-  await click("WorkspaceMenuDropDown");
-  await click("WorkspaceMenuDropDown.WorkspaceAddBtn");
-  const wspName = getElement("Popup.content", "input");
-  (wspName as any)?.forceDemoValue(DEMO_WSP_PREFIX + Math.random().toFixed(2));
-  await click("WorkspaceAddBtn.Create");
+  const createWorkspace = async () => {
+    await click("WorkspaceMenuDropDown");
+    await click("WorkspaceMenuDropDown.WorkspaceAddBtn");
+    const wspName = getElement("Popup.content", "input");
+    (wspName as any)?.forceDemoValue(DEMO_WSP_PREFIX + Math.random().toFixed(2));
+    await click("WorkspaceAddBtn.Create");
+  }
+
+  await createWorkspace();
 
   await click("dashboard.menu.tablesSearchList", "[data-key=users]");
+  // const togglePinned = getElement("DashboardMenuHeader.togglePinned");
+  // if(togglePinned){
+    await click("DashboardMenuHeader.togglePinned");
+    await tout(500);
+  // }
   await click("AddColumnMenu");
   await click("AddColumnMenu", "[data-key=Referenced]");
   await click("JoinPathSelectorV2");
@@ -164,19 +172,22 @@ const dashboardDemo = async () => {
   await click("QuickAddComputedColumn");
   await click("QuickAddComputedColumn", `[data-key="$countAll`);
 
-  const inpt = document.querySelector("#nested-col-name") as any;
-  inpt?.forceDemoValue("Customer Order Count");
+  await type("Customer Order Count", "", "#nested-col-name")
   await click("LinkedColumn.Add");
 
   /** Descending order count */
   await click("", `[role="columnheader"]:nth-child(2)`);
   await click("", `[role="columnheader"]:nth-child(2)`);
+  await tout(1e3);
 
-  await click("dashboard.window.viewEditRow", undefined, { nth: 0 });
+  await click("dashboard.window.viewEditRow", undefined, { nth: 0, noTimeToWait: true });
   await click("JoinedRecords.toggle");
   await tout(1e3);
   await click("JoinedRecords", `[data-key="orders"] button[data-label="Expand section"]`);
-  await tout(1e3);
+  await tout(2e3);
+  await click("JoinedRecords", `[data-command="SmartCard.viewEditRow"]`, { nth: 0 });
+  await tout(2e3);
+  await click("Popup.close");
   await click("Popup.close");
 
   /** Add Map */
@@ -184,21 +195,54 @@ const dashboardDemo = async () => {
   await click("AddChartMenu.Map", `[data-key="location"]`);
   await tout(2e3);
   const mapDiv = document.querySelector(".DeckGLMapDiv") as DeckGLMapDivDemoControls;
-  const park = { 
-    latitude: 51.536, 
-    longitude: -.1568 
+  const point = { 
+    /** Park */
+    // latitude: 51.536, 
+    // longitude: -.1568 
+    /** Maida Vale */
+    latitude: 51.5276,
+    longitude: -.1906
   }
-  const { x, y } = mapDiv.getLatLngXY(park);
+  const { x, y } = mapDiv.getLatLngXY(point);
   await movePointer(x, y);
-  await mapDiv.zoomTo({ ...park, zoom: 19 });
+  await mapDiv.zoomTo({ ...point, zoom: 19 });
   await tout(5e3);
   await click("ChartLayerManager");
   await click("ChartLayerManager.AddChartLayer.addLayer");
   // await click("ChartLayerManager.AddChartLayer.addLayer", `[data-key=${JSON.stringify(`"roads.geojson".geog`)}]`);
   await click("ChartLayerManager.AddChartLayer.addLayer", `[data-key=${JSON.stringify(`"london_restaurants.geojson".geometry`)}]`);
   await click("Popup.close");
+  await tout(2e3);
+  await click("dashboard.goToConnections");
+  await click("", "[data-key^=crypto] a", { nth: 0 });
 
+  await createWorkspace();
+  
+  await click("dashboard.menu.tablesSearchList", "[data-key=futures]");
+  await click("DashboardMenuHeader.togglePinned");
+
+  await click("dashboard.window.toggleFilterBar");
+  await type("btcusd", "", ".SmartFilterBar input");
+  await click("", `[data-label="BTCUSDC"]`);
+  await click("", ".FilterWrapper_Type");
+  await click("", `[data-key="$in"]`);
+  await type("btcu",  "", ".FilterWrapper input.custom-input");
+  await click("", `[data-key="BTCUSDC"]`);
+  await click("", `[data-key="BTCUSDT"]`);
+  await click("", `[title="Expand/Collapse filters"]`);
+  await click("AddChartMenu.Timechart");
+  await click("ChartLayerManager");
+  await click("TimeChartLayerOptions.aggFunc");
+  await click("TimeChartLayerOptions.aggFunc.select");
+  await click("TimeChartLayerOptions.aggFunc.select", `[data-key="$avg"]`);
+  await click("TimeChartLayerOptions.numericColumn");
+  await click("TimeChartLayerOptions.numericColumn", `[data-key="price"]`);
+  await click("TimeChartLayerOptions.groupBy");
+  await click("TimeChartLayerOptions.groupBy", `[data-key="symbol"]`);
+  await click("Popup.close");
+  await click("Popup.close");
 }
+
 
 const loadTest = async () => {
   const dbs: DBS = (window as any).dbs;
@@ -214,4 +258,4 @@ export const VIDEO_DEMO_SCRIPTS = {
   loadTest,
 }
 
-startRecordingDemo();
+// startRecordingDemo();

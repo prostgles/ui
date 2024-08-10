@@ -225,6 +225,12 @@ export const COMMANDS = {
   "ConnectionServer.withNewOwnerToggle": "",
   "W_Table.TableNotFound": "",
   "JoinedRecords" : "",
+  "SmartCard.viewEditRow": "",
+  "TimeChartLayerOptions.yAxis": "",
+  "TimeChartLayerOptions.aggFunc": "",
+  "TimeChartLayerOptions.aggFunc.select": "",
+  "TimeChartLayerOptions.groupBy": "",
+  "TimeChartLayerOptions.numericColumn": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

@@ -78,7 +78,7 @@ export const runSQLErrorHints = async (rawErr: any, suggestions: SQLSuggestion[]
       hint = "Hint: Might need postgis for this: CREATE EXTENSION postgis;";
       
     } else if(message.includes("cannot be dropped because some objects depend on it")){
-      hint = `Hint: Try reassigning objects: \nREASSIGN OWNED BY ${message.split('"')[1] || "your_user"} TO postgres;` 
+      hint = `Hint: Try reassigning objects: \nREASSIGN OWNED BY ${JSON.stringify(message.split('"')[1] || "your_user")} TO postgres;` 
     }
   
     if(hint){

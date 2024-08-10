@@ -4,6 +4,7 @@ import { getColumnDataColor } from "./SmartFormField";
 import { renderInterval } from "../../W_SQL/customRenderers";
 import { dateAsYMD_Time } from "../../Charts";
 import type { ValidatedColumnInfo} from "prostgles-types";
+import { _PG_numbers_num } from "prostgles-types";
 import { isObject, _PG_date } from "prostgles-types";
 import { sliceText } from "../../../../../commonTypes/utils";
 
@@ -37,7 +38,14 @@ export const RenderValue = ({ column: c, value, showTitle = true, maxLength, sty
   if(c?.udt_name === "uuid" && value){ 
     return <ShorterText style={style} value={value} column={c} /> 
   }
-  if(c?.tsDataType === "number" && value !== undefined && value !== null){
+
+  if(c?.tsDataType !== "number" && c?.udt_name === "int8"){
+    return <span style={{color: getColumnDataColor({ udt_name: "int4", tsDataType: "number" }),  ...style }}>
+      {BigInt(value).toLocaleString()}
+    </span>
+  }
+
+  if((c?.tsDataType === "number" || c && _PG_numbers_num.includes(c.udt_name as any)) && value !== undefined && value !== null){
     const countDecimals = (num: number) => {
       if(Math.floor(num.valueOf()) === num.valueOf()) return 0;
       return num.toString().split(".")[1]?.length || 0; 

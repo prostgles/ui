@@ -67,7 +67,12 @@ export class DeckWrapped {
     
     if(opts.onClickQuick){
       node.addEventListener("pointerdown", ev => {
-        if(this.currHover) {
+        if(!ev.target) return;
+        const bbox = (ev.target as HTMLDivElement).getBoundingClientRect(),
+         x = ev.clientX - bbox.x,
+         y = ev.clientY - bbox.y,
+         maxDist = 4;
+        if(this.currHover && this.currHover.x - x < maxDist && this.currHover.y - y < maxDist){
           opts.onClickQuick?.(this.currHover)
         }
       })
@@ -193,29 +198,6 @@ export function debounce<Params extends any[]>(
       func(...args)
     }, timeout)
   }
-}
-export function throttle<Params extends any[]>(
-  func: (...args: Params) => any,
-  timeout: number
-): (...args: Params) => void {
-  let timer: NodeJS.Timeout | undefined;
-  let lastCallArgs: Params | undefined;
-  const throttledFunc = (...args: Params) => {
-    if(timer !== undefined) {
-      lastCallArgs = args;
-      return;
-    } else {
-      lastCallArgs = undefined;
-    }
-    timer = setTimeout(() => {
-      func(...args);
-      timer = undefined;
-      if(lastCallArgs){
-        throttledFunc(...lastCallArgs);
-      }
-    }, timeout);
-  }
-  return throttledFunc;
 }
 
 export const getViewState = <Type extends ViewType>(type: Type, state?: Partial<DeckWrappedOpts["initialViewState"]>): Type extends "orthographic"? OrthographicViewState : MapViewState => {

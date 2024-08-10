@@ -23,24 +23,21 @@ export const getElement = <T extends Element>(testId: Command | "", endSelector 
   /** Only the last matching element is clicked to ensure only the top ClickCatchOverlay is clicked to maintain correct context */
   return allMatchingElements.at(nth);
 }
-const hoverTriggerClasses = [
-  "show-on-hover",
-  "show-on-parent-hover", 
-  "show-on-trigger-hover",
-];
 type ClickOpts = GetElemOpts & {
   timeout?: number;
+  noTimeToWait?: boolean;
 }
 
-export const waitForElement = async <T extends Element>(testId: Command | "", endSelector = "", { timeout = 10e5, ...otherOpts }: ClickOpts = { }) => {
-  await tout(100);
+export const waitForElement = async <T extends Element>(testId: Command | "", endSelector = "", { noTimeToWait, timeout = 10e5, ...otherOpts }: ClickOpts = { }) => {
+  !noTimeToWait && await tout(100);
   let elem = getElement<T>(testId, endSelector, otherOpts);
   if(!elem && timeout) {
+    const waitTime = noTimeToWait? 20 : 100;
     let timeoutLeft = timeout;
     while(!elem && timeoutLeft > 0){
-      await tout(100);
+      await tout(waitTime);
       elem = getElement<T>(testId, endSelector, otherOpts);
-      timeoutLeft -= 100;
+      timeoutLeft -= waitTime;
     }
   }
   if(!elem){
@@ -49,43 +46,81 @@ export const waitForElement = async <T extends Element>(testId: Command | "", en
   return elem
 }
 
-export const click = async (testId: Command | "", endSelector = "", opts: ClickOpts = {}) => {
-  // window.document.body.classList.toggle("is_demo_mode", true);
+export const goToElem = async <ElemType = HTMLElement>(testId: Command | "", endSelector = "", opts: ClickOpts = {}): Promise<ElemType> => {
   const elem = await waitForElement<HTMLButtonElement>(testId, endSelector, opts);
-  const hideClassNode = elem.closest(hoverTriggerClasses.map(v => `.${v}`).join(", "))?.parentElement;
-  hideClassNode?.classList.toggle("is_demo_mode", true);
   const bbox = elem.getBoundingClientRect();
-  
   if((elem as any).scrollIntoViewIfNeeded){
     (elem as any).scrollIntoViewIfNeeded({ behavior: "smooth" });
-    await tout(200);
+    !opts.noTimeToWait && await tout(200);
   }
   await movePointer(
     (bbox.left + Math.min(60, bbox.width/2)),
     (bbox.top + bbox.height/2)
   )
+  if(!elem.isConnected) {
+    return goToElem(testId, endSelector, opts);
+  }
+  return elem as any;
+}
+export const click = async (testId: Command | "", endSelector = "", opts: ClickOpts = {}): Promise<void> => {
+  const elem = await goToElem(testId, endSelector, opts);
   elem.click();
-  // hideClassNode?.classList.toggle("is_demo_mode", false);
 }
 
-export const type = async (value: string, testId: Command, endSelector = "") => {
-  const input = getElement<HTMLInputElement>(testId, endSelector);
-  if(!input) return;
+export const type = async (value: string, testId: Command | "", endSelector = "") => {
+  const input = await goToElem<HTMLInputElement>(testId, endSelector);
   input.focus();
-  input.value = "";
-  input.focus();
-  const chars = value.split("");
-  for (const char of chars) {
-    input.value += char;
-    await tout(100);
-  }
-  await tout(200); 
-  input.value = value;
+  // input.value = "";
+  // input.focus();
+  // const chars = value.split("");
+  // for (const char of chars) {
+  //   input.value += char;
+  //   await tout(100);
+  // }
+  // await tout(200); 
+  // input.value = value;
   //@ts-ignore
-  input.forceDemoValue?.(value); 
+  await input.forceDemoValue?.(value); 
   await tout(500); 
 }
 
+let lastHovered: { 
+  elem: Element;
+  hoverElem: Element | null;
+} | undefined;
+let hoverCheckInterval: NodeJS.Timeout;
 export const setPointer = (p: HTMLDivElement | null) => {
   pointer = p;
+
+  if(!p) return;
+  p.ontransitionstart = () => {
+    hoverCheckInterval = setInterval(() => {
+      const bbox = p.getBoundingClientRect();
+      const hovered = document.elementFromPoint(bbox.left + bbox.width/2, bbox.top + bbox.height/2);
+      if(hovered !== lastHovered?.elem){
+        lastHovered?.hoverElem?.classList.toggle("hover", false);
+        if(!hovered){
+          lastHovered = undefined;
+          return;
+        }
+        const hoverElem = getClosestHovereableElem(hovered);
+        lastHovered = { elem: hovered, hoverElem };
+        hoverElem?.classList.toggle("hover", true);
+      }
+    }, 100);
+  }
+  p.ontransitionend = (e) => {
+    clearInterval(hoverCheckInterval); 
+  }
+}
+
+const hoverTriggerClasses = [
+  "show-on-hover",
+  "show-on-row-hover",
+  "show-on-parent-hover", 
+  "show-on-trigger-hover",
+  "list-comp li",
+];
+const getClosestHovereableElem = (elem: Element) => {
+  return elem.closest(hoverTriggerClasses.map(v => `.${v}`).join(", "));
 }

@@ -11,10 +11,10 @@ import FormField from "../../components/FormField/FormField";
 import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
 import Popup from "../../components/Popup/Popup";
 import Select from "../../components/Select/Select";
-import { SwitchToggle } from "../../components/SwitchToggle";
 import type { DBS } from "../../dashboard/Dashboard/DBS";
 import { SampleSchemas } from "../../dashboard/SampleSchemas";
 import type { Connection } from "../NewConnection/NewConnnection";
+import { CreatePostgresUser, useCreatePostgresUser, type NewPostgresUser } from "./CreatePostgresUser";
 
 type ConnectionServerProps = {
   name: string;
@@ -40,9 +40,10 @@ type ActionTypes = [
 ];
 type Action = ActionTypes[number];
 
+
 export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: ConnectionServerProps) => {
   const { runConnectionQuery, getSampleSchemas, createConnection, validateConnection } = dbsMethods;
-  const connId = connections[0]?.id;
+  const connId = connections[0]!.id;
   const [action, setAction] = useState<ActionTypes[number]>();
   const [connectionName, setConnectionName] = useState("");
   const [serverInfo, setServerInfo] = useState<{
@@ -57,15 +58,9 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
 
   const navigate = useNavigate();
   const [error, setError] = useState<any>();
-  const [newOwner, setNewOwner] = useState({ name: "", password: "", create: false });
-  const newUserName = newOwner.name;
-  const newUsernameError = usePromise(async () => {
-    if(!connId || !runConnectionQuery || !newUserName || !newOwner.create) return undefined;
-    if(!newUserName) return "Username is required";
-    const matchingUserNames = await runConnectionQuery(connId, `SELECT usename FROM pg_catalog.pg_user WHERE usename = $1`, [newUserName]);
-    return matchingUserNames.length > 0 ? "User already exists" : undefined;
-  }, [newUserName, connId, runConnectionQuery, newOwner.create]);
-  const newUserPasswordError = newOwner.create && !newOwner.password? "Password is required" : undefined;
+  
+  const newUser = useCreatePostgresUser({ connId, runConnectionQuery });
+  const { newPgUser, newUserPasswordError, newUsernameError } = newUser;
 
   if(!runConnectionQuery || !getSampleSchemas || !createConnection || !validateConnection || !connId) return null;
 
@@ -109,26 +104,41 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
 
     let newDbName = "";
     let newDbOwnerCredentials: undefined | Pick<Connection, "db_user" | "db_pass">;
-    if(action.type === Actions.create){
-      /** Create owner if required */
-      if(newOwner.create){
-        if(newUsernameError || newUserPasswordError) throw "User already exists or password is missing";
-        newDbOwnerCredentials = {
-          db_user: newOwner.name,
-          db_pass: newOwner.password,
-        }
-        await runConnectionQuery(connId, `CREATE USER ${asName(newOwner.name)} WITH ENCRYPTED PASSWORD $1;`, [newOwner.password]);
+    if(newPgUser.create) {
+      if(newUsernameError || newUserPasswordError) throw "User already exists or password is missing";
+      await runConnectionQuery(connId, `CREATE USER ${asName(newPgUser.name)} WITH ENCRYPTED PASSWORD $1;`, [newPgUser.password]);
+      newDbOwnerCredentials = {
+        db_user: newPgUser.name,
+        db_pass: newPgUser.password,
       }
+    }
+    if(action.type === Actions.create){ 
       const createDbQuery = [
         `CREATE DATABASE ${asName(action.newDatabaseName!)}`,
-        newDbOwnerCredentials? `WITH OWNER ${JSON.stringify(newOwner.name)}` : "",
-      ].join("\n")
+        newDbOwnerCredentials && newPgUser.permissions.type === "owner"? `WITH OWNER ${JSON.stringify(newPgUser.name)}` : "",
+      ].join("\n");
       await runConnectionQuery(connId, createDbQuery);
       newDbName = action.newDatabaseName!;
       
     } else {
+      if(newDbOwnerCredentials && newPgUser.permissions.type === "owner"){
+        await runConnectionQuery(connId, `ALTER DATABASE ${asName(action.existingDatabaseName!)} SET OWNER TO ${asName(newPgUser.name)};`);
+      }
       newDbName = action.existingDatabaseName!
     }
+
+    if(newDbOwnerCredentials && newPgUser.permissions.type === "custom"){
+      const escapedUserName = asName(newUser.newPgUser.name);
+      await runConnectionQuery(
+        connId, 
+        `
+        GRANT CONNECT ON DATABASE ${asName(newDbName)} TO ${escapedUserName};
+        GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO ${escapedUserName};
+        GRANT SELECT ON ALL TABLES IN SCHEMA public TO ${escapedUserName};
+        `
+      );
+    }
+
     const validatedConnection = await validateConnection({ 
       ...pickKeys(serverInfo!.mainConnection!, [
         "db_conn", 
@@ -272,12 +282,12 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
         
         </> : serverInfo? <>
           <Select
-            label={"Databases"}
+            label={"Database"}
             value={action.existingDatabaseName}
             fullOptions={serverInfo.databases.map(key => ({
               key,
-              disabledInfo: serverInfo.usedDatabases.includes(key)? "Already added to connections" : undefined
-            })).sort((a, b) => +!!a.disabledInfo - +!!b.disabledInfo)}
+              subLabel: serverInfo.usedDatabases.includes(key)? "Already added to connections" : undefined
+            })).sort((a, b) => +!!a.subLabel - +!!b.subLabel)}
             onChange={existingDatabaseName => {
               setAction({ 
                 ...action, 
@@ -290,37 +300,10 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
           />
           {action.existingDatabaseName && ConnectionNameEditor}
         </> : "Something went wrong"}
-        {action.type === Actions.create && 
-          <SwitchToggle 
-            label="Create a user for this database (optional)"
-            variant="col"
-            data-command="ConnectionServer.withNewOwnerToggle"
-            checked={newOwner.create}
-            onChange={create => {
-              setNewOwner({ 
-                ...newOwner,
-                ...(create && !newOwner.name && connectionName && { name: `${connectionName}_owner` }),
-                create, 
-              });
-            }}
-          />
-        }
-        {newOwner.create && <>
-          <FormFieldDebounced 
-            data-command="ConnectionServer.NewUserName"
-            label={"New username"} 
-            value={newOwner.name}
-            error={newUsernameError}
-            onChange={name => setNewOwner({ ...newOwner, name })} 
-          />
-          <FormField 
-            data-command="ConnectionServer.NewUserPassword"
-            label={"New username password"} 
-            value={newOwner.password} 
-            error={newUserPasswordError}
-            onChange={password => setNewOwner({ ...newOwner, password })}  
-          />
-        </>}
+        {(action.type === Actions.create? action.newDatabaseName : action.existingDatabaseName) && <CreatePostgresUser 
+          {...newUser}
+          connectionName={connectionName} 
+        />}
         <ErrorComponent error={error} />
       </Popup>
     }

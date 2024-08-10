@@ -31,8 +31,8 @@ export class TreeBuilder {
     } else {
       res.isRoot = true;
     }
-    if((l as LayoutGroup).items){
-      (l as LayoutGroup).items.map(sl => {
+    if("items" in l && l.items){
+      l.items.forEach(sl => {
         this.makeTree(sl, res);
       });
     }
@@ -86,20 +86,39 @@ export class TreeBuilder {
   refresh = (noChange = false) => {
     this.build(this.getLayout());
     
+    /* Remove empty boxes */
+    const getEmptyItems = () => this._filter(t => t.type !== "item" && t.parent && t.items && t.items.length === 0);
+    while(getEmptyItems().length){
+      getEmptyItems().map(d => { 
+        (d.parent as LayoutGroup).items = (d.parent as LayoutGroup).items.filter(dp => dp.id != d.id);
+      })
+      const cleansedLayout = this.getLayout();
+      this.build(cleansedLayout);
+    }
+
     const items = this._filter(t => t.type === "item");
     
     /* Unnest single items */
-    items.concat(items.map(d => d.parent!)).filter(isDefined)
+    items.concat(items.map(d => d.parent).filter(isDefined))
       .map(item => {
 
-        let p = { ...item };
-        while(p.parent && !p.parent.isRoot && (p.parent as LayoutGroup).items && (p.parent as LayoutGroup).items.length === 1){
-          p = p.parent;
+        let topParent = { ...item };
+        /** Climb to first parent that is root OR has more than one item */
+        while(
+          topParent.parent && 
+          topParent.parent?.type !== "item" && 
+          !topParent.parent.isRoot && 
+          topParent.parent.items.length <= 1
+        ){
+          topParent = topParent.parent;
         }
-        if(p.parent){
-          (p.parent as LayoutGroup).items = (p.parent as LayoutGroup).items.map(d => {
-            if(d === p){
-              return item;
+        if(topParent.parent && topParent.parent?.type !== "item"){
+          topParent.parent.items = topParent.parent.items.map(d => {
+            if(d === topParent){
+              return {
+                ...item,
+                size: topParent.size ?? item.size,
+              };
             }
             return d;
           })
@@ -112,25 +131,15 @@ export class TreeBuilder {
     const getRedundant = () => this._filter(t => Boolean(t.parent && t.parent.type === t.type));
     while(getRedundant().length){
       getRedundant().map(p => {
-  
-
-        if(p.parent && p.parent.type === p.type){
-          const idx = (p.parent as LayoutGroup).items.findIndex(d => d === p);
-          (p.parent as LayoutGroup).items.splice(idx, 1, ...(p as LayoutGroup).items);
+        
+        if(p.parent && p.parent.type === p.type && p.type !== "item" && p.parent.type !== "item"){
+          const idx = p.parent.items.findIndex(d => d === p);
+          p.parent.items.splice(idx, 1, ...p.items);
         }
         this.build(this.getLayout());
       })
     }
 
-    /* Remove empty boxes */
-    const getEmptyItems = () => this._filter(t => t.type !== "item" && t.parent && t.items && t.items.length === 0);
-    while(getEmptyItems().length){
-      getEmptyItems().map(d => { 
-        (d.parent as LayoutGroup).items = (d.parent as LayoutGroup).items.filter(dp => dp.id != d.id);
-      })
-      const cleansedLayout = this.getLayout();
-      this.build(cleansedLayout);
-    }
     if(!noChange) this.onChange(this.getLayout());
   }
 
@@ -160,11 +169,9 @@ export class TreeBuilder {
   }
 
   moveTo = (sourceId: string, targetId: string, parentType: "row" | "col" | "tab", insertBefore: boolean) => {
-    // console.log({sourceId, targetId})
 
     const source = this.find(sourceId) as LayoutItem;
-    // console.log(JSON.stringify(this.getLayout(), null, 2));
-    this.build(this.getLayout())
+    this.build(this.getLayout());
     this.remove(sourceId, true);
     
     
@@ -192,7 +199,8 @@ export class TreeBuilder {
           }
           
           this.layout = target;
-          this.tree = this.makeTree(target!);
+          const newTree = this.makeTree(target!);
+          this.tree = newTree;
         }
       
       /* Target parent is a group with required layout */

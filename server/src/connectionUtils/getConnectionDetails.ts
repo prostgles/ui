@@ -18,7 +18,7 @@ export const getConnectionDetails = (c: Connections): ConnectionDetails => {
     rejectUnauthorized: c.ssl_reject_unauthorized ?? (sslmode === "require" && !!c.ssl_certificate || sslmode === "verify-ca" || sslmode === "verify-full")
   }) : undefined;
 
-  const default_application_name = "prostgles";
+  const default_application_name = "";
 
   if(c.type === "Connection URI"){
     const cs = new ConnectionString(c.db_conn);

@@ -18,6 +18,13 @@ export const setDBSRoutesForElectron = (app: Express, io: Server, port: number, 
 
   app.post("/dbs", async (req, res) => {
 
+    if(req.body.deleteExisting){
+      const electronConfig = getElectronConfig();
+      electronConfig?.setCredentials(undefined);
+      res.json({ msg: "DBS changed. Restart system" });
+      return;
+    }
+
     const creds = pickKeys(req.body, ["db_conn", "db_user", "db_pass", "db_host", "db_port", "db_name", "db_ssl", "type"]);
     if(req.body.validate){
       try {

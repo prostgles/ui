@@ -4,7 +4,8 @@ import { loggerTableConfig } from "./Logger";
 
 export const DB_SSL_ENUM = ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"] as const;
  
-const UNIQUE_DB_FIELDLIST = "db_name, db_host, db_port";
+export const UNIQUE_DB_COLS = ["db_name", "db_host", "db_port"] as const;
+const UNIQUE_DB_FIELDLIST = UNIQUE_DB_COLS.join(", ");
 const PASSWORDLESS_ADMIN_USERNAME = "passwordless_admin";
 const DUMP_OPTIONS_SCHEMA = {
   jsonbSchema: {
@@ -121,7 +122,7 @@ const tableConfigSchema: JSONB.JSONBSchema<JSONB.FieldTypeObj> = {
 }
 
 const SESSION_TYPE = {
-  enum: ["web", "api_token", "desktop", "mobile"], 
+  enum: ["web", "api_token", "mobile"], 
   defaultValue: "web", 
   nullable: false 
 } as const;
@@ -251,7 +252,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
 
   session_types: {
     isLookupTable: {
-      values: { "web": {}, "api_token": {}, "desktop": {}, "mobile": {} }
+      values: { "web": {}, "api_token": {}, "mobile": {} }
     }
   },
 
@@ -277,7 +278,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
   },
 
   login_attempts: {
-    dropIfExists: true,
+    // dropIfExists: true,
     columns: {
       id:               `BIGSERIAL PRIMARY KEY` ,
       ip_address:       `INET NOT NULL`,
@@ -317,14 +318,6 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       table_config_ts_disabled: {
         sqlDefinition: "BOOLEAN",
         info: { hint: `If true then Table configurations will not be executed` },
-      },
-      on_mount_ts: {
-        sqlDefinition: "TEXT",
-        info: { hint: `On mount typescript function. Must export const onMount` },
-      },
-      on_mount_ts_disabled: {
-        sqlDefinition: "BOOLEAN",
-        info: { hint: `If true then On mount typescript will not be executed` },
       },
       file_table_config:            { info: { hint: `File storage configurations` },
         nullable: true,
@@ -457,10 +450,20 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       prgl_params:             { sqlDefinition: `JSONB` },
       type:                    { enum: ["Standard", "Connection URI", "Prostgles"], nullable: false },
       is_state_db:             { sqlDefinition: `BOOLEAN`, info: { hint: `If true then this DB is used to run the dashboard` }  },
- 
-      info: { jsonbSchemaType: {
-        canCreateDb: { type: "boolean", optional: true, description: "True if postgres user is allowed to create databases. Never gets updated" }
-      }, nullable: true },
+      on_mount_ts: {
+        sqlDefinition: "TEXT",
+        info: { hint: `On mount typescript function. Must export const onMount` },
+      },
+      on_mount_ts_disabled: {
+        sqlDefinition: "BOOLEAN",
+        info: { hint: `If true then On mount typescript will not be executed` },
+      },
+      info: {
+        jsonbSchemaType: {
+          canCreateDb: { type: "boolean", optional: true, description: "True if postgres user is allowed to create databases. Never gets updated" }
+        }, 
+        nullable: true 
+      },
       created:             { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
       last_updated:        { sqlDefinition: `BIGINT NOT NULL DEFAULT 0` },
 
@@ -484,7 +487,6 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     columns: {
       id:    `SERIAL PRIMARY KEY`,
       name:   "TEXT",
-      // connection_id   : `UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE`,
       database_id     : `INTEGER NULL REFERENCES database_configs(id)  ON DELETE CASCADE`,
       dbsPermissions: { info:{ hint: "Permission types and rules for the state database"}, nullable: true, jsonbSchemaType: {
         createWorkspaces: { type: "boolean", optional: true },
@@ -716,6 +718,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           command: { enum: ["pg_restore", "psql"] },
           format: { enum: ["p", "t", "c"] },
           clean: { type: "boolean" },
+          excludeSchema: { type: "string", optional: true },
           newDbName: { type: "string", optional: true },
           create: { type: "boolean", optional: true },
           dataOnly: { type: "boolean", optional: true },
@@ -784,7 +787,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       last_used:      `TIMESTAMP NOT NULL DEFAULT now()`,
       deleted:        `BOOLEAN NOT NULL DEFAULT FALSE`,
       url_path:       `TEXT`,
-      published:      `BOOLEAN NOT NULL DEFAULT FALSE`
+      published:      { sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE`, info: { hint: "If true then this workspace can be shared with other users through Access Control" } },
     },
     constraints: {
       unique_url_path: `UNIQUE(url_path)`,
@@ -980,6 +983,11 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     }
   },
 
+  database_stats: {
+    columns: {
+      database_config_id: "INTEGER REFERENCES database_configs(id) ON DELETE SET NULL",
+    }
+  },
 
   stats: { 
     // dropIfExists: true,

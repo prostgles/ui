@@ -8,7 +8,7 @@ export const startRecordingDemo = () => {
       selector,
       timestamp: (Date.now() - (!firstPath? 0 : firstPath.timestamp)),
     });
-    console.log(clickedPaths.at(-1));
+    // console.log(clickedPaths.at(-1));
   });
 }
 
