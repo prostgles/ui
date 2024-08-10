@@ -1,3 +1,4 @@
+import { getMonaco } from "../../SQLEditor";
 import {
   suggestSnippets,
   type MinimalSnippet
@@ -17,13 +18,27 @@ export const matchCreateView = async (args: SQLMatcherResultArgs) => {
     return suggestSnippets([{ label: "SELECT" }]);
   }
 
+  const monaco = await getMonaco();
   if(cb.ltoken?.textLC === "view"){
     const userSchemas = getUserSchemaNames(ss);
-    return suggestSnippets([
-      "$view_name", 
+    const ms: MinimalSnippet[] = [
+      "$new_or_existing_view_name", 
       "IF NOT EXISTS",
-      ...userSchemas.map(s => `${s}.$view_name`),
-    ].map(label => ({ label })));
+      ...userSchemas.map(s => `${s}.$new_or_existing_view_name`),
+    ].map(label => ({ label }));
+    if(cb.prevTokens.some(t => t.textLC === "replace")){
+      const views = await ss.filter(s => s.type === "view");
+      return suggestSnippets([
+        ...ms,
+        ...views.map(v => ({ 
+            ...v, 
+            insertText: `${v.escapedIdentifier} AS \n${v.view!.definition}`,
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.None,
+            sortText: v.schema === "public" ? "0" : "1" 
+          }))
+      ]);
+    }
+    return suggestSnippets(ms);
   }
 
   const withOptions = [

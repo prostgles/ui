@@ -16,6 +16,14 @@ export const getPopupSize = (popup: Popup) => {
   const contentRef = rootChild?.querySelector<HTMLElement>(`:scope > .${POPUP_CLASSES.content}`) ?? undefined;
   const titleRef = rootChild?.querySelector<HTMLElement>(`:scope > header.${POPUP_CLASSES.title}`) ?? undefined;
   const footerRef = popup.ref.querySelector<HTMLElement>(`:scope > footer`) ?? undefined;
+  if(!rootChild) return undefined;
+
+  /** Account for border to ensure there isn't a 2px overflow */
+  const style = window.getComputedStyle(popup.ref);
+  const bTop = Number(style.getPropertyValue(`border-top-width`).slice(0, -2));
+  const bRight = Number(style.getPropertyValue(`border-right-width`).slice(0, -2));
+  const bBottom = Number(style.getPropertyValue(`border-bottom-width`).slice(0, -2));
+  const bLeft = Number(style.getPropertyValue(`border-left-width`).slice(0, -2));
 
   const { width, height } = [titleRef, contentRef, footerRef]
     .filter(isDefined)
@@ -23,7 +31,7 @@ export const getPopupSize = (popup: Popup) => {
       ...a,
       width: Math.max(a.width, offsetWidth, scrollWidth),
       height: a.height + Math.max(offsetHeight, scrollHeight),
-    }), { width: 0, height: 0 });
+    }), { width: bLeft + bRight, height: bTop + bBottom });
 
   const size = {
     width: Math.max(width, popup.prevSize?.width ?? 0),

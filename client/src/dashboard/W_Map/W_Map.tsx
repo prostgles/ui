@@ -413,7 +413,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
 
     let infoSection;
 
-    if(loadingLayers){
+    if(loadingLayers && w.options.refresh?.type !== "Realtime"){
       infoSection = <div className="f-1 flex-col jc-center ai-center absolute pl-2 mt-1 ml-2">
         <Loading delay={100}/>
       </div>
@@ -486,7 +486,6 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
           }}
           style={isDrawing? { cursor: "crosshair" } : {}}
         >  
-
           {infoSection}
           <DeckGLMap
             onLoad={(map) => {

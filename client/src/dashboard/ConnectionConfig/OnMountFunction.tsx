@@ -8,17 +8,17 @@ import { ProcessLogs } from "../TableConfig/ProcessLogs";
 
 export const OnMountFunction = ({ dbsMethods, dbs, connectionId, dbKey }: Prgl) => {
 
-  const { data: dbConf } = dbs.database_configs.useSubscribeOne({ $existsJoined: { connections: { id: connectionId } } });
+  const { data: connection } = dbs.connections.useSubscribeOne({ id: connectionId });
   const tsLibraries = useCodeEditorTsTypes({ connectionId, dbsMethods, dbKey });
   return <FlexCol>
     <FlexRow>
       <h3>On mount</h3>
       <SwitchToggle 
         label={"Enabled"}
-        disabledInfo={!dbConf?.on_mount_ts? "No on mount function. Provide a function or edit and save the example" : undefined}
-        checked={!!dbConf?.on_mount_ts && !dbConf.on_mount_ts_disabled}
+        disabledInfo={!connection?.on_mount_ts? "No on mount function. Provide a function or edit and save the example" : undefined}
+        checked={!!connection?.on_mount_ts && !connection.on_mount_ts_disabled}
         onChange={async (checked) => {
-          await dbsMethods.setOnMountAndTableConfig?.(connectionId, { on_mount_ts_disabled: !checked });
+          await dbsMethods.setOnMount?.(connectionId, { on_mount_ts_disabled: !checked });
         }} 
       />
     </FlexRow>
@@ -30,9 +30,9 @@ export const OnMountFunction = ({ dbsMethods, dbs, connectionId, dbKey }: Prgl) 
       ]}
       codePlaceholder={example}
       language="typescript"
-      value={dbConf?.on_mount_ts}
+      value={connection?.on_mount_ts}
       onSave={async (value) => {
-        await dbsMethods.setOnMountAndTableConfig?.(connectionId, { on_mount_ts: value });
+        await dbsMethods.setOnMount?.(connectionId, { on_mount_ts: value });
       }}
     
     />

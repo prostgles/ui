@@ -399,7 +399,7 @@ export const createDatabase = async (dbName: string, page: PageWIds, fromTemplat
 }
 
 export const dropConnectionAndDatabase = async (dbName: string, page: PageWIds) => {
-
+  await page.waitForTimeout(2000);
   const connectionSelector = `[data-key=${JSON.stringify(dbName)}]`;
   await page.locator(connectionSelector)
     .getByTestId("Connection.edit").click();

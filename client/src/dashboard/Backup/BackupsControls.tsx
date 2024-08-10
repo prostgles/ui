@@ -484,11 +484,15 @@ const DeleteAllBackups = ({ dbs, filter, dbsMethods, filterName }: DeleteAllBack
   />
 };
   
-export function bytesToSize(bytes) {
+export function bytesToSize(bytes, _precision = 2) {
   const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
   if (bytes == 0) return "0 Byte";
   const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)) + "");
-  return (bytes / Math.pow(1024, i)).toFixed(2) + " " + sizes[i];
+  const unit = sizes[i];
+  const value = (bytes / Math.pow(1024, i));
+  const precision = i > 0? _precision : 0;
+  const valueStr = value.toFixed(precision);
+  return `${valueStr} ${unit}`;
 }
 
 

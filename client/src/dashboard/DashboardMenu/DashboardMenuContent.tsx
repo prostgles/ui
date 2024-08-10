@@ -39,7 +39,7 @@ export const DashboardMenuContent = (props: P) => {
   const { centeredLayout } = useLocalSettings();
   const maxWidth = centeredLayout?.enabled? ((window.innerWidth - centeredLayout.maxWidth)/2) + "px" : "50vw";
 
-  const detailedMethods: (MethodFullDef & { name: string; })[] = getKeys(methods).filter(n => {
+  const detailedMethods: (MethodFullDef & { name: string; })[] = Object.keys(methods).filter(n => {
     const m = methods[n]
     return m && typeof m !== "function" && isObject(m) && m.run 
   }).map(methodName => ({
@@ -52,7 +52,7 @@ export const DashboardMenuContent = (props: P) => {
   const ref = useRef<HTMLDivElement>(null);
 
   const { tablesWithInfo } = useTableSizeInfo({ tables, db, workspace });
-  
+  const ensureFadeDoesNotShowForOneItem = { minHeight: "40px" };
   return <FlexCol 
     className={"DashboardMenuContent relative f-1 min-h-0 " + (prgl.theme === "light"? "bg-color-0" : "bg-color-1") + (window.isMobileDevice? " p-p25 " : " p-1  " )}
     ref={ref}
@@ -97,7 +97,7 @@ export const DashboardMenuContent = (props: P) => {
       <SearchList
         id="search-list-queries"
         className={" b-t f-1 min-h-0 " + smallScreen? " mt-p5 " : " mt-1 "}
-        style={{ minHeight: "120pxx", maxHeight: "30vh" }}
+        style={{ ...ensureFadeDoesNotShowForOneItem, maxHeight: "30vh" }}
         placeholder={`${closedQueries.length} saved queries`} 
         noSearchLimit={3}
         items={closedQueries.sort((a, b) => +b.last_updated - +a.last_updated).map((t, i)=> ({
@@ -120,6 +120,7 @@ export const DashboardMenuContent = (props: P) => {
     {!tables.length? <div className="text-1p5 p-1">0 tables/views</div> : 
       <SearchList
         limit={100}
+        style={ensureFadeDoesNotShowForOneItem}
         noSearchLimit={0}
         data-command="dashboard.menu.tablesSearchList"
         inputProps={dataCommand("dashboard.menu.tablesSearchListInput")}
@@ -135,7 +136,6 @@ export const DashboardMenuContent = (props: P) => {
             ),
             key: t.name,
             label: t.name,
-            // disabledInfo: t.columns.length? undefined : "Table has no columns",
             contentRight: t.endText.length > 0 && (
               <span title={t.endTitle} className="text-2 ml-auto">
                 {t.endText}
@@ -153,7 +153,7 @@ export const DashboardMenuContent = (props: P) => {
       limit={100}
       noSearchLimit={0} 
       className={"search-list-functions b-t f-1 min-h-0 " + (smallScreen? " mt-p5 " : " mt-1 ")}
-      style={{ minHeight: "120px" }} 
+      style={ensureFadeDoesNotShowForOneItem} 
       placeholder={"Search " + detailedMethods.length + " functions"} 
       items={detailedMethods.map((t, i)=> ({ 
         contentLeft: (

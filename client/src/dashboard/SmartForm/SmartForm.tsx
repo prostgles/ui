@@ -496,7 +496,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     })
   }
 
-  setData = async (column: Pick<ValidatedColumnInfo, "is_pkey" | "name" | "tsDataType">, newVal: any) => {
+  setColumnData = async (column: Pick<ValidatedColumnInfo, "is_pkey" | "name" | "tsDataType">, newVal: any) => {
     this.wasChanged = true;
     const {
       db, tableName, rowFilter, onChange, onSuccess
@@ -726,7 +726,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
         row={row}
         action={action}
         getThisRow={this.getThisRow}
-        setData={this.setData}
+        setData={this.setColumnData}
         mediaTableInfo={this.mediaTableInfo}
         mediaTableName={tableInfo.fileTableName}
       />
@@ -763,7 +763,10 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
       {action.loading && <Loading variant="cover" />}
 
       {formHeader}
-      <div className={classOverride("SMARTFORM_CONTENT flex-col f-1 o-auto min-h-0 min-w-0 p-1 gap-1 " + (window.isMobileDevice ? "" : " px-2 "), contentClassname)} style={{ paddingTop: 0 }}>
+      <div 
+        className={classOverride("SmartFormContent flex-col f-1 o-auto min-h-0 min-w-0 p-1 gap-1 px-2", contentClassname)} 
+        style={{ paddingTop: 0 }}
+      >
         {fileManagerTop}
         {this.getDisplayedColumns()
           .map((c, i) => {
@@ -816,7 +819,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
               value={rawValue || ""}
               rawValue={rawValue}
               row={row}
-              onChange={newVal => this.setData(c, newVal)}
+              onChange={newVal => this.setColumnData(c, newVal)}
               showSuggestions={showSuggestions}
               error={errors[c.name] ?? (isObject(error) && error.column === c.name ? error : undefined)}
               rightContentAlwaysShow={false}
@@ -830,7 +833,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
                   enableInsert={enableInsert}
                   hideNullBtn={hideNullBtn}
                   referencedInsertData={this.state.referencedInsertData}
-                  setData={this.setData}
+                  setData={this.setColumnData}
                   setReferencedInsertData={this.setReferencedInsertData}
                 />
               )}

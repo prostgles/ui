@@ -2,11 +2,12 @@ import type { MultiSyncHandles, SingleSyncHandles } from "prostgles-client/dist/
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { DBSchemaTable } from "prostgles-types";
 import React from "react";
-import Loading, { pageReload } from "../../components/Loading";
-import RTComp from "../RTComp";
+import Loading from "../../components/Loading";
+import RTComp, { type DeltaOfData } from "../RTComp";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
 import type { DBObject } from "../SearchAll";
 
+import { isEmpty } from "prostgles-types";
 import type { NavigateFunction } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import type { Prgl } from "../../App";
@@ -33,7 +34,8 @@ import {
   TopHeaderClassName
 } from "./dashboardUtils";
 import { loadTable, type LoadTableArgs } from "./loadTable";
-import { isEmpty } from "prostgles-types"; 
+import Btn from "../../components/Btn";
+import { mdiArrowLeft } from "@mdi/js";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -150,7 +152,7 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
 
   loadingTables = false;
   syncsSet = false;
-  onDelta = async (dp: DashboardProps, ds: DashboardState, dd: any) => {
+  onDelta = async (dp: DashboardProps, ds: DashboardState, dd: DeltaOfData<DashboardData>) => {
     const delta = ({ ...dp, ...ds, ...dd });
     const { prgl: { connectionId, dbs, }, workspaceId } = this.props;
     const { workspace } = this.d;
@@ -212,7 +214,7 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
           }
           this.setData({ workspace }, { workspace: delta })
         }
-      );
+      ); 
 
       const linksSync = await dbs.links.sync?.(
         { workspace_id: wsp.id }, 
@@ -250,12 +252,16 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
 
     this.checkIfNoOpenWindows();
 
-    const needToRecalculateCounds = delta.workspace && "hideCounts" in delta.workspace;
+    const needToRecalculateCounts = "workspace" in delta && (
+      delta.workspace && "hideCounts" in delta.workspace || 
+      delta.workspace?.options?.tableListEndInfo || 
+      delta.workspace?.options?.tableListSortBy
+    );
     const schemaChanged = this.props.prgl.dbKey !== this.loadingSchema?.dbKey; //  !this.loadingSchema?.dbKey.startsWith(FORCED_REFRESH_PREFIX) && 
     const dataWasImported = !!delta.imported;
     if(
       workspace && 
-      (schemaChanged || needToRecalculateCounds || dataWasImported)
+      (schemaChanged || needToRecalculateCounts || dataWasImported)
     ){
       this.loadSchema();
     }
@@ -313,7 +319,20 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
     const { centeredLayout } = localSettings;
 
     if(wspError || error){
-      const errorNode = wspError? <>Workspace not found <a className='text-white' href={`/connections/${connectionId}`}>Go back</a></> : <ErrorComponent error={error} />
+      const errorNode = wspError? 
+        <FlexCol className="w-full h-full ai-center text-0 pt-2">
+          Workspace not found 
+          <Btn 
+            color="action" 
+            variant="filled" 
+            asNavLink={true} 
+            href={`/connections/${connectionId}`} 
+            iconPath={mdiArrowLeft}
+          >
+            Go back
+          </Btn>
+        </FlexCol> : 
+        <ErrorComponent error={error} />
       return <div className="flex-col p-1 text-white">
         {errorNode}
       </div>
@@ -487,13 +506,13 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<DashboardP
 export const getTables = async (schemaTables: DBSchemaTable[], workspace: WorkspaceSyncItem | undefined, db: DBHandlerClient): Promise<{ tables: DBSchemaTablesWJoins; error?: undefined } | { error: any; tables?: undefined }> => {
   try {
     const tables = await Promise.all(schemaTables.map(async t => {
-      const countRequestedAndAllowed = workspace?.options.tableListEndInfo === "count" && db[t.name]?.count;
-      const tableHasColumnsAndWillNotError = !!t.columns.length;
-      const shouldGetCount = countRequestedAndAllowed && tableHasColumnsAndWillNotError;
-      const count = (shouldGetCount? await db[t.name]?.count?.() ?? "" : "").toString();
+      // const countRequestedAndAllowed = workspace?.options.tableListEndInfo === "count" && db[t.name]?.count;
+      // const tableHasColumnsAndWillNotError = !!t.columns.length;
+      // const shouldGetCount = countRequestedAndAllowed && tableHasColumnsAndWillNotError;
+      // const count = (shouldGetCount? await db[t.name]?.count?.() ?? "" : "").toString();
       return {
         ...t,
-        count,
+        // count,
         ...getJoinedTables(schemaTables, t.name, db),
       }
     })).catch(e => {

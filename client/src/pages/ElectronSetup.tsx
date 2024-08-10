@@ -4,14 +4,15 @@ import type { AppState } from "../App";
 import Btn from "../components/Btn";
 import ErrorComponent from "../components/ErrorComponent"; 
 import Loading, { pageReload } from "../components/Loading";
-import { pickKeys } from "../utils";
+import { omitKeys, pickKeys } from "../utils";
 import { POST } from "./Login";
 import { NewConnectionForm } from "./NewConnection/NewConnectionForm";
 import type { Connection} from "./NewConnection/NewConnnection";
 import { DEFAULT_CONNECTION } from "./NewConnection/NewConnnection";
-import { FlexCol } from "../components/Flex";
+import { FlexCol, FlexRow } from "../components/Flex";
 import type { OS} from "./PostgresInstallationInstructions";
 import { PostgresInstallationInstructions } from "./PostgresInstallationInstructions";
+import { isObject } from "../../../commonTypes/publishUtils";
 
 type ElectronSetup = {
   serverState: AppState["serverState"]
@@ -72,7 +73,16 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
 
   const [step, setStep] = useState(0);
 
-  const error = serverState?.connectionError || serverState?.initError;
+  const { electronCredsProvided, connectionError, initError, electronCreds } = serverState || {};
+  const error = connectionError || initError;
+  useEffect(() => {
+    if(electronCredsProvided){
+      setStep(2);
+      if(electronCreds){
+        setConnection(c => ({ ...c,  ...omitKeys(electronCreds, ["db_ssl"]) }));
+      }
+    }
+  }, [electronCredsProvided, setConnection, connectionError, electronCreds]);
 
   return (
     <FlexCol className="ElectronSetup m-auto min-s-0">
@@ -113,7 +123,7 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
             /> : 
             <FlexCol className="px-p25 min-s-0">
               <h2>State database</h2>
-              <FlexCol className="min-s-0 o-auto">
+              <FlexCol className="min-s-0 o-auto px-p5">
                 <NewConnectionForm 
                   mode="insert"
                   warning={validationWarning}
@@ -125,17 +135,20 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
                     status: "",
                     statusOK: false,
                   }}
-                  dbProps={undefined} 
+                  dbProps={undefined}
                 />
               </FlexCol>
             </FlexCol>}
 
-            {error && <ErrorComponent 
-              className="rounded f-0" 
-              style={{ background: "#fde8e8"}}
-              withIcon={true} 
-              error={pickKeys(serverState, ["connectionError", "initError"], true)} 
-            />}
+            {!loading && error && 
+              <ErrorComponent 
+                className="rounded f-0" 
+                style={{ background: "#fde8e8"}}
+                withIcon={true} 
+                error={pickKeys(serverState!, ["connectionError", "initError"], true)} 
+              />
+            }
+            
             {!loading && 
               <Btn 
                 data-command="ElectronSetup.Done"
@@ -198,9 +211,7 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
 
 const postConnection = async (c: Connection, validate = false): Promise<{ connection?: Connection; warning?: any; }> => {
   const res = await POST("/dbs", { ...c, ...(validate? {validate: true} : {}) });
-
   return await res.json();
-
 }
 
 export const tout = (timeout: number) => {

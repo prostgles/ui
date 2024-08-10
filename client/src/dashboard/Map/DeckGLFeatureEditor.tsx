@@ -219,6 +219,10 @@ export const DeckGLFeatureEditor = ({ onRenderLayer, edit, deckGlLibs, deckW }: 
     .map(l => ({ ...l, rootTable: l.path?.at(-1) ?? l.tableName }))
     .filter(l => dbProject[l.tableName]?.update);
 
+  if(!layerTables.length){
+    return null;
+  }
+
   if(editMode){
 
     if(editMode.finished && editMode.geometry){
@@ -358,7 +362,7 @@ export const DeckGLFeatureEditor = ({ onRenderLayer, edit, deckGlLibs, deckW }: 
       }} 
     />
 
-  }  
+  }
 
   return <>Something went wrong</>; 
 }

@@ -343,7 +343,9 @@ export default class SmartCard<T extends AnyObject> extends RTComp<SmartCardProp
         }}
       >
         {(allowedActions.update || allowedActions.delete || allowedActions.view) ?
-          <Btn className="f-0 absolute show-on-parent-hover"
+          <Btn 
+            className="f-0 absolute show-on-parent-hover"
+            data-command="SmartCard.viewEditRow"
             style={{ top: "0.25em", right: "0.25em" }}
             iconPath={(allowedActions.update || allowedActions.delete) ? mdiPencil : mdiResize}
             onClick={(e) => {

@@ -200,11 +200,7 @@ export const SQL_TESTING_SCRIPTS = {
 export type SqlTestingScripts = typeof SQL_TESTING_SCRIPTS;
  
 console.error(`Finish demo videos:
-  - Backups (Automatic, on demand, s3)
-  - Access Control
   - Table view (row panel + related records, cross filtering, )
-  - Map (zoom to realtime view in food_delivery, row panel, draw shape)
-  - Time chart (layers, realtime view)
   - Table method view
 `);
 

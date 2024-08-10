@@ -89,16 +89,19 @@ export const MatchFirst = async ({
   }
 
   if(ftoken?.textLC === "table"){
-    // return getExpected("tableOrView", cb, ss)
     return suggestTableLike({ cb, ss, sql });
   }
 
   if(ftoken?.textLC === "explain"){
     if(cb.currNestingFunc?.textLC === "explain"){
-      const { getSuggestion } = withKWDs(ExplainOptions, { cb, ss, setS, sql });
+      const { getSuggestion } = withKWDs(ExplainOptions, { cb, ss, setS, sql, opts: { notOrdered: true } });
       return getSuggestion(",", ["(", ")"]);
     }
-    if(!TOP_KEYWORDS.some(kwd => !cb.text.toLowerCase().includes(kwd.label.toLowerCase()))){
+    if(cb.ltoken?.textLC === "explain"){
+      const hasNoStatement = !TOP_KEYWORDS.some(kwd => !cb.text.toLowerCase().includes(kwd.label.toLowerCase()));
+      if(!hasNoStatement){
+        return suggestSnippets([{ label: "(...options)", insertText: "( $0 )" }]);
+      }
       return withKWDs(EXPLAIN_KWDS, { cb, ss, setS, sql }).getSuggestion();
     }
   }
@@ -209,7 +212,7 @@ const ExplainOptions = [
 { kwd: "WAL", docs: "Include information on WAL record generation. Specifically, include the number of records, number of full page images (fpi) and the amount of WAL generated in bytes. In text format, only non-zero values are printed. This parameter may only be used when ANALYZE is also enabled. It defaults to FALSE." },
 { kwd: "TIMING", docs: "Include actual startup time and time spent in each node in the output. The overhead of repeatedly reading the system clock can slow down the query significantly on some systems, so it may be useful to set this parameter to FALSE when only actual row counts, and not exact times, are needed. Run time of the entire statement is always measured, even when node-level timing is turned off with this option. This parameter may only be used when ANALYZE is also enabled. It defaults to TRUE." },
 { kwd: "SUMMARY", docs: "Include summary information (e.g., totaled timing information) after the query plan. Summary information is included by default when ANALYZE is used but otherwise is not included by default, but can be enabled using this option. Planning time in EXPLAIN EXECUTE includes the time required to fetch the plan from the cache and the time required for re-planning, if necessary." },
-{ kwd: "FORMAT", docs: "Specify the output format, which can be TEXT, XML, JSON, or YAML. Non-text output contains the same information as the text output format, but is easier for programs to parse. This parameter defaults to TEXT." },
+{ kwd: "FORMAT", options: ["JSON", "TEXT", "YAML", "XML"], docs: "Specify the output format, which can be TEXT, XML, JSON, or YAML. Non-text output contains the same information as the text output format, but is easier for programs to parse. This parameter defaults to TEXT." },
 ] satisfies KWD[];
 
 const TO_CHAR_PATTERNS: { label: string, docs: string }[] = [

@@ -21,7 +21,7 @@ type P = {
 }
 
 export const WorkspaceMenu = (props: P) => {
-  const { workspace, className, prgl: { dbs, dbsTables, dbsMethods } } = props;
+  const { workspace, className, prgl: { dbs, dbsTables, dbsMethods, user } } = props;
   const listRef = useRef<HTMLDivElement>(null);
 
   const { data: unsortedWorkspaces = []} = dbs.workspaces.useSync!(
@@ -29,13 +29,21 @@ export const WorkspaceMenu = (props: P) => {
     { handlesOnData: true, select: "*", patchText: false }
   );
 
+  const userId = user?.id;
+  const isAdmin = user?.type === "admin";
   const workspaces = useMemo(() => {
 
     setTimeout(() => {
       listRef.current?.querySelector("li.active")?.scrollIntoView()
     }, 100)
-    return unsortedWorkspaces.slice(0).sort((a, b) => + new Date(a.created!) - + new Date(b.created!))
-  }, [unsortedWorkspaces]);
+    return unsortedWorkspaces
+      .slice(0)
+      .sort((a, b) => + new Date(a.created!) - + new Date(b.created!))
+      .map(wsp => ({ 
+        ...wsp,
+        isMine: wsp.user_id === userId,
+      }));
+  }, [unsortedWorkspaces, userId]);
 
   const navigate = useNavigate();
   const setWorkspace = (w?: Workspace) => {
@@ -103,15 +111,28 @@ export const WorkspaceMenu = (props: P) => {
                   </div>
                 ),
                 contentRight: (<div className="flex-row gap-p5 pl-1 show-on-parent-hover">
-                  {w.published && <Btn 
+                  {w.published && isAdmin && <Btn 
                     title="Published" 
                     iconPath={mdiAccountMultiple} 
                     color="action" 
                     asNavLink={true} 
                     href={`/connection-config/${w.connection_id}?section=access_control`} 
                   />}
-                  <WorkspaceDeleteBtn w={w} dbs={props.prgl.dbs} activeWorkspaceId={workspace.id} />
-                  <WorkspaceSettings w={w} theme={props.prgl.theme} dbs={props.prgl.dbs} dbsTables={dbsTables} dbsMethods={dbsMethods} />
+                  <WorkspaceDeleteBtn 
+                    w={w} 
+                    dbs={props.prgl.dbs} 
+                    activeWorkspaceId={workspace.id}
+                    disabledInfo={(isAdmin || w.isMine)? undefined : "You can not delete a published workspace"}
+                  />
+                  {(isAdmin || w.isMine) && <>
+                    <WorkspaceSettings 
+                      w={w} 
+                      theme={props.prgl.theme} 
+                      dbs={props.prgl.dbs} 
+                      dbsTables={dbsTables} 
+                      dbsMethods={dbsMethods} 
+                    />
+                  </>}
                 </div>),
                 onPress: (e) => {
                   if(w.id === props.workspace.id ||

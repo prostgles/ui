@@ -2,7 +2,7 @@ name: Electron build windows
 on: workflow_dispatch 
 jobs:
   electron_build_windows:
-    timeout-minutes: 20
+    timeout-minutes: 12
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
@@ -10,9 +10,17 @@ jobs:
       with:
         node-version: 20
 
-    - name: Install dependencies
+    - name: Build
       run: |
         cd electron && npm run build-win
+
+    - name: Test build
+      shell: cmd
+      run: |
+        cd electron
+        ".\dist\Prostgles Desktop-1.0.0.exe" /S --force-run
+        waitfor SomethingThatIsNeverHappening /t 3 2>NUL
+        call screenCapture.bat .\dist\screen1.png
       
     - uses: actions/upload-artifact@v3
       if: always()

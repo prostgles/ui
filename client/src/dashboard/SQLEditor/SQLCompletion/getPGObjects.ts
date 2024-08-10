@@ -964,7 +964,7 @@ export const PG_OBJECT_QUERIES = {
       SELECT 
         trigger_catalog, trigger_schema, trigger_name, event_manipulation, 
         event_object_schema, 
-        format('%I', event_object_table ) as event_object_table,
+        format('%I.%I', trigger_schema, event_object_table ) as event_object_table,
         action_statement, action_orientation,
         action_timing, action_condition,
         format('%I', trigger_name ) as escaped_identifier

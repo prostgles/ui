@@ -18,25 +18,17 @@ jobs:
       
     - name: Install dependencies for testing
       run: | 
-        sudo apt-get update && \
-        cd electron && sudo apt-get install -y libnotify4  libnss3-dev libatk1.0-0 libatk-bridge2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0  && \
-        DEBIAN_FRONTEND=noninteractive sudo apt install -y x11-apps imagemagick xvfb && \
-        ls /tmp/.X11-unix/ && \
-        sudo apt-get install gdebi-core
-        
+        sudo apt-get update
+        cd electron && sudo apt-get install -y x11-xserver-utils scrot libnotify4  libnss3-dev libatk1.0-0 libatk-bridge2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0 gconf-service gconf2
+        DEBIAN_FRONTEND=noninteractive sudo apt install -y x11-apps xvfb gdebi-core  
     - name: Install the app
       run: | 
-        cd electron && \
-        sudo apt install ./dist/Prostgles-Desktop-1.0.0-amd64.deb
+        cd electron
+        sudo dpkg -i ./dist/Prostgles\ Desktop-1.0.0-amd64.deb
     - name: Test installation file
       run: | 
-        xvfb-run --auto-servernum -- prostgles-desktop & \
-        echo "Waiting for 10 seconds for the app to start" && \
-        sleep 10 && \ 
-        echo $DISPLAY && \ 
-        DISPLAY=:1 xterm 2>/dev/null && \ 
-        DISPLAY=:1 xwd -root -silent | convert xwd:- png:./dist/screenshot.png
-      # Xvfb :1 -screen 5 1024x768x8 & \ 
+        cd electron
+        xvfb-run --server-num=98 --server-args="-screen 0 1920x1080x24" -- bash -c "QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu prostgles-desktop & sleep 5 && scrot ./dist/screenshot.png && exit" && exit
     - uses: actions/upload-artifact@v4
       if: always()
       with:

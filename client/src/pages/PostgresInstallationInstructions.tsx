@@ -1,9 +1,8 @@
-import Btn from "../components/Btn";
-import PopupMenu from "../components/PopupMenu";
-import { ExpandSection } from "../components/ExpandSection";
 import { mdiApple, mdiInformationVariant, mdiLinux, mdiMicrosoftWindows } from "@mdi/js";
 import React from "react";
-import type { DivProps } from "../components/Flex";
+import Btn from "../components/Btn";
+import { ExpandSection } from "../components/ExpandSection";
+import PopupMenu from "../components/PopupMenu";
 import { DEFAULT_ELECTRON_CONNECTION } from "./ElectronSetup";
 
 const OPERATING_SYSTEMS = [
@@ -15,8 +14,9 @@ export type OS = typeof OPERATING_SYSTEMS[number]["key"];
 
 type P = { 
   os: OS;
-  placement: "state-db" | "add-connection"; 
-} & Pick<DivProps, "className">;
+  placement: "state-db" | "add-connection";
+  className?: string; 
+};
 export const PostgresInstallationInstructions = ({ os, className = "", placement }: P) => {
 
   return <PopupMenu 

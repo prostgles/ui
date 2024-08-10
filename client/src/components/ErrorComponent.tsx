@@ -1,10 +1,11 @@
-import { mdiAlertCircleOutline } from "@mdi/js"; 
+import { mdiAlertCircleOutline, mdiCancel, mdiClose } from "@mdi/js"; 
 import type { ReactNode } from "react";
 import React from "react";
 import { isEmpty } from "../utils";
 import { classOverride } from "./Flex";
 import { Icon } from "./Icon/Icon";
 import { isObject } from "../../../commonTypes/publishUtils";
+import Btn from "./Btn";
 
 export default class ErrorComponent extends React.Component<{ 
   error: any; 
@@ -18,6 +19,7 @@ export default class ErrorComponent extends React.Component<{
   title?: string;
   variant?: "outlined";
   color?: "warning" | "action" | "info";
+  onClear?: VoidFunction;
 }, any> {
   ref?: any;
 
@@ -61,7 +63,7 @@ export default class ErrorComponent extends React.Component<{
     this.scrollIntoView();
   }
   render(){
-    const { error, className = "", style = {}, pre = false, findMsg = false, withIcon = false, maxTextLength = 1000, title, noScroll = false, variant, color } = this.props;
+    const { error, className = "", style = {}, pre = false, findMsg = false, withIcon = false, maxTextLength = 1000, title, noScroll = false, variant, color, onClear } = this.props;
 
     if([null, undefined].includes(error)){
       return null;
@@ -69,7 +71,7 @@ export default class ErrorComponent extends React.Component<{
     const colorClass = color? `text-${color}` : "text-danger";
     return (
       <div ref={e => { if(e) this.ref = e; }} 
-        className={classOverride(`ErrorComponent flex-row ai-center text-danger p-1 o-auto min-w-0 min-h-0 o-auto ${colorClass} ${(pre? " ws-pre " : "")}`, className)} 
+        className={classOverride(`ErrorComponent relative flex-row ai-center text-danger p-1 o-auto min-w-0 min-h-0 o-auto ${colorClass} ${(pre? " ws-pre " : "")}`, className)} 
         style={{ 
           whiteSpace: "pre-line", 
           textAlign: "left", 
@@ -92,6 +94,16 @@ export default class ErrorComponent extends React.Component<{
           {title && <div className="font-18 bold">{title}</div>}
           {(ErrorComponent.parsedError(error, findMsg) + "").slice(0, maxTextLength)}
         </div>
+        {onClear && 
+          <Btn 
+            className="ml-p5"
+            onClick={onClear} 
+            iconPath={mdiClose} 
+            variant="faded" 
+            color="danger" 
+            size="small" 
+          />
+        }
       </div>
     )
   }

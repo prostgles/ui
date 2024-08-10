@@ -1,26 +1,19 @@
 import { mdiDelete } from "@mdi/js";
 import React, { useState } from "react";
-import Btn from "../../components/Btn";
-import ErrorComponent from "../../components/ErrorComponent";
-import PopupMenu from "../../components/PopupMenu"; 
-import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";
-import type { Workspace } from "../Dashboard/dashboardUtils";
 import type { Prgl } from "../../App";
+import Btn, { type BtnProps } from "../../components/Btn";
+import ErrorComponent from "../../components/ErrorComponent";
 import { pageReload } from "../../components/Loading";
+import PopupMenu from "../../components/PopupMenu";
+import type { Workspace } from "../Dashboard/dashboardUtils";
 
-type WorkspaceDeleteBtnProps = Pick<Prgl, "dbs"> & {
+type WorkspaceDeleteBtnProps = Pick<Prgl, "dbs"> & Pick<BtnProps, "disabledInfo"> & {
   w: Workspace;
   activeWorkspaceId: string;
 }
-export const WorkspaceDeleteBtn = ({ dbs, w, activeWorkspaceId }: WorkspaceDeleteBtnProps) => {
+export const WorkspaceDeleteBtn = ({ dbs, w, activeWorkspaceId, disabledInfo }: WorkspaceDeleteBtnProps) => {
 
   const [error, setError] = useState<any>();
-  const [disabledDelete, setDisabledD] = useState("");
-
-  useEffectAsync(async () => {
-    const cols = await dbs.workspaces.getColumns!({ rule: "update", data: { id: "f6c03e9b-d66c-432b-b82c-e959bcbabf16" }} as any);
-    setDisabledD(cols.some(c => c.delete)? "" : "Not allowed to delete this workspace")
-  }, [])
 
   return <PopupMenu
     style={{
@@ -35,7 +28,7 @@ export const WorkspaceDeleteBtn = ({ dbs, w, activeWorkspaceId }: WorkspaceDelet
         title="Delete this workspace"
         iconPath={mdiDelete}
         className="delete-workspace"
-        disabledInfo={disabledDelete}
+        disabledInfo={disabledInfo}
         data-command="WorkspaceDeleteBtn"
         color='danger'
       />

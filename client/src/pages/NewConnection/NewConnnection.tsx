@@ -151,6 +151,8 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
     const { dbsMethods } = prglState;
     try {
       await dbsMethods.deleteConnection!(c.id!, { dropDatabase });
+      /** Hacky way to prevent reconnections to dropped connection */
+      (window as any).dbSocket?.disconnect();
       onDeleted?.();
     } catch (e: any) {
       this.setState({ error: getSqlErrorText(e) });
@@ -236,7 +238,6 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
         minWidth: "450px",
       }}
     >
-
       {!contentOnly && <NavLink className="p-1 text-1 round flex-row ai-center" to={`/connections`}>
         <Icon path={mdiArrowLeft} size={1} />
         <div className="ml-p5">Connections</div>

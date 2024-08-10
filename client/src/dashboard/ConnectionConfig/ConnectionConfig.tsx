@@ -56,11 +56,12 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
       listProps: dataCommand("config.status"),
       leftIconPath: mdiChartLine,
       disabledText: !dbsMethods.getStatus ? "Must be admin to access this" : undefined,
-      content: !dbsMethods.getStatus ? null : 
+      content: !dbsMethods.getStatus || !dbsMethods.runConnectionQuery ? null : 
         <StatusMonitor
           {...prgl}
           theme={prgl.theme}
           getStatus={dbsMethods.getStatus}
+          runConnectionQuery={dbsMethods.runConnectionQuery}
         />
     },
     access_control: {

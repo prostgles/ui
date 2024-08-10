@@ -101,6 +101,7 @@ test.describe("Main test", () => {
     await page.getByText("my_new_value_3").waitFor({ state: "visible", timeout: 15e3 });
 
     await goTo(page, 'localhost:3004/connections');
+    await page.waitForTimeout(4e3);
     await dropConnectionAndDatabase(dbName, page);
     await page.waitForTimeout(4e3);
     await runDbsSql(page, `DROP USER db_with_owner;`);
@@ -142,9 +143,9 @@ test.describe("Main test", () => {
     await page.getByTestId("Setup2FA.Enable.Confirm").click();
 
     /** Using token */
-    // await goTo(page, 'localhost:3004/logout');
     await login(page);
-    await page.locator("#totp_token").fill(code);
+    const newCode = authenticator.generate(Base64Secret ?? "");
+    await page.locator("#totp_token").fill(newCode);
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
     await page.getByRole('link', { name: 'Connections' }).waitFor({ state: "visible", timeout: 15e3 });
 

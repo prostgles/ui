@@ -213,6 +213,8 @@ export async function getSqlSuggestions(db: DB): Promise< {
         cols
       });
       suggestions = suggestions.concat(cols.map(c => {
+        const cIndexes = tIndexes.filter(d => d.indexdef.slice(d.indexdef.indexOf("("), d.indexdef.lastIndexOf(")")).includes(c.escaped_identifier));
+        const indexInfo = t.is_view? "" : `\n\n\n\n**Indexes**(${cIndexes.length}): \n${asSQL(cIndexes.map(i => i.indexdef).join(", "))}`
         return {
           label: getColumnSuggestionLabel(c, t.name),
           name: c.name, 
@@ -224,7 +226,7 @@ export async function getSqlSuggestions(db: DB): Promise< {
           escapedIdentifier: c.escaped_identifier,
           insertText: c.escaped_identifier,
           documentation: `${asListObject({ Table: t.escaped_identifier, Schema: t.schema, Comment: c.comment })}  \n` + 
-            asSQL(c.definition),
+            asSQL(c.definition) + indexInfo,
           filterText: `${c.name} ${c.udt_name}`,
           type: "column",
           colInfo: c

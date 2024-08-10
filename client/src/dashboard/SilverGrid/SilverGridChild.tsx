@@ -121,6 +121,7 @@ export class SilverGridChild extends RTComp<SilverGridChildProps, SilverGridChil
         }
         this.target = undefined;
       },
+      threshold: 55,
       onPan: (p) => {
         if(!this.props.hasSiblings) return;
 

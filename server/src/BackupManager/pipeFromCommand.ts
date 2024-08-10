@@ -75,7 +75,7 @@ export function pipeFromCommand(args: {
 
   proc.on("exit", function (code, signal) {
     if(code){
-      console.error({ execCommandErr: fullLog.slice(fullLog.length - 100) })
+      console.error({ code, signal, logs: fullLog.slice(fullLog.length - 1100) })
       onEnd(log, fullLog)
     } else {
       onEnd(undefined, fullLog);

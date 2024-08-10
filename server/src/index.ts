@@ -17,15 +17,15 @@ import { getInitState, tryStartProstgles } from "./startProstgles";
 
 const app = express();
 
-// if(process.env.PRGL_TEST){
+if(process.env.PRGL_TEST){
   app.use((req, res, next) => {
     res.on("finish", () => {
       console.log(`${(new Date()).toISOString()} ${req.method} ${res.statusCode} ${req.url} ${res.statusCode === 302? res.getHeader("Location") : ""}`);
     });
     next();
-  });
-// }
-
+  });   
+} 
+     
 export const API_PATH = "/api";
 
 app.use(json({ limit: "100mb" }));
@@ -104,7 +104,12 @@ const awaitInit = () => {
  * Serve prostglesInitState
  */
 app.get("/dbs", (_req, res) => {
-  const serverState: ServerState = getInitState()
+  const serverState: ServerState = getInitState();
+  const electronCreds = electronConfig?.isElectron && electronConfig.hasCredentials()? electronConfig.getCredentials() : undefined;
+  /** Provide credentials if there is a connection error so the user can rectify it */
+  if(electronCreds && isObject(serverState.connectionError) && _req.cookies["sid_token"] === electronConfig?.sidConfig.electronSid){
+    serverState.electronCreds = electronCreds as any;
+  }
   res.json(serverState);
 });
 
@@ -171,8 +176,11 @@ const server = http.listen(PORT, HOST, () => {
   _initState.httpListening = {
     port
   };
-  onServerReadyListeners.forEach(cb => {
-    cb(port)
+
+  awaitInit().then(() => {
+    onServerReadyListeners.forEach(cb => {
+      cb(port)
+    });
   });
   console.log(`\n\nexpress listening on port ${port} (${host}:${port})\n\n`);
 });

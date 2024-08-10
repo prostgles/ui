@@ -106,13 +106,15 @@ export default class Select<O extends OptionKey, Multi extends boolean = false, 
 
   btnRef?: HTMLButtonElement;
 
+  id = "select-" + Date.now();
+
   render(){
     const { 
       onChange: _onChange, 
       className = "",
       title,
       value: _value,
-      id = "select-" + Date.now(),
+      id = this.id,
       style = {},
       required,
       label,
@@ -269,7 +271,7 @@ export default class Select<O extends OptionKey, Multi extends boolean = false, 
       />
       let chips: React.ReactNode = null;
       if(chipMode){
-        const chipValues = multiSelect && popupAnchor? fullOptions.filter(v => {4
+        const chipValues = multiSelect && popupAnchor? fullOptions.filter(v => {
           return this.props.value.includes(v.key)
         }) : selectedFullOptions;
         chips = <div className={"Select_Chips flex-row-wrap gap-p5 ai-center " + (className)} style={style}>

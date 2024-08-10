@@ -100,24 +100,21 @@ export const TopControls = (props: TopControlsProps) => {
 
 type ConnectionConfigBtnProps = Pick<FullExtraProps, "user"> & { connection: Connections; location: "workspace" | "config" }
 export const ConnectionConfigBtn = ({ user, connection, location }: ConnectionConfigBtnProps) => {
-
+  const isAdmin = user?.type === "admin";
+  if(!isAdmin) return null;
   const isOnWorkspace = location === "workspace"
   return <div className="h-full flex-col gap-p25 ai-start ">
-    {user?.type === "admin"? 
-      <Btn title={isOnWorkspace? "Configure database connection" : "Go back to connection workspace"}  
-        { ...dataCommand("dashboard.goToConnConfig") }
-        variant="faded"
-        color={isOnWorkspace? undefined : "action"}
-        className="ConnectionConfigBtn" 
-        iconPath={mdiDatabaseCog} 
-        href={isOnWorkspace? `/connection-config/${connection.id}` : `/connections/${connection.id}`} 
-        asNavLink={true} 
-        disabledInfo={connection.is_state_db? "Not allowed for state database" : undefined} 
-        children={isOnWorkspace? null : "Connection configuration"}
-      /> : 
-      !window.isLowWidthScreen && <>
-        <div > </div>
-      </>}
+    <Btn title={isOnWorkspace? "Configure database connection" : "Go back to connection workspace"}  
+      { ...dataCommand("dashboard.goToConnConfig") }
+      variant="faded"
+      color={isOnWorkspace? undefined : "action"}
+      className="ConnectionConfigBtn" 
+      iconPath={mdiDatabaseCog} 
+      href={isOnWorkspace? `/connection-config/${connection.id}` : `/connections/${connection.id}`} 
+      asNavLink={true} 
+      disabledInfo={connection.is_state_db? "Not allowed for state database" : undefined} 
+      children={isOnWorkspace? null : "Connection configuration"}
+    /> 
   </div>
 }
 
