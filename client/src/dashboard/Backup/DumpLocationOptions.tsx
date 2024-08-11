@@ -15,8 +15,7 @@ type P = Pick<DumpOptionsProps, "dbs" | "dbsTables" | "dbsMethods"> & {
 export const DumpLocationOptions = ({ dbs, dbsTables, dbsMethods, currOpts, theme, onChangeCurrOpts }: P) => {
 
   const { destination, credentialID } = currOpts;
-  return <>
-    {/* FEATURE FLAG */}
+  return <> 
     <Select className="mr-1"
       label="Destination"
       fullOptions={DESTINATIONS}

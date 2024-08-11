@@ -1,6 +1,5 @@
 {
-  "name": "prgl_ui_server",
-  "version": "1.0.0",
+  "name": "prostgles-ui-server",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -14,9 +13,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.620.1",
-    "@aws-sdk/lib-storage": "^3.620.1",
-    "@aws-sdk/s3-request-presigner": "^3.620.1",
+    "@aws-sdk/client-s3": "^3.627.0",
+    "@aws-sdk/lib-storage": "^3.627.0",
+    "@aws-sdk/s3-request-presigner": "^3.627.0",
     "@faker-js/faker": "^7.6.0",
     "@types/cookie-parser": "^1.4.2",
     "check-disk-space": "^3.3.1",

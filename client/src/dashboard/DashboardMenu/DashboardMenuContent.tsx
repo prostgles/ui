@@ -1,9 +1,8 @@
-import { mdiFile, mdiFunction, mdiRelationManyToMany, mdiScriptTextPlay, mdiTable, mdiTableEdit } from "@mdi/js";
+import { mdiFile, mdiFunction, mdiScriptTextPlay, mdiTable, mdiTableEdit } from "@mdi/js";
 import type { MethodFullDef } from "prostgles-types";
-import { getKeys, isObject } from "prostgles-types";
+import { isObject } from "prostgles-types";
 import React, { useRef, useState } from "react";
 import { dataCommand } from "../../Testing";
-import Btn from "../../components/Btn";
 import { FlexCol, FlexRowWrap } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
@@ -16,11 +15,12 @@ import type { DashboardMenuProps, DashboardMenuState } from "./DashboardMenu";
 import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuResizer } from "./DashboardMenuResizer";
 import { NewTableMenu } from "./NewTableMenu";
-import { useTableSizeInfo } from "./useTableSizeInfo";
+import type { TablesWithInfo } from "./useTableSizeInfo";
 
 type P = DashboardMenuProps & {
   onClose: undefined | VoidFunction;
   onClickSearchAll: VoidFunction;
+  tablesWithInfo: TablesWithInfo
 } & Pick<DashboardMenuState, "queries">;
 
 export const DashboardMenuContent = (props: P) => {
@@ -28,7 +28,7 @@ export const DashboardMenuContent = (props: P) => {
   const { 
     tables, loadTable, 
     workspace, 
-    prgl, queries, onClose, onClickSearchAll,
+    prgl, queries, onClose, onClickSearchAll, tablesWithInfo
   } = props;
   const { db, methods } = prgl;
   const closedQueries = queries.filter(q => q.closed);
@@ -50,8 +50,7 @@ export const DashboardMenuContent = (props: P) => {
   const [showSchemaDiagram, setShowSchemaDiagram] = useState(false);
 
   const ref = useRef<HTMLDivElement>(null);
-
-  const { tablesWithInfo } = useTableSizeInfo({ tables, db, workspace });
+ 
   const ensureFadeDoesNotShowForOneItem = { minHeight: "40px" };
   return <FlexCol 
     className={"DashboardMenuContent relative f-1 min-h-0 " + (prgl.theme === "light"? "bg-color-0" : "bg-color-1") + (window.isMobileDevice? " p-p25 " : " p-1  " )}

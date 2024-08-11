@@ -1831,7 +1831,7 @@ nav.left-nav-list a.active {
 }
 
 
-.show-on-parent-hover {
+.show-on-parent-hover:not(.hover) {
   opacity: 0;
 }
 
@@ -1843,13 +1843,6 @@ nav.left-nav-list a.active {
 }
 .show-on-hover:hover {
   opacity: 1;
-}
-
-
-@media (min-width:820px)  { 
-  .show-on-parent-hover {
-    opacity: 0;
-  }
 }
 
 .show-on-parent-hover:focus-within {

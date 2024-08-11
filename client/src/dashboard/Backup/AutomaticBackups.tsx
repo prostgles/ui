@@ -135,13 +135,15 @@ export const AutomaticBackups = ({ dbs, dbsTables, dbsMethods, connectionId: con
               setBackupConf({ keepLast: +keepLast })
             }}
           />
-          {bkpConf.frequency !== "hourly" && <Select label="Hour of day for backup" 
-            options={(new Array(24)).fill(1).map((_, i) => i)}
-            value={bkpConf.hour} 
-            onChange={hour => {
-              setBackupConf({ hour })
-            }}
-          />}
+          {bkpConf.frequency !== "hourly" && 
+            <Select label="Hour of day for backup" 
+              data-command="AutomaticBackups.hourOfDay"
+              options={(new Array(24)).fill(1).map((_, i) => i)}
+              value={bkpConf.hour} 
+              onChange={hour => {
+                setBackupConf({ hour })
+              }}
+            />}
           {bkpConf.frequency === "weekly" && <Select label="Day of week for backup" 
             fullOptions={DAYS_OF_WEEK}
             value={bkpConf.dayOfWeek} 
@@ -165,6 +167,7 @@ export const AutomaticBackups = ({ dbs, dbsTables, dbsMethods, connectionId: con
             dbsTables={dbsTables}
             opts={dumpOpts}
             onChange={setDumpOpts}
+            hideDestination={true}
           />
         </>}
       </div>

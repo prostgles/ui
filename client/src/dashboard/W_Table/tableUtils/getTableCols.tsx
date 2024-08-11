@@ -1,4 +1,4 @@
-import { mdiFilter, mdiFunction, mdiKey } from "@mdi/js"; 
+import { mdiFilter, mdiFunction, mdiKey, mdiLink, mdiShare } from "@mdi/js"; 
 import type { AnyObject } from "prostgles-types";
 
 import React from "react";
@@ -17,6 +17,7 @@ import { getFullColumnConfig } from "./tableUtils";
 import { getCellStyle } from "./StyledTableColumn";
 import { Icon } from "../../../components/Icon/Icon";
 import { sliceText } from "../../../../../commonTypes/utils";
+import { FlexRow } from "../../../components/Flex";
 
 export type ProstglesTableColumn = ProstglesColumn & ColumnConfigWInfo
 
@@ -74,7 +75,8 @@ export const getTableCols = ({
         const nestedCols = !c.nested? null : 
           c.nested.chart? ` (${c.nested.chart.dateCol}, ${c.nested.chart.yAxis.isCountAll? "COUNT(*)" : 
             `${c.nested.chart.yAxis.funcName.slice(1).toUpperCase()}(${c.nested.chart.yAxis.colName})`})` : 
-            ` (${sliceText(c.nested.columns.filter(c => c.show).map(c => c.name).join(", "), 20)})`;
+            ""
+            // ` (${sliceText(c.nested.columns.filter(c => c.show).map(c => c.name).join(", "), 20)})`;
 
         const subLabel = (
           <div className="flex-row ai-center">
@@ -105,8 +107,24 @@ export const getTableCols = ({
           </div>
         );
 
-        const label = c.computedConfig?.isColumn? `${c.computedConfig.funcDef.label}(${c.name})` : 
-          c.name + (nestedCols ?? (c.info?.references ? ` (${c.info.references.map(r => r.ftable).join(", ")})` : ""));
+        let labelText = c.name;
+        let labelIcon = "";
+        if(c.computedConfig?.isColumn){
+          labelIcon = mdiFunction;
+          labelText = `${c.computedConfig.funcDef.label}(${c.name})`;
+        } else if(c.info?.references || c.nested){
+          labelIcon = mdiLink;
+        } 
+        const title = c.nested? `${c.name} (${
+          c.nested.path.at(-1)?.table
+        } data)` : 
+          [
+            //@ts-ignore
+            c.name,
+            c.udt_name,
+            c.info?.comment || "", 
+            c.info?.references? `references ${c.info.references.map(r => r.ftable)}` : ""
+          ].filter(v=>v).join("\n")
         const tableColumn: ProstglesTableColumn = {
           ...c,
           filter: c.info?.filter ?? false,
@@ -117,10 +135,10 @@ export const getTableCols = ({
           } : !!c.computedConfig || !!c.info?.orderBy && (c.info.udt_name !== "json" && (c.info as any)?.udt_name !== "point"),
           computed: !!c.computedConfig,
           key: c.name,
-          label,
+          label: labelIcon? <FlexRow className="ai-none jc-none gap-p5"><Icon className="f-0" path={labelIcon} size={0.75} /> {labelText}</FlexRow> : labelText,
           subLabelTitle: "Data type",
           subLabel,
-          title: c.nested? `${c.name} (referenced)` : `${c.name}\n(${c.udt_name})\n${c.info?.comment || ""}`,
+          title,
           hidden: c.name === "$rowhash",
           width: c.width ?? 100,
 

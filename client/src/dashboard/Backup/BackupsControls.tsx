@@ -165,6 +165,7 @@ export const BackupsControls = ({ prgl: { connectionId, serverState, dbs, dbsTab
               dbsTables={dbsTables}
               opts={dumpOpts} 
               onChange={setDumpOpts}
+              hideDestination={false}
             />
           </div>
         )} 

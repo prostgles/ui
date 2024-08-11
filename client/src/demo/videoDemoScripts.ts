@@ -43,6 +43,10 @@ const backupDemo = async () => {
   await click("AutomaticBackups.destination", `[data-key=Local]`);
   await tout(500);
   await click("AutomaticBackups.frequency");
+  await tout(500);
+  await click("AutomaticBackups.destination", `[data-key=daily]`);
+  await tout(500);
+  await click("AutomaticBackups.hourOfDay");
   await tout(2e3);
 }
 
@@ -148,22 +152,29 @@ const dashboardDemo = async () => {
 
   // await closeAllViews();
 
-  const createWorkspace = async () => {
+  const createWorkspace = async (name: string) => {
     await click("WorkspaceMenuDropDown");
     await click("WorkspaceMenuDropDown.WorkspaceAddBtn");
     const wspName = getElement("Popup.content", "input");
-    (wspName as any)?.forceDemoValue(DEMO_WSP_PREFIX + Math.random().toFixed(2));
+    (wspName as any)?.forceDemoValue(name || (DEMO_WSP_PREFIX + Math.random().toFixed(2)));
     await click("WorkspaceAddBtn.Create");
   }
 
-  await createWorkspace();
-
-  await click("dashboard.menu.tablesSearchList", "[data-key=users]");
-  // const togglePinned = getElement("DashboardMenuHeader.togglePinned");
-  // if(togglePinned){
+  const openTable = async (tableName: string) => {
+    const tableList = getElement("dashboard.menu.tablesSearchList");
+    if(!tableList) {
+      await click("dashboard.menu");
+      await click("DashboardMenuHeader.togglePinned");
+    }
+    await click("dashboard.menu.tablesSearchList", `[data-key=${tableName}]`);
     await click("DashboardMenuHeader.togglePinned");
-    await tout(500);
-  // }
+  }
+
+  // await createWorkspace();
+
+  await closeAllViews();
+  await openTable("users");
+  await tout(500);
   await click("AddColumnMenu");
   await click("AddColumnMenu", "[data-key=Referenced]");
   await click("JoinPathSelectorV2");
@@ -216,10 +227,10 @@ const dashboardDemo = async () => {
   await click("dashboard.goToConnections");
   await click("", "[data-key^=crypto] a", { nth: 0 });
 
-  await createWorkspace();
+  // await createWorkspace();
   
-  await click("dashboard.menu.tablesSearchList", "[data-key=futures]");
-  await click("DashboardMenuHeader.togglePinned");
+  await closeAllViews();
+  await openTable("futures");
 
   await click("dashboard.window.toggleFilterBar");
   await type("btcusd", "", ".SmartFilterBar input");
