@@ -203,6 +203,7 @@ export const COMMANDS = {
   "SmartCardList": "",
   "AutomaticBackups.destination": "",
   "AutomaticBackups.frequency": "",
+  "AutomaticBackups.hourOfDay": "",
   "WorkspaceAddBtn.Create": "",
   "ChartLayerManager.AddChartLayer.addLayer": "",
   "ConnectionSelector": "",

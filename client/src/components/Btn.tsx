@@ -40,7 +40,7 @@ type BtnCustomProps = {
   disabledVariant?: "no-fade";
   loading?: boolean; 
   fadeIn?: boolean;
-  _ref?: ((btnNode?: HTMLButtonElement) => void);
+  _ref?: React.RefObject<HTMLButtonElement>;
 
   /**
    * If provided will override existing top classname

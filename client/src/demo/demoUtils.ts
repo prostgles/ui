@@ -28,7 +28,7 @@ type ClickOpts = GetElemOpts & {
   noTimeToWait?: boolean;
 }
 
-export const waitForElement = async <T extends Element>(testId: Command | "", endSelector = "", { noTimeToWait, timeout = 10e5, ...otherOpts }: ClickOpts = { }) => {
+export const waitForElement = async <T extends Element>(testId: Command | "", endSelector = "", { noTimeToWait, timeout = 15e3, ...otherOpts }: ClickOpts = { }) => {
   !noTimeToWait && await tout(100);
   let elem = getElement<T>(testId, endSelector, otherOpts);
   if(!elem && timeout) {

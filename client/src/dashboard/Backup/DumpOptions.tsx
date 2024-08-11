@@ -48,6 +48,7 @@ export type DumpOptionsProps = Pick<FullExtraProps, "dbProject" | "dbs" |  "dbsT
   opts?: PGDumpParams;
   onChange?: (newOpts: PGDumpParams) => void;
   connectionId: string;
+  hideDestination: boolean;
 }
 export const DumpOptions = (props: DumpOptionsProps) => {
   const {  
@@ -57,6 +58,7 @@ export const DumpOptions = (props: DumpOptionsProps) => {
     dbsMethods,
     dbProject,
     connectionId,
+    hideDestination = false
   } = props;
 
   const [currOpts, setCurrOpts] = useState(opts ?? DEFAULT_DUMP_OPTS);
@@ -90,7 +92,7 @@ export const DumpOptions = (props: DumpOptionsProps) => {
       }}
     />
     
-    <DumpLocationOptions { ...props } currOpts={currOpts} onChangeCurrOpts={_onChange} />
+    {!hideDestination && <DumpLocationOptions { ...props } currOpts={currOpts} onChangeCurrOpts={_onChange} />}
 
     <Section title="More options..." titleIconPath="" contentClassName="DumpOptionsMoreOptions flex-col p-1 gap-1 f-1 min-s-0 bg-inherit" >
       {o.command === "pg_dump"? <>

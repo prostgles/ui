@@ -1,6 +1,6 @@
 import { mdiDotsHorizontal } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { appTheme, useReactiveState } from "../../../../App";
 import { ExpandSection } from "../../../../components/ExpandSection";
 import { FlexCol, FlexRowWrap } from "../../../../components/Flex";
@@ -36,8 +36,6 @@ export const NESTED_COLUMN_DISPLAY_MODES = [
 ] as const;
 
 
-console.error("MAKE IT EASIER TO ADD ROW COUNT/AGGREGATION");
-
 export const LinkedColumn = (props: LinkedColumnProps) => {
   const { w, tables, db } = props; 
   const { state: theme } = useReactiveState(appTheme);
@@ -45,8 +43,10 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
 
   const [localColumn, setLocalColumn] = useState<ColumnConfigWInfo>();
   const currentColumn = localColumn ?? props.column;
-  const currentTargetPath = currentColumn?.nested && getAllJoins({ tableName: w.table_name, tables, value: currentColumn.nested.path }).targetPath;
-  const table = currentTargetPath?.table;
+  const table = useMemo(() => {
+    const currentTargetPath = currentColumn?.nested && getAllJoins({ tableName: w.table_name, tables, value: currentColumn.nested.path }).targetPath;
+    return currentTargetPath?.table;
+  }, [currentColumn, tables, w.table_name]);
   const newColumnNameError = !props.column && currentColumn && getCol(currentColumn.name)? "Column name already used. Change to another" : undefined;
 
   const updateColumn = useCallback((newCol: Partial<ColumnConfig>) => {
@@ -61,6 +61,15 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
 
   const nestedColumns = currentColumn?.nested?.columns;
   const disabledInfo = newColumnNameError ?? (!nestedColumns?.filter(c => c.show).length? "Must select columns" : !props.column?.nested && !currentColumn? "Must select a table" : undefined);
+
+  useEffect(() => {
+    if(!localColumn) return;
+    const shownCols = localColumn.nested?.columns.filter(c => c.show) ?? [];
+    const width = (shownCols.length > 2 || table?.info.isFileTable)? 250 : 150;
+    if(localColumn.width !== width){
+      setLocalColumn({ ...localColumn, width });
+    }
+  }, [localColumn, table]);
 
   return <FlexCol className="LinkedColumn gap-2">
     <InfoRow color="info" variant="naked" className=" " iconPath="">
@@ -98,16 +107,18 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
           const newColName = getCol(colName)? `${colName} (1)` : colName;
 
           const { table } = targetPath;
+          /** 
+           * Show first 5 cols to improve performance
+           * If fileTable show all columns to ensure the images/media preview works
+           */
+          const nestedColumns = getColWInfo([table], { table_name: table.name, columns: null })
+            .map((c, i) => ({ ...c, show: !!table.info.isFileTable || i < 5 }));
           const newCol: ColumnConfig = {
             name: newColName,
             show: true,
             width: 250,
             nested: {
-              /** 
-               * Show first 5 cols to improve performance
-               * If fileTable show all columns to ensure the images/media preview works
-               */
-              columns: getColWInfo([table], { table_name: table.name, columns: null }).map((c, i) => ({ ...c, show: !!table.info.isFileTable || i < 5 })),
+              columns: nestedColumns,
               path: targetPath.path,
               joinType: "left",
               limit: 20,

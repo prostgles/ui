@@ -999,7 +999,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       pid: "INTEGER NOT NULL",
       usesysid: "INTEGER",
       usename: { sqlDefinition: "TEXT", info: { hint: `Name of the user logged into this backend` } },
-      application_name: { sqlDefinition: "TEXT NOT NULL", info: { hint: `Name of the application that is connected to this backend` }},
+      application_name: { sqlDefinition: "TEXT", info: { hint: `Name of the application that is connected to this backend` }},
       client_addr: { sqlDefinition: "TEXT", info: { hint: `IP address of the client connected to this backend. If this field is null, it indicates either that the client is connected via a Unix socket on the server machine or that this is an internal process such as autovacuum.` }},
       client_hostname: { sqlDefinition: "TEXT", info: { hint: `Host name of the connected client, as reported by a reverse DNS lookup of client_addr. This field will only be non-null for IP connections, and only when log_hostname is enabled.` }},
       client_port: { sqlDefinition: "INTEGER", info: { hint: `TCP port number that the client is using for communication with this backend, or -1 if a Unix socket is used. If this field is null, it indicates that this is an internal server process.` }},
@@ -1012,7 +1012,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       state: { sqlDefinition: "TEXT", info: { hint: `Current overall state of this backend. Possible values are: active: The backend is executing a query. idle: The backend is waiting for a new client command. idle in transaction: The backend is in a transaction, but is not currently executing a query. idle in transaction (aborted): This state is similar to idle in transaction, except one of the statements in the transaction caused an error. fastpath function call: The backend is executing a fast-path function. disabled: This state is reported if track_activities is disabled in this backend.` }},
       backend_xid: { sqlDefinition: "TEXT", info: { hint: `Top-level transaction identifier of this backend, if any.` }},
       backend_xmin: { sqlDefinition: "TEXT", info: { hint: `The current backend's xmin horizon.` }},
-      query: { sqlDefinition: "TEXT NOT NULL", info: { hint: `Text of this backend's most recent query. If state is active this field shows the currently executing query. In all other states, it shows the last query that was executed. By default the query text is truncated at 1024 bytes; this value can be changed via the parameter track_activity_query_size.` }},
+      query: { sqlDefinition: "TEXT", info: { hint: `Text of this backend's most recent query. If state is active this field shows the currently executing query. In all other states, it shows the last query that was executed. By default the query text is truncated at 1024 bytes; this value can be changed via the parameter track_activity_query_size.` }},
       backend_type: { sqlDefinition: "TEXT", info: { hint: `Type of current backend. Possible types are autovacuum launcher, autovacuum worker, logical replication launcher, logical replication worker, parallel worker, background writer, client backend, checkpointer, archiver, startup, walreceiver, walsender and walwriter. In addition, background workers registered by extensions may have additional types.` }},
       blocked_by: { sqlDefinition: "INTEGER[]", info: { hint: `Process ID(s) of the sessions that are blocking the server process with the specified process ID from acquiring a lock. One server process blocks another if it either holds a lock that conflicts with the blocked process's lock request (hard block), or is waiting for a lock that would conflict with the blocked process's lock request and is ahead of it in the wait queue (soft block). When using parallel queries the result always lists client-visible process IDs (that is, pg_backend_pid results) even if the actual lock is held or awaited by a child worker process. As a result of that, there may be duplicated PIDs in the result. Also note that when a prepared transaction holds a conflicting lock, it will be represented by a zero process ID.` } },
       blocked_by_num: "INTEGER NOT NULL DEFAULT 0", 
@@ -1025,9 +1025,6 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       cmd: { sqlDefinition: "TEXT", info: { hint: `Command with all its arguments as a string` } },
 
     },
-    // indexes: {
-    //   pkeys: {columns: "pid, connection_id"}
-    // },
     constraints: {
       stats_pkey: "PRIMARY KEY(pid, connection_id)"
     }
