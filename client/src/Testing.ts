@@ -168,6 +168,8 @@ export const COMMANDS = {
   "W_TimeChart": "",
   "W_TimeChart.ActiveRow": "",
 
+  "CloseSaveSQLPopup.delete": "",
+
   "schema-diagram": "",
   "AddColumnReference": "",
   "SmartFormFieldOptions.AttachFile": "",

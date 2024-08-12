@@ -28,7 +28,7 @@ export const prepareColsForRender = (cols: ProstglesTableColumn[], getWCols: () 
     .map(c => ({
       ...c,
       /* Align numbers to right for an easier read */
-      headerClassname: c.tsDataType === "number" ? " jc-end  " : " ",
+      headerClassname: (c.tsDataType === "number" || c.nested?.columns.filter(nc => nc.show && nc.computedConfig?.funcDef.outType.tsDataType === "number").length === 1) ? " jc-end  " : " ",
       className: c.tsDataType === "number" ? " ta-right " : " ",
       onResize: async (width) => {
         const wcols = getWCols()

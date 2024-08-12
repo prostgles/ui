@@ -1,23 +1,22 @@
-import { mdiFilter, mdiFunction, mdiKey, mdiLink, mdiShare } from "@mdi/js"; 
+import { mdiFilter, mdiFunction, mdiKey, mdiLink } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
 
 import React from "react";
 
 import Btn from "../../../components/Btn";
  
-import { quickClone } from "prostgles-client/dist/SyncedTable/SyncedTable"; 
+import { quickClone } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import { FlexRow } from "../../../components/Flex";
+import { Icon } from "../../../components/Icon/Icon";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
-import type { WindowSyncItem } from "../../Dashboard/dashboardUtils"; 
-import type { MinMaxVals, ColumnConfigWInfo, ProstglesColumn, W_TableProps } from "../W_Table";
+import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import type W_Table from "../W_Table";
-import type { OnClickEditRow} from "./getEditColumn";
+import type { ColumnConfigWInfo, MinMaxVals, ProstglesColumn, W_TableProps } from "../W_Table";
+import type { OnClickEditRow } from "./getEditColumn";
 import { getEditColumn } from "./getEditColumn";
 import { onRenderColumn } from "./onRenderColumn";
-import { getFullColumnConfig } from "./tableUtils";
 import { getCellStyle } from "./StyledTableColumn";
-import { Icon } from "../../../components/Icon/Icon";
-import { sliceText } from "../../../../../commonTypes/utils";
-import { FlexRow } from "../../../components/Flex";
+import { getFullColumnConfig } from "./tableUtils";
 
 export type ProstglesTableColumn = ProstglesColumn & ColumnConfigWInfo
 

@@ -22,6 +22,7 @@ export type ProstglesQuickMenuProps = {
     anchorEl: HTMLElement | Element;
   }) => any;
   tables?: CommonWindowProps["tables"];
+  theme: CommonWindowProps["prgl"]["theme"];
   onAddChart?: OnAddChart;
   /**
    * If undefined then will show all
@@ -55,15 +56,16 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
     return null;
   }
 
+  const bgColorClass = props.theme === "light"? "bg-color-3" : "bg-color-0";
   return <>
     <div 
-      className="W_QuickMenu flex-row ai-center bg-color-3 rounded b b-color h-fit w-fit m-auto f-1 min-w-0" 
+      className={"W_QuickMenu flex-row ai-center rounded b b-color h-fit w-fit m-auto f-1 min-w-0 " + bgColorClass}
       style={{ maxWidth: "fit-content", margin: "2px 0" }}
       ref={divRef}
     >
       {showLinks && !!setLinkMenu && <Btn 
         title="Cross filter tables"
-        className="bg-color-3"
+        className={bgColorClass}
         size="small"
         iconPath={mdiSetLeftCenter}
         style={firstLink && { color: getLinkColorV2(firstLink, 1).colorStr }}
@@ -79,13 +81,14 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
         <AddChartMenu 
           w={w} 
           tables={tables} 
-          onAddChart={onAddChart}  
+          onAddChart={onAddChart} 
+          btnClassName={bgColorClass} 
         />
       }
       
       {table && (!show || show.filter) && <Btn 
         title={"Show/Hide filtering"}
-        className="bg-color-3"
+        className={bgColorClass}
         data-command="dashboard.window.toggleFilterBar"
         size="small"
         iconPath={mdiFilter}

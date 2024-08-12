@@ -1,17 +1,16 @@
+import type { AnyObject } from "prostgles-types";
+import { _PG_date } from "prostgles-types";
 import React from "react";
+import { FlexRowWrap } from "../../../components/Flex";
 import { CellBarchart } from "../../../components/ProgressBar";
 import type { OnColRenderRowInfo } from "../../../components/Table/Table";
-import SmartFormField from "../../SmartForm/SmartFormField/SmartFormField";
+import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
+import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
+import type { ChipStyle } from "../ColumnMenu/ColumnStyleControls";
+import { kFormatter, type MinMax } from "../W_Table";
+import { blend } from "../colorBlend";
 import type { ProstglesTableColumn } from "./getTableCols";
 import type { OnRenderColumnProps } from "./onRenderColumn";
-import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
-import type { AnyObject } from "prostgles-types"
-import type { ChipStyle } from "../ColumnMenu/ColumnStyleControls";
-import { blend } from "../colorBlend";
-import { _PG_date } from "prostgles-types";
-import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
-import { FlexRowWrap } from "../../../components/Flex";
-import { kFormatter, type MinMax } from "../W_Table";
 
 type P = OnColRenderRowInfo & Pick<OnRenderColumnProps, "maxCellChars" | "c" | "barchartVals">;
 
@@ -58,7 +57,7 @@ export const StyledTableColumn = ({ c, value, row, maxCellChars, barchartVals, r
     return <StyledCell 
       style={c.style?.type === "Scale"? { textColor: style?.textColor } : style} 
       renderedVal={renderedVal} 
-      className={c.tsDataType === "number"? "as-end" : ""} 
+      className={_PG_date.includes(c.udt_name as any)? "" : "as-end"} 
     />
   }
 

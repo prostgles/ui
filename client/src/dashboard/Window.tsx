@@ -118,10 +118,14 @@ export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W>
     if(getMenu && menuIconContainer){
       menuPortal = ReactDOM.createPortal(
         <>
-          <Btn className="f-0" 
+          <Btn 
+            className="f-0" 
             iconPath={mdiDotsVertical}
             title="Open menu"
             data-command="dashboard.window.menu"
+            onContextMenu={e => {
+              navigator.clipboard.writeText(w.id);
+            }}
             onClick={() => {
               this.setState({ showMenu: !showMenu })
             }}

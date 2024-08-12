@@ -21,4 +21,3 @@ ffmpeg -y -f x11grab  -s 630x860  -i :0.0+0,160 -vcodec libx264 -vf format=yuv42
 # For All else
 ffmpeg -y -f x11grab  -s 570x460  -i :0.0+0,240 -vcodec libx264 -vf format=yuv420p  create.mp4
 
-

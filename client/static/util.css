@@ -164,7 +164,8 @@
   --bg-default: var(--gray-600);
   --bg-action: #0071b3;
   --bg-popup: #3b3b3b;
-  --bg-popup-content: #272727;
+  /* --bg-popup-content: #272727; */
+  --bg-popup-content: #3b3b3b;
 
 /* 
   --shadow0: rgba(77, 77, 78, 0.733);
@@ -176,7 +177,7 @@
   --text-0p75: var(--gray-400);
   --text-1: #b4b4b4;
   --text-1p5: var(--gray-500);
-  --text-2: var(--gray-600);
+  --text-2: var(--gray-400);
   --text-3: var(--gray-700);
 
   --bg-color-0: #2c2c2c; /* rgb(69, 69, 69); */
@@ -1666,6 +1667,9 @@ button.toggle:focus {
 
 .color-action {
   color: var(--blue-500);
+}
+.dark-theme .color-action {
+  color: var(--blue-400);
 }
 .border-action {
   border-color: var(--blue-500);
