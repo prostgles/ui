@@ -24,7 +24,8 @@ test.describe("Demo video", () => {
     await login(page, USERS.test_user, "/login");
     await page.waitForTimeout(2000);
     // await page.getByTestId("App.colorScheme").click();
-    // await page.getByTestId("App.colorScheme").locator(`[data-key=light]`).click();
+    // // await page.getByTestId("App.colorScheme").locator(`[data-key=light]`).click();
+    // await page.getByTestId("App.colorScheme").locator(`[data-key=dark]`).click();
     const getVideoDemoConnection = async () => {
       await page.getByRole('link', { name: 'Connections' }).click();
       const videoDemoConnection = await page.getByRole('link', { name: 'prostgles_video_demo', exact: true });

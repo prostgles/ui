@@ -132,7 +132,7 @@ export const getViewRendererUtils = function(this: ViewRenderer, { prgl, workspa
           showBinLabels: "off",
           binValueLabelMaxDecimals: 3,
           statType: "Count All",
-          missingBins: "show nearest",
+          missingBins: "ignore",
           refresh: {
             type: "Realtime",
             throttleSeconds: 1,

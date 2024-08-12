@@ -45,7 +45,7 @@ export const ProstglesTimeChartMenu = ({ w, autoBinSize }: P) => {
   const {
     binSize = "auto",
     tooltipPosition = "auto",
-    missingBins = "show 0",
+    missingBins = "ignore",
     renderStyle = "line",
     showBinLabels = "off",
     binValueLabelMaxDecimals = null,

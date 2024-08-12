@@ -11,6 +11,7 @@ import type { ColumnConfig } from "./ColumnMenu";
 import { ChipStylePalette, chipColorsFadedBorder } from "./ColumnDisplayFormat/ChipStylePalette";
 import { MINI_BARCHART_COLOR } from "../../../components/ProgressBar";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { index } from "d3";
 
 export type ColumnValue = string | number | Date | null | undefined | boolean;
  
@@ -72,10 +73,13 @@ export const setDefaultConditionalStyle = async ({ columnName, db, tableName, fi
   if(!tableHandler?.find) return undefined;
   const rows = await tableHandler.find(filter, { select: { [columnName]: 1 }, limit: 5, groupBy: true });
   const values = rows.map(v => v[columnName]) as string[];
+  const prevSyleIndexes = new Set<number>();
   setStyle({ 
     type: "Conditional", 
     conditions: values.map(v => {
-      const style = getRandomElement(chipColorsFadedBorder) 
+      const nonPickedStyles = prevSyleIndexes.size === chipColorsFadedBorder.length? chipColorsFadedBorder : chipColorsFadedBorder.filter((_, i) => !prevSyleIndexes.has(i));
+      const { elem: style, index } = getRandomElement(nonPickedStyles) 
+      prevSyleIndexes.add(index);
       return { 
         condition: v, 
         operator: "=", 
@@ -200,6 +204,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
   );
 }
 
-export const getRandomElement = <Arr,>(items: Arr[]): Arr => {
-  return items[Math.floor(Math.random() * items.length)] as any;
+export const getRandomElement = <Arr,>(items: Arr[]): { elem: Arr, index: number } => {
+  const randomIndex = Math.floor(Math.random() * items.length);
+  return { elem: items[randomIndex]!, index: randomIndex };
 }

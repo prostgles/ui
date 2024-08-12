@@ -17,7 +17,7 @@ export const insertStateDatabase = async (db: DBS, _db: DB, con: DBSConnectionIn
       const { connection: state_db } = await upsertConnection({
         ...con,
         user_id: null, 
-        name: "Prostgles UI state database", 
+        name: "Prostgles UI state", 
         type: !con.db_conn? "Standard" : "Connection URI",
         db_port: con.db_port || 5432,
         db_ssl: con.db_ssl || "disable",

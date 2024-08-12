@@ -76,7 +76,7 @@ export const TableRulesPopup = ({
     positioning="right-panel"
     focusTrap={true}
     onClose={closePopup}
-    clickCatchStyle={{ opacity: .5 }}
+    clickCatchStyle={{ opacity: 1 }}
     footerButtons={[
       { 
         label: "Cancel", 
