@@ -88,7 +88,7 @@ export const UserSyncConfig = ({ databaseId, dbs, dbsTables, tables, db, dbKey, 
         Sync users...
       </Btn>
     )}
-    clickCatchStyle={{ opacity: 0.5 }}
+    clickCatchStyle={{ opacity: 1 }}
     render={pClose => (
       <FlexCol>
         <p className="ta-start">

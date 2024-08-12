@@ -136,8 +136,8 @@
 
 :root.dark-theme  {
   --li-hover-bg: #5b5a5a;
-  --color-uuid: rgb(206, 61, 162);
-  --color-number: rgb(0 169 0);
+  --color-uuid: rgb(216, 99, 181);
+  --color-number: rgb(52, 192, 52);
   --color-text: #fb9b9b;
   --color-boolean: #a5a5ff;
   --color-date: rgb(112 156 250);
@@ -1547,7 +1547,8 @@ button.toggle:focus {
 }
 
 .dark-theme .card {
-  border: 1px solid var(--gray-800);
+  border: unset;
+  box-shadow: 0 1px 3px 0 rgb(221 221 221 / 57%), 0 1px 2px 0 rgba(0, 0, 0, .06)
 }
 
 @media only screen and (max-width: 600px) {

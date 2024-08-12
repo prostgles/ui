@@ -60,7 +60,7 @@ export function CodeConfirmation({
     onClose={() => {
       setKey(getCode());
     }}
-    clickCatchStyle={{ opacity: .4 }}
+    clickCatchStyle={{ opacity: 1 }}
     contentClassName="p-1"
     render={(_popupClose) => {
       const popupClose = () => { 

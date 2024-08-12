@@ -155,9 +155,9 @@ function getFuncs( ): FuncDef[] {
     { key: "$time12",   label: "Time 12H",          subLabel: "Timestamp formated as 'HH:MI'. 12 Hour time format" },
     { key: "$timeAM",   label: "Time AM/PM",        subLabel: "Timestamp formated as 'HH:MI AM'. 24 Hour time format with AM/PM meridiem indicators" },
     // { label: "$to_char", subLabel: "format dates and strings. Eg: [current_timestamp, 'HH12:MI:SS']" },
-    { key: "$age",      label: "Age",               subLabel: "Age of timestamp compared to start of today" },
-    { key: "$ageNow",   label: "Age exact",         subLabel: "Age of timestamp compared to now"  },
-    { key: "$duration", label: "Duration",          subLabel: "Duration between another date field. Expressed as an interval of years, months, days, minutes" },
+    { key: "$age",      label: "Age (start of day)",  subLabel: "Age of timestamp compared to start of today" },
+    { key: "$ageNow",   label: "Age",       subLabel: "Age of timestamp compared to now"  },
+    { key: "$duration", label: "Duration",  subLabel: "Duration between another date field. Expressed as an interval of years, months, days, minutes" },
   ] as const;
 
   const StringFuncs = [

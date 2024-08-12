@@ -197,7 +197,7 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
 
           /** Add empty bins */
           let filledData = sortedParsedData.slice(0, 0);
-          const { missingBins = "show 0", renderStyle = "line" } = this.d.w?.options ?? {};
+          const { missingBins = "ignore", renderStyle = "line" } = this.d.w?.options ?? {};
           if(binSize){
             if(missingBins === "ignore" || renderStyle !== "line"){
               filledData = sortedParsedData.slice(0);

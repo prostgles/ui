@@ -28,7 +28,7 @@ export const {
 
 const db_ssl: DBSConnectionInfo["db_ssl"] = DB_SSL_ENUM[DB_SSL_ENUM.indexOf(POSTGRES_SSL?.trim().toLowerCase() as any)] ?? "prefer";
 export const DBS_CONNECTION_INFO = validateConnection({
-  name: "Prostgles UI state database",
+  name: "Prostgles UI state",
   type: !POSTGRES_URL ? "Standard" : "Connection URI",
   db_conn: POSTGRES_URL ?? null,
   db_name: POSTGRES_DB,

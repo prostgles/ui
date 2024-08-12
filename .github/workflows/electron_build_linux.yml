@@ -24,7 +24,7 @@ jobs:
     - name: Install the app
       run: | 
         cd electron
-        sudo dpkg -i ./dist/Prostgles\ Desktop-1.0.0-amd64.deb
+        sudo dpkg -i ./dist/Prostgles\ Desktop-2.0.0-amd64.deb
     - name: Test installation file
       run: | 
         cd electron
@@ -34,4 +34,5 @@ jobs:
       with:
         name: installers
         path: electron/dist
+        compression-level: 0
         retention-days: 10

@@ -17,9 +17,9 @@ jobs:
         cd electron && npm run build-macos
     - name: Test DMG file installations and run
       run: |
-        hdiutil attach electron/dist/Prostgles\ Desktop-1.0.0.dmg
+        hdiutil attach electron/dist/Prostgles\ Desktop-2.0.0.dmg
         ls -la /Volumes
-        sudo cp -r /Volumes/Prostgles\ Desktop\ 1.0.0/Prostgles\ Desktop.app /Applications
+        sudo cp -r /Volumes/Prostgles\ Desktop\ 2.0.0/Prostgles\ Desktop.app /Applications
         open /Applications/Prostgles\ Desktop.app
         sleep 10
         screencapture electron/dist/picture.png
@@ -28,4 +28,5 @@ jobs:
       with:
         name: installers
         path: electron/dist
+        compression-level: 0
         retention-days: 10

@@ -234,6 +234,8 @@ export const COMMANDS = {
   "TimeChartLayerOptions.aggFunc.select": "",
   "TimeChartLayerOptions.groupBy": "",
   "TimeChartLayerOptions.numericColumn": "",
+  "AgeFilter.comparator": "",
+  "AgeFilter.argsLeftToRight": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

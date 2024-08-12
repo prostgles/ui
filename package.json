@@ -1,9 +1,0 @@
-{
-  "devDependencies": {
-    "typescript": "^5.2.2"
-  },
-  "scripts": {
-    "build": "cd client && npm run build && cd ../server && npm run build"
-  },
-  "version": "0.0.3"
-}

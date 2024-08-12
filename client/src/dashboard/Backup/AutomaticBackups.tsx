@@ -73,7 +73,7 @@ export const AutomaticBackups = ({ dbs, dbsTables, dbsMethods, connectionId: con
         {bkpConf?.enabled? `Automatic backups: ${bkpConf.frequency}` : `Enable automatic backups`}
       </Btn>
     } 
-    clickCatchStyle={{ opacity: 0.5 }}
+    clickCatchStyle={{ opacity: 1 }}
     positioning="beneath-left"
     footerButtons={_popupClose => [
       { label: "Close", onClickClose: true },

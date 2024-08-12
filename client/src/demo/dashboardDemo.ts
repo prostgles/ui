@@ -120,6 +120,13 @@ export const dashboardDemo = async () => {
   await type("btcu",  "", ".FilterWrapper input.custom-input");
   await click("", `[data-key="BTCUSDC"]`);
   await click("", `[data-key="BTCUSDT"]`);
+
+  await click("SmartAddFilter");
+  await click("SmartAddFilter", `[data-key="timestamp"]`);
+  await click("AgeFilter.comparator");
+  await click("AgeFilter.comparator", `[data-key="<"]`);
+  await type("7 minutes", "", ".AgeFilter input ");
+
   await click("", `[title="Expand/Collapse filters"]`);
   await click("AddChartMenu.Timechart");
   await click("ChartLayerManager");
