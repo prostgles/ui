@@ -29,6 +29,19 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
     </Btn>
 
   const buttons = <>
+    <Btn title="Close all windows" 
+      titleAsLabel={isMobile}
+      iconPath={mdiLadybug} 
+      onClickPromise={async () => {
+        // const wsp = await dbs.workspaces.findOne({ connection_id: c.id });
+        const closed = await dbs.windows.update({ $existsJoined: { workspaces: { connection_id: c.id } } }, { closed: true }, { returning: "*" });
+        if(closed){
+          alert("Windows have been closed")
+        } else {
+          alert("Could not close windows: workspace not found")
+        }
+      }}
+    />
     {dbsMethods.getStatus && dbsMethods.runConnectionQuery &&
       <PopupMenu
         title={"Activity status: " + (c.name || c.id)}
@@ -51,20 +64,6 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
         />
       </PopupMenu> 
     }
-
-    <Btn title="Close all windows" 
-      titleAsLabel={isMobile}
-      iconPath={mdiLadybug} 
-      onClickPromise={async () => {
-        // const wsp = await dbs.workspaces.findOne({ connection_id: c.id });
-        const closed = await dbs.windows.update({ $existsJoined: { workspaces: { connection_id: c.id } } }, { closed: true }, { returning: "*" });
-        if(closed){
-          alert("Windows have been closed")
-        } else {
-          alert("Could not close windows: workspace not found")
-        }
-      }}
-    />
     
     {isAdmin && !c.is_state_db && 
       <Btn href={"/connection-config/"+c.id} 

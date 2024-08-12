@@ -6,7 +6,7 @@ import { parseValue } from "../SmartForm/SmartFormField/fieldUtils";
 import { colIs } from "../W_Table/ColumnMenu/ColumnSelect";
 import { getTableSelect } from "../W_Table/tableUtils/getTableSelect";
 import type { BaseFilterProps } from "./SmartFilter";
-import { _PG_numbers_num } from "prostgles-types";
+import { _PG_numbers } from "prostgles-types";
 import { FlexRowWrap } from "../../components/Flex";
 
 
@@ -52,7 +52,7 @@ export class NumberOrDateFilter extends RTComp<NumberOrDateFilterProps, NumberOr
         );
         
         if(_minVal && _maxVal){
-          const isNumeric = _PG_numbers_num.includes(column.udt_name as any)
+          const isNumeric = _PG_numbers.includes(column.udt_name as any)
           const minVal = _minVal[column.name];
           const maxVal = _maxVal[column.name];
           limits = { 

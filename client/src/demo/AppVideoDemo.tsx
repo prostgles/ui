@@ -1,12 +1,32 @@
-import { mdiPlay, mdiPlayCircleOutline } from "@mdi/js";
+import { mdiPlay } from "@mdi/js";
 import React, { useState } from "react";
 import { r_useAppVideoDemo, useReactiveState, type Prgl } from "../App";
 import Btn from "../components/Btn";
 import { FlexCol } from "../components/Flex";
 import Popup from "../components/Popup/Popup";
+import type { DBS } from "../dashboard/Dashboard/DBS";
 import { startWakeLock, VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
 import { getKeys } from "../utils";
-import { VIDEO_DEMO_SCRIPTS } from "./videoDemoScripts";
+import { accessControlDemo } from "./accessControlDemo";
+import { backupDemo } from "./backupDemo";
+import { dashboardDemo } from "./dashboardDemo";
+import { fileDemo } from "./fileDemo";
+import { sqlDemo } from "./sqlVideoDemo";
+
+
+const loadTest = async () => {
+  const dbs: DBS = (window as any).dbs;
+  console.log(dbs)
+}
+
+const VIDEO_DEMO_SCRIPTS = {
+  backupDemo,
+  fileDemo,
+  accessControlDemo,
+  sqlDemo,
+  dashboardDemo,
+  loadTest,
+}
 const demoScripts = getKeys(VIDEO_DEMO_SCRIPTS);
 type DEMO_NAME = keyof typeof VIDEO_DEMO_SCRIPTS;
 
@@ -39,11 +59,11 @@ export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
     if(name) {
       await VIDEO_DEMO_SCRIPTS[name]();
     } else {
-      const { sqlDemo, acDemo, backupDemo, fileDemo, dashboardDemo } = VIDEO_DEMO_SCRIPTS;
+      const { sqlDemo, accessControlDemo, backupDemo, fileDemo, dashboardDemo } = VIDEO_DEMO_SCRIPTS;
       startVideoDemo("SQL");
       await sqlDemo();
       startVideoDemo("Access Control");
-      await acDemo();
+      await accessControlDemo();
       startVideoDemo("Dashboard");
       await dashboardDemo();
       startVideoDemo("Backups");
@@ -53,12 +73,13 @@ export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
     stopWakeLock();
   }
  
-  if(demoStarted && window.isLowWidthScreen || !isOnDemoDatabase){
+  if(demoStarted || !isOnDemoDatabase){
     return null;
   }
   return <>
     <Btn
-      _ref={(node: any) => {
+      //@ts-ignore
+      _ref={node => {
         if(!node) return;
         node.start = () => {
           return startDemo();
@@ -70,9 +91,8 @@ export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
       }}
       // style={{ opacity: isOnDemoDatabase? 1 : 0 }}
       data-command="AppDemo.start"
-      color={demoStarted? "action" : undefined} 
       onClick={() => startDemo()}
-      iconPath={demoStarted? mdiPlayCircleOutline : mdiPlay} 
+      iconPath={mdiPlay} 
     />
     {showDemoOptions && <Popup anchorEl={showDemoOptions} positioning="beneath-left">
       <FlexCol className="gap-0">

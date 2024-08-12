@@ -29,7 +29,7 @@ export const NestedColumnRender = ({ value, c, row, nestedTimeChartMeta, tables 
   const isMedia = table?.info.isFileTable;
   const nestedColumns = c.nested? getColWInfo(tables, { table_name: c.nested!.path.at(-1)!.table, columns: c.nested.columns }) : undefined;
   if(!nestedColumns){
-    return <>Unexpected issue</>
+    return <>Unexpected issue: No nested columns</>
   }
   if (value?.length && c.nested?.chart && nestedTimeChartMeta) {
     return <TimeChart
@@ -56,7 +56,21 @@ export const NestedColumnRender = ({ value, c, row, nestedTimeChartMeta, tables 
       ]}
     />
   }
-  const content = (value ?? []).slice(0, NESTED_LIMIT).map((nestedObj, idx) => {
+  const shownNestedColumns = nestedColumns.filter(c => c.show);
+  const renderValue = ({ key, value }: { key: string; value: any }) => {
+    const columnWInfo = nestedColumns.find(c => c.name === key);
+    const datType = columnWInfo?.info ?? columnWInfo?.computedConfig?.funcDef.outType
+    const renderedValue = columnWInfo ? SmartFormField.renderValue(datType, value, true) : JSON.stringify(value);
+    return renderedValue;
+  }
+  const valueList = value ?? [];
+  const [firstValue, ...rest] = valueList;
+  const isSingleValue = shownNestedColumns.length === 1;
+  if(isSingleValue && !isMedia && firstValue && !rest.length){
+    const [key, value] = Object.entries(firstValue)[0]!;
+    return <>{renderValue({ key, value })}</>;
+  }
+  const content = valueList.slice(0, NESTED_LIMIT).map((nestedObj, idx) => {
     if (!nestedObj) return null;
 
     if (isMedia) {
@@ -66,20 +80,23 @@ export const NestedColumnRender = ({ value, c, row, nestedTimeChartMeta, tables 
         url={nestedObj.url} 
       />
     }
+
+    const objectEntries = Object.entries(nestedObj);
+
     return <div key={idx} className="flex-row-wrap gap-p5 ws-pre mb-p5">
-      {Object.entries(nestedObj).map(([key, value]) => {
-        const columnWInfo = nestedColumns.find(c => c.name === key);
-        const renderedValue = columnWInfo ? SmartFormField.renderValue(columnWInfo.info, value, true) : JSON.stringify(value);
+      {objectEntries.map(([key, value]) => {
         const displayModeClass = {
           column: "flex-col",
           row: "flex-row gap-p25",
           "no-headers": "flex-row-wrap gap-p25"
         }
         const { displayMode = "column" } = c.nested!;
-        return <div key={key} className={`${displayModeClass[displayMode]} gap-0`}>
-          {displayMode !== "no-headers" && <div className="text-2 font-12">{key}</div>}
-          <div>{renderedValue}</div>
-        </div>
+        return (
+          <div key={key} className={`${displayModeClass[displayMode]} gap-0`}>
+            {displayMode !== "no-headers" && <div className="text-2 font-12">{key}</div>}
+            <div>{renderValue({ key, value })}</div>
+          </div>
+        );
       })}
     </div>;
   });

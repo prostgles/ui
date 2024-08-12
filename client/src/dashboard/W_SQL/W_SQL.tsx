@@ -485,6 +485,7 @@ export default class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
       w={w} 
       quickMenuProps={{
         dbs,
+        theme: this.props.prgl.theme,
         onAddChart,
         tables,
         setLinkMenu,

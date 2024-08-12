@@ -3,6 +3,7 @@ import { tout } from "../../pages/ElectronSetup";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { triggerCharacters } from "../SQLEditor/SQLCompletion/registerSuggestions";
 import type { SQLEditorRef } from "../SQLEditor/SQLEditor";
+import type { SQLHandler } from "prostgles-types";
 
 export type TypeOpts = { msPerChar?: number; triggerMode?: "off" | "firstChar"; newLinePress?: boolean; };
 export type TypeAutoOpts = {
@@ -29,6 +30,15 @@ export type TypeAutoOpts = {
   onEnd?: VoidFunction; 
 } & TypeOpts;
 
+export const runDbSQL: SQLHandler = async (...args: any[]) => {
+  try {
+    return await (window as any).db?.sql(...args);
+  } catch(e){
+    console.error(e);
+    throw e;
+  }
+}
+
 export type DemoUtils = ReturnType<typeof getDemoUtils>;
 export type DemoScript = (utils: DemoUtils) => Promise<void>;
 export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
@@ -46,14 +56,6 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
     return { editor, e };
   }
  
-  const runDbSQL = async (sql: string, args?: Record<string, any>, opts?: any) => {
-    try {
-      return await (window as any).db?.sql(sql, args, opts);
-    } catch(e){
-      console.error(e);
-      throw e;
-    }
-  }
 
   const getTriggerFor = (action: string) => {
     return async (times = 1, delay = 20) => {

@@ -30,7 +30,7 @@ export const DashboardMenuContent = (props: P) => {
     workspace, 
     prgl, queries, onClose, onClickSearchAll, tablesWithInfo
   } = props;
-  const { db, methods } = prgl;
+  const { db, methods, theme } = prgl;
   const closedQueries = queries.filter(q => q.closed);
 
   const smallScreen = window.innerHeight < 1200;
@@ -52,8 +52,9 @@ export const DashboardMenuContent = (props: P) => {
   const ref = useRef<HTMLDivElement>(null);
  
   const ensureFadeDoesNotShowForOneItem = { minHeight: "40px" };
+  const bgColorClass = (theme === "light" || !pinnedMenu)? "bg-color-0" : "bg-color-1"
   return <FlexCol 
-    className={"DashboardMenuContent relative f-1 min-h-0 " + (prgl.theme === "light"? "bg-color-0" : "bg-color-1") + (window.isMobileDevice? " p-p25 " : " p-1  " )}
+    className={"DashboardMenuContent relative f-1 min-h-0 " + bgColorClass + (window.isMobileDevice? " p-p25 " : " p-1  " )}
     ref={ref}
     style={{
       ...(pinnedMenu && { 

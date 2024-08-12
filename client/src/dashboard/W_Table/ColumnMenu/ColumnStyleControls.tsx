@@ -1,4 +1,5 @@
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
+import { _PG_numbers } from "prostgles-types";
 import React from "react";
 import type { Prgl } from "../../../App";
 import { FlexCol, FlexRowWrap } from "../../../components/Flex";
@@ -55,6 +56,7 @@ export type StyleColumnProps = Pick<Prgl, "db" | "tables" > & {
   column: ColumnConfig;
   onUpdate: (newCol: Pick<ColumnConfig, "style">) => void;
   tsDataType: ValidatedColumnInfo["tsDataType"];
+  udt_name: ValidatedColumnInfo["udt_name"];
   tableName: string;
 } 
 
@@ -85,12 +87,12 @@ export const setDefaultConditionalStyle = async ({ columnName, db, tableName, fi
 }
 
 export const ColumnStyleControls = (props: StyleColumnProps) => {
-  const { column, onUpdate, tsDataType, tableName, db } = props;
+  const { column, onUpdate, tsDataType, udt_name, tableName, db } = props;
 
   const STYLE_MODES: Array<Required<ColumnConfig>["style"]["type"]> = ["None", "Fixed", "Conditional"];
   const { style = { type: "None" as const }  } = column;
 
-  if(["number", "Date"].includes(tsDataType)){
+  if(["number", "Date"].includes(tsDataType) || _PG_numbers.includes(udt_name as any)){
     STYLE_MODES.push("Scale");
     STYLE_MODES.push("Barchart");
   }

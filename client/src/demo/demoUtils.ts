@@ -1,5 +1,6 @@
 
-import { type Command, getCommandElemSelector } from "../Testing"
+import type { SQLHandler } from "prostgles-types";
+import { type Command, getCommandElemSelector } from "../Testing";
 import { tout } from "../pages/ElectronSetup";
 
 let pointer: HTMLDivElement | null = null;
