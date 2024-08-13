@@ -5,8 +5,8 @@ Improved UI
 - SQL code blocks
 - SQL snippets
 
-Users and Permissions
-- Role-based access control
+Access control
+- Role-based access rules
 - API
 
 File storage
@@ -16,7 +16,6 @@ File storage
 Backup and Restore
 - Automatic or manual
 - Saved locally or to S3
-
 
 Security
 - App based 2 factor-authentication

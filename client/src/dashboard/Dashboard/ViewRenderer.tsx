@@ -192,7 +192,7 @@ export class ViewRenderer extends RTComp<ViewRendererProps, ViewRendererState, D
         onClose, 
         onForceUpdate, 
         searchParams,
-        setSearchParams, 
+        setSearchParams,
         suggestions,
         isReadonly: !!isReadonly,
         myLinks,

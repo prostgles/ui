@@ -65,7 +65,9 @@ export const goToElem = async <ElemType = HTMLElement>(testId: Command | "", end
 }
 export const click = async (testId: Command | "", endSelector = "", opts: ClickOpts = {}): Promise<void> => {
   const elem = await goToElem(testId, endSelector, opts);
-  elem.click();
+  /** In some cases react has since replaced the node content */
+  const latestElem = getElement<HTMLButtonElement>(testId, endSelector, opts);
+  (latestElem ?? elem).click();
 }
 
 export const type = async (value: string, testId: Command | "", endSelector = "") => {
