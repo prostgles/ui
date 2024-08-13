@@ -39,6 +39,7 @@ export const dashboardDemo = async () => {
   }
 
   const openTable = async (tableName: string) => {
+    await tout(500);
     const tableList = getElement("dashboard.menu.tablesSearchList");
     if(!tableList) {
       await click("dashboard.menu");
