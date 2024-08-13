@@ -129,7 +129,7 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
 
     if(newDbOwnerCredentials && newPgUser.permissions.type === "custom"){
       const escapedUserName = asName(newUser.newPgUser.name);
-      console.log(await runConnectionQuery(connId, "SELECT current_user"));
+      // console.log(await runConnectionQuery(connId, "SELECT current_user"));
       await runConnectionQuery(
         connId, 
         `
