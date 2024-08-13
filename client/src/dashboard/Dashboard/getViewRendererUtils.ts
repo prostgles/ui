@@ -1,13 +1,13 @@
-import { type AnyObject, type ParsedJoinPath, isEmpty } from "prostgles-types"; 
+import { type AnyObject, type ParsedJoinPath, isEmpty } from "prostgles-types";
 import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
-import type { OmitDistributive} from "../../../../commonTypes/utils";
-import { matchObj } from "../../../../commonTypes/utils";
-import type { ChartType, DBSchemaTablesWJoins, Link, LinkSyncItem, NewChartOpts, WindowData, WindowSyncItem, WorkspaceSyncItem } from "./dashboardUtils";
-import { getDefaultLayout, PALETTE } from "./dashboardUtils";
-import type {  ViewRenderer,ViewRendererProps } from "./ViewRenderer";
-import type { ActiveRow } from "../W_Table/W_Table";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { OmitDistributive } from "../../../../commonTypes/utils";
+import { matchObj } from "../../../../commonTypes/utils";
 import { pageReload } from "../../components/Loading";
+import type { ActiveRow } from "../W_Table/W_Table";
+import type { ChartType, DBSchemaTablesWJoins, Link, LinkSyncItem, NewChartOpts, WindowData, WindowSyncItem, WorkspaceSyncItem } from "./dashboardUtils";
+import { PALETTE } from "./dashboardUtils";
+import type { ViewRenderer, ViewRendererProps } from "./ViewRenderer";
 
 type Args = ViewRendererProps & {
   links: LinkSyncItem[];
@@ -29,7 +29,6 @@ export const getViewRendererUtils = function(this: ViewRenderer, { prgl, workspa
       table_name,
       options,
       filter,
-      layout: getDefaultLayout("111"),
       fullscreen: false,
       workspace_id: workspace.id,
       limit: 500,
