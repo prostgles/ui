@@ -23,12 +23,33 @@ export const WorkspaceSettings = ({ dbs, dbsTables, w, dbsMethods, theme }: Work
         title="Workspace settings"
         iconPath={mdiCog}
         className="workspace-settings"
-        // size="small"
+        onContextMenu={async () => {
+          const workspaceData = await dbs.workspaces.findOne(
+            { id: w.id }, 
+            { 
+              select: {
+                name: true,
+                options: true,
+                defaultLayoutType: true,
+                windows: {
+                  id: false,
+                  user_id: false,
+                  workspace_id: false,
+                  created: false,
+                  last_updated: false,
+                }
+              } 
+            }
+          );
+          navigator.clipboard.writeText(JSON.stringify(workspaceData, null, 2));
+          alert("Workspace data copied to clipboard");
+        }}
       />
     )}
     contentStyle={{ padding: 0 }}
     render={popupClose => (<div className="flex-col gap-p5  min-h-0">
-      <SmartForm db={dbs as any}
+      <SmartForm 
+        db={dbs as any}
         showJoinedTables={false}
         theme={theme}
         label=""

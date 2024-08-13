@@ -481,7 +481,6 @@ export type DBSchemaGenerated = {
       having?: any;
       id?: string;
       last_updated: string;
-      layout?: null | any;
       limit?: null | number;
       method_name?: null | string;
       name?: null | string;

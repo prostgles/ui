@@ -816,7 +816,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       closed          : `BOOLEAN DEFAULT FALSE` ,
       deleted         : `BOOLEAN DEFAULT FALSE` ,
       show_menu       : `BOOLEAN DEFAULT FALSE` , 
-      layout          : `JSONB`,
+      // layout          : `JSONB`,
       fullscreen      : `BOOLEAN DEFAULT TRUE` , 
       sort            : "JSONB DEFAULT '[]'::jsonb",
       filter          : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
