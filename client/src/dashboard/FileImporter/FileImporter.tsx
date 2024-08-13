@@ -330,17 +330,11 @@ export default class FileImporter extends RTComp<FileImporterProps, FileImporter
 
     const readonlyName = Boolean(importing);
     return (
-      <Popup title={!selectedFile?.file? "Import data from file" : files? `Import ${files.length} files` : `Import ${selectedFile.file.name}`  }
+      <Popup 
+        title={!selectedFile?.file? "Import data from file" : files? `Import ${files.length} files` : `Import ${selectedFile.file.name}`  }
         onClose={this.cancel}
         clickCatchStyle={{ opacity: .5 }}
-        positioning="as-is"
-        rootStyle={{
-          top: !window.isMobileDevice? "2em" : 0, 
-          left: !window.isMobileDevice? "2em" : 0, 
-          maxHeight: window.isIOSDevice? `calc(100vh - 100px)` : `calc(100% - 3em)`,
-          maxWidth: `calc(100vw - 2em)`,
-          width: "700px",
-        }}
+        positioning="center"
         contentClassName="p-1"
         footer={
           <FileImporterFooter 

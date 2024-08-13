@@ -156,7 +156,7 @@ export class CanvasChart {
         createHiPPICanvas(canvas, offsetWidth, offsetHeight);
 
         /**
-         * This cancels createHiPPICanvas
+         * This cancels createHiPPICanvas. Why was it needed?
          */
         // this.ctx.canvas.width  = offsetWidth;
         // this.ctx.canvas.height = offsetHeight;
