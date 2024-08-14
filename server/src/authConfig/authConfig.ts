@@ -74,7 +74,7 @@ const loginAttempt = async (args: LoginAttemptArgs) => {
   }
   const previousFails = await db.login_attempts.find({ ...matchByFilter, failed: true, "created.>=": lastHour })
   if(previousFails.length > Math.max(1, globalSettings.login_rate_limit.maxAttemptsPerHour)){
-    throw "Too many failed attempts within the last hour";
+    throw "Too many failed attempts";
   } 
 
   /** In case of a bad sid do not log it multiple times */
