@@ -235,6 +235,8 @@ export type DBSchemaGenerated = {
       allowed_ips_enabled?: boolean;
       allowed_origin?: null | string;
       id?: number;
+      login_rate_limit?: {    maxAttemptsPerHour: number;   matchBy: {  ip: boolean;  remote_ip: boolean;  x_real_ip: boolean; };  };
+      login_rate_limit_enabled?: boolean;
       magic_link_validity_days?: number;
       session_max_age_days?: number;
       tableConfig?: null | any;

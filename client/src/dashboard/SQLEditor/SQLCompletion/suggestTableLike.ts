@@ -1,10 +1,11 @@
 import type { SQLSuggestion } from "../SQLEditor";
+import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import { getTableExpressionSuggestions } from "./completionUtils/getTableExpressionReturnTypes";
 import { getJoinSuggestions } from "./getJoinSuggestions";
 import type { ParsedSQLSuggestion, SQLMatchContext } from "./registerSuggestions";
 
-export const suggestTableLike = async (args: Pick<SQLMatchContext, "cb" | "ss" | "sql">) => {
-  const { cb, ss, sql } = args;
+export const suggestTableLike = async (args: Pick<SQLMatchContext, "cb" | "ss" | "sql"> & { parentCb: CodeBlock | undefined; }) => {
+  const { cb, ss, sql, parentCb } = args;
   const isTableLike = (t: SQLSuggestion["type"]) => ["table", "view", "mview"].includes(t);
   const schemas = ss.filter(s => s.type === "schema");
   const { ltoken } = cb;
@@ -21,9 +22,10 @@ export const suggestTableLike = async (args: Pick<SQLMatchContext, "cb" | "ss" |
   }
 
   let aliasedTables: ParsedSQLSuggestion[] = [];
-  if(cb.ftoken?.textLC === "with"){
-    const dw = await getTableExpressionSuggestions({ cb, ss, sql }, "table");
-    aliasedTables = dw.tables.map(t => ({ ...t, sortText: "a" }));
+  const withCb = cb.ftoken?.textLC === "with"? cb : parentCb?.ftoken?.textLC === "with"? parentCb : undefined;
+  if(withCb){
+    const tableExpressions = await getTableExpressionSuggestions({ cb: withCb, ss, sql }, "table");
+    aliasedTables = tableExpressions.tables.map(t => ({ ...t, sortText: "a" }));
   }
 
   const schemaTables = isSearchingSchemaTable? schemaMatchingTables : 

@@ -2,6 +2,8 @@ import { getKeys, isObject } from "prostgles-types";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import type { MonacoSuggestion, ParsedSQLSuggestion } from "./registerSuggestions";
 import type { IRange } from "../../W_SQL/monacoEditorTypes";
+import type { TokenInfo } from "./completionUtils/getTokens";
+import type { SQLSuggestion } from "../SQLEditor";
 const asSQL = (v: string, lang = "sql") => "```" + lang + "\n"+ v +"\n```";
 
 export type MinimalSnippet = { 
@@ -14,6 +16,13 @@ export type MinimalSnippet = {
   commitCharacters?: string[];
 };
 
+/**
+ * Takes into account that non double-quoted names are case-insensitive
+ */
+export const nameMatches = (s: Pick<SQLSuggestion, "name" | "escapedName">, token: TokenInfo) => {
+  const name = s.escapedName ?? s.name;
+  return name === token.text || !name.startsWith(`"`) && name.toLowerCase() === token.textLC;
+}
 
 export const suggestSnippets = (mSnippets: MinimalSnippet[], opts?: { range?: IRange; cb?: CodeBlock; }): { suggestions: ParsedSQLSuggestion[] } => {
   const { range } = opts ?? {}; 

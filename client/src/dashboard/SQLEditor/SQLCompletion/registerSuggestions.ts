@@ -1,18 +1,17 @@
 
 import type { SQLHandler } from "prostgles-types";
-import type { editor, IDisposable, Monaco, Position, languages } from "../../W_SQL/monacoEditorTypes";
-import { getFormattedSql } from "../getFormattedSql";
+import { format } from "sql-formatter";
+import { isObject } from "../../../../../commonTypes/publishUtils";
+import { isDefined } from "../../../utils";
+import { debounce } from "../../Map/DeckGLWrapped";
+import type { editor, IDisposable, languages, Monaco, Position } from "../../W_SQL/monacoEditorTypes";
 import type { SQLSuggestion } from "../SQLEditor";
 import { LANG } from "../SQLEditor";
 import { getKeywordDocumentation } from "../SQLEditorSuggestions";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import { getCurrentCodeBlock } from "./completionUtils/getCodeBlock";
-import { getMatch } from "./getMatch";
-import { isObject } from "../../../../../commonTypes/publishUtils";
-import { isDefined } from "../../../utils";
-import { format } from "sql-formatter";
 import { getStartingLetters, removeQuotes } from "./getJoinSuggestions";
-import { debounce } from "../../Map/DeckGLWrapped";
+import { getMatch } from "./getMatch";
 
 
 export const triggerCharacters = [
@@ -198,7 +197,7 @@ const getRespectedSortText = (cb: CodeBlock, monaco: Monaco, { suggestions }: { 
 export let KNDS: Kind = {} as any;
 
 export function registerSuggestions(args: Args) {
-  const { suggestions, settingSuggestions, sql, monaco } = args;
+  const { suggestions, settingSuggestions, sql, monaco, editor } = args;
   const s = suggestions;
   KNDS = monaco.languages.CompletionItemKind;
 
@@ -236,6 +235,11 @@ export function registerSuggestions(args: Args) {
     const setS = parseSuggestions(settingSuggestions);
     
     const cBlock = await getCurrentCodeBlock(model, position);
+    const myEditor = monaco.editor.getEditors().find(e => e.getModel()?.id === model.id);
+    const editorNode = myEditor?.getDomNode();
+    if(editorNode){
+      (editorNode as any)._cBlock = cBlock;
+    }
     const isFormattingCode = context.triggerCharacter === "\n" && cBlock.thisLineLC.length > 0;
     const isCommenting = cBlock.currToken?.type === "comment.sql"
     if(isFormattingCode || isCommenting){
@@ -348,7 +352,7 @@ export function registerSuggestions(args: Args) {
     },
     resolveCompletionItem: async (item, token) => {
 
-      fixMonacoSortFilter(args.editor);
+      hackyFixMonacoSortFilter(args.editor);
       return item;
     }
   });
@@ -404,18 +408,20 @@ export function isUpperCase(str) {
  * FROM pg_catalog.pg_class
  * ORDER BY name -> relname
  */
-const fixMonacoSortFilter = debounce((editor: editor.IStandaloneCodeEditor) => {
+const hackyFixMonacoSortFilter = debounce((editor: editor.IStandaloneCodeEditor) => {
   const suggestWidget = (editor as any).getContribution("editor.contrib.suggestController").widget;
-
   const allCompletionItems: ParsedSQLSuggestion[] | undefined = suggestWidget._value._completionModel?._items.map(d => d.completion);
   if(!allCompletionItems) return;
-  // const shownCompletionItems = suggestWidget._value._list.view.items.map(e => e.element.completion);
+  const shownCompletionItems = suggestWidget._value._list.view.items.map(e => e.element.completion) as ParsedSQLSuggestion[];
   const firstItem: ParsedSQLSuggestion | undefined = suggestWidget._value._list.view.items[0]?.element.completion;
   const focusedItem: { filterTextLow: string; word: string; completion: ParsedSQLSuggestion } = suggestWidget._value._focusedItem ?? {};
   const { filterTextLow, word, completion } = focusedItem;
-  // console.log(filterTextLow, word, completion, allCompletionItems.filter(s => s.type === "column" && s.name.includes(word)));
-  if(allCompletionItems.length && word && filterTextLow && firstItem){
-    if(allCompletionItems.some(s => (s.name as any)?.includes(word) && s.sortText && s.sortText < (firstItem.sortText ?? "zzz"))){ // && !filterTextLow.includes(word)
+  const didScroll = suggestWidget._value?._list?.view.scrollable._state.scrollTop;
+  const cb = (editor.getDomNode() as any)?._cBlock as CodeBlock | undefined;
+  // console.log(cb, suggestWidget, focusedItem, shownCompletionItems)
+  if(!didScroll && cb?.currToken?.type !== "string.sql" && allCompletionItems.length && word && filterTextLow && firstItem){
+    const itemThatShouldBeHigher = allCompletionItems.find(s => (s.name as any)?.includes(word) && s.sortText && s.sortText < (firstItem.sortText ?? "zzz"))
+    if(itemThatShouldBeHigher && !shownCompletionItems.slice(0, 10).find(s => s.name === itemThatShouldBeHigher.name) ){ // && !filterTextLow.includes(word)
       editor.trigger("demo", "hideSuggestWidget", {});
       editor.trigger("demo", "editor.action.triggerSuggest", {});
     }
