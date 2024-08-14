@@ -17,7 +17,6 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
     if(funcArgs) return funcArgs;
   }
   const expressions = await getTableExpressionSuggestions({ parentCb, cb, ss, sql }, "columns");
-
   const dotPrefix = !cb.currToken? undefined : cb.currToken.text === "."? cb.ltoken?.text : cb.currToken.text.split(".")[0]!;
   const activeAliasTable = !dotPrefix? undefined : expressions.tablesWithAliasInfo.find(t => t.alias === dotPrefix);
   if(activeAliasTable){

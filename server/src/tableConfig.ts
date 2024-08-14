@@ -924,6 +924,32 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         enum: ["user", "app"], 
         defaultValue: "app" 
       },
+      login_rate_limit_enabled: { 
+        sqlDefinition: `BOOLEAN NOT NULL DEFAULT TRUE`, 
+        info: { hint: "If enabled then only allowed IPs can connect" } 
+      },
+      login_rate_limit: { 
+        defaultValue: {
+          maxAttemptsPerHour: 5,
+          matchBy: {
+            ip: true,
+            remote_ip: true,
+            x_real_ip: true,
+          }
+        },
+        jsonbSchemaType: {
+          maxAttemptsPerHour: { type: "integer", description: "Maximum number of login attempts allowed per hour" },
+          matchBy: {
+            type: {
+              ip: { type: "boolean", description: "If true then will match by IP" },
+              remote_ip: { type: "boolean", description: "If true then will match by remote_ip" },
+              x_real_ip: { type: "boolean", description: "If true then will match by x_real_ip" },
+            }
+          }
+        },
+        label: "Allowed IPs and subnets", 
+        info: { hint: "List of allowed IP addresses in ipv4 or ipv6 format" } 
+      },
       tableConfig: {
         info: { "hint": "Schema used to create prostgles-ui" },
         sqlDefinition: "JSONB"

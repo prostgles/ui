@@ -1,4 +1,5 @@
 import { isDefined } from "../../../utils";
+import { nameMatches } from "./CommonMatchImports";
 import { getParentFunction } from "./MatchSelect";
 import type { ParsedSQLSuggestion, SQLMatcherResultArgs } from "./registerSuggestions";
 import { suggestColumnLike } from "./suggestColumnLike";
@@ -10,7 +11,7 @@ export const suggestFuncArgs = async ({ cb, parentCb, ss, setS, sql }: Pick<SQLM
   if(cb.currNestingId){
     const insideFunc = getParentFunction(cb);
     if(insideFunc){
-      const funcDefs = ss.filter(s => s.type === "function" && s.name === insideFunc.func.text);
+      const funcDefs = ss.filter(s => s.type === "function" && nameMatches(s, insideFunc.func));
       if(insideFunc.func.textLC === "current_setting"){
         return { suggestions: setS.map(s => ({ ...s, insertText: `'${s.insertText || s.name}'` })) };
       }
@@ -19,21 +20,25 @@ export const suggestFuncArgs = async ({ cb, parentCb, ss, setS, sql }: Pick<SQLM
         const activeArgIndex = insideFunc.prevArgs.length;
         const activeArgs = funcDefs.map(f => f.funcInfo?.arg_udt_names?.[activeArgIndex]).filter(isDefined);
         const matchingTypeSuggestions = suggestions.map(s => {
+          if(!["column", "function"].includes(s.type)){
+            return undefined;
+          }
           const matchingDataTypes = [
             ["json", "jsonb"],
             ["numeric", "decimal", "float", "real", "integer", "int4", "int8", "int2", "bigint", "smallint"],
           ];
-          const dataTypeMatches = activeArgs.some(activeArgUdtName => 
-              [s.colInfo?.udt_name.toLowerCase(), s.colInfo?.data_type.toLowerCase()].includes(activeArgUdtName) ||
-              matchingDataTypes.some(types => types.includes(activeArgUdtName) && types.some(type => [s.colInfo?.udt_name.toLowerCase(), s.colInfo?.data_type.toLowerCase()].includes(type))) ||
-              s.funcInfo?.restype === activeArgUdtName ||
+          const dataTypeMatches = activeArgs.some(activeArgUdtName => {
+            const udt_name = s.colInfo?.udt_name ?? s.funcInfo?.restype_udt_name;
+            if(!udt_name) return false;
+            return udt_name === activeArgUdtName ||
+              matchingDataTypes.some(types => types.includes(activeArgUdtName) && types.includes(udt_name)) ||
               activeArgUdtName === "any" || 
-              activeArgUdtName === "anyarray" && s.colInfo?.udt_name.startsWith("_") ||
-              activeArgUdtName === "bytea" && s.colInfo?.data_type.toLowerCase() === "text"
-          );
+              activeArgUdtName === "anyarray" && udt_name.startsWith("_") ||
+              activeArgUdtName === "bytea" && udt_name === "text"
+          });
           return {
             ...s,
-            sortText: (s.type === "column"?  (dataTypeMatches? "-1" : "a") : "b")
+            sortText: (s.type === "column"?  (dataTypeMatches? "a" : "b") : dataTypeMatches? "c" : "d")
           }
         })
         .filter(isDefined);

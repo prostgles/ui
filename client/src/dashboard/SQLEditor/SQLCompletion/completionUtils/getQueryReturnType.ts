@@ -74,12 +74,13 @@ export const getTableExpressionReturnType = async (expression: string, sql: SQLH
       } 
     }
     if(!colTypes){
+      console.warn(error);
       throw error ?? new Error("No columns found");
     }
     cached.set(expression, { colTypes });
     return { colTypes };
   } catch (error) {
-    // console.error(error);
+    console.warn(error);
     cached.set(expression, { error });
     return {
       error

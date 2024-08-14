@@ -4,6 +4,21 @@ import type { DemoScript } from "../getDemoUtils";
 
 export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL }) => {
 
+  /** Funcs args in CTE */
+  const cteFuncArgQuery = fixIndent(`
+    WITH cte1 AS (
+      SELECT max()
+      FROM pg_catalog.pg_class
+    )`
+  )
+  await fromBeginning(false,cteFuncArgQuery);
+  await moveCursor.up(2);
+  await moveCursor.lineEnd();
+  await moveCursor.left();
+  await typeAuto(` name`);
+  await testResult(cteFuncArgQuery.replace("max()", "max( relname)"));
+
+
   /** Test explain */
   await fromBeginning(false, "EXPLAIN SELECT * FROM");
   await typeAuto(" class");
