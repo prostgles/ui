@@ -217,6 +217,8 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
           trust_proxy: 1,
           allowed_ips_enabled: 1,
           session_max_age_days: 1,
+          login_rate_limit: 1,
+          login_rate_limit_enabled: 1,
         },
         postValidate: async ({ row, dbx: dbsTX }) => {
           if(!row.allowed_ips.length){
