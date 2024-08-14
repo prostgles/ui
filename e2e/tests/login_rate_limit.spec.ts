@@ -4,20 +4,8 @@ import { PageWIds, USERS, createDatabase, fillLoginFormAndSubmit, goTo, login } 
 
 test.describe("Login rate limit", () => { 
 
-  test("Limit login attempts", async ({ browser }) => {
-    const mockIPContext = await browser.newContext();
-
-    // Enable request interception
-    await mockIPContext.route('**/*', route => {
-      const headers = route.request().headers();
-      
-      // Add a custom header with the mocked IP
-      headers['x-real-ip'] = '123.45.67.89';
-      
-      // Continue the request with modified headers
-      route.continue({ headers });
-    });
-    const page = await mockIPContext.newPage() as PageWIds;
+  test("Limit login attempts", async ({ page: p }) => {
+    const page = p as PageWIds;
 
     await goTo(page, "/login");
     const loginAndExpectError = async (errorMessage: string, user: string) => {
