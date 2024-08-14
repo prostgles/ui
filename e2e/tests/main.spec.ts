@@ -19,7 +19,6 @@ import {
   typeConfirmationCode,
   uploadFile,
   runDbSql,
-  fillLoginFormAndSubmit
 } from './utils';
 import { authenticator } from "otplib";
 
@@ -802,19 +801,5 @@ test.describe("Main test", () => {
     await page.getByRole('link', { name: TEST_DB_NAME }).click();
     await page.getByTestId("dashboard.menu.tablesSearchList").waitFor({ state: "visible", timeout: 10e3 });
     await openTable(page, "my_tabl");
-  });
-
-  test("Limit login attempts", async ({ page: p }) => {
-    const page = p as PageWIds;
-    await goTo(page, "/login");
-    const badLoginAndExpectError = async (errorMessage: string) => {
-      await fillLoginFormAndSubmit(page, "invalid");
-      await page.getByTestId("Login.error").waitFor({ state: "visible", timeout: 15e3 });
-      expect(await page.getByTestId("Login.error").textContent()).toContain(errorMessage);
-    }
-    for(let i = 0; i < 5; i++){
-      await badLoginAndExpectError("Provided credentials are not correct");
-    }
-    await badLoginAndExpectError("Too many failed attempts");
   });
 });

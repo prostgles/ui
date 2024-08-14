@@ -396,7 +396,7 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      application_name: string;
+      application_name?: null | string;
       backend_start?: null | string;
       backend_type?: null | string;
       backend_xid?: null | string;
@@ -416,7 +416,7 @@ export type DBSchemaGenerated = {
       memPretty?: null | string;
       mhz?: null | string;
       pid: number;
-      query: string;
+      query?: null | string;
       query_start?: null | string;
       state?: null | string;
       state_change?: null | string;
@@ -444,6 +444,7 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
+      description?: null | string;
       id: string;
     };
   };

@@ -124,6 +124,7 @@ export const goTo = async (page: PageWIds, url = "localhost:3004") => {
 
 export const fillLoginFormAndSubmit = async (page: PageWIds, userNameAndPassword = "test_user") => {
   await page.locator("#username").waitFor({ state: "visible", timeout: 30e3 });
+  await page.locator("#username").fill("")
   await page.locator("#username").fill(userNameAndPassword)
   await page.locator("#password").fill(userNameAndPassword)
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
