@@ -1,12 +1,11 @@
 import React from "react";
-import type { PopupProps } from "../components/Popup/Popup";
-import Popup from "../components/Popup/Popup";
-import FormField from "../components/FormField/FormField";
 import Btn from "../components/Btn";
 import ErrorComponent from "../components/ErrorComponent";
-import RTComp from "../dashboard/RTComp";
 import { FlexCol } from "../components/Flex";
-import { tout } from "./ElectronSetup";
+import FormField from "../components/FormField/FormField";
+import type { PopupProps } from "../components/Popup/Popup";
+import Popup from "../components/Popup/Popup";
+import RTComp from "../dashboard/RTComp";
 
 type LoginState = {
   showTOTP?: "token" | "recovery";
@@ -85,7 +84,7 @@ export default class Login extends RTComp<any, LoginState> {
       showTOTP, totp_token, totp_recovery_code, 
     } = this.state;
 
-    const ErrorComp = !showTOTP && <ErrorComponent error={error} className="my-1" />;
+    const ErrorComp = !showTOTP && <ErrorComponent data-command="Login.error" error={error} className="my-1" />;
 
     const getForgetPasswordPopup = () => {
       if(!forgotPassword) return null;

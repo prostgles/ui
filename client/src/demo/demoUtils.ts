@@ -1,5 +1,6 @@
 
-import { type Command, getCommandElemSelector } from "../Testing"
+import type { SQLHandler } from "prostgles-types";
+import { type Command, getCommandElemSelector } from "../Testing";
 import { tout } from "../pages/ElectronSetup";
 
 let pointer: HTMLDivElement | null = null;
@@ -28,7 +29,7 @@ type ClickOpts = GetElemOpts & {
   noTimeToWait?: boolean;
 }
 
-export const waitForElement = async <T extends Element>(testId: Command | "", endSelector = "", { noTimeToWait, timeout = 10e5, ...otherOpts }: ClickOpts = { }) => {
+export const waitForElement = async <T extends Element>(testId: Command | "", endSelector = "", { noTimeToWait, timeout = 15e3, ...otherOpts }: ClickOpts = { }) => {
   !noTimeToWait && await tout(100);
   let elem = getElement<T>(testId, endSelector, otherOpts);
   if(!elem && timeout) {
@@ -64,7 +65,9 @@ export const goToElem = async <ElemType = HTMLElement>(testId: Command | "", end
 }
 export const click = async (testId: Command | "", endSelector = "", opts: ClickOpts = {}): Promise<void> => {
   const elem = await goToElem(testId, endSelector, opts);
-  elem.click();
+  /** In some cases react has since replaced the node content */
+  const latestElem = getElement<HTMLButtonElement>(testId, endSelector, opts);
+  (latestElem ?? elem).click();
 }
 
 export const type = async (value: string, testId: Command | "", endSelector = "") => {

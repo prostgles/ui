@@ -9,6 +9,7 @@ import type { TreeLayout } from "./TreeBuilder";
 import { TreeBuilder } from "./TreeBuilder";
 import { FlexRow } from "../../components/Flex";
 import Btn from "../../components/Btn";
+import { isDefined } from "../../utils";
 
 
 export type LayoutItem = {
@@ -298,7 +299,6 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
             ...l,
             title: getChildNode(l.id)?.props["data-title"]
           }));
-        
         content = <SilverGridChild
           key={key}
           activeTabKey={activeItemId}
@@ -390,7 +390,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
 
   render(){
     const { targetStyle } = this.state;
-    const { style = {}, className = "", overlay  } = this.props;
+    const { style = {}, className = "", overlay } = this.props;
     return (
       <div ref={r=> { if(r) this.ref = r; }}
         className={"silver-grid-component relative  " + className }

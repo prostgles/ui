@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "setup": "cp ../client/src/Testing.ts ./tests",
-    "test": "npm run setup && playwright test main.spec.ts && playwright test demo_video_setup.spec.ts && playwright test demo_video.spec.ts",
+    "test": "npm run setup && playwright test main.spec.ts && playwright test demo_video_setup.spec.ts && playwright test demo_video.spec.ts && playwright test login_rate_limit.spec.ts",
     "test-local": "bash test-local.sh",
     "test_debug": "npm run setup && playwright test --debug"
   },

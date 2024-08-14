@@ -73,7 +73,7 @@ const io = new Server(http, {
   cors: connectionChecker.withOrigin
 });
  
-export const connMgr = new ConnectionManager(http, app, connectionChecker.withOrigin);
+export const connMgr = new ConnectionManager(http, app, connectionChecker);
 
 const electronConfig = getElectronConfig();
 const PORT = electronConfig? (electronConfig.port ?? 3099) : +(process.env.PROSTGLES_UI_PORT ?? 3004);

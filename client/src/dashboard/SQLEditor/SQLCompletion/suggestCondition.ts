@@ -34,7 +34,7 @@ export const suggestCondition = async (
     if(cb.l1token?.textLC === cb.currNestingFunc?.textLC){
       return suggestSnippets([{ label: "SELECT" }]);
     }
-    const res = await matchNested(args, ["MatchSelect"]);
+    const res = await matchNested(args, ["MatchSelect"], undefined);
     if(res) return res;
   }
 
@@ -123,6 +123,7 @@ export const suggestCondition = async (
     cb.currToken?.type === "string.sql"
   ){
     const { identifierText: columnName, colTokens } = getPreviousIdentifier()!;
+    const currentText = `${cb.currToken.text.slice(1, -1)}`;
     const currentFilter = `%${cb.currToken.text.slice(1, -1)}%`;
     const [matchingTable, ...other] = ss.filter(s => 
       (s.type === "table" || s.type === "view") && 
@@ -138,8 +139,8 @@ export const suggestCondition = async (
       ){
         expression = `(${colTokens.map(t => t.text).join("")})`;
       }
-      const querySelect = `DISTINCT LEFT(${expression}::TEXT, 500)`;
-      const queryFilter = ` WHERE LEFT(${expression}::TEXT, 500) ilike \${currentFilter} LIMIT 20`;
+      const querySelect = `DISTINCT LEFT(${expression}::TEXT, 500) as str, position(lower(\${currentText}) in lower(${expression}::TEXT)) as pos`;
+      const queryFilter = ` WHERE LEFT(${expression}::TEXT, 500) ilike \${currentFilter} ORDER BY 2,1 LIMIT 20`;
       return {
         querySelect,
         queryFilter
@@ -160,8 +161,8 @@ export const suggestCondition = async (
       query = `SELECT ${querySelect} FROM ${matchingTable.escapedIdentifier} ${queryFilter}`;
     }
     if(query){
-      const result = await args.sql?.(query, { currentFilter }, { returnType: "default-with-rollback" });
-      const values = result?.rows.map((r: any) => Object.values(r)[0]?.toString()).filter(isDefined);
+      const result = await args.sql?.(query, { currentFilter, currentText }, { returnType: "default-with-rollback" });
+      const values = result?.rows.map((r: any) => r.str?.toString()).filter(isDefined);
       if(values?.length){
         return suggestSnippets(
           values.map(v => ({ label: v, type: "value", kind: KNDS.Constant })),

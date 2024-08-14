@@ -4,7 +4,7 @@ import { getColumnDataColor } from "./SmartFormField";
 import { renderInterval } from "../../W_SQL/customRenderers";
 import { dateAsYMD_Time } from "../../Charts";
 import type { ValidatedColumnInfo} from "prostgles-types";
-import { _PG_numbers_num } from "prostgles-types";
+import { _PG_numbers } from "prostgles-types";
 import { isObject, _PG_date } from "prostgles-types";
 import { sliceText } from "../../../../../commonTypes/utils";
 
@@ -26,7 +26,6 @@ export const RenderValue = ({ column: c, value, showTitle = true, maxLength, sty
   }
   const nullRender = renderNull(value);
   if(nullRender) return nullRender;
-
   const getSliced = (v: string | null | undefined, _maxLength?: number) => {
     const nullRender = renderNull(v);
     if(nullRender) return nullRender;
@@ -39,13 +38,18 @@ export const RenderValue = ({ column: c, value, showTitle = true, maxLength, sty
     return <ShorterText style={style} value={value} column={c} /> 
   }
 
+  const numericStyle = {
+    /* Align numbers to right for an easier read */
+    textAlign: "right",
+  } as const
+
   if(c?.tsDataType !== "number" && c?.udt_name === "int8"){
-    return <span style={{color: getColumnDataColor({ udt_name: "int4", tsDataType: "number" }),  ...style }}>
+    return <span style={{ color: getColumnDataColor({ udt_name: "int4", tsDataType: "number" }), ...numericStyle,  ...style }}>
       {BigInt(value).toLocaleString()}
     </span>
   }
 
-  if((c?.tsDataType === "number" || c && _PG_numbers_num.includes(c.udt_name as any)) && value !== undefined && value !== null){
+  if((c?.tsDataType === "number" || c && _PG_numbers.includes(c.udt_name as any)) && value !== undefined && value !== null){
     const countDecimals = (num: number) => {
       if(Math.floor(num.valueOf()) === num.valueOf()) return 0;
       return num.toString().split(".")[1]?.length || 0; 
@@ -56,7 +60,7 @@ export const RenderValue = ({ column: c, value, showTitle = true, maxLength, sty
         minimumFractionDigits: Math.min(maxDecimals, countDecimals(+value)) 
       })
     );
-    return <span style={{color: getColumnDataColor(c),  ...style }}>{slicedValue}</span>
+    return <span style={{ color: getColumnDataColor(c), ...numericStyle,  ...style }}>{slicedValue}</span>
   }
   if(c?.udt_name === "interval"){
     return <>{renderInterval(value)}</>

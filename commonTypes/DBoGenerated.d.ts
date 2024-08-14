@@ -235,6 +235,8 @@ export type DBSchemaGenerated = {
       allowed_ips_enabled?: boolean;
       allowed_origin?: null | string;
       id?: number;
+      login_rate_limit?: {    maxAttemptsPerHour: number;   groupBy: 'x_real_ip' | 'remote_ip' | 'ip';  };
+      login_rate_limit_enabled?: boolean;
       magic_link_validity_days?: number;
       session_max_age_days?: number;
       tableConfig?: null | any;
@@ -394,7 +396,7 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      application_name: string;
+      application_name?: null | string;
       backend_start?: null | string;
       backend_type?: null | string;
       backend_xid?: null | string;
@@ -414,7 +416,7 @@ export type DBSchemaGenerated = {
       memPretty?: null | string;
       mhz?: null | string;
       pid: number;
-      query: string;
+      query?: null | string;
       query_start?: null | string;
       state?: null | string;
       state_change?: null | string;
@@ -442,6 +444,7 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
+      description?: null | string;
       id: string;
     };
   };
@@ -481,7 +484,6 @@ export type DBSchemaGenerated = {
       having?: any;
       id?: string;
       last_updated: string;
-      layout?: null | any;
       limit?: null | number;
       method_name?: null | string;
       name?: null | string;

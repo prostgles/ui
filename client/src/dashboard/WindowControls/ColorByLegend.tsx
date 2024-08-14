@@ -12,6 +12,7 @@ import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
 import { type ColumnValue, setDefaultConditionalStyle } from "../W_Table/ColumnMenu/ColumnStyleControls";
 import { updateWCols } from "../W_Table/tableUtils/tableUtils";
 import type { ProstglesTimeChartStateLayer } from "../W_TimeChart/W_TimeChart";
+import { useEffectDeep } from "prostgles-client/dist/prostgles";
 
 type P = DivProps & Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "prgl" | "w"> & {
   layerLinkId: string;
@@ -37,7 +38,7 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
 
 
   /** Add group by colors */
-  useEffectAsync(async () => {
+  useEffectDeep(() => {
     const missingLabels = !valueStyles? undefined : layers.filter(l => !valueStyles.some(s => s.condition === l.groupByValue)).map(l => l.groupByValue).join(", ");
     if((!valueStyles || missingLabels) && oldLayerWindow?.table_name){
       const parentW = props.getLinksAndWindows().windows.find(w => w.id === props.w.parent_window_id);

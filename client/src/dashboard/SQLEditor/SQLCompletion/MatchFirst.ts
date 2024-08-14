@@ -89,7 +89,7 @@ export const MatchFirst = async ({
   }
 
   if(ftoken?.textLC === "table"){
-    return suggestTableLike({ cb, ss, sql });
+    return suggestTableLike({ cb, ss, sql, parentCb: undefined });
   }
 
   if(ftoken?.textLC === "explain"){

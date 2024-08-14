@@ -1,9 +1,10 @@
+import { getDemoUtils, type DemoScript, type TypeAutoOpts } from "../dashboard/W_SQL/getDemoUtils";
+import { VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
 import { tout } from "../pages/ElectronSetup";
-import type { DemoScript, TypeAutoOpts } from "../dashboard/W_SQL/getDemoUtils";
-import { QUERY_WATCH_IGNORE } from "../../../commonTypes/utils";
-import { getElement, movePointer } from "./demoUtils";
+import { closeAllViews } from "./dashboardDemo";
+import { click, getElement, movePointer } from "./demoUtils";
 
-export const sqlVideoDemo: DemoScript = async ({ 
+const sqlVideoDemo: DemoScript = async ({ 
   runDbSQL, fromBeginning, typeAuto, 
   moveCursor, triggerParamHints,  getEditor, 
   actions, testResult, triggerSuggest, runSQL, newLine
@@ -52,9 +53,6 @@ export const sqlVideoDemo: DemoScript = async ({
 
   await runDbSQL(`DROP POLICY IF EXISTS read_own_data ON users;`)
 
-  const pinnToggle = getElement<HTMLButtonElement>("DashboardMenuHeader.togglePinned");
-  pinnToggle?.click();
-  await movePointer(0,0);
 
   /** Force monaco to show the text in docker */
   const focusEditor = () => {
@@ -151,7 +149,12 @@ export const sqlVideoDemo: DemoScript = async ({
     await actions.selectCodeBlock();
     await tout(500);
     await runSQL();
-  })
+    await newLine(2);
+    await typeAuto(`SEL` );
+    await actions.selectCodeBlock();
+    await tout(500);
+    await runSQL();
+  });
   
   /** Selection expansion */
   // await showScript(`Selection/statement expansion`, async () => {
@@ -207,8 +210,7 @@ export const sqlVideoDemo: DemoScript = async ({
     await typeAuto(` myn`);
     await typeAuto(`\n`);
     await typeAuto(` id`);
-    await typeAuto(`= prou`);
-    await typeAuto(`('id')::uuid`, { dontAccept: true });
+    await typeAuto(`= userid`);
     await tout(1e3);
     await runSQL();
   });
@@ -245,7 +247,10 @@ export const sqlVideoDemo: DemoScript = async ({
     await typeQuick(`INSE`);
     await typeQuick(` users`, { nth: 1 });
     await typeQuick(`(`, { nth: -1 });
-    await typeQuick(`DEFAULT,`, { nth: -1 });
+    await typeQuick(`DEFAULT)`, { nth: -1 });
+    await moveCursor.left(1);
+    await typeAuto(`,`, { waitAccept: 1e3, nth: -1 });
+    await typeAuto(`1,`, { waitAccept: 1e3, nth: -1 });
   });
 
   await showScript(`Settings details`, "", async () => {
@@ -288,4 +293,28 @@ export const fixIndent = (str: string) => {
     .map((l, i) => i === 0 ? l : l.slice(minIdentOffset))
     .join("\n")
     .trim();
+}
+
+export const sqlDemo = async () => {
+
+  await closeAllViews();
+  await click("dashboard.menu");
+  await click("dashboard.menu.sqlEditor");
+  await movePointer(-20,-20);
+  const getSqlWindow = () => Array.from(document.querySelectorAll<HTMLDivElement>(`[data-box-id][data-box-type=item]`)).find(n => n.querySelector(".ProstglesSQL"));
+  if (!getSqlWindow()) {
+    click("dashboard.menu.sqlEditor");
+    await tout(1500);
+  }
+  const sqlWindow = getSqlWindow();
+  const id = sqlWindow?.dataset!.boxId;
+  if (!sqlWindow || !id) throw "not ok";
+  await (window as any).dbs.windows.update({ id }, { sql_options: { $merge: [{ "executeOptions": "smallest-block" }] } });
+  await tout(1500);
+  const testUtils = getDemoUtils({ id });
+
+  const currDbName = await testUtils.runDbSQL(`SELECT current_database() as db_name`, {}, { returnType: "value" });
+  if (currDbName === VIDEO_DEMO_DB_NAME) {
+    return sqlVideoDemo(testUtils);
+  }
 }

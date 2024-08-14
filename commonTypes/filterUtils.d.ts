@@ -71,11 +71,8 @@ export declare const NUMERIC_FILTER_TYPES: readonly [{
     readonly label: "<=";
 }];
 export declare const DATE_FILTER_TYPES: readonly [{
-    readonly key: "$age";
-    readonly label: "Age";
-}, {
     readonly key: "$ageNow";
-    readonly label: "Age exact";
+    readonly label: "Age";
 }, {
     readonly key: "$duration";
     readonly label: "Duration";

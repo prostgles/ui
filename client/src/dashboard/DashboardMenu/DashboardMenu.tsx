@@ -10,6 +10,7 @@ import { SearchAll, } from "../SearchAll";
 import { DashboardMenuContent } from "./DashboardMenuContent";
 import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuHotkeys } from "./DashboardMenuHotkeys";
+import { useTableSizeInfo } from "./useTableSizeInfo";
 
 export type DashboardMenuProps = Pick<DashboardProps, "prgl" > & {
   suggestions: DashboardState["suggestions"];
@@ -41,39 +42,51 @@ export const DashboardMenu = ({ menuAnchorState, ...props }: Omit<DashboardMenuP
     return (windows?.filter(w => w.type === "sql" && !w.deleted)  ?? []) as SyncDataItem<WindowData<"sql">>[];
   }, [windows]);
   const anchor = { node: menuAnchor, onClose: () => setState(undefined) }
-
+  const { tablesWithInfo } = useTableSizeInfo({ tables, db, workspace });
+  
   const onClickSearchAll = useCallback(() => {
     setShowSearchAll({ 
       mode: "views and queries", 
       term: undefined 
     });
   }, []);
-  if(!(dbs as any).workspaces.insert) return null;
+  const hotKeys = <>
+    <DashboardMenuHotkeys 
+      {...props} 
+      setShowSearchAll={setShowSearchAll}
+    />
+  </>
+  if(!(dbs as any).workspaces.insert) return hotKeys;
 
   const pinnedMenu = workspace.options.pinnedMenu && !window.isLowWidthScreen;
-  if(!pinnedMenu && !anchor.node && !showSearchAll) return null;
+  if(!pinnedMenu && !anchor.node && !showSearchAll) return hotKeys;
   const mainContent = pinnedMenu? 
     <DashboardMenuContent 
       {...props} 
       queries={queries} 
       onClickSearchAll={onClickSearchAll} 
+      tablesWithInfo={tablesWithInfo}
       onClose={undefined} 
-    /> :
+    /> : anchor.node?
     <Popup
       key="main menu"
-      // title=" "
       showFullscreenToggle={{}}
       title={
         <DashboardMenuHeader 
           { ...props }
           onClickSearchAll={onClickSearchAll}
-          onClose={undefined}
+          onClose={anchor.onClose}
         />
       }
       onClickClose={false}
       onClose={anchor.onClose}
       positioning="beneath-left"
       anchorEl={anchor.node}
+      clickCatchStyle={{
+        backdropFilter: "blur(1px)",
+        background: "rgba(var(--text-color-0), 0.11)",
+        opacity: 1,
+      }}
       contentStyle={{
         overflow: "hidden",
         padding: 0
@@ -85,10 +98,11 @@ export const DashboardMenu = ({ menuAnchorState, ...props }: Omit<DashboardMenuP
       <DashboardMenuContent 
         {...props} 
         queries={queries} 
+        tablesWithInfo={tablesWithInfo}
         onClickSearchAll={onClickSearchAll} 
         onClose={anchor.onClose} 
       />
-    </Popup>
+    </Popup> : null;
 
   return <>
     {showSearchAll &&
@@ -122,10 +136,7 @@ export const DashboardMenu = ({ menuAnchorState, ...props }: Omit<DashboardMenuP
         onClose={() => { setShowSearchAll(undefined) }} 
       />
     } 
-    <DashboardMenuHotkeys 
-      {...props} 
-      setShowSearchAll={setShowSearchAll}
-    />
+    {hotKeys}
     {mainContent}
   </>
 }

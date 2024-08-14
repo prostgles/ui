@@ -50,8 +50,8 @@ export const DashboardMenuHeader = ({ prgl, loadTable, onClose, workspace, onCli
       data-command="DashboardMenuHeader.togglePinned"
       className="ml-p25"
       onClick={() => {
-        workspace.$update({ options: { pinnedMenu: !workspace.options.pinnedMenu } }, { deepMerge: true })
-        onClose?.()
+        workspace.$update({ options: { pinnedMenu: !workspace.options.pinnedMenu } }, { deepMerge: true });
+        onClose?.();
       }}
     />
   </FlexRowWrap>

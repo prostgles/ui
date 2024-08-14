@@ -309,8 +309,8 @@ export const getCurrentCodeBlock = async (model: editor.ITextModel, pos: Positio
 }
 
 
-export const getCurrentNestingOffsetLimits = ({ currNestingId, currOffset, tokens }: Pick<CodeBlock, "currNestingId" | "tokens" | "currOffset">): { limits: [number, number]; isEmpty: boolean; } | undefined => {
-
+export const getCurrentNestingOffsetLimits = ({ currNestingId: cn, currOffset, tokens }: Pick<CodeBlock, "currNestingId" | "tokens" | "currOffset">, nestingId?: string): { limits: [number, number]; isEmpty: boolean; } | undefined => {
+  const currNestingId = nestingId ?? cn;
   const isInsideCurrentNestingId = (t: TokenInfo, i: number, arr: TokenInfo[]) => {
     const pToken = arr[i-1];
     const nToken = arr[i+1];

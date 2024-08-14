@@ -12,7 +12,10 @@
   height: fit-content;
 }
 .table-component .sort-none::after {
-  content: "\25bc";    
+  /*
+    used to avoid content shift. Disabled to preserve space 
+    content: "\25bc";     
+  */
   color: transparent;
   margin-left: .25em;
   height: fit-content;

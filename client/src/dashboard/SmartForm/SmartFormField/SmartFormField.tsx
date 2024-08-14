@@ -1,7 +1,7 @@
 import { mdiDotsHorizontal } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, MethodHandler, TableInfo, ValidatedColumnInfo} from "prostgles-types";
-import { TS_PG_Types, _PG_date, getJSONBSchemaAsJSONSchema } from "prostgles-types";
+import { TS_PG_Types, _PG_date, getJSONBSchemaAsJSONSchema, _PG_numbers } from "prostgles-types";
 import React from "react";
 import type { Theme } from "../../../App";
 import Btn from "../../../components/Btn";
@@ -392,6 +392,10 @@ export const getColumnDataColor = (c?: Pick<Partial<ValidatedColumnInfo>, "udt_n
 
   if(_PG_date.some(v => v === c?.udt_name)){
     return "var(--color-date)"
+  }
+
+  if(c && _PG_numbers.includes(c.udt_name as any)){
+    return "var(--color-number)"
   }
 
   const TS_COL_TYPE_TO_COLOR = {

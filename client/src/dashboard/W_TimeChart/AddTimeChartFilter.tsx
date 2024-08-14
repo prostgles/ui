@@ -249,7 +249,7 @@ type TimestampFilterProps = {
   endIcon?: React.ReactNode;
 }
 const TimestampFilter = ({ min, max, style, endIcon }: TimestampFilterProps) => {
-  return <FlexRow className="gap-1 p-p5 rounded ai-start" style={style}>
+  return <FlexRow className="TimestampFilter gap-1 p-p5 rounded ai-start" style={style}>
     <FlexCol className="gap-p5">
       <div style={{ }}>{RenderValue({ column: { udt_name: "timestamptz", tsDataType: "any" }, value: min })}</div>  
       <div style={{ }}>{RenderValue({ column: { udt_name: "timestamptz", tsDataType: "any" }, value: max })}</div>  

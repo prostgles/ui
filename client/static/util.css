@@ -136,8 +136,8 @@
 
 :root.dark-theme  {
   --li-hover-bg: #5b5a5a;
-  --color-uuid: rgb(206, 61, 162);
-  --color-number: rgb(0 169 0);
+  --color-uuid: rgb(216, 99, 181);
+  --color-number: rgb(52, 192, 52);
   --color-text: #fb9b9b;
   --color-boolean: #a5a5ff;
   --color-date: rgb(112 156 250);
@@ -164,7 +164,8 @@
   --bg-default: var(--gray-600);
   --bg-action: #0071b3;
   --bg-popup: #3b3b3b;
-  --bg-popup-content: #272727;
+  /* --bg-popup-content: #272727; */
+  --bg-popup-content: #3b3b3b;
 
 /* 
   --shadow0: rgba(77, 77, 78, 0.733);
@@ -176,7 +177,7 @@
   --text-0p75: var(--gray-400);
   --text-1: #b4b4b4;
   --text-1p5: var(--gray-500);
-  --text-2: var(--gray-600);
+  --text-2: var(--gray-400);
   --text-3: var(--gray-700);
 
   --bg-color-0: #2c2c2c; /* rgb(69, 69, 69); */
@@ -1546,7 +1547,8 @@ button.toggle:focus {
 }
 
 .dark-theme .card {
-  border: 1px solid var(--gray-800);
+  border: unset;
+  box-shadow: 0 1px 3px 0 rgb(221 221 221 / 57%), 0 1px 2px 0 rgba(0, 0, 0, .06)
 }
 
 @media only screen and (max-width: 600px) {
@@ -1666,6 +1668,9 @@ button.toggle:focus {
 
 .color-action {
   color: var(--blue-500);
+}
+.dark-theme .color-action {
+  color: var(--blue-400);
 }
 .border-action {
   border-color: var(--blue-500);
@@ -1831,7 +1836,7 @@ nav.left-nav-list a.active {
 }
 
 
-.show-on-parent-hover {
+.show-on-parent-hover:not(.hover) {
   opacity: 0;
 }
 
@@ -1843,13 +1848,6 @@ nav.left-nav-list a.active {
 }
 .show-on-hover:hover {
   opacity: 1;
-}
-
-
-@media (min-width:820px)  { 
-  .show-on-parent-hover {
-    opacity: 0;
-  }
 }
 
 .show-on-parent-hover:focus-within {

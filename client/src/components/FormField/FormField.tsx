@@ -550,7 +550,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
         >
           {!!label && isObject(label)? <Label className="mb-p25" {...label} variant="normal" style={{ zIndex:1 }}/> :
             <label htmlFor={id} 
-              className={"main-label ta-left noselect text-0p75 flex-row ai-center " + (id? " pointer " : " ") + labelClass} 
+              className={"main-label ta-left noselect text-1 flex-row ai-center " + (id? " pointer " : " ") + labelClass} 
               style={{ 
                 flex: 0.5, 
                 justifyContent: "space-between",
@@ -659,7 +659,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
             {!rightContent? null : <div className={`RightContent  ${rightContentAlwaysShow? "" : "show-on-trigger-hover"} f-0 as-start `} style={{ alignSelf: "start" }}>{rightContent}</div>}
           </div>
           {hint && 
-            <p className="ta-left text-2 m-0 text-sm noselect ws-pre-line" 
+            <p className="ta-left text-1 m-0 text-sm noselect ws-pre-line" 
               onClick={e => { 
                 const input = e.currentTarget.closest(`.${INPUT_HINT_WRAPPER_CLASS}`)?.querySelector<HTMLInputElement>(`.${INPUT_WRAPPER_CLASS} > *`);
                 input?.click() 

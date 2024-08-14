@@ -11,8 +11,9 @@ test.use({
   trace: "on",
   launchOptions: {
     args: ['--start-maximized'],
-  }
+  },
 });
+
 const videoTestDuration = 10 * 60e3;
 test.describe("Demo video", () => {
   test.setTimeout(videoTestDuration);
@@ -20,10 +21,11 @@ test.describe("Demo video", () => {
   test("Vide demo", async ({ page: p }) => {
     const page = p as PageWIds;
     
-    await login(page, USERS.test_user, "http://localhost:3004/login");
+    await login(page, USERS.test_user, "/login");
     await page.waitForTimeout(2000);
-    await page.getByTestId("App.colorScheme").click();
-    await page.getByTestId("App.colorScheme").locator(`[data-key=light]`).click();
+    // await page.getByTestId("App.colorScheme").click();
+    // // await page.getByTestId("App.colorScheme").locator(`[data-key=light]`).click();
+    // await page.getByTestId("App.colorScheme").locator(`[data-key=dark]`).click();
     const getVideoDemoConnection = async () => {
       await page.getByRole('link', { name: 'Connections' }).click();
       const videoDemoConnection = await page.getByRole('link', { name: 'prostgles_video_demo', exact: true });
@@ -34,12 +36,12 @@ test.describe("Demo video", () => {
       await localVideoDemoConnection.click();
     } else {
       await createDatabase("prostgles_video_demo", page);
-      await goTo(page, "http://localhost:3004/connections");
+      await goTo(page, "/connections");
       await createDatabase("food_delivery", page, true);
     }
 
     const startDemo = async () => {
-      await goTo(page, "http://localhost:3004/connections");
+      await goTo(page, "/connections");
       await page.waitForTimeout(1000);
       const videoDemoConnection = await getVideoDemoConnection();
 
@@ -59,9 +61,9 @@ test.describe("Demo video", () => {
 
     }
     await startDemo();
-    await goTo(page, "http://localhost:3004/connections");
-    await page.getByTestId("App.colorScheme").click();
-    await page.getByTestId("App.colorScheme").locator(`[data-key=dark]`).click();
-    await startDemo();
+    // await goTo(page, "/connections");
+    // await page.getByTestId("App.colorScheme").click();
+    // await page.getByTestId("App.colorScheme").locator(`[data-key=dark]`).click();
+    // await startDemo();
   });
 });

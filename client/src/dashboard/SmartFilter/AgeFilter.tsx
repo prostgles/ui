@@ -14,7 +14,7 @@ export const getDefaultAgeFilter = (fieldName: string, type: typeof AgeFilterTyp
   complexFilter: {
     type: "controlled",
     funcName: type,
-    argsLeftToRight: true,
+    argsLeftToRight: false,
     comparator: ">",
   },
   type,
@@ -53,10 +53,12 @@ export const AgeFilter  = (props: FilterProps) => {
     ...otherDateCols.map(c => ({ key: c.name, label: c.label }))
   ]
 
-  return <div className="flex-row gap-p25">
+  return <div className="AgeFilter flex-row gap-p25">
     {filter.type !== "$age" && <div className="flex-row p-p25 gap-p25 ai-center">
-      <Btn size="small"
+      <Btn 
+        size="small"
         color="action" 
+        data-command="AgeFilter.argsLeftToRight"
         onClick={() => { 
           updateComplex({ argsLeftToRight: !complex.argsLeftToRight }) 
         }}
@@ -66,6 +68,9 @@ export const AgeFilter  = (props: FilterProps) => {
       <Select 
         value={complex.otherField ?? null} 
         fullOptions={colOptsions} 
+        btnProps={{
+          size: "small"
+        }}
         onChange={otherField => {
           updateComplex({ otherField });
         }} 
@@ -75,6 +80,7 @@ export const AgeFilter  = (props: FilterProps) => {
       <Select 
         className="text-action"
         iconPath=""
+        data-command="AgeFilter.comparator"
         btnProps={{
           style: { borderRadius: 0 },
           color: "default",

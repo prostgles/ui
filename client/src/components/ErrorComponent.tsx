@@ -6,8 +6,9 @@ import { classOverride } from "./Flex";
 import { Icon } from "./Icon/Icon";
 import { isObject } from "../../../commonTypes/publishUtils";
 import Btn from "./Btn";
+import type { TestSelectors } from "../Testing";
 
-export default class ErrorComponent extends React.Component<{ 
+type P = TestSelectors & { 
   error: any; 
   className?: string; 
   noScroll?: boolean;
@@ -20,7 +21,8 @@ export default class ErrorComponent extends React.Component<{
   variant?: "outlined";
   color?: "warning" | "action" | "info";
   onClear?: VoidFunction;
-}, any> {
+}
+export default class ErrorComponent extends React.Component<P> {
   ref?: any;
 
   static parsedError = (val, findMsg?: boolean): string => {
@@ -63,7 +65,7 @@ export default class ErrorComponent extends React.Component<{
     this.scrollIntoView();
   }
   render(){
-    const { error, className = "", style = {}, pre = false, findMsg = false, withIcon = false, maxTextLength = 1000, title, noScroll = false, variant, color, onClear } = this.props;
+    const { error, className = "", style = {}, pre = false, findMsg = false, withIcon = false, maxTextLength = 1000, title, noScroll = false, variant, color, onClear, children, ...testSelectors } = this.props;
 
     if([null, undefined].includes(error)){
       return null;
@@ -72,6 +74,7 @@ export default class ErrorComponent extends React.Component<{
     return (
       <div ref={e => { if(e) this.ref = e; }} 
         className={classOverride(`ErrorComponent relative flex-row ai-center text-danger p-1 o-auto min-w-0 min-h-0 o-auto ${colorClass} ${(pre? " ws-pre " : "")}`, className)} 
+        {...testSelectors}
         style={{ 
           whiteSpace: "pre-line", 
           textAlign: "left", 

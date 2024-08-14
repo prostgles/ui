@@ -1,5 +1,6 @@
 import { scaleLinear } from "d3-scale";
 import type { TimeChart, TimeChartLayer } from "./TimeChart";
+import { getCssVariableValue } from "./onRenderTimechart";
 
 export const prepareTimechartData = function(this: TimeChart){
 
@@ -10,11 +11,11 @@ export const prepareTimechartData = function(this: TimeChart){
         coords: [this.ref!.offsetWidth/2, this.ref!.offsetHeight/2],
         id: "2111r",
         type: "text",
-        fillStyle: "#cecece",
+        fillStyle: getCssVariableValue("--text-color-1"),
         textAlign: "center",
         font: "18px arial",
         background: {
-          fillStyle: "white",
+          fillStyle: getCssVariableValue("--bg-color-0"),
           lineWidth: 1,
           padding: 6,
           borderRadius: 3
