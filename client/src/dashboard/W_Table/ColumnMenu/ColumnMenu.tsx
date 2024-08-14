@@ -192,6 +192,7 @@ export const ColumnMenu = (props: P) => {
         column={column} 
         onUpdate={onUpdate} 
         tsDataType={column.info?.tsDataType || column.computedConfig?.funcDef.outType.tsDataType || "any"} 
+        udt_name={column.info?.udt_name || column.computedConfig?.funcDef.outType.udt_name || "text"}
       /> 
     },
     "Display format": {

@@ -1,21 +1,21 @@
 
+import * as crypto from "crypto";
 import type { Express } from "express";
 import { authenticator } from "otplib";
 import path from "path";
 import type { Auth, AuthClientRequest, BasicSession, LoginClientInfo } from "prostgles-server/dist/AuthHandler";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import { omitKeys } from "prostgles-types";
+import { isEmpty, omitKeys, pickKeys } from "prostgles-types";
 import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { BKP_PREFFIX } from "../BackupManager/BackupManager";
-import { actualRootDir, getElectronConfig } from "../electronConfig";
+import { actualRootDir } from "../electronConfig";
 import { PROSTGLES_STRICT_COOKIE } from "../envVars";
-import type { DBS, Users} from "../index";
-import { API_PATH, MEDIA_ROUTE_PREFIX, connectionChecker, log } from "../index";
+import type { DBS, Users } from "../index";
+import { API_PATH, MEDIA_ROUTE_PREFIX, connectionChecker, log, tout } from "../index";
 import { initBackupManager } from "../startProstgles";
 import { getPasswordHash } from "./authUtils";
-import * as crypto from "crypto";
 
 export const HOUR = 3600e3;
 export const YEAR = 365 * HOUR * 24;
@@ -25,6 +25,18 @@ const authCookieOpts = (process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_
   sameSite: "lax"   //  "none"
 };
 
+const getGlobalSettings = async () => {
+  let gs = connectionChecker.config.global_setting;
+  do {
+    gs = connectionChecker.config.global_setting;
+    if(!gs) {
+      console.warn("Delaying user request until GlobalSettings area available");
+      await tout(500);
+    }
+  } while (!gs);
+  return gs;
+}
+
 /**
  * Used to prevent ip addresses from authentication for 1 hour after 3 failed attempts
  */
@@ -32,25 +44,45 @@ type AuthAttepmt =
 | { auth_type: "login", username: string; }
 | { auth_type: "magic-link", magic_link_id: string; }
 | { auth_type: "session-id", sid: string; };
-const loginAttempt = async ({ db, ip_address, user_agent, ...attempt}: { db: DBOFullyTyped<DBSchemaGenerated>; } & LoginClientInfo & AuthAttepmt) => {
-
-  try {
-    const lastHour = (new Date(Date.now() - 1 * HOUR)).toISOString()
-    const previousFails = await db.login_attempts.find({ ip_address, failed: true, "created.>=": lastHour })
-    if(previousFails.length > 3){
-      throw "Too many failed attempts within the last hour";
+type LoginAttemptArgs = { 
+  db: DBOFullyTyped<DBSchemaGenerated>;
+} & LoginClientInfo & AuthAttepmt;
+const loginAttempt = async (args: LoginAttemptArgs) => {
+  const { db, ip_address, user_agent, ...attempt } = args;
+  const ignoredResult = {
+    onSuccess: async () => { }
+  } 
+  const globalSettings = await getGlobalSettings();
+  const lastHour = (new Date(Date.now() - 1 * HOUR)).toISOString();
+  const matchByFilterKeys: (keyof typeof args)[] = [];
+  const { login_rate_limit: { groupBy }, login_rate_limit_enabled } = globalSettings;
+  if(login_rate_limit_enabled){
+    if(groupBy === "ip"){
+      matchByFilterKeys.push("ip_address");
+    } else if(groupBy === "remote_ip"){
+      matchByFilterKeys.push("ip_address_remote");
+    } else if(groupBy === "x_real_ip"){
+      matchByFilterKeys.push("x_real_ip");
+    } else {
+      throw "Invalid login_rate_limit.groupBy";
     }
-  } catch(err) {
-    console.error(err);
+  } else {
+    return ignoredResult;
   }
+  const matchByFilter = pickKeys(args, matchByFilterKeys);
+  if(isEmpty(matchByFilter)){
+    throw "matchByFilter is empty " + JSON.stringify([matchByFilter, matchByFilterKeys, Object.keys(args), args.x_real_ip]);
+  }
+  const previousFails = await db.login_attempts.find({ ...matchByFilter, failed: true, "created.>=": lastHour })
+  if(previousFails.length >= Math.max(1, globalSettings.login_rate_limit.maxAttemptsPerHour)){
+    throw "Too many failed attempts";
+  } 
 
   /** In case of a bad sid do not log it multiple times */
   if(attempt.auth_type === "session-id"){
     const prevFailOnSameSid = await db.login_attempts.findOne({ ip_address, failed: true, sid: attempt.sid }, { orderBy: { created: false } });
     if(prevFailOnSameSid){
-      return {
-        onSuccess: async () => { }
-      }
+      return ignoredResult;
     }
   }
 
@@ -184,7 +216,7 @@ export const getAuth = (app: Express) => {
       if(password.length > 400){
         throw "Password is too long";
       }
-      const { onSuccess } = await loginAttempt({ db, username, ip_address, ip_address_remote, user_agent, x_real_ip, auth_type: "login" })
+      const { onSuccess } = await loginAttempt({ db, username, ip_address, ip_address_remote, user_agent, x_real_ip, auth_type: "login" });
       try {
         const userFromUsername = await _db.one("SELECT * FROM users WHERE username = ${username};", { username });
         if(!userFromUsername){
@@ -284,7 +316,7 @@ export const getAuth = (app: Express) => {
       magicLinks: {
         check: async (id, dbo, db, { ip_address, ip_address_remote, user_agent, x_real_ip }) => {
 
-          const onLoginAttempt = await loginAttempt({ db: dbo, magic_link_id: id, ip_address, ip_address_remote, user_agent, x_real_ip, auth_type: "magic-link" });
+          const onLoginAttempt = await loginAttempt({ db: dbo, magic_link_id: id, ip_address, ip_address_remote, user_agent, x_real_ip, auth_type: "magic-link", });
           const mlink = await dbo.magic_links.findOne({ id });
           
           if(mlink){

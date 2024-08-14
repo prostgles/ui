@@ -156,10 +156,10 @@ export class CanvasChart {
         createHiPPICanvas(canvas, offsetWidth, offsetHeight);
 
         /**
-         * Why were this commented out
+         * This cancels createHiPPICanvas. Why was it needed?
          */
-        this.ctx.canvas.width  = offsetWidth;
-        this.ctx.canvas.height = offsetHeight;
+        // this.ctx.canvas.width  = offsetWidth;
+        // this.ctx.canvas.height = offsetHeight;
         const { onResize } = this.opts ?? {};
         setTimeout(() => {
           onResize?.();
@@ -565,15 +565,17 @@ function createHiPPICanvas(cv: HTMLCanvasElement , _w: number, _h: number) {
   // if(ratio > 1){
     const w = Math.max(30, _w)
     const h = Math.max(30, _h)
-    cv.width = w * ratio;
-    cv.height = h * ratio;
+    const width = w * ratio;
+    const height = h * ratio;
+    cv.width = width;
+    cv.height = height;
     cv.style.width = w + "px";
     cv.style.height = h + "px";
     if(ratio > 1){
       cv.getContext("2d")?.scale(ratio, ratio);
     }
   // }
-  return cv;
+  return { cv, width, height };
 }
 
 /** Big lower case text appears lower than needed */

@@ -73,6 +73,12 @@ export const MinimisedFilter = ({ filter, label, column, style, toggle, toggleTi
 
     const filterValue = getValueForDisplay(filter.value, false);
     const filterValueText = getValueForDisplay(filter.value, true);
+
+    let comparatorNode: React.ReactNode = null;
+    if(filter.complexFilter){
+      //@ts-ignore
+      comparatorNode = <div className="p-p25">{filter.complexFilter.comparator}</div> ;
+    }
     return <div
       className={"FilterWrapper_MinimisedRoot flex-row ai-center noselect pointer relative o-hidden " + className}
       style={{
@@ -108,6 +114,7 @@ export const MinimisedFilter = ({ filter, label, column, style, toggle, toggleTi
           >
             {filterTypeLabel}
           </div>
+          {comparatorNode}
           {(filter.type !== "not null" && filter.type !== "null") && <>
             <div className="min-w-0 min-h-0 o-hidden font-16 flex-row ai-center "
               title={filterValueText}

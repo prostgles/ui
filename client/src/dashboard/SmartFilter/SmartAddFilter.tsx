@@ -1,6 +1,7 @@
 import { mdiFilterPlus } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { ValidatedColumnInfo } from "prostgles-types";
+import { _PG_date, _PG_numbers } from "prostgles-types";
 import React, { useState } from "react";
 import type { FilterType, JoinedFilter, SimpleFilter, SmartGroupFilter } from "../../../../commonTypes/filterUtils";
 import type { BtnProps } from "../../components/Btn";
@@ -19,6 +20,7 @@ import { getJoinPaths } from "../W_Table/tableUtils/getJoinPaths";
 import { FlexRow } from "../../components/Flex";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import { getJoinPathLabel } from "../W_Table/ColumnMenu/JoinPathSelectorV2";
+import { getDefaultAgeFilter } from "./AgeFilter";
 
 export type SmartAddFilterProps = {
   db: DBHandlerClient;
@@ -63,7 +65,10 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
   } = props;
 
   const [includeLinkedColumns, setIncludeLinkedColumns] = useState(false);
-  const isCategorical = (col: Pick<ValidatedColumnInfo, "tsDataType" | "references">) => Boolean(col.references?.length || !["number", "Date"].includes(col.tsDataType));
+  const isCategorical = (col: Pick<ValidatedColumnInfo, "tsDataType" | "references" | "udt_name">) => 
+      Boolean(col.references?.length || 
+      ![..._PG_date, ..._PG_numbers].includes(col.udt_name as any)
+    );
   const lastPathItem = joinOpts?.path.at(-1);
   const currentTable = lastPathItem?.tableName ?? tableName;
   const filterableTableColumns = getFilterableCols(tables.find(t => t.name === currentTable)?.columns ?? [])
@@ -141,8 +146,10 @@ export const SmartAddFilter = (props: SmartAddFilterProps) => {
       });
       const joinType = joinOpts?.type ?? c.joinInfo ? "$existsJoined" : undefined;
       
-      const type = isGeo? "$ST_DWithin" : defaultType ?? (joinPath? "not null" : isCategorical(c)? "$in" : "$between")
-      const innerFilter: SimpleFilter = {
+      const type = isGeo? "$ST_DWithin" :  
+        _PG_numbers.includes(c.udt_name as any) && !c.is_pkey ? "$between" : 
+        defaultType ?? (joinPath? "not null" : isCategorical(c)? "$in" : "$between")
+      const innerFilter: SimpleFilter = _PG_date.includes(c.udt_name as any)?  getDefaultAgeFilter(fieldName, "$ageNow") : {
         fieldName,
         type,
         value: [],

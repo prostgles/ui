@@ -4,11 +4,18 @@ import { kFormatter } from "../W_Table/W_Table";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { useMemo } from "react";
 import { bytesToSize } from "../Backup/BackupsControls";
+import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 
 type Args = Pick<DashboardMenuProps, "workspace" | "tables"> & { 
   db: DBHandlerClient; 
 };
-export const useTableSizeInfo = ({ workspace, tables, db }: Args) => {
+export type TablesWithInfo = (DBSchemaTablesWJoins[number] & {
+  endText: string;
+  endTitle: string;
+  count: number;
+  sizeNum: number;
+})[];
+export const useTableSizeInfo = ({ workspace, tables, db }: Args): { tablesWithInfo: TablesWithInfo} => {
 
   const { tableListEndInfo, tableListSortBy } = workspace.options;
   const tablesWithInfoNonSorted = usePromise(async () => {
@@ -51,13 +58,20 @@ export const useTableSizeInfo = ({ workspace, tables, db }: Args) => {
   }, [tables, tableListEndInfo, db]);
 
   const tablesWithInfo = useMemo(() => {
-    return tablesWithInfoNonSorted?.sort((a, b) => {
+    if(!tablesWithInfoNonSorted) {
+      const tablesWithEmptyInfo = tables.map(t => ({ ...t, endText: "", endTitle: "", count: 0, sizeNum: 0 }));
+      if(tableListSortBy === "name") return tablesWithEmptyInfo.sort((a, b) => a.name.localeCompare(b.name));
+      return tablesWithEmptyInfo;
+    }
+    return tablesWithInfoNonSorted.sort((a, b) => {
       if(tableListSortBy === "name") return a.name.localeCompare(b.name);
       if(tableListSortBy === "extraInfo" && tableListEndInfo === "count") return +b.count - +a.count;
       if(tableListSortBy === "extraInfo" && tableListEndInfo === "size") return b.sizeNum - a.sizeNum;
       return 0;
     });
-  }, [tableListSortBy, tableListEndInfo, tablesWithInfoNonSorted])
+  }, [tableListSortBy, tableListEndInfo, tablesWithInfoNonSorted, tables])
 
-  return { tablesWithInfo: tablesWithInfo ?? [] };
+  return { 
+    tablesWithInfo
+  };
 }

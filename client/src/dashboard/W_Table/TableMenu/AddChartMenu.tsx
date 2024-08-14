@@ -13,6 +13,7 @@ type P = {
   w: WindowData<"table"> | WindowData<"sql">;
   onAddChart: OnAddChart;
   tables: DBSchemaTablesWJoins; 
+  btnClassName: string;
 }
 
 export const AddChartMenu = (props: P) => {
@@ -77,6 +78,7 @@ export const AddChartMenu = (props: P) => {
             variant: "default",
             iconPath: c.iconPath,
             size: "small",
+            className: props.btnClassName
           }}
           fullOptions={c.cols.map((c, i) => ({
             key: c.type === "joined"? c.label : c.name,
@@ -95,7 +97,7 @@ export const AddChartMenu = (props: P) => {
         title={title}
         iconPath={c.iconPath} 
         size="small"
-        className="bg-color-3"
+        className={props.btnClassName}
         data-command={`AddChartMenu.${c.label}`}
         onClick={() => { 
           c.onAdd(c.cols.map(c => c.name), undefined) 

@@ -38,15 +38,6 @@ export type DBSSchemaForHandlers = {
   [K in keyof DBSchemaGenerated]: DBSchemaGenerated[K]["columns"];
 }
 
-export function getDefaultLayout(i: string){
-  return {
-    i,
-    x: 1, y: 0, w: 4, h: 2,
-    // minimised: false, 
-    // fullscreen: false
-  }
-}
-
 export const vibrateFeedback = (duration = 15) => {
   try {
     navigator.vibrate(duration)
@@ -245,12 +236,6 @@ export type WindowData<CType extends ChartType = ChartType> = Omit<Windows, "col
   table_name: CType extends "table"? Exclude<Windows["table_name"], null> : (null | string);
   method_name: CType extends "method"? Exclude<Windows["method_name"], null> : (null | string);
   name: string;
-  layout?: {
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-  };
   last_updated: string;
   fullscreen?: boolean;
   show_menu?: boolean;

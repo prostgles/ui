@@ -12,7 +12,7 @@ export const ClickCatchOverlay = ({ style, className, onClick }: Pick<DivProps, 
       position: "fixed",
       inset: 0,
       zIndex: 1,
-      backdropFilter: "blur(1px)",
+      backdropFilter: "blur(2px)",
       ...style,
     }}
     onClick={onClick}

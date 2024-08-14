@@ -1,4 +1,5 @@
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
+import { _PG_numbers } from "prostgles-types";
 import React from "react";
 import type { Prgl } from "../../../App";
 import { FlexCol, FlexRowWrap } from "../../../components/Flex";
@@ -10,6 +11,7 @@ import type { ColumnConfig } from "./ColumnMenu";
 import { ChipStylePalette, chipColorsFadedBorder } from "./ColumnDisplayFormat/ChipStylePalette";
 import { MINI_BARCHART_COLOR } from "../../../components/ProgressBar";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { index } from "d3";
 
 export type ColumnValue = string | number | Date | null | undefined | boolean;
  
@@ -55,6 +57,7 @@ export type StyleColumnProps = Pick<Prgl, "db" | "tables" > & {
   column: ColumnConfig;
   onUpdate: (newCol: Pick<ColumnConfig, "style">) => void;
   tsDataType: ValidatedColumnInfo["tsDataType"];
+  udt_name: ValidatedColumnInfo["udt_name"];
   tableName: string;
 } 
 
@@ -70,10 +73,13 @@ export const setDefaultConditionalStyle = async ({ columnName, db, tableName, fi
   if(!tableHandler?.find) return undefined;
   const rows = await tableHandler.find(filter, { select: { [columnName]: 1 }, limit: 5, groupBy: true });
   const values = rows.map(v => v[columnName]) as string[];
+  const prevSyleIndexes = new Set<number>();
   setStyle({ 
     type: "Conditional", 
     conditions: values.map(v => {
-      const style = getRandomElement(chipColorsFadedBorder) 
+      const nonPickedStyles = prevSyleIndexes.size === chipColorsFadedBorder.length? chipColorsFadedBorder : chipColorsFadedBorder.filter((_, i) => !prevSyleIndexes.has(i));
+      const { elem: style, index } = getRandomElement(nonPickedStyles) 
+      prevSyleIndexes.add(index);
       return { 
         condition: v, 
         operator: "=", 
@@ -85,12 +91,12 @@ export const setDefaultConditionalStyle = async ({ columnName, db, tableName, fi
 }
 
 export const ColumnStyleControls = (props: StyleColumnProps) => {
-  const { column, onUpdate, tsDataType, tableName, db } = props;
+  const { column, onUpdate, tsDataType, udt_name, tableName, db } = props;
 
   const STYLE_MODES: Array<Required<ColumnConfig>["style"]["type"]> = ["None", "Fixed", "Conditional"];
   const { style = { type: "None" as const }  } = column;
 
-  if(["number", "Date"].includes(tsDataType)){
+  if(["number", "Date"].includes(tsDataType) || _PG_numbers.includes(udt_name as any)){
     STYLE_MODES.push("Scale");
     STYLE_MODES.push("Barchart");
   }
@@ -198,6 +204,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
   );
 }
 
-export const getRandomElement = <Arr,>(items: Arr[]): Arr => {
-  return items[Math.floor(Math.random() * items.length)] as any;
+export const getRandomElement = <Arr,>(items: Arr[]): { elem: Arr, index: number } => {
+  const randomIndex = Math.floor(Math.random() * items.length);
+  return { elem: items[randomIndex]!, index: randomIndex };
 }

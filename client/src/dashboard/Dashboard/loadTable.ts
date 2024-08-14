@@ -1,6 +1,6 @@
 import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
 import type { Prgl } from "../../App";
-import { getDefaultLayout, type WindowData } from "./dashboardUtils";
+import { type WindowData } from "./dashboardUtils";
 
 export type LoadTableArgs = Pick<Prgl, "db" | "dbs"> & { 
   type: "sql" | "table" | "method"; 
@@ -48,7 +48,6 @@ export const loadTable = async (args: LoadTableArgs): Promise<string> => {
       table_oid,
       name,
       method_name,
-      layout: getDefaultLayout("111"), 
       fullscreen: false, 
       workspace_id,
     } as any,

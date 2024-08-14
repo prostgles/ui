@@ -1,4 +1,4 @@
-import { mdiOpenInNew, mdiPencilOutline } from "@mdi/js";
+import { mdiCrossBolnisi, mdiOpenInNew, mdiPencilOutline } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
 
 import React from "react";
@@ -126,7 +126,8 @@ export const getRowFilter = async (row: AnyObject, columns: CoreColInfo[], table
       })
     });
   } else {
-    const filterCols = columns.filter(c => c.udt_name !== "interval" && c.filter && ((["number", "string", "boolean", "Date"] ).includes(c.tsDataType) || c.udt_name === "jsonb" ))
+    const dissallowedUdtTypes = ["interval"];
+    const filterCols = columns.filter(c => !dissallowedUdtTypes.includes(c.udt_name) && c.filter && ((["number", "string", "boolean", "Date"]).includes(c.tsDataType) || c.udt_name === "jsonb" ))
 
     /** Trim value if too long to avoid btrim error */
     const getSlicedValue = v => {
@@ -151,16 +152,16 @@ export const getRowFilter = async (row: AnyObject, columns: CoreColInfo[], table
   }
 
   const _rowFilter = getSmartGroupFilter(rowFilter);
-  
   /** This check is needed for subscriptions */
   if(JSON.stringify(_rowFilter).length * 4 > 2704 || isEmpty(_rowFilter)){
     return { filter: undefined, error: "Could not create filter for record" + (!pkeys.length? ". Create a primary key to fix this issue" : "") }
   }
 
-  const count = await tableHandler.count?.(_rowFilter)
-  if (count === 0) {
+  const [firstRecord, secondRecord] = await tableHandler.find?.(_rowFilter, { select: "",  limit: 2 }) ?? [];
+  if (!firstRecord) {
+    console.log(_rowFilter);
     return { filter: undefined, error: "Could not create a single row filter. Record not found." }
-  } else if (count !== 1) {
+  } else if (secondRecord) {
     return { filter: undefined, error: "Could not create a single row filter. More than one record returned" + (!pkeys.length? ". Create a primary key to fix this issue" : "") }
   } else {
     return { filter: rowFilter ?? [], error: undefined }

@@ -37,7 +37,7 @@ export const NUMERIC_FILTER_TYPES = [
 
 export const DATE_FILTER_TYPES = [
   { key: "$age",      label: "Age"},
-  { key: "$ageNow",   label: "Age exact"},
+  { key: "$ageNow",   label: "Age (start of day)"},
   { key: "$duration", label: "Duration"},
 ] as const;
 
@@ -217,20 +217,20 @@ export const getFinalFilter = (detailedFilter: SimpleFilter, context?: ContextDa
         ]
       }
     } else if(f.complexFilter || f.type?.startsWith("$age") || f.type === "$duration"){
-      const isAgeOrDuration = f.type?.startsWith("$age") || f.type === "$duration"
+      const isAgeOrDuration = f.type?.startsWith("$age") || f.type === "$duration";
       if(isAgeOrDuration){
         if(f.complexFilter && f.complexFilter.type !== "controlled"){
           throw new Error("Only controlled complex filters are allowed for age and duration filters");
         }
         const { comparator, argsLeftToRight = true, otherField } = f.complexFilter ?? {};
   
-        const $age = f.type === "$age"? [fieldName] : 
+        const filterArgs = f.type === "$age"? [fieldName] : 
           [fieldName, otherField].filter(isDefined);
   
-        if(!argsLeftToRight) $age.reverse();
+        if(!argsLeftToRight) filterArgs.reverse();
         return {
           $filter: [
-            { $age },
+            { [f.type === "$ageNow"? "$ageNow" : "$age"]: filterArgs },
             comparator,
             val
           ]

@@ -39,7 +39,7 @@ type WorkspaceConfig = {
 export const workspaceConfig: WorkspaceConfig = {
   workspaces: [
     {
-      name: "Main",
+      name: "Crypto markets",
       options: {
         "hideCounts": false,
         "pinnedMenu": true,
@@ -296,6 +296,6 @@ export const workspaceConfig: WorkspaceConfig = {
           ]
         }
       ]
-    }
+    },
   ]
 };

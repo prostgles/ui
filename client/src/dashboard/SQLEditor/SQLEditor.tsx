@@ -430,7 +430,6 @@ export default class SQLEditor extends RTComp<P, S> {
   render(){
     const { value = "", themeAge } = this.state;
     const { onMount, style = {}, className = "", sqlOptions } = this.props;
-    const key = JSON.stringify(sqlOptions) + themeAge;
 
     const glyphPlayBtnElem = document.querySelector(`.${playButtonglyphMarginClassName}`);
     const glyphPlayBtn = (this.canExecuteBlocks && glyphPlayBtnElem)? ReactDOM.createPortal(
@@ -443,7 +442,7 @@ export default class SQLEditor extends RTComp<P, S> {
       glyphPlayBtnElem
     ) : null;
 
-    return <div key={key}
+    return <div 
       className={"sqleditor f-1 min-h-0 min-w-0 flex-col relative " + className}
       ref={e => {
         if(e) this.rootRef = e;

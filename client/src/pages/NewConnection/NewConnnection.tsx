@@ -285,7 +285,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
           {mode === "edit" &&
             <CodeConfirmation positioning="center"
               title={"Delete connection"}
-              fixedCode={c.db_name}
+              fixedCode={dropDatabase? c.db_name : c.name}
               button={
                 <Btn 
                   iconPath={mdiDeleteOutline} 

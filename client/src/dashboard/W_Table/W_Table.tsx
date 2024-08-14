@@ -491,6 +491,7 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
         w={w} 
         quickMenuProps={{
           tables, 
+          theme: prgl.theme,
           dbs, 
           setLinkMenu,
           onAddChart,
@@ -535,7 +536,7 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
       const tableHandler = db[tableName];
       const canInsert = Boolean(tableHandler?.insert);
       const pkeys = cols.map(c => c.show && c.info?.is_pkey? c.info.name : undefined).filter(isDefined);
-      const rowKeys = pkeys.length? pkeys : undefined
+      const rowKeys = pkeys.length? pkeys : undefined;
       content = <>
         <div className={`W_Table flex-col f-1 min-h-0 min-w-0 relative`} 
           ref={r => {

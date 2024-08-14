@@ -12,7 +12,7 @@ import type { SubscriptionHandler } from "prostgles-types";
 import { omitKeys, pickKeys } from "prostgles-types";
 import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import type { WithOrigin } from "../ConnectionChecker";
+import type { ConnectionChecker, WithOrigin } from "../ConnectionChecker";
 import { getDbConnection } from "../connectionUtils/testDBConnection";
 import { getRootDir } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
@@ -71,11 +71,14 @@ export class ConnectionManager {
   db?: DB;
   connections?: Connections[];
   database_configs?: DatabaseConfigs[];
+  connectionChecker: ConnectionChecker;
 
-  constructor(http: any, app: Express, withOrigin: WithOrigin){
+  constructor(http: any, app: Express, connectionChecker: ConnectionChecker){
     this.http = http;
     this.app = app;
-    this.withOrigin = withOrigin;
+    this.connectionChecker = connectionChecker;
+    this.withOrigin = connectionChecker.withOrigin;
+
     this.setUpWSS();
   }
 

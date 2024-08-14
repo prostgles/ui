@@ -133,7 +133,7 @@ export const BackupsControls = ({ prgl: { connectionId, serverState, dbs, dbsTab
           </Btn>
         }
         title="Create backup"
-        clickCatchStyle={{ opacity: .5 }}
+        clickCatchStyle={{ opacity: 1 }}
         footerButtons={popupClose => [
           {
             label: "Cancel", onClickClose: true,
@@ -165,6 +165,7 @@ export const BackupsControls = ({ prgl: { connectionId, serverState, dbs, dbsTab
               dbsTables={dbsTables}
               opts={dumpOpts} 
               onChange={setDumpOpts}
+              hideDestination={false}
             />
           </div>
         )} 

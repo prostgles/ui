@@ -1,13 +1,16 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCIDRRangesQuery = exports.validateDynamicFields = exports.getTableRulesErrors = exports.parseTableRules = exports.parseCheckForcedFilters = exports.parseFullFilter = exports.parseFieldFilter = exports.isObject = void 0;
-const filterUtils_1 = require("./filterUtils");
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
+import { getFinalFilter, isDefined } from "./filterUtils";
 const OBJ_DEF_TYPES = ["boolean", "string", "number", "Date", "string[]", "number[]", "Date[]", "boolean[]"];
-function isObject(obj) {
+export function isObject(obj) {
     return Boolean(obj && typeof obj === "object" && !Array.isArray(obj));
 }
-exports.isObject = isObject;
-const parseFieldFilter = (args) => {
+export const parseFieldFilter = (args) => {
     const { columns, fieldFilter } = args;
     if (!fieldFilter)
         return [];
@@ -25,36 +28,33 @@ const parseFieldFilter = (args) => {
     }
     return [];
 };
-exports.parseFieldFilter = parseFieldFilter;
-const parseFullFilter = (filter, context, columns) => {
+export const parseFullFilter = (filter, context, columns) => {
     const isAnd = "$and" in filter;
     const filters = isAnd ? filter.$and : filter.$or;
-    const finalFilters = filters.map(f => (0, filterUtils_1.getFinalFilter)(f, context, { columns })).filter(filterUtils_1.isDefined);
+    const finalFilters = filters.map(f => getFinalFilter(f, context, { columns })).filter(isDefined);
     const f = isAnd ? { $and: finalFilters } : { $or: finalFilters };
     return f;
 };
-exports.parseFullFilter = parseFullFilter;
-const parseCheckForcedFilters = (rule, context, columns) => {
+export const parseCheckForcedFilters = (rule, context, columns) => {
     let parsedRuleFilters;
     if (isObject(rule)) {
         if ("forcedFilterDetailed" in rule && rule.forcedFilterDetailed) {
-            const forcedFilter = (0, exports.parseFullFilter)(rule.forcedFilterDetailed, context, columns);
+            const forcedFilter = parseFullFilter(rule.forcedFilterDetailed, context, columns);
             if (forcedFilter) {
-                parsedRuleFilters ??= {};
+                parsedRuleFilters !== null && parsedRuleFilters !== void 0 ? parsedRuleFilters : (parsedRuleFilters = {});
                 parsedRuleFilters.forcedFilter = forcedFilter;
             }
         }
         if ("checkFilterDetailed" in rule && rule.checkFilterDetailed) {
-            const checkFilter = (0, exports.parseFullFilter)(rule.checkFilterDetailed, context, columns);
+            const checkFilter = parseFullFilter(rule.checkFilterDetailed, context, columns);
             if (checkFilter) {
-                parsedRuleFilters ??= {};
+                parsedRuleFilters !== null && parsedRuleFilters !== void 0 ? parsedRuleFilters : (parsedRuleFilters = {});
                 parsedRuleFilters.checkFilter = checkFilter;
             }
         }
     }
     return parsedRuleFilters;
 };
-exports.parseCheckForcedFilters = parseCheckForcedFilters;
 const getValidatedFieldFilter = (value, columns, expectAtLeastOne = true) => {
     if (value === "*")
         return value;
@@ -75,16 +75,18 @@ const getValidatedFieldFilter = (value, columns, expectAtLeastOne = true) => {
     return value;
 };
 const parseForcedData = (value, context, columns) => {
+    var _a;
     /** TODO: retire forced data completely */
-    if (!value?.forcedDataDetail?.length) {
-        if (value?.checkFilterDetailed) {
-            const checkFilter = value?.checkFilterDetailed;
+    if (!((_a = value === null || value === void 0 ? void 0 : value.forcedDataDetail) === null || _a === void 0 ? void 0 : _a.length)) {
+        if (value === null || value === void 0 ? void 0 : value.checkFilterDetailed) {
+            const checkFilter = value === null || value === void 0 ? void 0 : value.checkFilterDetailed;
             if ("$and" in checkFilter && checkFilter.$and.length) {
                 const forcedContextData = checkFilter.$and
                     .map((f) => {
+                    var _a;
                     if (f.type !== "=")
                         return undefined;
-                    if (f.contextValue && f.contextValue?.objectName === "user") {
+                    if (f.contextValue && ((_a = f.contextValue) === null || _a === void 0 ? void 0 : _a.objectName) === "user") {
                         const userKey = f.contextValue.objectPropertyName;
                         if (!(userKey in context.user))
                             throw new Error(`Invalid objectPropertyName (${f.contextValue.objectPropertyName}) found in forcedData`);
@@ -94,7 +96,7 @@ const parseForcedData = (value, context, columns) => {
                         return [f.fieldName, f.value];
                     }
                     return undefined;
-                }).filter(filterUtils_1.isDefined);
+                }).filter(isDefined);
                 if (!forcedContextData.length)
                     return undefined;
                 const forcedData = Object.fromEntries(forcedContextData);
@@ -106,7 +108,7 @@ const parseForcedData = (value, context, columns) => {
         return undefined;
     }
     let forcedData = {};
-    value?.forcedDataDetail.forEach(v => {
+    value === null || value === void 0 ? void 0 : value.forcedDataDetail.forEach(v => {
         if (!columns.includes(v.fieldName))
             new Error(`Invalid fieldName in forced data ${v.fieldName}`);
         if (v.fieldName in forcedData)
@@ -128,70 +130,49 @@ const parseForcedData = (value, context, columns) => {
 const parseSelect = (rule, columns, context) => {
     if (!rule || rule === true)
         return rule;
-    return {
-        fields: getValidatedFieldFilter(rule.fields, columns),
-        ...(0, exports.parseCheckForcedFilters)(rule, context, columns),
-        ...(rule.orderByFields && { orderByFields: getValidatedFieldFilter(rule.orderByFields, columns, false) }),
-        ...(rule.filterFields && { filterFields: getValidatedFieldFilter(rule.filterFields, columns, false) })
-    };
+    return Object.assign(Object.assign(Object.assign({ fields: getValidatedFieldFilter(rule.fields, columns) }, parseCheckForcedFilters(rule, context, columns)), (rule.orderByFields && { orderByFields: getValidatedFieldFilter(rule.orderByFields, columns, false) })), (rule.filterFields && { filterFields: getValidatedFieldFilter(rule.filterFields, columns, false) }));
 };
 const parseUpdate = (rule, columns, context) => {
+    var _a;
     if (!rule || rule === true)
         return rule;
-    return {
-        fields: getValidatedFieldFilter(rule.fields, columns),
-        ...(0, exports.parseCheckForcedFilters)(rule, context, columns),
-        ...parseForcedData(rule, context, columns),
-        ...(rule.filterFields && { filterFields: getValidatedFieldFilter(rule.filterFields, columns, false) }),
-        ...(rule.dynamicFields?.length && {
-            dynamicFields: rule.dynamicFields.map(v => ({
-                fields: getValidatedFieldFilter(v.fields, columns),
-                filter: (0, exports.parseFullFilter)(v.filterDetailed, context, columns)
-            }))
-        })
-    };
+    return Object.assign(Object.assign(Object.assign(Object.assign({ fields: getValidatedFieldFilter(rule.fields, columns) }, parseCheckForcedFilters(rule, context, columns)), parseForcedData(rule, context, columns)), (rule.filterFields && { filterFields: getValidatedFieldFilter(rule.filterFields, columns, false) })), (((_a = rule.dynamicFields) === null || _a === void 0 ? void 0 : _a.length) && {
+        dynamicFields: rule.dynamicFields.map(v => ({
+            fields: getValidatedFieldFilter(v.fields, columns),
+            filter: parseFullFilter(v.filterDetailed, context, columns)
+        }))
+    }));
 };
 const parseInsert = (rule, columns, context) => {
     if (!rule || rule === true)
         return rule;
-    return {
-        fields: getValidatedFieldFilter(rule.fields, columns),
-        ...parseForcedData(rule, context, columns),
-        ...(0, exports.parseCheckForcedFilters)(rule, context, columns),
-    };
+    return Object.assign(Object.assign({ fields: getValidatedFieldFilter(rule.fields, columns) }, parseForcedData(rule, context, columns)), parseCheckForcedFilters(rule, context, columns));
 };
 const parseDelete = (rule, columns, context) => {
     if (!rule || rule === true)
         return rule;
-    return {
-        ...(0, exports.parseCheckForcedFilters)(rule, context, columns),
-        filterFields: getValidatedFieldFilter(rule.filterFields, columns),
-    };
+    return Object.assign(Object.assign({}, parseCheckForcedFilters(rule, context, columns)), { filterFields: getValidatedFieldFilter(rule.filterFields, columns) });
 };
-const parseTableRules = (rules, isView = false, columns, context) => {
+export const parseTableRules = (rules, isView = false, columns, context) => {
     if ([true, "*"].includes(rules)) {
         return true;
     }
     if (isObject(rules)) {
-        return {
-            select: parseSelect(rules.select, columns, context),
-            ...(!isView ? {
-                insert: parseInsert(rules.insert, columns, context),
-                update: parseUpdate(rules.update, columns, context),
-                delete: parseDelete(rules.delete, columns, context),
-            } : {})
-        };
+        return Object.assign({ select: parseSelect(rules.select, columns, context) }, (!isView ? {
+            insert: parseInsert(rules.insert, columns, context),
+            update: parseUpdate(rules.update, columns, context),
+            delete: parseDelete(rules.delete, columns, context),
+        } : {}));
     }
     return false;
 };
-exports.parseTableRules = parseTableRules;
-const getTableRulesErrors = async (rules, tableColumns, contextData) => {
+export const getTableRulesErrors = async (rules, tableColumns, contextData) => {
     let result = {};
     await Promise.all(Object.keys(rules).map(async (ruleKey) => {
         const key = ruleKey;
         const rule = rules[key];
         try {
-            (0, exports.parseTableRules)({ [key]: rule }, false, tableColumns, contextData);
+            parseTableRules({ [key]: rule }, false, tableColumns, contextData);
         }
         catch (err) {
             result[key] = err;
@@ -199,35 +180,57 @@ const getTableRulesErrors = async (rules, tableColumns, contextData) => {
     }));
     return result;
 };
-exports.getTableRulesErrors = getTableRulesErrors;
-const validateDynamicFields = async (dynamicFields, db, context, columns) => {
+export const validateDynamicFields = async (dynamicFields, db, context, columns) => {
+    var _a, e_1, _b, _c, _d, e_2, _e, _f;
     if (!dynamicFields)
         return {};
-    for await (const [dfIndex, dfRule] of dynamicFields.entries()) {
-        const filter = await (0, exports.parseFullFilter)(dfRule.filterDetailed, context, columns);
-        if (!filter)
-            throw new Error("dynamicFields.filter cannot be empty: " + JSON.stringify(dfRule));
-        await db.find(filter, { limit: 0 });
-        /** Ensure dynamicFields filters do not overlap */
-        for await (const [_dfIndex, _dfRule] of dynamicFields.entries()) {
-            if (dfIndex !== _dfIndex) {
-                const _filter = await (0, exports.parseFullFilter)(_dfRule.filterDetailed, context, columns);
-                if (await db.findOne({ $and: [filter, _filter] }, { select: "" })) {
-                    const error = `dynamicFields.filter cannot overlap each other. \n
+    try {
+        for (var _g = true, _h = __asyncValues(dynamicFields.entries()), _j; _j = await _h.next(), _a = _j.done, !_a; _g = true) {
+            _c = _j.value;
+            _g = false;
+            const [dfIndex, dfRule] = _c;
+            const filter = await parseFullFilter(dfRule.filterDetailed, context, columns);
+            if (!filter)
+                throw new Error("dynamicFields.filter cannot be empty: " + JSON.stringify(dfRule));
+            await db.find(filter, { limit: 0 });
+            try {
+                /** Ensure dynamicFields filters do not overlap */
+                for (var _k = true, _l = (e_2 = void 0, __asyncValues(dynamicFields.entries())), _m; _m = await _l.next(), _d = _m.done, !_d; _k = true) {
+                    _f = _m.value;
+                    _k = false;
+                    const [_dfIndex, _dfRule] = _f;
+                    if (dfIndex !== _dfIndex) {
+                        const _filter = await parseFullFilter(_dfRule.filterDetailed, context, columns);
+                        if (await db.findOne({ $and: [filter, _filter] }, { select: "" })) {
+                            const error = `dynamicFields.filter cannot overlap each other. \n
           Overlapping dynamicFields rules:
               ${JSON.stringify(dfRule)} 
               AND
               ${JSON.stringify(_dfRule)} 
           `;
-                    return { error };
+                            return { error };
+                        }
+                    }
                 }
+            }
+            catch (e_2_1) { e_2 = { error: e_2_1 }; }
+            finally {
+                try {
+                    if (!_k && !_d && (_e = _l.return)) await _e.call(_l);
+                }
+                finally { if (e_2) throw e_2.error; }
             }
         }
     }
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (!_g && !_a && (_b = _h.return)) await _b.call(_h);
+        }
+        finally { if (e_1) throw e_1.error; }
+    }
     return {};
 };
-exports.validateDynamicFields = validateDynamicFields;
-const getCIDRRangesQuery = (arg) => "select \
+export const getCIDRRangesQuery = (arg) => "select \
   host(${cidr}::cidr) AS \"from\",  \
   host(broadcast(${cidr}::cidr)) AS \"to\" ";
-exports.getCIDRRangesQuery = getCIDRRangesQuery;

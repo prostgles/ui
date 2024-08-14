@@ -18,7 +18,7 @@ import {
   setWspColLayout,
   typeConfirmationCode,
   uploadFile,
-  runDbSql
+  runDbSql,
 } from './utils';
 import { authenticator } from "otplib";
 
@@ -802,5 +802,4 @@ test.describe("Main test", () => {
     await page.getByTestId("dashboard.menu.tablesSearchList").waitFor({ state: "visible", timeout: 10e3 });
     await openTable(page, "my_tabl");
   });
-
 });

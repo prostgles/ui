@@ -333,7 +333,7 @@ export class AddComputedColMenu extends RTComp<AddComputedColMenuP, AddComputedC
       showFullscreenToggle={{}}
       positioning="top-center"
       persistInitialSize={true}
-      clickCatchStyle={{ opacity: .25, backdropFilter: "blur(1px)"   }}
+      clickCatchStyle={{ opacity: 1 }}
       contentClassName="gap-2 p-2 "
       rootChildClassname="f-1"
       footerButtons={footerButtons}

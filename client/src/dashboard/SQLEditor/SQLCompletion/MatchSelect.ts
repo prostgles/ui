@@ -194,7 +194,7 @@ export const MatchSelect: SQLMatcher = {
     }
 
     if(prevKWD?.expects === "table"){
-      return suggestTableLike({ cb, ss, sql });
+      return suggestTableLike({ cb, ss, sql, parentCb: args.parentCb });
     }
 
     if(cb.ftoken?.textLC === "select" && cb.nextTokens[0]?.textLC === "select"){

@@ -756,7 +756,12 @@ export const PG_OBJECT_QUERIES = {
   },
   functions: {
     sql: undefined,
-    getData: (db: DB) => getFuncs({ db, minArgs: 0, limit: 4000, distinct: true }),
+    getData: (db: DB) => getFuncs({ 
+      db, 
+      minArgs: 0, 
+      limit: 4000, 
+      distinct: false 
+    }),
     type: {} as PG_Function,
   },
 

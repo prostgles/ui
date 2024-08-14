@@ -73,7 +73,12 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
   }, [props.value, editor.current]);
 
   const { className, style } = props;
-  return <div key={`${!!props.language.length}`} ref={container}  style={{ ...style, textAlign: "initial" }} className={`MonacoEditor ${className}`} />;
+  return <div 
+    key={`${!!props.language.length}`} 
+    ref={container}  
+    style={{ ...style, textAlign: "initial" }} 
+    className={`MonacoEditor ${className}`} 
+  />;
  
 }
 

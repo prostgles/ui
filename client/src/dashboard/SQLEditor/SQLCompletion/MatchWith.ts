@@ -12,9 +12,9 @@ import type { IMarkdownString } from "../../W_SQL/monacoEditorTypes";
 
 const DATA_MODIF_INFO = `Trying to update the same row twice in a single statement is not supported. Only one of the modifications takes place, but it is not easy (and sometimes not possible) to reliably predict which one. This also applies to deleting a row that was already updated in the same statement: only the update is performed. Therefore you should generally avoid trying to modify a single row twice in a single statement. In particular avoid writing WITH sub-statements that could affect the same rows changed by the main statement or a sibling sub-statement. The effects of such a statement will not be predictable.`
 
-export const matchNested = async (args: SQLMatchContext, commands: (keyof typeof SQLMatchers)[]) => {
+export const matchNested = async (args: SQLMatchContext, commands: (keyof typeof SQLMatchers)[], nestingId: string | undefined) => {
   const { cb } = args;
-  const nestedLimits = getCurrentNestingOffsetLimits(cb)
+  const nestedLimits = getCurrentNestingOffsetLimits(cb, nestingId)
   if(nestedLimits){        
     const cbNested = await getCurrentCodeBlock(
       cb.model, 
@@ -54,9 +54,10 @@ export const MatchWith: SQLMatcher = {
     }
 
     if(currNestingId){
-      const func = getParentFunction(cb);
-      if(func?.func.textLC === "as"){
-        if(cb.ltoken?.text === "(" && func.func.nestingId === cb.ltoken.nestingId){
+      const firstNestingToken = cb.tokens.find(t => t.nestingId.length === 1 && t.nestingFuncToken);
+      const firstNesting = firstNestingToken?.nestingFuncToken;
+      if(firstNesting?.textLC === "as"){
+        if(cb.ltoken?.text === "(" && firstNesting.nestingId === cb.ltoken.nestingId){
           const getDocStr = (v: string | IMarkdownString | undefined) => isObject(v)? v.value : (v ?? "")
           const allowedCteCommands = ss.filter(s => s.topKwd && ["SELECT", "UPDATE", "INSERT INTO", "DELETE FROM"].includes(s.name.toUpperCase())).map(s => ({
             ...s,
@@ -69,7 +70,7 @@ export const MatchWith: SQLMatcher = {
             suggestions: allowedCteCommands
           }
         }
-        const res = await matchNested(args, ["MatchSelect", "MatchInsert", "MatchUpdate", "MatchDelete"]);
+        const res = await matchNested(args, ["MatchSelect", "MatchInsert", "MatchUpdate", "MatchDelete"], firstNestingToken?.nestingId);
         if(res) return res;
       }
     }
