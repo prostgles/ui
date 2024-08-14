@@ -168,6 +168,8 @@ export const COMMANDS = {
   "W_TimeChart": "",
   "W_TimeChart.ActiveRow": "",
 
+  "CloseSaveSQLPopup.delete": "",
+
   "schema-diagram": "",
   "AddColumnReference": "",
   "SmartFormFieldOptions.AttachFile": "",
@@ -203,6 +205,7 @@ export const COMMANDS = {
   "SmartCardList": "",
   "AutomaticBackups.destination": "",
   "AutomaticBackups.frequency": "",
+  "AutomaticBackups.hourOfDay": "",
   "WorkspaceAddBtn.Create": "",
   "ChartLayerManager.AddChartLayer.addLayer": "",
   "ConnectionSelector": "",
@@ -226,6 +229,14 @@ export const COMMANDS = {
   "W_Table.TableNotFound": "",
   "JoinedRecords" : "",
   "SmartCard.viewEditRow": "",
+  "TimeChartLayerOptions.yAxis": "",
+  "TimeChartLayerOptions.aggFunc": "",
+  "TimeChartLayerOptions.aggFunc.select": "",
+  "TimeChartLayerOptions.groupBy": "",
+  "TimeChartLayerOptions.numericColumn": "",
+  "AgeFilter.comparator": "",
+  "AgeFilter.argsLeftToRight": "",
+  "Login.error": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

@@ -236,6 +236,7 @@ export const COMMANDS = {
   "TimeChartLayerOptions.numericColumn": "",
   "AgeFilter.comparator": "",
   "AgeFilter.argsLeftToRight": "",
+  "Login.error": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 
