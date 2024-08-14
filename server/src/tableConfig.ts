@@ -931,21 +931,18 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       login_rate_limit: { 
         defaultValue: {
           maxAttemptsPerHour: 5,
-          matchBy: {
-            ip: true,
-            remote_ip: true,
-            x_real_ip: true,
-          }
+          groupBy: "ip",
         },
         jsonbSchemaType: {
           maxAttemptsPerHour: { type: "integer", description: "Maximum number of login attempts allowed per hour" },
-          matchBy: {
-            type: {
-              ip: { type: "boolean", description: "If true then will match by IP" },
-              remote_ip: { type: "boolean", description: "If true then will match by remote_ip" },
-              x_real_ip: { type: "boolean", description: "If true then will match by x_real_ip" },
-            }
-          }
+          groupBy: {
+            description: "The IP address used to group login attempts",
+            enum: [
+              "x_real_ip",
+              "remote_ip",
+              "ip",
+            ],
+          },
         },
         label: "Allowed IPs and subnets", 
         info: { hint: "List of allowed IP addresses in ipv4 or ipv6 format" } 

@@ -55,25 +55,26 @@ const loginAttempt = async (args: LoginAttemptArgs) => {
   const globalSettings = await getGlobalSettings();
   const lastHour = (new Date(Date.now() - 1 * HOUR)).toISOString();
   const matchByFilterKeys: (keyof typeof args)[] = [];
-  if(globalSettings.login_rate_limit_enabled){
-    if(globalSettings.login_rate_limit.matchBy.ip){
+  const { login_rate_limit: { groupBy }, login_rate_limit_enabled } = globalSettings;
+  if(login_rate_limit_enabled){
+    if(groupBy === "ip"){
       matchByFilterKeys.push("ip_address");
-    }
-    if(globalSettings.login_rate_limit.matchBy.remote_ip){
+    } else if(groupBy === "remote_ip"){
       matchByFilterKeys.push("ip_address_remote");
-    }
-    if(globalSettings.login_rate_limit.matchBy.x_real_ip){
+    } else if(groupBy === "x_real_ip"){
       matchByFilterKeys.push("x_real_ip");
+    } else {
+      throw "Invalid login_rate_limit.groupBy";
     }
   } else {
     return ignoredResult;
   }
-  const matchByFilter = pickKeys(args, ["ip_address", "ip_address_remote", "x_real_ip"]);
+  const matchByFilter = pickKeys(args, matchByFilterKeys);
   if(isEmpty(matchByFilter)){
-    throw "matchByFilter is empty";
+    throw "matchByFilter is empty " + JSON.stringify([matchByFilter, matchByFilterKeys, Object.keys(args), args.x_real_ip]);
   }
   const previousFails = await db.login_attempts.find({ ...matchByFilter, failed: true, "created.>=": lastHour })
-  if(previousFails.length > Math.max(1, globalSettings.login_rate_limit.maxAttemptsPerHour)){
+  if(previousFails.length >= Math.max(1, globalSettings.login_rate_limit.maxAttemptsPerHour)){
     throw "Too many failed attempts";
   } 
 
