@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { PageWIds, USERS, createDatabase, fillLoginFormAndSubmit, goTo, login } from "./utils";
+import { PageWIds, USERS, fillLoginFormAndSubmit, goTo, login, runDbsSql } from "./utils";
 
 
 test.describe("Login rate limit", () => { 
@@ -7,6 +7,9 @@ test.describe("Login rate limit", () => {
   test("Limit login attempts", async ({ page: p }) => {
     const page = p as PageWIds;
 
+    await login(page, USERS.test_user, "/");
+    await runDbsSql(page, "DELETE FROM login_attempts");
+    await goTo(page, "/logout");
     await goTo(page, "/login");
     const loginAndExpectError = async (errorMessage: string, user: string) => {
       await page.waitForTimeout(1e3);
