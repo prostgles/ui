@@ -7,6 +7,7 @@ import { suggestSnippets } from "./CommonMatchImports";
 import { getExpected } from "./getExpected";
 import { getKind, type GetKind, type ParsedSQLSuggestion, type SQLMatchContext } from "./registerSuggestions";
 import { suggestFuncArgs } from "./suggestFuncArgs";
+import { suggestColumnLike } from "./suggestColumnLike";
 
 type ExpectString = SQLSuggestion["type"] | "condition" | "number" | "string";
 export type KWD = { 
@@ -49,11 +50,12 @@ type Opts = {
 
 type WithKwdArgs = SQLMatchContext & {
   opts?: Opts;
+  parentCb?: CodeBlock;
 }
 
 export const withKWDs = <KWDD extends KWD>(
   kwds: readonly KWDD[],
-  { cb, ss, setS, opts, sql }: WithKwdArgs
+  { cb, ss, setS, opts, sql, parentCb }: WithKwdArgs
 ): {
   suggestKWD: (vals: string[], sortText?: string) => {
     suggestions: ParsedSQLSuggestion[];
@@ -69,7 +71,19 @@ export const withKWDs = <KWDD extends KWD>(
  
   const currNestingId = cb.currNestingId;
   const currNestLimits = getCurrentNestingOffsetLimits(cb);
-  const currNestingTokens = cb.tokens.filter(t => 
+  let currTokens  = cb.tokens.slice(0);
+  if(currNestingId){
+    const currNestingStartIdx = cb.tokens.slice(0).map((t, i) => ({ t, i })).reverse().find(({ t }, i, arr)=> {
+      const next = arr[i+1]?.t;
+      return next?.text === "(" && next.offset <= cb.currOffset && t.nestingId === currNestingId;
+    })?.i;
+    const currNestingEndIdx = cb.tokens.findIndex((t, i, arr)=> {
+      const next = arr[i+1];
+      return next?.text === ")" && next.offset >= cb.currOffset && t.nestingId === currNestingId;
+    });
+    currTokens = cb.tokens.slice(currNestingStartIdx, currNestingEndIdx + 1);
+  }
+  const currNestingTokens = currTokens.filter(t => 
     currNestLimits?.isEmpty === false? ( t.offset >= currNestLimits.limits[0] && t.end <= currNestLimits.limits[1] ) : 
     (currNestingId === t.nestingId || kwds.some(k => k.expects === "(options)" && cb.currNestingFunc?.textLC === k.kwd.toLowerCase()))
   );
@@ -233,7 +247,7 @@ export const withKWDs = <KWDD extends KWD>(
           }
         }
 
-        const expectedSuggestions = (!prevKWD.expects || prevKWD.expects === "(options)")? [] : getExpected(prevKWD.expects, cb, ss).suggestions;
+        const expectedSuggestions = (!prevKWD.expects || prevKWD.expects === "(options)")? [] : prevKWD.expects === "column"? (await suggestColumnLike({ cb, ss, setS, parentCb, sql })).suggestions.filter(s => s.type === "column") : getExpected(prevKWD.expects, cb, ss).suggestions;
         if(firstSuggestions.length || expectedSuggestions.length){
 
           const result = {

@@ -196,7 +196,15 @@ const getExpressions = (tokens: TokenInfo[], cb: CodeBlock, ss: ParsedSQLSuggest
       } else if(t.text === "(" && !t.nestingId){
         const closing = getClosingParenthesis(i+1);
         if(!closing) return;
-        let getQuery = (selectedColumns = "*") => `SELECT ${selectedColumns} FROM (${closing.query}) t`;
+        let aliasColumnDefinition = "";
+        const tokensAfterAlias = cb.tokens.filter(t => t.offset >= closing.aliasToken!.end);
+        if(tokensAfterAlias[0]?.textLC === "("){
+          const closingAliasIndex = tokensAfterAlias.findIndex(t => t.text === ")" && !t.nestingId);
+          if(closingAliasIndex !== -1){
+            aliasColumnDefinition = tokensAfterAlias.map(t => t.text).slice(0, closingAliasIndex + 1).join("");
+          }          
+        }
+        let getQuery = (selectedColumns = "*") => `SELECT ${selectedColumns} FROM (${closing.query}) t${aliasColumnDefinition}`;
         /** Lateral allows using previous table columns within the subquery. Must include all previous tables */
         if(kwd === "lateral"){
           const fromKwd = tokens.find(t => t.textLC === "from" && !t.nestingId);

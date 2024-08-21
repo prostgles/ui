@@ -1,4 +1,5 @@
 import type { ProstglesTableColumn } from "./getTableCols";
+import { _PG_numbers } from "prostgles-types"
 
 export const getColWidth = <T extends Pick<ProstglesTableColumn, "tsDataType" | "udt_name" | "width">, K extends keyof T>(
   cols: T[],
@@ -58,7 +59,7 @@ export const getColWidth = <T extends Pick<ProstglesTableColumn, "tsDataType" | 
             maxCW
           )
         });
-        if(isLastColumn){
+        if(isLastColumn && !_PG_numbers.includes(c.udt_name as any)){
           const remainingWidth = tableWidth - totalAssignedWidth;
           if(remainingWidth > 20){
             width = remainingWidth;

@@ -51,9 +51,49 @@ export const MatchSelect: SQLMatcher = {
     }
 
     if(insideFunc?.func.textLC === "over"){
+      const frameDocs = `The default framing option is RANGE UNBOUNDED PRECEDING, which is the same as RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW. With ORDER BY, this sets the frame to be all rows from the partition start up through the current row's last ORDER BY peer. Without ORDER BY, this means all rows of the partition are included in the window frame, since all rows become peers of the current row.`;
+
+      const offsetDocs = [
+        `In ROWS mode, the offset must yield a non-null, non-negative integer, and the option means that the frame starts or ends the specified number of rows before or after the current row`,
+        `In GROUPS mode, the offset again must yield a non-null, non-negative integer, and the option means that the frame starts or ends the specified number of peer groups before or after the current row's peer group, where a peer group is a set of rows that are equivalent in the ORDER BY ordering. (There must be an ORDER BY clause in the window definition to use GROUPS mode.)`,
+        `In RANGE mode, these options require that the ORDER BY clause specify exactly one column. The offset specifies the maximum difference between the value of that column in the current row and its value in preceding or following rows of the frame. The data type of the offset expression varies depending on the data type of the ordering column. For numeric ordering columns it is typically of the same type as the ordering column, but for datetime ordering columns it is an interval. For example, if the ordering column is of type date or timestamp, one could write RANGE BETWEEN '1 day' PRECEDING AND '10 days' FOLLOWING. The offset is still required to be non-null and non-negative, though the meaning of “non-negative” depends on its data type.`,
+      ].join("\n\n");
+      const frameEdge = [
+        { label: "BETWEEN", docs: `used to specify a frame_start and frame_end`, optional: true },
+        { label: "UNBOUNDED PRECEDING", docs: `means that the frame starts with the first row of the partition` },
+        { label: "$offset PRECEDING", docs: offsetDocs },
+        { label: "CURRENT ROW", docs: `` },
+        { label: "$offset FOLLOWING", docs: offsetDocs },
+        { label: "UNBOUNDED FOLLOWING", docs: `means that the frame ends with the last row of the partition` },
+      ]
+      const frameExclusion = [
+        { label: "EXCLUDE CURRENT ROW", docs: `excludes the current row from the frame` },
+        { label: "EXCLUDE GROUP", docs: `excludes the current row and its ordering peers from the frame` },
+        { label: "EXCLUDE TIES", docs: `excludes any peers of the current row from the frame, but not the current row itself` },
+        { label: "EXCLUDE NO OTHERS", docs: `simply specifies explicitly the default behavior of not excluding the current row or its peers` },
+      ]
       return withKWDs([
-        { kwd: "ORDER BY", expects: "column" }, 
-        { kwd: "PARTITION BY", expects: "column" }
+        { kwd: "PARTITION BY", expects: "column", docs: `The PARTITION BY clause groups the rows of the query into partitions, which are processed separately by the window function. PARTITION BY works similarly to a query-level GROUP BY clause, except that its expressions are always just expressions and cannot be output-column names or numbers. Without PARTITION BY, all rows produced by the query are treated as a single partition` },
+        { kwd: "ORDER BY", expects: "column", docs: `The ORDER BY clause determines the order in which the rows of a partition are processed by the window function. It works similarly to a query-level ORDER BY clause, but likewise cannot use output-column names or numbers. Without ORDER BY, rows are processed in an unspecified order` }, 
+        { kwd: ",", expects: "column", },
+        { 
+          kwd: "ROWS", 
+          options: [...frameEdge, ...frameExclusion],
+          docs: frameDocs
+        },
+        { 
+          kwd: "RANGE", 
+          options: [...frameEdge, ...frameExclusion],
+          docs: frameDocs
+        },
+        { 
+          kwd: "GROUPS", 
+          options: [...frameEdge, ...frameExclusion],
+          docs: frameDocs
+        },
+        { kwd: "ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING" }, 
+        { kwd: "UNBOUNDED" }, 
+        { kwd: "UNBOUNDED PRECEDING" }, 
       ], { cb, ss, setS, sql }).getSuggestion();
     }
 
