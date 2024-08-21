@@ -306,6 +306,7 @@ export function registerSuggestions(args: Args) {
           justAfterStartOfWordPosition, 
           { triggerKind: monaco.languages.CompletionTriggerKind.Invoke, triggerCharacter: " " }
         );
+        newModel.dispose();
         let matches = suggestions.filter(s => 
           s.insertText === curWord.word || 
           s.insertText.toLowerCase() === curWord.word.toLowerCase() ||
