@@ -4,6 +4,17 @@ import type { DemoScript } from "../getDemoUtils";
 
 export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL }) => {
 
+  const namedValues = fixIndent(`
+    SELECT *
+    FROM (
+    values (1, 1, 'a'), (1, 9, 'a')
+    ) tbl (id, col123, "name")
+    ORDER BY`
+  );
+  fromBeginning(false, namedValues);
+  await typeAuto(" c");
+  testResult(namedValues + " tbl.col123");
+
   /** Funcs args in CTE */
   const cteFuncArgQuery = fixIndent(`
     WITH cte1 AS (

@@ -18,9 +18,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            electron/dist/Prostgles\ Desktop-${{ github.ref_name }}-amd64.deb
-            electron/dist/Prostgles\ Desktop-${{ github.ref_name }}-x86_64.rpm
-            electron/dist/Prostgles\ Desktop-${{ github.ref_name }}-x86_64.AppImage
+            electron/dist/**/*.deb
+            electron/dist/**/*.rpm
+            electron/dist/**/*.AppImage
   build_windows:
     timeout-minutes: 20
     runs-on: windows-latest
@@ -37,7 +37,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            electron/dist/Prostgles\ Desktop-${{ github.ref_name }}.exe
+            electron/dist/**/*.exe
   build_macos:
     timeout-minutes: 20
     runs-on: macos-latest
@@ -54,4 +54,4 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          electron/dist/Prostgles\ Desktop-${{ github.ref_name }}.dmg
+          electron/dist/**/*.dmg

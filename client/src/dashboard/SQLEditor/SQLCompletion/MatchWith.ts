@@ -34,7 +34,7 @@ export const MatchWith: SQLMatcher = {
   result: async (args) => {
     const { cb, ss } = args;
 
-    const { prevLC, ltoken, currNestingId } = cb; 
+    const { prevLC, ltoken, currNestingId, currNestingFunc } = cb; 
     const prevTokensNoParens = cb.getPrevTokensNoParantheses();
     const ltokenNoParens = prevTokensNoParens.at(-1);
     const isWrittingEndCommand = !currNestingId && 
@@ -54,10 +54,12 @@ export const MatchWith: SQLMatcher = {
     }
 
     if(currNestingId){
-      const firstNestingToken = cb.tokens.find(t => t.nestingId.length === 1 && t.nestingFuncToken);
-      const firstNesting = firstNestingToken?.nestingFuncToken;
-      if(firstNesting?.textLC === "as"){
-        if(cb.ltoken?.text === "(" && firstNesting.nestingId === cb.ltoken.nestingId){
+      const topNestingToken = cb.prevTokens.slice(0).reverse().find(t => {
+        return t.nestingFuncToken?.textLC === "as" && t.nestingId.length === 1;
+      });
+      const asToken = [currNestingFunc, topNestingToken?.nestingFuncToken].find(t => t?.textLC === "as");
+      if(asToken){
+        if(currNestingFunc?.textLC === "as" && currNestingId.length === 1 && cb.ltoken?.text === "("){
           const getDocStr = (v: string | IMarkdownString | undefined) => isObject(v)? v.value : (v ?? "")
           const allowedCteCommands = ss.filter(s => s.topKwd && ["SELECT", "UPDATE", "INSERT INTO", "DELETE FROM"].includes(s.name.toUpperCase())).map(s => ({
             ...s,
@@ -70,9 +72,9 @@ export const MatchWith: SQLMatcher = {
             suggestions: allowedCteCommands
           }
         }
-        const res = await matchNested(args, ["MatchSelect", "MatchInsert", "MatchUpdate", "MatchDelete"], firstNestingToken?.nestingId);
+        const res = await matchNested(args, ["MatchSelect", "MatchInsert", "MatchUpdate", "MatchDelete"], topNestingToken?.nestingId);
         if(res) return res;
-      }
+      } 
     }
     
     if(!isWrittingEndCommand && !currNestingId){
