@@ -7,7 +7,7 @@ test.describe("Login rate limit", () => {
   test("Limit login attempts", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await login(page, USERS.test_user, "/");
+    await login(page, USERS.test_user, "/login");
     await runDbsSql(page, "DELETE FROM login_attempts");
     await goTo(page, "/logout");
     await goTo(page, "/login");
