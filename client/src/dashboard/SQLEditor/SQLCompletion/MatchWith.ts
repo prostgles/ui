@@ -42,7 +42,8 @@ export const MatchWith: SQLMatcher = {
 
     if(prevLC.trim() === "with"){
       return suggestSnippets([
-        { label: "recursive...", insertText: "RECURSIVE t(n) AS (\n  VALUES (1)\n  UNION ALL\n  SELECT n+1\n  FROM t\n  WHERE n < 100 \n) \nSELECT sum(n) FROM t;"},
+        { label: "RECURSIVE",  },
+        { label: "RECURSIVE...", insertText: "RECURSIVE t(n) AS (\n  VALUES (1)\n  UNION ALL\n  SELECT n+1\n  FROM t\n  WHERE n < 100 \n) \nSELECT sum(n) FROM t;"},
         { label: "cte1", insertText: "cte1 AS (\n SELECT 1 \n FROM $1\n)\nSELECT * FROM cte1;" }
       ])
     }
