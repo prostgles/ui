@@ -1,5 +1,5 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
-import type { DBS } from ".";
+import { connMgr, type DBS } from ".";
 import type { EventInfo } from "prostgles-server/dist/Logging";
 import { pickKeys } from "prostgles-types";
 
@@ -28,9 +28,8 @@ let dbs: DBS | undefined;
 export const setLoggerDBS = (_dbs: DBS) => {
   dbs = _dbs;
 }
-const enableLogging = false as boolean;
 const shouldExclude = (e: EventInfo) => {
-  if(!enableLogging) return true;
+  if(!connMgr.connectionChecker.config.global_setting?.enable_logs) return true;
   if(e.type === "table"){
     if(e.tableName === "logs") return true;
     return true;
