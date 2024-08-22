@@ -912,6 +912,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         sqlDefinition: `boolean NOT NULL DEFAULT FALSE`, 
         info: { hint: "If true then will use the IP from 'X-Forwarded-For' header" } 
       },
+      enable_logs: {
+        sqlDefinition: `boolean NOT NULL DEFAULT FALSE`, 
+        info: { hint: "" } 
+      },
       session_max_age_days: { 
         sqlDefinition: `INTEGER NOT NULL DEFAULT 14 CHECK(session_max_age_days > 0)`, 
         info: { hint: "Number of days a user will stay logged in", min: 1, max: Number.MAX_SAFE_INTEGER } 
