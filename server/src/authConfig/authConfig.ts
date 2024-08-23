@@ -61,7 +61,7 @@ const loginAttempt = async (args: LoginAttemptArgs) => {
       matchByFilterKeys.push("ip_address");
     } else if(groupBy === "remote_ip"){
       matchByFilterKeys.push("ip_address_remote");
-    } else if(groupBy === "x_real_ip"){
+    } else if((groupBy as any) === "x_real_ip"){
       matchByFilterKeys.push("x_real_ip");
     } else {
       throw "Invalid login_rate_limit.groupBy";
@@ -71,12 +71,12 @@ const loginAttempt = async (args: LoginAttemptArgs) => {
   }
   const matchByFilter = pickKeys(args, matchByFilterKeys);
   if(isEmpty(matchByFilter)){
-    throw "matchByFilter is empty " + JSON.stringify([matchByFilter, matchByFilterKeys, Object.keys(args), args.x_real_ip]);
+    throw "matchByFilter is empty " + JSON.stringify([matchByFilter, matchByFilterKeys, ]); // pickKeys(args, ["ip_address", "ip_address_remote", "x_real_ip"])
   }
   const previousFails = await db.login_attempts.find({ ...matchByFilter, failed: true, "created.>=": lastHour })
   if(previousFails.length >= Math.max(1, globalSettings.login_rate_limit.maxAttemptsPerHour)){
-    throw "Too many failed attempts";
-  } 
+    throw "Too many failed login attempts";
+  }
 
   /** In case of a bad sid do not log it multiple times */
   if(attempt.auth_type === "session-id"){

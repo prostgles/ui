@@ -1,5 +1,5 @@
 import { mdiPlus } from "@mdi/js";
-import { asName, usePromise } from "prostgles-client/dist/prostgles";
+import { asName } from "prostgles-client/dist/prostgles";
 import { pickKeys } from "prostgles-types";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -13,8 +13,9 @@ import Popup from "../../components/Popup/Popup";
 import Select from "../../components/Select/Select";
 import type { DBS } from "../../dashboard/Dashboard/DBS";
 import { SampleSchemas } from "../../dashboard/SampleSchemas";
+import { isDefined } from "../../utils";
 import type { Connection } from "../NewConnection/NewConnnection";
-import { CreatePostgresUser, useCreatePostgresUser, type NewPostgresUser } from "./CreatePostgresUser";
+import { CreatePostgresUser, useCreatePostgresUser } from "./CreatePostgresUser";
 
 type ConnectionServerProps = {
   name: string;
@@ -62,7 +63,9 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
   const newUser = useCreatePostgresUser({ connId, runConnectionQuery });
   const { newPgUser, newUserPasswordError, newUsernameError } = newUser;
 
-  if(!runConnectionQuery || !getSampleSchemas || !createConnection || !validateConnection || !connId) return null;
+  if(!runConnectionQuery || !getSampleSchemas || !createConnection || !validateConnection || !connId) {
+    return null;
+  }
 
   const onOpenActions = async () => {
     const serverInfo = (await runConnectionQuery(
@@ -81,7 +84,7 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
     )) as { datname: string; }[];
     const sampleSchemas = await getSampleSchemas();
     const existingConnections = await dbs.connections.find({}, { select: { name: 1 } });
-    setServerInfo({ 
+    setServerInfo({
       ...serverInfo, 
       sampleSchemas,
       databases: databases.map(d => d.datname), 
@@ -130,13 +133,24 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
     if(newDbOwnerCredentials && newPgUser.permissions.type === "custom"){
       const escapedUserName = asName(newUser.newPgUser.name);
       // console.log(await runConnectionQuery(connId, "SELECT current_user"));
-      await runConnectionQuery(
-        connId, 
-        `
+
+      const rulesObj = pickKeys(newPgUser.permissions, ["select", "delete", "update", "insert"]);
+      const allowedActions = Object.entries(rulesObj).map(([k, v]) => v? k : undefined).filter(isDefined);
+      if(newPgUser.permissions.allow_subscription_triggers){
+        allowedActions.push("TRIGGER");
+      }
+      const query = `
         GRANT CONNECT ON DATABASE ${asName(newDbName)} TO ${escapedUserName};
         GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO ${escapedUserName};
-        GRANT SELECT ON ALL TABLES IN SCHEMA public TO ${escapedUserName};
-        `
+        GRANT ${allowedActions} ON ALL TABLES IN SCHEMA public TO ${escapedUserName};
+        ` + (newPgUser.permissions.allow_subscription_triggers? `
+        GRANT USAGE ON SCHEMA prostgles TO ${escapedUserName};
+        GRANT USAGE ON ALL SEQUENCES IN SCHEMA prostgles TO ${escapedUserName};
+        GRANT SELECT, UPDATE, DELETE, INSERT ON ALL TABLES IN SCHEMA prostgles TO ${escapedUserName};
+        ` : ``);
+      await runConnectionQuery(
+        connId, 
+        query
       );
     }
 

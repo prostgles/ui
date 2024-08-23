@@ -659,7 +659,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
             {!rightContent? null : <div className={`RightContent  ${rightContentAlwaysShow? "" : "show-on-trigger-hover"} f-0 as-start `} style={{ alignSelf: "start" }}>{rightContent}</div>}
           </div>
           {hint && 
-            <p className="ta-left text-1 m-0 text-sm noselect ws-pre-line" 
+            <p className="ta-left text-2 m-0 text-sm noselect ws-pre-line" 
               onClick={e => { 
                 const input = e.currentTarget.closest(`.${INPUT_HINT_WRAPPER_CLASS}`)?.querySelector<HTMLInputElement>(`.${INPUT_WRAPPER_CLASS} > *`);
                 input?.click() 
