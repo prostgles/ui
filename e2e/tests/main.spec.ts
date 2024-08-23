@@ -19,6 +19,7 @@ import {
   typeConfirmationCode,
   uploadFile,
   runDbSql,
+  fillLoginFormAndSubmit,
 } from './utils';
 import { authenticator } from "otplib";
 
@@ -67,6 +68,75 @@ test.describe("Main test", () => {
 
     /** Sample database exists and all config pages exist */
     await page.getByRole('link', { name: 'Connections' }).click();
+  });
+
+  test("Limit login attempts", async ({ page: p, browser, context }) => {
+    // const page = p as PageWIds;
+    const page: PageWIds = await browser.newPage({ 
+      extraHTTPHeaders: { 
+        'x-real-ip': '1.1.1.1' 
+      } 
+    });
+
+    await login(page, USERS.test_user, "/login");
+    await page.waitForTimeout(1500);
+    await runDbsSql(page, `DELETE FROM login_attempts; UPDATE global_settings SET login_rate_limit = '{"groupBy": "x_real_ip", "maxAttemptsPerHour": 5}'`);
+    await goTo(page, "/logout");
+    await goTo(page, "/login");
+    const loginAndExpectError = async (errorMessage: string, user: string, lpage: PageWIds) => {
+      await lpage.waitForTimeout(1e3);
+      await fillLoginFormAndSubmit(lpage, user);
+      await lpage.getByTestId("Login.error").waitFor({ state: "visible", timeout: 15e3 });
+      expect(await lpage.getByTestId("Login.error").textContent()).toContain(errorMessage);
+    }
+    for(let i = 0; i < 5; i++){
+      await loginAndExpectError("Provided credentials are not correct", "invalid", page);
+    }
+    await loginAndExpectError("Too many failed ", "invalid", page);
+    await loginAndExpectError("Too many failed ", USERS.default_user, page);
+
+    /** TODO: finish cookie rate test after playwright ws headers fix 
+     * https://github.com/microsoft/playwright/issues/28948
+    */
+    // const newPageC: PageWIds = await browser.newPage({ 
+    //   extraHTTPHeaders: { 
+    //     'x-real-ip': '1.1.1.2' 
+    //   }
+    // });
+    // await login(newPageC, USERS.test_user, "/");
+    // await newPageC.waitForTimeout(1e3);
+    // await newPageC.getByRole('link', { name: 'Connections' }).click();
+    // await goTo(newPageC, "/logout");
+    // for(let i = 0; i < 5; i++){
+    //   const newPageCc: PageWIds = await browser.newPage({ 
+    //     extraHTTPHeaders: { 
+    //       'x-real-ip': '1.1.1.22' 
+    //     },
+    //     storageState: {
+    //       cookies: [
+    //         { name: 'sid_token', value: "random"+i, path: "/", domain: "localhost", httpOnly: true, sameSite: "Lax", expires: Math.round((Date.now() + 36e4)/1e3), secure: false }
+    //       ],
+    //       origins: []
+    //     }
+    //   });
+    //   // await newPageCc.context().addCookies([
+    //   //   { name: 'sid_token', value: "random"+i, path: "/", domain: "localhost", httpOnly: true, sameSite: "Lax" }
+    //   // ]);
+    //   await goTo(newPageCc, "/");
+    //   await newPageCc.waitForTimeout(1e3);
+    //   await newPageCc.close();
+    // }
+    // await loginAndExpectError("Too many failed attempts", USERS.default_user, newPageC);
+
+    /** Revert */
+    const newPage: PageWIds = await browser.newPage({ 
+      extraHTTPHeaders: { 
+        'x-real-ip': '1.1.1.3' 
+      }
+    });
+    await login(newPage, USERS.test_user, "/login");
+    await newPage.waitForTimeout(1500);
+    await runDbsSql(newPage, `DELETE FROM login_attempts; UPDATE global_settings SET login_rate_limit = '{"groupBy": "ip", "maxAttemptsPerHour": 5}'`);
   });
 
   test('Create db with owner', async ({ page: p }) => {

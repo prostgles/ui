@@ -24,14 +24,17 @@ export const loggerTableConfig: TableConfig<{ en: 1; }> = {
 
 }
 
-let dbs: DBS | undefined;
-export const setLoggerDBS = (_dbs: DBS) => {
-  dbs = _dbs;
+let loggerConfig: {
+  dbs: DBS;
+} | undefined;
+export const setLoggerDBS = (dbs: DBS) => {
+  loggerConfig = { dbs };
 }
-const shouldExclude = (e: EventInfo) => {
+
+const shouldExclude = (e: EventInfo, isStateDb: boolean) => {
+  
   if(!connMgr.connectionChecker.config.global_setting?.enable_logs) return true;
-  if(e.type === "table"){
-    if(e.tableName === "logs") return true;
+  if(isStateDb && e.type === "table" && e.tableName === "logs"){
     return true;
   }
   return false;
@@ -39,9 +42,10 @@ const shouldExclude = (e: EventInfo) => {
 
 const logRecords: { e: EventInfo; connection_id: string | null; created: Date; }[] = [];
 export const addLog = (e: EventInfo, connection_id: string | null) => {
-  if(shouldExclude(e)) return;
+  if(shouldExclude(e, connection_id === null)) return;
   logRecords.push({ e, connection_id, created: new Date() });
   const batchSize = 20;
+  const { dbs } = loggerConfig ?? {};
   if(dbs && logRecords.length > batchSize){
     const getSid = (e: EventInfo) => {
       if(e.type === "table" || e.type === "sync"){
