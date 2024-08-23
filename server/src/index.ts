@@ -14,6 +14,7 @@ import type { OnServerReadyCallback } from "./electronConfig";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { getInitState, tryStartProstgles } from "./startProstgles";
+import { SPOOF_TEST_VALUE } from "../../commonTypes/utils";
 
 const app = express();
 
@@ -110,7 +111,12 @@ app.get("/dbs", (_req, res) => {
   if(electronCreds && isObject(serverState.connectionError) && _req.cookies["sid_token"] === electronConfig?.sidConfig.electronSid){
     serverState.electronCreds = electronCreds as any;
   }
-  res.json(serverState);
+
+  let xRealIpSpoofable = false;
+  if(_req.headers["x-real-ip"] === SPOOF_TEST_VALUE && connMgr.connectionChecker.config.global_setting?.login_rate_limit.groupBy === "x_real_ip"){
+    xRealIpSpoofable = true;
+  }
+  res.json({ ...serverState, xRealIpSpoofable });
 });
 
 /* Must provide index.html if there is an error OR prostgles is loading */
