@@ -80,7 +80,7 @@ test.describe("Main test", () => {
 
     await login(page, USERS.test_user, "/login");
     await page.waitForTimeout(1500);
-    await runDbsSql(page, `DELETE FROM login_attempts; UPDATE global_settings SET login_rate_limit = '{"groupBy": "x_real_ip", "maxAttemptsPerHour": 5}'`);
+    await runDbsSql(page, `DELETE FROM login_attempts; UPDATE global_settings SET login_rate_limit = '{"groupBy": "x-real-ip", "maxAttemptsPerHour": 5}'`);
     await goTo(page, "/logout");
     await goTo(page, "/login");
     const loginAndExpectError = async (errorMessage: string, user: string, lpage: PageWIds) => {

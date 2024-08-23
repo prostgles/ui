@@ -61,7 +61,7 @@ const loginAttempt = async (args: LoginAttemptArgs) => {
       matchByFilterKeys.push("ip_address");
     } else if(groupBy === "remote_ip"){
       matchByFilterKeys.push("ip_address_remote");
-    } else if((groupBy as any) === "x_real_ip"){
+    } else if((groupBy as any) === "x-real-ip"){
       matchByFilterKeys.push("x_real_ip");
     } else {
       throw "Invalid login_rate_limit.groupBy";

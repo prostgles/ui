@@ -914,7 +914,8 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       },
       enable_logs: {
         sqlDefinition: `boolean NOT NULL DEFAULT FALSE`, 
-        info: { hint: "" } 
+        info: { hint: "Logs are saved in the logs table from the state database" },
+        label: "Enable logs (experimental)" 
       },
       session_max_age_days: { 
         sqlDefinition: `INTEGER NOT NULL DEFAULT 14 CHECK(session_max_age_days > 0)`, 
@@ -930,7 +931,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       },
       login_rate_limit_enabled: { 
         sqlDefinition: `BOOLEAN NOT NULL DEFAULT TRUE`, 
-        info: { hint: "If enabled then only allowed IPs can connect" } 
+        info: { 
+          hint: "If enabled then each client defined by <groupBy> that fails <maxAttemptsPerHour> in an hour will not be able to login for the rest of the hour", 
+        }, 
+        label: "Enable failed login rate limit" 
       },
       login_rate_limit: { 
         defaultValue: {
@@ -942,13 +946,13 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           groupBy: {
             description: "The IP address used to group login attempts",
             enum: [
-              "x_real_ip",
+              "x-real-ip",
               "remote_ip",
               "ip",
             ],
           },
         },
-        label: "Allowed IPs and subnets", 
+        label: "Failed login rate limit options", 
         info: { hint: "List of allowed IP addresses in ipv4 or ipv6 format" } 
       },
       tableConfig: {

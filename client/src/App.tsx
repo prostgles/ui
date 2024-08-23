@@ -198,7 +198,7 @@ export const App = () => {
 
   return (
     <FlexCol key={dbsKey} className={`App gap-0 f-1 min-h-0`}>
-      {serverState?.xRealIpSpoofable && 
+      {serverState?.xRealIpSpoofable && user?.type === "admin" && 
         <PopupMenu 
           button={<Btn color="danger" iconPath={mdiAlertOutline} variant="filled">Security issue</Btn>}
           style={{ position: "fixed", right: 0, top: 0, zIndex: 999999 }}
