@@ -104,16 +104,22 @@ const awaitInit = () => {
 /**
  * Serve prostglesInitState
  */
-app.get("/dbs", (_req, res) => {
+app.get("/dbs", (req, res) => {
   const serverState: ServerState = getInitState();
   const electronCreds = electronConfig?.isElectron && electronConfig.hasCredentials()? electronConfig.getCredentials() : undefined;
   /** Provide credentials if there is a connection error so the user can rectify it */
-  if(electronCreds && isObject(serverState.connectionError) && _req.cookies["sid_token"] === electronConfig?.sidConfig.electronSid){
+  if(electronCreds && isObject(serverState.connectionError) && req.cookies["sid_token"] === electronConfig?.sidConfig.electronSid){
     serverState.electronCreds = electronCreds as any;
   }
 
   let xRealIpSpoofable = false;
-  if(_req.headers["x-real-ip"] === SPOOF_TEST_VALUE && connMgr.connectionChecker.config.global_setting?.login_rate_limit.groupBy === "x_real_ip"){
+  const { global_setting } = connMgr.connectionChecker.config;
+  if(
+    req.headers["x-real-ip"] === SPOOF_TEST_VALUE && 
+    global_setting?.login_rate_limit_enabled &&
+    global_setting.login_rate_limit.groupBy === "x-real-ip"
+
+  ){
     xRealIpSpoofable = true;
   }
   res.json({ ...serverState, xRealIpSpoofable });
