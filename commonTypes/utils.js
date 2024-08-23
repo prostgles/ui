@@ -87,3 +87,4 @@ export function throttle(func, timeout) {
     };
     return throttledFunc;
 }
+export const SPOOF_TEST_VALUE = "trustme";
