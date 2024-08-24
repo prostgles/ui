@@ -18,7 +18,7 @@ jobs:
     - name: Test DMG file installations and run
       run: |
         shasum -a 256 electron/dist/*.dmg > electron/dist/checksum.txt
-        echo electron/dist/checksum.txt
+        cat electron/dist/checksum.txt
         hdiutil attach electron/dist/*.dmg
         ls -la /Volumes
         sudo cp -r /Volumes/Prostgles*/*.app /Applications
