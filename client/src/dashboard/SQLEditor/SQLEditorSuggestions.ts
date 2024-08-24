@@ -363,12 +363,14 @@ export async function getSqlSuggestions(db: DB): Promise< {
         installed: ex.installed
       }
     })));
-    const schemasS = schemas.map(({ name: label, access_privileges, owner, comment, is_in_search_path }) => ({
+    const schemasS = schemas.map(({ name: label, access_privileges, owner, comment, is_in_search_path, escaped_identifier }) => ({
       label,
       name: label,
       detail: "(schema)",
       documentation: makeDocumentation({ access_privileges, owner, comment, is_in_search_path }),
-      type: "schema" as const
+      type: "schema" as const,
+      escaped_identifier,
+      insertText: escaped_identifier,
     }));
     suggestions = suggestions.concat(schemasS);
    
@@ -388,7 +390,7 @@ export async function getSqlSuggestions(db: DB): Promise< {
       documentation: o.description,
       filterText: `${o.name} ${o.left_arg_types?.join(", ")} ${o.description}`
     })));
-   
+
     suggestions = suggestions.concat(publications.map(p => ({
       detail: "(publication)",
       label: p.pubname,
@@ -442,7 +444,7 @@ export async function getSqlSuggestions(db: DB): Promise< {
         asListObject(pickKeys(s, ["category", "unit", "setting", "min_val", "max_val", "enumvals", "reset_val", "vartype", "pending_restart"]))
       } `, 
   
-    }))
+    }));
   
     const res = { 
       suggestions,
