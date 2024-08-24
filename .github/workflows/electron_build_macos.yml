@@ -1,4 +1,4 @@
-name: Electron build & test macOs
+name: Electron build macOs
 on: workflow_dispatch
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -17,9 +17,9 @@ jobs:
         cd electron && npm run build-macos
     - name: Test DMG file installations and run
       run: |
-        hdiutil attach electron/dist/*.dmg
+        hdiutil attach electron/dist/Prostgles\ Desktop-2.0.0.dmg
         ls -la /Volumes
-        sudo cp -r /Volumes/*.app /Applications
+        sudo find /Volumes -type d -name "Prostgles*" -maxdepth 1 -exec find {} -maxdepth 1 -name "*.app" -exec cp -R {} /Applications \; \;
         open /Applications/*.app
         sleep 10
         screencapture electron/dist/picture.png
