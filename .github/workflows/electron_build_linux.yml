@@ -24,7 +24,7 @@ jobs:
     - name: Install the app
       run: | 
         cd electron
-        sudo dpkg -i ./dist/Prostgles\ Desktop-2.0.0-amd64.deb
+        sudo dpkg -i ./dist/*.deb
     - name: Test installation file
       run: | 
         cd electron

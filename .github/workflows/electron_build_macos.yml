@@ -17,10 +17,10 @@ jobs:
         cd electron && npm run build-macos
     - name: Test DMG file installations and run
       run: |
-        hdiutil attach electron/dist/Prostgles\ Desktop-2.0.0.dmg
+        hdiutil attach electron/dist/*.dmg
         ls -la /Volumes
-        sudo cp -r /Volumes/Prostgles\ Desktop\ 2.0.0/Prostgles\ Desktop.app /Applications
-        open /Applications/Prostgles\ Desktop.app
+        sudo cp -r /Volumes/*.app /Applications
+        open /Applications/*.app
         sleep 10
         screencapture electron/dist/picture.png
     - uses: actions/upload-artifact@v3

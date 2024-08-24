@@ -18,7 +18,8 @@ jobs:
       shell: cmd
       run: |
         cd electron
-        ".\dist\Prostgles Desktop-1.0.0.exe" /S --force-run
+        for /f "delims=" %f in ('dir /b /o:n "Prostgles Desktop-*.exe"') do (start "" /wait "%f" /S --force-run & goto done)
+        :done
         waitfor SomethingThatIsNeverHappening /t 3 2>NUL
         call screenCapture.bat .\dist\screen1.png
       
