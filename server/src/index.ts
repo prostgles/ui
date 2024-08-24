@@ -14,8 +14,11 @@ import type { OnServerReadyCallback } from "./electronConfig";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { getInitState, tryStartProstgles } from "./startProstgles";
+import { SPOOF_TEST_VALUE } from "../../commonTypes/utils";
+import helmet from "helmet";
 
 const app = express();
+app.use(helmet({ crossOriginResourcePolicy: false }));
 
 if(process.env.PRGL_TEST){
   app.use((req, res, next) => {
@@ -103,14 +106,25 @@ const awaitInit = () => {
 /**
  * Serve prostglesInitState
  */
-app.get("/dbs", (_req, res) => {
+app.get("/dbs", (req, res) => {
   const serverState: ServerState = getInitState();
   const electronCreds = electronConfig?.isElectron && electronConfig.hasCredentials()? electronConfig.getCredentials() : undefined;
   /** Provide credentials if there is a connection error so the user can rectify it */
-  if(electronCreds && isObject(serverState.connectionError) && _req.cookies["sid_token"] === electronConfig?.sidConfig.electronSid){
+  if(electronCreds && isObject(serverState.connectionError) && req.cookies["sid_token"] === electronConfig?.sidConfig.electronSid){
     serverState.electronCreds = electronCreds as any;
   }
-  res.json(serverState);
+
+  let xRealIpSpoofable = false;
+  const { global_setting } = connMgr.connectionChecker.config;
+  if(
+    req.headers["x-real-ip"] === SPOOF_TEST_VALUE && 
+    global_setting?.login_rate_limit_enabled &&
+    global_setting.login_rate_limit.groupBy === "x-real-ip"
+
+  ){
+    xRealIpSpoofable = true;
+  }
+  res.json({ ...serverState, xRealIpSpoofable });
 });
 
 /* Must provide index.html if there is an error OR prostgles is loading */

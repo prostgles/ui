@@ -1,4 +1,4 @@
-name: Electron build windows
+name: Electron build & test windows
 on: workflow_dispatch 
 jobs:
   electron_build_windows:
@@ -17,8 +17,11 @@ jobs:
     - name: Test build
       shell: cmd
       run: |
-        cd electron
-        ".\dist\Prostgles Desktop-1.0.0.exe" /S --force-run
+        cd electron\dist
+        for /r %%f in (*.exe) DO certutil -hashfile "%%f" SHA256 > windows.checksums
+        type windows.checksums
+        for /r %%f in (*.exe) DO "%%f" /S --force-run
+        cd ..
         waitfor SomethingThatIsNeverHappening /t 3 2>NUL
         call screenCapture.bat .\dist\screen1.png
       

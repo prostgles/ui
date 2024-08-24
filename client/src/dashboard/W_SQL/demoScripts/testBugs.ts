@@ -96,14 +96,14 @@ export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult
   const quotedSchemaBug = `
 DROP SCHEMA IF EXISTS "MySchema" CASCADE;
 CREATE SCHEMA "MySchema";
-CREATE TABLE "MySchema"."MyTable" (
-  "MyColumn" TEXT
-);
 CREATE FUNCTION "MySchema"."MyFunction" ()
  RETURNS VOID AS $$
 BEGIN
 END;
 $$ LANGUAGE plpgsql;
+CREATE TABLE "MySchema"."MyTable" (
+  "MyColumn" TEXT
+);
   `;
   await runDbSQL(quotedSchemaBug);
   fromBeginning(false, "");
@@ -117,6 +117,10 @@ $$ LANGUAGE plpgsql;
     FROM "MySchema"."MyTable"
     LIMIT 200`
   ));
+
+  fromBeginning(false, `DROP SCHEMA`);
+  await typeAuto(` mys`);
+  testResult(`DROP SCHEMA "MySchema"`);
 
   /** Ensure whitespace is kept, replacing quoted identifiers works as expected */
   fromBeginning(false, `SELECT FROM "MySchema"."MyTable"`);

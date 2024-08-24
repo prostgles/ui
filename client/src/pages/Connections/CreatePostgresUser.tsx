@@ -15,7 +15,8 @@ export type NewPostgresUser = {
   permissions: {
     type: "owner";
   } | {
-    type: "custom",
+    type: "custom";
+    allow_subscription_triggers: boolean;
     select: boolean;
     insert: boolean;
     update: boolean;
@@ -79,7 +80,7 @@ export const CreatePostgresUser = ({ newPgUser, setNewPgUser, connectionName, ne
         value={newPgUser.permissions.type}
         label={"Permission type"}
         onChange={type => {
-          setNewPgUser({ ...newPgUser, permissions: type === "owner"? { type } : { type, select: true, insert: true, update: true, delete: true } });
+          setNewPgUser({ ...newPgUser, permissions: type === "owner"? { type } : { type, select: true, insert: true, update: true, delete: true, allow_subscription_triggers: false } });
         }} 
       />
       {newPgUser.permissions.type === "custom" && <>
@@ -95,7 +96,18 @@ export const CreatePostgresUser = ({ newPgUser, setNewPgUser, connectionName, ne
             onChange={e => setNewPgUser({ ...newPgUser, permissions: { ...newPgUser.permissions, [p.key]: e.target.checked } })}
             />
           ))}
-        </FlexRowWrap> 
+        </FlexRowWrap>
+        <SwitchToggle 
+          label={{
+            label: "Allow subscribing to tables",
+            info: "This will allow adding triggers to tables from the public schema and select/update/delete/insert access to tables from the prostgles schema"
+          }}
+          checked={newPgUser.permissions.allow_subscription_triggers}
+          onChange={allow_subscription_triggers => {
+            if(newPgUser.permissions.type !== "custom") return;
+            setNewPgUser({ ...newPgUser, permissions: { ...newPgUser.permissions, allow_subscription_triggers } });
+          }}
+        />
       </>}
     </>}
   </> 

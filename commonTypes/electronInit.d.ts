@@ -1,5 +1,6 @@
 export type ProstglesInitState = ({
     isElectron: boolean;
+    xRealIpSpoofable?: boolean;
     electronCredsProvided?: boolean;
     electronCreds?: {
         db_conn: string;

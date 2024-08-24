@@ -191,7 +191,7 @@ const EXPLAIN_KWDS = [
     options: [
       {
         label: { label: "( ...options )" },
-        insertText: "( $0 )"
+        insertText: "( $options )"
       },
       {
         label: { label: "$statement" },
