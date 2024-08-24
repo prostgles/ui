@@ -14,6 +14,9 @@ jobs:
         run: |
           sudo apt-get install rpm -y && \
           cd electron && npm run build-linux
+          cd dist
+          sha256sum *.* > linux.checksums
+          echo linux.checksums
       - name: Release Linux
         uses: softprops/action-gh-release@v2
         with:
@@ -21,6 +24,7 @@ jobs:
             electron/dist/**/*.deb
             electron/dist/**/*.rpm
             electron/dist/**/*.AppImage
+            electron/dist/**/*.checksums
   build_windows:
     timeout-minutes: 20
     runs-on: windows-latest
@@ -33,11 +37,15 @@ jobs:
       - name: Build Windows
         run: |
           cd electron && npm run build-win
+          cd dist
+          certutil -hashfile *.* SHA256 > windows.checksums
+          echo windows.checksums
       - name: Release Windows
         uses: softprops/action-gh-release@v2
         with:
           files: |
             electron/dist/**/*.exe
+            electron/dist/**/*.checksums
   build_macos:
     timeout-minutes: 20
     runs-on: macos-latest
@@ -50,8 +58,12 @@ jobs:
     - name: Build MacOS
       run: |
         cd electron && npm run build-macos
+        cd dist
+        shasum -a 256 *.* > macos.checksums
+        cat macos.checksums
     - name: Release MacOS
       uses: softprops/action-gh-release@v2
       with:
         files: |
           electron/dist/**/*.dmg
+          electron/dist/**/*.checksums
