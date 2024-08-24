@@ -1,4 +1,4 @@
-name: Electron build windows
+name: Electron build & test windows
 on: workflow_dispatch 
 jobs:
   electron_build_windows:
@@ -18,7 +18,7 @@ jobs:
       shell: cmd
       run: |
         cd electron
-        for /f "delims=" %f in ('dir /b /o:n "Prostgles Desktop-*.exe"') do (start "" /wait "%f" /S --force-run & goto done)
+        for /f "delims=" %f in ('dir /b /o:n "*.exe"') do (start "" /wait "%f" /S --force-run & goto done)
         :done
         waitfor SomethingThatIsNeverHappening /t 3 2>NUL
         call screenCapture.bat .\dist\screen1.png

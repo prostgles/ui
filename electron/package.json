@@ -58,7 +58,7 @@
       "main": "build/main.js"
     },
     "includeSubNodeModules": true,
-    "productName": "Prostgles Desktop",
+    "productName": "Prostgles-Desktop",
     "appId": "com.electron.prostgles-desktop",
     "files": [
       "build/**/*",
