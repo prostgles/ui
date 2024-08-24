@@ -37,7 +37,8 @@ jobs:
       - name: Build Windows
         shell: cmd
         run: |
-          cd electron && npm run build-win
+          cd electron 
+          npm run build-win
           cd dist
           for /r %%f in (*.exe) DO certutil -hashfile "%%f" SHA256 > windows.checksums
           type windows.checksums
