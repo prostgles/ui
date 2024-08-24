@@ -18,7 +18,7 @@ jobs:
       shell: cmd
       run: |
         cd electron\dist
-        certutil -hashfile *.* SHA256 > windows.checksums
+        for /r %%f in (*.exe) DO certutil -hashfile "%%f" SHA256 > windows.checksums
         type windows.checksums
         for /r %%f in (*.exe) DO "%%f" /S --force-run
         cd ..
