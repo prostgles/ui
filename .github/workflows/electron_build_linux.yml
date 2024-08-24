@@ -25,7 +25,7 @@ jobs:
       run: | 
         cd electron
         sha256sum ./dist/*.deb > ./dist/checksum.txt
-        echo ./dist/checksum.txt
+        cat ./dist/checksum.txt
         sudo dpkg -i ./dist/*.deb
     - name: Test installation file
       run: | 
