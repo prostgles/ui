@@ -1,4 +1,4 @@
-name: Electron test macos
+name: Electron test macos (deprecated)
 on: workflow_dispatch 
 jobs:
   electron_build:
