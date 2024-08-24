@@ -18,7 +18,7 @@ import { SPOOF_TEST_VALUE } from "../../commonTypes/utils";
 import helmet from "helmet";
 
 const app = express();
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false }));
 
 if(process.env.PRGL_TEST){
   app.use((req, res, next) => {
