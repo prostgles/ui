@@ -169,6 +169,7 @@ test.describe("Main test", () => {
     await runDbSql(page, `INSERT INTO table_name (title) VALUES('my_new_value_')`);
     await page.getByText("my_new_value_1").waitFor({ state: "visible", timeout: 15e3 });
     await page.getByText("my_new_value_3").waitFor({ state: "visible", timeout: 15e3 });
+    await page.waitForTimeout(4e3);
 
     await goTo(page, 'localhost:3004/connections');
     await page.waitForTimeout(4e3);
