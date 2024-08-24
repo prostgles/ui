@@ -1,4 +1,4 @@
-name: Electron build macOs
+name: Electron build & test macOs
 on: workflow_dispatch
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -17,6 +17,8 @@ jobs:
         cd electron && npm run build-macos
     - name: Test DMG file installations and run
       run: |
+        shasum -a 256 electron/dist/*.dmg > electron/dist/checksum.txt
+        echo electron/dist/checksum.txt
         hdiutil attach electron/dist/*.dmg
         ls -la /Volumes
         sudo cp -r /Volumes/Prostgles*/*.app /Applications

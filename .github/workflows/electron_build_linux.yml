@@ -24,6 +24,8 @@ jobs:
     - name: Install the app
       run: | 
         cd electron
+        sha256sum ./dist/*.deb > ./dist/checksum.txt
+        echo ./dist/checksum.txt
         sudo dpkg -i ./dist/*.deb
     - name: Test installation file
       run: | 

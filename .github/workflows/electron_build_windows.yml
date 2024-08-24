@@ -18,7 +18,8 @@ jobs:
       shell: cmd
       run: |
         cd electron\dist
-        for /r %%f in (*.exe) DO echo %%f
+        certutil -hashfile *.* SHA256 > windows.checksums
+        echo windows.checksums
         for /r %%f in (*.exe) DO "%%f" /S --force-run
         cd ..
         waitfor SomethingThatIsNeverHappening /t 3 2>NUL
