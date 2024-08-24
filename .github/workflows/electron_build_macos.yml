@@ -19,7 +19,7 @@ jobs:
       run: |
         hdiutil attach electron/dist/*.dmg
         ls -la /Volumes
-        sudo find /Volumes -type d -name "Prostgles*" -maxdepth 1 -exec find {} -maxdepth 1 -name "*.app" -exec cp -R {} /Applications \; \;
+        sudo cp -r /Volumes/Prostgles*/*.app /Applications
         open /Applications/*.app
         sleep 10
         screencapture electron/dist/picture.png
