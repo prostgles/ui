@@ -181,8 +181,9 @@ export function onRenderTimechart (this: TimeChart, delta: Partial<TimeChartProp
       const compactYAxis = this.props.yAxisVariant === "compact" || this.canv?.height && this.canv.height < 200;
       const yTickValues = compactYAxis? [minVal, maxVal] : getYTickValues({ min: minVal, max: maxVal, steps: 6 });
       const cannotShorten = compactYAxis ? false : (new Set(yTickValues.map(v => nFormatter(v, 1)) )).size < yTickValues.length; 
-      const yTicks: Shape[] = yTickValues.map((v, i) =>
-        ({
+      let yTicks: ChartedText[] = [];
+      yTickValues.forEach((v, i) =>{
+        const yTick: ChartedText = {
           id: `y${i}`,
           text: `${cannotShorten? v.toLocaleString() : nFormatter(v, 1)}`,
           type: "text",
@@ -193,8 +194,18 @@ export function onRenderTimechart (this: TimeChart, delta: Partial<TimeChartProp
           //   fillStyle: "var(--color-ticks-1)",
           // },
           font: "14px Arial ",
-        })
-      );
+        };
+        const lastTick = yTicks.at(-1);
+        if(!lastTick || lastTick.coords[1] - yTick.coords[1] > 14 * 1.2){
+          yTicks.push(yTick);
+        }
+      });
+
+      const yTicksHeight = 14;
+      if(yTicks.length * yTicksHeight > h){
+        yTicks = [];
+
+      }
 
       return [...yTicks, ...timeAxisTicks];
     }
