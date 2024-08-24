@@ -1,4 +1,4 @@
-name: Linux test
+name: Linux & Electron test
 on: workflow_dispatch
 # on:
 #   push:

@@ -1,4 +1,4 @@
-name: Electron build linux
+name: Electron build & test linux
 on: workflow_dispatch 
 jobs:
   electron_build:
