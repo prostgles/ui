@@ -1,10 +1,8 @@
 name: Test docker-compose
-on: workflow_dispatch
-# on:
-#   push:
-#     branches: [ main, master ]
-#   pull_request:
-#     branches: [ main, master ]
+on:
+  pull_request:
+    branches: [ main, master ]
+  merge_group:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true

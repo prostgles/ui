@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import "./NavBar.css";
  
-import { mdiArrowLeft, mdiAccount, mdiServer, mdiMenu, mdiClose } from "@mdi/js"
+import { mdiArrowLeft, mdiClose, mdiMenu } from "@mdi/js";
 import { useNavigate } from "react-router-dom";
-import { AccountMenu } from "../pages/AccountMenu";
-import type { ClientUser, Prgl } from "../App";
 import type { ServerState } from "../../../commonTypes/electronInit";
-import { InfoRow } from "./InfoRow"; 
+import type { ClientUser, Prgl } from "../App";
+import { AccountMenu } from "../pages/AccountMenu";
+import ClickCatch from "./ClickCatch";
 import { Icon } from "./Icon/Icon";
+import { InfoRow } from "./InfoRow";
  
 type P = {
   title?: string;
@@ -28,7 +29,6 @@ export const NavBar = (props: P) => {
   const [navCollapsed, setNavCollapsed] = useState(true);
   const navigate = useNavigate();
   const { options = [], title, user, serverState, dbsMethods, dbs, endContent: _endContent } = props;
-  const isPublicUser = user?.type === "public";
   const endContent = _endContent? <div onClick={e => { e.stopPropagation(); e.preventDefault(); }}>{_endContent}</div> : null;
 
   const MenuButton = !title && 
@@ -45,25 +45,9 @@ export const NavBar = (props: P) => {
         <Icon path={mdiClose} size={1.5} />}
     </button>
 
-  const navRef = React.useRef<HTMLDivElement>(null);
-
-  /** Close menu when pressing outside */
-  useEffect(() => {
-    if(navCollapsed) return;
-    const listener = (e: MouseEvent) => {
-      if(navRef.current && !navRef.current.contains(e.target as Node)){
-        setNavCollapsed(true);
-      }
-    }
-    document.addEventListener("pointerdown", listener);
-    return () => {
-      document.removeEventListener("pointerdown", listener);
-    }
-  }, [navRef, navCollapsed]);
-
-  return (
+  return <>
+    {!navCollapsed && <ClickCatch style={{ zIndex: 1 }} onClick={() => setNavCollapsed(true)} />}
     <nav
-      ref={navRef} 
       className={"flex-row jc-center noselect w-full text-1p5 shadow-l bg-color-0 " + (navCollapsed? " mobile-collapsed " : " mobile-expanded pb-1 ")} 
       style={{ 
         zIndex: 2, 
@@ -121,29 +105,5 @@ export const NavBar = (props: P) => {
         </div>
       </div>
     </nav>
-  );
-}
-
-
-export class LeftNavBar extends React.Component<any, any> {
-  render(){
-    return (
-      <div className="flex-col">
-        <ul className="plain flex-col">
-          <li>
-            <NavLink to={"/projects"} className={"text-0p5 text-white-hover flex-row  bb text-sm font-medium ml-8 transition-150 "}>
-              <Icon path={mdiServer} size={1}/>
-              <div>Projects</div>
-            </NavLink>
-          </li>
-          <li>
-            <NavLink to={"/account"} className={"text-0p5 text-white-hover flex-row  bb text-sm font-medium ml-8 transition-150 "}>
-              <Icon path={mdiAccount} size={1}/>
-              <div>Account</div>
-            </NavLink>
-          </li>
-        </ul>
-      </div>
-    )
-  }
+  </>
 }

@@ -341,7 +341,7 @@ export default class Select<O extends OptionKey, Multi extends boolean = false, 
       select = <>
         {chips || trigger} 
         {popupAnchor? <Popup 
-          rootStyle={{ padding: 0, maxWidth: "600px", boxSizing: "border-box" }}
+          rootStyle={{ padding: 0, maxWidth: "min(99vw, 600px)", boxSizing: "border-box" }}
           anchorEl={popupAnchor}
           positioning="beneath-left-minfill"
           clickCatchStyle={{ opacity: 0 }}

@@ -33,7 +33,7 @@ export const ServerSettings = ({ theme, dbsMethods, dbs, dbsTables }: Pick<Prgl,
 
   if(!myIP) return null;
 
-  return <div className="w-full o-auto" style={{ opacity: settingsLoaded? 1 : 0 }}>
+  return <div className="ServerSettings w-full o-auto" style={{ opacity: settingsLoaded? 1 : 0 }}>
     <div className="flex-row jc-center p-p5" style={{ alignSelf: "stretch" }}>
       <div className="flex-col gap-1 mt-2 max-w-800 min-w-0 f-1" style={{ alignSelf: "stretch" }}>
         <SmartForm 

@@ -161,7 +161,6 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
       },
       // DEBUG_MODE: false, // This won't work because old_table is not available in the trigger
       onLog: async (e) => {
-        // console.log(e);
         addLog(e, null);
       },
       tableConfig,
@@ -189,7 +188,9 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
       onReady: async (params) => {
         const { dbo: db } = params;
         const _db: DB = params.db;
+        
         setLoggerDBS(params.dbo);
+
         /* Update stale data */
         await connectionChecker.init(db, _db); 
                   

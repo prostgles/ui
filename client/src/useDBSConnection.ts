@@ -11,6 +11,7 @@ import type { DBS } from "./dashboard/Dashboard/DBS";
 import { getTables } from "./dashboard/Dashboard/Dashboard";
 import { useEffectAsync } from "./dashboard/DashboardMenu/DashboardMenuSettings";
 import { pageReload } from "./components/Loading";
+import { SPOOF_TEST_VALUE } from "../../commonTypes/utils";
 
 export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void) => {
 
@@ -37,7 +38,7 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
      */
     let serverState: AppState["serverState"];
     try {
-      const resp = await fetch("/dbs");
+      const resp = await fetch("/dbs", { headers: { "x-real-ip": SPOOF_TEST_VALUE } });
       serverState = await resp.json();
       window.document.title = `Prostgles ${serverState?.isElectron? "Desktop" : "UI"}`;
       if(serverState?.connectionError){

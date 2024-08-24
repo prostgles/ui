@@ -14,6 +14,6 @@ RUN apt-get update && \
     apt-get -y update && \
     apt-get -y install postgresql-16
 
-WORKDIR /usr/src/app
+WORKDIR /usr/src/app/client
 
-RUN npm run build
+RUN npm run build && cd ../server && npm run build

@@ -219,6 +219,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
           session_max_age_days: 1,
           login_rate_limit: 1,
           login_rate_limit_enabled: 1,
+          enable_logs: 1,
         },
         postValidate: async ({ row, dbx: dbsTX }) => {
           if(!row.allowed_ips.length){
@@ -233,9 +234,11 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
           //     )
           //   )
           // )
-          const { isAllowed, ip } = await connectionChecker.checkClientIP({ socket, dbsTX });
 
-          if(!isAllowed) throw `Cannot update to a rule that will block your current IP.  \n Must allow ${ip} within Allowed IPs`
+          if(row.allowed_ips_enabled){
+            const { isAllowed, ip } = await connectionChecker.checkClientIP({ socket, dbsTX });
+            if(!isAllowed) throw `Cannot update to a rule that will block your current IP.  \n Must allow ${ip} within Allowed IPs`
+          }
           return undefined;
         }
       }

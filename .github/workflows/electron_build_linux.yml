@@ -1,4 +1,4 @@
-name: Electron build linux
+name: Electron build & test linux
 on: workflow_dispatch 
 jobs:
   electron_build:
@@ -24,7 +24,9 @@ jobs:
     - name: Install the app
       run: | 
         cd electron
-        sudo dpkg -i ./dist/Prostgles\ Desktop-2.0.0-amd64.deb
+        sha256sum ./dist/*.deb > ./dist/checksum.txt
+        cat ./dist/checksum.txt
+        sudo dpkg -i ./dist/*.deb
     - name: Test installation file
       run: | 
         cd electron

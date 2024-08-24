@@ -1,4 +1,4 @@
-name: Electron build macOs
+name: Electron build & test macOs
 on: workflow_dispatch
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -17,10 +17,12 @@ jobs:
         cd electron && npm run build-macos
     - name: Test DMG file installations and run
       run: |
-        hdiutil attach electron/dist/Prostgles\ Desktop-2.0.0.dmg
+        shasum -a 256 electron/dist/*.dmg > electron/dist/checksum.txt
+        cat electron/dist/checksum.txt
+        hdiutil attach electron/dist/*.dmg
         ls -la /Volumes
-        sudo cp -r /Volumes/Prostgles\ Desktop\ 2.0.0/Prostgles\ Desktop.app /Applications
-        open /Applications/Prostgles\ Desktop.app
+        sudo cp -r /Volumes/Prostgles*/*.app /Applications
+        open /Applications/Prostgles*.app
         sleep 10
         screencapture electron/dist/picture.png
     - uses: actions/upload-artifact@v3

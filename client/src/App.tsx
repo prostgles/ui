@@ -10,7 +10,7 @@ import NewConnnection from "./pages/NewConnection/NewConnnection";
 import { NotFound } from "./pages/NotFound";
 import { ProjectConnection } from "./pages/ProjectConnection/ProjectConnection";
 
-import { mdiAccountMultiple, mdiServerNetwork, mdiServerSecurity, mdiThemeLightDark } from "@mdi/js";
+import { mdiAccountMultiple, mdiAlertOutline, mdiExclamation, mdiServerNetwork, mdiServerSecurity, mdiThemeLightDark } from "@mdi/js";
 import ErrorComponent from "./components/ErrorComponent";
 import { NavBar } from "./components/NavBar";
 import UserManager from "./dashboard/UserManager";
@@ -32,6 +32,9 @@ import { useDBSConnection } from "./useDBSConnection";
 import { isDefined } from "./utils";
 import { type Socket } from "socket.io-client";
 import { MousePointer } from "./demo/MousePointer";
+import PopupMenu from "./components/PopupMenu";
+import Btn from "./components/Btn";
+import { InfoRow } from "./components/InfoRow";
 export * from "./appUtils";
 
 export type ClientUser = {
@@ -195,6 +198,19 @@ export const App = () => {
 
   return (
     <FlexCol key={dbsKey} className={`App gap-0 f-1 min-h-0`}>
+      {serverState?.xRealIpSpoofable && user?.type === "admin" && 
+        <PopupMenu 
+          button={<Btn color="danger" iconPath={mdiAlertOutline} variant="filled">Security issue</Btn>}
+          style={{ position: "fixed", right: 0, top: 0, zIndex: 999999 }}
+          positioning="beneath-left-minfill"
+          clickCatchStyle={{ opacity: 0.5 }}
+          content={
+            <InfoRow>
+              Failed login rate limiting is based on x-real-ip header which can be spoofed based on your current connection. <NavLink to="/server-settings">Settings</NavLink>
+            </InfoRow>
+          }
+        />
+      }
       {demoStarted && <MousePointer />}
       {isDisconnected && 
         <Loading 

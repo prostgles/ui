@@ -281,7 +281,6 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     // dropIfExists: true,
     columns: {
       id:               `BIGSERIAL PRIMARY KEY` ,
-      ip_address:       `INET NOT NULL`,
       type:              SESSION_TYPE,
       created:          `TIMESTAMP DEFAULT NOW()` ,
       username:         "TEXT",
@@ -289,7 +288,8 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       magic_link_id:    "TEXT",
       sid:              "TEXT",
       auth_type: { enum: ["session-id", "magic-link", "login"] },
-      ip_address_remote:  "TEXT",
+      ip_address:       `INET NOT NULL`,
+      ip_address_remote:"TEXT",
       x_real_ip:        "TEXT",
       user_agent:       "TEXT",
       info:             "TEXT",
@@ -912,6 +912,11 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         sqlDefinition: `boolean NOT NULL DEFAULT FALSE`, 
         info: { hint: "If true then will use the IP from 'X-Forwarded-For' header" } 
       },
+      enable_logs: {
+        sqlDefinition: `boolean NOT NULL DEFAULT FALSE`, 
+        info: { hint: "Logs are saved in the logs table from the state database" },
+        label: "Enable logs (experimental)" 
+      },
       session_max_age_days: { 
         sqlDefinition: `INTEGER NOT NULL DEFAULT 14 CHECK(session_max_age_days > 0)`, 
         info: { hint: "Number of days a user will stay logged in", min: 1, max: Number.MAX_SAFE_INTEGER } 
@@ -926,7 +931,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       },
       login_rate_limit_enabled: { 
         sqlDefinition: `BOOLEAN NOT NULL DEFAULT TRUE`, 
-        info: { hint: "If enabled then only allowed IPs can connect" } 
+        info: { 
+          hint: "If enabled then each client defined by <groupBy> that fails <maxAttemptsPerHour> in an hour will not be able to login for the rest of the hour", 
+        }, 
+        label: "Enable failed login rate limit" 
       },
       login_rate_limit: { 
         defaultValue: {
@@ -938,13 +946,13 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           groupBy: {
             description: "The IP address used to group login attempts",
             enum: [
-              "x_real_ip",
+              "x-real-ip",
               "remote_ip",
               "ip",
             ],
           },
         },
-        label: "Allowed IPs and subnets", 
+        label: "Failed login rate limit options", 
         info: { hint: "List of allowed IP addresses in ipv4 or ipv6 format" } 
       },
       tableConfig: {
