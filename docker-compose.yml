@@ -43,6 +43,7 @@ services:
       POSTGRES_DB: "POSTGRES_DB" 
       POSTGRES_USER: "POSTGRES_USER" 
       POSTGRES_PASSWORD: "POSTGRES_PASSWORD" 
+      PROSTGLES_UI_HOST: "0.0.0.0" 
       POSTGRES_HOST: postgres
       IS_DOCKER: "yes"
       NODE_ENV: "production"
