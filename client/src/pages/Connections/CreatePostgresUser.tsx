@@ -100,7 +100,7 @@ export const CreatePostgresUser = ({ newPgUser, setNewPgUser, connectionName, ne
         <SwitchToggle 
           label={{
             label: "Allow subscribing to tables",
-            info: "This will allow adding triggers to tables and also read/write access to tables from prostgles schema"
+            info: "This will allow adding triggers to tables from the public schema and select/update/delete/insert access to tables from the prostgles schema"
           }}
           checked={newPgUser.permissions.allow_subscription_triggers}
           onChange={allow_subscription_triggers => {
