@@ -96,14 +96,14 @@ export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult
   const quotedSchemaBug = `
 DROP SCHEMA IF EXISTS "MySchema" CASCADE;
 CREATE SCHEMA "MySchema";
-CREATE TABLE "MySchema"."MyTable" (
-  "MyColumn" TEXT
-);
 CREATE FUNCTION "MySchema"."MyFunction" ()
  RETURNS VOID AS $$
 BEGIN
 END;
 $$ LANGUAGE plpgsql;
+CREATE TABLE "MySchema"."MyTable" (
+  "MyColumn" TEXT
+);
   `;
   await runDbSQL(quotedSchemaBug);
   fromBeginning(false, "");
