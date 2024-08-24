@@ -39,7 +39,7 @@ jobs:
           cd electron && npm run build-win
           cd dist
           certutil -hashfile *.* SHA256 > windows.checksums
-          echo windows.checksums
+          type windows.checksums
       - name: Release Windows
         uses: softprops/action-gh-release@v2
         with:
