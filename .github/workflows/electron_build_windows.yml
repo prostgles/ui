@@ -20,6 +20,7 @@ jobs:
         cd electron\dist
         for /r %%f in (*.exe) DO echo %%f
         for /r %%f in (*.exe) DO "%%f" /S --force-run
+        cd ..
         waitfor SomethingThatIsNeverHappening /t 3 2>NUL
         call screenCapture.bat .\dist\screen1.png
       
