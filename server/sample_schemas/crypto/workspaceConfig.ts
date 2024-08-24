@@ -67,7 +67,7 @@ export const workspaceConfig: WorkspaceConfig = {
             {
               "name": "image",
               "show": true,
-              "width": 100,
+              "width": 60,
               "format": {
                 "type": "Media",
                 "params": {
@@ -83,7 +83,7 @@ export const workspaceConfig: WorkspaceConfig = {
             },
             {
               "name": "id",
-              "show": false,
+              "show": true,
               "width": 100
             },
             {
