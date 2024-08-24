@@ -16,4 +16,4 @@ RUN apt-get update && \
 
 WORKDIR /usr/src/app
 
-RUN npm run build
+RUN ./prod-start.sh
