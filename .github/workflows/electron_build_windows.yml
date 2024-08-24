@@ -18,8 +18,8 @@ jobs:
       shell: cmd
       run: |
         cd electron
-        for /f "delims=" %%f in ('dir /b /o:n "*.exe"') DO echo %%f
-        for /f "delims=" %%f in ('dir /b /o:n "*.exe"') DO "%%f" /S --force-run
+        for /r %%f in (*.exe) DO echo %%f
+        for /r %%f in (*.exe) DO "%%f" /S --force-run
         waitfor SomethingThatIsNeverHappening /t 3 2>NUL
         call screenCapture.bat .\dist\screen1.png
       
