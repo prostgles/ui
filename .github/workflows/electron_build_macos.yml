@@ -20,7 +20,7 @@ jobs:
         hdiutil attach electron/dist/*.dmg
         ls -la /Volumes
         sudo cp -r /Volumes/Prostgles*/*.app /Applications
-        open /Applications/*.app
+        open /Applications/Prostgles*.app
         sleep 10
         screencapture electron/dist/picture.png
     - uses: actions/upload-artifact@v3
