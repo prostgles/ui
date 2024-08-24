@@ -281,7 +281,6 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     // dropIfExists: true,
     columns: {
       id:               `BIGSERIAL PRIMARY KEY` ,
-      ip_address:       `INET NOT NULL`,
       type:              SESSION_TYPE,
       created:          `TIMESTAMP DEFAULT NOW()` ,
       username:         "TEXT",
@@ -289,7 +288,8 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       magic_link_id:    "TEXT",
       sid:              "TEXT",
       auth_type: { enum: ["session-id", "magic-link", "login"] },
-      ip_address_remote:  "TEXT",
+      ip_address:       `INET NOT NULL`,
+      ip_address_remote:"TEXT",
       x_real_ip:        "TEXT",
       user_agent:       "TEXT",
       info:             "TEXT",
