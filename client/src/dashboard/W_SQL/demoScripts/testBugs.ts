@@ -118,6 +118,10 @@ $$ LANGUAGE plpgsql;
     LIMIT 200`
   ));
 
+  fromBeginning(false, `DROP SCHEMA`);
+  await typeAuto(` mys`);
+  testResult(`DROP SCHEMA "MySchema"`);
+
   /** Ensure whitespace is kept, replacing quoted identifiers works as expected */
   fromBeginning(false, `SELECT FROM "MySchema"."MyTable"`);
   await moveCursor.lineStart();
