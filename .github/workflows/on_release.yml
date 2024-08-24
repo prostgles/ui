@@ -35,6 +35,7 @@ jobs:
         with:
           node-version: 20
       - name: Build Windows
+        shell: cmd
         run: |
           cd electron && npm run build-win
           cd dist
