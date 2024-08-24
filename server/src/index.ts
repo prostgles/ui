@@ -15,8 +15,10 @@ import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { getInitState, tryStartProstgles } from "./startProstgles";
 import { SPOOF_TEST_VALUE } from "../../commonTypes/utils";
+import helmet from "helmet";
 
 const app = express();
+app.use(helmet());
 
 if(process.env.PRGL_TEST){
   app.use((req, res, next) => {

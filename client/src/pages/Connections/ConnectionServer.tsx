@@ -187,9 +187,9 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
   
   const cannotCreateDb = error?.toString() || serverInfo && !serverInfo.canCreateDb;
   return <FlexRow className="gap-p25 jc-end p-p5" style={{ fontWeight: 400 }}>
-    <h4 title="Server info" className="m-0 flex-row gap-p5 p-p5 ai-center text-1p5 jc-end" >
+    <h4 title="Server info" className="m-0 flex-row gap-p5 p-p5 ai-center text-1p5 jc-end text-ellipsis" >
       {/* <Icon path={mdiServerNetwork} size={1} className="text-2" /> */}
-      <div>{name}</div>
+      <div className="text-ellipsis">{name}</div>
     </h4>
     <Select 
       btnProps={{ 
