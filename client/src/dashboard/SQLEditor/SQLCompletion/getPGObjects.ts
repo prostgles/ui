@@ -294,7 +294,6 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
   q = rootQ + "\n" + lQ;
   
   const finalQuery = distinct? distQ : q;
-  console.log(finalQuery, { name, limit, minArgs })
   const funcs = await db.sql(finalQuery, { name: name || "%", limit, minArgs }).then(d => 
     d.rows.map((r: PG_Function)=> {
       
