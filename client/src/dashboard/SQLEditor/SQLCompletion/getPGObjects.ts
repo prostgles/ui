@@ -294,8 +294,8 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
   q = rootQ + "\n" + lQ;
   
   const finalQuery = distinct? distQ : q;
-  
-  return await db.sql(finalQuery, { name: name || "%", limit, minArgs }).then(d => 
+  console.log(finalQuery, { name, limit, minArgs })
+  const funcs = await db.sql(finalQuery, { name: name || "%", limit, minArgs }).then(d => 
     d.rows.map((r: PG_Function)=> {
       
 
@@ -342,6 +342,10 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
       return ({ ...r, args });
     })
   );
+  if(funcs.length === limit){
+    console.warn("Function 8k limit reached. Some function suggestions might be missing...")
+  }
+  return funcs;
 }
 
 
@@ -759,7 +763,7 @@ export const PG_OBJECT_QUERIES = {
     getData: (db: DB) => getFuncs({ 
       db, 
       minArgs: 0, 
-      limit: 4000, 
+      limit: 8000, 
       distinct: false 
     }),
     type: {} as PG_Function,
