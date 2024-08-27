@@ -189,9 +189,9 @@ export type PG_Function = {
   args_length: string;
   is_aggregate: string;
   /**
-   * a = aggregate, f = function, p = procedure
+   * a = aggregate, f = function, p = procedure, w = window function
    */
-  prokind: "a" | "f" | "p";
+  prokind: "a" | "f" | "p" | "w";
   /**
    * provolatile tells whether the function's result depends only on its input arguments, or is affected by outside factors. 
    * It is i for “immutable” functions, which always deliver the same result for the same inputs. 

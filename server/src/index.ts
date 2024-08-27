@@ -75,7 +75,7 @@ const io = new Server(http, {
   maxHttpBufferSize: 100e100,
   cors: connectionChecker.withOrigin
 });
- 
+
 export const connMgr = new ConnectionManager(http, app, connectionChecker);
 
 const electronConfig = getElectronConfig();

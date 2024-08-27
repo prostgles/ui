@@ -25,8 +25,7 @@ export const SmartFormUpperFooter = (props: P) => {
     columns, onRemoveUpdate, state, row, db
   } = props;
 
-  const dbMethodActions = getKeys(methods).map(methodName => {
-    const _m = methods[methodName];
+  const dbMethodActions = Object.entries(methods).map(([methodName, _m]) => {
     if (isObject(_m) && "run" in _m) {
       const argEntries = Object.entries(_m.input);
       const thisTableArgIdx = argEntries.findIndex(([_, arg]) => arg.lookup?.type === "data" && arg.lookup.isFullRow && arg.lookup.table === tableName);
@@ -67,10 +66,9 @@ export const SmartFormUpperFooter = (props: P) => {
       boxShadow: "0px 3px 9px 0px var(--shadow0)",
       clipPath: "inset(-10px 1px 0px 1px)",
       minHeight: "1px",
-      ...(expandJoinedRecords ? {
-        flex: 1
-      } : {
-        maxHeight: "30%", // "30vh"
+      ...(expandJoinedRecords && {
+        flex: 4,
+        maxHeight: "fit-content",
       })
     }}
   >
@@ -124,7 +122,7 @@ export const SmartFormUpperFooter = (props: P) => {
         />
       </div>
       {!collapseChanges && <div className={"flex-col w-full ai-start " + (showChanges ? " p-1 " : " ")}>
-        {getKeys(newRow ?? {})
+        {Object.keys(newRow ?? {})
           .map(key => {
             if (!newRow) return null;
             const c = columns.find(c => c.name === key);
