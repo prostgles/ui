@@ -55,7 +55,7 @@ export const NavBar = (props: P) => {
     >
       <div className="flex-row f-1" style={{ maxWidth: "970px"}}>
         {(navCollapsed || !window.isMobileDevice) && <NavLink 
-          title="v2.0.0-alpha" 
+          title={document.head.dataset.version}
           to={"/"} 
           className="prgl-brand-icon flex-row ai-center jc-center"
         >

@@ -106,7 +106,10 @@ module.exports = {
     ],
   },
   plugins: [
-    new HtmlWebpackPlugin({ template: "index.html.ejs" }),
+    new HtmlWebpackPlugin({ 
+      template: "index.html.ejs",
+      v: require("../../electron/package.json")?.version,
+    }),
     new MiniCssExtractPlugin({ 
       filename: 'static/css/[name].[contenthash:8].css',
       chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',

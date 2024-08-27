@@ -63,29 +63,6 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
       style={{ maxWidth: "fit-content", margin: "2px 0" }}
       ref={divRef}
     >
-      {showLinks && !!setLinkMenu && <Btn 
-        title="Cross filter tables"
-        className={bgColorClass}
-        size="small"
-        iconPath={mdiSetLeftCenter}
-        style={firstLink && { color: getLinkColorV2(firstLink, 1).colorStr }}
-        onClick={async e => {
-
-          setLinkMenu({
-            w: w as WindowSyncItem<"table">,
-            anchorEl: e.currentTarget,
-          });
-        }}
-      />}
-      {showChartButtons && 
-        <AddChartMenu 
-          w={w} 
-          tables={tables} 
-          onAddChart={onAddChart} 
-          btnClassName={bgColorClass} 
-        />
-      }
-      
       {table && (!show || show.filter) && <Btn 
         title={"Show/Hide filtering"}
         className={bgColorClass}
@@ -100,6 +77,28 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
         onClick={async e => {
           const _w: SyncDataItem<WindowData<"table">, true> = w as any;
           _w.$update({ options: { showFilters: !_w.options?.showFilters } }, { deepMerge: true });
+        }}
+      />}
+      {showChartButtons && 
+        <AddChartMenu 
+          w={w} 
+          tables={tables} 
+          onAddChart={onAddChart} 
+          btnClassName={bgColorClass} 
+        />
+      }
+      {showLinks && !window.isMobileDevice && !!setLinkMenu && <Btn 
+        title="Cross filter tables"
+        className={bgColorClass}
+        size="small"
+        iconPath={mdiSetLeftCenter}
+        style={firstLink && { color: getLinkColorV2(firstLink, 1).colorStr }}
+        onClick={async e => {
+
+          setLinkMenu({
+            w: w as WindowSyncItem<"table">,
+            anchorEl: e.currentTarget,
+          });
         }}
       />}
     </div>

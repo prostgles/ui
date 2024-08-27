@@ -1,8 +1,8 @@
 # Prostgles UI
 
-Web dashboard and SQL Editor for Postgres  
+SQL Editor and internal tool builder for Postgres  
 
-[Live demo](https://play.prostgles.com/)  
+[Live demo](https://playground.prostgles.com/)  
 
 ### Screenshots
 
@@ -10,7 +10,6 @@ Web dashboard and SQL Editor for Postgres
 <p float="left">
   <img src="https://prostgles.com/static/images/screenshot_crypto.png" width="100%%"/>  
 </p>
-<img src="https://prostgles.com/static/images/screenshot_start_commands.png" width="33%" />  
 
 ### Features
 
