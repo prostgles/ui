@@ -45,7 +45,7 @@ rm -rf ./ui/client/node_modules
 cp ./docker-compose.yml ./ui/
 cp ./LICENSE ./ui/
 cp ./README.md ./ui/
-cp ./PRIVACY.md ./ui/
+cp ./PRIVACY ./ui/
 cp ./server/.gitignore ./ui/
 cp ./Dockerfile ./ui/
 cp ./.env ./ui/
