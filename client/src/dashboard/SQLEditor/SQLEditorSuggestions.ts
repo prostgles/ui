@@ -214,7 +214,7 @@ export async function getSqlSuggestions(db: DB): Promise< {
       });
       suggestions = suggestions.concat(cols.map(c => {
         const cIndexes = tIndexes.filter(d => d.indexdef.slice(d.indexdef.indexOf("("), d.indexdef.lastIndexOf(")")).includes(c.escaped_identifier));
-        const indexInfo = t.is_view? "" : `\n\n\n\n**Indexes**(${cIndexes.length}): \n${asSQL(cIndexes.map(i => i.indexdef).join(", "))}`
+        const indexInfo = t.is_view? "" : `\n\n\n\n**Indexes**(${cIndexes.length}): \n${asSQL(cIndexes.map(i => i.indexdef.split(" USING ")[1] || i.indexdef).join(", \n"))}`
         return {
           label: getColumnSuggestionLabel(c, t.name),
           name: c.name, 
@@ -300,7 +300,7 @@ export async function getSqlSuggestions(db: DB): Promise< {
     }));
 
     suggestions = suggestions.concat(functions.map(f => {
-      const overEnding = ["rank", "dense_rank", "row_number"].includes(f.escaped_name)? " over()" : "";
+      const overEnding = f.prokind === "w"? " over()" : "";
       return { 
         type: "function",
         name: f.escaped_identifier,
