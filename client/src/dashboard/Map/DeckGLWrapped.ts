@@ -5,9 +5,11 @@ import { fitBounds } from "./fitBounds";
 import { createReactiveState } from "../../appUtils";
 export const getDeckLibs = async () => {
   const lib = await import(/* webpackChunkName: "deckgl" */ "deck.gl");
+  const mvtLoader = await import(/* webpackChunkName: "mvtLoader" */ "@loaders.gl/mvt");
+
   return {
     lib,
-    // core
+    MVTLoader: mvtLoader.MVTLoader
   }
 }
 export type DeckGlLib = Awaited<ReturnType<typeof getDeckLibs>>["lib"]

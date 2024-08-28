@@ -30,8 +30,8 @@ export const NUMERIC_FILTER_TYPES = [
     { key: "<=", label: "<=" },
 ];
 export const DATE_FILTER_TYPES = [
-    { key: "$age", label: "Age" },
-    { key: "$ageNow", label: "Age (start of day)" },
+    { key: "$age", label: "Age at start of day" },
+    { key: "$ageNow", label: "Age" },
     { key: "$duration", label: "Duration" },
 ];
 export const GEO_FILTER_TYPES = [

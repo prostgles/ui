@@ -77,6 +77,10 @@ export const dashboardDemo = async () => {
   await click("JoinedRecords", `[data-key="orders"] button[data-label="Expand section"]`);
   await tout(2e3);
   await click("JoinedRecords", `[data-command="SmartCard.viewEditRow"]`, { nth: 0 });
+  await tout(1e3);
+  await click("JoinedRecords.toggle");
+  await tout(1e3);
+  await click("JoinedRecords", `[data-key="order_items"] button[data-label="Expand section"]`);
   await tout(2e3);
   await click("Popup.close");
   await click("Popup.close");
@@ -140,4 +144,5 @@ export const dashboardDemo = async () => {
   await click("TimeChartLayerOptions.groupBy", `[data-key="symbol"]`);
   await click("Popup.close");
   await click("Popup.close");
+  await tout(5e3);
 }

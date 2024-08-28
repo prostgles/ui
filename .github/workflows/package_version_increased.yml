@@ -1,0 +1,38 @@
+name: Ensure package version is higher
+on:
+  pull_request:
+    branches: [ main, master ]
+  merge_group:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  test_docker:
+    name: Run test suite
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Get versions
+      id: pr-version
+      run: |
+        sudo apt  install jq
+        cd electron
+        cat package.json | jq -r .version > pr_version.txt
+        git fetch origin ${{ github.base_ref }} --depth=1
+        git checkout origin/${{ github.base_ref }} -- package.json
+        cat package.json | jq -r .version > current_version.txt
+
+    - name: Compare versions
+      run: |
+        cd electron
+        current_version=$(cat current_version.txt)
+        pr_version=$(cat pr_version.txt)
+        if [ "$(printf '%s\n' "$current_version" "$pr_version" | sort -V | head -n1)" = "$pr_version" ]; then
+          echo "Version in package.json is not greater than the version in the base branch: $current_version <= $pr_version"
+          exit 1
+        else
+          echo "Version check passed: $current_version <= $pr_version"
+        fi

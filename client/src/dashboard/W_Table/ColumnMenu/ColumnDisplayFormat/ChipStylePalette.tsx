@@ -25,16 +25,16 @@ export const chipColors = [
  
 export const chipColorsFadedBorder = [
 
-  { color: "#ffd0cd",   borderColor: "rgb(216 71 71)", textColor: "#940000" }, // Red
-  { color: "#f6beff",   borderColor: "rgb(172 64 211)", textColor: "#490063" }, // Pink
-  { color: "#e5e9ff",   borderColor: "rgb(108 130 231)", textColor: "#002fff" }, // Purple
-  { color: "#c9e7ff7d", borderColor: "rgb(120 189 243)", textColor: "#0075d2" }, // Deep Purple
+  { color: "#ffd0cd",   borderColor: "rgb(216 71 71)", textColor: "#940000", textColorDarkMode: "#ff004a" }, // Red
+  { color: "#f6beff",   borderColor: "rgb(172 64 211)", textColor: "#490063", textColorDarkMode: "#a95cc5" }, // Pink
+  { color: "#e5e9ff",   borderColor: "rgb(108 130 231)", textColor: "#002fff", textColorDarkMode: "#4f6ffb" }, // Purple
+  { color: "#c9e7ff7d", borderColor: "rgb(120 189 243)", textColor: "#0075d2", textColorDarkMode: "#2386d5" }, // Deep Purple
 
-  { color: "#00bcd42e", borderColor: "rgb(93 186 198)", textColor: "#009aad" }, // Indigo
-  { color: "#01d4002e", borderColor: "#01d4008a",       textColor: "#00ad44" }, // Green
-  { color: "#d4b7002e", borderColor: "rgb(227 217 41)", textColor: "#716400" }, // Yellow
+  { color: "#00bcd42e", borderColor: "rgb(93 186 198)", textColor: "#009aad", textColorDarkMode: "#0cbacf"  }, // Indigo
+  { color: "#01d4002e", borderColor: "#01d4008a",       textColor: "#00ad44", textColorDarkMode: "#0ad75b" }, // Green
+  { color: "#d4b7002e", borderColor: "rgb(227 217 41)", textColor: "#716400", textColorDarkMode: "#c1ad10" }, // Yellow
 
-  { color: "#b4b4b42e", borderColor: "rgb(169 169 169)", textColor: "#4b4b4b" }, // Gray
+  { color: "#b4b4b42e", borderColor: "rgb(169 169 169)", textColor: "#4b4b4b", textColorDarkMode: "#838181" }, // Gray
   
 ];
 
