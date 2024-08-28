@@ -189,9 +189,9 @@ export type PG_Function = {
   args_length: string;
   is_aggregate: string;
   /**
-   * a = aggregate, f = function, p = procedure
+   * a = aggregate, f = function, p = procedure, w = window function
    */
-  prokind: "a" | "f" | "p";
+  prokind: "a" | "f" | "p" | "w";
   /**
    * provolatile tells whether the function's result depends only on its input arguments, or is affected by outside factors. 
    * It is i for “immutable” functions, which always deliver the same result for the same inputs. 
@@ -294,8 +294,7 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
   q = rootQ + "\n" + lQ;
   
   const finalQuery = distinct? distQ : q;
-  
-  return await db.sql(finalQuery, { name: name || "%", limit, minArgs }).then(d => 
+  const funcs = await db.sql(finalQuery, { name: name || "%", limit, minArgs }).then(d => 
     d.rows.map((r: PG_Function)=> {
       
 
@@ -342,6 +341,10 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
       return ({ ...r, args });
     })
   );
+  if(funcs.length === limit){
+    console.warn("Function 8k limit reached. Some function suggestions might be missing...")
+  }
+  return funcs;
 }
 
 
@@ -759,7 +762,7 @@ export const PG_OBJECT_QUERIES = {
     getData: (db: DB) => getFuncs({ 
       db, 
       minArgs: 0, 
-      limit: 4000, 
+      limit: 8000, 
       distinct: false 
     }),
     type: {} as PG_Function,

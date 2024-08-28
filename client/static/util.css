@@ -1888,7 +1888,7 @@ nav.left-nav-list a.active {
   .show-on-hover,
   .show-on-parent-hover, 
   .show-on-trigger-hover {
-    opacity: 1;
+    opacity: 1 !important;
   }
 }
 

@@ -7,12 +7,15 @@ mkdir -p ./ui/server/dist
 mkdir -p ./ui/server/connection_dbo
 mkdir -p ./ui/commonTypes
 mkdir -p ./ui/client
+mkdir -p ./ui/electron
 
 cp -R ./.github ./ui/
 
 cd ./server
 npm run build
 cd ..
+
+cp -R ./electron/*.json ./ui/electron/
 
 cp -R ./server/src ./ui/server/
 cp -R ./server/dist ./ui/server/
@@ -42,7 +45,7 @@ rm -rf ./ui/client/node_modules
 cp ./docker-compose.yml ./ui/
 cp ./LICENSE ./ui/
 cp ./README.md ./ui/
-cp ./PRIVACY.md ./ui/
+cp ./PRIVACY ./ui/
 cp ./server/.gitignore ./ui/
 cp ./Dockerfile ./ui/
 cp ./.env ./ui/
