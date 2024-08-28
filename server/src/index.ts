@@ -18,7 +18,10 @@ import { SPOOF_TEST_VALUE } from "../../commonTypes/utils";
 import helmet from "helmet";
 
 const app = express();
-app.use(helmet({ crossOriginResourcePolicy: false }));
+// app.use(helmet({ 
+//   crossOriginResourcePolicy: false, 
+//   referrerPolicy: false,
+// }));
 
 if(process.env.PRGL_TEST){
   app.use((req, res, next) => {
@@ -60,6 +63,9 @@ export const log = (msg: string, extra?: any) => {
 
 app.use(express.static(path.resolve(actualRootDir + "/../client/build"), { index: false }));
 app.use(express.static(path.resolve(actualRootDir + "/../client/static"), { index: false }));
+
+/** Needed to load MVT tiles worker */
+app.use(express.static(path.resolve(actualRootDir + "/../client/node_modules/@loaders.gl/mvt/dist/"), { index: false, extensions: ["js"] }));
  
 
 app.use(cookieParser());
