@@ -15,19 +15,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Get base branch package.json
-      id: base-version
-      run: |
-        sudo apt  install jq
-        git fetch origin ${{ github.base_ref }} --depth=1
-        cd electron
-        cat package.json | jq -r .version > current_version.txt
-
-    - name: Get PR branch package.json
+    - name: Get versions
       id: pr-version
       run: |
+        sudo apt  install jq
         cd electron
         cat package.json | jq -r .version > pr_version.txt
+        git checkout origin/${{ github.base_ref }} -- package.json
+        cat package.json | jq -r .version > current_version.txt
 
     - name: Compare versions
       run: |
