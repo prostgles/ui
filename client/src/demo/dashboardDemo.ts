@@ -140,4 +140,5 @@ export const dashboardDemo = async () => {
   await click("TimeChartLayerOptions.groupBy", `[data-key="symbol"]`);
   await click("Popup.close");
   await click("Popup.close");
+  await tout(5e3);
 }
