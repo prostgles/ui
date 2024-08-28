@@ -31,6 +31,7 @@ jobs:
 
     - name: Compare versions
       run: |
+        cd electron
         current_version=$(cat current_version.txt)
         pr_version=$(cat pr_version.txt)
         if [ "$(printf '%s\n' "$current_version" "$pr_version" | sort -V | head -n1)" = "$pr_version" ]; then
