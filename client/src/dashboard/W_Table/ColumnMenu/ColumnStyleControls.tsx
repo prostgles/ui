@@ -1,7 +1,7 @@
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import { _PG_numbers } from "prostgles-types";
 import React from "react";
-import type { Prgl } from "../../../App";
+import { appTheme, useReactiveState, type Prgl, type Theme } from "../../../App";
 import { FlexCol, FlexRowWrap } from "../../../components/Flex";
 import Select from "../../../components/Select/Select";
 import { ColorPicker } from "./ColorPicker";
@@ -11,7 +11,6 @@ import type { ColumnConfig } from "./ColumnMenu";
 import { ChipStylePalette, chipColorsFadedBorder } from "./ColumnDisplayFormat/ChipStylePalette";
 import { MINI_BARCHART_COLOR } from "../../../components/ProgressBar";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { index } from "d3";
 
 export type ColumnValue = string | number | Date | null | undefined | boolean;
  
@@ -66,8 +65,9 @@ type DefaultConditionalStyleArgs = {
   tableName: string;
   columnName: string;
   filter?: any;
+  theme: Theme;
 }
-export const setDefaultConditionalStyle = async ({ columnName, db, tableName, filter = {} }: DefaultConditionalStyleArgs, setStyle: (newStyle: ColumnConfig["style"]) => void) => {
+export const setDefaultConditionalStyle = async ({ columnName, db, tableName, filter = {}, theme }: DefaultConditionalStyleArgs, setStyle: (newStyle: ColumnConfig["style"]) => void) => {
 
   const tableHandler = db[tableName];
   if(!tableHandler?.find) return undefined;
@@ -84,6 +84,7 @@ export const setDefaultConditionalStyle = async ({ columnName, db, tableName, fi
         condition: v, 
         operator: "=", 
         ...style,
+        textColor: theme === "dark"? style.textColorDarkMode : style.textColor,
         chipColor: style.color,
       }
     }) 
@@ -124,7 +125,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
   const updateStylePart = (newStyle: Partial<Required<ColumnConfig>["style"]>) => {
     setStyle({ ...style, ...newStyle } as any)
   }
-
+  const { state: theme } = useReactiveState(appTheme);
   return (
     <FlexCol className="ColumnStyleControls flex-col gap-1">
       <Select label="Style mode" 
@@ -133,7 +134,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
         options={STYLE_MODES} 
         onChange={async (type) => { 
           if(type === "Conditional"){
-            setDefaultConditionalStyle({ db, tableName, columnName: column.name}, setStyle)
+            setDefaultConditionalStyle({ db, tableName, columnName: column.name, theme: theme }, setStyle)
           } else {
 
             setStyle(

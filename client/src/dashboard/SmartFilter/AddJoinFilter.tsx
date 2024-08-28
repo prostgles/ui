@@ -43,7 +43,7 @@ export const AddJoinFilter = ({ tables, tableName, path, type = "$existsJoined",
         }}
       />
     </div>}
-    <FlexRow className={"p-p5 bt b-color"}> 
+    <FlexRow className={"p-p5"}> 
       {!path && 
         <Btn 
           title={title}
