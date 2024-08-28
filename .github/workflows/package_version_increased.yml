@@ -20,11 +20,13 @@ jobs:
       run: |
         sudo apt  install jq
         git fetch origin ${{ github.base_ref }} --depth=1
+        cd electron
         cat package.json | jq -r .version > current_version.txt
 
     - name: Get PR branch package.json
       id: pr-version
       run: |
+        cd electron
         cat package.json | jq -r .version > pr_version.txt
 
     - name: Compare versions
