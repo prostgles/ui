@@ -33,5 +33,5 @@ jobs:
           echo "Version in package.json is not greater than the version in the base branch: $current_version <= $pr_version"
           exit 1
         else
-          echo "Version check passed."
+          echo "Version check passed: $current_version <= $pr_version"
         fi
