@@ -21,6 +21,7 @@ jobs:
         sudo apt  install jq
         cd electron
         cat package.json | jq -r .version > pr_version.txt
+        git fetch origin ${{ github.base_ref }} --depth=1
         git checkout origin/${{ github.base_ref }} -- package.json
         cat package.json | jq -r .version > current_version.txt
 
