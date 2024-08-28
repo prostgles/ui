@@ -1,18 +1,18 @@
+import { useEffectDeep } from "prostgles-client/dist/prostgles";
 import React from "react";
+import { appTheme, useReactiveState } from "../../appUtils";
 import type { DivProps } from "../../components/Flex";
 import { FlexRow, classOverride } from "../../components/Flex";
 import { isDefined } from "../../utils";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { PALETTE } from "../Dashboard/dashboardUtils";
-import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";
 import { getSmartGroupFilter } from "../SmartFilter/smartFilterUtils";
 import { ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
 import { type ColumnValue, setDefaultConditionalStyle } from "../W_Table/ColumnMenu/ColumnStyleControls";
 import { updateWCols } from "../W_Table/tableUtils/tableUtils";
 import type { ProstglesTimeChartStateLayer } from "../W_TimeChart/W_TimeChart";
-import { useEffectDeep } from "prostgles-client/dist/prostgles";
 
 type P = DivProps & Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "prgl" | "w"> & {
   layerLinkId: string;
@@ -37,13 +37,14 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
   }
 
 
+  const { state: theme } = useReactiveState(appTheme);
   /** Add group by colors */
   useEffectDeep(() => {
     const missingLabels = !valueStyles? undefined : layers.filter(l => !valueStyles.some(s => s.condition === l.groupByValue)).map(l => l.groupByValue).join(", ");
     if((!valueStyles || missingLabels) && oldLayerWindow?.table_name){
       const parentW = props.getLinksAndWindows().windows.find(w => w.id === props.w.parent_window_id);
       const filter = getSmartGroupFilter(parentW?.filter || []);
-      setDefaultConditionalStyle({ db, tableName: oldLayerWindow.table_name, columnName: groupByColumn, filter }, newStyle => {
+      setDefaultConditionalStyle({ db, tableName: oldLayerWindow.table_name, columnName: groupByColumn, filter, theme }, newStyle => {
         setColumnStyle(newStyle)
       });
     }
