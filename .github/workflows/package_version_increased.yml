@@ -35,7 +35,7 @@ jobs:
         current_version=$(cat current_version.txt)
         pr_version=$(cat pr_version.txt)
         if [ "$(printf '%s\n' "$current_version" "$pr_version" | sort -V | head -n1)" = "$pr_version" ]; then
-          echo "Version in package.json is not greater than the version in the base branch."
+          echo "Version in package.json is not greater than the version in the base branch: $current_version <= $pr_version"
           exit 1
         else
           echo "Version check passed."
