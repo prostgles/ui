@@ -32,13 +32,56 @@ export function makeTileLayer(
     tileURLs = DEFAULT_TILE_URLS;
   }
 
+  if(tileURLs.some(url => url.endsWith(".pbf") || url.endsWith(".mvt"))){
+    return new deckGlLibs.lib.MVTLayer({
+      id: "basemap",
+      data: tileURLs,
+      loaders: [deckGlLibs.MVTLoader],
+      loadOptions: {
+        mvt: {
+          // cp node_modules/@loaders.gl/mvt/dist/mvt-worker.js static/mvt-worker.js
+          // Added file to express static
+          workerUrl: "/mvt-worker.js"
+        }
+      },
+      minZoom: 0,
+      maxZoom: 14,
+      getFillColor: (f) => {
+        switch (f.properties.layerName) {
+          case "poi":
+            return [255, 0, 0];
+          case "water":
+            return [120, 150, 180];
+          case "building":
+            return [218, 218, 218];
+          default:
+            return [240, 240, 240];
+        }
+      },
+      getLineWidth: (f) => {
+        switch (f.properties.class) {
+          case "street":
+            return 6;
+          case "motorway":
+            return 10;
+          default:
+            return 1;
+        }
+      },
+      getLineColor: [192, 192, 192],
+      getPointRadius: 2,
+      pointRadiusUnits: "pixels",
+      stroked: false,
+      // picking: true
+    });
+  }
+
   return new deckGlLibs.lib.TileLayer({
     id: "basemap",
     TilesetClass: deckGlLibs.lib._Tileset2D,
     opacity,
-
+    
     desaturate,
-
     transparentColor: [255, 255, 255, 255],
 
     /**

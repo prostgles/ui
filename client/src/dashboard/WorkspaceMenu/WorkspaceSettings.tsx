@@ -30,7 +30,7 @@ export const WorkspaceSettings = ({ dbs, dbsTables, w, dbsMethods, theme }: Work
               select: {
                 name: true,
                 options: true,
-                defaultLayoutType: true,
+                layout: true,
                 windows: {
                   id: false,
                   user_id: false,
