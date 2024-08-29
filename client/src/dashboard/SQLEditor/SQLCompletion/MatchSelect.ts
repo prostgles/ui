@@ -1,5 +1,5 @@
 import { missingKeywordDocumentation } from "../SQLEditorSuggestions";
-import { suggestSnippets, type MinimalSnippet } from "./CommonMatchImports";
+import { nameMatches, suggestSnippets, type MinimalSnippet } from "./CommonMatchImports";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import { getCurrentCodeBlock, getCurrentNestingOffsetLimits } from "./completionUtils/getCodeBlock";
 import { getExpected } from "./getExpected";
@@ -11,6 +11,7 @@ import type { KWD } from "./withKWDs";
 import { withKWDs } from "./withKWDs";
 
 export const AGG_FUNC_NAMES = ["max", "min", "agg", "sum", "count", "string_agg", "json_object_agg", "array_agg", "jsonb_agg"];
+
 export const preSubQueryKwds = [
   "in", 
   "from", 
@@ -149,19 +150,21 @@ export const MatchSelect: SQLMatcher = {
       return t && t.text === "(" && t.nestingId === cb.ltoken?.nestingId;
     });
     if(prevFunc){
-      if(prevFunc.textLC === "unnest"){
+      const funcInfo = ss.find(s => s.type === "function" && nameMatches(s, prevFunc));
+      if(funcInfo?.funcInfo?.proretset){
         return suggestSnippets([{ 
           label: `WITH ORDINALITY $0`, 
           docs: `If the WITH ORDINALITY clause is specified, an additional column of type bigint will be added to the function result columns. This column numbers the rows of the function result set, starting from 1.`, 
           kind: getKind("function") 
         }])
       }
-      if(AGG_FUNC_NAMES.includes(prevFunc.textLC)){
+      if(funcInfo?.funcInfo?.prokind === "a"){
         return suggestSnippets([{ label: `FILTER ( WHERE $0 )`, docs: missingKeywordDocumentation.FILTER, kind: getKind("function") }])
       }
-      if(prevFunc.textLC === "rank" || prevFunc.textLC === "row_number"){
+      if(funcInfo?.funcInfo?.prokind === "w"){
         return suggestSnippets([{
-          label: `OVER (PARTITION BY $0 ORDER BY $1 DESC)`, kind: getKind("function"), 
+          label: `OVER()`, 
+          kind: getKind("function"), 
           docs: rancDocs }])
       }
     }

@@ -314,20 +314,35 @@ export const getCurrentNestingOffsetLimits = ({ currNestingId: cn, currOffset, t
   const isInsideCurrentNestingId = (t: TokenInfo, i: number, arr: TokenInfo[]) => {
     const pToken = arr[i-1];
     const nToken = arr[i+1];
-    const isParens = nToken?.type === "delimiter.parenthesis.sql";
+    const isParens = (nToken?.type === "delimiter.parenthesis.sql");
     const isExitingNesting = !nToken || nToken.nestingId.length < currNestingId.length;
     const isSameNesting = t.nestingId.startsWith(currNestingId) && (!pToken || pToken.nestingId.startsWith(currNestingId));
-    return isParens && isSameNesting && isExitingNesting;
+    const foundEnd = isParens && isSameNesting && isExitingNesting;
+    return foundEnd;
   }
-  const startTokens = tokens.slice(0).filter(t => t.offset <= currOffset).reverse()
+  const startTokens = tokens.slice(0).filter(t => t.offset <= currOffset).reverse();
   const startTokenIdx = startTokens.findIndex(isInsideCurrentNestingId);
-  const startToken = startTokens[startTokenIdx];
+  let startToken = startTokens[startTokenIdx];
+  if(startTokens[0]?.text === "(" && startTokens[0].nestingId.length < currNestingId.length){
+    startToken = undefined;
+  }
+  const firstBefore = tokens.slice(0).findLast(t => t.end <= currOffset);
+  const firstAfter = tokens.slice(0).find(t => t.offset >= currOffset);
+  /** Is inside empty brackets */
+  if(
+    firstBefore?.text === "(" && firstAfter?.text === ")" && 
+    firstBefore.end <= currOffset && firstAfter.end >= currOffset &&
+    firstBefore.nestingId.length < currNestingId.length && firstAfter.nestingId.length < currNestingId.length
+  ){
+    return undefined;
+  }
   const endTokens = tokens.filter(t => t.offset >= currOffset || t.end === currOffset);
-  if((!endTokens.length || endTokens[0]?.text === ")" && endTokens[0].nestingId === currNestingId.slice(0, -1)) && startTokenIdx > 0){
-    endTokens.unshift(startTokens[0]!);
+  /** If cursor is near end parens then must find the token just before cursor */
+  if((!endTokens.length || endTokens[0]?.text === ")" && endTokens[0].nestingId.length < currNestingId.length) && startTokenIdx >= 0 && firstBefore){
+    endTokens.unshift(firstBefore);
   }
   const endToken = endTokens.find(isInsideCurrentNestingId);
-  const allowedCommands = ["select", "update", "delete", "insert"]
+  const allowedCommands = ["select", "update", "delete", "insert"];
   if(startToken?.type === "keyword.sql" && endToken && allowedCommands.includes(startToken.textLC)){
     return { 
       limits: [startToken.offset, endToken.end], 
