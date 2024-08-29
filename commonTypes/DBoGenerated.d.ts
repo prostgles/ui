@@ -125,6 +125,7 @@ export type DBSchemaGenerated = {
     columns: {
       created?: null | string;
       db_conn?: null | string;
+      db_connection_timeout?: null | number;
       db_host?: string;
       db_name: string;
       db_pass?: null | string;

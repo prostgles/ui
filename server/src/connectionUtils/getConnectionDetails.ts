@@ -4,7 +4,7 @@ export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 import { ConnectionString } from "connection-string";
 import type pg from "pg-promise/typescript/pg-subset";
 
-type ConnectionDetails = Required<Pick<pg.IConnectionParameters<pg.IClient>, "application_name" | "host" | "port" | "password" | "user" | "ssl" | "database">> & { password: string };
+type ConnectionDetails = Required<Pick<pg.IConnectionParameters<pg.IClient>, "application_name" | "host" | "port" | "password" | "user" | "ssl" | "database" | "connectionTimeoutMillis">> & { password: string };
 
 export const getConnectionDetails = (c: Connections): ConnectionDetails => {
   /**
@@ -23,7 +23,7 @@ export const getConnectionDetails = (c: Connections): ConnectionDetails => {
   if(c.type === "Connection URI"){
     const cs = new ConnectionString(c.db_conn);
     const params = cs.params ?? {};
-    const { sslmode, application_name = default_application_name } = params;
+    const { sslmode, application_name = default_application_name, connect_timeout = 10 } = params;
     const conn = {
       application_name,
       host: cs.hosts![0]!.name!,
@@ -32,6 +32,7 @@ export const getConnectionDetails = (c: Connections): ConnectionDetails => {
       password: cs.password!,
       database: cs.path![0]!,
       ssl: getSSLOpts(sslmode) ?? false,
+      connectionTimeoutMillis: Math.ceil(connect_timeout) * 1000
     }
     return conn;
   }
@@ -43,6 +44,7 @@ export const getConnectionDetails = (c: Connections): ConnectionDetails => {
     host: c.db_host!,
     port: c.db_port!,
     ssl: getSSLOpts(c.db_ssl) ?? false,
+    connectionTimeoutMillis: Math.ceil(c.db_connection_timeout || 10_000)
   };
   return conn;
 }

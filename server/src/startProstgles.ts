@@ -2,9 +2,9 @@ import type { Express } from "express";
 import path from "path";
 import type pg from "pg-promise/typescript/pg-subset";
 import prostgles from "prostgles-server";
-import type { EventInfo } from "prostgles-server/dist/Logging";
+import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import { omitKeys, pickKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
+import { pickKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { Server } from "socket.io";
 import type { DBS } from ".";
@@ -12,6 +12,7 @@ import { connMgr, connectionChecker } from ".";
 import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 import type { ProstglesInitState } from "../../commonTypes/electronInit";
 import BackupManager from "./BackupManager/BackupManager";
+import { addLog, setLoggerDBS } from "./Logger";
 import { getAuth } from "./authConfig/authConfig";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import type { DBSConnectionInfo } from "./electronConfig";
@@ -23,8 +24,6 @@ import { publishMethods } from "./publishMethods/publishMethods";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { tableConfig } from "./tableConfig";
-import { addLog, setLoggerDBS } from "./Logger";
-import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 
 type StartArguments = {
   app: Express; 

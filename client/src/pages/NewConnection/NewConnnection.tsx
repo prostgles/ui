@@ -58,6 +58,7 @@ export const DEFAULT_CONNECTION = {
   prgl_params: "",
   db_conn: "",
   db_watch_shema: true,
+  db_connection_timeout: 10_000,
 } as const;
 
 type NewConnectionProps = {
@@ -65,7 +66,7 @@ type NewConnectionProps = {
   connectionId: string | undefined;
   prglState: Pick<ExtraProps, "dbs" | "dbsMethods" | "dbsTables" | "user" | "theme">; 
   onDeleted?: () => void;
-  onUpserted?: () => void;
+  onUpserted?: (connection: Required<Connection>) => void;
   contentOnly?: boolean;
   showTitle: boolean;
 }
@@ -386,13 +387,13 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                   return
                 }
 
-                await dbsMethods.createConnection!(conn);
+                const { connection } = await dbsMethods.createConnection!(conn);
 
-                onUpserted?.();
+                onUpserted?.(connection);
                 setMsg({ ok: mode !== "edit" ? "Created!" : "Updated!" });
-                setTimeout(() => {
-                  window.location.href = "/connections";
-                }, 500)
+                // setTimeout(() => {
+                //   window.location.href = "/connections";
+                // }, 500)
               } catch (e: any) {
                 console.log(e);
                 setMsg({ loading: 0 })
@@ -417,8 +418,8 @@ export default (props: NewConnectionProps) => {
     onDeleted={() => { 
       navigate("/") 
     }}
-    onUpserted={() => { 
-      navigate("/connections") 
+    onUpserted={({ id }) => { 
+      navigate("/connections/" + id) 
     }}
   />
 };
