@@ -25,6 +25,10 @@ Visit https://playground.prostgles.com
 * TypeScript server-side functions (experimental)
 * LISTEN NOTIFY support
 
+### Installation
+
+Visit our [releases page](https://github.com/prostgles/ui/releases) to download the latest installation binaries.
+
 ### Building
 
 Download the source code:
