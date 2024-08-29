@@ -3,6 +3,23 @@ import { tout } from "../../../pages/ElectronSetup";
 import type { DemoScript } from "../getDemoUtils";
 
 export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL }) => {
+
+  const lateralJoin = fixIndent(`
+    SELECT *
+    FROM pg_catalog.pg_class c
+    LEFT JOIN LATERAL (
+      SELECT *
+      FROM pg_catalog.pg_proc p
+      WHERE 
+    ) tt
+      ON TRUE`
+  );
+  fromBeginning(false, lateralJoin);
+  await moveCursor.up(2);
+  await moveCursor.lineEnd();
+  await typeAuto(`c.`);
+  testResult(lateralJoin.replace(`WHERE `, `WHERE c.oid`));
+
   const withNestingBug = fixIndent(`
     WITH cte1 AS (
       SELECT 1 as he
