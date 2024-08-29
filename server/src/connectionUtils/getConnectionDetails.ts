@@ -4,7 +4,7 @@ export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 import { ConnectionString } from "connection-string";
 import type pg from "pg-promise/typescript/pg-subset";
 
-type ConnectionDetails = Required<Pick<pg.IConnectionParameters<pg.IClient>, "application_name" | "host" | "port" | "password" | "user" | "ssl" | "database" | "connectionTimeoutMillis">> & { password: string };
+type ConnectionDetails = Required<Pick<pg.IConnectionParameters<pg.IClient>, "application_name" | "host" | "port" | "password" | "user" | "ssl" | "database">> & { password: string; connectionTimeoutMillis?: number };
 
 export const getConnectionDetails = (c: Connections): ConnectionDetails => {
   /**
@@ -32,7 +32,9 @@ export const getConnectionDetails = (c: Connections): ConnectionDetails => {
       password: cs.password!,
       database: cs.path![0]!,
       ssl: getSSLOpts(sslmode) ?? false,
-      connectionTimeoutMillis: Math.ceil(connect_timeout) * 1000
+      ...(Number.isFinite(connect_timeout) && {
+        connectionTimeoutMillis: Math.ceil(connect_timeout) * 1000
+      })
     }
     return conn;
   }
@@ -44,7 +46,9 @@ export const getConnectionDetails = (c: Connections): ConnectionDetails => {
     host: c.db_host!,
     port: c.db_port!,
     ssl: getSSLOpts(c.db_ssl) ?? false,
-    connectionTimeoutMillis: Math.ceil(c.db_connection_timeout || 10_000)
+    ...(Number.isFinite(c.db_connection_timeout) && {
+      connectionTimeoutMillis: Math.ceil(c.db_connection_timeout!)
+    })
   };
   return conn;
 }

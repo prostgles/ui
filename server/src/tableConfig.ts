@@ -438,7 +438,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       db_port:                 `INTEGER NOT NULL DEFAULT 5432`,
       db_user:                 `TEXT NOT NULL DEFAULT ''`,
       db_pass:                 `TEXT DEFAULT ''`,
-      db_connection_timeout:    `INTEGER CHECK(db_connection_timeout > 0) DEFAULT 10`,
+      db_connection_timeout:    `INTEGER CHECK(db_connection_timeout > 0)`,
       db_ssl:                  { enum: DB_SSL_ENUM, nullable: false, defaultValue: "disable" },
       ssl_certificate:         { sqlDefinition: `TEXT` },
       ssl_client_certificate:  { sqlDefinition: `TEXT` },
