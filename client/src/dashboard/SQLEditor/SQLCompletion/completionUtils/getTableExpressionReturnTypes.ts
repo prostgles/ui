@@ -39,7 +39,7 @@ export const getTableExpressionSuggestions = async (args: GetTableExpressionSugg
   const columnsWithAliasInfo: (TabularExpression & { s: ParsedSQLSuggestion })[] = [];
   const tablesWithAliasInfo: (TabularExpression & { s: ParsedSQLSuggestion; })[] = [];
 
-  const getColumnSuggestion = (cs: { type: "s"; s: ParsedSQLSuggestion; } | { type: "col"; colType: ColType; }, tableAlias?: string): Pick<ParsedSQLSuggestion, "label" | "sortText" | "insertText" | "name" | "filterText" | "escapedIdentifier"> => {
+  const getColumnSuggestion = (cs: { type: "s"; s: ParsedSQLSuggestion; } | { type: "col"; colType: ColType; }, tableAlias?: string, isCteAlias = false): Pick<ParsedSQLSuggestion, "label" | "sortText" | "insertText" | "name" | "filterText" | "escapedIdentifier"> => {
       
     const c = cs.type === "s"? cs.s.colInfo! : cs.colType;
     const colName = cs.type === "s"? cs.s.escapedIdentifier! : cs.colType.column_name;
@@ -48,7 +48,7 @@ export const getTableExpressionSuggestions = async (args: GetTableExpressionSugg
     const hasNoAlias = cs.type === "s" && cs.s.escapedParentName === tableAlias;
     const endsWithThisAlias = tableAlias && prevText.endsWith(`${tableAlias}.`);
     const label = tableAlias && !hasNoAlias? `${tableAlias}.${colName}` : colName;
-    const insertText = (endsWithThisAlias || hasNoAlias)? colName : label;
+    const insertText = (isCteAlias || endsWithThisAlias || hasNoAlias)? colName : label;
     return {
       name: label,
       label: getColumnSuggestionLabel({ name: colName, ...c }, tableAlias ?? (cs.type === "s"? cs.s.tablesInfo!.name : "" )),
@@ -129,7 +129,7 @@ export const getTableExpressionSuggestions = async (args: GetTableExpressionSugg
         const s: ParsedSQLSuggestion = {
           kind: getKind("column"),
           documentation: { value: tableAliasHeader + asSQL(c.definition) },
-          ...getColumnSuggestion({ type: "col", colType: c }, e.alias),
+          ...getColumnSuggestion({ type: "col", colType: c }, e.alias, e.type === "subquery" && e.kwd === "as"),
           range: undefined as any,
           schema: c.schema,
           colInfo: {
