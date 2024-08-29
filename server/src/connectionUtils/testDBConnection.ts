@@ -43,7 +43,7 @@ export const testDBConnection = (_c: ConnectionInfo, expectSuperUser = false, ch
 
   return new Promise(async (resolve, reject) => {
     const connOpts = getConnectionDetails(con as any);
-    const db = pgpNoWarnings({ ...connOpts, connectionTimeoutMillis: 1000 });
+    const db = pgpNoWarnings({ ...connOpts });
     db.connect()
       .then(async function (c: pgPromise.IConnected<{}, pg.IClient>) {
         

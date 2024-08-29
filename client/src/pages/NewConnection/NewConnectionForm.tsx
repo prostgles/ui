@@ -206,8 +206,19 @@ export const NewConnectionForm = ({ c, updateConnection, nameErr, warning, test,
     {warning && <ErrorComponent error={warning} style={{ minWidth: 0 }} />}
 
     {type !== "Prostgles" && <>
-      <ExpandSection label="SSL options" buttonProps={{ variant: undefined, color: "action", iconPath: mdiDotsHorizontal, "data-command": "SSLOptionsToggle" }} >
-        <FormField id="ssl_mode" label="SSL Mode"
+      <ExpandSection label="More options" buttonProps={{ variant: undefined, color: "action", iconPath: mdiDotsHorizontal, "data-command": "SSLOptionsToggle" }} >
+        <FormField 
+          id="timeout" 
+          label="Connection timeout (ms)"
+          optional={true}
+          value={c.db_connection_timeout}
+          onChange={db_connection_timeout => {
+            updateConnection({ db_connection_timeout, type: "Standard" })
+          }}
+        />
+        <FormField 
+          id="ssl_mode" 
+          label="SSL Mode"
           fullOptions={SSL_MODES} required={true}
           value={c.db_ssl}
           onChange={async (db_ssl: typeof SSL_MODES[number]["key"]) => {
