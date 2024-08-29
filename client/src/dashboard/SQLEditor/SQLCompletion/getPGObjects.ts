@@ -200,6 +200,10 @@ export type PG_Function = {
    * (Use v also for functions with side-effects, so that calls to them cannot get optimized away.)
    */
   provolatile: "i" | "s" | "v";
+  /**
+   * Function returns a set (i.e., multiple values of the specified data type)
+   * */
+  proretset: boolean;
   definition: string | null;
   func_signature: string;
   escaped_identifier: string;
@@ -242,6 +246,7 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
                 , pronargs as args_length
                 , prokind = 'a' as is_aggregate
                 , prokind
+                , proretset
                 , p.oid
                 , p.prolang -- 12, 13 are internal,c languages
                 , ext.extension

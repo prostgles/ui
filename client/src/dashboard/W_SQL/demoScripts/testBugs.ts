@@ -4,6 +4,48 @@ import type { DemoScript } from "../getDemoUtils";
 
 export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL }) => {
 
+  const lateralJoin = fixIndent(`
+    SELECT *
+    FROM pg_catalog.pg_class c
+    LEFT JOIN LATERAL (
+      SELECT *
+      FROM pg_catalog.pg_proc p
+      WHERE 
+    ) tt
+      ON TRUE`
+  );
+  fromBeginning(false, lateralJoin);
+  await moveCursor.up(2);
+  await moveCursor.lineEnd();
+  await typeAuto(`c.`);
+  testResult(lateralJoin.replace(`WHERE `, `WHERE c.oid`));
+
+  const withNestingBug = fixIndent(`
+    WITH cte1 AS (
+      SELECT 1 as he
+      FROM pg_catalog.pg_proc
+    )
+    SELECT *, lag(  ), max( ), first_value()
+    FROM cte1`
+  );
+  const expectedFixed = withNestingBug
+    .replace(`max( )`, `max(  he)`)
+    .replace(`lag(  )`, `lag(   he) OVER()`)
+    .replace(`first_value()`, `first_value( he)`);
+  fromBeginning(false, withNestingBug);
+  await moveCursor.up();
+  await moveCursor.lineStart();
+  await moveCursor.right(16);
+  await typeAuto(` `);
+  await moveCursor.right();
+  await typeAuto(` `);
+  await moveCursor.lineEnd();
+  await moveCursor.left(1);
+  await typeAuto(` `);
+  await moveCursor.left(18);
+  await typeAuto(` `);
+  testResult(expectedFixed);
+
   const namedValues = fixIndent(`
     SELECT *
     FROM (
