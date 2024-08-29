@@ -199,9 +199,5 @@ export const SQL_TESTING_SCRIPTS = {
 };
 export type SqlTestingScripts = typeof SQL_TESTING_SCRIPTS;
  
-console.error(`Finish demo videos:
-  - Table view (row panel + related records, cross filtering, )
-  - Table method view
-`);
 
 // TODO "prostgles-server: add implied joins (if a-b-c (where a-b and b-c use the same columns from b) then add/allow a-c)";

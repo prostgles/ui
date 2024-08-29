@@ -15,13 +15,13 @@ SQL Editor and internal tool builder for Postgres
 
 * SQL Editor with context-aware schema auto-completion and documentation extracts and hints
 * Realtime data exploration dashboard with versatile layout system (tab and side-by-side view)
-* UI controls to join tables, sort, filter and cross-filter
+* Table view with controls to view related data, sort, filter and cross-filter
 * Map and Time charts with aggregations
 * Data insert/update forms with autocomplete
 * Role based access control rules
 * Isomorphic TypeScript API with schema types, end to end type safety and React hooks
 * File upload (locally or to cloud)
-* Search all data/schema
+* Search all tables from public schema
 * Media file display (audio/video/image/html/svg) 
 * Data import (CSV, JSON and GeoJSON)
 * Backup/Restore (locally or to cloud)
