@@ -358,7 +358,6 @@ export async function getSqlSuggestions(db: DB): Promise< {
       documentation: ex.comment,
       type: "extension",
       insertText: ex.escaped_identifier,
-      filterText: `${ex.name} ${ex.installed? "installed" : "nnstalled"}`,
       extensionInfo: {
         installed: ex.installed
       }
