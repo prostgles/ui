@@ -12,7 +12,7 @@ import { authenticator } from "@otplib/preset-default";
 export type Users = Required<DBSchemaGenerated["users"]["columns"]>; 
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 
-import type { DBHandlerServer } from "prostgles-server/dist/DboBuilder";
+import type { DBHandlerServer } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
 import type { AnyObject} from "prostgles-types";
 import { asName, isEmpty, pickKeys } from "prostgles-types";
@@ -213,7 +213,7 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
             $existsJoined: {  
               path: ["database_configs", "connections"],
               filter: { id }
-            } 
+            } as any
           });
 
           if(opts?.keepBackups){

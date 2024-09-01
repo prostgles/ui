@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import path from "path";
-import { pgp } from "prostgles-server/dist/DboBuilder";
+import { pgp } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import type { DB } from "prostgles-server/dist/Prostgles";  
 import { getRootDir } from "./electronConfig";
 // import { faker } from "@faker-js/faker";

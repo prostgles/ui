@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { authenticator } from "otplib";
 import {
   PageWIds, TEST_DB_NAME, USERS, clickInsertRow, closeWorkspaceWindows,
   createAccessRule,
@@ -6,22 +7,22 @@ import {
   disablePwdlessAdminAndCreateUser,
   dropConnectionAndDatabase,
   fileName,
+  fillLoginFormAndSubmit,
   forEachLocator,
-  runDbsSql,
   getMonacoEditorBySelector,
   getSearchListItem,
   getTableWindow,
   goTo,
-  insertRow, 
-  localNoAuthSetup, login, monacoType, openTable, 
-  queries, runSql, selectAndInsertFile, setTableRule,
+  insertRow,
+  localNoAuthSetup, login, monacoType, openTable,
+  queries,
+  runDbSql,
+  runDbsSql,
+  runSql, selectAndInsertFile, setTableRule,
   setWspColLayout,
   typeConfirmationCode,
-  uploadFile,
-  runDbSql,
-  fillLoginFormAndSubmit,
+  uploadFile
 } from './utils';
-import { authenticator } from "otplib";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -171,6 +172,23 @@ test.describe("Main test", () => {
     await page.getByText("my_new_value_3").waitFor({ state: "visible", timeout: 15e3 });
     await page.waitForTimeout(4e3);
 
+    /** Test schema select */
+    await runDbSql(page, `
+      CREATE SCHEMA "MySchema";
+      CREATE TABLE "MySchema"."MyTable" (
+        "MyColumn" TEXT
+      );
+    `);
+    await page.getByTestId("dashboard.goToConnConfig").click();
+    await page.getByTestId("MoreOptionsToggle").click();
+    await page.getByTestId("SchemaFilter").click();
+    await page.getByTestId("SchemaFilter").locator(`[data-key="MySchema"]`).click();
+    await page.keyboard.press("Escape");
+    await page.getByTestId("Connection.edit.updateOrCreateConfirm").click();
+    await page.getByTestId("dashboard.menu.tablesSearchList").locator(`[data-key=${JSON.stringify(`"MySchema"."MyTable"`)}]`).click();
+    await insertRow(page, `"MySchema"."MyTable"`, { MyColumn: "some value" });
+    await page.getByText("some value").waitFor({ state: "visible", timeout: 15e3 });
+    
     await goTo(page, 'localhost:3004/connections');
     await page.waitForTimeout(4e3);
     await dropConnectionAndDatabase(dbName, page);
@@ -446,7 +464,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1000);
     await insertRow(page, "users", { username: USERS.default_user, password: USERS.default_user }, true);
     await insertRow(page, "users", { username: USERS.default_user1, password: USERS.default_user1 }, true);
-    await insertRow(page, "users", { username: USERS.public_user, password: USERS.public_user, type: "public" }, true);
+    // await insertRow(page, "users", { username: USERS.public_user, password: USERS.public_user, type: "public" }, true);
   });
 
   test('Set access rules', async ({ page: p }) => {

@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
 import { PageWIds, USERS, createDatabase, goTo, login } from "./utils";
-// const viewPortSize = { width: 1920, height: 1080 };
-const viewPortSize = { width: 800, height: 1080 };
+const viewPortSize = { width: 1920, height: 1080 };
+// const viewPortSize = { width: 800, height: 1080 };
 test.use({ 
   viewport: viewPortSize,
   video: { 

@@ -2,7 +2,6 @@ import cors from "cors";
 import type { Express, Request } from "express";
 import type { Auth, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
 import { getLoginClientInfo } from "prostgles-server/dist/AuthHandler";
-import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { SubscriptionHandler } from "prostgles-types";
 import { isDefined, tryCatch } from "prostgles-types";
@@ -22,6 +21,7 @@ import {
   tout,
 } from "./index";
 import { tableConfig } from "./tableConfig";
+import { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 
 export type WithOrigin = {
   origin?: (requestOrigin: string | undefined, callback: (err: Error | null, origin?: string) => void) => void;
