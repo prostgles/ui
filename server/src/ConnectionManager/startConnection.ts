@@ -1,6 +1,6 @@
 import prostgles from "prostgles-server";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder";
+import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { getIsSuperUser, type DB } from "prostgles-server/dist/Prostgles";
 import { pickKeys } from "prostgles-types";

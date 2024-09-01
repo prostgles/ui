@@ -58,7 +58,7 @@ export type DBObject = {
   schema: string;
 }
 
-type SearchAllSuggestion = Pick<SQLSuggestion, "schema" | "subLabel" | "name" | "escapedIdentifier" | "definition"> & { type: "table" | "function" };
+type SearchAllSuggestion = Pick<SQLSuggestion, "schema" | "subLabel" | "name" | "escapedIdentifier" | "definition"> & { type: "table" | "function" | "view" | "mview" };
 
 export type SearchAllProps = Pick<Prgl, "db" | "methods" | "tables"> & {
   suggestions: SearchAllSuggestion[] | undefined;
@@ -120,7 +120,6 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
     const { defaultTerm = "", db } = this.props;
     const tablesToSearch = Object.keys(db).filter(k => db[k]?.find);
     const allTablesToSearch = tablesToSearch.slice(0);
-
     this.setState({ searchTerm: defaultTerm, tablesToSearch, allTablesToSearch }, () => {
       if (defaultTerm) {
         this.searchRows(defaultTerm)
@@ -313,12 +312,14 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
       }
     };
 
-    const searchItems: SearchAllSuggestion[] = suggestions?.slice(0) ?? Object.entries(db).map(([tableName, handler]) => {
+    const searchItems: SearchAllSuggestion[] = suggestions?.slice(0).filter(s => { 
+        return (s.type === "table" || s.type === "view") && s.schema && 
+        (!["information_schema", ].includes(s.schema) && !s.schema.startsWith("pg_"))
+      }) ?? Object.entries(db).map(([tableName, handler]) => {
       if("find" in handler && handler.find){
         return {
           name: tableName,
           type: "table",
-          schema: "public",
           escapedIdentifier: JSON.stringify(tableName),
           subLabel: "",
         } satisfies SearchAllSuggestion
@@ -327,7 +328,7 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
     if (sType === "views and queries") {
 
       /** Prioritise public schema */
-      items = searchItems.filter(s => s.type === "table" && s.schema === "public" && objTypesToSearch.includes("tables"))
+      items = searchItems.filter(s => s.type === "table" && objTypesToSearch.includes("tables"))
         .map(s => ({
           key: s.name,
           label: s.name,
@@ -418,11 +419,10 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
     const margin = narrowScreen ? 0 : "2em";
 
     const selStyle: React.CSSProperties = {
-      marginTop: narrowScreen ? ".5em" : "68px",
-      flex: "none"
-    },
-      selClass = "f-0 " + (narrowScreen ? "" : " px-1 "); // ml-p5
-
+        marginTop: narrowScreen ? ".5em" : "68px",
+        flex: "none"
+      },
+      selClass = "f-0 " + (narrowScreen ? "" : " px-1 "); 
     const searchOptsSelect = sType === "commands" ? null :
       sType !== "rows" ? <Select
         label="Tables/Queries/Actions"
@@ -433,7 +433,8 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
         value={objTypesToSearch}
         multiSelect={true}
         onChange={objTypesToSearch => this.setState({ objTypesToSearch })}
-      /> : <Select
+      /> : 
+      <Select
         label="Tables"
         style={selStyle}
         className={selClass}

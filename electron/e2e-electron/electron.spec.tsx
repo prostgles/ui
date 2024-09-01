@@ -74,7 +74,7 @@ test('renders the first page', async () => {
   await page.getByLabel("database").fill("prostgles_desktop_db");
   
   /** Ensure overflow does not obscure done button */
-  await page.getByTestId("SSLOptionsToggle").click();
+  await page.getByTestId("MoreOptionsToggle").click();
   const doneBtn = await page.getByTestId("ElectronSetup.Done");
   await expect(doneBtn).toBeVisible();
   await screenshot();

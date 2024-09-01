@@ -126,7 +126,7 @@ export const COMMANDS = {
   "connections.add": "add",
 
   "Connection.edit": "",
-
+  "Connection.edit.updateOrCreateConfirm": "",
   "Connection.edit.delete": "",
   "Connection.edit.delete.dropDatabase": "",
   "Connection.edit.delete.confirm": "",
@@ -201,7 +201,7 @@ export const COMMANDS = {
   "PostgresInstallationInstructions": "",
   "PostgresInstallationInstructions.Close": "",
   "ElectronSetup.Done": "",
-  "SSLOptionsToggle": "",
+  "MoreOptionsToggle": "",
   "SmartCardList": "",
   "AutomaticBackups.destination": "",
   "AutomaticBackups.frequency": "",
@@ -237,6 +237,7 @@ export const COMMANDS = {
   "AgeFilter.comparator": "",
   "AgeFilter.argsLeftToRight": "",
   "Login.error": "",
+  "SchemaFilter": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

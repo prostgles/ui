@@ -119,7 +119,6 @@ app.get("/dbs", (req, res) => {
   if(electronCreds && isObject(serverState.connectionError) && req.cookies["sid_token"] === electronConfig?.sidConfig.electronSid){
     serverState.electronCreds = electronCreds as any;
   }
-
   let xRealIpSpoofable = false;
   const { global_setting } = connMgr.connectionChecker.config;
   if(

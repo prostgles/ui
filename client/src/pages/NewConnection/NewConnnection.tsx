@@ -371,9 +371,11 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
             >Clone</Btn>
           }
 
-          <Btn className={"ml-auto w-fit"}
+          <Btn 
+            className={"ml-auto w-fit"}
             variant="filled"
             color="action"
+            data-command="Connection.edit.updateOrCreateConfirm"
             iconPath={mode === "edit" ? mdiCheck : mdiPlus}
             disabledInfo={mode === "edit" && JSON.stringify(c) === JSON.stringify(origCon) ? "Nothing to update" : undefined}
             onClickMessage={async (e, setMsg) => {

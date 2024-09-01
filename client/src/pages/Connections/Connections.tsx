@@ -50,7 +50,6 @@ export class Connections extends RTComp<PrglState, S> {
   userSub?: SubscriptionHandler;
   onDelta = async () => {
     const { dbs, user, dbsMethods } = this.props;
-
     if (user && !this.loaded) {
       this.loaded = true;
       dbs.connections.find({}, {
