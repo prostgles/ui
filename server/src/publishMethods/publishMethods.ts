@@ -209,12 +209,6 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
           }
           const conFilter = { connection_id: id };
           await t.workspaces.delete(conFilter);
-          await t.access_control.delete({ 
-            $existsJoined: {  
-              path: ["database_configs", "connections"],
-              filter: { id }
-            } as any
-          });
 
           if(opts?.keepBackups){
             await t.backups.update(conFilter, { connection_id: null });
