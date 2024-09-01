@@ -73,10 +73,10 @@ export const runSql = async (page: PageWIds, query: string) => {
 
 export const fillSmartFormAndInsert = async (page: PageWIds, tableName: string, values: Record<string, string>) => {
   for (const [key, value] of Object.entries(values)){
-    const elem = await page.locator(`input#${tableName}-${key}`);
-    if(await elem.isVisible()){
-      await elem.fill(value);
-    }
+    const unescapedSelector = `${tableName}-${key}`;
+    const escapedSelector = await page.evaluate((unescapedSelector) => CSS.escape(unescapedSelector), unescapedSelector);
+    const elem = await page.locator('input#' + escapedSelector);
+    await elem.fill(value);
     const selectElem = await page.locator(`[data-key=${JSON.stringify(key)}] .FormField_Select`);
     if(await selectElem.isVisible()){
       await selectElem.click();

@@ -79,9 +79,20 @@ export const NewConnectionForm = ({ c, updateConnection, nameErr, warning, test,
       {}, { returnType: "rows" }) as {
         rolname: string; 
         rolsuper: boolean;
-      }[]
+      }[];
 
-      return { users, databases };
+      const schemas = await dbProject.sql(`
+        SELECT schema_name, schema_owner
+        FROM information_schema.schemata
+        ORDER BY (
+          CASE WHEN schema_name = 'public' THEN '0' 
+            WHEN schema_owner = 'postgres' THEN 'b' 
+            ELSE 'a' 
+          END
+        ) || schema_name
+        `, {}, { returnType: "rows" }) as { schema_name: string; schema_owner: string }[];
+
+      return { users, databases, schemas };
     } catch (e) {
       console.error("Failed getting user & db suggestions", e);
     }
@@ -206,7 +217,32 @@ export const NewConnectionForm = ({ c, updateConnection, nameErr, warning, test,
     {warning && <ErrorComponent error={warning} style={{ minWidth: 0 }} />}
 
     {type !== "Prostgles" && <>
-      <ExpandSection label="More options" buttonProps={{ variant: undefined, color: "action", iconPath: mdiDotsHorizontal, "data-command": "SSLOptionsToggle" }} >
+      <ExpandSection 
+        label="More options" 
+        buttonProps={{ variant: undefined, color: "action", iconPath: mdiDotsHorizontal, "data-command": "MoreOptionsToggle" }} 
+      >
+        <FormField 
+          id="schema_filter" 
+          label="Schema list"
+          optional={true}
+          multiSelect={true}
+          data-command="SchemaFilter"
+          fullOptions={suggestions?.schemas?.map(s => ({ 
+            key: s.schema_name,
+            subLabel: s.schema_owner
+          })) ?? []}
+          value={Object.keys(c.db_schema_filter || { public: 1 })}
+          disabledInfo={!suggestions?.schemas? "Must connect to see schemas" : undefined}
+          onChange={schema_keys => {
+            updateConnection({ 
+              type: "Standard",
+              db_schema_filter: schema_keys.reduce((acc, key) => ({
+                ...acc,
+                [key]: Object.values(c.db_schema_filter || { a: 1 }).includes(1)? 1 : 0
+              }), {}) 
+            })
+          }}
+        />
         <FormField 
           id="timeout" 
           label="Connection timeout (ms)"

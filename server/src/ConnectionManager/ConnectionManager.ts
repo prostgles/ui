@@ -49,12 +49,13 @@ type PRGLInstance = {
   isSuperUser: boolean | undefined;
 }
 
-export const getReloadConfigs = async function (this: ConnectionManager, c: Connections, conf: DatabaseConfigs, dbs: DBS): Promise<Pick<ProstglesInitOptions, "fileTable" | "tableConfig" | "restApi">> {
+export const getReloadConfigs = async function (this: ConnectionManager, c: Connections, conf: DatabaseConfigs, dbs: DBS): Promise<Pick<ProstglesInitOptions, "fileTable" | "tableConfig" | "restApi" | "schema">> {
   const restApi = getRestApiConfig(this, c.id, conf) 
   const { fileTable } = await parseTableConfig({ type: "saved", dbs, con: c, conMgr: this });
   return {
     restApi,
-    fileTable
+    fileTable,
+    schema: c.db_schema_filter || undefined,
   }
 }
 
@@ -194,7 +195,7 @@ export class ConnectionManager {
         const dbConf = await this.dbs?.database_configs.findOne({ id: prglCon.dbConf.id });
         if(dbUsersHandler && dbConf?.sync_users){
           const userTypes = await this.dbs?.access_control_user_types.find(
-            { $existsJoined: { "**.connections": { id: prglCon.con.id } } },
+            { $existsJoined: { ["**.connections" as "connections"]: { id: prglCon.con.id } } },
             { 
               select: { user_type: 1 }, 
               returnType: "values" 
@@ -291,7 +292,7 @@ export class ConnectionManager {
           } 
         }, 
         async (connections) => {
-          const dbIds = Array.from(new Set(connections.map(c => c.database_id)));
+          const dbIds = Array.from(new Set(connections.map(c => c.database_id))) as number[];
           const d = await this.dbs?.connections.findOne(
             { $existsJoined: { database_configs: { id: { $in: dbIds }  } } }, 
             { select: { connIds: { $array_agg: ["id"]  } } }

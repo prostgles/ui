@@ -439,6 +439,15 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       db_user:                 `TEXT NOT NULL DEFAULT ''`,
       db_pass:                 `TEXT DEFAULT ''`,
       db_connection_timeout:    `INTEGER CHECK(db_connection_timeout > 0)`,
+      db_schema_filter:        {
+        jsonbSchema: { 
+          oneOf: [
+            { record: { values: { enum: [1] } } },
+            { record: { values: { enum: [0] } } },
+          ]
+        }, 
+        nullable: true 
+      },
       db_ssl:                  { enum: DB_SSL_ENUM, nullable: false, defaultValue: "disable" },
       ssl_certificate:         { sqlDefinition: `TEXT` },
       ssl_client_certificate:  { sqlDefinition: `TEXT` },
@@ -488,7 +497,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     columns: {
       id:    `SERIAL PRIMARY KEY`,
       name:   "TEXT",
-      database_id     : `INTEGER NULL REFERENCES database_configs(id)  ON DELETE CASCADE`,
+      database_id     : `INTEGER NOT NULL REFERENCES database_configs(id) ON DELETE CASCADE`,
       dbsPermissions: { info:{ hint: "Permission types and rules for the state database"}, nullable: true, jsonbSchemaType: {
         createWorkspaces: { type: "boolean", optional: true },
         viewPublishedWorkspaces: { type: {
