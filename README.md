@@ -68,6 +68,7 @@ $ docker run -p 3004:3004 -e POSTGRES_DB=bittenman -e POSTGRES_USER=user -e POST
 
 ```
 
+Your server is now running on [localhost:3004](http://localhost:3004).
 
 
 
