@@ -30,23 +30,46 @@ SQL Editor and internal tool builder for Postgres
 * LISTEN NOTIFY support
 
 
-### Installation
+### Installation - Bootstrap PostgreSQL server and Prostgles altogether
+
+This method is best for learning about the Prostgless.
 
 Download the source code:
-```
+```sh
 git clone https://github.com/prostgles/ui.git
 cd ui
 ```
 
 Docker setup. By default the app will be accessible at localhost:3004
-```
+```sh
 docker compose up 
 ```
 
 To use a custom port (3099 for example) and/or a custom binding address (0.0.0.0 for example):
-```
+```sh
 PRGL_DOCKER_IP=0.0.0.0 PRGL_DOCKER_PORT=3099 docker compose up 
 ```
+
+### Installation - use existing PostgreSQL instance
+
+Use this method if you want to get Postgles to work against your existing database
+
+Download the source code:
+```
+git clone https://github.com/prostgles/ui.git prostgles
+cd prostgles
+```
+
+Build and run docker image
+
+```sh
+$ docker build -t prostgles .
+$ docker run -p 3004:3004 -e POSTGRES_DB=bittenman -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e PROSTGLES_UI_HOST=0.0.0.0 -e POSTGRES_HOST=192.168.123.1 -e IS_DOCKER=yes -e NODE_ENV=production prostgles
+
+```
+
+
+
 
 ### Development
 
