@@ -113,12 +113,3 @@ export const start = async (
   const { onServerReady } = require("./index");
   onServerReady(onReady)
 }
-
-export const isDemoMode = () => {
-  const demoMode = !!process.env.DEMO_MODE && !isElectron;
-  if(isElectron && demoMode){
-    throw "Demo mode not allowed with electron"
-  }
-
-  return demoMode;
-}

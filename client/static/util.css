@@ -1899,14 +1899,6 @@ nav.left-nav-list a.active {
   }
 }
 
-/* Disable for demo because there's no hover */
-.is_demo_mode .show-on-hover,
-.is_demo_mode .show-on-parent-hover, 
-.is_demo_mode .show-on-trigger-hover {
-  opacity: 1 !important;
-}
-
-
 .shrink-label {
   max-width: fit-content;
   max-height: fit-content;
