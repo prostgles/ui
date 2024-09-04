@@ -54,7 +54,7 @@ PRGL_DOCKER_IP=0.0.0.0 PRGL_DOCKER_PORT=3099 docker compose up
 - [NodeJS](https://nodejs.org/en/download)
 - [Postgres](https://www.postgresql.org/download/): For full features **postgresql-15-postgis-3** is recommended
 
-#### 2. Create a database and user for the dashboard, ensuring `.env` has the apropriate values
+#### 2. Create a database and user update `.env`. All prostgles state and metadata will be stored in this database
 
     sudo su - postgres
     createuser --superuser usr

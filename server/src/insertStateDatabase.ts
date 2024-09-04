@@ -1,11 +1,11 @@
 import type { DB } from "prostgles-server/dist/Prostgles";
 import { omitKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
+import { tryCatch } from "prostgles-types";
 import type { DBS } from ".";
 import { validateConnection } from "./connectionUtils/validateConnection";
-import type { DBSConnectionInfo} from "./electronConfig";
-import { isDemoMode } from "./electronConfig"; 
+import type { DBSConnectionInfo } from "./electronConfig";
+import { getElectronConfig } from "./electronConfig";
 import { upsertConnection } from "./upsertConnection";
-import { tryCatch } from "prostgles-types";
 
 /** Add state db if missing */
 export const insertStateDatabase = async (db: DBS, _db: DB, con: DBSConnectionInfo | Partial<DBSConnectionInfo>) => {
@@ -45,35 +45,24 @@ export const insertStateDatabase = async (db: DBS, _db: DB, con: DBSConnectionIn
         if(!databases.includes(SAMPLE_DB_NAME)) {
           await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
         }
-        const stateCon = { ...omitKeys(state_db, ["id"]) };
-        const validatedSampleDBConnection = validateConnection({
-          ...stateCon,
-          type: "Standard",
-          name: SAMPLE_DB_LABEL,
-          db_name: SAMPLE_DB_NAME,
-        })
-        const { connection: con, database_config } = await upsertConnection({ 
-          ...stateCon,
-          ...validatedSampleDBConnection,
-          is_state_db: false,
-          name: SAMPLE_DB_LABEL,
-        }, null, db);
-        console.log("Inserted sample connection for db ", con.db_name);
 
-        if(isDemoMode()){
-
-          const demoModeUserRole = "default";
-          const ac = await db.access_control.insert({ 
-            database_id: database_config.id, 
-            dbPermissions: { allowSQL: true, type: "Run SQL" }, 
-            dbsPermissions: { createWorkspaces: true },
-          }, { returning: "*" });
-
-          await db.access_control_user_types.insert({
-            access_control_id: ac.id, 
-            user_type: demoModeUserRole 
-          });
+        if(!getElectronConfig()?.isElectron){
+          const stateCon = { ...omitKeys(state_db, ["id"]) };
+          const validatedSampleDBConnection = validateConnection({
+            ...stateCon,
+            type: "Standard",
+            name: SAMPLE_DB_LABEL,
+            db_name: SAMPLE_DB_NAME,
+          })
+          const { connection: con, database_config } = await upsertConnection({ 
+            ...stateCon,
+            ...validatedSampleDBConnection,
+            is_state_db: false,
+            name: SAMPLE_DB_LABEL,
+          }, null, db);
+          console.log("Inserted sample connection for db ", con.db_name);
         }
+
       }
     } catch(err: any){
       console.error("Failed to create sample database: ", err)

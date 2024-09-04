@@ -399,13 +399,11 @@ const getDrawnLayer = ({ deckGlLibs, shapes, deckW }: GetDrawnLayerArgs) => {
     getPointRadius: radius,
     extruded: false,
     getElevation: 0,
-
     getFillColor: f => f.properties.fillColor ?? [200, 0, 80, 255],
     getLineColor: f => f.properties.lineColor ?? [200, 0, 80, 255],
     lineWidthMinPixels: 2, 
     widthScale: 22, 
     lineWidth: f => f.properties?.lineWidth ?? 1,
-
     pickable: true,
     pickingRadius: 10,
     autoHighlight: true,
