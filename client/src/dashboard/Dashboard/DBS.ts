@@ -40,7 +40,6 @@ export type DBSMethods = Partial<{
     content: string;
   }[];
   getConnectionDBTypes: (conId: string) => string | undefined;
-  makeFakeData: (conId: string) => string | undefined;
   getStatus: (conId: string) => Promise<ConnectionStatus>;
   killPID: (connId: string, id_query_hash: string, type: "cancel" | "terminate") => Promise<any>;
   runConnectionQuery: (connId: string, query: string, args?: AnyObject | any[]) => Promise<AnyObject[]>;

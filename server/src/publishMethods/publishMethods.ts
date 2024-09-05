@@ -1,41 +1,40 @@
 
+import { authenticator } from "@otplib/preset-default";
 import * as crypto from "crypto";
 import fs from "fs";
+import * as os from "os";
 import path from "path";
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
-import type { DatabaseConfigs, DBS} from "../index";
-import { connMgr, connectionChecker } from "../index";
-import * as os from "os";
-import { authenticator } from "@otplib/preset-default";
+import type { DBS } from "../index";
+import { connectionChecker, connMgr } from "../index";
 
 export type Users = Required<DBSchemaGenerated["users"]["columns"]>; 
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 
 import type { DBHandlerServer } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
-import type { AnyObject} from "prostgles-types";
+import type { AnyObject } from "prostgles-types";
 import { asName, isEmpty, pickKeys } from "prostgles-types";
-import type { DBSSchema} from "../../../commonTypes/publishUtils";
-import { isObject } from "../../../commonTypes/publishUtils";
-import type { ConnectionTableConfig} from "../ConnectionManager/ConnectionManager";
-import { DB_TRANSACTION_KEY, getCDB, getSuperUserCDB } from "../ConnectionManager/ConnectionManager";
 import { isDefined } from "../../../commonTypes/filterUtils";
+import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import { isObject } from "../../../commonTypes/publishUtils";
+import type { SampleSchema } from "../../../commonTypes/utils";
+import { createSessionSecret } from "../authConfig/authConfig";
+import { getPasswordHash } from "../authConfig/authUtils";
 import type { Backups } from "../BackupManager/BackupManager";
+import { getInstalledPrograms } from "../BackupManager/getInstalledPrograms";
 import { getPasswordlessAdmin, insertUser } from "../ConnectionChecker";
+import type { ConnectionTableConfig } from "../ConnectionManager/ConnectionManager";
+import { DB_TRANSACTION_KEY, getCDB, getSuperUserCDB } from "../ConnectionManager/ConnectionManager";
+import { getCompiledTS, getDatabaseConfigFilter, getEvaledExports } from "../ConnectionManager/connectionManagerUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
-import { demoDataSetup } from "../demoDataSetup";
 import { getElectronConfig, getRootDir } from "../electronConfig";
+import { getStatus } from "../methods/getPidStats";
 import { killPID } from "../methods/statusMonitorUtils";
 import { initBackupManager, statePrgl } from "../startProstgles";
 import { upsertConnection } from "../upsertConnection";
-import { getCompiledTS, getDatabaseConfigFilter, getEvaledExports } from "../ConnectionManager/connectionManagerUtils";
-import type { SampleSchema } from "../../../commonTypes/utils";
-import { getInstalledPrograms } from "../BackupManager/getInstalledPrograms";
-import { getStatus } from "../methods/getPidStats";
-import { getPasswordHash } from "../authConfig/authUtils";
-import { createSessionSecret } from "../authConfig/authConfig";
 
 export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params) => { 
   const { dbo: dbs, socket, db: _dbs } = params;
@@ -61,12 +60,6 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
   }
 
   const adminMethods: ReturnType<PublishMethods> = {
-    makeFakeData: async (connId: string) => {
-      const c = connMgr.getConnection(connId);
-      const con = await dbs.connections.findOne({ id: connId });
-      if(!con) throw "bad connid";
-      return demoDataSetup(c.prgl._db, "sample");
-    },
     disablePasswordless: async (newAdmin: { username: string; password: string }) => {
 
       const noPwdAdmin = await getPasswordlessAdmin(dbs);

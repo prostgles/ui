@@ -22,7 +22,6 @@ export type ProstglesInitState = ({
     pg_dump: string;
     pg_restore: string;
   } | undefined;
-  isDemoMode: boolean;
 }) 
 
 export type ServerState = ProstglesInitState;
