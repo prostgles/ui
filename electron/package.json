@@ -27,7 +27,6 @@
   },
   "author": "Prostgles  <office@prostgles.com>",
   "projectUrl": "https://github.com/prostgles/ui-desktop",
-  "license": "Apache-2.0",
   "keywords": [
     "postgres",
     "postgis",
