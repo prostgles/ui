@@ -10,7 +10,7 @@ import type { DBSSchema } from "../../commonTypes/publishUtils";
 import type { SUser } from "./authConfig/authConfig";
 import { YEAR, getActiveSession, makeSession, sidKeyName } from "./authConfig/authConfig";
 import { getPasswordHash } from "./authConfig/authUtils";
-import { getElectronConfig, isDemoMode } from "./electronConfig";
+import { getElectronConfig } from "./electronConfig";
 import { PRGL_PASSWORD, PRGL_USERNAME } from "./envVars";
 import type {
   DBS,
@@ -176,7 +176,7 @@ export class ConnectionChecker {
       }
 
       const publicConnections = connMgr.getConnectionsWithPublicAccess();
-      if(isDemoMode() || publicConnections.length){
+      if(publicConnections.length){
         const isLoggingIn = isAccessingMagicLink || req.originalUrl.startsWith("/login");
         const client = getLoginClientInfo({ httpReq: req });
         const hasNoActiveSession = !sid || !(await getActiveSession(this.db, { type: "session-id", client, filter: { id: sid }  }));

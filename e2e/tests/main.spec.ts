@@ -67,8 +67,10 @@ test.describe("Main test", () => {
     }
     await login(page);
 
-    /** Sample database exists and all config pages exist */
     await page.getByRole('link', { name: 'Connections' }).click();
+    
+    /** State database exists */
+    await page.getByRole("link", { name: "Prostgles UI state" }).isVisible();
   });
 
   test("Limit login attempts", async ({ page: p, browser, context }) => {
@@ -76,7 +78,7 @@ test.describe("Main test", () => {
     const page: PageWIds = await browser.newPage({ 
       extraHTTPHeaders: { 
         'x-real-ip': '1.1.1.1' 
-      } 
+      }
     });
 
     await login(page, USERS.test_user, "/login");

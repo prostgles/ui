@@ -54,14 +54,14 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
           insert: {
             fields: "*",
             forcedData: { user_id },
-            /** TODO: Add workspace modes */
-            // checkFilter: tableName === "workspaces"? undefined : {
-            //   $existsJoined: {
-            //     workspaces: {
-            //       user_id: user.id
-            //     }
-            //   }
-            // }
+            /** TODO: Add workspace publish modes */
+            checkFilter: tableName === "workspaces"? undefined : {
+              $existsJoined: {
+                workspaces: {
+                  user_id: user.id
+                }
+              }
+            }
           },
           delete: {
             filterFields: "*",
