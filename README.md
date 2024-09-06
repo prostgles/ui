@@ -62,7 +62,7 @@ Build and run our docker image
 
 ```docker-run.sh
 docker build -t prostgles .
-docker run -p 3004:3004 \
+docker run -d -p 3004:3004 \
   -e POSTGRES_HOST=172.17.0.1 \
   -e POSTGRES_PORT=5432 \
   -e POSTGRES_DB=postgres \
