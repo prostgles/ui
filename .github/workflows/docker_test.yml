@@ -18,12 +18,15 @@ jobs:
     - name: Docker build
       run: |
         docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres
-        testscr=$(awk '/```docker-run.sh/{f=1;next} /```/{f=0} f' README.md)
-        echo $testscr
-        eval "$testscr"
+        TEST_SCRIPT=$(awk '/```docker-run.sh/{f=1;next} /```/{f=0} f' README.md)
+        echo $TEST_SCRIPT
+        eval "$TEST_SCRIPT"
     
     - name: Test docker run
-      run: sleep 25 && docker ps && curl localhost:3004 | grep -q "Prostgles UI"; echo $?
+      run: |
+        sleep 25
+        curl localhost:3004
+        docker ps && curl localhost:3004 | grep -q "Prostgles UI"; echo $?
 
     - name: Docker stop
       run: docker stop $(docker ps -a -q)
