@@ -24,6 +24,7 @@ jobs:
     
     - name: Test docker run
       run: |
+        curl localhost:3004
         sleep 165
         curl localhost:3004
         docker ps 
