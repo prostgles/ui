@@ -1,4 +1,4 @@
-name: Test docker-compose
+name: Test docker scripts
 on:
   pull_request:
     branches: [ main, master ]
