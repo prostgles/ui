@@ -62,7 +62,7 @@ Build and run our docker image (172.17.0.1 is used to connect to localhost):
 
 ```docker-run.sh
 docker build -t prostgles .
-docker run -d -p 3004:3004 \
+docker run -d -p 127.0.0.1:3004:3004 \
   -e POSTGRES_HOST=172.17.0.1 \
   -e POSTGRES_PORT=5432 \
   -e POSTGRES_DB=postgres \
