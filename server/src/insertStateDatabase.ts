@@ -41,11 +41,10 @@ export const insertStateDatabase = async (db: DBS, _db: DB, con: DBSConnectionIn
       if(!sampleConnection){
         if(!state_db) throw "state_db not found";
         
-        const databases: string[] = (await _db.any(`SELECT datname FROM pg_database WHERE datistemplate = false;`)).map(({ datname }) => datname)
-        if(!databases.includes(SAMPLE_DB_NAME)) {
-          await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
-        }
-
+        // const databases: string[] = (await _db.any(`SELECT datname FROM pg_database WHERE datistemplate = false;`)).map(({ datname }) => datname)
+        // if(!databases.includes(SAMPLE_DB_NAME)) {
+        //   await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
+        // }
         // if(!getElectronConfig()?.isElectron){
         //   const stateCon = { ...omitKeys(state_db, ["id"]) };
         //   const validatedSampleDBConnection = validateConnection({
