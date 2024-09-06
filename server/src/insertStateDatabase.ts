@@ -33,13 +33,13 @@ export const insertStateDatabase = async (db: DBS, _db: DB, con: DBSConnectionIn
     } else {
       console.log("Inserted state database ", state_db?.db_name);
     }
+    if(!state_db) throw "state_db not found";
 
     try {
       const SAMPLE_DB_LABEL = "Sample database";
       const SAMPLE_DB_NAME = "sample_database";
       const sampleConnection = await db.connections.findOne({ name: SAMPLE_DB_LABEL, db_name: SAMPLE_DB_NAME });
       if(!sampleConnection){
-        if(!state_db) throw "state_db not found";
         
         // const databases: string[] = (await _db.any(`SELECT datname FROM pg_database WHERE datistemplate = false;`)).map(({ datname }) => datname)
         // if(!databases.includes(SAMPLE_DB_NAME)) {
