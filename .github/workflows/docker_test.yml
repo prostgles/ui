@@ -21,8 +21,6 @@ jobs:
         TEST_SCRIPT=$(awk '/```docker-run.sh/{f=1;next} /```/{f=0} f' README.md)
         echo $TEST_SCRIPT
         eval "$TEST_SCRIPT"
-        sudo apt-get update
-        sudo apt install curl -y
     
     - name: Test docker run
       run: |
