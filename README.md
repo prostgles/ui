@@ -58,7 +58,7 @@ git clone https://github.com/prostgles/ui.git prostgles
 cd prostgles
 ```
 
-Build and run our docker image
+Build and run our docker image (172.17.0.1 is used to connect to localhost):
 
 ```docker-run.sh
 docker build -t prostgles .
