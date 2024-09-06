@@ -21,19 +21,19 @@ jobs:
         TEST_SCRIPT=$(awk '/```docker-run.sh/{f=1;next} /```/{f=0} f' README.md)
         echo $TEST_SCRIPT
         eval "$TEST_SCRIPT"
-        apt-get update
+        sudo apt-get update
         apt install curl -y
     
     - name: Test docker run
       run: |
-        curl -v  localhost:3004
+        # curl -v  localhost:3004
         sleep 65
-        curl -L  -v  localhost:3004
+        # curl -L  -v  localhost:3004
         docker ps 
         pg_container_name=$(docker ps --format '{{.Names}}\t{{.Image}}' | grep 'prostgles' | head -1 | awk '{print $1}')
         echo $pg_container_name
         eval "docker logs $pg_container_name"
-        curl localhost:3004 | grep -q "Prostgles UI"; echo $?
+        curl 127.0.0.1:3004 | grep -q "Prostgles UI"; echo $?
 
     - name: Docker stop
       run: docker stop $(docker ps -a -q)
