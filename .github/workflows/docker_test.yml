@@ -15,8 +15,18 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Build docker images
+    - name: Docker compose
       run: docker compose up -d
 
-    - name: Run tests
+    - name: Test docker compose
+      run: sleep 5 && docker ps && curl localhost:3004 | grep -q "Prostgles UI"; echo $?
+
+    - name: Docker build
+      run: 
+        docker compose down
+        docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres
+        testscr=$(awk '/```docker-run.sh/{f=1;next} /```/{f=0} f' README.md)
+        eval "$testscr"
+    
+    - name: Test docker run
       run: sleep 5 && docker ps && curl localhost:3004 | grep -q "Prostgles UI"; echo $?
