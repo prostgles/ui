@@ -260,7 +260,7 @@ test.describe("Main test", () => {
     await login(page);
 
     /** Create Sample database */
-    await createDatabase("sample_database", page, true);
+    await createDatabase("sample_database", page, false);
     
     await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 10e3 });
     await page.getByTestId("dashboard.goToConnConfig").click();
