@@ -46,22 +46,22 @@ export const insertStateDatabase = async (db: DBS, _db: DB, con: DBSConnectionIn
           await _db.any("CREATE DATABASE " + SAMPLE_DB_NAME);
         }
 
-        if(!getElectronConfig()?.isElectron){
-          const stateCon = { ...omitKeys(state_db, ["id"]) };
-          const validatedSampleDBConnection = validateConnection({
-            ...stateCon,
-            type: "Standard",
-            name: SAMPLE_DB_LABEL,
-            db_name: SAMPLE_DB_NAME,
-          })
-          const { connection: con, database_config } = await upsertConnection({ 
-            ...stateCon,
-            ...validatedSampleDBConnection,
-            is_state_db: false,
-            name: SAMPLE_DB_LABEL,
-          }, null, db);
-          console.log("Inserted sample connection for db ", con.db_name);
-        }
+        // if(!getElectronConfig()?.isElectron){
+        //   const stateCon = { ...omitKeys(state_db, ["id"]) };
+        //   const validatedSampleDBConnection = validateConnection({
+        //     ...stateCon,
+        //     type: "Standard",
+        //     name: SAMPLE_DB_LABEL,
+        //     db_name: SAMPLE_DB_NAME,
+        //   })
+        //   const { connection: con, database_config } = await upsertConnection({ 
+        //     ...stateCon,
+        //     ...validatedSampleDBConnection,
+        //     is_state_db: false,
+        //     name: SAMPLE_DB_LABEL,
+        //   }, null, db);
+        //   console.log("Inserted sample connection for db ", con.db_name);
+        // }
 
       }
     } catch(err: any){
