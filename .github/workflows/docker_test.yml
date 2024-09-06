@@ -24,8 +24,8 @@ jobs:
     
     - name: Test docker run
       run: |
-        curl -L  -v  localhost:3004
-        sleep 165
+        curl -v  localhost:3004
+        sleep 65
         curl -L  -v  localhost:3004
         docker ps 
         pg_container_name=$(docker ps --format '{{.Names}}\t{{.Image}}' | grep 'prostgles' | head -1 | awk '{print $1}')
