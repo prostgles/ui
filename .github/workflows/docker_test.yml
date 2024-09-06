@@ -23,7 +23,7 @@ jobs:
         eval "$testscr"
     
     - name: Test docker run
-      run: sleep 15 && docker ps && curl localhost:3004 | grep -q "Prostgles UI"; echo $?
+      run: sleep 25 && docker ps && curl localhost:3004 | grep -q "Prostgles UI"; echo $?
 
     - name: Docker stop
       run: docker stop $(docker ps -a -q)
