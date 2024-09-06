@@ -99,7 +99,7 @@ export const testDBConnection = (_c: ConnectionInfo, expectSuperUser = false, ch
             `  host  all   all   0.0.0.0/0  md5`,
             `4) Restart the postgresql server to apply the changes.`,
             `5) Ensure the user you connect with has an encrypted password. `,
-            `6) use "host.docker.internal" instead of "localhost" in the above connection details`,
+            `6) use "172.17.0.1" or "host.docker.internal" instead of "localhost" in the above connection details`,
           ].join("\n");
         }
         reject(pickKeys(getErrorAsObject(err), ["message", "code"]))
