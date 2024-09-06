@@ -259,10 +259,9 @@ test.describe("Main test", () => {
 
     await login(page);
 
-    /** Sample database exists and all config pages exist */
-    await page.getByRole('link', { name: 'Connections' }).click();
-
-    await page.getByRole("link", { name: "Sample database" }).click();
+    /** Create Sample database */
+    await createDatabase("sample_database", page, true);
+    
     await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 10e3 });
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.details").click(); 
