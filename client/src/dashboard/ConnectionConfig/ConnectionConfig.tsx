@@ -4,15 +4,17 @@ import {
   mdiDatabaseSync, mdiImage, mdiLanguageTypescript, mdiPencil, mdiTableEdit,
 } from "@mdi/js";
 import React from "react";
+import type { CONNECTION_CONFIG_SECTIONS } from "../../../../commonTypes/utils";
 import type { Prgl } from "../../App";
 import { dataCommand } from "../../Testing";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
-import type { TabItems } from "../../components/Tabs";
+import type { TabItem } from "../../components/Tabs";
 import Tabs from "../../components/Tabs";
 import NewConnection from "../../pages/NewConnection/NewConnnection";
 import type { Connections } from "../../pages/ProjectConnection/ProjectConnection";
 import { TopControls } from "../../pages/TopControls";
+import { getKeys } from "../../utils";
 import { AccessControl } from "../AccessControl/AccessControl";
 import { useAccessControlSearchParams } from "../AccessControl/useAccessControlSearchParams";
 import { BackupsControls } from "../Backup/BackupsControls";
@@ -23,7 +25,6 @@ import { TableConfig } from "../TableConfig/TableConfig";
 import { PublishedMethods } from "../W_Method/PublishedMethods";
 import { OnMountFunction } from "./OnMountFunction";
 import { useConnectionConfigSearchParams } from "./useConnectionConfigSearchParams";
-import { getKeys } from "../../utils";
 
 type ConnectionConfigProps = Pick<React.HTMLAttributes<HTMLDivElement>, "style" | "className" | "children"> & {
   connection: Connections;
@@ -114,7 +115,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
         />
       </FlexCol>
     },
-  } as const satisfies TabItems;
+  } as const satisfies Record<typeof CONNECTION_CONFIG_SECTIONS[number],TabItem>;
   const { activeSection, setSection } = useConnectionConfigSearchParams(getKeys(sectionItems));
   
   return <div 

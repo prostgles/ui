@@ -14,7 +14,7 @@ import W_Map from "../W_Map/W_Map";
 import { getLinkColorV2, getMapLayerQueries } from "../W_Map/getMapLayerQueries";
 import { W_Method } from "../W_Method/W_Method";
 import { SQL_SNIPPETS } from "../W_SQL/SQLSnippets";
-import W_SQL from "../W_SQL/W_SQL";
+import { W_SQL } from "../W_SQL/W_SQL";
 import type { ActiveRow } from "../W_Table/W_Table";
 import W_Table from "../W_Table/W_Table";
 import { W_TimeChart } from "../W_TimeChart/W_TimeChart";

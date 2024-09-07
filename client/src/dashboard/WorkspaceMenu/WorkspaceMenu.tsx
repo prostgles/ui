@@ -173,13 +173,13 @@ export const WorkspaceMenu = (props: P) => {
   const renderedWorkspaces = window.isLowWidthScreen? workspaces.filter(w => w.id === workspace.id) : workspaces;
   return <FlexRow
     ref={listRef}
-    className={classOverride("WorkspaceMenu as-end jc-center text-white ai-start f-1  min-w-0 o-auto h-fit", className)} 
+    className={classOverride("WorkspaceMenu as-end jc-center text-white ai-end f-1  min-w-0 o-auto h-fit", className)} 
     style={{ 
       gap: "1px",
     }}
   >
     <ul 
-      className={"o-auto f-1 min-w-0 max-w-fit flex-row no-scroll-bar "} 
+      className={"o-auto f-1 min-w-0 max-w-fit flex-row no-scroll-bar ai-end"} 
       onWheel={onWheelScroll()}
     >
       {renderedWorkspaces.map(w => 
@@ -187,6 +187,10 @@ export const WorkspaceMenu = (props: P) => {
           className={"workspace-list-item text-1 relative " + (workspace.id === w.id? "active" : "")}
         >
           <Btn
+            iconProps={w.published? {
+              title: "Shared workspace" + (w.isMine? "" : " (readonly)"),
+              path: mdiAccountMultiple
+            } : undefined}
             style={{
               padding: "16px",
               borderBottomStyle: "solid",

@@ -15,6 +15,8 @@ import type { EditedRuleType, TablePermissionControlsProps } from "./TablePermis
 import { TABLE_RULE_LABELS } from "./TablePermissionControls";
 import { Icon } from "../../../components/Icon/Icon";
 import { mdiFile, mdiTable, mdiTableEye } from "@mdi/js";
+import { getEntries } from "../../../../../commonTypes/utils";
+import { SyncRuleControl } from "../RuleTypeControls/SyncRuleControl";
 
 type TableRulesPopupProps = TablePermissionControlsProps & {
   table: DBSchemaTablesWJoins[number];
@@ -98,11 +100,11 @@ export const TableRulesPopup = ({
         className="m-auto"
         style={{ width: "100%", minWidth: "500px" }}
         variant="horizontal-tabs"
-        items={Object.entries(TABLE_RULE_LABELS).map(([key, { label }]) => ({
+        items={getEntries(TABLE_RULE_LABELS).map(([key, { label }]) => ({
           key,
           label: label.mini,
           onPress: () => {
-            setEditedRuleType(key as any);
+            setEditedRuleType(key);
           }
         }))}
         activeKey={editedRuleType}
@@ -133,7 +135,13 @@ export const TableRulesPopup = ({
           <DeleteRuleControl 
             { ...commonProps } 
             rule={localRules[editedRuleType]} 
-          /> : null
+          /> :
+          editedRuleType === "sync"? 
+            <SyncRuleControl 
+              { ...commonProps } 
+              rule={localRules[editedRuleType]} 
+            /> 
+          : null
       }
       {error && <ErrorComponent error={error} className="m-1" />}
     </FlexCol>

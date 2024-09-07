@@ -87,7 +87,7 @@ export const DashboardMenuContent = (props: P) => {
       >
         <div>
           This is a read-only published workspace. 
-          Create your own workspace to make changes.
+          Create your own workspace to open new views.
         </div>
         <WorkspaceAddBtn
           connection_id={workspace.connection_id}

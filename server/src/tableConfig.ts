@@ -1,6 +1,8 @@
 import type { JSONB } from "prostgles-types";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { loggerTableConfig } from "./Logger";
+import { CONNECTION_CONFIG_SECTIONS, throttle } from "../../commonTypes/utils";
+import { subscribe } from "diagnostics_channel";
 
 export const DB_SSL_ENUM = ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"] as const;
  
@@ -415,6 +417,8 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       message: "TEXT",
       severity: { enum: ["info", "warning", "error"] },
       database_config_id: "INTEGER REFERENCES database_configs(id) ON DELETE SET NULL",
+      connection_id: "UUID REFERENCES connections(id) ON DELETE SET NULL",
+      section: { enum: CONNECTION_CONFIG_SECTIONS, nullable: true },
       data: "JSONB",
       created: "TIMESTAMP DEFAULT NOW()",
     }
@@ -521,6 +525,9 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
               type: {
                 fields: FieldFilterSchema,
                 forcedFilterDetailed: { optional: true, type: "any" },
+                subscribe: { optional: true, type: {
+                  throttle: { optional: true, type: "integer" },
+                }},
                 filterFields: { optional: true, ...FieldFilterSchema },
                 orderByFields: { optional: true, ...FieldFilterSchema }
               }
@@ -553,7 +560,13 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
                 filterFields: FieldFilterSchema,
                 forcedFilterDetailed: { optional: true, type: "any" },
               }
-            }]}
+            }]},
+            sync: { optional: true, type: {
+              id_fields: { type: "string[]" },
+              synced_field: { type: "string" },
+              throttle: { optional: true, type: "integer" },
+              allow_delete: { type: "boolean", optional: true },
+            }}
 
 
           }},

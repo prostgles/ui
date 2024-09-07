@@ -138,7 +138,7 @@ type D = {
   wSync?: SingleSyncHandles;
 }
 
-export default class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
+export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
 
   refHeader?: HTMLDivElement;
   refResize?: HTMLElement;
@@ -380,8 +380,8 @@ export default class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
             value={this.d.w?.sql ?? ""}
             style={hideCodeEditor? { display: "none" } : {}}
             sql={db.sql!}
-            suggestions={{ 
-              ...suggestions!,
+            suggestions={!suggestions? undefined : { 
+              ...suggestions,
               onLoaded: () => {
                 this.setState({ loadingSuggestions: false })
               }

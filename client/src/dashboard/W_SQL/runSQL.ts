@@ -4,7 +4,7 @@ import type { WindowData } from "../Dashboard/dashboardUtils";
 import { STARTING_KEYWORDS } from "../SQLEditor/SQLCompletion/CommonMatchImports";
 import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 import type { W_SQLState} from "./W_SQL";
-import type W_SQL from "./W_SQL";
+import type { W_SQL } from "./W_SQL";
 import { SQL_NOT_ALLOWED } from "./W_SQL";
 import { parseSQLError } from "./parseSQLError";
 import { getFieldsWithActions, parseSqlResultCols } from "./parseSqlResultCols";

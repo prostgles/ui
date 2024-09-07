@@ -120,7 +120,13 @@ export const startConnection = async function (
       };
       await this.setTableConfig(con.id, dbConf.table_config_ts, dbConf.table_config_ts_disabled)
         .catch(e => {
-          dbs.alerts.insert({ severity: "error", message: "Table config was disabled due to error", database_config_id: dbConf.id });
+          dbs.alerts.insert({ 
+            severity: "error", 
+            message: "Table config was disabled due to error", 
+            database_config_id: dbConf.id, 
+            connection_id: con.id,
+            section: "table_config",
+          });
           dbs.database_configs.update({ id: dbConf.id }, { table_config_ts_disabled: true });
         });
       await this.setOnMount(con.id, con.on_mount_ts, con.on_mount_ts_disabled)
@@ -128,7 +134,9 @@ export const startConnection = async function (
           dbs.alerts.insert({ 
             severity: "error", 
             message: "On mount was disabled due to error" + `\n\n${JSON.stringify(getErrorAsObject(e))}`, 
-            database_config_id: dbConf.id 
+            database_config_id: dbConf.id,
+            connection_id: con.id,
+            section: "methods",
           });
           dbs.connections.update({ id: con.id }, { on_mount_ts_disabled: true });
         });
