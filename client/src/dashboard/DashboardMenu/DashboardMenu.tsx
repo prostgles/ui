@@ -60,6 +60,7 @@ export const DashboardMenu = ({ menuAnchorState, ...props }: Omit<DashboardMenuP
 
   const pinnedMenu = workspace.options.pinnedMenu && !window.isLowWidthScreen;
   if(!pinnedMenu && !anchor.node && !showSearchAll) return hotKeys;
+  const isReadonlyWorkspace = workspace.published && workspace.user_id !== prgl.user?.id;
   const mainContent = pinnedMenu? 
     <DashboardMenuContent 
       {...props} 
@@ -91,7 +92,7 @@ export const DashboardMenu = ({ menuAnchorState, ...props }: Omit<DashboardMenuP
         overflow: "hidden",
         padding: 0
       }}
-      autoFocusFirst={{ 
+      autoFocusFirst={isReadonlyWorkspace? undefined :{ 
         selector: `.search-list-tables input`
       }}
     >

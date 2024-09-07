@@ -25,14 +25,15 @@ export const getPopupSize = (popup: Popup) => {
   const bBottom = Number(style.getPropertyValue(`border-bottom-width`).slice(0, -2));
   const bLeft = Number(style.getPropertyValue(`border-left-width`).slice(0, -2));
 
-  const { width, height } = [titleRef, contentRef, footerRef]
+  const { width: widthWithoutB, height: heightWithoutB } = [titleRef, contentRef, footerRef]
     .filter(isDefined)
     .reduce((a, { offsetHeight, offsetWidth, scrollHeight, scrollWidth }) => ({
       ...a,
       width: Math.max(a.width, offsetWidth, scrollWidth),
       height: a.height + Math.max(offsetHeight, scrollHeight),
-    }), { width: bLeft + bRight, height: bTop + bBottom });
-
+    }), { width: 0, height: 0 });
+  const width = widthWithoutB + bLeft + bRight;
+  const height = heightWithoutB + bTop + bBottom;
   const size = {
     width: Math.max(width, popup.prevSize?.width ?? 0),
     height: Math.max(height, popup.prevSize?.height ?? 0),

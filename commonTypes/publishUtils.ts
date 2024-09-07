@@ -94,6 +94,9 @@ export type ForcedData = ({
 
 
 export type SelectRule = {
+  subscribe?: {
+    throttle?: number;
+  };
   fields: FieldFilter;
   forcedFilterDetailed?: GroupedDetailedFilter;
   filterFields?: FieldFilter;
@@ -135,12 +138,24 @@ export type DBSSchema = {
   [K in keyof DBSchemaGenerated]: Required<DBSchemaGenerated[K]["columns"]>
 }
 
+export type SyncRule = {
+  id_fields: string[];
+  synced_field: string;
+  allow_delete?: boolean;
+  batch_size?: number;
+  throttle?: number;
+}
+
 
 export type TableRules = {
   select?: boolean | SelectRule;
   update?: boolean | UpdateRule;
   insert?: boolean | InsertRule;
   delete?: boolean | DeleteRule;
+  subscribe?: boolean | {
+    throttle?: number;
+  };
+  sync?: SyncRule;
 };
 
 export type BasicTablePermissions = Partial<Record<keyof TableRules, boolean>>;
@@ -181,6 +196,10 @@ type PublishedResult = boolean | {
     filterFields: FieldFilter;
     forcedFilter?: AnyObject;
   }
+  sync?: SyncRule;
+  subscribe?: boolean | {
+    throttle?: number;
+  };
 }
 
 export function isObject<T extends Record<string, any>>(obj: any): obj is T {
@@ -368,10 +387,12 @@ export const parseTableRules = (rules: TableRules, isView = false, columns: stri
   if(isObject(rules)){
     return {
       select: parseSelect(rules.select, columns, context),
+      subscribe: isObject(rules.select)? rules.select.subscribe : rules.subscribe,
       ...(!isView? {
         insert: parseInsert(rules.insert, columns, context),
         update: parseUpdate(rules.update, columns, context),
         delete: parseDelete(rules.delete, columns, context),
+        sync: rules.sync
       } : {})
     }
   }

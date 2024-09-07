@@ -16,7 +16,7 @@ import { SwitchToggle } from "../../../components/SwitchToggle";
 import type { DBS, DBSMethods } from "../../Dashboard/DBS";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import { CopyResultBtn } from "../CopyResultBtn";
-import type W_SQL from "../W_SQL";
+import type { W_SQL } from "../W_SQL";
 import type { W_SQLState } from "../W_SQL";
 import { Counter, SQL_NOT_ALLOWED } from "../W_SQL";
 import { W_SQLBottomBarProcStats } from "./W_SQLBottomBarProcStats";
@@ -223,7 +223,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
       </div>
     
 
-    {loadingSuggestions && <Loading message="Loading suggestions" />}
+    {loadingSuggestions && db.sql && <Loading message="Loading suggestions" />}
 
     {w.sql_options.errorMessageDisplay !== "tooltip" &&
       <ErrorComponent

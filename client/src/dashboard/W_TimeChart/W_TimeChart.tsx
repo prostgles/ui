@@ -164,8 +164,9 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
   }, 300)
   
   layerSubscriptions: Record<string, { 
-    filterStr: string; 
-    sub: SubscriptionHandler;
+    externalFilters: any; 
+    realtimeOpts: any;
+    sub: SubscriptionHandler | undefined;
     /**
      * Data age of the fetched data
      */

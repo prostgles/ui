@@ -73,6 +73,9 @@ export type ForcedData = ({
     fieldName: string;
 } & ContextValue);
 export type SelectRule = {
+    subscribe?: {
+        throttle?: number;
+    };
     fields: FieldFilter;
     forcedFilterDetailed?: GroupedDetailedFilter;
     filterFields?: FieldFilter;
@@ -110,11 +113,22 @@ export type DeleteRule = {
 export type DBSSchema = {
     [K in keyof DBSchemaGenerated]: Required<DBSchemaGenerated[K]["columns"]>;
 };
+export type SyncRule = {
+    id_fields: string[];
+    synced_field: string;
+    allow_delete?: boolean;
+    batch_size?: number;
+    throttle?: number;
+};
 export type TableRules = {
     select?: boolean | SelectRule;
     update?: boolean | UpdateRule;
     insert?: boolean | InsertRule;
     delete?: boolean | DeleteRule;
+    subscribe?: boolean | {
+        throttle?: number;
+    };
+    sync?: SyncRule;
 };
 export type BasicTablePermissions = Partial<Record<keyof TableRules, boolean>>;
 type AnyObject = Record<string, any>;
@@ -148,6 +162,10 @@ type PublishedResult = boolean | {
     delete?: boolean | {
         filterFields: FieldFilter;
         forcedFilter?: AnyObject;
+    };
+    sync?: SyncRule;
+    subscribe?: boolean | {
+        throttle?: number;
     };
 };
 export declare function isObject<T extends Record<string, any>>(obj: any): obj is T;

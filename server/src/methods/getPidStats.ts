@@ -6,6 +6,7 @@ import { IGNORE_QUERY, execPSQLBash, getServerStatus } from "./statusMonitorUtil
 import { bytesToSize } from "../BackupManager/utils";
 import type { DBS } from "..";
 import { getCDB, getSuperUserCDB } from "../ConnectionManager/ConnectionManager";
+import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 
 type PS_ProcInfo = { 
   pid: number; 
@@ -110,7 +111,7 @@ const pidStatsMethods = {
 
 type PidStatProgs = keyof typeof pidStatsMethods;
 type PidStatMode = PidStatProgs | "off";
-type ConnectionStatInfo = { mode: PidStatMode; available?: PidStatProgs[]; ioMode: "diskstats" | "off" };
+type ConnectionStatInfo = { mode: PidStatMode; available?: PidStatProgs[]; ioMode: "diskstats" | "off"; getPidStatsErrors: Partial<Record<PidStatProgs, any>>; };
 const connectionBashStatus: Record<string, ConnectionStatInfo | undefined> = {};
 
 
@@ -124,13 +125,15 @@ export const getCpuCoresMhz = async (db: DB, connId: string): Promise<number[]> 
 
 const getPidStatsMode = async (db: DB, connId: string): Promise<ConnectionStatInfo> => {
   const [platform] = await execPSQLBash(db, connId, "uname");
+  const getPidStatsErrors: Partial<Record<PidStatProgs, any>> = {};
   if(platform !== "Linux"){
-    return { mode: "off", ioMode: "off" };
+    getPidStatsErrors["proc"] = "uname not Linux";
+    return { mode: "off", ioMode: "off", getPidStatsErrors };
   }
 
   let mode: PidStatMode | undefined;
   const available: PidStatProgs[] = [];
-  for await(const [program, method] of Object.entries(pidStatsMethods)){
+  for await(const [program, method] of Object.entries(pidStatsMethods) as [PidStatProgs, typeof pidStatsMethods[keyof typeof pidStatsMethods]][]){
     try {
       if(program === "proc"){
         await method(db, connId);
@@ -142,13 +145,13 @@ const getPidStatsMode = async (db: DB, connId: string): Promise<ConnectionStatIn
         const [which] = await execPSQLBash(db, connId, `which ${program}`);
         if(which){
           await method(db, connId);
-          mode ??= program as any;
-          available.push(program as any);
+          mode ??= program;
+          available.push(program);
         }
       }
 
     } catch(e){
-
+      getPidStatsErrors[program] = getErrorAsObject(e);
     }
   }
 
@@ -163,12 +166,12 @@ const getPidStatsMode = async (db: DB, connId: string): Promise<ConnectionStatIn
     mode: mode || "off",
     ioMode,
     available,
+    getPidStatsErrors,
   };
-
 }
 
 export const getPidStats = async (db: DB, connId: string): Promise<ServerLoadStats | undefined> => {
-  connectionBashStatus[connId] ??= await getPidStatsMode(db, connId).catch(() => Promise.resolve({ mode: "off", ioMode: "off" } as const));
+  connectionBashStatus[connId] ??= await getPidStatsMode(db, connId).catch((error) => Promise.resolve({ mode: "off", ioMode: "off", getPidStatsErrors: { proc: getErrorAsObject(error) } } as const));
   const { mode } = connectionBashStatus[connId] ?? {};
   if(!mode || mode === "off") return undefined;
   return pidStatsMethods[mode](db, connId);
