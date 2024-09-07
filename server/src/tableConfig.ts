@@ -410,27 +410,6 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
 
     }
   },
-  alerts: {
-    columns: {
-      id: `BIGSERIAL PRIMARY KEY`,
-      title: "TEXT",
-      message: "TEXT",
-      severity: { enum: ["info", "warning", "error"] },
-      database_config_id: "INTEGER REFERENCES database_configs(id) ON DELETE SET NULL",
-      connection_id: "UUID REFERENCES connections(id) ON DELETE SET NULL",
-      section: { enum: CONNECTION_CONFIG_SECTIONS, nullable: true },
-      data: "JSONB",
-      created: "TIMESTAMP DEFAULT NOW()",
-    }
-  },
-  alert_viewed_by: {
-    columns: {
-      id: `BIGSERIAL PRIMARY KEY`,
-      alert_id: "BIGINT REFERENCES alerts(id) ON DELETE CASCADE",
-      user_id: "UUID REFERENCES users(id) ON DELETE CASCADE",
-      viewed: "TIMESTAMP DEFAULT NOW()",
-    }
-  },
 
   connections: {
     columns: {
@@ -495,6 +474,27 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     },
   },
 
+  alerts: {
+    columns: {
+      id: `BIGSERIAL PRIMARY KEY`,
+      title: "TEXT",
+      message: "TEXT",
+      severity: { enum: ["info", "warning", "error"] },
+      database_config_id: "INTEGER REFERENCES database_configs(id) ON DELETE SET NULL",
+      connection_id: "UUID REFERENCES connections(id) ON DELETE SET NULL",
+      section: { enum: CONNECTION_CONFIG_SECTIONS, nullable: true },
+      data: "JSONB",
+      created: "TIMESTAMP DEFAULT NOW()",
+    }
+  },
+  alert_viewed_by: {
+    columns: {
+      id: `BIGSERIAL PRIMARY KEY`,
+      alert_id: "BIGINT REFERENCES alerts(id) ON DELETE CASCADE",
+      user_id: "UUID REFERENCES users(id) ON DELETE CASCADE",
+      viewed: "TIMESTAMP DEFAULT NOW()",
+    }
+  },
 
   access_control: {
     // dropIfExistsCascade: true,
