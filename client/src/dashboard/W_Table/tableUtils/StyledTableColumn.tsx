@@ -11,6 +11,7 @@ import { kFormatter, type MinMax } from "../W_Table";
 import { blend } from "../colorBlend";
 import type { ProstglesTableColumn } from "./getTableCols";
 import type { OnRenderColumnProps } from "./onRenderColumn";
+import { SvgIcon } from "../../../components/SvgIcon";
 
 type P = OnColRenderRowInfo & Pick<OnRenderColumnProps, "maxCellChars" | "c" | "barchartVals">;
 
@@ -18,9 +19,9 @@ export const StyledTableColumn = ({ c, value, row, barchartVals, renderedVal }: 
   
   if(c.style?.type === "Icons"){
     const valueKey = value?.toString() ?? "";
-    const iconNames = valueKey && c.style.valueToIconMap[valueKey];
-    const size = `${c.style.size ?? 24}px`;
-    const iconNode = iconNames && <img src={`/icons/${iconNames}.svg`} alt={valueKey} style={{ width: size, height: size }} />;
+    const iconName = valueKey && c.style.valueToIconMap[valueKey];
+    const sizeNum = c.style.size ?? 24;
+    const iconNode = iconName && <SvgIcon icon={iconName} size={sizeNum} />;
     return <FlexRow>
       {iconNode ?? value}
     </FlexRow>

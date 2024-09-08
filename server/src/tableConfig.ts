@@ -457,6 +457,19 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         }, 
         nullable: true 
       },
+      table_options: {
+        nullable: true,
+        jsonbSchema: {
+          record: {
+            partial: true,
+            values: {
+              type: {
+                icon: { type: "string", optional: true },
+              }
+            }
+          }
+        }
+      },
       created:             { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
       last_updated:        { sqlDefinition: `BIGINT NOT NULL DEFAULT 0` },
 

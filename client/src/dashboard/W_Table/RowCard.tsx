@@ -37,6 +37,7 @@ export const RowCard = ({ prgl, tableName, rows, tableHandler, onSuccess, onPrev
   
   return <SmartForm
     theme={prgl.theme}
+    connection={prgl.connection}
     asPopup={true}
     confirmUpdates={true}
     hideChangesOptions={true}
