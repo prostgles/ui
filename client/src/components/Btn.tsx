@@ -25,11 +25,20 @@ type ClickMessageArgs = (
   onEnd?: () => void
 ) => void;
 
-type BtnCustomProps = {
+type BtnCustomProps = ({
+  iconPath?: never;
+  iconStyle?: never;
+  iconProps?: never;
+  iconClassname?: never;
+  iconNode?: never;
+} | {
   iconPath?: string;
   iconStyle?: React.CSSProperties;
   iconProps?: IconProps;
   iconClassname?: string;
+  iconNode?: React.ReactNode;
+
+}) & {
   iconPosition?: "left" | "right";
   label?: LabelProps;
 
@@ -72,7 +81,7 @@ type OmmitedKeys = keyof BtnCustomProps | "children" | "ref" | "onClick" | "styl
 const CUSTOM_ATTRS: OmmitedKeys[] = [
   "iconPath", "children", "disabledInfo", "title", "disabledVariant",
   "onClick", "loading", "color", "fadeIn", 
-  "_ref", "ref", "style", "size", "exactClassName", "iconProps", "iconPosition", "iconClassname",
+  "_ref", "ref", "style", "size", "exactClassName", "iconProps", "iconNode", "iconPosition", "iconClassname",
   "onClickMessage" as any, "onClickPromise" as any, "asNavLink" as any, "iconStyle", "titleAsLabel"
 ]
 
@@ -169,7 +178,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
   render(){
     const { 
       iconPath, iconPosition = "left", className = "", style = {}, iconStyle = {}, disabledInfo, disabledVariant = "", title, 
-      fadeIn, exactClassName, variant = "default", iconProps, iconClassname = "", titleAsLabel, label, ...otherProps
+      fadeIn, exactClassName, variant = "default", iconProps, iconNode, iconClassname = "", titleAsLabel, label, ...otherProps
     } = this.props;
     const { clickMessage } = this.state;
     let extraStyle: React.CSSProperties = {};
@@ -259,14 +268,14 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
     const content = <>
       {iconPosition === "right" && childrenContent}
 
-      {(!(iconPath || iconProps?.path) || loading)? null : 
-        <Icon 
+      {(!(iconPath || iconProps?.path || iconNode) || loading)? null : 
+        (iconNode ?? <Icon 
           path={clickMessage?.type === "err"? mdiAlert : clickMessage?.type === "ok"? mdiCheck : (iconPath ?? iconProps!.path)} 
           size={size === "micro"? 0.75 : 1} 
           className={iconClassname + " f-0 " } 
           style={iconStyle}
           { ...iconProps }
-        />
+        />)
       }
       
       {loading? <Loading 

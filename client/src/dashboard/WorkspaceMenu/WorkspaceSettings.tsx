@@ -1,10 +1,13 @@
 import { mdiCog } from "@mdi/js";
+import { usePromise } from "prostgles-client/dist/prostgles";
 import React from "react";
-import Btn from "../../components/Btn"; 
-import PopupMenu from "../../components/PopupMenu"; 
+import type { Prgl } from "../../App";
+import Btn from "../../components/Btn";
+import PopupMenu from "../../components/PopupMenu";
+import Select from "../../components/Select/Select";
 import type { DBSchemaTablesWJoins, Workspace } from "../Dashboard/dashboardUtils";
 import SmartForm from "../SmartForm/SmartForm";
-import type { Prgl } from "../../App";
+import { IconPalette } from "../../components/IconPalette/IconPalette";
 
 type WorkspaceSettingsProps = Pick<Prgl, "dbs" | "dbsMethods" | "theme"> & {
   w: Workspace;
@@ -12,11 +15,13 @@ type WorkspaceSettingsProps = Pick<Prgl, "dbs" | "dbsMethods" | "theme"> & {
 }
 export const WorkspaceSettings = ({ dbs, dbsTables, w, dbsMethods, theme }: WorkspaceSettingsProps) => {
 
+
   return <PopupMenu
     title={"Workspace settings"}
     style={{
       height: "100%",
     }}
+    clickCatchStyle={{ opacity: 1 }}
     onClickClose={false}
     button={(
       <Btn
@@ -58,7 +63,24 @@ export const WorkspaceSettings = ({ dbs, dbsTables, w, dbsMethods, theme }: Work
         methods={dbsMethods}
         hideChangesOptions={true}
         confirmUpdates={true}
-        columns={["name", "published"]}
+        columns={{ 
+          name: 1, 
+          published: 1, 
+          icon: {
+            onRender: (value, onChange) => {
+              return <IconPalette 
+                iconName={value}
+                onChange={onChange}
+              />
+              // return <Select 
+              //   fullOptions={iconList?.map(key => ({ key })) ?? []}
+              //   onChange={onChange}
+              //   value={value}
+              //   optional={true}
+              // />
+            }
+          } 
+        }}
         disabledActions={["clone", "delete"]}
         rowFilter={[
           { fieldName: "id", value: w.id }

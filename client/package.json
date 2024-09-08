@@ -1,7 +1,7 @@
 {
   "name": "prostgles-ui-client",
   "dependencies": {
-    "@mdi/js": "^7.0.96",
+    "@mdi/js": "^7.4.47",
     "@types/d3": "^7.1.0",
     "@types/papaparse": "^5.3.1",
     "case-sensitive-paths-webpack-plugin": "2.3.0",
@@ -79,7 +79,7 @@
     "babel-plugin-named-asset-import": "^0.3.8",
     "babel-preset-minify": "^0.5.1",
     "babel-preset-react-app": "^10.0.1",
-    "copy-webpack-plugin": "^10.2.0",
+    "copy-webpack-plugin": "^12.0.2",
     "css-loader": "^6.8.1",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
@@ -95,7 +95,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5",
     "url-loader": "^4.1.1",
-    "webpack": "^5.91.0",
+    "webpack": "^5.94.0",
     "webpack-bundle-analyzer": "^4.10.2",
     "webpack-cli": "^5.1.4",
     "webpack-manifest-plugin": "^5.0.0",

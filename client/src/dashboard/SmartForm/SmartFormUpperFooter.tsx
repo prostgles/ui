@@ -6,13 +6,13 @@ import Btn from "../../components/Btn";
 import Popup from "../../components/Popup/Popup";
 import { W_MethodControls } from "../W_Method/W_MethodControls";
 import { JoinedRecords } from "./JoinedRecords/JoinedRecords";
-import type { SmartFormProps, SmartFormState } from "./SmartForm";
+import type { ColumnDisplayConfig, SmartFormProps, SmartFormState } from "./SmartForm";
 import SmartFormField from "./SmartFormField/SmartFormField";
 
-type P = SmartFormProps & {
+type P = Omit<SmartFormProps, "columns"> & {
   onSetNestedInsertData: ((newData: Record<string, AnyObject[]> | undefined) => void) | undefined;
   onRemoveUpdate: (key: string) => void;
-  columns: ValidatedColumnInfo[];
+  columns: (ValidatedColumnInfo & ColumnDisplayConfig)[];
   state: Pick<SmartFormState, "newRow" | "tableInfo" | "action">;
   row?: AnyObject;
 }

@@ -3,7 +3,7 @@ import { PAGE_SIZES } from "./Table";
 import { mdiChevronLeft, mdiChevronRight, mdiPageFirst, mdiPageLast } from "@mdi/js";
 import Btn from "../Btn";
 import FormField from "../FormField/FormField";
-import { FlexRow } from "../Flex";
+import { classOverride, FlexRow } from "../Flex";
 
 export type PaginationProps = {
   pageSize?: typeof PAGE_SIZES[number];
@@ -11,10 +11,11 @@ export type PaginationProps = {
   totalRows?: number;
   onPageChange?: (newPage: number) => any;
   onPageSizeChange?: (newPageSize: Required<PaginationProps>["pageSize"]) => any;
+  className?: string;
 }
 export const Pagination = (props: PaginationProps) => {
 
-  const { onPageChange: onPC, page = 1, onPageSizeChange, pageSize = PAGE_SIZES[0], totalRows } = props;
+  const { onPageChange: onPC, page = 1, onPageSizeChange, pageSize = PAGE_SIZES[0], totalRows, className = "" } = props;
   const onPageChange = p => { if(page !== p) onPC?.(p) }
 
   let maxPage = 0;
@@ -28,7 +29,7 @@ export const Pagination = (props: PaginationProps) => {
   const noNext = page === maxPage? "Already at last page" : undefined;
   if(noPrev && noNext) return null;
 
-  return <FlexRow className={"gap-0 p-p5 mt-auto ai-center"}>
+  return <FlexRow className={classOverride("gap-0 p-p5 mt-auto ai-center", className)}>
     <Btn iconPath={mdiPageFirst} 
       disabledInfo={noPrev} 
       onClick={e => {

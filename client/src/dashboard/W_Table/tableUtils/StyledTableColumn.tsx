@@ -1,7 +1,7 @@
 import type { AnyObject } from "prostgles-types";
 import { _PG_date } from "prostgles-types";
 import React from "react";
-import { FlexRowWrap } from "../../../components/Flex";
+import { FlexRow, FlexRowWrap } from "../../../components/Flex";
 import { CellBarchart } from "../../../components/ProgressBar";
 import type { OnColRenderRowInfo } from "../../../components/Table/Table";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
@@ -14,8 +14,17 @@ import type { OnRenderColumnProps } from "./onRenderColumn";
 
 type P = OnColRenderRowInfo & Pick<OnRenderColumnProps, "maxCellChars" | "c" | "barchartVals">;
 
-export const StyledTableColumn = ({ c, value, row, maxCellChars, barchartVals, renderedVal }: P) => {
+export const StyledTableColumn = ({ c, value, row, barchartVals, renderedVal }: P) => {
   
+  if(c.style?.type === "Icons"){
+    const valueKey = value?.toString() ?? "";
+    const iconNames = valueKey && c.style.valueToIconMap[valueKey];
+    const size = `${c.style.size ?? 24}px`;
+    const iconNode = iconNames && <img src={`/icons/${iconNames}.svg`} alt={valueKey} style={{ width: size, height: size }} />;
+    return <FlexRow>
+      {iconNode ?? value}
+    </FlexRow>
+  }
   if (c.style?.type === "Barchart" && barchartVals?.[c.name]) {
     return <CellBarchart 
       style={{ marginTop: "6px" }}

@@ -19,6 +19,7 @@ import { getSmartFormFieldRightButtons } from "./SmartFormFieldRightButtons";
 import { OPTIONS_LIMIT, getSuggestions, parseValue } from "./fieldUtils";
 import type { FilterColumn } from "../../SmartFilter/smartFilterUtils";
 import { isObject } from "../../../../../commonTypes/publishUtils";
+import type { ColumnDisplayConfig } from "../SmartForm";
 
 export type SmartFormFieldProps = {
   id?: string;
@@ -55,10 +56,8 @@ export type SmartFormFieldProps = {
   methods: MethodHandler;
 }
 
-export type SmartColumnInfo = ValidatedColumnInfo & {
-  // label?: string;
-  foreignLabelColumn?: string;
-}
+export type SmartColumnInfo = ValidatedColumnInfo & ColumnDisplayConfig;
+
 type S = {
   column?: SmartColumnInfo;
   error?: any;

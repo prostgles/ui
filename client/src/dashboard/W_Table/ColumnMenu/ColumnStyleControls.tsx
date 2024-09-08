@@ -11,6 +11,7 @@ import type { ColumnConfig } from "./ColumnMenu";
 import { ChipStylePalette, chipColorsFadedBorder } from "./ColumnDisplayFormat/ChipStylePalette";
 import { MINI_BARCHART_COLOR } from "../../../components/ProgressBar";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { ConditionalCellIconStyleControls } from "./ColumnDisplayFormat/ConditionalCellIconStyleControls";
 
 export type ColumnValue = string | number | Date | null | undefined | boolean;
  
@@ -35,6 +36,11 @@ export type ConditionalStyle = {
   type: "Conditional";
   conditions: (ConditionFilter & ChipStyle)[];
   defaultStyle?: ChipStyle;
+};
+export type ConditionalStyleIcons = {
+  type: "Icons";
+  size?: number;
+  valueToIconMap: Record<string, string>;
 };
 export type FixedStyle = {
   type: "Fixed";
@@ -94,7 +100,7 @@ export const setDefaultConditionalStyle = async ({ columnName, db, tableName, fi
 export const ColumnStyleControls = (props: StyleColumnProps) => {
   const { column, onUpdate, tsDataType, udt_name, tableName, db } = props;
 
-  const STYLE_MODES: Array<Required<ColumnConfig>["style"]["type"]> = ["None", "Fixed", "Conditional"];
+  const STYLE_MODES: Array<Required<ColumnConfig>["style"]["type"]> = ["None", "Fixed", "Conditional", "Icons"];
   const { style = { type: "None" as const }  } = column;
 
   if(["number", "Date"].includes(tsDataType) || _PG_numbers.includes(udt_name as any)){
@@ -141,6 +147,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
               type === "Scale"? { type, minColor: "#8fccf0", maxColor: "#0AA1FA", textColor: "#1c1c1c"  } : 
               type === "Barchart"? { type, barColor: MINI_BARCHART_COLOR, textColor: "#646464" } :
               type === "Fixed"? { type } : 
+              type === "Icons"? { type, valueToIconMap: {} } :
               { type }
             ); 
           }
@@ -161,6 +168,7 @@ export const ColumnStyleControls = (props: StyleColumnProps) => {
         </> :
 
         style.type === "Conditional"? <ConditionalCellStyleControls {...props} style={style} />:
+        style.type === "Icons"? <ConditionalCellIconStyleControls {...props} style={style} />:
 
         style.type === "Scale"? <FlexRowWrap>
         

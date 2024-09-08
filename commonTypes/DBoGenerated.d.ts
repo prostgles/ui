@@ -520,6 +520,7 @@ export type DBSchemaGenerated = {
       connection_id: string;
       created?: null | string;
       deleted?: boolean;
+      icon?: null | string;
       id?: string;
       last_updated: string;
       last_used?: string;

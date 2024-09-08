@@ -66,7 +66,6 @@ app.use(express.static(path.resolve(actualRootDir + "/../client/static"), { inde
 
 /** Needed to load MVT tiles worker */
 app.use(express.static(path.resolve(actualRootDir + "/../client/node_modules/@loaders.gl/mvt/dist/"), { index: false, extensions: ["js"] }));
- 
 
 app.use(cookieParser());
 
