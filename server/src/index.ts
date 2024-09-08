@@ -61,8 +61,16 @@ export const log = (msg: string, extra?: any) => {
   console.log(...[`(server): ${(new Date()).toISOString()} ` + msg, extra].filter(v => v));
 }
 
-app.use(express.static(path.resolve(actualRootDir + "/../client/build"), { index: false }));
-app.use(express.static(path.resolve(actualRootDir + "/../client/static"), { index: false }));
+app.use(express.static(path.resolve(actualRootDir + "/../client/build"), { index: false, cacheControl: false }));
+app.use(express.static(path.resolve(actualRootDir + "/../client/static"), { index: false, cacheControl: false }));
+app.use(express.static(
+  "/icons",
+  {
+    cacheControl: true,
+    index: false, 
+    maxAge: 31536000 
+  } 
+));
 
 /** Needed to load MVT tiles worker */
 app.use(express.static(path.resolve(actualRootDir + "/../client/node_modules/@loaders.gl/mvt/dist/"), { index: false, extensions: ["js"] }));
