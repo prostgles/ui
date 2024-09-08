@@ -187,10 +187,12 @@ export const WorkspaceMenu = (props: P) => {
           className={"workspace-list-item text-1 relative " + (workspace.id === w.id? "active" : "")}
         >
           <Btn
-            iconProps={w.published? {
-              title: "Shared workspace" + (w.isMine? "" : " (readonly)"),
-              path: mdiAccountMultiple
-            } : undefined}
+            // iconProps={{
+            //   title: "Shared workspace" + (w.isMine? "" : " (readonly)"),
+            //   // path: w.published? mdiAccountMultiple : mdiChevronDown,
+            // }}
+            title={"Shared workspace" + (w.isMine? "" : " (readonly)")}
+            iconNode={w.icon? <img style={{ width: "24px", height: "24px" }} src={`/icons/${w.icon}.svg`} /> : undefined}
             style={{
               padding: "16px",
               borderBottomStyle: "solid",

@@ -85,6 +85,7 @@ export const SelectTriggerButton = <O extends OptionKey, Multi extends boolean =
       onOpen?.(e.currentTarget);
       setState({ popupAnchor: e.currentTarget, fixedBtnWidth: maxBtnWidth });
     }}
+    //@ts-ignore
     _ref={r => {
       if(r) {
         setRef(r);
@@ -122,11 +123,13 @@ export const SelectTriggerButton = <O extends OptionKey, Multi extends boolean =
   const trigger = !optional? triggerButton : 
     <div className={`${label? "  " : className} flex-row gap-p5 ai-center ${selectClass} `}>
       {triggerButton}
-      {value !== undefined && <Btn 
-        iconPath={mdiClose} 
-        title="Reset selection"
-        onClick={e => onChange(undefined as any, e, undefined)} 
-      />}
+      {![undefined, null].includes(value) && 
+        <Btn 
+          iconPath={mdiClose} 
+          title="Reset selection"
+          onClick={e => onChange(undefined as any, e, undefined)} 
+        />
+      }
     </div>
 
   return trigger;

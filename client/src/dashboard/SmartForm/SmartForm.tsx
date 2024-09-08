@@ -12,7 +12,7 @@ import Btn from "../../components/Btn";
 import Checkbox from "../../components/Checkbox";
 import ErrorComponent from "../../components/ErrorComponent";
 import FileInput from "../../components/FileInput/FileInput";
-import { classOverride } from "../../components/Flex";
+import { classOverride, FlexCol } from "../../components/Flex";
 import Loading from "../../components/Loading";
 import type { PopupProps } from "../../components/Popup/Popup";
 import Popup from "../../components/Popup/Popup";
@@ -27,6 +27,7 @@ import { SmartFormFileSection } from "./SmartFormFileSection";
 import { SmartFormFooterButtons } from "./SmartFormFooterButtons";
 import { SmartFormUpperFooter } from "./SmartFormUpperFooter";
 import { sliceText } from "../../../../commonTypes/utils";
+import { Label } from "../../components/Label";
 
 export type getErrorsHook = (cb: (newRow: AnyObject) => SmartFormState["error"] | undefined) => void;
 
@@ -39,6 +40,10 @@ export type GetRefHooks = {
 
 export type GetRefCB = (hooks: GetRefHooks) => void;
 
+export type ColumnDisplayConfig = { 
+  sectionHeader?: string; 
+  onRender?: (value: any, setValue: (newValue: any)=>void) => React.ReactNode; 
+};
 
 export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods" | "theme"> & {
   tableName: string;
@@ -136,9 +141,12 @@ export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods" | "theme"> &
   }
 
 } & ({
-  columns?: (string | { name: string; sectionHeader?: string })[];
+  columns?: Record<string, 1 | ColumnDisplayConfig>;
+  columnFilter?: never;
+  //(string | { name: string; sectionHeader?: string })[];
 } | {
   columnFilter?: (c: ValidatedColumnInfo) => boolean;
+  columns?: never;
 })
 
 export type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
@@ -267,12 +275,16 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     }
     const _columns = !getColParams ? table.columns : (await tableHandler.getColumns(lang, getColParams));
 
+    const invalidColumns = this.props.columns && 
+        Object.keys(this.props.columns).filter(colName => 
+          !_columns.some(_c => _c.name === colName)
+        );
     this.setState({
       action,
       dynamicValidatedColumns: _columns,
       tableInfo,
-      // dataItemLoaded: this.state.dataItemLoaded || Boolean(!rowFilter),
-      error: "columns" in this.props && this.props.columns?.length && this.props.columns.some(c => !_columns.some(_c => _c.name === c)) ? "Some requested columns not found in the table" : undefined
+      error: invalidColumns && invalidColumns.length ? "Some requested columns not found in the table: " + JSON.stringify(invalidColumns) : 
+        undefined
     });
   }
 
@@ -415,12 +427,12 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
 
       if (tableHandler?.subscribeOne && !this.props.noRealtime) {
         try {
-          const options = { select: await this.getSelect() };
-          /** validate options */
+          const findParams = { select: await this.getSelect() };
+          /** validate find args */
           await findAndSetRow();
           this.rowSub = await tableHandler.subscribeOne(
             rowFilter,
-            options,
+            findParams,
             currentRow => {
               if (currentRow) {
                 this.setState({ action: { ...this.state.action, loading: false, currentRow, dataItemLoaded: true } });
@@ -635,7 +647,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     return tableHandler;
   }
 
-  get columns(): (ValidatedColumnInfo & { sectionHeader?: string })[] {
+  get columns(): (ValidatedColumnInfo & ColumnDisplayConfig)[] {
     const { fixedData } = this.props;
     let validatedCols = quickClone((this.state.dynamicValidatedColumns || this.table?.columns || []));
     if (fixedData) {
@@ -647,29 +659,22 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     }
     let displayedCols = validatedCols as SmartColumnInfo[];
 
-    if ("columns" in this.props) {
+    if (this.props.columns) {
       const { columns } = this.props;
 
-      /** Add headers */
-      if (columns) {
-        displayedCols = columns.map(cc => {
+      /** Add headers */ 
+      displayedCols = Object.entries(columns).map(([colName, colConf]) => {
 
-          if (typeof cc === "string") {
-            return validatedCols.find(c => c.name === cc)
-          } else {
-            const ec = validatedCols.find(c => c.name === cc.name);
-            if (!ec) return undefined;
+        if (colConf === 1) {
+          return validatedCols.find(c => c.name === colName)
+        } else {
+          const ec = validatedCols.find(c => c.name === colName);
+          if (!ec) return undefined;
 
-            if (cc.sectionHeader) {
-              return { ...ec, ...cc }
-            }
-            return { ...ec }
-          }
-        }).filter(isDefined);
-      }
-    }
-
-    if ("columnFilter" in this.props && this.props.columnFilter) {
+          return { ...ec, ...colConf }
+        }
+      }).filter(isDefined); 
+    } else if (this.props.columnFilter) {
       const { columnFilter } = this.props;
       displayedCols = displayedCols.filter(columnFilter)
     }
@@ -804,6 +809,18 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
                   }} />
                 </div>
               </div>
+            }
+
+            if(c.onRender){
+              const columnNode = c.onRender(rawValue, newVal => this.setColumnData(c, newVal));
+              return <FlexCol 
+                key={c.name} 
+                style={formFieldStyle}
+                className="gap-p25"
+              >
+                <Label variant="normal">{c.label}</Label>
+                {columnNode}
+              </FlexCol>
             }
 
             return (<SmartFormField

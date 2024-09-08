@@ -767,6 +767,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       created:        `TIMESTAMP DEFAULT NOW()`,
       active_row:     `JSONB DEFAULT '{}'::jsonb`,
       layout:         `JSONB`,
+      icon:           `TEXT`,
       options:        { 
         defaultValue: { 
           defaultLayoutType: "tab",
