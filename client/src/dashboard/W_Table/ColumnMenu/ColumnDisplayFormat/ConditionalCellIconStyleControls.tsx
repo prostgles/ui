@@ -54,7 +54,7 @@ export const ConditionalCellIconStyleControls = ({ column, style, tableName, tab
           className="flex-col gap-1 p-p5 ai-start card  " 
           style={{ padding: "1em", alignItems: "stretch" }}
         >
-          <div className="flex-row-wrap gap-0 ai-center">
+          <div className="flex-row gap-0 ai-center">
             <SmartSearch 
               className=" "
               key={value.toString()}

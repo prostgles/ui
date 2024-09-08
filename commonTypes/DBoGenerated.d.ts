@@ -153,6 +153,7 @@ export type DBSchemaGenerated = {
       ssl_client_certificate?: null | string;
       ssl_client_certificate_key?: null | string;
       ssl_reject_unauthorized?: null | boolean;
+      table_options?: null | Partial<Record<string,  {  icon?: string; }>>
       type: "Standard" | "Connection URI" | "Prostgles"
       user_id?: null | string;
     };

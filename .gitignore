@@ -7,6 +7,7 @@ prostgles_certificates
 
 demo_utils/dist
 client/build
+client/static/icons
 server/dist
 server/media
 

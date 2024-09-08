@@ -154,7 +154,7 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
   syncsSet = false;
   onDelta = async (dp: DashboardProps, ds: DashboardState, dd: DeltaOfData<DashboardData>) => {
     const delta = ({ ...dp, ...ds, ...dd });
-    const { prgl: { connectionId, dbs, }, workspaceId } = this.props;
+    const { prgl: { connectionId, dbs }, workspaceId } = this.props;
     const { workspace } = this.d;
     let ns: Partial<DashboardState> = {};
 

@@ -13,6 +13,7 @@ import { WorkspaceAddBtn } from "./WorkspaceAddBtn";
 import { WorkspaceDeleteBtn } from "./WorkspaceDeleteBtn";
 import "./WorkspaceMenu.css";
 import { WorkspaceSettings } from "./WorkspaceSettings";
+import { SvgIcon } from "../../components/SvgIcon";
 
 type P = {
   workspace: WorkspaceSyncItem;
@@ -113,7 +114,10 @@ export const WorkspaceMenu = (props: P) => {
                   <div className="flex-col ai-start f-0 mr-1 text-2" 
                     style={workspace.id === w.id? { color: "var(--active)" } : undefined}
                   >
-                    <Icon path={mdiViewCarousel} size={1} />
+                    {w.icon ?
+                      <SvgIcon icon={w.icon} /> :
+                      <Icon path={mdiViewCarousel} size={1} />
+                    } 
                   </div>
                 ),
                 contentRight: (<div className="flex-row gap-p5 pl-1 show-on-parent-hover">
@@ -187,12 +191,8 @@ export const WorkspaceMenu = (props: P) => {
           className={"workspace-list-item text-1 relative " + (workspace.id === w.id? "active" : "")}
         >
           <Btn
-            // iconProps={{
-            //   title: "Shared workspace" + (w.isMine? "" : " (readonly)"),
-            //   // path: w.published? mdiAccountMultiple : mdiChevronDown,
-            // }}
             title={"Shared workspace" + (w.isMine? "" : " (readonly)")}
-            iconNode={w.icon? <img style={{ width: "24px", height: "24px" }} src={`/icons/${w.icon}.svg`} /> : undefined}
+            iconNode={w.icon? <SvgIcon icon={w.icon} /> : undefined}
             style={{
               padding: "16px",
               borderBottomStyle: "solid",

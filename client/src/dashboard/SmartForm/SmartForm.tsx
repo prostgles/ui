@@ -12,7 +12,7 @@ import Btn from "../../components/Btn";
 import Checkbox from "../../components/Checkbox";
 import ErrorComponent from "../../components/ErrorComponent";
 import FileInput from "../../components/FileInput/FileInput";
-import { classOverride, FlexCol } from "../../components/Flex";
+import { classOverride, FlexCol, FlexRow } from "../../components/Flex";
 import Loading from "../../components/Loading";
 import type { PopupProps } from "../../components/Popup/Popup";
 import Popup from "../../components/Popup/Popup";
@@ -28,6 +28,7 @@ import { SmartFormFooterButtons } from "./SmartFormFooterButtons";
 import { SmartFormUpperFooter } from "./SmartFormUpperFooter";
 import { sliceText } from "../../../../commonTypes/utils";
 import { Label } from "../../components/Label";
+import { SvgIcon } from "../../components/SvgIcon";
 
 export type getErrorsHook = (cb: (newRow: AnyObject) => SmartFormState["error"] | undefined) => void;
 
@@ -47,6 +48,7 @@ export type ColumnDisplayConfig = {
 
 export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods" | "theme"> & {
   tableName: string;
+  connection?: Prgl["connection"];
 
   label?: string;
   /**
@@ -709,7 +711,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
       onChange, showSuggestions, label,
       hideChangesOptions = false,
       includeMedia = true, asPopup, enableInsert = true,
-      db, tables, methods, className = "", onPrevOrNext, prevNext, contentClassname, theme
+      db, tables, methods, className = "", onPrevOrNext, prevNext, contentClassname, theme, connection
     } = this.props;
 
     const { error, errors = {}, tableInfo,
@@ -954,7 +956,17 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
       }
 
       return <Popup
-        title={headerText}
+        title={
+          <FlexRow>
+            {connection?.table_options?.[tableName]?.icon && 
+              <SvgIcon
+                size={34} 
+                icon={connection!.table_options![tableName]!.icon!}
+              />
+            }
+            {headerText}
+          </FlexRow>
+        }
         subTitle={titleEnd}
         autoFocusFirst={onPrevOrNext ? "header" : "content"}
         {...extraProps}

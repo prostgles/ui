@@ -133,6 +133,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
       update: user.type === "admin" && {
         fields: {
           name: 1,
+          table_options: 1,
         }
       }
     },
