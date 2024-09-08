@@ -72,12 +72,6 @@ export const WorkspaceSettings = ({ dbs, dbsTables, w, dbsMethods, theme }: Work
                 iconName={value}
                 onChange={onChange}
               />
-              // return <Select 
-              //   fullOptions={iconList?.map(key => ({ key })) ?? []}
-              //   onChange={onChange}
-              //   value={value}
-              //   optional={true}
-              // />
             }
           } 
         }}
