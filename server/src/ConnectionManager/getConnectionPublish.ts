@@ -50,7 +50,12 @@ export const getConnectionPublish = ({ dbs, dbConf }: Args) => {
 
               const ptr: ParsedTableRules = {
                 ...a,
-                [v.tableName]: parseTableRules(omitKeys(v, ["tableName"]), dbo[v.tableName]!.is_view, table.columns.map((c: any) => c.name), { user: user as DBSSchema["users"] })
+                [v.tableName]: parseTableRules(
+                  omitKeys(v, ["tableName"]), 
+                  dbo[v.tableName]!.is_view, 
+                  table.columns.map((c: any) => c.name), 
+                  { user: user as DBSSchema["users"] }
+                )
               }
               return ptr;
             }, {} as ParsedTableRules);

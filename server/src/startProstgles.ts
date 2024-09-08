@@ -16,7 +16,7 @@ import { addLog, setLoggerDBS } from "./Logger";
 import { getAuth } from "./authConfig/authConfig";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import type { DBSConnectionInfo } from "./electronConfig";
-import { actualRootDir, getElectronConfig, isDemoMode, } from "./electronConfig";
+import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { DBS_CONNECTION_INFO } from "./envVars";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { publish } from "./publish";
@@ -288,6 +288,5 @@ export const getInitState = (): typeof _initState & ProstglesInitState  => {
     electronCredsProvided: !!eConfig?.hasCredentials(),
     ..._initState,
     canDumpAndRestore: bkpManager?.installedPrograms,
-    isDemoMode: isDemoMode(),
   }
 };

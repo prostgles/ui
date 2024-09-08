@@ -1,8 +1,8 @@
-import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import { isEqual, type TableHandlerClient } from "prostgles-client/dist/prostgles";
 import { tryCatch } from "prostgles-types";
 import type { AnyObject} from "prostgles-types";
 import { asName } from "prostgles-types";
-import { isDefined } from "../../utils";
+import { isDefined, quickClone } from "../../utils";
 import type { DateExtent} from "../Charts/getTimechartBinSize";
 import { getTimechartBinSize } from "../Charts/getTimechartBinSize";
 import type { WindowData, WindowSyncItem } from "../Dashboard/dashboardUtils";
@@ -51,16 +51,17 @@ async function getTimeChartLayerWithBin(this: W_TimeChart, layer: ProstglesTimeC
     // extentFilter = getExtentFilter(extent, dateColumn);
 
     /** Subscribe */
-    const strFilter = JSON.stringify(externalFilters);
     const timeChartFilters = getTimeChartFilters(w, dateColumn)
     const tableFilters = { $and: [...externalFilters, ...timeChartFilters, tableFilter].filter(isDefined) };
     const existingSubscription = this.layerSubscriptions[layer._id];
-    if (tableHandler.subscribe && (!existingSubscription || existingSubscription.filterStr !== strFilter)) {
-      await existingSubscription?.sub.unsubscribe();
+    const realtimeOpts = w.options.refresh;
+    if (tableHandler.subscribe && (!existingSubscription || !isEqual(existingSubscription.externalFilters, externalFilters) || !isEqual(existingSubscription.realtimeOpts, realtimeOpts))) {
+      await existingSubscription?.sub?.unsubscribe();
       const firstDataAge = Date.now();
       this.layerSubscriptions[layer._id] = {
-        filterStr: strFilter,
-        sub: await tableHandler.subscribe(tableFilters, { select: "", limit: 0, throttle: 500 }, () => {
+        externalFilters,
+        realtimeOpts: quickClone(realtimeOpts),
+        sub: realtimeOpts?.type !== "Realtime"? undefined : await tableHandler.subscribe(tableFilters, { select: "", limit: 0, throttle: (+realtimeOpts.throttleSeconds * 1000) }, () => {
           
           const now = Date.now();
           const prevAge = this.layerSubscriptions[layer._id]?.latestDataAge;

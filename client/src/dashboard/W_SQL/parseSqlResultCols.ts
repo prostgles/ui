@@ -1,6 +1,6 @@
 import { PALETTE } from "../Dashboard/dashboardUtils";
 import { getColWidth } from "../W_Table/tableUtils/getColWidth";
-import type W_SQL from "./W_SQL";
+import type { W_SQL } from "./W_SQL";
 
 export const parseSqlResultCols = function (this: W_SQL, { fields, isSelect, rows, sql, trimmedSql }: { rows: any[]; fields: any[]; isSelect: boolean; trimmedSql: string; sql: string; }) {
 

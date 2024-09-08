@@ -279,7 +279,6 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
     }
   }
 
-
   loadTable = async (args: Omit<LoadTableArgs, "db" | "dbs" | "workspace_id">): Promise<string> => {
     const { db, dbs } = this.props.prgl;
     const { workspace } = this.d;

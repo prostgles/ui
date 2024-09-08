@@ -258,7 +258,7 @@ const getKWDSz = (excludeInto = false) => [
     [
       { kwd: "INTO",    expects: "table", justAfter: ["SELECT"], dependsOnAfter: "FROM", docs: "Creates a table from the result of the select statement" } as const
     ]),
-  { kwd: "FROM",    expects: "table", justAfter: ["SELECT"], docs: "Specifies a table/view or function with returns a table-like result" }, 
+  { kwd: "FROM",    expects: "table", justAfter: ["SELECT"], docs: "Specifies a table/view or function which returns a table-like result" }, 
   { kwd: "JOIN",  expects: "table", docs: "Combine rows from one table with rows from a second table", canRepeat: true }, 
   { kwd: "JOIN LATERAL",  expects: "table", docs: "Lateral join subquery can reference columns provided by preceding FROM items", canRepeat: true }, 
   { kwd: "INNER JOIN", dependsOn: "FROM",   expects: "table", docs: "Combine rows from one table with rows from a second table. Only matching records from both tables are returned", canRepeat: true }, 

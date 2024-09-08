@@ -158,10 +158,11 @@ export const parseTableRules = (rules, isView = false, columns, context) => {
         return true;
     }
     if (isObject(rules)) {
-        return Object.assign({ select: parseSelect(rules.select, columns, context) }, (!isView ? {
+        return Object.assign({ select: parseSelect(rules.select, columns, context), subscribe: isObject(rules.select) ? rules.select.subscribe : rules.subscribe }, (!isView ? {
             insert: parseInsert(rules.insert, columns, context),
             update: parseUpdate(rules.update, columns, context),
             delete: parseDelete(rules.delete, columns, context),
+            sync: rules.sync
         } : {}));
     }
     return false;

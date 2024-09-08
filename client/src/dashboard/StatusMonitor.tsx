@@ -22,6 +22,7 @@ import type { SmartCardListProps } from "./SmartCard/SmartCardList";
 import SmartCardList from "./SmartCard/SmartCardList";
 import { StatusMonitorConnections } from "./StatusMonitor/StatusMonitorConnections";
 import { StyledInterval } from "./W_SQL/customRenderers";
+import ErrorComponent from "../components/ErrorComponent";
 
 export type StatusMonitorProps = Pick<PrglState, "dbs" | "dbsMethods" | "dbsTables"> & {
   connectionId: string;
@@ -39,13 +40,19 @@ export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTab
   const [refreshRate, setRefreshRate] = useState(1);
   const [c, setc] = useState<ConnectionStatus>();
   const getIsMounted = useIsMounted();
+  const [statusError, setStatusError] = useState<any>();
   useEffect(() => {
     const interval = setInterval(async () => {
-      const c = await getStatus(connectionId) 
-      if(!getIsMounted()){
-        return;
+      try {
+        const c = await getStatus(connectionId);
+        if(!getIsMounted()){
+          return;
+        }
+        setc(c);
+      } catch (e) {
+        console.error(e);
+        setStatusError(e);
       }
-      setc(c);
     }, refreshRate * 1e3);
 
     return () => clearInterval(interval);
@@ -91,7 +98,7 @@ export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTab
   
   return <FlexCol className="StatusMonitor min-w-0 jc-start">
     <InfoRow>Some queries used for this view have been hidden</InfoRow>
-    
+    {statusError && <ErrorComponent error={statusError} />}
     <FlexRow>
       {connection && 
         <Chip 

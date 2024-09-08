@@ -35,10 +35,11 @@ export const getBasicPermissions = (rules: TableRules = {}): BasicTablePermissio
   }), {});
 }
 export const TABLE_RULE_LABELS = {
-  select: { label: { micro: "S", mini: "Select", default: "Select/View all records" },  title: "View records" },
-  insert: { label: { micro: "I", mini: "Insert", default: "Insert/Add new records" },   title: "Insert/Add records" },
-  update: { label: { micro: "U", mini: "Update", default: "Update/Edit records" },      title: "Edit data" },
-  delete: { label: { micro: "D", mini: "Delete", default: "Delete/Remove records"},     title: "Remove records" }
+  select:   { label: { micro: "S", mini: "Select", default: "Select/View all records" }, title: "View records" },
+  insert:   { label: { micro: "I", mini: "Insert", default: "Insert/Add new records" },  title: "Insert/Add records" },
+  update:   { label: { micro: "U", mini: "Update", default: "Update/Edit records" },     title: "Edit data" },
+  delete:   { label: { micro: "D", mini: "Delete", default: "Delete/Remove records"},    title: "Remove records" },
+  sync:     { label: { micro: "R", mini: "Sync",   default: "Sync records"},     title: "Sync records" }
 } as const;
 
 export type  EditedRuleType = keyof typeof TABLE_RULE_LABELS;
@@ -85,6 +86,10 @@ export const TablePermissionControls = (props: TablePermissionControlsProps) => 
     }
     {getKeys(TABLE_RULE_LABELS)
     .map(ruleType => {
+
+      if(ruleType === "sync"){
+        return null;
+      }
 
       const error = tableErrors[ruleType];
       const rule = tableRules[ruleType];
@@ -145,14 +150,14 @@ export const TablePermissionControls = (props: TablePermissionControlsProps) => 
                 onChange({ 
                   [ruleType]: { 
                     forcedFilterDetailed, 
-                    fields: "*" 
+                    fields: "*",
+                    subscribe: {},
                   } 
                 } satisfies { select: SelectRule }) 
               }
             } else {
               onChange({ [ruleType]: !rule })  
             }
-            
           }}
         >
           {TABLE_RULE_LABELS[ruleType].label[variant].toUpperCase()}
@@ -169,7 +174,7 @@ export const TablePermissionControls = (props: TablePermissionControlsProps) => 
           color={error? "danger" : isObject(rule)? "action" : undefined} 
           onClick={() => { 
             setEditedRuleType(ruleType) 
-          }} 
+          }}
         />}
       </div>
     })}

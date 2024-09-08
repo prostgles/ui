@@ -7,9 +7,9 @@ import type { RefreshOptions } from "./W_TableMenu";
 import React from "react";
 import FormField from "../../../components/FormField/FormField";
 
-export const AutoRefreshMenu = ({ w, db }: {w: WindowSyncItem<"sql"> | WindowSyncItem<"map"> | WindowSyncItem<"table">, db?: DBHandlerClient}) => {
+export const AutoRefreshMenu = ({ w, db }: {w: WindowSyncItem<"sql"> | WindowSyncItem<"map"> | WindowSyncItem<"table">  | WindowSyncItem<"timechart">, db?: DBHandlerClient}) => {
   const { refresh } = w.options;
-  const { type = "None", intervalSeconds = 3, throttleSeconds = 0 } = refresh || {};
+  const { type = "None", intervalSeconds = 3, throttleSeconds = 1 } = refresh ?? {};
 
   const update = (r: RefreshOptions["refresh"]) => {
     w.$update({
@@ -28,11 +28,11 @@ export const AutoRefreshMenu = ({ w, db }: {w: WindowSyncItem<"sql"> | WindowSyn
 
   return <div className="flex-col ai-start">
     <ButtonGroup
-      fullOptions={REFRESH_OPTIONS}
+      fullOptions={REFRESH_OPTIONS.filter(o => w.type !== "timechart" || o.key !== "Interval")}
       value={type}
       style={{ marginRight: "40px", marginBottom: "1em" }}
       onChange={type => {
-        update({ type, throttleSeconds: 0, intervalSeconds: 3 })
+        update({ type, throttleSeconds: 1, intervalSeconds: 3 })
       }}
     />
 
@@ -44,7 +44,8 @@ export const AutoRefreshMenu = ({ w, db }: {w: WindowSyncItem<"sql"> | WindowSyn
         type === "Interval" ? "Run the query every N seconds" :
           "Data will not be refreshed"
     }</div>
-    {type === "Interval" && <FormField label="Seconds"
+    {type === "Interval" && 
+    <FormField label="Seconds"
       type="number"
       value={intervalSeconds}
 
@@ -58,12 +59,12 @@ export const AutoRefreshMenu = ({ w, db }: {w: WindowSyncItem<"sql"> | WindowSyn
         }
       }}
     />}
-    {type === "Realtime" && <FormField label="Throttle seconds"
+    {type === "Realtime" && 
+    <FormField label="Throttle seconds"
       type="number"
-
       value={throttleSeconds}
       onChange={throttleSeconds => {
-        update({ type, intervalSeconds, throttleSeconds });
+        update({ type, intervalSeconds, throttleSeconds: +(throttleSeconds || 1) });
       }}
     />}
   </div>
