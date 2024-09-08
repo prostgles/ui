@@ -198,7 +198,7 @@ export let KNDS: Kind = {} as any;
 
 export function registerSuggestions(args: Args) {
   const { suggestions, settingSuggestions, sql, monaco, editor } = args;
-  const s = suggestions;
+  const sqlSuggestions = suggestions;
   KNDS = monaco.languages.CompletionItemKind;
 
   const provideCompletionItems = async (model: editor.ITextModel, position: Position, context: languages.CompletionContext): Promise<{ suggestions: (MonacoSuggestion | languages.CompletionItem)[] }> => {
@@ -230,7 +230,7 @@ export function registerSuggestions(args: Args) {
         return res;
       });
     }
-    const ss = parseSuggestions(s);
+    const ss = parseSuggestions(sqlSuggestions);
 
     const setS = parseSuggestions(settingSuggestions);
     
@@ -293,7 +293,7 @@ export function registerSuggestions(args: Args) {
     provideHover: async function (model, position, token, context) {
       const curWord = model.getWordAtPosition(position);
 
-      if(curWord && s.length){
+      if(curWord && sqlSuggestions.length){
         const startOfWordPosition = new monaco.Position(position.lineNumber, curWord.startColumn);
         const justAfterStartOfWordPosition = new monaco.Position(position.lineNumber, curWord.startColumn + 1);
         const offset = model.getOffsetAt(startOfWordPosition);
@@ -302,7 +302,7 @@ export function registerSuggestions(args: Args) {
         const val = modelValue.slice(0, offset) + " " + modelValue.slice(offset + curWord.word.length);
         const newModel = monaco.editor.createModel(val, LANG);
         const { suggestions } = await provideCompletionItems(
-          newModel, 
+          newModel,
           justAfterStartOfWordPosition, 
           { triggerKind: monaco.languages.CompletionTriggerKind.Invoke, triggerCharacter: " " }
         );
@@ -316,11 +316,28 @@ export function registerSuggestions(args: Args) {
           matches = suggestions.filter(s => (s as ParsedSQLSuggestion).escapedIdentifier?.startsWith(`"`) && (s as ParsedSQLSuggestion).escapedIdentifier?.includes(curWord.word));
         }
         
-        const [_matchingSuggestion, other] = matches;
+        const [_matchingSuggestion, ...otherMatches] = matches;
         // TODO ensure escapeIdentifier works ("table name" ends up as two words (in curWord) and doesn't always match)
         // console.log(curWord.word, _matchingSuggestion, other);
-        const matchingSuggestion = !other? _matchingSuggestion : undefined;
-        const sm = matchingSuggestion ?? s
+        let matchingSuggestion = _matchingSuggestion; 
+        if(otherMatches.length && matchingSuggestion){
+          /** Matched many similar functions. Pick first*/
+          if(otherMatches.every(s => 
+            matchingSuggestion && 
+            "type" in s && 
+            "type" in matchingSuggestion && 
+            "name" in s && 
+            "name" in matchingSuggestion && 
+            s.type === matchingSuggestion.type &&
+            s.type === "function" &&
+            s.name === matchingSuggestion.name
+          )){
+
+          } else {
+            matchingSuggestion = undefined;
+          }
+        }
+        const sm = matchingSuggestion ?? sqlSuggestions
           .find(s => s.type === "keyword" && s.name === curWord.word.toUpperCase());
 
         if(sm){

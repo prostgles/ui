@@ -20,6 +20,21 @@ type P = {
   className?: string;
 }
 
+export const useSetNewWorkspace = (workspace: WorkspaceSyncItem) => {
+  
+  const navigate = useNavigate();
+  const setWorkspace = (w?: Workspace) => {
+    if(w?.id && w.id === workspace.id){
+      return;
+    }
+    const path = ["/connections", `${w?.connection_id}?workspaceId=${w?.id}`].filter(v => v).join("/");
+    
+    navigate(path);
+  }
+
+  return { setWorkspace }
+}
+
 export const WorkspaceMenu = (props: P) => {
   const { workspace, className, prgl: { dbs, dbsTables, dbsMethods, user } } = props;
   const listRef = useRef<HTMLDivElement>(null);
@@ -28,7 +43,7 @@ export const WorkspaceMenu = (props: P) => {
     { connection_id: workspace.connection_id, deleted: false },
     { handlesOnData: true, select: "*", patchText: false }
   );
-
+  const { setWorkspace } = useSetNewWorkspace(workspace);
   const userId = user?.id;
   const isAdmin = user?.type === "admin";
   const workspaces = useMemo(() => {
@@ -45,15 +60,6 @@ export const WorkspaceMenu = (props: P) => {
       }));
   }, [unsortedWorkspaces, userId]);
 
-  const navigate = useNavigate();
-  const setWorkspace = (w?: Workspace) => {
-    if(w?.id && w.id === props.workspace.id){
-      return;
-    }
-    const path = ["/connections", `${w?.connection_id}?workspaceId=${w?.id}`].filter(v => v).join("/");
-    
-    navigate(path);
-  }
 
   const WorkspaceMenuDropDown = <PopupMenu
     title="Workspaces"
@@ -167,13 +173,13 @@ export const WorkspaceMenu = (props: P) => {
   const renderedWorkspaces = window.isLowWidthScreen? workspaces.filter(w => w.id === workspace.id) : workspaces;
   return <FlexRow
     ref={listRef}
-    className={classOverride("WorkspaceMenu as-end jc-center text-white ai-start f-1  min-w-0 o-auto h-fit", className)} 
+    className={classOverride("WorkspaceMenu as-end jc-center text-white ai-end f-1  min-w-0 o-auto h-fit", className)} 
     style={{ 
       gap: "1px",
     }}
   >
     <ul 
-      className={"o-auto f-1 min-w-0 max-w-fit flex-row no-scroll-bar "} 
+      className={"o-auto f-1 min-w-0 max-w-fit flex-row no-scroll-bar ai-end"} 
       onWheel={onWheelScroll()}
     >
       {renderedWorkspaces.map(w => 
@@ -181,6 +187,10 @@ export const WorkspaceMenu = (props: P) => {
           className={"workspace-list-item text-1 relative " + (workspace.id === w.id? "active" : "")}
         >
           <Btn
+            iconProps={w.published? {
+              title: "Shared workspace" + (w.isMine? "" : " (readonly)"),
+              path: mdiAccountMultiple
+            } : undefined}
             style={{
               padding: "16px",
               borderBottomStyle: "solid",

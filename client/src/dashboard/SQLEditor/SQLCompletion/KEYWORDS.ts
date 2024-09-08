@@ -323,11 +323,9 @@ https://www.postgresql.org/docs/current/queries-with.html
 \`\`\`sql
 WITH cte1 AS (SELECT * FROM orders)
 , cte2 AS (SELECT * FROM customers)
-
 SELECT *
-FROM
-  cte1 c1
-  INNER JOIN cte2 c2
+FROM cte1 c1
+INNER JOIN cte2 c2
   ON ........
 
 \`\`\`

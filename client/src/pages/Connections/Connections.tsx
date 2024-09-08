@@ -106,7 +106,7 @@ export class Connections extends RTComp<PrglState, S> {
 
     const isAdmin = user.type === "admin";
 
-    const showStateConn = user.options?.showStateDB;
+    const showStateConn = user.options?.showStateDB ?? true;
 
     const canViewStateDB = !!connections.length && connections.some(c => "is_state_db" in c && c.is_state_db);
 

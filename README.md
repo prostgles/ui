@@ -30,23 +30,52 @@ SQL Editor and internal tool builder for Postgres
 * LISTEN NOTIFY support
 
 
-### Installation
+### Installation - Docker compose (recommended)
 
 Download the source code:
-```
+```sh
 git clone https://github.com/prostgles/ui.git
 cd ui
 ```
 
-Docker setup. By default the app will be accessible at localhost:3004
-```
+Docker setup. By default the app will be accessible at [localhost:3004](http://localhost:3004)
+```sh
 docker compose up 
 ```
 
 To use a custom port (3099 for example) and/or a custom binding address (0.0.0.0 for example):
-```
+```sh
 PRGL_DOCKER_IP=0.0.0.0 PRGL_DOCKER_PORT=3099 docker compose up 
 ```
+
+### Installation - use existing PostgreSQL instance
+
+Use this method if you want to use your existing database to store Prostgles metadata
+
+Download the source code:
+```sh
+git clone https://github.com/prostgles/ui.git prostgles
+cd prostgles
+```
+
+Build and run our docker image (172.17.0.1 is used to connect to localhost):
+
+```docker-run.sh
+docker build -t prostgles .
+docker run -d -p 127.0.0.1:3004:3004 \
+  -e POSTGRES_HOST=172.17.0.1 \
+  -e POSTGRES_PORT=5432 \
+  -e POSTGRES_DB=postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e PROSTGLES_UI_HOST=0.0.0.0 \
+  -e IS_DOCKER=yes \
+  -e NODE_ENV=production \
+  prostgles
+
+```
+
+Your server will be running on [localhost:3004](http://localhost:3004).
 
 ### Development
 
@@ -54,7 +83,7 @@ PRGL_DOCKER_IP=0.0.0.0 PRGL_DOCKER_PORT=3099 docker compose up
 - [NodeJS](https://nodejs.org/en/download)
 - [Postgres](https://www.postgresql.org/download/): For full features **postgresql-15-postgis-3** is recommended
 
-#### 2. Create a database and user for the dashboard, ensuring `.env` has the apropriate values
+#### 2. Create a database and user update `.env`. All prostgles state and metadata will be stored in this database
 
     sudo su - postgres
     createuser --superuser usr

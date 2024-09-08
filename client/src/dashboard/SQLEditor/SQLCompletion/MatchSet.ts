@@ -52,20 +52,28 @@ export const MatchSet: SQLMatcher = {
       const settingInfo = settingSuggestions.find(s => s.name === cb.identifiers.at(-1))?.settingInfo;
       const docs = settingInfo?.description;
       const getVal = (v = "") => settingInfo?.unit? `'${v}${settingInfo.unit}'` : v;
-      return suggestSnippets([
-        { label: "DEFAULT", docs }, // docs: `${settingInfo?.reset_val ?? ""}${settingInfo?.unit ?? ""} \n\n${docs}`
+      const valueSuggestions = suggestSnippets([
+        { label: "DEFAULT", docs },  
         ...(
           settingInfo?.vartype === "bool"? [{ label: `ON`, docs }, { label: `OFF`, docs }] : 
-          settingInfo?.vartype === "string"? [
-            { label: "'$setting_string_value'", docs }
-          ] : 
+          settingInfo?.vartype === "string"? [{ label: "'$setting_string_value'", docs }] : 
           settingInfo?.vartype === "integer"? [
             { label: settingInfo.setting_pretty?.min_val ?? getVal(settingInfo.min_val), kind: KNDS.Value, docs: "Minimum value" + `\n\n${docs}` }, 
             { label: settingInfo.setting_pretty?.max_val ?? getVal(settingInfo.max_val), kind: KNDS.Value, docs: "Maximum value" + `\n\n${docs}` }
           ] : 
-          settingInfo?.enumvals?.length? settingInfo.enumvals.map(label => ({ label, docs: (settingInfo.reset_val === label? "Default" : "") + + `\n\n${docs}` })) : 
-        []),
-      ])
+          settingInfo?.enumvals?.length? settingInfo.enumvals
+            .map(label => {
+              const isDefault = settingInfo.reset_val === label;
+              return { 
+                label: { label, description: isDefault? "DEFAULT" : undefined }, 
+                docs
+              }
+            }) : 
+          []
+        ),
+      ]);
+
+      return valueSuggestions;
     }
     const extraSettings = [
       { label: "SESSION", expects: "setting", docs: `Specifies that the command takes effect for the current session. (This is the default if neither SESSION nor LOCAL appears.)` },

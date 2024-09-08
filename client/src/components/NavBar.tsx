@@ -60,15 +60,6 @@ export const NavBar = (props: P) => {
           className="prgl-brand-icon flex-row ai-center jc-center"
         >
           <img className="p-p5 px-1 mr-2 " src="/prostgles-logo.svg"/>
-          {serverState?.isDemoMode && user?.type === "admin" && <div className="DemoMode rounded text-action b b-action px-p75 py-p5 mr-1" 
-            onClick={async () => {
-              if(!dbs || !dbsMethods) return;
-              const con = await dbs.connections.findOne({ db_name: "sales" });
-              if(!con) return;
-              dbsMethods.makeFakeData!(con.id);
-            }}
-          >Demo mode</div>}
-          {serverState?.isDemoMode && user?.passwordless_admin && <InfoRow color="danger">MUST DISABLE PASSWORDLESS ADMIN!!!</InfoRow>}
         </NavLink>}
 
         <div className={"flex-col " + (serverState?.isElectron? "f-0 ml-auto jc-center" : "f-1")}>

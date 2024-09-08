@@ -3,6 +3,7 @@ import type { Prgl } from "../../App";
 import { FlexCol } from "../../components/Flex";
 import { SmartCodeEditor } from "../CodeEditor/SmartCodeEditor";
 import { ProcessLogs } from "./ProcessLogs";
+import { SwitchToggle } from "../../components/SwitchToggle";
 
 type P = {
   prgl: Prgl;
@@ -17,6 +18,13 @@ export const TableConfig = ({ prgl: { dbs, connectionId, dbsMethods } }: P) => {
     <p className="m-0 p-0">
       Table definitions and lifecycle methods that will be synced to schema
     </p>
+    <SwitchToggle
+      label="Enabled"
+      checked={!!dbConf.table_config_ts && !dbConf.table_config_ts_disabled}
+      onChange={async (checked) => {
+        await dbsMethods.setTableConfig?.(connectionId, { table_config_ts_disabled: !checked });
+      }}
+    />
     <SmartCodeEditor
       key={"tableConfig"}
       label="Table Config"
@@ -28,7 +36,7 @@ export const TableConfig = ({ prgl: { dbs, connectionId, dbsMethods } }: P) => {
       codePlaceholder={exampleConfig}
       value={dbConf.table_config_ts}
       onSave={async (value) => {
-        await dbsMethods.setOnMountAndTableConfig?.(connectionId, { table_config_ts: value });
+        await dbsMethods.setTableConfig?.(connectionId, { table_config_ts: value, table_config_ts_disabled: !value });
       }}
 
     />

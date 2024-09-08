@@ -130,6 +130,7 @@ export type ConnectionStatus = {
     connections: PG_STAT_DATABASE[];
     maxConnections: number;
     noBash: boolean;
+    getPidStatsErrors: Partial<Record<string, any>>;
     serverStatus?: ServerStatus;
 };
 export type SampleSchema = {
@@ -164,4 +165,6 @@ export type ColType = {
 export declare const RELOAD_NOTIFICATION = "Prostgles UI accessible at";
 export declare function throttle<Params extends any[]>(func: (...args: Params) => any, timeout: number): (...args: Params) => void;
 export declare const SPOOF_TEST_VALUE = "trustme";
+export declare const getEntries: <T extends AnyObject>(obj: T) => [keyof T, T[keyof T]][];
+export declare const CONNECTION_CONFIG_SECTIONS: readonly ["access_control", "backups", "table_config", "details", "status", "methods", "file_storage", "API"];
 export {};

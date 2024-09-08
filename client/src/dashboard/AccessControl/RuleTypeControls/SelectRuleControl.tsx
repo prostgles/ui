@@ -12,6 +12,7 @@ import { FilterControl } from "../OptionControllers/FilterControl";
 import type { TablePermissionControlsProps } from "../TableRules/TablePermissionControls";
 import { ExampleComparablePolicy } from "./ExampleComparablePolicy";
 import { RuleToggle } from "./RuleToggle";
+import { SwitchToggle } from "../../../components/SwitchToggle";
 
 export type SelectRuleControlProps = Pick<Required<TablePermissionControlsProps>, "prgl" | "table"> & {
   tableRules: TableRules;
@@ -24,7 +25,7 @@ export type SelectRuleControlProps = Pick<Required<TablePermissionControlsProps>
 export const SelectRuleControl = ({ tableRules, onChange, table, prgl, contextDataSchema: contextData, userTypes }: SelectRuleControlProps) => {
   const {db, methods: dbMethods, tables} = prgl;
   const rawRule = tableRules["select"];
-  const rule: SelectRule | undefined = rawRule === true? { fields: "*" } : isObject(rawRule)? rawRule : undefined;
+  const rule: SelectRule | undefined = rawRule === true? { fields: "*", subscribe: {} } : isObject(rawRule)? rawRule : undefined;
   const [filterErr, setFilterError] = useState<string | undefined>();
   const error = getSelectRuleError({ table, tableRules, prgl }) ?? filterErr;
 
@@ -36,7 +37,13 @@ export const SelectRuleControl = ({ tableRules, onChange, table, prgl, contextDa
       }}
     />
     {rule && <FlexCol className="gap-2">
-        
+      <SwitchToggle 
+        label={{ label: "Allow subscribe", variant: "header" }}
+        checked={!!rule.subscribe}
+        onChange={allowSubscribe => {
+          onChange({ ...rule, subscribe: allowSubscribe? {} : undefined });
+        }}
+      />
       <FieldFilterControl 
         iconPath={mdiTextBoxSearchOutline}
         title="SELECT fields"

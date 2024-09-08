@@ -13,11 +13,11 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       created?: null | string;
-      database_id: number;
+      database_id?: null | number;
       dbPermissions: 
        |  {  type: 'Run SQL';  allowSQL?: boolean; }
        |  {  type: 'All views/tables';  allowAllTables: ("select" | "insert" | "update" | "delete")[]; }
-       |  {  type: 'Custom';  customTables: (  {  tableName: string;  select?: | boolean |  {  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any;  filterFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  orderByFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>; };  update?: | boolean |  {  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any;  checkFilterDetailed?: any;  filterFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  orderByFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedDataDetail?: any[];  dynamicFields?: (  {  filterDetailed: any;  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>; } )[]; };  insert?: | boolean |  {  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedDataDetail?: any[];  checkFilterDetailed?: any; };  delete?: | boolean |  {  filterFields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any; }; } )[]; }
+       |  {  type: 'Custom';  customTables: (  {  tableName: string;  select?: | boolean |  {  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any;  subscribe?: {  throttle?: number; };  filterFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  orderByFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>; };  update?: | boolean |  {  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any;  checkFilterDetailed?: any;  filterFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  orderByFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedDataDetail?: any[];  dynamicFields?: (  {  filterDetailed: any;  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>; } )[]; };  insert?: | boolean |  {  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedDataDetail?: any[];  checkFilterDetailed?: any; };  delete?: | boolean |  {  filterFields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any; };  sync?: {  id_fields: string[];  synced_field: string;  throttle?: number;  allow_delete?: boolean; }; } )[]; }
       dbsPermissions?: null | {    createWorkspaces?: boolean;   viewPublishedWorkspaces?: {  workspaceIds: string[]; };  };
       id?: number;
       name?: null | string;
@@ -65,11 +65,13 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
+      connection_id?: null | string;
       created?: null | string;
       data?: null | any;
       database_config_id?: null | number;
       id?: string;
       message?: null | string;
+      section?: null | "access_control" | "backups" | "table_config" | "details" | "status" | "methods" | "file_storage" | "API"
       severity: "info" | "warning" | "error"
       title?: null | string;
     };
@@ -402,7 +404,7 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      application_name?: null | string;
+      application_name: string;
       backend_start?: null | string;
       backend_type?: null | string;
       backend_xid?: null | string;
@@ -422,7 +424,7 @@ export type DBSchemaGenerated = {
       memPretty?: null | string;
       mhz?: null | string;
       pid: number;
-      query?: null | string;
+      query: string;
       query_start?: null | string;
       state?: null | string;
       state_change?: null | string;
@@ -450,7 +452,6 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      description?: null | string;
       id: string;
     };
   };

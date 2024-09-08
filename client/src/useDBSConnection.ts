@@ -54,7 +54,6 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
         initError,
         isElectron: false,
         canDumpAndRestore: undefined,
-        isDemoMode: false,
       }
       console.error(initError)
     }

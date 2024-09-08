@@ -172,6 +172,7 @@ export type ConnectionStatus = {
   connections: PG_STAT_DATABASE[];
   maxConnections: number;
   noBash: boolean;
+  getPidStatsErrors: Partial<Record<string, any>>;
   serverStatus?: ServerStatus;
 }
 
@@ -249,3 +250,7 @@ export function throttle<Params extends any[]>(
 }
 
 export const SPOOF_TEST_VALUE = "trustme";
+
+export const getEntries = <T extends AnyObject>(obj: T) => Object.entries(obj) as [keyof T, T[keyof T]][];
+
+export const CONNECTION_CONFIG_SECTIONS = ["access_control", "backups", "table_config", "details", "status", "methods", "file_storage", "API"] as const;

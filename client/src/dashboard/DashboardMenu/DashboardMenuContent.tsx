@@ -16,6 +16,9 @@ import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuResizer } from "./DashboardMenuResizer";
 import { NewTableMenu } from "./NewTableMenu";
 import type { TablesWithInfo } from "./useTableSizeInfo";
+import Btn from "../../components/Btn";
+import { WorkspaceAddBtn } from "../WorkspaceMenu/WorkspaceAddBtn";
+import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
 
 type P = DashboardMenuProps & {
   onClose: undefined | VoidFunction;
@@ -30,11 +33,12 @@ export const DashboardMenuContent = (props: P) => {
     workspace, 
     prgl, queries, onClose, onClickSearchAll, tablesWithInfo
   } = props;
-  const { db, methods, theme } = prgl;
+  const { db, methods, theme, user } = prgl;
   const closedQueries = queries.filter(q => q.closed);
 
   const smallScreen = window.innerHeight < 1200;
   const pinnedMenu = getIsPinnedMenu(workspace);
+  const isPublishedReadonlyWorkspace = workspace.published && workspace.user_id !== user?.id;
 
   const { centeredLayout } = useLocalSettings();
   const maxWidth = centeredLayout?.enabled? ((window.innerWidth - centeredLayout.maxWidth)/2) + "px" : "50vw";
@@ -47,6 +51,7 @@ export const DashboardMenuContent = (props: P) => {
     ...methods[methodName] as MethodFullDef
   }));
 
+  const { setWorkspace } = useSetNewWorkspace(workspace);
   const [showSchemaDiagram, setShowSchemaDiagram] = useState(false);
 
   const ref = useRef<HTMLDivElement>(null);
@@ -69,7 +74,33 @@ export const DashboardMenuContent = (props: P) => {
         onClose?.()
       }
     }}
-  > {showSchemaDiagram && <Popup 
+  > 
+    {isPublishedReadonlyWorkspace && 
+      <FlexCol
+        className="jc-center ai-center bg-color-1 p-1"
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 1,
+          backdropFilter: "blur(2px)",
+        }}
+      >
+        <div>
+          This is a read-only published workspace. 
+          Create your own workspace to open new views.
+        </div>
+        <WorkspaceAddBtn
+          connection_id={workspace.connection_id}
+          dbs={prgl.dbs}
+          setWorkspace={setWorkspace}
+          btnProps={{
+            children: "Create new workspace",
+            size: undefined
+          }}
+        />
+      </FlexCol>
+    }
+    {showSchemaDiagram && <Popup 
       title="Schema diagram"
       positioning="top-center" 
       onClose={() => setShowSchemaDiagram(false)}
