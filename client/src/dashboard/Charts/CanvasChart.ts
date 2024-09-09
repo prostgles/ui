@@ -388,20 +388,28 @@ export class CanvasChart {
     };
   }
 
+  measureTextCache: Map<string, TextMeasurement> = new Map();
   measureText = (s: ChartedText): TextMeasurement => {
     const {ctx} = this;
     if(!ctx) throw "No ctx";
+    const { textAlign = "", text = "", font = "" } = s;
+    const key = [textAlign, text.length, font].join(";");
+    const cached = this.measureTextCache.get(key);
+    if(cached) return cached;
     ctx.fillStyle = s.fillStyle;
     ctx.textAlign = s.textAlign ?? ctx.textAlign;
     ctx.font = s.font || ctx.font;
     const metrics = ctx.measureText(s.text);
+
     const fontHeight = metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent; 
     const actualHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-    return {
+    const result = {
       width: metrics.width,
       fontHeight,
       actualHeight
     };
+    this.measureTextCache.set(key, result);
+    return result;
   }
 
   private parseData(_shapes: (Shape | GetShapes)[]): Shape[] {

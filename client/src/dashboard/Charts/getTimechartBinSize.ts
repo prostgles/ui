@@ -10,21 +10,37 @@ type Bin = {
 const hourIncrements = [8, 4, 2] as const;
 const smIncrements = [30, 15, 5] as const;
 const millisecondIncrements = [500, 250, 100, 10, 5] as const;
-type SizePart = { size: number; increment: number};
+type SizePart = { size: number; increment: number; unit: "year" | "month" | "week" | "day" | "hour" | "minute" | "second" | "millisecond"; };
 
 export const MainTimeBinSizes = {
-  year:   { size: YEAR, increment: 1 }, 
-  month:  { size: YEAR/12, increment: 1 }, 
-  week:   { size: DAY * 7, increment: 1 }, 
-  day:    { size: DAY, increment: 1 },
-  ...Object.fromEntries(hourIncrements.map(val => [`${val}hour`, { size: HOUR * val, increment: val }])) as Record<`${typeof hourIncrements[number]}hour`, SizePart>,
-  hour: { size: HOUR, increment: 1 },
-  ...Object.fromEntries(smIncrements.map(val => [`${val}minute`, { size: MINUTE * val, increment: val }])) as Record<`${typeof smIncrements[number]}minute`, SizePart>,
-  minute: { size: MINUTE, increment: 1 },
-  ...Object.fromEntries(smIncrements.map(val => [`${val}second`, { size: SECOND * val, increment: val }])) as Record<`${typeof smIncrements[number]}second`, SizePart>,
-  second: { size: SECOND, increment: 1 },
-  ...Object.fromEntries(millisecondIncrements.map(val => [`${val}millisecond`, { size: MILLISECOND * val, increment: val }])) as Record<`${typeof millisecondIncrements[number]}millisecond`, SizePart>,
-  millisecond: { size: MILLISECOND, increment: 1 },
+  year:   { size: YEAR, increment: 1, unit: "year" }, 
+  month:  { size: YEAR/12, increment: 1, unit: "month" }, 
+  week:   { size: DAY * 7, increment: 1, unit: "week" }, 
+  day:    { size: DAY, increment: 1, unit: "day" },
+  ...Object.fromEntries(hourIncrements.map(val => 
+    [
+      `${val}hour`, 
+      { size: HOUR * val, increment: val, unit: "hour" }
+    ])) as Record<`${typeof hourIncrements[number]}hour`, SizePart>,
+  hour: { size: HOUR, increment: 1, unit: "hour" },
+  ...Object.fromEntries(smIncrements.map(val => 
+    [
+      `${val}minute`, 
+      { size: MINUTE * val, increment: val, unit: "minute" }
+    ])) as Record<`${typeof smIncrements[number]}minute`, SizePart>,
+  minute: { size: MINUTE, increment: 1, unit: "minute" },
+  ...Object.fromEntries(smIncrements.map(val => 
+    [
+      `${val}second`, 
+      { size: SECOND * val, increment: val, unit: "second" }
+    ])) as Record<`${typeof smIncrements[number]}second`, SizePart>,
+  second: { size: SECOND, increment: 1, unit: "second" },
+  ...Object.fromEntries(millisecondIncrements.map(val => 
+      [
+        `${val}millisecond`, 
+        { size: MILLISECOND * val, increment: val, unit: "millisecond" }
+      ])) as Record<`${typeof millisecondIncrements[number]}millisecond`, SizePart>,
+  millisecond: { size: MILLISECOND, increment: 1, unit: "millisecond" },
 } as const satisfies Record<string, SizePart>;
 
 
