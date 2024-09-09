@@ -58,6 +58,8 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
     skip: !pathAndCon?.path,
   });
 
+  /** TODO: fix hacky null as skip */
+  const { data: connection } = prglState.dbs.connections.useSubscribeOne(pathAndCon?.con? { id: connId } : { id: null as any });
   const dashboardDbState: undefined | PrglProjectState = usePromise(async () => {
 
     try {
@@ -92,7 +94,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
         const prglProject: PrglProject = {
           dbKey: "db-onReady-" + Date.now(),
           connectionId: con.id,
-          connection: con,
+          connection: connection ?? con,
           databaseId: dbConf.id,
           db: thisIstheStateDB ? (dbs as any) : db,
           tables: thisIstheStateDB ? dbsTables : dbTables,
@@ -115,7 +117,6 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
     } catch (error) {
       return { error, state: "error" } as const;
     }
-  }, [prglState, dbPrgl, pathAndCon]);
-  
+  }, [prglState, dbPrgl, pathAndCon, connection]);
   return dashboardDbState ?? { state: "loading" };
 }

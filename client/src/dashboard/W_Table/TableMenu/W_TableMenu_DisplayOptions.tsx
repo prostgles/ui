@@ -4,10 +4,11 @@ import FormField from "../../../components/FormField/FormField";
 import { ColumnSelect } from "../ColumnMenu/ColumnSelect";
 import Select from "../../../components/Select/Select";
 import { includes } from "../../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import { IconPalette } from "../../../components/IconPalette/IconPalette";
 
 type P = W_TableMenuProps;
 
-export const W_TableMenu_DisplayOptions = ({ w, workspace, prgl: { tables } }: P) => {
+export const W_TableMenu_DisplayOptions = ({ w, workspace, prgl: { tables, connection, dbs } }: P) => {
 
   const tableName = w.table_name;
   if (!tableName) return null;
@@ -17,6 +18,29 @@ export const W_TableMenu_DisplayOptions = ({ w, workspace, prgl: { tables } }: P
 
   return <div className="flex-col gap-1 ai-start mb-1 f-1 o-auto p-p25 ">
 
+    <IconPalette 
+      label={{
+        label: "Icon",
+        variant: "normal",
+        style: {
+          marginBottom: "4px"
+        }
+      }}
+      iconName={connection.table_options?.[w.table_name]?.icon}
+      onChange={icon => {
+        dbs.connections.update({ id: connection.id }, 
+          { 
+            table_options: {
+              ...(connection.table_options ?? {}),
+              [w.table_name]: {
+                ...connection.table_options?.[w.table_name],
+                icon: icon ?? undefined
+              }
+            } 
+          }
+        )
+      }}
+    />
     <FormField className="w-fit f-0" type="checkbox"
       label={{
         label: "Hide top count",

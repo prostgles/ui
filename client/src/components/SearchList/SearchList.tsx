@@ -158,7 +158,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
   static getMatch = (args: { ranking?: number; term: string, text: string, key?: any, subLabel?: string; matchCase?: boolean; style?: React.CSSProperties; subLabelStyle?: React.CSSProperties; rootStyle?: React.CSSProperties; }): { node: React.ReactNode; rank: number } => {
 
     const getNode = (r: { ranking?: number; term: string, text: string, key?: any, isSublabel?: boolean, matchCase?: boolean; style?: React.CSSProperties; }) => {
-      const { term , text , key , isSublabel = false, matchCase = false } = r;
+      const { term , text , key , isSublabel = false, matchCase = false, } = r;
       const style: React.CSSProperties = !isSublabel? {
         fontSize: "18px",
         fontWeight: term? undefined : 500,
@@ -197,9 +197,9 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
             label = label.split("\n").join(" ");
           }
           const shortenText = label.length > 40;
-          node = <div className="flex-col  f-1" style={rootStyle} title={text}>
+          node = <div className="MatchRoot flex-col  f-1" style={rootStyle} title={text}>
             {prevLines !== undefined && prevLines.length > 0 && <span className="f-0 text-2 text-ellipsis">{prevLines.join("\n")}</span>}
-            <div className="flex-row f-1" >
+            <div className="MatchRow flex-row f-1" >
               <span className={`${shortenText? "f-1" : "f-0"} ta-right search-text-endings text-ellipsis`} style={{maxWidth: "fit-content"}}>{label.slice(0, idx)}</span> 
               <strong className="f-0 search-text-match">{label.slice(idx, idx + strm.length)}</strong>
               <span className={`${shortenText? "f-1" : "f-0"} f-1 search-text-endings text-ellipsis`}>{label.slice(idx + strm.length)}</span>

@@ -102,29 +102,41 @@ export function onRenderTimechart (this: TimeChart, delta: Partial<TimeChartProp
         let barWidth = ((xMax/circles.length) - circles.length);
         const xScale = this.data?.xScale.copy().clamp(false);
         // TODO: Fix bars too wide at high zoom
-        if(this.props.binSize && xScale){
-          const [leftDomain] = xScale.domain()
-          barWidth = xScale(leftDomain! + this.props.binSize) - xScale(leftDomain!) - 2; 
+        const [leftDomain, rightDomain] = xScale?.domain() ?? [];
+        if(this.props.binSize && xScale && isDefined(leftDomain) && isDefined(rightDomain)){ 
+          let actualBinSize = this.props.binSize;
+          circles.forEach((c, i) => {
+            const prevC = circles[i-1];
+            if(prevC){
+              actualBinSize = Math.min(actualBinSize, c.data?.date - prevC.data?.date);
+            }
+          });
+          // const bins = Math.round((rightDomain - leftDomain) / actualBinSize);
+          barWidth = xScale(leftDomain! + actualBinSize) - xScale(leftDomain!) ; 
         }
-        const barWidthRounded = Math.max(2, barWidth);
+        const barWidthRounded = .9 * barWidth; //Math.max(2, barWidth);
         const halfBarWidth = Math.round(barWidthRounded/2);
 
         const showBinLabels = this.props.showBinLabels && this.props.showBinLabels !== "off"? this.props.showBinLabels : undefined;
  
-        const getBars = () => circles.flatMap(c=> {
-          const r: Rectangle = {
-            ...c,
-            coords: [
-              c.coords[0] - halfBarWidth,
-              c.coords[1]
-            ],
-            type: "rectangle",
-            w: barWidthRounded,
-            h: yMax - c.coords[1],
-          }
+        const getBars = () => {
+          const bars = circles.flatMap(c=> {
+            const r: Rectangle = {
+              ...c,
+              coords: [
+                c.coords[0] - halfBarWidth,
+                c.coords[1]
+              ],
+              type: "rectangle",
+              w: barWidthRounded,
+              h: yMax - c.coords[1],
+            }
 
-          return r;
-        });
+            return r;
+          });
+          //.filter(r => r.coords[0] >= 0 && r.coords[0] <= xMax);
+          return bars;
+        }
 
         const labels = getBinValueLabels({ circles, showCircles, binValueLabelMaxDecimals, renderStyle, showBinLabels })
         const finalShapes = renderStyle === "bars"? getBars() : showCircles? circles : lines;

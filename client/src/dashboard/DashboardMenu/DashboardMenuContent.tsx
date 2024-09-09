@@ -10,15 +10,15 @@ import Popup from "../../components/Popup/Popup";
 import SearchList from "../../components/SearchList/SearchList";
 import { getIsPinnedMenu } from "../Dashboard/Dashboard";
 import { SchemaGraph } from "../SchemaGraph/SchemaGraph";
+import { WorkspaceAddBtn } from "../WorkspaceMenu/WorkspaceAddBtn";
+import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
 import { useLocalSettings } from "../localSettings";
 import type { DashboardMenuProps, DashboardMenuState } from "./DashboardMenu";
 import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuResizer } from "./DashboardMenuResizer";
 import { NewTableMenu } from "./NewTableMenu";
 import type { TablesWithInfo } from "./useTableSizeInfo";
-import Btn from "../../components/Btn";
-import { WorkspaceAddBtn } from "../WorkspaceMenu/WorkspaceAddBtn";
-import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
+import { SvgIcon } from "../../components/SvgIcon";
 
 type P = DashboardMenuProps & {
   onClose: undefined | VoidFunction;
@@ -33,7 +33,7 @@ export const DashboardMenuContent = (props: P) => {
     workspace, 
     prgl, queries, onClose, onClickSearchAll, tablesWithInfo
   } = props;
-  const { db, methods, theme, user } = prgl;
+  const { db, methods, theme, user, connection } = prgl;
   const closedQueries = queries.filter(q => q.closed);
 
   const smallScreen = window.innerHeight < 1200;
@@ -57,7 +57,8 @@ export const DashboardMenuContent = (props: P) => {
   const ref = useRef<HTMLDivElement>(null);
  
   const ensureFadeDoesNotShowForOneItem = { minHeight: "40px" };
-  const bgColorClass = (theme === "light" || !pinnedMenu)? "bg-color-0" : "bg-color-1"
+  const bgColorClass = (theme === "light" || !pinnedMenu)? "bg-color-0" : "bg-color-1";
+
   return <FlexCol 
     className={"DashboardMenuContent relative f-1 min-h-0 " + bgColorClass + (window.isMobileDevice? " p-p25 " : " p-1  " )}
     ref={ref}
@@ -162,7 +163,10 @@ export const DashboardMenuContent = (props: P) => {
               <div className="flex-col ai-start f-0 mr-p5 text-1"
                 { ...(t.info.isFileTable? dataCommand("dashboard.menu.fileTable") : {})}
               >
-                <Icon path={t.info.isFileTable? mdiFile : db[t.name]?.insert? mdiTableEdit : mdiTable} size={1} />
+                {connection.table_options?.[t.name]?.icon?
+                  <SvgIcon icon={connection.table_options[t.name]!.icon!} /> :
+                  <Icon path={t.info.isFileTable? mdiFile : db[t.name]?.insert? mdiTableEdit : mdiTable} size={1} />
+                }
               </div>
             ),
             key: t.name,

@@ -34,9 +34,12 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
   
   const {windows, links} = getLinksAndWindows();
   const lq = getTimeChartLayer({ active_row: undefined, link, windows, links, myLinks, w }).find(l => l.dateColumn === column);
-
+  const parentW = windows.find(_w => _w.id !== w.id && [link.w1_id , link.w2_id].includes(_w.id));
   const table = lq?.type === "table"? tables.find(t => t.name === lq.tableName) : undefined;
-  const numericCols = table?.columns.filter(c => _PG_numbers.includes(c.udt_name as any)) || [];
+  const numericCols = (
+    parentW?.type === "sql"? (parentW.options.sqlResultCols ?? []) : 
+    parentW?.type === "table"? table?.columns : []
+  )?.filter(c => _PG_numbers.includes(c.udt_name as any)) ?? [];
   const statType = colOpts.statType ?? { funcName: "$countAll", numericColumn: undefined };
   const linkOpts = link.options;
   if(linkOpts.type !== "timechart"){

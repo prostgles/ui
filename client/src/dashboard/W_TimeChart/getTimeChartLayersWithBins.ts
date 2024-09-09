@@ -17,16 +17,23 @@ export const getTimeChartFilters = (w: WindowData<"timechart"> | WindowSyncItem<
   ] : [];
 }
 
-export type TimeChartLayerWithBin = (ProstglesTimeChartLayer & {
-  request: {
-    min: Date; 
-    max: Date; 
-    dateExtent: number;
-    finalFilter: AnyObject;
-    dataSignature: string; 
-    tableFilters: AnyObject;
-  }
-});
+export type TimeChartLayerWithBin = ProstglesTimeChartLayer & (
+  {
+    hasError?: false;
+    request: {
+      min: Date; 
+      max: Date; 
+      dateExtent: number;
+      finalFilter: AnyObject;
+      dataSignature: string; 
+      tableFilters: AnyObject;
+    } 
+  } | {
+    hasError: true;
+    error: any;
+    request?: undefined;
+  } 
+);
 
 async function getTimeChartLayerWithBin(this: W_TimeChart, layer: ProstglesTimeChartLayer){
   const { prgl: { db } } = this.props;
@@ -169,7 +176,7 @@ export async function getTimeChartLayersWithBins (this: W_TimeChart){
   layerExtentBins = (await Promise.all(
     activeLayers
       .map(async layer => {
-        const { layerWithBin, duration, hasError } = await tryCatch(async () => {
+        const { layerWithBin, error, hasError } = await tryCatch(async () => {
           const layerWithBin = await getTimeChartLayerWithBin.bind(this)(layer);
           return { layerWithBin }
         });
@@ -177,7 +184,8 @@ export async function getTimeChartLayersWithBins (this: W_TimeChart){
         if(hasError && layerSubscription){
           layerSubscription.isLoading = false;
         }
-        return hasError? undefined : layerWithBin;
+
+        return hasError? { ...layer, hasError, error } : layerWithBin;
       })
     )
 

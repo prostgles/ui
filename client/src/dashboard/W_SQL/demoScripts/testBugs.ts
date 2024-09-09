@@ -1,8 +1,23 @@
+import { click, getElement, waitForElement } from "../../../demo/demoUtils";
 import { fixIndent } from "../../../demo/sqlVideoDemo";
 import { tout } from "../../../pages/ElectronSetup";
 import type { DemoScript } from "../getDemoUtils";
 
-export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL }) => {
+export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL, runSQL }) => {
+
+  /** Timechart works with codeblocks */
+  await fromBeginning(false, "SELECT now(), 3; \n\nselect 1");
+  await moveCursor.up(3);
+  await runSQL();
+  await click("AddChartMenu.Timechart");
+  await tout(2e3);
+  const tchartNode = await waitForElement("W_TimeChart", undefined, { timeout: 2e3 });
+  console.log(tchartNode)
+  const dataItems = (tchartNode as any)._renderedData as any[];
+  if(!dataItems.length){
+    throw "Timechart not working";
+  }
+  await click("dashboard.window.closeChart");
 
   const lateralJoin = fixIndent(`
     SELECT *

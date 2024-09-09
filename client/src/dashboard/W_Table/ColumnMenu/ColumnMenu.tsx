@@ -19,7 +19,7 @@ import Tabs from "../../../components/Tabs";
 
 import type { TIMECHART_STAT_TYPES, TimechartRenderStyle } from "../../W_TimeChart/W_TimeChartMenu";
 import { AlterColumn } from "./AlterColumn/AlterColumn";
-import type { BarchartStyle, ConditionalStyle, FixedStyle, ScaleStyle } from "./ColumnStyleControls";
+import type { BarchartStyle, ConditionalStyle, ConditionalStyleIcons, FixedStyle, ScaleStyle } from "./ColumnStyleControls";
 import { ColumnStyleControls } from "./ColumnStyleControls";
 
 import type { ParsedJoinPath } from "prostgles-types";
@@ -76,6 +76,7 @@ export type ColumnConfig = {
   style?:
     | { type: "None" }
     | ConditionalStyle
+    | ConditionalStyleIcons
     | FixedStyle
     | ScaleStyle
     | BarchartStyle
@@ -186,7 +187,8 @@ export const ColumnMenu = (props: P) => {
       hide: !!column.nested,
       disabledText: column.format?.type === "Media"? "Cannot style a media format column" : undefined,
       style: (column.style?.type && column.style.type !== "None") ? { color: "var(--active)" } : {},
-      content: <ColumnStyleControls db={db} 
+      content: <ColumnStyleControls 
+        db={db} 
         tableName={tableName} 
         tables={tables} 
         column={column} 

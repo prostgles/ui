@@ -45,7 +45,7 @@ export const DashboardMenuSettings = ({ workspace, prgl: { dbsMethods } }: P) =>
     data-command="dashboard.menu.settings"
     positioning="center"
     clickCatchStyle={{ opacity: 0.2 }}
-    title="Workspace settings"
+    title="Dashboard settings"
     contentClassName="p-0"
     render={() => {
       return <div className="flex-col gap-2 p-1"> 
