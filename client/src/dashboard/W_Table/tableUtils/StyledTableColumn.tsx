@@ -1,7 +1,7 @@
 import type { AnyObject } from "prostgles-types";
 import { _PG_date } from "prostgles-types";
 import React from "react";
-import { FlexRowWrap } from "../../../components/Flex";
+import { FlexRow, FlexRowWrap } from "../../../components/Flex";
 import { CellBarchart } from "../../../components/ProgressBar";
 import type { OnColRenderRowInfo } from "../../../components/Table/Table";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
@@ -11,11 +11,21 @@ import { kFormatter, type MinMax } from "../W_Table";
 import { blend } from "../colorBlend";
 import type { ProstglesTableColumn } from "./getTableCols";
 import type { OnRenderColumnProps } from "./onRenderColumn";
+import { SvgIcon } from "../../../components/SvgIcon";
 
 type P = OnColRenderRowInfo & Pick<OnRenderColumnProps, "maxCellChars" | "c" | "barchartVals">;
 
-export const StyledTableColumn = ({ c, value, row, maxCellChars, barchartVals, renderedVal }: P) => {
+export const StyledTableColumn = ({ c, value, row, barchartVals, renderedVal }: P) => {
   
+  if(c.style?.type === "Icons"){
+    const valueKey = value?.toString() ?? "";
+    const iconName = valueKey && c.style.valueToIconMap[valueKey];
+    const sizeNum = c.style.size ?? 24;
+    const iconNode = iconName && <SvgIcon icon={iconName} size={sizeNum} />;
+    return <FlexRow>
+      {iconNode ?? value}
+    </FlexRow>
+  }
   if (c.style?.type === "Barchart" && barchartVals?.[c.name]) {
     return <CellBarchart 
       style={{ marginTop: "6px" }}

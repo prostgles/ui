@@ -1,33 +1,34 @@
+import { mdiAlertCircleOutline, mdiUndo } from "@mdi/js";
+import type { AnyObject, ParsedJoinPath, SubscriptionHandler } from "prostgles-types";
+import { getKeys } from "prostgles-types";
 import React from "react";
-import type { CommonWindowProps  } from "../Dashboard/Dashboard";
+import { throttle } from "../../../../commonTypes/utils";
+import { createReactiveState } from "../../appUtils";
+import Btn from "../../components/Btn";
+import ErrorComponent from "../../components/ErrorComponent";
 import Loading from "../../components/Loading";
+import PopupMenu from "../../components/PopupMenu";
+import type { Command } from "../../Testing";
+import { MILLISECOND } from "../Charts";
+import type { DateExtent } from "../Charts/getTimechartBinSize";
+import { MainTimeBinSizes } from "../Charts/getTimechartBinSize";
 import type { TimeChartLayer } from "../Charts/TimeChart";
-import { TimeChart } from "../Charts/TimeChart"
-import Window from "../Window";
+import { TimeChart } from "../Charts/TimeChart";
+import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import type { DeltaOfData } from "../RTComp";
 import RTComp from "../RTComp";
-import ErrorComponent from "../../components/ErrorComponent";
-import { mdiAlertCircleOutline, mdiFitToPageOutline, mdiUndo } from "@mdi/js";
-import Btn from "../../components/Btn";
-import PopupMenu from "../../components/PopupMenu"; 
-import type { AnyObject, SubscriptionHandler, ParsedJoinPath } from "prostgles-types";
-import { getKeys } from "prostgles-types";  
-import { getTimeChartData, getTimeChartSelectDate } from "./getTimeChartData";
-import type { TimeChartBinSize} from "./W_TimeChartMenu";
-import { ProstglesTimeChartMenu } from "./W_TimeChartMenu";
-import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import type { LayerBase } from "../W_Map/W_Map";
-import { ChartLayerManager } from "../WindowControls/ChartLayerManager";
-import { getTimeChartLayerQueries } from "./getTimeChartLayers"; 
-import type { DateExtent} from "../Charts/getTimechartBinSize";
-import { MainTimeBinSizes } from "../Charts/getTimechartBinSize";
-import { MILLISECOND } from "../Charts"; 
-import { AddTimeChartFilter } from "./AddTimeChartFilter";
 import type { ActiveRow } from "../W_Table/W_Table";
-import type { Command } from "../../Testing";
+import Window from "../Window";
+import { ChartLayerManager } from "../WindowControls/ChartLayerManager";
 import { ColorByLegend } from "../WindowControls/ColorByLegend";
-import { createReactiveState } from "../../appUtils";
-import { throttle } from "../../../../commonTypes/utils";
+import { AddTimeChartFilter } from "./AddTimeChartFilter";
+import { getTimeChartData, getTimeChartSelectDate } from "./getTimeChartData";
+import { getTimeChartLayerQueries } from "./getTimeChartLayers";
+import type { TimeChartLayerWithBin } from "./getTimeChartLayersWithBins";
+import type { TimeChartBinSize } from "./W_TimeChartMenu";
+import { ProstglesTimeChartMenu } from "./W_TimeChartMenu";
 
 export type ProstglesTimeChartLayer = Pick<LayerBase, "_id" | "linkId" | "disabled"> & {
   
@@ -77,6 +78,7 @@ export type ProstglesTimeChartState = {
   wSync: any;
   error?: any;
   layers: ProstglesTimeChartStateLayer[];
+  erroredLayers?: TimeChartLayerWithBin[]
   columns: any[];
   xExtent?: [Date, Date];
   visibleDataExtent?: DateExtent;
@@ -184,7 +186,7 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
     try {
       const d = await getTimeChartData.bind(this)();
       if(d){
-        const { error, layers: rawLayers } = d;
+        const { error, layers: rawLayers, erroredLayers } = d;
         const binSize = d.binSize? MainTimeBinSizes[d.binSize].size : undefined;
         const layers = rawLayers.map(l => {
           const sortedParsedData = l.data.map(d => {
@@ -257,13 +259,16 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
           }
 
           if(this.ref && this.chartRef){
-            const renderedData = filledData.map(d => {
-              const [x, y] = this.chartRef!.getPointXY({ date: new Date(d.date), value: d.value }) ?? [];
-              return {
-                x, y, value: d.value
-              }
-            });
-            (this.ref as any)._renderedData = renderedData;
+            setTimeout(() => {
+              const renderedData = filledData.map(d => {
+                const [x, y] = this.chartRef!.getPointXY({ date: new Date(d.date), value: +d.value }) ?? [];
+                return {
+                  x, y, value: d.value
+                }
+              });
+              (this.ref as any)._renderedData = renderedData;
+
+            }, 0);
           }
           
           return {
@@ -272,7 +277,7 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
           }
         });
 
-        this.setState({ loadingData: false, loadingLayers: false, loading: false, binSize: d.binSize, error, layers });
+        this.setState({ loadingData: false, loadingLayers: false, loading: false, binSize: d.binSize, error, layers, erroredLayers });
       }
     } catch(error){
       this.setState({ loading: false, error, loadingData: false })
@@ -323,8 +328,9 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
   render(){
     const {  
       layers = [], 
+      erroredLayers,
       loadingLayers, 
-      error, 
+      error: fetchingError, 
       loadingData,
       addingFilter = false,
     } = this.state;
@@ -342,15 +348,16 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
 
     const groupedByLayer = this.layerQueries.find(lq => !lq.disabled && lq.groupByColumn && lq.type === "table");
 
+    const error = fetchingError ?? (erroredLayers?.[0]?.hasError && erroredLayers[0].error);
     if(error){
       errorPopup = (
         <PopupMenu
-          button={<Btn className="text-danger" iconPath={mdiAlertCircleOutline} />} 
+          button={<Btn color="danger" iconPath={mdiAlertCircleOutline} />} 
           onClose={()=>{
             this.setState({ showError: false })
           }}>
           <div className="bg-color-0">
-            <ErrorComponent error={error} />
+            <ErrorComponent error={error} findMsg={true} />
           </div>
         </PopupMenu>
       )

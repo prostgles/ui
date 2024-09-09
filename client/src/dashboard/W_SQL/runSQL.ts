@@ -19,13 +19,12 @@ export async function runSQL(this: W_SQL, sort: ColumnSort[] = []) {
 
   const selected_sql = this.sqlRef?.getSelectedText() || (await this.sqlRef?.getCurrentCodeBlock())?.text;
   const sql = selected_sql  || this.d.w?.sql || ""; 
-  if(selected_sql && this.state.selected_sql !== selected_sql){
-    this.setState({ selected_sql })
+  const { db } = this.props.prgl;
+  const w = this.d.w;
+  if(w && w.selected_sql !== selected_sql){
+    w.$update({ selected_sql });
   }
 
-  const { db } = this.props.prgl;
-  
-  const w = this.d.w;
 
   if(!w || !db.sql) {
     this.setState({ error: !db.sql? SQL_NOT_ALLOWED : "Internal error (w is missing). Try refreshing the page" });

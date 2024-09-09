@@ -247,6 +247,9 @@ export type WindowData<CType extends ChartType = ChartType> = Omit<Windows, "col
   filter?: SmartGroupFilter;
   having?: SmartGroupFilter;
   columns?: ColumnConfig[] | null;
+  /**
+   * This is either the sql user has selected OR the current code block
+   */
   selected_sql?: string;
 
   nested_tables?: Record<string, {

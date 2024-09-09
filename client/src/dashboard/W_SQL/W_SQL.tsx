@@ -118,7 +118,6 @@ export type W_SQLState = {
     routine: string;
     received: string;
   }[];
-  selected_sql?: string;
   columns?: ValidatedColumnInfo[];
   /**
    * Stringified joinFilter that is set after the data has been downloaded.
@@ -411,8 +410,6 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               clearActiveQueryError();
             }}
             onRun={async (sql, isSelected) => {
-              
-              this.setState({ selected_sql: isSelected? sql : "" })
               await this.runSQL();
             }}
             onStopQuery={this.killQuery}

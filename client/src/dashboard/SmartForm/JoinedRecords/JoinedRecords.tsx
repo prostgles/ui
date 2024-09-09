@@ -147,7 +147,11 @@ export class JoinedRecords extends RTComp<JoinedRecordsProps, JoinedRecordsState
           tableName={nestedInsertTable}
           onChange={() => { }}
           onSuccess={onSuccess}
-          columns={fcols?.filter(c => !(c.references?.some(r => r.ftable === tableName))).map(c => c.name)}
+          columns={fcols?.filter(c => 
+              !(c.references?.some(r => r.ftable === tableName))
+            )
+            .reduce((a, v) => ({ ...a, [v.name]: 1 }), {})
+          }
         />
       </Popup>
     }
