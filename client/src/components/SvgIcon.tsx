@@ -4,12 +4,17 @@ import sanitizeHtml from "sanitize-html";
 
 const cachedSvgs = new Map<string, string>();
 
-export const SvgIcon = (props: { icon: string, className?: string, style?: React.CSSProperties; size?: number }) => {
+export const SvgIcon = ({ icon, className, size, style }: { icon: string, className?: string, style?: React.CSSProperties; size?: number }) => {
 
   const getIsMounted = useIsMounted();
-  const iconPath = `/icons/${props.icon}.svg`;
+  const iconPath = `/icons/${icon}.svg`;
   const [svg, setSvg] = React.useState(cachedSvgs.get(iconPath));
   useEffect(() => {
+    const iconNameContainsOnlyLetters = /^[a-zA-Z]+$/.test(icon);
+    if(!iconNameContainsOnlyLetters){
+      console.error(`Icon name "${icon}" must contain only letters`);
+      return;
+    }
     if (cachedSvgs.has(iconPath)) return;
     fetch(iconPath)
       .then(res => res.text())
@@ -29,15 +34,15 @@ export const SvgIcon = (props: { icon: string, className?: string, style?: React
         if(!getIsMounted()) return;
         setSvg(svg);
       })
-  }, [iconPath, getIsMounted]);
+  }, [iconPath, getIsMounted, icon]);
 
-  const sizePx = `${props.size || 24}px`;
+  const sizePx = `${size || 24}px`;
   return <div
-    className={props.className}
+    className={className}
     style={{
       width: sizePx,
       height: sizePx,
-      ...props.style,
+      ...style,
     }}
     dangerouslySetInnerHTML={!svg? undefined : { __html: svg }}
   />
