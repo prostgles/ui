@@ -69,11 +69,11 @@ export const getTimeChartLayer = ({ links, link, windows, active_row, w }: Args 
     
       return layer;
     } else if(tbl) {
-      
+      const latestW = tbl.$get();
       const layer: ProstglesTimeChartLayer =  {
         ...commonOpts,
         type: "sql",
-        sql: lOpts.fromSelected? tbl.selected_sql : tbl.sql,
+        sql: lOpts.fromSelected? latestW.selected_sql : latestW.sql,
         color
       }
       

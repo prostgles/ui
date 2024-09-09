@@ -31,6 +31,7 @@ type TChartLayers = TChartLayer[];
 
 type FetchedLayerData = { 
   layers: TChartLayers;  
+  erroredLayers: TimeChartLayerWithBin[];
   error: any;
   binSize: keyof typeof MainTimeBinSizes | undefined;
 };
@@ -94,8 +95,11 @@ async function getTChartLayer({
   const dataSignature = getTimeLayerDataSignature(layer, w, [extentFilter]);
 
   let _groupByColumn: string | undefined;
+  if(layer.hasError){
+    throw layer.error;
+  }
   if (layer.type === "table") {
-    const { dateColumn, statType, groupByColumn, path, request } = layer;
+    const { dateColumn, statType, groupByColumn, path } = layer;
     _groupByColumn = groupByColumn;
     const tableName = path?.length? path.at(-1)!.table : layer.tableName;
 
@@ -106,7 +110,7 @@ async function getTChartLayer({
 
     // const cachedLayers = this.state.layers.filter(l => l.dataSignature === dataSignature);
     // extentFilter = getExtentFilter(extent, dateColumn);
-
+    const { request } = layer;
     const { tableFilters } = request;
     const { select, orderBy } = getTimeChartSelectParams({ statType, groupByColumn, dateColumn, bin })
 
@@ -190,15 +194,30 @@ async function getTChartLayer({
         statField = `${stat.label}(${asName(statType.numericColumn)})`;
       }
     }
-    const dataQuery = "SELECT date_trunc(${bin}, " + `${escDateCol}::TIMESTAMPTZ) as ${JSON.stringify(FIELD_NAMES.date)}, ${statField} as "value" \nFROM (\n` +
+
+    const binValue = bin ?? "hour";
+    const binInfo = MainTimeBinSizes[binValue];
+    const binUnit = binInfo.unit;
+    const prevBinUnit = {
+      "millisecond": "second",
+      "second": "minute",
+      "minute": "hour",
+      "hour": "day",
+      "day": "month",
+      "month": "year",
+      "year": "year",
+    }[binUnit];
+
+    const dateBinCol = binInfo.increment === 1? `date_trunc(\${bin}, ${escDateCol}::TIMESTAMPTZ)` :  
+      `date_bin('${binInfo.increment}${binInfo.unit}', ${escDateCol}::TIMESTAMPTZ, date_trunc('${prevBinUnit ?? binUnit}', ${escDateCol}::TIMESTAMPTZ))`;
+    const dataQuery = `SELECT ${dateBinCol} as ${JSON.stringify(FIELD_NAMES.date)}, ${statField} as "value" \nFROM (\n` +
       _sql +
       "\n ) t \n" +
       `\nWHERE ${escDateCol} IS NOT NULL ` +
-      "\nGROUP BY date_trunc(${bin}, " + escDateCol + "::TIMESTAMPTZ ) \n" +
-      ` ORDER BY ${JSON.stringify(FIELD_NAMES.date)} `;
-
-
-    rows = await db.sql(dataQuery, { dateColumn, bin: (bin ?? "hour").replace(/[0-9]/g, ""), statField }, { returnType: "rows" }) as any;
+      "\nGROUP BY 1 \n" +
+      ` ORDER BY 2`;
+ 
+    rows = await db.sql(dataQuery, { dateColumn, bin: binInfo.unit, statField }, { returnType: "rows" }) as any;
   }
 
   const renderedLayer: ProstglesTimeChartState["layers"][number] = {
@@ -233,7 +252,7 @@ export async function getTimeChartData(this: W_TimeChart): Promise<FetchedLayerD
   
   let layers: TChartLayers = []; 
   let bin: FetchedLayerData["binSize"] | undefined;
-
+  let erroredLayers: TimeChartLayerWithBin[] = [];
   try {
 
     const { prgl: { db } } = this.props;
@@ -245,8 +264,10 @@ export async function getTimeChartData(this: W_TimeChart): Promise<FetchedLayerD
     if(!layerExtentBinsRes) return undefined;
 
     const { layerExtentBins } = layerExtentBinsRes;
+    const nonErroredLayers = layerExtentBins.filter(l => !l.hasError);
+    erroredLayers = layerExtentBins.filter(l => l.hasError);
     if(!layerExtentBins.length){
-      return { layers: [], error: undefined, binSize: undefined };
+      return { layers: [], erroredLayers, error: undefined, binSize: undefined };
     }
     
     const { chartRef } = this;
@@ -255,8 +276,8 @@ export async function getTimeChartData(this: W_TimeChart): Promise<FetchedLayerD
       return undefined;
     }
 
-    const min = (Math.min(...layerExtentBins.map(l => +l.request.min)));
-    const max = (Math.max(...layerExtentBins.map(l => +l.request.max)));
+    const min = (Math.min(...nonErroredLayers.map(l => +l.request.min)));
+    const max = (Math.max(...nonErroredLayers.map(l => +l.request.max)));
     const dataExtent: DateExtent = {
       minDate: new Date(min),
       maxDate: new Date(max),
@@ -272,7 +293,7 @@ export async function getTimeChartData(this: W_TimeChart): Promise<FetchedLayerD
     bin = binOpts.bin;
     const { desiredBinCount } = binOpts;
     layers = (await Promise.all(
-      layerExtentBins
+      nonErroredLayers
         .map(async layer => {
           const { fetchedLayer, duration, hasError } = await tryCatch(async () => {
             const fetchedLayer = await getTChartLayer({ getLinksAndWindows, myLinks, tables, viewPortExtent, visibleDataExtent, layer, bin, binSize, db, w, desiredBinCount });
@@ -290,10 +311,10 @@ export async function getTimeChartData(this: W_TimeChart): Promise<FetchedLayerD
     ).filter(isDefined).flat();
   } catch (error) {
     console.error(error);
-    return { error, layers: [], binSize: undefined };
+    return { error, erroredLayers, layers: [], binSize: undefined };
   }
 
-  return { layers, error: undefined, binSize: bin };
+  return { layers, erroredLayers, error: undefined, binSize: bin };
 }
 export const getTimeChartSelectDate = ({ dateColumn, bin }: Pick<GetTimeChartSelectArgs, "bin" | "dateColumn">) => {
   return { ["$date_trunc_" + bin]: [dateColumn, { timeZone: true }] };
