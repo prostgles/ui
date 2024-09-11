@@ -30,7 +30,11 @@ test.beforeAll(async () => {
 })
 
 test.afterAll(async () => {
-  if(!electronApp) return;
+  console.log("afterAll electronApp", !!electronApp, {electronApp});
+  if(!electronApp) {
+    process.exit(0);
+    return;
+  }
   await electronApp.close()
 })
 
@@ -117,7 +121,7 @@ test('renders the first page', async () => {
   await page.getByTestId("config.bkp.create.start").click();
   await page.waitForTimeout(3000);
   await screenshot();
-
+  console.log("electronApp", !!electronApp, {electronApp});
   // passed = true;
 
 })
