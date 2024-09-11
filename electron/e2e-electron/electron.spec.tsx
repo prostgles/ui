@@ -31,8 +31,8 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   console.log("afterAll electronApp", !!electronApp);
-  process.exit(0);
-  // await electronApp?.close()
+  // process.exit(0);
+  await electronApp?.close()
   // if(!electronApp) {
   //   process.exit(0);
   //   return;
