@@ -50,7 +50,7 @@ test('renders the first page', async () => {
 
   const screenshot = async (name?: string) => {
     if(!page) return;
-    await page.screenshot({ path: `../e2e/playwright-report/electron-scr-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
+    await page.screenshot({ path: `../e2e/electron-report/electron-scr-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
   }
 
   // await page.waitForTimeout(12000);
@@ -122,6 +122,7 @@ test('renders the first page', async () => {
   await page.getByTestId("config.bkp.create.start").click();
   await page.waitForTimeout(3000);
   await screenshot();
+  await page.getByTestId("BackupControls.Restore").waitFor({ state: "visible", timeout: 120e3 });
   console.log("electronApp", !!electronApp);
   // passed = true;
 
