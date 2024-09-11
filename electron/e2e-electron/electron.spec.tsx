@@ -115,7 +115,7 @@ test('renders the first page', async () => {
   await screenshot();
   await page.getByTestId("BackupControls.Restore").waitFor({ state: "visible", timeout: 2e3 });
   console.log("electronApp", !!electronApp);
-  // await page.reload();
+  await page.close();
   // passed = true;
 
 })
