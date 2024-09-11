@@ -12,7 +12,8 @@ test.beforeAll(async () => {
     ],
     env: { 
       ...process.env, 
-      NODE_ENV: 'development' 
+      NODE_ENV: "production", 
+      //'development' 
     },
     // tracesDir: './dist',
     // recordVideo: { dir: './dist' }
