@@ -45,7 +45,7 @@ test('renders the first page', async () => {
 
   const screenshot = async (name?: string) => {
     if(!page) return;
-    await page.screenshot({ path: `../e2e/playwright-report/s-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
+    await page.screenshot({ path: `../e2e/electron-report/electron-scr-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
   }
 
   // await page.waitForTimeout(12000);
@@ -97,6 +97,15 @@ test('renders the first page', async () => {
   await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
   await page.getByTestId("dashboard.goToConnections").click();
   await createDatabase("sample_db", page);
+  await screenshot();
+  await page.waitForTimeout(1000);
+  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
+  await screenshot();
+  await page.waitForTimeout(1000);
+  await page.getByTestId("dashboard.goToConnections").click();
+  await createDatabase("crypto", page, true);
+  await screenshot();
+  await page.waitForTimeout(1000);
   await screenshot();
   await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
   await screenshot();

@@ -314,7 +314,7 @@ export async function getSqlSuggestions(db: DB): Promise< {
         /** If func has arguments we exclude the parenthesis so that the user will write them and trigger func arg suggestions */
         insertText: f.escaped_identifier + ((f.arg_list_str && !overEnding)? "" : (f.name === "count"? "(*)" : "()")) + overEnding,
         detail: `(${f.is_aggregate? "agg " : ""}function) \n${f.name}(${f.arg_list_str}) => ${f.restype}`, 
-        documentation: `Schema: \`${f.schema}\`  \n\n${f.description?.trim() ?? ""}   \n\n${asSQL(f.definition ?? "")}`, 
+        documentation: `Schema: \`${f.schema}\`  \n\n**${f.description?.trim() ?? ""}**   \n\n${asSQL(f.definition ?? "")}`, 
         definition: f.definition ?? "",
         funcCallDefinition: `${f.name}(${f.arg_list_str}) => ${f.restype}`,
         filterText: `${f.escaped_identifier} ${f.args.map(a => a.data_type).join(", ")} ${f.extension}`

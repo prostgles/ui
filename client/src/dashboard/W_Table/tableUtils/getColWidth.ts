@@ -16,7 +16,7 @@ export const getColWidth = <T extends Pick<ProstglesTableColumn, "tsDataType" | 
 
     const [firstCol] = cols;
     const tableWidth = windowWidth ?? maxCW;
-    if(cols.length === 1 && firstCol?.tsDataType !== "number"){
+    if(cols.length === 1 && !_PG_numbers.includes(firstCol?.udt_name as any)){
       return cols.map(c => {
         return {
           ...c,
