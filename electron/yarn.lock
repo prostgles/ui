@@ -102,12 +102,12 @@
   resolved "https://registry.npmjs.org/@pkgjs/parseargs/-/parseargs-0.11.0.tgz"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
-"@playwright/test@^1.46.0":
-  version "1.46.0"
-  resolved "https://registry.npmjs.org/@playwright/test/-/test-1.46.0.tgz"
-  integrity sha512-/QYft5VArOrGRP5pgkrfKksqsKA6CEFyGQ/gjNe6q0y4tZ1aaPfq4gIjudr1s3D+pXyrPRdsy4opKDrjBabE5w==
+"@playwright/test@^1.47.0":
+  version "1.47.0"
+  resolved "https://registry.npmjs.org/@playwright/test/-/test-1.47.0.tgz"
+  integrity sha512-SgAdlSwYVpToI4e/IH19IHHWvoijAYH5hu2MWSXptRypLSnzj51PcGD+rsOXFayde4P9ZLi+loXVwArg6IUkCA==
   dependencies:
-    playwright "1.46.0"
+    playwright "1.47.0"
 
 "@sindresorhus/is@^4.0.0":
   version "4.6.0"
@@ -751,10 +751,10 @@ electron-unhandled@^4.0.1:
     lodash.debounce "^4.0.8"
     serialize-error "^8.1.0"
 
-electron@^31.3.1:
-  version "31.3.1"
-  resolved "https://registry.npmjs.org/electron/-/electron-31.3.1.tgz"
-  integrity sha512-9fiuWlRhBfygtcT+auRd/WdBK/f8LZZcrpx0RjpXhH2DPTP/PfnkC4JB1PW55qCbGbh4wAgkYbf4ExIag8oGCA==
+electron@^32.0.2:
+  version "32.0.2"
+  resolved "https://registry.npmjs.org/electron/-/electron-32.0.2.tgz"
+  integrity sha512-nmZblq8wW3HZ17MAyaUuiMI9Mb0Cgc7UR3To85h/rVopbfyF5s34NxtK4gvyRfYPxpDGP4k+HoQIPniPPrdE3w==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^20.9.0"
@@ -1454,17 +1454,17 @@ pend@~1.2.0:
   resolved "https://registry.npmjs.org/pend/-/pend-1.2.0.tgz"
   integrity sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg==
 
-playwright-core@1.46.0:
-  version "1.46.0"
-  resolved "https://registry.npmjs.org/playwright-core/-/playwright-core-1.46.0.tgz"
-  integrity sha512-9Y/d5UIwuJk8t3+lhmMSAJyNP1BUC/DqP3cQJDQQL/oWqAiuPTLgy7Q5dzglmTLwcBRdetzgNM/gni7ckfTr6A==
+playwright-core@1.47.0:
+  version "1.47.0"
+  resolved "https://registry.npmjs.org/playwright-core/-/playwright-core-1.47.0.tgz"
+  integrity sha512-1DyHT8OqkcfCkYUD9zzUTfg7EfTd+6a8MkD/NWOvjo0u/SCNd5YmY/lJwFvUZOxJbWNds+ei7ic2+R/cRz/PDg==
 
-playwright@1.46.0:
-  version "1.46.0"
-  resolved "https://registry.npmjs.org/playwright/-/playwright-1.46.0.tgz"
-  integrity sha512-XYJ5WvfefWONh1uPAUAi0H2xXV5S3vrtcnXe6uAOgdGi3aSpqOSXX08IAjXW34xitfuOJsvXU5anXZxPSEQiJw==
+playwright@1.47.0:
+  version "1.47.0"
+  resolved "https://registry.npmjs.org/playwright/-/playwright-1.47.0.tgz"
+  integrity sha512-jOWiRq2pdNAX/mwLiwFYnPHpEZ4rM+fRSQpRHwEwZlP2PUANvL3+aJOF/bvISMhFD30rqMxUB4RJx9aQbfh4Ww==
   dependencies:
-    playwright-core "1.46.0"
+    playwright-core "1.47.0"
   optionalDependencies:
     fsevents "2.3.2"
 
