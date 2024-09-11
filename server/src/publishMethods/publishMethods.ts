@@ -30,7 +30,7 @@ import { DB_TRANSACTION_KEY, getCDB, getSuperUserCDB } from "../ConnectionManage
 import { getCompiledTS, getDatabaseConfigFilter, getEvaledExports } from "../ConnectionManager/connectionManagerUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
-import { getElectronConfig, getRootDir } from "../electronConfig";
+import { actualRootDir, getElectronConfig, getRootDir } from "../electronConfig";
 import { getStatus } from "../methods/getPidStats";
 import { killPID } from "../methods/statusMonitorUtils";
 import { initBackupManager, statePrgl } from "../startProstgles";
@@ -490,7 +490,7 @@ const tryReadFile = (path: string) => {
   }
 }
 export const getSampleSchemas = async (): Promise<SampleSchema[]> => {
-  const path = getRootDir() + `/sample_schemas`;
+  const path = actualRootDir + `/sample_schemas`;
   const files = fs.readdirSync(path).filter(name => !name.startsWith("_"));
   return  files.map(name => {
     const schemaPath = `${path}/${name}`;

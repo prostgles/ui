@@ -72,6 +72,7 @@ test('renders the first page', async () => {
   await page.getByLabel("user").fill("usr");
   await page.getByLabel("password").fill("psw");
   await page.getByLabel("database").fill("prostgles_desktop_db");
+  await screenshot();
   
   /** Ensure overflow does not obscure done button */
   await page.getByTestId("MoreOptionsToggle").click();
@@ -82,18 +83,51 @@ test('renders the first page', async () => {
   await page.waitForTimeout(1000);
 
   await screenshot();
-  let passed = false;
-  setInterval(() => {
-    if(passed) return;
-    screenshot();
-  }, 2e3);
+  // let passed = false;
+  // setInterval(() => {
+  //   if(passed) return;
+  //   screenshot();
+  // }, 2e3);
   await page.getByTestId("ConnectionServer.add").waitFor({ state: "visible", timeout: 600e3 });
-  passed = true;
   await screenshot();
   await page.locator("a.LEFT-CONNECTIONINFO").click();
   await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
   await screenshot();
   await page.reload();
   await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
+  await page.getByTestId("dashboard.goToConnections").click();
+  await createDatabase("sample_db", page);
+  await screenshot();
+  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
+  await screenshot();
+  // passed = true;
 
 })
+
+
+const MINUTE = 60e3;
+export const createDatabase = async (dbName: string, page: Page, fromTemplates = false, owner?: { name: string; pass: string; }) => {
+  await page.locator(`[data-command="ConnectionServer.add"]`).first().click();
+  // await page.waitForTimeout(3000);
+  if(fromTemplates){
+    await page.getByTestId("ConnectionServer.add.newDatabase").click();
+    await page.getByTestId("ConnectionServer.SampleSchemas").click();
+    await page.getByTestId("ConnectionServer.SampleSchemas").locator(`[data-key=${JSON.stringify(dbName)}]`).click();
+  } else {
+    await page.getByTestId("ConnectionServer.add.newDatabase").click();
+    await page.getByTestId("ConnectionServer.NewDbName").locator("input").fill(dbName);
+  }
+  if(owner){
+    await page.getByTestId("ConnectionServer.withNewOwnerToggle").click()
+    await page.waitForTimeout(500);
+    await page.getByTestId("ConnectionServer.NewUserName").locator("input").fill(owner.name);
+    await page.getByTestId("ConnectionServer.NewUserPassword").locator("input").fill(owner.pass);
+    await page.waitForTimeout(500);
+  }
+  await page.getByTestId("ConnectionServer.add.confirm").click();
+  /* Wait until db is created */
+  const databaseCreationTime = (fromTemplates? 4 : 1) * MINUTE;
+  const workspaceCreationAndLoatTime = 3 * MINUTE;
+  await page.getByTestId("ConnectionServer.add.confirm").waitFor({ state: "detached", timeout: databaseCreationTime });
+  await page.getByTestId("dashboard.menu").waitFor({ state: "visible", timeout: workspaceCreationAndLoatTime });
+}
