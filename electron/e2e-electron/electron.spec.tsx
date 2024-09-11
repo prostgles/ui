@@ -72,7 +72,6 @@ test('renders the first page', async () => {
   await page.getByLabel("user").fill("usr");
   await page.getByLabel("password").fill("psw");
   await page.getByLabel("database").fill("prostgles_desktop_db");
-  await screenshot();
   
   /** Ensure overflow does not obscure done button */
   await page.getByTestId("MoreOptionsToggle").click();

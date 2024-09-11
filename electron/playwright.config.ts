@@ -10,8 +10,8 @@ export default defineConfig({
   retries: 0,
   use: {
     /** https://github.com/microsoft/playwright/issues/27048 */
-    trace: "off",
-    video: "off",
+    trace: "on-first-retry",
+    // video: "off",
     testIdAttribute: "data-command",
   }
 });
