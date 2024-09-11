@@ -50,7 +50,7 @@ test('renders the first page', async () => {
 
   const screenshot = async (name?: string) => {
     if(!page) return;
-    await page.screenshot({ path: `../e2e/electron-report/electron-scr-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
+    await page.screenshot({ path: `../e2e/electron-report/scr-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
   }
 
   // await page.waitForTimeout(12000);
@@ -93,18 +93,18 @@ test('renders the first page', async () => {
   //   if(passed) return;
   //   screenshot();
   // }, 2e3);
-  await page.getByTestId("ConnectionServer.add").waitFor({ state: "visible", timeout: 600e3 });
+  await page.getByTestId("ConnectionServer.add").waitFor({ state: "visible", timeout: 60e3 });
   await screenshot();
   await page.locator("a.LEFT-CONNECTIONINFO").click();
-  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
+  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 2e3 });
   await screenshot();
   await page.reload();
-  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
+  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 2e3 });
   await page.getByTestId("dashboard.goToConnections").click();
   await createDatabase("sample_db", page);
   await screenshot();
   await page.waitForTimeout(1000);
-  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
+  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 2e3 });
   await screenshot();
   await page.waitForTimeout(1000);
   await page.getByTestId("dashboard.goToConnections").click();
@@ -112,7 +112,6 @@ test('renders the first page', async () => {
   await screenshot();
   await page.waitForTimeout(1000);
   await screenshot();
-  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
   await page.getByTestId("dashboard.goToConnConfig").click();
   await screenshot();
   await page.getByTestId("config.bkp").click();
@@ -122,8 +121,9 @@ test('renders the first page', async () => {
   await page.getByTestId("config.bkp.create.start").click();
   await page.waitForTimeout(3000);
   await screenshot();
-  await page.getByTestId("BackupControls.Restore").waitFor({ state: "visible", timeout: 120e3 });
+  await page.getByTestId("BackupControls.Restore").waitFor({ state: "visible", timeout: 2e3 });
   console.log("electronApp", !!electronApp);
+  await page.reload();
   // passed = true;
 
 })
