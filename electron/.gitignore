@@ -3,4 +3,5 @@ ui
 build
 node_modules
 playwright-report
+electron-report
 test-results
