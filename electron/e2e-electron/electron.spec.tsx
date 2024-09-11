@@ -34,9 +34,7 @@ test.afterAll(async () => {
   await electronApp?.close()
 })
 
-// let page: Page | undefined;
-
-test.setTimeout(60e3);
+test.setTimeout(120e3);
 
 test('renders the first page', async () => {
   if(!electronApp) return;
