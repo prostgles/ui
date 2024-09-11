@@ -14,7 +14,7 @@ test.beforeAll(async () => {
       ...process.env, 
       NODE_ENV: 'development' 
     },
-    tracesDir: './dist',
+    // tracesDir: './dist',
     // recordVideo: { dir: './dist' }
   });
   electronApp.on('window', async (page) => {
