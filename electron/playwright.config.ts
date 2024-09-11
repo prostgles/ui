@@ -11,7 +11,7 @@ export default defineConfig({
   use: {
     /** https://github.com/microsoft/playwright/issues/27048 */
     trace: "on-first-retry",
-    // video: "off",
+    video: "on",
     testIdAttribute: "data-command",
   }
 });
