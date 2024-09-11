@@ -30,7 +30,7 @@ test.beforeAll(async () => {
 })
 
 test.afterAll(async () => {
-  console.log("afterAll electronApp", !!electronApp, {electronApp});
+  console.log("afterAll electronApp", !!electronApp);
   process.exit(0);
   // await electronApp?.close()
   // if(!electronApp) {
@@ -50,7 +50,7 @@ test('renders the first page', async () => {
 
   const screenshot = async (name?: string) => {
     if(!page) return;
-    await page.screenshot({ path: `../e2e/electron-report/electron-scr-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
+    await page.screenshot({ path: `../e2e/playwright-report/electron-scr-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
   }
 
   // await page.waitForTimeout(12000);
