@@ -31,11 +31,12 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   console.log("afterAll electronApp", !!electronApp, {electronApp});
-  if(!electronApp) {
-    process.exit(0);
-    return;
-  }
-  await electronApp.close()
+  await electronApp?.close()
+  process.exit(0);
+  // if(!electronApp) {
+  //   process.exit(0);
+  //   return;
+  // }
 })
 
 let page: Page | undefined;
