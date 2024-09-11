@@ -108,7 +108,16 @@ test('renders the first page', async () => {
   await page.waitForTimeout(1000);
   await screenshot();
   await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
+  await page.getByTestId("dashboard.goToConnConfig").click();
   await screenshot();
+  await page.getByTestId("config.bkp").click();
+  await screenshot();
+  await page.getByTestId("config.bkp.create").click();
+  await screenshot();
+  await page.getByTestId("config.bkp.create.start").click();
+  await page.waitForTimeout(3000);
+  await screenshot();
+
   // passed = true;
 
 })
