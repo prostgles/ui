@@ -64,11 +64,12 @@ jobs:
     - name: Run test
       run: |
         ./e2e/test.sh
-        mv ./e2e/electron-report ./e2e/playwright-report/electron-report
 
     - uses: actions/upload-artifact@v4
       if: always()
       with:
         name: playwright-report
-        path: e2e/playwright-report/
+        path: |
+          e2e/electron-report/
+          e2e/playwright-report/
         retention-days: 10
