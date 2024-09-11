@@ -34,14 +34,14 @@ test.afterAll(async () => {
   await electronApp?.close()
 })
 
-let page: Page | undefined;
+// let page: Page | undefined;
 
 test.setTimeout(60e3);
 
 test('renders the first page', async () => {
   if(!electronApp) return;
 
-  page = await electronApp.firstWindow();
+  const page = await electronApp.firstWindow();
 
   const screenshot = async (name?: string) => {
     if(!page) return;
@@ -92,7 +92,7 @@ test('renders the first page', async () => {
   await page.locator("a.LEFT-CONNECTIONINFO").click();
   await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 2e3 });
   await screenshot();
-  await page.reload();
+  // await page.reload();
   await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 2e3 });
   await page.getByTestId("dashboard.goToConnections").click();
   await createDatabase("sample_db", page);
@@ -117,7 +117,7 @@ test('renders the first page', async () => {
   await screenshot();
   await page.getByTestId("BackupControls.Restore").waitFor({ state: "visible", timeout: 2e3 });
   console.log("electronApp", !!electronApp);
-  await page.reload();
+  // await page.reload();
   // passed = true;
 
 })
