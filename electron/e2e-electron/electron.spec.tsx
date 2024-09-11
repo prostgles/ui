@@ -50,7 +50,7 @@ test('renders the first page', async () => {
 
   const screenshot = async (name?: string) => {
     if(!page) return;
-    await page.screenshot({ path: `../e2e/electron-report/scr-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
+    // await page.screenshot({ path: `../e2e/electron-report/scr-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
   }
 
   // await page.waitForTimeout(12000);
@@ -114,14 +114,14 @@ test('renders the first page', async () => {
   await screenshot();
   await page.getByTestId("dashboard.goToConnConfig").click();
   await screenshot();
-  // await page.getByTestId("config.bkp").click();
-  // await screenshot();
-  // await page.getByTestId("config.bkp.create").click();
-  // await screenshot();
-  // await page.getByTestId("config.bkp.create.start").click();
-  // await page.waitForTimeout(3000);
-  // await screenshot();
-  // await page.getByTestId("BackupControls.Restore").waitFor({ state: "visible", timeout: 2e3 });
+  await page.getByTestId("config.bkp").click();
+  await screenshot();
+  await page.getByTestId("config.bkp.create").click();
+  await screenshot();
+  await page.getByTestId("config.bkp.create.start").click();
+  await page.waitForTimeout(3e3);
+  await screenshot();
+  await page.getByTestId("BackupControls.Restore").waitFor({ state: "visible", timeout: 2e3 });
   console.log("electronApp", !!electronApp);
   await page.reload();
   // passed = true;
