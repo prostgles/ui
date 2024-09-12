@@ -6,7 +6,7 @@ export default defineConfig({
   testDir: './e2e-electron',
   maxFailures: 0,
   workers: 1,
-  reporter: 'html',
+  reporter: "list",
   retries: 0,
   use: {
     /** https://github.com/microsoft/playwright/issues/27048 */
