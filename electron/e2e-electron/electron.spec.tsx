@@ -4,6 +4,7 @@ import { expect, test, ElectronApplication,
 let electronApp: ElectronApplication | undefined;
 
 const start = Date.now();
+const urlsOpened: string[] = [];
 test.beforeAll(async () => {
   process.env.CI = 'e2e'
   electronApp = await electron.launch({
@@ -20,7 +21,8 @@ test.beforeAll(async () => {
     // recordVideo: { dir: './dist' }
   });
   electronApp.on('window', async (page) => {
-    console.log(`Window opened`)
+    urlsOpened.push(page.url());
+    console.log(`Windows opened: `, urlsOpened);
 
     page.on('pageerror', (error) => {
       console.error(error)
@@ -28,7 +30,7 @@ test.beforeAll(async () => {
     page.on('console', (msg) => {
       console.log(msg.text())
     })
-  })
+  });
 })
 
 test.afterAll(async () => {
@@ -36,10 +38,16 @@ test.afterAll(async () => {
     console.log("Closing page ", page.url());
     await page.close();
   });
-  electronApp?.close();
+  let waitTimeSeconds = 10;
   setInterval(() => {
     console.log((Date.now() - start) / 1e3, " seconds since started. trying to close... " );
+    waitTimeSeconds--;
+    if(waitTimeSeconds <= 0){
+      electronApp?.process().kill(0);
+    }
   }, 1e3);
+  waitTimeSeconds = 0; 
+  await electronApp?.close();
   console.log("afterAll electronApp", !!electronApp);
 })
 
