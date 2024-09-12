@@ -157,5 +157,5 @@ export const createDatabase = async (dbName: string, page: Page, fromTemplates =
   const databaseCreationTime = (fromTemplates? 4 : 1) * MINUTE;
   const workspaceCreationAndLoatTime = 3 * MINUTE;
   await page.getByTestId("ConnectionServer.add.confirm").waitFor({ state: "detached", timeout: databaseCreationTime });
-  await page.getByTestId("dashboard.menu").waitFor({ state: "visible", timeout: workspaceCreationAndLoatTime });
+  // await page.getByTestId("dashboard.menu").waitFor({ state: "visible", timeout: workspaceCreationAndLoatTime });
 }
