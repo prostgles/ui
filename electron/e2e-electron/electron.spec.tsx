@@ -64,10 +64,6 @@ test('renders the first page', async ({ browser }) => {
     await page.screenshot({ path: `../e2e/electron-report/s-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
   }
 
-  // await page.waitForTimeout(12000);
-  // await page.reload();
-  // await screenshot();
-
   /** Privacy */
   await page.getByTestId("ElectronSetup.Next").waitFor({ state: "visible", timeout: 120e3 });
   await screenshot();
@@ -133,7 +129,7 @@ test('renders the first page', async ({ browser }) => {
   await screenshot();
   await page.getByTestId("BackupControls.Restore").waitFor({ state: "visible", timeout: 2e3 });
   console.log("electronApp", !!electronApp);
-  await browser.close();
+  // await browser.close();
   // await page.close();
   // passed = true;
 
