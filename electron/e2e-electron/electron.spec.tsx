@@ -3,6 +3,8 @@ import { expect, test, ElectronApplication,
 } from '@playwright/test';
 let electronApp: ElectronApplication | undefined;
 
+const start = Date.now();
+const urlsOpened: string[] = [];
 test.beforeAll(async () => {
   process.env.CI = 'e2e'
   electronApp = await electron.launch({
@@ -12,13 +14,15 @@ test.beforeAll(async () => {
     ],
     env: { 
       ...process.env, 
-      NODE_ENV: 'development' 
+      NODE_ENV: "development", 
+      //'development' 
     },
-    tracesDir: './dist',
+    // tracesDir: './dist',
     // recordVideo: { dir: './dist' }
   });
   electronApp.on('window', async (page) => {
-    console.log(`Window opened`)
+    urlsOpened.push(page.url());
+    console.log(`Windows opened: `, urlsOpened);
 
     page.on('pageerror', (error) => {
       console.error(error)
@@ -26,31 +30,39 @@ test.beforeAll(async () => {
     page.on('console', (msg) => {
       console.log(msg.text())
     })
-  })
+  });
 })
 
 test.afterAll(async () => {
-  if(!electronApp) return;
-  await electronApp.close()
+  let waitTimeSeconds = 20;
+  console.trace("closing app");
+  setInterval(() => {
+    console.log((Date.now() - start) / 1e3, " seconds since started. trying to close... " );
+    waitTimeSeconds--;
+    if(waitTimeSeconds <= 0){
+      console.trace("Force closing app");
+      // process.exit(0);
+    }
+  }, 1e3);
+  await electronApp?.close();
+  waitTimeSeconds = 0; 
+  console.log("afterAll electronApp", !!electronApp);
 })
 
-let page: Page | undefined;
+test.setTimeout(2 * 60e3);
 
-test.setTimeout(60e3);
+test('renders the first page', async ( ) => {
+  if(!electronApp) {
+    console.error("No electronApp");
+    return;
+  }
 
-test('renders the first page', async () => {
-  if(!electronApp) return;
-
-  page = await electronApp.firstWindow();
+  const page = await electronApp.firstWindow();
 
   const screenshot = async (name?: string) => {
     if(!page) return;
-    await page.screenshot({ path: `../e2e/playwright-report/s-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
+    await page.screenshot({ path: `../e2e/electron-report/s-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
   }
-
-  // await page.waitForTimeout(12000);
-  // await page.reload();
-  await screenshot();
 
   /** Privacy */
   await page.getByTestId("ElectronSetup.Next").waitFor({ state: "visible", timeout: 120e3 });
@@ -82,18 +94,71 @@ test('renders the first page', async () => {
   await page.waitForTimeout(1000);
 
   await screenshot();
-  let passed = false;
-  setInterval(() => {
-    if(passed) return;
-    screenshot();
-  }, 2e3);
-  await page.getByTestId("ConnectionServer.add").waitFor({ state: "visible", timeout: 600e3 });
-  passed = true;
+  // let passed = false;
+  // setInterval(() => {
+  //   if(passed) return;
+  //   screenshot();
+  // }, 2e3);
+  await page.getByTestId("ConnectionServer.add").waitFor({ state: "visible", timeout: 60e3 });
   await screenshot();
   await page.locator("a.LEFT-CONNECTIONINFO").click();
-  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
+  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 2e3 });
   await screenshot();
-  await page.reload();
-  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 120e3 });
+  // await page.reload();
+  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 2e3 });
+  await page.getByTestId("dashboard.goToConnections").click();
+  await createDatabase("sample_db", page);
+  await screenshot();
+  await page.waitForTimeout(1000);
+  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 2e3 });
+  await screenshot();
+  await page.waitForTimeout(1000);
+  await page.getByTestId("dashboard.goToConnections").click();
+  await createDatabase("crypto", page, true);
+  await screenshot();
+  await page.waitForTimeout(1000);
+  await screenshot();
+  await page.getByTestId("dashboard.goToConnConfig").click();
+  await screenshot();
+  await page.getByTestId("config.bkp").click();
+  await screenshot();
+  await page.getByTestId("config.bkp.create").click();
+  await screenshot();
+  await page.getByTestId("config.bkp.create.start").click();
+  await page.waitForTimeout(3e3);
+  await screenshot();
+  await page.getByTestId("BackupControls.Restore").waitFor({ state: "visible", timeout: 2e3 });
+  console.log("electronApp", !!electronApp);
+  // await browser.close();
+  // await page.close();
+  // passed = true;
 
 })
+
+
+const MINUTE = 60e3;
+export const createDatabase = async (dbName: string, page: Page, fromTemplates = false, owner?: { name: string; pass: string; }) => {
+  await page.locator(`[data-command="ConnectionServer.add"]`).first().click();
+  // await page.waitForTimeout(3000);
+  if(fromTemplates){
+    await page.getByTestId("ConnectionServer.add.newDatabase").click();
+    await page.getByTestId("ConnectionServer.SampleSchemas").click();
+    await page.getByTestId("ConnectionServer.SampleSchemas").locator(`[data-key=${JSON.stringify(dbName)}]`).click();
+  } else {
+    await page.getByTestId("ConnectionServer.add.newDatabase").click();
+    await page.getByTestId("ConnectionServer.NewDbName").locator("input").fill(dbName);
+  }
+  if(owner){
+    await page.getByTestId("ConnectionServer.withNewOwnerToggle").click()
+    await page.waitForTimeout(500);
+    await page.getByTestId("ConnectionServer.NewUserName").locator("input").fill(owner.name);
+    await page.getByTestId("ConnectionServer.NewUserPassword").locator("input").fill(owner.pass);
+    await page.waitForTimeout(500);
+  }
+  await page.getByTestId("ConnectionServer.add.confirm").click();
+  /* Wait until db is created */
+  const databaseCreationTime = (fromTemplates? 4 : 1) * MINUTE;
+  const workspaceCreationAndLoatTime = 3 * MINUTE;
+  await page.getByTestId("ConnectionServer.add.confirm").waitFor({ state: "detached", timeout: databaseCreationTime });
+  // await page.getByTestId("dashboard.menu").waitFor({ state: "visible", timeout: workspaceCreationAndLoatTime });
+}

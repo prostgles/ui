@@ -19,6 +19,15 @@ export type InstalledPrograms = ProstglesInitState["canDumpAndRestore"] & {
   filePath: string;
 } | undefined;
 
+const getDataDirectory = async (db: DB) => {
+  const dataDir = (await db.oneOrNone("SHOW data_directory"))?.data_directory as string;
+  const binDir = dataDir.endsWith("data")? (dataDir.slice(0, -4) + "bin/") : undefined;
+  return {
+    binDir,
+    dataDir,
+  };
+}
+
 const getWindowsPsqlBinPath = async (db: DB) => {
   let filePath = "";
   const { ProgramFiles } = process.env;
@@ -40,9 +49,8 @@ const getWindowsPsqlBinPath = async (db: DB) => {
   }
 
   if(!filePath){
-    const installLocation = (await db.oneOrNone("SHOW data_directory"))?.data_directory as string;
-    const binDir = installLocation.endsWith("data")? (installLocation.slice(0, -4) + "bin/") : installLocation;
-    if(fs.existsSync(`${binDir}psql.exe`)){
+    const { binDir } = await getDataDirectory(db);
+    if(binDir && fs.existsSync(`${binDir}psql.exe`)){
       return binDir;
     }
 
@@ -77,28 +85,52 @@ export const getInstalledPrograms = async (db: DB): Promise<InstalledPrograms> =
         pg_dump: execSync(JSON.stringify(`${filePath}pg_dump${ext}`) + ` --version`).toString(),
         pg_restore: execSync(JSON.stringify(`${filePath}pg_restore${ext}`) + ` --version`).toString(),
       };
+
     /** Linux/MacOS */
     } else {
       if(os === "Mac"){
-        const brewProgramFolders = fs.readdirSync("/opt/homebrew/opt/");
-        let maxVersion = 0;
-        const postgresFolders = brewProgramFolders
-          .map(folder => {
-            if(folder === "postgresql"){
-              return { version: undefined };
-            } else if(folder.startsWith("postgresql@")){
-              const version = Number(folder.split("@")[1]!);
-              maxVersion = Math.max(maxVersion, version);
-              return { version };
-            }
-          })
-          .filter(isDefined);
 
-        if(postgresFolders.length){
-          filePath = "/opt/homebrew/opt/postgresql/bin/";
-          if(maxVersion){
-            filePath = `/opt/homebrew/opt/postgresql@${maxVersion}/bin/`;
+        /** 
+         * Option 1 - PG was installed through EDB 
+         * Expecting something like this:
+         *    /Library/PostgreSQL/16/bin/psql 
+        */
+        const { binDir } = await getDataDirectory(db);
+        if(binDir && fs.existsSync(`${binDir}psql`)){
+          filePath = binDir;
+        
+        /** 
+         * Option 2 - PG was installed through Homebrew 
+         * Expecting something like this:
+         *    /opt/homebrew/opt/postgresql/bin/psql 
+         * OR
+         *    /opt/homebrew/opt/postgresql@13/bin/psql 
+        */
+        } else {
+
+          const brewProgramFolders = fs.readdirSync("/opt/homebrew/opt/");
+          let maxVersion = 0;
+          const postgresFolders = brewProgramFolders
+            .map(folder => {
+              if(folder === "postgresql"){
+                return { version: undefined };
+              } else if(folder.startsWith("postgresql@")){
+                const version = Number(folder.split("@")[1]!);
+                maxVersion = Math.max(maxVersion, version);
+                return { version };
+              }
+            })
+            .filter(isDefined);
+
+          if(postgresFolders.length){
+            filePath = "/opt/homebrew/opt/postgresql/bin/";
+            if(maxVersion){
+              filePath = `/opt/homebrew/opt/postgresql@${maxVersion}/bin/`;
+            }
           }
+
+        }
+        if(filePath){
           installedPrograms = {
             psql: execSync(`${filePath}psql --version`).toString(),
             pg_dump: execSync(`${filePath}pg_dump --version`).toString(),
