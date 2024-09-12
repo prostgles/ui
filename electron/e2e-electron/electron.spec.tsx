@@ -1,44 +1,13 @@
 import { expect, test, ElectronApplication, 
   _electron as electron, Page 
 } from '@playwright/test';
+let electronApp: ElectronApplication | undefined;
 
 const start = Date.now();
 const urlsOpened: string[] = [];
-
-
-const MINUTE = 60e3;
-const createDatabase = async (dbName: string, page: Page, fromTemplates = false, owner?: { name: string; pass: string; }) => {
-  await page.locator(`[data-command="ConnectionServer.add"]`).first().click();
-  // await page.waitForTimeout(3000);
-  if(fromTemplates){
-    await page.getByTestId("ConnectionServer.add.newDatabase").click();
-    await page.getByTestId("ConnectionServer.SampleSchemas").click();
-    await page.getByTestId("ConnectionServer.SampleSchemas").locator(`[data-key=${JSON.stringify(dbName)}]`).click();
-  } else {
-    await page.getByTestId("ConnectionServer.add.newDatabase").click();
-    await page.getByTestId("ConnectionServer.NewDbName").locator("input").fill(dbName);
-  }
-  if(owner){
-    await page.getByTestId("ConnectionServer.withNewOwnerToggle").click()
-    await page.waitForTimeout(500);
-    await page.getByTestId("ConnectionServer.NewUserName").locator("input").fill(owner.name);
-    await page.getByTestId("ConnectionServer.NewUserPassword").locator("input").fill(owner.pass);
-    await page.waitForTimeout(500);
-  }
-  await page.getByTestId("ConnectionServer.add.confirm").click();
-  /* Wait until db is created */
-  const databaseCreationTime = (fromTemplates? 4 : 1) * MINUTE;
-  const workspaceCreationAndLoatTime = 3 * MINUTE;
-  await page.getByTestId("ConnectionServer.add.confirm").waitFor({ state: "detached", timeout: databaseCreationTime });
-  // await page.getByTestId("dashboard.menu").waitFor({ state: "visible", timeout: workspaceCreationAndLoatTime });
-}
-
-
-test.setTimeout(2 * 60e3);
-
-(async () => {
+test.beforeAll(async () => {
   process.env.CI = 'e2e'
-  const electronApp = await electron.launch({
+  electronApp = await electron.launch({
     args: [
       __dirname + "/../build/main.js",
       "--no-sandbox"
@@ -62,7 +31,27 @@ test.setTimeout(2 * 60e3);
       console.log(msg.text())
     })
   });
+})
 
+test.afterAll(async () => {
+  let waitTimeSeconds = 20;
+  setInterval(() => {
+    console.log((Date.now() - start) / 1e3, " seconds since started. trying to close... " );
+    waitTimeSeconds--;
+    if(waitTimeSeconds <= 0){
+      console.trace("Force closing app");
+      electronApp?.process().kill(0);
+      // electronApp?.;
+    }
+  }, 1e3);
+  await electronApp?.close();
+  waitTimeSeconds = 0; 
+  console.log("afterAll electronApp", !!electronApp);
+})
+
+test.setTimeout(2 * 60e3);
+
+test('renders the first page', async () => {
   if(!electronApp) {
     console.error("No electronApp");
     return;
@@ -72,7 +61,7 @@ test.setTimeout(2 * 60e3);
 
   const screenshot = async (name?: string) => {
     if(!page) return;
-    await page.screenshot({ path: `../e2e/electron-report/scr-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
+    await page.screenshot({ path: `../e2e/electron-report/s-${name ?? (new Date()).toISOString().replaceAll(":", "")}.png` });
   }
 
   // await page.waitForTimeout(12000);
@@ -144,8 +133,35 @@ test.setTimeout(2 * 60e3);
   await screenshot();
   await page.getByTestId("BackupControls.Restore").waitFor({ state: "visible", timeout: 2e3 });
   console.log("electronApp", !!electronApp);
-  
-  
-  await electronApp?.close();
+  // await page.close();
+  // passed = true;
 
-})();
+})
+
+
+const MINUTE = 60e3;
+export const createDatabase = async (dbName: string, page: Page, fromTemplates = false, owner?: { name: string; pass: string; }) => {
+  await page.locator(`[data-command="ConnectionServer.add"]`).first().click();
+  // await page.waitForTimeout(3000);
+  if(fromTemplates){
+    await page.getByTestId("ConnectionServer.add.newDatabase").click();
+    await page.getByTestId("ConnectionServer.SampleSchemas").click();
+    await page.getByTestId("ConnectionServer.SampleSchemas").locator(`[data-key=${JSON.stringify(dbName)}]`).click();
+  } else {
+    await page.getByTestId("ConnectionServer.add.newDatabase").click();
+    await page.getByTestId("ConnectionServer.NewDbName").locator("input").fill(dbName);
+  }
+  if(owner){
+    await page.getByTestId("ConnectionServer.withNewOwnerToggle").click()
+    await page.waitForTimeout(500);
+    await page.getByTestId("ConnectionServer.NewUserName").locator("input").fill(owner.name);
+    await page.getByTestId("ConnectionServer.NewUserPassword").locator("input").fill(owner.pass);
+    await page.waitForTimeout(500);
+  }
+  await page.getByTestId("ConnectionServer.add.confirm").click();
+  /* Wait until db is created */
+  const databaseCreationTime = (fromTemplates? 4 : 1) * MINUTE;
+  const workspaceCreationAndLoatTime = 3 * MINUTE;
+  await page.getByTestId("ConnectionServer.add.confirm").waitFor({ state: "detached", timeout: databaseCreationTime });
+  // await page.getByTestId("dashboard.menu").waitFor({ state: "visible", timeout: workspaceCreationAndLoatTime });
+}
