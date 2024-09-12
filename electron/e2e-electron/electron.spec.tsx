@@ -49,7 +49,7 @@ test('renders the first page', async () => {
 
   // await page.waitForTimeout(12000);
   // await page.reload();
-  await screenshot();
+  // await screenshot();
 
   /** Privacy */
   await page.getByTestId("ElectronSetup.Next").waitFor({ state: "visible", timeout: 120e3 });
