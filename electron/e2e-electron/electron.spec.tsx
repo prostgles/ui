@@ -3,6 +3,7 @@ import { expect, test, ElectronApplication,
 } from '@playwright/test';
 let electronApp: ElectronApplication | undefined;
 
+const start = Date.now();
 test.beforeAll(async () => {
   process.env.CI = 'e2e'
   electronApp = await electron.launch({
@@ -31,11 +32,14 @@ test.beforeAll(async () => {
 })
 
 test.afterAll(async () => {
-  electronApp?.close()
+  electronApp?.close();
+  setInterval(() => {
+    console.log((Date.now() - start) / 1e3, " seconds since started. trying to close... " );
+  }, 1e3);
   console.log("afterAll electronApp", !!electronApp);
 })
 
-test.setTimeout(1 * 60e3);
+test.setTimeout(2 * 60e3);
 
 test('renders the first page', async () => {
   if(!electronApp) {

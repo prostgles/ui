@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.47.0",
-    "electron": "^32.0.2",
+    "electron": "^32.1.0",
     "electron-builder": "^24.13.3",
     "electron-squirrel-startup": "^1.0.1",
     "tsc-watch": "^6.2.0",
