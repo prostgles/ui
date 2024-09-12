@@ -31,14 +31,17 @@ test.beforeAll(async () => {
 })
 
 test.afterAll(async () => {
-  await electronApp?.close()
+  electronApp?.close()
   console.log("afterAll electronApp", !!electronApp);
 })
 
 test.setTimeout(1 * 60e3);
 
 test('renders the first page', async () => {
-  if(!electronApp) return;
+  if(!electronApp) {
+    console.error("No electronApp");
+    return;
+  }
 
   const page = await electronApp.firstWindow();
 
@@ -116,7 +119,7 @@ test('renders the first page', async () => {
   await screenshot();
   await page.getByTestId("BackupControls.Restore").waitFor({ state: "visible", timeout: 2e3 });
   console.log("electronApp", !!electronApp);
-  await page.close();
+  // await page.close();
   // passed = true;
 
 })
