@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test' 
 
-const timeoutMinutes = 6;
+const timeoutMinutes = 1;
 export default defineConfig({
   timeout: timeoutMinutes * 60e3,
   testDir: './e2e-electron',
