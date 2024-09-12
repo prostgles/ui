@@ -35,6 +35,7 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   let waitTimeSeconds = 20;
+  console.trace("closing app");
   setInterval(() => {
     console.log((Date.now() - start) / 1e3, " seconds since started. trying to close... " );
     waitTimeSeconds--;
