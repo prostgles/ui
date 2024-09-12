@@ -41,8 +41,7 @@ test.afterAll(async () => {
     waitTimeSeconds--;
     if(waitTimeSeconds <= 0){
       console.trace("Force closing app");
-      electronApp?.process().kill(0);
-      // electronApp?.;
+      process.exit(0);
     }
   }, 1e3);
   await electronApp?.close();
