@@ -23,7 +23,7 @@
     "test-start": "playwright test",
     "test": "bash ./test.sh",
     "test-linux": "bash ./build.sh && bash ./test-linux.sh",
-    "test-macos": "bash ./build.sh && bash test-w-debug.sh"
+    "test-macos": "bash ./build.sh && playwright test"
   },
   "author": "Prostgles  <office@prostgles.com>",
   "projectUrl": "https://github.com/prostgles/ui-desktop",

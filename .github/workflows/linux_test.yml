@@ -56,10 +56,11 @@ jobs:
         sudo apt-get update && \
         sudo apt-get -y install postgresql-client-16
       
-    - name: Run electron test
-      run: |
-        sudo apt-get install xvfb -y &&
-        cd electron && npm run test-linux
+    # buggy
+    # - name: Run electron test
+    #   run: |
+    #     sudo apt-get install xvfb -y &&
+    #     cd electron && npm run test-linux
 
     - name: Run test
       run: |
@@ -72,4 +73,45 @@ jobs:
         path: |
           e2e/electron-report/
           e2e/playwright-report/
+        retention-days: 10
+  test_macos:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 20
+    - name: Install curl inside postgres container for video needed for demo
+      run: |
+        ls -la /Applications/ 
+        
+    - name: Install dependencies (psql with pg_dump) pg_dump version must be >= pg servers version to ensure backup/restore works
+      run: |
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && \
+        brew install postgresql@14
+        brew services restart postgresql@14
+        export PATH="/opt/homebrew/opt/postgresql@14/bin:$PATH"
+        /opt/homebrew/opt/postgresql@14/bin/psql --version
+        /opt/homebrew/opt/postgresql@14/bin/pg_dump --version
+        until pg_isready
+        do
+          echo "Waiting for postgres to start..."
+          sleep 1
+        done
+        /opt/homebrew/opt/postgresql@14/bin/createuser -s postgres
+        sudo psql -U postgres -c "CREATE USER usr WITH LOGIN SUPERUSER ENCRYPTED PASSWORD 'psw'"
+        sudo psql -U postgres -c "CREATE DATABASE prostgles_desktop_db OWNER usr"
+        brew install postgis
+        brew services restart postgresql 
+        
+        psql --version
+        cd electron
+        npm run test-macos
+         
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report
+        path: e2e/playwright-report/
         retention-days: 10
