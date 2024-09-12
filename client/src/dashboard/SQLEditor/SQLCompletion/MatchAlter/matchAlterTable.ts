@@ -1,5 +1,6 @@
+import { tout } from "../../../../pages/ElectronSetup";
 import { suggestSnippets } from "../CommonMatchImports";
-import { PG_TABLE_CONSTRAINTS, REFERENCE_CONSTRAINT_OPTIONS_KWDS, TABLE_CONS_TYPES } from "../TableKWDs";
+import { ALTER_COL_ACTIONS, PG_TABLE_CONSTRAINTS, REFERENCE_CONSTRAINT_OPTIONS_KWDS, TABLE_CONS_TYPES } from "../TableKWDs";
 import { getExpected } from "../getExpected";
 import { type ParsedSQLSuggestion, type SQLMatchContext } from "../registerSuggestions";
 import type { KWD } from "../withKWDs";
@@ -26,9 +27,29 @@ export const matchAlterTable = async ({ cb, ss, sql, setS }: SQLMatchContext): P
   if(cb.tokens.length === 3){
     return withKWDs(ALTER_TABLE_ACTIONS.map(({ label, docs }) => ({ kwd: label, docs  })), { cb, ss, setS, sql }).getSuggestion();
   }
+
+  if (cb.prevLC.includes("alter column") && !cb.prevLC.endsWith("column")) {
+    return withKWDs(ALTER_COL_ACTIONS, { cb, ss, setS, sql }).getSuggestion();
+  }
+  if (cb.prevLC.includes("drop column")  && !cb.prevLC.endsWith("column")) {
+    return suggestSnippets(["CASCADE", "RESTRICT"].map(label => ({ label })));
+  }
+  if (cb.prevLC.includes("rename column")) {
+    if(!cb.prevLC.endsWith("column")){
+      if(cb.l1token?.textLC == "column"){
+        return suggestSnippets(["TO $new_col_name"].map(label => ({ label })));
+      }
+      if(cb.ltoken?.textLC == "to"){
+        return suggestSnippets([{ label: "$new_col_name" }]);
+      }
+    }
+  }
+
+
   const k = withKWDs(ALTER_TABLE_KWD, { cb, ss, setS, sql });
 
-  return k.getSuggestion(); 
+  const result = await k.getSuggestion();
+  return result; 
 }
 
 
@@ -66,20 +87,15 @@ const ALTER_TABLE_KWD = [
       { label: "COLUMN" }
     ]
   },
-  {
-    kwd: "ALTER COLUMN",
+  ...(["RENAME", "ALTER", "DROP"].map(kwd => ({
+    kwd: `${kwd} COLUMN`,
     expects: "column",
     excludeIf: (cb) => cb.prevTokens.length > 3,
-  },
-  {
-    kwd: "DROP COLUMN",
-    expects: "column",
-    excludeIf: (cb) => cb.prevTokens.length > 3,
-  },
+  }))),
   {
     kwd: "COLUMN",
     expects: "column",
-    exactlyAfter: ["ADD", "DROP", "ALTER"]
+    exactlyAfter: ["ADD", "DROP", "ALTER", "RENAME"]
   },
   {
     kwd: "DISABLE TRIGGER",

@@ -247,7 +247,14 @@ export const withKWDs = <KWDD extends KWD>(
           }
         }
 
-        const expectedSuggestions = (!prevKWD.expects || prevKWD.expects === "(options)")? [] : prevKWD.expects === "column"? (await suggestColumnLike({ cb, ss, setS, parentCb, sql })).suggestions.filter(s => s.type === "column") : getExpected(prevKWD.expects, cb, ss).suggestions;
+        let expectedSuggestions: ParsedSQLSuggestion[] = [];
+        if(!prevKWD.expects || prevKWD.expects === "(options)"){
+          expectedSuggestions = [];
+        } else if (prevKWD.expects === "column"){
+          expectedSuggestions = (await suggestColumnLike({ cb, ss, setS, parentCb, sql })).suggestions.filter(s => s.type === "column")
+        } else {
+          expectedSuggestions = getExpected(prevKWD.expects, cb, ss).suggestions;
+        }
         if(firstSuggestions.length || expectedSuggestions.length){
 
           const result = {
