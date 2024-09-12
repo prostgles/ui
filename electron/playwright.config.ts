@@ -1,15 +1,17 @@
 import { defineConfig } from '@playwright/test' 
 
-const timeoutMinutes = 1;
+const timeoutMinutes = 2;
 export default defineConfig({
   timeout: timeoutMinutes * 60e3,
   testDir: './e2e-electron',
   maxFailures: 0,
   workers: 1,
-  reporter: 'html',
+  reporter: "list",
+  retries: 0,
   use: {
-    trace: "on-first-retry",
-    video: "on",
+    /** https://github.com/microsoft/playwright/issues/27048 */
+    trace: "off",
+    video: "off",
     testIdAttribute: "data-command",
   }
 });

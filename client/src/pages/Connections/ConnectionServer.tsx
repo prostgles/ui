@@ -82,14 +82,21 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
         SELECT datname FROM pg_catalog.pg_database
       `
     )) as { datname: string; }[];
-    const sampleSchemas = await getSampleSchemas();
+    const sampleSchemas = await getSampleSchemas().catch(gettingSampleSchemasError => {
+      console.error({ gettingSampleSchemasError });
+      return [];
+    });
     const existingConnections = await dbs.connections.find({}, { select: { name: 1 } });
+    const mainConnection = await dbs.connections.findOne({ id: connId });
+    if(!mainConnection){
+      throw "mainConnection not found";
+    }
     setServerInfo({
       ...serverInfo, 
       sampleSchemas,
       databases: databases.map(d => d.datname), 
       usedDatabases: connections.map(c => c.db_name),
-      mainConnection: (await dbs.connections.findOne({ id: connId }))!,
+      mainConnection,
       existingConnectionNames: existingConnections.map(c => c.name).filter(v => v),
     });
   };
