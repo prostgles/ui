@@ -49,8 +49,9 @@ export const getElectronConfig = () => {
     
     try {
       const file = !fs.existsSync(electronConfigPath)? undefined : fs.readFileSync(electronConfigPath);
-      if(file){
-        return JSON.parse(safeStorage!.decryptString(file));
+      const decrypted = file? safeStorage!.decryptString(file) : undefined;
+      if(decrypted){
+        return JSON.parse(decrypted);
       }
     } catch(e){
       console.error(e);
