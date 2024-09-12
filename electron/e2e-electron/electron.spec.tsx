@@ -32,6 +32,10 @@ test.beforeAll(async () => {
 })
 
 test.afterAll(async () => {
+  electronApp?.windows().forEach(async (page) => {
+    console.log("Closing page ", page.url());
+    await page.close();
+  });
   electronApp?.close();
   setInterval(() => {
     console.log((Date.now() - start) / 1e3, " seconds since started. trying to close... " );
