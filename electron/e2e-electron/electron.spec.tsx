@@ -41,7 +41,7 @@ test.afterAll(async () => {
     waitTimeSeconds--;
     if(waitTimeSeconds <= 0){
       console.trace("Force closing app");
-      process.exit(0);
+      // process.exit(0);
     }
   }, 1e3);
   await electronApp?.close();
@@ -51,7 +51,7 @@ test.afterAll(async () => {
 
 test.setTimeout(2 * 60e3);
 
-test('renders the first page', async ({ browser }) => {
+test('renders the first page', async ( ) => {
   if(!electronApp) {
     console.error("No electronApp");
     return;
