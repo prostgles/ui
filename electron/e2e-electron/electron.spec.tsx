@@ -31,8 +31,8 @@ test.beforeAll(async () => {
 })
 
 test.afterAll(async () => {
-  console.log("afterAll electronApp", !!electronApp);
   await electronApp?.close()
+  console.log("afterAll electronApp", !!electronApp);
 })
 
 test.setTimeout(1 * 60e3);
