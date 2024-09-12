@@ -14,7 +14,7 @@ test.beforeAll(async () => {
     ],
     env: { 
       ...process.env, 
-      NODE_ENV: "production", 
+      NODE_ENV: "development", 
       //'development' 
     },
     // tracesDir: './dist',
@@ -44,10 +44,11 @@ test.afterAll(async () => {
     waitTimeSeconds--;
     if(waitTimeSeconds <= 0){
       electronApp?.process().kill(0);
+      // electronApp?.;
     }
   }, 1e3);
-  waitTimeSeconds = 0; 
   await electronApp?.close();
+  waitTimeSeconds = 0; 
   console.log("afterAll electronApp", !!electronApp);
 })
 
