@@ -51,7 +51,7 @@ test.afterAll(async () => {
 
 test.setTimeout(2 * 60e3);
 
-test('renders the first page', async () => {
+test('renders the first page', async ({ browser }) => {
   if(!electronApp) {
     console.error("No electronApp");
     return;
@@ -133,6 +133,7 @@ test('renders the first page', async () => {
   await screenshot();
   await page.getByTestId("BackupControls.Restore").waitFor({ state: "visible", timeout: 2e3 });
   console.log("electronApp", !!electronApp);
+  await browser.close();
   // await page.close();
   // passed = true;
 
