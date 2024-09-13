@@ -362,6 +362,16 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
   }
 
   const userMethods = !user.id? {} : {
+    sendFeedback: async ({ details, email }: { details: string; email?: string }) => {
+      await fetch("https://prostgles.com/feedback", {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ details, email }),
+      });
+    },
     generateToken: async (days: number) => {
       if(!Number.isInteger(days)) {
         throw "Expecting an integer days but got: " + days;

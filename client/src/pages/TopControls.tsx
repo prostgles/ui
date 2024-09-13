@@ -78,7 +78,7 @@ export const TopControls = (props: TopControlsProps) => {
             <Alerts { ...prgl } />
           }
 
-          <Feedback /> 
+          <Feedback dbsMethods={prgl.dbsMethods} /> 
         
           <Btn 
             data-command="dashboard.goToConnections"

@@ -5,13 +5,14 @@ import { Success } from "../components/Animations";
 import Btn from "../components/Btn";
 import ErrorComponent from "../components/ErrorComponent";
 import FormField from "../components/FormField/FormField";
-import { POST } from "../pages/Login";
 import { useIsMounted } from "./Backup/CredentialSelector";
 import PopupMenu from "../components/PopupMenu";
 import { FlexCol } from "../components/Flex";
+import type { Prgl } from "../App";
 
-export const Feedback = () => {
-  const getIsMounted = useIsMounted()
+export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
+  const getIsMounted = useIsMounted();
+  const { sendFeedback } = dbsMethods;
   const [feedback, setFeedBack] = useState<{
       email?: string;
       details: string;
@@ -21,7 +22,9 @@ export const Feedback = () => {
     }>({
       email: "",
       details: "",
-    })
+    });
+
+  if(!sendFeedback) return null;
 
   return <PopupMenu 
       title="Send feedback"
@@ -43,7 +46,7 @@ export const Feedback = () => {
           {window.isMediumWidthScreen? null : `Feedback`}
         </Btn>
       )}
-      footerButtons={pClose => [
+      footerButtons={feedback.sending? undefined : (pClose => [
         {
           label: "Cancel",
           variant: "outline",
@@ -60,9 +63,7 @@ export const Feedback = () => {
           onClickPromise: async (e) => {
             try {
               setFeedBack({ ...feedback, sending: true });
-              const res = await POST("https://prostgles.com/feedback", feedback);
-              const resp = await res.json();
-              if(resp.error) throw resp.error;
+              await sendFeedback(feedback);
               setFeedBack({ ...feedback, success: true });
               setTimeout(() => {
                 if(getIsMounted()){
@@ -75,7 +76,7 @@ export const Feedback = () => {
             }
           }
         }
-      ]}
+      ])}
     > 
       <FlexCol>
         {feedback.success?

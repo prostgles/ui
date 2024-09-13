@@ -22,10 +22,12 @@ const getAliasToken = (tokens: SQLMatchContext["cb"]["tokens"], expressionLastTo
 const tablePrecedingKeywords = ["from", "join", "lateral", "update"] as const;
 const withTablePrecedingKeywords = ["as"] as const;
 const policyTablePrecedingKeywords = ["on"] as const;
+const alterTablePrecedingKeywords = ["table"] as const;
 const allTablePrecedingKeywords = [
   ...tablePrecedingKeywords,
   ...withTablePrecedingKeywords,
-  ...policyTablePrecedingKeywords
+  ...policyTablePrecedingKeywords,
+  ...alterTablePrecedingKeywords,
 ] as const;
 
 export type TabularExpression = {
@@ -134,6 +136,7 @@ const getExpressions = (tokens: TokenInfo[], cb: CodeBlock, ss: ParsedSQLSuggest
   const isWith = tokens[0]?.textLC === "with";
   const isPolicy = tokens[1]?.textLC === "policy";
   const isIndex = tokens[1]?.textLC === "index";
+  const isAlterTable = tokens[0]?.textLC === "alter" && tokens[1]?.textLC === "table";
   const indexOrPolicy = isIndex || isPolicy;
   let isWithAsSectionFinished = false;
   tokens.forEach((t, i) => {
@@ -141,7 +144,12 @@ const getExpressions = (tokens: TokenInfo[], cb: CodeBlock, ss: ParsedSQLSuggest
     const nextToken = tokens[i+1];
     const tableKeywods = [
       ...tablePrecedingKeywords,
-      ...(indexOrPolicy? policyTablePrecedingKeywords : (isWith && !isWithAsSectionFinished)? withTablePrecedingKeywords : [])
+      ...(
+        isAlterTable? alterTablePrecedingKeywords : 
+        indexOrPolicy? policyTablePrecedingKeywords : 
+        (isWith && !isWithAsSectionFinished)? withTablePrecedingKeywords : 
+        []
+      )
     ];
     if(!isWithAsSectionFinished && t.textLC === "select" && !t.nestingId){
       isWithAsSectionFinished = true;
@@ -235,7 +243,7 @@ const getExpressions = (tokens: TokenInfo[], cb: CodeBlock, ss: ParsedSQLSuggest
       /** Table or view or CTE alias */
       } else if(t.type === "identifier.sql" && !t.nestingId){
         const [matchingTable, ...otherTables] = ss.filter(s => ["table", "view", "mview"].includes(s.type) && (s.escapedIdentifier === t.text || s.name === t.text));
-        const alias = indexOrPolicy? undefined : getAliasToken(tokens, i)?.text;
+        const alias = (indexOrPolicy || isAlterTable)? undefined : getAliasToken(tokens, i)?.text;
 
         /** Table or view */
         if(matchingTable && !otherTables.length){

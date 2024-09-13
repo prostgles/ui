@@ -1,10 +1,10 @@
 
-import type { MinimalSnippet} from "../CommonMatchImports";
+import type { MinimalSnippet } from "../CommonMatchImports";
 import { PG_OBJECTS, suggestSnippets } from "../CommonMatchImports";
 import { cleanExpect, getExpected } from "../getExpected";
 import { getParentFunction } from "../MatchSelect";
 import { getKind, type ParsedSQLSuggestion, type SQLMatcher } from "../registerSuggestions";
-import { ALTER_COL_ACTIONS, getNewColumnDefinitions, PG_COLUMN_CONSTRAINTS } from "../TableKWDs";
+import { getNewColumnDefinitions, PG_COLUMN_CONSTRAINTS } from "../TableKWDs";
 import { withKWDs } from "../withKWDs";
 import { matchAlterPolicy } from "./matchAlterPolicy";
 import { matchAlterTable } from "./matchAlterTable";
@@ -104,9 +104,14 @@ export const MatchAlter: SQLMatcher = {
 
     if (prevLC.startsWith("alter database")) {
       if(prevLC.endsWith("alter database")){
-        return suggestSnippets(ss.filter(s => s.type === "database").flatMap(s => ALTED_DB_ACTIONS.map(a => ({ label: `${s.escapedIdentifier} ${a}`, kind: getKind("keyword") }))));
+        return suggestSnippets(ss.filter(s => s.type === "database")
+          .flatMap(s => 
+            ALTED_DB_ACTIONS.map(a => ({ label: `${s.escapedIdentifier} ${a}`, kind: getKind("keyword") }))
+          )
+        );
       }
       return suggestSnippets(ALTED_DB_ACTIONS.map(label => ({ label, kind: getKind("keyword") })));
+      
     } else if (prevLC.endsWith("data type")) {
       return {
         suggestions: ss.filter(s => s.type === "dataType")
@@ -114,17 +119,6 @@ export const MatchAlter: SQLMatcher = {
     } else if (prevLC.endsWith("owner to")) {
       const users = ss.filter(s => userFields.includes(s.type));
       return suggestSnippets(users.map(s => ({ label: s.name })));
-
-    } else if (prevLC.includes("alter column")) {
-
-      if (prevLC.endsWith("column")) {
-        const cols = ss.filter(s => s.type === "column" && identifiers.includes(s.escapedParentName!));
-        return { suggestions: cols };
-      }
-      return withKWDs(ALTER_COL_ACTIONS, { cb, ss, setS, sql }).getSuggestion();
-
-    } else if (prevLC.includes("drop column")) {
-      return suggestSnippets(["CASCADE", "RESTRICT"].map(label => ({ label })));
     
     } else if(prevLC.startsWith("alter table")){
       return matchAlterTable({ cb, ss, setS, sql });
