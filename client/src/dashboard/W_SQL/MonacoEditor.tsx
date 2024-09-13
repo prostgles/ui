@@ -5,6 +5,7 @@ import { appTheme, useReactiveState } from "../../App";
 import { useAsyncEffectQueue, useEffectDeep } from "prostgles-client/dist/react-hooks";
 import type { editor } from "../W_SQL/monacoEditorTypes"
 import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
+import { hackyFixOptionmatchOnWordStartOnly } from "../SQLEditor/SQLCompletion/registerSuggestions";
 export type MonacoEditorProps = {
   language: string;
   value: string;
@@ -47,6 +48,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     if (!container.current) return;
     
     editor.current = monaco.editor.create(container.current, editorOptions);
+    hackyFixOptionmatchOnWordStartOnly(editor.current);
     hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42(editor.current, expandSuggestionDocs)
     if (props.onChange) {
       editor.current.onDidChangeModelContent(() => {

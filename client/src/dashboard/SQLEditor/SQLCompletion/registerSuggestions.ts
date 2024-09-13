@@ -365,7 +365,6 @@ export function registerSuggestions(args: Args) {
     triggerCharacters: triggerCharacters.slice(0),
     provideCompletionItems: async (model, position, context): Promise<{ suggestions: (MonacoSuggestion | languages.CompletionItem)[] }> => {
       const res = await provideCompletionItems(model, position, context);
-
       return res;
     },
     resolveCompletionItem: async (item, token) => {
@@ -419,6 +418,7 @@ export function isUpperCase(str) {
 
 
 /**
+ * Extra fix below does not work for all cases
  * monaco filters items without caring about sortText too much (relname "-1" is not shown. name "b" is shown instead).
  * Need to insure that sortText first group items are shown if they contain the word
  * 
@@ -433,9 +433,10 @@ const hackyFixMonacoSortFilter = debounce((editor: editor.IStandaloneCodeEditor)
   const shownCompletionItems = suggestWidget._value._list.view.items.map(e => e.element.completion) as ParsedSQLSuggestion[];
   const firstItem: ParsedSQLSuggestion | undefined = suggestWidget._value._list.view.items[0]?.element.completion;
   const focusedItem: { filterTextLow: string; word: string; completion: ParsedSQLSuggestion } = suggestWidget._value._focusedItem ?? {};
-  const { filterTextLow, word, completion } = focusedItem;
+  const { filterTextLow, completion } = focusedItem;
   const didScroll = suggestWidget._value?._list?.view.scrollable._state.scrollTop;
   const cb = (editor.getDomNode() as any)?._cBlock as CodeBlock | undefined;
+  const word = focusedItem.word || cb?.currToken?.text;
   // console.log(cb, suggestWidget, focusedItem, shownCompletionItems)
   if(!didScroll && cb?.currToken?.type !== "string.sql" && allCompletionItems.length && word && filterTextLow && firstItem){
     const itemThatShouldBeHigher = allCompletionItems.find(s => (s.name as any)?.includes(word) && s.sortText && s.sortText < (firstItem.sortText ?? "zzz"))
@@ -445,6 +446,19 @@ const hackyFixMonacoSortFilter = debounce((editor: editor.IStandaloneCodeEditor)
     }
   }
 }, 500);
+export const hackyFixOptionmatchOnWordStartOnly = (editor: editor.IStandaloneCodeEditor) => {
+
+  try {
+    // ensure typing name matches relname
+    // suggestModel.js:420
+    //@ts-ignore
+    const confObj = editor._configuration?.options?._values?.[118];
+    if(confObj && "matchOnWordStartOnly" in confObj){
+      //@ts-ignore
+      editor._configuration.options._values[118].matchOnWordStartOnly = false
+    }
+  } catch(e){}
+}
 
 // function searchObjectForValue(obj, searchValue) {
 //   const results = [];

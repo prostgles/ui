@@ -5,6 +5,16 @@ import type { DemoScript } from "../getDemoUtils";
 
 export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL, runSQL }) => {
 
+  /** Alter/Drop column */
+  const alterTableQuery = "ALTER TABLE pg_catalog.pg_class "
+  await fromBeginning(false, alterTableQuery + "DROP COLUMN");
+  await typeAuto(" nam");
+  await testResult(alterTableQuery + "DROP COLUMN relname");  
+  await fromBeginning(false, alterTableQuery + "ALTER COLUMN");
+  await typeAuto(" nam");
+  await typeAuto(" drd");
+  await testResult(alterTableQuery + "ALTER COLUMN relname DROP DEFAULT"); 
+
   /** Timechart works with codeblocks */
   await fromBeginning(false, "SELECT now(), 3; \n\nselect 1");
   await moveCursor.up(3);
