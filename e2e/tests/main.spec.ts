@@ -366,9 +366,6 @@ test.describe("Main test", () => {
     await page.getByRole("button", { name: "Ok, don't show again", exact: true }).click();
 
     /** Test sql key bindings */
-    await page.getByRole("link", { name: "Prostgles UI state" }).click();
-    await page.getByTestId("dashboard.menu.sqlEditor").click();
-    await page.getByRole("button", { name: "Ok, don't show again", exact: true }).click();
     await page.keyboard.press("Alt+KeyE");
     const keybindings = [
       'Alt+KeyE',
