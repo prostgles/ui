@@ -48,6 +48,9 @@ export const getMonacoEditorBySelector = async (page: PageWIds, parentSelector: 
   const monacoEditor = await page.locator(`${parentSelector} .monaco-editor`).nth(0)
   return monacoEditor;
 }
+/**
+ * Will overwrite all previous content
+ */
 export const monacoType = async (page: PageWIds, parentSelector: string, text: string) => {
 
   const monacoEditor = await getMonacoEditorBySelector(page, parentSelector);

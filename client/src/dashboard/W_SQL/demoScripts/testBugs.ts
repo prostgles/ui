@@ -4,7 +4,7 @@ import { tout } from "../../../pages/ElectronSetup";
 import type { DemoScript } from "../getDemoUtils";
 
 export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL, runSQL }) => {
-
+  
   /** Alter/Drop column */
   const alterTableQuery = "ALTER TABLE pg_catalog.pg_class "
   await fromBeginning(false, alterTableQuery + "DROP COLUMN");
