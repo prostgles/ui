@@ -83,6 +83,7 @@ export const DashboardMenuContent = (props: P) => {
           position: "absolute",
           inset: 0,
           zIndex: 1,
+          opacity: 0.95,
           backdropFilter: "blur(2px)",
         }}
       >
