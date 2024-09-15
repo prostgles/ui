@@ -111,6 +111,8 @@ export const COMMANDS = {
   "deleteRuleAdvanced": "",
   "insertRule": "",
   "insertRuleAdvanced": "",
+  "syncRule": "",
+  "syncRuleAdvanced": "",
 
   "SearchAll": "",
   "SmartAddFilter": "",

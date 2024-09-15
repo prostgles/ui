@@ -70,7 +70,7 @@ test.describe("Main test", () => {
     await page.getByRole('link', { name: 'Connections' }).click();
     
     /** State database exists */
-    await page.getByRole("link", { name: "Prostgles UI state" }).isVisible();
+    await page.getByRole("link", { name: "Prostgles UI state" }).waitFor({ state: "visible", timeout: 15e3 });
   });
 
   test("Limit login attempts", async ({ page: p, browser, context }) => {
@@ -364,6 +364,31 @@ test.describe("Main test", () => {
       throw "Not ok"
     }
     await page.getByRole("button", { name: "Ok, don't show again", exact: true }).click();
+
+    /** Test sql key bindings */
+    await page.getByRole("link", { name: "Prostgles UI state" }).click();
+    await page.getByTestId("dashboard.menu.sqlEditor").click();
+    await page.getByRole("button", { name: "Ok, don't show again", exact: true }).click();
+    await page.keyboard.press("Alt+KeyE");
+    const keybindings = [
+      'Alt+KeyE',
+      'Control+KeyE',
+      'Control+Enter',
+      'F5',
+    ];
+    for await(const key of keybindings){
+      const text = `hello${key}`;
+      await monacoType(page, `.ProstglesSQL`, `SELECT '${text}'`);
+      await page.keyboard.press(key);
+      await page.locator('.W_SQLResults').getByText(text, { exact: true }).waitFor({ state: "visible", timeout: 5e3 });
+    }
+    await monacoType(page, `.ProstglesSQL`, `SELECT pg_sleep(22)`);
+    await page.keyboard.press('Alt+KeyE');
+    await page.waitForTimeout(2e3);
+    await page.keyboard.press('Escape');
+    await page.locator('.W_SQLBottomBar .ErrorComponent').getByText("canceling statement due to user request", { exact: true }).waitFor({ state: "visible", timeout: 5e3 });
+
+    /** Create schema */
     await runSql(page, queries.orders);
     await page.waitForTimeout(1e3);
     await page.getByTestId("dashboard.menu.tablesSearchList")
@@ -450,14 +475,14 @@ test.describe("Main test", () => {
     /** Go to dashboard. Deleted row should be there */
     await page.waitForTimeout(2200);
     await page.getByTestId("config.goToConnDashboard").click();
-    await page.getByText(deletedRowName).isVisible();
+    await page.getByText(deletedRowName).waitFor({ state: "visible", timeout: 15e3});
     await page.waitForTimeout(1200);
 
     /** SearchAll for that row as well */
     await page.keyboard.press("Control+Shift+KeyF");
     await page.getByTestId("SearchAll").fill(deletedRowName);
     await page.waitForTimeout(1100);
-    await page.getByText(`name: ${deletedRowName}`).isVisible();
+    await page.getByText(`name: ${deletedRowName}`).waitFor({ state: "visible", timeout: 15e3 });
     await page.keyboard.press("Escape");
 
     /** Test Access control */
