@@ -88,14 +88,15 @@ export const DashboardMenuContent = (props: P) => {
       >
         <div>
           This is a read-only published workspace. 
-          Create your own workspace to open new views.
+          <br></br>
+          Create your own workspace to open table/views.
         </div>
         <WorkspaceAddBtn
           connection_id={workspace.connection_id}
           dbs={prgl.dbs}
           setWorkspace={setWorkspace}
           btnProps={{
-            children: "Create new workspace",
+            children: "Create workspace",
             size: undefined
           }}
         />

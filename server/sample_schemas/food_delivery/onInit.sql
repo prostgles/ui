@@ -910,7 +910,9 @@ CREATE INDEX ON orders (restaurant_id);
 CREATE INDEX ON orders (customer_id);
 CREATE INDEX ON orders (deliverer_id);
 CREATE INDEX ON orders (created_at);
+CREATE INDEX ON orders (status, created_at);
 CREATE INDEX ON orders (customer_id, created_at);
+CREATE INDEX ON orders (deliverer_id, created_at);
 
 CREATE TABLE order_items (
   id SERIAL PRIMARY KEY,
