@@ -204,7 +204,6 @@ export default class SQLEditor extends RTComp<P, S> {
   }
   
   async onMount(){
-    document.addEventListener("keydown", this.onKeyDown, false);
     const didupdate = await defineCustomSQLTheme();
     if(didupdate){
       this.setState({ themeAge: Date.now() })
@@ -215,7 +214,6 @@ export default class SQLEditor extends RTComp<P, S> {
   }
   
   async onUnmount(){
-    document.removeEventListener("keydown", this.onKeyDown, false);
     await this.props.onUnmount?.(this.editor, this.editor?.getPosition());
     if(this.rootRef) this.resizeObserver?.unobserve(this.rootRef);
   } 
@@ -360,23 +358,6 @@ export default class SQLEditor extends RTComp<P, S> {
     }
   }
 
-  onKeyDown = e => {
-    const { onStopQuery } = this.props;
-    
-    const CTRL_E =  e.altKey && e.key.toLowerCase() === "e"; 
-    const CTRL_Enter = e.ctrlKey && e.key === "Enter"; // Does not work
-    if(e.key === "Escape" && onStopQuery){
-      e.preventDefault();
-      onStopQuery(false);
-    } else if(
-      (e.key === "F5" || CTRL_E || CTRL_Enter) && 
-      this.editor?.getDomNode()?.contains(e.target)
-    ){
-      e.preventDefault();
-      this.onRun()
-    }
-  }
-
   inDebounce: any;
   curVal?: string;
   onChange = (val: string) => {
@@ -506,7 +487,8 @@ export default class SQLEditor extends RTComp<P, S> {
           })
         }} 
         onMount={(editor) => {
-          addSqlEditorFunctions(editor, sqlOptions?.executeOptions === "smallest-block")
+          addSqlEditorFunctions(editor, sqlOptions?.executeOptions === "smallest-block");
+
           this.setState({ editorMounted: true });
           if(onMount) {
             onMount({ 
@@ -516,6 +498,7 @@ export default class SQLEditor extends RTComp<P, S> {
             });
           }
           this.editor = editor;
+          setActions(editor, this);
           editor.onDidChangeModelContent(e => {
             this.onChange(editor.getValue());
             setActiveCodeBlock.bind(this)(undefined);
@@ -574,4 +557,15 @@ const setActiveCodeBlock = async function (this: SQLEditor, e: editor.ICursorPos
 
     this.currentDecorations = await highlightCurrentCodeBlock(editor, codeBlock);
   }
+}
+
+const setActions = async (editor: editor.IStandaloneCodeEditor, comp: SQLEditor) => {
+  const monaco = await getMonaco();
+  editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, comp.onRun);
+  editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.KeyE, comp.onRun);
+  editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyE, comp.onRun);
+  editor.addCommand(monaco.KeyCode.F5, comp.onRun);
+  editor.addCommand(monaco.KeyCode.Escape, () => {
+    comp.props.onStopQuery?.(false);
+  });
 }

@@ -13,7 +13,7 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       created?: null | string;
-      database_id?: null | number;
+      database_id: number;
       dbPermissions: 
        |  {  type: 'Run SQL';  allowSQL?: boolean; }
        |  {  type: 'All views/tables';  allowAllTables: ("select" | "insert" | "update" | "delete")[]; }
@@ -405,7 +405,7 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      application_name: string;
+      application_name?: null | string;
       backend_start?: null | string;
       backend_type?: null | string;
       backend_xid?: null | string;
@@ -425,7 +425,7 @@ export type DBSchemaGenerated = {
       memPretty?: null | string;
       mhz?: null | string;
       pid: number;
-      query: string;
+      query?: null | string;
       query_start?: null | string;
       state?: null | string;
       state_change?: null | string;
@@ -453,6 +453,7 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
+      description?: null | string;
       id: string;
     };
   };
