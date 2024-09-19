@@ -6,6 +6,7 @@ import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import { getJoinSuggestions } from "./getJoinSuggestions";
 import type { ParsedSQLSuggestion } from "./registerSuggestions";
 import { getKind } from "./registerSuggestions";
+import { matchTableFromSuggestions } from "./completionUtils/getTabularExpressions";
 
 export type RawExpect = string | string[] | readonly string[]
 
@@ -43,7 +44,7 @@ export const getExpected = (
       const sortText = s.userInfo? s.userInfo.priority : 
         s.dataTypeInfo? s.dataTypeInfo.priority :
         s.funcInfo? `${schemaSort}${s.funcInfo.extension? "b" : "a"}` :
-        `${(s.type === "column" || s.type === "index") && cb.tableIdentifiers.some(id => s.escapedParentName === id)? "a" : "b" }${schemaSort}`;
+        `${(s.type === "column" || s.type === "index") && cb.tableIdentifiers.some(tableIdentifier => matchTableFromSuggestions(s as any, tableIdentifier))? "0a" : "b" }${schemaSort}`;
 
       /** Do not add schema name again if it exists */
       let insertText = s.insertText;
@@ -58,9 +59,9 @@ export const getExpected = (
     }).concat(extra.map(s => ({ ...s, sortText: "a" })));
 
   const fixedTableQueries = ["create index", "create policy", "create trigger"];
-  const [tableName, ...otherTables] = cb.tableIdentifiers
-  if(rawExpect == "(column)" && fixedTableQueries.some(q => cb.textLC.trim().startsWith(q)) && tableName && !otherTables.length){
-    const tableColumns = suggestions.filter(s => s.type === "column" && s.escapedParentName === tableName);
+  const [table, ...otherTables] = cb.tableIdentifiers
+  if((rawExpect == "(column)" || rawExpect == "column")&& fixedTableQueries.some(q => cb.textLC.trim().startsWith(q)) && table && !otherTables.length){
+    const tableColumns = suggestions.filter(s => s.type === "column" && matchTableFromSuggestions(s as any, table));
     if(tableColumns.length){
       return { suggestions: tableColumns }
     }

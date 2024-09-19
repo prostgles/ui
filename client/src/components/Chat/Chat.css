@@ -31,7 +31,7 @@
   min-height: 200px;
   display: flex; 
   flex-direction: column; 
-  font-size: 15px; 
+  font-size: 16px; 
   overflow: auto; 
   padding: 1em; 
   scroll-behavior: smooth;
@@ -41,26 +41,27 @@
 .chat-container.chat-component .message {
   padding: 5px 8px; 
   border-radius: 12px; 
-  background: rgb(5, 149, 252); 
-  margin-top: 3px; 
+  margin-top: 3px;
   max-width: 70%; 
-  color: white; 
+  color: var(--text-color-1); 
   min-width: 2em; 
   flex: 0 0 auto; 
   opacity: 1; 
   transition: all 0.5s ease 0s; 
   text-align: start; 
-  margin-right: unset; 
-  margin-left: auto; 
   overflow: hidden; 
   text-overflow: ellipsis;
 }
+.chat-container.chat-component .message:not(.incoming) {
+  background: var(--bg-color-3); 
+  margin-left: auto; 
+}
+
 .chat-container.chat-component .message.incoming {
   padding: 5px 8px; 
   border-radius: 12px; 
   margin-top: 3px; 
-  max-width: 70%; 
-  color: white; 
+  max-width: 100%; 
   min-width: 2em; 
   flex: 0 0 auto; 
   opacity: 1; 
@@ -68,8 +69,6 @@
   text-align: start; 
   overflow: hidden; 
   text-overflow: ellipsis; 
-  background: rgb(97, 96, 99); 
-  margin-right: auto; 
   margin-left: unset;
 }
 

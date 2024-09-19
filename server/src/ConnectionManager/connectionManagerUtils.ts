@@ -60,7 +60,7 @@ export const parseTableConfig = async ({ con, conMgr, dbs, type, newTableConfig 
     }
     if (!tableConfigOk) {
       console.error("Could not find S3 credentials for fileTable config. File storage will not be set up")
-    } 
+    }
   } else if(tableConfig?.storageType.type === "local" && tableConfig.fileTable){
     tableConfigOk = true;
   }

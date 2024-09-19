@@ -41,9 +41,9 @@ export type CodeBlock = {
   nextLC: string;
   thisLine: string;
   thisLineLC: string;
-  prevIdentifiers: string[];
-  identifiers: string[];
-  tableIdentifiers: string[];
+  prevIdentifiers: TokenInfo[];
+  identifiers: TokenInfo[];
+  tableIdentifiers: TokenInfo[];
   offset: number;
   getPrevTokensNoParantheses: (excludeParantheses?: boolean) => TokenInfo[];
   prevTopKWDs: (Omit<TokenInfo, "text"> & { text: typeof STARTING_KWDS[number]; })[];
@@ -214,7 +214,7 @@ export const getCurrentCodeBlock = async (model: editor.ITextModel, pos: Positio
     });
   }
 
-  const prevIdentifiers = prevTokens.filter(t => t.type === "identifier.sql").map(t => t.text);
+  const prevIdentifiers = prevTokens.filter(t => t.type === "identifier.sql");
   
   // const identifiers = tokens.filter(t => t.type === "identifier.sql").map(t => t.text);
   const _identifiers = tokens.map((t, i, arr)=> {
@@ -229,11 +229,11 @@ export const getCurrentCodeBlock = async (model: editor.ITextModel, pos: Positio
     const tableKeyords = ["from", "join", "table", "on", "update", "truncate", "insert into", "analyze", "copy", "into", "cluster"];
     return { 
       type: tableKeyords.includes(prevT?.textLC as any)? "table" as const : undefined,  
-      value: t.text
+      t
     };
   }).filter(isDefined);
-  const identifiers = _identifiers.map(d => d.value);
-  const tableIdentifiers = _identifiers.filter(d => d.type === "table").map(d => d.value);
+  const identifiers = _identifiers.map(d => d.t);
+  const tableIdentifiers = _identifiers.filter(d => d.type === "table").map(d => d.t);
 
   const currLtoken = currToken ?? ltoken;
   const [nextToken] = nextTokens;

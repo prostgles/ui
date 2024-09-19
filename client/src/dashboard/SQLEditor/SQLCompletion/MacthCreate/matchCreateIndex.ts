@@ -10,8 +10,8 @@ export const matchCreateIndex = ({ cb, ss, setS, sql }: SQLMatchContext) => {
     const prevCols = cb.tokens.filter(t => t.nestingId.length === 1).map(t => t.text);
     const tableColumns = getExpected(inParens? "(column)" : "column", cb, ss)
       .suggestions
-      .filter(s => !prevCols.includes(s.insertText) && cb.tableIdentifiers.includes(s.escapedParentName ?? s.parentName ?? undefined as any));
-    const immutableFuncs = ss.filter(s => s.funcInfo?.provolatile === "i");
+      .filter(s => !prevCols.includes(s.insertText));
+    const immutableFuncs = ss.filter(s => s.funcInfo?.provolatile === "i" && s.funcInfo.prokind === "f");
     return {
       suggestions: [
         ...tableColumns,

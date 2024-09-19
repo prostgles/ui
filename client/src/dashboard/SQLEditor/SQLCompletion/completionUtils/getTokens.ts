@@ -21,6 +21,10 @@ export type TokenInfo = Pick<Token, "offset"> & {
   end: number;
   text: string;
   textLC: string;
+  /** 
+   * For schema.identifier tokens 
+   * */
+  textParts?: [string, string];
   lineNumber: number;
   columnNumber: number;
   nestingId: string;
@@ -173,6 +177,7 @@ export const getTokens = ({
     ){
       result1.push({
         ...t,
+        textParts: [t.text, t2.text],
         text: [t.text, t1.text, t2.text].join(""),
         textLC: [t.textLC, t1.textLC, t2.textLC].join(""),
         end: t2.end

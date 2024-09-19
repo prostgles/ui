@@ -242,7 +242,9 @@ const getExpressions = (tokens: TokenInfo[], cb: CodeBlock, ss: ParsedSQLSuggest
 
       /** Table or view or CTE alias */
       } else if(t.type === "identifier.sql" && !t.nestingId){
-        const [matchingTable, ...otherTables] = ss.filter(s => ["table", "view", "mview"].includes(s.type) && (s.escapedIdentifier === t.text || s.name === t.text));
+        const [matchingTable, ...otherTables] = ss.filter(s => {
+          return ["table", "view", "mview"].includes(s.type) && matchTableFromSuggestions(s as any, t);
+        });
         const alias = (indexOrPolicy || isAlterTable)? undefined : getAliasToken(tokens, i)?.text;
 
         /** Table or view */
@@ -276,4 +278,24 @@ const getExpressions = (tokens: TokenInfo[], cb: CodeBlock, ss: ParsedSQLSuggest
   });
 
   return expressions;
+}
+
+
+export const matchTableFromSuggestions = (
+  s: { type: "column", escapedParentName: string; schema: string; } | { type: "table" | "view" | "mview", escapedIdentifier: string, name: string, schema: string },
+  t: TokenInfo
+) => {
+  const matches = s.type === "column"? s.escapedParentName === t.text : (s.escapedIdentifier === t.text || s.name === t.text);
+  if(matches) return matches;
+  const s_name = s.type === "column"? s.escapedParentName : s.name;
+
+  if(t.textParts){
+    if([s.schema, s_name].join(".") === t.textParts.join(".")){
+      return true;
+    }
+    const [schema, name] = t.textParts.map(t => t.startsWith('"')? t : t.toLowerCase());
+    return [s.schema, s_name].join(".") === [schema, name].join(".");
+  }
+
+  return false;
 }

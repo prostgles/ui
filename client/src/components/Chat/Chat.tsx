@@ -3,8 +3,9 @@ import React, { useEffect, useState } from "react";
 import "./Chat.css";
 
 import { mdiAttachment, mdiFile, mdiMicrophone, mdiStop } from "@mdi/js";
-import { Icon } from "./Icon/Icon";
-type Message = {
+import { Icon } from "../Icon/Icon";
+
+export type Message = {
   message: ReactChild;
   sender_id: number | string;
   incoming: boolean;
@@ -63,7 +64,7 @@ class AudioRecorder {
   }
 }
 const audioRec = new AudioRecorder();
-const Chat:FunctionComponent<P> = (props) => {
+export const Chat: FunctionComponent<P> = (props) => {
   const {
     className = "",
     style = {},
@@ -173,11 +174,12 @@ const Chat:FunctionComponent<P> = (props) => {
           }}
           onChange={e => { setMsg(e.target.value) }}
         ></textarea>
-        {/* <button className="bg-transparent p-p5 ml-p5 mr-p5 bg-active-hover" onClick={async (e)=>{
+        <button className="bg-transparent p-p5 ml-p5 mr-p5 bg-active-hover" onClick={async (e)=>{
+          if(!ref) return;
           sendMsg(ref.value)
         }}>
           <svg viewBox="0 0 24 24" role="presentation"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"></path></svg>
-        </button> */}
+        </button>
         <label className="button bg-transparent p-p5 ml-p5 mr-p5 bg-active-hover" style={{ background: "transparent", padding: ".5em"}}>
           <input type="file" style={{ display: "none" }} onChange={async e => {
             console.log(e.target.files);
@@ -200,6 +202,3 @@ const Chat:FunctionComponent<P> = (props) => {
     </div>
   );
 }
-
-
-export default Chat;
