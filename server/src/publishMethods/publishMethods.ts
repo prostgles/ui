@@ -69,6 +69,36 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       await dbs.users.update({ id: noPwdAdmin.id }, { status: "disabled" });
       await dbs.sessions.delete({});
     },
+    askLLM: async (question: string, schema: string) => {
+      const llmCredentials = await dbs.credentials.findOne({ type: "openai" });
+      if(!llmCredentials) throw "LLM credentials missing";
+      if(!question.trim()) throw "Question is empty";
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${llmCredentials.key_secret}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4o",
+          messages: [
+            { 
+              role: "system", 
+              content: [
+                "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
+                "Assist user with any queries they might have.",
+                "Below is the database schema they're currently working with:",
+                "",
+                schema
+              ].join("\n")
+            },
+            { role: "user", content: question }
+          ]
+        })
+      });
+
+      return res.json();
+    },
     getConnectionDBTypes: async (conId: string) => {
 
       /** Maybe state connection */

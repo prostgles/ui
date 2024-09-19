@@ -675,7 +675,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
   credential_types: {
     // dropIfExists: true,
     isLookupTable: {
-      values: { s3: {} }
+      values: { s3: {}, openai: {} }
     }
   },
   

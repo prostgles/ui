@@ -55,7 +55,7 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
     const prioritiseColumn =
         s.type === "column" && 
         expressions.tables.some(t => t.escapedIdentifier === s.escapedParentName) && 
-        !prevIdentifiers.includes(s.name)
+        !prevIdentifiers.some(pi => pi.text === s.name)
       ;
 
     const sortText = isPrioritised? s.sortText : 
