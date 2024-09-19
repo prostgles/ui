@@ -6,8 +6,8 @@ import type { DemoScript } from "../getDemoUtils";
 export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL, runSQL }) => {
 
   /** Public schema prefix */
-  await runDbSQL(`CREATE TABLE IF NOT EXISTS my_public_table (id1 serial PRIMARY KEY, name1 text);`);
-  const publicSchemaPrefix = "SELECT * FROM public.my_public_table WHERE";
+  await runDbSQL(`CREATE TABLE IF NOT EXISTS my_p_table (id1 serial PRIMARY KEY, name1 text);`);
+  const publicSchemaPrefix = "SELECT * FROM public.my_p_table WHERE";
   for await(const script of [publicSchemaPrefix, publicSchemaPrefix.replace("public", "PUBLIC")]){
     await fromBeginning(false, script);
     await typeAuto(" ");
@@ -15,14 +15,14 @@ export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult
   }
 
   /** Create index public schema prefix */
-  const publicSchemaPrefixIndex = "CREATE INDEX ON public.my_public_table (  )";
+  const publicSchemaPrefixIndex = "CREATE INDEX ON public.my_p_table (  )";
   for await(const script of [publicSchemaPrefixIndex, publicSchemaPrefixIndex.replace("public", "PUBLIC")]){
     await fromBeginning(false, script);
     await moveCursor.left(2);
     await typeAuto(" ");
     await testResult(script.replace(")", "id1 )"));
   }
-  await runDbSQL(`DROP TABLE  my_public_table;`);
+  await runDbSQL(`DROP TABLE  my_p_table;`);
   
   /** Alter/Drop column */
   const alterTableQuery = "ALTER TABLE pg_catalog.pg_class "
