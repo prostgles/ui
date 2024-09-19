@@ -36,10 +36,6 @@ export const AskLLM = ({ dbsMethods, tables }: Pick<Prgl, "dbsMethods" | "tables
       onClickClose={false}
       showFullscreenToggle={{}}
       onClose={() => {
-        // setFeedBack({
-        //   email: feedback.email,
-        //   details: "",
-        // })
       }}
       contentClassName="p-0"
       button={(
