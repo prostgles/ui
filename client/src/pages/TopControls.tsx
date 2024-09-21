@@ -13,7 +13,7 @@ import { WorkspaceMenu } from "../dashboard/WorkspaceMenu/WorkspaceMenu";
 import { AppVideoDemo } from "../demo/AppVideoDemo";
 import { Alerts } from "./Alerts";
 import type { Connections, FullExtraProps } from "./ProjectConnection/ProjectConnection";
-import { AskLLM } from "../dashboard/AskLLM";
+import { AskLLM } from "../dashboard/AskLLM/AskLLM";
 
 type TopControlsProps = {
   prgl: Prgl;
@@ -79,7 +79,9 @@ export const TopControls = (props: TopControlsProps) => {
             <Alerts { ...prgl } />
           }
 
-          <AskLLM dbsMethods={prgl.dbsMethods} tables={prgl.tables} />
+          {prgl.user?.type === "admin" && 
+            <AskLLM {...prgl} />
+          }
           <Feedback dbsMethods={prgl.dbsMethods} /> 
         
           <Btn 

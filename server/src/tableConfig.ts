@@ -1097,5 +1097,51 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       stats_pkey: "PRIMARY KEY(pid, connection_id)"
     }
   },
+  llm_credentials: {
+    columns: {
+      id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
+      name: `TEXT NOT NULL DEFAULT 'Default credential'`,
+      user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
+      key_id: `TEXT`,
+      key_secret: `TEXT NOT NULL`,
+      endpoint: `TEXT NOT NULL DEFAULT 'https://api.openai.com/v1/chat/completions'`,
+      extraHeaders: {
+        jsonbSchema: {
+          record: {
+            partial: true,
+            values: "string",
+          }
+        }
+      },
+      created: `TIMESTAMP DEFAULT NOW()`,
+    },
+  },
+  llm_prompts: {
+    columns: {
+      id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
+      user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
+      prompt: `TEXT CHECK(LENGTH(btrim(prompt)) > 0)`,
+      created: `TIMESTAMP DEFAULT NOW()`,
+    },
+  },
+  llm_chats: {
+    columns: {
+      id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
+      name: `TEXT NOT NULL DEFAULT 'New chat'`,
+      user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
+      llm_credential_id: `INTEGER REFERENCES llm_credentials(id) ON DELETE SET NULL`,
+      llm_prompt_id: `INTEGER REFERENCES llm_prompts(id) ON DELETE SET NULL`,
+      created: `TIMESTAMP DEFAULT NOW()`,
+    },
+  },
+  llm_messages: {
+    columns: {
+      id: `int8 PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
+      chat_id: `INTEGER REFERENCES llm_chats(id) ON DELETE CASCADE`,
+      user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
+      message: `TEXT`,
+      created: `TIMESTAMP DEFAULT NOW()`,
+    }
+  },
   ...loggerTableConfig,
 }

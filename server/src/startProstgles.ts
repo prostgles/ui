@@ -95,7 +95,7 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
     const prgl = await prostgles<DBSchemaGenerated>({
       dbConnection: {
         ...validatedDbConnection,
-        connectionTimeoutMillis: 10 * 1000, 
+        connectionTimeoutMillis: 10 * 1000,
       },
       sqlFilePath: path.join(actualRootDir + "/src/init.sql"),
       io,

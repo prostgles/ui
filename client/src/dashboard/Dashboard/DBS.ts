@@ -10,7 +10,7 @@ import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 
 export type DBSMethods = Partial<{
   sendFeedback: (feedback: { details: string; email?: string }) => Promise<void>;
-  askLLM: (query: string, schema: string) => Promise<AnyObject>;
+  askLLM: (query: string, schema: string, chatId: number) => Promise<AnyObject>;
   pgDump: (conId: string, credId: number | null | undefined, dumpParams: PGDumpParams) => Promise<void>;
   pgRestore: (arg1: { bkpId: string; connId?: string }, opts: Backups["restore_options"]) => Promise<void>;
   streamBackupFile: (c: "start" | "chunk" | "end", id: null | string, conId: string | null, chunk: any | undefined, sizeBytes: number | undefined, opts?: Backups["restore_options"]) => Promise<any>

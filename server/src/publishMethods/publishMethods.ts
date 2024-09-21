@@ -69,35 +69,55 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       await dbs.users.update({ id: noPwdAdmin.id }, { status: "disabled" });
       await dbs.sessions.delete({});
     },
-    askLLM: async (question: string, schema: string) => {
+    askLLM: async (question: string, schema: string, chatId: number) => {
+      const chat = await dbs.llm_chats.findOne({ id: chatId, user_id: user.id });
+      if(!chat) throw "Chat not found";
       const llmCredentials = await dbs.credentials.findOne({ type: "openai" });
       if(!llmCredentials) throw "LLM credentials missing";
       if(!question.trim()) throw "Question is empty";
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${llmCredentials.key_secret}`
-        },
-        body: JSON.stringify({
-          model: "gpt-4o",
-          messages: [
-            { 
-              role: "system", 
-              content: [
-                "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
-                "Assist user with any queries they might have.",
-                "Below is the database schema they're currently working with:",
-                "",
-                schema
-              ].join("\n")
-            },
-            { role: "user", content: question }
-          ]
-        })
-      });
+      const aiResponseMessage = await dbs.llm_messages.insert({
+        user_id: null as any,
+        chat_id: chatId,
+        message: "",
+      }, { returning: "*" });
+      try {
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${llmCredentials.key_secret}`
+          },
+          body: JSON.stringify({
+            model: "gpt-4o",
+            messages: [
+              { 
+                role: "system", 
+                content: [
+                  "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
+                  "Assist user with any queries they might have.",
+                  "Below is the database schema they're currently working with:",
+                  "",
+                  schema
+                ].join("\n")
+              },
+              { role: "user", content: question }
+            ]
+          })
+        });
+  
+        const response: any = await res.json();
+        const aiText = response?.choices[0]?.message.content;
+        let aiMessage = aiText;
+        if(typeof aiText !== "string") {
+          aiMessage = "Error: Unexpected response from LLM";
+        }
+        await dbs.llm_messages.update({ id: aiResponseMessage.id }, { message: aiMessage });
 
-      return res.json();
+      } catch(err){
+        console.error(err);
+        await dbs.llm_messages.update({ id: aiResponseMessage.id }, { message: "Something went wrong" });
+        throw "Error asking LLM";
+      }
     },
     getConnectionDBTypes: async (conId: string) => {
 

@@ -543,7 +543,7 @@ const setActiveCodeBlock = async function (this: SQLEditor, e: editor.ICursorPos
   const codeBlockSignature: CodeBlockSignature = {
     numberOfLineBreaks: value.split(model?.getEOL() ?? "\n").length,
     numberOfSemicolons: value.split(";").length,
-    currentLineNumber: e?.position.lineNumber ?? editor.getPosition()?.lineNumber ?? this.codeBlockSignature?.currentLineNumber ?? 0,
+    currentLineNumber: e?.position.lineNumber ?? editor.getPosition()?.lineNumber ?? this.codeBlockSignature?.currentLineNumber ?? 1,
   };
   const signatureDiffers = !isEqual(this.codeBlockSignature, codeBlockSignature);
   if(signatureDiffers && !document.getSelection()?.toString()){
@@ -551,9 +551,11 @@ const setActiveCodeBlock = async function (this: SQLEditor, e: editor.ICursorPos
     const codeBlock = await this.getCurrentCodeBlock();
     this.currentCodeBlock = codeBlock;
 
-    const existingDecorations = editor.getLineDecorations(0)?.map(d => d.id) ?? [];
-    editor.removeDecorations(existingDecorations);
     this.currentDecorations?.clear();
+    const existingDecorations = [
+      ...(editor.getVisibleRanges().flatMap(range => editor.getDecorationsInRange(range)?.map(d => d.id) ?? [])),
+    ];
+    editor.removeDecorations(existingDecorations);
 
     this.currentDecorations = await highlightCurrentCodeBlock(editor, codeBlock);
   }
@@ -566,6 +568,8 @@ const setActions = async (editor: editor.IStandaloneCodeEditor, comp: SQLEditor)
   editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyE, comp.onRun);
   editor.addCommand(monaco.KeyCode.F5, comp.onRun);
   editor.addCommand(monaco.KeyCode.Escape, () => {
+    editor.trigger("demo", "hideSuggestWidget", {});
+    editor.trigger("demo", "hideParameterHints", {});
     comp.props.onStopQuery?.(false);
   });
 }
