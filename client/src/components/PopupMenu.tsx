@@ -1,14 +1,13 @@
 import type { AnyObject } from "prostgles-types";
-import type { ReactChild} from "react";
 import React, { useState } from "react";
-import type { PopupProps} from "./Popup/Popup";
-import Popup, { POPUP_ZINDEX } from "./Popup/Popup";
 import type { Command } from "../Testing";
+import type { PopupProps } from "./Popup/Popup";
+import Popup, { POPUP_ZINDEX } from "./Popup/Popup";
 
 type P<State extends AnyObject> = {
-  button: ReactChild;
-  render?: (close: () => void, state: State, setState: (newState: Partial<State>) => void) => React.ReactChild;
-  footer?: (close: VoidFunction) => React.ReactChild;
+  button: React.ReactNode;
+  render?: (close: () => void, state: State, setState: (newState: Partial<State>) => void) => React.ReactNode;
+  footer?: (close: VoidFunction) => React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
   initialState?: State;
@@ -19,7 +18,7 @@ type P<State extends AnyObject> = {
   raiseButton?: boolean;
 }
 
-export default function<S extends AnyObject>(props: P<S> & Partial<PopupProps>){
+export default function<S extends AnyObject>(props: P<S> & Partial<Omit<PopupProps, "footer">>){
   const [ref, setRef] = useState<HTMLElement | null>();
   const [refBtn, setRefBtn] = useState<HTMLElement>();
   const { render, content, style = {}, className = "", onClickClose, initialState = {}, footer, onClose, raiseButton, ...otherProps } = props;
@@ -40,7 +39,7 @@ export default function<S extends AnyObject>(props: P<S> & Partial<PopupProps>){
       }}}
       onClickClose={onClickClose ?? !render}  
       content={render? render(popupClose, state, newState => setState({ ...state, ...newState as any })) : (content || props.children) as React.ReactChild}
-      footer={footer? footer(popupClose) : undefined}
+      footer={footer?.(popupClose)}
       anchorEl={refBtn}
     />
   }

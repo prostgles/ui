@@ -41,7 +41,7 @@
 .chat-container.chat-component .message {
   padding: 5px 8px; 
   border-radius: 12px; 
-  margin-top: 3px;
+  margin-top: 2em;
   max-width: 70%; 
   color: var(--text-color-1); 
   min-width: 2em; 

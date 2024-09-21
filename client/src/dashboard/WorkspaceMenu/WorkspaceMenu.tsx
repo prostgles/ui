@@ -1,4 +1,4 @@
-import { mdiAccountMultiple, mdiChevronDown, mdiViewCarousel } from "@mdi/js";
+import { mdiAccountMultiple, mdiChevronDown, mdiContentCopy, mdiViewCarousel } from "@mdi/js";
 import React, { useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Prgl } from "../../App";
@@ -7,13 +7,14 @@ import { FlexCol, FlexRow, classOverride } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
 import PopupMenu from "../../components/PopupMenu";
 import SearchList from "../../components/SearchList/SearchList";
+import { SvgIcon } from "../../components/SvgIcon";
 import { onWheelScroll } from "../../components/Table/Table";
 import type { Workspace, WorkspaceSyncItem } from "../Dashboard/dashboardUtils";
 import { WorkspaceAddBtn } from "./WorkspaceAddBtn";
 import { WorkspaceDeleteBtn } from "./WorkspaceDeleteBtn";
 import "./WorkspaceMenu.css";
 import { WorkspaceSettings } from "./WorkspaceSettings";
-import { SvgIcon } from "../../components/SvgIcon";
+import { clonePublishedWorkspace } from "../Dashboard/Dashboard";
 
 type P = {
   workspace: WorkspaceSyncItem;
@@ -134,6 +135,13 @@ export const WorkspaceMenu = (props: P) => {
                     activeWorkspaceId={workspace.id}
                     disabledInfo={(isAdmin || w.isMine)? undefined : "You can not delete a published workspace"}
                   />
+                  <Btn 
+                    iconPath={mdiContentCopy}
+                    title="Clone workspace"
+                    onClickPromise={async () => {
+                      await clonePublishedWorkspace(dbs, w.id).then(console.log);
+                    }}
+                  />
                   {(isAdmin || w.isMine) && <>
                     <WorkspaceSettings 
                       w={w} 
@@ -161,7 +169,7 @@ export const WorkspaceMenu = (props: P) => {
 
       </FlexCol>
     )}
-    footer={closePopup => (
+    footer={() => (
       <WorkspaceAddBtn  
         dbs={props.prgl.dbs} 
         connection_id={workspace.connection_id} 

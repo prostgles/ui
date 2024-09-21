@@ -276,6 +276,65 @@ export type DBSchemaGenerated = {
       workspace_id?: null | string;
     };
   };
+  llm_chats: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      created?: null | string;
+      id?: number;
+      llm_credential_id?: null | number;
+      llm_prompt_id?: null | number;
+      name?: string;
+      user_id: string;
+    };
+  };
+  llm_credentials: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      created?: null | string;
+      endpoint?: null | string;
+      extraHeaders:  Partial<Record<string, string>>
+      id?: number;
+      key_id?: null | string;
+      key_secret: string;
+      name?: string;
+      user_id: string;
+    };
+  };
+  llm_messages: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      chat_id?: null | number;
+      created?: null | string;
+      id?: string;
+      message?: null | string;
+      user_id?: null | string;
+    };
+  };
+  llm_prompts: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      created?: null | string;
+      id?: number;
+      prompt?: null | string;
+      user_id: string;
+    };
+  };
   login_attempts: {
     is_view: false;
     select: true;

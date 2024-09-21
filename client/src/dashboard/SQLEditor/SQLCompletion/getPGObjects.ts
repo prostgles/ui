@@ -35,6 +35,7 @@ export type PGConstraint = {
 };
 
 export type PG_Role = {
+  is_connected: boolean;
   usename: string; usesuper: boolean; usecreatedb: boolean; 
   usebypassrls: boolean; userepl: boolean; escaped_identifier: string; 
   rolconfig: string[]; rolcanlogin: boolean; priority: string; is_current_user: boolean; 
@@ -61,6 +62,7 @@ export type PG_Index = {
 };
 
 export type PG_Trigger = { 
+  disabled: boolean;
   trigger_catalog: string;
   trigger_schema: string;
   trigger_name: string;
@@ -915,7 +917,12 @@ export const PG_OBJECT_QUERIES = {
         rolreplication  as userepl, rolconfig, rolcanlogin,
         lpad(ROW_NUMBER () OVER (ORDER BY sort_text)::text, 2, '0') as priority,
         rolname = CURRENT_USER AS is_current_user,
-        table_grants
+        table_grants,
+        EXISTS (
+          SELECT 1
+          FROM pg_stat_activity
+          WHERE usename = rolname
+        ) as is_connected
       FROM (
         SELECT *, replace(format('%I', rolname ), 'pg_', 'Ω') as sort_text
         FROM pg_catalog.pg_roles 
@@ -973,6 +980,7 @@ export const PG_OBJECT_QUERIES = {
   triggers: {
     sql: `
       SELECT 
+        tgenabled = 'D' as disabled,
         trigger_catalog, trigger_schema, trigger_name, event_manipulation, 
         event_object_schema, 
         format('%I.%I', trigger_schema, event_object_table ) as event_object_table,

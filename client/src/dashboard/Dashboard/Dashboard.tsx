@@ -9,7 +9,7 @@ import type { DBObject } from "../SearchAll";
 
 import { isEmpty } from "prostgles-types";
 import type { NavigateFunction } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Await, useNavigate } from "react-router-dom";
 import type { Prgl } from "../../App";
 import { createReactiveState } from "../../App";
 import ErrorComponent from "../../components/ErrorComponent";
@@ -36,6 +36,8 @@ import {
 import { loadTable, type LoadTableArgs } from "./loadTable";
 import Btn from "../../components/Btn";
 import { mdiArrowLeft } from "@mdi/js";
+import { omitKeys } from "../../utils";
+import type { DBS } from "./DBS";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -92,7 +94,6 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
     links: [],
     linksSync: null
   }
-
 
   onUnmount(){
     const { workspaceSync, windowsSync, linksSync } = this.d;
@@ -530,4 +531,58 @@ export const getTables = async (schemaTables: DBSchemaTable[], workspace: Worksp
 
 export const getIsPinnedMenu = (workspace: WorkspaceSyncItem) => {
   return workspace.options.pinnedMenu && !window.isLowWidthScreen;
+}
+
+export const clonePublishedWorkspace = async (dbs: DBS, workspaceId: string) => {
+  const id = workspaceId;
+  const wsp = await dbs.workspaces.findOne({ id });
+  if(!wsp) throw new Error("Workspace not found");
+  
+  const clonedWsp = await dbs.workspaces.insert({
+    ...omitKeys(wsp, ["id", "user_id"]),
+    user_id: undefined as any,
+    name: `${wsp.name} (copy)`,
+  }, { returning: "*" });
+  
+  const windows = await dbs.windows.find({ workspace_id: id });
+  const links = await dbs.links.find({ workspace_id: id });
+  const clonedWindows = await Promise.all(windows.map(async w => {
+    const win = { 
+      ...omitKeys(w, ["id", "parent_window_id", "user_id"]), 
+      workspace_id: clonedWsp.id,
+      user_id: undefined as any, 
+    };
+    const clonedWindow = await dbs.windows.insert(win, { returning: "*" });
+    return clonedWindow;
+  }));
+
+  windows.forEach((w, i) => {
+    const clonedWindow = clonedWindows[i];
+    if(!clonedWindow) throw new Error("clonedWindow not found");
+    if(w.parent_window_id){
+      const parentIndex = windows.findIndex(w => w.id === w.parent_window_id);
+      const parent = clonedWindows[parentIndex];
+      if(!parent) throw new Error("parent not found");
+      dbs.windows.update({ id: clonedWindow.id }, { parent_window_id: parent.id });
+    }
+  });
+
+  const clonedLinks = await Promise.all(links.map(async l => { 
+    const lin: typeof l = { 
+      ...omitKeys(l, ["id", "user_id"]),
+      workspace_id: clonedWsp.id,
+      user_id: undefined as any,
+      id: undefined as any,
+      w1_id: clonedWindows[windows.findIndex(w => w.id === l.w1_id)]!.id,
+      w2_id: clonedWindows[windows.findIndex(w => w.id === l.w2_id)]!.id,
+    };
+    const clonedLinks = await dbs.links.insert(lin, { returning: "*" });
+    return clonedLinks;
+  }));
+
+  return {
+    clonedWsp,
+    clonedLinks,
+    clonedWindows,
+  };
 }
