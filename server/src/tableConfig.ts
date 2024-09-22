@@ -1123,6 +1123,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       key_secret: `TEXT NOT NULL`,
       endpoint: `TEXT NOT NULL DEFAULT 'https://api.openai.com/v1/chat/completions'`,
       extraHeaders: {
+        nullable: true,
         jsonbSchema: {
           record: {
             partial: true,
@@ -1130,12 +1131,15 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           }
         }
       },
-      created: `TIMESTAMP DEFAULT NOW()`,
+      created: {
+        sqlDefinition: `TIMESTAMP DEFAULT NOW()`,
+      },
     },
   },
   llm_prompts: {
     columns: {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
+      name: `TEXT NOT NULL DEFAULT 'New prompt'`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
       prompt: `TEXT CHECK(LENGTH(btrim(prompt)) > 0)`,
       created: `TIMESTAMP DEFAULT NOW()`,
@@ -1146,8 +1150,8 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       name: `TEXT NOT NULL DEFAULT 'New chat'`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
-      llm_credential_id: `INTEGER REFERENCES llm_credentials(id) ON DELETE SET NULL`,
-      llm_prompt_id: `INTEGER REFERENCES llm_prompts(id) ON DELETE SET NULL`,
+      llm_credential_id: `INTEGER NOT NULL REFERENCES llm_credentials(id) ON DELETE SET NULL`,
+      llm_prompt_id: `INTEGER NOT NULL REFERENCES llm_prompts(id) ON DELETE SET NULL`,
       created: `TIMESTAMP DEFAULT NOW()`,
     },
   },

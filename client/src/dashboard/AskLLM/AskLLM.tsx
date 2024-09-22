@@ -12,13 +12,19 @@ import Popup from "../../components/Popup/Popup";
 import Select from "../../components/Select/Select";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
+import SmartForm from "../SmartForm/SmartForm"; 
+import { InfoRow } from "../../components/InfoRow";
+import { LLMChatOptions } from "./LLMChatOptions";
 
 
 export const AskLLM = (prgl: Prgl) => {
   const { dbsMethods, dbs, user } = prgl;
   const { askLLM } = dbsMethods;
 
-  const { llmMessages, createNewChat, activeChatId, latestChats, setActiveChat } = useLLMChat(prgl);
+  const { 
+    llmMessages, createNewChat, activeChatId, latestChats, 
+    setActiveChat, firstCredential, prompts, activeChat, credentials
+  } = useLLMChat(prgl);
   const actualMessages: Message[] = llmMessages?.map(m => ({
     incoming: m.user_id !== user?.id,
     message: <Marked content={m.message || ""} /> ,
@@ -37,11 +43,11 @@ export const AskLLM = (prgl: Prgl) => {
     }
   });
 
-  const { data: credentials } = dbs.credentials.useFind({ type: "openai" });
   const { schemaStr } = useLLMSchemaStr(prgl);
-
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-
+  const onClose = () => {
+    setAnchorEl(null);
+  }
   if(!askLLM) return null;
 
   return <>
@@ -55,29 +61,58 @@ export const AskLLM = (prgl: Prgl) => {
     >
       {window.isMediumWidthScreen? null : `Ask AI`}
     </Btn>
-    {anchorEl && 
+    {anchorEl && !firstCredential && <Popup
+      title="Setup AI assistant"
+      positioning="beneath-left"
+      anchorEl={anchorEl}
+      onClose={onClose}
+      clickCatchStyle={{ opacity: 1 }}
+    >
+      <InfoRow>
+        No credentials found. Please add a credential to use AI assistant.
+      </InfoRow>
+      <SmartForm
+        theme={prgl.theme}
+        methods={{}}
+        db={prgl.dbs as any}
+        tables={prgl.dbsTables} 
+        tableName="llm_credentials"
+        columnFilter={c => !["created"].includes(c.name)}
+        showJoinedTables={false}
+        hideChangesOptions={true}
+      />
+    </Popup>}
+    {anchorEl && firstCredential && 
       <Popup
         title={
           <FlexRow>
             <div>
-              Ask AI Assistant
+              Ask AI Assistant <span className="text-2 font-14">(experimental)</span>
             </div>
-            <Select
-              fullOptions={credentials?.map(c => ({ key: c.id, label: c.name })) ?? []}
-
-            />
             <Select 
+              title={"Chat"}
               fullOptions={latestChats?.map(c => ({ key: c.id, label: c.name })) ?? []}
               value={activeChatId}
               showSelectedSublabel={true}
+              style={{
+                backgroundColor: "transparent",
+              }}
               onChange={v => {
                 setActiveChat(v);
               }}
             />
+            <LLMChatOptions {...prgl} 
+              prompts={prompts} 
+              activeChat={activeChat}
+              activeChatId={activeChatId}
+              credentials={credentials}
+            />
             <Btn 
               iconPath={mdiPlus}
               title="New chat"
-              onClickPromise={() => createNewChat()}
+              variant="faded"
+              color="action"
+              onClickPromise={() => createNewChat(firstCredential.id)}
             />
           </FlexRow>
         }
@@ -85,9 +120,7 @@ export const AskLLM = (prgl: Prgl) => {
         clickCatchStyle={{ opacity: 1 }}
         onClickClose={false}
         // showFullscreenToggle={{}}
-        onClose={() => {
-          setAnchorEl(null);
-        }}
+        onClose={onClose}
         anchorEl={anchorEl}
         contentClassName="p-0 f-1"
         rootStyle={{

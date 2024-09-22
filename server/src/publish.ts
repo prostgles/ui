@@ -7,6 +7,7 @@ import { getACRules } from "./ConnectionManager/ConnectionManager";
 import { isDefined } from "../../commonTypes/filterUtils";
 import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { getPasswordHash } from "./authConfig/authUtils";
+import { fetchLLMResponse } from "./publishMethods/askLLM/fetchLLMResponse";
 
 export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise<Publish<DBSchemaGenerated>> => {
         
@@ -126,7 +127,10 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
       delete: "*",
       insert: { 
         fields: "*", 
-        forcedData
+        forcedData,
+        postValidate: async ({ row, dbx }) => {
+          await fetchLLMResponse({ llm_credential: row, question: "Hey", schema: "my_table();", prompt: undefined });
+        }
       },
       update: "*",
     },

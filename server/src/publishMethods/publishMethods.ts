@@ -35,6 +35,7 @@ import { getStatus } from "../methods/getPidStats";
 import { killPID } from "../methods/statusMonitorUtils";
 import { initBackupManager, statePrgl } from "../startProstgles";
 import { upsertConnection } from "../upsertConnection";
+import { fetchLLMResponse } from "./askLLM/fetchLLMResponse";
 
 export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params) => { 
   const { dbo: dbs, socket, db: _dbs } = params;
@@ -72,7 +73,7 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     askLLM: async (question: string, schema: string, chatId: number) => {
       const chat = await dbs.llm_chats.findOne({ id: chatId, user_id: user.id });
       if(!chat) throw "Chat not found";
-      const llmCredentials = await dbs.credentials.findOne({ type: "openai" });
+      const llmCredentials = await dbs.llm_credentials.findOne({ id: chat.llm_credential_id! });
       if(!llmCredentials) throw "LLM credentials missing";
       if(!question.trim()) throw "Question is empty";
       const aiResponseMessage = await dbs.llm_messages.insert({
@@ -81,32 +82,8 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
         message: "",
       }, { returning: "*" });
       try {
-        const res = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${llmCredentials.key_secret}`
-          },
-          body: JSON.stringify({
-            model: "gpt-4o",
-            messages: [
-              { 
-                role: "system", 
-                content: [
-                  "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
-                  "Assist user with any queries they might have.",
-                  "Below is the database schema they're currently working with:",
-                  "",
-                  schema
-                ].join("\n")
-              },
-              { role: "user", content: question }
-            ]
-          })
-        });
-  
-        const response: any = await res.json();
-        const aiText = response?.choices[0]?.message.content;
+        // const prompt = await dbs.llm_prompts.findOne({ id: chat.llm_prompt_id });
+        const { aiText } = await fetchLLMResponse({ llm_credential: llmCredentials, question, schema, prompt: undefined });
         let aiMessage = aiText;
         if(typeof aiText !== "string") {
           aiMessage = "Error: Unexpected response from LLM";
