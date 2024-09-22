@@ -1141,7 +1141,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       name: `TEXT NOT NULL DEFAULT 'New prompt'`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
-      prompt: `TEXT CHECK(LENGTH(btrim(prompt)) > 0)`,
+      prompt: `TEXT NOT NULL CHECK(LENGTH(btrim(prompt)) > 0)`,
       created: `TIMESTAMP DEFAULT NOW()`,
     },
   },
