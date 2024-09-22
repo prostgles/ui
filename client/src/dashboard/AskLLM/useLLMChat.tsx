@@ -27,7 +27,7 @@ export const useLLMChat = ({ dbs, user }: Prgl) => {
     setActiveChat(newChat.id);
   }, [setActiveChat, dbs, user_id, firstPromptId]);
 
-  const { data: latestChats } = dbs.llm_chats.useFind(
+  const { data: latestChats } = dbs.llm_chats.useSubscribe(
     { user_id }, 
     { 
       orderBy: { created: -1 }
