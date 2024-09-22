@@ -285,8 +285,8 @@ export type DBSchemaGenerated = {
     columns: {
       created?: null | string;
       id?: number;
-      llm_credential_id?: null | number;
-      llm_prompt_id?: null | number;
+      llm_credential_id: number;
+      llm_prompt_id: number;
       name?: string;
       user_id: string;
     };
@@ -299,8 +299,8 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       created?: null | string;
-      endpoint?: null | string;
-      extraHeaders:  Partial<Record<string, string>>
+      endpoint?: string;
+      extraHeaders?: null | Partial<Record<string, string>>
       id?: number;
       key_id?: null | string;
       key_secret: string;
@@ -331,6 +331,7 @@ export type DBSchemaGenerated = {
     columns: {
       created?: null | string;
       id?: number;
+      name?: string;
       prompt?: null | string;
       user_id: string;
     };
