@@ -25,6 +25,7 @@ export const AskLLM = (prgl: Prgl) => {
     llmMessages, createNewChat, activeChatId, latestChats, 
     setActiveChat, firstCredential, prompts, activeChat, credentials
   } = useLLMChat(prgl);
+  
   const actualMessages: Message[] = llmMessages?.map(m => ({
     incoming: m.user_id !== user?.id,
     message: <Marked content={m.message || ""} /> ,
