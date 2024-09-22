@@ -83,7 +83,7 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       }, { returning: "*" });
       try {
         const prompt = await dbs.llm_prompts.findOne({ id: chat.llm_prompt_id });
-        const { aiText } = await fetchLLMResponse({ llm_credential: llmCredentials, question, schema, prompt });
+        const { aiText } = await fetchLLMResponse({ llm_credential: llmCredentials, question, schema, prompt: prompt!.prompt! });
         let aiMessage = aiText;
         if(typeof aiText !== "string") {
           aiMessage = "Error: Unexpected response from LLM";
