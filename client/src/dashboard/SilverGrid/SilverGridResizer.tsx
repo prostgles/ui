@@ -11,7 +11,8 @@ type LayoutSize = Pick<LayoutItem, "id" | "size" >;
 
 type SilverGridResizerProps = { 
   type: "row" | "col"; 
-  onChange: (prev: LayoutSize, next: LayoutSize) => void; 
+  onChange: (prev: LayoutSize, next: LayoutSize) => void;
+  layoutMode: "fixed" | "editable";
 }
 
 export class SilverGridResizer extends RTComp<SilverGridResizerProps, Record<string, never>, any> {
@@ -21,13 +22,16 @@ export class SilverGridResizer extends RTComp<SilverGridResizerProps, Record<str
     next: LayoutSize;
   } 
 
-  // onMount(){
+  cleanupListeners?: VoidFunction;
   onDelta(){
-    const { onChange } = this.props;
+    const { onChange, layoutMode } = this.props;
     const ref = this.ref as any;
+    if(this.cleanupListeners && layoutMode === "fixed"){
+      this.cleanupListeners();
+    }
     if(!ref || ref?._hasListeners) return;
     ref._hasListeners = true;
-    setPan(this.ref!, {
+    this.cleanupListeners = setPan(this.ref!, {
       onPanEnd: () => {
         const { prev, next } = this.sizes!;
         onChange(prev, next);
@@ -89,12 +93,13 @@ export class SilverGridResizer extends RTComp<SilverGridResizerProps, Record<str
 
   ref?: HTMLDivElement;
   render(){
-    const size = isTouchDevice()? "20px" : "4px";
+    const isFixed = this.props.layoutMode === "fixed";
+    const size = isFixed? "1em" : isTouchDevice()? "20px" : "4px";
     const { type } = this.props,
       style: React.CSSProperties = {
         width: type === "col"? "100%" : size,
         height: type === "col"? size : "100%",
-        cursor: type === "col"? "ns-resize" : "ew-resize",
+        cursor: isFixed? "default" : type === "col"? "ns-resize" : "ew-resize",
         opacity: 0.4,
         zIndex: 2,
         margin: isTouchDevice()? (type !== "col"? "0 -8px" : "-8px 0") : ""
@@ -103,7 +108,7 @@ export class SilverGridResizer extends RTComp<SilverGridResizerProps, Record<str
     return <div 
       ref={r => { if(r) this.ref = r; }}
       style={style}
-      className="silver-grid-resizer noselect "
+      className={"silver-grid-resizer noselect "}
     />
   }
 }

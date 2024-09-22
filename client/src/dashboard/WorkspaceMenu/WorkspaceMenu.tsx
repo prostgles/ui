@@ -14,7 +14,7 @@ import { WorkspaceAddBtn } from "./WorkspaceAddBtn";
 import { WorkspaceDeleteBtn } from "./WorkspaceDeleteBtn";
 import "./WorkspaceMenu.css";
 import { WorkspaceSettings } from "./WorkspaceSettings";
-import { clonePublishedWorkspace } from "../Dashboard/Dashboard";
+import { cloneWorkspace } from "../Dashboard/cloneWorkspace";
 
 type P = {
   workspace: WorkspaceSyncItem;
@@ -22,14 +22,18 @@ type P = {
   className?: string;
 }
 
+export const getWorkspacePath = (w: Workspace) => {
+  return ["/connections", `${w.connection_id}?workspaceId=${w.id}`].filter(v => v).join("/");
+}
+
 export const useSetNewWorkspace = (workspace: WorkspaceSyncItem) => {
   
   const navigate = useNavigate();
-  const setWorkspace = (w?: Workspace) => {
-    if(w?.id && w.id === workspace.id){
+  const setWorkspace = (w: Workspace) => {
+    if(w.id === workspace.id){
       return;
     }
-    const path = ["/connections", `${w?.connection_id}?workspaceId=${w?.id}`].filter(v => v).join("/");
+    const path = getWorkspacePath(w);
     
     navigate(path);
   }
@@ -59,7 +63,9 @@ export const WorkspaceMenu = (props: P) => {
       .map(wsp => ({ 
         ...wsp,
         isMine: wsp.user_id === userId,
-      }));
+      }))
+      /** Exclude editable original workspaces */
+      .filter(wsp => wsp.isMine || (!wsp.published || wsp.publish_mode === "fixed"));
   }, [unsortedWorkspaces, userId]);
 
 
@@ -139,7 +145,9 @@ export const WorkspaceMenu = (props: P) => {
                     iconPath={mdiContentCopy}
                     title="Clone workspace"
                     onClickPromise={async () => {
-                      await clonePublishedWorkspace(dbs, w.id).then(console.log);
+                      await cloneWorkspace(dbs, w.id).then(d => {
+                        setWorkspace(d.clonedWsp);
+                      });
                     }}
                   />
                   {(isAdmin || w.isMine) && <>

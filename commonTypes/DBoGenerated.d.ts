@@ -569,6 +569,18 @@ export type DBSchemaGenerated = {
       workspace_id?: null | string;
     };
   };
+  workspace_publish_modes: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      description?: null | string;
+      en?: null | string;
+      id: string;
+    };
+  };
   workspaces: {
     is_view: false;
     select: true;
@@ -587,6 +599,8 @@ export type DBSchemaGenerated = {
       layout?: null | any;
       name?: string;
       options?: {    hideCounts?: boolean;   tableListEndInfo?: 'none' | 'count' | 'size';   tableListSortBy?: 'name' | 'extraInfo';   showAllMyQueries?: boolean;   defaultLayoutType?: 'row' | 'tab' | 'col';   pinnedMenu?: boolean;   pinnedMenuWidth?: number;  };
+      parent_workspace_id?: null | string;
+      publish_mode?: null | string;
       published?: boolean;
       url_path?: null | string;
       user_id: string;

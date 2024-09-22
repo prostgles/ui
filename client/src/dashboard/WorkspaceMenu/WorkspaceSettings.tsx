@@ -15,7 +15,6 @@ type WorkspaceSettingsProps = Pick<Prgl, "dbs" | "dbsMethods" | "theme"> & {
 }
 export const WorkspaceSettings = ({ dbs, dbsTables, w, dbsMethods, theme }: WorkspaceSettingsProps) => {
 
-
   return <PopupMenu
     title={"Workspace settings"}
     style={{
@@ -66,6 +65,7 @@ export const WorkspaceSettings = ({ dbs, dbsTables, w, dbsMethods, theme }: Work
         columns={{ 
           name: 1, 
           published: 1, 
+          publish_mode: 1,
           icon: {
             onRender: (value, onChange) => {
               return <IconPalette 

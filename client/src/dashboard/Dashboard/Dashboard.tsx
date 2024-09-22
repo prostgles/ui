@@ -7,11 +7,13 @@ import RTComp, { type DeltaOfData } from "../RTComp";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
 import type { DBObject } from "../SearchAll";
 
+import { mdiArrowLeft } from "@mdi/js";
 import { isEmpty } from "prostgles-types";
 import type { NavigateFunction } from "react-router-dom";
-import { Await, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import type { Prgl } from "../../App";
 import { createReactiveState } from "../../App";
+import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import { TopControls } from "../../pages/TopControls";
@@ -34,10 +36,8 @@ import {
   TopHeaderClassName
 } from "./dashboardUtils";
 import { loadTable, type LoadTableArgs } from "./loadTable";
-import Btn from "../../components/Btn";
-import { mdiArrowLeft } from "@mdi/js";
-import { omitKeys } from "../../utils";
-import type { DBS } from "./DBS";
+import { cloneWorkspace } from "./cloneWorkspace";
+import { getWorkspacePath } from "../WorkspaceMenu/WorkspaceMenu";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -157,6 +157,7 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
     const delta = ({ ...dp, ...ds, ...dd });
     const { prgl: { connectionId, dbs }, workspaceId } = this.props;
     const { workspace } = this.d;
+    const user_id = this.props.prgl.user?.id;
     let ns: Partial<DashboardState> = {};
 
     const workspaces = dbs.workspaces; 
@@ -180,6 +181,21 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
           workspaceId? { id: workspaceId, ...wspFilter } : wspFilter, 
           { orderBy: { last_used: -1 } }
         ) as Workspace;
+
+        await cloneEditableWorkpsaces({ dbs, user_id });
+
+        /** If this is an editable workspace then ensure we're working on a clone */
+        if(wsp.published && wsp.user_id !== this.props.prgl.user?.id && wsp.publish_mode !== "fixed"){
+          let myClonedWsp = await workspaces.findOne({ parent_workspace_id: wsp.id });
+          if(!myClonedWsp){
+            myClonedWsp = (await cloneWorkspace(dbs, wsp.id, true)).clonedWsp;
+          }
+          if(wsp.id !== myClonedWsp.id){
+            window.location.href = getWorkspacePath(myClonedWsp);
+          }
+          wsp = myClonedWsp;
+        }
+
       } catch(e){
         this.setState({ wspError: e });
         return;
@@ -381,7 +397,9 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
 
     this.isOk = true;
 
-    const pinnedMenu = getIsPinnedMenu(workspace)
+    const pinnedMenu = getIsPinnedMenu(workspace);
+    const isReadonlyWorkspace = workspace.published && workspace.user_id !== prgl.user?.id;
+    const isFixed = isReadonlyWorkspace && workspace.publish_mode === "fixed";
     const dashboardMenu = <DashboardMenu
         menuAnchorState={this.menuAnchorState}
         prgl={prgl}
@@ -533,56 +551,20 @@ export const getIsPinnedMenu = (workspace: WorkspaceSyncItem) => {
   return workspace.options.pinnedMenu && !window.isLowWidthScreen;
 }
 
-export const clonePublishedWorkspace = async (dbs: DBS, workspaceId: string) => {
-  const id = workspaceId;
-  const wsp = await dbs.workspaces.findOne({ id });
-  if(!wsp) throw new Error("Workspace not found");
-  
-  const clonedWsp = await dbs.workspaces.insert({
-    ...omitKeys(wsp, ["id", "user_id"]),
-    user_id: undefined as any,
-    name: `${wsp.name} (copy)`,
-  }, { returning: "*" });
-  
-  const windows = await dbs.windows.find({ workspace_id: id });
-  const links = await dbs.links.find({ workspace_id: id });
-  const clonedWindows = await Promise.all(windows.map(async w => {
-    const win = { 
-      ...omitKeys(w, ["id", "parent_window_id", "user_id"]), 
-      workspace_id: clonedWsp.id,
-      user_id: undefined as any, 
-    };
-    const clonedWindow = await dbs.windows.insert(win, { returning: "*" });
-    return clonedWindow;
-  }));
+const cloneEditableWorkpsaces = async ({ dbs, user_id }: { dbs: Prgl["dbs"]; user_id: string | undefined }) => {
 
-  windows.forEach((w, i) => {
-    const clonedWindow = clonedWindows[i];
-    if(!clonedWindow) throw new Error("clonedWindow not found");
-    if(w.parent_window_id){
-      const parentIndex = windows.findIndex(w => w.id === w.parent_window_id);
-      const parent = clonedWindows[parentIndex];
-      if(!parent) throw new Error("parent not found");
-      dbs.windows.update({ id: clonedWindow.id }, { parent_window_id: parent.id });
+  /** Clone published editable workspaces */
+  const editablePublished = !user_id? [] : await dbs.workspaces.find({
+    published: true,
+    user_id: { $ne: user_id! },
+    publish_mode: { $isDistinctFrom: "fixed" },
+    $notExistsJoined: {
+      workspaces: {
+        user_id
+      }
     }
   });
-
-  const clonedLinks = await Promise.all(links.map(async l => { 
-    const lin: typeof l = { 
-      ...omitKeys(l, ["id", "user_id"]),
-      workspace_id: clonedWsp.id,
-      user_id: undefined as any,
-      id: undefined as any,
-      w1_id: clonedWindows[windows.findIndex(w => w.id === l.w1_id)]!.id,
-      w2_id: clonedWindows[windows.findIndex(w => w.id === l.w2_id)]!.id,
-    };
-    const clonedLinks = await dbs.links.insert(lin, { returning: "*" });
-    return clonedLinks;
+  await Promise.all(editablePublished.map(async wsp => {
+    return cloneWorkspace(dbs, wsp.id, true);
   }));
-
-  return {
-    clonedWsp,
-    clonedLinks,
-    clonedWindows,
-  };
 }

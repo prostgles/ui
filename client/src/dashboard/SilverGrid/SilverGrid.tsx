@@ -7,7 +7,7 @@ import { SilverGridChild } from "./SilverGridChild";
 import { SilverGridResizer } from "./SilverGridResizer";
 import type { TreeLayout } from "./TreeBuilder";
 import { TreeBuilder } from "./TreeBuilder";
-import { FlexRow } from "../../components/Flex";
+import { classOverride, FlexRow } from "../../components/Flex";
 import Btn from "../../components/Btn";
 import { isDefined } from "../../utils";
 
@@ -59,6 +59,7 @@ export type SilverGridProps = {
   children?: ReactSilverGridNode[];
   headerIcons?: ReactSilverGridNode[];
   _ref?: (ref: HTMLDivElement) => void;
+  layoutMode: "fixed" | "editable";
 
   /**
    * Something to draw on top
@@ -232,7 +233,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
   ref?: HTMLDivElement;
   refTarget?: HTMLDivElement;
   renderGrid = (layout: LayoutConfig | null = this.props.layout, _key?: string, _onChange?: (newLayout: LayoutConfig) => void) => {
-    const { children: c, header, headerIcons = [], onClose, _ref, hideButtons } = this.props;
+    const { children: c, header, headerIcons = [], onClose, _ref, hideButtons, layoutMode } = this.props;
     const { minimized } = this.state;
     const children = React.Children.toArray(c) as ReactSilverGridNode[];
     let content: React.ReactNode = null;
@@ -253,6 +254,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
       return <SilverGridChild
         key={key}
         activeTabKey={layout.id}
+        layoutMode={layoutMode}
         title={child?.props["data-title"] || ""}
         hideButtons={hideButtons ?? {}}
         layout={layout}
@@ -305,6 +307,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
           title={child.props["data-title"] || ""}
           headerIcon={headerIcon}
           siblingTabs={otherChildren}
+          layoutMode={layoutMode}
           onClickSibling={tabId => {
             onChange({ ...layout, activeTabKey: tabId })
           }}
@@ -352,6 +355,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
             (content as React.ReactNode[]).push(
               <SilverGridResizer
                 key={"resizer" + i} 
+                layoutMode={layoutMode}
                 type={layout!.type as "col" | "row"}
                 onChange={(prevSize, nextSize) => {
                   this.treeLayout?.update([prevSize, nextSize])
@@ -373,7 +377,7 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
       key={key}
       data-box-type={layout.type}
       data-box-id={layout.id}
-      className={"silver-grid-box  flex-" + layout.type + " min-w-0 min-h-0"} 
+      className={classOverride("silver-grid-box flex-" + layout.type + " min-w-0 min-h-0")} 
       style={{
         flex: layout.size,
         display: "flex",
@@ -390,10 +394,10 @@ export class SilverGridReact extends RTComp<SilverGridProps, S, any> {
 
   render(){
     const { targetStyle } = this.state;
-    const { style = {}, className = "", overlay } = this.props;
+    const { style = {}, className = "", overlay, layoutMode } = this.props;
     return (
       <div ref={r=> { if(r) this.ref = r; }}
-        className={"silver-grid-component relative  " + className }
+        className={classOverride(`silver-grid-component relative  ${layoutMode === "fixed"? "p-1 bg-color-3" : ""}`, className )}
         style={{ display: "flex", flex: 1, height: "100%", width: "100%", ...style }}
       >
         {this.renderGrid()}
