@@ -247,11 +247,6 @@ export default class SQLEditor extends RTComp<P, S> {
       this.resizeObserver.observe(this.rootRef);
     }
 
-      /** Enter newline only when not accepting a suggestion */
-      // this.editor?.addCommand(monaco.KeyCode.Enter, () => {
-      //   this.editor?.trigger('newline', 'type', { text: EOL });
-      // }, '!suggestWidgetVisible && !renameInputVisible && !inSnippetMode && !quickFixWidgetVisible');
-
     const { suggestions } = this.props;
 
     /* LOAD SUGGESTIONS */
@@ -551,11 +546,9 @@ const setActiveCodeBlock = async function (this: SQLEditor, e: editor.ICursorPos
     const codeBlock = await this.getCurrentCodeBlock();
     this.currentCodeBlock = codeBlock;
 
-    this.currentDecorations?.clear();
-    const existingDecorations = [
-      ...(editor.getVisibleRanges().flatMap(range => editor.getDecorationsInRange(range)?.map(d => d.id) ?? [])),
-    ];
+    const existingDecorations = editor.getLineDecorations(0)?.map(d => d.id) ?? [];
     editor.removeDecorations(existingDecorations);
+    this.currentDecorations?.clear();
 
     this.currentDecorations = await highlightCurrentCodeBlock(editor, codeBlock);
   }
@@ -563,13 +556,39 @@ const setActiveCodeBlock = async function (this: SQLEditor, e: editor.ICursorPos
 
 const setActions = async (editor: editor.IStandaloneCodeEditor, comp: SQLEditor) => {
   const monaco = await getMonaco();
-  editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, comp.onRun);
-  editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.KeyE, comp.onRun);
-  editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyE, comp.onRun);
-  editor.addCommand(monaco.KeyCode.F5, comp.onRun);
-  editor.addCommand(monaco.KeyCode.Escape, () => {
-    editor.trigger("demo", "hideSuggestWidget", {});
-    editor.trigger("demo", "hideParameterHints", {});
-    comp.props.onStopQuery?.(false);
+
+  /** Use actions instead of commands due to this bug: 
+   * https://github.com/microsoft/monaco-editor/issues/2947
+  */
+  editor.addAction({ 
+    id: "run-sql", 
+    label: "Execute SQL", 
+    keybindings: [
+      monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+      monaco.KeyMod.Alt | monaco.KeyCode.KeyE,
+      monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyE,
+      monaco.KeyCode.F5
+    ], 
+    run: comp.onRun
   });
+  editor.addAction({ 
+    id: "cancel-running-sql", 
+    label: "Cancel running query", 
+    keybindings: [
+      monaco.KeyCode.Escape
+    ], 
+    run: () => {
+      editor.trigger("demo", "hideSuggestWidget", {});
+      editor.trigger("demo", "closeParameterHints", {});
+      /**
+       * Array.from(this._commands).filter(([k]) => k.toLowerCase().includes("hint") && console.log(k))
+       */
+      comp.props.onStopQuery?.(false);
+    }
+  });
+
+  /** Enter newline only when not accepting a suggestion */
+  // this.editor?.addCommand(monaco.KeyCode.Enter, () => {
+  //   this.editor?.trigger('newline', 'type', { text: EOL });
+  // }, '!suggestWidgetVisible && !renameInputVisible && !inSnippetMode && !quickFixWidgetVisible');
 }

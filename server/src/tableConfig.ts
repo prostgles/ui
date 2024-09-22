@@ -770,6 +770,20 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     },
   },
 
+  workspace_publish_modes: {
+    isLookupTable: {
+      values: { 
+        fixed: {
+          en: "Fixed",
+          description: "The workspace layout is fixed"
+        }, 
+        editable: {
+          en: "Editable",
+          description: "The workspace will be cloned layout for each user"
+        } 
+      }
+    }
+  },
   
   workspaces: {
     columns: {
@@ -824,7 +838,12 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       last_used:      `TIMESTAMP NOT NULL DEFAULT now()`,
       deleted:        `BOOLEAN NOT NULL DEFAULT FALSE`,
       url_path:       `TEXT`,
-      published:      { sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE`, info: { hint: "If true then this workspace can be shared with other users through Access Control" } },
+      parent_workspace_id: `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,
+      published:      { 
+        sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE, CHECK(parent_workspace_id IS NULL OR published = FALSE)`, 
+        info: { hint: "If true then this workspace can be shared with other users through Access Control" } 
+      },
+      publish_mode: `TEXT REFERENCES workspace_publish_modes `,
     },
     constraints: {
       unique_url_path: `UNIQUE(url_path)`,
@@ -832,7 +851,6 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     }
   },
   
-
   windows: {
     columns: {
       id              : `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
@@ -853,7 +871,6 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       closed          : `BOOLEAN DEFAULT FALSE` ,
       deleted         : `BOOLEAN DEFAULT FALSE` ,
       show_menu       : `BOOLEAN DEFAULT FALSE` , 
-      // layout          : `JSONB`,
       fullscreen      : `BOOLEAN DEFAULT TRUE` , 
       sort            : "JSONB DEFAULT '[]'::jsonb",
       filter          : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
