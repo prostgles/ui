@@ -112,9 +112,6 @@ export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTab
           {getServerCoreInfoStr(connection)}
         </Chip>
       }
-      {
-        !isEmpty(c?.getPidStatsErrors) && <ErrorComponent error={c?.getPidStatsErrors} />
-      }
       {c?.serverStatus && 
         <Chip 
           className="f-0"
