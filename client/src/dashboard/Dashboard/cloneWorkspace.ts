@@ -1,4 +1,5 @@
 import { omitKeys } from "../../utils";
+import { LayoutConfig } from "../SilverGrid/SilverGrid";
 import type { DBS } from "./DBS";
 
 export const cloneWorkspace = async (dbs: DBS, workspaceId: string, keepName = false) => {
@@ -56,6 +57,23 @@ export const cloneWorkspace = async (dbs: DBS, workspaceId: string, keepName = f
     const clonedLinks = await dbs.links.insert(lin, { returning: "*" });
     return clonedLinks;
   }));
+
+  const replaceIds = (oldId: string) => {
+    return clonedWindows[windows.findIndex(w => w.id === oldId)]?.id ?? oldId;
+  }
+  const fixIds = (layout: LayoutConfig) => {
+    if("items" in layout){
+      layout.items.forEach(item => {
+        item.id = replaceIds(item.id);
+        fixIds(item);
+      });
+    } else {
+      layout.id = replaceIds(layout.id);
+    }
+  }
+  const newLayout = { ...(wsp.layout || {}) };
+  fixIds(newLayout);
+  await dbs.workspaces.update({ id: clonedWsp.id }, { layout: newLayout });
 
   return {
     clonedWsp,
