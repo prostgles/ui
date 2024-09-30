@@ -131,7 +131,6 @@ export const getMapLayerQueries = ({ links, myLinks, windows, active_row, w }: A
       } else if(linkW?.type === "sql") {
 
         const latestW = linkW.$get();
-        console.log(latestW.sql)
         const lsql: LayerSQL = {
           ...commonOpts,
           type: "sql",  
