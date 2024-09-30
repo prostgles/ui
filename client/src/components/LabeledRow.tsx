@@ -1,5 +1,6 @@
 import React from "react";
 import { Icon } from "./Icon/Icon";
+import { FlexRowWrap } from "./Flex";
 
 type P = {
   icon?: string;
@@ -27,9 +28,9 @@ export const LabeledRow = (p: P) => {
       {p.icon && <Icon path={p.icon} className="text-2" />}  
       {p.label}
     </div>
-    {p.noContentWrapper? p.children : <div className={"px-p5 font-medium " + (p.contentClassName ?? "")} style={p.contentStyle}>
+    {p.noContentWrapper? p.children : <FlexRowWrap className={"px-p5 font-medium gap-p5 " + (p.contentClassName ?? "")} style={p.contentStyle}>
       {p.children}
-    </div>}
+    </FlexRowWrap>}
   </div>
   
 }

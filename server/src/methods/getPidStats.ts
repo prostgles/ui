@@ -196,6 +196,7 @@ export const getStatus = async (connId: string, dbs: DBS) => {
     `, { queryName: IGNORE_QUERY })) as PG_STAT_ACTIVITY[],
     blockedQueries: [],
     topQueries: [],
+    getPidStatsErrors: connectionBashStatus[connId]?.getPidStatsErrors,
     noBash: connectionBashStatus[connId]?.mode === "off",
     connections: (await cdb.any(`
       /* ${IGNORE_QUERY} */
@@ -214,7 +215,7 @@ export const getStatus = async (connId: string, dbs: DBS) => {
   try {
     procInfo = await getPidStats(cdb, connId);
     result.serverStatus = procInfo?.serverStatus;
-    result.getPidStatsErrors = procInfo?.getPidStatsErrors;
+    // result.getPidStatsErrors ??= procInfo?.getPidStatsErrors;
   } catch(err) {
     console.error(err);
   }
