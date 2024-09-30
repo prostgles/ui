@@ -5,9 +5,8 @@ import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";
 import { FlexCol, FlexRow, classOverride } from "../../components/Flex";
 import { FooterButtons } from "../../components/Popup/FooterButtons";
-import CodeEditor, { type CodeEditorProps } from "./CodeEditor";
 import Popup from "../../components/Popup/Popup";
-import { dboLib } from "./monacoTsLibs";
+import CodeEditor, { type CodeEditorProps } from "./CodeEditor";
 
 type P = {
   label: React.ReactNode;

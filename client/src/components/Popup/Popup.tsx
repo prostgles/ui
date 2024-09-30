@@ -49,7 +49,7 @@ export type PopupProps = TestSelectors & {
   title?: React.ReactNode;
   subTitle?: string;
   headerRightContent?: React.ReactNode;
-  content?: ReactChild;
+  content?: React.ReactNode;
   footer?: React.ReactNode;
   contentClassName?: string;
   rootChildClassname?: string;
@@ -58,7 +58,7 @@ export type PopupProps = TestSelectors & {
   children?: React.ReactNode;
   clickCatchStyle?: React.CSSProperties;
   rootStyle?: React.CSSProperties;
-
+  rootChildStyle?: React.CSSProperties;
   /** 
    * Close popup on clicking content. Used for menus 
    * */
@@ -222,7 +222,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
     const defaultContentClassName = this.props.title && !window.isLowWidthScreen? "p-1 pl-2" : "p-1" 
     const {
       onClose, positioning, content, children,
-      clickCatchStyle = {}, rootStyle = {}, rootChildClassname,
+      clickCatchStyle = {}, rootStyle = {}, rootChildStyle = {}, rootChildClassname,
       onClickClose, contentClassName = defaultContentClassName, 
       contentStyle = {},
       showFullscreenToggle, 
@@ -265,6 +265,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
         >
           <div className={classOverride(`${POPUP_CLASSES.rootChild} w-full min-h-0 text-center flex-col bg-inherit ${fullHeightPositions.includes(positioning)? "f-1" : ""}`, rootChildClassname)}
             style={{
+              ...rootChildStyle,
               ...showFullscreenToggle?.getStyle?.(!!fullScreen)
             }}
           >

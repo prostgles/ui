@@ -2,7 +2,6 @@ import { isDefined } from "../../../utils";
 import { suggestSnippets } from "./CommonMatchImports";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import type { RawExpect } from "./getExpected";
-import { asSQL } from "./KEYWORDS";
 import type { ParsedSQLSuggestion } from "./registerSuggestions";
 import { getKind } from "./registerSuggestions";
 
@@ -36,7 +35,7 @@ export const getJoinSuggestions = ({ ss, tableSuggestions, rawExpect, cb }: Args
       });
     }
 
-    const matches = tableSuggestions.filter(s => identifiers.includes(s.escapedParentName!) );
+    const matches = tableSuggestions.filter(s => identifiers.some(pi => pi.text === s.escapedParentName) );
     if(matches.length){
       return {
         suggestions: matches,

@@ -96,7 +96,7 @@ function getCodeSamples({ token, projectPath }: { token?: string; projectPath?: 
   const uri = JSON.stringify(window.location.origin);
   const path = JSON.stringify(projectPath);
   const indexTs = `import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import { useProstglesClient } from "prostgles-client/dist/prostgles";
 
 const App = () => {
@@ -113,9 +113,9 @@ const App = () => {
   </div>
 }
 
-ReactDOM.render(
-  <App />,
-  document.getElementById("root")
+const root = createRoot(document.getElementById("root")); 
+root.render(
+  <App />
 );
 
 `;

@@ -144,7 +144,8 @@ export const getTableMeta = async (db: DBHandlerClient, dbs: DBS, database_id: n
         // }
       ],
     } 
-    const nonFilteredRules = await dbs.access_control.find(filter, ACCESS_CONTROL_SELECT);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const nonFilteredRules = await dbs.access_control?.find(filter, ACCESS_CONTROL_SELECT);
     const rules = nonFilteredRules.filter(r => r.dbPermissions.type !== "Custom" || r.dbPermissions.customTables.find(t => t.tableName === tableName));
     const accessRules: W_TableInfo["accessRules"] = rules.map(r => {
       const userTypes = r.access_control_user_types.flatMap(d => d.ids.flat())

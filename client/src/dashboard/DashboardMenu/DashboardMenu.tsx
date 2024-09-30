@@ -61,7 +61,8 @@ export const DashboardMenu = ({ menuAnchorState, ...props }: Omit<DashboardMenuP
   const pinnedMenu = workspace.options.pinnedMenu && !window.isLowWidthScreen;
   if(!pinnedMenu && !anchor.node && !showSearchAll) return hotKeys;
   const isReadonlyWorkspace = workspace.published && workspace.user_id !== prgl.user?.id;
-  const mainContent = pinnedMenu? 
+  const isFixed = isReadonlyWorkspace && workspace.publish_mode === "fixed";
+  const mainContent = isFixed? null : pinnedMenu? 
     <DashboardMenuContent 
       {...props} 
       queries={queries} 

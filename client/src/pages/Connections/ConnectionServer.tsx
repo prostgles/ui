@@ -22,6 +22,7 @@ type ConnectionServerProps = {
   dbsMethods: PrglState["dbsMethods"];
   connections: { id: string; db_name: string; }[];
   dbs: DBS;
+  showCreateText: boolean;
 };
 
 const Actions = {
@@ -42,7 +43,7 @@ type ActionTypes = [
 type Action = ActionTypes[number];
 
 
-export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: ConnectionServerProps) => {
+export const ConnectionServer = ({ name, dbsMethods, connections, dbs, showCreateText }: ConnectionServerProps) => {
   const { runConnectionQuery, getSampleSchemas, createConnection, validateConnection } = dbsMethods;
   const connId = connections[0]!.id;
   const [action, setAction] = useState<ActionTypes[number]>();
@@ -201,7 +202,7 @@ export const ConnectionServer = ({ name, dbsMethods, connections, dbs }: Connect
     <Select 
       btnProps={{ 
         iconPath: mdiPlus, 
-        children: "", 
+        children: showCreateText? "Create a database" : "", 
         size: "small", 
         color: "action", 
         variant: "filled",

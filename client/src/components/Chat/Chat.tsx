@@ -2,9 +2,13 @@ import type { FunctionComponent, ReactChild} from "react";
 import React, { useEffect, useState } from "react";
 import "./Chat.css";
 
-import { mdiAttachment, mdiFile, mdiMicrophone, mdiStop } from "@mdi/js";
-import { Icon } from "./Icon/Icon";
-type Message = {
+import { mdiAt, mdiAttachment, mdiFile, mdiMicrophone, mdiSend, mdiStop } from "@mdi/js";
+import { Icon } from "../Icon/Icon";
+import { classOverride } from "../Flex";
+import FileInput, { generateUniqueID } from "../FileInput/FileInput";
+import Btn from "../Btn";
+
+export type Message = {
   message: ReactChild;
   sender_id: number | string;
   incoming: boolean;
@@ -17,10 +21,14 @@ type Message = {
 };
 
 type P = {
-  style?: object;
+  style?: React.CSSProperties;
   className?: string;
   onSend: (msg?: string, media?: Blob | ArrayBuffer | File , mediaName?: string, mediaContentType?: string) => Promise<any | void>;
   messages: Message[];
+  allowedMessageTypes?: Partial<{
+    audio: boolean;
+    file: boolean;
+  }>;
 }
 
 class AudioRecorder {
@@ -63,12 +71,16 @@ class AudioRecorder {
   }
 }
 const audioRec = new AudioRecorder();
-const Chat:FunctionComponent<P> = (props) => {
+export const Chat: FunctionComponent<P> = (props) => {
   const {
     className = "",
     style = {},
     messages,
-    onSend
+    onSend,
+    allowedMessageTypes = {
+      audio: false,
+      file: false
+    }
   } = props;
   
   const [recording, setRecording] = useState(false);
@@ -93,15 +105,6 @@ const Chat:FunctionComponent<P> = (props) => {
   }, [messages, scrollRef]);
 
   const [msg, setMsg] = useState("");
-
-
-  const spinner = (
-    <div className="spinner">
-      <div className="bounce1"></div>
-      <div className="bounce2"></div>
-      <div className="bounce3"></div>
-    </div>
-  );
 
   const sendMsg = async (msg: string) => {
     if(msg && msg.trim().length){
@@ -153,15 +156,16 @@ const Chat:FunctionComponent<P> = (props) => {
   }
 
   return (
-    <div className={"chat-container chat-component " + className} style={style}>
+    <div className={classOverride("chat-container chat-component ", className)} style={style}>
       <div className="message-list " ref={e => { if(e){ setScrollRef(e); }}}>
         {messages.map(makeMessage)}            
       </div>
                 
       <div className="send-wrapper">
-        <textarea ref={e => {
-          if(e) ref = e;
-        }}
+        <textarea 
+          ref={e => {
+            if(e) ref = e;
+          }}
           className="no-scroll-bar bg-color-2 text-0" 
           rows={1} 
           value={msg}
@@ -172,34 +176,32 @@ const Chat:FunctionComponent<P> = (props) => {
             }
           }}
           onChange={e => { setMsg(e.target.value) }}
-        ></textarea>
-        {/* <button className="bg-transparent p-p5 ml-p5 mr-p5 bg-active-hover" onClick={async (e)=>{
+        ></textarea> 
+        <Btn iconPath={mdiSend} onClick={async (e)=>{
+          if(!ref) return;
           sendMsg(ref.value)
-        }}>
-          <svg viewBox="0 0 24 24" role="presentation"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"></path></svg>
-        </button> */}
-        <label className="button bg-transparent p-p5 ml-p5 mr-p5 bg-active-hover" style={{ background: "transparent", padding: ".5em"}}>
-          <input type="file" style={{ display: "none" }} onChange={async e => {
-            console.log(e.target.files);
-            const file = e.target.files?.[0];
-            if(file){
-              onSend("", file , file.name, file.type);
-            }
-          }}/>
-          <Icon path={mdiAttachment} color={"rgb(5, 149, 252)"}/>
-        </label>
-        <button className=" bg-transparent p-p5 ml-p5 mr-p5 bg-active-hover" 
+        }}/>
+        {allowedMessageTypes.file && 
+          <label className="pointer button bg-transparent p-p5 ml-p5 mr-p5 bg-active-hover" style={{ background: "transparent", padding: ".5em"}}>
+            <input type="file" style={{ display: "none" }} onChange={async e => {
+              console.log(e.target.files);
+              const file = e.target.files?.[0];
+              if(file){
+                onSend("", file , file.name, file.type);
+              }
+            }}/>
+            <Icon path={mdiAttachment} />
+          </label> 
+        }
+        {allowedMessageTypes.audio && <Btn className=" bg-transparent p-p5 ml-p5 mr-p5" 
           onClick={async (e)=>{
             if(recording) stopRecording();
             else startRecording();
           }}
-        >
-          <Icon path={recording? mdiStop : mdiMicrophone} color={recording? "rgb(226 0 0)" : "rgb(5, 149, 252)"}/>
-        </button>
+          color={recording? "action" : "default"}
+          iconPath={recording? mdiStop : mdiMicrophone}
+        />}
       </div>
     </div>
   );
 }
-
-
-export default Chat;

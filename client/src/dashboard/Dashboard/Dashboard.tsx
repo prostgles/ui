@@ -7,11 +7,13 @@ import RTComp, { type DeltaOfData } from "../RTComp";
 import { getSqlSuggestions } from "../SQLEditor/SQLEditorSuggestions";
 import type { DBObject } from "../SearchAll";
 
+import { mdiArrowLeft } from "@mdi/js";
 import { isEmpty } from "prostgles-types";
 import type { NavigateFunction } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import type { Prgl } from "../../App";
 import { createReactiveState } from "../../App";
+import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import { TopControls } from "../../pages/TopControls";
@@ -34,8 +36,8 @@ import {
   TopHeaderClassName
 } from "./dashboardUtils";
 import { loadTable, type LoadTableArgs } from "./loadTable";
-import Btn from "../../components/Btn";
-import { mdiArrowLeft } from "@mdi/js";
+import { cloneWorkspace } from "./cloneWorkspace";
+import { getWorkspacePath } from "../WorkspaceMenu/WorkspaceMenu";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -92,7 +94,6 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
     links: [],
     linksSync: null
   }
-
 
   onUnmount(){
     const { workspaceSync, windowsSync, linksSync } = this.d;
@@ -156,6 +157,7 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
     const delta = ({ ...dp, ...ds, ...dd });
     const { prgl: { connectionId, dbs }, workspaceId } = this.props;
     const { workspace } = this.d;
+    const user_id = this.props.prgl.user?.id;
     let ns: Partial<DashboardState> = {};
 
     const workspaces = dbs.workspaces; 
@@ -179,6 +181,21 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
           workspaceId? { id: workspaceId, ...wspFilter } : wspFilter, 
           { orderBy: { last_used: -1 } }
         ) as Workspace;
+
+        await cloneEditableWorkpsaces({ dbs, user_id });
+
+        /** If this is an editable workspace then ensure we're working on a clone */
+        if(wsp.published && wsp.user_id !== this.props.prgl.user?.id && wsp.publish_mode !== "fixed"){
+          let myClonedWsp = await workspaces.findOne({ parent_workspace_id: wsp.id });
+          if(!myClonedWsp){
+            myClonedWsp = (await cloneWorkspace(dbs, wsp.id, true)).clonedWsp;
+          }
+          if(wsp.id !== myClonedWsp.id){
+            window.location.href = getWorkspacePath(myClonedWsp);
+          }
+          wsp = myClonedWsp;
+        }
+
       } catch(e){
         this.setState({ wspError: e });
         return;
@@ -380,7 +397,9 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
 
     this.isOk = true;
 
-    const pinnedMenu = getIsPinnedMenu(workspace)
+    const pinnedMenu = getIsPinnedMenu(workspace);
+    const isReadonlyWorkspace = workspace.published && workspace.user_id !== prgl.user?.id;
+    const isFixed = isReadonlyWorkspace && workspace.publish_mode === "fixed";
     const dashboardMenu = <DashboardMenu
         menuAnchorState={this.menuAnchorState}
         prgl={prgl}
@@ -530,4 +549,22 @@ export const getTables = async (schemaTables: DBSchemaTable[], workspace: Worksp
 
 export const getIsPinnedMenu = (workspace: WorkspaceSyncItem) => {
   return workspace.options.pinnedMenu && !window.isLowWidthScreen;
+}
+
+const cloneEditableWorkpsaces = async ({ dbs, user_id }: { dbs: Prgl["dbs"]; user_id: string | undefined }) => {
+
+  /** Clone published editable workspaces */
+  const editablePublished = !user_id? [] : await dbs.workspaces.find({
+    published: true,
+    user_id: { $ne: user_id! },
+    publish_mode: { $isDistinctFrom: "fixed" },
+    $notExistsJoined: {
+      workspaces: {
+        user_id
+      }
+    }
+  });
+  await Promise.all(editablePublished.map(async wsp => {
+    return cloneWorkspace(dbs, wsp.id, true);
+  }));
 }

@@ -327,6 +327,7 @@ export class ViewRenderer extends RTComp<ViewRendererProps, ViewRendererState, D
       }
       <SilverGridReact
         _ref={r => { this.gridRef = r; }}
+        layoutMode={workspace.publish_mode === "fixed"? "fixed" : "editable"}
         defaultLayoutType={workspace.options.defaultLayoutType}
         className="min-h-0 relative"
         layout={workspace.layout}

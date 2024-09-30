@@ -276,6 +276,66 @@ export type DBSchemaGenerated = {
       workspace_id?: null | string;
     };
   };
+  llm_chats: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      created?: null | string;
+      id?: number;
+      llm_credential_id: number;
+      llm_prompt_id: number;
+      name?: string;
+      user_id: string;
+    };
+  };
+  llm_credentials: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      created?: null | string;
+      endpoint?: string;
+      extraHeaders?: null | Partial<Record<string, string>>
+      id?: number;
+      key_id?: null | string;
+      key_secret: string;
+      name?: string;
+      user_id: string;
+    };
+  };
+  llm_messages: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      chat_id?: null | number;
+      created?: null | string;
+      id?: string;
+      message?: null | string;
+      user_id?: null | string;
+    };
+  };
+  llm_prompts: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      created?: null | string;
+      id?: number;
+      name?: string;
+      prompt: string;
+      user_id: string;
+    };
+  };
   login_attempts: {
     is_view: false;
     select: true;
@@ -511,6 +571,18 @@ export type DBSchemaGenerated = {
       workspace_id?: null | string;
     };
   };
+  workspace_publish_modes: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      description?: null | string;
+      en?: null | string;
+      id: string;
+    };
+  };
   workspaces: {
     is_view: false;
     select: true;
@@ -529,6 +601,8 @@ export type DBSchemaGenerated = {
       layout?: null | any;
       name?: string;
       options?: {    hideCounts?: boolean;   tableListEndInfo?: 'none' | 'count' | 'size';   tableListSortBy?: 'name' | 'extraInfo';   showAllMyQueries?: boolean;   defaultLayoutType?: 'row' | 'tab' | 'col';   pinnedMenu?: boolean;   pinnedMenuWidth?: number;  };
+      parent_workspace_id?: null | string;
+      publish_mode?: null | string;
       published?: boolean;
       url_path?: null | string;
       user_id: string;

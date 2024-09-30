@@ -109,7 +109,7 @@ Indexes and simple table constraints involving the column will be automatically 
 When this form is used, the column's statistics are removed, so running ANALYZE on the table afterwards is recommended.` },
   { kwd: "SET DEFAULT", 
     options: (ss, cb) => {
-      const col = ss.find(s => cb.prevIdentifiers.includes(s.escapedIdentifier ?? "") && cb.prevIdentifiers.includes(s.escapedParentName ?? ""));
+      const col = ss.find(s => cb.prevIdentifiers.some(pi => pi.text === s.escapedIdentifier) && cb.prevIdentifiers.some(pi => pi.text === s.escapedParentName));
       const prioritisedFuncNames = ["now", "current_timestamp", `"current_user"`, "current_setting", "gen_random_uuid", "uuid_generate_v1", "uuid_generate_v4"];
       const funcs = ss.filter(s => {
         return !col || s.funcInfo?.restype_udt_name?.startsWith(col.colInfo?.udt_name ?? "invalid") && !s.funcInfo.args.length

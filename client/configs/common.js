@@ -117,6 +117,7 @@ module.exports = {
     new MonacoWebpackPlugin({ 
       languages: [
         "typescript", 
+        "javascript", 
         "sql", 
         "pgsql", 
         "json"

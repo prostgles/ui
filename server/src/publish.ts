@@ -7,6 +7,7 @@ import { getACRules } from "./ConnectionManager/ConnectionManager";
 import { isDefined } from "../../commonTypes/filterUtils";
 import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { getPasswordHash } from "./authConfig/authUtils";
+import { fetchLLMResponse } from "./publishMethods/askLLM/fetchLLMResponse";
 
 export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise<Publish<DBSchemaGenerated>> => {
         
@@ -101,6 +102,8 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
 
   const userTypeFilter = { "access_control_user_types": { user_type: user.type } }
   
+  const forcedData = { user_id: user.id };
+  const forcedFilter = { user_id: user.id };
   let dashboardTables: Publish<DBSchemaGenerated> = {
 
     /* DASHBOARD */
@@ -113,9 +116,81 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
       delete: "*",
       insert: { 
         fields: { id: 0 }, 
-        forcedData: { user_id: user.id }
+        forcedData
       },
       update: "*",
+    },
+    llm_credentials: isAdmin && {
+      select: {
+        fields: { key_secret: 0 }
+      },
+      delete: "*",
+      insert: { 
+        fields: "*", 
+        forcedData,
+        postValidate: async ({ row, dbx }) => {
+          await fetchLLMResponse({ llm_credential: row, question: "Hey", schema: "my_table();", prompt: undefined });
+        }
+      },
+      update: "*",
+    },
+    llm_prompts: isAdmin && {
+      select: "*",
+      delete: "*",
+      insert: { 
+        fields: "*", 
+        forcedData
+      },
+      update: {
+        fields: "*",
+        forcedFilter,
+        forcedData
+      }
+    },
+    llm_chats: isAdmin && {
+      select: {
+        fields: "*",
+        forcedFilter
+      },
+      delete: "*",
+      insert: { 
+        fields: "*", 
+        forcedData
+      },
+      update: {
+        fields: "*",
+        forcedData,
+        forcedFilter,
+      }
+    },
+    llm_messages: isAdmin && {
+      select: {
+        fields: "*",
+        forcedFilter: {
+          $existsJoined: {
+            llm_chats: {
+              user_id: user.id
+            }
+          }
+        }
+      },
+      delete: "*",
+      insert: { 
+        fields: "*", 
+        forcedData,
+        checkFilter: {
+          $existsJoined: {
+            llm_chats: {
+              user_id: user.id
+            }
+          }
+        },
+      },
+      update: {
+        fields: "*",
+        forcedData,
+        forcedFilter,
+      }
     },
     credential_types: isAdmin && { select: "*" },
     access_control: isAdmin? "*" : undefined,// { select: { fields: "*", forcedFilter: { $existsJoined: userTypeFilter } } },

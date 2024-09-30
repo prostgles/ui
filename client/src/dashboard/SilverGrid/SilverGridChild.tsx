@@ -26,7 +26,7 @@ export type SilverGridChildProps = {
     value: boolean;
     toggle: VoidFunction;
   };
-} & Required<Pick<SilverGridProps, "hideButtons" >>;
+} & Required<Pick<SilverGridProps, "hideButtons" | "layoutMode">>;
 
 
 type SilverGridChildState = {
@@ -57,9 +57,11 @@ export class SilverGridChild extends RTComp<SilverGridChildProps, SilverGridChil
   loaded?: {
     headerRef: HTMLDivElement | null;
   };
+
+  cleanupListeners?: VoidFunction;
   onDelta(deltaP: Partial<SilverGridChildProps> | undefined, deltaS: Partial<SilverGridChildState> | undefined, deltaD: any): void {
     
-    const { header, setTarget, moveTo, hideButtons } = this.props;
+    const { header, setTarget, moveTo, hideButtons, layoutMode } = this.props;
     const container = this.ref?.closest(".silver-grid-component");
 
     if(!container || !this.ref || hideButtons.pan) {
@@ -74,7 +76,11 @@ export class SilverGridChild extends RTComp<SilverGridChildProps, SilverGridChil
     }
     this.loaded = { headerRef };
 
-    setPan(headerRef, {
+    if(layoutMode === "fixed"){
+      this.cleanupListeners?.();
+      return;
+    }
+    this.cleanupListeners = setPan(headerRef, {
       onPress: () => {
         if(!this.props.hasSiblings) return;
         vibrateFeedback(15)
@@ -303,10 +309,10 @@ export class SilverGridChild extends RTComp<SilverGridChildProps, SilverGridChil
     
     /** Is used to ensure that clicks on overflowing content are not disabled */
     const isMyContent = (target: any) => this.ref?.contains(target as any)
-
+    const isFixed = this.props.layoutMode === "fixed";
     return <div 
       ref={r => { if(r) this.ref = r; }} 
-      className={"SilverGridChild silver-grid-box silver-grid-item bg-color-1 f-1 flex-col min-w-0 min-h-0 " + (fullscreen? " fullscreen " : " ")}
+      className={`SilverGridChild silver-grid-box silver-grid-item bg-color-1 f-1 flex-col min-w-0 min-h-0 ${fullscreen? " fullscreen " : " "} ${isFixed? "rounded shadow" : ""}`}
       data-box-id={layout.id}
       data-box-type="item"
       data-table-name={layout.tableName}
