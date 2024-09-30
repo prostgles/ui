@@ -15,6 +15,8 @@ import { Connection } from "./Connection";
 import PopupMenu from "../../components/PopupMenu";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import { ConnectionServer } from "./ConnectionServer";
+import { NavLink } from "react-router-dom";
+import { FlexCol, FlexRow } from "../../components/Flex";
 
 type CommonConnectionInfo = Pick<DBSSchema["connections"], "created"> & {
   access_control: { count: number; }[];
@@ -234,6 +236,7 @@ export class Connections extends RTComp<PrglState, S> {
                   dbsMethods={dbsMethods} 
                   connections={conns as any}
                   dbs={dbs}
+                  showCreateText={Boolean(isAdmin && serverUserGroupings.length <= 1 && !conns.filter(c => !c.is_state_db).length)}
                 />
                 <div className="flex-col gap-p5 ">
                   {conns.map(c => 
