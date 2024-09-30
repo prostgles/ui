@@ -13,7 +13,7 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       created?: null | string;
-      database_id?: null | number;
+      database_id: number;
       dbPermissions: 
        |  {  type: 'Run SQL';  allowSQL?: boolean; }
        |  {  type: 'All views/tables';  allowAllTables: ("select" | "insert" | "update" | "delete")[]; }
@@ -332,7 +332,7 @@ export type DBSchemaGenerated = {
       created?: null | string;
       id?: number;
       name?: string;
-      prompt?: null | string;
+      prompt: string;
       user_id: string;
     };
   };
