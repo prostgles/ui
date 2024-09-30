@@ -69,12 +69,14 @@ export const AskLLM = (prgl: Prgl) => {
       onClose={onClose}
       clickCatchStyle={{ opacity: 1 }}
     >
-      <InfoRow>
+      <InfoRow variant="naked" className="mt-1">
         No credentials found. Please add a credential to use AI assistant.
       </InfoRow>
-      <SmartForm
+      <SmartForm 
+        label="Add LLM Credential"
         theme={prgl.theme}
         methods={{}}
+        className="p-0"
         db={prgl.dbs as any}
         tables={prgl.dbsTables} 
         tableName="llm_credentials"
