@@ -1,5 +1,5 @@
 import { omitKeys } from "../../utils";
-import { LayoutConfig } from "../SilverGrid/SilverGrid";
+import type { LayoutConfig } from "../SilverGrid/SilverGrid";
 import type { DBS } from "./DBS";
 
 export const cloneWorkspace = async (dbs: DBS, workspaceId: string, keepName = false) => {
