@@ -675,7 +675,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
   credential_types: {
     // dropIfExists: true,
     isLookupTable: {
-      values: { s3: {} }
+      values: { s3: {}, openai: {} }
     }
   },
   
@@ -770,6 +770,20 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     },
   },
 
+  workspace_publish_modes: {
+    isLookupTable: {
+      values: { 
+        fixed: {
+          en: "Fixed",
+          description: "The workspace layout is fixed"
+        }, 
+        editable: {
+          en: "Editable",
+          description: "The workspace will be cloned layout for each user"
+        } 
+      }
+    }
+  },
   
   workspaces: {
     columns: {
@@ -824,7 +838,12 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       last_used:      `TIMESTAMP NOT NULL DEFAULT now()`,
       deleted:        `BOOLEAN NOT NULL DEFAULT FALSE`,
       url_path:       `TEXT`,
-      published:      { sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE`, info: { hint: "If true then this workspace can be shared with other users through Access Control" } },
+      parent_workspace_id: `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,
+      published:      { 
+        sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE, CHECK(parent_workspace_id IS NULL OR published = FALSE)`, 
+        info: { hint: "If true then this workspace can be shared with other users through Access Control" } 
+      },
+      publish_mode: `TEXT REFERENCES workspace_publish_modes `,
     },
     constraints: {
       unique_url_path: `UNIQUE(url_path)`,
@@ -832,7 +851,6 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     }
   },
   
-
   windows: {
     columns: {
       id              : `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
@@ -853,7 +871,6 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       closed          : `BOOLEAN DEFAULT FALSE` ,
       deleted         : `BOOLEAN DEFAULT FALSE` ,
       show_menu       : `BOOLEAN DEFAULT FALSE` , 
-      // layout          : `JSONB`,
       fullscreen      : `BOOLEAN DEFAULT TRUE` , 
       sort            : "JSONB DEFAULT '[]'::jsonb",
       filter          : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
@@ -1095,6 +1112,56 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     },
     constraints: {
       stats_pkey: "PRIMARY KEY(pid, connection_id)"
+    }
+  },
+  llm_credentials: {
+    columns: {
+      id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
+      name: `TEXT NOT NULL DEFAULT 'Default credential'`,
+      user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
+      key_id: `TEXT`,
+      key_secret: `TEXT NOT NULL`,
+      endpoint: `TEXT NOT NULL DEFAULT 'https://api.openai.com/v1/chat/completions'`,
+      extraHeaders: {
+        nullable: true,
+        jsonbSchema: {
+          record: {
+            partial: true,
+            values: "string",
+          }
+        }
+      },
+      created: {
+        sqlDefinition: `TIMESTAMP DEFAULT NOW()`,
+      },
+    },
+  },
+  llm_prompts: {
+    columns: {
+      id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
+      name: `TEXT NOT NULL DEFAULT 'New prompt'`,
+      user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
+      prompt: `TEXT NOT NULL CHECK(LENGTH(btrim(prompt)) > 0)`,
+      created: `TIMESTAMP DEFAULT NOW()`,
+    },
+  },
+  llm_chats: {
+    columns: {
+      id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
+      name: `TEXT NOT NULL DEFAULT 'New chat'`,
+      user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
+      llm_credential_id: `INTEGER NOT NULL REFERENCES llm_credentials(id) ON DELETE SET NULL`,
+      llm_prompt_id: `INTEGER NOT NULL REFERENCES llm_prompts(id) ON DELETE SET NULL`,
+      created: `TIMESTAMP DEFAULT NOW()`,
+    },
+  },
+  llm_messages: {
+    columns: {
+      id: `int8 PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
+      chat_id: `INTEGER REFERENCES llm_chats(id) ON DELETE CASCADE`,
+      user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
+      message: `TEXT`,
+      created: `TIMESTAMP DEFAULT NOW()`,
     }
   },
   ...loggerTableConfig,

@@ -20,7 +20,7 @@ type P = SilverGridChildProps & {
 const CloseButton = ({ tabId, onClose }: { tabId: string | undefined; } & Pick<P, "onClose">) => {
   if(!onClose || !tabId) return null;
   return <Btn 
-    className="show-on-parent-hover" 
+    className="SilverGridChild_CloseButton show-on-parent-hover" 
     style={{
       width: "22px",
       height: "22px",
@@ -39,21 +39,22 @@ export const getSilverGridTitleNode = (id: string) => document.body.querySelecto
 export const SilverGridChildHeader = (props: P) => {
 
   const { 
-    headerIcon, minimize, hideButtons = {}, onClose, 
+    headerIcon, minimize, hideButtons: _hideButtons = {}, onClose, layoutMode,
     height, minimized, onSetHeaderRef, fullscreen, onSetMinimized,
     onClickFullscreen, onClickClose, siblingTabs, onClickSibling, activeTabKey
   } = props;
   const lineHeight = window.isMobileDevice? 16 : 24;
 
   const tabs = siblingTabs?.length? siblingTabs : [props.layout];
-
+  const isFixed = layoutMode === "fixed";
+  const hideButtons: typeof _hideButtons = isFixed? { minimize: true, fullScreen: true, close: true, pan: true, resize: true } : _hideButtons;
   const { state: theme } = useReactiveState(appTheme);
   const bgClass = theme === "dark"? "bg-color-0" : "bg-color-3"
   const bgActiveClass = theme === "dark"? "bg-color-2" : "bg-color-0";
 
   return <div className="silver-grid-item-header flex-row  bg-color-1 pointer f-0 noselect relative ai-center shadow">
 
-    <div 
+    {!isFixed && <div 
       className="silver-grid-item-header--icon flex-row f-0 o-hidden f-1 ai-center" 
       style={{ 
         maxWidth: "fit-content", 
@@ -61,7 +62,7 @@ export const SilverGridChildHeader = (props: P) => {
       }
     }>
       {headerIcon}
-    </div>
+    </div>}
 
     <div 
       className=" flex-row f-1 min-w-0 ws-nowrap ai-center text-ellipsiss ml-p25 o-auto  no-scroll-bar" 
@@ -125,7 +126,12 @@ export const SilverGridChildHeader = (props: P) => {
           >
             {tab.title}
           </div>
-          <CloseButton {...props} tabId={tab.id} />
+         {!isFixed && 
+          <CloseButton 
+            {...props} 
+            tabId={tab.id} 
+          />
+        }
         </FlexRow>
       })}
     </div>

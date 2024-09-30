@@ -23,6 +23,7 @@ import SmartCardList from "./SmartCard/SmartCardList";
 import { StatusMonitorConnections } from "./StatusMonitor/StatusMonitorConnections";
 import { StyledInterval } from "./W_SQL/customRenderers";
 import ErrorComponent from "../components/ErrorComponent";
+import { isEmpty } from "../utils";
 
 export type StatusMonitorProps = Pick<PrglState, "dbs" | "dbsMethods" | "dbsTables"> & {
   connectionId: string;
@@ -49,6 +50,9 @@ export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTab
           return;
         }
         setc(c);
+        if(!isEmpty(c.getPidStatsErrors)){
+          console.error(c.getPidStatsErrors);
+        }
       } catch (e) {
         console.error(e);
         setStatusError(e);

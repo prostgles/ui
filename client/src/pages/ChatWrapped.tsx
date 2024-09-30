@@ -1,7 +1,7 @@
 import type { FunctionComponent} from "react";
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import Chat from "../components/Chat";
+import Chat from "../components/Chat/Chat";
 import Loading from "../components/Loading";
 import { get } from "../utils";
 

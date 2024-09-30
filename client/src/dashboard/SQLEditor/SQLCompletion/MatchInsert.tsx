@@ -4,6 +4,7 @@ import { getKind, type SQLMatcher } from "./registerSuggestions";
 import { getParentFunction } from "./MatchSelect";
 import { getExpected } from "./getExpected";
 import { suggestSnippets } from "./CommonMatchImports";
+import { matchTableFromSuggestions } from "./completionUtils/getTabularExpressions";
 
 const KWDS = [
   { kwd: "INTO", justAfter: ["INSERT"], expects: "keyword" },
@@ -38,11 +39,11 @@ export const MatchInsert: SQLMatcher = {
     if(insideFunc){
       if(insideFunc.prevToken?.textLC === "into"){
         const cols = getExpected("column", cb, ss).suggestions;
-        if(cb.prevIdentifiers.length === 1 && cols.every(c => c.colInfo && c.escapedParentName?.includes(cb.prevIdentifiers[0]!))){
+        if(cb.prevIdentifiers.length === 1 && cols.every(c => c.colInfo && matchTableFromSuggestions(c as any, cb.prevIdentifiers[0]!))){
           return suggestSnippets([{ label: "...columns", insertText: cols.sort((a, b) => a.colInfo!.ordinal_position - b.colInfo!.ordinal_position).map(c => c.insertText).join(", ") }])
         }
         return {
-          suggestions: cols.filter(c =>  !prevIdentifiers.includes(c.colInfo?.escaped_identifier as any)) 
+          suggestions: cols.filter(c =>  !prevIdentifiers.some(pi => pi.text === c.colInfo?.escaped_identifier)) 
         }
       }
       const funcs = getExpected("function", cb, ss).suggestions.filter(s => !s.funcInfo?.args.length && s.funcInfo?.restype)

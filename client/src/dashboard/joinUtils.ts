@@ -66,7 +66,7 @@ export const getJoinFilters = (
         let chartFilters: AnyObject[] = [];
         if(otherW.type === "map"){
           if(otherW.options.extent){
-            chartFilters = otherW.options.extentBehavior !== "filterToMapBounds"? [] : [W_Map.extentToFilter(otherW.options.extent, chartCol)]
+            chartFilters = otherW.options.extentBehavior !== "filterToMapBounds"? [] : [W_Map.extentToFilter(otherW.options.extent as any, chartCol)]
           }
         } else {
           chartFilters = getTimeChartFilters(otherW, chartCol);

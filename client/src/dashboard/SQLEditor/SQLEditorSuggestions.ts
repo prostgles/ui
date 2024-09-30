@@ -110,7 +110,7 @@ export async function getSqlSuggestions(db: DB): Promise< {
       type: "trigger",
       insertText: t.escaped_identifier,
       triggerInfo: t,
-      documentation: asListObject(pickKeys(t, ["trigger_schema", "event_object_schema", "event_object_table"])) + 
+      documentation: asListObject(pickKeys(t, ["disabled", "trigger_schema", "event_object_schema", "event_object_table"])) + 
         "\n\n" + asSQL(`${t.definition};\n\n${(t.function_definition ?? "")}`)
           .replace(" BEFORE ", "\nBEFORE ")
           .replace(" AFTER ", "\nAFTER ")
@@ -284,14 +284,20 @@ export async function getSqlSuggestions(db: DB): Promise< {
         }).join("\n")}`
       });
       return { 
-        label: { label: r.usename, description: [(r.is_current_user? "CURRENT_USER" : ""), (r.usesuper? "usesuper" : "")].join(" ") },
+        label: { 
+          label: r.usename, 
+          description: [
+            (r.is_current_user? "CURRENT_USER" : r.is_connected? "CONNECTED" : ""), 
+            (r.usesuper? "usesuper" : ""),
+          ].join(" ") 
+        },
         name: r.usename,
         userInfo: r,
         escapedIdentifier: r.escaped_identifier,
         insertText: r.escaped_identifier,
         detail: `(role)`, 
         documentation: 
-          asListObject(omitKeys(r, ["escaped_identifier", "usename", "is_current_user", "priority", "table_grants"] )) + 
+          asListObject(omitKeys(r, ["is_connected", "escaped_identifier", "usename", "is_current_user", "priority", "table_grants"] )) + 
           (!r.table_grants? "" :
             `\n\n**Table grants**:\n\n\n${asSQL(r.table_grants)}`) + 
             `\n\n**Policies (${userPolicies.length}):**\n\n${asSQL(tablePoliciesSqlDefs.sort().join("\n\n"))}`,

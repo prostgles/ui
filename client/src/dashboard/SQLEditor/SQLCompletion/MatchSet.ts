@@ -49,7 +49,7 @@ export const MatchSet: SQLMatcher = {
         })))
       }
 
-      const settingInfo = settingSuggestions.find(s => s.name === cb.identifiers.at(-1))?.settingInfo;
+      const settingInfo = settingSuggestions.find(s => s.name === cb.identifiers.at(-1)?.text)?.settingInfo;
       const docs = settingInfo?.description;
       const getVal = (v = "") => settingInfo?.unit? `'${v}${settingInfo.unit}'` : v;
       const valueSuggestions = suggestSnippets([
