@@ -38,7 +38,7 @@ export const cloneWorkspace = async (dbs: DBS, workspaceId: string, keepName = f
     const clonedWindow = clonedWindows[i];
     if(!clonedWindow) throw new Error("clonedWindow not found");
     if(w.parent_window_id){
-      const parentIndex = windows.findIndex(w => w.id === w.parent_window_id);
+      const parentIndex = windows.findIndex(pw => pw.id === w.parent_window_id);
       const parent = clonedWindows[parentIndex];
       if(!parent) throw new Error("parent not found");
       dbs.windows.update({ id: clonedWindow.id }, { parent_window_id: parent.id });
@@ -64,7 +64,6 @@ export const cloneWorkspace = async (dbs: DBS, workspaceId: string, keepName = f
   const fixIds = (layout: LayoutConfig) => {
     if("items" in layout){
       layout.items.forEach(item => {
-        item.id = replaceIds(item.id);
         fixIds(item);
       });
     } else {
