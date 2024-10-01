@@ -5,13 +5,23 @@ import type { DemoScript } from "../getDemoUtils";
 
 export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL, runSQL }) => {
 
+  /** Schema prefix doubling bug */
+  const qPrefDoubling = fixIndent(`
+    DELETE FROM pg_catalog.pg_class pc
+    WHERE pc.rela`
+  );
+  fromBeginning(false, qPrefDoubling);
+  moveCursor.lineEnd();
+  await typeAuto(`c`);
+  testResult(qPrefDoubling + "cl");
+
   /** Public schema prefix */
   await runDbSQL(`CREATE TABLE IF NOT EXISTS my_p_table (id1 serial PRIMARY KEY, name1 text);`);
   const publicSchemaPrefix = "SELECT * FROM public.my_p_table WHERE";
   for await(const script of [publicSchemaPrefix, publicSchemaPrefix.replace("public", "PUBLIC")]){
     await fromBeginning(false, script);
     await typeAuto(" ");
-    await testResult(script + " id1"); 
+    await testResult(script + " id1");
   }
 
   /** Create index public schema prefix */
