@@ -144,6 +144,7 @@ export const WorkspaceMenu = (props: P) => {
                   <Btn 
                     iconPath={mdiContentCopy}
                     title="Clone workspace"
+                    data-command="WorkspaceMenu.CloneWorkspace"
                     onClickPromise={async () => {
                       await cloneWorkspace(dbs, w.id).then(d => {
                         setWorkspace(d.clonedWsp);
@@ -207,7 +208,7 @@ export const WorkspaceMenu = (props: P) => {
           className={"workspace-list-item text-1 relative " + (workspace.id === w.id? "active" : "")}
         >
           <Btn
-            title={"Shared workspace" + (w.isMine? "" : " (readonly)")}
+            title={(w.published && !w.isMine? "Shared workspace" : "Workspace") + (w.isMine? "" : " (readonly)")}
             iconNode={w.icon? <SvgIcon icon={w.icon} /> : undefined}
             style={{
               padding: "16px",
