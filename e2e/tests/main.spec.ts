@@ -191,6 +191,7 @@ test.describe("Main test", () => {
     await insertRow(page, `"MySchema"."MyTable"`, { MyColumn: "some value" });
     await page.getByText("some value").waitFor({ state: "visible", timeout: 15e3 });
     
+    
     await goTo(page, 'localhost:3004/connections');
     await page.waitForTimeout(4e3);
     await dropConnectionAndDatabase(dbName, page);
