@@ -1,7 +1,7 @@
 import type { DeckGLMapDivDemoControls } from "../dashboard/Map/DeckGLMap";
 import { runDbSQL } from "../dashboard/W_SQL/getDemoUtils";
 import { tout } from "../pages/ElectronSetup";
-import { click, getElement, movePointer, type } from "./demoUtils";
+import { click, getElement, movePointer, type, waitForElement } from "./demoUtils";
 
 
 /** Close previous windows */
@@ -107,7 +107,40 @@ export const dashboardDemo = async () => {
   // await click("ChartLayerManager.AddChartLayer.addLayer", `[data-key=${JSON.stringify(`"roads.geojson".geog`)}]`);
   await click("ChartLayerManager.AddChartLayer.addLayer", `[data-key=${JSON.stringify(`"london_restaurants.geojson".geometry`)}]`);
   await click("Popup.close");
+
+  /** Set to col layout, add table, clone wsp */
+  await click("dashboard.menu.settingsToggle");
+  await click("dashboard.menu.settings.defaultLayoutType");
+  await click("dashboard.menu.settings.defaultLayoutType", `[data-key="col"]`);
+  await click("Popup.close");
+  await openTable("orders");
+  await click("WorkspaceMenuDropDown");
+  await click("WorkspaceMenu.CloneWorkspace");
+  
+  await tout(1e3);
+  await waitForElement("", ".DeckGLMapDiv");
+  await waitForElement("", `.SilverGridChild[data-table-name="orders"]`);
+
+  /** TODO: Fails due to page refresh 
+   * Delete all workspaces and expect to be returned to a new blank workspace 
+  await click("WorkspaceMenuDropDown");
+  await click("WorkspaceDeleteBtn");
+  await click("WorkspaceDeleteBtn.Confirm");
+  await tout(1e3);
+  if(document.querySelectorAll(`button[title="Workspace"]`).length !== 1){
+    throw new Error("Expected a total of 2 workspaces");
+  }
+  await click("WorkspaceMenuDropDown");
+  await click("WorkspaceDeleteBtn");
+  await click("WorkspaceDeleteBtn.Confirm");
+  */
+
+  await tout(1e3);
+  await waitForElement("dashboard.menu.sqlEditor");
+
   await tout(2e3);
+
+
   await click("dashboard.goToConnections");
   await click("", "[data-key^=crypto] a", { nth: 0 });
 

@@ -30,7 +30,7 @@ export const WorkspaceDeleteBtn = ({ dbs, w, activeWorkspaceId, disabledInfo }: 
         className="delete-workspace"
         disabledInfo={disabledInfo}
         data-command="WorkspaceDeleteBtn"
-        color='danger'
+        color="danger"
       />
     )}
     content={(<div className="flex-col gap-p5">

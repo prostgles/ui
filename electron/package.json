@@ -1,6 +1,6 @@
 {
   "name": "prostgles-desktop",
-  "version": "2.0.24-alpha",
+  "version": "2.0.25-alpha",
   "homepage": "https://prostgles.com/desktop",
   "description": "Realtime Dashboard and SQL editor for PostgreSQL",
   "main": "build/main.js",
