@@ -7,6 +7,7 @@ import type { PrglState, Theme } from "../App";
 import Btn from "../components/Btn";
 import ButtonGroup from "../components/ButtonGroup";
 import Chip from "../components/Chip";
+import ErrorComponent from "../components/ErrorComponent";
 import { ExpandSection } from "../components/ExpandSection";
 import { FlexCol, FlexRow, FlexRowWrap } from "../components/Flex";
 import FormField from "../components/FormField/FormField";
@@ -14,6 +15,7 @@ import { InfoRow } from "../components/InfoRow";
 import PopupMenu from "../components/PopupMenu";
 import Select from "../components/Select/Select";
 import { getServerCoreInfoStr } from "../pages/Connections/Connections";
+import { isEmpty } from "../utils";
 import { bytesToSize } from "./Backup/BackupsControls";
 import { useIsMounted } from "./Backup/CredentialSelector";
 import CodeExample from "./CodeExample";
@@ -22,8 +24,6 @@ import type { SmartCardListProps } from "./SmartCard/SmartCardList";
 import SmartCardList from "./SmartCard/SmartCardList";
 import { StatusMonitorConnections } from "./StatusMonitor/StatusMonitorConnections";
 import { StyledInterval } from "./W_SQL/customRenderers";
-import ErrorComponent from "../components/ErrorComponent";
-import { isEmpty } from "../utils";
 
 export type StatusMonitorProps = Pick<PrglState, "dbs" | "dbsMethods" | "dbsTables"> & {
   connectionId: string;
@@ -170,14 +170,35 @@ export const StatusMonitor = ({ getStatus, connectionId, dbs, dbsMethods, dbsTab
             {c.serverStatus.disk_space}
           </span>
         </Chip>
-        {(c.serverStatus.ioInfo?.length ?? 0) > 0 && <Chip
-          label={"IO (device, reads, writes)"}
-          variant="header"
-        >
-          <span className="ws-pre">
-            {c.serverStatus.ioInfo?.map(r => `${r.deviceName} ${bytesToSize(r.readsCompletedSuccessfully)} ${bytesToSize(r.writesCompleted)}`).join("\n")}
-          </span>
-        </Chip>}
+        {(c.serverStatus.ioInfo?.length ?? 0) > 0 && 
+          <FlexCol className="gap-0 p-p5">
+            <span className="text-1 font-14 ta-left">IO: </span>
+            <table className="ta-left"  style={{ borderSpacing: 0 }}>
+              <thead >
+                <tr>
+                  <th>Device</th>
+                  <th>Reads</th>
+                  <th>Writes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {c.serverStatus.ioInfo?.map(r => 
+                  <tr key={r.deviceName}>
+                    <td>
+                      {r.deviceName}
+                    </td>
+                    <td>
+                      {bytesToSize(r.readsCompletedSuccessfully)}
+                    </td>
+                    <td>
+                      {bytesToSize(r.writesCompleted)}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </FlexCol>
+        }
       </PopupMenu>}
     </FlexRow>
     
