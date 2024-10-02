@@ -34,8 +34,21 @@ export const getServerStatus = async (db: DB, connId: string): Promise<ServerSta
   }
   const { data_directory } = await db.oneOrNone("show data_directory;");
 
-  const cpu_mhz = (await execPSQLBash(db, connId, `lscpu | grep "MHz"`)).join("\n");
-  const cpu_cores_mhz = (await execPSQLBash(db, connId, `cat /proc/cpuinfo | grep "MHz" | sed 's/^.*: //'`)).join("\n");
+  const cpu_cores_mhz_arr = await execPSQLBash(db, connId, `cat /proc/cpuinfo | grep "MHz" | sed 's/^.*: //'`);
+  const cpu_cores_mhz = cpu_cores_mhz_arr.join("\n");
+  let cpu_mhz = "";
+  try {
+    cpu_mhz = (await execPSQLBash(db, connId, `lscpu | grep "MHz"`)).join("\n");
+  } catch (e) {
+    /** Set from mhz array */
+    const mhzNumArr = cpu_cores_mhz_arr.map(v => +v).filter(v => v);
+    if(mhzNumArr.length && mhzNumArr.every(v => Number.isFinite)) {
+      cpu_mhz = [
+        "CPU min MHz: " + Math.max(...mhzNumArr),
+        "CPU max MHz: " + Math.max(...mhzNumArr),
+      ].join("\n");
+    }
+  }
   const disk_spaceStr = (await execPSQLBash(db, connId, `df -h ${data_directory} | grep "/"`)).join("\n");
   const {
     clock_ticks: clock_ticksStr,
