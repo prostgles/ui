@@ -248,10 +248,10 @@ export function registerSuggestions(args: Args) {
 
     const { firstTry, match } = await getMatch({ cb: cBlock, ss, setS, sql });
     if(firstTry){
-      return getRespectedSortText(cBlock, monaco, firstTry)
+      return getRespectedSortText(cBlock, monaco, firstTry);
     } else if(match) {
       const res = await match.result({ cb: cBlock, ss, setS, sql });
-      return getRespectedSortText(cBlock, monaco, res)
+      return getRespectedSortText(cBlock, monaco, res);
     }
 
     const suggestions = ss.filter(s => s.topKwd?.start_kwd)

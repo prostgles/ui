@@ -173,7 +173,7 @@ const getPidStatsMode = async (db: DB, connId: string): Promise<ConnectionStatIn
 
 export const getPidStats = async (db: DB, connId: string): Promise<ServerLoadStats | undefined> => {
   connectionBashStatus[connId] ??= await getPidStatsMode(db, connId).catch((error) => Promise.resolve({ mode: "off", ioMode: "off", getPidStatsErrors: { proc: getErrorAsObject(error) } } as const));
-  const { mode, getPidStatsErrors } = connectionBashStatus[connId] ?? {};
+  const { mode } = connectionBashStatus[connId] ?? {};
   if(!mode || mode === "off") return undefined;
   return pidStatsMethods[mode](db, connId);
 }
