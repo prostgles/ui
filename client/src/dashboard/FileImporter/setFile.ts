@@ -105,17 +105,17 @@ async function parseJSONFile(file: File): Promise<{
    */
   rowsPerBatch: number;
 }> {
-
   let type: "json" | "geojson" = "json";
   const txt = await getFileText(file);
   const obj = JSON.parse(txt);
+  const actualBytesPerChar = txt.length / file.size;
   let rows: AnyObject[] = [];
   let srid;
   let _cols: Record<string, "text" | "numeric" | "geometry"> = {};
   let maxCharsPerRow = 0;
   const setCol = row => {
     const getType = v => typeof v === "number"? "numeric" : "text";
-    getKeys(row).map(k => {
+    Object.keys(row).map(k => {
       const actualType = getType(row[k]);
       const type = _cols[k];
       if(!type || type === "numeric" && actualType === "text"){ 
@@ -181,6 +181,7 @@ async function parseJSONFile(file: File): Promise<{
     })
   }
   console.log({ _cols, rows })
+  console.log(file, txt.length, maxCharsPerRow)
   return {
     type, 
     rows, 
@@ -190,7 +191,7 @@ async function parseJSONFile(file: File): Promise<{
       escapedName: asName(key), 
       dataType
     })),
-    rowsPerBatch: getRowsPerBatch(maxCharsPerRow)
+    rowsPerBatch: getRowsPerBatch(maxCharsPerRow, actualBytesPerChar)
   }
 
 }

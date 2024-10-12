@@ -13,7 +13,8 @@ import { LayerFilterManager } from "./LayerFilterManager";
 import { TimeChartLayerOptions } from "./TimeChartLayerOptions";
 import { FlexCol } from "../../components/Flex";
 import { MapOpacityMenu } from "../W_Map/MapOpacityMenu";
-import { MapBasemapOptions } from "../W_Map/MapBasemapOptions";
+import { MapBasemapOptions } from "../W_Map/MapBasemapOptions"; 
+import { OSMLayerOptions } from "./OSMLayerOptions";
 
 export type MapLayerManagerProps = 
 (
@@ -63,7 +64,6 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
             path: lq.path 
           };
           const isLocal = thisLink.w1_id === thisLink.w2_id;
-
           return <div 
             key={lqRaw._id} 
             className={`LayerQuery bg-color-0 ai-center flex-row-wrap gap-1 ta-left b b-color rounded ${window.isMobileDevice? "p-p5" : "p-1"}`}
@@ -71,17 +71,20 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
             
             <LayerColorPicker title="Change color" column={column} link={thisLink} myLinks={myLinks} />
             
-            <Label 
-              variant="header"
-              iconPath={lTypeInfo.type === "Table"? (isLocal? mdiTable : mdiSetCenter) : mdiScript}
-              info={lTypeInfo.type === "Table"? (isLocal? "Local table" : "Remote table") : "SQL Script"}
-              className={"ws-nowrap o-hidden"}  
-              title={lTypeInfo.type === "Table"? `Table name` : "SQL Script"}
-            >
-              <div className="text-ellipsis">
-                {lTypeInfo.type === "Table"? `${lTypeInfo.path?.at(-1)?.table || lTypeInfo.value} (${column})` : lTypeInfo.value}
-              </div>
-            </Label>
+            {lTypeInfo.type === "OSM"? 
+              <OSMLayerOptions link={thisLink} /> :
+              <Label 
+                variant="header"
+                iconPath={lTypeInfo.type === "Table"? (isLocal? mdiTable : mdiSetCenter) : mdiScript}
+                info={lTypeInfo.type === "Table"? (isLocal? "Local table" : "Remote table") : "SQL Script"}
+                className={"ws-nowrap f-1 min-w-0"}  
+                title={lTypeInfo.type === "Table"? `Table name` : "SQL Script"}
+              >
+                <div className="text-ellipsis">
+                  {lTypeInfo.type === "Table"? `${lTypeInfo.path?.at(-1)?.table || lTypeInfo.value} (${column})` : lTypeInfo.value}
+                </div>
+              </Label>
+            }
 
 
             <TimeChartLayerOptions 
