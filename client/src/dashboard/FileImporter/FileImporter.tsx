@@ -18,6 +18,7 @@ import { importFile } from "./importFile";
 import { setFile } from "./setFile";
 const streamColumnDataTypes = ["TEXT", "JSON", "JSONB"] as const;
 import type { AnyObject } from "prostgles-types";
+import { bytesToSize } from "../Backup/BackupsControls";
  
 type Papa = typeof import("papaparse");
 export const getPapa = () => import(/* webpackChunkName: "papaparse" */ "papaparse")
@@ -333,7 +334,7 @@ export default class FileImporter extends RTComp<FileImporterProps, FileImporter
       <Popup 
         title={!selectedFile?.file? "Import data from file" : files? `Import ${files.length} files` : `Import ${selectedFile.file.name}`  }
         onClose={this.cancel}
-        clickCatchStyle={{ opacity: .5 }}
+        clickCatchStyle={{ opacity: 1 }}
         positioning="center"
         contentClassName="p-1"
         footer={
@@ -516,12 +517,12 @@ export default class FileImporter extends RTComp<FileImporterProps, FileImporter
 }
 
 
-export function getRowsPerBatch(maxCharsPerRow){
+export function getRowsPerBatch(maxCharsPerRow, bytesPerChar = 4){
   
   let rowsPerBatch = 1;
-  const bitsPerRow = (maxCharsPerRow + 100) * 4 * 8;
+  const bitsPerRow = (maxCharsPerRow + 100) * bytesPerChar;
   if(bitsPerRow > batchMaxBitSize){
-    throw "100Mb row size limit exceeded. Cannot send upload data";
+    throw `${bytesToSize(bitsPerRow)} row size limit exceeded (> ${bytesToSize(batchMaxBitSize)} batchMaxBitSize). Cannot send upload data`;
   } else {
     
     rowsPerBatch = Math.floor(

@@ -41,14 +41,25 @@ type OSMRelation = OSMElementBase & {
 
 type OSMElement = OSMNode | OSMWay | OSMRelation;
 
+const cachedFeatures: Map<number, GeoJSONFeature> = new Map();
 export const getOSMData = async (query: string, bbox: string) => {  
   const response = await fetch(OVERPASS_URL, {
     method: "POST",
     body: query.replace(/\${bbox}/g, bbox),
   });
-  const data = await response.json();
-  const features = await getOSMDataAsGeoJson(data);
-  return { data, features };
+  const data: {
+    elements: OSMElement[];
+}  = await response.json();
+  const cache = data.elements.map(d => cachedFeatures.get(d.id));
+  const nonCached = data.elements.filter((d, i) => !cache[i]);
+  const features = await getOSMDataAsGeoJson({
+    elements: nonCached
+  });
+  console.log(data.elements)
+  return { 
+    data, 
+    features: [...cache.filter(isDefined), ...features], 
+  };
 }
 
 const cachedElements: Map<number, OSMElement> = new Map();
@@ -93,7 +104,7 @@ export const getOSMDataAsGeoJson = async (responseData: { elements: OSMElement[]
   const ways = await fetchElements("way", wayIds);
   const wayNodeIds = unique(ways.flatMap(w => w.nodes));
   const nodeIds = unique([ ..._nodeIds, ...wayNodeIds]);
-  console.log(nodeIds.length)
+  
   // const nodes: OSMNode[] = !nodeIds.length? [] : await fetch(OVERPASS_URL, {
   //   method: "POST",
   //   body: `[out:json];node(id:${nodeIds.join(",")});out;`,
@@ -136,7 +147,10 @@ export const getOSMDataAsGeoJson = async (responseData: { elements: OSMElement[]
       // Convert ways to GeoJSON coordinates
       const convertWayToCoordinates = (m: OSMRelationMemberWay) => {
         const way = ways.find((el) => el.id === m.ref);
-        if(!way) return [];
+        if(!way) {
+          console.warn(`Way with ID ${m.ref} not found`);
+          return [];
+        }
         const polygon: [number,number][] = way.nodes.map(nodeId => {
           const node = nodes.find((el) => el.id === nodeId);
           if(!node) return;

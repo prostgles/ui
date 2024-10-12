@@ -553,10 +553,12 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
             }}
             onMapStateChange={({ extent, latitude, longitude, zoom, pitch, bearing, target }) => {
 
-              /** Ensure the first extent is from data */
-              if(w.options.extent){
-                w.$update({ options: { target, extent, latitude, longitude, zoom, pitch, bearing } }, { deepMerge: true });
-              }
+              /** 
+               * IS THIS STILL NEEDED?
+               * Ensure the first extent is from data */
+              // if(w.options.extent){
+              // }
+              w.$update({ options: { target, extent, latitude, longitude, zoom, pitch, bearing } }, { deepMerge: true });
             }}
             onHover={this.onHover}
             onGetFullExtent={this.getDataExtent}

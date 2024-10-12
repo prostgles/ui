@@ -13,6 +13,7 @@ import { download } from "../W_SQL/W_SQL";
 import { getOSMData } from "./OSM/getOSMData";
 import { predefinedOsmQueries } from "./OSM/osmTypes";
 import { mdiPlus } from "@mdi/js";
+import { OverpassQuery } from "./OSM/OverpassQuery";
 
 type DataType = keyof typeof predefinedOsmQueries;
 
@@ -101,18 +102,7 @@ export const MapOSMQuery = ({ bbox, onData }: MapOSMQueryOSMQueryProps) => {
           }}
         />}
       </FlexRow>
-      <div>
-        <label htmlFor="query">Overpass Query:</label>
-        <CodeEditor 
-          language="text"
-          value={query}
-          onChange={handleQueryChange}
-          style={{
-            minWidth: "500px",
-            minHeight: "100px",
-          }} 
-        />
-      </div>
+      <OverpassQuery query={query} onChange={handleQueryChange} />
       <FlexRow>
         <Btn iconPath={mdiPlus} loading={loading} variant="filled" color="action" onClick={() => onSearch()}>
           Search & add
