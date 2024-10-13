@@ -57,10 +57,14 @@ export type DeckGlColor =
 export type GeoJSONFeature = Omit<Feature, "properties"> & {
     properties: (
       {
+        _is_from_osm?: boolean;
+      } 
+      | {
         type: "table";
         [MAP_SELECT_COLUMNS.idObj]: any;
         [MAP_SELECT_COLUMNS.geoJson]: any;
-      } | {
+      } 
+      | {
         type: "sql";
         $rowhash: string;
       }

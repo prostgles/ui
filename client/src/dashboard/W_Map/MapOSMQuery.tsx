@@ -12,7 +12,7 @@ import type { GeoJSONFeature } from "../Map/DeckGLMap";
 import { download } from "../W_SQL/W_SQL";
 import { getOSMData } from "./OSM/getOSMData";
 import { predefinedOsmQueries } from "./OSM/osmTypes";
-import { mdiPlus } from "@mdi/js";
+import { mdiDownload, mdiPlus } from "@mdi/js";
 import { OverpassQuery } from "./OSM/OverpassQuery";
 
 type DataType = keyof typeof predefinedOsmQueries;
@@ -102,14 +102,26 @@ export const MapOSMQuery = ({ bbox, onData }: MapOSMQueryOSMQueryProps) => {
           }}
         />}
       </FlexRow>
-      <OverpassQuery query={query} onChange={handleQueryChange} />
+      <OverpassQuery autoSave={true} query={query} onChange={handleQueryChange} />
       <FlexRow>
-        <Btn iconPath={mdiPlus} loading={loading} variant="filled" color="action" onClick={() => onSearch()}>
-          Search & add
+        <Btn 
+          iconPath={mdiPlus} 
+          loading={loading} 
+          variant="filled" 
+          color="action" 
+          onClick={() => onSearch()}
+        >
+          Add layer
         </Btn> 
 
-        <Btn loading={loading} variant="faded" color="action" onClick={() => onSearch(true)}>
-          Search & save
+        <Btn 
+          iconPath={mdiDownload} 
+          loading={loading} 
+          variant="faded" 
+          color="action" 
+          onClick={() => onSearch(true)}
+        >
+          Save as GeoJSON
         </Btn> 
       </FlexRow>
       {error && <ErrorComponent error={error} />}

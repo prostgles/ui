@@ -75,7 +75,7 @@ export const onMount: OnMount = async ({ dbo }) => {
 
     }
     const cities = await dbo.cities.find({
-      name_en: { $in: ["London", "Amsterdam", "Athens", "Valencia", "Malaga", "Zagreb"] }
+      name_en: { $in: ["London", "Amsterdam", "Athens", "Valencia", "Malaga", "Zagreb", "Valencia", "Copenhagen"] }
     });
 
     const lastAdded = await dbo.weather_forecasts.findOne({}, { orderBy: [{ forecast_time: -1 }]});
@@ -218,8 +218,7 @@ const fetchAirports = async () => {
     throw new Error(`Failed to fetch Airports`);
   }
   const data = await response.json();
-
-  // Iterate over the elements and insert them into the PostgreSQL table
+ 
   return data.elements.map(element => {
     return {
       id: element.id,
