@@ -102,19 +102,22 @@ export const startConnection = async function (
       const auth = getAuth(this.app);
       const watchSchema = con.db_watch_shema ? "*" : false; 
       const getForkedProcRunner = async () => {
-        this.prglConnections[con.id]?.methodRunner ?? await ForkedPrglProcRunner.create({ 
-          type: "run", 
-          dbConfId: dbConf.id, 
-          dbs, 
-          initArgs: { 
-            
-            dbConnection: { 
-              ...connectionInfo,
-              application_name: "methodRunner" 
-            }, 
-            watchSchema 
-          } 
-        });
+        if(!this.prglConnections[con.id]?.methodRunner){
+          const methodRunner = await ForkedPrglProcRunner.create({ 
+            type: "run", 
+            dbConfId: dbConf.id, 
+            dbs, 
+            initArgs: { 
+              
+              dbConnection: { 
+                ...connectionInfo,
+                application_name: "methodRunner" 
+              }, 
+              watchSchema 
+            } 
+          });
+          this.prglConnections[con.id]!.methodRunner = methodRunner;
+        }
         const forkedPrglProcRunner = this.prglConnections[con.id]!.methodRunner!;
         return forkedPrglProcRunner;
       };

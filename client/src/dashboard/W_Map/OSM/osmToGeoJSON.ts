@@ -8,24 +8,9 @@ export const osmRelationToGeoJSON = (
   relation: OSMRelation,
   nodeMap: Map<number, OSMNode>,
   wayMap: Map<number, OSMWay>
-): Feature<Geometry, { [key: string]: any }> | null => {
-  // Create maps for quick lookup
-  // const nodeMap = new Map<number, OsmNode>();
-  // const wayMap = new Map<number, OsmWay>();
+): Feature<Geometry, { [key: string]: any }> | null => { 
   const relationMap = new Map<number, OSMRelation>();
-
-  // Populate the maps
-  // osmData.elements.forEach(element => {
-  //   if (element.type === "node") {
-  //     nodeMap.set(element.id, element as OsmNode);
-  //   } else if (element.type === "way") {
-  //     wayMap.set(element.id, element as OsmWay);
-  //   } else if (element.type === "relation") {
-  //     relationMap.set(element.id, element as OsmRelation);
-  //   }
-  // });
-
-  // Helper function to assemble way into coordinates
+ 
   const getWayCoordinates = (wayId: number): [number, number][] => {
     const way = wayMap.get(wayId);
     if (!way || !way.nodes.length) {
@@ -47,16 +32,17 @@ export const osmRelationToGeoJSON = (
   for (const member of relation.members) {
     if (member.type === "way") {
       const coords = getWayCoordinates(member.ref);
-      rings.push({ role: member.role || "outer", coordinates: coords });
-    } else if (member.type === "relation") {
+      rings.push({ role: member.role, coordinates: coords }); //  || "outer"
+    } else if ((member as any).type === "relation") {
+      console.log("Nested relation not handled");
       // Handle nested relations (optional, depends on your needs)
-      const nestedRelation = relationMap.get(member.ref);
-      if (nestedRelation) {
-        const nestedFeature = osmRelationToGeoJSON(nestedRelation, nodeMap, wayMap);
-        console.log("Nested feature:", nestedFeature);
-        // Process nested features (e.g., merge polygons)
-        // For simplicity, this code does not handle nested relations deeply
-      }
+      // const nestedRelation = relationMap.get(member.ref);
+      // if (nestedRelation) {
+      //   const nestedFeature = osmRelationToGeoJSON(nestedRelation, nodeMap, wayMap);
+      //   console.log("Nested feature:", nestedFeature);
+      //   // Process nested features (e.g., merge polygons)
+      //   // For simplicity, this code does not handle nested relations deeply
+      // }
     }
   }
 
@@ -100,17 +86,17 @@ export const osmRelationToGeoJSON = (
       let connected = false;
       for (let i = 0; i < ways.length; i++) {
         if (used.has(i)) continue;
-        const way = ways[i];
+        const way = ways[i]!;
         if (ring.length === 0) {
           ring = cloneDeep(way);
           used.add(i);
           connected = true;
           break;
         } else {
-          const ringStart = ring[0];
-          const ringEnd = ring[ring.length - 1];
-          const wayStart = way[0];
-          const wayEnd = way[way.length - 1];
+          const ringStart = ring[0]!;
+          const ringEnd = ring[ring.length - 1]!;
+          const wayStart = way[0]!;
+          const wayEnd = way[way.length - 1]!;
 
           if (coordinatesEqual(ringEnd, wayStart)) {
             ring = ring.concat(way.slice(1));
@@ -140,8 +126,8 @@ export const osmRelationToGeoJSON = (
         // Ring is complete
         if (ring.length > 0) {
           // Ensure the ring is closed
-          if (!coordinatesEqual(ring[0], ring[ring.length - 1])) {
-            ring.push(ring[0]);
+          if (!coordinatesEqual(ring[0]!, ring[ring.length - 1]!)) {
+            ring.push(ring[0]!);
           }
           rings.push(ring);
         }
@@ -151,8 +137,8 @@ export const osmRelationToGeoJSON = (
 
     // Add the last ring if any
     if (ring.length > 0) {
-      if (!coordinatesEqual(ring[0], ring[ring.length - 1])) {
-        ring.push(ring[0]);
+      if (!coordinatesEqual(ring[0]!, ring[ring.length - 1]!)) {
+        ring.push(ring[0]!);
       }
       rings.push(ring);
     }

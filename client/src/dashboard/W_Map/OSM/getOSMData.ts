@@ -9,7 +9,7 @@ type OSMElementType = "node" | "way" | "relation";
 type OSMElementBase = {
   id: number;
   type: OSMElementType;
-  tags: { [key: string]: string | undefined };
+  tags: Partial<{ [key: string]: string }>;
 }
 
 export type OSMNode = OSMElementBase & {
@@ -162,7 +162,7 @@ export const getOSMDataAsGeoJson = async (responseData: { elements: OSMElement[]
       //   geometry: wayToLineString(way, nodes),
       // }))
 
-      return osmRelationToGeoJSON(element, nodes, ways);
+      return osmRelationToGeoJSON(element, nodes, ways) ?? [];
       // // Convert ways to GeoJSON coordinates
       // const convertWayToCoordinates = (m: OSMRelationMemberWay) => {
       //   const way = ways.find((el) => el.id === m.ref);
