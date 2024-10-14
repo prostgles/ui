@@ -9,6 +9,7 @@ import Select from "../Select/Select";
 import { isCompleteJSONB } from "./isCompleteJSONB";
 import type { JSONBSchemaCommonProps } from "./JSONBSchema";
 import { JSONBSchema } from "./JSONBSchema";
+import { getFinalFilter } from "../../../../commonTypes/filterUtils";
 
 
 type Schema = JSONB.Lookup; 
@@ -75,8 +76,8 @@ export const JSONBSchemaLookup = ({ value: rawValue, schema, onChange, db, table
       const value = isObject(rawValue)? rawValue : undefined;
       const tableCols = value?.table? 
         tables.find(t => t.name === value.table)?.columns.map(c => c.name) : 
-        undefined;
-      console.error(value);
+        undefined; 
+        
       return <div className="flex-row gap-1">
         {selector}
         {tableCols && <> 
@@ -158,17 +159,19 @@ export const JSONBSchemaLookup = ({ value: rawValue, schema, onChange, db, table
     tables={tables} 
     error={error}
     searchOptions={{ includeColumnNames: false, hideMatchCase: true }}
-    onChange={async (val) => {
-      if(!val && val !== defaultValue){
-        onChange(val);
+    onChange={async (searchArgs) => {
+      if(!searchArgs && searchArgs !== defaultValue){
+        onChange(searchArgs);
         return
       }
 
       const refCol = lookup.column;
-      const { colName, columnValue } = val ?? {};
-      if(!colName || !columnValue || !refCol) return;
+      const { colName, columnValue, filter } = searchArgs ?? {};
+      const filterItem = filter?.[0];
+      if(!colName || !columnValue || !refCol || !filterItem) return;
 
-      const firstMatchingRow = await db[lookup.table!]?.findOne!({ [colName!]: columnValue });
+      const finalFilter = getFinalFilter(filterItem);
+      const firstMatchingRow = await db[lookup.table!]?.findOne!(finalFilter);
       if(firstMatchingRow){ 
         onChange(
           lookup.isFullRow? 
