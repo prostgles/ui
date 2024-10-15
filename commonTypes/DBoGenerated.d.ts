@@ -23,6 +23,17 @@ export type DBSchemaGenerated = {
       name?: null | string;
     };
   };
+  access_control_connections: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      access_control_id: number;
+      connection_id: string;
+    };
+  };
   access_control_methods: {
     is_view: false;
     select: true;

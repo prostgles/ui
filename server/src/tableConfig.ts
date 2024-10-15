@@ -3,6 +3,7 @@ import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig"
 import { loggerTableConfig } from "./Logger";
 import { CONNECTION_CONFIG_SECTIONS, throttle } from "../../commonTypes/utils";
 import { subscribe } from "diagnostics_channel";
+import { access } from "fs";
 
 export const DB_SSL_ENUM = ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"] as const;
  
@@ -660,7 +661,16 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       pkey: { type: "PRIMARY KEY", content: "published_method_id, access_control_id" }
     }, 
   },
-
+  access_control_connections: {
+    dropIfExistsCascade: true,
+    columns: {
+      connection_id: `UUID NOT NULL REFERENCES connections(id) ON DELETE CASCADE`,
+      access_control_id: `INTEGER NOT NULL REFERENCES access_control  ON DELETE CASCADE`,
+    },
+    indexes: {
+      "unique_connection_id": { unique: true, columns: "connection_id, access_control_id" }
+    }
+  },
   magic_links: { 
     // dropIfExistsCascade: true,
     columns: {

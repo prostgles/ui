@@ -142,7 +142,19 @@ const upsertRule = async (args: Pick<P,"dbs" | "connectionId" | "action" | "data
         throw `Cannot have rules with overlapping user group names: ${overLappingUserGroups.flat().join(", ")}.\nRemove these group names from this rule or from the other rules`
       } else {
 
-        const acontrol = await dbs.access_control.insert({ ...newRuleWithoutSomeExtraKeys as AccessRule, database_id }, { returning: "*" });
+        const acontrol = await dbs.access_control.insert(
+          { 
+            ...newRuleWithoutSomeExtraKeys as AccessRule, 
+            database_id,
+            access_control_connections: [
+              { 
+                connection_id: connectionId,
+              }
+            ]
+          }, 
+          { returning: "*" }
+        );
+        
         await insertRelatedData(acontrol.id)
       }
 

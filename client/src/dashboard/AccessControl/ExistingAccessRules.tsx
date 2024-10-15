@@ -6,16 +6,19 @@ import { mdiAccount, mdiFunction, mdiViewCarousel } from "@mdi/js";
 import { LabeledRow } from "../../components/LabeledRow"; 
 import { pluralise } from "../../pages/Connections/Connection";
 import { AccessRuleSummary } from "./AccessRuleSummary"; 
-import type { Workspace } from "../Dashboard/dashboardUtils";
-import { NavLink } from "react-router-dom";
+import type { Workspace } from "../Dashboard/dashboardUtils"; 
+import { SwitchToggle } from "../../components/SwitchToggle";
+import type { Prgl } from "../../App";
+import { FlexRow } from "../../components/Flex";
 
 type ExistingAccessRulesProps = {
   onSelect: (rule: AccessRule) => void;
   rules: AccessRule[];
   workspaces: Workspace[];
+  prgl: Prgl;
 }
 
-export const AccessControlRules = ({ rules, onSelect, workspaces }: ExistingAccessRulesProps) => {
+export const AccessControlRules = ({ rules, onSelect, workspaces, prgl: { dbs, connectionId } }: ExistingAccessRulesProps) => {
 
   const userTypesWithAccess = rules.flatMap(r => r.access_control_user_types.flatMap(u => u.ids));
 
@@ -36,34 +39,52 @@ export const AccessControlRules = ({ rules, onSelect, workspaces }: ExistingAcce
       const userTypes = r.access_control_user_types[0]?.ids;
       return (
         <div key={ri} 
-          className={"ExistingAccessRules_Item flex-col active-shadow-hover gap-p5 pointer rounded p-p5 bg-color-0 shadow b b-color o-auto"} 
-          // style={{ opacity: userTypes?.length? 1 : 0 }}
+          className={"ExistingAccessRules_Item flex-col active-shadow-hover gap-p5 pointer rounded p-p5 bg-color-0 shadow b b-color o-auto"}  
           data-key={userTypes}
-          onClick={() => onSelect(r)}
         >
-          <LabeledRow 
-            icon={mdiAccount} 
-            title="User types"
-            className="ai-center"
-          >
-            <span className="text-0 font-20 bold">{userTypes?.join(", ")}</span>
-          </LabeledRow>
+          <FlexRow>
+            <LabeledRow 
+              icon={mdiAccount} 
+              title="User types"
+              className="ai-center"
+              onClick={() => onSelect(r)}
+            >
+              <span className="text-0 font-20 bold">{userTypes?.join(", ")}</span>
+            </LabeledRow>
+            <SwitchToggle  
+              className="ml-auto"
+              checked={!!r.isApplied}
+              title={r.isApplied? "Click to disable" : "Click to enable"}
+              onChange={(isApplied, e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                if(isApplied){
+                  dbs.access_control_connections.insert({ connection_id: connectionId, access_control_id: r.id })
+                } else {
+                  dbs.access_control_connections.delete({ connection_id: connectionId, access_control_id: r.id })
+                }
+              }}
+            />
+          </FlexRow>
           
           <AccessRuleSummary rule={r.dbPermissions} />
 
-          {!!publishedWorkspaceNames.length && <LabeledRow 
-            icon={mdiViewCarousel} 
-            label="Workspaces"
-            labelStyle={{ minWidth: "152px" }}
-            className="ai-center"
-            contentClassName="pl-1"
-          >
-            {publishedWorkspaceNames.map((w, i) => 
-              <Chip title="Published workspace" color="blue" key={i}>
-                {w}
-              </Chip>
-            )}
-          </LabeledRow>}
+          {!!publishedWorkspaceNames.length && 
+            <LabeledRow 
+              icon={mdiViewCarousel} 
+              label="Workspaces"
+              labelStyle={{ minWidth: "152px" }}
+              className="ai-center"
+              contentClassName="pl-1"
+              onClick={() => onSelect(r)}
+            >
+              {publishedWorkspaceNames.map((w, i) => 
+                <Chip title="Published workspace" color="blue" key={i}>
+                  {w}
+                </Chip>
+              )}
+            </LabeledRow>
+          }
 
           {!!r.published_methods.length && 
           <LabeledRow 
@@ -71,6 +92,7 @@ export const AccessControlRules = ({ rules, onSelect, workspaces }: ExistingAcce
             label="Functions"
             className="ai-center"
             contentClassName="pl-1"
+            onClick={() => onSelect(r)}
           >
             <div className="flex-row-wrap gap-p5">
               {r.published_methods.map((m, i) => 

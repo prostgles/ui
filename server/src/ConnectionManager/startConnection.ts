@@ -162,14 +162,14 @@ export const startConnection = async function (
         disableRealtime: con.disable_realtime ?? undefined,
         transactions: DB_TRANSACTION_KEY,
         joins: "inferred",
-        publish: getConnectionPublish({ dbs, dbConf }),
+        publish: getConnectionPublish({ dbs, dbConf, connectionId: con.id }),
         publishMethods: getConnectionPublishMethods({ dbConf, dbs, con, _dbs, getForkedProcRunner }), 
         // DEBUG_MODE: true,
         publishRawSQL: async ({ user }) => {
           if (user?.type === "admin") {
             return true;
           }
-          const ac = await getACRule(dbs, user, dbConf.id);
+          const ac = await getACRule(dbs, user, dbConf.id, con.id);
           if (ac?.dbPermissions.type === "Run SQL" && ac.dbPermissions.allowSQL) {
             return true;
           }
@@ -257,7 +257,26 @@ export const startConnection = async function (
 
 }
 
-export const getACRule = async (dbs: DBOFullyTyped<DBSchemaGenerated>, user: User | undefined, database_id: number): Promise<DBSSchema["access_control"] | undefined>  => {
+export const getACRule = async (dbs: DBOFullyTyped<DBSchemaGenerated>, user: User | undefined, database_id: number, connection_id: string): Promise<DBSSchema["access_control"] | undefined>  => {
   if(!user) return undefined;
-  return await dbs.access_control.findOne({ database_id, $existsJoined: { access_control_user_types: { user_type: user.type } } });
+  return await dbs.access_control.findOne({
+    
+    $and: [
+      {
+        database_id, 
+        $existsJoined: { 
+          access_control_user_types: { 
+            user_type: user.type 
+          }
+        }
+      }, 
+      {
+        $existsJoined: {
+          access_control_connections: {
+            connection_id
+          }
+        }
+      }
+    ]
+  });
 }
