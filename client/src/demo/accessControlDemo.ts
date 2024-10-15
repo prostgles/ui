@@ -23,7 +23,7 @@ export const accessControlDemo = async () => {
 
   await tout(1e3);
   await click("config.ac");
-  await click("", `[data-key="default"]`);
+  await click("", `[data-key="default"] .ExistingAccessRules_Item_Header`);
   await tout(2500);
   await click("SearchList.List", `[data-key="messages"] [data-command=${JSON.stringify("selectRuleAdvanced" satisfies Command)}]`);
   await tout(1500);
