@@ -583,7 +583,7 @@ test.describe("Main test", () => {
     /** Disable files permissions to test direct insert */
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.ac").click();
-    await page.locator(`.ExistingAccessRules_Item`).click();
+    await page.locator(`.ExistingAccessRules_Item_Header`).click();
     await setTableRule(page, "files", { select: { }, update: {}, insert: {}, delete: {} }, true);
     await page.getByTestId("config.ac.save").click();
     await page.waitForTimeout(2e3);

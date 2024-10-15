@@ -115,10 +115,7 @@ const useGetAccessRules = (prgl: Prgl) => {
   const { connectionId, dbs } = prgl;
   const { data: appliedRules } = dbs.access_control_connections.useSubscribe({ connection_id: connectionId });
   const { data: _rules } = dbs.access_control.useSubscribe({ 
-    database_id: prgl.databaseId,
-    // $existsJoined: {
-    //   access_control_connections: { connection_id: connectionId }
-    // } 
+    database_id: prgl.databaseId, 
   }, ACCESS_CONTROL_SELECT);
   const rules = _rules?.map(r => ({
     ...r,
