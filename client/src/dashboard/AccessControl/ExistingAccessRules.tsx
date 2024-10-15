@@ -46,13 +46,12 @@ export const AccessControlRules = ({ rules, onSelect, workspaces, prgl: { dbs, c
             <LabeledRow 
               icon={mdiAccount} 
               title="User types"
-              className="ai-center"
+              className="ExistingAccessRules_Item_Header ai-center f-1"
               onClick={() => onSelect(r)}
             >
               <span className="text-0 font-20 bold">{userTypes?.join(", ")}</span>
             </LabeledRow>
-            <SwitchToggle  
-              className="ml-auto"
+            <SwitchToggle   
               checked={!!r.isApplied}
               title={r.isApplied? "Click to disable" : "Click to enable"}
               onChange={(isApplied, e) => {
