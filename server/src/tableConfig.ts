@@ -36,6 +36,7 @@ const DUMP_OPTIONS_SCHEMA = {
       ifExists: { type: "boolean", optional: true },
 
       keepLogs: { type: "boolean", optional: true },
+      excludeSchema: { type: "string", optional: true },
     }]
   },
   // defaultValue: "{}"
@@ -662,7 +663,6 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     }, 
   },
   access_control_connections: {
-    dropIfExistsCascade: true,
     columns: {
       connection_id: `UUID NOT NULL REFERENCES connections(id) ON DELETE CASCADE`,
       access_control_id: `INTEGER NOT NULL REFERENCES access_control  ON DELETE CASCADE`,

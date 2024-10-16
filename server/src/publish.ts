@@ -203,7 +203,17 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
         orderByFields: { db_conn: 1, created: 1 },
         forcedFilter: isAdmin? 
           {} : 
-          { $existsJoined: { "database_configs.access_control.access_control_user_types": userTypeFilter["access_control_user_types"] } as any }
+          { 
+            $and: [
+              { 
+                $existsJoined: { 
+                  "database_configs.access_control.access_control_user_types": 
+                    userTypeFilter["access_control_user_types"] 
+                } as any 
+              },
+              { $existsJoined: { access_control_connections: {} } }
+            ] 
+          }
       },
       update: user.type === "admin" && {
         fields: {
