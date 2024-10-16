@@ -1,22 +1,19 @@
-import { mdiAlert, mdiCog, mdiCogOff, mdiCogOutline, mdiDelete, mdiDotsHorizontal, mdiPlus } from "@mdi/js";
-import type { SubscriptionHandler } from "prostgles-types";
+import { mdiAlert, mdiCogOutline, mdiPlus } from "@mdi/js";
+import type { AnyObject, SubscriptionHandler } from "prostgles-types";
 import React from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { PrglState } from "../../App";
 import Btn from "../../components/Btn";
 import ConfirmationDialog from "../../components/ConfirmationDialog";
-import type { AnyObject } from "prostgles-types"
 import { InfoRow } from "../../components/InfoRow";
 import Loading from "../../components/Loading";
+import PopupMenu from "../../components/PopupMenu";
+import { SwitchToggle } from "../../components/SwitchToggle";
 import type { UserData, Workspace } from "../../dashboard/Dashboard/dashboardUtils";
 import RTComp from "../../dashboard/RTComp";
 import { pickKeys } from "../../utils";
 import { Connection } from "./Connection";
-import PopupMenu from "../../components/PopupMenu";
-import { SwitchToggle } from "../../components/SwitchToggle";
 import { ConnectionServer } from "./ConnectionServer";
-import { NavLink } from "react-router-dom";
-import { FlexCol, FlexRow } from "../../components/Flex";
 
 type CommonConnectionInfo = Pick<DBSSchema["connections"], "created"> & {
   access_control: { count: number; }[];
@@ -166,7 +163,7 @@ export class Connections extends RTComp<PrglState, S> {
       /** Group same servers together */
       const serverStrs = Array.from(new Set(serverUserGroupings.map(s => s.serverStr)))
       serverUserGroupings = serverStrs.flatMap(serverStr => serverUserGroupings.filter(sg => sg.serverStr === serverStr));
-    } else {
+    } else if (renderedConnections.length) {
       serverUserGroupings.push({
         name: "",
         serverStr: "",

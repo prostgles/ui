@@ -23,7 +23,7 @@ export const ConnectionSelector = ({ connection, dbs, location }: P) => {
     }))}
     onChange={cId => {
       const subpath = location === "workspace"? "connections" : "connection-config"
-      const newLocation = `/${subpath}/${cId}`;
+      const newLocation = `/${subpath}/${cId}${window.location.search}`;
       window.location.href = newLocation;
     }}
     value={connection.id}
