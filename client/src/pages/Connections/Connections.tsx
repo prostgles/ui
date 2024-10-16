@@ -56,9 +56,15 @@ export class Connections extends RTComp<PrglState, S> {
         select: {
           "*": 1,
           ...(user.type === "admin"? {
-            "access_control": {
-              count: { "$countAll": [] },
-            },
+            access_control: {
+              /** Only include enabled access rules */
+              $leftJoin: ["access_control_connections", "access_control"],
+              select: {
+                count: {
+                  "$countAll": [] 
+                },
+              }
+            }, 
           } : {}),
           workspaces: "*"
         },
@@ -99,7 +105,7 @@ export class Connections extends RTComp<PrglState, S> {
   }
 
   render() {
-    const { dbs, dbsMethods, serverState } = this.props;
+    const { dbs, dbsMethods } = this.props;
     const { connections, showStateConfirm, user, showDbNames } = this.state;
     if (!user || !connections) return null;
 

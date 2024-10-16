@@ -14,7 +14,7 @@ export const startDevHotReloadNotifier = ({ io, port, host }: { io: InitResult["
   }
   if(process.env.NODE_ENV === "development"){
     fs.watchFile(path.join(__dirname, "../../../../client/configs/last_compiled.txt"), { interval: 100 }, (eventType, filename) => {
-      io.emit("pls-restart");
+      io.emit("server-restart-request");
       showMessage();
     });
   } else {
