@@ -139,12 +139,11 @@ export const DumpOptions = (props: DumpOptionsProps) => {
           onChange={rolesOnly => { onChangeOptions({ rolesOnly }) }} 
           hint="" 
         />
-        <FormField asColumn={true} value={o.schemaOnly} type="checkbox" label="Schema only" 
-          onChange={schemaOnly => { onChangeOptions({ schemaOnly }) }} 
-          hint="" 
-        />
-
       </>}
+      <FormField asColumn={true} value={o.schemaOnly} type="checkbox" label="Schema only" 
+        onChange={schemaOnly => { onChangeOptions({ schemaOnly }) }} 
+        hint="" 
+      />
       <FormField asColumn={true} value={o.encoding} type="text" label="Encoding" 
         onChange={encoding => { onChangeOptions({ encoding }) }} 
         hint="" 

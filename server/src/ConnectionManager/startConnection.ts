@@ -61,7 +61,7 @@ export const startConnection = async function (
       if (prglInstance.socket_path !== socket_path) {
 
         restartProc(() => {
-          socket?.emit("pls-restart", true)
+          socket?.emit("server-restart-request", true)
         })
 
         if (prglInstance.prgl) {

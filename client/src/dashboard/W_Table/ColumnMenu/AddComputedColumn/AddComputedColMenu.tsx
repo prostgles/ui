@@ -191,6 +191,7 @@ export class AddComputedColMenu extends RTComp<AddComputedColMenuP, AddComputedC
             <FunctionSelector 
               column={column} 
               wColumns={w.columns ?? undefined}
+              currentNestedColumnName={this.props.nestedColumnOpts?.config.name}
               tableColumns={table.columns}
               onSelect={newFuncDef => {
                 this.setState({

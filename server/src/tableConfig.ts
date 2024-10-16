@@ -37,6 +37,7 @@ const DUMP_OPTIONS_SCHEMA = {
 
       keepLogs: { type: "boolean", optional: true },
       excludeSchema: { type: "string", optional: true },
+      schemaOnly: { type: "boolean", optional: true },
     }]
   },
   // defaultValue: "{}"

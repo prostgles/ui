@@ -15,6 +15,7 @@ type P = {
   tableColumns: ValidatedColumnInfo[];
   onSelect: (func: FuncDef | undefined) => void;
   className?: string;
+  currentNestedColumnName?: string;
 };
 
 const funcAcceptsColumn = (f: FuncDef, targetCols: ValidatedColumnInfo[]) => {
@@ -26,9 +27,9 @@ const funcAcceptsColumn = (f: FuncDef, targetCols: ValidatedColumnInfo[]) => {
     Array.isArray(f.tsDataTypeCol) && f.tsDataTypeCol.some(tsd => targetCols.some(c => c.tsDataType === tsd))
 }
 
-export const FunctionSelector = ({ column, tableColumns, onSelect, selectedFunction, wColumns: parentColumns, className }: P) => {
+export const FunctionSelector = ({ column, tableColumns, onSelect, selectedFunction, wColumns: parentColumns, className, currentNestedColumnName }: P) => {
   
-  const cannotUseAggs = useMemo(() => parentColumns?.some(c => c.nested), [parentColumns])
+  const cannotUseAggs = useMemo(() => parentColumns?.some(c => c.nested && c.name !== currentNestedColumnName), [parentColumns, currentNestedColumnName])
   
   const funcs = useMemo(() => { 
     const columnInfo = tableColumns.find(c => c.name === column);
