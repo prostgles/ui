@@ -158,6 +158,25 @@ const CommonChartLinkOpts = {
   groupByColumn: { type: "string", optional: true, description: "Used by timechart" },
   fromSelected: { type: "boolean", optional: true, description: "True if chart links to SQL statement selection" },
   sql: { type: "string", optional: true },
+  mapIcons: {
+    optional: true,
+    oneOfType: [
+      { 
+        type: { enum: ["fixed"] },
+        iconPath: "string",
+      },
+      { 
+        type: { enum: ["conditional"] },
+        columnName: "string",
+        conditions: {
+          arrayOfType: {
+            value: "any",
+            iconPath: "string",
+          },
+        }
+      },
+    ]
+  },
   mapColorMode: {
     optional: true,
     oneOfType: [

@@ -2,7 +2,7 @@ import { useIsMounted } from "prostgles-client/dist/prostgles";
 import React, { useEffect } from "react";
 import sanitizeHtml from "sanitize-html";
 
-const cachedSvgs = new Map<string, string>();
+export const cachedSvgs = new Map<string, string>();
 
 export const SvgIcon = ({ icon, className, size, style }: { icon: string, className?: string, style?: React.CSSProperties; size?: number }) => {
 
@@ -16,20 +16,8 @@ export const SvgIcon = ({ icon, className, size, style }: { icon: string, classN
       return;
     }
     if (cachedSvgs.has(iconPath)) return;
-    fetch(iconPath)
-      .then(res => res.text())
-      .then(svgRaw => {
-        const svg = sanitizeHtml(svgRaw, {
-          allowedTags: ["svg", "path"],
-          allowedAttributes: {
-            svg: ["width", "height", "view", "style", "xmlns", "viewBox", "role"],
-            path: ["d", "style"],
-          },
-          parser: {
-            lowerCaseTags: false,
-            lowerCaseAttributeNames: false
-          }
-        })
+    fetchIcon(iconPath)
+      .then(svg => {
         cachedSvgs.set(iconPath, svg);
         if(!getIsMounted()) return;
         setSvg(svg);
@@ -47,4 +35,33 @@ export const SvgIcon = ({ icon, className, size, style }: { icon: string, classN
     dangerouslySetInnerHTML={!svg? undefined : { __html: svg }}
   />
 
+}
+
+const fetchIcon = (iconPath: string) => {
+  return fetch(iconPath)
+    .then(res => res.text())
+    .then(svgRaw => {
+      const svg = sanitizeHtml(svgRaw, {
+        allowedTags: ["svg", "path"],
+        allowedAttributes: {
+          svg: ["width", "height", "view", "style", "xmlns", "viewBox", "role"],
+          path: ["d", "style"],
+        },
+        parser: {
+          lowerCaseTags: false,
+          lowerCaseAttributeNames: false
+        }
+      })
+      cachedSvgs.set(iconPath, svg);
+      return svg;
+    })
+}
+
+export const getIcon = async (icon: string) => {
+  const iconPath = `/icons/${icon}.svg`;
+  if(!cachedSvgs.has(iconPath)) {
+    const res = await fetchIcon(iconPath);
+    return res;
+  }
+  return cachedSvgs.get(iconPath)!;
 }

@@ -1,3 +1,4 @@
+import { cachedSvgs, getIcon } from "../../components/SvgIcon";
 import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
 import type { DeckGlColor, GeoJSONFeature, GeoJsonLayerProps } from "../Map/DeckGLMap";
 import { blend } from "../W_Table/colorBlend";
@@ -35,7 +36,7 @@ export const getMapFeatureStyle = (
   layerQuery: LayerQuery, 
   clickedItem: ClickedItem | undefined, 
   links: LinkSyncItem[]
-): Pick<GeoJsonLayerProps, "getFillColor" | "getLineColor" | "getText" | "getTextSize"> => {
+): Pick<GeoJsonLayerProps, "getFillColor" | "getLineColor" | "getText" | "getTextSize" | "getIcon"> => {
   const getIsClickedFeature = (f: GeoJSONFeature) => {
     return clickedItem && 
       "type" in f.properties && (
@@ -49,6 +50,8 @@ export const getMapFeatureStyle = (
   if(!opts || opts.type !== "map") {
     throw new Error("Invalid map link type");
   }
+
+  const iconOpts = opts.mapIcons;
   
   return {
     getFillColor: f => {
@@ -81,5 +84,18 @@ export const getMapFeatureStyle = (
       return f.properties[MAP_SELECT_COLUMNS.props]?.[columnName]?.toString() ?? "";
     }) : undefined,
     getTextSize: 12,
-  };
+    getIcon: !iconOpts? undefined : f => {
+      if(!opts.mapIcons) throw new Error("Invalid mapIcons"); 
+      const icon = iconOpts.type === "fixed"? iconOpts.iconPath : 
+      iconOpts.conditions.find(c => c.value === f.properties[iconOpts.columnName])?.iconPath ?? "";
+      const iconPath = `/icons/${icon}.svg`;
+      const rawSvg = cachedSvgs.get(iconPath) ?? "";
+      const svg = rawSvg.replace("<svg ", `<svg width="24" height="24" `)
+      return {
+        url: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
+        width: 24,
+        height: 24, 
+      }
+    }
+  }
 }

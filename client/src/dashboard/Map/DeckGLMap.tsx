@@ -82,6 +82,11 @@ export type GeoJsonLayerProps = {
   getLineColor: ((f: GeoJSONFeature) => DeckGlColor);
   getText?: (f: GeoJSONFeature) => string;
   getTextSize?: number;
+  getIcon?: (f: GeoJSONFeature) => {
+    url: string;
+    width: number;
+    height: number;
+  };
   elevation?: number;
   pickable?: boolean;
   stroked?: boolean;
@@ -390,18 +395,22 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
       filled: true,
       pointRadiusMinPixels: 2,
       pointRadiusScale: 1,
-      // pointType: 'circle',
       getPointRadius: f => f.properties.radius ?? 1,
       extruded: Boolean(g.elevation),
       getElevation: g.elevation || 0,
 
       getFillColor: g.getFillColor, // ?? [200, 0, 80, 255],
       getLineColor: g.getLineColor, // ?? [200, 0, 80, 255],
-      pointType: "circle+text",
+      pointType: g.getIcon? "circle+icon" : g.getText? "circle+text" : "circle",
       getText: g.getText,
       getTextAlignmentBaseline: "top",
       getTextPixelOffset: f => [0, 5],
       getTextSize: g.getTextSize,
+      getIconColor: g.getFillColor,
+      getIcon: g.getIcon,
+      getIconPixelOffset: f => [0, -10],
+      //@ts-ignore
+      getIconSize: g.getIcon? (f => [g.getIcon!(f).width, g.getIcon!(f).height]) : undefined,
       lineWidthMinPixels: 2,
       //@ts-ignore
       widthScale: 22,
