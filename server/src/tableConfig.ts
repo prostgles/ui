@@ -3,6 +3,7 @@ import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig"
 import { loggerTableConfig } from "./Logger";
 import { CONNECTION_CONFIG_SECTIONS, throttle } from "../../commonTypes/utils";
 import { subscribe } from "diagnostics_channel";
+import { access } from "fs";
 
 export const DB_SSL_ENUM = ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"] as const;
  
@@ -35,6 +36,8 @@ const DUMP_OPTIONS_SCHEMA = {
       ifExists: { type: "boolean", optional: true },
 
       keepLogs: { type: "boolean", optional: true },
+      excludeSchema: { type: "string", optional: true },
+      schemaOnly: { type: "boolean", optional: true },
     }]
   },
   // defaultValue: "{}"
@@ -141,16 +144,72 @@ const filter = {
   optional: true,
 } as const; 
 
-const joinPath = { arrayOfType: { table: "string", on: { arrayOf: { record: { values: "any" } } } }, optional: true } as const satisfies JSONB.FieldTypeObj
+const joinPath = { 
+  description: "When adding a chart this allows showing data from a table that joins to the current table",
+  arrayOfType: { table: "string", on: { arrayOf: { record: { values: "any" } } } }, 
+  optional: true 
+} as const satisfies JSONB.FieldTypeObj
 const CommonChartLinkOpts = { 
   ...CommonLinkOpts,
   smartGroupFilter: filter,
   joinPath,
   localTableName: { type: "string", optional: true, description: "If provided then this is a local layer (w1_id === w2_id === current chart window)" },
   osmLayerQuery: { type: "string", optional: true, description: "If provided then this is a OSM layer (w1_id === w2_id === current chart window)" },
-  groupByColumn: { type: "string", optional: true, description: "Used by timechart only at the moment" },
+  groupByColumn: { type: "string", optional: true, description: "Used by timechart" },
   fromSelected: { type: "boolean", optional: true, description: "True if chart links to SQL statement selection" },
   sql: { type: "string", optional: true },
+  mapIcons: {
+    optional: true,
+    oneOfType: [
+      { 
+        type: { enum: ["fixed"] },
+        iconPath: "string",
+      },
+      { 
+        type: { enum: ["conditional"] },
+        columnName: "string",
+        conditions: {
+          arrayOfType: {
+            value: "any",
+            iconPath: "string",
+          },
+        }
+      },
+    ]
+  },
+  mapColorMode: {
+    optional: true,
+    oneOfType: [
+      { 
+        type: { enum: ["fixed"] },
+        colorArr: "number[]",
+      },
+      { 
+        type: { enum: ["scale"] },
+        columnName: "string",
+        min: "number",
+        max: "number",
+        minColorArr: "number[]",
+        maxColorArr: "number[]",
+      },
+      { 
+        type: { enum: ["conditional"] },
+        columnName: "string",
+        conditions: {
+          arrayOfType: {
+            value: "any",
+            colorArr: "number[]",
+          },
+        }
+      },
+    ]
+  },
+  mapShowText: { 
+    optional: true, 
+    type: {
+      columnName: { type: "string" },
+    }, 
+  },
 } as const satisfies JSONB.ObjectType["type"] 
 
 export const tableConfig: TableConfig<{ en: 1; }> = {
@@ -660,7 +719,15 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       pkey: { type: "PRIMARY KEY", content: "published_method_id, access_control_id" }
     }, 
   },
-
+  access_control_connections: {
+    columns: {
+      connection_id: `UUID NOT NULL REFERENCES connections(id) ON DELETE CASCADE`,
+      access_control_id: `INTEGER NOT NULL REFERENCES access_control  ON DELETE CASCADE`,
+    },
+    indexes: {
+      "unique_connection_id": { unique: true, columns: "connection_id, access_control_id" }
+    }
+  },
   magic_links: { 
     // dropIfExistsCascade: true,
     columns: {

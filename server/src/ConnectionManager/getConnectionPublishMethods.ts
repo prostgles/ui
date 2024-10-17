@@ -27,7 +27,7 @@ export const getConnectionPublishMethods = ({ dbConf, dbs, con, _dbs, getForkedP
       allowedMethods = await dbs.published_methods.find({ connection_id: con.id });
 
     } else {
-      const ac = await getACRule(dbs, user, dbConf.id);
+      const ac = await getACRule(dbs, user, dbConf.id, con.id);
       if (ac) {
         allowedMethods = await dbs.published_methods.find({ connection_id: con.id, $existsJoined: { access_control_methods: { access_control_id: ac.id } } })
       }

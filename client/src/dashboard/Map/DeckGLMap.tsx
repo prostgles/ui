@@ -57,17 +57,20 @@ export type DeckGlColor =
 export type GeoJSONFeature = Omit<Feature, "properties"> & {
     properties: (
       {
+        type?: undefined,
+        _is_from_osm?: boolean;
+      } 
+      | {
         type: "table";
         [MAP_SELECT_COLUMNS.idObj]: any;
         [MAP_SELECT_COLUMNS.geoJson]: any;
-      } | {
+      } 
+      | {
         type: "sql";
         $rowhash: string;
       }
     ) & {
       radius?: number;
-      fillColor?: DeckGlColor;
-      lineColor?: DeckGlColor;
     }
   }
 
@@ -75,8 +78,15 @@ export type GeoJsonLayerProps = {
   id: string;
   features: GeoJSONFeature[];
   filled: boolean;
-  fillColor?: DeckGlColor | ((f: any) => DeckGlColor);
-  lineColor?: DeckGlColor | ((f: any) => DeckGlColor);
+  getFillColor: ((f: GeoJSONFeature) => DeckGlColor);
+  getLineColor: ((f: GeoJSONFeature) => DeckGlColor);
+  getText?: (f: GeoJSONFeature) => string;
+  getTextSize?: number;
+  getIcon?: (f: GeoJSONFeature) => {
+    url: string;
+    width: number;
+    height: number;
+  };
   elevation?: number;
   pickable?: boolean;
   stroked?: boolean;
@@ -385,13 +395,22 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
       filled: true,
       pointRadiusMinPixels: 2,
       pointRadiusScale: 1,
-      // pointType: 'circle',
       getPointRadius: f => f.properties.radius ?? 1,
       extruded: Boolean(g.elevation),
       getElevation: g.elevation || 0,
 
-      getFillColor: f => f.properties.fillColor || (g.fillColor? typeof g.fillColor === "function"? g.fillColor(f) : g.fillColor : undefined) || [200, 0, 80, 255],
-      getLineColor: f => f.properties.lineColor || (g.lineColor? typeof g.lineColor === "function"? g.lineColor(f) : g.lineColor : undefined) || [200, 0, 80, 255],
+      getFillColor: g.getFillColor, // ?? [200, 0, 80, 255],
+      getLineColor: g.getLineColor, // ?? [200, 0, 80, 255],
+      pointType: g.getIcon? "circle+icon" : g.getText? "circle+text" : "circle",
+      getText: g.getText,
+      getTextAlignmentBaseline: "top",
+      getTextPixelOffset: f => [0, 5],
+      getTextSize: g.getTextSize,
+      getIconColor: g.getFillColor,
+      getIcon: g.getIcon,
+      getIconPixelOffset: f => [0, -10],
+      //@ts-ignore
+      getIconSize: g.getIcon? (f => [g.getIcon!(f).width, g.getIcon!(f).height]) : undefined,
       lineWidthMinPixels: 2,
       //@ts-ignore
       widthScale: 22,

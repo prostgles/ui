@@ -9,8 +9,9 @@ import type { DBS } from "..";
 type Args = {
   dbs: DBS;
   dbConf: DBSSchema["database_configs"];
+  connectionId: string;
 }
-export const getConnectionPublish = ({ dbs, dbConf }: Args) => {
+export const getConnectionPublish = ({ dbs, dbConf, connectionId }: Args) => {
  
   const publish: Publish<void, SUser> = async ({ user, dbo, tables }) => {
     if (user) {
@@ -18,7 +19,7 @@ export const getConnectionPublish = ({ dbs, dbConf }: Args) => {
         return "*";
       }
 
-      const ac = await getACRule(dbs, user, dbConf.id);
+      const ac = await getACRule(dbs, user, dbConf.id, connectionId);
 
       if (ac) {
         const { dbPermissions } = ac;

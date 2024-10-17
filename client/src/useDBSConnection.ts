@@ -78,9 +78,9 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
         });
 
         socket.on("infolog", console.log);
-        socket.on("pls-restart", _sure => {
+        socket.on("server-restart-request", _sure => {
           setTimeout(() => {
-            pageReload("pls-restart")
+            pageReload("server-restart-request")
           }, 2000)
         });
         socket.on("redirect", newLocation => {

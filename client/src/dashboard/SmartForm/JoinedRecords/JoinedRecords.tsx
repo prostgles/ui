@@ -36,6 +36,7 @@ type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods" | "theme"> & Pi
 export type JoinedRecordsState = {
   nestedInsertData?: Record<string, AnyObject[]>;
   expanded: boolean;
+  isLoadingSections?: boolean;
   sections: {
     label: string;
     tableName: string;
@@ -209,7 +210,7 @@ export class JoinedRecords extends RTComp<JoinedRecordsProps, JoinedRecordsState
   render(): React.ReactNode {
     const { 
       sections, insert, quickView, 
-      nestedInsertData  
+      nestedInsertData , isLoadingSections
     } = this.state;
     const { 
       db, tables,methods, tableName, onSetNestedInsertData, theme,
@@ -251,7 +252,11 @@ export class JoinedRecords extends RTComp<JoinedRecordsProps, JoinedRecordsState
       />
     }
 
-    if (!sections.length) return <Loading className="m-1 as-center" />;
+    if (isLoadingSections) {
+      return <Loading className="m-1 as-center" />;
+    } else if(!sections.length){
+      return null;
+    }
 
     if(action === "insert" && sections.every(s => !s.canInsert)) {
       return null;

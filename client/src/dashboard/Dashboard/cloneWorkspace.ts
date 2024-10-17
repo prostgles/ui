@@ -15,7 +15,7 @@ export const cloneWorkspace = async (dbs: DBS, workspaceId: string, keepName = f
   const existingDigit = tryParseNumber(existing?.name.slice(name.length, -1) || "") + 1;
   const newName = existing? `${wsp.name} (Copy ${existingDigit})` : name;
   const clonedWsp = await dbs.workspaces.insert({
-    ...omitKeys(wsp, ["id", "user_id"]),
+    ...omitKeys(wsp, ["id", "user_id", "publish_mode", "published"]),
     user_id: undefined as any,
     name: keepName? wsp.name : newName,
     published: false,

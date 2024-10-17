@@ -21,11 +21,11 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
   const { id: user_id, } = user;
 
   /** Admin users are always allowed everything */
-  const acs = isAdmin? undefined : await getACRules(db, user);
+  const accessRules = isAdmin? undefined : await getACRules(db, user);
   
-  const createEditDashboards = isAdmin || acs?.some(({ dbsPermissions }) => dbsPermissions?.createWorkspaces);
+  const createEditDashboards = isAdmin || accessRules?.some(({ dbsPermissions }) => dbsPermissions?.createWorkspaces);
 
-  const publishedWspIDs = acs?.flatMap(ac => ac.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds).filter(isDefined) || []; 
+  const publishedWspIDs = accessRules?.flatMap(ac => ac.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds).filter(isDefined) || []; 
 
   const dashboardMainTables: Publish<DBSchemaGenerated> = (["windows", "links", "workspaces"] as const)
     .reduce((a, tableName) => ({
@@ -203,7 +203,17 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
         orderByFields: { db_conn: 1, created: 1 },
         forcedFilter: isAdmin? 
           {} : 
-          { $existsJoined: { "database_configs.access_control.access_control_user_types": userTypeFilter["access_control_user_types"] } as any }
+          { 
+            $and: [
+              { 
+                $existsJoined: { 
+                  "database_configs.access_control.access_control_user_types": 
+                    userTypeFilter["access_control_user_types"] 
+                } as any 
+              },
+              { $existsJoined: { access_control_connections: {} } }
+            ] 
+          }
       },
       update: user.type === "admin" && {
         fields: {
