@@ -1,11 +1,17 @@
 import * as d3 from "d3";
 import type { AnyObject, SelectParams } from "prostgles-types";
 import { pickKeys } from "../../utils";
-import type { Extent, GeoJsonLayerProps } from "../Map/DeckGLMap";
+import type { DeckGlColor, Extent, GeoJSONFeature, GeoJsonLayerProps } from "../Map/DeckGLMap";
 import type { W_MapState } from "./W_Map";
 import type W_Map from "./W_Map";
 import { MAP_SELECT_COLUMNS, getMapSelect, getSQLData } from "./getMapData";
 import { getOSMData } from "./OSM/getOSMData";
+import { getMapFeatureStyle } from "./getMapFeatureStyle";
+
+export const DEFAULT_GET_COLOR: Pick<GeoJsonLayerProps, "getFillColor" | "getLineColor"> = {
+  getLineColor: (f: GeoJSONFeature) => f.geometry.type === "Polygon"? [200, 0, 80, 55] : [0, 129, 167, 255],
+  getFillColor: (f: GeoJSONFeature) => f.geometry.type === "Polygon"? [200, 0, 80, 255] : [0, 129, 167, 255]
+};
 
 export const setMapLayerData = async function(this: W_Map, dataAge: number ){
     const { prgl: {db }, layerQueries = [], tables } = this.props;
@@ -71,6 +77,7 @@ export const setMapLayerData = async function(this: W_Map, dataAge: number ){
               pickable: true,
               stroked: true,
               filled: true,
+              ...DEFAULT_GET_COLOR,
             })
 
           } else if("tableName" in q){
@@ -123,7 +130,7 @@ export const setMapLayerData = async function(this: W_Map, dataAge: number ){
             /** Get client download speed */
             const downloadStart = Date.now();
 
-            const select = getMapSelect(q, columns);
+            const select = getMapSelect(q, columns, this.props.myLinks);
             const selectGeoJson = { select: pickKeys(select, ["l"]) }
             const oneRow = await tableHandler.findOne(f.finalFilter, selectGeoJson);
             const seconds = (Date.now() - downloadStart)/1000;
@@ -139,6 +146,7 @@ export const setMapLayerData = async function(this: W_Map, dataAge: number ){
                 pickable: true,
                 stroked: true,
                 filled: true,
+                ...DEFAULT_GET_COLOR,
               });
               return;
             }
@@ -182,24 +190,13 @@ export const setMapLayerData = async function(this: W_Map, dataAge: number ){
                 willAggregate = actualWait > (aggregationMode?.wait ?? 2);
               }
             }
-            
-            // if(count >= AGG_LIMIT){
+             
             if(willAggregate){
               const radiusRangeScale = d3.scaleLinear().range([20, 250]).domain([0.001, 0.1]);
               const scale = d3.scaleLinear().range([0.07, 0.0005]).domain([0.886, 0.007166]);
               /** TODO: fix point bad agg cluster positioning at low zoom  */
               // const scale = d3.scaleLinear().range([0.07, 0.0005]).domain([0.2, 0.007166]).clamp(true);
-              const size = scale(minDelta);
-              // const size = oneRow?.c?.type.startsWith("Line")? 0 : scale(minDelta);
-              
-              /**
-                0.886 -> 0.03
-                0.0212 -> 0.002
-                0.007166 -> 0.0001
-              */
-              // console.log({ count, size, detla: minDelta }, this.ref.offsetHeight);
-
-              // geoJsonCol = "l";
+              const size = scale(minDelta);  
               const opts = { 
                 select: { 
                   c: { "$countAll": [] }, 
@@ -216,16 +213,12 @@ export const setMapLayerData = async function(this: W_Map, dataAge: number ){
               });
               const maxRange = radiusRangeScale(minDelta)
               const radiusScale = d3.scaleLinear().range([1, maxRange]).domain([minCount, maxCount]);
-              
-              // console.log(radiusScale.range())
+               
               aggs = aggRows.map(a => ({ ...a, radius: radiusScale(+a.c) }))
             } else {
               const scale = d3.scaleLinear().range([1, 10, 80, 100]).domain([20, 14, 10, 1]).clamp(true) ;
-
-              // console.log({zoom}, scale(zoom))
+ 
               rows = await tableHandler.find(f.finalFilter, opts) as any;
-              
-              // console.log({ rows: rows?.length, size: await tableHandler.size(f.finalFilter, opts) })
               
               const radius = scale(zoom);
               rows = rows?.map(r => ({ ...r, type: "table", radius }));
@@ -235,7 +228,6 @@ export const setMapLayerData = async function(this: W_Map, dataAge: number ){
             
             
           } else if("sql" in q){
-            // geoJsonCol = "l";
             if(!db.sql){
               console.error("Not enough privileges to run query");
               alert("Could not show data: sql privilege not allowed for current user")
@@ -267,7 +259,6 @@ export const setMapLayerData = async function(this: W_Map, dataAge: number ){
           const layerColor = lineColor;
 
           layers.push({
-            // id: "layer-"+Date.now(),
             id: q._id + Date.now(),
             dataSignature,
             features: data.map(r => ({
@@ -278,45 +269,17 @@ export const setMapLayerData = async function(this: W_Map, dataAge: number ){
                 ...r,
                 layer: q,
                 tableName: _tableName,
-                geomColumn: _geomColumn,
-                fillColor: (() => {
-
-                  /** TODO maybe color items based on any table styled columns */
-                  // let fill = fillColor;
-                  // if(!willAggregate && sourceW.table_name && sourceW.columns){
-                  //   const styledCols = sourceW.columns.filter(c => c.style?.type && c.style?.type !== "None");
-
-                  // }
-
-                  // const { activeRow } = this.props;
-                  // if(activeRow && activeRow.window_id === w.id && activeRow.row_filter?.$rowhash === r?.$rowhash){
-                  //   return fillColor.slice(0,3).map(v => 255 - v).concat([200])
-                  // }
-                  // const { clickedItem } = this.state;
-                  // if(clickedItem) debugger
-                  // if(clickedItem && activeRow.window_id === w.id && activeRow.row_filter?.$rowhash === r?.$rowhash){
-                  //   return fillColor.slice(0,3).map(v => 255 - v).concat([200])
-                  // }
-
-                  /** Reduce fill opacity for polygons */
-                  if(r[MAP_SELECT_COLUMNS.geoJson]?.type?.includes("Polygon")){
-                    return fillColor?.slice(0,3).concat([200])
-                  }
-                  return fillColor;
-                })()
+                geomColumn: _geomColumn, 
               }
             })),
             pickable: true,
             stroked: true,
             filled: true,
             elevation: q.elevation,
-            fillColor: fillColor,// f => f.properties.fillColor,
-            lineColor: lineColor, //[22,22,22,222], // q.lineColor,  
-            // getLineColor: f => lineColor ?? f.properties.lineColor ?? [22,22,22,222],
+            ...getMapFeatureStyle(q, this.state.clickedItem, this.props.myLinks),
             getLineWidth: f => 1211,
             layerColor,
             lineWidth: 1222
-            // getLineColor: [22,22,22,222],
           })
         }));
   

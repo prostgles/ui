@@ -57,6 +57,7 @@ export type DeckGlColor =
 export type GeoJSONFeature = Omit<Feature, "properties"> & {
     properties: (
       {
+        type?: undefined,
         _is_from_osm?: boolean;
       } 
       | {
@@ -70,8 +71,6 @@ export type GeoJSONFeature = Omit<Feature, "properties"> & {
       }
     ) & {
       radius?: number;
-      fillColor?: DeckGlColor;
-      lineColor?: DeckGlColor;
     }
   }
 
@@ -79,8 +78,10 @@ export type GeoJsonLayerProps = {
   id: string;
   features: GeoJSONFeature[];
   filled: boolean;
-  fillColor?: DeckGlColor | ((f: any) => DeckGlColor);
-  lineColor?: DeckGlColor | ((f: any) => DeckGlColor);
+  getFillColor: ((f: GeoJSONFeature) => DeckGlColor);
+  getLineColor: ((f: GeoJSONFeature) => DeckGlColor);
+  getText?: (f: GeoJSONFeature) => string;
+  getTextSize?: number;
   elevation?: number;
   pickable?: boolean;
   stroked?: boolean;
@@ -394,8 +395,13 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
       extruded: Boolean(g.elevation),
       getElevation: g.elevation || 0,
 
-      getFillColor: f => f.properties.fillColor || (g.fillColor? typeof g.fillColor === "function"? g.fillColor(f) : g.fillColor : undefined) || [200, 0, 80, 255],
-      getLineColor: f => f.properties.lineColor || (g.lineColor? typeof g.lineColor === "function"? g.lineColor(f) : g.lineColor : undefined) || [200, 0, 80, 255],
+      getFillColor: g.getFillColor, // ?? [200, 0, 80, 255],
+      getLineColor: g.getLineColor, // ?? [200, 0, 80, 255],
+      pointType: "circle+text",
+      getText: g.getText,
+      getTextAlignmentBaseline: "top",
+      getTextPixelOffset: f => [0, 5],
+      getTextSize: g.getTextSize,
       lineWidthMinPixels: 2,
       //@ts-ignore
       widthScale: 22,

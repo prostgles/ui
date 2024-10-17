@@ -69,7 +69,15 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
             className={`LayerQuery bg-color-0 ai-center flex-row-wrap gap-1 ta-left b b-color rounded ${window.isMobileDevice? "p-p5" : "p-1"}`}
           >
             
-            <LayerColorPicker title="Change color" column={column} link={thisLink} myLinks={myLinks} />
+            <LayerColorPicker 
+              title="Change color" 
+              column={column} 
+              link={thisLink} 
+              myLinks={myLinks} 
+              tables={tables} 
+              w={w} 
+              getLinksAndWindows={getLinksAndWindows} 
+            />
             
             {lTypeInfo.type === "OSM"? 
               <OSMLayerOptions link={thisLink} /> :

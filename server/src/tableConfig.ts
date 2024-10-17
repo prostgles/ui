@@ -144,16 +144,53 @@ const filter = {
   optional: true,
 } as const; 
 
-const joinPath = { arrayOfType: { table: "string", on: { arrayOf: { record: { values: "any" } } } }, optional: true } as const satisfies JSONB.FieldTypeObj
+const joinPath = { 
+  description: "When adding a chart this allows showing data from a table that joins to the current table",
+  arrayOfType: { table: "string", on: { arrayOf: { record: { values: "any" } } } }, 
+  optional: true 
+} as const satisfies JSONB.FieldTypeObj
 const CommonChartLinkOpts = { 
   ...CommonLinkOpts,
   smartGroupFilter: filter,
   joinPath,
   localTableName: { type: "string", optional: true, description: "If provided then this is a local layer (w1_id === w2_id === current chart window)" },
   osmLayerQuery: { type: "string", optional: true, description: "If provided then this is a OSM layer (w1_id === w2_id === current chart window)" },
-  groupByColumn: { type: "string", optional: true, description: "Used by timechart only at the moment" },
+  groupByColumn: { type: "string", optional: true, description: "Used by timechart" },
   fromSelected: { type: "boolean", optional: true, description: "True if chart links to SQL statement selection" },
   sql: { type: "string", optional: true },
+  mapColorMode: {
+    optional: true,
+    oneOfType: [
+      { 
+        type: { enum: ["fixed"] },
+        colorArr: "number[]",
+      },
+      { 
+        type: { enum: ["scale"] },
+        columnName: "string",
+        min: "number",
+        max: "number",
+        minColorArr: "number[]",
+        maxColorArr: "number[]",
+      },
+      { 
+        type: { enum: ["conditional"] },
+        columnName: "string",
+        conditions: {
+          arrayOfType: {
+            value: "any",
+            colorArr: "number[]",
+          },
+        }
+      },
+    ]
+  },
+  mapShowText: { 
+    optional: true, 
+    type: {
+      columnName: { type: "string" },
+    }, 
+  },
 } as const satisfies JSONB.ObjectType["type"] 
 
 export const tableConfig: TableConfig<{ en: 1; }> = {
