@@ -18,7 +18,7 @@ import { W_MapMenu } from "./W_MapMenu";
 import { getMapDataExtent } from "./getMapDataExtent";
 import type { HoveredObject} from "./onMapHover";
 import { onMapHover } from "./onMapHover";
-import { setMapLayerData } from "./setMapLayerData"; 
+import { fetchMapLayerData } from "./setMapLayerData"; 
 import SmartForm from "../SmartForm/SmartForm";
 import { isObject } from "../../../../commonTypes/publishUtils";
 import { getMapFilter } from "./getMapData";
@@ -332,7 +332,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
   /**
    * Used to fetch and draw layer data
    */
-  setLayerData = setMapLayerData.bind(this);
+  setLayerData = fetchMapLayerData.bind(this);
 
   hoveredObj?: HoveredObject;
   hovering?: {

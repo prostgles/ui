@@ -1,13 +1,13 @@
-import React from "react"
+import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import React from "react";
+import { FlexCol } from "../../components/Flex";
+import PopupMenu from "../../components/PopupMenu";
+import Select from "../../components/Select/Select";
 import type { LinkSyncItem, WindowData } from "../Dashboard/dashboardUtils";
 import type { RGBA } from "../W_Table/ColumnMenu/ColorPicker";
 import { ColorCircle, ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
-import PopupMenu from "../../components/PopupMenu";
-import type { Prgl } from "../../App";
-import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import Select from "../../components/Select/Select";
 import type { MapLayerManagerProps } from "./ChartLayerManager";
-import { FlexCol } from "../../components/Flex";
+import { IconPalette } from "../../components/IconPalette/IconPalette";
 
 type P = {
   link: LinkSyncItem;
@@ -31,6 +31,27 @@ export const LayerColorPicker = ({ link, column, myLinks, title, tables, w, getL
       title="Layer style"
       button={<ColorCircle color={`rgba(${getLinkColor(link)})`} />}
       render={pClose => <FlexCol>
+        <IconPalette 
+          iconName={opts.mapIcons?.type === "fixed"? opts.mapIcons.iconPath : undefined}
+          onChange={iconPath => {
+            const thisLink = myLinks.find(l => l.id === link.id);
+            if(thisLink && thisLink.options.type !== "table"){
+              const opts = thisLink.options;
+              thisLink.$update(
+                { 
+                  options: { 
+                    ...opts,
+                    mapIcons: !iconPath? undefined : {
+                      type: "fixed",
+                      iconPath
+                    }
+                  } 
+                }, 
+                { deepMerge: true }
+              );
+            }
+          }}
+        />
         {table && 
           <Select 
             label={"Show labels"}

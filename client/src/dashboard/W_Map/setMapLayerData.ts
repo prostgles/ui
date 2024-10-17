@@ -7,13 +7,14 @@ import type W_Map from "./W_Map";
 import { MAP_SELECT_COLUMNS, getMapSelect, getSQLData } from "./getMapData";
 import { getOSMData } from "./OSM/getOSMData";
 import { getMapFeatureStyle } from "./getMapFeatureStyle";
+import { getIcon } from "../../components/SvgIcon";
 
 export const DEFAULT_GET_COLOR: Pick<GeoJsonLayerProps, "getFillColor" | "getLineColor"> = {
   getLineColor: (f: GeoJSONFeature) => f.geometry.type === "Polygon"? [200, 0, 80, 55] : [0, 129, 167, 255],
   getFillColor: (f: GeoJSONFeature) => f.geometry.type === "Polygon"? [200, 0, 80, 255] : [0, 129, 167, 255]
 };
 
-export const setMapLayerData = async function(this: W_Map, dataAge: number ){
+export const fetchMapLayerData = async function(this: W_Map, dataAge: number ){
     const { prgl: {db }, layerQueries = [], tables } = this.props;
     const { w } = this.d;
     if(!w) return;
@@ -32,6 +33,19 @@ export const setMapLayerData = async function(this: W_Map, dataAge: number ){
     if(this.state.loadingLayers){
       this.loadAgain = true;
       return;
+    }
+
+    for await(const l of this.props.myLinks){
+      const opts = l.options;
+      if(opts.type === "map" && opts.mapIcons) {
+        if(opts.mapIcons.type === "fixed") {
+          await getIcon(opts.mapIcons.iconPath);
+        } else if (opts.mapIcons.type === "conditional") {
+          for await(const c of opts.mapIcons.conditions){
+            await getIcon(c.iconPath)
+          }
+        }
+      }
     }
 
     if(w.options.extent){
