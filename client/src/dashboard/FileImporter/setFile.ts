@@ -1,10 +1,11 @@
 import type { AnyObject} from "prostgles-types";
-import { asName, getKeys } from "prostgles-types";
+import { asName, getKeys, isDefined } from "prostgles-types";
 import { getFileText } from "../W_SQL/W_SQLMenu";
 import type FileImporter from "./FileImporter";
 import { getRowsPerBatch } from "./FileImporter";
 import type { Col} from "./parseCSVFile";
 import { parseCSVFile } from "./parseCSVFile";
+import type { GeoJSONFeature } from "../Map/DeckGLMap";
 
   export const setFile = function(this: FileImporter, file: File){
     const lowerName = file.name.toLowerCase()
@@ -124,11 +125,26 @@ async function parseJSONFile(file: File): Promise<{
       
     })
   }
-  if(obj.type === "FeatureCollection" && obj.features && Array.isArray(obj.features)){
+  const getGeoJSONFeatures = (): undefined | GeoJSONFeature[] => {
+    if(obj.type === "FeatureCollection" && obj.features && Array.isArray(obj.features)){
+      return obj.features;
+    } else if (
+      Array.isArray(obj) && 
+      obj.length && 
+      obj[0].type === "Feature" && 
+      typeof obj[0].geometry?.type === "string" && 
+      Array.isArray(obj[0].geometry.coordinates)
+    ){
+      return obj;
+    }
+  }
+
+  const geoJSONFeatures = getGeoJSONFeatures();
+  if(geoJSONFeatures){
     type = "geojson";
     _cols = { geometry: "geometry" };
     let hasID = false;
-    obj.features.map((f: GeoJSON.Feature, i)=> {
+    geoJSONFeatures.map((f: GeoJSON.Feature, i)=> {
       if((f.type as any) !== "Feature"){
         console.warn(`Could not import feature number ${i}. Feature.type is not "Feature"`, f)
       } else {
@@ -142,14 +158,14 @@ async function parseJSONFile(file: File): Promise<{
       }
     });
     const colKeys = getKeys(_cols)
-    rows = obj.features.map((f: GeoJSON.Feature, i)=> {
+    rows = geoJSONFeatures.map((f: GeoJSON.Feature, i)=> {
       if((f.type as any) !== "Feature"){
         console.warn(`Could not import feature number ${i}. Feature.type is not "Feature"`, f)
       } else {
         
         srid = srid || (f as any).geometry?.crs?.type?.name?.properties?.name || "EPSG:4326";
         
-        const row: any = {};
+        const row: Record<string, any> = {};
         colKeys.map(k => {
           if(k === "id" && hasID){
             row[k] = f.id ?? null;
@@ -164,7 +180,7 @@ async function parseJSONFile(file: File): Promise<{
         maxCharsPerRow = Math.max(maxCharsPerRow, JSON.stringify(row).length)
         return row;
       }
-    });
+    }).filter(isDefined);
   } else if(Array.isArray(obj)){
     obj.forEach(row => {
       setCol(row);

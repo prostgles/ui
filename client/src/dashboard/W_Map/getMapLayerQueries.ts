@@ -7,6 +7,7 @@ import { getCrossFilters } from "../joinUtils";
 import { getSmartGroupFilter } from "../SmartFilter/SmartFilter";
 import type { LayerOSM, LayerQuery, LayerSQL, LayerTable } from "./W_Map";
 import type { ActiveRow } from "../W_Table/W_Table";
+import type { DeckGlColor } from "../Map/DeckGLMap";
 
 type Args = {
   links: LinkSyncItem[];
@@ -33,7 +34,7 @@ export const getLinkColor = (value: Link["options"]["colorArr"] | undefined, opa
   const colorArrParsed = colorArrRaw.map(parseVal);
   const [r,g,b, a] = colorArrParsed;
   const colorOpacity = Number.isFinite(opacity)? opacity : Number.isFinite(a)? a :  1;
-  const colorArr = [r,g,b, colorOpacity * 255];
+  const colorArr: DeckGlColor = [r,g,b, colorOpacity * 255];
   const colorArrStr = [r,g,b, colorOpacity];
   const colorStr = `rgba(${colorArrStr.join()})`;
 
@@ -66,11 +67,9 @@ export const getMapLayerQueries = ({ links, myLinks, windows, active_row, w }: A
         disabled: !!l.disabled,
         _id: `${l.id}`,
         linkId: l.id,
-        // fillColor,
-        // lineColor,
-        color, 
-        // wid: linkW?.id, 
-        // path: undefined,
+        fillColor,
+        lineColor,
+        color,  
         geomColumn: "",
         type: "osm",
         query,

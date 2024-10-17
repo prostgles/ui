@@ -39,8 +39,8 @@ export type LayerBase = {
 
   /** If missing then it's a local layer */
   wid?: string;
-  fillColor?: DeckGlColor;
-  lineColor?: DeckGlColor;
+  fillColor: DeckGlColor;
+  lineColor: DeckGlColor;
   getLineColor?: () => DeckGlColor;
   elevation?: number;
   geomColumn: string;
@@ -90,12 +90,15 @@ export type W_MapProps = CommonWindowProps<"map"> & {
 
 export type MapLayerExtras = Record<string, { colorStr: string; color: [number, number, number]; }>;
 
-type ClickedItem = GeoJSONFeature & {
+export type ClickedItem = GeoJSONFeature & {
   properties: GeoJSONFeature["properties"] & {
     $rowhash?: string;
     geomColumn: string;
     tableName: string;
-    l: GeoJSONFeature["geometry"]
+    l: GeoJSONFeature["geometry"];
+    layer: {
+      _id: string;
+    }
   } & ({
     i: AnyObject | string;
   } | {
@@ -366,10 +369,10 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
         features: [drawingShape], 
         filled: true, 
         id: "drawingSHAPE",
-        fillColor: [131, 56, 236, 255] satisfies DeckGlColor,
+        getFillColor: f => [131, 56, 236, 255] satisfies DeckGlColor,
         getLineWidth: f => 1211,
         layerColor: [131, 56, 236, 255] satisfies DeckGlColor,
-        lineColor: [131, 56, 236, 255] satisfies DeckGlColor,
+        getLineColor: f => [131, 56, 236, 255] satisfies DeckGlColor,
         lineWidth: 1222,
         pickable: true,
         stroked: true,
@@ -427,32 +430,14 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
       )
     }
 
-    let geoJsonLayers = layers;
-
-    geoJsonLayers = geoJsonLayers.map(l => {
-      l.features = l.features.map(f => {
-        if(
-          clickedItem?.properties.$rowhash && 
-          (f.properties.type === "sql" && f.properties.$rowhash === clickedItem.properties.$rowhash)
-        ){
-          f.properties.fillColor = [0,0,0, 255];// f.properties.fillColor.slice(0,3).map(v => 255 - v).concat([200]);
-          f.properties.lineColor = [0,0,0, 255];//f.properties.fillColor.slice(0,3).map(v => 255 - v).concat([200]);
-        } else {
-          f.properties.fillColor = l.layerColor;
-          f.properties.lineColor = l.layerColor;
-        }
-        return f;
-      });
-
-      return l;
-    });
+    const geoJsonLayers = layers; 
     
     const geoJsonLayersDataFilterSignature = JSON.stringify([layerQueries]);
     let form: React.ReactNode = null;
     if(w.options.showCardOnClick && clickedItem?.properties.i){
       const table = this.props.tables.find(t => t.name === clickedItem.properties.tableName);
       if(table){
-        const filter = getMapFilter({ geomColumn: clickedItem.properties.geomColumn }, table.columns, clickedItem.properties);
+        const filter = getMapFilter({ geomColumn: clickedItem.properties.geomColumn, linkId: clickedItem.properties.layer._id }, table.columns, clickedItem.properties, this.props.myLinks);
         form = !filter? null : <SmartForm
             theme={prgl.theme}
             asPopup={true}
@@ -520,7 +505,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
                 } else {
                   const table = this.props.tables.find(t => t.name === object.properties.tableName);
                   if(table){
-                    rowFilter = getMapFilter({ geomColumn: object.properties.geomColumn }, table.columns, object.properties)?.filterValue;
+                    rowFilter = getMapFilter({ geomColumn: object.properties.geomColumn, linkId: object.properties.layer._id }, table.columns, object.properties, this.props.myLinks)?.filterValue;
                   }
                 }
               }

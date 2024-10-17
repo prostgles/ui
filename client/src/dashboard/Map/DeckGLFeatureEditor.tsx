@@ -384,10 +384,7 @@ const getDrawnLayer = ({ deckGlLibs, shapes, deckW }: GetDrawnLayerArgs) => {
         id: i,
         type: "Feature",
         geometry,
-        properties: {
-          fillColor: geometry.type === "Polygon"? [200, 0, 80, 55] : [0, 129, 167, 255],
-          lineColor: geometry.type === "Polygon"? [200, 0, 80, 255] : [0, 129, 167, 255],
-          radius,
+        properties: { 
         }
       }))
     }),
@@ -399,8 +396,8 @@ const getDrawnLayer = ({ deckGlLibs, shapes, deckW }: GetDrawnLayerArgs) => {
     getPointRadius: radius,
     extruded: false,
     getElevation: 0,
-    getFillColor: f => f.properties.fillColor ?? [200, 0, 80, 255],
-    getLineColor: f => f.properties.lineColor ?? [200, 0, 80, 255],
+    getFillColor: f => f.geometry.type === "Polygon"? [200, 0, 80, 55] : [0, 129, 167, 255],
+    getLineColor: f => f.geometry.type === "Polygon"? [200, 0, 80, 255] : [0, 129, 167, 255],
     lineWidthMinPixels: 2, 
     widthScale: 22, 
     lineWidth: f => f.properties?.lineWidth ?? 1,
