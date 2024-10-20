@@ -33,7 +33,6 @@ export type SmartFormFieldProps = {
   action?: "update" | "insert" | "view";
   column: ValidatedColumnInfo;
   tableInfo: TableInfo;
-  // columnName: string;
   style?: React.CSSProperties;
   inputStyle?: React.CSSProperties;
   placeholder?: string;

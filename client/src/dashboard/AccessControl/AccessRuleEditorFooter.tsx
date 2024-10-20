@@ -96,7 +96,7 @@ export const AccessRuleEditorFooter = (props: P) => {
   </FlexCol>
 } 
 
-const upsertRule = async (args: Pick<P,"dbs" | "connectionId" | "action" | "database_id"> & { newRule: EditedAccessRule }) => { 
+const upsertRule = async (args: Pick<P,"dbs" | "connectionId" | "action" | "database_id"> & { newRule: EditedAccessRule }) => {
   const { action, newRule, dbs, connectionId, database_id } = args;
   const { access_control_user_types = [], published_methods = [] } = newRule;
   

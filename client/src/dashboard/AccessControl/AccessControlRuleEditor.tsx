@@ -25,6 +25,7 @@ import { UserTypeSelect } from "./UserTypeSelect";
 import { useAccessControlSearchParams } from "./useAccessControlSearchParams";
 import type { ValidEditedAccessRuleState } from "./useEditedAccessRule";
 import { useEditedAccessRule } from "./useEditedAccessRule";
+import { AskLLMAccessControl } from "../AskLLM/AskLLMAccessControl";
 
 
 const ACCESS_TYPES = ["Custom", "All views/tables", "Run SQL"] as const;
@@ -245,9 +246,13 @@ export const AccessControlRuleEditor = ({
         <PublishedMethods 
           className="my-2" 
           prgl={prgl}
-          forAccessRule={{
-            access_rule_id: action.type === "edit"? action.selectedRuleId : undefined 
-          }}
+          accessRuleId={action.type === "edit"? action.selectedRuleId : undefined}
+        />
+
+        <AskLLMAccessControl
+          {...prgl}
+          editedRule={editedRule}
+          accessRuleId={action.type === "edit"? action.selectedRuleId : undefined}
         />
 
         <AccessRuleEditorFooter 

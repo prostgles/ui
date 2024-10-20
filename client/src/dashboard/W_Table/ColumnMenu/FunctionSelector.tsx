@@ -29,7 +29,7 @@ const funcAcceptsColumn = (f: FuncDef, targetCols: ValidatedColumnInfo[]) => {
 
 export const FunctionSelector = ({ column, tableColumns, onSelect, selectedFunction, wColumns: parentColumns, className, currentNestedColumnName }: P) => {
   
-  const cannotUseAggs = useMemo(() => parentColumns?.some(c => c.nested && c.name !== currentNestedColumnName), [parentColumns, currentNestedColumnName])
+  const cannotUseAggs = useMemo(() => parentColumns?.some(c => c.show && c.nested && c.name !== currentNestedColumnName), [parentColumns, currentNestedColumnName])
   
   const funcs = useMemo(() => { 
     const columnInfo = tableColumns.find(c => c.name === column);

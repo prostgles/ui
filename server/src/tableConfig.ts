@@ -576,9 +576,12 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       database_id     : `INTEGER NOT NULL REFERENCES database_configs(id) ON DELETE CASCADE`,
       dbsPermissions: { info:{ hint: "Permission types and rules for the state database"}, nullable: true, jsonbSchemaType: {
         createWorkspaces: { type: "boolean", optional: true },
-        viewPublishedWorkspaces: { type: {
-          workspaceIds: "string[]"
-        }, optional: true },
+        viewPublishedWorkspaces: {
+          optional: true, 
+          type: {
+            workspaceIds: "string[]"
+          }, 
+        },
       }},        
       dbPermissions: { info: { hint: "Permission types and rules for this (connection_id) database" }, jsonbSchema: { oneOfType: [
         { 
@@ -1189,7 +1192,18 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       key_id: `TEXT`,
       key_secret: `TEXT NOT NULL`,
       endpoint: `TEXT NOT NULL DEFAULT 'https://api.openai.com/v1/chat/completions'`,
-      extraHeaders: {
+      extra_headers: {
+        info: { hint: "Extra headers to be sent with the request. Can overwrite existing" },
+        nullable: true,
+        jsonbSchema: {
+          record: {
+            partial: true,
+            values: "string",
+          }
+        }
+      },
+      body_parameters: {
+        info: { hint: "Used to set model, response_format and other options" },
         nullable: true,
         jsonbSchema: {
           record: {
@@ -1227,8 +1241,18 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       id: `int8 PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       chat_id: `INTEGER REFERENCES llm_chats(id) ON DELETE CASCADE`,
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
-      message: `TEXT`,
+      message: `TEXT NOT NULL`,
       created: `TIMESTAMP DEFAULT NOW()`,
+    }
+  },
+  access_control_allowed_llm: {
+    columns: {
+      access_control_id: `INTEGER NOT NULL REFERENCES access_control(id)`,
+      llm_credential_id: `INTEGER NOT NULL REFERENCES llm_credentials(id)`,
+      llm_prompt_id: `INTEGER NOT NULL REFERENCES llm_prompts(id)`,
+    },
+    indexes: {
+      unique: { unique: true, columns: "access_control_id, llm_credential_id, llm_prompt_id" }
     }
   },
   ...loggerTableConfig,

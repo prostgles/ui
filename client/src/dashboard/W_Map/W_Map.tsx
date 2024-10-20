@@ -18,7 +18,7 @@ import { W_MapMenu } from "./W_MapMenu";
 import { getMapDataExtent } from "./getMapDataExtent";
 import type { HoveredObject} from "./onMapHover";
 import { onMapHover } from "./onMapHover";
-import { fetchMapLayerData } from "./setMapLayerData"; 
+import { fetchMapLayerData } from "./fetchMapLayerData"; 
 import SmartForm from "../SmartForm/SmartForm";
 import { isObject } from "../../../../commonTypes/publishUtils";
 import { getMapFilter } from "./getMapData";

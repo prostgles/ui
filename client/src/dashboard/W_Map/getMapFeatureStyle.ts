@@ -6,29 +6,34 @@ import { asRGB } from "../W_Table/ColumnMenu/ColorPicker";
 import { MAP_SELECT_COLUMNS } from "./getMapData";
 import type { ClickedItem, LayerQuery } from "./W_Map";
 
+export const rgbaToString = (rgba: DeckGlColor) => {
+  const [r,g,b,a = 1] = rgba.map(v => Number.isInteger(v)? v : 1);
+  const alpha = a > 1? a/255 : a;
+  return `rgba(${[r,g,b,alpha]})`;
+}
+
 const parseFeatureColor = (f: GeoJSONFeature, link: LinkSyncItem | undefined): DeckGlColor | undefined => {
   if(!link) return;
   const opts = link.options;
   if(opts.type !== "map") return;
   const { mapColorMode, colorArr } = opts;
   if(!mapColorMode) return colorArr as DeckGlColor;
-  if(mapColorMode?.type === "fixed") return mapColorMode.colorArr as DeckGlColor;
-  if(mapColorMode?.type === "conditional") {
+  if(mapColorMode.type === "fixed") return mapColorMode.colorArr as DeckGlColor;
+  if(mapColorMode.type === "conditional") {
     const { columnName, conditions } = mapColorMode;
     const val = f.properties[columnName];
     const condition = conditions.find(c => c.value === val);
     return condition?.colorArr as DeckGlColor;
   }
-  if(mapColorMode?.type === "scale") {
-    const { minColorArr, maxColorArr, max, min, columnName } = mapColorMode;
-    const val = f.properties[columnName];
-    if([val, max, min].every(v => Number.isFinite(v))) {
-      const perc = (val - min)/(max - min);
-      const minColor = `rgba(${minColorArr.join(",")})`;
-      const maxColor = `rgba(${maxColorArr.join(",")})`;
-      const color = blend(minColor, maxColor, perc);
-      return asRGB(color)
-    }
+  
+  const { minColorArr, maxColorArr, max, min, columnName } = mapColorMode;
+  const val = f.properties[columnName];
+  if([val, max, min].every(v => Number.isFinite(v))) {
+    const perc = (val - min)/(max - min);
+    const minColor = rgbaToString(minColorArr as DeckGlColor);
+    const maxColor = rgbaToString(maxColorArr as DeckGlColor);
+    const color = blend(minColor, maxColor, perc);
+    return asRGB(color)
   }
 }
 
@@ -51,7 +56,7 @@ export const getMapFeatureStyle = (
     throw new Error("Invalid map link type");
   }
 
-  const iconOpts = opts.mapIcons;
+  const { mapIcons, mapShowText } = opts;
   
   return {
     getFillColor: f => {
@@ -78,19 +83,22 @@ export const getMapFeatureStyle = (
       }
       return lineColor;
     },
-    getText: opts.mapShowText?  (f => {
-      if(!opts.mapShowText) return "";
-      const { columnName } = opts.mapShowText;
+    getText: mapShowText?  (f => {
+      const { columnName } = mapShowText;
       return f.properties[MAP_SELECT_COLUMNS.props]?.[columnName]?.toString() ?? "";
     }) : undefined,
-    getTextSize: 12,
-    getIcon: !iconOpts? undefined : f => {
-      if(!opts.mapIcons) throw new Error("Invalid mapIcons"); 
-      const icon = iconOpts.type === "fixed"? iconOpts.iconPath : 
-      iconOpts.conditions.find(c => c.value === f.properties[iconOpts.columnName])?.iconPath ?? "";
+    getTextSize: mapShowText?  (f => {
+      const { columnName } = mapShowText;
+      const txt = `${f.properties[MAP_SELECT_COLUMNS.props]?.[columnName]?.toString() ?? ""}`;
+      return 12; // txt.length * 4;
+    }) : undefined,
+    getIcon: !mapIcons? undefined : f => {
+      const icon = mapIcons.type === "fixed"? mapIcons.iconPath : 
+      mapIcons.conditions.find(c => c.value === f.properties[mapIcons.columnName])?.iconPath ?? "";
       const iconPath = `/icons/${icon}.svg`;
       const rawSvg = cachedSvgs.get(iconPath) ?? "";
-      const svg = rawSvg.replace("<svg ", `<svg width="24" height="24" `)
+      const lineColor = parseFeatureColor(f, link) || layerQuery.lineColor;
+      const svg = rawSvg.replace("<svg ", `<svg width="24" height="24" style="color:${rgbaToString(lineColor)};" `);
       return {
         url: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
         width: 24,

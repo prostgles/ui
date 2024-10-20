@@ -12,6 +12,7 @@ import CodeEditor from "../../CodeEditor/CodeEditor";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import { dboLib, wsLib } from "../../CodeEditor/monacoTsLibs";
 import { FlexCol, FlexRow } from "../../../components/Flex";
+import { SmartCodeEditor } from "../../CodeEditor/SmartCodeEditor";
  
 type P = { 
   onChange: (newMethod: P["method"]) => void;
@@ -168,19 +169,14 @@ type MyMethod = (
           contentClassName="flex-col gap-1  f-1" 
           open={true}
         >
-          <FlexCol className="p-1">
-            <p className="ta-start m-0">
-              Server-side TypeScript function triggered by a button press
-            </p>
-          </FlexCol>
-          <CodeEditor 
+          <SmartCodeEditor 
             key={tsMethodDef}
-            className="f-1 ml-1 "
+            label="Server-side TypeScript function triggered by a button press"
             tsLibraries={[
               ...tsLibraries,
               { filePath: "file:///MyMethod.ts", content: tsMethodDef },
             ]}
-            style={{ minWidth: "600px", minHeight: "200px"}}
+            // style={{ minWidth: "600px", minHeight: "200px"}}
             language="typescript"
             value={method.run ?? ""}
             options={{
@@ -188,14 +184,13 @@ type MyMethod = (
               "glyphMargin": false,
               "lineNumbersMinChars": 0
             }}
-            onChange={run => onChange({ ...method, run })}
+            autoSave={true}
+            onSave={run => onChange({ ...method, run })}
           />
         </Section>
         <Section 
-          className="f-1" 
           title="Result" 
           contentClassName="flex-col gap-1 p-1 f-1" 
-          // open={true}
         >
           <p className="ta-start m-0">
             Any returned value will be shown as JSON to the client

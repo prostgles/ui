@@ -26,7 +26,8 @@ const defaultRule: EditedAccessRule = {
   created: null,
   dbsPermissions: {
     createWorkspaces: true
-  }
+  },
+  access_control_allowed_llm: [],
 };
 
 export type ValidEditedAccessRuleState =  (
@@ -37,7 +38,7 @@ export type ValidEditedAccessRuleState =  (
   } 
   | {
     type: "create"
-    newRule: Partial<Pick<EditedAccessRule, "access_control_user_types" | "dbPermissions" | "dbsPermissions">> | undefined;
+    newRule: Partial<Pick<EditedAccessRule, "access_control_user_types" | "dbPermissions" | "dbsPermissions" | "access_control_allowed_llm">> | undefined;
     rule: undefined;
     initialUserTypes?: undefined;
   }
