@@ -15,6 +15,7 @@ import { useLLMSchemaStr } from "./useLLMSchemaStr";
 import SmartForm from "../SmartForm/SmartForm"; 
 import { InfoRow } from "../../components/InfoRow";
 import { LLMChatOptions } from "./LLMChatOptions";
+import { loadGeneratedWorkspaces } from "./loadGeneratedWorkspaces";
 
 
 export const AskLLM = (prgl: Prgl) => {
@@ -28,7 +29,29 @@ export const AskLLM = (prgl: Prgl) => {
   
   const actualMessages: Message[] = llmMessages?.map(m => ({
     incoming: m.user_id !== user?.id,
-    message: <Marked content={m.message || ""} /> ,
+    message: <Marked 
+      content={m.message || ""} 
+      codeHeader={({ language, codeString }) => {
+        if(language !== "json") return null;
+        try {
+          const json = JSON.parse(codeString);
+          if(Array.isArray(json.prostglesWorkspaces)){
+            return <Btn
+              color="action"
+              iconPath={mdiPlus}
+              variant="faded"
+              onClick={() => {
+                loadGeneratedWorkspaces(json.prostglesWorkspaces, prgl);
+              }}
+            >
+              Load workspaces
+            </Btn>
+          }
+        } catch(e) {
+          console.error(e);
+        }
+      }}
+    /> ,
     sender_id: m.user_id || "ai",
     sent: new Date(m.created || new Date()),
   })) ?? [];
@@ -98,17 +121,11 @@ export const AskLLM = (prgl: Prgl) => {
               value={activeChatId}
               showSelectedSublabel={true}
               style={{
-                backgroundColor: "transparent",
+                // backgroundColor: "transparent",
               }}
               onChange={v => {
                 setActiveChat(v);
               }}
-            />
-            <LLMChatOptions {...prgl} 
-              prompts={prompts} 
-              activeChat={activeChat}
-              activeChatId={activeChatId}
-              credentials={credentials}
             />
             <Btn 
               iconPath={mdiPlus}
@@ -116,6 +133,12 @@ export const AskLLM = (prgl: Prgl) => {
               variant="faded"
               color="action"
               onClickPromise={() => createNewChat(firstCredential.id)}
+            />
+            <LLMChatOptions {...prgl} 
+              prompts={prompts} 
+              activeChat={activeChat}
+              activeChatId={activeChatId}
+              credentials={credentials}
             />
           </FlexRow>
         }
@@ -148,14 +171,8 @@ export const AskLLM = (prgl: Prgl) => {
             messages={messages}
             onSend={async (msg) => {
               if(!msg || !activeChatId) return;
-              // const newMessages = [...messages, { message: msg, incoming: false, sent: new Date(), sender_id: "me" }];
-              // setMessages(newMessages);
-              await dbs.llm_messages.insert({
-                user_id: user?.id as any,
-                chat_id: activeChatId,
-                message: msg,
-              });
               const response = await askLLM(msg, schemaStr, activeChatId);
+
               // if(!getIsMounted()) return;
               // const aiResponseText = response.choices[0]?.message.content;
               // console.log(aiResponseText);

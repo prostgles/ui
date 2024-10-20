@@ -7,8 +7,11 @@ import Btn from "../Btn";
 import { mdiContentCopy } from "@mdi/js";
 import "./Marked.css";
 
-type P = { content: string } & DivProps
-export const Marked = ({ content, ...divProps }: P) => {
+type P = DivProps & { 
+  content: string;
+  codeHeader: (opts: { language: string, codeString: string; }) => React.ReactNode;
+};
+export const Marked = ({ content, codeHeader, ...divProps }: P) => {
   
   useEffect(() => {
     if(!content) return
@@ -39,8 +42,9 @@ export const Marked = ({ content, ...divProps }: P) => {
             maxWidth: "700px",
           }}
         > 
-          <FlexRow className="bg-color-2">
+          <FlexRow className="bg-color-2 p-p5">
             <div className="text-sm text-color-4 f-1 px-1 ">{language}</div>
+            {codeHeader({ language, codeString })}
             <Btn 
               iconPath={mdiContentCopy}
               style={{
@@ -50,7 +54,7 @@ export const Marked = ({ content, ...divProps }: P) => {
               onClick={() => {
                 navigator.clipboard.writeText(codeString);
               }}
-            >Copy code</Btn>
+            >Copy</Btn>
           </FlexRow>
           <MonacoEditor 
             style={{ 

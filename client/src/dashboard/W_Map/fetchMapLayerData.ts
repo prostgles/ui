@@ -40,7 +40,7 @@ export const fetchMapLayerData = async function(this: W_Map, dataAge: number ){
       if(opts.type === "map" && opts.mapIcons) {
         if(opts.mapIcons.type === "fixed") {
           await getIcon(opts.mapIcons.iconPath);
-        } else if (opts.mapIcons.type === "conditional") {
+        } else {
           for await(const c of opts.mapIcons.conditions){
             await getIcon(c.iconPath)
           }

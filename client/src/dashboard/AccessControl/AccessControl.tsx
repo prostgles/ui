@@ -25,9 +25,10 @@ export type AccessRule = Required<DBSSchema["access_control"]> & {
   }[];
   isApplied: boolean | undefined;
   published_methods: Required<DBSSchema["published_methods"]>[];
+  access_control_allowed_llm: Omit<Required<DBSSchema["access_control_allowed_llm"]>, "access_control_id">[];
 };
 
-export type EditedAccessRule = Omit<AccessRule, "database_id" | "id">;
+export type EditedAccessRule = Omit<AccessRule, "database_id" | "id" | "isApplied">;
 
 export type AccessControlAction =
   | {
@@ -133,6 +134,7 @@ export const ACCESS_CONTROL_SELECT = {
   select: {
     "*": 1,
     access_control_user_types: { ids: { $array_agg: ["user_type"] } },
-    published_methods: "*"
+    published_methods: "*",
+    access_control_allowed_llm: "*",
   },
 } as const;

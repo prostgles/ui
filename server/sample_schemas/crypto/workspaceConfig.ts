@@ -5,6 +5,7 @@ type WorkspaceConfig = {
   workspaces: {
     name: string;
     options?: any;
+    layout?: any;
     windows: {
       type: "table";
       table_name: string;

@@ -23,6 +23,18 @@ export type DBSchemaGenerated = {
       name?: null | string;
     };
   };
+  access_control_allowed_llm: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      access_control_id: number;
+      llm_credential_id: number;
+      llm_prompt_id: number;
+    };
+  };
   access_control_connections: {
     is_view: false;
     select: true;
@@ -309,9 +321,10 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
+      body_parameters?: null | Partial<Record<string, string>>
       created?: null | string;
       endpoint?: string;
-      extraHeaders?: null | Partial<Record<string, string>>
+      extra_headers?: null | Partial<Record<string, string>>
       id?: number;
       key_id?: null | string;
       key_secret: string;

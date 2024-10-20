@@ -741,7 +741,9 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
 
     const maxWidth = "max-w-650" as const;
 
-    if (!tableInfo) return null;
+    if (!tableInfo) {
+      return <>Table {tableName} not found.</>
+    }
 
     const rowFilter = this.getRowFilter();
     const filterKeys = rowFilter && "$and" in rowFilter ? rowFilter.$and.flatMap(f => getKeys(f)) : getKeys(rowFilter ?? {});

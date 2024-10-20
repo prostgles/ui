@@ -81,7 +81,7 @@ export type GeoJsonLayerProps = {
   getFillColor: ((f: GeoJSONFeature) => DeckGlColor);
   getLineColor: ((f: GeoJSONFeature) => DeckGlColor);
   getText?: (f: GeoJSONFeature) => string;
-  getTextSize?: number;
+  getTextSize?: number | ((f: GeoJSONFeature) => number);
   getIcon?: (f: GeoJSONFeature) => {
     url: string;
     width: number;
@@ -392,25 +392,35 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
         type: "FeatureCollection",
         features: g.features
       }),
+      /** Disabled due to bad  */
+      // extensions: [new deckGlLibs.extensions.CollisionFilterExtension()],
       filled: true,
       pointRadiusMinPixels: 2,
       pointRadiusScale: 1,
-      getPointRadius: f => f.properties.radius ?? 1,
+      // getPointRadius: f => f.properties.radius ?? 1,
+      // getPointRadius: 22,
       extruded: Boolean(g.elevation),
       getElevation: g.elevation || 0,
 
       getFillColor: g.getFillColor, // ?? [200, 0, 80, 255],
       getLineColor: g.getLineColor, // ?? [200, 0, 80, 255],
-      pointType: g.getIcon? "circle+icon" : g.getText? "circle+text" : "circle",
+      pointType: [
+          "circle",
+          g.getIcon? "icon" : undefined,
+          g.getText? "text" : undefined
+        ].filter(isDefined).join("+"),
       getText: g.getText,
       getTextAlignmentBaseline: "top",
       getTextPixelOffset: f => [0, 5],
       getTextSize: g.getTextSize,
+      textCharacterSet: "auto",
+      /** For example, maxWidth: 10.0 used with getSize: 12 is roughly the equivalent of max-width: 120px in CSS. */
+      textMaxWidth: 10,
+
       getIconColor: g.getFillColor,
       getIcon: g.getIcon,
       getIconPixelOffset: f => [0, -10],
-      //@ts-ignore
-      getIconSize: g.getIcon? (f => [g.getIcon!(f).width, g.getIcon!(f).height]) : undefined,
+      getIconSize: f => g.getIcon!(f).width,
       lineWidthMinPixels: 2,
       //@ts-ignore
       widthScale: 22,

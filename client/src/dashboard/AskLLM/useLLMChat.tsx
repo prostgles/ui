@@ -33,9 +33,16 @@ export const useLLMChat = ({ dbs, user }: Prgl) => {
       orderBy: { created: -1 }
     }
   );
-  const { data: activeChat } = dbs.llm_chats.useSubscribeOne({ id: activeChatId });
+  const { data: activeChat, isLoading } = dbs.llm_chats.useSubscribeOne({ id: activeChatId });
 
   useEffectDeep(() => {
+    
+    /** Change chat if deleted */
+    if(activeChatId && !activeChat && !isLoading && latestChats){
+      setActiveChat(undefined);
+      return;
+    }
+
     const firstCredential = credentials?.[0];
     if(latestChats?.length){
       if(!activeChatId){

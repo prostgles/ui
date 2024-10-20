@@ -1,9 +1,13 @@
 import React from "react";
 import Btn from "../../../components/Btn";
-import { FlexRow, FlexRowWrap, classOverride } from "../../../components/Flex";
+import type { BtnProps } from "../../../components/Btn";
+import { FlexCol, FlexRow, FlexRowWrap, classOverride } from "../../../components/Flex";
 import FormField from "../../../components/FormField/FormField";
 import { FormFieldDebounced } from "../../../components/FormField/FormFieldDebounced";
 import Popup from "../../../components/Popup/Popup";
+import { Label, type LabelProps } from "../../../components/Label";
+import { isObject } from "../../../../../commonTypes/publishUtils";
+import { mdiPalette } from "@mdi/js";
 
 export type RGBA = [number, number, number, number];
 const COLOR_PALETTE = ["#F79800", "#ff004a", "#CB11F0", "#7430F0", "#ffffff", "#174CFA", "#0AA1FA", "#36E00B", "rgb(143 143 143)"];
@@ -17,7 +21,7 @@ export class ColorPicker extends React.Component<{
   className?: string;
   value: string;
   onChange: (color: string, rgb: RGBA, rgb255Alpha: RGBA) => void;
-  label?: string;
+  label?: string | LabelProps;
   required?: boolean;
   title?: string;
   variant?: "legend";
@@ -60,16 +64,22 @@ export class ColorPicker extends React.Component<{
     const { anchorEl } = this.state;
     const { value, style = {}, className = "", onChange, label, variant } = this.props;
 
-    const labelNode = label? <div className=" noselect f-d1">{label}</div> : null;
+    const labelNode = label? isObject(label)? null : 
+      <div className=" noselect f-d1">{label}</div> : 
+      null;
     const colorNode = <ColorCircle
-        color={value}
-        onClick={e => {
-          this.setState({ anchorEl: e.currentTarget })
-        }}
-      />
+      label={isObject(label)? label : undefined}
+      color={value}
+      onClick={e => {
+        this.setState({ anchorEl: e.currentTarget })
+      }}
+    />
 
     return <FlexRow className={classOverride("gap-p5 ai-center ", className)} style={style}>
-      {variant === "legend"? <>{colorNode}{labelNode}</> : <>{labelNode}{colorNode}</>}
+      {
+        variant === "legend"? <>{colorNode}{labelNode}</> : 
+        <>{labelNode}{colorNode}</>
+      }
       {anchorEl && 
         <Popup 
           title={"Layer color"}
@@ -123,11 +133,17 @@ export class ColorPicker extends React.Component<{
   }
 }
 
-export const ColorCircle = ({ color, onClick }: Pick<React.DOMAttributes<HTMLDivElement>, "onClick">& { color: string }) => {
-  return <div 
-    className={"round pointer shadow b b-color f-0"} 
-    style={{ width: "24px", height: "24px", backgroundColor: color }} 
+export const ColorCircle = ({ color, onClick, label, size }: Pick<BtnProps, "onClick" | "label" | "size"> & { color: string }) => {
+  return <Btn 
+    label={label}
+    size={size}
+    className={"shadow b b-color f-0"} 
+    style={{ backgroundColor: color }} 
     onClick={onClick}
+    iconProps={{
+      path: mdiPalette,
+      color
+    }}
   />
 }
 
