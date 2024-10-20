@@ -7,7 +7,7 @@ import { getACRules } from "./ConnectionManager/ConnectionManager";
 import { isDefined } from "../../commonTypes/filterUtils";
 import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { getPasswordHash } from "./authConfig/authUtils";
-import { fetchLLMResponse } from "./publishMethods/askLLM/fetchLLMResponse";
+import { fetchLLMResponse } from "./publishMethods/askLLM/askLLM";
 
 export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise<Publish<DBSchemaGenerated>> => {
         
@@ -21,11 +21,11 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
   const { id: user_id, } = user;
 
   /** Admin users are always allowed everything */
-  const acs = isAdmin? undefined : await getACRules(db, user);
+  const accessRules = isAdmin? undefined : await getACRules(db, user);
   
-  const createEditDashboards = isAdmin || acs?.some(({ dbsPermissions }) => dbsPermissions?.createWorkspaces);
+  const createEditDashboards = isAdmin || accessRules?.some(({ dbsPermissions }) => dbsPermissions?.createWorkspaces);
 
-  const publishedWspIDs = acs?.flatMap(ac => ac.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds).filter(isDefined) || []; 
+  const publishedWspIDs = accessRules?.flatMap(ac => ac.dbsPermissions?.viewPublishedWorkspaces?.workspaceIds).filter(isDefined) || []; 
 
   const dashboardMainTables: Publish<DBSchemaGenerated> = (["windows", "links", "workspaces"] as const)
     .reduce((a, tableName) => ({
@@ -104,6 +104,15 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
   
   const forcedData = { user_id: user.id };
   const forcedFilter = { user_id: user.id };
+
+  const forcedFilterLLM = { 
+    $existsJoined: {
+      access_control_allowed_llm: {
+        access_control_id: { $in: accessRules?.map(ac => ac.id) ?? [] }
+      }
+    } 
+  }
+
   let dashboardTables: Publish<DBSchemaGenerated> = {
 
     /* DASHBOARD */
@@ -120,39 +129,49 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
       },
       update: "*",
     },
-    llm_credentials: isAdmin && {
+    llm_credentials: {
       select: {
-        fields: { key_secret: 0 }
+        fields: isAdmin? { key_secret: 0 } : { id: 1, name: 1 },
+        forcedFilter: isAdmin? undefined : forcedFilterLLM
       },
-      delete: "*",
-      insert: { 
+      delete: isAdmin && "*",
+      insert: isAdmin && { 
         fields: "*", 
         forcedData,
         postValidate: async ({ row, dbx }) => {
-          await fetchLLMResponse({ llm_credential: row, question: "Hey", schema: "my_table();", prompt: undefined });
+          await fetchLLMResponse({ 
+            llm_credential: row, 
+            messages: [
+              { role: "system", content: "Be helpful" },
+              { role: "user", content: "Hey" }
+            ]
+          });
         }
       },
-      update: "*",
+      update: isAdmin && "*",
     },
-    llm_prompts: isAdmin && {
-      select: "*",
-      delete: "*",
-      insert: { 
+    llm_prompts: {
+      select: isAdmin? "*" : { 
+        fields: { id: 1, name: 1 },
+        forcedFilter: forcedFilterLLM 
+      },
+      delete: isAdmin && "*",
+      insert: isAdmin && { 
         fields: "*", 
         forcedData
       },
-      update: {
+      update: isAdmin && {
         fields: "*",
         forcedFilter,
         forcedData
       }
     },
-    llm_chats: isAdmin && {
+    llm_chats: {
       select: {
         fields: "*",
         forcedFilter
       },
-      delete: "*",
+      delete: isAdmin && "*",
       insert: { 
         fields: "*", 
         forcedData
@@ -163,7 +182,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
         forcedFilter,
       }
     },
-    llm_messages: isAdmin && {
+    llm_messages: {
       select: {
         fields: "*",
         forcedFilter: {
@@ -174,7 +193,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
           }
         }
       },
-      delete: "*",
+      delete: isAdmin && "*",
       insert: { 
         fields: "*", 
         forcedData,
@@ -203,7 +222,17 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
         orderByFields: { db_conn: 1, created: 1 },
         forcedFilter: isAdmin? 
           {} : 
-          { $existsJoined: { "database_configs.access_control.access_control_user_types": userTypeFilter["access_control_user_types"] } as any }
+          { 
+            $and: [
+              { 
+                $existsJoined: { 
+                  "database_configs.access_control.access_control_user_types": 
+                    userTypeFilter["access_control_user_types"] 
+                } as any 
+              },
+              { $existsJoined: { access_control_connections: {} } }
+            ] 
+          }
       },
       update: user.type === "admin" && {
         fields: {

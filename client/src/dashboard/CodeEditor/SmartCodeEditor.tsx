@@ -12,12 +12,14 @@ type P = {
   label: React.ReactNode;
   onSaveButton?: Pick<BtnProps, "children" | "iconPath" | "color" | "size">;
   onSave?: (value: string) => void;
+  autoSave?: boolean;
   value: string | undefined | null;
   codePlaceholder?: string;
 } & Omit<CodeEditorProps, "onSave" | "onChange" | "value" | "style" | "className">;
 
-export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceholder, ...codeEditorProps }: P) => {
-  const [localValue, setLocalValue] = React.useState(value);
+export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceholder, autoSave, ...codeEditorProps }: P) => {
+  const [_localValue, setLocalValue] = React.useState<string | null | undefined>();
+  const localValue = _localValue ?? value;
   const [error, setError] = React.useState<any>();
   const [fullScreen, setFullScreen] = React.useState(false);
   useEffectDeep(() => {
@@ -27,7 +29,7 @@ export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceh
   }, [localValue, value]);
  
   const didChange = localValue !== value;
-  const onClickSave = !onSave? undefined : async () => {
+  const onClickSave = (!onSave || autoSave)? undefined : async () => {
     if(!didChange) return;
     try {
       await onSave(localValue ?? "");
@@ -55,7 +57,12 @@ export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceh
         }}
         { ...codeEditorProps }
         value={localValue || (codePlaceholder ?? "")}
-        onChange={setLocalValue}
+        onChange={newValue => {
+          if(autoSave){
+            onSave?.(newValue);
+          }
+          setLocalValue(newValue);
+        }}
         onSave={onClickSave}
       />
       {didChange && onClickSave && <FooterButtons 

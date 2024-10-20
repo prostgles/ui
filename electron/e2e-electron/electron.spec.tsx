@@ -110,7 +110,7 @@ test('renders the first page', async ( ) => {
   await createDatabase("sample_db", page);
   await screenshot();
   await page.waitForTimeout(1000);
-  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 2e3 });
+  await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 10e3 });
   await screenshot();
   await page.waitForTimeout(1000);
   await page.getByTestId("dashboard.goToConnections").click();

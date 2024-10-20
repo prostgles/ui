@@ -2,7 +2,7 @@ import type { HoverCoords } from "../Map/DeckGLMap";
 import type { LayerQuery, LayerSQL } from "./W_Map";
 import type W_Map from "./W_Map";
 import type { MapDataResult} from "./getMapData";
-import { getMapFilter, getMapSelect, getSQLHoverRow } from "./getMapData";
+import { getMapFilter, getSQLHoverRow } from "./getMapData";
 import type { AnyObject} from "prostgles-types";
 import { isObject } from "prostgles-types"
 
@@ -75,7 +75,7 @@ export async function onMapHover(this: W_Map, hoverObj?: AnyObject & HoveredObje
                   return;
                 }
                 const select = selectCols.reduce((a, v) => ({ ...a, [v.name]: 0 }), {});
-                const filter = getMapFilter(layer, table.columns, hoverObj.properties as any)?.filterValue;
+                const filter = getMapFilter(layer, table.columns, hoverObj.properties as any, this.props.myLinks)?.filterValue;
                 // const filter = selectData.i.$jsonb_build_object? (i as AnyObject) : { 
                 //   $filter: [
                 //     selectData.i,

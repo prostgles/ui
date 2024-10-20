@@ -29,7 +29,6 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitAny": false,
     "declaration": true,
-    "keyofStringsOnly": true,
 		"ignoreDeprecations": "5.0",
     "strictNullChecks": true,
 		"paths": { 

@@ -111,7 +111,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
         <OnMountFunction { ...prgl } />
         <PublishedMethods
           prgl={prgl}
-          forAccessRule={undefined}
+          accessRuleId={undefined}
         />
       </FlexCol>
     },

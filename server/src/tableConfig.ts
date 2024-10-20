@@ -3,6 +3,7 @@ import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig"
 import { loggerTableConfig } from "./Logger";
 import { CONNECTION_CONFIG_SECTIONS, throttle } from "../../commonTypes/utils";
 import { subscribe } from "diagnostics_channel";
+import { access } from "fs";
 
 export const DB_SSL_ENUM = ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"] as const;
  
@@ -35,6 +36,8 @@ const DUMP_OPTIONS_SCHEMA = {
       ifExists: { type: "boolean", optional: true },
 
       keepLogs: { type: "boolean", optional: true },
+      excludeSchema: { type: "string", optional: true },
+      schemaOnly: { type: "boolean", optional: true },
     }]
   },
   // defaultValue: "{}"
@@ -141,16 +144,72 @@ const filter = {
   optional: true,
 } as const; 
 
-const joinPath = { arrayOfType: { table: "string", on: { arrayOf: { record: { values: "any" } } } }, optional: true } as const satisfies JSONB.FieldTypeObj
+const joinPath = { 
+  description: "When adding a chart this allows showing data from a table that joins to the current table",
+  arrayOfType: { table: "string", on: { arrayOf: { record: { values: "any" } } } }, 
+  optional: true 
+} as const satisfies JSONB.FieldTypeObj
 const CommonChartLinkOpts = { 
   ...CommonLinkOpts,
   smartGroupFilter: filter,
   joinPath,
   localTableName: { type: "string", optional: true, description: "If provided then this is a local layer (w1_id === w2_id === current chart window)" },
   osmLayerQuery: { type: "string", optional: true, description: "If provided then this is a OSM layer (w1_id === w2_id === current chart window)" },
-  groupByColumn: { type: "string", optional: true, description: "Used by timechart only at the moment" },
+  groupByColumn: { type: "string", optional: true, description: "Used by timechart" },
   fromSelected: { type: "boolean", optional: true, description: "True if chart links to SQL statement selection" },
   sql: { type: "string", optional: true },
+  mapIcons: {
+    optional: true,
+    oneOfType: [
+      { 
+        type: { enum: ["fixed"] },
+        iconPath: "string",
+      },
+      { 
+        type: { enum: ["conditional"] },
+        columnName: "string",
+        conditions: {
+          arrayOfType: {
+            value: "any",
+            iconPath: "string",
+          },
+        }
+      },
+    ]
+  },
+  mapColorMode: {
+    optional: true,
+    oneOfType: [
+      { 
+        type: { enum: ["fixed"] },
+        colorArr: "number[]",
+      },
+      { 
+        type: { enum: ["scale"] },
+        columnName: "string",
+        min: "number",
+        max: "number",
+        minColorArr: "number[]",
+        maxColorArr: "number[]",
+      },
+      { 
+        type: { enum: ["conditional"] },
+        columnName: "string",
+        conditions: {
+          arrayOfType: {
+            value: "any",
+            colorArr: "number[]",
+          },
+        }
+      },
+    ]
+  },
+  mapShowText: { 
+    optional: true, 
+    type: {
+      columnName: { type: "string" },
+    }, 
+  },
 } as const satisfies JSONB.ObjectType["type"] 
 
 export const tableConfig: TableConfig<{ en: 1; }> = {
@@ -517,9 +576,12 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       database_id     : `INTEGER NOT NULL REFERENCES database_configs(id) ON DELETE CASCADE`,
       dbsPermissions: { info:{ hint: "Permission types and rules for the state database"}, nullable: true, jsonbSchemaType: {
         createWorkspaces: { type: "boolean", optional: true },
-        viewPublishedWorkspaces: { type: {
-          workspaceIds: "string[]"
-        }, optional: true },
+        viewPublishedWorkspaces: {
+          optional: true, 
+          type: {
+            workspaceIds: "string[]"
+          }, 
+        },
       }},        
       dbPermissions: { info: { hint: "Permission types and rules for this (connection_id) database" }, jsonbSchema: { oneOfType: [
         { 
@@ -660,7 +722,15 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       pkey: { type: "PRIMARY KEY", content: "published_method_id, access_control_id" }
     }, 
   },
-
+  access_control_connections: {
+    columns: {
+      connection_id: `UUID NOT NULL REFERENCES connections(id) ON DELETE CASCADE`,
+      access_control_id: `INTEGER NOT NULL REFERENCES access_control  ON DELETE CASCADE`,
+    },
+    indexes: {
+      "unique_connection_id": { unique: true, columns: "connection_id, access_control_id" }
+    }
+  },
   magic_links: { 
     // dropIfExistsCascade: true,
     columns: {
@@ -1122,7 +1192,18 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       key_id: `TEXT`,
       key_secret: `TEXT NOT NULL`,
       endpoint: `TEXT NOT NULL DEFAULT 'https://api.openai.com/v1/chat/completions'`,
-      extraHeaders: {
+      extra_headers: {
+        info: { hint: "Extra headers to be sent with the request. Can overwrite existing" },
+        nullable: true,
+        jsonbSchema: {
+          record: {
+            partial: true,
+            values: "string",
+          }
+        }
+      },
+      body_parameters: {
+        info: { hint: "Used to set model, response_format and other options" },
         nullable: true,
         jsonbSchema: {
           record: {
@@ -1160,8 +1241,18 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       id: `int8 PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       chat_id: `INTEGER REFERENCES llm_chats(id) ON DELETE CASCADE`,
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
-      message: `TEXT`,
+      message: `TEXT NOT NULL`,
       created: `TIMESTAMP DEFAULT NOW()`,
+    }
+  },
+  access_control_allowed_llm: {
+    columns: {
+      access_control_id: `INTEGER NOT NULL REFERENCES access_control(id)`,
+      llm_credential_id: `INTEGER NOT NULL REFERENCES llm_credentials(id)`,
+      llm_prompt_id: `INTEGER NOT NULL REFERENCES llm_prompts(id)`,
+    },
+    indexes: {
+      unique: { unique: true, columns: "access_control_id, llm_credential_id, llm_prompt_id" }
     }
   },
   ...loggerTableConfig,

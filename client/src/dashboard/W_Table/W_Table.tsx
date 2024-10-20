@@ -631,32 +631,32 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
                 tableStyle={{ borderRadius: "unset", border: "unset" }}
                 pagination={this.getPaginationProps()}
                 showSubLabel={w.options.showSubLabel}
-
                 activeRowStyle={activeRowStyle}
                 activeRowIndex={activeRowIndex}
                 onRowClick={this.state.onRowClick}
+                afterLastRowContent={canInsert && !childWindow &&
+                  <Btn iconPath={mdiPlus}
+                    data-command="dashboard.window.rowInsert"
+                    data-key={w.table_name}
+                    title="Insert row"
+                    className="shadow w-fit h-fit mt-1"
+                    color="action"
+                    variant={w.options.showFilters? "outline" : "filled"}
+                    style={{ 
+                      position: "sticky", 
+                      left: "15px", 
+                      bottom: "15px",
+                      zIndex: 1,
+                    }}
+                    onClick={async () => {
+                      this.rowPanelRState.set({ type: "insert" });
+                    }}
+                  />
+                }
               />
             }
 
-            {canInsert && !childWindow &&
-              <Btn iconPath={mdiPlus}
-                data-command="dashboard.window.rowInsert"
-                data-key={w.table_name}
-                title="Insert row"
-                className="shadow w-fit h-fit"
-                color="action"
-                variant="outline"
-                style={{ 
-                  position: "absolute", 
-                  right: "15px", 
-                  bottom: "15px",
-                  zIndex: 1,
-                }}
-                onClick={async () => {
-                  this.rowPanelRState.set({ type: "insert" });
-                }}
-              />
-            }
+            
           </W_Table_Content>
   
         </div>

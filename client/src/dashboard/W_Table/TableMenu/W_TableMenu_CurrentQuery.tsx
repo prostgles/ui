@@ -1,14 +1,13 @@
-import React, { useState } from "react"
-import { FlexCol } from "../../../components/Flex";
+import React, { useState } from "react";
 import Btn from "../../../components/Btn";
+import { FlexCol } from "../../../components/Flex";
+import CodeExample from "../../CodeExample";
 import { getTableFilter } from "../getTableData";
 import { getTableSelect } from "../tableUtils/getTableSelect";
 import { getSort } from "../tableUtils/tableUtils";
-import CodeExample from "../../CodeExample";
 import type { W_TableMenuProps } from "./W_TableMenu";
-import { mdiBug } from "@mdi/js";
 
-const QUERY_TYPES = ["SQL", "Prostgles API", "Debug"] as const;
+const QUERY_TYPES = ["SQL", "Prostgles API", "Full config"] as const;
 type QueryType = typeof QUERY_TYPES[number];
 
 export const W_TableMenu_CurrentQuery = (props: W_TableMenuProps) => {
@@ -16,21 +15,16 @@ export const W_TableMenu_CurrentQuery = (props: W_TableMenuProps) => {
   const [{ query, type }, setQuery] = useState<{ query: string; type?: QueryType }>({ query: "", type: undefined })
   // const [queryType, setQueryType] = useState<QueryType>("SQL");
 
-  return <FlexCol>
-    {/* <ButtonGroup 
-      value={queryType} 
-      options={QUERY_TYPES} 
-      onChange={currentQueryType => {
-        setQuery("");
-        setQueryType(currentQueryType);
-      }} 
-    /> */}
+  return <FlexCol> 
     {QUERY_TYPES.map(queryType => {
-      if(queryType === "Debug") return null
       const isActive = queryType === type;
       return <Btn 
         key={queryType}
         onClickPromise={async () => {
+          if(queryType === "Full config"){
+            setQuery({ query: JSON.stringify(w, null, 2), type: "Full config" })
+            return;
+          }
           const { filter, having } = getTableFilter(w, props);
           const { select } = await getTableSelect(w, tables, db, filter);
           const orderBy = getSort(tables, w);
@@ -68,15 +62,7 @@ export const W_TableMenu_CurrentQuery = (props: W_TableMenuProps) => {
         language={type === "SQL"? "sql" : "javascript"}
         value={query}
       />
-    }
-
-    <Btn 
-      iconPath={mdiBug}
-      title="Show window object (debugging)" 
-      onClick={() => {
-        setQuery({ query: JSON.stringify(w, null, 2), type: "Debug" })
-      }} 
-    />
+    } 
   </FlexCol>
 }
 /*

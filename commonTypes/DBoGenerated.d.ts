@@ -23,6 +23,29 @@ export type DBSchemaGenerated = {
       name?: null | string;
     };
   };
+  access_control_allowed_llm: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      access_control_id: number;
+      llm_credential_id: number;
+      llm_prompt_id: number;
+    };
+  };
+  access_control_connections: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      access_control_id: number;
+      connection_id: string;
+    };
+  };
   access_control_methods: {
     is_view: false;
     select: true;
@@ -99,7 +122,7 @@ export type DBSchemaGenerated = {
       local_filepath?: null | string;
       options: 
        |  {  command: 'pg_dumpall';  clean: boolean;  dataOnly?: boolean;  globalsOnly?: boolean;  rolesOnly?: boolean;  schemaOnly?: boolean;  ifExists?: boolean;  encoding?: string;  keepLogs?: boolean; }
-       |  {  command: 'pg_dump';  format: 'p' | 't' | 'c';  dataOnly?: boolean;  clean?: boolean;  create?: boolean;  encoding?: string;  numberOfJobs?: number;  noOwner?: boolean;  compressionLevel?: number;  ifExists?: boolean;  keepLogs?: boolean; }
+       |  {  command: 'pg_dump';  format: 'p' | 't' | 'c';  dataOnly?: boolean;  clean?: boolean;  create?: boolean;  encoding?: string;  numberOfJobs?: number;  noOwner?: boolean;  compressionLevel?: number;  ifExists?: boolean;  keepLogs?: boolean;  excludeSchema?: string;  schemaOnly?: boolean; }
       restore_command?: null | string;
       restore_end?: null | string;
       restore_logs?: null | string;
@@ -206,7 +229,7 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       backups_config?: null | {    enabled?: boolean;   cloudConfig: null |  {  credential_id?: null | number; };   frequency: 'daily' | 'monthly' | 'weekly' | 'hourly';   hour?: number;   dayOfWeek?: number;   dayOfMonth?: number;   keepLast?: number;   err?: null | string;   dump_options: |  {  command: 'pg_dumpall';  clean: boolean;  dataOnly?: boolean;  globalsOnly?: boolean;  rolesOnly?: boolean;  schemaOnly?: boolean;  ifExists?: boolean;  encoding?: string;  keepLogs?: boolean; }
- |  {  command: 'pg_dump';  format: 'p' | 't' | 'c';  dataOnly?: boolean;  clean?: boolean;  create?: boolean;  encoding?: string;  numberOfJobs?: number;  noOwner?: boolean;  compressionLevel?: number;  ifExists?: boolean;  keepLogs?: boolean; };  };
+ |  {  command: 'pg_dump';  format: 'p' | 't' | 'c';  dataOnly?: boolean;  clean?: boolean;  create?: boolean;  encoding?: string;  numberOfJobs?: number;  noOwner?: boolean;  compressionLevel?: number;  ifExists?: boolean;  keepLogs?: boolean;  excludeSchema?: string;  schemaOnly?: boolean; };  };
       db_host: string;
       db_name: string;
       db_port: number;
@@ -268,8 +291,8 @@ export type DBSchemaGenerated = {
       last_updated: string;
       options: 
        |  {  type: 'table';  colorArr?: number[];  tablePath: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; }
-       |  {  type: 'map';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  fromSelected?: boolean;  sql?: string;  columns: (  {  name: string;  colorArr: number[]; } )[]; }
-       |  {  type: 'timechart';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  fromSelected?: boolean;  sql?: string;  columns: (  {  name: string;  colorArr: number[];  statType?: {  funcName: '$min' | '$max' | '$countAll' | '$avg' | '$sum';  numericColumn: string; }; } )[]; }
+       |  {  type: 'map';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  fromSelected?: boolean;  sql?: string;  mapIcons?: |  {  type: 'fixed';  iconPath: string; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: 'fixed';  colorArr: number[]; } |  {  type: 'scale';  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[]; } )[]; }
+       |  {  type: 'timechart';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  fromSelected?: boolean;  sql?: string;  mapIcons?: |  {  type: 'fixed';  iconPath: string; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: 'fixed';  colorArr: number[]; } |  {  type: 'scale';  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[];  statType?: {  funcName: '$min' | '$max' | '$countAll' | '$avg' | '$sum';  numericColumn: string; }; } )[]; }
       user_id: string;
       w1_id: string;
       w2_id: string;
@@ -298,9 +321,10 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
+      body_parameters?: null | Partial<Record<string, string>>
       created?: null | string;
       endpoint?: string;
-      extraHeaders?: null | Partial<Record<string, string>>
+      extra_headers?: null | Partial<Record<string, string>>
       id?: number;
       key_id?: null | string;
       key_secret: string;

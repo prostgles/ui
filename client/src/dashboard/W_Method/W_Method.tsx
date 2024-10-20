@@ -18,11 +18,11 @@ export const W_Method = (allProps: W_MethodProps) => {
   useEffectAsync(async () => {
     const wSync = await props.w.$cloneSync((newW, deltaW) => { 
       if(!getIsMounted()) return;
-      setW(newW) 
+      setW(newW);
     });
 
     return wSync.$unsync;
-  }, []);
+  }, [props.w, getIsMounted]);
   
   const setOpts = (newOpts: Partial<typeof w["options"]>) => {
     w.$update({ options: { ...w.options, ...newOpts} }, { deepMerge: false });

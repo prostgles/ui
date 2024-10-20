@@ -441,7 +441,7 @@ test.describe("Main test", () => {
     await insertRow(page, "my_table", { name: deletedRowName });
 
     /** Search row */
-    await page.getByTestId("dashboard.window.toggleFilterBar").click(); // { force: true }
+    await page.getByTestId("dashboard.window.toggleFilterBar").click();
     await page.locator("input#search-all").fill("2");
     await page.getByRole('listitem', { name: '2' }).click();
     /** This should work as well!!! */
@@ -583,7 +583,7 @@ test.describe("Main test", () => {
     /** Disable files permissions to test direct insert */
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("config.ac").click();
-    await page.locator(`.ExistingAccessRules_Item`).click();
+    await page.locator(`.ExistingAccessRules_Item_Header`).click();
     await setTableRule(page, "files", { select: { }, update: {}, insert: {}, delete: {} }, true);
     await page.getByTestId("config.ac.save").click();
     await page.waitForTimeout(2e3);

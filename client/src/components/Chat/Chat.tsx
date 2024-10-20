@@ -1,10 +1,10 @@
 import type { FunctionComponent, ReactChild} from "react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./Chat.css";
 
 import { mdiAt, mdiAttachment, mdiFile, mdiMicrophone, mdiSend, mdiStop } from "@mdi/js";
 import { Icon } from "../Icon/Icon";
-import { classOverride } from "../Flex";
+import { classOverride, FlexRow } from "../Flex";
 import FileInput, { generateUniqueID } from "../FileInput/FileInput";
 import Btn from "../Btn";
 
@@ -71,6 +71,7 @@ class AudioRecorder {
   }
 }
 const audioRec = new AudioRecorder();
+
 export const Chat: FunctionComponent<P> = (props) => {
   const {
     className = "",
@@ -85,6 +86,7 @@ export const Chat: FunctionComponent<P> = (props) => {
   
   const [recording, setRecording] = useState(false);
   const [scrollRef, setScrollRef] = useState<HTMLDivElement>();
+  const ref = useRef<HTMLTextAreaElement>(null);
   const startRecording = () => {
     audioRec.start(blob => {
       onSend("", blob, "recording.ogg", "audio/webm");
@@ -105,15 +107,20 @@ export const Chat: FunctionComponent<P> = (props) => {
   }, [messages, scrollRef]);
 
   const [msg, setMsg] = useState("");
+  const [sendingMsg, setSendingMsg] = useState(false);
 
   const sendMsg = async (msg: string) => {
     if(msg && msg.trim().length){
-      await onSend(msg);
-      setMsg("");
+      setSendingMsg(true);
+      try {
+        await onSend(msg);
+        setMsg("");
+      } catch(e){
+        console.error(e);
+      }
+      setSendingMsg(false);
     }
   }
-
-  let ref: HTMLTextAreaElement | undefined;
 
   const makeMessage = (m: Message, i: number) => {
     const content = m.message;
@@ -161,46 +168,51 @@ export const Chat: FunctionComponent<P> = (props) => {
         {messages.map(makeMessage)}            
       </div>
                 
-      <div className="send-wrapper">
+      <div className={"send-wrapper " + (sendingMsg? "no-interaction not-allowed" : "")}>
         <textarea 
-          ref={e => {
-            if(e) ref = e;
-          }}
+          ref={ref}
           className="no-scroll-bar bg-color-2 text-0" 
           rows={1} 
           value={msg}
           onKeyDown={e => {
-            if(ref && e.key.toLocaleLowerCase() === "enter"){
+            if(ref.current && !e.shiftKey && e.key.toLocaleLowerCase() === "enter"){
               e.preventDefault();
-              sendMsg(ref.value)
+              sendMsg(ref.current.value)
             }
           }}
           onChange={e => { setMsg(e.target.value) }}
         ></textarea> 
-        <Btn iconPath={mdiSend} onClick={async (e)=>{
-          if(!ref) return;
-          sendMsg(ref.value)
-        }}/>
-        {allowedMessageTypes.file && 
-          <label className="pointer button bg-transparent p-p5 ml-p5 mr-p5 bg-active-hover" style={{ background: "transparent", padding: ".5em"}}>
-            <input type="file" style={{ display: "none" }} onChange={async e => {
-              console.log(e.target.files);
-              const file = e.target.files?.[0];
-              if(file){
-                onSend("", file , file.name, file.type);
-              }
-            }}/>
-            <Icon path={mdiAttachment} />
-          </label> 
-        }
-        {allowedMessageTypes.audio && <Btn className=" bg-transparent p-p5 ml-p5 mr-p5" 
-          onClick={async (e)=>{
-            if(recording) stopRecording();
-            else startRecording();
-          }}
-          color={recording? "action" : "default"}
-          iconPath={recording? mdiStop : mdiMicrophone}
-        />}
+        <FlexRow className="as-end gap-p5 p-p5">
+          <Btn
+            iconPath={mdiSend} 
+            onClick={async (e)=>{
+              if(!ref.current) return;
+              sendMsg(ref.current.value)
+            }}
+          />
+          {allowedMessageTypes.file && 
+            <label className="pointer button bg-transparent bg-active-hover" style={{ background: "transparent", padding: ".5em"}}>
+              <input type="file" style={{ display: "none" }} onChange={async e => {
+                console.log(e.target.files);
+                const file = e.target.files?.[0];
+                if(file){
+                  onSend("", file , file.name, file.type);
+                }
+              }}/>
+              <Icon path={mdiAttachment} />
+            </label> 
+          }
+          {allowedMessageTypes.audio && 
+            <Btn className=" bg-transparent" 
+              onClick={async (e)=>{
+                if(recording) stopRecording();
+                else startRecording();
+              }}
+              color={recording? "action" : "default"}
+              iconPath={recording? mdiStop : mdiMicrophone}
+            />
+          }
+        </FlexRow>
       </div>
     </div>
   );

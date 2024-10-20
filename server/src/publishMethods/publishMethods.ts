@@ -30,12 +30,12 @@ import { DB_TRANSACTION_KEY, getCDB, getSuperUserCDB } from "../ConnectionManage
 import { getCompiledTS, getDatabaseConfigFilter, getEvaledExports } from "../ConnectionManager/connectionManagerUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
-import { actualRootDir, getElectronConfig, getRootDir } from "../electronConfig";
+import { actualRootDir, getElectronConfig } from "../electronConfig";
 import { getStatus } from "../methods/getPidStats";
 import { killPID } from "../methods/statusMonitorUtils";
 import { initBackupManager, statePrgl } from "../startProstgles";
 import { upsertConnection } from "../upsertConnection";
-import { fetchLLMResponse } from "./askLLM/fetchLLMResponse";
+import { askLLM } from "./askLLM/askLLM";
 
 export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params) => { 
   const { dbo: dbs, socket, db: _dbs } = params;
@@ -70,32 +70,7 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       await dbs.users.update({ id: noPwdAdmin.id }, { status: "disabled" });
       await dbs.sessions.delete({});
     },
-    askLLM: async (question: string, schema: string, chatId: number) => {
-      const chat = await dbs.llm_chats.findOne({ id: chatId, user_id: user.id });
-      if(!chat) throw "Chat not found";
-      const llmCredentials = await dbs.llm_credentials.findOne({ id: chat.llm_credential_id! });
-      if(!llmCredentials) throw "LLM credentials missing";
-      if(!question.trim()) throw "Question is empty";
-      const aiResponseMessage = await dbs.llm_messages.insert({
-        user_id: null as any,
-        chat_id: chatId,
-        message: "",
-      }, { returning: "*" });
-      try {
-        const prompt = await dbs.llm_prompts.findOne({ id: chat.llm_prompt_id });
-        const { aiText } = await fetchLLMResponse({ llm_credential: llmCredentials, question, schema, prompt: prompt!.prompt! });
-        let aiMessage = aiText;
-        if(typeof aiText !== "string") {
-          aiMessage = "Error: Unexpected response from LLM";
-        }
-        await dbs.llm_messages.update({ id: aiResponseMessage.id }, { message: aiMessage });
-
-      } catch(err){
-        console.error(err);
-        await dbs.llm_messages.update({ id: aiResponseMessage.id }, { message: "Something went wrong" });
-        throw "Error asking LLM";
-      }
-    },
+    askLLM: (question: string, schema: string, chatId: number) => askLLM(question, schema, chatId, dbs, user),
     getConnectionDBTypes: async (conId: string) => {
 
       /** Maybe state connection */

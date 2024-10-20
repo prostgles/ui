@@ -158,12 +158,12 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
           await dbo.sessions.update({ id: sid }, { is_connected: false })
         }
       },
-      // DEBUG_MODE: false, // This won't work because old_table is not available in the trigger
-      onQuery: (err, ctx) => {
-        if(err){
-          console.error(err, ctx?.client?.processID, ctx?.query);
-        }
-      },
+      /** Used for debugging */
+      // onQuery: (err, ctx) => {
+      //   if(err){
+      //     console.error(err, ctx?.client?.processID, ctx?.query);
+      //   }
+      // },
       onLog: async (e) => {
         addLog(e, null);
       },

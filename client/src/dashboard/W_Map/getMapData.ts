@@ -3,6 +3,7 @@ import type { AnyObject, ValidatedColumnInfo, SelectParams } from "prostgles-typ
 import type { LayerSQL, LayerTable } from "./W_Map";
 import type { GeoJSONFeature } from "../Map/DeckGLMap";
 import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
+import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
 
 const rowHashQuery = `md5(((t.*))::text) as "$rowhash"` as const;
 const getSQLQuery = ({ sql }: LayerSQL, selectList: string, limit?: number) => {
@@ -19,7 +20,8 @@ const getSQLQuery = ({ sql }: LayerSQL, selectList: string, limit?: number) => {
 
 export const MAP_SELECT_COLUMNS = { 
   geoJson: "l", 
-  idObj: "i", 
+  idObj: "i",
+  props: "p",
 } as const;
 export type MapDataResult = {
   l: AnyObject;
@@ -34,19 +36,23 @@ export const getSQLData = async (q: LayerSQL, db: DBHandlerClient, AGG_LIMIT: nu
   return await db.sql!(nq, { ...parameters, geomColumn }, { returnType: "rows" }) as any;
 }
 
-export const getMapSelect = ({ geomColumn }: Pick<LayerTable, "geomColumn">, columns: ValidatedColumnInfo[]) => {
+export const getMapSelect = ({ geomColumn, linkId }: Pick<LayerTable, "geomColumn" | "linkId">, columns: ValidatedColumnInfo[], myLinks: LinkSyncItem[]) => {
   
   const idColumns = columns.filter(c => c.is_pkey).map(c => c.name);
-  
+  const link = myLinks.find(l => l.id === linkId);
+  const opts = link?.options;
   const select = { 
     [MAP_SELECT_COLUMNS.idObj]: idColumns.length? { $jsonb_build_object: idColumns } : { $md5_multi: [geomColumn] },
-    [MAP_SELECT_COLUMNS.geoJson]: { $ST_AsGeoJSON: [geomColumn] } 
+    [MAP_SELECT_COLUMNS.geoJson]: { $ST_AsGeoJSON: [geomColumn] },
+    ...(opts?.type === "map" && opts.mapShowText?.columnName? {
+      [MAP_SELECT_COLUMNS.props]: { $jsonb_build_object: [opts.mapShowText.columnName] }
+    } : {})
   } as const satisfies SelectParams["select"];
 
   return select;
 }
-export const getMapFilter = ({ geomColumn }: Pick<LayerTable, "geomColumn">, columns: ValidatedColumnInfo[], fProps: GeoJSONFeature["properties"]) => {
-  const select = getMapSelect({ geomColumn }, columns);
+export const getMapFilter = (lt: Pick<LayerTable, "geomColumn" | "linkId">, columns: ValidatedColumnInfo[], fProps: GeoJSONFeature["properties"], myLinks: LinkSyncItem[]) => {
+  const select = getMapSelect(lt, columns, myLinks);
   if(fProps.type !== "table"){
     console.error("Only table type is supported");
     return undefined;

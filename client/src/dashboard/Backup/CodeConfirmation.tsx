@@ -9,7 +9,7 @@ import { useIsMounted } from "./CredentialSelector";
 import type { TestSelectors } from "../../Testing";
 
 type CodeConfirmationProps = TestSelectors & {
-  button: React.ReactChild;
+  button: React.ReactNode;
   message: React.ReactNode | (() => Promise< React.ReactNode>);
   confirmButton: (popupClose) => React.ReactNode;
   topContent?: (popupClose) => React.ReactNode;

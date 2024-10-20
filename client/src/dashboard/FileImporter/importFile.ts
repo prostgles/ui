@@ -64,80 +64,6 @@ export const importFile = async (args: Args) => {
       throw "Preview missing";
     }
 
-    // let insert, tableName, insertQueryPrefix = '';
-    // if (destination?.newTable) {
-    //   tableName = escapedTableName;
-    //   const cols = selectedFile.preview.cols;
-    //   // const escapedColnames = cols.map((col, i) => col.escapedName);
-
-    //   insert = async (rows: any[]) => {
-
-    //     if (insertAs === "Single text value") {
-    //       return db.sql!(`INSERT INTO ${escapedTableName} ( all_data ) VALUES ($1) `, [rows[0].all_data])
-    //     }
-
-    //     const srid = selectedFile?.srid;
-
-    //     if (srid) {
-    //       rows = rows.map(_r => {
-    //         let r: any = { ..._r };
-    //         let f = r;//.feature;
-    //         f.geometry.crs = f.geometry.crs || {};
-    //         f.geometry.crs.type = f.geometry.crs.type || {};
-    //         f.geometry.crs.type.name = f.geometry.crs.type.name || {};
-    //         f.geometry.crs.type.name.properties = f.geometry.crs.type.name.properties || {};
-    //         f.geometry.crs.type.name.properties.name = srid;
-    //         // r.feature = f
-    //         r.geometry = f.geometry;
-    //         return r;
-    //       })
-    //     }
-
-
-    //     // if(insertAs !== "Properties with Geometry"){
-    //     //   const q = insertQueryPrefix +  ` ${rows.map((row, i) => " ($" + (i+1) + ") ").join(", ")} `
-    //     //   // return this.props.db.sql(q, rows);
-    //     //   await this.sendToServer([q], rows);
-    //     //   return true
-    //     //   // return Promise.all(rows.map(row => {
-
-    //     //   // }));
-    //     // }
-    //     let rowsObj = {};
-    //     const insertedCols = cols.filter(c => c.dataType !== "BIGSERIAL")
-    //     rows.forEach((row, ri) => {
-    //       return insertedCols.map((c, ci) => {
-    //         if (!(c.key in row) || row[c.key] === undefined) {
-    //           row[c.key] = null;
-    //         } else if (c.dataType === "BIGSERIAL") {
-    //           row[c.key] = null;
-    //         }
-    //         const rkey = `r${ri}`, ckey = `c${ci}`
-    //         rowsObj[rkey] = rowsObj[rkey] || {};
-    //         rowsObj[rkey][ckey] = row[c.key];
-    //       });
-    //     })
-    //     const rowValues = rows.map((row, ri) => {
-
-    //       return `(${insertedCols.map((c, ci) => {
-
-    //         /** Never use raw colNames for import because any "." within key will be taken as path */
-    //         const vkey = "${r" + ri + ".c" + ci + "}";
-    //         if (c.dataType === "geometry") {
-    //           return ` ST_GeomFromGeoJSON(${vkey}) `;
-    //         }
-    //         return vkey;
-    //       }).join(", ")}) `;
-
-    //     });
-    //     if (!rowValues.length) return [];
-    //     return db.sql!(insertQueryPrefix + rowValues.join(", "), rowsObj)
-    //   };
-    // } else if (destination.existingTable) {
-    //   tableName = destination.existingTable;
-    //   insert = (rows: any[]) => db[destination.existingTable!]?.insert!(rows);
-    // }
-    
     const { tableName, insertQueryPrefix, columns } = await createTable(args);
     const importing = {
       tableName,
@@ -311,16 +237,6 @@ const createTable = async (args: Args): Promise<{ tableName: string, escapedTabl
   if(cols.some(c => c.dataType === "geometry" || c.dataType === "geography")){
     create = `CREATE EXTENSION IF NOT EXISTS postgis;\n${create}`
   }
-  
-  // if(insertAs !== "Properties with Geometry"){
-  //   cols = [{
-  //     key: "all_data",
-  //     dataType: insertAs === "JSONB Rows"? "jsonb" : "text",
-  //     sortable: false,
-  //     escapedName: "all_data",
-  //     label: "all_data",
-  //   }]
-  // }
 
   const columns: typeof cols = insertAs === "Single text value"? [
     { 
