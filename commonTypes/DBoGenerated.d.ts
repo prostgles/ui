@@ -321,14 +321,15 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      body_parameters?: null | Partial<Record<string, string>>
+      config?: 
+       |  {  Provider: 'OpenAI';  API_Key: string;  model: string;  temperature?: number;  frequency_penalty?: number;  max_completion_tokens?: number;  presence_penalty?: number;  response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt'; }
+       |  {  Provider: 'Anthropic';  API_Key: string;  "anthropic-version": string;  model: string;  max_tokens: number; }
+       |  {  Provider: 'Custom';  headers?: Record<string, string>;  body?: Record<string, string>; }
       created?: null | string;
       endpoint?: string;
-      extra_headers?: null | Partial<Record<string, string>>
       id?: number;
-      key_id?: null | string;
-      key_secret: string;
       name?: string;
+      result_path?: null | string[];
       user_id: string;
     };
   };
@@ -354,6 +355,7 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       created?: null | string;
+      description?: null | string;
       id?: number;
       name?: string;
       prompt: string;

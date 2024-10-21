@@ -6,6 +6,7 @@ import { classOverride, FlexCol, FlexRow, type DivProps } from "../Flex";
 import Btn from "../Btn";
 import { mdiContentCopy } from "@mdi/js";
 import "./Marked.css";
+import { CHAT_WIDTH } from "../../dashboard/AskLLM/AskLLM";
 
 type P = DivProps & { 
   content: string;
@@ -39,7 +40,7 @@ export const Marked = ({ content, codeHeader, ...divProps }: P) => {
         return <FlexCol 
           className="relative b b-color-1 rounded gap-0 b-color-2 f-0 o-hidden"
           style={{
-            maxWidth: "700px",
+            maxWidth: `${CHAT_WIDTH}px`,
           }}
         > 
           <FlexRow className="bg-color-2 p-p5">

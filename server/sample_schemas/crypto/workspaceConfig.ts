@@ -266,11 +266,7 @@ export const workspaceConfig: WorkspaceConfig = {
                     "isCountAll": false
                   },
                   "dateCol": "timestamp",
-                  "renderStyle": "smooth-line",
-                  "sortableColumns": [
-                    "date",
-                    "value"
-                  ]
+                  "renderStyle": "smooth-line"
                 },
                 "limit": 200,
                 "columns": [

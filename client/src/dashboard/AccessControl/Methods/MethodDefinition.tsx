@@ -62,7 +62,7 @@ export const MethodDefinition = ({ onChange, method, tables, dbsTables, db, them
   const methodArgsCol = methodsTable?.columns.find(c => c.name === "arguments");
 
 const tsMethodDef = `
-type MyMethod = (
+type ProstglesMethod = (
   args: { \n${method.arguments?.map(a => {
     let type: string = a.type;
     if(a.type === "Lookup" && a.lookup as any){
@@ -174,7 +174,7 @@ type MyMethod = (
             label="Server-side TypeScript function triggered by a button press"
             tsLibraries={[
               ...tsLibraries,
-              { filePath: "file:///MyMethod.ts", content: tsMethodDef },
+              { filePath: "file:///ProstglesMethod.ts", content: tsMethodDef },
             ]}
             // style={{ minWidth: "600px", minHeight: "200px"}}
             language="typescript"
