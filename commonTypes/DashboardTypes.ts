@@ -89,7 +89,7 @@ type TableWindowInsertModel = {
      */
     width: number; 
     /**
-     * Show linked data from other tables
+     * Show linked data from other tables that are linked to this column through foreign keys
      */
     nested: LinkedData;
   }[];
@@ -137,6 +137,7 @@ type MapWindowInsertModel = {
  */
 type SqlWindowInsertModel = {
   id: string;
+  name: string;
   type: "sql";
   sql: string;
 }

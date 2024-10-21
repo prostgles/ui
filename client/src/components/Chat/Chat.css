@@ -148,9 +148,3 @@
   flex: 0 0 auto; 
   cursor: pointer;
 }
-
-.chat-container.chat-component .spinner {
-  position: relative; 
-  margin-left: 20px; 
-  display: none;
-}

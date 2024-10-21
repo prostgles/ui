@@ -468,7 +468,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
       readOnly? <div className="pr-p5 py-p5 font-16 ta-left o-auto" style={{ fontWeight: 500, maxHeight: "30vh" }}>
         {SmartFormField.renderValue(undefined, rawValue)}
       </div> :
-      asTextArea? <textarea {...inputProps as any } className={classOverride(inputProps.className ?? "", "bg-color-2 text-0")} style={textareaStyle} /> : 
+      asTextArea? <textarea {...inputProps as any } className={classOverride(inputProps.className ?? "", "bg-color-1 text-0")} style={textareaStyle} /> : 
       <input 
         {...inputProps} 
         { ...( rval === null && { placeholder: "NULL" })}

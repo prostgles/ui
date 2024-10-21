@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { justToCompile } from "../../../../commonTypes/DashboardTypes";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
+import { AnyObject, pickKeys } from "prostgles-types";
 justToCompile;
 const dashboardTypes = fs.readFileSync(path.join(__dirname, "../../../../commonTypes/DashboardTypes.d.ts"), "utf8");
 
@@ -51,16 +52,13 @@ export const askLLM = async (question: string, schema: string, chatId: number, d
       messages: [
         { role: "system", content: promptWithContext },
         ...pastMessages.map(m => ({ 
-          role: m.user_id? "user" : "system", 
+          role: m.user_id? "user" : "assistant", 
           content: m.message ?? ""
         } satisfies LLMMessage)),
         { role: "user", content: question } satisfies LLMMessage
       ]
     });
-    let aiMessage = aiText;
-    if(typeof aiText !== "string") {
-      aiMessage = "Error: Unexpected response from LLM";
-    }
+    const aiMessage = typeof aiText !== "string"? "Error: Unexpected response from LLM" : aiText;
     await dbs.llm_messages.update({ id: aiResponseMessage.id }, { message: aiMessage });
 
   } catch(err){
@@ -72,36 +70,61 @@ export const askLLM = async (question: string, schema: string, chatId: number, d
     });
   }
 };
-type LLMMessage = { role: "system" | "user", content: string }
+type LLMMessage = { role: "system" | "user" | "assistant", content: string }
 
 type Args = {
-  llm_credential: Pick<DBSSchema["llm_credentials"], "key_secret" | "endpoint" | "extra_headers" | "body_parameters">;
+  llm_credential: Pick<DBSSchema["llm_credentials"], "config" | "endpoint" | "result_path">;
   messages: LLMMessage[];
 }
-export const fetchLLMResponse = async ({ llm_credential, messages }: Args) => {
+export const fetchLLMResponse = async ({ llm_credential, messages: _messages }: Args) => {
 
-  const res = await fetch(llm_credential.endpoint || "https://api.openai.com/v1/chat/completions", {
+  const systemMessage = _messages.filter(m => m.role === "system");
+  const [systemMessageObj, ...otherSM] = systemMessage;
+  if(!systemMessageObj) throw "Prompt not found";
+  if(otherSM.length) throw "Multiple prompts found";
+  const { config } = llm_credential;
+  const messages = config?.Provider === "OpenAI"? _messages : _messages.filter(m => m.role !== "system");
+  const headers = config?.Provider === "OpenAI"? {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${config.API_Key}`,
+  } : config?.Provider === "Anthropic"?  {
+    "content-type": "application/json",
+    "x-api-key": config.API_Key,
+    "anthropic-version": config["anthropic-version"],
+  } : config?.headers;
+
+  const body = config?.Provider === "OpenAI"?  {
+    ...pickKeys(config, ["temperature", "max_completion_tokens", "model", "frequency_penalty", "presence_penalty", "response_format"]),
+    messages,
+  } : config?.Provider === "Anthropic"? {
+    ...pickKeys(config, ["model", "max_tokens"]),
+    system: systemMessageObj.content,
+    messages,
+  } : config?.body;
+  const res = await fetch(llm_credential.endpoint, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${llm_credential.key_secret}`,
-      ...llm_credential.extra_headers
-    },
-    body: JSON.stringify({
-      model: "gpt-4o",
-      ...llm_credential.body_parameters,
-      messages,
-    })
-  });
+    headers,
+    body: body && JSON.stringify(body)
+  }).catch(err => Promise.reject(JSON.stringify(getErrorAsObject(err))));
 
   if(!res.ok){
     let errorText = await (res.text().catch(() => ""));
     throw new Error(`Failed to fetch LLM response: ${res.statusText} ${errorText}`);
   }
   const response: any = await res.json();
-  const aiText = response?.choices[0]?.message.content;
-
+  const path = llm_credential.result_path ?? (config?.Provider === "OpenAI"? ["choices", 0, "message", "content"] : ["content", 0, "text"]);
+  const aiText = parsePath(response ?? {}, path);
+  if(typeof aiText !== "string") throw "Unexpected response from LLM. Expecting string";
   return {
     aiText
   }
 };
+
+const parsePath = (obj: AnyObject, path: (string | number)[]) => {
+  let val = obj;
+  for(const key of path){
+    if(val === undefined) return undefined;
+    val = val[key];
+  }
+  return val;
+}

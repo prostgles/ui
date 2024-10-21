@@ -7,6 +7,7 @@ import { Icon } from "../Icon/Icon";
 import { classOverride, FlexRow } from "../Flex";
 import FileInput, { generateUniqueID } from "../FileInput/FileInput";
 import Btn from "../Btn";
+import Loading from "../Loading";
 
 export type Message = {
   message: ReactChild;
@@ -168,7 +169,7 @@ export const Chat: FunctionComponent<P> = (props) => {
         {messages.map(makeMessage)}            
       </div>
                 
-      <div className={"send-wrapper " + (sendingMsg? "no-interaction not-allowed" : "")}>
+      <div className={"send-wrapper relative " + (sendingMsg? "no-interaction not-allowed" : "")}>
         <textarea 
           ref={ref}
           className="no-scroll-bar bg-color-2 text-0" 
@@ -185,6 +186,7 @@ export const Chat: FunctionComponent<P> = (props) => {
         <FlexRow className="as-end gap-p5 p-p5">
           <Btn
             iconPath={mdiSend} 
+            loading={sendingMsg}
             onClick={async (e)=>{
               if(!ref.current) return;
               sendMsg(ref.current.value)

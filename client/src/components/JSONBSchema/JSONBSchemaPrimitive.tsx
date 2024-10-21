@@ -132,7 +132,14 @@ export const JSONBSchemaPrimitive = ({ value, schema, onChange, showErrors } : P
     fullOptions={fullOptions}
     multiSelect={!!schema.allowedValues?.length && schema.type.endsWith("[]")}
     onChange={newVal => {
-      if(schema.type === "number" && newVal && Number.isFinite(+newVal) && (+newVal.trim()).toString() === newVal.trim()){
+      if(schema.type === "number[]" || schema.type === "integer[]"){
+        if(Array.isArray(newVal) && newVal.every(parseNumber)){
+          onChange(newVal.map(parseNumber));
+          return
+        }
+
+      }
+      if((schema.type === "number" || schema.type === "integer") && parseNumber(newVal)){
         onChange(+newVal);
         return
       }
@@ -141,3 +148,5 @@ export const JSONBSchemaPrimitive = ({ value, schema, onChange, showErrors } : P
     error={error}
   />;
 }
+
+const parseNumber = (str: string) => str && Number.isFinite(+str) && (+str.trim()).toString() === str.trim()

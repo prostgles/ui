@@ -1,9 +1,7 @@
-import type { JSONB } from "prostgles-types";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { JSONB } from "prostgles-types";
+import { CONNECTION_CONFIG_SECTIONS } from "../../commonTypes/utils";
 import { loggerTableConfig } from "./Logger";
-import { CONNECTION_CONFIG_SECTIONS, throttle } from "../../commonTypes/utils";
-import { subscribe } from "diagnostics_channel";
-import { access } from "fs";
 
 export const DB_SSL_ENUM = ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"] as const;
  
@@ -697,7 +695,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           ]  
         } 
       } },
-      run: "TEXT NOT NULL DEFAULT 'export const run: MyMethod = async (args, { db, dbo, user }) => {\n  \n}'",
+      run: "TEXT NOT NULL DEFAULT 'export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n  \n}'",
       outputTable: `TEXT`
     },
     indexes: { "unique_name": { columns: "name, connection_id" }}
@@ -1189,29 +1187,41 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       name: `TEXT NOT NULL DEFAULT 'Default credential'`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
-      key_id: `TEXT`,
-      key_secret: `TEXT NOT NULL`,
-      endpoint: `TEXT NOT NULL DEFAULT 'https://api.openai.com/v1/chat/completions'`,
-      extra_headers: {
-        info: { hint: "Extra headers to be sent with the request. Can overwrite existing" },
-        nullable: true,
+      endpoint: { sqlDefinition: `TEXT NOT NULL DEFAULT 'https://api.openai.com/v1/chat/completions'` },
+      config: {
         jsonbSchema: {
-          record: {
-            partial: true,
-            values: "string",
-          }
+          oneOfType: [
+            {
+              Provider: { enum: ["OpenAI"] },
+              API_Key: { type: "string" },
+              model: { type: "string" },
+              temperature: { type: "number", optional: true },
+              frequency_penalty: { type: "number", optional: true },
+              max_completion_tokens: { type: "integer", optional: true },
+              presence_penalty: { type: "number", optional: true },
+              response_format: { enum: [ "json", "text", "srt", "verbose_json", "vtt" ], optional: true },
+            },
+            {
+              Provider: { enum: ["Anthropic"] },
+              API_Key: { type: "string" },
+              "anthropic-version": { type: "string" },
+              model: { type: "string" },
+              max_tokens: { type: "integer" },
+            },
+            {
+              Provider: { enum: ["Custom"] },
+              headers: { record: { values: "string" }, optional: true },
+              body: { record: { values: "string" }, optional: true },
+            }
+          ]
+        },
+        defaultValue: { 
+          Provider: "OpenAI", 
+          model: "gpt-4o",
+          API_Key: "",
         }
       },
-      body_parameters: {
-        info: { hint: "Used to set model, response_format and other options" },
-        nullable: true,
-        jsonbSchema: {
-          record: {
-            partial: true,
-            values: "string",
-          }
-        }
-      },
+      result_path: { sqlDefinition: `_TEXT `, info: { hint: "Will use corect defaults for OpenAI and Anthropic. Path to text response. E.g.: choices,0,message,content" } },
       created: {
         sqlDefinition: `TIMESTAMP DEFAULT NOW()`,
       },
@@ -1221,6 +1231,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     columns: {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       name: `TEXT NOT NULL DEFAULT 'New prompt'`,
+      description: `TEXT DEFAULT ''`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
       prompt: `TEXT NOT NULL CHECK(LENGTH(btrim(prompt)) > 0)`,
       created: `TIMESTAMP DEFAULT NOW()`,

@@ -131,7 +131,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
     },
     llm_credentials: {
       select: {
-        fields: isAdmin? { key_secret: 0 } : { id: 1, name: 1 },
+        fields: isAdmin? "*" : { id: 1, name: 1 },
         forcedFilter: isAdmin? undefined : forcedFilterLLM
       },
       delete: isAdmin && "*",
@@ -148,7 +148,9 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
           });
         }
       },
-      update: isAdmin && "*",
+      update: isAdmin && {
+        fields: { created: 0 },
+      },
     },
     llm_prompts: {
       select: isAdmin? "*" : { 
@@ -177,7 +179,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
         forcedData
       },
       update: {
-        fields: "*",
+        fields: { created: 0 },
         forcedData,
         forcedFilter,
       }

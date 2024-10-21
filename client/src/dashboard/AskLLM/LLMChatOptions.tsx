@@ -1,11 +1,11 @@
 import { mdiCogOutline } from "@mdi/js"
-import React, { useEffect } from "react"
+import { useEffectDeep } from "prostgles-client/dist/prostgles"
+import React from "react"
 import type { DBSSchema } from "../../../../commonTypes/publishUtils"
 import type { Prgl } from "../../App"
 import Btn from "../../components/Btn"
 import { FlexCol } from "../../components/Flex"
-import PopupMenu from "../../components/PopupMenu";
-import { useEffectDeep } from "prostgles-client/dist/prostgles"
+import PopupMenu from "../../components/PopupMenu"
 import SmartForm from "../SmartForm/SmartForm"
 
 type P = Prgl & {
@@ -25,7 +25,8 @@ export const LLMChatOptions = (prgl: P) => {
           return
         }
         dbs.llm_prompts.insert({ 
-          name: "Default prompt", 
+          name: "Chat", 
+          description: "Basic chat",
           user_id: undefined as any,
           prompt: [
             "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
@@ -37,7 +38,8 @@ export const LLMChatOptions = (prgl: P) => {
           ].join("\n") 
         });
         dbs.llm_prompts.insert({
-          name: "Dashboard creation", 
+          name: "Dashboards", 
+          description: "Create dashboards. Claude Sonnet recommended",
           user_id: undefined as any,
           prompt: [
             "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
@@ -71,12 +73,14 @@ export const LLMChatOptions = (prgl: P) => {
         <SmartForm
           {...prgl}
           label=""
+          contentClassname="p-1 pt-1"
           columns={{
             name: 1,
             llm_credential_id: 1,
             llm_prompt_id: 1,
             created: 1,
           }}
+          jsonbSchemaWithControls={true}
           db={dbs as any}
           tables={dbsTables}
           methods={{}}
@@ -85,24 +89,6 @@ export const LLMChatOptions = (prgl: P) => {
           hideChangesOptions={true}
           showJoinedTables={false}
         />
-        {/* <Select
-          label={"Credential"}
-          value={activeChat?.llm_credential_id}
-          showSelectedSublabel={true}
-          fullOptions={credentials?.map(c => ({ key: c.id, label: c.name })) ?? []}
-          onChange={credId => {
-            dbs.llm_chats.update({ id: activeChatId }, { llm_credential_id: credId });
-          }}
-        />
-        <Select
-          label={"Prompt"}
-          value={activeChat?.llm_prompt_id}
-          showSelectedSublabel={true}
-          fullOptions={prompts?.map(c => ({ key: c.id, label: c.name })) ?? []}
-          onChange={promptId => {
-            dbs.llm_chats.update({ id: activeChatId }, { llm_prompt_id: promptId });
-          }}
-        /> */}
       </FlexCol>
     }
   />
