@@ -8,7 +8,6 @@
     "d3": "^7.9.0",
     "d3-scale": "^4.0.2",
     "deck.gl": "^9.0.33",
-    "dompurify": "^3.1.6",
     "dotenv": "8.2.0",
     "engine.io-client": "^6.5.4",
     "loaders.gl": "^0.3.5",

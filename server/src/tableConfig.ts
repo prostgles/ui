@@ -1242,15 +1242,15 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       name: `TEXT NOT NULL DEFAULT 'New chat'`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
-      llm_credential_id: `INTEGER NOT NULL REFERENCES llm_credentials(id) ON DELETE SET NULL`,
-      llm_prompt_id: `INTEGER NOT NULL REFERENCES llm_prompts(id) ON DELETE SET NULL`,
+      llm_credential_id: `INTEGER REFERENCES llm_credentials(id) ON DELETE SET NULL`,
+      llm_prompt_id: `INTEGER REFERENCES llm_prompts(id) ON DELETE SET NULL`,
       created: `TIMESTAMP DEFAULT NOW()`,
     },
   },
   llm_messages: {
     columns: {
       id: `int8 PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
-      chat_id: `INTEGER REFERENCES llm_chats(id) ON DELETE CASCADE`,
+      chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
       message: `TEXT NOT NULL`,
       created: `TIMESTAMP DEFAULT NOW()`,

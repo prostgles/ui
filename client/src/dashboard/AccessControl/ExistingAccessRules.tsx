@@ -41,13 +41,16 @@ export const AccessControlRules = ({ rules, onSelect, workspaces, prgl: { dbs, c
         <div key={ri} 
           className={"ExistingAccessRules_Item flex-col active-shadow-hover gap-p5 pointer rounded p-p5 bg-color-0 shadow b b-color o-auto"}  
           data-key={userTypes}
+          onClick={({ target }) => {
+            if(target instanceof HTMLElement && target.closest(".SwitchToggle")) return;
+            onSelect(r);
+          }}
         >
           <FlexRow>
             <LabeledRow 
               icon={mdiAccount} 
               title="User types"
               className="ExistingAccessRules_Item_Header ai-center f-1"
-              onClick={() => onSelect(r)}
             >
               <span className="text-0 font-20 bold">{userTypes?.join(", ")}</span>
             </LabeledRow>

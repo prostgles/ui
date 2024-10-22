@@ -20,7 +20,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
 
   const { id: user_id, } = user;
 
-  /** Admin users are always allowed everything */
+  /** This will prevent admins from seing each others published workspaces?! */
   const accessRules = isAdmin? undefined : await getACRules(db, user);
   
   const createEditDashboards = isAdmin || accessRules?.some(({ dbsPermissions }) => dbsPermissions?.createWorkspaces);

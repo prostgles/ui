@@ -88,10 +88,24 @@ type TableWindowInsertModel = {
      * Column width in pixels
      */
     width: number; 
+
+    /**
+     * Render column value in a chip
+     * Cannot be used with nested
+     */
+    styling?: {
+      type: "conditional";
+      conditions: {
+        chipColor: "red" | "pink" | "purple" | "blue" | "indigo" | "green" | "yellow" | "gray";
+        operator: "=" | "!=" | ">" | "<" | ">=" | "<=";
+        value: string;
+      }[];
+    };
+
     /**
      * Show linked data from other tables that are linked to this column through foreign keys
      */
-    nested: LinkedData;
+    nested?: LinkedData;
   }[];
   filter?:  ({
     /**

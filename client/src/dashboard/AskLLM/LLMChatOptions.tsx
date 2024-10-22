@@ -15,48 +15,7 @@ type P = Prgl & {
   activeChatId: number | undefined;
 }
 export const LLMChatOptions = (prgl: P) => {
-  const { dbs, prompts, activeChatId, dbsTables } = prgl;
-  const propmtCount = prompts?.length;
-  useEffectDeep(() => {
-    if(propmtCount === 0){
-      (async () => {
-        const prompt = await dbs.llm_prompts.findOne();
-        if(prompt){
-          return
-        }
-        dbs.llm_prompts.insert({ 
-          name: "Chat", 
-          description: "Basic chat",
-          user_id: undefined as any,
-          prompt: [
-            "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
-            "Assist user with any queries they might have. Do not add empty lines in your sql response.",
-            "Reply with a full and concise answer that does not require further clarification or revisions.",
-            "Below is the database schema they're currently working with:",
-            "",
-            "${schema}"
-          ].join("\n") 
-        });
-        dbs.llm_prompts.insert({
-          name: "Dashboards", 
-          description: "Create dashboards. Claude Sonnet recommended",
-          user_id: undefined as any,
-          prompt: [
-            "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
-            "Assist user with any queries they might have.",
-            "Below is the database schema they're currently working with:",
-            "",
-            "${schema}",
-            "",
-            "Using dashboard structure below create workspaces with useful views my current schema.",
-            "Return only a valid json of this format: { prostglesWorkspaces: WorkspaceInsertModel[] }",
-            "",
-            "${dashboardTypes}"
-          ].join("\n") 
-        });
-      })()
-    }
-  }, [propmtCount, dbs.llm_prompts]);
+  const { dbs, activeChatId, dbsTables } = prgl; 
 
   return <PopupMenu 
     button={

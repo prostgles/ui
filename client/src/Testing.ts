@@ -241,6 +241,12 @@ export const COMMANDS = {
   "AgeFilter.argsLeftToRight": "",
   "Login.error": "",
   "SchemaFilter": "",
+  "AskLLMAccessControl": "",
+  "AskLLMAccessControl.AllowAll": "",
+  "Chat.send": "",
+  "AskLLM": "",
+  "AskLLM.popup": "",
+  "SetupLLMCredentials": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

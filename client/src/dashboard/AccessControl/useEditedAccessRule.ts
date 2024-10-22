@@ -132,7 +132,7 @@ export const useEditedAccessRule = ({ action, prgl, }: P): EditedAccessRuleState
   }
 
   const ruleWasEdited = !newRule? false : action.type === "create" || 
-    Boolean(ruleData.rule && !areEqual(newRule, ruleData.rule, ["access_control_user_types", "dbPermissions", "dbsPermissions", "published_methods"]));
+    Boolean(ruleData.rule && !areEqual(newRule, ruleData.rule, ["access_control_user_types", "access_control_allowed_llm", "dbPermissions", "dbsPermissions", "published_methods"]));
   
   const result: ValidEditedAccessRuleState = {
     ...ruleData,

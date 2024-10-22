@@ -2,6 +2,7 @@ import type { WorkspaceInsertModel } from "../../../../commonTypes/DashboardType
 import { isObject, type DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 import { isDefined, omitKeys } from "../../utils";
+import { CHIP_COLOR_NAMES } from "../W_Table/ColumnMenu/ColumnDisplayFormat/ChipStylePalette";
 
 export const loadGeneratedWorkspaces = async (basicWorkspaces: WorkspaceInsertModel[], { dbs, connectionId }: Prgl) => {
   const viewIdToIndex: Record<string, number> = {};
@@ -19,7 +20,28 @@ export const loadGeneratedWorkspaces = async (basicWorkspaces: WorkspaceInsertMo
           table_name: bw.table_name,
         }
       } else if (bw.type === "table") {
-        const columns = bw.columns?.map((c) => ({ ...c, show: true }));
+        const columns = bw.columns?.map((c) => { 
+          return { 
+            ...c, 
+            show: true, 
+            style: c.styling && {
+              "type": "Conditional",
+              "conditions": c.styling.conditions.map(cond => {
+                // "textColor": "#ffffff",
+                // "textColorDarkMode": "#2386d5",
+                // "chipColor": "#673AB7"\
+                const style = Object.entries(CHIP_COLOR_NAMES).find(([k]) => k === cond.chipColor)?.[1] ?? CHIP_COLOR_NAMES.blue!
+                return {
+                  "condition": cond.value,
+                  "operator": cond.operator,
+                  textColor: style.textColor,
+                  chipColor: style.color,
+                  textColorDarkMode: style.textColorDarkMode
+                }
+              })
+            }
+          }
+        });
         const { sort, filter } = bw;
         return {
           type: "table",
@@ -138,5 +160,7 @@ export const loadGeneratedWorkspaces = async (basicWorkspaces: WorkspaceInsertMo
     await dbs.workspaces.update({ id: wsp.id }, { layout });
   }));
 
-  console.log(basicWorkspaces)
+  console.log(basicWorkspaces);
+
+  return insertedWorkspaces;
 }

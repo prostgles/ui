@@ -1,6 +1,7 @@
 
 import { mdiAssistant, mdiPlus, mdiScript } from "@mdi/js";
 import React, { useState } from "react";
+import { isObject } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import type { Message } from "../../components/Chat/Chat";
@@ -10,17 +11,17 @@ import { FlexCol, FlexRow } from "../../components/Flex";
 import Loading from "../../components/Loading";
 import Popup from "../../components/Popup/Popup";
 import Select from "../../components/Select/Select";
-import SmartForm from "../SmartForm/SmartForm";
 import { renderInterval } from "../W_SQL/customRenderers";
+import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
 import { LLMChatOptions } from "./LLMChatOptions";
 import { loadGeneratedWorkspaces } from "./loadGeneratedWorkspaces";
+import { SetupLLMCredentials } from "./SetupLLMCredentials";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
-import { isObject } from "../../../../commonTypes/publishUtils";
 
 export const CHAT_WIDTH = 800;
 
-export const AskLLM = (prgl: Prgl) => {
+export const AskLLM = ({ workspaceId, ...prgl }: Prgl & { workspaceId: string | undefined }) => {
   const { dbsMethods, dbs, user } = prgl;
   const { askLLM } = dbsMethods;
 
@@ -28,6 +29,8 @@ export const AskLLM = (prgl: Prgl) => {
     llmMessages, createNewChat, activeChatId, latestChats, 
     setActiveChat, firstCredential, prompts, activeChat, credentials
   } = useLLMChat(prgl);
+
+  const { setWorkspace } = useSetNewWorkspace(workspaceId);
   
   const actualMessages: Message[] = llmMessages?.map(m => ({
     incoming: m.user_id !== user?.id,
@@ -43,11 +46,18 @@ export const AskLLM = (prgl: Prgl) => {
               iconPath={mdiPlus}
               variant="faded"
               onClick={() => {
-                loadGeneratedWorkspaces(json.prostglesWorkspaces, prgl).catch(error => {
-                  if(isObject(error) && error.code === "23505"){
-                    alert(`Workspace with this name already exists. Must delete or rename the clashing workspaces: \n${json.prostglesWorkspaces.map(w => w.name).join(", ")}`);
-                  }
-                });
+                loadGeneratedWorkspaces(json.prostglesWorkspaces, prgl)
+                  .then((insertedWorkspaces) => {
+                    const [first] = insertedWorkspaces;
+                    if(first){
+                      setWorkspace(first);
+                    }
+                  })
+                  .catch(error => {
+                    if(isObject(error) && error.code === "23505"){
+                      alert(`Workspace with this name already exists. Must delete or rename the clashing workspaces: \n${json.prostglesWorkspaces.map(w => w.name).join(", ")}`);
+                    }
+                  });
               }}
             >
               Load workspaces
@@ -80,7 +90,7 @@ export const AskLLM = (prgl: Prgl) => {
   const onClose = () => {
     setAnchorEl(null);
   }
-  if(!askLLM) return null;
+  if(!askLLM || !firstCredential && user?.type !== "admin") return null;
 
   return <>
     <Btn 
@@ -88,38 +98,28 @@ export const AskLLM = (prgl: Prgl) => {
       variant="faded"
       color="action"
       iconPath={mdiAssistant}
+      data-command="AskLLM"
       onClick={(e) => {
         setAnchorEl(e.currentTarget);
       }}
     >
       {window.isMediumWidthScreen? null : `Ask AI`}
     </Btn>
+
     {anchorEl && !firstCredential && <Popup
       title="Setup AI assistant"
       positioning="beneath-left"
+      data-command="AskLLM.popup"
       anchorEl={anchorEl}
       onClose={onClose}
       clickCatchStyle={{ opacity: 1 }}
     >
-      <div className="my-2 font-18 bold">
-        Add a credential to use AI assistant.
-      </div>
-      <SmartForm 
-        label=""
-        theme={prgl.theme}
-        methods={{}}
-        className="p-0"
-        db={prgl.dbs as any}
-        tables={prgl.dbsTables} 
-        tableName="llm_credentials"
-        columnFilter={c => !["created"].includes(c.name)}
-        showJoinedTables={false}
-        hideChangesOptions={true}
-        jsonbSchemaWithControls={true}
-      />
+      <SetupLLMCredentials {...prgl} />
     </Popup>}
+    
     {anchorEl && firstCredential && 
       <Popup
+        data-command="AskLLM.popup"
         title={
           <FlexRow>
             <FlexCol className="gap-p25">
@@ -202,7 +202,10 @@ export const AskLLM = (prgl: Prgl) => {
             messages={messages}
             onSend={async (msg) => {
               if(!msg || !activeChatId) return;
-              await askLLM(msg, schemaStr, activeChatId);
+              await askLLM(msg, schemaStr, activeChatId).catch(error => {
+                const errorText = error?.message || error;
+                alert(typeof errorText === "string"? errorText : JSON.stringify(errorText));
+              });
             }}
           />
         </FlexCol>
