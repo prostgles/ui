@@ -8,6 +8,7 @@ import {
   dropConnectionAndDatabase,
   fileName,
   fillLoginFormAndSubmit,
+  fillSmartFormAndInsert,
   forEachLocator,
   getMonacoEditorBySelector,
   getSearchListItem,
@@ -496,15 +497,49 @@ test.describe("Main test", () => {
 
     await createAccessRule(page, "default");
 
-    await setTableRule(page, "my_table", { 
-      select: { excludedFields: ["secret"] },
-      insert: { forcedData: { name: "abc" }, excludedFields: ["secret"] },
-      update: { forcedData: { name: "abc" }, excludedFields: ["secret"] },
-      delete: { forcedFilter: [{ fieldName: "name", value: "abc" }] },
-    }, false);
+    await setTableRule(
+      page, 
+      "my_table", 
+      { 
+        select: { excludedFields: ["secret"] },
+        insert: { forcedData: { name: "abc" }, excludedFields: ["secret"] },
+        update: { forcedData: { name: "abc" }, excludedFields: ["secret"] },
+        delete: { forcedFilter: [{ fieldName: "name", value: "abc" }] },
+      }, 
+      false
+    );
     await setTableRule(page, "orders", { select: { }, update: {}, insert: {}, delete: {} }, false);
     await setTableRule(page, "files", { select: { }, update: {}, insert: {}, delete: {} }, true);
 
+    /** Expect LLM to ask for API credentials */
+    await page.getByTestId("AskLLM").click();
+    await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });
+    await page.getByTestId("SetupLLMCredentials").waitFor({ state: "visible" });
+    const chatSend = await page.getByTestId("AskLLM.popup").getByTestId("Chat.send").count();
+    expect(chatSend).toBe(0);
+    await page.getByTestId("Popup.close").click();
+
+    /** Setup LLM */
+    await page.getByTestId("AskLLMAccessControl").click();
+    await fillSmartFormAndInsert(page, "llm_credentials", { endpoint: "http://localhost:3004/mocked-llm" });
+    await page.waitForTimeout(1e3);
+    await page.getByTestId("AskLLMAccessControl.AllowAll").click();
+    await page.getByTestId("Popup.close").click();
+
+    /** Expect LLM to work */
+    await page.getByTestId("AskLLM").click();
+    await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });
+    const setupLLM = await page.getByTestId("SetupLLMCredentials").count();
+    expect(setupLLM).toBe(0);
+    const chatSend1 = await page.getByTestId("AskLLM.popup").getByTestId("Chat.send");
+    expect(chatSend1).toBeAttached();
+    await page.waitForTimeout(1e3);
+    await page.getByTestId("AskLLM.popup").locator("textarea").fill("hey");
+    await chatSend1.click();
+    await page.getByTestId("AskLLM.popup").getByText("Mocked response").waitFor({ state: "visible" });
+    await page.getByTestId("Popup.close").click();
+
+    /** Finish  */
     await page.getByTestId("config.ac.save").click();
     await page.waitForTimeout(2e3);
   });

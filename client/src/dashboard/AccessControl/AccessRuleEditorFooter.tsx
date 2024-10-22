@@ -98,7 +98,7 @@ export const AccessRuleEditorFooter = (props: P) => {
 
 const upsertRule = async (args: Pick<P,"dbs" | "connectionId" | "action" | "database_id"> & { newRule: EditedAccessRule }) => {
   const { action, newRule, dbs, connectionId, database_id } = args;
-  const { access_control_user_types = [], published_methods = [] } = newRule;
+  const { access_control_user_types = [], published_methods = [], access_control_allowed_llm = [] } = newRule;
   
   const connection = await dbs.connections.findOne({ id: connectionId });
   if(!connection || !connectionId){
@@ -116,11 +116,16 @@ const upsertRule = async (args: Pick<P,"dbs" | "connectionId" | "action" | "data
       if(published_methods.length){
         await dbs.access_control_methods.insert(published_methods.map(m => ({ access_control_id, published_method_id: m.id })));
       }
-    }; 
+
+      await dbs.access_control_allowed_llm.delete({ access_control_id });
+      if(access_control_allowed_llm.length){
+        await dbs.access_control_allowed_llm.insert(access_control_allowed_llm.map(m => ({ ...m, access_control_id })));
+      }
+    };
 
     const newRuleWithoutSomeExtraKeys = omitKeys(
-      args.newRule as AccessRule, 
-      ["access_control_user_types", "database_id", "published_methods", "id", "created"]
+      newRule as AccessRule, 
+      ["access_control_user_types", "database_id", "published_methods", "id", "created", "access_control_allowed_llm"]
     );
 
     if(action.type === "edit"){

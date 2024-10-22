@@ -187,6 +187,7 @@ export const Chat: FunctionComponent<P> = (props) => {
           <Btn
             iconPath={mdiSend} 
             loading={sendingMsg}
+            data-command="Chat.send"
             onClick={async (e)=>{
               if(!ref.current) return;
               sendMsg(ref.current.value)

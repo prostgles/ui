@@ -13,14 +13,13 @@ export const useAppTheme = (state: Omit<AppState, "title" | "isConnected">) => {
   }, [theme]);
 
   useEffect(() => {
-    const listener = (event: MediaQueryListEvent) => {
-      const newColorScheme = event.matches ? "dark" : "light";
-      setTheme(newColorScheme)
+    const listener = () => {
+      setTheme(userTheme)
     }
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", listener);
 
     return () => window.matchMedia("(prefers-color-scheme: dark)").removeEventListener("change", listener);
-  }, [user]);
+  }, [userTheme]);
 
   useEffect(() => {
     if(!user?.options?.theme) return;
@@ -41,6 +40,9 @@ export const useAppTheme = (state: Omit<AppState, "title" | "isConnected">) => {
   return { theme, userThemeOption };
 }
 
+/**
+ * Returns the correct theme based on the user's preference and the system
+ */
 const getTheme = (desired: Theme | "from-system" = "from-system" ): Theme => {
   if(desired !== "from-system") return desired;
   return window.matchMedia("(prefers-color-scheme: dark)").matches? "dark" : "light";

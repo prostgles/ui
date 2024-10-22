@@ -26,7 +26,7 @@ import type { Backups } from "../BackupManager/BackupManager";
 import { getInstalledPrograms } from "../BackupManager/getInstalledPrograms";
 import { getPasswordlessAdmin, insertUser } from "../ConnectionChecker";
 import type { ConnectionTableConfig } from "../ConnectionManager/ConnectionManager";
-import { DB_TRANSACTION_KEY, getCDB, getSuperUserCDB } from "../ConnectionManager/ConnectionManager";
+import { DB_TRANSACTION_KEY, getACRules, getCDB, getSuperUserCDB } from "../ConnectionManager/ConnectionManager";
 import { getCompiledTS, getDatabaseConfigFilter, getEvaledExports } from "../ConnectionManager/connectionManagerUtils";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
@@ -70,7 +70,6 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
       await dbs.users.update({ id: noPwdAdmin.id }, { status: "disabled" });
       await dbs.sessions.delete({});
     },
-    askLLM: (question: string, schema: string, chatId: number) => askLLM(question, schema, chatId, dbs, user),
     getConnectionDBTypes: async (conId: string) => {
 
       /** Maybe state connection */
@@ -363,7 +362,13 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     }
   }
 
-  const userMethods = !user.id? {} : {
+  const isAdmin = user.type === "admin";
+  const accessRules = isAdmin? undefined : await getACRules(dbs, user);
+  const allowedLLMCreds = isAdmin? "all" : !accessRules?.length? undefined : await dbs.access_control_allowed_llm.find({ access_control_id: { $in: accessRules.map(ac => ac.id) } });
+  const userMethods = {
+    askLLM: !allowedLLMCreds? undefined : async (question: string, schema: string, chatId: number) => {
+      await askLLM(question, schema, chatId, dbs, user, allowedLLMCreds);
+    },
     sendFeedback: async ({ details, email }: { details: string; email?: string }) => {
       await fetch("https://prostgles.com/feedback", {
         method: "POST",

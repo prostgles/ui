@@ -24,6 +24,7 @@ import { publishMethods } from "./publishMethods/publishMethods";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { tableConfig } from "./tableConfig";
+import { insertDefaultPrompts } from "./publishMethods/askLLM/askLLM";
 
 type StartArguments = {
   app: Express; 
@@ -106,6 +107,10 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
       onSocketConnect: async ({ socket, dbo, db, getUser }) => {
           
         const user = await getUser();
+
+        if(user?.user?.type === "admin"){
+          await insertDefaultPrompts(dbo, user.user.id);
+        }
         const userId = user?.user?.id;
         // if(userId){
         //   await dbo.users.update({ id: userId, is_online: false }, { is_online: true });

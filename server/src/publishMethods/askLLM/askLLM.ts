@@ -8,16 +8,27 @@ import { AnyObject, pickKeys } from "prostgles-types";
 justToCompile;
 const dashboardTypes = fs.readFileSync(path.join(__dirname, "../../../../commonTypes/DashboardTypes.d.ts"), "utf8");
 
-export const askLLM = async (question: string, schema: string, chatId: number, dbs: DBS, user: DBSSchema["users"]) => {
+export const askLLM = async (question: string, schema: string, chatId: number, dbs: DBS, user: DBSSchema["users"], allowedLLMCreds: "all" | DBSSchema["access_control_allowed_llm"][]) => {
   if(typeof question !== "string") throw "Question must be a string";
   if(typeof schema !== "string") throw "Schema must be a string";
   if(!question.trim()) throw "Question is empty";
   if(!Number.isInteger(chatId)) throw "chatId must be an integer";
   const chat = await dbs.llm_chats.findOne({ id: chatId, user_id: user.id });
   if(!chat) throw "Chat not found";
-  const llm_credential = await dbs.llm_credentials.findOne({ id: chat.llm_credential_id });
+  const { llm_prompt_id, llm_credential_id } = chat;
+  if(!llm_prompt_id || !llm_credential_id) throw "Chat missing prompt or credential";
+  const llm_credential = await dbs.llm_credentials.findOne({ id: llm_credential_id });
   if(!llm_credential) throw "LLM credentials missing";
-
+  const promptObj = await dbs.llm_prompts.findOne({ id: llm_prompt_id });
+  if(!promptObj) throw "Prompt not found";
+  const { prompt } = promptObj;
+  if(!prompt) throw "Prompt is empty";
+  if(
+    allowedLLMCreds !== "all" && 
+    !allowedLLMCreds.some(c => c.llm_credential_id === llm_credential_id && c.llm_prompt_id === llm_prompt_id)
+  ){
+    throw "LLM credential/prompt not allowed";
+  }
   const pastMessages = await dbs.llm_messages.find({ chat_id: chatId });
 
   await dbs.llm_messages.insert({
@@ -38,10 +49,6 @@ export const askLLM = async (question: string, schema: string, chatId: number, d
     message: "",
   }, { returning: "*" });
   try {
-    const promptObj = await dbs.llm_prompts.findOne({ id: chat.llm_prompt_id });
-    if(!promptObj) throw "Prompt not found";
-    const { prompt } = promptObj;
-    if(!prompt) throw "Prompt is empty";
 
     const promptWithContext = prompt
       .replace("${schema}", schema)
@@ -127,4 +134,47 @@ const parsePath = (obj: AnyObject, path: (string | number)[]) => {
     val = val[key];
   }
   return val;
+}
+
+let insertedDefaultPrompts = false;
+export const insertDefaultPrompts = async (dbs: DBS, user_id: string) => {
+  /** In case of stale schema update */
+  if(!dbs.llm_prompts || insertedDefaultPrompts) return;
+
+  const prompt = await dbs.llm_prompts.findOne();
+  if(prompt){
+    insertedDefaultPrompts = true;
+    return
+  }
+  await dbs.llm_prompts.insert({ 
+    name: "Chat", 
+    description: "Basic chat",
+    user_id,
+    prompt: [
+      "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
+      "Assist user with any queries they might have. Do not add empty lines in your sql response.",
+      "Reply with a full and concise answer that does not require further clarification or revisions.",
+      "Below is the database schema they're currently working with:",
+      "",
+      "${schema}"
+    ].join("\n") 
+  });
+  await dbs.llm_prompts.insert({
+    name: "Dashboards", 
+    description: "Create dashboards. Claude Sonnet recommended",
+    user_id,
+    prompt: [
+      "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
+      "Assist user with any queries they might have.",
+      "Below is the database schema they're currently working with:",
+      "",
+      "${schema}",
+      "",
+      "Using dashboard structure below create workspaces with useful views my current schema.",
+      "Return only a valid, markdown compatible json of this format: { prostglesWorkspaces: WorkspaceInsertModel[] }",
+      "",
+      "${dashboardTypes}"
+    ].join("\n") 
+  });
+  insertedDefaultPrompts = true;
 }
