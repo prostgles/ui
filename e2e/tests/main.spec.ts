@@ -539,7 +539,7 @@ test.describe("Main test", () => {
     await page.getByTestId("AskLLM.popup").getByText("Mocked response").waitFor({ state: "visible" });
     await page.getByTestId("Popup.close").click();
 
-    /** Finish  */
+    /** Save access rule  */
     await page.getByTestId("config.ac.save").click();
     await page.waitForTimeout(2e3);
   });
