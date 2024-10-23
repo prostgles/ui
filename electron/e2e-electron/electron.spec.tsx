@@ -31,7 +31,9 @@ test.beforeAll(async () => {
       console.log(msg.text())
     })
   });
-})
+  electronApp.process().stdout?.on('data', (data) => console.log(`stdout: ${data}`));
+  electronApp.process().stderr?.on('data', (error) => console.log(`stderr: ${error}`));
+});
 
 test.afterAll(async () => {
   let waitTimeSeconds = 20;
