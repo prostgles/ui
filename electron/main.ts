@@ -13,8 +13,15 @@ let localCreds: any;
  * but this does not work within containers
  */
 const safeStorage = process.env.TEST_MODE === 'true'? {
-  encryptString: (str: string) => { localCreds = str; return str },
-  decryptString: (str: string) => { return localCreds }
+  encryptString: (str: string) => { 
+    localCreds = str;
+    console.log("encryptString", { str })
+    return str 
+  },
+  decryptString: (str: string) => {
+    console.log("decryptString", { str, localCreds }) 
+    return localCreds;
+  }
 } : ss;
 
 const expressApp = require("../ui/server/dist/server/src/electronConfig");
