@@ -47,6 +47,7 @@ type Opts = {
   initArgs: InitOpts;
   dbs: DBS;
   dbConfId: number;
+  pass_process_env_vars_to_server_side_functions: boolean;
 } & (
   {
     type: "run"
@@ -102,7 +103,7 @@ export class ForkedPrglProcRunner {
     console.log(`${logName} restarting ...`);
     setTimeout(async () => {
       console.log(`${logName} restarted`);
-      const newProc = await ForkedPrglProcRunner.createProc(this.opts.initArgs);
+      const newProc = await ForkedPrglProcRunner.createProc(this.opts.initArgs, this.opts.pass_process_env_vars_to_server_side_functions);
       this.proc = newProc;
       this.initProc();
       if(this.opts.type === "onMount"){
@@ -173,14 +174,17 @@ export class ForkedPrglProcRunner {
     this.proc.stderr?.on("error", updateLogs);
   }
 
-  private static createProc = (initOpts: InitOpts): Promise<ChildProcess> => {
+  private static createProc = (initOpts: InitOpts, pass_process_env_vars_to_server_side_functions: boolean): Promise<ChildProcess> => {
     return new Promise((resolve, reject) => {
       const proc = fork(
         __dirname + "/forkedProcess.js", 
         { 
           execArgv: [],
           silent: true,
-          env: { [FORKED_PROC_ENV_NAME]: "true" }
+          env: {
+            ...(pass_process_env_vars_to_server_side_functions? process.env : {}), 
+            [FORKED_PROC_ENV_NAME]: "true",
+          }
         }
       )
       proc.on("error", reject);
@@ -201,7 +205,7 @@ export class ForkedPrglProcRunner {
   }
 
   static create = async (opts: Opts): Promise<ForkedPrglProcRunner> => {
-    const proc = await ForkedPrglProcRunner.createProc(opts.initArgs);
+    const proc = await ForkedPrglProcRunner.createProc(opts.initArgs, opts.pass_process_env_vars_to_server_side_functions);
     return new ForkedPrglProcRunner(proc, opts);
   }
 

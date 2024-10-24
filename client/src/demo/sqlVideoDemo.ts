@@ -300,6 +300,7 @@ export const sqlDemo = async () => {
   await closeAllViews();
   await click("dashboard.menu");
   await click("dashboard.menu.sqlEditor");
+  await tout(1500);
   await movePointer(-20,-20);
   const getSqlWindow = () => Array.from(document.querySelectorAll<HTMLDivElement>(`[data-box-id][data-box-type=item]`)).find(n => n.querySelector(".ProstglesSQL"));
   if (!getSqlWindow()) {

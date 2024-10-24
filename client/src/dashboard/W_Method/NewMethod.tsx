@@ -20,7 +20,7 @@ export const NewMethod = ({ dbKey, theme, db, dbs, methodId, connectionId, onClo
   const [newMethod, setNewMethod] = useState<Partial<Omit<Method, "id">>>({
     name: "my_new_func",
     arguments: [],
-    run: "export const run: MyMethod = async (args, { db, dbo, user }) => {\n  \n}",
+    run: "export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n  \n}",
     connection_id: connectionId,
     description: "",
     outputTable: null,

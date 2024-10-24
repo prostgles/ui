@@ -18,7 +18,7 @@ type P = JSONBSchemaCommonProps & {
 export const JSONBSchemaArrayMatch = (s: JSONB.JSONBSchema): s is Schema => !!(s.arrayOf || s.arrayOfType);
 export const JSONBSchemaArray = ({ value, schema, onChange, ...oProps } : P) => {
 
-  const [newItem, setNewItem] = useState<{ val: any; isComplete: boolean; }>();
+  const [newItem, setNewItem] = useState<{ val: any; isComplete: boolean; anchorEl: HTMLElement }>();
   const itemSchema = typeof schema.arrayOf === "string"? { type: schema.arrayOf } : (schema.arrayOf ?? { type: schema.arrayOfType });
 
   const addNewItem = (nItem = newItem) => {
@@ -32,7 +32,7 @@ export const JSONBSchemaArray = ({ value, schema, onChange, ...oProps } : P) => 
 
   return <Section 
     className="JSONBSchemaArray flex-col gap-p5 f-1" 
-    contentClassName="flex-col gap-p5 max-h-500 p-p25 o-auto"  
+    contentClassName="flex-col gap-p5 max-h-500 p-1 o-auto"  
     title={schema.title ?? "Items"} 
     open={true}
   >
@@ -84,6 +84,9 @@ export const JSONBSchemaArray = ({ value, schema, onChange, ...oProps } : P) => 
     </div>
     {newItem && <Popup 
       title={"Add new item"}
+      anchorEl={newItem.anchorEl}
+      positioning="beneath-left"
+      clickCatchStyle={{ opacity: 1 }}
       onClose={() => setNewItem(undefined)}
       footerButtons={[
         {
@@ -103,15 +106,15 @@ export const JSONBSchemaArray = ({ value, schema, onChange, ...oProps } : P) => 
         schema={itemSchema as any} 
         value={newItem.val} 
         onChange={(newValue => {
-          setNewItem({ val: newValue, isComplete: true });
-          addNewItem({ val: newValue, isComplete: true });
+          setNewItem({ ...newItem, val: newValue, isComplete: true });
+          addNewItem({ ...newItem, val: newValue, isComplete: true });
         }) as any}
         {...oProps}
       />
     </Popup>}
 
-    <Btn iconPath={mdiPlus} color="action" variant="faded" onClick={() => {
-      setNewItem({ isComplete: false, val: null })
+    <Btn iconPath={mdiPlus} color="action" variant="faded" onClick={({ currentTarget }) => {
+      setNewItem({ isComplete: false, val: null, anchorEl: currentTarget });
     }}/> 
   </Section>;
 }

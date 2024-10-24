@@ -18,6 +18,7 @@ type TableErrors = Record<string, TableRulesErrors>;
 const defaultRule: EditedAccessRule = {
   access_control_user_types: [], 
   name: "",
+  llm_daily_limit: 0,
   dbPermissions: {
     type: "All views/tables",
     allowAllTables: []
@@ -26,7 +27,8 @@ const defaultRule: EditedAccessRule = {
   created: null,
   dbsPermissions: {
     createWorkspaces: true
-  }
+  },
+  access_control_allowed_llm: [],
 };
 
 export type ValidEditedAccessRuleState =  (
@@ -37,7 +39,7 @@ export type ValidEditedAccessRuleState =  (
   } 
   | {
     type: "create"
-    newRule: Partial<Pick<EditedAccessRule, "access_control_user_types" | "dbPermissions" | "dbsPermissions">> | undefined;
+    newRule: Partial<Pick<EditedAccessRule, "access_control_user_types" | "dbPermissions" | "dbsPermissions" | "access_control_allowed_llm" | "llm_daily_limit">> | undefined;
     rule: undefined;
     initialUserTypes?: undefined;
   }
@@ -131,7 +133,7 @@ export const useEditedAccessRule = ({ action, prgl, }: P): EditedAccessRuleState
   }
 
   const ruleWasEdited = !newRule? false : action.type === "create" || 
-    Boolean(ruleData.rule && !areEqual(newRule, ruleData.rule, ["access_control_user_types", "dbPermissions", "dbsPermissions", "published_methods"]));
+    Boolean(ruleData.rule && !areEqual(newRule, ruleData.rule, ["access_control_user_types", "access_control_allowed_llm", "dbPermissions", "dbsPermissions", "published_methods", "llm_daily_limit"]));
   
   const result: ValidEditedAccessRuleState = {
     ...ruleData,

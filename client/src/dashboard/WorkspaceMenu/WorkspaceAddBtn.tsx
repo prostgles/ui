@@ -12,7 +12,7 @@ import { useIsMounted } from "prostgles-client/dist/react-hooks";
 
 type WorkspaceDeleteBtnProps = Pick<Prgl, "dbs"> & {
   connection_id: string;
-  setWorkspace(w?: Required<WorkspaceSchema> | undefined): void; 
+  setWorkspace(w: Required<WorkspaceSchema>): void; 
   btnProps?: BtnProps<void>;
   className?: string;
 }

@@ -94,6 +94,8 @@ export const W_MethodControls = ({ w, db, tables, methods, method_name, fixedRow
 
   const hasErrors = !isCompleteJSONB(args, argSchema);
 
+  const outputTableInfo = m?.outputTable? tables.find(t => t.name === m.outputTable) : undefined;
+
   return <div className="flex-col f-1  min-s-0 o-auto bg-color-2" style={{ gap: "2px" }}>
     {m && <div className="flex-col gap-1 p-1 shadow bg-color-0">
       <div className={"flex-row-wrap gap-1 " + (expandControls? "" : " hidden ")}> 
@@ -158,9 +160,9 @@ export const W_MethodControls = ({ w, db, tables, methods, method_name, fixedRow
         />
       </div>
     </div> }
-
+    {m?.outputTable && !outputTableInfo && <ErrorComponent error={`Results table ( ${m.outputTable} ) missing or not allowed`} className="m-1" />}
     {showResults && !error && <div className="flex-row f-1">
-      {m?.outputTable? <SmartTable
+      {m?.outputTable && outputTableInfo? <SmartTable
           title="" 
           db={db}
           theme={theme}

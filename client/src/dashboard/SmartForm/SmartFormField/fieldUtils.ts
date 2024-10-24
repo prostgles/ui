@@ -168,6 +168,14 @@ export const parseDefaultValue = (c: ValidatedColumnInfo, value: any, wasChanged
     //   if (c.udt_name === "date") return (new Date()).toISOString().split('T')[0];
     //   return (new Date()).toISOString().slice(0, -5);
     // }
+    if (c.udt_name === "jsonb" && c.column_default.endsWith("::jsonb")) {
+      try {
+        const val = JSON.parse(c.column_default.slice(1, -8));
+        return val;
+      } catch (e) {
+        console.error("Could not parse column_default", e);
+      }
+    }
     if (c.tsDataType === "number") return Number(c.column_default);
   } else if (value) {
     return parseValue(c, value);

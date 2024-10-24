@@ -1,9 +1,13 @@
 import React from "react";
 import Btn from "../../../components/Btn";
-import { FlexRow, FlexRowWrap, classOverride } from "../../../components/Flex";
+import type { BtnProps } from "../../../components/Btn";
+import { FlexCol, FlexRow, FlexRowWrap, classOverride } from "../../../components/Flex";
 import FormField from "../../../components/FormField/FormField";
 import { FormFieldDebounced } from "../../../components/FormField/FormFieldDebounced";
 import Popup from "../../../components/Popup/Popup";
+import { Label, type LabelProps } from "../../../components/Label";
+import { isObject } from "../../../../../commonTypes/publishUtils";
+import { mdiPalette } from "@mdi/js";
 
 export type RGBA = [number, number, number, number];
 const COLOR_PALETTE = ["#F79800", "#ff004a", "#CB11F0", "#7430F0", "#ffffff", "#174CFA", "#0AA1FA", "#36E00B", "rgb(143 143 143)"];
@@ -16,8 +20,8 @@ export class ColorPicker extends React.Component<{
   style?: React.CSSProperties;
   className?: string;
   value: string;
-  onChange: (color: string, rgb: RGBA) => void; // , colorKey: string
-  label?: string;
+  onChange: (color: string, rgb: RGBA, rgb255Alpha: RGBA) => void;
+  label?: string | LabelProps;
   required?: boolean;
   title?: string;
   variant?: "legend";
@@ -51,7 +55,7 @@ export class ColorPicker extends React.Component<{
 
     } else {
       
-      onChange(asHex(this.color), asRGB(this.color) );
+      onChange(asHex(this.color), asRGB(this.color), asRGB(this.color, "255"));
       this.lastChanged = now;
     }
   }
@@ -60,18 +64,25 @@ export class ColorPicker extends React.Component<{
     const { anchorEl } = this.state;
     const { value, style = {}, className = "", onChange, label, variant } = this.props;
 
-    const labelNode = label? <div className=" noselect f-d1">{label}</div> : null;
-    const colorNode = <div className={"round pointer shadow b b-color f-0"} 
-        style={{ width: "24px", height: "24px", backgroundColor: value }} 
-        onClick={e => {
-          this.setState({ anchorEl: e.currentTarget })
-        }}
-      ></div>
+    const labelNode = label? isObject(label)? null : 
+      <div className=" noselect f-d1">{label}</div> : 
+      null;
+    const colorNode = <ColorCircle
+      label={isObject(label)? label : undefined}
+      color={value}
+      onClick={e => {
+        this.setState({ anchorEl: e.currentTarget })
+      }}
+    />
 
     return <FlexRow className={classOverride("gap-p5 ai-center ", className)} style={style}>
-      {variant === "legend"? <>{colorNode}{labelNode}</> : <>{labelNode}{colorNode}</>}
+      {
+        variant === "legend"? <>{colorNode}{labelNode}</> : 
+        <>{labelNode}{colorNode}</>
+      }
       {anchorEl && 
         <Popup 
+          title={"Layer color"}
           anchorEl={anchorEl} 
           positioning="beneath-left" 
           onClose={() => this.setState({ anchorEl: null })} 
@@ -83,7 +94,7 @@ export class ColorPicker extends React.Component<{
                 className={"round pointer mr-1 mb-1 shadow"} 
                 style={{ width: "24px", height: "24px", backgroundColor: c }} 
                 onClick={e => {
-                  onChange(asHex(c), asRGB(c));
+                  onChange(asHex(c), asRGB(c), asRGB(c, "255"));
                   this.setState({ anchorEl: null })
                 }}
               ></div>
@@ -122,6 +133,20 @@ export class ColorPicker extends React.Component<{
   }
 }
 
+export const ColorCircle = ({ color, onClick, label, size }: Pick<BtnProps, "onClick" | "label" | "size"> & { color: string }) => {
+  return <Btn 
+    label={label}
+    size={size}
+    className={"shadow b b-color f-0"} 
+    style={{ backgroundColor: color }} 
+    onClick={onClick}
+    iconProps={{
+      path: mdiPalette,
+      color
+    }}
+  />
+}
+
 export const asHex = (v: string) => {
   if(v.startsWith("#")) return v;
 
@@ -134,23 +159,35 @@ export const rgbToHex = (r, g, b) => "#" + [r, g, b].map(x => {
   return hex.length === 1 ? "0" + hex : hex
 }).join("");
 
-const asRGB = (color: string): RGBA => {
+export const asRGB = (color: string, maxOpacity?: "1" | "255"): RGBA => {
 
   if(color.toLowerCase().trim().startsWith("rgb")){
     const rgba = color.trim().split("(")[1]?.split(")")[0]?.split(",").map(v => +v.trim());
     if((rgba?.length ?? 0) >= 3 && rgba?.every(v => Number.isFinite(v))){
-      const opacity = rgba[3] || 1;
+      let opacity = rgba[3] || 1;
+      if(maxOpacity === "255" && opacity <= 1){
+        opacity = Math.max(
+          1, 
+          Math.floor((1/opacity) * 255)
+        );
+      }
       const rgb = rgba.slice(0, 3) as [number, number, number];
       return [ ...rgb, opacity] as RGBA
     }
-    return [100, 100, 100, 1];
+    return [100, 100, 100, maxOpacity === "255"? 255 : 1];
   }
 
   const r = parseInt(color.substr(1,2), 16)
   const g = parseInt(color.substr(3,2), 16)
   const b = parseInt(color.substr(5,2), 16)
-  const a = parseInt(color.substr(7,2), 16) || 1;
+  let a = parseInt(color.substr(7,2), 16) || 1;
 
+  if(maxOpacity === "255" && a <= 1){
+    a = Math.max(
+      1, 
+      Math.floor((1/a) * 255)
+    );
+  }
   return [r, g, b, a];
 }
 

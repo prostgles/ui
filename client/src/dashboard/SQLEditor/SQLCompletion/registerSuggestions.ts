@@ -98,6 +98,7 @@ let sqlHoverProvider: IDisposable | undefined;
  * Used to ensure connecting to other databases will show the correct suggestions
  */
 let sqlCompletionProvider: IDisposable | undefined;
+let sqlInlineCompletionProvider: IDisposable | undefined;
 let sqlFormattingProvider: IDisposable | undefined;
 type Args = { 
   suggestions: SQLSuggestion[]; 
@@ -373,6 +374,42 @@ export function registerSuggestions(args: Args) {
       return item;
     }
   });
+
+  // TODO: Add inline completion using LLMs
+  // setInterval(() => {
+  //   editor.trigger("demo", "editor.action.inlineSuggest.trigger", {});
+  // }, 2e3)
+  // sqlInlineCompletionProvider?.dispose();
+  // sqlInlineCompletionProvider = monaco.languages.registerInlineCompletionsProvider(LANG, { 
+  //   freeInlineCompletions: (completions) => {
+
+  //   },
+  //   provideInlineCompletions: async (model, position) => {
+  //     // const suggestionText = "hello there\n  dwadwa \n dwadwa";
+  //     // const maxColumn = model.getLineMaxColumn(position.lineNumber);
+  //     // const maxLine = model.getLineCount();
+  //     // const line = model.getLineContent(position.lineNumber);
+  //     const contentAfterCusor = model.getLineContent(position.lineNumber).slice(position.column - 1); 
+      
+  //     const insertText = "hello there\n  dwadwa \n dwadwa"; // "hello there dwadwa";
+  //     return { 
+  //       items: [
+  //         {
+  //           // range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, contentAfterCusor? model.getLineMaxColumn(position.lineNumber) : position.column),
+  //           // range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.lineNumber ),
+  //           insertText,
+  //           // insertText: "hello there\n  dwadwa \n dwadwa",
+  //           // additionalTextEdits: [
+  //           //   {
+  //           //     range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+  //           //     text: ""
+  //           //   }
+  //           // ],
+  //         }
+  //       ],
+  //     }
+  //   }
+  // });
 }
 export const getKind = (type: SQLSuggestion["type"]): number => {
   // return KNDS.Text

@@ -31,7 +31,7 @@ const DEFAULT_RESTORE_OPTS: RestoreOpts = {
 }
 
 type RestoreOptionsProps = Pick<Prgl, "dbsMethods" | "db"> & {
-  button: React.ReactChild;
+  button: React.ReactNode;
   defaultOpts?: RestoreOpts;
   dbs: DBS;
   backupId?: string;
@@ -41,7 +41,7 @@ type RestoreOptionsProps = Pick<Prgl, "dbsMethods" | "db"> & {
   onReadyButton?: undefined;
 } | {
   fromFile?: undefined;
-  onReadyButton: (opts: RestoreOpts, popupClose: ()=>void) => React.ReactChild;
+  onReadyButton: (opts: RestoreOpts, popupClose: ()=>void) => React.ReactNode;
 })
 export const RestoreOptions = (props: RestoreOptionsProps) => {
   const {

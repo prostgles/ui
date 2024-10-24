@@ -79,8 +79,8 @@ export const TopControls = (props: TopControlsProps) => {
             <Alerts { ...prgl } />
           }
 
-          {prgl.user?.type === "admin" && 
-            <AskLLM {...prgl} />
+          {prgl.dbsMethods.askLLM && 
+            <AskLLM {...prgl} workspaceId={props.location === "workspace"? props.workspace.id : undefined} />
           }
           <Feedback dbsMethods={prgl.dbsMethods} /> 
         

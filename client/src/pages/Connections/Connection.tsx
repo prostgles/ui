@@ -24,7 +24,7 @@ const getConnectionPath = (cid: string, wid?: string) => `/connections/${cid}` +
 
 export const Connection = (props: ConnectionProps) => {
 
-  const { c, isAdmin, } = props;
+  const { c, isAdmin } = props;
   const noWorkspaceAndCannotCreateOne = !c.workspaces.length && !(props.dbs.workspaces as any).insert
 
   if(noWorkspaceAndCannotCreateOne) {
@@ -39,6 +39,11 @@ export const Connection = (props: ConnectionProps) => {
   const showWorkspaces = !!c.workspaces.length && c.workspaces.map(w => w.name).join("") !== "default";
 
   const showAccessInfo = isAdmin && c.access_control.length > 0;
+
+  /** Remove published workspaces that have been cloned */
+  const workspaces = c.workspaces.filter(w => {
+    return !c.workspaces.some(pw => pw.id === w.parent_workspace_id && pw.name === w.name)
+  });
 
   return <FlexCol
     key={c.id} 
@@ -78,7 +83,7 @@ export const Connection = (props: ConnectionProps) => {
       >
         {showWorkspaces && <>
           <Icon path={WspIconPath} size={.75} className="text-action mr-p5" />
-          {c.workspaces.map(w => 
+          {workspaces.map(w => 
             <Btn key={w.id} 
               className="w-fit" 
               color="action" 

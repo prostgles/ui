@@ -730,9 +730,8 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
             break;
           }
         }} 
-      >
-        {/* {!!label && <div className={" noselect text-1p5 my-p5 " + (!isSearch? (" p-p75 " + (hasSearch? " pb-0 " : " ")) : " pb-p25 ")} style={{}}>{label}</div>} */}
-        {!!label && <Label className="ml-p5" variant="normal">{label}</Label>}
+      > 
+        {!!label && <Label className="ml-p5 mb-p25" variant="normal">{label}</Label>}
         <div 
           className={
             "f-0 min-h-0 min-w-0 flex-row jc-start relative " + 
@@ -868,7 +867,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
       } else {
         return <Btn onClick={() => {
           this.setState({ selectPopup: true })
-        }}>{selectedKey}</Btn>
+        }}>{selectedKey?.toString()}</Btn>
       }
     }
 

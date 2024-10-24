@@ -51,7 +51,7 @@ export const DashboardMenuContent = (props: P) => {
     ...methods[methodName] as MethodFullDef
   }));
 
-  const { setWorkspace } = useSetNewWorkspace(workspace);
+  const { setWorkspace } = useSetNewWorkspace(workspace.id);
   const [showSchemaDiagram, setShowSchemaDiagram] = useState(false);
 
   const ref = useRef<HTMLDivElement>(null);

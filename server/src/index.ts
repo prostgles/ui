@@ -29,8 +29,17 @@ if(process.env.PRGL_TEST){
       console.log(`${(new Date()).toISOString()} ${req.method} ${res.statusCode} ${req.url} ${res.statusCode === 302? res.getHeader("Location") : ""}`);
     });
     next();
-  });   
-} 
+  });
+  
+  /** Mock LLM API */
+  app.post("/mocked-llm", (req, res) => {
+    const { path, method, body } = req;
+    console.log(`LLM API: ${method} ${path} ${JSON.stringify(body)}`);
+    res.json({
+      choices: [{ message: { content: "Mocked response" } }]
+    });
+  });
+}
      
 export const API_PATH = "/api";
 
@@ -126,6 +135,7 @@ app.get("/dbs", (req, res) => {
   if(electronCreds && isObject(serverState.connectionError) && req.cookies["sid_token"] === electronConfig?.sidConfig.electronSid){
     serverState.electronCreds = electronCreds as any;
   }
+  /** Alert admin if x-real-ip is spoofable */
   let xRealIpSpoofable = false;
   const { global_setting } = connMgr.connectionChecker.config;
   if(

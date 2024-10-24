@@ -1,12 +1,12 @@
 import type { AnyObject } from "prostgles-types";
-import { _PG_date } from "prostgles-types";
+import { _PG_date, isDefined } from "prostgles-types";
 import React from "react";
 import { FlexRow, FlexRowWrap } from "../../../components/Flex";
 import { CellBarchart } from "../../../components/ProgressBar";
 import type { OnColRenderRowInfo } from "../../../components/Table/Table";
 import { RenderValue } from "../../SmartForm/SmartFormField/RenderValue";
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
-import type { ChipStyle } from "../ColumnMenu/ColumnStyleControls";
+import type { ChipStyle, ColumnValue } from "../ColumnMenu/ColumnStyleControls";
 import { kFormatter, type MinMax } from "../W_Table";
 import { blend } from "../colorBlend";
 import type { ProstglesTableColumn } from "./getTableCols";
@@ -129,19 +129,20 @@ export const getCellStyle = (
     const val = row[col.name];
 
     const match = style.conditions.find(({ operator, condition }) => {
-      const cval = c.tsDataType === "number"? +condition : condition;
+      const isNumeric = c.udt_name === "int4" || c.udt_name === "float8" || c.udt_name === "numeric" || c.udt_name === "int8" || c.udt_name === "int2" || c.udt_name === "float4" || c.udt_name === "money";
+      const cval = isNumeric? +(condition as string) : condition as ColumnValue;
       if(operator === "contains"){
         return val && `${JSON.stringify(val)}`.includes(cval + "");
       } else if(operator === "="){
         return val == cval;
       } else if(operator === ">"){
-        return val > cval;
+        return (cval !== undefined && cval !== null) && val > cval;
       } else if(operator === ">="){
-        return val >= cval;
+        return (cval !== undefined && cval !== null) && val >= cval;
       } else if(operator === "<="){
-        return val <= cval;
+        return (cval !== undefined && cval !== null) && val <= cval;
       } else if(operator === "<"){
-        return val < cval;
+        return (cval !== undefined && cval !== null) && val < cval;
       } else if(operator === "!="){
         return val != cval;
       } else if(operator === "in" || operator === "not in"){

@@ -3,6 +3,7 @@ import { suggestSnippets } from "../CommonMatchImports";
 import { getExpected } from "../getExpected";
 import { getParentFunction } from "../MatchSelect";
 import { getKind, type ParsedSQLSuggestion, type SQLMatchContext, type SQLMatcherResultType } from "../registerSuggestions";
+import { suggestColumnLike } from "../suggestColumnLike";
 import { suggestCondition } from "../suggestCondition";
 import { getNewColumnDefinitions, PG_COLUMN_CONSTRAINTS, REFERENCE_CONSTRAINT_OPTIONS_KWDS } from "../TableKWDs";
 import { type KWD, suggestKWD, withKWDs } from "../withKWDs";
@@ -16,8 +17,7 @@ export const matchCreateTable = async ({ cb, ss, sql, setS }: SQLMatchContext): 
 
   const insideFunc = getParentFunction(cb);
   if (insideFunc?.prevTextLC?.endsWith("generated always as")) {
-    const res = await suggestCondition({ cb, ss, sql, setS }, true);
-    if (res) return res;
+    return suggestColumnLike({ cb, ss, setS, sql });
   }
 
   if (cb.prevTokens.some(t => !t.nestingId && t.textLC === ")")) {

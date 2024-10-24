@@ -3,37 +3,15 @@ import React from "react";
 import RTComp from "../RTComp";
 
 
+import Btn from "../../components/Btn";
+import { classOverride, FlexRow } from "../../components/Flex";
 import { SilverGridChild } from "./SilverGridChild";
 import { SilverGridResizer } from "./SilverGridResizer";
 import type { TreeLayout } from "./TreeBuilder";
 import { TreeBuilder } from "./TreeBuilder";
-import { classOverride, FlexRow } from "../../components/Flex";
-import Btn from "../../components/Btn";
-import { isDefined } from "../../utils";
 
-
-export type LayoutItem = {
-  type: "item";
-  title?: string;
-  id: string;
-  tableName: string | null;
-  size: number;
-  isRoot?: boolean;
-}
-export type LayoutGroup = {
-  id: string;
-  size: number;
-  isRoot?: boolean;
-} & ({
-  type: "row" | "col";
-  items: LayoutConfig[];
-} | {
-  type: "tab";
-  items: LayoutItem[];
-  activeTabKey: string | undefined; 
-})
-
-export type LayoutConfig = LayoutItem | LayoutGroup;
+import type { LayoutItem, LayoutConfig, LayoutGroup } from "@common/DashboardTypes";
+export type { LayoutItem, LayoutConfig, LayoutGroup } from "@common/DashboardTypes";
 
 export type CustomHeaderClassNames = { close: string; minimise: string; fullscreen: string; move: string };
 export type ReactSilverGridNode = ReactElement<{  

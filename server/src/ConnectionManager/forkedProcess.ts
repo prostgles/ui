@@ -8,7 +8,7 @@ import type { ProcStats } from "../../../commonTypes/utils";
 export const getError = (rawError: any) => {
   return rawError instanceof Error? Object.fromEntries(Object.getOwnPropertyNames(rawError).map(key => [key, (rawError as any)[key]])) : rawError;
 }
-export const initForkedProc = () => {
+const initForkedProc = () => {
   let _prglParams: OnReadyParamsBasic | undefined;
   let prglParams: OnReadyParamsBasic | undefined;
 

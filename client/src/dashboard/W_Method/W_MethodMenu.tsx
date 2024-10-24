@@ -1,22 +1,26 @@
-import { mdiFormatListCheckbox, mdiPencil } from "@mdi/js";
-import React, { useState } from "react";
+import { mdiCog, mdiFormatListCheckbox, mdiPencil } from "@mdi/js";
+import { isEmpty } from "prostgles-types";
+import React, { useMemo, useState } from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import Btn from "../../components/Btn";
+import { JSONBSchemaA } from "../../components/JSONBSchema/JSONBSchema";
+import { pageReload } from "../../components/Loading";
 import SearchList from "../../components/SearchList/SearchList";
 import Tabs from "../../components/Tabs";
 import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
 import type { W_MethodProps } from "./W_Method";
-import { isEmpty } from "prostgles-types"; 
-import { pageReload } from "../../components/Loading";
 
 export const W_MethodMenu = (props: W_MethodProps & {  closeMenu: () => void; }) => {
-  const { prgl: { dbs, user, connectionId }, w, closeMenu } = props;
+  const { prgl: { dbs, dbsTables, user, connectionId }, w, closeMenu } = props;
   const { data: method } = dbs.published_methods.useFindOne({ name: w.method_name, connection_id: connectionId });
   const [editedMethod, setEditedMethod] = useState<DBSSchema["published_methods"]>();
 
   const isAdmin = user?.type === "admin";
   const { hiddenArgs = [] } = w.options;
 
+  const functionCol = useMemo(() => {
+    return dbsTables.find(t => t.name === "windows")?.columns.find(c => c.name === "function_options");
+  }, []);  
   if(!method || isEmpty(method)) return null;
 
   return <Tabs 
@@ -26,6 +30,21 @@ export const W_MethodMenu = (props: W_MethodProps & {  closeMenu: () => void; })
     // defaultActiveKey={isAdmin? "edit" : undefined}
     defaultActiveKey={"args"}
     items={{
+      display: {
+        label: "Display",
+        leftIconPath: mdiCog,
+        content: <div className="flex-col o-auto f-1 min-s-0 p-1 gap-1">
+          {functionCol?.jsonbSchema && <JSONBSchemaA
+            schema={functionCol.jsonbSchema} 
+            db={props.prgl.db}
+            tables={props.tables}
+            onChange={v => {
+              w.$update({ function_options: v });
+            }}
+            value={w.function_options}
+          />}
+        </div>
+      },
       args: {
         label: "Arguments",
         leftIconPath: mdiFormatListCheckbox,

@@ -233,7 +233,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
       this.setState({ collapsed: !collapsed })
     }
     const style = getPopupStyle({ positioning, collapsed, fullScreen, stateStyle, rootStyle });
-    const fullHeightPositions: PopupProps["positioning"][] = ["right-panel", "fullscreen"];
+    const fullHeightPositions: PopupProps["positioning"][] = ["right-panel", "fullscreen", undefined];
     
     const result = (
       <>

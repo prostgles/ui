@@ -47,31 +47,29 @@ type AuthAttepmt =
 type LoginAttemptArgs = { 
   db: DBOFullyTyped<DBSchemaGenerated>;
 } & LoginClientInfo & AuthAttepmt;
+
 const loginAttempt = async (args: LoginAttemptArgs) => {
   const { db, ip_address, user_agent, ...attempt } = args;
-  const ignoredResult = {
-    onSuccess: async () => { }
-  } 
   const globalSettings = await getGlobalSettings();
   const lastHour = (new Date(Date.now() - 1 * HOUR)).toISOString();
-  const matchByFilterKeys: (keyof typeof args)[] = [];
   const { login_rate_limit: { groupBy }, login_rate_limit_enabled } = globalSettings;
-  if(login_rate_limit_enabled){
-    if(groupBy === "ip"){
-      matchByFilterKeys.push("ip_address");
-    } else if(groupBy === "remote_ip"){
-      matchByFilterKeys.push("ip_address_remote");
-    } else if((groupBy as any) === "x-real-ip"){
-      matchByFilterKeys.push("x_real_ip");
-    } else {
-      throw "Invalid login_rate_limit.groupBy";
-    }
-  } else {
+  const matchByFilterKey = login_rate_limit_enabled? ({
+    "ip": "ip_address",
+    "x-real-ip": "x_real_ip",
+    "remote_ip": "ip_address_remote"
+  } as const)[groupBy] : undefined;
+  const ip = (matchByFilterKey && args[matchByFilterKey]) ?? ip_address;
+  const ignoredResult = {
+    ip,
+    onSuccess: async () => { }
+  } 
+  if(!matchByFilterKey){
+    if(login_rate_limit_enabled) throw "Invalid login_rate_limit.groupBy";
     return ignoredResult;
   }
-  const matchByFilter = pickKeys(args, matchByFilterKeys);
+  const matchByFilter = pickKeys(args, [matchByFilterKey]);
   if(isEmpty(matchByFilter)){
-    throw "matchByFilter is empty " + JSON.stringify([matchByFilter, matchByFilterKeys, ]); // pickKeys(args, ["ip_address", "ip_address_remote", "x_real_ip"])
+    throw "matchByFilter is empty " + JSON.stringify([matchByFilter, matchByFilterKey]); // pickKeys(args, ["ip_address", "ip_address_remote", "x_real_ip"])
   }
   const previousFails = await db.login_attempts.find({ ...matchByFilter, failed: true, "created.>=": lastHour })
   if(previousFails.length >= Math.max(1, globalSettings.login_rate_limit.maxAttemptsPerHour)){
@@ -89,6 +87,7 @@ const loginAttempt = async (args: LoginAttemptArgs) => {
   const loginAttempt = await db.login_attempts.insert({ ip_address, failed: true, user_agent, ...attempt }, { returning: { id: 1 } });
 
   return { 
+    ip,
     onSuccess: async () => { 
       await db.login_attempts.update({ id: loginAttempt.id }, { failed: false })
     }
@@ -216,7 +215,7 @@ export const getAuth = (app: Express) => {
       if(password.length > 400){
         throw "Password is too long";
       }
-      const { onSuccess } = await loginAttempt({ db, username, ip_address, ip_address_remote, user_agent, x_real_ip, auth_type: "login" });
+      const { onSuccess, ip } = await loginAttempt({ db, username, ip_address, ip_address_remote, user_agent, x_real_ip, auth_type: "login" });
       try {
         const userFromUsername = await _db.one("SELECT * FROM users WHERE username = ${username};", { username });
         if(!userFromUsername){
@@ -258,7 +257,7 @@ export const getAuth = (app: Express) => {
         const globalSettings = await db.global_settings.findOne();
         const DAY = 24 * 60 * 60 * 1000;
         const expires = Date.now() + (globalSettings?.session_max_age_days ?? 1) * DAY;
-        return await makeSession(u, { ip_address, user_agent: user_agent || null, type: "web" }, db, expires)
+        return await makeSession(u, { ip_address: ip, user_agent: user_agent || null, type: "web" }, db, expires)
       }
       await db.sessions.update({ id: activeSession.id }, { last_used: new Date() });
       return parseAsBasicSession(activeSession);
@@ -339,7 +338,7 @@ export const getAuth = (app: Express) => {
           if(!usedMagicLink){
             throw new Error("Magic link already used");
           }
-          const session = await makeSession(user, { ip_address, user_agent: user_agent || null, type: "web" }, dbo , Number(mlink.expires));
+          const session = await makeSession(user, { ip_address: onLoginAttempt.ip, user_agent: user_agent || null, type: "web" }, dbo , Number(mlink.expires));
           await onLoginAttempt.onSuccess();
           return session;
         }

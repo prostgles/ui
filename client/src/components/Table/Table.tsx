@@ -90,6 +90,10 @@ export type TableProps = {
   rowStyle?: React.CSSProperties;
   className?: string;
   showSubLabel?: boolean;
+  /**
+   * Used to render add row button
+   */
+  afterLastRowContent?: React.ReactNode;
 }
 export function useWhatChanged(props: { [prop: string]: unknown }) {
   // cache the last set of props
@@ -140,6 +144,7 @@ export const Table = (props: TableProps & React.HTMLAttributes<HTMLDivElement>) 
     rowStyle = {},
     maxRowHeight,
     rowKeys,
+    afterLastRowContent = null,
   } = props;
 
   const ref = useRef<HTMLDivElement>(null);
@@ -194,7 +199,8 @@ export const Table = (props: TableProps & React.HTMLAttributes<HTMLDivElement>) 
             !_rows.length ? <div className="text-3 p-2 noselect">No data</div> :
               _rows.map((row, iRow) => {
                 const rowKey = rowKeys?.map(key => row[key]).join("-") || iRow + " " + Date.now();
-                return <div key={rowKey}
+                return <div 
+                  key={rowKey}
                   role="row"
                   className={"d-row flex-row f-0 " + (rowClass ? rowClass : " ") + (onRowClick ? " pointer " : "") + ((onRowHover || onRowClick) ? " hover " : "")}// + ((activeRowIndex === iRow && !activeRowStyle)? " active-row " : "")}
                   style={{ ...(activeRowIndex === iRow ? activeRowStyle : {}), ...rowStyle, maxHeight: `${maxRowHeight || 100}px` }}
@@ -221,7 +227,6 @@ export const Table = (props: TableProps & React.HTMLAttributes<HTMLDivElement>) 
                       (col.onClick ? "  " : " p-p5 "),
                       (col.className || "")
                     );
-
 
                     return (
                       <div 
@@ -251,7 +256,7 @@ export const Table = (props: TableProps & React.HTMLAttributes<HTMLDivElement>) 
                   })}
                 </div>
               })}
-
+          {afterLastRowContent}
           {(!pagination) ? null :
             <Pagination 
               key="Pagination"

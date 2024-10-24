@@ -5,10 +5,13 @@ import { useEffectDeep } from "prostgles-client/dist/prostgles";
 export const useLLMChat = ({ dbs, user }: Prgl) => {
 
   const [activeChatId, setActiveChat] = useState<number>();
+  const { data: activeChat, isLoading } = dbs.llm_chats.useSubscribeOne({ id: activeChatId });
   const { data: credentials } = dbs.llm_credentials.useSubscribe();
-  const { data: prompts } = dbs.llm_prompts.useSubscribe();
+  /** Order by Id to ensure the first prompt is the default chat */
+  const { data: prompts } = dbs.llm_prompts.useSubscribe({}, { orderBy: { id: 1 } });
   const user_id = user?.id;
   const firstPromptId = prompts?.[0]?.id;
+  const activeChatPromptId = activeChat?.llm_prompt_id;
   const createNewChat = useCallback(async (credentialId: number, ifNoOtherChatsExist = false) => {
     if(ifNoOtherChatsExist){
       const chat = await dbs.llm_chats.findOne({ user_id });
@@ -20,22 +23,29 @@ export const useLLMChat = ({ dbs, user }: Prgl) => {
         name: "New chat", 
         user_id: undefined as any,
         llm_credential_id: credentialId,
-        llm_prompt_id: firstPromptId,
+        llm_prompt_id: activeChatPromptId ?? firstPromptId,
       }, 
       { returning: "*" }
     );
     setActiveChat(newChat.id);
-  }, [setActiveChat, dbs, user_id, firstPromptId]);
+  }, [setActiveChat, dbs, user_id, firstPromptId, activeChatPromptId]);
 
   const { data: latestChats } = dbs.llm_chats.useSubscribe(
     { user_id }, 
     { 
+      select: { "*": 1, created_ago: { $ageNow: ["created"] } },
       orderBy: { created: -1 }
     }
   );
-  const { data: activeChat } = dbs.llm_chats.useSubscribeOne({ id: activeChatId });
 
   useEffectDeep(() => {
+    
+    /** Change chat if deleted */
+    if(activeChatId && !activeChat && !isLoading && latestChats){
+      setActiveChat(undefined);
+      return;
+    }
+
     const firstCredential = credentials?.[0];
     if(latestChats?.length){
       if(!activeChatId){

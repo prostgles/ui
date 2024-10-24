@@ -14,6 +14,7 @@ type P = Pick<SmartFilterBarProps, "db" | "tables"> & {
   extraFilters:  AnyObject[] | undefined;
   onFilterChange: (newFilter: SmartGroupFilter) => void;
 }
+
 export const SmartFilterBarSearch = ({ tables, db, table, tableName, filter, extraFilters, onFilterChange }: P) => {
 
   return <SmartSearch

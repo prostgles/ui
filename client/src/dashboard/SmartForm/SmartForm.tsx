@@ -99,6 +99,7 @@ export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods" | "theme"> &
   enableInsert?: boolean;
   insertBtnText?: string;
   hideNullBtn?: boolean;
+  jsonbSchemaWithControls?: boolean;
 
   /**
    * Fired after a successful update/insert
@@ -285,7 +286,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
       action,
       dynamicValidatedColumns: _columns,
       tableInfo,
-      error: invalidColumns && invalidColumns.length ? "Some requested columns not found in the table: " + JSON.stringify(invalidColumns) : 
+      error: invalidColumns?.length ? "Some requested columns not found in the table: " + JSON.stringify(invalidColumns) : 
         undefined
     });
   }
@@ -709,7 +710,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
   render() {
     const { tableName,
       onChange, showSuggestions, label,
-      hideChangesOptions = false,
+      hideChangesOptions = false, jsonbSchemaWithControls,
       includeMedia = true, asPopup, enableInsert = true,
       db, tables, methods, className = "", onPrevOrNext, prevNext, contentClassname, theme, connection
     } = this.props;
@@ -741,7 +742,9 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
 
     const maxWidth = "max-w-650" as const;
 
-    if (!tableInfo) return null;
+    if (!tableInfo) {
+      return <>Table {tableName} not found.</>
+    }
 
     const rowFilter = this.getRowFilter();
     const filterKeys = rowFilter && "$and" in rowFilter ? rowFilter.$and.flatMap(f => getKeys(f)) : getKeys(rowFilter ?? {});
@@ -755,7 +758,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     const formHeader = asPopup ? null : (!label && "label" in this.props) ? null : headerText ? <h4 className="font-24" style={{ margin: 0, padding: "1em", paddingBottom: ".5em" }}>{headerText}</h4> : null;
 
     if (action.dataItemLoaded === false) {
-      return null;// <div className="bg-color-0 w-full f-1"></div>
+      return null;
     }
 
     const renderResult = <div
@@ -771,8 +774,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
 
       {formHeader}
       <div 
-        className={classOverride("SmartFormContent flex-col f-1 o-auto min-h-0 min-w-0 p-1 gap-1 px-2", contentClassname)} 
-        style={{ paddingTop: 0 }}
+        className={classOverride("SmartFormContent flex-col f-1 o-auto min-h-0 min-w-0 pb-1 gap-1 px-2", contentClassname)} 
       >
         {fileManagerTop}
         {this.getDisplayedColumns()
@@ -838,6 +840,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
               value={rawValue || ""}
               rawValue={rawValue}
               row={row}
+              jsonbSchemaWithControls={jsonbSchemaWithControls}
               onChange={newVal => this.setColumnData(c, newVal)}
               showSuggestions={showSuggestions}
               error={errors[c.name] ?? (isObject(error) && error.column === c.name ? error : undefined)}
@@ -850,6 +853,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
                   column={c}
                   tableInfo={tableInfo}
                   enableInsert={enableInsert}
+                  jsonbSchemaWithControls={jsonbSchemaWithControls}
                   hideNullBtn={hideNullBtn}
                   referencedInsertData={this.state.referencedInsertData}
                   setData={this.setColumnData}

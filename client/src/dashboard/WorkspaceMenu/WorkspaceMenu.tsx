@@ -22,15 +22,15 @@ type P = {
   className?: string;
 }
 
-export const getWorkspacePath = (w: Workspace) => {
+export const getWorkspacePath = (w: Pick<Workspace, "id" | "connection_id">) => {
   return ["/connections", `${w.connection_id}?workspaceId=${w.id}`].filter(v => v).join("/");
 }
 
-export const useSetNewWorkspace = (workspace: WorkspaceSyncItem) => {
+export const useSetNewWorkspace = (currentWorkspaceId: string | undefined) => {
   
   const navigate = useNavigate();
-  const setWorkspace = (w: Workspace) => {
-    if(w.id === workspace.id){
+  const setWorkspace = (w: Pick<Workspace, "id" | "connection_id">) => {
+    if(w.id === currentWorkspaceId){
       return;
     }
     const path = getWorkspacePath(w);
@@ -49,7 +49,7 @@ export const WorkspaceMenu = (props: P) => {
     { connection_id: workspace.connection_id, deleted: false },
     { handlesOnData: true, select: "*", patchText: false }
   );
-  const { setWorkspace } = useSetNewWorkspace(workspace);
+  const { setWorkspace } = useSetNewWorkspace(workspace.id);
   const userId = user?.id;
   const isAdmin = user?.type === "admin";
   const workspaces = useMemo(() => {

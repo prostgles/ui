@@ -16,18 +16,15 @@ import { NewMethod } from "./NewMethod";
 type P = {
   className?: string;
   style?: React.CSSProperties;
-  forAccessRule: undefined | {
-    access_rule_id: number | undefined;
-  };
+  accessRuleId: number | undefined;
   prgl: Prgl;
 }
 
-export const PublishedMethods = ({ className, style, prgl, forAccessRule }: P) => {
-  const { dbsMethods, dbsTables, dbs, db, tables, connectionId } = prgl;
+export const PublishedMethods = ({ className, style, prgl, accessRuleId }: P) => {
+  const { dbsMethods, dbsTables, dbs, connectionId } = prgl;
 
   const [action, setAction] = useState<{ type: "update"; existingMethodId: number; } | { type: "create" }>();
-
-  const { access_rule_id } = forAccessRule ?? {};
+ 
   const functionList = <SmartCardList 
     theme={prgl.theme}
     db={dbs as any}
@@ -46,17 +43,17 @@ export const PublishedMethods = ({ className, style, prgl, forAccessRule }: P) =
       { name: "description", hide: true },
       { name: "name", hide: true },
       { name: "id", hide: true },
-      !access_rule_id? undefined : {
+      !isDefined(accessRuleId)? undefined : {
         name: "access_control_methods",
         select: "*",
         label: " ", 
         render: (v, row) => <SwitchToggle 
-          checked={v?.some(a => a.access_control_id === access_rule_id)}
+          checked={v?.some(a => a.access_control_id === accessRuleId)}
           onChange={checked => {
             if(!checked){
-              dbs.access_control_methods.delete({ published_method_id: row.id, access_control_id: access_rule_id })
+              dbs.access_control_methods.delete({ published_method_id: row.id, access_control_id: accessRuleId })
             } else {
-              dbs.access_control_methods.insert({ published_method_id: row.id, access_control_id: access_rule_id })
+              dbs.access_control_methods.insert({ published_method_id: row.id, access_control_id: accessRuleId })
             }
           }}
         />
@@ -104,7 +101,7 @@ export const PublishedMethods = ({ className, style, prgl, forAccessRule }: P) =
       <FlexRow className="mt-1">
         <Btn 
           iconPath={mdiPlus}          
-          variant={forAccessRule? "faded" : "filled" }
+          variant={isDefined(accessRuleId)? "faded" : "filled" }
           color="action"
           title="Create new method"
           onClick={() => {
@@ -132,108 +129,28 @@ export const PublishedMethods = ({ className, style, prgl, forAccessRule }: P) =
   />; 
 
   return <FlexCol className={className} style={style}>
-    <SectionHeader icon={forAccessRule? mdiLanguageTypescript : undefined}>
+    <SectionHeader icon={isDefined(accessRuleId)? mdiLanguageTypescript : undefined}>
       Functions
     </SectionHeader>
-    {!forAccessRule && 
+    {!isDefined(accessRuleId) && 
       <p className="p-0 m-0">
         Server-side user triggered functions
       </p>
     }
-    <div className={`flex-col gap-1 ${forAccessRule? "pl-2" : ""}`}>
+    <div className={`flex-col gap-1 ${isDefined(accessRuleId)? "pl-2" : ""}`}>
       {functionList}
-
       <div className="flex-col f-1">
         {action && <NewMethod 
           {...prgl}
           connectionId={connectionId} 
-          access_rule_id={access_rule_id}
+          access_rule_id={accessRuleId}
           dbs={dbs} 
           onClose={() => setAction(undefined)}
           methodId={action.type === "update"? action.existingMethodId : undefined} 
-        />}
-        {/* {newMethod && <Popup 
-          title={isNewMethod? "Add function" : `Update ${newMethod.id}`} 
-          // rootStyle={{ transform: "none", top: 0, }}
-          positioning="fullscreen"
-          onClickClose={false} 
-          onClose={() => setNewMethod(undefined)}
-          footerButtons={[
-            { 
-              onClickClose: true,
-              label: "Close"
-            },
-            { 
-              label: !isNewMethod? "Update" : "Add",
-              color: "action",
-              variant: "filled",
-              onClickMessage: async (e, setM) => {
-                setM({ loading: 1 });
-
-                try {
-                  if(newMethod.id){
-                    await dbs.published_methods.update(pickKeys(newMethod, ["id"]), omitKeys(newMethod, ["access_control_methods"]))
-                  } else {
-                    const { id } = await dbs.published_methods.insert({ ...newMethod, connection_id: connectionId }, { returning: { id: 1 } });
-                    if(access_rule_id){
-                      await dbs.access_control_methods.insert({ access_control_id: access_rule_id, published_method_id: id })
-                    }
-                  }
-                } catch (err){
-                  setM({ err })
-                }
-                setM({ loading: 0 })
-                setNewMethod(undefined);
-              },
-            }
-          ]}
-          contentClassName="flex-col gap-1 p-2"
-        >
-         <MethodDefinition 
-            connectionId={connectionId}
-            dbsMethods={dbsMethods}
-            method={newMethod}
-            tables={tables} 
-            dbsTables={dbsTables}
-            db={db}
-            theme={prgl.theme}
-            onChange={m => setNewMethod(m)}
-          /> 
-        </Popup>} */}
-
-        
+        />} 
       </div>
     </div>
    
   </FlexCol>
 
-}
-
-
-// export const useMethods = (dbs: DBS, connection_id: string) => {
-  
-//   const [methods, setMethods] = useState<Method[]>([]);
-  
-//   const getIsMounted = useIsMounted();
-//   useEffectAsync(async () => {
-//     const filter: AnyObject = {
-//       connection_id, 
-//       // ...(!access_control_id? {} : { 
-//       //   $existsJoined: {
-//       //     access_control_methods: { 
-//       //       access_control_id 
-//       //     }
-//       //   } 
-//       // })
-//     };
-//     const sub = await dbs.published_methods.subscribe(filter, { select: { "*": 1, access_control_methods: "*" } }, methods => {
-//       if(!getIsMounted()){ 
-//         return;
-//       }
-//       setMethods(methods as any); 
-//     }); 
-//     return sub.unsubscribe; 
-//   }, []); 
-
-//   return methods;
-// }
+} 

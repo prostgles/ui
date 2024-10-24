@@ -27,7 +27,6 @@ export type SmartFilterBarProps = PrglCore & {
   style?: React.CSSProperties;
 
   filterFields?: string[];
-
   leftContent?: React.ReactNode;
   rightContent?: React.ReactNode;
   showInsertUpdateDelete?: {

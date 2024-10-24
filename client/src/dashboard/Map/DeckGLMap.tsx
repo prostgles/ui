@@ -57,17 +57,20 @@ export type DeckGlColor =
 export type GeoJSONFeature = Omit<Feature, "properties"> & {
     properties: (
       {
+        type?: undefined,
+        _is_from_osm?: boolean;
+      } 
+      | {
         type: "table";
         [MAP_SELECT_COLUMNS.idObj]: any;
         [MAP_SELECT_COLUMNS.geoJson]: any;
-      } | {
+      } 
+      | {
         type: "sql";
         $rowhash: string;
       }
     ) & {
       radius?: number;
-      fillColor?: DeckGlColor;
-      lineColor?: DeckGlColor;
     }
   }
 
@@ -75,8 +78,15 @@ export type GeoJsonLayerProps = {
   id: string;
   features: GeoJSONFeature[];
   filled: boolean;
-  fillColor?: DeckGlColor | ((f: any) => DeckGlColor);
-  lineColor?: DeckGlColor | ((f: any) => DeckGlColor);
+  getFillColor: ((f: GeoJSONFeature) => DeckGlColor);
+  getLineColor: ((f: GeoJSONFeature) => DeckGlColor);
+  getText?: (f: GeoJSONFeature) => string;
+  getTextSize?: number | ((f: GeoJSONFeature) => number);
+  getIcon?: (f: GeoJSONFeature) => {
+    url: string;
+    width: number;
+    height: number;
+  };
   elevation?: number;
   pickable?: boolean;
   stroked?: boolean;
@@ -382,16 +392,35 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
         type: "FeatureCollection",
         features: g.features
       }),
+      /** Disabled due to bad  */
+      // extensions: [new deckGlLibs.extensions.CollisionFilterExtension()],
       filled: true,
       pointRadiusMinPixels: 2,
       pointRadiusScale: 1,
-      // pointType: 'circle',
-      getPointRadius: f => f.properties.radius ?? 1,
+      // getPointRadius: f => f.properties.radius ?? 1,
+      // getPointRadius: 22,
       extruded: Boolean(g.elevation),
       getElevation: g.elevation || 0,
 
-      getFillColor: f => f.properties.fillColor || (g.fillColor? typeof g.fillColor === "function"? g.fillColor(f) : g.fillColor : undefined) || [200, 0, 80, 255],
-      getLineColor: f => f.properties.lineColor || (g.lineColor? typeof g.lineColor === "function"? g.lineColor(f) : g.lineColor : undefined) || [200, 0, 80, 255],
+      getFillColor: g.getFillColor, // ?? [200, 0, 80, 255],
+      getLineColor: g.getLineColor, // ?? [200, 0, 80, 255],
+      pointType: [
+          "circle",
+          g.getIcon? "icon" : undefined,
+          g.getText? "text" : undefined
+        ].filter(isDefined).join("+"),
+      getText: g.getText,
+      getTextAlignmentBaseline: "top",
+      getTextPixelOffset: f => [0, 5],
+      getTextSize: g.getTextSize,
+      textCharacterSet: "auto",
+      /** For example, maxWidth: 10.0 used with getSize: 12 is roughly the equivalent of max-width: 120px in CSS. */
+      textMaxWidth: 10,
+
+      getIconColor: g.getFillColor,
+      getIcon: g.getIcon,
+      getIconPixelOffset: f => [0, -10],
+      getIconSize: f => g.getIcon!(f).width,
       lineWidthMinPixels: 2,
       //@ts-ignore
       widthScale: 22,

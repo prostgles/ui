@@ -10,6 +10,11 @@ import { TIMECHART_STAT_TYPES, TimechartRenderStyles } from "../../W_TimeChart/W
 import type { ColumnConfigWInfo } from "../W_Table";
 import { _PG_numbers } from "prostgles-types";
 
+export const SORTABLE_CHART_COLUMNS = [
+  "date",
+  "value"
+];
+
 export type ColTimeChart = Required<ColumnConfigWInfo>["nested"]["chart"]
 type P = {
   tableName: string | undefined;
@@ -58,9 +63,6 @@ export const NestedTimechartControls = ({ tableName, chart, tables, onChange }: 
                 type: "time", 
                 dateCol,
                 renderStyle: "smooth-line",
-                sortableColumns: [
-                  "date", "value"
-                ],
                 yAxis: { 
                   isCountAll: true 
                 } 
