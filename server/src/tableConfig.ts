@@ -572,6 +572,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       id:    `SERIAL PRIMARY KEY`,
       name:   "TEXT",
       database_id     : `INTEGER NOT NULL REFERENCES database_configs(id) ON DELETE CASCADE`,
+      llm_daily_limit: { 
+        sqlDefinition: `INTEGER NOT NULL DEFAULT 0 CHECK(llm_daily_limit >= 0)`, 
+        info: { hint: "Maximum amount of queires per user/ip per 24hours" } 
+      },
       dbsPermissions: { info:{ hint: "Permission types and rules for the state database"}, nullable: true, jsonbSchemaType: {
         createWorkspaces: { type: "boolean", optional: true },
         viewPublishedWorkspaces: {
@@ -944,7 +948,12 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       filter          : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
       having          : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
       options         : `JSONB NOT NULL DEFAULT '{}'::jsonb` , 
-      
+      function_options: {
+        nullable: true,
+        jsonbSchemaType: {
+          showDefinition: { type: "boolean", optional: true, description: "Show the function definition" },
+        },
+      },
       sql_options     : { defaultValue: { executeOptions: "block", errorMessageDisplay: "both", tabSize: 2  }, 
         jsonbSchemaType: {
           "executeOptions": {
@@ -1050,6 +1059,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       updated_by: { 
         enum: ["user", "app"], 
         defaultValue: "app" 
+      },
+      pass_process_env_vars_to_server_side_functions: {
+        sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE`,
+        info: { hint: "If true then all environment variables will be passed to the server side function nodejs. Use at your own risk" }
       },
       login_rate_limit_enabled: { 
         sqlDefinition: `BOOLEAN NOT NULL DEFAULT TRUE`, 

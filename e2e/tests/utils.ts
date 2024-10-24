@@ -507,3 +507,45 @@ export const createAccessRule = async (page: PageWIds, userType: "default" | "pu
   /** Setting AC Type to custom */
   await page.getByTestId("config.ac.edit.type").locator(`button[value="Custom"]`).click();
 }
+
+export const enableAskLLM = async (page: PageWIds, maxRequestsPerDay: number, credsProvided=false) => {
+  if(credsProvided){
+    await page.getByTestId("AskLLMAccessControl").click();
+    await page.getByTestId("AskLLMAccessControl.AllowAll").click();
+    await page.getByTestId("Popup.close").click();
+    return
+  }
+  await page.getByTestId("AskLLMAccessControl").click();
+  await fillSmartFormAndInsert(page, "llm_credentials", { endpoint: "http://localhost:3004/mocked-llm" });
+  await page.waitForTimeout(1e3);
+  await page.getByTestId("AskLLMAccessControl.AllowAll").click();
+  if(maxRequestsPerDay){
+    await page.getByTestId("AskLLMAccessControl.llm_daily_limit").fill(maxRequestsPerDay.toString());
+  }
+  await page.getByTestId("Popup.close").click();
+}
+
+
+export const getLLMResponses = async (page: PageWIds, questions: string[]) => {
+
+  await page.getByTestId("AskLLM").click();
+  await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });
+
+  const result: {
+    response: string | null;
+    isOk: boolean;
+  }[] = [];
+
+  for await (const question of questions){
+    await page.getByTestId("AskLLM.popup").locator("textarea").fill(question);
+    await page.getByTestId("AskLLM.popup").getByTestId("Chat.send").click();
+    await page.waitForTimeout(2e3);
+    const response = await page.getByTestId("AskLLM.popup").locator(".message.incoming").last().textContent();
+    result.push({
+      response,
+      isOk: !!response?.includes("Mocked response")
+    });
+  }
+  await page.getByTestId("Popup.close").click();
+  return result;
+}

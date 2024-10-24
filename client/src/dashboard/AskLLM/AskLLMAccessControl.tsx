@@ -12,6 +12,7 @@ import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAcces
 import SmartForm from "../SmartForm/SmartForm";
 import { SetupLLMCredentials } from "./SetupLLMCredentials";
 import { Section } from "../../components/Section";
+import FormField from "../../components/FormField/FormField";
 
 type P = Prgl & {
   accessRuleId: number | undefined;
@@ -115,6 +116,16 @@ export const AskLLMAccessControl = ({ dbs, connectionId, accessRuleId, className
                   />
                 </FlexRow>
               })}
+              {!!allowedItems?.length && <FormField 
+                label={"Max requests per day"}
+                value={rule?.llm_daily_limit}
+                type="integer"
+                hint="0 for unlimited"
+                data-command="AskLLMAccessControl.llm_daily_limit"
+                onChange={v => {
+                  editedRule?.onChange({ llm_daily_limit: +v });
+                }}
+              />}
             </FlexCol>
             <Section className="gap-1" title="Allow custom pairs" titleIconPath="">
               <SmartForm 

@@ -5,10 +5,19 @@ import * as path from "path";
 import { justToCompile } from "../../../../commonTypes/DashboardTypes";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { AnyObject, pickKeys } from "prostgles-types";
+import { checkLLMLimit } from "./checkLLMLimit";
 justToCompile;
 const dashboardTypes = fs.readFileSync(path.join(__dirname, "../../../../commonTypes/DashboardTypes.d.ts"), "utf8");
 
-export const askLLM = async (question: string, schema: string, chatId: number, dbs: DBS, user: DBSSchema["users"], allowedLLMCreds: "all" | DBSSchema["access_control_allowed_llm"][]) => {
+export const askLLM = async (
+  question: string, 
+  schema: string, 
+  chatId: number, 
+  dbs: DBS, 
+  user: DBSSchema["users"], 
+  allowedLLMCreds: DBSSchema["access_control_allowed_llm"][] | undefined,
+  accessRules: DBSSchema["access_control"][] | undefined
+) => {
   if(typeof question !== "string") throw "Question must be a string";
   if(typeof schema !== "string") throw "Schema must be a string";
   if(!question.trim()) throw "Question is empty";
@@ -23,13 +32,25 @@ export const askLLM = async (question: string, schema: string, chatId: number, d
   if(!promptObj) throw "Prompt not found";
   const { prompt } = promptObj;
   if(!prompt) throw "Prompt is empty";
-  if(
-    allowedLLMCreds !== "all" && 
-    !allowedLLMCreds.some(c => c.llm_credential_id === llm_credential_id && c.llm_prompt_id === llm_prompt_id)
-  ){
-    throw "LLM credential/prompt not allowed";
+  const pastMessages = await dbs.llm_messages.find({ chat_id: chatId }, { orderBy: { created: 1} });
+
+  const allowedUsedCreds = allowedLLMCreds?.filter(c => c.llm_credential_id === llm_credential_id && c.llm_prompt_id === llm_prompt_id)
+  if(allowedUsedCreds){
+    const limitReachedMessage = await checkLLMLimit(dbs, user, allowedUsedCreds, accessRules!);
+    if(limitReachedMessage){
+      const lastMessage = pastMessages.at(-1);
+      if(!lastMessage || lastMessage.user_id === user.id){
+        await dbs.llm_messages.insert({
+          user_id: user.id,
+          chat_id: chatId,
+          message: question,
+        });
+      } else if(lastMessage.message !== limitReachedMessage){
+        await dbs.llm_messages.update({ id: lastMessage.id }, { message: limitReachedMessage });
+      }
+      return;
+    }
   }
-  const pastMessages = await dbs.llm_messages.find({ chat_id: chatId });
 
   await dbs.llm_messages.insert({
     user_id: user.id,
