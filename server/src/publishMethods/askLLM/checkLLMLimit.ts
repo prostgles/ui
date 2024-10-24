@@ -1,3 +1,4 @@
+import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 import { DBS } from "../..";
 import { DBSSchema } from "../../../../commonTypes/publishUtils";
 
@@ -28,7 +29,7 @@ export const checkLLMLimit = async (
 
   /** If public user then must check all messages from the same IP */
   } else {
-    const currentSession = await dbs.sessions.findOne({ id: user.id });
+    const currentSession = await dbs.sessions.findOne({ user_id: user.id });
     if(!currentSession) throw "Session not found";
     const sameIpSessions = await dbs.sessions.find({ ip_address: currentSession.ip_address });
     userIds = sameIpSessions.map(s => s.user_id).filter(Boolean);
@@ -37,7 +38,7 @@ export const checkLLMLimit = async (
   if(!userIds.length) throw "User id filter empty";
   const messagesCount = await dbs.llm_messages.count({
     user_id: { $in: userIds }, 
-    created: { $gte: new Date(new Date().setHours(0, 0, 0, 0)).toString() } 
+    created: { $gte: new Date(Date.now() - 24 * HOUR).toISOString() } 
   });
   if(+messagesCount >= totalLimit){
     return "Daily limit reached" as const;
