@@ -208,7 +208,7 @@ type ProstglesMethod = (
             }} 
             value={method.outputTable} 
             onChange={outputTable => {
-              onChange({ ...method, outputTable })
+              onChange({ ...method, outputTable: outputTable ?? null })
             }}
             db={db}
             tables={tables}
@@ -219,3 +219,5 @@ type ProstglesMethod = (
 
   </FlexCol>
 }
+
+// throw "subscribe to table then drop it will cause Could not create this._pubSubManager check logs";
