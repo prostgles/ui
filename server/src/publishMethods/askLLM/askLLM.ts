@@ -41,9 +41,9 @@ export const askLLM = async (
       const lastMessage = pastMessages.at(-1);
       if(!lastMessage || lastMessage.user_id === user.id){
         await dbs.llm_messages.insert({
-          user_id: user.id,
+          user_id: null,
           chat_id: chatId,
-          message: question,
+          message: limitReachedMessage,
         });
       } else if(lastMessage.message !== limitReachedMessage){
         await dbs.llm_messages.update({ id: lastMessage.id }, { message: limitReachedMessage });
