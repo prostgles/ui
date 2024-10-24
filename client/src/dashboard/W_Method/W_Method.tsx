@@ -5,7 +5,7 @@ import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { useEffectAsync } from "../DashboardMenu/DashboardMenuSettings";
 import Window from "../Window";
-import { W_MethodMenu } from "./ProstglesMethodMenu";
+import { W_MethodMenu } from "./W_MethodMenu";
 import { W_MethodControls } from "./W_MethodControls";
 
 export type W_MethodProps = Omit<CommonWindowProps, "w"> & {  w: WindowSyncItem<"method">; }
