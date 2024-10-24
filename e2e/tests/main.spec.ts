@@ -6,10 +6,11 @@ import {
   createDatabase,
   disablePwdlessAdminAndCreateUser,
   dropConnectionAndDatabase,
+  enableAskLLM,
   fileName,
   fillLoginFormAndSubmit,
-  fillSmartFormAndInsert,
   forEachLocator,
+  getLLMResponses,
   getMonacoEditorBySelector,
   getSearchListItem,
   getTableWindow,
@@ -520,11 +521,7 @@ test.describe("Main test", () => {
     await page.getByTestId("Popup.close").click();
 
     /** Setup LLM */
-    await page.getByTestId("AskLLMAccessControl").click();
-    await fillSmartFormAndInsert(page, "llm_credentials", { endpoint: "http://localhost:3004/mocked-llm" });
-    await page.waitForTimeout(1e3);
-    await page.getByTestId("AskLLMAccessControl.AllowAll").click();
-    await page.getByTestId("Popup.close").click();
+    await enableAskLLM(page, 0);
 
     /** Expect LLM to work */
     await page.getByTestId("AskLLM").click();
@@ -937,10 +934,11 @@ test.describe("Main test", () => {
     }, false);
     await setTableRule(page, "orders", { select: { }, update: {}, insert: {}, delete: {} }, false);
     await setTableRule(page, "files", { select: { }, update: {}, insert: {}, delete: {} }, true);
+    await enableAskLLM(page, 4, true);
     await page.getByTestId("config.ac.save").click();
     await page.waitForTimeout(2e3);
-  
   });
+
   test('Public user can access all allowed sections without issues', async ({ page: p }) => {
     const page = p as PageWIds;
     await goTo(page, "localhost:3004/connections");
@@ -949,5 +947,23 @@ test.describe("Main test", () => {
     await page.getByRole('link', { name: TEST_DB_NAME }).click();
     await page.getByTestId("dashboard.menu.tablesSearchList").waitFor({ state: "visible", timeout: 10e3 });
     await openTable(page, "my_tabl");
+
+    /** Ask LLM limit */
+    const [response1, response2, response3] = await getLLMResponses(page, ["hey", "hey", "hey"]);
+    expect(response1.isOk).toBe(true);
+    expect(response2.isOk).toBe(true);
+    expect(response3.isOk).toBe(true);
+  });
+
+  test('Public user ask llm limit', async ({ page: p }) => {
+    const page = p as PageWIds;
+    await goTo(page, "localhost:3004/connections");
+    await page.reload();
+    await page.getByRole('link', { name: 'Connections' }).click();
+    await page.getByRole('link', { name: TEST_DB_NAME }).click();
+    await page.getByTestId("dashboard.menu.tablesSearchList").waitFor({ state: "visible", timeout: 10e3 });
+    const [response1, response2] = await getLLMResponses(page, ["hey", "hey"]);
+    expect(response1.isOk).toBe(true);
+    expect(response2.isOk).toBe(false);
   });
 });

@@ -20,6 +20,7 @@ export type DBSchemaGenerated = {
        |  {  type: 'Custom';  customTables: (  {  tableName: string;  select?: | boolean |  {  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any;  subscribe?: {  throttle?: number; };  filterFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  orderByFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>; };  update?: | boolean |  {  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any;  checkFilterDetailed?: any;  filterFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  orderByFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedDataDetail?: any[];  dynamicFields?: (  {  filterDetailed: any;  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>; } )[]; };  insert?: | boolean |  {  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedDataDetail?: any[];  checkFilterDetailed?: any; };  delete?: | boolean |  {  filterFields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any; };  sync?: {  id_fields: string[];  synced_field: string;  throttle?: number;  allow_delete?: boolean; }; } )[]; }
       dbsPermissions?: null | {    createWorkspaces?: boolean;   viewPublishedWorkspaces?: {  workspaceIds: string[]; };  };
       id?: number;
+      llm_daily_limit?: number;
       name?: null | string;
     };
   };
@@ -270,6 +271,7 @@ export type DBSchemaGenerated = {
       login_rate_limit?: {    maxAttemptsPerHour: number;   groupBy: 'x-real-ip' | 'remote_ip' | 'ip';  };
       login_rate_limit_enabled?: boolean;
       magic_link_validity_days?: number;
+      pass_process_env_vars_to_server_side_functions?: boolean;
       session_max_age_days?: number;
       tableConfig?: null | any;
       trust_proxy?: boolean;
@@ -576,6 +578,7 @@ export type DBSchemaGenerated = {
       deleted?: null | boolean;
       filter?: any;
       fullscreen?: null | boolean;
+      function_options?: null | {    showDefinition?: boolean;  };
       having?: any;
       id?: string;
       last_updated: string;

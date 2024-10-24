@@ -364,11 +364,13 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
 
   const isAdmin = user.type === "admin";
   const accessRules = isAdmin? undefined : await getACRules(dbs, user);
-  const allowedLLMCreds = isAdmin? "all" : !accessRules?.length? undefined : await dbs.access_control_allowed_llm.find({ access_control_id: { $in: accessRules.map(ac => ac.id) } });
+  const allowedLLMCreds = isAdmin? undefined : !accessRules?.length? undefined : await dbs.access_control_allowed_llm.find({ access_control_id: { $in: accessRules.map(ac => ac.id) } });
   const userMethods = {
-    askLLM: !allowedLLMCreds? undefined : async (question: string, schema: string, chatId: number) => {
-      await askLLM(question, schema, chatId, dbs, user, allowedLLMCreds);
-    },
+    ...((allowedLLMCreds || isAdmin) && {
+      askLLM: async (question: string, schema: string, chatId: number) => {
+        await askLLM(question, schema, chatId, dbs, user, allowedLLMCreds, accessRules);
+      },
+    }),
     sendFeedback: async ({ details, email }: { details: string; email?: string }) => {
       await fetch("https://prostgles.com/feedback", {
         method: "POST",

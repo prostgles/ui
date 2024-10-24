@@ -18,6 +18,7 @@ type TableErrors = Record<string, TableRulesErrors>;
 const defaultRule: EditedAccessRule = {
   access_control_user_types: [], 
   name: "",
+  llm_daily_limit: 0,
   dbPermissions: {
     type: "All views/tables",
     allowAllTables: []
@@ -38,7 +39,7 @@ export type ValidEditedAccessRuleState =  (
   } 
   | {
     type: "create"
-    newRule: Partial<Pick<EditedAccessRule, "access_control_user_types" | "dbPermissions" | "dbsPermissions" | "access_control_allowed_llm">> | undefined;
+    newRule: Partial<Pick<EditedAccessRule, "access_control_user_types" | "dbPermissions" | "dbsPermissions" | "access_control_allowed_llm" | "llm_daily_limit">> | undefined;
     rule: undefined;
     initialUserTypes?: undefined;
   }

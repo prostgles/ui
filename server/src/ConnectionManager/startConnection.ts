@@ -98,6 +98,7 @@ export const startConnection = async function (
     const _io = new Server(http, { path: socket_path, maxHttpBufferSize: 1e8, cors: this.withOrigin });
 
     try {
+      const global_settings = await dbs.global_settings.findOne();
       const hotReloadConfig = await getReloadConfigs.bind(this)(con, dbConf, dbs);
       const auth = getAuth(this.app);
       const watchSchema = con.db_watch_shema ? "*" : false; 
@@ -106,6 +107,7 @@ export const startConnection = async function (
           const methodRunner = await ForkedPrglProcRunner.create({ 
             type: "run", 
             dbConfId: dbConf.id, 
+            pass_process_env_vars_to_server_side_functions: global_settings?.pass_process_env_vars_to_server_side_functions ?? false,
             dbs, 
             initArgs: { 
               

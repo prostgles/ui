@@ -179,7 +179,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
         forcedData
       },
       update: {
-        fields: { created: 0 },
+        fields: { created: 0, user_id: 0 },
         forcedData,
         forcedFilter,
       }
@@ -207,7 +207,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
           }
         },
       },
-      update: {
+      update: isAdmin && {
         fields: "*",
         forcedData,
         forcedFilter,
@@ -334,6 +334,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
           session_max_age_days: 1,
           login_rate_limit: 1,
           login_rate_limit_enabled: 1,
+          pass_process_env_vars_to_server_side_functions: 1,
           enable_logs: 1,
         },
         postValidate: async ({ row, dbx: dbsTX }) => {
