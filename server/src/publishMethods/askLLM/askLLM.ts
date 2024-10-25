@@ -6,6 +6,7 @@ import { justToCompile } from "../../../../commonTypes/DashboardTypes";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { AnyObject, pickKeys } from "prostgles-types";
 import { checkLLMLimit } from "./checkLLMLimit";
+import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 justToCompile;
 const dashboardTypes = fs.readFileSync(path.join(__dirname, "../../../../commonTypes/DashboardTypes.d.ts"), "utf8");
 
@@ -33,23 +34,29 @@ export const askLLM = async (
   const { prompt } = promptObj;
   if(!prompt) throw "Prompt is empty";
   const pastMessages = await dbs.llm_messages.find({ chat_id: chatId }, { orderBy: { created: 1} });
-
-  const allowedUsedCreds = allowedLLMCreds?.filter(c => c.llm_credential_id === llm_credential_id && c.llm_prompt_id === llm_prompt_id)
-  if(allowedUsedCreds){
-    const limitReachedMessage = await checkLLMLimit(dbs, user, allowedUsedCreds, accessRules!);
-    if(limitReachedMessage){
-      await dbs.llm_chats.update({ id: chatId }, { disabled_message: limitReachedMessage });
-      return;
-    } else if(chat.disabled_message){
-      await dbs.llm_chats.update({ id: chatId }, { disabled_message: null });
-    }
-  }
   
   await dbs.llm_messages.insert({
     user_id: user.id,
     chat_id: chatId,
     message: question,
   });
+
+  const allowedUsedCreds = allowedLLMCreds?.filter(c => c.llm_credential_id === llm_credential_id && c.llm_prompt_id === llm_prompt_id)
+  if(allowedUsedCreds){
+    const limitReachedMessage = await checkLLMLimit(dbs, user, allowedUsedCreds, accessRules!);
+    if(limitReachedMessage){
+      await dbs.llm_chats.update({ id: chatId }, { 
+        disabled_message: limitReachedMessage, 
+        disabled_until: new Date(Date.now() + 24 * HOUR) 
+      });
+      return;
+    } else if(chat.disabled_message){
+      await dbs.llm_chats.update({ id: chatId }, { 
+        disabled_message: null,
+        disabled_until: null
+      });
+    }
+  }
 
   /** Update chat name based on first user message */
   const isFirstUserMessage = !pastMessages.some(m => m.user_id === user?.id);

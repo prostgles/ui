@@ -524,17 +524,11 @@ test.describe("Main test", () => {
     await enableAskLLM(page, 0);
 
     /** Expect LLM to work */
-    await page.getByTestId("AskLLM").click();
-    await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });
-    const setupLLM = await page.getByTestId("SetupLLMCredentials").count();
-    expect(setupLLM).toBe(0);
-    const chatSend1 = await page.getByTestId("AskLLM.popup").getByTestId("Chat.send");
-    expect(chatSend1).toBeAttached();
-    await page.waitForTimeout(1e3);
-    await page.getByTestId("AskLLM.popup").locator("textarea").fill("hey");
-    await chatSend1.click();
-    await page.getByTestId("AskLLM.popup").getByText("Mocked response").waitFor({ state: "visible" });
-    await page.getByTestId("Popup.close").click();
+    const [{ isOk }] = await getLLMResponses(page, ["hehhehey"]);
+    expect(isOk).toBe(true);
+
+    /** Clear prev chats to ensure llm limit test works */
+    await runDbsSql(page, `TRUNCATE llm_chats CASCADE;`);
 
     /** Save access rule  */
     await page.getByTestId("config.ac.save").click();

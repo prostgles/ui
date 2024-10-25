@@ -40,8 +40,8 @@ export const checkLLMLimit = async (
     user_id: { $in: userIds }, 
     created: { $gte: new Date(Date.now() - 24 * HOUR).toISOString() } 
   });
-  const messagesCount = +_messagesCount + 1;
-  if(+messagesCount >= totalLimit){
+  const messagesCount = +_messagesCount;
+  if(+messagesCount > totalLimit){
     return "Daily limit reached" as const;
   }
 }
