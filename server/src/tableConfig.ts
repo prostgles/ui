@@ -1,8 +1,7 @@
-import type { JSONB } from "prostgles-types";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { JSONB } from "prostgles-types";
+import { CONNECTION_CONFIG_SECTIONS } from "../../commonTypes/utils";
 import { loggerTableConfig } from "./Logger";
-import { CONNECTION_CONFIG_SECTIONS, throttle } from "../../commonTypes/utils";
-import { subscribe } from "diagnostics_channel";
 
 export const DB_SSL_ENUM = ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"] as const;
  
@@ -35,6 +34,8 @@ const DUMP_OPTIONS_SCHEMA = {
       ifExists: { type: "boolean", optional: true },
 
       keepLogs: { type: "boolean", optional: true },
+      excludeSchema: { type: "string", optional: true },
+      schemaOnly: { type: "boolean", optional: true },
     }]
   },
   // defaultValue: "{}"
@@ -141,16 +142,72 @@ const filter = {
   optional: true,
 } as const; 
 
-const joinPath = { arrayOfType: { table: "string", on: { arrayOf: { record: { values: "any" } } } }, optional: true } as const satisfies JSONB.FieldTypeObj
+const joinPath = { 
+  description: "When adding a chart this allows showing data from a table that joins to the current table",
+  arrayOfType: { table: "string", on: { arrayOf: { record: { values: "any" } } } }, 
+  optional: true 
+} as const satisfies JSONB.FieldTypeObj
 const CommonChartLinkOpts = { 
   ...CommonLinkOpts,
   smartGroupFilter: filter,
   joinPath,
   localTableName: { type: "string", optional: true, description: "If provided then this is a local layer (w1_id === w2_id === current chart window)" },
   osmLayerQuery: { type: "string", optional: true, description: "If provided then this is a OSM layer (w1_id === w2_id === current chart window)" },
-  groupByColumn: { type: "string", optional: true, description: "Used by timechart only at the moment" },
+  groupByColumn: { type: "string", optional: true, description: "Used by timechart" },
   fromSelected: { type: "boolean", optional: true, description: "True if chart links to SQL statement selection" },
   sql: { type: "string", optional: true },
+  mapIcons: {
+    optional: true,
+    oneOfType: [
+      { 
+        type: { enum: ["fixed"] },
+        iconPath: "string",
+      },
+      { 
+        type: { enum: ["conditional"] },
+        columnName: "string",
+        conditions: {
+          arrayOfType: {
+            value: "any",
+            iconPath: "string",
+          },
+        }
+      },
+    ]
+  },
+  mapColorMode: {
+    optional: true,
+    oneOfType: [
+      { 
+        type: { enum: ["fixed"] },
+        colorArr: "number[]",
+      },
+      { 
+        type: { enum: ["scale"] },
+        columnName: "string",
+        min: "number",
+        max: "number",
+        minColorArr: "number[]",
+        maxColorArr: "number[]",
+      },
+      { 
+        type: { enum: ["conditional"] },
+        columnName: "string",
+        conditions: {
+          arrayOfType: {
+            value: "any",
+            colorArr: "number[]",
+          },
+        }
+      },
+    ]
+  },
+  mapShowText: { 
+    optional: true, 
+    type: {
+      columnName: { type: "string" },
+    }, 
+  },
 } as const satisfies JSONB.ObjectType["type"] 
 
 export const tableConfig: TableConfig<{ en: 1; }> = {
@@ -515,11 +572,18 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       id:    `SERIAL PRIMARY KEY`,
       name:   "TEXT",
       database_id     : `INTEGER NOT NULL REFERENCES database_configs(id) ON DELETE CASCADE`,
+      llm_daily_limit: { 
+        sqlDefinition: `INTEGER NOT NULL DEFAULT 0 CHECK(llm_daily_limit >= 0)`, 
+        info: { hint: "Maximum amount of queires per user/ip per 24hours" } 
+      },
       dbsPermissions: { info:{ hint: "Permission types and rules for the state database"}, nullable: true, jsonbSchemaType: {
         createWorkspaces: { type: "boolean", optional: true },
-        viewPublishedWorkspaces: { type: {
-          workspaceIds: "string[]"
-        }, optional: true },
+        viewPublishedWorkspaces: {
+          optional: true, 
+          type: {
+            workspaceIds: "string[]"
+          }, 
+        },
       }},        
       dbPermissions: { info: { hint: "Permission types and rules for this (connection_id) database" }, jsonbSchema: { oneOfType: [
         { 
@@ -635,7 +699,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           ]  
         } 
       } },
-      run: "TEXT NOT NULL DEFAULT 'export const run: MyMethod = async (args, { db, dbo, user }) => {\n  \n}'",
+      run: "TEXT NOT NULL DEFAULT 'export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n  \n}'",
       outputTable: `TEXT`
     },
     indexes: { "unique_name": { columns: "name, connection_id" }}
@@ -660,7 +724,15 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       pkey: { type: "PRIMARY KEY", content: "published_method_id, access_control_id" }
     }, 
   },
-
+  access_control_connections: {
+    columns: {
+      connection_id: `UUID NOT NULL REFERENCES connections(id) ON DELETE CASCADE`,
+      access_control_id: `INTEGER NOT NULL REFERENCES access_control  ON DELETE CASCADE`,
+    },
+    indexes: {
+      "unique_connection_id": { unique: true, columns: "connection_id, access_control_id" }
+    }
+  },
   magic_links: { 
     // dropIfExistsCascade: true,
     columns: {
@@ -876,7 +948,12 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       filter          : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
       having          : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
       options         : `JSONB NOT NULL DEFAULT '{}'::jsonb` , 
-      
+      function_options: {
+        nullable: true,
+        jsonbSchemaType: {
+          showDefinition: { type: "boolean", optional: true, description: "Show the function definition" },
+        },
+      },
       sql_options     : { defaultValue: { executeOptions: "block", errorMessageDisplay: "both", tabSize: 2  }, 
         jsonbSchemaType: {
           "executeOptions": {
@@ -982,6 +1059,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       updated_by: { 
         enum: ["user", "app"], 
         defaultValue: "app" 
+      },
+      pass_process_env_vars_to_server_side_functions: {
+        sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE`,
+        info: { hint: "If true then all environment variables will be passed to the server side function nodejs. Use at your own risk" }
       },
       login_rate_limit_enabled: { 
         sqlDefinition: `BOOLEAN NOT NULL DEFAULT TRUE`, 
@@ -1119,18 +1200,41 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       name: `TEXT NOT NULL DEFAULT 'Default credential'`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
-      key_id: `TEXT`,
-      key_secret: `TEXT NOT NULL`,
-      endpoint: `TEXT NOT NULL DEFAULT 'https://api.openai.com/v1/chat/completions'`,
-      extraHeaders: {
-        nullable: true,
+      endpoint: { sqlDefinition: `TEXT NOT NULL DEFAULT 'https://api.openai.com/v1/chat/completions'` },
+      config: {
         jsonbSchema: {
-          record: {
-            partial: true,
-            values: "string",
-          }
+          oneOfType: [
+            {
+              Provider: { enum: ["OpenAI"] },
+              API_Key: { type: "string" },
+              model: { type: "string" },
+              temperature: { type: "number", optional: true },
+              frequency_penalty: { type: "number", optional: true },
+              max_completion_tokens: { type: "integer", optional: true },
+              presence_penalty: { type: "number", optional: true },
+              response_format: { enum: [ "json", "text", "srt", "verbose_json", "vtt" ], optional: true },
+            },
+            {
+              Provider: { enum: ["Anthropic"] },
+              API_Key: { type: "string" },
+              "anthropic-version": { type: "string" },
+              model: { type: "string" },
+              max_tokens: { type: "integer" },
+            },
+            {
+              Provider: { enum: ["Custom"] },
+              headers: { record: { values: "string" }, optional: true },
+              body: { record: { values: "string" }, optional: true },
+            }
+          ]
+        },
+        defaultValue: { 
+          Provider: "OpenAI", 
+          model: "gpt-4o",
+          API_Key: "",
         }
       },
+      result_path: { sqlDefinition: `_TEXT `, info: { hint: "Will use corect defaults for OpenAI and Anthropic. Path to text response. E.g.: choices,0,message,content" } },
       created: {
         sqlDefinition: `TIMESTAMP DEFAULT NOW()`,
       },
@@ -1140,6 +1244,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     columns: {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       name: `TEXT NOT NULL DEFAULT 'New prompt'`,
+      description: `TEXT DEFAULT ''`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
       prompt: `TEXT NOT NULL CHECK(LENGTH(btrim(prompt)) > 0)`,
       created: `TIMESTAMP DEFAULT NOW()`,
@@ -1150,18 +1255,30 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       name: `TEXT NOT NULL DEFAULT 'New chat'`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
-      llm_credential_id: `INTEGER NOT NULL REFERENCES llm_credentials(id) ON DELETE SET NULL`,
-      llm_prompt_id: `INTEGER NOT NULL REFERENCES llm_prompts(id) ON DELETE SET NULL`,
+      llm_credential_id: `INTEGER REFERENCES llm_credentials(id) ON DELETE SET NULL`,
+      llm_prompt_id: `INTEGER REFERENCES llm_prompts(id) ON DELETE SET NULL`,
       created: `TIMESTAMP DEFAULT NOW()`,
+      disabled_message: { sqlDefinition: `TEXT`, info: { hint: "Message to show when chat is disabled" } },
+      disabled_until: { sqlDefinition: `TIMESTAMPTZ`, info: { hint: "If set then chat is disabled until this time" } },
     },
   },
   llm_messages: {
     columns: {
       id: `int8 PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
-      chat_id: `INTEGER REFERENCES llm_chats(id) ON DELETE CASCADE`,
+      chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
-      message: `TEXT`,
+      message: `TEXT NOT NULL`,
       created: `TIMESTAMP DEFAULT NOW()`,
+    }
+  },
+  access_control_allowed_llm: {
+    columns: {
+      access_control_id: `INTEGER NOT NULL REFERENCES access_control(id)`,
+      llm_credential_id: `INTEGER NOT NULL REFERENCES llm_credentials(id)`,
+      llm_prompt_id: `INTEGER NOT NULL REFERENCES llm_prompts(id)`,
+    },
+    indexes: {
+      unique: { unique: true, columns: "access_control_id, llm_credential_id, llm_prompt_id" }
     }
   },
   ...loggerTableConfig,

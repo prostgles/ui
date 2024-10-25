@@ -210,7 +210,22 @@ export const getFinalFilter = (detailedFilter: SimpleFilter, context?: ContextDa
     if(f.contextValue && !context && !forInfoOnly){
       return { };
     }
-    if(f.type == "$ST_DWithin"){
+
+    if(FTS_FILTER_TYPES.some(fts => fts.key === f.type) && "fieldName" in f){
+      const fieldName = checkFieldname(f.fieldName, opts?.columns);
+      const { ftsFilterOptions } = f;
+      return {
+        [`${fieldName}.${f.type}`]: [
+          ...(ftsFilterOptions? [ftsFilterOptions.lang] : []),
+          parseContextVal(f, context, opts)
+        ]
+      }
+    } else if(f.type === "$term_highlight"){
+      const fieldName = f.fieldName? checkFieldname(f.fieldName, opts?.columns) : "*"
+      return {
+        $term_highlight: [[fieldName], parseContextVal(f, context, opts), { matchCase: false, edgeTruncate: 30, returnType: "boolean" } ]
+      };
+    } else if(f.type == "$ST_DWithin"){
       return {
         $filter: [
           { $ST_DWithin: [fieldName, { ...val }] },
@@ -265,16 +280,7 @@ export const getFinalFilter = (detailedFilter: SimpleFilter, context?: ContextDa
     }
   };
 
-  if(FTS_FILTER_TYPES.some(f => f.key === detailedFilter.type) && "fieldName" in detailedFilter){
-    const fieldName = checkFieldname(detailedFilter.fieldName, opts?.columns);
-    const { ftsFilterOptions } = detailedFilter;
-    return {
-      [`${fieldName}.${detailedFilter.type}`]: [
-        ...(ftsFilterOptions? [ftsFilterOptions.lang] : []),
-        parseContextVal(detailedFilter, context, opts)
-      ]
-    }
-  } else if(isJoinedFilter(detailedFilter)){
+  if(isJoinedFilter(detailedFilter)){
     
     return {
       [detailedFilter.type]: {
@@ -282,12 +288,7 @@ export const getFinalFilter = (detailedFilter: SimpleFilter, context?: ContextDa
         filter: getFilter(detailedFilter.filter)
       }
     };
-  } else if(detailedFilter.type === "$term_highlight"){
-    const fieldName = detailedFilter.fieldName? checkFieldname(detailedFilter.fieldName, opts?.columns) : "*"
-    return {
-      $term_highlight: [[fieldName], parseContextVal(detailedFilter, context, opts), { matchCase: false, edgeTruncate: 30, returnType: "boolean" } ]
-    };
-  };
+  }
 
   return getFilter(detailedFilter, opts?.columns)
 }

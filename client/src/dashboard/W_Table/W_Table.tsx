@@ -27,7 +27,7 @@ import { matchObj } from "../../../../commonTypes/utils";
 import { createReactiveState } from "../../appUtils";
 import { Icon } from "../../components/Icon/Icon";
 import type { PaginationProps } from "../../components/Table/Pagination";
-import { isDefined } from "../../utils";
+import { isDefined, pickKeys } from "../../utils";
 import CodeEditor from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { SmartFilterBar } from "../SmartFilterBar/SmartFilterBar";
@@ -608,7 +608,7 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
             w.options.viewAs?.type === "json"?
               <CodeEditor 
                 language="json" 
-                value={JSON.stringify(rows, null, 2)} 
+                value={JSON.stringify(rows.map(r => pickKeys(r, cols.filter(c => c.show).map(c => c.name))), null, 2)} 
                 className="b-unset"
               /> :
               <Table
@@ -631,32 +631,32 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
                 tableStyle={{ borderRadius: "unset", border: "unset" }}
                 pagination={this.getPaginationProps()}
                 showSubLabel={w.options.showSubLabel}
-
                 activeRowStyle={activeRowStyle}
                 activeRowIndex={activeRowIndex}
                 onRowClick={this.state.onRowClick}
+                afterLastRowContent={canInsert && !childWindow &&
+                  <Btn iconPath={mdiPlus}
+                    data-command="dashboard.window.rowInsert"
+                    data-key={w.table_name}
+                    title="Insert row"
+                    className="shadow w-fit h-fit mt-1"
+                    color="action"
+                    variant={w.options.showFilters? "outline" : "filled"}
+                    style={{ 
+                      position: "sticky", 
+                      left: "15px", 
+                      bottom: "15px",
+                      zIndex: 1,
+                    }}
+                    onClick={async () => {
+                      this.rowPanelRState.set({ type: "insert" });
+                    }}
+                  />
+                }
               />
             }
 
-            {canInsert && !childWindow &&
-              <Btn iconPath={mdiPlus}
-                data-command="dashboard.window.rowInsert"
-                data-key={w.table_name}
-                title="Insert row"
-                className="shadow w-fit h-fit"
-                color="action"
-                variant="outline"
-                style={{ 
-                  position: "absolute", 
-                  right: "15px", 
-                  bottom: "15px",
-                  zIndex: 1,
-                }}
-                onClick={async () => {
-                  this.rowPanelRState.set({ type: "insert" });
-                }}
-              />
-            }
+            
           </W_Table_Content>
   
         </div>

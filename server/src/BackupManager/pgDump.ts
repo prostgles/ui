@@ -64,6 +64,8 @@ export async function pgDump(this: BackupManager, conId: string, credId: number 
         [o.ifExists, "--if-exists"],
         [o.dataOnly, "--data-only"],
         [!!o.encoding, ["--encoding", o.encoding!]],
+        [o.schemaOnly, "--schema-only"],
+        [!!o.excludeSchema, ["--exclude-schema", o.excludeSchema!]],
         [Number.isInteger(o.compressionLevel), ["--compress", o.compressionLevel!]],
         [Number.isInteger(o.numberOfJobs), ["--jobs", o.numberOfJobs!]],
         [true, "-v"]

@@ -62,8 +62,7 @@ export type ColumnConfig = {
     chart?: {
       type: "time";
       dateCol: string;
-      renderStyle: TimechartRenderStyle | "smooth-line";
-      sortableColumns: string[];
+      renderStyle: TimechartRenderStyle | "smooth-line"; 
       yAxis: { 
         isCountAll: false; 
         colName: string; 

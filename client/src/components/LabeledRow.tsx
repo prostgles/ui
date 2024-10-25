@@ -9,6 +9,7 @@ type P = {
   className?: string;
   style?: React.CSSProperties;
   children?: React.ReactNode;
+  onClick?: React.DOMAttributes<HTMLDivElement>["onClick"];
 
   labelClassName?: string;
   labelStyle?: React.CSSProperties;
@@ -23,6 +24,7 @@ export const LabeledRow = (p: P) => {
     className={"LabeledRow " + (p.className || "") + " flex-row-wrap ai-center "} 
     style={p.style} 
     title={p.title}
+    onClick={p.onClick}
   >
     <div className={"flex-row gap-p5 text-1 ai-center " + (p.labelClassName ?? "")} style={p.labelStyle}>
       {p.icon && <Icon path={p.icon} className="text-2" />}  

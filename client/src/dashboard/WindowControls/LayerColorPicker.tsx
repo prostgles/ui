@@ -1,21 +1,39 @@
-import React from "react"
-import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
+import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
+import React from "react";
+import type { LinkSyncItem, WindowData } from "../Dashboard/dashboardUtils";
 import type { RGBA } from "../W_Table/ColumnMenu/ColorPicker";
 import { ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
+import type { MapLayerManagerProps } from "./ChartLayerManager";
+import { MapLayerStyling } from "./MapLayerStyling";
 
-type P = {
+export type LayerColorPickerProps = {
   link: LinkSyncItem;
   column: string;
   myLinks: LinkSyncItem[];
   title?: string;
-}
-export const LayerColorPicker = ({ link, column, myLinks, title }: P) => {
+  w: SyncDataItem<Required<WindowData<"timechart">>, true> | SyncDataItem<Required<WindowData<"map">>, true>
+} & Pick<MapLayerManagerProps, "tables" | "w" | "getLinksAndWindows">;
+
+export const LayerColorPicker = ({ link, column, myLinks, title, tables, w, getLinksAndWindows }: LayerColorPickerProps) => {
   if(link.options.type === "table"){
     return null;
   }
-
-
   const rgba: RGBA = link.options.columns.find(c => c.name === column)?.colorArr ?? link.options.colorArr ?? [100,100,100] as any;
+  const opts = link.options;
+
+  if(opts.type === "map"){
+    return <MapLayerStyling 
+      linkOptions={opts}
+      myLinks={myLinks}
+      link={link}
+      tables={tables}
+      w={w}
+      getLinksAndWindows={getLinksAndWindows}
+      column={column}
+      title={title}
+    />
+  }
+
   return <ColorPicker 
     style={{ flex: "none" }}
     // label="Layer color"
@@ -30,8 +48,8 @@ export const LayerColorPicker = ({ link, column, myLinks, title }: P) => {
         thisLink.$update(
           { 
             options: { 
-              colorArr,
               ...opts,
+              colorArr,
               columns: opts.columns.map(c => ({
                 ...c,
                 colorArr: c.name === column? colorArr : c.colorArr

@@ -126,7 +126,7 @@ export class AddComputedColMenu extends RTComp<AddComputedColMenuP, AddComputedC
  
     const hasJoinCols = w.columns?.some(c => c.nested);
     const content = <>    
-      <FlexRowWrap className="gap-2 f-1 min-h-0 mt-1 ai-start">
+      <FlexCol className="AddComputedColMenu gap-2 f-1 min-h-0 mt-1 ai-start max-h-fit">
         {!column && !hasJoinCols && 
           <FlexRowWrap>
             <FlexCol className="gap-p25">
@@ -191,6 +191,7 @@ export class AddComputedColMenu extends RTComp<AddComputedColMenuP, AddComputedC
             <FunctionSelector 
               column={column} 
               wColumns={w.columns ?? undefined}
+              currentNestedColumnName={this.props.nestedColumnOpts?.config.name}
               tableColumns={table.columns}
               onSelect={newFuncDef => {
                 this.setState({
@@ -201,7 +202,7 @@ export class AddComputedColMenu extends RTComp<AddComputedColMenuP, AddComputedC
             />
           </FlexCol>
         }
-      </FlexRowWrap>
+      </FlexCol>
 
       {funcDef?.key === "$template_string" && <>
         <FormField className="mt-1"

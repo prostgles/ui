@@ -25,6 +25,7 @@ const DUMP_COMMANDS = [
 export const DEFAULT_DUMP_OPTS: PGDumpParams = {
   options: {
     command: "pg_dump",
+    excludeSchema: "prostgles",
     format: "c",
     clean: true,
     ifExists: true,
@@ -115,6 +116,10 @@ export const DumpOptions = (props: DumpOptionsProps) => {
             options={[0,1,2,3,4,5,6,7,8,9]}
             onChange={compressionLevel => { onChangeOptions({ compressionLevel })  }} 
           />
+          <FormField value={o.excludeSchema} label="Exclude schema" 
+            hint="Do not restore objects that are in the named schema"
+            type="text" onChange={excludeSchema => { onChangeOptions({ excludeSchema }) }} 
+          />
 
         </FlexRowWrap>
         <FormField asColumn={true} value={o.noOwner} type="checkbox" label="No owner" 
@@ -134,12 +139,11 @@ export const DumpOptions = (props: DumpOptionsProps) => {
           onChange={rolesOnly => { onChangeOptions({ rolesOnly }) }} 
           hint="" 
         />
-        <FormField asColumn={true} value={o.schemaOnly} type="checkbox" label="Schema only" 
-          onChange={schemaOnly => { onChangeOptions({ schemaOnly }) }} 
-          hint="" 
-        />
-
       </>}
+      <FormField asColumn={true} value={o.schemaOnly} type="checkbox" label="Schema only" 
+        onChange={schemaOnly => { onChangeOptions({ schemaOnly }) }} 
+        hint="" 
+      />
       <FormField asColumn={true} value={o.encoding} type="text" label="Encoding" 
         onChange={encoding => { onChangeOptions({ encoding }) }} 
         hint="" 

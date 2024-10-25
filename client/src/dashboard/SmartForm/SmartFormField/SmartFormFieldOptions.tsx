@@ -8,7 +8,7 @@ import type { SmartFormProps } from "../SmartForm";
 import SmartForm from "../SmartForm";
 import { columnIsReadOnly } from "./SmartFormField";
 
-type P = Pick<SmartFormProps, "db" | "tables" | "methods" | "hideNullBtn" | "enableInsert" | "onSuccess" | "tableName" | "theme"> & {
+type P = Pick<SmartFormProps, "db" | "tables" | "methods" | "hideNullBtn" | "enableInsert" | "onSuccess" | "tableName" | "theme" | "jsonbSchemaWithControls"> & {
   column: ValidatedColumnInfo;
   row: AnyObject;
   referencedInsertData?: AnyObject;
@@ -22,7 +22,7 @@ type P = Pick<SmartFormProps, "db" | "tables" | "methods" | "hideNullBtn" | "ena
 }
 
 export const SmartFormFieldOptions = ({ 
-  setData, action, enableInsert, column: c, db, tableName, tables, methods, row , onSuccess, theme,
+  setData, action, enableInsert, column: c, db, tableName, tables, methods, row , onSuccess, theme, jsonbSchemaWithControls,
   hideNullBtn, referencedInsertData, setReferencedInsertData 
 }: P) => {
 
@@ -155,6 +155,7 @@ export const SmartFormFieldOptions = ({
       onClose={() => { 
         setShowNestedInsertForm(undefined)
       }}
+      jsonbSchemaWithControls={jsonbSchemaWithControls}
       isReferencedInsert={{
         tableName,
         columnName: c.name,

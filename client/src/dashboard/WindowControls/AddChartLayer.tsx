@@ -8,12 +8,14 @@ import PopupMenu from "../../components/PopupMenu";
 import Btn from "../../components/Btn";
 import { MapOSMQuery } from "../W_Map/MapOSMQuery";
 
+const defaultWorldExtent = [-180, -90, 180, 90];
+
 export const AddChartLayer = (props: MapLayerManagerProps) => {
   const { tables, type, prgl: {dbs}, w } = props;
   const isMap = type === "map";
   let osmBbox = "";// w.type === "map"? w.options.extent?.join(",") : "";
-  if(w.type === "map"&& w.options.extent){
-    const [b, a, b1, a1] = w.options.extent;
+  if(w.type === "map"){
+    const [b, a, b1, a1] = w.options.extent ?? defaultWorldExtent;
     osmBbox = [a, b, a1, b1].join(",");
   }
 

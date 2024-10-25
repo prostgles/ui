@@ -11,7 +11,8 @@ import type { CodeEditorProps } from "../../CodeEditor/CodeEditor";
 import CodeEditor from "../../CodeEditor/CodeEditor";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import { dboLib, wsLib } from "../../CodeEditor/monacoTsLibs";
-import { FlexCol } from "../../../components/Flex";
+import { FlexCol, FlexRow } from "../../../components/Flex";
+import { SmartCodeEditor } from "../../CodeEditor/SmartCodeEditor";
  
 type P = { 
   onChange: (newMethod: P["method"]) => void;
@@ -61,7 +62,7 @@ export const MethodDefinition = ({ onChange, method, tables, dbsTables, db, them
   const methodArgsCol = methodsTable?.columns.find(c => c.name === "arguments");
 
 const tsMethodDef = `
-type MyMethod = (
+type ProstglesMethod = (
   args: { \n${method.arguments?.map(a => {
     let type: string = a.type;
     if(a.type === "Lookup" && a.lookup as any){
@@ -100,19 +101,24 @@ type MyMethod = (
     }
   ];
 
-  return <div className="MethodDefinition flex-col f-1" > 
+  return <FlexCol className="MethodDefinition f-1 gap-p5" > 
     <div className="flex-row ai-center gap-1"> 
-      <Btn title="Edit as JSON"
+      <Btn 
         className="ml-auto"
         iconPath={mdiCodeJson} 
         color={editAsJSON? "action" : undefined}
         variant={editAsJSON? "filled" : undefined}
         onClick={() => { seteditAsJSON(!editAsJSON) }}
-      /> 
+      >
+        {!editAsJSON? "Edit as JSON" : "Edit as form"}
+      </Btn>
     </div>
     {editAsJSON? 
       <CodeEditor 
-        style={{ minWidth: "600px", minHeight: "400px" }}
+        style={{ 
+          minWidth: "600px", 
+          minHeight: "400px" 
+        }}
         language="json" 
         value={JSON.stringify(method, null, 2)}
         jsonSchemas={jsonSchemas}
@@ -124,13 +130,14 @@ type MyMethod = (
             const newMethod = JSON.parse(val);
             onChange(newMethod)
           } catch(err){
-
+            console.error(err);
           }
         }} 
       /> : 
       <>
-      <div className="flex-row-wrap gap-1" title="Method name">
-        <FormField label="Name"  
+      <FlexCol className="p-1">
+        <FormField 
+          label="Name"  
           value={method.name} 
           onChange={name => {
             onChange({ ...method, name })
@@ -139,11 +146,13 @@ type MyMethod = (
         <FormField 
           type="text" 
           value={method.description} 
-          label="Description" 
+          label={"Description"}
+          optional={true}
           onChange={description => onChange({ ...method, description })} 
         />
-      </div>
-      {method.name && <div className="flex-col gap-1 f-1">
+      </FlexCol>
+      {method.name && 
+      <FlexCol className="flex-col gap-1 f-1">
         <JSONBSchema 
           className="mt-1"
           schema={methodArgsCol!.jsonbSchema!} 
@@ -154,45 +163,20 @@ type MyMethod = (
           db={db}
           tables={tables}
         />
-        <JSONBSchema className="mt-1"
-          schema={{
-            title: "Display table",
-            description: "Table that will be displayed below controls and inputs",
-            optional: true,
-            lookup: {
-              type: "schema",
-              object: "table",
-            }
-          }} 
-          value={method.outputTable} 
-          onChange={outputTable => {
-            onChange({ ...method, outputTable })
-          }}
-          db={db}
-          tables={tables}
-        /> 
         <Section 
           className="f-1" 
           title="Function definition" 
-          contentClassName="flex-col p-1 f-1" 
+          contentClassName="flex-col gap-1  f-1" 
           open={true}
         >
-          <FlexCol className="p-1">
-            <p className="ta-start m-0">
-              Server-side TypeScript function triggered by a button press
-            </p>
-            <p className="ta-start m-0">
-              Any returned value will be shown as JSON to the client
-            </p>
-          </FlexCol>
-          <CodeEditor 
+          <SmartCodeEditor 
             key={tsMethodDef}
-            className="f-1 ml-1 "
+            label="Server-side TypeScript function triggered by a button press"
             tsLibraries={[
               ...tsLibraries,
-              { filePath: "file:///MyMethod.ts", content: tsMethodDef },
+              { filePath: "file:///ProstglesMethod.ts", content: tsMethodDef },
             ]}
-            style={{ minWidth: "600px", minHeight: "200px"}}
+            // style={{ minWidth: "600px", minHeight: "200px"}}
             language="typescript"
             value={method.run ?? ""}
             options={{
@@ -200,11 +184,38 @@ type MyMethod = (
               "glyphMargin": false,
               "lineNumbersMinChars": 0
             }}
-            onChange={run => onChange({ ...method, run })}
+            autoSave={true}
+            onSave={run => onChange({ ...method, run })}
           />
         </Section>
-      </div>}
+        <Section 
+          title="Result" 
+          contentClassName="flex-col gap-1 p-1 f-1" 
+        >
+          <p className="ta-start m-0">
+            Any returned value will be shown as JSON to the client
+          </p>
+          <JSONBSchema 
+            className="mt-1"
+            schema={{
+              title: "Display table",
+              description: "Table that will be displayed below controls and inputs",
+              optional: true,
+              lookup: {
+                type: "schema",
+                object: "table",
+              }
+            }} 
+            value={method.outputTable} 
+            onChange={outputTable => {
+              onChange({ ...method, outputTable: outputTable ?? null })
+            }}
+            db={db}
+            tables={tables}
+          /> 
+        </Section>
+      </FlexCol>}
     </>}
 
-  </div>
+  </FlexCol>
 }

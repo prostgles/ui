@@ -5,6 +5,7 @@ import Checkbox from "./Checkbox";
 import { Icon } from "./Icon/Icon";
 import PopupMenu from "./PopupMenu";
 import { classOverride } from "./Flex";
+import "./Label.css";
 
 export type LabelProps = React.DetailedHTMLProps<React.LabelHTMLAttributes<HTMLLabelElement>, HTMLLabelElement> & {
   label?: string;
@@ -34,22 +35,9 @@ export const Label = ({
 }: LabelProps) => {
 
   const isHeader = variant === "header";
-  let IconBtn: React.ReactNode = null;// <Icon path={iconPath} size={1} className="text-2 mr-1" />;
+  let IconBtn: React.ReactNode = null;
   
   if(info){
-    const headerButton = isHeader? <Btn iconPath={iconPath} className="text-2 "></Btn> : null;
-    const questionBtn = isHeader? 
-      <Icon path={mdiHelp} 
-        className={"f-0 text-1p5 " + ( headerButton? " absolute show-on-parent-hover " : "" ) }
-        size={.75} 
-        style={!headerButton? { margin: "-8px" } : { top: "-12px", left: 0  }} 
-      /> : 
-      <Btn 
-        iconPath={mdiHelp} 
-        size="small" 
-        style={{ margin: "-8px" }} 
-      />;
-
     IconBtn = <PopupMenu 
       title={popupTitle ?? label ?? "Information"}
       positioning="beneath-center" 
@@ -57,21 +45,27 @@ export const Label = ({
       rootStyle={{
         maxWidth: "500px"
       }}
-      className={headerButton? undefined : "show-on-parent-hover"}
+      className={isHeader? undefined : "show-on-parent-hover"}
       contentClassName="p-1"
-      button={!headerButton? questionBtn :
-        <div className="relative ai-center" title="Click for more information" >
-          {isHeader? questionBtn : null}
-          {headerButton}
-        </div>
+      button={!isHeader? 
+        <Btn 
+          iconPath={mdiHelp} 
+          size="small" 
+          style={{ margin: "-8px" }} 
+        /> :
+        <Btn 
+          iconPath={iconPath} 
+          className="Label_QuestionButton text-2  relative ai-center" 
+          title="Click for more information"
+        />
       }
     >
-      <div className="flex-row wzs-pre ta-left">
+      <div className="flex-row ta-left">
         <Icon path={mdiInformationOutline} size={1} className="f-0 text-2 mr-1" />
         {info}
       </div>
     </PopupMenu>
-  }  
+  }
   
   const labelNode = <label 
     {...otherProps} 

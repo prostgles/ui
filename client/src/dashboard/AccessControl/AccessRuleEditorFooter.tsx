@@ -96,9 +96,9 @@ export const AccessRuleEditorFooter = (props: P) => {
   </FlexCol>
 } 
 
-const upsertRule = async (args: Pick<P,"dbs" | "connectionId" | "action" | "database_id"> & { newRule: EditedAccessRule }) => { 
+const upsertRule = async (args: Pick<P,"dbs" | "connectionId" | "action" | "database_id"> & { newRule: EditedAccessRule }) => {
   const { action, newRule, dbs, connectionId, database_id } = args;
-  const { access_control_user_types = [], published_methods = [] } = newRule;
+  const { access_control_user_types = [], published_methods = [], access_control_allowed_llm = [] } = newRule;
   
   const connection = await dbs.connections.findOne({ id: connectionId });
   if(!connection || !connectionId){
@@ -116,11 +116,16 @@ const upsertRule = async (args: Pick<P,"dbs" | "connectionId" | "action" | "data
       if(published_methods.length){
         await dbs.access_control_methods.insert(published_methods.map(m => ({ access_control_id, published_method_id: m.id })));
       }
-    }; 
+
+      await dbs.access_control_allowed_llm.delete({ access_control_id });
+      if(access_control_allowed_llm.length){
+        await dbs.access_control_allowed_llm.insert(access_control_allowed_llm.map(m => ({ ...m, access_control_id })));
+      }
+    };
 
     const newRuleWithoutSomeExtraKeys = omitKeys(
-      args.newRule as AccessRule, 
-      ["access_control_user_types", "database_id", "published_methods", "id", "created"]
+      newRule as AccessRule, 
+      ["access_control_user_types", "database_id", "published_methods", "id", "created", "access_control_allowed_llm"]
     );
 
     if(action.type === "edit"){
@@ -142,7 +147,19 @@ const upsertRule = async (args: Pick<P,"dbs" | "connectionId" | "action" | "data
         throw `Cannot have rules with overlapping user group names: ${overLappingUserGroups.flat().join(", ")}.\nRemove these group names from this rule or from the other rules`
       } else {
 
-        const acontrol = await dbs.access_control.insert({ ...newRuleWithoutSomeExtraKeys as AccessRule, database_id }, { returning: "*" });
+        const acontrol = await dbs.access_control.insert(
+          { 
+            ...newRuleWithoutSomeExtraKeys as AccessRule, 
+            database_id,
+            access_control_connections: [
+              { 
+                connection_id: connectionId,
+              }
+            ]
+          }, 
+          { returning: "*" }
+        );
+        
         await insertRelatedData(acontrol.id)
       }
 
