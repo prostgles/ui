@@ -72,13 +72,18 @@ export const AskLLM = ({ workspaceId, ...prgl }: Prgl & { workspaceId: string | 
     sent: new Date(m.created || new Date()),
   })) ?? [];
 
-  const messages: Message[] = actualMessages.length? actualMessages.concat(activeChat?.disabled_message? [{
-    incoming: true,
-    message: activeChat.disabled_message,
-    sender_id: "ai",
-    sent: new Date(),
-  }] : []) : [
-    { message: "Hello, I am the AI assistant. How can I help you?", incoming: true, sent: new Date("2024-01-01"), sender_id: "ai" },
+  const disabled_message = activeChat?.disabled_until && 
+    new Date(activeChat.disabled_until) > 
+    new Date() && activeChat.disabled_message? 
+      activeChat.disabled_message : 
+      undefined;
+  const messages: Message[] = (actualMessages.length? actualMessages : [
+    { 
+      message: "Hello, I am the AI assistant. How can I help you?", 
+      incoming: true, 
+      sent: new Date("2024-01-01"), 
+      sender_id: "ai" 
+    },
   ].map(m => {
     const incoming = m.sender_id !== user?.id;
     return { 
@@ -86,7 +91,12 @@ export const AskLLM = ({ workspaceId, ...prgl }: Prgl & { workspaceId: string | 
       incoming,
       message: incoming && !m.message? <Loading /> : m.message 
     }
-  });
+  })).concat(disabled_message? [{
+    incoming: true,
+    message: disabled_message,
+    sender_id: "ai",
+    sent: new Date(),
+  }] : []);
 
   const { data: llm_prompts } = dbs.llm_prompts.useSubscribe();
 
