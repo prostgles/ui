@@ -27,7 +27,7 @@ import { matchObj } from "../../../../commonTypes/utils";
 import { createReactiveState } from "../../appUtils";
 import { Icon } from "../../components/Icon/Icon";
 import type { PaginationProps } from "../../components/Table/Pagination";
-import { isDefined } from "../../utils";
+import { isDefined, pickKeys } from "../../utils";
 import CodeEditor from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { SmartFilterBar } from "../SmartFilterBar/SmartFilterBar";
@@ -608,7 +608,7 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
             w.options.viewAs?.type === "json"?
               <CodeEditor 
                 language="json" 
-                value={JSON.stringify(rows, null, 2)} 
+                value={JSON.stringify(rows.map(r => pickKeys(r, cols.filter(c => c.show).map(c => c.name))), null, 2)} 
                 className="b-unset"
               /> :
               <Table

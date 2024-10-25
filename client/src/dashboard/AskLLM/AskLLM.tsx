@@ -99,7 +99,7 @@ export const AskLLM = ({ workspaceId, ...prgl }: Prgl & { workspaceId: string | 
 
   return <>
     <Btn 
-      title="Ask AI"
+      title="Chat to an AI Assistant to get help with your queries"
       variant="faded"
       color="action"
       iconPath={mdiAssistant}
