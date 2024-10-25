@@ -20,7 +20,31 @@ export type DBSchemaGenerated = {
        |  {  type: 'Custom';  customTables: (  {  tableName: string;  select?: | boolean |  {  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any;  subscribe?: {  throttle?: number; };  filterFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  orderByFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>; };  update?: | boolean |  {  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any;  checkFilterDetailed?: any;  filterFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  orderByFields?: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedDataDetail?: any[];  dynamicFields?: (  {  filterDetailed: any;  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>; } )[]; };  insert?: | boolean |  {  fields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedDataDetail?: any[];  checkFilterDetailed?: any; };  delete?: | boolean |  {  filterFields: | string[] | '*' | '' |  Record<string, 1 | true> |  Record<string, 0 | false>;  forcedFilterDetailed?: any; };  sync?: {  id_fields: string[];  synced_field: string;  throttle?: number;  allow_delete?: boolean; }; } )[]; }
       dbsPermissions?: null | {    createWorkspaces?: boolean;   viewPublishedWorkspaces?: {  workspaceIds: string[]; };  };
       id?: number;
+      llm_daily_limit?: number;
       name?: null | string;
+    };
+  };
+  access_control_allowed_llm: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      access_control_id: number;
+      llm_credential_id: number;
+      llm_prompt_id: number;
+    };
+  };
+  access_control_connections: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      access_control_id: number;
+      connection_id: string;
     };
   };
   access_control_methods: {
@@ -99,7 +123,7 @@ export type DBSchemaGenerated = {
       local_filepath?: null | string;
       options: 
        |  {  command: 'pg_dumpall';  clean: boolean;  dataOnly?: boolean;  globalsOnly?: boolean;  rolesOnly?: boolean;  schemaOnly?: boolean;  ifExists?: boolean;  encoding?: string;  keepLogs?: boolean; }
-       |  {  command: 'pg_dump';  format: 'p' | 't' | 'c';  dataOnly?: boolean;  clean?: boolean;  create?: boolean;  encoding?: string;  numberOfJobs?: number;  noOwner?: boolean;  compressionLevel?: number;  ifExists?: boolean;  keepLogs?: boolean; }
+       |  {  command: 'pg_dump';  format: 'p' | 't' | 'c';  dataOnly?: boolean;  clean?: boolean;  create?: boolean;  encoding?: string;  numberOfJobs?: number;  noOwner?: boolean;  compressionLevel?: number;  ifExists?: boolean;  keepLogs?: boolean;  excludeSchema?: string;  schemaOnly?: boolean; }
       restore_command?: null | string;
       restore_end?: null | string;
       restore_logs?: null | string;
@@ -206,7 +230,7 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       backups_config?: null | {    enabled?: boolean;   cloudConfig: null |  {  credential_id?: null | number; };   frequency: 'daily' | 'monthly' | 'weekly' | 'hourly';   hour?: number;   dayOfWeek?: number;   dayOfMonth?: number;   keepLast?: number;   err?: null | string;   dump_options: |  {  command: 'pg_dumpall';  clean: boolean;  dataOnly?: boolean;  globalsOnly?: boolean;  rolesOnly?: boolean;  schemaOnly?: boolean;  ifExists?: boolean;  encoding?: string;  keepLogs?: boolean; }
- |  {  command: 'pg_dump';  format: 'p' | 't' | 'c';  dataOnly?: boolean;  clean?: boolean;  create?: boolean;  encoding?: string;  numberOfJobs?: number;  noOwner?: boolean;  compressionLevel?: number;  ifExists?: boolean;  keepLogs?: boolean; };  };
+ |  {  command: 'pg_dump';  format: 'p' | 't' | 'c';  dataOnly?: boolean;  clean?: boolean;  create?: boolean;  encoding?: string;  numberOfJobs?: number;  noOwner?: boolean;  compressionLevel?: number;  ifExists?: boolean;  keepLogs?: boolean;  excludeSchema?: string;  schemaOnly?: boolean; };  };
       db_host: string;
       db_name: string;
       db_port: number;
@@ -247,6 +271,7 @@ export type DBSchemaGenerated = {
       login_rate_limit?: {    maxAttemptsPerHour: number;   groupBy: 'x-real-ip' | 'remote_ip' | 'ip';  };
       login_rate_limit_enabled?: boolean;
       magic_link_validity_days?: number;
+      pass_process_env_vars_to_server_side_functions?: boolean;
       session_max_age_days?: number;
       tableConfig?: null | any;
       trust_proxy?: boolean;
@@ -268,8 +293,8 @@ export type DBSchemaGenerated = {
       last_updated: string;
       options: 
        |  {  type: 'table';  colorArr?: number[];  tablePath: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; }
-       |  {  type: 'map';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  fromSelected?: boolean;  sql?: string;  columns: (  {  name: string;  colorArr: number[]; } )[]; }
-       |  {  type: 'timechart';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  fromSelected?: boolean;  sql?: string;  columns: (  {  name: string;  colorArr: number[];  statType?: {  funcName: '$min' | '$max' | '$countAll' | '$avg' | '$sum';  numericColumn: string; }; } )[]; }
+       |  {  type: 'map';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  fromSelected?: boolean;  sql?: string;  mapIcons?: |  {  type: 'fixed';  iconPath: string; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: 'fixed';  colorArr: number[]; } |  {  type: 'scale';  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[]; } )[]; }
+       |  {  type: 'timechart';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  fromSelected?: boolean;  sql?: string;  mapIcons?: |  {  type: 'fixed';  iconPath: string; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: 'fixed';  colorArr: number[]; } |  {  type: 'scale';  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[];  statType?: {  funcName: '$min' | '$max' | '$countAll' | '$avg' | '$sum';  numericColumn: string; }; } )[]; }
       user_id: string;
       w1_id: string;
       w2_id: string;
@@ -284,9 +309,11 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       created?: null | string;
+      disabled_message?: null | string;
+      disabled_until?: null | string;
       id?: number;
-      llm_credential_id: number;
-      llm_prompt_id: number;
+      llm_credential_id?: null | number;
+      llm_prompt_id?: null | number;
       name?: string;
       user_id: string;
     };
@@ -298,13 +325,15 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
+      config?: 
+       |  {  Provider: 'OpenAI';  API_Key: string;  model: string;  temperature?: number;  frequency_penalty?: number;  max_completion_tokens?: number;  presence_penalty?: number;  response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt'; }
+       |  {  Provider: 'Anthropic';  API_Key: string;  "anthropic-version": string;  model: string;  max_tokens: number; }
+       |  {  Provider: 'Custom';  headers?: Record<string, string>;  body?: Record<string, string>; }
       created?: null | string;
       endpoint?: string;
-      extraHeaders?: null | Partial<Record<string, string>>
       id?: number;
-      key_id?: null | string;
-      key_secret: string;
       name?: string;
+      result_path?: null | string[];
       user_id: string;
     };
   };
@@ -315,10 +344,10 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      chat_id?: null | number;
+      chat_id: number;
       created?: null | string;
       id?: string;
-      message?: null | string;
+      message: string;
       user_id?: null | string;
     };
   };
@@ -330,6 +359,7 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       created?: null | string;
+      description?: null | string;
       id?: number;
       name?: string;
       prompt: string;
@@ -550,6 +580,7 @@ export type DBSchemaGenerated = {
       deleted?: null | boolean;
       filter?: any;
       fullscreen?: null | boolean;
+      function_options?: null | {    showDefinition?: boolean;  };
       having?: any;
       id?: string;
       last_updated: string;

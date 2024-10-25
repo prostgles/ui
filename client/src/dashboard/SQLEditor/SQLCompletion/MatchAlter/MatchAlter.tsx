@@ -4,6 +4,7 @@ import { PG_OBJECTS, suggestSnippets } from "../CommonMatchImports";
 import { cleanExpect, getExpected } from "../getExpected";
 import { getParentFunction } from "../MatchSelect";
 import { getKind, type ParsedSQLSuggestion, type SQLMatcher } from "../registerSuggestions";
+import { suggestColumnLike } from "../suggestColumnLike";
 import { getNewColumnDefinitions, PG_COLUMN_CONSTRAINTS } from "../TableKWDs";
 import { withKWDs } from "../withKWDs";
 import { matchAlterPolicy } from "./matchAlterPolicy";
@@ -58,7 +59,7 @@ export const MatchAlter: SQLMatcher = {
       const insideFun = getParentFunction(cb);
       if(insideFun?.func.textLC === "as"){
         if(insideFun.prevTokens?.slice(-3).map(t => t.textLC).join(" ") === "generated always as"){
-          return getExpected("column", cb, ss);
+          return suggestColumnLike({ cb, ss, setS, sql });
         }
       }
 

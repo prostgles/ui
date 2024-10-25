@@ -1,6 +1,6 @@
 import React from "react";
 
-type P = Pick<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "style" | "className" | "onClick" | "onPointerUp" | "onPointerDown">;
+type P = Pick<React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>, "style" | "className" | "onClick" | "onPointerUp" | "onPointerDown" | "children">;
 
 export default class ClickCatch extends React.Component<P, any> {
 

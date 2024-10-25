@@ -20,6 +20,7 @@ import { OPTIONS_LIMIT, getSuggestions, parseValue } from "./fieldUtils";
 import type { FilterColumn } from "../../SmartFilter/smartFilterUtils";
 import { isObject } from "../../../../../commonTypes/publishUtils";
 import type { ColumnDisplayConfig } from "../SmartForm";
+import { JSONBSchema, JSONBSchemaA } from "../../../components/JSONBSchema/JSONBSchema";
 
 export type SmartFormFieldProps = {
   id?: string;
@@ -33,11 +34,14 @@ export type SmartFormFieldProps = {
   action?: "update" | "insert" | "view";
   column: ValidatedColumnInfo;
   tableInfo: TableInfo;
-  // columnName: string;
   style?: React.CSSProperties;
   inputStyle?: React.CSSProperties;
   placeholder?: string;
   variant?: "compact" | "column";
+  /**
+   * If true then will render jsonbSchema columns using controls instead of code editor
+   */
+  jsonbSchemaWithControls?: boolean;
   multiSelect?: boolean;
   theme: Theme;
   /**
@@ -218,7 +222,7 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
       action, value, inputStyle = {}, placeholder = "",
       variant, multiSelect, column,
       rightContent, hideNullBtn, sectionHeader, style,
-      tableName, maxWidth = "100vw", theme, db, tables
+      tableName, maxWidth = "100vw", theme, db, tables, jsonbSchemaWithControls
     } = this.props;
     let rawValue = "rawValue" in this.props ? this.props.rawValue : value;
     const { error, options, showDateInput, onSearchOptions, loaded, collapsed } = this.state;
@@ -264,6 +268,15 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
 
     let codeEditorProps: CodeEditorProps | undefined;
     if(column.udt_name.startsWith("json") && tableName){
+      if(jsonbSchemaWithControls && column.jsonbSchema){
+        return <JSONBSchemaA
+          db={db} 
+          schema={column.jsonbSchema}
+          tables={tables}
+          value={value}
+          onChange={this.onChange} 
+        />
+      }
       const jsonSchema = column.jsonbSchema && getJSONBSchemaAsJSONSchema(tableName, column.name, column.jsonbSchema);
       codeEditorProps = {
         language: "json",
@@ -318,9 +331,7 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
         className={(cantUpdate? " cursor-default " : "")}// + (!isCompact ? "mt-1" : "")}
         inputClassName={(cantUpdate? " cursor-default " : "")}
         maxWidth={maxWidth}
-        inputStyle={{
-          // maxWidth: "400px", 
-          // maxHeight: "450px", 
+        inputStyle={{ 
           ...inputStyle,
           minWidth: 0,
           ...(type === "checkbox" ? { padding: "1px" } :

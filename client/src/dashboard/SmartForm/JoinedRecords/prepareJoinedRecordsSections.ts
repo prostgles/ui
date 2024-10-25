@@ -5,11 +5,10 @@ export const prepareJoinedRecordsSections = async function(this: JoinedRecords){
   const dataSignature = this.getDataSignature();
   if(dataSignature === this.dataSignature) return;
   
-  const { tables, db, tableName, showLookupTables = true, showOnlyFKeyTables } = this.props;
-  const { extraSectionPaths } = this.state;
+  const { tables, db, tableName, showLookupTables = true, showOnlyFKeyTables } = this.props; 
   const tableJoins = tables.find(t => t.name === tableName)?.joins.filter(j => j.hasFkeys || !showOnlyFKeyTables);
   if(!tableJoins) return;
-
+  this.setState({ isLoadingSections: true });
   this.dataSignature = dataSignature;
   const diplayedTables = tableJoins.slice(0, 0).map(d => ({ 
     ...d, 
@@ -82,5 +81,5 @@ export const prepareJoinedRecordsSections = async function(this: JoinedRecords){
 
     return res;
   }));
-  this.setState({ sections })
+  this.setState({ sections, isLoadingSections: false });
 }

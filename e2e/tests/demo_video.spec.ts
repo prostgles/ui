@@ -18,7 +18,7 @@ const videoTestDuration = 10 * 60e3;
 test.describe("Demo video", () => {
   test.setTimeout(videoTestDuration);
 
-  test("Vide demo", async ({ page: p }) => {
+  test("Video demo", async ({ page: p }) => {
     const page = p as PageWIds;
     
     await login(page, USERS.test_user, "/login");

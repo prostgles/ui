@@ -6,10 +6,12 @@ import { createReactiveState } from "../../appUtils";
 export const getDeckLibs = async () => {
   const lib = await import(/* webpackChunkName: "deckgl" */ "deck.gl");
   const mvtLoader = await import(/* webpackChunkName: "mvtLoader" */ "@loaders.gl/mvt");
+  // const extensions = await import(/* webpackChunkName: "deckglExtensions" */ "@deck.gl/extensions");
 
   return {
     lib,
-    MVTLoader: mvtLoader.MVTLoader
+    MVTLoader: mvtLoader.MVTLoader,
+    // extensions
   }
 }
 export type DeckGlLib = Awaited<ReturnType<typeof getDeckLibs>>["lib"]

@@ -16,6 +16,7 @@ export default defineConfig({
     baseURL: "http://localhost:3004",
     trace: "retain-on-failure",
     video: "retain-on-failure",
+    // video: "on",
     testIdAttribute: "data-command",
     actionTimeout: 5e3,
   },

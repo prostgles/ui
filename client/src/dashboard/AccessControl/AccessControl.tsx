@@ -11,8 +11,7 @@ import { AccessControlRuleEditor } from "./AccessControlRuleEditor";
 import { AccessControlRules } from "./ExistingAccessRules";
 import type { useAccessControlSearchParams } from "./useAccessControlSearchParams";
 import { mdiAccountCog, mdiPlus } from "@mdi/js";
-import { UserSyncConfig } from "./UserSyncConfig";
-import { NavLink } from "react-router-dom";
+import { UserSyncConfig } from "./UserSyncConfig"; 
 
 
 type P = ReturnType<typeof useAccessControlSearchParams> & {
@@ -24,10 +23,12 @@ export type AccessRule = Required<DBSSchema["access_control"]> & {
   access_control_user_types: {
     ids: string[]
   }[];
+  isApplied: boolean | undefined;
   published_methods: Required<DBSSchema["published_methods"]>[];
+  access_control_allowed_llm: Omit<Required<DBSSchema["access_control_allowed_llm"]>, "access_control_id">[];
 };
 
-export type EditedAccessRule = Omit<AccessRule, "database_id" | "id">;
+export type EditedAccessRule = Omit<AccessRule, "database_id" | "id" | "isApplied">;
 
 export type AccessControlAction =
   | {
@@ -95,6 +96,7 @@ export const AccessControl = (props: P) => {
           <AccessControlRules
             workspaces={workspaces ?? []}
             rules={rules}
+            prgl={prgl}
             onSelect={r => {
               setAction({ type: "edit", selectedRuleId: r.id });
             }}
@@ -108,10 +110,18 @@ export const AccessControl = (props: P) => {
 
   )
 }
+
 const useGetAccessRules = (prgl: Prgl) => {
 
   const { connectionId, dbs } = prgl;
-  const { data: rules } = dbs.access_control.useSubscribe({ database_id: prgl.databaseId }, ACCESS_CONTROL_SELECT);
+  const { data: appliedRules } = dbs.access_control_connections.useSubscribe({ connection_id: connectionId });
+  const { data: _rules } = dbs.access_control.useSubscribe({ 
+    database_id: prgl.databaseId, 
+  }, ACCESS_CONTROL_SELECT);
+  const rules = _rules?.map(r => ({
+    ...r,
+    isApplied: appliedRules?.some(ar => ar.access_control_id === r.id)
+  }));
   const { data: connection } = dbs.connections.useFindOne({ id: connectionId });
   const { data: dbsConnection} = dbs.connections.useFindOne({ is_state_db: true });
   const { data: database_config } = dbs.database_configs.useFindOne({ id: prgl.databaseId });
@@ -124,6 +134,7 @@ export const ACCESS_CONTROL_SELECT = {
   select: {
     "*": 1,
     access_control_user_types: { ids: { $array_agg: ["user_type"] } },
-    published_methods: "*"
+    published_methods: "*",
+    access_control_allowed_llm: "*",
   },
 } as const;

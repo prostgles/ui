@@ -1,6 +1,6 @@
 {
   "name": "prostgles-desktop",
-  "version": "2.0.26-alpha",
+  "version": "2.0.27-alpha",
   "homepage": "https://prostgles.com/desktop",
   "description": "Realtime Dashboard and SQL editor for PostgreSQL",
   "main": "build/main.js",
@@ -23,7 +23,7 @@
     "test-start": "playwright test",
     "test": "bash ./test.sh",
     "test-linux": "bash ./build.sh && bash ./test-linux.sh",
-    "test-macos": "bash ./build.sh && playwright test"
+    "test-macos": "bash ./build.sh && bash ./test-linux-macos.sh"
   },
   "author": "Prostgles  <office@prostgles.com>",
   "projectUrl": "https://github.com/prostgles/ui-desktop",

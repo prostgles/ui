@@ -8,6 +8,7 @@ import type { ColumnConfig, ColumnSort } from "../ColumnMenu/ColumnMenu";
 import type { ColumnConfigWInfo } from "../W_Table";
 import { getColWInfo } from "./getColWInfo";
 import { getColWidth } from "./getColWidth";
+import { SORTABLE_CHART_COLUMNS } from "../ColumnMenu/NestedTimechartControls";
 
 
 export const getFullColumnConfig = (
@@ -131,7 +132,7 @@ export const updateWCols = (w: WindowSyncItem<"table">, newCols: WindowSyncItem<
 export const getSortColumn = (sort: ColumnSort, columns: ColumnConfig[]): ColumnConfig | undefined => {
   return columns.find(c => 
     c.name === sort.key || 
-    c.nested?.chart?.sortableColumns.some(sortCol => sort.key === `${c.name}.${sortCol}`) ||
+    c.nested?.chart?.type === "time" && SORTABLE_CHART_COLUMNS.some(sortCol => sort.key === `${c.name}.${sortCol}`) ||
     c.nested?.columns.some(nc => sort.key === `${c.name}.${nc.name}`)
   );
 }

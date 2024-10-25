@@ -152,6 +152,7 @@ export const COMMANDS = {
   "WorkspaceMenuDropDown": "",
   "WorkspaceMenuDropDown.WorkspaceAddBtn": "",
   "WorkspaceMenu.SearchList": "",
+  "WorkspaceMenu.CloneWorkspace": "",
   "WorkspaceDeleteBtn": "",
   "WorkspaceDeleteBtn.Confirm": "",
 
@@ -240,6 +241,13 @@ export const COMMANDS = {
   "AgeFilter.argsLeftToRight": "",
   "Login.error": "",
   "SchemaFilter": "",
+  "AskLLMAccessControl": "",
+  "AskLLMAccessControl.AllowAll": "",
+  "Chat.send": "",
+  "AskLLM": "",
+  "AskLLM.popup": "",
+  "SetupLLMCredentials": "",
+  "AskLLMAccessControl.llm_daily_limit": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

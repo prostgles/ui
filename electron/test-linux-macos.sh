@@ -1,0 +1,1 @@
+TEST_MODE=true npm run test-start

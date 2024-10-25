@@ -6,9 +6,13 @@ import { classOverride, FlexCol, FlexRow, type DivProps } from "../Flex";
 import Btn from "../Btn";
 import { mdiContentCopy } from "@mdi/js";
 import "./Marked.css";
+import { CHAT_WIDTH } from "../../dashboard/AskLLM/AskLLM";
 
-type P = { content: string } & DivProps
-export const Marked = ({ content, ...divProps }: P) => {
+type P = DivProps & { 
+  content: string;
+  codeHeader: (opts: { language: string, codeString: string; }) => React.ReactNode;
+};
+export const Marked = ({ content, codeHeader, ...divProps }: P) => {
   
   useEffect(() => {
     if(!content) return
@@ -36,11 +40,12 @@ export const Marked = ({ content, ...divProps }: P) => {
         return <FlexCol 
           className="relative b b-color-1 rounded gap-0 b-color-2 f-0 o-hidden"
           style={{
-            maxWidth: "700px",
+            maxWidth: `${CHAT_WIDTH}px`,
           }}
         > 
-          <FlexRow className="bg-color-2">
+          <FlexRow className="bg-color-2 p-p5">
             <div className="text-sm text-color-4 f-1 px-1 ">{language}</div>
+            {codeHeader({ language, codeString })}
             <Btn 
               iconPath={mdiContentCopy}
               style={{
@@ -50,7 +55,7 @@ export const Marked = ({ content, ...divProps }: P) => {
               onClick={() => {
                 navigator.clipboard.writeText(codeString);
               }}
-            >Copy code</Btn>
+            >Copy</Btn>
           </FlexRow>
           <MonacoEditor 
             style={{ 

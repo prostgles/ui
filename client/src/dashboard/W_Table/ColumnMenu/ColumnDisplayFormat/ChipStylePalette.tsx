@@ -28,7 +28,7 @@ export const chipColorsFadedBorder = [
   { color: "#ffd0cd",   borderColor: "rgb(216 71 71)", textColor: "#940000", textColorDarkMode: "#ff004a" }, // Red
   { color: "#f6beff",   borderColor: "rgb(172 64 211)", textColor: "#490063", textColorDarkMode: "#a95cc5" }, // Pink
   { color: "#e5e9ff",   borderColor: "rgb(108 130 231)", textColor: "#002fff", textColorDarkMode: "#4f6ffb" }, // Purple
-  { color: "#c9e7ff7d", borderColor: "rgb(120 189 243)", textColor: "#0075d2", textColorDarkMode: "#2386d5" }, // Deep Purple
+  { color: "#c9e7ff7d", borderColor: "rgb(120 189 243)", textColor: "#0075d2", textColorDarkMode: "#2386d5" }, // Blue
 
   { color: "#00bcd42e", borderColor: "rgb(93 186 198)", textColor: "#009aad", textColorDarkMode: "#0cbacf"  }, // Indigo
   { color: "#01d4002e", borderColor: "#01d4008a",       textColor: "#00ad44", textColorDarkMode: "#0ad75b" }, // Green
@@ -37,6 +37,17 @@ export const chipColorsFadedBorder = [
   { color: "#b4b4b42e", borderColor: "rgb(169 169 169)", textColor: "#4b4b4b", textColorDarkMode: "#838181" }, // Gray
   
 ];
+
+export const CHIP_COLOR_NAMES = {
+  red: chipColorsFadedBorder[0],
+  pink: chipColorsFadedBorder[1],
+  purple: chipColorsFadedBorder[2],
+  blue: chipColorsFadedBorder[3],
+  indigo: chipColorsFadedBorder[4],
+  green: chipColorsFadedBorder[5],
+  yellow: chipColorsFadedBorder[6],
+  gray: chipColorsFadedBorder[7],
+}
 
 const chipColorsFaded = chipColorsFadedBorder.map(c => ({ ...c, borderColor: undefined }));
 

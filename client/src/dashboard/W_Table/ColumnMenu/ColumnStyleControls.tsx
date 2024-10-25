@@ -73,11 +73,12 @@ type DefaultConditionalStyleArgs = {
   filter?: any;
   theme: Theme;
 }
+export const DefaultConditionalStyleLimit = 5;
 export const setDefaultConditionalStyle = async ({ columnName, db, tableName, filter = {}, theme }: DefaultConditionalStyleArgs, setStyle: (newStyle: ColumnConfig["style"]) => void) => {
 
   const tableHandler = db[tableName];
   if(!tableHandler?.find) return undefined;
-  const rows = await tableHandler.find(filter, { select: { [columnName]: 1 }, limit: 5, groupBy: true });
+  const rows = await tableHandler.find(filter, { select: { [columnName]: 1 }, limit: DefaultConditionalStyleLimit, groupBy: true });
   const values = rows.map(v => v[columnName]) as string[];
   const prevSyleIndexes = new Set<number>();
   setStyle({ 

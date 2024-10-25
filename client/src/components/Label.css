@@ -1,0 +1,10 @@
+.Label_QuestionButton {
+  position: relative;
+}
+
+.Label_QuestionButton:hover::after {
+  content: "?";
+  position: absolute;
+  top: 0;
+  right: 0;
+}
