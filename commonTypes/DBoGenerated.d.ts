@@ -309,6 +309,7 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       created?: null | string;
+      disabled_message?: null | string;
       id?: number;
       llm_credential_id: number;
       llm_prompt_id: number;

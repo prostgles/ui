@@ -219,5 +219,3 @@ type ProstglesMethod = (
 
   </FlexCol>
 }
-
-// throw "subscribe to table then drop it will cause Could not create this._pubSubManager check logs";

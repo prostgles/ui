@@ -1258,6 +1258,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       llm_credential_id: `INTEGER REFERENCES llm_credentials(id) ON DELETE SET NULL`,
       llm_prompt_id: `INTEGER REFERENCES llm_prompts(id) ON DELETE SET NULL`,
       created: `TIMESTAMP DEFAULT NOW()`,
+      disabled_message: { sqlDefinition: `TEXT`, info: { hint: "Message to show when chat is disabled" } },
     },
   },
   llm_messages: {
