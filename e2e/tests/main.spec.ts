@@ -964,7 +964,6 @@ test.describe("Main test", () => {
     await page.getByTestId("dashboard.menu.tablesSearchList").waitFor({ state: "visible", timeout: 10e3 });
     const [response1, response2] = await getLLMResponses(page, ["hey", "hey"]);
     expect(response1.isOk).toBe(true);
-    expect(response1.isOk).toBe(true);
     expect(response2.isOk).toBe(false);
   });
 });

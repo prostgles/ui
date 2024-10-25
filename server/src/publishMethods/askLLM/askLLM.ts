@@ -34,29 +34,35 @@ export const askLLM = async (
   if(!prompt) throw "Prompt is empty";
   const pastMessages = await dbs.llm_messages.find({ chat_id: chatId }, { orderBy: { created: 1} });
 
-  const allowedUsedCreds = allowedLLMCreds?.filter(c => c.llm_credential_id === llm_credential_id && c.llm_prompt_id === llm_prompt_id)
-  if(allowedUsedCreds){
-    const limitReachedMessage = await checkLLMLimit(dbs, user, allowedUsedCreds, accessRules!);
-    if(limitReachedMessage){
-      const lastMessage = pastMessages.at(-1);
-      if(!lastMessage || lastMessage.user_id === user.id){
-        await dbs.llm_messages.insert({
-          user_id: null,
-          chat_id: chatId,
-          message: limitReachedMessage,
-        });
-      } else if(lastMessage.message !== limitReachedMessage){
-        await dbs.llm_messages.update({ id: lastMessage.id }, { message: limitReachedMessage });
-      }
-      return;
-    }
-  }
-
   await dbs.llm_messages.insert({
     user_id: user.id,
     chat_id: chatId,
     message: question,
   });
+
+  const allowedUsedCreds = allowedLLMCreds?.filter(c => c.llm_credential_id === llm_credential_id && c.llm_prompt_id === llm_prompt_id)
+  if(allowedUsedCreds){
+    const limitReachedMessage = await checkLLMLimit(dbs, user, allowedUsedCreds, accessRules!);
+    if(limitReachedMessage){
+      await dbs.llm_chats.update({ id: chatId }, { disabled_message: limitReachedMessage });
+      // const lastMessage = pastMessages.at(-1);
+      // if(!lastMessage || lastMessage.user_id === user.id){
+      //   await dbs.llm_messages.insert({
+      //     user_id: null,
+      //     chat_id: chatId,
+      //     message: limitReachedMessage,
+      //   });
+      // } else if(lastMessage.message !== limitReachedMessage){
+      //   await dbs.llm_messages.update(
+      //     { id: lastMessage.id }, 
+      //     { message: limitReachedMessage }
+      //   );
+      // }
+      return;
+    } else if(chat.disabled_message){
+      await dbs.llm_chats.update({ id: chatId }, { disabled_message: null });
+    }
+  }
 
   /** Update chat name based on first user message */
   const isFirstUserMessage = !pastMessages.some(m => m.user_id === user?.id);
