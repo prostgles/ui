@@ -30,6 +30,7 @@ type P = {
     audio: boolean;
     file: boolean;
   }>;
+  disabledInfo?: string;
 }
 
 class AudioRecorder {
@@ -79,6 +80,7 @@ export const Chat: FunctionComponent<P> = (props) => {
     style = {},
     messages,
     onSend,
+    disabledInfo,
     allowedMessageTypes = {
       audio: false,
       file: false
@@ -169,7 +171,7 @@ export const Chat: FunctionComponent<P> = (props) => {
         {messages.map(makeMessage)}            
       </div>
                 
-      <div className={"send-wrapper relative " + (sendingMsg? "no-interaction not-allowed" : "")}>
+      <div className={"send-wrapper relative " + ((sendingMsg || disabledInfo)? "no-interaction not-allowed" : "")}>
         <textarea 
           ref={ref}
           className="no-scroll-bar bg-color-2 text-0" 
@@ -188,6 +190,7 @@ export const Chat: FunctionComponent<P> = (props) => {
             iconPath={mdiSend} 
             loading={sendingMsg}
             data-command="Chat.send"
+            disabledInfo={disabledInfo}
             onClick={async (e)=>{
               if(!ref.current) return;
               sendMsg(ref.current.value)

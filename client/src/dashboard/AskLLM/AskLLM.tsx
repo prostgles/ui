@@ -205,6 +205,7 @@ export const AskLLM = ({ workspaceId, ...prgl }: Prgl & { workspaceId: string | 
               minHeight: "0"
             }}
             messages={messages}
+            disabledInfo={activeChat?.disabled_message ?? undefined}
             onSend={async (msg) => {
               if(!msg || !activeChatId) return;
               await askLLM(msg, schemaStr, activeChatId).catch(error => {

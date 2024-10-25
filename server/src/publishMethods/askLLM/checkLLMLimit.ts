@@ -36,11 +36,12 @@ export const checkLLMLimit = async (
   }
   
   if(!userIds.length) throw "User id filter empty";
-  const messagesCount = await dbs.llm_messages.count({
+  const _messagesCount = await dbs.llm_messages.count({
     user_id: { $in: userIds }, 
     created: { $gte: new Date(Date.now() - 24 * HOUR).toISOString() } 
   });
-  if(+messagesCount > totalLimit){
+  const messagesCount = +_messagesCount + 1;
+  if(+messagesCount >= totalLimit){
     return "Daily limit reached" as const;
   }
 }
