@@ -19,7 +19,7 @@ export const DashboardMenuHeader = ({ prgl, loadTable, onClose, workspace, onCli
     <Btn key="sql" 
       { ...dataCommand("dashboard.menu.sqlEditor") }
       className="f-1 jc-start max-w-fit"
-      title="SQL Query"
+      title="Opens SQL Query editor"
       onClick={e => {
         loadTable({ type: "sql", name: "SQL Query" });
         onClose?.();

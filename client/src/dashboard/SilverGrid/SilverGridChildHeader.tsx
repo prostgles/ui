@@ -143,6 +143,7 @@ export const SilverGridChildHeader = (props: P) => {
         className="f-0" 
         iconPath={!minimized? mdiUnfoldLessHorizontal : mdiUnfoldMoreHorizontal} 
         disabledInfo={fullscreen? "Must exit fullscreen" : undefined}
+        title="Minimize/Maximize view"
         onClick={e => {
           if(minimize){
             minimize.toggle()
@@ -156,6 +157,7 @@ export const SilverGridChildHeader = (props: P) => {
     {!hideButtons.fullScreen && 
       <Btn 
         { ...dataCommand("dashboard.window.fullscreen")}
+        title="Toggle view fullscreen mode"
         className="f-0" 
         iconPath={!fullscreen? mdiFullscreen : mdiFullscreenExit} 
         onClick={onClickFullscreen}
@@ -164,6 +166,7 @@ export const SilverGridChildHeader = (props: P) => {
     {onClose && !hideButtons.close && 
       <Btn 
         { ...dataCommand("dashboard.window.close")}
+        title="Close view"
         className="f-0" 
         iconPath={mdiClose} 
         onClick={e => onClickClose(e)} 
