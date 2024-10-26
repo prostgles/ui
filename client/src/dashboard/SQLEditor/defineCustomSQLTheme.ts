@@ -20,6 +20,7 @@ export const defineCustomSQLTheme = async (): Promise<boolean> => {
       { token: `identifier.${LANG}`, foreground: "#6c06ab"},
       { token: `complexIdentifiers.${LANG}`, foreground: "#6c06ab" },
       
+      // { token: `identifier.ts`, foreground: "#1072a3"},
       // { token: 'function', foreground: '94763a', fontStyle: 'bold'  },
       // { token: 'keyword', foreground: '#696969' },
     ],

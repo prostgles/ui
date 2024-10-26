@@ -15,12 +15,16 @@ export const SvgIcon = ({ icon, className, size, style }: { icon: string, classN
       console.error(`Icon name "${icon}" must contain only letters`);
       return;
     }
-    if (cachedSvgs.has(iconPath)) return;
+    const cached = cachedSvgs.get(iconPath);
+    if (cached) {
+      setSvg(cached);
+      return;
+    }
     fetchIcon(iconPath)
-      .then(svg => {
-        cachedSvgs.set(iconPath, svg);
+      .then(fetchedSvg => {
+        cachedSvgs.set(iconPath, fetchedSvg);
         if(!getIsMounted()) return;
-        setSvg(svg);
+        setSvg(fetchedSvg);
       })
   }, [iconPath, getIsMounted, icon]);
 

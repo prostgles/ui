@@ -2,7 +2,7 @@ import React from "react";
 import type { Prgl } from "../../App";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import { SwitchToggle } from "../../components/SwitchToggle";
-import { useCodeEditorTsTypes } from "../AccessControl/Methods/MethodDefinition";
+import { useCodeEditorTsTypes } from "../AccessControl/Methods/useMethodDefinitionTypes";
 import { SmartCodeEditor } from "../CodeEditor/SmartCodeEditor";
 import { ProcessLogs } from "../TableConfig/ProcessLogs";
 
@@ -25,11 +25,14 @@ export const OnMountFunction = ({ dbsMethods, dbs, connectionId, dbKey }: Prgl) 
     <SmartCodeEditor 
       key={dbKey}
       label="Server-side function executed after the table is created and server started or schema changed"
-      tsLibraries={[
-        ...tsLibraries,
-      ]}
+      language={{ 
+        lang: "typescript",
+        modelFileName: `onMount_${connectionId}`,
+        tsLibraries: [
+          ...tsLibraries,
+        ]
+      }}
       codePlaceholder={example}
-      language="typescript"
       value={connection?.on_mount_ts}
       onSave={async (value) => {
         await dbsMethods.setOnMount?.(connectionId, { on_mount_ts: value });
