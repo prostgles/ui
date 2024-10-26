@@ -312,8 +312,8 @@ export type DBSchemaGenerated = {
       disabled_message?: null | string;
       disabled_until?: null | string;
       id?: number;
-      llm_credential_id?: null | number;
-      llm_prompt_id?: null | number;
+      llm_credential_id: number;
+      llm_prompt_id: number;
       name?: string;
       user_id: string;
     };
@@ -344,10 +344,10 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      chat_id: number;
+      chat_id?: null | number;
       created?: null | string;
       id?: string;
-      message: string;
+      message?: null | string;
       user_id?: null | string;
     };
   };
