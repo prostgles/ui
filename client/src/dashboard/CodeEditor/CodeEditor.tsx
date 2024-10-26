@@ -2,12 +2,13 @@
 import React from "react";
  
 import { omitKeys } from "../../utils";
-import type { MonacoEditorProps } from "../W_SQL/MonacoEditor";
-import { MonacoEditor } from "../W_SQL/MonacoEditor";
+import type { MonacoEditorProps } from "../../components/MonacoEditor/MonacoEditor";
+import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
 import { languages, type editor, type Uri } from "../W_SQL/monacoEditorTypes";
 import { classOverride } from "../../components/Flex";
 import { registerLogLang } from "./registerLogLang";
 import { getMonaco } from "../SQLEditor/SQLEditor";
+import { isObject } from "../../../../commonTypes/publishUtils";
 export type Suggestion = {
   type: "table" | "column" | "function";
   label: string;
@@ -62,33 +63,54 @@ export type MonacoJSONSchema = {
   schema: Record<string, any>;
 };
 
-export type CodeEditorProps = Pick<MonacoEditorProps, "options" | "value" | "language"> & {
+export type TSLibrary = {
+  /**
+   * 'ts:filename/facts.d.ts';
+   */
+  filePath: string;
+  /**
+   * type MyType = { a: number; b: string };
+   * class MyClass { ... }
+   */
+  content: string;
+};
+
+type LanguageConfig =
+| {
+  lang: "sql";
+  suggestions?: Suggestion[];
+}
+| {
+  lang: "typescript";
+  /**
+   * e.g.: 'myMethod2';
+   * Must be unique for each model
+   */
+  modelFileName: string;
+  tsLibraries?: TSLibrary[];
+}
+| {
+  lang: "json";
+  jsonSchemas?: CodeEditorJsonSchema[];
+}
+
+export type CodeEditorJsonSchema = { id: string; schema: any; }
+
+export type CodeEditorProps = Pick<MonacoEditorProps, "options" | "value"> & {
   value: string;
   onChange?: (newValue: string) => any | void;
+  language: LanguageConfig | string;
   /**
    * If true then will allow saving on CTRL+S
    */
   onSave?: (code: string) => any | void;
-  suggestions?: Suggestion[];
   error?: MonacoError;
-  language: string;
   style?: React.CSSProperties;
   className?: string;
   markers?: editor.IMarkerData[];
-  tsLibraries?: {
-    /**
-     * 'ts:filename/facts.d.ts';
-     */
-    filePath: string;
-    /**
-     * type MyType = { a: number; b: string };
-     * class MyClass { ... }
-     */
-    content: string;
-  }[];
   onMount?: ((editor: editor.IStandaloneCodeEditor) => void);
-  jsonSchemas?: { id: string; schema: any; }[];
 };
+
 type S = {
   schemas?: MonacoJSONSchema[]
 };
@@ -122,8 +144,8 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
   getSchemas = async (): Promise<MonacoJSONSchema[] | undefined> => {
 
     const monaco = await this.getMonaco()
-    const { jsonSchemas } = this.props;
-    // const monaco = this._monaco;
+    const { language } = this.props;
+    const { jsonSchemas } = isObject(language) && language.lang === "json" ? language : {};
     if (!jsonSchemas) return;
     const schemas = jsonSchemas.map(s => {
       const { id, schema } = s;
@@ -149,7 +171,6 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
    */
   addedModelId?: string;
   setSchema = async (editor?: editor.IStandaloneCodeEditor) => {
-    // const monaco = this._monaco;
     
     const monaco = await this.getMonaco()
     const mySchemas = await this.getSchemas();
@@ -172,8 +193,7 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
     // const model = editor.getModel();
     const models = monaco.editor.getModels();
     const matchingModel = models.find(m => m.uri.path === mySchemas[0]?.theUri.path)
-    if (!matchingModel) { //  || (!this.addedModelId || this.addedModelId !== matchingModel.id)
-      // monaco.editor.getModels().forEach(model => model.dispose());
+    if (!matchingModel) {
 
       try {
         const newModel = monaco.editor.createModel(this.props.value as any ?? editor.getValue(), "json", mySchemas[0]?.theUri);
@@ -200,10 +220,10 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
   loadedJsonSchema = false;
   tsLibrariesStr = "";
   onUpdate = async (prevProps?) => {
-    const { error, language, markers, tsLibraries, jsonSchemas } = this.props;
+    const { error, language, markers } = this.props;
     const monaco = await this.getMonaco();
-
-    if (this.editor && jsonSchemas && !this.loadedJsonSchema) {
+    const languageObj = isObject(language) ? language :undefined;
+    if (this.editor && languageObj?.lang === "json" && !this.loadedJsonSchema) {
       this.loadedJsonSchema = true;
       this.setSchema(this.editor);
     }
@@ -227,33 +247,28 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
     }
 
     /* Add ts specific stuff */
-    if (this.editor && language === "typescript") {
+    if (this.editor && languageObj?.lang === "typescript") {
       if (!this.setTSOpts) {
         this.setTSOpts = true;
         setTSoptions();
       }
-
+      const { tsLibraries, modelFileName } = languageObj;
       const tsLibrariesStr = JSON.stringify(tsLibraries);
       if (tsLibraries && this.tsLibrariesStr !== tsLibrariesStr) {
         this.tsLibrariesStr = tsLibrariesStr;
 
-        monaco.languages.typescript.typescriptDefaults.setExtraLibs(tsLibraries);
+        monaco.languages.typescript.typescriptDefaults.setExtraLibs(tsLibraries); 
 
-        // this.loadedTSLibs?.forEach(d => d.dispose());
-        // this.loadedTSLibs = tsLibraries.map(({ path, content }) => {
-        //   const d = monaco.languages.typescript.typescriptDefaults.addExtraLib(content, path);
-        //   // When resolving definitions and references, the editor will try to use created models.
-        //   // Creating a model for the library allows "peek definition/references" commands to work with the library.
-        //   // monaco.editor.createModel(content, 'typescript', monaco.Uri.parse(path));
+        /* 
+          THIS CLOSES ALL OTHER EDITORS 
+          This is/was? needed to prevent this error: Type annotations can only be used in TypeScript files. 
+        */
+        // monaco.editor.getModels().forEach(model => model.dispose());
 
-        //   return d;
-        // });
-
-        /* This is needed to prevent this error: Type annotations can only be used in TypeScript files. */
-        monaco.editor.getModels().forEach(model => model.dispose());
-        this.editor.setModel(
-          monaco.editor.createModel(this.props.value, "typescript", monaco.Uri.parse("file:///main.ts"))
-        )
+        const modelUri = monaco.Uri.parse(`file:///${modelFileName}.ts`)
+        const existingModel = monaco.editor.getModels().find(m => m.uri.path === modelUri.path);
+        const model = existingModel ?? monaco.editor.createModel(this.props.value, "typescript", modelUri)
+        this.editor.setModel(model);
       }
     }
 
@@ -331,8 +346,8 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
   }
 
   render() {
-    const { value = "", onChange, language, options = {}, style, className = "" } = this.props;
-
+    const { value = "", onChange, language: languageOrConf, options = {}, style, className = "" } = this.props;
+    const language = isObject(languageOrConf) ? languageOrConf.lang : languageOrConf;
     return <div className={classOverride("f-1 min-h-0 min-w-0 flex-col relative b b-color-2", className)}
       style={style}
     >
@@ -368,7 +383,8 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
           }
           this.forceUpdate();
           this.props.onMount?.(editor);
-        }} />
+        }} 
+      />
     </div>
   }
 }

@@ -1,7 +1,7 @@
 
 import React, { useEffect } from "react";
 import Markdown from "react-markdown";
-import { MonacoEditor } from "../../dashboard/W_SQL/MonacoEditor";
+import { MonacoEditor } from "../MonacoEditor/MonacoEditor";
 import { classOverride, FlexCol, FlexRow, type DivProps } from "../Flex";
 import Btn from "../Btn";
 import { mdiContentCopy } from "@mdi/js";

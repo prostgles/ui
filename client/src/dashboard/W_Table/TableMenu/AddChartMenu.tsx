@@ -13,7 +13,7 @@ type P = {
   w: WindowData<"table"> | WindowData<"sql">;
   onAddChart: OnAddChart;
   tables: DBSchemaTablesWJoins; 
-  btnClassName: string;
+  btnClassName?: string;
 }
 
 export const AddChartMenu = (props: P) => {

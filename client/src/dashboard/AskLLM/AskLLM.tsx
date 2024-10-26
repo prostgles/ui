@@ -143,7 +143,7 @@ export const AskLLM = ({ workspaceId, ...prgl }: Prgl & { workspaceId: string | 
               </div>
               <span className="text-2 font-14">(experimental)</span>
             </FlexCol>
-            <FlexRow className="gap-p25">
+            <FlexRow className="gap-p25 min-w-0">
               <LLMChatOptions {...prgl} 
                 prompts={prompts} 
                 activeChat={activeChat}
@@ -160,7 +160,9 @@ export const AskLLM = ({ workspaceId, ...prgl }: Prgl & { workspaceId: string | 
                 value={activeChatId}
                 showSelectedSublabel={true}
                 style={{
-                  // backgroundColor: "transparent",
+                  flex:1,
+                  minWidth: "80px",
+                  maxWidth: "fit-content",
                 }}
                 onChange={v => {
                   setActiveChat(v);

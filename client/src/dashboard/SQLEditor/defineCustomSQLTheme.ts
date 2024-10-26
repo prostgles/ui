@@ -13,17 +13,17 @@ export const defineCustomSQLTheme = async (): Promise<boolean> => {
     },
     rules: [
       
-      // { token: 'predefined.sql', foreground: '#730000'},
       { token: `string.${LANG}`, foreground: "#930000"}, // #e200e2
       
   
       /* Table names */
-      { token: "identifier", foreground: "#6c06ab"},
-      { token: "complexIdentifiers", foreground: "#6c06ab" },
+      { token: `identifier.${LANG}`, foreground: "#6c06ab"},
+      { token: `complexIdentifiers.${LANG}`, foreground: "#6c06ab" },
       
       // { token: 'function', foreground: '94763a', fontStyle: 'bold'  },
       // { token: 'keyword', foreground: '#696969' },
-    ]
+    ],
+    
   });
   return true;
 }
