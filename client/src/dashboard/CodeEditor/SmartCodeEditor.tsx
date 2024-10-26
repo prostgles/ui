@@ -7,6 +7,7 @@ import { FlexCol, FlexRow, classOverride } from "../../components/Flex";
 import { FooterButtons } from "../../components/Popup/FooterButtons";
 import Popup from "../../components/Popup/Popup";
 import CodeEditor, { type CodeEditorProps } from "./CodeEditor";
+import { isDefined } from "../../utils";
 
 type P = {
   label: React.ReactNode;
@@ -15,9 +16,10 @@ type P = {
   autoSave?: boolean;
   value: string | undefined | null;
   codePlaceholder?: string;
+  codeEditorClassName?: string;
 } & Omit<CodeEditorProps, "onSave" | "onChange" | "value" | "style" | "className">;
 
-export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceholder, autoSave, ...codeEditorProps }: P) => {
+export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceholder, autoSave, codeEditorClassName = "b", ...codeEditorProps }: P) => {
   const [_localValue, setLocalValue] = React.useState<string | null | undefined>();
   const localValue = _localValue ?? value;
   const [error, setError] = React.useState<any>();
@@ -28,7 +30,7 @@ export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceh
     }
   }, [localValue, value]);
  
-  const didChange = localValue !== value;
+  const didChange = isDefined(localValue) && localValue !== value;
   const onClickSave = (!onSave || autoSave)? undefined : async () => {
     if(!didChange) return;
     try {
@@ -39,18 +41,23 @@ export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceh
     }
   }
 
-  const content = <FlexCol 
-    className={classOverride("SmartCodeEditor gap-0 f-1 ", `${fullScreen? "min-h-0" : ""}`)}
-  >
-    <FlexRow>
+  const titleNode = (
+    <FlexRow className={fullScreen? "" : "shadow"} style={{ zIndex: 1 }}>
       {<div className="m-0 py-1 f-1">
         {label}
       </div>}
       <Btn iconPath={mdiFullscreen} onClick={() => setFullScreen(!fullScreen) } />
     </FlexRow>
+
+  )
+
+  const content = <FlexCol 
+    className={classOverride("SmartCodeEditor gap-0 f-1 ", `${fullScreen? "min-h-0" : ""}`)}
+  >
+    {fullScreen? null : titleNode}
     <FlexCol className={classOverride("relative f-1 gap-0 ", `${fullScreen? "min-h-0" : ""}`)}>
       <CodeEditor 
-        className="b"
+        className={codeEditorClassName}
         style={{
           minHeight: "300px",
           ...(!localValue? { opacity: .7 } : {})
@@ -67,7 +74,7 @@ export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceh
       />
       {didChange && onClickSave && <FooterButtons 
         error={error}
-        className="bg-color-1 b "
+        className="bg-color-1"
         style={{ 
           maxHeight: "60%", 
           alignItems: "start",
@@ -80,7 +87,7 @@ export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceh
             }
           },
           error? undefined : {
-            label: "Save",
+            label: "Save (Ctrl + S)",
             color: "action",
             variant: "filled",
             ...onSaveButton,
@@ -93,10 +100,12 @@ export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceh
 
   if(fullScreen){
     return <Popup
+      title={titleNode}
       positioning="fullscreen"
       contentStyle={{
         overflow: "hidden"
       }}
+      onClose={() => setFullScreen(false)}
       onKeyDown={(e) => {
         if(e.key === "Escape"){
           setFullScreen(false);

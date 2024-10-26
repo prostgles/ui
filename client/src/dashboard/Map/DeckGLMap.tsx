@@ -392,12 +392,17 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
         type: "FeatureCollection",
         features: g.features
       }),
-      /** Disabled due to bad  */
+      /** Disabled due to bad experience (features missing) */
       // extensions: [new deckGlLibs.extensions.CollisionFilterExtension()],
       filled: true,
+
+      /**
+       * Radius of the circle in meters. If radiusUnits is not meters, this is converted from meters.
+       */
+      getPointRadius: f => f.properties.radius ?? 1,
       pointRadiusMinPixels: 2,
       pointRadiusScale: 1,
-      getPointRadius: f => f.properties.radius ?? 1,
+
       extruded: Boolean(g.elevation),
       getElevation: g.elevation || 0,
 

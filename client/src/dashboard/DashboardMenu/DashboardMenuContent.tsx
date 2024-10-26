@@ -160,13 +160,15 @@ export const DashboardMenuContent = (props: P) => {
         inputProps={dataCommand("dashboard.menu.tablesSearchListInput")}
         className={"search-list-tables b-t min-h-0 " + (smallScreen? " mt-p5 " : " mt-1 ")}
         placeholder={`${tables.length} tables/views`} 
-        items={tablesWithInfo.map((t, i)=> ({
+        items={tablesWithInfo.map((t, i)=> {
+          const icon = connection.table_options?.[t.name]?.icon;
+          return {
             contentLeft: (
               <div className="flex-col ai-start f-0 mr-p5 text-1"
                 { ...(t.info.isFileTable? dataCommand("dashboard.menu.fileTable") : {})}
               >
-                {connection.table_options?.[t.name]?.icon?
-                  <SvgIcon icon={connection.table_options[t.name]!.icon!} /> :
+                {icon?
+                  <SvgIcon icon={icon} /> :
                   <Icon path={t.info.isFileTable? mdiFile : db[t.name]?.insert? mdiTableEdit : mdiTable} size={1} />
                 }
               </div>
@@ -182,8 +184,8 @@ export const DashboardMenuContent = (props: P) => {
               loadTable({ type: "table", table: t.name });
               onClose?.();
             }
-          }))
-        }
+          }
+        })}
       />
     }
     {detailedMethods.length > 0 && <SearchList
