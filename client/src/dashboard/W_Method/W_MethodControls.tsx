@@ -101,9 +101,10 @@ export const W_MethodControls = ({ w, db, tables, methods, method_name, fixedRow
   const hasErrors = !isCompleteJSONB(args, argSchema);
 
   const outputTableInfo = m?.outputTable? tables.find(t => t.name === m.outputTable) : undefined;
+  const { showCode = true } = w?.options ?? {};
 
   return <FlexCol className="W_MethodControls f-1  min-s-0 o-auto bg-color-2" style={{ gap: "2px" }}>
-    {w?.options.showCode && method && 
+    {showCode && method && 
       <MethodDefinition 
         renderMode="Code"
         {...prgl!}
@@ -172,7 +173,7 @@ export const W_MethodControls = ({ w, db, tables, methods, method_name, fixedRow
         {w && <SwitchToggle 
           label="Show code" 
           className="ml-auto"
-          checked={!!w.options.showCode} 
+          checked={!!showCode} 
           onChange={showCode => {
             w.$update({ options: { showCode } }, { deepMerge: true });
           }} 

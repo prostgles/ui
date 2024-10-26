@@ -153,12 +153,12 @@ export const DashboardMenuContent = (props: P) => {
     
     {!tables.length? <div className="text-1p5 p-1">0 tables/views</div> : 
       <SearchList
+        className={"search-list-tables b-t min-h-0  " + (smallScreen? " mt-p5 " : " mt-1 ")}
+        data-command="dashboard.menu.tablesSearchList"
         limit={100}
         style={ensureFadeDoesNotShowForOneItem}
         noSearchLimit={0}
-        data-command="dashboard.menu.tablesSearchList"
         inputProps={dataCommand("dashboard.menu.tablesSearchListInput")}
-        className={"search-list-tables b-t min-h-0 " + (smallScreen? " mt-p5 " : " mt-1 ")}
         placeholder={`${tables.length} tables/views`} 
         items={tablesWithInfo.map((t, i)=> {
           const icon = connection.table_options?.[t.name]?.icon;
@@ -191,7 +191,7 @@ export const DashboardMenuContent = (props: P) => {
     {detailedMethods.length > 0 && <SearchList
       limit={100}
       noSearchLimit={0} 
-      className={"search-list-functions b-t f-1 min-h-0 " + (smallScreen? " mt-p5 " : " mt-1 ")}
+      className={"search-list-functions b-t f-1 min-h-0 max-h-fit " + (smallScreen? " mt-p5 " : " mt-1 ")}
       style={ensureFadeDoesNotShowForOneItem} 
       placeholder={"Search " + detailedMethods.length + " functions"} 
       items={detailedMethods.map((t, i)=> ({ 

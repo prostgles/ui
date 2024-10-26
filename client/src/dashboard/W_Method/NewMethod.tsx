@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Popup from "../../components/Popup/Popup";
-import { useAsyncEffectQueue, useIsMounted } from "prostgles-client/dist/react-hooks";
+import { useAsyncEffectQueue, useIsMounted, usePromise } from "prostgles-client/dist/react-hooks";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 import { omitKeys, pickKeys } from "../../utils";
@@ -76,6 +76,7 @@ export const NewMethod = ({ dbKey, theme, db, dbs, methodId, connectionId, onClo
   >
     <MethodDefinition 
       dbKey={dbKey}
+      dbs={dbs}
       connectionId={connectionId}
       dbsMethods={dbsMethods}
       method={newMethod}

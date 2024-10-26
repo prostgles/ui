@@ -48,8 +48,39 @@ export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceh
       </div>}
       <Btn iconPath={mdiFullscreen} onClick={() => setFullScreen(!fullScreen) } />
     </FlexRow>
+  );
 
-  )
+  const footerNode = didChange && onClickSave && 
+    <FooterButtons 
+      error={error}
+      className="bg-color-1"
+      style={{ 
+        maxHeight: "60%", 
+        alignItems: "start",
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 122222,
+        background: "#dfdfdf5c",
+        backdropFilter: "blur(1px)"
+      }}
+      footerButtons={[
+        {
+          label: "Cancel",
+          onClick: () => {
+            setLocalValue(value);
+          }
+        },
+        error? undefined : {
+          label: "Save (Ctrl + S)",
+          color: "action",
+          variant: "filled",
+          ...onSaveButton,
+          onClick: onClickSave
+        }
+      ]}
+    />
 
   const content = <FlexCol 
     className={classOverride("SmartCodeEditor gap-0 f-1 ", `${fullScreen? "min-h-0" : ""}`)}
@@ -72,29 +103,7 @@ export const SmartCodeEditor = ({ label, onSave, onSaveButton, value, codePlaceh
         }}
         onSave={onClickSave}
       />
-      {didChange && onClickSave && <FooterButtons 
-        error={error}
-        className="bg-color-1"
-        style={{ 
-          maxHeight: "60%", 
-          alignItems: "start",
-        }}
-        footerButtons={[
-          {
-            label: "Cancel",
-            onClick: () => {
-              setLocalValue(value);
-            }
-          },
-          error? undefined : {
-            label: "Save (Ctrl + S)",
-            color: "action",
-            variant: "filled",
-            ...onSaveButton,
-            onClick: onClickSave
-          }
-        ]}
-      />}
+      {footerNode}
     </FlexCol>
   </FlexCol>;
 

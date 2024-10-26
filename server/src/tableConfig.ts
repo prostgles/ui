@@ -696,13 +696,15 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
                 } 
               }, 
             },
-          ]  
+          ]
         } 
       } },
       run: "TEXT NOT NULL DEFAULT 'export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n  \n}'",
       outputTable: `TEXT`
     },
-    indexes: { "unique_name": { columns: "name, connection_id" }}
+    indexes: {  
+      "unique_name": { unique: true, columns: "connection_id, name" } 
+    }
   },
   access_control_user_types: {
     columns: {

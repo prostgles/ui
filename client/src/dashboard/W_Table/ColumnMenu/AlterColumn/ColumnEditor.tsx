@@ -12,6 +12,7 @@ import type { CommonWindowProps } from "../../../Dashboard/Dashboard";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import type { ColumnReference} from "./ReferenceEditor";
 import { AddColumnReference, References } from "./ReferenceEditor";
+import type { PG_DataType } from "../../../SQLEditor/SQLCompletion/getPGObjects";
 
 
 export type ColumnOptions = {
@@ -35,20 +36,25 @@ type P = Pick<CommonWindowProps, "suggestions"> & ColumnOptions & {
 export const ColumnEditorTestSelectors = {
   columnName: ""
 } as const;
+
 export const ColumnEditor = ({ onChange, onAddReference, tables, onEditReference, isAlter, suggestions, tableName, ...colOpts }: P) => {
   const { dataType, defaultValue, isPkey, name, notNull, references = [] } = colOpts;
 
   const DATA_TYPES = useMemo(() => {
     type Item = { key: string; label: string; subLabel?: string; }
-    const _dataTypes: Item[] = suggestions?.suggestions
-      .filter(s => s.dataTypeInfo)
+    const pgDataTypes: PG_DataType[] | undefined = suggestions?.suggestions
+      /** Must exclude arrays */
+      .filter(s => s.dataTypeInfo && s.name.startsWith("_"))
       .map(dt => dt.dataTypeInfo!)
-      .sort((a, b) => a.priority.localeCompare(b.priority))
-      .map(di => ({
+      .sort((a, b) => a.priority.localeCompare(b.priority));
+
+      const _dataTypes: Item[] = pgDataTypes?.map(di => ({
         key: ["serial", "bigserial"].includes(di.name.toLowerCase())? di.name.toLowerCase() : di.udt_name,
         label: di.name,
         subLabel: di.desc,
-      } as Item)) ?? dataTypes.concat(["SERIAL", "BIGSERIAL"].map(key => ({ key }))).map(dt => ({ label: dt.key, ...dt }));
+      } as Item)) ?? dataTypes
+        .concat(["SERIAL", "BIGSERIAL"].map(key => ({ key })))
+        .map(dt => ({ label: dt.key, ...dt }));
     
       return _dataTypes.concat(_dataTypes.map(dt => ({
         key: `_${dt.key}`,
@@ -56,8 +62,7 @@ export const ColumnEditor = ({ onChange, onAddReference, tables, onEditReference
         subLabel: dt.subLabel,
       })));
     }, 
-    [suggestions]);
-
+  [suggestions]);
 
   return <FlexCol className="ColumnEditor gap-2">
     <FlexRowWrap className="ai-end">
@@ -171,7 +176,6 @@ const dataTypeRename = {
 }
 export const dataTypes = [
   ...[
-    
     ..._PG_strings,
     ..._PG_numbers,
     ..._PG_json,
