@@ -16,10 +16,10 @@ export type MethodDefinitionProps = {
   onChange: (newMethod: MethodDefinitionProps["method"]) => void;
   method: Partial<DBSSchema["published_methods"]>;
   renderMode?: "Code";
-} & Pick<Prgl, "tables" | "dbsTables" | "db" | "theme" | "connectionId" | "dbsMethods" | "dbKey">;
+} & Pick<Prgl, "tables" | "dbsTables" | "db" | "theme" | "connectionId" | "dbsMethods" | "dbKey" | "dbs">;
 
 
-export const MethodDefinition = ({ onChange, method, tables, dbsTables, db, connectionId, dbsMethods, dbKey, renderMode }: MethodDefinitionProps) => {
+export const MethodDefinition = ({ onChange, method, tables, dbsTables, db, connectionId, dbsMethods, dbKey, renderMode, dbs }: MethodDefinitionProps) => {
 
   const tsLibraries = useCodeEditorTsTypes({ connectionId, dbsMethods, dbKey });
   const { tsMethodDef } = useMethodDefinitionTypes({ method, tables });
@@ -62,6 +62,13 @@ export const MethodDefinition = ({ onChange, method, tables, dbsTables, db, conn
     codeEditorClassName={renderCode? "b-none" : ""}
   />;
 
+  const methodName = method.name;
+  const { data: clashingMethod } = dbs.published_methods.useFindOne({ 
+    ...(method.id && {id: { $ne: method.id }}), 
+    name: methodName, 
+    connection_id: connectionId,
+  });
+
   if(renderCode) return Code;
 
   return <FlexCol className="MethodDefinition f-1 gap-p5" > 
@@ -101,6 +108,7 @@ export const MethodDefinition = ({ onChange, method, tables, dbsTables, db, conn
         <FormField 
           label="Name"  
           value={method.name} 
+          error={clashingMethod? "Name already exists" : undefined}
           onChange={name => {
             onChange({ ...method, name })
           }} 

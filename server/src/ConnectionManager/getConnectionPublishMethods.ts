@@ -16,6 +16,7 @@ type Args = {
   _dbs: DB;
   getForkedProcRunner: () => Promise<ForkedPrglProcRunner>;
 }
+
 export const getConnectionPublishMethods = ({ dbConf, dbs, con, _dbs, getForkedProcRunner }: Args): PublishMethods<void, SUser> => {
   const publishMethods: PublishMethods<void, SUser> = async ({ user }) => {
 
@@ -29,14 +30,19 @@ export const getConnectionPublishMethods = ({ dbConf, dbs, con, _dbs, getForkedP
     } else {
       const ac = await getACRule(dbs, user, dbConf.id, con.id);
       if (ac) {
-        allowedMethods = await dbs.published_methods.find({ connection_id: con.id, $existsJoined: { access_control_methods: { access_control_id: ac.id } } })
+        allowedMethods = await dbs.published_methods.find({
+          connection_id: con.id, 
+          $existsJoined: { 
+            access_control_methods: { access_control_id: ac.id } 
+          } 
+        });
       }
     }
 
     allowedMethods.forEach(m => {
 
       result[m.name] = {
-        input: m.arguments.reduce((a, v) => ({ ...a, [v.name]: v }), {}), // v.type === "Lookup"? { lookup: v }: v
+        input: m.arguments.reduce((a, v) => ({ ...a, [v.name]: v }), {}),
         outputTable: m.outputTable ?? undefined,
         run: async (args) => {
 
