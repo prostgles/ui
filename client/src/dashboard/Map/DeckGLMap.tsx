@@ -397,8 +397,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
       filled: true,
       pointRadiusMinPixels: 2,
       pointRadiusScale: 1,
-      // getPointRadius: f => f.properties.radius ?? 1,
-      // getPointRadius: 22,
+      getPointRadius: f => f.properties.radius ?? 1,
       extruded: Boolean(g.elevation),
       getElevation: g.elevation || 0,
 
@@ -420,7 +419,7 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
       getIconColor: g.getFillColor,
       getIcon: g.getIcon,
       getIconPixelOffset: f => [0, -10],
-      getIconSize: f => g.getIcon!(f).width,
+      getIconSize: g.getIcon && (f => g.getIcon!(f).width),
       lineWidthMinPixels: 2,
       //@ts-ignore
       widthScale: 22,
