@@ -115,6 +115,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
     args?: Record<string, any>;
     disabledArgs?: string[];
     hiddenArgs?: string[];
+    showCode?: boolean;
   } :
   CType extends "card"? { 
     // sortableFields: string[];

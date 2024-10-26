@@ -1,6 +1,6 @@
 import { mdiDelete, mdiUnfoldLessHorizontal, mdiUnfoldMoreHorizontal } from "@mdi/js";
-import type { AnyObject, ValidatedColumnInfo} from "prostgles-types";
-import { getKeys, isDefined, isObject } from "prostgles-types";
+import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
+import { isDefined, isObject } from "prostgles-types";
 import React, { useState } from "react";
 import Btn from "../../components/Btn";
 import Popup from "../../components/Popup/Popup";
@@ -76,11 +76,12 @@ export const SmartFormUpperFooter = (props: P) => {
         row: method.row,
         tableName,
       }}
-      db={db as any}
+      db={db}
       tables={tables}
       methods={methods}
       state={methodState}
       setState={setMethodState}
+      w={undefined}
     />
   </Popup>
 

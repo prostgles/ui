@@ -423,14 +423,12 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
       lineWidthMinPixels: 2,
       //@ts-ignore
       widthScale: 22,
-      // getLineWidth: f => f.properties?.lineWidth ?? 4,
       lineWidth: f => f.properties?.lineWidth ?? 1,
 
       pickable: true,
       pickingRadius: 10,
       autoHighlight: true,
       onClick: g.onClick,
-      // onHover: (d, e) => [d, e],
       opacity: dataOpacity,
       // material: {
       //   ambient: 0.35,

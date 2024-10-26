@@ -373,9 +373,6 @@ const getFixedFieldConfigs = (dbsMethods: PrglState["dbsMethods"], theme: Theme,
           <CodeExample 
             value={query} 
             language="sql"
-            options={{
-              theme: theme === "dark"? "vs-dark" : "vs-light"
-            }}
             style={{
               minWidth: "450px",
               minHeight: "450px",

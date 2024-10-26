@@ -266,7 +266,7 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
 
     const cantUpdate = readOnly && action === "update";
 
-    let codeEditorProps: CodeEditorProps | undefined;
+    let asJSON: FormFieldProps["asJSON"];
     if(column.udt_name.startsWith("json") && tableName){
       if(jsonbSchemaWithControls && column.jsonbSchema){
         return <JSONBSchemaA
@@ -278,14 +278,12 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
         />
       }
       const jsonSchema = column.jsonbSchema && getJSONBSchemaAsJSONSchema(tableName, column.name, column.jsonbSchema);
-      codeEditorProps = {
-        language: "json",
+      asJSON = {
         options: {
-          theme: `vs-${theme}`
+          value: (typeof value !== "string" && value? JSON.stringify(value, null, 2) : value?.toString()) ?? "",
         },
-        value: (typeof value !== "string" && value? JSON.stringify(value, null, 2) : value?.toString()) ?? "",
         ...(column.jsonbSchema && {
-          jsonSchemas: [{ 
+          schemas: [{ 
             id: `${tableName}_${column.name}`, 
             schema: jsonSchema
           }]
@@ -293,12 +291,10 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
       }
     }
     if(column.udt_name === "geography" && tableName && isObject(value) && !isEmpty(value)){
-      codeEditorProps = {
-        language: "json",
+      asJSON = {
         options: {
-          theme: `vs-${theme}`
+          value: JSON.stringify(value, null, 2),
         },
-        value: JSON.stringify(value, null, 2),
       }
     }
 
@@ -328,14 +324,16 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
         id={tableName + "-" + column.name}
         data-key={column.name}
         style={style}
-        className={(cantUpdate? " cursor-default " : "")}// + (!isCompact ? "mt-1" : "")}
+        className={(cantUpdate? " cursor-default " : "")}
         inputClassName={(cantUpdate? " cursor-default " : "")}
         maxWidth={maxWidth}
         inputStyle={{ 
           ...inputStyle,
           minWidth: 0,
-          ...(type === "checkbox" ? { padding: "1px" } :
-            isCompact ? { padding: "2px 6px" } : {}
+          ...(
+            type === "checkbox" ? { padding: "1px" } :
+            isCompact ? { padding: "2px 6px" } : 
+            {}
           )
         }}
         key={column.name}
@@ -347,10 +345,7 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
         rawValue={rawValue}
         options={options}
         title={cantUpdate? "You are not allowed to update this field" : ""}
-        asJSON={codeEditorProps && {
-          schemas: codeEditorProps.jsonSchemas,
-          options: codeEditorProps,
-        }} 
+        asJSON={asJSON} 
         asTextArea={column.tsDataType === "string" && typeof value === "string" && (value.length > 50 || value.split("\n").length > 1)}
         readOnly={readOnly}
         multiSelect={multiSelect}

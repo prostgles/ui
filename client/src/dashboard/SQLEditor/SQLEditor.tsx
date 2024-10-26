@@ -139,7 +139,7 @@ import { SECOND } from "../Charts";
 import type { DashboardState } from "../Dashboard/Dashboard";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import RTComp from "../RTComp";
-import { MonacoEditor } from "../W_SQL/MonacoEditor";
+import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
 import type { IRange, editor } from "../W_SQL/monacoEditorTypes";
 import type { TopKeyword } from "./SQLCompletion/KEYWORDS";
 import type { CodeBlock } from "./SQLCompletion/completionUtils/getCodeBlock";
