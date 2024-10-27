@@ -74,7 +74,12 @@ export const ApplySuggestedDataTypes = ({ types, onDone, sql, tableName }: P) =>
         label: d.column_name,
         subLabel: d.suggested_type,
         checked: selectedColumns.includes(d.column_name),
-        onPress: () => setSelectedColumns(selectedColumns.includes(d.column_name) ? selectedColumns.filter(t => t !== d.column_name) : selectedColumns.concat(d.column_name))
+        onPress: () => {
+          const newSelected = selectedColumns.includes(d.column_name) ? 
+            selectedColumns.filter(colKey => colKey !== d.column_name) : 
+            selectedColumns.concat(d.column_name);
+          setSelectedColumns(newSelected);
+        }
       }))}
       checkboxed={true}
       onMultiToggle={(selected) => {
