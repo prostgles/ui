@@ -6,6 +6,7 @@ import { isObject } from "prostgles-types";
 import type { DBS } from "..";
 import type { ProcStats } from "../../../commonTypes/utils";
 import { getError } from "./forkedProcess";
+import { OnReadyParamsBasic } from "prostgles-server/dist/initProstgles";
 
 type ForkedProcMessageCommon = {
   id: string;

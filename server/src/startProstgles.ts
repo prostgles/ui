@@ -41,8 +41,6 @@ export const initBackupManager = async (db: DB, dbs: DBS) => {
 }
 
 export let statePrgl: InitResult | undefined;
-   
-const isTesting = !!process.env.PRGL_TEST;
 
 type ProstglesStartupState = 
 | { ok: true; init?: undefined; conn?: undefined } 
@@ -104,7 +102,7 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
       watchSchema,
       watchSchemaType: "DDL_trigger",
       transactions: true,
-      onSocketConnect: async ({ socket, dbo, db, getUser }) => {
+      onSocketConnect: async ({ socket, dbo, getUser }) => {
           
         const user = await getUser();
 
@@ -112,9 +110,6 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
           await insertDefaultPrompts(dbo, user.user.id);
         }
         const userId = user?.user?.id;
-        // if(userId){
-        //   await dbo.users.update({ id: userId, is_online: false }, { is_online: true });
-        // }
         const sid = user?.sid;   
 
         await connectionChecker.onSocketConnected({ sid, getUser: getUser as any });
@@ -176,14 +171,7 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
       tableConfigMigrations: { 
         silentFail: false,
         version: 3,
-        onMigrate: async ({ db, oldVersion }) => {
-          // if(!oldVersion){
-          //   return db.any("DROP TABLE IF EXISTS sessions CASCADE;")
-          // }
-          // console.log({oldVersion}) 
-          // await db.any(`UPDATE connections SET backups_config = null;`);
-          // await db.any(`DELETE FROM access_control WHERE rule->>'dbPermissions' ilike '%fake_data%' `);
-          // await db.any(`DELETE FROM access_control `);
+        onMigrate: async ( ) => { 
         }
       },
       publishRawSQL: async (params) => {

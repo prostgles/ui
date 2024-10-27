@@ -6,14 +6,15 @@
 		"lib": [ "ES2017", "es2019", "ES2021.String", "ES2022" ],
 		"esModuleInterop" : true,
 		"allowSyntheticDefaultImports": true,
+		"types": [
+			"./global.d.ts"
+		],
 		"allowJs": true,
 		"module": "commonjs",
 		"sourceMap": true,
-		// "rootDir": ".",
 		"moduleResolution": "node",
 		"declaration": true,
 		"declarationMap": true,
-		"keyofStringsOnly": true,
 		"ignoreDeprecations": "5.0",
 		"strict": true,
 		"skipLibCheck": true,

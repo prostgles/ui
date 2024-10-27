@@ -97,7 +97,7 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
       db
     } = this.props;
 
-    const field = this.state.field || this.props.field;
+    const field = JSON.stringify(this.state.field || this.props.field);
 
     const col = table.columns.find(c => c.name === field);
 

@@ -1,7 +1,7 @@
 const SECOND = 1e3;
 import { WebSocket } from 'ws';
 
-export const onMount: OnMount = async ({ dbo }) => {
+export const onMount: ProstglesOnMount = async ({ dbo }) => {
  
   const getMarketCaps = async () => {
 

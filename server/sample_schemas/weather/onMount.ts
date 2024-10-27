@@ -1,4 +1,4 @@
-export const onMount: OnMount = async ({ dbo }) => {
+export const onMount: ProstglesOnMount = async ({ dbo }) => {
   if(!dbo.cities){
     await dbo.sql(`
       CREATE EXTENSION IF NOT EXISTS postgis;

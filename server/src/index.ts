@@ -23,7 +23,8 @@ app.use(helmet({
   referrerPolicy: false,
 }));
 
-if(process.env.PRGL_TEST){
+export const isTesting = !!process.env.PRGL_TEST;
+if(isTesting){
   app.use((req, res, next) => {
     res.on("finish", () => {
       console.log(`${(new Date()).toISOString()} ${req.method} ${res.statusCode} ${req.url} ${res.statusCode === 302? res.getHeader("Location") : ""}`);
