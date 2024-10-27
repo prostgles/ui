@@ -49,6 +49,12 @@ export const getTextColumnPotentialDataTypes = async (sql: Required<DBHandlerCli
   return result;
 }
 
+export const applySuggestedDataTypes = async ({ types, sql, tableName }: { types: SuggestedColumnDataType[] ; sql: Required<DBHandlerClient>["sql"]; tableName: string; }) => {
+
+  const query = `ALTER TABLE ${JSON.stringify(tableName)}\n ` + types.map(d => d.alter_query).join(",\n");
+  await sql(query);
+}
+
 type P = {
   types: SuggestedColumnDataType[] | undefined; 
   onDone: VoidFunction; 
@@ -81,8 +87,7 @@ export const ApplySuggestedDataTypes = ({ types, onDone, sql, tableName }: P) =>
       variant="filled"
       onClickPromise={async () => {
         const selectedTypes = types.filter(d => selectedColumns.includes(d.column_name));
-        const query = `ALTER TABLE ${JSON.stringify(tableName)}\n ` + selectedTypes.map(d => d.alter_query).join(",\n");
-        await sql(query);
+        await applySuggestedDataTypes({ types: selectedTypes, sql, tableName });
         onDone();
       }}
     >

@@ -2,7 +2,7 @@ import type { AnyObject, DBHandler } from "prostgles-types";
 import { asName } from "prostgles-types";
 import type { FileImporterState} from "./FileImporter";
 import { getPapa, streamBIGFile } from "./FileImporter";
-import { getTextColumnPotentialDataTypes, type SuggestedColumnDataType } from "./checkCSVColumnDataTypes";
+import { applySuggestedDataTypes, getTextColumnPotentialDataTypes, type SuggestedColumnDataType } from "./checkCSVColumnDataTypes";
 
 
 export type ImportProgress = {
@@ -23,6 +23,7 @@ type Args = Pick<FileImporterState,
   | "streamBatchMb" 
   | "streamColumnDataType" 
   | "streamColDelimiter"
+  | "inferAndApplyDataTypes"
 > & {
   db: DBHandler;
   onError: (err: any) => void;
@@ -157,7 +158,11 @@ export const importFile = async (args: Args) => {
             console.error(error);
           },
           onDone: async () => {
-            const types = await getTextColumnPotentialDataTypes(db.sql!, { tableName });
+            let types = await getTextColumnPotentialDataTypes(db.sql!, { tableName });
+            if(args.inferAndApplyDataTypes){
+              await applySuggestedDataTypes({ types, sql: db.sql!, tableName });
+              types = [];
+            }
             onProgress({
               ...importing,
               progress: 100,

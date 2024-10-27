@@ -131,6 +131,7 @@ export type FileImporterState = {
   open: boolean;
   error?: any;
   reCreateTable?: boolean;
+  inferAndApplyDataTypes: boolean;
   headerType: HeaderType;
   customHeaders?: string;
   customHeadersError?: string;
@@ -176,6 +177,7 @@ export default class FileImporter extends RTComp<FileImporterProps, FileImporter
     results: undefined,
     colNo: "",
     streamColDelimiter: "_$_",
+    inferAndApplyDataTypes: true,
   }
 
   getExitMessage = () => {
@@ -323,7 +325,7 @@ export default class FileImporter extends RTComp<FileImporterProps, FileImporter
   render(){
 
     const { selectedFile, colNo, destination, importing, headerType, 
-      error, open, reCreateTable, 
+      error, open, reCreateTable, inferAndApplyDataTypes,
       insertAs, loadingFileName, 
       files,
     } = this.state;
@@ -400,6 +402,17 @@ export default class FileImporter extends RTComp<FileImporterProps, FileImporter
                   value={reCreateTable}
                   onChange={reCreateTable => {
                     this.setState({ reCreateTable });
+                  }}
+                />
+                <FormField 
+                  asColumn={true} 
+                  readOnly={readonlyName} 
+                  className="mb-1 " 
+                  label="Try to infer and apply column data types" 
+                  type="checkbox"
+                  value={inferAndApplyDataTypes}
+                  onChange={inferAndApplyDataTypes => {
+                    this.setState({ inferAndApplyDataTypes });
                   }}
                 />
 
