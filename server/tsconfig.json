@@ -6,9 +6,6 @@
 		"lib": [ "ES2017", "es2019", "ES2021.String", "ES2022" ],
 		"esModuleInterop" : true,
 		"allowSyntheticDefaultImports": true,
-		"types": [
-			"./global.d.ts"
-		],
 		"allowJs": true,
 		"module": "commonjs",
 		"sourceMap": true,
@@ -20,7 +17,9 @@
 		"skipLibCheck": true,
 		"noUncheckedIndexedAccess": true,
 		"paths": {
-			"@common/*": ["../commonTypes/*"], 
+			"@common/*": [
+				"../commonTypes/*"
+			], 
 		},
 	},
 	"exclude": [
