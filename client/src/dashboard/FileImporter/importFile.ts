@@ -2,15 +2,17 @@ import type { AnyObject, DBHandler } from "prostgles-types";
 import { asName } from "prostgles-types";
 import type { FileImporterState} from "./FileImporter";
 import { getPapa, streamBIGFile } from "./FileImporter";
+import { getTextColumnPotentialDataTypes, type SuggestedColumnDataType } from "./checkCSVColumnDataTypes";
 
 
-type ImportProgress = {
+export type ImportProgress = {
   importedRows: number; 
   totalRows: number; 
   tableName: string;
   timeElapsed: string;
   progress: number;
   finished?: boolean;
+  types?: SuggestedColumnDataType[];
   errors: any[];
 }
 type Args = Pick<FileImporterState, 
@@ -154,13 +156,14 @@ export const importFile = async (args: Args) => {
           onError: (error) => {
             console.error(error);
           },
-          onDone: () => {
-
+          onDone: async () => {
+            const types = await getTextColumnPotentialDataTypes(db.sql!, { tableName });
             onProgress({
               ...importing,
               progress: 100,
               importedRows: rowsImported,
               errors,
+              types,
               finished: true,
             });
 
@@ -224,8 +227,9 @@ const createTable = async (args: Args): Promise<{ tableName: string, escapedTabl
     throw "Cannot create new table";
   }
 
-  const tableName = destination.newTableName || selectedFile.file.name;//.slice(0, -4);
-  const escapedTableName = await db.sql("$1:name", [tableName], { returnType: "statement" });
+  /** There is a maximum length on table name in postgresql which is 63 characters */
+  const tableName = (destination.newTableName || selectedFile.file.name).slice(0, 63);
+  const escapedTableName = await db.sql(`SELECT quote_ident($1)`, [tableName], { returnType: "values" });
   if(reCreateTable && db[tableName]){
     await db.sql("DROP TABLE IF EXISTS " + escapedTableName);
   }

@@ -1,4 +1,4 @@
-import { mdiAlertCircleOutline, mdiFormatText } from "@mdi/js";
+import { mdiAlertCircleOutline, mdiClose, mdiFormatText } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
 import Btn from "../../components/Btn";
@@ -14,11 +14,14 @@ import type { ProstglesColumn } from "../W_SQL/W_SQL";
 import { getFileText } from "../W_SQL/W_SQLMenu";
 import RTComp from "../RTComp";
 import { FileImporterFooter } from "./FileImporterFooter";
-import { importFile } from "./importFile";
+import { importFile, type ImportProgress } from "./importFile";
 import { setFile } from "./setFile";
 const streamColumnDataTypes = ["TEXT", "JSON", "JSONB"] as const;
 import type { AnyObject } from "prostgles-types";
 import { bytesToSize } from "../Backup/BackupsControls";
+import { FlexCol } from "../../components/Flex";
+import SearchList from "../../components/SearchList/SearchList";
+import { ApplySuggestedDataTypes } from "./checkCSVColumnDataTypes";
  
 type Papa = typeof import("papaparse");
 export const getPapa = () => import(/* webpackChunkName: "papaparse" */ "papaparse")
@@ -115,14 +118,15 @@ export type FileImporterState = {
      */
     // rowsPerBatch: number;
   }
-  importing?: {
-    tableName: string;
-    importedRows?: number;
-    progress?: number;
-    timeElapsed?: string;
-    finished?: boolean;
-    errors: any[];
-  }
+  importing?: ImportProgress;
+  // {
+  //   tableName: string;
+  //   importedRows?: number;
+  //   progress?: number;
+  //   timeElapsed?: string;
+  //   finished?: boolean;
+  //   errors: any[];
+  // }
   
   open: boolean;
   error?: any;
@@ -469,8 +473,6 @@ export default class FileImporter extends RTComp<FileImporterProps, FileImporter
 
 
           {importing?.finished && <div className="flex-row-wrap gap-1 ai-center">
-
-
             {importing.errors.length > 0 && 
               <PopupMenu 
                 button={
@@ -499,6 +501,12 @@ export default class FileImporter extends RTComp<FileImporterProps, FileImporter
                 {importing.tableName}
               </span>
             </div>
+            {db.sql && <ApplySuggestedDataTypes 
+              types={importing.types}
+              onDone={this.cancel}
+              sql={db.sql}
+              tableName={importing.tableName}
+            />}
 
           </div>}
 

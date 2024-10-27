@@ -51,14 +51,14 @@ export const W_TableMenu_TableInfo = ({ w, tableMeta, onSetQuery, prgl }: W_Tabl
       <div className="flex-row-wrap gap-p5 mr-1 ai-center mt-auto ">
         <Btn className="mr-1" iconPath={mdiDatabaseRefreshOutline} variant="outline" onClick={() => {
           onSetQuery({
-            sql: `VACUUM ${asName(tableName)} `,
+            sql: `VACUUM ${tableName} `,
             title: `Garbage-collect and optionally analyze a database`,
           })
         }}>Vacuum</Btn>
         <Btn className="mr-1" iconPath={mdiDatabaseRefreshOutline} variant="outline" 
           onClick={() => {
             onSetQuery({
-            sql: `VACUUM FULL ${asName(tableName)} `,
+            sql: `VACUUM FULL ${tableName} `,
             title: `Selects "full" vacuum, which can reclaim more space, but takes much longer and exclusively locks the table`,
           })
         }}>Vacuum Full</Btn>
