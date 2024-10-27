@@ -229,7 +229,7 @@ const createTable = async (args: Args): Promise<{ tableName: string, escapedTabl
 
   /** There is a maximum length on table name in postgresql which is 63 characters */
   const tableName = (destination.newTableName || selectedFile.file.name).slice(0, 63);
-  const escapedTableName = await db.sql(`SELECT quote_ident($1)`, [tableName], { returnType: "values" });
+  const escapedTableName = await db.sql(`SELECT quote_ident($1)`, [tableName], { returnType: "value" });
   if(reCreateTable && db[tableName]){
     await db.sql("DROP TABLE IF EXISTS " + escapedTableName);
   }
