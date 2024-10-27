@@ -50,7 +50,7 @@ export const OnMountFunction = ({ dbsMethods, dbs, connectionId, dbKey }: Prgl) 
 } 
 const example = `/* Example */
 import { WebSocket } from "ws";
-export const onMount: OnMount = async ({ dbo }) => {
+export const onMount: ProstglesOnMount = async ({ dbo }) => {
 
   await dbo.sql('CREATE TABLE IF NOT EXISTS symbols(pair text primary key);');
   await dbo.sql('CREATE TABLE IF NOT EXISTS futures (price float, symbol text, "timestamp" timestamptz);');

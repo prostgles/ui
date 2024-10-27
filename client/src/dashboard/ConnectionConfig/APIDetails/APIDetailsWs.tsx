@@ -3,13 +3,12 @@ import { usePromise } from "prostgles-client/dist/react-hooks";
 import React from "react";
 import Btn from "../../../components/Btn";
 import { FlexCol, FlexRow } from "../../../components/Flex";
-import { FormFieldDebounced } from "../../../components/FormField/FormFieldDebounced";
+import FormField from "../../../components/FormField/FormField";
 import { InfoRow } from "../../../components/InfoRow";
 import PopupMenu from "../../../components/PopupMenu";
 import { download } from "../../W_SQL/W_SQL";
 import { APICodeExamples } from "./APICodeExamples";
 import type { APIDetailsProps } from "./APIDetails";
-import FormField from "../../../components/FormField/FormField";
 
 
 const AllowedOriginCheck = ({ dbs }: Pick<APIDetailsProps, "dbs">) => {
@@ -81,13 +80,13 @@ export const APIDetailsWs = ({ dbs, dbsMethods, connectionId, token, projectPath
         contentStyle={{ width: "700px", maxWidth: "100%" }}
         clickCatchStyle={{ opacity: .6 }}
         content={
-          <APICodeExamples token={token} projectPath={projectPath} dbSchemaTypes={dbSchemaTypes} />
+          <APICodeExamples token={token} projectPath={projectPath} dbSchemaTypes={dbSchemaTypes?.dbSchema} />
         }
       />
       <Btn title="Download typescript schema"
         disabledInfo={dbsMethods.getConnectionDBTypes? undefined : "Not permitted"}
         onClick={() => {
-          download(dbSchemaTypes, "DBoGenerated.d.ts", "text/plain")
+          download(dbSchemaTypes?.dbSchema, "DBoGenerated.d.ts", "text/plain")
         }}
         iconPath={mdiLanguageTypescript}
         variant="faded"

@@ -1399,4 +1399,206 @@ export type DBTableHandlersFromSchema<Schema = void> = Schema extends DBSchema ?
 	[tov_name in keyof Schema]: Schema[tov_name]["is_view"] extends true ? ViewHandler<Schema[tov_name]["columns"]> : TableHandler<Schema[tov_name]["columns"]>;
 } : Record<string, TableHandler>;
 export type DBOFullyTyped<Schema = void> = (DBTableHandlersFromSchema<Schema> & Pick<DBHandlerServer<DBTableHandlersFromSchema<Schema>>, "tx" | "sql">);
-`
+`;
+
+export const pgPromiseDb = `
+
+declare namespace pgPromise {
+
+  enum queryResult {
+    one = 1,
+    many = 2,
+    none = 4,
+    any = 6
+  }
+  interface IColumn {
+    name: string
+    oid: number
+    dataTypeID: number
+
+    // NOTE: properties below are not available within Native Bindings:
+
+    tableID: number
+    columnID: number
+    dataTypeSize: number
+    dataTypeModifier: number
+    format: string
+  }
+
+  interface IResult<T = unknown> extends Iterable<T> {
+    command: string
+    rowCount: number
+    rows: T[]
+    fields: IColumn[]
+
+    // properties below are not available within Native Bindings:
+    rowAsArray: boolean
+
+    _types: {
+      _types: any,
+      text: any,
+      binary: any
+    };
+    _parsers: Array<Function>;
+  }
+
+  interface IResult<T = unknown> extends Iterable<T> {
+    command: string
+    rowCount: number
+    rows: T[]
+    fields: IColumn[]
+
+    // properties below are not available within Native Bindings:
+    rowAsArray: boolean
+
+    _types: {
+      _types: any,
+      text: any,
+      binary: any
+    };
+    _parsers: Array<Function>;
+  }
+
+  interface IResultExt<T = unknown> extends IResult<T> {
+    // Property 'duration' exists only in the following context:
+    //  - for single-query events 'receive'
+    //  - for method Database.result
+    duration?: number
+  }
+
+  // Event context extension for tasks + transactions;
+  // See: https://vitaly-t.github.io/pg-promise/global.html#TaskContext
+  interface ITaskContext {
+
+    // these are set in the beginning of each task/transaction:
+    readonly context: any
+    readonly parent: ITaskContext | null
+    readonly connected: boolean
+    readonly inTransaction: boolean
+    readonly level: number
+    readonly useCount: number
+    readonly isTX: boolean
+    readonly start: Date
+    readonly tag: any
+    readonly dc: any
+
+    // these are set at the end of each task/transaction:
+    readonly finish?: Date
+    readonly duration?: number
+    readonly success?: boolean
+    readonly result?: any
+
+    // this exists only inside transactions (isTX = true):
+    readonly txLevel?: number
+
+    // Version of PostgreSQL Server to which we are connected;
+    // This property is not available with Native Bindings!
+    readonly serverVersion: string
+  }
+
+  // Additional methods available inside tasks + transactions;
+  // API: https://vitaly-t.github.io/pg-promise/Task.html
+  interface ITask {
+    readonly ctx: ITaskContext
+  }
+
+  interface ITaskIfOptions<Ext = {}> {
+    cnd?: boolean | ((t: ITask) => boolean)
+    tag?: any
+  }
+
+  interface ITxIfOptions<Ext = {}> extends ITaskIfOptions<Ext> {
+    mode?: any | null
+    reusable?: boolean | ((t: ITask) => boolean)
+  }
+
+  // Base database protocol
+  // API: https://vitaly-t.github.io/pg-promise/Database.html
+  interface DB {
+
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#query
+    query<T = any>(query: string, values?: any, qrm?: queryResult): Promise<T>
+
+    // result-specific methods;
+
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#none
+    none(query: string, values?: any): Promise<null>
+
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#one
+    one<T = any>(query: string, values?: any, cb?: (value: any) => T, thisArg?: any): Promise<T>
+
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#oneOrNone
+    oneOrNone<T = any>(query: string, values?: any, cb?: (value: any) => T, thisArg?: any): Promise<T | null>
+
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#many
+    many<T = any>(query: string, values?: any): Promise<T[]>
+
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#manyOrNone
+    manyOrNone<T = any>(query: string, values?: any): Promise<T[]>
+
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#any
+    any<T = any>(query: string, values?: any): Promise<T[]>
+
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#result
+    result<T, R = IResultExt<T>>(query: string, values?: any, cb?: (value: IResultExt<T>) => R, thisArg?: any): Promise<R>
+
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#multiResult
+    multiResult(query: string, values?: any): Promise<IResult[]>
+
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#multi
+    multi<T = any>(query: string, values?: any): Promise<Array<T[]>>
+
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#stream
+    stream(qs: NodeJS.ReadableStream, init: (stream: NodeJS.ReadableStream) => void): Promise<{
+      processed: number,
+      duration: number
+    }>
+
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#func
+    func<T = any>(funcName: string, values?: any, qrm?: queryResult): Promise<T>
+
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#proc
+    proc<T = any>(procName: string, values?: any, cb?: (value: any) => T, thisArg?: any): Promise<T | null>
+
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#map
+    map<T = any>(query: string, values: any, cb: (row: any, index: number, data: any[]) => T, thisArg?: any): Promise<T[]>
+
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#each
+    each<T = any>(query: string, values: any, cb: (row: any, index: number, data: any[]) => void, thisArg?: any): Promise<T[]>
+
+    // Tasks;
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#task
+    task<T>(cb: (t: ITask) => T | Promise<T>): Promise<T>
+
+    task<T>(tag: string | number, cb: (t: ITask) => T | Promise<T>): Promise<T>
+
+    task<T>(options: { tag?: any }, cb: (t: ITask) => T | Promise<T>): Promise<T>
+
+    // Conditional Tasks;
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#taskIf
+    taskIf<T>(cb: (t: ITask) => T | Promise<T>): Promise<T>
+
+    taskIf<T>(tag: string | number, cb: (t: ITask) => T | Promise<T>): Promise<T>
+
+    taskIf<T>(options: ITaskIfOptions, cb: (t: ITask) => T | Promise<T>): Promise<T>
+
+    // Transactions;
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#tx
+    tx<T>(cb: (t: ITask) => T | Promise<T>): Promise<T>
+
+    tx<T>(tag: string | number, cb: (t: ITask) => T | Promise<T>): Promise<T>
+
+    tx<T>(options: {
+      tag?: any,
+      mode?: any
+    }, cb: (t: ITask) => T | Promise<T>): Promise<T>
+
+    // Conditional Transactions;
+    // API: https://vitaly-t.github.io/pg-promise/Database.html#txIf
+    txIf<T>(cb: (t: ITask) => T | Promise<T>): Promise<T>
+
+    txIf<T>(tag: string | number, cb: (t: ITask) => T | Promise<T>): Promise<T>
+
+    txIf<T>(options: ITxIfOptions, cb: (t: ITask) => T | Promise<T>): Promise<T>
+  }
+}`

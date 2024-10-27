@@ -1,4 +1,4 @@
-export const onMount: OnMount = async ({ dbo }) => {
+export const onMount: ProstglesOnMount = async ({ dbo }) => {
 
   const roadTableHandler = dbo["\"roads.geojson\""]
   if(!roadTableHandler) return;

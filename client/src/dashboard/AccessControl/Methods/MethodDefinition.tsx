@@ -22,7 +22,7 @@ export type MethodDefinitionProps = {
 export const MethodDefinition = ({ onChange, method, tables, dbsTables, db, connectionId, dbsMethods, dbKey, renderMode, dbs }: MethodDefinitionProps) => {
 
   const tsLibraries = useCodeEditorTsTypes({ connectionId, dbsMethods, dbKey });
-  const { tsMethodDef } = useMethodDefinitionTypes({ method, tables });
+  const { tsMethodDef } = useMethodDefinitionTypes({ method, tables, dbs });
   const methodsTable = dbsTables.find(t => t.name === "published_methods");
   const methodArgsCol = methodsTable?.columns.find(c => c.name === "arguments");
 

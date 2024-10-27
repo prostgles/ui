@@ -73,14 +73,18 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
     getConnectionDBTypes: async (conId: string) => {
 
       /** Maybe state connection */
-      const con = await dbs.connections.findOne({ id: conId, is_state_db: true });
-      if(con){
-        if(!statePrgl) throw "statePrgl missing";
-        return statePrgl.getTSSchema()
-      }
-
+      // const con = await dbs.connections.findOne({ id: conId, is_state_db: true });
+      if(!statePrgl) throw "statePrgl missing";
+      // if(con){
+      //   return statePrgl.getTSSchema()
+      // }
+      const dbsSchema = await statePrgl.getTSSchema();
       const c = connMgr.getConnection(conId);
-      return c.prgl.getTSSchema();
+      const dbSchema = await c.prgl.getTSSchema();
+      return {
+        dbsSchema,
+        dbSchema
+      }
     },
     getMyIP: () => {
       return connectionChecker.checkClientIP({ socket })
