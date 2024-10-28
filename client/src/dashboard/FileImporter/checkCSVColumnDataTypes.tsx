@@ -85,7 +85,6 @@ export const ApplySuggestedDataTypes = ({ types, onDone, sql, tableName }: P) =>
       onMultiToggle={(selected) => {
         setSelectedColumns(selected.filter(d => d.checked).map(d => d.key) as string[]);
       }}
-      onChange={console.warn}
     />
     <Btn
       color="action"
