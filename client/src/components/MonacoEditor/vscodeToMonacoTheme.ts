@@ -12,7 +12,7 @@ import light_vs from "./vscodeThemes/light_vs.json"
 export interface IVSCodeTheme {
   $schema: "vscode://schemas/color-theme",
   type: "dark" | "light",
-  colors: { [name: string]: string };
+  colors?: { [name: string]: string };
   include?: string;
   tokenColors?: {
     name?: string;
@@ -31,7 +31,7 @@ export function convertTheme(theme: IVSCodeTheme): editor.IStandaloneThemeData {
   const returnTheme: editor.IStandaloneThemeData = {
     inherit: false,
     base: "vs",
-    colors: theme.colors,
+    colors: theme.colors ?? {},
     rules: monacoThemeRule,
     encodedTokensColors: []
   };
