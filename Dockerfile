@@ -16,6 +16,6 @@ RUN apt-get update && \
 
 WORKDIR /usr/src/app/client
 
-RUN npm run build && cd ../server && npm run build
+RUN npm install --save-dev webpack webpack-cli && npm run build && cd ../server && npm run build
 
 CMD ["node", "/usr/src/app/server/dist/server/src/index.js"]
