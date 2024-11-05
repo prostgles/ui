@@ -11,7 +11,7 @@ import { AddChartLayer } from "./AddChartLayer";
 import { LayerColorPicker } from "./LayerColorPicker";
 import { LayerFilterManager } from "./LayerFilterManager";
 import { TimeChartLayerOptions } from "./TimeChartLayerOptions";
-import { FlexCol } from "../../components/Flex";
+import { FlexCol, FlexRowWrap } from "../../components/Flex";
 import { MapOpacityMenu } from "../W_Map/MapOpacityMenu";
 import { MapBasemapOptions } from "../W_Map/MapBasemapOptions"; 
 import { OSMLayerOptions } from "./OSMLayerOptions";
@@ -66,9 +66,9 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
           };
           const isLocal = thisLink.w1_id === thisLink.w2_id;
           const layerDesc = lTypeInfo.type === "Table"? `${lTypeInfo.path?.at(-1)?.table || lTypeInfo.value} (${column})` : lTypeInfo.value
-          return <div 
+          return <FlexRowWrap 
             key={lqRaw._id} 
-            className={`LayerQuery bg-color-0 ai-center flex-row-wrap gap-1 ta-left b b-color rounded ${window.isMobileDevice? "p-p5" : "p-1"}`}
+            className={`LayerQuery bg-color-0 ai-center gap-1 ta-left b b-color rounded ${window.isMobileDevice? "p-p5" : "p-1"}`}
           >
             <LayerColorPicker 
               title={layerDesc}
@@ -94,7 +94,6 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
                 </div>
               </Label>
             }
-
 
             <TimeChartLayerOptions 
               w={w as any} 
@@ -135,7 +134,7 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
               }} 
               iconPath={mdiClose}
             />
-          </div>
+          </FlexRowWrap>
         })}
 
       <AddChartLayer { ...props } />

@@ -3,7 +3,7 @@ import React from "react";
 export type DeepPartial<T> = 
 T extends any[]? T : 
 T extends Record<string, any> ? {
-  [P in keyof T]?: DeepPartial<T[P]>;
+  [P in keyof T & string]?: DeepPartial<T[P]>;
 } : T;
 
 type CombinedPartial<P, S, D> = Partial<DeltaOf<P> & DeltaOf<S> & DeltaOfData<D>>;
@@ -13,7 +13,7 @@ export type DeltaOfData<T> = T | DeepPartial<T> | undefined;
 export type DeltaOf<T> = Partial<T> | undefined;
 
 
-export default class RTComp<P = {}, S = { }, D = Record<string, any>> extends React.Component<P, S, D> {
+export default class RTComp<P = {}, S = {}, D = Record<string, any>> extends React.Component<P, S, D> {
 
   mounted = false;
   // private syncs: { [key: string]: any };
@@ -103,7 +103,7 @@ export default class RTComp<P = {}, S = { }, D = Record<string, any>> extends Re
       try {
         await this.onDelta(deltaP, deltaS, deltaD);
         const combinedDeltas: CombinedPartial<P, S, D> = { ...deltaP, ...deltaS, ...deltaD } as any ;
-        await this.onDeltaCombined(combinedDeltas, Object.keys(combinedDeltas as any) as (keyof CombinedPartial<P, S, D>)[]);
+        await this.onDeltaCombined(combinedDeltas, Object.keys(combinedDeltas as any) as (keyof CombinedPartial<P, S, D> & string)[]);
       } catch(e){
         const error = e instanceof Error? e : new Error(e as any);
         this.logAsyncErr("onDelta", e);
@@ -119,7 +119,7 @@ export default class RTComp<P = {}, S = { }, D = Record<string, any>> extends Re
     //empty
   }
   /** Helper func */
-  onDeltaCombined(delta: CombinedPartial<P, S, D>, deltaKeys: (keyof CombinedPartial<P, S, D>)[]){
+  onDeltaCombined(delta: CombinedPartial<P, S, D>, deltaKeys: (keyof CombinedPartial<P, S, D> & string)[]){
 
     //empty
   }

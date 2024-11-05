@@ -242,3 +242,6 @@ export const DashboardMenuContent = (props: P) => {
     </FlexRowWrap>
   </FlexCol>
 }
+
+console.error("Add table refresh button when user searches for a table and doesn't find it");
+console.error("Trigger table refresh on DO commands");

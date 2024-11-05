@@ -78,8 +78,7 @@ export class TableHeader extends React.Component<TableHeaderProps, TableHeaderSt
       <div role="row" className="noselect f-0 flex-row shadow bg-color-1"
         onWheel={onWheelScroll(TableRootClassname)}
       >
-        {cols.map((col, iCol) => {
-          // const mySort = sort.find((s: any) => s.key === col.key) ?? sort.find(s => typeof s.key === "string" && s.key.startsWith(`${col.key}.`));
+        {cols.map((col, iCol) => { 
           const mySort = sort.find(s => getSortColumn(s, [col]));
           const className = 
             "flex-col h-full min-w-0 px-p5 py-p5 text-left font-14 relative " + 

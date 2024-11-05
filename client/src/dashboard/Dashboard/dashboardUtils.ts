@@ -53,7 +53,7 @@ export type Link = DBSSchema["links"];
  
 export type NewChartOpts = {
   name: string;
-  linkOpts: OmitDistributive<ChartLink, "color" | "colorKey" >;
+  linkOpts: OmitDistributive<ChartLink, "color" | "colorKey">;
 }
 
 export type OnAddChart = ((args: NewChartOpts) => void) | undefined

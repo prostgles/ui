@@ -30,7 +30,7 @@ export const AddChartMenu = (props: P) => {
 
   const tableName = w.table_name;
   const onAdd = (
-    linkOpts: { type: "map" | "timechart"; columns: string[]; },
+    linkOpts: { type: "map" | "timechart"; columns: string[]; timechartNumericColumn?: string; },
     joinPath: ParsedJoinPath[] | undefined,
   ) => {
     const columnList = `(${linkOpts.columns.join()})`;
@@ -64,10 +64,12 @@ export const AddChartMenu = (props: P) => {
   return <>
     {charts.map(c => {
       const [firstCol] = c.cols;
-      if(!firstCol) return null;
+      const isMap = c.label === "Map";
       const title = `Add ${c.label}`;
-      
-      /** Add all columns for render */
+
+      /** Add all columns for render 
+       * Why the map exclusion?
+      */
       if(c.label !== "Map" && c.cols.length > 1 || c.cols.some(_c => _c.type === "joined")){
         return <Select 
           key={c.label}
@@ -99,6 +101,7 @@ export const AddChartMenu = (props: P) => {
         size="small"
         className={props.btnClassName}
         data-command={`AddChartMenu.${c.label}`}
+        disabledInfo={!firstCol? `No ${isMap? "geography/geometry" : "date/timestamp"} columns available` : undefined}
         onClick={() => { 
           c.onAdd(c.cols.map(c => c.name), undefined) 
         }} 
