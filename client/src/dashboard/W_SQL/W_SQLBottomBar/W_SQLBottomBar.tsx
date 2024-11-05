@@ -1,5 +1,5 @@
 import { mdiAlertOutline, mdiCancel, mdiChevronDown, mdiPlay, mdiStopCircleOutline, mdiTable } from "@mdi/js";
-import type { DBHandler } from "prostgles-types";
+import { isDefined, type DBHandler } from "prostgles-types";
 import React, { useEffect, useRef, useState } from "react";
 import type { Prgl } from "../../../App";
 import { dataCommand } from "../../../Testing";
@@ -7,7 +7,7 @@ import { useReactiveState } from "../../../appUtils";
 import Btn from "../../../components/Btn";
 import ButtonGroup from "../../../components/ButtonGroup";
 import ErrorComponent from "../../../components/ErrorComponent";
-import { FlexRow } from "../../../components/Flex";
+import { FlexCol, FlexRow } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
 import Loading from "../../../components/Loading";
 import Popup from "../../../components/Popup/Popup";
@@ -70,6 +70,9 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
     activeQuery?.state === "ended" ? activeQuery.ended.getTime() - activeQuery.started.getTime() : 
     0;
   const queryIsRunning = activeQuery?.state === "running";
+  const fetchedRowCount = !activeQuery || activeQuery.state === "error"? 0 : (activeQuery.state === "running"? rows.length : activeQuery.rowCount)
+  const totalRowCount = activeQuery?.state === "ended" && isDefined(activeQuery.totalRowCount)? activeQuery.totalRowCount : undefined;
+  const limitWasReached = activeQuery?.state === "ended" && activeQuery.rowCount === w.limit;
   return <div 
     className={"W_SQLBottomBar relative oy-hidden flex-row text-2 ai-center text-sm o-auto "} 
     style={{ 
@@ -185,20 +188,18 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
     }
 
     
-      <div ref={myRef}
+      <FlexRow ref={myRef}
         className="flex-row gap-p5 ai-center p-p5 noselect"
         style={{ marginRight: "1em" }}
       >{activeQuery && activeQuery.state !== "error" && cols && <>
-        <div className="text-1" >
-          {(activeQuery.state === "running"? rows.length : activeQuery.rowCount).toLocaleString()} rows
-        </div>
-        {activeQuery.state === "ended" && activeQuery.rowCount === w.limit && 
+        <FlexCol className="RowCount gap-p25 text-1">
+          {fetchedRowCount.toLocaleString()} rows
+          {isDefined(totalRowCount) && totalRowCount > fetchedRowCount && <div className="text-warning">{totalRowCount.toLocaleString()} total rows</div>}
+        </FlexCol>
+        {limitWasReached && 
           <PopupMenu 
             contentClassName="p-1"
             positioning="above-center"
-            footerButtons={[
-              { label: "Remove limit", color: "action", variant: "filled", onClick: () => w.$update({ limit: null }) },
-            ]}
             button={
               <Btn 
                 iconPath={mdiAlertOutline} 
@@ -206,9 +207,12 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
                 color="warn" 
               />
             } 
+            footerButtons={[
+              { label: "Remove limit", color: "action", variant: "filled", onClick: () => w.$update({ limit: null }) },
+            ]}
             render={() => 
               <InfoRow variant="naked">
-                Limit was reached
+                Limit was reached: {w.limit} rows fetched out of {totalRowCount} total rows
               </InfoRow>
             } 
           />}
@@ -220,7 +224,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
             sql={db.sql!} 
             queryEnded={activeQuery?.state === "ended"} 
         />}
-      </div>
+      </FlexRow>
     
 
     {loadingSuggestions && db.sql && <Loading message="Loading suggestions" />}
@@ -237,7 +241,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
 
     {!queryIsRunning && <>
       <div 
-        className="ml-auto flex-row ai-center " 
+        className={"ml-auto flex-row ai-center " + (limitWasReached? "text-warning" : "")}
         style={{ marginRight: "1em" }} 
         title="Clear value to show all rows" 
       >
@@ -258,7 +262,6 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
               w.$update({ limit })
             }
           }}
-
         />
       </div>
       <Btn title="Show/Hide table"

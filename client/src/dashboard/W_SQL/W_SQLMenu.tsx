@@ -174,7 +174,7 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
           <AddChartMenu 
             w={w} 
             tables={tables} 
-            onAddChart={args => { 
+            onAddChart={async args => {
               onAddChart(args);
               this.props.w.$update({ show_menu: false });
             }} 

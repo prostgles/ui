@@ -49,7 +49,35 @@ export type W_SQLProps = Omit<CommonWindowProps, "w"> & {
 
 export const SQL_NOT_ALLOWED = "Your prostgles account is not allowed to run SQL";
 
-export type ProstglesColumn = TableColumn & { computed: boolean } & Pick<ValidatedColumnInfo, "name" | "tsDataType" | "label" | "udt_name" | "filter">  // ValidatedColumnInfo & 
+export type ProstglesColumn = TableColumn & { computed: boolean } & Pick<ValidatedColumnInfo, "name" | "tsDataType" | "label" | "udt_name" | "filter"> 
+
+export type W_SQL_ActiveQuery = {
+  pid: number | undefined;
+  hashedSQL: string;
+  trimmedSql: string;
+  started: Date;
+  stopped?: {
+    date: Date;
+    type: "terminate" | "cancel";
+  }
+} & ({
+  state: "running";
+} | {
+  state: "ended";
+  commandResult?: string;  
+  rowCount: number;
+  /**
+   * For LIMITed select queries will try to get the total row count
+   * to enable pagination
+   */
+  totalRowCount: number | undefined;
+  ended: Date;
+  info: SQLResultInfo | undefined;
+} | {
+  state: "error";
+  ended: Date;
+  error?: MonacoError;
+});
 
 export type W_SQLState = {
   table?: TableProps & Query;
@@ -69,28 +97,7 @@ export type W_SQLState = {
   };
   cols?: Required<W_SQLProps>["w"]["options"]["sqlResultCols"];
   handler?: SocketSQLStreamHandlers;
-  activeQuery: undefined | {
-    pid: number | undefined;
-    hashedSQL: string;
-    trimmedSql: string;
-    started: Date;
-    stopped?: {
-      date: Date;
-      type: "terminate" | "cancel";
-    }
-  } & ({
-    state: "running";
-  } | {
-    state: "ended";
-    commandResult?: string;  
-    rowCount: number;  
-    ended: Date;
-    info: SQLResultInfo | undefined;
-  } | {
-    state: "error";
-    ended: Date;
-    error?: MonacoError;
-  });
+  activeQuery: undefined | W_SQL_ActiveQuery;
   joins: string[]; 
   error?: any;
   w?: SyncDataItem<WindowData>;
@@ -147,7 +154,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
   state: W_SQLState = { 
     sql: "",
     loading: false,
-    page: 1,
+    page: 0,
     pageSize: 100,
     activeQuery: undefined,
     isSelect: false,
@@ -486,7 +493,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
         onAddChart,
         tables,
         setLinkMenu,
-        show: childWindow? { } : undefined
+        // show: childWindow? { } : undefined
       }}
       getMenu={(w, onClose) => (
         <ProstglesSQLMenu

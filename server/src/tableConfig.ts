@@ -933,7 +933,8 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         info: { hint: "If defined then this is a chart for another window and will be rendered within that parent window" }
       },
       user_id         : `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,
-      workspace_id    : `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,//   ON DELETE SET NULL is used to ensure we don't delete SQL queries for convenience
+      /*   ON DELETE SET NULL is used to ensure we don't delete saved SQL queries */
+      workspace_id    : `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,
       type            : `TEXT CHECK(type IN ('map', 'sql', 'table', 'timechart', 'card', 'method'))` ,
       table_name      : `TEXT` ,
       method_name     : `TEXT` ,
@@ -941,9 +942,9 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       sql             : `TEXT NOT NULL DEFAULT ''` ,
       selected_sql    : `TEXT NOT NULL DEFAULT ''` ,
       name            : `TEXT` ,
-      limit           : `INTEGER DEFAULT 100 CHECK("limit" > 1 AND "limit" < 10000)`,
+      limit           : `INTEGER DEFAULT 1000 CHECK("limit" > -1 AND "limit" < 100000)`,
       closed          : `BOOLEAN DEFAULT FALSE` ,
-      deleted         : `BOOLEAN DEFAULT FALSE` ,
+      deleted         : `BOOLEAN DEFAULT FALSE CHECK(NOT (type = 'sql' AND deleted = TRUE AND (options->>'sqlWasSaved')::boolean = true))`,
       show_menu       : `BOOLEAN DEFAULT FALSE` , 
       fullscreen      : `BOOLEAN DEFAULT TRUE` , 
       sort            : "JSONB DEFAULT '[]'::jsonb",
