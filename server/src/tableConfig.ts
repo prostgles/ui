@@ -154,8 +154,14 @@ const CommonChartLinkOpts = {
   localTableName: { type: "string", optional: true, description: "If provided then this is a local layer (w1_id === w2_id === current chart window)" },
   osmLayerQuery: { type: "string", optional: true, description: "If provided then this is a OSM layer (w1_id === w2_id === current chart window)" },
   groupByColumn: { type: "string", optional: true, description: "Used by timechart" },
-  fromSelected: { type: "boolean", optional: true, description: "True if chart links to SQL statement selection" },
-  sql: { type: "string", optional: true },
+  sql: {
+    description: "Defined if chart links to SQL statement", 
+    optional: true,
+    type: "string", 
+    // type: {
+    //   query: "string",
+    // }, 
+  },
   mapIcons: {
     optional: true,
     oneOfType: [

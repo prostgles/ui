@@ -56,7 +56,7 @@ export type NewChartOpts = {
   linkOpts: OmitDistributive<ChartLink, "color" | "colorKey">;
 }
 
-export type OnAddChart = ((args: NewChartOpts) => void) | undefined
+export type OnAddChart = ((args: NewChartOpts) => void)
 
 export type Query = {
   id: string;

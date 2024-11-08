@@ -491,7 +491,7 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
         w={w} 
         quickMenuProps={{
           tables, 
-          theme: prgl.theme,
+          prgl,
           dbs, 
           setLinkMenu,
           onAddChart,

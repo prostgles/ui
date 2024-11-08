@@ -10,14 +10,16 @@ import { getTimeChartLayer } from "../W_TimeChart/getTimeChartLayers";
 import { TIMECHART_STAT_TYPES } from "../W_TimeChart/W_TimeChartMenu";
 import type { MapLayerManagerProps } from "./ChartLayerManager";
 import { _PG_numbers } from "prostgles-types"
+import { Label } from "../../components/Label";
 
 type TimeChartLayerOptionsProps = Pick<MapLayerManagerProps, "tables" | "myLinks" | "getLinksAndWindows"> & {
   link: LinkSyncItem;
   column: string;
   w: WindowSyncItem;
-  btnProps?: BtnProps;
+  // btnProps?: BtnProps;
+  mode?: "on-screen";
 }
-export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows, myLinks, w: wMapOrTimechart, btnProps }: TimeChartLayerOptionsProps) => {
+export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows, myLinks, w: wMapOrTimechart, mode }: TimeChartLayerOptionsProps) => {
 
   if(!windowIs(wMapOrTimechart, "timechart")){
     return null;
@@ -34,7 +36,8 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
   }
   
   const { windows, links } = getLinksAndWindows();
-  const lq = getTimeChartLayer({ active_row: undefined, link, windows, links, myLinks, w }).find(l => l.dateColumn === column);
+  const lq = getTimeChartLayer({ active_row: undefined, link, windows, links, myLinks, w })
+    .find(l => l.dateColumn === column);
   const parentW = windows.find(_w => _w.id !== w.id && [link.w1_id , link.w2_id].includes(_w.id));
   const table = lq?.type === "table"? tables.find(t => t.name === lq.tableName) : undefined;
   const cols = (
@@ -60,9 +63,10 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
       columns: opts.columns.map(c => c.name === col? ({ ...c, ...newColOpts }) : c )
     })
   };
+  const isOnScreen = mode === "on-screen";
   const activeStat = TIMECHART_STAT_TYPES.find(s => s.func === statType.funcName);
   const activeStatLabel: typeof TIMECHART_STAT_TYPES[number]["label"] = activeStat?.label ?? statType.funcName as any;
-  const activeStatLabelDesc = activeStatLabel === "Count All"? activeStatLabel : <FlexRow className="gap-0">{activeStatLabel}(<strong style={{ margin: "6px"}}>{colOpts.statType?.numericColumn}</strong>)</FlexRow>;
+  const activeStatLabelDesc = activeStatLabel === "Count All"? "count(*), " : <FlexRow className="gap-0">{activeStatLabel}(<strong style={{ margin: "6px"}}>{colOpts.statType?.numericColumn}</strong>),</FlexRow>;
   const groupByCols = cols?.filter(c => c.name !== lq?.statType?.numericColumn && c.name !== lq?.dateColumn && c.udt_name !== "timestamp" && c.udt_name !== "timestamptz");
 
   return <>
@@ -71,14 +75,24 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
       data-command="TimeChartLayerOptions.yAxis"
       button={
         <FlexRow style={{ gap: ".5em", fontSize: "14px" }} >
-          <Btn color="action" variant="faded" iconPath={mdiSigma} {...btnProps} title="Aggregate function" data-command="TimeChartLayerOptions.aggFunc" >
+          <Btn 
+            color="action" 
+            variant={isOnScreen? "text" : "faded"} 
+            iconPath={isOnScreen? "" : mdiSigma} 
+            title="Aggregate function" 
+            data-command="TimeChartLayerOptions.aggFunc"
+            style={{
+              paddingRight: isOnScreen? "0" : undefined,
+            }}
+          >
             {activeStatLabelDesc}
+            {isOnScreen? `${lq?.dateColumn}` : ""}
           </Btn>
-          {!!groupByCols?.length && 
+          {/* {!!groupByCols?.length && 
             <Btn color="action" variant="faded" iconPath={mdiTableColumn}  {...btnProps} title="Group by column" data-command="TimeChartLayerOptions.groupBy" >
               {lq?.groupByColumn}
             </Btn>
-          }
+          } */}
         </FlexRow>
       }
       render={() => 
@@ -109,9 +123,12 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
             />
             {statType.funcName !== "$countAll" && numericCols.length > 0 && 
               <Select
-                label="field"
-                variant="div" 
+                label="Aggregation field"
+                variant="div"
                 className="w-fit " 
+                btnProps={{
+                  color: "action",
+                }}
                 data-command="TimeChartLayerOptions.numericColumn"
                 fullOptions={numericCols.map(c => ({
                   key: c.name,
@@ -134,7 +151,7 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
             optional={true}
             btnProps={{
               iconPath: mdiTableColumn,
-              color: "action",
+              color: !lq?.groupByColumn? undefined : "action",
               iconPosition: "left",
             }}
             fullOptions={[
@@ -149,6 +166,14 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
               updateLinkOpts({ groupByColumn });
             }}
           />}
+          {isOnScreen && 
+            <FlexCol className="gap-p5">
+              <Label variant="normal">{lq?.type === "sql"? "Query" : "Table"}</Label>
+              <code className="ta-start ws-pre-line bg-color-2 rounded p-p5">
+                {lq?.type === "sql"? lq.sql : lq?.tableName}
+              </code>
+            </FlexCol>
+          }
         </FlexCol>
       } 
     />

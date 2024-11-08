@@ -85,8 +85,6 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     style={{ 
       ...style, 
       textAlign: "initial",
-      /** Used to ensure the minimaps are beneath clickcatch when typing method arguments autocomplete */ 
-      zIndex: 0, 
     }} 
     className={`MonacoEditor ${className}`} 
   />;

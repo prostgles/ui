@@ -117,7 +117,13 @@ export const W_MethodControls = ({ w, db, tables, methods, method_name, fixedRow
         }}
       />
     }
-    {m && <div className="flex-col gap-1 p-1 shadow bg-color-0">
+    {m && <div 
+        className="flex-col gap-1 p-1 shadow bg-color-0"
+        style={{
+          /** Used to ensure the "Show code" minimap is beneath clickcatch when typing method arguments autocomplete */ 
+          zIndex: 5,
+        }}
+      >
       <div className={"flex-row-wrap gap-1 " + (expandControls? "" : " hidden ")}> 
         <JSONBSchema 
           schema={argSchema} 

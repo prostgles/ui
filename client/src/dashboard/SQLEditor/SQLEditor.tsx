@@ -132,7 +132,7 @@ export type MonacoError = Pick<editor.IMarkerData, "code" | "message" | "severit
 import { mdiPlay } from "@mdi/js";
 import { isEqual } from "prostgles-client/dist/react-hooks";
 import type { SQLHandler } from "prostgles-types";
-import Btn from "../../components/Btn";
+import Btn, { type BtnProps } from "../../components/Btn";
 import { getDataTransferFiles } from "../../components/FileInput/DropZone";
 import { isEmpty, omitKeys } from "../../utils";
 import { SECOND } from "../Charts";
@@ -144,11 +144,15 @@ import type { IRange, editor } from "../W_SQL/monacoEditorTypes";
 import type { TopKeyword } from "./SQLCompletion/KEYWORDS";
 import type { CodeBlock } from "./SQLCompletion/completionUtils/getCodeBlock";
 import { getCurrentCodeBlock, highlightCurrentCodeBlock, playButtonglyphMarginClassName } from "./SQLCompletion/completionUtils/getCodeBlock";
-import type { PGConstraint, PGOperator, PG_DataType, PG_EventTrigger, PG_Function, PG_Policy, PG_Role, PG_Rule, PG_Setting, PG_Table, PG_Trigger } from "./SQLCompletion/getPGObjects";
+import type {
+  PGConstraint, PGOperator, PG_DataType, PG_EventTrigger, PG_Function, 
+  PG_Policy, PG_Role, PG_Rule, PG_Setting, PG_Table, PG_Trigger 
+} from "./SQLCompletion/getPGObjects";
 import { addSqlEditorFunctions, getSelectedText } from "./addSqlEditorFunctions";
 import { defineCustomSQLTheme } from "./defineCustomSQLTheme";
 import type { GetFuncs } from "./registerFunctionSuggestions";
 import { registerFunctionSuggestions } from "./registerFunctionSuggestions";
+import { FlexCol } from "../../components/Flex";
 
 export type SQLEditorRef = {
   editor: editor.IStandaloneCodeEditor;
@@ -178,6 +182,9 @@ type P = {
   className?: string;
   autoFocus?: boolean;
   sqlOptions?: Partial<WindowData["sql_options"]>;
+  activeCodeBlockButtons?: Pick<BtnProps<void>, "onClick" | "iconPath" | "style" | "title" | "className">[];
+  activeCodeBlockButtonsNode?: React.ReactNode;
+  onDidChangeCursorPosition?: (e: editor.ICursorPositionChangedEvent) => void;
 };
 type S = {
   value: string;
@@ -404,17 +411,33 @@ export default class SQLEditor extends RTComp<P, S> {
   currentCodeBlock: CodeBlock | undefined
 
   render(){
-    const { value = "", themeAge } = this.state;
-    const { onMount, style = {}, className = "", sqlOptions } = this.props;
+    const { value = "" } = this.state;
+    const {
+      onMount, 
+      style = {}, 
+      className = "", 
+      sqlOptions, 
+      activeCodeBlockButtons = [], 
+      activeCodeBlockButtonsNode,
+      onDidChangeCursorPosition 
+    } = this.props;
 
     const glyphPlayBtnElem = document.querySelector(`.${playButtonglyphMarginClassName}`);
     const glyphPlayBtn = (this.canExecuteBlocks && glyphPlayBtnElem)? ReactDOM.createPortal(
-      <Btn 
-        iconPath={mdiPlay} 
-        size="micro" 
-        onClick={this.onRun}
-        color="action" 
-      />,
+      <FlexCol className="gap-p25 mt-auto">
+        <Btn 
+          iconPath={mdiPlay} 
+          size="micro" 
+          onClick={this.onRun}
+          color="action"
+          title={`Run this statement**\n\nOnly this section of the script will be executed unless text is selected. This behaviour can be changed in options\n\nExecute hot keys: ctrl+e, alt+e`}
+        />
+        {activeCodeBlockButtonsNode}
+        {activeCodeBlockButtons.map((b, i) => 
+          <Btn {...b} key={i} size="micro" />
+        )}
+      </FlexCol>
+      ,
       glyphPlayBtnElem
     ) : null;
 
@@ -501,6 +524,7 @@ export default class SQLEditor extends RTComp<P, S> {
           editor.onDidChangeCursorPosition(async e => {
             if(e.source === "api") return;
             setActiveCodeBlock.bind(this)(e);
+            onDidChangeCursorPosition?.(e);
           });
           
           editor.onDidChangeModelDecorations(() => {

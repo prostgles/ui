@@ -1,14 +1,14 @@
 
 import React from "react";
  
-import { omitKeys } from "../../utils";
+import { isObject } from "../../../../commonTypes/publishUtils";
+import { classOverride } from "../../components/Flex";
 import type { MonacoEditorProps } from "../../components/MonacoEditor/MonacoEditor";
 import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
-import { languages, type editor, type Uri } from "../W_SQL/monacoEditorTypes";
-import { classOverride } from "../../components/Flex";
-import { registerLogLang } from "./registerLogLang";
+import { omitKeys } from "../../utils";
 import { getMonaco } from "../SQLEditor/SQLEditor";
-import { isObject } from "../../../../commonTypes/publishUtils";
+import { type editor, type Uri } from "../W_SQL/monacoEditorTypes";
+import { registerLogLang } from "./registerLogLang";
 export type Suggestion = {
   type: "table" | "column" | "function";
   label: string;
