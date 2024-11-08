@@ -16,7 +16,7 @@ jobs:
       run: |
         cd electron 
         npm run build-macos
-        rm -rf /dist/mac-universal
+        rm -rf ./dist/mac-universal
     - name: Test DMG file installations and run
       run: |
         shasum -a 256 electron/dist/*.dmg > electron/dist/checksum.txt
