@@ -59,7 +59,9 @@ jobs:
         node-version: 18
     - name: Build MacOS
       run: |
-        cd electron && npm run build-macos
+        cd electron 
+        npm run build-macos
+        rm -rf /dist/mac-universal
         cd dist
         shasum -a 256 *.* > macos.checksums
         cat macos.checksums
