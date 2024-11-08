@@ -293,8 +293,8 @@ export type DBSchemaGenerated = {
       last_updated: string;
       options: 
        |  {  type: 'table';  colorArr?: number[];  tablePath: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; }
-       |  {  type: 'map';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  sql?: string;  mapIcons?: |  {  type: 'fixed';  iconPath: string; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: 'fixed';  colorArr: number[]; } |  {  type: 'scale';  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[]; } )[]; }
-       |  {  type: 'timechart';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  sql?: string;  mapIcons?: |  {  type: 'fixed';  iconPath: string; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: 'fixed';  colorArr: number[]; } |  {  type: 'scale';  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[];  statType?: {  funcName: '$min' | '$max' | '$countAll' | '$avg' | '$sum';  numericColumn: string; }; } )[]; }
+       |  {  type: 'map';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  fromSelected?: boolean;  sql?: string;  mapIcons?: |  {  type: 'fixed';  iconPath: string; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: 'fixed';  colorArr: number[]; } |  {  type: 'scale';  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[]; } )[]; }
+       |  {  type: 'timechart';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  fromSelected?: boolean;  sql?: string;  mapIcons?: |  {  type: 'fixed';  iconPath: string; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: 'fixed';  colorArr: number[]; } |  {  type: 'scale';  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[];  statType?: {  funcName: '$min' | '$max' | '$countAll' | '$avg' | '$sum';  numericColumn: string; }; } )[]; }
       user_id: string;
       w1_id: string;
       w2_id: string;
@@ -312,8 +312,8 @@ export type DBSchemaGenerated = {
       disabled_message?: null | string;
       disabled_until?: null | string;
       id?: number;
-      llm_credential_id: number;
-      llm_prompt_id: number;
+      llm_credential_id?: null | number;
+      llm_prompt_id?: null | number;
       name?: string;
       user_id: string;
     };
@@ -344,10 +344,10 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      chat_id?: null | number;
+      chat_id: number;
       created?: null | string;
       id?: string;
-      message?: null | string;
+      message: string;
       user_id?: null | string;
     };
   };
