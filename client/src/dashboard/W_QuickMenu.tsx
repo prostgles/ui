@@ -7,22 +7,18 @@ import type { CommonWindowProps } from "./Dashboard/Dashboard";
 import type { OnAddChart, WindowData, WindowSyncItem } from "./Dashboard/dashboardUtils";
 
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import { _PG_date, _PG_postgis } from "prostgles-types";
 import { isJoinedFilter } from "../../../commonTypes/filterUtils";
 import type { DBS } from "./Dashboard/DBS";
 import { getLinkColorV2 } from "./W_Map/getMapLayerQueries";
 import { AddChartMenu } from "./W_Table/TableMenu/AddChartMenu";
-import { getChartColsV2 } from "./W_Table/TableMenu/getChartCols";
 
-export type ProstglesQuickMenuProps = {
+export type ProstglesQuickMenuProps = Pick<CommonWindowProps, "tables" | "prgl"> & {
   w: WindowSyncItem<"table"> | WindowSyncItem<"sql">;
   dbs: DBS;
   setLinkMenu?: (args: { 
     w: WindowSyncItem<"table">;
     anchorEl: HTMLElement | Element;
   }) => any;
-  tables?: CommonWindowProps["tables"];
-  theme: CommonWindowProps["prgl"]["theme"];
   onAddChart?: OnAddChart;
   /**
    * If undefined then will show all
@@ -31,32 +27,32 @@ export type ProstglesQuickMenuProps = {
 };
 
 export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
-  const { w, setLinkMenu, tables, onAddChart, show, dbs } = props;
+  const { w, setLinkMenu, onAddChart, show, dbs, prgl } = props;
+  const { theme, tables } = prgl;
   const { data: links } = dbs.links.useSync!(
     { workspace_id: w.workspace_id }, 
     { handlesOnData: true }, 
   );
   const myLinks = links?.filter(l => !l.closed && !l.deleted && [l.w1_id, l.w2_id].includes(w.id));
-  const table = tables?.find(t => t.name === w.table_name);
-  const showLinks = (!show || show.link) && Boolean(setLinkMenu && w.table_name && table?.joins.length || !!myLinks?.length);
-  const chartCols = tables && getChartColsV2(w, tables);
-  let canChart = Boolean(chartCols?.cols.length);
+  const table = tables.find(t => t.name === w.table_name);
+  const showLinks = (!show || show.link) && Boolean(setLinkMenu && w.table_name && table?.joins.length || w.type !== "sql" && !!myLinks?.length);
+  // let canChart = Boolean(chartCols?.cols.length);
   if(w.type === "sql"){
     const _w = w as WindowData<"sql">;
-    canChart = Boolean(_w.options?.lastSQL && _w.options.sqlResultCols?.some(c => [..._PG_date, ..._PG_postgis].some(v => v === c.udt_name)))
+    // canChart = Boolean(_w.options?.lastSQL && _w.options.sqlResultCols?.some(c => [..._PG_date, ..._PG_postgis].some(v => v === c.udt_name)))
   }
 
   let popup;
-  const showChartButtons = (!show || show.chart) && canChart && tables && onAddChart;
+  // const showChartButtons = (!show || show.chart) && canChart && tables && onAddChart;
 
   const [firstLink] = myLinks ?? [];
   const divRef = React.useRef<HTMLDivElement>(null);
 
-  if(!table && !showLinks && !canChart){
+  if(!table && !showLinks && w.type === "table"){
     return null;
   }
 
-  const bgColorClass = props.theme === "light"? "bg-color-3" : "bg-color-0";
+  const bgColorClass = theme === "light"? "bg-color-3" : "bg-color-0";
   return <>
     <div 
       className={"W_QuickMenu flex-row ai-center rounded b b-color h-fit w-fit m-auto f-1 min-w-0 " + bgColorClass}
@@ -78,15 +74,15 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
           const _w: SyncDataItem<WindowData<"table">, true> = w as any;
           _w.$update({ options: { showFilters: !_w.options?.showFilters } }, { deepMerge: true });
         }}
+      />} 
+      {onAddChart && <AddChartMenu 
+        w={w} 
+        tables={tables}
+        sqlHandler={prgl.db.sql!}
+        sql=""
+        onAddChart={onAddChart} 
+        btnClassName={bgColorClass} 
       />}
-      {showChartButtons && 
-        <AddChartMenu 
-          w={w} 
-          tables={tables} 
-          onAddChart={onAddChart} 
-          btnClassName={bgColorClass} 
-        />
-      }
       {showLinks && !window.isMobileDevice && !!setLinkMenu && <Btn 
         title="Cross filter tables"
         className={bgColorClass}

@@ -1,32 +1,32 @@
 import React from "react";
-import type { ProstglesTimeChartLayer, ProstglesTimeChartStateLayer } from "./W_TimeChart";
-import { ColorByLegend } from "../WindowControls/ColorByLegend";
-import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { FlexRow } from "../../components/Flex";
+import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
+import { useSortedLayerQueries } from "../WindowControls/ChartLayerManager";
+import { ColorByLegend } from "../WindowControls/ColorByLegend";
 import { LayerColorPicker } from "../WindowControls/LayerColorPicker";
+import { TimeChartLayerOptions } from "../WindowControls/TimeChartLayerOptions";
+import type { ProstglesTimeChartLayer, ProstglesTimeChartStateLayer } from "./W_TimeChart";
 import { TIMECHART_STAT_TYPES } from "./W_TimeChartMenu";
 import Btn from "../../components/Btn";
-import PopupMenu from "../../components/PopupMenu";
-import { TimeChartLayerOptions } from "../WindowControls/TimeChartLayerOptions";
+import { mdiClose } from "@mdi/js";
 
-type P = Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "prgl" | "w"> & {
+type P = Pick<CommonWindowProps, "getLinksAndWindows" | "myLinks" | "prgl"> & {
   layerQueries: ProstglesTimeChartLayer[];
   layers: ProstglesTimeChartStateLayer[];
   onChanged: VoidFunction;
+  w: WindowSyncItem<"timechart">;
 }
 
 export const W_TimeChartLayerLegend = ({ layerQueries, layers, onChanged, ...props }: P) => {
   const { w, myLinks, prgl: { tables } } = props;
-  if(w.type !== "timechart") return null;
   // const groupedByLayer = layerQueries.find(lq => !lq.disabled && lq.groupByColumn && lq.type === "table");
 
-  return <FlexRow>
-    {layerQueries.filter(l => !l.disabled).map(({ statType, _id, linkId, dateColumn, groupByColumn, disabled }) => {
-      const link = myLinks.find(l => l.id === linkId);
-      if(!link) return null;
-      const activeStat = TIMECHART_STAT_TYPES.find(s => s.func === (statType?.funcName ?? "$countAll"));
-      // const funcInfo = statType? `${activeStat?.label ?? statType.funcName}(${statType.numericColumn})` : activeStat?.label ?? "Count All";
+  const activeLayerQueries = useSortedLayerQueries({ layerQueries, myLinks })
+    .filter(l => !l.disabled)
 
+  return <FlexRow className="W_TimeChartLayerLegend min-w-0 o-auto">
+    {activeLayerQueries.map(({ _id, linkId, dateColumn, groupByColumn, link }) => {
   
       return <FlexRow 
         key={_id}
@@ -50,7 +50,7 @@ export const W_TimeChartLayerLegend = ({ layerQueries, layers, onChanged, ...pro
           myLinks={myLinks} 
           tables={tables} 
           column={dateColumn} 
-          btnProps={{ variant: "text" }}
+          mode="on-screen"
         />
         {groupByColumn && 
           <ColorByLegend
@@ -61,15 +61,13 @@ export const W_TimeChartLayerLegend = ({ layerQueries, layers, onChanged, ...pro
             onChanged={onChanged}
           />
         }
-        {/* <PopupMenu
-          button={
-            <Btn>
-              {dateColumn},
-              {funcInfo}
-            </Btn>
-          }
-        >
-        </PopupMenu> */}
+        <Btn
+          iconPath={mdiClose}
+          size="micro"
+          onClick={() => {
+            link.$update({ closed: true, deleted: true })
+          }}
+        />
       </FlexRow>
     })}
   </FlexRow>

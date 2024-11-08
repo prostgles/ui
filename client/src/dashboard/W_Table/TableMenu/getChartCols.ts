@@ -1,8 +1,9 @@
 import { isDefined } from "../../../utils";
 import type { DBSchemaTablesWJoins, WindowData, WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import { getTableExpressionReturnType } from "../../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import { getAllJoins } from "../ColumnMenu/JoinPathSelectorV2";
 import { getColWInfo } from "../tableUtils/getColWInfo"; 
-import type { ParsedJoinPath, ValidatedColumnInfo } from "prostgles-types";
+import type { ParsedJoinPath, SQLHandler, ValidatedColumnInfo } from "prostgles-types";
  
 export type ColInfo = Pick<ValidatedColumnInfo, "name" | "udt_name">;
 type JoinedChartColumn = {
@@ -13,10 +14,10 @@ type JoinedChartColumn = {
 export type ChartColumn = (JoinedChartColumn | {
   type: "normal";
 }) & ColInfo;
-const isGeoCol = (c: ColInfo) => ["geography", "geometry"].includes(c.udt_name);
-const isDateCol = (c: ColInfo) => c.udt_name.startsWith("timestamp") || c.udt_name === "date";
+export const isGeoCol = (c: ColInfo) => ["geography", "geometry"].includes(c.udt_name);
+export const isDateCol = (c: ColInfo) => c.udt_name.startsWith("timestamp") || c.udt_name === "date";
 
-export const getChartColsV2 = (
+export const getChartCols = (
   w: WindowData<"sql"> | WindowData<"table"> | WindowSyncItem<"sql"> | WindowSyncItem<"table">,
   tables: DBSchemaTablesWJoins
 ): {
@@ -47,7 +48,7 @@ export const getChartColsV2 = (
   if(w.type === "table"){
     const table = tables.find(t => t.name === w.table_name);
     if(table){
-      const cols = getColWInfo( tables, w).map(c => ({ ...c, udt_name: c.info?.udt_name || c.computedConfig?.funcDef.outType.udt_name || "text" }));
+      const cols = getColWInfo(tables, w).map(c => ({ ...c, udt_name: c.info?.udt_name || c.computedConfig?.funcDef.outType.udt_name || "text" }));
       //@ts-ignore
       windowDateCols = cols.filter(isDateCol).map(c => ({ ...c, type: "normal" }))
       windowGeoCols = cols.filter(isGeoCol).map(c => ({ ...c, type: "normal" }))

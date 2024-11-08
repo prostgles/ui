@@ -136,13 +136,12 @@ export const AddTimeChartFilter = ({ onStart, onEnd, chartRef, filter, myActiveR
  
   return <>
     <FlexRow 
-      className="AddTimeChartFilter" 
+      className="AddTimeChartFilter " 
       style={{ position: "absolute", right: 0, top: 0, zIndex: 1 }}
     >
       {newFilter && !newFilter.dates && 
-        <InfoRow iconPath={mdiGestureTap} color="info" variant="naked">Tap two points you want to filter between</InfoRow>
+        <InfoRow iconPath={mdiGestureTap} className="shadow bg-color-0 px-1 py-p5" color="info" variant="naked">Tap two points you want to filter between</InfoRow>
       }
-      
       
       {filter? <TimestampFilter 
         min={new Date(filter.min)} 

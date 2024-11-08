@@ -34,6 +34,8 @@ import { SQLHotkeys } from "./SQLHotkeys";
 import { W_SQLBottomBar } from "./W_SQLBottomBar/W_SQLBottomBar";
 import { ProstglesSQLMenu } from "./W_SQLMenu";
 import { W_SQLResults } from "./W_SQLResults";
+import { AddChartMenu } from "../W_Table/TableMenu/AddChartMenu";
+import type { CodeBlock } from "../SQLEditor/SQLCompletion/completionUtils/getCodeBlock";
  
 
 export type W_SQLProps = Omit<CommonWindowProps, "w"> & {
@@ -79,10 +81,13 @@ export type W_SQL_ActiveQuery = {
   error?: MonacoError;
 });
 
+type SQLResultCols = Required<W_SQLProps>["w"]["options"]["sqlResultCols"];
+
 export type W_SQLState = {
   table?: TableProps & Query;
   sort: ColumnSort[];
   loading: boolean;
+  currentCodeBlock?: CodeBlock;
   isSelect: boolean;
   hideCodeEditor?: boolean;
   rows?: (string | number)[][];
@@ -95,7 +100,7 @@ export type W_SQLState = {
     content: React.ReactNode;
     style: React.CSSProperties;
   };
-  cols?: Required<W_SQLProps>["w"]["options"]["sqlResultCols"];
+  cols?: SQLResultCols;
   handler?: SocketSQLStreamHandlers;
   activeQuery: undefined | W_SQL_ActiveQuery;
   joins: string[]; 
@@ -303,7 +308,9 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
 
   render() {
     const {
-      loading, joins, popup, error, activeQuery, hideCodeEditor,
+      loading, joins, popup, 
+      error, activeQuery, 
+      hideCodeEditor, currentCodeBlock,
     } = this.state;
     const { w } = this.d;
     const { 
@@ -364,6 +371,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
         });
       }
     }
+
     const content =  <>
       <div className={"ProstglesSQL flex-col f-1 min-h-0 min-w-0 relative "} 
         ref={r => {
@@ -398,7 +406,12 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
                 this.ref.sqlRef = this.sqlRef; 
               }
             }}
-            onUnmount={(editor, cursorPosition) => {
+            onDidChangeCursorPosition={async ({ position: { lineNumber } }) => {
+              // console.log(lineNumber);
+              const cb = await this.sqlRef?.getCurrentCodeBlock();
+              this.setState({ currentCodeBlock: cb })
+            }}
+            onUnmount={(_editor, cursorPosition) => {
               updateOptions({ cursorPosition })
             }}
             cursorPosition={this.d.w?.options.cursorPosition}
@@ -413,10 +426,10 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               opts = { ...opts, cursorPosition };
               newData.options = opts;
               this.d.w.$update(newData, { deepMerge: true });
-              /** Clear error on type */
+              /** Clear error on typing */
               clearActiveQueryError();
             }}
-            onRun={async (sql, isSelected) => {
+            onRun={async () => {
               await this.runSQL();
             }}
             onStopQuery={this.killQuery}
@@ -427,6 +440,16 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
             sqlOptions={{
               ...w.sql_options,
             }}
+            activeCodeBlockButtonsNode={
+              !currentCodeBlock? null : <AddChartMenu 
+                onAddChart={this.props.onAddChart}
+                sql={currentCodeBlock.text}
+                sqlHandler={this.props.prgl.db.sql!}
+                tables={this.props.prgl.tables}
+                w={w}
+                size="micro"
+              />
+            }
           />
           {this.d.w && <W_SQLBottomBar 
             { ...this.state }
@@ -489,7 +512,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
       w={w} 
       quickMenuProps={{
         dbs,
-        theme: this.props.prgl.theme,
+        prgl: this.props.prgl,
         onAddChart,
         tables,
         setLinkMenu,

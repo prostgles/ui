@@ -30,7 +30,7 @@ import { SECOND } from "../Charts";
 import CodeEditor from "../CodeEditor/CodeEditor";
 import type { DBS } from "../Dashboard/DBS";
 import { AddChartMenu } from "../W_Table/TableMenu/AddChartMenu";
-import { getChartColsV2 } from "../W_Table/TableMenu/getChartCols";
+import { getChartCols } from "../W_Table/TableMenu/getChartCols";
 import { TestSQL } from "./TestSQL";
 import { SQLHotkeys } from "./SQLHotkeys";
 import { download } from "./W_SQL";
@@ -164,8 +164,7 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
     if(!table){
       return <div>dbs.windows table schema not found</div>
     }
-    // const cCols = getChartCols(w, tables); 
-    const cCols = getChartColsV2(w, tables); 
+    const cCols = getChartCols(w, tables); 
     const chartMenuItem = { 
       leftIconPath: mdiChartBoxPlusOutline,
       disabledText: (!cCols.dateCols.length && !cCols.geoCols.length)? "No date or geo columns to chart" : undefined,

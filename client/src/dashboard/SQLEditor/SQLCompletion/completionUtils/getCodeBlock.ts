@@ -364,6 +364,7 @@ export const MAIN_KEYWORDS = ["JOIN", "SELECT", "ON", "CREATE", "TABLE", "SET", 
 
 export const playButtonglyphMarginClassName = "active-code-block-play";
 export const highlightCurrentCodeBlock = async (editor: editor.IStandaloneCodeEditor, currCodeBlock?: CodeBlock) => {  
+  const codeBlockId = currCodeBlock? ["L", currCodeBlock.startLine, currCodeBlock.endLine].join("-") : "";
   const monaco = await getMonaco();
   const model = editor.getModel();
   const selection = editor.getSelection();
@@ -375,9 +376,11 @@ export const highlightCurrentCodeBlock = async (editor: editor.IStandaloneCodeEd
         range: new monaco.Range(currCodeBlock.startLine, 1, currCodeBlock.endLine, 1),
         options: {
           isWholeLine: true,
-          linesDecorationsClassName: "active-code-block-decoration",
+          linesDecorationsClassName: ["active-code-block-decoration", codeBlockId].join(" "),
           glyphMarginClassName: currCodeBlock.textLC? playButtonglyphMarginClassName : undefined,
-          glyphMarginHoverMessage: { value: "**Run this statement**\n\nOnly this section of the script will be executed unless text is selected. This behaviour can be changed in options\n\nExecute hot keys: ctrl+e, alt+e",  }
+          // glyphMarginHoverMessage: { 
+          //   value: "**Run this statement**\n\nOnly this section of the script will be executed unless text is selected. This behaviour can be changed in options\n\nExecute hot keys: ctrl+e, alt+e",  
+          // }
         }
       }
     ]

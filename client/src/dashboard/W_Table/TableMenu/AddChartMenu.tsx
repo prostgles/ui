@@ -1,20 +1,25 @@
 import { mdiChartLine, mdiMap, } from "@mdi/js";
-import type { ParsedJoinPath } from "prostgles-types";
-import React, { useState } from "react";
-import Btn from "../../../components/Btn";
+import { usePromise } from "prostgles-client/dist/prostgles";
+import { _PG_numbers, isDefined, type ParsedJoinPath, type SQLHandler } from "prostgles-types";
+import React from "react";
+import Btn, { type BtnProps } from "../../../components/Btn";
 import Select from "../../../components/Select/Select";
 import type { DBSchemaTablesWJoins, OnAddChart, WindowData } from "../../Dashboard/dashboardUtils";
 import { PALETTE } from "../../Dashboard/dashboardUtils";
-import type { ChartColumn} from "./getChartCols";
-import { getChartColsV2 } from "./getChartCols";
+import { getTableExpressionReturnType } from "../../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import { getRankingFunc } from "../ColumnMenu/JoinPathSelectorV2";
+import type { ChartColumn } from "./getChartCols";
+import { getChartCols, isDateCol, isGeoCol } from "./getChartCols";
 
 type P = {
   w: WindowData<"table"> | WindowData<"sql">;
+  sql: string;
+  sqlHandler: SQLHandler;
   onAddChart: OnAddChart;
   tables: DBSchemaTablesWJoins; 
   btnClassName?: string;
-}
+  size?: "micro";
+};
 
 export const AddChartMenu = (props: P) => {
 
@@ -22,17 +27,27 @@ export const AddChartMenu = (props: P) => {
     w,
     onAddChart,
     tables, 
+    sql: propsSql,
+    sqlHandler,
+    size,
   } = props;
 
-  if(!onAddChart) return null;
+  const isMicroMode = size === "micro";
 
-  const { geoCols, dateCols, sql } = getChartColsV2(w, tables);
+  const chartCols = usePromise(async () => {
+    const res = !propsSql? getChartCols(w, tables) : await getChartColsFromSql(propsSql, sqlHandler)
+    return res
+  }, [propsSql, sqlHandler, tables, w]);
+  if(!chartCols) return null;
+  const { geoCols, dateCols, sql, cols: allCols } = chartCols;
 
+  
   const tableName = w.table_name;
   const onAdd = (
     linkOpts: { type: "map" | "timechart"; columns: string[]; timechartNumericColumn?: string; },
     joinPath: ParsedJoinPath[] | undefined,
   ) => {
+    
     const columnList = `(${linkOpts.columns.join()})`;
     onAddChart({
       name: joinPath? `${[ tableName, ...joinPath.slice(0).map(p => p.table)].join(" > ")} ${columnList}` : `${tableName || ""} ${columnList}`,
@@ -46,7 +61,6 @@ export const AddChartMenu = (props: P) => {
           })
         ),
         sql,
-        fromSelected: Boolean(w.selected_sql),
       }
     });
   };
@@ -57,8 +71,26 @@ export const AddChartMenu = (props: P) => {
     label: "Map" | "Timechart";
     iconPath: string;
   }[] = [
-    { label: "Map", iconPath: mdiMap, cols: geoCols, onAdd: (cols, path) => { onAdd({ type: "map", columns: cols, }, path)  } },
-    { label: "Timechart", iconPath: mdiChartLine , cols: dateCols, onAdd: (cols, path) => { onAdd({ type: "timechart", columns: cols }, path)  } }
+    { 
+      label: "Map", 
+      iconPath: mdiMap, 
+      cols: geoCols, 
+      onAdd: (cols, path) => { 
+        onAdd({ type: "map", columns: cols, }, path)  
+      } 
+    },
+    { 
+      label: "Timechart", 
+      iconPath: mdiChartLine , 
+      cols: dateCols, 
+      onAdd: (cols, path) => { 
+        onAdd({ 
+          type: "timechart", 
+          columns: cols, 
+          // timechartNumericColumn: allCols.find(c => _PG_numbers.includes(c.udt_name as any)  )?.name 
+        }, path)  
+      } 
+    }
   ];
 
   return <>
@@ -66,6 +98,14 @@ export const AddChartMenu = (props: P) => {
       const [firstCol] = c.cols;
       const isMap = c.label === "Map";
       const title = `Add ${c.label}`;
+      const btnProps: BtnProps = {
+        title,
+        size: size ?? "small",
+        iconPath: c.iconPath,
+        className: props.btnClassName,
+        "data-command": `AddChartMenu.${c.label}`,
+      }
+
 
       /** Add all columns for render 
        * Why the map exclusion?
@@ -74,13 +114,11 @@ export const AddChartMenu = (props: P) => {
         return <Select 
           key={c.label}
           title={title}
-          data-command={`AddChartMenu.${c.label}`}
+          data-command={btnProps["data-command"]}
           btnProps={{
             children: "",
             variant: "default",
-            iconPath: c.iconPath,
-            size: "small",
-            className: props.btnClassName
+            ...btnProps,
           }}
           fullOptions={c.cols.map((c, i) => ({
             key: c.type === "joined"? c.label : c.name,
@@ -94,19 +132,53 @@ export const AddChartMenu = (props: P) => {
         />;
       }
 
+      if(!firstCol && isMicroMode){
+        return undefined;
+      }
+
       return <Btn 
         key={c.label}
-        title={title}
-        iconPath={c.iconPath} 
-        size="small"
-        className={props.btnClassName}
-        data-command={`AddChartMenu.${c.label}`}
         disabledInfo={!firstCol? `No ${isMap? "geography/geometry" : "date/timestamp"} columns available` : undefined}
+        {...btnProps}
         onClick={() => { 
           c.onAdd(c.cols.map(c => c.name), undefined) 
         }} 
       />;
 
-    })}
+    }).filter(isDefined)}
   </>  
+}
+
+
+type AddChartMenuFromSqlProps = {
+  onAddChart: OnAddChart;
+  sql: string;
+  sqlHandler: SQLHandler;
+};
+
+export const AddChartMenuFromSql = ({ onAddChart, sql, sqlHandler }: AddChartMenuFromSqlProps) => {
+  const chartCols = usePromise(async () => {
+    return getChartColsFromSql(sql, sqlHandler)
+  }, [sql, sqlHandler]);
+
+  if(!chartCols) return null;
+
+}
+
+export const getChartColsFromSql = async (sql: string, sqlHandler: SQLHandler) => {
+  const trimmedSql = sql.trim();
+  const { colTypes = [] } = await getTableExpressionReturnType(trimmedSql, sqlHandler);
+  const cols: ChartColumn[] = colTypes.map(c => ({ 
+    ...c,
+    type: "normal",
+    name: c.column_name, 
+    udt_name: c.udt_name as any, 
+  }));
+
+  return {
+    sql: trimmedSql,
+    cols,
+    geoCols: cols.filter(c => isGeoCol(c)),
+    dateCols: cols.filter(c => isDateCol(c)),
+  }
 }
