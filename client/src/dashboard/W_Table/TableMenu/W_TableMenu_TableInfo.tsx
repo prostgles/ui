@@ -18,7 +18,7 @@ export const W_TableMenu_TableInfo = ({ w, tableMeta, onSetQuery, prgl }: W_Tabl
         <Chip className=" " variant="header" label={"Name"} value={tableName} />
         <Btn iconPath={mdiPencil} color="action"
           onClick={() => { 
-            onSetQuery({ sql: `ALTER TABLE ${asName(tableName)} \nRENAME TO new_table_name` }) 
+            onSetQuery({ sql: `ALTER ${tableMeta.type.toUpperCase()} ${asName(tableName)} \nRENAME TO new_name` }) 
           }} 
         />
       </div>
@@ -27,7 +27,7 @@ export const W_TableMenu_TableInfo = ({ w, tableMeta, onSetQuery, prgl }: W_Tabl
         <Btn color="action"
           iconPath={mdiPencil} 
           onClick={() => { 
-            onSetQuery({ sql: `COMMENT ON TABLE ${asName(tableName)} IS 'My comment';` }) 
+            onSetQuery({ sql: `COMMENT ON ${tableMeta.type.toUpperCase()} ${asName(tableName)} IS 'My comment';` }) 
           }} 
         />
       </div>
@@ -49,27 +49,29 @@ export const W_TableMenu_TableInfo = ({ w, tableMeta, onSetQuery, prgl }: W_Tabl
         <CodeExample language="sql" value={tableMeta.viewDefinition} style={{ width: "100%", height: "400px", maxHeight: "60vh" }} />
       </FlexCol>}
       <div className="flex-row-wrap gap-p5 mr-1 ai-center mt-auto ">
-        <Btn className="mr-1" iconPath={mdiDatabaseRefreshOutline} variant="outline" onClick={() => {
-          onSetQuery({
-            sql: `VACUUM ${tableName} `,
-            title: `Garbage-collect and optionally analyze a database`,
-          })
-        }}>Vacuum</Btn>
-        <Btn className="mr-1" iconPath={mdiDatabaseRefreshOutline} variant="outline" 
-          onClick={() => {
+        {tableMeta.type === "Table" && <>  
+          <Btn className="mr-1" iconPath={mdiDatabaseRefreshOutline} variant="outline" onClick={() => {
             onSetQuery({
-            sql: `VACUUM FULL ${tableName} `,
-            title: `Selects "full" vacuum, which can reclaim more space, but takes much longer and exclusively locks the table`,
-          })
-        }}>Vacuum Full</Btn>
+              sql: `VACUUM ${asName(tableName)} `,
+              title: `Garbage-collect and optionally analyze a database`,
+            })
+          }}>Vacuum</Btn>
+          <Btn className="mr-1" iconPath={mdiDatabaseRefreshOutline} variant="outline" 
+            onClick={() => {
+              onSetQuery({
+                sql: `VACUUM FULL ${asName(tableName)} `,
+                title: `Selects "full" vacuum, which can reclaim more space, but takes much longer and exclusively locks the table`,
+              })
+          }}>Vacuum Full</Btn>
+        </>}
 
         <Btn iconPath={mdiDeleteOutline}
           color="danger"
           variant="faded"
           onClick={() => {
             onSetQuery({
-              sql: `DROP TABLE ${tableName} \n"remove this line to confirm"`,
-              title: `Table will be deleted from the database`,
+              sql: `DROP ${tableMeta.type.toUpperCase()} ${asName(tableName)} \n"remove this line to confirm"`,
+              title: `${tableMeta.type} will be deleted from the database`,
               onSuccess: () => {
                 prgl.dbs.windows.update({ table_name: tableName }, { closed: true })
                 w.$update({ closed: true })

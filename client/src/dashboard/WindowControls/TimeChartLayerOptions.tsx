@@ -121,26 +121,28 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
                 updateCol(colOpts.name, { statType: { funcName, numericColumn: statType.numericColumn ?? numericCols[0]!.name! } })
               }} 
             />
-            {statType.funcName !== "$countAll" && numericCols.length > 0 && 
-              <Select
-                label="Aggregation field"
-                variant="div"
-                className="w-fit " 
-                btnProps={{
-                  color: "action",
-                }}
-                data-command="TimeChartLayerOptions.numericColumn"
-                fullOptions={numericCols.map(c => ({
-                  key: c.name,
-                  subLabel: c.udt_name,
-                  ...c,
-                }))} 
-                value={colOpts.statType?.numericColumn} 
-                onChange={numericColumn => {
-                  updateCol(colOpts.name, { statType: { ...statType, numericColumn } })
-                }}
-              />
-            }
+            <Select
+              label="Aggregation field"
+              variant="div"
+              className="w-fit " 
+              btnProps={{
+                color: "action",
+              }}
+              data-command="TimeChartLayerOptions.numericColumn"
+              fullOptions={numericCols.map(c => ({
+                key: c.name,
+                subLabel: c.udt_name,
+                ...c,
+              }))} 
+              disabledInfo={
+                statType.funcName === "$countAll"? "Requires a different aggregation function" : 
+                !numericCols.length? "No numeric columns available" : undefined
+              }
+              value={colOpts.statType?.numericColumn} 
+              onChange={numericColumn => {
+                updateCol(colOpts.name, { statType: { ...statType, numericColumn } })
+              }}
+            />
             
           </FlexRowWrap>
           {!!groupByCols?.length && <Select

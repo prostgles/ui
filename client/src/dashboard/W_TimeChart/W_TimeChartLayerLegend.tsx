@@ -65,7 +65,11 @@ export const W_TimeChartLayerLegend = ({ layerQueries, layers, onChanged, ...pro
           iconPath={mdiClose}
           size="micro"
           onClick={() => {
-            link.$update({ closed: true, deleted: true })
+            const isLastLayer = activeLayerQueries.length === 1;
+            link.$update({ closed: true, deleted: true });
+            if(isLastLayer && w.parent_window_id){
+              w.$update({ closed: true, deleted: true });
+            }
           }}
         />
       </FlexRow>

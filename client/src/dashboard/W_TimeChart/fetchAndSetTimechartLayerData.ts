@@ -1,5 +1,5 @@
 import { MILLISECOND } from "../Charts";
-import { MainTimeBinSizes } from "../Charts/getTimechartBinSize";
+import { getMainTimeBinSizes } from "../Charts/getTimechartBinSize";
 import { getTimeChartData } from "./getTimeChartData";
 import type { W_TimeChart } from "./W_TimeChart";
 
@@ -7,10 +7,10 @@ export const fetchAndSetTimechartLayerData = async function(this: W_TimeChart) {
 
   this.setState({ loadingData: true });
   try {
-    const d = await getTimeChartData.bind(this)();
-    if(d){
-      const { error, layers: rawLayers, erroredLayers } = d;
-      const binSize = d.binSize? MainTimeBinSizes[d.binSize].size : undefined;
+    const timechartData = await getTimeChartData.bind(this)();
+    if(timechartData){
+      const { error, layers: rawLayers, erroredLayers } = timechartData;
+      const binSize = timechartData.binSize? getMainTimeBinSizes()[timechartData.binSize].size : undefined;
       const layers = rawLayers.map(l => {
         const sortedParsedData = l.data.map(d => {
 
@@ -100,7 +100,7 @@ export const fetchAndSetTimechartLayerData = async function(this: W_TimeChart) {
         }
       });
 
-      this.setState({ loadingData: false, loading: false, binSize: d.binSize, error, layers, erroredLayers });
+      this.setState({ loadingData: false, loading: false, binSize: timechartData.binSize, error, layers, erroredLayers });
     }
   } catch(error){
     this.setState({ loading: false, error, loadingData: false })

@@ -5,15 +5,17 @@ import React from "react";
 import Btn, { type BtnProps } from "../../../components/Btn";
 import Select from "../../../components/Select/Select";
 import type { DBSchemaTablesWJoins, OnAddChart, WindowData } from "../../Dashboard/dashboardUtils";
-import { PALETTE } from "../../Dashboard/dashboardUtils";
+import { getRandomColor } from "../../Dashboard/dashboardUtils";
 import { getTableExpressionReturnType } from "../../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import { getRankingFunc } from "../ColumnMenu/JoinPathSelectorV2";
 import type { ChartColumn } from "./getChartCols";
 import { getChartCols, isDateCol, isGeoCol } from "./getChartCols";
+import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+import { rgbaToString } from "../../W_Map/getMapFeatureStyle";
 
-type P = {
+type P = Pick<CommonWindowProps, "myLinks"> & {
   w: WindowData<"table"> | WindowData<"sql">;
-  sql: string;
+  sql: string | undefined;
   sqlHandler: SQLHandler;
   onAddChart: OnAddChart;
   tables: DBSchemaTablesWJoins; 
@@ -30,39 +32,60 @@ export const AddChartMenu = (props: P) => {
     sql: propsSql,
     sqlHandler,
     size,
+    myLinks,
   } = props;
 
   const isMicroMode = size === "micro";
 
   const chartCols = usePromise(async () => {
-    const res = !propsSql? getChartCols(w, tables) : await getChartColsFromSql(propsSql, sqlHandler)
+    const res = w.type === "table"? getChartCols(w, tables) : await getChartColsFromSql(propsSql ?? w.sql, sqlHandler)
     return res
   }, [propsSql, sqlHandler, tables, w]);
   if(!chartCols) return null;
-  const { geoCols, dateCols, sql, cols: allCols } = chartCols;
+  const { geoCols, dateCols, sql, otherCols } = chartCols;
 
-  
   const tableName = w.table_name;
   const onAdd = (
-    linkOpts: { type: "map" | "timechart"; columns: string[]; timechartNumericColumn?: string; },
+    linkOpts: { type: "map" | "timechart"; columns: string[]; },
     joinPath: ParsedJoinPath[] | undefined,
   ) => {
-    
+    const firstNumericColumn = otherCols.find(c => _PG_numbers.includes(c.udt_name as any))?.name;
     const columnList = `(${linkOpts.columns.join()})`;
-    onAddChart({
-      name: joinPath? `${[ tableName, ...joinPath.slice(0).map(p => p.table)].join(" > ")} ${columnList}` : `${tableName || ""} ${columnList}`,
-      linkOpts: {
-        ...linkOpts,
-        joinPath,
-        columns: linkOpts.columns
-          .map((name, i) => ({ 
-            name, 
-            colorArr: PALETTE[`c${Math.min(Math.max(1, i), 5)}`].get(1, "deck")
-          })
-        ),
-        sql,
-      }
-    });
+    const name = joinPath? `${[ tableName, ...joinPath.slice(0).map(p => p.table)].join(" > ")} ${columnList}` : `${tableName || ""} ${columnList}`;
+    const usedColors = myLinks.flatMap(l => l.options.type !== "table"? l.options.columns.map(c => c.colorArr) : undefined);
+    const colorArr = getRandomColor(1, "deck", usedColors);
+    if(linkOpts.type === "timechart"){
+      onAddChart({
+        name,
+        linkOpts: {
+          type: "timechart",
+          columns: [{
+            name: linkOpts.columns[0]!,
+            colorArr,
+            statType: firstNumericColumn? { 
+              funcName: "$avg", 
+              numericColumn: firstNumericColumn,
+            } : undefined
+          }],
+          sql,
+        }
+      });
+    } else {
+      onAddChart({
+        name,
+        linkOpts: {
+          ...linkOpts,
+          joinPath,
+          columns: linkOpts.columns
+            .map((name, i) => ({ 
+              name, 
+              colorArr
+            })
+          ),
+          sql,
+        }
+      });
+    }
   };
 
   const charts: {
@@ -87,7 +110,6 @@ export const AddChartMenu = (props: P) => {
         onAdd({ 
           type: "timechart", 
           columns: cols, 
-          // timechartNumericColumn: allCols.find(c => _PG_numbers.includes(c.udt_name as any)  )?.name 
         }, path)  
       } 
     }
@@ -98,17 +120,32 @@ export const AddChartMenu = (props: P) => {
       const [firstCol] = c.cols;
       const isMap = c.label === "Map";
       const title = `Add ${c.label}`;
+      const layerAlreadyAdded = myLinks.map(({ options: linkOpts }) => {
+        if(linkOpts.type === "table") {
+          return undefined;
+        }
+
+        const matches = linkOpts.type === c.label.toLowerCase() && (
+          w.type === "sql" && sql === linkOpts.sql ||
+          w.type === "table" && c.cols.some(col => linkOpts.columns.some(c => c.name === col.name))
+        );
+        if(matches) return linkOpts.columns[0]?.colorArr;
+      }).find(isDefined);
       const btnProps: BtnProps = {
         title,
         size: size ?? "small",
         iconPath: c.iconPath,
         className: props.btnClassName,
+        style: {
+          minHeight: 0,
+          color: layerAlreadyAdded? rgbaToString(layerAlreadyAdded as any) : undefined,
+        },
         "data-command": `AddChartMenu.${c.label}`,
-      }
+      };
 
-
-      /** Add all columns for render 
-       * Why the map exclusion?
+      /** 
+       * If map and no joined columns then add all columns for render 
+       * Timechart can only render one date column
       */
       if(c.label !== "Map" && c.cols.length > 1 || c.cols.some(_c => _c.type === "joined")){
         return <Select 
@@ -123,6 +160,7 @@ export const AddChartMenu = (props: P) => {
           fullOptions={c.cols.map((c, i) => ({
             key: c.type === "joined"? c.label : c.name,
             label: c.type === "joined"? `> ${c.label} (${c.name})` : c.name,
+            disabledInfo: layerAlreadyAdded? "Layer already added" : undefined,
             ranking: searchTerm => getRankingFunc(searchTerm, c.type === "joined"? c.path.map(p => p.table) : [c.name]),
           }))}
           onChange={colNameOrLabel => {
@@ -136,9 +174,13 @@ export const AddChartMenu = (props: P) => {
         return undefined;
       }
 
-      return <Btn 
+      return <Btn
         key={c.label}
-        disabledInfo={!firstCol? `No ${isMap? "geography/geometry" : "date/timestamp"} columns available` : undefined}
+        disabledInfo={
+          layerAlreadyAdded? "Layer already added" : 
+          !firstCol? `No ${isMap? "geography/geometry" : "date/timestamp"} columns available` : 
+          undefined
+        }
         {...btnProps}
         onClick={() => { 
           c.onAdd(c.cols.map(c => c.name), undefined) 
@@ -168,7 +210,7 @@ export const AddChartMenuFromSql = ({ onAddChart, sql, sqlHandler }: AddChartMen
 export const getChartColsFromSql = async (sql: string, sqlHandler: SQLHandler) => {
   const trimmedSql = sql.trim();
   const { colTypes = [] } = await getTableExpressionReturnType(trimmedSql, sqlHandler);
-  const cols: ChartColumn[] = colTypes.map(c => ({ 
+  const alLCols: ChartColumn[] = colTypes.map(c => ({ 
     ...c,
     type: "normal",
     name: c.column_name, 
@@ -177,8 +219,8 @@ export const getChartColsFromSql = async (sql: string, sqlHandler: SQLHandler) =
 
   return {
     sql: trimmedSql,
-    cols,
-    geoCols: cols.filter(c => isGeoCol(c)),
-    dateCols: cols.filter(c => isDateCol(c)),
+    otherCols: alLCols.filter(c => !isGeoCol(c) && !isDateCol(c)),
+    geoCols: alLCols.filter(c => isGeoCol(c)),
+    dateCols: alLCols.filter(c => isDateCol(c)),
   }
 }

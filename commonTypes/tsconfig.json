@@ -14,7 +14,6 @@
     "strict": true,
     "noImplicitAny": false,
     "declaration": true,
-    "keyofStringsOnly": true,
     "noUncheckedIndexedAccess": true,
 		"ignoreDeprecations": "5.0"
   },

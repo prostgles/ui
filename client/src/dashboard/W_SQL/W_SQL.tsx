@@ -406,9 +406,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
                 this.ref.sqlRef = this.sqlRef; 
               }
             }}
-            onDidChangeCursorPosition={async ({ position: { lineNumber } }) => {
-              // console.log(lineNumber);
-              const cb = await this.sqlRef?.getCurrentCodeBlock();
+            onDidChangeActiveCodeBlock={(cb: CodeBlock | undefined) => {
               this.setState({ currentCodeBlock: cb })
             }}
             onUnmount={(_editor, cursorPosition) => {
@@ -442,6 +440,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
             }}
             activeCodeBlockButtonsNode={
               !currentCodeBlock? null : <AddChartMenu 
+                myLinks={this.props.myLinks}
                 onAddChart={this.props.onAddChart}
                 sql={currentCodeBlock.text}
                 sqlHandler={this.props.prgl.db.sql!}
@@ -513,10 +512,11 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
       quickMenuProps={{
         dbs,
         prgl: this.props.prgl,
+        myLinks: this.props.myLinks,
         onAddChart,
         tables,
         setLinkMenu,
-        // show: childWindow? { } : undefined
+        sql: currentCodeBlock?.text,
       }}
       getMenu={(w, onClose) => (
         <ProstglesSQLMenu

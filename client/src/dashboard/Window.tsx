@@ -97,11 +97,11 @@ export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W>
     const { w } = this.d;
 
     if(!quickMenuProps || !w) return null;
+    if(w.type !== "table" && w.type !== "sql") {
+      return null;
+    }
     
-    return <W_QuickMenu 
-        w={w as any} 
-        {...quickMenuProps}
-      />
+    return <W_QuickMenu {...quickMenuProps} w={w} />
   }
 
 

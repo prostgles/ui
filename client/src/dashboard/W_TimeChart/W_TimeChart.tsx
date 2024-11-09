@@ -10,7 +10,7 @@ import Loading from "../../components/Loading";
 import PopupMenu from "../../components/PopupMenu";
 import type { Command } from "../../Testing";
 import type { DateExtent } from "../Charts/getTimechartBinSize";
-import { MainTimeBinSizes } from "../Charts/getTimechartBinSize";
+import { getMainTimeBinSizes } from "../Charts/getTimechartBinSize";
 import type { TimeChartLayer } from "../Charts/TimeChart";
 import { TimeChart } from "../Charts/TimeChart";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
@@ -29,7 +29,9 @@ import { W_TimeChartLayerLegend } from "./W_TimeChartLayerLegend";
 import type { TimeChartBinSize } from "./W_TimeChartMenu";
 import { ProstglesTimeChartMenu } from "./W_TimeChartMenu";
 import { FlexRow } from "../../components/Flex";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 
+type ChartColumn = Extract<DBSSchema["links"]["options"], { type: "timechart" }>;
 export type ProstglesTimeChartLayer = Pick<LayerBase, "_id" | "linkId" | "disabled"> & {
   
   dateColumn: string;
@@ -39,7 +41,7 @@ export type ProstglesTimeChartLayer = Pick<LayerBase, "_id" | "linkId" | "disabl
    * If none then COUNT(*) will be used
    */
   statType: {
-    funcName: string;
+    funcName: Required<ChartColumn["columns"][number]>["statType"]["funcName"];
     numericColumn: string;
   } | undefined;
   color?: string;
@@ -242,6 +244,8 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
 
     let errorPopup;
 
+    const { layerQueries } = this;
+
     const error = fetchingError ?? (erroredLayers?.[0]?.hasError && erroredLayers[0].error);
     if(error){
       errorPopup = (
@@ -263,7 +267,7 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
         this.setState({ visibleDataExtent: undefined, viewPortExtent: undefined }) 
       }
     } 
-    const binSize = MainTimeBinSizes[this.state.binSize as string]?.size;
+    const binSize = getMainTimeBinSizes()[this.state.binSize as string]?.size;
     const onCancelActiveRow = () => onClickRow(undefined, "", undefined)
     const infoSection = <FlexRow 
       className="W_TimeChart_TopBar gap-0 relative f-1 m-auto " 
@@ -281,7 +285,7 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
         w={w} 
         type="timechart" 
         asMenuBtn={{}} 
-        layerQueries={this.layerQueries} 
+        layerQueries={layerQueries} 
       />
       {/* {loadingLayers && 
         <Loading 

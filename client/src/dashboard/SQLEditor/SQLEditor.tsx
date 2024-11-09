@@ -181,10 +181,9 @@ type P = {
   style?: React.CSSProperties;
   className?: string;
   autoFocus?: boolean;
-  sqlOptions?: Partial<WindowData["sql_options"]>;
-  activeCodeBlockButtons?: Pick<BtnProps<void>, "onClick" | "iconPath" | "style" | "title" | "className">[];
+  sqlOptions?: Partial<WindowData["sql_options"]>; 
   activeCodeBlockButtonsNode?: React.ReactNode;
-  onDidChangeCursorPosition?: (e: editor.ICursorPositionChangedEvent) => void;
+  onDidChangeActiveCodeBlock?: (cb: CodeBlock | undefined) => void;
 };
 type S = {
   value: string;
@@ -416,15 +415,20 @@ export default class SQLEditor extends RTComp<P, S> {
       onMount, 
       style = {}, 
       className = "", 
-      sqlOptions, 
-      activeCodeBlockButtons = [], 
-      activeCodeBlockButtonsNode,
-      onDidChangeCursorPosition 
+      sqlOptions,  
+      activeCodeBlockButtonsNode, 
     } = this.props;
 
+    const { canExecuteBlocks } = this;
     const glyphPlayBtnElem = document.querySelector(`.${playButtonglyphMarginClassName}`);
-    const glyphPlayBtn = (this.canExecuteBlocks && glyphPlayBtnElem)? ReactDOM.createPortal(
-      <FlexCol className="gap-p25 mt-auto">
+    const glyphPlayBtn = (canExecuteBlocks && glyphPlayBtnElem)? ReactDOM.createPortal(
+      <FlexCol 
+        className="gap-0 mt-auto" 
+        style={{ 
+          /** Ensures we can click add chart btn */
+          zIndex: 2, 
+        }}
+      >
         <Btn 
           iconPath={mdiPlay} 
           size="micro" 
@@ -433,9 +437,6 @@ export default class SQLEditor extends RTComp<P, S> {
           title={`Run this statement**\n\nOnly this section of the script will be executed unless text is selected. This behaviour can be changed in options\n\nExecute hot keys: ctrl+e, alt+e`}
         />
         {activeCodeBlockButtonsNode}
-        {activeCodeBlockButtons.map((b, i) => 
-          <Btn {...b} key={i} size="micro" />
-        )}
       </FlexCol>
       ,
       glyphPlayBtnElem
@@ -446,7 +447,11 @@ export default class SQLEditor extends RTComp<P, S> {
       ref={e => {
         if(e) this.rootRef = e;
       }}
-      style={style}
+      style={{ 
+        ...style,
+        /** Needed to ensure add timechart chart select btn outline is visible */
+        paddingLeft: canExecuteBlocks? "4px" : undefined,
+      }}
       onDragOver={e => {
         e.preventDefault();
         e.stopPropagation();
@@ -496,7 +501,12 @@ export default class SQLEditor extends RTComp<P, S> {
           quickSuggestions: {
             strings: true,
           },
-          ...(!sqlOptions? {} : omitKeys(sqlOptions, ["maxCharsPerCell", "renderMode", "executeOptions", "errorMessageDisplay"])),
+          ...(!sqlOptions? {} : omitKeys(sqlOptions, [
+            "maxCharsPerCell", 
+            "renderMode", 
+            "executeOptions", 
+            "errorMessageDisplay"
+          ])),
 
           ...(this.canExecuteBlocks && {
             /** Needed for play button */
@@ -524,7 +534,6 @@ export default class SQLEditor extends RTComp<P, S> {
           editor.onDidChangeCursorPosition(async e => {
             if(e.source === "api") return;
             setActiveCodeBlock.bind(this)(e);
-            onDidChangeCursorPosition?.(e);
           });
           
           editor.onDidChangeModelDecorations(() => {
@@ -576,6 +585,7 @@ const setActiveCodeBlock = async function (this: SQLEditor, e: editor.ICursorPos
 
     this.currentDecorations = await highlightCurrentCodeBlock(editor, codeBlock);
   }
+  this.props.onDidChangeActiveCodeBlock?.(this.currentCodeBlock);
 }
 
 const setActions = async (editor: editor.IStandaloneCodeEditor, comp: SQLEditor) => {
