@@ -68,9 +68,12 @@
       "icon": "./images/rounded/icon512.png",
       "artifactName": "${productName}-${version}.${ext}",
       "category": "public.app-category.productivity",
-      "target": [
-        "dmg"
-      ]
+      "target": [{
+        "target": "dmg",
+        "arch": [
+          "universal"
+        ]
+      }]
     },
     "linux": {
       "artifactName": "${productName}-${version}-${arch}.${ext}",
