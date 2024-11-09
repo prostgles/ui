@@ -8,7 +8,7 @@ import type { DBSchemaTablesWJoins, OnAddChart, WindowData } from "../../Dashboa
 import { getRandomColor } from "../../Dashboard/dashboardUtils";
 import { getTableExpressionReturnType } from "../../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
 import { getRankingFunc } from "../ColumnMenu/JoinPathSelectorV2";
-import type { ChartColumn } from "./getChartCols";
+import type { ChartColumn, ColInfo } from "./getChartCols";
 import { getChartCols, isDateCol, isGeoCol } from "./getChartCols";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import { rgbaToString } from "../../W_Map/getMapFeatureStyle";
@@ -42,23 +42,25 @@ export const AddChartMenu = (props: P) => {
     return res
   }, [propsSql, sqlHandler, tables, w]);
   if(!chartCols) return null;
-  const { geoCols, dateCols, sql, otherCols } = chartCols;
+  const { geoCols, dateCols, sql } = chartCols;
 
   const tableName = w.table_name;
   const onAdd = (
     linkOpts: { type: "map" | "timechart"; columns: string[]; },
     joinPath: ParsedJoinPath[] | undefined,
+    numericCols: ColInfo[] = []
   ) => {
-    const firstNumericColumn = otherCols.find(c => _PG_numbers.includes(c.udt_name as any))?.name;
+    const firstNumericColumn = numericCols.find(c => _PG_numbers.includes(c.udt_name as any))?.name;
     const columnList = `(${linkOpts.columns.join()})`;
     const name = joinPath? `${[ tableName, ...joinPath.slice(0).map(p => p.table)].join(" > ")} ${columnList}` : `${tableName || ""} ${columnList}`;
     const usedColors = myLinks.flatMap(l => l.options.type !== "table"? l.options.columns.map(c => c.colorArr) : undefined);
     const colorArr = getRandomColor(1, "deck", usedColors);
-    if(linkOpts.type === "timechart"){
-      onAddChart({
-        name,
-        linkOpts: {
-          type: "timechart",
+    const type = linkOpts.type;
+    onAddChart({
+      name,
+      linkOpts: {
+        ...(type === "timechart"? {
+          type, 
           columns: [{
             name: linkOpts.columns[0]!,
             colorArr,
@@ -66,26 +68,18 @@ export const AddChartMenu = (props: P) => {
               funcName: "$avg", 
               numericColumn: firstNumericColumn,
             } : undefined
-          }],
-          sql,
-        }
-      });
-    } else {
-      onAddChart({
-        name,
-        linkOpts: {
-          ...linkOpts,
-          joinPath,
-          columns: linkOpts.columns
-            .map((name, i) => ({ 
-              name, 
-              colorArr
-            })
-          ),
-          sql,
-        }
-      });
-    }
+          }]
+        } : {
+          type,
+          columns: linkOpts.columns.map((name, i) => ({ 
+            name, 
+            colorArr
+          }))
+        }),
+        joinPath,
+        sql,
+      }
+    });
   };
 
   const charts: {
@@ -210,17 +204,20 @@ export const AddChartMenuFromSql = ({ onAddChart, sql, sqlHandler }: AddChartMen
 export const getChartColsFromSql = async (sql: string, sqlHandler: SQLHandler) => {
   const trimmedSql = sql.trim();
   const { colTypes = [] } = await getTableExpressionReturnType(trimmedSql, sqlHandler);
-  const alLCols: ChartColumn[] = colTypes.map(c => ({ 
+  const _allCols: ColInfo[] = colTypes.map(c => ({ 
     ...c,
-    type: "normal",
     name: c.column_name, 
     udt_name: c.udt_name as any, 
   }));
+  const allCols: ChartColumn[] = _allCols.map(c => ({ 
+    ...c,
+    type: "normal",
+    numericCols: _allCols.filter(c => !isGeoCol(c) && !isDateCol(c)),
+  }));
 
   return {
-    sql: trimmedSql,
-    otherCols: alLCols.filter(c => !isGeoCol(c) && !isDateCol(c)),
-    geoCols: alLCols.filter(c => isGeoCol(c)),
-    dateCols: alLCols.filter(c => isDateCol(c)),
+    sql: trimmedSql, 
+    geoCols: allCols.filter(c => isGeoCol(c)),
+    dateCols: allCols.filter(c => isDateCol(c)),
   }
 }
