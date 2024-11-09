@@ -248,6 +248,7 @@ export const COMMANDS = {
   "AskLLM.popup": "",
   "SetupLLMCredentials": "",
   "AskLLMAccessControl.llm_daily_limit": "",
+  "Pagination.page": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 
