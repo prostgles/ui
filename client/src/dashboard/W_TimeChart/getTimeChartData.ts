@@ -6,7 +6,7 @@ import { omitKeys } from "../../utils";
 import { SECOND } from "../Charts";
 import type { DataItem, TimeChartLayer } from "../Charts/TimeChart";
 import type { DateExtent } from "../Charts/getTimechartBinSize";
-import { MainTimeBinSizes } from "../Charts/getTimechartBinSize";
+import { getMainTimeBinSizes } from "../Charts/getTimechartBinSize";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import { getGroupByValueColor } from "../WindowControls/ColorByLegend";
 import type { ProstglesTimeChartLayer, ProstglesTimeChartProps, ProstglesTimeChartState, ProstglesTimeChartStateLayer, W_TimeChart } from "./W_TimeChart";
@@ -34,7 +34,7 @@ type FetchedLayerData = {
   layers: TChartLayers;  
   erroredLayers: TimeChartLayerWithBin[];
   error: any;
-  binSize: keyof typeof MainTimeBinSizes | undefined;
+  binSize: keyof ReturnType<typeof getMainTimeBinSizes> | undefined;
 };
 
 type ExtentFilter = { filter: AnyObject; paddedEdges: [Date, Date] };
@@ -92,7 +92,7 @@ async function getTChartLayer({
   let rows: DataItem[] = [];
   let cols: TimeChartLayer["cols"] = [];
   
-  const extentFilter = getExtentFilter({ viewPortExtent, visibleDataExtent }, MainTimeBinSizes[bin!].size);
+  const extentFilter = getExtentFilter({ viewPortExtent, visibleDataExtent }, getMainTimeBinSizes()[bin!].size);
   const dataSignature = getTimeLayerDataSignature(layer, w, [extentFilter]);
  
   if(layer.hasError){
@@ -187,7 +187,7 @@ async function getTChartLayer({
     cols = plainResult.fields.map(f => ({ ...f, key: f.name, label: f.name, subLabel: f.dataType, udt_name: f.dataType as any }));
 
     let statField = "COUNT(*)"
-    if (statType && statType.funcName !== "Count All") {
+    if (statType && statType.funcName !== "$countAll") {
       const stat = TIMECHART_STAT_TYPES.find(s => s.func === statType.funcName);
       if (stat) {
         statField = `${stat.label}(${asName(statType.numericColumn)})`;
@@ -195,7 +195,7 @@ async function getTChartLayer({
     }
 
     const binValue = bin ?? "hour";
-    const binInfo = MainTimeBinSizes[binValue];
+    const binInfo = getMainTimeBinSizes()[binValue];
     const binUnit = binInfo.unit;
     const prevBinUnit = {
       "millisecond": "second",
@@ -308,13 +308,21 @@ export async function getTimeChartData(this: W_TimeChart): Promise<FetchedLayerD
     layers = (await Promise.all(
       nonErroredLayers
         .map(async layer => {
-          const { fetchedLayer, duration, hasError } = await tryCatch(async () => {
+          const { fetchedLayer, duration, hasError, error } = await tryCatch(async () => {
             const fetchedLayer = await getTChartLayer({ getLinksAndWindows, myLinks, tables, viewPortExtent, visibleDataExtent, layer, bin, binSize, db, w, desiredBinCount });
             return { fetchedLayer }
           });
           const layerSubscription = this.layerSubscriptions[layer._id];
           if(layerSubscription){
             layerSubscription.isLoading = false;
+          }
+          if(hasError && !erroredLayers.some(el => el._id === layer._id)){
+            erroredLayers.push({
+              ...layer,
+              hasError,
+              error,
+              request: undefined,
+            });
           }
 
           return hasError? undefined : fetchedLayer;
@@ -339,7 +347,7 @@ type GetTimeChartSelectArgs = Pick<ProstglesTimeChartLayer, "statType" | "groupB
 export const getTimeChartSelectParams = ({ statType, groupByColumn, dateColumn, bin }: GetTimeChartSelectArgs) => {
 
   let statField: any = { $countAll: [] };
-  if (statType && statType.funcName !== "") {
+  if (statType) {
     const stat = TIMECHART_STAT_TYPES.find(s => s.func === statType.funcName);
     if (stat) {
       statField = { [stat.func]: [statType.numericColumn] };

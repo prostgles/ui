@@ -194,7 +194,8 @@ export function onRenderTimechart (this: TimeChart, delta: Partial<TimeChartProp
       const yTickValues = compactYAxis? [minVal, maxVal] : getYTickValues({ min: minVal, max: maxVal, steps: 6 });
       const cannotShorten = compactYAxis ? false : (new Set(yTickValues.map(v => nFormatter(v, 1)) )).size < yTickValues.length; 
       const yTicks: ChartedText[] = [];
-      yTickValues.forEach((v, i) =>{
+      const yPercTicks: ChartedText[] = [];
+      yTickValues.forEach((v, i) => {
         const yTick: ChartedText = {
           id: `y${i}`,
           text: `${cannotShorten? v.toLocaleString() : nFormatter(v, 1)}`,
@@ -212,9 +213,19 @@ export function onRenderTimechart (this: TimeChart, delta: Partial<TimeChartProp
         if(!lastTick || lastTick.coords[1] - yTick.coords[1] > yTicksHeight * 1.2){
           yTicks.push(yTick);
         }
+        /** TODO: add percentage bar */
+        // const lastPercTick = yPercTicks.at(-1);
+        // if(!lastPercTick || lastPercTick.coords[1] - yTick.coords[1] > yTicksHeight * 1.2) {
+        //   const yPerc = (v - minVal) / (maxVal - minVal) * 100;
+        //   yPercTicks.push({
+        //     ...yTick,
+        //     text: `${yPerc.toFixed(0)}%`,
+        //     coords: [xMax - xForYTicks, Math.round(yScale(v))],
+        //   });
+        // }
       });
 
-      return [...yTicks, ...timeAxisTicks];
+      return [...yTicks, ...timeAxisTicks, ...yPercTicks];
     }
     this.chart.render([
       ...this.mainShapes,

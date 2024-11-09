@@ -18,12 +18,12 @@ export const isGeoCol = (c: ColInfo) => ["geography", "geometry"].includes(c.udt
 export const isDateCol = (c: ColInfo) => c.udt_name.startsWith("timestamp") || c.udt_name === "date";
 
 export const getChartCols = (
-  w: WindowData<"sql"> | WindowData<"table"> | WindowSyncItem<"sql"> | WindowSyncItem<"table">,
+  w: WindowData<"table"> | WindowSyncItem<"table">,
   tables: DBSchemaTablesWJoins
 ): {
   geoCols: ChartColumn[];
   dateCols: ChartColumn[];
-  cols: ChartColumn[];
+  otherCols: ChartColumn[];
   sql: string | undefined;
 } => {
   const allJoins = getAllJoins({ tableName: w.table_name!, tables, value: undefined });
@@ -43,21 +43,10 @@ export const getChartCols = (
   } satisfies ChartColumn))).filter(isDefined);
 
 
-  let windowDateCols: ChartColumn[] = [];
-  let windowGeoCols: ChartColumn[] = [];
-  if(w.type === "table"){
-    const table = tables.find(t => t.name === w.table_name);
-    if(table){
-      const cols = getColWInfo(tables, w).map(c => ({ ...c, udt_name: c.info?.udt_name || c.computedConfig?.funcDef.outType.udt_name || "text" }));
-      //@ts-ignore
-      windowDateCols = cols.filter(isDateCol).map(c => ({ ...c, type: "normal" }))
-      windowGeoCols = cols.filter(isGeoCol).map(c => ({ ...c, type: "normal" }))
-    }
-  } else {
-    const cols = w.options?.sqlResultCols?.map(c => ({ ...c, name: c.key })) || [];
-    windowDateCols = cols.filter(isDateCol).map(c => ({ ...c, type: "normal" }))
-    windowGeoCols = cols.filter(isGeoCol).map(c => ({ ...c, type: "normal" }));
-  }
+  const cols = getColWInfo(tables, w).map(c => ({ ...c, udt_name: c.info?.udt_name || c.computedConfig?.funcDef.outType.udt_name || "text" }));
+  //@ts-ignore
+  const windowDateCols = cols.filter(isDateCol).map(c => ({ ...c, type: "normal" as const }))
+  const windowGeoCols = cols.filter(isGeoCol).map(c => ({ ...c, type: "normal" as const }))
   
   const dateCols: ChartColumn[] = [
     ...windowDateCols,
@@ -67,10 +56,19 @@ export const getChartCols = (
     ...windowGeoCols,
     ...geoColsJoined,
   ];
+
+  const otherCols = cols.filter(c => 
+    !dateCols.some(gc => gc.name === c.name) && !geoCols.some(gc => gc.name === c.name)
+  ).map(c => ({ ...c, type: "normal" as const }))
+  .sort((b, a) => {
+    /** Sort primary keys down */
+    return Number(b.info?.is_pkey || false) - Number(a.info?.is_pkey || false) || (b.info?.references?.length ?? 0) - (a.info?.references?.length ?? 0);
+  })
+  
   return {
-    sql: w.type === "sql"? w.options?.lastSQL : "",
+    sql: undefined,
     dateCols,
     geoCols,
-    cols: [...dateCols, ...geoCols],
+    otherCols,
   }
 }
