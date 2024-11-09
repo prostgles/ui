@@ -745,7 +745,7 @@ test.describe("Main test", () => {
     /** Set count all to ensure the W_TimeChart.ActiveRow below works */
     await page.getByTestId("TimeChartLayerOptions.aggFunc").click();
     await page.getByTestId("TimeChartLayerOptions.aggFunc.select").click();
-    await page.getByTestId("TimeChartLayerOptions.aggFunc.select").locator(`[data-key="$avg"]`).click();
+    await page.getByTestId("TimeChartLayerOptions.aggFunc.select").locator(`[data-key="$countAll"]`).click();
 
     await page.waitForTimeout(5e3);
     /** Mouse move is needed to show tooltip and to trigger re-render so that _renderedData.x,y are defined */
