@@ -742,6 +742,11 @@ test.describe("Main test", () => {
     await page.waitForTimeout(3e3);
     await page.getByTestId("dashboard.window.detachChart").click();
 
+    /** Set count all to ensure the W_TimeChart.ActiveRow below works */
+    await page.getByTestId("TimeChartLayerOptions.aggFunc").click();
+    await page.getByTestId("TimeChartLayerOptions.aggFunc.select").click();
+    await page.getByTestId("TimeChartLayerOptions.aggFunc.select").locator(`[data-key="$avg"]`).click();
+
     await page.waitForTimeout(5e3);
     /** Mouse move is needed to show tooltip and to trigger re-render so that _renderedData.x,y are defined */
     await page.mouse.move(700, 111);

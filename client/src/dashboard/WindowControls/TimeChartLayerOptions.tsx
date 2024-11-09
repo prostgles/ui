@@ -66,7 +66,17 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
   const isOnScreen = mode === "on-screen";
   const activeStat = TIMECHART_STAT_TYPES.find(s => s.func === statType.funcName);
   const activeStatLabel: typeof TIMECHART_STAT_TYPES[number]["label"] = activeStat?.label ?? statType.funcName as any;
-  const activeStatLabelDesc = activeStatLabel === "Count All"? "count(*), " : <FlexRow className="gap-0">{activeStatLabel}(<strong style={{ margin: "6px"}}>{colOpts.statType?.numericColumn}</strong>),</FlexRow>;
+  const activeStatLabelDesc = activeStatLabel === "Count All"? "count(*), " : 
+  <FlexRow className="gap-0">
+    <span style={{ opacity: .7 }}>
+      {activeStatLabel}
+      (
+    </span>
+    <strong style={{ margin: ".6px"}}>{colOpts.statType?.numericColumn}</strong>
+    <span style={{ opacity: .7 }}>
+      ),
+    </span>
+  </FlexRow>;
   const groupByCols = cols?.filter(c => c.name !== lq?.statType?.numericColumn && c.name !== lq?.dateColumn && c.udt_name !== "timestamp" && c.udt_name !== "timestamptz");
 
   return <>
