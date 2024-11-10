@@ -23,6 +23,7 @@ jobs:
         docker --version
 
     - name: Docker build
+      shell: bash
       run: |
         docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres
         TEST_SCRIPT=$(awk '/```docker-run.sh/{f=1;next} /```/{f=0} f' README.md)
@@ -30,6 +31,7 @@ jobs:
         eval "$TEST_SCRIPT"
 
     - name: Test docker run
+      shell: bash
       run: |
         sleep 15
         docker ps 
@@ -39,6 +41,7 @@ jobs:
         curl -b -i -L -v localhost:3004 | grep -q "Prostgles UI" && echo "Test passed" || echo "Test failed"
 
     - name: Docker stop
+      shell: bash
       run: docker stop $(docker ps -a -q) || true
 
     - name: Docker compose up
@@ -46,6 +49,7 @@ jobs:
         docker compose up -d
 
     - name: Test docker compose
+      shell: bash
       run: |
         sleep 5
         docker ps
