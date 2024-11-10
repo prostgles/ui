@@ -70,6 +70,7 @@ const getQueryReturnTypeForDuplicateCols = async (query: string, sql: SQLHandler
 
 type ExpressionResult = { colTypes: ColType[]; error?: undefined } | { colTypes?: undefined; error: any; }
 const cached = new Map<string, ExpressionResult>();
+
 export const getTableExpressionReturnType = async (expression: string, sql: SQLHandler): Promise<ExpressionResult> => {
   const cachedValue = cached.get(expression);
   if(cachedValue){
