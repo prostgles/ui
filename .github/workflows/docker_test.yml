@@ -24,7 +24,7 @@ jobs:
 
     - name: Docker build postgres
       shell: bash
-      if: runner.os == 'Linux'  # Cannot get postgres to work on windows
+      if: runner.os == 'ubuntu-latest'  # Cannot get postgres to work on windows
       run: |
         docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres
 
@@ -37,7 +37,7 @@ jobs:
 
     - name: Test docker run
       shell: bash
-      if: runner.os == 'Linux'  # Cannot get postgres to work on windows
+      if: runner.os == 'ubuntu-latest'  # Cannot get postgres to work on windows
       run: |
         sleep 15
         docker ps 
