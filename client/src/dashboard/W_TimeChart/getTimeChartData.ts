@@ -6,7 +6,7 @@ import { omitKeys } from "../../utils";
 import { SECOND } from "../Charts";
 import type { DataItem, TimeChartLayer } from "../Charts/TimeChart";
 import type { DateExtent } from "../Charts/getTimechartBinSize";
-import { MainTimeBinSizes } from "../Charts/getTimechartBinSize";
+import { getMainTimeBinSizes } from "../Charts/getTimechartBinSize";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import { getGroupByValueColor } from "../WindowControls/ColorByLegend";
 import type { ProstglesTimeChartLayer, ProstglesTimeChartProps, ProstglesTimeChartState, ProstglesTimeChartStateLayer, W_TimeChart } from "./W_TimeChart";
@@ -23,7 +23,8 @@ export const getTimeLayerDataSignature = (l: ProstglesTimeChartLayer, w: WindowD
 
 const FIELD_NAMES = {
   date: "date",
-  value: "value"
+  value: "value",
+  group_by: "group_by",
 } as const;
 
 type TChartLayer = ProstglesTimeChartState["layers"][number];
@@ -33,7 +34,7 @@ type FetchedLayerData = {
   layers: TChartLayers;  
   erroredLayers: TimeChartLayerWithBin[];
   error: any;
-  binSize: keyof typeof MainTimeBinSizes | undefined;
+  binSize: keyof ReturnType<typeof getMainTimeBinSizes> | undefined;
 };
 
 type ExtentFilter = { filter: AnyObject; paddedEdges: [Date, Date] };
@@ -91,16 +92,15 @@ async function getTChartLayer({
   let rows: DataItem[] = [];
   let cols: TimeChartLayer["cols"] = [];
   
-  const extentFilter = getExtentFilter({ viewPortExtent, visibleDataExtent }, MainTimeBinSizes[bin!].size);
+  const extentFilter = getExtentFilter({ viewPortExtent, visibleDataExtent }, getMainTimeBinSizes()[bin!].size);
   const dataSignature = getTimeLayerDataSignature(layer, w, [extentFilter]);
-
-  let _groupByColumn: string | undefined;
+ 
   if(layer.hasError){
     throw layer.error;
   }
+  const { dateColumn, statType, groupByColumn, type } = layer;
   if (layer.type === "table") {
-    const { dateColumn, statType, groupByColumn, path } = layer;
-    _groupByColumn = groupByColumn;
+    const { path } = layer;
     const tableName = path?.length? path.at(-1)!.table : layer.tableName;
 
     const tableHandler = db[tableName];
@@ -172,7 +172,7 @@ async function getTChartLayer({
     cols = _cols;
 
   } else {
-    const { dateColumn, sql, statType } = layer;
+    const { dateColumn, sql, statType, groupByColumn } = layer;
 
     if (!db.sql) {
       console.error("Not enough privileges to run query");
@@ -181,14 +181,13 @@ async function getTChartLayer({
 
     let _sql = sql.trim() + "";
     if (_sql.endsWith(";")) _sql = _sql.slice(0, _sql.length - 1);
-    const escDateCol = asName(dateColumn);
 
 
     const plainResult = await db.sql(" SELECT * FROM (\n" + _sql + "\n ) t LIMIT 0 ");
     cols = plainResult.fields.map(f => ({ ...f, key: f.name, label: f.name, subLabel: f.dataType, udt_name: f.dataType as any }));
 
     let statField = "COUNT(*)"
-    if (statType && statType.funcName !== "Count All") {
+    if (statType && statType.funcName !== "$countAll") {
       const stat = TIMECHART_STAT_TYPES.find(s => s.func === statType.funcName);
       if (stat) {
         statField = `${stat.label}(${asName(statType.numericColumn)})`;
@@ -196,7 +195,7 @@ async function getTChartLayer({
     }
 
     const binValue = bin ?? "hour";
-    const binInfo = MainTimeBinSizes[binValue];
+    const binInfo = getMainTimeBinSizes()[binValue];
     const binUnit = binInfo.unit;
     const prevBinUnit = {
       "millisecond": "second",
@@ -208,14 +207,27 @@ async function getTChartLayer({
       "year": "year",
     }[binUnit];
 
+    /**
+     * For fractional bins we use date_bin function
+     */
+    const escDateCol = asName(dateColumn);
+    const escGroupByCol = groupByColumn && asName(groupByColumn);
     const dateBinCol = binInfo.increment === 1? `date_trunc(\${bin}, ${escDateCol}::TIMESTAMPTZ)` :  
       `date_bin('${binInfo.increment}${binInfo.unit}', ${escDateCol}::TIMESTAMPTZ, date_trunc('${prevBinUnit ?? binUnit}', ${escDateCol}::TIMESTAMPTZ))`;
-    const dataQuery = `SELECT ${dateBinCol} as ${JSON.stringify(FIELD_NAMES.date)}, ${statField} as "value" \nFROM (\n` +
-      _sql +
-      "\n ) t \n" +
-      `\nWHERE ${escDateCol} IS NOT NULL ` +
-      "\nGROUP BY 1 \n" +
-      ` ORDER BY 2`;
+    const topSelect = [
+      `${dateBinCol} as ${JSON.stringify(FIELD_NAMES.date)}`,
+      escGroupByCol && `${escGroupByCol} as ${JSON.stringify(FIELD_NAMES.group_by)}`,
+      `${statField} as ${JSON.stringify(FIELD_NAMES.value)}`,
+    ].filter(v=>v).join(", ");
+    const dataQuery = [
+      `SELECT ${topSelect}`,
+      `FROM (`,
+        _sql,
+      `) t `,
+      `WHERE ${escDateCol} IS NOT NULL `,
+      `GROUP BY 1 ${escGroupByCol? `, 2` : ""}`,
+      `ORDER BY 2`
+    ].join("\n");
  
     rows = await db.sql(dataQuery, { dateColumn, bin: binInfo.unit, statField }, { returnType: "rows" }) as any;
   }
@@ -231,14 +243,15 @@ async function getTChartLayer({
     dataSignature,
   }
 
-  if(_groupByColumn){
-    const { getColor } = getGroupByValueColor({ getLinksAndWindows, myLinks, layerLinkId: layer.linkId, groupByColumn: _groupByColumn });
-    const groupByVals = Array.from(new Set(renderedLayer.data.map(d => d[_groupByColumn!])));
+  if(groupByColumn){
+    const { getColor } = getGroupByValueColor({ getLinksAndWindows, myLinks, layerLinkId: layer.linkId, groupByColumn });
+    const groupByColumnDataKey = type === "table"? groupByColumn : FIELD_NAMES.group_by;
+    const groupByVals = Array.from(new Set(renderedLayer.data.map(d => d[groupByColumnDataKey])));
     return groupByVals.map((gbVal, gbi) => {
       return {
         ...renderedLayer,
         getYLabel: getYLabelFunc(`  ${gbVal}`, !layer.statType),
-        data: rows.filter(r => r[_groupByColumn!] === gbVal),
+        data: rows.filter(r => r[groupByColumnDataKey] === gbVal),
         color: getColor(gbVal, gbi),
         groupByValue: gbVal,
       } satisfies TimeChartLayer;
@@ -295,13 +308,21 @@ export async function getTimeChartData(this: W_TimeChart): Promise<FetchedLayerD
     layers = (await Promise.all(
       nonErroredLayers
         .map(async layer => {
-          const { fetchedLayer, duration, hasError } = await tryCatch(async () => {
+          const { fetchedLayer, duration, hasError, error } = await tryCatch(async () => {
             const fetchedLayer = await getTChartLayer({ getLinksAndWindows, myLinks, tables, viewPortExtent, visibleDataExtent, layer, bin, binSize, db, w, desiredBinCount });
             return { fetchedLayer }
           });
           const layerSubscription = this.layerSubscriptions[layer._id];
           if(layerSubscription){
             layerSubscription.isLoading = false;
+          }
+          if(hasError && !erroredLayers.some(el => el._id === layer._id)){
+            erroredLayers.push({
+              ...layer,
+              hasError,
+              error,
+              request: undefined,
+            });
           }
 
           return hasError? undefined : fetchedLayer;
@@ -326,7 +347,7 @@ type GetTimeChartSelectArgs = Pick<ProstglesTimeChartLayer, "statType" | "groupB
 export const getTimeChartSelectParams = ({ statType, groupByColumn, dateColumn, bin }: GetTimeChartSelectArgs) => {
 
   let statField: any = { $countAll: [] };
-  if (statType && statType.funcName !== "") {
+  if (statType) {
     const stat = TIMECHART_STAT_TYPES.find(s => s.func === statType.funcName);
     if (stat) {
       statField = { [stat.func]: [statType.numericColumn] };

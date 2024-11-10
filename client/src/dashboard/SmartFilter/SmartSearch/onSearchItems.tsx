@@ -7,12 +7,13 @@ import { isDefined } from "../../../utils";
 import { SearchAll } from "../../SearchAll";
 
 export async function onSearchItems(this: SmartSearch, term: string, opts?: { matchCase?: boolean }, onPartialResult?): Promise<Required<SearchListProps>["items"]> {
-  if(typeof term !== "string") return [];
+  if(typeof term !== "string") {
+    return [];
+  }
   if(!term.length && !this.props.searchEmpty){
     this.props.onChange?.();
     return [];
   }
-
   const matchCase = opts?.matchCase ?? false;
   const { db, tableName, onType, detailedFilter = [] } = this.props; 
   const column = this.column?.name
@@ -47,8 +48,8 @@ export async function onSearchItems(this: SmartSearch, term: string, opts?: { ma
 
     return [];
   }
-  const asSearchItems = (rows: { prgl_term_highlight?: string[] }[]) => {
-    const searchItems: SearchListProps["items"] = rows
+  const asSearchItems = (fetchedRows: { prgl_term_highlight?: string[] }[]) => {
+    const searchItems: SearchListProps["items"] = fetchedRows
       .map((r, i)=> {
         if(!r.prgl_term_highlight) return undefined
         const firstRowKey = Object.keys(r.prgl_term_highlight)[0]!;
@@ -95,10 +96,8 @@ export async function onSearchItems(this: SmartSearch, term: string, opts?: { ma
     return searchItems;
   }
   const hasChars = Boolean(term &&  /[a-z]/i.test(term));
-  let searchItems: SearchListProps["items"] = [];
   for(let i = 0; i < columns.length; i++){
     const col = columns[i]!;
-    let partialResult: SearchListProps["items"] = [];
     let canceled: boolean = false as boolean;
     if(canceled || col.tsDataType === "number" && hasChars){
       /** 100% no result due to data type mismatch */
@@ -106,9 +105,8 @@ export async function onSearchItems(this: SmartSearch, term: string, opts?: { ma
 
       const colRows = await fetchColumnResults(col.name);
       rows = rows.concat(colRows);
-      partialResult = asSearchItems(rows);
-      searchItems = searchItems.concat(partialResult);
     }
+    const partialResult: SearchListProps["items"] = asSearchItems(rows);
     onPartialResult?.(
       partialResult, 
       i === columns.length - 1, 
@@ -117,5 +115,5 @@ export async function onSearchItems(this: SmartSearch, term: string, opts?: { ma
       }
     );
   }
-  return searchItems;
+  return asSearchItems(rows);
 }

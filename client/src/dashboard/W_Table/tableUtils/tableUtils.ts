@@ -74,6 +74,7 @@ export const getFullColumnConfig = (
 
 /** It's a record to ensure all keys are present */
 const COLUMN_CONFIG_KEYS: Record<keyof ColumnConfig, 1> = {
+  idx: 1,
   computedConfig: 1,
   format: 1,
   name: 1,
@@ -130,11 +131,12 @@ export const updateWCols = (w: WindowSyncItem<"table">, newCols: WindowSyncItem<
 }
 
 export const getSortColumn = (sort: ColumnSort, columns: ColumnConfig[]): ColumnConfig | undefined => {
-  return columns.find(c => 
-    c.name === sort.key || 
-    c.nested?.chart?.type === "time" && SORTABLE_CHART_COLUMNS.some(sortCol => sort.key === `${c.name}.${sortCol}`) ||
-    c.nested?.columns.some(nc => sort.key === `${c.name}.${nc.name}`)
-  );
+  return columns.find((c) => {
+    return c.name === sort.key || 
+      typeof sort.key === "number" && typeof c.name === "string" && c.idx === sort.key ||
+      c.nested?.chart?.type === "time" && SORTABLE_CHART_COLUMNS.some(sortCol => sort.key === `${c.name}.${sortCol}`) ||
+      c.nested?.columns.some(nc => sort.key === `${c.name}.${nc.name}`)
+  });
 }
 
 export const getSort = (

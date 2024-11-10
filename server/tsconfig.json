@@ -9,17 +9,17 @@
 		"allowJs": true,
 		"module": "commonjs",
 		"sourceMap": true,
-		// "rootDir": ".",
 		"moduleResolution": "node",
 		"declaration": true,
 		"declarationMap": true,
-		"keyofStringsOnly": true,
 		"ignoreDeprecations": "5.0",
 		"strict": true,
 		"skipLibCheck": true,
 		"noUncheckedIndexedAccess": true,
 		"paths": {
-			"@common/*": ["../commonTypes/*"], 
+			"@common/*": [
+				"../commonTypes/*"
+			], 
 		},
 	},
 	"exclude": [

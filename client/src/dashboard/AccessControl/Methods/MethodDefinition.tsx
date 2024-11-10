@@ -4,90 +4,27 @@ import React, { useState } from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";
+import { FlexCol } from "../../../components/Flex";
 import FormField from "../../../components/FormField/FormField";
 import { JSONBSchema } from "../../../components/JSONBSchema/JSONBSchema";
 import { Section } from "../../../components/Section";
-import type { CodeEditorProps } from "../../CodeEditor/CodeEditor";
 import CodeEditor from "../../CodeEditor/CodeEditor";
-import { usePromise } from "prostgles-client/dist/react-hooks";
-import { dboLib, wsLib } from "../../CodeEditor/monacoTsLibs";
-import { FlexCol, FlexRow } from "../../../components/Flex";
 import { SmartCodeEditor } from "../../CodeEditor/SmartCodeEditor";
+import { useCodeEditorTsTypes, useMethodDefinitionTypes } from "./useMethodDefinitionTypes";
  
-type P = { 
-  onChange: (newMethod: P["method"]) => void;
+export type MethodDefinitionProps = { 
+  onChange: (newMethod: MethodDefinitionProps["method"]) => void;
   method: Partial<DBSSchema["published_methods"]>;
-} & Pick<Prgl, "tables" | "dbsTables" | "db" | "theme" | "connectionId" | "dbsMethods" | "dbKey">;
+  renderMode?: "Code";
+} & Pick<Prgl, "tables" | "dbsTables" | "db" | "theme" | "connectionId" | "dbsMethods" | "dbKey" | "dbs">;
 
-export const useCodeEditorTsTypes = ({ connectionId, dbsMethods, dbKey }: Pick<P, "dbsMethods" | "connectionId" | "dbKey">) => {
 
-  const dbSchemaTypes = usePromise(async () => {
-    if(dbsMethods.getAPITSDefinitions && connectionId && dbKey){
-      const dbSchemaTypes = await dbsMethods.getConnectionDBTypes?.(connectionId)
-      return dbSchemaTypes;
-    }
-  }, [dbsMethods, connectionId, dbKey]);
-
-  return [
-    { 
-      filePath: "file:///node_modules/@types/ws/index.d.ts", 
-      content: wsLib
-    },
-    {
-      filePath: "file:///node_modules/@types/dbo/index.d.ts",
-      content: `declare global { ${dboLib} }; export {}`
-    },
-    { 
-      filePath: "file:///DBSchemaGenerated.ts", 
-      content: `declare global {   ${dbSchemaTypes ?? ""} }; export {}`
-    },
-    {
-      filePath: "file:///node_modules/@types/onMount/index.d.ts",
-      content: `declare global { 
-        /**
-         * Function that will be called after the table is created and server started or schema changed
-         */
-        export type OnMount = (args: { dbo: Required<DBOFullyTyped<DBSchemaGenerated>>; db: any; }) => void | Promise<void>; 
-      }; 
-      export {}      `
-    },
-  ] satisfies CodeEditorProps["tsLibraries"];
-}
-
-export const MethodDefinition = ({ onChange, method, tables, dbsTables, db, theme, connectionId, dbsMethods, dbKey }: P) => {
+export const MethodDefinition = ({ onChange, method, tables, dbsTables, db, connectionId, dbsMethods, dbKey, renderMode, dbs }: MethodDefinitionProps) => {
 
   const tsLibraries = useCodeEditorTsTypes({ connectionId, dbsMethods, dbKey });
-
+  const { tsMethodDef } = useMethodDefinitionTypes({ method, tables, dbs });
   const methodsTable = dbsTables.find(t => t.name === "published_methods");
   const methodArgsCol = methodsTable?.columns.find(c => c.name === "arguments");
-
-const tsMethodDef = `
-type ProstglesMethod = (
-  args: { \n${method.arguments?.map(a => {
-    let type: string = a.type;
-    if(a.type === "Lookup" && a.lookup as any){
-      const refT = tables.find(t => t.name === a.lookup.table);
-      if(refT){
-        if(a.lookup.isFullRow){
-          type = `{ ${refT.columns.map(c => `${c.name}: ${c.tsDataType}`).join("; ")} }`;
-        } else {
-          const col = refT.columns.find(c => c.name === a.lookup!.column);
-          if(col){
-            type = col.tsDataType;
-          }
-        }
-      }
-    }
-    return `    ${a.name}${a.optional? "?" : ""}: ${type};\n`;
-    
-  }).join("")} \n},
-  ctx: { 
-    db: any; 
-    dbo: DBOFullyTyped<DBSchemaGenerated>; 
-    tables: any[]; 
-    user: any;
-  }
-) => Promise<any>`;
 
   const [editAsJSON, seteditAsJSON] = useState(false);
 
@@ -100,6 +37,39 @@ type ProstglesMethod = (
       }})
     }
   ];
+
+  const renderCode = renderMode === "Code";
+
+  const Code = <SmartCodeEditor 
+    key={tsMethodDef}
+    label={renderCode? undefined : "Server-side TypeScript function triggered by a button press"}
+    language={{ 
+      lang: "typescript",
+      modelFileName: method.name ?? "myModel",
+      tsLibraries: [
+        ...tsLibraries,
+        { filePath: "file:///ProstglesMethod.ts", content: tsMethodDef },
+      ]
+    }}
+    value={method.run ?? ""}
+    options={{
+      glyphMargin: false,
+      padding: renderCode? { top: 16, bottom: 0 } : undefined,
+      lineNumbersMinChars: renderCode? 4 : 0
+    }}
+    autoSave={!renderCode}
+    onSave={run => onChange({ ...method, run })}
+    codeEditorClassName={renderCode? "b-none" : ""}
+  />;
+
+  const methodName = method.name;
+  const { data: clashingMethod } = dbs.published_methods.useFindOne({ 
+    ...(method.id && {id: { $ne: method.id }}), 
+    name: methodName, 
+    connection_id: connectionId,
+  });
+
+  if(renderCode) return Code;
 
   return <FlexCol className="MethodDefinition f-1 gap-p5" > 
     <div className="flex-row ai-center gap-1"> 
@@ -119,12 +89,11 @@ type ProstglesMethod = (
           minWidth: "600px", 
           minHeight: "400px" 
         }}
-        language="json" 
+        language={{
+          lang: "json",
+          jsonSchemas
+        }} 
         value={JSON.stringify(method, null, 2)}
-        jsonSchemas={jsonSchemas}
-        options={{
-          theme: `vs-${theme}`,
-        }}
         onChange={val => {
           try {
             const newMethod = JSON.parse(val);
@@ -139,6 +108,7 @@ type ProstglesMethod = (
         <FormField 
           label="Name"  
           value={method.name} 
+          error={clashingMethod? "Name already exists" : undefined}
           onChange={name => {
             onChange({ ...method, name })
           }} 
@@ -169,24 +139,7 @@ type ProstglesMethod = (
           contentClassName="flex-col gap-1  f-1" 
           open={true}
         >
-          <SmartCodeEditor 
-            key={tsMethodDef}
-            label="Server-side TypeScript function triggered by a button press"
-            tsLibraries={[
-              ...tsLibraries,
-              { filePath: "file:///ProstglesMethod.ts", content: tsMethodDef },
-            ]}
-            // style={{ minWidth: "600px", minHeight: "200px"}}
-            language="typescript"
-            value={method.run ?? ""}
-            options={{
-              theme: `vs-${theme}`,
-              "glyphMargin": false,
-              "lineNumbersMinChars": 0
-            }}
-            autoSave={true}
-            onSave={run => onChange({ ...method, run })}
-          />
+          {Code}
         </Section>
         <Section 
           title="Result" 

@@ -1,30 +1,39 @@
+import type { ParsedJoinPath, ValidatedColumnInfo } from "prostgles-types";
 import { isDefined } from "../../../utils";
 import type { DBSchemaTablesWJoins, WindowData, WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import { getAllJoins } from "../ColumnMenu/JoinPathSelectorV2";
-import { getColWInfo } from "../tableUtils/getColWInfo"; 
-import type { ParsedJoinPath, ValidatedColumnInfo } from "prostgles-types";
+import { getColWInfo } from "../tableUtils/getColWInfo";
  
 export type ColInfo = Pick<ValidatedColumnInfo, "name" | "udt_name">;
 type JoinedChartColumn = {
   type: "joined";
   label: string;
   path: ParsedJoinPath[];
+  numericCols: ColInfo[];
 } & ColInfo;
 export type ChartColumn = (JoinedChartColumn | {
   type: "normal";
+  numericCols: ColInfo[];
 }) & ColInfo;
-const isGeoCol = (c: ColInfo) => ["geography", "geometry"].includes(c.udt_name);
-const isDateCol = (c: ColInfo) => c.udt_name.startsWith("timestamp") || c.udt_name === "date";
+export const isGeoCol = (c: ColInfo) => ["geography", "geometry"].includes(c.udt_name);
+export const isDateCol = (c: ColInfo) => c.udt_name.startsWith("timestamp") || c.udt_name === "date";
 
-export const getChartColsV2 = (
-  w: WindowData<"sql"> | WindowData<"table"> | WindowSyncItem<"sql"> | WindowSyncItem<"table">,
+export const getChartCols = (
+  w: WindowData<"table"> | WindowSyncItem<"table">,
   tables: DBSchemaTablesWJoins
 ): {
   geoCols: ChartColumn[];
   dateCols: ChartColumn[];
-  cols: ChartColumn[];
-  sql: string | undefined;
+  // otherCols: ChartColumn[];
+  sql?: undefined;
 } => {
+
+  const getNumericCols = (cols: ValidatedColumnInfo[]): ColInfo[] => cols
+    .sort((b, a) => {
+      /** Sort primary keys down */
+      return Number(b.is_pkey || false) - Number(a.is_pkey || false) || (b.references?.length ?? 0) - (a.references?.length ?? 0);
+    });
+
   const allJoins = getAllJoins({ tableName: w.table_name!, tables, value: undefined });
   const dateColsJoined = allJoins.allJoins.flatMap(j => j.table.columns.filter(isDateCol).map(c => ({
     type: "joined",
@@ -32,6 +41,7 @@ export const getChartColsV2 = (
     label: j.label,
     name: c.name,
     udt_name: c.udt_name,
+    numericCols: getNumericCols(j.table.columns),
   } satisfies ChartColumn))).filter(isDefined);
   const geoColsJoined = allJoins.allJoins.flatMap(j => j.table.columns.filter(isGeoCol).map(c => ({
     type: "joined",
@@ -39,24 +49,23 @@ export const getChartColsV2 = (
     name: c.name,
     label: j.label,
     udt_name: c.udt_name,
+    numericCols: getNumericCols(j.table.columns),
   } satisfies ChartColumn))).filter(isDefined);
 
 
-  let windowDateCols: ChartColumn[] = [];
-  let windowGeoCols: ChartColumn[] = [];
-  if(w.type === "table"){
-    const table = tables.find(t => t.name === w.table_name);
-    if(table){
-      const cols = getColWInfo( tables, w).map(c => ({ ...c, udt_name: c.info?.udt_name || c.computedConfig?.funcDef.outType.udt_name || "text" }));
-      //@ts-ignore
-      windowDateCols = cols.filter(isDateCol).map(c => ({ ...c, type: "normal" }))
-      windowGeoCols = cols.filter(isGeoCol).map(c => ({ ...c, type: "normal" }))
-    }
-  } else {
-    const cols = w.options?.sqlResultCols?.map(c => ({ ...c, name: c.key })) || [];
-    windowDateCols = cols.filter(isDateCol).map(c => ({ ...c, type: "normal" }))
-    windowGeoCols = cols.filter(isGeoCol).map(c => ({ ...c, type: "normal" }));
-  }
+  const cols = getColWInfo(tables, w).map(c => ({ ...c, udt_name: c.info?.udt_name || c.computedConfig?.funcDef.outType.udt_name || "text" }));
+
+  //@ts-ignore
+  const windowDateCols: ChartColumn[] = cols.filter(isDateCol).map(c => ({ 
+    ...c,
+    type: "normal",
+    numericCols: getNumericCols(tables.find(t => t.name === w.table_name)?.columns || []), 
+  }))
+  const windowGeoCols: ChartColumn[] = cols.filter(isGeoCol).map(c => ({ 
+    ...c, 
+    type: "normal",
+    numericCols: getNumericCols(tables.find(t => t.name === w.table_name)?.columns || []), 
+  }))
   
   const dateCols: ChartColumn[] = [
     ...windowDateCols,
@@ -66,10 +75,17 @@ export const getChartColsV2 = (
     ...windowGeoCols,
     ...geoColsJoined,
   ];
+
+  // const otherCols = cols.filter(c => 
+  //   !dateCols.some(gc => gc.name === c.name) && !geoCols.some(gc => gc.name === c.name)
+  // ).map(c => ({ ...c, type: "normal" as const }))
+  // .sort((b, a) => {
+  //   /** Sort primary keys down */
+  //   return Number(b.info?.is_pkey || false) - Number(a.info?.is_pkey || false) || (b.info?.references?.length ?? 0) - (a.info?.references?.length ?? 0);
+  // })
+  
   return {
-    sql: w.type === "sql"? w.options?.lastSQL : "",
     dateCols,
     geoCols,
-    cols: [...dateCols, ...geoCols],
   }
 }

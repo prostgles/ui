@@ -76,6 +76,7 @@ export const W_MethodMenu = (props: W_MethodProps & {  closeMenu: () => void; })
         content: <div className="flex-col o-auto f-1 min-s-0 p-1 gap-1">
           <MethodDefinition
             dbKey={props.prgl.dbKey} 
+            dbs={props.prgl.dbs}
             connectionId={connectionId}
             dbsMethods={props.prgl.dbsMethods}
             method={{...(editedMethod ?? method)}}

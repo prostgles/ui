@@ -16,7 +16,6 @@ type P = {
 }
 export const JSONBColumnEditor = ({ value, column, tableName, onChange, style, className }: P) => {
 
-  const { state: theme } = useReactiveState(appTheme);
   if (!column.jsonbSchema) {
     return <ErrorComponent error={"Provided column is not of jsonbSchema type"} />
   }
@@ -25,15 +24,14 @@ export const JSONBColumnEditor = ({ value, column, tableName, onChange, style, c
   const codeEditorProps: CodeEditorProps = {
     style, 
     className,
-    language: "json",
-    options: {
-      theme: `vs-${theme}`
+    language: {
+      lang: "json",
+      jsonSchemas: [{
+        id: `${tableName}_${column.name}`,
+        schema: jsonSchema
+      }],
     },
     value: (typeof value !== "string" && value ? JSON.stringify(value, null, 2) : value?.toString()) ?? "",
-    jsonSchemas: [{
-      id: `${tableName}_${column.name}`,
-      schema: jsonSchema
-    }]
   }
 
   return <CodeEditor 

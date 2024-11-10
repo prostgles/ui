@@ -1,11 +1,11 @@
-import * as React from "react";
-import { customLightThemeMonaco, getMonaco } from "../SQLEditor/SQLEditor";
-import { loadPSQLLanguage } from "./MonacoLanguageRegister";
-import { appTheme, useReactiveState } from "../../App"; 
 import { useAsyncEffectQueue, useEffectDeep } from "prostgles-client/dist/react-hooks";
-import type { editor } from "../W_SQL/monacoEditorTypes"
-import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
-import { hackyFixOptionmatchOnWordStartOnly } from "../SQLEditor/SQLCompletion/registerSuggestions";
+import * as React from "react";
+import { appTheme, useReactiveState } from "../../App";
+import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
+import { hackyFixOptionmatchOnWordStartOnly } from "../../dashboard/SQLEditor/SQLCompletion/registerSuggestions";
+import { customLightThemeMonaco, getMonaco } from "../../dashboard/SQLEditor/SQLEditor";
+import type { editor } from "../../dashboard/W_SQL/monacoEditorTypes";
+import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
 export type MonacoEditorProps = {
   language: string;
   value: string;
@@ -20,10 +20,10 @@ export type MonacoEditorProps = {
   style?: React.CSSProperties;
   loadedSuggestions: LoadedSuggestions | undefined;
 } 
-
 export const MonacoEditor = (props: MonacoEditorProps) => {
 
-  React.useEffect(() => {
+  useEffectDeep(() => {
+    if(!props.loadedSuggestions) return;
     loadPSQLLanguage(props.loadedSuggestions);
   }, [props.loadedSuggestions]);
 
@@ -33,9 +33,11 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   const options = props.options
   const theme = options?.theme && options.theme !== "vs"?  options.theme : (_appTheme === "dark"? "vs-dark" : customLightThemeMonaco as any);
+
   useAsyncEffectQueue(async () => {
     const { language, value, options, onMount, expandSuggestionDocs = true } = props;
  
+    const monaco = await getMonaco();
     const editorOptions: editor.IStandaloneEditorConstructionOptions = {
       value,
       language,
@@ -44,12 +46,11 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       matchOnWordStartOnly: false,
     };
 
-    const monaco = await getMonaco();
     if (!container.current) return;
     
     editor.current = monaco.editor.create(container.current, editorOptions);
     hackyFixOptionmatchOnWordStartOnly(editor.current);
-    hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42(editor.current, expandSuggestionDocs)
+    hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42(editor.current, expandSuggestionDocs);
     if (props.onChange) {
       editor.current.onDidChangeModelContent(() => {
         const value = editor.current?.getValue() || "";
@@ -68,17 +69,23 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     if (!editor.current) return
     editor.current.updateOptions({ ...props.options, theme });
   }, [theme, props.options, editor.current]);
+
   useEffectDeep(() => {
     if (editor.current && props.value !== editor.current.getValue()) {
       editor.current.setValue(props.value);
     }
   }, [props.value, editor.current]);
 
+  
+
   const { className, style } = props;
   return <div 
     key={`${!!props.language.length}`} 
     ref={container}  
-    style={{ ...style, textAlign: "initial" }} 
+    style={{ 
+      ...style, 
+      textAlign: "initial",
+    }} 
     className={`MonacoEditor ${className}`} 
   />;
  

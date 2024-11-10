@@ -45,10 +45,7 @@ export const getViewRendererUtils = function(this: ViewRenderer, { prgl, workspa
 
     return res;
   };
-
-  // const layouts = windows.map(q => parseLayout({  ...q.layout }, q.id));
-  // // console.log(JSON.stringify(layouts, null, 2))
-
+  
   const addLink = (l: {
     w1_id: string;
     w2_id: string;
@@ -99,6 +96,7 @@ export const getViewRendererUtils = function(this: ViewRenderer, { prgl, workspa
     let extra: Pick<WindowData<"map">, "parent_window_id" | "options"> | Pick<WindowData<"timechart">, "parent_window_id" | "options"> = {
       parent_window_id: null,
     };
+
     if (type === "map") {
       extra = {  
         parent_window_id: parentW.id,
@@ -140,7 +138,14 @@ export const getViewRendererUtils = function(this: ViewRenderer, { prgl, workspa
         }
       }
     }
-    const w = await addWindow({ name, type, ...extra }) as WindowData;
+    // const existingCharts = await windows.filter(cw => cw.parent_window_id === parentW.id);
+    // if(existingCharts.length){
+    //   // alert("Close existing chart before adding new one");
+    // } else {
+
+    //   const w = await addWindow({ name, type, ...extra }) as WindowData;
+    // }
+    const w = windows.find(cw => cw.parent_window_id === parentW.id) ?? await addWindow({ name, type, ...extra }) as WindowData;
 
     addLink({ w1_id: parentW.id, w2_id: w.id, linkOpts });
   }

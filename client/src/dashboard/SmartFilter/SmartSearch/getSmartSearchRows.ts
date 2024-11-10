@@ -1,5 +1,5 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { ValidatedColumnInfo, AnyObject } from "prostgles-types";
+import { type ValidatedColumnInfo, type AnyObject, _PG_numbers } from "prostgles-types";
 import type { SmartGroupFilter } from "../../../../../commonTypes/filterUtils";
 import { getSmartGroupFilter } from "../smartFilterUtils";
 import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
@@ -76,7 +76,8 @@ export const getRows = async (args: Args, limit = 3, matchStart = false) => {
   const columnInfo = columns.find(c => c.name === currentlySearchedColumn);
   /** Group increases query time considerably. Must try not to use it when not crucial */
   const groupBy = !columnInfo?.is_pkey && columnInfo?.udt_name !== "uuid";
-  const items = await db[tableName]?.find?.(finalFilter, { select , limit, having, groupBy }) ?? [];
+  const skipSearch = isFruitlessSearch(term, columnInfo);
+  const items = skipSearch? [] : await db[tableName]?.find?.(finalFilter, { select , limit, having, groupBy }) ?? [];
   const result = computedCol? items.map(d => ({ 
     ...d,
     prgl_term_highlight: {
@@ -85,6 +86,107 @@ export const getRows = async (args: Args, limit = 3, matchStart = false) => {
   })) : items;
   return { result, isAggregate };
 }
+
+/**
+ * Check if search is pointless. For example if searching for a characters in a numeric column
+ */
+const isFruitlessSearch = (term: string, columnInfo: Pick<ValidatedColumnInfo, "udt_name"> | undefined) => {
+  if(!columnInfo) return false;
+  const isNumeric = _PG_numbers.some(v => v === columnInfo.udt_name);
+  if(isNumeric){
+    /** Is searching for negative numbers */
+    if(term === "-"){
+      return false;
+    }
+    const isInteger = ["int2", "int4", "int8"].includes(columnInfo.udt_name);
+    const termAsNumber = Number(term);
+    if(isInteger){
+      if(!Number.isInteger(termAsNumber)){
+        return true;
+      }
+    } else {
+      /** Is searching for fractional numbers */
+      if(term === "."){
+        return false;
+      }
+      if(!Number.isFinite(termAsNumber)){
+        return true;
+      }
+    }
+  }
+
+  const isDate = columnInfo.udt_name.startsWith("timestamp") || columnInfo.udt_name === "date";
+  if(isDate){
+
+    const containsOnlyNumbersOrSymbols = term.split("").every(c => !isNaN(Number(c)) || c === "-" || c === ":" || c === " ");
+    if(containsOnlyNumbersOrSymbols){
+      return false;
+    }
+    const englishFormatter = { 
+      weekDay: new Intl.DateTimeFormat("en", { weekday: "long" }).format,
+      month: new Intl.DateTimeFormat("en", { month: "long" }).format,
+    };
+    const clientFormatter = { 
+      weekDay: new Intl.DateTimeFormat(navigator.language, { weekday: "long" }).format,
+      month: new Intl.DateTimeFormat(navigator.language, { month: "long" }).format,
+    };
+    const weekdays = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(2024, 0, i + 1); 
+      return [
+        englishFormatter.weekDay(date),
+        clientFormatter.weekDay(date),
+      ]
+    }).flat();
+    const months = Array.from({ length: 12 }, (_, i) => {
+      const date = new Date(2024, i, 1); 
+      return [
+        englishFormatter.month(date),
+        clientFormatter.month(date),
+      ]
+    }).flat();
+    if(![...weekdays, ...months].some(name => name.toLowerCase().includes(term.toLowerCase()))){
+      return true;
+    }
+  }
+}
+const testCases: {
+  term: string;
+  columnInfo: Pick<ValidatedColumnInfo, "udt_name">;
+  expected: boolean;
+}[] = [
+  {
+    term: "1",
+    columnInfo: { udt_name: "int4" },
+    expected: false,
+  },
+  {
+    term: "1.1",
+    columnInfo: { udt_name: "int4" },
+    expected: true,
+  },
+  {
+    term: "1.1",
+    columnInfo: { udt_name: "float4" },
+    expected: false,
+  },
+  {
+    term: "jebruary",
+    columnInfo: { udt_name: "date" },
+    expected: true,
+  },
+  {
+    term: "february",
+    columnInfo: { udt_name: "date" },
+    expected: false,
+  },
+];
+testCases.forEach(({ term, columnInfo, expected }) => {
+  const actual = isFruitlessSearch(term, columnInfo) ?? false;
+  if(actual !== expected){
+    console.error("isFruitlessSearch failed", { term, columnInfo, expected, actual });
+    throw new Error("isFruitlessSearch failed");
+  }
+});
 
 
 export const getSmartSearchRows = async (args: Args): Promise<SmartSearchResultRows> => {

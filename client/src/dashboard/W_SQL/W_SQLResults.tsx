@@ -24,7 +24,7 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
     pageSize, onSort, onResize, isSelect, onPageChange, onPageSizeChange
   } = props;
   const o: WindowData<"sql">["options"] = w.options;
-  const { commandResult = undefined, rowCount = undefined, info = undefined } = activeQuery?.state === "ended"? activeQuery : {};
+  const { commandResult = undefined, rowCount = undefined, info = undefined, totalRowCount } = activeQuery?.state === "ended"? activeQuery : {};
   const hideResults = !childWindow && (
     o.hideTable && !notices && !notifEventSub || !rows.length && !sqlResult && activeQuery?.state !== "running"
   );
@@ -32,7 +32,9 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
   if(activeQuery?.state === "running" && !rows.length){
     return null;
   }
+  const { renderMode = "table", maxCharsPerCell } = w.sql_options
 
+  const paginatedRows = renderMode === "table"? rows.slice(page * pageSize, (page + 1) * pageSize) : rows;
   return <div className={
     "W_SQLResults flex-col oy-auto relative bt b-color " + 
     (commandResult? " f-0 " : " f-1 ") + 
@@ -41,15 +43,15 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
     {notices ? <div className="p-1 ws-pre text-1">{notices.slice(0).map(n => JSON.stringify(n, null, 2)).join("\n")}</div> :
       commandResult ? <div className="p-1 ">{commandResult}</div> :
       childWindow ? childWindow :
-      w.sql_options.renderMode === "csv"?
+      renderMode === "csv"?
         <CSVRender cols={cols} rows={rows} /> :
-        w.sql_options.renderMode === "JSON"?
+      renderMode === "JSON"?
         <CodeEditor 
           language="json" 
           value={JSON.stringify(rows.map(rowValues => cols.reduce((a, v, i) => ({ ...a, [v.name]: rowValues[i] }), {})), null, 2)} 
         /> :
         <Table
-          maxCharsPerCell={w.sql_options.maxCharsPerCell || 1000}
+          maxCharsPerCell={maxCharsPerCell || 1000}
           sort={sort}
           onSort={onSort}
           showSubLabel={true}
@@ -67,7 +69,7 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
                 table: undefined,
                 tables, 
                 barchartVals: undefined,
-                maxCellChars: w.sql_options.maxCharsPerCell || 1000,
+                maxCellChars: maxCharsPerCell || 1000,
                 maximumFractionDigits: 12,
               }),
               onResize: async (width) => {
@@ -82,7 +84,7 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
               }
             }))
           }
-          rows={rows.slice(page * pageSize, (page + 1) * pageSize)}
+          rows={paginatedRows}
           style={{ flex: 1, boxShadow: "unset" }}
           tableStyle={{ borderRadius: "unset", border: "unset", ...((info?.command || "").toLowerCase() === "explain"? { whiteSpace: "pre" } : {} ) }}
           pagination={!isSelect? undefined : {

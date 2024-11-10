@@ -6,7 +6,8 @@ const path = require('path');
 const webpack = require('webpack');
 const APP_DIR = path.resolve(__dirname, '../src');
 const MONACO_DIR = path.resolve(__dirname, '../node_modules/monaco-editor');
-
+const { saveMdiIcons } = require('../setup-icons');
+saveMdiIcons();
 const PRODUCTION = process.env.NODE_ENV === "production";
 
 const getLoader = () => {

@@ -4,17 +4,18 @@ import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";
 import { Label } from "../../components/Label";
 import PopupMenu from "../../components/PopupMenu";
-import type { Link } from "../Dashboard/dashboardUtils";
+import type { Link, LinkSyncItem } from "../Dashboard/dashboardUtils";
 import type { LayerQuery, W_MapProps } from "../W_Map/W_Map";
 import type { ProstglesTimeChartLayer, ProstglesTimeChartProps } from "../W_TimeChart/W_TimeChart";
 import { AddChartLayer } from "./AddChartLayer";
 import { LayerColorPicker } from "./LayerColorPicker";
 import { LayerFilterManager } from "./LayerFilterManager";
 import { TimeChartLayerOptions } from "./TimeChartLayerOptions";
-import { FlexCol } from "../../components/Flex";
+import { FlexCol, FlexRowWrap } from "../../components/Flex";
 import { MapOpacityMenu } from "../W_Map/MapOpacityMenu";
 import { MapBasemapOptions } from "../W_Map/MapBasemapOptions"; 
 import { OSMLayerOptions } from "./OSMLayerOptions";
+import { isDefined } from "../../utils";
 
 export type MapLayerManagerProps = 
 (
@@ -35,10 +36,10 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
   const isMap = type === "map";
   
   const layerQueries = (props.layerQueries ?? []) as (ProstglesTimeChartLayer | LayerQuery)[];
+  const sortedLayerQueries = useSortedLayerQueries({ layerQueries, myLinks })
   const content = <FlexCol className="gap-p5">
     <div className="flex-col gap-1">
-      {layerQueries.sort((a, b) => a._id.localeCompare(b._id))
-        .map((lqRaw)=> {
+      {sortedLayerQueries.map((lqRaw)=> {
           const lq = lqRaw as LayerQuery | ProstglesTimeChartLayer;
           const thisLink = myLinks.find(l => l.id === lq.linkId);
           if(!thisLink || thisLink.options.type === "table") return null;
@@ -66,9 +67,9 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
           };
           const isLocal = thisLink.w1_id === thisLink.w2_id;
           const layerDesc = lTypeInfo.type === "Table"? `${lTypeInfo.path?.at(-1)?.table || lTypeInfo.value} (${column})` : lTypeInfo.value
-          return <div 
+          return <FlexRowWrap 
             key={lqRaw._id} 
-            className={`LayerQuery bg-color-0 ai-center flex-row-wrap gap-1 ta-left b b-color rounded ${window.isMobileDevice? "p-p5" : "p-1"}`}
+            className={`LayerQuery bg-color-0 ai-center gap-1 ta-left b b-color rounded ${window.isMobileDevice? "p-p5" : "p-1"}`}
           >
             <LayerColorPicker 
               title={layerDesc}
@@ -94,7 +95,6 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
                 </div>
               </Label>
             }
-
 
             <TimeChartLayerOptions 
               w={w as any} 
@@ -135,7 +135,7 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
               }} 
               iconPath={mdiClose}
             />
-          </div>
+          </FlexRowWrap>
         })}
 
       <AddChartLayer { ...props } />
@@ -168,4 +168,24 @@ export const ChartLayerManager = (props: MapLayerManagerProps) => {
     render={() => content}
   />
 
+}
+
+type Args<T extends ProstglesTimeChartLayer | LayerQuery> = {
+  layerQueries: T[];
+  myLinks: LinkSyncItem[];
+}
+export const useSortedLayerQueries = <T extends ProstglesTimeChartLayer | LayerQuery> ({ layerQueries, myLinks }: Args<T>) => {
+  return layerQueries
+    .map(lq => {
+      const link = myLinks.find(l => l.id === lq.linkId);
+      if(!link) return undefined
+      return {
+        ...lq,
+        link
+      }
+    })
+    .filter(isDefined)
+    .sort((a, b) => {
+      return (new Date(a.link.created ?? 0)).getTime() - (new Date(b.link.created ?? 0)).getTime()
+    });
 }

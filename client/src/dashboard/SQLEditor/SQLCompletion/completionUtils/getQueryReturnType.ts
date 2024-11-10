@@ -7,12 +7,24 @@ import { tryCatch } from "prostgles-types";
  */
 const getQueryReturnType = async (query: string, sql: SQLHandler): Promise<ColType[]> => {
 
+  /** Check if it's a data returning statement to avoid useless error logs */
+  const res = await sql(`
+      EXPLAIN
+      ${query};      
+    `, 
+    {}, 
+    { returnType: "default-with-rollback" }
+  ).catch(_e => false);
+
+  if(!res){
+    return [];
+  }
+
   const viewName = "prostgles_temp_view_getQueryReturnType" + Date.now();
   const result = await sql(`
-
       CREATE OR REPLACE TEMP VIEW "${viewName}" AS 
       ${query};
-    
+
       SELECT 
         --column_name, 
         format('%I', column_name) as column_name,
@@ -21,6 +33,7 @@ const getQueryReturnType = async (query: string, sql: SQLHandler): Promise<ColTy
         current_schema() as schema
       FROM information_schema.columns i 
       WHERE i.table_name = '${viewName}'
+      
     `, 
     {}, 
     { returnType: "default-with-rollback" }

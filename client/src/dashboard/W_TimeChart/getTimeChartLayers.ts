@@ -16,7 +16,11 @@ type Args = {
 
 export const getTimeChartLayer = ({ links, link, windows, active_row, w }: Args & { link: LinkSyncItem }): ProstglesTimeChartLayer[] => {
   const l = link;
-  const tbl = windows.find(_w => (_w.type === "table" || _w.type === "sql") && _w.id !== w.id && [l.w1_id, l.w2_id].includes(_w.id)) as WindowSyncItem<"table"> | undefined;
+  const wTable = windows.find(_w => 
+    (_w.type === "table" || _w.type === "sql") && 
+    _w.id !== w.id && [l.w1_id, l.w2_id].includes(_w.id)
+  ) as WindowSyncItem<"table"> | WindowSyncItem<"sql"> | undefined;
+  
   const lOpts = l.options;
   if(lOpts.type !== "timechart"){
     throw "Not expected"
@@ -34,7 +38,7 @@ export const getTimeChartLayer = ({ links, link, windows, active_row, w }: Args 
       updateOptions: (newOptions) => l.$update({ options: { ...lOpts, ...newOptions } }), 
     } as const;
 
-    if(tbl?.type === "table" || lOpts.localTableName){
+    if(wTable?.type === "table" || lOpts.localTableName){
       // const activeRowFilter = getActiveRowFilter(q.id);
 
       if(lOpts.localTableName){
@@ -49,8 +53,8 @@ export const getTimeChartLayer = ({ links, link, windows, active_row, w }: Args 
         } satisfies ProstglesTimeChartLayer;
       }
 
-      if(!tbl){
-        throw "Unexpected";
+      if(!wTable || !wTable.table_name){
+        throw "Unexpected: wTable or table_name missing";
       }
 
       /** Map will always join to the same table name. Use that table */
@@ -59,7 +63,7 @@ export const getTimeChartLayer = ({ links, link, windows, active_row, w }: Args 
       const layer: ProstglesTimeChartLayer = {
         ...commonOpts,
         type: "table",
-        tableName: tbl.table_name,
+        tableName: wTable.table_name,
         path: lOpts.joinPath,
         // activeRowFilter: jf.activeRowFilter,
         tableFilter: undefined,// getSmartGroupFilter(tbl.filter || []),
@@ -68,12 +72,15 @@ export const getTimeChartLayer = ({ links, link, windows, active_row, w }: Args 
       }
     
       return layer;
-    } else if(tbl) {
-      const latestW = tbl.$get();
+    } else if(wTable) {
+      if((wTable as any).type !== "sql" || !lOpts.sql){
+        throw "Unexpected: wTable or table_name missing";
+      }
+      // const latestW = tbl.$get();
       const layer: ProstglesTimeChartLayer =  {
         ...commonOpts,
         type: "sql",
-        sql: lOpts.fromSelected? latestW.selected_sql : latestW.sql,
+        sql: lOpts.sql, //fromSelected? latestW.selected_sql : latestW.sql,
         color
       }
       

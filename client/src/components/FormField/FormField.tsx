@@ -9,7 +9,7 @@ import List from "../List";
 import Checkbox from "../Checkbox"; 
 import { mdiAlertCircleOutline, mdiClose, mdiFullscreen } from "@mdi/js";
 import { InfoRow } from "../InfoRow";
-import type { CodeEditorProps } from "../../dashboard/CodeEditor/CodeEditor";
+import type { CodeEditorJsonSchema, CodeEditorProps } from "../../dashboard/CodeEditor/CodeEditor";
 import CodeEditor from "../../dashboard/CodeEditor/CodeEditor";
 import { generateUniqueID } from "../FileInput/FileInput";
 import { onFormFieldKeyDown } from "./onFormFieldKeyDown";
@@ -58,8 +58,8 @@ export type FormFieldProps = TestSelectors & {
   accept?: string;
   asTextArea?: boolean;
   asJSON?: { 
-    schemas?: { id: string; schema: any; }[]; 
-    options?: CodeEditorProps
+    schemas?: CodeEditorJsonSchema[]; 
+    options?: Omit<CodeEditorProps, "language">
   };
   rightContentAlwaysShow?: boolean;
   rightIcons?: React.ReactNode;
@@ -453,8 +453,10 @@ export default class FormField extends React.Component<FormFieldProps, FormField
           automaticLayout: true,
         }}  
         value={value} 
-        language="json" 
-        jsonSchemas={asJSON.schemas}
+        language={{ 
+          lang: "json",
+          jsonSchemas: asJSON.schemas
+        }}
         onChange={(readOnly || disabledInfo || !this.props.onChange)? undefined : v => {
           try {
             const jsonValue = JSON.parse(v);
@@ -514,7 +516,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
 
     if(this.state.fullScreen && asJSON){
       return <Popup
-        title={label}
+        title={typeof label === "string"? label : undefined}
         positioning="fullscreen"
         onClose={() => {
           this.setState({ fullScreen: false });

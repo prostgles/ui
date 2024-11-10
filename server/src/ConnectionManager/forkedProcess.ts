@@ -13,6 +13,7 @@ const initForkedProc = () => {
   let prglParams: OnReadyParamsBasic | undefined;
 
   const setProxy = (params: OnReadyParamsBasic) => {
+    _prglParams = params as any;
     prglParams ??= new Proxy(params, {
       get(target, prop: keyof OnReadyParamsBasic, receiver) {
         return _prglParams![prop];
@@ -63,7 +64,6 @@ const initForkedProc = () => {
             } else {
               cb(undefined, "ready");
             }
-            _prglParams = params as any;
             setProxy(params as any);
           }, 
         });

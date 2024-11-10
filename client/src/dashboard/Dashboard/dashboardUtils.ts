@@ -16,7 +16,10 @@ import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
 import type { OmitDistributive } from "../../../../commonTypes/utils";
 import type { Extent, MapExtentBehavior } from "../Map/DeckGLMap";
 import type { ColumnConfig, ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
-
+const getRandomElement = <Arr,>(items: Arr[]): { elem: Arr | undefined, index: number } => {
+  const randomIndex = Math.floor(Math.random() * items.length);
+  return { elem: items[randomIndex], index: randomIndex };
+}
 type ColorFunc = {
   (opacity: number, target: "deck"): number[];
   (opacity?: number, target?: "css"): string;
@@ -30,6 +33,12 @@ export const PALETTE = {
   c4: { get: (opacity = 1, target: "deck" | "css" = "css") => { const v = [131,  56, 236, target === "css"? opacity : Math.round(opacity * 255)];  return (target === "deck")? v : `rgba(${v.join(", ")})` as any} },
   c5: { get: (opacity = 1, target: "deck" | "css" = "css") => { const v = [203, 149,   0, target === "css"? opacity : Math.round(opacity * 255)];  return (target === "deck")? v : `rgba(${v.join(", ")})` as any} },
 } as const;
+
+export const getRandomColor = (opacity = 1, target: "deck" | "css" = "css", usedColors?: any[]) => {
+  const results = Object.values(PALETTE).map(p => p.get(opacity, target));
+  const nonUsedColors = results.filter(c => !usedColors?.some(uc => typeof uc === "string"? uc === c : uc.join() === c.join()));
+  return getRandomElement(nonUsedColors).elem ?? results[0];
+}
 
 export type ChartType = "table" | "map" | "timechart" | "sql" | "card" | "method";
 
@@ -53,10 +62,10 @@ export type Link = DBSSchema["links"];
  
 export type NewChartOpts = {
   name: string;
-  linkOpts: OmitDistributive<ChartLink, "color" | "colorKey" >;
+  linkOpts: OmitDistributive<ChartLink, "color" | "colorKey">;
 }
 
-export type OnAddChart = ((args: NewChartOpts) => void) | undefined
+export type OnAddChart = ((args: NewChartOpts) => void)
 
 export type Query = {
   id: string;
@@ -115,6 +124,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
     args?: Record<string, any>;
     disabledArgs?: string[];
     hiddenArgs?: string[];
+    showCode?: boolean;
   } :
   CType extends "card"? { 
     // sortableFields: string[];

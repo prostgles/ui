@@ -9,27 +9,29 @@ import ErrorComponent from "../../components/ErrorComponent";
 import Loading from "../../components/Loading";
 import PopupMenu from "../../components/PopupMenu";
 import type { Command } from "../../Testing";
-import { MILLISECOND } from "../Charts";
 import type { DateExtent } from "../Charts/getTimechartBinSize";
-import { MainTimeBinSizes } from "../Charts/getTimechartBinSize";
+import { getMainTimeBinSizes } from "../Charts/getTimechartBinSize";
 import type { TimeChartLayer } from "../Charts/TimeChart";
 import { TimeChart } from "../Charts/TimeChart";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
-import type { DeltaOfData } from "../RTComp";
 import RTComp from "../RTComp";
 import type { LayerBase } from "../W_Map/W_Map";
 import type { ActiveRow } from "../W_Table/W_Table";
 import Window from "../Window";
 import { ChartLayerManager } from "../WindowControls/ChartLayerManager";
-import { ColorByLegend } from "../WindowControls/ColorByLegend";
 import { AddTimeChartFilter } from "./AddTimeChartFilter";
-import { getTimeChartData, getTimeChartSelectDate } from "./getTimeChartData";
+import { fetchAndSetTimechartLayerData } from "./fetchAndSetTimechartLayerData";
+import { getTimeChartSelectDate } from "./getTimeChartData";
 import { getTimeChartLayerQueries } from "./getTimeChartLayers";
 import type { TimeChartLayerWithBin } from "./getTimeChartLayersWithBins";
+import { W_TimeChartLayerLegend } from "./W_TimeChartLayerLegend";
 import type { TimeChartBinSize } from "./W_TimeChartMenu";
 import { ProstglesTimeChartMenu } from "./W_TimeChartMenu";
+import { FlexRow } from "../../components/Flex";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 
+type ChartColumn = Extract<DBSSchema["links"]["options"], { type: "timechart" }>;
 export type ProstglesTimeChartLayer = Pick<LayerBase, "_id" | "linkId" | "disabled"> & {
   
   dateColumn: string;
@@ -39,7 +41,7 @@ export type ProstglesTimeChartLayer = Pick<LayerBase, "_id" | "linkId" | "disabl
    * If none then COUNT(*) will be used
    */
   statType: {
-    funcName: string;
+    funcName: Required<ChartColumn["columns"][number]>["statType"]["funcName"];
     numericColumn: string;
   } | undefined;
   color?: string;
@@ -73,8 +75,7 @@ export type ProstglesTimeChartStateLayer = (Omit<TimeChartLayer, "yScale"> & {
   })
 
 export type ProstglesTimeChartState = {
-  loading: boolean;
-  loadingLayers: boolean;
+  loading: boolean; 
   wSync: any;
   error?: any;
   layers: ProstglesTimeChartStateLayer[];
@@ -106,8 +107,7 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
   state: ProstglesTimeChartState = {
     resetExtent: 0,
     xExtent: undefined,
-    visibleDataExtent: undefined,
-    loadingLayers: false,
+    visibleDataExtent: undefined, 
     loading: false,
     wSync: null,
     layers: [],
@@ -131,9 +131,9 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
     this.state.wSync?.$unsync?.();
   }
 
-  onDelta = async (dp: DeltaOfData<ProstglesTimeChartProps>, ds: DeltaOfData<ProstglesTimeChartState>, dd: DeltaOfData<D>) => {
+  onDelta = async (dp , ds , dd ) => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    const deltaKeys = getKeys({ ...dp, ...ds, ...dd } || {});
+    const deltaKeys = getKeys({ ...dp, ...ds, ...dd });
     const filterChanged = dd?.w?.options && "filter" in dd.w.options;
     if(
       filterChanged ||
@@ -181,108 +181,7 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
   }> = {};
 
   dataStr?: string;
-  setLayerData = async () => {
-    this.setState({ loadingData: true });
-    try {
-      const d = await getTimeChartData.bind(this)();
-      if(d){
-        const { error, layers: rawLayers, erroredLayers } = d;
-        const binSize = d.binSize? MainTimeBinSizes[d.binSize].size : undefined;
-        const layers = rawLayers.map(l => {
-          const sortedParsedData = l.data.map(d => {
-
-            return {
-              ...d,
-              value: +d.value,
-              date: +new Date(d.date)
-            }
-          }).sort((a, b) => a.date - b.date);
-
-          /** Add empty bins */
-          let filledData = sortedParsedData.slice(0, 0);
-          const { missingBins = "ignore", renderStyle = "line" } = this.d.w?.options ?? {};
-          if(binSize){
-            if(missingBins === "ignore" || renderStyle !== "line"){
-              filledData = sortedParsedData.slice(0);
-            } else if(missingBins === "show nearest"){
-              filledData = sortedParsedData.slice(0);
-              for(let i = sortedParsedData.length - 1; i >= 0; i--){
-                const d = sortedParsedData[i];
-                const nextD = sortedParsedData[i+1];
-
-                if(d && nextD){
-                  const gapSize = nextD.date - d.date;
-                  const gapSizeInBins = Math.floor(gapSize / binSize);
-                  const halfGapSizeInBins = Math.floor(gapSizeInBins/2);
-                  if(gapSize > binSize + MILLISECOND){
-                    filledData.splice(i+1, 0, {
-                      value: nextD.value,
-                      date: nextD.date - (halfGapSizeInBins * binSize),
-                    });
-                    /** If not exactly in the middle then also add the left point */
-                    if(gapSizeInBins%2 !== 0){
-                      const leftGapSizeInBins = Math.floor(gapSizeInBins/2);
-                      filledData.splice(i, 0, {
-                        value: d.value,
-                        date: d.date + (leftGapSizeInBins * binSize),
-                      });
-                    }
-                  }
-                }
-              }
-            } else {
-              sortedParsedData.forEach(d=> {
-    
-                let preLastItem = filledData.at(-2);
-                let lastItem = filledData.at(-1);
-                if(!lastItem){
-                  filledData.push(d);
-                } else {
-                  while(d.date - lastItem!.date > binSize + MILLISECOND) {
-                    const emptyItem = {
-                      value: 0,
-                      date: lastItem!.date + binSize,
-                    }
-                    /** Update last point if drawing a straigh line to avoid too many points */
-                    if(lastItem && preLastItem && Number(preLastItem.value) === 0 && Number(lastItem.value) === 0){
-                      lastItem.date = emptyItem.date;
-                    } else {
-                      filledData.push(emptyItem);
-                    }
-                    preLastItem = filledData.at(-2);
-                    lastItem = filledData.at(-1);
-                  }
-                  filledData.push(d);
-                }
-              });
-            }
-          }
-
-          if(this.ref && this.chartRef){
-            setTimeout(() => {
-              const renderedData = filledData.map(d => {
-                const [x, y] = this.chartRef!.getPointXY({ date: new Date(d.date), value: +d.value }) ?? [];
-                return {
-                  x, y, value: d.value
-                }
-              });
-              (this.ref as any)._renderedData = renderedData;
-
-            }, 0);
-          }
-          
-          return {
-            ...l,
-            data: filledData,
-          }
-        });
-
-        this.setState({ loadingData: false, loadingLayers: false, loading: false, binSize: d.binSize, error, layers, erroredLayers });
-      }
-    } catch(error){
-      this.setState({ loading: false, error, loadingData: false })
-    }
-  }
+  setLayerData = fetchAndSetTimechartLayerData.bind(this);
 
   settingExtent: any;
   private visibleDataExtent?: DateExtent;
@@ -328,8 +227,7 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
   render(){
     const {  
       layers = [], 
-      erroredLayers,
-      loadingLayers, 
+      erroredLayers, 
       error: fetchingError, 
       loadingData,
       addingFilter = false,
@@ -346,7 +244,7 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
 
     let errorPopup;
 
-    const groupedByLayer = this.layerQueries.find(lq => !lq.disabled && lq.groupByColumn && lq.type === "table");
+    const { layerQueries } = this;
 
     const error = fetchingError ?? (erroredLayers?.[0]?.hasError && erroredLayers[0].error);
     if(error){
@@ -369,15 +267,15 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
         this.setState({ visibleDataExtent: undefined, viewPortExtent: undefined }) 
       }
     } 
-    const binSize = MainTimeBinSizes[this.state.binSize as string]?.size;
+    const binSize = getMainTimeBinSizes()[this.state.binSize as string]?.size;
     const onCancelActiveRow = () => onClickRow(undefined, "", undefined)
-    const infoSection = <div 
-      className="W_TimeChart_TopBar flex-row relative f-1 m-auto " 
+    const infoSection = <FlexRow 
+      className="W_TimeChart_TopBar gap-0 relative f-1 m-auto " 
       style={{ 
         position: "absolute", 
         top:"0", 
         left:"0", 
-        right: "240px", 
+        // right: "240px", 
         /* Ensure it doesn't cover the tooltip active row brush */
         zIndex: 1 
       }} 
@@ -387,15 +285,15 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
         w={w} 
         type="timechart" 
         asMenuBtn={{}} 
-        layerQueries={this.layerQueries} 
+        layerQueries={layerQueries} 
       />
-      {loadingLayers && 
+      {/* {loadingLayers && 
         <Loading 
           className="m-auto f-1" 
           delay={1500} 
           variant="cover" 
         />
-      }
+      } */}
       {errorPopup}
       <Btn 
         title="Reset extent" 
@@ -411,18 +309,15 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
           })
         }
       />
-      {groupedByLayer && 
-        <ColorByLegend
-          { ...this.props}
-          layers={this.state.layers}
-          layerLinkId={groupedByLayer.linkId}
-          groupByColumn={groupedByLayer.groupByColumn!}
-          onChanged={() => {
-            this.setData({ dataAge: Date.now() })
-          }}
-        />
-      }
-    </div>
+      <W_TimeChartLayerLegend
+        {...this.props}
+        layers={layers}
+        layerQueries={this.layerQueries}
+        onChanged={() => {
+          this.setData({ dataAge: Date.now() })
+        }}
+      />
+    </FlexRow>
 
     const content = <>
       <div 
@@ -442,7 +337,10 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
         }} 
       >
         {loadingData && this.d.w?.options.refresh?.type !== "Realtime" && 
-          <Loading variant="cover" delay={1500} />
+          <Loading 
+            variant="cover" 
+            delay={1500} 
+          />
         }
         {infoSection}
 
