@@ -579,9 +579,15 @@ const setActiveCodeBlock = async function (this: SQLEditor, e: editor.ICursorPos
   /** When just moving the cursor, trigger only if cursor exited currentCodeBlock  
    * Only if currentCodeBlock doesn't have gaps or semicolons
   */
-  if(e && this.currentCodeBlock && !this.currentCodeBlock.text.split(EOL).filter(v => !v.trim()).length && !this.currentCodeBlock.text.trim().slice(0, -1).includes(";")){
-    const { startLine, endLine } = this.currentCodeBlock;
-    if(e.position.lineNumber >= startLine && e.position.lineNumber <= endLine){
+  if(
+    e && 
+    this.currentCodeBlock && 
+    !this.currentCodeBlock.text.split(EOL).filter(v => !v.trim()).length && 
+    !this.currentCodeBlock.text.trim().slice(0, -1).includes(";")
+  ){
+    const { startLine, endLine, text } = this.currentCodeBlock;
+    const codeBlockTextDidNotChange = value.slice(this.currentCodeBlock.blockStartOffset).startsWith(text)
+    if(codeBlockTextDidNotChange && e.position.lineNumber >= startLine && e.position.lineNumber <= endLine){
       return;
     }
   }
@@ -593,10 +599,11 @@ const setActiveCodeBlock = async function (this: SQLEditor, e: editor.ICursorPos
     this.currentCodeBlock = codeBlock;
     this.props.onDidChangeActiveCodeBlock?.(this.currentCodeBlock);
 
-    const existingDecorations = editor.getLineDecorations(0)?.map(d => d.id) ?? [];
+    const existingDecorations = value.split(EOL).flatMap((_, idx) => 
+      editor.getLineDecorations(idx)?.map(d => d.id) ?? []
+    );
     editor.removeDecorations(existingDecorations);
     this.currentDecorations?.clear();
-
     this.currentDecorations = await highlightCurrentCodeBlock(editor, codeBlock);
   }
 }

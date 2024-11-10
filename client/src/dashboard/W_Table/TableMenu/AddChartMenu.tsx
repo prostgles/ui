@@ -38,7 +38,7 @@ export const AddChartMenu = (props: P) => {
   const isMicroMode = size === "micro";
 
   const chartCols = usePromise(async () => {
-    const res = w.type === "table"? getChartCols(w, tables) : await getChartColsFromSql(propsSql ?? w.sql, sqlHandler)
+    const res = getChartCols(w.type === "table"?  { type: "table", w, tables }: { type: "sql", w, sqlHandler, sql: propsSql ?? w.sql });
     return res
   }, [propsSql, sqlHandler, tables, w]);
   if(!chartCols) return null;
@@ -46,11 +46,18 @@ export const AddChartMenu = (props: P) => {
 
   const tableName = w.table_name;
   const onAdd = (
-    linkOpts: { type: "map" | "timechart"; columns: string[]; },
+    linkOpts: { type: "map" | "timechart"; columns: ChartColumn[]; },
     joinPath: ParsedJoinPath[] | undefined,
-    numericCols: ColInfo[] = []
   ) => {
-    const firstNumericColumn = numericCols.find(c => _PG_numbers.includes(c.udt_name as any))?.name;
+    const otherColumns = linkOpts.columns.reduce((a, v) => {
+      v.otherColumns.forEach(vc => {
+        if(!a.some(ac => ac.name === vc.name)) {
+          a.push(vc);
+        }
+      });
+      return a;
+    }, [] as ColInfo[]).map(({ name, udt_name }) => ({ name, udt_name }));
+    const firstNumericColumn = otherColumns.find(c => _PG_numbers.includes(c.udt_name as any))?.name;
     const columnList = `(${linkOpts.columns.join()})`;
     const name = joinPath? `${[ tableName, ...joinPath.slice(0).map(p => p.table)].join(" > ")} ${columnList}` : `${tableName || ""} ${columnList}`;
     const usedColors = myLinks.flatMap(l => l.options.type !== "table"? l.options.columns.map(c => c.colorArr) : undefined);
@@ -61,8 +68,9 @@ export const AddChartMenu = (props: P) => {
       linkOpts: {
         ...(type === "timechart"? {
           type, 
+          otherColumns,
           columns: [{
-            name: linkOpts.columns[0]!,
+            name: linkOpts.columns[0]!.name,
             colorArr,
             statType: firstNumericColumn? { 
               funcName: "$avg", 
@@ -71,7 +79,7 @@ export const AddChartMenu = (props: P) => {
           }]
         } : {
           type,
-          columns: linkOpts.columns.map((name, i) => ({ 
+          columns: linkOpts.columns.map(({ name }, i) => ({ 
             name, 
             colorArr
           }))
@@ -84,7 +92,7 @@ export const AddChartMenu = (props: P) => {
 
   const charts: {
     cols: ChartColumn[],
-    onAdd: (cols: string[], path: ParsedJoinPath[] | undefined) => any,
+    onAdd: (cols: ChartColumn[], path: ParsedJoinPath[] | undefined) => any,
     label: "Map" | "Timechart";
     iconPath: string;
   }[] = [
@@ -159,7 +167,7 @@ export const AddChartMenu = (props: P) => {
           }))}
           onChange={colNameOrLabel => {
             const col = c.cols.find(col => col.type === "joined"? col.label === colNameOrLabel : col.name === colNameOrLabel);
-            c.onAdd([col!.name], col?.type === "joined"? col.path : undefined);
+            c.onAdd([col!], col?.type === "joined"? col.path : undefined);
           }}
         />;
       }
@@ -177,47 +185,10 @@ export const AddChartMenu = (props: P) => {
         }
         {...btnProps}
         onClick={() => { 
-          c.onAdd(c.cols.map(c => c.name), undefined) 
+          c.onAdd(c.cols, undefined) 
         }} 
       />;
 
     }).filter(isDefined)}
   </>  
-}
-
-
-type AddChartMenuFromSqlProps = {
-  onAddChart: OnAddChart;
-  sql: string;
-  sqlHandler: SQLHandler;
-};
-
-export const AddChartMenuFromSql = ({ onAddChart, sql, sqlHandler }: AddChartMenuFromSqlProps) => {
-  const chartCols = usePromise(async () => {
-    return getChartColsFromSql(sql, sqlHandler)
-  }, [sql, sqlHandler]);
-
-  if(!chartCols) return null;
-
-}
-
-export const getChartColsFromSql = async (sql: string, sqlHandler: SQLHandler) => {
-  const trimmedSql = sql.trim();
-  const { colTypes = [] } = await getTableExpressionReturnType(trimmedSql, sqlHandler);
-  const _allCols: ColInfo[] = colTypes.map(c => ({ 
-    ...c,
-    name: c.column_name, 
-    udt_name: c.udt_name as any, 
-  }));
-  const allCols: ChartColumn[] = _allCols.map(c => ({ 
-    ...c,
-    type: "normal",
-    numericCols: _allCols.filter(c => !isGeoCol(c) && !isDateCol(c)),
-  }));
-
-  return {
-    sql: trimmedSql, 
-    geoCols: allCols.filter(c => isGeoCol(c)),
-    dateCols: allCols.filter(c => isDateCol(c)),
-  }
 }

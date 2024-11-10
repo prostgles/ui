@@ -1,6 +1,6 @@
 import type { ColType } from "../../../../../../commonTypes/utils";
 import type { SQLHandler } from "prostgles-types";
-import { tryCatch } from "prostgles-types";
+import { asName, tryCatch } from "prostgles-types";
 
 /**
  * Get statement return type ensuring any dangerous commands are not commited
@@ -27,7 +27,8 @@ const getQueryReturnType = async (query: string, sql: SQLHandler): Promise<ColTy
 
       SELECT 
         --column_name, 
-        format('%I', column_name) as column_name,
+        column_name,
+        format('%I', column_name) as escaped_column_name,
         data_type, 
         udt_name, 
         current_schema() as schema
@@ -58,6 +59,7 @@ const getQueryReturnTypeForDuplicateCols = async (query: string, sql: SQLHandler
   const cols: ColType[] = result.fields.map(f => {
     return {
       column_name: f.name,
+      escaped_column_name: asName(f.name),
       data_type: f.dataType,
       udt_name: f.dataType,
       schema: "public"

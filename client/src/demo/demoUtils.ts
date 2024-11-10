@@ -1,5 +1,4 @@
 
-import type { SQLHandler } from "prostgles-types";
 import { type Command, getCommandElemSelector } from "../Testing";
 import { tout } from "../pages/ElectronSetup";
 
@@ -16,6 +15,9 @@ export const movePointer = async (x: number, y: number) => {
 }
 type GetElemOpts = {
   noSpaceBetweenSelectors?: boolean;
+  /**
+   * Zero based index of the element to click
+   */
   nth?: number;
 }
 export const getElement = <T extends Element>(testId: Command | "", endSelector = "", { noSpaceBetweenSelectors, nth = -1 }: GetElemOpts = {}) => {
