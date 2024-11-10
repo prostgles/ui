@@ -14,9 +14,30 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
 
+    services:
+      postgres:
+        image: postgres:latest
+        ports:
+          - 5432:5432
+        options: > 
+          --health-cmd="pg_isready -U postgres" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+
+    - name: Wait for PostgreSQL to be ready
+      run: |
+        until pg_isready -h localhost -p 5432 -U postgres; do
+          sleep 1
+        done
 
     - name: Set up Docker
       run: |
@@ -25,7 +46,7 @@ jobs:
     - name: Docker build
       shell: bash
       run: |
-        docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres
+        # docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres
         TEST_SCRIPT=$(awk '/```docker-run.sh/{f=1;next} /```/{f=0} f' README.md)
         echo "$TEST_SCRIPT"
         eval "$TEST_SCRIPT"
