@@ -76,6 +76,7 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
         value={getColor(s.condition, i)} 
         label={getConditionLabel(s.condition)}
         variant="legend"
+        btnProps={{ size: "micro" }}
         onChange={newColor => {
           const currColStyle = (!currCol?.style || currCol.style.type !== "Conditional")? undefined : currCol.style
           if(!currColStyle) return;
