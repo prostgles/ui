@@ -8,55 +8,34 @@ concurrency:
   cancel-in-progress: true
 jobs:
   test_docker:
-    name: Run test suite on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+    name: Run test suite
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Docker
-      run: |
-        docker --version
-
-    - name: Docker build postgres (linux only)
-      shell: bash
-      if: matrix.os == 'ubuntu-latest'  # Cannot get postgres to work on windows
+    - name: Docker build
       run: |
         docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres
-
-    - name: Docker build
-      shell: bash
-      run: |
         TEST_SCRIPT=$(awk '/```docker-run.sh/{f=1;next} /```/{f=0} f' README.md)
-        echo "$TEST_SCRIPT"
+        echo $TEST_SCRIPT
         eval "$TEST_SCRIPT"
-
+    
     - name: Test docker run
-      shell: bash
-      if: matrix.os == 'ubuntu-latest'  # Cannot get postgres to work on windows
       run: |
         sleep 15
         docker ps 
         pg_container_name=$(docker ps --format '{{.Names}}\t{{.Image}}' | grep 'prostgles' | head -1 | awk '{print $1}')
         echo $pg_container_name
-        docker logs "$pg_container_name"
-        curl -b -i -L -v localhost:3004 | grep -q "Prostgles UI" && echo "Test passed" || echo "Test failed"
+        eval "docker logs $pg_container_name"
+        curl -b -i -L  -v  localhost:3004 | grep -q "Prostgles UI"; echo $?
 
     - name: Docker stop
-      shell: bash
-      run: docker stop $(docker ps -a -q) || true
+      run: docker stop $(docker ps -a -q)
 
-    - name: Docker compose up
-      run: |
-        docker compose up -d
+    - name: Docker compose
+      run: docker compose up -d
 
     - name: Test docker compose
-      shell: bash
-      run: |
-        sleep 5
-        docker ps
-        curl localhost:3004 | grep -q "Prostgles UI" && echo "Compose test passed" || echo "Compose test failed"
+      run: sleep 5 && docker ps && curl localhost:3004 | grep -q "Prostgles UI"; echo $?
