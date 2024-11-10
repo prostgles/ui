@@ -62,10 +62,10 @@ export const getViewRendererUtils = function(this: ViewRenderer, { prgl, workspa
       // leastUsedColorKey = Object.keys(activeColors).pop()!;
 
     const myLinks = links.filter(l => [l.w1_id, l.w2_id].find(wid => [w1_id, w2_id].includes(wid)));
-    const cLink = myLinks.find(l => l.options.colorArr);
-    const colorOpts = {
-      colorArr: cLink?.options.colorArr ?? PALETTE.c4.get(1, "deck"),
-    } as const;
+    const cLinkColor = myLinks.map(l => l.options.type === "table"? l.options.colorArr : undefined).find(c => c);
+    const colorOpts = l.linkOpts.type === "table"? {
+      colorArr: cLinkColor ?? PALETTE.c4.get(1, "deck"),
+    } : {} as const;
 
     const options: Link["options"] = {
       ...colorOpts,

@@ -4,14 +4,13 @@ import { _PG_numbers, isDefined, type ParsedJoinPath, type SQLHandler } from "pr
 import React from "react";
 import Btn, { type BtnProps } from "../../../components/Btn";
 import Select from "../../../components/Select/Select";
+import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { DBSchemaTablesWJoins, OnAddChart, WindowData } from "../../Dashboard/dashboardUtils";
 import { getRandomColor } from "../../Dashboard/dashboardUtils";
-import { getTableExpressionReturnType } from "../../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
+import { rgbaToString } from "../../W_Map/getMapFeatureStyle";
 import { getRankingFunc } from "../ColumnMenu/JoinPathSelectorV2";
 import type { ChartColumn, ColInfo } from "./getChartCols";
-import { getChartCols, isDateCol, isGeoCol } from "./getChartCols";
-import type { CommonWindowProps } from "../../Dashboard/Dashboard";
-import { rgbaToString } from "../../W_Map/getMapFeatureStyle";
+import { getChartCols } from "./getChartCols";
 
 type P = Pick<CommonWindowProps, "myLinks"> & {
   w: WindowData<"table"> | WindowData<"sql">;
@@ -128,11 +127,12 @@ export const AddChartMenu = (props: P) => {
         }
 
         const matches = linkOpts.type === c.label.toLowerCase() && (
-          w.type === "sql" && sql === linkOpts.sql ||
+          w.type === "sql" && sql?.trim() === linkOpts.sql?.trim() ||
           w.type === "table" && c.cols.some(col => linkOpts.columns.some(c => c.name === col.name))
         );
         if(matches) return linkOpts.columns[0]?.colorArr;
       }).find(isDefined);
+
       const btnProps: BtnProps = {
         title,
         size: size ?? "small",

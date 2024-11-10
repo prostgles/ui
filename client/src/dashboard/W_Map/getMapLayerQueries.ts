@@ -23,7 +23,7 @@ export const getLinkColorV2 = (l?: Link, opacity?: number) => {
   return getLinkColor(colorArr, opacity)
 }
 
-export const getLinkColor = (value: Link["options"]["colorArr"] | undefined, opacity?: number) => {
+export const getLinkColor = (value: number[] | undefined, opacity?: number) => {
 
   const parseVal = (v: number) => {
     if(typeof v === "number" && v >= 0 && v <= 255) return v;
@@ -57,7 +57,7 @@ export const getMapLayerQueries = ({ links, myLinks, windows, active_row, w }: A
     const tableName = isLocalLayerLink? lOpts.localTableName : (joinEndTable?.table ?? linkW?.table_name);
 
     if(lOpts.osmLayerQuery){
-      const { colorArr, colorStr } = getLinkColor(lOpts.colorArr);
+      const { colorArr, colorStr } = getLinkColor(lOpts.mapColorMode?.type === "fixed"? lOpts.mapColorMode.colorArr : [0,0,0,1]);
       const fillColor = colorArr; 
       const lineColor = colorArr;
       const color = colorStr;

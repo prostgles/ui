@@ -93,7 +93,6 @@ export const MapLayerStyling = ({ linkOptions: opts, myLinks, link, tables, getL
 }
 
 const getLinkColor = (link: LinkSyncItem) => {
-  const { colorArr } = link.options
   if(link.options.type === "table") return;
   if(link.options.type === "map"){
     if(link.options.mapColorMode?.type === "fixed"){
@@ -103,8 +102,10 @@ const getLinkColor = (link: LinkSyncItem) => {
       return link.options.mapColorMode.minColorArr;
     }
     if(link.options.mapColorMode?.type === "conditional"){
-      return link.options.mapColorMode.conditions[0]?.colorArr ?? colorArr;
+      return link.options.mapColorMode.conditions[0]?.colorArr;
     }
+    return link.options.columns[0]?.colorArr;
+  } else {
+    return link.options.columns[0]?.colorArr;
   }
-  return colorArr;
 }
