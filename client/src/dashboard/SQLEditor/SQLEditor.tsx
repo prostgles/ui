@@ -593,10 +593,7 @@ const setActiveCodeBlock = async function (this: SQLEditor, e: editor.ICursorPos
   }
 
   const signatureDiffers = !isEqual(this.codeBlockSignature, codeBlockSignature);
-  const noSelection = !document.getSelection()?.toString()
-  if(signatureDiffers){
-    console.warn("cbchange", signatureDiffers, noSelection, this.codeBlockSignature, codeBlockSignature)
-  }
+  const noSelection = !document.getSelection()?.toString();
   if(signatureDiffers && noSelection){
     this.codeBlockSignature = codeBlockSignature;
     const codeBlock = await this.getCurrentCodeBlock();
