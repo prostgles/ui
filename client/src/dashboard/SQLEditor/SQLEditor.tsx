@@ -593,16 +593,21 @@ const setActiveCodeBlock = async function (this: SQLEditor, e: editor.ICursorPos
   }
 
   const signatureDiffers = !isEqual(this.codeBlockSignature, codeBlockSignature);
-  if(signatureDiffers && !document.getSelection()?.toString()){
+  const noSelection = !document.getSelection()?.toString()
+  if(signatureDiffers){
+    console.warn("cbchange", signatureDiffers, noSelection, this.codeBlockSignature, codeBlockSignature)
+  }
+  if(signatureDiffers && noSelection){
     this.codeBlockSignature = codeBlockSignature;
     const codeBlock = await this.getCurrentCodeBlock();
     this.currentCodeBlock = codeBlock;
     this.props.onDidChangeActiveCodeBlock?.(this.currentCodeBlock);
 
-    const existingDecorations = value.split(EOL).flatMap((_, idx) => 
-      editor.getLineDecorations(idx)?.map(d => d.id) ?? []
-    );
-    editor.removeDecorations(existingDecorations);
+    /** Is this needed? It breaks code snippet tab  */
+    // const existingDecorations = value.split(EOL).flatMap((_, idx) => 
+    //   editor.getLineDecorations(idx)?.map(d => d.id) ?? []
+    // );
+    // editor.removeDecorations(existingDecorations);
     this.currentDecorations?.clear();
     this.currentDecorations = await highlightCurrentCodeBlock(editor, codeBlock);
   }
