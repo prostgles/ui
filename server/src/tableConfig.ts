@@ -148,71 +148,14 @@ const joinPath = {
   optional: true 
 } as const satisfies JSONB.FieldTypeObj
 const CommonChartLinkOpts = { 
-  ...CommonLinkOpts,
+  // ...CommonLinkOpts,
   smartGroupFilter: filter,
   joinPath,
   localTableName: { type: "string", optional: true, description: "If provided then this is a local layer (w1_id === w2_id === current chart window)" },
-  osmLayerQuery: { type: "string", optional: true, description: "If provided then this is a OSM layer (w1_id === w2_id === current chart window)" },
-  groupByColumn: { type: "string", optional: true, description: "Used by timechart" },
   sql: {
     description: "Defined if chart links to SQL statement", 
     optional: true,
-    type: "string", 
-    // type: {
-    //   query: "string",
-    // }, 
-  },
-  mapIcons: {
-    optional: true,
-    oneOfType: [
-      { 
-        type: { enum: ["fixed"] },
-        iconPath: "string",
-      },
-      { 
-        type: { enum: ["conditional"] },
-        columnName: "string",
-        conditions: {
-          arrayOfType: {
-            value: "any",
-            iconPath: "string",
-          },
-        }
-      },
-    ]
-  },
-  mapColorMode: {
-    optional: true,
-    oneOfType: [
-      { 
-        type: { enum: ["fixed"] },
-        colorArr: "number[]",
-      },
-      { 
-        type: { enum: ["scale"] },
-        columnName: "string",
-        min: "number",
-        max: "number",
-        minColorArr: "number[]",
-        maxColorArr: "number[]",
-      },
-      { 
-        type: { enum: ["conditional"] },
-        columnName: "string",
-        conditions: {
-          arrayOfType: {
-            value: "any",
-            colorArr: "number[]",
-          },
-        }
-      },
-    ]
-  },
-  mapShowText: { 
-    optional: true, 
-    type: {
-      columnName: { type: "string" },
-    }, 
+    type: "string",
   },
 } as const satisfies JSONB.ObjectType["type"] 
 
@@ -1125,6 +1068,59 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
             { 
               type: { enum: ["map"] },
               ...CommonChartLinkOpts,
+              osmLayerQuery: { type: "string", optional: true, description: "If provided then this is a OSM layer (w1_id === w2_id === current chart window)" },
+              mapIcons: {
+                optional: true,
+                oneOfType: [
+                  { 
+                    type: { enum: ["fixed"] },
+                    iconPath: "string",
+                  },
+                  { 
+                    type: { enum: ["conditional"] },
+                    columnName: "string",
+                    conditions: {
+                      arrayOfType: {
+                        value: "any",
+                        iconPath: "string",
+                      },
+                    }
+                  },
+                ]
+              },
+              mapColorMode: {
+                optional: true,
+                oneOfType: [
+                  { 
+                    type: { enum: ["fixed"] },
+                    colorArr: "number[]",
+                  },
+                  { 
+                    type: { enum: ["scale"] },
+                    columnName: "string",
+                    min: "number",
+                    max: "number",
+                    minColorArr: "number[]",
+                    maxColorArr: "number[]",
+                  },
+                  { 
+                    type: { enum: ["conditional"] },
+                    columnName: "string",
+                    conditions: {
+                      arrayOfType: {
+                        value: "any",
+                        colorArr: "number[]",
+                      },
+                    }
+                  },
+                ]
+              },
+              mapShowText: { 
+                optional: true, 
+                type: {
+                  columnName: { type: "string" },
+                }, 
+              },
               columns: { 
                 arrayOfType: {
                   name: { type: "string", description: "Geometry/Geography column" },
@@ -1135,6 +1131,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
             { 
               type: { enum: ["timechart"] },
               ...CommonChartLinkOpts,
+              groupByColumn: { type: "string", optional: true, description: "Used by timechart" },
               otherColumns: { arrayOfType: {
                 name: "string",
                 label: { type: "string", optional: true },

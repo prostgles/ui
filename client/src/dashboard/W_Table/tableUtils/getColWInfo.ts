@@ -14,6 +14,7 @@ export const getColWInfo = (
   }
   const isAdditionalComputed = (c: ColumnConfigWInfo) => (c.computedConfig && !c.computedConfig.isColumn);
  
+  //@ts-ignore
   const columns: ColumnConfigWInfo[] = (cols ?? []).map(c => ({
     ...c,
     info: isAdditionalComputed(c)? undefined : table.columns.find(_c => _c.select && _c.name === c.name),

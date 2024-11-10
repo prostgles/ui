@@ -517,7 +517,7 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<DashboardP
   isReadonly: boolean;
   suggestions: LoadedSuggestions | undefined;
   myLinks: LinkSyncItem[];
-  onAddChart: OnAddChart;
+  onAddChart: OnAddChart | undefined;
   active_row: ActiveRow | undefined;
 } & Pick<ViewRendererProps, "searchParams" | "setSearchParams">;
 

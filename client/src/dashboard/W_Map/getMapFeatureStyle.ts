@@ -1,4 +1,4 @@
-import { cachedSvgs, getIcon } from "../../components/SvgIcon";
+import { cachedSvgs } from "../../components/SvgIcon";
 import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
 import type { DeckGlColor, GeoJSONFeature, GeoJsonLayerProps } from "../Map/DeckGLMap";
 import { blend } from "../W_Table/colorBlend";
@@ -12,11 +12,12 @@ export const rgbaToString = (rgba: DeckGlColor) => {
   return `rgba(${[r,g,b,alpha]})`;
 }
 
-const parseFeatureColor = (f: GeoJSONFeature, link: LinkSyncItem | undefined): DeckGlColor | undefined => {
+const parseFeatureColor = (f: GeoJSONFeature, link: LinkSyncItem | undefined, { geomColumn }: LayerQuery): DeckGlColor | undefined => {
   if(!link) return;
   const opts = link.options;
   if(opts.type !== "map") return;
-  const { mapColorMode, colorArr } = opts;
+  const { mapColorMode, columns } = opts;
+  const colorArr = columns.find(c => c.name === geomColumn)?.colorArr;
   if(!mapColorMode) return colorArr as DeckGlColor;
   if(mapColorMode.type === "fixed") return mapColorMode.colorArr as DeckGlColor;
   if(mapColorMode.type === "conditional") {
@@ -70,14 +71,14 @@ export const getMapFeatureStyle = (
       if(getIsClickedFeature(f)){
         return [0,0,0, 255] as DeckGlColor;
       }
-      const fillColor = parseFeatureColor(f, link) || layerQuery.fillColor;
+      const fillColor = parseFeatureColor(f, link, layerQuery) || layerQuery.fillColor;
       if(f.geometry.type.includes("Polygon")){
         return fillColor.slice(0,3).concat([200]) as DeckGlColor
       }
       return fillColor;
     },
     getLineColor: f => {
-      const lineColor = parseFeatureColor(f, link) || layerQuery.lineColor;
+      const lineColor = parseFeatureColor(f, link, layerQuery) || layerQuery.lineColor;
       if(getIsClickedFeature(f)){
         return [0,0,0, 255] as DeckGlColor;
       }
@@ -97,7 +98,7 @@ export const getMapFeatureStyle = (
       mapIcons.conditions.find(c => c.value === f.properties[mapIcons.columnName])?.iconPath ?? "";
       const iconPath = `/icons/${icon}.svg`;
       const rawSvg = cachedSvgs.get(iconPath) ?? "";
-      const lineColor = parseFeatureColor(f, link) || layerQuery.lineColor;
+      const lineColor = parseFeatureColor(f, link, layerQuery) || layerQuery.lineColor;
       const svg = rawSvg.replace("<svg ", `<svg width="24" height="24" style="color:${rgbaToString(lineColor)};" `);
       return {
         url: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
