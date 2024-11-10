@@ -7,19 +7,16 @@ export const getColWInfo = (
   w: Pick<WindowData<"table">, "columns" | "table_name">
 ): ColumnConfigWInfo[] => {
   const { columns: cols, table_name } = w;
-  let columns: ColumnConfigWInfo[] = cols || [];
-
-  const t = tables.find(t => t.name === table_name);
-  if(!t){
+  const table = tables.find(t => t.name === table_name);
+  if(!table){
     console.error("Table not found:", table_name);
     return [];
   }
   const isAdditionalComputed = (c: ColumnConfigWInfo) => (c.computedConfig && !c.computedConfig.isColumn);
-
-  //@ts-ignore
-  columns = columns.map(c => ({
+ 
+  const columns: ColumnConfigWInfo[] = (cols ?? []).map(c => ({
     ...c,
-    info: isAdditionalComputed(c)? undefined : t.columns.find(_c => _c.select && _c.name === c.name),
+    info: isAdditionalComputed(c)? undefined : table.columns.find(_c => _c.select && _c.name === c.name),
   }))
   .filter(c => {
 
@@ -30,7 +27,7 @@ export const getColWInfo = (
     return true;
   }) as ColumnConfigWInfo[];
 
-  const newCols = t.columns.filter(c => !columns.find(r => r.info && r.name === c.name));
+  const newCols = table.columns.filter(c => !columns.find(r => r.info && r.name === c.name));
 
   return structuredClone(columns.concat(newCols.map(c => ({
     info: c,
