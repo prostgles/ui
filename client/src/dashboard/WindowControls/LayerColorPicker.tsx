@@ -5,16 +5,18 @@ import type { RGBA } from "../W_Table/ColumnMenu/ColorPicker";
 import { ColorPicker } from "../W_Table/ColumnMenu/ColorPicker";
 import type { MapLayerManagerProps } from "./ChartLayerManager";
 import { MapLayerStyling } from "./MapLayerStyling";
+import type { BtnProps } from "../../components/Btn";
 
 export type LayerColorPickerProps = {
   link: LinkSyncItem;
   column: string;
   myLinks: LinkSyncItem[];
   title?: string;
-  w: SyncDataItem<Required<WindowData<"timechart">>, true> | SyncDataItem<Required<WindowData<"map">>, true>
+  w: SyncDataItem<Required<WindowData<"timechart">>, true> | SyncDataItem<Required<WindowData<"map">>, true>;
+  btnProps?: BtnProps;
 } & Pick<MapLayerManagerProps, "tables" | "w" | "getLinksAndWindows">;
 
-export const LayerColorPicker = ({ link, column, myLinks, title, tables, w, getLinksAndWindows }: LayerColorPickerProps) => {
+export const LayerColorPicker = ({ link, column, myLinks, title, tables, w, getLinksAndWindows, btnProps }: LayerColorPickerProps) => {
   if(link.options.type === "table"){
     return null;
   }
@@ -36,7 +38,7 @@ export const LayerColorPicker = ({ link, column, myLinks, title, tables, w, getL
 
   return <ColorPicker 
     style={{ flex: "none" }}
-    // label="Layer color"
+    btnProps={btnProps}
     title={title}
     required={true}
     className="w-fit m-p5 text-2"

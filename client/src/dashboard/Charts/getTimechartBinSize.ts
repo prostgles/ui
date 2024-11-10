@@ -12,7 +12,11 @@ const smIncrements = [30, 15, 5] as const;
 const millisecondIncrements = [500, 250, 100, 10, 5] as const;
 type SizePart = { size: number; increment: number; unit: "year" | "month" | "week" | "day" | "hour" | "minute" | "second" | "millisecond"; };
 
-export const MainTimeBinSizes = {
+if(!HOUR){
+  throw new Error("HOUR is not defined. Circular import error?!");
+}
+
+export const getMainTimeBinSizes = () => ({
   year:   { size: YEAR, increment: 1, unit: "year" }, 
   month:  { size: YEAR/12, increment: 1, unit: "month" }, 
   week:   { size: DAY * 7, increment: 1, unit: "week" }, 
@@ -41,7 +45,7 @@ export const MainTimeBinSizes = {
         { size: MILLISECOND * val, increment: val, unit: "millisecond" }
       ])) as Record<`${typeof millisecondIncrements[number]}millisecond`, SizePart>,
   millisecond: { size: MILLISECOND, increment: 1, unit: "millisecond" },
-} as const satisfies Record<string, SizePart>;
+}) as const satisfies Record<string, SizePart>;
 
 
 const getBinDiffs = (extent: DateExtent) => {
@@ -51,7 +55,7 @@ const getBinDiffs = (extent: DateExtent) => {
    */
 
   const millisDelta = (+new Date(maxDate) - +new Date(minDate));
-
+  const MainTimeBinSizes = getMainTimeBinSizes();
   return Object.fromEntries(
     Object.entries(MainTimeBinSizes).map(([ key, { size }]) => (
       [key, {
@@ -88,5 +92,6 @@ export const getTimechartBinSize = ({ data, viewPort, bin_count }: GetTimechartB
     .sort((a, b) => a.absDelta - b.absDelta);
 
   const [firstBin] = diffSorted as any;
+  const MainTimeBinSizes = getMainTimeBinSizes();
   return firstBin ?? { key: "hour" as const, size: MainTimeBinSizes.hour.size };
 }

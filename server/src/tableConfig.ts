@@ -154,8 +154,14 @@ const CommonChartLinkOpts = {
   localTableName: { type: "string", optional: true, description: "If provided then this is a local layer (w1_id === w2_id === current chart window)" },
   osmLayerQuery: { type: "string", optional: true, description: "If provided then this is a OSM layer (w1_id === w2_id === current chart window)" },
   groupByColumn: { type: "string", optional: true, description: "Used by timechart" },
-  fromSelected: { type: "boolean", optional: true, description: "True if chart links to SQL statement selection" },
-  sql: { type: "string", optional: true },
+  sql: {
+    description: "Defined if chart links to SQL statement", 
+    optional: true,
+    type: "string", 
+    // type: {
+    //   query: "string",
+    // }, 
+  },
   mapIcons: {
     optional: true,
     oneOfType: [
@@ -696,13 +702,15 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
                 } 
               }, 
             },
-          ]  
+          ]
         } 
       } },
       run: "TEXT NOT NULL DEFAULT 'export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n  \n}'",
       outputTable: `TEXT`
     },
-    indexes: { "unique_name": { columns: "name, connection_id" }}
+    indexes: {  
+      "unique_name": { unique: true, columns: "connection_id, name" } 
+    }
   },
   access_control_user_types: {
     columns: {
@@ -931,7 +939,8 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         info: { hint: "If defined then this is a chart for another window and will be rendered within that parent window" }
       },
       user_id         : `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,
-      workspace_id    : `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,//   ON DELETE SET NULL is used to ensure we don't delete SQL queries for convenience
+      /*   ON DELETE SET NULL is used to ensure we don't delete saved SQL queries */
+      workspace_id    : `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,
       type            : `TEXT CHECK(type IN ('map', 'sql', 'table', 'timechart', 'card', 'method'))` ,
       table_name      : `TEXT` ,
       method_name     : `TEXT` ,
@@ -939,9 +948,9 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       sql             : `TEXT NOT NULL DEFAULT ''` ,
       selected_sql    : `TEXT NOT NULL DEFAULT ''` ,
       name            : `TEXT` ,
-      limit           : `INTEGER DEFAULT 100 CHECK("limit" > 1 AND "limit" < 10000)`,
+      limit           : `INTEGER DEFAULT 1000 CHECK("limit" > -1 AND "limit" < 100000)`,
       closed          : `BOOLEAN DEFAULT FALSE` ,
-      deleted         : `BOOLEAN DEFAULT FALSE` ,
+      deleted         : `BOOLEAN DEFAULT FALSE CHECK(NOT (type = 'sql' AND deleted = TRUE AND (options->>'sqlWasSaved')::boolean = true))`,
       show_menu       : `BOOLEAN DEFAULT FALSE` , 
       fullscreen      : `BOOLEAN DEFAULT TRUE` , 
       sort            : "JSONB DEFAULT '[]'::jsonb",

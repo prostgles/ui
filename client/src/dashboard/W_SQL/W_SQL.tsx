@@ -34,6 +34,8 @@ import { SQLHotkeys } from "./SQLHotkeys";
 import { W_SQLBottomBar } from "./W_SQLBottomBar/W_SQLBottomBar";
 import { ProstglesSQLMenu } from "./W_SQLMenu";
 import { W_SQLResults } from "./W_SQLResults";
+import { AddChartMenu } from "../W_Table/TableMenu/AddChartMenu";
+import type { CodeBlock } from "../SQLEditor/SQLCompletion/completionUtils/getCodeBlock";
  
 
 export type W_SQLProps = Omit<CommonWindowProps, "w"> & {
@@ -49,12 +51,43 @@ export type W_SQLProps = Omit<CommonWindowProps, "w"> & {
 
 export const SQL_NOT_ALLOWED = "Your prostgles account is not allowed to run SQL";
 
-export type ProstglesColumn = TableColumn & { computed: boolean } & Pick<ValidatedColumnInfo, "name" | "tsDataType" | "label" | "udt_name" | "filter">  // ValidatedColumnInfo & 
+export type ProstglesColumn = TableColumn & { computed: boolean } & Pick<ValidatedColumnInfo, "name" | "tsDataType" | "label" | "udt_name" | "filter"> 
+
+export type W_SQL_ActiveQuery = {
+  pid: number | undefined;
+  hashedSQL: string;
+  trimmedSql: string;
+  started: Date;
+  stopped?: {
+    date: Date;
+    type: "terminate" | "cancel";
+  }
+} & ({
+  state: "running";
+} | {
+  state: "ended";
+  commandResult?: string;  
+  rowCount: number;
+  /**
+   * For LIMITed select queries will try to get the total row count
+   * to enable pagination
+   */
+  totalRowCount: number | undefined;
+  ended: Date;
+  info: SQLResultInfo | undefined;
+} | {
+  state: "error";
+  ended: Date;
+  error?: MonacoError;
+});
+
+type SQLResultCols = Required<W_SQLProps>["w"]["options"]["sqlResultCols"];
 
 export type W_SQLState = {
   table?: TableProps & Query;
   sort: ColumnSort[];
   loading: boolean;
+  currentCodeBlockText?: string;
   isSelect: boolean;
   hideCodeEditor?: boolean;
   rows?: (string | number)[][];
@@ -67,30 +100,9 @@ export type W_SQLState = {
     content: React.ReactNode;
     style: React.CSSProperties;
   };
-  cols?: Required<W_SQLProps>["w"]["options"]["sqlResultCols"];
+  cols?: SQLResultCols;
   handler?: SocketSQLStreamHandlers;
-  activeQuery: undefined | {
-    pid: number | undefined;
-    hashedSQL: string;
-    trimmedSql: string;
-    started: Date;
-    stopped?: {
-      date: Date;
-      type: "terminate" | "cancel";
-    }
-  } & ({
-    state: "running";
-  } | {
-    state: "ended";
-    commandResult?: string;  
-    rowCount: number;  
-    ended: Date;
-    info: SQLResultInfo | undefined;
-  } | {
-    state: "error";
-    ended: Date;
-    error?: MonacoError;
-  });
+  activeQuery: undefined | W_SQL_ActiveQuery;
   joins: string[]; 
   error?: any;
   w?: SyncDataItem<WindowData>;
@@ -147,7 +159,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
   state: W_SQLState = { 
     sql: "",
     loading: false,
-    page: 1,
+    page: 0,
     pageSize: 100,
     activeQuery: undefined,
     isSelect: false,
@@ -296,7 +308,9 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
 
   render() {
     const {
-      loading, joins, popup, error, activeQuery, hideCodeEditor,
+      loading, joins, popup, 
+      error, activeQuery, 
+      hideCodeEditor, currentCodeBlockText,
     } = this.state;
     const { w } = this.d;
     const { 
@@ -357,6 +371,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
         });
       }
     }
+
     const content =  <>
       <div className={"ProstglesSQL flex-col f-1 min-h-0 min-w-0 relative "} 
         ref={r => {
@@ -391,7 +406,13 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
                 this.ref.sqlRef = this.sqlRef; 
               }
             }}
-            onUnmount={(editor, cursorPosition) => {
+            onDidChangeActiveCodeBlock={(cb: CodeBlock | undefined) => {
+              const newCbText = cb?.text;
+              if(currentCodeBlockText !== newCbText){
+                this.setState({ currentCodeBlockText: cb?.text });
+              }
+            }}
+            onUnmount={(_editor, cursorPosition) => {
               updateOptions({ cursorPosition })
             }}
             cursorPosition={this.d.w?.options.cursorPosition}
@@ -406,10 +427,10 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               opts = { ...opts, cursorPosition };
               newData.options = opts;
               this.d.w.$update(newData, { deepMerge: true });
-              /** Clear error on type */
+              /** Clear error on typing */
               clearActiveQueryError();
             }}
-            onRun={async (sql, isSelected) => {
+            onRun={async () => {
               await this.runSQL();
             }}
             onStopQuery={this.killQuery}
@@ -420,6 +441,17 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
             sqlOptions={{
               ...w.sql_options,
             }}
+            activeCodeBlockButtonsNode={
+              !currentCodeBlockText? null : <AddChartMenu 
+                myLinks={this.props.myLinks}
+                onAddChart={this.props.onAddChart}
+                sql={currentCodeBlockText}
+                sqlHandler={this.props.prgl.db.sql!}
+                tables={this.props.prgl.tables}
+                w={w}
+                size="micro"
+              />
+            }
           />
           {this.d.w && <W_SQLBottomBar 
             { ...this.state }
@@ -482,11 +514,12 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
       w={w} 
       quickMenuProps={{
         dbs,
-        theme: this.props.prgl.theme,
+        prgl: this.props.prgl,
+        myLinks: this.props.myLinks,
         onAddChart,
         tables,
         setLinkMenu,
-        show: childWindow? { } : undefined
+        sql: currentCodeBlockText,
       }}
       getMenu={(w, onClose) => (
         <ProstglesSQLMenu

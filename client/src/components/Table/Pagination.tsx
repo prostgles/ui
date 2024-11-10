@@ -4,6 +4,7 @@ import { mdiChevronLeft, mdiChevronRight, mdiPageFirst, mdiPageLast } from "@mdi
 import Btn from "../Btn";
 import FormField from "../FormField/FormField";
 import { classOverride, FlexRow } from "../Flex";
+import type { Command } from "../../Testing";
 
 export type PaginationProps = {
   pageSize?: typeof PAGE_SIZES[number];
@@ -15,7 +16,8 @@ export type PaginationProps = {
 }
 export const Pagination = (props: PaginationProps) => {
 
-  const { onPageChange: onPC, page = 1, onPageSizeChange, pageSize = PAGE_SIZES[0], totalRows, className = "" } = props;
+  const { onPageChange: onPC, page: zeroBasedPage = 0, onPageSizeChange, pageSize = PAGE_SIZES[0], totalRows, className = "" } = props;
+  const page = zeroBasedPage + 1;
   const onPageChange = p => { if(page !== p) onPC?.(p) }
 
   let maxPage = 0;
@@ -27,8 +29,15 @@ export const Pagination = (props: PaginationProps) => {
 
   const noPrev = page === 1? "Already at first page" : undefined;
   const noNext = page === maxPage? "Already at last page" : undefined;
-  if(noPrev && noNext) return null;
-
+  const totalPages = (+maxPage);
+  const totalRowCount = +(totalRows ?? 0)
+  const pageCountInfoNode = <div className="text-2 text-sm p-p5 noselect">{totalPages.toLocaleString()} page{totalPages === 1? "" : "s"} {` (${totalRowCount.toLocaleString()} rows)`}</div>
+  if(noPrev && noNext) {
+    return <FlexRow className="p-1">
+      <div style={{ opacity: .5 }}>End of results</div>
+      {pageCountInfoNode}
+    </FlexRow> 
+  }
   return <FlexRow className={classOverride("gap-0 p-p5 mt-auto ai-center", className)}>
     <Btn iconPath={mdiPageFirst} 
       disabledInfo={noPrev} 
@@ -39,13 +48,12 @@ export const Pagination = (props: PaginationProps) => {
     <Btn iconPath={mdiChevronLeft} 
       disabledInfo={noPrev} 
       onClick={e => {
-        onPageChange(Math.max(1, page - 1));
+        onPageChange(Math.max(1, zeroBasedPage - 1));
       }}
     />
 
     <input 
-      // Why this key?
-      // key={Date.now()}
+      data-command={"Pagination.page" satisfies Command}
       type="number"
       className="h-fit min-w-0 p-p5"
       style={{
@@ -53,8 +61,8 @@ export const Pagination = (props: PaginationProps) => {
       }}
       value={page} 
       onChange={e => {
-        const p = +e.target.value;
-        if(p > 0 && p  <= maxPage){
+        const p = +e.target.value - 1;
+        if(p > 0 && p <= maxPage){
           onPageChange(p);
         }
       }}
@@ -63,7 +71,7 @@ export const Pagination = (props: PaginationProps) => {
     <Btn iconPath={mdiChevronRight} 
       disabledInfo={noNext} 
       onClick={e => {
-        onPageChange(Math.min(maxPage, page + 1));
+        onPageChange(Math.min(maxPage, zeroBasedPage + 1));
       }}
     />
     <Btn iconPath={mdiPageLast} 
@@ -83,6 +91,6 @@ export const Pagination = (props: PaginationProps) => {
         }}
       />
     }
-    <div className="text-2 text-sm p-p5 noselect">{(+maxPage).toLocaleString()} pages {` (${(+(totalRows ?? 0)).toLocaleString()} rows)`}</div>
+    {pageCountInfoNode}
   </FlexRow>
 }

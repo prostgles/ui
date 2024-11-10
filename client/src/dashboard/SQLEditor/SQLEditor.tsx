@@ -127,28 +127,32 @@ export const customLightThemeMonaco = "myCustomTheme";
 export type MonacoError = Pick<editor.IMarkerData, "code" | "message" | "severity" | "relatedInformation"> &  {
   position?: number;
   length?: number;
-} 
+}
 
 import { mdiPlay } from "@mdi/js";
 import { isEqual } from "prostgles-client/dist/react-hooks";
 import type { SQLHandler } from "prostgles-types";
-import Btn from "../../components/Btn";
+import Btn, { type BtnProps } from "../../components/Btn";
 import { getDataTransferFiles } from "../../components/FileInput/DropZone";
 import { isEmpty, omitKeys } from "../../utils";
 import { SECOND } from "../Charts";
 import type { DashboardState } from "../Dashboard/Dashboard";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import RTComp from "../RTComp";
-import { MonacoEditor } from "../W_SQL/MonacoEditor";
+import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
 import type { IRange, editor } from "../W_SQL/monacoEditorTypes";
 import type { TopKeyword } from "./SQLCompletion/KEYWORDS";
 import type { CodeBlock } from "./SQLCompletion/completionUtils/getCodeBlock";
 import { getCurrentCodeBlock, highlightCurrentCodeBlock, playButtonglyphMarginClassName } from "./SQLCompletion/completionUtils/getCodeBlock";
-import type { PGConstraint, PGOperator, PG_DataType, PG_EventTrigger, PG_Function, PG_Policy, PG_Role, PG_Rule, PG_Setting, PG_Table, PG_Trigger } from "./SQLCompletion/getPGObjects";
+import type {
+  PGConstraint, PGOperator, PG_DataType, PG_EventTrigger, PG_Function, 
+  PG_Policy, PG_Role, PG_Rule, PG_Setting, PG_Table, PG_Trigger 
+} from "./SQLCompletion/getPGObjects";
 import { addSqlEditorFunctions, getSelectedText } from "./addSqlEditorFunctions";
 import { defineCustomSQLTheme } from "./defineCustomSQLTheme";
 import type { GetFuncs } from "./registerFunctionSuggestions";
 import { registerFunctionSuggestions } from "./registerFunctionSuggestions";
+import { FlexCol } from "../../components/Flex";
 
 export type SQLEditorRef = {
   editor: editor.IStandaloneCodeEditor;
@@ -177,7 +181,9 @@ type P = {
   style?: React.CSSProperties;
   className?: string;
   autoFocus?: boolean;
-  sqlOptions?: Partial<WindowData["sql_options"]>;
+  sqlOptions?: Partial<WindowData["sql_options"]>; 
+  activeCodeBlockButtonsNode?: React.ReactNode;
+  onDidChangeActiveCodeBlock?: (cb: CodeBlock | undefined) => void;
 };
 type S = {
   value: string;
@@ -404,17 +410,35 @@ export default class SQLEditor extends RTComp<P, S> {
   currentCodeBlock: CodeBlock | undefined
 
   render(){
-    const { value = "", themeAge } = this.state;
-    const { onMount, style = {}, className = "", sqlOptions } = this.props;
+    const { value = "" } = this.state;
+    const {
+      onMount, 
+      style = {}, 
+      className = "", 
+      sqlOptions,  
+      activeCodeBlockButtonsNode, 
+    } = this.props;
 
+    const { canExecuteBlocks } = this;
     const glyphPlayBtnElem = document.querySelector(`.${playButtonglyphMarginClassName}`);
-    const glyphPlayBtn = (this.canExecuteBlocks && glyphPlayBtnElem)? ReactDOM.createPortal(
-      <Btn 
-        iconPath={mdiPlay} 
-        size="micro" 
-        onClick={this.onRun}
-        color="action" 
-      />,
+    const glyphPlayBtn = (canExecuteBlocks && glyphPlayBtnElem)? ReactDOM.createPortal(
+      <FlexCol 
+        className="gap-0 mt-auto" 
+        style={{ 
+          /** Ensures we can click add chart btn */
+          zIndex: 2, 
+        }}
+      >
+        <Btn 
+          iconPath={mdiPlay} 
+          size="micro" 
+          onClick={this.onRun}
+          color="action"
+          title={`Run this statement**\n\nOnly this section of the script will be executed unless text is selected. This behaviour can be changed in options\n\nExecute hot keys: ctrl+e, alt+e`}
+        />
+        {activeCodeBlockButtonsNode}
+      </FlexCol>
+      ,
       glyphPlayBtnElem
     ) : null;
 
@@ -423,7 +447,11 @@ export default class SQLEditor extends RTComp<P, S> {
       ref={e => {
         if(e) this.rootRef = e;
       }}
-      style={style}
+      style={{ 
+        ...style,
+        /** Needed to ensure add timechart chart select btn outline is visible */
+        paddingLeft: canExecuteBlocks? "4px" : undefined,
+      }}
       onDragOver={e => {
         e.preventDefault();
         e.stopPropagation();
@@ -473,7 +501,12 @@ export default class SQLEditor extends RTComp<P, S> {
           quickSuggestions: {
             strings: true,
           },
-          ...(!sqlOptions? {} : omitKeys(sqlOptions, ["maxCharsPerCell", "renderMode", "executeOptions", "errorMessageDisplay"])),
+          ...(!sqlOptions? {} : omitKeys(sqlOptions, [
+            "maxCharsPerCell", 
+            "renderMode", 
+            "executeOptions", 
+            "errorMessageDisplay"
+          ])),
 
           ...(this.canExecuteBlocks && {
             /** Needed for play button */
@@ -535,16 +568,30 @@ const setActiveCodeBlock = async function (this: SQLEditor, e: editor.ICursorPos
   /** Codeblock end line changes when going from empty line to content */
   const model = editor.getModel();
   const value = model?.getValue() ?? "";
+
+  const EOL = model?.getEOL() ?? "\n";
   const codeBlockSignature: CodeBlockSignature = {
-    numberOfLineBreaks: value.split(model?.getEOL() ?? "\n").length,
+    numberOfLineBreaks: value.split(EOL).length,
     numberOfSemicolons: value.split(";").length,
     currentLineNumber: e?.position.lineNumber ?? editor.getPosition()?.lineNumber ?? this.codeBlockSignature?.currentLineNumber ?? 1,
   };
+
+  /** When just moving the cursor, trigger only if cursor exited currentCodeBlock  
+   * Only if currentCodeBlock doesn't have gaps or semicolons
+  */
+  if(e && this.currentCodeBlock && !this.currentCodeBlock.text.split(EOL).filter(v => !v.trim()).length && !this.currentCodeBlock.text.trim().slice(0, -1).includes(";")){
+    const { startLine, endLine } = this.currentCodeBlock;
+    if(e.position.lineNumber >= startLine && e.position.lineNumber <= endLine){
+      return;
+    }
+  }
+
   const signatureDiffers = !isEqual(this.codeBlockSignature, codeBlockSignature);
   if(signatureDiffers && !document.getSelection()?.toString()){
     this.codeBlockSignature = codeBlockSignature;
     const codeBlock = await this.getCurrentCodeBlock();
     this.currentCodeBlock = codeBlock;
+    this.props.onDidChangeActiveCodeBlock?.(this.currentCodeBlock);
 
     const existingDecorations = editor.getLineDecorations(0)?.map(d => d.id) ?? [];
     editor.removeDecorations(existingDecorations);

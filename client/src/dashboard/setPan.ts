@@ -23,7 +23,7 @@ export type PanListeners = {
   doubleTapThreshold?: number;
   tapThreshold?: number;
   onPress?: (e: React.PointerEvent<HTMLDivElement>, node: HTMLDivElement ) => void;
-  onDoubleTap?: (args: { x: number; y: number; }) => void;
+  onDoubleTap?: (args: { x: number; y: number; }, e: React.PointerEvent<HTMLDivElement>, node: HTMLDivElement) => void;
   onRelease?: (e: React.PointerEvent<HTMLDivElement>, node: HTMLDivElement) => void;
 
   onPanStart?: (pe: PanEvent, e: React.PointerEvent<HTMLDivElement>) => void;
@@ -124,7 +124,7 @@ export function setPan(node: HTMLDivElement, evs: PanListeners){
         onDoubleTap({
           x: ev.clientX - r.x,
           y: ev.clientY - r.y,
-        })
+        }, ev, currEv.node);
         lastRelease = undefined;
       } else {
         lastRelease = {

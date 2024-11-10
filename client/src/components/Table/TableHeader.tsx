@@ -1,6 +1,7 @@
 import React from "react";
 import type { TableProps, TableState} from "./Table";
 import { Pan, TableRootClassname, onWheelScroll } from "./Table";
+import type { AnyObject} from "prostgles-types";
 import { isObject } from "prostgles-types";
 import { vibrateFeedback } from "../../dashboard/Dashboard/dashboardUtils";
 import { quickClone } from "../../utils";
@@ -16,6 +17,7 @@ type TableHeaderProps = Pick<TableProps, "cols" | "sort" | "onSort" | "whiteHead
   setDraggedCol: (newCol: TableState["draggedCol"]) => void;
   rootRef?: HTMLDivElement | null;
 } & Pick<TableState, "draggedCol">;
+
 export type TableHeaderState = Pick<TableState, "draggedCol"> & {
   popup?: PopupProps & { key: string; };
   showNestedSortOptions?: { 
@@ -30,8 +32,10 @@ export class TableHeader extends React.Component<TableHeaderProps, TableHeaderSt
 
   render(): React.ReactNode {
     const { 
-      cols, sort: s = [], onColumnReorder, onSort, 
-      whiteHeader = false,  
+      cols, sort: s = [], 
+      onColumnReorder, 
+      onSort, 
+      whiteHeader = false, 
     } = this.props;
     const setDraggedCol = (draggedCol: TableHeaderState["draggedCol"]) => this.setState({ draggedCol })
     const { draggedCol, showNestedSortOptions, popup } = this.state;
@@ -74,8 +78,7 @@ export class TableHeader extends React.Component<TableHeaderProps, TableHeaderSt
       <div role="row" className="noselect f-0 flex-row shadow bg-color-1"
         onWheel={onWheelScroll(TableRootClassname)}
       >
-        {cols.map((col, iCol) => {
-          // const mySort = sort.find((s: any) => s.key === col.key) ?? sort.find(s => typeof s.key === "string" && s.key.startsWith(`${col.key}.`));
+        {cols.map((col, iCol) => { 
           const mySort = sort.find(s => getSortColumn(s, [col]));
           const className = 
             "flex-col h-full min-w-0 px-p5 py-p5 text-left font-14 relative " + 
@@ -195,10 +198,18 @@ export class TableHeader extends React.Component<TableHeaderProps, TableHeaderSt
                     zIndex: 1,
                     marginRight: iCol === cols.length - 1? 0 : "-15px",
                   }}
-                  onDoubleTap={e => {
-                    const tableBody = this.props.rootRef?.querySelector(`[role="rowgroup"]`);
-                    console.log("resize to fit content please", iCol, tableBody)
-                    // get Max( ...rows.scrollWidth/currwidth)
+                  onDoubleTap={(_, __, node) => {
+                    const tableBody = node.closest(`.table-component`);
+                    const colh: HTMLDivElement | null = node.closest(`[role="columnheader"]`);
+                    if(colh && col.onResize && tableBody){
+                      const [firstNode, ...otherRowNodes] = tableBody.querySelectorAll<HTMLElement>(`div[role="rowgroup"] [role="row"] > *:nth-child(${iCol + 1})`);
+                      if(firstNode){
+                        const font = window.getComputedStyle(firstNode).font;
+                        const max = [firstNode, ...otherRowNodes].reduce((a, n) => Math.max(a, getTextWidth(n.innerText.split("\n")[0] ?? "", font)), 9);
+                        const newWidth = Math.min(document.body.offsetWidth/2, Math.max(30, max + 20));
+                        col.onResize(newWidth);
+                      }
+                    }
                   }}
                   threshold={0}
                   onPanStart={(opts, ev) => {
@@ -229,8 +240,7 @@ export class TableHeader extends React.Component<TableHeaderProps, TableHeaderSt
                     
                     const colh: HTMLDivElement | null = opts.node.closest(`[role="columnheader"]`);
                     if(colh && col.onResize){
-                      col.onResize(colh.offsetWidth );
-
+                      col.onResize(colh.offsetWidth);
                     }
                   }}
                   onPress={ev => {
@@ -327,3 +337,19 @@ function iosContextMenuPolyfill(): {
   }
 }
 
+const getTextWidth = (text: string, font: string) => {
+  // Create a canvas element
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    return text.length * 10;
+  }
+  
+  // Set the font
+  context.font = font;
+  
+  // Measure the text width
+  const metrics = context.measureText(text);
+  return metrics.width;
+}

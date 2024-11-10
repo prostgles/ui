@@ -130,18 +130,22 @@ export const getMapLayerQueries = ({ links, myLinks, windows, active_row, w }: A
       } else if(linkW?.type === "sql") {
 
         const latestW = linkW.$get();
+
+        if(!lOpts.sql){
+          throw "Unexpected: sql missing";
+        }
         const lsql: LayerSQL = {
           ...commonOpts,
           type: "sql",  
-          sql: lOpts.fromSelected? latestW.selected_sql : latestW.sql,
-          // elevation: 1000
+          // sql: lOpts.fromSelected? latestW.selected_sql : latestW.sql,
+          sql: lOpts.sql,
         };
         if(!lsql.sql) {
           return undefined;
         }
         return lsql
       } else {
-        console.error("Why linkW is missing?");
+        console.error("linkW is missing?");
       }
     }).filter(isDefined);
 

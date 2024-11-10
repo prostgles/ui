@@ -21,6 +21,7 @@ export class ColorPicker extends React.Component<{
   className?: string;
   value: string;
   onChange: (color: string, rgb: RGBA, rgb255Alpha: RGBA) => void;
+  btnProps?: BtnProps;
   label?: string | LabelProps;
   required?: boolean;
   title?: string;
@@ -62,12 +63,13 @@ export class ColorPicker extends React.Component<{
 
   render(){
     const { anchorEl } = this.state;
-    const { value, style = {}, className = "", onChange, label, variant } = this.props;
+    const { value, style = {}, className = "", onChange, label, variant, btnProps } = this.props;
 
     const labelNode = label? isObject(label)? null : 
       <div className=" noselect f-d1">{label}</div> : 
       null;
     const colorNode = <ColorCircle
+      {...btnProps}
       label={isObject(label)? label : undefined}
       color={value}
       onClick={e => {

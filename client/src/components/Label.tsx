@@ -7,12 +7,7 @@ import PopupMenu from "./PopupMenu";
 import { classOverride } from "./Flex";
 import "./Label.css";
 
-export type LabelProps = React.DetailedHTMLProps<React.LabelHTMLAttributes<HTMLLabelElement>, HTMLLabelElement> & {
-  label?: string;
-  info?: React.ReactNode;
-  popupTitle?: React.ReactNode;
-  size?: "small";
-} & ({
+export type NormalLabelProps = {
   /**
    * @default "normal"
    */
@@ -22,11 +17,20 @@ export type LabelProps = React.DetailedHTMLProps<React.LabelHTMLAttributes<HTMLL
     checked?: boolean;
     onChange: (checked: boolean) => void;
   };
-} | {
+};
+
+export type HeaderLabelProps = {
   variant?: "header"; 
   iconPath?: string; 
   toggle?: undefined;
-});
+}
+
+export type LabelProps = React.DetailedHTMLProps<React.LabelHTMLAttributes<HTMLLabelElement>, HTMLLabelElement> & {
+  label?: string;
+  info?: React.ReactNode;
+  popupTitle?: React.ReactNode;
+  size?: "small";
+} & (NormalLabelProps | HeaderLabelProps);
 
 export const Label = ({ 
   info, variant = "header", iconPath = mdiHelp, 

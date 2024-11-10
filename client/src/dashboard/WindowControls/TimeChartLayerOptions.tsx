@@ -1,6 +1,6 @@
 import { mdiSetSplit, mdiSigma, mdiTableColumn } from "@mdi/js";
 import React from "react";
-import Btn from "../../components/Btn";
+import Btn, { type BtnProps } from "../../components/Btn";
 import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
 import PopupMenu from "../../components/PopupMenu";
 import Select from "../../components/Select/Select";
@@ -10,13 +10,16 @@ import { getTimeChartLayer } from "../W_TimeChart/getTimeChartLayers";
 import { TIMECHART_STAT_TYPES } from "../W_TimeChart/W_TimeChartMenu";
 import type { MapLayerManagerProps } from "./ChartLayerManager";
 import { _PG_numbers } from "prostgles-types"
+import { Label } from "../../components/Label";
 
 type TimeChartLayerOptionsProps = Pick<MapLayerManagerProps, "tables" | "myLinks" | "getLinksAndWindows"> & {
   link: LinkSyncItem;
   column: string;
   w: WindowSyncItem;
+  // btnProps?: BtnProps;
+  mode?: "on-screen";
 }
-export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows, myLinks, w: wMapOrTimechart }: TimeChartLayerOptionsProps) => {
+export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows, myLinks, w: wMapOrTimechart, mode }: TimeChartLayerOptionsProps) => {
 
   if(!windowIs(wMapOrTimechart, "timechart")){
     return null;
@@ -32,14 +35,16 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
     return <>Column not found: {column}</>
   }
   
-  const {windows, links} = getLinksAndWindows();
-  const lq = getTimeChartLayer({ active_row: undefined, link, windows, links, myLinks, w }).find(l => l.dateColumn === column);
+  const { windows, links } = getLinksAndWindows();
+  const lq = getTimeChartLayer({ active_row: undefined, link, windows, links, myLinks, w })
+    .find(l => l.dateColumn === column);
   const parentW = windows.find(_w => _w.id !== w.id && [link.w1_id , link.w2_id].includes(_w.id));
   const table = lq?.type === "table"? tables.find(t => t.name === lq.tableName) : undefined;
-  const numericCols = (
+  const cols = (
     parentW?.type === "sql"? (parentW.options.sqlResultCols ?? []) : 
     parentW?.type === "table"? table?.columns : []
-  )?.filter(c => _PG_numbers.includes(c.udt_name as any)) ?? [];
+  );
+  const numericCols = cols?.filter(c => _PG_numbers.includes(c.udt_name as any)) ?? [];
   const statType = colOpts.statType ?? { funcName: "$countAll", numericColumn: undefined };
   const linkOpts = link.options;
   if(linkOpts.type !== "timechart"){
@@ -58,10 +63,21 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
       columns: opts.columns.map(c => c.name === col? ({ ...c, ...newColOpts }) : c )
     })
   };
+  const isOnScreen = mode === "on-screen";
   const activeStat = TIMECHART_STAT_TYPES.find(s => s.func === statType.funcName);
   const activeStatLabel: typeof TIMECHART_STAT_TYPES[number]["label"] = activeStat?.label ?? statType.funcName as any;
-  const activeStatLabelDesc = activeStatLabel === "Count All"? activeStatLabel : `${activeStatLabel}(${colOpts.statType?.numericColumn})`;
-  const groupByCols = table?.columns.filter(c => c.name !== lq?.statType?.numericColumn && c.name !== lq?.dateColumn && ["string", "boolean", "number"].includes(c.tsDataType));
+  const activeStatLabelDesc = activeStatLabel === "Count All"? "count(*), " : 
+  <FlexRow className="gap-0">
+    <span style={{ opacity: .7 }}>
+      {activeStatLabel}
+      (
+    </span>
+    <strong style={{ margin: ".6px"}}>{colOpts.statType?.numericColumn}</strong>
+    <span style={{ opacity: .7 }}>
+      ),
+    </span>
+  </FlexRow>;
+  const groupByCols = cols?.filter(c => c.name !== lq?.statType?.numericColumn && c.name !== lq?.dateColumn && c.udt_name !== "timestamp" && c.udt_name !== "timestamptz");
 
   return <>
     <PopupMenu 
@@ -69,14 +85,24 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
       data-command="TimeChartLayerOptions.yAxis"
       button={
         <FlexRow style={{ gap: ".5em", fontSize: "14px" }} >
-          <Btn color="action" variant="faded" iconPath={mdiSigma} data-command="TimeChartLayerOptions.aggFunc"  title="Aggregate function">
+          <Btn 
+            color="action" 
+            variant={isOnScreen? "text" : "faded"} 
+            iconPath={isOnScreen? "" : mdiSigma} 
+            title="Aggregate function" 
+            data-command="TimeChartLayerOptions.aggFunc"
+            style={{
+              paddingRight: isOnScreen? "0" : undefined,
+            }}
+          >
             {activeStatLabelDesc}
+            {isOnScreen? `${lq?.dateColumn}` : ""}
           </Btn>
-          {lq?.groupByColumn && 
-            <Btn color="action" variant="faded" title="Group by column" iconPath={mdiTableColumn} data-command="TimeChartLayerOptions.groupBy" >
-              {lq.groupByColumn}
+          {/* {!!groupByCols?.length && 
+            <Btn color="action" variant="faded" iconPath={mdiTableColumn}  {...btnProps} title="Group by column" data-command="TimeChartLayerOptions.groupBy" >
+              {lq?.groupByColumn}
             </Btn>
-          }
+          } */}
         </FlexRow>
       }
       render={() => 
@@ -105,23 +131,28 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
                 updateCol(colOpts.name, { statType: { funcName, numericColumn: statType.numericColumn ?? numericCols[0]!.name! } })
               }} 
             />
-            {statType.funcName !== "$countAll" && numericCols.length > 0 && 
-              <Select
-                label="field"
-                variant="div" 
-                className="w-fit " 
-                data-command="TimeChartLayerOptions.numericColumn"
-                fullOptions={numericCols.map(c => ({
-                  key: c.name,
-                  subLabel: c.udt_name,
-                  ...c,
-                }))} 
-                value={colOpts.statType?.numericColumn} 
-                onChange={numericColumn => {
-                  updateCol(colOpts.name, { statType: { ...statType, numericColumn } })
-                }}
-              />
-            }
+            <Select
+              label="Aggregation field"
+              variant="div"
+              className="w-fit " 
+              btnProps={{
+                color: "action",
+              }}
+              data-command="TimeChartLayerOptions.numericColumn"
+              fullOptions={numericCols.map(c => ({
+                key: c.name,
+                subLabel: c.udt_name,
+                ...c,
+              }))} 
+              disabledInfo={
+                statType.funcName === "$countAll"? "Requires a different aggregation function" : 
+                !numericCols.length? "No numeric columns available" : undefined
+              }
+              value={colOpts.statType?.numericColumn} 
+              onChange={numericColumn => {
+                updateCol(colOpts.name, { statType: { ...statType, numericColumn } })
+              }}
+            />
             
           </FlexRowWrap>
           {!!groupByCols?.length && <Select
@@ -132,7 +163,7 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
             optional={true}
             btnProps={{
               iconPath: mdiTableColumn,
-              color: "action",
+              color: !lq?.groupByColumn? undefined : "action",
               iconPosition: "left",
             }}
             fullOptions={[
@@ -140,13 +171,21 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
                 key: undefined,
                 label: "NONE"
               },
-              ...groupByCols.map(s => ({ key: s.name, label: s.label, subLabel: s.udt_name }))
+              ...groupByCols.map(s => ({ key: s.name, label: "label" in s? s.label : s.name, subLabel: s.udt_name }))
             ]}
             value={lq?.groupByColumn} 
             onChange={groupByColumn => {
               updateLinkOpts({ groupByColumn });
             }}
           />}
+          {isOnScreen && 
+            <FlexCol className="gap-p5">
+              <Label variant="normal">{lq?.type === "sql"? "Query" : "Table"}</Label>
+              <code className="ta-start ws-pre-line bg-color-2 rounded p-p5">
+                {lq?.type === "sql"? lq.sql : lq?.tableName}
+              </code>
+            </FlexCol>
+          }
         </FlexCol>
       } 
     />

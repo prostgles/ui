@@ -1,9 +1,9 @@
 import type { SQLResult } from "prostgles-client/dist/prostgles";
-import type { SQLResultInfo, SocketSQLStreamHandlers } from "prostgles-types";
+import type { SQLHandler, SQLResultInfo, SocketSQLStreamHandlers } from "prostgles-types";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import { STARTING_KEYWORDS } from "../SQLEditor/SQLCompletion/CommonMatchImports";
 import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
-import type { W_SQLState} from "./W_SQL";
+import type { W_SQL_ActiveQuery, W_SQLState} from "./W_SQL";
 import type { W_SQL } from "./W_SQL";
 import { SQL_NOT_ALLOWED } from "./W_SQL";
 import { parseSQLError } from "./parseSQLError";
@@ -60,7 +60,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSort[] = []) {
     if (o.hideTable) w.$update({ options: { ...o, hideTable: false } });
 
     const limit = w.limit === null? null : (w.limit || 100);
-
+    
     let sqlSorted = trimmedSql;
     if (isSelect && sort.length) {
 
@@ -74,7 +74,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSort[] = []) {
         this.hashedSQL = `EXPLAIN ${sqlSorted}`;
         await db.sql(this.hashedSQL);
         this.hashedSQL = ` SELECT * FROM (\n ${sqlSorted} \n ) t LIMIT 0`;
-        const { fields } = await db.sql(this.hashedSQL);
+        const { fields } = await db.sql(this.hashedSQL, { }, { returnType: "default-with-rollback" });
         
         const orderBy = sort
           .filter(s => fields[s.key])
@@ -91,6 +91,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSort[] = []) {
     this._queryHashAlias = `--prostgles-` + hashFnv32a(sqlSorted + Date.now(), true)
     this.hashedSQL = this._queryHashAlias + " \n" + sqlSorted;
     let rowCount: number | undefined;
+    let totalRowCount: number | undefined;
     const hashedSQL = this.hashedSQL;
     const setRunningQuery = (extra?: { handler: SocketSQLStreamHandlers | undefined }) => {
       this.streamData.set({ rows: [] });
@@ -100,7 +101,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSort[] = []) {
         sqlResult: false,
         page: 0,
         ...extra,
-        sort,
+        sort: sqlSorted !== trimmedSql? sort : [],
         activeQuery: {
           pid: extra?.handler?.pid ?? this.state.handler?.pid ?? -1,
           state: "running",
@@ -228,9 +229,12 @@ export async function runSQL(this: W_SQL, sort: ColumnSort[] = []) {
               ended: new Date(),
               commandResult,
               rowCount,
+              totalRowCount,
               info: packet.info,
             } satisfies Required<W_SQLState>["activeQuery"];
             const newColsAndRows = parseExplainResult({ rows, cols, activeQuery });
+            activeQuery.totalRowCount = await getTotalRowCount(db.sql!, activeQuery, limit, isSelect);
+
             this.setState({
               queryEnded: Date.now(),
               activeQuery,
@@ -273,6 +277,35 @@ export async function runSQL(this: W_SQL, sort: ColumnSort[] = []) {
   }
 }
 
+const getTotalRowCount = async (sql: SQLHandler, query: Extract<W_SQL_ActiveQuery, { state: "ended"; }>, limit: number | string | null, isSelect: boolean) => {
+  if(
+    query.info?.command !== "SELECT" && !isSelect ||
+    !limit ||
+    query.rowCount < Number(limit)
+  ){
+    return undefined;
+  }
+  const { rows } = await sql(` 
+      SET LOCAL statement_timeout TO 2000;
+      SELECT count(*) as count 
+      FROM (
+        ${query.trimmedSql}
+      ) t; 
+    `, 
+    {}, 
+    { returnType: "default-with-rollback" }
+  ).catch(e => {
+    console.error("Failed to get total count", e);
+    return { rows: [] };
+  });
+
+  const count = rows[0]?.count;
+  const countNum = Number(count);
+  if(Number.isFinite(countNum)){
+    return countNum;
+  }
+  return undefined;
+}
 
 export const parseError = (err: any) => {
   if(typeof err === "string"){

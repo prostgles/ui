@@ -4,7 +4,7 @@ import type { AnyObject, JSONB, MethodFullDef } from "prostgles-types";
 import { isEmpty } from "prostgles-types";
 import { getKeys } from "prostgles-types";
 import React, { useState } from "react";
-import type { Prgl } from "../../App";
+import { useReactiveState, type Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
 import { isCompleteJSONB } from "../../components/JSONBSchema/isCompleteJSONB";
@@ -14,6 +14,9 @@ import { omitKeys } from "../../utils";
 import CodeEditor from "../CodeEditor/CodeEditor";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import SmartTable from "../SmartTable";
+import { FlexCol, FlexRow } from "../../components/Flex";
+import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
+import { prgl_R } from "../../WithPrgl";
 
 type P = Pick<Prgl, "db" | "methods" | "tables" | "theme"> & {
   method_name: string;
@@ -28,10 +31,12 @@ type P = Pick<Prgl, "db" | "methods" | "tables" | "theme"> & {
     argName: string;
     tableName: string;
   };
-  w?: SyncDataItem<Required<WindowData<"method">>, true>
+  w: SyncDataItem<Required<WindowData<"method">>, true> | undefined
 }
 
 export const W_MethodControls = ({ w, db, tables, methods, method_name, fixedRowArgument, theme, ...otherProps }: P) => {
+
+  const { state: prgl } = useReactiveState(prgl_R);
 
   const [result, setResult] = useState<AnyObject | void>();
   const [showResults, setShowResults] = useState(true);
@@ -39,7 +44,8 @@ export const W_MethodControls = ({ w, db, tables, methods, method_name, fixedRow
   const [error, setError] = useState<any>(!m? `Method named "${method_name}" not found` : undefined); 
   const [expandControls, setExpandControls] = useState(true);
   const [showJSONBErrors, setshowJSONBErrors] = useState(false);
-
+  const { dbs, connectionId } = prgl!;
+  const { data: method } = dbs.published_methods.useSubscribeOne({ name: w?.method_name, connection_id: connectionId }, { limit: w?.method_name? 1 : 0 });
 
   const [loading, setLoading] = useState(false);
 
@@ -95,9 +101,29 @@ export const W_MethodControls = ({ w, db, tables, methods, method_name, fixedRow
   const hasErrors = !isCompleteJSONB(args, argSchema);
 
   const outputTableInfo = m?.outputTable? tables.find(t => t.name === m.outputTable) : undefined;
+  const { showCode = true } = w?.options ?? {};
 
-  return <div className="flex-col f-1  min-s-0 o-auto bg-color-2" style={{ gap: "2px" }}>
-    {m && <div className="flex-col gap-1 p-1 shadow bg-color-0">
+  return <FlexCol className="W_MethodControls f-1  min-s-0 o-auto bg-color-2" style={{ gap: "2px" }}>
+    {showCode && method && 
+      <MethodDefinition 
+        renderMode="Code"
+        {...prgl!}
+        db={db}
+        tables={tables}
+        method={method}
+        theme={theme}
+        onChange={code => {
+          dbs.published_methods.update({ id: method.id }, { run: code.run });
+        }}
+      />
+    }
+    {m && <div 
+        className="flex-col gap-1 p-1 shadow bg-color-0"
+        style={{
+          /** Used to ensure the "Show code" minimap is beneath clickcatch when typing method arguments autocomplete */ 
+          zIndex: 5,
+        }}
+      >
       <div className={"flex-row-wrap gap-1 " + (expandControls? "" : " hidden ")}> 
         <JSONBSchema 
           schema={argSchema} 
@@ -111,7 +137,7 @@ export const W_MethodControls = ({ w, db, tables, methods, method_name, fixedRow
           showErrors={showJSONBErrors}
         />
       </div>
-      <div className="flex-row gap-2">
+      <FlexRow className="gap-2">
         <Btn  
           loading={loading}
           iconPath={mdiPlay}
@@ -126,8 +152,8 @@ export const W_MethodControls = ({ w, db, tables, methods, method_name, fixedRow
               setLoading(true); 
               setError(undefined);
               const res = await m.run(params);
-              if(w && m.outputTable){
-                w.$update({ name: `${method_name} - ${await db[m.outputTable]?.count?.()}` })
+              if(m.outputTable){
+                w?.$update({ name: `${method_name} - ${await db[m.outputTable]?.count?.()}` })
               }
 
               setshowJSONBErrors(false);
@@ -150,17 +176,31 @@ export const W_MethodControls = ({ w, db, tables, methods, method_name, fixedRow
           {!expandControls? "Expand" : "Collapse"} input
         </Btn>}
 
+        {w && <SwitchToggle 
+          label="Show code" 
+          className="ml-auto"
+          checked={!!showCode} 
+          onChange={showCode => {
+            w.$update({ options: { showCode } }, { deepMerge: true });
+          }} 
+          variant="row"
+        />}
+
         <SwitchToggle 
           label="Show results" 
-          className="ml-auto"
           checked={showResults} 
           onChange={setShowResults} 
           variant="row"
           disabledInfo={(result || m.outputTable)? undefined : "No results to show"}
         />
-      </div>
-    </div> }
-    {m?.outputTable && !outputTableInfo && <ErrorComponent error={`Results table ( ${m.outputTable} ) missing or not allowed`} className="m-1" />}
+      </FlexRow>
+    </div>}
+    {m?.outputTable && !outputTableInfo && 
+      <ErrorComponent 
+        error={`Results table ( ${m.outputTable} ) missing or not allowed`} 
+        className="m-1" 
+      />
+    }
     {showResults && !error && <div className="flex-row f-1">
       {m?.outputTable && outputTableInfo? <SmartTable
           title="" 
@@ -182,5 +222,5 @@ export const W_MethodControls = ({ w, db, tables, methods, method_name, fixedRow
     }
     
     <ErrorComponent error={error} findMsg={true} className="o-auto min-h-0 m-1 ai-start f-1" />
-  </div>
+  </FlexCol>
 }

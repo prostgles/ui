@@ -375,14 +375,6 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
           const matchCase = this.props.matchCase?.value ?? this.state.matchCase;
 
           try {
-            // const searchItems = await this.props.onSearchItems(term, { matchCase });
-    
-            // if(term === this.searching?.term){
-            //   this.setState({ searchItems, searchingItems: false, searchClosed: false, error: undefined });
-            //   this.searching = undefined;
-            // } else if(!this.searching && this.state.searchingItems) {
-            //   this.setState({ searchingItems: false, error: undefined });
-            // }
             this.props.onSearchItems?.(term, { matchCase }, (searchItems, finished, cancel) => {
               this.cancelCurrentSearch = ()=> {
                 this.setState({ searchingItems: false, error: undefined });
@@ -410,9 +402,6 @@ export default class SearchList<M extends boolean = false> extends RTComp<Search
         }, 400)
       }
     }
-
-
-    // this.setState({ detailedFilter, filter })
   }
 
   inputWrapper?: HTMLDivElement;

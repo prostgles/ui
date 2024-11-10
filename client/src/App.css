@@ -17,6 +17,10 @@ body {
   margin-left: 3px;
 }  
 
+.active-code-block-play {
+  margin-left: 4px;
+}
+
 .dark-theme .active-code-block-decoration {
   background: #14708f;
 }

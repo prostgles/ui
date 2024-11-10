@@ -1,4 +1,4 @@
-export const onMount: OnMount = async ({ dbo }) => {
+export const onMount: ProstglesOnMount = async ({ dbo }) => {
   if(!dbo.cities){
     await dbo.sql(`
       CREATE EXTENSION IF NOT EXISTS postgis;
@@ -8,8 +8,8 @@ export const onMount: OnMount = async ({ dbo }) => {
         name TEXT,                            -- Name of the airport
         iata_code TEXT,                 -- IATA code (3-letter code)
         icao_code TEXT,                 -- ICAO code (4-letter code)
-        latitude DOUBLE PRECISION,            -- Latitude
-        longitude DOUBLE PRECISION,           -- Longitude
+        latitude DOUBLE PRECISION NOT NULL,            
+        longitude DOUBLE PRECISION NOT NULL,           
         elevation TEXT,                       -- Elevation (in meters)
         operator TEXT,                        -- Airport operator
         capacity numeric,                     -- Passenger capacity (if available)
@@ -38,8 +38,8 @@ export const onMount: OnMount = async ({ dbo }) => {
         addr_country TEXT,
         country_code TEXT,
         
-        latitude DECIMAL(9,6) ,
-        longitude DECIMAL(9,6) ,
+        latitude DECIMAL(9,6) NOT NULL,
+        longitude DECIMAL(9,6) NOT NULL,
         geog GEOGRAPHY(POINT, 4326) generated always as (ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)) stored,
         CONSTRAINT unique_city UNIQUE (latitude, longitude)
       );

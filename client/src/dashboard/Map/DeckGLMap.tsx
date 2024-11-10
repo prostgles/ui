@@ -392,13 +392,17 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
         type: "FeatureCollection",
         features: g.features
       }),
-      /** Disabled due to bad  */
+      /** Disabled due to bad experience (features missing) */
       // extensions: [new deckGlLibs.extensions.CollisionFilterExtension()],
       filled: true,
+
+      /**
+       * Radius of the circle in meters. If radiusUnits is not meters, this is converted from meters.
+       */
+      getPointRadius: f => f.properties.radius ?? 1,
       pointRadiusMinPixels: 2,
       pointRadiusScale: 1,
-      // getPointRadius: f => f.properties.radius ?? 1,
-      // getPointRadius: 22,
+
       extruded: Boolean(g.elevation),
       getElevation: g.elevation || 0,
 
@@ -420,18 +424,16 @@ export class DeckGLMap extends RTComp<DecKGLMapProps, DeckGLMapState, D> {
       getIconColor: g.getFillColor,
       getIcon: g.getIcon,
       getIconPixelOffset: f => [0, -10],
-      getIconSize: f => g.getIcon!(f).width,
+      getIconSize: g.getIcon && (f => g.getIcon!(f).width),
       lineWidthMinPixels: 2,
       //@ts-ignore
       widthScale: 22,
-      // getLineWidth: f => f.properties?.lineWidth ?? 4,
       lineWidth: f => f.properties?.lineWidth ?? 1,
 
       pickable: true,
       pickingRadius: 10,
       autoHighlight: true,
       onClick: g.onClick,
-      // onHover: (d, e) => [d, e],
       opacity: dataOpacity,
       // material: {
       //   ambient: 0.35,

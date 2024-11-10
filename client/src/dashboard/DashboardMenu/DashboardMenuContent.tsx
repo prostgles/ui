@@ -3,7 +3,7 @@ import type { MethodFullDef } from "prostgles-types";
 import { isObject } from "prostgles-types";
 import React, { useRef, useState } from "react";
 import { dataCommand } from "../../Testing";
-import { FlexCol, FlexRowWrap } from "../../components/Flex";
+import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
 import Popup from "../../components/Popup/Popup";
@@ -19,6 +19,7 @@ import { DashboardMenuResizer } from "./DashboardMenuResizer";
 import { NewTableMenu } from "./NewTableMenu";
 import type { TablesWithInfo } from "./useTableSizeInfo";
 import { SvgIcon } from "../../components/SvgIcon";
+import Btn from "../../components/Btn";
 
 type P = DashboardMenuProps & {
   onClose: undefined | VoidFunction;
@@ -33,7 +34,7 @@ export const DashboardMenuContent = (props: P) => {
     workspace, 
     prgl, queries, onClose, onClickSearchAll, tablesWithInfo
   } = props;
-  const { db, methods, theme, user, connection } = prgl;
+  const { db, methods, theme, user, connection, dbsMethods: { reloadSchema }, connectionId } = prgl;
   const closedQueries = queries.filter(q => q.closed);
 
   const smallScreen = window.innerHeight < 1200;
@@ -153,20 +154,37 @@ export const DashboardMenuContent = (props: P) => {
     
     {!tables.length? <div className="text-1p5 p-1">0 tables/views</div> : 
       <SearchList
+        className={"search-list-tables b-t min-h-0  " + (smallScreen? " mt-p5 " : " mt-1 ")}
+        data-command="dashboard.menu.tablesSearchList"
         limit={100}
         style={ensureFadeDoesNotShowForOneItem}
         noSearchLimit={0}
-        data-command="dashboard.menu.tablesSearchList"
         inputProps={dataCommand("dashboard.menu.tablesSearchListInput")}
-        className={"search-list-tables b-t min-h-0 " + (smallScreen? " mt-p5 " : " mt-1 ")}
         placeholder={`${tables.length} tables/views`} 
-        items={tablesWithInfo.map((t, i)=> ({
+        onNoResultsContent={_term => 
+          <FlexRow>
+            Table/view not found. 
+            <Btn 
+              variant="faded" 
+              color="action" 
+              disabledInfo={!reloadSchema? "Must be admin" : ""} 
+              onClickPromise={async () => {
+                reloadSchema!(props.prgl.connectionId);
+              }}
+            >
+              refresh schema
+            </Btn>
+          </FlexRow>
+        }
+        items={tablesWithInfo.map((t, i)=> {
+          const icon = connection.table_options?.[t.name]?.icon;
+          return {
             contentLeft: (
               <div className="flex-col ai-start f-0 mr-p5 text-1"
                 { ...(t.info.isFileTable? dataCommand("dashboard.menu.fileTable") : {})}
               >
-                {connection.table_options?.[t.name]?.icon?
-                  <SvgIcon icon={connection.table_options[t.name]!.icon!} /> :
+                {icon?
+                  <SvgIcon icon={icon} /> :
                   <Icon path={t.info.isFileTable? mdiFile : db[t.name]?.insert? mdiTableEdit : mdiTable} size={1} />
                 }
               </div>
@@ -182,30 +200,32 @@ export const DashboardMenuContent = (props: P) => {
               loadTable({ type: "table", table: t.name });
               onClose?.();
             }
-          }))
-        }
+          }
+        })}
       />
     }
-    {detailedMethods.length > 0 && <SearchList
-      limit={100}
-      noSearchLimit={0} 
-      className={"search-list-functions b-t f-1 min-h-0 " + (smallScreen? " mt-p5 " : " mt-1 ")}
-      style={ensureFadeDoesNotShowForOneItem} 
-      placeholder={"Search " + detailedMethods.length + " functions"} 
-      items={detailedMethods.map((t, i)=> ({ 
-        contentLeft: (
-          <div className="flex-col ai-start f-0 mr-p5 text-1">
-            <Icon path={mdiFunction} size={1} />
-          </div>
-        ),
-        key: t.name,
-        label: t.name,
-        onPress: () => {
-          loadTable({ type: "method", method_name: t.name });
-          onClose?.();
-        }
-      }))}
-    />}
+    {detailedMethods.length > 0 && 
+      <SearchList
+        limit={100}
+        noSearchLimit={0} 
+        className={"search-list-functions b-t f-1 min-h-0 max-h-fit " + (smallScreen? " mt-p5 " : " mt-1 ")}
+        style={ensureFadeDoesNotShowForOneItem} 
+        placeholder={"Search " + detailedMethods.length + " functions"} 
+        items={detailedMethods.map((t, i)=> ({ 
+          contentLeft: (
+            <div className="flex-col ai-start f-0 mr-p5 text-1">
+              <Icon path={mdiFunction} size={1} />
+            </div>
+          ),
+          key: t.name,
+          label: t.name,
+          onPress: () => {
+            loadTable({ type: "method", method_name: t.name });
+            onClose?.();
+          }
+        }))}
+      />
+    }
     <FlexRowWrap className="f-0 ml-1 my-p5">
       {!tables.length && !db.sql && 
         <InfoRow>

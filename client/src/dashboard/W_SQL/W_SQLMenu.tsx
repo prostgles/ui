@@ -29,8 +29,6 @@ import { InfoRow } from "../../components/InfoRow";
 import { SECOND } from "../Charts";
 import CodeEditor from "../CodeEditor/CodeEditor";
 import type { DBS } from "../Dashboard/DBS";
-import { AddChartMenu } from "../W_Table/TableMenu/AddChartMenu";
-import { getChartColsV2 } from "../W_Table/TableMenu/getChartCols";
 import { TestSQL } from "./TestSQL";
 import { SQLHotkeys } from "./SQLHotkeys";
 import { download } from "./W_SQL";
@@ -164,22 +162,6 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
     if(!table){
       return <div>dbs.windows table schema not found</div>
     }
-    // const cCols = getChartCols(w, tables); 
-    const cCols = getChartColsV2(w, tables); 
-    const chartMenuItem = { 
-      leftIconPath: mdiChartBoxPlusOutline,
-      disabledText: (!cCols.dateCols.length && !cCols.geoCols.length)? "No date or geo columns to chart" : undefined,
-      content: <div className="text-0p5 noselect flex-row ai-center">
-        {!onAddChart? <InfoRow>Not allowed</InfoRow> : <AddChartMenu 
-          w={w} 
-          tables={tables} 
-          onAddChart={args => { 
-            onAddChart(args);
-            this.props.w.$update({ show_menu: false });
-          }} 
-        />}
-      </div> 
-    };
     
     const l1Opts: TabsProps["items"] = {
       "General": {
@@ -266,7 +248,6 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
           </div>
         )
       },
-      "Add chart": chartMenuItem,
 
       "Editor options": {
 
@@ -278,7 +259,15 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
           >
             <div>SQL Editor settings</div>
             <CodeEditor 
-              language="json"  
+              language={{ 
+                lang: "json",
+                jsonSchemas: [
+                  {
+                    id: "sql_options",
+                    schema: getJSONBSchemaAsJSONSchema(table.name, "sql_options", sqlOptionsCol?.jsonbSchema ?? {})
+                  }
+                ]
+              }}  
               style={{ 
                 minHeight: "200px",
                 minWidth: "400px", 
@@ -295,12 +284,6 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
 
                 }
               }}
-              jsonSchemas={[
-                {
-                  id: "sql_options",
-                  schema: getJSONBSchemaAsJSONSchema(table.name, "sql_options", sqlOptionsCol?.jsonbSchema ?? {})
-                }
-              ]}
             />
             <InfoRow color="info">Press <strong>ctrl</strong> + <strong>space</strong> to get a list of possible options</InfoRow> 
             {!!error && <ErrorComponent error={error} />}

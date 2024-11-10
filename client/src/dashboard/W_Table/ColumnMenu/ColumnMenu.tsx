@@ -48,6 +48,7 @@ import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 
 
 export type ColumnConfig = {
+  idx?: number;
   name: string;
   show?: boolean;
   nested?: {

@@ -55,7 +55,6 @@ export class DragHeader extends RTComp<DragHeaderProps> {
         rootView,
       }
     }
-    const { padding } = this.props;
     return <Pan
       data-command="CardView.DragHeader" 
       className=" "
