@@ -6,8 +6,12 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
   const getMarketCaps = async () => {
 
     const marketCaps = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250").then(d => d.json());
+    const batchUpdate = marketCaps.map(({ id, ...otherData }) => [
+      { id },
+      otherData
+    ]);
+    await dbo.market_caps.updateBatch(batchUpdate);
     await dbo.market_caps.insert(marketCaps, { onConflict: "DoUpdate" });
-
   }
   setInterval(getMarketCaps, 30 * SECOND);
   getMarketCaps();
@@ -16,7 +20,7 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
       
   socket.onmessage = async (rawData) => {
     const dataItems = JSON.parse(rawData.data as string);
-    const data = dataItems.map(data => ({ symbol: data.s, price: data.p, timestamp: new Date(data.E) }))
+    const data = dataItems.map(data => ({ symbol: data.s, price: data.p, timestamp: new Date(data.E) }));
     await dbo.symbols.insert(data.map(({ symbol }) => ({ pair: symbol })), { onConflict: "DoNothing" });
     await dbo.futures.insert(data);
   }

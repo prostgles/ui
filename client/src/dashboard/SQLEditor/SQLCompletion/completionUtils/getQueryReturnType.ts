@@ -7,6 +7,19 @@ import { tryCatch } from "prostgles-types";
  */
 const getQueryReturnType = async (query: string, sql: SQLHandler): Promise<ColType[]> => {
 
+  /** Check if it's a data returning statement to avoid useless error logs */
+  const res = await sql(`
+      EXPLAIN
+      ${query};      
+    `, 
+    {}, 
+    { returnType: "default-with-rollback" }
+  ).catch(_e => false);
+
+  if(!res){
+    return [];
+  }
+
   const viewName = "prostgles_temp_view_getQueryReturnType" + Date.now();
   const result = await sql(`
       CREATE OR REPLACE TEMP VIEW "${viewName}" AS 

@@ -87,7 +87,7 @@ export type W_SQLState = {
   table?: TableProps & Query;
   sort: ColumnSort[];
   loading: boolean;
-  currentCodeBlock?: CodeBlock;
+  currentCodeBlockText?: string;
   isSelect: boolean;
   hideCodeEditor?: boolean;
   rows?: (string | number)[][];
@@ -310,7 +310,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
     const {
       loading, joins, popup, 
       error, activeQuery, 
-      hideCodeEditor, currentCodeBlock,
+      hideCodeEditor, currentCodeBlockText,
     } = this.state;
     const { w } = this.d;
     const { 
@@ -407,7 +407,10 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               }
             }}
             onDidChangeActiveCodeBlock={(cb: CodeBlock | undefined) => {
-              this.setState({ currentCodeBlock: cb })
+              const newCbText = cb?.text;
+              if(currentCodeBlockText !== newCbText){
+                this.setState({ currentCodeBlockText: cb?.text });
+              }
             }}
             onUnmount={(_editor, cursorPosition) => {
               updateOptions({ cursorPosition })
@@ -439,10 +442,10 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               ...w.sql_options,
             }}
             activeCodeBlockButtonsNode={
-              !currentCodeBlock? null : <AddChartMenu 
+              !currentCodeBlockText? null : <AddChartMenu 
                 myLinks={this.props.myLinks}
                 onAddChart={this.props.onAddChart}
-                sql={currentCodeBlock.text}
+                sql={currentCodeBlockText}
                 sqlHandler={this.props.prgl.db.sql!}
                 tables={this.props.prgl.tables}
                 w={w}
@@ -516,7 +519,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
         onAddChart,
         tables,
         setLinkMenu,
-        sql: currentCodeBlock?.text,
+        sql: currentCodeBlockText,
       }}
       getMenu={(w, onClose) => (
         <ProstglesSQLMenu

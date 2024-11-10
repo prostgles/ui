@@ -20,10 +20,10 @@ const getValidPGColumnNames = async (v: string[], sql: SQLHandler): Promise<{ na
 type Outputs = { val: string; label: string; iconPath: string; fileName: string; }[]
 export const CopyResultBtn = (props: { queryEnded: boolean; sql: SQLHandler; rows: any[][]; cols: Pick<ValidatedColumnInfo, "name" | "tsDataType" | "udt_name">[] }) => {
   const { cols, rows: rawValues, sql, queryEnded } = props;
-  const rows = rawValues.map(row => getStringifiedObjects(row, cols))
   const res = usePromise(async () => {
 
     try {
+      const rows = rawValues.map(row => getStringifiedObjects(row, cols))
       let escapedNames: Unpromise<ReturnType<typeof getValidPGColumnNames>> = []
       if(!cols.length || !rows.length) return;
       try {
@@ -85,7 +85,7 @@ export const CopyResultBtn = (props: { queryEnded: boolean; sql: SQLHandler; row
         error: err
       }
     }
-  }, [cols, rows, sql]);
+  }, [cols, rawValues, sql]);
   const { outputs, error } = res ?? {};
 
   if(error) return <Label iconPath={mdiAlert} label="" popupTitle="Cannot copy result" info={<ErrorComponent error={error} />} />
@@ -94,7 +94,7 @@ export const CopyResultBtn = (props: { queryEnded: boolean; sql: SQLHandler; row
   return <PopupMenuList 
     button={
       <Btn 
-        title={`Copy result (${rows.length} rows)`} 
+        title={`Copy result (${rawValues.length} rows)`} 
         size="small"
         iconPath={mdiContentCopy} 
         style={{ visibility: queryEnded && outputs?.length? "visible" : "hidden" }}

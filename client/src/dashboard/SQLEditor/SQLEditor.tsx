@@ -127,7 +127,7 @@ export const customLightThemeMonaco = "myCustomTheme";
 export type MonacoError = Pick<editor.IMarkerData, "code" | "message" | "severity" | "relatedInformation"> &  {
   position?: number;
   length?: number;
-} 
+}
 
 import { mdiPlay } from "@mdi/js";
 import { isEqual } from "prostgles-client/dist/react-hooks";
@@ -568,16 +568,30 @@ const setActiveCodeBlock = async function (this: SQLEditor, e: editor.ICursorPos
   /** Codeblock end line changes when going from empty line to content */
   const model = editor.getModel();
   const value = model?.getValue() ?? "";
+
+  const EOL = model?.getEOL() ?? "\n";
   const codeBlockSignature: CodeBlockSignature = {
-    numberOfLineBreaks: value.split(model?.getEOL() ?? "\n").length,
+    numberOfLineBreaks: value.split(EOL).length,
     numberOfSemicolons: value.split(";").length,
     currentLineNumber: e?.position.lineNumber ?? editor.getPosition()?.lineNumber ?? this.codeBlockSignature?.currentLineNumber ?? 1,
   };
+
+  /** When just moving the cursor, trigger only if cursor exited currentCodeBlock  
+   * Only if currentCodeBlock doesn't have gaps or semicolons
+  */
+  if(e && this.currentCodeBlock && !this.currentCodeBlock.text.split(EOL).filter(v => !v.trim()).length && !this.currentCodeBlock.text.trim().slice(0, -1).includes(";")){
+    const { startLine, endLine } = this.currentCodeBlock;
+    if(e.position.lineNumber >= startLine && e.position.lineNumber <= endLine){
+      return;
+    }
+  }
+
   const signatureDiffers = !isEqual(this.codeBlockSignature, codeBlockSignature);
   if(signatureDiffers && !document.getSelection()?.toString()){
     this.codeBlockSignature = codeBlockSignature;
     const codeBlock = await this.getCurrentCodeBlock();
     this.currentCodeBlock = codeBlock;
+    this.props.onDidChangeActiveCodeBlock?.(this.currentCodeBlock);
 
     const existingDecorations = editor.getLineDecorations(0)?.map(d => d.id) ?? [];
     editor.removeDecorations(existingDecorations);
@@ -585,7 +599,6 @@ const setActiveCodeBlock = async function (this: SQLEditor, e: editor.ICursorPos
 
     this.currentDecorations = await highlightCurrentCodeBlock(editor, codeBlock);
   }
-  this.props.onDidChangeActiveCodeBlock?.(this.currentCodeBlock);
 }
 
 const setActions = async (editor: editor.IStandaloneCodeEditor, comp: SQLEditor) => {
