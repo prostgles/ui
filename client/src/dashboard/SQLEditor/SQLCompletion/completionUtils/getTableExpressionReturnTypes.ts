@@ -42,7 +42,7 @@ export const getTableExpressionSuggestions = async (args: GetTableExpressionSugg
   const getColumnSuggestion = (cs: { type: "s"; s: ParsedSQLSuggestion; } | { type: "col"; colType: ColType; }, tableAlias?: string, isCteAlias = false): Pick<ParsedSQLSuggestion, "label" | "sortText" | "insertText" | "name" | "filterText" | "escapedIdentifier"> => {
       
     const c = cs.type === "s"? cs.s.colInfo! : cs.colType;
-    const colName = cs.type === "s"? cs.s.escapedIdentifier! : cs.colType.column_name;
+    const colName = cs.type === "s"? cs.s.escapedIdentifier! : cs.colType.escaped_column_name;
     
     const prevText = args.cb.prevText.trim();
     const hasNoAlias = cs.type === "s" && cs.s.escapedParentName === tableAlias;
@@ -72,7 +72,7 @@ export const getTableExpressionSuggestions = async (args: GetTableExpressionSugg
     const colTypesWithDefs = colTypes.map(c => {
       return {
         ...c,
-        definition: `${c.column_name} ${c.data_type}`,
+        definition: `${c.escaped_column_name} ${c.data_type}`,
       }
     });
     if(e.alias){

@@ -1135,6 +1135,11 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
             { 
               type: { enum: ["timechart"] },
               ...CommonChartLinkOpts,
+              otherColumns: { arrayOfType: {
+                name: "string",
+                label: { type: "string", optional: true },
+                udt_name: "string",
+              }, optional: true },
               columns: { 
                 arrayOfType: {
                   name: { type: "string", description: "Date column" },
