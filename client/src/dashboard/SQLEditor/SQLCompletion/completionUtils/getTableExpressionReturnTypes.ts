@@ -72,6 +72,7 @@ export const getTableExpressionSuggestions = async (args: GetTableExpressionSugg
     const colTypesWithDefs = colTypes.map(c => {
       return {
         ...c,
+        column_name: c.escaped_column_name,
         definition: `${c.escaped_column_name} ${c.data_type}`,
       }
     });
@@ -98,10 +99,10 @@ export const getTableExpressionSuggestions = async (args: GetTableExpressionSugg
             character_maximum_length: 0,
             data_type: c.data_type,
             udt_name: c.udt_name,
-            name: c.column_name,
+            name: c.escaped_column_name,
             comment: "",
             definition: "",
-            escaped_identifier: c.column_name,
+            escaped_identifier: c.escaped_column_name,
             has_default: false,
             nullable: false,
             numeric_precision: 0,
