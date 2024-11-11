@@ -22,6 +22,5 @@ module.exports = merge(commonConfig, {
   devtool: "cheap-module-source-map",
   plugins: [
     new OnDevCompiled({ options: true }),
-    // new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)()
   ],
 });

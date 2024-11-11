@@ -172,18 +172,22 @@ async function getTChartLayer({
     cols = _cols;
 
   } else {
-    const { dateColumn, sql, statType, groupByColumn } = layer;
+    const { dateColumn, sql, withStatement, statType, groupByColumn } = layer;
 
     if (!db.sql) {
       console.error("Not enough privileges to run query");
       return
     }
 
-    let _sql = sql.trim() + "";
-    if (_sql.endsWith(";")) _sql = _sql.slice(0, _sql.length - 1);
 
-
-    const plainResult = await db.sql(" SELECT * FROM (\n" + _sql + "\n ) t LIMIT 0 ");
+    const plainResult = await db.sql(`
+        ${withStatement}
+        SELECT * FROM (
+          ${sql}
+        ) prostgles_chart_table 
+        LIMIT 0 
+      `
+    );
     cols = plainResult.fields.map(f => ({ ...f, key: f.name, label: f.name, subLabel: f.dataType, udt_name: f.dataType as any }));
 
     let statField = "COUNT(*)"
@@ -220,9 +224,10 @@ async function getTChartLayer({
       `${statField} as ${JSON.stringify(FIELD_NAMES.value)}`,
     ].filter(v=>v).join(", ");
     const dataQuery = [
+      withStatement,
       `SELECT ${topSelect}`,
       `FROM (`,
-        _sql,
+        sql,
       `) t `,
       `WHERE ${escDateCol} IS NOT NULL `,
       `GROUP BY 1 ${escGroupByCol? `, 2` : ""}`,
@@ -308,7 +313,7 @@ export async function getTimeChartData(this: W_TimeChart): Promise<FetchedLayerD
     layers = (await Promise.all(
       nonErroredLayers
         .map(async layer => {
-          const { fetchedLayer, duration, hasError, error } = await tryCatch(async () => {
+          const { fetchedLayer, hasError, error } = await tryCatch(async () => {
             const fetchedLayer = await getTChartLayer({ getLinksAndWindows, myLinks, tables, viewPortExtent, visibleDataExtent, layer, bin, binSize, db, w, desiredBinCount });
             return { fetchedLayer }
           });

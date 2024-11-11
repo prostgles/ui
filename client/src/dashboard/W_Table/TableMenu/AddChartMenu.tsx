@@ -1,5 +1,5 @@
 import { mdiChartLine, mdiMap, } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/prostgles";
+import { useMemoDeep, usePromise } from "prostgles-client/dist/prostgles";
 import { _PG_numbers, isDefined, type ParsedJoinPath, type SQLHandler } from "prostgles-types";
 import React from "react";
 import Btn, { type BtnProps } from "../../../components/Btn";
@@ -11,37 +11,44 @@ import { rgbaToString } from "../../W_Map/getMapFeatureStyle";
 import { getRankingFunc } from "../ColumnMenu/JoinPathSelectorV2";
 import type { ChartColumn, ColInfo } from "./getChartCols";
 import { getChartCols } from "./getChartCols";
+import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
 
-type P = Pick<CommonWindowProps, "myLinks"> & {
-  w: WindowData<"table"> | WindowData<"sql">;
-  sql: string | undefined;
-  sqlHandler: SQLHandler;
+type P = Pick<CommonWindowProps, "myLinks" | "childWindows"> & {
   onAddChart: OnAddChart;
   tables: DBSchemaTablesWJoins; 
   btnClassName?: string;
   size?: "micro";
-};
+} & ({
+  type: "sql";
+  w: WindowData<"sql">;
+  chartableSQL: ChartableSQL;
+} | {
+  type: "table";
+  w: WindowData<"table">;
+  chartableSQL: undefined;
+});
 
 export const AddChartMenu = (props: P) => {
 
   const {
+    type,
     w,
     onAddChart,
     tables, 
-    sql: propsSql,
-    sqlHandler,
+    chartableSQL,
     size,
     myLinks,
+    childWindows,
   } = props;
 
   const isMicroMode = size === "micro";
 
-  const chartCols = usePromise(async () => {
-    const res = getChartCols(w.type === "table"?  { type: "table", w, tables }: { type: "sql", w, sqlHandler, sql: propsSql ?? w.sql });
+  const chartCols = useMemoDeep(() => {
+    const res = getChartCols(type === "table"?  { type: "table", w, tables }: { type: "sql", chartableSQL, w });
     return res
-  }, [propsSql, sqlHandler, tables, w]);
-  if(!chartCols) return null;
-  const { geoCols, dateCols, sql } = chartCols;
+  }, [chartableSQL, tables, w]);
+
+  const { geoCols, dateCols, sql, withStatement = "" } = chartCols;
 
   const tableName = w.table_name;
   const onAdd = (
@@ -56,6 +63,7 @@ export const AddChartMenu = (props: P) => {
       });
       return a;
     }, [] as ColInfo[]).map(({ name, udt_name }) => ({ name, udt_name }));
+
     const firstNumericColumn = otherColumns.find(c => _PG_numbers.includes(c.udt_name as any))?.name;
     const columnList = `(${linkOpts.columns.join()})`;
     const name = joinPath? `${[ tableName, ...joinPath.slice(0).map(p => p.table)].join(" > ")} ${columnList}` : `${tableName || ""} ${columnList}`;
@@ -84,6 +92,14 @@ export const AddChartMenu = (props: P) => {
           }))
         }),
         joinPath,
+        dataSource: sql? {
+          type: "sql",
+          sql,
+          withStatement,
+        } : {
+          type: "table",
+          joinPath,
+        },
         sql,
       }
     });
@@ -121,7 +137,7 @@ export const AddChartMenu = (props: P) => {
       const [firstCol] = c.cols;
       const isMap = c.label === "Map";
       const title = `Add ${c.label}`;
-      const layerAlreadyAdded = myLinks.map(({ options: linkOpts }) => {
+      const layerAlreadyAdded = myLinks.map(({ options: linkOpts, id }) => {
         if(linkOpts.type === "table") {
           return undefined;
         }
@@ -133,8 +149,14 @@ export const AddChartMenu = (props: P) => {
         if(matches) return linkOpts.columns[0]?.colorArr;
       }).find(isDefined);
 
+      const alreadyAddedButMinimisedOrNotVisibleChart = layerAlreadyAdded && childWindows.some(cw => {
+        const addedButMinimised = cw.type === c.label.toLowerCase() && cw.minimised;
+        const addedButNotVisible = cw.type === c.label.toLowerCase() && childWindows.some(_cw => _cw.type !== cw.type && !_cw.minimised && Number(_cw.last_updated) > Number(cw.last_updated));
+        return addedButMinimised || addedButNotVisible;
+      });
+      
       const btnProps: BtnProps = {
-        title,
+        title: alreadyAddedButMinimisedOrNotVisibleChart? "Show chart" : title,
         size: size ?? "small",
         iconPath: c.iconPath,
         className: props.btnClassName,
@@ -149,7 +171,7 @@ export const AddChartMenu = (props: P) => {
        * If map and no joined columns then add all columns for render 
        * Timechart can only render one date column
       */
-      if(c.label !== "Map" && c.cols.length > 1 || c.cols.some(_c => _c.type === "joined")){
+      if(!layerAlreadyAdded && (c.label !== "Map" && c.cols.length > 1 || c.cols.some(_c => _c.type === "joined"))){
         return <Select 
           key={c.label}
           title={title}
@@ -162,7 +184,6 @@ export const AddChartMenu = (props: P) => {
           fullOptions={c.cols.map((c, i) => ({
             key: c.type === "joined"? c.label : c.name,
             label: c.type === "joined"? `> ${c.label} (${c.name})` : c.name,
-            disabledInfo: layerAlreadyAdded? "Layer already added" : undefined,
             ranking: searchTerm => getRankingFunc(searchTerm, c.type === "joined"? c.path.map(p => p.table) : [c.name]),
           }))}
           onChange={colNameOrLabel => {
@@ -176,16 +197,31 @@ export const AddChartMenu = (props: P) => {
         return undefined;
       }
 
+
       return <Btn
         key={c.label}
         disabledInfo={
+          alreadyAddedButMinimisedOrNotVisibleChart? undefined :
           layerAlreadyAdded? "Layer already added" : 
           !firstCol? `No ${isMap? "geography/geometry" : "date/timestamp"} columns available` : 
           undefined
         }
         {...btnProps}
         onClick={() => { 
-          c.onAdd(c.cols, undefined) 
+          if(alreadyAddedButMinimisedOrNotVisibleChart){
+            childWindows.forEach(cw => {
+              if(cw.type === c.label.toLowerCase()){
+                cw.$update({ 
+                  minimised: false,
+
+                  /** Hacky way to ensure it shows first if another chart is already visible */
+                  created: (new Date()).toISOString(), 
+                });
+              }
+            });
+          } else {
+            c.onAdd(c.cols, undefined) 
+          }
         }} 
       />;
 

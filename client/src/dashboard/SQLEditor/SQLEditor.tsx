@@ -189,7 +189,6 @@ type S = {
   value: string;
   editorMounted: boolean;
   themeAge: number;
-  activeCodeBlock: undefined | Pick<CodeBlock, "startLine" | "endLine">;
 };
 
 export default class SQLEditor extends RTComp<P, S> {
@@ -205,7 +204,6 @@ export default class SQLEditor extends RTComp<P, S> {
       value: props.value ?? "",
       editorMounted: false,
       themeAge: 0,
-      activeCodeBlock: undefined,
     }
   }
   
@@ -532,17 +530,7 @@ export default class SQLEditor extends RTComp<P, S> {
             setActiveCodeBlock.bind(this)(undefined);
           });
           editor.onDidChangeCursorPosition(async e => {
-            if(e.source === "api") return;
             setActiveCodeBlock.bind(this)(e);
-          });
-          
-          editor.onDidChangeModelDecorations(() => {
-            if(this.canExecuteBlocks && this.codeBlockSignature){
-              // setTimeout(() => {
-                if(!this.mounted) return;
-                this.setState({ activeCodeBlock: { startLine: 1, endLine: 2 } })
-              // }, 100)
-            }
           });
 
           const { cursorPosition } = this.props;

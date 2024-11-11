@@ -1,4 +1,4 @@
-import { useAsyncEffectQueue, useEffectDeep } from "prostgles-client/dist/react-hooks";
+import { useAsyncEffectQueue, useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
 import * as React from "react";
 import { appTheme, useReactiveState } from "../../App";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
@@ -22,21 +22,26 @@ export type MonacoEditorProps = {
 } 
 export const MonacoEditor = (props: MonacoEditorProps) => {
 
-  useEffectDeep(() => {
-    if(!props.loadedSuggestions) return;
-    loadPSQLLanguage(props.loadedSuggestions);
-  }, [props.loadedSuggestions]);
+  const { loadedSuggestions } = props;
+  // useEffectDeep(() => {
+  //   if(!props.loadedSuggestions) return;
+  //   loadPSQLLanguage(props.loadedSuggestions);
+  // }, [props.loadedSuggestions]);
+
+  const loadedLanguage = usePromise(async () => {
+    await loadPSQLLanguage(loadedSuggestions);
+    return true
+  }, [loadedSuggestions]);
 
   const editor = React.useRef<editor.IStandaloneCodeEditor>();
   const container = React.useRef<HTMLDivElement>(null);
   const { state: _appTheme } = useReactiveState(appTheme);
 
   const options = props.options
-  const theme = options?.theme && options.theme !== "vs"?  options.theme : (_appTheme === "dark"? "vs-dark" : customLightThemeMonaco as any);
-
+  const theme = options?.theme && options.theme !== "vs"?  options.theme : (_appTheme === "dark"? "vs-dark" : customLightThemeMonaco as any); 
   useAsyncEffectQueue(async () => {
     const { language, value, options, onMount, expandSuggestionDocs = true } = props;
- 
+  
     const monaco = await getMonaco();
     const editorOptions: editor.IStandaloneEditorConstructionOptions = {
       value,
@@ -58,12 +63,15 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       });
     }
 
-    onMount?.(editor.current); 
+    /** This check necessary to ensure getTokens returns correct data */
+    if(loadedLanguage){
+      onMount?.(editor.current); 
+    }
     return () => {
       editor.current?.dispose();
     }
 
-  }, [props.language, container, props.onChange ]);
+  }, [props.language, container, props.onChange, loadedLanguage]);
 
   useEffectDeep(() => {
     if (!editor.current) return

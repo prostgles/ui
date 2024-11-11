@@ -7,8 +7,9 @@ import { FlexRow } from "../../components/Flex";
 import PopupMenu from "../../components/PopupMenu";
 import Btn from "../../components/Btn";
 import { MapOSMQuery } from "../W_Map/MapOSMQuery";
+import type { Extent } from "../Map/DeckGLMap";
 
-const defaultWorldExtent = [-180, -90, 180, 90];
+export const defaultWorldExtent: Extent = [-180, -90, 180, 90];
 
 export const AddChartLayer = (props: MapLayerManagerProps) => {
   const { tables, type, prgl: {dbs}, w } = props;

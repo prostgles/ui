@@ -3,8 +3,8 @@ import type { LinkSyncItem, WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { getCrossFilters } from "../joinUtils";
 import { getLinkColor } from "../W_Map/getMapLayerQueries";
 import type { ActiveRow } from "../W_Table/W_Table";
-import { getSmartGroupFilter } from "../SmartFilter/SmartFilter";
 import type { ProstglesTimeChartLayer } from "./W_TimeChart";
+import { tryCatchV2 } from "../WindowControls/TimeChartLayerOptions";
 
 type Args = {
   links: LinkSyncItem[];
@@ -38,15 +38,15 @@ export const getTimeChartLayer = ({ links, link, windows, active_row, w }: Args 
       updateOptions: (newOptions) => l.$update({ options: { ...lOpts, ...newOptions } }), 
     } as const;
 
-    if(wTable?.type === "table" || lOpts.localTableName){
-      // const activeRowFilter = getActiveRowFilter(q.id);
-
-      if(lOpts.localTableName){
+    const localTableName = lOpts.dataSource?.type === "local-table"? lOpts.dataSource.localTableName :  lOpts.localTableName;
+    const joinPath = lOpts.dataSource?.type === "table"? lOpts.dataSource.joinPath : lOpts.joinPath;
+    if(wTable?.type === "table" || localTableName){
+      if(localTableName){
         return {
           ...commonOpts,
           type: "table",
-          tableName: lOpts.localTableName,
-          path: lOpts.joinPath,
+          tableName: localTableName,
+          path: joinPath,
           tableFilter: undefined,
           externalFilters: [],
           color
@@ -64,7 +64,7 @@ export const getTimeChartLayer = ({ links, link, windows, active_row, w }: Args 
         ...commonOpts,
         type: "table",
         tableName: wTable.table_name,
-        path: lOpts.joinPath,
+        path: joinPath,
         // activeRowFilter: jf.activeRowFilter,
         tableFilter: undefined,// getSmartGroupFilter(tbl.filter || []),
         externalFilters: jf.all,
@@ -80,7 +80,8 @@ export const getTimeChartLayer = ({ links, link, windows, active_row, w }: Args 
       const layer: ProstglesTimeChartLayer =  {
         ...commonOpts,
         type: "sql",
-        sql: lOpts.sql, //fromSelected? latestW.selected_sql : latestW.sql,
+        sql: lOpts.sql,
+        withStatement: lOpts.dataSource?.type === "sql"? lOpts.dataSource.withStatement : "",
         color
       }
       
@@ -92,7 +93,10 @@ export const getTimeChartLayer = ({ links, link, windows, active_row, w }: Args 
 
 export const getTimeChartLayerQueries = (args: Args) => {
   const { links, myLinks } = args;
-  const layerQueries: ProstglesTimeChartLayer[] = myLinks.flatMap(link => getTimeChartLayer({ ...args, link })).filter(isDefined)
+  const layerQueries: ProstglesTimeChartLayer[] = myLinks.flatMap(link => {
+    const { data = [] } = tryCatchV2(() => getTimeChartLayer({ ...args, link }));
+    return data;
+  }).filter(isDefined)
 
   return layerQueries;
 }

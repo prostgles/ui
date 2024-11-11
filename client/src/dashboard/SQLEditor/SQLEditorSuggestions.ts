@@ -2,13 +2,14 @@
 
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, SQLHandler } from "prostgles-types";
-import { getKeys } from "prostgles-types";
+import { getKeys, tryCatch } from "prostgles-types";
 import { isDefined, omitKeys, pickKeys } from "../../utils";
 import { TOP_KEYWORDS, asSQL } from "./SQLCompletion/KEYWORDS";
 import { type PG_Policy, PRIORITISED_OPERATORS, getPGObjects } from "./SQLCompletion/getPGObjects";
 import type { ParsedSQLSuggestion } from "./SQLCompletion/registerSuggestions";
 import type { SQLSuggestion } from "./SQLEditor";
 import { SQL_SNIPPETS } from "./SQL_SNIPPETS";
+import { tryCatchV2 } from "../WindowControls/TimeChartLayerOptions";
 
 type DB = { sql: SQLHandler }
 
@@ -130,6 +131,24 @@ export async function getSqlSuggestions(db: DB): Promise< {
       documentation: asListObject(omitKeys(t, ["escaped_identifier"])) + `\n\n${asSQL(t.function_definition ?? "")}`,
     })));
 
+    const { data: columnStats } = await tryCatchV2(async () => {
+      const vals: { 
+        schemaname: string;
+        tablename: string;
+        attname: string;
+        most_common_vals: string[] | null; 
+      }[] = await db.sql(`
+          SELECT 
+              schemaname
+            , tablename
+            , attname
+            , (most_common_vals::text::_text)[:2] as most_common_vals
+          FROM pg_catalog.pg_stats
+          WHERE schemaname = current_schema()
+      `, {}, { returnType: "rows" }) as any;
+      
+      return vals;
+    });
 
     tables.map(t => {
       const type = t.relkind === "r"? "table" : t.relkind === "v"? "view" : "mview";
@@ -214,7 +233,8 @@ export async function getSqlSuggestions(db: DB): Promise< {
       });
       suggestions = suggestions.concat(cols.map(c => {
         const cIndexes = tIndexes.filter(d => d.indexdef.slice(d.indexdef.indexOf("("), d.indexdef.lastIndexOf(")")).includes(c.escaped_identifier));
-        const indexInfo = t.is_view? "" : `\n\n\n\n**Indexes**(${cIndexes.length}): \n${asSQL(cIndexes.map(i => i.indexdef.split(" USING ")[1] || i.indexdef).join(", \n"))}`
+        const indexInfo = t.is_view? "" : `\n\n\n\n**Indexes**(${cIndexes.length}): \n${asSQL(cIndexes.map(i => i.indexdef.split(" USING ")[1] || i.indexdef).join(", \n"))}`;
+        const topValues = columnStats?.find(cs => cs.schemaname === t.schema && cs.tablename === t.name && cs.attname === c.name)?.most_common_vals?.map(v => v.slice(0, 20)).join(", ") ?? "";
         return {
           label: getColumnSuggestionLabel(c, t.name),
           name: c.name, 
@@ -225,7 +245,14 @@ export async function getSqlSuggestions(db: DB): Promise< {
           parentOID: t.oid,
           escapedIdentifier: c.escaped_identifier,
           insertText: c.escaped_identifier,
-          documentation: `${asListObject({ Table: t.escaped_identifier, Schema: t.schema, Comment: c.comment })}  \n` + 
+          documentation: `${asListObject({ 
+              Table: t.escaped_identifier, 
+              Schema: t.schema, 
+              Comment: c.comment,
+              ...(topValues? {
+                "Common values": topValues, 
+              } : {})
+            })}  \n` + 
             asSQL(c.definition) + indexInfo,
           filterText: `${c.name} ${c.udt_name}`,
           type: "column",

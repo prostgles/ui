@@ -53,8 +53,10 @@ export const getMapLayerQueries = ({ links, myLinks, windows, active_row, w }: A
     }
     const isLocalLayerLink = l.w1_id === l.w2_id;
     const linkW = isLocalLayerLink? undefined : windows.find(_w => (windowIs(_w, "table") || windowIs(_w, "sql")) && _w.id !== w.id && [l.w1_id, l.w2_id].includes(_w.id));
-    const joinEndTable = lOpts.joinPath?.at(-1);
-    const tableName = isLocalLayerLink? lOpts.localTableName : (joinEndTable?.table ?? linkW?.table_name);
+    const _joinEndTable = lOpts.dataSource?.type === "table"? lOpts.dataSource.joinPath : undefined;
+    const joinEndTable = (_joinEndTable ?? lOpts.joinPath)?.at(-1);
+    const _localTableName = lOpts.dataSource?.type === "local-table"? lOpts.dataSource.localTableName : undefined;
+    const tableName = isLocalLayerLink? (_localTableName ?? lOpts.localTableName) : (joinEndTable?.table ?? linkW?.table_name);
 
     if(lOpts.osmLayerQuery){
       const { colorArr, colorStr } = getLinkColor(lOpts.mapColorMode?.type === "fixed"? lOpts.mapColorMode.colorArr : [0,0,0,1]);
@@ -102,15 +104,17 @@ export const getMapLayerQueries = ({ links, myLinks, windows, active_row, w }: A
           activeRowFilter: undefined, 
       } : getCrossFilters(w, active_row, links, windows); 
 
-        const localLayerFilter = (!lOpts.smartGroupFilter? undefined : parseFullFilter(lOpts.smartGroupFilter, undefined, undefined)) ?? {};
-
-        const joinInfo = lOpts.joinPath && w.table_name && joinEndTable? {
+        const smartGroupFilter = lOpts.dataSource?.type === "local-table"? lOpts.dataSource.smartGroupFilter : lOpts.smartGroupFilter; 
+        const localLayerFilter = (!smartGroupFilter? undefined : parseFullFilter(smartGroupFilter, undefined, undefined)) ?? {};
+        const joinPath = lOpts.dataSource?.type === "table"? lOpts.dataSource.joinPath : lOpts.joinPath;
+        const joinInfo = joinPath && w.table_name && joinEndTable? {
           joinStartTable: w.table_name,
-          path: lOpts.joinPath,
+          path: joinPath,
         } : {
           joinStartTable: undefined,
           path: undefined,
         } satisfies Pick<LayerTable, "joinStartTable" | "path">;
+        
         const lt: LayerTable = {
           ...commonOpts,
           type: "table",
@@ -136,9 +140,9 @@ export const getMapLayerQueries = ({ links, myLinks, windows, active_row, w }: A
         }
         const lsql: LayerSQL = {
           ...commonOpts,
-          type: "sql",  
-          // sql: lOpts.fromSelected? latestW.selected_sql : latestW.sql,
+          type: "sql",
           sql: lOpts.sql,
+          withStatement: lOpts.dataSource?.type === "sql"? lOpts.dataSource.withStatement : "",
         };
         if(!lsql.sql) {
           return undefined;

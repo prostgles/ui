@@ -1,10 +1,8 @@
-import type { ValidatedColumnInfo } from "prostgles-types";
 import { isDefined } from "prostgles-types";
 import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { ErrorTrap } from "../../components/ErrorComponent";
 import { FlexCol } from "../../components/Flex";
-import { pickKeys } from "../../utils";
 import { DashboardHotkeys } from "../DashboardMenu/DashboardHotkeys";
 import { LinkMenu } from "../LinkMenu";
 import RTComp from "../RTComp";
@@ -46,8 +44,6 @@ type ViewRendererState = {
   }
 }
 
-type WindowColPermissions = Record<keyof WindowData, Pick<ValidatedColumnInfo, "select" | "filter" | "orderBy">>;
-
 type D = {
   links: Link[];
   windows: WindowData[];
@@ -81,31 +77,9 @@ export class ViewRenderer extends RTComp<ViewRendererProps, ViewRendererState, D
     return undefined;
   }
 
-  /**
-   * Although the user might be allowed some actions on the db schema (table column select/sort/filter)
-   *  Updating the related window properties (columns, sort, filter) might not be allowed (if readonly dashboard)
-   */
-  getWindowPermissions = async (wid: string): Promise<WindowColPermissions> => {
-    const validatedCols = await this.props.prgl.dbs.windows.getColumns?.("en", {
-      rule: "update",
-      filter: { id: wid },
-      data: {  }
-    }) ?? [];
-
-    return validatedCols.reduce((a, col) => {
-      
-      const r: WindowColPermissions = {
-        ...a,
-        [col.name]: pickKeys(col, ["select", "filter", "orderBy"])
-      }
-
-      return r;
-    }, {} as WindowColPermissions)
-  }
-
   getOpenedLinksAndWindows(){
 
-    const windows = this.props.windows.filter(w => !w.deleted && !w.closed);//.find(w => w.fullscreen)? wnds.filter(w => w.fullscreen).slice(0,1) : wnds;
+    const windows = this.props.windows.filter(w => !w.deleted && !w.closed);
     const links = this.props.links.filter(l => !l.closed && !l.deleted && [l.w1_id, l.w2_id].every(wid => windows.some(w => w.id === wid)));
 
     return { links, windows }
@@ -125,7 +99,7 @@ export class ViewRenderer extends RTComp<ViewRendererProps, ViewRendererState, D
       onLinkTable,
     } = getViewRendererUtils.bind(this)({ ...this.props, windows, links, workspace, tables });
   
-    const getRenderedWindow = (w: WindowSyncItem, childWindow?: React.ReactNode) => {
+    const getRenderedWindow = (w: WindowSyncItem, childWindow: React.ReactNode | null, childWindows: WindowSyncItem[]) => {
 
       const onClose: CommonWindowProps["onClose"] = async (e) => {
         if(!e) return;
@@ -186,7 +160,8 @@ export class ViewRenderer extends RTComp<ViewRendererProps, ViewRendererState, D
         "data-key": w.id,
         "data-table-name": w.table_name,
         "data-title": WNDOW.getTitle(w),
-        w ,
+        w,
+        childWindows,
         prgl: this.props.prgl,
         tables,
         onClose, 
@@ -230,8 +205,7 @@ export class ViewRenderer extends RTComp<ViewRendererProps, ViewRendererState, D
 
           const layerQueries = getMapLayerQueries({ active_row, links, myLinks, windows, w });
           
-          result = <W_Map
-            // activeRow={active_row}
+          result = <W_Map 
             myActiveRow={(active_row?.window_id === w.id)? active_row : undefined} 
             onClickRow={(row, table_name) => {
               onClickRow(row, table_name, w.id, { type: "table-row" });
@@ -242,6 +216,7 @@ export class ViewRenderer extends RTComp<ViewRendererProps, ViewRendererState, D
             w={w}
           />;
         } else if(w.type === "timechart"){
+
           result = <W_TimeChart
             { ...commonProps }
             activeRowColor={colorStr}
@@ -288,8 +263,18 @@ export class ViewRenderer extends RTComp<ViewRendererProps, ViewRendererState, D
 
     const parentWindows = windows.filter(w => !w.parent_window_id);
     const renderedWindows = parentWindows.map((w)=> {
-      const childWindow = windows.find(cw => cw.parent_window_id === w.id);
-      return getRenderedWindow(w, childWindow && getRenderedWindow(childWindow).elem);
+      const latestChildWindows = windows
+        .filter(cw => cw.parent_window_id === w.id)
+        .sort((b,a) => (new Date(a.created)).getTime() - (new Date(b.created)).getTime());
+        // .sort((b,a) => Number(a.last_updated) - Number(b.last_updated));
+      const latestChildWindow = latestChildWindows.find(cw => !cw.minimised);
+      
+      const renderedChildNode = latestChildWindow && getRenderedWindow(latestChildWindow, undefined, []).elem
+      return getRenderedWindow(
+        w,
+        renderedChildNode, 
+        latestChildWindows
+      );
     }).filter(isDefined);
 
     return <div className="ViewRenderer min-h-0 f-1 flex-row relative"
