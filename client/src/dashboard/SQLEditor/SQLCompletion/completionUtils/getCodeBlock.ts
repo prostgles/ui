@@ -182,7 +182,7 @@ export const getCurrentCodeBlock = async (model: editor.ITextModel, pos: Positio
   const nextLC = nextTokens.map(t => t.textLC).join(" ").toLowerCase().trim();
   const thisLineLC = thisEntireLineTokens.map(t => t.textLC).join(" ").toLowerCase().trim();
 
-  const ftoken = prevTokens.at(0);
+  const ftoken = tokens.at(0);
   const ltoken = prevTokens.at(-1);
   const l1token = prevTokens.at(-2);
   const l2token = prevTokens.at(-3);

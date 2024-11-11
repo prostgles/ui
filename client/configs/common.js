@@ -6,8 +6,7 @@ const path = require('path');
 const webpack = require('webpack');
 const APP_DIR = path.resolve(__dirname, '../src');
 const MONACO_DIR = path.resolve(__dirname, '../node_modules/monaco-editor');
-const { saveMdiIcons } = require('../setup-icons');
-saveMdiIcons();
+const { SaveMdiIcons } = require('../setup-icons');
 const PRODUCTION = process.env.NODE_ENV === "production";
 
 const getLoader = () => {
@@ -136,7 +135,9 @@ module.exports = {
       dependencies: true,
       dependenciesCount: 10000,
       percentBy: null,
-    })
+    }),
+    new SaveMdiIcons(),
+    // new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)()
   ],
   output: {
     clean: true, // Clean the output directory before emit.

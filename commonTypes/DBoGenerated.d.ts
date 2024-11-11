@@ -293,8 +293,8 @@ export type DBSchemaGenerated = {
       last_updated: string;
       options: 
        |  {  type: 'table';  colorArr?: number[];  tablePath: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; }
-       |  {  type: 'map';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  sql?: string;  mapIcons?: |  {  type: 'fixed';  iconPath: string; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: 'fixed';  colorArr: number[]; } |  {  type: 'scale';  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[]; } )[]; }
-       |  {  type: 'timechart';  colorArr?: number[];  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  osmLayerQuery?: string;  groupByColumn?: string;  sql?: string;  mapIcons?: |  {  type: 'fixed';  iconPath: string; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: 'fixed';  colorArr: number[]; } |  {  type: 'scale';  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[];  statType?: {  funcName: '$min' | '$max' | '$countAll' | '$avg' | '$sum';  numericColumn: string; }; } )[]; }
+       |  {  type: 'map';  dataSource?: |  {  type: 'sql';  sql: string;  withStatement: string; } |  {  type: 'table';  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; } |  {  type: 'local-table';  localTableName: string;  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; };  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  sql?: string;  osmLayerQuery?: string;  mapIcons?: |  {  type: 'fixed';  iconPath: string; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  iconPath: string; } )[]; };  mapColorMode?: |  {  type: 'fixed';  colorArr: number[]; } |  {  type: 'scale';  columnName: string;  min: number;  max: number;  minColorArr: number[];  maxColorArr: number[]; } |  {  type: 'conditional';  columnName: string;  conditions: (  {  value: any;  colorArr: number[]; } )[]; };  mapShowText?: {  columnName: string; };  columns: (  {  name: string;  colorArr: number[]; } )[]; }
+       |  {  type: 'timechart';  dataSource?: |  {  type: 'sql';  sql: string;  withStatement: string; } |  {  type: 'table';  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[]; } |  {  type: 'local-table';  localTableName: string;  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; }; };  smartGroupFilter?: |  {  $and: any[]; } |  {  $or: any[]; };  joinPath?: (  {  table: string;  on: (  Record<string, any> )[]; } )[];  localTableName?: string;  sql?: string;  groupByColumn?: string;  otherColumns?: (  {  name: string;  label?: string;  udt_name: string; } )[];  columns: (  {  name: string;  colorArr: number[];  statType?: {  funcName: '$min' | '$max' | '$countAll' | '$avg' | '$sum';  numericColumn: string; }; } )[]; }
       user_id: string;
       w1_id: string;
       w2_id: string;
@@ -576,7 +576,7 @@ export type DBSchemaGenerated = {
     columns: {
       closed?: null | boolean;
       columns?: null | any;
-      created?: null | string;
+      created?: string;
       deleted?: null | boolean;
       filter?: any;
       fullscreen?: null | boolean;
@@ -586,6 +586,7 @@ export type DBSchemaGenerated = {
       last_updated: string;
       limit?: null | number;
       method_name?: null | string;
+      minimised?: null | boolean;
       name?: null | string;
       nested_tables?: null | any;
       options?: any;

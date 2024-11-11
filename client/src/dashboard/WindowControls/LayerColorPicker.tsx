@@ -20,7 +20,7 @@ export const LayerColorPicker = ({ link, column, myLinks, title, tables, w, getL
   if(link.options.type === "table"){
     return null;
   }
-  const rgba: RGBA = link.options.columns.find(c => c.name === column)?.colorArr ?? link.options.colorArr ?? [100,100,100] as any;
+  const rgba: RGBA = link.options.columns.find(c => c.name === column)?.colorArr ?? [100,100,100] as any;
   const opts = link.options;
 
   if(opts.type === "map"){
@@ -51,7 +51,6 @@ export const LayerColorPicker = ({ link, column, myLinks, title, tables, w, getL
           { 
             options: { 
               ...opts,
-              colorArr,
               columns: opts.columns.map(c => ({
                 ...c,
                 colorArr: c.name === column? colorArr : c.colorArr

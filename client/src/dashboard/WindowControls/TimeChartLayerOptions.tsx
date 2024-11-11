@@ -1,7 +1,9 @@
-import { mdiSetSplit, mdiSigma, mdiTableColumn } from "@mdi/js";
+import { mdiSigma, mdiTableColumn } from "@mdi/js";
+import { _PG_numbers } from "prostgles-types";
 import React from "react";
-import Btn, { type BtnProps } from "../../components/Btn";
+import Btn from "../../components/Btn";
 import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
+import { Label } from "../../components/Label";
 import PopupMenu from "../../components/PopupMenu";
 import Select from "../../components/Select/Select";
 import type { LinkSyncItem, WindowSyncItem } from "../Dashboard/dashboardUtils";
@@ -9,14 +11,11 @@ import { windowIs } from "../Dashboard/dashboardUtils";
 import { getTimeChartLayer } from "../W_TimeChart/getTimeChartLayers";
 import { TIMECHART_STAT_TYPES } from "../W_TimeChart/W_TimeChartMenu";
 import type { MapLayerManagerProps } from "./ChartLayerManager";
-import { _PG_numbers } from "prostgles-types"
-import { Label } from "../../components/Label";
 
 type TimeChartLayerOptionsProps = Pick<MapLayerManagerProps, "tables" | "myLinks" | "getLinksAndWindows"> & {
   link: LinkSyncItem;
   column: string;
   w: WindowSyncItem;
-  // btnProps?: BtnProps;
   mode?: "on-screen";
 }
 export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows, myLinks, w: wMapOrTimechart, mode }: TimeChartLayerOptionsProps) => {
@@ -25,31 +24,31 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
     return null;
   }
   const w = wMapOrTimechart as WindowSyncItem<"timechart">;
-  const opts = link.options;
-  if(opts.type !== "timechart"){
-    return null;
-  }
-  
-  const colOpts = opts.columns.find(dc => dc.name === column);
-  if(!colOpts){
-    return <>Column not found: {column}</>
-  }
-  
-  const { windows, links } = getLinksAndWindows();
-  const lq = getTimeChartLayer({ active_row: undefined, link, windows, links, myLinks, w })
-    .find(l => l.dateColumn === column);
-  const parentW = windows.find(_w => _w.id !== w.id && [link.w1_id , link.w2_id].includes(_w.id));
-  const table = lq?.type === "table"? tables.find(t => t.name === lq.tableName) : undefined;
-  const cols = (
-    parentW?.type === "sql"? (parentW.options.sqlResultCols ?? []) : 
-    parentW?.type === "table"? table?.columns : []
-  );
-  const numericCols = cols?.filter(c => _PG_numbers.includes(c.udt_name as any)) ?? [];
-  const statType = colOpts.statType ?? { funcName: "$countAll", numericColumn: undefined };
   const linkOpts = link.options;
   if(linkOpts.type !== "timechart"){
     return <>Invalid link type: {linkOpts.type}</>;
   }
+  
+  const colOpts = linkOpts.columns.find(dc => dc.name === column);
+  if(!colOpts){
+    return <>Column not found: {column}</>
+  }
+
+  
+  
+  const { windows, links } = getLinksAndWindows();
+  const { data: lq } = tryCatchV2(
+    () => getTimeChartLayer({ active_row: undefined, link, windows, links, myLinks, w })
+      .find(l => l.dateColumn === column)
+  );
+  const parentW = windows.find(_w => _w.id !== w.id && [link.w1_id , link.w2_id].includes(_w.id));
+  const table = lq?.type === "table"? tables.find(t => t.name === lq.tableName) : undefined;
+  const cols = (
+    parentW?.type === "sql"? (linkOpts.otherColumns ?? parentW.options.sqlResultCols) : 
+    parentW?.type === "table"? table?.columns : []
+  ) ?? [];
+  const numericCols = cols.filter(c => _PG_numbers.includes(c.udt_name as any));
+  const statType = colOpts.statType ?? { funcName: "$countAll", numericColumn: undefined };
 
   const updateLinkOpts = (newOpts: Partial<typeof linkOpts>) => {
     link.$update({
@@ -59,25 +58,22 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
   
   const updateCol = (col: string, newColOpts: Partial<typeof colOpts>) => {
     updateLinkOpts({
-      ...opts,
-      columns: opts.columns.map(c => c.name === col? ({ ...c, ...newColOpts }) : c )
+      ...linkOpts,
+      columns: linkOpts.columns.map(c => c.name === col? ({ ...c, ...newColOpts }) : c )
     })
   };
   const isOnScreen = mode === "on-screen";
   const activeStat = TIMECHART_STAT_TYPES.find(s => s.func === statType.funcName);
   const activeStatLabel: typeof TIMECHART_STAT_TYPES[number]["label"] = activeStat?.label ?? statType.funcName as any;
+  const boldTextNode = (text: string) => <strong style={{ margin: ".6px"}}>{text}</strong>;
+  const fadedTextNode = (text: string) => <span style={{ opacity: .7 }}>{text}</span>;
   const activeStatLabelDesc = activeStatLabel === "Count All"? "count(*), " : 
   <FlexRow className="gap-0">
-    <span style={{ opacity: .7 }}>
-      {activeStatLabel}
-      (
-    </span>
-    <strong style={{ margin: ".6px"}}>{colOpts.statType?.numericColumn}</strong>
-    <span style={{ opacity: .7 }}>
-      ),
-    </span>
+    {fadedTextNode(`${activeStatLabel}(`)}
+    {boldTextNode(colOpts.statType?.numericColumn ?? "")}
+    {fadedTextNode(`),`)}
   </FlexRow>;
-  const groupByCols = cols?.filter(c => c.name !== lq?.statType?.numericColumn && c.name !== lq?.dateColumn && c.udt_name !== "timestamp" && c.udt_name !== "timestamptz");
+  const groupByCols = cols.filter(c => c.name !== lq?.statType?.numericColumn && c.name !== lq?.dateColumn && c.udt_name !== "timestamp" && c.udt_name !== "timestamptz");
 
   return <>
     <PopupMenu 
@@ -98,11 +94,6 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
             {activeStatLabelDesc}
             {isOnScreen? `${lq?.dateColumn}` : ""}
           </Btn>
-          {/* {!!groupByCols?.length && 
-            <Btn color="action" variant="faded" iconPath={mdiTableColumn}  {...btnProps} title="Group by column" data-command="TimeChartLayerOptions.groupBy" >
-              {lq?.groupByColumn}
-            </Btn>
-          } */}
         </FlexRow>
       }
       render={() => 
@@ -155,12 +146,13 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
             />
             
           </FlexRowWrap>
-          {!!groupByCols?.length && <Select
+          <Select
             label="Group by field"
             variant="div" 
             className="w-fit "
             data-command="TimeChartLayerOptions.groupBy"
             optional={true}
+            disabledInfo={groupByCols.length? undefined : "No groupable columns available"}
             btnProps={{
               iconPath: mdiTableColumn,
               color: !lq?.groupByColumn? undefined : "action",
@@ -177,7 +169,7 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
             onChange={groupByColumn => {
               updateLinkOpts({ groupByColumn });
             }}
-          />}
+          />
           {isOnScreen && 
             <FlexCol className="gap-p5">
               <Label variant="normal">{lq?.type === "sql"? "Query" : "Table"}</Label>
@@ -190,4 +182,36 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
       } 
     />
   </>
+}
+
+type TryCatchResult<T> = 
+| { data: T; hasError?: false; error?: undefined; duration: number; }
+| { data?: undefined; hasError: true; error: unknown; duration: number; } 
+
+export const tryCatchV2 = <T,>(func: () => T | Promise<T>): T extends Promise<T>? Promise<TryCatchResult<Awaited<T>>> : TryCatchResult<T> => {
+  const startTime = Date.now();
+  try {
+    const dataOrResult = func();
+    if(dataOrResult instanceof Promise){
+      return new Promise(async (resolve, reject) => {
+        const duration = Date.now() - startTime;
+        const data = await dataOrResult
+        resolve({
+          data,
+          duration,
+        });
+      }) as any;
+    }
+    return {
+      data: dataOrResult,
+      duration: Date.now() - startTime,
+    } as any;
+  } catch(error){
+    console.error(error);
+    return { 
+      error,
+      hasError: true,
+      duration: Date.now() - startTime, 
+    } as any;
+  }
 }

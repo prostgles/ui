@@ -42,7 +42,7 @@ export const getTableExpressionSuggestions = async (args: GetTableExpressionSugg
   const getColumnSuggestion = (cs: { type: "s"; s: ParsedSQLSuggestion; } | { type: "col"; colType: ColType; }, tableAlias?: string, isCteAlias = false): Pick<ParsedSQLSuggestion, "label" | "sortText" | "insertText" | "name" | "filterText" | "escapedIdentifier"> => {
       
     const c = cs.type === "s"? cs.s.colInfo! : cs.colType;
-    const colName = cs.type === "s"? cs.s.escapedIdentifier! : cs.colType.column_name;
+    const colName = cs.type === "s"? cs.s.escapedIdentifier! : cs.colType.escaped_column_name;
     
     const prevText = args.cb.prevText.trim();
     const hasNoAlias = cs.type === "s" && cs.s.escapedParentName === tableAlias;
@@ -72,7 +72,8 @@ export const getTableExpressionSuggestions = async (args: GetTableExpressionSugg
     const colTypesWithDefs = colTypes.map(c => {
       return {
         ...c,
-        definition: `${c.column_name} ${c.data_type}`,
+        column_name: c.escaped_column_name,
+        definition: `${c.escaped_column_name} ${c.data_type}`,
       }
     });
     if(e.alias){
@@ -98,10 +99,10 @@ export const getTableExpressionSuggestions = async (args: GetTableExpressionSugg
             character_maximum_length: 0,
             data_type: c.data_type,
             udt_name: c.udt_name,
-            name: c.column_name,
+            name: c.escaped_column_name,
             comment: "",
             definition: "",
-            escaped_identifier: c.column_name,
+            escaped_identifier: c.escaped_column_name,
             has_default: false,
             nullable: false,
             numeric_precision: 0,
@@ -136,11 +137,11 @@ export const getTableExpressionSuggestions = async (args: GetTableExpressionSugg
             cConstraint: undefined,
             data_type: c.data_type,
             udt_name: c.udt_name,
-            name: c.column_name,
+            name: c.escaped_column_name,
             comment: "",
             character_maximum_length: 0,
             definition: "",
-            escaped_identifier: c.column_name,
+            escaped_identifier: c.escaped_column_name,
             has_default: false,
             nullable: false,
             numeric_precision: 0,

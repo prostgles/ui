@@ -249,7 +249,6 @@ export type WindowData<CType extends ChartType = ChartType> = Omit<Windows, "col
   last_updated: string;
   fullscreen?: boolean;
   show_menu?: boolean;
-  minimised?: boolean;
   closed?: boolean;
   deleted: boolean;
   workspace_id?: string;
@@ -270,7 +269,6 @@ export type WindowData<CType extends ChartType = ChartType> = Omit<Windows, "col
   user_id: string;
   limit: number | null;
   sort: null | ColumnSort[];
-  created: Date;
 };
 
 

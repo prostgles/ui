@@ -63,6 +63,7 @@ export type LayerOSM = LayerBase & {
 export type LayerSQL = LayerBase & {
   type: "sql";
   sql: string;
+  withStatement: string;
   parameters?: any;
 }
 
@@ -311,15 +312,19 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
     };
   }
 
-  getSQL = (l: LayerSQL, select: string, limit = 1000): { sql: string, args: AnyObject } => {
-    if(!l.sql) throw "No SQL";
-    let _sql = l.sql.trim()  + "";
-    if(_sql.endsWith(";")) _sql = _sql.slice(0, _sql.length - 1);
+  getSQL = ({ sql, withStatement, parameters, geomColumn }: LayerSQL, select: string, limit = 1000): { sql: string, args: AnyObject } => {
+    if(!sql) throw "No SQL";
 
-    _sql = `SELECT ${select} FROM ( \n  ${_sql} \n ) t LIMIT ${limit}`;
-    const args = { ...l.parameters, geomColumn: l.geomColumn };
+    const finalSql = `
+      ${withStatement}
+      SELECT ${select} 
+      FROM ( 
+        ${sql}
+      ) prostgles_chart_data
+      LIMIT ${limit}`;
+    const args = { ...parameters, geomColumn };
 
-    return { sql: _sql, args };
+    return { sql: finalSql, args };
   }
 
   getDataExtent = getMapDataExtent.bind(this);

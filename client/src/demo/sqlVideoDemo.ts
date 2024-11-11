@@ -2,13 +2,14 @@ import { getDemoUtils, type DemoScript, type TypeAutoOpts } from "../dashboard/W
 import { VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
 import { tout } from "../pages/ElectronSetup";
 import { closeAllViews } from "./dashboardDemo";
-import { click, getElement, movePointer } from "./demoUtils";
+import { click, getElement, movePointer, waitForElement } from "./demoUtils";
 
-const sqlVideoDemo: DemoScript = async ({ 
-  runDbSQL, fromBeginning, typeAuto, 
-  moveCursor, triggerParamHints,  getEditor, 
-  actions, testResult, triggerSuggest, runSQL, newLine
-}) => {
+const sqlVideoDemo: DemoScript = async (args) => {
+  const { 
+    runDbSQL, fromBeginning, typeAuto, 
+    moveCursor, triggerParamHints,  getEditor, 
+    actions, testResult, triggerSuggest, runSQL, newLine
+  } = args;
   const hasTable = await runDbSQL(`SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = current_schema() AND tablename = 'chats'`, { }, { returnType: "value" });
   const existingUsers: string[] = await runDbSQL(`SELECT usename FROM pg_catalog.pg_user `, { }, { returnType: "values" });
   if(!hasTable){
@@ -72,6 +73,8 @@ const sqlVideoDemo: DemoScript = async ({
   const typeQuick = (text: string, opts?: TypeAutoOpts) => {
     return typeAuto(text, { msPerChar: 0, waitBeforeAccept: .5e3, waitAccept: 0, ...opts });
   }
+
+  await timeChartDemo(args);
 
   /** Join complete */
   await showScript(`Joins autocomplete`, `SELECT * \nFROM users u`, async () => {
@@ -317,5 +320,102 @@ export const sqlDemo = async () => {
   const currDbName = await testUtils.runDbSQL(`SELECT current_database() as db_name`, {}, { returnType: "value" });
   if (currDbName === VIDEO_DEMO_DB_NAME) {
     return sqlVideoDemo(testUtils);
+  }
+}
+
+
+
+const timeChartDemo: DemoScript = async ({ fromBeginning, newLine, moveCursor, getEditor, runSQL }) => {
+  await fromBeginning(false, fixIndent(`
+    SELECT *, random() as rval
+    FROM generate_series(
+      '2021-01-01'::timestamp, 
+      '2021-01-31'::timestamp, 
+      '1 day'::interval
+    ) as date 
+  `));
+  const addTChartBtn = await waitForElement<HTMLButtonElement>("AddChartMenu.Timechart");
+  addTChartBtn.click();
+
+  const layer = await waitForElement<HTMLButtonElement>("TimeChartLayerOptions.aggFunc");
+
+  /** Shows numeric col avg by default */
+  shouldBeEqual(layer.innerText, "Avg(\nrval\n),\ndate");
+
+  /** Cannot add the same layer */
+  shouldBeEqual(addTChartBtn.disabled, true);
+
+  const setLayerFunc = async (func: "$avg" | "$countAll", layerNumber = 0) => {
+    await click("TimeChartLayerOptions.aggFunc", "", { nth: layerNumber });
+    await click("TimeChartLayerOptions.aggFunc.select");
+    await click("TimeChartLayerOptions.aggFunc.select", `[data-key=${JSON.stringify(func)}]`);
+    await click("Popup.close");
+    await tout(222);
+  }
+
+  /** Count all works */
+  await setLayerFunc("$countAll");
+  shouldBeEqual(layer.innerText, "count(*), date");
+
+  /** Switch back */
+  await setLayerFunc("$avg");
+  shouldBeEqual(layer.innerText, "Avg(\nrval\n),\ndate");
+
+  const addSqlLayer = async (sql: string) => {
+    await moveCursor.pageDown();
+    await moveCursor.lineEnd();
+    await newLine(3);
+    const newQ = fixIndent(sql);
+    getEditor().e.setValue(getEditor().e.getValue() + newQ);
+
+    moveCursor.pageDown();
+    moveCursor.up(3, 50);
+    moveCursor.down(2, 50);
+
+    await tout(2000);
+    await click("AddChartMenu.Timechart");
+  }
+
+  /** Add another layer */
+  await addSqlLayer(`
+    SELECT *, 10 * random() as rvalx10
+    FROM generate_series(
+      '2021-01-01'::timestamp, 
+      '2021-01-31'::timestamp, 
+      '1 day'::interval
+    ) as date 
+  `);
+
+  const secondLayer = await waitForElement<HTMLButtonElement>("TimeChartLayerOptions.aggFunc", "", { nth: 1 });
+  shouldBeEqual("Avg(\nrvalx10\n),\ndate", secondLayer.innerText);
+
+  /** Add group by layer */
+  await addSqlLayer(`
+    SELECT *
+      , 10 * random() as rvalx11
+      , CASE WHEN random() > .3 then 'g1' when random() > .6 then 'g2' else 'g3' END as groupbyval
+    FROM generate_series(
+      '2021-01-01'::timestamp, 
+      '2021-01-31'::timestamp, 
+      '1 day'::interval
+    ) as date 
+  `);
+  const thirdLayer = await waitForElement<HTMLButtonElement>("TimeChartLayerOptions.aggFunc", "", { nth: 2 });
+  shouldBeEqual("Avg(\nrvalx11\n),\ndate", thirdLayer.innerText);
+  thirdLayer.click();
+
+  /**
+   * Group by column
+   */
+  await click("TimeChartLayerOptions.groupBy");
+  await click("TimeChartLayerOptions.groupBy", `[data-key="groupbyval"]`);
+  await click("Popup.close");
+
+  await click("dashboard.window.closeChart");
+}
+
+export const shouldBeEqual = (a: any, b: any) => {
+  if (a !== b) {
+    throw new Error(`Expected ${a} to equal ${b}`);
   }
 }
