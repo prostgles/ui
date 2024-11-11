@@ -42,7 +42,6 @@ export const AddChartMenu = (props: P) => {
   } = props;
 
   const isMicroMode = size === "micro";
-
   const chartCols = useMemoDeep(() => {
     const res = getChartCols(type === "table"?  { type: "table", w, tables }: { type: "sql", chartableSQL, w });
     return res
@@ -65,7 +64,7 @@ export const AddChartMenu = (props: P) => {
     }, [] as ColInfo[]).map(({ name, udt_name }) => ({ name, udt_name }));
 
     const firstNumericColumn = otherColumns.find(c => _PG_numbers.includes(c.udt_name as any))?.name;
-    const columnList = `(${linkOpts.columns.join()})`;
+    const columnList = `(${linkOpts.columns.map(c => c.name).join()})`;
     const name = joinPath? `${[ tableName, ...joinPath.slice(0).map(p => p.table)].join(" > ")} ${columnList}` : `${tableName || ""} ${columnList}`;
     const usedColors = myLinks.flatMap(l => l.options.type !== "table"? l.options.columns.map(c => c.colorArr) : undefined);
     const colorArr = getRandomColor(1, "deck", usedColors);

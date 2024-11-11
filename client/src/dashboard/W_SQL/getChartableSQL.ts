@@ -19,7 +19,7 @@ export type ChartableSQL = {
   text: string;
 };
 
-export const getChartableSQL = async ({ text, tokens, ftoken, blockStartOffset }: CodeBlock, sqlHandler: SQLHandler): Promise<ChartableSQL> => {
+export const getChartableSQL = async ({ text, tokens, ftoken, blockStartOffset }: Pick<CodeBlock, "text" | "tokens" | "blockStartOffset" | "ftoken">, sqlHandler: SQLHandler): Promise<ChartableSQL> => {
 
   const emptyResult = { text, withStatement: "", sql: "", dateCols: [], geoCols: [], columns: [] };
 
