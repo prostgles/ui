@@ -414,7 +414,7 @@ const timeChartDemo: DemoScript = async ({ fromBeginning, newLine, moveCursor, g
   await click("dashboard.window.closeChart");
 }
 
-const shouldBeEqual = (a: any, b: any) => {
+export const shouldBeEqual = (a: any, b: any) => {
   if (a !== b) {
     throw new Error(`Expected ${a} to equal ${b}`);
   }

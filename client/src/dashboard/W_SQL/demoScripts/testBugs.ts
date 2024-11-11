@@ -2,8 +2,12 @@ import { click, getElement, waitForElement } from "../../../demo/demoUtils";
 import { fixIndent } from "../../../demo/sqlVideoDemo";
 import { tout } from "../../../pages/ElectronSetup";
 import type { DemoScript } from "../getDemoUtils";
+import { testSqlCharts } from "./testSqlCharts";
 
-export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL, runSQL }) => {
+export const testBugs: DemoScript = async (args) => {
+  const { typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL, runSQL } = args;
+
+  await testSqlCharts(args);
 
   /** Schema prefix doubling bug */
   const qPrefDoubling = fixIndent(`
@@ -46,7 +50,8 @@ export const testBugs: DemoScript = async ({ typeAuto, fromBeginning, testResult
 
   /** Timechart works with codeblocks */
   await fromBeginning(false, "SELECT now(), 3; \n\nselect 1");
-  await moveCursor.up(3);
+  await moveCursor.up(3, 50);
+  await tout(1e3);
   await runSQL();
   await click("AddChartMenu.Timechart");
   await tout(2e3);

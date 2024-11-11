@@ -109,7 +109,7 @@ async function getTimeChartLayerWithBin(this: W_TimeChart, layer: ProstglesTimeC
     return res;
 
   } else {
-    const { dateColumn, sql } = layer;
+    const { dateColumn, sql, withStatement } = layer;
 
     if (!db.sql) {
       console.error("Not enough privileges to run query");
@@ -128,14 +128,20 @@ async function getTimeChartLayerWithBin(this: W_TimeChart, layer: ProstglesTimeC
     //     );
     //     bin = this.getBin(leftDate, rightDate);
     //   }
-    // }
+    // } 
 
-    let _sql = sql.trim() + "";
-    if (_sql.endsWith(";")) _sql = _sql.slice(0, _sql.length - 1);
     const escDateCol = asName(dateColumn);
 
     
-    const minMaxQuery = `SELECT MIN(${escDateCol}) as min, MAX(${escDateCol}) as max FROM (\n` + _sql + "\n ) t";
+    const minMaxQuery = `
+      ${withStatement}
+      SELECT 
+        MIN(${escDateCol}) as min, 
+        MAX(${escDateCol}) as max 
+      FROM (
+        ${sql}
+      ) t
+    `;
     const rows = (await db.sql(minMaxQuery, { dateColumn }, { returnType: "rows" }));
     if (!rows.length) {
       console.warn("No min max");
