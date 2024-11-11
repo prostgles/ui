@@ -7,7 +7,6 @@ import { ColorByLegend } from "../WindowControls/ColorByLegend";
 import { LayerColorPicker } from "../WindowControls/LayerColorPicker";
 import { TimeChartLayerOptions } from "../WindowControls/TimeChartLayerOptions";
 import type { ProstglesTimeChartLayer, ProstglesTimeChartStateLayer } from "./W_TimeChart";
-import { TIMECHART_STAT_TYPES } from "./W_TimeChartMenu";
 import Btn from "../../components/Btn";
 import { mdiClose } from "@mdi/js";
 
@@ -32,7 +31,7 @@ export const W_TimeChartLayerLegend = ({ layerQueries, layers, onChanged, ...pro
         key={_id}
         className="gap-0"
       >
-        <LayerColorPicker 
+        {!groupByColumn && <LayerColorPicker 
           btnProps={{ size: "micro" }}
           title={"layerDesc"}
           column={dateColumn} 
@@ -41,7 +40,7 @@ export const W_TimeChartLayerLegend = ({ layerQueries, layers, onChanged, ...pro
           tables={tables} 
           w={w} 
           getLinksAndWindows={props.getLinksAndWindows} 
-        />
+        />}
 
         <TimeChartLayerOptions 
           w={w} 
@@ -55,6 +54,7 @@ export const W_TimeChartLayerLegend = ({ layerQueries, layers, onChanged, ...pro
         {groupByColumn && 
           <ColorByLegend
             { ...props}
+            className="ml-1"
             layers={layers}
             layerLinkId={linkId}
             groupByColumn={groupByColumn}

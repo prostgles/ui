@@ -25,11 +25,16 @@ export async function runSQL(this: W_SQL, sort: ColumnSort[] = []) {
     w.$update({ selected_sql });
   }
 
-
   if(!w || !db.sql) {
     this.setState({ error: !db.sql? SQL_NOT_ALLOWED : "Internal error (w is missing). Try refreshing the page" });
     return;
   }
+
+  this.props.childWindows.forEach(cw => {
+    if(!cw.minimised && (cw.type === "map" || cw.type === "timechart")){
+      cw.$update({ minimised: true });
+    }
+  })
 
   let trimmedSql = sql.trimEnd();
 
@@ -128,6 +133,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSort[] = []) {
         if(w.$get().closed){
           handler.stop();
         } else {
+          console.error(this.state.activeQuery, sql, packet);
           alert("Something went wrong: No running query found");
         }
         return

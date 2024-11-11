@@ -257,7 +257,7 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
           /** Dashboard only re-renders on window ids or names change OR linked windows filters change
            * Maybe ....
           */
-          const stringOpts = (w: WindowSyncItem) => `${w.id} ${w.type} ${w.fullscreen} ${JSON.stringify(w.filter)} ${JSON.stringify(w.having)} ${w.parent_window_id}`; // ${JSON.stringify((w as any).options?.extent ?? {})}
+          const stringOpts = (w: WindowSyncItem) => `${w.id} ${w.type} ${w.fullscreen} ${JSON.stringify(w.filter)} ${JSON.stringify(w.having)} ${w.parent_window_id} ${w.minimised} ${w.created}`; // ${JSON.stringify((w as any).options?.extent ?? {})}
           if(this.d.windows.map(stringOpts).sort().join() === openWindows.map(stringOpts).sort().join()){
             return
           } 
@@ -503,6 +503,7 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<DashboardP
   "data-table-name": string | null;
   "data-title": string;
   w: WindowSyncItem<T>;
+  childWindows: WindowSyncItem[];
   getLinksAndWindows: () => { links: LinkSyncItem[]; windows: WindowSyncItem<ChartType>[]; };
   /**
    * e is undefined when the table window was closed due to dropped table
@@ -517,7 +518,7 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<DashboardP
   isReadonly: boolean;
   suggestions: LoadedSuggestions | undefined;
   myLinks: LinkSyncItem[];
-  onAddChart: OnAddChart;
+  onAddChart: OnAddChart | undefined;
   active_row: ActiveRow | undefined;
 } & Pick<ViewRendererProps, "searchParams" | "setSearchParams">;
 

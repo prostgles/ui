@@ -1,4 +1,5 @@
 /* eslint-disable no-useless-escape */
+import { tout } from "../../pages/ElectronSetup";
 import { isDefined } from "../../utils";
 import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 import { STARTING_KEYWORDS } from "../SQLEditor/SQLCompletion/CommonMatchImports";
@@ -1109,6 +1110,7 @@ export const loadPSQLLanguage = async (loadedSuggestions: LoadedSuggestions | un
 	if (loadedPSQLLanguage) return false;
 	loadedPSQLLanguage = true;
 	const m = await getMonaco();
+
 	m.languages.getLanguages().forEach((lang) => {
 		if (["sql"].includes(lang.id) && "loader" in lang) {
 			const oldLoader: () => Promise<{ language: languages.IMonarchLanguage }> = lang.loader as any;
@@ -1139,5 +1141,6 @@ export const loadPSQLLanguage = async (loadedSuggestions: LoadedSuggestions | un
 			};
 		}
 	});
+	await tout(1000);
 	return true;
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
+import { getRandomColor, type LinkSyncItem } from "../Dashboard/dashboardUtils";
 import PopupMenu from "../../components/PopupMenu";
 import Btn from "../../components/Btn";
 import { mdiMap } from "@mdi/js";
@@ -34,7 +34,7 @@ export const OSMLayerOptions = ({ link }: P) => {
     <OverpassQuery 
       query={query} 
       onChange={osmLayerQuery => {  
-        link.$update({ options: { osmLayerQuery } }, { deepMerge: true });
+        link.$update({ options: { osmLayerQuery, mapColorMode: { type: "fixed", colorArr: getRandomColor(1, "deck") } } }, { deepMerge: true });
       }}
     />
   </PopupMenu> 

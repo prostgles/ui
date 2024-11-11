@@ -83,6 +83,7 @@ export const InMapControls = ({ tileAttribution, topLeftContent, onOptionsChange
       {!isDrawing && <FlexRow className="in-map-hover-control mx-auto">
         <Select 
           title="Map extent behavior"
+          data-command="MapExtentBehavior"
           fullOptions={MapExtentBehavior}
           value={options.extentBehavior}
           onChange={extentBehavior => {

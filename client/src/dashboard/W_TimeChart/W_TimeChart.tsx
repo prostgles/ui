@@ -49,6 +49,7 @@ export type ProstglesTimeChartLayer = Pick<LayerBase, "_id" | "linkId" | "disabl
 } & ({
   type: "sql";
   sql: string;
+  withStatement: string;
 } | {
   type: "table";
   tableName: string;
@@ -275,7 +276,8 @@ export class W_TimeChart extends RTComp<ProstglesTimeChartProps, ProstglesTimeCh
         position: "absolute", 
         top:"0", 
         left:"0", 
-        // right: "240px", 
+        /** Ensure it doesn't clash with right add filter button */
+        maxWidth: "calc(100% - 60px)", 
         /* Ensure it doesn't cover the tooltip active row brush */
         zIndex: 1 
       }} 

@@ -148,73 +148,35 @@ const joinPath = {
   optional: true 
 } as const satisfies JSONB.FieldTypeObj
 const CommonChartLinkOpts = { 
-  ...CommonLinkOpts,
+  // ...CommonLinkOpts,
+  dataSource: {
+    optional: true,
+    oneOfType: [
+      {
+        type: { enum: ["sql"], description: "Show data from an SQL query within an editor. Will not reflect latest changes to that query (must be re-added)" },
+        sql: "string",
+        withStatement: "string",
+      },
+      {
+        type: { enum: ["table"], description: "Shows data from an opened table window. Any filters from that table will apply to the chart as well" },
+        joinPath,
+      },
+      {
+        type: { enum: ["local-table"], description: "Shows data from postgres table not connected to any window (w1_id === w2_id === current chart window). Custom filters can be added" },
+        localTableName: { type: "string" },
+        smartGroupFilter: filter,
+      }
+    ]
+  },
   smartGroupFilter: filter,
   joinPath,
   localTableName: { type: "string", optional: true, description: "If provided then this is a local layer (w1_id === w2_id === current chart window)" },
-  osmLayerQuery: { type: "string", optional: true, description: "If provided then this is a OSM layer (w1_id === w2_id === current chart window)" },
-  groupByColumn: { type: "string", optional: true, description: "Used by timechart" },
   sql: {
     description: "Defined if chart links to SQL statement", 
     optional: true,
-    type: "string", 
-    // type: {
-    //   query: "string",
-    // }, 
+    type: "string",
   },
-  mapIcons: {
-    optional: true,
-    oneOfType: [
-      { 
-        type: { enum: ["fixed"] },
-        iconPath: "string",
-      },
-      { 
-        type: { enum: ["conditional"] },
-        columnName: "string",
-        conditions: {
-          arrayOfType: {
-            value: "any",
-            iconPath: "string",
-          },
-        }
-      },
-    ]
-  },
-  mapColorMode: {
-    optional: true,
-    oneOfType: [
-      { 
-        type: { enum: ["fixed"] },
-        colorArr: "number[]",
-      },
-      { 
-        type: { enum: ["scale"] },
-        columnName: "string",
-        min: "number",
-        max: "number",
-        minColorArr: "number[]",
-        maxColorArr: "number[]",
-      },
-      { 
-        type: { enum: ["conditional"] },
-        columnName: "string",
-        conditions: {
-          arrayOfType: {
-            value: "any",
-            colorArr: "number[]",
-          },
-        }
-      },
-    ]
-  },
-  mapShowText: { 
-    optional: true, 
-    type: {
-      columnName: { type: "string" },
-    }, 
-  },
-} as const satisfies JSONB.ObjectType["type"] 
+} as const satisfies JSONB.ObjectType["type"]; 
 
 export const tableConfig: TableConfig<{ en: 1; }> = {
   user_types: {
@@ -952,6 +914,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       closed          : `BOOLEAN DEFAULT FALSE` ,
       deleted         : `BOOLEAN DEFAULT FALSE CHECK(NOT (type = 'sql' AND deleted = TRUE AND (options->>'sqlWasSaved')::boolean = true))`,
       show_menu       : `BOOLEAN DEFAULT FALSE` , 
+      minimised       : { 
+        info: { hint: "Used for attached charts to hide them" },
+        sqlDefinition: `BOOLEAN DEFAULT FALSE` 
+      },
       fullscreen      : `BOOLEAN DEFAULT TRUE` , 
       sort            : "JSONB DEFAULT '[]'::jsonb",
       filter          : `JSONB NOT NULL DEFAULT '[]'::jsonb` ,
@@ -1025,7 +991,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       } ,
       columns         : `JSONB` ,
       nested_tables   : `JSONB` ,
-      created         : `TIMESTAMP DEFAULT NOW()` ,
+      created         : `TIMESTAMP NOT NULL DEFAULT NOW()` ,
       last_updated    : `BIGINT NOT NULL` ,
     }
   },
@@ -1125,6 +1091,59 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
             { 
               type: { enum: ["map"] },
               ...CommonChartLinkOpts,
+              osmLayerQuery: { type: "string", optional: true, description: "If provided then this is a OSM layer (w1_id === w2_id === current chart window)" },
+              mapIcons: {
+                optional: true,
+                oneOfType: [
+                  { 
+                    type: { enum: ["fixed"] },
+                    iconPath: "string",
+                  },
+                  { 
+                    type: { enum: ["conditional"] },
+                    columnName: "string",
+                    conditions: {
+                      arrayOfType: {
+                        value: "any",
+                        iconPath: "string",
+                      },
+                    }
+                  },
+                ]
+              },
+              mapColorMode: {
+                optional: true,
+                oneOfType: [
+                  { 
+                    type: { enum: ["fixed"] },
+                    colorArr: "number[]",
+                  },
+                  { 
+                    type: { enum: ["scale"] },
+                    columnName: "string",
+                    min: "number",
+                    max: "number",
+                    minColorArr: "number[]",
+                    maxColorArr: "number[]",
+                  },
+                  { 
+                    type: { enum: ["conditional"] },
+                    columnName: "string",
+                    conditions: {
+                      arrayOfType: {
+                        value: "any",
+                        colorArr: "number[]",
+                      },
+                    }
+                  },
+                ]
+              },
+              mapShowText: { 
+                optional: true, 
+                type: {
+                  columnName: { type: "string" },
+                }, 
+              },
               columns: { 
                 arrayOfType: {
                   name: { type: "string", description: "Geometry/Geography column" },
@@ -1135,6 +1154,12 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
             { 
               type: { enum: ["timechart"] },
               ...CommonChartLinkOpts,
+              groupByColumn: { type: "string", optional: true, description: "Used by timechart" },
+              otherColumns: { arrayOfType: {
+                name: "string",
+                label: { type: "string", optional: true },
+                udt_name: "string",
+              }, optional: true },
               columns: { 
                 arrayOfType: {
                   name: { type: "string", description: "Date column" },

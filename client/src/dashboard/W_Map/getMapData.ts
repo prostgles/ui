@@ -5,15 +5,20 @@ import type { GeoJSONFeature } from "../Map/DeckGLMap";
 import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
 import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
 
-const rowHashQuery = `md5(((t.*))::text) as "$rowhash"` as const;
-const getSQLQuery = ({ sql }: LayerSQL, selectList: string, limit?: number) => {
-
-  let _sql = sql.trim()  + "";
-  if(_sql.endsWith(";")) _sql = _sql.slice(0, _sql.length - 1);
+export const WITH_LAST_SELECT_ALIAS = "prostgles_chart_data";
+const rowHashQuery = `md5(((${WITH_LAST_SELECT_ALIAS}.*))::text) as "$rowhash"` as const;
+const getSQLQuery = ({ sql, withStatement, limit, whereClause = "", selectList }: Pick<LayerSQL, "sql" | "withStatement"> & { selectList: string; whereClause?: string; limit?: number; }) => {
+ 
   const limitQuery = Number.isInteger(limit)? ` LIMIT ${limit} ` : ""; 
   return `
-    SELECT ${selectList}, ST_AsGeoJSON(ST_SetSRID(\${geomColumn:name}, 4326))::json as l 
-    FROM ( \n ${_sql} \n ) t 
+    ${withStatement}
+    SELECT 
+      ${selectList}
+      , ST_AsGeoJSON(ST_SetSRID(\${geomColumn:name}, 4326))::json as l 
+    FROM (
+      ${sql}
+    ) prostgles_chart_data
+    ${whereClause}
     ${limitQuery}
   `;
 }
@@ -28,12 +33,19 @@ export type MapDataResult = {
   i: AnyObject | string;
 };
 
-export const getSQLData = async (q: LayerSQL, db: DBHandlerClient, AGG_LIMIT: number): Promise<{ $rowhash: string; l: AnyObject }[]> => {
+export const getSQLData = async (layer: LayerSQL, db: DBHandlerClient, AGG_LIMIT: number): Promise<{ $rowhash: string; l: AnyObject }[]> => {
 
-  const { parameters, geomColumn } = q;
+  const { parameters, geomColumn } = layer;
   
-  const nq = getSQLQuery(q, [rowHashQuery, "ST_AsGeoJSON(ST_SetSRID(${geomColumn:name}, 4326))::json as l"].join(", "), AGG_LIMIT) //"SELECT md5(((t.*))::text) as \"$rowhash\", ST_AsGeoJSON(ST_SetSRID(${geomColumn:name}, 4326))::json as l FROM ( \n" + _sql + "\n ) t LIMIT " + AGG_LIMIT
-  return await db.sql!(nq, { ...parameters, geomColumn }, { returnType: "rows" }) as any;
+  const query = getSQLQuery({ 
+    ...layer, 
+    selectList: [rowHashQuery, "ST_AsGeoJSON(ST_SetSRID(${geomColumn:name}, 4326))::json as l"].join(", "), 
+    limit: AGG_LIMIT
+  });
+
+  const result = await db.sql!(query, { ...parameters, geomColumn }, { returnType: "rows" }) as any;
+
+  return result;
 }
 
 export const getMapSelect = ({ geomColumn, linkId }: Pick<LayerTable, "geomColumn" | "linkId">, columns: ValidatedColumnInfo[], myLinks: LinkSyncItem[]) => {
@@ -91,7 +103,10 @@ export const getSQLHoverRow = async (q: LayerSQL, db: DBHandlerClient, $rowhash:
 
   const { parameters, geomColumn } = q;
   
-  const rootQuery = getSQLQuery(q, [rowHashQuery, "row_to_json((t.*)) as d"].join(", "));
-  const query = `SELECT * FROM (\n ${rootQuery} \n ) tt WHERE "$rowhash" = \${$rowhash} `;
+  const query = getSQLQuery({ 
+    ...q, 
+    selectList: [rowHashQuery, `row_to_json((${WITH_LAST_SELECT_ALIAS}.*)) as d`].join(", "),
+    whereClause: `WHERE "$rowhash" = \${$rowhash} `,
+  });
   return await db.sql!(query, { ...parameters, geomColumn, $rowhash }, { returnType: "row" }) as any;
 }

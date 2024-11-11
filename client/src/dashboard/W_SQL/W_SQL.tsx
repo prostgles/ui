@@ -36,6 +36,7 @@ import { ProstglesSQLMenu } from "./W_SQLMenu";
 import { W_SQLResults } from "./W_SQLResults";
 import { AddChartMenu } from "../W_Table/TableMenu/AddChartMenu";
 import type { CodeBlock } from "../SQLEditor/SQLCompletion/completionUtils/getCodeBlock";
+import { type ChartableSQL, getChartableSQL } from "./getChartableSQL";
  
 
 export type W_SQLProps = Omit<CommonWindowProps, "w"> & {
@@ -87,7 +88,7 @@ export type W_SQLState = {
   table?: TableProps & Query;
   sort: ColumnSort[];
   loading: boolean;
-  currentCodeBlockText?: string;
+  currentCodeBlockChartColumns?: ChartableSQL;
   isSelect: boolean;
   hideCodeEditor?: boolean;
   rows?: (string | number)[][];
@@ -310,12 +311,14 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
     const {
       loading, joins, popup, 
       error, activeQuery, 
-      hideCodeEditor, currentCodeBlockText,
+      hideCodeEditor, 
+      currentCodeBlockChartColumns,
     } = this.state;
     const { w } = this.d;
     const { 
       onAddChart, suggestions, tables, setLinkMenu, 
       prgl: { db, dbs, dbsTables, user },
+      myLinks,
       childWindow,
     } = this.props;
 
@@ -406,11 +409,12 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
                 this.ref.sqlRef = this.sqlRef; 
               }
             }}
-            onDidChangeActiveCodeBlock={(cb: CodeBlock | undefined) => {
-              const newCbText = cb?.text;
-              if(currentCodeBlockText !== newCbText){
-                this.setState({ currentCodeBlockText: cb?.text });
+            onDidChangeActiveCodeBlock={async (cb: CodeBlock | undefined) => {
+              if(currentCodeBlockChartColumns?.text === cb?.text){
+                return 
               }
+              const res = cb && await getChartableSQL(cb, db.sql!).catch(() => undefined);
+              this.setState({ currentCodeBlockChartColumns: res });
             }}
             onUnmount={(_editor, cursorPosition) => {
               updateOptions({ cursorPosition })
@@ -442,15 +446,17 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
               ...w.sql_options,
             }}
             activeCodeBlockButtonsNode={
-              !currentCodeBlockText? null : <AddChartMenu 
-                myLinks={this.props.myLinks}
-                onAddChart={this.props.onAddChart}
-                sql={currentCodeBlockText}
-                sqlHandler={this.props.prgl.db.sql!}
-                tables={this.props.prgl.tables}
-                w={w}
-                size="micro"
-              />
+              (!currentCodeBlockChartColumns || !onAddChart)? null : 
+                <AddChartMenu 
+                  type="sql"
+                  w={w}
+                  myLinks={myLinks}
+                  childWindows={this.props.childWindows}
+                  onAddChart={onAddChart}
+                  chartableSQL={currentCodeBlockChartColumns}
+                  tables={tables}
+                  size="micro"
+                />
             }
           />
           {this.d.w && <W_SQLBottomBar 
@@ -519,7 +525,8 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
         onAddChart,
         tables,
         setLinkMenu,
-        sql: currentCodeBlockText,
+        childWindows: this.props.childWindows,
+        chartableSQL: currentCodeBlockChartColumns,
       }}
       getMenu={(w, onClose) => (
         <ProstglesSQLMenu

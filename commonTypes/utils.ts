@@ -217,6 +217,7 @@ export function sliceText(v: string | undefined, maxLen: number, ellipseText = "
 
 export type ColType = {
   column_name: string;
+  escaped_column_name: string;
   data_type: string;
   udt_name: string;
   schema: string;

@@ -1,4 +1,4 @@
-import { mdiClose, mdiCog, mdiDotsVertical, mdiOpenInNew, } from "@mdi/js";
+import { mdiArrowCollapse, mdiClose, mdiCog, mdiCollapseAllOutline, mdiDotsVertical, mdiOpenInNew, } from "@mdi/js";
 
 import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { ReactNode } from "react";
@@ -191,8 +191,18 @@ export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W>
             }}
             children={window.isLowWidthScreen? null : "Chart options"}
           />
+
           <Btn
             className="ml-auto"
+            iconPath={mdiArrowCollapse}
+            color="action"
+            title="Collapse chart"
+            data-command="dashboard.window.collapseChart"
+            onClick={() => {
+              w.$update({ minimised: true });
+            }}
+          />
+          <Btn
             variant="outline"
             iconPath={mdiOpenInNew}
             color="action"
