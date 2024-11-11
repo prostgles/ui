@@ -1,4 +1,4 @@
-import { mdiFilter, mdiSetLeftCenter } from "@mdi/js";
+import { mdiChartBoxMultipleOutline, mdiEyeOff, mdiFilter, mdiSetLeftCenter } from "@mdi/js";
 
 import React from "react";
 import Btn from "../components/Btn";
@@ -49,6 +49,9 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
     w.type === "table"? { w, type: w.type } : 
     undefined;
 
+  const minimisedCharts = childWindows.filter(w => (w.type === "timechart" || w.type === "map") && w.minimised);
+  const hasMinimisedCharts = minimisedCharts.length > 0;
+
   return <>
     <div 
       className={"W_QuickMenu flex-row ai-center rounded b b-color h-fit w-fit m-auto f-1 min-w-0 " + bgColorClass}
@@ -79,20 +82,35 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
         onAddChart={onAddChart} 
         btnClassName={bgColorClass}
       />}
-      {showLinks && !window.isMobileDevice && !!setLinkMenu && <Btn 
-        title="Cross filter tables"
+      {hasMinimisedCharts && <Btn 
+        iconPath={mdiChartBoxMultipleOutline}
+        title="Restore minimised charts"
+        data-command="dashboard.window.restoreMinimisedCharts"
+        color="action"
         className={bgColorClass}
         size="small"
-        iconPath={mdiSetLeftCenter}
-        style={firstLink && { color: getLinkColorV2(firstLink, 1).colorStr }}
-        onClick={async e => {
-
-          setLinkMenu({
-            w: w as WindowSyncItem<"table">,
-            anchorEl: e.currentTarget,
+        onClick={() => {
+          minimisedCharts.forEach(w => {
+            w.$update({ minimised: false });
           });
         }}
       />}
+      {showLinks && !window.isMobileDevice && !!setLinkMenu && 
+        <Btn 
+          title="Cross filter tables"
+          className={bgColorClass}
+          size="small"
+          iconPath={mdiSetLeftCenter}
+          style={firstLink && { color: getLinkColorV2(firstLink, 1).colorStr }}
+          onClick={async e => {
+
+            setLinkMenu({
+              w: w as WindowSyncItem<"table">,
+              anchorEl: e.currentTarget,
+            });
+          }}
+        />
+      }
     </div>
 
     {popup && divRef.current && <Popup 

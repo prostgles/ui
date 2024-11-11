@@ -132,27 +132,27 @@ export type MonacoError = Pick<editor.IMarkerData, "code" | "message" | "severit
 import { mdiPlay } from "@mdi/js";
 import { isEqual } from "prostgles-client/dist/react-hooks";
 import type { SQLHandler } from "prostgles-types";
-import Btn, { type BtnProps } from "../../components/Btn";
+import Btn from "../../components/Btn";
 import { getDataTransferFiles } from "../../components/FileInput/DropZone";
+import { FlexCol } from "../../components/Flex";
+import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
 import { isEmpty, omitKeys } from "../../utils";
 import { SECOND } from "../Charts";
 import type { DashboardState } from "../Dashboard/Dashboard";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import RTComp from "../RTComp";
-import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
 import type { IRange, editor } from "../W_SQL/monacoEditorTypes";
 import type { TopKeyword } from "./SQLCompletion/KEYWORDS";
 import type { CodeBlock } from "./SQLCompletion/completionUtils/getCodeBlock";
 import { getCurrentCodeBlock, highlightCurrentCodeBlock, playButtonglyphMarginClassName } from "./SQLCompletion/completionUtils/getCodeBlock";
 import type {
-  PGConstraint, PGOperator, PG_DataType, PG_EventTrigger, PG_Function, 
-  PG_Policy, PG_Role, PG_Rule, PG_Setting, PG_Table, PG_Trigger 
+  PGConstraint, PGOperator, PG_DataType, PG_EventTrigger, PG_Function,
+  PG_Policy, PG_Role, PG_Rule, PG_Setting, PG_Table, PG_Trigger
 } from "./SQLCompletion/getPGObjects";
 import { addSqlEditorFunctions, getSelectedText } from "./addSqlEditorFunctions";
 import { defineCustomSQLTheme } from "./defineCustomSQLTheme";
 import type { GetFuncs } from "./registerFunctionSuggestions";
 import { registerFunctionSuggestions } from "./registerFunctionSuggestions";
-import { FlexCol } from "../../components/Flex";
 
 export type SQLEditorRef = {
   editor: editor.IStandaloneCodeEditor;
@@ -405,7 +405,7 @@ export default class SQLEditor extends RTComp<P, S> {
   }
 
   codeBlockSignature?: CodeBlockSignature;
-  currentCodeBlock: CodeBlock | undefined
+  currentCodeBlock: CodeBlock | undefined; 
 
   render(){
     const { value = "" } = this.state;
@@ -419,9 +419,13 @@ export default class SQLEditor extends RTComp<P, S> {
 
     const { canExecuteBlocks } = this;
     const glyphPlayBtnElem = document.querySelector(`.${playButtonglyphMarginClassName}`);
+    if(glyphPlayBtnElem && glyphPlayBtnElem.children.length > 1){
+      glyphPlayBtnElem.children[1]?.remove();
+      console.warn("Removed extra play button");
+    }
     const glyphPlayBtn = (canExecuteBlocks && glyphPlayBtnElem)? ReactDOM.createPortal(
-      <FlexCol 
-        className="gap-0 mt-auto" 
+      <FlexCol  
+        className="GlyphButtons gap-0 mt-auto" 
         style={{ 
           /** Ensures we can click add chart btn */
           zIndex: 2, 
@@ -506,7 +510,7 @@ export default class SQLEditor extends RTComp<P, S> {
             "errorMessageDisplay"
           ])),
 
-          ...(this.canExecuteBlocks && {
+          ...(canExecuteBlocks && {
             /** Needed for play button */
             glyphMargin: true,
             lineNumbersMinChars: 3,
@@ -588,14 +592,31 @@ const setActiveCodeBlock = async function (this: SQLEditor, e: editor.ICursorPos
     this.currentCodeBlock = codeBlock;
     this.props.onDidChangeActiveCodeBlock?.(this.currentCodeBlock);
 
-    /** Is this needed? It breaks code snippet tab  */
-    // const existingDecorations = value.split(EOL).flatMap((_, idx) => 
-    //   editor.getLineDecorations(idx)?.map(d => d.id) ?? []
-    // );
-    // editor.removeDecorations(existingDecorations);
+    // removePlayDecoration({ editor, EOL, value });
+
     this.currentDecorations?.clear();
     this.currentDecorations = await highlightCurrentCodeBlock(editor, codeBlock);
   }
+}
+
+type Args = {
+  editor: editor.IStandaloneCodeEditor;
+  value: string;
+  EOL: string;
+}
+
+/** 
+ * If used incorrectly it breaks code snippet tab to next param.  
+*/
+const removePlayDecoration = ({ editor, value, EOL }: Args) => {
+  const existingDecorations = value.split(EOL).flatMap((_, idx) => {
+    const decorations = editor.getLineDecorations(idx);
+    return decorations?.filter(decor => {
+      return decor.options.glyphMarginClassName === "active-code-block-play";
+    }).map(d => d.id) ?? []
+  });
+  console.log(existingDecorations)
+  editor.removeDecorations(existingDecorations);
 }
 
 const setActions = async (editor: editor.IStandaloneCodeEditor, comp: SQLEditor) => {

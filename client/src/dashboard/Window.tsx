@@ -196,11 +196,11 @@ export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W>
             className="ml-auto"
             iconPath={mdiArrowCollapse}
             color="action"
+            title="Collapse chart"
             data-command="dashboard.window.collapseChart"
             onClick={() => {
               w.$update({ minimised: true });
             }}
-            children={window.isLowWidthScreen? null : "Collapse chart"}
           />
           <Btn
             variant="outline"
