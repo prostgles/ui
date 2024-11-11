@@ -52,6 +52,7 @@ export const COMMANDS = {
   "dashboard.window.menu": "",
 
   "dashboard.window.detachChart": "",
+  "dashboard.window.collapseChart": "",
   "dashboard.window.closeChart": "",
   "dashboard.window.chartMenu": "",
 

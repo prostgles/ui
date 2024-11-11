@@ -14,9 +14,7 @@ module.exports = merge(commonConfig, {
     publicPath: "/",
     libraryTarget: 'umd',
   }, 
-  plugins: [
-    // new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)()
-  ],
+  plugins: [],
   optimization: { 
     splitChunks: {
       chunks: 'all',

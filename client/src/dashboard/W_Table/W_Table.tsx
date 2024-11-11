@@ -492,11 +492,12 @@ export default class W_Table extends RTComp<W_TableProps, W_TableState, Prostgle
         quickMenuProps={{
           tables, 
           prgl,
+          chartableSQL: undefined,
           dbs, 
           setLinkMenu,
           onAddChart,
           myLinks: this.props.myLinks,
-          sql: undefined,
+          childWindows: this.props.childWindows,
           show: childWindow? { filter: true } : undefined
         }} 
         getMenu={this.getMenu}  

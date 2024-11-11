@@ -33,17 +33,21 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
   if(!colOpts){
     return <>Column not found: {column}</>
   }
+
+  
   
   const { windows, links } = getLinksAndWindows();
-  const lq = getTimeChartLayer({ active_row: undefined, link, windows, links, myLinks, w })
-    .find(l => l.dateColumn === column);
+  const { data: lq } = tryCatchV2(
+    () => getTimeChartLayer({ active_row: undefined, link, windows, links, myLinks, w })
+      .find(l => l.dateColumn === column)
+  );
   const parentW = windows.find(_w => _w.id !== w.id && [link.w1_id , link.w2_id].includes(_w.id));
   const table = lq?.type === "table"? tables.find(t => t.name === lq.tableName) : undefined;
   const cols = (
     parentW?.type === "sql"? (linkOpts.otherColumns ?? parentW.options.sqlResultCols) : 
     parentW?.type === "table"? table?.columns : []
   ) ?? [];
-  const numericCols = cols?.filter(c => _PG_numbers.includes(c.udt_name as any)) ?? [];
+  const numericCols = cols.filter(c => _PG_numbers.includes(c.udt_name as any));
   const statType = colOpts.statType ?? { funcName: "$countAll", numericColumn: undefined };
 
   const updateLinkOpts = (newOpts: Partial<typeof linkOpts>) => {
@@ -69,7 +73,7 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
     {boldTextNode(colOpts.statType?.numericColumn ?? "")}
     {fadedTextNode(`),`)}
   </FlexRow>;
-  const groupByCols = cols?.filter(c => c.name !== lq?.statType?.numericColumn && c.name !== lq?.dateColumn && c.udt_name !== "timestamp" && c.udt_name !== "timestamptz");
+  const groupByCols = cols.filter(c => c.name !== lq?.statType?.numericColumn && c.name !== lq?.dateColumn && c.udt_name !== "timestamp" && c.udt_name !== "timestamptz");
 
   return <>
     <PopupMenu 
@@ -142,12 +146,13 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
             />
             
           </FlexRowWrap>
-          {!!groupByCols?.length && <Select
+          <Select
             label="Group by field"
             variant="div" 
             className="w-fit "
             data-command="TimeChartLayerOptions.groupBy"
             optional={true}
+            disabledInfo={groupByCols.length? undefined : "No groupable columns available"}
             btnProps={{
               iconPath: mdiTableColumn,
               color: !lq?.groupByColumn? undefined : "action",
@@ -164,7 +169,7 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
             onChange={groupByColumn => {
               updateLinkOpts({ groupByColumn });
             }}
-          />}
+          />
           {isOnScreen && 
             <FlexCol className="gap-p5">
               <Label variant="normal">{lq?.type === "sql"? "Query" : "Table"}</Label>
@@ -177,4 +182,36 @@ export const TimeChartLayerOptions = ({ link, column, tables, getLinksAndWindows
       } 
     />
   </>
+}
+
+type TryCatchResult<T> = 
+| { data: T; hasError?: false; error?: undefined; duration: number; }
+| { data?: undefined; hasError: true; error: unknown; duration: number; } 
+
+export const tryCatchV2 = <T,>(func: () => T | Promise<T>): T extends Promise<T>? Promise<TryCatchResult<Awaited<T>>> : TryCatchResult<T> => {
+  const startTime = Date.now();
+  try {
+    const dataOrResult = func();
+    if(dataOrResult instanceof Promise){
+      return new Promise(async (resolve, reject) => {
+        const duration = Date.now() - startTime;
+        const data = await dataOrResult
+        resolve({
+          data,
+          duration,
+        });
+      }) as any;
+    }
+    return {
+      data: dataOrResult,
+      duration: Date.now() - startTime,
+    } as any;
+  } catch(error){
+    console.error(error);
+    return { 
+      error,
+      hasError: true,
+      duration: Date.now() - startTime, 
+    } as any;
+  }
 }

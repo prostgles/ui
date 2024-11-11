@@ -49,6 +49,7 @@ export type ProstglesTimeChartLayer = Pick<LayerBase, "_id" | "linkId" | "disabl
 } & ({
   type: "sql";
   sql: string;
+  withStatement: string;
 } | {
   type: "table";
   tableName: string;

@@ -76,7 +76,7 @@ export const SelectTriggerButton = <O extends OptionKey, Multi extends boolean =
     iconPath={showSelectedIcon ?? iconPath ?? (chipMode? mdiPencil : mdiMenuDown)}
     iconPosition={!btnProps?.iconPath? "right" : "left"} 
     iconClassname={(btnProps?.iconPath || showSelectedIcon)? "" : chipMode? undefined : "text-2"}
-    disabledInfo={noOtherOption? "No other option" : disabledInfo}
+    disabledInfo={disabledInfo ?? (noOtherOption? "No other option" : undefined)}
     disabledVariant={noOtherOption? "no-fade" : undefined}
     {...btnProps}
     onClick={noOtherOption? undefined : e => {

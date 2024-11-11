@@ -1,9 +1,9 @@
-import type { ParsedJoinPath, SQLHandler, ValidatedColumnInfo } from "prostgles-types";
+import type { ParsedJoinPath, ValidatedColumnInfo } from "prostgles-types";
 import { isDefined } from "../../../utils";
 import type { DBSchemaTablesWJoins, WindowData, WindowSyncItem } from "../../Dashboard/dashboardUtils";
+import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
 import { getAllJoins } from "../ColumnMenu/JoinPathSelectorV2";
 import { getColWInfo } from "../tableUtils/getColWInfo";
-import { getTableExpressionReturnType } from "../../SQLEditor/SQLCompletion/completionUtils/getQueryReturnType";
  
 export type ColInfo = Pick<ValidatedColumnInfo, "name" | "udt_name">;
 type JoinedChartColumn = {
@@ -12,6 +12,7 @@ type JoinedChartColumn = {
   path: ParsedJoinPath[];
   otherColumns: ColInfo[];
 } & ColInfo;
+
 export type ChartColumn = (JoinedChartColumn | {
   type: "normal";
   otherColumns: ColInfo[];
@@ -26,17 +27,17 @@ type Args = {
 } | {
   type: "sql";
   w: WindowData<"sql"> | WindowSyncItem<"sql">;
-  sql: string;
-  sqlHandler: SQLHandler;
+  chartableSQL: ChartableSQL;
 }
-export const getChartCols = async (args: Args): Promise<{
+export const getChartCols = (args: Args): {
   geoCols: ChartColumn[];
   dateCols: ChartColumn[];
   sql?: string;
-}> => {
+  withStatement?: string;
+} => {
 
   if(args.type === "sql") {
-    return getChartColsFromSql(args.sql, args.sqlHandler)
+    return args.chartableSQL;
   }
   const { w, tables } = args;
 
@@ -91,26 +92,5 @@ export const getChartCols = async (args: Args): Promise<{
   return {
     dateCols,
     geoCols,
-  }
-}
-
-const getChartColsFromSql = async (sql: string, sqlHandler: SQLHandler) => {
-  const trimmedSql = sql.trim();
-  const { colTypes = [] } = await getTableExpressionReturnType(trimmedSql, sqlHandler);
-  const _allCols: ColInfo[] = colTypes.map(c => ({ 
-    ...c,
-    name: c.column_name, 
-    udt_name: c.udt_name as any, 
-  }));
-  const allCols: ChartColumn[] = _allCols.map(c => ({ 
-    ...c,
-    type: "normal",
-    otherColumns: _allCols.filter(c => !isGeoCol(c) && !isDateCol(c)),
-  }));
-
-  return {
-    sql: trimmedSql, 
-    geoCols: allCols.filter(c => isGeoCol(c)),
-    dateCols: allCols.filter(c => isDateCol(c)),
   }
 }

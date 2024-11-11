@@ -54,12 +54,6 @@ export const getViewRendererUtils = function(this: ViewRenderer, { prgl, workspa
 
     const { links } = this.getOpenedLinksAndWindows()
     const { w1_id, w2_id } = l;
-      // activeLinks = links.filter(l => windows.find(w => [l.w1_id, l.w2_id].includes(w.id))),
-      // activeColors = countDupes([
-      //   ...Object.keys(PALETTE).sort(() => .5 - Math.random()),
-      //   ...activeLinks.map(l => getLinkColor(l).colorStr).filter(c => c)
-      // ]),
-      // leastUsedColorKey = Object.keys(activeColors).pop()!;
 
     const myLinks = links.filter(l => [l.w1_id, l.w2_id].find(wid => [w1_id, w2_id].includes(wid)));
     const cLinkColor = myLinks.map(l => l.options.type === "table"? l.options.colorArr : undefined).find(c => c);
@@ -145,8 +139,7 @@ export const getViewRendererUtils = function(this: ViewRenderer, { prgl, workspa
 
     //   const w = await addWindow({ name, type, ...extra }) as WindowData;
     // }
-    const w = windows.find(cw => cw.parent_window_id === parentW.id) ?? await addWindow({ name, type, ...extra }) as WindowData;
-
+    const w = windows.find(cw => cw.type === type && cw.parent_window_id === parentW.id) ?? await addWindow({ name, type, ...extra }) as WindowData;
     addLink({ w1_id: parentW.id, w2_id: w.id, linkOpts });
   }
 

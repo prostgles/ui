@@ -11,8 +11,9 @@ import { isJoinedFilter } from "../../../commonTypes/filterUtils";
 import type { DBS } from "./Dashboard/DBS";
 import { getLinkColorV2 } from "./W_Map/getMapLayerQueries";
 import { AddChartMenu } from "./W_Table/TableMenu/AddChartMenu";
+import type { ChartableSQL } from "./W_SQL/getChartableSQL";
 
-export type ProstglesQuickMenuProps = Pick<CommonWindowProps, "tables" | "prgl" | "myLinks"> & {
+export type ProstglesQuickMenuProps = Pick<CommonWindowProps, "tables" | "prgl" | "myLinks" | "childWindows"> & {
   w: WindowSyncItem<"table"> | WindowSyncItem<"sql">;
   dbs: DBS;
   setLinkMenu?: (args: { 
@@ -24,11 +25,11 @@ export type ProstglesQuickMenuProps = Pick<CommonWindowProps, "tables" | "prgl" 
    * If undefined then will show all
    */
   show?: { filter?: boolean; link?: boolean; };
-  sql: string | undefined;
+  chartableSQL: ChartableSQL | undefined;
 };
 
 export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
-  const { w, setLinkMenu, onAddChart, show, sql, prgl, myLinks } = props;
+  const { w, setLinkMenu, onAddChart, show, chartableSQL, prgl, myLinks, childWindows } = props;
   const { theme, tables } = prgl; 
   const table = tables.find(t => t.name === w.table_name);
   const showLinks = (!show || show.link) && Boolean(setLinkMenu && w.table_name && table?.joins.length || w.type !== "sql" && !!myLinks.length); 
@@ -43,6 +44,11 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
   }
 
   const bgColorClass = theme === "light"? "bg-color-3" : "bg-color-0";
+
+  const addChartProps = w.type === "sql" && chartableSQL? { w, type: w.type, chartableSQL } : 
+    w.type === "table"? { w, type: w.type } : 
+    undefined;
+
   return <>
     <div 
       className={"W_QuickMenu flex-row ai-center rounded b b-color h-fit w-fit m-auto f-1 min-w-0 " + bgColorClass}
@@ -65,14 +71,13 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
           _w.$update({ options: { showFilters: !_w.options?.showFilters } }, { deepMerge: true });
         }}
       />} 
-      {onAddChart && <AddChartMenu 
-        w={w} 
+      {onAddChart && addChartProps && <AddChartMenu
+        {...addChartProps}
         tables={tables}
+        childWindows={childWindows}
         myLinks={myLinks}
-        sqlHandler={prgl.db.sql!}
-        sql={sql}
         onAddChart={onAddChart} 
-        btnClassName={bgColorClass} 
+        btnClassName={bgColorClass}
       />}
       {showLinks && !window.isMobileDevice && !!setLinkMenu && <Btn 
         title="Cross filter tables"
