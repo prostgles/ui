@@ -61,6 +61,7 @@ export const monacoType = async (page: PageWIds, parentSelector: string, text: s
   await page.waitForTimeout(500);
   await page.keyboard.press("Delete");
   await page.waitForTimeout(500);
+  await monacoEditor.click();
   await page.keyboard.type(text, { delay: 100 });
   await page.waitForTimeout(500);
 }
