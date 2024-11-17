@@ -79,6 +79,17 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
           passwordless_admin: false 
         }
       );
+
+      /** Ensure passwordless_admin is setup and disabled */
+      await dbs.users.insert({
+        passwordless_admin: true,
+        type: noPwdAdmin.type,
+        username: noPwdAdmin.username,
+        password: noPwdAdmin.password,
+        created: noPwdAdmin.created,
+        status: "disabled",
+      });
+
       /** Terminate all sessions */
       await dbs.sessions.delete({});
     },
