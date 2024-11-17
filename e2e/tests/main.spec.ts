@@ -59,7 +59,7 @@ test.describe("Main test", () => {
     }
   }
 
-  test('Can disable passwordless admin by creating a new admin user', async ({ page: p }) => {
+  test('Can disable passwordless admin by creating a new admin user. User data is reassigned and accessible to the new user', async ({ page: p }) => {
     const page = p as PageWIds;
 
     const goToWorkspace = async (openUsersTable = true) => {
@@ -68,7 +68,7 @@ test.describe("Main test", () => {
       if(openUsersTable){
         await openTable(page, "users");
       }
-      await page.getByTestId("dashboard.window.rowInsert").locator(`[data-key="users"]`).waitFor({ state: "visible" });
+      await page.getByTestId("dashboard.window.rowInsert").and(page.locator(`[data-key="users"]`)).waitFor({ state: "visible", timeout: 20e3 });
     }
 
     await goTo(page);
