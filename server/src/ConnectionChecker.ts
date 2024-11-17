@@ -241,9 +241,6 @@ export class ConnectionChecker {
       cb(null, this.config.global_setting?.allowed_origin ?? undefined);
     }
   }
-
-
-
 }
 
 

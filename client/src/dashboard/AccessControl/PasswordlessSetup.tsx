@@ -22,7 +22,7 @@ export const PasswordlessSetup = ({ dbsMethods }: ExtraProps) => {
   return <div className="flex-col gap-1 ai-center p-1">
     <div>Passwordless access</div>
     <div>Only this device and browser can access the dashboard</div>
-    <div>To add users and set access control must first create an admin user with a password. This will disable passwordless access </div>
+    <div>To add users and set access control must first create an admin user with a password. This will disable passwordless access</div>
 
     <PopupMenu
       title="Create admin user"

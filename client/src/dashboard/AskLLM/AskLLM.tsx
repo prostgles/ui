@@ -99,7 +99,6 @@ export const AskLLM = ({ workspaceId, ...prgl }: Prgl & { workspaceId: string | 
   }] : []);
 
   const { data: llm_prompts } = dbs.llm_prompts.useSubscribe();
-
   const { schemaStr } = useLLMSchemaStr(prgl);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const onClose = () => {

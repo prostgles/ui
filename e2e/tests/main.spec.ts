@@ -62,6 +62,18 @@ test.describe("Main test", () => {
   test('Can disable passwordless admin by creating a new admin user', async ({ page: p }) => {
     const page = p as PageWIds;
 
+    const goToWorkspace = async (openUsersTable = true) => {
+      await page.getByRole('link', { name: 'Connections' }).click();
+      await page.getByRole("link", { name: "Prostgles UI state" }).click();
+      if(openUsersTable){
+        await openTable(page, "users");
+      }
+      await page.getByTestId("dashboard.window.rowInsert").locator(`[data-key="users"]`).waitFor({ state: "visible" });
+    }
+
+    await goTo(page);
+    await goToWorkspace();
+
     await page.waitForTimeout(2000);
 
     if(!localNoAuthSetup) {
@@ -69,10 +81,8 @@ test.describe("Main test", () => {
     }
     await login(page);
 
-    await page.getByRole('link', { name: 'Connections' }).click();
-    
-    /** State database exists */
-    await page.getByRole("link", { name: "Prostgles UI state" }).waitFor({ state: "visible", timeout: 15e3 });
+    /** Expect the workspace to have users table open */
+    await goToWorkspace(false);
   });
 
   test("Limit login attempts", async ({ page: p, browser, context }) => {
