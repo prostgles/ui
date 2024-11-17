@@ -272,6 +272,7 @@ export type DBSchemaGenerated = {
       login_rate_limit_enabled?: boolean;
       magic_link_validity_days?: number;
       pass_process_env_vars_to_server_side_functions?: boolean;
+      prostglesRegistration?: null | {    enabled: boolean;   email: string;   refreshToken: string;  };
       session_max_age_days?: number;
       tableConfig?: null | any;
       trust_proxy?: boolean;
@@ -329,9 +330,11 @@ export type DBSchemaGenerated = {
        |  {  Provider: 'OpenAI';  API_Key: string;  model: string;  temperature?: number;  frequency_penalty?: number;  max_completion_tokens?: number;  presence_penalty?: number;  response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt'; }
        |  {  Provider: 'Anthropic';  API_Key: string;  "anthropic-version": string;  model: string;  max_tokens: number; }
        |  {  Provider: 'Custom';  headers?: Record<string, string>;  body?: Record<string, string>; }
+       |  {  Provider: 'Prostgles'; }
       created?: null | string;
       endpoint?: string;
       id?: number;
+      is_default?: null | boolean;
       name?: string;
       result_path?: null | string[];
       user_id: string;

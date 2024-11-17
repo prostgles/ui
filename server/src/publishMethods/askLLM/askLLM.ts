@@ -104,6 +104,8 @@ type Args = {
   llm_credential: Pick<DBSSchema["llm_credentials"], "config" | "endpoint" | "result_path">;
   messages: LLMMessage[];
 }
+
+console.error("Must authenticate user for prostgles requests");
 export const fetchLLMResponse = async ({ llm_credential, messages: _messages }: Args) => {
 
   const systemMessage = _messages.filter(m => m.role === "system");
@@ -119,7 +121,11 @@ export const fetchLLMResponse = async ({ llm_credential, messages: _messages }: 
     "content-type": "application/json",
     "x-api-key": config.API_Key,
     "anthropic-version": config["anthropic-version"],
-  } : config?.headers;
+  } : 
+  config?.Provider === "Prostgles"? { 
+
+  } :
+  config?.headers;
 
   const body = config?.Provider === "OpenAI"?  {
     ...pickKeys(config, ["temperature", "max_completion_tokens", "model", "frequency_penalty", "presence_penalty", "response_format"]),
@@ -128,7 +134,10 @@ export const fetchLLMResponse = async ({ llm_credential, messages: _messages }: 
     ...pickKeys(config, ["model", "max_tokens"]),
     system: systemMessageObj.content,
     messages,
-  } : config?.body;
+  } : config?.Provider === "Prostgles"? {
+    messages,
+  } : 
+  config?.body;
   const res = await fetch(llm_credential.endpoint, {
     method: "POST",
     headers,
