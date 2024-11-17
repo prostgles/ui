@@ -717,7 +717,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
   credential_types: {
     // dropIfExists: true,
     isLookupTable: {
-      values: { s3: {}, openai: {} }
+      values: { s3: {} }
     }
   },
   
@@ -1068,6 +1068,15 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       tableConfig: {
         info: { "hint": "Schema used to create prostgles-ui" },
         sqlDefinition: "JSONB"
+      },
+      prostglesRegistration: {
+        info: { "hint": "Registration options" },
+        nullable: true,
+        jsonbSchemaType: {
+          enabled: { type: "boolean" },
+          email: { type: "string" },
+          refreshToken: { type: "string" },
+        },
       }
     }
   },
@@ -1259,6 +1268,9 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
               Provider: { enum: ["Custom"] },
               headers: { record: { values: "string" }, optional: true },
               body: { record: { values: "string" }, optional: true },
+            },
+            {
+              Provider: { enum: ["Prostgles"] },
             }
           ]
         },
@@ -1268,9 +1280,17 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
           API_Key: "",
         }
       },
+      is_default: { sqlDefinition: `BOOLEAN DEFAULT FALSE`, info: { hint: "If true then this is the default credential" } },
       result_path: { sqlDefinition: `_TEXT `, info: { hint: "Will use corect defaults for OpenAI and Anthropic. Path to text response. E.g.: choices,0,message,content" } },
       created: {
         sqlDefinition: `TIMESTAMP DEFAULT NOW()`,
+      },
+    },
+    indexes: {
+      unique_default: { 
+        unique: true, 
+        columns: "is_default", 
+        where: "is_default = TRUE" 
       },
     },
   },

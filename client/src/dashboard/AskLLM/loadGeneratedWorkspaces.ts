@@ -4,7 +4,7 @@ import type { Prgl } from "../../App";
 import { isDefined, omitKeys } from "../../utils";
 import { CHIP_COLOR_NAMES } from "../W_Table/ColumnMenu/ColumnDisplayFormat/ChipStylePalette";
 
-export const loadGeneratedWorkspaces = async (basicWorkspaces: WorkspaceInsertModel[], { dbs, connectionId }: Prgl) => {
+export const loadGeneratedWorkspaces = async (basicWorkspaces: WorkspaceInsertModel[], { dbs, connectionId }: Pick<Prgl, "dbs" | "connectionId">) => {
   const viewIdToIndex: Record<string, number> = {};
   const workspaces = basicWorkspaces.map((bw, i) => {
     const windows = bw.windows.map((bw, wIndex) => {

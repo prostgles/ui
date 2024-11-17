@@ -1,114 +1,38 @@
 
 import { mdiAssistant, mdiPlus, mdiScript } from "@mdi/js";
 import React, { useState } from "react";
-import { isObject } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
-import type { Message } from "../../components/Chat/Chat";
 import { Chat } from "../../components/Chat/Chat";
-import { Marked } from "../../components/Chat/Marked";
 import { FlexCol, FlexRow } from "../../components/Flex";
-import Loading from "../../components/Loading";
 import Popup from "../../components/Popup/Popup";
 import Select from "../../components/Select/Select";
 import { renderInterval } from "../W_SQL/customRenderers";
-import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
 import { LLMChatOptions } from "./LLMChatOptions";
-import { loadGeneratedWorkspaces } from "./loadGeneratedWorkspaces";
-import { SetupLLMCredentials } from "./SetupLLMCredentials";
+import { SetupLLMCredentials, useAskLLMSetupState } from "./SetupLLMCredentials";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
 
 export const CHAT_WIDTH = 800;
 
-export const AskLLM = ({ workspaceId, ...prgl }: Prgl & { workspaceId: string | undefined }) => {
+type P = Prgl & { workspaceId: string | undefined }
+export const AskLLM = (props: P) => {
+  const { workspaceId, ...prgl } = props;
   const { dbsMethods, dbs, user } = prgl;
   const { askLLM } = dbsMethods;
-
-  const { 
-    llmMessages, createNewChat, activeChatId, latestChats, 
-    setActiveChat, firstCredential, prompts, activeChat, credentials
-  } = useLLMChat(prgl);
-
-  const { setWorkspace } = useSetNewWorkspace(workspaceId);
-  
-  const actualMessages: Message[] = llmMessages?.map(m => ({
-    incoming: m.user_id !== user?.id,
-    message: <Marked 
-      content={m.message || ""} 
-      codeHeader={({ language, codeString }) => {
-        if(language !== "json") return null;
-        try {
-          const json = JSON.parse(codeString);
-          if(Array.isArray(json.prostglesWorkspaces)){
-            return <Btn
-              color="action"
-              iconPath={mdiPlus}
-              variant="faded"
-              onClick={() => {
-                loadGeneratedWorkspaces(json.prostglesWorkspaces, prgl)
-                  .then((insertedWorkspaces) => {
-                    const [first] = insertedWorkspaces;
-                    if(first){
-                      setWorkspace(first);
-                    }
-                  })
-                  .catch(error => {
-                    if(isObject(error) && error.code === "23505"){
-                      alert(`Workspace with this name already exists. Must delete or rename the clashing workspaces: \n${json.prostglesWorkspaces.map(w => w.name).join(", ")}`);
-                    }
-                  });
-              }}
-            >
-              Load workspaces
-            </Btn>
-          }
-        } catch(e) {
-          console.error(e);
-        }
-      }}
-    /> ,
-    sender_id: m.user_id || "ai",
-    sent: new Date(m.created || new Date()),
-  })) ?? [];
-
-  const disabled_message = activeChat?.disabled_until && 
-    new Date(activeChat.disabled_until) > 
-    new Date() && activeChat.disabled_message? 
-      activeChat.disabled_message : 
-      undefined;
-  const messages: Message[] = (actualMessages.length? actualMessages : [
-    { 
-      message: "Hello, I am the AI assistant. How can I help you?", 
-      incoming: true, 
-      sent: new Date("2024-01-01"), 
-      sender_id: "ai" 
-    },
-  ].map(m => {
-    const incoming = m.sender_id !== user?.id;
-    return { 
-      ...m, 
-      incoming,
-      message: incoming && !m.message? <Loading /> : m.message 
-    }
-  })).concat(disabled_message? [{
-    incoming: true,
-    message: disabled_message,
-    sender_id: "ai",
-    sent: new Date(),
-  }] : []);
-
-  const { data: llm_prompts } = dbs.llm_prompts.useSubscribe();
 
   const { schemaStr } = useLLMSchemaStr(prgl);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const onClose = () => {
     setAnchorEl(null);
   }
-  if(!askLLM || !firstCredential && user?.type !== "admin") return null;
+  const state = useAskLLM(props);
+  if(!askLLM) { //  || !firstCredential && user?.type !== "admin"
+    return null;
+  }
 
   return <>
-    <Btn 
+    <Btn
       title="Chat to an AI Assistant to get help with your queries"
       variant="faded"
       color="action"
@@ -121,43 +45,41 @@ export const AskLLM = ({ workspaceId, ...prgl }: Prgl & { workspaceId: string | 
       {window.isMediumWidthScreen? null : `Ask AI`}
     </Btn>
 
-    {anchorEl && !firstCredential && <Popup
-      title="Setup AI assistant"
-      positioning="beneath-left"
-      data-command="AskLLM.popup"
-      anchorEl={anchorEl}
-      onClose={onClose}
-      clickCatchStyle={{ opacity: 1 }}
-    >
-      <SetupLLMCredentials {...prgl} />
-    </Popup>}
-    
-    {anchorEl && firstCredential && 
+    {!anchorEl? null : state.state !== "ready"?  
+      <SetupLLMCredentials 
+        {...prgl}
+        setupState={state}
+        anchorEl={anchorEl} 
+        onClose={onClose} 
+      /> :
       <Popup
         data-command="AskLLM.popup"
+        showFullscreenToggle={{}}
         title={
           <FlexRow>
             <FlexCol className="gap-p25">
               <div>
-                Ask AI Assistant 
+                Ask AI Assistant
               </div>
-              <span className="text-2 font-14">(experimental)</span>
+              <span className="text-2 font-14">
+                (experimental)
+              </span>
             </FlexCol>
             <FlexRow className="gap-p25 min-w-0">
               <LLMChatOptions {...prgl} 
-                prompts={prompts} 
-                activeChat={activeChat}
-                activeChatId={activeChatId}
-                credentials={credentials}
+                prompts={state.prompts} 
+                activeChat={state.activeChat}
+                activeChatId={state.activeChatId}
+                credentials={state.credentials}
               />
               <Select 
                 title={"Chat"}
-                fullOptions={latestChats?.map(c => ({ 
+                fullOptions={state.latestChats?.map(c => ({ 
                   key: c.id, 
                   label: c.name,
                   subLabel: renderInterval(c.created_ago, true, true, true), 
                 })) ?? []}
-                value={activeChatId}
+                value={state.activeChatId}
                 showSelectedSublabel={true}
                 style={{
                   flex:1,
@@ -165,7 +87,7 @@ export const AskLLM = ({ workspaceId, ...prgl }: Prgl & { workspaceId: string | 
                   maxWidth: "fit-content",
                 }}
                 onChange={v => {
-                  setActiveChat(v);
+                  state.setActiveChat(v);
                 }}
               />
               <Btn 
@@ -173,7 +95,7 @@ export const AskLLM = ({ workspaceId, ...prgl }: Prgl & { workspaceId: string | 
                 title="New chat"
                 variant="faded"
                 color="action"
-                onClickPromise={() => createNewChat(firstCredential.id)}
+                onClickPromise={() => state.createNewChat(state.defaultCredential.id)}
               />
               <Select 
                 className="ml-1"
@@ -181,10 +103,10 @@ export const AskLLM = ({ workspaceId, ...prgl }: Prgl & { workspaceId: string | 
                 btnProps={{
                   iconPath: mdiScript
                 }}
-                fullOptions={llm_prompts?.map(p => ({ key: p.id, label: p.name, subLabel: p.description || undefined })) ?? []}
-                value={activeChat?.llm_prompt_id}
+                fullOptions={state.llm_prompts?.map(p => ({ key: p.id, label: p.name, subLabel: p.description || undefined })) ?? []}
+                value={state.activeChat?.llm_prompt_id}
                 onChange={promptId => {
-                  dbs.llm_chats.update({ id: activeChatId }, { llm_prompt_id: promptId });
+                  dbs.llm_chats.update({ id: state.activeChatId }, { llm_prompt_id: promptId });
                 }}
               />
             </FlexRow>
@@ -216,11 +138,11 @@ export const AskLLM = ({ workspaceId, ...prgl }: Prgl & { workspaceId: string | 
               minWidth: `min(${CHAT_WIDTH}px, 100%)`,
               minHeight: "0"
             }}
-            messages={messages}
-            disabledInfo={activeChat?.disabled_message ?? undefined}
+            messages={state.messages}
+            disabledInfo={state.activeChat?.disabled_message ?? undefined}
             onSend={async (msg) => {
-              if(!msg || !activeChatId) return;
-              await askLLM(msg, schemaStr, activeChatId).catch(error => {
+              if(!msg || !state.activeChatId) return;
+              await askLLM(msg, schemaStr, state.activeChatId).catch(error => {
                 const errorText = error?.message || error;
                 alert(typeof errorText === "string"? errorText : JSON.stringify(errorText));
               });
@@ -229,4 +151,15 @@ export const AskLLM = ({ workspaceId, ...prgl }: Prgl & { workspaceId: string | 
         </FlexCol>
     </Popup>}
   </> 
+}
+
+const useAskLLM = (props: P) => {
+  const { workspaceId, ...prgl } = props;
+  const state = useAskLLMSetupState(prgl);
+  const chatState = useLLMChat({ ...prgl, workspaceId, credentials: "credentials" in state? state.credentials : undefined });
+
+  return state.state === "ready"? {
+    ...state,
+    ...chatState,
+  } : state;
 }

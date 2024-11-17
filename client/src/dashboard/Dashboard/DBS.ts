@@ -66,6 +66,19 @@ export type DBSMethods = Partial<{
   changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
 }>;
 
+const AdminTableNames = [
+  "connections",
+  "global_settings",
+  "llm_messages",
+  "llm_prompts",
+] as const
+
 export type DBS = DBHandlerClient<DBSchemaGenerated> & {
   sql: DBHandlerClient["sql"];
+};
+
+type AsOptional<T, Keys extends keyof Partial<T> & string> = Omit<T, Keys> & {
+  [K in Keys]?: Partial<T[K]>;
 }
+
+export type DbsByUserType = AsOptional<DBS, typeof AdminTableNames[number]>;

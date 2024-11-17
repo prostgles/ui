@@ -336,6 +336,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
           login_rate_limit_enabled: 1,
           pass_process_env_vars_to_server_side_functions: 1,
           enable_logs: 1,
+          prostglesRegistration: 1,
         },
         postValidate: async ({ row, dbx: dbsTX }) => {
           if(!row.allowed_ips.length){
@@ -362,8 +363,10 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
   }
 
   const curTables = Object.keys(dashboardTables);
-  // @ts-ignore
-  const remainingTables = getKeys(db).filter(k => db[k]?.find).filter(t => !curTables.includes(t));
+  const remainingTables = getKeys(db).filter(k => {
+    const tableHandler = db[k];
+    return tableHandler && "find" in tableHandler && !curTables.includes(k);
+  });
   const adminExtra = remainingTables.reduce((a, v) => ({ ...a, [v]: "*" }), {});
   dashboardTables = {
     ...(dashboardTables as object),
