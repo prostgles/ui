@@ -103,7 +103,7 @@ export const AskLLM = (props: P) => {
                 btnProps={{
                   iconPath: mdiScript
                 }}
-                fullOptions={state.llm_prompts?.map(p => ({ key: p.id, label: p.name, subLabel: p.description || undefined })) ?? []}
+                fullOptions={state.prompts?.map(p => ({ key: p.id, label: p.name, subLabel: p.description || undefined })) ?? []}
                 value={state.activeChat?.llm_prompt_id}
                 onChange={promptId => {
                   dbs.llm_chats.update({ id: state.activeChatId }, { llm_prompt_id: promptId });

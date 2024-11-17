@@ -14,7 +14,7 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials }
 
   const [activeChatId, setActiveChat] = useState<number>();
   const { data: activeChat, isLoading } = dbs.llm_chats.useSubscribeOne({ id: activeChatId });
-  const { data: llm_prompts } = dbs.llm_prompts.useSubscribe();
+
   /** Order by Id to ensure the first prompt is the default chat */
   const { data: prompts } = dbs.llm_prompts.useSubscribe({}, { orderBy: { id: 1 } });
   const user_id = user?.id;
@@ -142,7 +142,6 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials }
     createNewChat, 
     llmMessages, 
     messages, 
-    llm_prompts,
     latestChats, 
     setActiveChat,
     noCredential: credentials && !credentials.length,
