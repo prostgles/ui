@@ -360,6 +360,7 @@ export const runDbSql = async (page: PageWIds, query: string, args?: any, opts?:
 }
 
 export const openTable = async (page: PageWIds, namePartStart: string) => {
+  await page.getByTestId("dashboard.menu").waitFor({ state: "visible" });
   await page.keyboard.press("Control+KeyP");
   await page.waitForTimeout(200);
   const searchAlLInput = await page.getByTestId("SearchAll"); 

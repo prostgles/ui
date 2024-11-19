@@ -55,6 +55,7 @@ export const COMMANDS = {
   "dashboard.window.collapseChart": "",
   "dashboard.window.closeChart": "",
   "dashboard.window.chartMenu": "",
+  "dashboard.window.restoreMinimisedCharts": "",
 
   "dashboard.goToConnConfig": "Go to connection config",
   "dashboard.menu.settingsToggle": "",
@@ -250,6 +251,7 @@ export const COMMANDS = {
   "SetupLLMCredentials": "",
   "AskLLMAccessControl.llm_daily_limit": "",
   "Pagination.page": "",
+  "MapExtentBehavior": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 
