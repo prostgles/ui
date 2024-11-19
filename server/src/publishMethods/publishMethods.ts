@@ -24,7 +24,7 @@ import { createSessionSecret } from "../authConfig/authConfig";
 import { getPasswordHash } from "../authConfig/authUtils";
 import type { Backups } from "../BackupManager/BackupManager";
 import { getInstalledPrograms } from "../BackupManager/getInstalledPrograms";
-import { getPasswordlessAdmin, insertUser } from "../ConnectionChecker";
+import { EMPTY_PASSWORD, getPasswordlessAdmin, insertUser, PASSWORDLESS_ADMIN_USERNAME } from "../ConnectionChecker";
 import type { ConnectionTableConfig } from "../ConnectionManager/ConnectionManager";
 import { DB_TRANSACTION_KEY, getACRules, getCDB, getSuperUserCDB } from "../ConnectionManager/ConnectionManager";
 import { getCompiledTS, getDatabaseConfigFilter, getEvaledExports } from "../ConnectionManager/connectionManagerUtils";
@@ -65,9 +65,32 @@ export const publishMethods:  PublishMethods<DBSchemaGenerated> = async (params)
 
       const noPwdAdmin = await getPasswordlessAdmin(dbs);
       if(!noPwdAdmin) throw "No passwordless admin found";
+      if(noPwdAdmin.id !== user.id) {
+        throw "Only the passwordless admin can disable passwordless access";
+      }
 
-      await insertUser(dbs, _dbs, { username: newAdmin.username, password: newAdmin.password, type: "admin" });
-      await dbs.users.update({ id: noPwdAdmin.id }, { status: "disabled" });
+      /** Change current passwordless user to normal admin to ensure old user data is accessible */
+      await dbs.users.update(
+        { id: noPwdAdmin.id },
+        { 
+          username: newAdmin.username, 
+          password: getPasswordHash(user, newAdmin.password), 
+          type: "admin", 
+          passwordless_admin: false 
+        }
+      );
+
+      /** Ensure passwordless_admin is setup and disabled */
+      await dbs.users.insert({
+        passwordless_admin: true,
+        type: noPwdAdmin.type,
+        username: noPwdAdmin.username,
+        password: noPwdAdmin.password,
+        created: noPwdAdmin.created,
+        status: "disabled",
+      });
+
+      /** Terminate all sessions */
       await dbs.sessions.delete({});
     },
     getConnectionDBTypes: async (conId: string) => {
