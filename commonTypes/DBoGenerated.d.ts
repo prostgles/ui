@@ -272,7 +272,7 @@ export type DBSchemaGenerated = {
       login_rate_limit_enabled?: boolean;
       magic_link_validity_days?: number;
       pass_process_env_vars_to_server_side_functions?: boolean;
-      prostglesRegistration?: null | {    enabled: boolean;   email: string;   refreshToken: string;  };
+      prostglesRegistration?: null | {    enabled: boolean;   email: string;   token: string;  };
       session_max_age_days?: number;
       tableConfig?: null | any;
       trust_proxy?: boolean;

@@ -1,5 +1,4 @@
 import { mdiCogOutline } from "@mdi/js"
-import { useEffectDeep } from "prostgles-client/dist/prostgles"
 import React from "react"
 import type { DBSSchema } from "../../../../commonTypes/publishUtils"
 import type { Prgl } from "../../App"
@@ -8,13 +7,13 @@ import { FlexCol } from "../../components/Flex"
 import PopupMenu from "../../components/PopupMenu"
 import SmartForm from "../SmartForm/SmartForm"
 
-type P = Prgl & {
+export type LLMChatOptionsProps = Pick<Prgl, "dbs" | "dbsTables" | "theme"> & {
   prompts: DBSSchema["llm_prompts"][] | undefined;
   activeChat: DBSSchema["llm_chats"] | undefined;
   credentials: DBSSchema["llm_credentials"][] | undefined;
   activeChatId: number | undefined;
 }
-export const LLMChatOptions = (prgl: P) => {
+export const LLMChatOptions = (prgl: LLMChatOptionsProps) => {
   const { dbs, activeChatId, dbsTables } = prgl; 
 
   return <PopupMenu 

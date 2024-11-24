@@ -1075,7 +1075,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
         jsonbSchemaType: {
           enabled: { type: "boolean" },
           email: { type: "string" },
-          refreshToken: { type: "string" },
+          token: { type: "string" },
         },
       }
     }
