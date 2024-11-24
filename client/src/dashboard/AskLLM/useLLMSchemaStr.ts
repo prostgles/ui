@@ -1,7 +1,8 @@
 import { useMemoDeep, usePromise } from "prostgles-client/dist/prostgles";
 import type { Prgl } from "../../App";
 
-export const useLLMSchemaStr = ({ db, connection, tables }: Prgl) => {
+type P = Pick<Prgl, "connection" | "db" | "tables">
+export const useLLMSchemaStr = ({ db, connection, tables }: P) => {
   const tableConstraints = usePromise(async () => {
     if(!db.sql) return;
 

@@ -10,7 +10,7 @@ import { isDefined } from "../../utils";
 import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
 import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAccessRule";
 import SmartForm from "../SmartForm/SmartForm";
-import { SetupLLMCredentials } from "./SetupLLMCredentials";
+import { SetupLLMCredentials, useAskLLMSetupState } from "./SetupLLMCredentials";
 import { Section } from "../../components/Section";
 import FormField from "../../components/FormField/FormField";
 
@@ -32,6 +32,7 @@ export const AskLLMAccessControl = ({ dbs, connectionId, accessRuleId, className
   
   /** We need to reset form after both values are undefined */
   const [addFormKey, setAddFormKey] = useState(0);
+  const state = useAskLLMSetupState({ dbs, user: prgl.user });
   
   return <FlexCol className={className} style={style}>
     <SectionHeader icon={isDefined(accessRuleId)? mdiAssistant : undefined}>
@@ -77,9 +78,8 @@ export const AskLLMAccessControl = ({ dbs, connectionId, accessRuleId, className
           } 
         ]}
       >
-
-        {!creds?.length? 
-          <SetupLLMCredentials {...prgl} dbs={dbs} /> :
+        {state.state !== "ready"? 
+          <SetupLLMCredentials {...prgl} dbs={dbs} setupState={state} asPopup={false} /> :
           <>
             <div className="ta-left" style={{ maxWidth: "500px" }}>
               To allow chatting with the AI assistant, allowed prompts and credentials must be specified
@@ -92,10 +92,9 @@ export const AskLLMAccessControl = ({ dbs, connectionId, accessRuleId, className
                 className="mt-1"
                 data-command="AskLLMAccessControl.AllowAll"
                 onClick={() => {
-                  if(!creds.length || !prompts?.length) return;
                   editedRule?.onChange({
-                    access_control_allowed_llm: creds.flatMap(c => {
-                      return prompts.map(p => {
+                    access_control_allowed_llm: state.credentials.flatMap(c => {
+                      return state.prompts.map(p => {
                         return { llm_prompt_id: p.id, llm_credential_id: c.id } 
                       })
                     })

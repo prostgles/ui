@@ -46,7 +46,7 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
           {window.isMediumWidthScreen? null : `Feedback`}
         </Btn>
       )}
-      footerButtons={feedback.sending? undefined : (pClose => [
+      footerButtons={(feedback.sending || feedback.success)? undefined : (pClose => [
         {
           label: "Cancel",
           variant: "outline",

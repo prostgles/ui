@@ -262,6 +262,11 @@ export const POST = async (path: string, data: object) => {
     },
     body: JSON.stringify(data)
   });
+
+  if(!rawResponse.ok){
+    const error = await rawResponse.json().catch(() => rawResponse.text()).catch(() => rawResponse.statusText);
+    throw new Error(error);
+  }
   
   return rawResponse;   
 }

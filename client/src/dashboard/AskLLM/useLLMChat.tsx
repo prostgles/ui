@@ -9,16 +9,18 @@ import Loading from "../../components/Loading";
 import { loadGeneratedWorkspaces } from "./loadGeneratedWorkspaces";
 import { type DBSSchema, isObject } from "../../../../commonTypes/publishUtils";
 import type { Message } from "../../components/Chat/Chat";
+import type { LLMSetupStateReady } from "./SetupLLMCredentials";
 
-export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials }: Prgl & { workspaceId: string | undefined; credentials: DBSSchema["llm_credentials"][] | undefined }) => {
+type P = LLMSetupStateReady & Pick<Prgl, "dbs" | "user" | "connectionId"> & { 
+  workspaceId: string | undefined;
+};
+export type LLMChatState = ReturnType<typeof useLLMChat>;
+export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, firstPromptId, defaultCredential }: P) => {
 
   const [activeChatId, setActiveChat] = useState<number>();
   const { data: activeChat, isLoading } = dbs.llm_chats.useSubscribeOne({ id: activeChatId });
 
-  /** Order by Id to ensure the first prompt is the default chat */
-  const { data: prompts } = dbs.llm_prompts.useSubscribe({}, { orderBy: { id: 1 } });
   const user_id = user?.id;
-  const firstPromptId = prompts?.[0]?.id;
   const activeChatPromptId = activeChat?.llm_prompt_id;
   const createNewChat = useCallback(async (credentialId: number, ifNoOtherChatsExist = false) => {
     if(ifNoOtherChatsExist){
@@ -54,13 +56,12 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials }
       return;
     }
 
-    const firstCredential = credentials?.[0];
     if(latestChats?.length){
       if(!activeChatId){
         setActiveChat(latestChats[0]!.id);
       }
-    } else if(latestChats && !latestChats.length && firstCredential){
-      createNewChat(firstCredential.id, true);
+    } else if(latestChats && !latestChats.length){
+      createNewChat(defaultCredential.id, true);
     }
   }, [latestChats, createNewChat, activeChatId, credentials]);
 
@@ -144,10 +145,10 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials }
     messages, 
     latestChats, 
     setActiveChat,
-    noCredential: credentials && !credentials.length,
-    firstCredential: credentials?.[0],
+    // noCredential: credentials && !credentials.length,
+    // firstCredential: credentials?.[0],
     credentials,
-    prompts,
+    // prompts,
     activeChat,
   };
 }
