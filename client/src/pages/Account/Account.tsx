@@ -18,7 +18,7 @@ export const Account = (props: AccountProps) => {
   const { dbs, dbsTables, dbsMethods, user, auth, theme } = props;
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const { data: dbsConnection } = dbs.connections.useFindOne({ id: auth?.user?.state_db_id });
+  const { data: dbsConnection } = dbs.connections.useFindOne({ id: auth.user?.state_db_id });
   
   if(!user || user.type === "public"){
     return null;
@@ -30,7 +30,7 @@ export const Account = (props: AccountProps) => {
     </div>
   }
 
-  const allowedColumns = ["id", "username", "type", "status", "options", "created_at"];
+  const allowedColumns = ["id", "username", "name", "type", "status", "options", "created_at", "auth_provider"];
   const sectionItems = {
     details: {
       label: "Account details",

@@ -83,6 +83,13 @@ export class ConnectionManager {
     this.setUpWSS();
   }
 
+  destroy = async () => {
+    await this.conSub?.unsubscribe();
+    await this.dbConfSub?.unsubscribe();
+    await this.userSub?.unsubscribe();
+    await this.accessControlListeners?.forEach(l => l.unsubscribe());
+  }
+
   getConnectionsWithPublicAccess = () => {
     return this.dbConfigs.filter(c => c.access_control_user_types.some(u => u.user_type === "public"));
   }

@@ -556,7 +556,6 @@ export default class FormField extends React.Component<FormFieldProps, FormField
               style={{ 
                 flex: 0.5, 
                 justifyContent: "space-between",
-                ...((readOnly) && disablePressStyle),
                 ...labelStyle 
               }}
             >

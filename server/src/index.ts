@@ -1,3 +1,6 @@
+import { logOutgoingHttpRequests } from "./logOutgoingHttpRequests";
+logOutgoingHttpRequests(false);
+
 import cookieParser from "cookie-parser";
 import type { NextFunction, Request, Response } from "express";
 import express, { json, urlencoded } from "express";

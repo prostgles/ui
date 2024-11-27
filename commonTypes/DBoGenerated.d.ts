@@ -266,13 +266,15 @@ export type DBSchemaGenerated = {
       allowed_ips?: string[];
       allowed_ips_enabled?: boolean;
       allowed_origin?: null | string;
+      auth_providers?: null | {    website_url: string;   created_user_type?: string;   email?: |  {  signupType: 'withMagicLink';  emailMagicLink: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; }; }
+ |  {  signupType: 'withPassword';  minPasswordLength?: number;  emailConfirmation: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; }; };   google?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("profile" | "email")[]; }; };   github?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("user:email")[]; }; };   microsoft?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  prompt: 'select_account';  scope: ("openid" | "email" | "profile")[]; }; };   facebook?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("email" | "public_profile")[]; }; };  };
       enable_logs?: boolean;
       id?: number;
       login_rate_limit?: {    maxAttemptsPerHour: number;   groupBy: 'x-real-ip' | 'remote_ip' | 'ip';  };
       login_rate_limit_enabled?: boolean;
       magic_link_validity_days?: number;
       pass_process_env_vars_to_server_side_functions?: boolean;
-      prostglesRegistration?: null | {    enabled: boolean;   email: string;   token: string;  };
+      prostgles_registration?: null | {    enabled: boolean;   email: string;   token: string;  };
       session_max_age_days?: number;
       tableConfig?: null | any;
       trust_proxy?: boolean;
@@ -376,7 +378,8 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      auth_type: "session-id" | "magic-link" | "login"
+      auth_provider?: null | string;
+      auth_type: "session-id" | "magic-link" | "login" | "provider"
       created?: null | string;
       failed?: null | boolean;
       id?: string;
@@ -558,10 +561,15 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       "2fa"?: null | {    secret: string;   recoveryCode: string;   enabled: boolean;  };
+      auth_provider?: null | string;
+      auth_provider_profile?: null | any;
+      auth_provider_user_id?: null | string;
       created?: null | string;
+      email?: null | string;
       has_2fa_enabled?: null | boolean;
       id?: string;
       last_updated?: null | string;
+      name?: null | string;
       options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: 'dark' | 'light' | 'from-system';  };
       password?: string;
       passwordless_admin?: null | boolean;

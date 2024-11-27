@@ -8,7 +8,7 @@ import type { DbsByUserType } from "../Dashboard/DBS"
 import { mdiKey, mdiLogin } from "@mdi/js"
 import Loading from "../../components/Loading"
 import FormField from "../../components/FormField/FormField"
-import { POST } from "../../pages/Login"
+import { POST } from "../../pages/Login/Login"
 
 type P = Pick<Prgl, "theme" | "dbs" | "dbsTables" | "dbsMethods"> & {
   setupState: Exclude<LLMSetupState, { state: "ready" }>;
@@ -23,7 +23,7 @@ export const SetupLLMCredentials = ({ theme, dbs, dbsTables, dbsMethods, asPopup
 
   const [setupType, setSetupType] = React.useState<"free" | "api">();
   const { state } = setupState;
-  const [email, setEmail] = React.useState(setupState.globalSettings?.data?.prostglesRegistration?.email || "");
+  const [email, setEmail] = React.useState(setupState.globalSettings?.data?.prostgles_registration?.email || "");
 
   const content = state === "loading"? <Loading delay={1000} /> : 
     state === "cannotSetupOrNotAllowed"? 
@@ -71,7 +71,7 @@ export const SetupLLMCredentials = ({ theme, dbs, dbsTables, dbsMethods, asPopup
             }
             await dbs.global_settings.update(
               {}, 
-              { prostglesRegistration: { email, token, enabled: true } }
+              { prostgles_registration: { email, token, enabled: true } }
             );
           }}
         >
@@ -127,16 +127,16 @@ export const useAskLLMSetupState = (props: Pick<Prgl, "dbs" | "user">) => {
         state: "loading" as const
       }
     }
-    const { data: { prostglesRegistration } } = globalSettings;
+    const { data: { prostgles_registration } } = globalSettings;
 
-    if(!prostglesRegistration || !defaultCredential || !credentials || !prompts){
+    if(!prostgles_registration || !defaultCredential || !credentials || !prompts){
       return {
         state: "mustSetup" as const,
         globalSettings,
       }
     }
 
-    const { enabled, email, token } = prostglesRegistration;
+    const { enabled, email, token } = prostgles_registration;
     if(enabled){
       // const quota = await POST("/api/llm/quota", { token });
       console.error("Finish this")

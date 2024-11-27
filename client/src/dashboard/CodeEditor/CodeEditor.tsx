@@ -171,14 +171,15 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
    */
   addedModelId?: string;
   setSchema = async (editor?: editor.IStandaloneCodeEditor) => {
-    
+    const { language } = this.props;
+    const languageObj = isObject(language) ? language :undefined;
+    if(languageObj?.lang !== "json") return;
     const monaco = await this.getMonaco()
     const mySchemas = await this.getSchemas();
     if (!mySchemas || !editor) return;
     const currentSchemas = monaco.languages.json.jsonDefaults.diagnosticsOptions.schemas;
 
     const schemas = [
-      // ...currentSchemas?.filter(s => !mySchemas.some(ms => ms.uri === s.uri)) ?? [],
       ...mySchemas.filter(s => !currentSchemas?.some(ms => ms.uri === s.uri)),
     ];
     monaco.languages.json.jsonDefaults
@@ -192,7 +193,7 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
     // SQL Editor options not working if opened twice
     // const model = editor.getModel();
     const models = monaco.editor.getModels();
-    const matchingModel = models.find(m => m.uri.path === mySchemas[0]?.theUri.path)
+    const matchingModel = models.find(m => m.uri.path === mySchemas[0]?.theUri.path);
     if (!matchingModel) {
 
       try {
@@ -350,6 +351,10 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
     const language = isObject(languageOrConf) ? languageOrConf.lang : languageOrConf;
     return <div className={classOverride("f-1 min-h-0 min-w-0 flex-col relative b b-color-2", className)}
       style={style}
+      onFocus={() => {
+        /** This is needed to ensure jsonschema works. Otherwise only the first editor schema will work */
+        this.setSchema(this.editor);
+      }}
     >
       <MonacoEditor
         className="f-1 min-h-0"

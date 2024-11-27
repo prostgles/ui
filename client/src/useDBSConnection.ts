@@ -105,7 +105,7 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
                 pageReload("sync reconnect bug");
               }
             },
-            onReady: async (dbs: Partial<DBS>, dbsMethods, tableSchema: any, auth = {}) => {
+            onReady: async (dbs: Partial<DBS>, dbsMethods, tableSchema: any, auth) => {
               (window as any).dbs = dbs;
               (window as any).dbsSocket = socket;
               (window as any).dbsMethods = dbsMethods;
