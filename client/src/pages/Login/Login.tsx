@@ -1,11 +1,14 @@
 import React from "react";
-import Btn from "../components/Btn";
-import ErrorComponent from "../components/ErrorComponent";
-import { FlexCol } from "../components/Flex";
-import FormField from "../components/FormField/FormField";
-import type { PopupProps } from "../components/Popup/Popup";
-import Popup from "../components/Popup/Popup";
-import RTComp from "../dashboard/RTComp";
+import Btn from "../../components/Btn";
+import ErrorComponent from "../../components/ErrorComponent";
+import { FlexCol } from "../../components/Flex";
+import FormField from "../../components/FormField/FormField";
+import type { PopupProps } from "../../components/Popup/Popup";
+import Popup from "../../components/Popup/Popup";
+import RTComp from "../../dashboard/RTComp";
+import type { PrglState } from "../../App";
+import { LoginWithProviders } from "./LoginWithProviders";
+import { LoginForm } from "./LoginForm";
 
 type LoginState = {
   showTOTP?: "token" | "recovery";
@@ -20,7 +23,7 @@ type LoginState = {
   error?: any;
   didReset: boolean;
 }
-export default class Login extends RTComp<any, LoginState> {
+export class Login extends RTComp<PrglState, LoginState> {
   state: LoginState = {
     password: "",
     username: "",
@@ -84,6 +87,8 @@ export default class Login extends RTComp<any, LoginState> {
       showTOTP, totp_token, totp_recovery_code, 
     } = this.state;
 
+    const { auth, user } = this.props;
+    console.log("auth", auth)
     const ErrorComp = !showTOTP && <ErrorComponent data-command="Login.error" error={error} className="my-1" />;
 
     const getForgetPasswordPopup = () => {
@@ -139,17 +144,13 @@ export default class Login extends RTComp<any, LoginState> {
         className="Login rounded shadow p-2 m-auto w-fit bg-color-0" 
         style={{ 
           maxWidth: "400px",
+          minWidth: "380px",
           paddingBottom: "3em"
         }}
       > 
+        <LoginForm auth={auth} />
         <div>
           <h2 className="mt-0">Sign in</h2>
-          {/* <p className="mt-2 text-sm leading-5 text-1 max-w">
-            Or
-            <NavLink to="/register">
-              register
-            </NavLink>
-          </p> */}
         </div>
         <form 
           className="flex-col gap-1"
@@ -237,12 +238,14 @@ export default class Login extends RTComp<any, LoginState> {
               });
             }}
             size="large"
+            style={{ width: "100%" }}
             variant="filled"
             color="action"
-            style={{ width: "100%" }}
           >
             Sign in
           </Btn>
+          {auth.register && <Btn>Sign up with email</Btn>}
+          <LoginWithProviders {...this.props} />
         </form>
 
         {getForgetPasswordPopup()}

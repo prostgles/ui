@@ -2,6 +2,7 @@ import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig"
 import type { JSONB } from "prostgles-types";
 import { CONNECTION_CONFIG_SECTIONS } from "../../commonTypes/utils";
 import { loggerTableConfig } from "./Logger";
+import { tableConfigGlobalSettings } from "./tableConfig/tableConfigGlobalSettings";
 
 export const DB_SSL_ENUM = ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"] as const;
  
@@ -220,7 +221,12 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       id:       { sqlDefinition: `UUID PRIMARY KEY DEFAULT gen_random_uuid()` },
       status:   { sqlDefinition: `TEXT NOT NULL DEFAULT 'active' REFERENCES user_statuses (id)`, info: { hint: "Only active users can access the system" } }, 
       username: { sqlDefinition: `TEXT NOT NULL UNIQUE` },
-      password: { 
+      name: { sqlDefinition: `TEXT`, info: { hint: "Display name, if empty username will be shown" } },
+      email: { sqlDefinition: `TEXT` },
+      auth_provider: { sqlDefinition: `TEXT`, info: { hint: "OAuth provider name. E.g.: google, github" } },
+      auth_provider_user_id: { sqlDefinition: `TEXT`, info: { hint: "User id" } },
+      auth_provider_profile: { sqlDefinition: `JSONB`, info: { hint: "OAuth provider profile data" } }, //  CHECK(auth_provider IS NOT NULL AND auth_provider_profile IS NOT NULL)
+      password: {
         sqlDefinition: `TEXT NOT NULL DEFAULT gen_random_uuid()`, 
         info: { hint: "Hashed with the user id on insert/update" } 
       },
@@ -314,7 +320,8 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       failed:           "BOOLEAN",
       magic_link_id:    "TEXT",
       sid:              "TEXT",
-      auth_type: { enum: ["session-id", "magic-link", "login"] },
+      auth_type: { enum: ["session-id", "magic-link", "login", "provider"] },
+      auth_provider:    "TEXT",
       ip_address:       `INET NOT NULL`,
       ip_address_remote:"TEXT",
       x_real_ip:        "TEXT",
@@ -996,90 +1003,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
     }
   },
 
-  global_settings: {
-    // dropIfExistsCascade: true,
-    columns: {
-      id: "INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY",
-      allowed_origin: { 
-        sqlDefinition: "TEXT", 
-        label: "Allow-Origin", 
-        info: { hint: "Specifies which domains can access this app in a cross-origin manner. \nSets the Access-Control-Allow-Origin header. \nUse '*' or a specific URL to allow API access" } 
-      },
-      allowed_ips: { 
-        sqlDefinition: `cidr[] NOT NULL DEFAULT '{}'`, 
-        label: "Allowed IPs and subnets", 
-        info: { hint: "List of allowed IP addresses in ipv4 or ipv6 format" } 
-      },
-      allowed_ips_enabled: { 
-        sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE CHECK(allowed_ips_enabled = FALSE OR cardinality(allowed_ips) > 0)`, 
-        info: { hint: "If enabled then only allowed IPs can connect" } 
-      },
-      trust_proxy: { 
-        sqlDefinition: `boolean NOT NULL DEFAULT FALSE`, 
-        info: { hint: "If true then will use the IP from 'X-Forwarded-For' header" } 
-      },
-      enable_logs: {
-        sqlDefinition: `boolean NOT NULL DEFAULT FALSE`, 
-        info: { hint: "Logs are saved in the logs table from the state database" },
-        label: "Enable logs (experimental)" 
-      },
-      session_max_age_days: { 
-        sqlDefinition: `INTEGER NOT NULL DEFAULT 14 CHECK(session_max_age_days > 0)`, 
-        info: { hint: "Number of days a user will stay logged in", min: 1, max: Number.MAX_SAFE_INTEGER } 
-      },
-      magic_link_validity_days: { 
-        sqlDefinition: `INTEGER NOT NULL DEFAULT 1 CHECK(magic_link_validity_days > 0)`, 
-        info: { hint: "Number of days a magic link can be used to log in", min: 1, max: Number.MAX_SAFE_INTEGER } 
-      },
-      updated_by: { 
-        enum: ["user", "app"], 
-        defaultValue: "app" 
-      },
-      pass_process_env_vars_to_server_side_functions: {
-        sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE`,
-        info: { hint: "If true then all environment variables will be passed to the server side function nodejs. Use at your own risk" }
-      },
-      login_rate_limit_enabled: { 
-        sqlDefinition: `BOOLEAN NOT NULL DEFAULT TRUE`, 
-        info: { 
-          hint: "If enabled then each client defined by <groupBy> that fails <maxAttemptsPerHour> in an hour will not be able to login for the rest of the hour", 
-        }, 
-        label: "Enable failed login rate limit" 
-      },
-      login_rate_limit: { 
-        defaultValue: {
-          maxAttemptsPerHour: 5,
-          groupBy: "ip",
-        },
-        jsonbSchemaType: {
-          maxAttemptsPerHour: { type: "integer", description: "Maximum number of login attempts allowed per hour" },
-          groupBy: {
-            description: "The IP address used to group login attempts",
-            enum: [
-              "x-real-ip",
-              "remote_ip",
-              "ip",
-            ],
-          },
-        },
-        label: "Failed login rate limit options", 
-        info: { hint: "List of allowed IP addresses in ipv4 or ipv6 format" } 
-      },
-      tableConfig: {
-        info: { "hint": "Schema used to create prostgles-ui" },
-        sqlDefinition: "JSONB"
-      },
-      prostglesRegistration: {
-        info: { "hint": "Registration options" },
-        nullable: true,
-        jsonbSchemaType: {
-          enabled: { type: "boolean" },
-          email: { type: "string" },
-          token: { type: "string" },
-        },
-      }
-    }
-  },
+  ...tableConfigGlobalSettings,
      
   links: {
     columns: {

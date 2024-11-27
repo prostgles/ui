@@ -1,7 +1,7 @@
 import cors from "cors";
 import type { Express, Request } from "express";
-import type { Auth, AuthResult, SessionUser } from "prostgles-server/dist/AuthHandler";
-import { getLoginClientInfo } from "prostgles-server/dist/AuthHandler";
+import type { Auth, AuthResult, SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
+import { getLoginClientInfo } from "prostgles-server/dist/Auth/AuthHandler";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { SubscriptionHandler } from "prostgles-types";
 import { isDefined, tryCatch } from "prostgles-types";
@@ -39,6 +39,11 @@ export class ConnectionChecker {
     app.use(
       cors(this.withOrigin)
     );
+  }
+
+  destroy = async () => {
+    await this.configSub?.unsubscribe();
+    await this.usersSub?.unsubscribe();
   }
 
   onSocketConnected = async ({ sid, getUser }: { sid?: string; getUser: () => Promise<AuthResult<SessionUser<Users, Users>>> }) => {

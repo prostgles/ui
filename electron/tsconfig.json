@@ -12,7 +12,6 @@
 		"moduleResolution": "node",
 		"declaration": true,
 		"declarationMap": true,
-		"keyofStringsOnly": true,
 		"ignoreDeprecations": "5.0",
 		"strict": true,
 		"outDir": "build",

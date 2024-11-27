@@ -8,6 +8,8 @@ import { classOverride } from "./Flex";
 import { Icon } from "./Icon/Icon";
 import type { MenuListitem } from "./MenuList";
 import { MenuList } from "./MenuList";
+import { useConnectionConfigSearchParams } from "../dashboard/ConnectionConfig/useConnectionConfigSearchParams";
+import { getKeys } from "../utils";
 
 export type TabItem = Partial<Omit<MenuListitem, "contentRight" | "onPress">> & { 
   content?: React.ReactNode;
@@ -17,7 +19,7 @@ export type TabItems = {
   [key: string]: TabItem
 };
 
-export type TabsProps<T extends TabItems = any> = {
+export type TabsProps<T extends TabItems = TabItems> = {
   items: T;
   style?: React.CSSProperties;
   className?: string;
@@ -41,15 +43,15 @@ export type TabsProps<T extends TabItems = any> = {
    * If true then non active controls will be hidden
    */
   compactMode?: "hide-label" | "hide-inactive";
-  activeKey?: keyof T;
-  defaultActiveKey?: keyof T;
-  onChange?: (itemLabel: keyof T | undefined) => void;
+  activeKey?: keyof T & string;
+  defaultActiveKey?: keyof T & string;
+  onChange?: (itemLabel: keyof T & string | undefined) => void;
   contentClass?: string;
   onRender?: (activeItem: TabItem) => React.ReactNode;
 }
 
 type S<T> = {
-  activeKey?: keyof T | null;
+  activeKey?: keyof T & string | null;
   variant?: "horizontal" | "vertical";
   controlsCollapsed: boolean;
 };
@@ -208,4 +210,28 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<TabsProp
       </div>
     )
   }
+}
+
+export const TabsWithDefaultStyle = (props: Pick<TabsProps, "items">) => {
+
+  const { activeSection, setSection } = useConnectionConfigSearchParams(getKeys(props.items) as any);
+  return <div className="flex-col f-1 min-h-0 pt-1 w-full" style={{ maxWidth: "800px"}}>
+    <Tabs variant={{ controlsBreakpoint: 200, contentBreakpoint: 500, controlsCollapseWidth: 350 }}
+      className="f-1 shadow"
+      activeKey={activeSection ?? props.items[0]?.key} 
+      onChange={section => { setSection({ section }) }}
+      items={props.items}
+      contentClass="f-1 o-autdo flex-row jc-center bg-color-2 " 
+      onRender={item => <div className="flex-col f-1 max-w-800 min-w-0 bg-color-0 shadow w-full">
+        <h2 style={{ paddingLeft: "18px" }} className=" max-h-fit">{item.label}</h2>
+        <div className={" f-1 o-auto flex-row " + (window.isLowWidthScreen? "" : " ")} 
+          style={{ 
+            alignSelf: "stretch",
+          }}
+        >
+          {item.content}
+        </div>
+      </div>}
+    />
+  </div> 
 }

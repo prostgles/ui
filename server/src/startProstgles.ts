@@ -5,7 +5,7 @@ import prostgles from "prostgles-server";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import { pickKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
-import type { InitResult } from "prostgles-server/dist/initProstgles";
+import type { InitResult, OnInitReason } from "prostgles-server/dist/initProstgles";
 import type { Server } from "socket.io";
 import type { DBS } from ".";
 import { connMgr, connectionChecker } from ".";
@@ -25,6 +25,9 @@ import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { tableConfig } from "./tableConfig";
 import { insertDefaultPrompts } from "./publishMethods/askLLM/askLLM";
+import { SubscriptionHandler } from "prostgles-types";
+import { isDeepStrictEqual } from "util";
+import { setAuthReloader } from "./authConfig/setAuthReloader";
 
 type StartArguments = {
   app: Express; 
@@ -189,17 +192,23 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
         setLoggerDBS(params.dbo);
 
         /* Update stale data */
+        await connectionChecker.destroy();
         await connectionChecker.init(db, _db); 
-                  
+
         await insertStateDatabase(db, _db, con);
 
+        await connMgr.destroy();
         await connMgr.init(db, _db);
 
+        await bkpManager?.destroy();
         bkpManager ??= await BackupManager.create(_db, db, connMgr);
-      }, 
+
+        setAuthReloader(app, db, prgl);
+      },
     });
 
     statePrgl = prgl;
+
     startDevHotReloadNotifier({ io, port, host });
     return { ok: true }
   } catch(err){

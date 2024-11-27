@@ -5,7 +5,7 @@ import Btn from "../components/Btn";
 import ErrorComponent from "../components/ErrorComponent"; 
 import Loading, { pageReload } from "../components/Loading";
 import { omitKeys, pickKeys } from "../utils";
-import { POST } from "./Login";
+import { POST } from "./Login/Login";
 import { NewConnectionForm } from "./NewConnection/NewConnectionForm";
 import type { Connection} from "./NewConnection/NewConnnection";
 import { DEFAULT_CONNECTION } from "./NewConnection/NewConnnection";

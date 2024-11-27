@@ -281,7 +281,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
       }
     } : {
       select: {
-        fields: { id: 1, username: 1, type: 1, options: 1, created: 1 },
+        fields: { id: 1, username: 1, name: 1, email: 1, auth_provider: 1, type: 1, options: 1, created: 1 },
         forcedFilter: { id: user_id }
       },
       update: {
@@ -336,7 +336,8 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
           login_rate_limit_enabled: 1,
           pass_process_env_vars_to_server_side_functions: 1,
           enable_logs: 1,
-          prostglesRegistration: 1,
+          auth_providers: 1,
+          prostgles_registration: 1,
         },
         postValidate: async ({ row, dbx: dbsTX }) => {
           if(!row.allowed_ips.length){
