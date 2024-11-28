@@ -1,132 +1,138 @@
-import React from "react"
-import { FlexCol } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
+import React from "react";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
+import FormField from "../../components/FormField/FormField";
+import { useLoginState } from "./useLoginState";
+import { LoginWithProviders } from "./LoginWithProviders";
+import { LoginTotpFormFields } from "./LoginTotpForm";
+import { FlexCol } from "../../components/Flex";
 
-type LoginFormProps = Pick<Prgl, "auth">;
-
-type FormStates = 
-| "login" 
-| "loginTotp" 
-| "loginTotpRecovery" 
-| "registerWithPassword" 
-| "registerWithMagicLink"
-;
-
-const loginStates: FormStates[] = ["login", "loginTotp", "loginTotpRecovery"];
+export type LoginFormProps = Pick<Prgl, "auth">;
 
 export const LoginForm = ({ auth }: LoginFormProps) => {
 
-  const [state, setState] = React.useState<FormStates>("login");
-  const [username, setUsername] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [confirmPassword, setConfirmPassword] = React.useState("");
-  const [error, setError] = React.useState("");
-
-  const showPassword = state === "login" || state === "registerWithPassword";
-  const showRepeatPassword = state === "registerWithPassword";
-
-  const getError = () => {
-    if(!username) return "Email cannot be empty";
-    if(showPassword && !password) return "Password cannot be empty";
-    if(showRepeatPassword && password !== confirmPassword) return "Passwords do not match";
-    return "";
-  }
-
-  const isOnLogin = loginStates.includes(state);
-  const registerTypeAllowed: FormStates = auth.register?.withMagicLink? "registerWithMagicLink" : "registerWithPassword";
+  console.log({ auth });
+  const authState = useLoginState({ auth });
+  const { formHandlers, isOnLogin, registerTypeAllowed, setState, error, onAuthCall } = authState;
 
   return <form 
-    className="LoginForm flex-col gap-1"
+    className="LoginForm flex-col gap-1 rounded shadow m-auto w-fit bg-color-0"
+    style={{ 
+      maxWidth: "400px",
+      minWidth: "380px"
+    }}
     onSubmit={e => {
       e.preventDefault();
     }}
   >
-    <div>
+    <FlexCol className="p-2 pb-1">
       <h2 className="mt-0">{!isOnLogin? "Sign up" : "Sign in"}</h2>
-    </div>
-    <FormField 
-      id="username" 
-      label="Email"
-      value={username} 
-      type="username" 
-      onChange={(v) => {
-        setUsername(v);
-        setError("");
-      }} 
-    />
-    {showPassword &&  
-      <FormField 
-        id="password" 
-        label="Password"
-        value={password} 
-        type="password" 
-        onChange={(v) => {
-          setPassword(v);
-          setError("");
-        }} 
+      {formHandlers?.setUsername && 
+        <FormField 
+          id="username" 
+          label="Email"
+          value={formHandlers.username} 
+          type="username" 
+          onChange={formHandlers.setUsername} 
+        />
+      }
+      {formHandlers?.setPassword &&  
+        <FormField 
+          id="password" 
+          label="Password"
+          value={formHandlers.password} 
+          type="password" 
+          onChange={formHandlers.setPassword} 
+        />
+      }
+      {formHandlers?.setConfirmPassword && 
+        <FormField 
+          id="new-password" 
+          label="Confirm password"
+          value={formHandlers.confirmPassword} 
+          type="password"
+          autoComplete="new-password" 
+          onChange={formHandlers.setConfirmPassword} 
+        />
+      }
+
+      <LoginTotpFormFields { ...authState } />
+
+      {error && <ErrorComponent data-command="Login.error" error={error} />}
+
+      <Btn 
+        onClickMessage={async (_, setM) => {
+          setM({ loading: 1 });
+          onAuthCall().finally(() => {
+            setM({ loading: 0 });
+          });
+        }}
+        variant="filled"
+        className="mt-1"
+        color="action"
+        children={isOnLogin? "Sign in" : "Sign up"}
+        size="large"
+        style={{ width: "100%" }}
       />
-    }
-    {showRepeatPassword && 
-      <FormField 
-        id="rnew-password" 
-        label="Confirm password"
-        value={confirmPassword} 
-        type="password"
-        autoComplete="new-password" 
-        onChange={(v) => {
-          setConfirmPassword(v);
-          setError("");
-        }} 
-      />
-    }
-    <Btn 
-      onClick={async () => {
-        const error = getError();
-        if(error){
-          setError(error);
-          return;
-        }
-        if(isOnLogin){
-          await auth.login?.withPassword!({ username, password });
-        } else if(state === "registerWithMagicLink"){
-          if(!auth.register?.withMagicLink) {
-            setError("Registration with magic link is not allowed");
-            return;
-          }
-          
-          await auth.register.withMagicLink({ username });
-        } else if(state === "registerWithPassword"){
-          if(!auth.register?.withPassword) {
-            setError("Registration with password is not allowed");
-            return;
-          }
-          const res = await auth.register.withPassword!({ username, password });
-          if(!res.success){
-            setError(res.error);
-          }
-        }
-      }}
-      variant="filled"
-      className="mt-1"
-      color="action"
-      children={isOnLogin? "Sign in" : "Sign up"}
-      size="large"
-      style={{ width: "100%" }}
-    />
+      <LoginWithProviders auth={auth} />
+    </FlexCol>
+    {!formHandlers && <ErrorComponent error="Invalid state" />}
     {auth.register &&  
       <Btn
-        style={{ fontSize: "14px" }} 
-        variant="text"
+        style={{ fontSize: "14px", width: "100%", borderTopLeftRadius: 0, borderTopRightRadius: 0 }} 
+        variant="faded"
+        color="action"
         onClick={() => {
           setState(isOnLogin? registerTypeAllowed : "login");
         }}
       >
-        {isOnLogin? "Don't have an account? Sign up with email" : "Already have an account? Sign in"}
+        {isOnLogin? "No account? Sign up with email" : "Already have an account? Sign in"}
       </Btn>
     }
-    {error && <ErrorComponent error={error}/>}
   </form>
 }
+
+
+// const login = async (formData: LoginFormData) => {
+//   // const { username, password, remember_me, totp_token, totp_recovery_code, showTOTP } = this.state;
+//   if(showTOTP === "token" && !totp_token || showTOTP === "recovery" && !totp_recovery_code){
+//     this.setState({ error: "Must provide a token/recovery code" });
+//     return;
+//   }
+//   const badCredentials = { 
+//     error: "Provided credentials are not correct" 
+//   };
+
+//   if(!username || !password){
+//     this.setState({ error: "Username/password cannot be empty" });
+//   } else {
+//     try {
+//       const { pathname, search } = window.location;
+//       const content = await POST(pathname + search, { username, password, remember_me, totp_token, totp_recovery_code });
+      
+//       if(content.status === 200){
+//         window.location.href = content.url;
+//       } else {
+//         const txtErr = await content.json();
+        
+//         if(txtErr.err === "Token missing"){
+//           this.setState({ showTOTP: "token" });
+//         } else if(txtErr.err === "inactive") {
+//           this.setState({ error: "Your account is not active" });
+//         } else if(txtErr.err === "no match") {
+//           this.setState(badCredentials);
+//         } else {
+//           this.setState({ error: txtErr.err });
+//         }
+//       }
+//     } catch(err: any){
+//       console.error(err)
+//       if(err && err.content && err.content.reason === "pending"){
+//         this.setState({ error: "Your account has not been approved yet" });
+//       } else {
+//         this.setState(badCredentials);
+//       }
+//     }
+//   }
+// }

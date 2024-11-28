@@ -1,11 +1,11 @@
-import React from "react"
-import type { PrglState } from "../../App"
-import Btn from "../../components/Btn"
-import { mdiFacebook, mdiGithub, mdiGoogle, mdiMicrosoftAzure } from "@mdi/js"
-import { FlexRowWrap } from "../../components/Flex";
+import { mdiFacebook } from "@mdi/js";
 import { getObjectEntries } from "prostgles-types";
+import React from "react";
+import type { PrglState } from "../../App";
+import Btn from "../../components/Btn";
+import { FlexRowWrap } from "../../components/Flex";
 
-export const LoginWithProviders = ({ auth }: PrglState) => {
+export const LoginWithProviders = ({ auth }: Pick<PrglState, "auth">) => {
   const { user } = auth
   if (user && user.type !== "public") return null
   return <FlexRowWrap>

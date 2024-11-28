@@ -5,37 +5,37 @@ import "./App.css";
 import Loading from "./components/Loading";
 import type { CommonWindowProps } from "./dashboard/Dashboard/Dashboard";
 import { Connections } from "./pages/Connections/Connections";
-import { Login } from "./pages/Login/Login";
 import NewConnnection from "./pages/NewConnection/NewConnnection";
 import { NotFound } from "./pages/NotFound";
 import { ProjectConnection } from "./pages/ProjectConnection/ProjectConnection";
 
-import { mdiAccountMultiple, mdiAlertOutline, mdiExclamation, mdiServerNetwork, mdiServerSecurity, mdiThemeLightDark } from "@mdi/js";
+import { mdiAccountMultiple, mdiAlertOutline, mdiServerNetwork, mdiServerSecurity, mdiThemeLightDark } from "@mdi/js";
 import ErrorComponent from "./components/ErrorComponent";
 import { NavBar } from "./components/NavBar";
 import UserManager from "./dashboard/UserManager";
 import { Account } from "./pages/Account/Account";
 import { ServerSettings } from "./pages/ServerSettings";
 
+import type { AuthHandler } from "prostgles-client/dist/Auth";
 import { type DBHandlerClient, type MethodHandler } from "prostgles-client/dist/prostgles";
+import { type Socket } from "socket.io-client";
 import type { ServerState } from "../../commonTypes/electronInit";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import { createReactiveState, useReactiveState } from "./appUtils";
+import Btn from "./components/Btn";
 import { FlexCol } from "./components/Flex";
+import { InfoRow } from "./components/InfoRow";
+import PopupMenu from "./components/PopupMenu";
 import Select from "./components/Select/Select";
 import type { DBS, DBSMethods } from "./dashboard/Dashboard/DBS";
+import { MousePointer } from "./demo/MousePointer";
 import { ComponentList } from "./pages/ComponentList";
 import { ElectronSetup } from "./pages/ElectronSetup";
+import { LoginForm } from "./pages/Login/LoginForm";
 import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./useAppTheme";
 import { useDBSConnection } from "./useDBSConnection";
 import { isDefined } from "./utils";
-import { type Socket } from "socket.io-client";
-import { MousePointer } from "./demo/MousePointer";
-import PopupMenu from "./components/PopupMenu";
-import Btn from "./components/Btn";
-import { InfoRow } from "./components/InfoRow";
-import type { AuthHandler } from "prostgles-client/dist/Auth";
 export * from "./appUtils";
 
 export type ClientUser = {
@@ -250,7 +250,7 @@ export const App = () => {
         <Route key="10" path="/connection-config/:cid" element={<ProjectConnection prglState={extraProps} showConnectionConfig={true} />} />,
         <Route key="11" path="/server-settings" element={withNavBar(<ServerSettings {...extraProps} />, true)} />
         <Route key="12" path="/component-list" element={withNavBar(<ComponentList />, false)} />
-        <Route path="/login" element={<Login {...extraProps} />} />
+        <Route path="/login" element={<LoginForm {...extraProps} />} />
         <Route path="*" element={<NotFound />} />
       </Switch>
     </FlexCol>
