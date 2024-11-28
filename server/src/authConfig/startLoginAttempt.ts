@@ -1,9 +1,8 @@
-
-import { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
-import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import type { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { isEmpty, pickKeys } from "prostgles-types";
 import { connectionChecker, tout } from "..";
-import { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
 import { HOUR } from "./authConfig";
 
 const getGlobalSettings = async () => {
@@ -23,22 +22,27 @@ export const getFailedTooManyTimes = async (db: DBOFullyTyped<DBSchemaGenerated>
   const globalSettings = await getGlobalSettings();
   const lastHour = (new Date(Date.now() - 1 * HOUR)).toISOString();
   const { login_rate_limit: { groupBy }, login_rate_limit_enabled } = globalSettings;
-  const matchByFilterKey = login_rate_limit_enabled? ({
+  if(!login_rate_limit_enabled){
+    return { ip: "", failedTooManyTimes: false, disabled: true };
+  }
+  
+  const matchByFilterKey = ({
     "ip": "ip_address",
     "x-real-ip": "x_real_ip",
     "remote_ip": "ip_address_remote"
-  } as const)[groupBy] : undefined;
-  const ip = (matchByFilterKey && clientInfo[matchByFilterKey]) ?? ip_address;
-  if(!matchByFilterKey || !login_rate_limit_enabled){
-    if(login_rate_limit_enabled) throw "Invalid login_rate_limit.groupBy";
-    return { ip, failedTooManyTimes: false, disabled: true };
+  } as const)[groupBy];
+  const ip = clientInfo[matchByFilterKey] ?? ip_address;
+  if(!(matchByFilterKey as any)){
+    throw "Invalid login_rate_limit.groupBy";
   }
   const matchByFilter = pickKeys(clientInfo, [matchByFilterKey]);
   if(isEmpty(matchByFilter)){
     throw "matchByFilter is empty " + JSON.stringify([matchByFilter, matchByFilterKey]); // pickKeys(args, ["ip_address", "ip_address_remote", "x_real_ip"])
   }
-  const previousFails = await db.login_attempts.find({ ...matchByFilter, failed: true, "created.>=": lastHour })
-  if(previousFails.length >= Math.max(1, globalSettings.login_rate_limit.maxAttemptsPerHour)){
+  const previousFails = await db.login_attempts.find({ ...matchByFilter, failed: true, "created.>=": lastHour });
+  const maxAttemptsPerHour = Math.max(1, globalSettings.login_rate_limit.maxAttemptsPerHour)
+  console.log({ ip, matchByFilterKey, clientInfo, login_rate_limit_enabled, groupBy, maxAttemptsPerHour }, previousFails.length);
+  if(previousFails.length >= maxAttemptsPerHour){
     return { ip, failedTooManyTimes: true };
   }
 
@@ -70,14 +74,14 @@ export const startLoginAttempt = async (db: DBOFullyTyped<DBSchemaGenerated>, cl
 
   /** In case of a bad sid do not log it multiple times */
   if(authInfo.auth_type === "session-id"){
-    const prevFailOnSameSid = await db.login_attempts.findOne({ ip_address, failed: true, sid: authInfo.sid }, { orderBy: { created: false } });
-    if(prevFailOnSameSid){
+    const alreadyFailedOnThisSID = await db.login_attempts.findOne({ ip_address, failed: true, sid: authInfo.sid }, { orderBy: { created: false } });
+    if(alreadyFailedOnThisSID){
       return ignoredResult;
     }
   }
 
   const loginAttempt = await db.login_attempts.insert({ ip_address, failed: true, user_agent, ...authInfo }, { returning: { id: 1 } });
-
+  console.log("loginAttempt", loginAttempt);
   return { 
     ip,
     onSuccess: async () => { 

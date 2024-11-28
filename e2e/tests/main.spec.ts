@@ -76,7 +76,6 @@ test.describe("Main test", () => {
   });
 
   test("Limit login attempts", async ({ page: p, browser, context }) => {
-    // const page = p as PageWIds;
     const page: PageWIds = await browser.newPage({ 
       extraHTTPHeaders: { 
         'x-real-ip': '1.1.1.1' 
@@ -95,7 +94,8 @@ test.describe("Main test", () => {
       expect(await lpage.getByTestId("Login.error").textContent()).toContain(errorMessage);
     }
     for(let i = 0; i < 5; i++){
-      await loginAndExpectError("Provided credentials are not correct", "invalid", page);
+      await page.reload();
+      await loginAndExpectError("Invalid credentials", "invalid", page);
     }
     await loginAndExpectError("Too many failed ", "invalid", page);
     await loginAndExpectError("Too many failed ", USERS.default_user, page);
