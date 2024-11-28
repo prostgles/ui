@@ -349,9 +349,14 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
   render() {
     const { value = "", onChange, language: languageOrConf, options = {}, style, className = "" } = this.props;
     const language = isObject(languageOrConf) ? languageOrConf.lang : languageOrConf;
-    return <div className={classOverride("f-1 min-h-0 min-w-0 flex-col relative b b-color-2", className)}
+    return <div className={classOverride("CodeEditor f-1 min-h-0 min-w-0 flex-col relative b b-color-2", className)}
       style={style}
       onFocus={() => {
+        const allCodeEditors = document.querySelectorAll(".CodeEditor");
+        if(allCodeEditors.length === 1){
+          /** If this is the only editor the fix below will break it (viewedSqlTips) */
+          return;
+        }
         /** This is needed to ensure jsonschema works. Otherwise only the first editor schema will work */
         this.setSchema(this.editor);
       }}

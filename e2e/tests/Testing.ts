@@ -249,6 +249,8 @@ export const COMMANDS = {
   "AskLLM": "",
   "AskLLM.popup": "",
   "SetupLLMCredentials": "",
+  "SetupLLMCredentials.free": "",
+  "SetupLLMCredentials.api": "",
   "AskLLMAccessControl.llm_daily_limit": "",
   "Pagination.page": "",
   "MapExtentBehavior": "",

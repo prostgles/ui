@@ -1,14 +1,13 @@
+import { mdiKey, mdiLogin } from "@mdi/js"
 import React from "react"
 import type { Prgl } from "../../App"
-import SmartForm from "../SmartForm/SmartForm"
-import { FlexCol, FlexRowWrap } from "../../components/Flex"
 import Btn from "../../components/Btn"
+import { FlexCol, FlexRowWrap } from "../../components/Flex"
+import FormField from "../../components/FormField/FormField"
+import Loading from "../../components/Loading"
 import Popup from "../../components/Popup/Popup"
 import type { DbsByUserType } from "../Dashboard/DBS"
-import { mdiKey, mdiLogin } from "@mdi/js"
-import Loading from "../../components/Loading"
-import FormField from "../../components/FormField/FormField"
-import { POST } from "../../pages/Login/Login"
+import SmartForm from "../SmartForm/SmartForm"
 
 type P = Pick<Prgl, "theme" | "dbs" | "dbsTables" | "dbsMethods"> & {
   setupState: Exclude<LLMSetupState, { state: "ready" }>;
@@ -31,18 +30,30 @@ export const SetupLLMCredentials = ({ theme, dbs, dbsTables, dbsMethods, asPopup
       Contact the admin to setup the AI assistant
     </div> :
     <FlexCol data-command="SetupLLMCredentials">
-      <FlexCol>
+      <FlexCol className="ai-center">
         <div className="my-2 font-18 bold">
           To to use the AI assistant you need to either: 
         </div>
         <FlexRowWrap>
-          <Btn variant="filled" color="action" onClick={() => setSetupType("free")} iconPath={mdiLogin}>
+          <Btn 
+            data-command="SetupLLMCredentials.free"
+            variant={setupType === "free"? "filled" : "faded"} 
+            color="action" 
+            onClick={() => setSetupType("free")} 
+            iconPath={mdiLogin}
+          >
             Use for free by signing up
           </Btn>
           <strong>
             Or
           </strong>
-          <Btn variant="faded" color="action" onClick={() => setSetupType("free")} iconPath={mdiKey}>
+          <Btn 
+            data-command="SetupLLMCredentials.api"
+            variant={setupType === "api"? "filled" : "faded"} 
+            color="action" 
+            onClick={() => setSetupType("api")} 
+            iconPath={mdiKey}
+          >
             Provide API Keys
           </Btn>
         </FlexRowWrap>

@@ -17,15 +17,17 @@ const getGlobalSettings = async () => {
   return gs;
 }
 
-export const getFailedTooManyTimes = async (db: DBOFullyTyped<DBSchemaGenerated>, clientInfo: LoginClientInfo): Promise<{ ip: string; failedTooManyTimes: boolean; disabled?: boolean; }> => {
+type FailedAttemptsInfo = 
+| { ip: string; failedTooManyTimes: boolean; disabled?: false; matchByFilter: Pick<LoginClientInfo, "ip_address" | "x_real_ip" | "ip_address_remote"> }
+| { ip: string; matchByFilter?: undefined; failedTooManyTimes: false; disabled?: true; }
+export const getFailedTooManyTimes = async (db: DBOFullyTyped<DBSchemaGenerated>, clientInfo: LoginClientInfo): Promise<FailedAttemptsInfo> => {
   const { ip_address } = clientInfo;
   const globalSettings = await getGlobalSettings();
   const lastHour = (new Date(Date.now() - 1 * HOUR)).toISOString();
   const { login_rate_limit: { groupBy }, login_rate_limit_enabled } = globalSettings;
   if(!login_rate_limit_enabled){
-    return { ip: "", failedTooManyTimes: false, disabled: true };
+    return { ip: ip_address || clientInfo.ip_address_remote || clientInfo.x_real_ip || "", failedTooManyTimes: false, disabled: true };
   }
-  
   const matchByFilterKey = ({
     "ip": "ip_address",
     "x-real-ip": "x_real_ip",
@@ -41,12 +43,11 @@ export const getFailedTooManyTimes = async (db: DBOFullyTyped<DBSchemaGenerated>
   }
   const previousFails = await db.login_attempts.find({ ...matchByFilter, failed: true, "created.>=": lastHour });
   const maxAttemptsPerHour = Math.max(1, globalSettings.login_rate_limit.maxAttemptsPerHour)
-  console.log({ ip, matchByFilterKey, clientInfo, login_rate_limit_enabled, groupBy, maxAttemptsPerHour }, previousFails.length);
   if(previousFails.length >= maxAttemptsPerHour){
-    return { ip, failedTooManyTimes: true };
+    return { ip, matchByFilter, failedTooManyTimes: true };
   }
 
-  return { ip, failedTooManyTimes: false };
+  return { ip, matchByFilter, failedTooManyTimes: false };
 }
 
 type AuthAttepmt = 
@@ -60,8 +61,7 @@ type AuthAttepmt =
  * Configured in global_settings.login_rate_limit found in Server settings page
  */
 export const startLoginAttempt = async (db: DBOFullyTyped<DBSchemaGenerated>, clientInfo: LoginClientInfo, authInfo: AuthAttepmt) => {
-  const { ip_address, user_agent } = clientInfo;
-  const { failedTooManyTimes, ip, disabled } = await getFailedTooManyTimes(db, clientInfo);
+  const { failedTooManyTimes, matchByFilter, ip, disabled } = await getFailedTooManyTimes(db, clientInfo);
   if(failedTooManyTimes){
     throw "Too many failed login attempts";
   }
@@ -74,17 +74,24 @@ export const startLoginAttempt = async (db: DBOFullyTyped<DBSchemaGenerated>, cl
 
   /** In case of a bad sid do not log it multiple times */
   if(authInfo.auth_type === "session-id"){
-    const alreadyFailedOnThisSID = await db.login_attempts.findOne({ ip_address, failed: true, sid: authInfo.sid }, { orderBy: { created: false } });
+    const alreadyFailedOnThisSID = await db.login_attempts.findOne({ ...matchByFilter, failed: true, sid: authInfo.sid }, { orderBy: { created: false } });
     if(alreadyFailedOnThisSID){
       return ignoredResult;
     }
   }
 
-  const loginAttempt = await db.login_attempts.insert({ ip_address, failed: true, user_agent, ...authInfo }, { returning: { id: 1 } });
-  console.log("loginAttempt", loginAttempt);
+  const loginAttempt = await db.login_attempts.insert({ 
+    failed: true, 
+    ...authInfo, 
+    ...clientInfo,
+    user_agent: clientInfo.user_agent ?? "",
+    x_real_ip: clientInfo.x_real_ip ?? "",
+    ip_address_remote: clientInfo.ip_address_remote ?? "" 
+  }, { returning: { id: 1 } });
   return { 
     ip,
-    onSuccess: async () => { 
+    onSuccess: async () => {
+      console.log("loginAttemptOk", loginAttempt.id);
       await db.login_attempts.update({ id: loginAttempt.id }, { failed: false })
     }
   }

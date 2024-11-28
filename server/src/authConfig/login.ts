@@ -1,13 +1,14 @@
-import { Auth } from "prostgles-server/dist/Auth/AuthTypes";
-import { Users } from "..";
-import { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { Auth } from "prostgles-server/dist/Auth/AuthTypes";
+import type { Users } from "..";
+import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
 import { log } from "../index";
-import { getActiveSession, makeSession, parseAsBasicSession, SUser } from "./authConfig";
-import { DB } from "prostgles-server/dist/initProstgles";
+import type { SUser } from "./authConfig";
+import { getActiveSession, makeSession, parseAsBasicSession } from "./authConfig";
+import type { DB } from "prostgles-server/dist/initProstgles";
 import { startLoginAttempt } from "./startLoginAttempt";
 import { getPasswordHash } from "./authUtils";
 import { authenticator } from "otplib";
-import { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 
 export const login: Required<Auth<DBSchemaGenerated, SUser>>["login"] = async (loginParams, db, _db: DB, clientInfo) => {
   log("login");
