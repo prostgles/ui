@@ -512,6 +512,7 @@ export const createAccessRule = async (page: PageWIds, userType: "default" | "pu
 export const enableAskLLM = async (page: PageWIds, maxRequestsPerDay: number, credsProvided=false) => {
   await page.getByTestId("AskLLMAccessControl").click();
   if(!credsProvided){
+    await page.getByTestId("SetupLLMCredentials.api").click();
     await fillSmartFormAndInsert(page, "llm_credentials", { endpoint: "http://localhost:3004/mocked-llm" });
     await page.waitForTimeout(1e3);
   }

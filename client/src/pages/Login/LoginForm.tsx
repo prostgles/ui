@@ -11,8 +11,6 @@ import { FlexCol } from "../../components/Flex";
 export type LoginFormProps = Pick<Prgl, "auth">;
 
 export const LoginForm = ({ auth }: LoginFormProps) => {
-
-  console.log({ auth });
   const authState = useLoginState({ auth });
   const { formHandlers, isOnLogin, registerTypeAllowed, setState, error, onAuthCall } = authState;
 

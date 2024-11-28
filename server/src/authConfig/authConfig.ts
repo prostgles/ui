@@ -40,7 +40,7 @@ export const createSessionSecret = () => {
   return crypto.randomBytes(48).toString("hex");
 }
 
-export const makeSession = async (user: Users | undefined, client: Pick<Sessions, "user_agent" | "ip_address" | "type"> & { sid?: string }, dbo: DBOFullyTyped<DBSchemaGenerated> , expires: number = 0): Promise<BasicSession> => {
+export const makeSession = async (user: Users | undefined, client: Pick<Sessions, "user_agent" | "ip_address" | "type"> & { sid?: string }, dbo: DBOFullyTyped<DBSchemaGenerated> , expires = 0): Promise<BasicSession> => {
 
   if(user){
     const session = await dbo.sessions.insert({ 
