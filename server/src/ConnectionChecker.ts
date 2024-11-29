@@ -246,9 +246,6 @@ export class ConnectionChecker {
       cb(null, this.config.global_setting?.allowed_origin ?? undefined);
     }
   }
-
-
-
 }
 
 
@@ -283,7 +280,7 @@ const initUsers = async (db: DBS, _db: DB) => {
   }
 
   /**
-   * No user. Must create
+   * No initial admin user setup. Create a passwordless admin user is required
    */
   if(!(await db.users.count({ username }))){
     if(NoInitialAdminPasswordProvided){
