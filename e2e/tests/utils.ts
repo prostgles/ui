@@ -513,7 +513,12 @@ export const enableAskLLM = async (page: PageWIds, maxRequestsPerDay: number, cr
   await page.getByTestId("AskLLMAccessControl").click();
   if(!credsProvided){
     await page.getByTestId("SetupLLMCredentials.api").click();
-    await fillSmartFormAndInsert(page, "llm_credentials", { endpoint: "http://localhost:3004/mocked-llm" });
+    await page.getByTestId("AddLLMCredentialForm").click();
+    await page.getByTestId("AddLLMCredentialForm.Provider").click();
+    await page.getByTestId("AddLLMCredentialForm.Provider").locator(`[data-key="Custom"]`).click();
+    // await fillSmartFormAndInsert(page, "llm_credentials", { endpoint: "http://localhost:3004/mocked-llm" });
+    await page.locator(`#endpoint`).fill("http://localhost:3004/mocked-llm");
+    await page.getByTestId("AddLLMCredentialForm.Save").click();
     await page.waitForTimeout(1e3);
   }
   await page.getByTestId("AskLLMAccessControl.AllowAll").click();

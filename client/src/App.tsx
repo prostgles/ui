@@ -31,7 +31,7 @@ import type { DBS, DBSMethods } from "./dashboard/Dashboard/DBS";
 import { MousePointer } from "./demo/MousePointer";
 import { ComponentList } from "./pages/ComponentList";
 import { ElectronSetup } from "./pages/ElectronSetup";
-import { LoginForm } from "./pages/Login/LoginForm";
+import { Login } from "./pages/Login/Login";
 import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./useAppTheme";
 import { useDBSConnection } from "./useDBSConnection";
@@ -250,7 +250,7 @@ export const App = () => {
         <Route key="10" path="/connection-config/:cid" element={<ProjectConnection prglState={extraProps} showConnectionConfig={true} />} />,
         <Route key="11" path="/server-settings" element={withNavBar(<ServerSettings {...extraProps} />, true)} />
         <Route key="12" path="/component-list" element={withNavBar(<ComponentList />, false)} />
-        <Route path="/login" element={<LoginForm {...extraProps} />} />
+        <Route path="/login" element={<Login {...extraProps} />} />
         <Route path="*" element={<NotFound />} />
       </Switch>
     </FlexCol>

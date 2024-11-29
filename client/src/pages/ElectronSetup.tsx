@@ -1,18 +1,16 @@
 import { mdiArrowLeft, mdiArrowRight } from "@mdi/js";
-import React, { useEffect, useState } from "react"; 
+import React, { useEffect, useState } from "react";
 import type { AppState } from "../App";
 import Btn from "../components/Btn";
-import ErrorComponent from "../components/ErrorComponent"; 
+import ErrorComponent from "../components/ErrorComponent";
+import { FlexCol } from "../components/Flex";
 import Loading, { pageReload } from "../components/Loading";
 import { omitKeys, pickKeys } from "../utils";
-import { POST } from "./Login/Login";
 import { NewConnectionForm } from "./NewConnection/NewConnectionForm";
-import type { Connection} from "./NewConnection/NewConnnection";
+import type { Connection } from "./NewConnection/NewConnnection";
 import { DEFAULT_CONNECTION } from "./NewConnection/NewConnnection";
-import { FlexCol, FlexRow } from "../components/Flex";
-import type { OS} from "./PostgresInstallationInstructions";
+import type { OS } from "./PostgresInstallationInstructions";
 import { PostgresInstallationInstructions } from "./PostgresInstallationInstructions";
-import { isObject } from "../../../commonTypes/publishUtils";
 
 type ElectronSetup = {
   serverState: AppState["serverState"]
@@ -210,7 +208,7 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
 
 
 const postConnection = async (c: Connection, validate = false): Promise<{ connection?: Connection; warning?: any; }> => {
-  const res = await POST("/dbs", { ...c, ...(validate? {validate: true} : {}) });
+  const res = await post("/dbs", { ...c, ...(validate? {validate: true} : {}) });
   return await res.json();
 }
 
@@ -220,4 +218,24 @@ export const tout = (timeout: number) => {
       resolve(true)
     }, timeout)
   })
+}
+
+
+const post = async (path: string, data: object) => {
+
+  const rawResponse = await fetch(path, {
+    method: "POST",
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  });
+
+  if(!rawResponse.ok){
+    const error = await rawResponse.json().catch(() => rawResponse.text()).catch(() => rawResponse.statusText);
+    throw error;
+  }
+
+  return rawResponse;   
 }
