@@ -131,7 +131,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
     },
     llm_credentials: {
       select: {
-        fields: isAdmin? "*" : { id: 1, name: 1 },
+        fields: isAdmin? "*" : { id: 1, name: 1, is_default: 1 },
         forcedFilter: isAdmin? undefined : forcedFilterLLM
       },
       delete: isAdmin && "*",

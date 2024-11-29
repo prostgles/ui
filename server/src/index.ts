@@ -34,15 +34,6 @@ if(isTesting){
     });
     next();
   });
-  
-  /** Mock LLM API */
-  app.post("/mocked-llm", (req, res) => {
-    const { path, method, body } = req;
-    console.log(`LLM API: ${method} ${path} ${JSON.stringify(body)}`);
-    res.json({
-      choices: [{ message: { content: "Mocked response" } }]
-    });
-  });
 }
      
 export const API_PATH = "/api";

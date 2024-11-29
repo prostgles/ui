@@ -1,10 +1,11 @@
-import { DBS } from "../..";
-import { DBSSchema } from "../../../../commonTypes/publishUtils";
+import { isTesting, type DBS } from "../..";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import * as fs from "fs";
 import * as path from "path";
 import { justToCompile } from "../../../../commonTypes/DashboardTypes";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
-import { AnyObject, pickKeys } from "prostgles-types";
+import type { AnyObject} from "prostgles-types";
+import { pickKeys } from "prostgles-types";
 import { checkLLMLimit } from "./checkLLMLimit";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 justToCompile;
@@ -59,7 +60,7 @@ export const askLLM = async (
   }
 
   /** Update chat name based on first user message */
-  const isFirstUserMessage = !pastMessages.some(m => m.user_id === user?.id);
+  const isFirstUserMessage = !pastMessages.some(m => m.user_id === user.id);
   if(isFirstUserMessage){
     dbs.llm_chats.update({ id: chatId }, { name: question.slice(0, 25) + "..." });
   }
@@ -81,7 +82,7 @@ export const askLLM = async (
         { role: "system", content: promptWithContext },
         ...pastMessages.map(m => ({ 
           role: m.user_id? "user" : "assistant", 
-          content: m.message ?? ""
+          content: m.message
         } satisfies LLMMessage)),
         { role: "user", content: question } satisfies LLMMessage
       ]
@@ -91,7 +92,7 @@ export const askLLM = async (
 
   } catch(err){
     console.error(err);
-    const isAdmin = user?.type === "admin";
+    const isAdmin = user.type === "admin";
     const errorText = isAdmin? `<br></br><pre>${JSON.stringify(getErrorAsObject(err), null, 2)}</pre>` : ""
     await dbs.llm_messages.update({ id: aiResponseMessage.id }, { 
       message: `<span style="color:red;">Something went wrong</span>${errorText}`
@@ -113,31 +114,41 @@ export const fetchLLMResponse = async ({ llm_credential, messages: _messages }: 
   if(!systemMessageObj) throw "Prompt not found";
   if(otherSM.length) throw "Multiple prompts found";
   const { config } = llm_credential;
-  const messages = config?.Provider === "OpenAI"? _messages : _messages.filter(m => m.role !== "system");
-  const headers = config?.Provider === "OpenAI"? {
+  const messages = config.Provider === "OpenAI"? _messages : _messages.filter(m => m.role !== "system");
+  const headers = config.Provider === "OpenAI"? {
     "Content-Type": "application/json",
     "Authorization": `Bearer ${config.API_Key}`,
-  } : config?.Provider === "Anthropic"?  {
+  } : config.Provider === "Anthropic"?  {
     "content-type": "application/json",
     "x-api-key": config.API_Key,
     "anthropic-version": config["anthropic-version"],
   } : 
-  config?.Provider === "Prostgles"? { 
+  config.Provider === "Prostgles"? { 
 
   } :
-  config?.headers;
+  config.headers;
 
-  const body = config?.Provider === "OpenAI"?  {
+  const body = config.Provider === "OpenAI"?  {
     ...pickKeys(config, ["temperature", "max_completion_tokens", "model", "frequency_penalty", "presence_penalty", "response_format"]),
     messages,
-  } : config?.Provider === "Anthropic"? {
+  } : config.Provider === "Anthropic"? {
     ...pickKeys(config, ["model", "max_tokens"]),
     system: systemMessageObj.content,
     messages,
-  } : config?.Provider === "Prostgles"? {
+  } : config.Provider === "Prostgles"? {
     messages,
   } : 
-  config?.body;
+  config.body;
+
+  if(llm_credential.endpoint === "http://localhost:3004/mocked-llm"){
+    if(!isTesting) {
+      throw "Mocked endpoint only available in testing";
+    }
+    return {
+      aiText: "Mocked response"
+    }
+  }
+
   const res = await fetch(llm_credential.endpoint, {
     method: "POST",
     headers,
@@ -145,20 +156,22 @@ export const fetchLLMResponse = async ({ llm_credential, messages: _messages }: 
   }).catch(err => Promise.reject(JSON.stringify(getErrorAsObject(err))));
 
   if(!res.ok){
-    let errorText = await (res.text().catch(() => ""));
+    const errorText = await (res.text().catch(() => ""));
     throw new Error(`Failed to fetch LLM response: ${res.statusText} ${errorText}`);
   }
   const response: any = await res.json();
-  const path = llm_credential.result_path ?? (config?.Provider === "OpenAI"? ["choices", 0, "message", "content"] : ["content", 0, "text"]);
+  const path = llm_credential.result_path ?? (config.Provider === "OpenAI"? ["choices", 0, "message", "content"] : ["content", 0, "text"]);
   const aiText = parsePath(response ?? {}, path);
-  if(typeof aiText !== "string") throw "Unexpected response from LLM. Expecting string";
+  if(typeof aiText !== "string") {
+    throw "Unexpected response from LLM. Expecting string";
+  }
   return {
     aiText
   }
 };
 
 const parsePath = (obj: AnyObject, path: (string | number)[]) => {
-  let val = obj;
+  let val: AnyObject | undefined = obj;
   for(const key of path){
     if(val === undefined) return undefined;
     val = val[key];
@@ -169,6 +182,7 @@ const parsePath = (obj: AnyObject, path: (string | number)[]) => {
 let insertedDefaultPrompts = false;
 export const insertDefaultPrompts = async (dbs: DBS, user_id: string) => {
   /** In case of stale schema update */
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if(!dbs.llm_prompts || insertedDefaultPrompts) return;
 
   const prompt = await dbs.llm_prompts.findOne();

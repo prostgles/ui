@@ -1,6 +1,6 @@
 import type { MagicLinkAuth, PasswordAuth, PasswordLoginData } from "prostgles-client/dist/Auth";
 import React, { useEffect } from "react";
-import type { LoginFormProps } from "./LoginForm";
+import type { LoginFormProps } from "./Login";
 
 
 type PasswordLoginDataAndFunc = { onCall: PasswordAuth<PasswordLoginData>;} & PasswordAuth<PasswordLoginData>;

@@ -7,7 +7,10 @@ import FormField from "../../components/FormField/FormField"
 import Loading from "../../components/Loading"
 import Popup from "../../components/Popup/Popup"
 import type { DbsByUserType } from "../Dashboard/DBS"
-import SmartForm from "../SmartForm/SmartForm"
+import { AddLLMCredentialForm } from "./AddLLMCredentialForm"
+import SmartCardList from "../SmartCard/SmartCardList"
+import { SwitchToggle } from "../../components/SwitchToggle"
+import { InfoRow } from "../../components/InfoRow"
 
 type P = Pick<Prgl, "theme" | "dbs" | "dbsTables" | "dbsMethods"> & {
   setupState: Exclude<LLMSetupState, { state: "ready" }>;
@@ -21,8 +24,9 @@ type P = Pick<Prgl, "theme" | "dbs" | "dbsTables" | "dbsMethods"> & {
 export const SetupLLMCredentials = ({ theme, dbs, dbsTables, dbsMethods, asPopup, onClose, setupState }: P) => {
 
   const [setupType, setSetupType] = React.useState<"free" | "api">();
-  const { state } = setupState;
+  const { state, credentials } = setupState;
   const [email, setEmail] = React.useState(setupState.globalSettings?.data?.prostgles_registration?.email || "");
+  const [selectedCredentialIds, setSelectedCredentialIds] = React.useState<number[]>([]);
 
   const content = state === "loading"? <Loading delay={1000} /> : 
     state === "cannotSetupOrNotAllowed"? 
@@ -30,10 +34,10 @@ export const SetupLLMCredentials = ({ theme, dbs, dbsTables, dbsMethods, asPopup
       Contact the admin to setup the AI assistant
     </div> :
     <FlexCol data-command="SetupLLMCredentials">
-      <FlexCol className="ai-center">
-        <div className="my-2 font-18 bold">
+      <FlexCol className="ai-center mb-2" >
+        {!setupType && <div className={"font-18 bold my-2"}>
           To to use the AI assistant you need to either: 
-        </div>
+        </div>}
         <FlexRowWrap>
           <Btn 
             data-command="SetupLLMCredentials.free"
@@ -89,19 +93,46 @@ export const SetupLLMCredentials = ({ theme, dbs, dbsTables, dbsMethods, asPopup
           Register
         </Btn>
       </FlexCol> }
-      {setupType === "api" && <SmartForm 
-        label=""
-        theme={theme}
-        methods={{}}
-        className="p-0"
-        db={dbs as any}
-        tables={dbsTables} 
-        tableName="llm_credentials"
-        columnFilter={c => !["created"].includes(c.name)}
-        showJoinedTables={false}
-        hideChangesOptions={true}
-        jsonbSchemaWithControls={true}
-      />}
+      {setupType === "api" && <>
+        <SmartCardList
+          title="Select allowed credentials"
+          className="mb-1"
+          db={dbs as any}
+          tableName={"llm_credentials"}
+          methods={dbsMethods}
+          tables={dbsTables}
+          theme={theme}
+          showEdit={false}
+          noDataComponent={<InfoRow color="info" variant="filled">No existing credentials</InfoRow>}
+          fieldConfigs={[
+            {
+              name: "name",
+            }, {
+              name: "config",
+              renderValue: (v) => {
+                return v.Provider;
+              }
+            },
+            {
+              name: "id",
+              className: "ml-auto",
+              render: (id) => {
+                return <SwitchToggle 
+                  checked={selectedCredentialIds.includes(id)} 
+                  onChange={v => {
+                    if(v){
+                      setSelectedCredentialIds([...selectedCredentialIds, id]);
+                    } else {
+                      setSelectedCredentialIds(selectedCredentialIds.filter(i => i !== id));
+                    }
+                  }}
+                />
+              }
+            }
+          ]}
+        />
+        <AddLLMCredentialForm dbs={dbs} />      
+      </>}
     </FlexCol>
   
   if(!asPopup){
@@ -138,20 +169,20 @@ export const useAskLLMSetupState = (props: Pick<Prgl, "dbs" | "user">) => {
         state: "loading" as const
       }
     }
-    const { data: { prostgles_registration } } = globalSettings;
 
-    if(!prostgles_registration || !defaultCredential || !credentials || !prompts){
+    if(!defaultCredential || !credentials || !prompts){
       return {
         state: "mustSetup" as const,
         globalSettings,
       }
     }
 
-    const { enabled, email, token } = prostgles_registration;
-    if(enabled){
-      // const quota = await POST("/api/llm/quota", { token });
-      console.error("Finish this")
-    }
+    // const { data: { prostgles_registration } } = globalSettings;
+    // const { enabled, email, token } = prostgles_registration;
+    // if(enabled){
+    //   // const quota = await POST("/api/llm/quota", { token });
+    //   console.error("Finish this")
+    // }
   } else if(!defaultCredential || !credentials || !prompts){
     return {
       state: "cannotSetupOrNotAllowed" as const
