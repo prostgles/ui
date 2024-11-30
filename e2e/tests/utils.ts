@@ -535,7 +535,7 @@ export const getLLMResponses = async (page: PageWIds, questions: string[]) => {
 
   await page.getByTestId("AskLLM").click();
   await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });
-
+  await page.waitForTimeout(2e3);
   const result: {
     response: string | null;
     isOk: boolean;
