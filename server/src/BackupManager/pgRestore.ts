@@ -127,7 +127,6 @@ export async function pgRestore(this: BackupManager, arg1: { bkpId: string; conn
       ENV_VARS, 
       bkpStream, 
       err => {
-        console.log(1, { err })
         if(err){
           console.error("pipeToCommand ERR:", err);
           bkpStream.destroy();
