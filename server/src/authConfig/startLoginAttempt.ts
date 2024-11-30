@@ -91,7 +91,6 @@ export const startLoginAttempt = async (db: DBOFullyTyped<DBSchemaGenerated>, cl
   return { 
     ip,
     onSuccess: async () => {
-      console.log("loginAttemptOk", loginAttempt.id);
       await db.login_attempts.update({ id: loginAttempt.id }, { failed: false })
     }
   }
