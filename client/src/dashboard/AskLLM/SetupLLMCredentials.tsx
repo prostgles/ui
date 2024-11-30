@@ -157,7 +157,8 @@ export const useAskLLMSetupState = (props: Pick<Prgl, "dbs" | "user">) => {
   const isAdmin = user?.type === "admin";
   const { data: credentials } = dbs.llm_credentials.useSubscribe();
   const globalSettings = dbs.global_settings?.useSubscribeOne?.();
-  const defaultCredential = credentials?.find(c => c.is_default);
+  /** For backward compatibility pick last credential as default */
+  const defaultCredential = credentials?.find(c => c.is_default) ?? credentials?.at(-1);
 
   /** Order by Id to ensure the first prompt is the default chat */
   const { data: prompts } = dbs.llm_prompts.useSubscribe({}, { orderBy: { id: 1 } });
