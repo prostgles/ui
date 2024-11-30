@@ -617,7 +617,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     };
     if (isObject(error) && error.code === "23503" && error.table) {
       console.log(error)
-      errState = { error: error.detail };// `Table ${error.table} has rows that reference this record (foreign_key_violation)` }
+      errState = { error: error.detail || `Table ${error.table} has rows that reference this record (foreign_key_violation)\n\n${error.message || ""}`};
     } else if (Object.keys(error).length && error.constraint) {
       let cols: string[] = [];
       const errors = {};
