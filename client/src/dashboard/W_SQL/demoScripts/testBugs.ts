@@ -7,6 +7,26 @@ import { testSqlCharts } from "./testSqlCharts";
 export const testBugs: DemoScript = async (args) => {
   const { typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL, runSQL } = args;
 
+  const selectSubSelectBug = fixIndent(`
+    select
+      t.relname as table_name,
+      (SELECT FROM  i.relnamespace),
+    from
+      pg_class t,
+      pg_class i,
+      pg_index ix,
+      pg_attribute a
+    where
+      t.oid = ix.indrelid
+  `);
+  fromBeginning(false, selectSubSelectBug);
+  await moveCursor.pageUp();
+  await moveCursor.down(2);
+  await moveCursor.right(15);
+  await typeAuto(`pna`);
+  await testResult(selectSubSelectBug.replace("SELECT FROM  ", "SELECT FROM pg_catalog.pg_namespace "));
+
+
   /** Comma cross join + table alias repeating bug */
   const crossJoinQuery = fixIndent(`
     select *
@@ -17,9 +37,6 @@ export const testBugs: DemoScript = async (args) => {
       pg_attribute a
     where
       t.oid = ix.indrelid
-      and i.oid = ix.indexrelid
-      and a.attrelid = t.oid
-      and a.attnum = ANY(ix.indkey)
       and t.relkind = 'r'
       and ix.
   `);
@@ -34,6 +51,13 @@ export const testBugs: DemoScript = async (args) => {
   await moveCursor.lineEnd();
   await typeAuto(``);
   await testResult(crossJoinQuery + "indisunique");
+
+  const crossJoinQuery2 = crossJoinQuery.replace("and ix.", "and ")
+  fromBeginning(false, crossJoinQuery2);
+  await moveCursor.pageDown();
+  await moveCursor.lineEnd();
+  await typeAuto(`uniq`);
+  await testResult(crossJoinQuery2 + "ix.indisunique");
 
 
   await testSqlCharts(args);
