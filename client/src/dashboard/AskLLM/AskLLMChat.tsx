@@ -22,6 +22,9 @@ export const AskLLMChat = ({ anchorEl, onClose, prgl, setupState, workspaceId }:
   const chatState = useLLMChat({ ...setupState, dbs, user, connectionId, workspaceId });
   const { messages, activeChat, activeChatId } = chatState;
   const { askLLM } = dbsMethods;
+  if(!activeChat){
+    return null;
+  }
   if(!askLLM) {
     return <>Unexpected: askLLM not missing</>
   }
@@ -64,7 +67,7 @@ export const AskLLMChat = ({ anchorEl, onClose, prgl, setupState, workspaceId }:
           minHeight: "0"
         }}
         messages={messages}
-        disabledInfo={activeChat?.disabled_message ?? undefined}
+        disabledInfo={activeChat.disabled_message ?? undefined}
         onSend={async (msg) => {
           if(!msg || !activeChatId) return;
           await askLLM(msg, schemaStr, activeChatId).catch(error => {

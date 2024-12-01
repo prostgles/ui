@@ -1,14 +1,14 @@
-import React, { useCallback, useEffect, useState } from "react";
-import type { Prgl } from "../../App";
-import { useEffectDeep } from "prostgles-client/dist/prostgles";
-import { Marked } from "../../components/Chat/Marked";
-import Btn from "../../components/Btn";
-import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
 import { mdiPlus } from "@mdi/js";
-import Loading from "../../components/Loading";
-import { loadGeneratedWorkspaces } from "./loadGeneratedWorkspaces";
-import { type DBSSchema, isObject } from "../../../../commonTypes/publishUtils";
+import { useEffectDeep } from "prostgles-client/dist/prostgles";
+import React, { useCallback, useState } from "react";
+import { isObject } from "../../../../commonTypes/publishUtils";
+import type { Prgl } from "../../App";
+import Btn from "../../components/Btn";
 import type { Message } from "../../components/Chat/Chat";
+import { Marked } from "../../components/Chat/Marked";
+import Loading from "../../components/Loading";
+import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
+import { loadGeneratedWorkspaces } from "./loadGeneratedWorkspaces";
 import type { LLMSetupStateReady } from "./SetupLLMCredentials";
 
 type P = LLMSetupStateReady & Pick<Prgl, "dbs" | "user" | "connectionId"> & { 
@@ -17,7 +17,7 @@ type P = LLMSetupStateReady & Pick<Prgl, "dbs" | "user" | "connectionId"> & {
 export type LLMChatState = ReturnType<typeof useLLMChat>;
 export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, firstPromptId, defaultCredential }: P) => {
 
-  const [activeChatId, setActiveChat] = useState<number>();
+  const [activeChatId, setActiveChat] = useState<number>();0
   const { data: activeChat, isLoading } = dbs.llm_chats.useSubscribeOne({ id: activeChatId });
 
   const user_id = user?.id;
@@ -49,16 +49,17 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
   );
 
   useEffectDeep(() => {
+    const latestChatId = latestChats?.[0]?.id;
     
     /** Change chat if deleted */
     if(activeChatId && !activeChat && !isLoading && latestChats){
-      setActiveChat(undefined);
+      setActiveChat(latestChatId);
       return;
     }
 
     if(latestChats?.length){
       if(!activeChatId){
-        setActiveChat(latestChats[0]!.id);
+        setActiveChat(latestChatId);
       }
     } else if(latestChats && !latestChats.length){
       createNewChat(defaultCredential.id, true);

@@ -157,6 +157,7 @@ export const useAskLLMSetupState = (props: Pick<Prgl, "dbs" | "user">) => {
   const isAdmin = user?.type === "admin";
   const { data: credentials } = dbs.llm_credentials.useSubscribe();
   const globalSettings = dbs.global_settings?.useSubscribeOne?.();
+  
   /** For backward compatibility pick last credential as default */
   const defaultCredential = credentials?.find(c => c.is_default) ?? credentials?.at(-1);
 
