@@ -37,7 +37,10 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
   const createNewChat = useCallback(async (credentialId: number, promptId: number, ifNoOtherChatsExist = false) => {
     if(ifNoOtherChatsExist){
       const chat = await dbs.llm_chats.findOne();
-      if(chat) return;
+      if(chat) {
+        console.warn("Chat already exists", chat);
+        return;
+      }
     }
     if(!preferredPromptId) {
       console.warn("No prompt found");
@@ -57,7 +60,7 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
 
 
   useEffectDeep(() => {
-    if(latestChats && preferredPromptId && !latestChats.length){
+    if(latestChats && !latestChats.length && preferredPromptId){
       createNewChat(defaultCredential.id, preferredPromptId, true);
     }
   }, [latestChats, createNewChat, preferredPromptId, defaultCredential]);
