@@ -34,7 +34,7 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
   const activeChatId = activeChat?.id;
 
   const preferredPromptId = activeChat?.llm_prompt_id ?? firstPromptId ?? prompts[0]?.id;
-  const createNewChat = useCallback(async (credentialId: number, ifNoOtherChatsExist = false) => {
+  const createNewChat = useCallback(async (credentialId: number, promptId: number, ifNoOtherChatsExist = false) => {
     if(ifNoOtherChatsExist){
       const chat = await dbs.llm_chats.findOne();
       if(chat) return;
@@ -48,7 +48,7 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
         name: "New chat", 
         user_id: undefined as any,
         llm_credential_id: credentialId,
-        llm_prompt_id: preferredPromptId,
+        llm_prompt_id: promptId,
       }, 
       { returning: "*" }
     );
@@ -57,10 +57,10 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
 
 
   useEffectDeep(() => {
-    if(latestChats && !latestChats.length){
-      createNewChat(defaultCredential.id, true);
+    if(latestChats && preferredPromptId && !latestChats.length){
+      createNewChat(defaultCredential.id, preferredPromptId, true);
     }
-  }, [latestChats, createNewChat, activeChatId, credentials]);
+  }, [latestChats, createNewChat, preferredPromptId, defaultCredential]);
 
   const { data: llmMessages } = dbs.llm_messages.useSubscribe(
     { chat_id: activeChatId }, 
@@ -138,6 +138,7 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
   return { 
     activeChatId, 
     createNewChat, 
+    preferredPromptId,
     llmMessages, 
     messages, 
     latestChats, 

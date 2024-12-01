@@ -9,7 +9,7 @@ import type { LLMSetupStateReady } from "./SetupLLMCredentials";
 import type { LLMChatState } from "./useLLMChat";
 
 export const AskLLMChatHeader = (props: LLMChatState & LLMSetupStateReady & LLMChatOptionsProps) => {
-  const { activeChat, credentials, activeChatId, latestChats, createNewChat, defaultCredential, setActiveChat, prompts, ...prgl } = props
+  const { activeChat, credentials, activeChatId, latestChats, createNewChat, defaultCredential, preferredPromptId, setActiveChat, prompts, ...prgl } = props
   return <FlexRow>
     <FlexCol className="gap-p25">
       <div>
@@ -52,7 +52,11 @@ export const AskLLMChatHeader = (props: LLMChatState & LLMSetupStateReady & LLMC
         title="New chat"
         variant="faded"
         color="action"
-        onClickPromise={() => createNewChat(defaultCredential.id)}
+        disabledInfo={!preferredPromptId? "No prompt found" : undefined}
+        onClickPromise={async () => {
+          if(!preferredPromptId) throw new Error("No prompt found");
+          createNewChat(defaultCredential.id, preferredPromptId);
+        }}
       />
       <Select 
         className="ml-1"
