@@ -19,7 +19,16 @@ const getAliasToken = (tokens: SQLMatchContext["cb"]["tokens"], expressionLastTo
   return aliasToken;
 }
 
-const tablePrecedingKeywords = ["from", "join", "lateral", "update"] as const;
+const tablePrecedingKeywords = [
+  "from", 
+  "join", 
+  "lateral", 
+  "update", 
+  /**
+   * comma is may be used as an alias for CROSS JOIN
+   */
+  ","
+] as const;
 const withTablePrecedingKeywords = ["as"] as const;
 const policyTablePrecedingKeywords = ["on"] as const;
 const alterTablePrecedingKeywords = ["table"] as const;

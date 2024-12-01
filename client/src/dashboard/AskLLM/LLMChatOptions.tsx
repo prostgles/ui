@@ -25,6 +25,7 @@ export const LLMChatOptions = (prgl: LLMChatOptionsProps) => {
     }
     contentStyle={{ padding: 0 }}
     onClickClose={false}
+    clickCatchStyle={{ opacity: 1 }}
     title="Chat settings"
     content={
       <FlexCol>

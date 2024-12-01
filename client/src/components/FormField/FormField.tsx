@@ -153,7 +153,6 @@ export default class FormField extends React.Component<FormFieldProps, FormField
   componentDidMount(){
     this.mounted = true;
     this.setResizer();
-    // this.searchOptions();
   }
   
   componentWillUnmount(){

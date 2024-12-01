@@ -1211,6 +1211,10 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       },
     },
     indexes: {
+      unique_llm_credential_name: {
+        unique: true,
+        columns: "name, user_id"
+      },
       unique_default: { 
         unique: true, 
         columns: "is_default", 

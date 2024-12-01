@@ -7,6 +7,35 @@ import { testSqlCharts } from "./testSqlCharts";
 export const testBugs: DemoScript = async (args) => {
   const { typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL, runSQL } = args;
 
+  /** Comma cross join + table alias repeating bug */
+  const crossJoinQuery = fixIndent(`
+    select *
+    from
+      pg_class t,
+      pg_class i,
+      pg_index ix,
+      pg_attribute a
+    where
+      t.oid = ix.indrelid
+      and i.oid = ix.indexrelid
+      and a.attrelid = t.oid
+      and a.attnum = ANY(ix.indkey)
+      and t.relkind = 'r'
+      and ix.
+  `);
+  fromBeginning(false, crossJoinQuery);
+  await moveCursor.pageDown();
+  await moveCursor.lineEnd();
+  await typeAuto(`uni`);
+  await testResult(crossJoinQuery + "indisunique");
+
+  fromBeginning(false, crossJoinQuery+"uni");
+  await moveCursor.pageDown();
+  await moveCursor.lineEnd();
+  await typeAuto(``);
+  await testResult(crossJoinQuery + "indisunique");
+
+
   await testSqlCharts(args);
 
   /** Schema prefix doubling bug */
