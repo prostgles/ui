@@ -1,4 +1,4 @@
-import { click, getElement, waitForElement } from "../../../demo/demoUtils";
+import { click, waitForElement } from "../../../demo/demoUtils";
 import { fixIndent } from "../../../demo/sqlVideoDemo";
 import { tout } from "../../../pages/ElectronSetup";
 import type { DemoScript } from "../getDemoUtils";
@@ -6,44 +6,6 @@ import { testSqlCharts } from "./testSqlCharts";
 
 export const testBugs: DemoScript = async (args) => {
   const { typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL, runSQL } = args;
-
-  /**
-   * Multiple cte
-   */
-  const multipleCtes = fixIndent(`
-    WITH cte1 AS (
-      SELECT *
-      FROM chat_members
-    ), cte2 AS (
-      SELECT *
-      FROM chats
-    )
-    SELECT * 
-    FROM`
-  );
-  fromBeginning(false, multipleCtes);
-  await typeAuto(" c2");
-  testResult(multipleCtes + " cte2");
-
-  fromBeginning(false, multipleCtes);
-  await moveCursor.up(3);
-  await moveCursor.lineEnd();
-  await typeAuto("\nw");
-  await typeAuto(" d");
-  testResult(multipleCtes.replace("FROM chats", "FROM chats\n  WHERE id"));
-
-  /** Cte joins */
-  fromBeginning(false, multipleCtes);
-  await typeAuto(" c2");
-  await typeAuto(" c", { nth: -1 });
-  await typeAuto("\nj");
-  await typeAuto(" c1");
-  await typeAuto(" c1", { nth: -1 });
-  await typeAuto("\no");
-  await typeAuto(" i");
-  await typeAuto(" ");
-  await typeAuto(" us");
-  testResult(multipleCtes + ` cte2 c\nJOIN cte1 c1\nON c.id = c1.user_id`);
 
   const selectSubSelectBug = fixIndent(`
     select

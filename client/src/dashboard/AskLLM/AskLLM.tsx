@@ -20,7 +20,7 @@ export const AskLLM = (props: P) => {
     setAnchorEl(null);
   }
   const state = useAskLLMSetupState(prgl);
-  if(!askLLM) {
+  if(!askLLM || state.state === "loading") {
     return null;
   }
 
