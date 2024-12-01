@@ -79,6 +79,10 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
       const delimiter = addTableInline? " " : "\n";
       return {
         ...s,
+        /**
+         * Prevent adding another alias
+         * Some dead table (no activeAliasTable) aliases are ignored and a repeating alias is added
+         */
         insertText: dotPrefix? (s.escapedIdentifier ?? s.name) : s.insertText.trim(),
         sortText,
         ...(addTable && {
