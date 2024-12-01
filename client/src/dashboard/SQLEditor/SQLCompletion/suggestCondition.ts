@@ -89,6 +89,14 @@ export const suggestCondition = async (
   }
   const allowedOperands = ["=", ">", "<", ">=", "<=", "<>", "!=", "like", "ilike", "~~", "!~~"];
 
+  /**
+   * Skip this case so it ends up in MatchWith and the nested logic is parsed
+   */
+  const isCOmingFromMatchFirstAndIsWithCte = cb.currNestingFunc?.textLC === "as" && cb.ftoken?.textLC === "with";
+  if(isCOmingFromMatchFirstAndIsWithCte){
+    return undefined;
+  }
+
   /* If expecting condition statement and writing dot then expect alias.col */
   if(cb.ltoken?.type === "identifier.sql" && cb.currToken?.text === "." && (isCondition || allowedOperands.includes(cb.l1token?.textLC ?? ""))){
     return await suggestColumnByType(cb.l2token);

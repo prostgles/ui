@@ -56,7 +56,7 @@ export type TabularExpression = {
   columns: ParsedSQLSuggestion[];
 });
 
-export const getTabularExpressions = ({ cb: _cb, ss, parentCb }: Pick<GetTableExpressionSuggestionsArgs, "ss" | "cb" | "parentCb">, require: "columns" | "table") => {
+export const getTabularExpressions = ({ cb: _cb, ss, parentCb }: Pick<GetTableExpressionSuggestionsArgs, "ss" | "cb" | "parentCb">, require: "columns" | "table", onlyCurrentBlock = false) => {
   let { tokens } = { ..._cb }; 
   let parentTokensForLateral = tokens.slice(0, 0);
   /** If is in a subquery then ignore parent UNLESS this is a lateral expression */
@@ -93,7 +93,7 @@ export const getTabularExpressions = ({ cb: _cb, ss, parentCb }: Pick<GetTableEx
   let expressions: TabularExpression[] = [];
 
   /** If inside a CTE then add previous WITH statement CTE defs (WITH ... update)*/
-  if(parentCb?.ftoken?.textLC === "with" && parentCb.currNestingId){
+  if(parentCb?.ftoken?.textLC === "with" && parentCb.currNestingId && !onlyCurrentBlock){
     const pFunc = getParentFunction(parentCb);
     if(pFunc?.func.textLC === "as" && !pFunc.func.nestingId){
       const prevExpressions = getTabularExpressions({ cb: parentCb, ss }, require).filter(e => e.endOffset < parentCb.currOffset);
@@ -167,7 +167,7 @@ const getExpressions = (tokens: TokenInfo[], cb: CodeBlock, ss: ParsedSQLSuggest
 
     if(prevToken && !prevToken.nestingId && kwd){
       /** CTE section finished */
-      if(isWith && kwd !== "as"){
+      if(isWith && (kwd !== "as" && kwd !== ",")){
         isWithAsSectionFinished = true;
       }
 

@@ -1,7 +1,7 @@
 import { getCurrentCodeBlock, getCurrentNestingOffsetLimits } from "./completionUtils/getCodeBlock"; 
 import { suggestSnippets } from "./CommonMatchImports"; 
 import { MatchInsert } from "./MatchInsert";
-import { MatchSelect, getParentFunction } from "./MatchSelect";
+import { MatchSelect } from "./MatchSelect";
 import { MatchUpdate } from "./MatchUpdate";
 import { MatchDelete } from "./MathDelete";
 import { getKind, type SQLMatchContext, type SQLMatcher } from "./registerSuggestions"; 
