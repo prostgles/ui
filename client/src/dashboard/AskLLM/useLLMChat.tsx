@@ -58,12 +58,11 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
     setSelectedChat(undefined);
   };
 
-
   useEffectDeep(() => {
     if(latestChats && !latestChats.length && preferredPromptId){
       createNewChat(defaultCredential.id, preferredPromptId, true);
     }
-  }, [latestChats, createNewChat, preferredPromptId, defaultCredential]);
+  }, [latestChats, preferredPromptId, defaultCredential]);
 
   const { data: llmMessages } = dbs.llm_messages.useSubscribe(
     { chat_id: activeChatId }, 
