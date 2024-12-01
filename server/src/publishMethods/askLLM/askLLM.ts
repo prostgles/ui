@@ -1,13 +1,13 @@
-import { isTesting, type DBS } from "../..";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import * as fs from "fs";
 import * as path from "path";
-import { justToCompile } from "../../../../commonTypes/DashboardTypes";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
-import type { AnyObject} from "prostgles-types";
-import { pickKeys } from "prostgles-types";
-import { checkLLMLimit } from "./checkLLMLimit";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
+import type { AnyObject } from "prostgles-types";
+import { pickKeys } from "prostgles-types";
+import { type DBS } from "../..";
+import { justToCompile } from "../../../../commonTypes/DashboardTypes";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import { checkLLMLimit } from "./checkLLMLimit";
 justToCompile;
 const dashboardTypes = fs.readFileSync(path.join(__dirname, "../../../../commonTypes/DashboardTypes.d.ts"), "utf8");
 
@@ -141,9 +141,6 @@ export const fetchLLMResponse = async ({ llm_credential, messages: _messages }: 
   config.body;
 
   if(llm_credential.endpoint === "http://localhost:3004/mocked-llm"){
-    if(!isTesting) {
-      throw "Mocked endpoint only available in testing";
-    }
     return {
       aiText: "Mocked response"
     }
