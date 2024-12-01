@@ -176,15 +176,13 @@ const parsePath = (obj: AnyObject, path: (string | number)[]) => {
   return val;
 }
 
-let insertedDefaultPrompts = false;
 export const insertDefaultPrompts = async (dbs: DBS, user_id: string) => {
   /** In case of stale schema update */
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if(!dbs.llm_prompts || insertedDefaultPrompts) return;
+  if(!dbs.llm_prompts) return;
 
   const prompt = await dbs.llm_prompts.findOne();
   if(prompt){
-    insertedDefaultPrompts = true;
     return
   }
   await dbs.llm_prompts.insert({ 
@@ -217,5 +215,4 @@ export const insertDefaultPrompts = async (dbs: DBS, user_id: string) => {
       "${dashboardTypes}"
     ].join("\n") 
   });
-  insertedDefaultPrompts = true;
 }

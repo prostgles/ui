@@ -35,7 +35,7 @@ if(isTesting){
     next();
   });
 }
-     
+
 export const API_PATH = "/api";
 
 app.use(json({ limit: "100mb" }));
