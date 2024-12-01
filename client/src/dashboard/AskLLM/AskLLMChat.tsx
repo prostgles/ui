@@ -30,7 +30,12 @@ export const AskLLMChat = ({ anchorEl, onClose, prgl, setupState, workspaceId }:
   }
   return <Popup
     data-command="AskLLM.popup"
-    showFullscreenToggle={{}}
+    showFullscreenToggle={{
+      getStyle: (isFullscreen: boolean) => (isFullscreen? {
+      } : {
+        maxWidth: `${CHAT_WIDTH}px`,
+      }),
+    }}
     title={
       <AskLLMChatHeader 
         { ...setupState } 
@@ -43,7 +48,6 @@ export const AskLLMChat = ({ anchorEl, onClose, prgl, setupState, workspaceId }:
     positioning="beneath-left"
     clickCatchStyle={{ opacity: 1 }}
     onClickClose={false}
-    // showFullscreenToggle={{}}
     onClose={onClose}
     anchorEl={anchorEl}
     contentClassName="p-0 f-1"
@@ -53,12 +57,12 @@ export const AskLLMChat = ({ anchorEl, onClose, prgl, setupState, workspaceId }:
     rootChildStyle={{
       flex: 1,
     }}
+    rootChildClassname="AskLLMChat"
   > 
     <FlexCol
       className="min-h-0 f-1"
       style={{
         whiteSpace: "pre-line",
-        maxWidth: `${CHAT_WIDTH}px`,
       }}
     >
       <Chat 

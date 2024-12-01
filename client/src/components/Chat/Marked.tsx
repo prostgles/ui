@@ -43,7 +43,7 @@ export const Marked = ({ content, codeHeader, ...divProps }: P) => {
             maxWidth: `${CHAT_WIDTH}px`,
           }}
         > 
-          <FlexRow className="bg-color-2 p-p5">
+          <FlexRow className="bg-color-2">
             <div className="text-sm text-color-4 f-1 px-1 ">{language}</div>
             {codeHeader({ language, codeString })}
             <Btn 

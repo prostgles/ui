@@ -25,6 +25,7 @@
 }
 
 .chat-container.chat-component .message-list {
+  line-height: 1.75rem;
   position: relative; 
   flex: 1 1 0%; 
   min-width: 0px; 
@@ -47,7 +48,7 @@
   min-width: 2em; 
   flex: 0 0 auto; 
   opacity: 1; 
-  transition: all 0.5s ease 0s; 
+  /* transition: all 0.5s ease 0s;  */
   text-align: start; 
   overflow: hidden; 
   text-overflow: ellipsis;
