@@ -26,10 +26,8 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
         /**
          * Must ensure we don't add alias if it's already there
          */
-        // const insertText = c.insertText?.startsWith(cb.currToken.text)? (c.escapedIdentifier ?? c.name) : c.insertText;
         return { 
           ...c, 
-          // insertText,
           insertText: c.escapedIdentifier ?? c.name,
         }
       });
@@ -81,7 +79,7 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
       const delimiter = addTableInline? " " : "\n";
       return {
         ...s,
-        insertText: activeAliasTable? (s.escapedIdentifier ?? s.name) : s.insertText.trim(),
+        insertText: dotPrefix? (s.escapedIdentifier ?? s.name) : s.insertText.trim(),
         sortText,
         ...(addTable && {
           insertTextRules: 4,
