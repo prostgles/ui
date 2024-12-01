@@ -34,7 +34,7 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
   const activeChatId = activeChat?.id;
 
   const preferredPromptId = activeChat?.llm_prompt_id ?? firstPromptId ?? prompts[0]?.id;
-  const createNewChat = useCallback(async (credentialId: number, promptId: number, ifNoOtherChatsExist = false) => {
+  const createNewChat = async (credentialId: number, promptId: number, ifNoOtherChatsExist = false) => {
     if(ifNoOtherChatsExist){
       const chat = await dbs.llm_chats.findOne();
       if(chat) {
@@ -56,7 +56,7 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
       { returning: "*" }
     );
     setSelectedChat(undefined);
-  }, [dbs, preferredPromptId]);
+  };
 
 
   useEffectDeep(() => {
