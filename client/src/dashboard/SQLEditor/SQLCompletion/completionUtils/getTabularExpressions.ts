@@ -213,9 +213,10 @@ const getExpressions = (tokens: TokenInfo[], cb: CodeBlock, ss: ParsedSQLSuggest
       } else if(t.text === "(" && !t.nestingId){
         const closing = getClosingParenthesis(i+1);
         if(!closing) return;
+        const { aliasToken } = closing;
         let aliasColumnDefinition = "";
-        const tokensAfterAlias = cb.tokens.filter(t => t.offset >= closing.aliasToken!.end);
-        if(tokensAfterAlias[0]?.textLC === "("){
+        const tokensAfterAlias = aliasToken && cb.tokens.filter(t => t.offset >= aliasToken.end);
+        if(tokensAfterAlias?.[0]?.textLC === "("){
           const closingAliasIndex = tokensAfterAlias.findIndex(t => t.text === ")" && !t.nestingId);
           if(closingAliasIndex !== -1){
             aliasColumnDefinition = tokensAfterAlias.map(t => t.text).slice(0, closingAliasIndex + 1).join("");
@@ -226,7 +227,7 @@ const getExpressions = (tokens: TokenInfo[], cb: CodeBlock, ss: ParsedSQLSuggest
         if(kwd === "lateral"){
           const fromKwd = tokens.find(t => t.textLC === "from" && !t.nestingId);
           if(!fromKwd || fromKwd.offset > t.offset) return;
-          if(!closing.aliasToken) return;
+          if(!aliasToken) return;
           let isWithStart = "";
           if(isWith && isWithAsSectionFinished){
             const selectKwd = tokens.find(t => t.textLC === "select" && !t.nestingId);

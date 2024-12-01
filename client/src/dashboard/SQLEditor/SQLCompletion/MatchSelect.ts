@@ -29,9 +29,14 @@ export const MatchSelect: SQLMatcher = {
     const { ltoken, thisLineLC, prevLC, prevText, currToken, thisLinePrevTokens, offset } = cb;
     const { prevKWD, suggestKWD, remainingKWDS } = withKWDs(getKWDSz(options?.MatchSelect?.excludeInto), { cb, ss, setS, sql, opts: { topResetKwd: "SELECT" } });
 
-    /** Is inside IN (...) or FROM (...) */
+    /**
+     * Is inside IN (...) 
+     * or FROM (...) 
+     * or (SELECT ...)
+     * */
     const insideFunc = getParentFunction(cb);
-    const isSelectSubQuery = insideFunc?.prevArgs.at(-1)?.textLC === "select" && [",", "select"].includes(insideFunc.func.textLC);
+    // const isSelectSubQuery = insideFunc?.prevArgs.at(-1)?.textLC === "select" && [",", "select"].includes(insideFunc.func.textLC);
+    const isSelectSubQuery = insideFunc?.prevArgs.at(0)?.textLC === "select" && [",", "select"].includes(insideFunc.func.textLC);
     if(insideFunc?.func && (isSelectSubQuery || preSubQueryKwds.includes(insideFunc.func.textLC) && insideFunc.func.textLC !== "lateral") && !options?.MatchSelect){
       const nestedLimits = getCurrentNestingOffsetLimits(cb)
       if(nestedLimits){

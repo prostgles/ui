@@ -150,10 +150,11 @@ export const getCurrentCodeBlock = async (model: editor.ITextModel, pos: Positio
   let { text } = _tokens;
   let tokens = _tokens.tokens
     .filter(t => t.text); /** Something is adding an empty token to the start */
+
   if(offsetLimits){
     const [minOffset, maxOffset] = offsetLimits;
     tokens = tokens.filter(t => {
-      return t.offset >= minOffset && t.offset <= maxOffset;
+      return t.offset >= minOffset && t.end <= maxOffset;
     });
 
     /** If is nested then remove root nesting */
