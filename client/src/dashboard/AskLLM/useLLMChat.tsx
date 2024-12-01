@@ -15,7 +15,7 @@ type P = LLMSetupStateReady & Pick<Prgl, "dbs" | "user" | "connectionId"> & {
   workspaceId: string | undefined;
 };
 export type LLMChatState = ReturnType<typeof useLLMChat>;
-export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, firstPromptId, defaultCredential }: P) => {
+export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, firstPromptId, defaultCredential, prompts }: P) => {
 
   const [selectedChatId, setSelectedChat] = useState<number>();
   const { data: latestChats } = dbs.llm_chats.useSubscribe(
@@ -33,24 +33,24 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
   const activeChat = latestChats?.find(c => c.id === selectedChatId) ?? latestChat;
   const activeChatId = activeChat?.id;
 
-  const activeChatPromptId = activeChat?.llm_prompt_id;
+  const preferredPromptId = activeChat?.llm_prompt_id ?? firstPromptId ?? prompts[0]?.id;
   const createNewChat = useCallback(async (credentialId: number, ifNoOtherChatsExist = false) => {
     if(ifNoOtherChatsExist){
       const chat = await dbs.llm_chats.findOne();
       if(chat) return;
     }
-    if(!firstPromptId) return;
+    if(!preferredPromptId) return;
     await dbs.llm_chats.insert(
       { 
         name: "New chat", 
         user_id: undefined as any,
         llm_credential_id: credentialId,
-        llm_prompt_id: activeChatPromptId ?? firstPromptId,
+        llm_prompt_id: preferredPromptId,
       }, 
       { returning: "*" }
     );
     setSelectedChat(undefined);
-  }, [dbs, firstPromptId, activeChatPromptId]);
+  }, [dbs, preferredPromptId]);
 
 
   useEffectDeep(() => {
@@ -139,10 +139,7 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
     messages, 
     latestChats, 
     setActiveChat: setSelectedChat,
-    // noCredential: credentials && !credentials.length,
-    // firstCredential: credentials?.[0],
     credentials,
-    // prompts,
     activeChat,
   };
 }

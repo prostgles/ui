@@ -5,7 +5,7 @@ import prostgles from "prostgles-server";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import { pickKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
-import type { InitResult, OnInitReason } from "prostgles-server/dist/initProstgles";
+import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { Server } from "socket.io";
 import type { DBS } from ".";
 import { connMgr, connectionChecker } from ".";
@@ -14,6 +14,7 @@ import type { ProstglesInitState } from "../../commonTypes/electronInit";
 import BackupManager from "./BackupManager/BackupManager";
 import { addLog, setLoggerDBS } from "./Logger";
 import { getAuth } from "./authConfig/authConfig";
+import { setAuthReloader } from "./authConfig/setAuthReloader";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import type { DBSConnectionInfo } from "./electronConfig";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
@@ -24,10 +25,6 @@ import { publishMethods } from "./publishMethods/publishMethods";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { tableConfig } from "./tableConfig";
-import { insertDefaultPrompts } from "./publishMethods/askLLM/askLLM";
-import { SubscriptionHandler } from "prostgles-types";
-import { isDeepStrictEqual } from "util";
-import { setAuthReloader } from "./authConfig/setAuthReloader";
 
 type StartArguments = {
   app: Express; 
@@ -108,10 +105,6 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
       onSocketConnect: async ({ socket, dbo, getUser }) => {
           
         const user = await getUser();
-
-        if(user?.user?.type === "admin"){
-          await insertDefaultPrompts(dbo, user.user.id);
-        }
         const userId = user?.user?.id;
         const sid = user?.sid;   
 

@@ -27,7 +27,6 @@ export const SetupLLMCredentials = ({ theme, dbs, dbsTables, dbsMethods, asPopup
   const { state, credentials } = setupState;
   const [email, setEmail] = React.useState(setupState.globalSettings?.data?.prostgles_registration?.email || "");
   const [selectedCredentialIds, setSelectedCredentialIds] = React.useState<number[]>([]);
-
   const content = state === "loading"? <Loading delay={1000} /> : 
     state === "cannotSetupOrNotAllowed"? 
     <div>
