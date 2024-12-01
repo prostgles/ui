@@ -8,10 +8,11 @@ import { SetupLLMCredentials, useAskLLMSetupState } from "./SetupLLMCredentials"
 
 export const CHAT_WIDTH = 800;
 
-type P = Prgl & { workspaceId: string | undefined }
+type P = Prgl & { workspaceId: string | undefined };
+
 export const AskLLM = (props: P) => {
   const { workspaceId, ...prgl } = props;
-  const { dbsMethods, dbs, user } = prgl;
+  const { dbsMethods } = prgl;
   const { askLLM } = dbsMethods;
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
