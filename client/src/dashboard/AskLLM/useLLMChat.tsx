@@ -39,7 +39,10 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
       const chat = await dbs.llm_chats.findOne();
       if(chat) return;
     }
-    if(!preferredPromptId) return;
+    if(!preferredPromptId) {
+      console.warn("No prompt found");
+      return;
+    }
     await dbs.llm_chats.insert(
       { 
         name: "New chat", 
