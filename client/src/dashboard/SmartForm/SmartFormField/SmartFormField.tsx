@@ -245,7 +245,7 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
       }
     });
 
-    const readOnly = columnIsReadOnly(action, column);// action === "view" || (action === "update" && !column.update) || (action === "insert" && !column.insert);
+    const readOnly = columnIsReadOnly(action, column);
     if (readOnly) rightIcons = null;
     let hint = column.hint;
     if(!readOnly && column.has_default && column.is_pkey && action === "insert"){
@@ -343,8 +343,9 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
         label={isCompact ? undefined : column.label}
         value={i_value}
         rawValue={rawValue}
-        options={options}
         title={cantUpdate? "You are not allowed to update this field" : ""}
+        options={options}
+        onSearchOptions={onSearchOptions}
         asJSON={asJSON} 
         asTextArea={column.tsDataType === "string" && typeof value === "string" && (value.length > 50 || value.split("\n").length > 1)}
         readOnly={readOnly}
@@ -359,7 +360,6 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
         rightContentAlwaysShow={this.props.rightContentAlwaysShow}
         
         labelAsValue={true}
-        onSearchOptions={onSearchOptions}
         onSuggest={this.onSuggest}
         nullable={column.is_nullable}
         inputProps={{ min: column.min, max: column.max }}

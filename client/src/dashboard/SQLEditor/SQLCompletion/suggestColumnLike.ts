@@ -23,10 +23,14 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
     const tableAliasCols = expressions.columns.filter(c => c.escapedParentName === activeAliasTable.s.escapedIdentifier)
       .map(c => {
         if(!cb.currToken) return c;
-        const insertText = c.insertText?.startsWith(cb.currToken.text)? (c.escapedIdentifier ?? c.name) : c.insertText;
+        /**
+         * Must ensure we don't add alias if it's already there
+         */
+        // const insertText = c.insertText?.startsWith(cb.currToken.text)? (c.escapedIdentifier ?? c.name) : c.insertText;
         return { 
           ...c, 
-          insertText,
+          // insertText,
+          insertText: c.escapedIdentifier ?? c.name,
         }
       });
     return { suggestions: tableAliasCols }
