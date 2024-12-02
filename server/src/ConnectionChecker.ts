@@ -298,7 +298,10 @@ const initUsers = async (db: DBS, _db: DB) => {
       console.error(e)
     }
     
-    console.log("Added users: ", await db.users.find({ username }))
+    console.log(
+      "Added users: ", await db.users.find({ username }),
+      "Prompts", await db.llm_prompts.find()
+    )
   }
 
   const electron = getElectronConfig();

@@ -1,3 +1,4 @@
+import { usePromise } from "prostgles-client/dist/prostgles";
 import type { Prgl } from "../../App";
 import type { DbsByUserType } from "../Dashboard/DBS";
 
@@ -15,6 +16,12 @@ export const useLLMSetupState = (props: Pick<Prgl, "dbs" | "user">) => {
   const defaultCredential = credentials?.find(c => c.is_default) ?? credentials?.at(-1);
 
   /** Order by Id to ensure the first prompt is the default chat */
+  usePromise(async () => {
+    const res = await dbs.llm_prompts.find({}, { orderBy: { id: 1 } });
+    const res2 = await dbs.sql?.(`SELECT * FROM llm_prompts`, {}, { returnType: "rows" });
+    console.log({ res, res2 });
+  }, []);
+  
   const { data: prompts } = dbs.llm_prompts.useSubscribe({}, { orderBy: { id: 1 } });
   const firstPromptId = prompts?.[0]?.id;
   
