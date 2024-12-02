@@ -194,7 +194,7 @@ export const startConnection = async function (
           }
 
           alertIfReferencedFileColumnsRemoved.bind(this)({ reason, tables, connId: con.id, db: _db });
-          console.log("onReady connection", Object.keys(db));
+          console.log("onReady connection", connectionInfo.database);
 
           /**
            * In some cases watchSchema does not work as expected (GRANT/REVOKE will not be observable to a less privileged db user)
