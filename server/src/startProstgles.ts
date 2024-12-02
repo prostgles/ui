@@ -25,6 +25,7 @@ import { publishMethods } from "./publishMethods/publishMethods";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { tableConfig } from "./tableConfig";
+import { insertDefaultPrompts } from "./publishMethods/askLLM/askLLM";
 
 type StartArguments = {
   app: Express; 
@@ -149,6 +150,9 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
 
         //@ts-ignore
         const user = await getUser();
+        if(user?.user){
+          await insertDefaultPrompts(dbo, user.user.id);
+        }
         const sid = user?.sid;
         if(sid){
           await dbo.sessions.update({ id: sid }, { is_connected: false })
