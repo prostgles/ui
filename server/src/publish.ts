@@ -153,7 +153,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
       },
     },
     llm_prompts: {
-      select: isAdmin? "*" : { 
+      select: isAdmin? "*" : {
         fields: { id: 1, name: 1 },
         forcedFilter: forcedFilterLLM 
       },

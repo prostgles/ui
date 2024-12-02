@@ -74,7 +74,7 @@ export const startConnection = async function (
         return socket_path;
       }
     }
-    log("creating prgl", Object.keys(prglInstance || {}))
+    log("creating prgl", con.db_name);
     this.prglConnections[con.id] = {
       socket_path,
       con,
