@@ -4,7 +4,9 @@ import React, { useState } from "react";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import { AskLLMChat } from "./AskLLMChat";
-import { SetupLLMCredentials, useAskLLMSetupState } from "./SetupLLMCredentials";
+import { SetupLLMCredentials } from "./SetupLLMCredentials";
+import { useLLMSetupState } from "./useLLMSetupState";
+import Loading from "../../components/Loading";
 
 export const CHAT_WIDTH = 800;
 
@@ -19,10 +21,10 @@ export const AskLLM = (props: P) => {
   const onClose = () => {
     setAnchorEl(null);
   }
-  const state = useAskLLMSetupState(prgl);
+  const state = useLLMSetupState(prgl);
 
-  if(!askLLM || state.state === "loading") {
-    return null;
+  if(state.state === "loading") {
+    return <Loading />
   }
 
   return <>
@@ -35,11 +37,12 @@ export const AskLLM = (props: P) => {
       onClick={(e) => {
         setAnchorEl(e.currentTarget);
       }}
+      disabledInfo={!askLLM? "AI assistant not available" : undefined}
     >
       {window.isMediumWidthScreen? null : `Ask AI`}
     </Btn>
 
-    {!anchorEl? null : state.state !== "ready"?  
+    {(!anchorEl || !askLLM)? null : state.state !== "ready"?  
       <SetupLLMCredentials 
         {...prgl}
         asPopup={true}
@@ -48,6 +51,7 @@ export const AskLLM = (props: P) => {
       /> :
       <AskLLMChat 
         prgl={prgl}
+        askLLM={askLLM}
         workspaceId={workspaceId}
         setupState={state}
         anchorEl={anchorEl}

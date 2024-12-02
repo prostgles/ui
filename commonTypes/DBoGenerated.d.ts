@@ -315,8 +315,8 @@ export type DBSchemaGenerated = {
       disabled_message?: null | string;
       disabled_until?: null | string;
       id?: number;
-      llm_credential_id: number;
-      llm_prompt_id: number;
+      llm_credential_id?: null | number;
+      llm_prompt_id?: null | number;
       name?: string;
       user_id: string;
     };
@@ -385,13 +385,13 @@ export type DBSchemaGenerated = {
       id?: string;
       info?: null | string;
       ip_address: string;
-      ip_address_remote?: null | string;
+      ip_address_remote: string;
       magic_link_id?: null | string;
       sid?: null | string;
       type?: "web" | "api_token" | "mobile"
-      user_agent?: null | string;
+      user_agent: string;
       username?: null | string;
-      x_real_ip?: null | string;
+      x_real_ip: string;
     };
   };
   logs: {

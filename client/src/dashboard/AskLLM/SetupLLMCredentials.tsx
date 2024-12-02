@@ -4,13 +4,15 @@ import type { Prgl } from "../../App"
 import Btn from "../../components/Btn"
 import { FlexCol, FlexRowWrap } from "../../components/Flex"
 import FormField from "../../components/FormField/FormField"
+import { InfoRow } from "../../components/InfoRow"
 import Loading from "../../components/Loading"
 import Popup from "../../components/Popup/Popup"
-import type { DbsByUserType } from "../Dashboard/DBS"
-import { AddLLMCredentialForm } from "./AddLLMCredentialForm"
-import SmartCardList from "../SmartCard/SmartCardList"
 import { SwitchToggle } from "../../components/SwitchToggle"
-import { InfoRow } from "../../components/InfoRow"
+import SmartCardList from "../SmartCard/SmartCardList"
+import SmartForm from "../SmartForm/SmartForm"
+import { AddLLMCredentialForm } from "./AddLLMCredentialForm"
+import type { LLMSetupState } from "./useLLMSetupState"
+import { AddLLMPromptForm } from "./AddLLMPromptForm"
 
 type P = Pick<Prgl, "theme" | "dbs" | "dbsTables" | "dbsMethods"> & {
   setupState: Exclude<LLMSetupState, { state: "ready" }>;
@@ -24,9 +26,8 @@ type P = Pick<Prgl, "theme" | "dbs" | "dbsTables" | "dbsMethods"> & {
 export const SetupLLMCredentials = ({ theme, dbs, dbsTables, dbsMethods, asPopup, onClose, setupState }: P) => {
 
   const [setupType, setSetupType] = React.useState<"free" | "api">();
-  const { state, credentials } = setupState;
+  const { state, prompts } = setupState;
   const [email, setEmail] = React.useState(setupState.globalSettings?.data?.prostgles_registration?.email || "");
-  const [selectedCredentialIds, setSelectedCredentialIds] = React.useState<number[]>([]);
   const content = state === "loading"? <Loading delay={1000} /> : 
     state === "cannotSetupOrNotAllowed"? 
     <div>
@@ -94,7 +95,7 @@ export const SetupLLMCredentials = ({ theme, dbs, dbsTables, dbsMethods, asPopup
       </FlexCol> }
       {setupType === "api" && <>
         <SmartCardList
-          title="Select allowed credentials"
+          title="API credentials"
           className="mb-1"
           db={dbs as any}
           tableName={"llm_credentials"}
@@ -111,27 +112,17 @@ export const SetupLLMCredentials = ({ theme, dbs, dbsTables, dbsMethods, asPopup
               renderValue: (v) => {
                 return v.Provider;
               }
-            },
-            {
-              name: "id",
-              className: "ml-auto",
-              render: (id) => {
-                return <SwitchToggle 
-                  checked={selectedCredentialIds.includes(id)} 
-                  onChange={v => {
-                    if(v){
-                      setSelectedCredentialIds([...selectedCredentialIds, id]);
-                    } else {
-                      setSelectedCredentialIds(selectedCredentialIds.filter(i => i !== id));
-                    }
-                  }}
-                />
-              }
             }
           ]}
         />
         <AddLLMCredentialForm dbs={dbs} />      
       </>}
+      {setupType && !prompts?.length && 
+        <FlexCol className="mt-2">
+          <InfoRow color="info" variant="filled">No existing prompts</InfoRow>
+          <AddLLMPromptForm theme={theme} dbs={dbs} dbsTables={dbsTables} />
+        </FlexCol>
+      }
     </FlexCol>
   
   if(!asPopup){
@@ -146,56 +137,4 @@ export const SetupLLMCredentials = ({ theme, dbs, dbsTables, dbsMethods, asPopup
   >
     {content}
   </Popup>
-}
-
-type LLMSetupState = ReturnType<typeof useAskLLMSetupState>;
-export type LLMSetupStateReady = Extract<LLMSetupState, { state: "ready" }>;
-export const useAskLLMSetupState = (props: Pick<Prgl, "dbs" | "user">) => {
-  const dbs = props.dbs as DbsByUserType;
-  const { user } = props;
-  const isAdmin = user?.type === "admin";
-  const { data: credentials } = dbs.llm_credentials.useSubscribe();
-  const globalSettings = dbs.global_settings?.useSubscribeOne?.();
-  
-  /** For backward compatibility pick last credential as default */
-  const defaultCredential = credentials?.find(c => c.is_default) ?? credentials?.at(-1);
-
-  /** Order by Id to ensure the first prompt is the default chat */
-  const { data: prompts } = dbs.llm_prompts.useSubscribe({}, { orderBy: { id: 1 } });
-  const firstPromptId = prompts?.[0]?.id;
-  
-  if(isAdmin){
-    if(!globalSettings?.data){
-      return {
-        state: "loading" as const
-      }
-    }
-
-    if(!defaultCredential || !credentials || !prompts){
-      return {
-        state: "mustSetup" as const,
-        globalSettings,
-      }
-    }
-
-    // const { data: { prostgles_registration } } = globalSettings;
-    // const { enabled, email, token } = prostgles_registration;
-    // if(enabled){
-    //   // const quota = await POST("/api/llm/quota", { token });
-    //   console.error("Finish this")
-    // }
-  } else if(!defaultCredential || !credentials || !prompts){
-    return {
-      state: "cannotSetupOrNotAllowed" as const
-    }
-  }
-
-  return {
-    state: "ready" as const,
-    defaultCredential,
-    globalSettings,
-    credentials,
-    prompts,
-    firstPromptId,
-  }
 }
