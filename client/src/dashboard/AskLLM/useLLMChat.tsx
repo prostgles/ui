@@ -9,7 +9,7 @@ import { Marked } from "../../components/Chat/Marked";
 import Loading from "../../components/Loading";
 import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
 import { loadGeneratedWorkspaces } from "./loadGeneratedWorkspaces";
-import type { LLMSetupStateReady } from "./SetupLLMCredentials";
+import type { LLMSetupStateReady } from "./useLLMSetupState";
 
 type P = LLMSetupStateReady & Pick<Prgl, "dbs" | "user" | "connectionId"> & { 
   workspaceId: string | undefined;
@@ -33,7 +33,7 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
   const activeChat = latestChats?.find(c => c.id === selectedChatId) ?? latestChat;
   const activeChatId = activeChat?.id;
 
-  const preferredPromptId = activeChat?.llm_prompt_id ?? firstPromptId ?? prompts[0]?.id;
+  const preferredPromptId = activeChat?.llm_prompt_id ?? firstPromptId;
   const createNewChat = async (credentialId: number, promptId: number, ifNoOtherChatsExist = false) => {
     if(ifNoOtherChatsExist){
       const chat = await dbs.llm_chats.findOne();
@@ -146,6 +146,7 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
     latestChats, 
     setActiveChat: setSelectedChat,
     credentials,
+    defaultCredential,
     activeChat,
   };
 }

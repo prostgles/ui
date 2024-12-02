@@ -5,7 +5,7 @@ import { FlexCol, FlexRow } from "../../components/Flex";
 import Select from "../../components/Select/Select";
 import { renderInterval } from "../W_SQL/customRenderers";
 import { LLMChatOptions, type LLMChatOptionsProps } from "./LLMChatOptions";
-import type { LLMSetupStateReady } from "./SetupLLMCredentials";
+import type { LLMSetupStateReady } from "./useLLMSetupState";
 import type { LLMChatState } from "./useLLMChat";
 
 export const AskLLMChatHeader = (props: LLMChatState & LLMSetupStateReady & LLMChatOptionsProps) => {

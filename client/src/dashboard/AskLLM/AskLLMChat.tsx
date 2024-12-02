@@ -6,28 +6,25 @@ import { Chat } from "../../components/Chat/Chat";
 import type { Prgl } from "../../App";
 import { AskLLMChatHeader } from "./AskLLMChatHeader";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
-import type { LLMSetupStateReady } from "./SetupLLMCredentials";
+import type { LLMSetupStateReady } from "./useLLMSetupState";
 import { useLLMChat } from "./useLLMChat";
+import Btn from "../../components/Btn";
 
 export type AskLLMChatProps = {
-  prgl: Prgl;
+  prgl: Omit<Prgl,"dbsMethods">;
+  askLLM: Required<Prgl["dbsMethods"]>["askLLM"];
   setupState: LLMSetupStateReady;
   anchorEl: HTMLElement;
   onClose: VoidFunction;
   workspaceId: string | undefined;
 }
-export const AskLLMChat = ({ anchorEl, onClose, prgl, setupState, workspaceId }: AskLLMChatProps) => {
-  const { dbsMethods, tables, db, user, connectionId, connection, dbs, dbsTables } = prgl;
+export const AskLLMChat = ({ anchorEl, onClose, askLLM, prgl, setupState, workspaceId }: AskLLMChatProps) => {
+  const { tables, db, user, connectionId, connection, dbs, dbsTables } = prgl;
   const { schemaStr } = useLLMSchemaStr({ tables, db, connection });
   const chatState = useLLMChat({ ...setupState, dbs, user, connectionId, workspaceId });
-  const { messages, activeChat, activeChatId } = chatState;
-  const { askLLM } = dbsMethods;
-  if(!activeChat){
-    return null;
-  }
-  if(!askLLM) {
-    return <>Unexpected: askLLM not missing</>
-  }
+  const { messages, activeChat, activeChatId, latestChats } = chatState;
+  const { defaultCredential, preferredPromptId, createNewChat } = chatState;
+
   return <Popup
     data-command="AskLLM.popup"
     showFullscreenToggle={{
@@ -71,7 +68,7 @@ export const AskLLMChat = ({ anchorEl, onClose, prgl, setupState, workspaceId }:
           minHeight: "0"
         }}
         messages={messages}
-        disabledInfo={activeChat.disabled_message ?? undefined}
+        disabledInfo={activeChat?.disabled_message ?? undefined}
         onSend={async (msg) => {
           if(!msg || !activeChatId) return;
           await askLLM(msg, schemaStr, activeChatId).catch(error => {
@@ -81,5 +78,13 @@ export const AskLLMChat = ({ anchorEl, onClose, prgl, setupState, workspaceId }:
         }}
       />
     </FlexCol>
+    {latestChats && !activeChat && <Btn 
+      onClickPromise={async () => createNewChat(defaultCredential.id, preferredPromptId)}
+      className="m-2"
+      color="action"
+      variant="faded"
+    >
+      Start new chat
+    </Btn>}
   </Popup>
 }

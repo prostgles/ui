@@ -10,7 +10,8 @@ import { isDefined } from "../../utils";
 import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
 import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAccessRule";
 import SmartForm from "../SmartForm/SmartForm";
-import { SetupLLMCredentials, useAskLLMSetupState } from "./SetupLLMCredentials";
+import { SetupLLMCredentials } from "./SetupLLMCredentials";
+import { useLLMSetupState } from "./useLLMSetupState";
 import { Section } from "../../components/Section";
 import FormField from "../../components/FormField/FormField";
 
@@ -36,7 +37,7 @@ export const AskLLMAccessControl = ({ dbs, connectionId, accessRuleId, className
 
   /** We need to reset form after both values are undefined */
   const [addFormKey, setAddFormKey] = useState(0);
-  const state = useAskLLMSetupState({ dbs, user: prgl.user });
+  const state = useLLMSetupState({ dbs, user: prgl.user });
   
   return <FlexCol className={className} style={style}>
     <SectionHeader icon={isDefined(accessRuleId)? mdiAssistant : undefined}>
