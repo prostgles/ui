@@ -297,9 +297,11 @@ const initUsers = async (db: DBS, _db: DB) => {
     } catch(e){
       console.error(e)
     }
+
+    const addedUser = await db.users.find({ username })
     
     console.log(
-      "Added users: ", await db.users.find({ username }),
+      "Added users: ", addedUser,
       "Prompts", await db.llm_prompts.find()
     )
   }
