@@ -150,9 +150,6 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
 
         //@ts-ignore
         const user = await getUser();
-        if(user?.user){
-          await insertDefaultPrompts(dbo, user.user.id);
-        }
         const sid = user?.sid;
         if(sid){
           await dbo.sessions.update({ id: sid }, { is_connected: false })
@@ -193,6 +190,7 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
         await connectionChecker.init(db, _db); 
 
         await insertStateDatabase(db, _db, con);
+        await insertDefaultPrompts(db);
 
         await connMgr.destroy();
         await connMgr.init(db, _db);

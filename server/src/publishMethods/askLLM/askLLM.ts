@@ -176,15 +176,21 @@ const parsePath = (obj: AnyObject, path: (string | number)[]) => {
   return val;
 }
 
-export const insertDefaultPrompts = async (dbs: DBS, user_id: string) => {
+export const insertDefaultPrompts = async (dbs: DBS) => {
   /** In case of stale schema update */
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if(!dbs.llm_prompts) return;
+  if(!dbs.llm_prompts) {
+    console.warn("llm_prompts table not found");
+    return;
+  }
 
   const prompt = await dbs.llm_prompts.findOne();
   if(prompt){
+    console.warn("Default prompts already exist");
     return
   }
+  const adminUser = await dbs.users.findOne({ passwordless_admin: true });
+  const user_id = adminUser?.id;
   await dbs.llm_prompts.insert({ 
     name: "Chat", 
     description: "Basic chat",
@@ -215,4 +221,7 @@ export const insertDefaultPrompts = async (dbs: DBS, user_id: string) => {
       "${dashboardTypes}"
     ].join("\n") 
   });
+
+  const addedPrompts = await dbs.llm_prompts.find();
+  console.warn("Added default prompts", addedPrompts);
 }

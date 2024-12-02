@@ -292,7 +292,6 @@ const initUsers = async (db: DBS, _db: DB) => {
       const u = await db.users.insert({ username, password, type: "admin", passwordless_admin: Boolean(NoInitialAdminPasswordProvided) }, { returning: "*" }) as Users | undefined;
       if(!u) throw "User not inserted";
       await _db.any("UPDATE users SET password = ${hashedPassword}, status = 'active' WHERE status IS NULL AND id = ${id};", { id: u.id, hashedPassword: getPasswordHash(u, "") });
-      await insertDefaultPrompts(db, u.id);
 
     } catch(e){
       console.error(e)
@@ -300,9 +299,8 @@ const initUsers = async (db: DBS, _db: DB) => {
 
     const addedUser = await db.users.find({ username })
     
-    console.log(
-      "Added users: ", addedUser,
-      "Prompts", await db.llm_prompts.find()
+    console.warn(
+      "Added users: ", addedUser
     )
   }
 

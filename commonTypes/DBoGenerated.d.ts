@@ -368,7 +368,7 @@ export type DBSchemaGenerated = {
       id?: number;
       name?: string;
       prompt: string;
-      user_id: string;
+      user_id?: null | string;
     };
   };
   login_attempts: {
