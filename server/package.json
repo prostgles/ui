@@ -27,7 +27,7 @@
     "express": "^4.21.0",
     "helmet": "^7.1.0",
     "otplib": "^12.0.1",
-    "prostgles-server": "^4.2.173",
+    "prostgles-server": "^4.2.174",
     "prostgles-types": "^4.0.89",
     "qrcode": "^1.5.1",
     "socket.io": "^4.7.5",

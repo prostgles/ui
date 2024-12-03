@@ -194,6 +194,7 @@ export const insertDefaultPrompts = async (dbs: DBS) => {
   await dbs.llm_prompts.insert({ 
     name: "Chat", 
     description: "Basic chat",
+    //@ts-ignore
     user_id,
     prompt: [
       "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
@@ -207,6 +208,7 @@ export const insertDefaultPrompts = async (dbs: DBS) => {
   await dbs.llm_prompts.insert({
     name: "Dashboards", 
     description: "Create dashboards. Claude Sonnet recommended",
+    //@ts-ignore
     user_id,
     prompt: [
       "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
