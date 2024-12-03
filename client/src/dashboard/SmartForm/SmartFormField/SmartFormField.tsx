@@ -21,6 +21,7 @@ import type { FilterColumn } from "../../SmartFilter/smartFilterUtils";
 import { isObject } from "../../../../../commonTypes/publishUtils";
 import type { ColumnDisplayConfig } from "../SmartForm";
 import { JSONBSchema, JSONBSchemaA } from "../../../components/JSONBSchema/JSONBSchema";
+import { SmartFormFieldForeignKey } from "./SmartFormFieldForeignKey";
 
 export type SmartFormFieldProps = {
   id?: string;
@@ -317,6 +318,21 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
       }
     }
 
+    const fkeyControl = !!column.references?.length && 
+      <SmartFormFieldForeignKey 
+        key={column.name}
+        column={column as any}
+        db={db}
+        readOnly={readOnly}
+        onChange={this.onChange}
+        tables={tables}
+        rawValue={rawValue}
+        row={this.props.row}
+        tableName={tableName}
+      />
+    
+    // if(fkeyControl) return fkeyControl;
+
     return <>
       {header}
       {!loaded && <Loading variant="cover" />}
@@ -336,6 +352,7 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
             {}
           )
         }}
+        inputContent={fkeyControl}
         key={column.name}
         placeholder={placeholder}
         type={type}
@@ -344,8 +361,8 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
         value={i_value}
         rawValue={rawValue}
         title={cantUpdate? "You are not allowed to update this field" : ""}
-        options={options}
-        onSearchOptions={onSearchOptions}
+        // options={options}
+        // onSearchOptions={onSearchOptions}
         asJSON={asJSON} 
         asTextArea={column.tsDataType === "string" && typeof value === "string" && (value.length > 50 || value.split("\n").length > 1)}
         readOnly={readOnly}
