@@ -75,7 +75,6 @@ export type FormFieldProps = TestSelectors & {
   title?: string;
   multiSelect?: boolean;
   labelAsValue?: boolean;
-  onSearchOptions?: (term: string) => Promise<string[]>;
   onSuggest?: (term?: string) => Promise<string[]>;
   name?: string;
   inputProps?:  React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>;
@@ -138,14 +137,6 @@ export default class FormField extends React.Component<FormFieldProps, FormField
         ta.style.height = "";
         ta.style.height = newH + "px";
       }
-    }
-  }
-
-  searchOptions = (term: string) => {
-    if(this.props.onSearchOptions){
-      this.props.onSearchOptions(term).then(options => {
-        this.setState({ options })
-      });
     }
   }
 
@@ -604,7 +595,6 @@ export default class FormField extends React.Component<FormFieldProps, FormField
                     data-command={this.props["data-command"]}
                     variant="div"
                     fullOptions={(options?.map(key => ({ key }))) ?? fullOptions ?? []}
-                    onSearch={!this.props.onSearchOptions? undefined : (term) => this.searchOptions(term)} 
                     onChange={!onChange? undefined : (val) => { onChange(val) }} 
                     value={rawValue} 
                     required={required}

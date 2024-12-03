@@ -1231,6 +1231,12 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       prompt: `TEXT NOT NULL CHECK(LENGTH(btrim(prompt)) > 0)`,
       created: `TIMESTAMP DEFAULT NOW()`,
     },
+    indexes: {
+      unique_llm_prompt_name: {
+        unique: true,
+        columns: "name, user_id"
+      },
+    },
   },
   llm_chats: {
     columns: {
