@@ -1125,7 +1125,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
   stats: { 
     // dropIfExists: true,
     columns: {
-      connection_id:  `UUID REFERENCES connections(id) ON DELETE CASCADE`,
+      connection_id:  `UUID NOT NULL REFERENCES connections(id) ON DELETE CASCADE`,
 
       datid: "INTEGER",
       datname: "TEXT",
@@ -1222,7 +1222,7 @@ export const tableConfig: TableConfig<{ en: 1; }> = {
       },
     },
   },
-  llm_prompts: {
+  llm_prompts: { 
     columns: {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       name: `TEXT NOT NULL DEFAULT 'New prompt'`,

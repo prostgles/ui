@@ -167,8 +167,20 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
       tableConfig,
       tableConfigMigrations: { 
         silentFail: false,
-        version: 3,
-        onMigrate: async ( ) => { 
+        version: 4,
+        onMigrate: async ({ db, oldVersion }) => {
+          console.warn("Migrating from version: ", oldVersion);
+          if(oldVersion === 3){
+            await db.any(` 
+              UPDATE login_attempts 
+                SET ip_address_remote = COALESCE(ip_address_remote, ''),
+                  user_agent = COALESCE(user_agent, ''),
+                  x_real_ip = COALESCE(x_real_ip, '')
+              WHERE ip_address_remote IS NULL 
+              OR user_agent IS NULL 
+              OR x_real_ip IS NULL
+            `);
+          }
         }
       },
       publishRawSQL: async (params) => {
