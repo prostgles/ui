@@ -248,17 +248,19 @@ test.describe("Main test", () => {
 
     /** Using token */
     await login(page);
-    const fillToken = async () => {
+    const fillTokenAndSignIn = async () => {
       const newCode = authenticator.generate(Base64Secret ?? "");
       await page.locator("#totp_token").fill(newCode);
+      await page.getByRole('button', { name: 'Sign in', exact: true }).click();
     }
-    await fillToken();
-    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await fillTokenAndSignIn();
     await page.waitForTimeout(1e3);
+
+    /** Retry once when it sometimes fails */
     const errorNode = await page.getByTestId("Login.error");
     if(await errorNode.count() && (await errorNode.textContent())?.includes("Invalid token")){
       await page.waitForTimeout(1e3);
-      await fillToken();
+      await fillTokenAndSignIn();
     }
     await page.getByRole('link', { name: 'Connections' }).waitFor({ state: "visible", timeout: 15e3 });
 
