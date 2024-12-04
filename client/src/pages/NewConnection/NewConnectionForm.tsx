@@ -203,7 +203,7 @@ export const NewConnectionForm = ({ c, updateConnection, nameErr, warning, test,
                     />
                     {action === "clone" && <InfoRow>You are about to clone the current database {origCon?.db_name} into {c.db_name}. This will close all existing connections to the current database!</InfoRow>}
                     {action === "create" && <InfoRow color="action">You are about to create a new database: {c.db_name}</InfoRow>}
-                    <CodeExample value={query} language="sql" style={{ minHeight: "400px" }} suggestions={this} />
+                    <CodeExample value={query} language="sql" style={{ minHeight: "400px" }} />
                     <Btn variant="filled" color="action" onClickPromise={() => dbProject.sql!(query).then(pClose)}>Run</Btn>
                   </div>
                 }}
@@ -255,7 +255,8 @@ export const NewConnectionForm = ({ c, updateConnection, nameErr, warning, test,
         <FormField 
           id="ssl_mode" 
           label="SSL Mode"
-          fullOptions={SSL_MODES} required={true}
+          fullOptions={SSL_MODES} 
+          required={true}
           value={c.db_ssl}
           onChange={async (db_ssl: typeof SSL_MODES[number]["key"]) => {
             // if(c.type === "Connection URI"){

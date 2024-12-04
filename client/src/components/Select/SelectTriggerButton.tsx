@@ -58,11 +58,9 @@ export const SelectTriggerButton = <O extends OptionKey, Multi extends boolean =
     style={{ 
       borderRadius: "6px",  
       position: "relative",  
-      // width: label? "auto" : "fit-content",
-      minHeight: "32px",
-      
-      // Why??
-      // opacity: 1,
+      /* Ensure the dropdown end icon is aligned with end when no value is selected */
+      justifyContent: "space-between", 
+      minHeight: "32px", 
       
       ...selectStyle,
       ...fixedBtnWidth && { width: `${fixedBtnWidth}px`}

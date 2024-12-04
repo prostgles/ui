@@ -104,6 +104,7 @@ test('renders the first page', async ( ) => {
   await page.getByTestId("ConnectionServer.add").waitFor({ state: "visible", timeout: 60e3 });
   await screenshot();
   await page.locator("a.LEFT-CONNECTIONINFO").click();
+  await screenshot();
   await page.getByTestId("dashboard.goToConnConfig").waitFor({ state: "visible", timeout: 2e3 });
   await screenshot();
   // await page.reload();
