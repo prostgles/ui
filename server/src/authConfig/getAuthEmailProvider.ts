@@ -2,7 +2,7 @@ import type { AuthRegistrationConfig } from "prostgles-server/dist/Auth/AuthType
 import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
 
 export const getAuthEmailProvider = (auth_providers: DBSchemaGenerated["global_settings"]["columns"]["auth_providers"]): Required<AuthRegistrationConfig<any>>["email"] | undefined => {
-  if(!auth_providers?.email) return undefined;
+  if(!auth_providers?.email?.enabled) return undefined;
   const { email } = auth_providers;
   return {
     ...email,
@@ -24,7 +24,7 @@ export const getAuthEmailProvider = (auth_providers: DBSchemaGenerated["global_s
       signupType: "withPassword",
       minPasswordLength: email.minPasswordLength,
       onRegistered: async (data: any) => {},
-      emailConfirmation: { 
+      emailConfirmation: email.emailConfirmation && { 
         smtp: email.emailConfirmation,
         onConfirmed: async (data) => {
           console.log({ data });
@@ -53,7 +53,7 @@ type OAuthConfig = Required<DBSchemaGenerated["global_settings"]["columns"]>["au
 export const getOAuthProviders = (auth_providers: OAuthConfig): Required<AuthRegistrationConfig<any>>["OAuthProviders"] | undefined => {
   if(!auth_providers) return undefined;
   const getProvider = <Conf extends { clientID: string; clientSecret: string; enabled?: boolean; }>(conf: Conf | undefined, providerName: string): Conf | undefined => {
-    if(!conf || conf.enabled === false) return undefined;
+    if(!conf?.enabled) return undefined;
     if(!conf.clientID || !conf.clientSecret){
       console.warn(`OAuth provider ${providerName} is missing clientID or clientSecret`);
       return;

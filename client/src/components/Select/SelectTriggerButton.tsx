@@ -111,7 +111,7 @@ export const SelectTriggerButton = <O extends OptionKey, Multi extends boolean =
           className={" text-ellipsis " + (value !== undefined? "text-color-0" : "text-color-1")} 
           style={{ lineHeight: "18px"}}
         >
-          {(!labelAsValue? btnLabel : SmartFormField.renderValue(undefined, btnLabel, !noOtherOption)) ?? emptyLabel}
+          {(!labelAsValue? btnLabel : SmartFormField.renderValue(undefined, btnLabel, !noOtherOption, 150)) ?? emptyLabel}
         </div>
       </>
     }

@@ -266,8 +266,8 @@ export type DBSchemaGenerated = {
       allowed_ips?: string[];
       allowed_ips_enabled?: boolean;
       allowed_origin?: null | string;
-      auth_providers?: null | {    website_url: string;   created_user_type?: string;   email?: |  {  signupType: 'withMagicLink';  emailMagicLink: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; }; }
- |  {  signupType: 'withPassword';  minPasswordLength?: number;  emailConfirmation: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; }; };   google?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("profile" | "email")[]; }; };   github?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("user:email")[]; }; };   microsoft?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  prompt: 'select_account';  scope: ("openid" | "email" | "profile")[]; }; };   facebook?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("email" | "public_profile")[]; }; };  };
+      auth_providers?: null | {    website_url: string;   created_user_type?: string;   email?: |  {  signupType: 'withMagicLink';  enabled?: boolean;  emailMagicLink: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; }; }
+ |  {  signupType: 'withPassword';  enabled?: boolean;  minPasswordLength?: number;  emailConfirmation?: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; }; };   google?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("profile" | "email" | "calendar" | "calendar.readonly" | "calendar.events" | "calendar.events.readonly")[]; }; };   github?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("read:user" | "user:email")[]; }; };   microsoft?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  prompt: 'login' | 'none' | 'consent' | 'select_account' | 'create';  scope: ("openid" | "profile" | "email" | "offline_access" | "User.Read" | "User.ReadBasic.All" | "User.Read.All")[]; }; };   facebook?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("email" | "public_profile" | "user_birthday" | "user_friends" | "user_gender" | "user_hometown")[]; }; };  };
       enable_logs?: boolean;
       id?: number;
       login_rate_limit?: {    maxAttemptsPerHour: number;   groupBy: 'x-real-ip' | 'remote_ip' | 'ip';  };
@@ -278,6 +278,7 @@ export type DBSchemaGenerated = {
       session_max_age_days?: number;
       tableConfig?: null | any;
       trust_proxy?: boolean;
+      updated_at?: string;
       updated_by?: "user" | "app"
     };
   };

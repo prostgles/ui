@@ -23,10 +23,16 @@ type SectionProps = {
   style?: React.CSSProperties; 
 } | {
   getStyle?: (expanded: boolean) => React.CSSProperties;
-})
+}) & ({
+  titleIconPath?: string; 
+  titleIcon?: undefined;
+} | {
+  titleIcon?: React.ReactNode;
+  titleIconPath?: undefined; 
+});
 
 export function Section(props: SectionProps) {
-  const { children, title, className = "", disabledInfo, contentClassName = "", contentStyle = {}, buttonStyle = {}, open: oDef, titleRightContent, titleIconPath, btnProps, ...p } = props;
+  const { children, title, className = "", disabledInfo, contentClassName = "", contentStyle = {}, buttonStyle = {}, open: oDef, titleRightContent, titleIcon, titleIconPath, btnProps, ...p } = props;
   const [open, toggle] = useState(oDef);
   const [fullscreen, setfullscreen] = useState(false);
   const toggleFullScreen = () => { setfullscreen(v => !v) }
@@ -47,7 +53,8 @@ export function Section(props: SectionProps) {
         title="Expand section"
         disabledInfo={disabledInfo}
         style={buttonStyle}
-        iconPath={titleIconPath ?? (!open ? mdiChevronRight : mdiChevronDown)}
+        iconPath={titleIcon? undefined : (titleIconPath ?? (!open ? mdiChevronRight : mdiChevronDown))}
+        iconNode={titleIcon}
         {...omitKeys(btnProps ?? {}, ["onClick"]) as any}
         onClick={fullscreen? undefined : () => toggle(!open)}
       >

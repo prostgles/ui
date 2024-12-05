@@ -41,7 +41,7 @@ window.addEventListener("storage", function(event){
   }
 }, false);
 
-export const localSettings = {
+const localSettings = {
   add: (l: LocalSettingsListener) => {
     if(!localSettingsListeners.some(ll => ll === l)){
       localSettingsListeners.push(l)
@@ -73,7 +73,7 @@ export const useLocalSettings = () => {
     localSettings.add(onChange);
 
     return () => localSettings.remove(onChange);
-  }, []);
+  }, [ls]);
  
   
   return ls;
