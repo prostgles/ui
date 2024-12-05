@@ -1,5 +1,6 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
-import { JSONB } from "prostgles-types";
+import type { JSONB } from "prostgles-types";
+import { OAuthProviderOptions } from "../../../commonTypes/OAuthUtils";
 
 const commonAuthSchema = {
   enabled: { type: "boolean", optional: true },
@@ -72,6 +73,9 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1; }> = {
         enum: ["user", "app"], 
         defaultValue: "app" 
       },
+      updated_at: {
+        sqlDefinition: "TIMESTAMP NOT NULL DEFAULT now()",
+      },
       pass_process_env_vars_to_server_side_functions: {
         sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE`,
         info: { hint: "If true then all environment variables will be passed to the server side function nodejs. Use at your own risk" }
@@ -112,11 +116,16 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1; }> = {
             optional: true,
             oneOfType: [{
               signupType: { enum: ["withMagicLink"] },
+              enabled: { type: "boolean", optional: true },
               emailMagicLink: SMTPConfig,
             }, {
               signupType: { enum: ["withPassword"] },
+              enabled: { type: "boolean", optional: true },
               minPasswordLength: { type: "integer", optional: true, title: "Minimum password length" },
-              emailConfirmation: SMTPConfig,
+              emailConfirmation: {
+                optional: true, 
+                ...SMTPConfig,
+              },
             }]
           },
           google: {
@@ -124,7 +133,7 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1; }> = {
             type: {
               ...commonAuthSchema,
               authOpts: { optional: true, type: {
-                scope: { type: "string[]", allowedValues: ["profile", "email"] },
+                scope: { type: "string[]", allowedValues: OAuthProviderOptions.google.scopes.map(s => s.key), },
               } },
             }
           },
@@ -133,7 +142,7 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1; }> = {
             type: {
               ...commonAuthSchema,
               authOpts: { optional: true, type: {
-                scope: { type: "string[]", allowedValues: ["user:email"] },
+                scope: { type: "string[]", allowedValues: OAuthProviderOptions.github.scopes.map(s => s.key) },
               } },
             }
           },
@@ -142,8 +151,8 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1; }> = {
             type: {
               ...commonAuthSchema,
               authOpts: { optional: true, type: {
-                prompt: { enum: ["select_account"] },
-                scope: { type: "string[]", allowedValues: ["openid", "email", "profile"] },
+                prompt: { enum: OAuthProviderOptions.microsoft.prompts.map(s => s.key) },
+                scope: { type: "string[]", allowedValues: OAuthProviderOptions.microsoft.scopes.map(s => s.key) },
               } },
             }
           },
@@ -152,7 +161,7 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1; }> = {
             type: {
               ...commonAuthSchema,
               authOpts: { optional: true, type: {
-                scope: { type: "string[]", allowedValues: ["email", "public_profile"] },
+                scope: { type: "string[]", allowedValues: OAuthProviderOptions.facebook.scopes.map(s => s.key) },
               } },
             }
           },
@@ -171,6 +180,19 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1; }> = {
           token: { type: "string" },
         },
       }
-    }
+    },
+    triggers: {
+      "Update updated_at": {
+        actions: ["update"],
+        type: "before",
+        forEach: "row",
+        query: `
+          BEGIN
+            NEW.updated_at = now();
+            RETURN NEW;
+          END;
+        `,
+      }
+    },
   },
 }

@@ -14,7 +14,7 @@ import ErrorComponent from "./components/ErrorComponent";
 import { NavBar } from "./components/NavBar";
 import UserManager from "./dashboard/UserManager";
 import { Account } from "./pages/Account/Account";
-import { ServerSettings } from "./pages/ServerSettings";
+import { ServerSettings } from "./pages/ServerSettings/ServerSettings";
 
 import type { AuthHandler } from "prostgles-client/dist/Auth";
 import { type DBHandlerClient, type MethodHandler } from "prostgles-client/dist/prostgles";

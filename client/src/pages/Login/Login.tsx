@@ -12,7 +12,14 @@ export type LoginFormProps = Pick<Prgl, "auth">;
 
 export const Login = ({ auth }: LoginFormProps) => {
   const authState = useLoginState({ auth });
-  const { formHandlers, isOnLogin, registerTypeAllowed, setState, error, onAuthCall } = authState;
+  const [isLoggingIn, setIsLoggingIn] = React.useState(false);
+  const { formHandlers, isOnLogin, registerTypeAllowed, setState, error, onAuthCall: _onAuthCall } = authState;
+  const onAuthCall = async () => {
+    setIsLoggingIn(true);
+    _onAuthCall().finally(() => {
+      setIsLoggingIn(false);
+    });
+  }
 
   return <form 
     className="LoginForm flex-col gap-1 rounded shadow m-auto w-fit bg-color-0"
@@ -65,12 +72,8 @@ export const Login = ({ auth }: LoginFormProps) => {
       }
 
       <Btn 
-        onClickMessage={async (_, setM) => {
-          setM({ loading: 1 });
-          onAuthCall().finally(() => {
-            setM({ loading: 0 });
-          });
-        }}
+        loading={isLoggingIn}
+        onClick={onAuthCall}
         variant="filled"
         className="mt-1"
         color="action"

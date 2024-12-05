@@ -1,18 +1,19 @@
-import { mdiLaptop } from "@mdi/js";
+import { mdiAccountKey, mdiCloudKeyOutline, mdiLaptop, mdiSecurity } from "@mdi/js";
 import React, { useState } from "react";
-import { getCIDRRangesQuery } from "../../../commonTypes/publishUtils";
-import Btn from "../components/Btn";
-import Chip from "../components/Chip";
-import FormField from "../components/FormField/FormField";
-import { InfoRow } from "../components/InfoRow"; 
-import SmartCardList from "../dashboard/SmartCard/SmartCardList";
-import SmartForm from "../dashboard/SmartForm/SmartForm";
+import { getCIDRRangesQuery } from "../../../../commonTypes/publishUtils";
+import Btn from "../../components/Btn";
+import Chip from "../../components/Chip";
+import FormField from "../../components/FormField/FormField";
+import { InfoRow } from "../../components/InfoRow"; 
+import SmartCardList from "../../dashboard/SmartCard/SmartCardList";
+import SmartForm from "../../dashboard/SmartForm/SmartForm";
 import { usePromise } from "prostgles-client/dist/react-hooks";
-import type { Prgl } from "../App";
-import { TabsWithDefaultStyle } from "../components/Tabs";
-import { DBS } from "../dashboard/Dashboard/DBS";
-import { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
-import { FlexCol } from "../components/Flex";
+import type { Prgl } from "../../App";
+import { TabsWithDefaultStyle } from "../../components/Tabs";
+import { DBS } from "../../dashboard/Dashboard/DBS";
+import { DBSchemaGenerated } from "../../../../commonTypes/DBoGenerated";
+import { FlexCol } from "../../components/Flex";
+import { AuthProviderSetup } from "./AuthProvidersSetup";
 
 export const ServerSettings = ({ theme, dbsMethods, dbs, dbsTables }: Pick<Prgl, "dbsMethods" | "dbs" | "dbsTables" | "auth" | "theme">) => {
 
@@ -37,15 +38,22 @@ export const ServerSettings = ({ theme, dbsMethods, dbs, dbsTables }: Pick<Prgl,
 
   if(!myIP) return null;
 
-  return <div className="ServerSettings w-full o-auto" 
-    
+  return <div 
+    className="ServerSettings w-full o-auto" 
   >
-    <div className="flex-row jc-center p-p5" style={{ alignSelf: "stretch" }}>
+    <div 
+      className="flex-row jc-center p-p5" 
+      style={{ 
+        alignSelf: "stretch", 
+        paddingBottom: "4em",
+      }}
+    >
       <div className="flex-col gap-1 mt-2 max-w-800 min-w-0 f-1" style={{ alignSelf: "stretch" }}>
         <TabsWithDefaultStyle
           items={{
             security: {
               label: "Security",
+              leftIconPath: mdiSecurity, 
               content: <FlexCol style={{ opacity: settingsLoaded? 1 : 0 }}>
                 <SmartForm 
                   theme={theme}
@@ -90,29 +98,18 @@ export const ServerSettings = ({ theme, dbsMethods, dbs, dbsTables }: Pick<Prgl,
               </FlexCol>
             },
             auth: {
+              leftIconPath: mdiAccountKey,
               label: "Authentication",
-              content: <FlexCol style={{ opacity: settingsLoaded? 1 : 0 }}>
-                <SmartForm 
-                  theme={theme}
-                  className="bg-color-0 shadow "
-                  label=""
-                  db={dbs as any}
-                  methods={dbsMethods}
-                  tableName="global_settings" 
-                  columns={{ auth_providers: 1 }} //  satisfies DBSchemaGenerated["global_settings"]["columns"]
-                  tables={dbsTables}
-                  rowFilter={[{} as any]} 
-                  hideChangesOptions={true}
-                  showLocalChanges={false}
-                  confirmUpdates={true}
-                  hideNonUpdateableColumns={true} 
-                  onLoaded={() => setSettingsLoaded(true)}
-                />
-                </FlexCol>
+              content: <AuthProviderSetup 
+                dbs={dbs} 
+                dbsTables={dbsTables}
+              />
             },
             cloud: {
+              leftIconPath: mdiCloudKeyOutline,
               label: "Cloud credentials",
-              content: <SmartCardList
+              content: 
+              <SmartCardList
                 theme={theme}
                 db={dbs as any} 
                 methods={dbsMethods}
@@ -121,7 +118,7 @@ export const ServerSettings = ({ theme, dbsMethods, dbs, dbsTables }: Pick<Prgl,
                 filter={{}}
                 realtime={true}
                 noDataComponentMode="hide-all"
-                noDataComponent={<InfoRow color="info" className="m-1">No cloud credentials. Credentials can be added for file storage</InfoRow>}
+                noDataComponent={<InfoRow color="info" className="m-1 h-fit">No cloud credentials. Credentials can be added for file storage</InfoRow>}
               />
             }
           }}

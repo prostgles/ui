@@ -258,7 +258,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
     }[size];
     const childrenContent = (children === undefined || children === null || children === "")? null : 
       loading? <div 
-        className="min-w-0 ws-nowrap text-ellipsis f-1 o-hidden" 
+        className="min-w-0 ws-nowrap text-ellipsis f-0 o-hidden" 
         style={{ opacity: .5 }}
       >
         {children}
@@ -278,12 +278,12 @@ export default class Btn<HREF extends string | void = void> extends RTComp<BtnPr
         />)
       }
       
-      {loading? <Loading 
+      {loading && <Loading 
         style={{ margin: `${loadingMargin}px` }}
         sizePx={loadingSize} 
         delay={0} 
         colorAnimation={false} 
-      /> : null}
+      />}
 
       {iconPosition === "left" && childrenContent}
     </>;

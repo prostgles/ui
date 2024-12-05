@@ -2,11 +2,8 @@ import { useIsMounted, type DBHandlerClient } from "prostgles-client/dist/prostg
 import { isDefined, isEmpty, type AnyObject, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useEffect, useState } from "react";
 import Select, { type FullOption } from "../../../components/Select/Select";
+import { renderNull } from "./RenderValue";
 import type { SmartFormFieldProps } from "./SmartFormField";
-import { FlexRowWrap } from "../../../components/Flex";
-import { renderNull, RenderValue } from "./RenderValue";
-import SmartFormField from "./SmartFormField";
-import { pickKeys } from "../../../utils";
 
 type P = Pick<SmartFormFieldProps, "rawValue" | "db" | "tables" | "row" | "tableName"> & {
   column: ValidatedColumnInfo & { references: NonNullable<ValidatedColumnInfo["references"]> };
@@ -47,14 +44,20 @@ export const SmartFormFieldForeignKey = ({ column, db, onChange, tables, tableNa
     </div>;
 
 
-  const displayValue = selectedOption? 
-    <div className={"flex-col gap-p5"}>
+  const displayValue = 
+    <div className={"flex-col gap-p5 min-w-0"}
+      style={{ 
+        padding: "6px",
+        // border: "1px solid var(--b-default)" 
+      }}
+    >
       {valueNode}
-      <div className="ta-left text-ellipsis" style={{ opacity: .75, fontSize: "14px", fontWeight: "normal", maxWidth: "300px" }}>
-        {selectedOption.subLabel}
-      </div>
-    </div> : 
-    valueNode;
+      {selectedOption && 
+        <div className="ta-left text-ellipsis" style={{ opacity: .75, fontSize: "14px", fontWeight: "normal", maxWidth: "300px" }}>
+          {selectedOption.subLabel}
+        </div>
+      }
+    </div>;
 
   if(readOnly) {
     return displayValue;
@@ -62,7 +65,6 @@ export const SmartFormFieldForeignKey = ({ column, db, onChange, tables, tableNa
 
   return <Select 
     className="SmartFormFieldForeignKey FormField_Select noselect bg-color-0"
-    // style={valueStyle}
     variant="div"
     fullOptions={fullOptions ?? []}
     onSearch={onSearchOptions} 
@@ -72,7 +74,9 @@ export const SmartFormFieldForeignKey = ({ column, db, onChange, tables, tableNa
     btnProps={{
       children: displayValue,
       style: {
-        padding: "4px 0",
+        padding: "0",
+        justifyContent: "space-between",
+        flex: 1,
       }
     }}
   />

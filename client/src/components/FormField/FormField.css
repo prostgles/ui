@@ -50,8 +50,8 @@
   color: var(--text-0);
 }
 
-.dark-theme .form-field .input-wrapper > :first-child:not(textarea, .ChipArrayEditor, .Checkbox)  { 
-  color: var(--gray-100);
+.dark-theme .form-field .input-wrapper > :first-child:not(.ChipArrayEditor, .Checkbox)  { 
+  color: var(--text-0);
   background-color: var(--input-bg-color);
 }
 

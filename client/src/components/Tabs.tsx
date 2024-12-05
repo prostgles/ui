@@ -216,22 +216,28 @@ export const TabsWithDefaultStyle = (props: Pick<TabsProps, "items">) => {
 
   const { activeSection, setSection } = useConnectionConfigSearchParams(getKeys(props.items) as any);
   return <div className="flex-col f-1 min-h-0 pt-1 w-full" style={{ maxWidth: "800px"}}>
-    <Tabs variant={{ controlsBreakpoint: 200, contentBreakpoint: 500, controlsCollapseWidth: 350 }}
+    <Tabs 
+      style={{ minHeight: "100vh" }}
+      menuStyle={{ maxHeight: undefined }}
+      variant={{ controlsBreakpoint: 200, contentBreakpoint: 500, controlsCollapseWidth: 350 }}
       className="f-1 shadow"
       activeKey={activeSection ?? props.items[0]?.key} 
       onChange={section => { setSection({ section }) }}
       items={props.items}
       contentClass="f-1 o-autdo flex-row jc-center bg-color-2 " 
-      onRender={item => <div className="flex-col f-1 max-w-800 min-w-0 bg-color-0 shadow w-full">
-        <h2 style={{ paddingLeft: "18px" }} className=" max-h-fit">{item.label}</h2>
-        <div className={" f-1 o-auto flex-row " + (window.isLowWidthScreen? "" : " ")} 
-          style={{ 
-            alignSelf: "stretch",
-          }}
+      onRender={item => 
+        <div className="flex-col f-1 max-w-800 min-w-0 bg-color-0 shadow w-full"
         >
-          {item.content}
+          <h2 style={{ paddingLeft: "18px" }} className=" max-h-fit">{item.label}</h2>
+          <div className={" f-1 o-auto flex-row " + (window.isLowWidthScreen? "" : " ")} 
+            style={{ 
+              alignSelf: "stretch",
+            }}
+          >
+            {item.content}
+          </div>
         </div>
-      </div>}
+      }
     />
   </div> 
 }

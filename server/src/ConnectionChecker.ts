@@ -174,7 +174,7 @@ export class ConnectionChecker {
       }
 
       if(this.config.global_setting?.allowed_ips_enabled){
-        const ipCheck = await this.checkClientIP({ req });
+        const ipCheck = await this.checkClientIP({ httpReq: req });
         if(!ipCheck.isAllowed){
           res.status(403).json({ error: "Your IP is not allowed" });
           return
@@ -231,13 +231,17 @@ export class ConnectionChecker {
   /**
    * This is mainly used to ensure that when there is passwordless admin access external IPs cannot connect
    */
-  checkClientIP = async (args: ({ socket: PRGLIOSocket } | { req: Request }) & { dbsTX?: DBS }): Promise<{ ip: string; isAllowed: boolean; }> => {
-    const ip: string = "req" in args? args.req.ip : (args.socket as any)?.conn?.remoteAddress;
-
-    const isAllowed = await (args.dbsTX || this.db)?.sql!("SELECT inet ${ip} <<= any (allowed_ips::inet[]) FROM global_settings ", { ip }, { returnType: "value" }) as boolean
+  checkClientIP = async (args: ({ socket: PRGLIOSocket } | { httpReq: Request }) & { dbsTX?: DBS }) => {
+    const { ip_address, ip_address_remote, x_real_ip } = getLoginClientInfo(args);
+    const { groupBy } = this.config.global_setting?.login_rate_limit ?? {};
+    const ipValue = groupBy === "x-real-ip" ? x_real_ip : groupBy === "remote_ip"? ip_address_remote : ip_address;
+    const isAllowed = await (args.dbsTX || this.db)?.sql!("SELECT inet ${ip} <<= any (allowed_ips::inet[]) FROM global_settings ", { ip: ipValue }, { returnType: "value" }) as boolean
 
     return {
-      ip,
+      ip: ipValue,
+      ip_address, 
+      ip_address_remote, 
+      x_real_ip,
       isAllowed //: (args.byPassedRanges || this.ipRanges).some(({ from, to }) => ip && ip >= from && ip <= to )
     }
   }

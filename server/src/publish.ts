@@ -8,6 +8,7 @@ import { isDefined } from "../../commonTypes/filterUtils";
 import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { getPasswordHash } from "./authConfig/authUtils";
 import { fetchLLMResponse } from "./publishMethods/askLLM/askLLM";
+import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
 
 export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise<Publish<DBSchemaGenerated>> => {
         
@@ -357,6 +358,15 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
             const { isAllowed, ip } = await connectionChecker.checkClientIP({ socket, dbsTX });
             if(!isAllowed) throw `Cannot update to a rule that will block your current IP.  \n Must allow ${ip} within Allowed IPs`
           }
+
+          const { email } = row.auth_providers ?? {};
+          if(email?.enabled){
+            const emailSmtpConfig = email.signupType === "withMagicLink"? email.emailMagicLink : email.emailConfirmation;
+            if(emailSmtpConfig){
+              await verifySMTPConfig(emailSmtpConfig);
+            }
+          }
+
           return undefined;
         }
       }

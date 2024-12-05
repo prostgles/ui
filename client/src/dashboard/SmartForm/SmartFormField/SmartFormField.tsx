@@ -307,8 +307,7 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
       >
         {sectionHeader}
       </h4>
-  
-    // let inputContent: React.ReactNode = null;
+   
     let arrayType: FormFieldProps["arrayType"];
     if(column.tsDataType.endsWith("[]") && !column.tsDataType.includes("any")){
       const elemTSType = tsDataTypeFromUdtName(column.element_udt_name as any)
