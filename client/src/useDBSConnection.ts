@@ -94,12 +94,13 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
             onDisconnect: () => {
               onDisconnect(true);
             },
-            // onDebug: (ev) => {
-            //   if(ev.type === "table" && ev.tableName === "global_settings"){
-            //     // if(ev.command === "unsubscribe") debugger;
-            //     console.log(Date.now(), "client", ev);
-            //   }
-            // },
+            onDebug: (ev) => {
+              const trackedTableNames = ["global_settings", "llm_chats", "llm_messages", "llm_prompts", "llm_credentials"];
+              if(ev.type === "table" && trackedTableNames.includes(ev.tableName)){
+                // if(ev.command === "unsubscribe") debugger;
+                console.log(Date.now(), "client", ev);
+              }
+            },
             onReconnect: () => {
               onDisconnect(false);
               if(window.location.pathname.startsWith("/connections/")){
@@ -111,7 +112,7 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
               (window as any).dbsSocket = socket;
               (window as any).dbsMethods = dbsMethods;
               const uType = auth.user?.type; 
-    
+              console.log(auth.user)
               const { tables: dbsTables = [], error } = await getTables(tableSchema ?? [], undefined, dbs as any);
               if(error){
                 resolve({ error });
