@@ -94,11 +94,12 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
             onDisconnect: () => {
               onDisconnect(true);
             },
-            // onDebug: (ev) => {
-            //   if(ev.type !== "method" && ev.tableName === "windows"){
-            //     console.log(Date.now(), "client", ev);
-            //   }
-            // },
+            onDebug: (ev) => {
+              if(ev.type === "table" && ev.tableName === "global_settings"){
+                // if(ev.command === "unsubscribe") debugger;
+                console.log(Date.now(), "client", ev);
+              }
+            },
             onReconnect: () => {
               onDisconnect(false);
               if(window.location.pathname.startsWith("/connections/")){

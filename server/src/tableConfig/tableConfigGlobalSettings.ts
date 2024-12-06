@@ -8,6 +8,14 @@ const commonAuthSchema = {
   clientSecret: { type: "string" },
 } satisfies JSONB.FieldTypeObj["type"];
 
+const EmailTemplateConfig = { 
+  title: "Email template used for sending auth emails. Must contain placeholders for the url: ${url}",
+  type: {
+    from: "string",
+    subject: "string",
+    body: "string",
+  }
+} as const satisfies JSONB.FieldTypeObj;
 const SMTPConfig = { 
   oneOfType: [
     {
@@ -118,6 +126,12 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1; }> = {
               signupType: { enum: ["withMagicLink"] },
               enabled: { type: "boolean", optional: true },
               emailMagicLink: SMTPConfig,
+              smtp: {
+                optional: true, 
+                ...SMTPConfig,
+              },
+              emailTemplate: { optional: true, ...EmailTemplateConfig },
+              emailConfirmationEnabled: { type: "boolean", optional: true, title: "Enable email confirmation" },
             }, {
               signupType: { enum: ["withPassword"] },
               enabled: { type: "boolean", optional: true },
@@ -126,6 +140,12 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1; }> = {
                 optional: true, 
                 ...SMTPConfig,
               },
+              smtp: {
+                optional: true, 
+                ...SMTPConfig,
+              },
+              emailTemplate: { optional: true, ...EmailTemplateConfig },
+              emailConfirmationEnabled: { type: "boolean", optional: true, title: "Enable email confirmation" },
             }]
           },
           google: {

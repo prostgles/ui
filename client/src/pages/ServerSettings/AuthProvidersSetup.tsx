@@ -36,7 +36,7 @@ export const AuthProviderSetup = ({ dbs, dbsTables }: Pick<Prgl, "dbs" | "dbsTab
       }
     );
   }
-
+  console.log(global_settings?.auth_providers?.email)
   useAsyncEffectQueue(async () => {
     if(!global_settings) return;
     if(!global_settings.auth_providers?.website_url){
@@ -63,7 +63,7 @@ export const AuthProviderSetup = ({ dbs, dbsTables }: Pick<Prgl, "dbs" | "dbsTab
     authProviders: auth_providers ?? {  website_url: "" }, 
     dbsTables,
     disabledInfo: !auth_providers?.website_url? "Must setup website URL first" : undefined,
-    contentClassName: "flex-col gap-1 p-1",
+    contentClassName: "flex-col gap-2 p-2",
   };
 
   return <FlexCol className="p-1 f-1">

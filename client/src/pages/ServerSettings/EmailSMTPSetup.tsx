@@ -2,15 +2,11 @@ import React from "react";
 import { type DivProps, FlexCol } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import Select from "../../components/Select/Select";
-import { isDefined } from "../../utils";
-import type { AuthProvidersConfig } from "./AuthProvidersSetup";
-import PopupMenu from "../../components/PopupMenu";
-import Btn from "../../components/Btn";
+import type { EmailSMTPCofig } from "./EmailSetup";
+
 
 type P = Pick<DivProps, "style" | "className"> & {
-  value: Extract<NonNullable<AuthProvidersConfig["email"]>, { signupType: "withMagicLink" }>["emailMagicLink"] | undefined;
-  label: string;
-  optional: boolean;
+  value: EmailSMTPCofig | undefined; 
   onChange: (newValue: P["value"]) => void;
 }
 
@@ -19,17 +15,9 @@ const providerOptions = [
   { key: "aws-ses", label: "AWS SES", subLabel: "Amazon Simple Email Service" },
 ] as const;
 
-export const EmailSMTPSetup = ({ value, optional, onChange, style, className, label }: P) => {
+export const EmailSMTPSetup = ({ value, onChange }: P) => {
 
-  const options = [
-    optional? { key: "None", subLabel: "" } : undefined,
-    ...providerOptions,
-  ].filter(isDefined)
-
-  const handleProviderChange = (type: (typeof options)[number]["key"]) => {
-    if(type === "None") {
-      return onChange(undefined);
-    }
+  const handleProviderChange = (type: (typeof providerOptions)[number]["key"]) => {
     if (type === "smtp") {
       onChange({
         type: "smtp",
@@ -39,7 +27,7 @@ export const EmailSMTPSetup = ({ value, optional, onChange, style, className, la
         user: "",
         pass: "",
       });
-    } else if (type === "aws-ses") {
+    } else {
       onChange({
         type: "aws-ses",
         region: "",
@@ -50,10 +38,10 @@ export const EmailSMTPSetup = ({ value, optional, onChange, style, className, la
     }
   };
 
-  const content = <FlexCol>
+  return <FlexCol>
     <Select 
       label="Email provider"
-      fullOptions={options}
+      fullOptions={providerOptions}
       value={value?.type ?? "None"}
       onChange={handleProviderChange}
     />
@@ -116,23 +104,4 @@ export const EmailSMTPSetup = ({ value, optional, onChange, style, className, la
       )
     }
   </FlexCol>
-
-  return <PopupMenu 
-    positioning="center"
-    title={label}
-    button={
-      <Btn
-        variant="faded"
-        color={value? "action" : undefined}
-        label={{ label, variant: "normal", className: "mb-p5" }}
-      >{value?.type ?? "None"}</Btn>
-    }
-    className={className}
-    style={style}
-    clickCatchStyle={{ opacity: 1 }}
-    render={pClose => content}
-    footerButtons={[
-      { label: "Done", color: "action", variant: "faded", onClickClose: true },
-    ]}
-  />
 }

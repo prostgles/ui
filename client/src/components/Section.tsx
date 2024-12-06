@@ -19,6 +19,7 @@ type SectionProps = {
   contentClassName?: string; 
   open?: boolean; 
   titleIconPath?: string; 
+  disableFullScreen?: boolean;
 } & ({
   style?: React.CSSProperties; 
 } | {
@@ -32,7 +33,7 @@ type SectionProps = {
 });
 
 export function Section(props: SectionProps) {
-  const { children, title, className = "", disabledInfo, contentClassName = "", contentStyle = {}, buttonStyle = {}, open: oDef, titleRightContent, titleIcon, titleIconPath, btnProps, ...p } = props;
+  const { children, title, className = "", disableFullScreen, disabledInfo, contentClassName = "", contentStyle = {}, buttonStyle = {}, open: oDef, titleRightContent, titleIcon, titleIconPath, btnProps, ...p } = props;
   const [open, toggle] = useState(oDef);
   const [fullscreen, setfullscreen] = useState(false);
   const toggleFullScreen = () => { setfullscreen(v => !v) }
@@ -41,7 +42,8 @@ export function Section(props: SectionProps) {
     className={classOverride("flex-col min-h-0 f-0 relative bg-inherit ", className)} 
     style={("getStyle" in p)? p.getStyle?.(!!open) : "style" in p? p.style : undefined } 
   >
-    <div className="Section__Header flex-row ai-center noselect pointer f-0 bb b-color bg-inherit"
+    <div 
+      className="Section__Header flex-row ai-center noselect pointer f-0 bb b-color bg-inherit"
       style={!open ? undefined : {
         position: "sticky",
         top: 0,
@@ -52,7 +54,11 @@ export function Section(props: SectionProps) {
       <Btn className={(titleRightContent? "" : "f-1") + " p-p5 ta-left font-20 bold jc-start mr-1"}
         title="Expand section"
         disabledInfo={disabledInfo}
-        style={buttonStyle}
+        style={{ 
+          width: undefined,
+          flex: 1,
+          ...buttonStyle,
+        }}
         iconPath={titleIcon? undefined : (titleIconPath ?? (!open ? mdiChevronRight : mdiChevronDown))}
         iconNode={titleIcon}
         {...omitKeys(btnProps ?? {}, ["onClick"]) as any}
@@ -60,7 +66,14 @@ export function Section(props: SectionProps) {
       >
         {title}
       </Btn>
-      <Btn className={fullscreen? "" : "show-on-parent-hover"} iconPath={mdiFullscreen} onClick={toggleFullScreen} color={fullscreen? "action" : undefined} />
+      {!disableFullScreen && 
+        <Btn 
+          className={fullscreen? "" : "show-on-parent-hover"} 
+          iconPath={mdiFullscreen} 
+          onClick={toggleFullScreen} 
+          color={fullscreen? "action" : undefined} 
+        />
+      }
       {titleRightContent}
 
     </div>

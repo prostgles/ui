@@ -42,6 +42,15 @@ export const OAuthProviderSetup = ({ dbs, authProviders, disabledInfo, contentCl
     titleIcon={icon}
     disabledInfo={disabledInfo}
     contentClassName={contentClassName}
+    disableFullScreen={true}
+    titleRightContent={
+      <SwitchToggle 
+        className="ml-auto" 
+        disabledInfo={!authProviders[provider] && "Must configure the provider first"}
+        checked={!!authProviders[provider]?.enabled} 
+        onChange={console.log} 
+      />
+    }
   >
     <SwitchToggle
       label={"Enabled"}
