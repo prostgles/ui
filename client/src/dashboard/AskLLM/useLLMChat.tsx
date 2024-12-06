@@ -46,7 +46,7 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
       console.warn("No prompt found", { prompts });
       return;
     }
-    await dbs.llm_chats.insert(
+    const newChat = await dbs.llm_chats.insert(
       { 
         name: "New chat", 
         user_id: undefined as any,
@@ -55,6 +55,7 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
       }, 
       { returning: "*" }
     );
+    console.log("Created new chat", newChat);
     setSelectedChat(undefined);
   };
 
@@ -116,6 +117,7 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
     new Date() && activeChat.disabled_message? 
       activeChat.disabled_message : 
       undefined;
+
   const messages: Message[] = (actualMessages.length? actualMessages : [
     { 
       message: "Hello, I am the AI assistant. How can I help you?", 
@@ -142,7 +144,7 @@ export const useLLMChat = ({ dbs, user, connectionId, workspaceId, credentials, 
     createNewChat, 
     preferredPromptId,
     llmMessages, 
-    messages, 
+    messages: activeChat? messages : undefined, 
     latestChats, 
     setActiveChat: setSelectedChat,
     credentials,
