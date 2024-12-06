@@ -3,13 +3,13 @@ import { isEqual } from "prostgles-client/dist/prostgles";
 import React, { useState } from "react";
 import ErrorComponent from "../../components/ErrorComponent";
 import FormField from "../../components/FormField/FormField";
+import { InfoRow } from "../../components/InfoRow";
 import { FooterButtons } from "../../components/Popup/FooterButtons";
 import { Section } from "../../components/Section";
 import Select from "../../components/Select/Select";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import type { AuthProviderProps } from "./AuthProvidersSetup";
-import { EmailSMTPSetup } from "./EmailSMTPSetup";
-import { InfoRow } from "../../components/InfoRow";
+import { DEFAULT_EMAIL_VERIFICATION_TEMPLATE, EmailSetup } from "./EmailSetup";
 
 export const EmailAuthSetup = ({ dbs, authProviders, disabledInfo, contentClassName }: AuthProviderProps) => {
   
@@ -18,11 +18,35 @@ export const EmailAuthSetup = ({ dbs, authProviders, disabledInfo, contentClassN
   const [error, setError] = useState<any>(undefined);
   const didChange = localAuth && !isEqual(localAuth, authProviders.email);
 
+  const onToggle = !localAuth? undefined : async (enabled: boolean) => {
+    await dbs.global_settings.update(
+      {}, 
+      {
+        auth_providers: {
+          ...authProviders,
+          email: {
+            ...localAuth,
+            enabled
+          }
+        }
+      }
+    ).catch(setError);
+  }
+
   return <Section 
     title="Email signup" 
     titleIconPath={mdiEmail}
     disabledInfo={disabledInfo}
     contentClassName={contentClassName}
+    disableFullScreen={true}
+    titleRightContent={
+      <SwitchToggle 
+        className="ml-auto" 
+        checked={!!authProviders.email?.enabled}
+        disabledInfo={!onToggle && "Must configure the email provider first"}
+        onChange={onToggle ?? (()=>{})} 
+      />
+    }
   >
     <SwitchToggle 
       label={"Enabled"}
@@ -47,6 +71,7 @@ export const EmailAuthSetup = ({ dbs, authProviders, disabledInfo, contentClassN
     />
     <Select 
       label={"Signup type"}
+      showSelectedSublabel={true}
       value={localAuth?.signupType}
       fullOptions={[
         { 
@@ -70,7 +95,8 @@ export const EmailAuthSetup = ({ dbs, authProviders, disabledInfo, contentClassN
               accessKeyId: "",
               region: "",
               secretAccessKey: ""
-            }
+            },
+            emailTemplate: DEFAULT_EMAIL_VERIFICATION_TEMPLATE
           } : {
             ...localAuth,
             signupType,
@@ -79,7 +105,8 @@ export const EmailAuthSetup = ({ dbs, authProviders, disabledInfo, contentClassN
               accessKeyId: "",
               region: "",
               secretAccessKey: ""
-            }
+            },
+            emailTemplate: DEFAULT_EMAIL_VERIFICATION_TEMPLATE
           }
         );
       }}
@@ -97,25 +124,23 @@ export const EmailAuthSetup = ({ dbs, authProviders, disabledInfo, contentClassN
         }}
         hint="Minimum password length. Defaults to 8"
       />
-    }
-    <InfoRow>
-      {localAuth?.signupType === "withMagicLink"? 
-        "Email settings below will be used to send the magic link to the registered user" :
-        "If provided, the email settings below will be used to send a confirmation email to the registered user"
-      }
-    </InfoRow>
-    <EmailSMTPSetup 
-      label={localAuth?.signupType === "withMagicLink"? "Magic link mail setup" : "Email confirmation setup"}
-      optional={localAuth?.signupType === "withPassword"}
-      value={localAuth?.signupType === "withMagicLink"? localAuth.emailMagicLink : localAuth?.emailConfirmation}
-      onChange={(smtpConfig) => {
-        if(!localAuth) return;
-        setLocalAuth({
-          ...localAuth,
-          [localAuth.signupType === "withMagicLink"? "emailMagicLink" : "emailConfirmation"]: smtpConfig
-        });
-        setError(undefined);
-      }}
+    } 
+    <EmailSetup 
+      label={localAuth?.signupType === "withMagicLink"? "Magic link email" : "Email verification"}
+      dbs={dbs}      
+      value={localAuth}
+      // onChange={(smtpConfig) => {
+      //   if(!localAuth) return;
+      //   if(!smtpConfig && localAuth.signupType !== "withPassword"){
+      //     setError("Please enable the email provider first");
+      //     return;
+      //   }
+      //   setLocalAuth({
+      //     ...localAuth,
+      //     smtp: smtpConfig
+      //   });
+      //   setError(undefined);
+      // }}
     />
     {error && 
       <ErrorComponent error={error} />
