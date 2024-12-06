@@ -56,35 +56,39 @@ export const AskLLMChat = ({ anchorEl, onClose, askLLM, prgl, setupState, worksp
     }}
     rootChildClassname="AskLLMChat"
   > 
-    <FlexCol
-      className="min-h-0 f-1"
-      style={{
-        whiteSpace: "pre-line",
-      }}
-    >
-      <Chat 
+    {messages && 
+      <FlexCol
+        className="min-h-0 f-1"
         style={{
-          minWidth: `min(${CHAT_WIDTH}px, 100%)`,
-          minHeight: "0"
+          whiteSpace: "pre-line",
         }}
-        messages={messages}
-        disabledInfo={activeChat?.disabled_message ?? undefined}
-        onSend={async (msg) => {
-          if(!msg || !activeChatId) return;
-          await askLLM(msg, schemaStr, activeChatId).catch(error => {
-            const errorText = error?.message || error;
-            alert(typeof errorText === "string"? errorText : JSON.stringify(errorText));
-          });
-        }}
-      />
-    </FlexCol>
-    {latestChats && !activeChat && <Btn 
-      onClickPromise={async () => createNewChat(defaultCredential.id, preferredPromptId)}
-      className="m-2"
-      color="action"
-      variant="faded"
-    >
-      Start new chat
-    </Btn>}
+      >
+        <Chat 
+          style={{
+            minWidth: `min(${CHAT_WIDTH}px, 100%)`,
+            minHeight: "0"
+          }}
+          messages={messages}
+          disabledInfo={activeChat?.disabled_message ?? undefined}
+          onSend={async (msg) => {
+            if(!msg || !activeChatId) return;
+            await askLLM(msg, schemaStr, activeChatId).catch(error => {
+              const errorText = error?.message || error;
+              alert(typeof errorText === "string"? errorText : JSON.stringify(errorText));
+            });
+          }}
+        />
+      </FlexCol>
+    }
+    {latestChats && !activeChat && 
+      <Btn 
+        onClickPromise={async () => createNewChat(defaultCredential.id, preferredPromptId)}
+        className="m-2"
+        color="action"
+        variant="faded"
+      >
+        Start new chat
+      </Btn>
+    }
   </Popup>
 }
