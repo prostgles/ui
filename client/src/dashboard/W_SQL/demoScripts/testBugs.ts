@@ -103,6 +103,7 @@ export const testBugs: DemoScript = async (args) => {
 
   /** Timechart works with codeblocks */
   await fromBeginning(false, "SELECT now(), 3; \n\nselect 1");
+  await moveCursor.down(3, 50);
   await moveCursor.up(3, 50);
   await tout(1e3);
   await runSQL();
