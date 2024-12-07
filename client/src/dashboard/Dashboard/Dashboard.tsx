@@ -130,7 +130,15 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
         if(db.sql){
           const { sql } = db;
            
-          const suggestions = await getSqlSuggestions({ sql }); 
+          const suggestions = await getSqlSuggestions({ sql });
+          console.log(
+            Date.now(), 
+            "REMOVE loadSchema", 
+            suggestions.suggestions.find(s => s.type === "table" && s.name === "plans"),
+            await sql(`SELECT *
+FROM information_schema.tables
+WHERE table_name = 'plans'`, {}, { returnType: "row" })
+          )
           const schema = {
             ...suggestions,
             connectionId,
@@ -276,6 +284,7 @@ export class _Dashboard extends RTComp<DashboardProps, DashboardState, Dashboard
     );
     const schemaChanged = this.props.prgl.dbKey !== this.loadingSchema?.dbKey; //  !this.loadingSchema?.dbKey.startsWith(FORCED_REFRESH_PREFIX) && 
     const dataWasImported = !!delta.imported;
+    console.log(Date.now(), "ONDELTA", { schemaChanged, needToRecalculateCounts, dataWasImported }, this.props.prgl.dbKey, this.loadingSchema?.dbKey)
     if(
       workspace && 
       (schemaChanged || needToRecalculateCounts || dataWasImported)

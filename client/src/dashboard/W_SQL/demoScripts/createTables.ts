@@ -31,6 +31,7 @@ export const createTables: DemoScript = async ({ fromBeginning, typeAuto, runDbS
     }
 
     goToNextLine();
+    console.log(Date.now(), "Created table: ", tableName);
     await runSQL();
     await tout(1000);
   }
