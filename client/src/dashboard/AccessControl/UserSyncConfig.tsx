@@ -69,7 +69,7 @@ export const UserSyncConfig = ({ databaseId, dbs, dbsTables, tables, db, dbKey, 
       contentTop={<p className="ta-left m-0 p-0">
         {title}
       </p>}
-      suggestions={{  dbKey, connectionId, onRenew: 1 as any, ...suggestions }}
+      suggestions={{  dbKey, connectionId, onRenew: ()=>{}, ...suggestions }}
       onSuccess={() => {
         setLocalState(undefined);
         dbs.database_configs.update({ id: databaseId }, { sync_users: true });
