@@ -10,7 +10,7 @@ export type GetTableExpressionSuggestionsArgs = Pick<SQLMatchContext, "ss" | "sq
   parentCb?: SQLMatchContext["cb"];
 }
 
-export const getTableExpressionSuggestions = async (args: GetTableExpressionSuggestionsArgs, require: "table" | "columns"): Promise<{ 
+export const getTableExpressionSuggestions = async (args: GetTableExpressionSuggestionsArgs, require: "table" | "columns", onlyCurrentBlock = false): Promise<{ 
   columns: ParsedSQLSuggestion[]; 
   tables: ParsedSQLSuggestion[];
   tablesWithAliasInfo: (TabularExpression & {
@@ -22,7 +22,7 @@ export const getTableExpressionSuggestions = async (args: GetTableExpressionSugg
 }> => {
   const isWith = args.cb.ftoken?.textLC === "with";
   const cannotSuggestTableSubqueries = isWith && require === "table" && args.cb.ltoken?.textLC === "join";
-  let expressions = getTabularExpressions(args, require).filter(e => {
+  let expressions = getTabularExpressions(args, require, onlyCurrentBlock).filter(e => {
     /** Cannot join to aliased subqueries */
     if(cannotSuggestTableSubqueries){
       return e.kwd === "as" || e.type === "tableOrView";

@@ -69,6 +69,7 @@ type LinkedData = {
     }[];
 } & (LinkedDataChart | LinkedDataTable);
 type TableWindowInsertModel = {
+    id: string;
     type: "table";
     table_name: string;
     columns?: {
@@ -81,9 +82,21 @@ type TableWindowInsertModel = {
          */
         width: number;
         /**
-         * Show linked data from other tables
+         * Render column value in a chip
+         * Cannot be used with nested
          */
-        nested: LinkedData;
+        styling?: {
+            type: "conditional";
+            conditions: {
+                chipColor: "red" | "pink" | "purple" | "blue" | "indigo" | "green" | "yellow" | "gray";
+                operator: "=" | "!=" | ">" | "<" | ">=" | "<=";
+                value: string;
+            }[];
+        };
+        /**
+         * Show linked data from other tables that are linked to this column through foreign keys
+         */
+        nested?: LinkedData;
     }[];
     filter?: ({
         /**
@@ -113,6 +126,7 @@ type TableWindowInsertModel = {
  * Shows GEOGRAPHY/GEOMETRY data on a map
  */
 type MapWindowInsertModel = {
+    id: string;
     type: "map";
     table_name: string;
     /**
@@ -124,6 +138,8 @@ type MapWindowInsertModel = {
  * Allows user to write and excute custom SQL queries with results displayed in a table
  */
 type SqlWindowInsertModel = {
+    id: string;
+    name: string;
     type: "sql";
     sql: string;
 };
@@ -131,6 +147,7 @@ type SqlWindowInsertModel = {
  * Shows a time chart
  */
 type TimechartWindowInsertModel = {
+    id: string;
     type: "timechart";
     table_name: string;
     date_column: string;
@@ -145,4 +162,5 @@ export type WorkspaceInsertModel = {
     layout: LayoutGroup;
     windows: WindowInsertModel[];
 };
+export declare const justToCompile = 1;
 export {};

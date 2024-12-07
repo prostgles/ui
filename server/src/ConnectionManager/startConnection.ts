@@ -74,7 +74,7 @@ export const startConnection = async function (
         return socket_path;
       }
     }
-    log("creating prgl", Object.keys(prglInstance || {}))
+    log("creating prgl", con.db_name);
     this.prglConnections[con.id] = {
       socket_path,
       con,
@@ -194,7 +194,7 @@ export const startConnection = async function (
           }
 
           alertIfReferencedFileColumnsRemoved.bind(this)({ reason, tables, connId: con.id, db: _db });
-          console.log("onReady connection", Object.keys(db));
+          console.log("onReady connection", connectionInfo.database, Object.keys(db));
 
           /**
            * In some cases watchSchema does not work as expected (GRANT/REVOKE will not be observable to a less privileged db user)

@@ -8,6 +8,7 @@ import { isDefined } from "../../commonTypes/filterUtils";
 import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { getPasswordHash } from "./authConfig/authUtils";
 import { fetchLLMResponse } from "./publishMethods/askLLM/askLLM";
+import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
 
 export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise<Publish<DBSchemaGenerated>> => {
         
@@ -131,7 +132,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
     },
     llm_credentials: {
       select: {
-        fields: isAdmin? "*" : { id: 1, name: 1 },
+        fields: isAdmin? "*" : { id: 1, name: 1, is_default: 1 },
         forcedFilter: isAdmin? undefined : forcedFilterLLM
       },
       delete: isAdmin && "*",
@@ -153,7 +154,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
       },
     },
     llm_prompts: {
-      select: isAdmin? "*" : { 
+      select: isAdmin? "*" : {
         fields: { id: 1, name: 1 },
         forcedFilter: forcedFilterLLM 
       },
@@ -281,7 +282,7 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
       }
     } : {
       select: {
-        fields: { id: 1, username: 1, type: 1, options: 1, created: 1 },
+        fields: { id: 1, username: 1, name: 1, email: 1, auth_provider: 1, type: 1, options: 1, created: 1 },
         forcedFilter: { id: user_id }
       },
       update: {
@@ -336,6 +337,8 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
           login_rate_limit_enabled: 1,
           pass_process_env_vars_to_server_side_functions: 1,
           enable_logs: 1,
+          auth_providers: 1,
+          prostgles_registration: 1,
         },
         postValidate: async ({ row, dbx: dbsTX }) => {
           if(!row.allowed_ips.length){
@@ -355,6 +358,15 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
             const { isAllowed, ip } = await connectionChecker.checkClientIP({ socket, dbsTX });
             if(!isAllowed) throw `Cannot update to a rule that will block your current IP.  \n Must allow ${ip} within Allowed IPs`
           }
+
+          const { email } = row.auth_providers ?? {};
+          if(email?.enabled){
+            const emailSmtpConfig = email.signupType === "withMagicLink"? email.emailMagicLink : email.emailConfirmation;
+            if(emailSmtpConfig){
+              await verifySMTPConfig(emailSmtpConfig);
+            }
+          }
+
           return undefined;
         }
       }
@@ -362,8 +374,10 @@ export const publish = async (params: PublishParams<DBSchemaGenerated>): Promise
   }
 
   const curTables = Object.keys(dashboardTables);
-  // @ts-ignore
-  const remainingTables = getKeys(db).filter(k => db[k]?.find).filter(t => !curTables.includes(t));
+  const remainingTables = getKeys(db).filter(k => {
+    const tableHandler = db[k];
+    return tableHandler && "find" in tableHandler && !curTables.includes(k);
+  });
   const adminExtra = remainingTables.reduce((a, v) => ({ ...a, [v]: "*" }), {});
   dashboardTables = {
     ...(dashboardTables as object),

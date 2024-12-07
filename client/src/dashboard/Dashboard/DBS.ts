@@ -10,6 +10,7 @@ import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 
 export type DBSMethods = Partial<{
   sendFeedback: (feedback: { details: string; email?: string }) => Promise<void>;
+  prostglesSignup: (email: string) => Promise<{ token: string; hasError?: boolean; error: any }>
   askLLM: (query: string, schema: string, chatId: number) => Promise<AnyObject>;
   pgDump: (conId: string, credId: number | null | undefined, dumpParams: PGDumpParams) => Promise<void>;
   pgRestore: (arg1: { bkpId: string; connId?: string }, opts: Backups["restore_options"]) => Promise<void>;
@@ -66,6 +67,17 @@ export type DBSMethods = Partial<{
   changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
 }>;
 
+const AdminTableNames = [
+  "connections",
+  "global_settings",
+] as const
+
 export type DBS = DBHandlerClient<DBSchemaGenerated> & {
   sql: DBHandlerClient["sql"];
+};
+
+type AsOptional<T, Keys extends keyof Partial<T> & string> = Omit<T, Keys> & {
+  [K in Keys]?: Partial<T[K]>;
 }
+
+export type DbsByUserType = AsOptional<DBS, typeof AdminTableNames[number]>;

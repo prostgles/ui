@@ -2,13 +2,18 @@ import { useEffect, useState } from "react";
 import type { AppState, Theme} from "./App";
 import { appTheme } from "./App";
 
+const THEMES = ["light", "dark", "from-system"] as const;
+const THEME_SETTING_NAME = "theme" as const;
+
 export const useAppTheme = (state: Omit<AppState, "title" | "isConnected">) => {
 
   const user = state.prglState?.user ?? state.prglState?.auth.user;
-  const userThemeOption = user?.options?.theme ?? "from-system";
+  const userThemeOption = user?.options?.theme as typeof THEMES[number] | undefined;
   const userTheme = getTheme(userThemeOption);
   const [theme, setTheme] = useState(userTheme);
   useEffect(() => {
+    /** We persist the theme to localSettings to ensure theme persists after logging out */
+    localStorage.setItem(THEME_SETTING_NAME, theme)
     appTheme.set(theme);
   }, [theme]);
 
@@ -37,13 +42,19 @@ export const useAppTheme = (state: Omit<AppState, "title" | "isConnected">) => {
     }
   }, [theme, state.serverState]);
 
-  return { theme, userThemeOption };
+  return { theme, userThemeOption: userThemeOption ?? "from-system" };
 }
 
 /**
  * Returns the correct theme based on the user's preference and the system
  */
-const getTheme = (desired: Theme | "from-system" = "from-system" ): Theme => {
+const getTheme = (_desired: Theme | "from-system" | undefined): Theme => {
+  let savedTheme = _desired;
+  if(!_desired){
+    const savedThemeSetting = localStorage.getItem(THEME_SETTING_NAME);
+    savedTheme = THEMES.find(t => t === savedThemeSetting);
+  }
+  const desired = savedTheme ?? "from-system";
   if(desired !== "from-system") return desired;
   return window.matchMedia("(prefers-color-scheme: dark)").matches? "dark" : "light";
 }

@@ -266,15 +266,19 @@ export type DBSchemaGenerated = {
       allowed_ips?: string[];
       allowed_ips_enabled?: boolean;
       allowed_origin?: null | string;
+      auth_providers?: null | {    website_url: string;   created_user_type?: string;   email?: |  {  signupType: 'withMagicLink';  enabled?: boolean;  emailMagicLink: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  smtp?: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate?: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; }
+ |  {  signupType: 'withPassword';  enabled?: boolean;  minPasswordLength?: number;  emailConfirmation?: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  smtp?: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate?: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; };   google?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("profile" | "email" | "calendar" | "calendar.readonly" | "calendar.events" | "calendar.events.readonly")[]; }; };   github?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("read:user" | "user:email")[]; }; };   microsoft?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  prompt: 'login' | 'none' | 'consent' | 'select_account' | 'create';  scope: ("openid" | "profile" | "email" | "offline_access" | "User.Read" | "User.ReadBasic.All" | "User.Read.All")[]; }; };   facebook?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("email" | "public_profile" | "user_birthday" | "user_friends" | "user_gender" | "user_hometown")[]; }; };  };
       enable_logs?: boolean;
       id?: number;
       login_rate_limit?: {    maxAttemptsPerHour: number;   groupBy: 'x-real-ip' | 'remote_ip' | 'ip';  };
       login_rate_limit_enabled?: boolean;
       magic_link_validity_days?: number;
       pass_process_env_vars_to_server_side_functions?: boolean;
+      prostgles_registration?: null | {    enabled: boolean;   email: string;   token: string;  };
       session_max_age_days?: number;
       tableConfig?: null | any;
       trust_proxy?: boolean;
+      updated_at?: string;
       updated_by?: "user" | "app"
     };
   };
@@ -329,9 +333,11 @@ export type DBSchemaGenerated = {
        |  {  Provider: 'OpenAI';  API_Key: string;  model: string;  temperature?: number;  frequency_penalty?: number;  max_completion_tokens?: number;  presence_penalty?: number;  response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt'; }
        |  {  Provider: 'Anthropic';  API_Key: string;  "anthropic-version": string;  model: string;  max_tokens: number; }
        |  {  Provider: 'Custom';  headers?: Record<string, string>;  body?: Record<string, string>; }
+       |  {  Provider: 'Prostgles'; }
       created?: null | string;
       endpoint?: string;
       id?: number;
+      is_default?: null | boolean;
       name?: string;
       result_path?: null | string[];
       user_id: string;
@@ -363,7 +369,7 @@ export type DBSchemaGenerated = {
       id?: number;
       name?: string;
       prompt: string;
-      user_id: string;
+      user_id?: null | string;
     };
   };
   login_attempts: {
@@ -373,19 +379,20 @@ export type DBSchemaGenerated = {
     update: true;
     delete: true;
     columns: {
-      auth_type: "session-id" | "magic-link" | "login"
+      auth_provider?: null | string;
+      auth_type: "session-id" | "magic-link" | "login" | "provider"
       created?: null | string;
       failed?: null | boolean;
       id?: string;
       info?: null | string;
       ip_address: string;
-      ip_address_remote?: null | string;
+      ip_address_remote: string;
       magic_link_id?: null | string;
       sid?: null | string;
       type?: "web" | "api_token" | "mobile"
-      user_agent?: null | string;
+      user_agent: string;
       username?: null | string;
-      x_real_ip?: null | string;
+      x_real_ip: string;
     };
   };
   logs: {
@@ -555,10 +562,15 @@ export type DBSchemaGenerated = {
     delete: true;
     columns: {
       "2fa"?: null | {    secret: string;   recoveryCode: string;   enabled: boolean;  };
+      auth_provider?: null | string;
+      auth_provider_profile?: null | any;
+      auth_provider_user_id?: null | string;
       created?: null | string;
+      email?: null | string;
       has_2fa_enabled?: null | boolean;
       id?: string;
       last_updated?: null | string;
+      name?: null | string;
       options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: 'dark' | 'light' | 'from-system';  };
       password?: string;
       passwordless_admin?: null | boolean;

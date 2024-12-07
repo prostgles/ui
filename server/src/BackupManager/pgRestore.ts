@@ -127,7 +127,6 @@ export async function pgRestore(this: BackupManager, arg1: { bkpId: string; conn
       ENV_VARS, 
       bkpStream, 
       err => {
-        console.log(1, { err })
         if(err){
           console.error("pipeToCommand ERR:", err);
           bkpStream.destroy();
@@ -138,7 +137,6 @@ export async function pgRestore(this: BackupManager, arg1: { bkpId: string; conn
         }
       }, 
       async ({ chunk: _restore_logs }, isStdErr) => {
-        console.log(2, { isStdErr, _restore_logs })
         /** Full logs are always provided */
         if(!isStdErr) return;
         const currBkp = await this.dbs.backups.findOne({ id: bkpId });

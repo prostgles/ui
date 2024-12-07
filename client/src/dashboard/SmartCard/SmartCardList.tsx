@@ -18,7 +18,7 @@ import { Pagination } from "../../components/Table/Pagination";
 import type { Prgl } from "../../App";
 import { getSmartCardColumns } from "./getSmartCardColumns";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
-import { FlexCol } from "../../components/Flex";
+import { classOverride, FlexCol } from "../../components/Flex";
 
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<Prgl, "db" | "tables" | "methods" | "theme"> & {
@@ -342,7 +342,8 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<SmartCard
       </>}
     </div> : null;
 
-    return <FlexCol className={"SmartCardList o-auto p-p25 gap-p5 relative " + className} 
+    return <FlexCol 
+      className={classOverride("SmartCardList o-auto gap-p5 relative ", className)} 
       data-command="SmartCardList"
       style={{
         ...style,

@@ -1,3 +1,6 @@
+import { logOutgoingHttpRequests } from "./logOutgoingHttpRequests";
+logOutgoingHttpRequests(false);
+
 import cookieParser from "cookie-parser";
 import type { NextFunction, Request, Response } from "express";
 import express, { json, urlencoded } from "express";
@@ -31,17 +34,8 @@ if(isTesting){
     });
     next();
   });
-  
-  /** Mock LLM API */
-  app.post("/mocked-llm", (req, res) => {
-    const { path, method, body } = req;
-    console.log(`LLM API: ${method} ${path} ${JSON.stringify(body)}`);
-    res.json({
-      choices: [{ message: { content: "Mocked response" } }]
-    });
-  });
 }
-     
+
 export const API_PATH = "/api";
 
 app.use(json({ limit: "100mb" }));

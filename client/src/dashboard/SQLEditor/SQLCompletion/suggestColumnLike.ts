@@ -8,7 +8,7 @@ type Args = Pick<SQLMatcherResultArgs, "cb" | "ss" | "parentCb" | "setS" | "sql"
 export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, withFuncArgs = true): Promise<{
   suggestions: ParsedSQLSuggestion[];
 }> => {
-  const { prevIdentifiers , ltoken, nextTokens } = cb;
+  const { prevIdentifiers, currToken, ltoken, nextTokens } = cb;
   const addTable = ltoken?.textLC === "select" && (!nextTokens.some(t => t.textLC === "from" || t.text === "FROM ") || nextTokens[0]?.text === ")");
   const addTableInline = nextTokens[0]?.text === ")";
 
@@ -16,17 +16,31 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
     const funcArgs = await suggestFuncArgs({ cb, ss, parentCb, setS, sql });
     if(funcArgs) return funcArgs;
   }
-  const expressions = await getTableExpressionSuggestions({ parentCb, cb, ss, sql }, "columns");
-  const dotPrefix = !cb.currToken? undefined : cb.currToken.text === "."? cb.ltoken?.text : cb.currToken.text.split(".")[0]!;
-  const activeAliasTable = !dotPrefix? undefined : expressions.tablesWithAliasInfo.find(t => t.alias === dotPrefix);
+
+  /**
+   * If cannot addTable AND is a cte expression then only suggest columns that are already in the expression
+   */
+  const onlyColumnsFromExpression = !addTable && cb.currNestingFunc?.textLC === "as" && cb.currNestingFunc.nestingId.length === 0 && parentCb?.ftoken?.textLC === "with";
+  const expression = await getTableExpressionSuggestions({ parentCb, cb, ss, sql }, "columns", onlyColumnsFromExpression);
+  const expressionTables = expression?.tablesWithAliasInfo;//.filter(c => c.endOffset < cb.currOffset)
+  const expressionColumns = expression?.columnsWithAliasInfo
+    // .filter(c => c.endOffset < cb.currOffset)
+    .flatMap(c => c.s);
+
+  // const expressionColumns = columnsWithAliasInfo.filter(c => c.endOffset < cb.currOffset).flatMap(c => c.s);
+  // const expressionTables = tablesWithAliasInfo.filter(c => c.endOffset < cb.currOffset).flatMap(c => c.s);
+  const dotPrefix = !currToken? undefined : currToken.text === "."? ltoken?.text : currToken.text.includes(".")? currToken.text.split(".")[0] : undefined;
+  const activeAliasTable = !dotPrefix? undefined : expressionTables.find(t => t.alias === dotPrefix);
   if(activeAliasTable){
-    const tableAliasCols = expressions.columns.filter(c => c.escapedParentName === activeAliasTable.s.escapedIdentifier)
+    const tableAliasCols = expressionColumns.filter(c => c.escapedParentName === activeAliasTable.s.escapedIdentifier)
       .map(c => {
         if(!cb.currToken) return c;
-        const insertText = c.insertText?.startsWith(cb.currToken.text)? (c.escapedIdentifier ?? c.name) : c.insertText;
+        /**
+         * Must ensure we don't add alias if it's already there
+         */
         return { 
           ...c, 
-          insertText,
+          insertText: c.escapedIdentifier ?? c.name,
         }
       });
     return { suggestions: tableAliasCols }
@@ -36,9 +50,9 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
   const activeSchema = !maybeWrittingSchema? undefined : ss.find(s => s.type === "schema" && s.escapedIdentifier === maybeWrittingSchema);
 
   /** Allow all other columns only if can add tablename to end */
-  const otherColumns = ss.filter(s => {
+  const otherColumns = !addTable?  [] : ss.filter(s => {
     if(s.type !== "column") return false;
-    return !addTable? false : !expressions.tables.some(t => t.escapedIdentifier === s.escapedParentName);
+    return !expressionColumns.some(t => t.escapedIdentifier === s.escapedParentName);
   });
  
   const funcs = ss.filter(s => {
@@ -46,7 +60,7 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
   });
 
   const colAndFuncSuggestions = ([
-    ...expressions.columns.map(s => ({ isPrioritised: true, s })), 
+    ...expressionColumns.map(s => ({ isPrioritised: true, s })), 
     ...otherColumns.map(s => ({ isPrioritised: false, s })),
     /**
      * This is now handled by fixMonacoSortFilter
@@ -62,7 +76,7 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
 
     const prioritiseColumn =
         s.type === "column" && 
-        expressions.tables.some(t => t.escapedIdentifier === s.escapedParentName) && 
+        expressionColumns.some(t => t.escapedIdentifier === s.escapedParentName) && 
         !prevIdentifiers.some(pi => pi.text === s.name)
       ;
 
@@ -77,7 +91,11 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
       const delimiter = addTableInline? " " : "\n";
       return {
         ...s,
-        insertText: activeAliasTable? (s.escapedIdentifier ?? s.name) : s.insertText.trim(),
+        /**
+         * Prevent adding another alias
+         * Some dead table (no activeAliasTable) aliases are ignored and a repeating alias is added
+         */
+        insertText: dotPrefix? (s.escapedIdentifier ?? s.name) : s.insertText.trim(),
         sortText,
         ...(addTable && {
           insertTextRules: 4,
@@ -86,7 +104,7 @@ export const suggestColumnLike = async ({ cb, parentCb, ss, setS, sql }: Args, w
         })
       }
     }
-      
+
     return {
       ...s,
       ...(s.type === "function" && s.insertText && activeSchema && {

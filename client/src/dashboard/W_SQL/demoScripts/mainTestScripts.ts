@@ -7,6 +7,45 @@ export const mainTestScripts: DemoScript = async ({ testResult, fromBeginning, t
   const testEditorValue = (key: keyof typeof SQL_TESTING_SCRIPTS | undefined, expectedValue?: string) => testResult(expectedValue ?? SQL_TESTING_SCRIPTS[key!]);
 
   /**
+   * Multiple cte
+   */
+  const multipleCtes = fixIndent(`
+    WITH cte1 AS (
+      SELECT *
+      FROM users
+    ), cte2 AS (
+      SELECT *
+      FROM orders
+    )
+    SELECT * 
+    FROM`
+  );
+  fromBeginning(false, multipleCtes);
+  await typeAuto(" c2");
+  testResult(multipleCtes + " cte2");
+
+  fromBeginning(false, multipleCtes);
+  await moveCursor.up(3);
+  await moveCursor.lineEnd();
+  await typeAuto("\nw");
+  await typeAuto(" i");
+  await tout(500);
+  testResult(multipleCtes.replace("FROM orders", "FROM orders\n  WHERE id"));
+
+  /** Cte joins */
+  fromBeginning(false, multipleCtes);
+  await typeAuto(" c2");
+  await typeAuto(" c", { nth: -1 });
+  await typeAuto("\nj");
+  await typeAuto(" c1");
+  await typeAuto(" c1", { nth: -1 });
+  await typeAuto("\no");
+  await typeAuto(" ui");
+  await typeAuto(" ");
+  await typeAuto(" c1.i");
+  testResult(multipleCtes + ` cte2 c\nJOIN cte1 c1\nON c.user_id = c1.id`);
+
+  /**
    * from subquery
    */
   const script = fixIndent(`

@@ -75,7 +75,6 @@ export type FormFieldProps = TestSelectors & {
   title?: string;
   multiSelect?: boolean;
   labelAsValue?: boolean;
-  onSearchOptions?: (term: string) => Promise<string[]>;
   onSuggest?: (term?: string) => Promise<string[]>;
   name?: string;
   inputProps?:  React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>;
@@ -141,19 +140,10 @@ export default class FormField extends React.Component<FormFieldProps, FormField
     }
   }
 
-  searchOptions = (term: string) => {
-    if(this.props.onSearchOptions){
-      this.props.onSearchOptions(term).then(options => {
-        this.setState({ options })
-      });
-    }
-  }
-
   mounted = false;
   componentDidMount(){
     this.mounted = true;
     this.setResizer();
-    // this.searchOptions();
   }
   
   componentWillUnmount(){
@@ -278,7 +268,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
     this.id ??= this.props.id ?? generateUniqueID();
     const id = this.id;
 
-    const inputContent = this.props.inputContent ?? (arrayType? <ChipArrayEditor 
+    const arrayEditor = (arrayType? <ChipArrayEditor 
       elemTsType={arrayType.tsDataType}
       elemUdtName={arrayType.udt_name}
       inputType={SmartFormField.getInputType({ 
@@ -289,7 +279,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
       onChange={onChange as any} 
     /> : null);
     
-    const readOnly = this.props.readOnly ?? false;// || !!disabledInfo;
+    const readOnly = this.props.readOnly ?? false; 
 
     const { suggestions, activeSuggestionIdx = 0, numLockAlert } = this.state;
     const rawValue = [rval, defaultValue, value].find(v => v !== undefined);
@@ -297,9 +287,6 @@ export default class FormField extends React.Component<FormFieldProps, FormField
     let wrapperStyle: React.CSSProperties = (options)? {
       width: "fit-content",
       minWidth: 0,
-      // padding: "1px",
-      // border: "1px solid var(--gray-500)",
-
     } : {};
 
     const disablePressStyle: React.CSSProperties = { pointerEvents: "none", touchAction: "none" };
@@ -309,14 +296,13 @@ export default class FormField extends React.Component<FormFieldProps, FormField
     }
 
     let valProp: any = {
-      value: [undefined, null].includes(value)? "" : value
-      // defaultValue: value
+      value: [undefined, null].includes(value)? "" : value 
     }
 
     if(readOnly) valProp = { value }
     if(defaultValue) valProp = { defaultValue }
 
-    let inptClass = " font-semibold ";// "shadow-sm text-ellipsis ";
+    let inptClass = " font-semibold "; 
     if(type !== "checkbox"){
       wrapperStyle = {
         ...wrapperStyle,
@@ -338,7 +324,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
       };
       wrapperStyle = { ...wrapperStyle, minWidth: 0, width: "fit-content", border: "none", overflow: "visible" };
     }
-    if(asTextArea || inputContent){
+    if(asTextArea || arrayEditor){
       wrapperStyle = { ...wrapperStyle, border: "none", overflow: "visible" }
     }
 
@@ -422,11 +408,17 @@ export default class FormField extends React.Component<FormFieldProps, FormField
     }
 
     const inputFinalStyle = {
-      ...(inputProps.type !== "file"? { padding: window.isMobileDevice? "2px 6px" : ".5em .5em 4px .5em" } : { paddingBottom: "4px" }),  
+      ...(inputProps.type !== "file"? { 
+        padding: window.isMobileDevice? "8px 6px 2px 6px" : ".5em .5em 4px .5em" 
+      } : { 
+        paddingBottom: "4px" 
+      }),  
       minHeight: window.isLowWidthScreen? "36px" : "42px", 
       ...inputProps.style,
       ...(rval === null && { fontStyle: "italic" })
     }
+
+    const inputContent = arrayEditor || this.props.inputContent;
     
     const inputNode = inputContent? inputContent : 
       asJSON? <CodeEditor 
@@ -470,7 +462,7 @@ export default class FormField extends React.Component<FormFieldProps, FormField
       readOnly? <div className="pr-p5 py-p5 font-16 ta-left o-auto" style={{ fontWeight: 500, maxHeight: "30vh" }}>
         {SmartFormField.renderValue(undefined, rawValue)}
       </div> :
-      asTextArea? <textarea {...inputProps as any } className={classOverride(inputProps.className ?? "", "bg-color-1 text-0")} style={textareaStyle} /> : 
+      asTextArea? <textarea {...inputProps as any } className={classOverride(inputProps.className ?? "", " text-0")} style={textareaStyle} /> : 
       <input 
         {...inputProps} 
         { ...( rval === null && { placeholder: "NULL" })}
@@ -499,7 +491,13 @@ export default class FormField extends React.Component<FormFieldProps, FormField
         rightIcons2 = (
           <Btn 
             data-command="FormField.clear"
-            style={{ height: "100%" }}
+            title="Set to null"
+            size="micro"
+            style={{ 
+              /** To ensure it's centered with the rest of the content */
+              height: "100%", 
+              // background: "var(--input-bg-color)",
+            }}
             iconPath={mdiClose}
             onClick={e => {
               onChange(optional? undefined : null, e);
@@ -556,7 +554,6 @@ export default class FormField extends React.Component<FormFieldProps, FormField
               style={{ 
                 flex: 0.5, 
                 justifyContent: "space-between",
-                ...((readOnly) && disablePressStyle),
                 ...labelStyle 
               }}
             >
@@ -579,7 +576,9 @@ export default class FormField extends React.Component<FormFieldProps, FormField
                 maxWidth: "100%"
               }}
             >
-              <div className={INPUT_WRAPPER_CLASS + (type === "checkbox"? " ai-center " : "") + ((inputContent || type === "checkbox")? " " : " focus-border  ") + 
+              <div className={INPUT_WRAPPER_CLASS + 
+                  (type === "checkbox"? " ai-center " : "") + 
+                  ((type === "checkbox")? " " : " focus-border  ") + 
                   " h-fit flex-row relative  f-0 " + 
                   ((options || fullOptions)? "w-fit" : "w-full") + 
                   (error? " error " : "")
@@ -589,6 +588,9 @@ export default class FormField extends React.Component<FormFieldProps, FormField
                 }}
                 style={{  
                   ...wrapperStyle, 
+                  ...(type !== "checkbox" && {
+                    backgroundColor: "var(--input-bg-color)", 
+                  }),
                   maxWidth: asTextArea? "100%" : maxWidth , 
                   ...(asJSON && { minHeight: "42px" }),
                   ...(readOnly && !asJSON && { border: "unset", boxShadow: "unset" }),
@@ -606,7 +608,6 @@ export default class FormField extends React.Component<FormFieldProps, FormField
                     data-command={this.props["data-command"]}
                     variant="div"
                     fullOptions={(options?.map(key => ({ key }))) ?? fullOptions ?? []}
-                    onSearch={!this.props.onSearchOptions? undefined : (term) => this.searchOptions(term)} 
                     onChange={!onChange? undefined : (val) => { onChange(val) }} 
                     value={rawValue} 
                     required={required}
@@ -634,10 +635,14 @@ export default class FormField extends React.Component<FormFieldProps, FormField
                 }
                 
                 {Boolean(rightIcons1 || rightIcons2) && 
-                  <div className={`RightIcons bg-color-0 ${rightContentAlwaysShow? "" : "show-on-trigger-hover"} flex-row ai-start jc-center ` + 
+                  <div className={`RightIcons ${rightContentAlwaysShow? "" : "show-on-trigger-hover"} flex-row ai-start jc-center ` + 
                       ((type !== "checkbox" && !asTextArea && !inputContent)? "  bl b-color "  :" ") 
                     }
-                    style={{ right: "2px", top: 0, bottom: 0 }}
+                    style={{ 
+                      right: "2px", 
+                      top: 0, 
+                      bottom: 0,
+                    }}
                   >
                     {rightIcons1}
                     {rightIcons2}
@@ -658,7 +663,14 @@ export default class FormField extends React.Component<FormFieldProps, FormField
                 
               </div>}
             </div>
-            {!rightContent? null : <div className={`RightContent  ${rightContentAlwaysShow? "" : "show-on-trigger-hover"} f-0 as-start `} style={{ alignSelf: "start" }}>{rightContent}</div>}
+            {!rightContent? null : 
+              <div 
+                className={`RightContent  ${rightContentAlwaysShow? "" : "show-on-trigger-hover"} f-0 `} 
+                style={{ alignSelf: "start" }}
+              >
+                {rightContent}
+              </div>
+            }
           </div>
           {hint && 
             <p className="ta-left text-2 m-0 text-sm noselect ws-pre-line" 

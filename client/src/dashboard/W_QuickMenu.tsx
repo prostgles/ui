@@ -64,10 +64,14 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
         data-command="dashboard.window.toggleFilterBar"
         size="small"
         iconPath={mdiFilter}
-        color={w.filter.some(f => !f.disabled ||
+        color={w.filter.some(f => 
+          !f.disabled ||
           f.type === "not null" || 
           f.type === "null" || 
-          (isJoinedFilter(f)? f.filter.value !== undefined : f.value !== undefined)
+          (isJoinedFilter(f)? 
+            f.filter.value !== undefined : 
+            f.value !== undefined
+          )
         ) ? "action" : undefined} 
         onClick={async e => {
           const _w: SyncDataItem<WindowData<"table">, true> = w as any;

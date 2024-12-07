@@ -42,7 +42,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
         to={"/account"} 
       >
         <Icon className="f-0" path={iconPath} size={1} />
-        <div className="f-1 min-w-0 text-ellipsis ws-no-wrap">{user.username || "??"}</div>
+        <div className="f-1 min-w-0 text-ellipsis ws-no-wrap">{user.name || user.username || "??"}</div>
         
       </NavLink>
       

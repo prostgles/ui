@@ -120,9 +120,8 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
   
   return <div 
     className={`flex-col f-1 min-s-0 ${className}`} 
-    style={{ 
-      background: "var(--gray-800)", ...style
-    }}>
+    style={style}
+  >
     <TopControls
       location="config"
       prgl={props.prgl}

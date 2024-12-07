@@ -1,9 +1,8 @@
-import { useProstglesClient } from "prostgles-client/dist/prostgles";
+import { useProstglesClient, type UseProstglesClientProps } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import type { PrglProject, PrglState } from "../../App";
 import { getTables } from "../../dashboard/Dashboard/Dashboard";
 import { prgl_R } from "../../WithPrgl";
-
 
 type PrglProjectState = {
   prglProject?: undefined;
@@ -32,6 +31,12 @@ type P = {
   prglState: PrglState;
 };
 
+const onDebug: UseProstglesClientProps["onDebug"] = (ev) => {
+  if(ev.type === "schemaChanged" || ev.type === "onReady" || ev.type === "onReady.notMounted" || ev.type === "onReady.call"){
+    console.log(Date.now(), "onDebug", ev.type, Object.keys(ev.type === "schemaChanged"? ev.data.schema : ev.data.dbo));
+  }
+};
+
 export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
   const { dbsMethods: { startConnection } } = prglState;
   const connectionTableHandler = prglState.dbs.connections;
@@ -48,6 +53,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
     }
   }, [startConnection, connId, connectionTableHandler]);
 
+
   const dbPrgl = useProstglesClient({
     socketOptions: {
       path: pathAndCon?.path,
@@ -55,6 +61,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
       reconnectionDelay: 1000,
       reconnection: true
     },
+    onDebug,
     skip: !pathAndCon?.path,
   });
 
@@ -118,5 +125,6 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
       return { error, state: "error" } as const;
     }
   }, [prglState, dbPrgl, pathAndCon, connection]);
+  console.log(dashboardDbState?.state, dashboardDbState?.state === "loaded"? Object.keys(dashboardDbState.prglProject.db) : null);
   return dashboardDbState ?? { state: "loading" };
 }

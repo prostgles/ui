@@ -108,7 +108,8 @@ export const ConnectionConfigBtn = ({ user, connection, location }: ConnectionCo
   if(!isAdmin) return null;
   const isOnWorkspace = location === "workspace"
   return <div className="h-full flex-col gap-p25 ai-start ">
-    <Btn title={isOnWorkspace? "Configure database connection" : "Go back to connection workspace"}  
+    <Btn 
+      title={isOnWorkspace? "Configure database connection" : "Go back to connection workspace"}  
       { ...dataCommand("dashboard.goToConnConfig") }
       variant="faded"
       color={isOnWorkspace? undefined : "action"}

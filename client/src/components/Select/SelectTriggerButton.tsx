@@ -58,11 +58,9 @@ export const SelectTriggerButton = <O extends OptionKey, Multi extends boolean =
     style={{ 
       borderRadius: "6px",  
       position: "relative",  
-      // width: label? "auto" : "fit-content",
-      minHeight: "32px",
-      
-      // Why??
-      // opacity: 1,
+      /* Ensure the dropdown end icon is aligned with end when no value is selected */
+      justifyContent: "space-between", 
+      minHeight: "32px", 
       
       ...selectStyle,
       ...fixedBtnWidth && { width: `${fixedBtnWidth}px`}
@@ -113,7 +111,7 @@ export const SelectTriggerButton = <O extends OptionKey, Multi extends boolean =
           className={" text-ellipsis " + (value !== undefined? "text-color-0" : "text-color-1")} 
           style={{ lineHeight: "18px"}}
         >
-          {(!labelAsValue? btnLabel : SmartFormField.renderValue(undefined, btnLabel, !noOtherOption)) ?? emptyLabel}
+          {(!labelAsValue? btnLabel : SmartFormField.renderValue(undefined, btnLabel, !noOtherOption, 150)) ?? emptyLabel}
         </div>
       </>
     }

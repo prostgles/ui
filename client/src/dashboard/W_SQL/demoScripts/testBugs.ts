@@ -1,4 +1,4 @@
-import { click, getElement, waitForElement } from "../../../demo/demoUtils";
+import { click, waitForElement } from "../../../demo/demoUtils";
 import { fixIndent } from "../../../demo/sqlVideoDemo";
 import { tout } from "../../../pages/ElectronSetup";
 import type { DemoScript } from "../getDemoUtils";
@@ -6,6 +6,59 @@ import { testSqlCharts } from "./testSqlCharts";
 
 export const testBugs: DemoScript = async (args) => {
   const { typeAuto, fromBeginning, testResult, getEditor, moveCursor, newLine, triggerSuggest, acceptSelectedSuggestion, actions, runDbSQL, runSQL } = args;
+
+  const selectSubSelectBug = fixIndent(`
+    select
+      t.relname as table_name,
+      (SELECT FROM  i.relnamespace),
+    from
+      pg_class t,
+      pg_class i,
+      pg_index ix,
+      pg_attribute a
+    where
+      t.oid = ix.indrelid
+  `);
+  fromBeginning(false, selectSubSelectBug);
+  await moveCursor.pageUp();
+  await moveCursor.down(2);
+  await moveCursor.right(15);
+  await typeAuto(`pna`);
+  await testResult(selectSubSelectBug.replace("SELECT FROM  ", "SELECT FROM pg_catalog.pg_namespace "));
+
+
+  /** Comma cross join + table alias repeating bug */
+  const crossJoinQuery = fixIndent(`
+    select *
+    from
+      pg_class t,
+      pg_class i,
+      pg_index ix,
+      pg_attribute a
+    where
+      t.oid = ix.indrelid
+      and t.relkind = 'r'
+      and ix.
+  `);
+  fromBeginning(false, crossJoinQuery);
+  await moveCursor.pageDown();
+  await moveCursor.lineEnd();
+  await typeAuto(`uni`);
+  await testResult(crossJoinQuery + "indisunique");
+
+  fromBeginning(false, crossJoinQuery+"uni");
+  await moveCursor.pageDown();
+  await moveCursor.lineEnd();
+  await typeAuto(``);
+  await testResult(crossJoinQuery + "indisunique");
+
+  const crossJoinQuery2 = crossJoinQuery.replace("and ix.", "and ")
+  fromBeginning(false, crossJoinQuery2);
+  await moveCursor.pageDown();
+  await moveCursor.lineEnd();
+  await typeAuto(`uniq`);
+  await testResult(crossJoinQuery2 + "ix.indisunique");
+
 
   await testSqlCharts(args);
 
@@ -50,6 +103,7 @@ export const testBugs: DemoScript = async (args) => {
 
   /** Timechart works with codeblocks */
   await fromBeginning(false, "SELECT now(), 3; \n\nselect 1");
+  await moveCursor.down(3, 50);
   await moveCursor.up(3, 50);
   await tout(1e3);
   await runSQL();

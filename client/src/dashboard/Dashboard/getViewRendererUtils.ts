@@ -140,7 +140,7 @@ export const getViewRendererUtils = function(this: ViewRenderer, { prgl, workspa
     //   const w = await addWindow({ name, type, ...extra }) as WindowData;
     // }
     const w = windows.find(cw => cw.type === type && cw.parent_window_id === parentW.id) ?? await addWindow({ name, type, ...extra }) as WindowData;
-    addLink({ w1_id: parentW.id, w2_id: w.id, linkOpts });
+    await addLink({ w1_id: parentW.id, w2_id: w.id, linkOpts });
   }
 
   type ClickRowOpts = { type: "table-row"; } | { type: "timechart"; value: ActiveRow["timeChart"] }

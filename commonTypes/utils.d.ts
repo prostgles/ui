@@ -158,6 +158,7 @@ export declare function matchObj(obj1: AnyObject | undefined, obj2: AnyObject | 
 export declare function sliceText(v: string | undefined, maxLen: number, ellipseText?: string, midEllipse?: boolean): string | undefined;
 export type ColType = {
     column_name: string;
+    escaped_column_name: string;
     data_type: string;
     udt_name: string;
     schema: string;

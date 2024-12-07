@@ -94,23 +94,25 @@ export const useDBSConnection = (onDisconnect: (isDisconnected: boolean) => void
             onDisconnect: () => {
               onDisconnect(true);
             },
-            // onDebug: (ev) => {
-            //   if(ev.type !== "method" && ev.tableName === "windows"){
-            //     console.log(Date.now(), "client", ev);
-            //   }
-            // },
+            onDebug: (ev) => {
+              const trackedTableNames = ["global_settings", "llm_chats", "llm_messages", "llm_prompts", "llm_credentials"];
+              if(ev.type === "table" && trackedTableNames.includes(ev.tableName)){
+                // if(ev.command === "unsubscribe") debugger;
+                console.log(Date.now(), "DBS client", ev);
+              }
+            },
             onReconnect: () => {
               onDisconnect(false);
               if(window.location.pathname.startsWith("/connections/")){
                 pageReload("sync reconnect bug");
               }
             },
-            onReady: async (dbs: Partial<DBS>, dbsMethods, tableSchema: any, auth = {}) => {
+            onReady: async (dbs: Partial<DBS>, dbsMethods, tableSchema: any, auth) => {
               (window as any).dbs = dbs;
               (window as any).dbsSocket = socket;
               (window as any).dbsMethods = dbsMethods;
               const uType = auth.user?.type; 
-    
+              console.log(auth.user)
               const { tables: dbsTables = [], error } = await getTables(tableSchema ?? [], undefined, dbs as any);
               if(error){
                 resolve({ error });

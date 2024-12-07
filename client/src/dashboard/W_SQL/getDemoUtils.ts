@@ -72,6 +72,7 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
     up: getTriggerFor("cursorUp"),
     lineEnd: getTriggerFor("cursorLineEnd"),
     lineStart: getTriggerFor("cursorLineStart"),
+    pageUp: getTriggerFor("cursorPageUp"),
     pageDown: getTriggerFor("cursorPageDown"),
     setPosition: (line: number, column: number) => getEditor().e.setPosition({ lineNumber: line, column }),
   }

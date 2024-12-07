@@ -13,7 +13,7 @@ export type SwitchToggleProps = TestSelectors & {
   onChange: (checked: boolean, e: React.ChangeEvent<HTMLInputElement>) => void;
   className?: string;
   style?: React.CSSProperties;
-  disabledInfo?: string;
+  disabledInfo?: string | false;
   variant?: "row" | "col" | "row-reverse"; 
   label?: string | LabelProps;
 };
@@ -46,7 +46,7 @@ export const SwitchToggle: React.FC<SwitchToggleProps> = ({
         ...(disabledInfo && { opacity: .7 }),
         padding: "1px", /** to ensure active border stays visible */
       }}
-      title={disabledInfo ?? title}
+      title={(disabledInfo? disabledInfo : undefined) ?? title}
     >
       {labelProps && <Label {...labelProps} />} 
       <div className={"Switch-root rounded focusable " + (checked? " checked" : " ")}>

@@ -19,7 +19,16 @@ const getAliasToken = (tokens: SQLMatchContext["cb"]["tokens"], expressionLastTo
   return aliasToken;
 }
 
-const tablePrecedingKeywords = ["from", "join", "lateral", "update"] as const;
+const tablePrecedingKeywords = [
+  "from", 
+  "join", 
+  "lateral", 
+  "update", 
+  /**
+   * comma is may be used as an alias for CROSS JOIN
+   */
+  ","
+] as const;
 const withTablePrecedingKeywords = ["as"] as const;
 const policyTablePrecedingKeywords = ["on"] as const;
 const alterTablePrecedingKeywords = ["table"] as const;
@@ -47,7 +56,7 @@ export type TabularExpression = {
   columns: ParsedSQLSuggestion[];
 });
 
-export const getTabularExpressions = ({ cb: _cb, ss, parentCb }: Pick<GetTableExpressionSuggestionsArgs, "ss" | "cb" | "parentCb">, require: "columns" | "table") => {
+export const getTabularExpressions = ({ cb: _cb, ss, parentCb }: Pick<GetTableExpressionSuggestionsArgs, "ss" | "cb" | "parentCb">, require: "columns" | "table", onlyCurrentBlock = false) => {
   let { tokens } = { ..._cb }; 
   let parentTokensForLateral = tokens.slice(0, 0);
   /** If is in a subquery then ignore parent UNLESS this is a lateral expression */
@@ -84,7 +93,7 @@ export const getTabularExpressions = ({ cb: _cb, ss, parentCb }: Pick<GetTableEx
   let expressions: TabularExpression[] = [];
 
   /** If inside a CTE then add previous WITH statement CTE defs (WITH ... update)*/
-  if(parentCb?.ftoken?.textLC === "with" && parentCb.currNestingId){
+  if(parentCb?.ftoken?.textLC === "with" && parentCb.currNestingId && !onlyCurrentBlock){
     const pFunc = getParentFunction(parentCb);
     if(pFunc?.func.textLC === "as" && !pFunc.func.nestingId){
       const prevExpressions = getTabularExpressions({ cb: parentCb, ss }, require).filter(e => e.endOffset < parentCb.currOffset);
@@ -158,7 +167,7 @@ const getExpressions = (tokens: TokenInfo[], cb: CodeBlock, ss: ParsedSQLSuggest
 
     if(prevToken && !prevToken.nestingId && kwd){
       /** CTE section finished */
-      if(isWith && kwd !== "as"){
+      if(isWith && (kwd !== "as" && kwd !== ",")){
         isWithAsSectionFinished = true;
       }
 
@@ -204,9 +213,10 @@ const getExpressions = (tokens: TokenInfo[], cb: CodeBlock, ss: ParsedSQLSuggest
       } else if(t.text === "(" && !t.nestingId){
         const closing = getClosingParenthesis(i+1);
         if(!closing) return;
+        const { aliasToken } = closing;
         let aliasColumnDefinition = "";
-        const tokensAfterAlias = cb.tokens.filter(t => t.offset >= closing.aliasToken!.end);
-        if(tokensAfterAlias[0]?.textLC === "("){
+        const tokensAfterAlias = aliasToken && cb.tokens.filter(t => t.offset >= aliasToken.end);
+        if(tokensAfterAlias?.[0]?.textLC === "("){
           const closingAliasIndex = tokensAfterAlias.findIndex(t => t.text === ")" && !t.nestingId);
           if(closingAliasIndex !== -1){
             aliasColumnDefinition = tokensAfterAlias.map(t => t.text).slice(0, closingAliasIndex + 1).join("");
@@ -217,7 +227,7 @@ const getExpressions = (tokens: TokenInfo[], cb: CodeBlock, ss: ParsedSQLSuggest
         if(kwd === "lateral"){
           const fromKwd = tokens.find(t => t.textLC === "from" && !t.nestingId);
           if(!fromKwd || fromKwd.offset > t.offset) return;
-          if(!closing.aliasToken) return;
+          if(!aliasToken) return;
           let isWithStart = "";
           if(isWith && isWithAsSectionFinished){
             const selectKwd = tokens.find(t => t.textLC === "select" && !t.nestingId);

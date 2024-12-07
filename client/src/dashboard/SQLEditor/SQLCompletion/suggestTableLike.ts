@@ -25,7 +25,11 @@ export const suggestTableLike = async (args: Pick<SQLMatchContext, "cb" | "ss" |
   const withCb = cb.ftoken?.textLC === "with"? cb : parentCb?.ftoken?.textLC === "with"? parentCb : undefined;
   if(withCb){
     const tableExpressions = await getTableExpressionSuggestions({ cb: withCb, ss, sql }, "table");
-    aliasedTables = tableExpressions.tables.map(t => ({ ...t, sortText: "a" }));
+    // const isCurrentlyInsideACte = cb.currNestingFunc?.textLC === "as" && cb.currNestingFunc.nestingId.length === 0;
+    aliasedTables = tableExpressions.tablesWithAliasInfo
+      /** Ensure only preceding tables are included */
+      .filter(t => t.endOffset < cb.currOffset)
+      .map(t => ({ ...t.s, sortText: "a" }));
   }
 
   const schemaTables = isSearchingSchemaTable? schemaMatchingTables : 

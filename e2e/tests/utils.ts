@@ -513,7 +513,13 @@ export const createAccessRule = async (page: PageWIds, userType: "default" | "pu
 export const enableAskLLM = async (page: PageWIds, maxRequestsPerDay: number, credsProvided=false) => {
   await page.getByTestId("AskLLMAccessControl").click();
   if(!credsProvided){
-    await fillSmartFormAndInsert(page, "llm_credentials", { endpoint: "http://localhost:3004/mocked-llm" });
+    await page.getByTestId("SetupLLMCredentials.api").click();
+    await page.getByTestId("AddLLMCredentialForm").click();
+    await page.getByTestId("AddLLMCredentialForm.Provider").click();
+    await page.getByTestId("AddLLMCredentialForm.Provider").locator(`[data-key="Custom"]`).click();
+    // await fillSmartFormAndInsert(page, "llm_credentials", { endpoint: "http://localhost:3004/mocked-llm" });
+    await page.locator(`#endpoint`).fill("http://localhost:3004/mocked-llm");
+    await page.getByTestId("AddLLMCredentialForm.Save").click();
     await page.waitForTimeout(1e3);
   }
   await page.getByTestId("AskLLMAccessControl.AllowAll").click();
@@ -529,7 +535,7 @@ export const getLLMResponses = async (page: PageWIds, questions: string[]) => {
 
   await page.getByTestId("AskLLM").click();
   await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });
-
+  await page.waitForTimeout(2e3);
   const result: {
     response: string | null;
     isOk: boolean;

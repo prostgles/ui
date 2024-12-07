@@ -16,18 +16,18 @@ type P = {
   maximumFractionDigits?: number;
   style?: React.CSSProperties;
 }
-export const RenderValue = ({ column: c, value, showTitle = true, maxLength, style, maximumFractionDigits = 3 }: P): JSX.Element => {
-  const renderNull = (v: any) => {
-    if ([null, undefined].includes(v)) {
-      return <i style={style} className="text-2  noselect" title={showTitle ? "NULL" : undefined}>NULL</i>;
-    }
-
-    return null;
+export const renderNull = (v: any, style: React.CSSProperties | undefined, showTitle: boolean) => {
+  if ([null, undefined].includes(v)) {
+    return <i style={style} className="text-2  noselect" title={showTitle ? "NULL" : undefined}>NULL</i>;
   }
-  const nullRender = renderNull(value);
+
+  return null;
+}
+export const RenderValue = ({ column: c, value, showTitle = true, maxLength, style, maximumFractionDigits = 3 }: P): JSX.Element => {
+  const nullRender = renderNull(value, style, showTitle);
   if(nullRender) return nullRender;
   const getSliced = (v: string | null | undefined, _maxLength?: number) => {
-    const nullRender = renderNull(v);
+    const nullRender = renderNull(v, style, showTitle);
     if(nullRender) return nullRender;
     if(maxLength) return sliceText(v?.toString(), _maxLength ?? maxLength);
 

@@ -14,6 +14,7 @@ import type { ProstglesInitState } from "../../commonTypes/electronInit";
 import BackupManager from "./BackupManager/BackupManager";
 import { addLog, setLoggerDBS } from "./Logger";
 import { getAuth } from "./authConfig/authConfig";
+import { setAuthReloader } from "./authConfig/setAuthReloader";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import type { DBSConnectionInfo } from "./electronConfig";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
@@ -105,10 +106,6 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
       onSocketConnect: async ({ socket, dbo, getUser }) => {
           
         const user = await getUser();
-
-        if(user?.user?.type === "admin"){
-          await insertDefaultPrompts(dbo, user.user.id);
-        }
         const userId = user?.user?.id;
         const sid = user?.sid;   
 
@@ -170,8 +167,20 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
       tableConfig,
       tableConfigMigrations: { 
         silentFail: false,
-        version: 3,
-        onMigrate: async ( ) => { 
+        version: 4,
+        onMigrate: async ({ db, oldVersion }) => {
+          console.warn("Migrating from version: ", oldVersion);
+          if(oldVersion === 3){
+            await db.any(` 
+              UPDATE login_attempts 
+                SET ip_address_remote = COALESCE(ip_address_remote, ''),
+                  user_agent = COALESCE(user_agent, ''),
+                  x_real_ip = COALESCE(x_real_ip, '')
+              WHERE ip_address_remote IS NULL 
+              OR user_agent IS NULL 
+              OR x_real_ip IS NULL
+            `);
+          }
         }
       },
       publishRawSQL: async (params) => {
@@ -189,17 +198,24 @@ export const startProstgles = async ({ app, port, host, io, con = DBS_CONNECTION
         setLoggerDBS(params.dbo);
 
         /* Update stale data */
+        await connectionChecker.destroy();
         await connectionChecker.init(db, _db); 
-                  
-        await insertStateDatabase(db, _db, con);
 
+        await insertStateDatabase(db, _db, con);
+        await insertDefaultPrompts(db);
+
+        await connMgr.destroy();
         await connMgr.init(db, _db);
 
+        await bkpManager?.destroy();
         bkpManager ??= await BackupManager.create(_db, db, connMgr);
-      }, 
+
+        setAuthReloader(app, db, prgl);
+      },
     });
 
     statePrgl = prgl;
+
     startDevHotReloadNotifier({ io, port, host });
     return { ok: true }
   } catch(err){

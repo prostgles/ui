@@ -5,36 +5,37 @@ import "./App.css";
 import Loading from "./components/Loading";
 import type { CommonWindowProps } from "./dashboard/Dashboard/Dashboard";
 import { Connections } from "./pages/Connections/Connections";
-import Login from "./pages/Login";
 import NewConnnection from "./pages/NewConnection/NewConnnection";
 import { NotFound } from "./pages/NotFound";
 import { ProjectConnection } from "./pages/ProjectConnection/ProjectConnection";
 
-import { mdiAccountMultiple, mdiAlertOutline, mdiExclamation, mdiServerNetwork, mdiServerSecurity, mdiThemeLightDark } from "@mdi/js";
+import { mdiAccountMultiple, mdiAlertOutline, mdiServerNetwork, mdiServerSecurity, mdiThemeLightDark } from "@mdi/js";
 import ErrorComponent from "./components/ErrorComponent";
 import { NavBar } from "./components/NavBar";
 import UserManager from "./dashboard/UserManager";
 import { Account } from "./pages/Account/Account";
-import { ServerSettings } from "./pages/ServerSettings";
+import { ServerSettings } from "./pages/ServerSettings/ServerSettings";
 
+import type { AuthHandler } from "prostgles-client/dist/Auth";
 import { type DBHandlerClient, type MethodHandler } from "prostgles-client/dist/prostgles";
+import { type Socket } from "socket.io-client";
 import type { ServerState } from "../../commonTypes/electronInit";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import { createReactiveState, useReactiveState } from "./appUtils";
+import Btn from "./components/Btn";
 import { FlexCol } from "./components/Flex";
+import { InfoRow } from "./components/InfoRow";
+import PopupMenu from "./components/PopupMenu";
 import Select from "./components/Select/Select";
 import type { DBS, DBSMethods } from "./dashboard/Dashboard/DBS";
+import { MousePointer } from "./demo/MousePointer";
 import { ComponentList } from "./pages/ComponentList";
 import { ElectronSetup } from "./pages/ElectronSetup";
+import { Login } from "./pages/Login/Login";
 import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./useAppTheme";
 import { useDBSConnection } from "./useDBSConnection";
 import { isDefined } from "./utils";
-import { type Socket } from "socket.io-client";
-import { MousePointer } from "./demo/MousePointer";
-import PopupMenu from "./components/PopupMenu";
-import Btn from "./components/Btn";
-import { InfoRow } from "./components/InfoRow";
 export * from "./appUtils";
 
 export type ClientUser = {
@@ -55,7 +56,7 @@ export type ExtraProps = {
   dbsTables: CommonWindowProps["tables"];
   dbsMethods: DBSMethods;
   user: DBSSchema["users"] | undefined;
-  auth: ClientAuth | undefined;
+  auth: AuthHandler;
   dbsSocket: Socket;
   theme: Theme;
 } & Pick<Required<AppState>, "serverState">;
@@ -88,7 +89,7 @@ export type AppState = {
     dbsTables: CommonWindowProps["tables"];
     dbsMethods: any;
     dbsSocket: Socket;
-    auth: ClientAuth;
+    auth: AuthHandler;
     isAdminOrSupport: boolean;
     user?: DBSSchema["users"];
     sid: string;
@@ -134,7 +135,7 @@ export const App = () => {
   }
   const { dbsKey, prglState, serverState } = state;
   const { dbs, dbsTables, dbsMethods, auth, dbsSocket } = prglState;
-  const authUser = auth.user;
+  const authUser = auth.user as ClientUser | undefined;
   const extraProps: PrglState = {
     setTitle: (content: ReactChild) => {
       if (title !== content) setTitle(content);
@@ -150,7 +151,7 @@ export const App = () => {
   };
 
   const withNavBar = (content: React.ReactNode, needsUser?: boolean) => {
-    const showLoginRegister = needsUser && !extraProps.user && !extraProps.auth?.user;
+    const showLoginRegister = needsUser && !extraProps.user && !extraProps.auth.user;
     return <div className="flex-col ai-center w-full f-1 min-h-0">
       <NavBar
         dbs={dbs}

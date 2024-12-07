@@ -249,9 +249,14 @@ export const COMMANDS = {
   "AskLLM": "",
   "AskLLM.popup": "",
   "SetupLLMCredentials": "",
+  "SetupLLMCredentials.free": "",
+  "SetupLLMCredentials.api": "",
   "AskLLMAccessControl.llm_daily_limit": "",
   "Pagination.page": "",
   "MapExtentBehavior": "",
+  "AddLLMCredentialForm": "",
+  "AddLLMCredentialForm.Save": "",
+  "AddLLMCredentialForm.Provider": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

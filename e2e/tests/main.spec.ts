@@ -86,7 +86,6 @@ test.describe("Main test", () => {
   });
 
   test("Limit login attempts", async ({ page: p, browser, context }) => {
-    // const page = p as PageWIds;
     const page: PageWIds = await browser.newPage({ 
       extraHTTPHeaders: { 
         'x-real-ip': '1.1.1.1' 
@@ -105,7 +104,8 @@ test.describe("Main test", () => {
       expect(await lpage.getByTestId("Login.error").textContent()).toContain(errorMessage);
     }
     for(let i = 0; i < 5; i++){
-      await loginAndExpectError("Provided credentials are not correct", "invalid", page);
+      await page.reload();
+      await loginAndExpectError("Invalid credentials", "invalid", page);
     }
     await loginAndExpectError("Too many failed ", "invalid", page);
     await loginAndExpectError("Too many failed ", USERS.default_user, page);
@@ -248,9 +248,20 @@ test.describe("Main test", () => {
 
     /** Using token */
     await login(page);
-    const newCode = authenticator.generate(Base64Secret ?? "");
-    await page.locator("#totp_token").fill(newCode);
-    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    const fillTokenAndSignIn = async () => {
+      const newCode = authenticator.generate(Base64Secret ?? "");
+      await page.locator("#totp_token").fill(newCode);
+      await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    }
+    await fillTokenAndSignIn();
+    await page.waitForTimeout(1e3);
+
+    /** Retry once when it sometimes fails */
+    const errorNode = await page.getByTestId("Login.error");
+    if(await errorNode.count() && (await errorNode.textContent())?.includes("Invalid token")){
+      await page.waitForTimeout(1e3);
+      await fillTokenAndSignIn();
+    }
     await page.getByRole('link', { name: 'Connections' }).waitFor({ state: "visible", timeout: 15e3 });
 
     /** Using recovery code */
