@@ -3,7 +3,11 @@ import { fixIndent, shouldBeEqual } from "../../../demo/sqlVideoDemo";
 import { tout } from "../../../pages/ElectronSetup";
 import type { DemoScript } from "../getDemoUtils";
 
-export const testSqlCharts: DemoScript = async ({ fromBeginning, moveCursor, runSQL }) => {
+export const testSqlCharts: DemoScript = async ({
+  fromBeginning,
+  moveCursor,
+  runSQL,
+}) => {
   const q0 = fixIndent(`
     SELECT 
       generate_series(now(), now() + '1 year'::interval, '1day'::interval) as tstamp, 
@@ -14,12 +18,16 @@ export const testSqlCharts: DemoScript = async ({ fromBeginning, moveCursor, run
       ${q0}
     )
     SELECT * FROM tbl
-  `)
+  `);
   fromBeginning(false, q1);
 
   await click("AddChartMenu.Timechart");
 
-  const l1 = await waitForElement<HTMLButtonElement>("TimeChartLayerOptions.aggFunc", "", { nth: 0 });
+  const l1 = await waitForElement<HTMLButtonElement>(
+    "TimeChartLayerOptions.aggFunc",
+    "",
+    { nth: 0 },
+  );
   shouldBeEqual("Avg(\nvalue\n),\ntstamp", l1.innerText);
 
   const timechartQueries = `${q1}\n\n\n${q0.replace("100 as value", "10 as value2")}`;
@@ -32,26 +40,30 @@ export const testSqlCharts: DemoScript = async ({ fromBeginning, moveCursor, run
     moveCursor.down(2);
     await click(`AddChartMenu.${chartType}`);
     await tout(500);
-  }
+  };
   await addChart("Timechart");
 
   const checkL2 = async () => {
-    const l2 = await waitForElement<HTMLButtonElement>("TimeChartLayerOptions.aggFunc", "", { nth: 1 });
+    const l2 = await waitForElement<HTMLButtonElement>(
+      "TimeChartLayerOptions.aggFunc",
+      "",
+      { nth: 1 },
+    );
     shouldBeEqual("Avg(\nvalue2\n),\ntstamp", l2.innerText);
-  }
+  };
   await checkL2();
 
   const getCloseChartBtn = () => {
-    return getElement<HTMLButtonElement>("dashboard.window.closeChart")
-  }
-  shouldBeEqual(true, !!getCloseChartBtn())
+    return getElement<HTMLButtonElement>("dashboard.window.closeChart");
+  };
+  shouldBeEqual(true, !!getCloseChartBtn());
 
   /** Executing sql will hide charts */
   const minimiseCharts = async () => {
     await runSQL();
     await tout(1e3);
     shouldBeEqual(false, !!getCloseChartBtn());
-  }
+  };
 
   /** Reopen chart by clicking add layer to chart button */
   const restoreCharts = async () => {
@@ -59,10 +71,10 @@ export const testSqlCharts: DemoScript = async ({ fromBeginning, moveCursor, run
     // moveCursor.up(1);
     await click("AddChartMenu.Timechart");
     await checkL2();
-  }
+  };
   await minimiseCharts();
   await restoreCharts();
-  
+
   /** Collapse chart button works */
   await click("dashboard.window.collapseChart");
   await tout(500);
@@ -99,5 +111,5 @@ export const testSqlCharts: DemoScript = async ({ fromBeginning, moveCursor, run
   await click("dashboard.window.closeChart");
   await click("dashboard.window.closeChart");
 
-  await tout(3e3)
-}
+  await tout(3e3);
+};

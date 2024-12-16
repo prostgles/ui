@@ -1,13 +1,11 @@
 const { resolve } = require("path");
 const { merge } = require("webpack-merge");
-const commonConfig = require("./common"); 
+const commonConfig = require("./common");
 const OnDevCompiled = require("./OnDevCompiled");
 
 module.exports = merge(commonConfig, {
   mode: "development",
-  entry: [ 
-    "./index.tsx", 
-  ],
+  entry: ["./index.tsx"],
   output: {
     filename: "js/[name].bundle.js",
     path: resolve(__dirname, "../build"),
@@ -16,11 +14,9 @@ module.exports = merge(commonConfig, {
   },
   optimization: {
     splitChunks: {
-      chunks: 'all',
+      chunks: "all",
     },
   },
   devtool: "cheap-module-source-map",
-  plugins: [
-    new OnDevCompiled({ options: true }),
-  ],
+  plugins: [new OnDevCompiled({ options: true })],
 });

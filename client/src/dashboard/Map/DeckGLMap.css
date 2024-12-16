@@ -1,21 +1,20 @@
-
-.map-controls-right > *{
+.map-controls-right > * {
   transform: translate(calc(100% + 20px), 0px);
 }
 
 .map-controls-right > *:nth-child(1) {
-  transition: .3s transform;
+  transition: 0.3s transform;
 }
 .map-controls-right > *:nth-child(2) {
-  transition: .6s transform;
+  transition: 0.6s transform;
 }
 .map-controls-right > *:nth-child(3) {
-  transition: .9s transform;
+  transition: 0.9s transform;
 }
 
 .map-controls-right {
   padding: 1em;
-  transition: .3s all;
+  transition: 0.3s all;
   background-color: transparent;
   transform: translate(calc(100% - 30px), 0px);
 }
@@ -24,7 +23,9 @@
   transform: translate(0, 0px);
   overflow: auto;
 
-  box-shadow: 0 1px 3px 0 rgba(0,0,0,.1),0 1px 2px 0 rgba(0,0,0,.06);
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 .dark-theme .map-controls-right:hover {
@@ -37,7 +38,7 @@
 }
 
 .in-map-hover-control {
-  opacity: .45;
+  opacity: 0.45;
 }
 .in-map-hover-control:hover {
   opacity: 1;

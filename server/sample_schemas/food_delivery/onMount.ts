@@ -1,10 +1,9 @@
 export const onMount: ProstglesOnMount = async ({ dbo }) => {
-
-  const roadTableHandler = dbo["\"roads.geojson\""]
-  if(!roadTableHandler) return;
+  const roadTableHandler = dbo['"roads.geojson"'];
+  if (!roadTableHandler) return;
 
   const count = await roadTableHandler.count();
-  if(count) {
+  if (count) {
     await dbo.sql(`
       VACUUM;
     `);
@@ -14,16 +13,20 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
         await dbo.sql(`CALL mock_locations(); /* from fork */`);
       } catch (error) {
         console.error("Error calling mock_locations", error);
-        const funcs = await dbo.sql(`
+        const funcs = await dbo.sql(
+          `
           SELECT proname, probin, pg_get_function_arguments(oid), current_database(), (SELECT string_agg(extname, '; ') FROM pg_catalog.pg_extension) as extensions
           FROM pg_catalog.pg_proc
           WHERE proname = 'st_lineinterpolatepoint'
-        `, {}, { returnType: "rows" });
+        `,
+          {},
+          { returnType: "rows" },
+        );
         console.error(funcs);
         throw error;
       }
       mockLocations();
-    }
+    };
     mockLocations();
 
     setInterval(async () => {
@@ -51,34 +54,36 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
         20: 12,
         21: 8,
         22: 5,
-        23: 3
+        23: 3,
       };
-      const hourOfDay = new Date().getHours() as keyof typeof hourOfDayAverageOrders;
+      const hourOfDay =
+        new Date().getHours() as keyof typeof hourOfDayAverageOrders;
       const orderRatePerSecond = hourOfDayAverageOrders[hourOfDay] ?? 1;
-      await dbo.sql(`CALL mock_orders(\${orderRatePerSecond}::integer)`, { orderRatePerSecond });
+      await dbo.sql(`CALL mock_orders(\${orderRatePerSecond}::integer)`, {
+        orderRatePerSecond,
+      });
     }, 3e3);
 
     return;
   }
 
-  const { elements } = await fetch(
-    "http://overpass-api.de/api/interpreter", 
-    {
-      method: "POST",
-      body: "[out:json];(way(51.31087184032102,-0.33782958984375,51.723200166800346,0.053558349609375)[highway];); out 200000 ids geom;",
-      headers: {
-        "Content-Type": "application/json"
-      }
-    }
-  ).then(res => res.json());
-
-  await dbo["\"roads.geojson\""].insert(elements.map(d => ({
-    id: d.id,
-    geometry: {
-      type: "LineString",
-      coordinates: d.geometry.map(({ lat, lon }) => [lon, lat])
+  const { elements } = await fetch("http://overpass-api.de/api/interpreter", {
+    method: "POST",
+    body: "[out:json];(way(51.31087184032102,-0.33782958984375,51.723200166800346,0.053558349609375)[highway];); out 200000 ids geom;",
+    headers: {
+      "Content-Type": "application/json",
     },
-  })));
+  }).then((res) => res.json());
+
+  await dbo['"roads.geojson"'].insert(
+    elements.map((d) => ({
+      id: d.id,
+      geometry: {
+        type: "LineString",
+        coordinates: d.geometry.map(({ lat, lon }) => [lon, lat]),
+      },
+    })),
+  );
 
   await dbo.sql(`
     UPDATE "roads.geojson"
@@ -92,4 +97,4 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
     CREATE INDEX IF NOT EXISTS idx_roads 
     ON "roads.geojson" USING gist (geog);
   `);
-}
+};

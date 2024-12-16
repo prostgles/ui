@@ -1,26 +1,22 @@
 {
-	"files": ["./main.ts"],
-	"compilerOptions": {
-		"target": "ES2022",
-		"lib": [ "ES2017", "es2019", "ES2021.String", "dom" ],
-		"esModuleInterop" : true,
-		"allowSyntheticDefaultImports": true,
-		"allowJs": true,
-		"module": "commonjs",
-		"sourceMap": true,
-		// "rootDir": ".",
-		"moduleResolution": "node",
-		"declaration": true,
-		"declarationMap": true,
-		"ignoreDeprecations": "5.0",
-		"strict": true,
-		"outDir": "build",
-		"resolveJsonModule": true,
-		"skipLibCheck": true //excludes node_modules
-	},
-	"exclude": [
-		"ui",
-		"*.conf",
-		"node_modules"
-	]
-} 
+  "files": ["./main.ts"],
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2017", "es2019", "ES2021.String", "dom"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "allowJs": true,
+    "module": "commonjs",
+    "sourceMap": true,
+    // "rootDir": ".",
+    "moduleResolution": "node",
+    "declaration": true,
+    "declarationMap": true,
+    "ignoreDeprecations": "5.0",
+    "strict": true,
+    "outDir": "build",
+    "resolveJsonModule": true,
+    "skipLibCheck": true //excludes node_modules
+  },
+  "exclude": ["ui", "*.conf", "node_modules"]
+}

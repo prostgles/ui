@@ -1,15 +1,15 @@
 const commonConfig = require("../.eslintrc.common.js");
 
-module.exports = { 
+module.exports = {
   ...commonConfig,
-  "extends": [
-    ...commonConfig.extends,
-    "plugin:react-hooks/recommended"
-  ],
-  "rules": {
+  extends: [...commonConfig.extends, "plugin:react-hooks/recommended"],
+  rules: {
     ...commonConfig.rules,
-    "react-hooks/exhaustive-deps": ["warn", {
-      "additionalHooks": "(usePromise|useEffectAsync|useProstglesClient)"
-    }]
-  }
-}
+    "react-hooks/exhaustive-deps": [
+      "warn",
+      {
+        additionalHooks: "(usePromise|useEffectAsync|useProstglesClient)",
+      },
+    ],
+  },
+};

@@ -11,9 +11,16 @@ import { QRCodeImage } from "../../components/QRCodeImage";
 import type { UserData } from "../../dashboard/Dashboard/dashboardUtils";
 import type { Prgl } from "../../App";
 
-export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<Prgl, "dbsMethods"> & { user: UserData; onChange: VoidFunction }) => {
-
-  const [OTP, setOTP] = useState<{ url: string; secret: string; recoveryCode: string; }>();
+export const Setup2FA = ({
+  user,
+  dbsMethods,
+  onChange,
+}: Pick<Prgl, "dbsMethods"> & { user: UserData; onChange: VoidFunction }) => {
+  const [OTP, setOTP] = useState<{
+    url: string;
+    secret: string;
+    recoveryCode: string;
+  }>();
 
   const [err, setErr] = useState<any>();
   const [codeConfirm, setCodeConfirm] = useState();
@@ -23,130 +30,195 @@ export const Setup2FA = ({ user, dbsMethods, onChange }: Pick<Prgl, "dbsMethods"
     setCodeConfirm(undefined);
     setOTP(undefined);
     setErr(null);
-  }
+  };
 
   const enable2FA = async (closePopup: VoidFunction) => {
     try {
-      if(!dbsMethods.enable2FA) throw "Something went wrong";
+      if (!dbsMethods.enable2FA) throw "Something went wrong";
       await dbsMethods.enable2FA(codeConfirm! + "");
-      
+
       setTimeout(() => {
         onChange();
         closePopup();
         reset();
-      }, 1500)
+      }, 1500);
       setEnabled(true);
-    } catch(err) {
-      setErr(err)
+    } catch (err) {
+      setErr(err);
     }
-  }
+  };
   const imageSize = 250;
-  return user.has_2fa_enabled? 
-    <Btn color="warn" 
-      variant="faded"
-      data-command="Setup2FA.Disable"
-      onClickMessage={async (_, setMsg) => { 
-        await dbsMethods.disable2FA?.();
-        setMsg({ ok: "Disabled!"}, onChange);
-      }}
-    >Disable 2FA</Btn> 
-    :
-    <PopupMenu 
-      title={<div className="bold">Two-factor authentication</div>}
-      data-command="Setup2FA.Enable"
-      button={<Btn variant="filled" color="green">Enable 2FA</Btn>} 
-      clickCatchStyle={{ opacity: 0.5 }}
-      positioning="center"
-      initialState={{ enabled: false, canvasNode: null as HTMLCanvasElement | null }}
-      onClose={reset}
-      contentClassName="p-1"
-      footer={!OTP? undefined : (closePopup => (
-        <div 
-          className="flex-col gap-1 w-full" 
-          onKeyDown={e => {
-            if(e.key === "Enter") enable2FA(closePopup)
-          }}
-        >
-          <FormField
-            data-command="Setup2FA.Enable.ConfirmCode"
-            value={codeConfirm} 
-            type="number" 
-            label="Confirm code" 
-            onChange={codeConfirm => { setCodeConfirm(codeConfirm) }}
-            rightContent={(
-              <Btn variant="filled" 
-                color="action"
-                className="ml-2"
-                data-command="Setup2FA.Enable.Confirm"
-                onClickMessage={() => enable2FA(closePopup)}
+  return user.has_2fa_enabled ?
+      <Btn
+        color="warn"
+        variant="faded"
+        data-command="Setup2FA.Disable"
+        onClickMessage={async (_, setMsg) => {
+          await dbsMethods.disable2FA?.();
+          setMsg({ ok: "Disabled!" }, onChange);
+        }}
+      >
+        Disable 2FA
+      </Btn>
+    : <PopupMenu
+        title={<div className="bold">Two-factor authentication</div>}
+        data-command="Setup2FA.Enable"
+        button={
+          <Btn variant="filled" color="green">
+            Enable 2FA
+          </Btn>
+        }
+        clickCatchStyle={{ opacity: 0.5 }}
+        positioning="center"
+        initialState={{
+          enabled: false,
+          canvasNode: null as HTMLCanvasElement | null,
+        }}
+        onClose={reset}
+        contentClassName="p-1"
+        footer={
+          !OTP ? undefined : (
+            (closePopup) => (
+              <div
+                className="flex-col gap-1 w-full"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") enable2FA(closePopup);
+                }}
               >
-                Enable 2FA
-              </Btn>
-            )}
-          />
-        </div>
-      ))}
-      render={( ) => (
-        enabled? <SuccessMessage message="2FA Enabled"></SuccessMessage> :
-        <div className="flex-col gap-1 ai-center" style={{ maxWidth: `${imageSize + 100}px` }}>
-          {!OTP && <div >
-            Along with your username and password, you will be asked to verify your identity using the code from authenticator app.
-          </div>}
-
-          {!!OTP && <>
-            <div>Scan <a href={OTP.url} target="_blank">or tap</a> the image below with the two-factor authentication app on your phone. </div>
-            <ExpandSection 
-              label="I can't scan the QR Code" 
-              buttonProps={{ 
-                variant: "outline",
-                "data-command": "Setup2FA.Enable.CantScanQR",
-              }}
-              iconPath=""
-            >
-              <div className="flex-col gap-p5 ai-start jc-start">
-              
-                <div>If you can't use a QR code you can enter this information manually:</div>
-                <div className="flex-col ml-1 pl-2">
-                  <Chip variant="naked" label="Name" value={user.username} />
-                  <Chip variant="naked" label="Issuer" value={"Prostgles UI"} />
-                  <Chip variant="naked" label="Base64 secret" value={OTP.secret} data-command="Setup2FA.Enable.Base64Secret" />
-                  <Chip variant="naked" label="Type" value={"Time-based OTP"} />
-                </div>
-            </div>
-            </ExpandSection>
-          </>}
-          
-          <QRCodeImage url={OTP?.url} size={imageSize} variant="href-wrapped" />
-
-          {OTP?.recoveryCode && <div className="f-1 flex-col gap-1 p-1" style={{ wordBreak: "break-word"}}>
-            <InfoRow variant="naked" className="ai-start">
-              <div className="flex-col gap-1">
-                <div>Save the Recovery code below. It will be used in case you lose access to your authenticator app:</div>
-                <div className="bold" id="totp_recovery_code">{OTP.recoveryCode}</div>  
+                <FormField
+                  data-command="Setup2FA.Enable.ConfirmCode"
+                  value={codeConfirm}
+                  type="number"
+                  label="Confirm code"
+                  onChange={(codeConfirm) => {
+                    setCodeConfirm(codeConfirm);
+                  }}
+                  rightContent={
+                    <Btn
+                      variant="filled"
+                      color="action"
+                      className="ml-2"
+                      data-command="Setup2FA.Enable.Confirm"
+                      onClickMessage={() => enable2FA(closePopup)}
+                    >
+                      Enable 2FA
+                    </Btn>
+                  }
+                />
               </div>
-            </InfoRow>
-          </div>}
-
-          {!OTP && 
-            <Btn variant="filled"   
-              color="action"
-              data-command="Setup2FA.Enable.GenerateQR"
-              onClickPromise={async () => {
-                const setup = await dbsMethods.create2FA?.();
-                if(!setup?.url){
-                  throw "Something went wrong. OTP URL not received"
-                }
-                
-                setOTP(setup);
-              }}
+            )
+          )
+        }
+        render={() =>
+          enabled ?
+            <SuccessMessage message="2FA Enabled"></SuccessMessage>
+          : <div
+              className="flex-col gap-1 ai-center"
+              style={{ maxWidth: `${imageSize + 100}px` }}
             >
-              Generate QR Code
-            </Btn>
-          } 
+              {!OTP && (
+                <div>
+                  Along with your username and password, you will be asked to
+                  verify your identity using the code from authenticator app.
+                </div>
+              )}
 
-          {err && <ErrorComponent error={err} findMsg={true} /> }
-          
-        </div>
-      )}
-    />
-}
+              {!!OTP && (
+                <>
+                  <div>
+                    Scan{" "}
+                    <a href={OTP.url} target="_blank">
+                      or tap
+                    </a>{" "}
+                    the image below with the two-factor authentication app on
+                    your phone.{" "}
+                  </div>
+                  <ExpandSection
+                    label="I can't scan the QR Code"
+                    buttonProps={{
+                      variant: "outline",
+                      "data-command": "Setup2FA.Enable.CantScanQR",
+                    }}
+                    iconPath=""
+                  >
+                    <div className="flex-col gap-p5 ai-start jc-start">
+                      <div>
+                        If you can't use a QR code you can enter this
+                        information manually:
+                      </div>
+                      <div className="flex-col ml-1 pl-2">
+                        <Chip
+                          variant="naked"
+                          label="Name"
+                          value={user.username}
+                        />
+                        <Chip
+                          variant="naked"
+                          label="Issuer"
+                          value={"Prostgles UI"}
+                        />
+                        <Chip
+                          variant="naked"
+                          label="Base64 secret"
+                          value={OTP.secret}
+                          data-command="Setup2FA.Enable.Base64Secret"
+                        />
+                        <Chip
+                          variant="naked"
+                          label="Type"
+                          value={"Time-based OTP"}
+                        />
+                      </div>
+                    </div>
+                  </ExpandSection>
+                </>
+              )}
+
+              <QRCodeImage
+                url={OTP?.url}
+                size={imageSize}
+                variant="href-wrapped"
+              />
+
+              {OTP?.recoveryCode && (
+                <div
+                  className="f-1 flex-col gap-1 p-1"
+                  style={{ wordBreak: "break-word" }}
+                >
+                  <InfoRow variant="naked" className="ai-start">
+                    <div className="flex-col gap-1">
+                      <div>
+                        Save the Recovery code below. It will be used in case
+                        you lose access to your authenticator app:
+                      </div>
+                      <div className="bold" id="totp_recovery_code">
+                        {OTP.recoveryCode}
+                      </div>
+                    </div>
+                  </InfoRow>
+                </div>
+              )}
+
+              {!OTP && (
+                <Btn
+                  variant="filled"
+                  color="action"
+                  data-command="Setup2FA.Enable.GenerateQR"
+                  onClickPromise={async () => {
+                    const setup = await dbsMethods.create2FA?.();
+                    if (!setup?.url) {
+                      throw "Something went wrong. OTP URL not received";
+                    }
+
+                    setOTP(setup);
+                  }}
+                >
+                  Generate QR Code
+                </Btn>
+              )}
+
+              {err && <ErrorComponent error={err} findMsg={true} />}
+            </div>
+        }
+      />;
+};

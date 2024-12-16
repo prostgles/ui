@@ -1,18 +1,8 @@
 {
   "compilerOptions": {
-    "typeRoots": [
-      "node_modules/@types",
-      "./@types"
-    ],    
+    "typeRoots": ["node_modules/@types", "./@types"],
     "target": "ES2022",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext",
-      "es2017",
-      "es2019",
-      "es2022", 
-    ],
+    "lib": ["dom", "dom.iterable", "esnext", "es2017", "es2019", "es2022"],
     "module": "ES2022",
     "allowJs": true,
     "skipLibCheck": true,
@@ -29,15 +19,13 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitAny": false,
     "declaration": true,
-		"ignoreDeprecations": "5.0",
+    "ignoreDeprecations": "5.0",
     "strictNullChecks": true,
-		"paths": { 
-      "@common/*": ["../commonTypes/*"] 
+    "paths": {
+      "@common/*": ["../commonTypes/*"]
     }
   },
-  "include": [
-    "src"
-  ],
+  "include": ["src"],
   "exclude": [
     "node_modules",
     "public",

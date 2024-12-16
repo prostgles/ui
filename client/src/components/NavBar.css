@@ -1,5 +1,3 @@
-
-
 :root {
   --nav-height: 50px;
 }
@@ -12,21 +10,19 @@ nav.main {
   z-index: 2;
   position: fixed;
   width: 100%;
-  
 }
 
 .navwrapper {
   align-items: center;
 }
 
-.navwrapper  a {
+.navwrapper a {
   padding: 12px 12px;
   border-top: 4px solid transparent;
   border-bottom-width: 4px;
   border-bottom-style: solid;
   border-bottom-color: transparent;
 }
-
 
 nav a {
   text-decoration: none;
@@ -36,16 +32,14 @@ nav a:focus {
   outline: none;
 }
 
-
 .navwrapper a.active {
   color: var(--active);
-  border-bottom-color: var(--active);;
+  border-bottom-color: var(--active);
 }
-.navwrapper  a:hover:not(.active),
-
-.navwrapper  a:not(.active):focus {
+.navwrapper a:hover:not(.active),
+.navwrapper a:not(.active):focus {
   color: var(--active-hover);
-  border-bottom-color: var(--active-hover);;
+  border-bottom-color: var(--active-hover);
 }
 
 @media only screen and (max-width: 600px) {
@@ -61,7 +55,7 @@ nav a:focus {
     align-items: unset;
     justify-content: center;
   }
-  
+
   nav .navwrapper > a {
     padding: 10px 0px;
     margin-left: 0;
@@ -80,32 +74,29 @@ nav a:focus {
 
   .prgl-brand-icon img {
     margin-right: 0;
-  } 
-  
-  nav.mobile-collapsed .navwrapper  > * {
+  }
+
+  nav.mobile-collapsed .navwrapper > * {
     display: none !important;
   }
   nav.mobile-expanded .prgl-brand-icon {
     display: none !important;
   }
-  
+
   nav button.hamburger {
     display: flex;
     background: transparent;
   }
 }
 
-
-
-
 /* 
 .navwrapper > a:hover {
   border-bottom-color: #a7dfff;
 } */
 
-button.hamburger, 
+button.hamburger,
 button.hamburger:focus {
-  margin: .5em;
+  margin: 0.5em;
   padding: 0;
   border: none;
   outline: 0;

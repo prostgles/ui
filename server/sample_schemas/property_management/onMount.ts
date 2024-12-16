@@ -1,8 +1,7 @@
-
 export const onMount: ProstglesOnMount = async ({ dbo }) => {
- 
   const createData = async () => {
-    await dbo.sql(`
+    await dbo.sql(
+      `
     -- Create Property Listings Table
     CREATE TABLE property_listings (
         property_id SERIAL PRIMARY KEY,
@@ -45,8 +44,10 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
     -- Insert Dummy Data into Maintenance Requests
 
     
-    `, {}, { returnType: "rows" });
-
-  }
+    `,
+      {},
+      { returnType: "rows" },
+    );
+  };
   await createData();
-} 
+};

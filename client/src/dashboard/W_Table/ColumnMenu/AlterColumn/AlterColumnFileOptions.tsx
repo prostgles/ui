@@ -12,50 +12,69 @@ type P = Pick<Prgl, "db" | "tables" | "dbsMethods" | "dbs" | "connectionId"> & {
   columnName: string;
 };
 
-export const AlterColumnFileOptions = ({ columnName, tableName, tables, db, dbs, dbsMethods, connectionId }: P) => {
-  const table = tables.find(t => t.name === tableName);
-  const column = table?.columns.find(c => c.name === columnName);
-  const { connection, database_config, refsConfig, setRefsConfig, updateRefsConfig, canUpdateRefColumns: canUpdate } = useFileTableConfigControls({ connectionId, db, dbs, dbsMethods });
+export const AlterColumnFileOptions = ({
+  columnName,
+  tableName,
+  tables,
+  db,
+  dbs,
+  dbsMethods,
+  connectionId,
+}: P) => {
+  const table = tables.find((t) => t.name === tableName);
+  const column = table?.columns.find((c) => c.name === columnName);
+  const {
+    connection,
+    database_config,
+    refsConfig,
+    setRefsConfig,
+    updateRefsConfig,
+    canUpdateRefColumns: canUpdate,
+  } = useFileTableConfigControls({ connectionId, db, dbs, dbsMethods });
   const getIsMounted = useIsMounted();
   const [error, setError] = useState<any>();
-  if(!column?.file || !connectionId || !connection || !database_config) return null;
-  
-  return <PopupMenu 
-    button={(
-      <Btn 
-        iconPath={mdiFileCogOutline}
-        color="action"
-        variant="faded"
-      >Allowed files...</Btn>
-    )}
-    render={pClose => (
-      <FileColumnConfigEditor
-        columnName={columnName}
-        tableName={tableName}
-        refsConfig={refsConfig}
-        onChange={setRefsConfig}
-        onSetError={setError}
-      />
-    )}
-    footerButtons={pClose => [
-      {
-        label: "Cancel",
-        onClick: (e) => {
-          setRefsConfig(undefined);
-          pClose?.(e);
-        }
-      },
-      {
-        label: "Save",
-        color: "action",
-        variant: "filled",
-        disabledInfo: error? "Must fix error" : !canUpdate? "No changes" : undefined,
-        onClickPromise: async (e) => {
-          await updateRefsConfig();
-          if(!getIsMounted()) return;
-          pClose?.(e);
-        }
+  if (!column?.file || !connectionId || !connection || !database_config)
+    return null;
+
+  return (
+    <PopupMenu
+      button={
+        <Btn iconPath={mdiFileCogOutline} color="action" variant="faded">
+          Allowed files...
+        </Btn>
       }
-    ]}
-  />
-}
+      render={(pClose) => (
+        <FileColumnConfigEditor
+          columnName={columnName}
+          tableName={tableName}
+          refsConfig={refsConfig}
+          onChange={setRefsConfig}
+          onSetError={setError}
+        />
+      )}
+      footerButtons={(pClose) => [
+        {
+          label: "Cancel",
+          onClick: (e) => {
+            setRefsConfig(undefined);
+            pClose?.(e);
+          },
+        },
+        {
+          label: "Save",
+          color: "action",
+          variant: "filled",
+          disabledInfo:
+            error ? "Must fix error"
+            : !canUpdate ? "No changes"
+            : undefined,
+          onClickPromise: async (e) => {
+            await updateRefsConfig();
+            if (!getIsMounted()) return;
+            pClose?.(e);
+          },
+        },
+      ]}
+    />
+  );
+};

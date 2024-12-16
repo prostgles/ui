@@ -1,8 +1,8 @@
-import React from "react"
+import React from "react";
 
 export const SmartCardView = () => {
-    return <>View not finished</>
-}
+  return <>View not finished</>;
+};
 // import { ValidatedColumnInfo, TableInfo, AnyObject, SubscriptionHandler } from "prostgles-types";
 // import RTComp from "../RTComp";
 // import React from "react";
@@ -38,9 +38,7 @@ export const SmartCardView = () => {
 
 // export type ParsedNestedFieldConfig = ParsedFieldConfig | FieldConfigTable;
 
-
 // export type BasicMedia = { content_type: string; name: string; url: string }
-
 
 // export type SmartCardViewProps = Pick<SmartCardProps, "db" | "tableName" | "columns" | "variant" | "excludeNulls"> & {
 
@@ -109,7 +107,7 @@ export const SmartCardView = () => {
 //     joinedInfo: {},
 //     tableColumns: undefined,
 //     insertMode: false,
-//     detailedFilter: [], 
+//     detailedFilter: [],
 //   }
 
 //   loaded = false;
@@ -309,7 +307,6 @@ export const SmartCardView = () => {
 //     }
 //   }
 
-
 //   renderMedia = (params: {
 //     file: { url: string; type: string; name?: string },
 //     i: string | number,
@@ -383,7 +380,6 @@ export const SmartCardView = () => {
 //   //     return undefined;
 //   // }
 
-
 //   onUnmount() {
 //     Object.values(this.itemsSub).map(v => v?.unsubscribe());
 //   }
@@ -407,10 +403,10 @@ export const SmartCardView = () => {
 //     } = this.props;
 
 //     const { items, joinedInfo, tableInfo,
-//       tableColumns, insertMode, fieldConfigs, 
+//       tableColumns, insertMode, fieldConfigs,
 //       loadingData
 //     } = this.state;
-    
+
 //     const detailedFilter = this.props.detailedFilter?.value || this.state.detailedFilter || [];
 
 //     const { orderByKey, orderAsc } = this.getSort();
@@ -453,7 +449,7 @@ export const SmartCardView = () => {
 //       //     tableColumns.filter(c => c.references?.ftable === parent.tableName && c.references.fcols?.length === 1)
 //       //         .map(c => {
 //       //             defaultData = defaultData || {};
-//       //             defaultData = { 
+//       //             defaultData = {
 //       //                 ...defaultData,
 //       //                 [c.name]: parent.row[c.references.fcols[0]]
 //       //             }
@@ -509,7 +505,7 @@ export const SmartCardView = () => {
 //     })
 
 //     const onFilterChange = detailedFilter => {
-            
+
 //       console.log({ detailedFilter })
 //       if(this.props.detailedFilter){
 //         this.props.detailedFilter.onChange(detailedFilter);
@@ -517,7 +513,6 @@ export const SmartCardView = () => {
 //         this.setState({ detailedFilter })
 //       }
 //     }
-    
 
 //     let AddRowButton = (smartFormProps?.enableInsert && db?.[tableName]?.insert) ?
 //       <Btn className="f-0 mr-2 shadow mt-p5 absolute b b-active"
@@ -528,11 +523,11 @@ export const SmartCardView = () => {
 //         color="action"
 //       /> :
 //       null,
-      
+
 //       SortButton = !orderableFields.length ?
 //         null :
 //         <div className={"ml-auto flex-row min-h-0 f-0 relative ai-center pl-p5"}>
-//           <Select 
+//           <Select
 //             id="orderbycomp"
 //             buttonClassName="shadow bg-color-0"
 //             label="Sort by"
@@ -549,7 +544,6 @@ export const SmartCardView = () => {
 //           <Btn iconPath={orderAsc ? mdiSortReverseVariant : mdiSortVariant} onClick={() => { this.setState({ orderAsc: !orderAsc }) }} />
 //         </div>
 
-
 //     const fieldConfigsL0 = (fieldConfigs || []).filter(fc => !("fieldConfigs" in fc) || fc.render)
 //     const fieldConfigsL1 = (fieldConfigs || []).filter(fc => ("fieldConfigs" in fc && !fc.render))  //   && !fc.hide
 
@@ -557,9 +551,9 @@ export const SmartCardView = () => {
 //       className={"flex-col min-h-0 f-1 relative  "}
 //       style={{}}
 //     >
-//       <SmartFilterBar 
-//         table_name={tableName} 
-//         db={db} 
+//       <SmartFilterBar
+//         table_name={tableName}
+//         db={db}
 //         onChange={detailedFilter => {
 //           this.setState({ detailedFilter })
 //         }}
@@ -573,8 +567,8 @@ export const SmartCardView = () => {
 //         {loadingData && <Loading variant="cover" delay={1} /> }
 //         {(items.length && depth) ? <div className="bottom-fader" /> : null}
 //         {items.map((item, i) => (
-//         <div key={pkeyCol ? (item[pkeyCol.name] || i) : i} 
-//           className={"flex-col " + (i? " mt-1 " : "") + (parent ? "" : " card ") + (depth ? " b b-color " : "")} 
+//         <div key={pkeyCol ? (item[pkeyCol.name] || i) : i}
+//           className={"flex-col " + (i? " mt-1 " : "") + (parent ? "" : " card ") + (depth ? " b b-color " : "")}
 //           style={{}}
 //         >
 //           <SmartCard

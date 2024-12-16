@@ -1,19 +1,27 @@
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import { getTableRulesErrors } from "../../../../../commonTypes/publishUtils";
-import { omitKeys } from "../../../utils"; 
+import { omitKeys } from "../../../utils";
 import type { TablePermissionControlsProps } from "./TablePermissionControls";
 
-type Args = Pick<TablePermissionControlsProps, "contextData" | "table"> & Pick<Partial<TablePermissionControlsProps>, "tableRules">;
+type Args = Pick<TablePermissionControlsProps, "contextData" | "table"> &
+  Pick<Partial<TablePermissionControlsProps>, "tableRules">;
 
-export const useLocalTableRulesErrors = ({ contextData, table, tableRules }: Args) => {
-
+export const useLocalTableRulesErrors = ({
+  contextData,
+  table,
+  tableRules,
+}: Args) => {
   const localTableRulesErrors = usePromise(async () => {
-    if(!table || !contextData?.user || !tableRules) return;
+    if (!table || !contextData?.user || !tableRules) return;
 
-    const columnNames = table.columns.map(c => c.name);
-    const tableRErrs = await getTableRulesErrors(omitKeys(tableRules, ["tableName" as any]), columnNames, contextData);
+    const columnNames = table.columns.map((c) => c.name);
+    const tableRErrs = await getTableRulesErrors(
+      omitKeys(tableRules, ["tableName" as any]),
+      columnNames,
+      contextData,
+    );
     return tableRErrs;
   }, [tableRules, table, contextData]);
 
   return localTableRulesErrors;
-}
+};

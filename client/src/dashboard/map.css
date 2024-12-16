@@ -1,8 +1,8 @@
 .ol-tooltip {
   position: absolute;
   background-color: white;
-  -webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
-  filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+  -webkit-filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.2));
   padding: 10px;
   border-radius: 10px;
   border: 1px solid #cccccc;
@@ -10,7 +10,8 @@
   left: -50px;
   min-width: 170px;
 }
-.ol-tooltip:after, .ol-tooltip:before {
+.ol-tooltip:after,
+.ol-tooltip:before {
   top: 100%;
   border: solid transparent;
   content: " ";
@@ -31,7 +32,7 @@
   left: 48px;
   margin-left: -11px;
 }
- .ol-tooltip p {
-   margin-top: 0;
-   margin-bottom: 0;
-  }
+.ol-tooltip p {
+  margin-top: 0;
+  margin-bottom: 0;
+}

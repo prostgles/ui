@@ -1,4 +1,3 @@
-
 import { MatchAlter } from "./MatchAlter/MatchAlter";
 import { MatchCopy } from "./MatchCopy";
 import { MatchCreate } from "./MacthCreate/MatchCreate";
@@ -9,8 +8,8 @@ import { MatchDrop } from "./MatchDrop";
 import { MatchUpdate } from "./MatchUpdate";
 import { MatchInsert } from "./MatchInsert";
 import { MatchComment } from "./MatchComment";
-import { MatchDelete } from "./MathDelete"; 
-import { MatchReassign } from "./MatchReassign"; 
+import { MatchDelete } from "./MathDelete";
+import { MatchReassign } from "./MatchReassign";
 import { MatchWith } from "./MatchWith";
 import { MatchGrant } from "./MatchGrant";
 import type { SQLMatchContext } from "./registerSuggestions";
@@ -25,7 +24,7 @@ export const SQLMatchers = {
   MatchSubscription,
   MatchPublication,
   MatchGrant,
-  MatchAlter,  
+  MatchAlter,
   MatchCreate,
   MatchUpdate,
   MatchSelect,
@@ -39,18 +38,25 @@ export const SQLMatchers = {
   MatchLast,
   MatchVacuum,
   MatchReindex,
-} as const; 
+} as const;
 type MatchFilter = (keyof typeof SQLMatchers)[];
 
-export const getMatch = async ({ cb, setS, sql, ss, filter }: SQLMatchContext & { filter?: MatchFilter }) => {
+export const getMatch = async ({
+  cb,
+  setS,
+  sql,
+  ss,
+  filter,
+}: SQLMatchContext & { filter?: MatchFilter }) => {
   const firstTry = await MatchFirst({ cb, ss, setS, sql });
-  if(firstTry) {
+  if (firstTry) {
     return { firstTry, match: undefined };
   }
 
   const match = Object.entries(SQLMatchers)
     .filter(([name]) => !filter?.length || filter.includes(name as any))
-    .map(m => m[1]).find(m => m.match(cb));
+    .map((m) => m[1])
+    .find((m) => m.match(cb));
 
-  return { match, firstTry: undefined }
-}
+  return { match, firstTry: undefined };
+};

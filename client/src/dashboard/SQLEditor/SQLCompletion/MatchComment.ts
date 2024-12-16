@@ -1,44 +1,42 @@
-
 import { suggestSnippets } from "./CommonMatchImports";
 import { getExpected } from "./getExpected";
 import type { SQLMatcher } from "./registerSuggestions";
 
 export const MatchComment: SQLMatcher = {
-  match: cb => cb.tokens[0]?.textLC === "comment",
+  match: (cb) => cb.tokens[0]?.textLC === "comment",
   result: async ({ cb, ss }) => {
+    const { prevLC, ltoken } = cb;
 
-    const { prevLC,  ltoken } = cb;
- 
-    if(ltoken?.type === "identifier.sql" && !["comment", "on", "is"].includes(ltoken.textLC)){
+    if (
+      ltoken?.type === "identifier.sql" &&
+      !["comment", "on", "is"].includes(ltoken.textLC)
+    ) {
       return suggestSnippets([{ label: "IS 'your comment$0'" }]);
     }
 
     if (ltoken?.textLC === "comment") {
       return suggestSnippets([{ label: "ON " }]);
-
     } else if (ltoken?.textLC === "on") {
-      return suggestSnippets(COMMENT_ON.map(label => ({ label })));
-
+      return suggestSnippets(COMMENT_ON.map((label) => ({ label })));
     } else if (prevLC.startsWith("comment on")) {
       const expect = ltoken!.textLC!;
-      if(expect === "column"){
+      if (expect === "column") {
         return {
-          suggestions: ss.filter(s => s.type === "column").map(s => ({
-            ...s,
-            insertText: `${s.escapedParentName}.${s.escapedIdentifier}`
-          }))
-        }
+          suggestions: ss
+            .filter((s) => s.type === "column")
+            .map((s) => ({
+              ...s,
+              insertText: `${s.escapedParentName}.${s.escapedIdentifier}`,
+            })),
+        };
       }
-      return getExpected(expect, cb, ss)
-
+      return getExpected(expect, cb, ss);
     }
     return {
-      suggestions: []
-    }
-
-  }
-}
-
+      suggestions: [],
+    };
+  },
+};
 
 export const COMMENT_ON = [
   "ACCESS METHOD ${1:object_name}",
@@ -85,4 +83,4 @@ export const COMMENT_ON = [
   "TRIGGER ${1:trigger_name} ON ${2:table_name}",
   "TYPE ${1:object_name}",
   "VIEW ${1:object_name}",
-  ].map(v => v + " IS '${3:your_comment}' ");
+].map((v) => v + " IS '${3:your_comment}' ");

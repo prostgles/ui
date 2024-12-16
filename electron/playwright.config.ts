@@ -1,9 +1,9 @@
-import { defineConfig } from '@playwright/test' 
+import { defineConfig } from "@playwright/test";
 
 const timeoutMinutes = 2;
 export default defineConfig({
   timeout: timeoutMinutes * 60e3,
-  testDir: './e2e-electron',
+  testDir: "./e2e-electron",
   maxFailures: 0,
   workers: 1,
   reporter: "list",
@@ -13,5 +13,5 @@ export default defineConfig({
     trace: "off",
     video: "off",
     testIdAttribute: "data-command",
-  }
+  },
 });

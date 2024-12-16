@@ -1,33 +1,36 @@
-::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
-    color: var(--gray-400);
-    opacity: 1; /* Firefox */
-    user-select: none;
+::placeholder {
+  /* Chrome, Firefox, Opera, Safari 10.1+ */
+  color: var(--gray-400);
+  opacity: 1; /* Firefox */
+  user-select: none;
 }
 
-:-ms-input-placeholder { /* Internet Explorer 10-11 */
-    color: var(--gray-400);
-    user-select: none;
+:-ms-input-placeholder {
+  /* Internet Explorer 10-11 */
+  color: var(--gray-400);
+  user-select: none;
 }
 
-::-ms-input-placeholder { /* Microsoft Edge */
-    color: var(--gray-400);
-    user-select: none;
+::-ms-input-placeholder {
+  /* Microsoft Edge */
+  color: var(--gray-400);
+  user-select: none;
 }
 
 .SearchList_InputWrapper {
-    border-color: var(--gray-300);
+  border-color: var(--gray-300);
 }
 .dark-theme .SearchList_InputWrapper {
-    border-color: var(--gray-500);
+  border-color: var(--gray-500);
 }
 .dark-theme .SearchList_InputWrapper input {
-    background-color: #1c1c1c;
-    color: var(--gray-100)
+  background-color: #1c1c1c;
+  color: var(--gray-100);
 }
 
 .dark-theme .search-text-endings {
-    color: #969696;
+  color: #969696;
 }
 .dark-theme .search-text-match {
-    color: #dddddd;
+  color: #dddddd;
 }

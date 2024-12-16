@@ -1,7 +1,4 @@
-import {
-  mdiChevronDown,
-  mdiPlus
-} from "@mdi/js";
+import { mdiChevronDown, mdiPlus } from "@mdi/js";
 import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import { _PG_date } from "prostgles-types";
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
@@ -17,7 +14,10 @@ import Popup from "../../../../components/Popup/Popup";
 import SearchList from "../../../../components/SearchList/SearchList";
 import Select from "../../../../components/Select/Select";
 import { isEmpty } from "../../../../utils";
-import type { DBSchemaTablesWJoins, WindowSyncItem } from "../../../Dashboard/dashboardUtils";
+import type {
+  DBSchemaTablesWJoins,
+  WindowSyncItem,
+} from "../../../Dashboard/dashboardUtils";
 import RTComp from "../../../RTComp";
 import { getTableSelect } from "../../tableUtils/getTableSelect";
 import { updateWCols } from "../../tableUtils/tableUtils";
@@ -26,10 +26,13 @@ import { getColumnListItem } from "../ColumnsMenu";
 import type { FuncDef } from "../FunctionSelector";
 import { CountAllFunc, FunctionSelector } from "../FunctionSelector";
 import { NEW_COL_POSITIONS } from "../LinkedColumn/LinkedColumnFooter";
-import { getNestedColumnTable, type NestedColumnOpts } from "../getNestedColumnTable";
+import {
+  getNestedColumnTable,
+  type NestedColumnOpts,
+} from "../getNestedColumnTable";
 import type { ColumnConfigWInfo } from "../../W_Table";
 
-const ColTypes = ["Function" , "Aggregate Function"] as const;
+const ColTypes = ["Function", "Aggregate Function"] as const;
 
 type AddComputedColMenuP = Pick<Prgl, "db"> & {
   tableHandler?: Partial<TableHandlerClient>;
@@ -40,255 +43,337 @@ type AddComputedColMenuP = Pick<Prgl, "db"> & {
   nestedColumnOpts: NestedColumnOpts | undefined;
   selectedColumn?: string;
   variant?: "no-popup";
-}
+};
 
 type AddComputedColMenuS = {
-  colType?: typeof ColTypes[number],
+  colType?: (typeof ColTypes)[number];
   column?: string;
 
   funcDef?: FuncDef;
-  
+
   name?: string;
 
   args?: Required<ColumnConfig>["computedConfig"]["args"];
 
   template_string_hint?: string;
   template_string_error?: any;
-  addTo: typeof NEW_COL_POSITIONS[number]["key"]
-}
+  addTo: (typeof NEW_COL_POSITIONS)[number]["key"];
+};
 
-export class AddComputedColMenu extends RTComp<AddComputedColMenuP, AddComputedColMenuS> {
+export class AddComputedColMenu extends RTComp<
+  AddComputedColMenuP,
+  AddComputedColMenuS
+> {
   state: AddComputedColMenuS = {
     args: {},
     addTo: "start",
-  }
+  };
 
   onDelta(deltaP?: Partial<AddComputedColMenuP> | undefined): void {
-    if(deltaP?.selectedColumn && !this.state.column){
-      this.setState({ column: deltaP.selectedColumn })
+    if (deltaP?.selectedColumn && !this.state.column) {
+      this.setState({ column: deltaP.selectedColumn });
     }
   }
-
 
   onAdd = (newCol: ColumnConfig, addTo: AddComputedColMenuS["addTo"]) => {
     const tableOrError = this.table;
-    if(tableOrError.error !== undefined){
+    if (tableOrError.error !== undefined) {
       console.error(tableOrError.error);
-      return
+      return;
     }
     const { columns, nestedColumn } = tableOrError;
     const { w, nestedColumnOpts } = this.props;
-    if(!nestedColumn){
-      const newColumns = columns.map(c => ({ ...c }));
-      if(addTo === "start") newColumns.unshift(newCol);
+    if (!nestedColumn) {
+      const newColumns = columns.map((c) => ({ ...c }));
+      if (addTo === "start") newColumns.unshift(newCol);
       else newColumns.push(newCol);
 
       updateWCols(w, newColumns);
     } else {
-      if(nestedColumnOpts?.type === "new"){
+      if (nestedColumnOpts?.type === "new") {
         const { config } = nestedColumnOpts;
         const updatedNestedColumn: ColumnConfigWInfo = {
           ...config,
           nested: {
             ...config.nested!,
-            columns: [...config.nested!.columns, newCol]
-          }
-        }
+            columns: [...config.nested!.columns, newCol],
+          },
+        };
         nestedColumnOpts.onChange(updatedNestedColumn);
       } else {
-        updateWCols(w, [...nestedColumn.nested!.columns, newCol], nestedColumn.name)
+        updateWCols(
+          w,
+          [...nestedColumn.nested!.columns, newCol],
+          nestedColumn.name,
+        );
       }
     }
-  }
+  };
 
-  get table(){
+  get table() {
     const { w, tables, nestedColumnOpts } = this.props;
     return getNestedColumnTable(nestedColumnOpts, w, tables);
   }
 
-  render(){
+  render() {
     const { onClose, tableHandler, w, tables, db, variant } = this.props;
-    const { column, funcDef, args, template_string_hint, template_string_error, addTo } = this.state;
-    
-    const name = this.state.name || (funcDef?.label? `${funcDef.label.toUpperCase()}(${column || ""}${args?.$duration?.otherColumn? ` TO ${args.$duration.otherColumn}` : "" })` : "" )|| "col_name";
+    const {
+      column,
+      funcDef,
+      args,
+      template_string_hint,
+      template_string_error,
+      addTo,
+    } = this.state;
+
+    const name =
+      this.state.name ||
+      (funcDef?.label ?
+        `${funcDef.label.toUpperCase()}(${column || ""}${args?.$duration?.otherColumn ? ` TO ${args.$duration.otherColumn}` : ""})`
+      : "") ||
+      "col_name";
     const { table, error } = this.table;
 
-    if(!table) return error;
+    if (!table) return error;
 
     const { columns } = table;
 
-    const allowedColumnsForFunction = (funcDef && getFuncDefColumns(funcDef, columns)) ?? columns;
- 
-    const isAggNocol = funcDef && (!funcDef.tsDataTypeCol && !funcDef.udtDataTypeCol);
-    const canAdd = funcDef?.key === "$template_string"? !template_string_error : 
-      funcDef?.key === "$duration"? !!args?.$duration?.otherColumn : 
-      Boolean(funcDef && (column || isAggNocol));
- 
-    const hasJoinCols = w.columns?.some(c => c.nested);
-    const content = <>    
-      <FlexCol className="AddComputedColMenu gap-2 f-1 min-h-0 mt-1 ai-start max-h-fit">
-        {!column && !hasJoinCols && 
-          <FlexRowWrap>
-            <FlexCol className="gap-p25">
-              <Btn variant="faded"
+    const allowedColumnsForFunction =
+      (funcDef && getFuncDefColumns(funcDef, columns)) ?? columns;
+
+    const isAggNocol =
+      funcDef && !funcDef.tsDataTypeCol && !funcDef.udtDataTypeCol;
+    const canAdd =
+      funcDef?.key === "$template_string" ? !template_string_error
+      : funcDef?.key === "$duration" ? !!args?.$duration?.otherColumn
+      : Boolean(funcDef && (column || isAggNocol));
+
+    const hasJoinCols = w.columns?.some((c) => c.nested);
+    const content = (
+      <>
+        <FlexCol className="AddComputedColMenu gap-2 f-1 min-h-0 mt-1 ai-start max-h-fit">
+          {!column && !hasJoinCols && (
+            <FlexRowWrap>
+              <FlexCol className="gap-p25">
+                <Btn
+                  variant="faded"
+                  color="action"
+                  onClick={() => {
+                    this.setState({
+                      funcDef: CountAllFunc,
+                    });
+                  }}
+                >
+                  Add count of all rows
+                </Btn>
+                <div
+                  className="text-0p75 p-p25 ta-left font-14"
+                  style={{ maxWidth: "250px" }}
+                >
+                  Will show total row counts grouped by the selected columns
+                </div>
+              </FlexCol>
+              {!funcDef && <div>OR</div>}
+            </FlexRowWrap>
+          )}
+          {funcDef?.key === CountAllFunc.key ?
+            null
+          : column ?
+            <div className="flex-col  f-0 min-h-fit  ">
+              <label className="noselect f-0 text-1p5 ta-left  mb-p5 ">
+                Column
+              </label>
+              <Btn
+                variant="faded"
                 color="action"
+                iconPosition="right"
+                iconPath={mdiChevronDown}
                 onClick={() => {
-                  this.setState({ 
-                    funcDef: CountAllFunc,
-                  })
+                  this.setState({ column: undefined });
                 }}
               >
-                Add count of all rows
+                {column}
               </Btn>
-              <div className="text-0p75 p-p25 ta-left font-14" style={{ maxWidth: "250px" }}>
-                Will show total row counts grouped by the selected columns
-              </div>
-            </FlexCol>
-            {!funcDef && <div>OR</div>}
-          </FlexRowWrap>
-        }
-        {funcDef?.key === CountAllFunc.key? null : 
-          column? 
-          <div className="flex-col  f-0 min-h-fit  " >
-            <label className="noselect f-0 text-1p5 ta-left  mb-p5 ">Column</label>
-            <Btn variant="faded"
-              color="action"
-              iconPosition="right"
-              iconPath={mdiChevronDown}
-              onClick={() => {
-                this.setState({ column: undefined, })
-              }}
-            >{column}</Btn>
-          </div> : 
-          <SearchList
-            id="cols-elect"
-            className="  f-1"
-            label={funcDef? `Columns for ${funcDef.label}` : `Choose a column`}
-            items={allowedColumnsForFunction.map(c => ({ 
-              ...getColumnListItem(c),
-              onPress: () => {
-                this.setState({ column: c.name })
+            </div>
+          : <SearchList
+              id="cols-elect"
+              className="  f-1"
+              label={
+                funcDef ? `Columns for ${funcDef.label}` : `Choose a column`
               }
-            }))}
-          />
-        }
+              items={allowedColumnsForFunction.map((c) => ({
+                ...getColumnListItem(c),
+                onPress: () => {
+                  this.setState({ column: c.name });
+                },
+              }))}
+            />
+          }
 
-        {!column? null : funcDef? 
-          <div className="flex-col">
-            <label className="noselect f-0 text-1p5 ta-left  mb-p5 ">Function</label>
-            <Btn variant="faded"
-              color="action"
-              iconPosition="right"
-              iconPath={mdiChevronDown}
-              onClick={() => {
-                this.setState({ funcDef: undefined, })
-              }}
-            >{funcDef.label}</Btn>
-          </div> :
+          {!column ?
+            null
+          : funcDef ?
+            <div className="flex-col">
+              <label className="noselect f-0 text-1p5 ta-left  mb-p5 ">
+                Function
+              </label>
+              <Btn
+                variant="faded"
+                color="action"
+                iconPosition="right"
+                iconPath={mdiChevronDown}
+                onClick={() => {
+                  this.setState({ funcDef: undefined });
+                }}
+              >
+                {funcDef.label}
+              </Btn>
+            </div>
+          : <FlexCol className="gap-p25 ">
+              <Label label="Function" variant="normal" />
+              <FunctionSelector
+                column={column}
+                wColumns={w.columns ?? undefined}
+                currentNestedColumnName={
+                  this.props.nestedColumnOpts?.config.name
+                }
+                tableColumns={table.columns}
+                onSelect={(newFuncDef) => {
+                  this.setState({
+                    funcDef: newFuncDef,
+                    args: {},
+                  });
+                }}
+              />
+            </FlexCol>
+          }
+        </FlexCol>
 
-          <FlexCol className="gap-p25 ">
-            <Label label="Function" variant="normal" />
-            <FunctionSelector 
-              column={column} 
-              wColumns={w.columns ?? undefined}
-              currentNestedColumnName={this.props.nestedColumnOpts?.config.name}
-              tableColumns={table.columns}
-              onSelect={newFuncDef => {
-                this.setState({
-                  funcDef: newFuncDef,
-                  args: {}
-                });
+        {funcDef?.key === "$template_string" && (
+          <>
+            <FormField
+              className="mt-1"
+              asColumn={true}
+              value={args?.$template_string ?? ""}
+              label="Template string"
+              hint={
+                template_string_hint ??
+                "Use column names. E.g.: Dear {FirstName} {LastName}"
+              }
+              error={template_string_error}
+              onChange={async ($template_string) => {
+                let template_string_hint: string | undefined = undefined;
+                if (tableHandler && tableHandler.find) {
+                  try {
+                    template_string_hint = (await tableHandler.find(
+                      {},
+                      {
+                        returnType: "value",
+                        limit: 1,
+                        select: {
+                          val: { $template_string: [$template_string] },
+                        },
+                      },
+                    )) as any as string;
+                    this.setState({
+                      args: { $template_string },
+                      template_string_error: undefined,
+                      template_string_hint,
+                    });
+                  } catch (template_string_error) {
+                    this.setState({ template_string_error });
+                  }
+                } else {
+                  this.setState({
+                    args: { $template_string },
+                    template_string_error: undefined,
+                  });
+                }
               }}
             />
-          </FlexCol>
-        }
-      </FlexCol>
+            <div className="flex-row-wrap">
+              {columns.map((c, i) => (
+                <div key={i} className="p-p25">{`{${c.name}}`}</div>
+              ))}
+            </div>
+          </>
+        )}
 
-      {funcDef?.key === "$template_string" && <>
-        <FormField className="mt-1"
-          asColumn={true} 
-          value={args?.$template_string ?? ""} 
-          label="Template string" 
-          hint={template_string_hint ?? "Use column names. E.g.: Dear {FirstName} {LastName}"}
-          error={template_string_error}
-          onChange={async $template_string => {
-            let template_string_hint: string | undefined = undefined;
-            if(tableHandler && tableHandler.find){
-              try {
-                template_string_hint = (await tableHandler.find({}, { returnType: "value", limit: 1, select: { val: { $template_string: [$template_string] } }})) as any as string
-                this.setState({ args: { $template_string } , template_string_error: undefined, template_string_hint })
-              } catch(template_string_error){
-                this.setState({ template_string_error })
-
-              }
-            } else {
-              this.setState({ args: { $template_string }, template_string_error: undefined })
-            }
-          }} 
-        />
-        <div className="flex-row-wrap">{columns.map((c, i) => (<div key={i} className="p-p25">{`{${c.name}}`}</div>))}</div>
-        </>
-      }
-
-      {funcDef?.key === "$duration" && (args?.$duration?.otherColumn? 
-        <FlexCol className="gap-p5 mt-1">
-          <label className="noselect f-0 text-1p5 ta-left">Compare to</label>
-          <Btn variant="filled"
-            style={{
-              backgroundColor: "rgb(0, 183, 255)"
-            }}
-            onClick={() => {
-              this.setState({ args: {} })
-            }}
-          >{args.$duration.otherColumn}</Btn>
-        </FlexCol> : 
-        <SearchList id="duration_othercolumn"
-          label="Compare to column"
-          items={columns.filter(c => c.name !== column && _PG_date.some(v => v === c.udt_name))
-            .map(c => ({
-              key: c.name,
-              label: c.label,
-              onPress: () => {
-                this.setState({
-                  args: {
-                    $duration: { otherColumn: c.name }
-                  }
-                })
-              }
-            }))} 
-          />)
-        }
-        {canAdd && <>
-          <FormField label="Name" 
-            type="text"
-            className="mt-1"
-            asColumn={true }
-            value={name} 
-            onChange={name => {
-              this.setState({ name })
-            }}
-          />
-          <Select 
-            label={"Add to"} 
-            value={addTo} 
-            fullOptions={NEW_COL_POSITIONS} 
-            onChange={addTo => this.setState({ addTo })} 
-          />
-        </>}
-      </>;
+        {funcDef?.key === "$duration" &&
+          (args?.$duration?.otherColumn ?
+            <FlexCol className="gap-p5 mt-1">
+              <label className="noselect f-0 text-1p5 ta-left">
+                Compare to
+              </label>
+              <Btn
+                variant="filled"
+                style={{
+                  backgroundColor: "rgb(0, 183, 255)",
+                }}
+                onClick={() => {
+                  this.setState({ args: {} });
+                }}
+              >
+                {args.$duration.otherColumn}
+              </Btn>
+            </FlexCol>
+          : <SearchList
+              id="duration_othercolumn"
+              label="Compare to column"
+              items={columns
+                .filter(
+                  (c) =>
+                    c.name !== column && _PG_date.some((v) => v === c.udt_name),
+                )
+                .map((c) => ({
+                  key: c.name,
+                  label: c.label,
+                  onPress: () => {
+                    this.setState({
+                      args: {
+                        $duration: { otherColumn: c.name },
+                      },
+                    });
+                  },
+                }))}
+            />)}
+        {canAdd && (
+          <>
+            <FormField
+              label="Name"
+              type="text"
+              className="mt-1"
+              asColumn={true}
+              value={name}
+              onChange={(name) => {
+                this.setState({ name });
+              }}
+            />
+            <Select
+              label={"Add to"}
+              value={addTo}
+              fullOptions={NEW_COL_POSITIONS}
+              onChange={(addTo) => this.setState({ addTo })}
+            />
+          </>
+        )}
+      </>
+    );
     const footerButtons: FooterButton[] = [
       { onClickClose: true, label: "Cancel", variant: "outline" },
-      { 
-        label: "Add", variant: "filled", color: "action", iconPath: mdiPlus,
-        disabledInfo: canAdd? undefined : "Some function inputs are missing",
+      {
+        label: "Add",
+        variant: "filled",
+        color: "action",
+        iconPath: mdiPlus,
+        disabledInfo: canAdd ? undefined : "Some function inputs are missing",
         onClickPromise: async () => {
-
-          if(!name){
-            alert("Provide a column name")
-          } else if(columns.find(c => c.name === name)){
-            alert("Column name already in use: " + name)
+          if (!name) {
+            alert("Provide a column name");
+          } else if (columns.find((c) => c.name === name)) {
+            alert("Column name already in use: " + name);
           } else {
-            if(!funcDef){
+            if (!funcDef) {
               alert("Something went wrong. No function definition found");
               return;
             }
@@ -300,69 +385,82 @@ export class AddComputedColMenu extends RTComp<AddComputedColMenuP, AddComputedC
                 funcDef,
                 column,
                 ...funcDef.outType,
-                args: isEmpty(args)? undefined : args
-              }
-            }
-            const { select } = await getTableSelect({ table_name: w.table_name, columns: [newComputedCol] }, tables, db, {}, true)
+                args: isEmpty(args) ? undefined : args,
+              },
+            };
+            const { select } = await getTableSelect(
+              { table_name: w.table_name, columns: [newComputedCol] },
+              tables,
+              db,
+              {},
+              true,
+            );
             await tableHandler?.find?.({}, { select, limit: 0 });
             this.onAdd(newComputedCol, addTo);
-            onClose()
+            onClose();
           }
-        } 
+        },
       },
-    ]
-    if(variant === "no-popup"){
-      const cancelButton: FooterButton | undefined = this.state.funcDef? { 
-        onClick: () => { this.setState({ funcDef: undefined }) }, 
-        label: "Cancel", 
-        variant: "outline" 
-      } : undefined;
-      return <FlexCol className="f-1">
-        {content}
-        <FooterButtons 
-          style={{ borderTop: "unset" }} 
-          className="mt-auto mb-0" 
-          footerButtons={[
-            cancelButton,
-            footerButtons[1],
-          ]} 
-        />
-      </FlexCol>
+    ];
+    if (variant === "no-popup") {
+      const cancelButton: FooterButton | undefined =
+        this.state.funcDef ?
+          {
+            onClick: () => {
+              this.setState({ funcDef: undefined });
+            },
+            label: "Cancel",
+            variant: "outline",
+          }
+        : undefined;
+      return (
+        <FlexCol className="f-1">
+          {content}
+          <FooterButtons
+            style={{ borderTop: "unset" }}
+            className="mt-auto mb-0"
+            footerButtons={[cancelButton, footerButtons[1]]}
+          />
+        </FlexCol>
+      );
     }
-    return <Popup 
-      title="Add computed column"
-      showFullscreenToggle={{}}
-      positioning="top-center"
-      persistInitialSize={true}
-      clickCatchStyle={{ opacity: 1 }}
-      contentClassName="gap-2 p-2 "
-      rootChildClassname="f-1"
-      footerButtons={footerButtons}
-      onClose={onClose}
-    >
-      {content}
-    </Popup>
+    return (
+      <Popup
+        title="Add computed column"
+        showFullscreenToggle={{}}
+        positioning="top-center"
+        persistInitialSize={true}
+        clickCatchStyle={{ opacity: 1 }}
+        contentClassName="gap-2 p-2 "
+        rootChildClassname="f-1"
+        footerButtons={footerButtons}
+        onClose={onClose}
+      >
+        {content}
+      </Popup>
+    );
   }
 }
 
-export const getFuncDefColumns = (funcDef: FuncDef, columns: ValidatedColumnInfo[]) => {
-  if(funcDef.tsDataTypeCol || funcDef.udtDataTypeCol){
-    return columns
-      .filter(c => {
-        if(funcDef.tsDataTypeCol === "any" || funcDef.udtDataTypeCol === "any"){
-          return true
-        } else if(funcDef.tsDataTypeCol){
-          return funcDef.tsDataTypeCol.includes(c.tsDataType)
-        } else if(funcDef.udtDataTypeCol){
-          return funcDef.udtDataTypeCol.includes(c.udt_name)
-        }
+export const getFuncDefColumns = (
+  funcDef: FuncDef,
+  columns: ValidatedColumnInfo[],
+) => {
+  if (funcDef.tsDataTypeCol || funcDef.udtDataTypeCol) {
+    return columns.filter((c) => {
+      if (funcDef.tsDataTypeCol === "any" || funcDef.udtDataTypeCol === "any") {
+        return true;
+      } else if (funcDef.tsDataTypeCol) {
+        return funcDef.tsDataTypeCol.includes(c.tsDataType);
+      } else if (funcDef.udtDataTypeCol) {
+        return funcDef.udtDataTypeCol.includes(c.udt_name);
+      }
 
-        return false;
-      });
+      return false;
+    });
   }
-  return undefined
-}
-
+  return undefined;
+};
 
 /*
 

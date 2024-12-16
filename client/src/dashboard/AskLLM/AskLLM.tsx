@@ -1,4 +1,3 @@
-
 import { mdiAssistant } from "@mdi/js";
 import React, { useState } from "react";
 import type { Prgl } from "../../App";
@@ -20,43 +19,47 @@ export const AskLLM = (props: P) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const onClose = () => {
     setAnchorEl(null);
-  }
+  };
   const state = useLLMSetupState(prgl);
 
-  if(state.state === "loading") {
-    return <Loading />
+  if (state.state === "loading") {
+    return <Loading />;
   }
 
-  return <>
-    <Btn
-      title="Chat to an AI Assistant to get help with your queries"
-      variant="faded"
-      color="action"
-      iconPath={mdiAssistant}
-      data-command="AskLLM"
-      onClick={(e) => {
-        setAnchorEl(e.currentTarget);
-      }}
-      disabledInfo={!askLLM? "AI assistant not available" : undefined}
-    >
-      {window.isMediumWidthScreen? null : `Ask AI`}
-    </Btn>
+  return (
+    <>
+      <Btn
+        title="Chat to an AI Assistant to get help with your queries"
+        variant="faded"
+        color="action"
+        iconPath={mdiAssistant}
+        data-command="AskLLM"
+        onClick={(e) => {
+          setAnchorEl(e.currentTarget);
+        }}
+        disabledInfo={!askLLM ? "AI assistant not available" : undefined}
+      >
+        {window.isMediumWidthScreen ? null : `Ask AI`}
+      </Btn>
 
-    {(!anchorEl || !askLLM)? null : state.state !== "ready"?  
-      <SetupLLMCredentials 
-        {...prgl}
-        asPopup={true}
-        setupState={state}
-        onClose={onClose} 
-      /> :
-      <AskLLMChat 
-        prgl={prgl}
-        askLLM={askLLM}
-        workspaceId={workspaceId}
-        setupState={state}
-        anchorEl={anchorEl}
-        onClose={onClose}
-      />
-    }
-  </> 
-}
+      {!anchorEl || !askLLM ?
+        null
+      : state.state !== "ready" ?
+        <SetupLLMCredentials
+          {...prgl}
+          asPopup={true}
+          setupState={state}
+          onClose={onClose}
+        />
+      : <AskLLMChat
+          prgl={prgl}
+          askLLM={askLLM}
+          workspaceId={workspaceId}
+          setupState={state}
+          anchorEl={anchorEl}
+          onClose={onClose}
+        />
+      }
+    </>
+  );
+};

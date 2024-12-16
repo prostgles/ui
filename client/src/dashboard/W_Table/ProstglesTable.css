@@ -1,4 +1,3 @@
-
 .fullscreen {
   position: fixed;
   z-index: 2;
@@ -9,7 +8,7 @@
   background: white;
 }
 
-.active-brush {    
+.active-brush {
   border: 1px solid #00d0ffcf;
   background: #def9ff38;
 }
@@ -17,28 +16,45 @@
 /* #root > div > div > div.flex-row.f-1 > div.f-1.flex-col > div > div > span, */
 .react-resizable-handle.react-resizable-handle-se {
   opacity: 0;
-} 
+}
 
 .d-row .show-on-row-hover:not(.hover) {
   opacity: 0;
 }
-.d-row:hover  .show-on-row-hover {
+.d-row:hover .show-on-row-hover {
   opacity: 1;
 }
 
-
 @keyframes rubberBand {
-  0%    { transform: scale(1); }
-  30%   { transform: scaleX(1.25) scaleY(0.75);}
-  40%   { transform: scaleX(0.75) scaleY(1.25);}
-  60%   { transform: scaleX(1.15) scaleY(0.85);}
-  100%  { transform: scale(1);}
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scaleX(1.25) scaleY(0.75);
+  }
+  40% {
+    transform: scaleX(0.75) scaleY(1.25);
+  }
+  60% {
+    transform: scaleX(1.15) scaleY(0.85);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 @keyframes colorFlick {
-  0%    { color: black;  }
-  30%   { color: red; }
-  60%   { color: green; }
-  100%  { color: initial; }
+  0% {
+    color: black;
+  }
+  30% {
+    color: red;
+  }
+  60% {
+    color: green;
+  }
+  100% {
+    color: initial;
+  }
 }
 .rubberBand {
   animation-duration: 1.5s;

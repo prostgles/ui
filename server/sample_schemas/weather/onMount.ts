@@ -1,5 +1,5 @@
 export const onMount: ProstglesOnMount = async ({ dbo }) => {
-  if(!dbo.cities){
+  if (!dbo.cities) {
     await dbo.sql(`
       CREATE EXTENSION IF NOT EXISTS postgis;
 
@@ -64,45 +64,62 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
   }
 
   const addForecasts = async () => {
-    if(!dbo.weather_forecasts) return; 
+    if (!dbo.weather_forecasts) return;
     const citiesCount = await dbo.cities.count();
-    if(!+citiesCount){
+    if (!+citiesCount) {
       const airports = await fetchAirports();
       await dbo.airports.insert(airports);
 
       const cities = await fetchCities();
       await dbo.cities.insert(cities);
-
     }
     const cities = await dbo.cities.find({
-      name_en: { $in: ["London", "Amsterdam", "Athens", "Valencia", "Malaga", "Zagreb", "Valencia", "Copenhagen"] }
+      name_en: {
+        $in: [
+          "London",
+          "Amsterdam",
+          "Athens",
+          "Valencia",
+          "Malaga",
+          "Zagreb",
+          "Valencia",
+          "Copenhagen",
+        ],
+      },
     });
 
-    const lastAdded = await dbo.weather_forecasts.findOne({}, { orderBy: [{ forecast_time: -1 }]});
-    if(lastAdded && new Date().getTime() - new Date(lastAdded.forecast_time).getTime() < DAY){
+    const lastAdded = await dbo.weather_forecasts.findOne(
+      {},
+      { orderBy: [{ forecast_time: -1 }] },
+    );
+    if (
+      lastAdded &&
+      new Date().getTime() - new Date(lastAdded.forecast_time).getTime() < DAY
+    ) {
       return;
     }
-    for(const city of cities){
+    for (const city of cities) {
       const weather = await getWeatherForCity(city.latitude, city.longitude);
-      const forecasts = weather.properties.timeseries.map(entry => ({
+      const forecasts = weather.properties.timeseries.map((entry) => ({
         city_id: city.id,
         // forecast_time: new Date(entry.time),
         forecast_time: entry.time,
         temperature: entry.data.instant.details.air_temperature,
         wind_speed: entry.data.instant.details.wind_speed,
-        precipitation: entry.data.next_1_hours?.details.precipitation_amount ?? 0,
+        precipitation:
+          entry.data.next_1_hours?.details.precipitation_amount ?? 0,
         pressure: entry.data.instant.details.air_pressure_at_sea_level,
         humidity: entry.data.instant.details.relative_humidity,
       }));
-  
+
       await dbo.weather_forecasts.insert(forecasts);
     }
-  }
+  };
 
   const DAY = 1000 * 3600 * 24;
   setTimeout(addForecasts, DAY); // Run every day
   await addForecasts();
-}
+};
 
 type ForecastDetails = {
   air_temperature: number;
@@ -125,7 +142,7 @@ type TimeSeriesEntry = {
       summary: {
         symbol_code: string;
       };
-    }
+    };
   };
 };
 
@@ -135,14 +152,17 @@ type ForecastResponse = {
   };
 };
 
-const getWeatherForCity = async (lat: number | string, lon: number | string) => {
+const getWeatherForCity = async (
+  lat: number | string,
+  lon: number | string,
+) => {
   const response = await fetch(
     `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}`,
     {
       headers: {
         "User-Agent": "Prostgles-Demo", // YR requires a user agent header
       },
-    }
+    },
   );
 
   if (!response.ok) {
@@ -154,57 +174,65 @@ const getWeatherForCity = async (lat: number | string, lon: number | string) => 
 };
 
 const EUROPE_BBOX = "(34,-25,72,45)";
-const fetchCities = async (): Promise<{
-  id: number;
-  lat: number;
-  lon: number;
-  name: string | null;
-  name_en: string | null;
-  capital: string | null;
-  admin_level: string | null;
-  official_status: string | null;
-  population: string | null;
-  population_date: string | null;
-  start_date: string | null;
-}[]> => {
+const fetchCities = async (): Promise<
+  {
+    id: number;
+    lat: number;
+    lon: number;
+    name: string | null;
+    name_en: string | null;
+    capital: string | null;
+    admin_level: string | null;
+    official_status: string | null;
+    population: string | null;
+    population_date: string | null;
+    start_date: string | null;
+  }[]
+> => {
   const overpassQuery = `
   [out:json];
   node["place"="city"]${EUROPE_BBOX};
   out body;
   `;
 
-  const overpassUrl = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(overpassQuery);
+  const overpassUrl =
+    "https://overpass-api.de/api/interpreter?data=" +
+    encodeURIComponent(overpassQuery);
 
   return fetch(overpassUrl)
-    .then(response => {
+    .then((response) => {
       if (!response.ok) {
-        throw new Error('Failed to fetch cities');
+        throw new Error("Failed to fetch cities");
       }
       return response;
     })
-    .then(response => response.json())
-    .then(data => {
-      const cities = data.elements.map(element => ({
+    .then((response) => response.json())
+    .then((data) => {
+      const cities = data.elements.map((element) => ({
         id: element.id,
         latitude: element.lat,
         longitude: element.lon,
         name: element.tags.name || null,
-        name_en: element.tags['name:en'] || (element.tags.name || "").normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
+        name_en:
+          element.tags["name:en"] ||
+          (element.tags.name || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, ""),
         capital: element.tags.capital || null,
         admin_level: element.tags.admin_level || null,
         official_status: element.tags.official_status || null,
         population: element.tags.population || null,
-        population_date: element.tags['population:date'] || null,
+        population_date: element.tags["population:date"] || null,
         start_date: element.tags.start_date || null,
         note: element.tags.note || null,
         website: element.tags.website || null,
-        addr_country: element.tags['addr:country'] || null,
-        country_code: element.tags['is_in:country_code'] || null,
+        addr_country: element.tags["addr:country"] || null,
+        country_code: element.tags["is_in:country_code"] || null,
       }));
 
       return cities;
     });
-}
+};
 
 const fetchAirports = async () => {
   const overpassQuery = `
@@ -212,28 +240,30 @@ const fetchAirports = async () => {
     way["aeroway"="aerodrome"]["iata"]${EUROPE_BBOX}; 
     out center;
   `;
-  const overpassUrl = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(overpassQuery);
+  const overpassUrl =
+    "https://overpass-api.de/api/interpreter?data=" +
+    encodeURIComponent(overpassQuery);
   const response = await fetch(overpassUrl);
   if (!response.ok) {
     throw new Error(`Failed to fetch Airports`);
   }
   const data = await response.json();
- 
-  return data.elements.map(element => {
+
+  return data.elements.map((element) => {
     return {
       id: element.id,
       name: element.tags.name || null,
-      iata_code: element.tags['iata'] || null,
-      icao_code: element.tags['icao'] || null,
+      iata_code: element.tags["iata"] || null,
+      icao_code: element.tags["icao"] || null,
       latitude: element.lat || (element.center ? element.center.lat : null),
       longitude: element.lon || (element.center ? element.center.lon : null),
       elevation: element.tags.ele || null,
       operator: element.tags.operator || null,
       capacity: element.tags.capacity || null,
-      opened_date: element.tags['start_date'] || null,
-      country: element.tags['addr:country'] || null,
+      opened_date: element.tags["start_date"] || null,
+      country: element.tags["addr:country"] || null,
       runway_count: element.tags.runways || null,
-      type: element.tags['aeroway'] || null
+      type: element.tags["aeroway"] || null,
     };
   });
-}
+};

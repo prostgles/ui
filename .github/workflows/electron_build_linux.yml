@@ -1,40 +1,40 @@
 name: Electron build & test linux
-on: workflow_dispatch 
+on: workflow_dispatch
 jobs:
   electron_build:
     timeout-minutes: 20
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 20
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
 
-    - name: Install dependencies, build and test
-      run: |
-        sudo apt-get update && \
-        cd electron && npm run build-linux
-      
-    - name: Install dependencies for testing
-      run: | 
-        sudo apt-get update
-        cd electron && sudo apt-get install -y x11-xserver-utils scrot libnotify4  libnss3-dev libatk1.0-0 libatk-bridge2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0 gconf-service gconf2
-        DEBIAN_FRONTEND=noninteractive sudo apt install -y x11-apps xvfb gdebi-core  
-    - name: Install the app
-      run: | 
-        cd electron
-        sha256sum ./dist/*.deb > ./dist/checksum.txt
-        cat ./dist/checksum.txt
-        sudo dpkg -i ./dist/*.deb
-    - name: Test installation file
-      run: | 
-        cd electron
-        xvfb-run --server-num=98 --server-args="-screen 0 1920x1080x24" -- bash -c "QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu prostgles-desktop & sleep 5 && scrot ./dist/screenshot.png && exit" && exit
-    - uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: installers
-        path: electron/dist
-        compression-level: 0
-        retention-days: 10
+      - name: Install dependencies, build and test
+        run: |
+          sudo apt-get update && \
+          cd electron && npm run build-linux
+
+      - name: Install dependencies for testing
+        run: |
+          sudo apt-get update
+          cd electron && sudo apt-get install -y x11-xserver-utils scrot libnotify4  libnss3-dev libatk1.0-0 libatk-bridge2.0-0 libgdk-pixbuf2.0-0 libgtk-3-0 gconf-service gconf2
+          DEBIAN_FRONTEND=noninteractive sudo apt install -y x11-apps xvfb gdebi-core
+      - name: Install the app
+        run: |
+          cd electron
+          sha256sum ./dist/*.deb > ./dist/checksum.txt
+          cat ./dist/checksum.txt
+          sudo dpkg -i ./dist/*.deb
+      - name: Test installation file
+        run: |
+          cd electron
+          xvfb-run --server-num=98 --server-args="-screen 0 1920x1080x24" -- bash -c "QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu prostgles-desktop & sleep 5 && scrot ./dist/screenshot.png && exit" && exit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installers
+          path: electron/dist
+          compression-level: 0
+          retention-days: 10

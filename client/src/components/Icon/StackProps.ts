@@ -1,4 +1,4 @@
-import type { ReactElement, CSSProperties, RefObject} from "react";
+import type { ReactElement, CSSProperties, RefObject } from "react";
 import { HTMLProps } from "react";
 import type { IconProps } from "./Icon";
 
