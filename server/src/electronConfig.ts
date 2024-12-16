@@ -1,19 +1,18 @@
-
 import * as fs from "fs";
 import * as path from "path";
 import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
 
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 export type DBSConnectionInfo = Pick<
-  Required<Connections>, 
-  | "type" 
-  | "db_conn" 
-  | "db_name" 
-  | "db_user" 
-  | "db_pass" 
-  | "db_host" 
-  | "db_port" 
-  | "db_ssl" 
+  Required<Connections>,
+  | "type"
+  | "db_conn"
+  | "db_name"
+  | "db_user"
+  | "db_pass"
+  | "db_host"
+  | "db_port"
+  | "db_ssl"
   | "type"
 >;
 export type OnServerReadyCallback = (portNumber: number) => void;
@@ -30,36 +29,45 @@ let port: number | undefined;
 
 let sidConfig = {
   electronSid: "",
-  onSidWasSet: () => {}
+  onSidWasSet: () => {},
 };
 
-export const actualRootDir = path.join(__dirname, "/../../.." );
+export const actualRootDir = path.join(__dirname, "/../../..");
 let rootDir = actualRootDir;
-export const getRootDir = () => rootDir; 
+export const getRootDir = () => rootDir;
 
 export const getElectronConfig = () => {
-  if(!isElectron) return undefined;
+  if (!isElectron) return undefined;
 
-  if(!safeStorage || ![safeStorage.encryptString, safeStorage.decryptString].every(v => typeof v === "function")){
-    throw "Invalid safeStorage provided. encryptString or decryptString is not a function"
-  } 
+  if (
+    !safeStorage ||
+    ![safeStorage.encryptString, safeStorage.decryptString].every(
+      (v) => typeof v === "function",
+    )
+  ) {
+    throw "Invalid safeStorage provided. encryptString or decryptString is not a function";
+  }
 
-  const electronConfigPath = path.resolve(`${getRootDir()}/.electron-auth.json`);
+  const electronConfigPath = path.resolve(
+    `${getRootDir()}/.electron-auth.json`,
+  );
   const getCredentials = (): DBSConnectionInfo | undefined => {
-    
     try {
-      const file = !fs.existsSync(electronConfigPath)? undefined : fs.readFileSync(electronConfigPath);
-      const decrypted = file? safeStorage!.decryptString(file) : undefined;
-      if(decrypted){
+      const file =
+        !fs.existsSync(electronConfigPath) ?
+          undefined
+        : fs.readFileSync(electronConfigPath);
+      const decrypted = file ? safeStorage!.decryptString(file) : undefined;
+      if (decrypted) {
         return JSON.parse(decrypted);
       }
-    } catch(e){
+    } catch (e) {
       console.error(e);
     }
 
     return undefined;
-  }
-  
+  };
+
   return {
     isElectron: true,
     port,
@@ -67,50 +75,57 @@ export const getElectronConfig = () => {
     hasCredentials: () => !!getCredentials(),
     getCredentials,
     setCredentials: (connection?: DBSConnectionInfo) => {
-      if(!connection){
-        if(fs.existsSync(electronConfigPath)){
+      if (!connection) {
+        if (fs.existsSync(electronConfigPath)) {
           fs.unlinkSync(electronConfigPath);
         }
       } else {
         try {
           console.log("Writing auth file: " + electronConfigPath);
-          fs.writeFileSync(electronConfigPath, safeStorage!.encryptString(JSON.stringify(connection)));
-        } catch(err){
+          fs.writeFileSync(
+            electronConfigPath,
+            safeStorage!.encryptString(JSON.stringify(connection)),
+          );
+        } catch (err) {
           console.error("Failed writing auth file: " + electronConfigPath, err);
           throw err;
         }
       }
-    }
-  }
-}
+    },
+  };
+};
 
 export const start = async (
-  sStorage: SafeStorage, 
-  args: { 
-    port: number; 
-    electronSid: string; 
-    onSidWasSet: ()=>void;
-    rootDir: string; 
-  }, 
-  onReady: OnServerReadyCallback
+  sStorage: SafeStorage,
+  args: {
+    port: number;
+    electronSid: string;
+    onSidWasSet: () => void;
+    rootDir: string;
+  },
+  onReady: OnServerReadyCallback,
 ) => {
   isElectron = true;
   port = args.port;
-  if(!Number.isInteger(args.port)){
+  if (!Number.isInteger(args.port)) {
     throw `Must provide a valid port`;
   }
-  if(!args.rootDir || typeof args.rootDir !== "string"){
+  if (!args.rootDir || typeof args.rootDir !== "string") {
     throw `Must provide a valid rootDir`;
   }
-  if(!args.electronSid || typeof args.electronSid !== "string" || typeof args.onSidWasSet !== "function"){
-    throw "Must provide a valid electronSid: string and onSidWasSet: ()=>void"
+  if (
+    !args.electronSid ||
+    typeof args.electronSid !== "string" ||
+    typeof args.onSidWasSet !== "function"
+  ) {
+    throw "Must provide a valid electronSid: string and onSidWasSet: ()=>void";
   }
   rootDir = args.rootDir;
   sidConfig = {
     electronSid: args.electronSid,
-    onSidWasSet: args.onSidWasSet
-  }
+    onSidWasSet: args.onSidWasSet,
+  };
   safeStorage = sStorage;
   const { onServerReady } = require("./index");
-  onServerReady(onReady)
-}
+  onServerReady(onReady);
+};

@@ -1,6 +1,11 @@
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { SUser } from "../authConfig/authConfig";
-import { omitKeys, pickKeys, type AnyObject, type MethodFullDef } from "prostgles-types";
+import {
+  omitKeys,
+  pickKeys,
+  type AnyObject,
+  type MethodFullDef,
+} from "prostgles-types";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { getCompiledTS } from "./connectionManagerUtils";
 import { getACRule } from "./startConnection";
@@ -15,41 +20,44 @@ type Args = {
   con: DBSSchema["connections"];
   _dbs: DB;
   getForkedProcRunner: () => Promise<ForkedPrglProcRunner>;
-}
+};
 
-export const getConnectionPublishMethods = ({ dbConf, dbs, con, _dbs, getForkedProcRunner }: Args): PublishMethods<void, SUser> => {
+export const getConnectionPublishMethods = ({
+  dbConf,
+  dbs,
+  con,
+  _dbs,
+  getForkedProcRunner,
+}: Args): PublishMethods<void, SUser> => {
   const publishMethods: PublishMethods<void, SUser> = async ({ user }) => {
-
     const result: Record<string, MethodFullDef> = {};
 
     /** Admin has access to all methods */
-    let allowedMethods: DBSSchema["published_methods"][] = []
+    let allowedMethods: DBSSchema["published_methods"][] = [];
     if (user?.type === "admin") {
-      allowedMethods = await dbs.published_methods.find({ connection_id: con.id });
-
+      allowedMethods = await dbs.published_methods.find({
+        connection_id: con.id,
+      });
     } else {
       const ac = await getACRule(dbs, user, dbConf.id, con.id);
       if (ac) {
         allowedMethods = await dbs.published_methods.find({
-          connection_id: con.id, 
-          $existsJoined: { 
-            access_control_methods: { access_control_id: ac.id } 
-          } 
+          connection_id: con.id,
+          $existsJoined: {
+            access_control_methods: { access_control_id: ac.id },
+          },
         });
       }
     }
 
-    allowedMethods.forEach(m => {
-
+    allowedMethods.forEach((m) => {
       result[m.name] = {
         input: m.arguments.reduce((a, v) => ({ ...a, [v.name]: v }), {}),
         outputTable: m.outputTable ?? undefined,
         run: async (args) => {
-
-          const sourceCode = getCompiledTS(m.run)
+          const sourceCode = getCompiledTS(m.run);
 
           try {
-
             let validatedArgs: AnyObject | undefined = undefined;
             if (m.arguments.length) {
               /**
@@ -62,24 +70,27 @@ export const getConnectionPublishMethods = ({ dbConf, dbs, con, _dbs, getForkedP
                     ...omitKeys(arg, ["type", "name", "optional"]),
                     lookup: {
                       ...arg.lookup,
-                      type: "data"
-                    }
-                  } as any
+                      type: "data",
+                    },
+                  } as any;
                 }
                 const partialArgSchema: JSONBColumnDef["jsonbSchema"] = {
                   //@ts-ignore
-                  type: { [arg.name]: argType }
-                }
+                  type: { [arg.name]: argType },
+                };
                 const partialValue = pickKeys(args, [arg.name]);
 
                 try {
-                  await _dbs.any("SELECT validate_jsonb_schema(${argSchema}::TEXT, ${args})", { args: partialValue, argSchema: partialArgSchema });
+                  await _dbs.any(
+                    "SELECT validate_jsonb_schema(${argSchema}::TEXT, ${args})",
+                    { args: partialValue, argSchema: partialArgSchema },
+                  );
                 } catch (error) {
                   throw {
                     message: "Could not validate argument against schema",
                     argument: arg.name,
-                    error
-                  }
+                    error,
+                  };
                 }
               }
               validatedArgs = args;
@@ -93,17 +104,14 @@ export const getConnectionPublishMethods = ({ dbConf, dbs, con, _dbs, getForkedP
               //@ts-ignore
               user,
             });
-
           } catch (err: any) {
             return Promise.reject(err);
           }
-
-        }
-      }
-    })
-
+        },
+      };
+    });
 
     return result;
-  }
+  };
   return publishMethods;
-}
+};

@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 import path from "path";
 import { pgp } from "prostgles-server/dist/DboBuilder/DboBuilder";
-import type { DB } from "prostgles-server/dist/Prostgles";  
+import type { DB } from "prostgles-server/dist/Prostgles";
 import { getRootDir } from "./electronConfig";
 // import { faker } from "@faker-js/faker";
 const { faker } = require("@faker-js/faker");
@@ -18,21 +18,27 @@ const SAMPLE_DB_NAMES = [
   "sample",
 ];
 
-export const demoDataSetup = async (_db: DB, dbName: string ) => {
-  
+export const demoDataSetup = async (_db: DB, dbName: string) => {
   const makeObj = (o: Record<string, any>) => {
-    return Object.keys(o).filter(k => typeof o[k] === "function").reduce((a, k) => ({ ...a, [k]: o[k]() }), {})
-  }
+    return Object.keys(o)
+      .filter((k) => typeof o[k] === "function")
+      .reduce((a, k) => ({ ...a, [k]: o[k]() }), {});
+  };
 
   // const dbName = con.db_name!;
   // const { dbname } = await _db.oneOrNone("SELECT current_database() as dbname");
-  if(!SAMPLE_DB_NAMES.includes(dbName)){
-    throw "Invalid db name. Expecting one of: " + SAMPLE_DB_NAMES + " \n But got: " + dbName;
+  if (!SAMPLE_DB_NAMES.includes(dbName)) {
+    throw (
+      "Invalid db name. Expecting one of: " +
+      SAMPLE_DB_NAMES +
+      " \n But got: " +
+      dbName
+    );
   }
   const rootDir = getRootDir();
   const sqlFilePath = path.join(rootDir, "sample_schemas", dbName + ".sql");
   const sqlFile = readFileSync(sqlFilePath, { encoding: "utf-8" });
-  if(!sqlFile){
+  if (!sqlFile) {
     throw `SQL File from "${sqlFilePath}" not found`;
   }
 
@@ -41,26 +47,31 @@ export const demoDataSetup = async (_db: DB, dbName: string ) => {
     CREATE TABLE IF NOT EXISTS fake_data (id SERIAL PRIMARY KEY, data JSONB);
   `);
 
-  const fakeData = Array(2000).fill(null).map(() => ({
-    data: {
-      name: makeObj(faker.name),
-      addres: makeObj(faker.address),
-      commerce: makeObj(faker.commerce),
-      company: makeObj(faker.company),
-      finance: makeObj(faker.finance),
-      image: makeObj(faker.image),
-      vehicle: makeObj(faker.vehicle),
-      internet: makeObj(faker.internet),
-      lorem: makeObj(faker.lorem),
-      phone: makeObj(faker.phone),
-    }
-  }));
+  const fakeData = Array(2000)
+    .fill(null)
+    .map(() => ({
+      data: {
+        name: makeObj(faker.name),
+        addres: makeObj(faker.address),
+        commerce: makeObj(faker.commerce),
+        company: makeObj(faker.company),
+        finance: makeObj(faker.finance),
+        image: makeObj(faker.image),
+        vehicle: makeObj(faker.vehicle),
+        internet: makeObj(faker.internet),
+        lorem: makeObj(faker.lorem),
+        phone: makeObj(faker.phone),
+      },
+    }));
 
-  const insert = pgp.helpers.insert(fakeData, new pgp.helpers.ColumnSet(["data",], {table: "fake_data"})); 
+  const insert = pgp.helpers.insert(
+    fakeData,
+    new pgp.helpers.ColumnSet(["data"], { table: "fake_data" }),
+  );
   await _db.any(insert);
 
   await _db.multi(sqlFile);
-}
+};
 
 /**
  * MAP REALTIME
@@ -122,4 +133,3 @@ CREATE TABLE "options" (
 write a websocket subscription to btc usd binance stream below using this link: wss://stream.binance.com:9443 
 
  */
-

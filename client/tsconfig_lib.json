@@ -1,19 +1,9 @@
 {
   "compilerOptions": {
-    "typeRoots": [
-      "node_modules/@types",
-      "./@types"
-    ],
-    "types": [
-      "dom-mediacapture-record",
-      "resize-observer-browser"
-    ],
+    "typeRoots": ["node_modules/@types", "./@types"],
+    "types": ["dom-mediacapture-record", "resize-observer-browser"],
     "target": "es6",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -31,13 +21,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true
   },
-  "assets":["**/*.css"],
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "public",
-    "typings/browser",
-    "typings/browser.d.ts"
-  ]
+  "assets": ["**/*.css"],
+  "include": ["src"],
+  "exclude": ["public", "typings/browser", "typings/browser.d.ts"]
 }

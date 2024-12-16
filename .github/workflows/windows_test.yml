@@ -8,41 +8,41 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 20
-    - uses: nyurik/action-setup-postgis@v2
-      with:
-        username: postgres
-        password: postgres
-        database: postgres
-        port: 5432
-      id: postgres
-    - name: Install postgres
-      run: |
-        cd "C:\Program Files\PostgreSQL\14\bin"
-        .\psql.exe -c "CREATE EXTENSION postgis;" "postgresql://postgres:postgres@127.0.0.1:5432/postgres"
-        .\psql.exe -c "CREATE USER usr WITH LOGIN SUPERUSER ENCRYPTED PASSWORD 'psw'" "postgresql://postgres:postgres@127.0.0.1:5432/postgres"
-        .\psql.exe -c "CREATE DATABASE db OWNER usr" "postgresql://postgres:postgres@127.0.0.1:5432/postgres"
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - uses: nyurik/action-setup-postgis@v2
+        with:
+          username: postgres
+          password: postgres
+          database: postgres
+          port: 5432
+        id: postgres
+      - name: Install postgres
+        run: |
+          cd "C:\Program Files\PostgreSQL\14\bin"
+          .\psql.exe -c "CREATE EXTENSION postgis;" "postgresql://postgres:postgres@127.0.0.1:5432/postgres"
+          .\psql.exe -c "CREATE USER usr WITH LOGIN SUPERUSER ENCRYPTED PASSWORD 'psw'" "postgresql://postgres:postgres@127.0.0.1:5432/postgres"
+          .\psql.exe -c "CREATE DATABASE db OWNER usr" "postgresql://postgres:postgres@127.0.0.1:5432/postgres"
 
-    - name: Install test dependencies
-      run: |
-        npm config set script-shell "C:\\Program Files\\Git\\bin\\bash.exe"
-        cd client
-        npm ci
-        cd ../server 
-        npm ci
-        cd ../e2e 
-        npm ci 
-        npx playwright install
-    - name: Run test
-      run: |
-        bash ./e2e/test.sh
+      - name: Install test dependencies
+        run: |
+          npm config set script-shell "C:\\Program Files\\Git\\bin\\bash.exe"
+          cd client
+          npm ci
+          cd ../server 
+          npm ci
+          cd ../e2e 
+          npm ci 
+          npx playwright install
+      - name: Run test
+        run: |
+          bash ./e2e/test.sh
 
-    - uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: playwright-report
-        path: e2e/playwright-report/
-        retention-days: 10
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 10

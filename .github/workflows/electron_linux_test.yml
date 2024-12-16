@@ -1,24 +1,24 @@
 name: Electron test linux (deprecated)
-on: workflow_dispatch 
+on: workflow_dispatch
 jobs:
   electron_build:
     timeout-minutes: 20
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 20
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
 
-    - name: Install dependencies, build and test
-      run: |
-        sudo apt-get install xvfb -y &&
-        cd electron && npm run test-linux
-      
-    - uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: installers
-        path: electron/dist
-        retention-days: 10
+      - name: Install dependencies, build and test
+        run: |
+          sudo apt-get install xvfb -y &&
+          cd electron && npm run test-linux
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: installers
+          path: electron/dist
+          retention-days: 10

@@ -25,7 +25,7 @@ export const startDevHotReloadNotifier = ({
       (eventType, filename) => {
         io.emit("server-restart-request");
         showMessage();
-      }
+      },
     );
   } else {
     showMessage();

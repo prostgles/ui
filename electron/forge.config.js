@@ -8,19 +8,19 @@ module.exports = {
   rebuildConfig: {},
   makers: [
     {
-      "name": "@electron-forge/maker-dmg",
-      "config": {
-        "icon": "image.ico"
-      }
+      name: "@electron-forge/maker-dmg",
+      config: {
+        icon: "image.ico",
+      },
     },
     {
-      "name": "@electron-forge/maker-deb",
-      "config": {
-        "options": {
-          "icon": "icon512.png",
-          "homepage": "https://prostgles.com/desktop"
-        }
-      }
-    }
-  ]
+      name: "@electron-forge/maker-deb",
+      config: {
+        options: {
+          icon: "icon512.png",
+          homepage: "https://prostgles.com/desktop",
+        },
+      },
+    },
+  ],
 };

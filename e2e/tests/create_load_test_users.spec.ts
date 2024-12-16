@@ -1,8 +1,8 @@
-import { test } from '@playwright/test';
+import { test } from "@playwright/test";
 import { PageWIds, USERS, login } from "./utils";
-test.use({ 
+test.use({
   viewport: { width: 1280, height: 1080 },
-  video: { 
+  video: {
     mode: "on",
     size: { width: 1280, height: 1080 },
   },
@@ -10,12 +10,10 @@ test.use({
 
 const loadUsers = new Array(100).fill(0).map((_, i) => `load_user_${i}`);
 test.describe("Create load test users", () => {
-
   test.beforeEach(async ({ page }) => {
-    
     page.on("console", console.log);
-    page.on("pageerror",console.error);
-    
+    page.on("pageerror", console.error);
+
     await page.waitForTimeout(100);
   });
 
@@ -24,12 +22,21 @@ test.describe("Create load test users", () => {
     await login(page, USERS.test_user, "http://localhost:3004/login");
     await page.evaluate(async (loadUsers) => {
       try {
-        const existingLoadUsers = await (window as any).dbs.users.count({ username: { $in: loadUsers } });
-        if(+existingLoadUsers > 10){
+        const existingLoadUsers = await (window as any).dbs.users.count({
+          username: { $in: loadUsers },
+        });
+        if (+existingLoadUsers > 10) {
           return;
         }
-        await (window as any).dbs.users.insert(loadUsers.map(username => ({ username, password: username, type: "admin", status: "active" })));
-      } catch(err){
+        await (window as any).dbs.users.insert(
+          loadUsers.map((username) => ({
+            username,
+            password: username,
+            type: "admin",
+            status: "active",
+          })),
+        );
+      } catch (err) {
         document.body.innerText = JSON.stringify(err.message ?? err);
         throw err;
       }

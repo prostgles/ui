@@ -1,6 +1,5 @@
-
 import React from "react";
- 
+
 import { isObject } from "../../../../commonTypes/publishUtils";
 import { classOverride } from "../../components/Flex";
 import type { MonacoEditorProps } from "../../components/MonacoEditor/MonacoEditor";
@@ -14,7 +13,7 @@ export type Suggestion = {
   label: string;
   detail?: string;
   documentation?: string;
-}
+};
 
 export type MonacoError = {
   message: string;
@@ -76,25 +75,25 @@ export type TSLibrary = {
 };
 
 type LanguageConfig =
-| {
-  lang: "sql";
-  suggestions?: Suggestion[];
-}
-| {
-  lang: "typescript";
-  /**
-   * e.g.: 'myMethod2';
-   * Must be unique for each model
-   */
-  modelFileName: string;
-  tsLibraries?: TSLibrary[];
-}
-| {
-  lang: "json";
-  jsonSchemas?: CodeEditorJsonSchema[];
-}
+  | {
+      lang: "sql";
+      suggestions?: Suggestion[];
+    }
+  | {
+      lang: "typescript";
+      /**
+       * e.g.: 'myMethod2';
+       * Must be unique for each model
+       */
+      modelFileName: string;
+      tsLibraries?: TSLibrary[];
+    }
+  | {
+      lang: "json";
+      jsonSchemas?: CodeEditorJsonSchema[];
+    };
 
-export type CodeEditorJsonSchema = { id: string; schema: any; }
+export type CodeEditorJsonSchema = { id: string; schema: any };
 
 export type CodeEditorProps = Pick<MonacoEditorProps, "options" | "value"> & {
   value: string;
@@ -108,20 +107,18 @@ export type CodeEditorProps = Pick<MonacoEditorProps, "options" | "value"> & {
   style?: React.CSSProperties;
   className?: string;
   markers?: editor.IMarkerData[];
-  onMount?: ((editor: editor.IStandaloneCodeEditor) => void);
+  onMount?: (editor: editor.IStandaloneCodeEditor) => void;
 };
 
 type S = {
-  schemas?: MonacoJSONSchema[]
+  schemas?: MonacoJSONSchema[];
 };
 
-const getSelectedText = (editor) => editor.getModel().getValueInRange(editor.getSelection());
+const getSelectedText = (editor) =>
+  editor.getModel().getValueInRange(editor.getSelection());
 
 export default class CodeEditor extends React.Component<CodeEditorProps, S> {
-
-  state: Readonly<S> = {
-
-  }
+  state: Readonly<S> = {};
 
   ref?: HTMLElement;
   editor?: editor.IStandaloneCodeEditor;
@@ -139,18 +136,18 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
 
   getMonaco = async () => {
     return getMonaco();
-  }
+  };
 
   getSchemas = async (): Promise<MonacoJSONSchema[] | undefined> => {
-
-    const monaco = await this.getMonaco()
+    const monaco = await this.getMonaco();
     const { language } = this.props;
-    const { jsonSchemas } = isObject(language) && language.lang === "json" ? language : {};
+    const { jsonSchemas } =
+      isObject(language) && language.lang === "json" ? language : {};
     if (!jsonSchemas) return;
-    const schemas = jsonSchemas.map(s => {
+    const schemas = jsonSchemas.map((s) => {
       const { id, schema } = s;
       const fileId = id + ".json";
-      const theUri = monaco.Uri.parse("internal://server/" + fileId)
+      const theUri = monaco.Uri.parse("internal://server/" + fileId);
       const uri = theUri.toString();
       return {
         id,
@@ -160,11 +157,11 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
         schema: omitKeys(schema, ["$id", "$schema"]),
         fileMatch: [uri],
         // fileMatch: [`*`]
-      }
-    })
+      };
+    });
 
     return schemas;
-  }
+  };
 
   /**
    * Ensure new json schemas are working
@@ -172,48 +169,50 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
   addedModelId?: string;
   setSchema = async (editor?: editor.IStandaloneCodeEditor) => {
     const { language } = this.props;
-    const languageObj = isObject(language) ? language :undefined;
-    if(languageObj?.lang !== "json") return;
-    const monaco = await this.getMonaco()
+    const languageObj = isObject(language) ? language : undefined;
+    if (languageObj?.lang !== "json") return;
+    const monaco = await this.getMonaco();
     const mySchemas = await this.getSchemas();
     if (!mySchemas || !editor) return;
-    const currentSchemas = monaco.languages.json.jsonDefaults.diagnosticsOptions.schemas;
+    const currentSchemas =
+      monaco.languages.json.jsonDefaults.diagnosticsOptions.schemas;
 
     const schemas = [
-      ...mySchemas.filter(s => !currentSchemas?.some(ms => ms.uri === s.uri)),
+      ...mySchemas.filter(
+        (s) => !currentSchemas?.some((ms) => ms.uri === s.uri),
+      ),
     ];
-    monaco.languages.json.jsonDefaults
-      .setDiagnosticsOptions({
-        // schemaRequest: "warning", 
-        enableSchemaRequest: true,
-        validate: true,
-        schemas: schemas
-      });
+    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+      // schemaRequest: "warning",
+      enableSchemaRequest: true,
+      validate: true,
+      schemas: schemas,
+    });
 
     // SQL Editor options not working if opened twice
     // const model = editor.getModel();
     const models = monaco.editor.getModels();
-    const matchingModel = models.find(m => m.uri.path === mySchemas[0]?.theUri.path);
+    const matchingModel = models.find(
+      (m) => m.uri.path === mySchemas[0]?.theUri.path,
+    );
     if (!matchingModel) {
-
       try {
-        const newModel = monaco.editor.createModel(this.props.value as any ?? editor.getValue(), "json", mySchemas[0]?.theUri);
+        const newModel = monaco.editor.createModel(
+          (this.props.value as any) ?? editor.getValue(),
+          "json",
+          mySchemas[0]?.theUri,
+        );
         this.addedModelId = newModel.id;
         editor.setModel(newModel);
-
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
-
     } else {
-
       editor.setModel(matchingModel);
       editor.setValue(this.props.value);
-      return
+      return;
     }
-
-
-  }
+  };
 
   loadedActions = false;
   setTSOpts = false;
@@ -223,13 +222,13 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
   onUpdate = async (prevProps?) => {
     const { error, language, markers } = this.props;
     const monaco = await this.getMonaco();
-    const languageObj = isObject(language) ? language :undefined;
+    const languageObj = isObject(language) ? language : undefined;
     if (this.editor && languageObj?.lang === "json" && !this.loadedJsonSchema) {
       this.loadedJsonSchema = true;
       this.setSchema(this.editor);
     }
 
-    if(language === "log"){
+    if (language === "log") {
       registerLogLang(monaco);
     }
 
@@ -242,8 +241,10 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
         // keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KEY_V],
         contextMenuGroupId: "navigation",
         run: (editor) => {
-          window.open("https://www.google.com/search?q=" + getSelectedText(editor))
-        }
+          window.open(
+            "https://www.google.com/search?q=" + getSelectedText(editor),
+          );
+        },
       });
     }
 
@@ -258,7 +259,9 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
       if (tsLibraries && this.tsLibrariesStr !== tsLibrariesStr) {
         this.tsLibrariesStr = tsLibrariesStr;
 
-        monaco.languages.typescript.typescriptDefaults.setExtraLibs(tsLibraries); 
+        monaco.languages.typescript.typescriptDefaults.setExtraLibs(
+          tsLibraries,
+        );
 
         /* 
           THIS CLOSES ALL OTHER EDITORS 
@@ -266,22 +269,29 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
         */
         // monaco.editor.getModels().forEach(model => model.dispose());
 
-        const modelUri = monaco.Uri.parse(`file:///${modelFileName}.ts`)
-        const existingModel = monaco.editor.getModels().find(m => m.uri.path === modelUri.path);
-        const model = existingModel ?? monaco.editor.createModel(this.props.value, "typescript", modelUri)
+        const modelUri = monaco.Uri.parse(`file:///${modelFileName}.ts`);
+        const existingModel = monaco.editor
+          .getModels()
+          .find((m) => m.uri.path === modelUri.path);
+        const model =
+          existingModel ??
+          monaco.editor.createModel(this.props.value, "typescript", modelUri);
         this.editor.setModel(model);
       }
     }
 
     /* SET ERROR */
-    if (this.editor && JSON.stringify(this.error || {}) !== JSON.stringify(error || {})) {
+    if (
+      this.editor &&
+      JSON.stringify(this.error || {}) !== JSON.stringify(error || {})
+    ) {
       this.error = error;
       const model = this.editor.getModel();
       if (!error && model) monaco.editor.setModelMarkers(model, "test", []);
       else if (error && model) {
         let offset = {};
         if (typeof error.position === "number") {
-          let pos = (error.position - 1) || 1;
+          let pos = error.position - 1 || 1;
           let len = error.length || 10;
           const sel = this.editor.getSelection();
           const selection = !sel ? undefined : model.getValueInRange(sel);
@@ -290,7 +300,7 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
             len = Math.max(1, Math.min(len, selection.length));
             pos += model.getOffsetAt({
               column: sel.startColumn,
-              lineNumber: sel.startLineNumber
+              lineNumber: sel.startLineNumber,
             });
           }
 
@@ -301,25 +311,25 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
             startColumn: s.column,
             endLineNumber: e.lineNumber,
             endColumn: e.column,
-          }
+          };
           this.editor.setPosition(s);
           this.editor.revealLine(s.lineNumber);
           this.editor.revealLineInCenter(s.lineNumber);
-
         }
-        monaco.editor.setModelMarkers(model, "test", [{
-          severity: 0,
-          // @ts-ignore
-          message: "error.message",
-          startLineNumber: 0,
-          startColumn: 0,
-          endLineNumber: 0,
-          endColumn: 5,
-          code: "error.code",
-          ...error,
-          ...offset
-        }]);
-
+        monaco.editor.setModelMarkers(model, "test", [
+          {
+            severity: 0,
+            // @ts-ignore
+            message: "error.message",
+            startLineNumber: 0,
+            startColumn: 0,
+            endLineNumber: 0,
+            endColumn: 5,
+            code: "error.code",
+            ...error,
+            ...offset,
+          },
+        ]);
       }
     } else if (this.editor && Array.isArray(markers)) {
       const model = this.editor.getModel();
@@ -327,15 +337,14 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
         monaco.editor.setModelMarkers(model, "test2", []);
         monaco.editor.setModelMarkers(model, "test2", markers);
       }
-
     }
+  };
 
-
-  }
-
-  onKeyDown = e => {
-    const _domElement = (this.editor as any)?._domElement ?? {} as HTMLDivElement;
-    if (this.props.onSave &&
+  onKeyDown = (e) => {
+    const _domElement =
+      (this.editor as any)?._domElement ?? ({} as HTMLDivElement);
+    if (
+      this.props.onSave &&
       this.editor &&
       e.ctrlKey &&
       e.key === "s" &&
@@ -344,65 +353,77 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
       e.preventDefault();
       this.props.onSave(this.editor.getValue());
     }
-  }
+  };
 
   render() {
-    const { value = "", onChange, language: languageOrConf, options = {}, style, className = "" } = this.props;
-    const language = isObject(languageOrConf) ? languageOrConf.lang : languageOrConf;
-    return <div className={classOverride("CodeEditor f-1 min-h-0 min-w-0 flex-col relative b b-color-2", className)}
-      style={style}
-      onFocus={() => {
-        const allCodeEditors = document.querySelectorAll(".CodeEditor");
-        if(allCodeEditors.length === 1){
-          /** If this is the only editor the fix below will break it (viewedSqlTips) */
-          return;
-        }
-        /** This is needed to ensure jsonschema works. Otherwise only the first editor schema will work */
-        this.setSchema(this.editor);
-      }}
-    >
-      <MonacoEditor
-        className="f-1 min-h-0"
-        language={language}
-        loadedSuggestions={undefined}
-        value={value}
-        options={{
-          readOnly: !onChange,
-          renderValidationDecorations: "on",
-          parameterHints: { enabled: true },
-          fixedOverflowWidgets: true,
-          tabSize: 2,
-          automaticLayout: true,
-          ...(language === "json" && {
-            formatOnType: true,
-            autoIndent: "full",
-          }),
-          ...options,
-          ...(language === "log" && {
-            theme: "logview"
-          })
-        }}
-        onMount={(editor) => {
-          this.editor = editor;
-          if (onChange) {
-            editor.onDidChangeModelContent(ev => {
-              const newValue = editor.getValue();
-              if (this.props.value === newValue) return;
-              onChange(newValue);
-            });
+    const {
+      value = "",
+      onChange,
+      language: languageOrConf,
+      options = {},
+      style,
+      className = "",
+    } = this.props;
+    const language =
+      isObject(languageOrConf) ? languageOrConf.lang : languageOrConf;
+    return (
+      <div
+        className={classOverride(
+          "CodeEditor f-1 min-h-0 min-w-0 flex-col relative b b-color-2",
+          className,
+        )}
+        style={style}
+        onFocus={() => {
+          const allCodeEditors = document.querySelectorAll(".CodeEditor");
+          if (allCodeEditors.length === 1) {
+            /** If this is the only editor the fix below will break it (viewedSqlTips) */
+            return;
           }
-          this.forceUpdate();
-          this.props.onMount?.(editor);
-        }} 
-      />
-    </div>
+          /** This is needed to ensure jsonschema works. Otherwise only the first editor schema will work */
+          this.setSchema(this.editor);
+        }}
+      >
+        <MonacoEditor
+          className="f-1 min-h-0"
+          language={language}
+          loadedSuggestions={undefined}
+          value={value}
+          options={{
+            readOnly: !onChange,
+            renderValidationDecorations: "on",
+            parameterHints: { enabled: true },
+            fixedOverflowWidgets: true,
+            tabSize: 2,
+            automaticLayout: true,
+            ...(language === "json" && {
+              formatOnType: true,
+              autoIndent: "full",
+            }),
+            ...options,
+            ...(language === "log" && {
+              theme: "logview",
+            }),
+          }}
+          onMount={(editor) => {
+            this.editor = editor;
+            if (onChange) {
+              editor.onDidChangeModelContent((ev) => {
+                const newValue = editor.getValue();
+                if (this.props.value === newValue) return;
+                onChange(newValue);
+              });
+            }
+            this.forceUpdate();
+            this.props.onMount?.(editor);
+          }}
+        />
+      </div>
+    );
   }
 }
 
-
-
 const setTSoptions = async () => {
-  const monaco = await getMonaco()
+  const monaco = await getMonaco();
   monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true);
 
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
@@ -417,15 +438,15 @@ const setTSoptions = async () => {
     experimentalDecorators: true,
     keyofStringsOnly: true,
     /** Adding this line breaks inbuild functions (setTimeout, etc) */
-		// lib: [ "ES2017", "es2019", "ES2021.String", "ES2020", "ES2022" ],
-		esModuleInterop : true,
-		allowSyntheticDefaultImports: true,
-		declaration: true,
-		declarationMap: true,
-		ignoreDeprecations: "5.0",
-		strict: true,
-		skipLibCheck: true,
-    typeRoots: ["node_modules/@types"]
+    // lib: [ "ES2017", "es2019", "ES2021.String", "ES2020", "ES2022" ],
+    esModuleInterop: true,
+    allowSyntheticDefaultImports: true,
+    declaration: true,
+    declarationMap: true,
+    ignoreDeprecations: "5.0",
+    strict: true,
+    skipLibCheck: true,
+    typeRoots: ["node_modules/@types"],
   });
 
   // extra libraries
@@ -435,9 +456,9 @@ const setTSoptions = async () => {
   // );
   // monaco.languages.typescript.javascriptDefaults.addExtraLib(getExtraLib("node/globals.d.ts"),  monaco.Uri.parse("ts:filename/globals.d.ts"));
   // monaco.languages.typescript.javascriptDefaults.addExtraLib(getExtraLib("node/fs.d.ts"),  monaco.Uri.parse("ts:filename/ts.d.ts"));
-  
+
   monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
     noSemanticValidation: false,
-    noSyntaxValidation: false
+    noSyntaxValidation: false,
   });
-}
+};

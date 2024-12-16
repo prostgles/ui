@@ -3,32 +3,41 @@ import type { PopupState } from "./Popup";
 import { POPUP_CLASSES, POPUP_ZINDEX } from "./Popup";
 import { getPopupPosition, getPopupSize } from "./getPopupPosition";
 
-const rightPanelStyle: React.CSSProperties = { 
-  padding: 0, 
-  top: 0, 
+const rightPanelStyle: React.CSSProperties = {
+  padding: 0,
+  top: 0,
   right: 0,
   bottom: 0,
   width: "fit-content",
-  maxHeight: "100%",// window.isIOSDevice? `calc(100vh - 100px)` : `calc(100% - 3em)`,
+  maxHeight: "100%", // window.isIOSDevice? `calc(100vh - 100px)` : `calc(100% - 3em)`,
   borderRadius: 0,
   maxWidth: "100vw",
-  // maxHeight: `100%` 
-}
+  // maxHeight: `100%`
+};
 
 export const popupCheckPosition = function (this: Popup) {
   if (!this.mounted || !this.el.isConnected) return;
 
-  const { anchorEl, anchorPadding = 0, anchorXY, positioning, persistInitialSize, fixedTopLeft = true } = this.props;
+  const {
+    anchorEl,
+    anchorPadding = 0,
+    anchorXY,
+    positioning,
+    persistInitialSize,
+    fixedTopLeft = true,
+  } = this.props;
   const persistInitialSizeInvalid = () => {
     if (!persistInitialSize) return;
-    console.warn("Popup: persistInitialSize=true only works with a content-dependant positioning")
-  }
+    console.warn(
+      "Popup: persistInitialSize=true only works with a content-dependant positioning",
+    );
+  };
 
   const commonState: React.CSSProperties = {
     opacity: 1,
     zIndex: POPUP_ZINDEX,
     position: "fixed",
-  }
+  };
 
   /**
    * Center positioning if nothing specified
@@ -38,7 +47,7 @@ export const popupCheckPosition = function (this: Popup) {
     /**
      * https://stackoverflow.com/questions/6411361/webkit-based-blurry-distorted-text-post-animation-via-translate3d
      */
-    const offsetToReduceChromeBlur = .5;
+    const offsetToReduceChromeBlur = 0.5;
     const x = Math.round(offsetWidth / 2);
     const y = Math.round(offsetHeight / 2) + offsetToReduceChromeBlur;
     this.setState({
@@ -47,7 +56,7 @@ export const popupCheckPosition = function (this: Popup) {
         transform: `translate(-${x}px, -${y}px)`,
         left: "50%",
         top: "50%",
-      }
+      },
     });
     persistInitialSizeInvalid();
     return;
@@ -58,20 +67,19 @@ export const popupCheckPosition = function (this: Popup) {
     this.setState({ stateStyle: { inset: 0, position: "absolute" } });
     persistInitialSizeInvalid();
     return;
-
   } else if (positioning === "as-is" || positioning === "right-panel") {
     this.setState({
       stateStyle: {
         ...commonState,
-        ...(positioning === "right-panel" ? rightPanelStyle : {})
-      }
+        ...(positioning === "right-panel" ? rightPanelStyle : {}),
+      },
     });
     persistInitialSizeInvalid();
     return;
   }
 
   const size = getPopupSize(this);
-  if(!this.ref || !size) return;
+  if (!this.ref || !size) return;
 
   const { height, width } = size;
   // const firstChild = this.ref.firstChild as HTMLElement;
@@ -94,10 +102,13 @@ export const popupCheckPosition = function (this: Popup) {
   const minPadding = window.innerWidth > 900 ? 10 : 0;
 
   /** If popup content overflows remove margins */
-  const PADDING_X = (window.innerWidth < width) ? 0 : minPadding;
-  const PADDING_Y = (window.innerHeight < height) ? 0 : minPadding;
+  const PADDING_X = window.innerWidth < width ? 0 : minPadding;
+  const PADDING_Y = window.innerHeight < height ? 0 : minPadding;
 
-  let anchorX = 0, anchorY = 0, anchorWidth = 0, anchorHeight = 0;
+  let anchorX = 0,
+    anchorY = 0,
+    anchorWidth = 0,
+    anchorHeight = 0;
 
   if (anchorXY) {
     anchorX = anchorXY.x;
@@ -109,52 +120,63 @@ export const popupCheckPosition = function (this: Popup) {
     anchorHeight = anchorR.height + 2 * anchorPadding;
     anchorWidth = anchorR.width + 2 * anchorPadding;
   } else {
-    anchorX = (window.innerWidth - width) / 2
-    anchorY = (window.innerHeight - height) / 2
+    anchorX = (window.innerWidth - width) / 2;
+    anchorY = (window.innerHeight - height) / 2;
 
     if (positioning && !["top-center", "center"].includes(positioning)) {
-      console.warn("Popup positioning provided without an anchorEl or anchorXY")
+      console.warn(
+        "Popup positioning provided without an anchorEl or anchorXY",
+      );
     }
   }
 
   let x = anchorX;
   let y = anchorY;
   const xLeft = Math.max(0, anchorX);
-  const xCenter = Math.max(0, anchorX + (anchorWidth / 2));
+  const xCenter = Math.max(0, anchorX + anchorWidth / 2);
 
-  if (positioning === "center") {      
-    y = .5 * (window.document.body.offsetHeight - height);
-    x = .5 * (window.document.body.offsetWidth - width);
-
+  if (positioning === "center") {
+    y = 0.5 * (window.document.body.offsetHeight - height);
+    x = 0.5 * (window.document.body.offsetWidth - width);
   } else if (positioning === "top-center") {
     y = 50;
-    x = .5 * (window.document.body.offsetWidth - width)
-
+    x = 0.5 * (window.document.body.offsetWidth - width);
   } else if (positioning === "beneath-center") {
     y = anchorY + anchorHeight;
     x = xCenter - width / 2;
-
-  } else if (positioning === "beneath-left" || positioning === "beneath-left-minfill") {
-    if(positioning === "beneath-left"){
-      return getPopupPosition({ positioning, anchorX, anchorHeight, anchorWidth, anchorY, popup: this });
+  } else if (
+    positioning === "beneath-left" ||
+    positioning === "beneath-left-minfill"
+  ) {
+    if (positioning === "beneath-left") {
+      return getPopupPosition({
+        positioning,
+        anchorX,
+        anchorHeight,
+        anchorWidth,
+        anchorY,
+        popup: this,
+      });
     }
     y = anchorY + anchorHeight;
     x = xLeft;
-
   } else if (positioning === "beneath-right") {
     y = anchorY + anchorHeight;
-    x = anchorX + anchorWidth - width
+    x = anchorX + anchorWidth - width;
 
     /* Bottom left of point */
   } else if (positioning === "tooltip") {
     y = anchorY + PADDING_Y;
     x = anchorX - PADDING_X - width;
-  } else if (positioning === "inside-top-center" || positioning === "above-center") {
+  } else if (
+    positioning === "inside-top-center" ||
+    positioning === "above-center"
+  ) {
     x = xCenter;
     y = anchorY || 0;
 
     if (positioning === "above-center") {
-      y = anchorY - height
+      y = anchorY - height;
     }
   }
 
@@ -164,7 +186,7 @@ export const popupCheckPosition = function (this: Popup) {
     x = Math.max(PADDING_X, window.innerWidth - width - PADDING_X);
     right = 0;
   } else if (x < 0) {
-    x = PADDING_X
+    x = PADDING_X;
   }
 
   /* Bottom side is out of screen */
@@ -173,16 +195,13 @@ export const popupCheckPosition = function (this: Popup) {
 
   // TODO ensure that this is + fixedTopLeft overflow compensation logic does not loop
   if (bottomOverflow > 0) {
- 
     if (bottomOverflow < height / 9) {
       bottom = PADDING_Y;
-    } 
+    }
     y = Math.max(PADDING_Y, window.innerHeight - height - PADDING_Y);
-
   } else if (y < 0) {
     y = PADDING_Y;
   }
-
 
   if (this.position?.x !== x || this.position.y !== y || bottom) {
     this.position ??= { x, y, xMin: x, yMin: y };
@@ -201,19 +220,25 @@ export const popupCheckPosition = function (this: Popup) {
       stateStyle: {
         ...commonState,
         ...(Number.isFinite(bottom) && { bottom: `${bottom}px` }),
-        ...(Number.isFinite(right) ? { 
-          right,
-          // ...(fixedTopLeft && { left }), // This makes popup width grow to max
-        } : { left }),
+        ...(Number.isFinite(right) ?
+          {
+            right,
+            // ...(fixedTopLeft && { left }), // This makes popup width grow to max
+          }
+        : { left }),
         top: `${Math.round(y)}px`,
-      }
+      },
     };
 
     if (persistInitialSize) {
       newState.stateStyle.width = `${width}px`;
       newState.stateStyle.height = `${height}px`;
       /** If content width is less than anchor then fill width */
-    } else if (positioning?.endsWith("-minfill") && anchorWidth && width < anchorWidth) {
+    } else if (
+      positioning?.endsWith("-minfill") &&
+      anchorWidth &&
+      width < anchorWidth
+    ) {
       newState.stateStyle.width = `${anchorWidth}px`;
     } else if (positioning?.endsWith("-fill")) {
       newState.stateStyle.width = `${anchorWidth}px`;
@@ -225,6 +250,4 @@ export const popupCheckPosition = function (this: Popup) {
     this.prevStateStyles.unshift(newState.stateStyle);
     this.prevStateStyles = this.prevStateStyles.slice(0, 3);
   }
-
-
-}
+};

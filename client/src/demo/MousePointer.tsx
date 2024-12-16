@@ -19,19 +19,21 @@ const mousePointerStyle: React.CSSProperties = {
   opacity: 0.25,
   borderRadius: "50%",
   transform: "translate(-50%, -50%)",
-  pointerEvents: "none"
+  pointerEvents: "none",
 };
 
 export const MousePointer = () => {
-  const pointerNode = <div 
-    ref={e => {
-      if(e){
-        setPointer(e);
-      }
-    }} 
-    style={mousePointerStyle} 
-    className="shadow"
-  />;
+  const pointerNode = (
+    <div
+      ref={(e) => {
+        if (e) {
+          setPointer(e);
+        }
+      }}
+      style={mousePointerStyle}
+      className="shadow"
+    />
+  );
 
   return ReactDOM.createPortal(pointerNode, getModalRoot(true));
-}
+};

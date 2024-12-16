@@ -13,16 +13,17 @@ import type { OS } from "./PostgresInstallationInstructions";
 import { PostgresInstallationInstructions } from "./PostgresInstallationInstructions";
 
 type ElectronSetup = {
-  serverState: AppState["serverState"]
-}
+  serverState: AppState["serverState"];
+};
 
 export const getOS = () => {
   const { platform } = window.navigator;
-  const os: OS = platform.startsWith("Mac")? "macosx" : 
-    (platform.startsWith("Linux") || platform.includes("BSD"))? "linux" : 
-    "windows";
+  const os: OS =
+    platform.startsWith("Mac") ? "macosx"
+    : platform.startsWith("Linux") || platform.includes("BSD") ? "linux"
+    : "windows";
   return os;
-}
+};
 export const DEFAULT_ELECTRON_CONNECTION = {
   type: "Standard",
   db_host: "localhost",
@@ -32,7 +33,6 @@ export const DEFAULT_ELECTRON_CONNECTION = {
 } satisfies Omit<Connection, "name">;
 
 export const ElectronSetup = ({ serverState }: ElectronSetup) => {
-
   const [c, setConnection] = useState<Connection>({
     ...DEFAULT_CONNECTION,
     ...DEFAULT_ELECTRON_CONNECTION,
@@ -44,40 +44,43 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
 
   const updateConnection = async (con: Partial<Connection>) => {
     setLoading(false);
-    const newData = { 
+    const newData = {
       ...c,
       ...con,
-    }
-    
-    const res = await postConnection(newData, true)
+    };
+
+    const res = await postConnection(newData, true);
 
     const { connection, warning } = res;
 
-
     setvalidationWarning(warning);
-    if(connection){
+    if (connection) {
       setConnection(connection);
     }
-  }
+  };
 
   const os = getOS();
 
   useEffect(() => {
-    setConnection(c => ({
+    setConnection((c) => ({
       ...c,
       ...(os === "windows" && { db_ssl: "disable" }),
-    }))
-  }, [setConnection, os])
+    }));
+  }, [setConnection, os]);
 
   const [step, setStep] = useState(0);
 
-  const { electronCredsProvided, connectionError, initError, electronCreds } = serverState || {};
+  const { electronCredsProvided, connectionError, initError, electronCreds } =
+    serverState || {};
   const error = connectionError || initError;
   useEffect(() => {
-    if(electronCredsProvided){
+    if (electronCredsProvided) {
       setStep(2);
-      if(electronCreds){
-        setConnection(c => ({ ...c,  ...omitKeys(electronCreds, ["db_ssl"]) }));
+      if (electronCreds) {
+        setConnection((c) => ({
+          ...c,
+          ...omitKeys(electronCreds, ["db_ssl"]),
+        }));
       }
     }
   }, [electronCredsProvided, setConnection, connectionError, electronCreds]);
@@ -88,154 +91,182 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
         <DashboardMenuBtn style={{ border: "unset", background: "unset" }} />
         <h3 className="m-0 text-0p5">Prostgles Desktop</h3>
       </div> */}
-      <div className="ta-center p-2  flex-col gap-2 max-w-700 o-auto  p-1" style={{ width: "500px" }}>
-
-      {!step? <div>
-        <h3>PRIVACY</h3>
-        <section className="ta-left  font-18">
-          The only data we collect is the information you send us through the "Send feedback" button.
-        </section>
-      </div> :
-      step === 1?
-        <div>
-          <h3>REQUIREMENTS</h3>
-          <section className="ta-left font-18">
-            <strong>Prostgles Desktop</strong> requires full access to a postgres database. 
-            <p>This database will be used to manage and store all connection and state data (database connection details, sql queries, workspaces, etc).</p> 
-            <p className="m-0 mt-p5">For best experience we recommend using a locally installed database</p>
-            <div className="flex-row-wrap gap-2 f-1 mt-1">
-              <PostgresInstallationInstructions 
-                os={os} 
-                placement="state-db" 
-              />
-            </div>
-          </section>
-        </div> : 
-        <FlexCol className="f-1 min-s-0">
-          
-          {(loading && !validationWarning)? 
-            <Loading 
-              id="main" 
-              className="m-auto" 
-              message="Connecting to electron state database" 
-            /> : 
-            <FlexCol className="px-p25 min-s-0">
-              <h2>State database</h2>
-              <FlexCol className="min-s-0 o-auto px-p5">
-                <NewConnectionForm 
-                  mode="insert"
-                  warning={validationWarning}
-                  c={c} 
-                  nameErr={""} 
-                  isForStateDB={true}
-                  updateConnection={updateConnection} 
-                  test={{
-                    status: "",
-                    statusOK: false,
-                  }}
-                  dbProps={undefined}
+      <div
+        className="ta-center p-2  flex-col gap-2 max-w-700 o-auto  p-1"
+        style={{ width: "500px" }}
+      >
+        {!step ?
+          <div>
+            <h3>PRIVACY</h3>
+            <section className="ta-left  font-18">
+              The only data we collect is the information you send us through
+              the "Send feedback" button.
+            </section>
+          </div>
+        : step === 1 ?
+          <div>
+            <h3>REQUIREMENTS</h3>
+            <section className="ta-left font-18">
+              <strong>Prostgles Desktop</strong> requires full access to a
+              postgres database.
+              <p>
+                This database will be used to manage and store all connection
+                and state data (database connection details, sql queries,
+                workspaces, etc).
+              </p>
+              <p className="m-0 mt-p5">
+                For best experience we recommend using a locally installed
+                database
+              </p>
+              <div className="flex-row-wrap gap-2 f-1 mt-1">
+                <PostgresInstallationInstructions
+                  os={os}
+                  placement="state-db"
                 />
-              </FlexCol>
-            </FlexCol>}
-
-            {!loading && error && 
-              <ErrorComponent 
-                className="rounded f-0" 
-                style={{ background: "#fde8e8"}}
-                withIcon={true} 
-                error={pickKeys(serverState!, ["connectionError", "initError"], true)} 
+              </div>
+            </section>
+          </div>
+        : <FlexCol className="f-1 min-s-0">
+            {loading && !validationWarning ?
+              <Loading
+                id="main"
+                className="m-auto"
+                message="Connecting to electron state database"
               />
+            : <FlexCol className="px-p25 min-s-0">
+                <h2>State database</h2>
+                <FlexCol className="min-s-0 o-auto px-p5">
+                  <NewConnectionForm
+                    mode="insert"
+                    warning={validationWarning}
+                    c={c}
+                    nameErr={""}
+                    isForStateDB={true}
+                    updateConnection={updateConnection}
+                    test={{
+                      status: "",
+                      statusOK: false,
+                    }}
+                    dbProps={undefined}
+                  />
+                </FlexCol>
+              </FlexCol>
             }
-            
-            {!loading && 
-              <Btn 
+
+            {!loading && error && (
+              <ErrorComponent
+                className="rounded f-0"
+                style={{ background: "#fde8e8" }}
+                withIcon={true}
+                error={pickKeys(
+                  serverState!,
+                  ["connectionError", "initError"],
+                  true,
+                )}
+              />
+            )}
+
+            {!loading && (
+              <Btn
                 data-command="ElectronSetup.Done"
-                color="action" 
-                variant="filled" 
+                color="action"
+                variant="filled"
                 className="ml-auto"
                 onClickMessage={async (e, setMsg) => {
                   setLoading(true);
                   try {
-
                     const resp = await postConnection(c, false);
-                    if(resp.warning){
-                      setvalidationWarning(resp.warning)
+                    if (resp.warning) {
+                      setvalidationWarning(resp.warning);
                     } else {
                       await tout(3000);
-                      pageReload("ElectronSetup.Done")
+                      pageReload("ElectronSetup.Done");
                       setLoading(false);
                     }
-                  } catch(err){
+                  } catch (err) {
                     setvalidationWarning(err);
                     setLoading(false);
                   }
-                  
                 }}
               >
                 Done
               </Btn>
-            }
-        </FlexCol>}
-            
+            )}
+          </FlexCol>
+        }
 
-        {step < 2 && <div className="flex-row f-1 mt-2" style={{ justifyContent: "space-between" }}>
-          <Btn 
-            data-command="ElectronSetup.Back"
-            onClick={() => { setStep(s => Math.max(0, s-1)) }} 
-            iconPath={mdiArrowLeft} 
-            variant="outline" 
-            style={{ opacity: step? 1 : 0 }}
+        {step < 2 && (
+          <div
+            className="flex-row f-1 mt-2"
+            style={{ justifyContent: "space-between" }}
           >
-            Back
-          </Btn>
-          <Btn 
-            data-command="ElectronSetup.Next"
-            onClick={() => { setStep(s => Math.min(2, s+1)) }} 
-            iconPosition="right" 
-            iconPath={mdiArrowRight} 
-            color="action" 
-            variant="filled"
-            style={{ opacity: step < 2? 1 : 0 }}
-          >
-            Next
-          </Btn>
-        </div>}
-
+            <Btn
+              data-command="ElectronSetup.Back"
+              onClick={() => {
+                setStep((s) => Math.max(0, s - 1));
+              }}
+              iconPath={mdiArrowLeft}
+              variant="outline"
+              style={{ opacity: step ? 1 : 0 }}
+            >
+              Back
+            </Btn>
+            <Btn
+              data-command="ElectronSetup.Next"
+              onClick={() => {
+                setStep((s) => Math.min(2, s + 1));
+              }}
+              iconPosition="right"
+              iconPath={mdiArrowRight}
+              color="action"
+              variant="filled"
+              style={{ opacity: step < 2 ? 1 : 0 }}
+            >
+              Next
+            </Btn>
+          </div>
+        )}
       </div>
     </FlexCol>
   );
-}
+};
 
-
-const postConnection = async (c: Connection, validate = false): Promise<{ connection?: Connection; warning?: any; }> => {
-  const res = await post("/dbs", { ...c, ...(validate? {validate: true} : {}) });
+const postConnection = async (
+  c: Connection,
+  validate = false,
+): Promise<{ connection?: Connection; warning?: any }> => {
+  const res = await post("/dbs", {
+    ...c,
+    ...(validate ? { validate: true } : {}),
+  });
   return await res.json();
-}
+};
 
 export const tout = (timeout: number) => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve(true)
-    }, timeout)
-  })
-}
-
+      resolve(true);
+    }, timeout);
+  });
+};
 
 const post = async (path: string, data: object) => {
-
   const rawResponse = await fetch(path, {
     method: "POST",
     headers: {
-      "Accept": "application/json",
-      "Content-Type": "application/json"
+      Accept: "application/json",
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
   });
 
-  if(!rawResponse.ok){
-    const error = await rawResponse.json().catch(() => rawResponse.text()).catch(() => rawResponse.statusText);
+  if (!rawResponse.ok) {
+    const error = await rawResponse
+      .json()
+      .catch(() => rawResponse.text())
+      .catch(() => rawResponse.statusText);
     throw error;
   }
 
-  return rawResponse;   
-}
+  return rawResponse;
+};

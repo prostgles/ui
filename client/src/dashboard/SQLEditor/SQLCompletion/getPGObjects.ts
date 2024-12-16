@@ -6,20 +6,20 @@ import { missingKeywordDocumentation } from "../SQLEditorSuggestions";
 import { QUERY_WATCH_IGNORE } from "../../../../../commonTypes/utils";
 import { fixIndent } from "../../../demo/sqlVideoDemo";
 
-export type PGDatabase = { 
-  "Name": string;
-  "Owner": string;
-  "Encoding": string;
-  "Collate": string;
-  "Ctype": string;
+export type PGDatabase = {
+  Name: string;
+  Owner: string;
+  Encoding: string;
+  Collate: string;
+  Ctype: string;
   "Access privileges": string | null;
-  "Size": string;
-  "Tablespace": string;
-  "Description": string | null; 
+  Size: string;
+  Tablespace: string;
+  Description: string | null;
   IsCurrent: boolean;
   escaped_identifier: string;
-}
-export type PGConstraint = { 
+};
+export type PGConstraint = {
   conname: string;
   definition: string;
   table_name: string;
@@ -36,11 +36,18 @@ export type PGConstraint = {
 
 export type PG_Role = {
   is_connected: boolean;
-  usename: string; usesuper: boolean; usecreatedb: boolean; 
-  usebypassrls: boolean; userepl: boolean; escaped_identifier: string; 
-  rolconfig: string[]; rolcanlogin: boolean; priority: string; is_current_user: boolean; 
+  usename: string;
+  usesuper: boolean;
+  usecreatedb: boolean;
+  usebypassrls: boolean;
+  userepl: boolean;
+  escaped_identifier: string;
+  rolconfig: string[];
+  rolcanlogin: boolean;
+  priority: string;
+  is_current_user: boolean;
   table_grants: string | null;
-}
+};
 
 export type PG_Index = {
   schemaname: string;
@@ -58,10 +65,10 @@ export type PG_Index = {
   idx_scan: string;
   idx_tup_read: string;
   idx_tup_fetch: string;
-  index_size: string; 
+  index_size: string;
 };
 
-export type PG_Trigger = { 
+export type PG_Trigger = {
   disabled: boolean;
   trigger_catalog: string;
   trigger_schema: string;
@@ -73,81 +80,73 @@ export type PG_Trigger = {
   action_orientation: string;
   action_timing: string;
   action_condition: string | null;
-  escaped_identifier: string; 
+  escaped_identifier: string;
   definition: string;
   function_definition?: string;
-}
+};
 
-export type PG_Rule = { 
+export type PG_Rule = {
   escaped_identifier: string;
   tablename_escaped: string;
   schemaname: string;
   tablename: string;
   rulename: string;
-  definition: string; 
-}
+  definition: string;
+};
 
 export type PG_Policy = {
   escaped_identifier: string;
-  policyname: string;  
-  tablename: string; 
-  tablename_escaped: string; 
-  schemaname: string; 
+  policyname: string;
+  tablename: string;
+  tablename_escaped: string;
+  schemaname: string;
   type: "PERMISSIVE" | "RESTRICTIVE";
   roles: string[] | null;
   definition: string;
-  cmd: 
-    | null 
-    | "SELECT"
-    | "INSERT"
-    | "UPDATE"
-    | "DELETE"
-    | "ALL";
+  cmd: null | "SELECT" | "INSERT" | "UPDATE" | "DELETE" | "ALL";
   using: string;
   with_check: string;
 };
 
-export type PG_EventTrigger = { 
-  "Name": string;
+export type PG_EventTrigger = {
+  Name: string;
   escaped_identifier: string;
-  "Event": string;
-  "Owner": string;
-  "Enabled": string;
-  "Function": any;
-  "Tags": string;
-  "Description": string | null;
+  Event: string;
+  Owner: string;
+  Enabled: string;
+  Function: any;
+  Tags: string;
+  Description: string | null;
   function_definition?: string;
-}
+};
 
-export type PG_Extension = { 
-  name: string; 
-  escaped_identifier: string; 
-  default_version: string; 
-  comment: string; 
-  installed: boolean; 
-}
+export type PG_Extension = {
+  name: string;
+  escaped_identifier: string;
+  default_version: string;
+  comment: string;
+  installed: boolean;
+};
 
-export type PG_Keyword = { 
-  label: string; 
-  topKwd?: TopKeyword; 
-  documentation: string; 
-  insertText: string; 
-}
-
+export type PG_Keyword = {
+  label: string;
+  topKwd?: TopKeyword;
+  documentation: string;
+  insertText: string;
+};
 
 type PG_Publication = {
   oid: number;
   pubname: string;
   escaped_identifier: string;
-  pubowner:  number;
+  pubowner: number;
   puballtables: boolean;
   pubinsert: boolean;
   pubupdate: boolean;
   pubdelete: boolean;
   pubtruncate: boolean;
-  tables: string[]
-}
-
+  tables: string[];
+};
 
 type PG_Subscription = {
   oid: number;
@@ -163,18 +162,16 @@ type PG_Subscription = {
   subsynccommit: string;
   subpublications: string[];
   escaped_identifier: string;
-}
+};
 
-
-type PG_Schema = { 
+type PG_Schema = {
   name: string;
   owner: string;
   access_privileges: string | null;
-  comment: string; 
+  comment: string;
   escaped_identifier: string;
   is_in_search_path: boolean;
 };
-
 
 export type PG_Function = {
   name: string;
@@ -195,10 +192,10 @@ export type PG_Function = {
    */
   prokind: "a" | "f" | "p" | "w";
   /**
-   * provolatile tells whether the function's result depends only on its input arguments, or is affected by outside factors. 
-   * It is i for “immutable” functions, which always deliver the same result for the same inputs. 
-   * It is s for “stable” functions, whose results (for fixed inputs) do not change within a scan. 
-   * It is v for “volatile” functions, whose results might change at any time. 
+   * provolatile tells whether the function's result depends only on its input arguments, or is affected by outside factors.
+   * It is i for “immutable” functions, which always deliver the same result for the same inputs.
+   * It is s for “stable” functions, whose results (for fixed inputs) do not change within a scan.
+   * It is v for “volatile” functions, whose results might change at any time.
    * (Use v also for functions with side-effects, so that calls to them cannot get optimized away.)
    */
   provolatile: "i" | "s" | "v";
@@ -211,22 +208,28 @@ export type PG_Function = {
   escaped_identifier: string;
   escaped_name: string;
   extension?: string;
-}
+};
 
-export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string, minArgs?: number, limit?: number, distinct?: boolean }): Promise<PG_Function[]> {
+export async function getFuncs(args: {
+  db: DB;
+  name?: string;
+  searchTerm?: string;
+  minArgs?: number;
+  limit?: number;
+  distinct?: boolean;
+}): Promise<PG_Function[]> {
   const { db, minArgs = 0, limit = 10, distinct = false, searchTerm } = args;
-  let { name, } = args;
-  if(searchTerm){
-
-  } else if(name === undefined){
+  let { name } = args;
+  if (searchTerm) {
+  } else if (name === undefined) {
     name = "";
-  } else if(name === ""){
+  } else if (name === "") {
     return [];
   }
 
-  const argQ = " AND pronargs >= ${minArgs} ", 
-      lQ = " LIMIT ${limit}",
-      rootQ = `
+  const argQ = " AND pronargs >= ${minArgs} ",
+    lQ = " LIMIT ${limit}",
+    rootQ = `
       SELECT * 
       FROM (
         SELECT *
@@ -285,7 +288,7 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
       ) tttt
       WHERE (name ilike \${name} OR escaped_identifier = \${name})
       `,
-  distQ = `
+    distQ = `
     SELECT DISTINCT ON (length(name::text), name) *
     FROM (
       SELECT * 
@@ -298,60 +301,66 @@ export async function getFuncs(args: {db: DB, name?: string, searchTerm?: string
     ORDER BY length(name::text), name, arg_list_str, description 
     ${lQ}
   `,
-  q = rootQ + "\n" + lQ;
-  
-  const finalQuery = distinct? distQ : q;
-  const funcs = await db.sql(finalQuery, { name: name || "%", limit, minArgs }).then(d => 
-    d.rows.map((r: PG_Function)=> {
-      const args = (r.arg_list_str? r.arg_list_str.split(",") : [])
-        .map((a, i) => {
-          const data_type = a.trim().split(" ").at(-1) ?? a;
-          return { label: `arg${i}: ${data_type}`, data_type } 
-        });
-      r.arg_list_str = args.map(a => a.label).join(", ");
+    q = rootQ + "\n" + lQ;
 
-      /** Some builtin functions (left, right) can be placed without double quotes.  */
-      if(
-        r.schema === "pg_catalog" &&
-        r.escaped_name.includes('"') && 
-        !r.escaped_name.endsWith(`_user"`) && 
-        /^[a-z_]+$/.test(r.name)
-      ){
-        r.escaped_identifier = r.name;
-      }
-      if(r.name === "format" && args.length > 1){
-        r.description += [
-          `\n arg1 format: %[position][flags][width]type`,
-          `type:`,
-          `-  s formats the argument value as a simple string. A null value is treated as an empty string.`,
-          `-  I treats the argument value as an SQL identifier, double-quoting it if necessary. It is an error for the value to be null (equivalent to quote_ident).`,
-          `-  L quotes the argument value as an SQL literal. A null value is displayed as the string NULL, without quotes (equivalent to quote_nullable).`,
-          `\nExamples: `,
-          `SELECT format('INSERT INTO %I VALUES(%L)', 'locations', 'C:\\Program Files');`,
-          `Result: INSERT INTO locations VALUES('C:\\Program Files')`
-        ].join("\n");
-      }
-      if(r.name === "dblink"){
-        r.description = [
-          r.description || "",
-          `Executes a query in a remote database\n\n`,
-          asSQL(fixIndent(`SELECT * 
+  const finalQuery = distinct ? distQ : q;
+  const funcs = await db
+    .sql(finalQuery, { name: name || "%", limit, minArgs })
+    .then((d) =>
+      d.rows.map((r: PG_Function) => {
+        const args = (r.arg_list_str ? r.arg_list_str.split(",") : []).map(
+          (a, i) => {
+            const data_type = a.trim().split(" ").at(-1) ?? a;
+            return { label: `arg${i}: ${data_type}`, data_type };
+          },
+        );
+        r.arg_list_str = args.map((a) => a.label).join(", ");
+
+        /** Some builtin functions (left, right) can be placed without double quotes.  */
+        if (
+          r.schema === "pg_catalog" &&
+          r.escaped_name.includes('"') &&
+          !r.escaped_name.endsWith(`_user"`) &&
+          /^[a-z_]+$/.test(r.name)
+        ) {
+          r.escaped_identifier = r.name;
+        }
+        if (r.name === "format" && args.length > 1) {
+          r.description += [
+            `\n arg1 format: %[position][flags][width]type`,
+            `type:`,
+            `-  s formats the argument value as a simple string. A null value is treated as an empty string.`,
+            `-  I treats the argument value as an SQL identifier, double-quoting it if necessary. It is an error for the value to be null (equivalent to quote_ident).`,
+            `-  L quotes the argument value as an SQL literal. A null value is displayed as the string NULL, without quotes (equivalent to quote_nullable).`,
+            `\nExamples: `,
+            `SELECT format('INSERT INTO %I VALUES(%L)', 'locations', 'C:\\Program Files');`,
+            `Result: INSERT INTO locations VALUES('C:\\Program Files')`,
+          ].join("\n");
+        }
+        if (r.name === "dblink") {
+          r.description = [
+            r.description || "",
+            `Executes a query in a remote database\n\n`,
+            asSQL(
+              fixIndent(`SELECT * 
           FROM dblink(
             'dbname=mydb ',
             'select proname, prosrc from pg_proc'
           ) AS t1(proname name, prosrc text)
-          WHERE proname LIKE 'bytea%';`))
-        ].join("\n");
-      }
-      return ({ ...r, args });
-    })
-  );
-  if(funcs.length === limit){
-    console.warn("Function 8k limit reached. Some function suggestions might be missing...")
+          WHERE proname LIKE 'bytea%';`),
+            ),
+          ].join("\n");
+        }
+        return { ...r, args };
+      }),
+    );
+  if (funcs.length === limit) {
+    console.warn(
+      "Function 8k limit reached. Some function suggestions might be missing...",
+    );
   }
   return funcs;
 }
-
 
 export type PG_Table = {
   oid: number;
@@ -366,9 +375,9 @@ export type PG_Table = {
   view_definition?: string;
   is_view: boolean;
   cols: {
-    name: string; 
-    data_type: string; 
-    udt_name: string; 
+    name: string;
+    data_type: string;
+    udt_name: string;
     escaped_identifier: string;
     nullable: boolean;
     has_default: boolean;
@@ -389,9 +398,9 @@ export type PG_Table = {
     character_maximum_length: number | null;
   }[];
   tableStats?: TableStats;
-}
+};
 
-type TableStats = { 
+type TableStats = {
   relid: number;
   table_name: string;
   seq_scans: string;
@@ -401,7 +410,7 @@ type TableStats = {
   last_vacuum: string | null;
   last_autovacuum: string | null;
   table_size: string;
-  might_need_index: boolean; 
+  might_need_index: boolean;
 };
 
 const searchSchemas = `
@@ -432,12 +441,19 @@ const getSearchSchemas = async (db: DB) => {
       SELECT searchpath
       FROM cte1
     ) 
-  `
-  const searchSchemas: string[] = await db.sql(query, {}, { returnType: "values" });
-  return { searchSchemas }
-}
+  `;
+  const searchSchemas: string[] = await db.sql(
+    query,
+    {},
+    { returnType: "values" },
+  );
+  return { searchSchemas };
+};
 
-export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise<PG_Table[]> {
+export async function getTablesViewsAndCols(
+  db: DB,
+  tableName?: string,
+): Promise<PG_Table[]> {
   /** Used to prevent permission erorrs */
   const allowedSchemasQuery = `(SELECT schema_name FROM information_schema.schemata)`;
   const { searchSchemas } = await getSearchSchemas(db);
@@ -477,16 +493,17 @@ export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise
     ON (cols.table_schema, cols.table_name) IN ((nspname, relname))
     WHERE relkind IN ('r', 'v', 'm' ) 
     AND nspname IN ${allowedSchemasQuery}
-    ${tableName? " AND relname = ${tableName} " : ""}
+    ${tableName ? " AND relname = ${tableName} " : ""}
     AND relname NOT ILIKE 'prostgles_shell_%'
     GROUP BY c.oid, relkind, nspname, relname;
     `,
-    { tableName }, 
-    { returnType: "rows" }
+    { tableName },
+    { returnType: "rows" },
   )) as PG_Table[];
 
   const { tableAndViewsStats = [] } = await tryCatch(async () => {
-    const tableAndViewsStats = await db.sql(`
+    const tableAndViewsStats = (await db.sql(
+      `
       SELECT relid,
         relname AS table_name,
         to_char(seq_scan, '999,999,999,999') AS seq_scans,
@@ -502,55 +519,71 @@ export async function getTablesViewsAndCols(db: DB, tableName?: string): Promise
       FROM pg_stat_all_tables
       WHERE schemaname <> 'information_schema'
       AND schemaname NOT ILIKE 'pg_%';
-      `, 
-      {}, 
-      { returnType: "rows" }
-    ) as TableStats[];
-    return { tableAndViewsStats }
-  })
+      `,
+      {},
+      { returnType: "rows" },
+    )) as TableStats[];
+    return { tableAndViewsStats };
+  });
 
-  return tablesAndViews.map(t => {
-    t.tableStats = tableAndViewsStats.find(s => s.relid === t.oid);
-    t.escaped_identifiers = searchSchemas.map(schema => `${schema}.${t.escaped_name}`).concat([t.escaped_identifier])
-    if([...searchSchemas, "pg_catalog"].some(s => t.escaped_identifier.startsWith(`${s}.`))){ 
+  return tablesAndViews.map((t) => {
+    t.tableStats = tableAndViewsStats.find((s) => s.relid === t.oid);
+    t.escaped_identifiers = searchSchemas
+      .map((schema) => `${schema}.${t.escaped_name}`)
+      .concat([t.escaped_identifier]);
+    if (
+      [...searchSchemas, "pg_catalog"].some((s) =>
+        t.escaped_identifier.startsWith(`${s}.`),
+      )
+    ) {
       t.escaped_identifiers.push(t.escaped_identifier.split(".")[1]!);
     }
 
-    t.cols = t.cols.filter(c => c.udt_name).map(c => {
-      // const cConstraint = tConstraints.find(con => ["p", "f", "c"].includes(con.contype) && con.conkey?.includes(c.ordinal_position)); // con.columns?.join() === c.name);
+    t.cols = t.cols
+      .filter((c) => c.udt_name)
+      .map((c) => {
+        // const cConstraint = tConstraints.find(con => ["p", "f", "c"].includes(con.contype) && con.conkey?.includes(c.ordinal_position)); // con.columns?.join() === c.name);
 
-      // const dataType = ["USER-DEFINED"].includes(c.data_type.toUpperCase())? c.udt_name.toUpperCase() : c.data_type.toUpperCase();
+        // const dataType = ["USER-DEFINED"].includes(c.data_type.toUpperCase())? c.udt_name.toUpperCase() : c.data_type.toUpperCase();
 
-      // c.definition = [
-      //   c.escaped_identifier, 
-      //   dataType + 
-      //     ((c.udt_name.toLowerCase() === "numeric" && c.numeric_precision !== null)? 
-      //       `(${[c.numeric_precision, c.numeric_scale].join(", ")})` : 
-      //         c.character_maximum_length !== null ? `(${c.character_maximum_length})` : 
-      //         ""
-      //     ), 
-      //   c.nullable? "" : "NOT NULL",
-      //   c.column_default !== null? `DEFAULT ${c.column_default}` : "",
-      //   cConstraint? `, \n ${cConstraint.definition}` : ""
-      // ].filter(v => v.trim()).join(" ");
+        // c.definition = [
+        //   c.escaped_identifier,
+        //   dataType +
+        //     ((c.udt_name.toLowerCase() === "numeric" && c.numeric_precision !== null)?
+        //       `(${[c.numeric_precision, c.numeric_scale].join(", ")})` :
+        //         c.character_maximum_length !== null ? `(${c.character_maximum_length})` :
+        //         ""
+        //     ),
+        //   c.nullable? "" : "NOT NULL",
+        //   c.column_default !== null? `DEFAULT ${c.column_default}` : "",
+        //   cConstraint? `, \n ${cConstraint.definition}` : ""
+        // ].filter(v => v.trim()).join(" ");
 
-      return c;
-    });
+        return c;
+      });
     return t;
-  })
+  });
 }
 
 const TOP_DATA_TYPES = [
-  "numeric", "integer" ,"real", "bigint", "serial",
+  "numeric",
+  "integer",
+  "real",
+  "bigint",
+  "serial",
   "boolean",
-  "geography", "geometry",
+  "geography",
+  "geometry",
   "uuid",
-  "text", "varchar",
-  "json", "jsonb",
-  "text", "tsvector",
-  "timestamp", "timestamptz"
+  "text",
+  "varchar",
+  "json",
+  "jsonb",
+  "text",
+  "tsvector",
+  "timestamp",
+  "timestamptz",
 ];
-
 
 export type PG_DataType = {
   name: string;
@@ -558,7 +591,7 @@ export type PG_DataType = {
   schema: string;
   desc: string;
   priority: string;
-}
+};
 
 export async function getDataTypes(db: DB): Promise<PG_DataType[]> {
   const q = `
@@ -575,12 +608,11 @@ export async function getDataTypes(db: DB): Promise<PG_DataType[]> {
 
   `;
 
-  let types = (await db.sql(q, {}, { returnType: "rows" }
-  )) as PG_DataType[];
-  const int = types.find(t => t.udt_name === "int4");
-  const bigint = types.find(t => t.udt_name === "int8");
+  let types = (await db.sql(q, {}, { returnType: "rows" })) as PG_DataType[];
+  const int = types.find((t) => t.udt_name === "int4");
+  const bigint = types.find((t) => t.udt_name === "int8");
 
-  if(int && bigint){
+  if (int && bigint) {
     types = [
       ...types,
       {
@@ -591,22 +623,22 @@ export async function getDataTypes(db: DB): Promise<PG_DataType[]> {
       {
         ...bigint,
         desc: "autoincrementing eight-byte integer",
-        name: "bigserial"
-      }
+        name: "bigserial",
+      },
     ];
   }
-  return types.map(t => {
-    const priority = TOP_DATA_TYPES.indexOf(t.name.toLowerCase())
-      return {
+  return types.map((t) => {
+    const priority = TOP_DATA_TYPES.indexOf(t.name.toLowerCase());
+    return {
       ...t,
-      name: t.name.startsWith('"')? t.name : t.name.toUpperCase(),
-      priority: priority > -1? (priority + "").padStart(2, "0") : "z"
-    }
-  })
-  
+      name: t.name.startsWith('"') ? t.name : t.name.toUpperCase(),
+      priority: priority > -1 ? (priority + "").padStart(2, "0") : "z",
+    };
+  });
+
   // const tableNames = Object.keys(db).filter(t => db[t].getColumns);
   // return (await db.sql(
-  //   "select typname as name, typtype, typtype NOT IN ('p', 'd', 'c') AS for_cols from pg_type " + 
+  //   "select typname as name, typtype, typtype NOT IN ('p', 'd', 'c') AS for_cols from pg_type " +
   //   (tableNames.length? "WHERE typname NOT IN ($1:csv) " : ""),
   //   [tableNames.concat(tableNames.map(t => "_" + t))],
   //   { returnType: "rows" }
@@ -631,10 +663,11 @@ export type PG_Setting = {
   category?: null | string;
   vartype?: null | string;
   pending_restart?: null | boolean;
-}
+};
 
 const getSettings = (db: DB): Promise<PG_Setting[]> => {
-  return db.sql(`
+  return db.sql(
+    `
     SELECT 
       name, 
       CASE 
@@ -655,8 +688,11 @@ const getSettings = (db: DB): Promise<PG_Setting[]> => {
     FROM pg_catalog.pg_settings 
     order by name 
 
-  `, {}, { returnType: "rows" }) as any
-}
+  `,
+    {},
+    { returnType: "rows" },
+  ) as any;
+};
 
 export type PGOperator = {
   schema: string;
@@ -665,11 +701,12 @@ export type PGOperator = {
   right_arg_types: string[] | null;
   result_type: string;
   description: string;
-}
+};
 
-export const PRIORITISED_OPERATORS = ["=", ">", "LIKE", "ILIKE", "IN" ];
+export const PRIORITISED_OPERATORS = ["=", ">", "LIKE", "ILIKE", "IN"];
 export const getOperators = async (db: DB): Promise<PGOperator[]> => {
-  const operators: PGOperator[] = await db.sql(`
+  const operators: PGOperator[] = (await db.sql(
+    `
     SELECT 
       schema, 
       name, 
@@ -697,50 +734,75 @@ export const getOperators = async (db: DB): Promise<PGOperator[]> => {
       name, 
       result_type, 
       description
-  `, {}, { returnType: "rows" }) as any;
+  `,
+    {},
+    { returnType: "rows" },
+  )) as any;
 
-  const like = operators.find(o => o.name === "~~" && o.description.toLowerCase().includes(" like "));
-  const nlike = operators.find(o => o.name === "!~~" && o.description.toLowerCase().includes(" like "));
-  if(like && nlike) {
-    operators.push({ ...like, name: "LIKE", description: like.description + `.\n\n Same as ${like.name} operator` })
-    operators.push({ ...nlike, name: "NOT LIKE", description: nlike.description + `.\n\n Same as ${nlike.name} operator`})
+  const like = operators.find(
+    (o) => o.name === "~~" && o.description.toLowerCase().includes(" like "),
+  );
+  const nlike = operators.find(
+    (o) => o.name === "!~~" && o.description.toLowerCase().includes(" like "),
+  );
+  if (like && nlike) {
+    operators.push({
+      ...like,
+      name: "LIKE",
+      description: like.description + `.\n\n Same as ${like.name} operator`,
+    });
+    operators.push({
+      ...nlike,
+      name: "NOT LIKE",
+      description: nlike.description + `.\n\n Same as ${nlike.name} operator`,
+    });
   }
-  const ilike = operators.find(o => o.name === "~~*" && o.description.toLowerCase().includes(" like "));
-  const nilike = operators.find(o => o.name === "!~~*" && o.description.toLowerCase().includes(" like "));
-  if(ilike && nilike) {
-    operators.push({ ...ilike, name: "ILIKE", description: ilike.description + `.\n\n Same as ${ilike.name} operator`})
-    operators.push({ ...nilike, name: "NOT ILIKE", description: nilike.description + `.\n\nSame as ${nilike.name} operator`})
+  const ilike = operators.find(
+    (o) => o.name === "~~*" && o.description.toLowerCase().includes(" like "),
+  );
+  const nilike = operators.find(
+    (o) => o.name === "!~~*" && o.description.toLowerCase().includes(" like "),
+  );
+  if (ilike && nilike) {
+    operators.push({
+      ...ilike,
+      name: "ILIKE",
+      description: ilike.description + `.\n\n Same as ${ilike.name} operator`,
+    });
+    operators.push({
+      ...nilike,
+      name: "NOT ILIKE",
+      description: nilike.description + `.\n\nSame as ${nilike.name} operator`,
+    });
   }
   operators.push({
     left_arg_types: ["any"],
     result_type: "boolean",
     right_arg_types: ["any"],
-    schema: "pg_catalog", 
-    name: "IN", 
+    schema: "pg_catalog",
+    name: "IN",
     description: `IN operator. Returns true if the left argument is equal to any element in the right argument or subquery.`,
-  })
+  });
   operators.push({
     left_arg_types: ["any"],
     result_type: "boolean",
     right_arg_types: ["any"],
-    schema: "pg_catalog", 
-    name: "BETWEEN", 
+    schema: "pg_catalog",
+    name: "BETWEEN",
     description: `BETWEEN operator. Returns true if the left argument is between/inclusive of the range endpoints.`,
-  })
+  });
   operators.push({
     left_arg_types: ["any"],
     result_type: "boolean",
     right_arg_types: ["any"],
-    schema: "pg_catalog", 
-    name: "DISTINCT FROM", 
+    schema: "pg_catalog",
+    name: "DISTINCT FROM",
     description: `IS DISTINCT FROM operator. Returns true if the left argument is Not equal to the right expression, treating null as a comparable value.`,
-  })
+  });
   return operators;
-}
-
+};
 
 export const PG_OBJECT_QUERIES = {
-
   operators: {
     sql: undefined,
     type: {} as PGOperator,
@@ -760,16 +822,17 @@ export const PG_OBJECT_QUERIES = {
   tables: {
     sql: undefined,
     type: {} as PG_Table,
-    getData: (db: DB) => getTablesViewsAndCols(db)
+    getData: (db: DB) => getTablesViewsAndCols(db),
   },
   functions: {
     sql: undefined,
-    getData: (db: DB) => getFuncs({ 
-      db, 
-      minArgs: 0, 
-      limit: 8000, 
-      distinct: false 
-    }),
+    getData: (db: DB) =>
+      getFuncs({
+        db,
+        minArgs: 0,
+        limit: 8000,
+        distinct: false,
+      }),
     type: {} as PG_Function,
   },
 
@@ -841,7 +904,7 @@ export const PG_OBJECT_QUERIES = {
     type: {} as PGDatabase,
   },
 
-  constraints: { 
+  constraints: {
     sql: `
       SELECT conname,
       conkey ,  confkey ,
@@ -931,7 +994,7 @@ export const PG_OBJECT_QUERIES = {
       ON t.rolname = g.grantee
       ORDER BY sort_text
     `,
-    type: {} as PG_Role
+    type: {} as PG_Role,
   },
 
   indexes: {
@@ -998,19 +1061,18 @@ export const PG_OBJECT_QUERIES = {
 
   policies: {
     sql: (tableName?: string) => {
-
       /** Used to prevent error "permission denied for table pg_authid" */
       let roles_query = "";
       // try {
       //   await db.sql("SELECT 1 FROM pg_authid", {});
-      // roles_query = `ELSE ARRAY( 
+      // roles_query = `ELSE ARRAY(
       //   SELECT pg_authid.rolname
       //   FROM pg_authid
       //   WHERE pg_authid.oid = ANY (pol.polroles)
       //   ORDER BY pg_authid.rolname
       // )::text[]`
       // } catch(err){
-    
+
       // }
       roles_query = `ELSE ARRAY( 
         SELECT pg_roles.rolname
@@ -1018,7 +1080,7 @@ export const PG_OBJECT_QUERIES = {
         WHERE pg_roles.oid = ANY (pol.polroles)
         ORDER BY pg_roles.rolname
       )::text[]`;
-    
+
       return `
       /*  ${QUERY_WATCH_IGNORE} */
       ${searchSchemaQuery}
@@ -1061,8 +1123,8 @@ export const PG_OBJECT_QUERIES = {
           FROM pg_policy pol
             JOIN pg_class c ON c.oid = pol.polrelid
           LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
-          ${!tableName? "" : `WHERE quote_ident(c.relname) = \${tableName}`}
-        ) t `
+          ${!tableName ? "" : `WHERE quote_ident(c.relname) = \${tableName}`}
+        ) t `;
     },
     type: {} as PG_Policy,
   },
@@ -1089,75 +1151,98 @@ export const PG_OBJECT_QUERIES = {
         , format('%I.%I', schemaname, tablename) as tablename_escaped
       FROM pg_catalog.pg_rules
     `,
-    type: {} as PG_Rule
+    type: {} as PG_Rule,
   },
 
   keywords: {
     sql: undefined,
     type: {} as PG_Keyword,
     getData: async (db: DB) => {
-      const allKeywords = (await db.sql("select upper(word) as word from pg_get_keywords();", {}, { returnType: "rows" })).map(d => d.word).concat(["RAISE", "NOTICE", "IF NOT EXISTS", "INSERT INTO", "DELETE FROM"]) as string[];
-      return allKeywords.map(label => {
-        const topKwd = TOP_KEYWORDS.find(k => k.label === label);
+      const allKeywords = (
+        await db.sql(
+          "select upper(word) as word from pg_get_keywords();",
+          {},
+          { returnType: "rows" },
+        )
+      )
+        .map((d) => d.word)
+        .concat([
+          "RAISE",
+          "NOTICE",
+          "IF NOT EXISTS",
+          "INSERT INTO",
+          "DELETE FROM",
+        ]) as string[];
+      return allKeywords.map((label) => {
+        const topKwd = TOP_KEYWORDS.find((k) => k.label === label);
         let documentation = missingKeywordDocumentation[label] ?? label;
-        const insertText = label === "IN"? `IN ( $0 )` : topKwd?.insertText ?? (["BEGIN", "COMMIT"].includes(label) ? (label + ";\n") : label);
-        if(topKwd?.info) {
+        const insertText =
+          label === "IN" ? `IN ( $0 )` : (
+            (topKwd?.insertText ??
+            (["BEGIN", "COMMIT"].includes(label) ? label + ";\n" : label))
+          );
+        if (topKwd?.info) {
           documentation = topKwd.info;
         }
-        return { label, topKwd, documentation, insertText } satisfies PG_Keyword
-      })
-    }
+        return {
+          label,
+          topKwd,
+          documentation,
+          insertText,
+        } satisfies PG_Keyword;
+      });
+    },
   },
 
   extensions: {
     sql: `SELECT *, format('%I', COALESCE(name, '')) as escaped_identifier, installed_version IS NOT NULL as installed  FROM pg_available_extensions`,
     type: {} as PG_Extension,
-  }
-
-} as const satisfies Record<string, { 
-  type: any; 
-  sql: string | ((...args: any) => string);
-  getData?: undefined;
-} | {
-  type: any;
-  sql?: undefined;
-  getData: (...args: any) => Promise<any>
-}>;
-
+  },
+} as const satisfies Record<
+  string,
+  | {
+      type: any;
+      sql: string | ((...args: any) => string);
+      getData?: undefined;
+    }
+  | {
+      type: any;
+      sql?: undefined;
+      getData: (...args: any) => Promise<any>;
+    }
+>;
 
 type PG_OBJECT_DATA = {
-  [key in keyof typeof PG_OBJECT_QUERIES]: typeof PG_OBJECT_QUERIES[key]["type"][]
-}
+  [key in keyof typeof PG_OBJECT_QUERIES]: (typeof PG_OBJECT_QUERIES)[key]["type"][];
+};
 
-type DB = { sql: SQLHandler }
+type DB = { sql: SQLHandler };
 export const getPGObjects = async (db: DB) => {
-
   const data: PG_OBJECT_DATA = Object.fromEntries(
     await Promise.all(
-      Object.entries(PG_OBJECT_QUERIES)
-        .map(async ([type, qparams]) => {
-          const { sql: sqlOrFunc } = qparams;
-          let result: any[] = [];
-          try {
-            if(sqlOrFunc === undefined){
-              result = await qparams.getData(db);
+      Object.entries(PG_OBJECT_QUERIES).map(async ([type, qparams]) => {
+        const { sql: sqlOrFunc } = qparams;
+        let result: any[] = [];
+        try {
+          if (sqlOrFunc === undefined) {
+            result = await qparams.getData(db);
+          } else {
+            let sql = "";
+            if (typeof sqlOrFunc === "function") {
+              sql = sqlOrFunc();
             } else {
-              let sql = "";
-              if(typeof sqlOrFunc === "function"){
-                sql = sqlOrFunc();
-              } else {
-                sql = sqlOrFunc;
-              }
-              result = await db.sql(sql, {}, { returnType: "rows" });
+              sql = sqlOrFunc;
             }
-          } catch(e){
-            console.error(`Could not load ${type}`, e);
+            result = await db.sql(sql, {}, { returnType: "rows" });
           }
+        } catch (e) {
+          console.error(`Could not load ${type}`, e);
+        }
 
-          return [type, result];
-        })
-    )
+        return [type, result];
+      }),
+    ),
   );
 
   return data;
-}
+};

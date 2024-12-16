@@ -4,20 +4,24 @@ import FormField from "../../components/FormField/FormField";
 import Select from "../../components/Select/Select";
 import type { EmailSMTPCofig } from "./EmailSetup";
 
-
 type P = Pick<DivProps, "style" | "className"> & {
-  value: EmailSMTPCofig | undefined; 
+  value: EmailSMTPCofig | undefined;
   onChange: (newValue: P["value"]) => void;
-}
+};
 
 const providerOptions = [
-  { key: "smtp", label: "SMTP Server", subLabel: "Standard SMTP configuration" },
+  {
+    key: "smtp",
+    label: "SMTP Server",
+    subLabel: "Standard SMTP configuration",
+  },
   { key: "aws-ses", label: "AWS SES", subLabel: "Amazon Simple Email Service" },
 ] as const;
 
 export const EmailSMTPSetup = ({ value, onChange }: P) => {
-
-  const handleProviderChange = (type: (typeof providerOptions)[number]["key"]) => {
+  const handleProviderChange = (
+    type: (typeof providerOptions)[number]["key"],
+  ) => {
     if (type === "smtp") {
       onChange({
         type: "smtp",
@@ -38,16 +42,17 @@ export const EmailSMTPSetup = ({ value, onChange }: P) => {
     }
   };
 
-  return <FlexCol>
-    <Select 
-      label="Email provider"
-      fullOptions={providerOptions}
-      value={value?.type ?? "None"}
-      onChange={handleProviderChange}
-    />
-    {
-      !value? null :
-      value.type === "smtp"? (
+  return (
+    <FlexCol>
+      <Select
+        label="Email provider"
+        fullOptions={providerOptions}
+        value={value?.type ?? "None"}
+        onChange={handleProviderChange}
+      />
+      {!value ?
+        null
+      : value.type === "smtp" ?
         <>
           <FormField
             label="Host"
@@ -72,8 +77,7 @@ export const EmailSMTPSetup = ({ value, onChange }: P) => {
             onChange={(pass) => onChange({ ...value, pass })}
           />
         </>
-      ) : (
-        <>
+      : <>
           <FormField
             label="Region"
             type="text"
@@ -90,7 +94,9 @@ export const EmailSMTPSetup = ({ value, onChange }: P) => {
             label="Secret Access Key"
             type="password"
             value={value.secretAccessKey}
-            onChange={(secretAccessKey) => onChange({ ...value, secretAccessKey })}
+            onChange={(secretAccessKey) =>
+              onChange({ ...value, secretAccessKey })
+            }
           />
           <FormField
             label="Sending Rate (per second)"
@@ -101,7 +107,7 @@ export const EmailSMTPSetup = ({ value, onChange }: P) => {
             }
           />
         </>
-      )
-    }
-  </FlexCol>
-}
+      }
+    </FlexCol>
+  );
+};

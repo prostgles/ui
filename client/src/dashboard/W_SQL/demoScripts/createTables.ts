@@ -3,45 +3,74 @@ import { tout } from "../../../pages/ElectronSetup";
 import type { DemoScript, TypeAutoOpts } from "../getDemoUtils";
 import { SQL_TESTING_SCRIPTS, type SqlTestingScripts } from "./mainTestScripts";
 
-export const createTables: DemoScript = async ({ fromBeginning, typeAuto, runDbSQL, getEditor, moveCursor, goToNextSnipPos, newLine, goToNextLine, runSQL, typeText, testResult, triggerParamHints }) => {
-
-  const testEditorValue = (key: keyof SqlTestingScripts | undefined, expectedValue?: string) => testResult(expectedValue ?? SQL_TESTING_SCRIPTS[key!]);
-  const createTable = async ({ tableName, cols }: { tableName: string; cols: { text: string; opts?: TypeAutoOpts; }[] }) => {
+export const createTables: DemoScript = async ({
+  fromBeginning,
+  typeAuto,
+  runDbSQL,
+  getEditor,
+  moveCursor,
+  goToNextSnipPos,
+  newLine,
+  goToNextLine,
+  runSQL,
+  typeText,
+  testResult,
+  triggerParamHints,
+}) => {
+  const testEditorValue = (
+    key: keyof SqlTestingScripts | undefined,
+    expectedValue?: string,
+  ) => testResult(expectedValue ?? SQL_TESTING_SCRIPTS[key!]);
+  const createTable = async ({
+    tableName,
+    cols,
+  }: {
+    tableName: string;
+    cols: { text: string; opts?: TypeAutoOpts }[];
+  }) => {
     const newCol = async (wait = 500) => {
       await typeText(",");
       newLine();
       await tout(wait);
-    }
-    await typeAuto("cr") 
+    };
+    await typeAuto("cr");
     await typeAuto(" ta");
     await typeAuto(tableName, { triggerMode: "off", nth: -1 });
     goToNextSnipPos();
 
-    for(const [idx, col] of cols.entries()){
+    for (const [idx, col] of cols.entries()) {
       // if(col.text.includes("cre")) debugger
-      await typeAuto(col.text, { triggerMode: "firstChar", msPerChar: 120, ...col.opts });
-      if(idx < cols.length -1){
+      await typeAuto(col.text, {
+        triggerMode: "firstChar",
+        msPerChar: 120,
+        ...col.opts,
+      });
+      if (idx < cols.length - 1) {
         await newCol();
         const { e } = getEditor();
-        if(e.getModel()?.getLineContent(e.getPosition()?.lineNumber as any).endsWith("   ")){
-          moveCursor.left()
+        if (
+          e
+            .getModel()
+            ?.getLineContent(e.getPosition()?.lineNumber as any)
+            .endsWith("   ")
+        ) {
+          moveCursor.left();
         }
       }
-        
     }
 
     goToNextLine();
     console.log(Date.now(), "Created table: ", tableName);
     await runSQL();
     await tout(1000);
-  }
+  };
 
   /**
    * Reset schema
    * Create example data
    */
   getEditor().e.setValue("");
-  await runDbSQL(initScript); 
+  await runDbSQL(initScript);
   getEditor().e.setValue("");
 
   await tout(2000);
@@ -49,7 +78,7 @@ export const createTables: DemoScript = async ({ fromBeginning, typeAuto, runDbS
    * Create table users
    * columns are auto-completed
    */
-  await createTable({ 
+  await createTable({
     tableName: "users",
     cols: [
       { text: "idugen" },
@@ -57,50 +86,45 @@ export const createTables: DemoScript = async ({ fromBeginning, typeAuto, runDbS
       { text: "last", opts: { nth: 1 } },
       { text: "ema" },
       { text: "cre" },
-    ]
+    ],
   });
-  testEditorValue("createTable_users")
-
+  testEditorValue("createTable_users");
 
   /**
    * Create table plans
    */
   fromBeginning();
-  await createTable({ 
+  await createTable({
     tableName: "plans",
     cols: [
       { text: "id TEXT pri" },
-      { text: "nam" }, 
-      { text: "pric" }, 
-      { text: "info js", opts: { nth: 2 } }, 
-    ]
+      { text: "nam" },
+      { text: "pric" },
+      { text: "info js", opts: { nth: 2 } },
+    ],
   });
-  testEditorValue("createTable_plans") 
-
+  testEditorValue("createTable_plans");
 
   /**
    * Create table subscriptions
    * add referenced column
    */
   fromBeginning();
-  await createTable({ 
+  await createTable({
     tableName: "subscriptions",
-    cols: [
-      { text: "crea" },
-      { text: "pla" }, 
-    ]
+    cols: [{ text: "crea" }, { text: "pla" }],
   });
-  testEditorValue("createTable_subscriptions") 
+  testEditorValue("createTable_subscriptions");
 
   /**
    * Alter table users
-   * Add referenced column 
+   * Add referenced column
    */
   fromBeginning();
-  await typeAuto("alt", {  });
-  await typeAuto(" ta", {  });
-  await typeAuto(" su", {  });
-  await typeAuto(" \na", {  });
+  await typeAuto("alt", {});
+  await typeAuto(" ta", {});
+  await typeAuto(" su", {});
+  await typeAuto(" \na", {});
   await typeAuto(" use", { nth: 2 });
   await typeAuto(";", { nth: -1 });
   testEditorValue("alterTable_subscriptionss");
@@ -124,45 +148,45 @@ export const createTables: DemoScript = async ({ fromBeginning, typeAuto, runDbS
    */
   fromBeginning();
   await typeAuto("WITH cte1 AS ()", { nth: -1 });
-  moveCursor.left()
+  moveCursor.left();
   await typeAuto("\nse");
   await typeAuto(" ");
-  await typeAuto("\n");// FROM
+  await typeAuto("\n"); // FROM
   await typeAuto(" ()", { nth: -1 });
-  moveCursor.left() 
-  await typeAuto("\n");// SELECT
+  moveCursor.left();
+  await typeAuto("\n"); // SELECT
   await typeAuto(" ");
   await typeAuto("\n"); // FROM
   await typeAuto(" geo");
   await typeAuto("\nwh");
   await typeAuto(" coord");
   await typeAuto(" = 1", { nth: -1 });
-  moveCursor.down(); 
+  moveCursor.down();
   await typeAuto(" t", { nth: -1 });
-  moveCursor.down(); 
+  moveCursor.down();
   await newLine();
   await typeAuto("SELECT * fr");
   await typeAuto(" cte1;", { nth: -1 });
   await newLine();
-  await typeAuto("SELECT st_point(1, 2)", { nth: -1 })
-  await typeAuto("::geog")
+  await typeAuto("SELECT st_point(1, 2)", { nth: -1 });
+  await typeAuto("::geog");
   testEditorValue("nestedSelects");
 
   /**
-   * insert cols/vals autocomplete 
-  */
+   * insert cols/vals autocomplete
+   */
   fromBeginning();
   await typeAuto("ins");
   await typeAuto(" pl");
   await typeAuto(" ()", { nth: -1 });
-  moveCursor.left() 
-  triggerParamHints(); 
-  await typeAuto("'basic', 'basic', 10, '{}'", { msPerChar: 200, nth: -1});
-  moveCursor.right(); 
-  moveCursor.right(); 
+  moveCursor.left();
+  triggerParamHints();
+  await typeAuto("'basic', 'basic', 10, '{}'", { msPerChar: 200, nth: -1 });
+  moveCursor.right();
+  moveCursor.right();
   await typeAuto(";", { nth: -1 });
-  testEditorValue("insert")
-  await runSQL();  
+  testEditorValue("insert");
+  await runSQL();
 
   const copyData = async () => {
     /**
@@ -175,29 +199,31 @@ export const createTables: DemoScript = async ({ fromBeginning, typeAuto, runDbS
     newLine();
     await typeAuto("f");
     await typeAuto(" h");
-    moveCursor.left()
+    moveCursor.left();
     await typeAuto("/");
-    moveCursor.right()
+    moveCursor.right();
     await typeAuto(" ");
     await typeAuto("for");
     await typeAuto(" c");
     await typeAuto(", hea");
     await typeAuto(", qu");
-    await typeAuto(" ", { nth: 1});
-    moveCursor.right()
-    moveCursor.right()
+    await typeAuto(" ", { nth: 1 });
+    moveCursor.right();
+    moveCursor.right();
     await typeAuto(";", { nth: -1 });
     // console.log({copy: e.getModel()?.getValue()})
-    testEditorValue("copy")
+    testEditorValue("copy");
     await runSQL();
-  }
+  };
   // Disabled because csv is missing in vm
   // await copyData();
-}
+};
 
-
-
-const initScript = ["users", "plans", "subscriptions", "logs", "some_table"].map(v => `DROP TABLE IF EXISTS ${v} CASCADE;`).join("") + `
+const initScript =
+  ["users", "plans", "subscriptions", "logs", "some_table"]
+    .map((v) => `DROP TABLE IF EXISTS ${v} CASCADE;`)
+    .join("") +
+  `
 /* ${QUERY_WATCH_IGNORE}  */
 DROP USER IF EXISTS user1;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -233,4 +259,3 @@ INSERT INTO logs(request) VALUES($$ {
     
   $$);
 `;
- 

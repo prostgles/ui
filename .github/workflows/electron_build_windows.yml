@@ -1,34 +1,34 @@
 name: Electron build & test windows
-on: workflow_dispatch 
+on: workflow_dispatch
 jobs:
   electron_build_windows:
     timeout-minutes: 12
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 20
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
 
-    - name: Build
-      run: |
-        cd electron && npm run build-win
+      - name: Build
+        run: |
+          cd electron && npm run build-win
 
-    - name: Test build
-      shell: cmd
-      run: |
-        cd electron\dist
-        for /r %%f in (*.exe) DO certutil -hashfile "%%f" SHA256 > windows.checksums
-        type windows.checksums
-        for /r %%f in (*.exe) DO "%%f" /S --force-run
-        cd ..
-        waitfor SomethingThatIsNeverHappening /t 3 2>NUL
-        call screenCapture.bat .\dist\screen1.png
-      
-    - uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: installers
-        path: electron/dist
-        compression-level: 0
-        retention-days: 10
+      - name: Test build
+        shell: cmd
+        run: |
+          cd electron\dist
+          for /r %%f in (*.exe) DO certutil -hashfile "%%f" SHA256 > windows.checksums
+          type windows.checksums
+          for /r %%f in (*.exe) DO "%%f" /S --force-run
+          cd ..
+          waitfor SomethingThatIsNeverHappening /t 3 2>NUL
+          call screenCapture.bat .\dist\screen1.png
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: installers
+          path: electron/dist
+          compression-level: 0
+          retention-days: 10

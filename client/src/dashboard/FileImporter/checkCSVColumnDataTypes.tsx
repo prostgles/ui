@@ -11,8 +11,11 @@ export type SuggestedColumnDataType = {
   column_name: string;
   suggested_type: PG_COLUMN_UDT_DATA_TYPE;
   alter_query: string;
-}
-export const getTextColumnPotentialDataTypes = async (sql: Required<DBHandlerClient>["sql"], { schema, tableName }: { schema?: string; tableName: string; }): Promise<SuggestedColumnDataType[]> => {
+};
+export const getTextColumnPotentialDataTypes = async (
+  sql: Required<DBHandlerClient>["sql"],
+  { schema, tableName }: { schema?: string; tableName: string },
+): Promise<SuggestedColumnDataType[]> => {
   await sql(`ANALYZE \${tableName:name}`, { tableName });
   const q = `
     WITH text_column_values AS (
@@ -45,57 +48,88 @@ export const getTextColumnPotentialDataTypes = async (sql: Required<DBHandlerCli
     HAVING COUNT(DISTINCT suggested_type) = 1
   `;
 
-  const result =  await sql(q, { tableName }, { returnType: "rows" }) as SuggestedColumnDataType[];
+  const result = (await sql(
+    q,
+    { tableName },
+    { returnType: "rows" },
+  )) as SuggestedColumnDataType[];
   return result;
-}
+};
 
-export const applySuggestedDataTypes = async ({ types, sql, tableName }: { types: SuggestedColumnDataType[] ; sql: Required<DBHandlerClient>["sql"]; tableName: string; }) => {
-
-  const query = `ALTER TABLE ${JSON.stringify(tableName)}\n ` + types.map(d => d.alter_query).join(",\n");
-  await sql(query);
-}
-
-type P = {
-  types: SuggestedColumnDataType[] | undefined; 
-  onDone: VoidFunction; 
+export const applySuggestedDataTypes = async ({
+  types,
+  sql,
+  tableName,
+}: {
+  types: SuggestedColumnDataType[];
   sql: Required<DBHandlerClient>["sql"];
   tableName: string;
-}
+}) => {
+  const query =
+    `ALTER TABLE ${JSON.stringify(tableName)}\n ` +
+    types.map((d) => d.alter_query).join(",\n");
+  await sql(query);
+};
 
-export const ApplySuggestedDataTypes = ({ types, onDone, sql, tableName }: P) => {
-  const [selectedColumns, setSelectedColumns] = useState<string[]>(types?.map(t => t.column_name) ?? []);
-  if(!types?.length) return null;
+type P = {
+  types: SuggestedColumnDataType[] | undefined;
+  onDone: VoidFunction;
+  sql: Required<DBHandlerClient>["sql"];
+  tableName: string;
+};
 
-  return <FlexCol>
-    <SearchList 
-      label="Suggested column data types"
-      items={types.map(d => ({
-        key: d.column_name,
-        label: d.column_name,
-        subLabel: d.suggested_type,
-        checked: selectedColumns.includes(d.column_name),
-        onPress: () => {
-          const newSelected = selectedColumns.includes(d.column_name) ? 
-            selectedColumns.filter(colKey => colKey !== d.column_name) : 
-            selectedColumns.concat(d.column_name);
-          setSelectedColumns(newSelected);
-        }
-      }))}
-      checkboxed={true}
-      onMultiToggle={(selected) => {
-        setSelectedColumns(selected.filter(d => d.checked).map(d => d.key) as string[]);
-      }}
-    />
-    <Btn
-      color="action"
-      variant="filled"
-      onClickPromise={async () => {
-        const selectedTypes = types.filter(d => selectedColumns.includes(d.column_name));
-        await applySuggestedDataTypes({ types: selectedTypes, sql, tableName });
-        onDone();
-      }}
-    >
-      Apply suggested data types types
-    </Btn>
-  </FlexCol>
-}
+export const ApplySuggestedDataTypes = ({
+  types,
+  onDone,
+  sql,
+  tableName,
+}: P) => {
+  const [selectedColumns, setSelectedColumns] = useState<string[]>(
+    types?.map((t) => t.column_name) ?? [],
+  );
+  if (!types?.length) return null;
+
+  return (
+    <FlexCol>
+      <SearchList
+        label="Suggested column data types"
+        items={types.map((d) => ({
+          key: d.column_name,
+          label: d.column_name,
+          subLabel: d.suggested_type,
+          checked: selectedColumns.includes(d.column_name),
+          onPress: () => {
+            const newSelected =
+              selectedColumns.includes(d.column_name) ?
+                selectedColumns.filter((colKey) => colKey !== d.column_name)
+              : selectedColumns.concat(d.column_name);
+            setSelectedColumns(newSelected);
+          },
+        }))}
+        checkboxed={true}
+        onMultiToggle={(selected) => {
+          setSelectedColumns(
+            selected.filter((d) => d.checked).map((d) => d.key) as string[],
+          );
+        }}
+      />
+      <Btn
+        color="action"
+        variant="filled"
+        onClickPromise={async () => {
+          const selectedTypes = types.filter((d) =>
+            selectedColumns.includes(d.column_name),
+          );
+          await applySuggestedDataTypes({
+            types: selectedTypes,
+            sql,
+            tableName,
+          });
+          onDone();
+        }}
+      >
+        Apply suggested data types types
+      </Btn>
+    </FlexCol>
+  );
+};

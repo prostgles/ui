@@ -12,19 +12,24 @@ type P = W_TableMenuProps & {
   tableMeta: W_TableInfo | undefined;
   onSetQuery: (newQuery: W_TableMenuState["query"]) => void;
 };
-export const W_TableMenu_Constraints = ({ tableMeta, onSetQuery, w, prgl }: P) => {
+export const W_TableMenu_Constraints = ({
+  tableMeta,
+  onSetQuery,
+  w,
+  prgl,
+}: P) => {
   const tableName = w.table_name;
   if (!tableMeta || !tableName) return null;
-  
+
   return (
     <FlexCol className="flex-col ai-start o-auto ws-pre">
       <div className="ta-left p-p5">
         Constraints set rules on the type of data that can be stored in columns
       </div>
       <SmartCardList
-        theme={prgl.theme} 
+        theme={prgl.theme}
         db={prgl.db as any}
-        tableName={{ 
+        tableName={{
           dataAge: prgl.dbKey,
           sqlQuery: `
             SELECT conname, pg_get_constraintdef(c.oid) as definition 
@@ -36,47 +41,47 @@ export const W_TableMenu_Constraints = ({ tableMeta, onSetQuery, w, prgl }: P) =
             WHERE nsp.nspname = 'public'
             AND rel.relname = \${tableName}
           `,
-          args: { tableName }
+          args: { tableName },
         }}
         methods={prgl.methods}
         tables={prgl.tables}
-        noDataComponent={
-          <InfoRow color="info">
-            No constraints
-          </InfoRow>
-        }
+        noDataComponent={<InfoRow color="info">No constraints</InfoRow>}
         fieldConfigs={[
-          { 
+          {
             name: "definition",
             label: "",
-            render: (definition, row) => <div className="ws-pre-line">
-              <span className="text-2">
-                ALTER TABLE {tableName} 
+            render: (definition, row) => (
+              <div className="ws-pre-line">
+                <span className="text-2">
+                  ALTER TABLE {tableName}
+                  <br></br>
+                  ADD CONSTRAINT {row.conname}
+                </span>
                 <br></br>
-                ADD CONSTRAINT {row.conname} 
-              </span>
-              <br></br>
-              {definition}
-            </div>
+                {definition}
+              </div>
+            ),
           },
-          { 
+          {
             name: "conname",
             label: "",
             className: "show-on-parent-hover ml-auto",
-            render: conname => <FlexRow className="">
-              <Btn 
-                title="Drop constraint..."
-                color="danger"
-                variant="faded"
-                iconPath={mdiDelete}
-                onClick={() => {
-                  onSetQuery({
-                    sql: `ALTER TABLE ${JSON.stringify(tableName)} DROP CONSTRAINT ${JSON.stringify(conname)}`
-                  })
-                }}
-              />
-            </FlexRow>
-          }
+            render: (conname) => (
+              <FlexRow className="">
+                <Btn
+                  title="Drop constraint..."
+                  color="danger"
+                  variant="faded"
+                  iconPath={mdiDelete}
+                  onClick={() => {
+                    onSetQuery({
+                      sql: `ALTER TABLE ${JSON.stringify(tableName)} DROP CONSTRAINT ${JSON.stringify(conname)}`,
+                    });
+                  }}
+                />
+              </FlexRow>
+            ),
+          },
         ]}
       />
       <Select
@@ -86,36 +91,41 @@ export const W_TableMenu_Constraints = ({ tableMeta, onSetQuery, w, prgl }: P) =
           iconPath: mdiPlus,
           variant: "faded",
           color: "action",
-          children: "Create"
+          children: "Create",
         }}
         fullOptions={[
           {
             key: "PRIMARY KEY",
-            subLabel: "A column or a group of columns used to identify a row uniquely in a table"
-          },{
+            subLabel:
+              "A column or a group of columns used to identify a row uniquely in a table",
+          },
+          {
             key: "FOREIGN KEY",
-            subLabel: "reference the primary key (or unique columns) of another table"
+            subLabel:
+              "reference the primary key (or unique columns) of another table",
           },
           {
             key: "CHECK",
-            subLabel: "Condition for row values before they are inserted or updated to the column"
+            subLabel:
+              "Condition for row values before they are inserted or updated to the column",
           },
           {
             key: "UNIQUE",
-            subLabel: "Similar to primary key except it allows null values"
+            subLabel: "Similar to primary key except it allows null values",
           },
           {
             key: "WITH CHECK",
-            subLabel: "Change condition used to validate INSERT and UPDATE queries"
+            subLabel:
+              "Change condition used to validate INSERT and UPDATE queries",
           },
         ]}
-        onChange={val => {
-          onSetQuery({ 
+        onChange={(val) => {
+          onSetQuery({
             title: "Add constraint",
             sql: `ALTER TABLE ${tableName} ADD ${val}`,
           });
         }}
       />
     </FlexCol>
-  )
-}
+  );
+};

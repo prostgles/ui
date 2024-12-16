@@ -1,4 +1,4 @@
-export {}
+export {};
 // import 'ol/ol.css';
 // import "./map.css";
 // // import("ol").then(()=>{
@@ -25,7 +25,6 @@ export {}
 // import { METERS_PER_UNIT } from 'ol/proj/Units.js';
 // import { fromLonLat } from 'ol/proj';
 
-
 // // window.loadMap = loadMap;
 // const GeometryTypes = ['Point', 'LineString', 'MultiLineString', 'MultiPoint', 'MultiPolygon', 'Polygon', 'GeometryCollection',  'Circle'];
 // // let { map } = loadMap("map");
@@ -41,7 +40,6 @@ export {}
 //   id: number | string | undefined;
 // }
 
-
 // // let loaderFunc: (p0: Extent) => Promise<GeoJsonFeature[]> = undefined;
 // let loaderFunc: any;
 // export type GetLayerData = (p0?: Extent) => Promise<GeoJsonFeature[]>;
@@ -55,11 +53,10 @@ export {}
 // let map: Map;
 // let currentLayers: Layer[] = [];
 
-
 // // Source and vector layer
 // var vectorSource = new VectorSource({
 //   // projection: 'EPSG:4326',
-  
+
 // });
 
 // var vectorLayer = new VectorLayer({
@@ -69,7 +66,7 @@ export {}
 
 // let zoomed = false;
 // async function setLayers(layers: Layer[], zoomToFeaturesOnce: boolean = false){
-  
+
 //   currentLayers.map(cl => {
 //     if(cl.mapLayer) {
 //       map.removeLayer(cl.mapLayer);
@@ -80,7 +77,7 @@ export {}
 //   currentLayers = [];
 
 //   layers.map(l => {
-    
+
 //     let vectorSource = new VectorSource({
 //       // features: (new GeoJSON({ featureProjection: 'EPSG:3857' })).readFeatures({ type: "FeatureCollection", features: geoJsonFeatures })
 //       format: new olformat.GeoJSON(),
@@ -105,16 +102,16 @@ export {}
 
 //   return Promise.all(currentLayers.map(async l => {
 //     const _ftrs = await (l.getData as any)(bbox);
-  
+
 //     let features = (new GeoJSON({ featureProjection: 'EPSG:3857', dataProjection: 'EPSG:3857' }))
-//       .readFeatures({ 
-//         type: "FeatureCollection", 
-//         features: _ftrs 
+//       .readFeatures({
+//         type: "FeatureCollection",
+//         features: _ftrs
 //       }, {
 //         dataProjection:'EPSG:3857',
 //         featureProjection:'EPSG:3857'
 //       })
-      
+
 //     vectorSource.clear(true);
 //     vectorSource.addFeatures(features);
 //     return true;
@@ -122,7 +119,6 @@ export {}
 // }
 
 // function loadMap(node: any){
-  
 
 //   // var highlightStyle = new Style({
 //   //   fill: new Fill({
@@ -133,14 +129,13 @@ export {}
 //   //     width: 3
 //   //   })
 //   // });
-  
+
 //   var tileSource = new XYZ({
 //     url: 'https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}'
 //   }),
 //   tileLayer = new TileLayer({
 //     source: tileSource
 //   });
-
 
 //   map = new Map({
 //     layers: [
@@ -170,10 +165,6 @@ export {}
 //     })
 //   });
 
-  
-
-
-
 //   map.addLayer(vectorLayer);
 
 //   map.on("moveend", async function(e){
@@ -188,24 +179,23 @@ export {}
 //     //   const  _ftrs = await (l.getData as any)(bbox);
 
 //     //   let features = (new GeoJSON({ featureProjection: 'EPSG:3857', dataProjection: 'EPSG:3857' }))
-//     //     .readFeatures({ 
-//     //       type: "FeatureCollection", 
-//     //       features: _ftrs 
+//     //     .readFeatures({
+//     //       type: "FeatureCollection",
+//     //       features: _ftrs
 //     //     }, {
 //     //       dataProjection:'EPSG:3857',
 //     //       featureProjection:'EPSG:3857'
 //     //     })
-        
+
 //     //   vectorSource.clear(true);
 //     //   vectorSource.addFeatures(features);
-      
+
 //     // });
 //   });
 
-
 //   //    pointermove   click
 //   map.on('click', function(event: any) {
-  
+
 //     map.forEachFeatureAtPixel(event.pixel, function(feature: any ,layer: any) {
 //       console.log(feature.get());
 //         // if ( feature.getId() == "IND" ) {
@@ -232,7 +222,7 @@ export {}
 //   //     if (featureId == feature.get('id')) {
 //   //       return feature;
 //   //     };
-      
+
 //   //     console.log(feature)
 //   //     featureId = feature.get('id');
 //   //     var coordinates = (feature as any).getGeometry().getCoordinates();
@@ -246,12 +236,11 @@ export {}
 //   //   };
 //   // });
 
-
 //   // drawCircleInMeter(map, { r: 400000, x: 0, y: 51 }, vectorSource);
 //   // for(let i = 0; i < 1000; i++){
 //   //   drawCircleInMeter(map, { r: 40000, x: 0 + (i * 0.001), y: 51 + (i * 0.001)}, vectorSource);
 //   // }
- 
+
 //   return {
 //     map,
 //     drawCircleInMeter
@@ -262,7 +251,6 @@ export {}
 // /* Change circle
 //   window.circleFeature.getGeometry().setRadius(2022222)
 // */
-
 
 // import React, { useState, useEffect } from 'react';
 // import { Extent } from 'ol/extent';
@@ -282,7 +270,7 @@ export {}
 //   h: number;
 // }
 // export function extentToGrid(ex4326: Extent, minCellsPerSide: number = 10, edgePaddingFactor = 0.5): GridCell[] {
-//   const ex = ex4326;// proj.transformExtent(ex4326,  'EPSG:4326', 'EPSG:3857'); //ex4326;// 
+//   const ex = ex4326;// proj.transformExtent(ex4326,  'EPSG:4326', 'EPSG:3857'); //ex4326;//
 //   const x1 = ex[0],
 //     y1 = ex[1],
 //     x2 = ex[2],
@@ -303,7 +291,7 @@ export {}
 
 //   const xg1 = x1 - w/2,
 //     yg1 = y1 - h/2;
-    
+
 //   let res = [],
 //     wNo = Math.ceil(wDegrees/w) + 1,
 //     hNo = Math.ceil(hDegrees/h) + 1;
@@ -338,7 +326,7 @@ export {}
 //           id: i + "Ddwadawdawdaw" + Date.now(),
 //           type: "Feature",
 //           geometry: {
-//             type: "MultiPolygon",          
+//             type: "MultiPolygon",
 //             coordinates: [[[
 //               [c.x, c.y],
 //               [c.x, c.y + c.h],
@@ -352,7 +340,7 @@ export {}
 //                 name: "EPSG:3857"
 //               },
 //             }
-//           }        
+//           }
 //         }))
 //         // console.log(bbox, cells)
 //       }
@@ -382,7 +370,7 @@ export {}
 //       // console.log(ftrs[0])
 //       return [...ftrs, ...cells];
 //     // }));
-      
+
 //     // return deFtrs.flat() as GeoJsonFeature[];
 //   }
 
@@ -404,7 +392,6 @@ export {}
 //     }
 //   }, [queries, _map, db]);
 
-
 //   return (
 //     <div className="relative f-1">
 //       <div ref={(e )=> {
@@ -419,9 +406,6 @@ export {}
 //     </div>
 //   );
 // }
-
-
-
 
 // var image = new CircleStyle({
 //   radius: 5,
@@ -507,7 +491,6 @@ export {}
 //   var pointResolution = projection.getPointResolutionFunc_(resolutionAtEquator, center);
 //   var resolutionFactor = resolutionAtEquator/pointResolution;
 //   radius = (radius / METERS_PER_UNIT.m) * resolutionFactor;
-
 
 //   var circle = new Circle(center, radius);
 //   var circleFeature = new Feature(circle);

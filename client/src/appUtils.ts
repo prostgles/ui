@@ -1,49 +1,49 @@
-
 import { useEffect, useState } from "react";
 import type { Theme } from "./App";
 
-
 type Unsubscribe = {
   unsubscribe: () => void;
-}
+};
 
 type OnStateChange<S> = (newState: S) => void;
-type Subscribe<S> = ((sc: OnStateChange<S>) => Unsubscribe)
+type Subscribe<S> = (sc: OnStateChange<S>) => Unsubscribe;
 
 export type ReactiveState<S> = {
   initialState: S;
   set: (newState: S) => void;
   get: () => S;
-  subscribe: Subscribe<S>
-}
-export const createReactiveState = <S>(initialState: S, onChange?: (state: S) => void) => {
- 
+  subscribe: Subscribe<S>;
+};
+export const createReactiveState = <S>(
+  initialState: S,
+  onChange?: (state: S) => void,
+) => {
   const handler: {
     listeners: OnStateChange<S>[];
     currentState: S;
   } = {
     listeners: [],
-    currentState: initialState as S
-  }
-  
+    currentState: initialState as S,
+  };
+
   const rootReference: ReactiveState<S> = {
     subscribe: (listener) => {
-      handler.listeners.push(listener)
+      handler.listeners.push(listener);
 
       return {
         unsubscribe: () => {
-          handler.listeners = handler.listeners.filter(l => l !== listener)
-        }
-      }
+          handler.listeners = handler.listeners.filter((l) => l !== listener);
+        },
+      };
     },
-    set: (newState: S) => { 
+    set: (newState: S) => {
       handler.currentState = newState;
-      handler.listeners.forEach(l => l(handler.currentState));
+      handler.listeners.forEach((l) => l(handler.currentState));
       onChange?.(newState);
     },
-    initialState:  initialState as S,
+    initialState: initialState as S,
     get: () => handler.currentState,
-  }
+  };
 
   return rootReference;
 };
@@ -51,32 +51,33 @@ export const createReactiveState = <S>(initialState: S, onChange?: (state: S) =>
 export const useReactiveState = <S>(store: ReactiveState<S>) => {
   const [state, setState] = useState(store.get());
   useEffect(() => {
-    return store.subscribe(newState => {
-      setState(newState)
-    }).unsubscribe
-  }, [store])
+    return store.subscribe((newState) => {
+      setState(newState);
+    }).unsubscribe;
+  }, [store]);
 
-  return { 
-    state, 
-    setState: data => {
+  return {
+    state,
+    setState: (data) => {
       store.set(data);
-    } 
-  }
-}
+    },
+  };
+};
 
 export const iOS = () => {
-  return [
-    "iPad Simulator",
-    "iPhone Simulator",
-    "iPod Simulator",
-    "iPad",
-    "iPhone",
-    "iPod"
-  ].includes(navigator.platform)
+  return (
+    [
+      "iPad Simulator",
+      "iPhone Simulator",
+      "iPod Simulator",
+      "iPad",
+      "iPhone",
+      "iPod",
+    ].includes(navigator.platform) ||
     // iPad on iOS 13 detection
-    || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
-}
-
+    (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+  );
+};
 
 declare global {
   interface Window {
@@ -102,12 +103,12 @@ declare global {
   }
 }
 
-export const appTheme = createReactiveState<Theme>("light")
+export const appTheme = createReactiveState<Theme>("light");
 
 const checkSize = () => {
   window.isLowWidthScreen = window.innerWidth < 700;
   window.isMediumWidthScreen = window.innerWidth < 1200;
-}
+};
 window.isIOSDevice = iOS();
 window.isMobileDevice = /Mobi/i.test(window.navigator.userAgent);
 window.isTouchOnlyDevice = window.matchMedia("(any-hover: none)").matches;

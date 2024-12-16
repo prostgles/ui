@@ -6,16 +6,21 @@ type QRCodeImageProps = {
   url: string | undefined;
   size?: number;
   variant: "href-wrapped" | "table-cell" | "canvas-only";
-}
+};
 
 export const QRCodeImage = ({ size, url, variant }: QRCodeImageProps) => {
   const canvasNode = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const canvas = canvasNode.current;
-    if(!canvas) return;
-    
-    if(url){
-      const sizeOpts = Number.isFinite(size)? { width: size } : { width: Math.min(canvas.offsetWidth, canvas.offsetHeight) } as const
+    if (!canvas) return;
+
+    if (url) {
+      const sizeOpts =
+        Number.isFinite(size) ?
+          { width: size }
+        : ({
+            width: Math.min(canvas.offsetWidth, canvas.offsetHeight),
+          } as const);
       QRCode.toCanvas(canvas, url, sizeOpts);
     } else {
       const context = canvas.getContext("2d");
@@ -23,28 +28,30 @@ export const QRCodeImage = ({ size, url, variant }: QRCodeImageProps) => {
     }
   }, [size, url, canvasNode]);
 
-  if(!url) return null;
+  if (!url) return null;
 
-  const canvas = <canvas ref={canvasNode} style={{  }} />;
+  const canvas = <canvas ref={canvasNode} style={{}} />;
 
-  if(variant === "canvas-only") return canvas;
+  if (variant === "canvas-only") return canvas;
 
-  const wrappedCanvas = <a href={url} target={"_blank"}>
-    {/* {window.isMobileDevice && <div>Tap image</div>} */}
-    {canvas}
-  </a>;
+  const wrappedCanvas = (
+    <a href={url} target={"_blank"}>
+      {/* {window.isMobileDevice && <div>Tap image</div>} */}
+      {canvas}
+    </a>
+  );
 
-  if(variant === "href-wrapped") {
+  if (variant === "href-wrapped") {
     return wrappedCanvas;
   }
 
-  return <PopupMenu 
-    positioning="center" 
-    title={url} 
-    button={canvas} 
-    contentClassName="ai-center"
-    render={() => 
-      <QRCodeImage size={400} url={url} variant="canvas-only" />
-    }
-  />
-}
+  return (
+    <PopupMenu
+      positioning="center"
+      title={url}
+      button={canvas}
+      contentClassName="ai-center"
+      render={() => <QRCodeImage size={400} url={url} variant="canvas-only" />}
+    />
+  );
+};

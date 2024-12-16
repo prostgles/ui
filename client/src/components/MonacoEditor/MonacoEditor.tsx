@@ -1,9 +1,16 @@
-import { useAsyncEffectQueue, useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
+import {
+  useAsyncEffectQueue,
+  useEffectDeep,
+  usePromise,
+} from "prostgles-client/dist/react-hooks";
 import * as React from "react";
 import { appTheme, useReactiveState } from "../../App";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
 import { hackyFixOptionmatchOnWordStartOnly } from "../../dashboard/SQLEditor/SQLCompletion/registerSuggestions";
-import { customLightThemeMonaco, getMonaco } from "../../dashboard/SQLEditor/SQLEditor";
+import {
+  customLightThemeMonaco,
+  getMonaco,
+} from "../../dashboard/SQLEditor/SQLEditor";
 import type { editor } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
 export type MonacoEditorProps = {
@@ -19,9 +26,8 @@ export type MonacoEditorProps = {
   onMount?: (editor: editor.IStandaloneCodeEditor) => void;
   style?: React.CSSProperties;
   loadedSuggestions: LoadedSuggestions | undefined;
-} 
+};
 export const MonacoEditor = (props: MonacoEditorProps) => {
-
   const { loadedSuggestions } = props;
   // useEffectDeep(() => {
   //   if(!props.loadedSuggestions) return;
@@ -30,18 +36,27 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   const loadedLanguage = usePromise(async () => {
     await loadPSQLLanguage(loadedSuggestions);
-    return true
+    return true;
   }, [loadedSuggestions]);
 
   const editor = React.useRef<editor.IStandaloneCodeEditor>();
   const container = React.useRef<HTMLDivElement>(null);
   const { state: _appTheme } = useReactiveState(appTheme);
 
-  const options = props.options
-  const theme = options?.theme && options.theme !== "vs"?  options.theme : (_appTheme === "dark"? "vs-dark" : customLightThemeMonaco as any); 
+  const options = props.options;
+  const theme =
+    options?.theme && options.theme !== "vs" ? options.theme
+    : _appTheme === "dark" ? "vs-dark"
+    : (customLightThemeMonaco as any);
   useAsyncEffectQueue(async () => {
-    const { language, value, options, onMount, expandSuggestionDocs = true } = props;
-  
+    const {
+      language,
+      value,
+      options,
+      onMount,
+      expandSuggestionDocs = true,
+    } = props;
+
     const monaco = await getMonaco();
     const editorOptions: editor.IStandaloneEditorConstructionOptions = {
       value,
@@ -52,10 +67,13 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     };
 
     if (!container.current) return;
-    
+
     editor.current = monaco.editor.create(container.current, editorOptions);
     hackyFixOptionmatchOnWordStartOnly(editor.current);
-    hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42(editor.current, expandSuggestionDocs);
+    hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42(
+      editor.current,
+      expandSuggestionDocs,
+    );
     if (props.onChange) {
       editor.current.onDidChangeModelContent(() => {
         const value = editor.current?.getValue() || "";
@@ -64,17 +82,16 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     }
 
     /** This check necessary to ensure getTokens returns correct data */
-    if(loadedLanguage){
-      onMount?.(editor.current); 
+    if (loadedLanguage) {
+      onMount?.(editor.current);
     }
     return () => {
       editor.current?.dispose();
-    }
-
+    };
   }, [props.language, container, props.onChange, loadedLanguage]);
 
   useEffectDeep(() => {
-    if (!editor.current) return
+    if (!editor.current) return;
     editor.current.updateOptions({ ...props.options, theme });
   }, [theme, props.options, editor.current]);
 
@@ -84,23 +101,24 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     }
   }, [props.value, editor.current]);
 
-  
-
   const { className, style } = props;
-  return <div 
-    key={`${!!props.language.length}`} 
-    ref={container}  
-    style={{ 
-      ...style, 
-      textAlign: "initial",
-    }} 
-    className={`MonacoEditor ${className}`} 
-  />;
- 
-}
+  return (
+    <div
+      key={`${!!props.language.length}`}
+      ref={container}
+      style={{
+        ...style,
+        textAlign: "initial",
+      }}
+      className={`MonacoEditor ${className}`}
+    />
+  );
+};
 
-
-const hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42 = (editor: editor.IStandaloneCodeEditor, expandSuggestionDocs = true) => {
+const hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42 = (
+  editor: editor.IStandaloneCodeEditor,
+  expandSuggestionDocs = true,
+) => {
   const sc = editor.getContribution("editor.contrib.suggestController") as any;
   if (sc?.widget) {
     const suggestWidget = sc.widget.value;
@@ -114,4 +132,4 @@ const hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42 = (editor: edi
       // suggestWidget._persistedSize.store({width: 200, height: 256});
     }
   }
-}
+};

@@ -1,22 +1,21 @@
-import type { Feature, Geometry} from "geojson";
+import type { Feature, Geometry } from "geojson";
 import { MultiPolygon, Polygon } from "geojson";
 import { cloneDeep } from "lodash";
 import type { OSMNode, OSMRelation, OSMWay } from "./getOSMData";
 
-
 export const osmRelationToGeoJSON = (
   relation: OSMRelation,
   nodeMap: Map<number, OSMNode>,
-  wayMap: Map<number, OSMWay>
-): Feature<Geometry, { [key: string]: any }> | null => { 
+  wayMap: Map<number, OSMWay>,
+): Feature<Geometry, { [key: string]: any }> | null => {
   const relationMap = new Map<number, OSMRelation>();
- 
+
   const getWayCoordinates = (wayId: number): [number, number][] => {
     const way = wayMap.get(wayId);
     if (!way || !way.nodes.length) {
       throw new Error(`Way ${wayId} not found`);
     }
-    const coords: [number, number][] = way.nodes.map(nodeId => {
+    const coords: [number, number][] = way.nodes.map((nodeId) => {
       const node = nodeMap.get(nodeId);
       if (!node) {
         throw new Error(`Node ${nodeId} not found`);
@@ -48,7 +47,7 @@ export const osmRelationToGeoJSON = (
 
   // Function to assemble rings into complete rings (handle way fragments)
   const assembleRings = (
-    rings: { role: string; coordinates: [number, number][] }[]
+    rings: { role: string; coordinates: [number, number][] }[],
   ): { outer: [number, number][][]; inner: [number, number][][] } => {
     const outerRings: [number, number][][] = [];
     const innerRings: [number, number][][] = [];
@@ -147,7 +146,10 @@ export const osmRelationToGeoJSON = (
   };
 
   // Helper function to compare coordinates
-  const coordinatesEqual = (a: [number, number], b: [number, number]): boolean => {
+  const coordinatesEqual = (
+    a: [number, number],
+    b: [number, number],
+  ): boolean => {
     return a[0] === b[0] && a[1] === b[1];
   };
 
@@ -159,7 +161,7 @@ export const osmRelationToGeoJSON = (
     return null;
   }
 
-  const polygons: [[number, number][][]] = outerRings.map(outerRing => {
+  const polygons: [[number, number][][]] = outerRings.map((outerRing) => {
     const polygon: [[number, number][]] = [outerRing];
 
     // Assign inner rings to this outer ring if needed
@@ -173,20 +175,23 @@ export const osmRelationToGeoJSON = (
   });
 
   // Create the GeoJSON geometry
-  const geometry: Geometry = polygons.length > 1 ? {
-    type: "MultiPolygon",
-    coordinates: polygons
-  } : {
-    type: "Polygon",
-    coordinates: polygons[0]
-  };
+  const geometry: Geometry =
+    polygons.length > 1 ?
+      {
+        type: "MultiPolygon",
+        coordinates: polygons,
+      }
+    : {
+        type: "Polygon",
+        coordinates: polygons[0],
+      };
 
   // Construct the GeoJSON Feature
   const feature: Feature<Geometry, { [key: string]: any }> = {
     type: "Feature",
     properties: relation.tags || {},
-    geometry: geometry
+    geometry: geometry,
   };
 
   return feature;
-}
+};

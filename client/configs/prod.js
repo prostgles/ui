@@ -2,7 +2,6 @@ const { merge } = require("webpack-merge");
 const { resolve } = require("path");
 const TerserPlugin = require("terser-webpack-plugin");
 
-
 const commonConfig = require("./common");
 
 module.exports = merge(commonConfig, {
@@ -12,18 +11,20 @@ module.exports = merge(commonConfig, {
     filename: "js/[name].bundle.js",
     path: resolve(__dirname, "../build"),
     publicPath: "/",
-    libraryTarget: 'umd',
-  }, 
+    libraryTarget: "umd",
+  },
   plugins: [],
-  optimization: { 
+  optimization: {
     splitChunks: {
-      chunks: 'all',
+      chunks: "all",
     },
     minimize: true,
-    minimizer: [new TerserPlugin({
-      terserOptions: {
-        keep_classnames: true,
-      },
-    })],
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          keep_classnames: true,
+        },
+      }),
+    ],
   },
 });

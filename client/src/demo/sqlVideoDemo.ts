@@ -1,18 +1,38 @@
-import { getDemoUtils, type DemoScript, type TypeAutoOpts } from "../dashboard/W_SQL/getDemoUtils";
+import {
+  getDemoUtils,
+  type DemoScript,
+  type TypeAutoOpts,
+} from "../dashboard/W_SQL/getDemoUtils";
 import { VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
 import { tout } from "../pages/ElectronSetup";
 import { closeAllViews } from "./dashboardDemo";
 import { click, getElement, movePointer, waitForElement } from "./demoUtils";
 
 const sqlVideoDemo: DemoScript = async (args) => {
-  const { 
-    runDbSQL, fromBeginning, typeAuto, 
-    moveCursor, triggerParamHints,  getEditor, 
-    actions, testResult, triggerSuggest, runSQL, newLine
+  const {
+    runDbSQL,
+    fromBeginning,
+    typeAuto,
+    moveCursor,
+    triggerParamHints,
+    getEditor,
+    actions,
+    testResult,
+    triggerSuggest,
+    runSQL,
+    newLine,
   } = args;
-  const hasTable = await runDbSQL(`SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = current_schema() AND tablename = 'chats'`, { }, { returnType: "value" });
-  const existingUsers: string[] = await runDbSQL(`SELECT usename FROM pg_catalog.pg_user `, { }, { returnType: "values" });
-  if(!hasTable){
+  const hasTable = await runDbSQL(
+    `SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = current_schema() AND tablename = 'chats'`,
+    {},
+    { returnType: "value" },
+  );
+  const existingUsers: string[] = await runDbSQL(
+    `SELECT usename FROM pg_catalog.pg_user `,
+    {},
+    { returnType: "values" },
+  );
+  if (!hasTable) {
     // alert("Creating demo tables. Must run demo script again");
     const usersTable = `CREATE TABLE IF NOT EXISTS users  (
       "id" UUID PRIMARY KEY DEFAULT null,
@@ -30,9 +50,11 @@ const sqlVideoDemo: DemoScript = async (args) => {
     `;
     const demoSchema = [
       `DROP TABLE IF EXISTS users, chats, chat_users, chat_members, contacts, orders, messages CASCADE;`,
-      existingUsers.includes("mynewuser")? "" : `CREATE USER mynewuser;`,
+      existingUsers.includes("mynewuser") ? "" : `CREATE USER mynewuser;`,
       `GRANT ALL ON ALL TABLES IN SCHEMA public TO mynewuser;`,
-      existingUsers.includes("vid_demo_user")? "" : `CREATE USER vid_demo_user;`,
+      existingUsers.includes("vid_demo_user") ? "" : (
+        `CREATE USER vid_demo_user;`
+      ),
       usersTable,
       `INSERT INTO users(id, status, username, password, type, options) VALUES (gen_random_uuid(), 'active', 'user78679', '****', 'default', '{ "theme": "light", "viewedSqlTips": true, "language": "en-US", "timeZone": "America/New_York" }'::JSONB);`,
       `INSERT INTO users(id, status, username, password, type, options) VALUES (gen_random_uuid(), 'active', 'user219', '****', 'customer', '{ "theme": "from-system", "viewedSqlTips": false }'::JSONB);`,
@@ -42,45 +64,57 @@ const sqlVideoDemo: DemoScript = async (args) => {
       `CREATE TABLE IF NOT EXISTS chat_members (chat_id BIGINT NOT NULL REFERENCES chats, user_id UUID NOT NULL REFERENCES users, UNIQUE(chat_id, user_id));`,
       `CREATE TABLE IF NOT EXISTS contacts ( user_id UUID REFERENCES users, contact_user_id UUID REFERENCES users, added_on TIMESTAMP DEFAULT now(), PRIMARY KEY (user_id, contact_user_id));`,
       `CREATE TABLE IF NOT EXISTS messages (id BIGSERIAL PRIMARY KEY, chat_id BIGINT REFERENCES chats, sender_id UUID REFERENCES users, message_text TEXT NOT NULL CHECK (length(trim(message_text)) > 0), timestamp TIMESTAMP DEFAULT now(), seen_at TIMESTAMP);`,
-      `REVOKE ALL ON ALL TABLES IN SCHEMA public FROM vid_demo_user;`, 
+      `REVOKE ALL ON ALL TABLES IN SCHEMA public FROM vid_demo_user;`,
       `
     -- Alter Default Privileges for Future Tables
       ALTER DEFAULT PRIVILEGES IN SCHEMA public FOR ROLE vid_demo_user
       REVOKE SELECT, INSERT, UPDATE, DELETE ON TABLES FROM vid_demo_user;
-      `
+      `,
     ];
-    await runDbSQL(demoSchema.join("\n"));  
+    await runDbSQL(demoSchema.join("\n"));
   }
 
-  await runDbSQL(`DROP POLICY IF EXISTS read_own_data ON users;`)
-
+  await runDbSQL(`DROP POLICY IF EXISTS read_own_data ON users;`);
 
   /** Force monaco to show the text in docker */
   const focusEditor = () => {
     getEditor().editor.querySelector<HTMLDivElement>(".monaco-editor")?.click();
-  }
+  };
   focusEditor();
 
   const waitAccept = 1e3;
-  const waitBeforeAccept = .5e3;
-  const showScript = async (title: string, script: string, logic: () => Promise<void>) => {
+  const waitBeforeAccept = 0.5e3;
+  const showScript = async (
+    title: string,
+    script: string,
+    logic: () => Promise<void>,
+  ) => {
     fromBeginning(false, `/* ${title} */\n${script}`);
     await tout(1000);
     await logic();
     await tout(1e3);
-  }
+  };
 
   const typeQuick = (text: string, opts?: TypeAutoOpts) => {
-    return typeAuto(text, { msPerChar: 0, waitBeforeAccept: .5e3, waitAccept: 0, ...opts });
-  }
+    return typeAuto(text, {
+      msPerChar: 0,
+      waitBeforeAccept: 0.5e3,
+      waitAccept: 0,
+      ...opts,
+    });
+  };
 
   await timeChartDemo(args);
 
   /** Join complete */
-  await showScript(`Joins autocomplete`, `SELECT * \nFROM users u`, async () => {
-    await typeQuick(`\nleft`);
-    await typeQuick(` `, { msPerChar: 40, waitAccept: 0, nth: 2 });
-  });
+  await showScript(
+    `Joins autocomplete`,
+    `SELECT * \nFROM users u`,
+    async () => {
+      await typeQuick(`\nleft`);
+      await typeQuick(` `, { msPerChar: 40, waitAccept: 0, nth: 2 });
+    },
+  );
 
   /** Context aware suggestions */
   const script = fixIndent(`
@@ -115,50 +149,63 @@ const sqlVideoDemo: DemoScript = async (args) => {
   //   await tout(500);
   //   await typeQuick("q" );
   // });
-  
-  await showScript(`Data aware suggestions, jsonb support`, `SELECT`, async () => {
-    await typeQuick(` opt`);
-    await moveCursor.lineEnd();
-    await typeQuick(`, age(cr`, { waitBeforeAccept: 1500 });
-    await moveCursor.down(1);
-    await moveCursor.lineEnd();
-    await newLine();
-    await typeQuick(`W`, { triggerMode: "firstChar", waitBeforeAccept: 500 });
-    await typeQuick(` opt`);
-    await typeAuto(` the`, { waitAccept: 1e3 });
-    await typeQuick(` `);
-    await typeAuto(` '`, { msPerChar: 55, waitAccept: 500, triggerMode: "firstChar", waitBeforeAccept: 500 });
-    testResult(`/* Data aware suggestions, jsonb support */\nSELECT options, age(created)\nFROM users\nWHERE options ->>'theme' = 'dark'\nLIMIT 200`);
-  });
-  
+
+  await showScript(
+    `Data aware suggestions, jsonb support`,
+    `SELECT`,
+    async () => {
+      await typeQuick(` opt`);
+      await moveCursor.lineEnd();
+      await typeQuick(`, age(cr`, { waitBeforeAccept: 1500 });
+      await moveCursor.down(1);
+      await moveCursor.lineEnd();
+      await newLine();
+      await typeQuick(`W`, { triggerMode: "firstChar", waitBeforeAccept: 500 });
+      await typeQuick(` opt`);
+      await typeAuto(` the`, { waitAccept: 1e3 });
+      await typeQuick(` `);
+      await typeAuto(` '`, {
+        msPerChar: 55,
+        waitAccept: 500,
+        triggerMode: "firstChar",
+        waitBeforeAccept: 500,
+      });
+      testResult(
+        `/* Data aware suggestions, jsonb support */\nSELECT options, age(created)\nFROM users\nWHERE options ->>'theme' = 'dark'\nLIMIT 200`,
+      );
+    },
+  );
+
   /** Current statement execution */
-  await showScript(`Current statement execution`, 
+  await showScript(
+    `Current statement execution`,
     fixIndent(`
       SELECT * 
       FROM orders
       
       SELECT * 
-      FROM`
-    ), async () => {
-    // await actions.selectCodeBlock();
-    await moveCursor.up(4, 30);
-    await tout(500);
-    await actions.selectCodeBlock();
-    await runSQL(); 
-    focusEditor();
-    await moveCursor.down(4, 30);
-    await moveCursor.lineEnd();
-    await typeAuto(" use");
-    await actions.selectCodeBlock();
-    await tout(500);
-    await runSQL();
-    await newLine(2);
-    await typeAuto(`SEL` );
-    await actions.selectCodeBlock();
-    await tout(500);
-    await runSQL();
-  });
-  
+      FROM`),
+    async () => {
+      // await actions.selectCodeBlock();
+      await moveCursor.up(4, 30);
+      await tout(500);
+      await actions.selectCodeBlock();
+      await runSQL();
+      focusEditor();
+      await moveCursor.down(4, 30);
+      await moveCursor.lineEnd();
+      await typeAuto(" use");
+      await actions.selectCodeBlock();
+      await tout(500);
+      await runSQL();
+      await newLine(2);
+      await typeAuto(`SEL`);
+      await actions.selectCodeBlock();
+      await tout(500);
+      await runSQL();
+    },
+  );
+
   /** Selection expansion */
   // await showScript(`Selection/statement expansion`, async () => {
   //   const script = fixIndent(`
@@ -190,7 +237,7 @@ const sqlVideoDemo: DemoScript = async (args) => {
     await typeQuick(`cr`, { msPerChar: 40, waitAccept, waitBeforeAccept });
     await typeQuick(` us`, { msPerChar: 40, waitBeforeAccept });
     await typeQuick(` mynewuser`, { msPerChar: 4, dontAccept: true });
-    await newLine()
+    await newLine();
     await typeQuick(`pass`, { msPerChar: 140, waitAccept, waitBeforeAccept });
 
     await newLine(2);
@@ -222,10 +269,11 @@ const sqlVideoDemo: DemoScript = async (args) => {
     await typeQuick(`?user `, { nth: 1, dontAccept: true });
     await moveCursor.left();
     await typeQuick(` mynew`, { waitBeforeAccept: 2e3 });
-    testResult([
-      "/* Schema extracts with access details */",
-      "?user mynewuser"
-    ].join("\n"));
+    testResult(
+      ["/* Schema extracts with access details */", "?user mynewuser"].join(
+        "\n",
+      ),
+    );
   });
 
   await showScript(`Schema extracts with related objects`, "", async () => {
@@ -237,13 +285,14 @@ const sqlVideoDemo: DemoScript = async (args) => {
     await newLine();
     await typeQuick(`def`, { waitAccept });
     await typeQuick(` FALSE`, { dontAccept: true, nth: -1 });
-    testResult(fixIndent(`
+    testResult(
+      fixIndent(`
       /* Schema extracts with related objects */
       ALTER TABLE users
       ALTER COLUMN passwordless_admin
-      SET DEFAULT FALSE`
-    ));
-  }); 
+      SET DEFAULT FALSE`),
+    );
+  });
 
   /** Insert value suggestions */
   await showScript(`Argument hints`, "", async () => {
@@ -277,35 +326,42 @@ const sqlVideoDemo: DemoScript = async (args) => {
   // );
 
   // await runSQL();
-}
+};
 
 /**
  * Ensure that multi-line strings are indented correctly
  */
 export const fixIndent = (str: string) => {
   const lines = str.split("\n");
-  if(!lines.some(l => l.trim())) return str;
-  let minIdentOffset = lines.reduce((a, line) => {
-    if(!line.trim()) return a;
-    const indent = line.length - line.trimStart().length;
-    return Math.min(a ?? indent, indent);
-  }, undefined as number | undefined);
+  if (!lines.some((l) => l.trim())) return str;
+  let minIdentOffset = lines.reduce(
+    (a, line) => {
+      if (!line.trim()) return a;
+      const indent = line.length - line.trimStart().length;
+      return Math.min(a ?? indent, indent);
+    },
+    undefined as number | undefined,
+  );
   minIdentOffset = Math.max(minIdentOffset ?? 0, 0);
 
   return lines
-    .map((l, i) => i === 0 ? l : l.slice(minIdentOffset))
+    .map((l, i) => (i === 0 ? l : l.slice(minIdentOffset)))
     .join("\n")
     .trim();
-}
+};
 
 export const sqlDemo = async () => {
-
   await closeAllViews();
   await click("dashboard.menu");
   await click("dashboard.menu.sqlEditor");
   await tout(1500);
-  await movePointer(-20,-20);
-  const getSqlWindow = () => Array.from(document.querySelectorAll<HTMLDivElement>(`[data-box-id][data-box-type=item]`)).find(n => n.querySelector(".ProstglesSQL"));
+  await movePointer(-20, -20);
+  const getSqlWindow = () =>
+    Array.from(
+      document.querySelectorAll<HTMLDivElement>(
+        `[data-box-id][data-box-type=item]`,
+      ),
+    ).find((n) => n.querySelector(".ProstglesSQL"));
   if (!getSqlWindow()) {
     click("dashboard.menu.sqlEditor");
     await tout(1500);
@@ -313,31 +369,49 @@ export const sqlDemo = async () => {
   const sqlWindow = getSqlWindow();
   const id = sqlWindow?.dataset!.boxId;
   if (!sqlWindow || !id) throw "not ok";
-  await (window as any).dbs.windows.update({ id }, { sql_options: { $merge: [{ "executeOptions": "smallest-block" }] } });
+  await (window as any).dbs.windows.update(
+    { id },
+    { sql_options: { $merge: [{ executeOptions: "smallest-block" }] } },
+  );
   await tout(1500);
   const testUtils = getDemoUtils({ id });
 
-  const currDbName = await testUtils.runDbSQL(`SELECT current_database() as db_name`, {}, { returnType: "value" });
+  const currDbName = await testUtils.runDbSQL(
+    `SELECT current_database() as db_name`,
+    {},
+    { returnType: "value" },
+  );
   if (currDbName === VIDEO_DEMO_DB_NAME) {
     return sqlVideoDemo(testUtils);
   }
-}
+};
 
-
-
-const timeChartDemo: DemoScript = async ({ fromBeginning, newLine, moveCursor, getEditor, runSQL }) => {
-  await fromBeginning(false, fixIndent(`
+const timeChartDemo: DemoScript = async ({
+  fromBeginning,
+  newLine,
+  moveCursor,
+  getEditor,
+  runSQL,
+}) => {
+  await fromBeginning(
+    false,
+    fixIndent(`
     SELECT *, random() as rval
     FROM generate_series(
       '2021-01-01'::timestamp, 
       '2021-01-31'::timestamp, 
       '1 day'::interval
     ) as date 
-  `));
-  const addTChartBtn = await waitForElement<HTMLButtonElement>("AddChartMenu.Timechart");
+  `),
+  );
+  const addTChartBtn = await waitForElement<HTMLButtonElement>(
+    "AddChartMenu.Timechart",
+  );
   addTChartBtn.click();
 
-  const layer = await waitForElement<HTMLButtonElement>("TimeChartLayerOptions.aggFunc");
+  const layer = await waitForElement<HTMLButtonElement>(
+    "TimeChartLayerOptions.aggFunc",
+  );
 
   /** Shows numeric col avg by default */
   shouldBeEqual(layer.innerText, "Avg(\nrval\n),\ndate");
@@ -348,10 +422,13 @@ const timeChartDemo: DemoScript = async ({ fromBeginning, newLine, moveCursor, g
   const setLayerFunc = async (func: "$avg" | "$countAll", layerNumber = 0) => {
     await click("TimeChartLayerOptions.aggFunc", "", { nth: layerNumber });
     await click("TimeChartLayerOptions.aggFunc.select");
-    await click("TimeChartLayerOptions.aggFunc.select", `[data-key=${JSON.stringify(func)}]`);
+    await click(
+      "TimeChartLayerOptions.aggFunc.select",
+      `[data-key=${JSON.stringify(func)}]`,
+    );
     await click("Popup.close");
     await tout(222);
-  }
+  };
 
   /** Count all works */
   await setLayerFunc("$countAll");
@@ -374,7 +451,7 @@ const timeChartDemo: DemoScript = async ({ fromBeginning, newLine, moveCursor, g
 
     await tout(2000);
     await click("AddChartMenu.Timechart");
-  }
+  };
 
   /** Add another layer */
   await addSqlLayer(`
@@ -386,7 +463,11 @@ const timeChartDemo: DemoScript = async ({ fromBeginning, newLine, moveCursor, g
     ) as date 
   `);
 
-  const secondLayer = await waitForElement<HTMLButtonElement>("TimeChartLayerOptions.aggFunc", "", { nth: 1 });
+  const secondLayer = await waitForElement<HTMLButtonElement>(
+    "TimeChartLayerOptions.aggFunc",
+    "",
+    { nth: 1 },
+  );
   shouldBeEqual("Avg(\nrvalx10\n),\ndate", secondLayer.innerText);
 
   /** Add group by layer */
@@ -400,7 +481,11 @@ const timeChartDemo: DemoScript = async ({ fromBeginning, newLine, moveCursor, g
       '1 day'::interval
     ) as date 
   `);
-  const thirdLayer = await waitForElement<HTMLButtonElement>("TimeChartLayerOptions.aggFunc", "", { nth: 2 });
+  const thirdLayer = await waitForElement<HTMLButtonElement>(
+    "TimeChartLayerOptions.aggFunc",
+    "",
+    { nth: 2 },
+  );
   shouldBeEqual("Avg(\nrvalx11\n),\ndate", thirdLayer.innerText);
   thirdLayer.click();
 
@@ -412,10 +497,10 @@ const timeChartDemo: DemoScript = async ({ fromBeginning, newLine, moveCursor, g
   await click("Popup.close");
 
   await click("dashboard.window.closeChart");
-}
+};
 
 export const shouldBeEqual = (a: any, b: any) => {
   if (a !== b) {
     throw new Error(`Expected ${a} to equal ${b}`);
   }
-}
+};

@@ -1,12 +1,9 @@
 ### Actual Behavior
 
-
 ### Expected Behavior
-
 
 ### Steps to reproduce the issue
 
+#### Data used
 
-#### Data used  
-
-#### Config  
+#### Config

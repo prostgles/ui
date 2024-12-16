@@ -21,104 +21,136 @@ type P = LinkedColumnProps & {
   table: DBSchemaTablesWJoins[number] | undefined;
   currentColumn: ColumnConfigWInfo | undefined;
   updateColumn: (newCol: Partial<ColumnConfig>) => void;
-}
-export const LinkedColumnSelect = ({ tables, w, db, table, currentColumn, column, updateNested, updateColumn }: P) => {
-
+};
+export const LinkedColumnSelect = ({
+  tables,
+  w,
+  db,
+  table,
+  currentColumn,
+  column,
+  updateNested,
+  updateColumn,
+}: P) => {
   const nestedColumns = currentColumn?.nested?.columns;
   const updateNestedColumns = (newCols: ColumnConfigWInfo[]) => {
-    if(!table) throw "not ok";
+    if (!table) throw "not ok";
     updateNested({
-      columns: getMinimalColumnInfo(getColWInfo(tables, { table_name: table.name, columns: newCols }))
+      columns: getMinimalColumnInfo(
+        getColWInfo(tables, { table_name: table.name, columns: newCols }),
+      ),
     });
-  }
+  };
   const [showAddComputedCol, setShowAddComputedCol] = useState(false);
 
-  return <FlexRowWrap className="ai-end">
-    {nestedColumns && table &&
-      <PopupMenu 
-        data-command="LinkedColumn.ColumnListMenu"
-        title="Select columns"
-        contentClassName=""
-        clickCatchStyle={{ opacity: .1 }}
-        positioning="beneath-left"
-        button={
-          <FlexCol className="gap-p25">
-            <Label label="Columns" variant="normal"></Label>
-            <Btn 
-              variant="faded"
-              color={!currentColumn.nested?.chart? "action" : undefined}
-              data-command="LinkedColumn.ColumnList.toggle" 
-              disabledInfo={currentColumn.nested?.chart? "Must disable time chart first" : undefined}
-            >
-              {nestedColumns.filter(c => c.show).length} selected
-            </Btn>
-          </FlexCol>
-        }
-        render={(pClose) => {
-          return <FlexCol>
-            <WithPrgl
-              onRender={prgl => (
-                <ColumnList 
-                  columns={nestedColumns}
-                  tableColumns={table.columns}
-                  mainMenuProps={{ db, onClose: pClose, suggestions: undefined, table, tables, w, prgl }}
-                  onChange={updateNestedColumns}
-                />
-              )}
-            />
-
-            <FlexRow className="p-1">
-              <Btn 
+  return (
+    <FlexRowWrap className="ai-end">
+      {nestedColumns && table && (
+        <PopupMenu
+          data-command="LinkedColumn.ColumnListMenu"
+          title="Select columns"
+          contentClassName=""
+          clickCatchStyle={{ opacity: 0.1 }}
+          positioning="beneath-left"
+          button={
+            <FlexCol className="gap-p25">
+              <Label label="Columns" variant="normal"></Label>
+              <Btn
                 variant="faded"
-                iconPath={mdiPlus} 
-                color="action" 
-                onClick={() => setShowAddComputedCol(true)}
+                color={!currentColumn.nested?.chart ? "action" : undefined}
+                data-command="LinkedColumn.ColumnList.toggle"
+                disabledInfo={
+                  currentColumn.nested?.chart ?
+                    "Must disable time chart first"
+                  : undefined
+                }
               >
-                Add computed column
+                {nestedColumns.filter((c) => c.show).length} selected
               </Btn>
-              {showAddComputedCol && 
-                <AddComputedColMenu
-                  db={db}
-                  nestedColumnOpts={!column? { 
-                    type: "new", 
-                    config: currentColumn,
-                    onChange: updateColumn,
-                  } : {
-                    type: "existing", 
-                    config: currentColumn
-                  }}
-                  tables={tables}
-                  w={w}
-                  onClose={() => setShowAddComputedCol(false)}
+            </FlexCol>
+          }
+          render={(pClose) => {
+            return (
+              <FlexCol>
+                <WithPrgl
+                  onRender={(prgl) => (
+                    <ColumnList
+                      columns={nestedColumns}
+                      tableColumns={table.columns}
+                      mainMenuProps={{
+                        db,
+                        onClose: pClose,
+                        suggestions: undefined,
+                        table,
+                        tables,
+                        w,
+                        prgl,
+                      }}
+                      onChange={updateNestedColumns}
+                    />
+                  )}
                 />
-              }
-            </FlexRow>
-          </FlexCol>
-        }}
-      />
-    }
-    {table && 
-      <>
-        <NestedTimechartControls
-          tableName={table.name} 
-          chart={currentColumn?.nested?.chart} 
-          onChange={chart => {
-            updateNested({ chart, limit: chart? 200 : 20 });
-          }} 
-          tables={tables} 
-        />
-        <div className="py-p75">OR</div>
-        <QuickAddComputedColumn 
-          tables={tables} 
-          tableName={table.name}
-          onAddColumn={newCol => {
-            const oldHiddenCols = (nestedColumns ?? []).map(c => ({ ...c, show: false }));
-            const newCols = [newCol, ...oldHiddenCols];
-            updateNested({ displayMode: "no-headers", columns: newCols });
+
+                <FlexRow className="p-1">
+                  <Btn
+                    variant="faded"
+                    iconPath={mdiPlus}
+                    color="action"
+                    onClick={() => setShowAddComputedCol(true)}
+                  >
+                    Add computed column
+                  </Btn>
+                  {showAddComputedCol && (
+                    <AddComputedColMenu
+                      db={db}
+                      nestedColumnOpts={
+                        !column ?
+                          {
+                            type: "new",
+                            config: currentColumn,
+                            onChange: updateColumn,
+                          }
+                        : {
+                            type: "existing",
+                            config: currentColumn,
+                          }
+                      }
+                      tables={tables}
+                      w={w}
+                      onClose={() => setShowAddComputedCol(false)}
+                    />
+                  )}
+                </FlexRow>
+              </FlexCol>
+            );
           }}
         />
-      </>
-    }
-    
-  </FlexRowWrap>
-}
+      )}
+      {table && (
+        <>
+          <NestedTimechartControls
+            tableName={table.name}
+            chart={currentColumn?.nested?.chart}
+            onChange={(chart) => {
+              updateNested({ chart, limit: chart ? 200 : 20 });
+            }}
+            tables={tables}
+          />
+          <div className="py-p75">OR</div>
+          <QuickAddComputedColumn
+            tables={tables}
+            tableName={table.name}
+            onAddColumn={(newCol) => {
+              const oldHiddenCols = (nestedColumns ?? []).map((c) => ({
+                ...c,
+                show: false,
+              }));
+              const newCols = [newCol, ...oldHiddenCols];
+              updateNested({ displayMode: "no-headers", columns: newCols });
+            }}
+          />
+        </>
+      )}
+    </FlexRowWrap>
+  );
+};

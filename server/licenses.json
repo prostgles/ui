@@ -2750,10 +2750,7 @@
     "licenseFile": "/home/uiprgl/server/node_modules/path-to-regexp/LICENSE"
   },
   "pause-stream@0.0.11": {
-    "licenses": [
-      "MIT",
-      "Apache2"
-    ],
+    "licenses": ["MIT", "Apache2"],
     "repository": "https://github.com/dominictarr/pause-stream",
     "publisher": "Dominic Tarr",
     "email": "dominic.tarr@gmail.com",
@@ -3822,4 +3819,3 @@
     "licenseFile": "/home/uiprgl/server/node_modules/npm/node_modules/yallist/LICENSE"
   }
 }
-

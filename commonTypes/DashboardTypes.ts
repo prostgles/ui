@@ -1,4 +1,3 @@
-
 export type LayoutItem = {
   /**
    * UUID of the window
@@ -12,42 +11,44 @@ export type LayoutItem = {
    */
   size: number;
   isRoot?: boolean;
-}
+};
 export type LayoutGroup = {
   id: string;
   size: number;
   isRoot?: boolean;
-} & ({
-  /**
-   * Flex direction of the group
-   */
-  type: "row" | "col";
-  items: LayoutConfig[];
-} | {
-  /**
-   * Will display windows as tabs
-   */
-  type: "tab";
-  items: LayoutItem[];
-  /**
-   * UUID of the currently shown window
-   */
-  activeTabKey: string | undefined; 
-});
+} & (
+  | {
+      /**
+       * Flex direction of the group
+       */
+      type: "row" | "col";
+      items: LayoutConfig[];
+    }
+  | {
+      /**
+       * Will display windows as tabs
+       */
+      type: "tab";
+      items: LayoutItem[];
+      /**
+       * UUID of the currently shown window
+       */
+      activeTabKey: string | undefined;
+    }
+);
 
 export type LayoutConfig = LayoutItem | LayoutGroup;
 
-
 type LinkedDataChart = {
   chart: {
-    type: "time",
+    type: "time";
     yAxis: {
       colName: string;
       funcName: "$avg" | "$sum" | "$min" | "$max" | "$count";
-      isCountAll: boolean
-    },
+      isCountAll: boolean;
+    };
     dateCol: string;
-  }
+  };
 };
 
 type LinkedDataTable = {
@@ -55,7 +56,7 @@ type LinkedDataTable = {
   columns: {
     name: string;
   }[];
-}
+};
 
 type LinkedData = {
   joinType: "left" | "inner";
@@ -81,13 +82,13 @@ type TableWindowInsertModel = {
   table_name: string;
   columns?: {
     /**
-     * Column name. 
+     * Column name.
      */
     name: string;
     /**
      * Column width in pixels
      */
-    width: number; 
+    width: number;
 
     /**
      * Render column value in a chip
@@ -96,7 +97,15 @@ type TableWindowInsertModel = {
     styling?: {
       type: "conditional";
       conditions: {
-        chipColor: "red" | "pink" | "purple" | "blue" | "indigo" | "green" | "yellow" | "gray";
+        chipColor:
+          | "red"
+          | "pink"
+          | "purple"
+          | "blue"
+          | "indigo"
+          | "green"
+          | "yellow"
+          | "gray";
         operator: "=" | "!=" | ">" | "<" | ">=" | "<=";
         value: string;
       }[];
@@ -107,30 +116,35 @@ type TableWindowInsertModel = {
      */
     nested?: LinkedData;
   }[];
-  filter?:  ({
+  filter?: ({
     /**
      * Column name
      */
     fieldName: string;
-  } & ({
-    type: "$in";
-    value: string[];
-  } | {
-    type: "$eq" | "$ne" | "$lt" | "$lte" | "$gt" | "$gte";
-    value: string;
-  }))[];
-  
+  } & (
+    | {
+        type: "$in";
+        value: string[];
+      }
+    | {
+        type: "$eq" | "$ne" | "$lt" | "$lte" | "$gt" | "$gte";
+        value: string;
+      }
+  ))[];
+
   /**
    * Sort order when of type 'table'
    */
-  sort?: null | {
-    /**
-     * Column name
-     */
-    key: string;
-    asc: boolean;
-    nulls: "first" | "last";
-  }[];
+  sort?:
+    | null
+    | {
+        /**
+         * Column name
+         */
+        key: string;
+        asc: boolean;
+        nulls: "first" | "last";
+      }[];
 };
 
 /**
@@ -144,7 +158,7 @@ type MapWindowInsertModel = {
    * Column name with GEOGRAPHY/GEOMETRY data
    */
   geo_column: string;
-}
+};
 
 /**
  * Allows user to write and excute custom SQL queries with results displayed in a table
@@ -154,7 +168,7 @@ type SqlWindowInsertModel = {
   name: string;
   type: "sql";
   sql: string;
-}
+};
 
 /**
  * Shows a time chart
@@ -164,13 +178,19 @@ type TimechartWindowInsertModel = {
   type: "timechart";
   table_name: string;
   date_column: string;
-  y_axis: "count(*)" | {
-    column: string;
-    aggregation: "sum" | "avg" | "min" | "max" | "count";
-  }
-}
+  y_axis:
+    | "count(*)"
+    | {
+        column: string;
+        aggregation: "sum" | "avg" | "min" | "max" | "count";
+      };
+};
 
-export type WindowInsertModel = MapWindowInsertModel | SqlWindowInsertModel | TableWindowInsertModel | TimechartWindowInsertModel
+export type WindowInsertModel =
+  | MapWindowInsertModel
+  | SqlWindowInsertModel
+  | TableWindowInsertModel
+  | TimechartWindowInsertModel;
 
 export type WorkspaceInsertModel = {
   name: string;

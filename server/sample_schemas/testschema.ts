@@ -1,12 +1,10 @@
-
 export const tableConfig: TableConfig = {
   market_caps: {
     columns: {
       image: "TEXT",
-    }
-  }
+    },
+  },
 };
-
 
 export const dashboardConfig: DashboardConfig = {
   workspaces: [
@@ -16,8 +14,8 @@ export const dashboardConfig: DashboardConfig = {
         {
           type: "table",
           table_name: "",
-        }
-      ]
-    }
-  ]
+        },
+      ],
+    },
+  ],
 };
