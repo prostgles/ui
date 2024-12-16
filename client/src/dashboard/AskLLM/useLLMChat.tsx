@@ -83,6 +83,7 @@ export const useLLMChat = ({
     { chat_id: activeChatId },
     { limit: activeChatId ? undefined : 0, orderBy: { created: 1 } },
   );
+  console.log(activeChatId, llmMessages);
 
   const { setWorkspace } = useSetNewWorkspace(workspaceId);
 
