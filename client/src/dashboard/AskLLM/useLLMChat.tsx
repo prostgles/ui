@@ -15,6 +15,9 @@ type P = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId"> & {
     workspaceId: string | undefined;
   };
+
+let debugSub: any;
+
 export type LLMChatState = ReturnType<typeof useLLMChat>;
 export const useLLMChat = ({
   dbs,
@@ -26,6 +29,8 @@ export const useLLMChat = ({
   defaultCredential,
   prompts,
 }: P) => {
+  debugSub = debugSub || dbs.llm_chats.subscribe({}, {}, console.warn);
+
   const [selectedChatId, setSelectedChat] = useState<number>();
   const { data: latestChats } = dbs.llm_chats.useSubscribe(
     {},
