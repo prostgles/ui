@@ -114,6 +114,12 @@ export const useDBSConnection = (
             ) {
               // if(ev.command === "unsubscribe") debugger;
               console.log(Date.now(), "DBS client", ev);
+            } else if (
+              ev.type === "onReady" ||
+              ev.type === "onReady.call" ||
+              ev.type === "onReady.notMounted"
+            ) {
+              console.log(Date.now(), "DBS client", ev);
             }
           },
           onReconnect: () => {
