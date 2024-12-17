@@ -13,11 +13,10 @@ import { dashboardDemo } from "./dashboardDemo";
 import { fileDemo } from "./fileDemo";
 import { sqlDemo } from "./sqlVideoDemo";
 
-
 const loadTest = async () => {
   const dbs: DBS = (window as any).dbs;
-  console.log(dbs)
-}
+  console.log(dbs);
+};
 
 const VIDEO_DEMO_SCRIPTS = {
   backupDemo,
@@ -26,40 +25,48 @@ const VIDEO_DEMO_SCRIPTS = {
   sqlDemo,
   dashboardDemo,
   loadTest,
-}
+};
 const demoScripts = getKeys(VIDEO_DEMO_SCRIPTS);
 type DEMO_NAME = keyof typeof VIDEO_DEMO_SCRIPTS;
 
-const videoTimings: { videoName: string; start: number; end: number; }[] = [];
-let currVideo: typeof videoTimings[number] | undefined;
+const videoTimings: { videoName: string; start: number; end: number }[] = [];
+let currVideo: (typeof videoTimings)[number] | undefined;
 const startVideoDemo = async (videoName: string) => {
-  if(currVideo){
+  if (currVideo) {
     videoTimings.push({ ...currVideo, end: Date.now() });
   }
   currVideo = {
     videoName,
     start: Date.now(),
-    end: 0
-  }
-}
+    end: 0,
+  };
+};
 
 export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
-
   const isOnDemoDatabase = db_name === VIDEO_DEMO_DB_NAME;
-  const { state: { demoStarted } } = useReactiveState(r_useAppVideoDemo);
-  const [showDemoOptions, setShowDemoOptions] = useState<HTMLButtonElement | null>(null);
+  const {
+    state: { demoStarted },
+  } = useReactiveState(r_useAppVideoDemo);
+  const [showDemoOptions, setShowDemoOptions] =
+    useState<HTMLButtonElement | null>(null);
   const startDemo = async (name?: DEMO_NAME) => {
     setShowDemoOptions(null);
 
-    if(!isOnDemoDatabase) {
+    if (!isOnDemoDatabase) {
       throw new Error("Cannot start demo on a non-demo database");
     }
     r_useAppVideoDemo.set({ demoStarted: true });
     const { stopWakeLock } = await startWakeLock();
-    if(name) {
+    if (name) {
       await VIDEO_DEMO_SCRIPTS[name]();
     } else {
-      const { sqlDemo, accessControlDemo, backupDemo, fileDemo, dashboardDemo } = VIDEO_DEMO_SCRIPTS;
+      const {
+        sqlDemo,
+        accessControlDemo,
+        backupDemo,
+        fileDemo,
+        dashboardDemo,
+      } = VIDEO_DEMO_SCRIPTS;
       startVideoDemo("SQL");
       await sqlDemo();
       startVideoDemo("Access Control");
@@ -71,39 +78,41 @@ export const AppVideoDemo = ({ connection: { db_name } }: Prgl) => {
       startVideoDemo("the end");
     }
     stopWakeLock();
-  }
- 
-  if(demoStarted || !isOnDemoDatabase){
+  };
+
+  if (demoStarted || !isOnDemoDatabase) {
     return null;
   }
-  return <>
-    <Btn
-      //@ts-ignore
-      _ref={node => {
-        if(!node) return;
-        node.start = () => {
-          return startDemo();
-        }
-      }}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        setShowDemoOptions(e.currentTarget);
-      }}
-      // style={{ opacity: isOnDemoDatabase? 1 : 0 }}
-      data-command="AppDemo.start"
-      onClick={() => startDemo()}
-      iconPath={mdiPlay} 
-    />
-    {showDemoOptions && <Popup anchorEl={showDemoOptions} positioning="beneath-left">
-      <FlexCol className="gap-0">
-        {demoScripts.map((key) => 
-          <Btn key={key} 
-            onClick={() => startDemo(key)}
-          >
-            {key}
-          </Btn>
-        )}
-      </FlexCol>
-      </Popup>}
-  </>
-}
+  return (
+    <>
+      <Btn
+        //@ts-ignore
+        _ref={(node) => {
+          if (!node) return;
+          node.start = () => {
+            return startDemo();
+          };
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setShowDemoOptions(e.currentTarget);
+        }}
+        // style={{ opacity: isOnDemoDatabase? 1 : 0 }}
+        data-command="AppDemo.start"
+        onClick={() => startDemo()}
+        iconPath={mdiPlay}
+      />
+      {showDemoOptions && (
+        <Popup anchorEl={showDemoOptions} positioning="beneath-left">
+          <FlexCol className="gap-0">
+            {demoScripts.map((key) => (
+              <Btn key={key} onClick={() => startDemo(key)}>
+                {key}
+              </Btn>
+            ))}
+          </FlexCol>
+        </Popup>
+      )}
+    </>
+  );
+};

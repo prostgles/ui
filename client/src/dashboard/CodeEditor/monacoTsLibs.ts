@@ -379,7 +379,8 @@ declare module 'ws' {
 }
 `;
 
-export const dboLib = `
+export const dboLib =
+  `
 
 type AnyObject = Record<string, any>;
 
@@ -603,14 +604,22 @@ export type ComplexFilter = Record<typeof COMPLEX_FILTER_KEY, [
  * Shortened filter operands
  */
  type BasicFilter<Field extends string, DataType extends any> = Partial<{
-  [K in Extract<typeof CompareFilterKeys[number], string> as ` + "`${Field}.${K}`" + `]: CastFromTSToPG<DataType>
+  [K in Extract<typeof CompareFilterKeys[number], string> as ` +
+  "`${Field}.${K}`" +
+  `]: CastFromTSToPG<DataType>
 }> | Partial<{
-  [K in Extract<typeof CompareInFilterKeys[number], string> as ` + "`${Field}.${K}`" + `]: CastFromTSToPG<DataType>[]
+  [K in Extract<typeof CompareInFilterKeys[number], string> as ` +
+  "`${Field}.${K}`" +
+  `]: CastFromTSToPG<DataType>[]
 }>;
 type StringFilter<Field extends string, DataType extends any> = BasicFilter<Field, DataType> & (Partial<{
-  [K in Extract<typeof TextFilterKeys[number], string> as ` + "`${Field}.${K}`" + `]: DataType
+  [K in Extract<typeof TextFilterKeys[number], string> as ` +
+  "`${Field}.${K}`" +
+  `]: DataType
 }> | Partial<{
-  [K in Extract<typeof TextFilterFTSKeys[number], string> as ` + "`${Field}.${K}`" + `]: any
+  [K in Extract<typeof TextFilterFTSKeys[number], string> as ` +
+  "`${Field}.${K}`" +
+  `]: any
 }>);
 export type ValueOf<T> = T[keyof T];
 
@@ -1054,7 +1063,7 @@ export type SubscribeParams<T extends AnyObject | void = void, S extends DBSchem
 export type UpdateParams<T extends AnyObject | void = void, S extends DBSchema | void = void> = {
   returning?: Select<T, S>;
   onConflict?: "DoUpdate" | "DoNothing";
-  fixIssues?: boolean;
+  removeDisallowedFields?: boolean;
 
   /* true by default. If false the update will fail if affecting more than one row */
   multi?: boolean;
@@ -1063,7 +1072,7 @@ export type UpdateParams<T extends AnyObject | void = void, S extends DBSchema |
 export type InsertParams<T extends AnyObject | void = void, S extends DBSchema | void = void> = {
   returning?: Select<T, S>;
   onConflict?: "DoUpdate" | "DoNothing";
-  fixIssues?: boolean;
+  removeDisallowedFields?: boolean;
 } & Pick<CommonSelectParams, "returnType">;
 
 export type DeleteParams<T extends AnyObject | void = void, S extends DBSchema | void = void> = {
@@ -1601,4 +1610,4 @@ declare namespace pgPromise {
 
     txIf<T>(options: ITxIfOptions, cb: (t: ITask) => T | Promise<T>): Promise<T>
   }
-}`
+}`;

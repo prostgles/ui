@@ -1,8 +1,8 @@
 const commonConfig = require("../.eslintrc.common.js");
 
-module.exports = { 
+module.exports = {
   ...commonConfig,
-  "rules": {
+  rules: {
     ...commonConfig.rules,
-  }
-}
+  },
+};

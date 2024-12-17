@@ -1,9 +1,6 @@
-
-
-import type { Extent } from "./DeckGLMap"; 
+import type { Extent } from "./DeckGLMap";
 import type { DeckGlLibs } from "./DeckGLWrapped";
 import type { TileLayer, TileLayerProps } from "deck.gl";
-
 
 export const DEFAULT_TILE_URLS = [
   // 'http://{s}.tile.stamen.com/watercolor/{z}/{x}/{y}.jpg'
@@ -11,7 +8,7 @@ export const DEFAULT_TILE_URLS = [
 
   "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
   "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png"
+  "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
 ];
 
 export function makeTileLayer(
@@ -23,16 +20,18 @@ export function makeTileLayer(
     showBorder = false,
     tileSize = 256, // 256 / devicePixelRatio; // or 512
 
-    asMVT = false
+    asMVT = false,
   } = {},
-  deckGlLibs: DeckGlLibs
+  deckGlLibs: DeckGlLibs,
 ): TileLayer {
-
-  if (!Array.isArray(tileURLs) || !tileURLs.find(url => typeof url === "string")) {
+  if (
+    !Array.isArray(tileURLs) ||
+    !tileURLs.find((url) => typeof url === "string")
+  ) {
     tileURLs = DEFAULT_TILE_URLS;
   }
 
-  if(tileURLs.some(url => url.endsWith(".pbf") || url.endsWith(".mvt"))){
+  if (tileURLs.some((url) => url.endsWith(".pbf") || url.endsWith(".mvt"))) {
     return new deckGlLibs.lib.MVTLayer({
       id: "basemap",
       data: tileURLs,
@@ -41,8 +40,8 @@ export function makeTileLayer(
         mvt: {
           // cp node_modules/@loaders.gl/mvt/dist/mvt-worker.js static/mvt-worker.js
           // Added file to express static
-          workerUrl: "/mvt-worker.js"
-        }
+          workerUrl: "/mvt-worker.js",
+        },
       },
       minZoom: 0,
       maxZoom: 14,
@@ -80,7 +79,7 @@ export function makeTileLayer(
     id: "basemap",
     TilesetClass: deckGlLibs.lib._Tileset2D,
     opacity,
-    
+
     desaturate,
     transparentColor: [255, 255, 255, 255],
 
@@ -89,8 +88,6 @@ export function makeTileLayer(
      * 
         https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{Z}/{Y}/{X}.jpg
      */
-
-
 
     // https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Tile_servers
     data: tileURLs,
@@ -108,11 +105,10 @@ export function makeTileLayer(
     maxZoom: 19,
     tileSize,
 
-
-    renderSubLayers: props => {
+    renderSubLayers: (props) => {
       const {
-        bbox: { west, south, east, north }
-      } = (props.tile as { bbox: any });
+        bbox: { west, south, east, north },
+      } = props.tile as { bbox: any };
 
       return [
         new deckGlLibs.lib.BitmapLayer(props as any, {
@@ -121,29 +117,44 @@ export function makeTileLayer(
           bounds: [west, south, east, north],
         }),
         showBorder &&
-        new deckGlLibs.lib.PathLayer({
-          id: `${props.id}-border`,
-          visible: props.visible,
-          data: [[[west, north], [west, south], [east, south], [east, north], [west, north]]],
-          getPath: d => d,
-          getColor: [255, 0, 0],
-          widthMinPixels: 4
-        })
+          new deckGlLibs.lib.PathLayer({
+            id: `${props.id}-border`,
+            visible: props.visible,
+            data: [
+              [
+                [west, north],
+                [west, south],
+                [east, south],
+                [east, north],
+                [west, north],
+              ],
+            ],
+            getPath: (d) => d,
+            getColor: [255, 0, 0],
+            widthMinPixels: 4,
+          }),
       ];
-    }
+    },
   } as TileLayerProps);
-} 
+}
 
 type MakeImageLayerArgs = {
-  url: string, 
-  bounds: Extent, 
-  opacity?: number; 
-  desaturate?: number; 
+  url: string;
+  bounds: Extent;
+  opacity?: number;
+  desaturate?: number;
   sharpImage?: boolean;
   deckGlLibs: DeckGlLibs;
-}
-export function makeImageLayer({ bounds, url, opacity = 1, desaturate = 0, sharpImage = false, deckGlLibs }: MakeImageLayerArgs) {
-  const { GL } = deckGlLibs.luma
+};
+export function makeImageLayer({
+  bounds,
+  url,
+  opacity = 1,
+  desaturate = 0,
+  sharpImage = false,
+  deckGlLibs,
+}: MakeImageLayerArgs) {
+  const { GL } = deckGlLibs.luma;
   return new deckGlLibs.lib.BitmapLayer({
     opacity,
     transparentColor: [255, 255, 255, 255],
@@ -153,15 +164,14 @@ export function makeImageLayer({ bounds, url, opacity = 1, desaturate = 0, sharp
     image: url,
 
     /** To remove smoothing and achieve a pixelated appearance: */
-    textureParameters: !sharpImage? undefined : {
-      [GL.TEXTURE_MIN_FILTER]: GL.NEAREST,
-      [GL.TEXTURE_MAG_FILTER]: GL.NEAREST
-    },
+    textureParameters:
+      !sharpImage ? undefined : (
+        {
+          [GL.TEXTURE_MIN_FILTER]: GL.NEAREST,
+          [GL.TEXTURE_MAG_FILTER]: GL.NEAREST,
+        }
+      ),
 
-    coordinateSystem: deckGlLibs.lib.COORDINATE_SYSTEM.CARTESIAN
+    coordinateSystem: deckGlLibs.lib.COORDINATE_SYSTEM.CARTESIAN,
   });
-
 }
-
-
-

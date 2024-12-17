@@ -1,7 +1,6 @@
 import { tout } from "../pages/ElectronSetup";
 import { click, type } from "./demoUtils";
 
-
 export const fileDemo = async () => {
   await tout(2e3);
   await click("config.goToConnDashboard");
@@ -22,4 +21,4 @@ export const fileDemo = async () => {
   await click("dashboard.window.rowInsert");
   await tout(500);
   await click("SmartFormFieldOptions.AttachFile");
-}
+};

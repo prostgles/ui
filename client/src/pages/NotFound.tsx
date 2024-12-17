@@ -5,12 +5,9 @@ import { FlexCol } from "../components/Flex";
 
 export const NotFound = () => {
   return (
-    <FlexCol 
-      className="bg-color-0 ai-center p-2 f-1"
-      data-command="NotFound"
-    >
+    <FlexCol className="bg-color-0 ai-center p-2 f-1" data-command="NotFound">
       <div className="p-1">404 page not found</div>
-      <Btn 
+      <Btn
         asNavLink={true}
         href="/"
         iconPath={mdiArrowLeft}
@@ -22,4 +19,4 @@ export const NotFound = () => {
       </Btn>
     </FlexCol>
   );
-}
+};

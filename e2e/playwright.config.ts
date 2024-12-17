@@ -1,17 +1,17 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 const timeoutMinutes = 6;
 
 export default defineConfig({
   timeout: timeoutMinutes * 6e4,
-  testDir: './tests',
+  testDir: "./tests",
   fullyParallel: false,
 
   forbidOnly: !!process.env.CI,
-  
+
   retries: 0,
   workers: 100,
-  reporter: 'html',
+  reporter: "html",
   use: {
     baseURL: "http://localhost:3004",
     trace: "retain-on-failure",
@@ -23,9 +23,8 @@ export default defineConfig({
   maxFailures: 0,
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-      
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
 
     // {

@@ -1,11 +1,12 @@
-*, body, html {
+*,
+body,
+html {
   box-sizing: border-box;
 }
 
 body {
   overflow: hidden;
 }
-
 
 .page-content {
   padding-top: 1em;
@@ -15,7 +16,7 @@ body {
   background: lightblue;
   width: 5px !important;
   margin-left: 3px;
-}  
+}
 
 .active-code-block-play {
   margin-left: 4px;

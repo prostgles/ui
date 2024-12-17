@@ -1,22 +1,21 @@
-.Marked p, 
-.Marked ul, 
-.Marked ol, 
-.Marked h1, 
-.Marked h2, 
-.Marked h3, 
-.Marked h4, 
-.Marked h5, 
-.Marked blockquote, 
+.Marked p,
+.Marked ul,
+.Marked ol,
+.Marked h1,
+.Marked h2,
+.Marked h3,
+.Marked h4,
+.Marked h5,
+.Marked blockquote,
 .Marked pre {
   margin-top: 0;
   margin-bottom: 0;
 }
 
-
-.Marked ul, 
+.Marked ul,
 .Marked ol {
   line-height: 1em;
-} 
+}
 
 .Marked ol {
   list-style: none;

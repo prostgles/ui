@@ -10,7 +10,7 @@ import {
   mdiListBoxOutline,
   mdiPlay,
   mdiTable,
-  mdiUpload
+  mdiUpload,
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
@@ -21,7 +21,11 @@ import Tabs from "../../components/Tabs";
 import RTComp from "../RTComp";
 
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
-import type { DBSchemaTablesWJoins, OnAddChart, WindowSyncItem } from "../Dashboard/dashboardUtils";
+import type {
+  DBSchemaTablesWJoins,
+  OnAddChart,
+  WindowSyncItem,
+} from "../Dashboard/dashboardUtils";
 
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import ErrorComponent from "../../components/ErrorComponent";
@@ -33,11 +37,10 @@ import { TestSQL } from "./TestSQL";
 import { SQLHotkeys } from "./SQLHotkeys";
 import { download } from "./W_SQL";
 
- 
 type P = {
   tableName?: string;
-  db: DBHandlerClient; 
-  dbs: DBS; 
+  db: DBHandlerClient;
+  dbs: DBS;
   onAddChart?: OnAddChart;
   w: WindowSyncItem<"sql">;
   joins: string[];
@@ -47,13 +50,13 @@ type P = {
 };
 
 const REFRESH_OPTIONS = ["Realtime", "Custom", "None"] as const;
-export type Unpromise<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
+export type Unpromise<T extends Promise<any>> =
+  T extends Promise<infer U> ? U : never;
 
 export type RefreshOptions = {
   autoRefreshSeconds?: number;
-  refreshType?: typeof REFRESH_OPTIONS[number];
+  refreshType?: (typeof REFRESH_OPTIONS)[number];
 };
-
 
 type S = {
   indexes?: {
@@ -64,8 +67,8 @@ type S = {
   }[];
   query?: {
     hint?: string;
-    label?: string; 
-    sql: string 
+    label?: string;
+    sql: string;
   };
   l1Key?: string;
   l2Key?: string;
@@ -76,18 +79,16 @@ type S = {
   infoQuery?: {
     label: string;
     query: string;
-  }
+  };
   autoRefreshSeconds?: number;
   newOptions?: P["w"]["sql_options"];
-}
+};
 
 type D = {
   w?: P["w"];
-}
+};
 
 export class ProstglesSQLMenu extends RTComp<P, S, D> {
-
-
   state: S = {
     // joins: [],
     l1Key: undefined,
@@ -100,78 +101,74 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
     indexes: undefined,
     infoQuery: undefined,
     autoRefreshSeconds: undefined,
-  }
- 
-  onUnmount = async () => {
-    if(this.wSub) await this.wSub.$unsync();
-  }
+  };
 
+  onUnmount = async () => {
+    if (this.wSub) await this.wSub.$unsync();
+  };
 
   wSub?: ReturnType<P["w"]["$cloneSync"]>;
   autoRefresh: any;
   loading = false;
   onDelta = async (dP?: Partial<P>, dS?: Partial<S>, dD?) => {
-
-    if(dS && ("query" in dS)){
-      this.setState({ error: undefined })
+    if (dS && "query" in dS) {
+      this.setState({ error: undefined });
     }
 
-    if(dP?.w?.sql_options && JSON.stringify(this.props.w.sql_options) === JSON.stringify(this.state.newOptions)){
-      this.setState({ newOptions: undefined })
+    if (
+      dP?.w?.sql_options &&
+      JSON.stringify(this.props.w.sql_options) ===
+        JSON.stringify(this.state.newOptions)
+    ) {
+      this.setState({ newOptions: undefined });
     }
-  }
+  };
 
   saveQuery = async () => {
-    const w = this.props.w
-    const sql = w.$get().sql || ""
-    const fileName  = (w.$get().name || `Query_${await sha256(sql)}`) + ".sql";
-    
+    const w = this.props.w;
+    const sql = w.$get().sql || "";
+    const fileName = (w.$get().name || `Query_${await sha256(sql)}`) + ".sql";
+
     download(sql, fileName, "text/sql");
-  }
+  };
 
-  render(){
-    const {
-      onAddChart,
-      w,
-      dbs,
-      dbsTables,
-      tables,
-      onClose,
-    } = this.props;
+  render() {
+    const { onAddChart, w, dbs, dbsTables, tables, onClose } = this.props;
 
+    const { l1Key, initError, error, newOptions } = this.state;
 
-    const {
-      l1Key,
-      initError, 
-      error,
-      newOptions,
-    } = this.state;
-
-    if(initError){
-      return <div className="p-1">
-        <ErrorComponent error={initError} />
-        
-      </div>
+    if (initError) {
+      return (
+        <div className="p-1">
+          <ErrorComponent error={initError} />
+        </div>
+      );
     }
 
     const sqlOptsValue = JSON.stringify(newOptions || w.sql_options, null, 2);
 
-    const table = dbsTables.find(t => t.name === "windows");
-    const sqlOptionsCol = table?.columns.find(c => c.name === "sql_options");
+    const table = dbsTables.find((t) => t.name === "windows");
+    const sqlOptionsCol = table?.columns.find((c) => c.name === "sql_options");
 
-    if(!table){
-      return <div>dbs.windows table schema not found</div>
+    if (!table) {
+      return <div>dbs.windows table schema not found</div>;
     }
-    
+
     const l1Opts: TabsProps["items"] = {
-      "General": {
+      General: {
         leftIconPath: mdiFileUploadOutline,
         content: (
           <div className="flex-col ai-start gap-1">
-
-            <FormField label="Query name" value={w.name} asColumn={true} type="text" 
-              onChange={newVal => {
-                w.$update({ name: newVal, options: { sqlWasSaved: true } }, { deepMerge: true })
+            <FormField
+              label="Query name"
+              value={w.name}
+              asColumn={true}
+              type="text"
+              onChange={(newVal) => {
+                w.$update(
+                  { name: newVal, options: { sqlWasSaved: true } },
+                  { deepMerge: true },
+                );
               }}
             />
 
@@ -181,171 +178,207 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
                 { key: "table", label: "Table", iconPath: mdiTable },
                 { key: "csv", label: "CSV", iconPath: mdiListBoxOutline },
                 { key: "JSON", label: "JSON", iconPath: mdiCodeJson },
-              ]} 
-              value={w.sql_options.renderMode ?? "table"}  
-              onChange={renderMode => w.$update({ sql_options: { renderMode } }, { deepMerge: true })}  
-            /> 
+              ]}
+              value={w.sql_options.renderMode ?? "table"}
+              onChange={(renderMode) =>
+                w.$update({ sql_options: { renderMode } }, { deepMerge: true })
+              }
+            />
 
-            <Btn 
-              title="Save query as file" 
-              iconPath={mdiDownload} 
+            <Btn
+              title="Save query as file"
+              iconPath={mdiDownload}
               onClick={this.saveQuery}
               variant="faded"
             >
               Download query
             </Btn>
 
-            <Btn iconPath={mdiUpload} variant="faded" onClick={({ currentTarget }) => { currentTarget.querySelector("input")?.click() }}>
+            <Btn
+              iconPath={mdiUpload}
+              variant="faded"
+              onClick={({ currentTarget }) => {
+                currentTarget.querySelector("input")?.click();
+              }}
+            >
               Open SQL file
-              <input 
-                id="sql-open" 
-                name="sql-open" 
-                title="Open query from file" 
-                type="file" accept='text/*, .sql, .txt'
+              <input
+                id="sql-open"
+                name="sql-open"
+                title="Open query from file"
+                type="file"
+                accept="text/*, .sql, .txt"
                 style={{ display: "none" }}
-                onChange={e => {
+                onChange={(e) => {
                   if (e.currentTarget.files && e.currentTarget.files[0]) {
                     const myFile = e.currentTarget.files[0];
-                    getFileText(myFile).then(sql => {
-                      w.$update({ sql, show_menu: false })
+                    getFileText(myFile).then((sql) => {
+                      w.$update({ sql, show_menu: false });
                     });
                   }
                 }}
               />
             </Btn>
 
-            <Btn title="Delete this query"
-              color="danger" 
+            <Btn
+              title="Delete this query"
+              color="danger"
               variant="faded"
-              iconPath={mdiDelete} 
+              iconPath={mdiDelete}
               onClick={() => {
-                w.$update({ closed: true, deleted: true })
+                w.$update({ closed: true, deleted: true });
               }}
             >
               Delete query
             </Btn>
 
-
-            <Btn variant="faded"
+            <Btn
+              variant="faded"
               iconPath={mdiPlay}
               title="Click three times to run demo"
               onClick={({ currentTarget }) => {
-                const node = currentTarget as { _lastClickedCount?: number, _lastClicked?: number };
-                if(node._lastClickedCount && node._lastClickedCount > 3){
+                const node = currentTarget as {
+                  _lastClickedCount?: number;
+                  _lastClicked?: number;
+                };
+                if (node._lastClickedCount && node._lastClickedCount > 3) {
                   onClose();
                   setTimeout(() => {
                     TestSQL(w);
                   }, SECOND);
                   node._lastClicked = 0;
-                  node._lastClickedCount = 0;  
+                  node._lastClickedCount = 0;
                 } else {
-                  const clickedWithinTimeFrame = !node._lastClicked || (Date.now() - node._lastClicked < 500);
-                  node._lastClickedCount = clickedWithinTimeFrame? (node._lastClickedCount ?? 0) + 1 : 0;
+                  const clickedWithinTimeFrame =
+                    !node._lastClicked || Date.now() - node._lastClicked < 500;
+                  node._lastClickedCount =
+                    clickedWithinTimeFrame ?
+                      (node._lastClickedCount ?? 0) + 1
+                    : 0;
                   node._lastClicked = Date.now();
-                } 
+                }
               }}
-            >DEMO</Btn>
+            >
+              DEMO
+            </Btn>
           </div>
-        )
+        ),
       },
 
       "Editor options": {
-
         leftIconPath: mdiCog,
         content: (
-          <div 
+          <div
             className="flex-col ai-start gap-1"
-            key={JSON.stringify(w.sql_options)} 
+            key={JSON.stringify(w.sql_options)}
           >
             <div>SQL Editor settings</div>
-            <CodeEditor 
-              language={{ 
+            <CodeEditor
+              language={{
                 lang: "json",
                 jsonSchemas: [
                   {
                     id: "sql_options",
-                    schema: getJSONBSchemaAsJSONSchema(table.name, "sql_options", sqlOptionsCol?.jsonbSchema ?? {})
-                  }
-                ]
-              }}  
-              style={{ 
+                    schema: getJSONBSchemaAsJSONSchema(
+                      table.name,
+                      "sql_options",
+                      sqlOptionsCol?.jsonbSchema ?? {},
+                    ),
+                  },
+                ],
+              }}
+              style={{
                 minHeight: "200px",
-                minWidth: "400px", 
-                flex: 1, 
-                resize: "vertical", 
+                minWidth: "400px",
+                flex: 1,
+                resize: "vertical",
                 overflow: "auto",
                 width: "100%",
               }}
-              value={sqlOptsValue} 
-              onChange={v => {
+              value={sqlOptsValue}
+              onChange={(v) => {
                 try {
-                  this.setState({ newOptions: JSON.parse(v) })
-                } catch(err){
-
-                }
+                  this.setState({ newOptions: JSON.parse(v) });
+                } catch (err) {}
               }}
             />
-            <InfoRow color="info">Press <strong>ctrl</strong> + <strong>space</strong> to get a list of possible options</InfoRow> 
+            <InfoRow color="info">
+              Press <strong>ctrl</strong> + <strong>space</strong> to get a list
+              of possible options
+            </InfoRow>
             {!!error && <ErrorComponent error={error} />}
-            <Btn color="action"
+            <Btn
+              color="action"
               variant="filled"
               iconPath={mdiContentSave}
-              disabledInfo={error? "Cannot save due to error" : !newOptions || JSON.stringify(newOptions) === JSON.stringify(w.sql_options)? "Nothing to update" : undefined}
+              disabledInfo={
+                error ? "Cannot save due to error"
+                : (
+                  !newOptions ||
+                  JSON.stringify(newOptions) === JSON.stringify(w.sql_options)
+                ) ?
+                  "Nothing to update"
+                : undefined
+              }
               onClickPromise={async () => {
                 const _newOpts = { ...newOptions! };
                 this.setState({ error: undefined });
                 try {
-                  await dbs.windows.update({ id: w.id }, { sql_options: _newOpts });
-                } catch(error){
-                  this.setState({ error, newOptions: _newOpts })
+                  await dbs.windows.update(
+                    { id: w.id },
+                    { sql_options: _newOpts },
+                  );
+                } catch (error) {
+                  this.setState({ error, newOptions: _newOpts });
                 }
               }}
             >
               Update options
             </Btn>
           </div>
-        )
-
+        ),
       },
-      "Hotkeys": {
-
+      Hotkeys: {
         leftIconPath: mdiKeyboard,
-        content: <SQLHotkeys />
+        content: <SQLHotkeys />,
       },
-        
-    }
+    };
 
     return (
-      <div className="table-menu c--fit flex-row" style={{maxHeight: "100vh", maxWidth: "100vw"}}>
+      <div
+        className="table-menu c--fit flex-row"
+        style={{ maxHeight: "100vh", maxWidth: "100vw" }}
+      >
         <Tabs
           variant="vertical"
-          contentClass={" o-auto min-h-0 max-h-100v " + (l1Key === "Alter"? " " : " p-1")}
+          contentClass={
+            " o-auto min-h-0 max-h-100v " + (l1Key === "Alter" ? " " : " p-1")
+          }
           items={l1Opts}
-          compactMode={window.isMobileDevice? "hide-inactive" : undefined}
+          compactMode={window.isMobileDevice ? "hide-inactive" : undefined}
           // defaultActiveKey={"General"}
         />
       </div>
-    )
+    );
   }
 }
 
 export function getFileText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-  
+
     reader.addEventListener("load", function (e) {
-      if(e.target) resolve(e.target.result as string);
+      if (e.target) resolve(e.target.result as string);
       else reject("e.target is null");
     });
-  
+
     reader.readAsBinaryString(file);
   });
 }
 
-
 export async function sha256(message) {
   // encode as UTF-8
-  const msgBuffer = new TextEncoder().encode(message);                    
+  const msgBuffer = new TextEncoder().encode(message);
 
   // hash the message
   const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
@@ -353,7 +386,9 @@ export async function sha256(message) {
   // convert ArrayBuffer to Array
   const hashArray = Array.from(new Uint8Array(hashBuffer));
 
-  // convert bytes to hex string                  
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  // convert bytes to hex string
+  const hashHex = hashArray
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
   return hashHex;
 }

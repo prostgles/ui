@@ -6,48 +6,61 @@ import { useCodeEditorTsTypes } from "../AccessControl/Methods/useMethodDefiniti
 import { SmartCodeEditor } from "../CodeEditor/SmartCodeEditor";
 import { ProcessLogs } from "../TableConfig/ProcessLogs";
 
-export const OnMountFunction = ({ dbsMethods, dbs, connectionId, dbKey }: Prgl) => {
-
-  const { data: connection } = dbs.connections.useSubscribeOne({ id: connectionId });
+export const OnMountFunction = ({
+  dbsMethods,
+  dbs,
+  connectionId,
+  dbKey,
+}: Prgl) => {
+  const { data: connection } = dbs.connections.useSubscribeOne({
+    id: connectionId,
+  });
   const tsLibraries = useCodeEditorTsTypes({ connectionId, dbsMethods, dbKey });
-  return <FlexCol>
-    <FlexRow>
-      <h3>On mount</h3>
-      <SwitchToggle 
-        label={"Enabled"}
-        disabledInfo={!connection?.on_mount_ts? "No on mount function. Provide a function or edit and save the example" : undefined}
-        checked={!!connection?.on_mount_ts && !connection.on_mount_ts_disabled}
-        onChange={async (checked) => {
-          await dbsMethods.setOnMount?.(connectionId, { on_mount_ts_disabled: !checked });
-        }} 
+  return (
+    <FlexCol>
+      <FlexRow>
+        <h3>On mount</h3>
+        <SwitchToggle
+          label={"Enabled"}
+          disabledInfo={
+            !connection?.on_mount_ts ?
+              "No on mount function. Provide a function or edit and save the example"
+            : undefined
+          }
+          checked={
+            !!connection?.on_mount_ts && !connection.on_mount_ts_disabled
+          }
+          onChange={async (checked) => {
+            await dbsMethods.setOnMount?.(connectionId, {
+              on_mount_ts_disabled: !checked,
+            });
+          }}
+        />
+      </FlexRow>
+      <SmartCodeEditor
+        key={dbKey}
+        label="Server-side function executed after the table is created and server started or schema changed"
+        language={{
+          lang: "typescript",
+          modelFileName: `onMount_${connectionId}`,
+          tsLibraries: [...tsLibraries],
+        }}
+        codePlaceholder={example}
+        value={connection?.on_mount_ts}
+        onSave={async (value) => {
+          await dbsMethods.setOnMount?.(connectionId, { on_mount_ts: value });
+        }}
       />
-    </FlexRow>
-    <SmartCodeEditor 
-      key={dbKey}
-      label="Server-side function executed after the table is created and server started or schema changed"
-      language={{ 
-        lang: "typescript",
-        modelFileName: `onMount_${connectionId}`,
-        tsLibraries: [
-          ...tsLibraries,
-        ]
-      }}
-      codePlaceholder={example}
-      value={connection?.on_mount_ts}
-      onSave={async (value) => {
-        await dbsMethods.setOnMount?.(connectionId, { on_mount_ts: value });
-      }}
-    
-    />
-    <ProcessLogs 
-      key={dbKey + "logs"}
-      connectionId={connectionId}
-      dbsMethods={dbsMethods}
-      type="onMount"
-      dbs={dbs}
-    />
-  </FlexCol>
-} 
+      <ProcessLogs
+        key={dbKey + "logs"}
+        connectionId={connectionId}
+        dbsMethods={dbsMethods}
+        type="onMount"
+        dbs={dbs}
+      />
+    </FlexCol>
+  );
+};
 const example = `/* Example */
 import { WebSocket } from "ws";
 export const onMount: ProstglesOnMount = async ({ dbo }) => {
@@ -63,4 +76,4 @@ export const onMount: ProstglesOnMount = async ({ dbo }) => {
     await dbo.futures.insert(data);
   }
 }
-`
+`;

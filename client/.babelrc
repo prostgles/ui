@@ -12,17 +12,18 @@
     "@babel/preset-react",
     "@babel/preset-typescript"
   ],
-  "plugins": [ 
-    "dynamic-import-node"
-  ],
+  "plugins": ["dynamic-import-node"],
   "env": {
-    "production": { 
+    "production": {
       "presets": [
-        ["minify", {
-          "builtIns": false,
-          "evaluate": false,
-          "mangle": false
-        }]
+        [
+          "minify",
+          {
+            "builtIns": false,
+            "evaluate": false,
+            "mangle": false
+          }
+        ]
       ]
     }
   }

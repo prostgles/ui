@@ -1,42 +1,47 @@
-// Using the below typescript definition return 
+// Using the below typescript definition return
 // a json workspace/dashboard config for a property management company ensuring all table and column names are snake case:
 
 type WorkspaceConfig = {
   workspaces: {
     name: string;
     options?: any;
-    windows: ({
-      type: "sql";
-      name: string;
-      sql: string;
-    } | {
-      type: "table";
-      table_name: string;
-      columns?: { 
-        name: string; 
-        show?: boolean; 
-        width?: number; 
-        nested?: any; 
-        style?: {
-          type: "Conditional";
-          conditions: {
-            color: string;
-            operator: "=",
-            chipColor: string;
-            condition: string;
-            textColor: string;
-            borderColor: string;
-          }[]
-        } | {
-          type: "Barchart";
-          barColor: string;
-          textColor: string;
+    windows: (
+      | {
+          type: "sql";
+          name: string;
+          sql: string;
         }
-        format?: any;
-      }[];
-      options?: any;
-      sort?: { asc: boolean; key: string }[];
-    })[];
+      | {
+          type: "table";
+          table_name: string;
+          columns?: {
+            name: string;
+            show?: boolean;
+            width?: number;
+            nested?: any;
+            style?:
+              | {
+                  type: "Conditional";
+                  conditions: {
+                    color: string;
+                    operator: "=";
+                    chipColor: string;
+                    condition: string;
+                    textColor: string;
+                    borderColor: string;
+                  }[];
+                }
+              | {
+                  type: "Barchart";
+                  barColor: string;
+                  textColor: string;
+                };
+            format?: any;
+          }[];
+          options?: any;
+          sort?: { asc: boolean; key: string }[];
+        }
+    )[];
   }[];
 };
 
@@ -45,11 +50,11 @@ export const workspaceConfig: WorkspaceConfig = {
     {
       name: "Main",
       options: {
-        "hideCounts": false,
-        "pinnedMenu": true,
-        "tableListSortBy": "extraInfo",
-        "tableListEndInfo": "count",
-        "defaultLayoutType": "tab"
+        hideCounts: false,
+        pinnedMenu: true,
+        tableListSortBy: "extraInfo",
+        tableListEndInfo: "count",
+        defaultLayoutType: "tab",
       },
       windows: [
         {
@@ -87,9 +92,9 @@ WITH customer_orders AS (
 )
 SELECT 
   (COUNT(CASE WHEN last_order >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month' THEN 1 END) * 100.0 / COUNT(*))::NUMERIC(8,2) as retention_rate
-FROM customer_orders;`
-        }
-      ]
-    }
-  ]
+FROM customer_orders;`,
+        },
+      ],
+    },
+  ],
 };

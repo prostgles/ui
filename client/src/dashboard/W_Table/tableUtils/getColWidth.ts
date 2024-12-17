@@ -1,32 +1,34 @@
 import type { ProstglesTableColumn } from "./getTableCols";
-import { _PG_numbers } from "prostgles-types"
+import { _PG_numbers } from "prostgles-types";
 
-export const getColWidth = <T extends Pick<ProstglesTableColumn, "tsDataType" | "udt_name" | "width">, K extends keyof T>(
+export const getColWidth = <
+  T extends Pick<ProstglesTableColumn, "tsDataType" | "udt_name" | "width">,
+  K extends keyof T,
+>(
   cols: T[],
   data: any[] = [],
   key: K,
   windowWidth?: number,
-): (T & { width: number })[]  => {
-
+): (T & { width: number })[] => {
   const minCW = 100;
   const maxCW = 300;
 
   /** If data AND no existing widths then calculate width based on row content length */
-  if(!cols.some(c => Number.isFinite(c.width))){
-
+  if (!cols.some((c) => Number.isFinite(c.width))) {
     const [firstCol] = cols;
     const tableWidth = windowWidth ?? maxCW;
-    if(cols.length === 1 && !_PG_numbers.includes(firstCol?.udt_name as any)){
-      return cols.map(c => {
+    if (cols.length === 1 && !_PG_numbers.includes(firstCol?.udt_name as any)) {
+      return cols.map((c) => {
         return {
           ...c,
-          width: tableWidth - 10
-        }
-      })
+          width: tableWidth - 10,
+        };
+      });
     }
 
-    let totalAssignedWidth = 0, maxCols = 0;
-    return cols.map((c, i)=> {
+    let totalAssignedWidth = 0,
+      maxCols = 0;
+    return cols.map((c, i) => {
       const isLastColumn = i === cols.length - 1;
       let width = 20;
 
@@ -37,43 +39,40 @@ export const getColWidth = <T extends Pick<ProstglesTableColumn, "tsDataType" | 
         timestamp: 200,
         bool: 100,
       };
-      const tsWidths: Partial<Record<typeof c.tsDataType, number>>  = {
-        number: 100
-      }
+      const tsWidths: Partial<Record<typeof c.tsDataType, number>> = {
+        number: 100,
+      };
 
-      const fixedWidth = (widths[c.udt_name] ?? tsWidths[c.tsDataType])
-      if(fixedWidth){ // isUsingOnRenderColumn && 
+      const fixedWidth = widths[c.udt_name] ?? tsWidths[c.tsDataType];
+      if (fixedWidth) {
+        // isUsingOnRenderColumn &&
         width = fixedWidth;
       } else {
-        data.map(r => {
+        data.map((r) => {
           const textContentWidth = JSON.stringify(r[c[key]] || "").length * 8;
-          const existingWidth = Number.isFinite(c.width)? c.width! : textContentWidth;
+          const existingWidth =
+            Number.isFinite(c.width) ? c.width! : textContentWidth;
           /** Must be within 100px and 300px */
           width = Math.min(
-            Math.max(
-              width,
-              textContentWidth,
-              minCW,
-              existingWidth,
-            ), 
-            maxCW
-          )
+            Math.max(width, textContentWidth, minCW, existingWidth),
+            maxCW,
+          );
         });
-        if(isLastColumn && !_PG_numbers.includes(c.udt_name as any)){
+        if (isLastColumn && !_PG_numbers.includes(c.udt_name as any)) {
           const remainingWidth = tableWidth - totalAssignedWidth;
-          if(remainingWidth > 20){
+          if (remainingWidth > 20) {
             width = remainingWidth;
           }
         }
       }
       width = Math.max(width, minCW);
-      if(width >= maxCW) maxCols++;
+      if (width >= maxCW) maxCols++;
 
       totalAssignedWidth += width;
       return {
         ...c,
-        width
-      }
+        width,
+      };
     });
 
     // if(windowWidth && windowWidth > totalAssignedWidth && res.length > 2){
@@ -91,7 +90,6 @@ export const getColWidth = <T extends Pick<ProstglesTableColumn, "tsDataType" | 
     //     return c;
     //   })
     // }
-
   }
 
   /** If free space then extend last column to fill it */
@@ -104,7 +102,7 @@ export const getColWidth = <T extends Pick<ProstglesTableColumn, "tsDataType" | 
   //     const newLastColWidth = windowWidth - 150 - _totalAssignedWidth;
   //     res.at(-1)!.width = Math.max(res.at(-1)!.width ?? 0, newLastColWidth)
   //   }
-  // } 
+  // }
 
   return cols as any;
-}
+};

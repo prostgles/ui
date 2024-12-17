@@ -1,1 +1,1 @@
-export {};
+export const justToCompile = 1;

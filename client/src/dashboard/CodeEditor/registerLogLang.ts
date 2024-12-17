@@ -4,7 +4,7 @@ import type { Monaco } from "../W_SQL/monacoEditorTypes";
 
 let logThemeLoaded = false;
 export const registerLogLang = (monaco: Monaco) => {
-  if(logThemeLoaded) return;
+  if (logThemeLoaded) return;
   logThemeLoaded = true;
   monaco.languages.register({ id: "log" });
 
@@ -33,7 +33,7 @@ export const registerLogLang = (monaco: Monaco) => {
         // INFO
         [
           /\b(HINT|INFO|INFORMATION|Info|NOTICE|II)\b|\b([iI][nN][fF][oO]|[iI][nN][fF][oO][rR][mM][aA][tT][iI][oO][nN])\:/,
-          "info"
+          "info",
         ],
         // serilog INFO
         [/\[(information|info|inf|in|i)\]/i, "info"],
@@ -42,7 +42,7 @@ export const registerLogLang = (monaco: Monaco) => {
         // WARN
         [
           /\b(WARNING|WARN|Warn|WW)\b|\b([wW][aA][rR][nN][iI][nN][gG])\:/,
-          "warning"
+          "warning",
         ],
         // Serilog WARN
         [/\[(warning|warn|wrn|wn|w)\]/i, "warning"],
@@ -51,7 +51,7 @@ export const registerLogLang = (monaco: Monaco) => {
         // ERROR
         [
           /\b(ALERT|CRITICAL|EMERGENCY|ERROR|FAILURE|FAIL|Fatal|FATAL|Error|EE)\b|\b([eE][rR][rR][oO][rR])\:/,
-          "error"
+          "error",
         ],
         // Serilog ERROR
         [/\[(error|eror|err|er|e|fatal|fatl|ftl|fa|f)\]/i, "error"],
@@ -64,17 +64,14 @@ export const registerLogLang = (monaco: Monaco) => {
         // Clock times with optional timezone ("01:01:01", "01:01:01.001", "01:01:01+01:01")
         [
           /\d{1,2}:\d{2}(:\d{2}([.,]\d{1,})?)?(Z| ?[+-]\d{1,2}:\d{2})?\b/,
-          "date"
+          "date",
         ],
         // Git commit hashes of length 40, 10, or 7
-        [
-          /\b([0-9a-fA-F]{40}|[0-9a-fA-F]{10}|[0-9a-fA-F]{7})\b/,
-          "constant"
-        ],
+        [/\b([0-9a-fA-F]{40}|[0-9a-fA-F]{10}|[0-9a-fA-F]{7})\b/, "constant"],
         // Guids
         [
           /[0-9a-fA-F]{8}[-]?([0-9a-fA-F]{4}[-]?){3}[0-9a-fA-F]{12}/,
-          "constant"
+          "constant",
         ],
         // Constants
         [/\b([0-9]+|true|false|null)\b/, "constant"],
@@ -89,8 +86,8 @@ export const registerLogLang = (monaco: Monaco) => {
         [/\b(http|https|ftp|file):\/\/\S+\b\/?/, "constant"],
         // Match character and . sequences (such as namespaces) as well as file names and extensions (e.g. bar.txt)
         [/(?<![\w/\\])([\w-]+\.)+([\w-])+(?![\w/\\])/, "constant"],
-      ]
-    }
+      ],
+    },
   });
 
   monaco.editor.defineTheme("logview", {
@@ -103,11 +100,11 @@ export const registerLogLang = (monaco: Monaco) => {
       { token: "date.log", foreground: "#008800" },
       { token: "constant", foreground: "#00891f" },
       { token: "exceptiontype.log", foreground: "#808080" },
-      ...themeRules
+      ...themeRules,
     ],
     colors: {
       "editor.lineHighlightBackground": "#ffffff",
       "editorGutter.background": "#f7f7f7",
     },
   });
-}
+};

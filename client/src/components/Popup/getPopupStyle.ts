@@ -7,15 +7,20 @@ type Args = {
   stateStyle: React.CSSProperties;
   rootStyle: React.CSSProperties;
   positioning: PopupProps["positioning"];
-}
-export const getPopupStyle = ({ positioning, stateStyle, rootStyle, collapsed, fullScreen }: Args) => {
-
+};
+export const getPopupStyle = ({
+  positioning,
+  stateStyle,
+  rootStyle,
+  collapsed,
+  fullScreen,
+}: Args) => {
   let rStyle = {};
   if (positioning === "tooltip") {
     rStyle = {
       pointerEvents: "none",
       touchAction: "none",
-    }
+    };
   }
   let style: React.CSSProperties = {
     maxWidth: "100vw",
@@ -32,19 +37,29 @@ export const getPopupStyle = ({ positioning, stateStyle, rootStyle, collapsed, f
     ...rootStyle,
   };
 
-  if(fullScreen){
+  if (fullScreen) {
     style = {
-      ...omitKeys(style, ["transform", "top", "left", "right", "bottom", "position", "inset", "width", "height"]),
-      position: "fixed", 
-      inset: 0, 
-      width: "100vw", 
+      ...omitKeys(style, [
+        "transform",
+        "top",
+        "left",
+        "right",
+        "bottom",
+        "position",
+        "inset",
+        "width",
+        "height",
+      ]),
+      position: "fixed",
+      inset: 0,
+      width: "100vw",
       height: "100vh",
-    }
+    };
   }
 
-  if(collapsed){
+  if (collapsed) {
     style = omitKeys(style, ["bottom", "height"]);
   }
 
   return style;
-}
+};

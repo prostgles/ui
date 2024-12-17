@@ -1,4 +1,4 @@
-export type ProstglesInitState = ({
+export type ProstglesInitState = {
   isElectron: boolean;
   xRealIpSpoofable?: boolean;
   electronCredsProvided?: boolean;
@@ -17,11 +17,13 @@ export type ProstglesInitState = ({
   initError?: any;
   connectionError?: any;
   ok: boolean;
-  canDumpAndRestore: {
-    psql: string;
-    pg_dump: string;
-    pg_restore: string;
-  } | undefined;
-}) 
+  canDumpAndRestore:
+    | {
+        psql: string;
+        pg_dump: string;
+        pg_restore: string;
+      }
+    | undefined;
+};
 
 export type ServerState = ProstglesInitState;

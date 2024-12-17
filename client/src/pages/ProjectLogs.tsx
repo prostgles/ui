@@ -1,5 +1,4 @@
-
-export default { ____________d: 1 } 
+export default { ____________d: 1 };
 
 // import React from 'react';
 // import FormField from '../components/FormField/FormField';
@@ -19,7 +18,7 @@ export default { ____________d: 1 }
 // import RTComp, { DeepPartial } from "../dashboard/RTComp";
 // import Dashboard from "../dashboard/Dashboard";
 
-// import prostgles from  "prostgles-client"; 
+// import prostgles from  "prostgles-client";
 // import io from "socket.io-client";
 // import { DBHandlerClient, SQLResult, Auth } from "prostgles-client/dist/prostgles";
 
@@ -35,7 +34,7 @@ export default { ____________d: 1 }
 
 // type S = {
 //   id: string;
-//   url: string; 
+//   url: string;
 //   url_code_server?: string;
 //   dbProject: DBHandlerClient;
 //   dev_mode?: boolean;
@@ -50,7 +49,7 @@ export default { ____________d: 1 }
 // }
 
 // export default class ProjectLogs extends RTComp<P, S> {
-  
+
 //   state = {
 //     id: null,
 //     name: "",
@@ -67,7 +66,7 @@ export default { ____________d: 1 }
 //   }
 
 //   loaded = false;
-//   sub = null; 
+//   sub = null;
 //   async onDelta(deltaP: Partial<P>, deltaS: Partial<S>, deltaD?: DeepPartial<D>){
 //     const { dbProject, status } = this.state;
 //     const { db, id } = this.props;
@@ -84,7 +83,7 @@ export default { ____________d: 1 }
 //           // console.log(get(project, "0.logs.app.log"));
 //         }
 //       });
-      
+
 //       if(proj) {
 //       } else {
 //         ns = {
@@ -101,9 +100,9 @@ export default { ____________d: 1 }
 //   }
 
 //   render(){
-//     const { 
+//     const {
 //       name, logs, notFound, loading = true,
-//       url_code_server, dbProject,  
+//       url_code_server, dbProject,
 //       iframeLoaded = false, iframeCached = false,
 //     } = this.state;
 //     const { id, db } = this.props;
@@ -120,7 +119,6 @@ export default { ____________d: 1 }
 //   }
 // }
 
-
 // export function getStatusColor(status: string){
 
 //   let statusColor = "red";
@@ -132,21 +130,20 @@ export default { ____________d: 1 }
 //   return statusColor;
 // }
 
-
 // type Log = {
 //   name: string;
 //   data: any[];
 // }
 
-// export class ProjectResourceMonitor extends RTComp<{ 
-//   db: DBHandlerClient; 
+// export class ProjectResourceMonitor extends RTComp<{
+//   db: DBHandlerClient;
 //   project_id: string;
 //   className?: string;
-// }, { 
+// }, {
 //   loading:boolean;
 //   logs: Log[]
 // }> {
-  
+
 //   state = {
 //     loading: true,
 //     logs: []
@@ -161,7 +158,7 @@ export default { ____________d: 1 }
 //     if(db && !this.loaded){
 //       this.loaded = true;
 //       let ns: any = { loading: false };
-      
+
 //       // this.sub = await db.logs.subscribe({ $existsJoined: { "project_resources": { project_id } } }, {}, (logs, delta) => {
 //       //   console.log(logs);
 //       // });
@@ -172,7 +169,7 @@ export default { ____________d: 1 }
 //           let data = await db.logs.find({ resource_id: resource.id }, { select: { date: { $date_trunc: ["second", "tstamp"] }, cpu_mhz: 1 }, orderBy: { tstamp: -1 } });
 //           logs.push({
 //             name: resource.id,
-//             data: data.map(d => ({ 
+//             data: data.map(d => ({
 //               ...d,
 //               value: d.cpu_mhz
 //             }))
@@ -187,7 +184,6 @@ export default { ____________d: 1 }
 //       //   });
 //         }
 //       // }, 1000)
-
 
 //     }
 //   }
@@ -231,4 +227,3 @@ export default { ____________d: 1 }
 //     )
 //   }
 // }
-

@@ -9,7 +9,6 @@
 // import { ForcedDataForm } from "./ForcedDataForm";
 // import type { ContextDataSchema } from "./FilterControl";
 
-
 // export type ForcedDataControlProps = Pick<Required<TablePermissionControlsProps>, "prgl" | "table" | "tableRules"> & {
 //   forcedDataDetail: UpdateRule["forcedDataDetail"];
 //   onChange: (forcedDataDetail: UpdateRule["forcedDataDetail"]) => void;
@@ -21,39 +20,38 @@
 // export const ForcedDataControl = (props: ForcedDataControlProps) => {
 //   const { forcedDataDetail, info, title } = props;
 //   const fDataValues: ForcedData[] | undefined = structuredClone(forcedDataDetail);
-  
+
 //   const id = generateUniqueID();
 
 //   const [showEditor, setShowEditor] = useState(false);
 //   const toggleEditor = () => setShowEditor(v => !v);
 
-
-//   return <FlexCol className="ForcedDataControl"> 
+//   return <FlexCol className="ForcedDataControl">
 //     <FlexRow className="noselect">
-//       <Label  
-//         htmlFor={id} 
-//         iconPath={mdiDatabaseImportOutline} 
-//         label={"Forced data"} 
-//         info={info} 
-//         popupTitle={title} 
+//       <Label
+//         htmlFor={id}
+//         iconPath={mdiDatabaseImportOutline}
+//         label={"Forced data"}
+//         info={info}
+//         popupTitle={title}
 //       />
-//       <Btn 
+//       <Btn
 //         data-command="ForcedDataControl.toggle"
-//         iconPath={fDataValues?.length? mdiPencil : mdiPlus} 
-//         color="action" 
-//         variant="filled" 
-//         size="small" 
+//         iconPath={fDataValues?.length? mdiPencil : mdiPlus}
+//         color="action"
+//         variant="filled"
+//         size="small"
 //         onClick={toggleEditor}
 //       />
-      
+
 //     </FlexRow>
 //     {showEditor && <ForcedDataForm { ...props } /> }
 
-//     {!showEditor && !!fDataValues?.length && 
+//     {!showEditor && !!fDataValues?.length &&
 //       <FlexCol className="gap-p5 ai-start b b-color rounded p-1 ml-3 w-fit shadow" style={{   }}>
 //         {fDataValues.map((v, i)=> <div key={i}>
-//           <strong className="mr-p5">{v.fieldName}:</strong> 
-//           {v.type === "context"? `{{${v.objectName}.${v.objectPropertyName}}}` : JSON.stringify(v.value)}</div> 
+//           <strong className="mr-p5">{v.fieldName}:</strong>
+//           {v.type === "context"? `{{${v.objectName}.${v.objectPropertyName}}}` : JSON.stringify(v.value)}</div>
 //         )}
 //       </FlexCol>
 //     }

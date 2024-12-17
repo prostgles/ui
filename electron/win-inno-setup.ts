@@ -2,30 +2,31 @@ import * as fs from "fs";
 import pkg from "./package.json";
 
 export const make = () => {
-
   const packed = `${__dirname}\\..\\packed`;
   const folders = fs.readdirSync(packed);
-  const packedFolder = folders.find(d => d.includes("prostgles-desktop"));
+  const packedFolder = folders.find((d) => d.includes("prostgles-desktop"));
   if (packedFolder) {
     const buildDir = `${packed}\\${packedFolder}`;
 
     /** Move all packed root folders to Data */
-    const dataDir = `${buildDir}/Data`
+    const dataDir = `${buildDir}/Data`;
     fs.mkdirSync(dataDir);
 
     const otherFolders = fs.readdirSync(buildDir, { withFileTypes: true });
-    otherFolders.forEach(f => {
+    otherFolders.forEach((f) => {
       if (f.isDirectory() && f.name !== "Data") {
-        fs.renameSync(`${buildDir}/${f.name}/`, `${dataDir}/${f.name}/`)
+        fs.renameSync(`${buildDir}/${f.name}/`, `${dataDir}/${f.name}/`);
       }
     });
 
     const buildDirFiles = fs.readdirSync(buildDir, { withFileTypes: true });
-    fs.writeFileSync(`${packed}\\inno.iss`, getInnoConfig(buildDirFiles, buildDir), { encoding: "utf8" });
-
+    fs.writeFileSync(
+      `${packed}\\inno.iss`,
+      getInnoConfig(buildDirFiles, buildDir),
+      { encoding: "utf8" },
+    );
   }
-
-}
+};
 
 function getInnoConfig(rootFiles: fs.Dirent[], rootLocationWin: string) {
   return `
@@ -71,9 +72,10 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "${rootLocationWin}\\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-${rootFiles.filter(f => !f.name.endsWith(".exe") && f.name !== "Data")
-  .map(f => {
-    return `Source: "${rootLocationWin}\\${f.name}"; DestDir: "{app}"; Flags: ignoreversion`
+${rootFiles
+  .filter((f) => !f.name.endsWith(".exe") && f.name !== "Data")
+  .map((f) => {
+    return `Source: "${rootLocationWin}\\${f.name}"; DestDir: "{app}"; Flags: ignoreversion`;
   })
   .join(" \n")}
 Source: "${rootLocationWin}\\Data\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs ; Permissions: everyone-full
@@ -94,5 +96,5 @@ Name: "{autodesktop}\\{#MyAppName}"; Filename: "{app}\\{#MyAppExeName}"; Tasks: 
 [Run]
 Filename: "{app}\\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
-`
+`;
 }

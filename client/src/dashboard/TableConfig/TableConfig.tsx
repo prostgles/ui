@@ -7,47 +7,57 @@ import { SwitchToggle } from "../../components/SwitchToggle";
 
 type P = {
   prgl: Prgl;
-}
+};
 
 export const TableConfig = ({ prgl: { dbs, connectionId, dbsMethods } }: P) => {
-  const { data: dbConf } = dbs.database_configs.useSubscribeOne({ $existsJoined: { connections: { id: connectionId } } });
+  const { data: dbConf } = dbs.database_configs.useSubscribeOne({
+    $existsJoined: { connections: { id: connectionId } },
+  });
 
-  if(!dbConf) return null;
+  if (!dbConf) return null;
 
-  return <FlexCol className="f-1">
-    <p className="m-0 p-0">
-      Table definitions and lifecycle methods that will be synced to schema
-    </p>
-    <SwitchToggle
-      label="Enabled"
-      checked={!!dbConf.table_config_ts && !dbConf.table_config_ts_disabled}
-      onChange={async (checked) => {
-        await dbsMethods.setTableConfig?.(connectionId, { table_config_ts_disabled: !checked });
-      }}
-    />
-    <SmartCodeEditor
-      key={"tableConfig"}
-      label="Table Config"
-      tsLibraries={[{
-        filePath: "TableConfig.ts",
-        content: TableConfigts,
-      }]}
-      language="typescript"
-      codePlaceholder={exampleConfig}
-      value={dbConf.table_config_ts}
-      onSave={async (value) => {
-        await dbsMethods.setTableConfig?.(connectionId, { table_config_ts: value, table_config_ts_disabled: !value });
-      }}
-
-    />
-    <ProcessLogs 
-      type="tableConfig"
-      connectionId={connectionId}
-      dbsMethods={dbsMethods} 
-      dbs={dbs} 
-    />
-  </FlexCol>
-}
+  return (
+    <FlexCol className="f-1">
+      <p className="m-0 p-0">
+        Table definitions and lifecycle methods that will be synced to schema
+      </p>
+      <SwitchToggle
+        label="Enabled"
+        checked={!!dbConf.table_config_ts && !dbConf.table_config_ts_disabled}
+        onChange={async (checked) => {
+          await dbsMethods.setTableConfig?.(connectionId, {
+            table_config_ts_disabled: !checked,
+          });
+        }}
+      />
+      <SmartCodeEditor
+        key={"tableConfig"}
+        label="Table Config"
+        tsLibraries={[
+          {
+            filePath: "TableConfig.ts",
+            content: TableConfigts,
+          },
+        ]}
+        language="typescript"
+        codePlaceholder={exampleConfig}
+        value={dbConf.table_config_ts}
+        onSave={async (value) => {
+          await dbsMethods.setTableConfig?.(connectionId, {
+            table_config_ts: value,
+            table_config_ts_disabled: !value,
+          });
+        }}
+      />
+      <ProcessLogs
+        type="tableConfig"
+        connectionId={connectionId}
+        dbsMethods={dbsMethods}
+        dbs={dbs}
+      />
+    </FlexCol>
+  );
+};
 
 const TableConfigts = `
 type TableConfig = Record<
@@ -69,4 +79,4 @@ export const tableConfig: TableConfig = {
   },
 };
 
-`
+`;

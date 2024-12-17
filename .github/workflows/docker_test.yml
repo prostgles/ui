@@ -1,7 +1,7 @@
 name: Test docker scripts
 on:
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
   merge_group:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -12,30 +12,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Docker build
-      run: |
-        docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres
-        TEST_SCRIPT=$(awk '/```docker-run.sh/{f=1;next} /```/{f=0} f' README.md)
-        echo $TEST_SCRIPT
-        eval "$TEST_SCRIPT"
-    
-    - name: Test docker run
-      run: |
-        sleep 15
-        docker ps 
-        pg_container_name=$(docker ps --format '{{.Names}}\t{{.Image}}' | grep 'prostgles' | head -1 | awk '{print $1}')
-        echo $pg_container_name
-        eval "docker logs $pg_container_name"
-        curl -b -i -L  -v  localhost:3004 | grep -q "Prostgles UI"; echo $?
+      - name: Docker build
+        run: |
+          docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres
+          TEST_SCRIPT=$(awk '/```docker-run.sh/{f=1;next} /```/{f=0} f' README.md)
+          echo $TEST_SCRIPT
+          eval "$TEST_SCRIPT"
 
-    - name: Docker stop
-      run: docker stop $(docker ps -a -q)
+      - name: Test docker run
+        run: |
+          sleep 15
+          docker ps 
+          pg_container_name=$(docker ps --format '{{.Names}}\t{{.Image}}' | grep 'prostgles' | head -1 | awk '{print $1}')
+          echo $pg_container_name
+          eval "docker logs $pg_container_name"
+          curl -b -i -L  -v  localhost:3004 | grep -q "Prostgles UI"; echo $?
 
-    - name: Docker compose
-      run: docker compose up -d
+      - name: Docker stop
+        run: docker stop $(docker ps -a -q)
 
-    - name: Test docker compose
-      run: sleep 5 && docker ps && curl localhost:3004 | grep -q "Prostgles UI"; echo $?
+      - name: Docker compose
+        run: docker compose up -d
+
+      - name: Test docker compose
+        run: sleep 5 && docker ps && curl localhost:3004 | grep -q "Prostgles UI"; echo $?

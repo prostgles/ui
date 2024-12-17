@@ -1,19 +1,17 @@
-import React from "react"; 
+import React from "react";
 
 type P = {
   value: any;
-}
+};
 
 export const JsonRenderer: React.FC<P> = ({ value }) => {
   const renderObject = (obj: any, idx = 1) => {
-
-    if(Array.isArray(obj)){
+    if (Array.isArray(obj)) {
       return obj.map(renderObject);
     }
 
-
-    if(Object(obj) !== obj){
-      return <span>{obj}</span>
+    if (Object(obj) !== obj) {
+      return <span>{obj}</span>;
     }
 
     return (
@@ -30,4 +28,3 @@ export const JsonRenderer: React.FC<P> = ({ value }) => {
 
   return <div className="flex-col">{renderObject(value)}</div>;
 };
-
