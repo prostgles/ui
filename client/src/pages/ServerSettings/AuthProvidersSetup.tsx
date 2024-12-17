@@ -131,7 +131,7 @@ export const AuthProviderSetup = ({
           </InfoRow>
         )}
       </FlexCol>
-      <EmailAuthSetup {...authProps} />
+      {/* <EmailAuthSetup {...authProps} /> */}
       <OAuthProviderSetup provider="google" {...authProps} />
       <OAuthProviderSetup provider="github" {...authProps} />
       <OAuthProviderSetup provider="microsoft" {...authProps} />
