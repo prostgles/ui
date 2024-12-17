@@ -52,7 +52,6 @@ export const JSONBSchema = <S extends Schema>({
       onChange(newlocalValue);
       return;
     }
-    console.log({ newlocalValue });
     setlocalValue(newlocalValue);
   };
 

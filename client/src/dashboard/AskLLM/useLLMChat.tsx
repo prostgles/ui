@@ -15,8 +15,9 @@ type P = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId"> & {
     workspaceId: string | undefined;
   };
-//
-let debugSub: any;
+
+// TODO: debug llm_chats sub sometimes not firing inside github actions
+// let debugSub: any;
 
 export type LLMChatState = ReturnType<typeof useLLMChat>;
 export const useLLMChat = ({
@@ -29,7 +30,7 @@ export const useLLMChat = ({
   defaultCredential,
   prompts,
 }: P) => {
-  debugSub = debugSub || dbs.llm_chats.subscribe({}, {}, console.warn);
+  // debugSub = debugSub || dbs.llm_chats.subscribe({}, {}, console.warn);
 
   const [selectedChatId, setSelectedChat] = useState<number>();
   const { data: latestChats } = dbs.llm_chats.useSubscribe(
@@ -75,6 +76,7 @@ export const useLLMChat = ({
       { returning: "*" },
     );
     console.log("Created new chat", newChat);
+    // dbs.sql(`SELECT * FROM `)
     setSelectedChat(undefined);
   };
 
@@ -88,7 +90,7 @@ export const useLLMChat = ({
     { chat_id: activeChatId },
     { limit: activeChatId ? undefined : 0, orderBy: { created: 1 } },
   );
-  console.log(activeChatId, llmMessages);
+  // console.log(activeChatId, llmMessages);
 
   const { setWorkspace } = useSetNewWorkspace(workspaceId);
 

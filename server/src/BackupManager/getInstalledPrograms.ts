@@ -42,7 +42,6 @@ const getWindowsPsqlBinPath = async (db: DB) => {
       : "C:/Program Files/PostgreSQL";
     if (fs.existsSync(pgPath)) {
       const installedVersions = fs.readdirSync(pgPath).map((v) => Number(v));
-      console.log({ installedVersions });
       const latestVersion = installedVersions.sort((a, b) => b - a)[0];
       if (latestVersion) {
         filePath = path.resolve(`${pgPath}/${latestVersion}/bin/`) + "/";

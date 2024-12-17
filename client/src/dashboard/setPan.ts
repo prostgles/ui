@@ -101,7 +101,6 @@ export function setPan(node: HTMLDivElement, evs: PanListeners) {
   const _onPress = (ev: React.PointerEvent<HTMLDivElement>) => {
       currEv = panEvents.find((p) => p.node.contains(ev.target as any));
       if (!currEv) return;
-      // console.log("press", currEv)
 
       lastPress = {
         ev,
@@ -111,7 +110,6 @@ export function setPan(node: HTMLDivElement, evs: PanListeners) {
       /** Ignore right clicks */
       if (ev.button && ev.pointerType !== "touch") return;
 
-      // if(onPress) onPress(ev);
       currEv.events.onPress?.(ev, currEv.node);
 
       ev.preventDefault();

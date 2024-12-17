@@ -211,8 +211,7 @@ async function parseJSONFile(file: File): Promise<{
       return row;
     });
   }
-  console.log({ _cols, rows });
-  console.log(file, txt.length, maxCharsPerRow);
+
   return {
     type,
     rows,
