@@ -100,28 +100,28 @@ export const useDBSConnection = (
           onDisconnect: () => {
             onDisconnect(true);
           },
-          onDebug: (ev) => {
-            const trackedTableNames = [
-              "global_settings",
-              "llm_chats",
-              "llm_messages",
-              "llm_prompts",
-              "llm_credentials",
-            ];
-            if (
-              ev.type === "table" &&
-              trackedTableNames.includes(ev.tableName)
-            ) {
-              // if(ev.command === "unsubscribe") debugger;
-              console.log(Date.now(), "DBS client", ev);
-            } else if (
-              ev.type === "onReady" ||
-              ev.type === "onReady.call" ||
-              ev.type === "onReady.notMounted"
-            ) {
-              console.log(Date.now(), "DBS client", ev);
-            }
-          },
+          // onDebug: (ev) => {
+          //   const trackedTableNames = [
+          //     "global_settings",
+          //     "llm_chats",
+          //     "llm_messages",
+          //     "llm_prompts",
+          //     "llm_credentials",
+          //   ];
+          //   if (
+          //     ev.type === "table" &&
+          //     trackedTableNames.includes(ev.tableName)
+          //   ) {
+          //     // if(ev.command === "unsubscribe") debugger;
+          //     console.log(Date.now(), "DBS client", ev);
+          //   } else if (
+          //     ev.type === "onReady" ||
+          //     ev.type === "onReady.call" ||
+          //     ev.type === "onReady.notMounted"
+          //   ) {
+          //     console.log(Date.now(), "DBS client", ev);
+          //   }
+          // },
           onReconnect: () => {
             onDisconnect(false);
             if (window.location.pathname.startsWith("/connections/")) {

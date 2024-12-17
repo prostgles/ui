@@ -853,7 +853,6 @@ export default class SearchList<M extends boolean = false> extends RTComp<
 
           /* Prevent annoying select all when not within input */
           if (e.key === "a" && e.ctrlKey && !inputIsFocused) {
-            // console.log(, this.refInput, this.refRoot)
             if (this.refInput) {
               this.refInput.focus();
               this.refInput.select();

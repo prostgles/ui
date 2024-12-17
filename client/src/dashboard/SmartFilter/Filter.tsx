@@ -332,7 +332,6 @@ export class Filter extends RTComp<FilterProps, { error?: any }> {
                 ) ?
                   val.columnTermValue
                 : columnValue || term; // f.type === "$term_highlight"? term : columnValue
-              // console.log(f)
               f.disabled = false;
 
               onChange(f);

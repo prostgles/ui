@@ -491,7 +491,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                   //   window.location.href = "/connections";
                   // }, 500)
                 } catch (e: any) {
-                  console.log(e);
+                  console.error(e);
                   setMsg({ loading: 0 });
                   const status = getErrorMessage(e);
                   this.setState({ status, statusOK: false });

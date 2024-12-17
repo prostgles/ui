@@ -10,12 +10,10 @@ export const DragOverUpload = ({ onOpen }: P) => {
 
   useEffect(() => {
     const onDrag = (ev: DragEvent) => {
-      console.log(ev);
       setShow(true);
     };
 
     const onDrop = (ev: DragEvent) => {
-      console.log(ev);
       onOpen(ev.dataTransfer?.files);
     };
     const onDragEnd = () => {

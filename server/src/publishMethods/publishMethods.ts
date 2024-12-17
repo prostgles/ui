@@ -542,24 +542,25 @@ export const publishMethods: PublishMethods<DBSchemaGenerated> = async (
       });
     },
     prostglesSignup: async (email: string) => {
-      const devAddess = "http://localhost:3003/signup";
-      const rawResp = await fetch(devAddess ?? "https://prostgles.com/signup", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-      if (!rawResp.ok) {
-        const error = await rawResp
-          .json()
-          .catch(() => rawResp.text())
-          .catch(() => rawResp.statusText);
-        return { error, hasError: true };
-      }
-      const { token } = (await rawResp.json()) as AnyObject;
-      return { token };
+      throw "Not implemented";
+      // const devAddess = "http://localhost:3003/signup"; //  ?? "https://prostgles.com/signup"
+      // const rawResp = await fetch(devAddess, {
+      //   method: "POST",
+      //   headers: {
+      //     Accept: "application/json",
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify({ email }),
+      // });
+      // if (!rawResp.ok) {
+      //   const error = await rawResp
+      //     .json()
+      //     .catch(() => rawResp.text())
+      //     .catch(() => rawResp.statusText);
+      //   return { error, hasError: true };
+      // }
+      // const { token } = (await rawResp.json()) as AnyObject;
+      // return { token };
     },
     generateToken: async (days: number) => {
       if (!Number.isInteger(days)) {

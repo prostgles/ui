@@ -212,7 +212,7 @@ export const importFile = async (args: Args) => {
         });
       }
     } catch (e) {
-      console.log(batch);
+      console.error(e, batch);
       throw {
         startRow: currIdx,
         // batchSize: stepSize,

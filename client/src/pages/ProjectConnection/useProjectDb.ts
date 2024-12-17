@@ -86,7 +86,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
       reconnectionDelay: 1000,
       reconnection: true,
     },
-    onDebug,
+    // onDebug,
     skip: !pathAndCon?.path,
   });
 
