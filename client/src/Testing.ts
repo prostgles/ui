@@ -1,5 +1,5 @@
 export const COMMANDS = {
-  "config.goToConnDashboard": "Go to connection workspace",
+  "config.goToConnDashboard": "Go to connection workspace ",
   "config.details": "",
   "config.bkp": "",
   "config.tableConfig": "",
