@@ -231,11 +231,6 @@ export const startConnection = async function (
             connId: con.id,
             db: _db,
           });
-          console.log(
-            "onReady connection",
-            connectionInfo.database,
-            Object.keys(db),
-          );
 
           /**
            * In some cases watchSchema does not work as expected (GRANT/REVOKE will not be observable to a less privileged db user)
