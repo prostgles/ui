@@ -14,7 +14,6 @@ import {
   mdiAlertOutline,
   mdiServerNetwork,
   mdiServerSecurity,
-  mdiThemeLightDark,
 } from "@mdi/js";
 import ErrorComponent from "./components/ErrorComponent";
 import { NavBar } from "./components/NavBar";
@@ -32,17 +31,18 @@ import type { ServerState } from "../../commonTypes/electronInit";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import { createReactiveState, useReactiveState } from "./appUtils";
 import Btn from "./components/Btn";
-import { FlexCol } from "./components/Flex";
+import { FlexCol, FlexRow } from "./components/Flex";
 import { InfoRow } from "./components/InfoRow";
 import PopupMenu from "./components/PopupMenu";
-import Select from "./components/Select/Select";
 import type { DBS, DBSMethods } from "./dashboard/Dashboard/DBS";
 import { MousePointer } from "./demo/MousePointer";
+import { LanguageSelector } from "./i18n/LanguageSelector";
 import { ComponentList } from "./pages/ComponentList";
 import { ElectronSetup } from "./pages/ElectronSetup";
 import { Login } from "./pages/Login/Login";
 import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
-import { useAppTheme } from "./useAppTheme";
+import { ThemeSelector } from "./theme/ThemeSelector";
+import { useAppTheme } from "./theme/useAppTheme";
 import { useDBSConnection } from "./useDBSConnection";
 import { isDefined } from "./utils";
 export * from "./appUtils";
@@ -227,31 +227,15 @@ export const App = () => {
                 .filter((o) => !o.forAdmin || extraProps.user?.type === "admin")
           }
           endContent={
-            <Select
-              title="Theme"
-              className={window.isLowWidthScreen ? "ml-2" : ""}
-              btnProps={{
-                variant: "default",
-                iconPath: mdiThemeLightDark,
-                children:
-                  window.isLowWidthScreen || serverState?.isElectron ?
-                    "Theme"
-                  : "",
-              }}
-              data-command="App.colorScheme"
-              value={userThemeOption}
-              fullOptions={[
-                { key: "light", label: "Light" },
-                { key: "dark", label: "Dark" },
-                { key: "from-system", label: "System" },
-              ]}
-              onChange={(theme) => {
-                dbs.users.update(
-                  { id: user?.id },
-                  { options: { $merge: [{ theme }] } },
-                );
-              }}
-            />
+            <FlexRow className={window.isLowWidthScreen ? "ml-2" : ""}>
+              <ThemeSelector
+                userId={user?.id}
+                dbs={dbs}
+                serverState={serverState}
+                userThemeOption={userThemeOption}
+              />
+              <LanguageSelector isElectron={!!serverState?.isElectron} />
+            </FlexRow>
           }
         />
         {showLoginRegister ?

@@ -17,6 +17,7 @@ import RTComp from "../../dashboard/RTComp";
 import { pickKeys } from "../../utils";
 import { Connection } from "./Connection";
 import { ConnectionServer } from "./ConnectionServer";
+import { t } from "../../i18n/i18nUtils";
 
 type CommonConnectionInfo = Pick<DBSSchema["connections"], "created"> & {
   access_control: { count: number }[];
@@ -254,12 +255,12 @@ export class Connections extends RTComp<PrglState, S> {
             <Btn
               href="/new-connection"
               asNavLink={true}
-              title="Create a new connection"
+              title={t.Connections.createNewConnection}
               iconPath={mdiPlus}
               variant="filled"
               color="action"
             >
-              New connection
+              {t.Connections.newConnection}
             </Btn>
           )}
 

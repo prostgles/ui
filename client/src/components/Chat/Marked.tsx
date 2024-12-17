@@ -15,10 +15,6 @@ type P = DivProps & {
   }) => React.ReactNode;
 };
 export const Marked = ({ content, codeHeader, ...divProps }: P) => {
-  useEffect(() => {
-    if (!content) return;
-    window.localStorage.setItem("content", content);
-  }, [content]);
   return (
     <Markdown
       {...divProps}

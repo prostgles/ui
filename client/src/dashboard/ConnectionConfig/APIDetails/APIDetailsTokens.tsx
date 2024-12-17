@@ -6,6 +6,7 @@ import FormField from "../../../components/FormField/FormField";
 import PopupMenu from "../../../components/PopupMenu";
 import { Sessions } from "../../../pages/Account/Sessions";
 import type { APIDetailsProps } from "./APIDetails";
+import { t } from "../../../i18n/i18nUtils";
 
 export const APIDetailsTokens = ({
   theme,
@@ -23,7 +24,9 @@ export const APIDetailsTokens = ({
 }) => {
   return (
     <FlexCol>
-      <h4 className="m-0 p-0">Access tokens ({tokenCount})</h4>
+      <h4 className="m-0 p-0">
+        {t.APIDetailsTokens.accessTokenCount({ tokenCount })}
+      </h4>
       <div>Provide the same level of access as the current account</div>
       <FlexCol className="w-fit  ">
         <Sessions

@@ -258,6 +258,7 @@ export const COMMANDS = {
   AddLLMCredentialForm: "",
   "AddLLMCredentialForm.Save": "",
   "AddLLMCredentialForm.Provider": "",
+  "App.LanguageSelector": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 
