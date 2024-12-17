@@ -21,11 +21,12 @@ import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { DBS_CONNECTION_INFO } from "./envVars";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { publish } from "./publish";
+import { insertDefaultPrompts } from "./publishMethods/askLLM/askLLM";
 import { publishMethods } from "./publishMethods/publishMethods";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { tableConfig } from "./tableConfig";
-import { insertDefaultPrompts } from "./publishMethods/askLLM/askLLM";
+import { findRawTextInJSX } from "./findJsxText";
 
 type StartArguments = {
   app: Express;
@@ -331,3 +332,5 @@ export const getInitState = (): typeof _initState & ProstglesInitState => {
     canDumpAndRestore: bkpManager?.installedPrograms,
   };
 };
+
+findRawTextInJSX;
