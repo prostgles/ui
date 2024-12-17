@@ -1,14 +1,13 @@
-
 .table-component .sort-asc::after {
-  content: "\25b2";    
+  content: "\25b2";
   color: var(--text-0);
-  margin-left: .25em;
+  margin-left: 0.25em;
   height: fit-content;
 }
 .table-component .sort-desc::after {
-  content: "\25bc";    
+  content: "\25bc";
   color: var(--text-0);
-  margin-left: .25em;
+  margin-left: 0.25em;
   height: fit-content;
 }
 .table-component .sort-none::after {
@@ -17,11 +16,11 @@
     content: "\25bc";     
   */
   color: transparent;
-  margin-left: .25em;
+  margin-left: 0.25em;
   height: fit-content;
 }
 
-.table-component .hover:hover { 
+.table-component .hover:hover {
   background-color: rgba(0, 183, 255, 0.04);
 }
 
@@ -34,14 +33,11 @@
   background: #def9ff;
 }
 
-
 .resizing-ew {
   border-right: 2px solid #00d0ff !important;
 }
 
-
-
-.table-component  .table-column-label {
+.table-component .table-column-label {
   -webkit-line-clamp: 2;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -51,7 +47,7 @@
 }
 
 .table-component div[role="table"] {
-  background-color:  white;
+  background-color: white;
 }
 
 .dark-theme .table-component div[role="table"] {

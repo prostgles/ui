@@ -1,4 +1,3 @@
 ## Issue title
 
-
 ## Details

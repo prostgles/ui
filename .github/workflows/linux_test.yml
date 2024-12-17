@@ -1,7 +1,7 @@
 name: Linux & Electron test
 on:
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
   merge_group:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -14,7 +14,7 @@ jobs:
       postgres:
         image: postgis/postgis:15-3.3
         env:
-          POSTGRES_DB: db        
+          POSTGRES_DB: db
           POSTGRES_PASSWORD: psw
           POSTGRES_USER: usr
         ports:
@@ -25,93 +25,93 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 20
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
 
-    - name: Install curl inside postgres container for video needed for demo
-      run: |
-        pg_container_name=$(docker ps --format '{{.Names}}\t{{.Image}}' | grep 'postgis' | head -1 | awk '{print $1}') && \
-        echo $pg_container_name && \
-        docker ps -a && \
-        docker exec $pg_container_name /bin/sh -c "apt-get update && apt install curl -y"
+      - name: Install curl inside postgres container for video needed for demo
+        run: |
+          pg_container_name=$(docker ps --format '{{.Names}}\t{{.Image}}' | grep 'postgis' | head -1 | awk '{print $1}') && \
+          echo $pg_container_name && \
+          docker ps -a && \
+          docker exec $pg_container_name /bin/sh -c "apt-get update && apt install curl -y"
 
-    - name: Wait for PostgreSQL to be ready and create prostgles_desktop_db
-      run: |
-        until pg_isready -h localhost -U usr -d db; do
-          sleep 1
-        done
-        PGPASSWORD=psw psql -h localhost -U usr -d db -c "CREATE DATABASE prostgles_desktop_db;"
+      - name: Wait for PostgreSQL to be ready and create prostgles_desktop_db
+        run: |
+          until pg_isready -h localhost -U usr -d db; do
+            sleep 1
+          done
+          PGPASSWORD=psw psql -h localhost -U usr -d db -c "CREATE DATABASE prostgles_desktop_db;"
 
-    - name: Install dependencies (psql with pg_dump)
-        pg_dump version must be >= pg servers version to ensure backup/restore works
-      run: |
-        cd client && npm ci && \
-        cd ../server && npm ci && \
-        cd ../e2e && npm ci && npx playwright install && \
-        sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && \
-        sudo apt-get -y install wget ca-certificates && \
-        wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - && \
-        sudo apt-get update && \
-        sudo apt-get -y install postgresql-client-16
-      
-    # buggy
-    # - name: Run electron test
-    #   run: |
-    #     sudo apt-get install xvfb -y &&
-    #     cd electron && npm run test-linux
+      - name: Install dependencies (psql with pg_dump)
+          pg_dump version must be >= pg servers version to ensure backup/restore works
+        run: |
+          cd client && npm ci && \
+          cd ../server && npm ci && \
+          cd ../e2e && npm ci && npx playwright install && \
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && \
+          sudo apt-get -y install wget ca-certificates && \
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - && \
+          sudo apt-get update && \
+          sudo apt-get -y install postgresql-client-16
 
-    - name: Run test
-      run: |
-        ./e2e/test.sh
+      # buggy
+      # - name: Run electron test
+      #   run: |
+      #     sudo apt-get install xvfb -y &&
+      #     cd electron && npm run test-linux
 
-    - uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: playwright-report
-        path: |
-          e2e/electron-report/
-          e2e/playwright-report/
-        retention-days: 10
+      - name: Run test
+        run: |
+          ./e2e/test.sh
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            e2e/electron-report/
+            e2e/playwright-report/
+          retention-days: 10
   test_macos:
     runs-on: macos-latest
     timeout-minutes: 15
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 20
-    - name: Install curl inside postgres container for video needed for demo
-      run: |
-        ls -la /Applications/ 
-        
-    - name: Install dependencies (psql with pg_dump) pg_dump version must be >= pg servers version to ensure backup/restore works
-      run: |
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && \
-        brew install postgresql@14
-        brew services restart postgresql@14
-        export PATH="/opt/homebrew/opt/postgresql@14/bin:$PATH"
-        /opt/homebrew/opt/postgresql@14/bin/psql --version
-        /opt/homebrew/opt/postgresql@14/bin/pg_dump --version
-        until pg_isready
-        do
-          echo "Waiting for postgres to start..."
-          sleep 1
-        done
-        /opt/homebrew/opt/postgresql@14/bin/createuser -s postgres
-        sudo psql -U postgres -c "CREATE USER usr WITH LOGIN SUPERUSER ENCRYPTED PASSWORD 'psw'"
-        sudo psql -U postgres -c "CREATE DATABASE prostgles_desktop_db OWNER usr"
-        brew install postgis
-        brew services restart postgresql 
-        
-        psql --version
-        cd electron
-        npm run test-macos
-         
-    - uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: playwright-report-electron
-        path: e2e/electron-report/
-        retention-days: 10
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - name: Install curl inside postgres container for video needed for demo
+        run: |
+          ls -la /Applications/
+
+      - name: Install dependencies (psql with pg_dump) pg_dump version must be >= pg servers version to ensure backup/restore works
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && \
+          brew install postgresql@14
+          brew services restart postgresql@14
+          export PATH="/opt/homebrew/opt/postgresql@14/bin:$PATH"
+          /opt/homebrew/opt/postgresql@14/bin/psql --version
+          /opt/homebrew/opt/postgresql@14/bin/pg_dump --version
+          until pg_isready
+          do
+            echo "Waiting for postgres to start..."
+            sleep 1
+          done
+          /opt/homebrew/opt/postgresql@14/bin/createuser -s postgres
+          sudo psql -U postgres -c "CREATE USER usr WITH LOGIN SUPERUSER ENCRYPTED PASSWORD 'psw'"
+          sudo psql -U postgres -c "CREATE DATABASE prostgles_desktop_db OWNER usr"
+          brew install postgis
+          brew services restart postgresql 
+
+          psql --version
+          cd electron
+          npm run test-macos
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-electron
+          path: e2e/electron-report/
+          retention-days: 10

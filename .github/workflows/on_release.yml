@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v3 
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: 20
@@ -30,7 +30,7 @@ jobs:
     runs-on: windows-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/checkout@v3 
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: 20
@@ -53,21 +53,21 @@ jobs:
     runs-on: macos-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 18
-    - name: Build MacOS
-      run: |
-        cd electron 
-        npm run build-macos
-        rm -rf ./dist/mac-universal
-        cd dist
-        shasum -a 256 *.* > macos.checksums
-        cat macos.checksums
-    - name: Release MacOS
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          electron/dist/**/*.dmg
-          electron/dist/**/*.checksums
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Build MacOS
+        run: |
+          cd electron 
+          npm run build-macos
+          rm -rf ./dist/mac-universal
+          cd dist
+          shasum -a 256 *.* > macos.checksums
+          cat macos.checksums
+      - name: Release MacOS
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            electron/dist/**/*.dmg
+            electron/dist/**/*.checksums

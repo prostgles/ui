@@ -26,7 +26,7 @@
 //   const locale = enGB;
 
 //   let items = props.items.sort((a, b) => +a.from - (+b.from));
- 
+
 //   const [day, setDay] = useState<any>(null);
 //   const [days, setDays] = useState<any[]>([]);
 
@@ -52,7 +52,7 @@
 
 //   const HOUR_HEIGHT = 80;
 
-//   useEffect(()=>{    
+//   useEffect(()=>{
 //     let start = new Date();
 //     if(items && items.length){
 //       start = items[0]!.from;
@@ -63,7 +63,7 @@
 //     setDay(days[0]);
 //     setDays(days);
 //   }, [items]);
-  
+
 //   const getDayItems = (day: Date) => {
 //     return items.filter(d => +d.from < +day + DAY - MINUTE && +d.to > +day);
 //   }
@@ -81,7 +81,7 @@
 //     endHour = getToHour(l.to, true) || endHour;
 //     if(endHour < 24) endHour++;
 //   }
-//   let nt = endHour - startHour + 1; 
+//   let nt = endHour - startHour + 1;
 //   let ticks = new Array(Math.max(1, nt)).fill(startHour).map((d,i)=> d + i);
 
 //   const getDaySelector = () => (
@@ -99,7 +99,7 @@
 //       ))}
 //     </div>
 //   );
-  
+
 //   if(!day) return null;
 //   return (
 //     <div className={"scheduler min-h-0 flex-col" + className} style={style}>
@@ -109,12 +109,12 @@
 //         <div className={"flex-col f-1"}>
 //           {ticks.map((h, i) => (
 //             <div key={i} className="flex-row f-0" style={{ height: HOUR_HEIGHT + "px"}}>
-//               <div className="f-0 text-2">{h === 24? "00" : h}:00</div> 
-//               <div className="f-1  ml-p5 mt-p5" style={{ height: "1px"}} ></div>    
+//               <div className="f-0 text-2">{h === 24? "00" : h}:00</div>
+//               <div className="f-1  ml-p5 mt-p5" style={{ height: "1px"}} ></div>
 //             </div>
 //           ))}
 //         </div>
-        
+
 //         {dayItems.map(({ content, from, to, post_code, onClick }, i) => {
 //           const topOffset = HOUR_HEIGHT * (getFromHour(from) - startHour);
 //           const btmOffset = HOUR_HEIGHT * (getToHour(to) - startHour);
@@ -123,7 +123,7 @@
 
 //           // debugger
 //           return (
-//             <button key={i} onClick={onClick} className="item rounded shadow-xl p-p5 absolute bg-color-0 w-fit flex-row text-white" 
+//             <button key={i} onClick={onClick} className="item rounded shadow-xl p-p5 absolute bg-color-0 w-fit flex-row text-white"
 //             style={{
 //               left: "70px",
 //               top: `${topOffset + 2 + 24}px`,
@@ -131,16 +131,16 @@
 //             }}>
 //               <div className="flex-col-wrap mr-2 h-full jc-between ai-start" >
 //                 <div className="mr-1">{format(from, "HH:mm", { locale } )}</div>
-//                 <div>{format(to, "HH:mm", { locale } )}</div> 
+//                 <div>{format(to, "HH:mm", { locale } )}</div>
 //               </div>
 //               <div className="flex-col-wrap ai-start" style={{ }}>
 //                 <div className="text-medium mb-1 mr-1">{`${hours} hour${hours > 1? "s" : ""}`}</div>
-//                 <div className="text-medium">{post_code}</div>  
+//                 <div className="text-medium">{post_code}</div>
 //               </div>
-//             </button>          
+//             </button>
 //           )
 //         })}
-        
+
 //       </div>
 //     </div>
 //   );

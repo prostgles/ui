@@ -1,47 +1,44 @@
-
 /* UTILS */
-export function loadCSS(document, css_style, STYLE_ID){
-
-  if(!document.head.querySelector(`style#${STYLE_ID}`)){
-      const style = document.createElement("style");
-      style.innerHTML = css_style;
-      style.setAttribute("id", STYLE_ID);
-      document.head.append(style);
+export function loadCSS(document, css_style, STYLE_ID) {
+  if (!document.head.querySelector(`style#${STYLE_ID}`)) {
+    const style = document.createElement("style");
+    style.innerHTML = css_style;
+    style.setAttribute("id", STYLE_ID);
+    document.head.append(style);
   }
 }
 
-export function addEvent(node, type, func){
-  const wrappedEvent = function(ev){
-    if(!node.isConnected){
-      node.removeEventListener(type, wrappedEvent,  {passive: false});
+export function addEvent(node, type, func) {
+  const wrappedEvent = function (ev) {
+    if (!node.isConnected) {
+      node.removeEventListener(type, wrappedEvent, { passive: false });
     } else {
-      func(ev)
+      func(ev);
     }
-  }
-  node.removeEventListener(type, wrappedEvent,  {passive: false});
-  node.addEventListener(type, wrappedEvent,  {passive: false});
+  };
+  node.removeEventListener(type, wrappedEvent, { passive: false });
+  node.addEventListener(type, wrappedEvent, { passive: false });
 }
 
-function getAttrs(node, attrNames = ["title"]){
+function getAttrs(node, attrNames = ["title"]) {
   const res = {};
-  attrNames.map(key => {
+  attrNames.map((key) => {
     res[key] = node[key];
-  })
+  });
   return res;
 }
 
-export function get(obj, propertyPath){
-
+export function get(obj, propertyPath) {
   let p = propertyPath,
-      o = obj;
+    o = obj;
 
-  if(typeof p === "string") p = p.split(".");
-  return p.reduce((xs, x) =>{ 
-      if(xs && xs[x]) { 
-          return xs[x] 
-      } else { 
-          return undefined; 
-      } 
+  if (typeof p === "string") p = p.split(".");
+  return p.reduce((xs, x) => {
+    if (xs && xs[x]) {
+      return xs[x];
+    } else {
+      return undefined;
+    }
   }, o);
 }
 
@@ -61,12 +58,12 @@ export default class Component extends HTMLElement {
   refRoot?: ChildNode;
   refs: { [key: string]: Element } = {};
   _events: any[] = [];
-  static DEFINE(comp){
-    if(!comp || !comp.TAG_NAME) throw "invalid component";
+  static DEFINE(comp) {
+    if (!comp || !comp.TAG_NAME) throw "invalid component";
     customElements.define(comp.TAG_NAME, comp);
   }
 
-  constructor(attrs?){
+  constructor(attrs?) {
     super(); //super(attrs);
     Object.assign(this, attrs);
     // this.render(attrs);
@@ -77,93 +74,101 @@ export default class Component extends HTMLElement {
   //   Object.assign(this.params, p);
   // }
 
-  addScriptIfMissing(src){
-    if(!document.head.querySelector(`script[src="${src}"]`)){
+  addScriptIfMissing(src) {
+    if (!document.head.querySelector(`script[src="${src}"]`)) {
       return new Promise((resolve, reject) => {
-        const scrpt = document.createElement('script');
-        try{
-          scrpt.type = 'text/javascript';
-          scrpt.setAttribute('src', src);
-          scrpt.addEventListener('load', function() {
+        const scrpt = document.createElement("script");
+        try {
+          scrpt.type = "text/javascript";
+          scrpt.setAttribute("src", src);
+          scrpt.addEventListener("load", function () {
             resolve(1);
           });
           // document.body.appendChild(scrpt);
           document.body.insertBefore(scrpt, document.body.firstChild);
-        } catch(e){
+        } catch (e) {
           reject(e);
         }
-        
-      })
+      });
     }
     return Promise.resolve(1);
   }
-  addLinkIfMissing(href){
-    if(!document.head.querySelector(`link[href="${href}"]`)){
-      const lnk = document.createElement('link');
-      lnk.setAttribute('href', href);
+  addLinkIfMissing(href) {
+    if (!document.head.querySelector(`link[href="${href}"]`)) {
+      const lnk = document.createElement("link");
+      lnk.setAttribute("href", href);
       document.head.appendChild(lnk);
     }
   }
 
-  removeChildren(parent){
-    removeChildren(parent)
-  }
-  
-  setCSS(css){
-    loadCSS(this.ownerDocument, css, this.constructor.name.toLowerCase() + "-comp-style");
+  removeChildren(parent) {
+    removeChildren(parent);
   }
 
-  setHTML(html){
+  setCSS(css) {
+    loadCSS(
+      this.ownerDocument,
+      css,
+      this.constructor.name.toLowerCase() + "-comp-style",
+    );
+  }
+
+  setHTML(html) {
     this.innerHTML = html;
     this.refRoot = this.firstChild ?? undefined;
     this.refs = {};
-    Array.from(this.querySelectorAll("[data-ref]")).map(elem => {
+    Array.from(this.querySelectorAll("[data-ref]")).map((elem) => {
       /* Ignore nested id duplicates */
-      if(elem instanceof HTMLElement && !this.refs[toCammelCase(elem.dataset.ref)]){
+      if (
+        elem instanceof HTMLElement &&
+        !this.refs[toCammelCase(elem.dataset.ref)]
+      ) {
         this.refs[toCammelCase(elem.dataset.ref)] = elem;
       }
     });
 
-    function toCammelCase(str){
-      return str.toLowerCase().replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
+    function toCammelCase(str) {
+      return str.toLowerCase().replace(/-([a-z])/g, function (g) {
+        return g[1].toUpperCase();
+      });
     }
-    function toDashed(strCammel){
-      return strCammel.replace(/[A-Z]/g, m => "-" + m.toLowerCase());
+    function toDashed(strCammel) {
+      return strCammel.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase());
     }
   }
 
-  addEvent(type, node, listener){
-    node.removeEventListener(type, listener,  { passive: false });
-    node.addEventListener(type, listener,  { passive: false });
-    this._events.push({ type, node, listener })
+  addEvent(type, node, listener) {
+    node.removeEventListener(type, listener, { passive: false });
+    node.addEventListener(type, listener, { passive: false });
+    this._events.push({ type, node, listener });
   }
 
-  disconnectedCallback(){
+  disconnectedCallback() {
     this._events.map(({ type, node, listener }) => {
       node.removeEventListener(type, listener, { passive: false });
     });
   }
 }
 
-export function removeChildren(node){
+export function removeChildren(node) {
   while (node.lastChild) {
     node.removeChild(node.lastChild);
   }
 }
 
 export class Icon extends HTMLElement {
-  constructor(){
+  constructor() {
     super();
-    this.render()
+    this.render();
   }
 
-  render(){
+  render() {
     const path = this.innerText;
-    if(path && !/^[a-zA-Z0-9-]+$/.test(path)) throw "invalid path";
+    if (path && !/^[a-zA-Z0-9-]+$/.test(path)) throw "invalid path";
     this.style.height = "24px";
     this.style.width = "24px";
     this.style.alignItems = "center";
-    this.innerHTML = `<img  loading="lazy" src="/svg/${path}.svg" alt="${path}" style="width:24px;height:24px; vertical-align: middle;     filter: opacity(0.4); " />`
+    this.innerHTML = `<img  loading="lazy" src="/svg/${path}.svg" alt="${path}" style="width:24px;height:24px; vertical-align: middle;     filter: opacity(0.4); " />`;
   }
 }
 customElements.define("comp-icon", Icon);
@@ -189,15 +194,15 @@ export class IconButton extends Component {
     }
   `;
 
-  constructor(){
+  constructor() {
     super();
     super.setCSS(IconButton.CSS);
     this.render();
   }
 
-  render(){
+  render() {
     const path = this.innerText;
-    this.classList.add("icon-btn")
+    this.classList.add("icon-btn");
     this.innerHTML = `
       <button>
         <comp-icon>${path}</comp-icon>
@@ -324,13 +329,13 @@ customElements.define("icon-btn", IconButton);
 //       }
 //       ${DropDown_TAG_NAME} button {
 //         background: transparent;
-        
+
 //         min-width: unset;
 //         font-size: 16px;
-//         font-weight: 600; 
+//         font-weight: 600;
 //         padding: 0 8px;
 //       }
-      
+
 //     `);
 //     this.setHTML(`
 //       <div data-ref="root" class="flex-col">
@@ -375,7 +380,7 @@ customElements.define("icon-btn", IconButton);
 //   if(delta.textButton){
 //     this.refs.btnText.classList.toggle("hidden", false);
 //     this.refs.btnIcon.classList.toggle("hidden", true);
-    
+
 //     this.refs.btnText.innerText = textButton;
 //     this.refs.btnText.onpointerdown = e => {
 //       this.setPopup(e, this.refs.btnText);
@@ -494,7 +499,7 @@ customElements.define("icon-btn", IconButton);
 
 //     const getExisting = () => {
 //       return Array.from(node.children).find(el => {
-//         return el.tagName.toLowerCase() === domContent.Component.TAG_NAME.toLowerCase() && 
+//         return el.tagName.toLowerCase() === domContent.Component.TAG_NAME.toLowerCase() &&
 //           (!idField || el[idField] == domContent.params[idField]);
 //       });
 //     }
@@ -519,7 +524,6 @@ customElements.define("icon-btn", IconButton);
 //       //   existing.render(delta);
 //       // }
 //     }
-
 
 //     checkChildren(attachedNode, domContent)
 //     // if(domContent instanceof DOM && domContent.content){
@@ -570,7 +574,7 @@ customElements.define("icon-btn", IconButton);
 // if(!parent.firstChild && children && children.length){
 //   appendChildren(parent, children);
 // } else {
-  
+
 //   /* Remove missing children */
 //   const getExisting = () => {
 //     return Array.from(parent.children).filter(el => {
@@ -595,15 +599,11 @@ customElements.define("icon-btn", IconButton);
 //   if(!children || !children.length) return;
 
 //   var fragment = document.createDocumentFragment();
-//   for (var i = 0; i < children.length; i++) {  
+//   for (var i = 0; i < children.length; i++) {
 //     fragment.appendChild(children[i]);
 //   }
 //   parent.appendChild(fragment);
 // }
-
-
-
-
 
 // export function initPanning(handlerDiv, { onPanStart=()=>{}, onPan=()=>{}, onPanEnd=()=>{} , clamp = true }){
 //   if(handlerDiv && !handlerDiv._initPanning){
@@ -650,7 +650,7 @@ customElements.define("icon-btn", IconButton);
 
 // export function initPan({ defaultValues, handle, target, manual = false, onPanStart = ()=>{}, onPan = ()=>{}, onPanEnd = ()=>{} }){
 
-// initPanning(handle, { 
+// initPanning(handle, {
 //   onPanStart,
 //   onPan: ({ x, y }) => {
 //     setVal({ x, y });
@@ -694,7 +694,6 @@ customElements.define("icon-btn", IconButton);
 
 //       const W = [300, window.innerWidth], H = [300, window.innerHeight],
 //       { width, height } = target._size;
-      
 
 //       let newW = width + x - xStart,
 //         newH = height + y - yStart;

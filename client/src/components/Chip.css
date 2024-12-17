@@ -1,10 +1,10 @@
 .chip {
-  padding-left: .625rem;
-  padding-right: .625rem;
-  padding-top: .125rem;
-  padding-bottom: .125rem;
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
   line-height: 1rem;
-  font-size: .75rem;
+  font-size: 0.75rem;
   font-weight: 500;
 
   align-items: center;
@@ -19,8 +19,8 @@
 
 .chip.lg {
   font-size: 1em;
-  padding-top: .4rem;
-  padding-bottom: .4rem;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
 }
 
 .chip.green {
@@ -29,7 +29,7 @@
 .chip.variant-naked {
   gap: 4px;
 }
-.chip.variant-default, 
+.chip.variant-default,
 .chip.variant-outline {
   background-color: var(--bg-color-1);
 }

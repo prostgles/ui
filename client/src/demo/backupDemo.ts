@@ -3,19 +3,28 @@ import { click, getElement } from "./demoUtils";
 
 export const backupDemo = async () => {
   await click("dashboard.goToConnections");
-  await click("", `[data-key=${JSON.stringify("prostgles_video_demo")}] a.LEFT-CONNECTIONINFO`);
+  await click(
+    "",
+    `[data-key=${JSON.stringify("prostgles_video_demo")}] a.LEFT-CONNECTIONINFO`,
+  );
   await click("dashboard.goToConnConfig");
   await tout(1e3);
-  if(getElement("BackupControls.Restore")){
+  if (getElement("BackupControls.Restore")) {
     await tout(1e3);
-    return
+    return;
   }
   await click("config.bkp");
   await tout(500);
-  const deleteAllBtn = getElement<HTMLButtonElement>("BackupControls.DeleteAll", "button");
-  if(deleteAllBtn){
+  const deleteAllBtn = getElement<HTMLButtonElement>(
+    "BackupControls.DeleteAll",
+    "button",
+  );
+  if (deleteAllBtn) {
     deleteAllBtn.click();
-    const code = getElement<HTMLDivElement>("", `[title="confirmation-code"]`)?.innerText;
+    const code = getElement<HTMLDivElement>(
+      "",
+      `[title="confirmation-code"]`,
+    )?.innerText;
     const input = getElement<HTMLInputElement>("", `[name="confirmation"]`);
     (input as any)?.forceDemoValue(code);
     await click("BackupControls.DeleteAll.Confirm");
@@ -41,4 +50,4 @@ export const backupDemo = async () => {
   await tout(500);
   await click("AutomaticBackups.hourOfDay");
   await tout(2e3);
-}
+};

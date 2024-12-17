@@ -7,25 +7,25 @@ import SmartTable from "./SmartTable";
 import { PasswordlessSetup } from "./AccessControl/PasswordlessSetup";
 
 export type Users = {
-  "created"?: Date;
-  "id"?: string;
-  "last_updated"?: number;
-  "password"?: string;
-  "status"?: string;
-  "type"?: string;
-  "username"?: string;
-}
+  created?: Date;
+  id?: string;
+  last_updated?: number;
+  password?: string;
+  status?: string;
+  type?: string;
+  username?: string;
+};
 
 type S = {
   collapsed: Boolean;
   loading: Boolean;
-}
+};
 
 export default class UserManager extends RTComp<ExtraProps, S> {
   state: S = {
     collapsed: true,
     loading: true,
-  }
+  };
 
   loaded = false;
   sub?: SubscriptionHandler;
@@ -37,43 +37,44 @@ export default class UserManager extends RTComp<ExtraProps, S> {
     //     this.setState({ users })
     //   })
     // }
-  }
+  };
 
-  onUnmount() {
-  }
+  onUnmount() {}
 
   render() {
     const { dbs, dbsTables, user, dbsMethods, theme } = this.props;
 
-
     let content: React.ReactNode;
     if (user?.type !== "admin") {
-
-      content = <div>Must be admin to access this section</div>
-
+      content = <div>Must be admin to access this section</div>;
     } else if (user.passwordless_admin) {
-      
-      content = <PasswordlessSetup {...this.props} />
-
+      content = <PasswordlessSetup {...this.props} />;
     } else {
-
-      content = <SmartTable
-        theme={theme}
-        className="w-full"
-        db={dbs as any}
-        methods={dbsMethods}
-        titlePrefix="Prostgles UI users"
-        tableName="users"
-        tables={dbsTables}
-        showInsert={true}
-        allowEdit={true}
-        realtime={{}}
-      />
+      content = (
+        <SmartTable
+          theme={theme}
+          className="w-full"
+          db={dbs as any}
+          methods={dbsMethods}
+          titlePrefix="Prostgles UI users"
+          tableName="users"
+          tables={dbsTables}
+          showInsert={true}
+          allowEdit={true}
+          realtime={{}}
+        />
+      );
     }
 
-
-    return <div className={"flex-col relative w-full f-1 min-h-0 pt-1 " + (window.isLowWidthScreen? "" : " px-2 ")}>
-      {content}
-    </div>
+    return (
+      <div
+        className={
+          "flex-col relative w-full f-1 min-h-0 pt-1 " +
+          (window.isLowWidthScreen ? "" : " px-2 ")
+        }
+      >
+        {content}
+      </div>
+    );
   }
 }

@@ -6,13 +6,13 @@ import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
 
 export type W_TableInfo = {
   comment: string;
-  type: "Materialized view" | "View" | "Table",
+  type: "Materialized view" | "View" | "Table";
   viewDefinition: string | null;
-  relowner: number,
-  relowner_name: string,
+  relowner: number;
+  relowner_name: string;
   relowner_is_current_user: boolean;
-  relrowsecurity: boolean,
-  relforcerowsecurity: boolean,
+  relrowsecurity: boolean;
+  relforcerowsecurity: boolean;
   constraints: {
     conname: string;
     definition: string;
@@ -28,7 +28,7 @@ export type W_TableInfo = {
     "Index Size": string;
     "Actual Size": string;
     "Row count": string;
-  }
+  };
   triggers: {
     trigger_name: string;
     event_manipulation: string;
@@ -37,17 +37,23 @@ export type W_TableInfo = {
     function_def: string;
     disabled: boolean;
   }[];
-  accessRules:(DBSSchema["access_control"] & {
+  accessRules: (DBSSchema["access_control"] & {
     userTypes: string[];
-  })[]
-}
+  })[];
+};
 
-export const getTableMeta = async (db: DBHandlerClient, dbs: DBS, database_id: number, tableName: string, tableOid: number): Promise<W_TableInfo> => {
+export const getTableMeta = async (
+  db: DBHandlerClient,
+  dbs: DBS,
+  database_id: number,
+  tableName: string,
+  tableOid: number,
+): Promise<W_TableInfo> => {
+  if (!db.sql) throw "db.sql not allowed";
 
-  if (!db.sql) throw "db.sql not allowed"
- 
   try {
-    const constraints: any = await db.sql(`
+    const constraints: any = await db.sql(
+      `
         SELECT conname, pg_get_constraintdef(c.oid) as definition 
         FROM pg_catalog.pg_constraint c
           INNER JOIN pg_catalog.pg_class rel
@@ -57,17 +63,20 @@ export const getTableMeta = async (db: DBHandlerClient, dbs: DBS, database_id: n
           WHERE nsp.nspname = current_schema()
               AND format('%I', rel.relname) = \${tableName};`,
       { tableName },
-      { returnType: "rows" }
+      { returnType: "rows" },
     );
-    const indexes: any = await db.sql(`
+    const indexes: any = await db.sql(
+      `
         SELECT tablename, indexname, indexdef
         FROM pg_indexes
         WHERE schemaname = current_schema() AND format('%I', tablename) = \${tableName}`,
       { tableName },
-      { returnType: "rows" }
+      { returnType: "rows" },
     );
 
-    const sizeInfo: any = await db.sql(`
+    const sizeInfo: any =
+      (await db.sql(
+        `
         SELECT
           relname  as table_name,
           pg_size_pretty(pg_total_relation_size(relid)) As "Total Size",
@@ -78,11 +87,17 @@ export const getTableMeta = async (db: DBHandlerClient, dbs: DBS, database_id: n
         WHERE format('%I', relname) = \${tableName}
         ORDER BY pg_total_relation_size(relid) DESC;
       `,
-      { tableName },
-      { returnType: "row" }) || {};
-    const comment = await db.sql(`SELECT obj_description(${tableOid}) as c FROM pg_class LIMIT 1`, [tableName], { returnType: "value" });
+        { tableName },
+        { returnType: "row" },
+      )) || {};
+    const comment = await db.sql(
+      `SELECT obj_description(${tableOid}) as c FROM pg_class LIMIT 1`,
+      [tableName],
+      { returnType: "value" },
+    );
 
-    const triggers: any = await db.sql(`
+    const triggers: any = await db.sql(
+      `
         SELECT event_object_table
           ,trigger_name
           ,event_manipulation
@@ -98,11 +113,17 @@ export const getTableMeta = async (db: DBHandlerClient, dbs: DBS, database_id: n
         ,event_manipulation
       `,
       { tableName },
-      { returnType: "rows" });
+      { returnType: "rows" },
+    );
 
-    const policiesCount = await db.sql(`SELECT COUNT(*) FROM ( \n${PG_OBJECT_QUERIES.policies.sql(tableName)} \n) tt`, { tableName }, { returnType: "value" })
+    const policiesCount = await db.sql(
+      `SELECT COUNT(*) FROM ( \n${PG_OBJECT_QUERIES.policies.sql(tableName)} \n) tt`,
+      { tableName },
+      { returnType: "value" },
+    );
 
-    const type = await db.sql(`
+    const type = (await db.sql(
+      `
         SELECT 
           CASE 
             WHEN  c.relkind = 'm' THEN 'Materialized view' 
@@ -126,11 +147,14 @@ export const getTableMeta = async (db: DBHandlerClient, dbs: DBS, database_id: n
         AND format('%I', c.relname) = \${tableName}
       `,
       { tableName },
-      { returnType: "row" }
-    ) as any;
+      { returnType: "row" },
+    )) as any;
 
-    const viewDefinition = await db.sql("SELECT pg_get_viewdef(${tableOid})", { tableOid }, { returnType: "value" });
-
+    const viewDefinition = await db.sql(
+      "SELECT pg_get_viewdef(${tableOid})",
+      { tableOid },
+      { returnType: "value" },
+    );
 
     const filter = {
       $and: [
@@ -143,17 +167,26 @@ export const getTableMeta = async (db: DBHandlerClient, dbs: DBS, database_id: n
         //   ]
         // }
       ],
-    } 
+    };
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    const nonFilteredRules = await dbs.access_control?.find(filter, ACCESS_CONTROL_SELECT);
-    const rules = nonFilteredRules.filter(r => r.dbPermissions.type !== "Custom" || r.dbPermissions.customTables.find(t => t.tableName === tableName));
-    const accessRules: W_TableInfo["accessRules"] = rules.map(r => {
-      const userTypes = r.access_control_user_types.flatMap(d => d.ids.flat())
+    const nonFilteredRules = await dbs.access_control?.find(
+      filter,
+      ACCESS_CONTROL_SELECT,
+    );
+    const rules = nonFilteredRules.filter(
+      (r) =>
+        r.dbPermissions.type !== "Custom" ||
+        r.dbPermissions.customTables.find((t) => t.tableName === tableName),
+    );
+    const accessRules: W_TableInfo["accessRules"] = rules.map((r) => {
+      const userTypes = r.access_control_user_types.flatMap((d) =>
+        d.ids.flat(),
+      );
       return {
         ...r,
         userTypes,
-      }
-    })
+      };
+    });
     return {
       constraints,
       indexes,
@@ -164,10 +197,9 @@ export const getTableMeta = async (db: DBHandlerClient, dbs: DBS, database_id: n
       policiesCount,
       viewDefinition,
       accessRules,
-    }
-
+    };
   } catch (e) {
-    console.error(e)
+    console.error(e);
     throw e;
   }
-}
+};

@@ -11,10 +11,15 @@ export type ColumnConstraint = {
   foreign_table_schema: string | null;
   foreign_table_name: string | null;
   foreign_column_name: string | null;
-}
+};
 
-export const getColumnConstraints = (tableName: string, columnName: string, sql: SQLHandler): Promise<ColumnConstraint[]> => {
-  return sql(`
+export const getColumnConstraints = (
+  tableName: string,
+  columnName: string,
+  sql: SQLHandler,
+): Promise<ColumnConstraint[]> => {
+  return sql(
+    `
     SELECT DISTINCT 
       trim(constraint_type) as constraint_type, tc.constraint_name,
       tc.table_schema, 
@@ -41,6 +46,8 @@ export const getColumnConstraints = (tableName: string, columnName: string, sql:
         ON rc.constraint_name = tc.constraint_name 
         AND tc.table_schema = rc.constraint_schema
       WHERE tc.table_name = $1 AND c.column_name = $2
-  `, [tableName, columnName], { returnType: "rows" }) as any;
-
-}
+  `,
+    [tableName, columnName],
+    { returnType: "rows" },
+  ) as any;
+};

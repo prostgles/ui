@@ -1,21 +1,21 @@
 const { resolve } = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
-const path = require('path');
-const webpack = require('webpack');
-const APP_DIR = path.resolve(__dirname, '../src');
-const MONACO_DIR = path.resolve(__dirname, '../node_modules/monaco-editor');
-const { SaveMdiIcons } = require('../setup-icons');
+const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
+const path = require("path");
+const webpack = require("webpack");
+const APP_DIR = path.resolve(__dirname, "../src");
+const MONACO_DIR = path.resolve(__dirname, "../node_modules/monaco-editor");
+const { SaveMdiIcons } = require("../setup-icons");
 const PRODUCTION = process.env.NODE_ENV === "production";
 
 const getLoader = () => {
   const babel = {
-    test: PRODUCTION? /\.jsx?$/ : [/\.jsx?$/, /\.tsx?$/],
+    test: PRODUCTION ? /\.jsx?$/ : [/\.jsx?$/, /\.tsx?$/],
     use: "babel-loader",
     exclude: /node_modules/,
-  }
-  if(!PRODUCTION) return [babel];
+  };
+  if (!PRODUCTION) return [babel];
   return [
     babel,
     {
@@ -24,14 +24,13 @@ const getLoader = () => {
       exclude: /node_modules/,
       options: {
         projectReferences: true,
-        transpileOnly: true
-      }
-    }
+        transpileOnly: true,
+      },
+    },
   ];
-}
+};
 
-
-      /** Added m?js rules to ensure deck.gl community works. 
+/** Added m?js rules to ensure deck.gl community works. 
        *  Error: failed to resolve only because it was resolved as fully specified (probably because the origin is strict EcmaScript Module, 
        * e. g. a module with javascript mimetype, a '*.mjs' file, or a '*.js' file where the package.json contains '"type": "module"'). 
        * 
@@ -54,46 +53,50 @@ const getLoader = () => {
       
       */
 module.exports = {
-  target: ["web", 'es2020'],
+  target: ["web", "es2020"],
   resolve: {
-    extensions: [
-      ".js", ".jsx", ".ts", ".tsx"
-    ],
+    extensions: [".js", ".jsx", ".ts", ".tsx"],
   },
   context: resolve(__dirname, "../src"),
   module: {
     rules: [
-
       {
         test: /\.css$/,
         include: APP_DIR,
         exclude: /\.module\.css$/,
-        use:[
-          { loader: MiniCssExtractPlugin.loader, options:  { publicPath: '../../' }},
-          { loader:'css-loader', options: { importLoaders: 1, sourceMap: false }, },
-          { loader: "postcss-loader" }
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader,
+            options: { publicPath: "../../" },
+          },
+          {
+            loader: "css-loader",
+            options: { importLoaders: 1, sourceMap: false },
+          },
+          { loader: "postcss-loader" },
           // { loader: require.resolve('css-loader'), options: { importLoaders: 1, sourceMap: false } },
         ],
-      }, 
+      },
       {
-				test: /\.ttf$/,
+        test: /\.ttf$/,
         include: MONACO_DIR,
-				type: 'asset/resource'
-			},
+        type: "asset/resource",
+      },
       {
         test: /\.woff2?$/i,
-        type: 'asset/resource',
+        type: "asset/resource",
         include: MONACO_DIR,
-        dependency: { not: ['url'] },
-      }, 
+        dependency: { not: ["url"] },
+      },
       {
         test: /\.(scss|sass)$/,
         include: APP_DIR,
         use: ["style-loader", "css-loader", "sass-loader", "postcss-loader"],
-      }, {
+      },
+      {
         test: /\.css$/,
         include: MONACO_DIR,
-        use: ['style-loader', 'css-loader' ],
+        use: ["style-loader", "css-loader"],
       },
       ...getLoader(),
       {
@@ -106,22 +109,16 @@ module.exports = {
     ],
   },
   plugins: [
-    new HtmlWebpackPlugin({ 
+    new HtmlWebpackPlugin({
       template: "index.html.ejs",
       v: require("../../electron/package.json")?.version,
     }),
-    new MiniCssExtractPlugin({ 
-      filename: 'static/css/[name].[contenthash:8].css',
-      chunkFilename: 'static/css/[name].[contenthash:8].chunk.css',
+    new MiniCssExtractPlugin({
+      filename: "static/css/[name].[contenthash:8].css",
+      chunkFilename: "static/css/[name].[contenthash:8].chunk.css",
     }),
-    new MonacoWebpackPlugin({ 
-      languages: [
-        "typescript", 
-        "javascript", 
-        "sql", 
-        "pgsql", 
-        "json"
-      ]
+    new MonacoWebpackPlugin({
+      languages: ["typescript", "javascript", "sql", "pgsql", "json"],
     }),
     new webpack.ProgressPlugin({
       activeModules: false,
@@ -143,6 +140,6 @@ module.exports = {
     clean: true, // Clean the output directory before emit.
   },
   performance: {
-    hints: false, 
+    hints: false,
   },
 };

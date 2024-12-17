@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-		"target": "ES2017",
-		"lib": [ "ES2017", "es2019", "ES2021.String" ],
+    "target": "ES2017",
+    "lib": ["ES2017", "es2019", "ES2021.String"],
     "module": "esnext",
     "allowJs": true,
     "skipLibCheck": true,
@@ -15,9 +15,7 @@
     "noImplicitAny": false,
     "declaration": true,
     "noUncheckedIndexedAccess": true,
-		"ignoreDeprecations": "5.0"
+    "ignoreDeprecations": "5.0"
   },
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

@@ -9,13 +9,10 @@ const KWDS = [
 ] as const;
 
 export const MatchDelete: SQLMatcher = {
-  match: cb => cb.prevLC.startsWith("delete"),
+  match: (cb) => cb.prevLC.startsWith("delete"),
   result: async ({ cb, ss, setS, sql }) => {
-
     const { getSuggestion } = withKWDs(KWDS, { cb, ss, setS, sql });
 
-    return getSuggestion()
-
-  }
-}
-
+    return getSuggestion();
+  },
+};

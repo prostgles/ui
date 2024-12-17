@@ -1,12 +1,20 @@
-import { S3Client, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import { Readable } from "stream";
-import type { CloudClient, FileUploadArgs, UploadedCloudFile } from "prostgles-server/dist/FileManager/FileManager";
+import type {
+  CloudClient,
+  FileUploadArgs,
+  UploadedCloudFile,
+} from "prostgles-server/dist/FileManager/FileManager";
 import { pickKeys } from "prostgles-types";
 
-type S3Config = { 
+type S3Config = {
   Bucket: string;
   region: string;
   accessKeyId: string;
@@ -28,7 +36,7 @@ const getS3CloudClient = (s3Config: S3Config): CloudClient => {
     file: string | Buffer | Readable,
     contentType: string,
     onFinish: (error: any, result: UploadedCloudFile) => void,
-    onProgress?: (bytesUploaded: number) => void
+    onProgress?: (bytesUploaded: number) => void,
   ): Promise<void> => {
     const stream = file instanceof Readable ? file : Readable.from(file);
 
@@ -51,7 +59,7 @@ const getS3CloudClient = (s3Config: S3Config): CloudClient => {
       parallelUploads3.on("httpUploadProgress", (progres) => {
         onProgress?.(progres.loaded ?? 0);
       });
-      
+
       await parallelUploads3.done();
 
       // Fetch the object metadata to get etag and content length
@@ -66,10 +74,9 @@ const getS3CloudClient = (s3Config: S3Config): CloudClient => {
 
       onFinish(undefined, uploadedFile);
     } catch (error: unknown) {
-      onFinish(error ?? new Error("Error"), undefined as any)
+      onFinish(error ?? new Error("Error"), undefined as any);
     }
-  }
-
+  };
 
   return {
     upload: (file: FileUploadArgs) =>
@@ -87,7 +94,7 @@ const getS3CloudClient = (s3Config: S3Config): CloudClient => {
             }
             file.onFinish(error, result);
           },
-          file.onProgress
+          file.onProgress,
         );
       }),
 
@@ -98,18 +105,21 @@ const getS3CloudClient = (s3Config: S3Config): CloudClient => {
     },
 
     delete: async (fileName: string) => {
-      const command = new DeleteObjectCommand({  ...bucket, Key: fileName });
+      const command = new DeleteObjectCommand({ ...bucket, Key: fileName });
       await s3Client.send(command);
     },
 
-    getSignedUrlForDownload: async (fileName: string, expiresInSeconds: number) => {
-      
-      const command = new GetObjectCommand({  ...bucket, Key: fileName });
-      const url = await getSignedUrl(s3Client, command, { expiresIn: expiresInSeconds });
+    getSignedUrlForDownload: async (
+      fileName: string,
+      expiresInSeconds: number,
+    ) => {
+      const command = new GetObjectCommand({ ...bucket, Key: fileName });
+      const url = await getSignedUrl(s3Client, command, {
+        expiresIn: expiresInSeconds,
+      });
       return url;
     },
-  }
+  };
 };
-
 
 export const getCloudClient = (config: S3Config) => getS3CloudClient(config);

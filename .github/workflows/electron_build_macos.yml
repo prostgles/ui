@@ -8,29 +8,29 @@ jobs:
     timeout-minutes: 25
     runs-on: macos-12-large
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 22 # node 20 is too slow
-    - name: Install dependencies
-      run: |
-        cd electron 
-        npm run build-macos
-        rm -rf ./dist/mac-universal
-    - name: Test DMG file installations and run
-      run: |
-        shasum -a 256 electron/dist/*.dmg > electron/dist/checksum.txt
-        cat electron/dist/checksum.txt
-        hdiutil attach electron/dist/*.dmg
-        ls -la /Volumes
-        sudo cp -r /Volumes/Prostgles*/*.app /Applications
-        open /Applications/Prostgles*.app
-        sleep 10
-        screencapture electron/dist/picture.png
-    - uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: installers
-        path: electron/dist
-        compression-level: 0
-        retention-days: 10
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 22 # node 20 is too slow
+      - name: Install dependencies
+        run: |
+          cd electron 
+          npm run build-macos
+          rm -rf ./dist/mac-universal
+      - name: Test DMG file installations and run
+        run: |
+          shasum -a 256 electron/dist/*.dmg > electron/dist/checksum.txt
+          cat electron/dist/checksum.txt
+          hdiutil attach electron/dist/*.dmg
+          ls -la /Volumes
+          sudo cp -r /Volumes/Prostgles*/*.app /Applications
+          open /Applications/Prostgles*.app
+          sleep 10
+          screencapture electron/dist/picture.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installers
+          path: electron/dist
+          compression-level: 0
+          retention-days: 10

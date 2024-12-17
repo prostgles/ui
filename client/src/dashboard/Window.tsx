@@ -1,4 +1,11 @@
-import { mdiArrowCollapse, mdiClose, mdiCog, mdiCollapseAllOutline, mdiDotsVertical, mdiOpenInNew, } from "@mdi/js";
+import {
+  mdiArrowCollapse,
+  mdiClose,
+  mdiCog,
+  mdiCollapseAllOutline,
+  mdiDotsVertical,
+  mdiOpenInNew,
+} from "@mdi/js";
 
 import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { ReactNode } from "react";
@@ -23,87 +30,88 @@ type P<W extends WindowSyncItem> = {
   children?: ReactNode;
   getMenu?: (w: W, onClose: () => any) => ReactNode;
 
-
-  quickMenuProps?: W extends WindowSyncItem<"table"> | WindowSyncItem<"sql">? Omit<ProstglesQuickMenuProps, "w"> : undefined
-}
+  quickMenuProps?: W extends WindowSyncItem<"table"> | WindowSyncItem<"sql"> ?
+    Omit<ProstglesQuickMenuProps, "w">
+  : undefined;
+};
 
 type S<W extends WindowSyncItem> = {
   showMenu: boolean;
   w?: W;
-}
+};
 
 type D = {
   w?: WindowSyncItem;
-  wSync?: SingleSyncHandles<WindowData>
-}
+  wSync?: SingleSyncHandles<WindowData>;
+};
 
-export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W> , D> {
-
+export default class Window<W extends WindowSyncItem> extends RTComp<
+  P<W>,
+  S<W>,
+  D
+> {
   state: S<W> = {
-    showMenu: false
-  }
+    showMenu: false,
+  };
 
-  d: D = {
+  d: D = {};
 
-  }
-
-  static getTitle(_w: WindowSyncItem){
+  static getTitle(_w: WindowSyncItem) {
     const w = _w.$get() as WindowSyncItem | undefined;
-    const title = !w? undefined : w.name || w.table_name || w.method_name || w.id;
+    const title =
+      !w ? undefined : w.name || w.table_name || w.method_name || w.id;
     // if(!w){
     //   // TODO ensure on reconnect all syncs work as expected
     //   console.warn("Window not found. Reloading...");
     //   setTimeout(() => window.location.reload(), 500);
-    // } 
+    // }
     return title || "Empty";
   }
 
   onDelta = (dp) => {
     const { w } = this.d;
     const { onWChange } = this.props;
-    if(this.ref && w){
-      const titleDiv = getSilverGridTitleNode(w.id)
+    if (this.ref && w) {
+      const titleDiv = getSilverGridTitleNode(w.id);
       const title = Window.getTitle(w);
-      if(titleDiv && titleDiv.innerText !== title){
+      if (titleDiv && titleDiv.innerText !== title) {
         titleDiv.innerText = title;
         titleDiv.title = title;
       }
     }
 
-    if(dp?.onWChange && this.d.w){
-      onWChange?.(this.d.w as any, this.d.w  as any)
+    if (dp?.onWChange && this.d.w) {
+      onWChange?.(this.d.w as any, this.d.w as any);
     }
 
-    if(this.props.w && !this.d.wSync) {
-
+    if (this.props.w && !this.d.wSync) {
       const wSync = this.props.w.$cloneSync((_w, delta) => {
         const w = _w;
         this.setData({ w }, { w: delta });
-        onWChange?.(w, delta)
-        this.setState({ w })
+        onWChange?.(w, delta);
+        this.setState({ w });
       });
-      
-      this.setData({ wSync })
+
+      this.setData({ wSync });
     }
-  }
+  };
 
   onUnmount = async () => {
     await this.d.wSync?.$unsync();
     this.d.wSync = undefined;
-  }
+  };
 
-  getTitleIcon(){
+  getTitleIcon() {
     const { quickMenuProps } = this.props;
     const { w } = this.d;
 
-    if(!quickMenuProps || !w) return null;
-    if(w.type !== "table" && w.type !== "sql") {
+    if (!quickMenuProps || !w) return null;
+    if (w.type !== "table" && w.type !== "sql") {
       return null;
     }
-    
-    return <W_QuickMenu {...quickMenuProps} w={w} />
-  }
 
+    return <W_QuickMenu {...quickMenuProps} w={w} />;
+  }
 
   ref?: HTMLDivElement;
   render(): ReactSilverGridNode | null {
@@ -111,115 +119,123 @@ export default class Window<W extends WindowSyncItem> extends RTComp<P<W> , S<W>
     const { showMenu } = this.state;
     const { w = this.props.w } = this.state;
 
-    if(!w) return null;
+    if (!w) return null;
 
     let menuPortal;
-    const menuIconContainer = this.ref?.parentElement?.querySelector(":scope > .silver-grid-item-header > .silver-grid-item-header--icon");
-    if(getMenu && menuIconContainer){
+    const menuIconContainer = this.ref?.parentElement?.querySelector(
+      ":scope > .silver-grid-item-header > .silver-grid-item-header--icon",
+    );
+    if (getMenu && menuIconContainer) {
       menuPortal = ReactDOM.createPortal(
         <>
-          <Btn 
-            className="f-0" 
+          <Btn
+            className="f-0"
             iconPath={mdiDotsVertical}
             title="Open menu"
             data-command="dashboard.window.menu"
-            onContextMenu={e => {
+            onContextMenu={(e) => {
               navigator.clipboard.writeText(w.id);
             }}
             onClick={() => {
-              this.setState({ showMenu: !showMenu })
+              this.setState({ showMenu: !showMenu });
             }}
           />
           {this.getTitleIcon()}
         </>,
-        menuIconContainer
+        menuIconContainer,
       );
     }
-    
+
     const closeMenu = () => {
-      this.setState({ showMenu: false })
-    }
+      this.setState({ showMenu: false });
+    };
 
-    const windowContent = <>
-      {menuPortal}
-      <div key={w.id + "-content"} 
-        className="flex-col f-1 min-h-0 min-w-0 relative"
-        ref={e => {
-          if(e) {
-            let forceUpdate;
-            if(!this.ref){
-              forceUpdate = true;
+    const windowContent = (
+      <>
+        {menuPortal}
+        <div
+          key={w.id + "-content"}
+          className="flex-col f-1 min-h-0 min-w-0 relative"
+          ref={(e) => {
+            if (e) {
+              let forceUpdate;
+              if (!this.ref) {
+                forceUpdate = true;
+              }
+              this.ref = e;
+              if (forceUpdate) this.forceUpdate();
             }
-            this.ref = e;
-            if(forceUpdate) this.forceUpdate();
-          }
-        }}
-      >
-        <ErrorTrap>{children}</ErrorTrap>
-      </div>
-
-      {showMenu && getMenu && 
-        <Popup
-          title={window.isLowWidthScreen? "Menu" : undefined} 
-          fixedTopLeft={true}
-          anchorEl={this.ref}
-          positioning={"inside"}
-          rootStyle={{ padding: 0 }}
-          clickCatchStyle={{ opacity: .5, backdropFilter: "blur(1px)" }}
-          contentClassName=""
-          contentStyle={{
-            overflow: "unset",
           }}
-          onClose={closeMenu}
         >
-          <ErrorTrap>{getMenu(w, closeMenu)}</ErrorTrap>
-        </Popup>
-      }
-    </>  
+          <ErrorTrap>{children}</ErrorTrap>
+        </div>
 
-    if(w.parent_window_id){
-      return <FlexCol className="f-1 gap-0 min-s-0 o-hidden">
-        <FlexRow className="p-p5">
-          <Btn className="f-0" 
-            title="Open menu"
-            variant="outline"
-            color="action"
-            iconPath={mdiCog}
-            data-command="dashboard.window.chartMenu"
-            onClick={() => {
-              this.setState({ showMenu: !showMenu })
+        {showMenu && getMenu && (
+          <Popup
+            title={window.isLowWidthScreen ? "Menu" : undefined}
+            fixedTopLeft={true}
+            anchorEl={this.ref}
+            positioning={"inside"}
+            rootStyle={{ padding: 0 }}
+            clickCatchStyle={{ opacity: 0.5, backdropFilter: "blur(1px)" }}
+            contentClassName=""
+            contentStyle={{
+              overflow: "unset",
             }}
-            children={window.isLowWidthScreen? null : "Chart options"}
-          />
+            onClose={closeMenu}
+          >
+            <ErrorTrap>{getMenu(w, closeMenu)}</ErrorTrap>
+          </Popup>
+        )}
+      </>
+    );
 
-          <Btn
-            className="ml-auto"
-            iconPath={mdiArrowCollapse}
-            color="action"
-            title="Collapse chart"
-            data-command="dashboard.window.collapseChart"
-            onClick={() => {
-              w.$update({ minimised: true });
-            }}
-          />
-          <Btn
-            variant="outline"
-            iconPath={mdiOpenInNew}
-            color="action"
-            data-command="dashboard.window.detachChart"
-            onClick={() => w.$update({ parent_window_id: null })}
-            children={window.isLowWidthScreen? null : "Detach chart"}
-          />
-          <Btn 
-            variant="outline"
-            data-command="dashboard.window.closeChart"
-            iconPath={mdiClose}
-            onClick={() => w.$update({ closed: true })}
-            children={window.isLowWidthScreen? null : "Close chart"}
-          />
-        </FlexRow>
-        {windowContent}
-      </FlexCol>
+    if (w.parent_window_id) {
+      return (
+        <FlexCol className="f-1 gap-0 min-s-0 o-hidden">
+          <FlexRow className="p-p5">
+            <Btn
+              className="f-0"
+              title="Open menu"
+              variant="outline"
+              color="action"
+              iconPath={mdiCog}
+              data-command="dashboard.window.chartMenu"
+              onClick={() => {
+                this.setState({ showMenu: !showMenu });
+              }}
+              children={window.isLowWidthScreen ? null : "Chart options"}
+            />
+
+            <Btn
+              className="ml-auto"
+              iconPath={mdiArrowCollapse}
+              color="action"
+              title="Collapse chart"
+              data-command="dashboard.window.collapseChart"
+              onClick={() => {
+                w.$update({ minimised: true });
+              }}
+            />
+            <Btn
+              variant="outline"
+              iconPath={mdiOpenInNew}
+              color="action"
+              data-command="dashboard.window.detachChart"
+              onClick={() => w.$update({ parent_window_id: null })}
+              children={window.isLowWidthScreen ? null : "Detach chart"}
+            />
+            <Btn
+              variant="outline"
+              data-command="dashboard.window.closeChart"
+              iconPath={mdiClose}
+              onClick={() => w.$update({ closed: true })}
+              children={window.isLowWidthScreen ? null : "Close chart"}
+            />
+          </FlexRow>
+          {windowContent}
+        </FlexCol>
+      );
     }
 
     return windowContent;

@@ -1,5 +1,3 @@
-
-
 export const COMMANDS = {
   "config.goToConnDashboard": "Go to connection workspace",
   "config.details": "",
@@ -18,13 +16,15 @@ export const COMMANDS = {
   "config.ac.createDefault": "",
   "config.ac.edit.user": "Opens select/edit access rule user types",
   "config.ac.edit.user.select": "User type select search box",
-  "config.ac.edit.user.select.create": "Creates a user type when the search did not yield any results",
+  "config.ac.edit.user.select.create":
+    "Creates a user type when the search did not yield any results",
   "config.ac.edit.user.select.done": "Closes create user popup",
 
-  "config.ac.edit.type": "Rule type button group. Each button.value will contain the type",
+  "config.ac.edit.type":
+    "Rule type button group. Each button.value will contain the type",
 
   "config.ac.edit.dataAccess": "Data access section with tables/runsql",
-  
+
   "config.ac.edit.createWorkspaces": "",
   "config.ac.edit.publishedWorkspaces": "",
 
@@ -39,11 +39,12 @@ export const COMMANDS = {
 
   "dashboard.window.rowInsert": "Open row insert panel",
   "dashboard.window.rowInsertTop": "Open row insert panel from top filter bar",
-  "dashboard.window.runQuery": "Executes the current query (selected, block or full)",
+  "dashboard.window.runQuery":
+    "Executes the current query (selected, block or full)",
   "dashboard.window.cancelQuery": "Cancels the current query",
   "dashboard.window.terminateQuery": "Terminates the current query",
   "dashboard.window.stopListen": "Terminates the current LISTEN query",
-  
+
   "dashboard.window.fullscreen": "fullscreen",
   "dashboard.window.close": "close",
   "dashboard.window.collapse": "collapse",
@@ -87,7 +88,7 @@ export const COMMANDS = {
   "SearchList.toggleAll": "",
   "SearchList.List": "",
 
-  "FieldFilterControl": "",
+  FieldFilterControl: "",
   "FieldFilterControl.type": "",
   "FieldFilterControl.type.custom": "",
   "FieldFilterControl.type.except": "",
@@ -95,32 +96,32 @@ export const COMMANDS = {
   "RenderFilter.edit": "",
   "RenderFilter.done": "",
 
-  "ForcedFilterControl": "",
+  ForcedFilterControl: "",
   "ForcedFilterControl.type": "",
   "ForcedFilterControl.type.disabled": "",
   "ForcedFilterControl.type.enabled": "",
 
-  "CheckFilterControl": "",
+  CheckFilterControl: "",
   "CheckFilterControl.type": "",
   "CheckFilterControl.type.disabled": "",
   "CheckFilterControl.type.enabled": "",
 
-  "selectRule": "",
-  "selectRuleAdvanced": "",
-  "updateRule": "",
-  "updateRuleAdvanced": "",
-  "deleteRule": "",
-  "deleteRuleAdvanced": "",
-  "insertRule": "",
-  "insertRuleAdvanced": "",
-  "syncRule": "",
-  "syncRuleAdvanced": "",
+  selectRule: "",
+  selectRuleAdvanced: "",
+  updateRule: "",
+  updateRuleAdvanced: "",
+  deleteRule: "",
+  deleteRuleAdvanced: "",
+  insertRule: "",
+  insertRuleAdvanced: "",
+  syncRule: "",
+  syncRuleAdvanced: "",
 
-  "SearchAll": "",
-  "SmartAddFilter": "",
-  "FilterWrapper": "",
+  SearchAll: "",
+  SmartAddFilter: "",
+  FilterWrapper: "",
 
-  "FileBtn": "",
+  FileBtn: "",
 
   "ForcedDataControl.toggle": "",
   "ForcedDataControl.addColumn": "",
@@ -148,37 +149,37 @@ export const COMMANDS = {
   "ColumnEditor.name": "",
   "ColumnEditor.dataType": "",
 
-  "AddColumnMenu": "",
+  AddColumnMenu: "",
 
-  "WorkspaceAddBtn": "",
-  "WorkspaceMenuDropDown": "",
+  WorkspaceAddBtn: "",
+  WorkspaceMenuDropDown: "",
   "WorkspaceMenuDropDown.WorkspaceAddBtn": "",
   "WorkspaceMenu.SearchList": "",
   "WorkspaceMenu.CloneWorkspace": "",
-  "WorkspaceDeleteBtn": "",
+  WorkspaceDeleteBtn: "",
   "WorkspaceDeleteBtn.Confirm": "",
 
-  "JoinPathSelectorV2": "",
+  JoinPathSelectorV2: "",
   "LinkedColumn.Add": "",
   "LinkedColumn.ColumnList.toggle": "",
 
   "SummariseColumn.toggle": "",
-  "FunctionSelector": "",
+  FunctionSelector: "",
   "SummariseColumn.apply": "",
   "Popup.close": "",
   "Popup.content": "",
   "LinkedColumn.ColumnListMenu": "",
   "AddChartMenu.Map": "",
   "AddChartMenu.Timechart": "",
-  "W_TimeChart": "",
+  W_TimeChart: "",
   "W_TimeChart.ActiveRow": "",
 
   "CloseSaveSQLPopup.delete": "",
 
   "schema-diagram": "",
-  "AddColumnReference": "",
+  AddColumnReference: "",
   "SmartFormFieldOptions.AttachFile": "",
-  "RuleToggle": "",
+  RuleToggle: "",
   "table.options.displayMode": "",
   "table.options.cardView.groupBy": "",
   "table.options.cardView.orderBy": "",
@@ -188,32 +189,32 @@ export const COMMANDS = {
 
   "CreateFileColumn.confirm": "",
   "AppDemo.start": "",
-  "MenuList": "",
-  "ComparablePGPolicies": "",
-  "ConnectionServer.SampleSchemas" : "",
+  MenuList: "",
+  ComparablePGPolicies: "",
+  "ConnectionServer.SampleSchemas": "",
   "dashboard.goToConnections": "",
-  "QuickAddComputedColumn": "",
+  QuickAddComputedColumn: "",
   "SmartSelect.Done": "",
   "SmartAddFilter.JoinTo": "",
   "SmartAddFilter.toggleIncludeLinkedColumns": "",
-  "ContextDataSelector": "",
-  "ClickCatchOverlay": "",
+  ContextDataSelector: "",
+  ClickCatchOverlay: "",
   "BackupControls.Restore": "",
-  "ChartLayerManager": "",
+  ChartLayerManager: "",
   "App.colorScheme": "",
   "ElectronSetup.Next": "",
   "ElectronSetup.Back": "",
-  "PostgresInstallationInstructions": "",
+  PostgresInstallationInstructions: "",
   "PostgresInstallationInstructions.Close": "",
   "ElectronSetup.Done": "",
-  "MoreOptionsToggle": "",
-  "SmartCardList": "",
+  MoreOptionsToggle: "",
+  SmartCardList: "",
   "AutomaticBackups.destination": "",
   "AutomaticBackups.frequency": "",
   "AutomaticBackups.hourOfDay": "",
   "WorkspaceAddBtn.Create": "",
   "ChartLayerManager.AddChartLayer.addLayer": "",
-  "ConnectionSelector": "",
+  ConnectionSelector: "",
   "Setup2FA.Enable": "",
   "Setup2FA.Enable.GenerateQR": "",
   "Setup2FA.Enable.CantScanQR": "",
@@ -226,13 +227,13 @@ export const COMMANDS = {
   "BackupControls.DeleteAll.Confirm": "",
   "JoinedRecords.toggle": "",
   "ProjectConnection.error": "",
-  "NotFound": "",
+  NotFound: "",
   "NotFound.goHome": "",
   "ConnectionServer.NewUserName": "",
   "ConnectionServer.NewUserPassword": "",
   "ConnectionServer.withNewOwnerToggle": "",
   "W_Table.TableNotFound": "",
-  "JoinedRecords" : "",
+  JoinedRecords: "",
   "SmartCard.viewEditRow": "",
   "TimeChartLayerOptions.yAxis": "",
   "TimeChartLayerOptions.aggFunc": "",
@@ -242,16 +243,21 @@ export const COMMANDS = {
   "AgeFilter.comparator": "",
   "AgeFilter.argsLeftToRight": "",
   "Login.error": "",
-  "SchemaFilter": "",
-  "AskLLMAccessControl": "",
+  SchemaFilter: "",
+  AskLLMAccessControl: "",
   "AskLLMAccessControl.AllowAll": "",
   "Chat.send": "",
-  "AskLLM": "",
+  AskLLM: "",
   "AskLLM.popup": "",
-  "SetupLLMCredentials": "",
+  SetupLLMCredentials: "",
+  "SetupLLMCredentials.free": "",
+  "SetupLLMCredentials.api": "",
   "AskLLMAccessControl.llm_daily_limit": "",
   "Pagination.page": "",
-  "MapExtentBehavior": "",
+  MapExtentBehavior: "",
+  AddLLMCredentialForm: "",
+  "AddLLMCredentialForm.Save": "",
+  "AddLLMCredentialForm.Provider": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 
@@ -259,9 +265,11 @@ export type TestSelectors = {
   "data-command"?: Command;
   "data-key"?: string;
   id?: string;
-}
+};
 
-export const dataCommand = (cmd: Command): { "data-command": Command; } => ({ "data-command": cmd });
+export const dataCommand = (cmd: Command): { "data-command": Command } => ({
+  "data-command": cmd,
+});
 export const getCommandElemSelector = (cmd: Command) => {
   return `[data-command=${JSON.stringify(cmd)}]`;
-}
+};

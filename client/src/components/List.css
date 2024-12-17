@@ -1,13 +1,12 @@
-
 input.custom-input {
   -webkit-appearance: none !important;
-  padding: .5em;
+  padding: 0.5em;
   padding-bottom: 4px;
   font-size: 16px;
   outline: none;
   font-weight: 600;
   /* border: 1px solid rgb(223, 223, 223); */
-  border: unset
+  border: unset;
 }
 
 .input-focus.error:focus,
@@ -20,7 +19,7 @@ input.custom-input {
   box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.151);
 }
 
-.list-comp ul, 
+.list-comp ul,
 ul {
   padding: 0;
   margin: 0;
@@ -35,8 +34,7 @@ ul {
 .list-comp li:not(.no-hover, :active, :focus):hover ,
 .list-comp li:not(.no-hover, :active, :focus).hover 
 /* .list-comp li:not(.no-hover):active, */
-/* .list-comp li:not(.no-hover):focus { */
-{
+/* .list-comp li:not(.no-hover):focus { */ {
   background-color: var(--li-hover-bg);
   border: none;
   outline: none;

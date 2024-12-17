@@ -1,16 +1,16 @@
-import { test } from '@playwright/test';
+import { test } from "@playwright/test";
 import { PageWIds, USERS, createDatabase, goTo, login } from "./utils";
 const viewPortSize = { width: 1920, height: 1080 };
 // const viewPortSize = { width: 800, height: 1080 };
-test.use({ 
+test.use({
   viewport: viewPortSize,
-  video: { 
+  video: {
     mode: "on",
     size: viewPortSize,
   },
   trace: "on",
   launchOptions: {
-    args: ['--start-maximized'],
+    args: ["--start-maximized"],
   },
 });
 
@@ -20,19 +20,22 @@ test.describe("Demo video", () => {
 
   test("Video demo", async ({ page: p }) => {
     const page = p as PageWIds;
-    
+
     await login(page, USERS.test_user, "/login");
     await page.waitForTimeout(2000);
     // await page.getByTestId("App.colorScheme").click();
     // // await page.getByTestId("App.colorScheme").locator(`[data-key=light]`).click();
     // await page.getByTestId("App.colorScheme").locator(`[data-key=dark]`).click();
     const getVideoDemoConnection = async () => {
-      await page.getByRole('link', { name: 'Connections' }).click();
-      const videoDemoConnection = await page.getByRole('link', { name: 'prostgles_video_demo', exact: true });
+      await page.getByRole("link", { name: "Connections" }).click();
+      const videoDemoConnection = await page.getByRole("link", {
+        name: "prostgles_video_demo",
+        exact: true,
+      });
       return videoDemoConnection;
-    }
+    };
     const localVideoDemoConnection = await getVideoDemoConnection();
-    if(await localVideoDemoConnection.isVisible()){
+    if (await localVideoDemoConnection.isVisible()) {
       await localVideoDemoConnection.click();
     } else {
       await createDatabase("prostgles_video_demo", page);
@@ -47,7 +50,8 @@ test.describe("Demo video", () => {
 
       await videoDemoConnection.click();
       await page.waitForTimeout(2e3);
-      await page.getByTestId("AppDemo.start")
+      await page
+        .getByTestId("AppDemo.start")
         .evaluate(async (node: HTMLButtonElement) => {
           try {
             await (node as any).start();
@@ -57,9 +61,8 @@ test.describe("Demo video", () => {
             throw JSON.stringify(e);
           }
         });
-      await page.waitForTimeout(1e3); 
-
-    }
+      await page.waitForTimeout(1e3);
+    };
     await startDemo();
     // await goTo(page, "/connections");
     // await page.getByTestId("App.colorScheme").click();
