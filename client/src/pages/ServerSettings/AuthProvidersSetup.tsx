@@ -82,7 +82,6 @@ export const AuthProviderSetup = ({
       },
     );
   };
-  console.log(global_settings?.auth_providers?.email?.emailConfirmationEnabled);
   useAsyncEffectQueue(async () => {
     if (!global_settings) return;
     if (!global_settings.auth_providers?.website_url) {
