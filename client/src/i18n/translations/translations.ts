@@ -1,5 +1,4 @@
-import { i18nCommon } from "./i18nCommon";
-import { i18nConnections } from "./i18nConnections";
+import type { TranslationGroup } from "../i18nUtils";
 
 export const LANGUAGES = [
   { key: "en", label: "English" },
@@ -8,25 +7,24 @@ export const LANGUAGES = [
 
 export type Language = (typeof LANGUAGES)[number]["key"];
 
-export type TemplatedTranslationConfig = { text: string; argNames: string[] };
-export type Translation = Record<Language, string>;
-export type TemplatedTranslation = Record<Language, TemplatedTranslationConfig>;
-
-export type TranslationGroup = Record<
-  string,
-  Translation | TemplatedTranslation
->;
-
 export const translations = {
-  ...i18nCommon,
-  ...i18nConnections,
+  common: {
+    Language: {
+      es: "Idioma",
+    },
+  },
+  Connections: {
+    "Create new connection": {
+      es: "Crear nueva conexión",
+    },
+    "New connection": {
+      es: "Nueva conexión",
+    },
+  },
   APIDetailsTokens: {
-    accessTokenCount: {
-      en: { text: "Access tokens ({{tokenCount}})", argNames: ["tokenCount"] },
-      es: {
-        text: "Tokens de acceso ({{tokenCount}})",
-        argNames: ["tokenCount"],
-      },
+    "Access tokens ({{tokenCount}})": {
+      argNames: ["tokenCount"],
+      es: "Tokens de acceso ({{tokenCount}})",
     },
   },
 } as const satisfies Record<string, TranslationGroup>;

@@ -255,12 +255,12 @@ export class Connections extends RTComp<PrglState, S> {
             <Btn
               href="/new-connection"
               asNavLink={true}
-              title={t.Connections.createNewConnection}
+              title={t.Connections["Create new connection"]}
               iconPath={mdiPlus}
               variant="filled"
               color="action"
             >
-              {t.Connections.newConnection}
+              {t.Connections["New connection"]}
             </Btn>
           )}
 

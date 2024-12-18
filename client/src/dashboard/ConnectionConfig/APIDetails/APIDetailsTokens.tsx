@@ -25,7 +25,7 @@ export const APIDetailsTokens = ({
   return (
     <FlexCol>
       <h4 className="m-0 p-0">
-        {t.APIDetailsTokens.accessTokenCount({ tokenCount })}
+        {t.APIDetailsTokens[`Access tokens ({{tokenCount}})`]({ tokenCount })}
       </h4>
       <div>Provide the same level of access as the current account</div>
       <FlexCol className="w-fit  ">

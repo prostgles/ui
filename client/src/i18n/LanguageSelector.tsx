@@ -6,7 +6,7 @@ import { t } from "./i18nUtils";
 
 export const LanguageSelector = ({ isElectron }: { isElectron: boolean }) => {
   const lang = getLanguage();
-  const title = t.common.language;
+  const title = t.common.Language;
   return (
     <Select
       title={title}
