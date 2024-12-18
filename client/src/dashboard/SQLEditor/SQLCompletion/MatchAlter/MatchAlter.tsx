@@ -43,11 +43,13 @@ export const MatchAlter: SQLMatcher = {
       cb.prevLC.includes(" constraint ")
     ) {
       return {
-        suggestions: ss.filter(
-          (s) =>
-            s.type === "constraint" &&
-            identifiers.includes(s.constraintInfo!.escaped_table_name!),
-        ),
+        suggestions: ss.filter((s) => {
+          const { escaped_table_name } = s.constraintInfo ?? {};
+          return (
+            (escaped_table_name && identifiers.includes(escaped_table_name)) ||
+            identifiers.includes([s.schema, escaped_table_name].join("."))
+          );
+        }),
       };
     }
 

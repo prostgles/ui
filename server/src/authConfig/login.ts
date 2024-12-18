@@ -1,6 +1,6 @@
 import type { Auth } from "prostgles-server/dist/Auth/AuthTypes";
 import type { Users } from "..";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import { log } from "../index";
 import type { SUser } from "./authConfig";
 import {

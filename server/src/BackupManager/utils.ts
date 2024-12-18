@@ -1,4 +1,4 @@
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import path from "path";
 import { FileManager } from "prostgles-server/dist/FileManager/FileManager";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
@@ -38,7 +38,7 @@ export async function getFileMgr(dbs: DBS, credId: number | null) {
 }
 
 export async function getBkp(
-  dbs: DBOFullyTyped<DBSchemaGenerated>,
+  dbs: DBOFullyTyped<DBGeneratedSchema>,
   bkpId: string,
 ) {
   const bkp = await dbs.backups.findOne({ id: bkpId });

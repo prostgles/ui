@@ -3,19 +3,21 @@ import { isEqual } from "prostgles-client/dist/prostgles";
 import React, { useState } from "react";
 import ErrorComponent from "../../components/ErrorComponent";
 import FormField from "../../components/FormField/FormField";
-import { InfoRow } from "../../components/InfoRow";
 import { FooterButtons } from "../../components/Popup/FooterButtons";
 import { Section } from "../../components/Section";
 import Select from "../../components/Select/Select";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import type { AuthProviderProps } from "./AuthProvidersSetup";
-import { DEFAULT_EMAIL_VERIFICATION_TEMPLATE, EmailSetup } from "./EmailSetup";
+import {
+  DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
+  EmailSMTPAndTemplateSetup,
+} from "./EmailSMTPAndTemplateSetup";
 
 export const EmailAuthSetup = ({
-  dbs,
   authProviders,
   disabledInfo,
   contentClassName,
+  doUpdate,
 }: AuthProviderProps) => {
   const [_localAuth, setLocalAuth] = useState(authProviders.email);
   const localAuth = _localAuth ?? authProviders.email;
@@ -25,20 +27,14 @@ export const EmailAuthSetup = ({
   const onToggle =
     !localAuth ? undefined : (
       async (enabled: boolean) => {
-        await dbs.global_settings
-          .update(
-            {},
-            {
-              auth_providers: {
-                ...authProviders,
-                email: {
-                  ...localAuth,
-                  enabled,
-                },
-              },
-            },
-          )
-          .catch(setError);
+        await doUpdate({
+          ...authProviders,
+          email: {
+            ...localAuth,
+            enabled,
+          },
+        }).catch(setError);
+        setLocalAuth(undefined);
       }
     );
 
@@ -67,12 +63,6 @@ export const EmailAuthSetup = ({
               {
                 enabled,
                 signupType: "withPassword",
-                emailConfirmation: {
-                  type: "aws-ses",
-                  accessKeyId: "",
-                  region: "",
-                  secretAccessKey: "",
-                },
               }
             : {
                 ...localAuth,
@@ -101,31 +91,11 @@ export const EmailAuthSetup = ({
           ] as const
         }
         onChange={async (signupType) => {
-          setLocalAuth(
-            signupType === "withPassword" ?
-              {
-                ...localAuth,
-                signupType,
-                emailConfirmation: {
-                  type: "aws-ses",
-                  accessKeyId: "",
-                  region: "",
-                  secretAccessKey: "",
-                },
-                emailTemplate: DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
-              }
-            : {
-                ...localAuth,
-                signupType,
-                emailMagicLink: {
-                  type: "aws-ses",
-                  accessKeyId: "",
-                  region: "",
-                  secretAccessKey: "",
-                },
-                emailTemplate: DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
-              },
-          );
+          setLocalAuth({
+            ...localAuth,
+            signupType,
+            emailTemplate: DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
+          });
         }}
       />
       {localAuth?.signupType === "withPassword" && (
@@ -142,26 +112,28 @@ export const EmailAuthSetup = ({
           hint="Minimum password length. Defaults to 8"
         />
       )}
-      <EmailSetup
+      <EmailSMTPAndTemplateSetup
         label={
           localAuth?.signupType === "withMagicLink" ?
             "Magic link email"
           : "Email verification"
         }
-        dbs={dbs}
         value={localAuth}
-        // onChange={(smtpConfig) => {
-        //   if(!localAuth) return;
-        //   if(!smtpConfig && localAuth.signupType !== "withPassword"){
-        //     setError("Please enable the email provider first");
-        //     return;
-        //   }
-        //   setLocalAuth({
-        //     ...localAuth,
-        //     smtp: smtpConfig
-        //   });
-        //   setError(undefined);
-        // }}
+        onChange={async (newConfig) => {
+          if (!localAuth) throw "Local auth not found";
+          if (localAuth.signupType !== "withPassword" && !newConfig.smtp) {
+            throw "Please enable the email provider first";
+          }
+          await doUpdate({
+            ...authProviders,
+            email: {
+              ...localAuth,
+              ...newConfig,
+            },
+          });
+          setError(undefined);
+          setLocalAuth(undefined);
+        }}
       />
       {error && <ErrorComponent error={error} />}
       {didChange && (
@@ -173,15 +145,11 @@ export const EmailAuthSetup = ({
               variant: "filled",
               onClick: async () => {
                 try {
-                  await dbs.global_settings.update(
-                    {},
-                    {
-                      auth_providers: {
-                        ...authProviders,
-                        email: localAuth,
-                      },
-                    },
-                  );
+                  await doUpdate({
+                    ...authProviders,
+                    email: localAuth,
+                  });
+                  setError(undefined);
                   setLocalAuth(undefined);
                 } catch (err) {
                   setError(err);

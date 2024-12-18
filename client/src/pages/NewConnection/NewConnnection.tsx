@@ -7,7 +7,7 @@ import {
 } from "@mdi/js";
 import React from "react";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
-import type { DBSchemaGenerated } from "../../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { isObject } from "../../../../commonTypes/publishUtils";
 import type { ExtraProps } from "../../App";

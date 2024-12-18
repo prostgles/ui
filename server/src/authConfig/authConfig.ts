@@ -10,7 +10,7 @@ import type {
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import { omitKeys } from "prostgles-types";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { BKP_PREFFIX } from "../BackupManager/BackupManager";
 import { actualRootDir } from "../electronConfig";

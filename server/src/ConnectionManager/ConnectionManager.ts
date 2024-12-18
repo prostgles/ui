@@ -12,7 +12,7 @@ import type {
 } from "prostgles-server/dist/ProstglesTypes";
 import type { SubscriptionHandler } from "prostgles-types";
 import { omitKeys, pickKeys } from "prostgles-types";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import type { ConnectionChecker, WithOrigin } from "../ConnectionChecker";
 import { getDbConnection } from "../connectionUtils/testDBConnection";

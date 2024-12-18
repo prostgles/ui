@@ -1,4 +1,4 @@
-import { DBSchemaGenerated } from "./DBoGenerated";
+import { DBGeneratedSchema as DBSchemaGenerated } from "./DBGeneratedSchema";
 import {
   GroupedDetailedFilter,
   getFinalFilter,

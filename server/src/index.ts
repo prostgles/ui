@@ -8,7 +8,7 @@ import _http from "http";
 import path from "path";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { Server } from "socket.io";
-import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
 import type { ServerState } from "../../commonTypes/electronInit";
 import { isObject } from "../../commonTypes/publishUtils";
 import { ConnectionChecker } from "./ConnectionChecker";
