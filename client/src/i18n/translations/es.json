@@ -1,0 +1,12 @@
+{
+  "common": {
+    "Language": "Idioma"
+  },
+  "Connections": {
+    "Create new connection": "Crear nueva conexión",
+    "New connection": "Nueva conexión"
+  },
+  "APIDetailsTokens": {
+    "Access tokens ({{tokenCount}})": "Tokens de acceso ({{tokenCount}})"
+  }
+}

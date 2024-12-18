@@ -9,22 +9,15 @@ export type Language = (typeof LANGUAGES)[number]["key"];
 
 export const translations = {
   common: {
-    Language: {
-      es: "Idioma",
-    },
+    Language: {},
   },
   Connections: {
-    "Create new connection": {
-      es: "Crear nueva conexión",
-    },
-    "New connection": {
-      es: "Nueva conexión",
-    },
+    "Create new connection": {},
+    "New connection": {},
   },
   APIDetailsTokens: {
     "Access tokens ({{tokenCount}})": {
       argNames: ["tokenCount"],
-      es: "Tokens de acceso ({{tokenCount}})",
     },
   },
 } as const satisfies Record<string, TranslationGroup>;
