@@ -21,3 +21,20 @@ export const translations = {
     },
   },
 } as const satisfies Record<string, TranslationGroup>;
+
+const enFile = Object.entries(translations).reduce(
+  (acc, [componentName, componentTranslations]) => {
+    return {
+      ...acc,
+      [componentName]: Object.fromEntries(
+        Object.keys(componentTranslations).map((translationKey) => [
+          translationKey,
+          translationKey,
+        ]),
+      ),
+    };
+  },
+  {},
+);
+
+console.log("en.json", JSON.stringify(enFile));
