@@ -1,4 +1,4 @@
-import type { DBSchemaGenerated } from "@common/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "@common/DBoGenerated";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";

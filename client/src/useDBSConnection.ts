@@ -3,7 +3,7 @@ import { useAsyncEffectQueue } from "prostgles-client/dist/prostgles";
 import { useState } from "react";
 import type { Socket } from "socket.io-client";
 import io from "socket.io-client";
-import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import type { AppState } from "./App";
 import type { DBS } from "./dashboard/Dashboard/DBS";
@@ -138,7 +138,6 @@ export const useDBSConnection = (
             (window as any).dbsSocket = socket;
             (window as any).dbsMethods = dbsMethods;
             const uType = auth.user?.type;
-            console.log(auth.user);
             const { tables: dbsTables = [], error } = await getTables(
               tableSchema ?? [],
               undefined,

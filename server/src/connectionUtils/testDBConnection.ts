@@ -1,5 +1,5 @@
 import { getConnectionDetails } from "./getConnectionDetails";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import { type ConnectionInfo, validateConnection } from "./validateConnection";
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 

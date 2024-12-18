@@ -1,5 +1,5 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { DBSchemaGenerated } from "../../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../../commonTypes/DBGeneratedSchema";
 import type {
   ColType,
   ConnectionStatus,

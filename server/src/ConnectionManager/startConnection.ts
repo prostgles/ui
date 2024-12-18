@@ -5,7 +5,7 @@ import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUti
 import { getIsSuperUser, type DB } from "prostgles-server/dist/Prostgles";
 import { pickKeys } from "prostgles-types";
 import { Server } from "socket.io";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { addLog } from "../Logger";
 import { getAuth } from "../authConfig/authConfig";

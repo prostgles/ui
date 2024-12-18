@@ -1,5 +1,5 @@
 import type { AuthRegistrationConfig } from "prostgles-server/dist/Auth/AuthTypes";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 
 export const getAuthEmailProvider = (
   auth_providers: DBSchemaGenerated["global_settings"]["columns"]["auth_providers"],
@@ -13,7 +13,7 @@ export const getAuthEmailProvider = (
         signupType: "withMagicLink",
         onRegistered: async (data: any) => {},
         emailMagicLink: {
-          smtp: email.emailMagicLink,
+          smtp: email.smtp!,
           onRegistered: async (data: any) => {
             console.log({ data });
             return { from: "", html: "hey", subject: "hey" };
@@ -28,20 +28,23 @@ export const getAuthEmailProvider = (
         signupType: "withPassword",
         minPasswordLength: email.minPasswordLength,
         onRegistered: async (data: any) => {},
-        emailConfirmation: email.emailConfirmation && {
-          smtp: email.emailConfirmation,
-          onConfirmed: async (data) => {
-            console.log({ data });
-          },
-          onSend: async (data) => {
-            console.log({ data });
-            return {
-              from: "noreply@cloud.prostgles.com",
-              html: `Hey ${data.email}, <br> Please confirm your email by clicking <a href="${data.confirmationUrlPath}/${123}">here</a>`,
-              subject: "Confirm your email",
-            };
-          },
-        },
+        emailConfirmation:
+          !email.emailConfirmationEnabled ? undefined : (
+            {
+              smtp: email.smtp!,
+              onConfirmed: async (data) => {
+                console.log({ data });
+              },
+              onSend: async (data) => {
+                console.log({ data });
+                return {
+                  from: "noreply@cloud.prostgles.com",
+                  html: `Hey ${data.email}, <br> Please confirm your email by clicking <a href="${data.confirmationUrlPath}/${123}">here</a>`,
+                  subject: "Confirm your email",
+                };
+              },
+            }
+          ),
         onSend: async (data: any) => {
           console.log({ data });
           return { from: "", html: "hey", subject: "hey" };

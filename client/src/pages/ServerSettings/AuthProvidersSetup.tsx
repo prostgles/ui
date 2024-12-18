@@ -14,13 +14,39 @@ export type AuthProvidersConfig = Extract<
   DBSSchema["global_settings"]["auth_providers"],
   { website_url: string }
 >;
-export type AuthProviderProps = {
+
+type UseProviderPropsArgs = {
   dbs: Prgl["dbs"];
   dbsTables: Prgl["dbsTables"];
-  authProviders: AuthProvidersConfig;
-  contentClassName: string;
-  disabledInfo: string | undefined;
+  auth_providers: DBSSchema["global_settings"]["auth_providers"] | undefined;
 };
+const useProviderProps = ({
+  dbs,
+  dbsTables,
+  auth_providers,
+}: UseProviderPropsArgs) => {
+  const doUpdate = async (newValue: typeof auth_providers) => {
+    await dbs.global_settings.update(
+      {},
+      {
+        auth_providers: newValue,
+      },
+    );
+  };
+
+  const authProps = {
+    authProviders: auth_providers ?? { website_url: "" },
+    dbsTables,
+    disabledInfo:
+      !auth_providers?.website_url ? "Must setup website URL first" : undefined,
+    contentClassName: "flex-col gap-2 p-2",
+    doUpdate,
+  };
+
+  return authProps;
+};
+
+export type AuthProviderProps = ReturnType<typeof useProviderProps>;
 
 export const AuthProviderSetup = ({
   dbs,
@@ -37,6 +63,9 @@ export const AuthProviderSetup = ({
   const updateAuth = async (
     auth: Partial<DBSSchema["global_settings"]["auth_providers"]>,
   ) => {
+    if (auth?.email?.signupType === "withMagicLink" && !auth.email.smtp) {
+      throw "Please setup SMTP settings first";
+    }
     await dbs.global_settings.update(
       {},
       {
@@ -53,6 +82,7 @@ export const AuthProviderSetup = ({
       },
     );
   };
+  console.log(global_settings?.auth_providers?.email?.emailConfirmationEnabled);
   useAsyncEffectQueue(async () => {
     if (!global_settings) return;
     if (!global_settings.auth_providers?.website_url) {
@@ -61,6 +91,12 @@ export const AuthProviderSetup = ({
       });
     }
   }, [global_settings]);
+
+  const authProps = useProviderProps({
+    auth_providers: global_settings?.auth_providers,
+    dbs,
+    dbsTables,
+  });
 
   if (!globalSettingsTable || !authColumn) {
     return (
@@ -76,14 +112,6 @@ export const AuthProviderSetup = ({
   }
 
   const { auth_providers } = global_settings;
-  const authProps = {
-    dbs,
-    authProviders: auth_providers ?? { website_url: "" },
-    dbsTables,
-    disabledInfo:
-      !auth_providers?.website_url ? "Must setup website URL first" : undefined,
-    contentClassName: "flex-col gap-2 p-2",
-  };
 
   return (
     <FlexCol className="p-1 f-1">
@@ -131,7 +159,7 @@ export const AuthProviderSetup = ({
           </InfoRow>
         )}
       </FlexCol>
-      {/* <EmailAuthSetup {...authProps} /> */}
+      <EmailAuthSetup {...authProps} />
       <OAuthProviderSetup provider="google" {...authProps} />
       <OAuthProviderSetup provider="github" {...authProps} />
       <OAuthProviderSetup provider="microsoft" {...authProps} />

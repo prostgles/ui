@@ -4,7 +4,7 @@ import fs from "fs";
 import * as os from "os";
 import path from "path";
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBS } from "../index";
 import { connectionChecker, connMgr } from "../index";
 

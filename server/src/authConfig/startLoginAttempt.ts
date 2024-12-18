@@ -2,7 +2,7 @@ import type { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { isEmpty, pickKeys } from "prostgles-types";
 import { connectionChecker, tout } from "..";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import { HOUR } from "./authConfig";
 
 const getGlobalSettings = async () => {

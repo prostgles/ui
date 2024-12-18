@@ -4,12 +4,11 @@ import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
 import { FlexCol, FlexRowWrap } from "../../components/Flex";
 import PopupMenu from "../../components/PopupMenu";
+import { SwitchToggle } from "../../components/SwitchToggle";
+import { fixIndent } from "../../demo/sqlVideoDemo";
 import type { AuthProvidersConfig } from "./AuthProvidersSetup";
 import { EmailSMTPSetup } from "./EmailSMTPSetup";
 import { EmailTemplateSetup } from "./EmailTemplateSetup";
-import { fixIndent } from "../../demo/sqlVideoDemo";
-import { SwitchToggle } from "../../components/SwitchToggle";
-import type { DBS } from "../../dashboard/Dashboard/DBS";
 
 type EmailConfig = Extract<
   NonNullable<AuthProvidersConfig["email"]>,
@@ -22,11 +21,30 @@ type P = {
   value: AuthProvidersConfig["email"] | undefined;
   label: string;
   className?: string;
-  dbs: DBS;
+  onChange: (
+    newValue: Pick<
+      NonNullable<AuthProvidersConfig["email"]>,
+      "emailConfirmationEnabled" | "smtp" | "emailTemplate"
+    >,
+  ) => Promise<void>;
 };
-export const EmailSetup = ({ label, className, value, dbs }: P) => {
+export const EmailSMTPAndTemplateSetup = ({
+  label,
+  className,
+  value,
+  onChange: _onChange,
+}: P) => {
   const [error, setError] = useState<any>();
-
+  const onChange: typeof _onChange = async (newValue) => {
+    return _onChange(newValue)
+      .then(() => {
+        setError(undefined);
+      })
+      .catch((err) => {
+        setError(err);
+        return Promise.reject(err);
+      });
+  };
   const [emailTemplate, setEmailTemplate] = useState(value?.emailTemplate);
   const [smtp, setSMTP] = useState(value?.smtp);
   const didChange =
@@ -35,43 +53,6 @@ export const EmailSetup = ({ label, className, value, dbs }: P) => {
 
   const { signupType, emailConfirmationEnabled } = value ?? {};
   const optional = signupType === "withPassword";
-
-  const onChange = async (
-    newValue: Pick<
-      NonNullable<AuthProvidersConfig["email"]>,
-      "signupType" | "emailConfirmationEnabled" | "smtp" | "emailTemplate"
-    >,
-  ) => {
-    try {
-      const gs = await dbs.global_settings.findOne();
-      if (!gs || !gs.auth_providers)
-        throw new Error("Global settings not found");
-      await dbs.global_settings.update(
-        {},
-        {
-          auth_providers: {
-            ...gs.auth_providers,
-            email:
-              newValue.signupType === "withMagicLink" ?
-                {
-                  ...newValue,
-                  emailTemplate,
-                  smtp,
-                  emailConfirmationEnabled,
-                }
-              : {
-                  ...value,
-                  emailTemplate,
-                  smtp,
-                  emailConfirmationEnabled,
-                },
-          },
-        },
-      );
-    } catch (error) {
-      setError(error);
-    }
-  };
 
   const enabled = optional && emailConfirmationEnabled;
 
@@ -98,7 +79,10 @@ export const EmailSetup = ({ label, className, value, dbs }: P) => {
               checked={!!emailConfirmationEnabled}
               variant="col"
               onChange={(checked) => {
-                onChange({ ...value, emailConfirmationEnabled: checked });
+                onChange({
+                  ...value,
+                  emailConfirmationEnabled: checked,
+                });
               }}
             />
           )}
@@ -141,7 +125,8 @@ export const EmailSetup = ({ label, className, value, dbs }: P) => {
                   smtp,
                   emailConfirmationEnabled,
                 },
-            ).then(() => pClose?.(e));
+            );
+            pClose?.(e);
           },
         },
       ]}

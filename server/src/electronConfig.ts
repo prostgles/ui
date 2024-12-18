@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
 
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
 export type DBSConnectionInfo = Pick<

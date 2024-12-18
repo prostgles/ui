@@ -9,7 +9,7 @@ import { getLoginClientInfo } from "prostgles-server/dist/Auth/AuthHandler";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { SubscriptionHandler } from "prostgles-types";
 import { isDefined, tryCatch } from "prostgles-types";
-import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import type { SUser } from "./authConfig/authConfig";
 import {

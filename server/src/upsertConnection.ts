@@ -3,7 +3,7 @@ import {
   pickKeys,
 } from "prostgles-server/dist/PubSubManager/PubSubManager";
 import type { Connections, DBS, Users } from ".";
-import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
 import {

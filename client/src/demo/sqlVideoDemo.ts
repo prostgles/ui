@@ -331,7 +331,8 @@ const sqlVideoDemo: DemoScript = async (args) => {
 /**
  * Ensure that multi-line strings are indented correctly
  */
-export const fixIndent = (str: string) => {
+export const fixIndent = (_str: string | TemplateStringsArray): string => {
+  const str = typeof _str === "string" ? _str : (_str[0] ?? "");
   const lines = str.split("\n");
   if (!lines.some((l) => l.trim())) return str;
   let minIdentOffset = lines.reduce(

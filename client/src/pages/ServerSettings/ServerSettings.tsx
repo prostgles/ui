@@ -16,7 +16,7 @@ import { usePromise } from "prostgles-client/dist/react-hooks";
 import type { Prgl } from "../../App";
 import { TabsWithDefaultStyle } from "../../components/Tabs";
 import { DBS } from "../../dashboard/Dashboard/DBS";
-import { DBSchemaGenerated } from "../../../../commonTypes/DBoGenerated";
+import { DBSchemaGenerated } from "../../../../commonTypes/DBGeneratedSchema";
 import { FlexCol } from "../../components/Flex";
 import { AuthProviderSetup } from "./AuthProvidersSetup";
 

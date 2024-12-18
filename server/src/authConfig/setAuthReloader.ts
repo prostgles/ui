@@ -3,7 +3,7 @@ import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { SubscriptionHandler } from "prostgles-types";
 import { isDeepStrictEqual } from "util";
 import type { DBS } from "..";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import { getAuth } from "./authConfig";
 
 let globalSettingSub: SubscriptionHandler | undefined;

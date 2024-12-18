@@ -24,11 +24,11 @@ type P = AuthProviderProps & {
   >;
 };
 export const OAuthProviderSetup = ({
-  dbs,
   authProviders,
   disabledInfo,
   contentClassName,
   provider,
+  doUpdate,
 }: P) => {
   const returnURL = `${authProviders.website_url}/auth/${provider}/callback`;
   const auth = authProviders[provider];
@@ -53,17 +53,21 @@ export const OAuthProviderSetup = ({
       localAuth.authOpts
     : undefined;
 
-  const doUpdate = async (newProviderConfig = localAuth) => {
+  const onSave = async (newProviderConfig = localAuth) => {
     try {
-      await dbs.global_settings.update(
-        {},
-        {
-          auth_providers: {
-            ...authProviders,
-            [provider]: newProviderConfig,
-          },
-        },
-      );
+      await doUpdate({
+        ...authProviders,
+        [provider]: newProviderConfig,
+      });
+      // await dbs.global_settings.update(
+      //   {},
+      //   {
+      //     auth_providers: {
+      //       ...authProviders,
+      //       [provider]: newProviderConfig,
+      //     },
+      //   },
+      // );
       await tout(500);
       setLocalAuth(undefined);
     } catch (err) {
@@ -90,7 +94,7 @@ export const OAuthProviderSetup = ({
           checked={!!authProviders[provider]?.enabled}
           onChange={(checked) => {
             if (!localAuth) return;
-            doUpdate({ ...localAuth, enabled: checked });
+            onSave({ ...localAuth, enabled: checked });
           }}
         />
       }
@@ -180,7 +184,7 @@ export const OAuthProviderSetup = ({
               label: "Save",
               color: "action",
               variant: "filled",
-              onClickPromise: () => doUpdate(),
+              onClickPromise: () => onSave(),
             },
           ]}
         />
