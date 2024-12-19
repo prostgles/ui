@@ -1,6 +1,6 @@
 import type { Auth } from "prostgles-server/dist/Auth/AuthTypes";
 import type { Users } from "..";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import { log } from "../index";
 import type { SUser } from "./authConfig";
 import {
@@ -97,6 +97,9 @@ export const login: Required<Auth<DBSchemaGenerated, SUser>>["login"] = async (
   }
   if (!u) {
     throw "something went wrong: " + JSON.stringify({ username, password });
+  }
+  if (u.email_confirmation_code) {
+    throw "email not confirmed";
   }
   if (u.status !== "active") {
     throw "inactive";

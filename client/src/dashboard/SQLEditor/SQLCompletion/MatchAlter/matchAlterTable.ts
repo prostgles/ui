@@ -38,11 +38,11 @@ export const matchAlterTable = async ({
     };
   }
 
-  if (cb.prevTokens.length === 2) {
-    return getExpected("table", cb, ss);
-  }
+  // if (cb.prevTokens.length === 2) {
+  //   return getExpected("table", cb, ss);
+  // }
 
-  if (cb.tokens.length === 3) {
+  if (cb.prevTokens.length === 3 && cb.currToken?.textLC !== ".") {
     return withKWDs(
       ALTER_TABLE_ACTIONS.map(({ label, docs }) => ({ kwd: label, docs })),
       { cb, ss, setS, sql },

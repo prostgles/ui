@@ -50,11 +50,11 @@ const logRecords: {
   connection_id: string | null;
   created: Date;
 }[] = [];
-console.log("REMOVE");
+// console.log("REMOVE");
 export const addLog = (e: EventInfo, connection_id: string | null) => {
-  if (e.type === "debug" && e.command === "pushSocketSchema") {
-    console.log("pushSocketSchema", Object.keys(e.data.clientSchema.schema));
-  }
+  // if (e.type === "debug" && e.command === "pushSocketSchema") {
+  //   console.log("pushSocketSchema", Object.keys(e.data.clientSchema.schema));
+  // }
   if (shouldExclude(e, connection_id === null)) return;
   logRecords.push({ e, connection_id, created: new Date() });
   const batchSize = 20;

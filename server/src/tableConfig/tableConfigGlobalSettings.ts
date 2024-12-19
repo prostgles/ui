@@ -147,7 +147,6 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1 }> = {
               {
                 signupType: { enum: ["withMagicLink"] },
                 enabled: { type: "boolean", optional: true },
-                emailMagicLink: SMTPConfig,
                 smtp: {
                   optional: true,
                   ...SMTPConfig,
@@ -163,13 +162,9 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1 }> = {
                 signupType: { enum: ["withPassword"] },
                 enabled: { type: "boolean", optional: true },
                 minPasswordLength: {
+                  optional: true,
                   type: "integer",
-                  optional: true,
                   title: "Minimum password length",
-                },
-                emailConfirmation: {
-                  optional: true,
-                  ...SMTPConfig,
                 },
                 smtp: {
                   optional: true,

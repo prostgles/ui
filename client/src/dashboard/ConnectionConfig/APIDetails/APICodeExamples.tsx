@@ -180,7 +180,7 @@ if(typeof document !== 'undefined'){
   const tsExample = `
 import prostgles from "prostgles-client";
 import io from "socket.io-client";
-import type { DBSchemaGenerated } from "./DBoGenerated.d.ts";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "./DBoGenerated.d.ts";
 
 ${initLogic}
 

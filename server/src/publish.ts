@@ -2,7 +2,7 @@ import type {
   Publish,
   PublishParams,
 } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
 import { getKeys } from "prostgles-types";
 import { connectionChecker } from ".";
 import { getACRules } from "./ConnectionManager/ConnectionManager";
@@ -425,12 +425,14 @@ export const publish = async (
 
           const { email } = row.auth_providers ?? {};
           if (email?.enabled) {
-            const emailSmtpConfig =
-              email.signupType === "withMagicLink" ?
-                email.emailMagicLink
-              : email.emailConfirmation;
-            if (emailSmtpConfig) {
-              await verifySMTPConfig(emailSmtpConfig);
+            if (
+              email.signupType !== "withPassword" ||
+              email.emailConfirmationEnabled
+            ) {
+              if (!email.smtp) {
+                throw "SMTP must be configured for withMagicLink";
+              }
+              await verifySMTPConfig(email.smtp);
             }
           }
 

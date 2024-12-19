@@ -19,6 +19,13 @@ export const testBugs: DemoScript = async (args) => {
     runSQL,
   } = args;
 
+  const alterTable3TknsBug = fixIndent`
+    ALTER TABLE pg_catalog.pg_transform`;
+  fromBeginning(false, alterTable3TknsBug);
+  await typeAuto(` dcs`);
+  await typeAuto(` `);
+  testResult(alterTable3TknsBug + " DROP CONSTRAINT pg_transform_oid_index");
+
   const selectSubSelectBug = fixIndent(`
     select
       t.relname as table_name,

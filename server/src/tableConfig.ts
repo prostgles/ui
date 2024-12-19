@@ -273,6 +273,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
         info: { hint: "Display name, if empty username will be shown" },
       },
       email: { sqlDefinition: `TEXT` },
+      email_confirmation_code: { sqlDefinition: `TEXT` },
       auth_provider: {
         sqlDefinition: `TEXT`,
         info: { hint: "OAuth provider name. E.g.: google, github" },

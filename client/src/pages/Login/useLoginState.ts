@@ -1,10 +1,13 @@
 import type {
+  EmailLoginResponse,
+  EmailRegisterResponse,
   MagicLinkAuth,
   PasswordAuth,
   PasswordLoginData,
 } from "prostgles-client/dist/Auth";
 import React, { useEffect } from "react";
 import type { LoginFormProps } from "./Login";
+export type AuthResult = EmailLoginResponse | EmailRegisterResponse;
 
 type PasswordLoginDataAndFunc = {
   onCall: PasswordAuth<PasswordLoginData>;
@@ -22,6 +25,7 @@ type FormData =
       type: "registerWithPassword";
       username: string;
       password: string;
+      result: undefined | AuthResult;
     } & PasswordLoginDataAndFunc)
   | ({
       type: "registerWithMagicLink";
@@ -44,6 +48,7 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
   const [totpRecoveryCode, setTotpRecoveryCode] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [error, setError] = React.useState("");
+  const [result, setResult] = React.useState<AuthResult>();
 
   useEffect(() => {
     setError("");
@@ -83,6 +88,7 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
         confirmPassword,
         setConfirmPassword,
         onCall: auth.register.withPassword,
+        result,
       }
     : state === "registerWithMagicLink" && auth.register?.withMagicLink ?
       {
@@ -144,17 +150,19 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
 
     const res = await formHandlers.onCall(formData);
     if (!res.success) {
-      console.error(res.error);
-      if (res.error === "Token missing") {
+      // if (res.error === "Token missing") {
+      if (res.code === "totp-token-missing") {
         setState("loginTotp");
       } else {
-        setErrorWithInfo(res.error);
+        setErrorWithInfo(res.message ?? res.code);
       }
     } else {
-      if (res.redirect_url) {
+      if ("redirect_url" in res && res.redirect_url) {
         window.location.href = res.redirect_url;
       }
     }
+    setResult(res);
+    return res;
   };
 
   return {
@@ -165,5 +173,6 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
     onAuthCall,
     isOnLogin,
     registerTypeAllowed,
+    result,
   };
 };

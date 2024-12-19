@@ -9,7 +9,7 @@ import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { Server } from "socket.io";
 import type { DBS } from ".";
 import { connMgr, connectionChecker } from ".";
-import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import type { ProstglesInitState } from "../../commonTypes/electronInit";
 import BackupManager from "./BackupManager/BackupManager";
 import { addLog, setLoggerDBS } from "./Logger";
@@ -90,16 +90,15 @@ export const startProstgles = async ({
       return { conn: getErrorAsObject(connError) };
     }
     const IS_PROD = process.env.NODE_ENV === "production";
-
     /** Prevent electron access denied error (cannot edit files in the install directory in electron) */
     const tsGeneratedTypesDir =
       IS_PROD || getElectronConfig()?.isElectron ?
         undefined
       : path.join(actualRootDir + "/../commonTypes/");
     const watchSchema = !!tsGeneratedTypesDir;
-    const auth = getAuth(app);
+    const auth = getAuth(app, undefined);
     //@ts-ignore
-    const prgl = await prostgles<DBSchemaGenerated>({
+    const prgl = await prostgles<DBGeneratedSchema>({
       dbConnection: {
         ...validatedDbConnection,
         connectionTimeoutMillis: 10 * 1000,

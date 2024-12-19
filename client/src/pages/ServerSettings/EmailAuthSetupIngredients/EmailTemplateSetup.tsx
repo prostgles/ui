@@ -1,8 +1,9 @@
 import React from "react";
-import { FlexCol } from "../../components/Flex";
-import { Label } from "../../components/Label";
-import FormField from "../../components/FormField/FormField";
-import CodeEditor from "../../dashboard/CodeEditor/CodeEditor";
+import { FlexCol } from "../../../components/Flex";
+import { Label } from "../../../components/Label";
+import FormField from "../../../components/FormField/FormField";
+import CodeEditor from "../../../dashboard/CodeEditor/CodeEditor";
+import { SmartCodeEditor } from "../../../dashboard/CodeEditor/SmartCodeEditor";
 
 export type EmailTemplateConfig = {
   from: string;
@@ -39,6 +40,7 @@ export const EmailTemplateSetup = ({
   return (
     <FlexCol
       style={{
+        ...style,
         minHeight: "300px",
         minWidth: "500px",
       }}
@@ -57,10 +59,13 @@ export const EmailTemplateSetup = ({
         value={value?.subject}
         onChange={(subject) => onFieldChange({ subject })}
       />
-      <CodeEditor
+      <SmartCodeEditor
         language={"html"}
         value={value?.body ?? ""}
-        onChange={(body) => onFieldChange({ body })}
+        label={"Body"}
+        // onChange={(body) => onFieldChange({ body })}
+        autoSave={true}
+        onSave={(body) => onFieldChange({ body })}
         options={{
           lineNumbers: "off",
           minimap: { enabled: false },

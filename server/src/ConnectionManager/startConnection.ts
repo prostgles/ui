@@ -5,7 +5,7 @@ import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUti
 import { getIsSuperUser, type DB } from "prostgles-server/dist/Prostgles";
 import { pickKeys } from "prostgles-types";
 import { Server } from "socket.io";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { addLog } from "../Logger";
 import { getAuth } from "../authConfig/authConfig";
@@ -109,7 +109,7 @@ export const startConnection = async function (
         dbConf,
         dbs,
       );
-      const auth = getAuth(this.app);
+      const auth = getAuth(this.app, dbs);
       const watchSchema = con.db_watch_shema ? "*" : false;
       const getForkedProcRunner = async () => {
         if (!this.prglConnections[con.id]?.methodRunner) {
@@ -231,11 +231,6 @@ export const startConnection = async function (
             connId: con.id,
             db: _db,
           });
-          console.log(
-            "onReady connection",
-            connectionInfo.database,
-            Object.keys(db),
-          );
 
           /**
            * In some cases watchSchema does not work as expected (GRANT/REVOKE will not be observable to a less privileged db user)

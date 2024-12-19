@@ -10,7 +10,7 @@ import type {
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import { omitKeys } from "prostgles-types";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { BKP_PREFFIX } from "../BackupManager/BackupManager";
 import { actualRootDir } from "../electronConfig";
@@ -145,6 +145,7 @@ export const getActiveSession = async (db: DBS, authType: AuthType) => {
 
 export const getAuth = (
   app: Express,
+  dbs: DBS | undefined,
   globalSettings?: DBSchemaGenerated["global_settings"]["columns"],
 ) => {
   const { auth_providers } = globalSettings || {};
@@ -299,7 +300,7 @@ export const getAuth = (
         auth_providers ?
           {
             websiteUrl: auth_providers.website_url,
-            email: getAuthEmailProvider(auth_providers),
+            email: getAuthEmailProvider(auth_providers, dbs),
             OAuthProviders: getOAuthProviders(auth_providers),
             onProviderLoginFail: async ({ clientInfo, dbo, provider }) => {
               await startLoginAttempt(dbo, clientInfo, {
