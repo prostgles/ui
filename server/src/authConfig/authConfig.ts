@@ -145,6 +145,7 @@ export const getActiveSession = async (db: DBS, authType: AuthType) => {
 
 export const getAuth = (
   app: Express,
+  dbs: DBS | undefined,
   globalSettings?: DBSchemaGenerated["global_settings"]["columns"],
 ) => {
   const { auth_providers } = globalSettings || {};
@@ -299,7 +300,7 @@ export const getAuth = (
         auth_providers ?
           {
             websiteUrl: auth_providers.website_url,
-            email: getAuthEmailProvider(auth_providers),
+            email: getAuthEmailProvider(auth_providers, dbs),
             OAuthProviders: getOAuthProviders(auth_providers),
             onProviderLoginFail: async ({ clientInfo, dbo, provider }) => {
               await startLoginAttempt(dbo, clientInfo, {

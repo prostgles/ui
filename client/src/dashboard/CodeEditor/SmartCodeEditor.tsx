@@ -138,26 +138,26 @@ export const SmartCodeEditor = ({
     </FlexCol>
   );
 
-  if (fullScreen) {
-    return (
-      <Popup
-        title={titleNode}
-        positioning="fullscreen"
-        contentStyle={{
-          overflow: "hidden",
-        }}
-        onClose={() => setFullScreen(false)}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            setFullScreen(false);
-          }
-        }}
-        onClickClose={false}
-      >
-        {content}
-      </Popup>
-    );
+  if (!fullScreen) {
+    return content;
   }
 
-  return content;
+  return (
+    <Popup
+      title={titleNode}
+      positioning="fullscreen"
+      contentStyle={{
+        overflow: "hidden",
+      }}
+      onClose={() => setFullScreen(false)}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          setFullScreen(false);
+        }
+      }}
+      onClickClose={false}
+    >
+      {content}
+    </Popup>
+  );
 };

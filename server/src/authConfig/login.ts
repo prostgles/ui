@@ -98,6 +98,9 @@ export const login: Required<Auth<DBSchemaGenerated, SUser>>["login"] = async (
   if (!u) {
     throw "something went wrong: " + JSON.stringify({ username, password });
   }
+  if (u.email_confirmation_code) {
+    throw "email not confirmed";
+  }
   if (u.status !== "active") {
     throw "inactive";
   }

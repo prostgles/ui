@@ -96,7 +96,7 @@ export const startProstgles = async ({
         undefined
       : path.join(actualRootDir + "/../commonTypes/");
     const watchSchema = !!tsGeneratedTypesDir;
-    const auth = getAuth(app);
+    const auth = getAuth(app, undefined);
     //@ts-ignore
     const prgl = await prostgles<DBGeneratedSchema>({
       dbConnection: {

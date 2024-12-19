@@ -1,7 +1,7 @@
 import React from "react";
-import { type DivProps, FlexCol } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
-import Select from "../../components/Select/Select";
+import { type DivProps, FlexCol } from "../../../components/Flex";
+import FormField from "../../../components/FormField/FormField";
+import Select from "../../../components/Select/Select";
 import type { EmailSMTPCofig } from "./EmailSMTPAndTemplateSetup";
 
 type P = Pick<DivProps, "style" | "className"> & {

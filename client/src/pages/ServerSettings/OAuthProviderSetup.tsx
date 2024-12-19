@@ -59,15 +59,6 @@ export const OAuthProviderSetup = ({
         ...authProviders,
         [provider]: newProviderConfig,
       });
-      // await dbs.global_settings.update(
-      //   {},
-      //   {
-      //     auth_providers: {
-      //       ...authProviders,
-      //       [provider]: newProviderConfig,
-      //     },
-      //   },
-      // );
       await tout(500);
       setLocalAuth(undefined);
     } catch (err) {

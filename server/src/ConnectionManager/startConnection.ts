@@ -109,7 +109,7 @@ export const startConnection = async function (
         dbConf,
         dbs,
       );
-      const auth = getAuth(this.app);
+      const auth = getAuth(this.app, dbs);
       const watchSchema = con.db_watch_shema ? "*" : false;
       const getForkedProcRunner = async () => {
         if (!this.prglConnections[con.id]?.methodRunner) {

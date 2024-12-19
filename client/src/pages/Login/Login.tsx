@@ -7,11 +7,13 @@ import { useLoginState } from "./useLoginState";
 import { LoginWithProviders } from "./LoginWithProviders";
 import { LoginTotpFormFields } from "./LoginTotpForm";
 import { FlexCol } from "../../components/Flex";
+import Popup from "../../components/Popup/Popup";
 
 export type LoginFormProps = Pick<Prgl, "auth">;
 
 export const Login = ({ auth }: LoginFormProps) => {
   const authState = useLoginState({ auth });
+  const [successMessage, setSuccessMessage] = React.useState("");
   const [isLoggingIn, setIsLoggingIn] = React.useState(false);
   const {
     formHandlers,
@@ -20,12 +22,19 @@ export const Login = ({ auth }: LoginFormProps) => {
     setState,
     error,
     onAuthCall: _onAuthCall,
+    result,
   } = authState;
   const onAuthCall = async () => {
     setIsLoggingIn(true);
-    _onAuthCall().finally(() => {
-      setIsLoggingIn(false);
-    });
+    _onAuthCall()
+      .then((res) => {
+        if (result?.success) {
+          setSuccessMessage(result.message);
+        }
+      })
+      .finally(() => {
+        setIsLoggingIn(false);
+      });
   };
 
   return (
@@ -39,6 +48,9 @@ export const Login = ({ auth }: LoginFormProps) => {
         e.preventDefault();
       }}
     >
+      {successMessage && (
+        <Popup onClose={() => setSuccessMessage("")}>{successMessage}</Popup>
+      )}
       <FlexCol className="p-2 pb-1">
         <h2 className="mt-0">{!isOnLogin ? "Sign up" : "Sign in"}</h2>
         {formHandlers?.setUsername && (

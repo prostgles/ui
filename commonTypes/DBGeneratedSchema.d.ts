@@ -567,6 +567,7 @@ export type DBGeneratedSchema = {
       auth_provider_user_id?: null | string;
       created?: null | string;
       email?: null | string;
+      email_confirmation_code?: null | string;
       has_2fa_enabled?: null | boolean;
       id?: string;
       last_updated?: null | string;

@@ -11,7 +11,7 @@ import type { AuthProviderProps } from "./AuthProvidersSetup";
 import {
   DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
   EmailSMTPAndTemplateSetup,
-} from "./EmailSMTPAndTemplateSetup";
+} from "./EmailAuthSetupIngredients/EmailSMTPAndTemplateSetup";
 
 export const EmailAuthSetup = ({
   authProviders,

@@ -1,4 +1,5 @@
 import type {
+  AuthResult,
   MagicLinkAuth,
   PasswordAuth,
   PasswordLoginData,
@@ -22,6 +23,7 @@ type FormData =
       type: "registerWithPassword";
       username: string;
       password: string;
+      result: undefined | AuthResult;
     } & PasswordLoginDataAndFunc)
   | ({
       type: "registerWithMagicLink";
@@ -44,6 +46,7 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
   const [totpRecoveryCode, setTotpRecoveryCode] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [error, setError] = React.useState("");
+  const [result, setResult] = React.useState<AuthResult>();
 
   useEffect(() => {
     setError("");
@@ -83,6 +86,7 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
         confirmPassword,
         setConfirmPassword,
         onCall: auth.register.withPassword,
+        result,
       }
     : state === "registerWithMagicLink" && auth.register?.withMagicLink ?
       {
@@ -155,6 +159,8 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
         window.location.href = res.redirect_url;
       }
     }
+    setResult(res);
+    return res;
   };
 
   return {
@@ -165,5 +171,6 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
     onAuthCall,
     isOnLogin,
     registerTypeAllowed,
+    result,
   };
 };

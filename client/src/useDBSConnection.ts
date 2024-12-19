@@ -137,6 +137,7 @@ export const useDBSConnection = (
             (window as any).dbs = dbs;
             (window as any).dbsSocket = socket;
             (window as any).dbsMethods = dbsMethods;
+            (window as any).auth = auth;
             const uType = auth.user?.type;
             const { tables: dbsTables = [], error } = await getTables(
               tableSchema ?? [],
