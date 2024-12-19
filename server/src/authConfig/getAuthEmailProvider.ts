@@ -16,7 +16,12 @@ export const getAuthEmailProvider = (
     ...(email.signupType === "withMagicLink" ?
       {
         signupType: "withMagicLink",
-        onRegistered: async (data: any) => {},
+        onRegistered: async (data: any) => {
+          return {
+            success: true,
+            code: "magic-link-sent",
+          };
+        },
         emailMagicLink: {
           smtp: email.smtp!,
           onRegistered: async (data: any) => {
@@ -32,7 +37,12 @@ export const getAuthEmailProvider = (
     : {
         signupType: "withPassword",
         minPasswordLength: email.minPasswordLength,
-        onRegistered: async (data: any) => {},
+        onRegistered: async (data: any) => {
+          return {
+            success: true,
+            code: "must-confirm-email",
+          };
+        },
         emailConfirmation:
           !email.emailConfirmationEnabled ? undefined : (
             {

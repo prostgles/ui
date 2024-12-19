@@ -29,7 +29,17 @@ export const Login = ({ auth }: LoginFormProps) => {
     _onAuthCall()
       .then((res) => {
         if (result?.success) {
-          setSuccessMessage(result.message);
+          const message =
+            result.message ||
+            (result.code ?
+              {
+                "must-confirm-email": "Please confirm your email",
+                "email-confirmation-sent": "Email confirmation sent",
+                "already-registered-but-did-not-confirm-email":
+                  "Please confirm your email",
+              }[result.code]
+            : "Success");
+          setSuccessMessage(message);
         }
       })
       .finally(() => {

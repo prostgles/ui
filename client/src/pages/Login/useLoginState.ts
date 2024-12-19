@@ -1,11 +1,13 @@
 import type {
-  AuthResult,
+  EmailLoginResponse,
+  EmailRegisterResponse,
   MagicLinkAuth,
   PasswordAuth,
   PasswordLoginData,
 } from "prostgles-client/dist/Auth";
 import React, { useEffect } from "react";
 import type { LoginFormProps } from "./Login";
+export type AuthResult = EmailLoginResponse | EmailRegisterResponse;
 
 type PasswordLoginDataAndFunc = {
   onCall: PasswordAuth<PasswordLoginData>;
@@ -148,14 +150,14 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
 
     const res = await formHandlers.onCall(formData);
     if (!res.success) {
-      console.error(res.error);
-      if (res.error === "Token missing") {
+      // if (res.error === "Token missing") {
+      if (res.code === "totp-token-missing") {
         setState("loginTotp");
       } else {
-        setErrorWithInfo(res.error);
+        setErrorWithInfo(res.message ?? res.code);
       }
     } else {
-      if (res.redirect_url) {
+      if ("redirect_url" in res && res.redirect_url) {
         window.location.href = res.redirect_url;
       }
     }
