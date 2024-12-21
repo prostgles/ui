@@ -62,9 +62,10 @@ export const addLog = (e: EventInfo, connection_id: string | null) => {
   if (dbs && logRecords.length > batchSize) {
     const getSid = (e: EventInfo) => {
       if (e.type === "table" || e.type === "sync") {
+        const { clientReq } = e.localParams ?? {};
         return (
-          e.localParams?.socket ? e.localParams.socket.__prglCache?.session.sid
-          : e.localParams?.httpReq ? e.localParams.httpReq.cookies["sid"]
+          clientReq?.socket ? clientReq.socket.__prglCache?.session.sid
+          : clientReq?.httpReq ? clientReq.httpReq.cookies["sid"]
           : null
         );
       }

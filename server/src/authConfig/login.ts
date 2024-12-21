@@ -2,17 +2,14 @@ import type { Auth } from "prostgles-server/dist/Auth/AuthTypes";
 import type { Users } from "..";
 import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import { log } from "../index";
-import type { SUser } from "./authConfig";
-import {
-  getActiveSession,
-  makeSession,
-  parseAsBasicSession,
-} from "./authConfig";
+import type { SUser } from "./getAuth";
+import { getActiveSession, makeSession, parseAsBasicSession } from "./getAuth";
 import type { DB } from "prostgles-server/dist/initProstgles";
 import { startLoginAttempt } from "./startLoginAttempt";
 import { getPasswordHash } from "./authUtils";
 import { authenticator } from "otplib";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import type { AuthResponse } from "prostgles-types";
 
 export const login: Required<Auth<DBSchemaGenerated, SUser>>["login"] = async (
   loginParams,
@@ -26,7 +23,9 @@ export const login: Required<Auth<DBSchemaGenerated, SUser>>["login"] = async (
   if (loginParams.type === "provider") {
     const { provider, profile } = loginParams;
     const auth_provider_user_id = profile.id;
-    if (!auth_provider_user_id) throw "No id provided";
+    if (!auth_provider_user_id) {
+      return "server-error";
+    }
     const username = `${provider}-${auth_provider_user_id}`;
     const auth_provider = provider;
     const name =
@@ -37,14 +36,25 @@ export const login: Required<Auth<DBSchemaGenerated, SUser>>["login"] = async (
         loginParams.profile.name?.givenName
       : loginParams.profile.name?.givenName);
     const email = profile.emails?.[0]?.value;
-    const { onSuccess, ip } = await startLoginAttempt(db, clientInfo, {
-      auth_type: "provider",
-      auth_provider: provider,
-    });
+    const { onSuccess, ip, failedTooManyTimes } = await startLoginAttempt(
+      db,
+      clientInfo,
+      {
+        auth_type: "provider",
+        auth_provider: provider,
+      },
+    );
+    if (failedTooManyTimes) return "rate-limit-exceeded";
     onSuccess();
     const matchingUser = await db.users.findOne({ auth_provider, username });
     if (matchingUser) {
-      return await createSession({ user: matchingUser, ip, user_agent, db });
+      const session = await createSession({
+        user: matchingUser,
+        ip,
+        user_agent,
+        db,
+      });
+      return { session, response: { success: true } };
     } else {
       const globalSettings = await db.global_settings.findOne();
       const newUser = await db.users
@@ -64,71 +74,97 @@ export const login: Required<Auth<DBSchemaGenerated, SUser>>["login"] = async (
           { returning: "*" },
         )
         .catch((e) => Promise.reject("Could not create user"));
-      return await createSession({ user: newUser, ip, db, user_agent });
+      const session = await createSession({
+        user: newUser,
+        ip,
+        db,
+        user_agent,
+      });
+      return { session, response: { success: true } };
     }
   }
   const { username, password, totp_token, totp_recovery_code } = loginParams;
 
-  let u: Users | undefined;
-
-  if (password.length > 400) {
-    throw "Password is too long";
+  if (!password) {
+    return "password-missing";
   }
-  const { onSuccess, ip } = await startLoginAttempt(
+  if (password.length > 400) {
+    return "something-went-wrong";
+  }
+  const { onSuccess, ip, failedTooManyTimes } = await startLoginAttempt(
     db,
     { ip_address, ip_address_remote, user_agent, x_real_ip },
     { auth_type: "login", username },
   );
+  if (failedTooManyTimes) return "rate-limit-exceeded";
+
+  let matchingUser: Users | undefined;
   try {
-    const userFromUsername = await _db.one(
+    const userFromUsername: Users | undefined = await _db.one(
       "SELECT * FROM users WHERE username = ${username};",
       { username },
     );
     if (!userFromUsername) {
-      throw "no match";
+      return "no-match";
+    }
+    /** Trying to login OAuth user using password */
+    if (userFromUsername.auth_provider) {
+      return "something-went-wrong";
     }
     const hashedPassword = getPasswordHash(userFromUsername, password);
-    u = await _db.one(
+    matchingUser = await _db.one(
       "SELECT * FROM users WHERE username = ${username} AND password = ${hashedPassword};",
       { username, hashedPassword },
     );
   } catch (e) {
-    throw "no match";
+    return "no-match";
   }
-  if (!u) {
-    throw "something went wrong: " + JSON.stringify({ username, password });
+  if (!matchingUser) {
+    return "something-went-wrong";
   }
-  if (u.email_confirmation_code) {
-    throw "email not confirmed";
+  if (matchingUser.email_confirmation_code) {
+    return "email-not-confirmed";
   }
-  if (u.status !== "active") {
-    throw "inactive";
+  if (matchingUser.status !== "active") {
+    return "inactive-account";
   }
 
-  if (u["2fa"]?.enabled) {
+  if (matchingUser["2fa"]?.enabled) {
     if (totp_recovery_code && typeof totp_recovery_code === "string") {
-      const hashedRecoveryCode = getPasswordHash(u, totp_recovery_code.trim());
+      const hashedRecoveryCode = getPasswordHash(
+        matchingUser,
+        totp_recovery_code.trim(),
+      );
       const areMatching = await _db.any(
         "SELECT * FROM users WHERE id = ${id} AND \"2fa\"->>'recoveryCode' = ${hashedRecoveryCode} ",
-        { id: u.id, hashedRecoveryCode },
+        { id: matchingUser.id, hashedRecoveryCode },
       );
       if (!areMatching.length) {
-        throw "Invalid token";
+        return "invalid-totp-recovery-code";
       }
     } else if (totp_token && typeof totp_token === "string") {
       if (
-        !authenticator.verify({ secret: u["2fa"].secret, token: totp_token })
+        !authenticator.verify({
+          secret: matchingUser["2fa"].secret,
+          token: totp_token,
+        })
       ) {
-        throw "Invalid token";
+        return "invalid-totp-code";
       }
     } else {
-      throw "Token missing";
+      return "totp-token-missing";
     }
   }
 
   await onSuccess();
 
-  return await createSession({ user: u, ip, db, user_agent });
+  const session = await createSession({
+    user: matchingUser,
+    ip,
+    db,
+    user_agent,
+  });
+  return { session, response: { success: true } };
 };
 
 type CreateSessionArgs = {

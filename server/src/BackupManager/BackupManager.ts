@@ -20,7 +20,7 @@ type DBS = DBOFullyTyped<DBGeneratedSchema>;
 
 import checkDiskSpace from "check-disk-space";
 import type { Request, Response } from "express";
-import type { SUser } from "../authConfig/authConfig";
+import type { SUser } from "../authConfig/getAuth";
 import { getRootDir } from "../electronConfig";
 import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
 import type { DB } from "prostgles-server/dist/Prostgles";

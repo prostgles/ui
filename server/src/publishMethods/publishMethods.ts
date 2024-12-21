@@ -19,16 +19,11 @@ import { isDefined } from "../../../commonTypes/filterUtils";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { isObject } from "../../../commonTypes/publishUtils";
 import type { SampleSchema } from "../../../commonTypes/utils";
-import { createSessionSecret } from "../authConfig/authConfig";
 import { getPasswordHash } from "../authConfig/authUtils";
+import { createSessionSecret } from "../authConfig/getAuth";
 import type { Backups } from "../BackupManager/BackupManager";
 import { getInstalledPrograms } from "../BackupManager/getInstalledPrograms";
-import {
-  EMPTY_PASSWORD,
-  getPasswordlessAdmin,
-  insertUser,
-  PASSWORDLESS_ADMIN_USERNAME,
-} from "../ConnectionChecker";
+import { getPasswordlessAdmin } from "../ConnectionChecker";
 import type { ConnectionTableConfig } from "../ConnectionManager/ConnectionManager";
 import {
   DB_TRANSACTION_KEY,
@@ -53,8 +48,8 @@ import { askLLM } from "./askLLM/askLLM";
 export const publishMethods: PublishMethods<DBSchemaGenerated> = async (
   params,
 ) => {
-  const { dbo: dbs, socket, db: _dbs } = params;
-  const ip_address = (socket as any).conn.remoteAddress;
+  const { dbo: dbs, clientReq, db: _dbs } = params;
+  const { socket } = clientReq;
 
   const user: DBSSchema["users"] | undefined = params.user as any;
 
@@ -128,6 +123,7 @@ export const publishMethods: PublishMethods<DBSchemaGenerated> = async (
       };
     },
     getMyIP: () => {
+      if (!socket) throw "Socket missing";
       return connectionChecker.checkClientIP({ socket });
     },
     getConnectedIds: async (): Promise<string[]> => {
@@ -567,6 +563,8 @@ export const publishMethods: PublishMethods<DBSchemaGenerated> = async (
         throw "Expecting an integer days but got: " + days;
       }
 
+      if (!socket) throw "Socket missing";
+      const ip_address = (socket as any).conn.remoteAddress;
       const session = await dbs.sessions.insert(
         {
           expires: Date.now() + days * 24 * 3600 * 1000,

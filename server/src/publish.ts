@@ -15,7 +15,7 @@ import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
 export const publish = async (
   params: PublishParams<DBSchemaGenerated>,
 ): Promise<Publish<DBSchemaGenerated>> => {
-  const { dbo: db, user, db: _db, socket } = params;
+  const { dbo: db, user, db: _db, clientReq } = params;
 
   if (!user || !user.id) {
     return null;
@@ -61,7 +61,6 @@ export const publish = async (
         sync: {
           id_fields: ["id"],
           synced_field: "last_updated",
-          allow_delete: true,
         },
         ...(createEditDashboards && {
           update: {
@@ -416,7 +415,7 @@ export const publish = async (
 
           if (row.allowed_ips_enabled) {
             const { isAllowed, ip } = await connectionChecker.checkClientIP({
-              socket,
+              ...clientReq,
               dbsTX,
             });
             if (!isAllowed)

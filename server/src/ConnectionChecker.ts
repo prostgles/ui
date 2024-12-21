@@ -5,19 +5,19 @@ import type {
   AuthResult,
   SessionUser,
 } from "prostgles-server/dist/Auth/AuthTypes";
-import { getLoginClientInfo } from "prostgles-server/dist/Auth/AuthHandler";
+import { getClientRequestIPsInfo } from "prostgles-server/dist/Auth/AuthHandler";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { SubscriptionHandler } from "prostgles-types";
 import { isDefined, tryCatch } from "prostgles-types";
 import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
-import type { SUser } from "./authConfig/authConfig";
+import type { SUser } from "./authConfig/getAuth";
 import {
   YEAR,
   getActiveSession,
   makeSession,
   sidKeyName,
-} from "./authConfig/authConfig";
+} from "./authConfig/getAuth";
 import { getPasswordHash } from "./authConfig/authUtils";
 import { getElectronConfig } from "./electronConfig";
 import { PRGL_PASSWORD, PRGL_USERNAME } from "./envVars";
@@ -51,13 +51,7 @@ export class ConnectionChecker {
     await this.usersSub?.unsubscribe();
   };
 
-  onSocketConnected = async ({
-    sid,
-    getUser,
-  }: {
-    sid?: string;
-    getUser: () => Promise<AuthResult<SessionUser<Users, Users>>>;
-  }) => {
+  onSocketConnected = async ({ sid }: { sid?: string }) => {
     /** Ensure that only 1 session is allowed for the passwordless admin */
     await this.withConfig();
     if (this.noPasswordAdmin) {
@@ -141,7 +135,7 @@ export class ConnectionChecker {
           //     { cidr },
           //     { returnType: "row" }
           //   )
-          // ) as any
+          //  ) as any
 
           // this.ipRanges = await Promise.all(cidrRequests);
 
@@ -215,7 +209,7 @@ export class ConnectionChecker {
       if (publicConnections.length) {
         const isLoggingIn =
           isAccessingMagicLink || req.originalUrl.startsWith("/login");
-        const client = getLoginClientInfo({ httpReq: req });
+        const client = getClientRequestIPsInfo({ httpReq: req, res });
         const hasNoActiveSession =
           !sid ||
           !(await getActiveSession(this.db, {
@@ -256,9 +250,10 @@ export class ConnectionChecker {
 
   config: {
     loaded: boolean;
-    global_setting?: DBSSchema["global_settings"];
+    global_setting: DBSSchema["global_settings"] | undefined;
   } = {
     loaded: false,
+    global_setting: undefined,
   };
 
   usersSub?: SubscriptionHandler;
@@ -277,7 +272,7 @@ export class ConnectionChecker {
     args: ({ socket: PRGLIOSocket } | { httpReq: Request }) & { dbsTX?: DBS },
   ) => {
     const { ip_address, ip_address_remote, x_real_ip } =
-      getLoginClientInfo(args);
+      getClientRequestIPsInfo(args);
     const { groupBy } = this.config.global_setting?.login_rate_limit ?? {};
     const ipValue =
       groupBy === "x-real-ip" ? x_real_ip

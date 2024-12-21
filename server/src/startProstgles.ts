@@ -13,7 +13,7 @@ import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import type { ProstglesInitState } from "../../commonTypes/electronInit";
 import BackupManager from "./BackupManager/BackupManager";
 import { addLog, setLoggerDBS } from "./Logger";
-import { getAuth } from "./authConfig/authConfig";
+import { getAuth } from "./authConfig/getAuth";
 import { setAuthReloader } from "./authConfig/setAuthReloader";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import type { DBSConnectionInfo } from "./electronConfig";
@@ -116,7 +116,6 @@ export const startProstgles = async ({
 
         await connectionChecker.onSocketConnected({
           sid,
-          getUser: getUser as any,
         });
 
         if (sid) {

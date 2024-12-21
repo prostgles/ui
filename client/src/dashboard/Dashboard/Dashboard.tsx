@@ -195,14 +195,15 @@ export class _Dashboard extends RTComp<
       this.syncsSet = true;
 
       const wspFilter = { connection_id: connectionId, deleted: false };
-      if (!+(await workspaces.count(wspFilter))) {
+      const wspCount = +(await workspaces.count(wspFilter));
+      if (!wspCount) {
         const defaultIsDeleted = +(await workspaces.count({
           connection_id: connectionId,
           name: "default",
           deleted: true,
         }));
 
-        await workspaces.insert(
+        const insertedWsp = await workspaces.insert(
           {
             connection_id: connectionId,
             name: !defaultIsDeleted ? "default" : `default ${Date.now()}`,
@@ -210,7 +211,7 @@ export class _Dashboard extends RTComp<
           },
           { returning: "*" },
         );
-        // await pageReload("default workspace created");
+        console.log(insertedWsp);
       }
       let wsp: Workspace | undefined;
       try {

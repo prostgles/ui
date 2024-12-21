@@ -3,7 +3,7 @@ import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { isEmpty, pickKeys } from "prostgles-types";
 import { connectionChecker, tout } from "..";
 import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
-import { HOUR } from "./authConfig";
+import { HOUR } from "./getAuth";
 
 const getGlobalSettings = async () => {
   let gs = connectionChecker.config.global_setting;
@@ -106,15 +106,15 @@ export const startLoginAttempt = async (
 ) => {
   const { failedTooManyTimes, matchByFilter, ip, disabled } =
     await getFailedTooManyTimes(db, clientInfo);
-  if (failedTooManyTimes) {
-    throw "Too many failed login attempts";
-  }
   const ignoredResult = {
     ip,
     onSuccess: async () => {},
+    disabled,
+    failedTooManyTimes,
   };
-
-  if (disabled) return ignoredResult;
+  if (failedTooManyTimes || disabled) {
+    return ignoredResult;
+  }
 
   /** In case of a bad sid do not log it multiple times */
   if (authInfo.auth_type === "session-id") {
@@ -140,6 +140,7 @@ export const startLoginAttempt = async (
   );
   return {
     ip,
+    failedTooManyTimes,
     onSuccess: async () => {
       await db.login_attempts.update(
         { id: loginAttempt.id },

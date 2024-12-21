@@ -1,27 +1,17 @@
-import React from "react";
-import Btn from "../../components/Btn";
-import {
-  mdiAlbum,
-  mdiCog,
-  mdiSortAscending,
-  mdiTable,
-  mdiViewGridPlus,
-} from "@mdi/js";
+import { mdiCog, mdiTable, mdiViewGridPlus } from "@mdi/js";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import { useEffectAsync, usePromise } from "prostgles-client/dist/react-hooks";
+import React from "react";
+import Btn from "../../components/Btn";
 import FormField from "../../components/FormField/FormField";
+import { pageReload } from "../../components/Loading";
 import PopupMenu from "../../components/PopupMenu";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import type { DashboardProps } from "../Dashboard/Dashboard";
 import type { Workspace } from "../Dashboard/dashboardUtils";
 import { useLocalSettings } from "../localSettings";
 import { DashboardHotkeys } from "./DashboardHotkeys";
-import Select from "../../components/Select/Select";
-import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
-import { FlexCol } from "../../components/Flex";
 import { SettingsSection } from "./SettingsSection";
-import { pageReload } from "../../components/Loading";
-import ButtonGroup from "../../components/ButtonGroup";
 export { useEffectAsync };
 
 const layoutType = [

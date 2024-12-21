@@ -9,7 +9,7 @@ import type {
 } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import { omitKeys } from "prostgles-types";
+import { type AuthResponse, omitKeys } from "prostgles-types";
 import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { BKP_PREFFIX } from "../BackupManager/BackupManager";
@@ -116,6 +116,13 @@ export const getActiveSession = async (db: DBS, authType: AuthType) => {
    * Always maintain a valid session for passwordless admin
    */
   const pwdlessUser = connectionChecker.noPasswordAdmin;
+  // const pwdAdmin = await db.sql(
+  //   `SELECT * FROM users WHERE passwordless_admin = true`,
+  // );
+  // const pwdUsr = await db.users.findOne();
+  // if (!pwdlessUser && pwdAdmin.rows.length) {
+  //   debugger;
+  // }
   if (pwdlessUser && !validSession) {
     const oldSession = await db.sessions.findOne({ user_id: pwdlessUser.id });
     if (oldSession) {
@@ -132,11 +139,14 @@ export const getActiveSession = async (db: DBS, authType: AuthType) => {
     if (!expiredSession) {
       const { ip_address, ip_address_remote, user_agent, x_real_ip } =
         authType.client;
-      await startLoginAttempt(
+      const { failedTooManyTimes } = await startLoginAttempt(
         db,
         { ip_address, ip_address_remote, user_agent, x_real_ip },
         { auth_type: "session-id", sid: authType.filter.id },
       );
+      if (failedTooManyTimes) {
+        throw "Failed too many times";
+      }
     }
   }
 
@@ -152,8 +162,6 @@ export const getAuth = (
   const auth = {
     sidKeyName,
     getUser: async (sid, db, _db: DB, client) => {
-      // log("getUser", sid);
-
       if (!sid) return undefined;
 
       const s = await getActiveSession(db, {
@@ -200,7 +208,6 @@ export const getAuth = (
       }
 
       await db.sessions.update({ id: sid }, { active: false });
-      // await db.sessions.delete({ id: sid });
       /** Keep last 20 sessions */
 
       return true;
@@ -216,12 +223,9 @@ export const getAuth = (
 
     expressConfig: {
       app,
-      // userRoutes: ["/", "/connection", "/connections", "/profile", "/jobs", "/chats", "/chat", "/account", "/dashboard", "/registrations"],
       use: connectionChecker.onUse,
       publicRoutes: ["/manifest.json", "/favicon.ico", API_PATH],
       onGetRequestOK: async (req, res, { getUser, db, dbo: dbs }) => {
-        // log("onGetRequestOK", req.path);
-
         if (req.path.startsWith(BKP_PREFFIX)) {
           const userData = await getUser();
           await (
@@ -244,57 +248,71 @@ export const getAuth = (
         }
       },
       cookieOptions: authCookieOpts,
-      magicLinks: {
-        check: async (
-          id,
+      onMagicLink: async (
+        id,
+        dbo,
+        _db,
+        { ip_address, ip_address_remote, user_agent, x_real_ip },
+      ) => {
+        const withError = (
+          code: AuthResponse.MagicLinkAuthFailure["code"],
+        ) => ({
+          response: {
+            success: false,
+            code,
+          } satisfies AuthResponse.MagicLinkAuthFailure,
+        });
+        const onLoginAttempt = await startLoginAttempt(
           dbo,
-          db,
           { ip_address, ip_address_remote, user_agent, x_real_ip },
-        ) => {
-          const onLoginAttempt = await startLoginAttempt(
-            dbo,
-            { ip_address, ip_address_remote, user_agent, x_real_ip },
-            { auth_type: "magic-link", magic_link_id: id },
-          );
-          const mlink = await dbo.magic_links.findOne({ id });
+          { auth_type: "magic-link", magic_link_id: id },
+        );
+        if (onLoginAttempt.failedTooManyTimes) {
+          return withError("rate-limit-exceeded");
+        }
+        const mlink = await dbo.magic_links.findOne({ id });
 
-          if (mlink) {
-            if (Number(mlink.expires) < Date.now()) {
-              throw "Expired magic link";
-            }
-            if (mlink.magic_link_used) {
-              throw "Magic link already used";
-            }
-          } else {
-            throw new Error("Magic link not found");
+        if (mlink) {
+          if (Number(mlink.expires) < Date.now()) {
+            return withError("expired-magic-link");
+            throw "Expired magic link";
           }
+          if (mlink.magic_link_used) {
+            return withError("expired-magic-link");
+            throw "Magic link already used";
+          }
+        } else {
+          return withError("no-match");
+          throw new Error("Magic link not found");
+        }
 
-          const user = await dbo.users.findOne({ id: mlink.user_id });
-          if (!user) {
-            throw new Error("User from Magic link not found");
-          }
+        const user = await dbo.users.findOne({ id: mlink.user_id });
+        if (!user) {
+          return withError("no-match");
+          throw new Error("User from Magic link not found");
+        }
 
-          const usedMagicLink = await dbo.magic_links.update(
-            { id: mlink.id, magic_link_used: null },
-            { magic_link_used: new Date() },
-            { returning: "*" },
-          );
-          if (!usedMagicLink) {
-            throw new Error("Magic link already used");
-          }
-          const session = await makeSession(
-            user,
-            {
-              ip_address: onLoginAttempt.ip,
-              user_agent: user_agent || null,
-              type: "web",
-            },
-            dbo,
-            Number(mlink.expires),
-          );
-          await onLoginAttempt.onSuccess();
-          return session;
-        },
+        const usedMagicLink = await dbo.magic_links.update(
+          { id: mlink.id, magic_link_used: null },
+          { magic_link_used: new Date() },
+          { returning: "*" },
+        );
+        if (!usedMagicLink) {
+          return withError("no-match");
+          throw new Error("Magic link already used");
+        }
+        const session = await makeSession(
+          user,
+          {
+            ip_address: onLoginAttempt.ip,
+            user_agent: user_agent || null,
+            type: "web",
+          },
+          dbo,
+          Number(mlink.expires),
+        );
+        await onLoginAttempt.onSuccess();
+        return { session };
       },
       registrations:
         auth_providers ?
@@ -303,10 +321,10 @@ export const getAuth = (
             email: getAuthEmailProvider(auth_providers, dbs),
             OAuthProviders: getOAuthProviders(auth_providers),
             onProviderLoginFail: async ({ clientInfo, dbo, provider }) => {
-              await startLoginAttempt(dbo, clientInfo, {
-                auth_type: "provider",
-                auth_provider: provider,
-              });
+              // await startLoginAttempt(dbo, clientInfo, {
+              //   auth_type: "provider",
+              //   auth_provider: provider,
+              // });
             },
             onProviderLoginStart: async ({ dbo, clientInfo }) => {
               const check = await getFailedTooManyTimes(dbo as any, clientInfo);

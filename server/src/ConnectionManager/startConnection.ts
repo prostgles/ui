@@ -8,7 +8,7 @@ import { Server } from "socket.io";
 import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { addLog } from "../Logger";
-import { getAuth } from "../authConfig/authConfig";
+import { getAuth } from "../authConfig/getAuth";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc } from "../index";
 import type { ConnectionManager, User } from "./ConnectionManager";

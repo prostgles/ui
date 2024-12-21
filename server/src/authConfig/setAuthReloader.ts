@@ -4,7 +4,7 @@ import type { SubscriptionHandler } from "prostgles-types";
 import { isDeepStrictEqual } from "util";
 import type { DBS } from "..";
 import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
-import { getAuth } from "./authConfig";
+import { getAuth } from "./getAuth";
 
 let globalSettingSub: SubscriptionHandler | undefined;
 let auth_providers:

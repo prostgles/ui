@@ -1,36 +1,40 @@
 import type {
-  EmailLoginResponse,
-  EmailRegisterResponse,
   MagicLinkAuth,
-  PasswordAuth,
-  PasswordLoginData,
+  PasswordLogin,
+  PasswordRegister,
 } from "prostgles-client/dist/Auth";
 import React, { useEffect } from "react";
 import type { LoginFormProps } from "./Login";
-export type AuthResult = EmailLoginResponse | EmailRegisterResponse;
+import type { AuthResponse } from "prostgles-types";
 
 type PasswordLoginDataAndFunc = {
-  onCall: PasswordAuth<PasswordLoginData>;
-} & PasswordAuth<PasswordLoginData>;
+  onCall: PasswordLogin;
+  result: undefined | Awaited<ReturnType<PasswordLogin>>;
+} & Parameters<PasswordLogin>[0];
+
+type PasswordRegisterDataAndFunc = {
+  onCall: PasswordRegister;
+  result: undefined | Awaited<ReturnType<PasswordRegister>>;
+} & Parameters<PasswordRegister>[0];
+
+type MagicLinkAuthFuncAndData = {
+  onCall: MagicLinkAuth;
+  result: undefined | Awaited<ReturnType<MagicLinkAuth>>;
+} & Parameters<MagicLinkAuth>[0];
 
 type FormData =
   | ({ type: "login" } & PasswordLoginDataAndFunc)
-  | ({ type: "loginWithMagicLink"; onCall: MagicLinkAuth } & Pick<
-      PasswordLoginData,
-      "username"
-    >)
+  | ({
+      type: "loginWithMagicLink";
+    } & MagicLinkAuthFuncAndData)
   | ({ type: "loginTotp" } & PasswordLoginDataAndFunc)
   | ({ type: "loginTotpRecovery" } & PasswordLoginDataAndFunc)
   | ({
       type: "registerWithPassword";
-      username: string;
-      password: string;
-      result: undefined | AuthResult;
-    } & PasswordLoginDataAndFunc)
+    } & PasswordRegisterDataAndFunc)
   | ({
       type: "registerWithMagicLink";
-      username: string;
-    } & PasswordLoginDataAndFunc);
+    } & MagicLinkAuthFuncAndData);
 
 type FormStates = FormData["type"];
 
@@ -48,7 +52,8 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
   const [totpRecoveryCode, setTotpRecoveryCode] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [error, setError] = React.useState("");
-  const [result, setResult] = React.useState<AuthResult>();
+  const [result, setResult] =
+    React.useState<Extract<FormData, { type: typeof state }>["result"]>();
 
   useEffect(() => {
     setError("");
@@ -150,11 +155,11 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
 
     const res = await formHandlers.onCall(formData);
     if (!res.success) {
-      // if (res.error === "Token missing") {
       if (res.code === "totp-token-missing") {
         setState("loginTotp");
       } else {
-        setErrorWithInfo(res.message ?? res.code);
+        const errorMessage = res.message ?? ERR_CODE_MESSAGES[res.code];
+        setErrorWithInfo(errorMessage);
       }
     } else {
       if ("redirect_url" in res && res.redirect_url) {
@@ -176,3 +181,29 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
     result,
   };
 };
+
+const ERR_CODE_MESSAGES = {
+  "no-match": "Invalid credentials",
+  "password-missing": "Password cannot be empty",
+  "totp-token-missing": "Token cannot be empty",
+  "invalid-totp-recovery-code": "Invalid recovery code",
+  "rate-limit-exceeded": "Too many failed attempts",
+  "email-not-confirmed": "Email not confirmed",
+  "expired-magic-link": "Magic link expired",
+  "inactive-account": "Account is inactive",
+  "invalid-password": "Invalid password",
+  "invalid-totp-code": "Invalid totp code",
+  "invalid-username": "Invalid username",
+  "is-from-magic-link": "Cannot login with password",
+  "is-from-OAuth": "Cannot login with password",
+  "server-error": "Server error",
+  "something-went-wrong": "Something went wrong",
+  "user-already-registered": "User already registered",
+  "username-missing": "Username cannot be empty",
+  "weak-password": "Password is too weak",
+} satisfies Record<
+  | AuthResponse.MagicLinkAuthFailure["code"]
+  | AuthResponse.PasswordLoginFailure["code"]
+  | AuthResponse.PasswordRegisterFailure["code"],
+  string
+>;

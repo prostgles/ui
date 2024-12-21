@@ -1,5 +1,5 @@
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
-import type { SUser } from "../authConfig/authConfig";
+import type { SUser } from "../authConfig/getAuth";
 import {
   omitKeys,
   pickKeys,
