@@ -2,9 +2,10 @@ import type { AuthRegistrationConfig } from "prostgles-server/dist/Auth/AuthType
 import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import { startLoginAttempt } from "./startLoginAttempt";
 import type { DBS } from "..";
-import { createSessionSecret } from "./getAuth";
+import { createSessionSecret, YEAR } from "./getAuth";
 import { getPasswordHash } from "./authUtils";
 import { EMAIL_CONFIRMED_SEARCH_PARAM } from "../../../commonTypes/OAuthUtils";
+import { makeMagicLink } from "../ConnectionChecker";
 
 export const getAuthEmailProvider = (
   auth_providers: DBSchemaGenerated["global_settings"]["columns"]["auth_providers"],
@@ -38,15 +39,23 @@ export const getAuthEmailProvider = (
               },
               { returning: "*" },
             ));
+          const mlink = await makeMagicLink(
+            user,
+            dbs,
+            "/",
+            Date.now() + 10 * YEAR,
+          );
           attempt.onSuccess();
           return {
             response: {
               success: true,
+              message:
+                "A magic link was sent to the provided email address. Click the link to login.",
             },
             email: {
               from: "noreply@cloud.prostgles.com",
               subject: "Login to your account",
-              html: `Hey ${email}, <br> Login by clicking <a href="${magicLinkUrlPath}/${user.email_confirmation_code}">here</a>`,
+              html: `Hey ${email}, <br> Login by clicking <a href="${magicLinkUrlPath}/${mlink.magicLinkId}">here</a>`,
             },
           };
         },
@@ -66,15 +75,25 @@ export const getAuthEmailProvider = (
             // throw "Invalid confirmation code";
           }
           const user = await dbs.users.findOne({
-            email_confirmation_code: data.confirmationCode,
-          });
+            "registration->>type": "password-w-email-confirmation",
+            // email_confirmation_code: data.confirmationCode,
+          } as any);
           if (!user) {
             return "no-match";
             // throw "Invalid confirmation code";
           }
           await dbs.users.update(
             { id: user.id },
-            { email_confirmation_code: null },
+            // { email_confirmation_code: null },
+            {
+              registration: {
+                type: "password-w-email-confirmation",
+                email_confirmation: {
+                  status: "confirmed",
+                  date: new Date().toISOString(),
+                },
+              },
+            },
           );
           await attempt.onSuccess();
           return {
@@ -99,14 +118,28 @@ export const getAuthEmailProvider = (
             email,
           });
           const email_confirmation_code = createSessionSecret();
+          const getUserUpdate = (newUsr: { id: string }) =>
+            ({
+              registration: {
+                type: "password-w-email-confirmation",
+                email_confirmation: {
+                  status: "pending",
+                  confirmation_code: email_confirmation_code,
+                },
+              },
+              password: getPasswordHash(newUsr, password),
+            }) as const;
           if (existingUser) {
-            if (!existingUser.email_confirmation_code) {
+            if (
+              existingUser.registration?.type !==
+                "password-w-email-confirmation" &&
+              existingUser.status !== "confirmed"
+            ) {
               return "user-already-registered";
             }
-            const hashedPassword = getPasswordHash(existingUser, password);
             await dbs.users.update(
               { id: existingUser.id },
-              { email_confirmation_code, password: hashedPassword },
+              getUserUpdate(existingUser),
             );
           } else {
             const newUser = await dbs.users.insert(
@@ -118,11 +151,7 @@ export const getAuthEmailProvider = (
               },
               { returning: "*" },
             );
-            const hashedPassword = getPasswordHash(newUser, password);
-            await dbs.users.update(
-              { id: newUser.id },
-              { email_confirmation_code, password: hashedPassword },
-            );
+            await dbs.users.update({ id: newUser.id }, getUserUpdate(newUser));
           }
           await attempt.onSuccess();
           return {

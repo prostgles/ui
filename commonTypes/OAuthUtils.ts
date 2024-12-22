@@ -133,3 +133,5 @@ export const OAuthProviderOptions = {
 };
 
 export const EMAIL_CONFIRMED_SEARCH_PARAM = "email-confirmed" as const;
+
+export const PASSWORDLESS_ADMIN_USERNAME = "passwordless_admin";

@@ -24,7 +24,7 @@ import { publish } from "./publish";
 import { publishMethods } from "./publishMethods/publishMethods";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
-import { tableConfig } from "./tableConfig";
+import { tableConfig } from "./tableConfig/tableConfig";
 import { insertDefaultPrompts } from "./publishMethods/askLLM/askLLM";
 
 type StartArguments = {

@@ -122,7 +122,10 @@ export const login: Required<Auth<DBSchemaGenerated, SUser>>["login"] = async (
   if (!matchingUser) {
     return "something-went-wrong";
   }
-  if (matchingUser.email_confirmation_code) {
+  if (
+    matchingUser.registration?.type === "password-w-email-confirmation" &&
+    matchingUser.registration.email_confirmation.status !== "confirmed"
+  ) {
     return "email-not-confirmed";
   }
   if (matchingUser.status !== "active") {

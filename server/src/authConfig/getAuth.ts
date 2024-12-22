@@ -269,16 +269,17 @@ export const getAuth = (
 
         if (mlink) {
           if (Number(mlink.expires) < Date.now()) {
+            await onLoginAttempt.onSuccess();
             return withError("expired-magic-link");
             throw "Expired magic link";
           }
           if (mlink.magic_link_used) {
+            await onLoginAttempt.onSuccess();
             return withError("expired-magic-link");
             throw "Magic link already used";
           }
         } else {
           return withError("no-match");
-          throw new Error("Magic link not found");
         }
 
         const user = await dbo.users.findOne({ id: mlink.user_id });

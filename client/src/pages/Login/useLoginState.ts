@@ -71,7 +71,14 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
   }, [username, password, totpToken, totpRecoveryCode, confirmPassword]);
 
   const formHandlers =
-    state === "login" && auth.login?.withPassword ?
+    state === "login" && auth.login?.withMagicLink ?
+      {
+        state,
+        username,
+        setUsername,
+        onCall: auth.login.withMagicLink,
+      }
+    : state === "login" && auth.login?.withPassword ?
       {
         state,
         username,

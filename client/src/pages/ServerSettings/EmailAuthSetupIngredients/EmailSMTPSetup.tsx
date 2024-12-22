@@ -6,7 +6,7 @@ import type { EmailSMTPCofig } from "./EmailSMTPAndTemplateSetup";
 
 type P = Pick<DivProps, "style" | "className"> & {
   value: EmailSMTPCofig | undefined;
-  onChange: (newValue: P["value"]) => void;
+  onChange: (newValue: NonNullable<P["value"]>) => void;
 };
 
 const providerOptions = [

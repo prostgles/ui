@@ -47,7 +47,7 @@ export const EmailSMTPAndTemplateSetup = (props: P) => {
   const showConfirmationEnableToggle = signupType === "withPassword";
 
   const enabled =
-    showConfirmationEnableToggle && value?.emailConfirmationEnabled;
+    !showConfirmationEnableToggle || value?.emailConfirmationEnabled;
   return (
     <PopupMenu
       positioning="top-center"

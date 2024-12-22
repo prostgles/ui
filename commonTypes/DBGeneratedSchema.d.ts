@@ -266,8 +266,8 @@ export type DBGeneratedSchema = {
       allowed_ips?: string[];
       allowed_ips_enabled?: boolean;
       allowed_origin?: null | string;
-      auth_providers?: null | {    website_url: string;   created_user_type?: string;   email?: |  {  signupType: 'withMagicLink';  enabled?: boolean;  smtp?: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate?: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; }
- |  {  signupType: 'withPassword';  enabled?: boolean;  minPasswordLength?: number;  smtp?: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate?: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; };   google?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("profile" | "email" | "calendar" | "calendar.readonly" | "calendar.events" | "calendar.events.readonly")[]; }; };   github?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("read:user" | "user:email")[]; }; };   microsoft?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  prompt: 'login' | 'none' | 'consent' | 'select_account' | 'create';  scope: ("openid" | "profile" | "email" | "offline_access" | "User.Read" | "User.ReadBasic.All" | "User.Read.All")[]; }; };   facebook?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("email" | "public_profile" | "user_birthday" | "user_friends" | "user_gender" | "user_hometown")[]; }; };  };
+      auth_providers?: null | {    website_url: string;   created_user_type?: string;   email?: |  {  signupType: 'withMagicLink';  enabled?: boolean;  smtp: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate?: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; }
+ |  {  signupType: 'withPassword';  enabled?: boolean;  minPasswordLength?: number;  smtp: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate?: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; };   google?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("profile" | "email" | "calendar" | "calendar.readonly" | "calendar.events" | "calendar.events.readonly")[]; }; };   github?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("read:user" | "user:email")[]; }; };   microsoft?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  prompt: 'login' | 'none' | 'consent' | 'select_account' | 'create';  scope: ("openid" | "profile" | "email" | "offline_access" | "User.Read" | "User.ReadBasic.All" | "User.Read.All")[]; }; };   facebook?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("email" | "public_profile" | "user_birthday" | "user_friends" | "user_gender" | "user_hometown")[]; }; };  };
       enable_logs?: boolean;
       id?: number;
       login_rate_limit?: {    maxAttemptsPerHour: number;   groupBy: 'x-real-ip' | 'remote_ip' | 'ip';  };
@@ -567,7 +567,6 @@ export type DBGeneratedSchema = {
       auth_provider_user_id?: null | string;
       created?: null | string;
       email?: null | string;
-      email_confirmation_code?: null | string;
       has_2fa_enabled?: null | boolean;
       id?: string;
       last_updated?: null | string;
@@ -575,6 +574,11 @@ export type DBGeneratedSchema = {
       options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: 'dark' | 'light' | 'from-system';  };
       password?: string;
       passwordless_admin?: null | boolean;
+      registration?: 
+       | null
+       |  {  type: 'password-w-email-confirmation';  email_confirmation: |  {  status: 'confirmed';  date: string; } |  {  status: 'pending';  confirmation_code: string; }; }
+       |  {  type: 'magic-link'; }
+       |  {  type: 'OAuth';  provider: string; }
       status?: string;
       type?: string;
       username: string;

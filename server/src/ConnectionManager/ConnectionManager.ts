@@ -28,7 +28,7 @@ import {
 } from "./connectionManagerUtils";
 import { startConnection } from "./startConnection";
 import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
-import { UNIQUE_DB_COLS } from "../tableConfig";
+import { UNIQUE_DB_COLS } from "../tableConfig/tableConfig";
 export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
 

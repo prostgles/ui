@@ -23,9 +23,10 @@ import { getElectronConfig } from "./electronConfig";
 import { PRGL_PASSWORD, PRGL_USERNAME } from "./envVars";
 import type { DBS, Users } from "./index";
 import { connMgr, tout } from "./index";
-import { tableConfig } from "./tableConfig";
+import { tableConfig } from "./tableConfig/tableConfig";
 import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { insertDefaultPrompts } from "./publishMethods/askLLM/askLLM";
+import { PASSWORDLESS_ADMIN_USERNAME } from "../../commonTypes/OAuthUtils";
 
 export type WithOrigin = {
   origin?: (
@@ -302,7 +303,6 @@ export class ConnectionChecker {
   };
 }
 
-export const PASSWORDLESS_ADMIN_USERNAME = "passwordless_admin";
 export const EMPTY_PASSWORD = "";
 
 const NoInitialAdminPasswordProvided = Boolean(
@@ -408,7 +408,7 @@ export const insertUser = async (
 };
 
 export const DAY = 24 * 3600 * 1000;
-const makeMagicLink = async (
+export const makeMagicLink = async (
   user: Users,
   dbo: DBS,
   returnURL: string,
@@ -426,6 +426,7 @@ const makeMagicLink = async (
 
   return {
     id: user.id,
+    magicLinkId: mlink.id,
     magic_login_link_redirect: `/magic-link/${mlink.id}?returnURL=${returnURL}`,
   };
 };
