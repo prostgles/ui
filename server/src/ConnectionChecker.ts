@@ -8,7 +8,7 @@ import type {
 import { getClientRequestIPsInfo } from "prostgles-server/dist/Auth/AuthHandler";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { SubscriptionHandler } from "prostgles-types";
-import { isDefined, tryCatch } from "prostgles-types";
+import { isDefined, tryCatch, tryCatchV2 } from "prostgles-types";
 import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import type { SUser } from "./authConfig/getAuth";
@@ -145,7 +145,7 @@ export class ConnectionChecker {
     });
   };
 
-  onUse: OnUse = async ({ req, res, next }) => {
+  onUse: OnUse = async ({ req, res, next, getUser }) => {
     if (!this.config.loaded || !this.db) {
       console.warn(
         "Delaying user request until server is ready. originalUrl: " +
@@ -184,10 +184,12 @@ export class ConnectionChecker {
       const isAccessingMagicLink = req.originalUrl.startsWith("/magic-link/");
       if (this.noPasswordAdmin && !sid && !isAccessingMagicLink) {
         // need to ensure that only 1 session is allowed for the passwordless admin
-        const { magicLinkPaswordless, error } = await tryCatch(async () => ({
-          magicLinkPaswordless: await getPasswordlessMacigLink(this.db!),
-        }));
-        if (error) {
+        const {
+          data: magicLinkPaswordless,
+          hasError,
+          error,
+        } = await tryCatchV2(() => getPasswordlessMacigLink(this.db!));
+        if (hasError) {
           res.status(401).json({ error });
           return;
         }

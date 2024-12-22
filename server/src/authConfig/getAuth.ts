@@ -116,13 +116,6 @@ export const getActiveSession = async (db: DBS, authType: AuthType) => {
    * Always maintain a valid session for passwordless admin
    */
   const pwdlessUser = connectionChecker.noPasswordAdmin;
-  // const pwdAdmin = await db.sql(
-  //   `SELECT * FROM users WHERE passwordless_admin = true`,
-  // );
-  // const pwdUsr = await db.users.findOne();
-  // if (!pwdlessUser && pwdAdmin.rows.length) {
-  //   debugger;
-  // }
   if (pwdlessUser && !validSession) {
     const oldSession = await db.sessions.findOne({ user_id: pwdlessUser.id });
     if (oldSession) {
