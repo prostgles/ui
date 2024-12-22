@@ -2,18 +2,21 @@ import React from "react";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
-import FormField from "../../components/FormField/FormField";
-import { useLoginState } from "./useLoginState";
-import { LoginWithProviders } from "./LoginWithProviders";
-import { LoginTotpFormFields } from "./LoginTotpForm";
 import { FlexCol } from "../../components/Flex";
-import Popup from "../../components/Popup/Popup";
+import FormField from "../../components/FormField/FormField";
+import { AuthNotifPopup } from "./AuthNotifPopup";
+import { LoginTotpFormFields } from "./LoginTotpForm";
+import { LoginWithProviders } from "./LoginWithProviders";
+import { useLoginState } from "./useLoginState";
 
 export type LoginFormProps = Pick<Prgl, "auth">;
 
 export const Login = ({ auth }: LoginFormProps) => {
   const authState = useLoginState({ auth });
-  const [successMessage, setSuccessMessage] = React.useState("");
+  const [authResponse, setAuthResponse] = React.useState<{
+    success: boolean;
+    message: string;
+  }>();
   const [isLoggingIn, setIsLoggingIn] = React.useState(false);
   const {
     formHandlers,
@@ -22,24 +25,29 @@ export const Login = ({ auth }: LoginFormProps) => {
     setState,
     error,
     onAuthCall: _onAuthCall,
-    result,
+    onClearEmailConfirmedNotification,
   } = authState;
   const onAuthCall = async () => {
     setIsLoggingIn(true);
     _onAuthCall()
       .then((res) => {
-        if (result?.success) {
-          const message =
-            result.message ||
-            (result.code ?
-              {
-                "must-confirm-email": "Please confirm your email",
-                "email-confirmation-sent": "Email confirmation sent",
-                "already-registered-but-did-not-confirm-email":
-                  "Please confirm your email",
-              }[result.code]
-            : "Success");
-          setSuccessMessage(message);
+        if (isOnLogin) return;
+        const message =
+          !res.success ?
+            res.message ||
+            {
+              "must-confirm-email": "Please confirm your email",
+              "email-confirmation-sent": "Email confirmation sent",
+              "already-registered-but-did-not-confirm-email":
+                "Please confirm your email",
+            }[res.code]
+          : (res.message ?? "Success");
+        const resp = {
+          success: res.success,
+          message,
+        };
+        if (resp.success) {
+          setAuthResponse(resp);
         }
       })
       .finally(() => {
@@ -58,8 +66,18 @@ export const Login = ({ auth }: LoginFormProps) => {
         e.preventDefault();
       }}
     >
-      {successMessage && (
-        <Popup onClose={() => setSuccessMessage("")}>{successMessage}</Popup>
+      {authResponse && (
+        <AuthNotifPopup
+          {...authResponse}
+          onClose={() => setAuthResponse(undefined)}
+        />
+      )}
+      {onClearEmailConfirmedNotification && (
+        <AuthNotifPopup
+          success={true}
+          message="Your email has been confirmed. You can now sign in"
+          onClose={onClearEmailConfirmedNotification}
+        />
       )}
       <FlexCol className="p-2 pb-1">
         <h2 className="mt-0">{!isOnLogin ? "Sign up" : "Sign in"}</h2>

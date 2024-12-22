@@ -131,3 +131,5 @@ export const OAuthProviderOptions = {
     ],
   },
 };
+
+export const EMAIL_CONFIRMED_SEARCH_PARAM = "email-confirmed" as const;

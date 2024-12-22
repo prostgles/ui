@@ -88,6 +88,7 @@ export type SUser = {
     state_db_id?: string;
     has_2fa: boolean;
   } & Omit<Users, "password" | "2fa">;
+  isAnonymous: boolean;
 };
 export const sidKeyName = "sid_token" as const;
 
@@ -173,6 +174,7 @@ export const getAuth = (
       const suser: SUser = {
         sid: s.id,
         user,
+        isAnonymous: user.type === "public",
         clientUser: {
           sid: s.id,
           uid: user.id,

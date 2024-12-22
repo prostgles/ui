@@ -56,12 +56,16 @@ export class SuccessSVG extends React.Component<React.SVGProps<SVGSVGElement>> {
   }
 }
 
-export const SuccessMini = ({ children }: { children: React.ReactChild }) => {
+const miniStyle = {
+  transform: `scale(0.5) translate(-50%, -50%)`,
+  width: "40px",
+  height: "40px",
+};
+
+export const SuccessMini = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex-col">
-      <Success
-        style={{ transform: `scale(.5)`, width: "40px", height: "40px" }}
-      />
+      <Success style={miniStyle} />
       <div>{children}</div>
     </div>
   );
@@ -73,6 +77,7 @@ type FlashMessageProps = {
     millis: number;
     onEnd: VoidFunction;
   };
+  variant?: "small";
 } & TestSelectors &
   Pick<DivProps, "className" | "style">;
 
@@ -80,6 +85,7 @@ export const SuccessMessage = ({
   message,
   className = "",
   duration,
+  variant,
   ...divProps
 }: FlashMessageProps) => {
   const getIsMounted = useIsMounted();
@@ -99,14 +105,12 @@ export const SuccessMessage = ({
     <div
       {...divProps}
       className={classOverride(
-        "SuccessMessage text-green p-1 flex-col jc-center ai-center",
+        "SuccessMessage text-green p-1 flex-col jc-center ai-center o-hidden gap-p5",
         className,
       )}
     >
-      <div className={"text-green p-1 flex-col mb-p5 capitalize"}>
-        {message}
-      </div>
-      <Success />
+      <div className={"text-green p-1 flex-col "}>{message}</div>
+      <Success style={!variant ? {} : miniStyle} />
     </div>
   );
 };

@@ -3,9 +3,10 @@ import type {
   PasswordLogin,
   PasswordRegister,
 } from "prostgles-client/dist/Auth";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import type { LoginFormProps } from "./Login";
 import type { AuthResponse } from "prostgles-types";
+import { useSearchParams } from "react-router-dom";
 
 type PasswordLoginDataAndFunc = {
   onCall: PasswordLogin;
@@ -51,12 +52,22 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
   const [totpToken, setTotpToken] = React.useState("");
   const [totpRecoveryCode, setTotpRecoveryCode] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
-  const [error, setError] = React.useState("");
+  const [error, _setError] = React.useState("");
   const [result, setResult] =
     React.useState<Extract<FormData, { type: typeof state }>["result"]>();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const emailConfirmedNotification =
+    searchParams.get("email-confirmed") === "true";
+  const onClearEmailConfirmedNotification =
+    !emailConfirmedNotification ? undefined : (
+      () => {
+        setSearchParams({ "email-confirmed": "" });
+      }
+    );
+
   useEffect(() => {
-    setError("");
+    _setError("");
   }, [username, password, totpToken, totpRecoveryCode, confirmPassword]);
 
   const formHandlers =
@@ -122,8 +133,12 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
     const errorMap = {
       "no match": "Invalid credentials",
     };
+    const setError = (err: string) => {
+      _setError(err);
+      return Promise.reject(err);
+    };
     const setErrorWithInfo = (err: string) => {
-      setError(errorMap[err] ?? err);
+      return setError(errorMap[err] ?? err);
     };
 
     if (!formHandlers?.onCall) {
@@ -179,6 +194,7 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
     isOnLogin,
     registerTypeAllowed,
     result,
+    onClearEmailConfirmedNotification,
   };
 };
 

@@ -4,6 +4,7 @@ import { startLoginAttempt } from "./startLoginAttempt";
 import type { DBS } from "..";
 import { createSessionSecret } from "./getAuth";
 import { getPasswordHash } from "./authUtils";
+import { EMAIL_CONFIRMED_SEARCH_PARAM } from "../../../commonTypes/OAuthUtils";
 
 export const getAuthEmailProvider = (
   auth_providers: DBSchemaGenerated["global_settings"]["columns"]["auth_providers"],
@@ -78,6 +79,7 @@ export const getAuthEmailProvider = (
           await attempt.onSuccess();
           return {
             success: true,
+            redirect_to: `/login?${EMAIL_CONFIRMED_SEARCH_PARAM}=true`,
           };
         },
         onRegister: async ({
