@@ -10,7 +10,7 @@ import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
 import Select from "../../components/Select/Select";
 import { SwitchToggle } from "../../components/SwitchToggle";
-import { pickKeys } from "../../utils";
+import { pickKeys } from "prostgles-types";
 import { CredentialSelector } from "../Backup/CredentialSelector";
 import { FileStorageDelete } from "./FileStorageDelete";
 import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";

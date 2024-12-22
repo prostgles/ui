@@ -10,7 +10,7 @@ import Btn from "../../components/Btn";
 import type { ConfirmDialogProps } from "../../components/ConfirmationDialog";
 import ConfirmationDialog from "../../components/ConfirmationDialog";
 import { Footer } from "../../components/Popup/Popup";
-import { isEmpty, pickKeys } from "../../utils";
+import { isEmpty, pickKeys } from "prostgles-types";
 import { useIsMounted } from "../Backup/CredentialSelector";
 import type {
   FormAction,

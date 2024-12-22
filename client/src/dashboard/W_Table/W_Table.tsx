@@ -30,7 +30,7 @@ import { matchObj } from "../../../../commonTypes/utils";
 import { createReactiveState } from "../../appUtils";
 import { Icon } from "../../components/Icon/Icon";
 import type { PaginationProps } from "../../components/Table/Pagination";
-import { isDefined, pickKeys } from "../../utils";
+import { isDefined, pickKeys } from "prostgles-types";
 import CodeEditor from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { SmartFilterBar } from "../SmartFilterBar/SmartFilterBar";

@@ -179,7 +179,7 @@ import Btn from "../../components/Btn";
 import { getDataTransferFiles } from "../../components/FileInput/DropZone";
 import { FlexCol } from "../../components/Flex";
 import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
-import { isEmpty, omitKeys } from "../../utils";
+import { isEmpty, omitKeys } from "prostgles-types";
 import { SECOND } from "../Charts";
 import type { DashboardState } from "../Dashboard/Dashboard";
 import type { WindowData } from "../Dashboard/dashboardUtils";

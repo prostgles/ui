@@ -12,6 +12,7 @@ import { useEffectAsync } from "./dashboard/DashboardMenu/DashboardMenuSettings"
 import { pageReload } from "./components/Loading";
 import { SPOOF_TEST_VALUE } from "../../commonTypes/utils";
 import { isPlaywrightTest } from "./pages/ProjectConnection/useProjectDb";
+import { playwrightTestLogs } from "./utils";
 
 export const useDBSConnection = (
   onDisconnect: (isDisconnected: boolean) => void,
@@ -101,31 +102,7 @@ export const useDBSConnection = (
           onDisconnect: () => {
             onDisconnect(true);
           },
-          onDebug:
-            !isPlaywrightTest ? undefined : (
-              (ev) => {
-                const trackedTableNames = [
-                  "global_settings",
-                  "llm_chats",
-                  "llm_messages",
-                  "llm_prompts",
-                  "llm_credentials",
-                ];
-                if (
-                  ev.type === "table" &&
-                  trackedTableNames.includes(ev.tableName)
-                ) {
-                  // if(ev.command === "unsubscribe") debugger;
-                  console.log(Date.now(), "DBS client", ev);
-                } else if (
-                  ev.type === "onReady" ||
-                  ev.type === "onReady.call" ||
-                  ev.type === "onReady.notMounted"
-                ) {
-                  console.log(Date.now(), "DBS client", ev);
-                }
-              }
-            ),
+          onDebug: !isPlaywrightTest ? undefined : playwrightTestLogs,
           onReconnect: () => {
             onDisconnect(false);
             if (window.location.pathname.startsWith("/connections/")) {

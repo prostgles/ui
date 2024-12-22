@@ -2,7 +2,7 @@ import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import { asName, isDefined, tryCatch } from "prostgles-types";
-import { omitKeys } from "../../utils";
+import { omitKeys } from "prostgles-types";
 import { SECOND } from "../Charts";
 import type { DataItem, TimeChartLayer } from "../Charts/TimeChart";
 import type { DateExtent } from "../Charts/getTimechartBinSize";

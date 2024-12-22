@@ -1,15 +1,14 @@
-import React, { useState } from "react";
-import Popup from "../../components/Popup/Popup";
 import {
   useAsyncEffectQueue,
   useIsMounted,
-  usePromise,
 } from "prostgles-client/dist/react-hooks";
+import { omitKeys } from "prostgles-types";
+import React, { useState } from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
-import { omitKeys, pickKeys } from "../../utils";
-import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
 import { pageReload } from "../../components/Loading";
+import Popup from "../../components/Popup/Popup";
+import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
 
 export type Method = DBSSchema["published_methods"] & {
   access_control_methods: DBSSchema["access_control_methods"][];

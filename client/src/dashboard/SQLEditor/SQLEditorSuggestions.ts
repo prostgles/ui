@@ -1,7 +1,7 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, SQLHandler } from "prostgles-types";
 import { getKeys, tryCatch } from "prostgles-types";
-import { isDefined, omitKeys, pickKeys } from "../../utils";
+import { isDefined, omitKeys, pickKeys } from "prostgles-types";
 import { TOP_KEYWORDS, asSQL } from "./SQLCompletion/KEYWORDS";
 import {
   type PG_Policy,

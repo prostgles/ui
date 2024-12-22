@@ -4,7 +4,7 @@ import type pg from "pg-promise/typescript/pg-subset";
 import prostgles from "prostgles-server";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import { pickKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
+import { pickKeys } from "prostgles-types";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { Server } from "socket.io";
 import type { DBS } from ".";

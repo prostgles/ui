@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { omitKeys } from "../utils";
+import { omitKeys } from "prostgles-types";
 import Loading from "./Loading";
 import "./Btn.css";
 import RTComp from "../dashboard/RTComp";

@@ -1,6 +1,6 @@
 import { mdiChevronDown, mdiChevronRight, mdiFullscreen } from "@mdi/js";
 import React, { useState } from "react";
-import { omitKeys } from "../utils";
+import { omitKeys } from "prostgles-types";
 import type { BtnProps } from "./Btn";
 import Btn from "./Btn";
 import { classOverride } from "./Flex";

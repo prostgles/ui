@@ -7,7 +7,7 @@ import PopupMenu from "../../../components/PopupMenu";
 import { Section } from "../../../components/Section";
 import { SwitchToggle } from "../../../components/SwitchToggle";
 import { fixIndent } from "../../../demo/sqlVideoDemo";
-import { pickKeys } from "../../../utils";
+import { pickKeys } from "prostgles-types";
 import type { AuthProvidersConfig } from "../AuthProvidersSetup";
 import { useEditableData } from "../useEditableData";
 import { EmailSMTPSetup } from "./EmailSMTPSetup";

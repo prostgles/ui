@@ -6,7 +6,7 @@ import type { LabelProps } from "./Label";
 import { Label } from "./Label";
 import type { FullOption } from "./Select/Select";
 import Select from "./Select/Select";
-import { pickKeys } from "../utils";
+import { pickKeys } from "prostgles-types";
 
 type P<Option extends string = never> = {
   onChange: (val: Option, e: any) => void;

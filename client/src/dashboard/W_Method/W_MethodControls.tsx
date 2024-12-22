@@ -10,7 +10,7 @@ import ErrorComponent from "../../components/ErrorComponent";
 import { isCompleteJSONB } from "../../components/JSONBSchema/isCompleteJSONB";
 import { JSONBSchema } from "../../components/JSONBSchema/JSONBSchema";
 import { SwitchToggle } from "../../components/SwitchToggle";
-import { omitKeys } from "../../utils";
+import { omitKeys } from "prostgles-types";
 import CodeEditor from "../CodeEditor/CodeEditor";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import SmartTable from "../SmartTable";

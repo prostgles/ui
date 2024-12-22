@@ -14,7 +14,7 @@ import type {
   Workspace,
 } from "../../dashboard/Dashboard/dashboardUtils";
 import RTComp from "../../dashboard/RTComp";
-import { pickKeys } from "../../utils";
+import { pickKeys } from "prostgles-types";
 import { Connection } from "./Connection";
 import { ConnectionServer } from "./ConnectionServer";
 

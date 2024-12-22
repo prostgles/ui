@@ -8,7 +8,7 @@ import type {
   TableInfo,
   ValidatedColumnInfo,
 } from "prostgles-types";
-import { isObject } from "prostgles-types";
+import { isObject, isEmpty, omitKeys } from "prostgles-types";
 import React from "react";
 import type {
   DetailedFilterBase,
@@ -24,7 +24,7 @@ import { classOverride, FlexCol, FlexRow } from "../../components/Flex";
 import Loading from "../../components/Loading";
 import type { PopupProps } from "../../components/Popup/Popup";
 import Popup from "../../components/Popup/Popup";
-import { filterObj, ifEmpty, isDefined, isEmpty, omitKeys } from "../../utils";
+import { filterObj, ifEmpty, isDefined } from "../../utils";
 import RTComp from "../RTComp";
 import { getSmartGroupFilter } from "../SmartFilter/SmartFilter";
 import type { SmartColumnInfo } from "./SmartFormField/SmartFormField";
@@ -313,7 +313,6 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
       getColParams = {
         rule: "update",
         filter: getSmartGroupFilter(rowFilter),
-        data: { thisIsBad: 1 },
       };
     }
     const _columns =

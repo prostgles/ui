@@ -4,7 +4,7 @@ import { isObject } from "../../../../commonTypes/publishUtils";
 import { classOverride } from "../../components/Flex";
 import type { MonacoEditorProps } from "../../components/MonacoEditor/MonacoEditor";
 import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
-import { omitKeys } from "../../utils";
+import { omitKeys } from "prostgles-types";
 import { getMonaco } from "../SQLEditor/SQLEditor";
 import { type editor, type Uri } from "../W_SQL/monacoEditorTypes";
 import { registerLogLang } from "./registerLogLang";
