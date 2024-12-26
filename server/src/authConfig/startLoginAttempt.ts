@@ -106,14 +106,14 @@ export const startLoginAttempt = async (
 ) => {
   const { failedTooManyTimes, matchByFilter, ip, disabled } =
     await getFailedTooManyTimes(db, clientInfo);
-  const ignoredResult = {
+  const result = {
     ip,
     onSuccess: async () => {},
     disabled,
     failedTooManyTimes,
   };
   if (failedTooManyTimes || disabled) {
-    return ignoredResult;
+    return result;
   }
 
   /** In case of a bad sid do not log it multiple times */
@@ -123,7 +123,7 @@ export const startLoginAttempt = async (
       { orderBy: { created: false } },
     );
     if (alreadyFailedOnThisSID) {
-      return ignoredResult;
+      return result;
     }
   }
 

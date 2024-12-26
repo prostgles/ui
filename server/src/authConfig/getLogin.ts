@@ -60,7 +60,7 @@ export const getLogin = async (
 
     let matchingUser: Users | undefined;
     try {
-      const userFromUsername: Users | undefined = await _db.one(
+      const userFromUsername: Users | undefined | null = await _db.oneOrNone(
         "SELECT * FROM users WHERE username = ${username};",
         { username },
       );

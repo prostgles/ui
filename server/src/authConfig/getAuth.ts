@@ -227,7 +227,7 @@ export const getAuth = async (
             await initBackupManager(db, dbs)
           ).onRequestBackupFile(
             res,
-            !userData?.user ? undefined : userData,
+            !userData.user ? undefined : userData,
             req,
           );
         } else if (req.path.startsWith(MEDIA_ROUTE_PREFIX)) {

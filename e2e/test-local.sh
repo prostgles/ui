@@ -1,4 +1,4 @@
-export PRGL_DEV_ENV=true && \
+# export PRGL_DEV_ENV=true && \
 npm i && \
 npx playwright install && \
 npm run setup && \

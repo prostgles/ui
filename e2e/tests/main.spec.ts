@@ -90,7 +90,7 @@ test.describe("Main test", () => {
     await goTo(page);
     await goToWorkspace();
 
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     if (!localNoAuthSetup) {
       await disablePwdlessAdminAndCreateUser(page);
@@ -133,6 +133,7 @@ test.describe("Main test", () => {
     for (let i = 0; i < 5; i++) {
       await page.reload();
       await loginAndExpectError("Invalid credentials", "invalid", page);
+      await page.waitForTimeout(1e3);
     }
     await loginAndExpectError("Too many failed ", "invalid", page);
     await loginAndExpectError("Too many failed ", USERS.default_user, page);
