@@ -19,9 +19,9 @@ export const setAuthReloader = async (
   globalSettingSub = await dbs.global_settings.subscribeOne(
     {},
     {},
-    (_globalSettings) => {
+    async (_globalSettings) => {
       if (!isDeepStrictEqual(auth_providers, _globalSettings?.auth_providers)) {
-        const auth = getAuth(app, dbs, _globalSettings);
+        const auth = await getAuth(app, dbs, _globalSettings);
         statePrgl.update({ auth: auth as any });
         auth_providers = _globalSettings?.auth_providers;
       }

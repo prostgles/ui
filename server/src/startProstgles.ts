@@ -44,7 +44,7 @@ export const initBackupManager = async (db: DB, dbs: DBS) => {
 export let statePrgl: InitResult | undefined;
 
 type ProstglesStartupState =
-  | { ok: true; init?: undefined; conn?: undefined }
+  | { ok: true; init?: undefined; conn?: undefined; dbs: DBS }
   | { ok?: undefined; init?: any; conn?: any };
 
 export const startProstgles = async ({
@@ -90,14 +90,15 @@ export const startProstgles = async ({
       return { conn: getErrorAsObject(connError) };
     }
     const IS_PROD = process.env.NODE_ENV === "production";
+
     /** Prevent electron access denied error (cannot edit files in the install directory in electron) */
     const tsGeneratedTypesDir =
       IS_PROD || getElectronConfig()?.isElectron ?
         undefined
       : path.join(actualRootDir + "/../commonTypes/");
     const watchSchema = !!tsGeneratedTypesDir;
-    const auth = getAuth(app, undefined);
-    //@ts-ignore
+    const auth = await getAuth(app, undefined);
+    //@ts-igndore
     const prgl = await prostgles<DBGeneratedSchema>({
       dbConnection: {
         ...validatedDbConnection,
@@ -111,8 +112,8 @@ export const startProstgles = async ({
       transactions: true,
       onSocketConnect: async ({ socket, dbo, getUser }) => {
         const user = await getUser();
-        const userId = user?.user?.id;
-        const sid = user?.sid;
+        const userId = user.user?.id;
+        const sid = user.sid;
 
         await connectionChecker.onSocketConnected({
           sid,
@@ -163,9 +164,8 @@ export const startProstgles = async ({
       onSocketDisconnect: async (params) => {
         const { dbo, getUser } = params;
 
-        //@ts-ignore
         const user = await getUser();
-        const sid = user?.sid;
+        const sid = user.sid;
         if (sid) {
           await dbo.sessions.update({ id: sid }, { is_connected: false });
         }
@@ -232,7 +232,7 @@ export const startProstgles = async ({
     statePrgl = prgl;
 
     startDevHotReloadNotifier({ io, port, host });
-    return { ok: true };
+    return { ok: true, dbs: prgl.db as DBS };
   } catch (err) {
     return { init: err };
   }
@@ -248,11 +248,15 @@ const _initState: Pick<
   httpListening?: {
     port: number;
   };
+  dbs: DBS | undefined;
 } = {
   ok: false,
   loading: false,
   loaded: false,
+  dbs: undefined,
 };
+
+export type InitState = typeof _initState;
 
 let connHistory: string[] = [];
 export const tryStartProstgles = async ({
@@ -279,8 +283,9 @@ export const tryStartProstgles = async ({
       connHistory.push(connHistoryItem);
       try {
         const status = await startProstgles({ app, io, con, port, host });
-        _initState.connectionError = status.conn;
-        _initState.initError = status.init;
+        if (status.ok) {
+          _initState.dbs = status.dbs;
+        }
 
         const databaseDoesNotExist = status.conn?.code === "3D000";
         if (status.ok || databaseDoesNotExist) {

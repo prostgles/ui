@@ -1,6 +1,7 @@
 import {
   mdiFile,
   mdiFunction,
+  mdiRelationManyToMany,
   mdiScriptTextPlay,
   mdiTable,
   mdiTableEdit,
@@ -305,7 +306,7 @@ export const DashboardMenuContent = (props: P) => {
           }}
         />
 
-        {/* {tables.length > 1 && 
+       {tables.length > 1 && 
         <Btn iconPath={mdiRelationManyToMany}
           className="fit "
           style={{ opacity: 0.05 }}
@@ -319,7 +320,7 @@ export const DashboardMenuContent = (props: P) => {
         >
           Schema diagram
         </Btn>
-      } */}
+      }  
       </FlexRowWrap>
     </FlexCol>
   );

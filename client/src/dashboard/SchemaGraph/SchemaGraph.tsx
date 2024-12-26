@@ -123,6 +123,8 @@ export class SchemaGraph extends RTComp<P, SchemaGraphState> {
           })),
           height: 0,
           width: 0,
+          x: 0,
+          y: 0,
           hasLinks: false,
           cluster: 0,
         };

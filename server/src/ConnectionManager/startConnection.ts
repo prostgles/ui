@@ -12,7 +12,7 @@ import { getAuth } from "../authConfig/getAuth";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc } from "../index";
 import type { ConnectionManager, User } from "./ConnectionManager";
-import { DB_TRANSACTION_KEY, getReloadConfigs } from "./ConnectionManager";
+import { getReloadConfigs } from "./ConnectionManager";
 import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
 import { alertIfReferencedFileColumnsRemoved } from "./connectionManagerUtils";
 import { getConnectionPublish } from "./getConnectionPublish";
@@ -109,7 +109,7 @@ export const startConnection = async function (
         dbConf,
         dbs,
       );
-      const auth = getAuth(this.app, dbs);
+      const auth = await getAuth(this.app, dbs);
       const watchSchema = con.db_watch_shema ? "*" : false;
       const getForkedProcRunner = async () => {
         if (!this.prglConnections[con.id]?.methodRunner) {
@@ -175,9 +175,12 @@ export const startConnection = async function (
         auth: {
           sidKeyName: auth.sidKeyName,
           getUser: (sid, __, _, cl) => auth.getUser(sid, dbs, _dbs, cl),
-          login: (sid, __, _, ip_address) =>
-            auth.login(sid, dbs, _dbs, ip_address),
-          logout: (sid, __, _) => auth.logout(sid, dbs, _dbs),
+          // loginSignupConfig: {
+
+          //  },
+          // login: (sid, __, _, ip_address) =>
+          //   auth.login(sid, dbs, _dbs, ip_address),
+          // logout: (sid, __, _) => auth.logout(sid, dbs, _dbs),
           cacheSession: {
             getSession: (sid) => auth.cacheSession.getSession(sid, dbs),
           },

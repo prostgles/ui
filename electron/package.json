@@ -56,6 +56,10 @@
     "extraMetadata": {
       "main": "build/main.js"
     },
+    "protocols": {
+      "name": "prostgles-desktop-protocol",
+      "schemes": ["prostgles-desktop"]
+    },
     "includeSubNodeModules": true,
     "productName": "Prostgles-Desktop",
     "appId": "com.electron.prostgles-desktop",
@@ -63,7 +67,7 @@
       "build/**/*",
       "ui/**/*",
       "images/**/*"
-    ],
+    ], 
     "mac": {
       "icon": "./images/rounded/icon512.png",
       "artifactName": "${productName}-${version}.${ext}",

@@ -135,3 +135,45 @@ export const OAuthProviderOptions = {
 export const EMAIL_CONFIRMED_SEARCH_PARAM = "email-confirmed" as const;
 
 export const PASSWORDLESS_ADMIN_USERNAME = "passwordless_admin";
+
+type TemplateData = Record<
+  string,
+  {
+    required?: boolean;
+    value: string;
+  }
+>;
+
+const getTemplatedText = (
+  templatedText: string,
+  data: TemplateData,
+  propertyName: string,
+) => {
+  return Object.entries(data).reduce((acc, [key, { value, required }]) => {
+    const placeholder = `{{${key}}}`;
+    if (required && !value) throw `Missing required value for key: ${key}`;
+    if (required && !acc.includes(placeholder))
+      throw `Missing placeholder: ${placeholder} from ${propertyName}`;
+    return acc.replaceAll(placeholder, value);
+  }, templatedText);
+};
+
+export const getEmailFromTemplate = <
+  EmailTemplate extends { body: string; from: string; subject: string },
+>(
+  template: EmailTemplate,
+  subjectData: TemplateData,
+  bodyData: TemplateData,
+): EmailTemplate => {
+  const keyValues = Object.entries(bodyData);
+  if (!keyValues.length) throw "Empty bodyData provided";
+  if (!template.body) throw "No body provided";
+  if (!template.from) throw "No from provided";
+  if (!template.subject) throw "No subject provided";
+
+  return {
+    ...template,
+    body: getTemplatedText(template.body, bodyData, "body"),
+    subject: getTemplatedText(template.subject, subjectData, "subject"),
+  };
+};

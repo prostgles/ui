@@ -2,8 +2,8 @@ import * as crypto from "crypto";
 import type { Express } from "express";
 import path from "path";
 import type {
-  Auth,
   AuthClientRequest,
+  AuthConfig,
   BasicSession,
   LoginClientInfo,
 } from "prostgles-server/dist/Auth/AuthTypes";
@@ -22,7 +22,7 @@ import {
   getAuthEmailProvider,
   getOAuthProviders,
 } from "./getAuthEmailProvider";
-import { login } from "./login";
+import { getLogin } from "./getLogin";
 import { getFailedTooManyTimes, startLoginAttempt } from "./startLoginAttempt";
 
 export const HOUR = 3600e3;
@@ -147,12 +147,14 @@ export const getActiveSession = async (db: DBS, authType: AuthType) => {
   return validSession;
 };
 
-export const getAuth = (
+export const getAuth = async (
   app: Express,
   dbs: DBS | undefined,
   globalSettings?: DBSchemaGenerated["global_settings"]["columns"],
 ) => {
   const { auth_providers } = globalSettings || {};
+
+  const { login } = await getLogin(auth_providers);
   const auth = {
     sidKeyName,
     getUser: async (sid, db, _db: DB, client) => {
@@ -190,24 +192,6 @@ export const getAuth = (
       return suser;
     },
 
-    login,
-
-    logout: async (sid, db, _db: DB) => {
-      if (!sid) throw "err";
-      const s = await db.sessions.findOne({ id: sid });
-      if (!s) throw "err";
-      const u = await db.users.findOne({ id: s.user_id });
-
-      if (u?.passwordless_admin) {
-        throw `Passwordless admin cannot logout`;
-      }
-
-      await db.sessions.update({ id: sid }, { active: false });
-      /** Keep last 20 sessions */
-
-      return true;
-    },
-
     cacheSession: {
       getSession: async (sid, db) => {
         const s = await db.sessions.findOne({ id: sid });
@@ -216,8 +200,24 @@ export const getAuth = (
       },
     },
 
-    expressConfig: {
+    loginSignupConfig: {
       app,
+
+      login,
+
+      logout: async (sid, db, _db: DB) => {
+        if (!sid) throw "err";
+        const s = await db.sessions.findOne({ id: sid });
+        if (!s) throw "err";
+        const u = await db.users.findOne({ id: s.user_id });
+
+        if (u?.passwordless_admin) {
+          throw `Passwordless admin cannot logout`;
+        }
+
+        await db.sessions.update({ id: sid }, { active: false });
+        /** Keep last 20 sessions */
+      },
       use: connectionChecker.onUse,
       publicRoutes: ["/manifest.json", "/favicon.ico", API_PATH],
       onGetRequestOK: async (req, res, { getUser, db, dbo: dbs }) => {
@@ -251,10 +251,12 @@ export const getAuth = (
       ) => {
         const withError = (
           code: AuthResponse.MagicLinkAuthFailure["code"],
+          message?: string,
         ) => ({
           response: {
             success: false,
             code,
+            message,
           } satisfies AuthResponse.MagicLinkAuthFailure,
         });
         const onLoginAttempt = await startLoginAttempt(
@@ -267,35 +269,33 @@ export const getAuth = (
         }
         const mlink = await dbo.magic_links.findOne({ id });
 
-        if (mlink) {
-          if (Number(mlink.expires) < Date.now()) {
-            await onLoginAttempt.onSuccess();
-            return withError("expired-magic-link");
-            throw "Expired magic link";
-          }
-          if (mlink.magic_link_used) {
-            await onLoginAttempt.onSuccess();
-            return withError("expired-magic-link");
-            throw "Magic link already used";
-          }
-        } else {
+        if (!mlink) {
           return withError("no-match");
         }
-
+        if (Number(mlink.expires) < Date.now()) {
+          await onLoginAttempt.onSuccess();
+          return withError("expired-magic-link", "Expired magic link");
+        }
+        if (mlink.magic_link_used) {
+          await onLoginAttempt.onSuccess();
+          return withError("expired-magic-link", "Magic link already used");
+        }
         const user = await dbo.users.findOne({ id: mlink.user_id });
         if (!user) {
-          return withError("no-match");
-          throw new Error("User from Magic link not found");
+          return withError("no-match", "User from Magic link not found");
         }
 
+        /**
+         * This is done to prevent multiple logins with the same magic link
+         * even if the requests are sent at the same time
+         */
         const usedMagicLink = await dbo.magic_links.update(
           { id: mlink.id, magic_link_used: null },
           { magic_link_used: new Date() },
           { returning: "*" },
         );
-        if (!usedMagicLink) {
-          return withError("no-match");
-          throw new Error("Magic link already used");
+        if (!usedMagicLink?.length) {
+          return withError("used-magic-link", "Magic link already used");
         }
         const session = await makeSession(
           user,
@@ -310,12 +310,15 @@ export const getAuth = (
         await onLoginAttempt.onSuccess();
         return { session };
       },
-      registrations:
-        auth_providers ?
+      signupWithEmailAndPassword: await getAuthEmailProvider(
+        auth_providers,
+        dbs,
+      ),
+      loginWithOAuth:
+        auth_providers && getOAuthProviders(auth_providers) ?
           {
             websiteUrl: auth_providers.website_url,
-            email: getAuthEmailProvider(auth_providers, dbs),
-            OAuthProviders: getOAuthProviders(auth_providers),
+            OAuthProviders: getOAuthProviders(auth_providers)!,
             onProviderLoginFail: async ({ clientInfo, dbo, provider }) => {
               // await startLoginAttempt(dbo, clientInfo, {
               //   auth_type: "provider",
@@ -325,12 +328,16 @@ export const getAuth = (
             onProviderLoginStart: async ({ dbo, clientInfo }) => {
               const check = await getFailedTooManyTimes(dbo as any, clientInfo);
               return check.failedTooManyTimes ?
-                  { error: "Too many failed attempts" }
-                : { ok: true };
+                  {
+                    success: false,
+                    code: "rate-limit-exceeded",
+                    message: "Too many failed attempts",
+                  }
+                : { success: true };
             },
           }
         : undefined,
     },
-  } satisfies Auth<DBSchemaGenerated, SUser>;
+  } satisfies AuthConfig<DBSchemaGenerated, SUser>;
   return auth;
 };

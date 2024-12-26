@@ -127,7 +127,7 @@ export const Login = ({ auth }: LoginFormProps) => {
         <LoginWithProviders auth={auth} />
       </FlexCol>
       {!formHandlers && <ErrorComponent error="Invalid state" />}
-      {auth.register && (
+      {auth.signupWithEmailAndPassword && (
         <Btn
           style={{
             fontSize: "14px",

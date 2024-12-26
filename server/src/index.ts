@@ -16,9 +16,14 @@ import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
 import type { OnServerReadyCallback } from "./electronConfig";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
-import { getInitState, tryStartProstgles } from "./startProstgles";
+import {
+  getInitState,
+  type InitState,
+  tryStartProstgles,
+} from "./startProstgles";
 import { SPOOF_TEST_VALUE } from "../../commonTypes/utils";
 import helmet from "helmet";
+import { omitKeys } from "prostgles-types";
 
 const app = express();
 app.use(
@@ -140,7 +145,7 @@ const HOST =
 setDBSRoutesForElectron(app, io, PORT, HOST);
 
 /** Make client wait for everything to load before serving page */
-const awaitInit = () => {
+const awaitInit = (): Promise<InitState> => {
   return new Promise((resolve) => {
     const _initState = getInitState();
     if (
@@ -163,7 +168,7 @@ const awaitInit = () => {
  * Serve prostglesInitState
  */
 app.get("/dbs", (req, res) => {
-  const serverState: ServerState = getInitState();
+  const serverState: ServerState = omitKeys(getInitState(), ["dbs"]);
   const electronCreds =
     electronConfig?.isElectron && electronConfig.hasCredentials() ?
       electronConfig.getCredentials()
@@ -246,7 +251,7 @@ const onServerReadyListeners: OnServerReadyCallback[] = [];
 export const onServerReady = async (cb: OnServerReadyCallback) => {
   const _initState = getInitState();
   if (_initState.httpListening) {
-    cb(_initState.httpListening.port);
+    cb(_initState.httpListening.port, _initState.dbs!);
   } else {
     onServerReadyListeners.push(cb);
   }
@@ -261,9 +266,9 @@ const server = http.listen(PORT, HOST, () => {
     port,
   };
 
-  awaitInit().then(() => {
+  awaitInit().then(({ dbs }) => {
     onServerReadyListeners.forEach((cb) => {
-      cb(port);
+      cb(port, dbs!);
     });
   });
   console.log(`\n\nexpress listening on port ${port} (${host}:${port})\n\n`);

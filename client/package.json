@@ -18,7 +18,7 @@
     "postcss-normalize": "^10.0.1",
     "postcss-preset-env": "^7.5.0",
     "postcss-safe-parser": "^6.0.0",
-    "prostgles-client": "^4.0.199",
+    "prostgles-client": "^4.0.200",
     "qrcode": "^1.5.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

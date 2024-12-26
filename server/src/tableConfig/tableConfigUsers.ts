@@ -1,5 +1,8 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
-import { PASSWORDLESS_ADMIN_USERNAME } from "../../../commonTypes/OAuthUtils";
+import {
+  OAuthProviderOptions,
+  PASSWORDLESS_ADMIN_USERNAME,
+} from "../../../commonTypes/OAuthUtils";
 
 export const tableConfigUsers = {
   users: {
@@ -39,7 +42,12 @@ export const tableConfigUsers = {
             },
             {
               type: { enum: ["OAuth"] },
-              provider: "string",
+              provider: {
+                enum: Object.keys(OAuthProviderOptions),
+                description: "OAuth provider name. E.g.: google, github",
+              },
+              user_id: "string",
+              profile: "any",
             },
           ],
         },
@@ -57,7 +65,7 @@ export const tableConfigUsers = {
         info: { hint: "OAuth provider profile data" },
       }, //  CHECK(auth_provider IS NOT NULL AND auth_provider_profile IS NOT NULL)
       password: {
-        sqlDefinition: `TEXT NOT NULL DEFAULT gen_random_uuid()`,
+        sqlDefinition: `TEXT NOT NULL`, // DEFAULT gen_random_uuid()`,
         info: { hint: "Hashed with the user id on insert/update" },
       },
       type: {

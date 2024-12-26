@@ -1,18 +1,11 @@
-import * as fs from "fs";
-import * as path from "path";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 import type { AnyObject } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
 import { type DBS } from "../..";
-import { justToCompile } from "../../../../commonTypes/DashboardTypes";
+import { contentOfThisFile as dashboardTypes } from "../../../../commonTypes/DashboardTypes";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { checkLLMLimit } from "./checkLLMLimit";
-justToCompile;
-const dashboardTypes = fs.readFileSync(
-  path.join(__dirname, "../../../../commonTypes/DashboardTypes.d.ts"),
-  "utf8",
-);
 
 export const askLLM = async (
   question: string,

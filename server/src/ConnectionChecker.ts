@@ -1,16 +1,15 @@
 import cors from "cors";
 import type { Express, Request } from "express";
-import type {
-  Auth,
-  AuthResult,
-  SessionUser,
-} from "prostgles-server/dist/Auth/AuthTypes";
 import { getClientRequestIPsInfo } from "prostgles-server/dist/Auth/AuthHandler";
+import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
+import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { SubscriptionHandler } from "prostgles-types";
-import { isDefined, tryCatch, tryCatchV2 } from "prostgles-types";
+import { isDefined, tryCatchV2 } from "prostgles-types";
 import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
+import { PASSWORDLESS_ADMIN_USERNAME } from "../../commonTypes/OAuthUtils";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
+import { getPasswordHash } from "./authConfig/authUtils";
 import type { SUser } from "./authConfig/getAuth";
 import {
   YEAR,
@@ -18,15 +17,11 @@ import {
   makeSession,
   sidKeyName,
 } from "./authConfig/getAuth";
-import { getPasswordHash } from "./authConfig/authUtils";
 import { getElectronConfig } from "./electronConfig";
 import { PRGL_PASSWORD, PRGL_USERNAME } from "./envVars";
 import type { DBS, Users } from "./index";
 import { connMgr, tout } from "./index";
 import { tableConfig } from "./tableConfig/tableConfig";
-import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
-import { insertDefaultPrompts } from "./publishMethods/askLLM/askLLM";
-import { PASSWORDLESS_ADMIN_USERNAME } from "../../commonTypes/OAuthUtils";
 
 export type WithOrigin = {
   origin?: (
@@ -35,7 +30,9 @@ export type WithOrigin = {
   ) => void;
 };
 
-type OnUse = Required<Auth<DBSchemaGenerated, SUser>>["expressConfig"]["use"];
+type OnUse = Required<
+  AuthConfig<DBSchemaGenerated, SUser>
+>["loginSignupConfig"]["use"];
 
 const PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR =
   "Only 1 session is allowed for the passwordless admin. If you're seeing this then the passwordless admin session has already been assigned to a different device/browser";

@@ -1,11 +1,98 @@
 import { getSchemaTableColY, type SchemaGraphState } from "./SchemaGraph";
 import * as d3 from "d3";
+import type { Node, Link } from "./types";
 
 type GraphParams = {
   svgNode: SVGElement;
-  data: { nodes: SchemaGraphState["nodes"]; links: SchemaGraphState["links"] };
-  onClickNode: (id: string) => any;
+  data: { 
+    nodes: Node[];
+    links: Link[];
+  };
+  onClickNode: (id: string) => void;
 };
+
+function calculateNodeReferences(nodes: Node[], links: Link[]) {
+  // Count incoming and outgoing references for each node
+  const refCounts = new Map<string, { in: number; out: number }>();
+  
+  nodes.forEach(node => {
+    refCounts.set(node.id, { in: 0, out: 0 });
+  });
+  
+  links.forEach(link => {
+    // Handle both string IDs and Node objects for source/target
+    const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+    const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+    
+    const sourceCount = refCounts.get(sourceId);
+    const targetCount = refCounts.get(targetId);
+    
+    if (sourceCount) sourceCount.out++;
+    if (targetCount) targetCount.in++;
+  });
+  
+  return refCounts;
+}
+
+function positionNodes(nodes: Node[], links: Link[], width: number, height: number) {
+  const refCounts = calculateNodeReferences(nodes, links);
+  
+  // Sort nodes by total references (in + out)
+  const sortedNodes = [...nodes].sort((a, b) => {
+    const aCount = refCounts.get(a.id) || { in: 0, out: 0 };
+    const bCount = refCounts.get(b.id) || { in: 0, out: 0 };
+    return (bCount.in + bCount.out) - (aCount.in + aCount.out);
+  });
+  
+  const centerX = width / 2;
+  const centerY = height / 2;
+  
+  // Fixed minimum spacing between nodes
+  const minSpacing = 15;
+  
+  // Calculate node dimensions
+  const maxNodeWidth = Math.max(...nodes.map(n => n.width));
+  const maxNodeHeight = Math.max(...nodes.map(n => n.height));
+  
+  // Calculate grid dimensions
+  const gridSize = Math.ceil(Math.sqrt(nodes.length));
+  const cellWidth = maxNodeWidth + minSpacing;
+  const cellHeight = maxNodeHeight + minSpacing;
+  
+  // Calculate total grid width and height
+  const totalWidth = cellWidth * gridSize;
+  const totalHeight = cellHeight * gridSize;
+  
+  // Position nodes in a grid pattern
+  sortedNodes.forEach((node, i) => {
+    if (i === 0) {
+      // Most referenced node goes in center
+      node.x = centerX;
+      node.y = centerY;
+    } else {
+      // Calculate grid position (spiral out from center)
+      const gridX = i % gridSize;
+      const gridY = Math.floor(i / gridSize);
+      
+      // Offset from center
+      const offsetX = (gridX - gridSize / 2) * cellWidth;
+      const offsetY = (gridY - gridSize / 2) * cellHeight;
+      
+      node.x = centerX + offsetX;
+      node.y = centerY + offsetY;
+    }
+  });
+  
+  // Add tiny jitter to prevent perfect alignment
+  sortedNodes.forEach((node, i) => {
+    if (i !== 0) {
+      const jitterAmount = minSpacing / 3;
+      node.x += (Math.random() - 0.5) * jitterAmount;
+      node.y += (Math.random() - 0.5) * jitterAmount;
+    }
+  });
+}
+
 export const drawSchema = (args: GraphParams) => {
   const { svgNode, data, onClickNode } = args;
 
@@ -24,19 +111,17 @@ export const drawSchema = (args: GraphParams) => {
     rectWidth * rectWidth + rectHeight * rectHeight,
   );
 
-  data.nodes.forEach((n) => {
-    n.x = n.hasLinks ? width / 2 : 0;
-    n.y = n.hasLinks ? height / 2 : 0;
-    n.fy = n.x;
-    n.fx = n.y;
-  });
+  // Position nodes before drawing
+  positionNodes(data.nodes, data.links, width, height);
 
   // Add encompassing group for the zoom
   const g = svg.select("g.everything"),
     gLinks = g.select("g.links"),
     gNodes = g.select("g.nodes");
 
-  const linkSel = gLinks.selectAll("path.link").data(data.links, (d) => d.id);
+  const linkSel = gLinks
+    .selectAll<SVGPathElement, Link>("path.link")
+    .data(data.links, (d: Link) => d.id);
 
   const link = linkSel
     .enter()
@@ -44,14 +129,20 @@ export const drawSchema = (args: GraphParams) => {
     .attr("class", "link")
     .attr("stroke-width", 2)
     .attr("fill", "none")
-    .attr("stroke", (d) => d.color)
-    .merge(linkSel);
+    .attr("stroke", (d: Link) => d.color)
+    .merge(linkSel as any);
 
   linkSel.exit().remove();
 
-  const nodeSel = gNodes.selectAll("g.node").data(data.nodes, (d) => d.id);
+  const nodeSel = gNodes
+    .selectAll<SVGGElement, Node>("g.node")
+    .data(data.nodes, (d: Node) => d.id);
 
-  const node = nodeSel.enter().append("g").attr("class", "node").merge(nodeSel);
+  const node = nodeSel
+    .enter()
+    .append("g")
+    .attr("class", "node")
+    .merge(nodeSel as any);
 
   nodeSel.exit().remove();
 
@@ -113,14 +204,30 @@ export const drawSchema = (args: GraphParams) => {
 
   // const drag_handler =
 
-  node.call(
-    d3.drag().on("drag", function (e, d) {
-      d.x = e.x;
-      d.y = e.y;
-      console.log(d.x, d.y);
-      d3.select(this).attr("x", d.x).attr("y", d.y);
-    }),
-  );
+  const drag = d3.drag<SVGGElement, Node>()
+    .on("start", dragStarted)
+    .on("drag", dragged)
+    .on("end", dragEnded);
+
+  function dragStarted(event: d3.D3DragEvent<SVGGElement, Node, any>, d: Node) {
+    d3.select<SVGGElement, Node>(this).classed("dragging", true);
+  }
+
+  function dragged(event: d3.D3DragEvent<SVGGElement, Node, any>, d: Node) {
+    d.x = event.x;
+    d.y = event.y;
+    d3.select<SVGGElement, Node>(this)
+      .attr("transform", `translate(${d.x},${d.y})`);
+    
+    updateLinks();
+  }
+
+  function dragEnded(event: d3.D3DragEvent<SVGGElement, Node, any>, d: Node) {
+    d3.select<SVGGElement, Node>(this).classed("dragging", false);
+  }
+
+  // Apply drag behavior
+  node.call(drag);
 
   // Zoom functions
   function zoom_actions(event) {
@@ -268,4 +375,116 @@ export const drawSchema = (args: GraphParams) => {
   //     }
   //   }
   // }
+
+  // After creating nodes, set their initial positions
+  node.attr("transform", d => `translate(${d.x},${d.y})`);
+
+  // Create a function to update link positions
+  function updateLinks() {
+    // Helper to check if a point is inside a table's bounds
+    function isPointNearTable(x: number, y: number, node: Node, padding: number = 20) {
+      const left = node.x - node.width/2 - padding;
+      const right = node.x + node.width/2 + padding;
+      const top = node.y - node.height/2 - padding;
+      const bottom = node.y + node.height/2 + padding;
+      
+      return x >= left && x <= right && y >= top && y <= bottom;
+    }
+
+    // Helper to find tables that intersect with a line segment
+    function findIntersectingTables(x1: number, y1: number, x2: number, y2: number, excludeNodes: Node[]) {
+      return data.nodes.filter(node => {
+        if (excludeNodes.includes(node)) return false;
+        
+        // Check if line segment intersects with table bounds
+        const left = node.x - node.width/2 - 20;
+        const right = node.x + node.width/2 + 20;
+        const top = node.y - node.height/2 - 20;
+        const bottom = node.y + node.height/2 + 20;
+        
+        // Simple line-box intersection test
+        const minX = Math.min(x1, x2);
+        const maxX = Math.max(x1, x2);
+        const minY = Math.min(y1, y2);
+        const maxY = Math.max(y1, y2);
+        
+        if (maxX < left || minX > right || maxY < top || minY > bottom) {
+          return false;
+        }
+        
+        return true;
+      });
+    }
+
+    link.attr("d", (l: Link) => {
+      const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
+      const targetId = typeof l.target === 'string' ? l.target : l.target.id;
+      
+      const source = data.nodes.find(n => n.id === sourceId);
+      const target = data.nodes.find(n => n.id === targetId);
+      
+      if (!source || !target) return "";
+
+      const sourceX = source.x + (source.width / 2);
+      const sourceY = source.y + getSchemaTableColY(l.sourceColIndex, source.height);
+      const targetX = target.x - (target.width / 2);
+      const targetY = target.y + getSchemaTableColY(l.targetColIndex, target.height);
+
+      // Find path around obstacles
+      const dx = targetX - sourceX;
+      const dy = targetY - sourceY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Try different vertical offsets until we find a clear path
+      const baseOffset = Math.min(100, distance / 3);
+      const offsets = [0, baseOffset, -baseOffset, baseOffset * 2, -baseOffset * 2];
+      
+      for (const offset of offsets) {
+        // Try a path with this offset
+        const cp1x = sourceX + distance / 4;
+        const cp1y = sourceY + offset;
+        const cp2x = sourceX + (distance * 3) / 4;
+        const cp2y = targetY + offset;
+        
+        // Check if this path intersects any tables
+        const intersections = findIntersectingTables(
+          sourceX, sourceY,
+          cp1x, cp1y,
+          [source, target]
+        ).concat(findIntersectingTables(
+          cp1x, cp1y,
+          cp2x, cp2y,
+          [source, target]
+        )).concat(findIntersectingTables(
+          cp2x, cp2y,
+          targetX, targetY,
+          [source, target]
+        ));
+        
+        if (intersections.length === 0) {
+          // Found a clear path
+          return [
+            `M ${sourceX},${sourceY}`,
+            `C ${cp1x},${cp1y}`,
+            `  ${cp2x},${cp2y}`,
+            `  ${targetX},${targetY}`
+          ].join(" ");
+        }
+      }
+      
+      // If no clear path found, use a path with maximum offset
+      const fallbackOffset = Math.max(150, distance / 2);
+      const sign = sourceY > targetY ? -1 : 1;
+      
+      return [
+        `M ${sourceX},${sourceY}`,
+        `C ${sourceX + distance/4},${sourceY + sign * fallbackOffset}`,
+        `  ${sourceX + (distance*3)/4},${targetY + sign * fallbackOffset}`,
+        `  ${targetX},${targetY}`
+      ].join(" ");
+    });
+  }
+
+  // Call updateLinks initially to set link positions
+  updateLinks();
 };

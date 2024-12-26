@@ -1,12 +1,11 @@
 import type {
-  MagicLinkAuth,
   PasswordLogin,
   PasswordRegister,
 } from "prostgles-client/dist/Auth";
-import React, { useEffect, useState } from "react";
-import type { LoginFormProps } from "./Login";
 import type { AuthResponse } from "prostgles-types";
+import React, { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import type { LoginFormProps } from "./Login";
 
 type PasswordLoginDataAndFunc = {
   onCall: PasswordLogin;
@@ -18,24 +17,13 @@ type PasswordRegisterDataAndFunc = {
   result: undefined | Awaited<ReturnType<PasswordRegister>>;
 } & Parameters<PasswordRegister>[0];
 
-type MagicLinkAuthFuncAndData = {
-  onCall: MagicLinkAuth;
-  result: undefined | Awaited<ReturnType<MagicLinkAuth>>;
-} & Parameters<MagicLinkAuth>[0];
-
 type FormData =
   | ({ type: "login" } & PasswordLoginDataAndFunc)
-  | ({
-      type: "loginWithMagicLink";
-    } & MagicLinkAuthFuncAndData)
   | ({ type: "loginTotp" } & PasswordLoginDataAndFunc)
   | ({ type: "loginTotpRecovery" } & PasswordLoginDataAndFunc)
   | ({
       type: "registerWithPassword";
-    } & PasswordRegisterDataAndFunc)
-  | ({
-      type: "registerWithMagicLink";
-    } & MagicLinkAuthFuncAndData);
+    } & PasswordRegisterDataAndFunc);
 
 type FormStates = FormData["type"];
 
@@ -71,37 +59,37 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
   }, [username, password, totpToken, totpRecoveryCode, confirmPassword]);
 
   const formHandlers =
-    state === "login" && auth.login?.withMagicLink ?
+    state === "login" && auth.loginType === "email" ?
       {
         state,
         username,
         setUsername,
-        onCall: auth.login.withMagicLink,
+        onCall: auth.login,
       }
-    : state === "login" && auth.login?.withPassword ?
+    : state === "login" && auth.loginType === "email+password" ?
       {
         state,
         username,
         setUsername,
         password,
         setPassword,
-        onCall: auth.login.withPassword,
+        onCall: auth.login,
       }
-    : state === "loginTotp" && auth.login?.withPassword ?
+    : state === "loginTotp" && auth.login ?
       {
         state,
         totpToken,
         setTotpToken,
-        onCall: auth.login.withPassword,
+        onCall: auth.login,
       }
-    : state === "loginTotpRecovery" && auth.login?.withPassword ?
+    : state === "loginTotpRecovery" && auth.login ?
       {
         state,
         totpRecoveryCode,
         setTotpRecoveryCode,
-        onCall: auth.login.withPassword,
+        onCall: auth.login,
       }
-    : state === "registerWithPassword" && auth.register?.withPassword ?
+    : state === "registerWithPassword" && auth.signupWithEmailAndPassword ?
       {
         state,
         username,
@@ -110,23 +98,13 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
         setPassword,
         confirmPassword,
         setConfirmPassword,
-        onCall: auth.register.withPassword,
+        onCall: auth.signupWithEmailAndPassword,
         result,
-      }
-    : state === "registerWithMagicLink" && auth.register?.withMagicLink ?
-      {
-        state,
-        username,
-        setUsername,
-        onCall: auth.register.withMagicLink,
       }
     : undefined;
 
   const isOnLogin = loginStates.some((v) => v === state);
-  const registerTypeAllowed: FormStates =
-    auth.register?.withMagicLink ?
-      "registerWithMagicLink"
-    : "registerWithPassword";
+  const registerTypeAllowed: FormStates = "registerWithPassword";
 
   const onAuthCall = async () => {
     const formData = {
@@ -224,6 +202,10 @@ const ERR_CODE_MESSAGES = {
   "user-already-registered": "User already registered",
   "username-missing": "Username cannot be empty",
   "weak-password": "Password is too weak",
+  "expired-email-confirmation-code": "Email confirmation code expired",
+  "invalid-email-confirmation-code": "Invalid email confirmation code",
+  "invalid-magic-link": "Invalid magic link",
+  "used-magic-link": "Magic link already used",
 } satisfies Record<
   | AuthResponse.MagicLinkAuthFailure["code"]
   | AuthResponse.PasswordLoginFailure["code"]

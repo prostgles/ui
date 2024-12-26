@@ -2,6 +2,7 @@ const unhandled = require("electron-unhandled");
 unhandled();
 import {
   app,
+  screen,
   BrowserWindow,
   safeStorage as ss,
   Tray,
@@ -12,6 +13,8 @@ import * as path from "path";
 import * as fs from "fs";
 import * as crypto from "crypto";
 
+const protocolName = "prostgles-desktop";
+app.setAsDefaultProtocolClient(protocolName);
 let localCreds: any;
 
 /**
@@ -35,6 +38,7 @@ const safeStorage =
 
 const expressApp = require("../ui/server/dist/server/src/electronConfig");
 const iconPath = path.join(__dirname, "/../images/icon.ico");
+
 /* createSessionSecret */
 const electronSid = crypto.randomBytes(48).toString("hex");
 
@@ -48,6 +52,13 @@ if (!gotTheLock) {
   app.on("second-instance", (event, commandLine, workingDirectory) => {
     // Tried to run a second instance - focus main window.
     if (mainWindow) {
+      /** Gets triggered if app is running and a protocol url was clicked */
+      const protocolUrl = commandLine.find((v) =>
+        v.startsWith(protocolName + "://"),
+      );
+      if (protocolUrl) {
+        onOpenedProtocol(protocolUrl);
+      }
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }
@@ -89,7 +100,7 @@ function initApp() {
           electronSid,
           onSidWasSet: () => {
             console.log("Express server ready, onSidWasSet, reloading...");
-            tryLoadUrl(port ?? 0, electronSid, 0);
+            tryOpenBrowser(port ?? 0, electronSid, 0);
           },
           openPath: (path: string, isFile?: boolean) => {
             // Show the given file in a file manager. If possible, select the file.
@@ -103,7 +114,7 @@ function initApp() {
         (actualPort: number) => {
           console.log("Express server started on port " + actualPort);
           port = actualPort;
-          tryLoadUrl(actualPort, electronSid);
+          tryOpenBrowser(actualPort, electronSid);
           // try {
           //   new Tray(nativeImage.createFromPath(iconPath));
           // } catch(error){
@@ -130,14 +141,35 @@ function initApp() {
   app.on("window-all-closed", function () {
     if (process.platform !== "darwin") app.quit();
   });
+
+  /** Gets triggered if app is NOT running and a protocol url was clicked */
+  app.on("open-url", function (event, data) {
+    event.preventDefault();
+    onOpenedProtocol(data);
+  });
 }
+
+const onOpenedProtocol = (url: string) => {
+  console.log("onOpenedProtocol", { url });
+  expressApp.setProstglesToken(url);
+};
 
 const createWindow = () => {
   if (mainWindow) return;
 
+  /** Make sure we open it on primary display */
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.workAreaSize;
+  const maxSize = Math.min(width, height);
+  const desiredSize = 1000;
+  const size = Math.min(maxSize, desiredSize);
+  const x = Math.round(primaryDisplay.bounds.x + (width - size) / 2);
+  const y = Math.round(primaryDisplay.bounds.y + (height - size) / 2);
   mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 1000,
+    x,
+    y,
+    width: size,
+    height: size,
     icon: iconPath,
   });
   mainWindow.setMenuBarVisibility(false);
@@ -145,7 +177,7 @@ const createWindow = () => {
 
 let mainWindowLoaded: { port: number };
 let didSetActivate = false;
-const tryLoadUrl = (port: number, sid: string, delay = 1100) => {
+const tryOpenBrowser = (port: number, sid: string, delay = 1100) => {
   if (!port) return;
   const url = `http://localhost:${port}`;
 
@@ -193,7 +225,7 @@ const tryLoadUrl = (port: number, sid: string, delay = 1100) => {
       // On macOS it's common to re-create a window in the app when the
       // dock icon is clicked and there are no other windows open.
       if (BrowserWindow.getAllWindows().length === 0) {
-        tryLoadUrl(port, electronSid);
+        tryOpenBrowser(port, electronSid);
       }
     });
   };
