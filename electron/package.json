@@ -56,10 +56,6 @@
     "extraMetadata": {
       "main": "build/main.js"
     },
-    "protocols": {
-      "name": "prostgles-desktop-protocol",
-      "schemes": ["prostgles-desktop"]
-    },
     "includeSubNodeModules": true,
     "productName": "Prostgles-Desktop",
     "appId": "com.electron.prostgles-desktop",

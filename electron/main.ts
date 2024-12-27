@@ -12,9 +12,8 @@ import {
 import * as path from "path";
 import * as fs from "fs";
 import * as crypto from "crypto";
+// import { getProtocolHandler } from "./getProtocolHandler";
 
-const protocolName = "prostgles-desktop";
-app.setAsDefaultProtocolClient(protocolName);
 let localCreds: any;
 
 /**
@@ -39,6 +38,11 @@ const safeStorage =
 const expressApp = require("../ui/server/dist/server/src/electronConfig");
 const iconPath = path.join(__dirname, "/../images/icon.ico");
 
+// const protocolHandler = getProtocolHandler({
+//   app,
+//   expressApp,
+// });
+
 /* createSessionSecret */
 const electronSid = crypto.randomBytes(48).toString("hex");
 
@@ -52,13 +56,7 @@ if (!gotTheLock) {
   app.on("second-instance", (event, commandLine, workingDirectory) => {
     // Tried to run a second instance - focus main window.
     if (mainWindow) {
-      /** Gets triggered if app is running and a protocol url was clicked */
-      const protocolUrl = commandLine.find((v) =>
-        v.startsWith(protocolName + "://"),
-      );
-      if (protocolUrl) {
-        onOpenedProtocol(protocolUrl);
-      }
+      /* protocolHandler.onSecondWindow(commandLine); */
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }
@@ -142,17 +140,8 @@ function initApp() {
     if (process.platform !== "darwin") app.quit();
   });
 
-  /** Gets triggered if app is NOT running and a protocol url was clicked */
-  app.on("open-url", function (event, data) {
-    event.preventDefault();
-    onOpenedProtocol(data);
-  });
+  /* protocolHandler.setOpenUrlListener(); */
 }
-
-const onOpenedProtocol = (url: string) => {
-  console.log("onOpenedProtocol", { url });
-  expressApp.setProstglesToken(url);
-};
 
 const createWindow = () => {
   if (mainWindow) return;
@@ -160,16 +149,17 @@ const createWindow = () => {
   /** Make sure we open it on primary display */
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width, height } = primaryDisplay.workAreaSize;
-  const maxSize = Math.min(width, height);
-  const desiredSize = 1000;
-  const size = Math.min(maxSize, desiredSize);
-  const x = Math.round(primaryDisplay.bounds.x + (width - size) / 2);
-  const y = Math.round(primaryDisplay.bounds.y + (height - size) / 2);
+  const desiredHeight = 1000;
+  const desiredWidth = 1400;
+  const startupWidth = Math.min(desiredWidth, width);
+  const startupHeight = Math.min(desiredHeight, height);
+  const x = Math.round(primaryDisplay.bounds.x + (width - startupWidth) / 2);
+  const y = Math.round(primaryDisplay.bounds.y + (height - startupHeight) / 2);
   mainWindow = new BrowserWindow({
     x,
     y,
-    width: size,
-    height: size,
+    width: startupWidth,
+    height: startupHeight,
     icon: iconPath,
   });
   mainWindow.setMenuBarVisibility(false);
