@@ -168,19 +168,13 @@ export const startConnection = async function (
         dbs.connections.update({ id: con.id }, { on_mount_ts_disabled: true });
       });
 
-      //@ts-ignored
+      //@ts-ignorded
       const prgl = await prostgles({
         dbConnection: connectionInfo,
         io: _io,
         auth: {
           sidKeyName: auth.sidKeyName,
           getUser: (sid, __, _, cl) => auth.getUser(sid, dbs, _dbs, cl),
-          // loginSignupConfig: {
-
-          //  },
-          // login: (sid, __, _, ip_address) =>
-          //   auth.login(sid, dbs, _dbs, ip_address),
-          // logout: (sid, __, _) => auth.logout(sid, dbs, _dbs),
           cacheSession: {
             getSession: (sid) => auth.cacheSession.getSession(sid, dbs),
           },

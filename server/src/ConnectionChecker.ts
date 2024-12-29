@@ -84,6 +84,18 @@ export class ConnectionChecker {
     return new Promise(async (resolve, reject) => {
       if (!this.db) throw "dbs missing";
 
+      /** Add cors config if missing */
+      if (!(await this.db.global_settings.count())) {
+        await this.db.global_settings.insert({
+          /** Origin "*" is required to enable API access */
+          allowed_origin: this.noPasswordAdmin ? null : "*",
+          // allowed_ips_enabled: this.noPasswordAdmin? true : false,
+          allowed_ips_enabled: false,
+          allowed_ips: ["::ffff:127.0.0.1"],
+          tableConfig,
+        });
+      }
+
       let resolved = false;
       const initialise = (what: "users" | "config") => {
         if (what === "users") this.initialised.users = true;
@@ -165,20 +177,6 @@ export class ConnectionChecker {
     }
 
     if (!electronConfig?.isElectron) {
-      /** Add cors config if missing */
-      if (!this.config.global_setting) {
-        await this.db.global_settings.insert({
-          /** Origin "*" is required to enable API access */
-          allowed_origin: this.noPasswordAdmin ? null : "*",
-          // allowed_ips_enabled: this.noPasswordAdmin? true : false,
-          allowed_ips_enabled: false,
-          allowed_ips: Array.from(new Set([req.ip, "::ffff:127.0.0.1"])).filter(
-            isDefined,
-          ),
-          tableConfig,
-        });
-      }
-
       const isAccessingMagicLink = req.originalUrl.startsWith("/magic-link/");
       if (this.noPasswordAdmin && !sid && !isAccessingMagicLink) {
         // need to ensure that only 1 session is allowed for the passwordless admin
