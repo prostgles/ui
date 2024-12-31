@@ -96,16 +96,33 @@ type AuthType =
   | {
       type: "session-id";
       filter: { id: string };
-      client: AuthClientRequest & LoginClientInfo;
+      // client: AuthClientRequest & LoginClientInfo;
+      client: LoginClientInfo;
     }
   | {
       type: "login-success";
       filter: { user_id: string; type: "web"; user_agent: string };
     };
 
-export const getActiveSession = async (db: DBS, authType: AuthType) => {
+export const getActiveSession = async (
+  db: DBS,
+  authType: AuthType,
+): Promise<{
+  validSession: Sessions | undefined;
+  failedTooManyTimes: boolean;
+  error?: AuthResponse.AuthFailure;
+}> => {
   if (Object.values(authType.filter).some((v) => typeof v !== "string" || !v)) {
-    throw `Must provide a valid session filter`;
+    // throw `Must provide a valid session filter`;
+    return {
+      validSession: undefined,
+      failedTooManyTimes: false,
+      error: {
+        success: false,
+        code: "server-error",
+        message: "Must provide a valid session filter",
+      },
+    };
   }
   const validSession = await db.sessions.findOne({
     ...authType.filter,
@@ -120,31 +137,38 @@ export const getActiveSession = async (db: DBS, authType: AuthType) => {
   if (pwdlessUser && !validSession) {
     const oldSession = await db.sessions.findOne({ user_id: pwdlessUser.id });
     if (oldSession) {
-      return db.sessions.update(
+      const validSession = await db.sessions.update(
         { id: oldSession.id },
         { active: true, expires: Date.now() + 1 * YEAR },
         { returning: "*", multi: false },
       );
+      return { validSession, failedTooManyTimes: false };
     }
   }
 
+  let failedTooManyTimes = false;
   if (!pwdlessUser && authType.type === "session-id" && !validSession) {
     const expiredSession = await db.sessions.findOne({ ...authType.filter });
     if (!expiredSession) {
       const { ip_address, ip_address_remote, user_agent, x_real_ip } =
         authType.client;
-      const { failedTooManyTimes } = await startLoginAttempt(
+      const failedInfo = await startLoginAttempt(
         db,
         { ip_address, ip_address_remote, user_agent, x_real_ip },
         { auth_type: "session-id", sid: authType.filter.id },
       );
-      if (failedTooManyTimes) {
-        throw "Failed too many times";
+      if ("success" in failedInfo) {
+        return {
+          validSession: undefined,
+          failedTooManyTimes: true,
+          error: failedInfo,
+        };
       }
+      failedTooManyTimes = failedInfo.failedTooManyTimes;
     }
   }
 
-  return validSession;
+  return { validSession, failedTooManyTimes };
 };
 
 export const getAuth = async (
@@ -160,25 +184,28 @@ export const getAuth = async (
     getUser: async (sid, db, _db: DB, client) => {
       if (!sid) return undefined;
 
-      const s = await getActiveSession(db, {
-        type: "session-id",
-        client,
-        filter: { id: sid },
-      });
-      if (!s) return undefined;
+      const { validSession, failedTooManyTimes, error } =
+        await getActiveSession(db, {
+          type: "session-id",
+          client,
+          filter: { id: sid },
+        });
+      if (error) return error;
+      if (failedTooManyTimes) return "rate-limit-exceeded";
+      if (!validSession) return undefined;
 
-      const user = await db.users.findOne({ id: s.user_id });
+      const user = await db.users.findOne({ id: validSession.user_id });
       if (!user) return undefined;
 
       const state_db = await db.connections.findOne({ is_state_db: true });
       if (!state_db) throw "Internal error: Statedb missing ";
 
       const suser: SUser = {
-        sid: s.id,
+        sid: validSession.id,
         user,
         isAnonymous: user.type === "public",
         clientUser: {
-          sid: s.id,
+          sid: validSession.id,
           uid: user.id,
 
           /** For security reasons provide state_db_id only to admin users */
@@ -264,6 +291,9 @@ export const getAuth = async (
           { ip_address, ip_address_remote, user_agent, x_real_ip },
           { auth_type: "magic-link", magic_link_id: id },
         );
+        if ("success" in onLoginAttempt) {
+          return withError("server-error", onLoginAttempt.message);
+        }
         if (onLoginAttempt.failedTooManyTimes) {
           return withError("rate-limit-exceeded");
         }
@@ -327,6 +357,7 @@ export const getAuth = async (
             },
             onProviderLoginStart: async ({ dbo, clientInfo }) => {
               const check = await getFailedTooManyTimes(dbo as any, clientInfo);
+              if ("success" in check) return check;
               return check.failedTooManyTimes ?
                   {
                     success: false,

@@ -168,7 +168,6 @@ export const startConnection = async function (
         dbs.connections.update({ id: con.id }, { on_mount_ts_disabled: true });
       });
 
-      //@ts-ignorded
       const prgl = await prostgles({
         dbConnection: connectionInfo,
         io: _io,

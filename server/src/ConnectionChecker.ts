@@ -1,6 +1,9 @@
 import cors from "cors";
 import type { Express, Request } from "express";
-import { getClientRequestIPsInfo } from "prostgles-server/dist/Auth/AuthHandler";
+import {
+  getClientRequestIPsInfo,
+  HTTP_FAIL_CODES,
+} from "prostgles-server/dist/Auth/AuthHandler";
 import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import type { DB } from "prostgles-server/dist/Prostgles";
@@ -155,7 +158,7 @@ export class ConnectionChecker {
     });
   };
 
-  onUse: OnUse = async ({ req, res, next, getUser }) => {
+  onUse: OnUse = async ({ req, res, next }) => {
     if (!this.config.loaded || !this.db) {
       console.warn(
         "Delaying user request until server is ready. originalUrl: " +
@@ -207,14 +210,22 @@ export class ConnectionChecker {
       if (publicConnections.length) {
         const isLoggingIn =
           isAccessingMagicLink || req.originalUrl.startsWith("/login");
-        const client = getClientRequestIPsInfo({ httpReq: req, res });
-        const hasNoActiveSession =
-          !sid ||
-          !(await getActiveSession(this.db, {
+        const client = getClientRequestIPsInfo({ httpReq: req });
+        let hasNoActiveSession = !sid;
+        if (sid) {
+          const activeSessionInfo = await getActiveSession(this.db, {
             type: "session-id",
             client,
             filter: { id: sid },
-          }));
+          });
+          if (activeSessionInfo.error) {
+            res
+              .status(HTTP_FAIL_CODES.BAD_REQUEST)
+              .json(activeSessionInfo.error);
+            return;
+          }
+          hasNoActiveSession = !activeSessionInfo.validSession;
+        }
 
         /** If test mode and no sid then create a random account and redirect to magic login link */
         if (this._db && hasNoActiveSession && !isLoggingIn) {

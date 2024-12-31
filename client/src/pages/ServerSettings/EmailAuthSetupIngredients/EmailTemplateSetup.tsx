@@ -1,8 +1,7 @@
 import React from "react";
 import { FlexCol } from "../../../components/Flex";
-import { Label } from "../../../components/Label";
 import FormField from "../../../components/FormField/FormField";
-import CodeEditor from "../../../dashboard/CodeEditor/CodeEditor";
+import { Label } from "../../../components/Label";
 import { SmartCodeEditor } from "../../../dashboard/CodeEditor/SmartCodeEditor";
 
 export type EmailTemplateConfig = {
@@ -13,7 +12,7 @@ export type EmailTemplateConfig = {
 
 type P = {
   value: EmailTemplateConfig | undefined;
-  onChange: (newValue: P["value"]) => void;
+  onChange: (newValue: EmailTemplateConfig) => void;
   style?: React.CSSProperties;
   className?: string;
   label: string;

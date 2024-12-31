@@ -9,9 +9,13 @@ import Select from "../../components/Select/Select";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import type { AuthProviderProps } from "./AuthProvidersSetup";
 import {
-  DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
+  DEFAULT_SMTP_CONFIG,
   EmailSMTPAndTemplateSetup,
 } from "./EmailAuthSetupIngredients/EmailSMTPAndTemplateSetup";
+import {
+  DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
+  DEFAULT_MAGIC_LINK_TEMPLATE,
+} from "../../../../commonTypes/OAuthUtils";
 
 export const EmailAuthSetup = ({
   authProviders,
@@ -41,6 +45,7 @@ export const EmailAuthSetup = ({
   return (
     <Section
       title="Email signup"
+      data-command="EmailAuthSetup"
       titleIconPath={mdiEmail}
       disabledInfo={disabledInfo}
       contentClassName={contentClassName}
@@ -63,6 +68,9 @@ export const EmailAuthSetup = ({
               {
                 enabled,
                 signupType: "withPassword",
+                emailTemplate: DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
+                smtp: DEFAULT_SMTP_CONFIG,
+                minPasswordLength: 8,
               }
             : {
                 ...localAuth,
@@ -73,6 +81,7 @@ export const EmailAuthSetup = ({
       />
       <Select
         label={"Signup type"}
+        data-command="EmailAuthSetup.SignupType"
         showSelectedSublabel={true}
         value={localAuth?.signupType}
         fullOptions={
@@ -91,11 +100,23 @@ export const EmailAuthSetup = ({
           ] as const
         }
         onChange={async (signupType) => {
-          setLocalAuth({
-            ...localAuth,
-            signupType,
-            emailTemplate: DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
-          });
+          setLocalAuth(
+            signupType === "withMagicLink" ?
+              {
+                signupType,
+                emailTemplate: DEFAULT_MAGIC_LINK_TEMPLATE,
+                smtp: localAuth?.smtp ?? DEFAULT_SMTP_CONFIG,
+              }
+            : {
+                signupType,
+                emailTemplate: DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
+                smtp: localAuth?.smtp ?? DEFAULT_SMTP_CONFIG,
+                minPasswordLength:
+                  localAuth?.signupType === "withPassword" ?
+                    (localAuth.minPasswordLength ?? 8)
+                  : undefined,
+              },
+          );
         }}
       />
       {localAuth?.signupType === "withPassword" && (
@@ -115,15 +136,12 @@ export const EmailAuthSetup = ({
       <EmailSMTPAndTemplateSetup
         label={
           localAuth?.signupType === "withMagicLink" ?
-            "Magic link email"
+            "Magic link email configuration"
           : "Email verification"
         }
         value={localAuth}
         onChange={async (newConfig) => {
           if (!localAuth) throw "Local auth not found";
-          if (localAuth.signupType !== "withPassword" && !newConfig.smtp) {
-            throw "Please enable the email provider first";
-          }
           await doUpdate({
             ...authProviders,
             email: {
@@ -135,7 +153,9 @@ export const EmailAuthSetup = ({
           setLocalAuth(undefined);
         }}
       />
-      {error && <ErrorComponent error={error} />}
+      {error && (
+        <ErrorComponent data-command="EmailAuthSetup.error" error={error} />
+      )}
       {didChange && (
         <FooterButtons
           footerButtons={[
@@ -143,17 +163,20 @@ export const EmailAuthSetup = ({
               label: "Save",
               color: "action",
               variant: "filled",
-              onClick: async () => {
+              onClickMessage: async (_, setM) => {
                 try {
-                  await doUpdate({
+                  setM({ loading: 1 });
+                  const newAuth = {
                     ...authProviders,
                     email: localAuth,
-                  });
+                  };
+                  await doUpdate(newAuth);
                   setError(undefined);
                   setLocalAuth(undefined);
                 } catch (err) {
                   setError(err);
                 }
+                setM({ loading: 0 });
               },
             },
           ]}

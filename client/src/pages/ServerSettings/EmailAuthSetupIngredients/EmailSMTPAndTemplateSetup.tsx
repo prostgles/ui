@@ -1,13 +1,15 @@
-import { mdiEmail, mdiEmailEdit, mdiMailboxOpenOutline } from "@mdi/js";
+import { mdiEmailEdit, mdiMailboxOpenOutline } from "@mdi/js";
+import { pickKeys } from "prostgles-types";
 import React from "react";
+import {
+  getMagicLinkEmailFromTemplate,
+  getVerificationEmailFromTemplate,
+} from "../../../../../commonTypes/OAuthUtils";
 import Btn from "../../../components/Btn";
 import ErrorComponent from "../../../components/ErrorComponent";
 import { FlexCol } from "../../../components/Flex";
 import PopupMenu from "../../../components/PopupMenu";
 import { Section } from "../../../components/Section";
-import { SwitchToggle } from "../../../components/SwitchToggle";
-import { fixIndent } from "../../../demo/sqlVideoDemo";
-import { pickKeys } from "prostgles-types";
 import type { AuthProvidersConfig } from "../AuthProvidersSetup";
 import { useEditableData } from "../useEditableData";
 import { EmailSMTPSetup } from "./EmailSMTPSetup";
@@ -40,88 +42,63 @@ type P = {
 export const EmailSMTPAndTemplateSetup = (props: P) => {
   const { label, className, onChange } = props;
 
-  const { didChange, error, onSave, value, setValue } = useEditableData(
-    props.value && pickKeys(props.value, keysToUpdate.slice()),
-  );
+  const { didChange, error, onSave, value, setValue, setError } =
+    useEditableData(props.value && pickKeys(props.value, keysToUpdate.slice()));
   const { signupType } = props.value ?? {};
-  const showConfirmationEnableToggle = signupType === "withPassword";
-
-  const enabled =
-    !showConfirmationEnableToggle || value?.emailConfirmationEnabled;
+  const enabled = !!signupType;
   return (
     <PopupMenu
       positioning="top-center"
       title={label}
+      data-command="EmailSMTPAndTemplateSetup"
       button={
         <Btn
           variant="faded"
           color={enabled ? "action" : undefined}
           label={{ label, variant: "normal", className: "mb-p5" }}
+          disabledInfo={
+            !signupType ? "Must select a Signup type first" : undefined
+          }
         >
-          {enabled ? "Enabled" : "Disabled"}
+          {enabled ? "Configured" : "Not configured"}
         </Btn>
       }
       className={className}
       clickCatchStyle={{ opacity: 1 }}
       render={(pClose) => (
         <FlexCol className="ai-start">
-          {showConfirmationEnableToggle && (
-            <FlexCol>
-              <p>
-                Require email confirmation for new users. Users will receive an
-                email with a link to verify their email address.
-              </p>
-              <SwitchToggle
-                label={"Email confirmation"}
-                checked={!!value?.emailConfirmationEnabled}
-                variant="col"
-                onChange={(checked) => {
-                  setValue({
-                    emailConfirmationEnabled: checked,
-                  });
-                }}
-              />
-            </FlexCol>
-          )}
-          <FlexCol
-            disabledInfo={
-              showConfirmationEnableToggle &&
-              !enabled &&
-              "Email verification must be enabled to edit"
-            }
-            className={`f-1 w-full gap-2 ai-start bg-color-0 ${
-              showConfirmationEnableToggle && !enabled ? "hidden" : ""
-            }`}
+          <p>
+            Users will receive an email with a link/code to verify their email
+            address.
+          </p>
+          <Section
+            title={"Email Provider"}
+            titleIconPath={mdiMailboxOpenOutline}
+            className={"w-full"}
+            contentClassName="p-1"
+            disableFullScreen={true}
           >
-            <Section
-              title={"Email Provider"}
-              titleIconPath={mdiMailboxOpenOutline}
-              className={"w-full"}
-              contentClassName="p-1"
-              disableFullScreen={true}
-            >
-              <EmailSMTPSetup
-                value={value?.smtp}
-                onChange={(newSmtpValue) => setValue({ smtp: newSmtpValue })}
-              />
-            </Section>
-            <Section
-              title={"Template"}
-              titleIconPath={mdiEmailEdit}
-              className={"w-full"}
-              contentClassName="p-1"
-              disableFullScreen={true}
-            >
-              <EmailTemplateSetup
-                // label="Email template"
-                label=""
-                value={value?.emailTemplate}
-                onChange={(newEmailTemplate) =>
-                  setValue({ emailTemplate: newEmailTemplate })
-                }
-              />
-            </Section>
-          </FlexCol>
+            <EmailSMTPSetup
+              value={value?.smtp}
+              onChange={(newSmtpValue) => setValue({ smtp: newSmtpValue })}
+            />
+          </Section>
+          <Section
+            title={"Template"}
+            titleIconPath={mdiEmailEdit}
+            className={"w-full"}
+            contentClassName="p-1"
+            disableFullScreen={true}
+          >
+            <EmailTemplateSetup
+              // label="Email template"
+              label=""
+              value={value?.emailTemplate}
+              onChange={(newEmailTemplate) =>
+                setValue({ emailTemplate: newEmailTemplate })
+              }
+            />
+          </Section>
           {error && <ErrorComponent error={error} />}
         </FlexCol>
       )}
@@ -134,9 +111,12 @@ export const EmailSMTPAndTemplateSetup = (props: P) => {
           disabledInfo: didChange ? undefined : "No changes",
           onClickPromiseMessage: "Error",
           onClickPromise: async (e) => {
-            if (!value) throw new Error("No value");
-            if (!onSave) throw new Error("Nothing to save");
-            await onSave(() => onChange({ ...props.value, ...value }));
+            if (!value) return setError("No value");
+            if (!onSave) return setError("Nothing to save");
+            await onSave(async () => {
+              const newValue = { ...props.value, ...value };
+              return onChange(newValue);
+            });
             pClose?.(e);
           },
         },
@@ -145,23 +125,11 @@ export const EmailSMTPAndTemplateSetup = (props: P) => {
   );
 };
 
-const capitalisedHostname =
-  window.location.hostname[0]?.toUpperCase() +
-  window.location.hostname.slice(1);
-
-export const DEFAULT_EMAIL_VERIFICATION_TEMPLATE = {
-  from: `noreply@${window.location.hostname}.com`,
-  subject: "Please verify your email address",
-  body: fixIndent(`
-    Hello,
-
-    Somebody just used this email address to sign up at ${capitalisedHostname}.
-
-    If this was you, verify your email by clicking on the link below:
-
-    \${url}
-
-    If this was not you, any other ${capitalisedHostname} accounts you may own, and your internet properties are not at risk.
-
-    Thanks, The ${capitalisedHostname} Team`),
-} satisfies EmailTemplateCofig;
+export const DEFAULT_SMTP_CONFIG = {
+  type: "smtp",
+  host: "",
+  port: 465,
+  secure: false,
+  user: "",
+  pass: "",
+} satisfies EmailSMTPCofig;

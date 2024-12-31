@@ -15,10 +15,18 @@ export const createSession = async ({
   user,
   user_agent,
 }: CreateSessionArgs) => {
-  const activeSession = await getActiveSession(db, {
+  const {
+    validSession: activeSession,
+    failedTooManyTimes,
+    error,
+  } = await getActiveSession(db, {
     type: "login-success",
     filter: { user_id: user.id, type: "web", user_agent: user_agent ?? "" },
   });
+  if (error) throw error;
+  if (failedTooManyTimes) {
+    throw "rate-limit-exceeded";
+  }
   if (!activeSession) {
     const globalSettings = await db.global_settings.findOne();
     const DAY = 24 * 60 * 60 * 1000;

@@ -33,6 +33,7 @@ export const tableConfigUsers = {
                   {
                     status: { enum: ["pending"] },
                     confirmation_code: { type: "string" },
+                    date: "Date",
                   },
                 ],
               },

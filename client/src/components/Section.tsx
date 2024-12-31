@@ -5,8 +5,9 @@ import type { BtnProps } from "./Btn";
 import Btn from "./Btn";
 import { classOverride } from "./Flex";
 import Popup from "./Popup/Popup";
+import type { Command, TestSelectors } from "../Testing";
 
-type SectionProps = {
+type SectionProps = TestSelectors & {
   title: string;
   titleRightContent?: React.ReactNode;
   children: React.ReactNode;
@@ -20,13 +21,13 @@ type SectionProps = {
   titleIconPath?: string;
   disableFullScreen?: boolean;
 } & (
-  | {
-      style?: React.CSSProperties;
-    }
-  | {
-      getStyle?: (expanded: boolean) => React.CSSProperties;
-    }
-) &
+    | {
+        style?: React.CSSProperties;
+      }
+    | {
+        getStyle?: (expanded: boolean) => React.CSSProperties;
+      }
+  ) &
   (
     | {
         titleIconPath?: string;
@@ -53,7 +54,8 @@ export function Section(props: SectionProps) {
     titleIcon,
     titleIconPath,
     btnProps,
-    ...p
+    "data-command": dataCommand,
+    ...otherProps
   } = props;
   const [open, toggle] = useState(oDef);
   const [fullscreen, setfullscreen] = useState(false);
@@ -63,14 +65,15 @@ export function Section(props: SectionProps) {
 
   const content = (
     <div
+      data-command={dataCommand satisfies Command | undefined}
       className={classOverride(
-        "flex-col min-h-0 f-0 relative bg-inherit ",
+        "Section flex-col min-h-0 f-0 relative bg-inherit ",
         className,
       )}
       style={
-        "getStyle" in p ? p.getStyle?.(!!open)
-        : "style" in p ?
-          p.style
+        "getStyle" in otherProps ? otherProps.getStyle?.(!!open)
+        : "style" in otherProps ?
+          otherProps.style
         : undefined
       }
     >

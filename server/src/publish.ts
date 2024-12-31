@@ -1,16 +1,22 @@
+import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
 import type {
   Publish,
   PublishParams,
 } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
+import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { getKeys } from "prostgles-types";
 import { connectionChecker } from ".";
-import { getACRules } from "./ConnectionManager/ConnectionManager";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
 import { isDefined } from "../../commonTypes/filterUtils";
-import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
+import {
+  getMagicLinkEmailFromTemplate,
+  getVerificationEmailFromTemplate,
+  MOCK_SMTP_HOST,
+} from "../../commonTypes/OAuthUtils";
 import { getPasswordHash } from "./authConfig/authUtils";
+import { getSMTPWithTLS } from "./authConfig/getEmailSenderWithMockTest";
+import { getACRules } from "./ConnectionManager/ConnectionManager";
 import { fetchLLMResponse } from "./publishMethods/askLLM/askLLM";
-import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
 
 export const publish = async (
   params: PublishParams<DBSchemaGenerated>,
@@ -423,16 +429,26 @@ export const publish = async (
           }
 
           const { email } = row.auth_providers ?? {};
-          if (email?.enabled) {
-            if (
-              email.signupType !== "withPassword" ||
-              email.emailConfirmationEnabled
-            ) {
-              if (!email.smtp) {
-                throw "SMTP must be configured for withMagicLink";
-              }
-              await verifySMTPConfig(email.smtp);
-            }
+          if (
+            email?.enabled &&
+            !(email.smtp.type === "smtp" && email.smtp.host === MOCK_SMTP_HOST)
+          ) {
+            const smtp = getSMTPWithTLS(email.smtp);
+            await verifySMTPConfig(smtp);
+          }
+
+          if (email?.signupType === "withPassword") {
+            getVerificationEmailFromTemplate({
+              template: email.emailTemplate,
+              url: "a",
+              code: "a",
+            });
+          }
+          if (email?.signupType === "withMagicLink") {
+            getMagicLinkEmailFromTemplate({
+              template: email.emailTemplate,
+              url: "a",
+            });
           }
 
           return undefined;
@@ -453,4 +469,32 @@ export const publish = async (
   };
 
   return dashboardTables;
+};
+
+export const isEqual = function (x: any, y: any) {
+  if (x === y) {
+    return true;
+  } else if (
+    typeof x == "object" &&
+    x != null &&
+    typeof y == "object" &&
+    y != null
+  ) {
+    if (Object.keys(x).length != Object.keys(y).length) {
+      return false;
+    }
+
+    for (const prop in x) {
+      // eslint-disable-next-line no-prototype-builtins
+      if (y.hasOwnProperty(prop)) {
+        if (!isEqual(x[prop], y[prop])) {
+          return false;
+        }
+      } else return false;
+    }
+
+    return true;
+  } else {
+    return false;
+  }
 };

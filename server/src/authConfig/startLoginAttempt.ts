@@ -1,6 +1,6 @@
 import type { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import { isEmpty, pickKeys } from "prostgles-types";
+import { type AuthResponse, isEmpty, pickKeys } from "prostgles-types";
 import { connectionChecker, tout } from "..";
 import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import { HOUR } from "./getAuth";
@@ -36,7 +36,7 @@ type FailedAttemptsInfo =
 export const getFailedTooManyTimes = async (
   db: DBOFullyTyped<DBSchemaGenerated>,
   clientInfo: LoginClientInfo,
-): Promise<FailedAttemptsInfo> => {
+): Promise<FailedAttemptsInfo | AuthResponse.AuthFailure> => {
   const { ip_address } = clientInfo;
   const globalSettings = await getGlobalSettings();
   const lastHour = new Date(Date.now() - 1 * HOUR).toISOString();
@@ -64,14 +64,24 @@ export const getFailedTooManyTimes = async (
   )[groupBy];
   const ip = clientInfo[matchByFilterKey] ?? ip_address;
   if (!(matchByFilterKey as any)) {
-    throw "Invalid login_rate_limit.groupBy";
+    // throw "Invalid login_rate_limit.groupBy";
+    return {
+      success: false,
+      code: "something-went-wrong",
+      message: "Invalid login_rate_limit.groupBy",
+    };
   }
   const matchByFilter = pickKeys(clientInfo, [matchByFilterKey]);
   if (isEmpty(matchByFilter)) {
-    throw (
+    const message =
       "matchByFilter is empty " +
-      JSON.stringify([matchByFilter, matchByFilterKey])
-    ); // pickKeys(args, ["ip_address", "ip_address_remote", "x_real_ip"])
+      JSON.stringify([matchByFilter, matchByFilterKey]); // pickKeys(args, ["ip_address", "ip_address_remote", "x_real_ip"])
+
+    return {
+      success: false,
+      code: "something-went-wrong",
+      message,
+    };
   }
   const previousFails = await db.login_attempts.find({
     ...matchByFilter,
@@ -104,8 +114,11 @@ export const startLoginAttempt = async (
   clientInfo: LoginClientInfo,
   authInfo: AuthAttepmt,
 ) => {
-  const { failedTooManyTimes, matchByFilter, ip, disabled } =
-    await getFailedTooManyTimes(db, clientInfo);
+  const failedInfo = await getFailedTooManyTimes(db, clientInfo);
+  if ("success" in failedInfo) {
+    return failedInfo;
+  }
+  const { failedTooManyTimes, matchByFilter, ip, disabled } = failedInfo;
   const result = {
     ip,
     onSuccess: async () => {},

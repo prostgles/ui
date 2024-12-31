@@ -63,9 +63,6 @@ export const AuthProviderSetup = ({
   const updateAuth = async (
     auth: Partial<DBSSchema["global_settings"]["auth_providers"]>,
   ) => {
-    if (auth?.email?.signupType === "withMagicLink" && !auth.email.smtp) {
-      throw "Please setup SMTP settings first";
-    }
     await dbs.global_settings.update(
       {},
       {

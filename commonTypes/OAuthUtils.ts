@@ -1,3 +1,5 @@
+import { fixIndent } from "./utils";
+
 export const OAuthProviderOptions = {
   google: {
     scopes: [
@@ -149,11 +151,20 @@ const getTemplatedText = (
   data: TemplateData,
   propertyName: string,
 ) => {
+  const extraPlaceholders = templatedText
+    .match(/{{\w+}}/g)
+    ?.filter((placeHolder) => {
+      const key = placeHolder.slice(2, -2);
+      return !Object.keys(data).includes(key);
+    });
+  if (extraPlaceholders?.length)
+    throw `Extra placeholders: ${extraPlaceholders.join(", ")} in ${propertyName}`;
   return Object.entries(data).reduce((acc, [key, { value, required }]) => {
-    const placeholder = `{{${key}}}`;
+    const placeholder = "{{" + key + "}}";
     if (required && !value) throw `Missing required value for key: ${key}`;
-    if (required && !acc.includes(placeholder))
+    if (required && !acc.includes(placeholder)) {
       throw `Missing placeholder: ${placeholder} from ${propertyName}`;
+    }
     return acc.replaceAll(placeholder, value);
   }, templatedText);
 };
@@ -167,9 +178,9 @@ export const getEmailFromTemplate = <
 ): EmailTemplate => {
   const keyValues = Object.entries(bodyData);
   if (!keyValues.length) throw "Empty bodyData provided";
-  if (!template.body) throw "No body provided";
-  if (!template.from) throw "No from provided";
-  if (!template.subject) throw "No subject provided";
+  if (!template.body) throw "Email template: No body provided";
+  if (!template.from) throw "Email template: No from provided";
+  if (!template.subject) throw "Email template: No subject provided";
 
   return {
     ...template,
@@ -177,3 +188,86 @@ export const getEmailFromTemplate = <
     subject: getTemplatedText(template.subject, subjectData, "subject"),
   };
 };
+
+export const MOCK_SMTP_HOST = "prostgles-test-mock";
+
+export const DEFAULT_EMAIL_VERIFICATION_TEMPLATE = {
+  from: `noreply@abc.com`,
+  subject: "Please verify your email address",
+  body: fixIndent(`
+    Hello,
+
+    Somebody just used this email address to sign up.
+
+    If this was you, verify your email by clicking on the link below:
+
+    <a href="{{url}}">{{url}}</a>.
+
+    Alternatively, you can fill in the code below on the login page:
+    {{code}}
+
+    If this was not you, any other accounts you may own, and your internet properties are not at risk.
+`),
+} as const;
+
+export const DEFAULT_MAGIC_LINK_TEMPLATE = {
+  from: `noreply@abc.com`,
+  subject: "Login to your account",
+  body: fixIndent(`
+    Hey,
+
+    Login by clicking <a href="{{url}}">here</a>.
+
+    If you didn't request this email there's nothing to worry about - you can safely ignore it.`),
+} as const;
+
+export const getMagicLinkEmailFromTemplate = ({
+  url,
+  template,
+}: {
+  url: string;
+  template: { from: string; subject: string; body: string };
+}) => {
+  return getEmailFromTemplate(
+    template,
+    {},
+    {
+      url: { required: true, value: url },
+    },
+  );
+};
+
+export const getVerificationEmailFromTemplate = ({
+  url,
+  code,
+  template,
+}: {
+  code: string;
+  url: string;
+  template: { from: string; subject: string; body: string };
+}) => {
+  return getEmailFromTemplate(
+    template,
+    {
+      code: { required: false, value: code },
+    },
+    {
+      code: { required: true, value: code },
+      url: { required: true, value: url },
+    },
+  );
+};
+try {
+  getMagicLinkEmailFromTemplate({
+    url: "a",
+    template: DEFAULT_MAGIC_LINK_TEMPLATE,
+  });
+  getVerificationEmailFromTemplate({
+    template: DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
+    code: "a",
+    url: "a",
+  });
+} catch (e) {
+  // console.trace(e);
+  throw e;
+}

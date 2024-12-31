@@ -13,47 +13,18 @@ export type LoginFormProps = Pick<Prgl, "auth">;
 
 export const Login = ({ auth }: LoginFormProps) => {
   const authState = useLoginState({ auth });
-  const [authResponse, setAuthResponse] = React.useState<{
-    success: boolean;
-    message: string;
-  }>();
-  const [isLoggingIn, setIsLoggingIn] = React.useState(false);
   const {
     formHandlers,
     isOnLogin,
     registerTypeAllowed,
     setState,
     error,
-    onAuthCall: _onAuthCall,
+    loading,
+    authResponse,
+    clearAuthResponse,
+    onAuthCall,
     onClearEmailConfirmedNotification,
   } = authState;
-  const onAuthCall = async () => {
-    setIsLoggingIn(true);
-    _onAuthCall()
-      .then((res) => {
-        if (isOnLogin) return;
-        const message =
-          !res.success ?
-            res.message ||
-            {
-              "must-confirm-email": "Please confirm your email",
-              "email-confirmation-sent": "Email confirmation sent",
-              "already-registered-but-did-not-confirm-email":
-                "Please confirm your email",
-            }[res.code]
-          : (res.message ?? "Success");
-        const resp = {
-          success: res.success,
-          message,
-        };
-        if (resp.success) {
-          setAuthResponse(resp);
-        }
-      })
-      .finally(() => {
-        setIsLoggingIn(false);
-      });
-  };
 
   return (
     <form
@@ -67,10 +38,7 @@ export const Login = ({ auth }: LoginFormProps) => {
       }}
     >
       {authResponse && (
-        <AuthNotifPopup
-          {...authResponse}
-          onClose={() => setAuthResponse(undefined)}
-        />
+        <AuthNotifPopup {...authResponse} onClose={clearAuthResponse} />
       )}
       {onClearEmailConfirmedNotification && (
         <AuthNotifPopup
@@ -109,18 +77,32 @@ export const Login = ({ auth }: LoginFormProps) => {
             onChange={formHandlers.setConfirmPassword}
           />
         )}
+        {formHandlers?.setEmailVerificationCode && (
+          <FormField
+            id="email-verification-code"
+            label="Email verification code"
+            value={formHandlers.emailVerificationCode}
+            type="text"
+            onChange={formHandlers.setEmailVerificationCode}
+          />
+        )}
 
         <LoginTotpFormFields {...authState} />
 
         {error && <ErrorComponent data-command="Login.error" error={error} />}
 
         <Btn
-          loading={isLoggingIn}
+          loading={loading}
           onClick={onAuthCall}
           variant="filled"
           className="mt-1"
           color="action"
-          children={isOnLogin ? "Sign in" : "Sign up"}
+          children={
+            isOnLogin ? "Sign in"
+            : formHandlers?.state === "registerWithPasswordConfirmationCode" ?
+              "Confirm email"
+            : "Sign up"
+          }
           size="large"
           style={{ width: "100%" }}
         />
@@ -136,6 +118,7 @@ export const Login = ({ auth }: LoginFormProps) => {
             borderTopRightRadius: 0,
           }}
           variant="faded"
+          data-command="Login.toggle"
           color="action"
           onClick={() => {
             setState(isOnLogin ? registerTypeAllowed : "login");

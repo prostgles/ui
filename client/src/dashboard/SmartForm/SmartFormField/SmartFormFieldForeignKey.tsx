@@ -8,7 +8,7 @@ import {
   type AnyObject,
   type ValidatedColumnInfo,
 } from "prostgles-types";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Select, { type FullOption } from "../../../components/Select/Select";
 import { renderNull } from "./RenderValue";
 import type { SmartFormFieldProps } from "./SmartFormField";
@@ -35,23 +35,36 @@ export const SmartFormFieldForeignKey = ({
 }: P) => {
   const [fullOptions, setFullOptions] = useState<FullOption[]>();
   const getuseIsMounted = useIsMounted();
-  const onSearchOptions = async (term: string) => {
-    const options = await fetchOptions({
-      column,
-      db,
-      tableName,
-      tables,
-      row,
-      term,
-    });
-    if (!getuseIsMounted()) return;
-    setFullOptions(options);
-  };
+  const onSearchOptions = useCallback(
+    async (term: string) => {
+      const options = await fetchOptions({
+        column,
+        db,
+        tableName,
+        tables,
+        row,
+        term,
+      });
+      if (!getuseIsMounted()) return;
+      setFullOptions(options);
+    },
+    [column, db, tableName, tables, row, getuseIsMounted],
+  );
 
   useEffect(() => {
     if (fullOptions) return;
     onSearchOptions("");
-  }, [column, db, onChange, tables, tableName, rawValue, row]);
+  }, [
+    column,
+    db,
+    onChange,
+    tables,
+    tableName,
+    rawValue,
+    row,
+    fullOptions,
+    onSearchOptions,
+  ]);
 
   const valueStyle = {
     fontSize: "16px",
@@ -70,7 +83,7 @@ export const SmartFormFieldForeignKey = ({
     <div
       className={"flex-col gap-p5 min-w-0"}
       style={{
-        padding: "6px",
+        padding: readOnly ? "6px 0" : "6px",
         // border: "1px solid var(--b-default)"
       }}
     >

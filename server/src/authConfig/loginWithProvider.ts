@@ -33,14 +33,12 @@ export const loginWithProvider = async (
     : loginParams.provider === "facebook" ? loginParams.profile.name?.givenName
     : loginParams.profile.name?.givenName);
   const email = profile.emails?.[0]?.value;
-  const { onSuccess, ip, failedTooManyTimes } = await startLoginAttempt(
-    db,
-    clientInfo,
-    {
-      auth_type: "provider",
-      auth_provider: provider,
-    },
-  );
+  const failedInfo = await startLoginAttempt(db, clientInfo, {
+    auth_type: "provider",
+    auth_provider: provider,
+  });
+  if ("success" in failedInfo) return failedInfo.code;
+  const { onSuccess, ip, failedTooManyTimes } = failedInfo;
   if (failedTooManyTimes) return "rate-limit-exceeded";
   await onSuccess();
   const matchingUser = await db.users.findOne({ auth_provider, username });

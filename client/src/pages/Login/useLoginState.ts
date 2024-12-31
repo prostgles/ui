@@ -1,11 +1,13 @@
-import type {
-  PasswordLogin,
-  PasswordRegister,
+import {
+  postAuthData,
+  type PasswordLogin,
+  type PasswordRegister,
 } from "prostgles-client/dist/Auth";
 import type { AuthResponse } from "prostgles-types";
 import React, { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import type { LoginFormProps } from "./Login";
+import { EMAIL_CONFIRMED_SEARCH_PARAM } from "../../../../commonTypes/OAuthUtils";
 
 type PasswordLoginDataAndFunc = {
   onCall: PasswordLogin;
@@ -23,6 +25,9 @@ type FormData =
   | ({ type: "loginTotpRecovery" } & PasswordLoginDataAndFunc)
   | ({
       type: "registerWithPassword";
+    } & PasswordRegisterDataAndFunc)
+  | ({
+      type: "registerWithPasswordConfirmationCode";
     } & PasswordRegisterDataAndFunc);
 
 type FormStates = FormData["type"];
@@ -34,23 +39,28 @@ const loginStates = [
 ] as const satisfies FormStates[];
 
 export const useLoginState = ({ auth }: LoginFormProps) => {
+  const [loading, setIsLoading] = React.useState(false);
   const [state, setState] = React.useState<FormStates>("login");
   const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [emailVerificationCode, setEmailVerificationCode] = React.useState("");
   const [totpToken, setTotpToken] = React.useState("");
   const [totpRecoveryCode, setTotpRecoveryCode] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [error, _setError] = React.useState("");
   const [result, setResult] =
     React.useState<Extract<FormData, { type: typeof state }>["result"]>();
-
+  const [authResponse, setAuthResponse] = React.useState<{
+    success: boolean;
+    message: string;
+  }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const emailConfirmedNotification =
-    searchParams.get("email-confirmed") === "true";
+    searchParams.get(EMAIL_CONFIRMED_SEARCH_PARAM) === "true";
   const onClearEmailConfirmedNotification =
     !emailConfirmedNotification ? undefined : (
       () => {
-        setSearchParams({ "email-confirmed": "" });
+        setSearchParams({ [EMAIL_CONFIRMED_SEARCH_PARAM]: "" });
       }
     );
 
@@ -101,6 +111,24 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
         onCall: auth.signupWithEmailAndPassword,
         result,
       }
+    : (
+      state === "registerWithPasswordConfirmationCode" &&
+      auth.signupWithEmailAndPassword
+    ) ?
+      {
+        state,
+        username,
+        emailVerificationCode,
+        setEmailVerificationCode,
+        onCall: () =>
+          fetch(
+            `/confirm-email?code=${emailVerificationCode}&email=${username}`,
+            {},
+          ).then((res) =>
+            res.json().catch(async () => ({ error: await res.text() })),
+          ),
+        result,
+      }
     : undefined;
 
   const isOnLogin = loginStates.some((v) => v === state);
@@ -120,7 +148,6 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
     };
     const setError = (err: string) => {
       _setError(err);
-      return Promise.reject(err);
     };
     const setErrorWithInfo = (err: string) => {
       return setError(errorMap[err] ?? err);
@@ -130,6 +157,9 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
       return setError("Invalid state");
     }
 
+    /**
+     * Validate form data
+     */
     if (isOnLogin) {
       if (!username || !password) {
         return setError("Username/password cannot be empty");
@@ -165,6 +195,33 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
       if ("redirect_url" in res && res.redirect_url) {
         window.location.href = res.redirect_url;
       }
+      if (state === "registerWithPassword") {
+        setState("registerWithPasswordConfirmationCode");
+      }
+
+      if (!isOnLogin) {
+        // const message =
+        //   !res.success ?
+        //     res.message ||
+        //     {
+        //       "already-registered-but-did-not-confirm-email":
+        //         "Email verification sent. Open the verification url or enter the code to confirm your email",
+        //       "email-verification-code-sent":
+        //         "Email verification sent. Open the verification url or enter the code to confirm your email",
+        //       "must-confirm-email": "Please confirm your email",
+        //       "email-confirmation-sent": "Email confirmation sent",
+        //     }[res.code]
+        //   : (res.message ?? "Success");
+        if (res.success) {
+          if (formHandlers.state === "registerWithPasswordConfirmationCode") {
+            setState("login");
+          }
+          setAuthResponse({
+            ...res,
+            message: SIGNUP_CODE_MESSAGES[res.code] ?? res.message ?? "Success",
+          });
+        }
+      }
     }
     setResult(res);
     return res;
@@ -175,10 +232,16 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
     error,
     setState,
     state,
-    onAuthCall,
+    loading,
+    onAuthCall: () => {
+      setIsLoading(true);
+      return onAuthCall().finally(() => setIsLoading(false));
+    },
     isOnLogin,
     registerTypeAllowed,
     result,
+    authResponse,
+    clearAuthResponse: () => setAuthResponse(undefined),
     onClearEmailConfirmedNotification,
   };
 };
@@ -212,3 +275,12 @@ const ERR_CODE_MESSAGES = {
   | AuthResponse.PasswordRegisterFailure["code"],
   string
 >;
+
+const SIGNUP_CODE_MESSAGES = {
+  "already-registered-but-did-not-confirm-email":
+    "Email verification sent. Open the verification url or enter the code to confirm your email",
+  "email-verification-code-sent":
+    "Email verification sent. Open the verification url or enter the code to confirm your email",
+  // "must-confirm-email": "Please confirm your email",
+  // "email-confirmation-sent": "Email confirmation sent",
+} satisfies Record<AuthResponse.PasswordRegisterSuccess["code"], string>;

@@ -34,6 +34,7 @@ import {
   typeConfirmationCode,
   uploadFile,
 } from "./utils";
+import { startMockSMTPServer } from "./mockSMTPServer";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -47,6 +48,14 @@ test.describe("Main test", () => {
   if (process.env.ONLY_VIDEO) {
     test.skip();
   }
+  let getEmails: () => any[];
+
+  test.beforeAll(async () => {
+    ({ getEmails } = startMockSMTPServer());
+    console.log("getEmails", getEmails());
+
+    return { getEmails };
+  });
   test.beforeEach(async ({ page }) => {
     page.on("console", console.log);
     page.on("pageerror", console.error);
@@ -101,7 +110,88 @@ test.describe("Main test", () => {
     await goToWorkspace(false);
   });
 
-  test("Limit login attempts", async ({ page: p, browser, context }) => {
+  test("Enable email registrations", async ({ page: p, browser }) => {
+    const page = p as PageWIds;
+
+    await login(page);
+    await goTo(page, "/server-settings");
+    await page.locator(`[data-key="auth"]`).click();
+    await page.getByTestId("EmailAuthSetup").locator("button").click();
+    await page.getByTestId("EmailAuthSetup.SignupType").click();
+    await page.locator(`[data-key="withPassword"]`).click();
+    await page.getByTestId("EmailSMTPAndTemplateSetup").click();
+    await page.getByText("Email Provider").click();
+    await page.locator(`[data-label="Host"] input`).fill("prostgles-test-mock");
+    // await page.locator(`[data-label="Port"] input`).fill("3017");
+    // await page.locator(`[data-label="Username"] input`).fill("user");
+    // await page.locator(`[data-label="Password"] input`).fill("pass");
+    // await page.getByLabel("Reject unauthorized").click();
+    // await page.getByLabel("Reject unauthorized").click();
+    // await page.getByLabel("Secure").click();
+    // await page.getByLabel("Secure").click();
+    await page.getByText("Test and Save").click();
+    await page.waitForTimeout(1500);
+    await page.getByText("Enable").click();
+    await page.getByText("Save").click();
+    await page.waitForTimeout(1500);
+    const errNodeCount = await page.getByTestId("EmailAuthSetup.error").count();
+    expect(errNodeCount).toBe(0);
+    // await goTo(page, "/logout");
+
+    const newPage: PageWIds = await browser.newPage();
+    await goTo(newPage, "/login");
+
+    /** Test failed login throttle */
+    await newPage.locator("#username").fill("new_user");
+    await newPage.locator("#password").fill("new_user");
+    const start = Date.now();
+    await newPage.getByRole("button", { name: "Sign in" }).click();
+    await newPage.getByTestId("Login.error").waitFor({ state: "visible" });
+    expect(Date.now() - start).toBeGreaterThan(499);
+    await newPage.reload();
+
+    await newPage.getByTestId("Login.toggle").click();
+    await newPage.locator("#username").fill("new_user");
+    await newPage.locator("#password").fill("new_user");
+    await newPage.getByRole("button", { name: "Sign up" }).click();
+    expect(await newPage.getByTestId("Login.error").textContent()).toContain(
+      "Passwords do not match",
+    );
+    await newPage.locator("#new-password").fill("new_user");
+    await newPage.getByRole("button", { name: "Sign up" }).click();
+    await newPage.getByRole("button", { name: "Ok" }).click();
+
+    const newUser = await runDbsSql(
+      page,
+      `SELECT * FROM users WHERE username = 'new_user'`,
+      undefined,
+      { returnType: "row" },
+    );
+    const code = newUser?.registration?.email_confirmation?.confirmation_code;
+    expect(typeof code).toBe("string");
+    expect(code.length).toBe(6);
+    await newPage.locator("#email-verification-code").fill(code);
+    await newPage.getByRole("button", { name: "Confirm email" }).click();
+  });
+
+  // test("Email signup", async ({ page: p }) => {
+  //   const page = p as PageWIds;
+  //   await goTo(page, "/login");
+  //   const emails = getEmails();
+  //   console.log("emails", emails);
+  //   expect(emails.length).toBe(1);
+  //   const email = emails[0];
+  //   const url = email.split(`href="`)[1].split('"')[0];
+  //   expect(url).toContain("localhost:3004/confirm-email");
+  //   await page.goto(url);
+  //   await login(page, "new_user");
+  //   // await page.locator("#email-verification-code").fill("123456");
+  // });
+
+  test("Limit login attempts max failed limit", async ({
+    page: p,
+    browser,
+  }) => {
     const page: PageWIds = await browser.newPage({
       extraHTTPHeaders: {
         "x-real-ip": "1.1.1.1",
@@ -133,7 +223,6 @@ test.describe("Main test", () => {
     for (let i = 0; i < 5; i++) {
       await page.reload();
       await loginAndExpectError("Invalid credentials", "invalid", page);
-      await page.waitForTimeout(1e3);
     }
     await loginAndExpectError("Too many failed ", "invalid", page);
     await loginAndExpectError("Too many failed ", USERS.default_user, page);

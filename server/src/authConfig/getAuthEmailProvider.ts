@@ -1,16 +1,15 @@
+import { randomInt } from "node:crypto";
 import type {
   LoginWithOAuthConfig,
   SignupWithEmailAndPassword,
 } from "prostgles-server/dist/Auth/AuthTypes";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
-import { startLoginAttempt } from "./startLoginAttempt";
-import type { DBS } from "..";
-import { createSessionSecret, YEAR } from "./getAuth";
-import { getPasswordHash } from "./authUtils";
-import { EMAIL_CONFIRMED_SEARCH_PARAM } from "../../../commonTypes/OAuthUtils";
-import { makeMagicLink } from "../ConnectionChecker";
-import { getEmailSender } from "prostgles-server/dist/Prostgles";
 import type { AuthResponse } from "prostgles-types";
+import type { DBS } from "..";
+import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
+import { EMAIL_CONFIRMED_SEARCH_PARAM } from "../../../commonTypes/OAuthUtils";
+import { getPasswordHash } from "./authUtils";
+import { getEmailSenderWithMockTest } from "./getEmailSenderWithMockTest";
+import { startLoginAttempt } from "./startLoginAttempt";
 
 export const getAuthEmailProvider = async (
   auth_providers: DBSchemaGenerated["global_settings"]["columns"]["auth_providers"],
@@ -29,8 +28,7 @@ export const getAuthEmailProvider = async (
     return undefined;
   if (!website_url) throw "website_url is required for email auth";
 
-  const { smtp } = emailAuthConfig;
-  const { sendEmail } = await getEmailSender(smtp, website_url);
+  const mailClient = await getEmailSenderWithMockTest(auth_providers);
   return {
     //   signupType: "withMagicLink",
     //   onRegister: async ({ email, clientInfo, magicLinkUrlPath }) => {
@@ -91,12 +89,7 @@ export const getAuthEmailProvider = async (
     //   smtp: emailAuthConfig.smtp,
     // }
     minPasswordLength: emailAuthConfig.minPasswordLength,
-    onRegister: async ({
-      email,
-      clientInfo,
-      password,
-      confirmationUrlPath,
-    }) => {
+    onRegister: async ({ email, clientInfo, password, getConfirmationUrl }) => {
       const withErrorCode = (
         code: AuthResponse.PasswordRegisterFailure["code"],
         message?: string,
@@ -106,18 +99,25 @@ export const getAuthEmailProvider = async (
           code,
           message,
         }) satisfies AuthResponse.PasswordRegisterFailure;
-      if (!emailAuthConfig.emailConfirmationEnabled) {
-        return withErrorCode("server-error", "Email confirmation is disabled");
+      if (!mailClient) {
+        return withErrorCode("server-error", "Email client not found");
       }
-      const attempt = await startLoginAttempt(dbs, clientInfo, {
+      const registrationAttempt = await startLoginAttempt(dbs, clientInfo, {
         auth_type: "provider",
         auth_provider: "email",
       });
+      if ("success" in registrationAttempt)
+        return withErrorCode("server-error", registrationAttempt.message);
+      if (registrationAttempt.failedTooManyTimes) {
+        return withErrorCode("rate-limit-exceeded", "Rate limit exceeded");
+      }
       const existingUser = await dbs.users.findOne({
         username: email,
         email,
       });
-      const email_confirmation_code = createSessionSecret();
+      const email_confirmation_code = randomInt(0, 999999)
+        .toString()
+        .padStart(6, "0");
       const getUserUpdate = (newUsr: { id: string }) =>
         ({
           registration: {
@@ -125,6 +125,7 @@ export const getAuthEmailProvider = async (
             email_confirmation: {
               status: "pending",
               confirmation_code: email_confirmation_code,
+              date: new Date().toISOString(),
             },
           },
           password: getPasswordHash(newUsr, password),
@@ -152,13 +153,16 @@ export const getAuthEmailProvider = async (
         );
         await dbs.users.update({ id: newUser.id }, getUserUpdate(newUser));
       }
-      await sendEmail({
-        from: "noreply@cloud.prostgles.com",
+
+      await mailClient.sendEmailVerification({
         to: email,
-        html: `Hey ${email}, <br> Please confirm your email by clicking <a href="${confirmationUrlPath}/${email_confirmation_code}">here</a>`,
-        subject: "Confirm your email",
+        code: email_confirmation_code,
+        verificationUrl: getConfirmationUrl({
+          code: email_confirmation_code,
+          websiteUrl: website_url,
+        }),
       });
-      await attempt.onSuccess();
+      await registrationAttempt.onSuccess();
       return {
         success: true,
         code:
@@ -172,23 +176,24 @@ export const getAuthEmailProvider = async (
         auth_type: "provider",
         auth_provider: "email",
       });
-
+      if ("success" in attempt) return attempt;
       const withErrorCode = (
         code: AuthResponse.AuthFailure["code"],
         message?: string,
       ) =>
         ({ success: false, code, message }) satisfies AuthResponse.AuthFailure;
 
-      if (typeof data.confirmationCode !== "string") {
+      if (typeof data.code !== "string" || typeof data.email !== "string") {
         return withErrorCode(
           "something-went-wrong",
-          "Invalid confirmation code",
+          "Invalid confirmation code or email",
         );
       }
       const user = await dbs.users.findOne({
         "registration->>type": "password-w-email-confirmation",
-        "registration->>status": "pending",
-        "registration->>email_confirmation_code": data.confirmationCode,
+        "registration->email_confirmation->>status": "pending",
+        "registration->email_confirmation->>confirmation_code": data.code,
+        email: data.email,
       } as any);
       if (!user) {
         return withErrorCode("no-match", "Invalid confirmation code");
@@ -217,6 +222,7 @@ export const getAuthEmailProvider = async (
 type OAuthConfig = Required<
   DBSchemaGenerated["global_settings"]["columns"]
 >["auth_providers"];
+
 export const getOAuthProviders = (
   auth_providers: OAuthConfig,
 ): LoginWithOAuthConfig<any>["OAuthProviders"] | undefined => {

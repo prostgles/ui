@@ -1,5 +1,5 @@
 import { isEqual } from "prostgles-client/dist/prostgles";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 export const useEditableData = <T extends Record<string, any> | undefined>(
   initialData: T,
@@ -14,7 +14,7 @@ export const useEditableData = <T extends Record<string, any> | undefined>(
 
   const onSave = useCallback(
     (onSavePromise: () => Promise<void>) => {
-      onSavePromise()
+      return onSavePromise()
         .then(() => {
           setEditedData(undefined);
           setError(undefined);
