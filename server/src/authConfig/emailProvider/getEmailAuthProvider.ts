@@ -8,7 +8,7 @@ import { getEmailSenderWithMockTest } from "./getEmailSenderWithMockTest";
 import { onEmailConfirmation } from "./onEmailConfirmation";
 import { onEmailRegistration } from "./onEmailRegistration";
 
-export const getAuthEmailProvider = async (
+export const getEmailAuthProvider = async (
   auth_providers: DBSchemaGenerated["global_settings"]["columns"]["auth_providers"],
   dbs: DBS | undefined,
 ): Promise<SignupWithEmailAndPassword | undefined> => {

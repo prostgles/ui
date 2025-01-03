@@ -18,7 +18,7 @@ import type { DBS, Users } from "../index";
 import { API_PATH, connectionChecker, MEDIA_ROUTE_PREFIX } from "../index";
 import { initBackupManager } from "../startProstgles";
 import {
-  getAuthEmailProvider,
+  getEmailAuthProvider,
   getOAuthProviders,
 } from "./emailProvider/getEmailAuthProvider";
 import { getLogin } from "./getLogin";
@@ -264,10 +264,13 @@ export const getAuth = async (app: Express, dbs: DBS | undefined) => {
         return { session };
       },
       localLoginMode:
-        auth_providers?.email?.signupType === "withMagicLink" ?
+        (
+          auth_providers?.email?.signupType === "withMagicLink" &&
+          auth_providers.email.enabled
+        ) ?
           "email"
         : "email+password",
-      signupWithEmailAndPassword: await getAuthEmailProvider(
+      signupWithEmailAndPassword: await getEmailAuthProvider(
         auth_providers,
         dbs,
       ),

@@ -110,139 +110,163 @@ test.describe("Main test", () => {
     await goToWorkspace(false);
   });
 
-  // test("Email password registrations", async ({ page: p, browser }) => {
-  //   // const newPage: PageWIds = await browser.newPage();
-  //   // const page = p as PageWIds;
-  //   const newPage = p as PageWIds;
-  //   const page = await browser.newPage();
+  test("Email password registrations", async ({ page: p, browser }) => {
+    // const newPage: PageWIds = await browser.newPage();
+    // const page = p as PageWIds;
+    const newPage = p as PageWIds;
+    const page = await browser.newPage();
 
-  //   await login(page);
-  //   await goTo(page, "/server-settings");
-  //   await page.locator(`[data-key="auth"]`).click();
-  //   await page.getByTestId("EmailAuthSetup").locator("button").click();
-  //   await page.getByTestId("EmailAuthSetup.SignupType").click();
-  //   await page.locator(`[data-key="withPassword"]`).click();
-  //   await page.getByTestId("EmailSMTPAndTemplateSetup").click();
-  //   await page.getByText("Email Provider").click();
-  //   await page.locator(`[data-label="Host"] input`).fill("prostgles-test-mock");
-  //   await page.getByText("Test and Save").click();
-  //   await page.waitForTimeout(1500);
-  //   await page.getByText("Enable").click();
-  //   await page.getByText("Save").click();
-  //   await page.waitForTimeout(1500);
-  //   const errNodeCount = await page.getByTestId("EmailAuthSetup.error").count();
-  //   expect(errNodeCount).toBe(0);
+    await login(page);
+    await goTo(page, "/server-settings");
+    await page.locator(`[data-key="auth"]`).click();
+    await page.getByTestId("EmailAuthSetup").locator("button").click();
+    await page.getByTestId("EmailAuthSetup.SignupType").click();
+    await page.locator(`[data-key="withPassword"]`).click();
+    await page.getByTestId("EmailSMTPAndTemplateSetup").click();
+    await page.getByText("Email Provider").click();
+    await page.locator(`[data-label="Host"] input`).fill("prostgles-test-mock");
+    await page.getByText("Test and Save").click();
+    await page.waitForTimeout(1500);
+    await page.getByText("Enable").click();
+    await page.getByText("Save").click();
+    await page.waitForTimeout(1500);
+    const errNodeCount = await page.getByTestId("EmailAuthSetup.error").count();
+    expect(errNodeCount).toBe(0);
 
-  //   await goTo(newPage, "/login");
+    await goTo(newPage, "/login");
 
-  //   /** Test failed login throttle */
-  //   await newPage.locator("#username").fill(USERS.new_user);
-  //   await newPage.locator("#password").fill(USERS.new_user);
-  //   const start = Date.now();
-  //   await newPage.getByRole("button", { name: "Sign in" }).click();
-  //   await newPage.getByTestId("Login.error").waitFor({ state: "visible" });
-  //   expect(Date.now() - start).toBeGreaterThan(499);
-  //   await newPage.reload();
+    /** Test failed login throttle */
+    await newPage.locator("#username").fill(USERS.new_user);
+    await newPage.locator("#password").fill(USERS.new_user);
+    const start = Date.now();
+    await newPage.getByRole("button", { name: "Sign in" }).click();
+    await newPage.getByTestId("Login.error").waitFor({ state: "visible" });
+    expect(Date.now() - start).toBeGreaterThan(499);
+    await newPage.reload();
 
-  //   /**
-  //    * Passwords do not match registration check
-  //    */
-  //   await newPage.getByTestId("Login.toggle").click();
-  //   await newPage.locator("#username").fill(USERS.new_user);
-  //   await newPage.locator("#password").fill(USERS.new_user);
-  //   await newPage.getByRole("button", { name: "Sign up" }).click();
-  //   expect(await newPage.getByTestId("Login.error").textContent()).toContain(
-  //     "Passwords do not match",
-  //   );
-  //   await newPage.locator("#new-password").fill(USERS.new_user);
-  //   await newPage.getByRole("button", { name: "Sign up" }).click();
-  //   expect(
-  //     await newPage
-  //       .getByTestId("AuthNotifPopup")
-  //       .getByTestId("Popup.content")
-  //       .textContent(),
-  //   ).toBe(
-  //     "Email verification sent. Open the verification url or enter the code to confirm your email",
-  //   );
-  //   await newPage.getByRole("button", { name: "Ok" }).click();
+    /**
+     * Passwords do not match registration check
+     */
+    await newPage.getByTestId("Login.toggle").click();
+    await newPage.locator("#username").fill(USERS.new_user);
+    await newPage.locator("#password").fill(USERS.new_user);
+    await newPage.getByRole("button", { name: "Sign up" }).click();
+    expect(await newPage.getByTestId("Login.error").textContent()).toContain(
+      "Passwords do not match",
+    );
+    await newPage.locator("#new-password").fill(USERS.new_user);
+    await newPage.getByRole("button", { name: "Sign up" }).click();
+    expect(
+      await newPage
+        .getByTestId("AuthNotifPopup")
+        .getByTestId("Popup.content")
+        .textContent(),
+    ).toBe(
+      "Email verification sent. Open the verification url or enter the code to confirm your email",
+    );
+    await newPage.getByRole("button", { name: "Ok" }).click();
 
-  //   const newUser = await runDbsSql(
-  //     page,
-  //     `SELECT * FROM users WHERE username = $1`,
-  //     [USERS.new_user],
-  //     { returnType: "row" },
-  //   );
-  //   const code = newUser?.registration?.email_confirmation?.confirmation_code;
-  //   expect(typeof code).toBe("string");
-  //   expect(code.length).toBe(6);
-  //   await newPage.locator("#email-verification-code").fill(code);
-  //   await newPage.getByRole("button", { name: "Confirm email" }).click();
+    const newUser = await runDbsSql(
+      page,
+      `SELECT * FROM users WHERE username = $1`,
+      [USERS.new_user],
+      { returnType: "row" },
+    );
+    const code = newUser?.registration?.email_confirmation?.confirmation_code;
+    expect(typeof code).toBe("string");
+    expect(code.length).toBe(6);
+    await newPage.locator("#email-verification-code").fill(code);
+    await newPage.getByRole("button", { name: "Confirm email" }).click();
 
-  //   await newPage.getByTestId("App.colorScheme").waitFor({ state: "visible" });
-  // });
+    await newPage.getByTestId("App.colorScheme").waitFor({ state: "visible" });
+  });
 
-  // test("Enable email magic link registrations", async ({ page: p }) => {
-  //   const page = p as PageWIds;
+  test("Enable email magic link registrations", async ({ page: p }) => {
+    const page = p as PageWIds;
 
-  //   await login(page);
-  //   await goTo(page, "/server-settings");
-  //   await page.locator(`[data-key="auth"]`).click();
-  //   await page.getByTestId("EmailAuthSetup").locator("button").click();
-  //   await page.getByTestId("EmailAuthSetup.SignupType").click();
-  //   await page.locator(`[data-key="withMagicLink"]`).click();
-  //   await page.getByText("Save").click();
-  //   await page.waitForTimeout(1500);
-  //   const errNodeCount = await page.getByTestId("EmailAuthSetup.error").count();
-  //   expect(errNodeCount).toBe(0);
-  // });
+    await login(page);
+    await goTo(page, "/server-settings");
+    await page.locator(`[data-key="auth"]`).click();
+    await page.getByTestId("EmailAuthSetup").locator("button").click();
+    await page.getByTestId("EmailAuthSetup.SignupType").click();
+    await page.locator(`[data-key="withMagicLink"]`).click();
+    await page.getByText("Save").click();
+    await page.waitForTimeout(1500);
+    const errNodeCount = await page.getByTestId("EmailAuthSetup.error").count();
+    expect(errNodeCount).toBe(0);
+  });
 
-  // test("Email magic link signup", async ({ page: p, browser }) => {
-  //   const page = p as PageWIds;
+  test("Email magic link signup", async ({ page: p, browser }) => {
+    const page = p as PageWIds;
 
-  //   /**
-  //    * Can still login with password with email magic link registrations
-  //    */
-  //   await goTo(page, "/login");
-  //   await page.locator("#username").fill(USERS.test_user);
-  //   await page.getByRole("button", { name: "Continue" }).click();
-  //   await page.locator("#password").waitFor({ state: "visible" });
-  //   await page.locator("#password").fill(USERS.test_user);
-  //   await page.getByRole("button", { name: "Continue" }).click();
-  //   await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
+    /**
+     * Can still login with password with email magic link registrations
+     */
+    await goTo(page, "/login");
+    await page.locator("#username").fill(USERS.test_user);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.locator("#password").waitFor({ state: "visible" });
+    await page.locator("#password").fill(USERS.test_user);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
 
-  //   const newPage: PageWIds = await browser.newPage();
-  //   await goTo(newPage, "/login");
+    const newPage: PageWIds = await browser.newPage();
+    await goTo(newPage, "/login");
 
-  //   // await newPage.getByTestId("Login.toggle").click();
-  //   await newPage.locator("#username").fill(USERS.new_user1);
-  //   await newPage.getByRole("button", { name: "Continue" }).click();
+    // await newPage.getByTestId("Login.toggle").click();
+    await newPage.locator("#username").fill(USERS.new_user1);
+    await newPage.getByRole("button", { name: "Continue" }).click();
 
-  //   expect(
-  //     await newPage
-  //       .getByTestId("AuthNotifPopup")
-  //       .getByTestId("Popup.content")
-  //       .textContent(),
-  //   ).toBe("Magic link sent. Open the url from your email to login");
-  //   await newPage.getByRole("button", { name: "Ok" }).click();
+    expect(
+      await newPage
+        .getByTestId("AuthNotifPopup")
+        .getByTestId("Popup.content")
+        .textContent(),
+    ).toBe("Magic link sent. Open the url from your email to login");
+    await newPage.getByRole("button", { name: "Ok" }).click();
 
-  //   const newUserMagicLink = await runDbsSql(
-  //     page,
-  //     `
-  //     SELECT *
-  //     FROM magic_links
-  //     WHERE user_id IN (
-  //       SELECT id FROM users WHERE username = $1
-  //     )`,
-  //     [USERS.new_user1],
-  //     { returnType: "row" },
-  //   );
-  //   const code = newUserMagicLink?.id;
-  //   expect(typeof code).toBe("string");
-  //   await goTo(newPage, `/magic-link/${code}`);
+    const newUserMagicLink = await runDbsSql(
+      page,
+      `
+      SELECT *
+      FROM magic_links
+      WHERE user_id IN (
+        SELECT id FROM users WHERE username = $1
+      )`,
+      [USERS.new_user1],
+      { returnType: "row" },
+    );
+    const code = newUserMagicLink?.id;
+    expect(typeof code).toBe("string");
+    await goTo(newPage, `/magic-link/${code}`);
 
-  //   await newPage.getByTestId("App.colorScheme").waitFor({ state: "visible" });
+    await newPage.getByTestId("App.colorScheme").waitFor({ state: "visible" });
 
-  // });
+    await runDbsSql(
+      page,
+      `
+      DELETE FROM login_attempts;
+      `,
+      undefined,
+      { returnType: "row" },
+    );
+  });
+
+  test("Disable signups", async ({ page: p, browser }) => {
+    const page = p as PageWIds;
+    await goTo(page, "/login");
+    await page.locator("#username").fill(USERS.test_user);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.locator("#password").waitFor({ state: "visible" });
+    await page.locator("#password").fill(USERS.test_user);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
+    await goTo(page, "/server-settings");
+    await page.locator(`[data-key="auth"]`).click();
+    await page.getByTestId("EmailAuthSetup").locator("button").click();
+    await page.getByText("Enable").click();
+    await page.getByText("Save").click();
+  });
 
   test("Limit login attempts max failed limit", async ({
     page: p,
@@ -256,17 +280,6 @@ test.describe("Main test", () => {
 
     await login(page, USERS.test_user, "/login");
     await page.waitForTimeout(1500);
-
-    const failedAttempts = await runDbsSql(
-      page,
-      `
-      SELECT *
-      FROM login_attempts
-      `,
-      undefined,
-      { returnType: "rows" },
-    );
-    console.log("failedAttempts", failedAttempts);
 
     await runDbsSql(
       page,

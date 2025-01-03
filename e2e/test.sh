@@ -1,7 +1,7 @@
 
 cd client
 npx tsc
-cd ../server
+cd ..
 
 cat ./client/configs/last_compiled.txt
 rm -f ./client/configs/last_compiled.txt
