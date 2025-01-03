@@ -1,5 +1,5 @@
 import { mdiContentCopy } from "@mdi/js";
-import { isEqual } from "prostgles-client/dist/prostgles";
+import { isEqual } from "prostgles-types";
 import React, { useEffect, useState } from "react";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";

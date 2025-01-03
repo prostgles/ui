@@ -173,7 +173,7 @@ export type MonacoError = Pick<
 };
 
 import { mdiPlay } from "@mdi/js";
-import { isEqual } from "prostgles-client/dist/react-hooks";
+import { isEqual } from "prostgles-types";
 import type { SQLHandler } from "prostgles-types";
 import Btn from "../../components/Btn";
 import { getDataTransferFiles } from "../../components/FileInput/DropZone";

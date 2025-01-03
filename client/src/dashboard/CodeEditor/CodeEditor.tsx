@@ -141,8 +141,10 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
   getSchemas = async (): Promise<MonacoJSONSchema[] | undefined> => {
     const monaco = await this.getMonaco();
     const { language } = this.props;
-    const { jsonSchemas } =
-      isObject(language) && language.lang === "json" ? language : {};
+    const jsonSchemas =
+      isObject(language) && language.lang === "json" ?
+        language.jsonSchemas
+      : undefined;
     if (!jsonSchemas) return;
     const schemas = jsonSchemas.map((s) => {
       const { id, schema } = s;

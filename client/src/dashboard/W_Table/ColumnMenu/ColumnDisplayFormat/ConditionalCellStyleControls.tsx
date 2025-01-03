@@ -12,6 +12,7 @@ import type {
   StyleColumnProps,
 } from "../ColumnStyleControls";
 import { ChipStylePalette } from "./ChipStylePalette";
+import { isDefined } from "../../../../utils";
 
 export const CONDITION_OPERATORS = [
   "=",
@@ -84,7 +85,7 @@ export const ConditionalCellStyleControls = ({
             {cs.operator !== "not null" && cs.operator !== "null" && (
               <SmartSearch
                 className=" "
-                key={(cs.condition || "").toString()}
+                key={(cs.condition ?? "").toString()}
                 db={db}
                 tableName={tableName}
                 style={{
@@ -92,7 +93,7 @@ export const ConditionalCellStyleControls = ({
                 }}
                 variant="search-no-shadow"
                 tables={tables}
-                defaultValue={(cs.condition || "").toString()}
+                defaultValue={(cs.condition ?? "").toString()}
                 column={column.name}
                 onPressEnter={(term) => {
                   updateCondStyle({ condition: term }, condIdx);
@@ -103,7 +104,7 @@ export const ConditionalCellStyleControls = ({
                   }
                   const { columnValue, term } = val;
                   const condition = columnValue ?? term;
-                  if (!condition) return;
+                  if (!isDefined(condition)) return;
                   updateCondStyle({ condition }, condIdx);
                 }}
               />
@@ -127,7 +128,7 @@ export const ConditionalCellStyleControls = ({
                     textColor: cs.textColor ?? style.defaultStyle?.textColor,
                     borderColor: cs.borderColor,
                   }}
-                  renderedVal={cs.condition || "Result"}
+                  renderedVal={(cs.condition ?? "Result").toString()}
                 />
               </div>
             }

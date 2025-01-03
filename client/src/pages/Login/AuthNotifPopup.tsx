@@ -14,6 +14,7 @@ export const AuthNotifPopup = ({
 }) => {
   return (
     <Popup
+      data-command="AuthNotifPopup"
       onClose={onClose}
       clickCatchStyle={{ opacity: 1 }}
       footerButtons={[
@@ -27,7 +28,10 @@ export const AuthNotifPopup = ({
     >
       {success ?
         <SuccessMessage variant="small" message={message} />
-      : <InfoRow color="danger">{message}</InfoRow>}
+      : <InfoRow color="danger" variant="naked">
+          {message}
+        </InfoRow>
+      }
     </Popup>
   );
 };

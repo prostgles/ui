@@ -23,9 +23,14 @@ export const Login = ({ auth }: LoginFormProps) => {
     authResponse,
     clearAuthResponse,
     onAuthCall,
-    onClearEmailConfirmedNotification,
   } = authState;
 
+  const headerTitle =
+    !isOnLogin ?
+      !formHandlers?.setPassword ?
+        "Signup or Login"
+      : "Sign up"
+    : "Sign in";
   return (
     <form
       className="LoginForm flex-col gap-1 rounded shadow m-auto w-fit bg-color-0"
@@ -40,15 +45,8 @@ export const Login = ({ auth }: LoginFormProps) => {
       {authResponse && (
         <AuthNotifPopup {...authResponse} onClose={clearAuthResponse} />
       )}
-      {onClearEmailConfirmedNotification && (
-        <AuthNotifPopup
-          success={true}
-          message="Your email has been confirmed. You can now sign in"
-          onClose={onClearEmailConfirmedNotification}
-        />
-      )}
       <FlexCol className="p-2 pb-1">
-        <h2 className="mt-0">{!isOnLogin ? "Sign up" : "Sign in"}</h2>
+        <h2 className="mt-0">{headerTitle}</h2>
         {formHandlers?.setUsername && (
           <FormField
             id="username"
@@ -98,7 +96,10 @@ export const Login = ({ auth }: LoginFormProps) => {
           className="mt-1"
           color="action"
           children={
-            isOnLogin ? "Sign in"
+            isOnLogin ?
+              auth.loginType === "email" ?
+                "Continue"
+              : "Sign in"
             : formHandlers?.state === "registerWithPasswordConfirmationCode" ?
               "Confirm email"
             : "Sign up"

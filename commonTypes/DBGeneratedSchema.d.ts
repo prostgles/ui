@@ -380,7 +380,7 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       auth_provider?: null | string;
-      auth_type: "session-id" | "magic-link" | "login" | "provider"
+      auth_type: "session-id" | "registration" | "email-confirmation" | "magic-link-registration" | "magic-link" | "login" | "provider"
       created?: null | string;
       failed?: null | boolean;
       id?: string;

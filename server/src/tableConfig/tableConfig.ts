@@ -295,12 +295,22 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
     columns: {
       id: `BIGSERIAL PRIMARY KEY`,
       type: SESSION_TYPE,
-      created: `TIMESTAMP DEFAULT NOW()`,
+      auth_type: {
+        enum: [
+          "session-id",
+          "registration",
+          "email-confirmation",
+          "magic-link-registration",
+          "magic-link",
+          "login",
+          "provider",
+        ],
+      },
       username: "TEXT",
+      created: `TIMESTAMP DEFAULT NOW()`,
       failed: "BOOLEAN",
       magic_link_id: "TEXT",
       sid: "TEXT",
-      auth_type: { enum: ["session-id", "magic-link", "login", "provider"] },
       auth_provider:
         "TEXT CHECK(auth_type <> 'provider' OR auth_provider IS NOT NULL)",
       ip_address: `INET NOT NULL`,

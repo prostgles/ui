@@ -1,5 +1,8 @@
 import React from "react";
-import type { SearchListProps } from "../../../components/SearchList/SearchList";
+import type {
+  SearchListItem,
+  SearchListProps,
+} from "../../../components/SearchList/SearchList";
 import type { SmartSearch } from "./SmartSearch";
 import { getSmartSearchRows } from "./getSmartSearchRows";
 import type {
@@ -87,11 +90,15 @@ export async function onSearchItems(
             </div>
           );
         }
+
+        const stringColumnValue = columnValue?.toString() ?? "";
+
         return {
           key: i,
           content: node,
-          label: columnValue,
-          title: columnValue + "",
+          label: stringColumnValue,
+          title: stringColumnValue,
+          data: columnValue,
           onPress: () => {
             const newFilter: SimpleFilter = {
               fieldName: colName,
@@ -112,7 +119,7 @@ export async function onSearchItems(
             };
             this.props.onChange?.(val);
           },
-        };
+        } satisfies SearchListItem;
       })
       .filter(isDefined);
     return searchItems;

@@ -8,23 +8,20 @@ import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { SubscriptionHandler } from "prostgles-types";
-import { isDefined, tryCatchV2 } from "prostgles-types";
+import { tryCatchV2 } from "prostgles-types";
 import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
 import { PASSWORDLESS_ADMIN_USERNAME } from "../../commonTypes/OAuthUtils";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import { getPasswordHash } from "./authConfig/authUtils";
+import { getActiveSession } from "./authConfig/getActiveSession";
 import type { SUser } from "./authConfig/getAuth";
-import {
-  YEAR,
-  getActiveSession,
-  makeSession,
-  sidKeyName,
-} from "./authConfig/getAuth";
+import { makeSession, sidKeyName } from "./authConfig/getAuth";
 import { getElectronConfig } from "./electronConfig";
 import { PRGL_PASSWORD, PRGL_USERNAME } from "./envVars";
 import type { DBS, Users } from "./index";
 import { connMgr, tout } from "./index";
 import { tableConfig } from "./tableConfig/tableConfig";
+import { DAY, YEAR } from "../../commonTypes/utils";
 
 export type WithOrigin = {
   origin?: (
@@ -175,7 +172,7 @@ export class ConnectionChecker {
       electronConfig?.isElectron &&
       electronConfig.sidConfig.electronSid !== sid
     ) {
-      res.json({ error: "Not authorized" });
+      res.json({ error: "Not authorized. Expecting a different electron sid" });
       return;
     }
 
@@ -187,13 +184,15 @@ export class ConnectionChecker {
           data: magicLinkPaswordless,
           hasError,
           error,
-        } = await tryCatchV2(() => getPasswordlessMacigLink(this.db!));
-        if (hasError) {
-          res.status(401).json({ error });
+        } = await tryCatchV2(() => getPasswordlessMagicLink(this.db!));
+        if (hasError || magicLinkPaswordless.state === "magic-link-exists") {
+          res
+            .status(HTTP_FAIL_CODES.UNAUTHORIZED)
+            .json({ error: magicLinkPaswordless?.error ?? error });
           return;
         }
-        if (magicLinkPaswordless) {
-          res.redirect(magicLinkPaswordless);
+        if (magicLinkPaswordless.magicLinkUrl) {
+          res.redirect(magicLinkPaswordless.magicLinkUrl);
           return;
         }
       }
@@ -354,7 +353,7 @@ const initUsers = async (db: DBS, _db: DB) => {
     }
 
     try {
-      const u = (await db.users.insert(
+      const initialAdmin = (await db.users.insert(
         {
           username,
           password,
@@ -363,10 +362,15 @@ const initUsers = async (db: DBS, _db: DB) => {
         },
         { returning: "*" },
       )) as Users | undefined;
-      if (!u) throw "User not inserted";
-      await _db.any(
-        "UPDATE users SET password = ${hashedPassword}, status = 'active' WHERE status IS NULL AND id = ${id};",
-        { id: u.id, hashedPassword: getPasswordHash(u, "") },
+      if (!initialAdmin) throw "User not inserted";
+      await db.users.update(
+        {
+          id: initialAdmin.id,
+        },
+        {
+          password: password && getPasswordHash(initialAdmin, password),
+          status: "active",
+        },
       );
     } catch (e) {
       console.error(e);
@@ -413,7 +417,6 @@ export const insertUser = async (
   return db.users.findOne({ id: user.id })!;
 };
 
-export const DAY = 24 * 3600 * 1000;
 export const makeMagicLink = async (
   user: Users,
   dbo: DBS,
@@ -437,19 +440,39 @@ export const makeMagicLink = async (
   };
 };
 
-const getPasswordlessMacigLink = async (dbs: DBS) => {
+const getPasswordlessMagicLink = async (dbs: DBS) => {
   /** Create session for passwordless admin */
-  const u = await getPasswordlessAdmin(dbs);
-  if (u) {
-    const existingLink = await dbs.magic_links.findOne({
-      user_id: u.id,
-      "magic_link_used.<>": null,
+  const maybePasswordlessAdmin = await getPasswordlessAdmin(dbs);
+  if (maybePasswordlessAdmin) {
+    const existingMagicLink = await dbs.magic_links.findOne({
+      user_id: maybePasswordlessAdmin.id,
+      // "magic_link_used.<>": null,
     });
-    if (existingLink) throw PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR;
-    const mlink = await makeMagicLink(u, dbs, "/", Date.now() + 10 * YEAR);
+    if (existingMagicLink) {
+      return {
+        state: "magic-link-exists",
+        wasUsed: !!existingMagicLink.magic_link_used,
+        error:
+          existingMagicLink.magic_link_used ?
+            PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR
+          : undefined,
+      } as const;
+    }
+    // if (existingMagicLink) throw PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR;
+    const mlink = await makeMagicLink(
+      maybePasswordlessAdmin,
+      dbs,
+      "/",
+      Date.now() + 10 * YEAR,
+    );
 
-    return mlink.magic_login_link_redirect;
+    return {
+      state: "magic-link-ready" as const,
+      magicLinkUrl: mlink.magic_login_link_redirect,
+    } as const;
   }
 
-  return undefined;
+  return {
+    state: "no-passwordless-admin",
+  } as const;
 };

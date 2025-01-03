@@ -4,8 +4,9 @@ import {
   getMagicLinkEmailFromTemplate,
   getVerificationEmailFromTemplate,
   MOCK_SMTP_HOST,
-} from "../../../commonTypes/OAuthUtils";
-import type { DBSSchema } from "../../../commonTypes/publishUtils";
+} from "../../../../commonTypes/OAuthUtils";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { Unpromise } from "../../ConnectionManager/ConnectionManager";
 
 export const getSMTPWithTLS = (
   smtp: NonNullable<
@@ -20,6 +21,10 @@ export const getSMTPWithTLS = (
       }),
   };
 };
+
+export type EmailClient = Unpromise<
+  ReturnType<typeof getEmailSenderWithMockTest>
+>;
 
 export const getEmailSenderWithMockTest = async (
   auth_providers: DBSSchema["global_settings"]["auth_providers"] | undefined,

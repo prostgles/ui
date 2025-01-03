@@ -3,7 +3,7 @@ import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { type AuthResponse, isEmpty, pickKeys } from "prostgles-types";
 import { connectionChecker, tout } from "..";
 import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
-import { HOUR } from "./getAuth";
+import { HOUR } from "../../../commonTypes/utils";
 
 const getGlobalSettings = async () => {
   let gs = connectionChecker.config.global_setting;
@@ -101,6 +101,9 @@ export const getFailedTooManyTimes = async (
 
 type AuthAttepmt =
   | { auth_type: "login"; username: string }
+  | { auth_type: "registration"; username: string }
+  | { auth_type: "magic-link-registration"; username: string }
+  | { auth_type: "email-confirmation"; username: string }
   | { auth_type: "provider"; auth_provider: string }
   | { auth_type: "magic-link"; magic_link_id: string }
   | { auth_type: "session-id"; sid: string };
@@ -109,7 +112,7 @@ type AuthAttepmt =
  * Used to prevent ip addresses from authentication after too many recent failed attempts
  * Configured in global_settings.login_rate_limit found in Server settings page
  */
-export const startLoginAttempt = async (
+export const startRateLimitedLoginAttempt = async (
   db: DBOFullyTyped<DBSchemaGenerated>,
   clientInfo: LoginClientInfo,
   authInfo: AuthAttepmt,
@@ -159,6 +162,34 @@ export const startLoginAttempt = async (
         { id: loginAttempt.id },
         { failed: false },
       );
+
+      /**
+       * Upon successfully confirming an email
+       * must delete all failed attempts within last day for that email
+       * */
+      if (
+        authInfo.auth_type === "email-confirmation" ||
+        authInfo.auth_type === "magic-link"
+      ) {
+        const getUsername = async () => {
+          if (authInfo.auth_type === "magic-link") {
+            const user = await db.users.findOne({
+              $existsJoined: { magic_links: { id: authInfo.magic_link_id } },
+            });
+            return user?.username;
+          }
+          return authInfo.username;
+        };
+
+        const username = await getUsername();
+        if (!username) throw "No username found for magic link";
+        await db.login_attempts.delete({
+          ...matchByFilter,
+          username,
+          failed: true,
+          "created.>=": new Date(Date.now() - 24 * HOUR).toISOString(),
+        });
+      }
     },
   };
 };

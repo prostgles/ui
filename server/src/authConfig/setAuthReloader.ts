@@ -1,10 +1,10 @@
 import type e from "express";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { SubscriptionHandler } from "prostgles-types";
-import { isDeepStrictEqual } from "util";
 import type { DBS } from "..";
 import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import { getAuth } from "./getAuth";
+import { isEqual } from "prostgles-types";
 
 let globalSettingSub: SubscriptionHandler | undefined;
 let auth_providers:
@@ -20,8 +20,8 @@ export const setAuthReloader = async (
     {},
     {},
     async (_globalSettings) => {
-      if (!isDeepStrictEqual(auth_providers, _globalSettings?.auth_providers)) {
-        const auth = await getAuth(app, dbs, _globalSettings);
+      if (!isEqual(auth_providers, _globalSettings?.auth_providers)) {
+        const auth = await getAuth(app, dbs);
         statePrgl.update({ auth: auth as any });
         auth_providers = _globalSettings?.auth_providers;
       }

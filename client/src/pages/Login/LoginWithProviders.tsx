@@ -16,7 +16,7 @@ export const LoginWithProviders = ({ auth }: Pick<PrglState, "auth">) => {
   if (user && user.type !== "public") return null;
   return (
     <FlexRowWrap>
-      {getObjectEntries(auth.login?.withProvider ?? {}).map(
+      {getObjectEntries(auth.loginWithProvider ?? {}).map(
         ([providerName, func]) => {
           return (
             <Btn

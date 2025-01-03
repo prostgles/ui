@@ -1,4 +1,4 @@
-import { isEqual } from "prostgles-client/dist/prostgles";
+import { isEqual } from "prostgles-types";
 import { useCallback, useMemo, useState } from "react";
 
 export const useEditableData = <T extends Record<string, any> | undefined>(

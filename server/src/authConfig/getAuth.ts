@@ -2,7 +2,6 @@ import * as crypto from "crypto";
 import type { Express } from "express";
 import path from "path";
 import type {
-  AuthClientRequest,
   AuthConfig,
   BasicSession,
   LoginClientInfo,
@@ -21,12 +20,13 @@ import { initBackupManager } from "../startProstgles";
 import {
   getAuthEmailProvider,
   getOAuthProviders,
-} from "./getAuthEmailProvider";
+} from "./emailProvider/getEmailAuthProvider";
 import { getLogin } from "./getLogin";
-import { getFailedTooManyTimes, startLoginAttempt } from "./startLoginAttempt";
-
-export const HOUR = 3600e3;
-export const YEAR = 365 * HOUR * 24;
+import {
+  getFailedTooManyTimes,
+  startRateLimitedLoginAttempt,
+} from "./startRateLimitedLoginAttempt";
+import { getActiveSession } from "./getActiveSession";
 
 const authCookieOpts =
   process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_COOKIE ?
@@ -92,91 +92,8 @@ export type SUser = {
 };
 export const sidKeyName = "sid_token" as const;
 
-type AuthType =
-  | {
-      type: "session-id";
-      filter: { id: string };
-      // client: AuthClientRequest & LoginClientInfo;
-      client: LoginClientInfo;
-    }
-  | {
-      type: "login-success";
-      filter: { user_id: string; type: "web"; user_agent: string };
-    };
-
-export const getActiveSession = async (
-  db: DBS,
-  authType: AuthType,
-): Promise<{
-  validSession: Sessions | undefined;
-  failedTooManyTimes: boolean;
-  error?: AuthResponse.AuthFailure;
-}> => {
-  if (Object.values(authType.filter).some((v) => typeof v !== "string" || !v)) {
-    // throw `Must provide a valid session filter`;
-    return {
-      validSession: undefined,
-      failedTooManyTimes: false,
-      error: {
-        success: false,
-        code: "server-error",
-        message: "Must provide a valid session filter",
-      },
-    };
-  }
-  const validSession = await db.sessions.findOne({
-    ...authType.filter,
-    "expires.>": Date.now(),
-    active: true,
-  });
-
-  /**
-   * Always maintain a valid session for passwordless admin
-   */
-  const pwdlessUser = connectionChecker.noPasswordAdmin;
-  if (pwdlessUser && !validSession) {
-    const oldSession = await db.sessions.findOne({ user_id: pwdlessUser.id });
-    if (oldSession) {
-      const validSession = await db.sessions.update(
-        { id: oldSession.id },
-        { active: true, expires: Date.now() + 1 * YEAR },
-        { returning: "*", multi: false },
-      );
-      return { validSession, failedTooManyTimes: false };
-    }
-  }
-
-  let failedTooManyTimes = false;
-  if (!pwdlessUser && authType.type === "session-id" && !validSession) {
-    const expiredSession = await db.sessions.findOne({ ...authType.filter });
-    if (!expiredSession) {
-      const { ip_address, ip_address_remote, user_agent, x_real_ip } =
-        authType.client;
-      const failedInfo = await startLoginAttempt(
-        db,
-        { ip_address, ip_address_remote, user_agent, x_real_ip },
-        { auth_type: "session-id", sid: authType.filter.id },
-      );
-      if ("success" in failedInfo) {
-        return {
-          validSession: undefined,
-          failedTooManyTimes: true,
-          error: failedInfo,
-        };
-      }
-      failedTooManyTimes = failedInfo.failedTooManyTimes;
-    }
-  }
-
-  return { validSession, failedTooManyTimes };
-};
-
-export const getAuth = async (
-  app: Express,
-  dbs: DBS | undefined,
-  globalSettings?: DBSchemaGenerated["global_settings"]["columns"],
-) => {
-  const { auth_providers } = globalSettings || {};
+export const getAuth = async (app: Express, dbs: DBS | undefined) => {
+  const { auth_providers } = (await dbs?.global_settings.findOne()) || {};
 
   const { login } = await getLogin(auth_providers);
   const auth = {
@@ -198,7 +115,13 @@ export const getAuth = async (
       if (!user) return undefined;
 
       const state_db = await db.connections.findOne({ is_state_db: true });
-      if (!state_db) throw "Internal error: Statedb missing ";
+      if (!state_db) {
+        return {
+          success: false,
+          code: "server-error",
+          message: "Internal error: Statedb missing ",
+        };
+      }
 
       const suser: SUser = {
         sid: validSession.id,
@@ -286,15 +209,15 @@ export const getAuth = async (
             message,
           } satisfies AuthResponse.MagicLinkAuthFailure,
         });
-        const onLoginAttempt = await startLoginAttempt(
+        const rateLimitedAttempt = await startRateLimitedLoginAttempt(
           dbo,
           { ip_address, ip_address_remote, user_agent, x_real_ip },
           { auth_type: "magic-link", magic_link_id: id },
         );
-        if ("success" in onLoginAttempt) {
-          return withError("server-error", onLoginAttempt.message);
+        if ("success" in rateLimitedAttempt) {
+          return withError("server-error", rateLimitedAttempt.message);
         }
-        if (onLoginAttempt.failedTooManyTimes) {
+        if (rateLimitedAttempt.failedTooManyTimes) {
           return withError("rate-limit-exceeded");
         }
         const mlink = await dbo.magic_links.findOne({ id });
@@ -303,11 +226,11 @@ export const getAuth = async (
           return withError("no-match");
         }
         if (Number(mlink.expires) < Date.now()) {
-          await onLoginAttempt.onSuccess();
+          await rateLimitedAttempt.onSuccess();
           return withError("expired-magic-link", "Expired magic link");
         }
         if (mlink.magic_link_used) {
-          await onLoginAttempt.onSuccess();
+          await rateLimitedAttempt.onSuccess();
           return withError("expired-magic-link", "Magic link already used");
         }
         const user = await dbo.users.findOne({ id: mlink.user_id });
@@ -330,16 +253,20 @@ export const getAuth = async (
         const session = await makeSession(
           user,
           {
-            ip_address: onLoginAttempt.ip,
+            ip_address: rateLimitedAttempt.ip,
             user_agent: user_agent || null,
             type: "web",
           },
           dbo,
           Number(mlink.expires),
         );
-        await onLoginAttempt.onSuccess();
+        await rateLimitedAttempt.onSuccess();
         return { session };
       },
+      localLoginMode:
+        auth_providers?.email?.signupType === "withMagicLink" ?
+          "email"
+        : "email+password",
       signupWithEmailAndPassword: await getAuthEmailProvider(
         auth_providers,
         dbs,

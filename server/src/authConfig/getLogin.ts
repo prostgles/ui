@@ -7,15 +7,17 @@ import { makeMagicLink } from "../ConnectionChecker";
 import { log } from "../index";
 import { getPasswordHash } from "./authUtils";
 import { createSession } from "./createSession";
-import { YEAR, type SUser } from "./getAuth";
+import type { SUser } from "./getAuth";
 import { loginWithProvider } from "./loginWithProvider";
-import { startLoginAttempt } from "./startLoginAttempt";
-import { getEmailSenderWithMockTest } from "./getEmailSenderWithMockTest";
+import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
+import { getEmailSenderWithMockTest } from "./emailProvider/getEmailSenderWithMockTest";
+import { YEAR } from "../../../commonTypes/utils";
 
 export const getLogin = async (
   auth_providers: DBGeneratedSchema["global_settings"]["columns"]["auth_providers"],
 ) => {
   const mailClient = await getEmailSenderWithMockTest(auth_providers);
+  const { email: emailAuthConfig } = auth_providers ?? {};
 
   const login: Required<
     LoginSignupConfig<DBGeneratedSchema, SUser>
@@ -28,15 +30,15 @@ export const getLogin = async (
     }
 
     const { username, password, totp_token, totp_recovery_code } = loginParams;
-    const failedInfo = await startLoginAttempt(
+    const authAttemptRateLimit = await startRateLimitedLoginAttempt(
       db,
       { ip_address, ip_address_remote, user_agent, x_real_ip },
       { auth_type: "login", username },
     );
-    if ("success" in failedInfo) {
-      return failedInfo.code;
+    if ("success" in authAttemptRateLimit) {
+      return authAttemptRateLimit.code;
     }
-    const { onSuccess, ip, failedTooManyTimes } = failedInfo;
+    const { onSuccess, ip, failedTooManyTimes } = authAttemptRateLimit;
     if (failedTooManyTimes) {
       return "rate-limit-exceeded";
     }
@@ -47,6 +49,50 @@ export const getLogin = async (
         "SELECT * FROM users WHERE username = ${username};",
         { username },
       );
+
+      const magicLinkAuthEnabled =
+        emailAuthConfig?.enabled &&
+        emailAuthConfig.signupType === "withMagicLink";
+
+      if (
+        magicLinkAuthEnabled &&
+        (!userFromUsername ||
+          (userFromUsername.registration?.type === "magic-link" &&
+            !userFromUsername.password))
+      ) {
+        if (!mailClient || !auth_providers) {
+          return "server-error";
+        }
+        const newUser =
+          userFromUsername ??
+          (await db.users.insert(
+            {
+              username,
+              email: username,
+              type: "default",
+              registration: {
+                type: "magic-link",
+              },
+              password: "",
+            },
+            { returning: "*" },
+          ));
+        const mlink = await makeMagicLink(
+          newUser,
+          db,
+          "/",
+          Date.now() + 1 * YEAR,
+        );
+        await mailClient.sendMagicLinkEmail({
+          to: newUser.username,
+          url: `${auth_providers.website_url}/${mlink.magic_login_link_redirect}`,
+        });
+        return {
+          session: undefined,
+          response: { success: true, code: "magic-link-sent" },
+        };
+      }
+
       if (!userFromUsername) {
         return "no-match";
       }
@@ -58,27 +104,6 @@ export const getLogin = async (
       if (userFromUsername.passwordless_admin) {
         /** This should normally not happen because when pwdless admin is enabled login is not possible */
         return "server-error";
-      }
-
-      if (
-        userFromUsername.registration?.type === "magic-link" &&
-        !userFromUsername.password
-      ) {
-        if (!mailClient || !auth_providers) {
-          return "server-error";
-        }
-        const mlink = await makeMagicLink(
-          userFromUsername,
-          db,
-          "/",
-          Date.now() + 1 * YEAR,
-        );
-        await mailClient.sendMagicLinkEmail({
-          to: userFromUsername.username,
-          url: `${auth_providers.website_url}/${mlink.magic_login_link_redirect}`,
-        });
-        await onSuccess();
-        return { session: undefined, response: { success: true } };
       }
 
       if (!userFromUsername.password) {
@@ -94,6 +119,7 @@ export const getLogin = async (
       }
 
       if (!password) {
+        // await onSuccess();
         return "password-missing";
       }
       if (password.length > 400) {

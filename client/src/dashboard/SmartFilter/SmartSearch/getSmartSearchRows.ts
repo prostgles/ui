@@ -128,12 +128,13 @@ export const getRows = async (args: Args, limit = 3, matchStart = false) => {
         having,
         groupBy,
       })) ?? []);
+  const computedColName = computedCol?.name;
   const result =
-    computedCol ?
+    computedColName ?
       items.map((d) => ({
         ...d,
         prgl_term_highlight: {
-          [computedCol.name]: [d[computedCol.name].toString()],
+          [computedColName]: [d[computedColName].toString()],
         },
       }))
     : items;

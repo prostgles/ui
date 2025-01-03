@@ -566,6 +566,8 @@ export enum USERS {
   default_user = "default_user",
   default_user1 = "default_user1",
   public_user = "public_user",
+  new_user = "new_user",
+  new_user1 = "new_user1",
 }
 export const TEST_DB_NAME = "Prostgles UI automated tests database";
 

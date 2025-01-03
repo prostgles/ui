@@ -4,7 +4,7 @@ import type { Node, Link } from "./types";
 
 type GraphParams = {
   svgNode: SVGElement;
-  data: { 
+  data: {
     nodes: Node[];
     links: Link[];
   };
@@ -14,55 +14,62 @@ type GraphParams = {
 function calculateNodeReferences(nodes: Node[], links: Link[]) {
   // Count incoming and outgoing references for each node
   const refCounts = new Map<string, { in: number; out: number }>();
-  
-  nodes.forEach(node => {
+
+  nodes.forEach((node) => {
     refCounts.set(node.id, { in: 0, out: 0 });
   });
-  
-  links.forEach(link => {
+
+  links.forEach((link) => {
     // Handle both string IDs and Node objects for source/target
-    const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
-    const targetId = typeof link.target === 'string' ? link.target : link.target.id;
-    
+    const sourceId =
+      typeof link.source === "string" ? link.source : link.source.id;
+    const targetId =
+      typeof link.target === "string" ? link.target : link.target.id;
+
     const sourceCount = refCounts.get(sourceId);
     const targetCount = refCounts.get(targetId);
-    
+
     if (sourceCount) sourceCount.out++;
     if (targetCount) targetCount.in++;
   });
-  
+
   return refCounts;
 }
 
-function positionNodes(nodes: Node[], links: Link[], width: number, height: number) {
+function positionNodes(
+  nodes: Node[],
+  links: Link[],
+  width: number,
+  height: number,
+) {
   const refCounts = calculateNodeReferences(nodes, links);
-  
+
   // Sort nodes by total references (in + out)
   const sortedNodes = [...nodes].sort((a, b) => {
     const aCount = refCounts.get(a.id) || { in: 0, out: 0 };
     const bCount = refCounts.get(b.id) || { in: 0, out: 0 };
-    return (bCount.in + bCount.out) - (aCount.in + aCount.out);
+    return bCount.in + bCount.out - (aCount.in + aCount.out);
   });
-  
+
   const centerX = width / 2;
   const centerY = height / 2;
-  
+
   // Fixed minimum spacing between nodes
   const minSpacing = 15;
-  
+
   // Calculate node dimensions
-  const maxNodeWidth = Math.max(...nodes.map(n => n.width));
-  const maxNodeHeight = Math.max(...nodes.map(n => n.height));
-  
+  const maxNodeWidth = Math.max(...nodes.map((n) => n.width));
+  const maxNodeHeight = Math.max(...nodes.map((n) => n.height));
+
   // Calculate grid dimensions
   const gridSize = Math.ceil(Math.sqrt(nodes.length));
   const cellWidth = maxNodeWidth + minSpacing;
   const cellHeight = maxNodeHeight + minSpacing;
-  
+
   // Calculate total grid width and height
   const totalWidth = cellWidth * gridSize;
   const totalHeight = cellHeight * gridSize;
-  
+
   // Position nodes in a grid pattern
   sortedNodes.forEach((node, i) => {
     if (i === 0) {
@@ -73,16 +80,16 @@ function positionNodes(nodes: Node[], links: Link[], width: number, height: numb
       // Calculate grid position (spiral out from center)
       const gridX = i % gridSize;
       const gridY = Math.floor(i / gridSize);
-      
+
       // Offset from center
       const offsetX = (gridX - gridSize / 2) * cellWidth;
       const offsetY = (gridY - gridSize / 2) * cellHeight;
-      
+
       node.x = centerX + offsetX;
       node.y = centerY + offsetY;
     }
   });
-  
+
   // Add tiny jitter to prevent perfect alignment
   sortedNodes.forEach((node, i) => {
     if (i !== 0) {
@@ -204,25 +211,31 @@ export const drawSchema = (args: GraphParams) => {
 
   // const drag_handler =
 
-  const drag = d3.drag<SVGGElement, Node>()
+  const drag = d3
+    .drag<SVGGElement, Node>()
     .on("start", dragStarted)
     .on("drag", dragged)
     .on("end", dragEnded);
 
   function dragStarted(event: d3.D3DragEvent<SVGGElement, Node, any>, d: Node) {
+    //@ts-ignore
     d3.select<SVGGElement, Node>(this).classed("dragging", true);
   }
 
   function dragged(event: d3.D3DragEvent<SVGGElement, Node, any>, d: Node) {
     d.x = event.x;
     d.y = event.y;
-    d3.select<SVGGElement, Node>(this)
-      .attr("transform", `translate(${d.x},${d.y})`);
-    
+    //@ts-ignore
+    d3.select<SVGGElement, Node>(this).attr(
+      "transform",
+      `translate(${d.x},${d.y})`,
+    );
+
     updateLinks();
   }
 
   function dragEnded(event: d3.D3DragEvent<SVGGElement, Node, any>, d: Node) {
+    //@ts-ignore
     d3.select<SVGGElement, Node>(this).classed("dragging", false);
   }
 
@@ -377,110 +390,127 @@ export const drawSchema = (args: GraphParams) => {
   // }
 
   // After creating nodes, set their initial positions
-  node.attr("transform", d => `translate(${d.x},${d.y})`);
+  node.attr("transform", (d) => `translate(${d.x},${d.y})`);
 
   // Create a function to update link positions
   function updateLinks() {
     // Helper to check if a point is inside a table's bounds
-    function isPointNearTable(x: number, y: number, node: Node, padding: number = 20) {
-      const left = node.x - node.width/2 - padding;
-      const right = node.x + node.width/2 + padding;
-      const top = node.y - node.height/2 - padding;
-      const bottom = node.y + node.height/2 + padding;
-      
+    function isPointNearTable(x: number, y: number, node: Node, padding = 20) {
+      const left = node.x - node.width / 2 - padding;
+      const right = node.x + node.width / 2 + padding;
+      const top = node.y - node.height / 2 - padding;
+      const bottom = node.y + node.height / 2 + padding;
+
       return x >= left && x <= right && y >= top && y <= bottom;
     }
 
     // Helper to find tables that intersect with a line segment
-    function findIntersectingTables(x1: number, y1: number, x2: number, y2: number, excludeNodes: Node[]) {
-      return data.nodes.filter(node => {
+    function findIntersectingTables(
+      x1: number,
+      y1: number,
+      x2: number,
+      y2: number,
+      excludeNodes: Node[],
+    ) {
+      return data.nodes.filter((node) => {
         if (excludeNodes.includes(node)) return false;
-        
+
         // Check if line segment intersects with table bounds
-        const left = node.x - node.width/2 - 20;
-        const right = node.x + node.width/2 + 20;
-        const top = node.y - node.height/2 - 20;
-        const bottom = node.y + node.height/2 + 20;
-        
+        const left = node.x - node.width / 2 - 20;
+        const right = node.x + node.width / 2 + 20;
+        const top = node.y - node.height / 2 - 20;
+        const bottom = node.y + node.height / 2 + 20;
+
         // Simple line-box intersection test
         const minX = Math.min(x1, x2);
         const maxX = Math.max(x1, x2);
         const minY = Math.min(y1, y2);
         const maxY = Math.max(y1, y2);
-        
+
         if (maxX < left || minX > right || maxY < top || minY > bottom) {
           return false;
         }
-        
+
         return true;
       });
     }
 
     link.attr("d", (l: Link) => {
-      const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
-      const targetId = typeof l.target === 'string' ? l.target : l.target.id;
-      
-      const source = data.nodes.find(n => n.id === sourceId);
-      const target = data.nodes.find(n => n.id === targetId);
-      
+      const sourceId = typeof l.source === "string" ? l.source : l.source.id;
+      const targetId = typeof l.target === "string" ? l.target : l.target.id;
+
+      const source = data.nodes.find((n) => n.id === sourceId);
+      const target = data.nodes.find((n) => n.id === targetId);
+
       if (!source || !target) return "";
 
-      const sourceX = source.x + (source.width / 2);
-      const sourceY = source.y + getSchemaTableColY(l.sourceColIndex, source.height);
-      const targetX = target.x - (target.width / 2);
-      const targetY = target.y + getSchemaTableColY(l.targetColIndex, target.height);
+      const sourceX = source.x + source.width / 2;
+      const sourceY =
+        source.y + getSchemaTableColY(l.sourceColIndex, source.height);
+      const targetX = target.x - target.width / 2;
+      const targetY =
+        target.y + getSchemaTableColY(l.targetColIndex, target.height);
 
       // Find path around obstacles
       const dx = targetX - sourceX;
       const dy = targetY - sourceY;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      
+
       // Try different vertical offsets until we find a clear path
       const baseOffset = Math.min(100, distance / 3);
-      const offsets = [0, baseOffset, -baseOffset, baseOffset * 2, -baseOffset * 2];
-      
+      const offsets = [
+        0,
+        baseOffset,
+        -baseOffset,
+        baseOffset * 2,
+        -baseOffset * 2,
+      ];
+
       for (const offset of offsets) {
         // Try a path with this offset
         const cp1x = sourceX + distance / 4;
         const cp1y = sourceY + offset;
         const cp2x = sourceX + (distance * 3) / 4;
         const cp2y = targetY + offset;
-        
+
         // Check if this path intersects any tables
         const intersections = findIntersectingTables(
-          sourceX, sourceY,
-          cp1x, cp1y,
-          [source, target]
-        ).concat(findIntersectingTables(
-          cp1x, cp1y,
-          cp2x, cp2y,
-          [source, target]
-        )).concat(findIntersectingTables(
-          cp2x, cp2y,
-          targetX, targetY,
-          [source, target]
-        ));
-        
+          sourceX,
+          sourceY,
+          cp1x,
+          cp1y,
+          [source, target],
+        )
+          .concat(
+            findIntersectingTables(cp1x, cp1y, cp2x, cp2y, [source, target]),
+          )
+          .concat(
+            findIntersectingTables(cp2x, cp2y, targetX, targetY, [
+              source,
+              target,
+            ]),
+          );
+
         if (intersections.length === 0) {
           // Found a clear path
           return [
             `M ${sourceX},${sourceY}`,
             `C ${cp1x},${cp1y}`,
             `  ${cp2x},${cp2y}`,
-            `  ${targetX},${targetY}`
+            `  ${targetX},${targetY}`,
           ].join(" ");
         }
       }
-      
+
       // If no clear path found, use a path with maximum offset
       const fallbackOffset = Math.max(150, distance / 2);
       const sign = sourceY > targetY ? -1 : 1;
-      
+
       return [
         `M ${sourceX},${sourceY}`,
-        `C ${sourceX + distance/4},${sourceY + sign * fallbackOffset}`,
-        `  ${sourceX + (distance*3)/4},${targetY + sign * fallbackOffset}`,
-        `  ${targetX},${targetY}`
+        `C ${sourceX + distance / 4},${sourceY + sign * fallbackOffset}`,
+        `  ${sourceX + (distance * 3) / 4},${targetY + sign * fallbackOffset}`,
+        `  ${targetX},${targetY}`,
       ].join(" ");
     });
   }

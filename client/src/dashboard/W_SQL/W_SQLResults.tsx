@@ -54,7 +54,6 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
     commandResult = undefined,
     rowCount = undefined,
     info = undefined,
-    totalRowCount,
   } = activeQuery?.state === "ended" ? activeQuery : {};
   const hideResults =
     !childWindow &&

@@ -58,7 +58,7 @@ import {
 } from "./tableUtils/tableUtils";
 import { W_Table_Content } from "./W_Table_Content";
 import { getAndFixWColumnsConfig } from "./TableMenu/getAndFixWColumnsConfig";
-import { isEqual } from "prostgles-client/dist/react-hooks";
+import { isEqual } from "prostgles-types";
 import type { Command } from "../../Testing";
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {

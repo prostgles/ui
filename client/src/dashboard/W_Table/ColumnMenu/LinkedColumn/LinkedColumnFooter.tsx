@@ -49,7 +49,7 @@ export const LinkedColumnFooter = ({
             onClick={() => {
               updateWCols(
                 w,
-                w.$get().columns?.filter((c) => c.name !== column.name),
+                w.$get()?.columns?.filter((c) => c.name !== column.name),
               );
               onClose?.();
             }}

@@ -21,6 +21,7 @@ import {
   getDesiredTimeChartBinSize,
   getTimeChartLayersWithBins,
   type TimeChartLayerWithBin,
+  type TimeChartLayerWithBinOrError,
 } from "./getTimeChartLayersWithBins";
 
 export const getTimeLayerDataSignature = (
@@ -54,7 +55,7 @@ type TChartLayers = TChartLayer[];
 
 type FetchedLayerData = {
   layers: TChartLayers;
-  erroredLayers: TimeChartLayerWithBin[];
+  erroredLayers: TimeChartLayerWithBinOrError[];
   error: any;
   binSize: keyof ReturnType<typeof getMainTimeBinSizes> | undefined;
 };
@@ -104,7 +105,7 @@ type getTChartLayerArgs = Pick<
   "viewPortExtent" | "visibleDataExtent"
 > &
   Pick<ProstglesTimeChartProps, "getLinksAndWindows" | "myLinks" | "tables"> & {
-    layer: TimeChartLayerWithBin;
+    layer: TimeChartLayerWithBinOrError;
     bin: FetchedLayerData["binSize"] | undefined;
     binSize: FetchedLayerData["binSize"] | "auto";
     desiredBinCount: number;
@@ -344,7 +345,7 @@ export async function getTimeChartData(
 ): Promise<FetchedLayerData | undefined> {
   let layers: TChartLayers = [];
   let bin: FetchedLayerData["binSize"] | undefined;
-  let erroredLayers: TimeChartLayerWithBin[] = [];
+  let erroredLayers: TimeChartLayerWithBinOrError[] = [];
   try {
     const {
       prgl: { db },
@@ -357,7 +358,9 @@ export async function getTimeChartData(
     if (!layerExtentBinsRes) return undefined;
 
     const { layerExtentBins } = layerExtentBinsRes;
-    const nonErroredLayers = layerExtentBins.filter((l) => !l.hasError);
+    const nonErroredLayers = layerExtentBins.filter(
+      (l): l is TimeChartLayerWithBin => !l.hasError,
+    );
     erroredLayers = layerExtentBins.filter((l) => l.hasError);
     if (!layerExtentBins.length) {
       return {

@@ -1,5 +1,5 @@
 import { mdiEmail } from "@mdi/js";
-import { isEqual } from "prostgles-client/dist/prostgles";
+import { isEqual } from "prostgles-types";
 import React, { useState } from "react";
 import ErrorComponent from "../../components/ErrorComponent";
 import FormField from "../../components/FormField/FormField";
@@ -103,12 +103,14 @@ export const EmailAuthSetup = ({
           setLocalAuth(
             signupType === "withMagicLink" ?
               {
+                enabled: localAuth?.enabled ?? false,
                 signupType,
                 emailTemplate: DEFAULT_MAGIC_LINK_TEMPLATE,
                 smtp: localAuth?.smtp ?? DEFAULT_SMTP_CONFIG,
               }
             : {
                 signupType,
+                enabled: localAuth?.enabled ?? false,
                 emailTemplate: DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
                 smtp: localAuth?.smtp ?? DEFAULT_SMTP_CONFIG,
                 minPasswordLength:

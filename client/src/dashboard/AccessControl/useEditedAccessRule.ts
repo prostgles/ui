@@ -132,6 +132,7 @@ export const useEditedAccessRule = ({
       rule: undefined,
       contextData: !user ? undefined : { user },
     };
+    //@ts-ignore
   }, [getIsMounted, action, dbs.access_control, dbs.users]);
 
   const wspTables = usePromise(async () => {

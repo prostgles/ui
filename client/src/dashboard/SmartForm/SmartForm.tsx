@@ -5,15 +5,15 @@ import type {
   AnyObject,
   ProstglesError,
   SubscriptionHandler,
-  TableInfo,
   ValidatedColumnInfo,
 } from "prostgles-types";
-import { isObject, isEmpty, omitKeys } from "prostgles-types";
+import { isEmpty, isObject, omitKeys } from "prostgles-types";
 import React from "react";
 import type {
   DetailedFilterBase,
   SmartGroupFilter,
 } from "../../../../commonTypes/filterUtils";
+import { sliceText } from "../../../../commonTypes/utils";
 import type { Prgl } from "../../App";
 import { SuccessMessage } from "../../components/Animations";
 import Btn from "../../components/Btn";
@@ -21,9 +21,11 @@ import Checkbox from "../../components/Checkbox";
 import ErrorComponent from "../../components/ErrorComponent";
 import FileInput from "../../components/FileInput/FileInput";
 import { classOverride, FlexCol, FlexRow } from "../../components/Flex";
+import { Label } from "../../components/Label";
 import Loading from "../../components/Loading";
 import type { PopupProps } from "../../components/Popup/Popup";
 import Popup from "../../components/Popup/Popup";
+import { SvgIcon } from "../../components/SvgIcon";
 import { filterObj, ifEmpty, isDefined } from "../../utils";
 import RTComp from "../RTComp";
 import { getSmartGroupFilter } from "../SmartFilter/SmartFilter";
@@ -36,9 +38,6 @@ import { parseDefaultValue } from "./SmartFormField/fieldUtils";
 import { SmartFormFileSection } from "./SmartFormFileSection";
 import { SmartFormFooterButtons } from "./SmartFormFooterButtons";
 import { SmartFormUpperFooter } from "./SmartFormUpperFooter";
-import { sliceText } from "../../../../commonTypes/utils";
-import { Label } from "../../components/Label";
-import { SvgIcon } from "../../components/SvgIcon";
 
 export type getErrorsHook = (
   cb: (newRow: AnyObject) => SmartFormState["error"] | undefined,
@@ -211,7 +210,6 @@ export type SmartFormState = {
    *  tables.columns will be used otherwise
    */
   dynamicValidatedColumns?: ValidatedColumnInfo[];
-  tableInfo?: TableInfo;
   error?: any;
   newRow?: AnyObject;
   rowFilter?: SmartGroupFilter;
@@ -250,7 +248,6 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     rowFilter: undefined,
     localChanges: [],
     errors: undefined,
-    tableInfo: undefined,
     defaultColumnData: {},
     referencedInsert: undefined,
     action: {
@@ -271,7 +268,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     const { tableName, lang, rowFilter, db, tables } = this.props;
 
     const tableHandler = db[tableName];
-    const table = tables.find((t) => t.name === tableName);
+    const table = this.table;
     const tableInfo = table?.info;
     if (!tableHandler?.getInfo || !tableHandler.getColumns || !tableInfo) {
       this.setState({
@@ -328,7 +325,6 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     this.setState({
       action,
       dynamicValidatedColumns: _columns,
-      tableInfo,
       error:
         invalidColumns?.length ?
           "Some requested columns not found in the table: " +
@@ -367,7 +363,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     const {
       newRow = {},
       defaultColumnData = {},
-      tableInfo,
+      // tableInfo,
       referencedInsertData = {},
     } = this.state;
     let data = {
@@ -378,7 +374,8 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     };
     let _errors: AnyObject | undefined;
 
-    const { columns } = this;
+    const { columns, table } = this;
+    const tableInfo = table?.info;
 
     this.getDisplayedColumns()
       .filter((c) => c.insert || c.update)
@@ -544,22 +541,17 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
 
   getSelect = async () => {
     const { tableName, db, includeMedia = true } = this.props;
-    const { tableInfo } = this.state;
-    let ti = tableInfo;
-    if (!tableInfo) {
-      ti = await db[tableName]?.getInfo?.();
-      this.setState({ tableInfo: ti });
-    }
-
+    const tableInfo = this.table?.info;
     const select = { $rowhash: 1, "*": 1 } as const;
+
     if (
       includeMedia &&
-      ti?.fileTableName &&
-      ti.fileTableName !== tableName &&
-      ti.hasFiles &&
-      db[ti.fileTableName]?.find
+      tableInfo?.fileTableName &&
+      tableInfo.fileTableName !== tableName &&
+      tableInfo.hasFiles &&
+      db[tableInfo.fileTableName]?.find
     ) {
-      select[ti.fileTableName] = "*";
+      select[tableInfo.fileTableName] = "*";
     }
     return select;
   };
@@ -817,9 +809,9 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
   }
 
   getDisplayedColumns = () => {
-    const { tableInfo, action } = this.state;
+    const { action } = this.state;
     const { hideNonUpdateableColumns = false } = this.props;
-    if (tableInfo?.isFileTable && action.type === "insert") {
+    if (this.table?.info.isFileTable && action.type === "insert") {
       return [];
     }
 
@@ -860,7 +852,6 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     const {
       error,
       errors = {},
-      tableInfo,
       confirmUpdates = this.props.confirmUpdates ?? false,
       showLocalChanges = this.props.showLocalChanges ?? true,
       action,
@@ -869,6 +860,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     const hideNullBtn = action.type === "view" || this.props.hideNullBtn;
 
     const row = this.getThisRow();
+    const tableInfo = this.table?.info;
 
     let fileManagerTop: React.ReactNode = null;
     if (
@@ -1131,6 +1123,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
           }}
           row={row}
           state={this.state}
+          table={this.table}
           onRemoveUpdate={(key) => {
             this.setState({
               newRow: filterObj({ ...this.state.newRow }, undefined, [key]),
@@ -1174,6 +1167,7 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
         : null}
 
         <SmartFormFooterButtons
+          tableInfo={tableInfo}
           state={this.state}
           props={this.props}
           action={action.type}

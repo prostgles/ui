@@ -1,7 +1,8 @@
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { Users } from "..";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import { getActiveSession, makeSession, parseAsBasicSession } from "./getAuth";
+import { getActiveSession } from "./getActiveSession";
+import { makeSession, parseAsBasicSession } from "./getAuth";
 
 type CreateSessionArgs = {
   user: Users;
@@ -23,7 +24,9 @@ export const createSession = async ({
     type: "login-success",
     filter: { user_id: user.id, type: "web", user_agent: user_agent ?? "" },
   });
-  if (error) throw error;
+  if (error) {
+    throw error;
+  }
   if (failedTooManyTimes) {
     throw "rate-limit-exceeded";
   }

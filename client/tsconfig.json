@@ -12,7 +12,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "noEmit": true, 
     "jsx": "react",
     "strict": true,
     "baseUrl": "./",
@@ -21,6 +21,7 @@
     "declaration": true,
     "ignoreDeprecations": "5.0",
     "strictNullChecks": true,
+    "checkJs": true,
     "paths": {
       "@common/*": ["../commonTypes/*"]
     }

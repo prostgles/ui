@@ -1,13 +1,13 @@
 import {
-  postAuthData,
+  authRequest,
   type PasswordLogin,
   type PasswordRegister,
 } from "prostgles-client/dist/Auth";
 import type { AuthResponse } from "prostgles-types";
 import React, { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import type { LoginFormProps } from "./Login";
 import { EMAIL_CONFIRMED_SEARCH_PARAM } from "../../../../commonTypes/OAuthUtils";
+import type { LoginFormProps } from "./Login";
 
 type PasswordLoginDataAndFunc = {
   onCall: PasswordLogin;
@@ -55,14 +55,14 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
     message: string;
   }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const emailConfirmedNotification =
-    searchParams.get(EMAIL_CONFIRMED_SEARCH_PARAM) === "true";
-  const onClearEmailConfirmedNotification =
-    !emailConfirmedNotification ? undefined : (
-      () => {
-        setSearchParams({ [EMAIL_CONFIRMED_SEARCH_PARAM]: "" });
-      }
-    );
+  const verifiedEmail = searchParams.get(EMAIL_CONFIRMED_SEARCH_PARAM);
+  useEffect(() => {
+    if (!verifiedEmail) return;
+    setAuthResponse({
+      success: true,
+      message: SIGNUP_CODE_MESSAGES["email-verified"],
+    });
+  }, [verifiedEmail, setSearchParams]);
 
   useEffect(() => {
     _setError("");
@@ -74,6 +74,10 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
         state,
         username,
         setUsername,
+        ...(result?.code === "password-missing" && {
+          password,
+          setPassword,
+        }),
         onCall: auth.login,
       }
     : state === "login" && auth.loginType === "email+password" ?
@@ -121,11 +125,10 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
         emailVerificationCode,
         setEmailVerificationCode,
         onCall: () =>
-          fetch(
+          authRequest(
             `/confirm-email?code=${emailVerificationCode}&email=${username}`,
             {},
-          ).then((res) =>
-            res.json().catch(async () => ({ error: await res.text() })),
+            "GET",
           ),
         result,
       }
@@ -161,8 +164,11 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
      * Validate form data
      */
     if (isOnLogin) {
-      if (!username || !password) {
-        return setError("Username/password cannot be empty");
+      if (!username) {
+        return setError("Username/email cannot be empty");
+      }
+      if (!password && formHandlers.setPassword) {
+        return setError("Password cannot be empty");
       }
       if (formHandlers.state === "loginTotp" && !totpToken) {
         return setError("Token cannot be empty");
@@ -185,9 +191,19 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
 
     const res = await formHandlers.onCall(formData);
     if (!res.success) {
+      if (state === "login" && res.code === "password-missing") {
+        setState("login");
+      }
+      if (state === "login" && res.code === "email-not-confirmed") {
+        setAuthResponse({
+          success: false,
+          message: ERR_CODE_MESSAGES[res.code],
+        });
+        setState("registerWithPasswordConfirmationCode");
+      }
       if (res.code === "totp-token-missing") {
         setState("loginTotp");
-      } else {
+      } else if (res.code !== "password-missing") {
         const errorMessage = res.message ?? ERR_CODE_MESSAGES[res.code];
         setErrorWithInfo(errorMessage);
       }
@@ -199,29 +215,20 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
         setState("registerWithPasswordConfirmationCode");
       }
 
-      if (!isOnLogin) {
-        // const message =
-        //   !res.success ?
-        //     res.message ||
-        //     {
-        //       "already-registered-but-did-not-confirm-email":
-        //         "Email verification sent. Open the verification url or enter the code to confirm your email",
-        //       "email-verification-code-sent":
-        //         "Email verification sent. Open the verification url or enter the code to confirm your email",
-        //       "must-confirm-email": "Please confirm your email",
-        //       "email-confirmation-sent": "Email confirmation sent",
-        //     }[res.code]
-        //   : (res.message ?? "Success");
-        if (res.success) {
-          if (formHandlers.state === "registerWithPasswordConfirmationCode") {
-            setState("login");
-          }
-          setAuthResponse({
-            ...res,
-            message: SIGNUP_CODE_MESSAGES[res.code] ?? res.message ?? "Success",
-          });
-        }
+      let message =
+        (res.code && SIGNUP_CODE_MESSAGES[res.code]) ??
+        res.message ??
+        "Success";
+      if (formHandlers.state === "registerWithPasswordConfirmationCode") {
+        message = SIGNUP_CODE_MESSAGES["email-verified"];
+        setState("login");
       }
+
+      !res.redirect_url &&
+        setAuthResponse({
+          ...res,
+          message,
+        });
     }
     setResult(res);
     return res;
@@ -241,8 +248,10 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
     registerTypeAllowed,
     result,
     authResponse,
-    clearAuthResponse: () => setAuthResponse(undefined),
-    onClearEmailConfirmedNotification,
+    clearAuthResponse: () => {
+      setAuthResponse(undefined);
+      setSearchParams({});
+    },
   };
 };
 
@@ -252,7 +261,8 @@ const ERR_CODE_MESSAGES = {
   "totp-token-missing": "Token cannot be empty",
   "invalid-totp-recovery-code": "Invalid recovery code",
   "rate-limit-exceeded": "Too many failed attempts",
-  "email-not-confirmed": "Email not confirmed",
+  "email-not-confirmed":
+    "Email not confirmed. Please check your email and open the confirmation url or enter the provided code",
   "expired-magic-link": "Magic link expired",
   "inactive-account": "Account is inactive",
   "invalid-password": "Invalid password",
@@ -278,9 +288,14 @@ const ERR_CODE_MESSAGES = {
 
 const SIGNUP_CODE_MESSAGES = {
   "already-registered-but-did-not-confirm-email":
-    "Email verification sent. Open the verification url or enter the code to confirm your email",
+    "Email verification re-sent. Open the verification url or enter the code to confirm your email",
   "email-verification-code-sent":
     "Email verification sent. Open the verification url or enter the code to confirm your email",
-  // "must-confirm-email": "Please confirm your email",
-  // "email-confirmation-sent": "Email confirmation sent",
-} satisfies Record<AuthResponse.PasswordRegisterSuccess["code"], string>;
+  "email-verified": "Your email has been confirmed. You can now sign in",
+  "magic-link-sent": "Magic link sent. Open the url from your email to login",
+} satisfies Record<
+  | AuthResponse.PasswordRegisterSuccess["code"]
+  | AuthResponse.MagicLinkAuthSuccess["code"]
+  | AuthResponse.PasswordRegisterEmailConfirmationSuccess["code"],
+  string
+>;

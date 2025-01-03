@@ -2,6 +2,7 @@ import { mdiContentCopy, mdiDelete } from "@mdi/js";
 import type {
   AnyObject,
   ProstglesError,
+  TableInfo,
   ValidatedColumnInfo,
 } from "prostgles-types";
 import React, { useState } from "react";
@@ -22,6 +23,7 @@ import type {
 type P = {
   props: SmartFormProps;
   state: SmartFormState;
+  tableInfo: TableInfo | undefined;
   columns: ValidatedColumnInfo[];
   action: "view" | "update" | "insert";
   getThisRow: () => AnyObject;
@@ -223,7 +225,7 @@ const onClickInsert = async ({
   parseError,
   setAction,
   setError,
-  getIsMounted,
+  tableInfo,
 }: ButtonProps) => {
   const {
     db,
@@ -233,7 +235,7 @@ const onClickInsert = async ({
     onSuccess,
     onBeforeInsert,
   } = props;
-  const { tableInfo, referencedInsertData = {}, action } = state;
+  const { referencedInsertData = {}, action } = state;
   const tableHandler = db[tableName];
 
   if (action.type !== "insert") return;
@@ -326,9 +328,10 @@ const onClickUpdate = async ({
   useConfirmPopup,
   setAction,
   setError,
+  tableInfo,
 }: ButtonProps) => {
   const { db, tableName, onSuccess } = props;
-  const { tableInfo, action } = state;
+  const { action } = state;
 
   const tableHandler = db[tableName];
 

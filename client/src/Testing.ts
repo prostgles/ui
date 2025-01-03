@@ -263,6 +263,7 @@ export const COMMANDS = {
   "EmailAuthSetup.error": "",
   EmailSMTPAndTemplateSetup: "",
   "Login.toggle": "",
+  AuthNotifPopup: "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

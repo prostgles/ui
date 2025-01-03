@@ -1125,6 +1125,7 @@ export const loadPSQLLanguage = async (
         //@ts-ignore
         langModule.language.tokenizer.numbers =
           langModule.language.tokenizer.numbers?.filter(
+            //@ts-ignore
             ([ruleRegex], i) => !"$".match(ruleRegex),
           );
 

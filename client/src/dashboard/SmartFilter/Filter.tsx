@@ -1,5 +1,5 @@
 import { mdiCog, mdiFormatLetterMatches } from "@mdi/js";
-import { omitKeys } from "prostgles-types";
+import { omitKeys, isEqual, isDefined } from "prostgles-types";
 import React from "react";
 import type { SimpleFilter } from "../../../../commonTypes/filterUtils";
 import {
@@ -24,7 +24,6 @@ import { NumberOrDateFilter } from "./NumberOrDateFilter";
 import type { BaseFilterProps } from "./SmartFilter";
 import { SmartSearch } from "./SmartSearch/SmartSearch";
 import { getTableSelect } from "../W_Table/tableUtils/getTableSelect";
-import { isEqual } from "prostgles-client/dist/react-hooks";
 
 type FilterProps = BaseFilterProps &
   Pick<FilterWrapperProps, "rootFilter" | "selectedColumns"> & {
@@ -314,7 +313,7 @@ export class Filter extends RTComp<FilterProps, { error?: any }> {
               onChange(f);
             }}
             onChange={(val) => {
-              if (!val) {
+              if (!isDefined(val)) {
                 onChange({
                   ...filter,
                   value: undefined,
@@ -331,7 +330,7 @@ export class Filter extends RTComp<FilterProps, { error?: any }> {
                     .includes(f.type)
                 ) ?
                   val.columnTermValue
-                : columnValue || term; // f.type === "$term_highlight"? term : columnValue
+                : (columnValue ?? term); // f.type === "$term_highlight"? term : columnValue
               f.disabled = false;
 
               onChange(f);

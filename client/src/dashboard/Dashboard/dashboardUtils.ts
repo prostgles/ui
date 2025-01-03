@@ -1,4 +1,3 @@
-import type { DBGeneratedSchema as DBSchemaGenerated } from "@common/DBoGenerated";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { DBSchemaTable, ValidatedColumnInfo } from "prostgles-types";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
@@ -23,6 +22,7 @@ import type {
   ColumnConfig,
   ColumnSort,
 } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
 const getRandomElement = <Arr>(
   items: Arr[],
 ): { elem: Arr | undefined; index: number } => {
@@ -117,7 +117,7 @@ export type ChartType =
   | "method";
 
 export type DBSSchemaForHandlers = {
-  [K in keyof DBSchemaGenerated]: DBSchemaGenerated[K]["columns"];
+  [K in keyof DBGeneratedSchema]: DBGeneratedSchema[K]["columns"];
 };
 
 export const vibrateFeedback = (duration = 15) => {

@@ -92,7 +92,7 @@ function extractSize(
   }
 
   return Array.isArray(entry[box]) ?
-      entry[box][0][sizeType]
+      entry[box][0]![sizeType]
       // @ts-ignore Support Firefox's non-standard behavior
     : (entry[box][sizeType] as number);
 }

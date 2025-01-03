@@ -34,8 +34,8 @@ const AllowedOriginCheck = ({ dbs }: Pick<APIDetailsProps, "dbs">) => {
             variant: "filled",
             disabledInfo:
               !allowed_origin ? "Allowed origin is required" : undefined,
-            onClickPromise: () => {
-              return dbs.global_settings.update({}, { allowed_origin });
+            onClickPromise: async () => {
+              await dbs.global_settings.update({}, { allowed_origin });
             },
           },
         ]}

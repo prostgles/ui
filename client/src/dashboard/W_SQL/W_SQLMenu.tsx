@@ -126,8 +126,8 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
 
   saveQuery = async () => {
     const w = this.props.w;
-    const sql = w.$get().sql || "";
-    const fileName = (w.$get().name || `Query_${await sha256(sql)}`) + ".sql";
+    const sql = w.$get()?.sql || "";
+    const fileName = (w.$get()?.name || `Query_${await sha256(sql)}`) + ".sql";
 
     download(sql, fileName, "text/sql");
   };

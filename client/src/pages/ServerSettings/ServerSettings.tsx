@@ -4,20 +4,18 @@ import {
   mdiLaptop,
   mdiSecurity,
 } from "@mdi/js";
+import { usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useState } from "react";
 import { getCIDRRangesQuery } from "../../../../commonTypes/publishUtils";
+import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import Chip from "../../components/Chip";
+import { FlexCol } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
+import { TabsWithDefaultStyle } from "../../components/Tabs";
 import SmartCardList from "../../dashboard/SmartCard/SmartCardList";
 import SmartForm from "../../dashboard/SmartForm/SmartForm";
-import { usePromise } from "prostgles-client/dist/react-hooks";
-import type { Prgl } from "../../App";
-import { TabsWithDefaultStyle } from "../../components/Tabs";
-import { DBS } from "../../dashboard/Dashboard/DBS";
-import { DBSchemaGenerated } from "../../../../commonTypes/DBGeneratedSchema";
-import { FlexCol } from "../../components/Flex";
 import { AuthProviderSetup } from "./AuthProvidersSetup";
 
 export const ServerSettings = ({

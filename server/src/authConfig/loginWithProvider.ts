@@ -7,7 +7,7 @@ import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import { createSession } from "./createSession";
 import type { SUser } from "./getAuth";
-import { startLoginAttempt } from "./startLoginAttempt";
+import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
 
 type LoginReturnType = ReturnType<
   Required<LoginSignupConfig<DBGeneratedSchema, SUser>>["login"]
@@ -33,14 +33,17 @@ export const loginWithProvider = async (
     : loginParams.provider === "facebook" ? loginParams.profile.name?.givenName
     : loginParams.profile.name?.givenName);
   const email = profile.emails?.[0]?.value;
-  const failedInfo = await startLoginAttempt(db, clientInfo, {
+  const rateLimitInfo = await startRateLimitedLoginAttempt(db, clientInfo, {
     auth_type: "provider",
     auth_provider: provider,
   });
-  if ("success" in failedInfo) return failedInfo.code;
-  const { onSuccess, ip, failedTooManyTimes } = failedInfo;
-  if (failedTooManyTimes) return "rate-limit-exceeded";
+  if ("success" in rateLimitInfo) return rateLimitInfo.code;
+  const { onSuccess, ip, failedTooManyTimes } = rateLimitInfo;
+  if (failedTooManyTimes) {
+    return "rate-limit-exceeded";
+  }
   await onSuccess();
+
   const matchingUser = await db.users.findOne({ auth_provider, username });
   if (matchingUser) {
     const session = await createSession({
