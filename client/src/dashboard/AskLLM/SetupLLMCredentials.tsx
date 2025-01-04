@@ -1,4 +1,4 @@
-import { mdiKey, mdiLogin } from "@mdi/js";
+import { mdiCheck, mdiKey, mdiLogin } from "@mdi/js";
 import React from "react";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
@@ -40,6 +40,12 @@ export const SetupLLMCredentials = ({
   const [email, setEmail] = React.useState(
     setupState.globalSettings?.data?.prostgles_registration?.email || "",
   );
+  const [isRegistering, setIsRegistering] = React.useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = React.useState(false);
+  
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
   const content =
     state === "loading" ? <Loading delay={1000} />
     : state === "cannotSetupOrNotAllowed" ?
@@ -89,20 +95,33 @@ export const SetupLLMCredentials = ({
             <Btn
               variant="filled"
               color="action"
+              disabled={!validateEmail(email) || isRegistering || registrationSuccess}
+              iconPath={registrationSuccess ? mdiCheck : undefined}
               onClickPromise={async () => {
-                const { token, error, hasError } =
-                  await dbsMethods.prostglesSignup!(email);
-                if (hasError) {
-                  throw error;
+                try {
+                  setIsRegistering(true);
+                  const { token, error, hasError } =
+                    await dbsMethods.prostglesSignup!(email);
+                  if (hasError) {
+                    throw error;
+                  }
+                  await dbs.global_settings.update(
+                    {},
+                    { prostgles_registration: { email, token, enabled: true } },
+                  );
+                  setRegistrationSuccess(true);
+                } finally {
+                  setIsRegistering(false);
                 }
-                await dbs.global_settings.update(
-                  {},
-                  { prostgles_registration: { email, token, enabled: true } },
-                );
               }}
             >
-              Register
+              {isRegistering ? "Registering..." : registrationSuccess ? "Registered!" : "Register"}
             </Btn>
+            {registrationSuccess && (
+              <InfoRow color="success" variant="filled" className="mt-2">
+                Registration successful! You can now use the AI assistant.
+              </InfoRow>
+            )}
           </FlexCol>
         )}
         {setupType === "api" && (
