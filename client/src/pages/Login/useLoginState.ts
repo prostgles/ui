@@ -4,7 +4,7 @@ import {
   type PasswordRegister,
 } from "prostgles-client/dist/Auth";
 import type { AuthResponse } from "prostgles-types";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { EMAIL_CONFIRMED_SEARCH_PARAM } from "../../../../commonTypes/OAuthUtils";
 import type { LoginFormProps } from "./Login";
@@ -47,6 +47,9 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
   const [totpToken, setTotpToken] = React.useState("");
   const [totpRecoveryCode, setTotpRecoveryCode] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [usernamesWithPassword, setUsernamesWithPassword] = useState<string[]>(
+    [],
+  );
   const [error, _setError] = React.useState("");
   const [result, setResult] =
     React.useState<Extract<FormData, { type: typeof state }>["result"]>();
@@ -74,7 +77,7 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
         state,
         username,
         setUsername,
-        ...(result?.code === "password-missing" && {
+        ...(usernamesWithPassword.includes(username) && {
           password,
           setPassword,
         }),
@@ -125,11 +128,10 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
         emailVerificationCode,
         setEmailVerificationCode,
         onCall: () =>
-          authRequest(
-            `/confirm-email?code=${emailVerificationCode}&email=${username}`,
-            {},
-            "GET",
-          ),
+          authRequest(`/magic-link`, {
+            email: username,
+            code: emailVerificationCode,
+          }),
         result,
       }
     : undefined;
@@ -191,8 +193,12 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
 
     const res = await formHandlers.onCall(formData);
     if (!res.success) {
-      if (state === "login" && res.code === "password-missing") {
-        setState("login");
+      if (
+        state === "login" &&
+        res.code === "password-missing" &&
+        !usernamesWithPassword.includes(username)
+      ) {
+        setUsernamesWithPassword([...usernamesWithPassword, username]);
       }
       if (state === "login" && res.code === "email-not-confirmed") {
         setAuthResponse({
@@ -211,7 +217,7 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
       if ("redirect_url" in res && res.redirect_url) {
         window.location.href = res.redirect_url;
       }
-      if (state === "registerWithPassword") {
+      if (state === "registerWithPassword" || res.code === "magic-link-sent") {
         setState("registerWithPasswordConfirmationCode");
       }
 
@@ -265,9 +271,9 @@ const ERR_CODE_MESSAGES = {
     "Email not confirmed. Please check your email and open the confirmation url or enter the provided code",
   "expired-magic-link": "Magic link expired",
   "inactive-account": "Account is inactive",
-  "invalid-password": "Invalid password",
-  "invalid-totp-code": "Invalid totp code",
-  "invalid-username": "Invalid username",
+  "invalid-password": "Invalid or missing password",
+  "invalid-totp-code": "Invalid or missing totp code",
+  "invalid-username": "Invalid or missing username",
   "is-from-magic-link": "Cannot login with password",
   "is-from-OAuth": "Cannot login with password",
   "server-error": "Server error",
@@ -279,6 +285,7 @@ const ERR_CODE_MESSAGES = {
   "invalid-email-confirmation-code": "Invalid email confirmation code",
   "invalid-magic-link": "Invalid magic link",
   "used-magic-link": "Magic link already used",
+  "invalid-email": "Invalid or missing email",
 } satisfies Record<
   | AuthResponse.MagicLinkAuthFailure["code"]
   | AuthResponse.PasswordLoginFailure["code"]

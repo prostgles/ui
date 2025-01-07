@@ -132,6 +132,7 @@ export const OAuthProviderOptions = {
       },
     ],
   },
+  customOAuth: {},
 };
 
 export const EMAIL_CONFIRMED_SEARCH_PARAM = "email-confirmed" as const;
@@ -216,7 +217,8 @@ export const DEFAULT_MAGIC_LINK_TEMPLATE = {
   body: fixIndent(`
     Hey,
 
-    Login by clicking <a href="{{url}}">here</a>.
+    Login by clicking <a href="{{url}}">here</a>. Or by entering the code below on the login page:
+    {{code}}
 
     If you didn't request this email there's nothing to worry about - you can safely ignore it.`),
 } as const;
@@ -224,14 +226,17 @@ export const DEFAULT_MAGIC_LINK_TEMPLATE = {
 export const getMagicLinkEmailFromTemplate = ({
   url,
   template,
+  code,
 }: {
   url: string;
+  code: string;
   template: { from: string; subject: string; body: string };
 }) => {
   return getEmailFromTemplate(
     template,
     {},
     {
+      code: { required: true, value: code },
       url: { required: true, value: url },
     },
   );
@@ -260,6 +265,7 @@ export const getVerificationEmailFromTemplate = ({
 try {
   getMagicLinkEmailFromTemplate({
     url: "a",
+    code: "a",
     template: DEFAULT_MAGIC_LINK_TEMPLATE,
   });
   getVerificationEmailFromTemplate({

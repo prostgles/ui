@@ -1,4 +1,4 @@
-import { mdiContentCopy } from "@mdi/js";
+import { mdiContentCopy, mdiLock } from "@mdi/js";
 import { isEqual } from "prostgles-types";
 import React, { useEffect, useState } from "react";
 import Btn from "../../components/Btn";
@@ -16,6 +16,7 @@ import {
 import type { AuthProviderProps } from "./AuthProvidersSetup";
 import { OAuthProviderOptions } from "../../../../commonTypes/OAuthUtils";
 import { tout } from "../ElectronSetup";
+import { Icon } from "../../components/Icon/Icon";
 
 type P = AuthProviderProps & {
   provider: keyof Omit<
@@ -30,10 +31,14 @@ export const OAuthProviderSetup = ({
   provider,
   doUpdate,
 }: P) => {
-  const returnURL = `${authProviders.website_url}/auth/${provider}/callback`;
+  const returnURL = `${authProviders.website_url}/oauth/${provider}/callback`;
   const auth = authProviders[provider];
   const [_localAuth, _setLocalAuth] = useState(auth);
   const localAuth = _localAuth ?? auth;
+  const isCustomOAuth = (
+    localAuth: any,
+  ): localAuth is typeof authProviders.customOAuth =>
+    provider === "customOAuth";
   const setLocalAuth = async (update: Partial<typeof auth>) => {
     if (!update) return _setLocalAuth(undefined);
     _setLocalAuth({
@@ -104,6 +109,46 @@ export const OAuthProviderSetup = ({
           });
         }}
       />
+      {isCustomOAuth(localAuth) && (
+        <>
+          <FormField
+            label={"Display Name"}
+            value={localAuth?.displayName}
+            onChange={async (displayName) => {
+              setLocalAuth({
+                displayName,
+              });
+            }}
+          />
+          <FormField
+            label={"Display Icon"}
+            value={localAuth?.displayIconPath}
+            onChange={async (displayIconPath) => {
+              setLocalAuth({
+                displayIconPath,
+              });
+            }}
+          />
+          <FormField
+            label={"Authorization URL"}
+            value={localAuth?.authorizationURL}
+            onChange={async (authorizationURL) => {
+              setLocalAuth({
+                authorizationURL,
+              });
+            }}
+          />
+          <FormField
+            label={"Token URL"}
+            value={localAuth?.tokenURL}
+            onChange={async (tokenURL) => {
+              setLocalAuth({
+                tokenURL,
+              });
+            }}
+          />
+        </>
+      )}
       <FormField
         label={"Client ID"}
         value={localAuth?.clientID}
@@ -161,7 +206,7 @@ export const OAuthProviderSetup = ({
           <Btn
             title="Copy to clipboard"
             iconPath={mdiContentCopy}
-            onClick={() => {
+            onClickPromise={async () => {
               navigator.clipboard.writeText(returnURL);
             }}
           />
@@ -203,6 +248,12 @@ const PROVIDER_INFO = {
   microsoft: {
     name: "Microsoft",
     icon: <MicrosoftIcon />,
+    scopes: OAuthProviderOptions.microsoft.scopes,
+    prompts: OAuthProviderOptions.microsoft.prompts,
+  },
+  customOAuth: {
+    name: "OAuth2",
+    icon: <Icon path={mdiLock} />,
     scopes: OAuthProviderOptions.microsoft.scopes,
     prompts: OAuthProviderOptions.microsoft.prompts,
   },

@@ -159,6 +159,7 @@ export const fetchLLMResponse = async ({
     config.Provider === "OpenAI" ?
       _messages
     : _messages.filter((m) => m.role !== "system");
+
   const headers =
     config.Provider === "OpenAI" ?
       {

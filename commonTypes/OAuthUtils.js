@@ -126,6 +126,7 @@ export const OAuthProviderOptions = {
             },
         ],
     },
+    customOAuth: {},
 };
 export const EMAIL_CONFIRMED_SEARCH_PARAM = "email-confirmed";
 export const PASSWORDLESS_ADMIN_USERNAME = "passwordless_admin";
@@ -153,11 +154,11 @@ export const getEmailFromTemplate = (template, subjectData, bodyData) => {
     if (!keyValues.length)
         throw "Empty bodyData provided";
     if (!template.body)
-        throw "No body provided";
+        throw "Email template: No body provided";
     if (!template.from)
-        throw "No from provided";
+        throw "Email template: No from provided";
     if (!template.subject)
-        throw "No subject provided";
+        throw "Email template: No subject provided";
     return Object.assign(Object.assign({}, template), { body: getTemplatedText(template.body, bodyData, "body"), subject: getTemplatedText(template.subject, subjectData, "subject") });
 };
 export const MOCK_SMTP_HOST = "prostgles-test-mock";
@@ -185,12 +186,14 @@ export const DEFAULT_MAGIC_LINK_TEMPLATE = {
     body: fixIndent(`
     Hey,
 
-    Login by clicking <a href="{{url}}">here</a>.
+    Login by clicking <a href="{{url}}">here</a>. Or by entering the code below on the login page:
+    {{code}}
 
     If you didn't request this email there's nothing to worry about - you can safely ignore it.`),
 };
-export const getMagicLinkEmailFromTemplate = ({ url, template, }) => {
+export const getMagicLinkEmailFromTemplate = ({ url, template, code, }) => {
     return getEmailFromTemplate(template, {}, {
+        code: { required: true, value: code },
         url: { required: true, value: url },
     });
 };
@@ -205,6 +208,7 @@ export const getVerificationEmailFromTemplate = ({ url, code, template, }) => {
 try {
     getMagicLinkEmailFromTemplate({
         url: "a",
+        code: "a",
         template: DEFAULT_MAGIC_LINK_TEMPLATE,
     });
     getVerificationEmailFromTemplate({

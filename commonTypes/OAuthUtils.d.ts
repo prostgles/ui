@@ -31,6 +31,7 @@ export declare const OAuthProviderOptions: {
             subLabel: string;
         }[];
     };
+    customOAuth: {};
 };
 export declare const EMAIL_CONFIRMED_SEARCH_PARAM: "email-confirmed";
 export declare const PASSWORDLESS_ADMIN_USERNAME = "passwordless_admin";
@@ -54,8 +55,9 @@ export declare const DEFAULT_MAGIC_LINK_TEMPLATE: {
     readonly subject: "Login to your account";
     readonly body: string;
 };
-export declare const getMagicLinkEmailFromTemplate: ({ url, template, }: {
+export declare const getMagicLinkEmailFromTemplate: ({ url, template, code, }: {
     url: string;
+    code: string;
     template: {
         from: string;
         subject: string;

@@ -38,6 +38,27 @@ const PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR =
   "Only 1 session is allowed for the passwordless admin. If you're seeing this then the passwordless admin session has already been assigned to a different device/browser";
 export class ConnectionChecker {
   app: Express;
+  passwordlessAdmin?: DBSSchema["users"];
+  dbs?: DBS;
+  _db?: DB;
+
+  config: {
+    loaded: boolean;
+    global_setting: DBSSchema["global_settings"] | undefined;
+  } = {
+    loaded: false,
+    global_setting: undefined,
+  };
+
+  usersSub?: SubscriptionHandler;
+  configSub?: SubscriptionHandler;
+  init = async (db: DBS, _db: DB) => {
+    this.dbs = db;
+    this._db = _db;
+    await initUsers(db, _db);
+    await this.withConfig();
+  };
+
   constructor(app: Express) {
     this.app = app;
 
@@ -52,11 +73,11 @@ export class ConnectionChecker {
   onSocketConnected = async ({ sid }: { sid?: string }) => {
     /** Ensure that only 1 session is allowed for the passwordless admin */
     await this.withConfig();
-    if (this.noPasswordAdmin) {
+    if (this.passwordlessAdmin) {
       const electronConfig = getElectronConfig();
 
-      const pwdLessSession = await this.db?.sessions.findOne({
-        user_id: this.noPasswordAdmin.id,
+      const pwdLessSession = await this.dbs?.sessions.findOne({
+        user_id: this.passwordlessAdmin.id,
         active: true,
       });
       if (pwdLessSession && pwdLessSession.id !== sid) {
@@ -64,7 +85,9 @@ export class ConnectionChecker {
           electronConfig?.isElectron &&
           electronConfig.sidConfig.electronSid === sid
         ) {
-          await this.db?.sessions.delete({ user_id: this.noPasswordAdmin.id });
+          await this.dbs?.sessions.delete({
+            user_id: this.passwordlessAdmin.id,
+          });
         } else {
           throw PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR;
         }
@@ -77,18 +100,17 @@ export class ConnectionChecker {
     config: false,
   };
   withConfig = async () => {
-    if (!this.db) throw "dbs missing";
+    const { dbs: db } = this;
+    if (!db) throw "dbs missing";
 
     if (this.config.loaded) return this.config;
 
     return new Promise(async (resolve, reject) => {
-      if (!this.db) throw "dbs missing";
-
       /** Add cors config if missing */
-      if (!(await this.db.global_settings.count())) {
-        await this.db.global_settings.insert({
+      if (!(await db.global_settings.count())) {
+        await db.global_settings.insert({
           /** Origin "*" is required to enable API access */
-          allowed_origin: this.noPasswordAdmin ? null : "*",
+          allowed_origin: this.passwordlessAdmin ? null : "*",
           // allowed_ips_enabled: this.noPasswordAdmin? true : false,
           allowed_ips_enabled: false,
           allowed_ips: ["::ffff:127.0.0.1"],
@@ -108,26 +130,22 @@ export class ConnectionChecker {
       };
 
       await this.usersSub?.unsubscribe();
-      const setNoPasswordAdmin = async () => {
-        this.noPasswordAdmin = await getPasswordlessAdmin(this.db!);
+      const setPasswordlessAdmin = async () => {
+        this.passwordlessAdmin = await getPasswordlessAdmin(this.dbs!);
         initialise("users");
       };
-      await setNoPasswordAdmin();
+      await setPasswordlessAdmin();
       let skippedFirst = false;
-      this.usersSub = await this.db.users.subscribe(
-        {},
-        { limit: 1 },
-        async () => {
-          if (skippedFirst) {
-            await setNoPasswordAdmin();
-          } else {
-            skippedFirst = true;
-          }
-        },
-      );
+      this.usersSub = await db.users.subscribe({}, { limit: 1 }, async () => {
+        if (skippedFirst) {
+          await setPasswordlessAdmin();
+        } else {
+          skippedFirst = true;
+        }
+      });
 
       await this.configSub?.unsubscribe();
-      this.configSub = await this.db.global_settings.subscribeOne(
+      this.configSub = await db.global_settings.subscribeOne(
         {},
         {},
         async (gconfigs) => {
@@ -156,7 +174,7 @@ export class ConnectionChecker {
   };
 
   onUse: OnUse = async ({ req, res, next }) => {
-    if (!this.config.loaded || !this.db) {
+    if (!this.config.loaded || !this.dbs) {
       console.warn(
         "Delaying user request until server is ready. originalUrl: " +
           req.originalUrl,
@@ -178,13 +196,13 @@ export class ConnectionChecker {
 
     if (!electronConfig?.isElectron) {
       const isAccessingMagicLink = req.originalUrl.startsWith("/magic-link/");
-      if (this.noPasswordAdmin && !sid && !isAccessingMagicLink) {
+      if (this.passwordlessAdmin && !sid && !isAccessingMagicLink) {
         // need to ensure that only 1 session is allowed for the passwordless admin
         const {
           data: magicLinkPaswordless,
           hasError,
           error,
-        } = await tryCatchV2(() => getPasswordlessMagicLink(this.db!));
+        } = await tryCatchV2(() => getPasswordlessMagicLink(this.dbs!));
         if (hasError || magicLinkPaswordless.state === "magic-link-exists") {
           res
             .status(HTTP_FAIL_CODES.UNAUTHORIZED)
@@ -212,7 +230,7 @@ export class ConnectionChecker {
         const client = getClientRequestIPsInfo({ httpReq: req });
         let hasNoActiveSession = !sid;
         if (sid) {
-          const activeSessionInfo = await getActiveSession(this.db, {
+          const activeSessionInfo = await getActiveSession(this.dbs, {
             type: "session-id",
             client,
             filter: { id: sid },
@@ -226,20 +244,17 @@ export class ConnectionChecker {
           hasNoActiveSession = !activeSessionInfo.validSession;
         }
 
-        /** If test mode and no sid then create a random account and redirect to magic login link */
+        /** If no sid then create a public anonymous account */
         if (this._db && hasNoActiveSession && !isLoggingIn) {
-          const newRandomUser = await insertUser(this.db, this._db, {
+          const newRandomUser = await insertUser(this.dbs, this._db, {
             username: `user-${new Date().toISOString()}_${Math.round(Math.random() * 1e8)}`,
             password: "",
             type: "public",
           });
           if (newRandomUser) {
-            const mlink = await makeMagicLink(
-              newRandomUser,
-              this.db,
-              "/",
-              Date.now() + DAY * 2,
-            );
+            const mlink = await makeMagicLink(newRandomUser, this.dbs, "/", {
+              session_expires: Date.now() + DAY * 2,
+            });
             res.redirect(mlink.magic_login_link_redirect);
             return;
           }
@@ -248,29 +263,6 @@ export class ConnectionChecker {
     }
 
     next();
-  };
-
-  noPasswordAdmin?: DBSSchema["users"];
-
-  // ipRanges: IPRange[] = [];
-  db?: DBS;
-  _db?: DB;
-
-  config: {
-    loaded: boolean;
-    global_setting: DBSSchema["global_settings"] | undefined;
-  } = {
-    loaded: false,
-    global_setting: undefined,
-  };
-
-  usersSub?: SubscriptionHandler;
-  configSub?: SubscriptionHandler;
-  init = async (db: DBS, _db: DB) => {
-    this.db = db;
-    this._db = _db;
-    await initUsers(db, _db);
-    await this.withConfig();
   };
 
   /**
@@ -286,7 +278,7 @@ export class ConnectionChecker {
       groupBy === "x-real-ip" ? x_real_ip
       : groupBy === "remote_ip" ? ip_address_remote
       : ip_address;
-    const isAllowed = (await (args.dbsTX || this.db)?.sql!(
+    const isAllowed = (await (args.dbsTX || this.dbs)?.sql!(
       "SELECT inet ${ip} <<= any (allowed_ips::inet[]) FROM global_settings ",
       { ip: ipValue },
       { returnType: "value" },
@@ -421,13 +413,17 @@ export const makeMagicLink = async (
   user: Users,
   dbo: DBS,
   returnURL: string,
-  expires?: number,
+  opts?: {
+    expires?: number;
+    session_expires?: number;
+  },
 ) => {
-  const maxDays =
+  const maxValidityDays =
     (await dbo.global_settings.findOne())?.magic_link_validity_days ?? 2;
   const mlink = await dbo.magic_links.insert(
     {
-      expires: expires ?? Date.now() + DAY * maxDays,
+      expires: opts?.expires ?? Date.now() + DAY * maxValidityDays,
+      session_expires: opts?.session_expires ?? Date.now() + DAY * 7,
       user_id: user.id,
     },
     { returning: "*" },
@@ -459,12 +455,9 @@ const getPasswordlessMagicLink = async (dbs: DBS) => {
       } as const;
     }
     // if (existingMagicLink) throw PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR;
-    const mlink = await makeMagicLink(
-      maybePasswordlessAdmin,
-      dbs,
-      "/",
-      Date.now() + 10 * YEAR,
-    );
+    const mlink = await makeMagicLink(maybePasswordlessAdmin, dbs, "/", {
+      session_expires: Date.now() + 10 * YEAR,
+    });
 
     return {
       state: "magic-link-ready" as const,

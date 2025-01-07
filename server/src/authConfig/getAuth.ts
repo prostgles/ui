@@ -4,11 +4,10 @@ import path from "path";
 import type {
   AuthConfig,
   BasicSession,
-  LoginClientInfo,
 } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import { type AuthResponse, omitKeys } from "prostgles-types";
+import { omitKeys } from "prostgles-types";
 import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { BKP_PREFFIX } from "../BackupManager/BackupManager";
@@ -17,16 +16,11 @@ import { PROSTGLES_STRICT_COOKIE } from "../envVars";
 import type { DBS, Users } from "../index";
 import { API_PATH, connectionChecker, MEDIA_ROUTE_PREFIX } from "../index";
 import { initBackupManager } from "../startProstgles";
-import {
-  getEmailAuthProvider,
-  getOAuthProviders,
-} from "./emailProvider/getEmailAuthProvider";
-import { getLogin } from "./getLogin";
-import {
-  getFailedTooManyTimes,
-  startRateLimitedLoginAttempt,
-} from "./startRateLimitedLoginAttempt";
+import { getEmailAuthProvider } from "./emailProvider/getEmailAuthProvider";
 import { getActiveSession } from "./getActiveSession";
+import { getLogin } from "./getLogin";
+import { onMagicLinkOrOTP } from "./onMagicLinkOrOTP";
+import { getOAuthLoginProviders } from "./OAuthProviders/getOAuthLoginProviders";
 
 const authCookieOpts =
   process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_COOKIE ?
@@ -72,12 +66,15 @@ export const makeSession = async (
       },
       { returning: "*" },
     );
+    ("auth_providers");
 
     return parseAsBasicSession(session);
   } else {
     throw "Invalid user";
   }
 };
+
+export type AuthProviders = DBSSchema["global_settings"]["auth_providers"];
 
 export type SUser = {
   sid: string;
@@ -109,7 +106,22 @@ export const getAuth = async (app: Express, dbs: DBS | undefined) => {
         });
       if (error) return error;
       if (failedTooManyTimes) return "rate-limit-exceeded";
-      if (!validSession) return undefined;
+      if (!validSession) {
+        const expiredSession = await db.sessions.findOne({ id: sid });
+        if (expiredSession) {
+          const user = await db.users.findOne({ id: expiredSession.user_id });
+          if (user?.status === "active") {
+            return {
+              preferredLogin:
+                user.registration?.type === "OAuth" ? user.registration.provider
+                : user.registration ? "email"
+                : user.password ? "email+password"
+                : undefined,
+            };
+          }
+        }
+        return undefined;
+      }
 
       const user = await db.users.findOne({ id: validSession.user_id });
       if (!user) return undefined;
@@ -193,76 +205,7 @@ export const getAuth = async (app: Express, dbs: DBS | undefined) => {
         }
       },
       cookieOptions: authCookieOpts,
-      onMagicLink: async (
-        id,
-        dbo,
-        _db,
-        { ip_address, ip_address_remote, user_agent, x_real_ip },
-      ) => {
-        const withError = (
-          code: AuthResponse.MagicLinkAuthFailure["code"],
-          message?: string,
-        ) => ({
-          response: {
-            success: false,
-            code,
-            message,
-          } satisfies AuthResponse.MagicLinkAuthFailure,
-        });
-        const rateLimitedAttempt = await startRateLimitedLoginAttempt(
-          dbo,
-          { ip_address, ip_address_remote, user_agent, x_real_ip },
-          { auth_type: "magic-link", magic_link_id: id },
-        );
-        if ("success" in rateLimitedAttempt) {
-          return withError("server-error", rateLimitedAttempt.message);
-        }
-        if (rateLimitedAttempt.failedTooManyTimes) {
-          return withError("rate-limit-exceeded");
-        }
-        const mlink = await dbo.magic_links.findOne({ id });
-
-        if (!mlink) {
-          return withError("no-match");
-        }
-        if (Number(mlink.expires) < Date.now()) {
-          await rateLimitedAttempt.onSuccess();
-          return withError("expired-magic-link", "Expired magic link");
-        }
-        if (mlink.magic_link_used) {
-          await rateLimitedAttempt.onSuccess();
-          return withError("expired-magic-link", "Magic link already used");
-        }
-        const user = await dbo.users.findOne({ id: mlink.user_id });
-        if (!user) {
-          return withError("no-match", "User from Magic link not found");
-        }
-
-        /**
-         * This is done to prevent multiple logins with the same magic link
-         * even if the requests are sent at the same time
-         */
-        const usedMagicLink = await dbo.magic_links.update(
-          { id: mlink.id, magic_link_used: null },
-          { magic_link_used: new Date() },
-          { returning: "*" },
-        );
-        if (!usedMagicLink?.length) {
-          return withError("used-magic-link", "Magic link already used");
-        }
-        const session = await makeSession(
-          user,
-          {
-            ip_address: rateLimitedAttempt.ip,
-            user_agent: user_agent || null,
-            type: "web",
-          },
-          dbo,
-          Number(mlink.expires),
-        );
-        await rateLimitedAttempt.onSuccess();
-        return { session };
-      },
+      onMagicLinkOrOTP,
       localLoginMode:
         (
           auth_providers?.email?.signupType === "withMagicLink" &&
@@ -270,34 +213,8 @@ export const getAuth = async (app: Express, dbs: DBS | undefined) => {
         ) ?
           "email"
         : "email+password",
-      signupWithEmailAndPassword: await getEmailAuthProvider(
-        auth_providers,
-        dbs,
-      ),
-      loginWithOAuth:
-        auth_providers && getOAuthProviders(auth_providers) ?
-          {
-            websiteUrl: auth_providers.website_url,
-            OAuthProviders: getOAuthProviders(auth_providers)!,
-            onProviderLoginFail: async ({ clientInfo, dbo, provider }) => {
-              // await startLoginAttempt(dbo, clientInfo, {
-              //   auth_type: "provider",
-              //   auth_provider: provider,
-              // });
-            },
-            onProviderLoginStart: async ({ dbo, clientInfo }) => {
-              const check = await getFailedTooManyTimes(dbo as any, clientInfo);
-              if ("success" in check) return check;
-              return check.failedTooManyTimes ?
-                  {
-                    success: false,
-                    code: "rate-limit-exceeded",
-                    message: "Too many failed attempts",
-                  }
-                : { success: true };
-            },
-          }
-        : undefined,
+      signupWithEmail: await getEmailAuthProvider(auth_providers, dbs),
+      loginWithOAuth: getOAuthLoginProviders(auth_providers),
     },
   } satisfies AuthConfig<DBSchemaGenerated, SUser>;
   return auth;

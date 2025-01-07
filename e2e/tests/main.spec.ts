@@ -177,6 +177,17 @@ test.describe("Main test", () => {
     expect(code.length).toBe(6);
     await newPage.locator("#email-verification-code").fill(code);
     await newPage.getByRole("button", { name: "Confirm email" }).click();
+    expect(
+      await newPage
+        .getByTestId("AuthNotifPopup")
+        .getByTestId("Popup.content")
+        .textContent(),
+    ).toBe("Your email has been confirmed. You can now sign in");
+    await newPage.getByRole("button", { name: "Ok" }).click();
+
+    await newPage.locator("#username").fill(USERS.new_user);
+    await newPage.locator("#password").fill(USERS.new_user);
+    await newPage.getByRole("button", { name: "Sign in" }).click();
 
     await newPage.getByTestId("App.colorScheme").waitFor({ state: "visible" });
   });
@@ -197,7 +208,8 @@ test.describe("Main test", () => {
   });
 
   test("Email magic link signup", async ({ page: p, browser }) => {
-    const page = p as PageWIds;
+    const newPage = p as PageWIds;
+    const page: PageWIds = await browser.newPage();
 
     /**
      * Can still login with password with email magic link registrations
@@ -210,10 +222,8 @@ test.describe("Main test", () => {
     await page.getByRole("button", { name: "Continue" }).click();
     await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
 
-    const newPage: PageWIds = await browser.newPage();
     await goTo(newPage, "/login");
 
-    // await newPage.getByTestId("Login.toggle").click();
     await newPage.locator("#username").fill(USERS.new_user1);
     await newPage.getByRole("button", { name: "Continue" }).click();
 
@@ -225,20 +235,29 @@ test.describe("Main test", () => {
     ).toBe("Magic link sent. Open the url from your email to login");
     await newPage.getByRole("button", { name: "Ok" }).click();
 
-    const newUserMagicLink = await runDbsSql(
+    const newUser = await runDbsSql(
       page,
       `
-      SELECT *
-      FROM magic_links
-      WHERE user_id IN (
-        SELECT id FROM users WHERE username = $1
-      )`,
+      SELECT * 
+      FROM users 
+      WHERE username = $1
+      `,
       [USERS.new_user1],
       { returnType: "row" },
     );
-    const code = newUserMagicLink?.id;
+    const failedAttempts = await runDbsSql(
+      page,
+      `
+      DELETE -- SELECT * 
+      FROM login_attempts
+      `,
+      undefined,
+      { returnType: "rows" },
+    );
+    console.log("failedAttempts", failedAttempts);
+    const code = newUser?.registration.otp_code;
     expect(typeof code).toBe("string");
-    await goTo(newPage, `/magic-link/${code}`);
+    await goTo(newPage, `/magic-link?code=${code}&email=${USERS.new_user1}`);
 
     await newPage.getByTestId("App.colorScheme").waitFor({ state: "visible" });
 
@@ -252,7 +271,10 @@ test.describe("Main test", () => {
     );
   });
 
-  test("Disable signups", async ({ page: p, browser }) => {
+  test("Free LLM assistant signup & Disable signups", async ({
+    page: p,
+    browser,
+  }) => {
     const page = p as PageWIds;
     await goTo(page, "/login");
     await page.locator("#username").fill(USERS.test_user);
@@ -261,6 +283,31 @@ test.describe("Main test", () => {
     await page.locator("#password").fill(USERS.test_user);
     await page.getByRole("button", { name: "Continue" }).click();
     await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
+
+    /**Free LLM assistant signup */
+    await page.getByRole("link", { name: "Prostgles UI state" }).click();
+    await page.getByTestId("AskLLM").click();
+    await page.getByTestId("SetupLLMCredentials.free").click();
+    await page.locator("input#email").fill(USERS.free_llm_user1);
+    await page.getByTestId("ProstglesSignup.continue").click();
+    await page.waitForTimeout(1e3);
+    const llmUser = await runDbsSql(
+      page,
+      `
+      SELECT * 
+      FROM users 
+      WHERE username = $1
+      `,
+      [USERS.free_llm_user1],
+      { returnType: "row" },
+    );
+    const freeLLMCode = llmUser?.registration.otp_code;
+    expect(typeof freeLLMCode).toBe("string");
+    await page.locator("input#otp-code").fill(freeLLMCode);
+    await page.getByTestId("ProstglesSignup.continue").click();
+    expect(await page.getByTestId("AskLLM.popup")).toBeVisible();
+
+    /** Disable signups */
     await goTo(page, "/server-settings");
     await page.locator(`[data-key="auth"]`).click();
     await page.getByTestId("EmailAuthSetup").locator("button").click();
@@ -285,7 +332,7 @@ test.describe("Main test", () => {
       page,
       `DELETE FROM login_attempts; UPDATE global_settings SET login_rate_limit = '{"groupBy": "x-real-ip", "maxAttemptsPerHour": 5}'`,
     );
-    await goTo(page, "/logout");
+    await page.request.post("/logout");
     await goTo(page, "/login");
     const loginAndExpectError = async (
       errorMessage: string,
@@ -527,7 +574,7 @@ test.describe("Main test", () => {
       .waitFor({ state: "visible", timeout: 15e3 });
 
     /** Using recovery code */
-    await goTo(page, "localhost:3004/logout");
+    await page.request.post("/logout");
     await login(page);
     await page
       .getByRole("button", { name: "Enter recovery code", exact: true })
@@ -905,7 +952,7 @@ test.describe("Main test", () => {
   test("Default user has correct permissions", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await goTo(page, "localhost:3004/logout");
+    await page.request.post("/logout");
     await login(page, USERS.default_user);
 
     await page.getByRole("link", { name: "Connections" }).click();
@@ -929,7 +976,7 @@ test.describe("Main test", () => {
   test("Default user1 has correct permissions", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await goTo(page, "localhost:3004/logout");
+    await page.request.post("/logout");
     await login(page, USERS.default_user1);
 
     await page.getByRole("link", { name: "Connections" }).click();
@@ -953,7 +1000,7 @@ test.describe("Main test", () => {
   test("Admin user (test_user) can see all data", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await goTo(page, "localhost:3004/logout");
+    await page.request.post("/logout");
     await login(page, USERS.test_user);
     await page.getByRole("link", { name: "Connections" }).click();
     await page.getByRole("link", { name: TEST_DB_NAME }).click();
@@ -1310,7 +1357,7 @@ test.describe("Main test", () => {
     const sqlTestTimeout = { total: 8 * 6e4, sql: 7 * 6e4 };
     test.setTimeout(sqlTestTimeout.total);
 
-    await goTo(page, "localhost:3004/logout");
+    await page.request.post("/logout");
     await login(page, USERS.test_user);
     await page.getByRole("link", { name: "Connections" }).click();
     await page.getByRole("link", { name: TEST_DB_NAME }).click();

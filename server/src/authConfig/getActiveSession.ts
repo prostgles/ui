@@ -45,7 +45,7 @@ export const getActiveSession = async (
   /**
    * Always maintain a valid session for passwordless admin
    */
-  const passwordlessAdmin = connectionChecker.noPasswordAdmin;
+  const passwordlessAdmin = connectionChecker.passwordlessAdmin;
   if (passwordlessAdmin && !validSession) {
     const anyPasswordlessSession = await db.sessions.findOne({
       user_id: passwordlessAdmin.id,

@@ -26,10 +26,8 @@ export const Login = ({ auth }: LoginFormProps) => {
   } = authState;
 
   const headerTitle =
-    !isOnLogin ?
-      !formHandlers?.setPassword ?
-        "Signup or Login"
-      : "Sign up"
+    !isOnLogin ? "Sign up"
+    : !formHandlers?.setPassword ? "Signup or Login"
     : "Sign in";
   return (
     <form
@@ -45,7 +43,7 @@ export const Login = ({ auth }: LoginFormProps) => {
       {authResponse && (
         <AuthNotifPopup {...authResponse} onClose={clearAuthResponse} />
       )}
-      <FlexCol className="p-2 pb-1">
+      <FlexCol className="p-2">
         <h2 className="mt-0">{headerTitle}</h2>
         {formHandlers?.setUsername && (
           <FormField

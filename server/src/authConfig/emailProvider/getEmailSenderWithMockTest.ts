@@ -36,6 +36,12 @@ export const getEmailSenderWithMockTest = async (
   let sendEmail:
     | Awaited<ReturnType<typeof getEmailSender>>["sendEmail"]
     | undefined;
+
+  /**
+   * Mock email sending for testing
+   * TODO: identify why e2e/tests/mockSMTPServer.ts is not working
+   * from playwright tests while it works from nodejs
+   */
   if (smtp.type === "smtp" && smtp.host === MOCK_SMTP_HOST) {
     sendEmail = async (_email: Email) => {
       console.log("Mock email sent", _email);
@@ -58,10 +64,19 @@ export const getEmailSenderWithMockTest = async (
         html: verificationEmail.body,
       });
     },
-    sendMagicLinkEmail: ({ to, url }: { to: string; url: string }) => {
+    sendMagicLinkEmail: ({
+      to,
+      url,
+      code,
+    }: {
+      to: string;
+      url: string;
+      code: string;
+    }) => {
       const magicLinkEmail = getMagicLinkEmailFromTemplate({
         template: emailTemplate,
         url,
+        code,
       });
       return sendEmail({
         to,

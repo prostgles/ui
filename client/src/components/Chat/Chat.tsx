@@ -17,7 +17,8 @@ import Btn from "../Btn";
 import Loading from "../Loading";
 
 export type Message = {
-  message: ReactChild;
+  id: number | string;
+  message: React.ReactNode;
   sender_id: number | string;
   incoming: boolean;
   sent: Date;
@@ -140,7 +141,8 @@ export const Chat: FunctionComponent<P> = (props) => {
     }
   };
 
-  const makeMessage = (m: Message, i: number) => {
+  const makeMessage = (m: Message) => {
+    const id = m.id;
     const content = m.message;
     if (m.media) {
       if (typeof m.media.content_type !== "string") {
@@ -149,7 +151,7 @@ export const Chat: FunctionComponent<P> = (props) => {
         return (
           <div
             className={"message media " + (m.incoming ? "incoming" : "")}
-            key={i}
+            key={id}
           >
             <video
               controls
@@ -164,7 +166,7 @@ export const Chat: FunctionComponent<P> = (props) => {
         return (
           <div
             className={"message media " + (m.incoming ? "incoming" : "")}
-            key={i}
+            key={id}
             style={{ color: "white" }}
           >
             <audio controls controlsList="nodownload" src={m.media.url} />
@@ -174,7 +176,7 @@ export const Chat: FunctionComponent<P> = (props) => {
         return (
           <div
             className={"message media " + (m.incoming ? "incoming" : "")}
-            key={i}
+            key={id}
             style={{
               border:
                 "1px solid " + (!m.incoming ? "rgb(5, 149, 252)" : "#cacaca"),
@@ -193,7 +195,7 @@ export const Chat: FunctionComponent<P> = (props) => {
             className={
               "message flex-row ai-center" + (m.incoming ? "incoming" : "")
             }
-            key={i}
+            key={id}
             style={{
               border:
                 "1px solid " + (!m.incoming ? "rgb(5, 149, 252)" : "#cacaca"),
@@ -208,7 +210,7 @@ export const Chat: FunctionComponent<P> = (props) => {
       }
     }
     return (
-      <div className={"message " + (m.incoming ? "incoming" : "")} key={i}>
+      <div className={"message " + (m.incoming ? "incoming" : "")} key={id}>
         {content}
       </div>
     );

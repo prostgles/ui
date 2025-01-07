@@ -302,8 +302,9 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
           "email-confirmation",
           "magic-link-registration",
           "magic-link",
+          "otp-code",
           "login",
-          "provider",
+          "oauth",
         ],
       },
       username: "TEXT",
@@ -312,7 +313,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       magic_link_id: "TEXT",
       sid: "TEXT",
       auth_provider:
-        "TEXT CHECK(auth_type <> 'provider' OR auth_provider IS NOT NULL)",
+        "TEXT CHECK(auth_type <> 'oauth' OR auth_provider IS NOT NULL)",
       ip_address: `INET NOT NULL`,
       ip_address_remote: "TEXT NOT NULL",
       x_real_ip: "TEXT NOT NULL",
@@ -833,6 +834,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       magic_link: `TEXT`,
       magic_link_used: `TIMESTAMP`,
       expires: `BIGINT NOT NULL`,
+      session_expires: `BIGINT NOT NULL DEFAULT 0`,
     },
   },
 

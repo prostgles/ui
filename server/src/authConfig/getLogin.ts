@@ -1,5 +1,8 @@
 import { authenticator } from "otplib";
-import type { LoginSignupConfig } from "prostgles-server/dist/Auth/AuthTypes";
+import {
+  getMagicLinkUrl,
+  type LoginSignupConfig,
+} from "prostgles-server/dist/Auth/AuthTypes";
 import type { DB } from "prostgles-server/dist/initProstgles";
 import type { Users } from "..";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
@@ -8,10 +11,11 @@ import { log } from "../index";
 import { getPasswordHash } from "./authUtils";
 import { createSession } from "./createSession";
 import type { SUser } from "./getAuth";
-import { loginWithProvider } from "./loginWithProvider";
+import { loginWithProvider } from "./OAuthProviders/loginWithProvider";
 import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
 import { getEmailSenderWithMockTest } from "./emailProvider/getEmailSenderWithMockTest";
 import { YEAR } from "../../../commonTypes/utils";
+import { getRandomSixDigitCode } from "./emailProvider/onEmailRegistration";
 
 export const getLogin = async (
   auth_providers: DBGeneratedSchema["global_settings"]["columns"]["auth_providers"],
@@ -21,17 +25,18 @@ export const getLogin = async (
 
   const login: Required<
     LoginSignupConfig<DBGeneratedSchema, SUser>
-  >["login"] = async (loginParams, db, _db: DB, clientInfo) => {
+  >["login"] = async (loginParams, dbs, _db: DB, clientInfo) => {
     log("login");
     const { ip_address, ip_address_remote, user_agent, x_real_ip } = clientInfo;
 
     if (loginParams.type === "OAuth") {
-      return loginWithProvider(loginParams, db, clientInfo);
+      return loginWithProvider(loginParams, dbs, clientInfo);
     }
 
     const { username, password, totp_token, totp_recovery_code } = loginParams;
+    if (!username) return "username-missing";
     const authAttemptRateLimit = await startRateLimitedLoginAttempt(
-      db,
+      dbs,
       { ip_address, ip_address_remote, user_agent, x_real_ip },
       { auth_type: "login", username },
     );
@@ -45,10 +50,7 @@ export const getLogin = async (
 
     let matchingUser: Users | undefined;
     try {
-      const userFromUsername: Users | undefined | null = await _db.oneOrNone(
-        "SELECT * FROM users WHERE username = ${username};",
-        { username },
-      );
+      const userFromUsername = await dbs.users.findOne({ username });
 
       const magicLinkAuthEnabled =
         emailAuthConfig?.enabled &&
@@ -63,29 +65,36 @@ export const getLogin = async (
         if (!mailClient || !auth_providers) {
           return "server-error";
         }
+        const newCode = getRandomSixDigitCode();
+
         const newUser =
           userFromUsername ??
-          (await db.users.insert(
+          (await dbs.users.insert(
             {
               username,
               email: username,
               type: "default",
               registration: {
                 type: "magic-link",
+                otp_code: newCode,
+                date: new Date().toISOString(),
               },
               password: "",
             },
             { returning: "*" },
           ));
-        const mlink = await makeMagicLink(
-          newUser,
-          db,
-          "/",
-          Date.now() + 1 * YEAR,
-        );
+        // const mlink = await makeMagicLink(newUser, db, "/", {
+        //   session_expires: Date.now() + 1 * YEAR,
+        // });
         await mailClient.sendMagicLinkEmail({
           to: newUser.username,
-          url: `${auth_providers.website_url}/${mlink.magic_login_link_redirect}`,
+          code: newCode,
+          url: getMagicLinkUrl(auth_providers.website_url, {
+            type: "otp",
+            code: newCode,
+            email: username,
+            returnToken: false,
+          }),
         });
         return {
           session: undefined,
@@ -122,6 +131,7 @@ export const getLogin = async (
         // await onSuccess();
         return "password-missing";
       }
+
       if (password.length > 400) {
         return "something-went-wrong";
       }
@@ -178,7 +188,7 @@ export const getLogin = async (
     const session = await createSession({
       user: matchingUser,
       ip,
-      db,
+      db: dbs,
       user_agent,
     });
     return { session, response: { success: true } };

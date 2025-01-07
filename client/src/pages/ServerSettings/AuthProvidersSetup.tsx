@@ -160,6 +160,7 @@ export const AuthProviderSetup = ({
       <OAuthProviderSetup provider="github" {...authProps} />
       <OAuthProviderSetup provider="microsoft" {...authProps} />
       <OAuthProviderSetup provider="facebook" {...authProps} />
+      <OAuthProviderSetup provider="customOAuth" {...authProps} />
     </FlexCol>
   );
 };

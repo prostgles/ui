@@ -4,10 +4,10 @@ import type {
   LoginSignupConfig,
 } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import { createSession } from "./createSession";
-import type { SUser } from "./getAuth";
-import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
+import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
+import { createSession } from "../createSession";
+import type { SUser } from "../getAuth";
+import { startRateLimitedLoginAttempt } from "../startRateLimitedLoginAttempt";
 
 type LoginReturnType = ReturnType<
   Required<LoginSignupConfig<DBGeneratedSchema, SUser>>["login"]
@@ -34,7 +34,7 @@ export const loginWithProvider = async (
     : loginParams.profile.name?.givenName);
   const email = profile.emails?.[0]?.value;
   const rateLimitInfo = await startRateLimitedLoginAttempt(db, clientInfo, {
-    auth_type: "provider",
+    auth_type: "oauth",
     auth_provider: provider,
   });
   if ("success" in rateLimitInfo) return rateLimitInfo.code;
@@ -76,7 +76,10 @@ export const loginWithProvider = async (
         },
         { returning: "*" },
       )
-      .catch((e) => Promise.reject("Could not create user"));
+      .catch((e) => {
+        console.error(e);
+        return Promise.reject("Could not create user");
+      });
     const session = await createSession({
       user: newUser,
       ip,

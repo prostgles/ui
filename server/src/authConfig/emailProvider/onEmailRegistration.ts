@@ -1,5 +1,5 @@
 import { randomInt } from "crypto";
-import type { SignupWithEmailAndPassword } from "prostgles-server/dist/Auth/AuthTypes";
+import type { SignupWithEmail } from "prostgles-server/dist/Auth/AuthTypes";
 import type { AuthResponse } from "prostgles-types";
 import type { DBS } from "../..";
 import { getPasswordHash } from "../authUtils";
@@ -12,7 +12,7 @@ export const onEmailRegistration = async (
     clientInfo,
     password,
     getConfirmationUrl,
-  }: Parameters<SignupWithEmailAndPassword["onRegister"]>[0],
+  }: Parameters<SignupWithEmail["onRegister"]>[0],
   {
     dbs,
     mailClient,
@@ -24,7 +24,7 @@ export const onEmailRegistration = async (
     newUserType: string;
     websiteUrl: string;
   },
-): Promise<ReturnType<SignupWithEmailAndPassword["onRegister"]>> => {
+): Promise<ReturnType<SignupWithEmail["onRegister"]>> => {
   const withErrorCode = (
     code: AuthResponse.PasswordRegisterFailure["code"],
     message?: string,
@@ -54,9 +54,7 @@ export const onEmailRegistration = async (
     username: email,
     email,
   });
-  const email_confirmation_code = randomInt(0, 999999)
-    .toString()
-    .padStart(6, "0");
+  const email_confirmation_code = getRandomSixDigitCode();
   const getUserUpdate = (newUsr: { id: string }) =>
     ({
       registration: {
@@ -109,3 +107,6 @@ export const onEmailRegistration = async (
       : "email-verification-code-sent",
   };
 };
+
+export const getRandomSixDigitCode = () =>
+  randomInt(0, 999999).toString().padStart(6, "0");

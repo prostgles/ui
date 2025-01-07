@@ -247,6 +247,24 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1 }> = {
               },
             },
           },
+          customOAuth: {
+            optional: true,
+            type: {
+              ...commonAuthSchema,
+              displayName: { type: "string" },
+              displayIconPath: { type: "string", optional: true },
+              authorizationURL: { type: "string" },
+              tokenURL: { type: "string" },
+              authOpts: {
+                optional: true,
+                type: {
+                  scope: {
+                    type: "string[]",
+                  },
+                },
+              },
+            },
+          },
         },
       },
       tableConfig: {

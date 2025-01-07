@@ -448,6 +448,7 @@ export const publish = async (
             getMagicLinkEmailFromTemplate({
               template: email.emailTemplate,
               url: "a",
+              code: "a",
             });
           }
 

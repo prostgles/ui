@@ -96,6 +96,7 @@ export const useLLMChat = ({
 
   const actualMessages: Message[] =
     llmMessages?.map((m) => ({
+      id: m.id,
       incoming: m.user_id !== user?.id,
       message: (
         <Marked
@@ -157,6 +158,7 @@ export const useLLMChat = ({
     actualMessages.length ? actualMessages : (
       [
         {
+          id: "first",
           message: "Hello, I am the AI assistant. How can I help you?",
           incoming: true,
           sent: new Date("2024-01-01"),
@@ -174,6 +176,7 @@ export const useLLMChat = ({
     disabled_message ?
       [
         {
+          id: "disabled-last",
           incoming: true,
           message: disabled_message,
           sender_id: "ai",

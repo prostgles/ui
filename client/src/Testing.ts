@@ -264,6 +264,7 @@ export const COMMANDS = {
   EmailSMTPAndTemplateSetup: "",
   "Login.toggle": "",
   AuthNotifPopup: "",
+  "ProstglesSignup.continue": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

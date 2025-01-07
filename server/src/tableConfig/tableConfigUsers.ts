@@ -12,7 +12,9 @@ export const tableConfigUsers = {
         sqlDefinition: `TEXT NOT NULL DEFAULT 'active' REFERENCES user_statuses (id)`,
         info: { hint: "Only active users can access the system" },
       },
-      username: { sqlDefinition: `TEXT NOT NULL UNIQUE` },
+      username: {
+        sqlDefinition: `TEXT NOT NULL UNIQUE CHECK(length(username) > 0)`,
+      },
       name: {
         sqlDefinition: `TEXT`,
         info: { hint: "Display name, if empty username will be shown" },
@@ -40,6 +42,9 @@ export const tableConfigUsers = {
             },
             {
               type: { enum: ["magic-link"] },
+              otp_code: { type: "string" },
+              date: "Date",
+              used_on: { type: "Date", optional: true },
             },
             {
               type: { enum: ["OAuth"] },

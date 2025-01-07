@@ -1,20 +1,21 @@
-import { mdiCheck, mdiKey, mdiLogin } from "@mdi/js";
+import { mdiKey, mdiLogin } from "@mdi/js";
 import React from "react";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol, FlexRowWrap } from "../../components/Flex";
-import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
 import Loading from "../../components/Loading";
 import Popup from "../../components/Popup/Popup";
-import { SwitchToggle } from "../../components/SwitchToggle";
 import SmartCardList from "../SmartCard/SmartCardList";
-import SmartForm from "../SmartForm/SmartForm";
 import { AddLLMCredentialForm } from "./AddLLMCredentialForm";
-import type { LLMSetupState } from "./useLLMSetupState";
 import { AddLLMPromptForm } from "./AddLLMPromptForm";
+import { ProstglesSignup } from "./ProstglesSignup";
+import type { LLMSetupState } from "./useLLMSetupState";
 
-type P = Pick<Prgl, "theme" | "dbs" | "dbsTables" | "dbsMethods"> & {
+export type SetupLLMCredentialsProps = Pick<
+  Prgl,
+  "theme" | "dbs" | "dbsTables" | "dbsMethods"
+> & {
   setupState: Exclude<LLMSetupState, { state: "ready" }>;
 } & (
     | {
@@ -26,26 +27,11 @@ type P = Pick<Prgl, "theme" | "dbs" | "dbsTables" | "dbsMethods"> & {
         onClose?: undefined;
       }
   );
-export const SetupLLMCredentials = ({
-  theme,
-  dbs,
-  dbsTables,
-  dbsMethods,
-  asPopup,
-  onClose,
-  setupState,
-}: P) => {
+export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
+  const { theme, dbs, dbsTables, dbsMethods, asPopup, onClose, setupState } =
+    props;
   const [setupType, setSetupType] = React.useState<"free" | "api">();
   const { state, prompts } = setupState;
-  const [email, setEmail] = React.useState(
-    setupState.globalSettings?.data?.prostgles_registration?.email || "",
-  );
-  const [isRegistering, setIsRegistering] = React.useState(false);
-  const [registrationSuccess, setRegistrationSuccess] = React.useState(false);
-  
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
   const content =
     state === "loading" ? <Loading delay={1000} />
     : state === "cannotSetupOrNotAllowed" ?
@@ -65,7 +51,7 @@ export const SetupLLMCredentials = ({
               onClick={() => setSetupType("free")}
               iconPath={mdiLogin}
             >
-              Use for free by signing up
+              Signup (free)
             </Btn>
             <strong>Or</strong>
             <Btn
@@ -80,49 +66,11 @@ export const SetupLLMCredentials = ({
           </FlexRowWrap>
         </FlexCol>
         {setupType === "free" && (
-          <FlexCol>
-            <div>Provide an email address to get started</div>
-            <FormField
-              id="email"
-              type="email"
-              label="Email"
-              value={email}
-              required={true}
-              onChange={(email) => {
-                setEmail(email);
-              }}
-            />
-            <Btn
-              variant="filled"
-              color="action"
-              disabled={!validateEmail(email) || isRegistering || registrationSuccess}
-              iconPath={registrationSuccess ? mdiCheck : undefined}
-              onClickPromise={async () => {
-                try {
-                  setIsRegistering(true);
-                  const { token, error, hasError } =
-                    await dbsMethods.prostglesSignup!(email);
-                  if (hasError) {
-                    throw error;
-                  }
-                  await dbs.global_settings.update(
-                    {},
-                    { prostgles_registration: { email, token, enabled: true } },
-                  );
-                  setRegistrationSuccess(true);
-                } finally {
-                  setIsRegistering(false);
-                }
-              }}
-            >
-              {isRegistering ? "Registering..." : registrationSuccess ? "Registered!" : "Register"}
-            </Btn>
-            {registrationSuccess && (
-              <InfoRow color="success" variant="filled" className="mt-2">
-                Registration successful! You can now use the AI assistant.
-              </InfoRow>
-            )}
-          </FlexCol>
+          <ProstglesSignup
+            setupState={setupState}
+            dbs={dbs}
+            dbsMethods={dbsMethods}
+          />
         )}
         {setupType === "api" && (
           <>
@@ -173,6 +121,7 @@ export const SetupLLMCredentials = ({
       title="Setup AI assistant"
       positioning="top-center"
       data-command="AskLLM.popup"
+      contentClassName="p-2"
       onClose={onClose}
       clickCatchStyle={{ opacity: 1 }}
     >

@@ -40,6 +40,7 @@ export const Account = (props: AccountProps) => {
   const allowedColumns = [
     "id",
     "username",
+    "email",
     "name",
     "type",
     "status",

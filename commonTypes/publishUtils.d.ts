@@ -130,7 +130,7 @@ export type TableRules = {
     };
     sync?: SyncRule;
 };
-export type BasicTablePermissions = Partial<Record<keyof TableRules, boolean>>;
+export type BasicTablePermissions = Partial<Record<Exclude<keyof TableRules, "sync">, boolean>>;
 type AnyObject = Record<string, any>;
 type PublishedResultUpdate = {
     fields: FieldFilter;

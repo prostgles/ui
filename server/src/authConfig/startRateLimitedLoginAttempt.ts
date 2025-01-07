@@ -62,20 +62,20 @@ export const getFailedTooManyTimes = async (
       remote_ip: "ip_address_remote",
     } as const
   )[groupBy];
+
   const ip = clientInfo[matchByFilterKey] ?? ip_address;
-  if (!(matchByFilterKey as any)) {
-    // throw "Invalid login_rate_limit.groupBy";
+  if (!clientInfo[matchByFilterKey]) {
     return {
       success: false,
       code: "something-went-wrong",
-      message: "Invalid login_rate_limit.groupBy",
+      message: "Invalid/empty ip",
     };
   }
   const matchByFilter = pickKeys(clientInfo, [matchByFilterKey]);
   if (isEmpty(matchByFilter)) {
     const message =
       "matchByFilter is empty " +
-      JSON.stringify([matchByFilter, matchByFilterKey]); // pickKeys(args, ["ip_address", "ip_address_remote", "x_real_ip"])
+      JSON.stringify([matchByFilter, matchByFilterKey]);
 
     return {
       success: false,
@@ -100,11 +100,11 @@ export const getFailedTooManyTimes = async (
 };
 
 type AuthAttepmt =
-  | { auth_type: "login"; username: string }
-  | { auth_type: "registration"; username: string }
-  | { auth_type: "magic-link-registration"; username: string }
-  | { auth_type: "email-confirmation"; username: string }
-  | { auth_type: "provider"; auth_provider: string }
+  | {
+      auth_type: "login" | "registration" | "otp-code";
+      username: string;
+    }
+  | { auth_type: "oauth"; auth_provider: string }
   | { auth_type: "magic-link"; magic_link_id: string }
   | { auth_type: "session-id"; sid: string };
 
@@ -168,7 +168,8 @@ export const startRateLimitedLoginAttempt = async (
        * must delete all failed attempts within last day for that email
        * */
       if (
-        authInfo.auth_type === "email-confirmation" ||
+        authInfo.auth_type === "otp-code" ||
+        authInfo.auth_type === "login" ||
         authInfo.auth_type === "magic-link"
       ) {
         const getUsername = async () => {

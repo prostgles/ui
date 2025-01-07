@@ -18,3 +18,5 @@ BACKUP
 media
 log.txt
 ui
+.aider*
+.env

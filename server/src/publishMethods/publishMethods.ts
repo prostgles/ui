@@ -6,7 +6,7 @@ import path from "path";
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBS } from "../index";
-import { connectionChecker, connMgr } from "../index";
+import { connectionChecker, connMgr, isTesting } from "../index";
 
 export type Users = Required<DBSchemaGenerated["users"]["columns"]>;
 export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
@@ -44,6 +44,7 @@ import { killPID } from "../methods/statusMonitorUtils";
 import { initBackupManager, statePrgl } from "../startProstgles";
 import { upsertConnection } from "../upsertConnection";
 import { askLLM } from "./askLLM/askLLM";
+import { prostglesSignup } from "./prostglesSignup";
 
 export const publishMethods: PublishMethods<DBSchemaGenerated> = async (
   params,
@@ -537,27 +538,7 @@ export const publishMethods: PublishMethods<DBSchemaGenerated> = async (
         body: JSON.stringify({ details, email }),
       });
     },
-    prostglesSignup: async (email: string) => {
-      throw "Not implemented";
-      // const devAddess = "http://localhost:3003/signup"; //  ?? "https://prostgles.com/signup"
-      // const rawResp = await fetch(devAddess, {
-      //   method: "POST",
-      //   headers: {
-      //     Accept: "application/json",
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({ email }),
-      // });
-      // if (!rawResp.ok) {
-      //   const error = await rawResp
-      //     .json()
-      //     .catch(() => rawResp.text())
-      //     .catch(() => rawResp.statusText);
-      //   return { error, hasError: true };
-      // }
-      // const { token } = (await rawResp.json()) as AnyObject;
-      // return { token };
-    },
+    prostglesSignup,
     generateToken: async (days: number) => {
       if (!Number.isInteger(days)) {
         throw "Expecting an integer days but got: " + days;
