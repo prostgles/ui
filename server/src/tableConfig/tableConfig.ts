@@ -175,7 +175,6 @@ const joinPath = {
   optional: true,
 } as const satisfies JSONB.FieldTypeObj;
 const CommonChartLinkOpts = {
-  // ...CommonLinkOpts,
   dataSource: {
     optional: true,
     oneOfType: [
