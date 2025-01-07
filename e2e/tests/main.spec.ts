@@ -313,6 +313,21 @@ test.describe("Main test", () => {
     await page.getByTestId("EmailAuthSetup").locator("button").click();
     await page.getByText("Enable").click();
     await page.getByText("Save").click();
+
+    /** Revert LLM signup */
+    await runDbsSql(
+      page,
+      `
+      UPDATE global_settings
+      SET prostgles_registration = null
+      `,
+    );
+    await runDbsSql(
+      page,
+      `
+      DELETE FROM llm_credentials
+      `,
+    );
   });
 
   test("Limit login attempts max failed limit", async ({
