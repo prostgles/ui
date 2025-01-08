@@ -156,13 +156,16 @@ export type DBGeneratedSchema = {
       db_name: string;
       db_pass?: null | string;
       db_port?: number;
-      db_schema_filter?: null | any;
-      db_ssl?: string;
+      db_schema_filter?: 
+       | null
+       |  Record<string, 1>
+       |  Record<string, 0>
+      db_ssl?: "disable" | "allow" | "prefer" | "require" | "verify-ca" | "verify-full"
       db_user?: string;
       db_watch_shema?: null | boolean;
       disable_realtime?: null | boolean;
       id?: string;
-      info?: null | any;
+      info?: null | {    canCreateDb?: boolean;  };
       is_state_db?: null | boolean;
       last_updated?: string;
       name: string;
@@ -174,8 +177,8 @@ export type DBGeneratedSchema = {
       ssl_client_certificate?: null | string;
       ssl_client_certificate_key?: null | string;
       ssl_reject_unauthorized?: null | boolean;
-      table_options?: null | any;
-      type: string;
+      table_options?: null | Partial<Record<string,  {  icon?: string; }>>
+      type: "Standard" | "Connection URI" | "Prostgles"
       user_id?: null | string;
     };
   };
