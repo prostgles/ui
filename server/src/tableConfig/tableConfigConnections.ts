@@ -1,7 +1,7 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 
 const UNIQUE_DB_COLS = ["db_name", "db_host", "db_port"] as const;
-const getUniqueDbFields = () => UNIQUE_DB_COLS.join(", ");
+const UNIQUE_DB_FIELDLIST = UNIQUE_DB_COLS.join(", ");
 
 export const DB_SSL_ENUM = [
   "disable",
@@ -100,7 +100,7 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
       last_updated: { sqlDefinition: `BIGINT NOT NULL DEFAULT 0` },
     },
     constraints: {
-      unique_url_path: `UNIQUE(url_path)`,
+      unique_connection_url_path: `UNIQUE(url_path)`,
       uniqueConName: `UNIQUE(name, user_id)`,
       "Check connection type": `CHECK (
             type IN ('Standard', 'Connection URI', 'Prostgles') 
@@ -108,7 +108,7 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
             AND (type <> 'Standard' OR length(db_host) > 1) 
             AND (type <> 'Prostgles' OR length(prgl_url) > 0)
           )`,
-      database_config_fkey: `FOREIGN KEY (${getUniqueDbFields()}) REFERENCES database_configs( ${getUniqueDbFields()} )`,
+      database_config_fkey: `FOREIGN KEY (${UNIQUE_DB_FIELDLIST}) REFERENCES database_configs( ${UNIQUE_DB_FIELDLIST} )`,
     },
   },
 };

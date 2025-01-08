@@ -179,6 +179,7 @@ export type DBGeneratedSchema = {
       ssl_reject_unauthorized?: null | boolean;
       table_options?: null | Partial<Record<string,  {  icon?: string; }>>
       type: "Standard" | "Connection URI" | "Prostgles"
+      url_path?: null | string;
       user_id?: null | string;
     };
   };

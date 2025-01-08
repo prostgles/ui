@@ -7,7 +7,7 @@ import { tableConfigUsers } from "./tableConfigUsers";
 import { tableConfigConnections } from "./tableConfigConnections";
 
 export const UNIQUE_DB_COLS = ["db_name", "db_host", "db_port"] as const;
-export const getUniqueDbFields = () => UNIQUE_DB_COLS.join(", ");
+const UNIQUE_DB_FIELDLIST = UNIQUE_DB_COLS.join(", ");
 const DUMP_OPTIONS_SCHEMA = {
   jsonbSchema: {
     oneOfType: [
@@ -314,7 +314,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
   },
   database_configs: {
     constraints: {
-      uniqueDatabase: { type: "UNIQUE", content: getUniqueDbFields() },
+      uniqueDatabase: { type: "UNIQUE", content: UNIQUE_DB_FIELDLIST },
     },
     columns: {
       id: `SERIAL PRIMARY KEY`,
