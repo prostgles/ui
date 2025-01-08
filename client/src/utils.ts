@@ -163,6 +163,10 @@ export const areEqual = <T extends AnyObject>(
 };
 
 export const playwrightTestLogs: InitOptions["onDebug"] = (ev) => {
+  //@ts-ignore
+  window.prostgles_logs ??= [];
+  //@ts-ignore
+  window.prostgles_logs.push({ ...ev, ts: new Date() });
   const trackedTableNames = [
     "global_settings",
     "llm_chats",

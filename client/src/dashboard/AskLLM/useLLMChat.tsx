@@ -88,7 +88,8 @@ export const useLLMChat = ({
 
   const { data: llmMessages } = dbs.llm_messages.useSubscribe(
     { chat_id: activeChatId },
-    { limit: activeChatId ? undefined : 0, orderBy: { created: 1 } },
+    { orderBy: { created: 1 } },
+    { skip: !activeChatId },
   );
   // console.log(activeChatId, llmMessages);
 

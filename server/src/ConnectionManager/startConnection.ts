@@ -41,7 +41,7 @@ export const startConnection = async function (
   }
 
   const con = await dbs.connections.findOne({ id: con_id }).catch((e) => {
-    console.error(142, e);
+    console.error("Could not fetch connection", e);
     return undefined;
   });
   if (!con) throw "Connection not found";
@@ -61,7 +61,7 @@ export const startConnection = async function (
   try {
     const prglInstance = this.prglConnections[con.id];
     if (prglInstance) {
-      // When does the socket path change??!!!
+      console.error("socket_path changed");
       if (prglInstance.socket_path !== socket_path) {
         restartProc(() => {
           socket?.emit("server-restart-request", true);

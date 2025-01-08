@@ -1,8 +1,7 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
-import { connMgr, type DBS } from ".";
 import type { EventInfo } from "prostgles-server/dist/Logging";
+import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { pickKeys } from "prostgles-types";
-import { isForStatement } from "typescript";
+import { connMgr, type DBS } from ".";
 
 export const loggerTableConfig: TableConfig<{ en: 1 }> = {
   logs: {
@@ -55,13 +54,16 @@ const isPlaywright = process.env.PLAYWRIGHT_TEST === "true";
 
 export const addLog = (e: EventInfo, connection_id: string | null) => {
   if (isPlaywright) {
-    if (
-      e.type === "syncOrSub" ||
-      (e.type === "table" &&
-        (e.command === "subscribe" || e.command === "subscribeOne"))
-    ) {
-      console.log(e);
-    }
+    console.log(
+      //@ts-ignore
+      e.command,
+      //@ts-ignore
+      e.table_name || e.tableName,
+      //@ts-ignore
+      e.filter || e.data?.filter || e.condition,
+      //@ts-ignore
+      e.channel_name,
+    );
   }
   if (shouldExclude(e, connection_id === null)) return;
   logRecords.push({ e, connection_id, created: new Date() });
