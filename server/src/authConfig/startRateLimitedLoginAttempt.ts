@@ -2,7 +2,7 @@ import type { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { type AuthResponse, isEmpty, pickKeys } from "prostgles-types";
 import { connectionChecker, tout } from "..";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import { HOUR } from "../../../commonTypes/utils";
 
 const getGlobalSettings = async () => {
@@ -34,7 +34,7 @@ type FailedAttemptsInfo =
       disabled?: true;
     };
 export const getFailedTooManyTimes = async (
-  db: DBOFullyTyped<DBSchemaGenerated>,
+  db: DBOFullyTyped<DBGeneratedSchema>,
   clientInfo: LoginClientInfo,
 ): Promise<FailedAttemptsInfo | AuthResponse.AuthFailure> => {
   const { ip_address } = clientInfo;
@@ -113,7 +113,7 @@ type AuthAttepmt =
  * Configured in global_settings.login_rate_limit found in Server settings page
  */
 export const startRateLimitedLoginAttempt = async (
-  db: DBOFullyTyped<DBSchemaGenerated>,
+  db: DBOFullyTyped<DBGeneratedSchema>,
   clientInfo: LoginClientInfo,
   authInfo: AuthAttepmt,
 ) => {

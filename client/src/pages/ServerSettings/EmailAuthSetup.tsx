@@ -89,7 +89,8 @@ export const EmailAuthSetup = ({
             {
               key: "withPassword",
               label: "With password",
-              subLabel: "A password will be required to login",
+              subLabel:
+                "Email and password will be required to login. User will have to confirm email",
             },
             {
               key: "withMagicLink",
@@ -136,6 +137,7 @@ export const EmailAuthSetup = ({
         />
       )}
       <EmailSMTPAndTemplateSetup
+        websiteUrl={authProviders.website_url}
         label={
           localAuth?.signupType === "withMagicLink" ?
             "Magic link email configuration"

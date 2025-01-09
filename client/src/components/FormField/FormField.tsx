@@ -570,7 +570,6 @@ export default class FormField extends React.Component<
           <Btn
             data-command="FormField.clear"
             title="Set to null"
-            size="micro"
             style={{
               /** To ensure it's centered with the rest of the content */
               height: "100%",

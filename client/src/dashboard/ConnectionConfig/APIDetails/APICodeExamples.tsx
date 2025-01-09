@@ -12,7 +12,7 @@ export const APICodeExamples = ({
   projectPath,
   dbSchemaTypes,
 }: {
-  token: string;
+  token?: string;
   projectPath: string;
   dbSchemaTypes: string | undefined;
 }) => {
@@ -20,7 +20,6 @@ export const APICodeExamples = ({
     token,
     projectPath,
   });
-  // const { tsExample } = getCodeSamples({ token, projectPath }, "ts");
 
   const DownloadCodeSample = (isTS = false) => (
     <Btn
@@ -46,7 +45,7 @@ export const APICodeExamples = ({
           zip.str2zip("README.md", readme, folder);
           zip.str2zip(
             "DBoGenerated.d.ts",
-            dbSchemaTypes ?? "export type DBSchemaGenerated = any;",
+            dbSchemaTypes ?? "export type DBGeneratedSchema = any;",
             folder,
           );
           zip.makeZip();
@@ -115,14 +114,14 @@ export const APICodeExamples = ({
 };
 
 function getCodeSamples({
-  token,
+  token: _token,
   projectPath,
 }: {
   token?: string;
   projectPath?: string;
 }) {
-  const authStr =
-    !token ? "" : `auth: { sid_token: ${JSON.stringify(token)} },`;
+  const token = _token || "YOUR_TOKEN";
+  const authStr = `auth: { sid_token: ${JSON.stringify(token)} },`;
   const uri = JSON.stringify(window.location.origin);
   const path = JSON.stringify(projectPath);
   const indexTs = `import React from "react";
@@ -180,11 +179,11 @@ if(typeof document !== 'undefined'){
   const tsExample = `
 import prostgles from "prostgles-client";
 import io from "socket.io-client";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "./DBoGenerated.d.ts";
+import type { DBGeneratedSchema } from "./DBoGenerated.d.ts";
 
 ${initLogic}
 
-prostgles<DBSchemaGenerated>({
+prostgles<DBGeneratedSchema>({
   socket,
   onReload: () => {},
   onReady: async (db, methods, tableSchema, auth) => {

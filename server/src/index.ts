@@ -8,7 +8,7 @@ import _http from "http";
 import path from "path";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { Server } from "socket.io";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import type { ServerState } from "../../commonTypes/electronInit";
 import { isObject } from "../../commonTypes/publishUtils";
 import { ConnectionChecker } from "./ConnectionChecker";
@@ -21,7 +21,7 @@ import {
   type InitState,
   tryStartProstgles,
 } from "./startProstgles";
-import { SPOOF_TEST_VALUE } from "../../commonTypes/utils";
+import { API_PATH_SUFFIXES, SPOOF_TEST_VALUE } from "../../commonTypes/utils";
 import helmet from "helmet";
 import { omitKeys } from "prostgles-types";
 
@@ -76,11 +76,11 @@ export type BareConnectionDetails = Pick<
   | "db_ssl"
   | "ssl_certificate"
 >;
-export type DBS = DBOFullyTyped<DBSchemaGenerated>;
-export type Users = Required<DBSchemaGenerated["users"]["columns"]>;
-export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
+export type DBS = DBOFullyTyped<DBGeneratedSchema>;
+export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
+export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DatabaseConfigs = Required<
-  DBSchemaGenerated["database_configs"]["columns"]
+  DBGeneratedSchema["database_configs"]["columns"]
 >;
 
 export const log = (msg: string, extra?: any) => {
@@ -125,9 +125,17 @@ export const MEDIA_ROUTE_PREFIX = `/prostgles_media`;
 
 export const connectionChecker = new ConnectionChecker(app);
 
-const ioPath = process.env.PRGL_IOPATH || "/iosckt";
+export const dbsWsApiPath = process.env.PRGL_IOPATH || "/ws-api-dbs";
+if (
+  API_PATH_SUFFIXES.WS.startsWith(dbsWsApiPath) ||
+  API_PATH_SUFFIXES.REST.startsWith(dbsWsApiPath)
+) {
+  throw new Error(
+    `dbsWsApiPath cannot start with ${API_PATH_SUFFIXES.WS}, ${API_PATH_SUFFIXES.REST}`,
+  );
+}
 const io = new Server(http, {
-  path: ioPath,
+  path: dbsWsApiPath,
   maxHttpBufferSize: 100e100,
   cors: connectionChecker.withOrigin,
 });

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { PrglState } from "../../../App";
+import type { Prgl, PrglState } from "../../../App";
 import { FlexCol } from "../../../components/Flex";
 import { getActiveTokensFilter } from "../../../pages/Account/Sessions";
 import { APIDetailsHttp } from "./APIDetailsHttp";
@@ -7,7 +7,7 @@ import { APIDetailsTokens } from "./APIDetailsTokens";
 import { APIDetailsWs } from "./APIDetailsWs";
 
 export type APIDetailsProps = PrglState & {
-  connectionId: string;
+  connection: Prgl["connection"];
   projectPath: string;
 };
 export const APIDetails = (props: APIDetailsProps) => {
@@ -20,8 +20,8 @@ export const APIDetails = (props: APIDetailsProps) => {
 
   return (
     <FlexCol className="APIDetails f-1 min-s-0 o-auto gap-2">
-      <APIDetailsWs {...props} token={token || "YOUR_TOKEN"} />
-      <APIDetailsHttp {...props} token={token || "YOUR_TOKEN"} />
+      <APIDetailsWs {...props} token={token} />
+      <APIDetailsHttp {...props} token={token} />
       <APIDetailsTokens
         {...props}
         token={token}

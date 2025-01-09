@@ -107,6 +107,7 @@ export type AppState = {
    */
   dbsKey?: string;
   prglState?: {
+    dbsWsApiPath: string;
     dbs: DBS;
     dbsTables: CommonWindowProps["tables"];
     dbsMethods: any;

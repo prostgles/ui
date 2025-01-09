@@ -1,7 +1,7 @@
 import { getConnectionDetails } from "./getConnectionDetails";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import { type ConnectionInfo, validateConnection } from "./validateConnection";
-export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
+export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
 import pgPromise from "pg-promise";
 const pgpNoWarnings = pgPromise({ noWarnings: true });
@@ -124,7 +124,7 @@ export const testDBConnection = (
 };
 
 export const getDbConnection = async (
-  _c: DBSchemaGenerated["connections"]["columns"],
+  _c: DBGeneratedSchema["connections"]["columns"],
   opts?: pg.IConnectionParameters<pg.IClient>,
 ): Promise<pgPromise.IDatabase<{}, pg.IClient>> => {
   const { connectionInfo } = await testDBConnection(_c);

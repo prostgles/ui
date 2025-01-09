@@ -79,18 +79,19 @@ export const SmartFormFieldForeignKey = ({
     </div>
   );
 
+  const paddingValue = isDefined(selectedOption?.subLabel) ? "6px" : "12px";
   const displayValue = (
     <div
       className={"flex-col gap-p5 min-w-0"}
       style={{
-        padding: readOnly ? "6px 0" : "6px",
+        padding: readOnly ? `${paddingValue} 0` : paddingValue,
         // border: "1px solid var(--b-default)"
       }}
     >
       {valueNode}
-      {selectedOption && (
+      {isDefined(selectedOption?.subLabel) && (
         <div
-          className="ta-left text-ellipsis"
+          className="SmartFormFieldForeignKey.subLabel ta-left text-ellipsis"
           style={{
             opacity: 0.75,
             fontSize: "14px",
@@ -177,14 +178,14 @@ const fetchOptions = async ({
   const { ftable, fcols, cols } = fKey;
 
   const tableHandler = db[tableName];
-  const fTableHandler = db[tableName];
+  const fTableHandler = db[ftable];
   if (!tableHandler?.find || !fTableHandler?.find) return [];
 
   const mainColumn = column.name;
   const textColumn = getBestTextColumn(column, tables);
 
   const fMainColumn = fcols[cols.indexOf(mainColumn)];
-  if (fMainColumn && textColumn) {
+  if (fMainColumn) {
     const fullForeignTableFilter = {};
     const foreignTableFilter = {};
     if (row) {

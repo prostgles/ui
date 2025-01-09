@@ -8,6 +8,7 @@ import { FooterButtons } from "../../components/Popup/FooterButtons";
 import Popup from "../../components/Popup/Popup";
 import CodeEditor, { type CodeEditorProps } from "./CodeEditor";
 import { isDefined } from "../../utils";
+import { Label } from "../../components/Label";
 
 type P = {
   label: React.ReactNode;
@@ -17,6 +18,7 @@ type P = {
   value: string | undefined | null;
   codePlaceholder?: string;
   codeEditorClassName?: string;
+  headerButtons?: React.ReactNode;
 } & Omit<
   CodeEditorProps,
   "onSave" | "onChange" | "value" | "style" | "className"
@@ -30,6 +32,7 @@ export const SmartCodeEditor = ({
   codePlaceholder,
   autoSave,
   codeEditorClassName = "b",
+  headerButtons,
   ...codeEditorProps
 }: P) => {
   const [_localValue, setLocalValue] = React.useState<
@@ -59,12 +62,17 @@ export const SmartCodeEditor = ({
     );
 
   const titleNode = (
-    <FlexRow className={fullScreen ? "" : "shadow"} style={{ zIndex: 1 }}>
-      {<div className="m-0 py-1 f-1">{label}</div>}
-      <Btn
-        iconPath={mdiFullscreen}
-        onClick={() => setFullScreen(!fullScreen)}
-      />
+    <FlexRow className={fullScreen ? "" : "bg-color-1"} style={{ zIndex: 1 }}>
+      <Label className=" px-p25 f-1 " variant="normal">
+        {label}
+      </Label>
+      <FlexRow className="gap-0">
+        {headerButtons}
+        <Btn
+          iconPath={mdiFullscreen}
+          onClick={() => setFullScreen(!fullScreen)}
+        />
+      </FlexRow>
     </FlexRow>
   );
 

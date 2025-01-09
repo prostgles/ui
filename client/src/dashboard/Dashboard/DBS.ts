@@ -1,5 +1,5 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
 import type {
   ColType,
   ConnectionStatus,
@@ -139,7 +139,7 @@ export type DBSMethods = Partial<{
 
 const AdminTableNames = ["connections", "global_settings"] as const;
 
-export type DBS = DBHandlerClient<DBSchemaGenerated> & {
+export type DBS = DBHandlerClient<DBGeneratedSchema> & {
   sql: DBHandlerClient["sql"];
 };
 

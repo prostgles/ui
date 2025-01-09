@@ -6,7 +6,7 @@ import type {
 import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { getKeys } from "prostgles-types";
 import { connectionChecker } from ".";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import { isDefined } from "../../commonTypes/filterUtils";
 import {
   getMagicLinkEmailFromTemplate,
@@ -19,8 +19,8 @@ import { getACRules } from "./ConnectionManager/ConnectionManager";
 import { fetchLLMResponse } from "./publishMethods/askLLM/askLLM";
 
 export const publish = async (
-  params: PublishParams<DBSchemaGenerated>,
-): Promise<Publish<DBSchemaGenerated>> => {
+  params: PublishParams<DBGeneratedSchema>,
+): Promise<Publish<DBGeneratedSchema>> => {
   const { dbo: db, user, db: _db, clientReq } = params;
 
   if (!user || !user.id) {
@@ -44,7 +44,7 @@ export const publish = async (
       )
       .filter(isDefined) || [];
 
-  const dashboardMainTables: Publish<DBSchemaGenerated> = (
+  const dashboardMainTables: Publish<DBGeneratedSchema> = (
     ["windows", "links", "workspaces"] as const
   ).reduce(
     (a, tableName) => ({
@@ -99,9 +99,9 @@ export const publish = async (
     {},
   );
 
-  type User = DBSchemaGenerated["users"]["columns"];
+  type User = DBGeneratedSchema["users"]["columns"];
   const getValidateAndHashUserPassword = (mustUpdate = false) => {
-    const validateFunc: ValidateUpdateRow<User, DBSchemaGenerated> = async ({
+    const validateFunc: ValidateUpdateRow<User, DBGeneratedSchema> = async ({
       dbx,
       filter,
       update,
@@ -146,7 +146,7 @@ export const publish = async (
     },
   };
 
-  let dashboardTables: Publish<DBSchemaGenerated> = {
+  let dashboardTables: Publish<DBGeneratedSchema> = {
     /* DASHBOARD */
     ...(dashboardMainTables as object),
     access_control_user_types: isAdmin && "*",
@@ -278,6 +278,7 @@ export const publish = async (
       update: user.type === "admin" && {
         fields: {
           name: 1,
+          url_path: 1,
           table_options: 1,
         },
       },

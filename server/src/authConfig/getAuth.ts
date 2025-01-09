@@ -8,7 +8,7 @@ import type {
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import { omitKeys } from "prostgles-types";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { BKP_PREFFIX } from "../BackupManager/BackupManager";
 import { actualRootDir } from "../electronConfig";
@@ -50,7 +50,7 @@ export const makeSession = async (
   client: Pick<Sessions, "user_agent" | "ip_address" | "type"> & {
     sid?: string;
   },
-  dbo: DBOFullyTyped<DBSchemaGenerated>,
+  dbo: DBOFullyTyped<DBGeneratedSchema>,
   expires = 0,
 ): Promise<BasicSession> => {
   if (user) {
@@ -216,6 +216,6 @@ export const getAuth = async (app: Express, dbs: DBS | undefined) => {
       signupWithEmail: await getEmailAuthProvider(auth_providers, dbs),
       loginWithOAuth: getOAuthLoginProviders(auth_providers),
     },
-  } satisfies AuthConfig<DBSchemaGenerated, SUser>;
+  } satisfies AuthConfig<DBGeneratedSchema, SUser>;
   return auth;
 };

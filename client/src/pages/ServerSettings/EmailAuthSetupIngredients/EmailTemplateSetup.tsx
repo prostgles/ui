@@ -1,7 +1,10 @@
+import { mdiDeleteRestore, mdiEyeCheckOutline } from "@mdi/js";
 import React from "react";
+import sanitize from "sanitize-html";
+import Btn from "../../../components/Btn";
 import { FlexCol } from "../../../components/Flex";
 import FormField from "../../../components/FormField/FormField";
-import { Label } from "../../../components/Label";
+import Popup from "../../../components/Popup/Popup";
 import { SmartCodeEditor } from "../../../dashboard/CodeEditor/SmartCodeEditor";
 
 export type EmailTemplateConfig = {
@@ -15,14 +18,16 @@ type P = {
   onChange: (newValue: EmailTemplateConfig) => void;
   style?: React.CSSProperties;
   className?: string;
-  label: string;
+  defaultBody: string;
+  parseBody: () => string;
 };
 export const EmailTemplateSetup = ({
   value,
   onChange,
   style,
   className,
-  label,
+  defaultBody,
+  parseBody,
 }: P) => {
   const onFieldChange = (newValue: Partial<EmailTemplateConfig>) => {
     const newTemplate = {
@@ -35,7 +40,8 @@ export const EmailTemplateSetup = ({
       subject: newTemplate.subject ?? "",
     });
   };
-
+  const htmlValue = value?.body ?? "";
+  const [showPreview, setShowPreview] = React.useState(false);
   return (
     <FlexCol
       style={{
@@ -45,7 +51,6 @@ export const EmailTemplateSetup = ({
       }}
       className={className}
     >
-      <Label label={label} />
       <FormField
         label={"From"}
         type="email"
@@ -60,16 +65,47 @@ export const EmailTemplateSetup = ({
       />
       <SmartCodeEditor
         language={"html"}
-        value={value?.body ?? ""}
+        value={htmlValue}
         label={"Body"}
-        // onChange={(body) => onFieldChange({ body })}
+        headerButtons={
+          <>
+            <Btn
+              title="Reset to default"
+              iconPath={mdiDeleteRestore}
+              onClick={() => onFieldChange({ body: defaultBody })}
+            />
+            <Btn
+              title="Preview"
+              iconPath={mdiEyeCheckOutline}
+              onClick={() => {
+                setShowPreview(!showPreview);
+              }}
+            />
+          </>
+        }
         autoSave={true}
         onSave={(body) => onFieldChange({ body })}
         options={{
           lineNumbers: "off",
+          padding: {
+            top: 24,
+          },
           minimap: { enabled: false },
         }}
       />
+      {showPreview && (
+        <Popup
+          title="Preview"
+          positioning="center"
+          clickCatchStyle={{ opacity: 1 }}
+          onClose={() => setShowPreview(false)}
+        >
+          <div
+            style={{ maxWidth: "600px" }}
+            dangerouslySetInnerHTML={{ __html: sanitize(parseBody()) }}
+          ></div>
+        </Popup>
+      )}
     </FlexCol>
   );
 };

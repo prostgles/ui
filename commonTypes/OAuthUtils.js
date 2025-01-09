@@ -167,15 +167,17 @@ export const DEFAULT_EMAIL_VERIFICATION_TEMPLATE = {
     subject: "Please verify your email address",
     body: fixIndent(`
     Hello,
-
+    <br/><br/>
     Somebody just used this email address to sign up.
-
+    <br/><br/>
     If this was you, verify your email by clicking on the link below:
-
+    <br/><br/>
     <a href="{{url}}">{{url}}</a>.
-
+    <br/><br/>
     Alternatively, you can fill in the code below on the login page:
-    {{code}}
+    <br/><br/>
+    <strong>{{code}}</strong>
+    <br/><br/>
 
     If this was not you, any other accounts you may own, and your internet properties are not at risk.
 `),
@@ -185,10 +187,11 @@ export const DEFAULT_MAGIC_LINK_TEMPLATE = {
     subject: "Login to your account",
     body: fixIndent(`
     Hey,
-
+    <br/><br/>
     Login by clicking <a href="{{url}}">here</a>. Or by entering the code below on the login page:
+    <br/><br/>
     {{code}}
-
+    <br/><br/>
     If you didn't request this email there's nothing to worry about - you can safely ignore it.`),
 };
 export const getMagicLinkEmailFromTemplate = ({ url, template, code, }) => {

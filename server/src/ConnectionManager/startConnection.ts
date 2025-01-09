@@ -5,7 +5,7 @@ import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUti
 import { getIsSuperUser, type DB } from "prostgles-server/dist/Prostgles";
 import { pickKeys } from "prostgles-types";
 import { Server } from "socket.io";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { addLog } from "../Logger";
 import { getAuth } from "../authConfig/getAuth";
@@ -17,11 +17,12 @@ import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
 import { alertIfReferencedFileColumnsRemoved } from "./connectionManagerUtils";
 import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionPublishMethods } from "./getConnectionPublishMethods";
+import { getApiPaths } from "../../../commonTypes/utils";
 
 export const startConnection = async function (
   this: ConnectionManager,
   con_id: string,
-  dbs: DBOFullyTyped<DBSchemaGenerated>,
+  dbs: DBOFullyTyped<DBGeneratedSchema>,
   _dbs: DB,
   socket?: PRGLIOSocket,
   restartIfExists = false,
@@ -56,7 +57,7 @@ export const startConnection = async function (
       (isSSLModeFallBack ? ". (sslmode=prefer fallback)" : ""),
   );
 
-  const socket_path = `${this.getConnectionPath(con_id)}-dashboard/s`;
+  const socket_path = getApiPaths(con).ws; // `${this.getConnectionPath(con_id)}-dashboard/s`;
 
   try {
     const prglInstance = this.prglConnections[con.id];
@@ -104,11 +105,7 @@ export const startConnection = async function (
 
     try {
       const global_settings = await dbs.global_settings.findOne();
-      const hotReloadConfig = await getReloadConfigs.bind(this)(
-        con,
-        dbConf,
-        dbs,
-      );
+      const hotReloadConfig = await getReloadConfigs(this, con, dbConf, dbs);
       const auth = await getAuth(this.app, dbs);
       const watchSchema = con.db_watch_shema ? "*" : false;
       const getForkedProcRunner = async () => {
@@ -290,7 +287,7 @@ export const startConnection = async function (
 };
 
 export const getACRule = async (
-  dbs: DBOFullyTyped<DBSchemaGenerated>,
+  dbs: DBOFullyTyped<DBGeneratedSchema>,
   user: User | undefined,
   database_id: number,
   connection_id: string,

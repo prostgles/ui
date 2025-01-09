@@ -1,11 +1,11 @@
 import type { SignupWithEmail } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBS } from "../..";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
 import { getEmailSenderWithMockTest } from "./getEmailSenderWithMockTest";
 import { onEmailRegistration } from "./onEmailRegistration";
 
 export const getEmailAuthProvider = async (
-  auth_providers: DBSchemaGenerated["global_settings"]["columns"]["auth_providers"],
+  auth_providers: DBGeneratedSchema["global_settings"]["columns"]["auth_providers"],
   dbs: DBS | undefined,
 ): Promise<SignupWithEmail | undefined> => {
   const {

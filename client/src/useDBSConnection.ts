@@ -1,9 +1,12 @@
 import prostgles from "prostgles-client";
-import { useAsyncEffectQueue } from "prostgles-client/dist/prostgles";
+import {
+  type DBHandlerClient,
+  useAsyncEffectQueue,
+} from "prostgles-client/dist/prostgles";
 import { useState } from "react";
 import type { Socket } from "socket.io-client";
 import io from "socket.io-client";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import type { AppState } from "./App";
 import type { DBS } from "./dashboard/Dashboard/DBS";
@@ -62,6 +65,7 @@ export const useDBSConnection = (
         initError,
         isElectron: false,
         canDumpAndRestore: undefined,
+        dbsWsApiPath: "",
       };
       console.error(initError);
     }
@@ -73,18 +77,14 @@ export const useDBSConnection = (
         serverState,
       });
       return;
-    } else if (serverState?.ok) {
-      socket = io(
-        // "http://localhost:3004",
-        {
-          // host: ,
-          transports: ["websocket"],
-          path: "/iosckt", //"/pipi",
-          reconnection: true,
-          reconnectionDelay: 2000,
-          reconnectionAttempts: 5,
-        },
-      );
+    } else if (serverState?.ok && serverState.dbsWsApiPath) {
+      socket = io({
+        transports: ["websocket"],
+        path: serverState.dbsWsApiPath,
+        reconnection: true,
+        reconnectionDelay: 2000,
+        reconnectionAttempts: 5,
+      });
 
       socket.on("infolog", console.log);
       socket.on("server-restart-request", (_sure) => {
@@ -97,7 +97,7 @@ export const useDBSConnection = (
       });
 
       prglReady = await new Promise((resolve, _reject) => {
-        prostgles<DBSchemaGenerated>({
+        prostgles<DBGeneratedSchema>({
           socket,
           onDisconnect: () => {
             onDisconnect(true);
@@ -123,13 +123,14 @@ export const useDBSConnection = (
             const { tables: dbsTables = [], error } = await getTables(
               tableSchema ?? [],
               undefined,
-              dbs as any,
+              dbs as DBHandlerClient,
             );
             if (error) {
               resolve({ error });
             } else {
               resolve({
-                dbs: dbs as any,
+                dbsWsApiPath: serverState.dbsWsApiPath,
+                dbs: dbs as DBS,
                 dbsMethods,
                 dbsTables,
                 auth,

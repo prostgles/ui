@@ -30,7 +30,7 @@ export const useCodeEditorTsTypes = ({
       content: pgPromiseDb,
     },
     {
-      filePath: "file:///DBSchemaGenerated.ts",
+      filePath: "file:///DBGeneratedSchema.ts",
       content: `declare global {   ${dbSchemaTypes?.dbSchema ?? ""} }; export {}`,
     },
     {
@@ -39,7 +39,7 @@ export const useCodeEditorTsTypes = ({
         /**
          * Function that will be called after the table is created and server started or schema changed
          */
-        export type ProstglesOnMount = (args: { dbo: Required<DBOFullyTyped<DBSchemaGenerated>>; db: pgPromise.DB; }) => void | Promise<void>; 
+        export type ProstglesOnMount = (args: { dbo: Required<DBOFullyTyped<DBGeneratedSchema>>; db: pgPromise.DB; }) => void | Promise<void>; 
       }; 
       export {} `,
     },
@@ -79,7 +79,7 @@ export const useMethodDefinitionTypes = ({
     args: ${argumentType},
     ctx: {
       db: pgPromise.DB;
-      dbo: DBOFullyTyped<DBSchemaGenerated>; 
+      dbo: DBOFullyTyped<DBGeneratedSchema>; 
       tables: any[];
       user: { id: string; type: ${userTypesTs}; };
     }

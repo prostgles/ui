@@ -6,16 +6,17 @@ import PopupMenu from "../../../components/PopupMenu";
 import { SwitchToggle } from "../../../components/SwitchToggle";
 import CodeExample from "../../CodeExample";
 import type { APIDetailsProps } from "./APIDetails";
+import { getApiPaths } from "../../../../../commonTypes/utils";
 
 export const APIDetailsHttp = ({
   dbs,
-  connectionId,
+  connection,
   token,
 }: APIDetailsProps & { token?: string }) => {
   const { data: dbConfig } = dbs.database_configs.useSubscribeOne({
-    $existsJoined: { connections: { id: connectionId } },
+    $existsJoined: { connections: { id: connection.id } },
   });
-  const restPath = `${window.location.origin}/rest-api/${connectionId}`;
+  const restPath = `${window.location.origin}${getApiPaths(connection).rest}`;
 
   return (
     <FlexCol>

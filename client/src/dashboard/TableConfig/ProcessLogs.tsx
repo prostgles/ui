@@ -9,6 +9,7 @@ import Loading from "../../components/Loading";
 import { SmartCodeEditor } from "../CodeEditor/SmartCodeEditor";
 import { renderInterval } from "../W_SQL/customRenderers";
 import type { editor } from "../W_SQL/monacoEditorTypes";
+import { Label } from "../../components/Label";
 
 type P = Pick<Prgl, "dbsMethods" | "connectionId" | "dbs"> & {
   type: "tableConfig" | "onMount" | "methods";
@@ -92,7 +93,7 @@ export const ProcessLogs = ({ dbsMethods, connectionId, dbs, type }: P) => {
         key={editorKey}
         label={
           <FlexRow>
-            <h4 className="m-0 p-0">{isDisabled ? "Log history" : "Log"}</h4>
+            <Label variant="normal">{isDisabled ? "Log history" : "Log"}</Label>
             {!isDisabled && (
               <>
                 <Chip variant="naked" label="PID">

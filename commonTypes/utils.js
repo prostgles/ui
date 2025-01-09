@@ -120,3 +120,13 @@ export const fixIndent = (_str) => {
         .join("\n")
         .trim();
 };
+export const getApiPaths = ({ id, url_path, }) => {
+    return {
+        rest: `${API_PATH_SUFFIXES.REST}/${url_path || id}`,
+        ws: `${API_PATH_SUFFIXES.WS}/${url_path || id}`,
+    };
+};
+export const API_PATH_SUFFIXES = {
+    REST: "/rest-api",
+    WS: "/ws-api-db",
+};

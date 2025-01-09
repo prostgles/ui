@@ -149,6 +149,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
+      config?: null | {    enabled: boolean;   path: string;  };
       created?: null | string;
       db_conn?: null | string;
       db_connection_timeout?: null | number;

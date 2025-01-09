@@ -7,7 +7,7 @@ import {
 } from "@mdi/js";
 import React from "react";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { isObject } from "../../../../commonTypes/publishUtils";
 import type { ExtraProps } from "../../App";
@@ -63,7 +63,7 @@ export const getSqlErrorText = (e: any) => {
 };
 
 export type Connection = Omit<
-  DBSchemaGenerated["connections"]["columns"],
+  DBGeneratedSchema["connections"]["columns"],
   "user_id"
 >;
 

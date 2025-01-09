@@ -2,8 +2,9 @@ import { mdiEmailEdit, mdiMailboxOpenOutline } from "@mdi/js";
 import { pickKeys } from "prostgles-types";
 import React from "react";
 import {
+  DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
+  DEFAULT_MAGIC_LINK_TEMPLATE,
   getMagicLinkEmailFromTemplate,
-  getVerificationEmailFromTemplate,
 } from "../../../../../commonTypes/OAuthUtils";
 import Btn from "../../../components/Btn";
 import ErrorComponent from "../../../components/ErrorComponent";
@@ -29,6 +30,7 @@ const keysToUpdate = [
 ] as const;
 
 type P = {
+  websiteUrl: string;
   value: AuthProvidersConfig["email"] | undefined;
   label: string;
   className?: string;
@@ -40,7 +42,7 @@ type P = {
   ) => Promise<void>;
 };
 export const EmailSMTPAndTemplateSetup = (props: P) => {
-  const { label, className, onChange } = props;
+  const { label, className, onChange, websiteUrl } = props;
 
   const { didChange, error, onSave, value, setValue, setError } =
     useEditableData(props.value && pickKeys(props.value, keysToUpdate.slice()));
@@ -91,8 +93,20 @@ export const EmailSMTPAndTemplateSetup = (props: P) => {
             disableFullScreen={true}
           >
             <EmailTemplateSetup
-              // label="Email template"
-              label=""
+              defaultBody={
+                signupType === "withMagicLink" ?
+                  DEFAULT_MAGIC_LINK_TEMPLATE.body
+                : DEFAULT_EMAIL_VERIFICATION_TEMPLATE.body
+              }
+              parseBody={() => {
+                return !value ? "" : (
+                    getMagicLinkEmailFromTemplate({
+                      code: "123456",
+                      url: websiteUrl || "https://example.com",
+                      template: value.emailTemplate,
+                    }).body
+                  );
+              }}
               value={value?.emailTemplate}
               onChange={(newEmailTemplate) =>
                 setValue({ emailTemplate: newEmailTemplate })

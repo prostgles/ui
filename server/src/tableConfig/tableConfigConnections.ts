@@ -96,6 +96,10 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
           },
         },
       },
+      config: {
+        jsonbSchemaType: { enabled: "boolean", path: "string" },
+        nullable: true,
+      },
       created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
       last_updated: { sqlDefinition: `BIGINT NOT NULL DEFAULT 0` },
     },

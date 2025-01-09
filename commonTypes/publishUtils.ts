@@ -1,4 +1,4 @@
-import { DBGeneratedSchema as DBSchemaGenerated } from "./DBGeneratedSchema";
+import { DBGeneratedSchema } from "./DBGeneratedSchema";
 import {
   GroupedDetailedFilter,
   getFinalFilter,
@@ -146,7 +146,7 @@ export type DeleteRule = {
 };
 
 export type DBSSchema = {
-  [K in keyof DBSchemaGenerated]: Required<DBSchemaGenerated[K]["columns"]>;
+  [K in keyof DBGeneratedSchema]: Required<DBGeneratedSchema[K]["columns"]>;
 };
 
 export type SyncRule = {

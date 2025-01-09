@@ -308,3 +308,21 @@ export const fixIndent = (_str: string | TemplateStringsArray): string => {
     .join("\n")
     .trim();
 };
+
+export const getApiPaths = ({
+  id,
+  url_path,
+}: {
+  id: string;
+  url_path: string | null;
+}) => {
+  return {
+    rest: `${API_PATH_SUFFIXES.REST}/${url_path || id}`,
+    ws: `${API_PATH_SUFFIXES.WS}/${url_path || id}`,
+  };
+};
+
+export const API_PATH_SUFFIXES = {
+  REST: "/rest-api",
+  WS: "/ws-api-db",
+};

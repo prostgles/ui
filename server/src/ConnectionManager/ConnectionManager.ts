@@ -10,15 +10,17 @@ import type {
   FileTableConfig,
   ProstglesInitOptions,
 } from "prostgles-server/dist/ProstglesTypes";
+import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
 import type { SubscriptionHandler } from "prostgles-types";
-import { omitKeys, pickKeys } from "prostgles-types";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
+import { pickKeys } from "prostgles-types";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import type { ConnectionChecker, WithOrigin } from "../ConnectionChecker";
 import { getDbConnection } from "../connectionUtils/testDBConnection";
 import { getRootDir } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
 import { API_PATH, MEDIA_ROUTE_PREFIX, connMgr } from "../index";
+import { UNIQUE_DB_COLS } from "../tableConfig/tableConfig";
 import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
 import {
   getCompiledTS,
@@ -27,8 +29,6 @@ import {
   parseTableConfig,
 } from "./connectionManagerUtils";
 import { startConnection } from "./startConnection";
-import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
-import { UNIQUE_DB_COLS } from "../tableConfig/tableConfig";
 export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
 
@@ -40,7 +40,7 @@ export const DB_TRANSACTION_KEY = "dbTransactionProstgles" as const;
 export type User = DBSSchema["users"];
 
 export const getACRules = async (
-  dbs: DBOFullyTyped<DBSchemaGenerated>,
+  dbs: DBOFullyTyped<DBGeneratedSchema>,
   user: Pick<User, "type">,
 ): Promise<DBSSchema["access_control"][]> => {
   return await dbs.access_control.find({
@@ -63,8 +63,8 @@ type PRGLInstance = {
   isSuperUser: boolean | undefined;
 };
 
-export const getReloadConfigs = async function (
-  this: ConnectionManager,
+export const getReloadConfigs = async (
+  conMgr: ConnectionManager,
   c: Connections,
   conf: DatabaseConfigs,
   dbs: DBS,
@@ -73,13 +73,13 @@ export const getReloadConfigs = async function (
     ProstglesInitOptions,
     "fileTable" | "tableConfig" | "restApi" | "schemaFilter"
   >
-> {
-  const restApi = getRestApiConfig(this, c.id, conf);
+> => {
+  const restApi = getRestApiConfig(conMgr, c, conf);
   const { fileTable } = await parseTableConfig({
     type: "saved",
     dbs,
     con: c,
-    conMgr: this,
+    conMgr,
   });
   return {
     restApi,
@@ -365,7 +365,8 @@ export class ConnectionManager {
             const prglCon = this.prglConnections[c.id];
             if (prglCon?.prgl) {
               const con = await this.getConnectionData(c.id);
-              const hotReloadConfig = await getReloadConfigs.bind(this)(
+              const hotReloadConfig = await getReloadConfigs(
+                this,
                 con,
                 conf,
                 dbs,

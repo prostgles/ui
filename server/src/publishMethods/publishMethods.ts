@@ -4,12 +4,12 @@ import fs from "fs";
 import * as os from "os";
 import path from "path";
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "../../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBS } from "../index";
-import { connectionChecker, connMgr, isTesting } from "../index";
+import { connectionChecker, connMgr } from "../index";
 
-export type Users = Required<DBSchemaGenerated["users"]["columns"]>;
-export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
+export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
+export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
 import type { DBHandlerServer } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
@@ -46,7 +46,7 @@ import { upsertConnection } from "../upsertConnection";
 import { askLLM } from "./askLLM/askLLM";
 import { prostglesSignup } from "./prostglesSignup";
 
-export const publishMethods: PublishMethods<DBSchemaGenerated> = async (
+export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   params,
 ) => {
   const { dbo: dbs, clientReq, db: _dbs } = params;

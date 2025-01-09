@@ -271,10 +271,7 @@ test.describe("Main test", () => {
     );
   });
 
-  test("Free LLM assistant signup & Disable signups", async ({
-    page: p,
-    browser,
-  }) => {
+  test("Free LLM assistant signup & Disable signups", async ({ page: p }) => {
     const page = p as PageWIds;
     await goTo(page, "/login");
     await page.locator("#username").fill(USERS.test_user);
@@ -330,10 +327,7 @@ test.describe("Main test", () => {
     );
   });
 
-  test("Limit login attempts max failed limit", async ({
-    page: p,
-    browser,
-  }) => {
+  test("Limit login attempts max failed limit", async ({ browser }) => {
     const page: PageWIds = await browser.newPage({
       extraHTTPHeaders: {
         "x-real-ip": "1.1.1.1",

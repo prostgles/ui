@@ -1,4 +1,4 @@
-import { DBGeneratedSchema as DBSchemaGenerated } from "./DBGeneratedSchema";
+import { DBGeneratedSchema } from "./DBGeneratedSchema";
 import { GroupedDetailedFilter } from "./filterUtils";
 export type CustomTableRules = {
     type: "Custom";
@@ -111,7 +111,7 @@ export type DeleteRule = {
     forcedFilterFrom?: "SelectRule" | "UpdateRule";
 };
 export type DBSSchema = {
-    [K in keyof DBSchemaGenerated]: Required<DBSchemaGenerated[K]["columns"]>;
+    [K in keyof DBGeneratedSchema]: Required<DBGeneratedSchema[K]["columns"]>;
 };
 export type SyncRule = {
     id_fields: string[];

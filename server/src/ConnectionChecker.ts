@@ -9,7 +9,7 @@ import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilderTy
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { SubscriptionHandler } from "prostgles-types";
 import { tryCatchV2 } from "prostgles-types";
-import type { DBGeneratedSchema as DBSchemaGenerated } from "../../commonTypes/DBGeneratedSchema";
+import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import { PASSWORDLESS_ADMIN_USERNAME } from "../../commonTypes/OAuthUtils";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import { getPasswordHash } from "./authConfig/authUtils";
@@ -31,7 +31,7 @@ export type WithOrigin = {
 };
 
 type OnUse = Required<
-  AuthConfig<DBSchemaGenerated, SUser>
+  AuthConfig<DBGeneratedSchema, SUser>
 >["loginSignupConfig"]["use"];
 
 const PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR =

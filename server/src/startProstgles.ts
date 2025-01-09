@@ -8,7 +8,7 @@ import { pickKeys } from "prostgles-types";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { Server } from "socket.io";
 import type { DBS } from ".";
-import { connMgr, connectionChecker } from ".";
+import { connMgr, connectionChecker, dbsWsApiPath } from ".";
 import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import type { ProstglesInitState } from "../../commonTypes/electronInit";
 import BackupManager from "./BackupManager/BackupManager";
@@ -330,6 +330,7 @@ export const getInitState = (): typeof _initState & ProstglesInitState => {
   return {
     isElectron: !!eConfig?.isElectron,
     electronCredsProvided: !!eConfig?.hasCredentials(),
+    dbsWsApiPath,
     ..._initState,
     canDumpAndRestore: bkpManager?.installedPrograms,
   };

@@ -67,17 +67,18 @@ const AllowedOriginCheck = ({ dbs }: Pick<APIDetailsProps, "dbs">) => {
 export const APIDetailsWs = ({
   dbs,
   dbsMethods,
-  connectionId,
+  connection,
   token,
   projectPath,
-}: APIDetailsProps & { token: string }) => {
+}: APIDetailsProps & { token?: string }) => {
   const dbSchemaTypes = usePromise(async () => {
-    if (dbsMethods.getAPITSDefinitions && connectionId) {
-      const dbSchemaTypes =
-        await dbsMethods.getConnectionDBTypes?.(connectionId);
+    if (dbsMethods.getAPITSDefinitions && connection.id) {
+      const dbSchemaTypes = await dbsMethods.getConnectionDBTypes?.(
+        connection.id,
+      );
       return dbSchemaTypes;
     }
-  }, [dbsMethods, connectionId]);
+  }, [dbsMethods, connection.id]);
 
   return (
     <FlexCol>
