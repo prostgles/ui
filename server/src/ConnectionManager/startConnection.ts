@@ -12,12 +12,12 @@ import { getAuth } from "../authConfig/getAuth";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc } from "../index";
 import type { ConnectionManager, User } from "./ConnectionManager";
-import { getReloadConfigs } from "./ConnectionManager";
+import { getHotReloadConfigs } from "./ConnectionManager";
 import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
 import { alertIfReferencedFileColumnsRemoved } from "./connectionManagerUtils";
 import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionPublishMethods } from "./getConnectionPublishMethods";
-import { getApiPaths } from "../../../commonTypes/utils";
+import { getConnectionPaths } from "../../../commonTypes/utils";
 
 export const startConnection = async function (
   this: ConnectionManager,
@@ -57,7 +57,7 @@ export const startConnection = async function (
       (isSSLModeFallBack ? ". (sslmode=prefer fallback)" : ""),
   );
 
-  const socket_path = getApiPaths(con).ws; // `${this.getConnectionPath(con_id)}-dashboard/s`;
+  const socket_path = getConnectionPaths(con).ws;
 
   try {
     const prglInstance = this.prglConnections[con.id];
@@ -80,6 +80,7 @@ export const startConnection = async function (
     }
     log("creating prgl", con.db_name);
     this.prglConnections[con.id] = {
+      io: undefined,
       socket_path,
       con,
       dbConf,
@@ -102,10 +103,9 @@ export const startConnection = async function (
       maxHttpBufferSize: 1e8,
       cors: this.withOrigin,
     });
-
     try {
       const global_settings = await dbs.global_settings.findOne();
-      const hotReloadConfig = await getReloadConfigs(this, con, dbConf, dbs);
+      const hotReloadConfig = await getHotReloadConfigs(this, con, dbConf, dbs);
       const auth = await getAuth(this.app, dbs);
       const watchSchema = con.db_watch_shema ? "*" : false;
       const getForkedProcRunner = async () => {
@@ -254,6 +254,7 @@ export const startConnection = async function (
         },
       });
       this.prglConnections[con.id] = {
+        io: _io,
         prgl,
         dbConf,
         connectionInfo,
@@ -270,6 +271,7 @@ export const startConnection = async function (
     } catch (e) {
       reject(e);
       this.prglConnections[con.id] = {
+        io: _io,
         error: e,
         connectionInfo,
         dbConf,

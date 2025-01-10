@@ -20,6 +20,7 @@ import { WorkspaceDeleteBtn } from "./WorkspaceDeleteBtn";
 import "./WorkspaceMenu.css";
 import { WorkspaceSettings } from "./WorkspaceSettings";
 import { cloneWorkspace } from "../Dashboard/cloneWorkspace";
+import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
 
 type P = {
   workspace: WorkspaceSyncItem;
@@ -30,7 +31,7 @@ type P = {
 export const getWorkspacePath = (
   w: Pick<Workspace, "id" | "connection_id">,
 ) => {
-  return ["/connections", `${w.connection_id}?workspaceId=${w.id}`]
+  return [API_PATH_SUFFIXES.DASHBOARD, `${w.connection_id}?workspaceId=${w.id}`]
     .filter((v) => v)
     .join("/");
 };

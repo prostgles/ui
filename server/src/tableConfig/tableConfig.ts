@@ -1374,6 +1374,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
             },
             {
               Provider: { enum: ["Prostgles"] },
+              API_Key: { type: "string" },
             },
           ],
         },

@@ -45,7 +45,7 @@ if (isTesting) {
   });
 }
 
-export const API_PATH = "/api";
+// export const API_PATH = "/api";
 
 app.use(json({ limit: "100mb" }));
 app.use(urlencoded({ extended: true, limit: "100mb" }));
@@ -127,11 +127,12 @@ export const connectionChecker = new ConnectionChecker(app);
 
 export const dbsWsApiPath = process.env.PRGL_IOPATH || "/ws-api-dbs";
 if (
-  API_PATH_SUFFIXES.WS.startsWith(dbsWsApiPath) ||
-  API_PATH_SUFFIXES.REST.startsWith(dbsWsApiPath)
+  Object.values(API_PATH_SUFFIXES).some((suffix) =>
+    suffix.startsWith(dbsWsApiPath),
+  )
 ) {
   throw new Error(
-    `dbsWsApiPath cannot start with ${API_PATH_SUFFIXES.WS}, ${API_PATH_SUFFIXES.REST}`,
+    `dbsWsApiPath cannot start with: ${Object.values(API_PATH_SUFFIXES)}`,
   );
 }
 const io = new Server(http, {

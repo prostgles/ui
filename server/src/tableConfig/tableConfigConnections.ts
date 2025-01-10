@@ -16,7 +16,12 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
   connections: {
     columns: {
       id: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
-      url_path: `TEXT CHECK(LENGTH(url_path) > 0 AND url_path ~ '^[a-z0-9-]+$')`,
+      url_path: {
+        sqlDefinition: `TEXT CHECK(LENGTH(url_path) > 0 AND url_path ~ '^[a-z0-9-]+$')`,
+        info: {
+          hint: `URL path to be used instead of the connection uuid`,
+        },
+      },
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
       name: `TEXT NOT NULL CHECK(LENGTH(name) > 0)`,
       db_name: `TEXT NOT NULL CHECK(LENGTH(db_name) > 0)`,

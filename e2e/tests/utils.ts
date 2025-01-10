@@ -60,6 +60,18 @@ export const getMonacoEditorBySelector = async (
     .nth(0);
   return monacoEditor;
 };
+
+export const getMonacoValue = async (
+  page: PageWIds,
+  parentSelector: string,
+) => {
+  await page.keyboard.press("Control+A");
+  const text = await page.innerText(
+    `${parentSelector} .monaco-editor .lines-content`,
+  );
+  const normalizedText = text.replace(/\u00A0/g, " "); // Replace char 160 with char 32
+  return normalizedText;
+};
 /**
  * Will overwrite all previous content
  */
@@ -67,16 +79,34 @@ export const monacoType = async (
   page: PageWIds,
   parentSelector: string,
   text: string,
+  {
+    deleteAll,
+    moveCursor,
+  }: {
+    deleteAll?: boolean;
+    moveCursor?: ("Down" | "Up" | "Left" | "Right")[];
+  } = { deleteAll: true },
 ) => {
   const monacoEditor = await getMonacoEditorBySelector(page, parentSelector);
   await monacoEditor.click();
-
-  // await page.evaluate( () => document.execCommand( 'selectall', false, null ) );
-  await page.keyboard.press("Control+A");
   await page.waitForTimeout(500);
-  await page.keyboard.press("Delete");
+
+  if (deleteAll) {
+    await page.keyboard.press("Control+A");
+    await page.waitForTimeout(500);
+    await page.keyboard.press("Delete");
+  }
   await page.waitForTimeout(500);
   await monacoEditor.click();
+  await monacoEditor.blur();
+  await page.waitForTimeout(500);
+  await monacoEditor.click();
+  await page.waitForTimeout(500);
+
+  for (const dir of moveCursor ?? []) {
+    await page.keyboard.press(`Arrow${dir}`);
+    await page.waitForTimeout(50);
+  }
   await page.keyboard.type(text, { delay: 100 });
   await page.waitForTimeout(500);
 };
@@ -622,14 +652,6 @@ export const createAccessRule = async (
   page: PageWIds,
   userType: "default" | "public",
 ) => {
-  await login(page);
-  await page.getByRole("link", { name: "Connections" }).click();
-  await page.getByRole("link", { name: TEST_DB_NAME }).click();
-  await page
-    .getByTestId("dashboard.goToConnConfig")
-    .waitFor({ state: "visible", timeout: 10e3 });
-  await page.getByTestId("dashboard.goToConnConfig").click();
-
   /** Set permissions */
   await page.getByTestId("config.ac").click();
   await page.waitForTimeout(1e3);
@@ -645,6 +667,20 @@ export const createAccessRule = async (
     .getByTestId("config.ac.edit.type")
     .locator(`button[value="Custom"]`)
     .click();
+};
+export const createAccessRuleForTestDB = async (
+  page: PageWIds,
+  userType: "default" | "public",
+) => {
+  await login(page);
+  await page.getByRole("link", { name: "Connections" }).click();
+  await page.getByRole("link", { name: TEST_DB_NAME }).click();
+  await page
+    .getByTestId("dashboard.goToConnConfig")
+    .waitFor({ state: "visible", timeout: 10e3 });
+  await page.getByTestId("dashboard.goToConnConfig").click();
+
+  await createAccessRule(page, userType);
 };
 
 export const enableAskLLM = async (

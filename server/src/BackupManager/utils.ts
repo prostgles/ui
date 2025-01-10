@@ -60,30 +60,6 @@ export function bytesToSize(bytes: number) {
   return Math.round(bytes / Math.pow(1024, i)) + " " + sizes[i];
 }
 
-export function getSSLEnvVars(
-  c: Connections,
-  connMgr: ConnectionManager,
-): EnvVars {
-  const result = {} as any;
-  if ((c as any).db_ssl) {
-    result.PGSSLMODE = c.db_ssl;
-  }
-  if (c.db_pass) {
-    result.PGPASSWORD = c.db_pass;
-  }
-  if (c.ssl_client_certificate) {
-    result.PGSSLCERT = connMgr.getCertPath(c.id, "cert");
-  }
-  if (c.ssl_client_certificate_key) {
-    result.PGSSLKEY = connMgr.getCertPath(c.id, "key");
-  }
-  if (c.ssl_certificate) {
-    result.PGSSLROOTCERT = connMgr.getCertPath(c.id, "ca");
-  }
-
-  return result;
-}
-
 type Basics = string | number | boolean;
 export function addOptions(
   opts: string[],

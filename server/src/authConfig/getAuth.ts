@@ -14,13 +14,14 @@ import { BKP_PREFFIX } from "../BackupManager/BackupManager";
 import { actualRootDir } from "../electronConfig";
 import { PROSTGLES_STRICT_COOKIE } from "../envVars";
 import type { DBS, Users } from "../index";
-import { API_PATH, connectionChecker, MEDIA_ROUTE_PREFIX } from "../index";
+import { connectionChecker, MEDIA_ROUTE_PREFIX } from "../index";
 import { initBackupManager } from "../startProstgles";
 import { getEmailAuthProvider } from "./emailProvider/getEmailAuthProvider";
 import { getActiveSession } from "./getActiveSession";
 import { getLogin } from "./getLogin";
 import { onMagicLinkOrOTP } from "./onMagicLinkOrOTP";
 import { getOAuthLoginProviders } from "./OAuthProviders/getOAuthLoginProviders";
+import { API_PATH_SUFFIXES } from "../../../commonTypes/utils";
 
 const authCookieOpts =
   process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_COOKIE ?
@@ -181,7 +182,7 @@ export const getAuth = async (app: Express, dbs: DBS | undefined) => {
         /** Keep last 20 sessions */
       },
       use: connectionChecker.onUse,
-      publicRoutes: ["/manifest.json", "/favicon.ico", API_PATH],
+      publicRoutes: ["/manifest.json", "/favicon.ico", API_PATH_SUFFIXES.WS],
       onGetRequestOK: async (req, res, { getUser, db, dbo: dbs }) => {
         if (req.path.startsWith(BKP_PREFFIX)) {
           const userData = await getUser();

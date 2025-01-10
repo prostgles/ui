@@ -7,6 +7,7 @@ import {
   clickInsertRow,
   closeWorkspaceWindows,
   createAccessRule,
+  createAccessRuleForTestDB,
   createDatabase,
   disablePwdlessAdminAndCreateUser,
   dropConnectionAndDatabase,
@@ -16,6 +17,7 @@ import {
   forEachLocator,
   getLLMResponses,
   getMonacoEditorBySelector,
+  getMonacoValue,
   getSearchListItem,
   getTableWindow,
   goTo,
@@ -281,7 +283,71 @@ test.describe("Main test", () => {
     await page.getByRole("button", { name: "Continue" }).click();
     await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
 
-    /**Free LLM assistant signup */
+    const existingCloudDb = await page
+      .getByRole("link", {
+        name: "cloud",
+        exact: true,
+      })
+      .count();
+
+    /** Create cloud db */
+    if (!existingCloudDb) {
+      const dbName = "cloud";
+      await createDatabase(dbName, page, false);
+      await page.getByTestId("dashboard.goToConnConfig").click();
+      await page.getByTestId("config.api").click();
+      await page.locator("input#url_path").fill(dbName);
+      /** Enable http api */
+      await page.getByText("Enabled").click();
+      await page.waitForTimeout(1500);
+    } else {
+      await page.getByRole("link", { name: "Cloud" }).click();
+      await page.getByTestId("dashboard.goToConnConfig").click();
+      await page.getByTestId("config.api").click();
+    }
+
+    /** Add server-side func */
+    await page.getByTestId("config.methods").click();
+
+    /** This timeout is crucial in ensuring monaco editor shows suggestions */
+    await page.waitForTimeout(1e3);
+    await page.getByText("Create function").click();
+    await page.waitForTimeout(1e3);
+    await page.locator("input#function_name").fill("askLLM");
+    await monacoType(page, ".MethodDefinition", "dbo.t", {
+      deleteAll: false,
+      moveCursor: ["Up"],
+    });
+    await page.keyboard.press("Tab");
+
+    /** Ensure db schema suggestions work */
+    const expectedCode =
+      "export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n dbo.tx \n}";
+    const funcCode = await getMonacoValue(page, ".MethodDefinition");
+    expect(funcCode).toEqual(expectedCode);
+    /** Add llm server side func */
+    const llmCode = `return { content: [{ text: "free ai assistant" }] };//`;
+    await monacoType(page, ".MethodDefinition", llmCode, {
+      deleteAll: false,
+      moveCursor: ["Up"],
+    });
+    const funcCode2 = await getMonacoValue(page, ".MethodDefinition");
+    expect(funcCode2).toEqual(
+      expectedCode.replace("dbo.tx", llmCode + "dbo.tx"),
+    );
+    await page.getByRole("button", { name: "Add" }).click();
+
+    /**
+     * Publish functions for user
+     */
+    await page.getByTestId("config.ac").click();
+    await createAccessRule(page, "default");
+    await page.getByText("askLLM").click();
+    await page.getByText("Create rule").click();
+    await page.waitForTimeout(1e3);
+
+    /** Signup for free LLM assistant */
+    await goTo(page, "/connections");
     await page.getByRole("link", { name: "Prostgles UI state" }).click();
     await page.getByTestId("AskLLM").click();
     await page.getByTestId("SetupLLMCredentials.free").click();
@@ -302,7 +368,16 @@ test.describe("Main test", () => {
     expect(typeof freeLLMCode).toBe("string");
     await page.locator("input#otp-code").fill(freeLLMCode);
     await page.getByTestId("ProstglesSignup.continue").click();
-    expect(await page.getByTestId("AskLLM.popup")).toBeVisible();
+    await page.waitForTimeout(1e3);
+    expect(await page.getByTestId("SetupLLMCredentials")).not.toBeVisible();
+
+    /**
+     * Test LLM responses
+     */
+    await goTo(page, "/connections");
+    await page.getByRole("link", { name: "cloud" }).click();
+    const responses = await getLLMResponses(page, ["hey"]);
+    expect(responses).toEqual([{ isOk: false, response: "free ai assistant" }]);
 
     /** Disable signups */
     await goTo(page, "/server-settings");
@@ -906,7 +981,7 @@ test.describe("Main test", () => {
   test("Set access rules", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await createAccessRule(page, "default");
+    await createAccessRuleForTestDB(page, "default");
 
     await setTableRule(
       page,
@@ -1430,7 +1505,7 @@ test.describe("Main test", () => {
   test("Set public user access rules", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await createAccessRule(page, "public");
+    await createAccessRuleForTestDB(page, "public");
     await setTableRule(
       page,
       "my_table",

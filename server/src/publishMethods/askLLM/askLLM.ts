@@ -161,7 +161,7 @@ export const fetchLLMResponse = async ({
     : _messages.filter((m) => m.role !== "system");
 
   const headers =
-    config.Provider === "OpenAI" ?
+    config.Provider === "OpenAI" || config.Provider === "Prostgles" ?
       {
         "Content-Type": "application/json",
         Authorization: `Bearer ${config.API_Key}`,
@@ -172,7 +172,6 @@ export const fetchLLMResponse = async ({
         "x-api-key": config.API_Key,
         "anthropic-version": config["anthropic-version"],
       }
-    : config.Provider === "Prostgles" ? {}
     : config.headers;
 
   const body =
@@ -195,9 +194,11 @@ export const fetchLLMResponse = async ({
         messages,
       }
     : config.Provider === "Prostgles" ?
-      {
-        messages,
-      }
+      [
+        {
+          messages,
+        },
+      ]
     : config.body;
 
   if (llm_credential.endpoint === "http://localhost:3004/mocked-llm") {
@@ -218,7 +219,7 @@ export const fetchLLMResponse = async ({
       `Failed to fetch LLM response: ${res.statusText} ${errorText}`,
     );
   }
-  const response: any = await res.json();
+  const response = (await res.json()) as AnyObject | undefined;
   const path =
     llm_credential.result_path ??
     (config.Provider === "OpenAI" ?

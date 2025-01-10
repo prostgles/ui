@@ -170,7 +170,7 @@ export const publish = async (
       insert: isAdmin && {
         fields: "*",
         forcedData,
-        postValidate: async ({ row, dbx }) => {
+        postValidate: async ({ row }) => {
           await fetchLLMResponse({
             llm_credential: row,
             messages: [

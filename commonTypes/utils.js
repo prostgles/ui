@@ -120,13 +120,18 @@ export const fixIndent = (_str) => {
         .join("\n")
         .trim();
 };
-export const getApiPaths = ({ id, url_path, }) => {
+export const getConnectionPaths = ({ id, url_path, }) => {
     return {
         rest: `${API_PATH_SUFFIXES.REST}/${url_path || id}`,
         ws: `${API_PATH_SUFFIXES.WS}/${url_path || id}`,
+        dashboard: `${API_PATH_SUFFIXES.DASHBOARD}/${id}`,
+        config: `${API_PATH_SUFFIXES.CONFIG}/${id}`,
     };
 };
 export const API_PATH_SUFFIXES = {
     REST: "/rest-api",
     WS: "/ws-api-db",
+    DASHBOARD: "/connections",
+    CONFIG: "/connection-config",
 };
+export const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";

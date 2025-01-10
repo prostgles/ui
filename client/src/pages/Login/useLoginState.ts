@@ -261,7 +261,7 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
   };
 };
 
-const ERR_CODE_MESSAGES = {
+export const ERR_CODE_MESSAGES = {
   "no-match": "Invalid credentials",
   "password-missing": "Password cannot be empty",
   "totp-token-missing": "Token cannot be empty",

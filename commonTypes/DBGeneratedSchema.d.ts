@@ -335,7 +335,7 @@ export type DBGeneratedSchema = {
        |  {  Provider: 'OpenAI';  API_Key: string;  model: string;  temperature?: number;  frequency_penalty?: number;  max_completion_tokens?: number;  presence_penalty?: number;  response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt'; }
        |  {  Provider: 'Anthropic';  API_Key: string;  "anthropic-version": string;  model: string;  max_tokens: number; }
        |  {  Provider: 'Custom';  headers?: Record<string, string>;  body?: Record<string, string>; }
-       |  {  Provider: 'Prostgles'; }
+       |  {  Provider: 'Prostgles';  API_Key: string; }
       created?: null | string;
       endpoint?: string;
       id?: number;
@@ -553,7 +553,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      description?: null | string;
+      en?: null | string;
       id: string;
     };
   };

@@ -309,7 +309,7 @@ export const fixIndent = (_str: string | TemplateStringsArray): string => {
     .trim();
 };
 
-export const getApiPaths = ({
+export const getConnectionPaths = ({
   id,
   url_path,
 }: {
@@ -319,10 +319,16 @@ export const getApiPaths = ({
   return {
     rest: `${API_PATH_SUFFIXES.REST}/${url_path || id}`,
     ws: `${API_PATH_SUFFIXES.WS}/${url_path || id}`,
+    dashboard: `${API_PATH_SUFFIXES.DASHBOARD}/${id}`,
+    config: `${API_PATH_SUFFIXES.CONFIG}/${id}`,
   };
 };
 
 export const API_PATH_SUFFIXES = {
   REST: "/rest-api",
   WS: "/ws-api-db",
-};
+  DASHBOARD: "/connections",
+  CONFIG: "/connection-config",
+} as const;
+
+export const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";

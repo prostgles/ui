@@ -1,9 +1,5 @@
-import {
-  useAsyncEffectQueue,
-  useIsMounted,
-} from "prostgles-client/dist/react-hooks";
 import { omitKeys } from "prostgles-types";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 import { pageReload } from "../../components/Loading";
@@ -45,15 +41,20 @@ export const NewMethod = ({
     description: "",
     outputTable: null,
   });
-  const getIsMounted = useIsMounted();
-  useAsyncEffectQueue(async () => {
-    if (!methodId) return;
-    const existingMethod = await dbs.published_methods.findOne({
+
+  const { data: existingMethod } = dbs.published_methods.useFindOne(
+    {
       id: methodId,
-    });
-    if (!getIsMounted() || !existingMethod) return;
-    setNewMethod(existingMethod);
-  }, [methodId]);
+    },
+    undefined,
+    { skip: !methodId },
+  );
+  useEffect(() => {
+    if (existingMethod && existingMethod.id === methodId) {
+      setNewMethod(existingMethod);
+    }
+  }, [existingMethod, methodId]);
+
   const isNewMethod = methodId === undefined;
 
   return (

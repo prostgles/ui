@@ -6,7 +6,7 @@ import PopupMenu from "../../../components/PopupMenu";
 import { SwitchToggle } from "../../../components/SwitchToggle";
 import CodeExample from "../../CodeExample";
 import type { APIDetailsProps } from "./APIDetails";
-import { getApiPaths } from "../../../../../commonTypes/utils";
+import { getConnectionPaths } from "../../../../../commonTypes/utils";
 
 export const APIDetailsHttp = ({
   dbs,
@@ -16,7 +16,7 @@ export const APIDetailsHttp = ({
   const { data: dbConfig } = dbs.database_configs.useSubscribeOne({
     $existsJoined: { connections: { id: connection.id } },
   });
-  const restPath = `${window.location.origin}${getApiPaths(connection).rest}`;
+  const restPath = `${window.location.origin}${getConnectionPaths(connection).rest}`;
 
   return (
     <FlexCol>
@@ -82,14 +82,10 @@ const api = (route, ...params) => fetch(
     headers,
     body: JSON.stringify(params ?? [])
   })
-  .then(res => res.text())
-  .then(text => { 
-    try {
-      return JSON.parse(text);
-    } catch {
-      return text;
-    }
-  });
+  .then(res => res.json())
+  .catch(res => res.text())
+  .catch(res => res.statusText) 
+  
 const schema = await api(["schema"]);
 console.log(schema);
 const data = await api(["db", schema.tableSchema[0]?.name ?? "someTable", "find"], {}, { select: "*", limit: 2 })

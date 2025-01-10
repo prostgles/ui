@@ -172,15 +172,20 @@ export declare const CONNECTION_CONFIG_SECTIONS: readonly ["access_control", "ba
  * Ensure that multi-line strings are indented correctly
  */
 export declare const fixIndent: (_str: string | TemplateStringsArray) => string;
-export declare const getApiPaths: ({ id, url_path, }: {
+export declare const getConnectionPaths: ({ id, url_path, }: {
     id: string;
     url_path: string | null;
 }) => {
     rest: string;
     ws: string;
+    dashboard: string;
+    config: string;
 };
 export declare const API_PATH_SUFFIXES: {
-    REST: string;
-    WS: string;
+    readonly REST: "/rest-api";
+    readonly WS: "/ws-api-db";
+    readonly DASHBOARD: "/connections";
+    readonly CONFIG: "/connection-config";
 };
+export declare const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
 export {};

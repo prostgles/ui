@@ -12,7 +12,7 @@ import type { Connections, DBS, DatabaseConfigs } from "..";
 import { MEDIA_ROUTE_PREFIX } from "..";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
-import { getApiPaths } from "../../../commonTypes/utils";
+import { getConnectionPaths } from "../../../commonTypes/utils";
 
 export const getDatabaseConfigFilter = (c: Connections) =>
   pickKeys(c, ["db_name", "db_host", "db_port"]);
@@ -137,7 +137,7 @@ export const getRestApiConfig = (
     dbConf.rest_api_enabled ?
       {
         expressApp: conMgr.app,
-        routePrefix: getApiPaths(con).rest,
+        routePrefix: getConnectionPaths(con).rest,
       }
     : undefined;
 

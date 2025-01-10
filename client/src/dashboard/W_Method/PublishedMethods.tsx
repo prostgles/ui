@@ -12,12 +12,14 @@ import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
 import SmartCardList from "../SmartCard/SmartCardList";
 import { ProcessLogs } from "../TableConfig/ProcessLogs";
 import { NewMethod } from "./NewMethod";
+import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAccessRule";
 
 type P = {
   className?: string;
   style?: React.CSSProperties;
   accessRuleId: number | undefined;
   prgl: Prgl;
+  editedRule: ValidEditedAccessRuleState | undefined;
 };
 
 export const PublishedMethods = ({
@@ -25,6 +27,7 @@ export const PublishedMethods = ({
   style,
   prgl,
   accessRuleId,
+  editedRule,
 }: P) => {
   const { dbsMethods, dbsTables, dbs, connectionId } = prgl;
 
@@ -49,33 +52,49 @@ export const PublishedMethods = ({
       noDataComponent={<InfoRow color="info">No functions</InfoRow>}
       fieldConfigs={[
         { name: "description", hide: true },
-        { name: "name", hide: true },
         { name: "id", hide: true },
-        !isDefined(accessRuleId) ? undefined : (
-          {
-            name: "access_control_methods",
-            select: "*",
-            label: " ",
-            render: (v, row) => (
-              <SwitchToggle
-                checked={v?.some((a) => a.access_control_id === accessRuleId)}
-                onChange={(checked) => {
-                  if (!checked) {
-                    dbs.access_control_methods.delete({
-                      published_method_id: row.id,
-                      access_control_id: accessRuleId,
-                    });
-                  } else {
-                    dbs.access_control_methods.insert({
-                      published_method_id: row.id,
-                      access_control_id: accessRuleId,
-                    });
-                  }
-                }}
-              />
-            ),
-          }
-        ),
+        {
+          name: "name",
+          label: " ",
+          render: (v, row) => (
+            <SwitchToggle
+              label={row.name}
+              checked={
+                !!editedRule?.newRule?.access_control_methods?.some(
+                  (m) => m.published_method_id === row.id,
+                )
+              }
+              onChange={(checked) => {
+                if (!checked) {
+                  editedRule?.onChange({
+                    access_control_methods:
+                      editedRule.rule?.access_control_methods.filter(
+                        (a) => a.published_method_id !== row.id,
+                      ),
+                  });
+                } else {
+                  editedRule?.onChange({
+                    access_control_methods: [
+                      ...(editedRule.rule?.access_control_methods ?? []),
+                      { published_method_id: row.id },
+                    ],
+                  });
+                }
+                // if (!checked) {
+                //   dbs.access_control_methods.delete({
+                //     published_method_id: row.id,
+                //     access_control_id: accessRuleId,
+                //   });
+                // } else {
+                //   dbs.access_control_methods.insert({
+                //     published_method_id: row.id,
+                //     access_control_id: accessRuleId,
+                //   });
+                // }
+              }}
+            />
+          ),
+        },
         {
           name: "arguments",
           label: " ",
@@ -84,7 +103,6 @@ export const PublishedMethods = ({
             <FlexRow className="noselect">
               <FlexCol>
                 <FlexRow>
-                  <div className="font-18">{m.name}</div>
                   <div className="text-2">
                     {!m.arguments.length ?
                       " ()"

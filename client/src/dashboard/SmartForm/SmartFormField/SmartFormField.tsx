@@ -186,7 +186,6 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
     const { tableName, db, column, showSuggestions, tables, action } =
       this.props;
     const { columnName } = this.state;
-    // console.log(dP, dS, dD);
 
     let ns = {} as any;
     if (columnName !== column.name) {

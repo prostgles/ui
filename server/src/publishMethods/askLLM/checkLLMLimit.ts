@@ -1,6 +1,6 @@
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
-import { DBS } from "../..";
-import { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { DBS } from "../..";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 
 export const checkLLMLimit = async (
   dbs: DBS,
@@ -9,7 +9,7 @@ export const checkLLMLimit = async (
   accessRules: DBSSchema["access_control"][],
 ) => {
   if (user.type === "admin") return;
-  if (!allowedUsedLLMCreds?.length) {
+  if (!allowedUsedLLMCreds.length) {
     throw "LLM credential/prompt not allowed";
   }
   if (!accessRules.length) throw "Access rules missing for non admin user";
@@ -19,7 +19,7 @@ export const checkLLMLimit = async (
   const limits = usedRules.map((r) => r.llm_daily_limit);
   if (!limits.length) throw "No limits found";
   if (limits.includes(0)) return;
-  const totalLimit = limits?.reduce((a, v) => a + v, 0);
+  const totalLimit = limits.reduce((a, v) => a + v, 0);
   if (totalLimit <= 0) throw "No limit found";
 
   /** If normal user then check messages by user_id only */

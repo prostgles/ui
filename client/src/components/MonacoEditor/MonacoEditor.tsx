@@ -27,8 +27,21 @@ export type MonacoEditorProps = {
   style?: React.CSSProperties;
   loadedSuggestions: LoadedSuggestions | undefined;
 };
+
+let renders = 0;
+let lastChecked = Date.now();
+
 export const MonacoEditor = (props: MonacoEditorProps) => {
   const { loadedSuggestions } = props;
+
+  const now = Date.now();
+  if (lastChecked + 100 < now && renders > 100) {
+    renders = 0;
+    lastChecked = Date.now();
+    console.error("MonacoEditor renders too much: ", renders);
+  }
+  renders++;
+
   // useEffectDeep(() => {
   //   if(!props.loadedSuggestions) return;
   //   loadPSQLLanguage(props.loadedSuggestions);
@@ -43,20 +56,21 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
   const container = React.useRef<HTMLDivElement>(null);
   const { state: _appTheme } = useReactiveState(appTheme);
 
-  const options = props.options;
+  const {
+    language,
+    value,
+    options,
+    onMount,
+    onChange,
+    expandSuggestionDocs = true,
+  } = props;
   const theme =
     options?.theme && options.theme !== "vs" ? options.theme
     : _appTheme === "dark" ? "vs-dark"
     : (customLightThemeMonaco as any);
-  useAsyncEffectQueue(async () => {
-    const {
-      language,
-      value,
-      options,
-      onMount,
-      expandSuggestionDocs = true,
-    } = props;
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useAsyncEffectQueue(async () => {
     const monaco = await getMonaco();
     const editorOptions: editor.IStandaloneEditorConstructionOptions = {
       value,
@@ -74,10 +88,10 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       editor.current,
       expandSuggestionDocs,
     );
-    if (props.onChange) {
+    if (onChange) {
       editor.current.onDidChangeModelContent(() => {
         const value = editor.current?.getValue() || "";
-        props.onChange?.(value);
+        onChange(value);
       });
     }
 
@@ -88,12 +102,12 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     return () => {
       editor.current?.dispose();
     };
-  }, [props.language, container, props.onChange, loadedLanguage]);
+  }, [language, container, onChange, loadedLanguage]);
 
   useEffectDeep(() => {
     if (!editor.current) return;
     editor.current.updateOptions({ ...props.options, theme });
-  }, [theme, props.options, editor.current]);
+  }, [theme, props.options, editor.current, props.onMount, props.onChange]);
 
   useEffectDeep(() => {
     if (editor.current && props.value !== editor.current.getValue()) {

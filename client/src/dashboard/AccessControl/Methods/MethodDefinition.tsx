@@ -73,8 +73,8 @@ export const MethodDefinition = ({
   ];
 
   const renderCode = renderMode === "Code";
-
-  const Code = (
+  const methodName = method.name;
+  const codeEditorNode = (
     <SmartCodeEditor
       key={tsMethodDef}
       label={
@@ -93,23 +93,24 @@ export const MethodDefinition = ({
       value={method.run ?? ""}
       options={{
         glyphMargin: false,
-        padding: renderCode ? { top: 16, bottom: 0 } : undefined,
-        lineNumbersMinChars: renderCode ? 4 : 0,
+        padding: { top: 16, bottom: 0 },
+        lineNumbersMinChars: 4,
       }}
       autoSave={!renderCode}
-      onSave={(run) => onChange({ ...method, run })}
+      onSave={(run) => {
+        onChange({ ...method, run });
+      }}
       codeEditorClassName={renderCode ? "b-none" : ""}
     />
   );
 
-  const methodName = method.name;
   const { data: clashingMethod } = dbs.published_methods.useFindOne({
     ...(method.id && { id: { $ne: method.id } }),
     name: methodName,
     connection_id: connectionId,
   });
 
-  if (renderCode) return Code;
+  if (renderCode) return codeEditorNode;
 
   return (
     <FlexCol className="MethodDefinition f-1 gap-p5">
@@ -149,6 +150,7 @@ export const MethodDefinition = ({
       : <>
           <FlexCol className="p-1">
             <FormField
+              id="function_name"
               label="Name"
               value={method.name}
               error={clashingMethod ? "Name already exists" : undefined}
@@ -157,6 +159,7 @@ export const MethodDefinition = ({
               }}
             />
             <FormField
+              id="function_description"
               type="text"
               value={method.description}
               label={"Description"}
@@ -182,7 +185,7 @@ export const MethodDefinition = ({
                 contentClassName="flex-col gap-1  f-1"
                 open={true}
               >
-                {Code}
+                {codeEditorNode}
               </Section>
               <Section title="Result" contentClassName="flex-col gap-1 p-1 f-1">
                 <p className="ta-start m-0">

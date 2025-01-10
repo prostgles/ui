@@ -408,11 +408,11 @@ export default class CodeEditor extends React.Component<CodeEditorProps, S> {
           }}
           onMount={(editor) => {
             this.editor = editor;
-            if (onChange) {
+            if (this.props.onChange) {
               editor.onDidChangeModelContent((ev) => {
                 const newValue = editor.getValue();
                 if (this.props.value === newValue) return;
-                onChange(newValue);
+                this.props.onChange!(newValue);
               });
             }
             this.forceUpdate();

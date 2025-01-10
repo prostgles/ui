@@ -22,7 +22,7 @@ export type DBSMethods = Partial<{
   prostglesSignup: (
     email: string,
     otpCode: string,
-  ) => Promise<{ token: string; hasError?: boolean; error: any }>;
+  ) => Promise<{ token: string; host: string; hasError?: boolean; error: any }>;
   askLLM: (query: string, schema: string, chatId: number) => Promise<AnyObject>;
   pgDump: (
     conId: string,

@@ -8,25 +8,26 @@ export type DivProps = React.DetailedHTMLProps<
   React.HTMLAttributes<HTMLDivElement>,
   HTMLDivElement
 >;
-export class Success extends React.Component<DivProps> {
-  render() {
-    const { className = "" } = this.props;
+export const Success = (props: DivProps) => {
+  const { className = "", ...otherProps } = props;
 
-    return (
-      <div
-        {...this.props}
-        className={"custom-animations success-checkmark " + className}
-      >
-        <div className="check-icon">
-          <span className="icon-line line-tip"></span>
-          <span className="icon-line line-long"></span>
-          <div className="icon-circle"></div>
-          <div className="icon-fix"></div>
-        </div>
+  return (
+    <div
+      {...otherProps}
+      className={classOverride(
+        "custom-animations success-checkmark f-0 ",
+        className,
+      )}
+    >
+      <div className="check-icon">
+        <span className="icon-line line-tip"></span>
+        <span className="icon-line line-long"></span>
+        <div className="icon-circle"></div>
+        <div className="icon-fix"></div>
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 export class SuccessSVG extends React.Component<React.SVGProps<SVGSVGElement>> {
   render() {
@@ -56,16 +57,21 @@ export class SuccessSVG extends React.Component<React.SVGProps<SVGSVGElement>> {
   }
 }
 
-const miniStyle = {
+const smallStyle = {
   transform: `scale(0.5) translate(-50%, -50%)`,
   width: "40px",
   height: "40px",
+};
+const textSizedStyle = {
+  transform: `scale(0.25) translate(-75%, -175%)`,
+  width: "20px",
+  height: "20px",
 };
 
 export const SuccessMini = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex-col">
-      <Success style={miniStyle} />
+      <Success style={smallStyle} />
       <div>{children}</div>
     </div>
   );
@@ -77,7 +83,7 @@ type FlashMessageProps = {
     millis: number;
     onEnd: VoidFunction;
   };
-  variant?: "small";
+  variant?: "small" | "text-sized";
 } & TestSelectors &
   Pick<DivProps, "className" | "style">;
 
@@ -105,12 +111,20 @@ export const SuccessMessage = ({
     <div
       {...divProps}
       className={classOverride(
-        "SuccessMessage text-green p-1 flex-col jc-center ai-center o-hidden gap-p5",
+        "SuccessMessage text-green p-1 jc-center ai-center o-hidden gap-p5 w-fit " +
+          (variant === "text-sized" ? "flex-row-reverse" : "flex-col"),
         className,
       )}
     >
       <div className={"text-green p-1 flex-col "}>{message}</div>
-      <Success style={!variant ? {} : miniStyle} />
+      <Success
+        style={
+          variant === "small" ? smallStyle
+          : variant === "text-sized" ?
+            textSizedStyle
+          : {}
+        }
+      />
     </div>
   );
 };

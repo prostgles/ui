@@ -301,6 +301,7 @@ export const AccessControlRuleEditor = ({
           <PublishedMethods
             className="my-2"
             prgl={prgl}
+            editedRule={editedRule}
             accessRuleId={
               action.type === "edit" ? action.selectedRuleId : undefined
             }

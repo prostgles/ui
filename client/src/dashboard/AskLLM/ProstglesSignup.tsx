@@ -1,8 +1,12 @@
 import React from "react";
+import { SuccessMessage } from "../../components/Animations";
+import Btn from "../../components/Btn";
+import ErrorComponent from "../../components/ErrorComponent";
 import { FlexCol } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import type { SetupLLMCredentialsProps } from "./SetupLLMCredentials";
-import Btn from "../../components/Btn";
+import { isObject } from "../../../../commonTypes/publishUtils";
+import { ERR_CODE_MESSAGES } from "../../pages/Login/useLoginState";
 
 export const ProstglesSignup = ({
   setupState,
@@ -14,6 +18,7 @@ export const ProstglesSignup = ({
   );
   const [didSendCode, setDidSendCode] = React.useState(false);
   const [otpCode, setOtpCode] = React.useState("");
+  const [error, setError] = React.useState<any>();
   return (
     <FlexCol className="ProstglesSignup">
       <div>
@@ -33,10 +38,10 @@ export const ProstglesSignup = ({
       />
       {didSendCode && (
         <>
-          <div>
-            A code was sent to your email. Enter the code to complete
-            registration
-          </div>
+          <SuccessMessage
+            variant="text-sized"
+            message="A code was sent to your email. Enter the code to complete registration"
+          />
           <FormField
             id="otp-code"
             type="text"
@@ -49,31 +54,42 @@ export const ProstglesSignup = ({
           />
         </>
       )}
+      {error && <ErrorComponent error={error} />}
       <Btn
         variant="filled"
         color="action"
         className="mt-1"
         data-command="ProstglesSignup.continue"
-        onClickPromise={async () => {
-          const { token, error, hasError } = await dbsMethods.prostglesSignup!(
-            email,
-            otpCode,
-          );
-          if (hasError) {
-            throw error;
+        onClick={async () => {
+          setError(undefined);
+          try {
+            const { token, host, error, hasError } =
+              await dbsMethods.prostglesSignup!(email, otpCode);
+            if (hasError) {
+              throw error;
+            }
+            setDidSendCode(true);
+            if (!token) return;
+            await dbs.global_settings.update(
+              {},
+              { prostgles_registration: { email, token, enabled: true } },
+            );
+            const API_Key = btoa(token);
+            await dbs.llm_credentials.insert({
+              config: {
+                Provider: "Prostgles",
+                API_Key,
+              },
+              endpoint: `${host}/rest-api/cloud/methods/askLLM`,
+              user_id: undefined as any,
+            });
+          } catch (err) {
+            if (isObject(err) && "code" in err) {
+              setError(ERR_CODE_MESSAGES[err.code] ?? err);
+            } else {
+              setError(err);
+            }
           }
-          setDidSendCode(true);
-          if (!token) return;
-          await dbs.global_settings.update(
-            {},
-            { prostgles_registration: { email, token, enabled: true } },
-          );
-          await dbs.llm_credentials.insert({
-            config: {
-              Provider: "Prostgles",
-            },
-            user_id: undefined as any,
-          });
         }}
       >
         Continue

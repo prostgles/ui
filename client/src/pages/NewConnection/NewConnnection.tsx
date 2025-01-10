@@ -30,6 +30,7 @@ import { SwitchToggle } from "../../components/SwitchToggle";
 import PopupMenu from "../../components/PopupMenu";
 import { Icon } from "../../components/Icon/Icon";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
+import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
 
 export const getSqlErrorText = (e: any) => {
   let objDetails: [string, any][] = [];
@@ -287,7 +288,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
         {!contentOnly && (
           <NavLink
             className="p-1 text-1 round flex-row ai-center"
-            to={`/connections`}
+            to={API_PATH_SUFFIXES.DASHBOARD}
           >
             <Icon path={mdiArrowLeft} size={1} />
             <div className="ml-p5">Connections</div>
@@ -487,9 +488,6 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
 
                   onUpserted?.(connection);
                   setMsg({ ok: mode !== "edit" ? "Created!" : "Updated!" });
-                  // setTimeout(() => {
-                  //   window.location.href = "/connections";
-                  // }, 500)
                 } catch (e: any) {
                   console.error(e);
                   setMsg({ loading: 0 });
@@ -518,7 +516,7 @@ export default (props: NewConnectionProps) => {
         navigate("/");
       }}
       onUpserted={({ id }) => {
-        navigate("/connections/" + id);
+        navigate(API_PATH_SUFFIXES.DASHBOARD + "/" + id);
       }}
     />
   );

@@ -45,6 +45,7 @@ import { TopHeaderClassName } from "./dashboardUtils";
 import { loadTable, type LoadTableArgs } from "./loadTable";
 import { cloneWorkspace } from "./cloneWorkspace";
 import { getWorkspacePath } from "../WorkspaceMenu/WorkspaceMenu";
+import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -417,7 +418,7 @@ export class _Dashboard extends RTComp<
               color="action"
               variant="filled"
               asNavLink={true}
-              href={`/connections/${connectionId}`}
+              href={`${API_PATH_SUFFIXES.DASHBOARD}/${connectionId}`}
               iconPath={mdiArrowLeft}
             >
               Go back

@@ -45,6 +45,7 @@ import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./useAppTheme";
 import { useDBSConnection } from "./useDBSConnection";
 import { isDefined } from "./utils";
+import { API_PATH_SUFFIXES } from "../../commonTypes/utils";
 export * from "./appUtils";
 
 export type ClientUser = {
@@ -206,7 +207,7 @@ export const App = () => {
             : [
                 {
                   label: "Connections",
-                  to: "/connections",
+                  to: API_PATH_SUFFIXES.DASHBOARD,
                   iconPath: mdiServerNetwork,
                 },
                 {
@@ -296,9 +297,12 @@ export const App = () => {
       )}
       <NonHTTPSWarning {...prglState} />
       <Switch>
-        <Route path="/" element={<Navigate to="/connections" replace />} />
         <Route
-          path="/connections"
+          path="/"
+          element={<Navigate to={API_PATH_SUFFIXES.DASHBOARD} replace />}
+        />
+        <Route
+          path={API_PATH_SUFFIXES.DASHBOARD}
           element={withNavBar(<Connections {...extraProps} />, true)}
         />
         <Route
@@ -315,7 +319,7 @@ export const App = () => {
         ,
         <Route
           key="3"
-          path="/connections/:cid"
+          path={`${API_PATH_SUFFIXES.DASHBOARD}/:cid`}
           element={<ProjectConnection prglState={extraProps} />}
         />
         ,
