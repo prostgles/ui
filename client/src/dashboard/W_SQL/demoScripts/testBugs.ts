@@ -69,6 +69,7 @@ export const testBugs: DemoScript = async (args) => {
   await typeAuto(`uni`);
   await testResult(crossJoinQuery + "indisunique");
 
+  /** hackyFixOptionmatchOnWordStartOnly */
   fromBeginning(false, crossJoinQuery + "uni");
   await moveCursor.pageDown();
   await moveCursor.lineEnd();
