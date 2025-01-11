@@ -13,6 +13,7 @@ import {
 } from "../../dashboard/SQLEditor/SQLEditor";
 import type { editor } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
+import { useWhyDidYouUpdate } from "./useWhyDidYouUpdate";
 export type MonacoEditorProps = {
   language: string;
   value: string;
@@ -35,17 +36,16 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
   const { loadedSuggestions } = props;
 
   const now = Date.now();
-  if (lastChecked + 100 < now && renders > 100) {
-    console.error(`MonacoEditor renders too much: ${renders}/100ms`);
-    renders = 0;
+  if (lastChecked + 100 < now) {
+    if (renders > 100) {
+      console.error(`MonacoEditor renders too much: ${renders}/100ms`);
+    }
     lastChecked = Date.now();
+    renders = 0;
   }
   renders++;
 
-  // useEffectDeep(() => {
-  //   if(!props.loadedSuggestions) return;
-  //   loadPSQLLanguage(props.loadedSuggestions);
-  // }, [props.loadedSuggestions]);
+  // useWhyDidYouUpdate("MonacoEditor", props);
 
   const loadedLanguage = usePromise(async () => {
     await loadPSQLLanguage(loadedSuggestions);

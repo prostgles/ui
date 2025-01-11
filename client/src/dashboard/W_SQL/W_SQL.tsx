@@ -26,7 +26,7 @@ import type { DeltaOf } from "../RTComp";
 import RTComp from "../RTComp";
 import { getFuncs } from "../SQLEditor/SQLCompletion/getPGObjects";
 import type { MonacoError, SQLEditorRef } from "../SQLEditor/SQLEditor";
-import SQLEditor from "../SQLEditor/SQLEditor";
+import { SQLEditor } from "../SQLEditor/SQLEditor";
 
 import type {
   SingleSyncHandles,
@@ -673,75 +673,3 @@ export const Counter = ({ from, className, title }: CounterProps) => {
     </div>
   );
 };
-
-// <div className={
-//   "Results flex-col oy-auto relative bt b-color " +
-//   (commandResult? " f-0 " : " f-1 ") +
-//   (!childWindow && (o.hideTable && !notices && !notifEventSub || (!rows.length && !sqlResult)) ? " hidden " : "")
-// }>
-//   {notices ? <div className="p-1 ws-pre text-1">{notices.slice(0).map(n => JSON.stringify(n, null, 2)).join("\n")}</div> :
-//     commandResult ? <div className="p-1 ">{commandResult}</div> :
-//     childWindow ? childWindow :
-//     w.sql_options.renderMode === "csv"?
-//       <CSVRender cols={cols} rows={rows} /> :
-//       w.sql_options.renderMode === "JSON"?
-//       <CodeEditor
-//         language="json"
-//         value={JSON.stringify(rows.map(rowValues => cols.reduce((a, v, i) => ({ ...a, [v.name]: rowValues[i] }), {})), null, 2)}
-//       /> :
-//       <Table
-//         maxCharsPerCell={w.sql_options.maxCharsPerCell || 1000}
-//         sort={sort}
-//         onSort={(sort) => {
-//           this.runSQL(sort);
-//         }}
-//         showSubLabel={true}
-//         cols={cols
-//           .map((c, i)=> ({
-//             ...c,
-//             key: i,
-//             label: c.name,
-//             filter: false,
-//             /* Align numbers to right for an easier read */
-//             headerClassname: c.tsDataType === "number" ? " jc-end  " : " ",
-//             className: c.tsDataType === "number" ? " ta-right " : " ",
-//             onRender: onRenderColumn({
-//               c: { ...c, name: i.toString(), format: undefined },
-//               table: undefined,
-//               tables,
-//               barchartVals: undefined,
-//               maxCellChars: w.sql_options.maxCharsPerCell || 1000,
-//               maximumFractionDigits: 12,
-//             }),
-//             onResize: async (width) => {
-
-//               const newCols = cols.map(_c => {
-//                 if (_c.key === c.key) {
-//                   _c.width = width;
-//                 }
-//                 return _c;
-//               });
-//               this.setState({ cols: newCols })
-//             }
-//           }))
-//         }
-//         rows={rows.slice(page * pageSize, (page + 1) * pageSize)}
-//         style={{ flex: 1, boxShadow: "unset" }}
-//         tableStyle={{ borderRadius: "unset", border: "unset", ...((info?.command || "").toLowerCase() === "explain"? { whiteSpace: "pre" } : {} ) }}
-//         pagination={!isSelect? undefined : {
-//           page,
-//           pageSize,
-//           totalRows: rowCount,
-//           onPageChange: (newPage) => {
-//             this.setState({ page: newPage })
-//           },
-//           onPageSizeChange: (pageSize) => {
-//             this.setState({ pageSize });
-//             if(this.d.w?.limit && pageSize > this.d.w.limit){
-//               w.$update({ limit: pageSize });
-//             }
-//           }
-//         }}
-//       />
-//   }
-// </div>

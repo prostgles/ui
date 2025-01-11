@@ -2,7 +2,7 @@ import React from "react";
 import Select from "../components/Select/Select";
 import type { DBSMethods } from "./Dashboard/DBS";
 import { FlexCol } from "../components/Flex";
-import SQLEditor from "./SQLEditor/SQLEditor";
+import { SQLEditor } from "./SQLEditor/SQLEditor";
 import CodeExample from "./CodeExample";
 import type { SampleSchema } from "../../../commonTypes/utils";
 import { usePromise } from "prostgles-client/dist/react-hooks";
