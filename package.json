@@ -1,8 +1,5 @@
 {
   "devDependencies": {
     "prettier": "^3.4.2"
-  },
-  "dependencies": {
-    "prostgles-server": "^4.2.228"
   }
 }

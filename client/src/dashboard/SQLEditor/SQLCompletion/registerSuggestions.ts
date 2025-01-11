@@ -601,7 +601,7 @@ export const hackyFixOptionmatchOnWordStartOnly = (
   editor: editor.IStandaloneCodeEditor,
 ) => {
   try {
-    const indexOfConfig = 119;
+    const indexOfConfig = 118; // 119 for version 0.52.0
     // ensure typing name matches relname
     // suggestModel.js:420
     //@ts-ignore

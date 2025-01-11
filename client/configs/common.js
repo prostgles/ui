@@ -122,7 +122,7 @@ module.exports = {
       languages: ["typescript", "javascript", "sql", "pgsql", "json"],
     }),
     new webpack.ProgressPlugin({
-      activeModules: false,
+      activeModules: true,
       entries: true,
       // handler(percentage, message, ...args) {
       //   console.log(percentage)
@@ -138,7 +138,7 @@ module.exports = {
     // new (require("webpack-bundle-analyzer").BundleAnalyzerPlugin)(),
   ],
   output: {
-    // Clean the output directory before emit.
+    /* Clean the output directory before emit. */
     clean: true,
   },
   performance: {

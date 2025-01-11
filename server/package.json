@@ -3,7 +3,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build-start": "npm i && tsc && npm prune --production",
+    "build-start": "npm i && tsc && npm prune --omit=dev",
     "build": "bash ./build.sh",
     "start": "npm run build && node dist/server/src/index.js",
     "rollup": "rollup -c",
