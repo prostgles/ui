@@ -29,4 +29,8 @@ export function useWhyDidYouUpdate(componentName, props) {
     // Update prev props ref
     prevProps.current = props;
   });
+
+  useEffect(() => {
+    console.log("[why-did-you-update] mounted", componentName);
+  }, [componentName]);
 }

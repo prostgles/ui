@@ -31,7 +31,7 @@ import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import ErrorComponent from "../../components/ErrorComponent";
 import { InfoRow } from "../../components/InfoRow";
 import { SECOND } from "../Charts";
-import CodeEditor from "../CodeEditor/CodeEditor";
+import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { DBS } from "../Dashboard/DBS";
 import { TestSQL } from "./TestSQL";
 import { SQLHotkeys } from "./SQLHotkeys";

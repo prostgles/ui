@@ -753,7 +753,7 @@ test.describe("Main test", () => {
 
     await page.goto("localhost:3004/account", { waitUntil: "networkidle" });
     await monacoType(page, `[data-label="Options"]`, `{ `, {
-      moveCursorAfterTyping: ["Right"],
+      // moveCursorAfterTyping: ["Right"],
     });
     await page.keyboard.type("vst", { delay: 100 });
     await page.keyboard.press("Tab");

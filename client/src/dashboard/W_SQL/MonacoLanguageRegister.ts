@@ -1109,9 +1109,9 @@ export const loadPSQLLanguage = async (
 ) => {
   if (loadedPSQLLanguage) return false;
   loadedPSQLLanguage = true;
-  const m = await getMonaco();
+  const monaco = await getMonaco();
 
-  m.languages.getLanguages().forEach((lang) => {
+  monaco.languages.getLanguages().forEach((lang) => {
     if (["sql"].includes(lang.id) && "loader" in lang) {
       const oldLoader: () => Promise<{ language: languages.IMonarchLanguage }> =
         lang.loader as any;

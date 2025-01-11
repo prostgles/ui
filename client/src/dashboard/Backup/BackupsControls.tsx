@@ -22,7 +22,7 @@ import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
 import PopupMenu from "../../components/PopupMenu";
 import { ProgressBar } from "../../components/ProgressBar";
-import CodeEditor from "../CodeEditor/CodeEditor";
+import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { DBS, DBSMethods } from "../Dashboard/DBS";
 import type { Backups } from "../Dashboard/dashboardUtils";
 import { StyledInterval } from "../W_SQL/customRenderers";

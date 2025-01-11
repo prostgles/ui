@@ -1,20 +1,26 @@
+import type { editor } from "monaco-editor";
+import { useEffect } from "react";
 import { getMonaco } from "../../SQLEditor/SQLEditor";
 import type { LanguageConfig } from "../CodeEditor";
 import { getMonacoJsonSchemas } from "./getMonacoJsonSchemas";
-import type CodeEditor from "../CodeEditor";
-import { isEqual } from "prostgles-types";
+import { useEffectDeep } from "prostgles-client/dist/react-hooks";
 
-export const setMonacoJsonSchemas = async (
-  codeEditor: CodeEditor,
+export const useSetMonacoJsonSchemas = (
+  editor: editor.IStandaloneCodeEditor | undefined,
   value: string,
   languageObj: LanguageConfig | undefined,
 ) => {
-  const editor = codeEditor.editor;
-  if (!editor) return;
-  if (languageObj?.lang !== "json") return;
-  const { jsonSchemas } = languageObj;
-  if (isEqual(codeEditor.jsonSchemas, jsonSchemas)) return;
-  codeEditor.jsonSchemas = jsonSchemas;
+  useEffectDeep(() => {
+    setMonacoEditorJsonSchemas(editor, value, languageObj);
+  }, [editor, languageObj]);
+};
+
+export const setMonacoEditorJsonSchemas = async (
+  editor: editor.IStandaloneCodeEditor | undefined,
+  value: string,
+  languageObj: LanguageConfig | undefined,
+) => {
+  if (!editor || !languageObj || languageObj.lang !== "json") return;
   const monaco = await getMonaco();
   const mySchemas = await getMonacoJsonSchemas(languageObj);
   if (!mySchemas) return;
@@ -49,7 +55,7 @@ export const setMonacoJsonSchemas = async (
     } catch (error) {
       console.log(error);
     }
-  } else {
+  } else if (editor.getModel()?.id !== matchingModel.id) {
     editor.setModel(matchingModel);
     editor.setValue(value);
     return true;

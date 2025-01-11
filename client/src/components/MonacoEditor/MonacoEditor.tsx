@@ -1,9 +1,8 @@
 import {
   useAsyncEffectQueue,
-  useEffectDeep,
   usePromise,
 } from "prostgles-client/dist/react-hooks";
-import * as React from "react";
+import React, { useEffect, useMemo } from "react";
 import { appTheme, useReactiveState } from "../../App";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
 import { hackyFixOptionmatchOnWordStartOnly } from "../../dashboard/SQLEditor/SQLCompletion/registerSuggestions";
@@ -45,14 +44,15 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
   }
   renders++;
 
-  // useWhyDidYouUpdate("MonacoEditor", props);
+  useWhyDidYouUpdate("MonacoEditor", props);
 
   const loadedLanguage = usePromise(async () => {
     await loadPSQLLanguage(loadedSuggestions);
     return true;
   }, [loadedSuggestions]);
 
-  const editor = React.useRef<editor.IStandaloneCodeEditor>();
+  // const editor = React.useRef<editor.IStandaloneCodeEditor>();
+  const [editor, setEditor] = React.useState<editor.IStandaloneCodeEditor>();
   const container = React.useRef<HTMLDivElement>(null);
   const { state: _appTheme } = useReactiveState(appTheme);
 
@@ -64,61 +64,87 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     onChange,
     expandSuggestionDocs = true,
   } = props;
-  const theme =
-    options?.theme && options.theme !== "vs" ? options.theme
-    : _appTheme === "dark" ? "vs-dark"
-    : (customLightThemeMonaco as any);
+
+  const valueRef = React.useRef(value);
+
+  const fullOptions = useMemo(() => {
+    const theme =
+      options?.theme && options.theme !== "vs" ? options.theme
+      : _appTheme === "dark" ? "vs-dark"
+      : (customLightThemeMonaco as any);
+    return {
+      ...options,
+      theme,
+    };
+  }, [_appTheme, options]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useAsyncEffectQueue(async () => {
+    if (!container.current) return;
     const monaco = await getMonaco();
     const editorOptions: editor.IStandaloneEditorConstructionOptions = {
-      value,
+      value: valueRef.current,
       language,
-      ...options,
-      theme,
+      ...fullOptions,
       matchOnWordStartOnly: false,
     };
 
-    if (!container.current) return;
-
-    editor.current = monaco.editor.create(container.current, editorOptions);
-    hackyFixOptionmatchOnWordStartOnly(editor.current);
+    const newEditor = monaco.editor.create(container.current, editorOptions);
+    hackyFixOptionmatchOnWordStartOnly(newEditor);
     hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42(
-      editor.current,
+      newEditor,
       expandSuggestionDocs,
     );
-    if (onChange) {
-      editor.current.onDidChangeModelContent(() => {
-        const value = editor.current?.getValue() || "";
-        onChange(value);
-      });
-    }
+
+    setEditor(newEditor);
+    return () => {
+      newEditor.dispose();
+    };
+  }, [
+    language,
+    container,
+    onChange,
+    onMount,
+    fullOptions,
+    expandSuggestionDocs,
+  ]);
+
+  useEffect(() => {
+    if (!editor) return;
 
     /** This check necessary to ensure getTokens returns correct data */
     if (loadedLanguage) {
-      onMount?.(editor.current);
+      onMount?.(editor);
     }
-    return () => {
-      editor.current?.dispose();
-    };
-  }, [language, container, onChange, loadedLanguage]);
+  }, [editor, onMount, loadedLanguage]);
 
-  useEffectDeep(() => {
-    if (!editor.current) return;
-    editor.current.updateOptions({ ...props.options, theme });
-  }, [theme, props.options, editor.current, props.onMount, props.onChange]);
+  useEffect(() => {
+    if (!editor) return;
 
-  useEffectDeep(() => {
-    if (editor.current && props.value !== editor.current.getValue()) {
-      editor.current.setValue(props.value);
+    if (onChange) {
+      editor.onDidChangeModelContent(() => {
+        const newValue = editor.getValue();
+        if (valueRef.current === newValue) return;
+        onChange(newValue);
+      });
     }
-  }, [props.value, editor.current]);
+  }, [editor, onChange]);
+
+  useEffect(() => {
+    if (!editor) return;
+    editor.updateOptions(fullOptions);
+  }, [editor, fullOptions]);
+
+  useEffect(() => {
+    if (editor && value !== editor.getValue()) {
+      editor.setValue(value);
+    }
+  }, [value, editor]);
 
   const { className, style } = props;
   return (
     <div
-      key={`${!!props.language.length}`}
+      key={`${!!language.length}`}
       ref={container}
       style={{
         ...style,

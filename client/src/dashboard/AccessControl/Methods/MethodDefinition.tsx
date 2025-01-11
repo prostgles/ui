@@ -1,6 +1,6 @@
 import { mdiCodeJson } from "@mdi/js";
-import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
-import React, { useState } from "react";
+import { getJSONBSchemaAsJSONSchema, isEqual } from "prostgles-types";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";
@@ -8,12 +8,13 @@ import { FlexCol } from "../../../components/Flex";
 import FormField from "../../../components/FormField/FormField";
 import { JSONBSchema } from "../../../components/JSONBSchema/JSONBSchema";
 import { Section } from "../../../components/Section";
-import CodeEditor from "../../CodeEditor/CodeEditor";
+import { CodeEditor, type LanguageConfig } from "../../CodeEditor/CodeEditor";
 import { SmartCodeEditor } from "../../CodeEditor/SmartCodeEditor";
 import {
   useCodeEditorTsTypes,
   useMethodDefinitionTypes,
 } from "./useMethodDefinitionTypes";
+import { useWhyDidYouUpdate } from "../../../components/MonacoEditor/useWhyDidYouUpdate";
 
 export type MethodDefinitionProps = {
   onChange: (newMethod: MethodDefinitionProps["method"]) => void;
@@ -31,49 +32,88 @@ export type MethodDefinitionProps = {
   | "dbs"
 >;
 
-export const MethodDefinition = ({
-  onChange,
-  method,
-  tables,
-  dbsTables,
-  db,
-  connectionId,
-  dbsMethods,
-  dbKey,
-  renderMode,
-  dbs,
-}: MethodDefinitionProps) => {
+export const MethodDefinition = (props: MethodDefinitionProps) => {
+  const {
+    onChange,
+    method,
+    tables,
+    dbsTables,
+    db,
+    connectionId,
+    dbsMethods,
+    dbKey,
+    renderMode,
+    dbs,
+  } = props;
+  useWhyDidYouUpdate("MethodDefinition", props);
   const tsLibraries = useCodeEditorTsTypes({ connectionId, dbsMethods, dbKey });
   const { tsMethodDef } = useMethodDefinitionTypes({ method, tables, dbs });
-  const methodsTable = dbsTables.find((t) => t.name === "published_methods");
-  const methodArgsCol = methodsTable?.columns.find(
-    (c) => c.name === "arguments",
-  );
 
   const [editAsJSON, seteditAsJSON] = useState(false);
 
-  const jsonSchemas = [
-    {
-      id: "published_methods",
-      schema: getJSONBSchemaAsJSONSchema("published_methods", "arguments", {
-        type: {
-          ...methodsTable?.columns
-            .filter((c) => ["arguments"].includes(c.name))
-            .reduce(
-              (a, v) => ({
-                ...a,
-                [v.name]: { type: v.tsDataType, nullable: v.is_nullable },
-              }),
-              {},
-            ),
-          arguments: methodArgsCol?.jsonbSchema as any,
-        },
-      }),
-    },
-  ];
+  const { language, methodArgsCol } = useMemo(() => {
+    const methodsTable = dbsTables.find((t) => t.name === "published_methods");
+    const methodArgsCol = methodsTable?.columns.find(
+      (c) => c.name === "arguments",
+    );
+    const jsonSchemas = [
+      {
+        id: "published_methods",
+        schema: getJSONBSchemaAsJSONSchema("published_methods", "arguments", {
+          type: {
+            ...methodsTable?.columns
+              .filter((c) => ["arguments"].includes(c.name))
+              .reduce(
+                (a, v) => ({
+                  ...a,
+                  [v.name]: { type: v.tsDataType, nullable: v.is_nullable },
+                }),
+                {},
+              ),
+            arguments: methodArgsCol?.jsonbSchema as any,
+          },
+        }),
+      },
+    ];
+    const language: LanguageConfig = {
+      lang: "json",
+      jsonSchemas,
+    };
+
+    return {
+      language,
+      methodArgsCol,
+    };
+  }, [dbsTables]);
 
   const renderCode = renderMode === "Code";
   const methodName = method.name;
+  const languageObj = useMemo(() => {
+    return {
+      lang: "typescript",
+      modelFileName: method.name ?? "myModel",
+      tsLibraries: [
+        ...tsLibraries,
+        { filePath: "file:///ProstglesMethod.ts", content: tsMethodDef },
+      ],
+    } satisfies LanguageConfig;
+  }, [tsLibraries, tsMethodDef, method.name]);
+
+  const onSave = useCallbackDeep(
+    (run: string) => {
+      onChange({ ...method, run });
+    },
+    [method, onChange],
+  );
+
+  const options = useMemo(() => {
+    return {
+      glyphMargin: false,
+      padding: { top: 16, bottom: 0 },
+      lineNumbersMinChars: 4,
+    };
+  }, []);
+
   const codeEditorNode = (
     <SmartCodeEditor
       key={tsMethodDef}
@@ -82,24 +122,11 @@ export const MethodDefinition = ({
           "Server-side TypeScript function triggered by a button press"
         )
       }
-      language={{
-        lang: "typescript",
-        modelFileName: method.name ?? "myModel",
-        tsLibraries: [
-          ...tsLibraries,
-          { filePath: "file:///ProstglesMethod.ts", content: tsMethodDef },
-        ],
-      }}
+      language={languageObj}
       value={method.run ?? ""}
-      options={{
-        glyphMargin: false,
-        padding: { top: 16, bottom: 0 },
-        lineNumbersMinChars: 4,
-      }}
+      options={options}
       autoSave={!renderCode}
-      onSave={(run) => {
-        onChange({ ...method, run });
-      }}
+      onSave={onSave}
       codeEditorClassName={renderCode ? "b-none" : ""}
     />
   );
@@ -109,6 +136,18 @@ export const MethodDefinition = ({
     name: methodName,
     connection_id: connectionId,
   });
+
+  const onCodeChange = useCallback(
+    (val: string) => {
+      try {
+        const newMethod = JSON.parse(val);
+        onChange(newMethod);
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    [onChange],
+  );
 
   if (renderCode) return codeEditorNode;
 
@@ -133,19 +172,9 @@ export const MethodDefinition = ({
             minWidth: "600px",
             minHeight: "400px",
           }}
-          language={{
-            lang: "json",
-            jsonSchemas,
-          }}
+          language={language}
           value={JSON.stringify(method, null, 2)}
-          onChange={(val) => {
-            try {
-              const newMethod = JSON.parse(val);
-              onChange(newMethod);
-            } catch (err) {
-              console.error(err);
-            }
-          }}
+          onChange={onCodeChange}
         />
       : <>
           <FlexCol className="p-1">
@@ -218,3 +247,37 @@ export const MethodDefinition = ({
     </FlexCol>
   );
 };
+
+function useCallbackDeep<T extends (...args: any[]) => any>(
+  callback: T,
+  dependencies: any[],
+): T {
+  const ref = useRef<{
+    deps: any[];
+    cb: T;
+    wrapper: T;
+  }>();
+
+  if (!ref.current) {
+    ref.current = {
+      deps: dependencies,
+      cb: callback,
+      wrapper: callback as T,
+    };
+  }
+
+  // Update stored callback if it changes
+  ref.current.cb = callback;
+
+  const memoizedCallback = useCallback(
+    (...args: any[]) => ref.current!.cb(...args),
+    [ref],
+  );
+
+  if (!isEqual(dependencies, ref.current.deps)) {
+    ref.current.deps = dependencies;
+    ref.current.wrapper = memoizedCallback as T;
+  }
+
+  return ref.current.wrapper;
+}

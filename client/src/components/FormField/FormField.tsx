@@ -13,7 +13,7 @@ import type {
   CodeEditorJsonSchema,
   CodeEditorProps,
 } from "../../dashboard/CodeEditor/CodeEditor";
-import CodeEditor from "../../dashboard/CodeEditor/CodeEditor";
+import { CodeEditor } from "../../dashboard/CodeEditor/CodeEditor";
 import { generateUniqueID } from "../FileInput/FileInput";
 import { onFormFieldKeyDown } from "./onFormFieldKeyDown";
 import SmartFormField from "../../dashboard/SmartForm/SmartFormField/SmartFormField";
@@ -26,6 +26,7 @@ import type { TestSelectors } from "../../Testing";
 import { classOverride } from "../Flex";
 import { Icon } from "../Icon/Icon";
 import Popup from "../Popup/Popup";
+import { FormFieldCodeEditor } from "./FormFieldCodeEditor";
 
 const INPUT_HINT_WRAPPER_CLASS = "input-hint-wrapper";
 const INPUT_WRAPPER_CLASS = "input-wrapper";
@@ -62,7 +63,7 @@ export type FormFieldProps = TestSelectors & {
   asTextArea?: boolean;
   asJSON?: {
     schemas?: CodeEditorJsonSchema[];
-    options?: Omit<CodeEditorProps, "language">;
+    options?: Omit<CodeEditorProps, "language" | "value">;
   };
   rightContentAlwaysShow?: boolean;
   rightIcons?: React.ReactNode;
@@ -474,45 +475,54 @@ export default class FormField extends React.Component<
     const inputNode =
       inputContent ? inputContent
       : asJSON ?
-        <CodeEditor
-          key={asJSON.schemas?.length ? asJSON.schemas[0]!.id : undefined}
-          className={inputProps.className}
-          style={{
-            minHeight: inputProps.value?.toString().length ? "100px" : "26px",
-            minWidth: "200px",
-            borderRadius: ".5em",
-            flex: 1,
-            resize: "vertical",
-            overflow: "auto",
-            border: "unset",
-            borderRight: `1px solid var(--text-4)`,
-            ...inputProps.style,
-          }}
-          options={{
-            ...asJSON.options,
-            tabSize: 2,
-            minimap: {
-              enabled: false,
-            },
-            lineNumbers: "off",
-            automaticLayout: true,
-          }}
+        <FormFieldCodeEditor
+          asJSON={asJSON}
           value={value}
-          language={{
-            lang: "json",
-            jsonSchemas: asJSON.schemas,
-          }}
-          onChange={
-            readOnly || disabledInfo || !this.props.onChange ?
-              undefined
-            : (v) => {
-                try {
-                  const jsonValue = JSON.parse(v);
-                  this.props.onChange?.(jsonValue);
-                } catch (e) {}
-              }
-          }
+          disabledInfo={disabledInfo}
+          onChange={onChange}
+          className={inputProps.className}
+          style={inputProps.style}
+          readOnly={readOnly}
         />
+        // <CodeEditor
+        //   key={asJSON.schemas?.length ? asJSON.schemas[0]!.id : undefined}
+        //   className={inputProps.className}
+        //   style={{
+        //     minHeight: inputProps.value?.toString().length ? "100px" : "26px",
+        //     minWidth: "200px",
+        //     borderRadius: ".5em",
+        //     flex: 1,
+        //     resize: "vertical",
+        //     overflow: "auto",
+        //     border: "unset",
+        //     borderRight: `1px solid var(--text-4)`,
+        //     ...inputProps.style,
+        //   }}
+        //   options={{
+        //     ...asJSON.options,
+        //     tabSize: 2,
+        //     minimap: {
+        //       enabled: false,
+        //     },
+        //     lineNumbers: "off",
+        //     automaticLayout: true,
+        //   }}
+        //   value={value}
+        //   language={{
+        //     lang: "json",
+        //     jsonSchemas: asJSON.schemas,
+        //   }}
+        //   onChange={
+        //     readOnly || disabledInfo || !this.props.onChange ?
+        //       undefined
+        //     : (v) => {
+        //         try {
+        //           const jsonValue = JSON.parse(v);
+        //           this.props.onChange?.(jsonValue);
+        //         } catch (e) {}
+        //       }
+        //   }
+        // />
       : type === "file" ? <FileBtn {...(inputProps as any)} />
       : type === "checkbox" ? <Checkbox {...(inputProps as any)} />
       : readOnly ?
@@ -624,7 +634,7 @@ export default class FormField extends React.Component<
           className={`trigger-hover ${(type !== "checkbox" && !asColumn ? " ai-center " : " ") + (!asColumn ? " flex-row-wrap " : " flex-col ")}`}
           title={title}
           style={{
-            ...(asJSON ? { minWidth: "min(400px, 90vw)" } : {}),
+            ...(asJSON && { minWidth: "min(400px, 90vw)" }),
             ...(disabledInfo && { pointerEvents: "none" }),
           }}
         >

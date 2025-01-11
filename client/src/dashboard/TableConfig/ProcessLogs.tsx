@@ -1,5 +1,5 @@
 import { useIsMounted } from "prostgles-client/dist/react-hooks";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { ProcStats } from "../../../../commonTypes/utils";
 import { getAgeFromDiff } from "../../../../commonTypes/utils";
 import type { Prgl } from "../../App";
@@ -37,6 +37,7 @@ export const ProcessLogs = ({ dbsMethods, connectionId, dbs, type }: P) => {
     (type === "tableConfig" ? dbConf?.table_config_ts_disabled
     : type === "onMount" ? conn?.on_mount_ts_disabled
     : false) || !hasCode;
+
   useEffect(() => {
     if (isDisabled) return;
     const interval = setInterval(async () => {
@@ -85,6 +86,15 @@ export const ProcessLogs = ({ dbsMethods, connectionId, dbs, type }: P) => {
     };
   }, [editorRef, logs, setEditorKey, getIsMounted]);
 
+  const onMonacoEditorMount = useCallback(
+    (editor: editor.IStandaloneCodeEditor) => {
+      editorRef.current = editor;
+    },
+    [],
+  );
+
+  const options = { readOnly: true };
+
   return (
     <FlexCol className="f-1 relative">
       {isLoading && <Loading variant="cover" delay={250} />}
@@ -121,10 +131,8 @@ export const ProcessLogs = ({ dbsMethods, connectionId, dbs, type }: P) => {
             )}
           </FlexRow>
         }
-        onMount={(editor) => {
-          editorRef.current = editor;
-        }}
-        options={{ readOnly: true }}
+        onMount={onMonacoEditorMount}
+        options={options}
         // style={{ minHeight: "200px", maxHeight: noMaxHeight? undefined : "300px" }}
         language="bash"
         value={logs ?? ""}

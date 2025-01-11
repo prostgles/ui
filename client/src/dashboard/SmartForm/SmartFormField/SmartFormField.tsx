@@ -412,10 +412,10 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
         getJSONBSchemaAsJSONSchema(tableName, column.name, column.jsonbSchema);
       asJSON = {
         options: {
-          value:
-            (typeof value !== "string" && value ?
-              JSON.stringify(value, null, 2)
-            : value?.toString()) ?? "",
+          // value:
+          //   (typeof value !== "string" && value ?
+          //     JSON.stringify(value, null, 2)
+          //   : value?.toString()) ?? "",
         },
         ...(column.jsonbSchema && {
           schemas: [
@@ -435,7 +435,7 @@ export default class SmartFormField extends RTComp<SmartFormFieldProps, S> {
     ) {
       asJSON = {
         options: {
-          value: JSON.stringify(value, null, 2),
+          // value: JSON.stringify(value, null, 2),
         },
       };
     }

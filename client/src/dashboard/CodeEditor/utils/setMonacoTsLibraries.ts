@@ -1,31 +1,32 @@
+import type { editor } from "monaco-editor";
 import type { LanguageConfig } from "../CodeEditor";
-import type CodeEditor from "../CodeEditor";
+import { useEffect } from "react";
+import { useIsMounted } from "../../Backup/CredentialSelector";
+import { useEffectDeep } from "prostgles-client/dist/react-hooks";
 
-export const setMonacoTsLibraries = async (
-  codeEditor: CodeEditor,
+export const useSetMonacoTsLibraries = async (
+  editor: editor.IStandaloneCodeEditor | undefined,
   languageObj: LanguageConfig | undefined,
-  monaco: typeof import("monaco-editor"),
+  monaco: typeof import("monaco-editor") | undefined,
+  value: string,
 ) => {
-  const editor = codeEditor.editor;
-  const value = codeEditor.props.value;
-  if (!editor || languageObj?.lang !== "typescript") {
-    return;
-  }
-  if (!codeEditor.setTSOpts) {
-    codeEditor.setTSOpts = true;
+  const getIsMounted = useIsMounted();
+
+  useEffect(() => {
+    if (!monaco) return;
     setTSoptions(monaco);
-  }
-  const { tsLibraries, modelFileName } = languageObj;
-  const tsLibrariesStr = JSON.stringify(tsLibraries);
-  if (tsLibraries && codeEditor.tsLibrariesStr !== tsLibrariesStr) {
-    codeEditor.tsLibrariesStr = tsLibrariesStr;
+  }, [monaco]);
 
+  useEffectDeep(() => {
+    if (!monaco || !editor || languageObj?.lang !== "typescript") return;
+    const { tsLibraries, modelFileName } = languageObj;
+    if (!tsLibraries) return;
     monaco.languages.typescript.typescriptDefaults.setExtraLibs(tsLibraries);
-
+    console.log({ tsLibraries });
     /* 
-      THIS CLOSES ALL OTHER EDITORS 
-      This is/was? needed to prevent this error: Type annotations can only be used in TypeScript files. 
-    */
+        THIS CLOSES ALL OTHER EDITORS 
+        This is/was? needed to prevent this error: Type annotations can only be used in TypeScript files. 
+      */
     // monaco.editor.getModels().forEach(model => model.dispose());
 
     const modelUri = monaco.Uri.parse(`file:///${modelFileName}.ts`);
@@ -34,8 +35,14 @@ export const setMonacoTsLibraries = async (
       .find((m) => m.uri.path === modelUri.path);
     const model =
       existingModel ?? monaco.editor.createModel(value, "typescript", modelUri);
-    editor.setModel(model);
-  }
+
+    if (!getIsMounted()) return;
+    try {
+      editor.setModel(model);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [editor, monaco, languageObj]);
 };
 
 const setTSoptions = async (monaco: typeof import("monaco-editor")) => {

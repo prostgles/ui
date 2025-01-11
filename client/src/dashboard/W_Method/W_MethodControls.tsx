@@ -11,7 +11,7 @@ import { isCompleteJSONB } from "../../components/JSONBSchema/isCompleteJSONB";
 import { JSONBSchema } from "../../components/JSONBSchema/JSONBSchema";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import { omitKeys } from "prostgles-types";
-import CodeEditor from "../CodeEditor/CodeEditor";
+import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import SmartTable from "../SmartTable";
 import { FlexCol, FlexRow } from "../../components/Flex";

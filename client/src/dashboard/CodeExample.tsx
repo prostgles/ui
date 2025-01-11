@@ -1,6 +1,6 @@
 import React from "react";
 import type { CodeEditorProps } from "./CodeEditor/CodeEditor";
-import CodeEditor from "./CodeEditor/CodeEditor";
+import { CodeEditor } from "./CodeEditor/CodeEditor";
 
 type P = CodeEditorProps & {
   header?: React.ReactNode;

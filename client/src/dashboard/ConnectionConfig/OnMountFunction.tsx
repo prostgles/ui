@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import type { Prgl } from "../../App";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import { SwitchToggle } from "../../components/SwitchToggle";
@@ -16,6 +16,15 @@ export const OnMountFunction = ({
     id: connectionId,
   });
   const tsLibraries = useCodeEditorTsTypes({ connectionId, dbsMethods, dbKey });
+  const { setOnMount } = dbsMethods;
+
+  const onSave = useCallback(
+    async (value: string) => {
+      await setOnMount?.(connectionId, { on_mount_ts: value });
+    },
+    [setOnMount, connectionId],
+  );
+
   return (
     <FlexCol>
       <FlexRow>
@@ -47,9 +56,7 @@ export const OnMountFunction = ({
         }}
         codePlaceholder={example}
         value={connection?.on_mount_ts}
-        onSave={async (value) => {
-          await dbsMethods.setOnMount?.(connectionId, { on_mount_ts: value });
-        }}
+        onSave={onSave}
       />
       <ProcessLogs
         key={dbKey + "logs"}
