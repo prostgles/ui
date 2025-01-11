@@ -135,7 +135,7 @@ module.exports = {
       percentBy: null,
     }),
     new SaveMdiIcons(),
-    new (require("webpack-bundle-analyzer").BundleAnalyzerPlugin)(),
+    // new (require("webpack-bundle-analyzer").BundleAnalyzerPlugin)(),
   ],
   output: {
     // Clean the output directory before emit.
