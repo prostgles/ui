@@ -310,13 +310,13 @@ test.describe("Main test", () => {
     await page.getByTestId("config.methods").click();
 
     /** This timeout is crucial in ensuring monaco editor shows suggestions */
-    await page.waitForTimeout(1e3);
+    // await page.waitForTimeout(1e3);
+
     await page.getByText("Create function").click();
-    await page.waitForTimeout(1e3);
     await page.locator("input#function_name").fill("askLLM");
     await monacoType(page, ".MethodDefinition", "dbo.t", {
       deleteAll: false,
-      moveCursor: ["Up"],
+      moveCursorBeforeTyping: ["Up"],
     });
     await page.keyboard.press("Tab");
 
@@ -329,7 +329,8 @@ test.describe("Main test", () => {
     const llmCode = `return { content: [{ text: "free ai assistant" }] };//`;
     await monacoType(page, ".MethodDefinition", llmCode, {
       deleteAll: false,
-      moveCursor: ["Up"],
+      moveCursorBeforeTyping: ["Up"],
+      keyPressDelay: 15,
     });
     const funcCode2 = await getMonacoValue(page, ".MethodDefinition");
     expect(funcCode2).toEqual(
@@ -371,9 +372,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     expect(await page.getByTestId("SetupLLMCredentials")).not.toBeVisible();
 
-    /**
-     * Test LLM responses
-     */
+    /** Test LLM responses */
     await goTo(page, "/connections");
     await page.getByRole("link", { name: "cloud" }).click();
     const responses = await getLLMResponses(page, ["hey"]);
@@ -397,7 +396,8 @@ test.describe("Main test", () => {
     await runDbsSql(
       page,
       `
-      DELETE FROM llm_credentials
+      DELETE FROM llm_credentials;
+      TRUNCATE llm_chats CASCADE;
       `,
     );
   });
@@ -753,7 +753,9 @@ test.describe("Main test", () => {
     }
 
     await page.goto("localhost:3004/account", { waitUntil: "networkidle" });
-    await monacoType(page, `[data-label="Options"]`, `{ `);
+    await monacoType(page, `[data-label="Options"]`, `{ `, {
+      moveCursorAfterTyping: ["Right"],
+    });
     await page.keyboard.type("vst", { delay: 100 });
     await page.keyboard.press("Tab");
     await page.keyboard.type("fa", { delay: 100 });
@@ -1480,7 +1482,6 @@ test.describe("Main test", () => {
           return dialog.accept();
         });
       });
-    await monacoType(page, `.ProstglesSQL`, " ");
     await startSqlTest();
   });
 

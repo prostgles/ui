@@ -36,9 +36,9 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   const now = Date.now();
   if (lastChecked + 100 < now && renders > 100) {
+    console.error(`MonacoEditor renders too much: ${renders}/100ms`);
     renders = 0;
     lastChecked = Date.now();
-    console.error("MonacoEditor renders too much: ", renders);
   }
   renders++;
 

@@ -81,10 +81,14 @@ export const monacoType = async (
   text: string,
   {
     deleteAll,
-    moveCursor,
+    moveCursorBeforeTyping,
+    moveCursorAfterTyping,
+    keyPressDelay = 100,
   }: {
     deleteAll?: boolean;
-    moveCursor?: ("Down" | "Up" | "Left" | "Right")[];
+    moveCursorBeforeTyping?: ("Down" | "Up" | "Left" | "Right")[];
+    moveCursorAfterTyping?: ("Down" | "Up" | "Left" | "Right")[];
+    keyPressDelay?: number;
   } = { deleteAll: true },
 ) => {
   const monacoEditor = await getMonacoEditorBySelector(page, parentSelector);
@@ -103,11 +107,15 @@ export const monacoType = async (
   await monacoEditor.click();
   await page.waitForTimeout(500);
 
-  for (const dir of moveCursor ?? []) {
+  for (const dir of moveCursorBeforeTyping ?? []) {
     await page.keyboard.press(`Arrow${dir}`);
     await page.waitForTimeout(50);
   }
-  await page.keyboard.type(text, { delay: 100 });
+  await page.keyboard.type(text, { delay: keyPressDelay });
+  for (const dir of moveCursorAfterTyping ?? []) {
+    await page.keyboard.press(`Arrow${dir}`);
+    await page.waitForTimeout(50);
+  }
   await page.waitForTimeout(500);
 };
 
