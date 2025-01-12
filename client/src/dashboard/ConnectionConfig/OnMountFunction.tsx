@@ -3,19 +3,22 @@ import type { Prgl } from "../../App";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import { useCodeEditorTsTypes } from "../AccessControl/Methods/useMethodDefinitionTypes";
-import { SmartCodeEditor } from "../CodeEditor/SmartCodeEditor";
+import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
 import { ProcessLogs } from "../TableConfig/ProcessLogs";
 
-export const OnMountFunction = ({
-  dbsMethods,
-  dbs,
-  connectionId,
-  dbKey,
-}: Prgl) => {
+export const OnMountFunction = (props: Prgl) => {
+  const { dbsMethods, dbs, connectionId, dbKey, tables } = props;
   const { data: connection } = dbs.connections.useSubscribeOne({
     id: connectionId,
   });
-  const tsLibraries = useCodeEditorTsTypes({ connectionId, dbsMethods, dbKey });
+  const languageObj = useCodeEditorTsTypes({
+    connectionId,
+    dbsMethods,
+    dbKey,
+    tables,
+    dbs,
+    method: undefined,
+  });
   const { setOnMount } = dbsMethods;
 
   const onSave = useCallback(
@@ -46,18 +49,16 @@ export const OnMountFunction = ({
           }}
         />
       </FlexRow>
-      <SmartCodeEditor
-        key={dbKey}
-        label="Server-side function executed after the table is created and server started or schema changed"
-        language={{
-          lang: "typescript",
-          modelFileName: `onMount_${connectionId}`,
-          tsLibraries: [...tsLibraries],
-        }}
-        codePlaceholder={example}
-        value={connection?.on_mount_ts}
-        onSave={onSave}
-      />
+      {languageObj && (
+        <CodeEditorWithSaveButton
+          key={dbKey}
+          label="Server-side function executed after the table is created and server started or schema changed"
+          language={languageObj}
+          codePlaceholder={example}
+          value={connection?.on_mount_ts}
+          onSave={onSave}
+        />
+      )}
       <ProcessLogs
         key={dbKey + "logs"}
         connectionId={connectionId}
@@ -68,6 +69,7 @@ export const OnMountFunction = ({
     </FlexCol>
   );
 };
+
 const example = `/* Example */
 import { WebSocket } from "ws";
 export const onMount: ProstglesOnMount = async ({ dbo }) => {

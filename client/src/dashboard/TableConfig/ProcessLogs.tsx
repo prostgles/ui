@@ -6,7 +6,7 @@ import type { Prgl } from "../../App";
 import Chip from "../../components/Chip";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import Loading from "../../components/Loading";
-import { SmartCodeEditor } from "../CodeEditor/SmartCodeEditor";
+import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
 import { renderInterval } from "../W_SQL/customRenderers";
 import type { editor } from "../W_SQL/monacoEditorTypes";
 import { Label } from "../../components/Label";
@@ -99,7 +99,7 @@ export const ProcessLogs = ({ dbsMethods, connectionId, dbs, type }: P) => {
     <FlexCol className="f-1 relative">
       {isLoading && <Loading variant="cover" delay={250} />}
 
-      <SmartCodeEditor
+      <CodeEditorWithSaveButton
         key={editorKey}
         label={
           <FlexRow>

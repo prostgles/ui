@@ -72,6 +72,13 @@ export const getMonacoValue = async (
   const normalizedText = text.replace(/\u00A0/g, " "); // Replace char 160 with char 32
   return normalizedText;
 };
+
+type KeyPress = "Control" | "Shift";
+type InputKey = KeyPress | "Enter" | "Escape" | "Tab" | "Backspace" | "Delete";
+type ArrowKey = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
+type ArrowKeyCombinations = `${KeyPress}+${ArrowKey}`;
+type KeyPressOrCombination = InputKey | ArrowKeyCombinations;
+
 /**
  * Will overwrite all previous content
  */
@@ -81,13 +88,13 @@ export const monacoType = async (
   text: string,
   {
     deleteAll,
-    moveCursorBeforeTyping,
-    moveCursorAfterTyping,
+    pressBeforeTyping,
+    pressAfterTyping,
     keyPressDelay = 100,
   }: {
     deleteAll?: boolean;
-    moveCursorBeforeTyping?: ("Down" | "Up" | "Left" | "Right")[];
-    moveCursorAfterTyping?: ("Down" | "Up" | "Left" | "Right")[];
+    pressBeforeTyping?: KeyPressOrCombination[];
+    pressAfterTyping?: KeyPressOrCombination[];
     keyPressDelay?: number;
   } = { deleteAll: true },
 ) => {
@@ -107,13 +114,13 @@ export const monacoType = async (
   await monacoEditor.click();
   await page.waitForTimeout(500);
 
-  for (const dir of moveCursorBeforeTyping ?? []) {
-    await page.keyboard.press(`Arrow${dir}`);
+  for (const key of pressBeforeTyping ?? []) {
+    await page.keyboard.press(key);
     await page.waitForTimeout(50);
   }
   await page.keyboard.type(text, { delay: keyPressDelay });
-  for (const dir of moveCursorAfterTyping ?? []) {
-    await page.keyboard.press(`Arrow${dir}`);
+  for (const key of pressAfterTyping ?? []) {
+    await page.keyboard.press(key);
     await page.waitForTimeout(50);
   }
   await page.waitForTimeout(500);

@@ -11,7 +11,6 @@ export const useSetMonacoTsLibraries = async (
   value: string,
 ) => {
   const getIsMounted = useIsMounted();
-
   useEffect(() => {
     if (!monaco) return;
     setTSoptions(monaco);
@@ -22,7 +21,6 @@ export const useSetMonacoTsLibraries = async (
     const { tsLibraries, modelFileName } = languageObj;
     if (!tsLibraries) return;
     monaco.languages.typescript.typescriptDefaults.setExtraLibs(tsLibraries);
-    console.log({ tsLibraries });
     /* 
         THIS CLOSES ALL OTHER EDITORS 
         This is/was? needed to prevent this error: Type annotations can only be used in TypeScript files. 

@@ -5,7 +5,6 @@ import type { Prgl } from "../../App";
 import { pageReload } from "../../components/Loading";
 import Popup from "../../components/Popup/Popup";
 import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
-import { useWhyDidYouUpdate } from "../../components/MonacoEditor/useWhyDidYouUpdate";
 
 export type Method = DBSSchema["published_methods"] & {
   access_control_methods: DBSSchema["access_control_methods"][];
@@ -42,8 +41,6 @@ export const NewMethod = ({
     description: "",
     outputTable: null,
   });
-
-  useWhyDidYouUpdate("NewMethod", newMethod);
 
   const { data: existingMethod } = dbs.published_methods.useFindOne(
     {

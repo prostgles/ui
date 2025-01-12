@@ -35,12 +35,12 @@ export const LoginWithProviders = ({ auth }: Pick<PrglState, "auth">) => {
               key={providerName}
               onClick={func}
               title={`Login with ${providerName}`}
-              variant="faded"
-              style={{ width: "100%" }}
+              className="shadow"
+              style={{ width: "100%", gap: "2em" }}
               color="action"
               children={
                 <>
-                  {providerIcon} continue with {providerName}
+                  {providerIcon} Continue with {providerName}
                 </>
               }
             />

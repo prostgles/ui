@@ -1,14 +1,6 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-import { error } from "console";
 import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
-import { isEqual } from "prostgles-types";
 import { isObject } from "../../../../commonTypes/publishUtils";
 import { classOverride } from "../../components/Flex";
 import type { MonacoEditorProps } from "../../components/MonacoEditor/MonacoEditor";
@@ -20,8 +12,8 @@ import { setMonacoErrorMarkers } from "./utils/setMonacoErrorMarkers";
 import {
   setMonacoEditorJsonSchemas,
   useSetMonacoJsonSchemas,
-} from "./utils/setMonacoJsonSchemas";
-import { useSetMonacoTsLibraries } from "./utils/setMonacoTsLibraries";
+} from "./utils/useSetMonacoJsonSchemas";
+import { useSetMonacoTsLibraries } from "./utils/useSetMonacoTsLibraries";
 export type Suggestion = {
   type: "table" | "column" | "function";
   label: string;
@@ -124,170 +116,8 @@ export type CodeEditorProps = Pick<MonacoEditorProps, "options" | "value"> & {
   onMount?: (editor: editor.IStandaloneCodeEditor) => void;
 };
 
-type S = {
-  schemas?: MonacoJSONSchema[];
-};
-
 const getSelectedText = (editor) =>
   editor.getModel().getValueInRange(editor.getSelection());
-
-// export default class CodeEditor extends React.Component<CodeEditorProps, S> {
-//   state: Readonly<S> = {};
-
-//   ref?: HTMLElement;
-//   editor?: editor.IStandaloneCodeEditor;
-//   error?: MonacoError;
-//   componentDidMount() {
-//     document.addEventListener("keydown", this.onKeyDown, false);
-//     this.onUpdate();
-//   }
-//   componentDidUpdate(prevProps) {
-//     this.onUpdate();
-//   }
-//   componentWillUnmount() {
-//     document.removeEventListener("keydown", this.onKeyDown, false);
-//   }
-
-//   get languageObj() {
-//     const { language } = this.props;
-//     return isObject(language) ? language : undefined;
-//   }
-
-//   loadedActions = false;
-//   setTSOpts = false;
-
-//   jsonSchemas: CodeEditorJsonSchema[] | undefined;
-
-//   loadedJsonSchema = false;
-//   tsLibrariesStr = "";
-//   onUpdate = async () => {
-//     const { language, value, error, markers } = this.props;
-//     const monaco = await getMonaco();
-//     const languageObj = this.languageObj;
-//     if (this.editor && languageObj?.lang === "json" && !this.loadedJsonSchema) {
-//       this.loadedJsonSchema = true;
-//       const shouldStopHere = await setMonacoJsonSchemas(
-//         this,
-//         value,
-//         languageObj,
-//       );
-//       if (shouldStopHere) return;
-//     }
-
-//     if (language === "log") {
-//       registerLogLang(monaco);
-//     }
-
-//     /* Set google search contextmenu option */
-//     if (this.editor && !this.loadedActions) {
-//       this.loadedActions = true;
-//       this.editor.addAction({
-//         id: "googleSearch",
-//         label: "Search with Google",
-//         // keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KEY_V],
-//         contextMenuGroupId: "navigation",
-//         run: (editor) => {
-//           window.open(
-//             "https://www.google.com/search?q=" + getSelectedText(editor),
-//           );
-//         },
-//       });
-//     }
-
-//     await setMonacoTsLibraries(this, languageObj, monaco);
-
-//     if (this.editor && !isEqual(this.error, error)) {
-//       this.error = error;
-//       setMonacoErrorMarkers(this.editor, monaco, { error });
-//     } else if (this.editor) {
-//       setMonacoErrorMarkers(this.editor, monaco, { markers });
-//     }
-//   };
-
-//   onKeyDown = (e) => {
-//     const _domElement =
-//       (this.editor as any)?._domElement ?? ({} as HTMLDivElement);
-//     if (
-//       this.props.onSave &&
-//       this.editor &&
-//       e.ctrlKey &&
-//       e.key === "s" &&
-//       _domElement?.contains(e.target)
-//     ) {
-//       e.preventDefault();
-//       this.props.onSave(this.editor.getValue());
-//     }
-//   };
-
-//   render() {
-//     const {
-//       value = "",
-//       onChange,
-//       language: languageOrConf,
-//       options = {},
-//       style,
-//       className = "",
-//     } = this.props;
-//     const language =
-//       isObject(languageOrConf) ? languageOrConf.lang : languageOrConf;
-//     return (
-//       <div
-//         className={classOverride(
-//           "CodeEditor f-1 min-h-0 min-w-0 flex-col relative b b-color-2 relative",
-//           className,
-//         )}
-//         style={style}
-//         onFocus={() => {
-//           const allCodeEditors = document.querySelectorAll(".CodeEditor");
-//           if (allCodeEditors.length === 1) {
-//             /** If this is the only editor the fix below will break it (viewedSqlTips) */
-//             return;
-//           }
-//           /** This is needed to ensure jsonschema works. Otherwise only the first editor schema will work */
-//           setMonacoJsonSchemas(this, value, this.languageObj);
-//         }}
-//       >
-//         {/* {!isReady && <Loading variant="cover" />} */}
-//         <MonacoEditor
-//           className="f-1 min-h-0"
-//           language={language}
-//           loadedSuggestions={undefined}
-//           value={value}
-//           options={{
-//             readOnly: !onChange,
-//             renderValidationDecorations: "on",
-//             parameterHints: { enabled: true },
-//             fixedOverflowWidgets: true,
-//             tabSize: 2,
-//             automaticLayout: true,
-//             ...(language === "json" && {
-//               formatOnType: true,
-//               autoIndent: "full",
-//             }),
-//             ...options,
-//             ...(language === "log" && {
-//               theme: "logview",
-//             }),
-//           }}
-//           onMount={(editor) => {
-//             this.editor = editor;
-//             if (this.props.onChange) {
-//               editor.onDidChangeModelContent((ev) => {
-//                 const newValue = editor.getValue();
-//                 if (this.props.value === newValue) return;
-//                 this.props.onChange!(newValue);
-//               });
-//             }
-//             /** This was breaking ts suggestions on opening quickly create function */
-//             // this.forceUpdate();
-
-//             this.props.onMount?.(editor);
-//           }}
-//         />
-//       </div>
-//     );
-//   }
-// }
 
 export const CodeEditor = (props: CodeEditorProps) => {
   const {
@@ -372,9 +202,9 @@ export const CodeEditor = (props: CodeEditorProps) => {
   }, [onSave, editor]);
 
   const onMountMonacoEditor = useCallback(
-    (editor: editor.IStandaloneCodeEditor) => {
-      setEditor(editor);
-      onMount?.(editor);
+    (newEditor: editor.IStandaloneCodeEditor) => {
+      setEditor(newEditor);
+      onMount?.(newEditor);
     },
     [onMount],
   );

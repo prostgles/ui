@@ -1,6 +1,6 @@
 import { mdiFullscreen } from "@mdi/js";
 import { useEffectDeep } from "prostgles-client/dist/react-hooks";
-import React, { useCallback } from "react";
+import React, { useCallback, useRef } from "react";
 import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";
 import { FlexCol, FlexRow, classOverride } from "../../components/Flex";
@@ -24,40 +24,44 @@ type P = {
   "onSave" | "onChange" | "value" | "style" | "className"
 >;
 
-export const SmartCodeEditor = ({
-  label,
-  onSave,
-  onSaveButton,
-  value,
-  codePlaceholder,
-  autoSave,
-  codeEditorClassName = "b",
-  headerButtons,
-  ...codeEditorProps
-}: P) => {
-  const [_localValue, setLocalValue] = React.useState<
-    string | null | undefined
-  >();
-  const localValue = _localValue ?? value;
+export const CodeEditorWithSaveButton = (props: P) => {
+  const {
+    label,
+    onSave,
+    onSaveButton,
+    value,
+    codePlaceholder,
+    autoSave,
+    codeEditorClassName = "b",
+    headerButtons,
+    ...codeEditorProps
+  } = props;
+  const localValueRef = useRef<string | null | undefined>(value);
+  const propsValueRef = useRef<string | null | undefined>(value);
+  propsValueRef.current = value;
+
   const [error, setError] = React.useState<any>();
   const [fullScreen, setFullScreen] = React.useState(false);
   useEffectDeep(() => {
-    if (localValue === undefined && value !== localValue) {
-      setLocalValue(value);
+    if (
+      localValueRef.current === undefined &&
+      localValueRef.current !== value
+    ) {
+      localValueRef.current = value;
     }
-  }, [localValue, value]);
+  }, [value]);
 
-  const didChange = isDefined(localValue) && localValue !== value;
+  const [didChange, setDidChange] = React.useState(false);
 
   const onSaveMonaco = useCallback(async () => {
     if (!didChange || !onSave) return;
     try {
-      await onSave(localValue ?? "");
+      await onSave(localValueRef.current ?? "");
       setError(undefined);
     } catch (err) {
       setError(err);
     }
-  }, [onSave, localValue, didChange]);
+  }, [onSave, didChange]);
 
   const onClickSave = !onSave || autoSave ? undefined : onSaveMonaco;
 
@@ -95,7 +99,8 @@ export const SmartCodeEditor = ({
         {
           label: "Cancel",
           onClick: () => {
-            setLocalValue(value);
+            localValueRef.current = value;
+            setDidChange(false);
           },
         },
         error ? undefined : (
@@ -116,9 +121,16 @@ export const SmartCodeEditor = ({
       if (autoSave) {
         onSave?.(newValue);
       }
-      setLocalValue(newValue);
+      localValueRef.current = newValue;
+
+      const _didChange =
+        isDefined(localValueRef.current) &&
+        localValueRef.current !== propsValueRef.current;
+      if (!autoSave && _didChange !== didChange) {
+        setDidChange(_didChange);
+      }
     },
-    [onSave, autoSave],
+    [onSave, autoSave, didChange],
   );
 
   const content = (
@@ -137,12 +149,13 @@ export const SmartCodeEditor = ({
       >
         <CodeEditor
           className={codeEditorClassName}
-          style={{
-            minHeight: "300px",
-            ...(!localValue ? { opacity: 0.7 } : {}),
-          }}
+          // style={{
+          //   minHeight: "300px",
+          //   // ...(!localValue ? { opacity: 0.7 } : {}),
+          // }}
           {...codeEditorProps}
-          value={localValue || (codePlaceholder ?? "")}
+          // value={localValue || (codePlaceholder ?? "")}
+          value={localValueRef.current || value || (codePlaceholder ?? "")}
           onChange={onChange}
           onSave={onClickSave}
         />

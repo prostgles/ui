@@ -5,7 +5,7 @@ import Btn from "../../../components/Btn";
 import { FlexCol } from "../../../components/Flex";
 import FormField from "../../../components/FormField/FormField";
 import Popup from "../../../components/Popup/Popup";
-import { SmartCodeEditor } from "../../../dashboard/CodeEditor/SmartCodeEditor";
+import { CodeEditorWithSaveButton } from "../../../dashboard/CodeEditor/CodeEditorWithSaveButton";
 
 export type EmailTemplateConfig = {
   from: string;
@@ -63,7 +63,7 @@ export const EmailTemplateSetup = ({
         value={value?.subject}
         onChange={(subject) => onFieldChange({ subject })}
       />
-      <SmartCodeEditor
+      <CodeEditorWithSaveButton
         language={"html"}
         value={htmlValue}
         label={"Body"}

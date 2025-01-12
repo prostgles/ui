@@ -4,7 +4,7 @@ import {
   mdiContentCopy,
   mdiViewCarousel,
 } from "@mdi/js";
-import React, { useMemo, useRef } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
@@ -38,14 +38,17 @@ export const getWorkspacePath = (
 
 export const useSetNewWorkspace = (currentWorkspaceId: string | undefined) => {
   const navigate = useNavigate();
-  const setWorkspace = (w: Pick<Workspace, "id" | "connection_id">) => {
-    if (w.id === currentWorkspaceId) {
-      return;
-    }
-    const path = getWorkspacePath(w);
+  const setWorkspace = useCallback(
+    (w: Pick<Workspace, "id" | "connection_id">) => {
+      if (w.id === currentWorkspaceId) {
+        return;
+      }
+      const path = getWorkspacePath(w);
 
-    navigate(path);
-  };
+      navigate(path);
+    },
+    [currentWorkspaceId, navigate],
+  );
 
   return { setWorkspace };
 };

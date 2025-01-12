@@ -1,9 +1,8 @@
 import type { editor } from "monaco-editor";
-import { useEffect } from "react";
+import { useEffectDeep } from "prostgles-client/dist/react-hooks";
 import { getMonaco } from "../../SQLEditor/SQLEditor";
 import type { LanguageConfig } from "../CodeEditor";
 import { getMonacoJsonSchemas } from "./getMonacoJsonSchemas";
-import { useEffectDeep } from "prostgles-client/dist/react-hooks";
 
 export const useSetMonacoJsonSchemas = (
   editor: editor.IStandaloneCodeEditor | undefined,

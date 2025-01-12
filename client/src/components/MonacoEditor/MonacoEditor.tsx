@@ -12,7 +12,6 @@ import {
 } from "../../dashboard/SQLEditor/SQLEditor";
 import type { editor } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
-import { useWhyDidYouUpdate } from "./useWhyDidYouUpdate";
 export type MonacoEditorProps = {
   language: string;
   value: string;
@@ -28,30 +27,14 @@ export type MonacoEditorProps = {
   loadedSuggestions: LoadedSuggestions | undefined;
 };
 
-let renders = 0;
-let lastChecked = Date.now();
-
 export const MonacoEditor = (props: MonacoEditorProps) => {
   const { loadedSuggestions } = props;
-
-  const now = Date.now();
-  if (lastChecked + 100 < now) {
-    if (renders > 100) {
-      console.error(`MonacoEditor renders too much: ${renders}/100ms`);
-    }
-    lastChecked = Date.now();
-    renders = 0;
-  }
-  renders++;
-
-  useWhyDidYouUpdate("MonacoEditor", props);
 
   const loadedLanguage = usePromise(async () => {
     await loadPSQLLanguage(loadedSuggestions);
     return true;
   }, [loadedSuggestions]);
 
-  // const editor = React.useRef<editor.IStandaloneCodeEditor>();
   const [editor, setEditor] = React.useState<editor.IStandaloneCodeEditor>();
   const container = React.useRef<HTMLDivElement>(null);
   const { state: _appTheme } = useReactiveState(appTheme);
@@ -100,14 +83,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     return () => {
       newEditor.dispose();
     };
-  }, [
-    language,
-    container,
-    onChange,
-    onMount,
-    fullOptions,
-    expandSuggestionDocs,
-  ]);
+  }, [language, container, fullOptions, expandSuggestionDocs]);
 
   useEffect(() => {
     if (!editor) return;
@@ -142,15 +118,31 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
   }, [value, editor]);
 
   const { className, style } = props;
+
+  const monacoStyle: React.CSSProperties = useMemo(() => {
+    if (style) {
+      return {
+        ...style,
+        textAlign: "initial",
+      };
+    }
+    /**
+     * automaticLayout does not appear to work so we use this
+     */
+    return {
+      textAlign: "initial",
+      minHeight:
+        Math.min(200, (2 + value.trim().split("\n").length) * 20) + "px",
+      flex: "f-1",
+    };
+  }, [value, style]);
+
   return (
     <div
       key={`${!!language.length}`}
       ref={container}
-      style={{
-        ...style,
-        textAlign: "initial",
-      }}
-      className={`MonacoEditor ${className}`}
+      style={monacoStyle}
+      className={`MonacoEditor  ${className}`}
     />
   );
 };

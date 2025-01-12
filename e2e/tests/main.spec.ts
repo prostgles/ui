@@ -315,20 +315,19 @@ test.describe("Main test", () => {
     await page.locator("input#function_name").fill("askLLM");
     await monacoType(page, ".MethodDefinition", "dbo.t", {
       deleteAll: false,
-      moveCursorBeforeTyping: ["Up"],
     });
     await page.keyboard.press("Tab");
 
     /** Ensure db schema suggestions work */
     const expectedCode =
-      "export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n dbo.tx \n}";
+      "export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n  dbo.tx\n}";
     const funcCode = await getMonacoValue(page, ".MethodDefinition");
     expect(funcCode).toEqual(expectedCode);
     /** Add llm server side func */
     const llmCode = `return { content: [{ text: "free ai assistant" }] };//`;
     await monacoType(page, ".MethodDefinition", llmCode, {
       deleteAll: false,
-      moveCursorBeforeTyping: ["Up"],
+      pressBeforeTyping: ["Control+ArrowLeft", "Control+ArrowLeft"],
       keyPressDelay: 15,
     });
     const funcCode2 = await getMonacoValue(page, ".MethodDefinition");
