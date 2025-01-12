@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import { Chat } from "../../components/Chat/Chat";
@@ -9,11 +9,6 @@ import { AskLLMChatHeader } from "./AskLLMChatHeader";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
-
-const chatStyle = {
-  minWidth: `min(${CHAT_WIDTH}px, 100%)`,
-  minHeight: "0",
-};
 
 export type AskLLMChatProps = {
   prgl: Omit<Prgl, "dbsMethods">;
@@ -55,6 +50,13 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     },
     [askLLM, schemaStr, activeChatId],
   );
+
+  const chatStyle = useMemo(() => {
+    return {
+      minWidth: `min(${CHAT_WIDTH}px, 100%)`,
+      minHeight: "0",
+    };
+  }, []);
 
   return (
     <Popup
