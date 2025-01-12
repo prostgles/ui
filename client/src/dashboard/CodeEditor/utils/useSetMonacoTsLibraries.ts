@@ -58,7 +58,7 @@ const setTSoptions = async (monaco: typeof import("monaco-editor")) => {
     experimentalDecorators: true,
     keyofStringsOnly: true,
     /** Adding this line breaks inbuild functions (setTimeout, etc) */
-    // lib: [ "ES2017", "es2019", "ES2021.String", "ES2020", "ES2022" ],
+    // lib: [ "ES2017", "es2019", "ES2021.String", "ES2020", "ES2022" ] ,
     esModuleInterop: true,
     allowSyntheticDefaultImports: true,
     declaration: true,
