@@ -202,7 +202,7 @@ export const suggestCondition = async (
     (allowedOperands.includes(cb.ltoken?.textLC ?? "") ||
       cb.currNestingFunc?.textLC === "in") &&
     getPreviousIdentifier() &&
-    ["select", "with"].includes(cb.ftoken?.textLC ?? "") &&
+    ["select", "with", "delete", "update"].includes(cb.ftoken?.textLC ?? "") &&
     cb.currToken?.type === "string.sql"
   ) {
     const { identifierText: columnName, colTokens } = getPreviousIdentifier()!;

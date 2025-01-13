@@ -138,6 +138,7 @@ const upsertRule = async (
     access_control_user_types = [],
     published_methods = [],
     access_control_allowed_llm = [],
+    access_control_methods = [],
   } = newRule;
 
   const connection = await dbs.connections.findOne({ id: connectionId });
@@ -170,6 +171,13 @@ const upsertRule = async (
           access_control_allowed_llm.map((m) => ({ ...m, access_control_id })),
         );
       }
+
+      await dbs.access_control_methods.delete({ access_control_id });
+      if (access_control_methods.length) {
+        await dbs.access_control_methods.insert(
+          access_control_methods.map((m) => ({ ...m, access_control_id })),
+        );
+      }
     };
 
     const newRuleWithoutSomeExtraKeys = omitKeys(newRule as AccessRule, [
@@ -179,6 +187,7 @@ const upsertRule = async (
       "id",
       "created",
       "access_control_allowed_llm",
+      "access_control_methods",
     ]);
 
     if (action.type === "edit") {

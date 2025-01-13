@@ -8,7 +8,7 @@ import {
   type AnyObject,
   type ValidatedColumnInfo,
 } from "prostgles-types";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Select, { type FullOption } from "../../../components/Select/Select";
 import { renderNull } from "./RenderValue";
 import type { SmartFormFieldProps } from "./SmartFormField";
@@ -35,23 +35,36 @@ export const SmartFormFieldForeignKey = ({
 }: P) => {
   const [fullOptions, setFullOptions] = useState<FullOption[]>();
   const getuseIsMounted = useIsMounted();
-  const onSearchOptions = async (term: string) => {
-    const options = await fetchOptions({
-      column,
-      db,
-      tableName,
-      tables,
-      row,
-      term,
-    });
-    if (!getuseIsMounted()) return;
-    setFullOptions(options);
-  };
+  const onSearchOptions = useCallback(
+    async (term: string) => {
+      const options = await fetchOptions({
+        column,
+        db,
+        tableName,
+        tables,
+        row,
+        term,
+      });
+      if (!getuseIsMounted()) return;
+      setFullOptions(options);
+    },
+    [column, db, tableName, tables, row, getuseIsMounted],
+  );
 
   useEffect(() => {
     if (fullOptions) return;
     onSearchOptions("");
-  }, [column, db, onChange, tables, tableName, rawValue, row]);
+  }, [
+    column,
+    db,
+    onChange,
+    tables,
+    tableName,
+    rawValue,
+    row,
+    fullOptions,
+    onSearchOptions,
+  ]);
 
   const valueStyle = {
     fontSize: "16px",
@@ -66,18 +79,19 @@ export const SmartFormFieldForeignKey = ({
     </div>
   );
 
+  const paddingValue = isDefined(selectedOption?.subLabel) ? "6px" : "12px";
   const displayValue = (
     <div
       className={"flex-col gap-p5 min-w-0"}
       style={{
-        padding: "6px",
+        padding: readOnly ? `${paddingValue} 0` : paddingValue,
         // border: "1px solid var(--b-default)"
       }}
     >
       {valueNode}
-      {selectedOption && (
+      {isDefined(selectedOption?.subLabel) && (
         <div
-          className="ta-left text-ellipsis"
+          className="SmartFormFieldForeignKey.subLabel ta-left text-ellipsis"
           style={{
             opacity: 0.75,
             fontSize: "14px",
@@ -164,14 +178,14 @@ const fetchOptions = async ({
   const { ftable, fcols, cols } = fKey;
 
   const tableHandler = db[tableName];
-  const fTableHandler = db[tableName];
+  const fTableHandler = db[ftable];
   if (!tableHandler?.find || !fTableHandler?.find) return [];
 
   const mainColumn = column.name;
   const textColumn = getBestTextColumn(column, tables);
 
   const fMainColumn = fcols[cols.indexOf(mainColumn)];
-  if (fMainColumn && textColumn) {
+  if (fMainColumn) {
     const fullForeignTableFilter = {};
     const foreignTableFilter = {};
     if (row) {

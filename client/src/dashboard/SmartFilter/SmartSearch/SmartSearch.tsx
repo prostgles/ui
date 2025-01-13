@@ -21,7 +21,7 @@ export type SmartSearchOnChangeArgs = {
   /**
    * Full column value
    */
-  columnValue?: string | number | Date;
+  columnValue?: string | number | Date | boolean;
 
   /**
    * Column term value as used in $term_highlight

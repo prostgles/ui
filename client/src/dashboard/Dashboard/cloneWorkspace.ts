@@ -1,4 +1,4 @@
-import { omitKeys } from "../../utils";
+import { omitKeys } from "prostgles-types";
 import type { LayoutConfig } from "../SilverGrid/SilverGrid";
 import type { DBS } from "./DBS";
 

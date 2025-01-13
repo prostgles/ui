@@ -1,12 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/prostgles";
-import { omitKeys, quickClone } from "../../../utils";
+import { quickClone } from "../../../utils";
 import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter";
 import Select from "../../../components/Select/Select";
 import type { SimpleFilter } from "../../../../../commonTypes/filterUtils";
 import { mdiCheckAll, mdiTableEye, mdiTableFilter } from "@mdi/js";
-import type { MethodHandler, ValidatedColumnInfo } from "prostgles-types";
+import {
+  omitKeys,
+  type MethodHandler,
+  type ValidatedColumnInfo,
+} from "prostgles-types";
 import Btn from "../../../components/Btn";
 import PopupMenu from "../../../components/PopupMenu";
 import SmartTable from "../../SmartTable";

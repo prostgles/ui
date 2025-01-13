@@ -1,15 +1,10 @@
-import React, { useState } from "react";
-import Popup from "../../components/Popup/Popup";
-import {
-  useAsyncEffectQueue,
-  useIsMounted,
-  usePromise,
-} from "prostgles-client/dist/react-hooks";
+import { omitKeys } from "prostgles-types";
+import React, { useEffect, useState } from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
-import { omitKeys, pickKeys } from "../../utils";
-import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
 import { pageReload } from "../../components/Loading";
+import Popup from "../../components/Popup/Popup";
+import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
 
 export type Method = DBSSchema["published_methods"] & {
   access_control_methods: DBSSchema["access_control_methods"][];
@@ -46,15 +41,20 @@ export const NewMethod = ({
     description: "",
     outputTable: null,
   });
-  const getIsMounted = useIsMounted();
-  useAsyncEffectQueue(async () => {
-    if (!methodId) return;
-    const existingMethod = await dbs.published_methods.findOne({
+
+  const { data: existingMethod } = dbs.published_methods.useFindOne(
+    {
       id: methodId,
-    });
-    if (!getIsMounted() || !existingMethod) return;
-    setNewMethod(existingMethod);
-  }, [methodId]);
+    },
+    undefined,
+    { skip: !methodId },
+  );
+  useEffect(() => {
+    if (existingMethod && existingMethod.id === methodId) {
+      setNewMethod(existingMethod);
+    }
+  }, [existingMethod, methodId]);
+
   const isNewMethod = methodId === undefined;
 
   return (
@@ -69,7 +69,7 @@ export const NewMethod = ({
           label: "Close",
         },
         {
-          label: !isNewMethod ? "Update" : "Add",
+          label: !isNewMethod ? "Update function" : "Add function",
           color: "action",
           variant: "filled",
           onClickPromise: async () => {
@@ -111,7 +111,7 @@ export const NewMethod = ({
         dbsTables={dbsTables}
         db={db}
         theme={theme}
-        onChange={(m) => setNewMethod(m)}
+        onChange={setNewMethod}
       />
     </Popup>
   );

@@ -154,6 +154,7 @@ export function makeImageLayer({
   sharpImage = false,
   deckGlLibs,
 }: MakeImageLayerArgs) {
+  //@ts-ignore
   const { GL } = deckGlLibs.luma;
   return new deckGlLibs.lib.BitmapLayer({
     opacity,

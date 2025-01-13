@@ -28,7 +28,7 @@ import { AddTimeChartFilter } from "./AddTimeChartFilter";
 import { fetchAndSetTimechartLayerData } from "./fetchAndSetTimechartLayerData";
 import { getTimeChartSelectDate } from "./getTimeChartData";
 import { getTimeChartLayerQueries } from "./getTimeChartLayers";
-import type { TimeChartLayerWithBin } from "./getTimeChartLayersWithBins";
+import type { TimeChartLayerWithBinOrError } from "./getTimeChartLayersWithBins";
 import { W_TimeChartLayerLegend } from "./W_TimeChartLayerLegend";
 import type { TimeChartBinSize } from "./W_TimeChartMenu";
 import { ProstglesTimeChartMenu } from "./W_TimeChartMenu";
@@ -101,7 +101,7 @@ export type ProstglesTimeChartState = {
   wSync: any;
   error?: any;
   layers: ProstglesTimeChartStateLayer[];
-  erroredLayers?: TimeChartLayerWithBin[];
+  erroredLayers?: TimeChartLayerWithBinOrError[];
   columns: any[];
   xExtent?: [Date, Date];
   visibleDataExtent?: DateExtent;

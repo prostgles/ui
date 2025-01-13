@@ -3,7 +3,7 @@ import {
   pickKeys,
 } from "prostgles-server/dist/PubSubManager/PubSubManager";
 import type { Connections, DBS, Users } from ".";
-import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
 import {
@@ -38,7 +38,7 @@ const loadSampleSchema = async (
 };
 
 export const upsertConnection = async (
-  con: DBSchemaGenerated["connections"]["columns"],
+  con: DBGeneratedSchema["connections"]["columns"],
   user_id: Users["id"] | null,
   dbs: DBS,
   sampleSchemaName?: string,

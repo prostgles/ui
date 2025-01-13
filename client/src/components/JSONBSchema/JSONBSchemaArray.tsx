@@ -16,6 +16,7 @@ type P = JSONBSchemaCommonProps & {
 
 export const JSONBSchemaArrayMatch = (s: JSONB.JSONBSchema): s is Schema =>
   !!(s.arrayOf || s.arrayOfType);
+
 export const JSONBSchemaArray = ({ value, schema, onChange, ...oProps }: P) => {
   const [newItem, setNewItem] = useState<{
     val: any;
@@ -138,6 +139,7 @@ export const JSONBSchemaArray = ({ value, schema, onChange, ...oProps }: P) => {
       )}
 
       <Btn
+        title="Add new item"
         iconPath={mdiPlus}
         color="action"
         variant="faded"

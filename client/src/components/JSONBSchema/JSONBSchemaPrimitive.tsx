@@ -22,6 +22,7 @@ export const JSONBSchemaPrimitiveMatch = (
   !s.lookup &&
   (!!s.enum?.length ||
     (!s.allowedValues?.length && typeof s.type === "string"));
+
 export const JSONBSchemaPrimitive = ({
   value,
   schema,

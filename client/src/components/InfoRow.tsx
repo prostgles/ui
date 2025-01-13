@@ -1,6 +1,7 @@
 import { mdiInformationOutline } from "@mdi/js";
 import React from "react";
 import { Icon } from "./Icon/Icon";
+import { classOverride } from "./Flex";
 
 type InfoRowProps = {
   variant?: "filled" | "naked";
@@ -9,6 +10,7 @@ type InfoRowProps = {
   iconSize?: number;
   style?: React.CSSProperties;
   className?: string;
+  contentClassname?: string;
   children?: React.ReactNode;
 };
 export function InfoRow(props: InfoRowProps) {
@@ -19,6 +21,7 @@ export function InfoRow(props: InfoRowProps) {
     variant,
     children,
     color = "warning",
+    contentClassname = "",
     iconSize = 1.25,
   } = props;
 
@@ -34,7 +37,10 @@ export function InfoRow(props: InfoRowProps) {
 
   return (
     <div
-      className={` rounded flex-row ai-start ta-left ${rootClass} ` + className}
+      className={classOverride(
+        ` rounded flex-row ai-start ta-left ${rootClass} `,
+        className,
+      )}
       style={style}
     >
       {iconPath && iconPath.length > 0 && (
@@ -45,7 +51,10 @@ export function InfoRow(props: InfoRowProps) {
           style={{ marginRight: "10px" }}
         />
       )}
-      <div className="min-s-0 f-1 as-center" style={{ whiteSpace: "pre-line" }}>
+      <div
+        className={classOverride("min-s-0 f-1 as-center", contentClassname)}
+        style={{ whiteSpace: "pre-line" }}
+      >
         {children}
       </div>
     </div>

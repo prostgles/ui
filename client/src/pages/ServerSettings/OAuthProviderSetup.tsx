@@ -1,5 +1,5 @@
-import { mdiContentCopy } from "@mdi/js";
-import { isEqual } from "prostgles-client/dist/prostgles";
+import { mdiContentCopy, mdiLock } from "@mdi/js";
+import { isEqual } from "prostgles-types";
 import React, { useEffect, useState } from "react";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
@@ -16,6 +16,7 @@ import {
 import type { AuthProviderProps } from "./AuthProvidersSetup";
 import { OAuthProviderOptions } from "../../../../commonTypes/OAuthUtils";
 import { tout } from "../ElectronSetup";
+import { Icon } from "../../components/Icon/Icon";
 
 type P = AuthProviderProps & {
   provider: keyof Omit<
@@ -24,16 +25,20 @@ type P = AuthProviderProps & {
   >;
 };
 export const OAuthProviderSetup = ({
-  dbs,
   authProviders,
   disabledInfo,
   contentClassName,
   provider,
+  doUpdate,
 }: P) => {
-  const returnURL = `${authProviders.website_url}/auth/${provider}/callback`;
+  const returnURL = `${authProviders.website_url}/oauth/${provider}/callback`;
   const auth = authProviders[provider];
   const [_localAuth, _setLocalAuth] = useState(auth);
   const localAuth = _localAuth ?? auth;
+  const isCustomOAuth = (
+    localAuth: any,
+  ): localAuth is typeof authProviders.customOAuth =>
+    provider === "customOAuth";
   const setLocalAuth = async (update: Partial<typeof auth>) => {
     if (!update) return _setLocalAuth(undefined);
     _setLocalAuth({
@@ -53,17 +58,12 @@ export const OAuthProviderSetup = ({
       localAuth.authOpts
     : undefined;
 
-  const doUpdate = async (newProviderConfig = localAuth) => {
+  const onSave = async (newProviderConfig = localAuth) => {
     try {
-      await dbs.global_settings.update(
-        {},
-        {
-          auth_providers: {
-            ...authProviders,
-            [provider]: newProviderConfig,
-          },
-        },
-      );
+      await doUpdate({
+        ...authProviders,
+        [provider]: newProviderConfig,
+      });
       await tout(500);
       setLocalAuth(undefined);
     } catch (err) {
@@ -90,7 +90,7 @@ export const OAuthProviderSetup = ({
           checked={!!authProviders[provider]?.enabled}
           onChange={(checked) => {
             if (!localAuth) return;
-            doUpdate({ ...localAuth, enabled: checked });
+            onSave({ ...localAuth, enabled: checked });
           }}
         />
       }
@@ -109,6 +109,46 @@ export const OAuthProviderSetup = ({
           });
         }}
       />
+      {isCustomOAuth(localAuth) && (
+        <>
+          <FormField
+            label={"Display Name"}
+            value={localAuth?.displayName}
+            onChange={async (displayName) => {
+              setLocalAuth({
+                displayName,
+              });
+            }}
+          />
+          <FormField
+            label={"Display Icon"}
+            value={localAuth?.displayIconPath}
+            onChange={async (displayIconPath) => {
+              setLocalAuth({
+                displayIconPath,
+              });
+            }}
+          />
+          <FormField
+            label={"Authorization URL"}
+            value={localAuth?.authorizationURL}
+            onChange={async (authorizationURL) => {
+              setLocalAuth({
+                authorizationURL,
+              });
+            }}
+          />
+          <FormField
+            label={"Token URL"}
+            value={localAuth?.tokenURL}
+            onChange={async (tokenURL) => {
+              setLocalAuth({
+                tokenURL,
+              });
+            }}
+          />
+        </>
+      )}
       <FormField
         label={"Client ID"}
         value={localAuth?.clientID}
@@ -166,7 +206,7 @@ export const OAuthProviderSetup = ({
           <Btn
             title="Copy to clipboard"
             iconPath={mdiContentCopy}
-            onClick={() => {
+            onClickPromise={async () => {
               navigator.clipboard.writeText(returnURL);
             }}
           />
@@ -180,7 +220,7 @@ export const OAuthProviderSetup = ({
               label: "Save",
               color: "action",
               variant: "filled",
-              onClickPromise: () => doUpdate(),
+              onClickPromise: () => onSave(),
             },
           ]}
         />
@@ -208,6 +248,12 @@ const PROVIDER_INFO = {
   microsoft: {
     name: "Microsoft",
     icon: <MicrosoftIcon />,
+    scopes: OAuthProviderOptions.microsoft.scopes,
+    prompts: OAuthProviderOptions.microsoft.prompts,
+  },
+  customOAuth: {
+    name: "OAuth2",
+    icon: <Icon path={mdiLock} />,
     scopes: OAuthProviderOptions.microsoft.scopes,
     prompts: OAuthProviderOptions.microsoft.prompts,
   },

@@ -4,7 +4,7 @@ import FormField from "../../../components/FormField/FormField";
 import Popup from "../../../components/Popup/Popup";
 import Select from "../../../components/Select/Select";
 import { SwitchToggle } from "../../../components/SwitchToggle";
-import { omitKeys } from "../../../utils";
+import { omitKeys } from "prostgles-types";
 import type { ArgumentDefinitionProps } from "./ArgumentDefinition";
 
 export const ReferencesDefinition = ({

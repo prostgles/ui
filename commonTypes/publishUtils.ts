@@ -1,4 +1,4 @@
-import { DBSchemaGenerated } from "./DBoGenerated";
+import { DBGeneratedSchema } from "./DBGeneratedSchema";
 import {
   GroupedDetailedFilter,
   getFinalFilter,
@@ -146,7 +146,7 @@ export type DeleteRule = {
 };
 
 export type DBSSchema = {
-  [K in keyof DBSchemaGenerated]: Required<DBSchemaGenerated[K]["columns"]>;
+  [K in keyof DBGeneratedSchema]: Required<DBGeneratedSchema[K]["columns"]>;
 };
 
 export type SyncRule = {
@@ -170,7 +170,9 @@ export type TableRules = {
   sync?: SyncRule;
 };
 
-export type BasicTablePermissions = Partial<Record<keyof TableRules, boolean>>;
+export type BasicTablePermissions = Partial<
+  Record<Exclude<keyof TableRules, "sync">, boolean>
+>;
 
 type AnyObject = Record<string, any>;
 

@@ -235,6 +235,7 @@ export class TreeBuilder {
         } else {
           source.size = 50;
           target.size = 50;
+          //@ts-ignore
           (target.parent as LayoutGroup).items[targetIdx] = {
             id: Date.now().toString(),
             type: parentType,
@@ -242,14 +243,20 @@ export class TreeBuilder {
               Math.min(
                 ...(target.parent as LayoutGroup).items.map((d) => d.size),
               ) || 50,
-            items: insertBefore ? [source, target] : [target, source],
+            items:
+              insertBefore ?
+                [source, target as LayoutItem]
+              : [target as LayoutItem, source],
           };
           target = {
             id: Date.now().toString(),
             size: target.size || 50,
             type: parentType as any,
             ...(parentType === "tab" && { activeTabKey: undefined }),
-            items: insertBefore ? [source, target] : [target, source],
+            items:
+              insertBefore ?
+                [source, target as LayoutItem]
+              : [target as LayoutItem, source],
           };
         }
       }

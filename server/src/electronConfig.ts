@@ -1,8 +1,9 @@
 import * as fs from "fs";
 import * as path from "path";
-import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
+import type { DBS } from ".";
 
-export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
+export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DBSConnectionInfo = Pick<
   Required<Connections>,
   | "type"
@@ -15,7 +16,7 @@ export type DBSConnectionInfo = Pick<
   | "db_ssl"
   | "type"
 >;
-export type OnServerReadyCallback = (portNumber: number) => void;
+export type OnServerReadyCallback = (portNumber: number, dbs: DBS) => void;
 
 interface SafeStorage extends NodeJS.EventEmitter {
   decryptString(encrypted: Buffer): string;
@@ -126,6 +127,27 @@ export const start = async (
     onSidWasSet: args.onSidWasSet,
   };
   safeStorage = sStorage;
-  const { onServerReady } = require("./index");
-  onServerReady(onReady);
+  const { onServerReady } = await import("./index");
+  onServerReady((port, dbs) => {
+    const [token] = prostglesTokens;
+    if (token) {
+      console.log("Setting prostgles tokens");
+      dbs.global_settings.update(
+        {},
+        { prostgles_registration: { email: "", enabled: true, token } },
+      );
+    }
+    return onReady(port, dbs);
+  });
+};
+
+/**
+ * Prostgles token granted after registration
+ */
+const prostglesTokens: string[] = [];
+export const setProstglesToken = async (token: string) => {
+  prostglesTokens.push(token);
+  setInterval(() => {
+    console.log("Prostgles token: " + token);
+  }, 1000);
 };

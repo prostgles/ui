@@ -47,7 +47,7 @@ export const AddLLMCredentialForm = ({ dbs }: P) => {
     provider?.name === "Custom" ?
       !endPoint ? "Provide an endpoint"
       : undefined
-    : !apiKey ? "Please provide API key"
+    : !apiKey ? "Please provide an API key"
     : !model ? "Please select model"
     : !provider ? "Provider not specified"
     : undefined;
@@ -117,7 +117,7 @@ export const AddLLMCredentialForm = ({ dbs }: P) => {
         <Select
           label={"Model"}
           value={model}
-          disabledInfo={!apiKey ? "Please provide API key" : undefined}
+          disabledInfo={!apiKey ? "Please provide an API key" : undefined}
           fullOptions={models?.map((m) => ({ key: m.id })) ?? []}
           onChange={setModel}
         />

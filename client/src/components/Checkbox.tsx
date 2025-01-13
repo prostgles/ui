@@ -33,7 +33,7 @@ export default class Checkbox extends React.Component<P, any> {
       readOnly,
       title,
       variant,
-      children,
+      // children,
       ...testSel
     } = props;
 

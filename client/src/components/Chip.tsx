@@ -26,7 +26,10 @@ type ChipProps = TestSelectors &
       style?: React.CSSProperties;
       className?: string;
     };
-  } & ({ value?: string | number } | { children: React.ReactNode });
+  } & (
+    | { value?: string | number; children?: undefined }
+    | { children: React.ReactNode }
+  );
 
 export default class Chip extends React.Component<ChipProps> {
   render() {
