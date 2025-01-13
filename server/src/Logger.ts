@@ -1,7 +1,7 @@
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
-import { connMgr, type DBS } from ".";
 import type { EventInfo } from "prostgles-server/dist/Logging";
+import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { pickKeys } from "prostgles-types";
+import { connMgr, type DBS } from ".";
 
 export const loggerTableConfig: TableConfig<{ en: 1 }> = {
   logs: {
@@ -50,10 +50,20 @@ const logRecords: {
   connection_id: string | null;
   created: Date;
 }[] = [];
-console.log("REMOVE");
+const isPlaywright = process.env.PLAYWRIGHT_TEST === "true";
+
 export const addLog = (e: EventInfo, connection_id: string | null) => {
-  if (e.type === "debug" && e.command === "pushSocketSchema") {
-    console.log("pushSocketSchema", Object.keys(e.data.clientSchema.schema));
+  if (isPlaywright) {
+    console.log(
+      //@ts-ignore
+      e.command,
+      //@ts-ignore
+      e.table_name || e.tableName,
+      //@ts-ignore
+      e.filter || e.data?.filter || e.condition,
+      //@ts-ignore
+      e.channel_name,
+    );
   }
   if (shouldExclude(e, connection_id === null)) return;
   logRecords.push({ e, connection_id, created: new Date() });
@@ -62,9 +72,10 @@ export const addLog = (e: EventInfo, connection_id: string | null) => {
   if (dbs && logRecords.length > batchSize) {
     const getSid = (e: EventInfo) => {
       if (e.type === "table" || e.type === "sync") {
+        const { clientReq } = e.localParams ?? {};
         return (
-          e.localParams?.socket ? e.localParams.socket.__prglCache?.session.sid
-          : e.localParams?.httpReq ? e.localParams.httpReq.cookies["sid"]
+          clientReq?.socket ? clientReq.socket.__prglCache?.session.sid
+          : clientReq?.httpReq ? clientReq.httpReq.cookies["sid"]
           : null
         );
       }

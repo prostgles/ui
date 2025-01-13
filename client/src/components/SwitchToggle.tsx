@@ -5,7 +5,7 @@ import { classOverride } from "./Flex";
 import type { LabelProps } from "./Label";
 import { Label } from "./Label";
 import type { TestSelectors } from "../Testing";
-import { omitKeys, pickKeys } from "../utils";
+import { omitKeys, pickKeys } from "prostgles-types";
 
 export type SwitchToggleProps = TestSelectors & {
   title?: string;

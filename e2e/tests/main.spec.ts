@@ -7,6 +7,7 @@ import {
   clickInsertRow,
   closeWorkspaceWindows,
   createAccessRule,
+  createAccessRuleForTestDB,
   createDatabase,
   disablePwdlessAdminAndCreateUser,
   dropConnectionAndDatabase,
@@ -16,6 +17,7 @@ import {
   forEachLocator,
   getLLMResponses,
   getMonacoEditorBySelector,
+  getMonacoValue,
   getSearchListItem,
   getTableWindow,
   goTo,
@@ -34,6 +36,7 @@ import {
   typeConfirmationCode,
   uploadFile,
 } from "./utils";
+import { startMockSMTPServer } from "./mockSMTPServer";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -47,6 +50,14 @@ test.describe("Main test", () => {
   if (process.env.ONLY_VIDEO) {
     test.skip();
   }
+  let getEmails: () => any[];
+
+  test.beforeAll(async () => {
+    ({ getEmails } = startMockSMTPServer());
+    console.log("getEmails", getEmails());
+
+    return { getEmails };
+  });
   test.beforeEach(async ({ page }) => {
     page.on("console", console.log);
     page.on("pageerror", console.error);
@@ -90,7 +101,7 @@ test.describe("Main test", () => {
     await goTo(page);
     await goToWorkspace();
 
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
 
     if (!localNoAuthSetup) {
       await disablePwdlessAdminAndCreateUser(page);
@@ -101,7 +112,310 @@ test.describe("Main test", () => {
     await goToWorkspace(false);
   });
 
-  test("Limit login attempts", async ({ page: p, browser, context }) => {
+  test("Email password registrations", async ({ page: p, browser }) => {
+    // const newPage: PageWIds = await browser.newPage();
+    // const page = p as PageWIds;
+    const newPage = p as PageWIds;
+    const page = await browser.newPage();
+
+    await login(page);
+    await goTo(page, "/server-settings");
+    await page.locator(`[data-key="auth"]`).click();
+    await page.getByTestId("EmailAuthSetup").locator("button").click();
+    await page.getByTestId("EmailAuthSetup.SignupType").click();
+    await page.locator(`[data-key="withPassword"]`).click();
+    await page.getByTestId("EmailSMTPAndTemplateSetup").click();
+    await page.getByText("Email Provider").click();
+    await page.locator(`[data-label="Host"] input`).fill("prostgles-test-mock");
+    await page.getByText("Test and Save").click();
+    await page.waitForTimeout(1500);
+    await page.getByText("Enable").click();
+    await page.getByText("Save").click();
+    await page.waitForTimeout(1500);
+    const errNodeCount = await page.getByTestId("EmailAuthSetup.error").count();
+    expect(errNodeCount).toBe(0);
+
+    await goTo(newPage, "/login");
+
+    /** Test failed login throttle */
+    await newPage.locator("#username").fill(USERS.new_user);
+    await newPage.locator("#password").fill(USERS.new_user);
+    const start = Date.now();
+    await newPage.getByRole("button", { name: "Sign in" }).click();
+    await newPage.getByTestId("Login.error").waitFor({ state: "visible" });
+    expect(Date.now() - start).toBeGreaterThan(499);
+    await newPage.reload();
+
+    /**
+     * Passwords do not match registration check
+     */
+    await newPage.getByTestId("Login.toggle").click();
+    await newPage.locator("#username").fill(USERS.new_user);
+    await newPage.locator("#password").fill(USERS.new_user);
+    await newPage.getByRole("button", { name: "Sign up" }).click();
+    expect(await newPage.getByTestId("Login.error").textContent()).toContain(
+      "Passwords do not match",
+    );
+    await newPage.locator("#new-password").fill(USERS.new_user);
+    await newPage.getByRole("button", { name: "Sign up" }).click();
+    expect(
+      await newPage
+        .getByTestId("AuthNotifPopup")
+        .getByTestId("Popup.content")
+        .textContent(),
+    ).toBe(
+      "Email verification sent. Open the verification url or enter the code to confirm your email",
+    );
+    await newPage.getByRole("button", { name: "Ok" }).click();
+
+    const newUser = await runDbsSql(
+      page,
+      `SELECT * FROM users WHERE username = $1`,
+      [USERS.new_user],
+      { returnType: "row" },
+    );
+    const code = newUser?.registration?.email_confirmation?.confirmation_code;
+    expect(typeof code).toBe("string");
+    expect(code.length).toBe(6);
+    await newPage.locator("#email-verification-code").fill(code);
+    await newPage.getByRole("button", { name: "Confirm email" }).click();
+    expect(
+      await newPage
+        .getByTestId("AuthNotifPopup")
+        .getByTestId("Popup.content")
+        .textContent(),
+    ).toBe("Your email has been confirmed. You can now sign in");
+    await newPage.getByRole("button", { name: "Ok" }).click();
+
+    await newPage.locator("#username").fill(USERS.new_user);
+    await newPage.locator("#password").fill(USERS.new_user);
+    await newPage.getByRole("button", { name: "Sign in" }).click();
+
+    await newPage.getByTestId("App.colorScheme").waitFor({ state: "visible" });
+  });
+
+  test("Enable email magic link registrations", async ({ page: p }) => {
+    const page = p as PageWIds;
+
+    await login(page);
+    await goTo(page, "/server-settings");
+    await page.locator(`[data-key="auth"]`).click();
+    await page.getByTestId("EmailAuthSetup").locator("button").click();
+    await page.getByTestId("EmailAuthSetup.SignupType").click();
+    await page.locator(`[data-key="withMagicLink"]`).click();
+    await page.getByText("Save").click();
+    await page.waitForTimeout(1500);
+    const errNodeCount = await page.getByTestId("EmailAuthSetup.error").count();
+    expect(errNodeCount).toBe(0);
+  });
+
+  test("Email magic link signup", async ({ page: p, browser }) => {
+    const newPage = p as PageWIds;
+    const page: PageWIds = await browser.newPage();
+
+    /**
+     * Can still login with password with email magic link registrations
+     */
+    await goTo(page, "/login");
+    await page.locator("#username").fill(USERS.test_user);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.locator("#password").waitFor({ state: "visible" });
+    await page.locator("#password").fill(USERS.test_user);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
+
+    await goTo(newPage, "/login");
+
+    await newPage.locator("#username").fill(USERS.new_user1);
+    await newPage.getByRole("button", { name: "Continue" }).click();
+
+    expect(
+      await newPage
+        .getByTestId("AuthNotifPopup")
+        .getByTestId("Popup.content")
+        .textContent(),
+    ).toBe("Magic link sent. Open the url from your email to login");
+    await newPage.getByRole("button", { name: "Ok" }).click();
+
+    const newUser = await runDbsSql(
+      page,
+      `
+      SELECT * 
+      FROM users 
+      WHERE username = $1
+      `,
+      [USERS.new_user1],
+      { returnType: "row" },
+    );
+    const failedAttempts = await runDbsSql(
+      page,
+      `
+      DELETE -- SELECT * 
+      FROM login_attempts
+      `,
+      undefined,
+      { returnType: "rows" },
+    );
+    console.log("failedAttempts", failedAttempts);
+    const code = newUser?.registration.otp_code;
+    expect(typeof code).toBe("string");
+    await goTo(newPage, `/magic-link?code=${code}&email=${USERS.new_user1}`);
+
+    await newPage.getByTestId("App.colorScheme").waitFor({ state: "visible" });
+
+    await runDbsSql(
+      page,
+      `
+      DELETE FROM login_attempts;
+      `,
+      undefined,
+      { returnType: "row" },
+    );
+  });
+
+  test("Free LLM assistant signup & Disable signups", async ({ page: p }) => {
+    const page = p as PageWIds;
+    await goTo(page, "/login");
+    await page.locator("#username").fill(USERS.test_user);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.locator("#password").waitFor({ state: "visible" });
+    await page.locator("#password").fill(USERS.test_user);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByTestId("App.colorScheme").waitFor({ state: "visible" });
+
+    const existingCloudDb = await page
+      .getByRole("link", {
+        name: "cloud",
+        exact: true,
+      })
+      .count();
+
+    /** Create cloud db */
+    if (!existingCloudDb) {
+      const dbName = "cloud";
+      await createDatabase(dbName, page, false);
+      await page.getByTestId("dashboard.goToConnConfig").click();
+      await page.getByTestId("config.api").click();
+      await page.locator("input#url_path").fill(dbName);
+      /** Enable http api */
+      await page.getByText("Enabled").click();
+      await page.waitForTimeout(1500);
+    } else {
+      await page.getByRole("link", { name: "Cloud" }).click();
+      await page.getByTestId("dashboard.goToConnConfig").click();
+      await page.getByTestId("config.api").click();
+    }
+
+    /** Add server-side func */
+    await page.getByTestId("config.methods").click();
+
+    /** This timeout is crucial in ensuring monaco editor shows suggestions */
+    await page.waitForTimeout(1e3);
+    await page.getByText("Create function").click();
+    await page.locator("input#function_name").fill("askLLM");
+    await monacoType(page, ".MethodDefinition", "dbo.t", {
+      deleteAll: false,
+    });
+    await page.keyboard.press("Tab");
+
+    /** Ensure db schema suggestions work */
+    const expectedCode =
+      "export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n  dbo.tx\n}";
+    const funcCode = await getMonacoValue(page, ".MethodDefinition");
+    expect(funcCode).toEqual(expectedCode);
+    /** Add llm server side func */
+    const llmCode = `return { content: [{ text: "free ai assistant" + args.messages.at(-1)?.content }] };//`;
+    await monacoType(page, ".MethodDefinition", llmCode, {
+      deleteAll: false,
+      pressBeforeTyping: ["Control+ArrowLeft", "Control+ArrowLeft"],
+      keyPressDelay: 15,
+    });
+    const funcCode2 = await getMonacoValue(page, ".MethodDefinition");
+    expect(funcCode2).toEqual(
+      expectedCode.replace("dbo.tx", llmCode + "dbo.tx"),
+    );
+    /** Add askLLM func args */
+    await page.getByTitle("Add new item").click();
+    await page.getByLabel("Argument name").fill("messages");
+    await page.getByLabel("Data type").click();
+    await page.locator(`[data-key="any"]`).click();
+    await page.getByRole("button", { name: "Add function" }).click();
+
+    /** Page will reload after func is added */
+    // await page.waitForTimeout(3e3);
+    await page.waitForLoadState("networkidle");
+    /** JSONBSchema localValue bugs. Argument must show */
+    await page.getByTitle("Edit function").click();
+    await page.getByLabel("Argument name").waitFor({ state: "visible" });
+
+    /**
+     * Publish functions for user
+     */
+    await page.getByTestId("config.ac").click();
+    await createAccessRule(page, "default");
+    await page.getByText("askLLM").click();
+    await page.getByText("Create rule").click();
+    await page.waitForTimeout(1e3);
+
+    /** Signup for free LLM assistant */
+    await goTo(page, "/connections");
+    await page.getByRole("link", { name: "Prostgles UI state" }).click();
+    await page.getByTestId("AskLLM").click();
+    await page.getByTestId("SetupLLMCredentials.free").click();
+    await page.locator("input#email").fill(USERS.free_llm_user1);
+    await page.getByTestId("ProstglesSignup.continue").click();
+    await page.waitForTimeout(1e3);
+    const llmUser = await runDbsSql(
+      page,
+      `
+      SELECT * 
+      FROM users 
+      WHERE username = $1
+      `,
+      [USERS.free_llm_user1],
+      { returnType: "row" },
+    );
+    const freeLLMCode = llmUser?.registration.otp_code;
+    expect(typeof freeLLMCode).toBe("string");
+    await page.locator("input#otp-code").fill(freeLLMCode);
+    await page.getByTestId("ProstglesSignup.continue").click();
+    await page.waitForTimeout(1e3);
+    await page.locator(".ProstglesSignup").waitFor({ state: "detached" });
+
+    /** Test LLM responses */
+    await goTo(page, "/connections");
+    await page.getByRole("link", { name: "cloud" }).click();
+    const userMessage = "hey";
+    const responses = await getLLMResponses(page, [userMessage]);
+    expect(responses).toEqual([
+      { isOk: false, response: "free ai assistant" + userMessage },
+    ]);
+
+    /** Disable signups */
+    await goTo(page, "/server-settings");
+    await page.locator(`[data-key="auth"]`).click();
+    await page.getByTestId("EmailAuthSetup").locator("button").click();
+    await page.getByText("Enable").click();
+    await page.getByText("Save").click();
+
+    /** Revert LLM signup */
+    await runDbsSql(
+      page,
+      `
+      UPDATE global_settings
+      SET prostgles_registration = null
+      `,
+    );
+    await runDbsSql(
+      page,
+      `
+      DELETE FROM llm_credentials;
+      TRUNCATE llm_chats CASCADE;
+      `,
+    );
+  });
+
+  test("Limit login attempts max failed limit", async ({ browser }) => {
     const page: PageWIds = await browser.newPage({
       extraHTTPHeaders: {
         "x-real-ip": "1.1.1.1",
@@ -110,11 +424,12 @@ test.describe("Main test", () => {
 
     await login(page, USERS.test_user, "/login");
     await page.waitForTimeout(1500);
+
     await runDbsSql(
       page,
       `DELETE FROM login_attempts; UPDATE global_settings SET login_rate_limit = '{"groupBy": "x-real-ip", "maxAttemptsPerHour": 5}'`,
     );
-    await goTo(page, "/logout");
+    await page.request.post("/logout");
     await goTo(page, "/login");
     const loginAndExpectError = async (
       errorMessage: string,
@@ -356,7 +671,7 @@ test.describe("Main test", () => {
       .waitFor({ state: "visible", timeout: 15e3 });
 
     /** Using recovery code */
-    await goTo(page, "localhost:3004/logout");
+    await page.request.post("/logout");
     await login(page);
     await page
       .getByRole("button", { name: "Enter recovery code", exact: true })
@@ -451,7 +766,9 @@ test.describe("Main test", () => {
     }
 
     await page.goto("localhost:3004/account", { waitUntil: "networkidle" });
-    await monacoType(page, `[data-label="Options"]`, `{ `);
+    await monacoType(page, `[data-label="Options"]`, `{ `, {
+      // moveCursorAfterTyping: ["Right"],
+    });
     await page.keyboard.type("vst", { delay: 100 });
     await page.keyboard.press("Tab");
     await page.keyboard.type("fa", { delay: 100 });
@@ -679,7 +996,7 @@ test.describe("Main test", () => {
   test("Set access rules", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await createAccessRule(page, "default");
+    await createAccessRuleForTestDB(page, "default");
 
     await setTableRule(
       page,
@@ -734,7 +1051,7 @@ test.describe("Main test", () => {
   test("Default user has correct permissions", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await goTo(page, "localhost:3004/logout");
+    await page.request.post("/logout");
     await login(page, USERS.default_user);
 
     await page.getByRole("link", { name: "Connections" }).click();
@@ -758,7 +1075,7 @@ test.describe("Main test", () => {
   test("Default user1 has correct permissions", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await goTo(page, "localhost:3004/logout");
+    await page.request.post("/logout");
     await login(page, USERS.default_user1);
 
     await page.getByRole("link", { name: "Connections" }).click();
@@ -782,7 +1099,7 @@ test.describe("Main test", () => {
   test("Admin user (test_user) can see all data", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await goTo(page, "localhost:3004/logout");
+    await page.request.post("/logout");
     await login(page, USERS.test_user);
     await page.getByRole("link", { name: "Connections" }).click();
     await page.getByRole("link", { name: TEST_DB_NAME }).click();
@@ -1139,7 +1456,7 @@ test.describe("Main test", () => {
     const sqlTestTimeout = { total: 8 * 6e4, sql: 7 * 6e4 };
     test.setTimeout(sqlTestTimeout.total);
 
-    await goTo(page, "localhost:3004/logout");
+    await page.request.post("/logout");
     await login(page, USERS.test_user);
     await page.getByRole("link", { name: "Connections" }).click();
     await page.getByRole("link", { name: TEST_DB_NAME }).click();
@@ -1178,7 +1495,6 @@ test.describe("Main test", () => {
           return dialog.accept();
         });
       });
-    await monacoType(page, `.ProstglesSQL`, " ");
     await startSqlTest();
   });
 
@@ -1203,7 +1519,7 @@ test.describe("Main test", () => {
   test("Set public user access rules", async ({ page: p }) => {
     const page = p as PageWIds;
 
-    await createAccessRule(page, "public");
+    await createAccessRuleForTestDB(page, "public");
     await setTableRule(
       page,
       "my_table",

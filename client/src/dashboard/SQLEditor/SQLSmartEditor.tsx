@@ -6,7 +6,7 @@ import { InfoRow } from "../../components/InfoRow";
 import Popup from "../../components/Popup/Popup";
 import { useIsMounted } from "../Backup/CredentialSelector";
 import type { DashboardState } from "../Dashboard/Dashboard";
-import SQLEditor from "./SQLEditor";
+import { SQLEditor } from "./SQLEditor";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";

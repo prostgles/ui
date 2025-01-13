@@ -45,6 +45,7 @@ import { TopHeaderClassName } from "./dashboardUtils";
 import { loadTable, type LoadTableArgs } from "./loadTable";
 import { cloneWorkspace } from "./cloneWorkspace";
 import { getWorkspacePath } from "../WorkspaceMenu/WorkspaceMenu";
+import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -195,14 +196,15 @@ export class _Dashboard extends RTComp<
       this.syncsSet = true;
 
       const wspFilter = { connection_id: connectionId, deleted: false };
-      if (!+(await workspaces.count(wspFilter))) {
+      const wspCount = +(await workspaces.count(wspFilter));
+      if (!wspCount) {
         const defaultIsDeleted = +(await workspaces.count({
           connection_id: connectionId,
           name: "default",
           deleted: true,
         }));
 
-        await workspaces.insert(
+        const insertedWsp = await workspaces.insert(
           {
             connection_id: connectionId,
             name: !defaultIsDeleted ? "default" : `default ${Date.now()}`,
@@ -210,7 +212,7 @@ export class _Dashboard extends RTComp<
           },
           { returning: "*" },
         );
-        // await pageReload("default workspace created");
+        console.log(insertedWsp);
       }
       let wsp: Workspace | undefined;
       try {
@@ -416,7 +418,7 @@ export class _Dashboard extends RTComp<
               color="action"
               variant="filled"
               asNavLink={true}
-              href={`/connections/${connectionId}`}
+              href={`${API_PATH_SUFFIXES.DASHBOARD}/${connectionId}`}
               iconPath={mdiArrowLeft}
             >
               Go back

@@ -1,18 +1,17 @@
 import * as d3 from "d3";
 import type { AnyObject, SelectParams } from "prostgles-types";
-import { pickKeys } from "../../utils";
+import { pickKeys } from "prostgles-types";
+import { getIcon } from "../../components/SvgIcon";
 import type {
-  DeckGlColor,
   Extent,
   GeoJSONFeature,
   GeoJsonLayerProps,
 } from "../Map/DeckGLMap";
-import type { W_MapState } from "./W_Map";
-import type W_Map from "./W_Map";
-import { MAP_SELECT_COLUMNS, getMapSelect, getSQLData } from "./getMapData";
 import { getOSMData } from "./OSM/getOSMData";
+import type W_Map from "./W_Map";
+import type { W_MapState } from "./W_Map";
+import { MAP_SELECT_COLUMNS, getMapSelect, getSQLData } from "./getMapData";
 import { getMapFeatureStyle } from "./getMapFeatureStyle";
-import { getIcon } from "../../components/SvgIcon";
 
 export const DEFAULT_GET_COLOR: Pick<
   GeoJsonLayerProps,

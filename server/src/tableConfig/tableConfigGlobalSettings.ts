@@ -23,7 +23,8 @@ const SMTPConfig = {
       type: { enum: ["smtp"] },
       host: { type: "string" },
       port: { type: "number" },
-      secure: { type: "boolean" },
+      secure: { type: "boolean", optional: true },
+      rejectUnauthorized: { type: "boolean", optional: true },
       user: { type: "string" },
       pass: { type: "string" },
     },
@@ -147,12 +148,8 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1 }> = {
               {
                 signupType: { enum: ["withMagicLink"] },
                 enabled: { type: "boolean", optional: true },
-                emailMagicLink: SMTPConfig,
-                smtp: {
-                  optional: true,
-                  ...SMTPConfig,
-                },
-                emailTemplate: { optional: true, ...EmailTemplateConfig },
+                smtp: SMTPConfig,
+                emailTemplate: EmailTemplateConfig,
                 emailConfirmationEnabled: {
                   type: "boolean",
                   optional: true,
@@ -163,19 +160,12 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1 }> = {
                 signupType: { enum: ["withPassword"] },
                 enabled: { type: "boolean", optional: true },
                 minPasswordLength: {
-                  type: "integer",
                   optional: true,
+                  type: "integer",
                   title: "Minimum password length",
                 },
-                emailConfirmation: {
-                  optional: true,
-                  ...SMTPConfig,
-                },
-                smtp: {
-                  optional: true,
-                  ...SMTPConfig,
-                },
-                emailTemplate: { optional: true, ...EmailTemplateConfig },
+                smtp: SMTPConfig,
+                emailTemplate: EmailTemplateConfig,
                 emailConfirmationEnabled: {
                   type: "boolean",
                   optional: true,
@@ -252,6 +242,24 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1 }> = {
                     allowedValues: OAuthProviderOptions.facebook.scopes.map(
                       (s) => s.key,
                     ),
+                  },
+                },
+              },
+            },
+          },
+          customOAuth: {
+            optional: true,
+            type: {
+              ...commonAuthSchema,
+              displayName: { type: "string" },
+              displayIconPath: { type: "string", optional: true },
+              authorizationURL: { type: "string" },
+              tokenURL: { type: "string" },
+              authOpts: {
+                optional: true,
+                type: {
+                  scope: {
+                    type: "string[]",
                   },
                 },
               },

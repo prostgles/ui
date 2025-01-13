@@ -1,13 +1,6 @@
-import {
-  mdiEllipseOutline,
-  mdiMapMarker,
-  mdiRectangleOutline,
-  mdiShapePolygonPlus,
-  mdiSquareOutline,
-  mdiVectorPolyline,
-} from "@mdi/js";
+import { mdiMapMarker, mdiShapePolygonPlus, mdiVectorPolyline } from "@mdi/js";
 import { usePromise } from "prostgles-client/dist/react-hooks";
-import { pickKeys } from "../../utils";
+import { pickKeys } from "prostgles-types";
 import type { GeoJSONFeature } from "./DeckGLMap";
 // export type  { Feature } from "@deck.gl-community/editable-layers/dist/geojson-types";
 // export type { EditableGeojsonLayerProps } from "@deck.gl-community/editable-layers/dist/editable-layers/editable-geojson-layer";

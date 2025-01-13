@@ -39,7 +39,7 @@ export const ColumnSortMenu = ({ column, w }: ColumnSortMenuProps) => {
   /**
    * w.$get is used because newest w is not propagated from Table.tsx
    */
-  const existingSort = (w.$get().sort || []).find((s) =>
+  const existingSort = (w.$get()?.sort || []).find((s) =>
     column.nested ?
       `${s.key}`.startsWith(`${column.name}.`)
     : s.key === column.name,

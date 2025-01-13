@@ -47,8 +47,8 @@ export const ColumnDisplayFormat = ({ column, table, tables, onChange }: P) => {
   //   onChange={onChange}
   //   />
 
-  //@ts-ignore
   return (
+    //@ts-ignore
     <JSONBSchema
       schema={s}
       tables={tables}

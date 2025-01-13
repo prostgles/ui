@@ -21,7 +21,7 @@ import type {
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import { SummariseColumn } from "./SummariseColumns";
 import type { ValidatedColumnInfo } from "prostgles-types";
-import { omitKeys } from "../../../utils";
+import { omitKeys } from "prostgles-types";
 import type { Prgl } from "../../../App";
 
 type P = {

@@ -9,7 +9,7 @@ type OSMElementType = "node" | "way" | "relation";
 type OSMElementBase = {
   id: number;
   type: OSMElementType;
-  tags: Partial<{ [key: string]: string }>;
+  tags?: Partial<{ [key: string]: string }>;
 };
 
 export type OSMNode = OSMElementBase & {
@@ -146,14 +146,13 @@ export const getOSMDataAsGeoJson = async (responseData: {
   const wayNodeIds = unique(
     ways
       .values()
+      //@ts-ignore
       .toArray()
       .flatMap((w) => w.nodes),
   );
   const nodeIds = unique([..._nodeIds, ...wayNodeIds]);
-  const nodes = await fetchElements("node", nodeIds);
+  const nodes = await fetchElements("node", nodeIds as number[]);
 
-  const node = await fetchElements("node", [36935764]);
-  console.log(node.values().toArray());
   const features: GeoJSONFeature[] = responseData.elements
     .flatMap((element) => {
       const commonProps: Pick<GeoJSONFeature, "id" | "properties" | "type"> = {

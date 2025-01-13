@@ -20,6 +20,7 @@ export const getSmartCardColumns = async ({
   return sqlRes?.fields.map((f, i) => ({
     ...f,
     label: f.columnName ?? f.name,
+    is_generated: false,
     comment: "",
     ordinal_position: i + 1,
     is_nullable: false,

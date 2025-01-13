@@ -10,8 +10,8 @@ import ErrorComponent from "../../components/ErrorComponent";
 import { isCompleteJSONB } from "../../components/JSONBSchema/isCompleteJSONB";
 import { JSONBSchema } from "../../components/JSONBSchema/JSONBSchema";
 import { SwitchToggle } from "../../components/SwitchToggle";
-import { omitKeys } from "../../utils";
-import CodeEditor from "../CodeEditor/CodeEditor";
+import { omitKeys } from "prostgles-types";
+import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import SmartTable from "../SmartTable";
 import { FlexCol, FlexRow } from "../../components/Flex";
@@ -103,7 +103,7 @@ export const W_MethodControls = ({
           {
             ...inputSchema[v],
             lookup: {
-              ...inputSchema[v]?.lookup,
+              ...inputSchema[v].lookup,
               type: "data",
             },
           }
@@ -126,6 +126,9 @@ export const W_MethodControls = ({
     m?.outputTable ? tables.find((t) => t.name === m.outputTable) : undefined;
   const { showCode = true } = w?.options ?? {};
 
+  if (!prgl) {
+    return <>prgl missing</>;
+  }
   return (
     <FlexCol
       className="W_MethodControls f-1  min-s-0 o-auto bg-color-2"
@@ -134,7 +137,7 @@ export const W_MethodControls = ({
       {showCode && method && (
         <MethodDefinition
           renderMode="Code"
-          {...prgl!}
+          {...prgl}
           db={db}
           tables={tables}
           method={method}

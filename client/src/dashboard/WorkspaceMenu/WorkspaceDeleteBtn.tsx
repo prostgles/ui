@@ -6,6 +6,7 @@ import ErrorComponent from "../../components/ErrorComponent";
 import { pageReload } from "../../components/Loading";
 import PopupMenu from "../../components/PopupMenu";
 import type { Workspace } from "../Dashboard/dashboardUtils";
+import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
 
 type WorkspaceDeleteBtnProps = Pick<Prgl, "dbs"> &
   Pick<BtnProps, "disabledInfo"> & {
@@ -64,7 +65,7 @@ export const WorkspaceDeleteBtn = ({
             try {
               await dbs.workspaces.update({ id: w.id }, { deleted: true });
               if (w.id === activeWorkspaceId) {
-                const path = ["/connections", w.connection_id]
+                const path = [API_PATH_SUFFIXES.DASHBOARD, w.connection_id]
                   .filter((v) => v)
                   .join("/");
                 window.location.href = path;

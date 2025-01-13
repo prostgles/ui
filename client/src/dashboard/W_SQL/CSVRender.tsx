@@ -1,5 +1,5 @@
 import React from "react";
-import CodeEditor from "../CodeEditor/CodeEditor";
+import { CodeEditor } from "../CodeEditor/CodeEditor";
 import { getSqlRowsAsCSV } from "./CopyResultBtn";
 import type { W_SQLState } from "./W_SQL";
 import { usePromise } from "prostgles-client/dist/react-hooks";

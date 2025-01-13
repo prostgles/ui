@@ -1,5 +1,5 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { DBSchemaGenerated } from "../../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
 import type {
   ColType,
   ConnectionStatus,
@@ -21,7 +21,8 @@ export type DBSMethods = Partial<{
   }) => Promise<void>;
   prostglesSignup: (
     email: string,
-  ) => Promise<{ token: string; hasError?: boolean; error: any }>;
+    otpCode: string,
+  ) => Promise<{ token: string; host: string; hasError?: boolean; error: any }>;
   askLLM: (query: string, schema: string, chatId: number) => Promise<AnyObject>;
   pgDump: (
     conId: string,
@@ -138,7 +139,7 @@ export type DBSMethods = Partial<{
 
 const AdminTableNames = ["connections", "global_settings"] as const;
 
-export type DBS = DBHandlerClient<DBSchemaGenerated> & {
+export type DBS = DBHandlerClient<DBGeneratedSchema> & {
   sql: DBHandlerClient["sql"];
 };
 

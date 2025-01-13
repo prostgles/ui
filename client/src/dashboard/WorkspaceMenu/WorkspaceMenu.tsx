@@ -4,7 +4,7 @@ import {
   mdiContentCopy,
   mdiViewCarousel,
 } from "@mdi/js";
-import React, { useMemo, useRef } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
@@ -20,6 +20,7 @@ import { WorkspaceDeleteBtn } from "./WorkspaceDeleteBtn";
 import "./WorkspaceMenu.css";
 import { WorkspaceSettings } from "./WorkspaceSettings";
 import { cloneWorkspace } from "../Dashboard/cloneWorkspace";
+import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
 
 type P = {
   workspace: WorkspaceSyncItem;
@@ -30,21 +31,24 @@ type P = {
 export const getWorkspacePath = (
   w: Pick<Workspace, "id" | "connection_id">,
 ) => {
-  return ["/connections", `${w.connection_id}?workspaceId=${w.id}`]
+  return [API_PATH_SUFFIXES.DASHBOARD, `${w.connection_id}?workspaceId=${w.id}`]
     .filter((v) => v)
     .join("/");
 };
 
 export const useSetNewWorkspace = (currentWorkspaceId: string | undefined) => {
   const navigate = useNavigate();
-  const setWorkspace = (w: Pick<Workspace, "id" | "connection_id">) => {
-    if (w.id === currentWorkspaceId) {
-      return;
-    }
-    const path = getWorkspacePath(w);
+  const setWorkspace = useCallback(
+    (w: Pick<Workspace, "id" | "connection_id">) => {
+      if (w.id === currentWorkspaceId) {
+        return;
+      }
+      const path = getWorkspacePath(w);
 
-    navigate(path);
-  };
+      navigate(path);
+    },
+    [currentWorkspaceId, navigate],
+  );
 
   return { setWorkspace };
 };

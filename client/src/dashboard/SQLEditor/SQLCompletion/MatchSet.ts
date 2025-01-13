@@ -1,4 +1,4 @@
-import { omitKeys } from "../../../utils";
+import { omitKeys } from "prostgles-types";
 import { asListObject } from "../SQLEditorSuggestions";
 import { suggestSnippets } from "./CommonMatchImports";
 import { getExpected } from "./getExpected";

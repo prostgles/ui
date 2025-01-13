@@ -1,4 +1,4 @@
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import path from "path";
 import { FileManager } from "prostgles-server/dist/FileManager/FileManager";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
@@ -38,7 +38,7 @@ export async function getFileMgr(dbs: DBS, credId: number | null) {
 }
 
 export async function getBkp(
-  dbs: DBOFullyTyped<DBSchemaGenerated>,
+  dbs: DBOFullyTyped<DBGeneratedSchema>,
   bkpId: string,
 ) {
   const bkp = await dbs.backups.findOne({ id: bkpId });
@@ -58,30 +58,6 @@ export function bytesToSize(bytes: number) {
   if (bytes == 0) return "0 Byte";
   const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)) + "");
   return Math.round(bytes / Math.pow(1024, i)) + " " + sizes[i];
-}
-
-export function getSSLEnvVars(
-  c: Connections,
-  connMgr: ConnectionManager,
-): EnvVars {
-  const result = {} as any;
-  if ((c as any).db_ssl) {
-    result.PGSSLMODE = c.db_ssl;
-  }
-  if (c.db_pass) {
-    result.PGPASSWORD = c.db_pass;
-  }
-  if (c.ssl_client_certificate) {
-    result.PGSSLCERT = connMgr.getCertPath(c.id, "cert");
-  }
-  if (c.ssl_client_certificate_key) {
-    result.PGSSLKEY = connMgr.getCertPath(c.id, "key");
-  }
-  if (c.ssl_certificate) {
-    result.PGSSLROOTCERT = connMgr.getCertPath(c.id, "ca");
-  }
-
-  return result;
 }
 
 type Basics = string | number | boolean;

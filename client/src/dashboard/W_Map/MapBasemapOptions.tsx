@@ -1,5 +1,3 @@
-import { isDefined } from "../../utils";
-
 import { mdiDelete, mdiMap, mdiPlus, mdiSearchWeb } from "@mdi/js";
 import React, { useCallback, useState } from "react";
 import Btn from "../../components/Btn";
@@ -16,7 +14,7 @@ import type { Prgl } from "../../App";
 import { DEFAULT_TILE_URLS } from "../Map/mapUtils";
 import { Label } from "../../components/Label";
 import { InfoRow } from "../../components/InfoRow";
-import { isEqual } from "prostgles-client/dist/react-hooks";
+import { isEqual, isDefined } from "prostgles-types";
 
 type P = {
   w: SyncDataItem<Required<WindowData<"map">>, true>;

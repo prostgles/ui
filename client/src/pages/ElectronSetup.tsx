@@ -5,7 +5,7 @@ import Btn from "../components/Btn";
 import ErrorComponent from "../components/ErrorComponent";
 import { FlexCol } from "../components/Flex";
 import Loading, { pageReload } from "../components/Loading";
-import { omitKeys, pickKeys } from "../utils";
+import { omitKeys, pickKeys } from "prostgles-types";
 import { NewConnectionForm } from "./NewConnection/NewConnectionForm";
 import type { Connection } from "./NewConnection/NewConnnection";
 import { DEFAULT_CONNECTION } from "./NewConnection/NewConnnection";

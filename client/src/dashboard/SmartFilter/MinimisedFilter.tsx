@@ -117,8 +117,8 @@ export const MinimisedFilter = ({
 
   let comparatorNode: React.ReactNode = null;
   if (filter.complexFilter) {
-    //@ts-ignore
     comparatorNode = (
+      //@ts-ignore
       <div className="p-p25">{filter.complexFilter.comparator}</div>
     );
   }

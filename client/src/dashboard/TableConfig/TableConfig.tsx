@@ -1,7 +1,7 @@
 import React from "react";
 import type { Prgl } from "../../App";
 import { FlexCol } from "../../components/Flex";
-import { SmartCodeEditor } from "../CodeEditor/SmartCodeEditor";
+import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
 import { ProcessLogs } from "./ProcessLogs";
 import { SwitchToggle } from "../../components/SwitchToggle";
 
@@ -30,16 +30,19 @@ export const TableConfig = ({ prgl: { dbs, connectionId, dbsMethods } }: P) => {
           });
         }}
       />
-      <SmartCodeEditor
+      <CodeEditorWithSaveButton
         key={"tableConfig"}
         label="Table Config"
-        tsLibraries={[
-          {
-            filePath: "TableConfig.ts",
-            content: TableConfigts,
-          },
-        ]}
-        language="typescript"
+        language={{
+          lang: "typescript",
+          modelFileName: "TableConfig.ts",
+          tsLibraries: [
+            {
+              filePath: "TableConfig.ts",
+              content: TableConfigts,
+            },
+          ],
+        }}
         codePlaceholder={exampleConfig}
         value={dbConf.table_config_ts}
         onSave={async (value) => {

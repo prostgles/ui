@@ -8,7 +8,8 @@ module.exports = {
     "react-hooks/exhaustive-deps": [
       "warn",
       {
-        additionalHooks: "(usePromise|useEffectAsync|useProstglesClient)",
+        additionalHooks:
+          "(usePromise|useEffectAsync|useProstglesClient|useAsyncEffectQueue)",
       },
     ],
   },

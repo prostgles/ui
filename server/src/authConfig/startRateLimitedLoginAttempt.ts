@@ -1,9 +1,9 @@
 import type { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import { isEmpty, pickKeys } from "prostgles-types";
+import { type AuthResponse, isEmpty, pickKeys } from "prostgles-types";
 import { connectionChecker, tout } from "..";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
-import { HOUR } from "./authConfig";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
+import { HOUR } from "../../../commonTypes/utils";
 
 const getGlobalSettings = async () => {
   let gs = connectionChecker.config.global_setting;
@@ -34,9 +34,9 @@ type FailedAttemptsInfo =
       disabled?: true;
     };
 export const getFailedTooManyTimes = async (
-  db: DBOFullyTyped<DBSchemaGenerated>,
+  db: DBOFullyTyped<DBGeneratedSchema>,
   clientInfo: LoginClientInfo,
-): Promise<FailedAttemptsInfo> => {
+): Promise<FailedAttemptsInfo | AuthResponse.AuthFailure> => {
   const { ip_address } = clientInfo;
   const globalSettings = await getGlobalSettings();
   const lastHour = new Date(Date.now() - 1 * HOUR).toISOString();
@@ -62,16 +62,26 @@ export const getFailedTooManyTimes = async (
       remote_ip: "ip_address_remote",
     } as const
   )[groupBy];
+
   const ip = clientInfo[matchByFilterKey] ?? ip_address;
-  if (!(matchByFilterKey as any)) {
-    throw "Invalid login_rate_limit.groupBy";
+  if (!clientInfo[matchByFilterKey]) {
+    return {
+      success: false,
+      code: "something-went-wrong",
+      message: "Invalid/empty ip",
+    };
   }
   const matchByFilter = pickKeys(clientInfo, [matchByFilterKey]);
   if (isEmpty(matchByFilter)) {
-    throw (
+    const message =
       "matchByFilter is empty " +
-      JSON.stringify([matchByFilter, matchByFilterKey])
-    ); // pickKeys(args, ["ip_address", "ip_address_remote", "x_real_ip"])
+      JSON.stringify([matchByFilter, matchByFilterKey]);
+
+    return {
+      success: false,
+      code: "something-went-wrong",
+      message,
+    };
   }
   const previousFails = await db.login_attempts.find({
     ...matchByFilter,
@@ -90,8 +100,11 @@ export const getFailedTooManyTimes = async (
 };
 
 type AuthAttepmt =
-  | { auth_type: "login"; username: string }
-  | { auth_type: "provider"; auth_provider: string }
+  | {
+      auth_type: "login" | "registration" | "otp-code";
+      username: string;
+    }
+  | { auth_type: "oauth"; auth_provider: string }
   | { auth_type: "magic-link"; magic_link_id: string }
   | { auth_type: "session-id"; sid: string };
 
@@ -99,22 +112,25 @@ type AuthAttepmt =
  * Used to prevent ip addresses from authentication after too many recent failed attempts
  * Configured in global_settings.login_rate_limit found in Server settings page
  */
-export const startLoginAttempt = async (
-  db: DBOFullyTyped<DBSchemaGenerated>,
+export const startRateLimitedLoginAttempt = async (
+  db: DBOFullyTyped<DBGeneratedSchema>,
   clientInfo: LoginClientInfo,
   authInfo: AuthAttepmt,
 ) => {
-  const { failedTooManyTimes, matchByFilter, ip, disabled } =
-    await getFailedTooManyTimes(db, clientInfo);
-  if (failedTooManyTimes) {
-    throw "Too many failed login attempts";
+  const failedInfo = await getFailedTooManyTimes(db, clientInfo);
+  if ("success" in failedInfo) {
+    return failedInfo;
   }
-  const ignoredResult = {
+  const { failedTooManyTimes, matchByFilter, ip, disabled } = failedInfo;
+  const result = {
     ip,
     onSuccess: async () => {},
+    disabled,
+    failedTooManyTimes,
   };
-
-  if (disabled) return ignoredResult;
+  if (failedTooManyTimes || disabled) {
+    return result;
+  }
 
   /** In case of a bad sid do not log it multiple times */
   if (authInfo.auth_type === "session-id") {
@@ -123,7 +139,7 @@ export const startLoginAttempt = async (
       { orderBy: { created: false } },
     );
     if (alreadyFailedOnThisSID) {
-      return ignoredResult;
+      return result;
     }
   }
 
@@ -140,11 +156,41 @@ export const startLoginAttempt = async (
   );
   return {
     ip,
+    failedTooManyTimes,
     onSuccess: async () => {
       await db.login_attempts.update(
         { id: loginAttempt.id },
         { failed: false },
       );
+
+      /**
+       * Upon successfully confirming an email
+       * must delete all failed attempts within last day for that email
+       * */
+      if (
+        authInfo.auth_type === "otp-code" ||
+        authInfo.auth_type === "login" ||
+        authInfo.auth_type === "magic-link"
+      ) {
+        const getUsername = async () => {
+          if (authInfo.auth_type === "magic-link") {
+            const user = await db.users.findOne({
+              $existsJoined: { magic_links: { id: authInfo.magic_link_id } },
+            });
+            return user?.username;
+          }
+          return authInfo.username;
+        };
+
+        const username = await getUsername();
+        if (!username) throw "No username found for magic link";
+        await db.login_attempts.delete({
+          ...matchByFilter,
+          username,
+          failed: true,
+          "created.>=": new Date(Date.now() - 24 * HOUR).toISOString(),
+        });
+      }
     },
   };
 };
