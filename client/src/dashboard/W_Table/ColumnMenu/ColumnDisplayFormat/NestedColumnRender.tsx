@@ -4,7 +4,7 @@ import { MediaViewer } from "../../../../components/MediaViewer";
 import { FlexRowWrap } from "../../../../components/Flex";
 import type { AnyObject } from "prostgles-types";
 import type { ColumnConfig } from "../ColumnMenu";
-import { omitKeys } from "../../../../utils";
+import { omitKeys } from "prostgles-types";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
 import { getColWInfo } from "../../tableUtils/getColWInfo";
 import SmartFormField from "../../../SmartForm/SmartFormField/SmartFormField";

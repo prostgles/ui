@@ -31,7 +31,7 @@ import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import ErrorComponent from "../../components/ErrorComponent";
 import { InfoRow } from "../../components/InfoRow";
 import { SECOND } from "../Charts";
-import CodeEditor from "../CodeEditor/CodeEditor";
+import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { DBS } from "../Dashboard/DBS";
 import { TestSQL } from "./TestSQL";
 import { SQLHotkeys } from "./SQLHotkeys";
@@ -126,8 +126,8 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
 
   saveQuery = async () => {
     const w = this.props.w;
-    const sql = w.$get().sql || "";
-    const fileName = (w.$get().name || `Query_${await sha256(sql)}`) + ".sql";
+    const sql = w.$get()?.sql || "";
+    const fileName = (w.$get()?.name || `Query_${await sha256(sql)}`) + ".sql";
 
     download(sql, fileName, "text/sql");
   };

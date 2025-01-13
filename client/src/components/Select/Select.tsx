@@ -15,6 +15,7 @@ import SearchList from "../SearchList/SearchList";
 import "./Select.css";
 import { SelectTriggerButton } from "./SelectTriggerButton";
 import { sliceText } from "../../../../commonTypes/utils";
+import { generateUniqueID } from "../FileInput/FileInput";
 
 export type OptionKey = string | number | boolean | Date | null | undefined;
 export type FullOption<O extends OptionKey = string> = Pick<
@@ -123,7 +124,7 @@ export default class Select<
 
   btnRef?: HTMLButtonElement;
 
-  id = "select-" + Date.now();
+  id = generateUniqueID();
 
   render() {
     const {
@@ -321,7 +322,6 @@ export default class Select<
       }
 
       const chipMode = variant.startsWith("chips");
-
       const trigger = (
         <SelectTriggerButton
           {...this.props}

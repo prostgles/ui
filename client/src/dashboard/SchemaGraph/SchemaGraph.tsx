@@ -66,7 +66,7 @@ export class SchemaGraph extends RTComp<P, SchemaGraphState> {
 
     const { displayMode, nodes: _nodes, links: _links } = this.state;
 
-    let nodes = _nodes.map((n) => ({ ...n })),
+    let nodes = _nodes.map((n) => ({ ...n, x: 0, y: 0 })),
       links = _links.map((l) => ({ ...l }));
 
     if (displayMode === "leaf") {
@@ -80,6 +80,7 @@ export class SchemaGraph extends RTComp<P, SchemaGraphState> {
       svgNode: this.svgRef,
       data: {
         nodes,
+        //@ts-ignore
         links,
       },
       onClickNode: this.props.onClickTable,
@@ -123,6 +124,8 @@ export class SchemaGraph extends RTComp<P, SchemaGraphState> {
           })),
           height: 0,
           width: 0,
+          x: 0,
+          y: 0,
           hasLinks: false,
           cluster: 0,
         };

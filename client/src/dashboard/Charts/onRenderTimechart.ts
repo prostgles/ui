@@ -1,5 +1,5 @@
-import { isDefined } from "prostgles-types";
-import { nFormatter, pickKeys } from "../../utils";
+import { isDefined, pickKeys } from "prostgles-types";
+import { nFormatter } from "../../utils";
 import type { Point } from "../Charts";
 import type {
   ChartedText,

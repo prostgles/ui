@@ -31,27 +31,28 @@ const getLoader = () => {
 };
 
 /** Added m?js rules to ensure deck.gl community works. 
-       *  Error: failed to resolve only because it was resolved as fully specified (probably because the origin is strict EcmaScript Module, 
-       * e. g. a module with javascript mimetype, a '*.mjs' file, or a '*.js' file where the package.json contains '"type": "module"'). 
-       * 
-      {
-        test: /\.m?js/,
-        type: "javascript/auto",
-      },
-      {
-        test: /\.m?js/,
-        resolve: {
-          fullySpecified: false,
-        },
-      },
-      {
-        // webpackl 4 fix for broken turf module: https://github.com/uber/@deck.gl-community/editable-layers/issues/64
-        test: /\.mjs$/,
-        include: /node_modules/,
-        type: 'javascript/auto'
-      },
-      
-      */
+ *  Error: failed to resolve only because it was resolved as fully specified (probably because the origin is strict EcmaScript Module, 
+ * e. g. a module with javascript mimetype, a '*.mjs' file, or a '*.js' file where the package.json contains '"type": "module"'). 
+ * 
+  {
+    test: /\.m?js/,
+    type: "javascript/auto",
+  },
+  {
+    test: /\.m?js/,
+    resolve: {
+      fullySpecified: false,
+    },
+  },
+  {
+    // webpackl 4 fix for broken turf module: https://github.com/uber/@deck.gl-community/editable-layers/issues/64
+    test: /\.mjs$/,
+    include: /node_modules/,
+    type: 'javascript/auto'
+  },
+
+*/
+
 module.exports = {
   target: ["web", "es2020"],
   resolve: {
@@ -121,7 +122,7 @@ module.exports = {
       languages: ["typescript", "javascript", "sql", "pgsql", "json"],
     }),
     new webpack.ProgressPlugin({
-      activeModules: false,
+      activeModules: true,
       entries: true,
       // handler(percentage, message, ...args) {
       //   console.log(percentage)
@@ -134,10 +135,11 @@ module.exports = {
       percentBy: null,
     }),
     new SaveMdiIcons(),
-    // new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)()
+    // new (require("webpack-bundle-analyzer").BundleAnalyzerPlugin)(),
   ],
   output: {
-    clean: true, // Clean the output directory before emit.
+    /* Clean the output directory before emit. */
+    clean: true,
   },
   performance: {
     hints: false,

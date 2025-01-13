@@ -30,8 +30,8 @@ import { matchObj } from "../../../../commonTypes/utils";
 import { createReactiveState } from "../../appUtils";
 import { Icon } from "../../components/Icon/Icon";
 import type { PaginationProps } from "../../components/Table/Pagination";
-import { isDefined, pickKeys } from "../../utils";
-import CodeEditor from "../CodeEditor/CodeEditor";
+import { isDefined, pickKeys } from "prostgles-types";
+import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { SmartFilterBar } from "../SmartFilterBar/SmartFilterBar";
 import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
@@ -58,7 +58,7 @@ import {
 } from "./tableUtils/tableUtils";
 import { W_Table_Content } from "./W_Table_Content";
 import { getAndFixWColumnsConfig } from "./TableMenu/getAndFixWColumnsConfig";
-import { isEqual } from "prostgles-client/dist/react-hooks";
+import { isEqual } from "prostgles-types";
 import type { Command } from "../../Testing";
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {

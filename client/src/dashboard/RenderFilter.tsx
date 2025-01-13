@@ -6,7 +6,7 @@ import type {
 } from "../../../commonTypes/filterUtils";
 import Btn from "../components/Btn";
 import PopupMenu from "../components/PopupMenu";
-import { pickKeys } from "../utils";
+import { pickKeys } from "prostgles-types";
 import type {
   ContextDataSchema,
   ForcedFilterControlProps,

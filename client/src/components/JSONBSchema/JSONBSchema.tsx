@@ -45,7 +45,8 @@ export const JSONBSchema = <S extends Schema>({
   setHasErrors,
   ...otherProps
 }: P<S>) => {
-  const [localValueRaw, setlocalValue] = useState<any>(value);
+  const [_localValueRaw, setlocalValue] = useState<any>();
+  const localValueRaw = _localValueRaw ?? value;
   const localValue = otherProps.isNested ? value : localValueRaw;
   const setLocalValue = (newlocalValue) => {
     if (otherProps.isNested) {
@@ -58,7 +59,7 @@ export const JSONBSchema = <S extends Schema>({
   const hasError = !isCompleteJSONB(value, schema);
   useEffect(() => {
     setHasErrors?.(hasError);
-  }, [hasError]);
+  }, [hasError, setHasErrors]);
 
   useEffect(() => {
     if (otherProps.isNested) return;
@@ -70,7 +71,14 @@ export const JSONBSchema = <S extends Schema>({
     if (shouldFireOnChange && valueHasChanged) {
       onChange(localValue);
     }
-  }, [localValue, value, otherProps.allowIncomplete, otherProps.isNested]);
+  }, [
+    localValue,
+    value,
+    otherProps.allowIncomplete,
+    otherProps.isNested,
+    onChange,
+    schema,
+  ]);
 
   let node: React.ReactNode = null;
   if (JSONBSchemaAllowedOptionsMatch(schema)) {
@@ -92,8 +100,8 @@ export const JSONBSchema = <S extends Schema>({
       />
     );
   } else if (JSONBSchemaOneOfTypeMatch(schema)) {
-    //@ts-ignore
     node = (
+      //@ts-ignore
       <JSONBSchemaOneOfType
         value={localValue as any}
         schema={schema as any}

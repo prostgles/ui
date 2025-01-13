@@ -9,6 +9,7 @@ import { FlexCol, FlexRow } from "../components/Flex";
 import { StyledInterval } from "../dashboard/W_SQL/customRenderers";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { NavLink } from "react-router-dom";
+import { API_PATH_SUFFIXES } from "../../../commonTypes/utils";
 
 export const Alerts = (prgl: Prgl) => {
   const { connectionId, dbs } = prgl;
@@ -113,7 +114,7 @@ export const Alerts = (prgl: Prgl) => {
                       <div>{message}</div>
                       {connection_id && section && (
                         <NavLink
-                          to={`/connection-config/${connection_id}?section=${section}`}
+                          to={`${API_PATH_SUFFIXES.CONFIG}/${connection_id}?section=${section}`}
                         >
                           Go to issue
                         </NavLink>

@@ -1,5 +1,4 @@
 import type { Express } from "express";
-import * as fs from "fs";
 import type { Server as httpServer } from "http";
 import path from "path";
 import type pg from "pg-promise/typescript/pg-subset";
@@ -10,15 +9,17 @@ import type {
   FileTableConfig,
   ProstglesInitOptions,
 } from "prostgles-server/dist/ProstglesTypes";
+import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
 import type { SubscriptionHandler } from "prostgles-types";
-import { omitKeys, pickKeys } from "prostgles-types";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import { pickKeys } from "prostgles-types";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import type { ConnectionChecker, WithOrigin } from "../ConnectionChecker";
 import { getDbConnection } from "../connectionUtils/testDBConnection";
 import { getRootDir } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
-import { API_PATH, MEDIA_ROUTE_PREFIX, connMgr } from "../index";
+import { MEDIA_ROUTE_PREFIX, connMgr } from "../index";
+import { UNIQUE_DB_COLS } from "../tableConfig/tableConfig";
 import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
 import {
   getCompiledTS,
@@ -27,8 +28,12 @@ import {
   parseTableConfig,
 } from "./connectionManagerUtils";
 import { startConnection } from "./startConnection";
-import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
-import { UNIQUE_DB_COLS } from "../tableConfig";
+import type { DefaultEventsMap, Server } from "socket.io";
+import { saveCertificates } from "./saveCertificates";
+import {
+  API_PATH_SUFFIXES,
+  getConnectionPaths,
+} from "../../../commonTypes/utils";
 export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
 
@@ -40,7 +45,7 @@ export const DB_TRANSACTION_KEY = "dbTransactionProstgles" as const;
 export type User = DBSSchema["users"];
 
 export const getACRules = async (
-  dbs: DBOFullyTyped<DBSchemaGenerated>,
+  dbs: DBOFullyTyped<DBGeneratedSchema>,
   user: Pick<User, "type">,
 ): Promise<DBSSchema["access_control"][]> => {
   return await dbs.access_control.find({
@@ -50,6 +55,9 @@ export const getACRules = async (
 
 type PRGLInstance = {
   socket_path: string;
+  io:
+    | Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>
+    | undefined;
   con: Connections;
   dbConf: DatabaseConfigs;
   prgl?: Unpromise<ReturnType<typeof prostgles>>;
@@ -63,8 +71,8 @@ type PRGLInstance = {
   isSuperUser: boolean | undefined;
 };
 
-export const getReloadConfigs = async function (
-  this: ConnectionManager,
+export const getHotReloadConfigs = async (
+  conMgr: ConnectionManager,
   c: Connections,
   conf: DatabaseConfigs,
   dbs: DBS,
@@ -73,13 +81,13 @@ export const getReloadConfigs = async function (
     ProstglesInitOptions,
     "fileTable" | "tableConfig" | "restApi" | "schemaFilter"
   >
-> {
-  const restApi = getRestApiConfig(this, c.id, conf);
+> => {
+  const restApi = getRestApiConfig(conMgr, c, conf);
   const { fileTable } = await parseTableConfig({
     type: "saved",
     dbs,
     con: c,
-    conMgr: this,
+    conMgr,
   });
   return {
     restApi,
@@ -87,8 +95,6 @@ export const getReloadConfigs = async function (
     schemaFilter: c.db_schema_filter || undefined,
   };
 };
-
-export const PROSTGLES_CERTS_FOLDER = "prostgles_certificates";
 
 export class ConnectionManager {
   prglConnections: Record<string, PRGLInstance> = {};
@@ -343,7 +349,20 @@ export class ConnectionManager {
       {},
       {},
       (connections) => {
-        this.saveCertificates(connections);
+        saveCertificates(connections);
+        connections.forEach((updatedConnection) => {
+          const prglCon = this.prglConnections[updatedConnection.id];
+          const currentConnection = this.connections?.find(
+            (ccon) => ccon.id === updatedConnection.id,
+          );
+          if (
+            prglCon?.io &&
+            currentConnection &&
+            currentConnection.url_path !== updatedConnection.url_path
+          ) {
+            prglCon.io.path(getConnectionPaths(updatedConnection).ws);
+          }
+        });
         this.connections = connections;
       },
     );
@@ -365,7 +384,8 @@ export class ConnectionManager {
             const prglCon = this.prglConnections[c.id];
             if (prglCon?.prgl) {
               const con = await this.getConnectionData(c.id);
-              const hotReloadConfig = await getReloadConfigs.bind(this)(
+              const hotReloadConfig = await getHotReloadConfigs(
+                this,
                 con,
                 conf,
                 dbs,
@@ -384,7 +404,7 @@ export class ConnectionManager {
       const { url } = req;
       if (
         this.connections &&
-        url.startsWith(API_PATH) &&
+        url.startsWith(API_PATH_SUFFIXES.WS) &&
         !Object.keys(this.prglConnections).some((connId) =>
           url.includes(connId),
         )
@@ -444,56 +464,6 @@ export class ConnectionManager {
       )) as SubscriptionHandler,
     ];
   };
-
-  getCertPath(conId: string, type?: "ca" | "cert" | "key") {
-    return path.resolve(
-      `${getRootDir()}/${PROSTGLES_CERTS_FOLDER}/${conId}` +
-        (type ? `/${type}.pem` : ""),
-    );
-  }
-
-  saveCertificates(connections: Connections[]) {
-    connections.forEach((c) => {
-      const hasCerts =
-        c.ssl_certificate ||
-        c.ssl_client_certificate_key ||
-        c.ssl_client_certificate;
-      if (hasCerts) {
-        const folder = this.getCertPath(c.id);
-        try {
-          fs.rmSync(folder, { recursive: true });
-          fs.mkdirSync(folder, { recursive: true, mode: 0o600 });
-          const utfOpts: fs.WriteFileOptions = {
-            encoding: "utf-8",
-            mode: 0o600,
-          }; //
-          if (c.ssl_certificate) {
-            fs.writeFileSync(
-              this.getCertPath(c.id, "ca"),
-              c.ssl_certificate,
-              utfOpts,
-            );
-          }
-          if (c.ssl_client_certificate) {
-            fs.writeFileSync(
-              this.getCertPath(c.id, "cert"),
-              c.ssl_client_certificate,
-              utfOpts,
-            );
-          }
-          if (c.ssl_client_certificate_key) {
-            fs.writeFileSync(
-              this.getCertPath(c.id, "key"),
-              c.ssl_client_certificate_key,
-              utfOpts,
-            );
-          }
-        } catch (err) {
-          console.error("Failed writing ssl certificates:", err);
-        }
-      }
-    });
-  }
 
   setUpWSS() {
     // if(!this.wss){
@@ -565,8 +535,6 @@ export class ConnectionManager {
 
     return con;
   }
-
-  getConnectionPath = (con_id: string) => `${API_PATH}/${con_id}`;
 
   setFileTable = async (
     con: DBSSchema["connections"],

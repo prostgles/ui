@@ -65,8 +65,6 @@ export const getEditColumn = ({
     ...getUnknownColInfo("edit_row", " ", "any", true),
     filter: false,
     sortable: false,
-
-    className: "ai-center jc-center",
     label: addColumnProps && <AddColumnMenu {...addColumnProps} />,
     hidden: false,
     width: 50,

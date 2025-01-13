@@ -1,7 +1,7 @@
 import React from "react";
 import type { W_SQLProps, W_SQLState } from "./W_SQL";
 import { CSVRender } from "./CSVRender";
-import CodeEditor from "../CodeEditor/CodeEditor";
+import { CodeEditor } from "../CodeEditor/CodeEditor";
 import { Table } from "../../components/Table/Table";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
@@ -54,7 +54,6 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
     commandResult = undefined,
     rowCount = undefined,
     info = undefined,
-    totalRowCount,
   } = activeQuery?.state === "ended" ? activeQuery : {};
   const hideResults =
     !childWindow &&

@@ -27,6 +27,10 @@ export type AccessRule = Required<DBSSchema["access_control"]> & {
     Required<DBSSchema["access_control_allowed_llm"]>,
     "access_control_id"
   >[];
+  access_control_methods: Omit<
+    Required<DBSSchema["access_control_methods"]>,
+    "access_control_id"
+  >[];
 };
 
 export type EditedAccessRule = Omit<
@@ -151,5 +155,6 @@ export const ACCESS_CONTROL_SELECT = {
     access_control_user_types: { ids: { $array_agg: ["user_type"] } },
     published_methods: "*",
     access_control_allowed_llm: "*",
+    access_control_methods: "*",
   },
 } as const;

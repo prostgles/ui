@@ -47,6 +47,7 @@ export type FilterWrapperProps = {
   hideToggle?: boolean;
   variant?: "row";
   error?: any;
+  children?: React.ReactNode;
   rootFilter:
     | {
         value: JoinedFilter;

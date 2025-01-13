@@ -251,8 +251,6 @@ export const SQL_TESTING_SCRIPTS = {
     "\nCREATE TABLE plans (\n  id TEXT PRIMARY KEY,\n  name  VARCHAR(150) NOT NULL,\n  price  DECIMAL(12,2) CHECK(price >= 0),\n  info JSONB\n);",
   createTable_subscriptions:
     '\nCREATE TABLE subscriptions (\n  created_at TIMESTAMP NOT NULL DEFAULT now(),\n  "plan_id" TEXT NOT NULL REFERENCES plans\n);',
-  alterTable_subscriptionss:
-    '\nALTER TABLE subscriptions \nADD COLUMN "user_id" UUID NOT NULL REFERENCES users;',
   selectJoin:
     "\nSELECT *\nFROM users u\nLEFT JOIN subscriptions s\n  ON s.user_id = u.id",
   copy: `COPY plans ( id, name, price, info )\nFROM '/home/plans.csv' ( FORMAT CSV, HEADER, QUOTE '''' );`,

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { omitKeys } from "../utils";
+import { omitKeys } from "prostgles-types";
 import Loading from "./Loading";
 import "./Btn.css";
 import RTComp from "../dashboard/RTComp";
@@ -84,7 +84,11 @@ type BtnCustomProps = (
         onClickMessage?: undefined;
         onClickPromise?: (
           e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-        ) => Promise<any>;
+        ) => Promise<void>;
+        /**
+         * Will display it instead of the error message
+         */
+        onClickPromiseMessage?: React.ReactNode;
       }
   );
 
@@ -116,6 +120,7 @@ const CUSTOM_ATTRS: OmmitedKeys[] = [
   "iconClassname",
   "onClickMessage" as any,
   "onClickPromise" as any,
+  "onClickPromiseMessage" as any,
   "asNavLink" as any,
   "iconStyle",
   "titleAsLabel",
@@ -216,7 +221,12 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       }
       this.clickMessage({ ok: "" });
     } catch (err) {
-      this.clickMessage({ err });
+      this.clickMessage({
+        err:
+          ("onClickPromiseMessage" in this.props ?
+            this.props.onClickPromiseMessage
+          : undefined) ?? err,
+      });
     }
   };
 

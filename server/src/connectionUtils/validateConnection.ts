@@ -1,6 +1,6 @@
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
-export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
-export type ConnectionInsert = DBSchemaGenerated["connections"]["columns"];
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
+export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
+export type ConnectionInsert = DBGeneratedSchema["connections"]["columns"];
 import { ConnectionString } from "connection-string";
 import type { DBSConnectionInfo } from "../electronConfig";
 

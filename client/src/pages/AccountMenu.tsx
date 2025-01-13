@@ -59,14 +59,30 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
         </NavLink>
 
         {!cannotLogout && (
-          <a
-            key={"logout"}
-            href="/logout"
-            className="text-0 font-16 flex-row ai-center gap-p5"
-          >
-            <Icon className="f-0" path={mdiLogout} size={1} />
-            <div className="f-1 min-w-0 text-ellipsis ws-no-wrap">Logout</div>
-          </a>
+          <>
+            <form
+              id="logout-form"
+              action="/logout"
+              method="POST"
+              style={{ display: "none" }}
+            ></form>
+            <a
+              key={"logout"}
+              href="#"
+              // href="/logout"
+              onClick={() => {
+                (
+                  document.getElementById(
+                    "logout-form",
+                  ) as HTMLFormElement | null
+                )?.submit();
+              }}
+              className="text-0 font-16 flex-row ai-center gap-p5"
+            >
+              <Icon className="f-0" path={mdiLogout} size={1} />
+              <div className="f-1 min-w-0 text-ellipsis ws-no-wrap">Logout</div>
+            </a>
+          </>
         )}
       </>
     );

@@ -103,7 +103,7 @@ export default class List extends React.Component<ListProps, any> {
                     className="mr-p5 f-1 flex-row pointer noselect"
                     style={d.style}
                   >
-                    {d.node || d.label || d.key}
+                    {d.node || (d.label ?? d.key)?.toString()}
                   </label>
                   {d.contentRight || null}
                   {!checkedValues ? null : (

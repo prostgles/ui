@@ -7,7 +7,7 @@ import { FlexCol, FlexRow } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import Select from "../../components/Select/Select";
 import { getKeys } from "../../utils";
-import CodeEditor from "../CodeEditor/CodeEditor";
+import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { GeoJSONFeature } from "../Map/DeckGLMap";
 import { download } from "../W_SQL/W_SQL";
 import { getOSMData } from "./OSM/getOSMData";

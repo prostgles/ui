@@ -1,6 +1,7 @@
 import {
   mdiFile,
   mdiFunction,
+  mdiRelationManyToMany,
   mdiScriptTextPlay,
   mdiTable,
   mdiTableEdit,
@@ -319,7 +320,7 @@ export const DashboardMenuContent = (props: P) => {
         >
           Schema diagram
         </Btn>
-      } */}
+      }   */}
       </FlexRowWrap>
     </FlexCol>
   );

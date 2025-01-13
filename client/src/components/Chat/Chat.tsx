@@ -1,23 +1,18 @@
-import type { FunctionComponent, ReactChild } from "react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./Chat.css";
 
-import {
-  mdiAt,
-  mdiAttachment,
-  mdiFile,
-  mdiMicrophone,
-  mdiSend,
-  mdiStop,
-} from "@mdi/js";
-import { Icon } from "../Icon/Icon";
-import { classOverride, FlexRow } from "../Flex";
-import FileInput, { generateUniqueID } from "../FileInput/FileInput";
+import { mdiAttachment, mdiMicrophone, mdiSend, mdiStop } from "@mdi/js";
 import Btn from "../Btn";
-import Loading from "../Loading";
+import { classOverride, FlexRow } from "../Flex";
+import { Icon } from "../Icon/Icon";
+import { ChatMessage } from "./ChatMessage";
+import { type MarkedProps } from "./Marked";
+import { useAudioRecorder } from "./utils/AudioRecorder";
 
 export type Message = {
-  message: ReactChild;
+  id: number | string;
+  message: React.ReactNode;
+  markdown?: string;
   sender_id: number | string;
   incoming: boolean;
   sent: Date;
@@ -28,7 +23,7 @@ export type Message = {
   };
 };
 
-type P = {
+export type ChatProps = {
   style?: React.CSSProperties;
   className?: string;
   onSend: (
@@ -38,6 +33,7 @@ type P = {
     mediaContentType?: string,
   ) => Promise<any | void>;
   messages: Message[];
+  markdownCodeHeader: MarkedProps["codeHeader"];
   allowedMessageTypes?: Partial<{
     audio: boolean;
     file: boolean;
@@ -45,51 +41,7 @@ type P = {
   disabledInfo?: string;
 };
 
-class AudioRecorder {
-  mediaOptions?: any;
-  recorder?: MediaRecorder;
-
-  constructor() {
-    this.mediaOptions = {
-      tag: "audio",
-      type: "audio/ogg",
-      ext: ".ogg",
-      gUM: { audio: true },
-    };
-    this.recorder = undefined;
-  }
-
-  start(cb: (result: Blob) => any | void) {
-    const chunks: any = [];
-    navigator.mediaDevices
-      .getUserMedia(this.mediaOptions.gUM)
-      .then((stream) => {
-        this.recorder = new MediaRecorder(stream, {
-          mimeType: "audio/webm;codecs=opus",
-        });
-        this.recorder.ondataavailable = (e: any) => {
-          chunks.push(e.data);
-          if (this.recorder && this.recorder.state == "inactive") {
-            cb(new Blob(chunks, { type: this.mediaOptions.type }));
-          }
-        };
-        this.recorder.start();
-      })
-      .catch(console.error);
-  }
-
-  stop() {
-    if (this.recorder) {
-      this.recorder.stream.getTracks().forEach(function (track) {
-        track.stop();
-      });
-      this.recorder.stop();
-    } else console.error("WTF", this);
-  }
-}
-const audioRec = new AudioRecorder();
-
-export const Chat: FunctionComponent<P> = (props) => {
+export const Chat = (props: ChatProps) => {
   const {
     className = "",
     style = {},
@@ -100,23 +52,24 @@ export const Chat: FunctionComponent<P> = (props) => {
       audio: false,
       file: false,
     },
+    markdownCodeHeader,
   } = props;
 
-  const [recording, setRecording] = useState(false);
   const [scrollRef, setScrollRef] = useState<HTMLDivElement>();
   const ref = useRef<HTMLTextAreaElement>(null);
-  const startRecording = () => {
-    audioRec.start((blob) => {
-      onSend("", blob, "recording.ogg", "audio/webm");
-    });
-    setRecording(true);
-  };
-  const stopRecording = () => {
-    if (recording) {
-      audioRec.stop();
-      setRecording(false);
-    }
-  };
+
+  const onSendAudio = useCallback(
+    async (blob: Blob) => {
+      try {
+        await onSend("", blob, "recording.ogg", "audio/webm");
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    [onSend],
+  );
+  const { startRecording, stopRecording, isRecording } =
+    useAudioRecorder(onSendAudio);
 
   useEffect(() => {
     if (scrollRef) {
@@ -124,7 +77,12 @@ export const Chat: FunctionComponent<P> = (props) => {
     }
   }, [messages, scrollRef]);
 
-  const [msg, setMsg] = useState("");
+  const getCurrentMessage = () => ref.current?.value ?? "";
+  const setCurrentMessage = (msg: string) => {
+    if (!ref.current) return;
+    ref.current.value = msg;
+  };
+
   const [sendingMsg, setSendingMsg] = useState(false);
 
   const sendMsg = async (msg: string) => {
@@ -132,86 +90,12 @@ export const Chat: FunctionComponent<P> = (props) => {
       setSendingMsg(true);
       try {
         await onSend(msg);
-        setMsg("");
+        setCurrentMessage("");
       } catch (e) {
         console.error(e);
       }
       setSendingMsg(false);
     }
-  };
-
-  const makeMessage = (m: Message, i: number) => {
-    const content = m.message;
-    if (m.media) {
-      if (typeof m.media.content_type !== "string") {
-        console.error("Bad media content_type");
-      } else if (m.media.content_type.includes("video")) {
-        return (
-          <div
-            className={"message media " + (m.incoming ? "incoming" : "")}
-            key={i}
-          >
-            <video
-              controls
-              style={{ maxHeight: "320px", height: "fit-content" }}
-              controlsList="nodownload"
-            >
-              <source src={m.media.url} type={m.media.content_type} />
-            </video>
-          </div>
-        );
-      } else if (m.media.content_type.includes("audio")) {
-        return (
-          <div
-            className={"message media " + (m.incoming ? "incoming" : "")}
-            key={i}
-            style={{ color: "white" }}
-          >
-            <audio controls controlsList="nodownload" src={m.media.url} />
-          </div>
-        );
-      } else if (m.media.content_type.includes("image")) {
-        return (
-          <div
-            className={"message media " + (m.incoming ? "incoming" : "")}
-            key={i}
-            style={{
-              border:
-                "1px solid " + (!m.incoming ? "rgb(5, 149, 252)" : "#cacaca"),
-            }}
-          >
-            <img
-              loading="lazy"
-              style={{ maxHeight: "300px", maxWidth: "260px" }}
-              src={m.media.url}
-            />
-          </div>
-        );
-      } else {
-        return (
-          <div
-            className={
-              "message flex-row ai-center" + (m.incoming ? "incoming" : "")
-            }
-            key={i}
-            style={{
-              border:
-                "1px solid " + (!m.incoming ? "rgb(5, 149, 252)" : "#cacaca"),
-            }}
-          >
-            <Icon path={mdiFile} size={0.5} className="f-0 mr-p5" />
-            <a href={m.media.url} target="_blank" style={{ color: "inherit" }}>
-              {m.media.name}
-            </a>
-          </div>
-        );
-      }
-    }
-    return (
-      <div className={"message " + (m.incoming ? "incoming" : "")} key={i}>
-        {content}
-      </div>
-    );
   };
 
   return (
@@ -227,7 +111,13 @@ export const Chat: FunctionComponent<P> = (props) => {
           }
         }}
       >
-        {messages.map(makeMessage)}
+        {messages.map((message) => (
+          <ChatMessage
+            key={message.id}
+            message={message}
+            markdownCodeHeader={markdownCodeHeader}
+          />
+        ))}
       </div>
 
       <div
@@ -240,7 +130,7 @@ export const Chat: FunctionComponent<P> = (props) => {
           ref={ref}
           className="no-scroll-bar bg-color-2 text-0"
           rows={1}
-          value={msg}
+          defaultValue={getCurrentMessage()}
           onKeyDown={(e) => {
             if (
               ref.current &&
@@ -251,10 +141,7 @@ export const Chat: FunctionComponent<P> = (props) => {
               sendMsg(ref.current.value);
             }
           }}
-          onChange={(e) => {
-            setMsg(e.target.value);
-          }}
-        ></textarea>
+        />
         <FlexRow className="as-end gap-p5 p-p5">
           <Btn
             iconPath={mdiSend}
@@ -289,11 +176,11 @@ export const Chat: FunctionComponent<P> = (props) => {
             <Btn
               className=" bg-transparent"
               onClick={async (e) => {
-                if (recording) stopRecording();
+                if (isRecording) stopRecording();
                 else startRecording();
               }}
-              color={recording ? "action" : "default"}
-              iconPath={recording ? mdiStop : mdiMicrophone}
+              color={isRecording ? "action" : "default"}
+              iconPath={isRecording ? mdiStop : mdiMicrophone}
             />
           )}
         </FlexRow>

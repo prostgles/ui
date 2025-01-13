@@ -1,4 +1,4 @@
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import path from "path";
 import { PassThrough } from "stream";
 import { pgDump } from "./pgDump";
@@ -10,17 +10,17 @@ import { getInstalledPrograms } from "./getInstalledPrograms";
 export const BACKUP_FOLDERNAME = "prostgles_backups";
 export const BKP_PREFFIX = "/" + BACKUP_FOLDERNAME;
 
-export type Backups = Required<DBSchemaGenerated["backups"]>["columns"];
+export type Backups = Required<DBGeneratedSchema["backups"]>["columns"];
 type DumpOpts = Backups["options"];
 export type DumpOptsServer = DumpOpts & { initiator: string };
 
-export type Users = Required<DBSchemaGenerated["users"]["columns"]>;
-export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
-type DBS = DBOFullyTyped<DBSchemaGenerated>;
+export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
+export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
+type DBS = DBOFullyTyped<DBGeneratedSchema>;
 
 import checkDiskSpace from "check-disk-space";
 import type { Request, Response } from "express";
-import type { SUser } from "../authConfig/authConfig";
+import type { SUser } from "../authConfig/getAuth";
 import { getRootDir } from "../electronConfig";
 import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
 import type { DB } from "prostgles-server/dist/Prostgles";

@@ -4,6 +4,7 @@ import {
   pickKeys,
 } from "prostgles-server/dist/PubSubManager/PubSubManager";
 import type { DumpOpts, PGDumpParams } from "../../../commonTypes/utils";
+import { getSSLEnvVars } from "../ConnectionManager/saveCertificates";
 import type BackupManager from "./BackupManager";
 import { envToStr, pipeFromCommand } from "./pipeFromCommand";
 import {
@@ -11,7 +12,6 @@ import {
   getConnectionEnvVars,
   getConnectionUri,
   getFileMgr,
-  getSSLEnvVars,
   makeLogs,
 } from "./utils";
 
@@ -55,7 +55,7 @@ export async function pgDump(
     throw "Cannot backup while another backup is in progress";
   }
 
-  const SSL_ENV_VARS = getSSLEnvVars(con, this.connMgr);
+  const SSL_ENV_VARS = getSSLEnvVars(con);
 
   let backup_id: string | undefined;
   const uri = getConnectionUri(con);

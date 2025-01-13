@@ -7,7 +7,7 @@ import {
 } from "@mdi/js";
 import React from "react";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
-import type { DBSchemaGenerated } from "../../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { isObject } from "../../../../commonTypes/publishUtils";
 import type { ExtraProps } from "../../App";
@@ -30,6 +30,7 @@ import { SwitchToggle } from "../../components/SwitchToggle";
 import PopupMenu from "../../components/PopupMenu";
 import { Icon } from "../../components/Icon/Icon";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
+import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
 
 export const getSqlErrorText = (e: any) => {
   let objDetails: [string, any][] = [];
@@ -63,7 +64,7 @@ export const getSqlErrorText = (e: any) => {
 };
 
 export type Connection = Omit<
-  DBSchemaGenerated["connections"]["columns"],
+  DBGeneratedSchema["connections"]["columns"],
   "user_id"
 >;
 
@@ -287,7 +288,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
         {!contentOnly && (
           <NavLink
             className="p-1 text-1 round flex-row ai-center"
-            to={`/connections`}
+            to={API_PATH_SUFFIXES.DASHBOARD}
           >
             <Icon path={mdiArrowLeft} size={1} />
             <div className="ml-p5">Connections</div>
@@ -487,9 +488,6 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
 
                   onUpserted?.(connection);
                   setMsg({ ok: mode !== "edit" ? "Created!" : "Updated!" });
-                  // setTimeout(() => {
-                  //   window.location.href = "/connections";
-                  // }, 500)
                 } catch (e: any) {
                   console.error(e);
                   setMsg({ loading: 0 });
@@ -518,7 +516,7 @@ export default (props: NewConnectionProps) => {
         navigate("/");
       }}
       onUpserted={({ id }) => {
-        navigate("/connections/" + id);
+        navigate(API_PATH_SUFFIXES.DASHBOARD + "/" + id);
       }}
     />
   );
