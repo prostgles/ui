@@ -79,9 +79,9 @@ export const FileColumnConfigEditor = ({
       ),
     }));
     onChangeOpts = (opts) => {
-      //@ts-ignore
       updateMergeColConfig({
         acceptedContent: opts.length === fullOptions.length ? "*" : opts,
+        //@ts-ignore
         acceptedFileTypes: undefined,
         acceptedContentType: undefined,
       });
@@ -103,10 +103,10 @@ export const FileColumnConfigEditor = ({
         acceptedContentType:
           opts.length === fullOptions.length ? "*" : (opts as any),
       };
-      //@ts-ignore
       updateMergeColConfig({
         acceptedContentType,
         acceptedContent: undefined,
+        //@ts-ignore
         acceptedFileTypes: undefined,
       });
     };
@@ -122,8 +122,8 @@ export const FileColumnConfigEditor = ({
         checked: isChecked(key, colConfig.acceptedFileTypes),
       }));
     onChangeOpts = (opts) => {
-      //@ts-ignore
       updateMergeColConfig({
+        //@ts-ignore
         acceptedFileTypes: opts.length === fullOptions.length ? "*" : opts,
         acceptedContent: undefined,
         acceptedContentType: undefined,

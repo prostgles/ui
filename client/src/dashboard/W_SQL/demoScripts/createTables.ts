@@ -124,10 +124,12 @@ export const createTables: DemoScript = async ({
   await typeAuto("alt", {});
   await typeAuto(" ta", {});
   await typeAuto(" su", {});
-  await typeAuto(" \na", {});
+  await typeAuto(" \naco", {});
   await typeAuto(" use", { nth: 2 });
   await typeAuto(";", { nth: -1 });
-  testEditorValue("alterTable_subscriptionss");
+  testResult(
+    '\nALTER TABLE subscriptions \nADD COLUMN "user_id" UUID NOT NULL REFERENCES users;',
+  );
   await runSQL();
 
   /**

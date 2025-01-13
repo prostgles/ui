@@ -1,7 +1,7 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, DBSchemaTable } from "prostgles-types";
 import { getKeys } from "prostgles-types";
-import { pickKeys } from "../../../utils";
+import { pickKeys } from "prostgles-types";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type {
   Join,

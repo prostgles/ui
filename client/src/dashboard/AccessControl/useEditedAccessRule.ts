@@ -31,6 +31,7 @@ const defaultRule: EditedAccessRule = {
     createWorkspaces: true,
   },
   access_control_allowed_llm: [],
+  access_control_methods: [],
 };
 
 export type ValidEditedAccessRuleState = (
@@ -49,6 +50,7 @@ export type ValidEditedAccessRuleState = (
               | "dbPermissions"
               | "dbsPermissions"
               | "access_control_allowed_llm"
+              | "access_control_methods"
               | "llm_daily_limit"
             >
           >
@@ -132,6 +134,7 @@ export const useEditedAccessRule = ({
       rule: undefined,
       contextData: !user ? undefined : { user },
     };
+    //@ts-ignore
   }, [getIsMounted, action, dbs.access_control, dbs.users]);
 
   const wspTables = usePromise(async () => {
@@ -172,6 +175,7 @@ export const useEditedAccessRule = ({
           !areEqual(newRule, ruleData.rule, [
             "access_control_user_types",
             "access_control_allowed_llm",
+            "access_control_methods",
             "dbPermissions",
             "dbsPermissions",
             "published_methods",
@@ -225,9 +229,10 @@ const getRuleErrorMessage = (
         ).length
       : !!dbPermissions.allowAllTables.length;
 
-    if (!allowedTables) {
-      return "Empty rule. Must allow at least one table";
-    }
+    /** Disabled because sometimes only server functions are needed */
+    // if (!allowedTables) {
+    //   return "Empty rule. Must allow at least one table";
+    // }
   } else if (dbPermissions?.type === "Run SQL" && !dbPermissions.allowSQL) {
     return `Must tick "Run SQL" checkbox`;
   }

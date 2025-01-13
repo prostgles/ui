@@ -4,21 +4,20 @@ import {
   mdiLaptop,
   mdiSecurity,
 } from "@mdi/js";
+import { usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useState } from "react";
 import { getCIDRRangesQuery } from "../../../../commonTypes/publishUtils";
+import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import Chip from "../../components/Chip";
+import { FlexCol } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
+import { TabsWithDefaultStyle } from "../../components/Tabs";
 import SmartCardList from "../../dashboard/SmartCard/SmartCardList";
 import SmartForm from "../../dashboard/SmartForm/SmartForm";
-import { usePromise } from "prostgles-client/dist/react-hooks";
-import type { Prgl } from "../../App";
-import { TabsWithDefaultStyle } from "../../components/Tabs";
-import { DBS } from "../../dashboard/Dashboard/DBS";
-import { DBSchemaGenerated } from "../../../../commonTypes/DBoGenerated";
-import { FlexCol } from "../../components/Flex";
 import { AuthProviderSetup } from "./AuthProvidersSetup";
+import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
 
 export const ServerSettings = ({
   theme,
@@ -81,15 +80,22 @@ export const ServerSettings = ({
                       db={dbs as any}
                       methods={dbsMethods}
                       tableName="global_settings"
-                      columns={{
-                        allowed_origin: 1,
-                        allowed_ips: 1,
-                        allowed_ips_enabled: 1,
-                        trust_proxy: 1,
-                        session_max_age_days: 1,
-                        login_rate_limit: 1,
-                        login_rate_limit_enabled: 1,
-                      }} //  satisfies DBSchemaGenerated["global_settings"]["columns"]
+                      columns={
+                        {
+                          allowed_origin: 1,
+                          allowed_ips: 1,
+                          allowed_ips_enabled: 1,
+                          trust_proxy: 1,
+                          session_max_age_days: 1,
+                          login_rate_limit: 1,
+                          login_rate_limit_enabled: 1,
+                        } satisfies Partial<
+                          Record<
+                            keyof DBGeneratedSchema["global_settings"]["columns"],
+                            1
+                          >
+                        >
+                      }
                       tables={dbsTables}
                       rowFilter={[{} as any]}
                       hideChangesOptions={true}

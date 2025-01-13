@@ -1,4 +1,4 @@
-import { omitKeys } from "../../utils";
+import { omitKeys } from "prostgles-types";
 import { POPUP_ZINDEX, type PopupProps } from "./Popup";
 
 type Args = {

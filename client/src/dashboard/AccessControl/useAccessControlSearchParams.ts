@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router-dom";
 import type { AccessControlAction } from "./AccessControl";
-import { isEqual } from "prostgles-client/dist/react-hooks";
+import { isEqual } from "prostgles-types";
 
 const SEARCH_PARAMS = {
   SELECTED_RULE_ID: "editRuleId",

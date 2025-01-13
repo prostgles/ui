@@ -173,7 +173,7 @@ export async function runSQL(this: W_SQL, sort: ColumnSort[] = []) {
           this.state.activeQuery
         : undefined;
       if (!runningQuery && packet.type !== "error") {
-        if (w.$get().closed) {
+        if (w.$get()?.closed) {
           handler.stop();
         } else {
           console.error(this.state.activeQuery, sql, packet);

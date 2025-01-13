@@ -8,7 +8,7 @@ import Loading from "../../components/Loading";
 import Popup from "../../components/Popup/Popup";
 import PopupMenu from "../../components/PopupMenu";
 import { Table } from "../../components/Table/Table";
-import CodeEditor from "../CodeEditor/CodeEditor";
+import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { ProstglesColumn } from "../W_SQL/W_SQL";
 import { getFileText } from "../W_SQL/W_SQLMenu";

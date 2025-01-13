@@ -8,7 +8,7 @@ import _http from "http";
 import path from "path";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { Server } from "socket.io";
-import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import type { ServerState } from "../../commonTypes/electronInit";
 import { isObject } from "../../commonTypes/publishUtils";
 import { ConnectionChecker } from "./ConnectionChecker";
@@ -16,9 +16,14 @@ import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
 import type { OnServerReadyCallback } from "./electronConfig";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
-import { getInitState, tryStartProstgles } from "./startProstgles";
-import { SPOOF_TEST_VALUE } from "../../commonTypes/utils";
+import {
+  getInitState,
+  type InitState,
+  tryStartProstgles,
+} from "./startProstgles";
+import { API_PATH_SUFFIXES, SPOOF_TEST_VALUE } from "../../commonTypes/utils";
 import helmet from "helmet";
+import { omitKeys } from "prostgles-types";
 
 const app = express();
 app.use(
@@ -40,15 +45,18 @@ if (isTesting) {
   });
 }
 
-export const API_PATH = "/api";
-
+/**
+ * Required to ensure xenova/transformators works
+ */
+const localLLMHeaders = ""; // `'unsafe-eval' 'wasm-unsafe-eval'`;
+// console.error("REMOVE CSP", localLLMHeaders);
 app.use(json({ limit: "100mb" }));
 app.use(urlencoded({ extended: true, limit: "100mb" }));
 app.use(function (req, res, next) {
   /* data import (papaparse) requires: worker-src blob: 'self' */
   res.setHeader(
     "Content-Security-Policy",
-    " script-src 'self'; frame-src 'self'; worker-src blob: 'self';",
+    ` script-src 'self' ${localLLMHeaders}; frame-src 'self'; worker-src blob: 'self';`,
   );
   next();
 });
@@ -71,11 +79,11 @@ export type BareConnectionDetails = Pick<
   | "db_ssl"
   | "ssl_certificate"
 >;
-export type DBS = DBOFullyTyped<DBSchemaGenerated>;
-export type Users = Required<DBSchemaGenerated["users"]["columns"]>;
-export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
+export type DBS = DBOFullyTyped<DBGeneratedSchema>;
+export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
+export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DatabaseConfigs = Required<
-  DBSchemaGenerated["database_configs"]["columns"]
+  DBGeneratedSchema["database_configs"]["columns"]
 >;
 
 export const log = (msg: string, extra?: any) => {
@@ -120,9 +128,18 @@ export const MEDIA_ROUTE_PREFIX = `/prostgles_media`;
 
 export const connectionChecker = new ConnectionChecker(app);
 
-const ioPath = process.env.PRGL_IOPATH || "/iosckt";
+export const dbsWsApiPath = process.env.PRGL_IOPATH || "/ws-api-dbs";
+if (
+  Object.values(API_PATH_SUFFIXES).some((suffix) =>
+    suffix.startsWith(dbsWsApiPath),
+  )
+) {
+  throw new Error(
+    `dbsWsApiPath cannot start with: ${Object.values(API_PATH_SUFFIXES)}`,
+  );
+}
 const io = new Server(http, {
-  path: ioPath,
+  path: dbsWsApiPath,
   maxHttpBufferSize: 100e100,
   cors: connectionChecker.withOrigin,
 });
@@ -140,7 +157,7 @@ const HOST =
 setDBSRoutesForElectron(app, io, PORT, HOST);
 
 /** Make client wait for everything to load before serving page */
-const awaitInit = () => {
+const awaitInit = (): Promise<InitState> => {
   return new Promise((resolve) => {
     const _initState = getInitState();
     if (
@@ -163,7 +180,7 @@ const awaitInit = () => {
  * Serve prostglesInitState
  */
 app.get("/dbs", (req, res) => {
-  const serverState: ServerState = getInitState();
+  const serverState: ServerState = omitKeys(getInitState(), ["dbs"]);
   const electronCreds =
     electronConfig?.isElectron && electronConfig.hasCredentials() ?
       electronConfig.getCredentials()
@@ -246,7 +263,7 @@ const onServerReadyListeners: OnServerReadyCallback[] = [];
 export const onServerReady = async (cb: OnServerReadyCallback) => {
   const _initState = getInitState();
   if (_initState.httpListening) {
-    cb(_initState.httpListening.port);
+    cb(_initState.httpListening.port, _initState.dbs!);
   } else {
     onServerReadyListeners.push(cb);
   }
@@ -261,9 +278,9 @@ const server = http.listen(PORT, HOST, () => {
     port,
   };
 
-  awaitInit().then(() => {
+  awaitInit().then(({ dbs }) => {
     onServerReadyListeners.forEach((cb) => {
-      cb(port);
+      cb(port, dbs!);
     });
   });
   console.log(`\n\nexpress listening on port ${port} (${host}:${port})\n\n`);

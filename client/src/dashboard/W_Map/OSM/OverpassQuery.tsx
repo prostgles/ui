@@ -1,5 +1,5 @@
 import React from "react";
-import { SmartCodeEditor } from "../../CodeEditor/SmartCodeEditor";
+import { CodeEditorWithSaveButton } from "../../CodeEditor/CodeEditorWithSaveButton";
 
 type P = {
   query: string;
@@ -9,7 +9,7 @@ type P = {
 export const OverpassQuery = ({ query, onChange, autoSave }: P) => {
   return (
     <div style={{ minWidth: "500px" }}>
-      <SmartCodeEditor
+      <CodeEditorWithSaveButton
         language="text"
         label="Overpass Query"
         autoSave={autoSave}

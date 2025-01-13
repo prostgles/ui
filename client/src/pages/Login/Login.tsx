@@ -2,32 +2,33 @@ import React from "react";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
-import FormField from "../../components/FormField/FormField";
-import { useLoginState } from "./useLoginState";
-import { LoginWithProviders } from "./LoginWithProviders";
-import { LoginTotpFormFields } from "./LoginTotpForm";
 import { FlexCol } from "../../components/Flex";
+import FormField from "../../components/FormField/FormField";
+import { AuthNotifPopup } from "./AuthNotifPopup";
+import { LoginTotpFormFields } from "./LoginTotpForm";
+import { LoginWithProviders } from "./LoginWithProviders";
+import { useLoginState } from "./useLoginState";
 
 export type LoginFormProps = Pick<Prgl, "auth">;
 
 export const Login = ({ auth }: LoginFormProps) => {
   const authState = useLoginState({ auth });
-  const [isLoggingIn, setIsLoggingIn] = React.useState(false);
   const {
     formHandlers,
     isOnLogin,
     registerTypeAllowed,
     setState,
     error,
-    onAuthCall: _onAuthCall,
+    loading,
+    authResponse,
+    clearAuthResponse,
+    onAuthCall,
   } = authState;
-  const onAuthCall = async () => {
-    setIsLoggingIn(true);
-    _onAuthCall().finally(() => {
-      setIsLoggingIn(false);
-    });
-  };
 
+  const headerTitle =
+    !isOnLogin ? "Sign up"
+    : !formHandlers?.setPassword ? "Signup or Login"
+    : "Sign in";
   return (
     <form
       className="LoginForm flex-col gap-1 rounded shadow m-auto w-fit bg-color-0"
@@ -39,8 +40,11 @@ export const Login = ({ auth }: LoginFormProps) => {
         e.preventDefault();
       }}
     >
-      <FlexCol className="p-2 pb-1">
-        <h2 className="mt-0">{!isOnLogin ? "Sign up" : "Sign in"}</h2>
+      {authResponse && (
+        <AuthNotifPopup {...authResponse} onClose={clearAuthResponse} />
+      )}
+      <FlexCol className="p-2">
+        <h2 className="mt-0">{headerTitle}</h2>
         {formHandlers?.setUsername && (
           <FormField
             id="username"
@@ -69,25 +73,42 @@ export const Login = ({ auth }: LoginFormProps) => {
             onChange={formHandlers.setConfirmPassword}
           />
         )}
+        {formHandlers?.setEmailVerificationCode && (
+          <FormField
+            id="email-verification-code"
+            label="Email verification code"
+            value={formHandlers.emailVerificationCode}
+            type="text"
+            onChange={formHandlers.setEmailVerificationCode}
+          />
+        )}
 
         <LoginTotpFormFields {...authState} />
 
         {error && <ErrorComponent data-command="Login.error" error={error} />}
 
         <Btn
-          loading={isLoggingIn}
+          loading={loading}
           onClick={onAuthCall}
           variant="filled"
           className="mt-1"
           color="action"
-          children={isOnLogin ? "Sign in" : "Sign up"}
+          children={
+            isOnLogin ?
+              auth.loginType === "email" ?
+                "Continue"
+              : "Sign in"
+            : formHandlers?.state === "registerWithPasswordConfirmationCode" ?
+              "Confirm email"
+            : "Sign up"
+          }
           size="large"
           style={{ width: "100%" }}
         />
         <LoginWithProviders auth={auth} />
       </FlexCol>
       {!formHandlers && <ErrorComponent error="Invalid state" />}
-      {auth.register && (
+      {auth.signupWithEmailAndPassword && (
         <Btn
           style={{
             fontSize: "14px",
@@ -96,6 +117,7 @@ export const Login = ({ auth }: LoginFormProps) => {
             borderTopRightRadius: 0,
           }}
           variant="faded"
+          data-command="Login.toggle"
           color="action"
           onClick={() => {
             setState(isOnLogin ? registerTypeAllowed : "login");

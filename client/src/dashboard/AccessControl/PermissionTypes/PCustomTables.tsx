@@ -149,7 +149,7 @@ export const PCustomTables = ({
                     tableRules[key] = rules[key];
                   } else if (key === "delete") {
                     tableRules[key] = rules[key];
-                  } else {
+                  } else if (key !== "sync" && key !== "subscribe") {
                     tableRules[key] = rules[key];
                   }
                 });

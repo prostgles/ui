@@ -3,6 +3,9 @@ import type { TestSelectors } from "../Testing";
 
 export type DivProps = React.HTMLAttributes<HTMLDivElement> & TestSelectors;
 
+type FlexDivProps = DivProps & {
+  disabledInfo?: string | false;
+};
 export const classOverride = (defaultClass = "", userClass = "") => {
   const parseClass = (v: string) =>
     v.includes("-") ? v.split("-")[0] + "-" : v;
@@ -17,37 +20,46 @@ export const classOverride = (defaultClass = "", userClass = "") => {
     .join(" ");
   return userClass + " " + defaultParts;
 };
-export const FlexRow = React.forwardRef<HTMLDivElement, DivProps>((p, ref) => {
+
+const FlexDiv = React.forwardRef<
+  HTMLDivElement,
+  FlexDivProps & { flexClass: string }
+>(({ disabledInfo, flexClass, className, ...p }, ref) => {
   return (
     <div
       {...p}
       ref={ref}
-      className={classOverride(`FlexRow flex-row gap-1 ai-center`, p.className)}
+      title={(disabledInfo || undefined) ?? p.title}
+      className={classOverride(
+        `${flexClass} ${disabledInfo ? "no-interaction" : ""}`,
+        className,
+      )}
     ></div>
   );
 });
 
-export const FlexRowWrap = React.forwardRef<HTMLDivElement, DivProps>(
+export const FlexRow = React.forwardRef<HTMLDivElement, FlexDivProps>(
   (p, ref) => {
     return (
-      <div
-        {...p}
-        ref={ref}
-        className={classOverride(
-          `FlexRowWrap flex-row-wrap gap-1 ai-center`,
-          p.className,
-        )}
-      ></div>
+      <FlexDiv {...p} ref={ref} flexClass="FlexRow flex-row gap-1 ai-center" />
     );
   },
 );
 
-export const FlexCol = React.forwardRef<HTMLDivElement, DivProps>((p, ref) => {
-  return (
-    <div
-      {...p}
-      ref={ref}
-      className={classOverride(`FlexCol flex-col gap-1 `, p.className)}
-    ></div>
-  );
-});
+export const FlexRowWrap = React.forwardRef<HTMLDivElement, FlexDivProps>(
+  (p, ref) => {
+    return (
+      <FlexDiv
+        {...p}
+        ref={ref}
+        flexClass="FlexRowWrap flex-row-wrap gap-1 ai-center"
+      />
+    );
+  },
+);
+
+export const FlexCol = React.forwardRef<HTMLDivElement, FlexDivProps>(
+  (p, ref) => {
+    return <FlexDiv {...p} ref={ref} flexClass="FlexCol flex-col gap-1" />;
+  },
+);

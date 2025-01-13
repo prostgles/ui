@@ -21,6 +21,7 @@ type P = TestSelectors & {
   variant?: "outlined";
   color?: "warning" | "action" | "info";
   onClear?: VoidFunction;
+  children?: ReactNode;
 };
 export default class ErrorComponent extends React.Component<P> {
   ref?: any;

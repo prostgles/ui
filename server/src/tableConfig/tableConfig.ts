@@ -1,21 +1,14 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import type { JSONB } from "prostgles-types";
-import { CONNECTION_CONFIG_SECTIONS } from "../../commonTypes/utils";
-import { loggerTableConfig } from "./Logger";
-import { tableConfigGlobalSettings } from "./tableConfig/tableConfigGlobalSettings";
-
-export const DB_SSL_ENUM = [
-  "disable",
-  "allow",
-  "prefer",
-  "require",
-  "verify-ca",
-  "verify-full",
-] as const;
+import { CONNECTION_CONFIG_SECTIONS } from "../../../commonTypes/utils";
+import { loggerTableConfig } from "../Logger";
+import { tableConfigGlobalSettings } from "./tableConfigGlobalSettings";
+import { tableConfigUsers } from "./tableConfigUsers";
+import { tableConfigConnections } from "./tableConfigConnections";
+import { tableConfigPublishedMethods } from "./tableConfigPublishedMethods";
 
 export const UNIQUE_DB_COLS = ["db_name", "db_host", "db_port"] as const;
 const UNIQUE_DB_FIELDLIST = UNIQUE_DB_COLS.join(", ");
-const PASSWORDLESS_ADMIN_USERNAME = "passwordless_admin";
 const DUMP_OPTIONS_SCHEMA = {
   jsonbSchema: {
     oneOfType: [
@@ -175,7 +168,6 @@ const joinPath = {
   optional: true,
 } as const satisfies JSONB.FieldTypeObj;
 const CommonChartLinkOpts = {
-  // ...CommonLinkOpts,
   dataSource: {
     optional: true,
     oneOfType: [
@@ -227,11 +219,10 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
     isLookupTable: {
       values: {
         admin: {
-          description: "Highest access level",
+          en: "Highest access level",
         },
         public: {
-          description:
-            "Public user. Account created on login and deleted on logout",
+          en: "Public user. Account created on login and deleted on logout",
         },
         default: {},
       },
@@ -260,112 +251,8 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       values: { active: {}, disabled: {} },
     },
   },
-  users: {
-    columns: {
-      id: { sqlDefinition: `UUID PRIMARY KEY DEFAULT gen_random_uuid()` },
-      status: {
-        sqlDefinition: `TEXT NOT NULL DEFAULT 'active' REFERENCES user_statuses (id)`,
-        info: { hint: "Only active users can access the system" },
-      },
-      username: { sqlDefinition: `TEXT NOT NULL UNIQUE` },
-      name: {
-        sqlDefinition: `TEXT`,
-        info: { hint: "Display name, if empty username will be shown" },
-      },
-      email: { sqlDefinition: `TEXT` },
-      auth_provider: {
-        sqlDefinition: `TEXT`,
-        info: { hint: "OAuth provider name. E.g.: google, github" },
-      },
-      auth_provider_user_id: {
-        sqlDefinition: `TEXT`,
-        info: { hint: "User id" },
-      },
-      auth_provider_profile: {
-        sqlDefinition: `JSONB`,
-        info: { hint: "OAuth provider profile data" },
-      }, //  CHECK(auth_provider IS NOT NULL AND auth_provider_profile IS NOT NULL)
-      password: {
-        sqlDefinition: `TEXT NOT NULL DEFAULT gen_random_uuid()`,
-        info: { hint: "Hashed with the user id on insert/update" },
-      },
-      type: {
-        sqlDefinition: `TEXT NOT NULL DEFAULT 'default' REFERENCES user_types (id)`,
-      },
-      passwordless_admin: {
-        sqlDefinition: `BOOLEAN`,
-        info: {
-          hint: "If true and status is active: enables passwordless access for default install. First connected client will have perpetual admin access and no other users are allowed ",
-        },
-      },
-      created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
-      last_updated: {
-        sqlDefinition: `BIGINT DEFAULT EXTRACT(EPOCH FROM NOW()) * 1000`,
-      },
-      options: {
-        nullable: true,
-        jsonbSchemaType: {
-          showStateDB: {
-            type: "boolean",
-            optional: true,
-            description: "Show the prostgles database in the connections list",
-          },
-          hideNonSSLWarning: {
-            type: "boolean",
-            optional: true,
-            description:
-              "Hides the top warning when accessing the website over an insecure connection (non-HTTPS)",
-          },
-          viewedSQLTips: {
-            type: "boolean",
-            optional: true,
-            description: "Will hide SQL tips if true",
-          },
-          viewedAccessInfo: {
-            type: "boolean",
-            optional: true,
-            description: "Will hide passwordless user tips if true",
-          },
-          theme: { enum: ["dark", "light", "from-system"], optional: true },
-        },
-      },
-      "2fa": {
-        nullable: true,
-        jsonbSchemaType: {
-          secret: { type: "string" },
-          recoveryCode: { type: "string" },
-          enabled: { type: "boolean" },
-        },
-      },
-      has_2fa_enabled: `BOOLEAN GENERATED ALWAYS AS ( ("2fa"->>'enabled')::BOOLEAN ) STORED`,
-    },
-    constraints: {
-      [`passwordless_admin type AND username CHECK`]: `CHECK(COALESCE(passwordless_admin, false) = FALSE OR type = 'admin' AND username = '${PASSWORDLESS_ADMIN_USERNAME}')`,
-    },
-    indexes: {
-      "Only one passwordless_admin admin account allowed": {
-        unique: true,
-        columns: `passwordless_admin`,
-        where: `passwordless_admin = true`,
-      },
-    },
-    triggers: {
-      atLeastOneActiveAdmin: {
-        actions: ["delete", "update"],
-        type: "after",
-        forEach: "statement",
-        query: `
-          BEGIN
-            IF NOT EXISTS(SELECT * FROM users WHERE type = 'admin' AND status = 'active') THEN
-              RAISE EXCEPTION 'Must have at least one active admin user';
-            END IF;
 
-            RETURN NULL;
-          END;
-        `,
-      },
-    },
-  },
+  ...tableConfigUsers,
 
   session_types: {
     isLookupTable: {
@@ -399,14 +286,25 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
     columns: {
       id: `BIGSERIAL PRIMARY KEY`,
       type: SESSION_TYPE,
-      created: `TIMESTAMP DEFAULT NOW()`,
+      auth_type: {
+        enum: [
+          "session-id",
+          "registration",
+          "email-confirmation",
+          "magic-link-registration",
+          "magic-link",
+          "otp-code",
+          "login",
+          "oauth",
+        ],
+      },
       username: "TEXT",
+      created: `TIMESTAMP DEFAULT NOW()`,
       failed: "BOOLEAN",
       magic_link_id: "TEXT",
       sid: "TEXT",
-      auth_type: { enum: ["session-id", "magic-link", "login", "provider"] },
       auth_provider:
-        "TEXT CHECK(auth_type <> 'provider' OR auth_provider IS NOT NULL)",
+        "TEXT CHECK(auth_type <> 'oauth' OR auth_provider IS NOT NULL)",
       ip_address: `INET NOT NULL`,
       ip_address_remote: "TEXT NOT NULL",
       x_real_ip: "TEXT NOT NULL",
@@ -537,102 +435,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
     },
   },
 
-  connections: {
-    columns: {
-      id: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
-      user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
-      name: `TEXT NOT NULL CHECK(LENGTH(name) > 0)`,
-      db_name: `TEXT NOT NULL CHECK(LENGTH(db_name) > 0)`,
-      db_host: `TEXT NOT NULL DEFAULT 'localhost'`,
-      db_port: `INTEGER NOT NULL DEFAULT 5432`,
-      db_user: `TEXT NOT NULL DEFAULT ''`,
-      db_pass: `TEXT DEFAULT ''`,
-      db_connection_timeout: `INTEGER CHECK(db_connection_timeout > 0)`,
-      db_schema_filter: {
-        jsonbSchema: {
-          oneOf: [
-            { record: { values: { enum: [1] } } },
-            { record: { values: { enum: [0] } } },
-          ],
-        },
-        nullable: true,
-      },
-      db_ssl: { enum: DB_SSL_ENUM, nullable: false, defaultValue: "disable" },
-      ssl_certificate: { sqlDefinition: `TEXT` },
-      ssl_client_certificate: { sqlDefinition: `TEXT` },
-      ssl_client_certificate_key: { sqlDefinition: `TEXT` },
-      ssl_reject_unauthorized: {
-        sqlDefinition: `BOOLEAN`,
-        info: {
-          hint: `If true, the server certificate is verified against the list of supplied CAs. \nAn error event is emitted if verification fails`,
-        },
-      },
-      db_conn: { sqlDefinition: `TEXT DEFAULT ''` },
-      db_watch_shema: { sqlDefinition: `BOOLEAN DEFAULT TRUE` },
-      disable_realtime: {
-        sqlDefinition: `BOOLEAN DEFAULT FALSE`,
-        info: {
-          hint: `If true then subscriptions and syncs will not work. Used to ensure prostgles schema is not created and nothing is changed in the database`,
-        },
-      },
-      prgl_url: { sqlDefinition: `TEXT` },
-      prgl_params: { sqlDefinition: `JSONB` },
-      type: {
-        enum: ["Standard", "Connection URI", "Prostgles"],
-        nullable: false,
-      },
-      is_state_db: {
-        sqlDefinition: `BOOLEAN`,
-        info: { hint: `If true then this DB is used to run the dashboard` },
-      },
-      on_mount_ts: {
-        sqlDefinition: "TEXT",
-        info: {
-          hint: `On mount typescript function. Must export const onMount`,
-        },
-      },
-      on_mount_ts_disabled: {
-        sqlDefinition: "BOOLEAN",
-        info: { hint: `If true then On mount typescript will not be executed` },
-      },
-      info: {
-        jsonbSchemaType: {
-          canCreateDb: {
-            type: "boolean",
-            optional: true,
-            description:
-              "True if postgres user is allowed to create databases. Never gets updated",
-          },
-        },
-        nullable: true,
-      },
-      table_options: {
-        nullable: true,
-        jsonbSchema: {
-          record: {
-            partial: true,
-            values: {
-              type: {
-                icon: { type: "string", optional: true },
-              },
-            },
-          },
-        },
-      },
-      created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
-      last_updated: { sqlDefinition: `BIGINT NOT NULL DEFAULT 0` },
-    },
-    constraints: {
-      uniqueConName: `UNIQUE(name, user_id)`,
-      "Check connection type": `CHECK (
-          type IN ('Standard', 'Connection URI', 'Prostgles') 
-          AND (type <> 'Connection URI' OR length(db_conn) > 1) 
-          AND (type <> 'Standard' OR length(db_host) > 1) 
-          AND (type <> 'Prostgles' OR length(prgl_url) > 0)
-        )`,
-      database_config_fkey: `FOREIGN KEY (${UNIQUE_DB_FIELDLIST}) REFERENCES database_configs( ${UNIQUE_DB_FIELDLIST} )`,
-    },
-  },
+  ...tableConfigConnections,
 
   alerts: {
     columns: {
@@ -811,79 +614,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
     },
   },
-  published_methods: {
-    // dropIfExistsCascade: true,
-    columns: {
-      id: `SERIAL PRIMARY KEY`,
-      name: `TEXT NOT NULL DEFAULT 'Method name'`,
-      description: `TEXT NOT NULL DEFAULT 'Method description'`,
-      connection_id: {
-        sqlDefinition: `UUID REFERENCES connections(id) ON DELETE SET NULL`,
-        info: { hint: "If null then connection was deleted" },
-      },
-      arguments: {
-        nullable: false,
-        defaultValue: "[]",
-        jsonbSchema: {
-          title: "Arguments",
-          arrayOf: {
-            oneOfType: [
-              {
-                name: { title: "Argument name", type: "string" },
-                type: {
-                  title: "Data type",
-                  enum: [
-                    "string",
-                    "number",
-                    "boolean",
-                    "Date",
-                    "time",
-                    "timestamp",
-                    "string[]",
-                    "number[]",
-                    "boolean[]",
-                    "Date[]",
-                    "time[]",
-                    "timestamp[]",
-                  ],
-                },
-                defaultValue: { type: "string", optional: true },
-                optional: {
-                  optional: true,
-                  type: "boolean",
-                  title: "Optional",
-                },
-                allowedValues: {
-                  title: "Allowed values",
-                  optional: true,
-                  type: "string[]",
-                },
-              },
-              {
-                name: { title: "Argument name", type: "string" },
-                type: { title: "Data type", enum: ["Lookup", "Lookup[]"] },
-                defaultValue: { type: "any", optional: true },
-                optional: { optional: true, type: "boolean" },
-                lookup: {
-                  title: "Table column",
-                  lookup: {
-                    type: "data-def",
-                    column: "",
-                    table: "",
-                  },
-                },
-              },
-            ],
-          },
-        },
-      },
-      run: "TEXT NOT NULL DEFAULT 'export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n  \n}'",
-      outputTable: `TEXT`,
-    },
-    indexes: {
-      unique_name: { unique: true, columns: "connection_id, name" },
-    },
-  },
+  ...tableConfigPublishedMethods,
   access_control_user_types: {
     columns: {
       access_control_id: `INTEGER NOT NULL REFERENCES access_control(id)  ON DELETE CASCADE`,
@@ -927,6 +658,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       magic_link: `TEXT`,
       magic_link_used: `TIMESTAMP`,
       expires: `BIGINT NOT NULL`,
+      session_expires: `BIGINT NOT NULL DEFAULT 0`,
     },
   },
 
@@ -1571,6 +1303,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
             },
             {
               Provider: { enum: ["Prostgles"] },
+              API_Key: { type: "string" },
             },
           ],
         },

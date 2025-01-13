@@ -98,9 +98,9 @@ export const AskLLMAccessControl = ({
           {state.state !== "ready" ?
             <SetupLLMCredentials
               {...prgl}
+              asPopup={false}
               dbs={dbs}
               setupState={state}
-              asPopup={false}
             />
           : <>
               <div className="ta-left" style={{ maxWidth: "500px" }}>

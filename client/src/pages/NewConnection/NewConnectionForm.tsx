@@ -554,24 +554,3 @@ const getDBCloneQuery = (
     { returnType: "statement" },
   );
 };
-
-// await db['users'].find(
-//   {
-//   "first_name": "Mirta",
-//   "created_at": "monday"
-// },
-//   {
-//   "select": {
-//     email: 1,
-//     "c": {
-//       "$countAll": []
-//     },
-//     "created_at": {
-//       "$day": [
-//         "created_at"
-//       ]
-//     },
-//   },
-//   "orderBy": []
-// }
-// )

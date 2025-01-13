@@ -26,7 +26,9 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
       title="Connected. Click to disconnect"
       color={c.isConnected ? "green" : undefined}
       className={c.isConnected ? "" : "show-on-trigger-hover"}
-      onClickPromise={async () => dbsMethods.disconnect!(c.id)}
+      onClickPromise={async () => {
+        await dbsMethods.disconnect!(c.id);
+      }}
       style={{
         // opacity: c.isConnected? undefined : 0,
         padding: "14px",

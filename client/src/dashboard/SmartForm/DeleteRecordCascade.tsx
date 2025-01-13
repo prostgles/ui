@@ -17,7 +17,7 @@ export const DeleteRecordCascade = (p: P) => {
     <Btn
       iconPath={mdiClose}
       onClickPromise={async () => {
-        return deleteCascade(p);
+        await deleteCascade(p);
       }}
     />
   );

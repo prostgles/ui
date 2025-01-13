@@ -5,7 +5,7 @@ import { isObject } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import type { Message } from "../../components/Chat/Chat";
-import { Marked } from "../../components/Chat/Marked";
+import type { MarkedProps } from "../../components/Chat/Marked";
 import Loading from "../../components/Loading";
 import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
 import { loadGeneratedWorkspaces } from "./loadGeneratedWorkspaces";
@@ -16,22 +16,18 @@ type P = LLMSetupStateReady &
     workspaceId: string | undefined;
   };
 
-// TODO: debug llm_chats sub sometimes not firing inside github actions
-// let debugSub: any;
-
 export type LLMChatState = ReturnType<typeof useLLMChat>;
-export const useLLMChat = ({
-  dbs,
-  user,
-  connectionId,
-  workspaceId,
-  credentials,
-  firstPromptId,
-  defaultCredential,
-  prompts,
-}: P) => {
-  // debugSub = debugSub || dbs.llm_chats.subscribe({}, {}, console.warn);
-
+export const useLLMChat = (props: P) => {
+  const {
+    dbs,
+    user,
+    connectionId,
+    workspaceId,
+    credentials,
+    firstPromptId,
+    defaultCredential,
+    prompts,
+  } = props;
   const [selectedChatId, setSelectedChat] = useState<number>();
   const { data: latestChats } = dbs.llm_chats.useSubscribe(
     {},
@@ -76,7 +72,6 @@ export const useLLMChat = ({
       { returning: "*" },
     );
     console.log("Created new chat", newChat);
-    // dbs.sql(`SELECT * FROM `)
     setSelectedChat(undefined);
   };
 
@@ -88,58 +83,16 @@ export const useLLMChat = ({
 
   const { data: llmMessages } = dbs.llm_messages.useSubscribe(
     { chat_id: activeChatId },
-    { limit: activeChatId ? undefined : 0, orderBy: { created: 1 } },
+    { orderBy: { created: 1 } },
+    { skip: !activeChatId },
   );
-  // console.log(activeChatId, llmMessages);
-
-  const { setWorkspace } = useSetNewWorkspace(workspaceId);
 
   const actualMessages: Message[] =
     llmMessages?.map((m) => ({
+      id: m.id,
       incoming: m.user_id !== user?.id,
-      message: (
-        <Marked
-          content={m.message || ""}
-          codeHeader={({ language, codeString }) => {
-            if (language !== "json") return null;
-            try {
-              const json = JSON.parse(codeString);
-              if (Array.isArray(json.prostglesWorkspaces)) {
-                return (
-                  <Btn
-                    color="action"
-                    iconPath={mdiPlus}
-                    variant="faded"
-                    onClick={() => {
-                      loadGeneratedWorkspaces(json.prostglesWorkspaces, {
-                        dbs,
-                        connectionId,
-                      })
-                        .then((insertedWorkspaces) => {
-                          const [first] = insertedWorkspaces;
-                          if (first) {
-                            setWorkspace(first);
-                          }
-                        })
-                        .catch((error) => {
-                          if (isObject(error) && error.code === "23505") {
-                            alert(
-                              `Workspace with this name already exists. Must delete or rename the clashing workspaces: \n${json.prostglesWorkspaces.map((w) => w.name).join(", ")}`,
-                            );
-                          }
-                        });
-                    }}
-                  >
-                    Load workspaces
-                  </Btn>
-                );
-              }
-            } catch (e) {
-              console.error(e);
-            }
-          }}
-        />
-      ),
+      message: null,
+      markdown: m.message || "",
       sender_id: m.user_id || "ai",
       sent: new Date(m.created || new Date()),
     })) ?? [];
@@ -157,6 +110,7 @@ export const useLLMChat = ({
     actualMessages.length ? actualMessages : (
       [
         {
+          id: "first",
           message: "Hello, I am the AI assistant. How can I help you?",
           incoming: true,
           sent: new Date("2024-01-01"),
@@ -174,6 +128,7 @@ export const useLLMChat = ({
     disabled_message ?
       [
         {
+          id: "disabled-last",
           incoming: true,
           message: disabled_message,
           sender_id: "ai",
@@ -183,7 +138,10 @@ export const useLLMChat = ({
     : [],
   );
 
+  const { markdownCodeHeader } = useMarkdownCodeHeader(props);
+
   return {
+    markdownCodeHeader,
     activeChatId,
     createNewChat,
     preferredPromptId,
@@ -195,4 +153,51 @@ export const useLLMChat = ({
     defaultCredential,
     activeChat,
   };
+};
+
+const useMarkdownCodeHeader = ({ workspaceId, dbs, connectionId }: P) => {
+  const { setWorkspace } = useSetNewWorkspace(workspaceId);
+  const markdownCodeHeader: MarkedProps["codeHeader"] = useCallback(
+    ({ language, codeString }) => {
+      if (language !== "json") return null;
+      try {
+        const json = JSON.parse(codeString);
+        if (Array.isArray(json.prostglesWorkspaces)) {
+          return (
+            <Btn
+              color="action"
+              iconPath={mdiPlus}
+              variant="faded"
+              onClick={() => {
+                loadGeneratedWorkspaces(json.prostglesWorkspaces, {
+                  dbs,
+                  connectionId,
+                })
+                  .then((insertedWorkspaces) => {
+                    const [first] = insertedWorkspaces;
+                    if (first) {
+                      setWorkspace(first);
+                    }
+                  })
+                  .catch((error) => {
+                    if (isObject(error) && error.code === "23505") {
+                      alert(
+                        `Workspace with this name already exists. Must delete or rename the clashing workspaces: \n${json.prostglesWorkspaces.map((w) => w.name).join(", ")}`,
+                      );
+                    }
+                  });
+              }}
+            >
+              Load workspaces
+            </Btn>
+          );
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    [connectionId, dbs, setWorkspace],
+  );
+
+  return { markdownCodeHeader };
 };

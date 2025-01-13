@@ -1,7 +1,7 @@
 import React from "react";
 import type { PopupProps } from "./Popup";
 import { Footer } from "./Popup";
-import { isDefined, omitKeys } from "../../utils";
+import { isDefined, omitKeys } from "prostgles-types";
 import Btn, { type BtnProps } from "../Btn";
 
 export type FooterButton =

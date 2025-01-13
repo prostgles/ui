@@ -1,4 +1,3 @@
-import { usePromise } from "prostgles-client/dist/prostgles";
 import type { Prgl } from "../../App";
 import type { DbsByUserType } from "../Dashboard/DBS";
 

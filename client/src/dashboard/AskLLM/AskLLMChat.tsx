@@ -1,14 +1,15 @@
-import React from "react";
-import Popup from "../../components/Popup/Popup";
-import { FlexCol } from "../../components/Flex";
-import { CHAT_WIDTH } from "./AskLLM";
-import { Chat } from "../../components/Chat/Chat";
+import React, { useCallback, useMemo } from "react";
 import type { Prgl } from "../../App";
+import Btn from "../../components/Btn";
+import { Chat } from "../../components/Chat/Chat";
+import { FlexCol } from "../../components/Flex";
+import Popup from "../../components/Popup/Popup";
+import { CHAT_WIDTH } from "./AskLLM";
 import { AskLLMChatHeader } from "./AskLLMChatHeader";
+import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
-import { useLLMChat } from "./useLLMChat";
-import Btn from "../../components/Btn";
+// import { useLocalLLM } from "./useLocalLLM";
 
 export type AskLLMChatProps = {
   prgl: Omit<Prgl, "dbsMethods">;
@@ -18,14 +19,8 @@ export type AskLLMChatProps = {
   onClose: VoidFunction;
   workspaceId: string | undefined;
 };
-export const AskLLMChat = ({
-  anchorEl,
-  onClose,
-  askLLM,
-  prgl,
-  setupState,
-  workspaceId,
-}: AskLLMChatProps) => {
+export const AskLLMChat = (props: AskLLMChatProps) => {
+  const { anchorEl, onClose, askLLM, prgl, setupState, workspaceId } = props;
   const { tables, db, user, connectionId, connection, dbs, dbsTables } = prgl;
   const { schemaStr } = useLLMSchemaStr({ tables, db, connection });
   const chatState = useLLMChat({
@@ -35,8 +30,36 @@ export const AskLLMChat = ({
     connectionId,
     workspaceId,
   });
-  const { messages, activeChat, activeChatId, latestChats } = chatState;
+  const {
+    messages,
+    activeChat,
+    activeChatId,
+    latestChats,
+    markdownCodeHeader,
+  } = chatState;
   const { defaultCredential, preferredPromptId, createNewChat } = chatState;
+
+  const onSend = useCallback(
+    async (msg: string | undefined) => {
+      if (!msg || !activeChatId) return;
+      await askLLM(msg, schemaStr, activeChatId).catch((error) => {
+        const errorText = error?.message || error;
+        alert(
+          typeof errorText === "string" ? errorText : JSON.stringify(errorText),
+        );
+      });
+    },
+    [askLLM, schemaStr, activeChatId],
+  );
+
+  const chatStyle = useMemo(() => {
+    return {
+      minWidth: `min(${CHAT_WIDTH}px, 100%)`,
+      minHeight: "0",
+    };
+  }, []);
+
+  // useLocalLLM({});
 
   return (
     <Popup
@@ -80,23 +103,11 @@ export const AskLLMChat = ({
           }}
         >
           <Chat
-            style={{
-              minWidth: `min(${CHAT_WIDTH}px, 100%)`,
-              minHeight: "0",
-            }}
+            style={chatStyle}
             messages={messages}
             disabledInfo={activeChat?.disabled_message ?? undefined}
-            onSend={async (msg) => {
-              if (!msg || !activeChatId) return;
-              await askLLM(msg, schemaStr, activeChatId).catch((error) => {
-                const errorText = error?.message || error;
-                alert(
-                  typeof errorText === "string" ? errorText : (
-                    JSON.stringify(errorText)
-                  ),
-                );
-              });
-            }}
+            onSend={onSend}
+            markdownCodeHeader={markdownCodeHeader}
           />
         </FlexCol>
       )}

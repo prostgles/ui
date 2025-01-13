@@ -285,3 +285,50 @@ export const CONNECTION_CONFIG_SECTIONS = [
   "file_storage",
   "API",
 ] as const;
+
+/**
+ * Ensure that multi-line strings are indented correctly
+ */
+export const fixIndent = (_str: string | TemplateStringsArray): string => {
+  const str = typeof _str === "string" ? _str : (_str[0] ?? "");
+  const lines = str.split("\n");
+  if (!lines.some((l) => l.trim())) return str;
+  let minIdentOffset = lines.reduce(
+    (a, line) => {
+      if (!line.trim()) return a;
+      const indent = line.length - line.trimStart().length;
+      return Math.min(a ?? indent, indent);
+    },
+    undefined as number | undefined,
+  );
+  minIdentOffset = Math.max(minIdentOffset ?? 0, 0);
+
+  return lines
+    .map((l, i) => (i === 0 ? l : l.slice(minIdentOffset)))
+    .join("\n")
+    .trim();
+};
+
+export const getConnectionPaths = ({
+  id,
+  url_path,
+}: {
+  id: string;
+  url_path: string | null;
+}) => {
+  return {
+    rest: `${API_PATH_SUFFIXES.REST}/${url_path || id}`,
+    ws: `${API_PATH_SUFFIXES.WS}/${url_path || id}`,
+    dashboard: `${API_PATH_SUFFIXES.DASHBOARD}/${id}`,
+    config: `${API_PATH_SUFFIXES.CONFIG}/${id}`,
+  };
+};
+
+export const API_PATH_SUFFIXES = {
+  REST: "/rest-api",
+  WS: "/ws-api-db",
+  DASHBOARD: "/connections",
+  CONFIG: "/connection-config",
+} as const;
+
+export const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";

@@ -21,12 +21,16 @@ export const NonHTTPSWarning = ({
       <InfoRow
         color="danger"
         iconPath={mdiAlertBox}
-        className="m-p5 bg-color-0"
+        className="m-p5 bg-color-0 ai-center"
+        contentClassname="flex-row-wrap gap-1 ai-center"
       >
-        Your are accessing this page over a non-HTTPS connection! You should not
-        enter any sensitive information on this site (passwords, secrets)
+        <div>
+          Your are accessing this page over a non-HTTPS connection! You should
+          not enter any sensitive information on this site (passwords, secrets)
+        </div>
         {canUpdateUsers && (
           <Btn
+            variant="faded"
             onClickPromise={async () => {
               dbs.users.update(
                 { id: authUser?.id },

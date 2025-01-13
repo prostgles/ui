@@ -1,21 +1,27 @@
 import { mdiEmail } from "@mdi/js";
-import { isEqual } from "prostgles-client/dist/prostgles";
+import { isEqual } from "prostgles-types";
 import React, { useState } from "react";
 import ErrorComponent from "../../components/ErrorComponent";
 import FormField from "../../components/FormField/FormField";
-import { InfoRow } from "../../components/InfoRow";
 import { FooterButtons } from "../../components/Popup/FooterButtons";
 import { Section } from "../../components/Section";
 import Select from "../../components/Select/Select";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import type { AuthProviderProps } from "./AuthProvidersSetup";
-import { DEFAULT_EMAIL_VERIFICATION_TEMPLATE, EmailSetup } from "./EmailSetup";
+import {
+  DEFAULT_SMTP_CONFIG,
+  EmailSMTPAndTemplateSetup,
+} from "./EmailAuthSetupIngredients/EmailSMTPAndTemplateSetup";
+import {
+  DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
+  DEFAULT_MAGIC_LINK_TEMPLATE,
+} from "../../../../commonTypes/OAuthUtils";
 
 export const EmailAuthSetup = ({
-  dbs,
   authProviders,
   disabledInfo,
   contentClassName,
+  doUpdate,
 }: AuthProviderProps) => {
   const [_localAuth, setLocalAuth] = useState(authProviders.email);
   const localAuth = _localAuth ?? authProviders.email;
@@ -25,26 +31,21 @@ export const EmailAuthSetup = ({
   const onToggle =
     !localAuth ? undefined : (
       async (enabled: boolean) => {
-        await dbs.global_settings
-          .update(
-            {},
-            {
-              auth_providers: {
-                ...authProviders,
-                email: {
-                  ...localAuth,
-                  enabled,
-                },
-              },
-            },
-          )
-          .catch(setError);
+        await doUpdate({
+          ...authProviders,
+          email: {
+            ...localAuth,
+            enabled,
+          },
+        }).catch(setError);
+        setLocalAuth(undefined);
       }
     );
 
   return (
     <Section
       title="Email signup"
+      data-command="EmailAuthSetup"
       titleIconPath={mdiEmail}
       disabledInfo={disabledInfo}
       contentClassName={contentClassName}
@@ -67,12 +68,9 @@ export const EmailAuthSetup = ({
               {
                 enabled,
                 signupType: "withPassword",
-                emailConfirmation: {
-                  type: "aws-ses",
-                  accessKeyId: "",
-                  region: "",
-                  secretAccessKey: "",
-                },
+                emailTemplate: DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
+                smtp: DEFAULT_SMTP_CONFIG,
+                minPasswordLength: 8,
               }
             : {
                 ...localAuth,
@@ -83,6 +81,7 @@ export const EmailAuthSetup = ({
       />
       <Select
         label={"Signup type"}
+        data-command="EmailAuthSetup.SignupType"
         showSelectedSublabel={true}
         value={localAuth?.signupType}
         fullOptions={
@@ -90,7 +89,8 @@ export const EmailAuthSetup = ({
             {
               key: "withPassword",
               label: "With password",
-              subLabel: "A password will be required to login",
+              subLabel:
+                "Email and password will be required to login. User will have to confirm email",
             },
             {
               key: "withMagicLink",
@@ -102,28 +102,22 @@ export const EmailAuthSetup = ({
         }
         onChange={async (signupType) => {
           setLocalAuth(
-            signupType === "withPassword" ?
+            signupType === "withMagicLink" ?
               {
-                ...localAuth,
+                enabled: localAuth?.enabled ?? false,
                 signupType,
-                emailConfirmation: {
-                  type: "aws-ses",
-                  accessKeyId: "",
-                  region: "",
-                  secretAccessKey: "",
-                },
-                emailTemplate: DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
+                emailTemplate: DEFAULT_MAGIC_LINK_TEMPLATE,
+                smtp: localAuth?.smtp ?? DEFAULT_SMTP_CONFIG,
               }
             : {
-                ...localAuth,
                 signupType,
-                emailMagicLink: {
-                  type: "aws-ses",
-                  accessKeyId: "",
-                  region: "",
-                  secretAccessKey: "",
-                },
+                enabled: localAuth?.enabled ?? false,
                 emailTemplate: DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
+                smtp: localAuth?.smtp ?? DEFAULT_SMTP_CONFIG,
+                minPasswordLength:
+                  localAuth?.signupType === "withPassword" ?
+                    (localAuth.minPasswordLength ?? 8)
+                  : undefined,
               },
           );
         }}
@@ -142,28 +136,30 @@ export const EmailAuthSetup = ({
           hint="Minimum password length. Defaults to 8"
         />
       )}
-      <EmailSetup
+      <EmailSMTPAndTemplateSetup
+        websiteUrl={authProviders.website_url}
         label={
           localAuth?.signupType === "withMagicLink" ?
-            "Magic link email"
+            "Magic link email configuration"
           : "Email verification"
         }
-        dbs={dbs}
         value={localAuth}
-        // onChange={(smtpConfig) => {
-        //   if(!localAuth) return;
-        //   if(!smtpConfig && localAuth.signupType !== "withPassword"){
-        //     setError("Please enable the email provider first");
-        //     return;
-        //   }
-        //   setLocalAuth({
-        //     ...localAuth,
-        //     smtp: smtpConfig
-        //   });
-        //   setError(undefined);
-        // }}
+        onChange={async (newConfig) => {
+          if (!localAuth) throw "Local auth not found";
+          await doUpdate({
+            ...authProviders,
+            email: {
+              ...localAuth,
+              ...newConfig,
+            },
+          });
+          setError(undefined);
+          setLocalAuth(undefined);
+        }}
       />
-      {error && <ErrorComponent error={error} />}
+      {error && (
+        <ErrorComponent data-command="EmailAuthSetup.error" error={error} />
+      )}
       {didChange && (
         <FooterButtons
           footerButtons={[
@@ -171,21 +167,20 @@ export const EmailAuthSetup = ({
               label: "Save",
               color: "action",
               variant: "filled",
-              onClick: async () => {
+              onClickMessage: async (_, setM) => {
                 try {
-                  await dbs.global_settings.update(
-                    {},
-                    {
-                      auth_providers: {
-                        ...authProviders,
-                        email: localAuth,
-                      },
-                    },
-                  );
+                  setM({ loading: 1 });
+                  const newAuth = {
+                    ...authProviders,
+                    email: localAuth,
+                  };
+                  await doUpdate(newAuth);
+                  setError(undefined);
                   setLocalAuth(undefined);
                 } catch (err) {
                   setError(err);
                 }
+                setM({ loading: 0 });
               },
             },
           ]}

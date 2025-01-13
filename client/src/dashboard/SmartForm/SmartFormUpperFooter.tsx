@@ -16,6 +16,7 @@ import type {
   SmartFormState,
 } from "./SmartForm";
 import SmartFormField from "./SmartFormField/SmartFormField";
+import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 
 type P = Omit<SmartFormProps, "columns"> & {
   onSetNestedInsertData:
@@ -23,7 +24,8 @@ type P = Omit<SmartFormProps, "columns"> & {
     | undefined;
   onRemoveUpdate: (key: string) => void;
   columns: (ValidatedColumnInfo & ColumnDisplayConfig)[];
-  state: Pick<SmartFormState, "newRow" | "tableInfo" | "action">;
+  state: Pick<SmartFormState, "newRow" | "action">;
+  table: DBSchemaTableWJoins;
   row?: AnyObject;
 };
 
@@ -36,6 +38,7 @@ export const SmartFormUpperFooter = (props: P) => {
     showJoinedTables = true,
     onSetNestedInsertData,
     tables,
+    table,
     theme,
     columns,
     onRemoveUpdate,
@@ -72,7 +75,7 @@ export const SmartFormUpperFooter = (props: P) => {
     argName: string;
   }>();
 
-  const { newRow, tableInfo, action } = state;
+  const { newRow, action } = state;
 
   const [collapseChanges, setcollapseChanges] = useState(false);
   const [expandJoinedRecords, setexpandJoinedRecords] = useState(false);
@@ -176,7 +179,7 @@ export const SmartFormUpperFooter = (props: P) => {
               oldVal: React.ReactNode = null;
             if (
               !c &&
-              tableInfo?.fileTableName === key &&
+              table.info.fileTableName === key &&
               Array.isArray(newRow[key])
             ) {
               oldVal =

@@ -258,6 +258,13 @@ export const COMMANDS = {
   AddLLMCredentialForm: "",
   "AddLLMCredentialForm.Save": "",
   "AddLLMCredentialForm.Provider": "",
+  "EmailAuthSetup.SignupType": "",
+  EmailAuthSetup: "",
+  "EmailAuthSetup.error": "",
+  EmailSMTPAndTemplateSetup: "",
+  "Login.toggle": "",
+  AuthNotifPopup: "",
+  "ProstglesSignup.continue": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

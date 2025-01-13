@@ -10,7 +10,7 @@ import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
 import Select from "../../components/Select/Select";
 import { SwitchToggle } from "../../components/SwitchToggle";
-import { pickKeys } from "../../utils";
+import { pickKeys } from "prostgles-types";
 import { CredentialSelector } from "../Backup/CredentialSelector";
 import { FileStorageDelete } from "./FileStorageDelete";
 import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
@@ -117,19 +117,20 @@ export const FileStorageControls = (props: FileStorageControlsProps) => {
           (Amazon S3) storage and designating a table within this database to
           store file urls and metadata
         </p>
-        <p>Access to the files is controlled through: </p>
-        <u className="no-decor">
-          <li>
-            the file table: users that are allowed to view/insert/delete the
-            data within the file table can interact with the files
+        <p className="mt-3">Access to the files is controlled through: </p>
+        <ul className="no-ddecor">
+          <li className="py-p25">
+            <strong>file table</strong> - users that are allowed to
+            view/insert/delete the data within the file table can interact with
+            the files
           </li>
-          <li>
-            tables that reference the file table: users that are allowed to
-            view/insert/update the reference column are also allowed to
-            view/insert/update the related records from the file table (and
-            associated files)
+          <li className="py-p25">
+            <strong>tables that reference the file table</strong> - users that
+            are allowed to view/insert/update the reference column are also
+            allowed to view/insert/update the related records from the file
+            table (and associated files)
           </li>
-        </u>
+        </ul>
         {error && <InfoRow color="danger">{error}</InfoRow>}
       </div>
 

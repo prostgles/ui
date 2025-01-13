@@ -1,4 +1,4 @@
-import { pickKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
+import { pickKeys } from "prostgles-types";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
 import type { Express } from "express";

@@ -17,6 +17,7 @@ import type {
   FullExtraProps,
 } from "./ProjectConnection/ProjectConnection";
 import { AskLLM } from "../dashboard/AskLLM/AskLLM";
+import { API_PATH_SUFFIXES } from "../../../commonTypes/utils";
 
 type TopControlsProps = {
   prgl: Prgl;
@@ -38,7 +39,7 @@ export const TopControls = (props: TopControlsProps) => {
         ...dataCommand("config.goToConnDashboard"),
         title: "Go to workspace",
         asNavLink: true,
-        href: `/connections/${connectionId}`,
+        href: `${API_PATH_SUFFIXES.DASHBOARD}/${connectionId}`,
       }
     : {
         ...dataCommand("dashboard.menu"),
@@ -95,7 +96,7 @@ export const TopControls = (props: TopControlsProps) => {
             <Btn
               data-command="dashboard.goToConnections"
               title="Go to Connections"
-              href={"/connections"}
+              href={API_PATH_SUFFIXES.DASHBOARD}
               variant="faded"
               asNavLink={true}
               iconPath={mdiArrowLeft}
@@ -136,8 +137,8 @@ export const ConnectionConfigBtn = ({
         iconPath={mdiDatabaseCog}
         href={
           isOnWorkspace ?
-            `/connection-config/${connection.id}`
-          : `/connections/${connection.id}`
+            `${API_PATH_SUFFIXES.CONFIG}/${connection.id}`
+          : `${API_PATH_SUFFIXES.DASHBOARD}/${connection.id}`
         }
         asNavLink={true}
         disabledInfo={
