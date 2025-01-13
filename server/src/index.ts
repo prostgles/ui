@@ -45,13 +45,18 @@ if (isTesting) {
   });
 }
 
+/**
+ * Required to ensure xenova/transformators works
+ */
+const localLLMHeaders = ""; // `'unsafe-eval' 'wasm-unsafe-eval'`;
+// console.error("REMOVE CSP", localLLMHeaders);
 app.use(json({ limit: "100mb" }));
 app.use(urlencoded({ extended: true, limit: "100mb" }));
 app.use(function (req, res, next) {
   /* data import (papaparse) requires: worker-src blob: 'self' */
   res.setHeader(
     "Content-Security-Policy",
-    " script-src 'self'; frame-src 'self'; worker-src blob: 'self';",
+    ` script-src 'self' ${localLLMHeaders}; frame-src 'self'; worker-src blob: 'self';`,
   );
   next();
 });

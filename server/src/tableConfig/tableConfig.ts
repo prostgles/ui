@@ -5,6 +5,7 @@ import { loggerTableConfig } from "../Logger";
 import { tableConfigGlobalSettings } from "./tableConfigGlobalSettings";
 import { tableConfigUsers } from "./tableConfigUsers";
 import { tableConfigConnections } from "./tableConfigConnections";
+import { tableConfigPublishedMethods } from "./tableConfigPublishedMethods";
 
 export const UNIQUE_DB_COLS = ["db_name", "db_host", "db_port"] as const;
 const UNIQUE_DB_FIELDLIST = UNIQUE_DB_COLS.join(", ");
@@ -613,79 +614,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
     },
   },
-  published_methods: {
-    // dropIfExistsCascade: true,
-    columns: {
-      id: `SERIAL PRIMARY KEY`,
-      name: `TEXT NOT NULL DEFAULT 'Method name'`,
-      description: `TEXT NOT NULL DEFAULT 'Method description'`,
-      connection_id: {
-        sqlDefinition: `UUID REFERENCES connections(id) ON DELETE SET NULL`,
-        info: { hint: "If null then connection was deleted" },
-      },
-      arguments: {
-        nullable: false,
-        defaultValue: "[]",
-        jsonbSchema: {
-          title: "Arguments",
-          arrayOf: {
-            oneOfType: [
-              {
-                name: { title: "Argument name", type: "string" },
-                type: {
-                  title: "Data type",
-                  enum: [
-                    "string",
-                    "number",
-                    "boolean",
-                    "Date",
-                    "time",
-                    "timestamp",
-                    "string[]",
-                    "number[]",
-                    "boolean[]",
-                    "Date[]",
-                    "time[]",
-                    "timestamp[]",
-                  ],
-                },
-                defaultValue: { type: "string", optional: true },
-                optional: {
-                  optional: true,
-                  type: "boolean",
-                  title: "Optional",
-                },
-                allowedValues: {
-                  title: "Allowed values",
-                  optional: true,
-                  type: "string[]",
-                },
-              },
-              {
-                name: { title: "Argument name", type: "string" },
-                type: { title: "Data type", enum: ["Lookup", "Lookup[]"] },
-                defaultValue: { type: "any", optional: true },
-                optional: { optional: true, type: "boolean" },
-                lookup: {
-                  title: "Table column",
-                  lookup: {
-                    type: "data-def",
-                    column: "",
-                    table: "",
-                  },
-                },
-              },
-            ],
-          },
-        },
-      },
-      run: "TEXT NOT NULL DEFAULT 'export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n  \n}'",
-      outputTable: `TEXT`,
-    },
-    indexes: {
-      unique_name: { unique: true, columns: "connection_id, name" },
-    },
-  },
+  ...tableConfigPublishedMethods,
   access_control_user_types: {
     columns: {
       access_control_id: `INTEGER NOT NULL REFERENCES access_control(id)  ON DELETE CASCADE`,

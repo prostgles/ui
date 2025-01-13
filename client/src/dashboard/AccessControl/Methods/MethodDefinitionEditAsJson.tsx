@@ -11,23 +11,29 @@ export const MethodDefinitionEditAsJson = (props: MethodDefinitionProps) => {
     const methodArgsCol = methodsTable?.columns.find(
       (c) => c.name === "arguments",
     );
+    const jsonSchema = getJSONBSchemaAsJSONSchema(
+      "published_methods",
+      "arguments",
+      {
+        type: {
+          ...methodsTable?.columns
+            // .filter((c) => ["arguments"].includes(c.name))
+            .filter((c) => !["id"].includes(c.name))
+            .reduce(
+              (a, v) => ({
+                ...a,
+                [v.name]: { type: v.tsDataType, nullable: v.is_nullable },
+              }),
+              {},
+            ),
+          arguments: methodArgsCol?.jsonbSchema as any,
+        },
+      },
+    );
     const jsonSchemas = [
       {
         id: "published_methods",
-        schema: getJSONBSchemaAsJSONSchema("published_methods", "arguments", {
-          type: {
-            ...methodsTable?.columns
-              .filter((c) => ["arguments"].includes(c.name))
-              .reduce(
-                (a, v) => ({
-                  ...a,
-                  [v.name]: { type: v.tsDataType, nullable: v.is_nullable },
-                }),
-                {},
-              ),
-            arguments: methodArgsCol?.jsonbSchema as any,
-          },
-        }),
+        schema: jsonSchema,
       },
     ];
     const language: LanguageConfig = {
@@ -47,7 +53,7 @@ export const MethodDefinitionEditAsJson = (props: MethodDefinitionProps) => {
         const newMethod = JSON.parse(val);
         onChange(newMethod);
       } catch (err) {
-        console.error(err);
+        // console.error(err);
       }
     },
     [onChange],

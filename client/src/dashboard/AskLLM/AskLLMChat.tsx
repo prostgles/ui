@@ -9,6 +9,7 @@ import { AskLLMChatHeader } from "./AskLLMChatHeader";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
+// import { useLocalLLM } from "./useLocalLLM";
 
 export type AskLLMChatProps = {
   prgl: Omit<Prgl, "dbsMethods">;
@@ -57,6 +58,8 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       minHeight: "0",
     };
   }, []);
+
+  // useLocalLLM({});
 
   return (
     <Popup

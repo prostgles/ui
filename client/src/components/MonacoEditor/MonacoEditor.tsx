@@ -2,6 +2,7 @@ import {
   useAsyncEffectQueue,
   usePromise,
 } from "prostgles-client/dist/react-hooks";
+import { getKeys, isEqual, pickKeys } from "prostgles-types";
 import React, { useEffect, useMemo } from "react";
 import { appTheme, useReactiveState } from "../../App";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
@@ -108,11 +109,16 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   useEffect(() => {
     if (!editor) return;
+    const currentEditorOptions = pickKeys(
+      editor.getRawOptions(),
+      getKeys(fullOptions) as any,
+    );
+    if (isEqual(currentEditorOptions, fullOptions)) return;
     editor.updateOptions(fullOptions);
   }, [editor, fullOptions]);
 
   useEffect(() => {
-    if (editor && value !== editor.getValue()) {
+    if (editor && valueIsDifferentFromEditor(value, editor)) {
       editor.setValue(value);
     }
   }, [value, editor]);
@@ -145,6 +151,26 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       className={`MonacoEditor  ${className}`}
     />
   );
+};
+
+const valueIsDifferentFromEditor = (
+  v1: string,
+  editor: editor.IStandaloneCodeEditor,
+) => {
+  const v2 = editor.getValue();
+  const valuesDiffer = v1 !== v2;
+  try {
+    const v2 = editor.getValue();
+    if (valuesDiffer) {
+      const lang = editor.getModel()?.getLanguageId();
+      if (lang !== "json") return valuesDiffer;
+      const o1 = JSON.parse(v1);
+      const o2 = JSON.parse(v2);
+      const valuesMatch = isEqual(o1, o2);
+      return !valuesMatch;
+    }
+  } catch (error) {}
+  return valuesDiffer;
 };
 
 const hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42 = (
