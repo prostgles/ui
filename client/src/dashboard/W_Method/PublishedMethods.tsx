@@ -116,6 +116,7 @@ export const PublishedMethods = ({
               </FlexCol>
               <div className="flex-row ai-center show-on-trigger-hover">
                 <Btn
+                  title="Edit function"
                   iconPath={mdiPencil}
                   onClick={async () => {
                     setAction({
@@ -125,6 +126,7 @@ export const PublishedMethods = ({
                   }}
                 />
                 <Btn
+                  title="Delete function"
                   iconPath={mdiDelete}
                   color="danger"
                   onClick={async () => {

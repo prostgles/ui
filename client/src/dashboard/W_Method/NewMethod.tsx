@@ -69,7 +69,7 @@ export const NewMethod = ({
           label: "Close",
         },
         {
-          label: !isNewMethod ? "Update" : "Add",
+          label: !isNewMethod ? "Update function" : "Add function",
           color: "action",
           variant: "filled",
           onClickPromise: async () => {

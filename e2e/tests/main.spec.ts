@@ -324,7 +324,7 @@ test.describe("Main test", () => {
     const funcCode = await getMonacoValue(page, ".MethodDefinition");
     expect(funcCode).toEqual(expectedCode);
     /** Add llm server side func */
-    const llmCode = `return { content: [{ text: "free ai assistant" }] };//`;
+    const llmCode = `return { content: [{ text: "free ai assistant" + args.messages.at(-1)?.content }] };//`;
     await monacoType(page, ".MethodDefinition", llmCode, {
       deleteAll: false,
       pressBeforeTyping: ["Control+ArrowLeft", "Control+ArrowLeft"],
@@ -334,7 +334,19 @@ test.describe("Main test", () => {
     expect(funcCode2).toEqual(
       expectedCode.replace("dbo.tx", llmCode + "dbo.tx"),
     );
-    await page.getByRole("button", { name: "Add" }).click();
+    /** Add askLLM func args */
+    await page.getByTitle("Add new item").click();
+    await page.getByLabel("Argument name").fill("messages");
+    await page.getByLabel("Data type").click();
+    await page.locator(`[data-key="any"]`).click();
+    await page.getByRole("button", { name: "Add function" }).click();
+
+    /** Page will reload after func is added */
+    // await page.waitForTimeout(3e3);
+    await page.waitForLoadState("networkidle");
+    /** JSONBSchema localValue bugs. Argument must show */
+    await page.getByTitle("Edit function").click();
+    await page.getByLabel("Argument name").waitFor({ state: "visible" });
 
     /**
      * Publish functions for user
@@ -368,13 +380,16 @@ test.describe("Main test", () => {
     await page.locator("input#otp-code").fill(freeLLMCode);
     await page.getByTestId("ProstglesSignup.continue").click();
     await page.waitForTimeout(1e3);
-    expect(await page.getByTestId("SetupLLMCredentials")).not.toBeVisible();
+    await page.locator(".ProstglesSignup").waitFor({ state: "detached" });
 
     /** Test LLM responses */
     await goTo(page, "/connections");
     await page.getByRole("link", { name: "cloud" }).click();
-    const responses = await getLLMResponses(page, ["hey"]);
-    expect(responses).toEqual([{ isOk: false, response: "free ai assistant" }]);
+    const userMessage = "hey";
+    const responses = await getLLMResponses(page, [userMessage]);
+    expect(responses).toEqual([
+      { isOk: false, response: "free ai assistant" + userMessage },
+    ]);
 
     /** Disable signups */
     await goTo(page, "/server-settings");

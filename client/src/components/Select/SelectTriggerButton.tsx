@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import Btn from "../Btn";
 import type { FullOption, OptionKey, SelectProps, SelectState } from "./Select";
 import SmartFormField from "../../dashboard/SmartForm/SmartFormField/SmartFormField";
 import { mdiClose, mdiMenuDown, mdiPencil } from "@mdi/js";
+import { generateUniqueID } from "../FileInput/FileInput";
 
 type P<
   O extends OptionKey,
@@ -62,7 +63,6 @@ export const SelectTriggerButton = <
     !options.length || (options.length === 1 && value === options[0]);
 
   if (!onChange) return null;
-
   const triggerButton = (
     <Btn
       title={title}

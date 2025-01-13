@@ -153,37 +153,3 @@ export const MethodDefinition = (props: MethodDefinitionProps) => {
     </FlexCol>
   );
 };
-
-function useCallbackDeep<T extends (...args: any[]) => any>(
-  callback: T,
-  dependencies: any[],
-): T {
-  const ref = useRef<{
-    deps: any[];
-    cb: T;
-    wrapper: T;
-  }>();
-
-  if (!ref.current) {
-    ref.current = {
-      deps: dependencies,
-      cb: callback,
-      wrapper: callback as T,
-    };
-  }
-
-  // Update stored callback if it changes
-  ref.current.cb = callback;
-
-  const memoizedCallback = useCallback(
-    (...args: any[]) => ref.current!.cb(...args),
-    [ref],
-  );
-
-  if (!isEqual(dependencies, ref.current.deps)) {
-    ref.current.deps = dependencies;
-    ref.current.wrapper = memoizedCallback as T;
-  }
-
-  return ref.current.wrapper;
-}

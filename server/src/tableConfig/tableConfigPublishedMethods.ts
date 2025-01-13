@@ -33,6 +33,7 @@ export const tableConfigPublishedMethods: TableConfig<{ en: 1 }> = {
                 type: {
                   title: "Data type",
                   enum: [
+                    "any",
                     "string",
                     "number",
                     "boolean",
