@@ -3,6 +3,10 @@ import type { TranslationGroup } from "../i18nUtils";
 export const LANGUAGES = [
   { key: "en", label: "English" },
   { key: "es", label: "Español" },
+  { key: "zh", label: "简体中文" },
+  { key: "ru", label: "Русский" },
+  { key: "de", label: "Deutsch" },
+  { key: "hi", label: "हिंदी" },
 ] as const;
 
 export type Language = (typeof LANGUAGES)[number]["key"];
@@ -183,7 +187,7 @@ export const translations = {
     "Must connect to see schemas": undefined,
     "You are about to create a new database": undefined,
     "You are about to clone the current database": {
-      text: "You are about to clone the current database {currDb} into {newDb}. This will close all existing connections to the current database!",
+      text: "You are about to clone the current database {{currDb}} into {{newDb}}. This will close all existing connections to the current database!",
       argNames: ["currDb", "newDb"],
     },
     "Create database": undefined,

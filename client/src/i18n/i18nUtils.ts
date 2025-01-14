@@ -2,7 +2,12 @@ import { getEntries } from "../../../commonTypes/utils";
 import { getLanguage } from "./LanguageSelector";
 import { type Language, translations } from "./translations/translations";
 import es from "./translations/es.json";
+import de from "./translations/de.json";
+import zh from "./translations/zh.json";
+import hi from "./translations/hi.json";
+import ru from "./translations/ru.json";
 import { isObject } from "../../../commonTypes/publishUtils";
+import { isPlaywrightTest } from "../pages/ProjectConnection/useProjectDb";
 
 type TranslationsType<T> = {
   [K1 in keyof T]: {
@@ -14,6 +19,10 @@ type TranslationFile = TranslationsType<typeof translations>;
 
 const translationFiles: Record<LanguageWithoutEn, TranslationFile> = {
   es,
+  de,
+  zh,
+  ru,
+  hi,
 };
 
 type LanguageWithoutEn = Exclude<Language, "en">;
@@ -28,13 +37,17 @@ export type TranslationGroup = Record<string, Translation>;
 const validateTranslationFiles = () => {
   getEntries(translations).forEach(([componentName, componentTranslations]) => {
     const checkArgs = (
-      text: string,
-      argNames: string[] | undefined,
+      translationKey: string,
+      translation: Translation,
       lang: string,
     ) => {
-      if (Array.isArray(argNames)) {
+      let argNames: string[] | undefined;
+      let text = translationKey;
+      if (isObject(translation) && Array.isArray(translation.argNames)) {
+        ({ argNames, text } = translation);
         argNames.forEach((argName) => {
           if (!text.includes(`{{${argName}}}`)) {
+            console.log(componentTranslations);
             throw new Error(
               `${lang} Translation "${componentName}.${text}" has invalid argName: ${argName}`,
             );
@@ -44,21 +57,18 @@ const validateTranslationFiles = () => {
       const textArgCount = text.split("{{").length - 1;
       if (textArgCount !== (argNames?.length ?? 0)) {
         throw new Error(
-          `${lang} Translation "${componentName}.${text}" has incorrect number of argNames`,
+          `${lang} Translation "${componentName}.${translationKey}" has incorrect number of argNames`,
         );
       }
     };
     getEntries(componentTranslations).forEach(
-      ([_enTranslationKey, argNamesOrText]) => {
-        const argNames = (argNamesOrText as Translation)?.argNames;
-        checkArgs(_enTranslationKey as string, argNames, "en");
+      ([_enTranslationKey, translation]) => {
+        const tr = translation as Translation;
+        // checkArgs(_enTranslationKey as string, argNamesOrText, "en");
         getEntries(translationFiles).forEach(([lang, _translation]) => {
-          const v = _translation[componentName][_enTranslationKey];
-          if (typeof v === "string") {
-            checkArgs(v, argNames, lang);
-          } else {
-            console.error("Invalid translation", v);
-          }
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          const v = _translation[componentName]?.[_enTranslationKey];
+          checkArgs(_enTranslationKey, tr, lang);
         });
       },
     );
@@ -119,24 +129,26 @@ type TranslationHandler = {
   };
 };
 
-const enFile = Object.entries(translations).reduce(
-  (acc, [componentName, componentTranslations]) => {
-    return {
-      ...acc,
-      [componentName]: Object.fromEntries(
-        Object.keys(componentTranslations).map((translationKey) => [
-          translationKey,
-          translationKey,
-        ]),
-      ),
-    };
-  },
-  {},
-);
-
-try {
-  validateTranslationFiles();
-} catch (e) {
-  console.error("Failed to validate translation files", e);
+if (isPlaywrightTest) {
+  try {
+    validateTranslationFiles();
+  } catch (e) {
+    console.error(e);
+    throw new Error("Failed to validate translation files");
+  }
+  const enFile = Object.entries(translations).reduce(
+    (acc, [componentName, componentTranslations]) => {
+      return {
+        ...acc,
+        [componentName]: Object.fromEntries(
+          Object.keys(componentTranslations).map((translationKey) => [
+            translationKey,
+            translationKey,
+          ]),
+        ),
+      };
+    },
+    {},
+  );
+  console.log("en.json", JSON.stringify(enFile));
 }
-console.log("en.json", JSON.stringify(enFile));

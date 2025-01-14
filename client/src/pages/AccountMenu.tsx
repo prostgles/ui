@@ -80,7 +80,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
                   ) as HTMLFormElement | null
                 )?.submit();
               }}
-              className="text-0 font-16 flex-row ai-center gap-p5"
+              className="ws-nowrap text-0 font-16 flex-row ai-center gap-p5"
             >
               <Icon className="f-0" path={mdiLogout} size={1} />
               <div className="f-1 min-w-0 text-ellipsis ws-no-wrap">
