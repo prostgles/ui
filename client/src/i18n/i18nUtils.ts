@@ -18,10 +18,14 @@ type TranslationsType<T> = {
 type TranslationFile = TranslationsType<typeof translations>;
 
 const translationFiles: Record<LanguageWithoutEn, TranslationFile> = {
+  //@ts-ignore
   es,
+  //@ts-ignore
   de,
   zh,
+  //@ts-ignore
   ru,
+  //@ts-ignore
   hi,
 };
 
