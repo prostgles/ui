@@ -1,21 +1,27 @@
+import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
 import type {
   Publish,
   PublishParams,
 } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { getKeys } from "prostgles-types";
 import { connectionChecker } from ".";
-import { getACRules } from "./ConnectionManager/ConnectionManager";
+import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import { isDefined } from "../../commonTypes/filterUtils";
-import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
+import {
+  getMagicLinkEmailFromTemplate,
+  getVerificationEmailFromTemplate,
+  MOCK_SMTP_HOST,
+} from "../../commonTypes/OAuthUtils";
 import { getPasswordHash } from "./authConfig/authUtils";
+import { getSMTPWithTLS } from "./authConfig/emailProvider/getEmailSenderWithMockTest";
+import { getACRules } from "./ConnectionManager/ConnectionManager";
 import { fetchLLMResponse } from "./publishMethods/askLLM/askLLM";
-import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
 
 export const publish = async (
-  params: PublishParams<DBSchemaGenerated>,
-): Promise<Publish<DBSchemaGenerated>> => {
-  const { dbo: db, user, db: _db, socket } = params;
+  params: PublishParams<DBGeneratedSchema>,
+): Promise<Publish<DBGeneratedSchema>> => {
+  const { dbo: db, user, db: _db, clientReq } = params;
 
   if (!user || !user.id) {
     return null;
@@ -38,7 +44,7 @@ export const publish = async (
       )
       .filter(isDefined) || [];
 
-  const dashboardMainTables: Publish<DBSchemaGenerated> = (
+  const dashboardMainTables: Publish<DBGeneratedSchema> = (
     ["windows", "links", "workspaces"] as const
   ).reduce(
     (a, tableName) => ({
@@ -61,7 +67,6 @@ export const publish = async (
         sync: {
           id_fields: ["id"],
           synced_field: "last_updated",
-          allow_delete: true,
         },
         ...(createEditDashboards && {
           update: {
@@ -94,9 +99,9 @@ export const publish = async (
     {},
   );
 
-  type User = DBSchemaGenerated["users"]["columns"];
+  type User = DBGeneratedSchema["users"]["columns"];
   const getValidateAndHashUserPassword = (mustUpdate = false) => {
-    const validateFunc: ValidateUpdateRow<User, DBSchemaGenerated> = async ({
+    const validateFunc: ValidateUpdateRow<User, DBGeneratedSchema> = async ({
       dbx,
       filter,
       update,
@@ -141,7 +146,7 @@ export const publish = async (
     },
   };
 
-  let dashboardTables: Publish<DBSchemaGenerated> = {
+  let dashboardTables: Publish<DBGeneratedSchema> = {
     /* DASHBOARD */
     ...(dashboardMainTables as object),
     access_control_user_types: isAdmin && "*",
@@ -165,7 +170,7 @@ export const publish = async (
       insert: isAdmin && {
         fields: "*",
         forcedData,
-        postValidate: async ({ row, dbx }) => {
+        postValidate: async ({ row }) => {
           await fetchLLMResponse({
             llm_credential: row,
             messages: [
@@ -273,6 +278,7 @@ export const publish = async (
       update: user.type === "admin" && {
         fields: {
           name: 1,
+          url_path: 1,
           table_options: 1,
         },
       },
@@ -416,7 +422,7 @@ export const publish = async (
 
           if (row.allowed_ips_enabled) {
             const { isAllowed, ip } = await connectionChecker.checkClientIP({
-              socket,
+              ...clientReq,
               dbsTX,
             });
             if (!isAllowed)
@@ -424,14 +430,27 @@ export const publish = async (
           }
 
           const { email } = row.auth_providers ?? {};
-          if (email?.enabled) {
-            const emailSmtpConfig =
-              email.signupType === "withMagicLink" ?
-                email.emailMagicLink
-              : email.emailConfirmation;
-            if (emailSmtpConfig) {
-              await verifySMTPConfig(emailSmtpConfig);
-            }
+          if (
+            email?.enabled &&
+            !(email.smtp.type === "smtp" && email.smtp.host === MOCK_SMTP_HOST)
+          ) {
+            const smtp = getSMTPWithTLS(email.smtp);
+            await verifySMTPConfig(smtp);
+          }
+
+          if (email?.signupType === "withPassword") {
+            getVerificationEmailFromTemplate({
+              template: email.emailTemplate,
+              url: "a",
+              code: "a",
+            });
+          }
+          if (email?.signupType === "withMagicLink") {
+            getMagicLinkEmailFromTemplate({
+              template: email.emailTemplate,
+              url: "a",
+              code: "a",
+            });
           }
 
           return undefined;

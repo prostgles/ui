@@ -190,9 +190,9 @@ export const Sessions = ({
                 variant="faded"
                 color="danger"
                 iconPath={mdiDelete}
-                onClickPromise={() => {
+                onClickPromise={async () => {
                   // return dbs.sessions.update({ id_num: v }, { active: false })
-                  return dbs.sessions.delete({ id_num: v });
+                  await dbs.sessions.delete({ id_num: v });
                 }}
               />
             ),

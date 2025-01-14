@@ -1,6 +1,6 @@
 import { mdiCodeJson } from "@mdi/js";
-import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
-import React, { useState } from "react";
+import { isEqual } from "prostgles-types";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";
@@ -8,12 +8,8 @@ import { FlexCol } from "../../../components/Flex";
 import FormField from "../../../components/FormField/FormField";
 import { JSONBSchema } from "../../../components/JSONBSchema/JSONBSchema";
 import { Section } from "../../../components/Section";
-import CodeEditor from "../../CodeEditor/CodeEditor";
-import { SmartCodeEditor } from "../../CodeEditor/SmartCodeEditor";
-import {
-  useCodeEditorTsTypes,
-  useMethodDefinitionTypes,
-} from "./useMethodDefinitionTypes";
+import { MethodDefinitionEditAsJson } from "./MethodDefinitionEditAsJson";
+import { MethodFunctionDefinition } from "./MethodFunctionDefinition";
 
 export type MethodDefinitionProps = {
   onChange: (newMethod: MethodDefinitionProps["method"]) => void;
@@ -31,85 +27,43 @@ export type MethodDefinitionProps = {
   | "dbs"
 >;
 
-export const MethodDefinition = ({
-  onChange,
-  method,
-  tables,
-  dbsTables,
-  db,
-  connectionId,
-  dbsMethods,
-  dbKey,
-  renderMode,
-  dbs,
-}: MethodDefinitionProps) => {
-  const tsLibraries = useCodeEditorTsTypes({ connectionId, dbsMethods, dbKey });
-  const { tsMethodDef } = useMethodDefinitionTypes({ method, tables, dbs });
-  const methodsTable = dbsTables.find((t) => t.name === "published_methods");
-  const methodArgsCol = methodsTable?.columns.find(
-    (c) => c.name === "arguments",
-  );
+export const MethodDefinition = (props: MethodDefinitionProps) => {
+  const {
+    onChange,
+    method,
+    tables,
+    dbsTables,
+    db,
+    connectionId,
+    renderMode,
+    dbs,
+  } = props;
 
   const [editAsJSON, seteditAsJSON] = useState(false);
 
-  const jsonSchemas = [
-    {
-      id: "published_methods",
-      schema: getJSONBSchemaAsJSONSchema("published_methods", "arguments", {
-        type: {
-          ...methodsTable?.columns
-            .filter((c) => ["arguments"].includes(c.name))
-            .reduce(
-              (a, v) => ({
-                ...a,
-                [v.name]: { type: v.tsDataType, nullable: v.is_nullable },
-              }),
-              {},
-            ),
-          arguments: methodArgsCol?.jsonbSchema as any,
-        },
-      }),
-    },
-  ];
+  const { methodArgsCol } = useMemo(() => {
+    const methodsTable = dbsTables.find((t) => t.name === "published_methods");
+    const methodArgsCol = methodsTable?.columns.find(
+      (c) => c.name === "arguments",
+    );
+
+    return {
+      methodArgsCol,
+    };
+  }, [dbsTables]);
 
   const renderCode = renderMode === "Code";
-
-  const Code = (
-    <SmartCodeEditor
-      key={tsMethodDef}
-      label={
-        renderCode ? undefined : (
-          "Server-side TypeScript function triggered by a button press"
-        )
-      }
-      language={{
-        lang: "typescript",
-        modelFileName: method.name ?? "myModel",
-        tsLibraries: [
-          ...tsLibraries,
-          { filePath: "file:///ProstglesMethod.ts", content: tsMethodDef },
-        ],
-      }}
-      value={method.run ?? ""}
-      options={{
-        glyphMargin: false,
-        padding: renderCode ? { top: 16, bottom: 0 } : undefined,
-        lineNumbersMinChars: renderCode ? 4 : 0,
-      }}
-      autoSave={!renderCode}
-      onSave={(run) => onChange({ ...method, run })}
-      codeEditorClassName={renderCode ? "b-none" : ""}
-    />
-  );
-
   const methodName = method.name;
+
+  const codeEditorNode = <MethodFunctionDefinition {...props} />;
+
   const { data: clashingMethod } = dbs.published_methods.useFindOne({
     ...(method.id && { id: { $ne: method.id } }),
     name: methodName,
     connection_id: connectionId,
   });
 
-  if (renderCode) return Code;
+  if (renderCode) return codeEditorNode;
 
   return (
     <FlexCol className="MethodDefinition f-1 gap-p5">
@@ -127,28 +81,11 @@ export const MethodDefinition = ({
         </Btn>
       </div>
       {editAsJSON ?
-        <CodeEditor
-          style={{
-            minWidth: "600px",
-            minHeight: "400px",
-          }}
-          language={{
-            lang: "json",
-            jsonSchemas,
-          }}
-          value={JSON.stringify(method, null, 2)}
-          onChange={(val) => {
-            try {
-              const newMethod = JSON.parse(val);
-              onChange(newMethod);
-            } catch (err) {
-              console.error(err);
-            }
-          }}
-        />
+        <MethodDefinitionEditAsJson {...props} />
       : <>
           <FlexCol className="p-1">
             <FormField
+              id="function_name"
               label="Name"
               value={method.name}
               error={clashingMethod ? "Name already exists" : undefined}
@@ -157,6 +94,7 @@ export const MethodDefinition = ({
               }}
             />
             <FormField
+              id="function_description"
               type="text"
               value={method.description}
               label={"Description"}
@@ -182,7 +120,7 @@ export const MethodDefinition = ({
                 contentClassName="flex-col gap-1  f-1"
                 open={true}
               >
-                {Code}
+                {codeEditorNode}
               </Section>
               <Section title="Result" contentClassName="flex-col gap-1 p-1 f-1">
                 <p className="ta-start m-0">

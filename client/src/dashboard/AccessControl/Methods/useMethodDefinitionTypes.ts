@@ -1,56 +1,90 @@
 import { usePromise } from "prostgles-client/dist/prostgles";
-import type { TSLibrary } from "../../CodeEditor/CodeEditor";
-import type { MethodDefinitionProps } from "./MethodDefinition";
+import { isDefined } from "../../../utils";
+import type { LanguageConfig, TSLibrary } from "../../CodeEditor/CodeEditor";
 import { dboLib, pgPromiseDb, wsLib } from "../../CodeEditor/monacoTsLibs";
+import type { MethodDefinitionProps } from "./MethodDefinition";
 
-export const useCodeEditorTsTypes = ({
-  connectionId,
-  dbsMethods,
-  dbKey,
-}: Pick<MethodDefinitionProps, "dbsMethods" | "connectionId" | "dbKey">) => {
+type Args = Pick<
+  MethodDefinitionProps,
+  "dbsMethods" | "connectionId" | "dbKey" | "tables" | "dbs"
+> & {
+  method: MethodDefinitionProps["method"] | undefined;
+};
+export const useCodeEditorTsTypes = (
+  args: Args,
+): LanguageConfig | undefined => {
+  const { connectionId, dbsMethods, dbKey, method, tables, dbs } = args;
   const dbSchemaTypes = usePromise(async () => {
-    if (dbsMethods.getAPITSDefinitions && connectionId && dbKey) {
-      const dbSchemaTypes =
-        await dbsMethods.getConnectionDBTypes?.(connectionId);
-      return dbSchemaTypes;
-    }
-  }, [dbsMethods, connectionId, dbKey]);
+    const dbSchemaTypes = await dbsMethods.getConnectionDBTypes?.(connectionId);
+    return dbSchemaTypes;
+  }, [dbsMethods, connectionId]);
 
-  return [
-    {
-      filePath: "file:///node_modules/@types/ws/index.d.ts",
-      content: wsLib,
-    },
-    {
-      filePath: "file:///node_modules/@types/dbo/index.d.ts",
-      content: `declare global { ${dboLib} }; export {}`,
-    },
-    {
-      filePath: "file:///pgPromiseDb.ts",
-      content: pgPromiseDb,
-    },
-    {
-      filePath: "file:///DBSchemaGenerated.ts",
-      content: `declare global {   ${dbSchemaTypes?.dbSchema ?? ""} }; export {}`,
-    },
-    {
-      filePath: "file:///node_modules/@types/ProstglesOnMount/index.d.ts",
-      content: `declare global { 
+  const tsLibrariesAndModelName = usePromise(async () => {
+    if (
+      dbSchemaTypes &&
+      dbsMethods.getAPITSDefinitions &&
+      connectionId &&
+      dbKey
+    ) {
+      const methodTsLib = await fetchMethodDefinitionTypes({
+        dbs,
+        method,
+        tables,
+      });
+      const tsLibraries: TSLibrary[] = [
+        {
+          filePath: "file:///node_modules/@types/ws/index.d.ts",
+          content: wsLib,
+        },
+        {
+          filePath: "file:///node_modules/@types/dbo/index.d.ts",
+          content: `declare global { ${dboLib} }; export {}`,
+        },
+        {
+          filePath: "file:///pgPromiseDb.ts",
+          content: pgPromiseDb,
+        },
+        {
+          filePath: "file:///DBGeneratedSchema.ts",
+          content: `declare global {   ${dbSchemaTypes.dbSchema} }; export {}`,
+        },
+        {
+          filePath: "file:///node_modules/@types/ProstglesOnMount/index.d.ts",
+          content: `declare global { 
+          /**
+           * Function that will be called after the table is created and server started or schema changed
+           */
+          export type ProstglesOnMount = (args: { dbo: Required<DBOFullyTyped<DBGeneratedSchema>>; db: pgPromise.DB; }) => void | Promise<void>; 
+        }; 
+        export {} `,
+        },
+        methodTsLib,
+      ].filter(isDefined);
+      return {
+        tsLibraries,
         /**
-         * Function that will be called after the table is created and server started or schema changed
+         * Using the same name for onmount and method will result in all editors showing the same content (first value)
          */
-        export type ProstglesOnMount = (args: { dbo: Required<DBOFullyTyped<DBSchemaGenerated>>; db: pgPromise.DB; }) => void | Promise<void>; 
-      }; 
-      export {} `,
-    },
-  ] satisfies TSLibrary[];
+        modelFileName: method ? `${method.name}` : `onMount_${connectionId}`,
+      };
+    }
+  }, [dbsMethods, connectionId, dbKey, method, tables, dbs, dbSchemaTypes]);
+
+  if (!tsLibrariesAndModelName) return;
+
+  return {
+    lang: "typescript",
+    ...tsLibrariesAndModelName,
+  };
 };
 
-export const useMethodDefinitionTypes = ({
+const fetchMethodDefinitionTypes = async ({
   tables,
   method,
   dbs,
-}: Pick<MethodDefinitionProps, "tables" | "method" | "dbs">) => {
+}: Pick<Args, "tables" | "method" | "dbs">) => {
+  if (!method) return;
+  const userTypes = await dbs.user_types.find();
   const argumentTypes = method.arguments?.map((a) => {
     let type: string = a.type;
     if (a.type === "Lookup" && (a.lookup as any)) {
@@ -71,19 +105,20 @@ export const useMethodDefinitionTypes = ({
   const argumentType =
     argumentTypes?.length ? `{ \n${argumentTypes.join("")} \n}` : "never";
 
-  const { data: userTypes } = dbs.user_types.useFind();
-  const userTypesTs =
-    userTypes?.map((t) => JSON.stringify(t.id)).join(" | ") ?? "string";
+  const userTypesTs = userTypes.map((t) => JSON.stringify(t.id)).join(" | ");
   const tsMethodDef = `
   type ProstglesMethod = (
     args: ${argumentType},
     ctx: {
       db: pgPromise.DB;
-      dbo: DBOFullyTyped<DBSchemaGenerated>; 
+      dbo: DBOFullyTyped<DBGeneratedSchema>; 
       tables: any[];
       user: { id: string; type: ${userTypesTs}; };
     }
   ) => Promise<any>`;
 
-  return { tsMethodDef };
+  return {
+    filePath: `file:///ProstglesMethod.ts`,
+    content: tsMethodDef,
+  } satisfies TSLibrary;
 };

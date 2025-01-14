@@ -161,7 +161,7 @@ export const osmRelationToGeoJSON = (
     return null;
   }
 
-  const polygons: [[number, number][][]] = outerRings.map((outerRing) => {
+  const polygons: [[number, number][]][] = outerRings.map((outerRing) => {
     const polygon: [[number, number][]] = [outerRing];
 
     // Assign inner rings to this outer ring if needed
@@ -175,6 +175,7 @@ export const osmRelationToGeoJSON = (
   });
 
   // Create the GeoJSON geometry
+  // @ts-ignore
   const geometry: Geometry =
     polygons.length > 1 ?
       {

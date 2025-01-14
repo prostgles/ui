@@ -32,7 +32,7 @@ export const ColorByLegend = ({ className, style, onChanged, ...props }: P) => {
     layers,
   } = props;
   const { getColor, valueStyles, oldLayerWindow } = getGroupByValueColor(props);
-  const latestCols = oldLayerWindow?.$get().columns;
+  const latestCols = oldLayerWindow?.$get()?.columns;
   const currCol = latestCols?.find((c) => c.name === props.groupByColumn);
 
   const setColumnStyle = (newStyle: ColumnConfig["style"]) => {
@@ -171,7 +171,7 @@ export const getGroupByValueColor = ({
   const layerWindow = oldLayerWindow?.$get();
   const gbCol = oldLayerWindow
     ?.$get()
-    .columns?.find((c) => c.name === groupByColumn);
+    ?.columns?.find((c) => c.name === groupByColumn);
   const style = gbCol?.style;
   const valueStyles =
     (

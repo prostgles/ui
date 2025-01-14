@@ -11,6 +11,7 @@ import { Sessions } from "./Sessions";
 import { Setup2FA } from "./Setup2FA";
 import { FlexRow } from "../../components/Flex";
 import { ChangePassword } from "./ChangePassword";
+import { InfoRow } from "../../components/InfoRow";
 
 type AccountProps = ExtraProps;
 
@@ -22,8 +23,14 @@ export const Account = (props: AccountProps) => {
     id: auth.user?.state_db_id,
   });
 
+  const notAllowedBanner = (
+    <InfoRow>
+      <h2>Not allowed</h2>
+      <p>You are not allowed to access</p>
+    </InfoRow>
+  );
   if (!user || user.type === "public") {
-    return null;
+    return notAllowedBanner;
   }
 
   if (user.passwordless_admin) {
@@ -40,6 +47,7 @@ export const Account = (props: AccountProps) => {
   const allowedColumns = [
     "id",
     "username",
+    "email",
     "name",
     "type",
     "status",
@@ -91,13 +99,13 @@ export const Account = (props: AccountProps) => {
       leftIconPath: mdiApplicationBracesOutline,
       content: (
         <div className="flex-col gap-1 px-1 f-1">
-          {dbsConnection && (
+          {dbsConnection ?
             <APIDetails
               {...props}
-              projectPath={"/iosckt"}
-              connectionId={dbsConnection.id}
+              projectPath={props.serverState.dbsWsApiPath}
+              connection={dbsConnection}
             />
-          )}
+          : notAllowedBanner}
         </div>
       ),
     },

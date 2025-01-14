@@ -5,6 +5,7 @@ import {
   TablePermissionControls,
 } from "../TableRules/TablePermissionControls";
 import type { DBPermissionEditorProps } from "./PCustomTables";
+import type { TableRules } from "../../../../../commonTypes/publishUtils";
 
 export const PAllTables = ({
   dbPermissions,
@@ -15,6 +16,10 @@ export const PAllTables = ({
   tablesWithRules,
 }: DBPermissionEditorProps<"All views/tables">) => {
   const { tables } = prgl;
+
+  const tableRules: TableRules = getBasicPermissions(
+    dbPermissions.allowAllTables.reduce((a, v) => ({ ...a, [v]: true }), {}),
+  );
   return (
     <div className="flex-col gap-1">
       <h4 className="my-1">Allowed on {tables.length} tables:</h4>
@@ -24,17 +29,12 @@ export const PAllTables = ({
         contextData={contextData}
         tablesWithRules={tablesWithRules}
         errors={{}}
-        tableRules={getBasicPermissions(
-          dbPermissions.allowAllTables.reduce(
-            (a, v) => ({ ...a, [v]: true }),
-            {},
-          ),
-        )}
+        tableRules={tableRules}
         onChange={(newRules) => {
           let allowAllTables = [...dbPermissions.allowAllTables];
           const newRule = getKeys(newRules)[0];
 
-          if (newRule) {
+          if (newRule && newRule !== "subscribe" && newRule !== "sync") {
             allowAllTables =
               !newRules[newRule] ?
                 allowAllTables.filter((v) => v !== newRule)

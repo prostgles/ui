@@ -149,6 +149,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
+      config?: null | {    enabled: boolean;   path: string;  };
       created?: null | string;
       db_conn?: null | string;
       db_connection_timeout?: null | number;
@@ -179,6 +180,7 @@ export type DBGeneratedSchema = {
       ssl_reject_unauthorized?: null | boolean;
       table_options?: null | Partial<Record<string,  {  icon?: string; }>>
       type: "Standard" | "Connection URI" | "Prostgles"
+      url_path?: null | string;
       user_id?: null | string;
     };
   };
@@ -266,8 +268,8 @@ export type DBGeneratedSchema = {
       allowed_ips?: string[];
       allowed_ips_enabled?: boolean;
       allowed_origin?: null | string;
-      auth_providers?: null | {    website_url: string;   created_user_type?: string;   email?: |  {  signupType: 'withMagicLink';  enabled?: boolean;  emailMagicLink: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  smtp?: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate?: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; }
- |  {  signupType: 'withPassword';  enabled?: boolean;  minPasswordLength?: number;  emailConfirmation?: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  smtp?: |  {  type: 'smtp';  host: string;  port: number;  secure: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate?: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; };   google?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("profile" | "email" | "calendar" | "calendar.readonly" | "calendar.events" | "calendar.events.readonly")[]; }; };   github?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("read:user" | "user:email")[]; }; };   microsoft?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  prompt: 'login' | 'none' | 'consent' | 'select_account' | 'create';  scope: ("openid" | "profile" | "email" | "offline_access" | "User.Read" | "User.ReadBasic.All" | "User.Read.All")[]; }; };   facebook?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("email" | "public_profile" | "user_birthday" | "user_friends" | "user_gender" | "user_hometown")[]; }; };  };
+      auth_providers?: null | {    website_url: string;   created_user_type?: string;   email?: |  {  signupType: 'withMagicLink';  enabled?: boolean;  smtp: |  {  type: 'smtp';  host: string;  port: number;  secure?: boolean;  rejectUnauthorized?: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; }
+ |  {  signupType: 'withPassword';  enabled?: boolean;  minPasswordLength?: number;  smtp: |  {  type: 'smtp';  host: string;  port: number;  secure?: boolean;  rejectUnauthorized?: boolean;  user: string;  pass: string; } |  {  type: 'aws-ses';  region: string;  accessKeyId: string;  secretAccessKey: string;  sendingRate?: number; };  emailTemplate: {  from: string;  subject: string;  body: string; };  emailConfirmationEnabled?: boolean; };   google?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("profile" | "email" | "calendar" | "calendar.readonly" | "calendar.events" | "calendar.events.readonly")[]; }; };   github?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("read:user" | "user:email")[]; }; };   microsoft?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  prompt: 'login' | 'none' | 'consent' | 'select_account' | 'create';  scope: ("openid" | "profile" | "email" | "offline_access" | "User.Read" | "User.ReadBasic.All" | "User.Read.All")[]; }; };   facebook?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  authOpts?: {  scope: ("email" | "public_profile" | "user_birthday" | "user_friends" | "user_gender" | "user_hometown")[]; }; };   customOAuth?: {  enabled?: boolean;  clientID: string;  clientSecret: string;  displayName: string;  displayIconPath?: string;  authorizationURL: string;  tokenURL: string;  authOpts?: {  scope: string[]; }; };  };
       enable_logs?: boolean;
       id?: number;
       login_rate_limit?: {    maxAttemptsPerHour: number;   groupBy: 'x-real-ip' | 'remote_ip' | 'ip';  };
@@ -333,7 +335,7 @@ export type DBGeneratedSchema = {
        |  {  Provider: 'OpenAI';  API_Key: string;  model: string;  temperature?: number;  frequency_penalty?: number;  max_completion_tokens?: number;  presence_penalty?: number;  response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt'; }
        |  {  Provider: 'Anthropic';  API_Key: string;  "anthropic-version": string;  model: string;  max_tokens: number; }
        |  {  Provider: 'Custom';  headers?: Record<string, string>;  body?: Record<string, string>; }
-       |  {  Provider: 'Prostgles'; }
+       |  {  Provider: 'Prostgles';  API_Key: string; }
       created?: null | string;
       endpoint?: string;
       id?: number;
@@ -380,7 +382,7 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       auth_provider?: null | string;
-      auth_type: "session-id" | "magic-link" | "login" | "provider"
+      auth_type: "session-id" | "registration" | "email-confirmation" | "magic-link-registration" | "magic-link" | "otp-code" | "login" | "oauth"
       created?: null | string;
       failed?: null | boolean;
       id?: string;
@@ -428,6 +430,7 @@ export type DBGeneratedSchema = {
       id?: string;
       magic_link?: null | string;
       magic_link_used?: null | string;
+      session_expires?: string;
       user_id: string;
     };
   };
@@ -439,8 +442,9 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       arguments?:  ( 
- |  {  name: string;  type: 'string' | 'number' | 'boolean' | 'Date' | 'time' | 'timestamp' | 'string[]' | 'number[]' | 'boolean[]' | 'Date[]' | 'time[]' | 'timestamp[]';  defaultValue?: string;  optional?: boolean;  allowedValues?: string[]; }
- |  {  name: string;  type: 'Lookup' | 'Lookup[]';  defaultValue?: any;  optional?: boolean;  lookup:  {    table: string;   column: string;   filter?: Record<string, any>;   isArray?: boolean;   searchColumns?: string[];   isFullRow?: {  displayColumns?: string[]; };   showInRowCard?: Record<string, any>;  }; } )[]
+ |  {  name: string;  type: 'any' | 'string' | 'number' | 'boolean' | 'Date' | 'time' | 'timestamp' | 'string[]' | 'number[]' | 'boolean[]' | 'Date[]' | 'time[]' | 'timestamp[]';  defaultValue?: string;  optional?: boolean;  allowedValues?: string[]; }
+ |  {  name: string;  type: 'Lookup' | 'Lookup[]';  defaultValue?: any;  optional?: boolean;  lookup:  {    table: string;   column: string;   filter?: Record<string, any>;   isArray?: boolean;   searchColumns?: string[];   isFullRow?: {  displayColumns?: string[]; };   showInRowCard?: Record<string, any>;  }; }
+ |  {  name: string;  type: 'JsonbSchema';  defaultValue?: any;  optional?: boolean;  schema: |  {  type: 'boolean' | 'number' | 'integer' | 'string' | 'Date' | 'time' | 'timestamp' | 'any' | 'boolean[]' | 'number[]' | 'integer[]' | 'string[]' | 'Date[]' | 'time[]' | 'timestamp[]' | 'any[]';  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any; } |  {  type: 'object' | 'object[]';  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any;  properties: Record<string,  {  type: 'boolean' | 'number' | 'integer' | 'string' | 'Date' | 'time' | 'timestamp' | 'any' | 'boolean[]' | 'number[]' | 'integer[]' | 'string[]' | 'Date[]' | 'time[]' | 'timestamp[]' | 'any[]';  optional?: boolean;  nullable?: boolean;  description?: string;  title?: string;  defaultValue?: any; }>; }; } )[]
       connection_id?: null | string;
       description?: string;
       id?: number;
@@ -550,7 +554,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      description?: null | string;
+      en?: null | string;
       id: string;
     };
   };
@@ -572,8 +576,13 @@ export type DBGeneratedSchema = {
       last_updated?: null | string;
       name?: null | string;
       options?: null | {    showStateDB?: boolean;   hideNonSSLWarning?: boolean;   viewedSQLTips?: boolean;   viewedAccessInfo?: boolean;   theme?: 'dark' | 'light' | 'from-system';  };
-      password?: string;
+      password: string;
       passwordless_admin?: null | boolean;
+      registration?: 
+       | null
+       |  {  type: 'password-w-email-confirmation';  email_confirmation: |  {  status: 'confirmed';  date: string; } |  {  status: 'pending';  confirmation_code: string;  date: string; }; }
+       |  {  type: 'magic-link';  otp_code: string;  date: string;  used_on?: string; }
+       |  {  type: 'OAuth';  provider: 'google' | 'facebook' | 'github' | 'microsoft' | 'customOAuth';  user_id: string;  profile: any; }
       status?: string;
       type?: string;
       username: string;

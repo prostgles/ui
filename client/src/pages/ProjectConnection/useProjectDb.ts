@@ -36,6 +36,8 @@ type P = {
   connId: string | undefined;
   prglState: PrglState;
 };
+export const isPlaywrightTest =
+  navigator.userAgent.includes("Playwright") || navigator.webdriver;
 
 const onDebug: UseProstglesClientProps["onDebug"] = (ev) => {
   if (
@@ -86,7 +88,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
       reconnectionDelay: 1000,
       reconnection: true,
     },
-    // onDebug,
+    onDebug: isPlaywrightTest ? onDebug : undefined,
     skip: !pathAndCon?.path,
   });
 

@@ -1,5 +1,5 @@
 import React from "react";
-import CodeEditor from "../dashboard/CodeEditor/CodeEditor";
+import { CodeEditor } from "../dashboard/CodeEditor/CodeEditor";
 
 type P = {
   platform:

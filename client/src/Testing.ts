@@ -1,5 +1,5 @@
 export const COMMANDS = {
-  "config.goToConnDashboard": "Go to connection workspace",
+  "config.goToConnDashboard": "Go to connection workspace ",
   "config.details": "",
   "config.bkp": "",
   "config.tableConfig": "",
@@ -259,6 +259,13 @@ export const COMMANDS = {
   "AddLLMCredentialForm.Save": "",
   "AddLLMCredentialForm.Provider": "",
   "App.LanguageSelector": "",
+  "EmailAuthSetup.SignupType": "",
+  EmailAuthSetup: "",
+  "EmailAuthSetup.error": "",
+  EmailSMTPAndTemplateSetup: "",
+  "Login.toggle": "",
+  AuthNotifPopup: "",
+  "ProstglesSignup.continue": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

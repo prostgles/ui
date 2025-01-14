@@ -10,7 +10,7 @@ export const LANG = "sql";
  * This option seems to start downloading monaco (870.js) from the start: webpackPrefetch: true
  */
 export const getMonaco = async () => {
-  const monaco = import(
+  const monaco = await import(
     /* webpackChunkName: "monaco_editorr" */ /*  webpackPrefetchNot */ "monaco-editor/esm/vs/editor/editor.api.js"
   );
   return monaco;
@@ -173,13 +173,13 @@ export type MonacoError = Pick<
 };
 
 import { mdiPlay } from "@mdi/js";
-import { isEqual } from "prostgles-client/dist/react-hooks";
+import { isEqual } from "prostgles-types";
 import type { SQLHandler } from "prostgles-types";
 import Btn from "../../components/Btn";
 import { getDataTransferFiles } from "../../components/FileInput/DropZone";
 import { FlexCol } from "../../components/Flex";
 import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
-import { isEmpty, omitKeys } from "../../utils";
+import { isEmpty, omitKeys } from "prostgles-types";
 import { SECOND } from "../Charts";
 import type { DashboardState } from "../Dashboard/Dashboard";
 import type { WindowData } from "../Dashboard/dashboardUtils";
@@ -212,6 +212,8 @@ import {
 import { defineCustomSQLTheme } from "./defineCustomSQLTheme";
 import type { GetFuncs } from "./registerFunctionSuggestions";
 import { registerFunctionSuggestions } from "./registerFunctionSuggestions";
+import { scrollToLineIfNeeded } from "./utils/scrollToLineIfNeeded";
+import { setMonacEditorError } from "./utils/setMonacEditorError";
 
 export type SQLEditorRef = {
   editor: editor.IStandaloneCodeEditor;
@@ -250,7 +252,7 @@ type S = {
   themeAge: number;
 };
 
-export default class SQLEditor extends RTComp<P, S> {
+export class SQLEditor extends RTComp<P, S> {
   ref?: HTMLElement;
   editor?: editor.IStandaloneCodeEditor;
   error?: MonacoError;
@@ -283,21 +285,6 @@ export default class SQLEditor extends RTComp<P, S> {
     await this.props.onUnmount?.(this.editor, this.editor?.getPosition());
     if (this.rootRef) this.resizeObserver?.unobserve(this.rootRef);
   }
-
-  scrollToLineIfNeeded = (lineNumber: number) => {
-    if (!this.editor) return;
-
-    const [vL1] = this.editor.getVisibleRanges();
-    if (
-      vL1 &&
-      !(
-        vL1.startLineNumber - 1 <= lineNumber &&
-        vL1.endLineNumber + 1 >= lineNumber
-      )
-    ) {
-      this.editor.revealLineInCenterIfOutsideViewport(lineNumber);
-    }
-  };
 
   tooltipHandler: any;
   loadedSuggestions: DashboardState["suggestions"];
@@ -360,99 +347,22 @@ export default class SQLEditor extends RTComp<P, S> {
     }
 
     /* SET ERROR */
-    if (
-      this.editor &&
-      JSON.stringify(this.error || {}) !== JSON.stringify(error || {})
-    ) {
+    if (this.editor && !isEqual(error, this.error)) {
       this.error = error;
-      const model = this.editor.getModel();
-      if (!model) return;
-      if (!error) monaco.editor.setModelMarkers(model, "test", []);
-      else {
-        let offset: Partial<IRange> = {};
-        if (typeof error.position === "number") {
-          let pos = error.position - 1 || 0;
-          let len = error.length || 10;
-          let selectionStartIndex = 0;
-          let codeLength = model.getValue().length;
-          let selectionLength = 0;
-          const sel = this.editor.getSelection();
-          if (sel) {
-            const selection = this.editor.getModel()?.getValueInRange(sel);
-            // let selectionOffset = 0;
-            if (selection) {
-              selectionStartIndex = model.getOffsetAt({
-                column: sel.startColumn,
-                lineNumber: sel.startLineNumber,
-              });
-              selectionLength = selection.length;
-            }
-          }
-
-          if (!selectionLength) {
-            const codeBlock = await this.getCurrentCodeBlock();
-            if (codeBlock) {
-              selectionStartIndex = model.getOffsetAt({
-                column: 1,
-                lineNumber: codeBlock.startLine,
-              });
-              selectionLength = codeBlock.text.length;
-            }
-          }
-
-          if (selectionLength) {
-            codeLength = selectionLength;
-            pos += selectionStartIndex;
-          }
-          /** Ensure error does not extend beyond active code */
-          len = Math.max(
-            1,
-            Math.min(len, selectionStartIndex + codeLength - pos),
-          );
-
-          const s = model.getPositionAt(pos);
-          const e = model.getPositionAt(pos + len);
-          offset = {
-            startLineNumber: s.lineNumber,
-            startColumn: s.column,
-            endLineNumber: e.lineNumber,
-            endColumn: e.column,
-          };
-          /** Do not reposition cursor on error */
-          // this.editor.setPosition(s);
-          this.scrollToLineIfNeeded(s.lineNumber);
-        }
-
-        if (sqlOptions?.errorMessageDisplay !== "bottom") {
-          const messageContribution = this.editor.getContribution(
-            "editor.contrib.messageController",
-          );
-          (messageContribution as any).showMessage(error.message, {
-            ...this.editor.getPosition(),
-            lineNumber: offset.startLineNumber,
-            column: offset.endColumn,
-          });
-        }
-
-        monaco.editor.setModelMarkers(model, "test", [
-          {
-            startLineNumber: 0,
-            startColumn: 0,
-            endLineNumber: 0,
-            endColumn: 5,
-            code: "error.code",
-            ...error,
-            ...offset,
-          },
-        ]);
-      }
+      setMonacEditorError(
+        this.editor,
+        monaco,
+        this.getCurrentCodeBlock,
+        sqlOptions?.errorMessageDisplay,
+        error,
+      );
     }
   };
 
   inDebounce: any;
   curVal?: string;
   onChange = (val: string) => {
-    const { value = "", onChange, debounce = 300 } = this.props;
+    const { onChange, debounce = 300 } = this.props;
 
     this.curVal = val;
     if (this.inDebounce) window.clearTimeout(this.inDebounce);
@@ -500,10 +410,77 @@ export default class SQLEditor extends RTComp<P, S> {
   codeBlockSignature?: CodeBlockSignature;
   currentCodeBlock: CodeBlock | undefined;
 
+  get editorOptions() {
+    const { sqlOptions } = this.props;
+
+    const { canExecuteBlocks } = this;
+    return {
+      fixedOverflowWidgets: true,
+      folding: true,
+      automaticLayout: true,
+      padding: {
+        top: 12,
+      },
+      parameterHints: {
+        enabled: !window.isMobileDevice,
+      },
+      quickSuggestions: {
+        strings: true,
+      },
+      ...omitKeys(sqlOptions ?? {}, [
+        "maxCharsPerCell",
+        "renderMode",
+        "executeOptions",
+        "errorMessageDisplay",
+      ]),
+
+      ...(canExecuteBlocks && {
+        /** Needed for play button */
+        glyphMargin: true,
+        lineNumbersMinChars: 3,
+      }),
+    };
+  }
+
+  onMonacoEditorMount = (editor: editor.IStandaloneCodeEditor) => {
+    const { onMount, sqlOptions } = this.props;
+    addSqlEditorFunctions(
+      editor,
+      sqlOptions?.executeOptions === "smallest-block",
+    );
+
+    this.setState({ editorMounted: true });
+    if (onMount) {
+      onMount({
+        editor,
+        getSelectedText: () => getSelectedText(editor),
+        getCurrentCodeBlock: this.getCurrentCodeBlock,
+      });
+    }
+    this.editor = editor;
+    setActions(editor, this);
+    editor.onDidChangeModelContent((e) => {
+      this.onChange(editor.getValue());
+      setActiveCodeBlock.bind(this)(undefined);
+    });
+    editor.onDidChangeCursorPosition(async (e) => {
+      setActiveCodeBlock.bind(this)(e);
+    });
+
+    const { cursorPosition } = this.props;
+    if (cursorPosition && !isEmpty(cursorPosition)) {
+      this.editor.setPosition(cursorPosition);
+
+      setTimeout(() => {
+        if (!this.mounted || !this.editor) return;
+        scrollToLineIfNeeded(this.editor, cursorPosition.lineNumber || 1);
+      }, SECOND / 2);
+    }
+  };
+
   render() {
     const { value = "" } = this.state;
     const {
-      onMount,
       style = {},
       className = "",
       sqlOptions,
@@ -590,68 +567,8 @@ export default class SQLEditor extends RTComp<P, S> {
           loadedSuggestions={this.props.suggestions}
           /** This is used to show documentation (expandSuggestionDocs) */
           expandSuggestionDocs={sqlOptions?.expandSuggestionDocs}
-          options={{
-            fixedOverflowWidgets: true,
-            folding: true,
-            automaticLayout: true,
-            padding: {
-              top: 12,
-            },
-            parameterHints: {
-              enabled: !window.isMobileDevice,
-            },
-            quickSuggestions: {
-              strings: true,
-            },
-            ...(!sqlOptions ?
-              {}
-            : omitKeys(sqlOptions, [
-                "maxCharsPerCell",
-                "renderMode",
-                "executeOptions",
-                "errorMessageDisplay",
-              ])),
-
-            ...(canExecuteBlocks && {
-              /** Needed for play button */
-              glyphMargin: true,
-              lineNumbersMinChars: 3,
-            }),
-          }}
-          onMount={(editor) => {
-            addSqlEditorFunctions(
-              editor,
-              sqlOptions?.executeOptions === "smallest-block",
-            );
-
-            this.setState({ editorMounted: true });
-            if (onMount) {
-              onMount({
-                editor,
-                getSelectedText: () => getSelectedText(editor),
-                getCurrentCodeBlock: this.getCurrentCodeBlock,
-              });
-            }
-            this.editor = editor;
-            setActions(editor, this);
-            editor.onDidChangeModelContent((e) => {
-              this.onChange(editor.getValue());
-              setActiveCodeBlock.bind(this)(undefined);
-            });
-            editor.onDidChangeCursorPosition(async (e) => {
-              setActiveCodeBlock.bind(this)(e);
-            });
-
-            const { cursorPosition } = this.props;
-            if (cursorPosition && !isEmpty(cursorPosition)) {
-              this.editor.setPosition(cursorPosition);
-
-              setTimeout(() => {
-                if (!this.mounted || !this.editor) return;
-                this.scrollToLineIfNeeded(cursorPosition.lineNumber || 1);
-              }, SECOND / 2);
-            }
-          }}
+          options={this.editorOptions}
+          onMount={this.onMonacoEditorMount}
         />
       </div>
     );

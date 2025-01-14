@@ -4,16 +4,16 @@ import type pg from "pg-promise/typescript/pg-subset";
 import prostgles from "prostgles-server";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import { pickKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
+import { pickKeys } from "prostgles-types";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { Server } from "socket.io";
 import type { DBS } from ".";
-import { connMgr, connectionChecker } from ".";
-import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import { connMgr, connectionChecker, dbsWsApiPath } from ".";
+import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import type { ProstglesInitState } from "../../commonTypes/electronInit";
 import BackupManager from "./BackupManager/BackupManager";
 import { addLog, setLoggerDBS } from "./Logger";
-import { getAuth } from "./authConfig/authConfig";
+import { getAuth } from "./authConfig/getAuth";
 import { setAuthReloader } from "./authConfig/setAuthReloader";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import type { DBSConnectionInfo } from "./electronConfig";
@@ -21,12 +21,12 @@ import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { DBS_CONNECTION_INFO } from "./envVars";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { publish } from "./publish";
-import { insertDefaultPrompts } from "./publishMethods/askLLM/askLLM";
 import { publishMethods } from "./publishMethods/publishMethods";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
-import { tableConfig } from "./tableConfig";
+import { tableConfig } from "./tableConfig/tableConfig";
 import { findRawTextInJSX } from "./findJsxText";
+import { insertDefaultPrompts } from "./publishMethods/askLLM/askLLM";
 
 type StartArguments = {
   app: Express;
@@ -45,7 +45,7 @@ export const initBackupManager = async (db: DB, dbs: DBS) => {
 export let statePrgl: InitResult | undefined;
 
 type ProstglesStartupState =
-  | { ok: true; init?: undefined; conn?: undefined }
+  | { ok: true; init?: undefined; conn?: undefined; dbs: DBS }
   | { ok?: undefined; init?: any; conn?: any };
 
 export const startProstgles = async ({
@@ -98,9 +98,9 @@ export const startProstgles = async ({
         undefined
       : path.join(actualRootDir + "/../commonTypes/");
     const watchSchema = !!tsGeneratedTypesDir;
-    const auth = getAuth(app);
-    //@ts-ignore
-    const prgl = await prostgles<DBSchemaGenerated>({
+    const auth = await getAuth(app, undefined);
+
+    const prgl = await prostgles<DBGeneratedSchema>({
       dbConnection: {
         ...validatedDbConnection,
         connectionTimeoutMillis: 10 * 1000,
@@ -113,12 +113,11 @@ export const startProstgles = async ({
       transactions: true,
       onSocketConnect: async ({ socket, dbo, getUser }) => {
         const user = await getUser();
-        const userId = user?.user?.id;
-        const sid = user?.sid;
+        const userId = user.user?.id;
+        const sid = user.sid;
 
         await connectionChecker.onSocketConnected({
           sid,
-          getUser: getUser as any,
         });
 
         if (sid) {
@@ -166,9 +165,8 @@ export const startProstgles = async ({
       onSocketDisconnect: async (params) => {
         const { dbo, getUser } = params;
 
-        //@ts-ignore
         const user = await getUser();
-        const sid = user?.sid;
+        const sid = user.sid;
         if (sid) {
           await dbo.sessions.update({ id: sid }, { is_connected: false });
         }
@@ -235,7 +233,7 @@ export const startProstgles = async ({
     statePrgl = prgl;
 
     startDevHotReloadNotifier({ io, port, host });
-    return { ok: true };
+    return { ok: true, dbs: prgl.db as DBS };
   } catch (err) {
     return { init: err };
   }
@@ -251,11 +249,15 @@ const _initState: Pick<
   httpListening?: {
     port: number;
   };
+  dbs: DBS | undefined;
 } = {
   ok: false,
   loading: false,
   loaded: false,
+  dbs: undefined,
 };
+
+export type InitState = typeof _initState;
 
 let connHistory: string[] = [];
 export const tryStartProstgles = async ({
@@ -282,8 +284,9 @@ export const tryStartProstgles = async ({
       connHistory.push(connHistoryItem);
       try {
         const status = await startProstgles({ app, io, con, port, host });
-        _initState.connectionError = status.conn;
-        _initState.initError = status.init;
+        if (status.ok) {
+          _initState.dbs = status.dbs;
+        }
 
         const databaseDoesNotExist = status.conn?.code === "3D000";
         if (status.ok || databaseDoesNotExist) {
@@ -328,6 +331,7 @@ export const getInitState = (): typeof _initState & ProstglesInitState => {
   return {
     isElectron: !!eConfig?.isElectron,
     electronCredsProvided: !!eConfig?.hasCredentials(),
+    dbsWsApiPath,
     ..._initState,
     canDumpAndRestore: bkpManager?.installedPrograms,
   };

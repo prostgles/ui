@@ -1,5 +1,6 @@
-import { getKeys, isEmpty } from "prostgles-types";
-export { getKeys, isEmpty };
+import type { InitOptions } from "prostgles-client/dist/prostgles";
+import { getKeys, isEmpty, isDefined } from "prostgles-types";
+export { getKeys, isEmpty, isDefined };
 import type { AnyObject } from "prostgles-types";
 import { isObject } from "prostgles-types";
 export const get = (nestedObj: any, pathArr: string | (string | number)[]) => {
@@ -39,39 +40,6 @@ export function filterObj<T extends AnyObject, K extends keyof T>(
 
 export function ifEmpty(v: any, replaceValue: any) {
   return isEmpty(v) ? replaceValue : v;
-}
-
-export function omitKeys<T extends AnyObject, Exclude extends keyof T>(
-  obj: T,
-  exclude: Exclude[],
-): Omit<T, Exclude> {
-  return pickKeys(
-    obj,
-    getKeys(obj).filter((k) => !exclude.includes(k as any)),
-  );
-}
-
-export function pickKeys<T extends AnyObject, Include extends keyof T>(
-  obj: T,
-  include: Include[] = [],
-  onlyIfDefined = false,
-): Pick<T, Include> {
-  const keys = include;
-  if (!keys.length) {
-    return {} as any;
-  }
-  if (keys.length) {
-    const res: AnyObject = {};
-    keys.forEach((k) => {
-      if (onlyIfDefined && obj[k] === undefined) {
-      } else {
-        res[k] = obj[k];
-      }
-    });
-    return res as any;
-  }
-
-  return obj;
 }
 
 export function nFormatter(num, digits) {
@@ -155,13 +123,9 @@ export function getStringFormat(s: string | undefined): StrFormat[] {
   return [];
 }
 
-export const isDefined = <T>(v: T | undefined | void): v is T =>
-  v !== undefined && v !== null;
-
 export function quickClone<T>(obj: T): T {
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     window !== undefined &&
     "structuredClone" in window &&
     typeof window.structuredClone === "function"
@@ -196,4 +160,28 @@ export const areEqual = <T extends AnyObject>(
       typeof obj1[k] !== typeof obj2[k] ||
       JSON.stringify(obj1[k]) !== JSON.stringify(obj2[k]),
   );
+};
+
+export const playwrightTestLogs: InitOptions["onDebug"] = (ev) => {
+  //@ts-ignore
+  window.prostgles_logs ??= [];
+  //@ts-ignore
+  window.prostgles_logs.push({ ...ev, ts: new Date() });
+  const trackedTableNames = [
+    "global_settings",
+    "llm_chats",
+    "llm_messages",
+    "llm_prompts",
+    "llm_credentials",
+  ];
+  if (ev.type === "table" && trackedTableNames.includes(ev.tableName)) {
+    // if(ev.command === "unsubscribe") debugger;
+    console.log(Date.now(), "DBS client", ev);
+  } else if (
+    ev.type === "onReady" ||
+    ev.type === "onReady.call" ||
+    ev.type === "onReady.notMounted"
+  ) {
+    console.log(Date.now(), "DBS client", ev);
+  }
 };

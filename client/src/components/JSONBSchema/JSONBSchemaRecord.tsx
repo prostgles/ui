@@ -22,7 +22,7 @@ export const JSONBSchemaRecord = ({
   ...oProps
 }: P) => {
   return (
-    <div className="JSONBSchemaRecord flex-col gap-1">
+    <div className="JSONBSchemaRecord flex-col gap-1 jc-end">
       {isObject(value) &&
         getKeys(value).map((propName) => {
           const ps = schema.record.values ?? { type: "any" };

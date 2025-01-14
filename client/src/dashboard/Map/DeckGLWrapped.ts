@@ -7,7 +7,7 @@ import type {
   OrthographicViewState,
   WebMercatorViewport,
 } from "deck.gl";
-import { isDefined, omitKeys, pickKeys } from "../../utils";
+import { isDefined, omitKeys, pickKeys } from "prostgles-types";
 import type { HoverCoords } from "./DeckGLMap";
 import { fitBounds } from "./fitBounds";
 import { createReactiveState } from "../../appUtils";

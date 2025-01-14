@@ -3,7 +3,10 @@ import { asName } from "prostgles-client/dist/prostgles";
 import { pickKeys } from "prostgles-types";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { SampleSchema } from "../../../../commonTypes/utils";
+import {
+  API_PATH_SUFFIXES,
+  type SampleSchema,
+} from "../../../../commonTypes/utils";
 import type { PrglState } from "../../App";
 import ErrorComponent from "../../components/ErrorComponent";
 import { FlexCol, FlexRow } from "../../components/Flex";
@@ -257,7 +260,7 @@ export const ConnectionServer = ({
         });
       }
     }
-    navigate(`/connections/${newConnection.id}`);
+    navigate(`${API_PATH_SUFFIXES.DASHBOARD}/${newConnection.id}`);
   };
 
   const cannotCreateDb =
@@ -307,7 +310,7 @@ export const ConnectionServer = ({
       />
       {!!action && (
         <Popup
-          clickCatchStyle={{ opacity: 0.3 }}
+          clickCatchStyle={{ opacity: 1 }}
           positioning="center"
           title={action.type}
           onClose={() => setAction(undefined)}
@@ -315,7 +318,10 @@ export const ConnectionServer = ({
           footerButtons={[
             { label: "Cancel", onClickClose: true },
             {
-              label: "Create and connect",
+              label:
+                action.type === "Select a database from this server" ?
+                  "Save and connect"
+                : "Create and connect",
               variant: "filled",
               color: "action",
               "data-command": "ConnectionServer.add.confirm",

@@ -1,16 +1,21 @@
 import prostgles from "prostgles-client";
-import { useAsyncEffectQueue } from "prostgles-client/dist/prostgles";
+import {
+  type DBHandlerClient,
+  useAsyncEffectQueue,
+} from "prostgles-client/dist/prostgles";
 import { useState } from "react";
 import type { Socket } from "socket.io-client";
 import io from "socket.io-client";
-import type { DBSchemaGenerated } from "../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import type { AppState } from "./App";
 import type { DBS } from "./dashboard/Dashboard/DBS";
 import { getTables } from "./dashboard/Dashboard/Dashboard";
 import { useEffectAsync } from "./dashboard/DashboardMenu/DashboardMenuSettings";
 import { pageReload } from "./components/Loading";
-import { SPOOF_TEST_VALUE } from "../../commonTypes/utils";
+import { API_PATH_SUFFIXES, SPOOF_TEST_VALUE } from "../../commonTypes/utils";
+import { isPlaywrightTest } from "./pages/ProjectConnection/useProjectDb";
+import { playwrightTestLogs } from "./utils";
 
 export const useDBSConnection = (
   onDisconnect: (isDisconnected: boolean) => void,
@@ -60,6 +65,7 @@ export const useDBSConnection = (
         initError,
         isElectron: false,
         canDumpAndRestore: undefined,
+        dbsWsApiPath: "",
       };
       console.error(initError);
     }
@@ -71,18 +77,14 @@ export const useDBSConnection = (
         serverState,
       });
       return;
-    } else if (serverState?.ok) {
-      socket = io(
-        // "http://localhost:3004",
-        {
-          // host: ,
-          transports: ["websocket"],
-          path: "/iosckt", //"/pipi",
-          reconnection: true,
-          reconnectionDelay: 2000,
-          reconnectionAttempts: 5,
-        },
-      );
+    } else if (serverState?.ok && serverState.dbsWsApiPath) {
+      socket = io({
+        transports: ["websocket"],
+        path: serverState.dbsWsApiPath,
+        reconnection: true,
+        reconnectionDelay: 2000,
+        reconnectionAttempts: 5,
+      });
 
       socket.on("infolog", console.log);
       socket.on("server-restart-request", (_sure) => {
@@ -95,36 +97,19 @@ export const useDBSConnection = (
       });
 
       prglReady = await new Promise((resolve, _reject) => {
-        prostgles<DBSchemaGenerated>({
+        prostgles<DBGeneratedSchema>({
           socket,
           onDisconnect: () => {
             onDisconnect(true);
           },
-          // onDebug: (ev) => {
-          //   const trackedTableNames = [
-          //     "global_settings",
-          //     "llm_chats",
-          //     "llm_messages",
-          //     "llm_prompts",
-          //     "llm_credentials",
-          //   ];
-          //   if (
-          //     ev.type === "table" &&
-          //     trackedTableNames.includes(ev.tableName)
-          //   ) {
-          //     // if(ev.command === "unsubscribe") debugger;
-          //     console.log(Date.now(), "DBS client", ev);
-          //   } else if (
-          //     ev.type === "onReady" ||
-          //     ev.type === "onReady.call" ||
-          //     ev.type === "onReady.notMounted"
-          //   ) {
-          //     console.log(Date.now(), "DBS client", ev);
-          //   }
-          // },
+          onDebug: !isPlaywrightTest ? undefined : playwrightTestLogs,
           onReconnect: () => {
             onDisconnect(false);
-            if (window.location.pathname.startsWith("/connections/")) {
+            if (
+              window.location.pathname.startsWith(
+                API_PATH_SUFFIXES.DASHBOARD + "/",
+              )
+            ) {
               pageReload("sync reconnect bug");
             }
           },
@@ -137,17 +122,19 @@ export const useDBSConnection = (
             (window as any).dbs = dbs;
             (window as any).dbsSocket = socket;
             (window as any).dbsMethods = dbsMethods;
+            (window as any).auth = auth;
             const uType = auth.user?.type;
             const { tables: dbsTables = [], error } = await getTables(
               tableSchema ?? [],
               undefined,
-              dbs as any,
+              dbs as DBHandlerClient,
             );
             if (error) {
               resolve({ error });
             } else {
               resolve({
-                dbs: dbs as any,
+                dbsWsApiPath: serverState.dbsWsApiPath,
+                dbs: dbs as DBS,
                 dbsMethods,
                 dbsTables,
                 auth,

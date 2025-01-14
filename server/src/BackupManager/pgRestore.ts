@@ -6,13 +6,8 @@ import type BackupManager from "./BackupManager";
 import type { Backups } from "./BackupManager";
 import { envToStr } from "./pipeFromCommand";
 import { pipeToCommand } from "./pipeToCommand";
-import {
-  addOptions,
-  getBkp,
-  getConnectionEnvVars,
-  getSSLEnvVars,
-  makeLogs,
-} from "./utils";
+import { addOptions, getBkp, getConnectionEnvVars, makeLogs } from "./utils";
+import { getSSLEnvVars } from "../ConnectionManager/saveCertificates";
 
 export async function pgRestore(
   this: BackupManager,
@@ -66,7 +61,7 @@ export async function pgRestore(
   }
 
   try {
-    const SSL_ENV_VARS = getSSLEnvVars(con, this.connMgr);
+    const SSL_ENV_VARS = getSSLEnvVars(con);
     const ConnectionEnvVars = getConnectionEnvVars(con);
     const ENV_VARS = { ...SSL_ENV_VARS, ...ConnectionEnvVars };
     const bkpStream = stream ?? (await fileMgr.getFileStream(bkp.id));

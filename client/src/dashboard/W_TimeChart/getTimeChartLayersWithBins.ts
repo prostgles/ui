@@ -1,10 +1,6 @@
-import {
-  isEqual,
-  type TableHandlerClient,
-} from "prostgles-client/dist/prostgles";
-import { tryCatch } from "prostgles-types";
+import { type TableHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
-import { asName } from "prostgles-types";
+import { asName, isEqual, tryCatchV2 } from "prostgles-types";
 import { isDefined, quickClone } from "../../utils";
 import type { DateExtent } from "../Charts/getTimechartBinSize";
 import { getTimechartBinSize } from "../Charts/getTimechartBinSize";
@@ -25,25 +21,26 @@ export const getTimeChartFilters = (
     : [];
 };
 
-export type TimeChartLayerWithBin = ProstglesTimeChartLayer &
-  (
-    | {
-        hasError?: false;
-        request: {
-          min: Date;
-          max: Date;
-          dateExtent: number;
-          finalFilter: AnyObject;
-          dataSignature: string;
-          tableFilters: AnyObject;
-        };
-      }
-    | {
-        hasError: true;
-        error: any;
-        request?: undefined;
-      }
-  );
+export type TimeChartLayerWithBinError = ProstglesTimeChartLayer & {
+  hasError: true;
+  error: any;
+  request?: undefined;
+};
+export type TimeChartLayerWithBin = ProstglesTimeChartLayer & {
+  hasError?: false;
+  request: {
+    min: Date;
+    max: Date;
+    dateExtent: number;
+    finalFilter: AnyObject;
+    dataSignature: string;
+    tableFilters: AnyObject;
+  };
+};
+
+export type TimeChartLayerWithBinOrError =
+  | TimeChartLayerWithBin
+  | TimeChartLayerWithBinError;
 
 async function getTimeChartLayerWithBin(
   this: W_TimeChart,
@@ -136,7 +133,7 @@ async function getTimeChartLayerWithBin(
       tableFilters,
       dateColumn,
     );
-    const res: TimeChartLayerWithBin = {
+    const res: TimeChartLayerWithBinOrError = {
       ...layer,
       request: {
         dataSignature,
@@ -193,7 +190,7 @@ async function getTimeChartLayerWithBin(
     const min = new Date(minMaxDateStr.min);
     const max = new Date(minMaxDateStr.max);
 
-    const res: TimeChartLayerWithBin = {
+    const res: TimeChartLayerWithBinOrError = {
       ...layer,
       request: {
         tableFilters: {},
@@ -216,15 +213,18 @@ export async function getTimeChartLayersWithBins(this: W_TimeChart) {
 
   const activeLayers = this.layerQueries.filter((l) => !l.disabled);
 
-  let layerExtentBins: TimeChartLayerWithBin[] = [];
+  let layerExtentBins: TimeChartLayerWithBinOrError[] = [];
 
   layerExtentBins = (
     await Promise.all(
       activeLayers.map(async (layer) => {
-        const { layerWithBin, error, hasError } = await tryCatch(async () => {
-          const layerWithBin = await getTimeChartLayerWithBin.bind(this)(layer);
-          return { layerWithBin };
-        });
+        const {
+          data: layerWithBin,
+          error,
+          hasError,
+        } = await tryCatchV2(async () =>
+          getTimeChartLayerWithBin.bind(this)(layer),
+        );
         const layerSubscription = this.layerSubscriptions[layer._id];
         if (hasError && layerSubscription) {
           layerSubscription.isLoading = false;

@@ -35,7 +35,7 @@ export const getNestedColumnTable = (
   w: WindowSyncItem<"table">,
   tables: DBSchemaTablesWJoins,
 ): MaybeResult => {
-  const columns = w.$get().columns;
+  const columns = w.$get()?.columns;
   if (!columns) {
     return {
       error: "w columns missing",

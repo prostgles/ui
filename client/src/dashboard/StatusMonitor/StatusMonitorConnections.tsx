@@ -36,14 +36,14 @@ export const StatusMonitorConnections = ({
           title="Kill connection"
           iconPath={mdiStopCircleOutline}
           color="danger"
-          onClickPromise={() => {
+          onClickPromise={async () => {
             const query = `
             SELECT *, pg_terminate_backend(pid)
             FROM pg_stat_activity 
             WHERE pid <> pg_backend_pid()
             AND datid = \${datid};
           `;
-            return dbsMethods.runConnectionQuery!(connectionId, query, {
+            await dbsMethods.runConnectionQuery!(connectionId, query, {
               datid,
             });
           }}

@@ -1,5 +1,5 @@
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
-import type { SUser } from "../authConfig/authConfig";
+import type { SUser } from "../authConfig/getAuth";
 import {
   omitKeys,
   pickKeys,
@@ -81,10 +81,12 @@ export const getConnectionPublishMethods = ({
                 const partialValue = pickKeys(args, [arg.name]);
 
                 try {
-                  await _dbs.any(
-                    "SELECT validate_jsonb_schema(${argSchema}::TEXT, ${args})",
-                    { args: partialValue, argSchema: partialArgSchema },
-                  );
+                  if (arg.type !== "any") {
+                    await _dbs.any(
+                      "SELECT validate_jsonb_schema(${argSchema}::TEXT, ${args})",
+                      { args: partialValue, argSchema: partialArgSchema },
+                    );
+                  }
                 } catch (error) {
                   throw {
                     message: "Could not validate argument against schema",
@@ -101,7 +103,6 @@ export const getConnectionPublishMethods = ({
               type: "run",
               code: sourceCode,
               validatedArgs,
-              //@ts-ignore
               user,
             });
           } catch (err: any) {

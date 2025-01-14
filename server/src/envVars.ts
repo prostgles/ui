@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 import path from "path";
 import type { DBSConnectionInfo } from "./electronConfig";
 import { actualRootDir } from "./electronConfig";
-import { DB_SSL_ENUM } from "./tableConfig";
+import { DB_SSL_ENUM } from "./tableConfig/tableConfigConnections";
 import { validateConnection } from "./connectionUtils/validateConnection";
 const envFileVars = dotenv.config({
   path: path.resolve(actualRootDir + "/../.env"),

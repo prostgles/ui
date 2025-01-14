@@ -5,23 +5,24 @@ import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUti
 import { getIsSuperUser, type DB } from "prostgles-server/dist/Prostgles";
 import { pickKeys } from "prostgles-types";
 import { Server } from "socket.io";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { addLog } from "../Logger";
-import { getAuth } from "../authConfig/authConfig";
+import { getAuth } from "../authConfig/getAuth";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc } from "../index";
 import type { ConnectionManager, User } from "./ConnectionManager";
-import { DB_TRANSACTION_KEY, getReloadConfigs } from "./ConnectionManager";
+import { getHotReloadConfigs } from "./ConnectionManager";
 import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
 import { alertIfReferencedFileColumnsRemoved } from "./connectionManagerUtils";
 import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionPublishMethods } from "./getConnectionPublishMethods";
+import { getConnectionPaths } from "../../../commonTypes/utils";
 
 export const startConnection = async function (
   this: ConnectionManager,
   con_id: string,
-  dbs: DBOFullyTyped<DBSchemaGenerated>,
+  dbs: DBOFullyTyped<DBGeneratedSchema>,
   _dbs: DB,
   socket?: PRGLIOSocket,
   restartIfExists = false,
@@ -41,7 +42,7 @@ export const startConnection = async function (
   }
 
   const con = await dbs.connections.findOne({ id: con_id }).catch((e) => {
-    console.error(142, e);
+    console.error("Could not fetch connection", e);
     return undefined;
   });
   if (!con) throw "Connection not found";
@@ -56,12 +57,12 @@ export const startConnection = async function (
       (isSSLModeFallBack ? ". (sslmode=prefer fallback)" : ""),
   );
 
-  const socket_path = `${this.getConnectionPath(con_id)}-dashboard/s`;
+  const socket_path = getConnectionPaths(con).ws;
 
   try {
     const prglInstance = this.prglConnections[con.id];
     if (prglInstance) {
-      // When does the socket path change??!!!
+      console.error("socket_path changed");
       if (prglInstance.socket_path !== socket_path) {
         restartProc(() => {
           socket?.emit("server-restart-request", true);
@@ -79,6 +80,7 @@ export const startConnection = async function (
     }
     log("creating prgl", con.db_name);
     this.prglConnections[con.id] = {
+      io: undefined,
       socket_path,
       con,
       dbConf,
@@ -101,15 +103,10 @@ export const startConnection = async function (
       maxHttpBufferSize: 1e8,
       cors: this.withOrigin,
     });
-
     try {
       const global_settings = await dbs.global_settings.findOne();
-      const hotReloadConfig = await getReloadConfigs.bind(this)(
-        con,
-        dbConf,
-        dbs,
-      );
-      const auth = getAuth(this.app);
+      const hotReloadConfig = await getHotReloadConfigs(this, con, dbConf, dbs);
+      const auth = await getAuth(this.app, dbs);
       const watchSchema = con.db_watch_shema ? "*" : false;
       const getForkedProcRunner = async () => {
         if (!this.prglConnections[con.id]?.methodRunner) {
@@ -168,16 +165,12 @@ export const startConnection = async function (
         dbs.connections.update({ id: con.id }, { on_mount_ts_disabled: true });
       });
 
-      //@ts-ignored
       const prgl = await prostgles({
         dbConnection: connectionInfo,
         io: _io,
         auth: {
           sidKeyName: auth.sidKeyName,
           getUser: (sid, __, _, cl) => auth.getUser(sid, dbs, _dbs, cl),
-          login: (sid, __, _, ip_address) =>
-            auth.login(sid, dbs, _dbs, ip_address),
-          logout: (sid, __, _) => auth.logout(sid, dbs, _dbs),
           cacheSession: {
             getSession: (sid) => auth.cacheSession.getSession(sid, dbs),
           },
@@ -231,11 +224,6 @@ export const startConnection = async function (
             connId: con.id,
             db: _db,
           });
-          console.log(
-            "onReady connection",
-            connectionInfo.database,
-            Object.keys(db),
-          );
 
           /**
            * In some cases watchSchema does not work as expected (GRANT/REVOKE will not be observable to a less privileged db user)
@@ -266,6 +254,7 @@ export const startConnection = async function (
         },
       });
       this.prglConnections[con.id] = {
+        io: _io,
         prgl,
         dbConf,
         connectionInfo,
@@ -282,6 +271,7 @@ export const startConnection = async function (
     } catch (e) {
       reject(e);
       this.prglConnections[con.id] = {
+        io: _io,
         error: e,
         connectionInfo,
         dbConf,
@@ -299,7 +289,7 @@ export const startConnection = async function (
 };
 
 export const getACRule = async (
-  dbs: DBOFullyTyped<DBSchemaGenerated>,
+  dbs: DBOFullyTyped<DBGeneratedSchema>,
   user: User | undefined,
   database_id: number,
   connection_id: string,

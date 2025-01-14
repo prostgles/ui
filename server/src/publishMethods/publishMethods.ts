@@ -4,12 +4,12 @@ import fs from "fs";
 import * as os from "os";
 import path from "path";
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/PublishParser";
-import type { DBSchemaGenerated } from "../../../commonTypes/DBoGenerated";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBS } from "../index";
 import { connectionChecker, connMgr } from "../index";
 
-export type Users = Required<DBSchemaGenerated["users"]["columns"]>;
-export type Connections = Required<DBSchemaGenerated["connections"]["columns"]>;
+export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
+export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
 import type { DBHandlerServer } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
@@ -19,16 +19,11 @@ import { isDefined } from "../../../commonTypes/filterUtils";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { isObject } from "../../../commonTypes/publishUtils";
 import type { SampleSchema } from "../../../commonTypes/utils";
-import { createSessionSecret } from "../authConfig/authConfig";
 import { getPasswordHash } from "../authConfig/authUtils";
+import { createSessionSecret } from "../authConfig/getAuth";
 import type { Backups } from "../BackupManager/BackupManager";
 import { getInstalledPrograms } from "../BackupManager/getInstalledPrograms";
-import {
-  EMPTY_PASSWORD,
-  getPasswordlessAdmin,
-  insertUser,
-  PASSWORDLESS_ADMIN_USERNAME,
-} from "../ConnectionChecker";
+import { getPasswordlessAdmin } from "../ConnectionChecker";
 import type { ConnectionTableConfig } from "../ConnectionManager/ConnectionManager";
 import {
   DB_TRANSACTION_KEY,
@@ -49,12 +44,13 @@ import { killPID } from "../methods/statusMonitorUtils";
 import { initBackupManager, statePrgl } from "../startProstgles";
 import { upsertConnection } from "../upsertConnection";
 import { askLLM } from "./askLLM/askLLM";
+import { prostglesSignup } from "./prostglesSignup";
 
-export const publishMethods: PublishMethods<DBSchemaGenerated> = async (
+export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   params,
 ) => {
-  const { dbo: dbs, socket, db: _dbs } = params;
-  const ip_address = (socket as any).conn.remoteAddress;
+  const { dbo: dbs, clientReq, db: _dbs } = params;
+  const { socket } = clientReq;
 
   const user: DBSSchema["users"] | undefined = params.user as any;
 
@@ -128,6 +124,7 @@ export const publishMethods: PublishMethods<DBSchemaGenerated> = async (
       };
     },
     getMyIP: () => {
+      if (!socket) throw "Socket missing";
       return connectionChecker.checkClientIP({ socket });
     },
     getConnectedIds: async (): Promise<string[]> => {
@@ -541,32 +538,14 @@ export const publishMethods: PublishMethods<DBSchemaGenerated> = async (
         body: JSON.stringify({ details, email }),
       });
     },
-    prostglesSignup: async (email: string) => {
-      throw "Not implemented";
-      // const devAddess = "http://localhost:3003/signup"; //  ?? "https://prostgles.com/signup"
-      // const rawResp = await fetch(devAddess, {
-      //   method: "POST",
-      //   headers: {
-      //     Accept: "application/json",
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({ email }),
-      // });
-      // if (!rawResp.ok) {
-      //   const error = await rawResp
-      //     .json()
-      //     .catch(() => rawResp.text())
-      //     .catch(() => rawResp.statusText);
-      //   return { error, hasError: true };
-      // }
-      // const { token } = (await rawResp.json()) as AnyObject;
-      // return { token };
-    },
+    prostglesSignup,
     generateToken: async (days: number) => {
       if (!Number.isInteger(days)) {
         throw "Expecting an integer days but got: " + days;
       }
 
+      if (!socket) throw "Socket missing";
+      const ip_address = (socket as any).conn.remoteAddress;
       const session = await dbs.sessions.insert(
         {
           expires: Date.now() + days * 24 * 3600 * 1000,
