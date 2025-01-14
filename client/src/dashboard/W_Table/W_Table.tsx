@@ -60,6 +60,7 @@ import { W_Table_Content } from "./W_Table_Content";
 import { getAndFixWColumnsConfig } from "./TableMenu/getAndFixWColumnsConfig";
 import { isEqual } from "prostgles-types";
 import type { Command } from "../../Testing";
+import { t } from "../../i18n/i18nUtils";
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"table">;
@@ -742,7 +743,7 @@ export default class W_Table extends RTComp<
                         iconPath={mdiPlus}
                         data-command="dashboard.window.rowInsert"
                         data-key={w.table_name}
-                        title="Insert row"
+                        title={t.W_Table["Insert row"]}
                         className="shadow w-fit h-fit mt-1"
                         color="action"
                         variant={w.options.showFilters ? "outline" : "filled"}

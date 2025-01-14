@@ -1,12 +1,418 @@
 {
   "common": {
-    "Language": "Idioma"
+    "Remove": "Eliminar",
+    "Add": "Agregar",
+    "Language": "Idioma",
+    "Generate": "Generar",
+    "Next": "Siguiente",
+    "Login": "Iniciar sesión",
+    "Logout": "Cerrar sesión",
+    "Confirm": "Confirmar",
+    "Register": "Registrarse",
+    "Close": "Cerrar",
+    "Options": "Opciones",
+    "Not permitted": "No permitido",
+    "Something went wrong": "Algo salió mal",
+    "Configure": "Configurar",
+    "Workspaces": "Espacios de trabajo",
+    "Theme": "Tema",
+    "Enabled": "Habilitado",
+    "Cancel": "Cancelar",
+    "Save": "Guardar",
+    "Copied!": "¡Copiado!",
+    "Test and Save": "Probar y Guardar",
+    "No changes": "Sin cambios",
+    "Run": "Ejecutar",
+    "Delete": "Eliminar",
+    "Clone": "Clonar",
+    "Update": "Actualizar",
+    "Related data": "Datos relacionados",
+    "Create": "Crear",
+    "Already exists. Chose another name": "Ya existe. Elija otro nombre",
+    "Nothing to update": "Nada que actualizar",
+    "You do not have sufficient privileges to access this": "No tiene privilegios suficientes para acceder a esto",
+    "Copy to clipboard": "Copiar al portapapeles",
+    "Send": "Enviar",
+    "experimental": "experimental"
   },
-  "Connections": {
-    "Create new connection": "Crear nueva conexión",
-    "New connection": "Nueva conexión"
+  "App": {
+    "Connections": "Conexiones",
+    "Users": "Usuarios",
+    "Server settings": "Configuración del servidor",
+    "Security issue": "Problema de seguridad",
+    "Settings": "Configuración",
+    "Reconnecting...": "Reconectando..."
+  },
+  "Users": {
+    "Prostgles UI users": "Usuarios de Prostgles UI"
+  },
+  "AccountMenu": {
+    "Account": "Cuenta"
+  },
+  "ServerSettings": {
+    "Security": "Seguridad",
+    "Validate a CIDR": "Validar un CIDR",
+    "Enter a value to see the allowed IP ranges": "Ingrese un valor para ver los rangos de IP permitidos",
+    "Add your current IP": "Agregar su IP actual",
+    "Allowed IP": "IP permitida",
+    "From IP": "Desde IP",
+    "To IP": "Hasta IP",
+    "Authentication": "Autenticación",
+    "Cloud credentials": "Credenciales en la nube",
+    "No cloud credentials. Credentials can be added for file storage": "Sin credenciales en la nube. Se pueden agregar credenciales para el almacenamiento de archivos",
+    "The default user type assigned to new users. Defaults to 'default'": "El tipo de usuario predeterminado asignado a los nuevos usuarios. Predeterminado es 'default'",
+    "Warning: The default user type is set to 'admin'. This will allow new users to access all resources.": "Advertencia: El tipo de usuario predeterminado está configurado como 'admin'. Esto permitirá que los nuevos usuarios accedan a todos los recursos."
+  },
+  "AuthProviderSetup": {
+    "Default user type": "Tipo de usuario predeterminado",
+    "Website URL": "URL del sitio web",
+    "Used for redirect uri": "Usado para URI de redirección",
+    "Warning: You are setting the default user type to 'admin'. This means that new users will be granted the highest level of access!": "Advertencia: Está configurando el tipo de usuario predeterminado como 'admin'. Esto significa que se otorgará a los nuevos usuarios el nivel más alto de acceso."
+  },
+  "OAuthProviderSetup": {
+    "Must configure the provider first": "Debe configurar el proveedor primero",
+    "Must provide a client ID and secret": "Debe proporcionar un ID de cliente y una clave secreta",
+    "Display Name": "Nombre para mostrar",
+    "Display Icon": "Icono para mostrar",
+    "Authorization URL": "URL de autorización",
+    "Client ID": "ID de cliente",
+    "Client Secret": "Clave secreta del cliente",
+    "Scopes": "Ámbitos",
+    "Prompt": "Indicación",
+    "Indicates the type of user interaction that is required.": "Indica el tipo de interacción del usuario que se requiere.",
+    "Return URL": "URL de retorno"
+  },
+  "EmailAuthSetup": {
+    "Email signup": "Registro por correo electrónico",
+    "Must configure the email provider first": "Debe configurar primero el proveedor de correo electrónico",
+    "Signup type": "Tipo de registro",
+    "With password": "Con contraseña",
+    "Email and password will be required to login. User will have to confirm email": "Se requerirán correo electrónico y contraseña para iniciar sesión. El usuario deberá confirmar el correo electrónico",
+    "With magic link": "Con enlace mágico",
+    "Only email is required to login. A magic link will be sent to the user's email": "Solo se requiere el correo electrónico para iniciar sesión. Se enviará un enlace mágico al correo del usuario",
+    "Minimum password length": "Longitud mínima de contraseña",
+    "Minimum password length. Defaults to 8": "Longitud mínima de contraseña. Predeterminado es 8",
+    "Magic link email configuration": "Configuración de correo para enlace mágico",
+    "Email verification": "Verificación de correo electrónico"
+  },
+  "LinkedColumn": {
+    "Row": "Fila",
+    "Column": "Columna",
+    "No headers": "Sin encabezados",
+    "Column name already used. Change to another": "El nombre de la columna ya está en uso. Cámbielo por otro",
+    "Must select columns": "Debe seleccionar columnas",
+    "Must select a table": "Debe seleccionar una tabla",
+    "Join to and show data from tables that are related through a": "Unir y mostrar datos de tablas que están relacionadas a través de un",
+    "Column label": "Etiqueta de columna",
+    "More options": "Más opciones",
+    "Layout": "Diseño",
+    "Must disable chart first": "Debe desactivar primero el gráfico",
+    "Join type": "Tipo de unión",
+    "Added!": "¡Agregado!"
+  },
+  "W_Table": {
+    "Insert row": "Insertar fila"
+  },
+  "CreateColumn": {
+    "Create column query": "Crear consulta de columna",
+    "Show create column query": "Mostrar consulta para crear columna",
+    "New column name missing": "Falta el nombre de la nueva columna",
+    "Data type missing": "Falta el tipo de dato"
+  },
+  "AddColumnMenu": {
+    "Add Computed Field": "Agregar Campo Calculado",
+    "Show a computed column": "Mostrar una columna calculada",
+    "Add Linked Data": "Agregar Datos Vinculados",
+    "Show data from a related table": "Mostrar datos de una tabla relacionada",
+    "Create New Column": "Crear Nueva Columna",
+    "Create a new column in this table": "Crear una nueva columna en esta tabla",
+    "Create New File Column": "Crear Nueva Columna de Archivo",
+    "Create a new file column in this table": "Crear una nueva columna de archivo en esta tabla",
+    "Not enough privileges": "No tiene suficientes privilegios",
+    "This is a view. Cannot create columns, must recreate": "Esto es una vista. No se pueden crear columnas, se debe recrear",
+    "Add column": "Agregar columna",
+    "New Field": "Nuevo Campo",
+    "No foreign keys to/from this table": "No hay claves foráneas hacia/desde esta tabla",
+    "Not allowed for nested columns": "No permitido para columnas anidadas",
+    "Aggregates and/or Count not allowed with linked": "Los agregados y/o Conteo no están permitidos con vinculados",
+    "Create new column": "Crear nueva columna",
+    "Add Referenced/Linked Fields": "Agregar Campos Referenciados/Vinculados"
+  },
+  "W_QuickMenu": {
+    "Show/Hide filtering": "Mostrar/Ocultar filtrado",
+    "Restore minimised charts": "Restaurar gráficos minimizados",
+    "Cross filter tables": "Filtrar tablas cruzadas",
+    "Add chart": "Agregar gráfico"
+  },
+  "DashboardMenuHeader": {
+    "New Dashboard": "Nuevo Panel",
+    "Rename Dashboard": "Renombrar Panel",
+    "Delete Dashboard": "Eliminar Panel",
+    "Clone Dashboard": "Clonar Panel",
+    "Dashboard Settings": "Configuración del Panel",
+    "Save Dashboard": "Guardar Panel",
+    "Dashboard name cannot be empty": "El nombre del panel no puede estar vacío",
+    "Dashboard name already exists": "El nombre del panel ya existe"
+  },
+  "AddChartMenu": {
+    "Add Chart": "Agregar Gráfico",
+    "Add Table": "Agregar Tabla",
+    "Add Text": "Agregar Texto",
+    "Chart Type": "Tipo de Gráfico",
+    "Data Source": "Fuente de Datos",
+    "Configure Chart": "Configurar Gráfico",
+    "Choose Chart Type": "Elegir Tipo de Gráfico",
+    "Choose Data Source": "Elegir Fuente de Datos",
+    "Chart Configuration": "Configuración del Gráfico"
+  },
+  "Window": {
+    "Close": "Cerrar",
+    "Maximize": "Maximizar",
+    "Minimize": "Minimizar",
+    "Restore": "Restaurar"
+  },
+  "W_SQLBottomBar": {
+    "Query executed successfully": "Consulta ejecutada con éxito",
+    "Execution time": "Tiempo de ejecución",
+    "Rows affected": "Filas afectadas",
+    "Errors": "Errores",
+    "Cancel query": "Cancelar consulta",
+    "Execute query": "Ejecutar consulta"
+  },
+  "SQLHotkeys": {
+    "Run Query": "Ejecutar Consulta",
+    "New Query Tab": "Nueva Pestaña de Consulta",
+    "Close Query Tab": "Cerrar Pestaña de Consulta",
+    "Comment/Uncomment": "Comentar/Descomentar",
+    "Find and Replace": "Buscar y Reemplazar",
+    "Toggle Fullscreen": "Alternar Pantalla Completa"
+  },
+  "W_SQLMenu": {
+    "Run": "Ejecutar",
+    "Save Query": "Guardar Consulta",
+    "Open Query": "Abrir Consulta",
+    "Export Results": "Exportar Resultados",
+    "Clear Query": "Limpiar Consulta",
+    "Format SQL": "Formatear SQL",
+    "History": "Historial",
+    "Explain Query": "Explicar Consulta"
+  },
+  "ConnectionSelector": {
+    "Switch database": "Cambiar base de datos",
+    "Select database": "Seleccionar base de datos"
+  },
+  "AskLLMChatHeader": {
+    "Ask AI Assistant": "Preguntar al Asistente de IA",
+    "Chat": "Chat",
+    "New chat": "Nuevo chat",
+    "No prompt found": "No se encontró mensaje",
+    "Prompt": "Mensaje",
+    "Chat settings": "Configuración del chat"
+  },
+  "AskLLM": {
+    "Chat to an AI Assistant to get help with your queries": "Chatea con un asistente de IA para obtener ayuda con tus consultas",
+    "AI assistant not available. Talk to the admin": "Asistente de IA no disponible. Habla con el administrador",
+    "Ask AI": "Preguntar a la IA"
+  },
+  "Feedback": {
+    "Send feedback": "Enviar comentarios",
+    "Leave feedback": "Dejar comentarios",
+    "Feedback": "Comentarios",
+    "Already sent": "Ya enviado",
+    "Must provide some details": "Debe proporcionar algunos detalles",
+    "Feedback was sent! Thanks a lot!": "¡Comentarios enviados! ¡Muchas gracias!",
+    "Email (optional)": "Correo electrónico (opcional)",
+    "Details": "Detalles",
+    "Other options": "Otras opciones",
+    "open an issue": "abrir un problema",
+    "or": "o",
+    "email us": "envíanos un correo"
+  },
+  "TopControls": {
+    "Go to Connections": "Ir a Conexiones",
+    "Connections": "Conexiones",
+    "Go to workspace": "Ir a espacio de trabajo",
+    "Menu is pinned": "El menú está fijado",
+    "pinned": "fijado",
+    "Configure database connection": "Configurar conexión de base de datos",
+    "Go back to connection workspace": "Volver al espacio de trabajo de conexión",
+    "Not allowed for state database": "No permitido para base de datos de estado",
+    "Connection configuration": "Configuración de la conexión"
+  },
+  "Sessions": {
+    "API tokens": "Tokens de API",
+    "Sessions": "Sesiones",
+    "Last used": "Último uso",
+    "Created": "Creado",
+    "Expires": "Expira",
+    "Disable": "Deshabilitar",
+    "User agent": "Agente de usuario",
+    "Active": "Activo",
+    "Inactive": "Inactivo",
+    "No active ": "Sin actividad "
+  },
+  "APIDetailsHttp": {
+    "Provides similar level of access to the Websocket API with the following limitations: no subscriptions, no sync, no file upload": "Proporciona un nivel de acceso similar al de la API Websocket con las siguientes limitaciones: sin suscripciones, sin sincronización, sin carga de archivos"
   },
   "APIDetailsTokens": {
-    "Access tokens ({{tokenCount}})": "Tokens de acceso ({{tokenCount}})"
+    "Access tokens (": "Tokens de acceso (",
+    "Provide the same level of access as the current account": "Proporciona el mismo nivel de acceso que la cuenta actual",
+    "Create access token": "Crear token de acceso",
+    "Create token": "Crear token",
+    "Expires in": "Expira en",
+    "Days": "Días",
+    "These token values will not be shown again": "Estos valores de token no se mostrarán de nuevo",
+    "Websocket API": "API Websocket",
+    "HTTP API (base64)": "API HTTP (base64)",
+    "Already generated. Close and re-open the popup": "Ya generado. Cierra y vuelve a abrir la ventana emergente"
+  },
+  "APIDetailsWs": {
+    "Allowed origin specifies which domains can access this app in a cross-origin manner. Sets the Access-Control-Allow-Origin header. Use '*' or a specific URL to allow API access": "El origen permitido especifica qué dominios pueden acceder a esta aplicación de forma cruzada. Establece el encabezado Access-Control-Allow-Origin. Usa '*' o una URL específica para permitir el acceso a la API",
+    "For testing it is recommended to use \"*\" as the allowed origin value": "Para pruebas, se recomienda usar \"*\" como valor de origen permitido",
+    "Allowed origin": "Origen permitido",
+    "Allowed origin is required": "Se requiere origen permitido",
+    "Allowed origin not set": "Origen permitido no establecido",
+    "Websocket API (recommended)": "API Websocket (recomendado)",
+    "Realtime Isomorphic API using": "API Isomórfica en tiempo real utilizando",
+    "library. End-to-end type-safety between client & server using the database Typescript schema provided below:": "biblioteca. Seguridad de tipo de extremo a extremo entre cliente y servidor usando el esquema de base de datos Typescript proporcionado a continuación:",
+    "Examples": "Ejemplos",
+    "Download typescript schema": "Descargar esquema typescript",
+    "Database schema types": "Tipos de esquema de base de datos"
+  },
+  "Account": {
+    "Account": "Cuenta",
+    "Change password": "Cambiar contraseña",
+    "Change email": "Cambiar correo electrónico",
+    "Are you sure you want to sign out?": "¿Estás seguro de que deseas cerrar sesión?",
+    "Account settings": "Configuración de cuenta",
+    "Account email": "Correo electrónico de la cuenta",
+    "Create a new password": "Crear una nueva contraseña",
+    "Email": "Correo electrónico",
+    "Phone number": "Número de teléfono",
+    "Password": "Contraseña",
+    "Sign out": "Cerrar sesión"
+  },
+  "Setup2FA": {
+    "Set up 2FA": "Configurar 2FA",
+    "Enable 2FA": "Habilitar 2FA",
+    "Enable": "Habilitar",
+    "Disable": "Deshabilitar",
+    "You will need to scan the QR code with your authenticator app": "Necesitarás escanear el código QR con tu aplicación de autenticador",
+    "This will enable Two Factor Authentication for your account": "Esto habilitará la Autenticación de dos factores para tu cuenta",
+    "Scan the QR code below": "Escanea el código QR a continuación",
+    "Save your backup codes": "Guarda tus códigos de respaldo",
+    "Backup Codes": "Códigos de respaldo"
+  },
+  "ChangePassword": {
+    "Change password": "Cambiar contraseña",
+    "New password": "Nueva contraseña",
+    "Confirm new password": "Confirmar nueva contraseña",
+    "Change": "Cambiar",
+    "Password updated": "Contraseña actualizada",
+    "Enter your new password": "Ingresa tu nueva contraseña",
+    "Enter your current password": "Ingresa tu contraseña actual"
+  },
+  "ConnectionConfig": {
+    "Configure connection": "Configurar conexión",
+    "Connection settings": "Configuraciones de conexión",
+    "Connection name": "Nombre de la conexión",
+    "Host": "Host",
+    "Port": "Puerto",
+    "Database": "Base de datos",
+    "Username": "Nombre de usuario",
+    "Password": "Contraseña",
+    "Connection successful": "Conexión exitosa",
+    "Connection failed": "Conexión fallida",
+    "SSL": "SSL"
+  },
+  "NewConnection": {
+    "New connection": "Nueva conexión",
+    "Create a new connection": "Crear una nueva conexión",
+    "Connection name": "Nombre de la conexión",
+    "Database name": "Nombre de la base de datos",
+    "Enter your database host": "Ingresa tu host de base de datos",
+    "Select connection type": "Selecciona tipo de conexión",
+    "Save connection": "Guardar conexión",
+    "Connection type": "Tipo de conexión"
+  },
+  "NewConnectionForm": {
+    "Connection form": "Formulario de conexión",
+    "Fill in the details below to create a new connection": "Rellena los detalles a continuación para crear una nueva conexión",
+    "Name": "Nombre",
+    "Host": "Host",
+    "Port": "Puerto",
+    "Username": "Nombre de usuario",
+    "Password": "Contraseña",
+    "SSL Enabled": "SSL habilitado",
+    "Create connection": "Crear conexión"
+  },
+  "Connection": {
+    "Connection details": "Detalles de la conexión",
+    "Edit connection": "Editar conexión",
+    "Delete connection": "Eliminar conexión",
+    "Connection name": "Nombre de la conexión",
+    "Connection type": "Tipo de conexión",
+    "Connection status": "Estado de la conexión",
+    "Host": "Host",
+    "Port": "Puerto",
+    "Database": "Base de datos",
+    "Username": "Nombre de usuario",
+    "SSL": "SSL",
+    "Connected": "Conectado",
+    "Disconnected": "Desconectado",
+    "Test connection": "Probar conexión"
+  },
+  "ConnectionServer": {
+    "Server settings": "Configuración del servidor",
+    "Server host": "Host del servidor",
+    "Server port": "Puerto del servidor",
+    "Server status": "Estado del servidor",
+    "Configure server": "Configurar servidor",
+    "Server is running": "El servidor está en ejecución",
+    "Server is stopped": "El servidor está detenido"
+  },
+  "ConnectionActionBar": {
+    "Connect": "Conectar",
+    "Disconnect": "Desconectar",
+    "Reconnect": "Reconectar",
+    "Test connection": "Probar conexión",
+    "Save connection": "Guardar conexión",
+    "Delete connection": "Eliminar conexión",
+    "Edit connection": "Editar conexión"
+  },
+  "Connections": {
+    "Connections": "Conexiones",
+    "Manage connections": "Administrar conexiones",
+    "No connections found": "No se encontraron conexiones",
+    "Add new connection": "Añadir nueva conexión",
+    "Connection list": "Lista de conexiones",
+    "Connection name": "Nombre de la conexión",
+    "Connection status": "Estado de la conexión",
+    "Connected": "Conectado",
+    "Disconnected": "Desconectado"
+  },
+  "EmailSMTPAndTemplateSetup": {
+    "Email SMTP Settings": "Configuración de SMTP de correo electrónico",
+    "SMTP Host": "Host SMTP",
+    "SMTP Port": "Puerto SMTP",
+    "SMTP User": "Usuario SMTP",
+    "SMTP Password": "Contraseña SMTP",
+    "SMTP Encryption": "Cifrado SMTP",
+    "None": "Ninguno",
+    "SSL": "SSL",
+    "TLS": "TLS",
+    "Test Email": "Probar correo electrónico",
+    "Send Test Email": "Enviar correo de prueba",
+    "Email Template Settings": "Configuración de plantillas de correo electrónico",
+    "Subject": "Asunto",
+    "Body": "Cuerpo",
+    "Sender Name": "Nombre del remitente",
+    "Sender Email": "Correo electrónico del remitente",
+    "Save Settings": "Guardar configuración",
+    "Reset to Default": "Restablecer a predeterminado",
+    "Test successful": "Prueba exitosa",
+    "Test failed": "Prueba fallida",
+    "SMTP configuration saved": "Configuración de SMTP guardada",
+    "Email template configuration saved": "Configuración de plantilla de correo electrónico guardada"
   }
 }

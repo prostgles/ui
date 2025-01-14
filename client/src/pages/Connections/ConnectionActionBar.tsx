@@ -13,6 +13,7 @@ import PopupMenu from "../../components/PopupMenu";
 import { StatusMonitor } from "../../dashboard/StatusMonitor";
 import { StatusDotCircleIcon } from "../Account/Sessions";
 import type { ConnectionProps } from "./Connection";
+import { t } from "../../i18n/i18nUtils";
 
 export const ConnectionActionBar = (props: ConnectionProps) => {
   const { dbsMethods, c, dbs, isAdmin } = props;
@@ -21,9 +22,11 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
 
   const disconectButton = dbsMethods.disconnect && !c.is_state_db && (
     <Btn
-      disabledInfo={!c.isConnected ? "Not connected" : undefined}
+      title={t.ConnectionActionBar["Connected. Click to disconnect"]}
+      disabledInfo={
+        !c.isConnected ? t.ConnectionActionBar["Not connected"] : undefined
+      }
       disabledVariant="no-fade"
-      title="Connected. Click to disconnect"
       color={c.isConnected ? "green" : undefined}
       className={c.isConnected ? "" : "show-on-trigger-hover"}
       onClickPromise={async () => {
@@ -41,7 +44,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
   const buttons = (
     <>
       <Btn
-        title="Close all windows"
+        title={t.ConnectionActionBar["Close all windows"]}
         titleAsLabel={isMobile}
         iconPath={mdiLadybug}
         onClickPromise={async () => {
@@ -52,9 +55,13 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
             { returning: "*" },
           );
           if (closed) {
-            alert("Windows have been closed");
+            alert(t.ConnectionActionBar["Windows have been closed"]);
           } else {
-            alert("Could not close windows: workspace not found");
+            alert(
+              t.ConnectionActionBar[
+                "Could not close windows: workspace not found"
+              ],
+            );
           }
         }}
       />
@@ -84,7 +91,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
       {isAdmin && !c.is_state_db && (
         <Btn
           href={"/connection-config/" + c.id}
-          title="Configure"
+          title={t.common["Configure"]}
           titleAsLabel={isMobile}
           className=" "
           iconPath={mdiCog}
@@ -97,7 +104,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
         <Btn
           data-command="Connection.edit"
           href={"/edit-connection/" + c.id}
-          title="Edit connection"
+          title={t.ConnectionActionBar["Edit connection"]}
           titleAsLabel={isMobile}
           className="  "
           iconPath={mdiPencil}

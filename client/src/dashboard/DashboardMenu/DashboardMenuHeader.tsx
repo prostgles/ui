@@ -11,6 +11,7 @@ import { FlexRowWrap } from "../../components/Flex";
 import type { DashboardMenuProps } from "./DashboardMenu";
 import { DashboardMenuSettings } from "./DashboardMenuSettings";
 import { getIsPinnedMenu } from "../Dashboard/Dashboard";
+import { t } from "../../i18n/i18nUtils";
 
 type P = Pick<DashboardMenuProps, "prgl" | "loadTable" | "workspace"> & {
   onClose: VoidFunction | undefined;
@@ -32,7 +33,7 @@ export const DashboardMenuHeader = ({
         key="sql"
         {...dataCommand("dashboard.menu.sqlEditor")}
         className="f-1 jc-start max-w-fit"
-        title="Opens SQL Query editor"
+        title={t.DashboardMenuHeader["Opens SQL Query editor"]}
         onClick={(e) => {
           loadTable({ type: "sql", name: "SQL Query" });
           onClose?.();
@@ -40,13 +41,13 @@ export const DashboardMenuHeader = ({
         color="action"
         variant="filled"
         iconPath={mdiScriptTextPlay}
-        disabledInfo={db.sql ? undefined : "Not permitted"}
+        disabledInfo={db.sql ? undefined : t.common["Not permitted"]}
       >
-        {window.isLowWidthScreen ? null : "SQL Editor"}
+        {window.isLowWidthScreen ? null : t.DashboardMenuHeader["SQL Editor"]}
       </Btn>
       <Btn
         iconPath={mdiSearchWeb}
-        title="Show quick search menu (CTRL + P)"
+        title={t.DashboardMenuHeader["Show quick search menu (CTRL + P)"]}
         className="ml-auto"
         onClick={() => {
           onClickSearchAll();
@@ -58,10 +59,10 @@ export const DashboardMenuHeader = ({
         iconPath={!pinnedMenu ? mdiPinOutline : mdiPinOffOutline}
         disabledInfo={
           window.isLowWidthScreen ?
-            "Cannot be used in a low width device"
+            t.DashboardMenuHeader["Cannot be used in a low width device"]
           : undefined
         }
-        title="Pin/Unpin"
+        title={t.DashboardMenuHeader["Pin/Unpin"]}
         data-command="DashboardMenuHeader.togglePinned"
         className="ml-p25"
         onClick={() => {

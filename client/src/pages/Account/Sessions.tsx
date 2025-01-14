@@ -24,6 +24,7 @@ import {
   renderInterval,
 } from "../../dashboard/W_SQL/customRenderers";
 import { Icon } from "../../components/Icon/Icon";
+import { t } from "../../i18n/i18nUtils";
 
 type SessionsProps = Pick<
   Prgl,
@@ -56,7 +57,8 @@ export const Sessions = ({
   if (!user) return null;
 
   const tokenMode = displayType === "api_token";
-  const sessionLabel = tokenMode ? "API tokens" : "Sessions";
+  const sessionLabel =
+    tokenMode ? t.Sessions["API tokens"] : t.Sessions["Sessions"];
 
   return (
     <SmartCardList
@@ -74,7 +76,8 @@ export const Sessions = ({
       className={"min-h-0 f-1 " + className}
       noDataComponent={
         <InfoRow color="info" style={{ alignItems: "center" }}>
-          No active {sessionLabel}
+          {t.Sessions["No active "]}
+          {sessionLabel}
         </InfoRow>
       }
       noDataComponentMode="hide-all"
@@ -91,7 +94,7 @@ export const Sessions = ({
           render: (v) => (
             <StatusDotCircleIcon
               className="my-p5"
-              title={v ? "Active" : "Not active"}
+              title={v ? t.Sessions.Active : t.Sessions.Inactive}
               color={v ? "green" : "red"}
             />
           ),
@@ -108,7 +111,7 @@ export const Sessions = ({
             ).toLowerCase();
             return (
               <PopupMenu
-                title="User agent"
+                title={t.Sessions["User agent"]}
                 button={
                   <FlexRow className="gap-0 pointer">
                     <Btn
@@ -160,20 +163,20 @@ export const Sessions = ({
         {
           name: "last_usedd",
           select: { $ageNow: ["last_used", null, "second"] },
-          label: "Last used",
+          label: t.Sessions["Last used"],
           renderValue: (value) => <StyledInterval value={value} />,
         },
         { name: "ip_address", hide: displayType === "api_token" },
         {
           name: "createdd",
           select: { $ageNow: ["created", null, "second"] },
-          label: "Created",
+          label: t.Sessions.Created,
           renderValue: (v) => renderInterval(v, true, true),
         },
         {
           name: "expiress",
           select: { $ageNow: ["expires", null, "hour"] },
-          label: "Expires",
+          label: t.Sessions.Expires,
           hideIf: (_, row) => !row.active,
           renderValue: (v) => {
             return renderInterval(v, true, true);
@@ -186,7 +189,7 @@ export const Sessions = ({
           render: (v) =>
             !!v && (
               <Btn
-                title="Disable"
+                title={t.Sessions.Disable}
                 variant="faded"
                 color="danger"
                 iconPath={mdiDelete}

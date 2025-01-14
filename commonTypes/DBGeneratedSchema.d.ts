@@ -554,7 +554,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      en?: null | string;
+      description?: null | string;
       id: string;
     };
   };

@@ -18,6 +18,7 @@ import SmartCardList from "../../dashboard/SmartCard/SmartCardList";
 import SmartForm from "../../dashboard/SmartForm/SmartForm";
 import { AuthProviderSetup } from "./AuthProvidersSetup";
 import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
+import { t } from "../../i18n/i18nUtils";
 
 export const ServerSettings = ({
   theme,
@@ -69,7 +70,7 @@ export const ServerSettings = ({
           <TabsWithDefaultStyle
             items={{
               security: {
-                label: "Security",
+                label: t.ServerSettings["Security"],
                 leftIconPath: mdiSecurity,
                 content: (
                   <FlexCol style={{ opacity: settingsLoaded ? 1 : 0 }}>
@@ -106,18 +107,22 @@ export const ServerSettings = ({
                     />
                     <FlexCol className="p-1 bg-color-0 shadow ">
                       <FormField
-                        label="Validate a CIDR"
+                        label={t.ServerSettings["Validate a CIDR"]}
                         value={testCIDR.cidr ?? ""}
                         onChange={(cidr) => {
                           setCIDR({ cidr });
                         }}
                         placeholder="127.1.1.1/32"
                         asColumn={true}
-                        hint={"Enter a value to see the allowed IP ranges"}
+                        hint={
+                          t.ServerSettings[
+                            "Enter a value to see the allowed IP ranges"
+                          ]
+                        }
                         error={ipRanges?.error}
                         rightIcons={
                           <Btn
-                            title="Add your current IP"
+                            title={t.ServerSettings["Add your current IP"]}
                             iconPath={mdiLaptop}
                             onClick={() => setCIDR({ cidr: myIP.ip + "/128" })}
                           ></Btn>
@@ -134,18 +139,18 @@ export const ServerSettings = ({
                           {ipRanges.from === ipRanges.to ?
                             <Chip
                               variant="naked"
-                              label="Allowed IP"
+                              label={t.ServerSettings["Allowed IP"]}
                               value={ipRanges.from}
                             />
                           : <>
                               <Chip
                                 variant="naked"
-                                label="From IP"
+                                label={t.ServerSettings["From IP"]}
                                 value={ipRanges.from}
                               />
                               <Chip
                                 variant="naked"
-                                label="To IP"
+                                label={t.ServerSettings["To IP"]}
                                 value={ipRanges.to}
                               />
                             </>
@@ -158,12 +163,12 @@ export const ServerSettings = ({
               },
               auth: {
                 leftIconPath: mdiAccountKey,
-                label: "Authentication",
+                label: t.ServerSettings.Authentication,
                 content: <AuthProviderSetup dbs={dbs} dbsTables={dbsTables} />,
               },
               cloud: {
                 leftIconPath: mdiCloudKeyOutline,
-                label: "Cloud credentials",
+                label: t.ServerSettings["Cloud credentials"],
                 content: (
                   <SmartCardList
                     theme={theme}
@@ -176,8 +181,11 @@ export const ServerSettings = ({
                     noDataComponentMode="hide-all"
                     noDataComponent={
                       <InfoRow color="info" className="m-1 h-fit">
-                        No cloud credentials. Credentials can be added for file
-                        storage
+                        {
+                          t.ServerSettings[
+                            "No cloud credentials. Credentials can be added for file storage"
+                          ]
+                        }
                       </InfoRow>
                     }
                   />

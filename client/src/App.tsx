@@ -46,6 +46,7 @@ import { useAppTheme } from "./theme/useAppTheme";
 import { useDBSConnection } from "./useDBSConnection";
 import { isDefined } from "./utils";
 import { API_PATH_SUFFIXES } from "../../commonTypes/utils";
+import { t } from "./i18n/i18nUtils";
 export * from "./appUtils";
 
 export type ClientUser = {
@@ -206,18 +207,18 @@ export const App = () => {
               []
             : [
                 {
-                  label: "Connections",
+                  label: t["App"]["Connections"],
                   to: API_PATH_SUFFIXES.DASHBOARD,
                   iconPath: mdiServerNetwork,
                 },
                 {
-                  label: "Users",
+                  label: t["App"]["Users"],
                   to: "/users",
                   forAdmin: true,
                   iconPath: mdiAccountMultiple,
                 },
                 {
-                  label: "Server settings",
+                  label: t["App"]["Server settings"],
                   to: "/server-settings",
                   forAdmin: true,
                   iconPath: mdiServerSecurity,
@@ -242,8 +243,8 @@ export const App = () => {
         />
         {showLoginRegister ?
           <div className="flex-col jc-center ai-center h-full gap-2 m-2">
-            <NavLink to="login">Login</NavLink>
-            <NavLink to="register">Register</NavLink>
+            <NavLink to="login">{t.common.Login}</NavLink>
+            <NavLink to="register">{t.common.Register}</NavLink>
           </div>
         : content}
       </div>
@@ -256,7 +257,7 @@ export const App = () => {
         <PopupMenu
           button={
             <Btn color="danger" iconPath={mdiAlertOutline} variant="filled">
-              Security issue
+              {t["App"]["Security issue"]}
             </Btn>
           }
           style={{ position: "fixed", right: 0, top: 0, zIndex: 999999 }}
@@ -266,7 +267,7 @@ export const App = () => {
             <InfoRow>
               Failed login rate limiting is based on x-real-ip header which can
               be spoofed based on your current connection.{" "}
-              <NavLink to="/server-settings">Settings</NavLink>
+              <NavLink to="/server-settings">{t["App"]["Settings"]}</NavLink>
             </InfoRow>
           }
         />
@@ -274,7 +275,7 @@ export const App = () => {
       {demoStarted && <MousePointer />}
       {isDisconnected && (
         <Loading
-          message="Reconnecting..."
+          message={t.App["Reconnecting..."]}
           variant="cover"
           style={{ zIndex: 467887 }}
         />

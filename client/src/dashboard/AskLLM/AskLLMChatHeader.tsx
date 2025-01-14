@@ -7,6 +7,7 @@ import { renderInterval } from "../W_SQL/customRenderers";
 import { LLMChatOptions, type LLMChatOptionsProps } from "./LLMChatOptions";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
 import type { LLMChatState } from "./useLLMChat";
+import { t } from "../../i18n/i18nUtils";
 
 export const AskLLMChatHeader = (
   props: LLMChatState & LLMSetupStateReady & LLMChatOptionsProps,
@@ -26,8 +27,8 @@ export const AskLLMChatHeader = (
   return (
     <FlexRow>
       <FlexCol className="gap-p25">
-        <div>Ask AI Assistant</div>
-        <span className="text-2 font-14">(experimental)</span>
+        <div>{t.AskLLMChatHeader["Ask AI Assistan"]}t</div>
+        <span className="text-2 font-14">({t.common.experimental})</span>
       </FlexCol>
       <FlexRow className="gap-p25 min-w-0">
         <LLMChatOptions
@@ -40,7 +41,7 @@ export const AskLLMChatHeader = (
           credentials={credentials}
         />
         <Select
-          title={"Chat"}
+          title={t.AskLLMChatHeader.Chat}
           fullOptions={
             latestChats?.map((c) => ({
               key: c.id,
@@ -61,18 +62,23 @@ export const AskLLMChatHeader = (
         />
         <Btn
           iconPath={mdiPlus}
-          title="New chat"
+          title={t.AskLLMChatHeader["New chat"]}
           variant="faded"
           color="action"
-          disabledInfo={!preferredPromptId ? "No prompt found" : undefined}
+          disabledInfo={
+            !preferredPromptId ?
+              t.AskLLMChatHeader["No prompt found"]
+            : undefined
+          }
           onClickPromise={async () => {
-            if (!preferredPromptId) throw new Error("No prompt found");
+            if (!preferredPromptId)
+              throw new Error(t.AskLLMChatHeader["No prompt found"]);
             createNewChat(defaultCredential.id, preferredPromptId);
           }}
         />
         <Select
           className="ml-1"
-          title="Prompt"
+          title={t.AskLLMChatHeader.Prompt}
           btnProps={{
             iconPath: mdiScript,
           }}
