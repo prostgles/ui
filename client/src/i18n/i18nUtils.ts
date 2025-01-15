@@ -82,22 +82,28 @@ const validateTranslationFiles = () => {
 export const t = new Proxy(
   {},
   {
-    get: (_, firstKey) => {
+    get: (_, firstKey: string) => {
       if (firstKey in translations) {
         return new Proxy(
           {},
           {
             get(_, secondKey: string) {
               const lang = getLanguage();
-              const engTranslation = translations[
+              const engTranslation = (translations[
                 firstKey as keyof typeof translations
-              ][secondKey] as Translation;
+              ][secondKey] ?? secondKey) as Translation;
               const translation: Translation | string =
-                lang === "en" ?
-                  (engTranslation ?? secondKey + "?")
-                : /** This is needed during dev when keys are missing */
+                lang === "en" ? engTranslation : (
+                  /** This is needed during dev when keys are missing */
                   ((translationFiles as any)?.[lang]?.[firstKey]?.[secondKey] ??
-                  secondKey + "?");
+                  secondKey + "?")
+                );
+
+              if (lang === "en" && !engTranslation) {
+                console.warn(
+                  `Missing translation for ${firstKey}.${secondKey}`,
+                );
+              }
               if (!isObject(translation)) {
                 return translation;
               }

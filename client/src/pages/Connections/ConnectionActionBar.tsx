@@ -67,12 +67,11 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
       />
       {dbsMethods.getStatus && dbsMethods.runConnectionQuery && (
         <PopupMenu
-          title={"Activity status: " + (c.name || c.id)}
           positioning="fullscreen"
           onClickClose={false}
           button={
             <Btn
-              title="Status"
+              title={t.ConnectionConfig["Status monitor"]}
               titleAsLabel={isMobile}
               color={"action"}
               iconPath={mdiChartLine}
