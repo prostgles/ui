@@ -1,0 +1,1688 @@
+{
+  "Stack": {
+    "keyframesSpinFromTransformRotate0degToTransformRotate360deg": {
+      "en": "@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }",
+      "es": ""
+    },
+    "keyframesSpininverseFromTransformRotate0degToTransformRotate360deg": {
+      "en": "@keyframes spin-inverse { from { transform: rotate(0deg) } to { transform: rotate(-360deg) } }",
+      "es": ""
+    }
+  },
+  "Icon": {
+    "keyframesSpininverseFromTransformRotate0degToTransformRotate360deg": {
+      "en": "@keyframes spin-inverse { from { transform: rotate(0deg) } to { transform: rotate(-360deg) } }",
+      "es": ""
+    },
+    "keyframesSpinFromTransformRotate0degToTransformRotate360deg": {
+      "en": "@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }",
+      "es": ""
+    }
+  },
+  "SearchList": {
+    "empty": {
+      "en": "[Empty]",
+      "es": ""
+    },
+    "null": {
+      "en": "[NULL]",
+      "es": ""
+    },
+    "noResults": {
+      "en": "No results",
+      "es": ""
+    },
+    "selected": {
+      "en": "selected",
+      "es": ""
+    }
+  },
+  "Pagination": {
+    "page": {
+      "en": "page",
+      "es": ""
+    },
+    "endOfResults": {
+      "en": "End of results",
+      "es": ""
+    }
+  },
+  "JoinPathSelectorV2": {
+    "joinPathDetails": {
+      "en": "Join path details",
+      "es": ""
+    }
+  },
+  "DropZone": {
+    "dropFilesHere": {
+      "en": "Drop files here...",
+      "es": ""
+    }
+  },
+  "SilverGrid": {
+    "itemNotFound": {
+      "en": "Item not found",
+      "es": ""
+    },
+    "clickToRemove": {
+      "en": "Click to remove",
+      "es": ""
+    }
+  },
+  "JoinPathItem": {
+    "or": {
+      "en": "OR",
+      "es": ""
+    }
+  },
+  "JSONBSchemaAllowedOptions": {
+    "couldNotRenderJsonbschemaallowedoptionsSchema": {
+      "en": "Could not render JSONBSchemaAllowedOptions schema:",
+      "es": ""
+    }
+  },
+  "JSONBSchemaOneOf": {
+    "cannotRenderSchemaoneoftypeIsEmpty": {
+      "en": "Cannot render: schema.oneOfType is empty",
+      "es": ""
+    },
+    "cannotRenderSchemaoneoftypeHasNoCommonProperties": {
+      "en": "Cannot render: schema.oneOfType has no common properties",
+      "es": ""
+    }
+  },
+  "JSONBSchemaRecord": {
+    "addProperty": {
+      "en": "Add property",
+      "es": ""
+    }
+  },
+  "JSONBSchema": {
+    "schemaNotSuitableForJsonbschematsx": {
+      "en": "Schema not suitable for JSONBSchema.tsx:",
+      "es": ""
+    }
+  },
+  "MethodDefinition": {
+    "anyReturnedValueWillBeShownAsJsonToTheClient": {
+      "en": "Any returned value will be shown as JSON to the client",
+      "es": ""
+    }
+  },
+  "PublishedMethods": {
+    "functions": {
+      "en": "Functions",
+      "es": ""
+    },
+    "serversideUserTriggeredFunctions": {
+      "en": "Server-side user triggered functions",
+      "es": ""
+    }
+  },
+  "ConfirmationDialog": {
+    "cancel": {
+      "en": "Cancel",
+      "es": ""
+    }
+  },
+  "CreatePostgresUser": {
+    "tickedCommandsWillBeAllowedOnAllTablesInThePublicSchema": {
+      "en": "Ticked commands will be allowed on all tables in the public\n                schema",
+      "es": ""
+    }
+  },
+  "ConnectionServer": {
+    "or": {
+      "en": "Or",
+      "es": ""
+    }
+  },
+  "Connections": {
+    "noConnectionsAvailablepermitted": {
+      "en": "No connections available/permitted",
+      "es": ""
+    }
+  },
+  "Feedback": {
+    "feedbackWasSentThanksALot": {
+      "en": "Feedback was sent! Thanks a lot!",
+      "es": ""
+    },
+    "otherOptions": {
+      "en": "Other options:",
+      "es": ""
+    },
+    "openAnIssue": {
+      "en": "open an issue",
+      "es": ""
+    },
+    "or": {
+      "en": "or",
+      "es": ""
+    },
+    "emailUs": {
+      "en": "email us",
+      "es": ""
+    }
+  },
+  "ShorterText": {
+    "null": {
+      "en": "NULL",
+      "es": ""
+    },
+    "copied": {
+      "en": "Copied!",
+      "es": ""
+    }
+  },
+  "RenderValue": {
+    "null": {
+      "en": "NULL",
+      "es": ""
+    },
+    "emptyString": {
+      "en": "Empty String",
+      "es": ""
+    }
+  },
+  "ColorPicker": {
+    "none": {
+      "en": "None",
+      "es": ""
+    }
+  },
+  "ConditionalCellStyleControls": {
+    "addCondition": {
+      "en": "Add condition",
+      "es": ""
+    }
+  },
+  "ConditionalCellIconStyleControls": {
+    "addCondition": {
+      "en": "Add condition",
+      "es": ""
+    }
+  },
+  "W_SQLMenu": {
+    "dbswindowsTableSchemaNotFound": {
+      "en": "dbs.windows table schema not found",
+      "es": ""
+    },
+    "downloadQuery": {
+      "en": "Download query",
+      "es": ""
+    },
+    "openSqlFile": {
+      "en": "Open SQL file",
+      "es": ""
+    },
+    "deleteQuery": {
+      "en": "Delete query",
+      "es": ""
+    },
+    "demo": {
+      "en": "DEMO",
+      "es": ""
+    },
+    "sqlEditorSettings": {
+      "en": "SQL Editor settings",
+      "es": ""
+    },
+    "press": {
+      "en": "Press",
+      "es": ""
+    },
+    "ctrl": {
+      "en": "ctrl",
+      "es": ""
+    },
+    "space": {
+      "en": "space",
+      "es": ""
+    },
+    "toGetAListOfPossibleOptions": {
+      "en": "to get a list\n              of possible options",
+      "es": ""
+    },
+    "updateOptions": {
+      "en": "Update options",
+      "es": ""
+    }
+  },
+  "FileImporterFooter": {
+    "cancel": {
+      "en": "Cancel",
+      "es": ""
+    },
+    "import": {
+      "en": "Import",
+      "es": ""
+    },
+    "openTable": {
+      "en": "Open table",
+      "es": ""
+    },
+    "loadingFile": {
+      "en": "Loading file ...",
+      "es": ""
+    }
+  },
+  "checkCSVColumnDataTypes": {
+    "applySuggestedDataTypesTypes": {
+      "en": "Apply suggested data types types",
+      "es": ""
+    }
+  },
+  "FileImporter": {
+    "loading": {
+      "en": "Loading",
+      "es": ""
+    },
+    "fileSize": {
+      "en": "File size:",
+      "es": ""
+    },
+    "mb": {
+      "en": "MB",
+      "es": ""
+    },
+    "preview": {
+      "en": "Preview (",
+      "es": ""
+    },
+    "rows": {
+      "en": "rows)",
+      "es": ""
+    },
+    "rowsImportedInto": {
+      "en": "rows\n                imported into",
+      "es": ""
+    }
+  },
+  "W_SQLBottomBarProcStats": {
+    "blockedBy": {
+      "en": "Blocked by:",
+      "es": ""
+    }
+  },
+  "W_SQLBottomBar": {
+    "cancel": {
+      "en": "Cancel",
+      "es": ""
+    },
+    "terminate": {
+      "en": "Terminate",
+      "es": ""
+    },
+    "stopListen": {
+      "en": "Stop LISTEN",
+      "es": ""
+    },
+    "repeatEvery": {
+      "en": "repeat every",
+      "es": ""
+    },
+    "seconds": {
+      "en": "seconds",
+      "es": ""
+    },
+    "run": {
+      "en": "Run",
+      "es": ""
+    },
+    "rows": {
+      "en": "rows",
+      "es": ""
+    },
+    "totalRows": {
+      "en": "total rows",
+      "es": ""
+    },
+    "limit": {
+      "en": "Limit",
+      "es": ""
+    }
+  },
+  "W_SQL": {
+    "hotkeys": {
+      "en": "Hotkeys:",
+      "es": ""
+    },
+    "okDontShowAgain": {
+      "en": "Ok, don't show again",
+      "es": ""
+    }
+  },
+  "MapOSMQuery": {
+    "addLayer": {
+      "en": "Add layer",
+      "es": ""
+    },
+    "saveAsGeojson": {
+      "en": "Save as GeoJSON",
+      "es": ""
+    }
+  },
+  "RenderFilter": {
+    "unexpected": {
+      "en": "Unexpected",
+      "es": ""
+    },
+    "ExpectingAndOr": {
+      "en": ". Expecting $and / $or",
+      "es": ""
+    }
+  },
+  "MapBasemapOptions": {
+    "deleteAllTilesToRestoreDefault": {
+      "en": "Delete all tiles to restore default",
+      "es": ""
+    }
+  },
+  "AddTimeChartFilter": {
+    "tapTwoPointsYouWantToFilterBetween": {
+      "en": "Tap two points you want to filter between",
+      "es": ""
+    }
+  },
+  "NestedColumnRender": {
+    "unexpectedIssueNoNestedColumns": {
+      "en": "Unexpected issue: No nested columns",
+      "es": ""
+    }
+  },
+  "AskLLMChatHeader": {
+    "askAiAssistant": {
+      "en": "Ask AI Assistant",
+      "es": ""
+    },
+    "experimental": {
+      "en": "(experimental)",
+      "es": ""
+    }
+  },
+  "AskLLMChat": {
+    "startNewChat": {
+      "en": "Start new chat",
+      "es": ""
+    }
+  },
+  "SetupLLMCredentials": {
+    "contactTheAdminToSetupTheAiAssistant": {
+      "en": "Contact the admin to setup the AI assistant",
+      "es": ""
+    },
+    "toToUseTheAiAssistantYouNeedToEither": {
+      "en": "To to use the AI assistant you need to either:",
+      "es": ""
+    },
+    "useForFreeBySigningUp": {
+      "en": "Use for free by signing up",
+      "es": ""
+    },
+    "or": {
+      "en": "Or",
+      "es": ""
+    },
+    "provideApiKeys": {
+      "en": "Provide API Keys",
+      "es": ""
+    },
+    "provideAnEmailAddressToGetStarted": {
+      "en": "Provide an email address to get started",
+      "es": ""
+    },
+    "register": {
+      "en": "Register",
+      "es": ""
+    },
+    "noExistingPrompts": {
+      "en": "No existing prompts",
+      "es": ""
+    }
+  },
+  "APIDetailsHttp": {
+    "httpApi": {
+      "en": "HTTP API",
+      "es": ""
+    },
+    "providesSimilarLevelOfAccessToTheWebsocketApiWithTheFollowingLimitationsNoSubscriptionsNoSyncNoFileUpload": {
+      "en": "Provides similar level of access to the Websocket API with the\n            following limitations: no subscriptions, no sync, no file upload",
+      "es": ""
+    }
+  },
+  "APIDetailsTokens": {
+    "provideTheSameLevelOfAccessAsTheCurrentAccount": {
+      "en": "Provide the same level of access as the current account",
+      "es": ""
+    }
+  },
+  "APICodeExamples": {
+    "downloadCodeSample": {
+      "en": "Download code sample",
+      "es": ""
+    }
+  },
+  "APIDetailsWs": {
+    "websocketApiRecommended": {
+      "en": "Websocket API (recommended)",
+      "es": ""
+    },
+    "realtimeIsomorphicApiUsing": {
+      "en": "Realtime Isomorphic API using",
+      "es": ""
+    },
+    "prostglesclient": {
+      "en": "prostgles-client",
+      "es": ""
+    },
+    "libraryEndtoendTypesafetyBetweenClientServerUsingTheDatabaseTypescriptSchemaProvidedBelow": {
+      "en": "library. End-to-end type-safety between client & server using the\n        database Typescript schema provided below:",
+      "es": ""
+    },
+    "databaseSchemaTypes": {
+      "en": "Database schema types",
+      "es": ""
+    }
+  },
+  "TableConfig": {
+    "tableDefinitionsAndLifecycleMethodsThatWillBeSyncedToSchema": {
+      "en": "Table definitions and lifecycle methods that will be synced to schema",
+      "es": ""
+    }
+  },
+  "OnMountFunction": {
+    "onMount": {
+      "en": "On mount",
+      "es": ""
+    }
+  },
+  "ConnectionConfig": {
+    "tableConfig": {
+      "en": "Table config",
+      "es": ""
+    },
+    "experimental": {
+      "en": "(experimental)",
+      "es": ""
+    },
+    "serversideFunctions": {
+      "en": "Server-side functions",
+      "es": ""
+    }
+  },
+  "ProjectConnection": {
+    "thisProjectWasNotFoundOrYouAreNotAllowedToAccessIt": {
+      "en": "This project was not found or you are not allowed to access it",
+      "es": ""
+    },
+    "databaseConnectionError": {
+      "en": "Database connection error:",
+      "es": ""
+    },
+    "connections": {
+      "en": "Connections",
+      "es": ""
+    },
+    "thisConfigurationPageIsNotSupportedForProstglesStateDatabase": {
+      "en": "This configuration page is not supported for Prostgles state\n            database",
+      "es": ""
+    },
+    "goBack": {
+      "en": "Go back",
+      "es": ""
+    }
+  },
+  "DumpRestoreAlerts": {
+    "serverVersion": {
+      "en": "Server version (",
+      "es": ""
+    },
+    "IsHigherThanTheProstglesUiHostVersionOfPsql": {
+      "en": ") is higher than the Prostgles UI host version of psql (",
+      "es": ""
+    },
+    "onLinuxThisCommandMayBeUsedToUpdateProstglesUiHostToTheSameVersion": {
+      "en": "On linux this command may be used to update Prostgles UI host to the same version:",
+      "es": ""
+    },
+    "sudoAptInstallPostgresqlclient": {
+      "en": "sudo apt install postgresql-client-",
+      "es": ""
+    },
+    "thisMightCauseIssues": {
+      "en": "This might cause issues.",
+      "es": ""
+    },
+    "usingNonSuperuserPostgresAccountThisActionMightNotBeFullySuccessful": {
+      "en": "Using non superuser postgres account. This action might not be fully successful",
+      "es": ""
+    }
+  },
+  "DumpOptions": {
+    "forMoreInfoOnOptionsVisit": {
+      "en": "For more info on options visit",
+      "es": ""
+    },
+    "theOfficialSite": {
+      "en": "the official site",
+      "es": ""
+    }
+  },
+  "RestoreOptions": {
+    "forMoreInfoOnOptionsVisit": {
+      "en": "For more info on options visit",
+      "es": ""
+    },
+    "thisOfficialSite": {
+      "en": "this official site",
+      "es": ""
+    },
+    "dataFromThisEntireServerIncludingUserDataMayBeAffectedBecauseThisIsARestoreFromAPlainSqlFile": {
+      "en": "Data from this entire server (including user data) may be affected because this is a restore from a plain SQL file.",
+      "es": ""
+    },
+    "restore": {
+      "en": "Restore",
+      "es": ""
+    },
+    "usingBackupFrom": {
+      "en": "using backup from",
+      "es": ""
+    },
+    "restoreDatabaseFrom": {
+      "en": "Restore database from",
+      "es": ""
+    }
+  },
+  "BackupsControls": {
+    "thisFeatureIsNotAvailableTheFollowingCommandsAreNotAvailableToTheServerPgdumpPgrestoreAndPsql": {
+      "en": "This feature is not available. The following commands are not available to the server pg_dump, pg_restore and psql",
+      "es": ""
+    },
+    "currentDatabaseSize": {
+      "en": "Current database size:",
+      "es": ""
+    }
+  },
+  "StatusMonitor": {
+    "someQueriesUsedForThisViewHaveBeenHidden": {
+      "en": "Some queries used for this view have been hidden",
+      "es": ""
+    },
+    "io": {
+      "en": "IO:",
+      "es": ""
+    },
+    "device": {
+      "en": "Device",
+      "es": ""
+    },
+    "reads": {
+      "en": "Reads",
+      "es": ""
+    },
+    "writes": {
+      "en": "Writes",
+      "es": ""
+    }
+  },
+  "Connection": {
+    "issueWithConnectionPermissionsNoPublishedWorkspaceAndNotAllowedToCreateWorkspaces": {
+      "en": "Issue with connection permissions: No published workspace and not\n          allowed to create workspaces",
+      "es": ""
+    },
+    "allProstglesConnectionAndDashboardDataIsStoredHereEditAtYourOwnRisk": {
+      "en": "All Prostgles connection and dashboard data is stored here. Edit\n                at your own risk",
+      "es": ""
+    },
+    "workspace": {
+      "en": "Workspace",
+      "es": ""
+    }
+  },
+  "AccessRuleSummary": {
+    "fullDatabaseAccess": {
+      "en": "Full database access",
+      "es": ""
+    },
+    "actionsAllowedTo": {
+      "en": "actions allowed to",
+      "es": ""
+    },
+    "allTablesviews": {
+      "en": "all tables/views",
+      "es": ""
+    },
+    "withinPublicSchemaOfTheDatabase": {
+      "en": "within public schema of the database",
+      "es": ""
+    }
+  },
+  "ExistingAccessRules": {
+    "ofType": {
+      "en": "of type",
+      "es": ""
+    },
+    "admin": {
+      "en": "\"admin\"",
+      "es": ""
+    },
+    "haveFullAccessToThisDatabase": {
+      "en": "have full access to this database.",
+      "es": ""
+    },
+    "usersOf": {
+      "en": "Users of",
+      "es": ""
+    },
+    "canAccessAccordingToTheRulesBelow": {
+      "en": "can access according to the rules below:",
+      "es": ""
+    },
+    "accessRules": {
+      "en": "Access rules",
+      "es": ""
+    }
+  },
+  "SQLSmartEditor": {
+    "cancel": {
+      "en": "Cancel",
+      "es": ""
+    },
+    "run": {
+      "en": "Run",
+      "es": ""
+    }
+  },
+  "AccessControl": {
+    "mustBeAdminToAccessThisSection": {
+      "en": "Must be admin to access this section",
+      "es": ""
+    },
+    "createNewRule": {
+      "en": "Create new rule",
+      "es": ""
+    },
+    "manageUsers": {
+      "en": "Manage users",
+      "es": ""
+    }
+  },
+  "PublishedWorkspaceSelector": {
+    "workspaceAccess": {
+      "en": "Workspace access",
+      "es": ""
+    }
+  },
+  "FileTableAccessControlInfo": {
+    "accessToTheFilesIsControlledThrough": {
+      "en": "Access to the files is controlled through:",
+      "es": ""
+    },
+    "AccessRulesForTheColumnsReferencingThisTable": {
+      "en": "- access rules for the columns referencing this table",
+      "es": ""
+    },
+    "AccessRulesForThisTable": {
+      "en": "- access rules for this table",
+      "es": ""
+    },
+    "anyAllowedActionOnTheReferencingColumnsIsPermittedOnTheReferencedFileRecords": {
+      "en": "Any allowed action on the referencing columns is permitted on the\n            referenced file records",
+      "es": ""
+    },
+    "isAllowedOnFiles": {
+      "en": "is allowed on\n                files",
+      "es": ""
+    },
+    "thePermittedRecordsFromFollowingTablesAndColumns": {
+      "en": "the permitted records from following tables and columns:",
+      "es": ""
+    }
+  },
+  "ExampleComparablePolicy": {
+    "policyThatMayBeUsedInPostgresToReplicateSomeOfTheRulesAbove": {
+      "en": "Policy that may be used in postgres to replicate some of the rules\n            above",
+      "es": ""
+    }
+  },
+  "SyncRuleControl": {
+    "realtimeSynchronizationBetweenServerAndApiClients": {
+      "en": "Real-time synchronization between server and API clients.",
+      "es": ""
+    },
+    "exposesASyncMethodForTheTableWhichAllowsTheClientToMakeInstantOptimisticChangesToTheirLocalDataWhichAreThenSyncedWithTheServer": {
+      "en": "Exposes a \"sync\" method for the table which allows the client to make\n        instant optimistic changes to their local data which are then synced\n        with the server.",
+      "es": ""
+    }
+  },
+  "PCustomTables": {
+    "toggleAll": {
+      "en": "Toggle All (",
+      "es": ""
+    },
+    "tables": {
+      "en": "tables)",
+      "es": ""
+    }
+  },
+  "PAllTables": {
+    "allowedOn": {
+      "en": "Allowed on",
+      "es": ""
+    },
+    "tables": {
+      "en": "tables:",
+      "es": ""
+    }
+  },
+  "PRunSQL": {
+    "thisRuleWillAllow": {
+      "en": "This rule will allow",
+      "es": ""
+    },
+    "superuser": {
+      "en": "superuser",
+      "es": ""
+    },
+    "accessToStateDatabaseServer": {
+      "en": "access to state\n              database server",
+      "es": ""
+    },
+    "userMayUpdateTheirPrivilegeToTheSameLevelOfAccessAsAType": {
+      "en": "User may update their privilege to the same level of access as a\n              type",
+      "es": ""
+    },
+    "admin": {
+      "en": "\"admin\"",
+      "es": ""
+    },
+    "user": {
+      "en": "user",
+      "es": ""
+    },
+    "superuserAccessBypassesAllPermissionChecksExceptTheRightToLogInThisIsADangerousPrivilegeAndShouldNotBeUsedCarelessly": {
+      "en": "Superuser access (Bypasses all permission checks, except the right\n              to log in. This is a dangerous privilege and should not be used\n              carelessly)",
+      "es": ""
+    }
+  },
+  "AskLLMAccessControl": {
+    "aiAssistant": {
+      "en": "AI Assistant",
+      "es": ""
+    },
+    "toAllowChattingWithTheAiAssistantAllowedPromptsAndCredentialsMustBeSpecified": {
+      "en": "To allow chatting with the AI assistant, allowed prompts and\n                credentials must be specified",
+      "es": ""
+    },
+    "allowedPromptsAndApis": {
+      "en": "Allowed Prompts and APIs (",
+      "es": ""
+    },
+    "allowAll": {
+      "en": "Allow all",
+      "es": ""
+    },
+    "add": {
+      "en": "Add",
+      "es": ""
+    }
+  },
+  "AccessControlRuleEditor": {
+    "showAllRules": {
+      "en": "Show all rules",
+      "es": ""
+    },
+    "targetUserTypes": {
+      "en": "Target user types",
+      "es": ""
+    },
+    "accessType": {
+      "en": "Access type",
+      "es": ""
+    },
+    "theSelectedUserGroupsWillBeAllowedToRunSqlQueries": {
+      "en": "The selected user groups will be allowed to run SQL queries.",
+      "es": ""
+    },
+    "thisIsTheSameLevelOfAccessToTheDatabaseAsTheCurrentUser": {
+      "en": "This is the same level of access to the database as the\n                  current user",
+      "es": ""
+    },
+    "dataAccess": {
+      "en": "Data access",
+      "es": ""
+    }
+  },
+  "DashboardHotkeys": {
+    "hotkeys": {
+      "en": "Hotkeys",
+      "es": ""
+    }
+  },
+  "FileStorageDelete": {
+    "fileStorageWillBeDisabled": {
+      "en": "File storage will be disabled",
+      "es": ""
+    }
+  },
+  "FileStorageControls": {
+    "filesCanBeUploadedAndViewedByConfiguringALocalOrRemoteAmazonS3StorageAndDesignatingATableWithinThisDatabaseToStoreFileUrlsAndMetadata": {
+      "en": "Files can be uploaded and viewed by configuring a local or remote\n          (Amazon S3) storage and designating a table within this database to\n          store file urls and metadata",
+      "es": ""
+    },
+    "accessToTheFilesIsControlledThrough": {
+      "en": "Access to the files is controlled through:",
+      "es": ""
+    },
+    "theFileTableUsersThatAreAllowedToViewinsertdeleteTheDataWithinTheFileTableCanInteractWithTheFiles": {
+      "en": "the file table: users that are allowed to view/insert/delete the\n            data within the file table can interact with the files",
+      "es": ""
+    },
+    "tablesThatReferenceTheFileTableUsersThatAreAllowedToViewinsertupdateTheReferenceColumnAreAlsoAllowedToViewinsertupdateTheRelatedRecordsFromTheFileTableAndAssociatedFiles": {
+      "en": "tables that reference the file table: users that are allowed to\n            view/insert/update the reference column are also allowed to\n            view/insert/update the related records from the file table (and\n            associated files)",
+      "es": ""
+    },
+    "enableFileStorage": {
+      "en": "Enable file storage",
+      "es": ""
+    }
+  },
+  "FileStorageReferencedTablesConfig": {
+    "referencedColumnLimits": {
+      "en": "Referenced column limits",
+      "es": ""
+    },
+    "theFollowingTablesHaveColumnsThatReferenceTheFileTable": {
+      "en": "The following tables have columns that reference the file table",
+      "es": ""
+    },
+    "specifyAllowedFileTypesAndSizesAsDesiredByDefaultAnyFileTypeIsAllowed": {
+      "en": "Specify allowed file types and sizes as desired. By default any file\n          type is allowed",
+      "es": ""
+    },
+    "updateColumnConfigurations": {
+      "en": "Update column configurations",
+      "es": ""
+    }
+  },
+  "CreateFileColumn": {
+    "mustEnable": {
+      "en": "Must enable",
+      "es": ""
+    },
+    "fileStorage": {
+      "en": "file storage",
+      "es": ""
+    },
+    "first": {
+      "en": "first",
+      "es": ""
+    }
+  },
+  "ReferenceEditor": {
+    "someForeignKeysContainASetNullOptionAndThisColumnIsNotNullableThisWillLeadToError": {
+      "en": "Some foreign keys contain a SET NULL option and this column is not\n          nullable. This will lead to error",
+      "es": ""
+    }
+  },
+  "ColumnEditor": {
+    "or": {
+      "en": "OR",
+      "es": ""
+    }
+  },
+  "AlterColumn": {
+    "cancel": {
+      "en": "Cancel",
+      "es": ""
+    },
+    "drop": {
+      "en": "DROP ...",
+      "es": ""
+    }
+  },
+  "LinkedColumnFooter": {
+    "cancel": {
+      "en": "Cancel",
+      "es": ""
+    },
+    "remove": {
+      "en": "Remove",
+      "es": ""
+    },
+    "linkedColumn": {
+      "en": "Linked Column",
+      "es": ""
+    }
+  },
+  "QuickAddComputedColumn": {
+    "tableNotFound": {
+      "en": "Table not found",
+      "es": ""
+    }
+  },
+  "NestedTimechartControls": {
+    "or": {
+      "en": "OR",
+      "es": ""
+    }
+  },
+  "LinkedColumnSelect": {
+    "or": {
+      "en": "OR",
+      "es": ""
+    }
+  },
+  "LinkedColumn": {
+    "joinToAndShowDataFromTablesThatAreRelatedThroughA": {
+      "en": "Join to and show data from tables that are related through a",
+      "es": ""
+    },
+    "foreignKey": {
+      "en": "FOREIGN KEY",
+      "es": ""
+    }
+  },
+  "ColumnsMenu": {
+    "invalidNestedColumnConfig": {
+      "en": "Invalid nested column config",
+      "es": ""
+    },
+    "tableNotFound": {
+      "en": "table not found",
+      "es": ""
+    }
+  },
+  "AddComputedColMenu": {
+    "addCountOfAllRows": {
+      "en": "Add count of all rows",
+      "es": ""
+    },
+    "willShowTotalRowCountsGroupedByTheSelectedColumns": {
+      "en": "Will show total row counts grouped by the selected columns",
+      "es": ""
+    },
+    "or": {
+      "en": "OR",
+      "es": ""
+    },
+    "column": {
+      "en": "Column",
+      "es": ""
+    },
+    "function": {
+      "en": "Function",
+      "es": ""
+    },
+    "compareTo": {
+      "en": "Compare to",
+      "es": ""
+    }
+  },
+  "CreateColumn": {
+    "cancel": {
+      "en": "Cancel",
+      "es": ""
+    },
+    "next": {
+      "en": "Next",
+      "es": ""
+    }
+  },
+  "AddColumnMenu": {
+    "table": {
+      "en": "Table",
+      "es": ""
+    },
+    "notFound": {
+      "en": "not found",
+      "es": ""
+    }
+  },
+  "ContextFilter": {
+    "noContextColumns": {
+      "en": "No context columns",
+      "es": ""
+    }
+  },
+  "AgeFilter": {
+    "somethingWentWrongCouldNotFindColumn": {
+      "en": "Something went wrong. Could not find column",
+      "es": ""
+    },
+    "somethingWentWrongCouldNotFindComplexFilter": {
+      "en": "Something went wrong. Could not find complex filter",
+      "es": ""
+    }
+  },
+  "GeoFilter": {
+    "of": {
+      "en": "of",
+      "es": ""
+    }
+  },
+  "MinimisedFilter": {
+    "and": {
+      "en": "AND",
+      "es": ""
+    }
+  },
+  "SmartSearch": {
+    "noFilterableColumns": {
+      "en": "No filterable columns",
+      "es": ""
+    }
+  },
+  "AddJoinFilter": {
+    "currentJoinPath": {
+      "en": "Current join path",
+      "es": ""
+    }
+  },
+  "SmartFilterBar": {
+    "having": {
+      "en": "Having",
+      "es": ""
+    },
+    "where": {
+      "en": "Where",
+      "es": ""
+    }
+  },
+  "ListFilter": {
+    "somethingWentWrongCouldNotFindColumn": {
+      "en": "Something went wrong. Could not find column",
+      "es": ""
+    }
+  },
+  "SmartFilter": {
+    "filterPathLastpathitemMissing": {
+      "en": "Filter path lastPathItem missing",
+      "es": ""
+    },
+    "no": {
+      "en": "No",
+      "es": ""
+    },
+    "s": {
+      "en": "s",
+      "es": ""
+    }
+  },
+  "SmartFormFooterButtons": {
+    "update": {
+      "en": "Update",
+      "es": ""
+    },
+    "delete": {
+      "en": "Delete",
+      "es": ""
+    },
+    "clone": {
+      "en": "Clone",
+      "es": ""
+    },
+    "cannotInsertNotAllowed": {
+      "en": "Cannot insert: not allowed",
+      "es": ""
+    }
+  },
+  "W_MethodControls": {
+    "run": {
+      "en": "Run",
+      "es": ""
+    },
+    "input": {
+      "en": "input",
+      "es": ""
+    }
+  },
+  "JoinedRecords": {
+    "relatedData": {
+      "en": "Related data",
+      "es": ""
+    },
+    "showingTop": {
+      "en": "Showing top",
+      "es": ""
+    },
+    "records": {
+      "en": "records",
+      "es": ""
+    }
+  },
+  "SmartFormUpperFooter": {
+    "changes": {
+      "en": "Changes (",
+      "es": ""
+    }
+  },
+  "SmartForm": {
+    "table": {
+      "en": "Table",
+      "es": ""
+    },
+    "notFound": {
+      "en": "not found.",
+      "es": ""
+    },
+    "newData": {
+      "en": "New data",
+      "es": ""
+    }
+  },
+  "CodeConfirmation": {
+    "confirmByTypingThis": {
+      "en": "Confirm by typing this:",
+      "es": ""
+    }
+  },
+  "NewConnectionForm": {
+    "connectionType": {
+      "en": "Connection type",
+      "es": ""
+    },
+    "reloadSchema": {
+      "en": "Reload schema",
+      "es": ""
+    },
+    "realtimeRequiresTableTriggersToBeCreatedAsAndWhenNeeded": {
+      "en": "Realtime requires table triggers to be created as and when\n                  needed.",
+      "es": ""
+    },
+    "aProstglesSchemaWithNecessaryMetadataWillAlsoBeCreated": {
+      "en": "A \"prostgles\" schema with necessary metadata will\n                  also be created",
+      "es": ""
+    },
+    "testConnection": {
+      "en": "Test connection",
+      "es": ""
+    }
+  },
+  "NewConnnection": {
+    "youDoNotHaveSufficientPrivilegesToAccessThis": {
+      "en": "You do not have sufficient privileges to access this",
+      "es": ""
+    },
+    "connectionNotFound": {
+      "en": "Connection not found",
+      "es": ""
+    },
+    "goBackToConnection": {
+      "en": "Go back to connection",
+      "es": ""
+    },
+    "connections": {
+      "en": "Connections",
+      "es": ""
+    },
+    "cloningConnection": {
+      "en": "Cloning connection:",
+      "es": ""
+    },
+    "connection": {
+      "en": "connection",
+      "es": ""
+    },
+    "clone": {
+      "en": "Clone",
+      "es": ""
+    }
+  },
+  "TimeChartLayerOptions": {
+    "invalidLinkType": {
+      "en": "Invalid link type:",
+      "es": ""
+    },
+    "columnNotFound": {
+      "en": "Column not found:",
+      "es": ""
+    }
+  },
+  "CreateTable": {
+    "columns": {
+      "en": "Columns",
+      "es": ""
+    },
+    "addColumn": {
+      "en": "Add column",
+      "es": ""
+    },
+    "createTable": {
+      "en": "Create table...",
+      "es": ""
+    }
+  },
+  "DashboardMenuContent": {
+    "thisIsAReadonlyPublishedWorkspace": {
+      "en": "This is a read-only published workspace.",
+      "es": ""
+    },
+    "createYourOwnWorkspaceToOpenTableviews": {
+      "en": "Create your own workspace to open table/views.",
+      "es": ""
+    },
+    "0Tablesviews": {
+      "en": "0 tables/views",
+      "es": ""
+    },
+    "youHaveNotBeenGrantedAnyPermissions": {
+      "en": "You have not been granted any permissions.",
+      "es": ""
+    },
+    "checkWithSystemAdministrator": {
+      "en": "Check with\n            system administrator",
+      "es": ""
+    }
+  },
+  "Dashboard": {
+    "workspaceNotFound": {
+      "en": "Workspace not found",
+      "es": ""
+    },
+    "goBack": {
+      "en": "Go back",
+      "es": ""
+    }
+  },
+  "CardView": {
+    "colsMissing": {
+      "en": "Cols missing",
+      "es": ""
+    },
+    "db": {
+      "en": "db.",
+      "es": ""
+    },
+    "tablehandlerMissing": {
+      "en": "tableHandler missing",
+      "es": ""
+    }
+  },
+  "NodeCountChecker": {
+    "tooMuchDataDisplayedReduceTheNumberOfRowsOrColumnsToImproveResponsiveness": {
+      "en": "Too much data displayed. Reduce the number of rows or columns to improve\n        responsiveness",
+      "es": ""
+    }
+  },
+  "TooManyColumnsWarning": {
+    "thereIsAHighNumber": {
+      "en": "There is a high number (",
+      "es": ""
+    },
+    "OfColumnsDisplayedReduceTheNumberOfViewedColumnsFromTheTableMenuToImprovePerformance": {
+      "en": ") of\n        columns displayed. Reduce the number of viewed columns from the table\n        menu to improve performance",
+      "es": ""
+    }
+  },
+  "W_Table": {
+    "table": {
+      "en": "Table",
+      "es": ""
+    },
+    "notFound": {
+      "en": "not found",
+      "es": ""
+    }
+  },
+  "W_TableMenu_AccessRules": {
+    "using": {
+      "en": "USING",
+      "es": ""
+    },
+    "check": {
+      "en": "CHECK",
+      "es": ""
+    },
+    "noAccessRules": {
+      "en": "No access rules",
+      "es": ""
+    },
+    "create": {
+      "en": "Create",
+      "es": ""
+    }
+  },
+  "W_TableMenu_Constraints": {
+    "constraintsSetRulesOnTheTypeOfDataThatCanBeStoredInColumns": {
+      "en": "Constraints set rules on the type of data that can be stored in columns",
+      "es": ""
+    }
+  },
+  "W_TableMenu_CurrentQuery": {
+    "query": {
+      "en": "query",
+      "es": ""
+    }
+  },
+  "W_TableMenu_Indexes": {
+    "anIndexImprovesTheSpeedOfDataRetrievalOperationsOnATable": {
+      "en": "An index improves the speed of data retrieval operations on a table",
+      "es": ""
+    },
+    "reindexTable": {
+      "en": "Reindex table",
+      "es": ""
+    }
+  },
+  "W_TableMenu_Policies": {
+    "whenRowLevelSecurityIsEnabledAllNormalAccessToTheTableForSelectingOrModifyingRowsMustBeAllowedByARowSecurityPolicy": {
+      "en": "When row level security is enabled all normal access to the table for\n        selecting or modifying rows must be allowed by a row security policy.",
+      "es": ""
+    },
+    "superusersAndRolesWithTheBypassrlsAttributeAlwaysBypassTheRowSecuritySystemWhenAccessingATable": {
+      "en": "Superusers and roles with the BYPASSRLS attribute always bypass the row\n        security system when accessing a table.",
+      "es": ""
+    },
+    "tableOwnersNormallyBypassRowSecurityAsWellThoughATableOwnerCanChooseToBeSubjectToRowSecurityWithAlterTableForceRowLevelSecurity": {
+      "en": "Table owners normally bypass row security as well, though a table owner\n        can choose to be subject to row security with ALTER TABLE ... FORCE ROW\n        LEVEL SECURITY.",
+      "es": ""
+    },
+    "createPolicy": {
+      "en": "Create policy",
+      "es": ""
+    }
+  },
+  "W_TableMenu_TableInfo": {
+    "viewDefinition": {
+      "en": "View definition",
+      "es": ""
+    },
+    "vacuum": {
+      "en": "Vacuum",
+      "es": ""
+    },
+    "vacuumFull": {
+      "en": "Vacuum Full",
+      "es": ""
+    },
+    "drop": {
+      "en": "Drop...",
+      "es": ""
+    }
+  },
+  "W_TableMenu_Triggers": {
+    "aTriggerIsUsedToExecuteAFunctionBeforeOrAfterAnyOfTheseCommandsInsertUpdateOrDelete": {
+      "en": "A trigger is used to execute a function before or after any of these\n        commands: INSERT, UPDATE, or DELETE",
+      "es": ""
+    },
+    "disableAllTriggers": {
+      "en": "Disable all triggers",
+      "es": ""
+    },
+    "enableAllTriggers": {
+      "en": "Enable all triggers",
+      "es": ""
+    },
+    "addTrigger": {
+      "en": "Add trigger",
+      "es": ""
+    }
+  },
+  "AutoRefreshMenu": {
+    "changesShownAsReceivedFromDatabaseNeedsSuperUserToCreateTriggers": {
+      "en": "Changes shown as received from database. Needs super user to create\n            triggers",
+      "es": ""
+    },
+    "cannotSubscribe": {
+      "en": "Cannot subscribe",
+      "es": ""
+    }
+  },
+  "Table": {
+    "noData": {
+      "en": "No data",
+      "es": ""
+    },
+    "null": {
+      "en": "NULL",
+      "es": ""
+    }
+  },
+  "List": {
+    "noResults": {
+      "en": "No results",
+      "es": ""
+    }
+  },
+  "FormField": {
+    "numlockIsOff": {
+      "en": "NumLock is off",
+      "es": ""
+    }
+  },
+  "DeckGLFeatureEditor": {
+    "cancel": {
+      "en": "Cancel",
+      "es": ""
+    },
+    "done": {
+      "en": "Done",
+      "es": ""
+    },
+    "doneAnd": {
+      "en": "Done and",
+      "es": ""
+    },
+    "delete": {
+      "en": "Delete",
+      "es": ""
+    },
+    "editFeature": {
+      "en": "Edit feature",
+      "es": ""
+    },
+    "somethingWentWrong": {
+      "en": "Something went wrong",
+      "es": ""
+    }
+  },
+  "ElectronSetup": {
+    "privacy": {
+      "en": "PRIVACY",
+      "es": ""
+    },
+    "theOnlyDataWeCollectIsTheInformationYouSendUsThroughTheSendFeedbackButton": {
+      "en": "The only data we collect is the information you send us through\n              the \"Send feedback\" button.",
+      "es": ""
+    },
+    "requirements": {
+      "en": "REQUIREMENTS",
+      "es": ""
+    },
+    "prostglesDesktop": {
+      "en": "Prostgles Desktop",
+      "es": ""
+    },
+    "requiresFullAccessToAPostgresDatabase": {
+      "en": "requires full access to a\n              postgres database.",
+      "es": ""
+    },
+    "thisDatabaseWillBeUsedToManageAndStoreAllConnectionAndStateDataDatabaseConnectionDetailsSqlQueriesWorkspacesEtc": {
+      "en": "This database will be used to manage and store all connection\n                and state data (database connection details, sql queries,\n                workspaces, etc).",
+      "es": ""
+    },
+    "forBestExperienceWeRecommendUsingALocallyInstalledDatabase": {
+      "en": "For best experience we recommend using a locally installed\n                database",
+      "es": ""
+    },
+    "stateDatabase": {
+      "en": "State database",
+      "es": ""
+    },
+    "done": {
+      "en": "Done",
+      "es": ""
+    },
+    "back": {
+      "en": "Back",
+      "es": ""
+    },
+    "next": {
+      "en": "Next",
+      "es": ""
+    }
+  },
+  "NotFound": {
+    "404PageNotFound": {
+      "en": "404 page not found",
+      "es": ""
+    },
+    "home": {
+      "en": "Home",
+      "es": ""
+    }
+  },
+  "AccountMenu": {
+    "login": {
+      "en": "Login",
+      "es": ""
+    },
+    "logout": {
+      "en": "Logout",
+      "es": ""
+    }
+  },
+  "PasswordlessSetup": {
+    "passwordlessAccess": {
+      "en": "Passwordless access",
+      "es": ""
+    },
+    "onlyThisDeviceAndBrowserCanAccessTheDashboard": {
+      "en": "Only this device and browser can access the dashboard",
+      "es": ""
+    },
+    "toAddUsersAndSetAccessControlMustFirstCreateAnAdminUserWithAPasswordThisWillDisablePasswordlessAccess": {
+      "en": "To add users and set access control must first create an admin user with\n        a password. This will disable passwordless access",
+      "es": ""
+    }
+  },
+  "UserManager": {
+    "mustBeAdminToAccessThisSection": {
+      "en": "Must be admin to access this section",
+      "es": ""
+    }
+  },
+  "Setup2FA": {
+    "disable2fa": {
+      "en": "Disable 2FA",
+      "es": ""
+    }
+  },
+  "AuthProvidersSetup": {
+    "couldNotFindGlobalsettingsTableOrAuthcolumnMakeSureYouHaveTheCorrectPermissions": {
+      "en": "Could not find global_settings table or authColumn. Make sure you have\n        the correct permissions",
+      "es": ""
+    },
+    "theDefaultUserTypeAssignedToNewUsersDefaultsToDefault": {
+      "en": "The default user type assigned to new users. Defaults to 'default'",
+      "es": ""
+    },
+    "warningTheDefaultUserTypeIsSetToAdminThisWillAllowNewUsersToAccessAllResources": {
+      "en": "Warning: The default user type is set to 'admin'. This will allow\n            new users to access all resources.",
+      "es": ""
+    }
+  },
+  "ComponentList": {
+    "buttons": {
+      "en": "Buttons",
+      "es": ""
+    },
+    "default": {
+      "en": "default",
+      "es": ""
+    },
+    "defaultAction": {
+      "en": "default action",
+      "es": ""
+    },
+    "defaultDanger": {
+      "en": "default danger",
+      "es": ""
+    },
+    "faded": {
+      "en": "faded",
+      "es": ""
+    },
+    "fadedAction": {
+      "en": "faded action",
+      "es": ""
+    },
+    "fadedDanger": {
+      "en": "faded danger",
+      "es": ""
+    },
+    "outlined": {
+      "en": "outlined",
+      "es": ""
+    },
+    "outlinedAction": {
+      "en": "outlined action",
+      "es": ""
+    },
+    "outlinedDanger": {
+      "en": "outlined danger",
+      "es": ""
+    },
+    "filled": {
+      "en": "filled",
+      "es": ""
+    },
+    "filledAction": {
+      "en": "filled action",
+      "es": ""
+    },
+    "filledDanger": {
+      "en": "filled danger",
+      "es": ""
+    }
+  },
+  "LoginTotpForm": {
+    "openYourAuthenticationAppAndEnterTheCodeForProstglesUi": {
+      "en": "Open your authentication app and enter the code for Prostgles UI",
+      "es": ""
+    },
+    "or": {
+      "en": "Or",
+      "es": ""
+    },
+    "enterRecoveryCode": {
+      "en": "Enter recovery code",
+      "es": ""
+    },
+    "cancel": {
+      "en": "Cancel",
+      "es": ""
+    }
+  },
+  "NonHTTPSWarning": {
+    "yourAreAccessingThisPageOverANonhttpsConnectionYouShouldNotEnterAnySensitiveInformationOnThisSitePasswordsSecrets": {
+      "en": "Your are accessing this page over a non-HTTPS connection! You should not\n        enter any sensitive information on this site (passwords, secrets)",
+      "es": ""
+    },
+    "doNotShowAgain": {
+      "en": "Do not show again",
+      "es": ""
+    }
+  },
+  "App": {
+    "couldNotConnectToStateDatabaseEnsureServerenvFileOrEnvironmentVariablesPointToARunningAndAccessiblePostgresServerDatabase": {
+      "en": "Could not connect to state database. Ensure /server/.env file (or\n            environment variables) point to a running and accessible postgres\n            server database",
+      "es": ""
+    },
+    "failedToStartProstgles": {
+      "en": "Failed to start Prostgles",
+      "es": ""
+    },
+    "login": {
+      "en": "Login",
+      "es": ""
+    },
+    "register": {
+      "en": "Register",
+      "es": ""
+    }
+  }
+}

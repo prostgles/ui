@@ -1,5 +1,5 @@
 export const COMMANDS = {
-  "config.goToConnDashboard": "Go to connection workspace",
+  "config.goToConnDashboard": "Go to connection workspace ",
   "config.details": "",
   "config.bkp": "",
   "config.tableConfig": "",
@@ -258,6 +258,7 @@ export const COMMANDS = {
   AddLLMCredentialForm: "",
   "AddLLMCredentialForm.Save": "",
   "AddLLMCredentialForm.Provider": "",
+  "App.LanguageSelector": "",
   "EmailAuthSetup.SignupType": "",
   EmailAuthSetup: "",
   "EmailAuthSetup.error": "",

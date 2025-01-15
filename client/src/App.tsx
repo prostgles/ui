@@ -14,7 +14,6 @@ import {
   mdiAlertOutline,
   mdiServerNetwork,
   mdiServerSecurity,
-  mdiThemeLightDark,
 } from "@mdi/js";
 import ErrorComponent from "./components/ErrorComponent";
 import { NavBar } from "./components/NavBar";
@@ -32,20 +31,22 @@ import type { ServerState } from "../../commonTypes/electronInit";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import { createReactiveState, useReactiveState } from "./appUtils";
 import Btn from "./components/Btn";
-import { FlexCol } from "./components/Flex";
+import { FlexCol, FlexRow } from "./components/Flex";
 import { InfoRow } from "./components/InfoRow";
 import PopupMenu from "./components/PopupMenu";
-import Select from "./components/Select/Select";
 import type { DBS, DBSMethods } from "./dashboard/Dashboard/DBS";
 import { MousePointer } from "./demo/MousePointer";
+import { LanguageSelector } from "./i18n/LanguageSelector";
 import { ComponentList } from "./pages/ComponentList";
 import { ElectronSetup } from "./pages/ElectronSetup";
 import { Login } from "./pages/Login/Login";
 import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
-import { useAppTheme } from "./useAppTheme";
+import { ThemeSelector } from "./theme/ThemeSelector";
+import { useAppTheme } from "./theme/useAppTheme";
 import { useDBSConnection } from "./useDBSConnection";
 import { isDefined } from "./utils";
 import { API_PATH_SUFFIXES } from "../../commonTypes/utils";
+import { t } from "./i18n/i18nUtils";
 export * from "./appUtils";
 
 export type ClientUser = {
@@ -206,18 +207,18 @@ export const App = () => {
               []
             : [
                 {
-                  label: "Connections",
+                  label: t["App"]["Connections"],
                   to: API_PATH_SUFFIXES.DASHBOARD,
                   iconPath: mdiServerNetwork,
                 },
                 {
-                  label: "Users",
+                  label: t["App"]["Users"],
                   to: "/users",
                   forAdmin: true,
                   iconPath: mdiAccountMultiple,
                 },
                 {
-                  label: "Server settings",
+                  label: t["App"]["Server settings"],
                   to: "/server-settings",
                   forAdmin: true,
                   iconPath: mdiServerSecurity,
@@ -229,37 +230,21 @@ export const App = () => {
                 .filter((o) => !o.forAdmin || extraProps.user?.type === "admin")
           }
           endContent={
-            <Select
-              title="Theme"
-              className={window.isLowWidthScreen ? "ml-2" : ""}
-              btnProps={{
-                variant: "default",
-                iconPath: mdiThemeLightDark,
-                children:
-                  window.isLowWidthScreen || serverState?.isElectron ?
-                    "Theme"
-                  : "",
-              }}
-              data-command="App.colorScheme"
-              value={userThemeOption}
-              fullOptions={[
-                { key: "light", label: "Light" },
-                { key: "dark", label: "Dark" },
-                { key: "from-system", label: "System" },
-              ]}
-              onChange={(theme) => {
-                dbs.users.update(
-                  { id: user?.id },
-                  { options: { $merge: [{ theme }] } },
-                );
-              }}
-            />
+            <FlexRow className={window.isLowWidthScreen ? "ml-2" : ""}>
+              <ThemeSelector
+                userId={user?.id}
+                dbs={dbs}
+                serverState={serverState}
+                userThemeOption={userThemeOption}
+              />
+              <LanguageSelector isElectron={!!serverState?.isElectron} />
+            </FlexRow>
           }
         />
         {showLoginRegister ?
           <div className="flex-col jc-center ai-center h-full gap-2 m-2">
-            <NavLink to="login">Login</NavLink>
-            <NavLink to="register">Register</NavLink>
+            <NavLink to="login">{t.common.Login}</NavLink>
+            <NavLink to="register">{t.common.Register}</NavLink>
           </div>
         : content}
       </div>
@@ -272,7 +257,7 @@ export const App = () => {
         <PopupMenu
           button={
             <Btn color="danger" iconPath={mdiAlertOutline} variant="filled">
-              Security issue
+              {t["App"]["Security issue"]}
             </Btn>
           }
           style={{ position: "fixed", right: 0, top: 0, zIndex: 999999 }}
@@ -282,7 +267,7 @@ export const App = () => {
             <InfoRow>
               Failed login rate limiting is based on x-real-ip header which can
               be spoofed based on your current connection.{" "}
-              <NavLink to="/server-settings">Settings</NavLink>
+              <NavLink to="/server-settings">{t["App"]["Settings"]}</NavLink>
             </InfoRow>
           }
         />
@@ -290,7 +275,7 @@ export const App = () => {
       {demoStarted && <MousePointer />}
       {isDisconnected && (
         <Loading
-          message="Reconnecting..."
+          message={t.App["Reconnecting..."]}
           variant="cover"
           style={{ zIndex: 467887 }}
         />

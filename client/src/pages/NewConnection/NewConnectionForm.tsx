@@ -15,6 +15,7 @@ import CodeExample from "../../dashboard/CodeExample";
 import type { Connection } from "./NewConnnection";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import ErrorComponent from "../../components/ErrorComponent";
+import { t } from "../../i18n/i18nUtils";
 
 const SSL_MODES = [
   { key: "disable", subLabel: "only try a non-SSL connection" },
@@ -140,8 +141,8 @@ export const NewConnectionForm = ({
     <>
       {!isForStateDB && (
         <FormField
-          label="Connection name"
-          hint="Optional"
+          label={t.NewConnectionForm["Connection name"]}
+          hint={t.NewConnectionForm.Optional}
           type="text"
           error={nameErr}
           value={c.name}
@@ -152,7 +153,9 @@ export const NewConnectionForm = ({
       )}
 
       <div className="flex-col gap-p5 ta-left">
-        <label className="m-0 text-1 ">Connection type</label>
+        <label className="m-0 text-1 ">
+          {t.NewConnectionForm["Connection type"]}
+        </label>
         <ButtonGroup
           value={type}
           options={["Standard", "Connection URI"]}
@@ -165,7 +168,7 @@ export const NewConnectionForm = ({
       {type === "Prostgles" ?
         <>
           <FormField
-            label="Socket URL"
+            label={t.NewConnectionForm["Socket URL"]}
             type="url"
             required={true}
             value={c.prgl_url}
@@ -174,7 +177,7 @@ export const NewConnectionForm = ({
             }}
           />
           <FormField
-            label="Socket params (JSON)"
+            label={t.NewConnectionForm["Socket params (JSON)"]}
             type="text"
             required={true}
             value={c.prgl_params}
@@ -187,7 +190,7 @@ export const NewConnectionForm = ({
       : type === "Connection URI" ?
         <>
           <FormFieldDebounced
-            label="Connection URI"
+            label={t.NewConnectionForm["Connection URI"]}
             type="text"
             hint="postgres://user:pass@host:port/database?sslmode=require"
             required={true}
@@ -201,7 +204,7 @@ export const NewConnectionForm = ({
           <FormField
             id="h"
             value={c.db_host}
-            label="Host"
+            label={t.NewConnectionForm["Host"]}
             type="text"
             autoComplete="off"
             onChange={(db_host) => updateConnection({ db_host })}
@@ -209,7 +212,7 @@ export const NewConnectionForm = ({
           <FormField
             id="p"
             value={c.db_port}
-            label="Port"
+            label={t.NewConnectionForm["Port"]}
             type="number"
             autoComplete="off"
             onChange={(db_port) => updateConnection({ db_port })}
@@ -221,7 +224,7 @@ export const NewConnectionForm = ({
               key: rolname,
               subLabel: rolsuper ? "Superuser" : "",
             }))}
-            label="User"
+            label={t.NewConnectionForm["User"]}
             type="text"
             autoComplete="off"
             onChange={(db_user) => updateConnection({ db_user })}
@@ -229,7 +232,7 @@ export const NewConnectionForm = ({
           <FormField
             id="pass"
             value={c.db_pass}
-            label="Password"
+            label={t.NewConnectionForm["Password"]}
             type="text"
             autoComplete="off"
             onChange={(db_pass) => updateConnection({ db_pass })}
@@ -238,7 +241,7 @@ export const NewConnectionForm = ({
           <FormField
             id="d"
             value={c.db_name}
-            label="Database"
+            label={t.NewConnectionForm.Database}
             type="text"
             options={suggestions?.databases}
             autoComplete="off"
@@ -251,13 +254,13 @@ export const NewConnectionForm = ({
               c.db_name &&
               dbProject?.sql && (
                 <PopupMenu
-                  title={"Create database"}
+                  title={t.NewConnectionForm["Create database"]}
                   positioning={undefined}
                   clickCatchStyle={{ opacity: 0.5 }}
                   button={
                     <Btn
                       iconPath={mdiPlus}
-                      title={"Create a new database"}
+                      title={t.NewConnectionForm["Create database"]}
                     ></Btn>
                   }
                   initialState={
@@ -289,14 +292,22 @@ export const NewConnectionForm = ({
                         />
                         {action === "clone" && (
                           <InfoRow>
-                            You are about to clone the current database{" "}
-                            {origCon?.db_name} into {c.db_name}. This will close
-                            all existing connections to the current database!
+                            {t.NewConnectionForm[
+                              "You are about to clone the current database"
+                            ]({
+                              currDb: origCon?.db_name ?? "",
+                              newDb: c.db_name,
+                            })}
                           </InfoRow>
                         )}
                         {action === "create" && (
                           <InfoRow color="action">
-                            You are about to create a new database: {c.db_name}
+                            {
+                              t.NewConnectionForm[
+                                "You are about to create a new database"
+                              ]
+                            }
+                            : {c.db_name}
                           </InfoRow>
                         )}
                         <CodeExample
@@ -311,7 +322,7 @@ export const NewConnectionForm = ({
                             dbProject.sql!(query).then(pClose)
                           }
                         >
-                          Run
+                          {t.common.Run}
                         </Btn>
                       </div>
                     );
@@ -328,7 +339,7 @@ export const NewConnectionForm = ({
       {type !== "Prostgles" && (
         <>
           <ExpandSection
-            label="More options"
+            label={t.NewConnectionForm["More options"]}
             buttonProps={{
               variant: undefined,
               color: "action",
@@ -338,7 +349,7 @@ export const NewConnectionForm = ({
           >
             <FormField
               id="schema_filter"
-              label="Schema list"
+              label={t.NewConnectionForm["Schema list"]}
               optional={true}
               multiSelect={true}
               data-command="SchemaFilter"
@@ -351,7 +362,7 @@ export const NewConnectionForm = ({
               value={Object.keys(c.db_schema_filter || { public: 1 })}
               disabledInfo={
                 !suggestions?.schemas ?
-                  "Must connect to see schemas"
+                  t.NewConnectionForm["Must connect to see schemas"]
                 : undefined
               }
               onChange={(schema_keys) => {
@@ -376,7 +387,7 @@ export const NewConnectionForm = ({
             />
             <FormField
               id="timeout"
-              label="Connection timeout (ms)"
+              label={t.NewConnectionForm["Connection timeout (ms)"]}
               optional={true}
               value={c.db_connection_timeout}
               onChange={(db_connection_timeout) => {
@@ -385,7 +396,7 @@ export const NewConnectionForm = ({
             />
             <FormField
               id="ssl_mode"
-              label="SSL Mode"
+              label={t.NewConnectionForm["SSL Mode"]}
               fullOptions={SSL_MODES}
               required={true}
               value={c.db_ssl}
@@ -408,7 +419,7 @@ export const NewConnectionForm = ({
               <>
                 <FormField
                   id="ssl_cert"
-                  label="CA Certificate"
+                  label={t.NewConnectionForm["CA Certificate"]}
                   type="file"
                   labelStyle={{ flex: "unset" }}
                   onChange={async (files) => {
@@ -432,7 +443,7 @@ export const NewConnectionForm = ({
                 />
                 <FormField
                   id="ssl_client_cert_key"
-                  label="Client Key"
+                  label={t.NewConnectionForm["Client Key"]}
                   type="file"
                   labelStyle={{ flex: "unset" }}
                   onChange={async (files) => {
@@ -445,7 +456,7 @@ export const NewConnectionForm = ({
                 />
                 <FormField
                   id="ssl_rejectUnauthorized"
-                  label="Reject unauthorized"
+                  label={t.NewConnectionForm["Reject unauthorized"]}
                   type="checkbox"
                   labelStyle={{ flex: "unset" }}
                   value={c.ssl_reject_unauthorized}
@@ -467,8 +478,10 @@ export const NewConnectionForm = ({
                 <SwitchToggle
                   id="swatch"
                   label={{
-                    label: "Watch schema",
-                    info: "Will refresh the dashboard and API on schema change. Requires superuser for best experience",
+                    label: t.NewConnectionForm["Watch schema"],
+                    info: t.NewConnectionForm[
+                      "Will refresh the dashboard and API on schema change. Requires superuser for best experience"
+                    ],
                   }}
                   checked={!!c.db_watch_shema}
                   onChange={(db_watch_shema) => {
@@ -480,15 +493,17 @@ export const NewConnectionForm = ({
                     onClickPromise={() => dbsMethods.reloadSchema!(c.id!)}
                     color="action"
                   >
-                    Reload schema
+                    {t.NewConnectionForm["Reload schema"]}
                   </Btn>
                 )}
               </FlexRow>
               <SwitchToggle
                 id="realtime"
                 label={{
-                  label: "Realtime",
-                  info: "Needed to allow realtime data view. Requires superuser",
+                  label: t.NewConnectionForm.Realtime,
+                  info: t.NewConnectionForm[
+                    "Needed to allow realtime data view. Requires superuser"
+                  ],
                 }}
                 checked={!c.disable_realtime}
                 onChange={(disable_realtime) => {
@@ -497,10 +512,17 @@ export const NewConnectionForm = ({
               />
               {!c.disable_realtime && (
                 <InfoRow>
-                  Realtime requires table triggers to be created as and when
-                  needed.
-                  <br></br>A "prostgles" schema with necessary metadata will
-                  also be created
+                  {
+                    t.NewConnectionForm[
+                      "Realtime requires table triggers to be created as and when needed."
+                    ]
+                  }
+                  <br></br>
+                  {
+                    t.NewConnectionForm[
+                      'A "prostgles" schema with necessary metadata will also be created'
+                    ]
+                  }
                 </InfoRow>
               )}
             </>
@@ -513,7 +535,7 @@ export const NewConnectionForm = ({
                 iconPath={mdiConnection}
                 onClickPromise={test.onTest}
               >
-                Test connection
+                {t.NewConnectionForm["Test connection"]}
               </Btn>
             )}
 

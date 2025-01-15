@@ -113,8 +113,6 @@ test.describe("Main test", () => {
   });
 
   test("Email password registrations", async ({ page: p, browser }) => {
-    // const newPage: PageWIds = await browser.newPage();
-    // const page = p as PageWIds;
     const newPage = p as PageWIds;
     const page = await browser.newPage();
 
@@ -194,7 +192,9 @@ test.describe("Main test", () => {
     await newPage.getByTestId("App.colorScheme").waitFor({ state: "visible" });
   });
 
-  test("Enable email magic link registrations", async ({ page: p }) => {
+  test("Enable email magic link registrations & Translations", async ({
+    page: p,
+  }) => {
     const page = p as PageWIds;
 
     await login(page);
@@ -207,6 +207,17 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1500);
     const errNodeCount = await page.getByTestId("EmailAuthSetup.error").count();
     expect(errNodeCount).toBe(0);
+
+    await goTo(page, "/connections");
+    await page.getByTestId("App.LanguageSelector").click();
+    await page.locator(`[data-key="es"]`).click();
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
+    await page.getByText("Nueva conexión").waitFor({ state: "visible" });
+    await page.getByTestId("App.LanguageSelector").click();
+    await page.locator(`[data-key="en"]`).click();
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
   });
 
   test("Email magic link signup", async ({ page: p, browser }) => {
@@ -334,6 +345,7 @@ test.describe("Main test", () => {
     expect(funcCode2).toEqual(
       expectedCode.replace("dbo.tx", llmCode + "dbo.tx"),
     );
+
     /** Add askLLM func args */
     await page.getByTitle("Add new item").click();
     await page.getByLabel("Argument name").fill("messages");
@@ -342,11 +354,12 @@ test.describe("Main test", () => {
     await page.getByRole("button", { name: "Add function" }).click();
 
     /** Page will reload after func is added */
-    // await page.waitForTimeout(3e3);
-    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(2e3);
     /** JSONBSchema localValue bugs. Argument must show */
     await page.getByTitle("Edit function").click();
+    await page.waitForTimeout(1e3);
     await page.getByLabel("Argument name").waitFor({ state: "visible" });
+    await page.getByTestId("Popup.close").click();
 
     /**
      * Publish functions for user
@@ -1469,16 +1482,11 @@ test.describe("Main test", () => {
     await page.getByTestId("dashboard.menu.sqlEditor").click();
     await page.getByTestId("dashboard.window.menu").click();
     await page.getByText("General").click();
-    await page.getByText("DEMO").click();
-    await page.waitForTimeout(100);
-    await page.getByText("DEMO").click();
-    await page.waitForTimeout(100);
-    await page.getByText("DEMO").click();
-    await page.waitForTimeout(100);
-    await page.getByText("DEMO").click();
-    await page.waitForTimeout(100);
-    await page.getByText("DEMO").click();
-    await page.waitForTimeout(100);
+
+    for await (const _ of new Array(5).fill(1)) {
+      await page.getByText("TEST", { exact: true }).click();
+      await page.waitForTimeout(100);
+    }
 
     const startSqlTest = async () =>
       new Promise(async (resolve, reject) => {

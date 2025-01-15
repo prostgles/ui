@@ -8,6 +8,7 @@ import { useIsMounted } from "./Backup/CredentialSelector";
 import PopupMenu from "../components/PopupMenu";
 import { FlexCol } from "../components/Flex";
 import type { Prgl } from "../App";
+import { t } from "../i18n/i18nUtils";
 
 export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
   const getIsMounted = useIsMounted();
@@ -27,7 +28,7 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
 
   return (
     <PopupMenu
-      title="Send feedback"
+      title={t.Feedback["Send feedback"]}
       positioning="beneath-left"
       clickCatchStyle={{ opacity: 0.5 }}
       onClickClose={false}
@@ -39,11 +40,11 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
       }}
       button={
         <Btn
-          title="Leave feedback"
+          title={t.Feedback["Leave feedback"]}
           variant="faded"
           iconPath={mdiMessageBookmarkOutline}
         >
-          {window.isMediumWidthScreen ? null : `Feedback`}
+          {window.isMediumWidthScreen ? null : t.Feedback.Feedback}
         </Btn>
       }
       footerButtons={
@@ -51,7 +52,7 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
           undefined
         : (pClose) => [
             {
-              label: "Cancel",
+              label: t.common.Cancel,
               variant: "outline",
               onClick: (e) => {
                 setFeedBack({ email: "", details: "" });
@@ -59,12 +60,12 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
               },
             },
             {
-              label: "Send",
+              label: t.common.Send,
               variant: "filled",
               color: "action",
               disabledInfo:
-                feedback.sending && !feedback.error ? "Already sent"
-                : !feedback.details ? "Must provide some details"
+                feedback.sending && !feedback.error ? t.Feedback["Already sent"]
+                : !feedback.details ? t.Feedback["Must provide some details"]
                 : undefined,
               onClickPromise: async (e) => {
                 try {
@@ -89,7 +90,7 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
         {feedback.success ?
           <>
             <Success />
-            <p>Feedback was sent! Thanks a lot!</p>
+            <p>{t.Feedback["Feedback was sent! Thanks a lot!"]}</p>
           </>
         : feedback.error ?
           <ErrorComponent error={feedback.error} />
@@ -97,7 +98,7 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
             <FormField
               id="email"
               type="email"
-              label="Email (optional)"
+              label={t.Feedback["Email (optional)"]}
               value={feedback.email}
               onChange={(email) => {
                 setFeedBack({ ...feedback, email });
@@ -106,7 +107,7 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
             <FormField
               id="text"
               type="text"
-              label="Details"
+              label={t.Feedback["Details"]}
               value={feedback.details}
               asTextArea={true}
               onChange={(details) => {
@@ -117,14 +118,17 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
               hint={`${500 - `${feedback.details}`.length}/500`}
             />
             <p>
-              Other options:{" "}
+              {t.Feedback["Other options"]}:{" "}
               <a
                 target="_blank"
                 href="https://github.com/prostgles/ui/issues/new/choose"
               >
-                open an issue
+                {t.Feedback["open an issue"]}
               </a>{" "}
-              or <a href="mailto:prostgles@protonmail.com">email us</a>
+              {t.Feedback.or}{" "}
+              <a href="mailto:prostgles@protonmail.com">
+                {t.Feedback["email us"]}
+              </a>
             </p>
           </>
         }

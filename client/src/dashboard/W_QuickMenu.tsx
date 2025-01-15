@@ -21,6 +21,7 @@ import type { DBS } from "./Dashboard/DBS";
 import { getLinkColorV2 } from "./W_Map/getMapLayerQueries";
 import { AddChartMenu } from "./W_Table/TableMenu/AddChartMenu";
 import type { ChartableSQL } from "./W_SQL/getChartableSQL";
+import { t } from "../i18n/i18nUtils";
 
 export type ProstglesQuickMenuProps = Pick<
   CommonWindowProps,
@@ -93,7 +94,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
       >
         {table && (!show || show.filter) && (
           <Btn
-            title={"Show/Hide filtering"}
+            title={t.W_QuickMenu["Show/Hide filtering"]}
             className={bgColorClass}
             data-command="dashboard.window.toggleFilterBar"
             size="small"
@@ -135,7 +136,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
         {hasMinimisedCharts && (
           <Btn
             iconPath={mdiChartBoxMultipleOutline}
-            title="Restore minimised charts"
+            title={t.W_QuickMenu["Restore minimised charts"]}
             data-command="dashboard.window.restoreMinimisedCharts"
             color="action"
             className={bgColorClass}
@@ -149,7 +150,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
         )}
         {showLinks && !window.isMobileDevice && !!setLinkMenu && (
           <Btn
-            title="Cross filter tables"
+            title={t.W_QuickMenu["Cross filter tables"]}
             className={bgColorClass}
             size="small"
             iconPath={mdiSetLeftCenter}
@@ -168,7 +169,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
 
       {popup && divRef.current && (
         <Popup
-          title="Add chart"
+          title={t.W_QuickMenu["Add chart"]}
           anchorEl={divRef.current}
           positioning={"inside"}
           rootStyle={{ padding: 0 }}

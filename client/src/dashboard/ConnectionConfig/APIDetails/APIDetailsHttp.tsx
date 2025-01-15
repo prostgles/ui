@@ -7,6 +7,7 @@ import { SwitchToggle } from "../../../components/SwitchToggle";
 import CodeExample from "../../CodeExample";
 import type { APIDetailsProps } from "./APIDetails";
 import { getConnectionPaths } from "../../../../../commonTypes/utils";
+import { t } from "../../../i18n/i18nUtils";
 
 export const APIDetailsHttp = ({
   dbs,
@@ -24,7 +25,7 @@ export const APIDetailsHttp = ({
       {dbConfig && (
         <FlexCol className=" ">
           <SwitchToggle
-            label={"Enabled"}
+            label={t.common.Enabled}
             variant="row"
             checked={!!dbConfig.rest_api_enabled}
             onChange={(rest_api_enabled) => {
@@ -35,15 +36,18 @@ export const APIDetailsHttp = ({
             }}
           />
           <div>
-            Provides similar level of access to the Websocket API with the
-            following limitations: no subscriptions, no sync, no file upload
+            {
+              t.APIDetailsHttp[
+                "Provides similar level of access to the Websocket API with the following limitations: no subscriptions, no sync, no file upload"
+              ]
+            }
           </div>
           {dbConfig.rest_api_enabled && (
             <PopupMenu
-              title="Examples"
+              title={t.APIDetailsWs.Examples}
               button={
                 <Btn variant="filled" iconPath={mdiCodeBraces} color="action">
-                  Examples
+                  {t.APIDetailsWs.Examples}
                 </Btn>
               }
               onClickClose={false}

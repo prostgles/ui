@@ -10,6 +10,7 @@ import PopupMenu from "../../components/PopupMenu";
 import { QRCodeImage } from "../../components/QRCodeImage";
 import type { UserData } from "../../dashboard/Dashboard/dashboardUtils";
 import type { Prgl } from "../../App";
+import { t } from "../../i18n/i18nUtils";
 
 export const Setup2FA = ({
   user,
@@ -61,11 +62,13 @@ export const Setup2FA = ({
         Disable 2FA
       </Btn>
     : <PopupMenu
-        title={<div className="bold">Two-factor authentication</div>}
+        title={
+          <div className="bold">{t.Setup2FA["Two-factor authentication"]}</div>
+        }
         data-command="Setup2FA.Enable"
         button={
           <Btn variant="filled" color="green">
-            Enable 2FA
+            {t.Setup2FA["Enable 2FA"]}
           </Btn>
         }
         clickCatchStyle={{ opacity: 0.5 }}
@@ -89,7 +92,7 @@ export const Setup2FA = ({
                   data-command="Setup2FA.Enable.ConfirmCode"
                   value={codeConfirm}
                   type="number"
-                  label="Confirm code"
+                  label={t.Setup2FA["Confirm code"]}
                   onChange={(codeConfirm) => {
                     setCodeConfirm(codeConfirm);
                   }}
@@ -101,7 +104,7 @@ export const Setup2FA = ({
                       data-command="Setup2FA.Enable.Confirm"
                       onClickMessage={() => enable2FA(closePopup)}
                     >
-                      Enable 2FA
+                      {t.Setup2FA["Enable 2FA"]}
                     </Btn>
                   }
                 />
@@ -118,23 +121,29 @@ export const Setup2FA = ({
             >
               {!OTP && (
                 <div>
-                  Along with your username and password, you will be asked to
-                  verify your identity using the code from authenticator app.
+                  {
+                    t.Setup2FA[
+                      "Along with your username and password, you will be asked to verify your identity using the code from authenticator app."
+                    ]
+                  }
                 </div>
               )}
 
               {!!OTP && (
                 <>
                   <div>
-                    Scan{" "}
+                    {t.Setup2FA.Scan}{" "}
                     <a href={OTP.url} target="_blank">
-                      or tap
+                      {t.Setup2FA[" or tap "]}
                     </a>{" "}
-                    the image below with the two-factor authentication app on
-                    your phone.{" "}
+                    {
+                      t.Setup2FA[
+                        "the image below with the two-factor authentication app on your phone."
+                      ]
+                    }{" "}
                   </div>
                   <ExpandSection
-                    label="I can't scan the QR Code"
+                    label={t.Setup2FA["I can't scan the QR Code"]}
                     buttonProps={{
                       variant: "outline",
                       "data-command": "Setup2FA.Enable.CantScanQR",
@@ -143,13 +152,16 @@ export const Setup2FA = ({
                   >
                     <div className="flex-col gap-p5 ai-start jc-start">
                       <div>
-                        If you can't use a QR code you can enter this
-                        information manually:
+                        {
+                          t.Setup2FA[
+                            "If you can't use a QR code you can enter this information manually:"
+                          ]
+                        }
                       </div>
                       <div className="flex-col ml-1 pl-2">
                         <Chip
                           variant="naked"
-                          label="Name"
+                          label={t.Setup2FA.Name}
                           value={user.username}
                         />
                         <Chip
@@ -159,13 +171,13 @@ export const Setup2FA = ({
                         />
                         <Chip
                           variant="naked"
-                          label="Base64 secret"
+                          label={t.Setup2FA["Base64 secret"]}
                           value={OTP.secret}
                           data-command="Setup2FA.Enable.Base64Secret"
                         />
                         <Chip
                           variant="naked"
-                          label="Type"
+                          label={t.Setup2FA.Type}
                           value={"Time-based OTP"}
                         />
                       </div>
@@ -188,8 +200,11 @@ export const Setup2FA = ({
                   <InfoRow variant="naked" className="ai-start">
                     <div className="flex-col gap-1">
                       <div>
-                        Save the Recovery code below. It will be used in case
-                        you lose access to your authenticator app:
+                        {
+                          t.Setup2FA[
+                            "Save the Recovery code below. It will be used in case you lose access to your authenticator app:"
+                          ]
+                        }
                       </div>
                       <div className="bold" id="totp_recovery_code">
                         {OTP.recoveryCode}
@@ -213,7 +228,7 @@ export const Setup2FA = ({
                     setOTP(setup);
                   }}
                 >
-                  Generate QR Code
+                  {t.Setup2FA["Generate QR Code"]}
                 </Btn>
               )}
 

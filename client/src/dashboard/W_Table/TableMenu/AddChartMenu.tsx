@@ -21,6 +21,7 @@ import { getRankingFunc } from "../ColumnMenu/JoinPathSelectorV2";
 import type { ChartColumn, ColInfo } from "./getChartCols";
 import { getChartCols } from "./getChartCols";
 import type { ChartableSQL } from "../../W_SQL/getChartableSQL";
+import { t } from "../../../i18n/i18nUtils";
 
 type P = Pick<CommonWindowProps, "myLinks" | "childWindows"> & {
   onAddChart: OnAddChart;
@@ -282,9 +283,14 @@ export const AddChartMenu = (props: P) => {
               disabledInfo={
                 alreadyAddedButMinimisedOrNotVisibleChart ? undefined
                 : layerAlreadyAdded ?
-                  "Layer already added"
+                  t.AddChartMenu["Layer already added"]
                 : !firstCol ?
-                  `No ${isMap ? "geography/geometry" : "date/timestamp"} columns available`
+                  t.AddChartMenu[
+                    "No {{chartColumnDataType}} columns available"
+                  ]({
+                    chartColumnDataType:
+                      isMap ? "geography/geometry" : "date/timestamp",
+                  })
                 : undefined
               }
               {...btnProps}
