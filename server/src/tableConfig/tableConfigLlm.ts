@@ -165,15 +165,6 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
           ],
         },
       },
-      tool_use: {
-        jsonbSchema: {
-          arrayOfType: {
-            name: "string",
-            input: "any",
-          },
-        },
-        nullable: true,
-      },
       created: `TIMESTAMP DEFAULT NOW()`,
     },
   },
