@@ -16,6 +16,7 @@ import {
   DEFAULT_EMAIL_VERIFICATION_TEMPLATE,
   DEFAULT_MAGIC_LINK_TEMPLATE,
 } from "../../../../commonTypes/OAuthUtils";
+import { t } from "../../i18n/i18nUtils";
 
 export const EmailAuthSetup = ({
   authProviders,
@@ -44,7 +45,7 @@ export const EmailAuthSetup = ({
 
   return (
     <Section
-      title="Email signup"
+      title={t.EmailAuthSetup["Email signup"]}
       data-command="EmailAuthSetup"
       titleIconPath={mdiEmail}
       disabledInfo={disabledInfo}
@@ -54,13 +55,16 @@ export const EmailAuthSetup = ({
         <SwitchToggle
           className="ml-auto"
           checked={!!authProviders.email?.enabled}
-          disabledInfo={!onToggle && "Must configure the email provider first"}
+          disabledInfo={
+            !onToggle &&
+            t.EmailAuthSetup["Must configure the email provider first"]
+          }
           onChange={onToggle ?? (() => {})}
         />
       }
     >
       <SwitchToggle
-        label={"Enabled"}
+        label={t.common.Enabled}
         checked={!!localAuth?.enabled}
         onChange={async (enabled) => {
           setLocalAuth(
@@ -88,15 +92,19 @@ export const EmailAuthSetup = ({
           [
             {
               key: "withPassword",
-              label: "With password",
+              label: t.EmailAuthSetup["With password"],
               subLabel:
-                "Email and password will be required to login. User will have to confirm email",
+                t.EmailAuthSetup[
+                  "Email and password will be required to login. User will have to confirm email"
+                ],
             },
             {
               key: "withMagicLink",
-              label: "With magic link",
+              label: t.EmailAuthSetup["With magic link"],
               subLabel:
-                "Only email is required to login. A magic link will be sent to the user's email",
+                t.EmailAuthSetup[
+                  "Only email is required to login. A magic link will be sent to the user's email"
+                ],
             },
           ] as const
         }
@@ -124,7 +132,7 @@ export const EmailAuthSetup = ({
       />
       {localAuth?.signupType === "withPassword" && (
         <FormField
-          label={"Minimum password length"}
+          label={t.EmailAuthSetup["Minimum password length"]}
           optional={true}
           value={localAuth.minPasswordLength ?? 8}
           onChange={async (minPasswordLength) => {
@@ -133,15 +141,15 @@ export const EmailAuthSetup = ({
               minPasswordLength,
             });
           }}
-          hint="Minimum password length. Defaults to 8"
+          hint={t.EmailAuthSetup["Minimum password length. Defaults to 8"]}
         />
       )}
       <EmailSMTPAndTemplateSetup
         websiteUrl={authProviders.website_url}
         label={
           localAuth?.signupType === "withMagicLink" ?
-            "Magic link email configuration"
-          : "Email verification"
+            t.EmailAuthSetup["Magic link email configuration"]
+          : t.EmailAuthSetup["Email verification"]
         }
         value={localAuth}
         onChange={async (newConfig) => {

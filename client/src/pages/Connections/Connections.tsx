@@ -17,6 +17,7 @@ import RTComp from "../../dashboard/RTComp";
 import { pickKeys } from "prostgles-types";
 import { Connection } from "./Connection";
 import { ConnectionServer } from "./ConnectionServer";
+import { t } from "../../i18n/i18nUtils";
 
 type CommonConnectionInfo = Pick<DBSSchema["connections"], "created"> & {
   access_control: { count: number }[];
@@ -149,7 +150,11 @@ export class Connections extends RTComp<PrglState, S> {
           positioning={"beneath-center"}
           anchorEl={showStateConfirm}
           iconPath={mdiAlert}
-          message="Editing state data directly may break functionality. Proceed at your own risk!"
+          message={
+            t.Connections[
+              "Editing state data directly may break functionality. Proceed at your own risk!"
+            ]
+          }
           onClose={() => {
             this.setState({ showStateConfirm: undefined });
           }}
@@ -247,19 +252,19 @@ export class Connections extends RTComp<PrglState, S> {
         <div className="flex-row as-center w-full gap-p5 mt-1 p-p5  max-w-800">
           {!connections.length && (
             <InfoRow color="info" className=" f-1 w-full">
-              No connections available/permitted
+              {t.Connections["No connections available/permitted"]}
             </InfoRow>
           )}
           {isAdmin && (
             <Btn
               href="/new-connection"
               asNavLink={true}
-              title="Create a new connection"
+              title={t.Connections["Create new connection"]}
               iconPath={mdiPlus}
               variant="filled"
               color="action"
             >
-              New connection
+              {t.Connections["New connection"]}
             </Btn>
           )}
 
@@ -270,11 +275,11 @@ export class Connections extends RTComp<PrglState, S> {
               positioning="beneath-right"
               onClickClose={false}
               contentClassName="p-p5"
-              button={<Btn title="Options" iconPath={mdiCogOutline} />}
+              button={<Btn title={t.common.Options} iconPath={mdiCogOutline} />}
             >
               {canViewStateDB && (
                 <SwitchToggle
-                  label="Show state connection"
+                  label={t.Connections["Show state connection"]}
                   checked={!!showStateConn}
                   onChange={(checked, e) => {
                     if (checked) {
@@ -289,7 +294,7 @@ export class Connections extends RTComp<PrglState, S> {
                 />
               )}
               <SwitchToggle
-                label="Show database names"
+                label={t.Connections["Show database names"]}
                 checked={showDbNames}
                 onChange={(showDbNames) => {
                   this.setState({ showDbNames });

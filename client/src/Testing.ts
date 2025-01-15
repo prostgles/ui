@@ -258,6 +258,7 @@ export const COMMANDS = {
   AddLLMCredentialForm: "",
   "AddLLMCredentialForm.Save": "",
   "AddLLMCredentialForm.Provider": "",
+  "App.LanguageSelector": "",
   "EmailAuthSetup.SignupType": "",
   EmailAuthSetup: "",
   "EmailAuthSetup.error": "",

@@ -2,7 +2,6 @@ import {
   mdiArrowCollapse,
   mdiClose,
   mdiCog,
-  mdiCollapseAllOutline,
   mdiDotsVertical,
   mdiOpenInNew,
 } from "@mdi/js";
@@ -15,6 +14,7 @@ import Btn from "../components/Btn";
 import { ErrorTrap } from "../components/ErrorComponent";
 import { FlexCol, FlexRow } from "../components/Flex";
 import Popup from "../components/Popup/Popup";
+import { t } from "../i18n/i18nUtils";
 import type { WindowData, WindowSyncItem } from "./Dashboard/dashboardUtils";
 import type { DeepPartial } from "./RTComp";
 import RTComp from "./RTComp";
@@ -131,7 +131,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
           <Btn
             className="f-0"
             iconPath={mdiDotsVertical}
-            title="Open menu"
+            title={t.Window["Open menu"]}
             data-command="dashboard.window.menu"
             onContextMenu={(e) => {
               navigator.clipboard.writeText(w.id);
@@ -172,7 +172,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
 
         {showMenu && getMenu && (
           <Popup
-            title={window.isLowWidthScreen ? "Menu" : undefined}
+            title={window.isLowWidthScreen ? t.Window.Menu : undefined}
             fixedTopLeft={true}
             anchorEl={this.ref}
             positioning={"inside"}
@@ -196,7 +196,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
           <FlexRow className="p-p5">
             <Btn
               className="f-0"
-              title="Open menu"
+              title={t.Window["Open menu"]}
               variant="outline"
               color="action"
               iconPath={mdiCog}
@@ -204,14 +204,16 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
               onClick={() => {
                 this.setState({ showMenu: !showMenu });
               }}
-              children={window.isLowWidthScreen ? null : "Chart options"}
+              children={
+                window.isLowWidthScreen ? null : t.Window["Chart options"]
+              }
             />
 
             <Btn
               className="ml-auto"
               iconPath={mdiArrowCollapse}
               color="action"
-              title="Collapse chart"
+              title={t.Window["Collapse chart"]}
               data-command="dashboard.window.collapseChart"
               onClick={() => {
                 w.$update({ minimised: true });
@@ -223,14 +225,18 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
               color="action"
               data-command="dashboard.window.detachChart"
               onClick={() => w.$update({ parent_window_id: null })}
-              children={window.isLowWidthScreen ? null : "Detach chart"}
+              children={
+                window.isLowWidthScreen ? null : t.Window["Detach chart"]
+              }
             />
             <Btn
               variant="outline"
               data-command="dashboard.window.closeChart"
               iconPath={mdiClose}
               onClick={() => w.$update({ closed: true })}
-              children={window.isLowWidthScreen ? null : "Close chart"}
+              children={
+                window.isLowWidthScreen ? null : t.Window["Close chart"]
+              }
             />
           </FlexRow>
           {windowContent}

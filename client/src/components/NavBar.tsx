@@ -9,7 +9,6 @@ import type { ClientUser, Prgl } from "../App";
 import { AccountMenu } from "../pages/AccountMenu";
 import ClickCatch from "./ClickCatch";
 import { Icon } from "./Icon/Icon";
-import { InfoRow } from "./InfoRow";
 
 type P = {
   title?: string;
@@ -35,17 +34,18 @@ export const NavBar = (props: P) => {
     serverState,
     dbsMethods,
     dbs,
-    endContent: _endContent,
+    endContent,
   } = props;
-  const endContent =
-    _endContent ?
+  const endContentWrapped =
+    endContent ?
       <div
+        className="NavBar_endContent"
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
         }}
       >
-        {_endContent}
+        {endContent}
       </div>
     : null;
 
@@ -154,7 +154,7 @@ export const NavBar = (props: P) => {
               {!serverState?.isElectron && (
                 <AccountMenu user={user} forNavBar={true} />
               )}
-              {endContent}
+              {endContentWrapped}
             </div>
             {MenuButton}
           </div>
