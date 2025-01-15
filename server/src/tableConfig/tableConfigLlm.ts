@@ -41,6 +41,9 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
               Provider: { enum: ["Prostgles"] },
               API_Key: { type: "string" },
             },
+            {
+              Provider: { enum: ["Google"] },
+            },
           ],
         },
         defaultValue: {

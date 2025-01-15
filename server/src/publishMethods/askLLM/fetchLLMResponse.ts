@@ -1,6 +1,7 @@
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { type AnyObject, isDefined, pickKeys } from "prostgles-types";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import { filterArr } from "../../../../commonTypes/llmUtils";
 
 export type LLMMessage = {
   role: "system" | "user" | "assistant";
@@ -11,14 +12,16 @@ type Args = {
     DBSSchema["llm_credentials"],
     "config" | "endpoint" | "result_path"
   >;
-  tools: {
-    name: string;
-    description: string;
-    /**
-     * JSON schema for input
-     */
-    input_schema: AnyObject;
-  }[];
+  tools:
+    | undefined
+    | {
+        name: string;
+        description: string;
+        /**
+         * JSON schema for input
+         */
+        input_schema: AnyObject;
+      }[];
   messages: LLMMessage[];
 };
 
@@ -27,7 +30,7 @@ export const fetchLLMResponse = async ({
   messages: maybeEmptyMessages,
   tools,
 }: Args): Promise<LLMMessage["content"]> => {
-  const _messages = maybeEmptyMessages
+  const nonEmptyMessages = maybeEmptyMessages
     .map((m) => {
       const nonEmptyMessageContent = m.content.filter(
         (m) => m.type !== "text" || m.text.trim(),
@@ -39,16 +42,15 @@ export const fetchLLMResponse = async ({
     })
     .filter((m) => m.content.length);
 
-  const systemMessage = _messages.filter((m) => m.role === "system");
+  const systemMessage = nonEmptyMessages.filter((m) => m.role === "system");
   const [systemMessageObj, ...otherSM] = systemMessage;
   if (!systemMessageObj) throw "Prompt not found";
   if (otherSM.length) throw "Multiple prompts found";
   const { config } = llm_credential;
   const messages =
     config.Provider === "OpenAI" ?
-      _messages
-    : _messages.filter((m) => m.role !== "system");
-
+      nonEmptyMessages
+    : nonEmptyMessages.filter((m) => m.role !== "system");
   const headers =
     config.Provider === "OpenAI" || config.Provider === "Prostgles" ?
       {
@@ -60,6 +62,11 @@ export const fetchLLMResponse = async ({
         "content-type": "application/json",
         "x-api-key": config.API_Key,
         "anthropic-version": config["anthropic-version"],
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    : config.Provider === "Google" ?
+      {
+        "content-type": "application/json",
       }
     : config.headers;
 
@@ -90,6 +97,29 @@ export const fetchLLMResponse = async ({
           tools,
         },
       ]
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    : config.Provider === "Google" ?
+      {
+        system_instruction: {
+          parts: systemMessageObj.content
+            .map((c) => {
+              if (c.type !== "text") return undefined;
+              return {
+                text: c.text,
+              };
+            })
+            .filter(isDefined),
+        },
+        /**
+         * https://ai.google.dev/gemini-api/docs/text-generation?lang=rest
+         */
+        contents: messages.map((m) => ({
+          role: m.role,
+          parts: m.content
+            .map((c) => (c.type === "text" ? { text: c.text } : undefined))
+            .filter(isDefined),
+        })),
+      }
     : config.body;
 
   if (llm_credential.endpoint === "http://localhost:3004/mocked-llm") {
@@ -110,6 +140,17 @@ export const fetchLLMResponse = async ({
   }
   const response = (await res.json()) as AnyObject | undefined;
 
+  if (config.Provider === "Google") {
+    const googleResponse = response as GoogleResponse;
+    return googleResponse.candidates.flatMap((c) => {
+      return c.content.parts.map((p) => {
+        return {
+          type: "text",
+          text: p.text,
+        };
+      });
+    });
+  }
   if (config.Provider === "Anthropic") {
     const anthropicResponse = response as AnthropicResponse;
     const result = anthropicResponse.content
@@ -181,4 +222,23 @@ type AnthropicResponse = {
     cache_read_input_tokens: number;
     output_tokens: number;
   };
+};
+
+type GoogleResponse = {
+  candidates: {
+    content: {
+      parts: {
+        text: string;
+      }[];
+      role: "model";
+    };
+    finishReason: "STOP";
+    avgLogprobs: number;
+  }[];
+  usageMetadata: {
+    promptTokenCount: number;
+    candidatesTokenCount: number;
+    totalTokenCount: number;
+  };
+  modelVersion: "gemini-1.5-flash";
 };

@@ -347,6 +347,7 @@ export type DBGeneratedSchema = {
        |  {  Provider: 'Anthropic';  API_Key: string;  "anthropic-version": string;  model: string;  max_tokens: number; }
        |  {  Provider: 'Custom';  headers?: Record<string, string>;  body?: Record<string, string>; }
        |  {  Provider: 'Prostgles';  API_Key: string; }
+       |  {  Provider: 'Google'; }
       created?: null | string;
       endpoint?: string;
       id?: number;

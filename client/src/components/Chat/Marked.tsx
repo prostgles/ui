@@ -56,37 +56,12 @@ export const Marked = (props: MarkedProps) => {
           </pre>
         );
       }
-
       return (
-        <FlexCol
-          className="Marked relative b b-color-1 rounded gap-0 b-color-2 f-0 o-hidden"
-          style={{
-            maxWidth: `${CHAT_WIDTH}px`,
-          }}
-        >
-          <FlexRow className="bg-color-2">
-            <div className="text-sm text-color-4 f-1 px-1 ">{language}</div>
-            {codeHeader({ language, codeString })}
-            <Btn
-              iconPath={mdiContentCopy}
-              style={{
-                marginLeft: "auto",
-                flex: "none",
-              }}
-              onClick={() => {
-                navigator.clipboard.writeText(codeString);
-              }}
-            >
-              Copy
-            </Btn>
-          </FlexRow>
-          <MonacoEditor
-            loadedSuggestions={undefined}
-            value={codeString}
-            language={language}
-            options={monacoOptions}
-          />
-        </FlexCol>
+        <MarkdownMonacoCode
+          codeHeader={codeHeader}
+          language={language}
+          codeString={codeString}
+        />
       );
     },
     [codeHeader],
@@ -103,5 +78,47 @@ export const Marked = (props: MarkedProps) => {
     >
       {content}
     </Markdown>
+  );
+};
+
+const MarkdownMonacoCode = ({
+  codeHeader,
+  language,
+  codeString,
+}: Pick<MarkedProps, "codeHeader"> & {
+  language: string;
+  codeString: string;
+}) => {
+  return (
+    <FlexCol
+      className="Marked relative b b-color-1 rounded gap-0 b-color-2 f-0 o-hidden"
+      style={{
+        maxWidth: `${CHAT_WIDTH}px`,
+      }}
+    >
+      <FlexRow className="bg-color-2 p-p25">
+        <div className="text-sm text-color-4 f-1 px-1 ">{language}</div>
+        {codeHeader({ language, codeString })}
+        <Btn
+          size="small"
+          iconPath={mdiContentCopy}
+          style={{
+            marginLeft: "auto",
+            flex: "none",
+          }}
+          onClick={() => {
+            navigator.clipboard.writeText(codeString);
+          }}
+        >
+          Copy
+        </Btn>
+      </FlexRow>
+      <MonacoEditor
+        loadedSuggestions={undefined}
+        value={codeString}
+        language={language}
+        options={monacoOptions}
+      />
+    </FlexCol>
   );
 };

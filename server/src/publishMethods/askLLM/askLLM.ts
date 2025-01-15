@@ -20,9 +20,6 @@ export const askLLM = async (
   accessRules: DBSSchema["access_control"][] | undefined,
 ) => {
   if (!userMessage.length) throw "Message is empty";
-  // if (typeof question !== "string") throw "Question must be a string";
-  // if (typeof schema !== "string") throw "Schema must be a string";
-  // if (!question.trim()) throw "Question is empty";
   if (!Number.isInteger(chatId)) throw "chatId must be an integer";
   const chat = await dbs.llm_chats.findOne({ id: chatId, user_id: user.id });
   if (!chat) throw "Chat not found";
@@ -118,34 +115,38 @@ export const askLLM = async (
         })
       : [];
 
-    const tools = published_methods.map((m) => {
-      const { name, description, arguments: _arguments } = m;
-      const properties = _arguments.reduce(
-        (acc, arg) => ({
-          ...acc,
-          [arg.name]:
-            (
-              arg.type === "JsonbSchema" ||
-              arg.type === "Lookup" ||
-              arg.type === "Lookup[]"
-            ) ?
-              "any"
-            : arg.type,
-        }),
-        {} as JSONB.ObjectType["type"],
-      );
-      return {
-        name,
-        description,
-        input_schema: getJSONBSchemaAsJSONSchema(
-          "published_methods",
-          "arguments",
-          {
-            type: properties,
-          },
-        ),
-      };
-    });
+    /** Tools are not used with Dashboarding due to induced errors */
+    const tools =
+      promptObj.name === "Dashboarding" ?
+        undefined
+      : published_methods.map((m) => {
+          const { name, description, arguments: _arguments } = m;
+          const properties = _arguments.reduce(
+            (acc, arg) => ({
+              ...acc,
+              [arg.name]:
+                (
+                  arg.type === "JsonbSchema" ||
+                  arg.type === "Lookup" ||
+                  arg.type === "Lookup[]"
+                ) ?
+                  "any"
+                : arg.type,
+            }),
+            {} as JSONB.ObjectType["type"],
+          );
+          return {
+            name,
+            description,
+            input_schema: getJSONBSchemaAsJSONSchema(
+              "published_methods",
+              "arguments",
+              {
+                type: properties,
+              },
+            ),
+          };
+        });
     const llmResponseMessage = await fetchLLMResponse({
       llm_credential,
       tools,
@@ -232,7 +233,8 @@ export const insertDefaultPrompts = async (dbs: DBS) => {
       "${schema}",
       "",
       "Using dashboard structure below create workspaces with useful views my current schema.",
-      "Return only a valid, markdown compatible json of this format: { prostglesWorkspaces: WorkspaceInsertModel[] }",
+      "Return a json of this format: { prostglesWorkspaces: WorkspaceInsertModel[] }",
+      "Return valid json, markdown compatible and in a clearly delimited section with a json code block.",
       "",
       "${dashboardTypes}",
     ].join("\n"),

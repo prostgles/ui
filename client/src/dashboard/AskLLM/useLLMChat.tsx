@@ -161,6 +161,7 @@ const useMarkdownCodeHeader = ({ workspaceId, dbs, connectionId }: P) => {
               color="action"
               iconPath={mdiPlus}
               variant="faded"
+              size="small"
               onClick={() => {
                 loadGeneratedWorkspaces(json.prostglesWorkspaces, {
                   dbs,
