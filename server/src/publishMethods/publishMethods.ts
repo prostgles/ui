@@ -45,6 +45,7 @@ import { initBackupManager, statePrgl } from "../startProstgles";
 import { upsertConnection } from "../upsertConnection";
 import { askLLM } from "./askLLM/askLLM";
 import { prostglesSignup } from "./prostglesSignup";
+import type { LLMMessage } from "../../../commonTypes/llmUtils";
 
 export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   params,
@@ -510,9 +511,13 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       });
   const userMethods = {
     ...((allowedLLMCreds || isAdmin) && {
-      askLLM: async (question: string, schema: string, chatId: number) => {
+      askLLM: async (
+        userMessage: LLMMessage["message"],
+        schema: string,
+        chatId: number,
+      ) => {
         await askLLM(
-          question,
+          userMessage,
           schema,
           chatId,
           dbs,

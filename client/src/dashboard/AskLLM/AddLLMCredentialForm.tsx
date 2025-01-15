@@ -23,6 +23,9 @@ export const AddLLMCredentialForm = ({ dbs }: P) => {
   const models = usePromise(async () => {
     const provider = providers.find((p) => p.name === providerName);
     if (!provider || !apiKey) return [];
+    if (providerName === "Google") {
+      return GoogleModels;
+    }
     if (providerName === "OpenAI") {
       const models = await fetchOpenAIModels(apiKey);
       const res = models.filter(
@@ -98,7 +101,9 @@ export const AddLLMCredentialForm = ({ dbs }: P) => {
                 : {
                     Provider: providerName,
                   },
-              endpoint: endPoint,
+              endpoint: endPoint
+                ?.replace("MODEL", model)
+                .replace("KEY", apiKey),
             });
             pClose?.(e);
           },
@@ -141,6 +146,11 @@ const providers = [
   {
     name: "Anthropic",
     modelEndpoint: "https://api.anthropic.com/v1/messages",
+  },
+  {
+    name: "Google",
+    modelEndpoint:
+      "https://generativelanguage.googleapis.com/v1beta/models/MODEL:generateContent?key=KEY",
   },
   {
     name: "Custom",
@@ -186,4 +196,11 @@ const AnthropicModels = [
   { id: "claude-3-opus-20240229" },
   { id: "claude-3-sonnet-20240229" },
   { id: "claude-3-haiku-20240307	" },
+];
+
+const GoogleModels = [
+  { id: "gemini-2.0-flash-exp" },
+  { id: "gemini-1.5-flash" },
+  { id: "gemini-1.5-flash-8b" },
+  { id: "gemini-1.5-pro" },
 ];

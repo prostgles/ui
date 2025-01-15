@@ -324,7 +324,7 @@ test.describe("Main test", () => {
     const funcCode = await getMonacoValue(page, ".MethodDefinition");
     expect(funcCode).toEqual(expectedCode);
     /** Add llm server side func */
-    const llmCode = `return { content: [{ text: "free ai assistant" + args.messages.at(-1)?.content }] };//`;
+    const llmCode = `return { content: [{ text: "free ai assistant" + args.messages.at(-1)?.content[0]?.text }] };//`;
     await monacoType(page, ".MethodDefinition", llmCode, {
       deleteAll: false,
       pressBeforeTyping: ["Control+ArrowLeft", "Control+ArrowLeft"],
@@ -342,11 +342,13 @@ test.describe("Main test", () => {
     await page.getByRole("button", { name: "Add function" }).click();
 
     /** Page will reload after func is added */
-    // await page.waitForTimeout(3e3);
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1e3);
     /** JSONBSchema localValue bugs. Argument must show */
     await page.getByTitle("Edit function").click();
+    await page.waitForTimeout(1e3);
     await page.getByLabel("Argument name").waitFor({ state: "visible" });
+    await page.getByTestId("Popup.close").click();
 
     /**
      * Publish functions for user

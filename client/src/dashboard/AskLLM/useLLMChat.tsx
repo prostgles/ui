@@ -10,6 +10,7 @@ import Loading from "../../components/Loading";
 import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
 import { loadGeneratedWorkspaces } from "./loadGeneratedWorkspaces";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
+import { getLLMMessageText } from "../../../../commonTypes/llmUtils";
 
 type P = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId"> & {
@@ -18,16 +19,8 @@ type P = LLMSetupStateReady &
 
 export type LLMChatState = ReturnType<typeof useLLMChat>;
 export const useLLMChat = (props: P) => {
-  const {
-    dbs,
-    user,
-    connectionId,
-    workspaceId,
-    credentials,
-    firstPromptId,
-    defaultCredential,
-    prompts,
-  } = props;
+  const { dbs, user, credentials, firstPromptId, defaultCredential, prompts } =
+    props;
   const [selectedChatId, setSelectedChat] = useState<number>();
   const { data: latestChats } = dbs.llm_chats.useSubscribe(
     {},
@@ -92,7 +85,7 @@ export const useLLMChat = (props: P) => {
       id: m.id,
       incoming: m.user_id !== user?.id,
       message: null,
-      markdown: m.message || "",
+      markdown: getLLMMessageText(m),
       sender_id: m.user_id || "ai",
       sent: new Date(m.created || new Date()),
     })) ?? [];
@@ -168,6 +161,7 @@ const useMarkdownCodeHeader = ({ workspaceId, dbs, connectionId }: P) => {
               color="action"
               iconPath={mdiPlus}
               variant="faded"
+              size="small"
               onClick={() => {
                 loadGeneratedWorkspaces(json.prostglesWorkspaces, {
                   dbs,

@@ -182,7 +182,7 @@ export const startProstgles = async ({
       tableConfig,
       tableConfigMigrations: {
         silentFail: false,
-        version: 4,
+        version: 5,
         onMigrate: async ({ db, oldVersion }) => {
           console.warn("Migrating from version: ", oldVersion);
           if (oldVersion === 3) {
@@ -194,6 +194,12 @@ export const startProstgles = async ({
               WHERE ip_address_remote IS NULL 
               OR user_agent IS NULL 
               OR x_real_ip IS NULL
+            `);
+          } else if (oldVersion === 4) {
+            await db.any(` 
+              UPDATE llm_messages
+              SET message = jsonb_build_array(jsonb_build_object('type', 'text', 'text', message)) 
+              WHERE message IS NOT NULL
             `);
           }
         },

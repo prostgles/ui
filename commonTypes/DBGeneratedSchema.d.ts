@@ -324,6 +324,17 @@ export type DBGeneratedSchema = {
       user_id: string;
     };
   };
+  llm_chats_allowed_functions: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      chat_id: number;
+      server_function_id: number;
+    };
+  };
   llm_credentials: {
     is_view: false;
     select: true;
@@ -336,6 +347,7 @@ export type DBGeneratedSchema = {
        |  {  Provider: 'Anthropic';  API_Key: string;  "anthropic-version": string;  model: string;  max_tokens: number; }
        |  {  Provider: 'Custom';  headers?: Record<string, string>;  body?: Record<string, string>; }
        |  {  Provider: 'Prostgles';  API_Key: string; }
+       |  {  Provider: 'Google'; }
       created?: null | string;
       endpoint?: string;
       id?: number;
@@ -355,7 +367,12 @@ export type DBGeneratedSchema = {
       chat_id: number;
       created?: null | string;
       id?: string;
-      message: string;
+      message: 
+       |  ( 
+ |  {  type: 'text';  text: string; }
+ |  {  type: 'image';  source: {  type: 'base64';  media_type: string;  data: string; }; }
+ |  {  type: 'tool_result';  tool_use_id: string;  content: string;  is_error?: boolean; }
+ |  {  type: 'tool_use';  id: string;  name: string;  input: any; } )[]
       user_id?: null | string;
     };
   };

@@ -9,6 +9,8 @@ import { AskLLMChatHeader } from "./AskLLMChatHeader";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
+import { useLLMTools } from "./useLLMTools";
+import type { LLMMessage } from "../../../../commonTypes/llmUtils";
 // import { useLocalLLM } from "./useLocalLLM";
 
 export type AskLLMChatProps = {
@@ -21,7 +23,16 @@ export type AskLLMChatProps = {
 };
 export const AskLLMChat = (props: AskLLMChatProps) => {
   const { anchorEl, onClose, askLLM, prgl, setupState, workspaceId } = props;
-  const { tables, db, user, connectionId, connection, dbs, dbsTables } = prgl;
+  const {
+    tables,
+    db,
+    user,
+    connectionId,
+    connection,
+    dbs,
+    dbsTables,
+    methods,
+  } = prgl;
   const { schemaStr } = useLLMSchemaStr({ tables, db, connection });
   const chatState = useLLMChat({
     ...setupState,
@@ -36,11 +47,12 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     activeChatId,
     latestChats,
     markdownCodeHeader,
+    llmMessages,
   } = chatState;
   const { defaultCredential, preferredPromptId, createNewChat } = chatState;
 
-  const onSend = useCallback(
-    async (msg: string | undefined) => {
+  const sendQuery = useCallback(
+    async (msg: LLMMessage["message"] | undefined) => {
       if (!msg || !activeChatId) return;
       await askLLM(msg, schemaStr, activeChatId).catch((error) => {
         const errorText = error?.message || error;
@@ -51,6 +63,14 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     },
     [askLLM, schemaStr, activeChatId],
   );
+
+  const sendMessage = useCallback(
+    (msg: string | undefined) =>
+      sendQuery(msg ? [{ type: "text", text: msg }] : undefined),
+    [sendQuery],
+  );
+
+  useLLMTools({ messages: llmMessages ?? [], methods, sendQuery });
 
   const chatStyle = useMemo(() => {
     return {
@@ -106,7 +126,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
             style={chatStyle}
             messages={messages}
             disabledInfo={activeChat?.disabled_message ?? undefined}
-            onSend={onSend}
+            onSend={sendMessage}
             markdownCodeHeader={markdownCodeHeader}
           />
         </FlexCol>
