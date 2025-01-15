@@ -353,10 +353,11 @@ test.describe("Main test", () => {
     await page.getByRole("button", { name: "Add function" }).click();
 
     /** Page will reload after func is added */
-    // await page.waitForTimeout(3e3);
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1e3);
     /** JSONBSchema localValue bugs. Argument must show */
     await page.getByTitle("Edit function").click();
+    await page.waitForTimeout(1e3);
     await page.getByLabel("Argument name").waitFor({ state: "visible" });
 
     /**
