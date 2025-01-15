@@ -113,8 +113,6 @@ test.describe("Main test", () => {
   });
 
   test("Email password registrations", async ({ page: p, browser }) => {
-    // const newPage: PageWIds = await browser.newPage();
-    // const page = p as PageWIds;
     const newPage = p as PageWIds;
     const page = await browser.newPage();
 
@@ -194,7 +192,9 @@ test.describe("Main test", () => {
     await newPage.getByTestId("App.colorScheme").waitFor({ state: "visible" });
   });
 
-  test("Enable email magic link registrations", async ({ page: p }) => {
+  test("Enable email magic link registrations & Translations", async ({
+    page: p,
+  }) => {
     const page = p as PageWIds;
 
     await login(page);
@@ -207,6 +207,17 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1500);
     const errNodeCount = await page.getByTestId("EmailAuthSetup.error").count();
     expect(errNodeCount).toBe(0);
+
+    await goTo(page, "/connections");
+    await page.getByTestId("App.LanguageSelector").click();
+    await page.locator(`[data-key="es"]`).click();
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
+    await page.getByText("Nueva conexión").waitFor({ state: "visible" });
+    await page.getByTestId("App.LanguageSelector").click();
+    await page.locator(`[data-key="en"]`).click();
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
   });
 
   test("Email magic link signup", async ({ page: p, browser }) => {

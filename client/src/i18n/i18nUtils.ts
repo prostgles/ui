@@ -160,5 +160,5 @@ if (isPlaywrightTest) {
     },
     {},
   );
-  console.log("en.json", JSON.stringify(enFile));
+  // console.log("en.json", JSON.stringify(enFile));
 }

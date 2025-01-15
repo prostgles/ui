@@ -324,17 +324,6 @@ export type DBGeneratedSchema = {
       user_id: string;
     };
   };
-  llm_chats_allowed_functions: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
-    columns: {
-      chat_id: number;
-      server_function_id: number;
-    };
-  };
   llm_credentials: {
     is_view: false;
     select: true;
@@ -366,7 +355,7 @@ export type DBGeneratedSchema = {
       chat_id: number;
       created?: null | string;
       id?: string;
-      message: any;
+      message: string;
       user_id?: null | string;
     };
   };
@@ -565,7 +554,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      description?: null | string;
+      en?: null | string;
       id: string;
     };
   };
