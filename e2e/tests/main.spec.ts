@@ -345,6 +345,7 @@ test.describe("Main test", () => {
     expect(funcCode2).toEqual(
       expectedCode.replace("dbo.tx", llmCode + "dbo.tx"),
     );
+
     /** Add askLLM func args */
     await page.getByTitle("Add new item").click();
     await page.getByLabel("Argument name").fill("messages");
@@ -353,7 +354,6 @@ test.describe("Main test", () => {
     await page.getByRole("button", { name: "Add function" }).click();
 
     /** Page will reload after func is added */
-    await page.waitForLoadState("networkidle");
     await page.waitForTimeout(1e3);
     /** JSONBSchema localValue bugs. Argument must show */
     await page.getByTitle("Edit function").click();
