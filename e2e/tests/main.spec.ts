@@ -1469,16 +1469,11 @@ test.describe("Main test", () => {
     await page.getByTestId("dashboard.menu.sqlEditor").click();
     await page.getByTestId("dashboard.window.menu").click();
     await page.getByText("General").click();
-    await page.getByText("DEMO").click();
-    await page.waitForTimeout(100);
-    await page.getByText("DEMO").click();
-    await page.waitForTimeout(100);
-    await page.getByText("DEMO").click();
-    await page.waitForTimeout(100);
-    await page.getByText("DEMO").click();
-    await page.waitForTimeout(100);
-    await page.getByText("DEMO").click();
-    await page.waitForTimeout(100);
+
+    for await (const _ of new Array(5).fill(1)) {
+      await page.getByText("TEST").click();
+      await page.waitForTimeout(100);
+    }
 
     const startSqlTest = async () =>
       new Promise(async (resolve, reject) => {
