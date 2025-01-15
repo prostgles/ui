@@ -5,25 +5,27 @@ import FormField from "../../components/FormField/FormField";
 import type { Prgl } from "../../App";
 import { InfoRow } from "../../components/InfoRow";
 import { Success } from "../../components/Animations";
+import { t } from "../../i18n/i18nUtils";
 
 export const ChangePassword = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const issue =
-    !password ? "Enter your old password"
-    : !newPassword ? "Enter your new password"
-    : !confirmPassword ? "Confirm your new password"
-    : newPassword !== confirmPassword ? "Passwords do not match"
+    !password ? t.ChangePassword["Enter your old password"]
+    : !newPassword ? t.ChangePassword["Enter your new password"]
+    : !confirmPassword ? t.ChangePassword["Confirm your new password"]
+    : newPassword !== confirmPassword ?
+      t.ChangePassword["Passwords do not match"]
     : undefined;
   const [success, setSuccess] = useState(false);
   return (
     <PopupMenu
-      title="Change password"
+      title={t.ChangePassword["Change password"]}
       positioning="center"
       button={
         <Btn color="action" variant="filled">
-          Change Password
+          {t.ChangePassword["Change password"]}
         </Btn>
       }
       contentClassName="flex-col p-1 gap-1"
@@ -33,39 +35,42 @@ export const ChangePassword = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
         return (
           <>
             <FormField
-              label={"Old password"}
+              label={t.ChangePassword["Old password"]}
               type="password"
               value={password}
               onChange={setPassword}
             />
             <FormField
-              label={"New password"}
+              label={t.ChangePassword["New password"]}
               autoComplete="new-password"
               type="password"
               value={newPassword}
               onChange={setNewPassword}
             />
             <FormField
-              label={"Confirm new password"}
+              label={t.ChangePassword["Confirm new password"]}
               autoComplete="new-password"
               type="password"
               value={confirmPassword}
               onChange={setConfirmPassword}
             />
             <InfoRow variant="naked" className="mt-1" iconPath="">
-              Make sure it's at least 15 characters OR at least 8 characters
-              including a number and a lowercase letter
+              {
+                t.ChangePassword[
+                  "Make sure it's at least 15 characters OR at least 8 characters including a number and a lowercase letter"
+                ]
+              }
             </InfoRow>
           </>
         );
       }}
       footerButtons={(pClose) => [
         {
-          label: "Cancel",
+          label: t.common.Cancel,
           onClickClose: true,
         },
         {
-          label: "Change password",
+          label: t.ChangePassword["Change password"],
           color: "action",
           variant: "filled",
           disabledInfo: issue,

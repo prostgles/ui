@@ -6,6 +6,7 @@ import { updateWCols } from "../../tableUtils/tableUtils";
 import type { LinkedColumnProps } from "./LinkedColumn";
 import Select from "../../../../components/Select/Select";
 import { mdiCheck } from "@mdi/js";
+import { t } from "../../../../i18n/i18nUtils";
 
 export const NEW_COL_POSITIONS = [
   { key: "start", label: "Start of table" },
@@ -40,7 +41,7 @@ export const LinkedColumnFooter = ({
       <FlexRow className="mt-2">
         {onClose && (
           <Btn onClick={onClose} variant="outline">
-            Cancel
+            {t.common["Cancel"]}
           </Btn>
         )}
         {column?.nested && (
@@ -54,7 +55,7 @@ export const LinkedColumnFooter = ({
               onClose?.();
             }}
           >
-            Remove
+            {t.common.Remove}
           </Btn>
         )}
 
@@ -78,11 +79,11 @@ export const LinkedColumnFooter = ({
                     c.name === column.name ? localColumn : c,
                   );
               updateWCols(w, newColumns);
-              setM({ ok: "Added!" });
+              setM({ ok: t.LinkedColumn["Added!"] });
               onClose?.();
             }}
           >
-            {!column ? "Add" : "Update"} Linked Column
+            {!column ? t.common.Add : t.common.Update} Linked Column
           </Btn>
         )}
       </FlexRow>

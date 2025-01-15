@@ -23,31 +23,32 @@ import { AddComputedColMenu } from "./AddComputedColumn/AddComputedColMenu";
 import { CreateColumn } from "./AlterColumn/CreateColumn";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
+import { t } from "../../../i18n/i18nUtils";
 
 const options = [
   {
     key: "Computed",
-    label: "Add Computed Field",
-    subLabel: "Show a computed column",
+    label: t.AddColumnMenu["Add Computed Field"],
+    subLabel: t.AddColumnMenu["Show a computed column"],
     iconPath: mdiFunction,
   },
   {
     key: "Referenced",
-    label: "Add Linked Data",
-    subLabel: "Show data from a related table",
+    label: t.AddColumnMenu["Add Linked Data"],
+    subLabel: t.AddColumnMenu["Show data from a related table"],
     iconPath: mdiLink,
   },
   {
     key: "Create",
-    label: "Create New Column",
-    subLabel: "Create a new column in this table",
+    label: t.AddColumnMenu["Create New Column"],
+    subLabel: t.AddColumnMenu["Create a new column in this table"],
     disabledInfo: undefined,
     iconPath: mdiTableEdit,
   },
   {
     key: "CreateFileColumn",
-    label: "Create New File Column",
-    subLabel: "Create a new file column in this table",
+    label: t.AddColumnMenu["Create New File Column"],
+    subLabel: t.AddColumnMenu["Create a new file column in this table"],
     disabledInfo: undefined,
     iconPath: mdiTableEdit,
   },
@@ -100,8 +101,9 @@ export const AddColumnMenu = ({
   }
 
   const cannotCreateColumns =
-    !db.sql ? "Not enough privileges"
-    : table.info.isView ? "This is a view. Cannot create columns, must recreate"
+    !db.sql ? t.AddColumnMenu["Not enough privileges"]
+    : table.info.isView ?
+      t.AddColumnMenu["This is a view. Cannot create columns, must recreate"]
     : undefined;
   const onClose = () => setColType();
   return (
@@ -110,23 +112,25 @@ export const AddColumnMenu = ({
         data-command="AddColumnMenu"
         onOpen={setAnchorEl}
         btnProps={{
-          children: variant ? "New Field" : "",
+          children: variant ? t.AddColumnMenu["New Field"] : "",
           variant: variant ? "faded" : undefined,
           color: variant ? "action" : undefined,
           iconPath: mdiTableColumnPlusAfter,
           size: variant ? undefined : "small",
-          title: "Add column",
+          title: t.AddColumnMenu["Add column"],
         }}
         fullOptions={options.map((o) => ({
           ...o,
           disabledInfo:
             !table.joinsV2.length && o.key === "Referenced" ?
-              "No foreign keys to/from this table"
+              t.AddColumnMenu["No foreign keys to/from this table"]
             : nestedColumnOpts && o.key === "Referenced" ?
-              "Not allowed for nested columns"
+              t.AddColumnMenu["Not allowed for nested columns"]
             : o.key === "Create" ? cannotCreateColumns
             : o.key === dissallow ?
-              "Aggregates and/or Count not allowed with linked "
+              t.AddColumnMenu[
+                "Aggregates and/or Count not allowed with linked "
+              ]
             : undefined,
         }))}
         onChange={(type) => setColType(type)}
@@ -156,9 +160,9 @@ export const AddColumnMenu = ({
         />
       : <Popup
           title={
-            colType === "Create" ? `Create new column` : (
-              "Add Referenced/Linked Fields"
-            )
+            colType === "Create" ?
+              t.AddColumnMenu[`Create new column`]
+            : t.AddColumnMenu["Add Referenced/Linked Fields"]
           }
           positioning="beneath-left"
           anchorEl={anchorEl}

@@ -22,6 +22,7 @@ import {
   CreatePostgresUser,
   useCreatePostgresUser,
 } from "./CreatePostgresUser";
+import { t } from "../../i18n/i18nUtils";
 
 type ConnectionServerProps = {
   name: string;
@@ -268,16 +269,18 @@ export const ConnectionServer = ({
   return (
     <FlexRow className="gap-p25 jc-end p-p5" style={{ fontWeight: 400 }}>
       <h4
-        title="Server info"
+        title={t.ConnectionServer["Server info"]}
         className="m-0 flex-row gap-p5 p-p5 ai-center text-1p5 jc-end text-ellipsis"
       >
         {/* <Icon path={mdiServerNetwork} size={1} className="text-2" /> */}
         <div className="text-ellipsis">{name}</div>
       </h4>
       <Select
+        title={t.ConnectionServer["Add or create a database"]}
         btnProps={{
           iconPath: mdiPlus,
-          children: showCreateText ? "Create a database" : "",
+          children:
+            showCreateText ? t.ConnectionServer["Create a database"] : "",
           size: "small",
           color: "action",
           variant: "filled",
@@ -287,6 +290,7 @@ export const ConnectionServer = ({
         fullOptions={[
           {
             key: Actions.create,
+            label: t.ConnectionServer["Create a database in this server"],
             /** This is to ensure serverInfo is loaded before clicking  */
             "data-command":
               !serverInfo || cannotCreateDb ? undefined : (
@@ -295,11 +299,14 @@ export const ConnectionServer = ({
             disabledInfo:
               error?.toString() ??
               (cannotCreateDb ?
-                `Not allowed to create databases with this user (${serverInfo?.rolname})`
+                t.ConnectionServer[
+                  "Not allowed to create databases with this user"
+                ]({ rolname: serverInfo?.rolname ?? "" })
               : undefined),
           },
           {
             key: Actions.add,
+            label: t.ConnectionServer["Select a database from this server"],
             disabledInfo: error?.toString(),
           },
         ]}
@@ -320,8 +327,8 @@ export const ConnectionServer = ({
             {
               label:
                 action.type === "Select a database from this server" ?
-                  "Save and connect"
-                : "Create and connect",
+                  t.ConnectionServer["Save and connect"]
+                : t.ConnectionServer["Create and connect"],
               variant: "filled",
               color: "action",
               "data-command": "ConnectionServer.add.confirm",
@@ -334,8 +341,9 @@ export const ConnectionServer = ({
                     !action.existingDatabaseName &&
                     !connectionName)
                 ) ?
-                  "Some data is missing"
-                : duplicateConnectionName ? "Must fix connection name error"
+                  t.ConnectionServer["Some data is missing"]
+                : duplicateConnectionName ?
+                  t.ConnectionServer["Must fix connection name error"]
                 : (newUsernameError ?? newUserPasswordError ?? undefined),
               onClickMessage: async (e, setMsg) => {
                 setMsg({ loading: 1, delay: 0 });
@@ -354,10 +362,14 @@ export const ConnectionServer = ({
           {action.type === Actions.create ?
             <>
               <FormFieldDebounced
-                label={"New database name"}
+                label={t.ConnectionServer["New database name"]}
                 data-command="ConnectionServer.NewDbName"
                 inputProps={{ autoFocus: true }}
-                error={duplicateDbName ? "Name already in use" : undefined}
+                error={
+                  duplicateDbName ?
+                    t.ConnectionServer["Name already in use"]
+                  : undefined
+                }
                 onChange={(newDatabaseName) => {
                   setAction({ ...action, newDatabaseName });
                   setConnectionName(newDatabaseName);
@@ -368,7 +380,7 @@ export const ConnectionServer = ({
                 <FlexCol>
                   <div>Or</div>
                   <SampleSchemas
-                    title={"Create demo schema (optional)"}
+                    title={t.ConnectionServer["Create demo schema (optional)"]}
                     name={action.applySchema?.name}
                     dbsMethods={{ getSampleSchemas }}
                     onChange={(applySchema) => {
@@ -387,7 +399,7 @@ export const ConnectionServer = ({
                 <>
                   {ConnectionNameEditor}
                   <SampleSchemas
-                    title={"Create demo schema (optional)"}
+                    title={t.ConnectionServer["Create demo schema (optional)"]}
                     name={action.applySchema?.name}
                     dbsMethods={{ getSampleSchemas }}
                     onChange={(applySchema) => {
@@ -403,14 +415,14 @@ export const ConnectionServer = ({
           : serverInfo ?
             <>
               <Select
-                label={"Database"}
+                label={t.ConnectionServer["Database"]}
                 value={action.existingDatabaseName}
                 fullOptions={serverInfo.databases
                   .map((key) => ({
                     key,
                     subLabel:
                       serverInfo.usedDatabases.includes(key) ?
-                        "Already added to connections"
+                        t.ConnectionServer["Already added to connections"]
                       : undefined,
                   }))
                   .sort((a, b) => +!!a.subLabel - +!!b.subLabel)}
@@ -426,7 +438,7 @@ export const ConnectionServer = ({
               />
               {action.existingDatabaseName && ConnectionNameEditor}
             </>
-          : "Something went wrong"}
+          : t.common["Something went wrong"]}
           {(action.type === Actions.create ?
             action.newDatabaseName
           : action.existingDatabaseName) && (

@@ -11,6 +11,7 @@ import type { ColumnOptions } from "./ColumnEditor";
 import { ColumnEditor } from "./ColumnEditor";
 import { getAlterFkeyQuery } from "./ReferenceEditor";
 import { colIs } from "../ColumnSelect";
+import { t } from "../../../../i18n/i18nUtils";
 
 export type CreateColumnProps = Pick<CommonWindowProps, "suggestions"> & {
   table: DBSchemaTable;
@@ -67,7 +68,7 @@ export const CreateColumn = ({
           asPopup={false}
           query={query}
           sql={db.sql!}
-          title={"Create column query"}
+          title={t.CreateColumn["Create column query"]}
           suggestions={suggestions}
           onCancel={() => {
             setQuery("");
@@ -81,15 +82,15 @@ export const CreateColumn = ({
       }
       <FlexRow className={query ? "hidden" : ""}>
         <Btn onClick={onClose} variant="outline">
-          Cancel
+          {t.common.Cancel}
         </Btn>
         <Btn
-          title="Show create column query"
+          title={t.CreateColumn["Show create column query"]}
           className="ml-auto"
           disabledInfo={
-            !col.name ? "New column name missing"
+            !col.name ? t.CreateColumn["New column name missing"]
             : !col.dataType ?
-              "Data type missing"
+              t.CreateColumn["Data type missing"]
             : undefined
           }
           variant="filled"
@@ -102,7 +103,7 @@ export const CreateColumn = ({
             setQuery(query);
           }}
         >
-          Next
+          {t.common.Next}
         </Btn>
       </FlexRow>
     </FlexCol>

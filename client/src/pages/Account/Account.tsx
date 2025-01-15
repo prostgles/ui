@@ -12,6 +12,7 @@ import { Setup2FA } from "./Setup2FA";
 import { FlexRow } from "../../components/Flex";
 import { ChangePassword } from "./ChangePassword";
 import { InfoRow } from "../../components/InfoRow";
+import { t } from "../../i18n/i18nUtils";
 
 type AccountProps = ExtraProps;
 
@@ -57,7 +58,7 @@ export const Account = (props: AccountProps) => {
   ];
   const sectionItems = {
     details: {
-      label: "Account details",
+      label: t.Account["Account details"],
       leftIconPath: mdiAccount,
       content: (
         <SmartForm
@@ -77,7 +78,7 @@ export const Account = (props: AccountProps) => {
       ),
     },
     security: {
-      label: "Security",
+      label: t.Account.Security,
       leftIconPath: mdiSecurity,
       content: (
         <div className="flex-col gap-1 px-1 f-1">
@@ -95,7 +96,7 @@ export const Account = (props: AccountProps) => {
       ),
     },
     api: {
-      label: "API",
+      label: t.Account.API,
       leftIconPath: mdiApplicationBracesOutline,
       content: (
         <div className="flex-col gap-1 px-1 f-1">

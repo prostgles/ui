@@ -13,6 +13,7 @@ import {
 import { MenuList } from "../components/MenuList";
 import { isDefined } from "prostgles-types";
 import { Icon } from "../components/Icon/Icon";
+import { t } from "../i18n/i18nUtils";
 
 type P = {
   forNavBar?: boolean;
@@ -32,7 +33,9 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
         to={"/login"}
       >
         <Icon className="f-0" path={mdiLogin} size={1} />
-        <div className="f-1 min-w-0 text-ellipsis ws-no-wrap">Login</div>
+        <div className="f-1 min-w-0 text-ellipsis ws-no-wrap">
+          {t.common["Login"]}
+        </div>
       </NavLink>
     );
   }
@@ -77,10 +80,12 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
                   ) as HTMLFormElement | null
                 )?.submit();
               }}
-              className="text-0 font-16 flex-row ai-center gap-p5"
+              className="ws-nowrap text-0 font-16 flex-row ai-center gap-p5"
             >
               <Icon className="f-0" path={mdiLogout} size={1} />
-              <div className="f-1 min-w-0 text-ellipsis ws-no-wrap">Logout</div>
+              <div className="f-1 min-w-0 text-ellipsis ws-no-wrap">
+                {t.common["Logout"]}
+              </div>
             </a>
           </>
         )}
@@ -115,7 +120,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
         style={{ borderRadius: 0 }}
         items={[
           {
-            label: "Account",
+            label: t.AccountMenu["Account"],
             leftIconPath:
               user.type === "admin" ? mdiAccountStarOutline : mdiAccountOutline,
             onPress: () => {
@@ -124,7 +129,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
           },
           cannotLogout ? undefined : (
             {
-              label: "Logout",
+              label: t.common["Logout"],
               leftIconPath: mdiLogout,
               onPress: () => {
                 window.location.href = "/logout";

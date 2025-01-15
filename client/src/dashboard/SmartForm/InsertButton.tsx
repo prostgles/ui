@@ -6,6 +6,7 @@ import Btn from "../../components/Btn";
 import FileInput from "../../components/FileInput/FileInput";
 import type { SmartFormProps } from "./SmartForm";
 import SmartForm from "./SmartForm";
+import { t } from "../../i18n/i18nUtils";
 
 type InsertButtonProps = {
   buttonProps?: BtnProps<void>;
@@ -50,7 +51,7 @@ export const InsertButton = ({
       <Btn
         iconPath={mdiPlus}
         {...buttonProps}
-        title="Insert row"
+        title={t.W_Table["Insert row"]}
         data-command="dashboard.window.rowInsertTop"
         data-key={tableName}
         color="action"

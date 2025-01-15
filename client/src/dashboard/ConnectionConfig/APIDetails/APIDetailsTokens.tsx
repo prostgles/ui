@@ -6,6 +6,7 @@ import FormField from "../../../components/FormField/FormField";
 import PopupMenu from "../../../components/PopupMenu";
 import { Sessions } from "../../../pages/Account/Sessions";
 import type { APIDetailsProps } from "./APIDetails";
+import { t } from "../../../i18n/i18nUtils";
 
 export const APIDetailsTokens = ({
   theme,
@@ -23,8 +24,16 @@ export const APIDetailsTokens = ({
 }) => {
   return (
     <FlexCol>
-      <h4 className="m-0 p-0">Access tokens ({tokenCount})</h4>
-      <div>Provide the same level of access as the current account</div>
+      <h4 className="m-0 p-0">
+        {t.APIDetailsTokens[`Access tokens (`]({ tokenCount })}
+      </h4>
+      <div>
+        {
+          t.APIDetailsTokens[
+            "Provide the same level of access as the current account"
+          ]
+        }
+      </div>
       <FlexCol className="w-fit  ">
         <Sessions
           theme={theme}
@@ -35,11 +44,11 @@ export const APIDetailsTokens = ({
           displayType="api_token"
         />
         <PopupMenu
-          title="Create access token"
+          title={t.APIDetailsTokens["Create access token"]}
           button={
             <FlexRow>
               <Btn color="action" variant="filled" iconPath={mdiPlus}>
-                Create token
+                {t.APIDetailsTokens["Create token"]}
               </Btn>
             </FlexRow>
           }
@@ -51,7 +60,7 @@ export const APIDetailsTokens = ({
               <div className="flex-col gap-1">
                 {!token ?
                   <FormField
-                    label="Expires in"
+                    label={t.APIDetailsTokens["Expires in"]}
                     value={state.days}
                     type="number"
                     inputProps={{
@@ -64,15 +73,29 @@ export const APIDetailsTokens = ({
                     onChange={(days) => {
                       setState({ days });
                     }}
-                    rightIcons={<FlexRow className="h-full px-1">Days</FlexRow>}
+                    rightIcons={
+                      <FlexRow className="h-full px-1">
+                        {t.APIDetailsTokens.Days}
+                      </FlexRow>
+                    }
                     rightContentAlwaysShow={true}
                   />
                 : <FlexCol>
                     <div className=" ta-start mt-1">
-                      These token values will not be shown again
+                      {
+                        t.APIDetailsTokens[
+                          "These token values will not be shown again"
+                        ]
+                      }
                     </div>
-                    <TokenCopy label="Websocket API" token={token} />
-                    <TokenCopy label="HTTP API (base64)" token={btoa(token)} />
+                    <TokenCopy
+                      label={t.APIDetailsTokens["Websocket API"]}
+                      token={token}
+                    />
+                    <TokenCopy
+                      label={t.APIDetailsTokens["HTTP API (base64)"]}
+                      token={btoa(token)}
+                    />
                   </FlexCol>
                 }
                 <Btn
@@ -81,7 +104,9 @@ export const APIDetailsTokens = ({
                   className="ml-auto"
                   disabledInfo={
                     token ?
-                      "Already generated. Close and re-open the popup"
+                      t.APIDetailsTokens[
+                        "Already generated. Close and re-open the popup"
+                      ]
                     : undefined
                   }
                   onClickPromise={async () => {
@@ -89,7 +114,7 @@ export const APIDetailsTokens = ({
                     setToken(token);
                   }}
                 >
-                  Generate
+                  {t.common.Generate}
                 </Btn>
               </div>
             );
@@ -112,7 +137,7 @@ const TokenCopy = ({ token, label }: { token: string; label: string }) => {
           iconPath={mdiContentCopy}
           onClickMessage={(e, setM) => {
             navigator.clipboard.writeText(token);
-            setM({ ok: "Copied!", duration: 2e3 });
+            setM({ ok: t.common["Copied!"], duration: 2e3 });
           }}
         />
       </div>
