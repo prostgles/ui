@@ -1471,7 +1471,7 @@ test.describe("Main test", () => {
     await page.getByText("General").click();
 
     for await (const _ of new Array(5).fill(1)) {
-      await page.getByText("TEST").click();
+      await page.getByText("TEST", { exact: true }).click();
       await page.waitForTimeout(100);
     }
 

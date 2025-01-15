@@ -367,7 +367,6 @@ export type DBGeneratedSchema = {
       created?: null | string;
       id?: string;
       message: any;
-      tool_use?: null | any;
       user_id?: null | string;
     };
   };
