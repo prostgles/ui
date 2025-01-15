@@ -10,6 +10,7 @@ import { WspIconPath } from "../../dashboard/AccessControl/ExistingAccessRules";
 import { ConnectionActionBar } from "./ConnectionActionBar";
 import type { AdminConnectionModel, BasicConnectionModel } from "./Connections";
 import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
+import { t } from "../../i18n/i18nUtils";
 
 export type ConnectionProps = (
   | {
@@ -99,8 +100,11 @@ export const Connection = (props: ConnectionProps) => {
 
             {isAdmin && c.is_state_db && (
               <InfoRow variant="naked" iconPath="" color="warning">
-                All Prostgles connection and dashboard data is stored here. Edit
-                at your own risk
+                {
+                  t.Connection[
+                    "All Prostgles connection and dashboard data is stored here. Edit at your own risk"
+                  ]
+                }
               </InfoRow>
             )}
           </div>
@@ -111,7 +115,7 @@ export const Connection = (props: ConnectionProps) => {
 
       {(showWorkspaces || showAccessInfo) && (
         <FlexRowWrap
-          title="Workspaces"
+          title={t.common["Workspaces"]}
           className="ConnectionWorkspaceList  pl-1 p-p25 pt-0 ai-center gap-0"
         >
           {showWorkspaces && (
@@ -138,7 +142,7 @@ export const Connection = (props: ConnectionProps) => {
           {showAccessInfo && (
             <Btn
               className="as-end ml-auto"
-              title={`Access granted to ${pluralisePreffixed(c.allowedUsers, "user")} `}
+              title={`${t.Connections["Access granted to "]}${pluralisePreffixed(c.allowedUsers, "user")} `}
               iconPath={mdiAccountMultiple}
               iconPosition="right"
               color="action"

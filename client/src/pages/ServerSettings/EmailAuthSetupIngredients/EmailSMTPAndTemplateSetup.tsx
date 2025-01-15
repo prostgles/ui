@@ -15,6 +15,7 @@ import type { AuthProvidersConfig } from "../AuthProvidersSetup";
 import { useEditableData } from "../useEditableData";
 import { EmailSMTPSetup } from "./EmailSMTPSetup";
 import { EmailTemplateSetup } from "./EmailTemplateSetup";
+import { t } from "../../../i18n/i18nUtils";
 
 type EmailConfig = Extract<
   NonNullable<AuthProvidersConfig["email"]>,
@@ -62,7 +63,9 @@ export const EmailSMTPAndTemplateSetup = (props: P) => {
             !signupType ? "Must select a Signup type first" : undefined
           }
         >
-          {enabled ? "Configured" : "Not configured"}
+          {enabled ?
+            t.EmailSMTPAndTemplateSetup["Configured"]
+          : t.EmailSMTPAndTemplateSetup["Not configured"]}
         </Btn>
       }
       className={className}
@@ -70,11 +73,14 @@ export const EmailSMTPAndTemplateSetup = (props: P) => {
       render={(pClose) => (
         <FlexCol className="ai-start">
           <p>
-            Users will receive an email with a link/code to verify their email
-            address.
+            {
+              t.EmailSMTPAndTemplateSetup[
+                "Users will receive an email with a link/code to verify their email address."
+              ]
+            }
           </p>
           <Section
-            title={"Email Provider"}
+            title={t.EmailSMTPAndTemplateSetup["Email Provider"]}
             titleIconPath={mdiMailboxOpenOutline}
             className={"w-full"}
             contentClassName="p-1"
@@ -86,7 +92,7 @@ export const EmailSMTPAndTemplateSetup = (props: P) => {
             />
           </Section>
           <Section
-            title={"Template"}
+            title={t.EmailSMTPAndTemplateSetup["Template"]}
             titleIconPath={mdiEmailEdit}
             className={"w-full"}
             contentClassName="p-1"
@@ -117,12 +123,12 @@ export const EmailSMTPAndTemplateSetup = (props: P) => {
         </FlexCol>
       )}
       footerButtons={(pClose) => [
-        { label: "Cancel", variant: "faded", onClickClose: true },
+        { label: t.common.Cancel, variant: "faded", onClickClose: true },
         {
-          label: enabled ? "Test and Save" : "Save",
+          label: enabled ? t.common["Test and Save"] : t.common.Save,
           color: "action",
           variant: "filled",
-          disabledInfo: didChange ? undefined : "No changes",
+          disabledInfo: didChange ? undefined : t.common["No changes"],
           onClickPromiseMessage: "Error",
           onClickPromise: async (e) => {
             if (!value) return setError("No value");

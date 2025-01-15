@@ -18,6 +18,7 @@ import type {
 } from "./ProjectConnection/ProjectConnection";
 import { AskLLM } from "../dashboard/AskLLM/AskLLM";
 import { API_PATH_SUFFIXES } from "../../../commonTypes/utils";
+import { t } from "../i18n/i18nUtils";
 
 type TopControlsProps = {
   prgl: Prgl;
@@ -37,15 +38,17 @@ export const TopControls = (props: TopControlsProps) => {
     props.location === "config" ?
       {
         ...dataCommand("config.goToConnDashboard"),
-        title: "Go to workspace",
+        title: t.TopControls["Go to workspace"],
         asNavLink: true,
         href: `${API_PATH_SUFFIXES.DASHBOARD}/${connectionId}`,
       }
     : {
         ...dataCommand("dashboard.menu"),
-        className: getIsPinnedMenu(props.workspace) ? "pinned" : "",
+        className: getIsPinnedMenu(props.workspace) ? t.TopControls.pinned : "",
         disabledInfo:
-          getIsPinnedMenu(props.workspace) ? "Menu is pinned" : undefined,
+          getIsPinnedMenu(props.workspace) ?
+            t.TopControls["Menu is pinned"]
+          : undefined,
         onClick: props.onClick,
       };
 
@@ -95,13 +98,13 @@ export const TopControls = (props: TopControlsProps) => {
 
             <Btn
               data-command="dashboard.goToConnections"
-              title="Go to Connections"
+              title={t.TopControls["Go to Connections"]}
               href={API_PATH_SUFFIXES.DASHBOARD}
               variant="faded"
               asNavLink={true}
               iconPath={mdiArrowLeft}
             >
-              {window.isMediumWidthScreen ? null : `Connections`}
+              {window.isMediumWidthScreen ? null : t.TopControls.Connections}
             </Btn>
           </FlexRow>
         </>,
@@ -127,8 +130,8 @@ export const ConnectionConfigBtn = ({
       <Btn
         title={
           isOnWorkspace ?
-            "Configure database connection"
-          : "Go back to connection workspace"
+            t.TopControls["Configure database connection"]
+          : t.TopControls["Go back to connection workspace"]
         }
         {...dataCommand("dashboard.goToConnConfig")}
         variant="faded"
@@ -142,9 +145,13 @@ export const ConnectionConfigBtn = ({
         }
         asNavLink={true}
         disabledInfo={
-          connection.is_state_db ? "Not allowed for state database" : undefined
+          connection.is_state_db ?
+            t.TopControls["Not allowed for state database"]
+          : undefined
         }
-        children={isOnWorkspace ? null : "Connection configuration"}
+        children={
+          isOnWorkspace ? null : t.TopControls["Connection configuration"]
+        }
       />
     </div>
   );

@@ -36,6 +36,7 @@ import type { DBS } from "../Dashboard/DBS";
 import { TestSQL } from "./TestSQL";
 import { SQLHotkeys } from "./SQLHotkeys";
 import { download } from "./W_SQL";
+import { t } from "../../i18n/i18nUtils";
 
 type P = {
   tableName?: string;
@@ -156,11 +157,12 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
 
     const l1Opts: TabsProps["items"] = {
       General: {
+        label: t.W_SQLMenu.General,
         leftIconPath: mdiFileUploadOutline,
         content: (
           <div className="flex-col ai-start gap-1">
             <FormField
-              label="Query name"
+              label={t.W_SQLMenu["Query name"]}
               value={w.name}
               asColumn={true}
               type="text"
@@ -173,7 +175,7 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
             />
 
             <FormField
-              label="Result display mode"
+              label={t.W_SQLMenu["Result display mode"]}
               fullOptions={[
                 { key: "table", label: "Table", iconPath: mdiTable },
                 { key: "csv", label: "CSV", iconPath: mdiListBoxOutline },
@@ -186,12 +188,12 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
             />
 
             <Btn
-              title="Save query as file"
+              title={t.W_SQLMenu["Save query as file"]}
               iconPath={mdiDownload}
               onClick={this.saveQuery}
               variant="faded"
             >
-              Download query
+              {t.W_SQLMenu["Download query"]}
             </Btn>
 
             <Btn
@@ -201,11 +203,11 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
                 currentTarget.querySelector("input")?.click();
               }}
             >
-              Open SQL file
+              {t.W_SQLMenu["Open SQL file"]}
               <input
                 id="sql-open"
                 name="sql-open"
-                title="Open query from file"
+                title={t.W_SQLMenu["Open query from file"]}
                 type="file"
                 accept="text/*, .sql, .txt"
                 style={{ display: "none" }}
@@ -221,7 +223,7 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
             </Btn>
 
             <Btn
-              title="Delete this query"
+              title={t.W_SQLMenu["Delete query"]}
               color="danger"
               variant="faded"
               iconPath={mdiDelete}
@@ -229,13 +231,13 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
                 w.$update({ closed: true, deleted: true });
               }}
             >
-              Delete query
+              {t.W_SQLMenu["Delete query"]}
             </Btn>
 
             <Btn
               variant="faded"
               iconPath={mdiPlay}
-              title="Click three times to run demo"
+              title="Click five times to run test"
               onClick={({ currentTarget }) => {
                 const node = currentTarget as {
                   _lastClickedCount?: number;
@@ -259,20 +261,21 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
                 }
               }}
             >
-              DEMO
+              TEST
             </Btn>
           </div>
         ),
       },
 
       "Editor options": {
+        label: t.W_SQLMenu["Editor options"],
         leftIconPath: mdiCog,
         content: (
           <div
             className="flex-col ai-start gap-1"
             key={JSON.stringify(w.sql_options)}
           >
-            <div>SQL Editor settings</div>
+            <div>{t.W_SQLMenu["SQL Editor settings"]}</div>
             <CodeEditor
               language={{
                 lang: "json",
@@ -303,8 +306,8 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
               }}
             />
             <InfoRow color="info">
-              Press <strong>ctrl</strong> + <strong>space</strong> to get a list
-              of possible options
+              {t.W_SQLMenu.Press} <strong>ctrl</strong> + <strong>space</strong>
+              {t.W_SQLMenu["to get a list of possible options"]}
             </InfoRow>
             {!!error && <ErrorComponent error={error} />}
             <Btn
@@ -312,12 +315,12 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
               variant="filled"
               iconPath={mdiContentSave}
               disabledInfo={
-                error ? "Cannot save due to error"
+                error ? t.W_SQLMenu["Cannot save due to error"]
                 : (
                   !newOptions ||
                   JSON.stringify(newOptions) === JSON.stringify(w.sql_options)
                 ) ?
-                  "Nothing to update"
+                  t.W_SQLMenu["Nothing to update"]
                 : undefined
               }
               onClickPromise={async () => {
@@ -333,12 +336,13 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
                 }
               }}
             >
-              Update options
+              {t.W_SQLMenu["Update options"]}
             </Btn>
           </div>
         ),
       },
       Hotkeys: {
+        label: t.W_SQLMenu.Hotkeys,
         leftIconPath: mdiKeyboard,
         content: <SQLHotkeys />,
       },

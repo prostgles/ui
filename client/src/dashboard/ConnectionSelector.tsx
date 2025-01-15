@@ -4,6 +4,7 @@ import { getServerInfoStr } from "../pages/Connections/Connections";
 import { mdiDatabase } from "@mdi/js";
 import type { Connection } from "../pages/NewConnection/NewConnnection";
 import type { DBS } from "./Dashboard/DBS";
+import { t } from "../i18n/i18nUtils";
 
 type P = {
   dbs: DBS;
@@ -15,7 +16,7 @@ export const ConnectionSelector = ({ connection, dbs, location }: P) => {
   const { data: connections } = dbs.connections.useFind();
   return (
     <Select
-      title="Switch database"
+      title={t.ConnectionSelector["Switch database"]}
       data-command="ConnectionSelector"
       fullOptions={(connections ?? []).map((c) => ({
         key: c.id,

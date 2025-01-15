@@ -4,8 +4,8 @@ import type pg from "pg-promise/typescript/pg-subset";
 import prostgles from "prostgles-server";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import { pickKeys } from "prostgles-types";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
+import { pickKeys } from "prostgles-types";
 import type { Server } from "socket.io";
 import type { DBS } from ".";
 import { connMgr, connectionChecker, dbsWsApiPath } from ".";
@@ -21,11 +21,11 @@ import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { DBS_CONNECTION_INFO } from "./envVars";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { publish } from "./publish";
+import { insertDefaultPrompts } from "./publishMethods/askLLM/askLLM";
 import { publishMethods } from "./publishMethods/publishMethods";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { tableConfig } from "./tableConfig/tableConfig";
-import { insertDefaultPrompts } from "./publishMethods/askLLM/askLLM";
 
 type StartArguments = {
   app: Express;
