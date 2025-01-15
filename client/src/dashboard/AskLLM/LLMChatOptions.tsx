@@ -42,7 +42,7 @@ export const LLMChatOptions = (prgl: LLMChatOptionsProps) => {
             tableName="llm_chats"
             rowFilter={[{ fieldName: "id", value: activeChatId }]}
             hideChangesOptions={true}
-            showJoinedTables={false}
+            // showJoinedTables={false}
           />
         </FlexCol>
       }

@@ -9,6 +9,7 @@ import { AskLLMChatHeader } from "./AskLLMChatHeader";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
+import { useLLMTools } from "./useLLMTools";
 // import { useLocalLLM } from "./useLocalLLM";
 
 export type AskLLMChatProps = {
@@ -21,7 +22,16 @@ export type AskLLMChatProps = {
 };
 export const AskLLMChat = (props: AskLLMChatProps) => {
   const { anchorEl, onClose, askLLM, prgl, setupState, workspaceId } = props;
-  const { tables, db, user, connectionId, connection, dbs, dbsTables } = prgl;
+  const {
+    tables,
+    db,
+    user,
+    connectionId,
+    connection,
+    dbs,
+    dbsTables,
+    methods,
+  } = prgl;
   const { schemaStr } = useLLMSchemaStr({ tables, db, connection });
   const chatState = useLLMChat({
     ...setupState,
@@ -36,10 +46,11 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     activeChatId,
     latestChats,
     markdownCodeHeader,
+    llmMessages,
   } = chatState;
   const { defaultCredential, preferredPromptId, createNewChat } = chatState;
 
-  const onSend = useCallback(
+  const sendQuery = useCallback(
     async (msg: string | undefined) => {
       if (!msg || !activeChatId) return;
       await askLLM(msg, schemaStr, activeChatId).catch((error) => {
@@ -51,6 +62,8 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     },
     [askLLM, schemaStr, activeChatId],
   );
+
+  useLLMTools({ messages: llmMessages ?? [], methods, sendQuery });
 
   const chatStyle = useMemo(() => {
     return {
@@ -106,7 +119,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
             style={chatStyle}
             messages={messages}
             disabledInfo={activeChat?.disabled_message ?? undefined}
-            onSend={onSend}
+            onSend={sendQuery}
             markdownCodeHeader={markdownCodeHeader}
           />
         </FlexCol>

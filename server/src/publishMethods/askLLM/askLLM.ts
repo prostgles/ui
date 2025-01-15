@@ -1,11 +1,12 @@
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
-import type { AnyObject } from "prostgles-types";
-import { pickKeys } from "prostgles-types";
+import type { JSONB } from "prostgles-types";
+import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import { type DBS } from "../..";
 import { contentOfThisFile as dashboardTypes } from "../../../../commonTypes/DashboardTypes";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { checkLLMLimit } from "./checkLLMLimit";
+import { fetchLLMResponse, type LLMMessage } from "./fetchLLMResponse";
 
 export const askLLM = async (
   question: string,
@@ -98,17 +99,68 @@ export const askLLM = async (
       .replace("${schema}", schema)
       .replace("${dashboardTypes}", dashboardTypes);
 
-    const { aiText } = await fetchLLMResponse({
+    const canUseTools =
+      llm_credential.config.Provider === "Prostgles" ||
+      llm_credential.config.Provider === "Anthropic";
+
+    const published_methods =
+      canUseTools ?
+        await dbs.published_methods.find({
+          $existsJoined: {
+            llm_chats_allowed_functions: {
+              chat_id: chatId,
+            },
+          },
+        })
+      : [];
+
+    const tools = published_methods.map((m) => {
+      const { name, description, arguments: _arguments } = m;
+      const properties = _arguments.reduce(
+        (acc, arg) => ({
+          ...acc,
+          [arg.name]:
+            (
+              arg.type === "JsonbSchema" ||
+              arg.type === "Lookup" ||
+              arg.type === "Lookup[]"
+            ) ?
+              "any"
+            : arg.type,
+        }),
+        {} as JSONB.ObjectType["type"],
+      );
+      return {
+        name,
+        description,
+        input_schema: getJSONBSchemaAsJSONSchema(
+          "published_methods",
+          "arguments",
+          {
+            type: properties,
+          },
+        ),
+      };
+    });
+    const { aiText, runTools } = await fetchLLMResponse({
       llm_credential,
+      tools,
       messages: [
         { role: "system", content: promptWithContext },
-        ...pastMessages.map(
-          (m) =>
-            ({
-              role: m.user_id ? "user" : "assistant",
-              content: m.message,
-            }) satisfies LLMMessage,
-        ),
+        ...pastMessages
+          /**all messages must have non-empty content */
+          .filter((m) => m.message)
+          .map(
+            (m) =>
+              ({
+                role: m.user_id ? "user" : "assistant",
+                content:
+                  typeof m.message === "string" ?
+                    m.message
+                  : (m.message.find((c): c is any => c.type === "text")?.text ??
+                    m.message.map((c) => c.type).join(",")),
+              }) satisfies LLMMessage,
+          ),
         { role: "user", content: question } satisfies LLMMessage,
       ],
     });
@@ -118,7 +170,7 @@ export const askLLM = async (
       : aiText;
     await dbs.llm_messages.update(
       { id: aiResponseMessage.id },
-      { message: aiMessage },
+      { message: aiMessage, tool_use: runTools ?? null },
     );
   } catch (err) {
     console.error(err);
@@ -130,117 +182,10 @@ export const askLLM = async (
     await dbs.llm_messages.update(
       { id: aiResponseMessage.id },
       {
-        message: `<span style="color:red;">Something went wrong</span>${errorText}`,
+        message: ["🔴 Something went wrong", errorText].join("\n"),
       },
     );
   }
-};
-type LLMMessage = { role: "system" | "user" | "assistant"; content: string };
-
-type Args = {
-  llm_credential: Pick<
-    DBSSchema["llm_credentials"],
-    "config" | "endpoint" | "result_path"
-  >;
-  messages: LLMMessage[];
-};
-
-console.error("Must authenticate user for prostgles requests");
-export const fetchLLMResponse = async ({
-  llm_credential,
-  messages: _messages,
-}: Args) => {
-  const systemMessage = _messages.filter((m) => m.role === "system");
-  const [systemMessageObj, ...otherSM] = systemMessage;
-  if (!systemMessageObj) throw "Prompt not found";
-  if (otherSM.length) throw "Multiple prompts found";
-  const { config } = llm_credential;
-  const messages =
-    config.Provider === "OpenAI" ?
-      _messages
-    : _messages.filter((m) => m.role !== "system");
-
-  const headers =
-    config.Provider === "OpenAI" || config.Provider === "Prostgles" ?
-      {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${config.API_Key}`,
-      }
-    : config.Provider === "Anthropic" ?
-      {
-        "content-type": "application/json",
-        "x-api-key": config.API_Key,
-        "anthropic-version": config["anthropic-version"],
-      }
-    : config.headers;
-
-  const body =
-    config.Provider === "OpenAI" ?
-      {
-        ...pickKeys(config, [
-          "temperature",
-          "max_completion_tokens",
-          "model",
-          "frequency_penalty",
-          "presence_penalty",
-          "response_format",
-        ]),
-        messages,
-      }
-    : config.Provider === "Anthropic" ?
-      {
-        ...pickKeys(config, ["model", "max_tokens"]),
-        system: systemMessageObj.content,
-        messages,
-      }
-    : config.Provider === "Prostgles" ?
-      [
-        {
-          messages,
-        },
-      ]
-    : config.body;
-
-  if (llm_credential.endpoint === "http://localhost:3004/mocked-llm") {
-    return {
-      aiText: "Mocked response",
-    };
-  }
-
-  const res = await fetch(llm_credential.endpoint, {
-    method: "POST",
-    headers,
-    body: body && JSON.stringify(body),
-  }).catch((err) => Promise.reject(JSON.stringify(getErrorAsObject(err))));
-
-  if (!res.ok) {
-    const errorText = await res.text().catch(() => "");
-    throw new Error(
-      `Failed to fetch LLM response: ${res.statusText} ${errorText}`,
-    );
-  }
-  const response = (await res.json()) as AnyObject | undefined;
-  const path =
-    llm_credential.result_path ??
-    (config.Provider === "OpenAI" ?
-      ["choices", 0, "message", "content"]
-    : ["content", 0, "text"]);
-  const aiText = parsePath(response ?? {}, path);
-  if (typeof aiText !== "string") {
-    throw "Unexpected response from LLM. Expecting string";
-  }
-  return {
-    aiText,
-  };
-};
-
-const parsePath = (obj: AnyObject, path: (string | number)[]) => {
-  let val: AnyObject | undefined = obj;
-  for (const key of path) {
-    if (val === undefined) return undefined;
-    val = val[key];
-  }
-  return val;
 };
 
 export const insertDefaultPrompts = async (dbs: DBS) => {

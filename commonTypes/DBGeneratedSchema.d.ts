@@ -324,6 +324,17 @@ export type DBGeneratedSchema = {
       user_id: string;
     };
   };
+  llm_chats_allowed_functions: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      chat_id: number;
+      server_function_id: number;
+    };
+  };
   llm_credentials: {
     is_view: false;
     select: true;
@@ -355,7 +366,13 @@ export type DBGeneratedSchema = {
       chat_id: number;
       created?: null | string;
       id?: string;
-      message: string;
+      message: 
+       | string
+       |  ( 
+ |  {  type: 'text';  text: string; }
+ |  {  type: 'image';  source: {  type: 'base64';  media_type: string;  data: string; }; }
+ |  {  type: 'tool_result';  tool_use_id: string;  content: string;  is_error?: boolean; } )[]
+      tool_use?: null |  (  {  name: string;  input: any; } )[]
       user_id?: null | string;
     };
   };
@@ -554,7 +571,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      en?: null | string;
+      description?: null | string;
       id: string;
     };
   };

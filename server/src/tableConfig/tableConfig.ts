@@ -2,10 +2,10 @@ import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig"
 import type { JSONB } from "prostgles-types";
 import { CONNECTION_CONFIG_SECTIONS } from "../../../commonTypes/utils";
 import { loggerTableConfig } from "../Logger";
-import { tableConfigGlobalSettings } from "./tableConfigGlobalSettings";
-import { tableConfigUsers } from "./tableConfigUsers";
 import { tableConfigConnections } from "./tableConfigConnections";
+import { tableConfigGlobalSettings } from "./tableConfigGlobalSettings";
 import { tableConfigPublishedMethods } from "./tableConfigPublishedMethods";
+import { tableConfigUsers } from "./tableConfigUsers";
 
 export const UNIQUE_DB_COLS = ["db_name", "db_host", "db_port"] as const;
 const UNIQUE_DB_FIELDLIST = UNIQUE_DB_COLS.join(", ");
@@ -1378,8 +1378,72 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       id: `int8 PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
-      message: `TEXT NOT NULL`,
+      // message: `TEXT NOT NULL`,
+      message: {
+        jsonbSchema: {
+          oneOf: [
+            "string",
+            {
+              arrayOf: {
+                oneOf: [
+                  {
+                    type: {
+                      type: {
+                        enum: ["text"],
+                      },
+                      text: "string",
+                    },
+                  },
+                  {
+                    type: {
+                      type: {
+                        enum: ["image"],
+                      },
+                      source: {
+                        type: {
+                          type: { enum: ["base64"] },
+                          media_type: "string",
+                          data: "string",
+                        },
+                      },
+                    },
+                  },
+                  {
+                    type: {
+                      type: { enum: ["tool_result"] },
+                      tool_use_id: "string",
+                      content: "string",
+                      is_error: { optional: true, type: "boolean" },
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      tool_use: {
+        jsonbSchema: {
+          arrayOfType: {
+            name: "string",
+            input: "any",
+          },
+        },
+        nullable: true,
+      },
       created: `TIMESTAMP DEFAULT NOW()`,
+    },
+  },
+  llm_chats_allowed_functions: {
+    columns: {
+      chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
+      server_function_id: `INTEGER NOT NULL REFERENCES published_methods(id) ON DELETE CASCADE`,
+    },
+    indexes: {
+      unique_chat_tool: {
+        unique: true,
+        columns: "chat_id, server_function_id",
+      },
     },
   },
   access_control_allowed_llm: {

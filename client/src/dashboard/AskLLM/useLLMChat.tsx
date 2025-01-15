@@ -18,16 +18,8 @@ type P = LLMSetupStateReady &
 
 export type LLMChatState = ReturnType<typeof useLLMChat>;
 export const useLLMChat = (props: P) => {
-  const {
-    dbs,
-    user,
-    connectionId,
-    workspaceId,
-    credentials,
-    firstPromptId,
-    defaultCredential,
-    prompts,
-  } = props;
+  const { dbs, user, credentials, firstPromptId, defaultCredential, prompts } =
+    props;
   const [selectedChatId, setSelectedChat] = useState<number>();
   const { data: latestChats } = dbs.llm_chats.useSubscribe(
     {},
@@ -92,7 +84,10 @@ export const useLLMChat = (props: P) => {
       id: m.id,
       incoming: m.user_id !== user?.id,
       message: null,
-      markdown: m.message || "",
+      markdown:
+        (typeof m.message === "string" ? m.message
+        : m.message.type === "text" ? m.message.text
+        : m.message.type) || "",
       sender_id: m.user_id || "ai",
       sent: new Date(m.created || new Date()),
     })) ?? [];

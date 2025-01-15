@@ -16,7 +16,7 @@ import {
 import { getPasswordHash } from "./authConfig/authUtils";
 import { getSMTPWithTLS } from "./authConfig/emailProvider/getEmailSenderWithMockTest";
 import { getACRules } from "./ConnectionManager/ConnectionManager";
-import { fetchLLMResponse } from "./publishMethods/askLLM/askLLM";
+import { fetchLLMResponse } from "./publishMethods/askLLM/fetchLLMResponse";
 
 export const publish = async (
   params: PublishParams<DBGeneratedSchema>,
@@ -173,6 +173,7 @@ export const publish = async (
         postValidate: async ({ row }) => {
           await fetchLLMResponse({
             llm_credential: row,
+            tools: [],
             messages: [
               { role: "system", content: "Be helpful" },
               { role: "user", content: "Hey" },
