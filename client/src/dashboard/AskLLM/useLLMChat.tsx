@@ -10,6 +10,7 @@ import Loading from "../../components/Loading";
 import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
 import { loadGeneratedWorkspaces } from "./loadGeneratedWorkspaces";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
+import { getLLMMessageText } from "../../../../commonTypes/llmUtils";
 
 type P = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId"> & {
@@ -84,10 +85,7 @@ export const useLLMChat = (props: P) => {
       id: m.id,
       incoming: m.user_id !== user?.id,
       message: null,
-      markdown:
-        (typeof m.message === "string" ? m.message
-        : m.message.type === "text" ? m.message.text
-        : m.message.type) || "",
+      markdown: getLLMMessageText(m),
       sender_id: m.user_id || "ai",
       sent: new Date(m.created || new Date()),
     })) ?? [];

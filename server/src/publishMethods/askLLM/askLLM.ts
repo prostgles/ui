@@ -4,12 +4,14 @@ import type { JSONB } from "prostgles-types";
 import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import { type DBS } from "../..";
 import { contentOfThisFile as dashboardTypes } from "../../../../commonTypes/DashboardTypes";
+import { getLLMMessageText } from "../../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessage } from "./fetchLLMResponse";
 
 export const askLLM = async (
-  question: string,
+  // question: string,
+  userMessage: DBSSchema["llm_messages"]["message"],
   schema: string,
   chatId: number,
   dbs: DBS,
@@ -17,9 +19,10 @@ export const askLLM = async (
   allowedLLMCreds: DBSSchema["access_control_allowed_llm"][] | undefined,
   accessRules: DBSSchema["access_control"][] | undefined,
 ) => {
-  if (typeof question !== "string") throw "Question must be a string";
-  if (typeof schema !== "string") throw "Schema must be a string";
-  if (!question.trim()) throw "Question is empty";
+  if (!userMessage.length) throw "Message is empty";
+  // if (typeof question !== "string") throw "Question must be a string";
+  // if (typeof schema !== "string") throw "Schema must be a string";
+  // if (!question.trim()) throw "Question is empty";
   if (!Number.isInteger(chatId)) throw "chatId must be an integer";
   const chat = await dbs.llm_chats.findOne({ id: chatId, user_id: user.id });
   if (!chat) throw "Chat not found";
@@ -42,7 +45,7 @@ export const askLLM = async (
   await dbs.llm_messages.insert({
     user_id: user.id,
     chat_id: chatId,
-    message: question,
+    message: userMessage,
   });
 
   const allowedUsedCreds = allowedLLMCreds?.filter(
@@ -80,9 +83,10 @@ export const askLLM = async (
   /** Update chat name based on first user message */
   const isFirstUserMessage = !pastMessages.some((m) => m.user_id === user.id);
   if (isFirstUserMessage) {
+    const questionText = getLLMMessageText({ message: userMessage });
     dbs.llm_chats.update(
       { id: chatId },
-      { name: question.slice(0, 25) + "..." },
+      { name: questionText.slice(0, 25) + "..." },
     );
   }
 
@@ -90,7 +94,7 @@ export const askLLM = async (
     {
       user_id: null as any,
       chat_id: chatId,
-      message: "",
+      message: [{ type: "text", text: "" }],
     },
     { returning: "*" },
   );
@@ -142,11 +146,16 @@ export const askLLM = async (
         ),
       };
     });
-    const { aiText, runTools } = await fetchLLMResponse({
+    const llmResponseMessage = await fetchLLMResponse({
       llm_credential,
       tools,
       messages: [
-        { role: "system", content: promptWithContext },
+        {
+          /** TODO check if this works with all providers */
+          role: "system",
+          // content: promptWithContext,
+          content: [{ type: "text", text: promptWithContext }],
+        },
         ...pastMessages
           /**all messages must have non-empty content */
           .filter((m) => m.message)
@@ -154,35 +163,30 @@ export const askLLM = async (
             (m) =>
               ({
                 role: m.user_id ? "user" : "assistant",
-                content:
-                  typeof m.message === "string" ?
-                    m.message
-                  : (m.message.find((c): c is any => c.type === "text")?.text ??
-                    m.message.map((c) => c.type).join(",")),
+                content: m.message,
               }) satisfies LLMMessage,
           ),
-        { role: "user", content: question } satisfies LLMMessage,
+        // { role: "user", content: question } satisfies LLMMessage,
+        {
+          role: "user",
+          content: userMessage,
+        } satisfies LLMMessage,
       ],
     });
-    const aiMessage =
-      typeof aiText !== "string" ?
-        "Error: Unexpected response from LLM"
-      : aiText;
     await dbs.llm_messages.update(
       { id: aiResponseMessage.id },
-      { message: aiMessage, tool_use: runTools ?? null },
+      { message: llmResponseMessage },
     );
   } catch (err) {
     console.error(err);
     const isAdmin = user.type === "admin";
     const errorText =
-      isAdmin ?
-        `<br></br><pre>${JSON.stringify(getErrorAsObject(err), null, 2)}</pre>`
-      : "";
+      isAdmin ? JSON.stringify(getErrorAsObject(err), null, 2) : "";
+    const messageText = ["🔴 Something went wrong", errorText].join("\n");
     await dbs.llm_messages.update(
       { id: aiResponseMessage.id },
       {
-        message: ["🔴 Something went wrong", errorText].join("\n"),
+        message: [{ type: "text", text: messageText }],
       },
     );
   }

@@ -367,11 +367,11 @@ export type DBGeneratedSchema = {
       created?: null | string;
       id?: string;
       message: 
-       | string
        |  ( 
  |  {  type: 'text';  text: string; }
  |  {  type: 'image';  source: {  type: 'base64';  media_type: string;  data: string; }; }
- |  {  type: 'tool_result';  tool_use_id: string;  content: string;  is_error?: boolean; } )[]
+ |  {  type: 'tool_result';  tool_use_id: string;  content: string;  is_error?: boolean; }
+ |  {  type: 'tool_use';  id: string;  name: string;  input: any; } )[]
       tool_use?: null |  (  {  name: string;  input: any; } )[]
       user_id?: null | string;
     };

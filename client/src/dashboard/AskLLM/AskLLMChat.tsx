@@ -10,6 +10,7 @@ import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
 import { useLLMTools } from "./useLLMTools";
+import type { LLMMessage } from "../../../../commonTypes/llmUtils";
 // import { useLocalLLM } from "./useLocalLLM";
 
 export type AskLLMChatProps = {
@@ -51,7 +52,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
   const { defaultCredential, preferredPromptId, createNewChat } = chatState;
 
   const sendQuery = useCallback(
-    async (msg: string | undefined) => {
+    async (msg: LLMMessage["message"] | undefined) => {
       if (!msg || !activeChatId) return;
       await askLLM(msg, schemaStr, activeChatId).catch((error) => {
         const errorText = error?.message || error;
@@ -61,6 +62,12 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       });
     },
     [askLLM, schemaStr, activeChatId],
+  );
+
+  const sendMessage = useCallback(
+    (msg: string | undefined) =>
+      sendQuery(msg ? [{ type: "text", text: msg }] : undefined),
+    [sendQuery],
   );
 
   useLLMTools({ messages: llmMessages ?? [], methods, sendQuery });
@@ -119,7 +126,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
             style={chatStyle}
             messages={messages}
             disabledInfo={activeChat?.disabled_message ?? undefined}
-            onSend={sendQuery}
+            onSend={sendMessage}
             markdownCodeHeader={markdownCodeHeader}
           />
         </FlexCol>

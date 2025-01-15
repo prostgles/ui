@@ -175,8 +175,14 @@ export const publish = async (
             llm_credential: row,
             tools: [],
             messages: [
-              { role: "system", content: "Be helpful" },
-              { role: "user", content: "Hey" },
+              {
+                role: "system",
+                content: [{ type: "text", text: "Be helpful" }],
+              },
+              {
+                role: "user",
+                content: [{ type: "text", text: "Hey" }],
+              },
             ],
           });
         },

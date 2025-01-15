@@ -1,5 +1,5 @@
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
-import { type AnyObject, pickKeys } from "prostgles-types";
+import { type AnyObject, isDefined, pickKeys } from "prostgles-types";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 
 export type LLMMessage = {
@@ -24,9 +24,21 @@ type Args = {
 
 export const fetchLLMResponse = async ({
   llm_credential,
-  messages: _messages,
+  messages: maybeEmptyMessages,
   tools,
-}: Args) => {
+}: Args): Promise<LLMMessage["content"]> => {
+  const _messages = maybeEmptyMessages
+    .map((m) => {
+      const nonEmptyMessageContent = m.content.filter(
+        (m) => m.type !== "text" || m.text.trim(),
+      );
+      return {
+        ...m,
+        content: nonEmptyMessageContent,
+      };
+    })
+    .filter((m) => m.content.length);
+
   const systemMessage = _messages.filter((m) => m.role === "system");
   const [systemMessageObj, ...otherSM] = systemMessage;
   if (!systemMessageObj) throw "Prompt not found";
@@ -81,9 +93,7 @@ export const fetchLLMResponse = async ({
     : config.body;
 
   if (llm_credential.endpoint === "http://localhost:3004/mocked-llm") {
-    return {
-      aiText: "Mocked response",
-    };
+    return [{ type: "text", text: "Mocked response" }];
   }
 
   const res = await fetch(llm_credential.endpoint, {
@@ -100,33 +110,42 @@ export const fetchLLMResponse = async ({
   }
   const response = (await res.json()) as AnyObject | undefined;
 
-  let aiText: string;
-  let runTools: { name: string; input: any }[] = [];
   if (config.Provider === "Anthropic") {
     const anthropicResponse = response as AnthropicResponse;
-    aiText =
-      anthropicResponse.content.find(
-        (c): c is AnthropicTextResponse => c.type === "text",
-      )?.text ?? "";
-    runTools = anthropicResponse.content
-      .filter((c): c is AnthropicToolUseResponse => c.type === "tool_use")
-      .map((c) => ({ name: c.name, input: c.input }));
+    const result = anthropicResponse.content
+      .map((c) => {
+        const contentItem: LLMMessage["content"][number] | undefined =
+          c.type === "text" && c.text ?
+            {
+              type: "text",
+              text: c.text,
+            }
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          : c.type === "tool_use" ?
+            ({
+              type: "tool_use",
+              id: c.id,
+              name: c.name,
+              input: c.input,
+            } satisfies LLMMessage["content"][number])
+          : undefined;
+
+        return contentItem;
+      })
+      .filter(isDefined);
+    return result;
   } else {
     const path =
       llm_credential.result_path ??
       (config.Provider === "OpenAI" ?
         ["choices", 0, "message", "content"]
       : ["content", 0, "text"]);
-    aiText = parsePath(response ?? {}, path);
+    const messageText = parsePath(response ?? {}, path);
+    if (typeof messageText !== "string") {
+      throw "Unexpected response from LLM. Expecting string";
+    }
+    return [{ type: "text", text: messageText }];
   }
-
-  if (typeof aiText !== "string") {
-    throw "Unexpected response from LLM. Expecting string";
-  }
-  return {
-    aiText,
-    runTools,
-  };
 };
 
 const parsePath = (obj: AnyObject, path: (string | number)[]): any => {

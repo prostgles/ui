@@ -1,5 +1,9 @@
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import {
+  getLLMMessageToolUse,
+  type LLMMessage,
+} from "../../../../commonTypes/llmUtils";
 import type { Prgl } from "../../App";
 import { useRef } from "react";
 
@@ -12,7 +16,9 @@ export const useLLMTools = ({
   sendQuery,
 }: {
   messages: DBSSchema["llm_messages"][];
-  sendQuery: (msg: string | undefined) => Promise<void>;
+  sendQuery: (
+    msg: DBSSchema["llm_messages"]["message"] | undefined,
+  ) => Promise<void>;
 } & Pick<Prgl, "methods">) => {
   const fetchingForMessageId = useRef<string>();
   usePromise(async () => {
@@ -26,42 +32,44 @@ export const useLLMTools = ({
       return;
     /** Prevent buggy recursions */
     if (isAssistantMessageRequestingToolUse(lastMessage2)) return;
-    const { tool_use = [] } = lastMessage;
+    const toolUse = getLLMMessageToolUse(lastMessage);
     fetchingForMessageId.current = lastMessage.id;
     const results = await Promise.all(
-      tool_use!.map(async (tu) => {
+      toolUse.map(async (tu) => {
         const method = methods[tu.name];
+        const { id, name } = tu;
         if (!method)
           return {
-            error: "Method not found or not allowed",
-            result: undefined,
-            tool_name: tu.name,
-          };
+            type: "tool_result",
+            // name,
+            tool_use_id: id,
+            content: "Method not found or not allowed",
+            is_error: true,
+          } satisfies LLMMessage["message"][number];
         const methodFunc = typeof method === "function" ? method : method.run;
         try {
           const result = await methodFunc(tu.input);
-          return { error: undefined, result, tool_name: tu.name };
+          return {
+            type: "tool_result",
+            content: JSON.stringify(result),
+            tool_use_id: id,
+          } satisfies LLMMessage["message"][number];
         } catch (e) {
-          return { error: e, result: undefined, tool_name: tu.name };
+          return {
+            type: "tool_result",
+            content: JSON.stringify(e),
+            // name,
+            tool_use_id: id,
+          } satisfies LLMMessage["message"][number];
         }
       }),
     );
-    const message = [
-      "```tool_result",
-      ...results.map((r) => {
-        if (r.error) {
-          return `Error: ${JSON.stringify(r.error)}`;
-        }
-        return JSON.stringify(r.result);
-      }),
-    ].join("\n");
-    await sendQuery(message);
+    await sendQuery(results);
   }, [messages, methods, sendQuery]);
 };
 
 const isAssistantMessageRequestingToolUse = (
   message: DBSSchema["llm_messages"] | undefined,
 ): message is DBSSchema["llm_messages"] => {
-  if (!message) return false;
-  return Boolean(!message.user_id && message.tool_use?.length);
+  return Boolean(message && getLLMMessageToolUse(message).length);
 };

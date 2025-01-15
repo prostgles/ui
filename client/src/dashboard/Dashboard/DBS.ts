@@ -13,6 +13,7 @@ import type { ConnectionTableConfig } from "../FileTableControls/FileTableConfig
 import type { Backups } from "./dashboardUtils";
 import type { AnyObject } from "prostgles-types/lib";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { LLMMessage } from "../../../../commonTypes/llmUtils";
 
 export type DBSMethods = Partial<{
   sendFeedback: (feedback: {
@@ -23,7 +24,11 @@ export type DBSMethods = Partial<{
     email: string,
     otpCode: string,
   ) => Promise<{ token: string; host: string; hasError?: boolean; error: any }>;
-  askLLM: (query: string, schema: string, chatId: number) => Promise<AnyObject>;
+  askLLM: (
+    userMessage: LLMMessage["message"],
+    schema: string,
+    chatId: number,
+  ) => Promise<AnyObject>;
   pgDump: (
     conId: string,
     credId: number | null | undefined,
