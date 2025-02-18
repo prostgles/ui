@@ -58,6 +58,7 @@ export const CodeEditorWithSaveButton = (props: P) => {
     try {
       await onSave(localValueRef.current ?? "");
       setError(undefined);
+      setDidChange(false);
     } catch (err) {
       setError(err);
     }
@@ -91,7 +92,8 @@ export const CodeEditorWithSaveButton = (props: P) => {
         bottom: 0,
         left: 0,
         right: 0,
-        zIndex: 122222,
+        /** Must appear above minimap but beneath completion suggestions */
+        zIndex: 5,
         background: "#dfdfdf5c",
         backdropFilter: "blur(1px)",
       }}
@@ -149,12 +151,7 @@ export const CodeEditorWithSaveButton = (props: P) => {
       >
         <CodeEditor
           className={codeEditorClassName}
-          // style={{
-          //   minHeight: "300px",
-          //   // ...(!localValue ? { opacity: 0.7 } : {}),
-          // }}
           {...codeEditorProps}
-          // value={localValue || (codePlaceholder ?? "")}
           value={localValueRef.current || value || (codePlaceholder ?? "")}
           onChange={onChange}
           onSave={onClickSave}

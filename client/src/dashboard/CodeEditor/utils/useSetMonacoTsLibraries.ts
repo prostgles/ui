@@ -4,10 +4,12 @@ import { useEffect } from "react";
 import { useIsMounted } from "../../Backup/CredentialSelector";
 import { useEffectDeep } from "prostgles-client/dist/react-hooks";
 
+type MonacoEditor = typeof import("monaco-editor");
+
 export const useSetMonacoTsLibraries = async (
   editor: editor.IStandaloneCodeEditor | undefined,
   languageObj: LanguageConfig | undefined,
-  monaco: typeof import("monaco-editor") | undefined,
+  monaco: MonacoEditor | undefined,
   value: string,
 ) => {
   const getIsMounted = useIsMounted();
@@ -43,7 +45,7 @@ export const useSetMonacoTsLibraries = async (
   }, [editor, monaco, languageObj]);
 };
 
-const setTSoptions = async (monaco: typeof import("monaco-editor")) => {
+const setTSoptions = async (monaco: MonacoEditor) => {
   monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true);
 
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
@@ -58,7 +60,7 @@ const setTSoptions = async (monaco: typeof import("monaco-editor")) => {
     experimentalDecorators: true,
     keyofStringsOnly: true,
     /** Adding this line breaks inbuild functions (setTimeout, etc) */
-    // lib: [ "ES2017", "es2019", "ES2021.String", "ES2020", "ES2022" ] ,
+    // lib: ["ES2017", "es2019", "ES2021.String", "ES2020", "ES2022"],
     esModuleInterop: true,
     allowSyntheticDefaultImports: true,
     declaration: true,

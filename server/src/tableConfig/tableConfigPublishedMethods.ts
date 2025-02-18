@@ -12,7 +12,6 @@ const primitiveJsonbType = {
 
 export const tableConfigPublishedMethods: TableConfig<{ en: 1 }> = {
   published_methods: {
-    // dropIfExistsCascade: true,
     columns: {
       id: `SERIAL PRIMARY KEY`,
       name: `TEXT NOT NULL DEFAULT 'Method name'`,
@@ -105,6 +104,8 @@ export const tableConfigPublishedMethods: TableConfig<{ en: 1 }> = {
         },
       },
       run: "TEXT NOT NULL DEFAULT 'export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n  \n}'",
+      tsconfig: "JSONB",
+      package: "JSONB",
       outputTable: `TEXT`,
     },
     indexes: {

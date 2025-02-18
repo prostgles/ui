@@ -89,9 +89,8 @@ export type DBSMethods = Partial<{
     username: string;
     password: string;
   }) => Promise<void>;
-  getAPITSDefinitions: () => {
-    name: string;
-    path: string;
+  getNodeTypes: () => {
+    filePath: string;
     content: string;
   }[];
   getConnectionDBTypes: (

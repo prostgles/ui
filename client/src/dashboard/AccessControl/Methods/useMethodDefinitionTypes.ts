@@ -1,7 +1,7 @@
 import { usePromise } from "prostgles-client/dist/prostgles";
 import { isDefined } from "../../../utils";
 import type { LanguageConfig, TSLibrary } from "../../CodeEditor/CodeEditor";
-import { dboLib, pgPromiseDb, wsLib } from "../../CodeEditor/monacoTsLibs";
+import { dboLib, pgPromiseDb } from "../../CodeEditor/monacoTsLibs";
 import type { MethodDefinitionProps } from "./MethodDefinition";
 
 type Args = Pick<
@@ -20,22 +20,19 @@ export const useCodeEditorTsTypes = (
   }, [dbsMethods, connectionId]);
 
   const tsLibrariesAndModelName = usePromise(async () => {
-    if (
-      dbSchemaTypes &&
-      dbsMethods.getAPITSDefinitions &&
-      connectionId &&
-      dbKey
-    ) {
+    if (dbSchemaTypes && dbsMethods.getNodeTypes && connectionId && dbKey) {
       const methodTsLib = await fetchMethodDefinitionTypes({
         dbs,
         method,
         tables,
       });
+      const libs = await dbsMethods.getNodeTypes();
       const tsLibraries: TSLibrary[] = [
-        {
-          filePath: "file:///node_modules/@types/ws/index.d.ts",
-          content: wsLib,
-        },
+        ...libs.map((l) => ({
+          ...l,
+          filePath: `file://${l.filePath}`,
+        })),
+        /** Required to ensure dbo types work */
         {
           filePath: "file:///node_modules/@types/dbo/index.d.ts",
           content: `declare global { ${dboLib} }; export {}`,

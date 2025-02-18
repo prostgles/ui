@@ -46,6 +46,7 @@ import { upsertConnection } from "../upsertConnection";
 import { askLLM } from "./askLLM/askLLM";
 import { prostglesSignup } from "./prostglesSignup";
 import type { LLMMessage } from "../../../commonTypes/llmUtils";
+import { getNodeTypes } from "./getNodeTypes";
 
 export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   params,
@@ -499,6 +500,7 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
         tableConfigRunner: await prgl.tableConfigRunner?.getProcStats(),
       };
     },
+    getNodeTypes,
   };
 
   const isAdmin = user.type === "admin";
@@ -616,29 +618,6 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
         throw "Old password is incorrect";
       const hashedNewPassword = getPasswordHash(user, newPassword);
       await dbs.users.update({ id: user.id }, { password: hashedNewPassword });
-    },
-    getAPITSDefinitions: () => {
-      /** Must install them into the server folder! */
-      const clientNodeModules = path.resolve(
-        __dirname + "/../../../../client/node_modules/",
-      );
-      const prostglesTypes = path.resolve(
-        clientNodeModules + "/prostgles-types/dist",
-      );
-      const prostglesClient = path.resolve(
-        clientNodeModules + "/prostgles-client/dist",
-      );
-
-      return [
-        ...getTSFiles(prostglesClient).map((l) => ({
-          ...l,
-          name: "prostgles-client",
-        })),
-        ...getTSFiles(prostglesTypes).map((l) => ({
-          ...l,
-          name: "prostgles-types",
-        })),
-      ];
     },
   };
 

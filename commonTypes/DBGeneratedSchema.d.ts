@@ -467,7 +467,9 @@ export type DBGeneratedSchema = {
       id?: number;
       name?: string;
       outputTable?: null | string;
+      package?: null | any;
       run?: string;
+      tsconfig?: null | any;
     };
   };
   schema_version: {
@@ -571,7 +573,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      en?: null | string;
+      description?: null | string;
       id: string;
     };
   };

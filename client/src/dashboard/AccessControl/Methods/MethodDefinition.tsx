@@ -1,6 +1,5 @@
 import { mdiCodeJson } from "@mdi/js";
-import { isEqual } from "prostgles-types";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";

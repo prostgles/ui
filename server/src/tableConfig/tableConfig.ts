@@ -615,7 +615,9 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       created: { sqlDefinition: `TIMESTAMP DEFAULT NOW()` },
     },
   },
+
   ...tableConfigPublishedMethods,
+
   access_control_user_types: {
     columns: {
       access_control_id: `INTEGER NOT NULL REFERENCES access_control(id)  ON DELETE CASCADE`,

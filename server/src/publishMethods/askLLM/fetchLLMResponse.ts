@@ -1,7 +1,6 @@
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { type AnyObject, isDefined, pickKeys } from "prostgles-types";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import { filterArr } from "../../../../commonTypes/llmUtils";
 
 export type LLMMessage = {
   role: "system" | "user" | "assistant";

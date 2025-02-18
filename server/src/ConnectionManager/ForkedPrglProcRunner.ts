@@ -6,7 +6,6 @@ import { isObject } from "prostgles-types";
 import type { DBS } from "..";
 import type { ProcStats } from "../../../commonTypes/utils";
 import { getError } from "./forkedProcess";
-import { OnReadyParamsBasic } from "prostgles-server/dist/initProstgles";
 
 type ForkedProcMessageCommon = {
   id: string;
@@ -72,6 +71,9 @@ type Opts = {
     }
 );
 
+/**
+ * This class is used to run onMount/methods/tableConfig TS code in a forked process.
+ */
 export class ForkedPrglProcRunner {
   currentRunId = 1;
   opts: Opts;
@@ -87,6 +89,12 @@ export class ForkedPrglProcRunner {
   stderr: any[] = [];
   logs: any[] = [];
 
+  private constructor(proc: ChildProcess, opts: Opts) {
+    this.proc = proc;
+    this.opts = opts;
+    this.initProc();
+  }
+
   databaseNotFound = false;
   destroyed = false;
   destroy = (databaseNotFound = false) => {
@@ -94,12 +102,6 @@ export class ForkedPrglProcRunner {
     this.databaseNotFound = databaseNotFound;
     this.proc.kill("SIGKILL");
   };
-
-  private constructor(proc: ChildProcess, opts: Opts) {
-    this.proc = proc;
-    this.opts = opts;
-    this.initProc();
-  }
 
   isRestarting = false;
   restartProc = debounce((error: any) => {
@@ -126,6 +128,7 @@ export class ForkedPrglProcRunner {
       this.isRestarting = false;
     }, 1e3);
   }, 400);
+
   private initProc = () => {
     const updateLogs = (dataOrError: any) => {
       const stringMessage =

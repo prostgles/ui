@@ -7,7 +7,11 @@ export const getLLMMessageText = ({ message, }) => {
     const toolsResponses = getLLMMessageToolUseResult({ message }).map((m) => m.is_error);
     return [
         toolsUsed.length ? `**Tools used: ${toolsUsed.join(", ")}**` : null,
-        toolsResponses.length ? `**Tool result response**` : null,
+        toolsResponses.length ?
+            toolsResponses[0] ?
+                `**Tool use error**`
+                : `**Tool result response**`
+            : null,
         text,
     ]
         .filter((v) => v)
