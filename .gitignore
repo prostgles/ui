@@ -2,6 +2,7 @@ node_modules
 prostgles_media
 prostgles_backups
 prostgles_certificates
+prostgles_mcp
 .electron-auth.json
 **/.electron-auth.json
 
