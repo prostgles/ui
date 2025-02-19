@@ -184,7 +184,7 @@ export class ConnectionManager {
         pass_process_env_vars_to_server_side_functions: false,
         table_config_ts,
         dbConfId: prglCon.dbConf.id!,
-        initArgs: {
+        prglInitOpts: {
           dbConnection: {
             ...prglCon.connectionInfo,
             application_name: "tableConfig",
@@ -227,7 +227,7 @@ export class ConnectionManager {
         on_mount_ts_compiled: getCompiledTS(on_mount_ts),
         pass_process_env_vars_to_server_side_functions: false,
         dbConfId: prglCon.dbConf.id,
-        initArgs: {
+        prglInitOpts: {
           dbConnection: {
             ...prglCon.connectionInfo,
             application_name: "onMount",

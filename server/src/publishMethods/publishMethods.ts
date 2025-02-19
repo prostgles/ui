@@ -47,6 +47,10 @@ import { askLLM } from "./askLLM/askLLM";
 import { prostglesSignup } from "./prostglesSignup";
 import type { LLMMessage } from "../../../commonTypes/llmUtils";
 import { getNodeTypes } from "./getNodeTypes";
+import {
+  getMCPServersStatus,
+  installMCPServers,
+} from "../McpHub/installMCPServers";
 
 export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   params,
@@ -501,6 +505,8 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       };
     },
     getNodeTypes,
+    installMCPServers,
+    getMCPServersStatus,
   };
 
   const isAdmin = user.type === "admin";

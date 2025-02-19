@@ -7,6 +7,7 @@ import { tableConfigGlobalSettings } from "./tableConfigGlobalSettings";
 import { tableConfigPublishedMethods } from "./tableConfigPublishedMethods";
 import { tableConfigUsers } from "./tableConfigUsers";
 import { tableConfigLLM } from "./tableConfigLlm";
+import { tableConfigMCPServers } from "./tableConfigMCPServers";
 
 export const UNIQUE_DB_COLS = ["db_name", "db_host", "db_port"] as const;
 const UNIQUE_DB_FIELDLIST = UNIQUE_DB_COLS.join(", ");
@@ -1270,4 +1271,5 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
   },
   ...tableConfigLLM,
   ...loggerTableConfig,
+  ...tableConfigMCPServers,
 };

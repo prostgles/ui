@@ -135,12 +135,3 @@ export const API_PATH_SUFFIXES = {
     CONFIG: "/connection-config",
 };
 export const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
-export function debounce(func, timeout) {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-            func(...args);
-        }, timeout);
-    };
-}

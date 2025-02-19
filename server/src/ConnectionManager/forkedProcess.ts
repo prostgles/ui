@@ -70,7 +70,7 @@ const initForkedProc = () => {
 
         //@ts-ignore
         await prostgles({
-          ...msg.initArgs,
+          ...msg.prglInitOpts,
           watchSchema: "*",
           transactions: true,
           onReady: (params) => {

@@ -1,4 +1,4 @@
-import type { ChildProcess } from "child_process";
+import type { ChildProcess, ForkOptions } from "child_process";
 import { fork } from "child_process";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
 import type { AnyObject } from "prostgles-types";
@@ -11,11 +11,11 @@ type ForkedProcMessageCommon = {
   id: string;
 };
 
-type InitOpts = Omit<ProstglesInitOptions, "onReady">;
+type PrglInitOptions = Omit<ProstglesInitOptions, "onReady">;
 
 type ForkedProcMessageStart = ForkedProcMessageCommon & {
   type: "start";
-  initArgs: InitOpts;
+  prglInitOpts: PrglInitOptions;
 };
 type ForkedProcRunArgs =
   | {
@@ -49,9 +49,10 @@ export type ForkedProcMessageResult =
 export const FORKED_PROC_ENV_NAME = "IS_FORKED_PROC" as const;
 
 type Opts = {
-  initArgs: InitOpts;
+  prglInitOpts: PrglInitOptions;
   dbs: DBS;
   dbConfId: number;
+  forkOpts?: Pick<ForkOptions, "cwd">;
   pass_process_env_vars_to_server_side_functions: boolean;
 } & (
   | {
@@ -72,7 +73,7 @@ type Opts = {
 );
 
 /**
- * This class is used to run onMount/methods/tableConfig TS code in a forked process.
+ * This class is used to run onMount/method TS code in a forked process.
  */
 export class ForkedPrglProcRunner {
   currentRunId = 1;
@@ -116,10 +117,7 @@ export class ForkedPrglProcRunner {
     console.log(`${logName} restarting ...`);
     setTimeout(async () => {
       console.log(`${logName} restarted`);
-      const newProc = await ForkedPrglProcRunner.createProc(
-        this.opts.initArgs,
-        this.opts.pass_process_env_vars_to_server_side_functions,
-      );
+      const newProc = await ForkedPrglProcRunner.createProc(this.opts);
       this.proc = newProc;
       this.initProc();
       if (this.opts.type === "onMount") {
@@ -198,12 +196,14 @@ export class ForkedPrglProcRunner {
     this.proc.stderr?.on("error", updateLogs);
   };
 
-  private static createProc = (
-    initOpts: InitOpts,
-    pass_process_env_vars_to_server_side_functions: boolean,
-  ): Promise<ChildProcess> => {
+  private static createProc = ({
+    prglInitOpts,
+    pass_process_env_vars_to_server_side_functions,
+    forkOpts,
+  }: Opts): Promise<ChildProcess> => {
     return new Promise((resolve, reject) => {
       const proc = fork(__dirname + "/forkedProcess.js", {
+        ...forkOpts,
         execArgv: [],
         silent: true,
         env: {
@@ -228,16 +228,13 @@ export class ForkedPrglProcRunner {
       proc.send({
         id: "1",
         type: "start",
-        initArgs: initOpts,
+        prglInitOpts,
       } satisfies ForkedProcMessageStart);
     });
   };
 
   static create = async (opts: Opts): Promise<ForkedPrglProcRunner> => {
-    const proc = await ForkedPrglProcRunner.createProc(
-      opts.initArgs,
-      opts.pass_process_env_vars_to_server_side_functions,
-    );
+    const proc = await ForkedPrglProcRunner.createProc(opts);
     return new ForkedPrglProcRunner(proc, opts);
   };
 

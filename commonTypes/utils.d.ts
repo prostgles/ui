@@ -188,5 +188,4 @@ export declare const API_PATH_SUFFIXES: {
     readonly CONFIG: "/connection-config";
 };
 export declare const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
-export declare function debounce<Params extends any[]>(func: (...args: Params) => any, timeout: number): (...args: Params) => void;
 export {};

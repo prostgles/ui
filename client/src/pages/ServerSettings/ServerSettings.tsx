@@ -18,13 +18,15 @@ import SmartCardList from "../../dashboard/SmartCard/SmartCardList";
 import SmartForm from "../../dashboard/SmartForm/SmartForm";
 import { AuthProviderSetup } from "./AuthProvidersSetup";
 import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
+import PopupMenu from "../../components/PopupMenu";
+import { MCPServers } from "./MCPServers/MCPServers";
 
-export const ServerSettings = ({
-  theme,
-  dbsMethods,
-  dbs,
-  dbsTables,
-}: Pick<Prgl, "dbsMethods" | "dbs" | "dbsTables" | "auth" | "theme">) => {
+export type ServerSettingsProps = Pick<
+  Prgl,
+  "dbsMethods" | "dbs" | "dbsTables" | "auth" | "theme"
+>;
+export const ServerSettings = (props: ServerSettingsProps) => {
+  const { theme, dbsMethods, dbs, dbsTables } = props;
   const [testCIDR, setCIDR] = useState<{ cidr?: string }>({});
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
@@ -182,6 +184,11 @@ export const ServerSettings = ({
                     }
                   />
                 ),
+              },
+              mcpServers: {
+                leftIconPath: mdiLaptop,
+                label: "MCP Servers",
+                content: <MCPServers {...props} />,
               },
             }}
           />

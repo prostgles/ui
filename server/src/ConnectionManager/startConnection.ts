@@ -117,7 +117,7 @@ export const startConnection = async function (
               global_settings?.pass_process_env_vars_to_server_side_functions ??
               false,
             dbs,
-            initArgs: {
+            prglInitOpts: {
               dbConnection: {
                 ...connectionInfo,
                 application_name: "methodRunner",
