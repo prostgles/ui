@@ -3,7 +3,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import {
   StdioClientTransport,
   StdioServerParameters,
-} from "@modelcontextprotocol/sdk/client/stdio";
+} from "@modelcontextprotocol/sdk/client/stdio.js";
 import {
   CallToolResultSchema,
   ListResourcesResultSchema,
@@ -11,10 +11,9 @@ import {
   ListToolsResultSchema,
   ReadResourceResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import deepEqual from "fast-deep-equal";
 import * as fs from "fs/promises";
 import { z } from "zod";
-import { tout } from "..";
+import { DBS, tout } from "..";
 import {
   McpMode,
   McpResource,
@@ -25,6 +24,7 @@ import {
   McpToolCallResponse,
   ServersConfig,
 } from "./McpTypes";
+import { isEqual, pickKeys } from "prostgles-types";
 
 export type McpConnection = {
   server: McpServer;
@@ -72,37 +72,14 @@ export class McpHub {
   //     .get<McpMode>("mode", "full");
   // }
 
-  async getMcpServersPath(): Promise<string> {
-    // const provider = this.providerRef.deref();
-    // if (!provider) {
-    //   throw new Error("Provider not available");
-    // }
-    const mcpServersPath = "empty"; // await provider.ensureMcpServersDirectoryExists();
-    return mcpServersPath;
-  }
-
-  async getMcpSettingsFilePath(): Promise<string> {
-    // const provider = this.providerRef.deref();
-    // if (!provider) {
-    //   throw new Error("Provider not available");
-    // }
-    //   const mcpSettingsFilePath = path.join(
-    //     await provider.ensureSettingsDirectoryExists(),
-    //     GlobalFileNames.mcpSettings,
-    //   );
-    //   const fileExists = await fileExistsAtPath(mcpSettingsFilePath);
-    //   if (!fileExists) {
-    //     await fs.writeFile(
-    //       mcpSettingsFilePath,
-    //       `{
-    //   "mcpServers": {
-    //   }
-    // }`,
-    //     );
-    //   }
-    //   return mcpSettingsFilePath;
-    return "empty";
-  }
+  // async getMcpServersPath(): Promise<string> {
+  //   // const provider = this.providerRef.deref();
+  //   // if (!provider) {
+  //   //   throw new Error("Provider not available");
+  //   // }
+  //   const mcpServersPath = "empty"; // await provider.ensureMcpServersDirectoryExists();
+  //   return mcpServersPath;
+  // }
 
   // private async watchMcpSettingsFile(): Promise<void> {
   //   const settingsPath = await this.getMcpSettingsFilePath();
@@ -178,7 +155,7 @@ export class McpHub {
           connection.server.status = "disconnected";
           this.appendErrorMessage(connection, error.message);
         }
-        await this.notifyWebviewOfServerChanges();
+        // await this.notifyWebviewOfServerChanges();
       };
 
       transport.onclose = async () => {
@@ -188,7 +165,7 @@ export class McpHub {
         if (connection) {
           connection.server.status = "disconnected";
         }
-        await this.notifyWebviewOfServerChanges();
+        // await this.notifyWebviewOfServerChanges();
       };
 
       // If the config is invalid, show an error
@@ -240,7 +217,7 @@ export class McpHub {
             this.appendErrorMessage(connection, errorOutput);
             // Only need to update webview right away if it's already disconnected
             if (connection.server.status === "disconnected") {
-              await this.notifyWebviewOfServerChanges();
+              // await this.notifyWebviewOfServerChanges();
             }
           }
         });
@@ -310,11 +287,11 @@ export class McpHub {
         ?.client.request({ method: "tools/list" }, ListToolsResultSchema);
 
       // Get autoApprove settings
-      const settingsPath = await this.getMcpSettingsFilePath();
-      const content = await fs.readFile(settingsPath, "utf-8");
-      const config = JSON.parse(content);
-      const autoApproveConfig =
-        config.mcpServers[serverName]?.autoApprove || [];
+      // const settingsPath = await this.getMcpSettingsFilePath();
+      // const content = await fs.readFile(settingsPath, "utf-8");
+      // const config = JSON.parse(content);
+      const autoApproveConfig: string[] = [];
+      // config.mcpServers[serverName]?.autoApprove || [];
 
       // Mark tools as always allowed based on settings
       const tools = (response?.tools || []).map((tool) => ({
@@ -414,7 +391,7 @@ export class McpHub {
           console.error(`Failed to connect to new MCP server ${name}:`, error);
         }
       } else if (
-        !deepEqual(JSON.parse(currentConnection.server.config), config)
+        !isEqual(JSON.parse(currentConnection.server.config), config)
       ) {
         // Existing server with changed config
         try {
@@ -428,7 +405,7 @@ export class McpHub {
       }
       // If server exists with same config, do nothing
     }
-    await this.notifyWebviewOfServerChanges();
+    // await this.notifyWebviewOfServerChanges();
     this.isConnecting = false;
   }
 
@@ -475,7 +452,7 @@ export class McpHub {
       // );
       connection.server.status = "connecting";
       connection.server.error = "";
-      await this.notifyWebviewOfServerChanges();
+      // await this.notifyWebviewOfServerChanges();
       await tout(500); // artificial delay to show user that server is restarting
       try {
         await this.deleteConnection(serverName);
@@ -492,119 +469,101 @@ export class McpHub {
       }
     }
 
-    await this.notifyWebviewOfServerChanges();
+    // await this.notifyWebviewOfServerChanges();
     this.isConnecting = false;
-  }
-
-  private async notifyWebviewOfServerChanges(): Promise<void> {
-    // servers should always be sorted in the order they are defined in the settings file
-    const settingsPath = await this.getMcpSettingsFilePath();
-    const content = await fs.readFile(settingsPath, "utf-8");
-    const config = JSON.parse(content);
-    const serverOrder = Object.keys(config.mcpServers || {});
-    // await this.providerRef.deref()?.postMessageToWebview({
-    //   type: "mcpServers",
-    //   mcpServers: [...this.connections]
-    //     .sort((a, b) => {
-    //       const indexA = serverOrder.indexOf(a.server.name);
-    //       const indexB = serverOrder.indexOf(b.server.name);
-    //       return indexA - indexB;
-    //     })
-    //     .map((connection) => connection.server),
-    // });
   }
 
   // Using server
 
   // Public methods for server management
 
-  public async toggleServerDisabled(
-    serverName: string,
-    disabled: boolean,
-  ): Promise<void> {
-    let settingsPath: string;
-    try {
-      settingsPath = await this.getMcpSettingsFilePath();
+  // public async toggleServerDisabled(
+  //   serverName: string,
+  //   disabled: boolean,
+  // ): Promise<void> {
+  //   let settingsPath: string;
+  //   try {
+  //     // settingsPath = await this.getMcpSettingsFilePath();
 
-      // Ensure the settings file exists and is accessible
-      try {
-        await fs.access(settingsPath);
-      } catch (error) {
-        console.error("Settings file not accessible:", error);
-        throw new Error("Settings file not accessible");
-      }
-      const content = await fs.readFile(settingsPath, "utf-8");
-      const config = JSON.parse(content);
+  //     // Ensure the settings file exists and is accessible
+  //     // try {
+  //     //   await fs.access(settingsPath);
+  //     // } catch (error) {
+  //     //   console.error("Settings file not accessible:", error);
+  //     //   throw new Error("Settings file not accessible");
+  //     // }
+  //     // const content = await fs.readFile(settingsPath, "utf-8");
+  //     // const config = JSON.parse(content);
 
-      // Validate the config structure
-      if (!config || typeof config !== "object") {
-        throw new Error("Invalid config structure");
-      }
+  //     // Validate the config structure
+  //     if (!config || typeof config !== "object") {
+  //       throw new Error("Invalid config structure");
+  //     }
 
-      if (!config.mcpServers || typeof config.mcpServers !== "object") {
-        config.mcpServers = {};
-      }
+  //     if (!config.mcpServers || typeof config.mcpServers !== "object") {
+  //       config.mcpServers = {};
+  //     }
 
-      if (config.mcpServers[serverName]) {
-        // Create a new server config object to ensure clean structure
-        const serverConfig = {
-          ...config.mcpServers[serverName],
-          disabled,
-        };
+  //     if (config.mcpServers[serverName]) {
+  //       // Create a new server config object to ensure clean structure
+  //       // const serverConfig = {
+  //       //   ...config.mcpServers[serverName],
+  //       //   disabled,
+  //       // };
 
-        // Ensure required fields exist
-        if (!serverConfig.autoApprove) {
-          serverConfig.autoApprove = [];
-        }
+  //       // // Ensure required fields exist
+  //       // if (!serverConfig.autoApprove) {
+  //       //   serverConfig.autoApprove = [];
+  //       // }
 
-        config.mcpServers[serverName] = serverConfig;
+  //       // config.mcpServers[serverName] = serverConfig;
 
-        // Write the entire config back
-        const updatedConfig = {
-          mcpServers: config.mcpServers,
-        };
+  //       // // Write the entire config back
+  //       // const updatedConfig = {
+  //       //   mcpServers: config.mcpServers,
+  //       // };
 
-        await fs.writeFile(
-          settingsPath,
-          JSON.stringify(updatedConfig, null, 2),
-        );
+  //       // await fs.writeFile(
+  //       //   settingsPath,
+  //       //   JSON.stringify(updatedConfig, null, 2),
+  //       // );
 
-        const connection = this.connections.find(
-          (conn) => conn.server.name === serverName,
-        );
-        if (connection) {
-          try {
-            connection.server.disabled = disabled;
+  //       const connection = this.connections.find(
+  //         (conn) => conn.server.name === serverName,
+  //       );
+  //       if (connection) {
+  //         try {
+  //           connection.server.disabled = disabled;
 
-            // Only refresh capabilities if connected
-            if (connection.server.status === "connected") {
-              connection.server.tools = await this.fetchToolsList(serverName);
-              connection.server.resources =
-                await this.fetchResourcesList(serverName);
-              connection.server.resourceTemplates =
-                await this.fetchResourceTemplatesList(serverName);
-            }
-          } catch (error) {
-            console.error(
-              `Failed to refresh capabilities for ${serverName}:`,
-              error,
-            );
-          }
-        }
+  //           // Only refresh capabilities if connected
+  //           if (connection.server.status === "connected") {
+  //             connection.server.tools = await this.fetchToolsList(serverName);
+  //             connection.server.resources =
+  //               await this.fetchResourcesList(serverName);
+  //             connection.server.resourceTemplates =
+  //               await this.fetchResourceTemplatesList(serverName);
+  //           }
+  //         } catch (error) {
+  //           console.error(
+  //             `Failed to refresh capabilities for ${serverName}:`,
+  //             error,
+  //           );
+  //         }
+  //       }
 
-        await this.notifyWebviewOfServerChanges();
-      }
-    } catch (error) {
-      console.error("Failed to update server disabled state:", error);
-      if (error instanceof Error) {
-        console.error("Error details:", error.message, error.stack);
-      }
-      // vscode.window.showErrorMessage(
-      //   `Failed to update server state: ${error instanceof Error ? error.message : String(error)}`,
-      // );
-      throw error;
-    }
-  }
+  //       // await this.notifyWebviewOfServerChanges();
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to update server disabled state:", error);
+  //     if (error instanceof Error) {
+  //       console.error("Error details:", error.message, error.stack);
+  //     }
+  //     // vscode.window.showErrorMessage(
+  //     //   `Failed to update server state: ${error instanceof Error ? error.message : String(error)}`,
+  //     // );
+  //     throw error;
+  //   }
+  // }
 
   async readResource(
     serverName: string,
@@ -660,49 +619,49 @@ export class McpHub {
     );
   }
 
-  async toggleToolAutoApprove(
-    serverName: string,
-    toolName: string,
-    shouldAllow: boolean,
-  ): Promise<void> {
-    try {
-      const settingsPath = await this.getMcpSettingsFilePath();
-      const content = await fs.readFile(settingsPath, "utf-8");
-      const config = JSON.parse(content);
+  // async toggleToolAutoApprove(
+  //   serverName: string,
+  //   toolName: string,
+  //   shouldAllow: boolean,
+  // ): Promise<void> {
+  //   try {
+  //     const settingsPath = await this.getMcpSettingsFilePath();
+  //     const content = await fs.readFile(settingsPath, "utf-8");
+  //     const config = JSON.parse(content);
 
-      // Initialize autoApprove if it doesn't exist
-      if (!config.mcpServers[serverName].autoApprove) {
-        config.mcpServers[serverName].autoApprove = [];
-      }
+  //     // Initialize autoApprove if it doesn't exist
+  //     if (!config.mcpServers[serverName].autoApprove) {
+  //       config.mcpServers[serverName].autoApprove = [];
+  //     }
 
-      const autoApprove = config.mcpServers[serverName].autoApprove;
-      const toolIndex = autoApprove.indexOf(toolName);
+  //     const autoApprove = config.mcpServers[serverName].autoApprove;
+  //     const toolIndex = autoApprove.indexOf(toolName);
 
-      if (shouldAllow && toolIndex === -1) {
-        // Add tool to autoApprove list
-        autoApprove.push(toolName);
-      } else if (!shouldAllow && toolIndex !== -1) {
-        // Remove tool from autoApprove list
-        autoApprove.splice(toolIndex, 1);
-      }
+  //     if (shouldAllow && toolIndex === -1) {
+  //       // Add tool to autoApprove list
+  //       autoApprove.push(toolName);
+  //     } else if (!shouldAllow && toolIndex !== -1) {
+  //       // Remove tool from autoApprove list
+  //       autoApprove.splice(toolIndex, 1);
+  //     }
 
-      // Write updated config back to file
-      await fs.writeFile(settingsPath, JSON.stringify(config, null, 2));
+  //     // Write updated config back to file
+  //     await fs.writeFile(settingsPath, JSON.stringify(config, null, 2));
 
-      // Update the tools list to reflect the change
-      const connection = this.connections.find(
-        (conn) => conn.server.name === serverName,
-      );
-      if (connection) {
-        connection.server.tools = await this.fetchToolsList(serverName);
-        await this.notifyWebviewOfServerChanges();
-      }
-    } catch (error) {
-      console.error("Failed to update autoApprove settings:", error);
-      // vscode.window.showErrorMessage("Failed to update autoApprove settings");
-      throw error; // Re-throw to ensure the error is properly handled
-    }
-  }
+  //     // Update the tools list to reflect the change
+  //     const connection = this.connections.find(
+  //       (conn) => conn.server.name === serverName,
+  //     );
+  //     if (connection) {
+  //       connection.server.tools = await this.fetchToolsList(serverName);
+  //       await this.notifyWebviewOfServerChanges();
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to update autoApprove settings:", error);
+  //     // vscode.window.showErrorMessage("Failed to update autoApprove settings");
+  //     throw error; // Re-throw to ensure the error is properly handled
+  //   }
+  // }
 
   async dispose(): Promise<void> {
     // this.removeAllFileWatchers();
@@ -719,3 +678,34 @@ export class McpHub {
     this.connections = [];
   }
 }
+
+const mcpHub = new McpHub();
+export const runMCPServerTool = async (
+  dbs: DBS,
+  serverName: string,
+  toolName: string,
+  toolArguments?: Record<string, unknown>,
+): Promise<McpToolCallResponse> => {
+  const mcpServers = await dbs.mcp_servers.find({ enabled: true });
+  const serversConfig: ServersConfig = Object.fromEntries(
+    mcpServers.map((server) => [
+      server.name,
+      {
+        ...server,
+        args: server.args ?? [],
+        env: {
+          /** Needed for puppeteer */
+          ...(server.name === "puppeteer" &&
+            (pickKeys(process.env, ["DISPLAY"]) as Record<string, string>)),
+          ...(server.env ?? {}),
+        },
+        stderr: undefined,
+        cwd: server.cwd,
+      },
+    ]),
+  );
+  await mcpHub.setServerConnections(serversConfig);
+  console.log(mcpHub.connections.map((c) => [c.server.name, c.server.tools]));
+  const res = await mcpHub.callTool(serverName, toolName, toolArguments);
+  return res;
+};

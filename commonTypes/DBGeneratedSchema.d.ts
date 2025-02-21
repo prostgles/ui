@@ -447,6 +447,21 @@ export type DBGeneratedSchema = {
       user_id: string;
     };
   };
+  mcp_install_logs: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      created?: null | string;
+      error?: null | string;
+      finished?: null | string;
+      id: string;
+      last_updated?: null | string;
+      log: string;
+    };
+  };
   mcp_server_configs: {
     is_view: false;
     select: true;
@@ -495,9 +510,12 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
+      args?: null | string[];
+      command: string;
       config_schema?: null | any;
       created?: null | string;
-      cwd?: null | string;
+      cwd: string;
+      enabled?: null | boolean;
       env?: null | Record<string, string>
       github_url: string;
       info?: null | string;

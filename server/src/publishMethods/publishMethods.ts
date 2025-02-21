@@ -51,6 +51,7 @@ import {
   getMCPServersStatus,
   installMCPServers,
 } from "../McpHub/installMCPServers";
+import { runMCPServerTool } from "../McpHub/McpHub";
 
 export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   params,
@@ -505,8 +506,17 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       };
     },
     getNodeTypes,
-    installMCPServers,
+    installMCPServers: async (reInstall?: boolean) =>
+      installMCPServers(dbs, reInstall),
     getMCPServersStatus,
+    runMCPServerTool: async (
+      serverName: string,
+      toolName: string,
+      args: any,
+    ) => {
+      const res = await runMCPServerTool(dbs, serverName, toolName, args);
+      return res;
+    },
   };
 
   const isAdmin = user.type === "admin";

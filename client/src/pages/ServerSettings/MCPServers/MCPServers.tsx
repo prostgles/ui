@@ -1,5 +1,5 @@
 import React from "react";
-import { FlexCol, FlexRow } from "../../../components/Flex";
+import { FlexCol, FlexRow, FlexRowWrap } from "../../../components/Flex";
 import PopupMenu from "../../../components/PopupMenu";
 import Btn from "../../../components/Btn";
 import SmartForm from "../../../dashboard/SmartForm/SmartForm";
@@ -7,6 +7,11 @@ import SmartCardList from "../../../dashboard/SmartCard/SmartCardList";
 import { InfoRow } from "../../../components/InfoRow";
 import type { ServerSettingsProps } from "../ServerSettings";
 import { usePromise } from "prostgles-client/dist/react-hooks";
+import { CodeConfirmation } from "../../../dashboard/Backup/CodeConfirmation";
+import { mdiDelete } from "@mdi/js";
+import { MCPServersInstall } from "./MCPServersInstall";
+import { SwitchToggle } from "../../../components/SwitchToggle";
+import Chip from "../../../components/Chip";
 
 export const MCPServers = ({
   theme,
@@ -14,12 +19,8 @@ export const MCPServers = ({
   dbs,
   dbsTables,
 }: ServerSettingsProps) => {
-  const mcpServerStatus = usePromise(async () =>
-    dbsMethods.getMCPServersStatus?.(),
-  );
-
   return (
-    <FlexCol className="p-1">
+    <FlexCol className="p-1 min-w-0 f-1">
       <FlexRow>
         <PopupMenu
           button={
@@ -39,16 +40,8 @@ export const MCPServers = ({
             showLocalChanges={false}
           />
         </PopupMenu>
-        <Btn
-          className="ml-auto"
-          variant="faded"
-          color={"action"}
-          onClickPromise={async () => {
-            return dbsMethods.installMCPServers?.();
-          }}
-        >
-          {mcpServerStatus?.ok ? "Re-Install" : "Install"} servers
-        </Btn>
+
+        <MCPServersInstall dbs={dbs} dbsMethods={dbsMethods} />
       </FlexRow>
       <SmartCardList
         theme={theme}
@@ -66,6 +59,51 @@ export const MCPServers = ({
             No MCP servers. MCP servers can be added to allow LLM tool usage
           </InfoRow>
         }
+        orderBy={{ name: true }}
+        fieldConfigs={[
+          {
+            name: "name",
+            label: "",
+            className: "bold",
+          },
+          {
+            name: "mcp_server_tools",
+            select: {
+              name: 1,
+              description: 1,
+            },
+            render: (tools) => {
+              return (
+                <FlexRowWrap className="gap-p25">
+                  {tools.map((tool, i) => (
+                    <Chip
+                      key={`${tool.name}${i}`}
+                      title={tool.description}
+                      className="pointer"
+                    >
+                      {tool.name}
+                    </Chip>
+                  ))}
+                </FlexRowWrap>
+              );
+            },
+          },
+          {
+            name: "enabled",
+            hide: true,
+          },
+        ]}
+        getRowFooter={(r) => (
+          <FlexRow className="jc-end">
+            <SwitchToggle
+              title={"Enabled"}
+              checked={r.enabled}
+              onChange={(enabled) =>
+                dbs.mcp_servers.update({ name: r.name }, { enabled })
+              }
+            />
+          </FlexRow>
+        )}
       />
     </FlexCol>
   );

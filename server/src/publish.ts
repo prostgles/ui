@@ -464,6 +464,16 @@ export const publish = async (
         },
       },
     },
+    mcp_servers: isAdmin && {
+      select: "*",
+      update: {
+        fields: {
+          enabled: 1,
+        },
+      },
+      insert: "*",
+      delete: false,
+    },
   };
 
   const curTables = Object.keys(dashboardTables);
