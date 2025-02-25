@@ -149,6 +149,10 @@ export type DBSSchema = {
   [K in keyof DBGeneratedSchema]: Required<DBGeneratedSchema[K]["columns"]>;
 };
 
+export type DBSSchemaForInsert = {
+  [K in keyof DBGeneratedSchema]: DBGeneratedSchema[K]["columns"];
+};
+
 export type SyncRule = {
   id_fields: string[];
   synced_field: string;

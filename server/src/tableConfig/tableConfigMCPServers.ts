@@ -1,23 +1,60 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 
 export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
-  mcp_install_logs: {
-    columns: {
-      id: `TEXT PRIMARY KEY`,
-      log: `TEXT NOT NULL`,
-      created: `TIMESTAMP DEFAULT NOW()`,
-      finished: `TIMESTAMP`,
-      error: `TEXT`,
-      last_updated: `TIMESTAMP DEFAULT NOW()`,
-    },
-  },
   mcp_servers: {
     columns: {
       name: `TEXT PRIMARY KEY`,
       info: `TEXT`,
-      github_url: `TEXT NOT NULL`,
+      source: {
+        jsonbSchema: {
+          oneOfType: [
+            {
+              type: { enum: ["npm package"] },
+              name: "string",
+              version: { type: "string", optional: true },
+            },
+            {
+              type: { enum: ["uvx"] },
+            },
+            {
+              type: { enum: ["github repo"] },
+              name: "string",
+              repoUrl: "string",
+            },
+            {
+              type: { enum: ["code"] },
+              indexTs: "string",
+              packageJson: "string",
+              tsconfigJson: "string",
+            },
+          ],
+        },
+      },
       command: `TEXT NOT NULL`,
-      config_schema: `JSONB`,
+      config_schema: {
+        jsonbSchema: {
+          record: {
+            values: {
+              oneOfType: [
+                {
+                  type: { enum: ["env"] },
+                  title: { type: "string", optional: true },
+                  optional: { type: "boolean", optional: true },
+                  description: { type: "string", optional: true },
+                },
+                {
+                  type: { enum: ["arg"] },
+                  title: { type: "string", optional: true },
+                  optional: { type: "boolean", optional: true },
+                  description: { type: "string", optional: true },
+                  index: { type: "integer", optional: true },
+                },
+              ],
+            },
+          },
+        },
+        nullable: true,
+      },
       cwd: `TEXT NOT NULL`,
       args: `TEXT[]`,
       stderr: "TEXT",
@@ -31,6 +68,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       },
       enabled: `BOOLEAN DEFAULT FALSE`,
       created: `TIMESTAMP DEFAULT NOW()`,
+      installed: `TIMESTAMP`,
       last_updated: `TIMESTAMP DEFAULT NOW()`,
     },
   },
@@ -49,7 +87,8 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       name: `TEXT NOT NULL`,
       description: `TEXT`,
       server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE CASCADE`,
-      input_schema: `JSONB`,
+      inputSchema: `JSONB`,
+      autoApprove: `BOOLEAN DEFAULT FALSE`,
     },
   },
   mcp_server_logs: {
@@ -57,7 +96,9 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       id: `SERIAL PRIMARY KEY`,
       server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE CASCADE`,
       log: `TEXT NOT NULL`,
-      created: `TIMESTAMP DEFAULT NOW()`,
+      install_log: `TEXT`,
+      install_error: `TEXT`,
+      last_updated: `TIMESTAMP DEFAULT NOW()`,
     },
   },
 };

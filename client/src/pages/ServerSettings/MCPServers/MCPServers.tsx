@@ -1,17 +1,17 @@
 import React from "react";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../../components/Flex";
-import PopupMenu from "../../../components/PopupMenu";
+import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import Btn from "../../../components/Btn";
-import SmartForm from "../../../dashboard/SmartForm/SmartForm";
-import SmartCardList from "../../../dashboard/SmartCard/SmartCardList";
-import { InfoRow } from "../../../components/InfoRow";
-import type { ServerSettingsProps } from "../ServerSettings";
-import { usePromise } from "prostgles-client/dist/react-hooks";
-import { CodeConfirmation } from "../../../dashboard/Backup/CodeConfirmation";
-import { mdiDelete } from "@mdi/js";
-import { MCPServersInstall } from "./MCPServersInstall";
-import { SwitchToggle } from "../../../components/SwitchToggle";
 import Chip from "../../../components/Chip";
+import { FlexCol, FlexRow, FlexRowWrap } from "../../../components/Flex";
+import { InfoRow } from "../../../components/InfoRow";
+import PopupMenu from "../../../components/PopupMenu";
+import { SwitchToggle } from "../../../components/SwitchToggle";
+import SmartCardList from "../../../dashboard/SmartCard/SmartCardList";
+import SmartForm from "../../../dashboard/SmartForm/SmartForm";
+import type { ServerSettingsProps } from "../ServerSettings";
+import { MCPServerConfig, MCPServerConfigButton } from "./MCPServerConfig";
+import { MCPServersInstall } from "./MCPServersInstall";
+import { mdiReload } from "@mdi/js";
 
 export const MCPServers = ({
   theme,
@@ -19,6 +19,19 @@ export const MCPServers = ({
   dbs,
   dbsTables,
 }: ServerSettingsProps) => {
+  const [serverConfig, setServerConfig] = React.useState<{
+    name: string;
+  }>();
+  const serverInfo = dbs.mcp_servers.useSubscribeOne(
+    {
+      name: serverConfig?.name,
+    },
+    {},
+    { skip: !serverConfig?.name },
+  );
+
+  const { reloadMcpServerTools } = dbsMethods;
+
   return (
     <FlexCol className="p-1 min-w-0 f-1">
       <FlexRow>
@@ -40,8 +53,6 @@ export const MCPServers = ({
             showLocalChanges={false}
           />
         </PopupMenu>
-
-        <MCPServersInstall dbs={dbs} dbsMethods={dbsMethods} />
       </FlexRow>
       <SmartCardList
         theme={theme}
@@ -67,6 +78,10 @@ export const MCPServers = ({
             className: "bold",
           },
           {
+            name: "mcp_server_configs",
+            select: "*",
+          },
+          {
             name: "mcp_server_tools",
             select: {
               name: 1,
@@ -89,22 +104,82 @@ export const MCPServers = ({
             },
           },
           {
+            name: "installed",
+            hide: true,
+          },
+          {
+            name: "config_schema",
+            hide: true,
+          },
+          {
             name: "enabled",
             hide: true,
           },
+          {
+            name: "source",
+            hide: true,
+          },
         ]}
-        getRowFooter={(r) => (
-          <FlexRow className="jc-end">
-            <SwitchToggle
-              title={"Enabled"}
-              checked={r.enabled}
-              onChange={(enabled) =>
-                dbs.mcp_servers.update({ name: r.name }, { enabled })
-              }
-            />
-          </FlexRow>
-        )}
+        getRowFooter={(r) => {
+          const { mcp_server_configs, config_schema } = r;
+          const config: DBSSchema["mcp_server_configs"] | undefined =
+            mcp_server_configs[0];
+          return (
+            <FlexRow className="jc-end">
+              {r.source.type === "code" && (
+                <MCPServersInstall
+                  name={r.name}
+                  dbs={dbs}
+                  dbsMethods={dbsMethods}
+                />
+              )}
+              {config_schema && config && (
+                <MCPServerConfigButton
+                  dbs={dbs}
+                  schema={config_schema}
+                  existingConfig={{ id: config.id, value: config.config }}
+                  serverName={r.name}
+                />
+              )}
+              {reloadMcpServerTools && r.enabled && (
+                <Btn
+                  iconPath={mdiReload}
+                  title={"Reload tools"}
+                  onClickPromise={async () => {
+                    const toolCount = await reloadMcpServerTools(r.name);
+                    alert(`Reloaded ${toolCount || 0} tools`);
+                  }}
+                />
+              )}
+              <SwitchToggle
+                title={!r.enabled ? "Press to enable" : "Press to disable"}
+                // disabledInfo={!r.installed ? "Must install MCP server first" : ""}
+                checked={r.enabled}
+                onChange={(enabled) => {
+                  if (
+                    !r.enabled &&
+                    r.config_schema &&
+                    !r.mcp_server_configs.length
+                  ) {
+                    setServerConfig({ name: r.name });
+                  } else {
+                    dbs.mcp_servers.update({ name: r.name }, { enabled });
+                  }
+                }}
+              />
+            </FlexRow>
+          );
+        }}
       />
+      {serverInfo.data?.config_schema && serverConfig && (
+        <MCPServerConfig
+          existingConfig={undefined}
+          schema={serverInfo.data.config_schema}
+          dbs={dbs}
+          onDone={() => setServerConfig(undefined)}
+          serverName={serverConfig.name}
+        />
+      )}
     </FlexCol>
   );
 };

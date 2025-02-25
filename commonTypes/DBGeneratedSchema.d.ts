@@ -483,8 +483,10 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      created?: null | string;
       id?: number;
+      install_error?: null | string;
+      install_log?: null | string;
+      last_updated?: null | string;
       log: string;
       server_name: string;
     };
@@ -496,9 +498,10 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
+      autoApprove?: null | boolean;
       description?: null | string;
       id?: number;
-      input_schema?: null | any;
+      inputSchema?: null | any;
       name: string;
       server_name: string;
     };
@@ -512,15 +515,22 @@ export type DBGeneratedSchema = {
     columns: {
       args?: null | string[];
       command: string;
-      config_schema?: null | any;
+      config_schema?: null | Record<string, 
+ |  {  type: 'env';  title?: string;  optional?: boolean;  description?: string; }
+ |  {  type: 'arg';  title?: string;  optional?: boolean;  description?: string;  index?: number; }>
       created?: null | string;
       cwd: string;
       enabled?: null | boolean;
       env?: null | Record<string, string>
-      github_url: string;
       info?: null | string;
+      installed?: null | string;
       last_updated?: null | string;
       name: string;
+      source: 
+       |  {  type: 'npm package';  name: string;  version?: string; }
+       |  {  type: 'uvx'; }
+       |  {  type: 'github repo';  name: string;  repoUrl: string; }
+       |  {  type: 'code';  indexTs: string;  packageJson: string;  tsconfigJson: string; }
       stderr?: null | string;
     };
   };

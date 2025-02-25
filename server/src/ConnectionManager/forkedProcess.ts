@@ -22,6 +22,8 @@ const initForkedProc = () => {
   let _prglParams: OnReadyParamsBasic | undefined;
   let prglParams: OnReadyParamsBasic | undefined;
 
+  let lastToolCallId = 0;
+  const toolCalls: Record<number, { cb: (err: any, res: any) => void }> = {};
   const setProxy = (params: OnReadyParamsBasic) => {
     _prglParams = params as any;
     prglParams ??= new Proxy(params, {
@@ -87,13 +89,37 @@ const initForkedProc = () => {
         if (!prglParams) throw "prgl not ready";
 
         try {
-          if (msg.type === "run") {
-            const { code, validatedArgs, user } = msg;
+          if (msg.type === "mcpResult") {
+            const { callId, error, result } = msg;
+            toolCalls[callId]?.cb(error, result);
+            delete toolCalls[callId];
+          } else if (msg.type === "run") {
+            const { code, validatedArgs, user, id } = msg;
             const { run } = eval(code + "\n\n exports;");
-
+            const callMCPServerTool = async (
+              serverName: string,
+              toolName: string,
+              args?: any,
+            ) => {
+              return new Promise((resolve, reject) => {
+                const callId = lastToolCallId++;
+                toolCalls[callId] = {
+                  cb: (err, res) => (err ? reject(err) : resolve(res)),
+                };
+                process.send?.({
+                  id,
+                  callId,
+                  type: "toolCall",
+                  serverName,
+                  toolName,
+                  args,
+                } satisfies ForkedProcMessageResult);
+              });
+            };
             const methodResult = await run(validatedArgs, {
               ...prglParams,
               user,
+              callMCPServerTool,
             });
             cb(undefined, methodResult);
           } else {

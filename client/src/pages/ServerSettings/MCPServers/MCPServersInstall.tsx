@@ -1,114 +1,77 @@
 import { usePromise } from "prostgles-client/dist/react-hooks";
-import React, { useEffect } from "react";
+import React from "react";
 import Btn from "../../../components/Btn";
-import { InfoRow } from "../../../components/InfoRow";
-import { CodeConfirmation } from "../../../dashboard/Backup/CodeConfirmation";
-import type { ServerSettingsProps } from "../ServerSettings";
+import ErrorComponent from "../../../components/ErrorComponent";
+import { FlexRow } from "../../../components/Flex";
 import PopupMenu from "../../../components/PopupMenu";
 import { CodeEditor } from "../../../dashboard/CodeEditor/CodeEditor";
-import Popup from "../../../components/Popup/Popup";
-import ErrorComponent from "../../../components/ErrorComponent";
-import { FlexCol, FlexRow } from "../../../components/Flex";
+import type { ServerSettingsProps } from "../ServerSettings";
 
 export const MCPServersInstall = ({
+  name,
   dbs,
   dbsMethods,
-}: Pick<ServerSettingsProps, "dbsMethods" | "dbs">) => {
-  const installLogs = dbs.mcp_install_logs.useSubscribeOne({
-    id: "mcp_install",
+}: Pick<ServerSettingsProps, "dbsMethods" | "dbs"> & { name: string }) => {
+  const mcpServer = dbs.mcp_servers.useSubscribeOne({
+    name,
   });
-  const data = installLogs.data;
+  const installLogs = dbs.mcp_server_logs.useSubscribeOne({
+    server_name: name,
+  });
+  const installLogData = installLogs.data;
+  const data = mcpServer.data;
   const mcpServerStatus = usePromise(async () => {
-    installLogs.data?.finished;
-    return dbsMethods.getMCPServersStatus?.();
-  }, [installLogs.data?.finished, dbsMethods]);
+    data?.installed;
+    return dbsMethods.getMCPServersStatus?.(name);
+  }, [data?.installed, dbsMethods, name]);
 
-  const [error, setError] = React.useState<any>();
-  const Logs =
-    !data ? null : (
-      <CodeEditor
-        language="bash"
-        style={{
-          minWidth: "min(600px, 100vw)",
-          minHeight: "300px",
-        }}
-        value={data.log}
-      />
-    );
+  const { installMCPServer } = dbsMethods;
+  if (!installMCPServer) return <>Not allowed</>;
   return (
     <FlexRow className="f-1 jc-end">
-      {error && (
-        <Popup
-          positioning="center"
-          onClose={() => setError(undefined)}
-          clickCatchStyle={{ opacity: 1 }}
-          title="Error"
-        >
-          <FlexCol>
-            {Logs}
-            <ErrorComponent error={error} />
-          </FlexCol>
-        </Popup>
-      )}
-      {data?.error && (
-        <Btn
-          color="danger"
-          variant="faded"
-          onClick={() => setError(data.error)}
-        >
-          Error
-        </Btn>
-      )}
-      {data?.log && !data.finished ?
+      {installLogData?.install_log && !data?.installed ?
         <PopupMenu
           title="MCP Server installation logs"
           positioning="center"
           clickCatchStyle={{ opacity: 1 }}
           button={
-            <Btn loading={true} variant="faded" color="action">
-              Installing MCP Servers...
-            </Btn>
+            !installLogData.install_error ?
+              <Btn
+                loading={!installLogData.install_error}
+                variant="faded"
+                color="action"
+              >
+                Installing MCP Server...
+              </Btn>
+            : <Btn
+                loading={!installLogData.install_error}
+                color="danger"
+                variant="faded"
+              >
+                Installation Error
+              </Btn>
           }
         >
-          {Logs}
-        </PopupMenu>
-      : mcpServerStatus?.ok ?
-        <CodeConfirmation
-          className="ml-auto"
-          positioning="center"
-          button={
-            <Btn variant="faded" color="action" title="Will need to confirm">
-              Re-Install MCP Servers
-            </Btn>
-          }
-          message={
-            <InfoRow style={{ alignItems: "center" }} color="danger">
-              Will uninstall MCP Servers. This action is not reversible!
-            </InfoRow>
-          }
-          confirmButton={(popupClose) => (
-            <>
-              <Btn
-                variant="faded"
-                color={"action"}
-                onClickPromise={async () => {
-                  await dbsMethods.installMCPServers?.(true).catch(setError);
-                  popupClose();
-                }}
-              >
-                Re-Install servers
-              </Btn>
-            </>
+          <CodeEditor
+            language="bash"
+            style={{
+              minWidth: "min(600px, 100vw)",
+              minHeight: "300px",
+            }}
+            value={installLogData.install_log}
+          />
+          {installLogData.install_error && (
+            <ErrorComponent error={installLogData.install_error} />
           )}
-        />
+        </PopupMenu>
       : <Btn
           variant="faded"
           color={"action"}
           onClickPromise={async () => {
-            return dbsMethods.installMCPServers?.().catch(setError);
+            return installMCPServer(name);
           }}
         >
-          Install servers
+          {mcpServerStatus?.ok ? "Re-Install" : "Install"}
         </Btn>
       }
     </FlexRow>

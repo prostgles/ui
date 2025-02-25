@@ -139,17 +139,18 @@ export type DBSMethods = Partial<{
     os: "" | "Linux" | "Mac" | "Windows";
   }>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
-  installMCPServers: (reInstall?: boolean) => Promise<void>;
-  getMCPServersStatus: () => Promise<{
+  installMCPServer: (serverName: string) => Promise<void>;
+  getMCPServersStatus: (serverName: string) => Promise<{
     ok: boolean;
     error?: string;
     message: string;
   }>;
-  runMCPServerTool: (
+  callMCPServerTool: (
     serverName: string,
     toolName: string,
     args: any,
   ) => Promise<any>;
+  reloadMcpServerTools: (serverName: string) => Promise<number>;
 }>;
 
 const AdminTableNames = ["connections", "global_settings"] as const;

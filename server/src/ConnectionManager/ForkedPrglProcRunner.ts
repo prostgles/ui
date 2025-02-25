@@ -1,11 +1,12 @@
 import type { ChildProcess, ForkOptions } from "child_process";
 import { fork } from "child_process";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
-import type { AnyObject } from "prostgles-types";
+import { type AnyObject, tryCatchV2 } from "prostgles-types";
 import { isObject } from "prostgles-types";
 import type { DBS } from "..";
 import type { ProcStats } from "../../../commonTypes/utils";
 import { getError } from "./forkedProcess";
+import { callMCPServerTool } from "../McpHub/McpHub";
 
 type ForkedProcMessageCommon = {
   id: string;
@@ -32,8 +33,17 @@ type ForkedProcRunArgs =
       type: "procStats";
     };
 type ForkedProcMessageRun = ForkedProcMessageCommon & ForkedProcRunArgs;
+type ForkedProcMCPResult = ForkedProcMessageCommon & {
+  type: "mcpResult";
+  callId: number;
+  error: any;
+  result: any;
+};
 
-export type ForkedProcMessage = ForkedProcMessageStart | ForkedProcMessageRun;
+export type ForkedProcMessage =
+  | ForkedProcMessageStart
+  | ForkedProcMessageRun
+  | ForkedProcMCPResult;
 export type ForkedProcMessageError = {
   type: "error";
   error: any;
@@ -44,7 +54,15 @@ export type ForkedProcMessageResult =
       result: any;
       error?: any;
     }
-  | ForkedProcMessageError;
+  | ForkedProcMessageError
+  | {
+      id: string;
+      callId: number;
+      type: "toolCall";
+      serverName: string;
+      toolName: string;
+      args?: any;
+    };
 
 export const FORKED_PROC_ENV_NAME = "IS_FORKED_PROC" as const;
 
@@ -151,6 +169,24 @@ export class ForkedPrglProcRunner {
     });
     this.proc.on("message", (msg: ForkedProcMessageResult) => {
       if ("type" in msg) {
+        if (msg.type === "toolCall") {
+          const { id, callId, serverName, toolName, args } = msg;
+          (async () => {
+            const result = await tryCatchV2(() =>
+              callMCPServerTool(this.opts.dbs, serverName, toolName, args),
+            );
+
+            this.proc.send({
+              callId,
+              result,
+              error: result.error,
+              type: "mcpResult",
+              id,
+            } satisfies ForkedProcMCPResult);
+          })();
+          return;
+        }
+
         console.error("ForkedPrglProc error ", msg.error);
         updateLogs(getError(msg.error));
         /** Database was dropped */
@@ -216,8 +252,9 @@ export class ForkedPrglProcRunner {
       proc.on("error", reject);
       const onStart = (message: ForkedProcMessageResult) => {
         proc.off("error", reject);
-        if (message.error || !("id" in message) || message.id !== "1") {
-          reject(message.error ?? "Something is wrong with the forked process");
+        const error = "error" in message && message.error;
+        if (error || !("id" in message) || message.id !== "1") {
+          reject(error ?? "Something is wrong with the forked process");
         } else {
           resolve(proc);
         }

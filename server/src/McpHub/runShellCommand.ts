@@ -5,7 +5,7 @@ export const runShellCommand = (
   args: ReadonlyArray<string>,
   opts: SpawnOptions,
   onData: (data: string, source: "stdout" | "stderr") => void,
-): Promise<{ err: any | undefined; fullLog: string }> => {
+): Promise<{ err: any | undefined; fullLog: string; code?: number }> => {
   const proc = spawn(command, args, opts);
   const getUTFText = (v: string) => v.toString();
 
@@ -19,6 +19,7 @@ export const runShellCommand = (
   });
   proc.stdout!.on("data", (data) => {
     streamSize += data.length;
+    fullLog += log;
     onData(getUTFText(data), "stdout");
   });
 
@@ -35,12 +36,12 @@ export const runShellCommand = (
 
     proc.on("exit", function (code, signal) {
       if (code) {
-        console.error({
-          code,
-          signal,
-          logs: fullLog.slice(fullLog.length - 1100),
-        });
-        resolve({ err: log, fullLog });
+        // console.error({
+        //   code,
+        //   signal,
+        //   logs: fullLog.slice(fullLog.length - 1100),
+        // });
+        resolve({ err: log || "Unknow error", code, fullLog });
       } else {
         resolve({ err: undefined, fullLog });
       }

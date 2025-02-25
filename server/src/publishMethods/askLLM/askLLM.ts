@@ -154,12 +154,11 @@ export const askLLM = async (
         {
           /** TODO check if this works with all providers */
           role: "system",
-          // content: promptWithContext,
           content: [{ type: "text", text: promptWithContext }],
         },
         ...pastMessages
           /**all messages must have non-empty content */
-          .filter((m) => m.message)
+          .filter((m) => m.message.length)
           .map(
             (m) =>
               ({
@@ -167,7 +166,6 @@ export const askLLM = async (
                 content: m.message,
               }) satisfies LLMMessage,
           ),
-        // { role: "user", content: question } satisfies LLMMessage,
         {
           role: "user",
           content: userMessage,

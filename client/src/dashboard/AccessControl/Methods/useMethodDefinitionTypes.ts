@@ -111,6 +111,7 @@ const fetchMethodDefinitionTypes = async ({
       dbo: DBOFullyTyped<DBGeneratedSchema>; 
       tables: any[];
       user: { id: string; type: ${userTypesTs}; };
+      callMCPServerTool: (serverName: string, toolName: string, args?: any) => Promise<any>;
     }
   ) => Promise<any>`;
 

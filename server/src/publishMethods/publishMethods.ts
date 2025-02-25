@@ -49,9 +49,10 @@ import type { LLMMessage } from "../../../commonTypes/llmUtils";
 import { getNodeTypes } from "./getNodeTypes";
 import {
   getMCPServersStatus,
-  installMCPServers,
-} from "../McpHub/installMCPServers";
-import { runMCPServerTool } from "../McpHub/McpHub";
+  installMCPServer,
+} from "../McpHub/installMCPServer";
+import { reloadMcpServerTools, callMCPServerTool } from "../McpHub/McpHub";
+import { DefaultMCPServers } from "../../../commonTypes/mcp";
 
 export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   params,
@@ -506,17 +507,20 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       };
     },
     getNodeTypes,
-    installMCPServers: async (reInstall?: boolean) =>
-      installMCPServers(dbs, reInstall),
+    installMCPServer: async (name: string) => {
+      return installMCPServer(dbs, name);
+    },
     getMCPServersStatus,
-    runMCPServerTool: async (
+    callMCPServerTool: async (
       serverName: string,
       toolName: string,
       args: any,
     ) => {
-      const res = await runMCPServerTool(dbs, serverName, toolName, args);
+      const res = await callMCPServerTool(dbs, serverName, toolName, args);
       return res;
     },
+    reloadMcpServerTools: async (serverName: string) =>
+      reloadMcpServerTools(dbs, serverName),
   };
 
   const isAdmin = user.type === "admin";
