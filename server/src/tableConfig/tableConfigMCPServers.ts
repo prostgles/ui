@@ -96,6 +96,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       id: `SERIAL PRIMARY KEY`,
       server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE CASCADE`,
       log: `TEXT NOT NULL`,
+      error: `TEXT`,
       install_log: `TEXT`,
       install_error: `TEXT`,
       last_updated: `TIMESTAMP DEFAULT NOW()`,

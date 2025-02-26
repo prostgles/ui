@@ -48,6 +48,7 @@ import { prostglesSignup } from "./prostglesSignup";
 import type { LLMMessage } from "../../../commonTypes/llmUtils";
 import { getNodeTypes } from "./getNodeTypes";
 import {
+  getMcpHostInfo,
   getMCPServersStatus,
   installMCPServer,
 } from "../McpHub/installMCPServer";
@@ -521,6 +522,7 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
     },
     reloadMcpServerTools: async (serverName: string) =>
       reloadMcpServerTools(dbs, serverName),
+    getMcpHostInfo,
   };
 
   const isAdmin = user.type === "admin";

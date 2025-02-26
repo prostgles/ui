@@ -271,6 +271,7 @@ export type DBGeneratedSchema = {
       login_rate_limit?: {    maxAttemptsPerHour: number;   groupBy: 'x-real-ip' | 'remote_ip' | 'ip';  };
       login_rate_limit_enabled?: boolean;
       magic_link_validity_days?: number;
+      mcp_servers_disabled?: boolean;
       pass_process_env_vars_to_server_side_functions?: boolean;
       prostgles_registration?: null | {    enabled: boolean;   email: string;   token: string;  };
       session_max_age_days?: number;
@@ -483,6 +484,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
+      error?: null | string;
       id?: number;
       install_error?: null | string;
       install_log?: null | string;

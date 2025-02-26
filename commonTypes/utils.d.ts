@@ -188,4 +188,5 @@ export declare const API_PATH_SUFFIXES: {
     readonly CONFIG: "/connection-config";
 };
 export declare const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
+export declare const FORKED_PROC_ENV_NAME: "IS_FORKED_PROC";
 export {};

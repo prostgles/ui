@@ -26,7 +26,7 @@ import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { tableConfig } from "./tableConfig/tableConfig";
 import { insertDefaultPrompts } from "./publishMethods/askLLM/askLLM";
-import { insertDefaultMCPServers } from "./McpHub/installMCPServer";
+import { setupMCPServerHub } from "./McpHub/McpHub";
 
 type StartArguments = {
   app: Express;
@@ -225,7 +225,7 @@ export const startProstgles = async ({
 
         await insertStateDatabase(db, _db, con);
         await insertDefaultPrompts(db);
-        await insertDefaultMCPServers(db);
+        await setupMCPServerHub(db);
 
         await connMgr.destroy();
         await connMgr.init(db, _db);

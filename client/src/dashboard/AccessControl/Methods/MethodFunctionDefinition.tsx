@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useRef } from "react";
 import { CodeEditorWithSaveButton } from "../../CodeEditor/CodeEditorWithSaveButton";
 import type { MethodDefinitionProps } from "./MethodDefinition";
 import { useCodeEditorTsTypes } from "./useMethodDefinitionTypes";
+import Loading from "../../../components/Loading";
 
 export const MethodFunctionDefinition = (props: MethodDefinitionProps) => {
   const {
@@ -41,7 +42,9 @@ export const MethodFunctionDefinition = (props: MethodDefinitionProps) => {
   }, []);
 
   const renderCode = renderMode === "Code";
-  if (!languageObj) return null;
+  if (!languageObj) {
+    return <Loading style={{ margin: "4em" }} />;
+  }
   return (
     <CodeEditorWithSaveButton
       label={

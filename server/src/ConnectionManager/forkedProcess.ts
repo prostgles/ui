@@ -5,8 +5,11 @@ import type {
   ForkedProcMessageError,
   ForkedProcMessageResult,
 } from "./ForkedPrglProcRunner";
-import { FORKED_PROC_ENV_NAME } from "./ForkedPrglProcRunner";
-import type { ProcStats } from "../../../commonTypes/utils";
+
+import {
+  FORKED_PROC_ENV_NAME,
+  type ProcStats,
+} from "../../../commonTypes/utils";
 
 export const getError = (rawError: any) => {
   return rawError instanceof Error ?
@@ -33,8 +36,10 @@ const initForkedProc = () => {
     });
   };
 
+  let lastMsgId = "";
   const sendError = (error: any) => {
     process.send?.({
+      lastMsgId,
       type: "error",
       error: getError(error),
     } satisfies ForkedProcMessageError);
@@ -53,6 +58,7 @@ const initForkedProc = () => {
   }
   process.on("message", async (msg: ForkedProcMessage) => {
     try {
+      if ("id" in msg) lastMsgId = msg.id;
       const cb = (error?: any, result?: any) => {
         process.send!({
           id: msg.id,

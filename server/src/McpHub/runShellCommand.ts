@@ -11,14 +11,13 @@ export const runShellCommand = (
 
   let fullLog = "";
   let log: string;
-  let streamSize = 0;
   proc.stderr!.on("data", (data) => {
     log = getUTFText(data);
     fullLog += log;
     onData(getUTFText(data), "stderr");
   });
   proc.stdout!.on("data", (data) => {
-    streamSize += data.length;
+    log = getUTFText(data);
     fullLog += log;
     onData(getUTFText(data), "stdout");
   });

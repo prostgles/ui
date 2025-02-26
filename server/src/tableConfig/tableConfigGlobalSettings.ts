@@ -280,6 +280,7 @@ export const tableConfigGlobalSettings: TableConfig<{ en: 1 }> = {
           token: { type: "string" },
         },
       },
+      mcp_servers_disabled: "BOOLEAN NOT NULL DEFAULT FALSE",
     },
     triggers: {
       "Update updated_at": {

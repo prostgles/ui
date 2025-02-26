@@ -4,7 +4,7 @@ export type McpMode = "full" | "server-use-only" | "off";
 
 export type McpServer = {
   name: string;
-  config: string;
+  config: StdioServerParameters;
   status: "connected" | "connecting" | "disconnected";
   error?: string;
   tools?: McpTool[];
@@ -105,4 +105,14 @@ export interface McpDownloadResponse {
   requiresApiKey: boolean;
 }
 
-export type ServersConfig = Record<string, StdioServerParameters>;
+export type McpServerEvents = {
+  onLog: (type: "stderr" | "error", data: string, fullLog: string) => void;
+  onTransportClose: () => void;
+};
+
+export type McpConfigWithEvents = StdioServerParameters & McpServerEvents;
+
+export type ServersConfig = Record<
+  string,
+  Omit<McpConfigWithEvents, "onTransportClose">
+>;

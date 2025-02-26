@@ -17,6 +17,9 @@ import { getPasswordHash } from "./authConfig/authUtils";
 import { getSMTPWithTLS } from "./authConfig/emailProvider/getEmailSenderWithMockTest";
 import { getACRules } from "./ConnectionManager/ConnectionManager";
 import { fetchLLMResponse } from "./publishMethods/askLLM/fetchLLMResponse";
+import { startMcpHub, testMCPServerConfig } from "./McpHub/McpHub";
+import { connectToMCPServer } from "./McpHub/connectToMCPServer";
+import { fetchMCPServerConfigs } from "./McpHub/fetchMCPServerConfigs";
 
 export const publish = async (
   params: PublishParams<DBGeneratedSchema>,
@@ -412,6 +415,7 @@ export const publish = async (
           enable_logs: 1,
           auth_providers: 1,
           prostgles_registration: 1,
+          mcp_servers_disabled: 1,
         },
         postValidate: async ({ row, dbx: dbsTX }) => {
           if (!row.allowed_ips.length) {
@@ -473,6 +477,23 @@ export const publish = async (
       },
       insert: "*",
       delete: false,
+    },
+    mcp_server_configs: isAdmin && {
+      insert: {
+        fields: "*",
+        postValidate: async ({ row, dbx }) => {
+          await testMCPServerConfig(dbx, row);
+        },
+      },
+      update: {
+        fields: "*",
+        postValidate: async ({ row, dbx }) => {
+          await testMCPServerConfig(dbx, row);
+          // await startMcpHub(dbx, row);
+        },
+      },
+      select: "*",
+      delete: "*",
     },
   };
 

@@ -151,6 +151,13 @@ export type DBSMethods = Partial<{
     args: any,
   ) => Promise<any>;
   reloadMcpServerTools: (serverName: string) => Promise<number>;
+  getMcpHostInfo: () => Promise<{
+    os: string;
+    nodeVersion: string;
+    npmVersion: string;
+    gitVersion: string;
+    uvxVersion: string;
+  }>;
 }>;
 
 const AdminTableNames = ["connections", "global_settings"] as const;

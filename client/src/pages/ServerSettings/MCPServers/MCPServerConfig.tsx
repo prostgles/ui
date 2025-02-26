@@ -31,7 +31,7 @@ export const MCPServerConfig = ({
 
   return (
     <Popup
-      title={`Configure and enable ${serverName} MCP server`}
+      title={`Configure and enable ${JSON.stringify(serverName)} MCP server`}
       positioning="center"
       onClose={onDone}
       clickCatchStyle={{ opacity: 1 }}
@@ -72,8 +72,8 @@ export const MCPServerConfig = ({
         {Object.entries(schema).map(([key, schema]) => (
           <FormField
             key={key}
-            label={schema?.title ?? key}
-            hint={schema?.description}
+            label={schema.title ?? key}
+            hint={schema.description}
             value={config[key]}
             onChange={(v) =>
               setValue({

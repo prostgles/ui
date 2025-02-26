@@ -1,10 +1,14 @@
 import type { ChildProcess, ForkOptions } from "child_process";
 import { fork } from "child_process";
+import * as path from "path";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
 import { type AnyObject, tryCatchV2 } from "prostgles-types";
 import { isObject } from "prostgles-types";
 import type { DBS } from "..";
-import type { ProcStats } from "../../../commonTypes/utils";
+import {
+  FORKED_PROC_ENV_NAME,
+  type ProcStats,
+} from "../../../commonTypes/utils";
 import { getError } from "./forkedProcess";
 import { callMCPServerTool } from "../McpHub/McpHub";
 
@@ -45,6 +49,7 @@ export type ForkedProcMessage =
   | ForkedProcMessageRun
   | ForkedProcMCPResult;
 export type ForkedProcMessageError = {
+  lastMsgId: string;
   type: "error";
   error: any;
 };
@@ -63,8 +68,6 @@ export type ForkedProcMessageResult =
       toolName: string;
       args?: any;
     };
-
-export const FORKED_PROC_ENV_NAME = "IS_FORKED_PROC" as const;
 
 type Opts = {
   prglInitOpts: PrglInitOptions;
@@ -238,9 +241,10 @@ export class ForkedPrglProcRunner {
     forkOpts,
   }: Opts): Promise<ChildProcess> => {
     return new Promise((resolve, reject) => {
-      const proc = fork(__dirname + "/forkedProcess.js", {
+      const forkedPath = path.join(__dirname, "forkedProcess.js");
+      const proc = fork(forkedPath, {
         ...forkOpts,
-        execArgv: [],
+        execArgv: ["--inspect-brk"],
         silent: true,
         env: {
           ...(pass_process_env_vars_to_server_side_functions ?
@@ -250,7 +254,7 @@ export class ForkedPrglProcRunner {
         },
       });
       proc.on("error", reject);
-      const onStart = (message: ForkedProcMessageResult) => {
+      const onMessage = (message: ForkedProcMessageResult) => {
         proc.off("error", reject);
         const error = "error" in message && message.error;
         if (error || !("id" in message) || message.id !== "1") {
@@ -258,9 +262,9 @@ export class ForkedPrglProcRunner {
         } else {
           resolve(proc);
         }
-        proc.off("message", onStart);
+        proc.off("message", onMessage);
       };
-      proc.on("message", onStart);
+      proc.on("message", onMessage);
 
       proc.send({
         id: "1",

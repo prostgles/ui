@@ -133,7 +133,11 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
       content: (
         <FlexCol className="w-full" style={{ gap: "2em" }}>
           <OnMountFunction {...prgl} />
-          <PublishedMethods prgl={prgl} accessRuleId={undefined} />
+          <PublishedMethods
+            prgl={prgl}
+            editedRule={undefined}
+            accessRuleId={undefined}
+          />
         </FlexCol>
       ),
     },

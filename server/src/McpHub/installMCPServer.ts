@@ -8,7 +8,7 @@ import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { getRootDir } from "../electronConfig";
 import { runShellCommand } from "./runShellCommand";
 
-const MCP_DIR = path.resolve(path.join(getRootDir(), `/prostgles_mcp`));
+export const MCP_DIR = path.resolve(path.join(getRootDir(), `/prostgles_mcp`));
 
 type MCPSource = NonNullable<DBSSchema["mcp_servers"]["source"]>;
 type MCPNpmSource = Extract<MCPSource, { type: "npm package" }>;
@@ -191,18 +191,23 @@ export const getMCPServersStatus = async (
   return { ok: false, message: `source type not implemented` };
 };
 
-export const insertDefaultMCPServers = async (dbs: DBS) => {
-  const servers = await dbs.mcp_servers.find();
-  if (servers.length) {
-    console.warn("Default MCP servers already exist");
-    return;
-  }
-
-  await dbs.mcp_servers.insert(
-    Object.entries(DefaultMCPServers).map(([name, server]) => ({
-      name,
-      cwd: MCP_DIR,
-      ...server,
-    })),
+export const getMcpHostInfo = async () => {
+  const platform = process.platform;
+  const os = platform === "win32" ? "windows" : platform;
+  const nodeVersion = await runShellCommand(
+    "node",
+    ["--version"],
+    {},
+    () => {},
   );
+  const npmVersion = await runShellCommand("npm", ["--version"], {}, () => {});
+  const gitVersion = await runShellCommand("git", ["--version"], {}, () => {});
+  const uvxVersion = await runShellCommand("git", ["--version"], {}, () => {});
+  return {
+    os,
+    nodeVersion: nodeVersion.fullLog,
+    npmVersion: npmVersion.fullLog,
+    gitVersion: gitVersion.fullLog,
+    uvxVersion: uvxVersion.fullLog,
+  };
 };
