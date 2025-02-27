@@ -1,3 +1,11 @@
+import {
+  mdiFilter,
+  mdiMagnify,
+  mdiPlus,
+  mdiReload,
+  mdiYoutubeStudio,
+} from "@mdi/js";
+import { usePromise } from "prostgles-client/dist/react-hooks";
 import React from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import Btn from "../../../components/Btn";
@@ -5,15 +13,14 @@ import Chip from "../../../components/Chip";
 import { FlexCol, FlexRow, FlexRowWrap } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
 import PopupMenu from "../../../components/PopupMenu";
+import Select from "../../../components/Select/Select";
 import { SwitchToggle } from "../../../components/SwitchToggle";
+import { CodeEditor } from "../../../dashboard/CodeEditor/CodeEditor";
 import SmartCardList from "../../../dashboard/SmartCard/SmartCardList";
 import SmartForm from "../../../dashboard/SmartForm/SmartForm";
 import type { ServerSettingsProps } from "../ServerSettings";
 import { MCPServerConfig, MCPServerConfigButton } from "./MCPServerConfig";
 import { MCPServersInstall } from "./MCPServersInstall";
-import { mdiReload } from "@mdi/js";
-import { CodeEditor } from "../../../dashboard/CodeEditor/CodeEditor";
-import { usePromise } from "prostgles-client/dist/react-hooks";
 
 export const MCPServers = ({
   theme,
@@ -31,17 +38,42 @@ export const MCPServers = ({
     {},
     { skip: !serverConfig?.name },
   );
-
+  const { data: tools } = dbs.mcp_server_tools.useFind();
+  const [selectedTool, setSelectedTool] =
+    React.useState<DBSSchema["mcp_server_tools"]>();
   const { reloadMcpServerTools, getMcpHostInfo } = dbsMethods;
   const globalSettings = dbs.global_settings.useSubscribeOne();
   const envInfo = usePromise(async () => getMcpHostInfo?.(), [getMcpHostInfo]);
-  console.log(envInfo);
+  const missing =
+    !envInfo ? undefined
+    : !envInfo.npmVersion ?
+      <>
+        npm not installed. Visit{" "}
+        <a href="https://nodejs.org/en/download">
+          https://nodejs.org/en/download
+        </a>
+      </>
+    : !envInfo.uvxVersion ?
+      <>
+        uvx not installed. Visit{" "}
+        <a href="https://docs.astral.sh/uv/getting-started/installation/">
+          https://docs.astral.sh/uv/getting-started/installation/
+        </a>
+      </>
+    : "";
+
   return (
-    <FlexCol className="p-1 min-w-0 f-1">
+    <FlexCol className="p-1 pt-0 min-w-0 f-1">
+      <InfoRow className="mb-1" variant="naked" color="info" iconPath="">
+        Pre-built integrations that can be used in AI Assistant and server-side
+        functions that use the{" "}
+        <a href="https://modelcontextprotocol.io/">Model Context Protocol</a>
+      </InfoRow>
+      {missing && <InfoRow>{missing}</InfoRow>}
       <FlexRow>
         <PopupMenu
           button={
-            <Btn variant="filled" color="action">
+            <Btn variant="filled" color="action" iconPath={mdiPlus}>
               Add MCP Server
             </Btn>
           }
@@ -73,7 +105,36 @@ export const MCPServers = ({
           {globalSettings.data?.mcp_servers_disabled ? "Enable" : "Disable"} MCP
           Servers
         </Btn>
+
+        <Select
+          className="min-w-0 ml-auto"
+          emptyLabel={"Search tools"}
+          btnProps={{
+            iconPath: selectedTool ? mdiFilter : mdiMagnify,
+            color: selectedTool ? "action" : "default",
+            variant: selectedTool ? "filled" : "faded",
+            style: {
+              flexShrink: 1,
+            },
+          }}
+          value={selectedTool?.id}
+          fullOptions={(tools ?? []).map((t) => ({
+            key: t.id,
+            label: `${t.server_name} ${t.name}`,
+            subLabel: t.description ?? "",
+          }))}
+          onChange={(id) => {
+            setSelectedTool(tools?.find((t) => t.id === id));
+          }}
+        />
       </FlexRow>
+      {selectedTool && (
+        <FlexRow className="jc-end">
+          <Btn color="action" onClick={() => setSelectedTool(undefined)}>
+            Clear filter
+          </Btn>
+        </FlexRow>
+      )}
       <FlexCol
         {...(globalSettings.data?.mcp_servers_disabled && {
           className: "disabled",
@@ -86,10 +147,14 @@ export const MCPServers = ({
           methods={dbsMethods}
           tableName="mcp_servers"
           tables={dbsTables}
-          filter={{}}
+          filter={
+            selectedTool && {
+              name: selectedTool.server_name,
+            }
+          }
           realtime={true}
-          showTopBar={true}
-          showEdit={true}
+          showTopBar={false}
+          showEdit={false}
           noDataComponentMode="hide-all"
           noDataComponent={
             <InfoRow color="info" className="m-1 h-fit">
@@ -125,6 +190,11 @@ export const MCPServers = ({
                         key={`${tool.name}${i}`}
                         title={tool.description}
                         className="pointer"
+                        color={
+                          selectedTool && selectedTool.name === tool.name ?
+                            "blue"
+                          : undefined
+                        }
                       >
                         {tool.name}
                       </Chip>
@@ -150,7 +220,12 @@ export const MCPServers = ({
               hide: true,
             },
           ]}
-          getRowFooter={(r) => {
+          getRowFooter={(
+            r: DBSSchema["mcp_servers"] & {
+              mcp_server_configs: DBSSchema["mcp_server_configs"][];
+              mcp_server_logs: DBSSchema["mcp_server_logs"][];
+            },
+          ) => {
             const { mcp_server_configs, config_schema } = r;
             const config: DBSSchema["mcp_server_configs"] | undefined =
               mcp_server_configs[0];
@@ -172,7 +247,7 @@ export const MCPServers = ({
                     className="mr-auto ml-p25"
                     button={
                       <Btn
-                        color={logItem.error ? "danger" : "warn"}
+                        color={logItem.error ? "danger" : "default"}
                         variant="faded"
                         size="small"
                       >
@@ -200,9 +275,12 @@ export const MCPServers = ({
                     serverName={r.name}
                   />
                 )}
-                {reloadMcpServerTools && r.enabled && (
+                {reloadMcpServerTools && (
                   <Btn
                     iconPath={mdiReload}
+                    disabledInfo={
+                      r.enabled ? undefined : "Must enable server first"
+                    }
                     title={"Reload tools"}
                     onClickPromise={async () => {
                       const toolCount = await reloadMcpServerTools(r.name);
@@ -212,8 +290,14 @@ export const MCPServers = ({
                 )}
                 <SwitchToggle
                   title={!r.enabled ? "Press to enable" : "Press to disable"}
-                  // disabledInfo={!r.installed ? "Must install MCP server first" : ""}
-                  checked={r.enabled}
+                  disabledInfo={
+                    r.source.type === "npm package" && !envInfo?.npmVersion ?
+                      "Must install npm"
+                    : r.source.type === "uvx" && !envInfo?.uvxVersion ?
+                      "Must install uvx"
+                    : undefined
+                  }
+                  checked={!!r.enabled}
                   onChange={(enabled) => {
                     if (
                       !r.enabled &&

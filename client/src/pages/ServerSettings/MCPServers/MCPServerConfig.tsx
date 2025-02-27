@@ -94,10 +94,13 @@ export const MCPServerConfigButton = (props: Omit<P, "onDone">) => {
   const { schema, existingConfig } = props;
   return (
     <>
-      <Btn onClick={({ currentTarget }) => setAnchorEl(currentTarget)}>
+      <Btn
+        onClick={({ currentTarget }) => setAnchorEl(currentTarget)}
+        style={{ flexShrink: 1 }}
+      >
         {Object.entries(schema).map(([key, schema]) => (
-          <FlexRow key={key} className="font-12 gap-p5">
-            <div>{schema.title ?? key}</div>
+          <FlexRow key={key} className="font-12 gap-p5 text-ellipsis ji-start">
+            <div className="font-10">{schema.title ?? key}</div>
             <div className="bold">{existingConfig?.value[key]}</div>
           </FlexRow>
         ))}

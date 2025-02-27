@@ -320,7 +320,7 @@ test.describe("Main test", () => {
 
     /** Ensure db schema suggestions work */
     const expectedCode =
-      "export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n  dbo.tx\n}";
+      "export const run: ProstglesMethod = async (args, { db, dbo, user, callMCPServerTool }) => {\n  dbo.tx\n}";
     const funcCode = await getMonacoValue(page, ".MethodDefinition");
     expect(funcCode).toEqual(expectedCode);
     /** Add llm server side func */

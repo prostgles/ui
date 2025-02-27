@@ -247,7 +247,6 @@ export const SmartFilterBar = (props: SmartFilterBarProps) => {
         <div className={"flex-row f-1 mx-p5 jc-center mr-p5 ai-center"}>
           <SmartFilterBarSearch
             db={db}
-            table={table}
             tableName={table_name}
             tables={tables}
             onFilterChange={onFilterChange}

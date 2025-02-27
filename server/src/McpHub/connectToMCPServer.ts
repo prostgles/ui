@@ -7,6 +7,7 @@ import { z } from "zod";
 import type { McpServerEvents } from "./McpTypes";
 import type { McpConnection } from "./McpHub";
 import { tout } from "..";
+import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 
 const AutoApproveSchema = z.array(z.string()).default([]);
 
@@ -111,7 +112,7 @@ export const connectToMCPServer = (
       connection.server.error = "";
       resolve(connection);
     } catch (error) {
-      reject({ error, log });
+      reject({ error: getErrorAsObject(error), log });
     }
   });
 };

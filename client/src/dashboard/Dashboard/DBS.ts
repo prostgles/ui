@@ -153,9 +153,7 @@ export type DBSMethods = Partial<{
   reloadMcpServerTools: (serverName: string) => Promise<number>;
   getMcpHostInfo: () => Promise<{
     os: string;
-    nodeVersion: string;
     npmVersion: string;
-    gitVersion: string;
     uvxVersion: string;
   }>;
 }>;

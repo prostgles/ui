@@ -218,7 +218,7 @@ export class McpHub {
     // }
   }
 
-  private async fetchToolsList(serverName: string): Promise<McpTool[]> {
+  async fetchToolsList(serverName: string): Promise<McpTool[]> {
     try {
       const response = await this.connections[serverName]?.client.request(
         { method: "tools/list" },
@@ -322,7 +322,9 @@ export class McpHub {
   ): Promise<McpResourceResponse> {
     const connection = this.connections[serverName];
     if (!connection) {
-      throw new Error(`No connection found for server: ${serverName}`);
+      throw new Error(
+        `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
+      );
     }
     if (connection.server.disabled) {
       throw new Error(`Server "${serverName}" is disabled`);
@@ -346,12 +348,14 @@ export class McpHub {
     const connection = this.connections[serverName];
     if (!connection) {
       throw new Error(
-        `No connection found for server: ${serverName}. Please make sure to use MCP servers available under 'Connected MCP Servers'.`,
+        `No connection found for MCP server: ${serverName}. Please make sure it is enabled`,
       );
     }
 
     if (connection.server.disabled) {
-      throw new Error(`Server "${serverName}" is disabled and cannot be used`);
+      throw new Error(
+        `MCP Server "${serverName}" is disabled and cannot be used`,
+      );
     }
 
     const toolResult = await connection.client.request(
@@ -386,24 +390,12 @@ const mcpHub = new McpHub();
 
 let mcpHubInitializing = false;
 let mcpHubReInitializingRequested = false;
-export const startMcpHub = async (
-  dbs: DBS,
-  testConfig?: Pick<DBSSchema["mcp_server_configs"], "server_name" | "config">,
-): Promise<void> => {
+export const startMcpHub = async (dbs: DBS, restart = false): Promise<void> => {
   mcpHubReInitializingRequested = mcpHubInitializing;
   mcpHubInitializing = true;
   const result = await tryCatchV2(async () => {
-    // const mcpServers = await dbs.mcp_servers.find(
-    //   { enabled: true },
-    //   { select: { "*": 1, mcp_server_configs: "*" } },
-    // );
-    // const globalSettings = await dbs.global_settings.findOne();
-    // if (globalSettings?.mcp_servers_disabled) {
-    //   await mcpHub.dispose();
-    //   return;
-    // }
-
-    const serversConfig = await fetchMCPServerConfigs(dbs, testConfig);
+    if (restart) await mcpHub.destroy();
+    const serversConfig = await fetchMCPServerConfigs(dbs);
     await mcpHub.setServerConnections(serversConfig);
   });
   mcpHubInitializing = false;
@@ -419,20 +411,17 @@ export const startMcpHub = async (
 
 export const reloadMcpServerTools = async (dbs: DBS, serverName: string) => {
   await startMcpHub(dbs);
-  const connection = mcpHub.connections[serverName];
-  const tools = connection?.server.tools;
-  if (tools) {
-    await dbs.tx(async (tx) => {
-      await tx.mcp_server_tools.delete({ server_name: serverName });
-      await tx.mcp_server_tools.insert(
-        tools.map((tool) => ({
-          ...tool,
-          server_name: serverName,
-        })),
-      );
-    });
-    return tools.length;
-  }
+  const tools = await mcpHub.fetchToolsList(serverName);
+  await dbs.tx(async (tx) => {
+    await tx.mcp_server_tools.delete({ server_name: serverName });
+    await tx.mcp_server_tools.insert(
+      tools.map((tool) => ({
+        ...tool,
+        server_name: serverName,
+      })),
+    );
+  });
+  return tools.length;
 };
 
 export const callMCPServerTool = async (

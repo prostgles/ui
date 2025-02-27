@@ -8,7 +8,12 @@ export const fetchMCPServerConfigs = async (
   testConfig?: Pick<DBSSchema["mcp_server_configs"], "server_name" | "config">,
 ): Promise<ServersConfig> => {
   const mcpServers = await dbs.mcp_servers.find(
-    { enabled: true },
+    {
+      $or: [
+        { enabled: true },
+        testConfig && { name: testConfig.server_name },
+      ].filter(isDefined),
+    },
     { select: { "*": 1, mcp_server_configs: "*" } },
   );
   const globalSettings = await dbs.global_settings.findOne();

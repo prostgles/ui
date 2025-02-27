@@ -1176,11 +1176,17 @@ textarea:focus {
 .jc-start {
   justify-content: start;
 }
+.ji-start {
+  justify-items: start;
+}
 .jc-fend {
   justify-content: flex-end;
 }
 .jc-end {
   justify-content: end;
+}
+.ji-end {
+  justify-items: end;
 }
 
 .font-12 {

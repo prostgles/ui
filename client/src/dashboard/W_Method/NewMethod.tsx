@@ -36,7 +36,7 @@ export const NewMethod = ({
   const [newMethod, setNewMethod] = useState<Partial<Omit<Method, "id">>>({
     name: "my_new_func",
     arguments: [],
-    run: "export const run: ProstglesMethod = async (args, { db, dbo, user }) => {\n  \n}",
+    run: "export const run: ProstglesMethod = async (args, { db, dbo, user, callMCPServerTool }) => {\n  \n}",
     connection_id: connectionId,
     description: "",
     outputTable: null,

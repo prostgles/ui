@@ -256,17 +256,13 @@ export default class SearchList<M extends boolean = false> extends RTComp<
               )}
               <div className="MatchRow flex-row f-1">
                 <span
-                  className={`${shortenText ? "f-1" : "f-0"} ta-right search-text-endings text-ellipsis`}
+                  className={`${shortenText ? "f-1" : "f-0"} search-text-endings text-ellipsis`}
                   style={{ maxWidth: "fit-content" }}
                 >
                   {label.slice(0, idx)}
-                </span>
-                <strong className="f-0 search-text-match">
-                  {label.slice(idx, idx + strm.length)}
-                </strong>
-                <span
-                  className={`${shortenText ? "f-1" : "f-0"} f-1 search-text-endings text-ellipsis`}
-                >
+                  <strong className="f-0 search-text-match font-16">
+                    {label.slice(idx, idx + strm.length)}
+                  </strong>
                   {label.slice(idx + strm.length)}
                 </span>
               </div>

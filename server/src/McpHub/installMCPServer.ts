@@ -194,20 +194,11 @@ export const getMCPServersStatus = async (
 export const getMcpHostInfo = async () => {
   const platform = process.platform;
   const os = platform === "win32" ? "windows" : platform;
-  const nodeVersion = await runShellCommand(
-    "node",
-    ["--version"],
-    {},
-    () => {},
-  );
   const npmVersion = await runShellCommand("npm", ["--version"], {}, () => {});
-  const gitVersion = await runShellCommand("git", ["--version"], {}, () => {});
   const uvxVersion = await runShellCommand("git", ["--version"], {}, () => {});
   return {
     os,
-    nodeVersion: nodeVersion.fullLog,
     npmVersion: npmVersion.fullLog,
-    gitVersion: gitVersion.fullLog,
     uvxVersion: uvxVersion.fullLog,
   };
 };

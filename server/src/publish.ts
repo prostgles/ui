@@ -16,10 +16,8 @@ import {
 import { getPasswordHash } from "./authConfig/authUtils";
 import { getSMTPWithTLS } from "./authConfig/emailProvider/getEmailSenderWithMockTest";
 import { getACRules } from "./ConnectionManager/ConnectionManager";
+import { testMCPServerConfig } from "./McpHub/McpHub";
 import { fetchLLMResponse } from "./publishMethods/askLLM/fetchLLMResponse";
-import { startMcpHub, testMCPServerConfig } from "./McpHub/McpHub";
-import { connectToMCPServer } from "./McpHub/connectToMCPServer";
-import { fetchMCPServerConfigs } from "./McpHub/fetchMCPServerConfigs";
 
 export const publish = async (
   params: PublishParams<DBGeneratedSchema>,

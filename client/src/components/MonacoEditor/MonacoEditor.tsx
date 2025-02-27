@@ -13,6 +13,7 @@ import {
 } from "../../dashboard/SQLEditor/SQLEditor";
 import type { editor } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
+import { KeyCode } from "monaco-editor";
 export type MonacoEditorProps = {
   language: string;
   value: string;
@@ -79,7 +80,13 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       newEditor,
       expandSuggestionDocs,
     );
-
+    newEditor.addCommand(
+      monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyR,
+      () => {
+        // Disable refactor command
+        return null;
+      },
+    );
     setEditor(newEditor);
     return () => {
       newEditor.dispose();

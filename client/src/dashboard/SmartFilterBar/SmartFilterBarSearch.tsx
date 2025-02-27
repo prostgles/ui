@@ -1,3 +1,4 @@
+import { useMemoDeep } from "prostgles-client/dist/react-hooks";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
 import type {
@@ -5,13 +6,12 @@ import type {
   SmartGroupFilter,
 } from "../../../../commonTypes/filterUtils";
 import { isJoinedFilter } from "../../../../commonTypes/filterUtils";
-import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
+import ErrorComponent from "../../components/ErrorComponent";
 import { SmartSearch } from "../SmartFilter/SmartSearch/SmartSearch";
 import { colIs } from "../W_Table/ColumnMenu/ColumnSelect";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
 
 type P = Pick<SmartFilterBarProps, "db" | "tables"> & {
-  table: DBSchemaTableWJoins;
   tableName: string;
   filter: SmartGroupFilter;
   extraFilters: AnyObject[] | undefined;
@@ -21,12 +21,18 @@ type P = Pick<SmartFilterBarProps, "db" | "tables"> & {
 export const SmartFilterBarSearch = ({
   tables,
   db,
-  table,
   tableName,
   filter,
   extraFilters,
   onFilterChange,
 }: P) => {
+  const table = useMemoDeep(
+    () => tables.find((t) => t.name === tableName),
+    [tables, tableName],
+  );
+  if (!table) {
+    return <ErrorComponent error="Table not found" />;
+  }
   return (
     <SmartSearch
       tables={tables}
@@ -35,7 +41,6 @@ export const SmartFilterBarSearch = ({
         alignSelf: "center",
         width: "500px",
         maxWidth: "80vw",
-        // marginRight: ".5em"
       }}
       className="m-auto"
       tableName={tableName}

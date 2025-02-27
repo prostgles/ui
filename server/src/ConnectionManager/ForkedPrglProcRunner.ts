@@ -11,6 +11,7 @@ import {
 } from "../../../commonTypes/utils";
 import { getError } from "./forkedProcess";
 import { callMCPServerTool } from "../McpHub/McpHub";
+import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 
 type ForkedProcMessageCommon = {
   id: string;
@@ -175,14 +176,20 @@ export class ForkedPrglProcRunner {
         if (msg.type === "toolCall") {
           const { id, callId, serverName, toolName, args } = msg;
           (async () => {
-            const result = await tryCatchV2(() =>
-              callMCPServerTool(this.opts.dbs, serverName, toolName, args),
+            const result = await tryCatchV2(
+              async () =>
+                await callMCPServerTool(
+                  this.opts.dbs,
+                  serverName,
+                  toolName,
+                  args,
+                ),
             );
 
             this.proc.send({
               callId,
-              result,
-              error: result.error,
+              result: result.data,
+              error: getErrorAsObject(result.error),
               type: "mcpResult",
               id,
             } satisfies ForkedProcMCPResult);
