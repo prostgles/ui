@@ -930,7 +930,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<
         >
           {!hasSearch ?
             multiSelect ?
-              <div className="pl-1 py-p5 noselect text-1p5">
+              <div className="pl-1 py-p5 noselect text-1p5 ws-nowrap">
                 {allSelected.length || 0} selected
               </div>
             : null

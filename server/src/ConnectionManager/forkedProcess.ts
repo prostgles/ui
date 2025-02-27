@@ -5,7 +5,6 @@ import type {
   ForkedProcMessageError,
   ForkedProcMessageResult,
 } from "./ForkedPrglProcRunner";
-
 import {
   FORKED_PROC_ENV_NAME,
   type ProcStats,
@@ -150,9 +149,10 @@ const initForkedProc = () => {
 
 if (process.env[FORKED_PROC_ENV_NAME]) {
   initForkedProc();
+  checkForImportBug();
 }
 
-export const getCpuPercentage = async () => {
+const getCpuPercentage = async () => {
   const interval = 1000;
   const getTotal = (prevUsage?: NodeJS.CpuUsage) => {
     const { system, user } = process.cpuUsage(prevUsage);
@@ -174,3 +174,21 @@ const tout = (timeout: number) => {
     }, timeout);
   });
 };
+
+function checkForImportBug() {
+  const ESMFiles = module.children.map((m) => ({
+    type: "ESM" as const,
+    filename: m.filename,
+  }));
+  const mainProcess = ESMFiles.find((f) =>
+    f.filename
+      .replaceAll("\\", "/")
+      .endsWith("ui/server/dist/server/src/index.js"),
+  );
+  if (mainProcess) {
+    throw new Error(
+      "Forked process should not import main process file. It will trigger this bug: listen EADDRINUSE: address already in use 127.0.0.1:3004",
+    );
+  }
+  return ESMFiles;
+}
