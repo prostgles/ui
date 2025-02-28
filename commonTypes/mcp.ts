@@ -17,10 +17,6 @@ export const DefaultMCPServers: Record<
     env: {
       BRAVE_API_KEY: "YOUR_API_KEY_HERE",
     },
-    source: {
-      type: "npm package",
-      name: "@modelcontextprotocol/server-brave-search",
-    },
     config_schema: {
       BRAVE_API_KEY: {
         title: "Brave API Key",
@@ -80,9 +76,6 @@ export const DefaultMCPServers: Record<
   fetch: {
     command: "uvx",
     args: ["mcp-server-fetch"],
-    source: {
-      type: "uvx",
-    },
     mcp_server_tools: [
       {
         name: "fetch",
@@ -136,10 +129,6 @@ export const DefaultMCPServers: Record<
       "@modelcontextprotocol/server-filesystem",
       "${dir:/path/to/other/allowed/dir}",
     ],
-    source: {
-      type: "npm package",
-      name: "@modelcontextprotocol/server-filesystem",
-    },
     config_schema: {
       allowedDir: {
         title: "Allowed Directory",
@@ -376,9 +365,6 @@ export const DefaultMCPServers: Record<
   git: {
     command: "uvx",
     args: ["mcp-server-git", "--repository", "${path:path/to/git/repo}"],
-    source: {
-      type: "uvx",
-    },
     config_schema: {
       repoPath: {
         title: "Repository Path",
@@ -392,10 +378,6 @@ export const DefaultMCPServers: Record<
     args: ["-y", "@modelcontextprotocol/server-github"],
     env: {
       GITHUB_PERSONAL_ACCESS_TOKEN: "<YOUR_TOKEN>",
-    },
-    source: {
-      type: "npm package",
-      name: "@modelcontextprotocol/server-github",
     },
     config_schema: {
       GITHUB_PERSONAL_ACCESS_TOKEN: {
@@ -1008,10 +990,6 @@ export const DefaultMCPServers: Record<
       GITLAB_PERSONAL_ACCESS_TOKEN: "<YOUR_TOKEN>",
       GITLAB_API_URL: "${default:https://gitlab.com/api/v4}",
     },
-    source: {
-      type: "npm package",
-      name: "@modelcontextprotocol/server-gitlab",
-    },
     config_schema: {
       GITLAB_PERSONAL_ACCESS_TOKEN: {
         title: "GitLab Personal Access Token",
@@ -1333,10 +1311,6 @@ export const DefaultMCPServers: Record<
     env: {
       GOOGLE_MAPS_API_KEY: "<YOUR_API_KEY>",
     },
-    source: {
-      type: "npm package",
-      name: "@modelcontextprotocol/server-google-maps",
-    },
     config_schema: {
       GOOGLE_MAPS_API_KEY: {
         title: "Google Maps API Key",
@@ -1512,10 +1486,6 @@ export const DefaultMCPServers: Record<
   memory: {
     command: "npx",
     args: ["-y", "@modelcontextprotocol/server-memory"],
-    source: {
-      type: "npm package",
-      name: "@modelcontextprotocol/server-memory",
-    },
     mcp_server_tools: [
       {
         name: "create_entities",
@@ -1761,10 +1731,6 @@ export const DefaultMCPServers: Record<
       "@modelcontextprotocol/server-postgres",
       "${text:postgresql://localhost/mydb}",
     ],
-    source: {
-      type: "npm package",
-      name: "@modelcontextprotocol/server-postgres",
-    },
     config_schema: {
       DATABASE_URL: {
         title: "Database URL",
@@ -1776,10 +1742,6 @@ export const DefaultMCPServers: Record<
   puppeteer: {
     command: "npx",
     args: ["-y", "@modelcontextprotocol/server-puppeteer"],
-    source: {
-      type: "npm package",
-      name: "@modelcontextprotocol/server-puppeteer",
-    },
     mcp_server_tools: [
       {
         name: "puppeteer_navigate",
@@ -1904,9 +1866,6 @@ export const DefaultMCPServers: Record<
   sentry: {
     command: "uvx",
     args: ["mcp-server-sentry", "--auth-token", "${text:YOUR_SENTRY_TOKEN}"],
-    source: {
-      type: "uvx",
-    },
     config_schema: {
       SENTRY_AUTH_TOKEN: {
         title: "Sentry Auth Token",
@@ -1939,10 +1898,6 @@ export const DefaultMCPServers: Record<
     env: {
       SLACK_BOT_TOKEN: "xoxb-your-bot-token",
       SLACK_TEAM_ID: "T01234567",
-    },
-    source: {
-      type: "npm package",
-      name: "@modelcontextprotocol/server-slack",
     },
     config_schema: {
       SLACK_BOT_TOKEN: {
@@ -2131,10 +2086,6 @@ export const DefaultMCPServers: Record<
       "--db-path",
       "${path:~/test.db}",
     ],
-    source: {
-      type: "npm package",
-      name: "@modelcontextprotocol/server-sqlite",
-    },
     config_schema: {
       directory: {
         title: "Directory",

@@ -6,6 +6,8 @@ import {
 } from "../../../../commonTypes/llmUtils";
 import type { Prgl } from "../../App";
 import { useRef } from "react";
+import type { MethodHandler } from "prostgles-client/dist/prostgles";
+import type { DBSMethods } from "../Dashboard/DBS";
 
 /**
  * https://docs.anthropic.com/en/docs/build-with-claude/tool-use
@@ -14,11 +16,13 @@ export const useLLMTools = ({
   messages,
   methods,
   sendQuery,
+  callMCPServerTool,
 }: {
   messages: DBSSchema["llm_messages"][];
   sendQuery: (
     msg: DBSSchema["llm_messages"]["message"] | undefined,
   ) => Promise<void>;
+  callMCPServerTool: Prgl["dbsMethods"]["callMCPServerTool"];
 } & Pick<Prgl, "methods">) => {
   const fetchingForMessageId = useRef<string>();
   usePromise(async () => {
@@ -36,36 +40,68 @@ export const useLLMTools = ({
     fetchingForMessageId.current = lastMessage.id;
     const results = await Promise.all(
       toolUse.map(async (tu) => {
-        const method = methods[tu.name];
-        const { id, name } = tu;
-        if (!method)
-          return {
-            type: "tool_result",
-            // name,
-            tool_use_id: id,
-            content: "Method not found or not allowed",
-            is_error: true,
-          } satisfies LLMMessage["message"][number];
-        const methodFunc = typeof method === "function" ? method : method.run;
-        try {
-          const result = await methodFunc(tu.input);
-          return {
-            type: "tool_result",
-            content: JSON.stringify(result),
-            tool_use_id: id,
-          } satisfies LLMMessage["message"][number];
-        } catch (e) {
-          return {
-            type: "tool_result",
-            content: JSON.stringify(e),
-            // name,
-            tool_use_id: id,
-          } satisfies LLMMessage["message"][number];
-        }
+        const toolResult = await getToolUseResult(
+          methods,
+          callMCPServerTool,
+          tu.name,
+          tu.input,
+        );
+
+        return {
+          type: "tool_result",
+          tool_use_id: tu.id,
+          ...toolResult,
+        } satisfies LLMMessage["message"][number];
       }),
     );
     await sendQuery(results);
-  }, [messages, methods, sendQuery]);
+  }, [messages, methods, sendQuery, callMCPServerTool]);
+};
+
+const getToolUseResult = async (
+  methods: MethodHandler,
+  callMCPServerTool: DBSMethods["callMCPServerTool"],
+  funcName: string,
+  input: any,
+): Promise<{ content: string; is_error?: true }> => {
+  const method = methods[funcName];
+  const parseResult = (func: Promise<any>) => {
+    return func
+      .then((content: string) => ({ content }))
+      .catch((e) => ({
+        content: JSON.stringify(e),
+        is_error: true as const,
+      }));
+  };
+  if (!method) {
+    if (funcName.includes(".")) {
+      if (!callMCPServerTool) {
+        return {
+          content: "callMCPServerTool not allowed",
+          is_error: true,
+        };
+      }
+      const [serverName, toolName] = funcName.split("____");
+      if (!serverName || !toolName) {
+        return {
+          content: "Invalid serverName or toolName",
+          is_error: true,
+        };
+      }
+      const result = parseResult(
+        callMCPServerTool(serverName, toolName, input),
+      );
+      return result;
+    }
+
+    return {
+      content: "Method not found or not allowed",
+      is_error: true,
+    };
+  }
+  const methodFunc = typeof method === "function" ? method : method.run;
+  const result = parseResult(methodFunc(input));
+  return result;
 };
 
 const isAssistantMessageRequestingToolUse = (

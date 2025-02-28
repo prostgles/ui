@@ -16,13 +16,22 @@ import type { LLMMessage } from "../../../../commonTypes/llmUtils";
 export type AskLLMChatProps = {
   prgl: Omit<Prgl, "dbsMethods">;
   askLLM: Required<Prgl["dbsMethods"]>["askLLM"];
+  callMCPServerTool: Prgl["dbsMethods"]["callMCPServerTool"];
   setupState: LLMSetupStateReady;
   anchorEl: HTMLElement;
   onClose: VoidFunction;
   workspaceId: string | undefined;
 };
 export const AskLLMChat = (props: AskLLMChatProps) => {
-  const { anchorEl, onClose, askLLM, prgl, setupState, workspaceId } = props;
+  const {
+    anchorEl,
+    onClose,
+    askLLM,
+    prgl,
+    setupState,
+    workspaceId,
+    callMCPServerTool,
+  } = props;
   const {
     tables,
     db,
@@ -70,7 +79,12 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     [sendQuery],
   );
 
-  useLLMTools({ messages: llmMessages ?? [], methods, sendQuery });
+  useLLMTools({
+    messages: llmMessages ?? [],
+    methods,
+    sendQuery,
+    callMCPServerTool,
+  });
 
   const chatStyle = useMemo(() => {
     return {

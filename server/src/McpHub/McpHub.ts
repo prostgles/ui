@@ -11,18 +11,13 @@ import {
   ListToolsResultSchema,
   ReadResourceResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import {
-  isDefined,
-  isEqual,
-  pickKeys,
-  SubscriptionHandler,
-  tryCatchV2,
-  ValueOf,
-} from "prostgles-types";
+import { isEqual, SubscriptionHandler, tryCatchV2 } from "prostgles-types";
 import { z } from "zod";
-import { DBS, tout } from "..";
+import { DBS } from "..";
 import { DefaultMCPServers } from "../../../commonTypes/mcp";
 import { DBSSchema } from "../../../commonTypes/publishUtils";
+import { connectToMCPServer } from "./connectToMCPServer";
+import { fetchMCPServerConfigs } from "./fetchMCPServerConfigs";
 import { MCP_DIR } from "./installMCPServer";
 import {
   McpResource,
@@ -34,8 +29,6 @@ import {
   McpToolCallResponse,
   ServersConfig,
 } from "./McpTypes";
-import { connectToMCPServer } from "./connectToMCPServer";
-import { fetchMCPServerConfigs } from "./fetchMCPServerConfigs";
 
 export type McpConnection = {
   server: McpServer;
@@ -228,6 +221,7 @@ export class McpHub {
       const autoApproveConfig: string[] = [];
       const tools = (response?.tools || []).map((tool) => ({
         ...tool,
+        description: tool.description ?? "",
         autoApprove: autoApproveConfig.includes(tool.name),
       }));
       return tools;
@@ -417,6 +411,7 @@ export const reloadMcpServerTools = async (dbs: DBS, serverName: string) => {
     await tx.mcp_server_tools.insert(
       tools.map((tool) => ({
         ...tool,
+        description: tool.description ?? "",
         server_name: serverName,
       })),
     );

@@ -6,10 +6,6 @@ export const DefaultMCPServers = {
         env: {
             BRAVE_API_KEY: "YOUR_API_KEY_HERE",
         },
-        source: {
-            type: "npm package",
-            name: "@modelcontextprotocol/server-brave-search",
-        },
         config_schema: {
             BRAVE_API_KEY: {
                 title: "Brave API Key",
@@ -66,9 +62,6 @@ export const DefaultMCPServers = {
     fetch: {
         command: "uvx",
         args: ["mcp-server-fetch"],
-        source: {
-            type: "uvx",
-        },
         mcp_server_tools: [
             {
                 name: "fetch",
@@ -119,10 +112,6 @@ export const DefaultMCPServers = {
             "@modelcontextprotocol/server-filesystem",
             "${dir:/path/to/other/allowed/dir}",
         ],
-        source: {
-            type: "npm package",
-            name: "@modelcontextprotocol/server-filesystem",
-        },
         config_schema: {
             allowedDir: {
                 title: "Allowed Directory",
@@ -348,9 +337,6 @@ export const DefaultMCPServers = {
     git: {
         command: "uvx",
         args: ["mcp-server-git", "--repository", "${path:path/to/git/repo}"],
-        source: {
-            type: "uvx",
-        },
         config_schema: {
             repoPath: {
                 title: "Repository Path",
@@ -364,10 +350,6 @@ export const DefaultMCPServers = {
         args: ["-y", "@modelcontextprotocol/server-github"],
         env: {
             GITHUB_PERSONAL_ACCESS_TOKEN: "<YOUR_TOKEN>",
-        },
-        source: {
-            type: "npm package",
-            name: "@modelcontextprotocol/server-github",
         },
         config_schema: {
             GITHUB_PERSONAL_ACCESS_TOKEN: {
@@ -970,10 +952,6 @@ export const DefaultMCPServers = {
             GITLAB_PERSONAL_ACCESS_TOKEN: "<YOUR_TOKEN>",
             GITLAB_API_URL: "${default:https://gitlab.com/api/v4}",
         },
-        source: {
-            type: "npm package",
-            name: "@modelcontextprotocol/server-gitlab",
-        },
         config_schema: {
             GITLAB_PERSONAL_ACCESS_TOKEN: {
                 title: "GitLab Personal Access Token",
@@ -1292,10 +1270,6 @@ export const DefaultMCPServers = {
         env: {
             GOOGLE_MAPS_API_KEY: "<YOUR_API_KEY>",
         },
-        source: {
-            type: "npm package",
-            name: "@modelcontextprotocol/server-google-maps",
-        },
         config_schema: {
             GOOGLE_MAPS_API_KEY: {
                 title: "Google Maps API Key",
@@ -1470,10 +1444,6 @@ export const DefaultMCPServers = {
     memory: {
         command: "npx",
         args: ["-y", "@modelcontextprotocol/server-memory"],
-        source: {
-            type: "npm package",
-            name: "@modelcontextprotocol/server-memory",
-        },
         mcp_server_tools: [
             {
                 name: "create_entities",
@@ -1706,10 +1676,6 @@ export const DefaultMCPServers = {
             "@modelcontextprotocol/server-postgres",
             "${text:postgresql://localhost/mydb}",
         ],
-        source: {
-            type: "npm package",
-            name: "@modelcontextprotocol/server-postgres",
-        },
         config_schema: {
             DATABASE_URL: {
                 title: "Database URL",
@@ -1721,10 +1687,6 @@ export const DefaultMCPServers = {
     puppeteer: {
         command: "npx",
         args: ["-y", "@modelcontextprotocol/server-puppeteer"],
-        source: {
-            type: "npm package",
-            name: "@modelcontextprotocol/server-puppeteer",
-        },
         mcp_server_tools: [
             {
                 name: "puppeteer_navigate",
@@ -1882,10 +1844,6 @@ export const DefaultMCPServers = {
         env: {
             SLACK_BOT_TOKEN: "xoxb-your-bot-token",
             SLACK_TEAM_ID: "T01234567",
-        },
-        source: {
-            type: "npm package",
-            name: "@modelcontextprotocol/server-slack",
         },
         config_schema: {
             SLACK_BOT_TOKEN: {
@@ -2069,10 +2027,6 @@ export const DefaultMCPServers = {
             "--db-path",
             "${path:~/test.db}",
         ],
-        source: {
-            type: "npm package",
-            name: "@modelcontextprotocol/server-sqlite",
-        },
         config_schema: {
             directory: {
                 title: "Directory",

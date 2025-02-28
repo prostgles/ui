@@ -1,10 +1,4 @@
-import {
-  mdiFilter,
-  mdiMagnify,
-  mdiPlus,
-  mdiReload,
-  mdiYoutubeStudio,
-} from "@mdi/js";
+import { mdiReload } from "@mdi/js";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import React from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
@@ -13,24 +7,19 @@ import Chip from "../../../components/Chip";
 import { FlexCol, FlexRow, FlexRowWrap } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
 import PopupMenu from "../../../components/PopupMenu";
-import Select from "../../../components/Select/Select";
 import { SwitchToggle } from "../../../components/SwitchToggle";
 import { CodeEditor } from "../../../dashboard/CodeEditor/CodeEditor";
 import SmartCardList from "../../../dashboard/SmartCard/SmartCardList";
-import SmartForm from "../../../dashboard/SmartForm/SmartForm";
 import type { ServerSettingsProps } from "../ServerSettings";
 import { MCPServerConfig, MCPServerConfigButton } from "./MCPServerConfig";
+import { MCPServersHeader } from "./MCPServersHeader";
 import { MCPServersInstall } from "./MCPServersInstall";
 
-export const MCPServers = ({
-  theme,
-  dbsMethods,
-  dbs,
-  dbsTables,
-}: ServerSettingsProps) => {
+export const MCPServers = (props: ServerSettingsProps) => {
   const [serverConfig, setServerConfig] = React.useState<{
     name: string;
   }>();
+  const { theme, dbsMethods, dbs, dbsTables } = props;
   const serverInfo = dbs.mcp_servers.useSubscribeOne(
     {
       name: serverConfig?.name,
@@ -38,7 +27,6 @@ export const MCPServers = ({
     {},
     { skip: !serverConfig?.name },
   );
-  const { data: tools } = dbs.mcp_server_tools.useFind();
   const [selectedTool, setSelectedTool] =
     React.useState<DBSSchema["mcp_server_tools"]>();
   const { reloadMcpServerTools, getMcpHostInfo } = dbsMethods;
@@ -65,76 +53,16 @@ export const MCPServers = ({
   return (
     <FlexCol className="p-1 pt-0 min-w-0 f-1">
       <InfoRow className="mb-1" variant="naked" color="info" iconPath="">
-        Pre-built integrations that can be used in AI Assistant and server-side
-        functions that use the{" "}
+        Pre-built integrations that can be used through the Ask AI chat and
+        server-side functions. For more information visit{" "}
         <a href="https://modelcontextprotocol.io/">Model Context Protocol</a>
       </InfoRow>
       {missing && <InfoRow>{missing}</InfoRow>}
-      <FlexRow>
-        <PopupMenu
-          button={
-            <Btn variant="filled" color="action" iconPath={mdiPlus}>
-              Add MCP Server
-            </Btn>
-          }
-          onClickClose={false}
-          clickCatchStyle={{ opacity: 1 }}
-        >
-          <SmartForm
-            theme={theme}
-            db={dbs as any}
-            methods={dbsMethods}
-            tableName="mcp_servers"
-            tables={dbsTables}
-            showLocalChanges={false}
-          />
-        </PopupMenu>
-        <Btn
-          color="action"
-          variant="faded"
-          onClick={() => {
-            dbs.global_settings.update(
-              {},
-              {
-                mcp_servers_disabled:
-                  !globalSettings.data?.mcp_servers_disabled,
-              },
-            );
-          }}
-        >
-          {globalSettings.data?.mcp_servers_disabled ? "Enable" : "Disable"} MCP
-          Servers
-        </Btn>
-
-        <Select
-          className="min-w-0 ml-auto"
-          emptyLabel={"Search tools"}
-          btnProps={{
-            iconPath: selectedTool ? mdiFilter : mdiMagnify,
-            color: selectedTool ? "action" : "default",
-            variant: selectedTool ? "filled" : "faded",
-            style: {
-              flexShrink: 1,
-            },
-          }}
-          value={selectedTool?.id}
-          fullOptions={(tools ?? []).map((t) => ({
-            key: t.id,
-            label: `${t.server_name} ${t.name}`,
-            subLabel: t.description ?? "",
-          }))}
-          onChange={(id) => {
-            setSelectedTool(tools?.find((t) => t.id === id));
-          }}
-        />
-      </FlexRow>
-      {selectedTool && (
-        <FlexRow className="jc-end">
-          <Btn color="action" onClick={() => setSelectedTool(undefined)}>
-            Clear filter
-          </Btn>
-        </FlexRow>
-      )}
+      <MCPServersHeader
+        {...props}
+        selectedTool={selectedTool}
+        setSelectedTool={setSelectedTool}
+      />
       <FlexCol
         {...(globalSettings.data?.mcp_servers_disabled && {
           className: "disabled",
@@ -203,22 +131,16 @@ export const MCPServers = ({
                 );
               },
             },
-            {
-              name: "installed",
+            ...[
+              "installed",
+              "config_schema",
+              "enabled",
+              "source",
+              "command",
+            ].map((name) => ({
+              name,
               hide: true,
-            },
-            {
-              name: "config_schema",
-              hide: true,
-            },
-            {
-              name: "enabled",
-              hide: true,
-            },
-            {
-              name: "source",
-              hide: true,
-            },
+            })),
           ]}
           getRowFooter={(
             r: DBSSchema["mcp_servers"] & {
@@ -233,7 +155,7 @@ export const MCPServers = ({
               r.mcp_server_logs[0];
             return (
               <FlexRow className="jc-end">
-                {r.source.type === "code" && (
+                {r.source?.type === "code" && (
                   <MCPServersInstall
                     name={r.name}
                     dbs={dbs}
@@ -291,9 +213,10 @@ export const MCPServers = ({
                 <SwitchToggle
                   title={!r.enabled ? "Press to enable" : "Press to disable"}
                   disabledInfo={
-                    r.source.type === "npm package" && !envInfo?.npmVersion ?
+                    !r.command ? "start command missing"
+                    : r.command === "npx" && !envInfo?.npmVersion ?
                       "Must install npm"
-                    : r.source.type === "uvx" && !envInfo?.uvxVersion ?
+                    : r.command === "uvx" && !envInfo?.uvxVersion ?
                       "Must install uvx"
                     : undefined
                   }

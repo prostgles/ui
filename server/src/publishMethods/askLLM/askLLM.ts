@@ -8,6 +8,7 @@ import { getLLMMessageText } from "../../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessage } from "./fetchLLMResponse";
+import { getLLMTools } from "./getLLMTools";
 
 export const askLLM = async (
   // question: string,
@@ -119,34 +120,7 @@ export const askLLM = async (
     const tools =
       promptObj.name === "Dashboarding" ?
         undefined
-      : published_methods.map((m) => {
-          const { name, description, arguments: _arguments } = m;
-          const properties = _arguments.reduce(
-            (acc, arg) => ({
-              ...acc,
-              [arg.name]:
-                (
-                  arg.type === "JsonbSchema" ||
-                  arg.type === "Lookup" ||
-                  arg.type === "Lookup[]"
-                ) ?
-                  "any"
-                : arg.type,
-            }),
-            {} as JSONB.ObjectType["type"],
-          );
-          return {
-            name,
-            description,
-            input_schema: getJSONBSchemaAsJSONSchema(
-              "published_methods",
-              "arguments",
-              {
-                type: properties,
-              },
-            ),
-          };
-        });
+      : await getLLMTools({ published_methods, dbs });
     const llmResponseMessage = await fetchLLMResponse({
       llm_credential,
       tools,

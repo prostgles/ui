@@ -501,7 +501,7 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       autoApprove?: null | boolean;
-      description?: null | string;
+      description: string;
       id?: number;
       inputSchema?: null | any;
       name: string;
@@ -516,7 +516,7 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       args?: null | string[];
-      command: string;
+      command: "npx" | "uvx" | "uv"
       config_schema?: null | Record<string, 
  |  {  type: 'env';  title?: string;  optional?: boolean;  description?: string; }
  |  {  type: 'arg';  title?: string;  optional?: boolean;  description?: string;  index?: number; }>
@@ -528,10 +528,9 @@ export type DBGeneratedSchema = {
       installed?: null | string;
       last_updated?: null | string;
       name: string;
-      source: 
-       |  {  type: 'npm package';  name: string;  version?: string; }
-       |  {  type: 'uvx'; }
-       |  {  type: 'github repo';  name: string;  repoUrl: string; }
+      source?: 
+       | null
+       |  {  type: 'github';  name: string;  repoUrl: string; }
        |  {  type: 'code';  indexTs: string;  packageJson: string;  tsconfigJson: string; }
       stderr?: null | string;
     };

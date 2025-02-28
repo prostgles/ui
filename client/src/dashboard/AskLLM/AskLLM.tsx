@@ -14,7 +14,7 @@ type P = Prgl & { workspaceId: string | undefined };
 export const AskLLM = (props: P) => {
   const { workspaceId, ...prgl } = props;
   const { dbsMethods } = prgl;
-  const { askLLM } = dbsMethods;
+  const { askLLM, callMCPServerTool } = dbsMethods;
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const onClose = () => {
@@ -53,6 +53,7 @@ export const AskLLM = (props: P) => {
         />
       : <AskLLMChat
           prgl={prgl}
+          callMCPServerTool={callMCPServerTool}
           askLLM={askLLM}
           workspaceId={workspaceId}
           setupState={state}

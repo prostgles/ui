@@ -1,5 +1,11 @@
 import type { InitOptions } from "prostgles-client/dist/prostgles";
-import { getKeys, isEmpty, isDefined } from "prostgles-types";
+import {
+  getKeys,
+  isEmpty,
+  isDefined,
+  pickKeys,
+  isEqual,
+} from "prostgles-types";
 export { getKeys, isEmpty, isDefined };
 import type { AnyObject } from "prostgles-types";
 import { isObject } from "prostgles-types";
@@ -184,4 +190,14 @@ export const playwrightTestLogs: InitOptions["onDebug"] = (ev) => {
   ) {
     console.log(Date.now(), "DBS client", ev);
   }
+};
+
+export const extractTypeUtil = <T extends AnyObject, U extends Partial<T>>(
+  t: T,
+  u: U,
+): Extract<T, U> | undefined => {
+  if (isEqual(pickKeys(t, Object.keys(u)), u)) {
+    return t as Extract<T, U>;
+  }
+  return undefined;
 };

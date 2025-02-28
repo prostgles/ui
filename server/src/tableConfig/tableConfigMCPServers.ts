@@ -6,18 +6,11 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       name: `TEXT PRIMARY KEY`,
       info: `TEXT`,
       source: {
+        nullable: true,
         jsonbSchema: {
           oneOfType: [
             {
-              type: { enum: ["npm package"] },
-              name: "string",
-              version: { type: "string", optional: true },
-            },
-            {
-              type: { enum: ["uvx"] },
-            },
-            {
-              type: { enum: ["github repo"] },
+              type: { enum: ["github"] },
               name: "string",
               repoUrl: "string",
             },
@@ -30,7 +23,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
           ],
         },
       },
-      command: `TEXT NOT NULL`,
+      command: { enum: ["npx", "uvx", "uv"] },
       config_schema: {
         jsonbSchema: {
           record: {
@@ -85,7 +78,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
     columns: {
       id: `SERIAL PRIMARY KEY`,
       name: `TEXT NOT NULL`,
-      description: `TEXT`,
+      description: `TEXT NOT NULL`,
       server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE CASCADE`,
       inputSchema: `JSONB`,
       autoApprove: `BOOLEAN DEFAULT FALSE`,

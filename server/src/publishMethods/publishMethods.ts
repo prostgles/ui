@@ -16,6 +16,7 @@ import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
 import type { AnyObject } from "prostgles-types";
 import { asName, isEmpty, pickKeys } from "prostgles-types";
 import { isDefined } from "../../../commonTypes/filterUtils";
+import type { LLMMessage } from "../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { isObject } from "../../../commonTypes/publishUtils";
 import type { SampleSchema } from "../../../commonTypes/utils";
@@ -39,21 +40,19 @@ import {
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
 import { actualRootDir, getElectronConfig } from "../electronConfig";
-import { getStatus } from "../methods/getPidStats";
-import { killPID } from "../methods/statusMonitorUtils";
-import { initBackupManager, statePrgl } from "../startProstgles";
-import { upsertConnection } from "../upsertConnection";
-import { askLLM } from "./askLLM/askLLM";
-import { prostglesSignup } from "./prostglesSignup";
-import type { LLMMessage } from "../../../commonTypes/llmUtils";
-import { getNodeTypes } from "./getNodeTypes";
 import {
   getMcpHostInfo,
   getMCPServersStatus,
   installMCPServer,
 } from "../McpHub/installMCPServer";
-import { reloadMcpServerTools, callMCPServerTool } from "../McpHub/McpHub";
-import { DefaultMCPServers } from "../../../commonTypes/mcp";
+import { callMCPServerTool, reloadMcpServerTools } from "../McpHub/McpHub";
+import { getStatus } from "../methods/getPidStats";
+import { killPID } from "../methods/statusMonitorUtils";
+import { initBackupManager, statePrgl } from "../startProstgles";
+import { upsertConnection } from "../upsertConnection";
+import { askLLM } from "./askLLM/askLLM";
+import { getNodeTypes } from "./getNodeTypes";
+import { prostglesSignup } from "./prostglesSignup";
 
 export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   params,
@@ -508,10 +507,10 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       };
     },
     getNodeTypes,
-    installMCPServer: async (name: string) => {
+    installMCPServer: async (name) => {
       return installMCPServer(dbs, name);
     },
-    getMCPServersStatus,
+    getMCPServersStatus: (serverName) => getMCPServersStatus(dbs, serverName),
     callMCPServerTool: async (
       serverName: string,
       toolName: string,
