@@ -1,4 +1,47 @@
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
+import type { JSONB } from "prostgles-types";
+
+const toolUseContent: JSONB.FieldType = {
+  oneOf: [
+    "string",
+    {
+      arrayOf: {
+        oneOf: [
+          {
+            type: {
+              type: {
+                enum: ["text"],
+              },
+              text: "string",
+            },
+          },
+          {
+            type: {
+              type: {
+                enum: ["image"],
+              },
+              mimeType: "string",
+              data: "string",
+            },
+          },
+          {
+            type: {
+              type: { enum: ["resource"] },
+              resource: {
+                type: {
+                  uri: "string",
+                  mimeType: { type: "string", optional: true },
+                  text: { type: "string", optional: true },
+                  blob: { type: "string", optional: true },
+                },
+              },
+            },
+          },
+        ],
+      },
+    },
+  ],
+};
 
 export const tableConfigLLM: TableConfig<{ en: 1 }> = {
   llm_credentials: {
@@ -150,7 +193,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
                     type: {
                       type: { enum: ["tool_result"] },
                       tool_use_id: "string",
-                      content: "string",
+                      content: toolUseContent,
                       is_error: { optional: true, type: "boolean" },
                     },
                   },

@@ -3,6 +3,7 @@ import { isDefined } from "../../../utils";
 import type { LanguageConfig, TSLibrary } from "../../CodeEditor/CodeEditor";
 import { dboLib, pgPromiseDb } from "../../CodeEditor/monacoTsLibs";
 import type { MethodDefinitionProps } from "./MethodDefinition";
+import { fixIndent } from "../../../demo/sqlVideoDemo";
 
 type Args = Pick<
   MethodDefinitionProps,
@@ -103,17 +104,24 @@ const fetchMethodDefinitionTypes = async ({
     argumentTypes?.length ? `{ \n${argumentTypes.join("")} \n}` : "never";
 
   const userTypesTs = userTypes.map((t) => JSON.stringify(t.id)).join(" | ");
-  const tsMethodDef = `
-  type ProstglesMethod = (
-    args: ${argumentType},
-    ctx: {
-      db: pgPromise.DB;
-      dbo: DBOFullyTyped<DBGeneratedSchema>; 
-      tables: any[];
-      user: { id: string; type: ${userTypesTs}; };
-      callMCPServerTool: (serverName: string, toolName: string, args?: any) => Promise<any>;
-    }
-  ) => Promise<any>`;
+  const tsMethodDef = fixIndent(`
+    /**
+     * Server-side function
+     * ${method.description}
+     */
+    type ProstglesMethod = (
+      args: ${argumentType},
+      ctx: {
+        db: pgPromise.DB;
+        dbo: DBOFullyTyped<DBGeneratedSchema>; 
+        tables: any[];
+        user: { id: string; type: ${userTypesTs}; };
+        /**
+         * Call an MCP server tool
+         */
+        callMCPServerTool: (serverName: string, toolName: string, args?: any) => Promise<any>;
+      }
+    ) => Promise<any>`);
 
   return {
     filePath: `file:///ProstglesMethod.ts`,

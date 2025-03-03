@@ -1,4 +1,5 @@
 export const MCP_SERVERS = {};
+import { playWrightMCPServer } from "./playwrightMCPServer";
 export const DefaultMCPServers = {
     "brave-search": {
         command: "npx",
@@ -1687,6 +1688,7 @@ export const DefaultMCPServers = {
     puppeteer: {
         command: "npx",
         args: ["-y", "@modelcontextprotocol/server-puppeteer"],
+        env_from_main_process: ["DISPLAY"],
         mcp_server_tools: [
             {
                 name: "puppeteer_navigate",
@@ -1810,9 +1812,6 @@ export const DefaultMCPServers = {
     sentry: {
         command: "uvx",
         args: ["mcp-server-sentry", "--auth-token", "${text:YOUR_SENTRY_TOKEN}"],
-        source: {
-            type: "uvx",
-        },
         config_schema: {
             SENTRY_AUTH_TOKEN: {
                 title: "Sentry Auth Token",
@@ -2042,4 +2041,15 @@ export const DefaultMCPServers = {
             },
         },
     },
+    playwright: playWrightMCPServer,
+};
+const MCP_TOOL_NAME_SEPARATOR = "_-_";
+export const getMCPFullToolName = ({ server_name, name, }) => {
+    return `${server_name}${MCP_TOOL_NAME_SEPARATOR}${name}`;
+};
+export const getMCPToolNameParts = (fullName) => {
+    const [serverName, toolName] = fullName.split(MCP_TOOL_NAME_SEPARATOR);
+    if (serverName && toolName) {
+        return { serverName, toolName };
+    }
 };

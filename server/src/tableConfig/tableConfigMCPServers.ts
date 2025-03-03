@@ -23,7 +23,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
           ],
         },
       },
-      command: { enum: ["npx", "uvx", "uv"] },
+      command: { enum: ["npx", "npm", "uvx", "uv"] },
       config_schema: {
         jsonbSchema: {
           record: {
@@ -59,6 +59,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
           },
         },
       },
+      env_from_main_process: `TEXT[]`,
       enabled: `BOOLEAN DEFAULT FALSE`,
       created: `TIMESTAMP DEFAULT NOW()`,
       installed: `TIMESTAMP`,

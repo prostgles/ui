@@ -40,6 +40,7 @@ export const MCPServersInstall = ({
                 loading={!installLogData.install_error}
                 variant="faded"
                 color="action"
+                size="small"
               >
                 Installing MCP Server...
               </Btn>
@@ -47,6 +48,7 @@ export const MCPServersInstall = ({
                 loading={!installLogData.install_error}
                 color="danger"
                 variant="faded"
+                size="small"
               >
                 Installation Error
               </Btn>
@@ -61,12 +63,16 @@ export const MCPServersInstall = ({
             value={installLogData.install_log}
           />
           {installLogData.install_error && (
-            <ErrorComponent error={installLogData.install_error} />
+            <ErrorComponent
+              className="mt-1"
+              error={installLogData.install_error}
+            />
           )}
         </PopupMenu>
       : <Btn
           variant="faded"
           color={"action"}
+          size="small"
           onClickPromise={async () => {
             return installMCPServer(name);
           }}

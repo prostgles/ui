@@ -20,7 +20,7 @@ export const installMCPServer = async (dbs: DBS, name: string) => {
 
   const logTypeFilter = { server_name: name };
   await dbs.mcp_server_logs.delete(logTypeFilter);
-  let log = "Installing MCP servers";
+  let log = "Installing MCP server";
   const addLog = (logChunk: string, finished = false, error?: string) => {
     log += `\n${logChunk}`;
     return dbs.mcp_server_logs.update(logTypeFilter, {
@@ -38,29 +38,52 @@ export const installMCPServer = async (dbs: DBS, name: string) => {
   await addLog("Creating MCP servers folder...");
   fs.mkdirSync(MCP_DIR, { recursive: true });
   if (source.type === "github") {
-    await addLog("Cloning MCP servers...");
-    const res1 = await runShellCommand(
-      "git",
-      ["clone", source.repoUrl],
-      { cwd: MCP_DIR },
+    throw new Error("Not implemented");
+    // await addLog("Cloning MCP servers...");
+    // const res1 = await runShellCommand(
+    //   "git",
+    //   ["clone", source.repoUrl],
+    //   { cwd: MCP_DIR },
+    //   (chunk) => addLog(chunk),
+    // );
+    // if (res1.err) {
+    //   return addLog("Failed to clone MCP servers.", true, res1.err);
+    // }
+    // await addLog("MCP servers cloned\nInstalling MCP servers...");
+
+    // const res2 = await runShellCommand(
+    //   "npm",
+    //   ["install"],
+    //   { cwd: MCP_DIR },
+    //   (chunk) => addLog(chunk),
+    // );
+    // if (res2.err) {
+    //   return addLog("Failed to install MCP servers", true, res2.err);
+    // }
+  } else {
+    const installationPath = path.join(MCP_DIR, name);
+    if (fs.existsSync(installationPath)) {
+      await addLog("MCP servers already installed. Reinstalling...");
+      fs.rmSync(installationPath, { recursive: true });
+    }
+    fs.mkdirSync(installationPath, { recursive: true });
+    const { packageJson, tsconfigJson, indexTs } = source;
+    for (const [fileName, content] of Object.entries({
+      "package.json": packageJson,
+      "tsconfig.json": tsconfigJson,
+      "index.ts": indexTs,
+    })) {
+      fs.writeFileSync(path.join(installationPath, fileName), content, "utf-8");
+    }
+    const npmI = await runShellCommand(
+      "npm",
+      ["install"],
+      { cwd: installationPath },
       (chunk) => addLog(chunk),
     );
-    if (res1.err) {
-      return addLog("Failed to clone MCP servers.", true, res1.err);
+    if (npmI.err) {
+      return addLog("Failed to install MCP server", true, npmI.err);
     }
-    await addLog("MCP servers cloned\nInstalling MCP servers...");
-  } else {
-    throw new Error("source type not implemented");
-  }
-
-  const res2 = await runShellCommand(
-    "npm",
-    ["install"],
-    { cwd: MCP_DIR },
-    (chunk) => addLog(chunk),
-  );
-  if (res2.err) {
-    return addLog("Failed to install MCP servers", true, res2.err);
   }
 
   await dbs.mcp_servers.update(
@@ -91,9 +114,12 @@ export const getMCPServersStatus = async (
     throw new Error("Server not found");
   }
   const source = serverInfo.source;
-  if (source?.type === "github") {
-    const server = await dbs.mcp_servers.findOne({ name: serverName });
-    if (!server?.cwd) return { ok: false, message: `Server cwd missing` };
+  if (!source) {
+    return { ok: false, message: `Installation not required` };
+  }
+  const server = await dbs.mcp_servers.findOne({ name: serverName });
+  if (!server?.cwd) return { ok: false, message: `Server cwd missing` };
+  if (source.type === "github") {
     const git: SimpleGit = simpleGit(server.cwd);
     const status = await git.status();
 
@@ -108,7 +134,11 @@ export const getMCPServersStatus = async (
         };
   }
 
-  return { ok: false, message: `source type not implemented` };
+  const wasInstalled = fs.existsSync(server.cwd);
+
+  return wasInstalled ?
+      { ok: true }
+    : { ok: false, message: `Server not installed` };
 };
 
 export const getMcpHostInfo = async () => {

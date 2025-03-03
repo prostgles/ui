@@ -1,7 +1,5 @@
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
-import type { JSONB } from "prostgles-types";
-import { getJSONBSchemaAsJSONSchema } from "prostgles-types";
 import { type DBS } from "../..";
 import { contentOfThisFile as dashboardTypes } from "../../../../commonTypes/DashboardTypes";
 import { getLLMMessageText } from "../../../../commonTypes/llmUtils";
@@ -101,26 +99,16 @@ export const askLLM = async (
       .replace("${schema}", schema)
       .replace("${dashboardTypes}", dashboardTypes);
 
-    const canUseTools =
-      llm_credential.config.Provider === "Prostgles" ||
-      llm_credential.config.Provider === "Anthropic";
-
-    const published_methods =
-      canUseTools ?
-        await dbs.published_methods.find({
-          $existsJoined: {
-            llm_chats_allowed_functions: {
-              chat_id: chatId,
-            },
-          },
-        })
-      : [];
-
     /** Tools are not used with Dashboarding due to induced errors */
     const tools =
       promptObj.name === "Dashboarding" ?
         undefined
-      : await getLLMTools({ published_methods, dbs });
+      : await getLLMTools({
+          dbs,
+          chatId,
+          Provider: llm_credential.config.Provider,
+        });
+
     const llmResponseMessage = await fetchLLMResponse({
       llm_credential,
       tools,

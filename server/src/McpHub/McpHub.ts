@@ -14,7 +14,10 @@ import {
 import { isEqual, SubscriptionHandler, tryCatchV2 } from "prostgles-types";
 import { z } from "zod";
 import { DBS } from "..";
-import { DefaultMCPServers } from "../../../commonTypes/mcp";
+import {
+  DefaultMCPServers,
+  McpToolCallResponse,
+} from "../../../commonTypes/mcp";
 import { DBSSchema } from "../../../commonTypes/publishUtils";
 import { connectToMCPServer } from "./connectToMCPServer";
 import { fetchMCPServerConfigs } from "./fetchMCPServerConfigs";
@@ -26,7 +29,6 @@ import {
   McpServer,
   McpServerEvents,
   McpTool,
-  McpToolCallResponse,
   ServersConfig,
 } from "./McpTypes";
 
@@ -37,24 +39,11 @@ export type McpConnection = {
   destroy: () => Promise<void>;
 };
 
-const AutoApproveSchema = z.array(z.string()).default([]);
-
-const StdioConfigSchema = z.object({
-  command: z.string(),
-  args: z.array(z.string()).optional(),
-  env: z.record(z.string()).optional(),
-  autoApprove: AutoApproveSchema.optional(),
-  disabled: z.boolean().optional(),
-});
-
 export class McpHub {
   connections: Record<string, McpConnection> = {};
   isConnecting = false;
 
-  constructor() {
-    // this.providerRef = provider;
-    // this.watchMcpSettingsFile();
-  }
+  constructor() {}
 
   getServers(): McpServer[] {
     // Only return enabled servers
@@ -84,131 +73,6 @@ export class McpHub {
       delete this.connections[name];
       throw error;
     }
-
-    // const { onLog } = evs;
-
-    // try {
-    //   await onLog("stderr", "");
-    //   await onLog("error", "");
-    //   // Each MCP server requires its own transport connection and has unique capabilities, configurations, and error handling.
-    //   // Having separate clients also allows proper scoping of resources/tools and independent server management like reconnection.
-    //   const client = new Client(
-    //     {
-    //       name: "Prostgles",
-    //       version: "1.0.0",
-    //     },
-    //     {
-    //       capabilities: {},
-    //     },
-    //   );
-
-    //   const transport = new StdioClientTransport({
-    //     command: config.command,
-    //     args: config.args,
-    //     env: {
-    //       ...config.env,
-    //       ...(process.env.PATH ? { PATH: process.env.PATH } : {}),
-    //       // ...(process.env.NODE_PATH ? { NODE_PATH: process.env.NODE_PATH } : {}),
-    //     },
-    //     stderr: "pipe", // necessary for stderr to be available
-    //   });
-
-    //   transport.onerror = async (error) => {
-    //     console.error(`Transport error for "${name}":`, error);
-    //     const connection = this.connections[name];
-    //     if (connection) {
-    //       connection.server.status = "disconnected";
-    //       this.appendErrorMessage(connection, error.message);
-    //     }
-    //     // await this.notifyWebviewOfServerChanges();
-    //   };
-
-    //   transport.onclose = async () => {
-    //     const connection = this.connections[name];
-    //     if (connection) {
-    //       connection.server.status = "disconnected";
-    //     }
-    //     // await this.notifyWebviewOfServerChanges();
-    //   };
-
-    //   // If the config is invalid, show an error
-    //   if (!StdioConfigSchema.safeParse(config).success) {
-    //     onLog(
-    //       "error",
-    //       `Invalid config for "${name}": missing or invalid parameters`,
-    //     );
-    //     const connection: McpConnection = {
-    //       server: {
-    //         name,
-    //         config,
-    //         status: "disconnected",
-    //         error: "Invalid config: missing or invalid parameters",
-    //       },
-    //       client,
-    //       transport,
-    //     };
-    //     this.connections[name] = connection;
-    //     return;
-    //   }
-
-    //   // valid schema
-    //   const parsedConfig = StdioConfigSchema.parse(config);
-    //   const connection: McpConnection = {
-    //     server: {
-    //       name,
-    //       config,
-    //       status: "connecting",
-    //       disabled: parsedConfig.disabled,
-    //     },
-    //     client,
-    //     transport,
-    //   };
-    //   this.connections[name] = connection;
-
-    //   // transport.stderr is only available after the process has been started. However we can't start it separately from the .connect() call because it also starts the transport. And we can't place this after the connect call since we need to capture the stderr stream before the connection is established, in order to capture errors during the connection process.
-    //   // As a workaround, we start the transport ourselves, and then monkey-patch the start method to no-op so that .connect() doesn't try to start it again.
-    //   await transport.start();
-    //   const stderrStream = transport.stderr;
-    //   if (stderrStream) {
-    //     stderrStream.on("data", async (data: Buffer) => {
-    //       const errorOutput = data.toString();
-    //       console.error(`Server "${name}" stderr:`, errorOutput);
-    //       onLog("stderr", errorOutput);
-    //       const connection = this.connections[name];
-    //       if (connection) {
-    //         // NOTE: we do not set server status to "disconnected" because stderr logs do not necessarily mean the server crashed or disconnected, it could just be informational. In fact when the server first starts up, it immediately logs "<name> server running on stdio" to stderr.
-    //         this.appendErrorMessage(connection, errorOutput);
-    //         // Only need to update webview right away if it's already disconnected
-    //         if (connection.server.status === "disconnected") {
-    //           // await this.notifyWebviewOfServerChanges();
-    //         }
-    //       }
-    //     });
-    //   } else {
-    //     console.error(`No stderr stream for ${name}`);
-    //   }
-    //   transport.start = async () => {}; // No-op now, .connect() won't fail
-
-    //   // Connect
-    //   await client.connect(transport);
-    //   connection.server.status = "connected";
-    //   connection.server.error = "";
-
-    //   // Initial fetch of tools and resources
-    //   connection.server.tools = await this.fetchToolsList(name);
-    //   connection.server.resources = await this.fetchResourcesList(name);
-    //   connection.server.resourceTemplates =
-    //     await this.fetchResourceTemplatesList(name);
-    // } catch (error) {
-    //   // Update status with error
-    //   const connection = this.connections[name];
-    //   if (connection) {
-    //     connection.server.status = "disconnected";
-    //     const errMsg = error instanceof Error ? error.message : String(error);
-    //     onLog("error", errMsg);
-    //   }
-    //   throw error;
-    // }
   }
 
   async fetchToolsList(serverName: string): Promise<McpTool[]> {

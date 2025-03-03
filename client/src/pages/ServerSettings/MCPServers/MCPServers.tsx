@@ -155,7 +155,7 @@ export const MCPServers = (props: ServerSettingsProps) => {
               r.mcp_server_logs[0];
             return (
               <FlexRow className="jc-end">
-                {r.source?.type === "code" && (
+                {r.source && (
                   <MCPServersInstall
                     name={r.name}
                     dbs={dbs}
@@ -213,8 +213,10 @@ export const MCPServers = (props: ServerSettingsProps) => {
                 <SwitchToggle
                   title={!r.enabled ? "Press to enable" : "Press to disable"}
                   disabledInfo={
-                    !r.command ? "start command missing"
-                    : r.command === "npx" && !envInfo?.npmVersion ?
+                    (
+                      (r.command === "npx" || r.command === "npm") &&
+                      !envInfo?.npmVersion
+                    ) ?
                       "Must install npm"
                     : r.command === "uvx" && !envInfo?.uvxVersion ?
                       "Must install uvx"

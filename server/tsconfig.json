@@ -25,7 +25,8 @@
 	"exclude": [
 		"dist",
 		"DBoGenerated.ts",
-		"*.conf"
+		"*.conf",
+		"prostgles_mcp"
 	],
 	"include": [
 		"src"

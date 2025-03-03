@@ -10,15 +10,18 @@ export const getLLMMessageText = ({
   const text = textMessages.map((m) => m.text).join("\n");
 
   const toolsUsed = getLLMMessageToolUse({ message }).map((m) => m.name);
-  const toolsResponses = getLLMMessageToolUseResult({ message }).map(
-    (m) => m.is_error,
-  );
+  const toolsResponse = getLLMMessageToolUseResult({ message })[0];
+  const toolResponseText =
+    typeof toolsResponse?.content === "string" ?
+      toolsResponse.content
+    : filterArr(toolsResponse?.content ?? [], { type: "text" } as const)[0]
+        ?.text;
   return [
     toolsUsed.length ? `**Tools used: ${toolsUsed.join(", ")}**` : null,
-    toolsResponses.length ?
-      toolsResponses[0] ?
-        `**Tool use error**`
-      : `**Tool result response**`
+    toolsResponse ?
+      (toolsResponse.is_error ? `**Tool use error**` : (
+        `**Tool result response**`
+      )) + `\n\n${toolResponseText}`
     : null,
     text,
   ]
@@ -46,8 +49,9 @@ export const filterArr = <T, U extends Partial<T>>(
   arr: T[],
   pattern: U,
 ): FilterMatch<T, U>[] => {
+  const patternEntries = Object.entries(pattern);
   return arr.filter((item) => {
-    return Object.entries(pattern).every(
+    return patternEntries.every(
       ([key, value]) => item[key as keyof T] === value,
     );
   }) as FilterMatch<T, U>[];

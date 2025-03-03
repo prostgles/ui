@@ -32,9 +32,12 @@ export const fetchMCPServerConfigs = async (
         : mcp_server_configs[0]?.config;
 
       const env = {
-        /** Needed for puppeteer */
-        ...(server.name === "puppeteer" &&
-          (pickKeys(process.env, ["DISPLAY"]) as Record<string, string>)),
+        /** Needed for puppeteer/playwright */
+        ...(server.env_from_main_process?.length &&
+          (pickKeys(process.env, server.env_from_main_process) as Record<
+            string,
+            string
+          >)),
         ...(server.env ?? {}),
       };
       const args = server.args ?? [];

@@ -1,16 +1,18 @@
 export const getLLMMessageText = ({ message, }) => {
+    var _a;
     if (typeof message === "string")
         return message;
     const textMessages = filterArr(message, { type: "text" });
     const text = textMessages.map((m) => m.text).join("\n");
     const toolsUsed = getLLMMessageToolUse({ message }).map((m) => m.name);
-    const toolsResponses = getLLMMessageToolUseResult({ message }).map((m) => m.is_error);
+    const toolsResponse = getLLMMessageToolUseResult({ message })[0];
+    const toolResponseText = typeof (toolsResponse === null || toolsResponse === void 0 ? void 0 : toolsResponse.content) === "string" ?
+        toolsResponse.content
+        : (_a = toolsResponse === null || toolsResponse === void 0 ? void 0 : toolsResponse.content.find((c) => c.type === "text")) === null || _a === void 0 ? void 0 : _a.text;
     return [
         toolsUsed.length ? `**Tools used: ${toolsUsed.join(", ")}**` : null,
-        toolsResponses.length ?
-            toolsResponses[0] ?
-                `**Tool use error**`
-                : `**Tool result response**`
+        toolsResponse ?
+            (toolsResponse.is_error ? `**Tool use error**` : (`**Tool result response**`)) + `\n\n${toolResponseText}`
             : null,
         text,
     ]
@@ -28,7 +30,8 @@ export const getLLMMessageToolUseResult = ({ message, }) => {
     return filterArr(message, { type: "tool_result" });
 };
 export const filterArr = (arr, pattern) => {
+    const patternEntries = Object.entries(pattern);
     return arr.filter((item) => {
-        return Object.entries(pattern).every(([key, value]) => item[key] === value);
+        return patternEntries.every(([key, value]) => item[key] === value);
     });
 };

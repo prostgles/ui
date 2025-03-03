@@ -10,7 +10,22 @@ export declare const getLLMMessageToolUse: ({ message, }: Pick<LLMMessage, "mess
 export declare const getLLMMessageToolUseResult: ({ message, }: Pick<LLMMessage, "message">) => {
     type: "tool_result";
     tool_use_id: string;
-    content: string;
+    content: string | ({
+        type: "text";
+        text: string;
+    } | {
+        type: "image";
+        mimeType: string;
+        data: string;
+    } | {
+        type: "resource";
+        resource: {
+            uri: string;
+            mimeType?: string | undefined;
+            text?: string | undefined;
+            blob?: string | undefined;
+        };
+    })[];
     is_error?: boolean | undefined;
 }[];
 type FilterMatch<T, U> = T extends U ? T : never;

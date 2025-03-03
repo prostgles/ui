@@ -1,12 +1,26 @@
 import { getJSONBSchemaAsJSONSchema, type JSONB } from "prostgles-types";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { DBS } from "../..";
+import { getMCPFullToolName } from "../../../../commonTypes/mcp";
 
 type Args = {
-  published_methods: DBSSchema["published_methods"][];
+  chatId: number;
   dbs: DBS;
-};
-export const getLLMTools = async ({ published_methods, dbs }: Args) => {
+} & Pick<DBSSchema["llm_credentials"]["config"], "Provider">;
+export const getLLMTools = async ({ dbs, Provider, chatId }: Args) => {
+  const canUseTools = Provider === "Prostgles" || Provider === "Anthropic";
+
+  const published_methods =
+    canUseTools ?
+      await dbs.published_methods.find({
+        $existsJoined: {
+          llm_chats_allowed_functions: {
+            chat_id: chatId,
+          },
+        },
+      })
+    : [];
+
   const mcpTools = (
     await dbs.mcp_server_tools.find({
       $existsJoined: {
@@ -17,8 +31,8 @@ export const getLLMTools = async ({ published_methods, dbs }: Args) => {
     })
   ).map((t) => {
     return {
-      name: `${t.server_name}____${t.name}`,
-      description: t.description ?? "",
+      name: getMCPFullToolName(t),
+      description: t.description,
       input_schema: t.inputSchema,
     };
   });
@@ -50,5 +64,15 @@ export const getLLMTools = async ({ published_methods, dbs }: Args) => {
       ),
     };
   });
-  return [...mcpTools, ...serverSideFuncTools];
+  const allTools = [...mcpTools, ...serverSideFuncTools];
+  // if (Provider === "OpenAI") {
+  //   return allTools.map(({ input_schema, ...func }) => {
+  //     return {
+  //       type: "function",
+  //       function: func,
+  //       parameters: input_schema,
+  //     };
+  //   });
+  // }
+  return allTools;
 };

@@ -368,7 +368,7 @@ export type DBGeneratedSchema = {
        |  ( 
  |  {  type: 'text';  text: string; }
  |  {  type: 'image';  source: {  type: 'base64';  media_type: string;  data: string; }; }
- |  {  type: 'tool_result';  tool_use_id: string;  content: string;  is_error?: boolean; }
+ |  {  type: 'tool_result';  tool_use_id: string;  content: | string |  (  |  {  type: 'text';  text: string; } |  {  type: 'image';  mimeType: string;  data: string; } |  {  type: 'resource';  resource: {  uri: string;  mimeType?: string;  text?: string;  blob?: string; }; } )[];  is_error?: boolean; }
  |  {  type: 'tool_use';  id: string;  name: string;  input: any; } )[]
       user_id?: null | string;
     };
@@ -516,7 +516,7 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       args?: null | string[];
-      command: "npx" | "uvx" | "uv"
+      command: "npx" | "npm" | "uvx" | "uv"
       config_schema?: null | Record<string, 
  |  {  type: 'env';  title?: string;  optional?: boolean;  description?: string; }
  |  {  type: 'arg';  title?: string;  optional?: boolean;  description?: string;  index?: number; }>
@@ -524,6 +524,7 @@ export type DBGeneratedSchema = {
       cwd: string;
       enabled?: null | boolean;
       env?: null | Record<string, string>
+      env_from_main_process?: null | string[];
       info?: null | string;
       installed?: null | string;
       last_updated?: null | string;

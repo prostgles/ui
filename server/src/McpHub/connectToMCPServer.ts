@@ -54,6 +54,7 @@ export const connectToMCPServer = (
           ...(process.env.PATH ? { PATH: process.env.PATH } : {}),
           // ...(process.env.NODE_PATH ? { NODE_PATH: process.env.NODE_PATH } : {}),
         },
+        cwd: config.cwd,
         stderr: "pipe", // necessary for stderr to be available
       });
 

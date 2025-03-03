@@ -1,16 +1,18 @@
 export const MCP_SERVERS = {};
 
-import type { DBSSchemaForInsert } from "./publishUtils";
+import type { DBSSchema, DBSSchemaForInsert } from "./publishUtils";
 
-export const DefaultMCPServers: Record<
-  string,
-  Omit<DBSSchemaForInsert["mcp_servers"], "id" | "cwd" | "enabled" | "name"> & {
-    mcp_server_tools?: Omit<
-      DBSSchemaForInsert["mcp_server_tools"],
-      "id" | "server_name"
-    >[];
-  }
-> = {
+export type MCPServerInfo = Omit<
+  DBSSchemaForInsert["mcp_servers"],
+  "id" | "cwd" | "enabled" | "name"
+> & {
+  mcp_server_tools?: Omit<
+    DBSSchemaForInsert["mcp_server_tools"],
+    "id" | "server_name"
+  >[];
+};
+
+export const DefaultMCPServers: Record<string, MCPServerInfo> = {
   "brave-search": {
     command: "npx",
     args: ["-y", "@modelcontextprotocol/server-brave-search"],
@@ -1742,6 +1744,7 @@ export const DefaultMCPServers: Record<
   puppeteer: {
     command: "npx",
     args: ["-y", "@modelcontextprotocol/server-puppeteer"],
+    env_from_main_process: ["DISPLAY"],
     mcp_server_tools: [
       {
         name: "puppeteer_navigate",
@@ -2101,4 +2104,42 @@ export const DefaultMCPServers: Record<
       },
     },
   },
+};
+
+const MCP_TOOL_NAME_SEPARATOR = "_-_";
+export const getMCPFullToolName = ({
+  server_name,
+  name,
+}: Pick<DBSSchema["mcp_server_tools"], "server_name" | "name">) => {
+  return `${server_name}${MCP_TOOL_NAME_SEPARATOR}${name}`;
+};
+export const getMCPToolNameParts = (fullName: string) => {
+  const [serverName, toolName] = fullName.split(MCP_TOOL_NAME_SEPARATOR);
+  if (serverName && toolName) {
+    return { serverName, toolName };
+  }
+};
+export type McpToolCallResponse = {
+  _meta?: Record<string, any>;
+  content: Array<
+    | {
+        type: "text";
+        text: string;
+      }
+    | {
+        type: "image";
+        data: string;
+        mimeType: string;
+      }
+    | {
+        type: "resource";
+        resource: {
+          uri: string;
+          mimeType?: string;
+          text?: string;
+          blob?: string;
+        };
+      }
+  >;
+  isError?: boolean;
 };

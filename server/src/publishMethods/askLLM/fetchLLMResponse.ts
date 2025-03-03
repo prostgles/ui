@@ -1,7 +1,6 @@
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { type AnyObject, isDefined, pickKeys } from "prostgles-types";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-
 export type LLMMessage = {
   role: "system" | "user" | "assistant";
   content: DBSSchema["llm_messages"]["message"];
@@ -13,14 +12,23 @@ type Args = {
   >;
   tools:
     | undefined
-    | {
+    | ({
         name: string;
         description: string;
-        /**
-         * JSON schema for input
-         */
-        input_schema: AnyObject;
-      }[];
+      } & (
+        | {
+            /**
+             * Anthropic
+             */
+            input_schema: AnyObject;
+          }
+        | {
+            /**
+             * Google/OpenAI
+             */
+            parameters: AnyObject;
+          }
+      ))[];
   messages: LLMMessage[];
 };
 
@@ -81,6 +89,7 @@ export const fetchLLMResponse = async ({
           "response_format",
         ]),
         messages,
+        tools,
       }
     : config.Provider === "Anthropic" ?
       {
@@ -118,6 +127,13 @@ export const fetchLLMResponse = async ({
             .map((c) => (c.type === "text" ? { text: c.text } : undefined))
             .filter(isDefined),
         })),
+        ...(tools && {
+          tools: [
+            {
+              functionDeclarations: tools,
+            },
+          ],
+        }),
       }
     : config.body;
 

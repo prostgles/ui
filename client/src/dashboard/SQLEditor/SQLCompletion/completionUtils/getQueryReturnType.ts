@@ -1,6 +1,6 @@
 import type { ColType } from "../../../../../../commonTypes/utils";
 import type { SQLHandler } from "prostgles-types";
-import { asName, tryCatch } from "prostgles-types";
+import { asName, tryCatch, tryCatchV2 } from "prostgles-types";
 
 /**
  * Get statement return type ensuring any dangerous commands are not commited
@@ -90,11 +90,11 @@ export const getTableExpressionReturnType = async (
   }
 
   try {
-    const result = await tryCatch(async () => {
+    const result = await tryCatchV2(async () => {
       const colTypes = await getQueryReturnType(expression, sql);
       return { colTypes };
     });
-    let { colTypes } = result;
+    let colTypes = result.data?.colTypes;
     const { error } = result;
     if (!colTypes) {
       if ((error as any)?.code === "42701") {

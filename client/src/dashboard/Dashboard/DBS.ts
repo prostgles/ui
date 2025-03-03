@@ -14,6 +14,7 @@ import type { Backups } from "./dashboardUtils";
 import type { AnyObject } from "prostgles-types/lib";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { LLMMessage } from "../../../../commonTypes/llmUtils";
+import type { McpToolCallResponse } from "../../../../commonTypes/mcp";
 
 export type DBSMethods = Partial<{
   sendFeedback: (feedback: {
@@ -149,7 +150,7 @@ export type DBSMethods = Partial<{
     serverName: string,
     toolName: string,
     args: any,
-  ) => Promise<any>;
+  ) => Promise<McpToolCallResponse>;
   reloadMcpServerTools: (serverName: string) => Promise<number>;
   getMcpHostInfo: () => Promise<{
     os: string;
