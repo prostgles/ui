@@ -31,6 +31,7 @@ import {
   McpTool,
   ServersConfig,
 } from "./McpTypes";
+import { checkMCPServerTools } from "./checkMCPServerTools";
 
 export type McpConnection = {
   server: McpServer;
@@ -255,6 +256,11 @@ export const startMcpHub = async (dbs: DBS, restart = false): Promise<void> => {
     if (restart) await mcpHub.destroy();
     const serversConfig = await fetchMCPServerConfigs(dbs);
     await mcpHub.setServerConnections(serversConfig);
+    await checkMCPServerTools(mcpHub);
+    const serverNames = Object.keys(mcpHub.connections);
+    if (serverNames.length) {
+      console.log(`McpHub started with ${serverNames.length} enabled servers`);
+    }
   });
   mcpHubInitializing = false;
   if (mcpHubReInitializingRequested) {

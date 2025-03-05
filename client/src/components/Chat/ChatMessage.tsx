@@ -3,6 +3,7 @@ import type { ChatProps, Message } from "./Chat";
 import { Icon } from "../Icon/Icon";
 import { mdiFile } from "@mdi/js";
 import { Marked } from "./Marked";
+import { FlexCol } from "../Flex";
 
 type ChatMessageProps = Pick<ChatProps, "markdownCodeHeader"> & {
   message: Message;
@@ -11,7 +12,7 @@ export const ChatMessage = ({
   message: m,
   markdownCodeHeader,
 }: ChatMessageProps) => {
-  const id = m.id;
+  const { id, messageTopContent } = m;
   if (m.media) {
     if (typeof m.media.content_type !== "string") {
       console.error("Bad media content_type");
@@ -82,8 +83,12 @@ export const ChatMessage = ({
       <Marked key={m.id} content={m.markdown} codeHeader={markdownCodeHeader} />
     : m.message;
   return (
-    <div className={"message " + (m.incoming ? "incoming" : "")} key={id}>
-      {content}
-    </div>
+    <FlexCol
+      className={"message gap-0 ai-start " + (m.incoming ? "incoming" : "")}
+      key={id}
+    >
+      {messageTopContent}
+      <div className="content-wrapper">{content}</div>
+    </FlexCol>
   );
 };

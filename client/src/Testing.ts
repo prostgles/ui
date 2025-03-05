@@ -265,6 +265,7 @@ export const COMMANDS = {
   "Login.toggle": "",
   AuthNotifPopup: "",
   "ProstglesSignup.continue": "",
+  "PublishedMethods.deleteFunction": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

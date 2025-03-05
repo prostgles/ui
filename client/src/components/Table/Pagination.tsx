@@ -30,9 +30,9 @@ export const Pagination = (props: PaginationProps) => {
     totalRows,
     className = "",
   } = props;
-  const page = zeroBasedPage + 1;
-  const onPageChange = (p) => {
-    if (page !== p) onPC?.(p);
+  const oneBasedPage = zeroBasedPage + 1;
+  const onPageChange = (newPage) => {
+    if (zeroBasedPage !== newPage) onPC?.(newPage);
   };
 
   let maxPage = 0;
@@ -42,8 +42,8 @@ export const Pagination = (props: PaginationProps) => {
 
   if (!maxPage) return null;
 
-  const noPrev = page === 1 ? "Already at first page" : undefined;
-  const noNext = page === maxPage ? "Already at last page" : undefined;
+  const noPrev = oneBasedPage === 1 ? "Already at first page" : undefined;
+  const noNext = oneBasedPage === maxPage ? "Already at last page" : undefined;
   const totalPages = +maxPage;
   const totalRowCount = +(totalRows ?? 0);
   const pageCountInfoNode = (
@@ -84,9 +84,9 @@ export const Pagination = (props: PaginationProps) => {
         type="number"
         className="h-fit min-w-0 p-p5"
         style={{
-          width: `${(page || 0).toString().length + 5}ch`,
+          width: `${(oneBasedPage || 0).toString().length + 5}ch`,
         }}
-        value={page}
+        value={oneBasedPage}
         onChange={(e) => {
           const p = +e.target.value - 1;
           if (p > 0 && p <= maxPage) {

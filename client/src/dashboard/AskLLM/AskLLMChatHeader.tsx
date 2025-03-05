@@ -21,15 +21,12 @@ export const AskLLMChatHeader = (
     preferredPromptId,
     setActiveChat,
     prompts,
+    chatRootDiv,
     ...prgl
   } = props;
   return (
-    <FlexRow>
-      <FlexCol className="gap-p25">
-        <div>Ask AI Assistant</div>
-        <span className="text-2 font-14">(experimental)</span>
-      </FlexCol>
-      <FlexRow className="gap-p25 min-w-0">
+    <FlexRow className="AskLLMChatHeader">
+      <FlexRow className="gap-p25">
         <LLMChatOptions
           dbs={prgl.dbs}
           dbsTables={prgl.dbsTables}
@@ -38,7 +35,14 @@ export const AskLLMChatHeader = (
           activeChat={activeChat}
           activeChatId={activeChatId}
           credentials={credentials}
+          chatRootDiv={chatRootDiv}
         />
+        <FlexCol className="gap-p25">
+          <div>Ask AI Assistant</div>
+          <span className="text-2 font-14">(experimental)</span>
+        </FlexCol>
+      </FlexRow>
+      <FlexRow className="gap-p25 min-w-0">
         <Select
           title={"Chat"}
           fullOptions={

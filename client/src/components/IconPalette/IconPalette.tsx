@@ -1,6 +1,6 @@
 import { mdiChevronDown, mdiClose } from "@mdi/js";
 import { usePromise } from "prostgles-client/dist/prostgles";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { isDefined } from "../../utils";
 import Btn from "../Btn";
 import type { BtnProps } from "../Btn";
@@ -56,9 +56,12 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
       .sort((a, b) => a.rank - b.rank);
   }, [iconList, searchTerm]);
   const [open, setOpen] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm]);
   const displayedItems = useMemo(
-    () => displayedItemsFull.slice((page - 1) * 50, page * 50),
+    () => displayedItemsFull.slice(page * 50, (page + 1) * 50),
     [page, displayedItemsFull],
   );
 
@@ -146,7 +149,11 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
               totalRows={displayedItemsFull.length}
               pageSize={50}
               page={page}
-              onPageChange={(newPage) => setPage(newPage)}
+              onPageSizeChange={console.error}
+              onPageChange={(newPage) => {
+                console.warn(newPage);
+                setPage(newPage);
+              }}
             />
           </FlexCol>
         </Popup>

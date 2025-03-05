@@ -6,9 +6,8 @@ import { FlexCol, FlexRowWrap } from "../../components/Flex";
 import { InfoRow } from "../../components/InfoRow";
 import Loading from "../../components/Loading";
 import Popup from "../../components/Popup/Popup";
-import SmartCardList from "../SmartCard/SmartCardList";
-import { AddLLMCredentialForm } from "./AddLLMCredentialForm";
 import { AddLLMPromptForm } from "./AddLLMPromptForm";
+import { LLMCredentials } from "./LLMCredentials";
 import { ProstglesSignup } from "./ProstglesSignup";
 import type { LLMSetupState } from "./useLLMSetupState";
 
@@ -72,37 +71,7 @@ export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
             dbsMethods={dbsMethods}
           />
         )}
-        {setupType === "api" && (
-          <>
-            <SmartCardList
-              title="API credentials"
-              className="mb-1"
-              db={dbs as any}
-              tableName={"llm_credentials"}
-              methods={dbsMethods}
-              tables={dbsTables}
-              theme={theme}
-              showEdit={false}
-              noDataComponent={
-                <InfoRow color="info" variant="filled">
-                  No existing credentials
-                </InfoRow>
-              }
-              fieldConfigs={[
-                {
-                  name: "name",
-                },
-                {
-                  name: "config",
-                  renderValue: (v) => {
-                    return v.Provider;
-                  },
-                },
-              ]}
-            />
-            <AddLLMCredentialForm dbs={dbs} />
-          </>
-        )}
+        {setupType === "api" && <LLMCredentials {...props} />}
         {setupType && !prompts?.length && (
           <FlexCol className="mt-2">
             <InfoRow color="info" variant="filled">

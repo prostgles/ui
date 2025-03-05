@@ -109,7 +109,7 @@ export const askLLM = async (
           Provider: llm_credential.config.Provider,
         });
 
-    const llmResponseMessage = await fetchLLMResponse({
+    const { content: llmResponseMessage, meta } = await fetchLLMResponse({
       llm_credential,
       tools,
       messages: [
@@ -136,7 +136,7 @@ export const askLLM = async (
     });
     await dbs.llm_messages.update(
       { id: aiResponseMessage.id },
-      { message: llmResponseMessage },
+      { message: llmResponseMessage, meta },
     );
   } catch (err) {
     console.error(err);

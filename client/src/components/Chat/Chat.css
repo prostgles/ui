@@ -34,27 +34,29 @@
   font-size: 16px;
   overflow: auto;
   padding: 1em;
-  scroll-behavior: smooth;
-  /* background-color: white; */
+  scroll-behavior: smooth; 
 }
 
-.chat-container.chat-component .message {
-  padding: 8px 12px;
-  border-radius: 12px;
+.chat-container.chat-component .message { 
   margin-top: 2em;
   max-width: 70%;
-  color: var(--text-color-1);
-  min-width: 2em;
+  color: var(--text-color-1); 
   flex: 0 0 auto;
-  opacity: 1;
-  /* transition: all 0.5s ease 0s;  */
+  opacity: 1; 
+}
+.chat-container.chat-component .message .content-wrapper {
+  padding: 8px 12px;
+  border-radius: 12px; 
+  min-width: 2em; 
   text-align: start;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .chat-container.chat-component .message:not(.incoming) {
-  background: var(--bg-color-2);
   margin-left: auto;
+}
+.chat-container.chat-component .message:not(.incoming) .content-wrapper {
+  background: var(--bg-color-2);
 }
 
 .chat-container.chat-component .message.incoming {

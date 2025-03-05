@@ -260,7 +260,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<
                   style={{ maxWidth: "fit-content" }}
                 >
                   {label.slice(0, idx)}
-                  <strong className="f-0 search-text-match font-16">
+                  <strong className="f-0 search-text-match">
                     {label.slice(idx, idx + strm.length)}
                   </strong>
                   {label.slice(idx + strm.length)}

@@ -1,5 +1,5 @@
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
-import { type AnyObject, isDefined, pickKeys } from "prostgles-types";
+import { type AnyObject, isDefined, omitKeys, pickKeys } from "prostgles-types";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 export type LLMMessage = {
   role: "system" | "user" | "assistant";
@@ -36,7 +36,9 @@ export const fetchLLMResponse = async ({
   llm_credential,
   messages: maybeEmptyMessages,
   tools,
-}: Args): Promise<LLMMessage["content"]> => {
+}: Args): Promise<
+  Pick<LLMMessage, "content"> & { meta?: AnyObject | null }
+> => {
   const nonEmptyMessages = maybeEmptyMessages
     .map((m) => {
       const nonEmptyMessageContent = m.content.filter(
@@ -138,7 +140,7 @@ export const fetchLLMResponse = async ({
     : config.body;
 
   if (llm_credential.endpoint === "http://localhost:3004/mocked-llm") {
-    return [{ type: "text", text: "Mocked response" }];
+    return { content: [{ type: "text", text: "Mocked response" }] };
   }
 
   const res = await fetch(llm_credential.endpoint, {
@@ -156,19 +158,20 @@ export const fetchLLMResponse = async ({
   const response = (await res.json()) as AnyObject | undefined;
 
   if (config.Provider === "Google") {
-    const googleResponse = response as GoogleResponse;
-    return googleResponse.candidates.flatMap((c) => {
+    const { candidates, ...meta } = response as GoogleResponse;
+    const content = candidates.flatMap((c) => {
       return c.content.parts.map((p) => {
         return {
           type: "text",
           text: p.text,
-        };
+        } satisfies LLMMessage["content"][number];
       });
     });
+    return { content, meta };
   }
   if (config.Provider === "Anthropic") {
-    const anthropicResponse = response as AnthropicResponse;
-    const result = anthropicResponse.content
+    const { content: rawContent, ...meta } = response as AnthropicResponse;
+    const content = rawContent
       .map((c) => {
         const contentItem: LLMMessage["content"][number] | undefined =
           c.type === "text" && c.text ?
@@ -189,7 +192,7 @@ export const fetchLLMResponse = async ({
         return contentItem;
       })
       .filter(isDefined);
-    return result;
+    return { content, meta };
   } else {
     const path =
       llm_credential.result_path ??
@@ -200,7 +203,12 @@ export const fetchLLMResponse = async ({
     if (typeof messageText !== "string") {
       throw "Unexpected response from LLM. Expecting string";
     }
-    return [{ type: "text", text: messageText }];
+    const firstPathItem = path[0];
+    const meta =
+      !isDefined(firstPathItem) || !response ? null
+      : Array.isArray(response) ? response.filter((_, i) => i !== firstPathItem)
+      : omitKeys(response, [firstPathItem.toString()]);
+    return { content: [{ type: "text", text: messageText }], meta };
   }
 };
 

@@ -160,6 +160,9 @@ export const popupCheckPosition = function (this: Popup) {
     }
     y = anchorY + anchorHeight;
     x = xLeft;
+  } else if (positioning === "left") {
+    y = anchorY;
+    x = anchorX - width;
   } else if (positioning === "beneath-right") {
     y = anchorY + anchorHeight;
     x = anchorX + anchorWidth - width;

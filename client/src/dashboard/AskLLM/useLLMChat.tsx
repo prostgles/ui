@@ -11,6 +11,8 @@ import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
 import { loadGeneratedWorkspaces } from "./loadGeneratedWorkspaces";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
 import { getLLMMessageText } from "../../../../commonTypes/llmUtils";
+import Chip from "../../components/Chip";
+import { AskLLMTokenUsage } from "./AskLLMTokenUsage";
 
 type P = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId"> & {
@@ -81,13 +83,14 @@ export const useLLMChat = (props: P) => {
   );
 
   const actualMessages: Message[] =
-    llmMessages?.map((m) => ({
-      id: m.id,
-      incoming: m.user_id !== user?.id,
+    llmMessages?.map(({ id, user_id, created, message, meta }) => ({
+      id,
+      incoming: user_id !== user?.id,
       message: null,
-      markdown: getLLMMessageText(m),
-      sender_id: m.user_id || "ai",
-      sent: new Date(m.created || new Date()),
+      messageTopContent: <AskLLMTokenUsage user_id={user_id} meta={meta} />,
+      markdown: getLLMMessageText({ message }),
+      sender_id: user_id || "ai",
+      sent: new Date(created || new Date()),
     })) ?? [];
 
   const disabled_message =
@@ -195,3 +198,5 @@ const useMarkdownCodeHeader = ({ workspaceId, dbs, connectionId }: P) => {
 
   return { markdownCodeHeader };
 };
+
+const getLLMUsageCost = (messages: Message[]) => {};

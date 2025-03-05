@@ -1,5 +1,5 @@
 export const getLLMMessageText = ({ message, }) => {
-    var _a;
+    var _a, _b;
     if (typeof message === "string")
         return message;
     const textMessages = filterArr(message, { type: "text" });
@@ -8,7 +8,7 @@ export const getLLMMessageText = ({ message, }) => {
     const toolsResponse = getLLMMessageToolUseResult({ message })[0];
     const toolResponseText = typeof (toolsResponse === null || toolsResponse === void 0 ? void 0 : toolsResponse.content) === "string" ?
         toolsResponse.content
-        : (_a = toolsResponse === null || toolsResponse === void 0 ? void 0 : toolsResponse.content.find((c) => c.type === "text")) === null || _a === void 0 ? void 0 : _a.text;
+        : (_b = filterArr((_a = toolsResponse === null || toolsResponse === void 0 ? void 0 : toolsResponse.content) !== null && _a !== void 0 ? _a : [], { type: "text" })[0]) === null || _b === void 0 ? void 0 : _b.text;
     return [
         toolsUsed.length ? `**Tools used: ${toolsUsed.join(", ")}**` : null,
         toolsResponse ?

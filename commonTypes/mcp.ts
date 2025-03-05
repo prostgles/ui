@@ -1,5 +1,3 @@
-export const MCP_SERVERS = {};
-
 import type { DBSSchema, DBSSchemaForInsert } from "./publishUtils";
 
 export type MCPServerInfo = Omit<

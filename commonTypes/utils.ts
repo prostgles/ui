@@ -334,3 +334,14 @@ export const API_PATH_SUFFIXES = {
 export const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
 
 export const FORKED_PROC_ENV_NAME = "IS_FORKED_PROC" as const;
+
+type ValueOf<T> = T[keyof T];
+export const getProperty = <
+  O extends AnyObject,
+  K extends (keyof O & string) | string,
+>(
+  o: O,
+  k: K,
+): ValueOf<O> | undefined => {
+  return o[k] as ValueOf<O> | undefined;
+};

@@ -1272,4 +1272,19 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
   ...tableConfigLLM,
   ...loggerTableConfig,
   ...tableConfigMCPServers,
+
+  llm_chats_allowed_mcp_tools: {
+    dropIfExistsCascade: true,
+    columns: {
+      chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
+      mcp_server_name: `TEXT NOT NULL`,
+      mcp_tool_name: `TEXT NOT NULL, FOREIGN KEY  (mcp_server_name, mcp_tool_name) REFERENCES mcp_server_tools(server_name, name) ON DELETE CASCADE`,
+    },
+    // indexes: {
+    //   unique_chat_tool: {
+    //     unique: true,
+    //     columns: "chat_id, mcp_server_name, mcp_tool_name",
+    //   },
+    // },
+  },
 };

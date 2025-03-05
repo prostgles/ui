@@ -47,7 +47,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
   llm_credentials: {
     columns: {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
-      name: `TEXT NOT NULL DEFAULT 'Default credential'`,
+      name: `TEXT NOT NULL UNIQUE DEFAULT 'OpenAI'`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
       endpoint: {
         sqlDefinition: `TEXT NOT NULL DEFAULT 'https://api.openai.com/v1/chat/completions'`,
@@ -97,7 +97,9 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       },
       is_default: {
         sqlDefinition: `BOOLEAN DEFAULT FALSE`,
-        info: { hint: "If true then this is the default credential" },
+        info: {
+          hint: "If true then this is the default credential used in new AI Assistant chats",
+        },
       },
       result_path: {
         sqlDefinition: `_TEXT `,
@@ -142,8 +144,14 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       name: `TEXT NOT NULL DEFAULT 'New chat'`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
-      llm_credential_id: `INTEGER REFERENCES llm_credentials(id) ON DELETE SET NULL`,
-      llm_prompt_id: `INTEGER REFERENCES llm_prompts(id) ON DELETE SET NULL`,
+      llm_credential_id: {
+        label: "LLM Provider Credential",
+        sqlDefinition: `INTEGER REFERENCES llm_credentials(id) ON DELETE SET NULL`,
+      },
+      llm_prompt_id: {
+        label: "Prompt",
+        sqlDefinition: `INTEGER REFERENCES llm_prompts(id) ON DELETE SET NULL`,
+      },
       created: `TIMESTAMP DEFAULT NOW()`,
       disabled_message: {
         sqlDefinition: `TEXT`,
@@ -160,7 +168,6 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       id: `int8 PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
-      // message: `TEXT NOT NULL`,
       message: {
         jsonbSchema: {
           oneOf: [
@@ -211,6 +218,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
           ],
         },
       },
+      meta: "JSONB",
       created: `TIMESTAMP DEFAULT NOW()`,
     },
   },

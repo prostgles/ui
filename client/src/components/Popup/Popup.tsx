@@ -51,7 +51,7 @@ export type PopupProps = TestSelectors & {
       | React.MouseEvent<HTMLDivElement, MouseEvent>
       | React.MouseEvent<HTMLButtonElement, MouseEvent>,
   ) => void;
-  title?: React.ReactNode;
+  title?: React.ReactNode | ((rootDiv: HTMLDivElement) => React.ReactNode);
   subTitle?: string;
   headerRightContent?: React.ReactNode;
   content?: React.ReactNode;
@@ -90,6 +90,7 @@ export type PopupProps = TestSelectors & {
     | "inside-top-center"
     | "above-center"
     | "as-is"
+    | "left"
     | "right-panel";
   focusTrap?: boolean;
   /**
@@ -343,6 +344,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
           >
             <PopupHeader
               {...this.props}
+              rootDiv={this.ref}
               onToggleFullscreen={() => {
                 const newFullScreen = !fullScreen;
                 if (!newFullScreen) {

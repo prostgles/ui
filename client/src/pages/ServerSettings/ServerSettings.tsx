@@ -1,11 +1,13 @@
 import {
   mdiAccountKey,
+  mdiAssistant,
   mdiCloudKeyOutline,
   mdiLaptop,
   mdiSecurity,
 } from "@mdi/js";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useState } from "react";
+import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
 import { getCIDRRangesQuery } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
@@ -14,11 +16,10 @@ import { FlexCol } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
 import { TabsWithDefaultStyle } from "../../components/Tabs";
+import { LLMCredentials } from "../../dashboard/AskLLM/LLMCredentials";
 import SmartCardList from "../../dashboard/SmartCard/SmartCardList";
 import SmartForm from "../../dashboard/SmartForm/SmartForm";
 import { AuthProviderSetup } from "./AuthProvidersSetup";
-import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
-import PopupMenu from "../../components/PopupMenu";
 import { MCPServers } from "./MCPServers/MCPServers";
 
 export type ServerSettingsProps = Pick<
@@ -189,6 +190,15 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                 leftIconPath: mdiLaptop,
                 label: "MCP Servers",
                 content: <MCPServers {...props} />,
+              },
+              llmProviders: {
+                leftIconPath: mdiAssistant,
+                label: "LLM Providers",
+                content: (
+                  <FlexCol className="p-1">
+                    <LLMCredentials {...props} />
+                  </FlexCol>
+                ),
               },
             }}
           />

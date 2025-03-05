@@ -11,6 +11,7 @@ import { useAudioRecorder } from "./utils/AudioRecorder";
 
 export type Message = {
   id: number | string;
+  messageTopContent?: React.ReactNode;
   message: React.ReactNode;
   markdown?: string;
   sender_id: number | string;

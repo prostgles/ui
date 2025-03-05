@@ -13,6 +13,7 @@ import SmartCardList from "../SmartCard/SmartCardList";
 import { ProcessLogs } from "../TableConfig/ProcessLogs";
 import { NewMethod } from "./NewMethod";
 import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAccessRule";
+import ConfirmationDialog from "../../components/ConfirmationDialog";
 
 type P = {
   className?: string;
@@ -58,7 +59,6 @@ export const PublishedMethods = ({
           label: " ",
           render: (v, row) => (
             <SwitchToggle
-              label={row.name}
               checked={
                 !!editedRule?.newRule?.access_control_methods?.some(
                   (m) => m.published_method_id === row.id,
@@ -98,41 +98,67 @@ export const PublishedMethods = ({
         {
           name: "arguments",
           label: " ",
-          // hide: true,
-          render: (v, m: DBSSchema["published_methods"]) => (
-            <FlexRow className="noselect">
-              <FlexCol>
-                <FlexRow>
+          className: "f-1 ",
+          render: (v, row: DBSSchema["published_methods"]) => (
+            <FlexRow className="noselect w-full">
+              <FlexCol className="gap-p5">
+                <FlexRow className="gap-p25">
+                  <div>{row.name}</div>
                   <div className="text-2">
-                    {!m.arguments.length ?
+                    {!row.arguments.length ?
                       " ()"
-                    : ` ({ ${m.arguments.map((a) => `${a.name}: ${a.type}`).join("; ")} })`
+                    : ` ({ ${row.arguments.map((a) => `${a.name}: ${a.type}`).join("; ")} })`
                     }
                   </div>
                 </FlexRow>
-                {!!m.description.trim() && (
-                  <div className="text-2">{m.description}</div>
+                {!!row.description.trim() && (
+                  <div className="text-2">{row.description}</div>
                 )}
               </FlexCol>
-              <div className="flex-row ai-center show-on-trigger-hover">
+              <div className="ml-auto flex-row ai-center show-on-trigger-hover">
                 <Btn
                   title="Edit function"
                   iconPath={mdiPencil}
                   onClick={async () => {
                     setAction({
                       type: "update",
-                      existingMethodId: m.id,
+                      existingMethodId: row.id,
                     });
                   }}
                 />
-                <Btn
+                <PopupMenu
+                  button={
+                    <Btn
+                      title="Delete function..."
+                      color="danger"
+                      iconPath={mdiDelete}
+                    />
+                  }
+                  onClickClose={false}
+                  clickCatchStyle={{ opacity: 1 }}
+                  render={(pClose) => (
+                    <ConfirmationDialog
+                      acceptBtn={{
+                        color: "danger",
+                        text: "Delete function",
+                        dataCommand: "PublishedMethods.deleteFunction",
+                      }}
+                      message="Are you sure you want to delete this function?"
+                      onAccept={async () => {
+                        await dbs.published_methods.delete({ id: row.id });
+                      }}
+                      onClose={pClose}
+                    />
+                  )}
+                />
+                {/* <Btn
                   title="Delete function"
                   iconPath={mdiDelete}
                   color="danger"
                   onClick={async () => {
-                    await dbs.published_methods.delete({ id: m.id });
+                    await dbs.published_methods.delete({ id: row.id });
                   }}
-                />
+                /> */}
               </div>
             </FlexRow>
           ),

@@ -9,17 +9,14 @@ type Args = {
 } & Pick<DBSSchema["llm_credentials"]["config"], "Provider">;
 export const getLLMTools = async ({ dbs, Provider, chatId }: Args) => {
   const canUseTools = Provider === "Prostgles" || Provider === "Anthropic";
-
-  const published_methods =
-    canUseTools ?
-      await dbs.published_methods.find({
-        $existsJoined: {
-          llm_chats_allowed_functions: {
-            chat_id: chatId,
-          },
-        },
-      })
-    : [];
+  if (!canUseTools) return undefined;
+  const published_methods = await dbs.published_methods.find({
+    $existsJoined: {
+      llm_chats_allowed_functions: {
+        chat_id: chatId,
+      },
+    },
+  });
 
   const mcpTools = (
     await dbs.mcp_server_tools.find({

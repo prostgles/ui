@@ -136,3 +136,6 @@ export const API_PATH_SUFFIXES = {
 };
 export const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
 export const FORKED_PROC_ENV_NAME = "IS_FORKED_PROC";
+export const getProperty = (o, k) => {
+    return o[k];
+};

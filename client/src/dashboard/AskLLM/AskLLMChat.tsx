@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from "react";
+import type { LLMMessage } from "../../../../commonTypes/llmUtils";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import { Chat } from "../../components/Chat/Chat";
@@ -10,7 +11,6 @@ import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
 import { useLLMTools } from "./useLLMTools";
-import type { LLMMessage } from "../../../../commonTypes/llmUtils";
 // import { useLocalLLM } from "./useLocalLLM";
 
 export type AskLLMChatProps = {
@@ -106,17 +106,18 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
               maxWidth: `${CHAT_WIDTH}px`,
             },
       }}
-      title={
+      title={(rootDiv) => (
         <AskLLMChatHeader
           {...setupState}
           {...chatState}
           dbs={dbs}
           dbsTables={dbsTables}
           theme={prgl.theme}
+          chatRootDiv={rootDiv}
         />
-      }
-      positioning="beneath-left"
-      clickCatchStyle={{ opacity: 1 }}
+      )}
+      positioning="right-panel"
+      clickCatchStyle={{ opacity: 0.1 }}
       onClickClose={false}
       onClose={onClose}
       anchorEl={anchorEl}

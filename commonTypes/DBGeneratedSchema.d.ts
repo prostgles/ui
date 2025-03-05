@@ -332,6 +332,18 @@ export type DBGeneratedSchema = {
       server_function_id: number;
     };
   };
+  llm_chats_allowed_mcp_tools: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      chat_id: number;
+      mcp_server_name: string;
+      mcp_tool_name: string;
+    };
+  };
   llm_credentials: {
     is_view: false;
     select: true;
@@ -370,6 +382,7 @@ export type DBGeneratedSchema = {
  |  {  type: 'image';  source: {  type: 'base64';  media_type: string;  data: string; }; }
  |  {  type: 'tool_result';  tool_use_id: string;  content: | string |  (  |  {  type: 'text';  text: string; } |  {  type: 'image';  mimeType: string;  data: string; } |  {  type: 'resource';  resource: {  uri: string;  mimeType?: string;  text?: string;  blob?: string; }; } )[];  is_error?: boolean; }
  |  {  type: 'tool_use';  id: string;  name: string;  input: any; } )[]
+      meta?: null | any;
       user_id?: null | string;
     };
   };
@@ -531,7 +544,7 @@ export type DBGeneratedSchema = {
       name: string;
       source?: 
        | null
-       |  {  type: 'github';  name: string;  repoUrl: string; }
+       |  {  type: 'github';  name: string;  repoUrl: string;  installationCommands?: (  {  command: string;  args?: string[]; } )[]; }
        |  {  type: 'code';  indexTs: string;  packageJson: string;  tsconfigJson: string; }
       stderr?: null | string;
     };

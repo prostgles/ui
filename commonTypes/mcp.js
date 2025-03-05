@@ -1,5 +1,3 @@
-export const MCP_SERVERS = {};
-import { playWrightMCPServer } from "./playwrightMCPServer";
 export const DefaultMCPServers = {
     "brave-search": {
         command: "npx",
@@ -2041,7 +2039,6 @@ export const DefaultMCPServers = {
             },
         },
     },
-    playwright: playWrightMCPServer,
 };
 const MCP_TOOL_NAME_SEPARATOR = "_-_";
 export const getMCPFullToolName = ({ server_name, name, }) => {

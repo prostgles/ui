@@ -31,6 +31,7 @@ export const MCPServers = (props: ServerSettingsProps) => {
     React.useState<DBSSchema["mcp_server_tools"]>();
   const { reloadMcpServerTools, getMcpHostInfo } = dbsMethods;
   const globalSettings = dbs.global_settings.useSubscribeOne();
+  const { mcp_servers_disabled } = globalSettings.data ?? {};
   const envInfo = usePromise(async () => getMcpHostInfo?.(), [getMcpHostInfo]);
   const missing =
     !envInfo ? undefined
@@ -64,7 +65,7 @@ export const MCPServers = (props: ServerSettingsProps) => {
         setSelectedTool={setSelectedTool}
       />
       <FlexCol
-        {...(globalSettings.data?.mcp_servers_disabled && {
+        {...(mcp_servers_disabled && {
           className: "disabled",
           title: "MCP Servers are disabled",
         })}
@@ -73,6 +74,9 @@ export const MCPServers = (props: ServerSettingsProps) => {
           theme={theme}
           db={dbs as any}
           methods={dbsMethods}
+          {...(mcp_servers_disabled && {
+            className: "no-interaction",
+          })}
           tableName="mcp_servers"
           tables={dbsTables}
           filter={
@@ -89,7 +93,7 @@ export const MCPServers = (props: ServerSettingsProps) => {
               No MCP servers. MCP servers can be added to allow LLM tool usage
             </InfoRow>
           }
-          orderBy={{ name: true }}
+          orderBy={{ enabled: false, name: true }}
           fieldConfigs={[
             {
               name: "name",

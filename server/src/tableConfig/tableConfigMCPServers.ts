@@ -13,6 +13,13 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
               type: { enum: ["github"] },
               name: "string",
               repoUrl: "string",
+              installationCommands: {
+                arrayOfType: {
+                  command: "string",
+                  args: { type: "string[]", optional: true },
+                },
+                optional: true,
+              },
             },
             {
               type: { enum: ["code"] },
@@ -83,6 +90,12 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE CASCADE`,
       inputSchema: `JSONB`,
       autoApprove: `BOOLEAN DEFAULT FALSE`,
+    },
+    indexes: {
+      unique_server_name_tool_name: {
+        unique: true,
+        columns: "server_name, name",
+      },
     },
   },
   mcp_server_logs: {

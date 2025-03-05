@@ -478,6 +478,11 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<
         data-command="SmartCardList"
         style={{
           ...style,
+          /**
+           * To ensure shadow is not clipped by parent
+           */
+          padding: "2px",
+          margin: "-2px",
           flex: "0 1 auto", // Allow the body to grow with content, ensuring height is always not greater than content
         }}
       >

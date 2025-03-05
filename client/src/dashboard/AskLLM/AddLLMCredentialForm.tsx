@@ -1,48 +1,47 @@
 import { mdiPlus } from "@mdi/js";
-import { usePromise } from "prostgles-client/dist/prostgles";
-import React from "react";
+import { useEffectDeep, usePromise } from "prostgles-client/dist/prostgles";
+import React, { useEffect, useState } from "react";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import PopupMenu from "../../components/PopupMenu";
-import Select from "../../components/Select/Select";
+import Select, { type FullOption } from "../../components/Select/Select";
 
-type P = {
-  dbs: Prgl["dbs"];
-};
-
-export const AddLLMCredentialForm = ({ dbs }: P) => {
+export const AddLLMCredentialForm = ({ dbs }: Pick<Prgl, "dbs">) => {
   const [apiKey, setAPIKey] = React.useState("");
   const [providerName, setProviderName] =
     React.useState<(typeof providers)[number]["name"]>("OpenAI");
-  const [endPoint, setEndPoint] = React.useState<string>();
-  const [model, setModel] = React.useState("");
+  const [endPoint, setEndPoint] = useState<string>();
+  const [modelName, setModel] = useState("");
+  const [name, setName] = useState("");
+  useEffect(() => {
+    setName(providerName);
+  }, [providerName]);
   const { data: existingCreds } = dbs.llm_credentials.useSubscribe();
+  const nameClash = existingCreds?.find((c) => c.name === name);
 
-  const models = usePromise(async () => {
+  const models: ModelInfo[] | undefined = usePromise(async () => {
     const provider = providers.find((p) => p.name === providerName);
-    if (!provider || !apiKey) return [];
-    if (providerName === "Google") {
-      return GoogleModels;
-    }
-    if (providerName === "OpenAI") {
-      const models = await fetchOpenAIModels(apiKey);
-      const res = models.filter(
-        (m) => m.id.startsWith("gpt-") || m.id.startsWith("o-"),
-      );
-      const defaultModel =
-        res.find((m) => m.id === "gpt-4o-2024-11-20")?.id ?? res[0]?.id;
-      if (defaultModel) {
-        setModel(defaultModel);
-      }
-      return res;
-    }
+    if (!provider) return [];
+    return {
+      OpenAI: OpenAIModels,
+      Google: GoogleModels,
+      Anthropic: AnthropicModels,
+    }[providerName];
 
-    return AnthropicModels;
-  }, [providerName, apiKey]);
+    // const models = await fetchOpenAIModels(apiKey);
+    // const res = models.filter(
+    //   (m) => m.id.startsWith("gpt-") || m.id.startsWith("o-"),
+    // );
+  }, [providerName]);
 
   const provider = providers.find((p) => p.name === providerName);
+  useEffectDeep(() => {
+    const defaultModel =
+      models?.find((m) => m.id === "gpt-4o-2024-08-06")?.id ?? models?.[0]?.id;
+    setModel(defaultModel ?? "");
+  }, [models]);
 
   if (!existingCreds) return null;
 
@@ -51,12 +50,12 @@ export const AddLLMCredentialForm = ({ dbs }: P) => {
       !endPoint ? "Provide an endpoint"
       : undefined
     : !apiKey ? "Please provide an API key"
-    : !model ? "Please select model"
+    : !modelName ? "Please select model"
     : !provider ? "Provider not specified"
     : undefined;
   return (
     <PopupMenu
-      title="Add AI Provider"
+      title="Add LLM Provider"
       positioning="center"
       data-command="AddLLMCredentialForm"
       clickCatchStyle={{ opacity: 1 }}
@@ -81,14 +80,14 @@ export const AddLLMCredentialForm = ({ dbs }: P) => {
             if (disabledInfo) return;
             await dbs.llm_credentials.insert({
               user_id: undefined as any,
-              name: providerName,
+              name,
               is_default: existingCreds.length === 0,
               config:
                 providerName === "OpenAI" ?
                   {
                     Provider: providerName,
                     API_Key: apiKey,
-                    model,
+                    model: modelName,
                   }
                 : providerName === "Anthropic" ?
                   {
@@ -96,13 +95,13 @@ export const AddLLMCredentialForm = ({ dbs }: P) => {
                     API_Key: apiKey,
                     "anthropic-version": "2023-06-01",
                     max_tokens: 2048,
-                    model,
+                    model: modelName,
                   }
                 : {
                     Provider: providerName,
                   },
               endpoint: endPoint
-                ?.replace("MODEL", model)
+                ?.replace("MODEL", modelName)
                 .replace("KEY", apiKey),
             });
             pClose?.(e);
@@ -111,6 +110,12 @@ export const AddLLMCredentialForm = ({ dbs }: P) => {
       ]}
     >
       <FlexCol>
+        <FormField
+          label={"Name"}
+          value={name}
+          onChange={setName}
+          error={nameClash ? "Name already exists" : undefined}
+        />
         <Select
           label={"Provider"}
           value={providerName}
@@ -121,9 +126,16 @@ export const AddLLMCredentialForm = ({ dbs }: P) => {
         <FormField label={"API Key"} value={apiKey} onChange={setAPIKey} />
         <Select
           label={"Model"}
-          value={model}
-          disabledInfo={!apiKey ? "Please provide an API key" : undefined}
-          fullOptions={models?.map((m) => ({ key: m.id })) ?? []}
+          value={modelName}
+          fullOptions={
+            models?.map(
+              (m) =>
+                ({
+                  key: m.id,
+                  subLabel: `$${m.inputPrice} M input/$${m.outputPrice} M output`,
+                }) satisfies FullOption,
+            ) ?? []
+          }
           onChange={setModel}
         />
         <FormField
@@ -190,17 +202,94 @@ type OpenAIModel = {
   owned_by: string;
 };
 
-const AnthropicModels = [
-  { id: "claude-3-5-sonnet-20241022" },
-  { id: "claude-3-5-haiku-20241022" },
-  { id: "claude-3-opus-20240229" },
-  { id: "claude-3-sonnet-20240229" },
-  { id: "claude-3-haiku-20240307	" },
-];
+type ModelInfo = {
+  id: string;
+  /**
+   * Prices are per 1M tokens
+   */
+  inputPrice: number;
+  outputPrice: number;
+  cachedInput?: number;
+} & (
+  | {
+      maxInputPrice?: undefined;
+      maxOutputPrice?: undefined;
+      tokenLimit?: undefined;
+    }
+  | {
+      maxInputPrice: number;
+      maxOutputPrice: number;
+      tokenLimit: number;
+    }
+);
 
-const GoogleModels = [
-  { id: "gemini-2.0-flash-exp" },
-  { id: "gemini-1.5-flash" },
-  { id: "gemini-1.5-flash-8b" },
-  { id: "gemini-1.5-pro" },
-];
+/**
+ * https://www.anthropic.com/pricing#anthropic-api
+ */
+export const AnthropicModels = [
+  { id: "claude-3-7-sonnet-20250219", inputPrice: 3, outputPrice: 15 },
+  { id: "claude-3-5-sonnet-20241022", inputPrice: 3, outputPrice: 15 },
+  { id: "claude-3-5-sonnet-20240620", inputPrice: 3, outputPrice: 15 },
+  { id: "claude-3-sonnet-20240229", inputPrice: 3, outputPrice: 15 },
+  { id: "claude-3-5-haiku-20241022", inputPrice: 0.8, outputPrice: 4 },
+  { id: "claude-3-opus-20240229", inputPrice: 15, outputPrice: 75 },
+] as const satisfies ModelInfo[];
+
+/**
+ * https://ai.google.dev/gemini-api/docs/pricing
+ */
+export const GoogleModels = [
+  { id: "gemini-2.0-flash", inputPrice: 0.1, outputPrice: 0.4 },
+  {
+    id: "gemini-1.5-flash",
+    inputPrice: 0.075,
+    outputPrice: 0.3,
+    maxInputPrice: 0.15,
+    maxOutputPrice: 0.6,
+    tokenLimit: 128_000,
+  },
+  { id: "gemini-1.5-flash-8b", inputPrice: 0.0375, outputPrice: 0.15 },
+  { id: "gemini-1.5-pro", inputPrice: 1.25, outputPrice: 5 },
+] as const satisfies ModelInfo[];
+
+/**
+ * https://platform.openai.com/docs/pricing
+ */
+export const OpenAIModels = [
+  {
+    id: "o1",
+    inputPrice: 15,
+    cachedInput: 7.5,
+    outputPrice: 60,
+  },
+  {
+    id: "o1-mini-2024-09-12",
+    inputPrice: 1.1,
+    cachedInput: 0.55,
+    outputPrice: 4.4,
+  },
+  {
+    id: "o3-mini-2025-01-31",
+    inputPrice: 1.1,
+    cachedInput: 0.55,
+    outputPrice: 4.4,
+  },
+  {
+    id: "gpt-4.5-preview-2025-02-27",
+    inputPrice: 75,
+    cachedInput: 37.5,
+    outputPrice: 150,
+  },
+  {
+    id: "gpt-4o-2024-08-06",
+    inputPrice: 2.5,
+    cachedInput: 1.25,
+    outputPrice: 10,
+  },
+  {
+    id: "gpt-4o-mini-2024-07-18",
+    inputPrice: 0.15,
+    cachedInput: 0.075,
+    outputPrice: 0.6,
+  },
+] as const satisfies ModelInfo[];
