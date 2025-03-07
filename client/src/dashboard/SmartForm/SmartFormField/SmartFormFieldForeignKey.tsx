@@ -141,13 +141,18 @@ const isTextColumn = (col: ValidatedColumnInfo) =>
  * we want to try and show the most representative text column of that table
  * to make it easier for the user to understand what record/data they refer to
  */
-const getBestTextColumn = (column: P["column"], tables: P["tables"]) => {
+const getBestTextColumn = (
+  column: P["column"],
+  tables: P["tables"],
+  fMainColumn: string | undefined,
+) => {
   const fTableName = column.references[0]?.ftable;
   const fTable = tables.find((t) => t.name === fTableName);
   if (isTextColumn(column) || !fTable) return;
 
   const fTableTextColumns = fTable.columns
     .filter(isTextColumn)
+    .filter((c) => c.name !== fMainColumn)
     .map((c) => {
       const shortestUnique = fTable.info.uniqueColumnGroups
         ?.filter((g) => g.includes(c.name))
@@ -182,9 +187,9 @@ const fetchOptions = async ({
   if (!tableHandler?.find || !fTableHandler?.find) return [];
 
   const mainColumn = column.name;
-  const textColumn = getBestTextColumn(column, tables);
 
   const fMainColumn = fcols[cols.indexOf(mainColumn)];
+  const textColumn = getBestTextColumn(column, tables, fMainColumn);
   if (fMainColumn) {
     const fullForeignTableFilter = {};
     const foreignTableFilter = {};
@@ -210,7 +215,13 @@ const fetchOptions = async ({
     });
 
     /** We must add current value */
-    if (row && !result.some((o) => o.key === row[mainColumn])) {
+    const currentValue = row?.[mainColumn];
+    if (
+      row &&
+      isDefined(currentValue) &&
+      currentValue !== null &&
+      !result.some((o) => o.key === currentValue)
+    ) {
       const [currentValue] = await fetchSearchResults({
         mainColumn: fMainColumn,
         textColumn,

@@ -472,13 +472,26 @@ export default class SmartCard<T extends AnyObject> extends RTComp<
             )
           }
         >
+          <div className="flex-col min-w-0 min-h-0 f-1">
+            <div className="f-0">{title}</div>
+            <div
+              className={classOverride(
+                `SmartCardContent o-auto f-1 min-w-0 min-h-0 gap-p5 p-p5 parent-hover ${variantClass}`,
+                contentClassname,
+              )}
+              style={{ columnGap: "1em", ...contentStyle }}
+            >
+              {content}
+            </div>
+            {footer?.(defaultData)}
+          </div>
           {(
             allowedActions.update ||
             allowedActions.delete ||
             allowedActions.view
           ) ?
             <Btn
-              className="f-0 absolute show-on-parent-hover"
+              className="f-0 show-on-parent-hover"
               data-command="SmartCard.viewEditRow"
               style={{ top: "0.25em", right: "0.25em" }}
               iconPath={
@@ -493,19 +506,6 @@ export default class SmartCard<T extends AnyObject> extends RTComp<
               }}
             />
           : null}
-          <div className="flex-col min-w-0 min-h-0 f-1">
-            <div className="f-0">{title}</div>
-            <div
-              className={classOverride(
-                `SmartCardContent o-auto f-1 min-w-0 min-h-0 gap-p5 p-p5 parent-hover ${variantClass}`,
-                contentClassname,
-              )}
-              style={{ columnGap: "1em", ...contentStyle }}
-            >
-              {content}
-            </div>
-            {footer?.(defaultData)}
-          </div>
         </div>
       </>
     );

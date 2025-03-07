@@ -7,6 +7,7 @@ import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessage } from "./fetchLLMResponse";
 import { getLLMTools } from "./getLLMTools";
+import { sliceText } from "../../../../commonTypes/utils";
 
 export const askLLM = async (
   // question: string,
@@ -20,14 +21,36 @@ export const askLLM = async (
 ) => {
   if (!userMessage.length) throw "Message is empty";
   if (!Number.isInteger(chatId)) throw "chatId must be an integer";
-  const chat = await dbs.llm_chats.findOne({ id: chatId, user_id: user.id });
+  const getChat = () => dbs.llm_chats.findOne({ id: chatId, user_id: user.id });
+  let chat = await getChat();
   if (!chat) throw "Chat not found";
-  const { llm_prompt_id, llm_credential_id } = chat;
-  if (!llm_prompt_id || !llm_credential_id)
-    throw "Chat missing prompt or credential";
+  const { llm_prompt_id } = chat;
+  if (!chat.model) {
+    const preferredChatModel = await dbs.llm_models.findOne(
+      {
+        $existsJoined: {
+          "llm_providers.llm_credentials": {},
+        } as any,
+        chat_suitability_rank: { $gt: "-1" },
+      },
+      { orderBy: { chat_suitability_rank: 1 } },
+    );
+    if (!preferredChatModel) throw "No models with credentials found";
+    await dbs.llm_chats.update(
+      { id: chatId },
+      { model: preferredChatModel.id },
+    );
+    chat = await getChat();
+  }
+  if (!chat?.model) throw "Chat model not found";
   const llm_credential = await dbs.llm_credentials.findOne({
-    id: llm_credential_id,
+    $existsJoined: {
+      "llm_providers.llm_models": {
+        id: chat.model!,
+      },
+    } as any,
   });
+  if (!llm_prompt_id) throw "Chat missing prompt";
   if (!llm_credential) throw "LLM credentials missing";
   const promptObj = await dbs.llm_prompts.findOne({ id: llm_prompt_id });
   if (!promptObj) throw "Prompt not found";
@@ -46,7 +69,7 @@ export const askLLM = async (
 
   const allowedUsedCreds = allowedLLMCreds?.filter(
     (c) =>
-      c.llm_credential_id === llm_credential_id &&
+      c.llm_credential_id === llm_credential.id &&
       c.llm_prompt_id === llm_prompt_id,
   );
   if (allowedUsedCreds) {
@@ -80,10 +103,7 @@ export const askLLM = async (
   const isFirstUserMessage = !pastMessages.some((m) => m.user_id === user.id);
   if (isFirstUserMessage) {
     const questionText = getLLMMessageText({ message: userMessage });
-    dbs.llm_chats.update(
-      { id: chatId },
-      { name: questionText.slice(0, 25) + "..." },
-    );
+    dbs.llm_chats.update({ id: chatId }, { name: sliceText(questionText, 25) });
   }
 
   const aiResponseMessage = await dbs.llm_messages.insert(
@@ -106,10 +126,28 @@ export const askLLM = async (
       : await getLLMTools({
           dbs,
           chatId,
-          Provider: llm_credential.config.Provider,
+          provider: llm_credential.provider_id,
         });
 
+    const modelData = await dbs.llm_models.findOne(
+      { id: chat.model! },
+      {
+        select: {
+          "*": 1,
+          llm_providers: "*",
+        },
+      },
+    );
+
+    if (!modelData) throw "Model not found";
+    const {
+      llm_providers: [llm_provider],
+      ...llm_model
+    } = modelData;
+    if (!llm_provider) throw "Provider not found";
     const { content: llmResponseMessage, meta } = await fetchLLMResponse({
+      llm_model,
+      llm_provider,
       llm_credential,
       tools,
       messages: [
@@ -151,55 +189,4 @@ export const askLLM = async (
       },
     );
   }
-};
-
-export const insertDefaultPrompts = async (dbs: DBS) => {
-  /** In case of stale schema update */
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (!dbs.llm_prompts) {
-    console.warn("llm_prompts table not found");
-    return;
-  }
-
-  const prompt = await dbs.llm_prompts.findOne();
-  if (prompt) {
-    console.warn("Default prompts already exist");
-    return;
-  }
-  const adminUser = await dbs.users.findOne({ passwordless_admin: true });
-  const user_id = adminUser?.id;
-  await dbs.llm_prompts.insert({
-    name: "Chat",
-    description: "Basic chat",
-    user_id,
-    prompt: [
-      "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
-      "Assist user with any queries they might have. Do not add empty lines in your sql response.",
-      "Reply with a full and concise answer that does not require further clarification or revisions.",
-      "Below is the database schema they're currently working with:",
-      "",
-      "${schema}",
-    ].join("\n"),
-  });
-  await dbs.llm_prompts.insert({
-    name: "Dashboards",
-    description: "Create dashboards. Claude Sonnet recommended",
-    user_id,
-    prompt: [
-      "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
-      "Assist user with any queries they might have.",
-      "Below is the database schema they're currently working with:",
-      "",
-      "${schema}",
-      "",
-      "Using dashboard structure below create workspaces with useful views my current schema.",
-      "Return a json of this format: { prostglesWorkspaces: WorkspaceInsertModel[] }",
-      "Return valid json, markdown compatible and in a clearly delimited section with a json code block.",
-      "",
-      "${dashboardTypes}",
-    ].join("\n"),
-  });
-
-  const addedPrompts = await dbs.llm_prompts.find();
-  console.warn("Added default prompts", addedPrompts);
 };

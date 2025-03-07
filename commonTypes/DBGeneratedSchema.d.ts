@@ -304,6 +304,21 @@ export type DBGeneratedSchema = {
       workspace_id?: null | string;
     };
   };
+  llm_api_keys: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      api_key?: string;
+      created?: null | string;
+      id?: number;
+      name?: string;
+      provider_id: number;
+      user_id: string;
+    };
+  };
   llm_chats: {
     is_view: false;
     select: true;
@@ -315,8 +330,8 @@ export type DBGeneratedSchema = {
       disabled_message?: null | string;
       disabled_until?: null | string;
       id?: number;
-      llm_credential_id?: null | number;
       llm_prompt_id?: null | number;
+      model?: null | number;
       name?: string;
       user_id: string;
     };
@@ -351,17 +366,14 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      config?: 
-       |  {  Provider: 'OpenAI';  API_Key: string;  model: string;  temperature?: number;  frequency_penalty?: number;  max_completion_tokens?: number;  presence_penalty?: number;  response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt'; }
-       |  {  Provider: 'Anthropic';  API_Key: string;  "anthropic-version": string;  model: string;  max_tokens: number; }
-       |  {  Provider: 'Custom';  headers?: Record<string, string>;  body?: Record<string, string>; }
-       |  {  Provider: 'Prostgles';  API_Key: string; }
-       |  {  Provider: 'Google'; }
+      api_key?: string;
       created?: null | string;
-      endpoint?: string;
+      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';  };
+      extra_headers?: null | Record<string, string>
       id?: number;
       is_default?: null | boolean;
-      name?: string;
+      name?: null | string;
+      provider_id: string;
       result_path?: null | string[];
       user_id: string;
     };
@@ -386,6 +398,23 @@ export type DBGeneratedSchema = {
       user_id?: null | string;
     };
   };
+  llm_models: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      chat_suitability_rank?: null | string;
+      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';  };
+      extra_headers?: null | Record<string, string>
+      id?: number;
+      model_created?: null | string;
+      name: string;
+      pricing_info?: null | {    input: number;   output: number;   cachedInput?: number;   threshold?: {  tokenLimit: number;  input: number;  output: number; };  };
+      provider_id: string;
+    };
+  };
   llm_prompts: {
     is_view: false;
     select: true;
@@ -399,6 +428,22 @@ export type DBGeneratedSchema = {
       name?: string;
       prompt: string;
       user_id?: null | string;
+    };
+  };
+  llm_providers: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      api_docs_url?: null | string;
+      api_pricing_url?: null | string;
+      api_url: string;
+      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';  };
+      extra_headers?: null | Record<string, string>
+      id: string;
+      logo_base64?: null | string;
     };
   };
   login_attempts: {

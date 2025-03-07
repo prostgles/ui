@@ -1,17 +1,17 @@
 import React from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import Chip from "../../components/Chip";
-import {
-  AnthropicModels,
-  GoogleModels,
-  OpenAIModels,
-} from "./AddLLMCredentialForm";
+
+type P = {
+  message: Pick<DBSSchema["llm_messages"], "meta" | "user_id">;
+  models: DBSSchema["llm_models"][];
+};
 
 export const AskLLMTokenUsage = ({
-  user_id,
-  meta: rawMeta,
-}: Pick<DBSSchema["llm_messages"], "meta" | "user_id">) => {
-  const meta = getMeta(rawMeta);
+  models,
+  message: { meta: rawMeta, user_id },
+}: P) => {
+  const meta = getMeta(rawMeta, models);
   if (user_id || !meta) return null;
   const cost = getCost(meta);
 
@@ -60,34 +60,37 @@ type GeminiMeta = {
   };
 };
 
-const getMeta = (rawMeta: any) => {
+const getMeta = (rawMeta: any, models: P["models"]) => {
   if (!rawMeta) return null;
   if (rawMeta.usage?.prompt_tokens) {
     const meta = rawMeta as OpenAIMeta;
-    return { type: "openai", meta } as const;
+    const model = models.find(
+      (m) => m.provider_id === "OpenAI" && m.name === meta.model,
+    );
+    return { type: "openai", meta, model } as const;
   }
   if (rawMeta.usage?.input_tokens) {
     const meta = rawMeta as AnthropicMeta;
-    return { type: "anthropic", meta } as const;
+    const model = models.find(
+      (m) => m.provider_id === "Anthropic" && m.name === meta.model,
+    );
+    return { type: "anthropic", meta, model } as const;
   }
   if (rawMeta.usageMetadata?.promptTokenCount) {
     const meta = rawMeta as GeminiMeta;
-    return { type: "gemini", meta } as const;
+    const model = models.find(
+      (m) => m.provider_id === "Google" && m.name === meta.modelVersion,
+    );
+    return { type: "gemini", meta, model } as const;
   }
+
   return null;
 };
 
 const getCost = (meta: ReturnType<typeof getMeta>) => {
   if (!meta) return null;
-
-  const modelName =
-    meta.type === "gemini" ? meta.meta.modelVersion : meta.meta.model;
-  const pricing = (
-    meta.type === "anthropic" ? AnthropicModels
-    : meta.type === "gemini" ? GoogleModels
-    : OpenAIModels).find((m) => m.id === modelName);
-  if (!pricing) return null;
-  const { inputPrice, outputPrice } = pricing;
+  if (!meta.model?.pricing_info) return null;
+  const { input, output, threshold } = meta.model.pricing_info;
   const inputCount =
     meta.type === "gemini" ? meta.meta.usageMetadata.promptTokenCount
     : meta.type === "openai" ? meta.meta.usage.prompt_tokens
@@ -96,5 +99,10 @@ const getCost = (meta: ReturnType<typeof getMeta>) => {
     meta.type === "gemini" ? meta.meta.usageMetadata.candidatesTokenCount
     : meta.type === "openai" ? meta.meta.usage.completion_tokens
     : meta.meta.usage.output_tokens;
+
+  const inputPrice =
+    threshold && inputCount > threshold.tokenLimit ? threshold.input : input;
+  const outputPrice =
+    threshold && outputCount > threshold.tokenLimit ? threshold.output : output;
   return (inputPrice / 1e6) * inputCount + (outputPrice / 1e6) * outputCount;
 };

@@ -222,17 +222,17 @@ export function matchObj(
 }
 
 export function sliceText(
-  v: string | undefined,
+  text: string | undefined,
   maxLen: number,
   ellipseText = "...",
   midEllipse = false,
 ) {
-  if (isDefined(v) && v.length > maxLen) {
-    if (!midEllipse) return `${v.slice(0, maxLen)}${ellipseText}`;
-    return `${v.slice(0, maxLen / 2)}${ellipseText}${v.slice(v.length - maxLen / 2 + 3)}`;
+  if (isDefined(text) && text.length > maxLen) {
+    if (!midEllipse) return `${text.slice(0, maxLen)}${ellipseText}`;
+    return `${text.slice(0, maxLen / 2)}${ellipseText}${text.slice(text.length - maxLen / 2 + 3)}`;
   }
 
-  return v;
+  return text;
 }
 
 export type ColType = {

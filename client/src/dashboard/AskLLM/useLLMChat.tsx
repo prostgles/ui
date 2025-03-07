@@ -61,7 +61,7 @@ export const useLLMChat = (props: P) => {
       {
         name: "New chat",
         user_id: undefined as any,
-        llm_credential_id: credentialId,
+        // model: undefined as any,
         llm_prompt_id: promptId,
       },
       { returning: "*" },
@@ -82,12 +82,16 @@ export const useLLMChat = (props: P) => {
     { skip: !activeChatId },
   );
 
+  const { data: models } = dbs.llm_models.useFind();
+
   const actualMessages: Message[] =
     llmMessages?.map(({ id, user_id, created, message, meta }) => ({
       id,
       incoming: user_id !== user?.id,
       message: null,
-      messageTopContent: <AskLLMTokenUsage user_id={user_id} meta={meta} />,
+      messageTopContent: (
+        <AskLLMTokenUsage message={{ user_id, meta }} models={models ?? []} />
+      ),
       markdown: getLLMMessageText({ message }),
       sender_id: user_id || "ai",
       sent: new Date(created || new Date()),
@@ -198,5 +202,3 @@ const useMarkdownCodeHeader = ({ workspaceId, dbs, connectionId }: P) => {
 
   return { markdownCodeHeader };
 };
-
-const getLLMUsageCost = (messages: Message[]) => {};

@@ -52,6 +52,7 @@ export const Alerts = (prgl: Prgl) => {
           methods={prgl.dbsMethods}
           tables={prgl.dbsTables}
           tableName={"alerts"}
+          realtime={true}
           filter={{
             $existsJoined: {
               "database_configs.connections": { id: connectionId },

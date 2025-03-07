@@ -164,15 +164,26 @@ export const publish = async (
     },
     llm_credentials: {
       select: {
-        fields: isAdmin ? "*" : { id: 1, name: 1, is_default: 1 },
+        fields: isAdmin ? "*" : { id: 1, name: 1 },
         forcedFilter: isAdmin ? undefined : forcedFilterLLM,
       },
       delete: isAdmin && "*",
       insert: isAdmin && {
-        fields: "*",
+        fields: { provider_id: 1, name: 1, api_key: 1 },
         forcedData,
         postValidate: async ({ row }) => {
+          const provider = await db.llm_providers.findOne({
+            id: row.provider_id,
+          });
+          const preferredModel = await db.llm_models.findOne({
+            provider_id: row.provider_id,
+            chat_suitability_rank: { $gt: "-1" },
+          });
+          if (!preferredModel) throw "No models with credentials found";
+          if (!provider) throw "Provider not found";
           await fetchLLMResponse({
+            llm_model: preferredModel,
+            llm_provider: provider,
             llm_credential: row,
             tools: [],
             messages: [

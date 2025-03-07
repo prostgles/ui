@@ -1,14 +1,14 @@
 import { getJSONBSchemaAsJSONSchema, type JSONB } from "prostgles-types";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { DBS } from "../..";
 import { getMCPFullToolName } from "../../../../commonTypes/mcp";
 
 type Args = {
   chatId: number;
   dbs: DBS;
-} & Pick<DBSSchema["llm_credentials"]["config"], "Provider">;
-export const getLLMTools = async ({ dbs, Provider, chatId }: Args) => {
-  const canUseTools = Provider === "Prostgles" || Provider === "Anthropic";
+  provider: string;
+};
+export const getLLMTools = async ({ dbs, provider, chatId }: Args) => {
+  const canUseTools = provider === "Prostgles" || provider === "Anthropic";
   if (!canUseTools) return undefined;
   const published_methods = await dbs.published_methods.find({
     $existsJoined: {

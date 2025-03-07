@@ -63,7 +63,7 @@ export const Label = ({
         contentClassName="p-1"
         button={
           !isHeader ?
-            <Btn iconPath={mdiHelp} size="small" style={{ margin: "-8px" }} />
+            <Btn iconPath={mdiHelp} size="micro" />
           : <Btn
               iconPath={iconPath}
               className="Label_QuestionButton text-2  relative ai-center"
@@ -88,7 +88,7 @@ export const Label = ({
       {...otherProps}
       className={classOverride(
         " Label noselect flex-row ai-center " +
-          (toggle ? " pointer gap-p5 " : " gap-1 ") +
+          (toggle ? " pointer gap-p5 " : " gap-p25 ") +
           (otherProps.htmlFor ? " pointer " : " ") +
           "w-fit",
         className,

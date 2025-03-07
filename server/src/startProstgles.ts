@@ -25,7 +25,7 @@ import { publishMethods } from "./publishMethods/publishMethods";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { tableConfig } from "./tableConfig/tableConfig";
-import { insertDefaultPrompts } from "./publishMethods/askLLM/askLLM";
+import { setupLLM } from "./publishMethods/askLLM/setupLLM";
 import { setupMCPServerHub } from "./McpHub/McpHub";
 
 type StartArguments = {
@@ -224,7 +224,7 @@ export const startProstgles = async ({
         await connectionChecker.init(db, _db);
 
         await insertStateDatabase(db, _db, con);
-        await insertDefaultPrompts(db);
+        await setupLLM(db);
         await setupMCPServerHub(db);
 
         await connMgr.destroy();

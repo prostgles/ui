@@ -1,15 +1,16 @@
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { type AnyObject, isDefined, omitKeys, pickKeys } from "prostgles-types";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { ReadableStreamDefaultReader } from "stream/web";
+import { readFetchStream } from "./readFetchStream";
 export type LLMMessage = {
   role: "system" | "user" | "assistant";
   content: DBSSchema["llm_messages"]["message"];
 };
 type Args = {
-  llm_credential: Pick<
-    DBSSchema["llm_credentials"],
-    "config" | "endpoint" | "result_path"
-  >;
+  llm_model: DBSSchema["llm_models"];
+  llm_provider: DBSSchema["llm_providers"];
+  llm_credential: DBSSchema["llm_credentials"];
   tools:
     | undefined
     | ({
@@ -32,13 +33,17 @@ type Args = {
   messages: LLMMessage[];
 };
 
+type LLMParsedResponse = Pick<LLMMessage, "content"> & {
+  meta?: AnyObject | null;
+};
+
 export const fetchLLMResponse = async ({
+  llm_provider,
   llm_credential,
   messages: maybeEmptyMessages,
   tools,
-}: Args): Promise<
-  Pick<LLMMessage, "content"> & { meta?: AnyObject | null }
-> => {
+  llm_model,
+}: Args): Promise<LLMParsedResponse> => {
   const nonEmptyMessages = maybeEmptyMessages
     .map((m) => {
       const nonEmptyMessageContent = m.content.filter(
@@ -55,52 +60,42 @@ export const fetchLLMResponse = async ({
   const [systemMessageObj, ...otherSM] = systemMessage;
   if (!systemMessageObj) throw "Prompt not found";
   if (otherSM.length) throw "Multiple prompts found";
-  const { config } = llm_credential;
+  const { api_key } = llm_credential;
+  const model = llm_model.name;
+  const provider = llm_provider.id;
   const messages =
-    config.Provider === "OpenAI" ?
-      nonEmptyMessages
-    : nonEmptyMessages.filter((m) => m.role !== "system");
-  const headers =
-    config.Provider === "OpenAI" || config.Provider === "Prostgles" ?
+    provider === "OpenAI" ? nonEmptyMessages : (
+      nonEmptyMessages.filter((m) => m.role !== "system")
+    );
+  const headers: RequestInit["headers"] =
+    provider === "Anthropic" ?
       {
+        "content-type": "application/json",
+        "x-api-key": api_key,
+        "anthropic-version": "2023-06-01",
+      }
+    : provider === "Google" ?
+      {
+        "content-type": "application/json",
+      }
+    : {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${config.API_Key}`,
-      }
-    : config.Provider === "Anthropic" ?
-      {
-        "content-type": "application/json",
-        "x-api-key": config.API_Key,
-        "anthropic-version": config["anthropic-version"],
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    : config.Provider === "Google" ?
-      {
-        "content-type": "application/json",
-      }
-    : config.headers;
+        Authorization: `Bearer ${api_key}`,
+      };
 
   const body =
-    config.Provider === "OpenAI" ?
+    provider === "Anthropic" ?
       {
-        ...pickKeys(config, [
-          "temperature",
-          "max_completion_tokens",
-          "model",
-          "frequency_penalty",
-          "presence_penalty",
-          "response_format",
-        ]),
-        messages,
-        tools,
-      }
-    : config.Provider === "Anthropic" ?
-      {
-        ...pickKeys(config, ["model", "max_tokens"]),
+        // ...pickKeys(config, [
+        //   // "model",
+        //   "max_tokens",
+        // ]),
+        model,
         system: systemMessageObj.content,
         messages,
         tools,
       }
-    : config.Provider === "Prostgles" ?
+    : provider === "Prostgles" ?
       [
         {
           messages,
@@ -108,7 +103,7 @@ export const fetchLLMResponse = async ({
         },
       ]
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    : config.Provider === "Google" ?
+    : provider === "Google" ?
       {
         system_instruction: {
           parts: systemMessageObj.content
@@ -137,28 +132,68 @@ export const fetchLLMResponse = async ({
           ],
         }),
       }
-    : config.body;
-
-  if (llm_credential.endpoint === "http://localhost:3004/mocked-llm") {
+    : /**  "OpenAI"  */
+      {
+        // ...pickKeys(config, [
+        //   "temperature",
+        //   "max_completion_tokens",
+        //   // "model",
+        //   "frequency_penalty",
+        //   "presence_penalty",
+        //   "response_format",
+        // ]),
+        model,
+        messages,
+        tools,
+      };
+  const api_url = llm_provider.api_url
+    .replace("$KEY", api_key)
+    .replace("$MODEL", model); // ?? config.model
+  if (api_url === "http://localhost:3004/mocked-llm") {
     return { content: [{ type: "text", text: "Mocked response" }] };
   }
 
-  const res = await fetch(llm_credential.endpoint, {
+  const res = await fetch(api_url, {
     method: "POST",
-    headers,
-    body: body && JSON.stringify(body),
+    headers: {
+      ...headers,
+      ...llm_provider.extra_headers,
+      ...llm_credential.extra_headers,
+      ...llm_model.extra_headers,
+    },
+    body: JSON.stringify({
+      ...body,
+      ...llm_provider.extra_body,
+      ...llm_credential.extra_body,
+      ...llm_model.extra_body,
+    }),
   }).catch((err) => Promise.reject(JSON.stringify(getErrorAsObject(err))));
 
+  const responseData = await readFetchStream(res);
   if (!res.ok) {
-    const errorText = await res.text().catch(() => "");
     throw new Error(
-      `Failed to fetch LLM response: ${res.statusText} ${errorText}`,
+      `Failed to fetch LLM response: ${res.statusText} ${responseData}`,
     );
   }
-  const response = (await res.json()) as AnyObject | undefined;
+  return parseResponseObject({
+    provider,
+    responseData,
+    llm_credential,
+  });
+};
 
-  if (config.Provider === "Google") {
-    const { candidates, ...meta } = response as GoogleResponse;
+type ParseResponseObjectArgs = {
+  provider: string;
+  responseData: AnyObject | undefined;
+  llm_credential: DBSSchema["llm_credentials"];
+};
+const parseResponseObject = ({
+  llm_credential,
+  provider,
+  responseData,
+}: ParseResponseObjectArgs): LLMParsedResponse => {
+  if (provider === "Google") {
+    const { candidates, ...meta } = responseData as GoogleResponse;
     const content = candidates.flatMap((c) => {
       return c.content.parts.map((p) => {
         return {
@@ -169,8 +204,8 @@ export const fetchLLMResponse = async ({
     });
     return { content, meta };
   }
-  if (config.Provider === "Anthropic") {
-    const { content: rawContent, ...meta } = response as AnthropicResponse;
+  if (provider === "Anthropic") {
+    const { content: rawContent, ...meta } = responseData as AnthropicResponse;
     const content = rawContent
       .map((c) => {
         const contentItem: LLMMessage["content"][number] | undefined =
@@ -194,20 +229,22 @@ export const fetchLLMResponse = async ({
       .filter(isDefined);
     return { content, meta };
   } else {
-    const path =
-      llm_credential.result_path ??
-      (config.Provider === "OpenAI" ?
-        ["choices", 0, "message", "content"]
-      : ["content", 0, "text"]);
-    const messageText = parsePath(response ?? {}, path);
+    const path = llm_credential.result_path ?? [
+      "choices",
+      0,
+      "message",
+      "content",
+    ];
+    const messageText = parsePath(responseData ?? {}, path);
     if (typeof messageText !== "string") {
       throw "Unexpected response from LLM. Expecting string";
     }
     const firstPathItem = path[0];
     const meta =
-      !isDefined(firstPathItem) || !response ? null
-      : Array.isArray(response) ? response.filter((_, i) => i !== firstPathItem)
-      : omitKeys(response, [firstPathItem.toString()]);
+      !isDefined(firstPathItem) || !responseData ? null
+      : Array.isArray(responseData) ?
+        responseData.filter((_, i) => i !== firstPathItem)
+      : omitKeys(responseData, [firstPathItem.toString()]);
     return { content: [{ type: "text", text: messageText }], meta };
   }
 };

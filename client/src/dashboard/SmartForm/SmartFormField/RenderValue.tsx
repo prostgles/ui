@@ -62,7 +62,8 @@ export const RenderValue = ({
     textAlign: "right",
   } as const;
 
-  if (c?.tsDataType !== "number" && c?.udt_name === "int8") {
+  const { udt_name, tsDataType } = c ?? {};
+  if (tsDataType !== "number" && udt_name === "int8") {
     return (
       <span
         style={{
@@ -77,27 +78,35 @@ export const RenderValue = ({
   }
 
   if (
-    (c?.tsDataType === "number" ||
-      (c && _PG_numbers.includes(c.udt_name as any))) &&
+    tsDataType === "number" &&
+    udt_name &&
+    _PG_numbers.includes(udt_name as any) &&
     value !== undefined &&
     value !== null
   ) {
-    const countDecimals = (num: number) => {
-      if (Math.floor(num.valueOf()) === num.valueOf()) return 0;
-      return num.toString().split(".")[1]?.length || 0;
+    const getValue = () => {
+      const isFloat =
+        udt_name === "float4" ||
+        udt_name === "float8" ||
+        udt_name === "numeric";
+      if (!isFloat) return +value;
+      const actualDecimals = countDecimals(+value);
+      const maxDecimals =
+        +value < 1 && +value > -1 ? actualDecimals + 1 : maximumFractionDigits;
+      const slicedValue = getSliced(
+        (+value).toLocaleString(undefined, {
+          minimumFractionDigits: maxDecimals, // Math.min(maxDecimals, actualDecimals),
+        }),
+      );
+      return slicedValue;
     };
-    const maxDecimals =
-      +value < 1 && +value > -1 ?
-        countDecimals(+value) + 1
-      : maximumFractionDigits;
-    const slicedValue = getSliced(
-      (+value).toLocaleString(undefined, {
-        minimumFractionDigits: Math.min(maxDecimals, countDecimals(+value)),
-      }),
-    );
+
     return (
-      <span style={{ color: getColumnDataColor(c), ...numericStyle, ...style }}>
-        {slicedValue}
+      <span
+        title={value}
+        style={{ color: getColumnDataColor(c), ...numericStyle, ...style }}
+      >
+        {getValue()}
       </span>
     );
   }
@@ -183,4 +192,9 @@ export const RenderValue = ({
   }
 
   return <>{getSliced(value)}</>;
+};
+
+const countDecimals = (num: number) => {
+  if (Math.floor(num.valueOf()) === num.valueOf()) return 0;
+  return num.toString().split(".")[1]?.length || 0;
 };

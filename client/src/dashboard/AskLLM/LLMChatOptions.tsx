@@ -44,18 +44,18 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
               <SmartForm
                 {...props}
                 label=""
+                tableName="llm_chats"
                 contentClassname="p-1 pt-1"
                 columns={{
                   name: 1,
-                  llm_credential_id: 1,
                   llm_prompt_id: 1,
+                  model: 1,
                   created: 1,
                 }}
                 jsonbSchemaWithControls={true}
                 db={dbs as any}
                 tables={dbsTables}
                 methods={{}}
-                tableName="llm_chats"
                 rowFilter={[{ fieldName: "id", value: activeChatId }]}
                 hideChangesOptions={true}
                 // showJoinedTables={false}
