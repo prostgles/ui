@@ -12,8 +12,9 @@ import React, { useCallback, useEffect, useState } from "react";
 import Select, { type FullOption } from "../../../components/Select/Select";
 import { renderNull } from "./RenderValue";
 import type { SmartFormFieldProps } from "./SmartFormField";
+import { fetchForeignKeyOptions } from "./fetchForeignKeyOptions";
 
-type P = Pick<
+export type SmartFormFieldForeignKeyProps = Pick<
   SmartFormFieldProps,
   "rawValue" | "db" | "tables" | "row" | "tableName"
 > & {
@@ -32,12 +33,12 @@ export const SmartFormFieldForeignKey = ({
   rawValue,
   row,
   readOnly,
-}: P) => {
+}: SmartFormFieldForeignKeyProps) => {
   const [fullOptions, setFullOptions] = useState<FullOption[]>();
   const getuseIsMounted = useIsMounted();
   const onSearchOptions = useCallback(
     async (term: string) => {
-      const options = await fetchOptions({
+      const options = await fetchForeignKeyOptions({
         column,
         db,
         tableName,
@@ -52,19 +53,8 @@ export const SmartFormFieldForeignKey = ({
   );
 
   useEffect(() => {
-    if (fullOptions) return;
     onSearchOptions("");
-  }, [
-    column,
-    db,
-    onChange,
-    tables,
-    tableName,
-    rawValue,
-    row,
-    fullOptions,
-    onSearchOptions,
-  ]);
+  }, [rawValue, onSearchOptions]);
 
   const valueStyle = {
     fontSize: "16px",
@@ -129,161 +119,3 @@ export const SmartFormFieldForeignKey = ({
     />
   );
 };
-
-const isTextColumn = (col: ValidatedColumnInfo) =>
-  !col.is_nullable &&
-  (["text", "varchar", "citext", "char"] as const).some(
-    (textType) => textType === col.udt_name,
-  );
-
-/**
- * When a non-text column is referencing another table,
- * we want to try and show the most representative text column of that table
- * to make it easier for the user to understand what record/data they refer to
- */
-const getBestTextColumn = (
-  column: P["column"],
-  tables: P["tables"],
-  fMainColumn: string | undefined,
-) => {
-  const fTableName = column.references[0]?.ftable;
-  const fTable = tables.find((t) => t.name === fTableName);
-  if (isTextColumn(column) || !fTable) return;
-
-  const fTableTextColumns = fTable.columns
-    .filter(isTextColumn)
-    .filter((c) => c.name !== fMainColumn)
-    .map((c) => {
-      const shortestUnique = fTable.info.uniqueColumnGroups
-        ?.filter((g) => g.includes(c.name))
-        .sort((a, b) => a.length - b.length)[0];
-      return {
-        ...c,
-        shortestUnique,
-        shortestUniqueLength: shortestUnique?.length ?? 100,
-      };
-    })
-    .sort((a, b) => a.shortestUniqueLength - b.shortestUniqueLength);
-
-  return fTableTextColumns[0]?.name;
-};
-
-const fetchOptions = async ({
-  column,
-  tableName,
-  db,
-  tables,
-  row,
-  term,
-}: Pick<P, "column" | "db" | "row" | "tableName" | "tables"> & {
-  term: string;
-}): Promise<FullOption[]> => {
-  const fKey = column.references[0];
-  if (!tableName || !fKey) return [];
-  const { ftable, fcols, cols } = fKey;
-
-  const tableHandler = db[tableName];
-  const fTableHandler = db[ftable];
-  if (!tableHandler?.find || !fTableHandler?.find) return [];
-
-  const mainColumn = column.name;
-
-  const fMainColumn = fcols[cols.indexOf(mainColumn)];
-  const textColumn = getBestTextColumn(column, tables, fMainColumn);
-  if (fMainColumn) {
-    const fullForeignTableFilter = {};
-    const foreignTableFilter = {};
-    if (row) {
-      cols.forEach((col, i) => {
-        const fCol = fcols[i];
-        if (fCol) {
-          fullForeignTableFilter[fCol] = row[col];
-          if (col !== column.name) {
-            foreignTableFilter[fCol] = row[col];
-          }
-        }
-      });
-    }
-
-    const result = await fetchSearchResults({
-      mainColumn: fMainColumn,
-      textColumn,
-      db,
-      tableName: ftable,
-      term,
-      filter: foreignTableFilter,
-    });
-
-    /** We must add current value */
-    const currentValue = row?.[mainColumn];
-    if (
-      row &&
-      isDefined(currentValue) &&
-      currentValue !== null &&
-      !result.some((o) => o.key === currentValue)
-    ) {
-      const [currentValue] = await fetchSearchResults({
-        mainColumn: fMainColumn,
-        textColumn,
-        db,
-        tableName: ftable,
-        term: "",
-        filter: fullForeignTableFilter,
-      });
-      if (currentValue) {
-        result.unshift(currentValue);
-      }
-    }
-
-    return result;
-  }
-
-  return fetchSearchResults({
-    mainColumn,
-    textColumn: undefined,
-    db,
-    tableName,
-    term,
-    filter: undefined,
-  });
-};
-
-type Args = {
-  term: string;
-  mainColumn: string;
-  textColumn: string | undefined;
-  tableName: string;
-  filter: AnyObject | undefined;
-  db: DBHandlerClient;
-};
-const fetchSearchResults = async ({
-  mainColumn,
-  textColumn,
-  db,
-  filter,
-  tableName,
-  term,
-}: Args): Promise<FullOption[]> => {
-  const tableHandler = db[tableName];
-  if (!tableHandler?.find) return [];
-  const columns = [mainColumn, textColumn].filter(isDefined);
-
-  const termFilter =
-    term ?
-      { $or: columns.map((col) => ({ [col]: { $ilike: `%${term}%` } })) }
-    : {};
-  const finalFilter = {
-    $and: [filter, termFilter].filter((v) => !isEmpty(v)),
-  };
-
-  const res = await tableHandler.find(finalFilter, {
-    select: columns,
-    limit: OPTIONS_LIMIT,
-  });
-  return res.map((row) => ({
-    key: row[mainColumn],
-    subLabel: textColumn && row[textColumn],
-  }));
-};
-
-export const OPTIONS_LIMIT = 20;

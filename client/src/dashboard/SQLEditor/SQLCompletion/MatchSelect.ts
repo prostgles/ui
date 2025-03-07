@@ -369,7 +369,7 @@ export const MatchSelect: SQLMatcher = {
         (prevKWD?.kwd === "INTO" && ltokenIsIdentifier) ||
         (prevKWD?.kwd === "FROM" && ltokenIsIdentifier) ||
         (prevKWD?.kwd.endsWith("JOIN") && ltokenIsIdentifier) ||
-        (prevKWD?.kwd === "WHERE" && conditionIsComplete) || // !cb.thisLinePrevTokens.length ||
+        (prevKWD?.kwd === "WHERE" && conditionIsComplete) ||
         (prevKWD?.kwd === "LIMIT" && ltoken?.type === "number.sql") ||
         (prevKWD?.kwd === "OFFSET" && ltoken?.type === "number.sql") ||
         ((prevKWD?.kwd === "GROUP BY" || prevKWD?.kwd === "ORDER BY") &&
