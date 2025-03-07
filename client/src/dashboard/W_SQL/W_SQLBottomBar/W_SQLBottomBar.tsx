@@ -27,6 +27,7 @@ import type { W_SQL } from "../W_SQL";
 import type { W_SQLState } from "../W_SQL";
 import { Counter, SQL_NOT_ALLOWED } from "../W_SQL";
 import { W_SQLBottomBarProcStats } from "./W_SQLBottomBarProcStats";
+import { t } from "../../../i18n/i18nUtils";
 
 export const includes = <T extends string, ArrV extends T>(
   v: T | undefined,
@@ -143,7 +144,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
           onClose={() => setShowRunOptions(null)}
         >
           <ButtonGroup
-            label={"Execution mode"}
+            label={t.W_SQLBottomBar["Execution mode"]}
             value={w.sql_options.executeOptions ?? "block"}
             options={["full", "block", "smallest-block"]}
             onChange={(executeOptions) =>
@@ -154,7 +155,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
             }
           />
           <SwitchToggle
-            label={"Loop query execution"}
+            label={t.W_SQLBottomBar["Loop query execution"]}
             checked={loopMode.enabled}
             onChange={() => {
               setLoopMode({ ...loopMode, show: true });
@@ -169,7 +170,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
             size="medium"
             color="action"
             iconPath={mdiStopCircleOutline}
-            title="Cancel this query (Esc)"
+            title={t.W_SQLBottomBar["Cancel this query (Esc)"]}
             {...dataCommand("dashboard.window.cancelQuery")}
             loading={activeQuery.stopped?.type === "cancel"}
             onClick={() => {
@@ -180,7 +181,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
           </Btn>
           <Btn
             size="medium"
-            title="Terminate this query"
+            title={t.W_SQLBottomBar["Terminate this query"]}
             {...dataCommand("dashboard.window.terminateQuery")}
             color="danger"
             iconPath={mdiCancel}
@@ -192,7 +193,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
             Terminate
           </Btn>
           <Counter
-            title="Query running time"
+            title={t.W_SQLBottomBar["Query running time"]}
             className="p-p5 mr-1 noselect"
             from={activeQuery.started}
           />
@@ -203,7 +204,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
       : <>
           {notifEventSub ?
             <Btn
-              title="Stop LISTEN"
+              title={t.W_SQLBottomBar["Stop LISTEN"]}
               size="medium"
               color="action"
               iconPath={mdiStopCircleOutline}
@@ -214,7 +215,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
               }}
               fadeIn={true}
             >
-              Stop LISTEN
+              {t.W_SQLBottomBar["Stop LISTEN"]}
             </Btn>
           : loopMode.show ?
             <FlexRow>
@@ -225,7 +226,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
                   setLoopMode({ ...loopMode, show: false, enabled: false })
                 }
               />
-              <label>repeat every</label>
+              <label>{t.W_SQLBottomBar["repeat every"]}</label>
               <input
                 {...{ min: 0, max: 20, step: 0.1 }}
                 type="number"
@@ -239,13 +240,13 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
                   })
                 }
               />
-              <label>seconds</label>
+              <label>{t.W_SQLBottomBar.seconds}</label>
             </FlexRow>
           : <Btn
               {...dataCommand("dashboard.window.runQuery")}
               className="ml-p25"
               color="action"
-              title="Run query (CTRL+E, ALT+E)"
+              title={t.W_SQLBottomBar["Run query (CTRL+E, ALT+E)"]}
               disabledInfo={!db.sql ? SQL_NOT_ALLOWED : undefined}
               size="medium"
               iconPath={mdiPlay}
@@ -259,13 +260,15 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
               }}
               fadeIn={true}
             >
-              Run
+              {t.W_SQLBottomBar.Run}
             </Btn>
           }
           {activeQuery?.state === "ended" && !loopMode.show && (
             <div
               className="p-p5 mr-1 noselect fade-in"
-              title={`Query running time: ${toSecondsString(duration)}`}
+              title={t.W_SQLBottomBar["Query running time: "]({
+                duration: toSecondsString(duration),
+              })}
             >
               {notifEventSub ? "LISTEN..." : toSecondsString(duration)}
             </div>
@@ -356,9 +359,9 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
               (limitWasReached ? "text-warning" : "")
             }
             style={{ marginRight: "1em" }}
-            title="Clear value to show all rows"
+            title={t.W_SQLBottomBar["Clear value to show all rows"]}
           >
-            <label className="mr-p5">Limit</label>
+            <label className="mr-p5">{t.W_SQLBottomBar.Limit}</label>
             <input
               id={"dd" + w.limit}
               type="number"
@@ -379,7 +382,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
             />
           </div>
           <Btn
-            title="Show/Hide table"
+            title={t.W_SQLBottomBar["Show/Hide table"]}
             iconPath={mdiTable}
             className="mr-1"
             onClick={(e) => {
@@ -402,7 +405,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
             }}
           />
           <Btn
-            title="Show/Hide code editor"
+            title={t.W_SQLBottomBar["Show/Hide code editor"]}
             iconPath={mdiChevronDown}
             style={{
               transform: `rotate(${hideCodeEditor ? 0 : 180}deg)`,
@@ -411,7 +414,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
             onClick={toggleCodeEditor}
           />
           <Btn
-            title="Show/Hide notices"
+            title={t.W_SQLBottomBar["Show/Hide notices"]}
             iconPath={mdiAlertOutline}
             color={noticeSub ? "action" : undefined}
             className="mr-1"

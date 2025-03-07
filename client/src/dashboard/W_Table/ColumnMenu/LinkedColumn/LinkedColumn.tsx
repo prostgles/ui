@@ -18,6 +18,7 @@ import type { ColumnConfig } from "../ColumnMenu";
 import { JoinPathSelectorV2, getAllJoins } from "../JoinPathSelectorV2";
 import { LinkedColumnFooter } from "./LinkedColumnFooter";
 import { LinkedColumnSelect } from "./LinkedColumnSelect";
+import { t } from "../../../../i18n/i18nUtils";
 
 export type LinkedColumnProps = {
   tables: DBSchemaTablesWJoins;
@@ -41,9 +42,9 @@ const JOIN_TYPES = [
 ] as const;
 
 export const NESTED_COLUMN_DISPLAY_MODES = [
-  { key: "row", label: "Row" },
-  { key: "column", label: "Column" },
-  { key: "no-headers", label: "No headers" },
+  { key: "row", label: t.LinkedColumn["Row"] },
+  { key: "column", label: t.LinkedColumn["Column"] },
+  { key: "no-headers", label: t.LinkedColumn["No headers"] },
 ] as const;
 
 export const LinkedColumn = (props: LinkedColumnProps) => {
@@ -65,7 +66,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
   }, [currentColumn, tables, w.table_name]);
   const newColumnNameError =
     !props.column && currentColumn && getCol(currentColumn.name) ?
-      "Column name already used. Change to another"
+      t.LinkedColumn["Column name already used. Change to another"]
     : undefined;
 
   const updateColumn = useCallback(
@@ -84,8 +85,10 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
   const nestedColumns = currentColumn?.nested?.columns;
   const disabledInfo =
     newColumnNameError ??
-    (!nestedColumns?.filter((c) => c.show).length ? "Must select columns"
-    : !props.column?.nested && !currentColumn ? "Must select a table"
+    (!nestedColumns?.filter((c) => c.show).length ?
+      t.LinkedColumn["Must select columns"]
+    : !props.column?.nested && !currentColumn ?
+      t.LinkedColumn["Must select a table"]
     : undefined);
 
   useEffect(() => {
@@ -100,7 +103,11 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
   return (
     <FlexCol className="LinkedColumn gap-2">
       <InfoRow color="info" variant="naked" className=" " iconPath="">
-        Join to and show data from tables that are related through a
+        {
+          t.LinkedColumn[
+            "Join to and show data from tables that are related through a"
+          ]
+        }
         <a
           className="ml-p25"
           href="https://www.postgresql.org/docs/current/tutorial-fk.html"
@@ -112,7 +119,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
       {currentColumn && (
         <FormFieldDebounced
           id="nested-col-name"
-          label={"Column label"}
+          label={t.LinkedColumn["Column label"]}
           value={currentColumn.name}
           error={newColumnNameError}
           onChange={(newColName) => {
@@ -181,15 +188,18 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
       />
       {currentColumn && (
         <>
-          <ExpandSection iconPath={mdiDotsHorizontal} label="More options">
+          <ExpandSection
+            iconPath={mdiDotsHorizontal}
+            label={t.LinkedColumn["More options"]}
+          >
             {currentColumn.nested && (
               <FlexRowWrap className="ai-end">
                 <Select
-                  label={"Layout"}
+                  label={t.LinkedColumn["Layout"]}
                   fullOptions={NESTED_COLUMN_DISPLAY_MODES}
                   disabledInfo={
                     currentColumn.nested.chart ?
-                      "Must disable chart first"
+                      t.LinkedColumn["Must disable chart first"]
                     : undefined
                   }
                   value={currentColumn.nested.displayMode}
@@ -201,7 +211,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
             )}
             <FlexRowWrap>
               <Select
-                label={"Join type"}
+                label={t.LinkedColumn["Join type"]}
                 value={currentColumn.nested?.joinType}
                 fullOptions={JOIN_TYPES}
                 onChange={(joinType) => {
@@ -211,7 +221,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
               {currentColumn.nested && (
                 <FormFieldDebounced
                   id="nested-col-limit"
-                  label={"Limit"}
+                  label={t.W_SQLBottomBar.Limit}
                   optional={true}
                   value={currentColumn.nested.limit}
                   type="number"

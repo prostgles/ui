@@ -1,4 +1,5 @@
 e2e/playwright-report/trace/
-*.json
+server/*.json
+client/*.json
 .vscode/
 *.d.ts

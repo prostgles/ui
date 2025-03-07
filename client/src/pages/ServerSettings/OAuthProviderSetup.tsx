@@ -17,6 +17,7 @@ import type { AuthProviderProps } from "./AuthProvidersSetup";
 import { OAuthProviderOptions } from "../../../../commonTypes/OAuthUtils";
 import { tout } from "../ElectronSetup";
 import { Icon } from "../../components/Icon/Icon";
+import { t } from "../../i18n/i18nUtils";
 
 type P = AuthProviderProps & {
   provider: keyof Omit<
@@ -82,9 +83,10 @@ export const OAuthProviderSetup = ({
         <SwitchToggle
           className="ml-auto"
           disabledInfo={
-            !authProviders[provider] ? "Must configure the provider first"
+            !authProviders[provider] ?
+              t.OAuthProviderSetup["Must configure the provider first"]
             : !localAuth ?
-              "Must provide a client ID and secret"
+              t.OAuthProviderSetup["Must provide a client ID and secret"]
             : undefined
           }
           checked={!!authProviders[provider]?.enabled}
@@ -96,12 +98,12 @@ export const OAuthProviderSetup = ({
       }
     >
       <SwitchToggle
-        label={"Enabled"}
+        label={t.common.Enabled}
         checked={!!localAuth?.enabled}
         disabledInfo={
           !localAuth?.clientID &&
           !localAuth?.clientSecret &&
-          "Must provide a client ID and secret"
+          t.OAuthProviderSetup["Must provide a client ID and secret"]
         }
         onChange={async (enabled) => {
           setLocalAuth({
@@ -112,7 +114,7 @@ export const OAuthProviderSetup = ({
       {isCustomOAuth(localAuth) && (
         <>
           <FormField
-            label={"Display Name"}
+            label={t.OAuthProviderSetup["Display Name"]}
             value={localAuth?.displayName}
             onChange={async (displayName) => {
               setLocalAuth({
@@ -121,7 +123,7 @@ export const OAuthProviderSetup = ({
             }}
           />
           <FormField
-            label={"Display Icon"}
+            label={t.OAuthProviderSetup["Display Icon"]}
             value={localAuth?.displayIconPath}
             onChange={async (displayIconPath) => {
               setLocalAuth({
@@ -130,7 +132,7 @@ export const OAuthProviderSetup = ({
             }}
           />
           <FormField
-            label={"Authorization URL"}
+            label={t.OAuthProviderSetup["Authorization URL"]}
             value={localAuth?.authorizationURL}
             onChange={async (authorizationURL) => {
               setLocalAuth({
@@ -139,7 +141,7 @@ export const OAuthProviderSetup = ({
             }}
           />
           <FormField
-            label={"Token URL"}
+            label={t.OAuthProviderSetup["Token URL"]}
             value={localAuth?.tokenURL}
             onChange={async (tokenURL) => {
               setLocalAuth({
@@ -150,7 +152,7 @@ export const OAuthProviderSetup = ({
         </>
       )}
       <FormField
-        label={"Client ID"}
+        label={t.OAuthProviderSetup["Client ID"]}
         value={localAuth?.clientID}
         onChange={async (clientID) => {
           setLocalAuth({
@@ -159,7 +161,7 @@ export const OAuthProviderSetup = ({
         }}
       />
       <FormField
-        label={"Client Secret"}
+        label={t.OAuthProviderSetup["Client Secret"]}
         value={localAuth?.clientSecret}
         onChange={async (clientSecret) => {
           setLocalAuth({
@@ -168,7 +170,7 @@ export const OAuthProviderSetup = ({
         }}
       />
       <FormField
-        label={"Scopes"}
+        label={t.OAuthProviderSetup.Scopes}
         fullOptions={PROVIDER_INFO[provider].scopes}
         multiSelect={true}
         value={localAuth?.authOpts?.scope}
@@ -184,7 +186,7 @@ export const OAuthProviderSetup = ({
       />
       {"prompts" in providerInfo && (
         <FormField
-          label={"Prompt"}
+          label={t.OAuthProviderSetup.Prompt}
           value={msftAuthOpts?.prompt}
           fullOptions={providerInfo.prompts}
           onChange={(prompt) =>
@@ -195,16 +197,20 @@ export const OAuthProviderSetup = ({
               } as typeof msftAuthOpts,
             })
           }
-          hint="Indicates the type of user interaction that is required."
+          hint={
+            t.OAuthProviderSetup[
+              "Indicates the type of user interaction that is required."
+            ]
+          }
         />
       )}
       <FormField
-        label={"Return URL"}
+        label={t.OAuthProviderSetup["Return URL"]}
         readOnly={true}
         value={returnURL}
         rightIcons={
           <Btn
-            title="Copy to clipboard"
+            title={t.common["Copy to clipboard"]}
             iconPath={mdiContentCopy}
             onClickPromise={async () => {
               navigator.clipboard.writeText(returnURL);
@@ -217,7 +223,7 @@ export const OAuthProviderSetup = ({
         <FooterButtons
           footerButtons={[
             {
-              label: "Save",
+              label: t.common.Save,
               color: "action",
               variant: "filled",
               onClickPromise: () => onSave(),

@@ -30,6 +30,7 @@ import { TableConfig } from "../TableConfig/TableConfig";
 import { PublishedMethods } from "../W_Method/PublishedMethods";
 import { OnMountFunction } from "./OnMountFunction";
 import { useConnectionConfigSearchParams } from "./useConnectionConfigSearchParams";
+import { t } from "../../i18n/i18nUtils";
 
 type ConnectionConfigProps = Pick<
   React.HTMLAttributes<HTMLDivElement>,
@@ -45,12 +46,12 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
   const disabledText =
     (dbs.access_control as any)?.update ?
       undefined
-    : "Must be admin to access this";
+    : t.ConnectionConfig["Must be admin to access this"];
   const { isElectron } = serverState;
   const acParams = useAccessControlSearchParams();
   const sectionItems = {
     details: {
-      label: "Connection details",
+      label: t.ConnectionConfig["Connection details"],
       leftIconPath: mdiPencil,
       disabledText,
       listProps: dataCommand("config.details"),
@@ -65,7 +66,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
       ),
     },
     status: {
-      label: "Status monitor",
+      label: t.ConnectionConfig["Status monitor"],
       listProps: dataCommand("config.status"),
       leftIconPath: mdiChartLine,
       disabledText:
@@ -81,7 +82,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           />,
     },
     access_control: {
-      label: "Access control",
+      label: t.ConnectionConfig["Access control"],
       listProps: dataCommand("config.ac"),
       leftIconPath: mdiAccountMultiple,
       disabledText:
@@ -89,7 +90,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
       content: <AccessControl className="min-h-0" prgl={prgl} {...acParams} />,
     },
     file_storage: {
-      label: "File storage",
+      label: t.ConnectionConfig["File storage"],
       listProps: dataCommand("config.files"),
       leftIconPath: mdiImage,
       disabledText:
@@ -97,14 +98,14 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
       content: <FileTableConfigControls {...props} />,
     },
     backups: {
-      label: "Backup/Restore",
+      label: t.ConnectionConfig["Backup/Restore"],
       listProps: dataCommand("config.bkp"),
       leftIconPath: mdiDatabaseSync,
       disabledText,
       content: <BackupsControls {...props} />,
     },
     API: {
-      label: "API",
+      label: t.ConnectionConfig["API"],
       listProps: dataCommand("config.api"),
       leftIconPath: mdiApplicationBracesOutline,
       disabledText:
@@ -114,7 +115,10 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
     table_config: {
       label: (
         <>
-          Table config <span className="text-2 font-14">(experimental)</span>
+          {t.ConnectionConfig["Table config"]}{" "}
+          <span className="text-2 font-14">
+            {t.ConnectionConfig.experimental}
+          </span>
         </>
       ),
       listProps: dataCommand("config.tableConfig"),
@@ -124,8 +128,10 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
     methods: {
       label: (
         <>
-          Server-side functions{" "}
-          <span className="text-2 font-14">(experimental)</span>
+          {t.ConnectionConfig["Server-side functions"]}{" "}
+          <span className="text-2 font-14">
+            ({t.ConnectionConfig.experimental})
+          </span>
         </>
       ),
       listProps: dataCommand("config.methods"),

@@ -9,6 +9,7 @@ import { EmailAuthSetup } from "./EmailAuthSetup";
 import { OAuthProviderSetup } from "./OAuthProviderSetup";
 import { useAsyncEffectQueue } from "prostgles-client/dist/prostgles";
 import Select from "../../components/Select/Select";
+import { t } from "../../i18n/i18nUtils";
 
 export type AuthProvidersConfig = Extract<
   DBSSchema["global_settings"]["auth_providers"],
@@ -113,8 +114,8 @@ export const AuthProviderSetup = ({
     <FlexCol className="p-1 f-1">
       <FlexCol className="p-1 gap-2">
         <FormField
-          label={"Website URL"}
-          hint="Used for redirect uri"
+          label={t.AuthProviderSetup["Website URL"]}
+          hint={t.AuthProviderSetup["Used for redirect uri"]}
           value={global_settings.auth_providers?.website_url}
           onChange={async (website_url) => {
             updateAuth({
@@ -124,7 +125,7 @@ export const AuthProviderSetup = ({
           }}
         />
         <Select
-          label="Default user type"
+          label={t.AuthProviderSetup["Default user type"]}
           value={auth_providers?.created_user_type ?? "default"}
           fullOptions={
             userTypes?.map((ut) => ({
@@ -135,7 +136,9 @@ export const AuthProviderSetup = ({
           onChange={async (default_user_type) => {
             if (default_user_type === "admin") {
               const result = window.confirm(
-                "Warning: You are setting the default user type to 'admin'. This means that new users will be granted the highest level of access!",
+                t.AuthProviderSetup[
+                  "Warning: You are setting the default user type to 'admin'. This means that new users will be granted the highest level of access!"
+                ],
               );
               if (!result) return;
             }
@@ -146,12 +149,19 @@ export const AuthProviderSetup = ({
           }}
         />
         <InfoRow variant="naked" iconPath={""} color="info">
-          The default user type assigned to new users. Defaults to 'default'
+          {
+            t.AuthProviderSetup[
+              "The default user type assigned to new users. Defaults to 'default'"
+            ]
+          }
         </InfoRow>
         {auth_providers?.created_user_type === "admin" && (
           <InfoRow variant="filled" color="danger">
-            Warning: The default user type is set to 'admin'. This will allow
-            new users to access all resources.
+            {
+              t.AuthProviderSetup[
+                "Warning: You are setting the default user type to 'admin'. This means that new users will be granted the highest level of access!"
+              ]
+            }
           </InfoRow>
         )}
       </FlexCol>

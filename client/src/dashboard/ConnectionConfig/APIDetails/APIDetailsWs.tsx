@@ -9,6 +9,7 @@ import PopupMenu from "../../../components/PopupMenu";
 import { download } from "../../W_SQL/W_SQL";
 import { APICodeExamples } from "./APICodeExamples";
 import type { APIDetailsProps } from "./APIDetails";
+import { t } from "../../../i18n/i18nUtils";
 
 const AllowedOriginCheck = ({ dbs }: Pick<APIDetailsProps, "dbs">) => {
   const { data: serverSettings } = dbs.global_settings.useSubscribeOne({});
@@ -21,19 +22,21 @@ const AllowedOriginCheck = ({ dbs }: Pick<APIDetailsProps, "dbs">) => {
       <PopupMenu
         button={
           <Btn iconPath={mdiAlert} color="warn" variant="faded">
-            Allowed origin not set
+            {t.APIDetailsWs["Allowed origin not set"]}
           </Btn>
         }
         clickCatchStyle={{ opacity: 0.2 }}
         contentStyle={{ maxWidth: "500px" }}
         footerButtons={(pClose) => [
-          { label: "Close", onClick: pClose },
+          { label: t.common.Close, onClick: pClose },
           {
-            label: "Confirm",
+            label: t.common.Confirm,
             color: "action",
             variant: "filled",
             disabledInfo:
-              !allowed_origin ? "Allowed origin is required" : undefined,
+              !allowed_origin ?
+                t.APIDetailsWs["Allowed origin is required"]
+              : undefined,
             onClickPromise: async () => {
               await dbs.global_settings.update({}, { allowed_origin });
             },
@@ -42,16 +45,21 @@ const AllowedOriginCheck = ({ dbs }: Pick<APIDetailsProps, "dbs">) => {
         render={() => (
           <FlexCol>
             <InfoRow className="ws-pre">
-              Allowed origin specifies which domains can access this app in a
-              cross-origin manner. Sets the Access-Control-Allow-Origin header.
-              Use '*' or a specific URL to allow API access
+              {
+                t.APIDetailsWs[
+                  "Allowed origin specifies which domains can access this app in a cross-origin manner. Sets the Access-Control-Allow-Origin header. Use '*' or a specific URL to allow API access"
+                ]
+              }
             </InfoRow>
             <p className="ta-left">
-              For testing it is recommended to use "*" as the allowed origin
-              value
+              {
+                t.APIDetailsWs[
+                  'For testing it is recommended to use "*" as the allowed origin value'
+                ]
+              }
             </p>
             <FormField
-              label={"Allowed origin"}
+              label={t.APIDetailsWs["Allowed origin"]}
               value={allowed_origin}
               onChange={setAllowedOrigin}
             />
@@ -82,26 +90,31 @@ export const APIDetailsWs = ({
 
   return (
     <FlexCol>
-      <h4 className="m-0 p-0">Websocket API (recommended)</h4>
+      <h4 className="m-0 p-0">
+        {t.APIDetailsWs["Websocket API (recommended)"]}
+      </h4>
       <div className=" ">
-        Realtime Isomorphic API using{" "}
+        {t.APIDetailsWs["Realtime Isomorphic API using"]}{" "}
         <a
           target="_blank"
           href="https://github.com/prostgles/prostgles-client-js"
         >
           prostgles-client
         </a>{" "}
-        library. End-to-end type-safety between client & server using the
-        database Typescript schema provided below:
+        {
+          t.APIDetailsWs[
+            "library. End-to-end type-safety between client & server using the database Typescript schema provided below:"
+          ]
+        }
       </div>
 
       {!!(dbs as any).global_settings && <AllowedOriginCheck dbs={dbs} />}
       <FlexRow className="ai-end mb-1 ">
         <PopupMenu
-          title="Examples"
+          title={t.APIDetailsWs.Examples}
           button={
             <Btn variant="filled" iconPath={mdiCodeBraces} color="action">
-              Examples
+              {t.APIDetailsWs.Examples}
             </Btn>
           }
           onClickClose={false}
@@ -117,9 +130,11 @@ export const APIDetailsWs = ({
           }
         />
         <Btn
-          title="Download typescript schema"
+          title={t.APIDetailsWs["Download typescript schema"]}
           disabledInfo={
-            dbsMethods.getConnectionDBTypes ? undefined : "Not permitted"
+            dbsMethods.getConnectionDBTypes ? undefined : (
+              t.common["Not permitted"]
+            )
           }
           onClick={() => {
             download(
@@ -132,7 +147,7 @@ export const APIDetailsWs = ({
           variant="faded"
           color="action"
         >
-          Database schema types
+          {t.APIDetailsWs["Database schema types"]}
         </Btn>
       </FlexRow>
     </FlexCol>

@@ -63,7 +63,7 @@
       "build/**/*",
       "ui/**/*",
       "images/**/*"
-    ], 
+    ],
     "mac": {
       "icon": "./images/rounded/icon512.png",
       "artifactName": "${productName}-${version}.${ext}",

@@ -6,6 +6,7 @@ import Btn from "../../components/Btn";
 import { FlexCol } from "../../components/Flex";
 import Popup from "../../components/Popup/Popup";
 import SmartForm from "../SmartForm/SmartForm";
+import { t } from "../../i18n/i18nUtils";
 
 export type LLMChatOptionsProps = Pick<Prgl, "dbs" | "dbsTables" | "theme"> & {
   prompts: DBSSchema["llm_prompts"][] | undefined;
@@ -20,7 +21,7 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
   return (
     <>
       <Btn
-        title="Chat settings"
+        title={t.AskLLMChatHeader["Chat settings"]}
         size="large"
         variant="icon"
         iconProps={{
@@ -38,7 +39,7 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
           anchorEl={chatRootDiv}
           positioning="left"
           clickCatchStyle={{ opacity: 1 }}
-          title="Chat settings"
+          title={t.AskLLMChatHeader["Chat settings"]}
           content={
             <FlexCol>
               <SmartForm

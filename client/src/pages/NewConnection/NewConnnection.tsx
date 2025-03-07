@@ -31,6 +31,7 @@ import PopupMenu from "../../components/PopupMenu";
 import { Icon } from "../../components/Icon/Icon";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
+import { t } from "../../i18n/i18nUtils";
 
 export const getSqlErrorText = (e: any) => {
   let objDetails: [string, any][] = [];
@@ -211,7 +212,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
     if (!dbsMethods.createConnection || !dbsMethods.deleteConnection) {
       return (
         <InfoRow color="warning" className="mt-2">
-          You do not have sufficient privileges to access this
+          {t.common["You do not have sufficient privileges to access this"]}
         </InfoRow>
       );
     }
@@ -219,8 +220,8 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
     if (conNotFound) {
       return (
         <FlexCol className="m-auto">
-          <p>Connection not found</p>
-          <NavLink to="/">Go back to connection</NavLink>
+          <p>{t.NewConnection["Connection not found"]}</p>
+          <NavLink to="/">{t.NewConnection["Go back to connections"]}</NavLink>
         </FlexCol>
       );
     }
@@ -291,7 +292,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
             to={API_PATH_SUFFIXES.DASHBOARD}
           >
             <Icon path={mdiArrowLeft} size={1} />
-            <div className="ml-p5">Connections</div>
+            <div className="ml-p5">{t.NewConnection.Connections}</div>
           </NavLink>
         )}
 
@@ -309,7 +310,8 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
           >
             {mode === "clone" && origCon && (
               <InfoRow color="action">
-                Cloning connection: <strong>{getServerInfo(origCon)}</strong>
+                {t.NewConnection["Cloning connection"]}:{" "}
+                <strong>{getServerInfo(origCon)}</strong>
               </InfoRow>
             )}
             {showTitle && (
@@ -355,7 +357,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
             {mode === "edit" && (
               <CodeConfirmation
                 positioning="center"
-                title={"Delete connection"}
+                title={t.NewConnection["Delete connection"]}
                 fixedCode={dropDatabase ? c.db_name : c.name}
                 button={
                   <Btn
@@ -364,18 +366,24 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                     variant="outline"
                     data-command="Connection.edit.delete"
                   >
-                    Delete...
+                    {t.common.Delete}...
                   </Btn>
                 }
                 message={
                   <div className="flex-col h-fit gap-1">
                     <InfoRow variant="naked" iconPath="">
-                      Any related dashboard content will also be deleted
+                      {
+                        t.NewConnection[
+                          "Any related dashboard content will also be deleted"
+                        ]
+                      }
                     </InfoRow>
 
                     <PopupMenu
-                      title="Related data"
-                      button={<Btn variant="outline">Related data</Btn>}
+                      title={t.common["Related data"]}
+                      button={
+                        <Btn variant="outline">{t.common["Related data"]}</Btn>
+                      }
                       clickCatchStyle={{ opacity: 0 }}
                       onClickClose={false}
                     >
@@ -394,7 +402,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                     </PopupMenu>
                     <SwitchToggle
                       data-command="Connection.edit.delete.dropDatabase"
-                      label={"Drop database as well"}
+                      label={t.NewConnection["Drop database as well"]}
                       checked={dropDatabase}
                       onChange={(dropDatabase) =>
                         this.setState({ dropDatabase })
@@ -404,10 +412,14 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                       className="ws-pre"
                       style={{ opacity: dropDatabase ? 1 : 0 }}
                     >
-                      You are about to drop <strong>{c.db_name}</strong>{" "}
-                      database.
+                      {t.NewConnection["You are about to drop"]}{" "}
+                      <strong>{c.db_name}</strong> {t.NewConnection.database}.
                       <br></br>
-                      Ensure data is backed up. This action is not reversible
+                      {
+                        t.NewConnection[
+                          "Ensure data is backed up. This action is not reversible"
+                        ]
+                      }
                     </InfoRow>
                     <ErrorComponent error={error} />
                   </div>
@@ -427,7 +439,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                       setMsg({ loading: 0 });
                     }}
                   >
-                    Delete
+                    {t.common.Delete}
                   </Btn>
                 )}
               />
@@ -435,7 +447,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
 
             {mode === "edit" && (
               <Btn
-                title={"Clone connection"}
+                title={t.NewConnection["Clone connection"]}
                 className={"f-0 mx-1 w-fit "}
                 variant="outline"
                 color="action"
@@ -446,7 +458,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                   this.setState({ mode: "clone" });
                 }}
               >
-                Clone
+                {t.common.Clone}
               </Btn>
             )}
 
@@ -461,7 +473,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                   mode === "edit" &&
                   JSON.stringify(c) === JSON.stringify(origCon)
                 ) ?
-                  "Nothing to update"
+                  t.common["Nothing to update"]
                 : undefined
               }
               onClickMessage={async (e, setMsg) => {
@@ -477,7 +489,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                     }))
                   ) {
                     this.setState({
-                      nameErr: "Already exists. Chose another name",
+                      nameErr: t.common["Already exists. Chose another name"],
                     });
                     setMsg({ loading: 0 });
                     return;
@@ -487,7 +499,11 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                     await dbsMethods.createConnection!(conn);
 
                   onUpserted?.(connection);
-                  setMsg({ ok: mode !== "edit" ? "Created!" : "Updated!" });
+                  setMsg({
+                    ok:
+                      (mode !== "edit" ? t.common.Create : t.common.Update) +
+                      "!",
+                  });
                 } catch (e: any) {
                   console.error(e);
                   setMsg({ loading: 0 });
@@ -496,7 +512,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                 }
               }}
             >
-              {mode !== "edit" ? "Create" : "Update"}
+              {mode !== "edit" ? t.common.Create : t.common.Update}
             </Btn>
           </div>
         </div>
