@@ -22,7 +22,6 @@ import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
 import Select from "../../components/Select/Select";
 import { CONTEXT_FILTER_OPERANDS } from "../AccessControl/ContextFilter";
 import RTComp from "../RTComp";
-import { colIs } from "../W_Table/ColumnMenu/ColumnSelect";
 import { JOIN_FILTER_TYPES } from "./AddJoinFilter";
 import { AgeFilterTypes, getDefaultAgeFilter } from "./AgeFilter";
 import { GeoFilterTypes, getDefaultGeoFilter } from "./GeoFilter";
@@ -33,6 +32,7 @@ import {
 } from "./smartFilterUtils";
 import "./FilterWrapper.css";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
+import { colIs } from "../SmartForm/SmartFormField/fieldUtils";
 
 export type FilterWrapperProps = {
   db: DBHandlerClient;

@@ -253,3 +253,38 @@ export const getFinalFilter = (detailedFilter, context, opts) => {
     }
     return getFilter(detailedFilter, opts === null || opts === void 0 ? void 0 : opts.columns);
 };
+export const simplifyFilter = (f) => {
+    var _a, _b, _c, _d;
+    let result = f;
+    if (result) {
+        while ((result &&
+            "$and" in result &&
+            Array.isArray(result.$and) &&
+            result.$and.length < 2) ||
+            (result &&
+                "$or" in result &&
+                Array.isArray(result.$or) &&
+                result.$or.length < 2)) {
+            if (result.$and)
+                result = (_b = (_a = result.$and) === null || _a === void 0 ? void 0 : _a[0]) !== null && _b !== void 0 ? _b : {};
+            if (result === null || result === void 0 ? void 0 : result.$or)
+                result = (_d = (_c = result.$or) === null || _c === void 0 ? void 0 : _c[0]) !== null && _d !== void 0 ? _d : {};
+        }
+        result !== null && result !== void 0 ? result : (result = {});
+    }
+    return result;
+};
+export const getSmartGroupFilter = (detailedFilter = [], extraFilters, operand) => {
+    let input = detailedFilter;
+    if (extraFilters === null || extraFilters === void 0 ? void 0 : extraFilters.detailed) {
+        input = [...detailedFilter, ...extraFilters.detailed];
+    }
+    let output = input.map((f) => getFinalFilter(f));
+    if (extraFilters === null || extraFilters === void 0 ? void 0 : extraFilters.filters) {
+        output = output.concat(extraFilters.filters);
+    }
+    const result = simplifyFilter({
+        [`$${operand || "and"}`]: output.filter(isDefined),
+    });
+    return result !== null && result !== void 0 ? result : {};
+};

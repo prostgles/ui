@@ -1,3 +1,4 @@
+import { t } from "./i18n/i18nUtils";
 import type { ReactChild } from "react";
 import React, { useState } from "react";
 import { NavLink, Navigate, Route, Routes as Switch } from "react-router-dom";
@@ -46,8 +47,6 @@ import { useAppTheme } from "./theme/useAppTheme";
 import { useDBSConnection } from "./useDBSConnection";
 import { isDefined } from "./utils";
 import { API_PATH_SUFFIXES } from "../../commonTypes/utils";
-import { t } from "./i18n/i18nUtils";
-export * from "./appUtils";
 
 export type ClientUser = {
   sid: string;
@@ -90,7 +89,7 @@ export type PrglState = Pick<
   setTitle: (content: ReactChild) => void;
 };
 export type PrglCore = {
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   methods: MethodHandler;
   tables: CommonWindowProps["tables"];
 };
@@ -361,3 +360,5 @@ export const App = () => {
     </FlexCol>
   );
 };
+
+export * from "./appUtils";

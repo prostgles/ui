@@ -63,7 +63,7 @@ export const Sessions = ({
   return (
     <SmartCardList
       title={tokenMode ? undefined : ({ count }) => `${sessionLabel} ${count}`}
-      db={dbs as any}
+      db={dbs}
       theme={theme}
       methods={dbsMethods}
       tableName="sessions"

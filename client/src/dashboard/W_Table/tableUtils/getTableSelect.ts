@@ -4,7 +4,6 @@ import { isDefined } from "prostgles-types";
 import { isEmpty } from "../../../utils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
-import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter";
 import { getTimeChartSelectParams } from "../../W_TimeChart/getTimeChartData";
 import {
   getDesiredTimeChartBinSize,
@@ -13,11 +12,13 @@ import {
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
 import type { MinMax, MinMaxVals } from "../W_Table";
 import { getFullColumnConfig } from "./tableUtils";
+import type { DBS } from "../../Dashboard/DBS";
+import { getSmartGroupFilter } from "../../../../../commonTypes/filterUtils";
 
 export const getTableSelect = async (
   w: Pick<WindowData<"table">, "columns" | "table_name">,
   tables: CommonWindowProps["tables"],
-  db: DBHandlerClient,
+  db: DBHandlerClient | DBS,
   filter: AnyObject,
   withoutData = false,
 ): Promise<{ barchartVals?: AnyObject; select: AnyObject }> => {
@@ -107,7 +108,7 @@ export const getComputedColumnSelect = (
 
 export const getNestedColumnSelect = async (
   c: ColumnConfig,
-  db: DBHandlerClient,
+  db: DBHandlerClient | DBS,
   tables: CommonWindowProps["tables"],
   withoutData = false,
 ): Promise<{ select: AnyObject; dateExtent?: MinMax<Date> } | undefined> => {

@@ -38,7 +38,7 @@ export const MCPServersHeader = ({
           <SmartForm
             label=""
             theme={theme}
-            db={dbs as any}
+            db={dbs}
             methods={dbsMethods}
             columnFilter={(c) =>
               [
@@ -90,7 +90,7 @@ export const MCPServersHeader = ({
           fullOptions={(tools ?? []).map((t) => ({
             key: t.id,
             label: `${t.server_name} ${t.name}`,
-            subLabel: t.description ?? "",
+            subLabel: t.description,
           }))}
           onChange={(id) => {
             setSelectedTool(tools?.find((t) => t.id === id));

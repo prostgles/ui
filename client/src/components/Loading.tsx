@@ -2,7 +2,7 @@ import React from "react";
 import "./Loading.css";
 import RTComp from "../dashboard/RTComp";
 import { classOverride, FlexRow } from "./Flex";
-import { tout } from "../pages/ElectronSetup";
+import { tout } from "../utils";
 export const pageReload = async (reason: string) => {
   console.log("pageReload due to: ", reason);
   await tout(200);

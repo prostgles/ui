@@ -55,7 +55,7 @@ export default class UserManager extends RTComp<ExtraProps, S> {
         <SmartTable
           theme={theme}
           className="w-full"
-          db={dbs as any}
+          db={dbs}
           methods={dbsMethods}
           titlePrefix={t.Users["Prostgles UI users"]}
           tableName="users"

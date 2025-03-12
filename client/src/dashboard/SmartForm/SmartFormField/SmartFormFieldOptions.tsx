@@ -4,13 +4,17 @@ import type {
   TableInfo,
   ValidatedColumnInfo,
 } from "prostgles-types";
-import { CONTENT_TYPE_TO_EXT, getKeys } from "prostgles-types";
+import {
+  CONTENT_TYPE_TO_EXT,
+  getKeys,
+  getPossibleNestedInsert,
+} from "prostgles-types";
 import React, { useState } from "react";
 import Btn from "../../../components/Btn";
 import SmartTable from "../../SmartTable";
 import type { SmartFormProps } from "../SmartForm";
 import SmartForm from "../SmartForm";
-import { columnIsReadOnly } from "./SmartFormField";
+import { columnIsReadOnly } from "./fieldUtils";
 
 type P = Pick<
   SmartFormProps,
@@ -26,7 +30,7 @@ type P = Pick<
 > & {
   column: ValidatedColumnInfo;
   row: AnyObject;
-  referencedInsertData?: AnyObject;
+  referencedInsertData?: AnyObject[];
   tableInfo: TableInfo;
   action: "update" | "insert" | "view";
   /**
@@ -35,11 +39,14 @@ type P = Pick<
   setReferencedInsertData: (
     column: Pick<ValidatedColumnInfo, "is_pkey" | "name">,
     newVal: any,
+    showTableForm?: boolean,
   ) => void;
   setData: (
     column: Pick<ValidatedColumnInfo, "is_pkey" | "name" | "tsDataType">,
     newVal: any,
   ) => Promise<void>;
+  showNestedInsertForm: boolean;
+  setShowNestedInsertForm: (show: boolean) => void;
 };
 
 export const SmartFormFieldOptions = ({
@@ -58,14 +65,13 @@ export const SmartFormFieldOptions = ({
   hideNullBtn,
   referencedInsertData,
   setReferencedInsertData,
+  showNestedInsertForm,
+  setShowNestedInsertForm,
 }: P) => {
   const readOnly = columnIsReadOnly(action, c);
-
-  const [showNestedInsertForm, setShowNestedInsertForm] = useState<string>();
-
   const [searchReferencedRow, setSearchReferencedRow] = useState(false);
 
-  const ref = c.references?.sort((a, b) => a.cols.length - b.cols.length)[0];
+  const ref = getPossibleNestedInsert(c, tables);
   const fileTableName = tables[0]?.info.fileTableName;
   const ftable =
     ref?.ftable ?? (c.file && fileTableName ? fileTableName : undefined);
@@ -157,9 +163,11 @@ export const SmartFormFieldOptions = ({
     } else {
       insertBtn = (
         <Btn
+          data-command="SmartFormFieldOptions.NestedInsert"
+          data-key={canInsertFTableName}
           iconPath={mdiPlus}
           onClick={() => {
-            setShowNestedInsertForm(canInsertFTableName);
+            setShowNestedInsertForm(true);
           }}
         />
       );
@@ -183,7 +191,7 @@ export const SmartFormFieldOptions = ({
   let rightContent: React.ReactNode = null;
   if (insertBtn || searchBtn) {
     rightContent = (
-      <div className="flex-row">
+      <div className="SmartFormFieldOptions flex-row">
         {searchBtn}
         {insertBtn}
       </div>
@@ -225,7 +233,7 @@ export const SmartFormFieldOptions = ({
     <>
       {searchTablePopup}
       {rightContent}
-      {showNestedInsertForm && (
+      {showNestedInsertForm && canInsertFTableName && (
         <SmartForm
           key="referenced-insert"
           asPopup={true}
@@ -234,10 +242,10 @@ export const SmartFormFieldOptions = ({
           tables={tables}
           methods={methods}
           hideNullBtn={hideNullBtn}
-          tableName={showNestedInsertForm}
+          tableName={canInsertFTableName}
           hideChangesOptions={true}
           onClose={() => {
-            setShowNestedInsertForm(undefined);
+            setShowNestedInsertForm(false);
           }}
           jsonbSchemaWithControls={jsonbSchemaWithControls}
           isReferencedInsert={{
@@ -261,12 +269,11 @@ export const SmartFormFieldOptions = ({
           onSuccess={onSuccess}
           {...(action === "insert" ?
             {
-              defaultData: referencedInsertData?.data,
+              defaultData: referencedInsertData,
               onBeforeInsert: (newRowOrRows) => {
                 const newRow =
                   Array.isArray(newRowOrRows) ? newRowOrRows[0] : newRowOrRows;
                 setReferencedInsertData(c, newRow);
-                setShowNestedInsertForm(undefined);
               },
             }
           : {})}

@@ -1,16 +1,14 @@
-import React from "react";
-import RTComp from "../../RTComp";
-import type { SearchListItem } from "../../../components/SearchList/SearchList";
-import SearchList from "../../../components/SearchList/SearchList";
-import Loading from "../../../components/Loading";
-import type { BaseFilterProps } from "../SmartFilter";
-import { getSmartGroupFilter } from "../SmartFilter";
-import type { FilterType } from "../../../../../commonTypes/filterUtils";
+import type { Primitive } from "d3";
 import type { AnyObject } from "prostgles-types";
 import { isObject } from "prostgles-types";
-import type { Primitive } from "d3";
-import { getSuggestions } from "../../SmartForm/SmartFormField/fieldUtils";
+import React from "react";
+import type { FilterType } from "../../../../../commonTypes/filterUtils";
 import { FlexRow } from "../../../components/Flex";
+import Loading from "../../../components/Loading";
+import type { SearchListItem } from "../../../components/SearchList/SearchList";
+import SearchList from "../../../components/SearchList/SearchList";
+import RTComp from "../../RTComp";
+import type { BaseFilterProps } from "../SmartFilter";
 import { fetchListFilterOptions } from "./fetchListFilterOptions";
 
 type ListFilterProps = BaseFilterProps;

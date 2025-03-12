@@ -1,32 +1,32 @@
 import React from "react";
 import "./FormField.css";
 
-import ErrorComponent from "../ErrorComponent";
-import type { FullOption } from "../Select/Select";
-import Select from "../Select/Select";
-import Btn, { FileBtn } from "../Btn";
-import List from "../List";
-import Checkbox from "../Checkbox";
 import { mdiAlertCircleOutline, mdiClose, mdiFullscreen } from "@mdi/js";
-import { InfoRow } from "../InfoRow";
+import type { ValidatedColumnInfo } from "prostgles-types";
+import { isDefined, isObject } from "prostgles-types";
 import type {
   CodeEditorJsonSchema,
   CodeEditorProps,
 } from "../../dashboard/CodeEditor/CodeEditor";
-import { CodeEditor } from "../../dashboard/CodeEditor/CodeEditor";
-import { generateUniqueID } from "../FileInput/FileInput";
-import { onFormFieldKeyDown } from "./onFormFieldKeyDown";
-import SmartFormField from "../../dashboard/SmartForm/SmartFormField/SmartFormField";
 import { ChipArrayEditor } from "../../dashboard/SmartForm/ChipArrayEditor";
-import type { ValidatedColumnInfo } from "prostgles-types";
-import { isDefined, isObject } from "prostgles-types";
-import type { LabelProps } from "../Label";
-import { Label } from "../Label";
+import { getInputType } from "../../dashboard/SmartForm/SmartFormField/fieldUtils";
+import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";
 import type { TestSelectors } from "../../Testing";
+import Btn, { FileBtn } from "../Btn";
+import Checkbox from "../Checkbox";
+import ErrorComponent from "../ErrorComponent";
+import { generateUniqueID } from "../FileInput/FileInput";
 import { classOverride } from "../Flex";
 import { Icon } from "../Icon/Icon";
+import { InfoRow } from "../InfoRow";
+import type { LabelProps } from "../Label";
+import { Label } from "../Label";
+import List from "../List";
 import Popup from "../Popup/Popup";
+import type { FullOption } from "../Select/Select";
+import Select from "../Select/Select";
 import { FormFieldCodeEditor } from "./FormFieldCodeEditor";
+import { onFormFieldKeyDown } from "./onFormFieldKeyDown";
 
 const INPUT_HINT_WRAPPER_CLASS = "input-hint-wrapper";
 const INPUT_WRAPPER_CLASS = "input-wrapper";
@@ -285,7 +285,7 @@ export default class FormField extends React.Component<
         <ChipArrayEditor
           elemTsType={arrayType.tsDataType}
           elemUdtName={arrayType.udt_name}
-          inputType={SmartFormField.getInputType({
+          inputType={getInputType({
             name: name ?? "text",
             ...arrayType,
           }).toLowerCase()}
@@ -491,7 +491,7 @@ export default class FormField extends React.Component<
           className="pr-p5 py-p5 font-16 ta-left o-auto"
           style={{ fontWeight: 500, maxHeight: "30vh" }}
         >
-          {SmartFormField.renderValue(undefined, rawValue)}
+          <RenderValue column={undefined} value={rawValue} />
         </div>
       : asTextArea ?
         <textarea
@@ -550,6 +550,7 @@ export default class FormField extends React.Component<
             onClick={(e) => {
               onChange(optional ? undefined : null, e);
             }}
+            disabledInfo="nothing to clear"
             className="rounded-r"
           />
         );

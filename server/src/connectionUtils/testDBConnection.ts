@@ -49,7 +49,8 @@ export const testDBConnection = (
   return new Promise(async (resolve, reject) => {
     const connOpts = getConnectionDetails(con as any);
     const db = pgpNoWarnings({ ...connOpts });
-    db.connect()
+    return db
+      .connect()
       .then(async function (c: pgPromise.IConnected<{}, pg.IClient>) {
         if (expectSuperUser) {
           const usessuper = await getIsSuperUser(c as any);

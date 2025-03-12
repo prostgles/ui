@@ -1,14 +1,14 @@
-import React from "react";
-import { TimeChart } from "../../../Charts/TimeChart";
-import { MediaViewer } from "../../../../components/MediaViewer";
-import { FlexRowWrap } from "../../../../components/Flex";
 import type { AnyObject } from "prostgles-types";
-import type { ColumnConfig } from "../ColumnMenu";
 import { omitKeys } from "prostgles-types";
+import React from "react";
+import { FlexRowWrap } from "../../../../components/Flex";
+import { MediaViewer } from "../../../../components/MediaViewer";
+import { TimeChart } from "../../../Charts/TimeChart";
 import type { DBSchemaTablesWJoins } from "../../../Dashboard/dashboardUtils";
-import { getColWInfo } from "../../tableUtils/getColWInfo";
-import SmartFormField from "../../../SmartForm/SmartFormField/SmartFormField";
+import { RenderValue } from "../../../SmartForm/SmartFormField/RenderValue";
 import { getYLabelFunc } from "../../../W_TimeChart/getTimeChartData";
+import { getColWInfo } from "../../tableUtils/getColWInfo";
+import type { ColumnConfig } from "../ColumnMenu";
 
 const NESTED_LIMIT = 10;
 
@@ -83,7 +83,7 @@ export const NestedColumnRender = ({
       columnWInfo?.info ?? columnWInfo?.computedConfig?.funcDef.outType;
     const renderedValue =
       columnWInfo ?
-        SmartFormField.renderValue(datType, value, true)
+        <RenderValue column={datType} value={value} />
       : JSON.stringify(value);
     return renderedValue;
   };

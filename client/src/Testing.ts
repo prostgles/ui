@@ -75,6 +75,7 @@ export const COMMANDS = {
 
   "FormField.clear": "Clear a FormField",
 
+  SmartForm: "",
   "SmartForm.close": "Close dialog",
   "SmartForm.delete": "Deletes row",
   "SmartForm.delete.confirm": "Confirms Deleting a row",
@@ -267,6 +268,7 @@ export const COMMANDS = {
   AuthNotifPopup: "",
   "ProstglesSignup.continue": "",
   "PublishedMethods.deleteFunction": "",
+  "SmartFormFieldOptions.NestedInsert": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

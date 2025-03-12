@@ -4,8 +4,10 @@ import {
   type AnyObject,
   _PG_numbers,
 } from "prostgles-types";
-import type { SmartGroupFilter } from "../../../../../commonTypes/filterUtils";
-import { getSmartGroupFilter } from "../smartFilterUtils";
+import {
+  getSmartGroupFilter,
+  type SmartGroupFilter,
+} from "../../../../../commonTypes/filterUtils";
 import type { ColumnConfig } from "../../W_Table/ColumnMenu/ColumnMenu";
 import { isObject } from "../../../../../commonTypes/publishUtils";
 import {

@@ -2,9 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/prostgles";
 import { quickClone } from "../../../utils";
-import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter";
 import Select from "../../../components/Select/Select";
-import type { SimpleFilter } from "../../../../../commonTypes/filterUtils";
+import {
+  getSmartGroupFilter,
+  type SimpleFilter,
+} from "../../../../../commonTypes/filterUtils";
 import { mdiCheckAll, mdiTableEye, mdiTableFilter } from "@mdi/js";
 import {
   omitKeys,
@@ -20,6 +22,7 @@ import type { DBSchemaTablesWJoins } from "../../Dashboard/dashboardUtils";
 import { RenderFilter } from "../../RenderFilter";
 import { FlexCol, FlexRowWrap } from "../../../components/Flex";
 import { appTheme, useReactiveState } from "../../../App";
+import type { DBS } from "../../Dashboard/DBS";
 
 export type ContextDataSchema = {
   name: string;
@@ -32,7 +35,7 @@ export type SingleGroupFilter =
 
 export type ForcedFilterControlProps = {
   detailedFilter?: SingleGroupFilter;
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   methods: MethodHandler;
   tables: DBSchemaTablesWJoins;
   tableName: string;

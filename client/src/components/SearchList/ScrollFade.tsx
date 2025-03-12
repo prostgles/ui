@@ -1,17 +1,18 @@
 import React, { useCallback } from "react";
 import type { TestSelectors } from "../../Testing";
-import { classOverride } from "../Flex";
+import { classOverride, type DivProps } from "../Flex";
 import "./ScrollFade.css";
 import { useResizeObserver } from "./useResizeObserver";
 
-type P = TestSelectors & {
-  children: React.ReactNode;
-  className?: string;
-};
+type P = TestSelectors &
+  DivProps & {
+    children: React.ReactNode;
+    className?: string;
+  };
 /**
  * Given a list of children, this component will add a fade effect to the bottom of the children if the children are scrollable
  */
-export const ScrollFade = ({ children, ...testSelectors }: P) => {
+export const ScrollFade = ({ children, ...divProps }: P) => {
   const ref = React.useRef<HTMLDivElement>(null);
   const onScroll = useCallback(() => {
     if (!ref.current) return;
@@ -44,8 +45,8 @@ export const ScrollFade = ({ children, ...testSelectors }: P) => {
   return (
     <div
       ref={ref}
-      {...testSelectors}
-      className={classOverride("ScrollFade", testSelectors.className ?? "")}
+      {...divProps}
+      className={classOverride("ScrollFade", divProps.className ?? "")}
     >
       {children}
     </div>

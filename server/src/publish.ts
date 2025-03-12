@@ -18,6 +18,7 @@ import { getSMTPWithTLS } from "./authConfig/emailProvider/getEmailSenderWithMoc
 import { getACRules } from "./ConnectionManager/ConnectionManager";
 import { testMCPServerConfig } from "./McpHub/McpHub";
 import { fetchLLMResponse } from "./publishMethods/askLLM/fetchLLMResponse";
+import { getLLMChatModel } from "./publishMethods/askLLM/askLLM";
 
 export const publish = async (
   params: PublishParams<DBGeneratedSchema>,
@@ -162,24 +163,35 @@ export const publish = async (
       },
       update: "*",
     },
+    llm_providers: isAdmin && {
+      select: "*",
+      insert: {
+        fields: "*",
+        requiredNestedInserts: [
+          {
+            ftable: "llm_models",
+          },
+        ],
+      },
+      update: "*",
+      delete: "*",
+    },
     llm_credentials: {
       select: {
-        fields: isAdmin ? "*" : { id: 1, name: 1 },
+        fields: isAdmin ? { api_key: 0 } : { id: 1, name: 1 },
         forcedFilter: isAdmin ? undefined : forcedFilterLLM,
       },
       delete: isAdmin && "*",
       insert: isAdmin && {
-        fields: { provider_id: 1, name: 1, api_key: 1 },
+        fields: { name: 1, provider_id: 1, api_key: 1 },
         forcedData,
-        postValidate: async ({ row }) => {
-          const provider = await db.llm_providers.findOne({
+        postValidate: async ({ row, dbx }) => {
+          const provider = await dbx.llm_providers.findOne({
             id: row.provider_id,
           });
-          const preferredModel = await db.llm_models.findOne({
+          const preferredModel = await getLLMChatModel(dbx, {
             provider_id: row.provider_id,
-            chat_suitability_rank: { $gt: "-1" },
           });
-          if (!preferredModel) throw "No models with credentials found";
           if (!provider) throw "Provider not found";
           await fetchLLMResponse({
             llm_model: preferredModel,

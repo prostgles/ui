@@ -221,10 +221,11 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
     isLookupTable: {
       values: {
         admin: {
-          en: "Highest access level",
+          description: "Highest access level",
         },
         public: {
-          en: "Public user. Account created on login and deleted on logout",
+          description:
+            "Public user. Account created on login and deleted on logout",
         },
         default: {},
       },

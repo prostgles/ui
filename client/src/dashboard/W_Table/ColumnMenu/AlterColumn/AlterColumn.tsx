@@ -20,12 +20,13 @@ import {
   type ColumnConstraint,
   getColumnConstraints,
 } from "./alterColumnUtilts";
+import type { DBS } from "../../../Dashboard/DBS";
 
 export type AlterColumnProps = Pick<CommonWindowProps, "suggestions"> & {
   prgl: Prgl;
   table: DBSchemaTable;
   field: string;
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   tables: DBSchemaTablesWJoins;
   onClose: VoidFunction;
 };

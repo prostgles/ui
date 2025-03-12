@@ -195,6 +195,17 @@ export const setupLLM = async (dbs: DBS) => {
           },
         ],
       },
+      {
+        id: "Prostgles",
+        api_url: "https://cloud.prostgles.com/api/v1",
+        llm_models: [
+          {
+            name: "claude-3-5-sonnet-20241022",
+            pricing_info: { input: 3, output: 15 },
+            chat_suitability_rank: "1",
+          },
+        ],
+      },
     ] satisfies (DBSSchemaForInsert["llm_providers"] & {
       llm_models: Omit<DBSSchemaForInsert["llm_models"], "provider_id">[];
     })[]);

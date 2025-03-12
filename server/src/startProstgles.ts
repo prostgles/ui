@@ -8,7 +8,7 @@ import type { InitResult } from "prostgles-server/dist/initProstgles";
 import { pickKeys } from "prostgles-types";
 import type { Server } from "socket.io";
 import type { DBS } from ".";
-import { connMgr, connectionChecker, dbsWsApiPath } from ".";
+import { connMgr, connectionChecker, dbsWsApiPath, isTesting } from ".";
 import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import type { ProstglesInitState } from "../../commonTypes/electronInit";
 import BackupManager from "./BackupManager/BackupManager";
@@ -27,6 +27,7 @@ import { publishMethods } from "./publishMethods/publishMethods";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { tableConfig } from "./tableConfig/tableConfig";
+import { cleanupTestDatabases } from "./cleanupTestDatabases";
 
 type StartArguments = {
   app: Express;
@@ -276,6 +277,9 @@ export const tryStartProstgles = async ({
 }: StartArguments): Promise<
   Pick<ProstglesInitState, "ok" | "initError" | "connectionError">
 > => {
+  /** Cleanup state for local tests */
+  await cleanupTestDatabases(con);
+
   const maxTries = 2;
   return new Promise((resolve, reject) => {
     let tries = 0;

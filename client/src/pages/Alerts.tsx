@@ -47,7 +47,7 @@ export const Alerts = (prgl: Prgl) => {
     >
       {!!alerts.length && (
         <SmartCardList
-          db={dbs as any}
+          db={dbs}
           theme={prgl.theme}
           methods={prgl.dbsMethods}
           tables={prgl.dbsTables}

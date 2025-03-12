@@ -1,7 +1,7 @@
 import { mdiDotsHorizontal } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { appTheme, useReactiveState } from "../../../../App";
+import { appTheme, useReactiveState } from "../../../../appUtils";
 import { ExpandSection } from "../../../../components/ExpandSection";
 import { FlexCol, FlexRowWrap } from "../../../../components/Flex";
 import { FormFieldDebounced } from "../../../../components/FormField/FormFieldDebounced";
@@ -19,10 +19,11 @@ import { JoinPathSelectorV2, getAllJoins } from "../JoinPathSelectorV2";
 import { LinkedColumnFooter } from "./LinkedColumnFooter";
 import { LinkedColumnSelect } from "./LinkedColumnSelect";
 import { t } from "../../../../i18n/i18nUtils";
+import type { DBS } from "../../../Dashboard/DBS";
 
 export type LinkedColumnProps = {
   tables: DBSchemaTablesWJoins;
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   w: WindowSyncItem<"table">;
   column: ColumnConfigWInfo | undefined;
   onClose: VoidFunction | undefined;

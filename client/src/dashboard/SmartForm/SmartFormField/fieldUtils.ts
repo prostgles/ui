@@ -1,15 +1,26 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
-import { isObject } from "prostgles-types";
+import {
+  _PG_bool,
+  _PG_date,
+  _PG_geometric,
+  _PG_interval,
+  _PG_json,
+  _PG_numbers,
+  _PG_postgis,
+  _PG_strings,
+  isObject,
+  TS_PG_Types,
+} from "prostgles-types";
 import { renderInterval } from "../../W_SQL/customRenderers";
-import { colIs } from "../../W_Table/ColumnMenu/ColumnSelect";
 import type { FilterColumn } from "../../SmartFilter/smartFilterUtils";
 import { getComputedColumnSelect } from "../../W_Table/tableUtils/getTableSelect";
+import type { DBS } from "../../Dashboard/DBS";
 
 export const OPTIONS_LIMIT = 20;
 export const getSuggestions = async (args: {
   table: string;
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   column: FilterColumn;
   term?: string;
   groupBy?: boolean;
@@ -198,4 +209,101 @@ export const parseDefaultValue = (
   }
 
   return value;
+};
+
+export const getInputType = (
+  c: Pick<ValidatedColumnInfo, "udt_name" | "tsDataType" | "name">,
+): string => {
+  return (
+    c.udt_name === "date" ? "date"
+    : c.udt_name.startsWith("timestamp") ? "datetime-local"
+    : c.udt_name === "time" ? "time"
+    : c.tsDataType === "boolean" ? "checkbox"
+    : ["email"].includes(c.name) ? "email"
+    : ["phone", "telephone", "phone_number", "tel"].includes(c.name) ? "tel"
+    : ["zip_code", "zipcode", "post_code", "postcode"].includes(c.name) ?
+      "postal-code"
+    : ["given-name", "first_name", "first-name"].includes(c.name) ? "given-name"
+    : ["family-name", "last_name", "last-name"].includes(c.name) ? "family-name"
+    : ["address_line1", "address_line"].includes(c.name) ? "address-line1"
+    : ["address_line2"].includes(c.name) ? "address-line2"
+    : c.tsDataType === "string" ? "text"
+    : (c.tsDataType as string)
+  );
+};
+
+export const getInputAutocomplete = (c: ValidatedColumnInfo): string => {
+  const _autocomplete_values = [
+    "address-line1",
+    "address-line2",
+    "address-line3",
+    "street_address",
+    "street",
+    "address",
+    "address-level1",
+    "address-level2",
+    "address-level3",
+    "address-level4",
+    "organization",
+    "organization-title",
+    "country",
+    "country-name",
+    "postal-code",
+    "tel",
+    "given-name",
+    "family-name",
+    "email",
+  ];
+  const autocomplete_values = _autocomplete_values.concat(
+    _autocomplete_values.map((v) => v.replaceAll("-", "_")),
+  );
+  const noAutocomplete = ["date", "timestamp", "timestamptz"].includes(
+    c.udt_name,
+  );
+  return (
+    noAutocomplete ? "off"
+    : autocomplete_values.includes(c.name.toLowerCase()) ?
+      c.name.replaceAll("_", "-").toLowerCase()
+    : "on"
+  );
+};
+
+export const columnIsReadOnly = (
+  action: "update" | "insert" | "view" | undefined,
+  c: ValidatedColumnInfo,
+) => {
+  return (
+    action === "view" ||
+    (action === "update" && !c.update) ||
+    (action === "insert" && !c.insert)
+  );
+};
+
+export const tsDataTypeFromUdtName = (
+  udtName: string,
+): ValidatedColumnInfo["tsDataType"] => {
+  return (
+    Object.entries(TS_PG_Types).find(([ts, pgArr]) =>
+      (pgArr as any).includes(udtName.toLowerCase()),
+    )?.[0] ?? ("string" as any)
+  );
+};
+
+const PG_Types = {
+  _PG_strings,
+  _PG_numbers,
+  _PG_json,
+  _PG_bool,
+  _PG_date,
+  _PG_interval,
+  _PG_postgis,
+  _PG_geometric,
+} as const;
+type PG_T = keyof typeof PG_Types;
+export const colIs = (
+  c: Partial<Pick<ValidatedColumnInfo, "udt_name">> | undefined,
+  type: PG_T | PG_T[],
+) => {
+  const types = Array.isArray(type) ? type : [type];
+  return types.some((t) => PG_Types[t].some((v) => c?.udt_name === v));
 };

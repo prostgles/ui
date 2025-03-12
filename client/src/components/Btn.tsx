@@ -12,8 +12,9 @@ import { Icon } from "./Icon/Icon";
 import Chip from "./Chip";
 import { classOverride } from "./Flex";
 import type { TestSelectors } from "../Testing";
-import { tout } from "../pages/ElectronSetup";
 import { Label, type LabelProps } from "./Label";
+import Popup from "./Popup/Popup";
+import { tout } from "../utils";
 
 type ClickMessage = (
   | { err: any }
@@ -72,6 +73,15 @@ type BtnCustomProps = (
    * If true then title will be used as children
    */
   titleAsLabel?: boolean;
+
+  /**
+   * If provided then will display a confirmation dialog before running any onClick function
+   */
+  clickConfirmation?: {
+    color: "danger" | "action";
+    message: React.ReactNode;
+    buttonText: string;
+  };
 } & (
     | {
         onClickMessage?: (
@@ -91,9 +101,10 @@ type BtnCustomProps = (
         onClickPromiseMessage?: React.ReactNode;
       }
   );
+type KeysOfUnion<T> = T extends T ? keyof T : never;
 
 type OmmitedKeys =
-  | keyof BtnCustomProps
+  | KeysOfUnion<BtnCustomProps>
   | "children"
   | "ref"
   | "onClick"
@@ -118,12 +129,13 @@ const CUSTOM_ATTRS: OmmitedKeys[] = [
   "iconNode",
   "iconPosition",
   "iconClassname",
-  "onClickMessage" as any,
-  "onClickPromise" as any,
-  "onClickPromiseMessage" as any,
+  "onClickMessage",
+  "onClickPromise",
+  "onClickPromiseMessage",
   "asNavLink" as any,
   "iconStyle",
   "titleAsLabel",
+  "clickConfirmation",
 ];
 
 export type BtnProps<HREF extends string | void = void> = TestSelectors &
@@ -147,6 +159,7 @@ type BtnState = {
     msg: React.ReactNode;
     replace?: boolean;
   };
+  showClickConfirmation?: boolean;
 };
 
 export default class Btn<HREF extends string | void = void> extends RTComp<
@@ -248,9 +261,10 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       iconClassname = "",
       titleAsLabel,
       label,
+      clickConfirmation,
       ...otherProps
     } = this.props;
-    const { clickMessage } = this.state;
+    const { clickMessage, showClickConfirmation } = this.state;
     let extraStyle: React.CSSProperties = {};
 
     const color =
@@ -386,16 +400,23 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
 
     type PropsOf<E> = React.HTMLAttributes<E> & { ref?: React.Ref<E> };
 
-    let onClick = this.props.onClick as any;
-    if ("onClickPromise" in this.props && this.props.onClickPromise) {
+    const needsConfirmation = () => {
+      if (clickConfirmation && !showClickConfirmation) {
+        this.setState({ showClickConfirmation: true });
+        return true;
+      }
+      return false;
+    };
+    let onClick = this.props.onClick;
+    if (this.props.onClickPromise) {
       const { onClickPromise } = this.props;
       onClick = (e) => {
-        this.setPromise(onClickPromise(e));
+        !needsConfirmation() && this.setPromise(onClickPromise(e));
       };
-    } else if ("onClickMessage" in this.props && this.props.onClickMessage) {
+    } else if (this.props.onClickMessage) {
       const { onClickMessage } = this.props;
       onClick = (e) => {
-        onClickMessage(e, this.clickMessage);
+        !needsConfirmation() && onClickMessage(e, this.clickMessage);
       };
     }
 
@@ -433,7 +454,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
         onMouseDown: (e) => e.preventDefault(),
         className: `${_className} btn btn-${variant} btn-size-${size} btn-color-${color} ws-nowrap w-fit `,
         ref: this.props._ref as any,
-        ...{ "data-id": otherProps["data-id"] as any },
+        ...{ "data-id": otherProps["data-id"] },
       };
 
     const withLabel = (content: React.ReactNode) => {
@@ -480,12 +501,36 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
     }
 
     return withLabel(
-      <button
-        {...(finalProps as PropsOf<HTMLButtonElement>)}
-        disabled={disabledInfo ? true : undefined}
-      >
-        {content}
-      </button>,
+      <>
+        <button
+          {...(finalProps as PropsOf<HTMLButtonElement>)}
+          disabled={disabledInfo ? true : undefined}
+        >
+          {content}
+        </button>
+        {clickConfirmation && showClickConfirmation && (
+          <Popup
+            onClickClose={false}
+            onClose={() => this.setState({ showClickConfirmation: false })}
+            clickCatchStyle={{ opacity: 1 }}
+            footerButtons={[
+              {
+                label: "Cancel",
+                onClickClose: true,
+              },
+              {
+                label: clickConfirmation.buttonText,
+                color: clickConfirmation.color,
+                variant: "filled",
+                className: "ml-auto",
+                onClick,
+              },
+            ]}
+          >
+            {clickConfirmation.message}
+          </Popup>
+        )}
+      </>,
     );
   }
 }
@@ -512,25 +557,6 @@ export const FileBtn = React.forwardRef<
     ref,
   ) => {
     const [files, setFiles] = useState<FileList | null>(null);
-
-    // return (<label htmlFor={id} className={"text-1p5 f-1 flex-row pointer gap-p25 ai-center px-p5 py-p25 " + className} style={style}>
-    //   {iconPath && <Icon path={iconPath} size={1} title="Add files" className="  "/>}
-    //   {children}
-    //   <Btn></Btn>
-    //   <div className="flex-row-wrap gap-p5">
-    //     {!files?.length? "No file chosen" : Array.from(files).map(f => <Chip>{f.name}</Chip>)}
-    //   </div>
-    //   <input id={id}
-    //     ref={ref}
-    //     style={{ width: 0, height: 0 }}
-    //     {...inputProps}
-    //     onChange={e => {
-    //       setFiles(e.target.files);
-    //       onChange?.(e);
-    //     }}
-    //     type="file"
-    //   />
-    // </label>)
 
     return (
       <div className={"flex-row  gap-p25 ai-center " + className} style={style}>

@@ -1,5 +1,6 @@
 import { type DBHandlerClient } from "prostgles-client/dist/prostgles";
 import {
+  getPossibleNestedInsert,
   isDefined,
   isEmpty,
   type AnyObject,
@@ -7,6 +8,33 @@ import {
 } from "prostgles-types";
 import { type FullOption } from "../../../components/Select/Select";
 import type { SmartFormFieldForeignKeyProps } from "./SmartFormFieldForeignKey";
+import type { DBS } from "../../Dashboard/DBS";
+
+type FetchForeignKeyOptionsArgs = Pick<
+  SmartFormFieldForeignKeyProps,
+  "column" | "db" | "row" | "tableName" | "tables"
+> & {
+  term: string;
+};
+
+export const getFkeySuggestionsFtable = ({
+  tables,
+  column,
+  tableName,
+  db,
+}: Pick<
+  FetchForeignKeyOptionsArgs,
+  "column" | "tableName" | "tables" | "db"
+>) => {
+  const fKey = getPossibleNestedInsert(column, tables) ?? column.references[0];
+  if (!tableName || !fKey) return;
+  const { ftable } = fKey;
+
+  const tableHandler = db[tableName];
+  const fTableHandler = db[ftable];
+  if (!tableHandler?.find || !fTableHandler?.find) return;
+  return fKey;
+};
 
 export const fetchForeignKeyOptions = async ({
   column,
@@ -15,20 +43,10 @@ export const fetchForeignKeyOptions = async ({
   tables,
   row,
   term,
-}: Pick<
-  SmartFormFieldForeignKeyProps,
-  "column" | "db" | "row" | "tableName" | "tables"
-> & {
-  term: string;
-}): Promise<FullOption[]> => {
-  const fKey = column.references[0];
-  if (!tableName || !fKey) return [];
-  const { ftable, fcols, cols } = fKey;
-
-  const tableHandler = db[tableName];
-  const fTableHandler = db[ftable];
-  if (!tableHandler?.find || !fTableHandler?.find) return [];
-
+}: FetchForeignKeyOptionsArgs): Promise<FullOption[]> => {
+  const fkey = getFkeySuggestionsFtable({ tables, column, tableName, db });
+  if (!fkey || !tableName) return [];
+  const { ftable, cols, fcols } = fkey;
   const mainColumn = column.name;
 
   const fMainColumn = fcols[cols.indexOf(mainColumn)];
@@ -39,7 +57,7 @@ export const fetchForeignKeyOptions = async ({
     if (row) {
       cols.forEach((col, i) => {
         const fCol = fcols[i];
-        if (fCol) {
+        if (fCol && row[col] !== null) {
           fullForeignTableFilter[fCol] = row[col];
           if (col !== column.name) {
             foreignTableFilter[fCol] = row[col];
@@ -97,7 +115,7 @@ type Args = {
   textColumn: string | undefined;
   tableName: string;
   filter: AnyObject | undefined;
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
 };
 const fetchSearchResults = async ({
   mainColumn,
@@ -150,10 +168,12 @@ const getBestTextColumn = (
   const fTableName = column.references[0]?.ftable;
   const fTable = tables.find((t) => t.name === fTableName);
   if (!fTable) return;
+  /** Ignore non unique columns to prevent duplicate options */
   if (isTextColumn(column) && !column.is_pkey) return;
 
   const fTableTextColumns = fTable.columns
     .filter(isTextColumn)
+    .filter((c) => c.select)
     .filter((c) => c.name !== fMainColumn)
     .map((c) => {
       const shortestUnique = fTable.info.uniqueColumnGroups

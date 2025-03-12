@@ -1,13 +1,13 @@
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
-import { type AnyObject, isDefined, omitKeys, pickKeys } from "prostgles-types";
+import { type AnyObject, isDefined, omitKeys } from "prostgles-types";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import type { ReadableStreamDefaultReader } from "stream/web";
 import { readFetchStream } from "./readFetchStream";
+import { getLLMRequestBody } from "./getLLMRequestBody";
 export type LLMMessage = {
   role: "system" | "user" | "assistant";
   content: DBSSchema["llm_messages"]["message"];
 };
-type Args = {
+export type FetchLLMResponseArgs = {
   llm_model: DBSSchema["llm_models"];
   llm_provider: DBSSchema["llm_providers"];
   llm_credential: DBSSchema["llm_credentials"];
@@ -37,145 +37,34 @@ type LLMParsedResponse = Pick<LLMMessage, "content"> & {
   meta?: AnyObject | null;
 };
 
-export const fetchLLMResponse = async ({
-  llm_provider,
-  llm_credential,
-  messages: maybeEmptyMessages,
-  tools,
-  llm_model,
-}: Args): Promise<LLMParsedResponse> => {
-  const nonEmptyMessages = maybeEmptyMessages
-    .map((m) => {
-      const nonEmptyMessageContent = m.content.filter(
-        (m) => m.type !== "text" || m.text.trim(),
-      );
-      return {
-        ...m,
-        content: nonEmptyMessageContent,
-      };
-    })
-    .filter((m) => m.content.length);
-
-  const systemMessage = nonEmptyMessages.filter((m) => m.role === "system");
-  const [systemMessageObj, ...otherSM] = systemMessage;
-  if (!systemMessageObj) throw "Prompt not found";
-  if (otherSM.length) throw "Multiple prompts found";
-  const { api_key } = llm_credential;
+export const fetchLLMResponse = async (
+  args: FetchLLMResponseArgs,
+): Promise<LLMParsedResponse> => {
+  const { llm_provider, llm_credential, llm_model } = args;
   const model = llm_model.name;
   const provider = llm_provider.id;
-  const messages =
-    provider === "OpenAI" ? nonEmptyMessages : (
-      nonEmptyMessages.filter((m) => m.role !== "system")
-    );
-  const headers: RequestInit["headers"] =
-    provider === "Anthropic" ?
-      {
-        "content-type": "application/json",
-        "x-api-key": api_key,
-        "anthropic-version": "2023-06-01",
-      }
-    : provider === "Google" ?
-      {
-        "content-type": "application/json",
-      }
-    : {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${api_key}`,
-      };
-
-  const body =
-    provider === "Anthropic" ?
-      {
-        // ...pickKeys(config, [
-        //   // "model",
-        //   "max_tokens",
-        // ]),
-        model,
-        system: systemMessageObj.content,
-        messages,
-        tools,
-      }
-    : provider === "Prostgles" ?
-      [
-        {
-          messages,
-          tools,
-        },
-      ]
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    : provider === "Google" ?
-      {
-        system_instruction: {
-          parts: systemMessageObj.content
-            .map((c) => {
-              if (c.type !== "text") return undefined;
-              return {
-                text: c.text,
-              };
-            })
-            .filter(isDefined),
-        },
-        /**
-         * https://ai.google.dev/gemini-api/docs/text-generation?lang=rest
-         */
-        contents: messages.map((m) => ({
-          role: m.role,
-          parts: m.content
-            .map((c) => (c.type === "text" ? { text: c.text } : undefined))
-            .filter(isDefined),
-        })),
-        ...(tools && {
-          tools: [
-            {
-              functionDeclarations: tools,
-            },
-          ],
-        }),
-      }
-    : /**  "OpenAI"  */
-      {
-        // ...pickKeys(config, [
-        //   "temperature",
-        //   "max_completion_tokens",
-        //   // "model",
-        //   "frequency_penalty",
-        //   "presence_penalty",
-        //   "response_format",
-        // ]),
-        model,
-        messages,
-        tools,
-      };
+  const { api_key } = llm_credential;
+  const { body, headers } = getLLMRequestBody(args);
   const api_url = llm_provider.api_url
     .replace("$KEY", api_key)
-    .replace("$MODEL", model); // ?? config.model
+    .replace("$MODEL", model);
   if (api_url === "http://localhost:3004/mocked-llm") {
     return { content: [{ type: "text", text: "Mocked response" }] };
   }
 
   const res = await fetch(api_url, {
     method: "POST",
-    headers: {
-      ...headers,
-      ...llm_provider.extra_headers,
-      ...llm_credential.extra_headers,
-      ...llm_model.extra_headers,
-    },
-    body: JSON.stringify({
-      ...body,
-      ...llm_provider.extra_body,
-      ...llm_credential.extra_body,
-      ...llm_model.extra_body,
-    }),
+    headers,
+    body,
   }).catch((err) => Promise.reject(JSON.stringify(getErrorAsObject(err))));
 
   const responseData = await readFetchStream(res);
   if (!res.ok) {
     throw new Error(
-      `Failed to fetch LLM response: ${res.statusText} ${responseData}`,
+      `Failed to fetch LLM response: ${res.statusText} ${JSON.stringify(responseData)}`,
     );
   }
-  return parseResponseObject({
+  return parseLLMResponseObject({
     provider,
     responseData,
     llm_credential,
@@ -187,7 +76,7 @@ type ParseResponseObjectArgs = {
   responseData: AnyObject | undefined;
   llm_credential: DBSSchema["llm_credentials"];
 };
-const parseResponseObject = ({
+export const parseLLMResponseObject = ({
   llm_credential,
   provider,
   responseData,
@@ -204,7 +93,7 @@ const parseResponseObject = ({
     });
     return { content, meta };
   }
-  if (provider === "Anthropic") {
+  if (provider === "Anthropic" || provider === "Prostgles") {
     const { content: rawContent, ...meta } = responseData as AnthropicResponse;
     const content = rawContent
       .map((c) => {
@@ -229,12 +118,7 @@ const parseResponseObject = ({
       .filter(isDefined);
     return { content, meta };
   } else {
-    const path = llm_credential.result_path ?? [
-      "choices",
-      0,
-      "message",
-      "content",
-    ];
+    const path = ["choices", 0, "message", "content"];
     const messageText = parsePath(responseData ?? {}, path);
     if (typeof messageText !== "string") {
       throw "Unexpected response from LLM. Expecting string";

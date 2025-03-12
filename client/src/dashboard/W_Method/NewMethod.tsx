@@ -86,7 +86,6 @@ export const NewMethod = ({
                 },
                 { returning: { id: 1 } },
               );
-
               if (access_rule_id) {
                 await dbs.access_control_methods.insert({
                   access_control_id: access_rule_id,

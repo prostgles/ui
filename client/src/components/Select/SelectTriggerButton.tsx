@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import { mdiClose, mdiMenuDown, mdiPencil } from "@mdi/js";
+import React from "react";
+import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";
 import Btn from "../Btn";
 import type { FullOption, OptionKey, SelectProps, SelectState } from "./Select";
-import SmartFormField from "../../dashboard/SmartForm/SmartFormField/SmartFormField";
-import { mdiClose, mdiMenuDown, mdiPencil } from "@mdi/js";
-import { generateUniqueID } from "../FileInput/FileInput";
 
 type P<
   O extends OptionKey,
@@ -150,14 +149,15 @@ export const SelectTriggerButton = <
               }
               style={{ lineHeight: "18px" }}
             >
-              {(!labelAsValue ? btnLabel : (
-                SmartFormField.renderValue(
-                  undefined,
-                  btnLabel,
-                  !noOtherOption,
-                  150,
-                )
-              )) ?? emptyLabel}
+              {!labelAsValue ?
+                btnLabel
+              : <RenderValue
+                  column={undefined}
+                  value={btnLabel}
+                  showTitle={!noOtherOption}
+                  maxLength={150}
+                />
+              }
             </div>
           </>
 

@@ -1,13 +1,30 @@
-import { getEntries } from "../../../commonTypes/utils";
-import { getLanguage } from "./LanguageSelector";
-import { type Language, translations } from "./translations/translations";
+import { isObject, getObjectEntries } from "prostgles-types";
+import {
+  type Language,
+  LANGUAGES,
+  translations,
+} from "./translations/translations";
 import es from "./translations/es.json";
 import de from "./translations/de.json";
 import zh from "./translations/zh.json";
 import hi from "./translations/hi.json";
 import ru from "./translations/ru.json";
-import { isObject } from "../../../commonTypes/publishUtils";
-import { isPlaywrightTest } from "../pages/ProjectConnection/useProjectDb";
+export const isPlaywrightTest =
+  navigator.userAgent.includes("Playwright") || navigator.webdriver;
+
+const getMatchingLanguage = (lang: string): Language | undefined => {
+  return LANGUAGES.find((l) => l.key === lang)?.key;
+};
+export const getLanguage = (): Language => {
+  const storedLang = localStorage.getItem("lang");
+  const result =
+    getMatchingLanguage(storedLang ?? "") ||
+    getMatchingLanguage(navigator.language.slice(0, 2)) ||
+    "en";
+
+  document.documentElement.lang = result;
+  return result;
+};
 
 type TranslationsType<T> = {
   [K1 in keyof T]: {
@@ -39,44 +56,46 @@ export type TranslationGroup = Record<string, Translation>;
 
 /** Ensure argument names are valid */
 const validateTranslationFiles = () => {
-  getEntries(translations).forEach(([componentName, componentTranslations]) => {
-    const checkArgs = (
-      translationKey: string,
-      translation: Translation,
-      lang: string,
-    ) => {
-      let argNames: string[] | undefined;
-      let text = translationKey;
-      if (isObject(translation) && Array.isArray(translation.argNames)) {
-        ({ argNames, text } = translation);
-        argNames.forEach((argName) => {
-          if (!text.includes(`{{${argName}}}`)) {
-            console.log(componentTranslations);
-            throw new Error(
-              `${lang} Translation "${componentName}.${text}" has invalid argName: ${argName}`,
-            );
-          }
-        });
-      }
-      const textArgCount = text.split("{{").length - 1;
-      if (textArgCount !== (argNames?.length ?? 0)) {
-        throw new Error(
-          `${lang} Translation "${componentName}.${translationKey}" has incorrect number of argNames`,
-        );
-      }
-    };
-    getEntries(componentTranslations).forEach(
-      ([_enTranslationKey, translation]) => {
-        const tr = translation as Translation;
-        // checkArgs(_enTranslationKey as string, argNamesOrText, "en");
-        getEntries(translationFiles).forEach(([lang, _translation]) => {
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          const v = _translation[componentName]?.[_enTranslationKey];
-          checkArgs(_enTranslationKey, tr, lang);
-        });
-      },
-    );
-  });
+  getObjectEntries(translations).forEach(
+    ([componentName, componentTranslations]) => {
+      const checkArgs = (
+        translationKey: string,
+        translation: Translation,
+        lang: string,
+      ) => {
+        let argNames: string[] | undefined;
+        let text = translationKey;
+        if (isObject(translation) && Array.isArray(translation.argNames)) {
+          ({ argNames, text } = translation);
+          argNames.forEach((argName) => {
+            if (!text.includes(`{{${argName}}}`)) {
+              console.log(componentTranslations);
+              throw new Error(
+                `${lang} Translation "${componentName}.${text}" has invalid argName: ${argName}`,
+              );
+            }
+          });
+        }
+        const textArgCount = text.split("{{").length - 1;
+        if (textArgCount !== (argNames?.length ?? 0)) {
+          throw new Error(
+            `${lang} Translation "${componentName}.${translationKey}" has incorrect number of argNames`,
+          );
+        }
+      };
+      getObjectEntries(componentTranslations).forEach(
+        ([_enTranslationKey, translation]) => {
+          const tr = translation as Translation;
+          // checkArgs(_enTranslationKey as string, argNamesOrText, "en");
+          getObjectEntries(translationFiles).forEach(([lang, _translation]) => {
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            const v = _translation[componentName]?.[_enTranslationKey];
+            checkArgs(_enTranslationKey, tr, lang);
+          });
+        },
+      );
+    },
+  );
 };
 
 export const t = new Proxy(

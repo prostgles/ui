@@ -15,7 +15,7 @@ import { isEmpty } from "prostgles-types";
 import type { NavigateFunction } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import type { Prgl } from "../../App";
-import { createReactiveState } from "../../App";
+import { createReactiveState } from "../../appUtils";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
 import { FlexCol, FlexRow } from "../../components/Flex";
@@ -46,6 +46,7 @@ import { loadTable, type LoadTableArgs } from "./loadTable";
 import { cloneWorkspace } from "./cloneWorkspace";
 import { getWorkspacePath } from "../WorkspaceMenu/WorkspaceMenu";
 import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
+import type { DBS } from "./DBS";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -632,7 +633,7 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<
 export const getTables = async (
   schemaTables: DBSchemaTable[],
   workspace: WorkspaceSyncItem | undefined,
-  db: DBHandlerClient,
+  db: DBHandlerClient | DBS,
 ): Promise<
   | { tables: DBSchemaTablesWJoins; error?: undefined }
   | { error: any; tables?: undefined }

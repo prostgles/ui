@@ -7,7 +7,7 @@ import { InfoRow } from "../../components/InfoRow";
 import Loading from "../../components/Loading";
 import Popup from "../../components/Popup/Popup";
 import { AddLLMPromptForm } from "./AddLLMPromptForm";
-import { LLMCredentials } from "./LLMCredentials";
+import { LLMProviderSetup } from "./LLMProviderSetup";
 import { ProstglesSignup } from "./ProstglesSignup";
 import type { LLMSetupState } from "./useLLMSetupState";
 
@@ -71,7 +71,7 @@ export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
             dbsMethods={dbsMethods}
           />
         )}
-        {setupType === "api" && <LLMCredentials {...props} />}
+        {setupType === "api" && <LLMProviderSetup {...props} />}
         {setupType && !prompts?.length && (
           <FlexCol className="mt-2">
             <InfoRow color="info" variant="filled">

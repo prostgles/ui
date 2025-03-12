@@ -6,6 +6,7 @@ import { usePromise } from "prostgles-client/dist/react-hooks";
 import type { PrglProject, PrglState } from "../../App";
 import { getTables } from "../../dashboard/Dashboard/Dashboard";
 import { prgl_R } from "../../WithPrgl";
+import { isPlaywrightTest } from "../../i18n/i18nUtils";
 
 type PrglProjectState =
   | {
@@ -36,8 +37,6 @@ type P = {
   connId: string | undefined;
   prglState: PrglState;
 };
-export const isPlaywrightTest =
-  navigator.userAgent.includes("Playwright") || navigator.webdriver;
 
 const onDebug: UseProstglesClientProps["onDebug"] = (ev) => {
   if (
@@ -141,7 +140,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
             connectionId: con.id,
             connection: connection ?? con,
             databaseId: dbConf.id,
-            db: thisIstheStateDB ? (dbs as any) : db,
+            db: thisIstheStateDB ? dbs : db,
             tables: thisIstheStateDB ? dbsTables : dbTables,
             methods: methods ?? {},
             projectPath: path,

@@ -1,5 +1,5 @@
 import { getCommandElemSelector } from "../../Testing";
-import { tout } from "../../pages/ElectronSetup";
+import { tout } from "../../utils";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { triggerCharacters } from "../SQLEditor/SQLCompletion/registerSuggestions";
 import type { SQLEditorRef } from "../SQLEditor/SQLEditor";

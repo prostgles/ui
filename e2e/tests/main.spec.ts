@@ -335,7 +335,7 @@ test.describe("Main test", () => {
     const funcCode = await getMonacoValue(page, ".MethodDefinition");
     expect(funcCode).toEqual(expectedCode);
     /** Add llm server side func */
-    const llmCode = `return { content: [{ text: "free ai assistant" + args.messages.at(-1)?.content[0]?.text }] };//`;
+    const llmCode = `return { content: [{ type: "text", text: "free ai assistant" + args.messages.at(-1)?.content[0]?.text }] };//`;
     await monacoType(page, ".MethodDefinition", llmCode, {
       deleteAll: false,
       pressBeforeTyping: ["Control+ArrowLeft", "Control+ArrowLeft"],

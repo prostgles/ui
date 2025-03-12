@@ -9,8 +9,18 @@ import { fetchLLMResponse, type LLMMessage } from "./fetchLLMResponse";
 import { getLLMTools } from "./getLLMTools";
 import { sliceText } from "../../../../commonTypes/utils";
 
+export const getLLMChatModel = async (
+  dbs: DBS,
+  filter: Parameters<DBS["llm_models"]["findOne"]>[0],
+) => {
+  const preferredChatModel = await dbs.llm_models.findOne(filter, {
+    orderBy: [{ key: "chat_suitability_rank", asc: true, nulls: "last" }],
+  });
+  if (!preferredChatModel) throw "No LLM models found";
+  return preferredChatModel;
+};
+
 export const askLLM = async (
-  // question: string,
   userMessage: DBSSchema["llm_messages"]["message"],
   schema: string,
   chatId: number,
@@ -26,16 +36,11 @@ export const askLLM = async (
   if (!chat) throw "Chat not found";
   const { llm_prompt_id } = chat;
   if (!chat.model) {
-    const preferredChatModel = await dbs.llm_models.findOne(
-      {
-        $existsJoined: {
-          "llm_providers.llm_credentials": {},
-        } as any,
-        chat_suitability_rank: { $gt: "-1" },
-      },
-      { orderBy: { chat_suitability_rank: 1 } },
-    );
-    if (!preferredChatModel) throw "No models with credentials found";
+    const preferredChatModel = await getLLMChatModel(dbs, {
+      $existsJoined: {
+        "llm_providers.llm_credentials": {},
+      } as any,
+    });
     await dbs.llm_chats.update(
       { id: chatId },
       { model: preferredChatModel.id },

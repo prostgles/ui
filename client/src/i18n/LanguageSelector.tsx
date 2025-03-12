@@ -2,7 +2,7 @@ import React from "react";
 import Select from "../components/Select/Select";
 import { mdiEarth } from "@mdi/js";
 import { type Language, LANGUAGES } from "./translations/translations";
-import { t } from "./i18nUtils";
+import { getLanguage, t } from "./i18nUtils";
 
 export const LanguageSelector = ({ isElectron }: { isElectron: boolean }) => {
   const lang = getLanguage();
@@ -27,22 +27,7 @@ export const LanguageSelector = ({ isElectron }: { isElectron: boolean }) => {
   );
 };
 
-const getMatchingLanguage = (lang: string): Language | undefined => {
-  return LANGUAGES.find((l) => l.key === lang)?.key;
-};
-
 const setLanguage = (lang: Language) => {
   document.documentElement.lang = lang;
   localStorage.setItem("lang", lang);
-};
-
-export const getLanguage = (): Language => {
-  const storedLang = localStorage.getItem("lang");
-  const result =
-    getMatchingLanguage(storedLang ?? "") ||
-    getMatchingLanguage(navigator.language.slice(0, 2)) ||
-    "en";
-
-  document.documentElement.lang = result;
-  return result;
 };

@@ -1,33 +1,37 @@
 import { mdiPlus, mdiTable } from "@mdi/js";
-import type { AnyObject } from "prostgles-types";
+import { isDefined, type AnyObject } from "prostgles-types";
 import React from "react";
-import type { DetailedFilterBase } from "../../../../../commonTypes/filterUtils";
+import {
+  getSmartGroupFilter,
+  type DetailedFilterBase,
+} from "../../../../../commonTypes/filterUtils";
 import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";
 import { FlexCol, FlexRow, classOverride } from "../../../components/Flex";
 import Loading from "../../../components/Loading";
 import { MediaViewer } from "../../../components/MediaViewer";
-import Popup from "../../../components/Popup/Popup";
 import type { Command } from "../../../Testing";
 import RTComp from "../../RTComp";
 import SmartCardList from "../../SmartCard/SmartCardList";
-import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter";
 import SmartTable from "../../SmartTable";
 import type { TargetPath } from "../../W_Table/tableUtils/getJoinPaths";
-import type { GetRefHooks, SmartFormProps } from "../SmartForm";
-import SmartForm from "../SmartForm";
+import type { SmartFormProps, SmartFormState } from "../SmartForm";
 import { getJoinFilter } from "./getJoinFilter";
 import { prepareJoinedRecordsSections } from "./prepareJoinedRecordsSections";
+import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
+import type { SmartFormUpperFooterProps } from "../SmartFormUpperFooter";
 
-type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods" | "theme"> &
+export type JoinedRecordsProps = Pick<
+  Prgl,
+  "db" | "tables" | "methods" | "theme"
+> &
   Pick<SmartFormProps, "onSuccess"> & {
     className?: string;
     style?: React.CSSProperties;
     tableName: string;
     rowFilter?: DetailedFilterBase[];
-    onSetNestedInsertData?: (
-      newData: JoinedRecordsState["nestedInsertData"],
-    ) => void;
+    newRowData: SmartFormState["newRowData"];
+    onSetNestedInsertData?: SmartFormUpperFooterProps["onSetNestedInsertData"];
     showLookupTables?: boolean;
     showRelated?: "descendants";
     action?: "update" | "insert" | "view";
@@ -37,7 +41,6 @@ type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods" | "theme"> &
   };
 
 export type JoinedRecordsState = {
-  nestedInsertData?: Record<string, AnyObject[]>;
   expanded: boolean;
   isLoadingSections?: boolean;
   sections: {
@@ -49,17 +52,18 @@ export type JoinedRecordsState = {
     canInsert?: boolean;
     error?: string;
   }[];
-  insert?: {
-    table: string;
-    data: AnyObject;
-  };
+  // insert?: {
+  //   table: string;
+  //   data: AnyObject;
+  // };
+
   quickView?: {
     tableName: string;
     path: string[];
   };
   extraSectionPaths: TargetPath[];
 
-  nestedInsertTable?: string;
+  // nestedInsertTable?: string;
 };
 export class JoinedRecords extends RTComp<
   JoinedRecordsProps,
@@ -93,171 +97,21 @@ export class JoinedRecords extends RTComp<
     this.prepareSections();
   }
 
-  get isInsert() {
-    return !this.props.rowFilter;
-  }
-
-  refNestedForm?: GetRefHooks;
-  getNestedInsertPopup = () => {
-    const {
-      tables,
-      db,
-      tableName,
-      methods,
-      onSetNestedInsertData,
-      onSuccess,
-      theme,
-    } = this.props;
-    const { nestedInsertTable } = this.state;
-
-    if (this.isInsert && nestedInsertTable && onSetNestedInsertData) {
-      const fcols = tables.find((t) => t.name === nestedInsertTable)?.columns;
-      return (
-        <Popup
-          title={`Insert ${nestedInsertTable} record`}
-          positioning="right-panel"
-          onClose={() => {
-            this.setState({ nestedInsertTable: undefined });
-          }}
-          contentStyle={{
-            padding: 0,
-          }}
-          footerButtons={[
-            {
-              label: "Add",
-              variant: "filled",
-              color: "action",
-              onClick: () => {
-                this.refNestedForm?.getErrors((newRow) => {
-                  console.log(newRow);
-                  const existingTableData =
-                    this.state.nestedInsertData?.[nestedInsertTable] ?? [];
-                  existingTableData.push(newRow);
-                  this.setState(
-                    {
-                      nestedInsertData: {
-                        ...this.state.nestedInsertData,
-                        [nestedInsertTable]: existingTableData,
-                      },
-                      nestedInsertTable: undefined,
-                    },
-                    () => {
-                      onSetNestedInsertData(this.state.nestedInsertData);
-                    },
-                  );
-                });
-              },
-            },
-            {
-              label: "Remove",
-              color: "danger",
-              onClick: () => {
-                this.refNestedForm?.getErrors((newRow) => {
-                  console.log(newRow);
-                });
-              },
-            },
-          ]}
-        >
-          <SmartForm
-            theme={theme}
-            getRef={(r) => {
-              this.refNestedForm = r;
-            }}
-            db={db}
-            methods={methods}
-            tables={tables}
-            label=" "
-            tableName={nestedInsertTable}
-            onChange={() => {}}
-            onSuccess={onSuccess}
-            columns={fcols
-              ?.filter(
-                (c) => !c.references?.some((r) => r.ftable === tableName),
-              )
-              .reduce((a, v) => ({ ...a, [v.name]: 1 }), {})}
-          />
-        </Popup>
-      );
-    }
-  };
-
   get tableHandler() {
     const { db, tableName } = this.props;
     return db[tableName];
   }
 
-  getAddButton(s: JoinedRecordsState["sections"][number]) {
-    const { rowFilter, tables, db, onSetNestedInsertData } = this.props;
-
-    /** Cannot insert if nested table
-     * TODO: allow insert if path.length === 2 and first path is a mapping table
-     */
-    if (s.path.length > 1) return null;
-
-    const isInsert = !!onSetNestedInsertData && !rowFilter;
-    const isDescendantTableAndCanInsert = tables.some(
-      (t) =>
-        t.columns.some((c) =>
-          c.references?.some((r) => r.ftable === s.tableName),
-        ) && db[t.name]?.insert,
-    );
-    if (isInsert && isDescendantTableAndCanInsert) {
-      if (!db[s.tableName]) return null;
-      return (
-        <Btn
-          key={s.tableName}
-          title="Add referenced record"
-          color="action"
-          iconPath={mdiPlus}
-          onClick={() => {
-            this.setState({ nestedInsertTable: s.tableName });
-          }}
-        />
-      );
-    }
-    const { tableName } = this.props;
-
-    return (
-      <Btn
-        iconPath={mdiPlus}
-        title="Add new record"
-        disabledInfo={
-          !s.canInsert ?
-            `Cannot reference more than one ${JSON.stringify(s.tableName)}`
-          : undefined
-        }
-        onClick={async () => {
-          const parentRow = await this.tableHandler?.findOne?.(
-            getSmartGroupFilter(this.props.rowFilter),
-          );
-          const table = tables.find((t) => t.name === tableName);
-          const joinConfig = table?.joins.find(
-            (j) => j.tableName === s.tableName,
-          );
-          if (parentRow && joinConfig) {
-            const data = {};
-            joinConfig.on.map(([pcol, fcol]) => {
-              data[fcol] = parentRow[pcol];
-            });
-            this.setState({
-              insert: { table: s.tableName, data },
-            });
-          }
-        }}
-      />
-    );
-  }
-
   render(): React.ReactNode {
-    const { sections, insert, quickView, nestedInsertData, isLoadingSections } =
-      this.state;
+    const { sections, quickView, isLoadingSections } = this.state;
     const {
       db,
       tables,
       methods,
       tableName,
+      newRowData,
       onSetNestedInsertData,
+      rowFilter,
       theme,
       showRelated,
       style,
@@ -283,31 +137,6 @@ export class JoinedRecords extends RTComp<
       );
     }
 
-    let insertPopup: React.ReactNode = null;
-    if (insert && db[insert.table]?.insert) {
-      const close = () => {
-        this.dataSignature = undefined;
-        this.setState({ insert: undefined });
-      };
-      insertPopup = (
-        <SmartForm
-          theme={theme}
-          db={db}
-          tables={tables}
-          methods={methods}
-          label={`Insert ${insert.table} record`}
-          hideChangesOptions={true}
-          showLocalChanges={false}
-          tableName={insert.table}
-          asPopup={true}
-          defaultData={insert.data}
-          onInserted={close}
-          onClose={close}
-          onSuccess={onSuccess}
-        />
-      );
-    }
-
     if (isLoadingSections) {
       return <Loading className="m-1 as-center" />;
     } else if (!sections.length) {
@@ -324,6 +153,12 @@ export class JoinedRecords extends RTComp<
     const descendantInsertTables = dencendants
       .filter((t) => db[t.name]?.insert)
       .map((t) => t.name);
+
+    const nestedInsertData = Object.fromEntries(
+      Object.entries(newRowData ?? {})
+        .map(([k, d]) => (d.type === "nested-table" ? [k, d.value] : undefined))
+        .filter(isDefined),
+    );
 
     return (
       <FlexCol
@@ -352,6 +187,7 @@ export class JoinedRecords extends RTComp<
               {sections.reduce((a, v) => a + v.existingDataCount, 0)}
             </span>
           )}
+
           {/* TODO allow customising Related data section */}
           {/* <JoinPathSelectorV2 
           onChange={path => {
@@ -371,8 +207,6 @@ export class JoinedRecords extends RTComp<
         /> */}
         </h4>
         {quickViewPopup}
-        {insertPopup}
-        {this.getNestedInsertPopup()}
         {expanded && (
           <FlexCol className="gap-0 o-auto f-1 px-1 bg-inherit">
             {sections
@@ -401,8 +235,9 @@ export class JoinedRecords extends RTComp<
                     currentTarget.scrollIntoView({ behavior: "smooth" });
                   }, 300);
                 };
+                const isInsert = !!onSetNestedInsertData && !rowFilter;
                 const count =
-                  (this.isInsert ?
+                  (isInsert ?
                     nestedInsertData?.[s.tableName]?.length
                   : s.existingDataCount) ?? 0;
                 const disabledInfo = !count ? "No records to show" : undefined;
@@ -415,15 +250,15 @@ export class JoinedRecords extends RTComp<
                     {count.toLocaleString()}
                   </span>
                 );
-                if (this.isInsert && !count) {
+                if (isInsert && !count) {
                   countNode = null;
                 }
 
                 let content: React.ReactNode = null;
                 const limit = 20;
-                if (this.isInsert && onSetNestedInsertData) {
+                if (isInsert) {
                   if (descendantInsertTables.includes(s.tableName)) {
-                    const { nestedInsertData } = this.state;
+                    // const { nestedInsertData } = this.state;
                     content = (
                       <SmartCardList
                         theme={theme}
@@ -439,16 +274,13 @@ export class JoinedRecords extends RTComp<
                         onChange={(newData) => {
                           this.setState(
                             {
-                              nestedInsertData: {
-                                ...this.state.nestedInsertData,
-                                [s.tableName]: newData,
-                              },
-                              nestedInsertTable: undefined,
+                              // nestedInsertData: {
+                              //   ...this.state.nestedInsertData,
+                              //   [s.tableName]: newData,
+                              // },
                             },
                             () => {
-                              onSetNestedInsertData(
-                                this.state.nestedInsertData,
-                              );
+                              onSetNestedInsertData(s.tableName, newData);
                             },
                           );
                         }}
@@ -543,8 +375,7 @@ export class JoinedRecords extends RTComp<
                             });
                           }}
                         />
-
-                        {this.getAddButton(s)}
+                        <JoinedRecordsAddRow {...this.props} section={s} />
                       </FlexRow>
                     </div>
                     {s.expanded && content}

@@ -83,7 +83,7 @@ export function CredentialSelector({
           <SmartForm
             theme={theme}
             methods={dbsMethods}
-            db={dbs as any}
+            db={dbs}
             label="Add Cloud credentials"
             tableName="credentials"
             // columns={dbsTables.find(t => t.name === "credentials")?.columns.filter(c => !["id", "connection_id"].includes(c.name))}

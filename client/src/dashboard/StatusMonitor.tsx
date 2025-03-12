@@ -217,7 +217,7 @@ export const StatusMonitor = ({
 
       <SmartCardList
         theme={theme}
-        db={dbs as any}
+        db={dbs}
         methods={dbsMethods}
         tables={dbsTables}
         tableName="stats"

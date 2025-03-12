@@ -7,14 +7,16 @@ import {
 import type { AnyObject } from "prostgles-types";
 import React, { useState } from "react";
 import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
-import { getFinalFilterInfo } from "../../../../commonTypes/filterUtils";
+import {
+  getFinalFilterInfo,
+  getSmartGroupFilter,
+} from "../../../../commonTypes/filterUtils";
 import Btn from "../../components/Btn";
 import { ExpandSection } from "../../components/ExpandSection";
 import { Footer } from "../../components/Popup/Popup";
 import PopupMenu from "../../components/PopupMenu";
 import { pluralise } from "../../pages/Connections/Connection";
 import { CodeConfirmation } from "../Backup/CodeConfirmation";
-import { getSmartGroupFilter } from "../SmartFilter/SmartFilter";
 import { InsertButton } from "../SmartForm/InsertButton";
 import SmartForm from "../SmartForm/SmartForm";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
@@ -49,7 +51,6 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
 
   const commonBtnProps = {
     variant: "outline",
-    // size: "small",
     className: "shadow w-fit h-fit bg-color-0",
   } as const;
 
@@ -69,7 +70,7 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
     return <></>;
 
   return (
-    <div className="ml-auto pl-1 flex-row ai-center">
+    <div className="SmartFilterBarRightActions ml-auto pl-1 flex-row ai-center">
       {!hideSort && <SmartFilterBarSort {...props} table={table} />}
       {rightContent}
 

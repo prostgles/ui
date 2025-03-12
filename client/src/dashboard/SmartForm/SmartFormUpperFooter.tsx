@@ -8,6 +8,7 @@ import { isDefined, isObject } from "prostgles-types";
 import React, { useState } from "react";
 import Btn from "../../components/Btn";
 import Popup from "../../components/Popup/Popup";
+import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import { W_MethodControls } from "../W_Method/W_MethodControls";
 import { JoinedRecords } from "./JoinedRecords/JoinedRecords";
 import type {
@@ -15,21 +16,21 @@ import type {
   SmartFormProps,
   SmartFormState,
 } from "./SmartForm";
-import SmartFormField from "./SmartFormField/SmartFormField";
-import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
+import { RenderValue } from "./SmartFormField/RenderValue";
+import { SmartFormNestedInserts } from "./SmartFormNestedInserts";
 
-type P = Omit<SmartFormProps, "columns"> & {
+export type SmartFormUpperFooterProps = Omit<SmartFormProps, "columns"> & {
   onSetNestedInsertData:
-    | ((newData: Record<string, AnyObject[]> | undefined) => void)
+    | ((tableName: string, newData: AnyObject[] | undefined) => void)
     | undefined;
   onRemoveUpdate: (key: string) => void;
   columns: (ValidatedColumnInfo & ColumnDisplayConfig)[];
-  state: Pick<SmartFormState, "newRow" | "action">;
+  state: Pick<SmartFormState, "newRowData" | "action">;
   table: DBSchemaTableWJoins;
   row?: AnyObject;
 };
 
-export const SmartFormUpperFooter = (props: P) => {
+export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
   const {
     onChange,
     rowFilter,
@@ -75,13 +76,15 @@ export const SmartFormUpperFooter = (props: P) => {
     argName: string;
   }>();
 
-  const { newRow, action } = state;
+  const { newRowData, action } = state;
 
   const [collapseChanges, setcollapseChanges] = useState(false);
   const [expandJoinedRecords, setexpandJoinedRecords] = useState(false);
 
   const showChanges =
-    onChange && action.type === "update" && Object.keys(newRow || {}).length;
+    onChange &&
+    action.type === "update" &&
+    Object.keys(newRowData ?? {}).length;
   const [methodState, setMethodState] = useState<{
     args?: AnyObject | undefined;
     disabledArgs?: string[] | undefined;
@@ -133,6 +136,7 @@ export const SmartFormUpperFooter = (props: P) => {
       tables={tables}
       methods={methods}
       rowFilter={rowFilter}
+      newRowData={state.newRowData}
       tableName={tableName}
       onSetNestedInsertData={onSetNestedInsertData}
       onToggle={setexpandJoinedRecords}
@@ -151,7 +155,7 @@ export const SmartFormUpperFooter = (props: P) => {
         onClick={() => setcollapseChanges(!collapseChanges)}
       >
         <h4 className="noselect  f-1 px-1">
-          Changes ({Object.keys(newRow || {}).length}):
+          Changes ({Object.keys(newRowData || {}).length}):
         </h4>
         <Btn
           className="f-0 "
@@ -168,8 +172,8 @@ export const SmartFormUpperFooter = (props: P) => {
             "flex-col w-full ai-start " + (showChanges ? " p-1 " : " ")
           }
         >
-          {Object.keys(newRow ?? {}).map((key) => {
-            if (!newRow) return null;
+          {Object.keys(newRowData ?? {}).map((key) => {
+            if (!newRowData) return null;
             const c = columns.find((c) => c.name === key);
 
             /**
@@ -180,7 +184,7 @@ export const SmartFormUpperFooter = (props: P) => {
             if (
               !c &&
               table.info.fileTableName === key &&
-              Array.isArray(newRow[key])
+              Array.isArray(newRowData[key]?.value)
             ) {
               oldVal =
                 !currentRow ? undefined : (
@@ -189,16 +193,17 @@ export const SmartFormUpperFooter = (props: P) => {
                     -1,
                   )
                 );
-              newVal = JSON.stringify([newRow[key].map((m) => m.name)]).slice(
-                1,
-                -1,
-              );
+              newVal = JSON.stringify([
+                newRowData[key].value.map((m) => m.name),
+              ]).slice(1, -1);
             } else {
               oldVal =
                 !currentRow ? undefined : (
-                  SmartFormField.renderValue(c, currentRow[key])
+                  <RenderValue column={c} value={currentRow[key]} />
                 );
-              newVal = SmartFormField.renderValue(c, newRow[key]);
+              newVal = (
+                <RenderValue column={c} value={newRowData[key]?.value} />
+              );
             }
 
             return (
@@ -278,6 +283,7 @@ export const SmartFormUpperFooter = (props: P) => {
     >
       {methodNode}
       {joinedRecords}
+      <SmartFormNestedInserts {...props} />
       {changesNode}
       {methodsNode}
     </div>

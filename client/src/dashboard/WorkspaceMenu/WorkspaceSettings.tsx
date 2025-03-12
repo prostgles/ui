@@ -65,7 +65,7 @@ export const WorkspaceSettings = ({
       render={(popupClose) => (
         <div className="flex-col gap-p5  min-h-0">
           <SmartForm
-            db={dbs as any}
+            db={dbs}
             showJoinedTables={false}
             theme={theme}
             label=""

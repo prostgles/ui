@@ -13,11 +13,12 @@ import ConfirmationDialog from "../../components/ConfirmationDialog";
 import { Footer } from "../../components/Popup/Popup";
 import { isEmpty, pickKeys } from "prostgles-types";
 import { useIsMounted } from "../Backup/CredentialSelector";
-import type {
-  FormAction,
-  SmartFormProps,
-  SmartFormState,
-  getErrorsHook,
+import {
+  getNewRow,
+  type FormAction,
+  type SmartFormProps,
+  type SmartFormState,
+  type getErrorsHook,
 } from "./SmartForm";
 
 type P = {
@@ -46,7 +47,8 @@ export const SmartFormFooterButtons = (p: P): JSX.Element => {
   const { props, state, action } = p;
 
   const { error } = state;
-  const newRow = state.newRow ?? props.defaultData ?? props.fixedData;
+  const newRow =
+    getNewRow(state.newRowData) ?? props.defaultData ?? props.fixedData;
   const {
     db,
     tableName,
@@ -131,7 +133,6 @@ export const SmartFormFooterButtons = (p: P): JSX.Element => {
             <Btn
               {...dataCommand("SmartForm.update")}
               color="action"
-              // size="medium"
               className=""
               variant="filled"
               disabledInfo={errorMsg}
@@ -235,7 +236,7 @@ const onClickInsert = async ({
     onSuccess,
     onBeforeInsert,
   } = props;
-  const { referencedInsertData = {}, action } = state;
+  const { referencedInsertData = {}, action, newRowData } = state;
   const tableHandler = db[tableName];
 
   if (action.type !== "insert") return;
@@ -265,6 +266,8 @@ const onClickInsert = async ({
         );
         dataForInsert = {
           ...dataForInsert,
+          // ...nestedInsertData,
+          ...getNewRow(newRowData ?? {}),
           ...referencedInsertData,
         };
       }
@@ -419,7 +422,6 @@ const onClickDelete = async ({
   state,
   setAction,
   setError,
-  getIsMounted,
 }: ButtonProps) => {
   const { db, tableName, onSuccess } = props;
   const tableHandler = db[tableName];

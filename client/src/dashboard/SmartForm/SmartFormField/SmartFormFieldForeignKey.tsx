@@ -1,13 +1,5 @@
-import {
-  useIsMounted,
-  type DBHandlerClient,
-} from "prostgles-client/dist/prostgles";
-import {
-  isDefined,
-  isEmpty,
-  type AnyObject,
-  type ValidatedColumnInfo,
-} from "prostgles-types";
+import { useIsMounted } from "prostgles-client/dist/prostgles";
+import { isDefined, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useCallback, useEffect, useState } from "react";
 import Select, { type FullOption } from "../../../components/Select/Select";
 import { renderNull } from "./RenderValue";
@@ -24,6 +16,7 @@ export type SmartFormFieldForeignKeyProps = Pick<
   onChange: (newValue: string | number | null) => Promise<void>;
   readOnly: boolean;
 };
+
 export const SmartFormFieldForeignKey = ({
   column,
   db,

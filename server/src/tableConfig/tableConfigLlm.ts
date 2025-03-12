@@ -82,8 +82,13 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       api_docs_url: `TEXT`,
       api_pricing_url: `TEXT`,
       logo_base64: `TEXT`,
+      // default_chat_model: "TEXT",
       ...extraRequestData,
     },
+    // constraints: {
+    //   default_chat_model:
+    //     "FOREIGN KEY (id, default_chat_model) REFERENCES llm_models(provider_id, name)",
+    // },
   },
   llm_models: {
     columns: {
@@ -127,6 +132,10 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         label: "Provider",
         sqlDefinition: `TEXT NOT NULL REFERENCES llm_providers(id) ON DELETE CASCADE`,
       },
+      default_model_name: {
+        label: "Default model",
+        sqlDefinition: `TEXT`,
+      },
       api_key: `TEXT NOT NULL DEFAULT ''`,
       ...extraRequestData,
       is_default: {
@@ -135,21 +144,14 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
           hint: "If true then this is the default credential used in new AI Assistant chats",
         },
       },
-      result_path: {
-        sqlDefinition: `_TEXT `,
-        info: {
-          hint: "Will use corect defaults for OpenAI and Anthropic. Path to text response. E.g.: choices,0,message,content",
-        },
-      },
       created: {
         sqlDefinition: `TIMESTAMP DEFAULT NOW()`,
       },
     },
+    constraints: {
+      default_model_fkey: `FOREIGN KEY (default_model_name, provider_id) REFERENCES llm_models(name, provider_id)`,
+    },
     indexes: {
-      unique_llm_credential_name: {
-        unique: true,
-        columns: "name, user_id",
-      },
       unique_default: {
         unique: true,
         columns: "is_default",

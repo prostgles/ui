@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useMemo } from "react";
 import type { ValidatedColumnInfo } from "prostgles-types";
-import { isObject } from "prostgles-types";
+import { isObject, getKeys } from "prostgles-types";
 import Select from "../../../components/Select/Select";
-import { getKeys } from "../../SmartForm/SmartForm";
 import ErrorComponent from "../../../components/ErrorComponent";
 import type { FieldFilter } from "../../../../../commonTypes/publishUtils";
 import { mdiFilter } from "@mdi/js";

@@ -8,8 +8,8 @@ import type {
 import { isJoinedFilter } from "../../../../commonTypes/filterUtils";
 import ErrorComponent from "../../components/ErrorComponent";
 import { SmartSearch } from "../SmartFilter/SmartSearch/SmartSearch";
-import { colIs } from "../W_Table/ColumnMenu/ColumnSelect";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
+import { colIs } from "../SmartForm/SmartFormField/fieldUtils";
 
 type P = Pick<SmartFilterBarProps, "db" | "tables"> & {
   tableName: string;

@@ -1,16 +1,17 @@
 import React from "react";
+import type { ValidatedColumnInfo } from "prostgles-types";
+import { isObject, _PG_date, _PG_numbers } from "prostgles-types";
 import { ShorterText } from "../../../components/ShorterText";
-import { getColumnDataColor } from "./SmartFormField";
 import { renderInterval } from "../../W_SQL/customRenderers";
 import { dateAsYMD_Time } from "../../Charts";
-import type { ValidatedColumnInfo } from "prostgles-types";
-import { _PG_numbers } from "prostgles-types";
-import { isObject, _PG_date } from "prostgles-types";
 import { sliceText } from "../../../../../commonTypes/utils";
 
 type P = {
   column: Pick<ValidatedColumnInfo, "udt_name" | "tsDataType"> | undefined;
   value: any;
+  /**
+   * Defaults to true
+   */
   showTitle?: boolean;
   maxLength?: number;
   maximumFractionDigits?: number;
@@ -35,6 +36,7 @@ export const renderNull = (
 
   return null;
 };
+
 export const RenderValue = ({
   column: c,
   value,
@@ -197,4 +199,43 @@ export const RenderValue = ({
 const countDecimals = (num: number) => {
   if (Math.floor(num.valueOf()) === num.valueOf()) return 0;
   return num.toString().split(".")[1]?.length || 0;
+};
+
+export const getColumnDataColor = (
+  c?: Pick<Partial<ValidatedColumnInfo>, "udt_name" | "tsDataType" | "is_pkey">,
+  fallBackColor?: string,
+) => {
+  if (c?.udt_name === "uuid" || c?.is_pkey) {
+    return "var(--color-uuid)";
+  }
+
+  if (c?.udt_name === "geography" || c?.udt_name === "geometry") {
+    return "var(--color-geo)";
+  }
+
+  if (
+    c?.udt_name === "json" ||
+    c?.udt_name === "jsonb" ||
+    c?.tsDataType === "any"
+  ) {
+    return "var(--color-json)";
+  }
+
+  if (_PG_date.some((v) => v === c?.udt_name)) {
+    return "var(--color-date)";
+  }
+
+  if (c && _PG_numbers.includes(c.udt_name as any)) {
+    return "var(--color-number)";
+  }
+
+  const TS_COL_TYPE_TO_COLOR = {
+    number: "var(--color-number)",
+    boolean: "var(--color-boolean)",
+  } as const;
+
+  return (
+    (c?.tsDataType ? TS_COL_TYPE_TO_COLOR[c.tsDataType] : undefined) ??
+    fallBackColor
+  );
 };

@@ -11,6 +11,9 @@ type Args = Pick<
 > & {
   method: MethodDefinitionProps["method"] | undefined;
 };
+
+let nodeLibs: TSLibrary[] | undefined;
+
 export const useCodeEditorTsTypes = (
   args: Args,
 ): LanguageConfig | undefined => {
@@ -27,7 +30,8 @@ export const useCodeEditorTsTypes = (
         method,
         tables,
       });
-      const libs = await dbsMethods.getNodeTypes();
+      const libs = nodeLibs ?? (await dbsMethods.getNodeTypes());
+      nodeLibs = libs;
       const tsLibraries: TSLibrary[] = [
         ...libs.map((l) => ({
           ...l,

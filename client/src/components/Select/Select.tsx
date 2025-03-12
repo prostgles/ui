@@ -1,5 +1,5 @@
-import { mdiMenuDown } from "@mdi/js";
 import React from "react";
+import { mdiMenuDown } from "@mdi/js";
 import type { TestSelectors } from "../../Testing";
 import RTComp from "../../dashboard/RTComp";
 import type { BtnProps } from "../Btn";

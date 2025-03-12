@@ -1,5 +1,5 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { ValidatedColumnInfo, AnyObject } from "prostgles-types";
+import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
 import React from "react";
 import type {
@@ -14,7 +14,8 @@ import {
 } from "../../../../commonTypes/filterUtils";
 import { isObject } from "../../../../commonTypes/publishUtils";
 import Btn from "../../components/Btn";
-import { FlexCol, FlexRow, classOverride } from "../../components/Flex";
+import { FlexCol, classOverride } from "../../components/Flex";
+import { InfoRow } from "../../components/InfoRow";
 import type { ContextDataSchema } from "../AccessControl/OptionControllers/FilterControl";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
@@ -25,7 +26,6 @@ import {
   DEFAULT_VALIDATED_COLUMN_INFO,
   type FilterColumn,
 } from "./smartFilterUtils";
-import { InfoRow } from "../../components/InfoRow";
 export * from "./smartFilterUtils";
 
 type Operand = "AND" | "OR";

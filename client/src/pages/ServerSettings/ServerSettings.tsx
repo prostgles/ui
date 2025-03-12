@@ -16,12 +16,12 @@ import { FlexCol } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
 import { TabsWithDefaultStyle } from "../../components/Tabs";
-import { LLMCredentials } from "../../dashboard/AskLLM/LLMCredentials";
+import { LLMProviderSetup } from "../../dashboard/AskLLM/LLMProviderSetup";
 import SmartCardList from "../../dashboard/SmartCard/SmartCardList";
 import SmartForm from "../../dashboard/SmartForm/SmartForm";
+import { t } from "../../i18n/i18nUtils";
 import { AuthProviderSetup } from "./AuthProvidersSetup";
 import { MCPServers } from "./MCPServers/MCPServers";
-import { t } from "../../i18n/i18nUtils";
 
 export type ServerSettingsProps = Pick<
   Prgl,
@@ -81,7 +81,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                       theme={theme}
                       className="bg-color-0 shadow "
                       label=""
-                      db={dbs as any}
+                      db={dbs}
                       methods={dbsMethods}
                       tableName="global_settings"
                       columns={
@@ -175,7 +175,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                 content: (
                   <SmartCardList
                     theme={theme}
-                    db={dbs as any}
+                    db={dbs}
                     methods={dbsMethods}
                     tableName="credentials"
                     tables={dbsTables}
@@ -204,7 +204,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                 label: "LLM Providers",
                 content: (
                   <FlexCol className="p-1">
-                    <LLMCredentials {...props} />
+                    <LLMProviderSetup {...props} />
                   </FlexCol>
                 ),
               },

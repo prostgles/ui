@@ -23,7 +23,7 @@ type P = {
     files: (LocalMedia | Media)[],
   ) => void;
 } & Pick<SmartFormProps, "defaultData" | "onSuccess" | "db"> &
-  Pick<SmartFormState, "action" | "newRow">;
+  Pick<SmartFormState, "action" | "newRowData">;
 
 /**
  * Appears at the bottom of the form when the table is a file table.
@@ -31,7 +31,7 @@ type P = {
 export const SmartFormFileSection = ({
   db,
   table,
-  newRow,
+  newRowData,
   defaultData,
   action,
   onSuccess,
@@ -47,13 +47,13 @@ export const SmartFormFileSection = ({
   const media: Media[] | undefined = usePromise(async () => {
     if (!isFileTable) throw "Must be a file table";
     if (action.type === "insert") {
-      if (defaultData && isObject(defaultData) && !newRow) {
+      if (defaultData && isObject(defaultData) && !newRowData) {
         return [defaultData as Media];
       } else {
         return getThisRow()[mediaTableName] ?? [];
       }
     } else {
-      return newRow?.[tableName] ?? [row as Media];
+      return newRowData?.[tableName]?.value ?? [row as Media];
     }
   }, [
     row,
@@ -62,7 +62,7 @@ export const SmartFormFileSection = ({
     action.type,
     defaultData,
     isFileTable,
-    newRow,
+    newRowData,
     tableName,
   ]);
 
@@ -76,7 +76,7 @@ export const SmartFormFileSection = ({
         maxFileCount={1}
         onAdd={(files) => {
           const currMedia = [
-            ...(newRow?.[mediaTableName] || []),
+            ...(newRowData?.[mediaTableName]?.value || []),
             ...(action.currentRow?.[mediaTableName] || []),
           ].filter(isDefined);
           setData(
@@ -103,7 +103,8 @@ export const SmartFormFileSection = ({
               }
             }
           } else {
-            const currMedia: Media[] = newRow?.[mediaTableName] || [];
+            const currMedia: Media[] =
+              newRowData?.[mediaTableName]?.value || [];
             setData(
               {
                 name: mediaTableName,

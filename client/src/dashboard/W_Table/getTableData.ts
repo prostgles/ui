@@ -1,13 +1,15 @@
 import type { AnyObject } from "prostgles-types";
-import { isDefined, isEmpty } from "prostgles-types";
+import { isDefined, isEmpty, omitKeys, pickKeys } from "prostgles-types";
 import type { DeltaOf, DeltaOfData } from "../RTComp";
-import { getSmartGroupFilter } from "../SmartFilter/SmartFilter";
 import type { ProstglesTableD, W_TableProps, W_TableState } from "./W_Table";
 import W_Table from "./W_Table";
-import { getSort, simplifyFilter } from "./tableUtils/tableUtils";
+import { getSort } from "./tableUtils/tableUtils";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import { getTableSelect } from "./tableUtils/getTableSelect";
-import { omitKeys, pickKeys } from "prostgles-types";
+import {
+  getSmartGroupFilter,
+  simplifyFilter,
+} from "../../../../commonTypes/filterUtils";
 
 export const getTableFilter = (
   w: WindowData<"table">,

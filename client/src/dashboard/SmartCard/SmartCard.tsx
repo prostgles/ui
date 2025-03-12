@@ -1,23 +1,23 @@
+import { mdiPencil, mdiResize } from "@mdi/js";
 import type {
-  ValidatedColumnInfo,
   AnyObject,
   TableInfo,
+  ValidatedColumnInfo,
 } from "prostgles-types";
-import RTComp from "../RTComp";
 import React from "react";
-import Loading from "../../components/Loading";
+import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
+import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
-import { mdiPencil, mdiResize } from "@mdi/js";
+import Checkbox from "../../components/Checkbox";
+import { classOverride } from "../../components/Flex";
+import { Label } from "../../components/Label";
+import Loading from "../../components/Loading";
+import RTComp from "../RTComp";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
 import SmartForm from "../SmartForm/SmartForm";
-import SmartFormField from "../SmartForm/SmartFormField/SmartFormField";
-import Checkbox from "../../components/Checkbox";
-import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
-import { Label } from "../../components/Label";
-import type { Prgl } from "../../App";
+import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
 import type { SmartCardListProps } from "./SmartCardList";
 import { getSmartCardColumns } from "./getSmartCardColumns";
-import { classOverride } from "../../components/Flex";
 
 type NestedSmartCardProps = Pick<SmartCardProps, "footer" | "excludeNulls">;
 type NestedSmartFormProps = Pick<
@@ -188,13 +188,15 @@ const getDefaultFieldConfig = (
       ["postcode", "post_code"].includes(c.name) ?
         (addr: string) =>
           !addr ?
-            SmartFormField.renderValue(c, addr)
+            <RenderValue column={c} value={addr} />
           : <a
               className="flex-col"
               target="_blank"
               href={`https://www.google.com/maps/search/${addr}`}
             >
-              <span>{SmartFormField.renderValue(c, addr)}</span>
+              <span>
+                <RenderValue column={c} value={addr} />
+              </span>
             </a>
       : c.tsDataType === "boolean" ?
         (val: boolean | null) => (
@@ -442,7 +444,7 @@ export default class SmartCard<T extends AnyObject> extends RTComp<
             {fc?.render?.(defaultData[name], defaultData) || (
               <div className="font-16 text-0 mt-p5 o-auto">
                 {fc?.renderValue?.(defaultData[name], defaultData) ??
-                  (c && SmartFormField.renderValue(c, defaultData[name]))}
+                  (c && <RenderValue column={c} value={defaultData[name]} />)}
               </div>
             )}
           </div>

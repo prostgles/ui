@@ -65,7 +65,7 @@ export const UserStats = ({
           <SmartTable
             theme={theme}
             key={"selectedRuleId"}
-            db={dbs as any}
+            db={dbs}
             methods={dbsMethods}
             filter={[
               { fieldName: "type", type: "$in", value: [], disabled: true },

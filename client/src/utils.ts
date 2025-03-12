@@ -192,12 +192,10 @@ export const playwrightTestLogs: InitOptions["onDebug"] = (ev) => {
   }
 };
 
-export const extractTypeUtil = <T extends AnyObject, U extends Partial<T>>(
-  t: T,
-  u: U,
-): Extract<T, U> | undefined => {
-  if (isEqual(pickKeys(t, Object.keys(u)), u)) {
-    return t as Extract<T, U>;
-  }
-  return undefined;
+export const tout = (timeout: number) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(true);
+    }, timeout);
+  });
 };

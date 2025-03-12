@@ -1,7 +1,6 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, DBSchemaTable } from "prostgles-types";
-import { getKeys } from "prostgles-types";
-import { pickKeys } from "prostgles-types";
+import { getKeys, pickKeys } from "prostgles-types";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type {
   Join,
@@ -14,6 +13,7 @@ import type { ColumnConfigWInfo } from "../W_Table";
 import { getColWInfo } from "./getColWInfo";
 import { getColWidth } from "./getColWidth";
 import { SORTABLE_CHART_COLUMNS } from "../ColumnMenu/NestedTimechartControls";
+import type { DBS } from "../../Dashboard/DBS";
 
 export const getFullColumnConfig = (
   tables: CommonWindowProps["tables"],
@@ -213,7 +213,7 @@ export const getSort = (
 export const getJoinedTables = (
   tables: DBSchemaTable[],
   tableName: string,
-  db: DBHandlerClient,
+  db: DBHandlerClient | DBS,
 ): { joins: Join[]; joinsV2: JoinV2[] } => {
   const myCols = tables.find((t) => t.name === tableName)?.columns;
   const upsertJoin = (joins: Join[], upsertedJoin: Join) => {
@@ -310,27 +310,6 @@ export const getJoinedTables = (
   };
 };
 
-export const simplifyFilter = (f: AnyObject | undefined) => {
-  let result = f;
-  if (result) {
-    while (
-      (result &&
-        "$and" in result &&
-        Array.isArray(result.$and) &&
-        result.$and.length < 2) ||
-      (result &&
-        "$or" in result &&
-        Array.isArray(result.$or) &&
-        result.$or.length < 2)
-    ) {
-      if (result.$and) result = result.$and?.[0] ?? {};
-      if (result?.$or) result = result.$or?.[0] ?? {};
-    }
-    result ??= {};
-  }
-
-  return result;
-};
 // static getCellStyle(
 //   row: AnyObject,
 //   wcol: ColumnConfig,

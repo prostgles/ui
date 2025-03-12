@@ -8,6 +8,7 @@ const APP_DIR = path.resolve(__dirname, "../src");
 const MONACO_DIR = path.resolve(__dirname, "../node_modules/monaco-editor");
 const { SaveMdiIcons } = require("../setup-icons");
 const PRODUCTION = process.env.NODE_ENV === "production";
+const CircularDependencyPlugin = require("circular-dependency-plugin");
 
 const getLoader = () => {
   const babel = {
@@ -110,6 +111,25 @@ module.exports = {
     ],
   },
   plugins: [
+    // new CircularDependencyPlugin({
+    //   // exclude detection of files based on a RegExp
+    //   exclude: /a\.js|node_modules/,
+    //   // include specific files based on a RegExp
+    //   include: /src/,
+    //   // add errors to webpack instead of warnings
+    //   failOnError: true,
+    //   // allow import cycles that include an asyncronous import,
+    //   // e.g. via import(/* webpackMode: "weak" */ './file.js')
+    //   allowAsyncCycles: false,
+    //   // set the current working directory for displaying module paths
+    //   cwd: process.cwd(),
+    //   onDetected({ module: webpackModuleRecord, paths, compilation }) {
+    //     if (paths.some((p) => p.includes("i18nUtils.ts"))) {
+    //       console.log(paths);
+    //       compilation.warnings.push(new Error(paths.join(" -> ")));
+    //     }
+    //   },
+    // }),
     new HtmlWebpackPlugin({
       template: "index.html.ejs",
       v: require("../../electron/package.json")?.version,

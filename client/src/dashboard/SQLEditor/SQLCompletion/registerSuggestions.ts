@@ -597,28 +597,6 @@ const hackyFixMonacoSortFilter = debounce(
   },
   500,
 );
-export const hackyFixOptionmatchOnWordStartOnly = (
-  editor: editor.IStandaloneCodeEditor,
-) => {
-  try {
-    const indexOfConfig = 118; // 119 for version 0.52.0
-    // ensure typing name matches relname
-    // suggestModel.js:420
-    //@ts-ignore
-    const confObj = editor._configuration?.options?._values?.[indexOfConfig];
-    if (!isObject(confObj)) {
-      console.error(
-        "new monaco version might have broken hackyFixOptionmatchOnWordStartOnly again",
-      );
-    }
-    if (confObj && "matchOnWordStartOnly" in confObj) {
-      //@ts-ignore
-      editor._configuration.options._values[
-        indexOfConfig
-      ].matchOnWordStartOnly = false;
-    }
-  } catch (e) {}
-};
 
 // function searchObjectForValue(obj, searchValue) {
 //   const results = [];

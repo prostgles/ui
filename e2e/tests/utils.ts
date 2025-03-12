@@ -141,7 +141,15 @@ export const fillSmartFormAndInsert = async (
   page: PageWIds,
   tableName: string,
   values: Record<string, string>,
+  opts: { isNestedInsert: boolean } = { isNestedInsert: false },
 ) => {
+  if (opts.isNestedInsert) {
+    await page
+      .locator(
+        getTestId("SmartFormFieldOptions.NestedInsert") + getDataKey(tableName),
+      )
+      .click();
+  }
   for (const [key, value] of Object.entries(values)) {
     const unescapedSelector = `${tableName}-${key}`;
     const escapedSelector = await page.evaluate(
@@ -162,7 +170,11 @@ export const fillSmartFormAndInsert = async (
     }
   }
   await page.waitForTimeout(200);
-  await page.getByRole("button", { name: "Insert", exact: true }).click();
+  // await page.getByRole("button", { name: "Insert", exact: true }).click();
+  await page
+    .locator(`${getTestId("SmartForm")}${getDataKey(tableName)}`)
+    .getByTestId("SmartForm.insert")
+    .click();
   await page.waitForTimeout(200);
 };
 
@@ -706,15 +718,39 @@ export const enableAskLLM = async (
   await page.getByTestId("AskLLMAccessControl").click();
   if (!credsProvided) {
     await page.getByTestId("SetupLLMCredentials.api").click();
-    await page.getByTestId("AddLLMCredentialForm").click();
-    await page.getByTestId("AddLLMCredentialForm.Provider").click();
-    await page
-      .getByTestId("AddLLMCredentialForm.Provider")
-      .locator(`[data-key="Custom"]`)
-      .click();
-    // await fillSmartFormAndInsert(page, "llm_credentials", { endpoint: "http://localhost:3004/mocked-llm" });
-    await page.locator(`#endpoint`).fill("http://localhost:3004/mocked-llm");
-    await page.getByTestId("AddLLMCredentialForm.Save").click();
+    // await page.getByTestId("AddLLMCredentialForm").click();
+    await page.getByTestId("dashboard.window.rowInsertTop").click();
+    // await page.getByTestId("AddLLMCredentialForm.Provider").click();
+
+    // await page
+    //   .getByTestId("AddLLMCredentialForm.Provider")
+    //   .locator(`[data-key="Custom"]`)
+    //   .click();
+    await fillSmartFormAndInsert(
+      page,
+      "llm_providers",
+      {
+        id: "Custom",
+        api_url: "http://localhost:3004/mocked-llm",
+      },
+      { isNestedInsert: true },
+    );
+    await fillSmartFormAndInsert(
+      page,
+      "llm_providers",
+      {
+        id: "Custom",
+        api_url: "http://localhost:3004/mocked-llm",
+      },
+      { isNestedInsert: true },
+    );
+    // await page.locator(`#endpoint`).fill("http://localhost:3004/mocked-llm");
+    // await page.getByTestId("AddLLMCredentialForm.Save").click();
+
+    await fillSmartFormAndInsert(page, "llm_credentials", {
+      name: "Custom",
+      api_key: "nothing",
+    });
     await page.waitForTimeout(1e3);
   }
   await page.getByTestId("AskLLMAccessControl.AllowAll").click();

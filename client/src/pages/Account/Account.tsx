@@ -64,7 +64,7 @@ export const Account = (props: AccountProps) => {
         <SmartForm
           theme={theme}
           label=""
-          db={dbs as any}
+          db={dbs}
           methods={dbsMethods}
           tableName="users"
           tables={dbsTables}

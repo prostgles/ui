@@ -41,6 +41,7 @@ export const ProstglesSignup = ({
           <SuccessMessage
             variant="text-sized"
             message="A code was sent to your email. Enter the code to complete registration"
+            style={{ flex: 1, minWidth: 0 }}
           />
           <FormField
             id="otp-code"
@@ -74,13 +75,18 @@ export const ProstglesSignup = ({
               {},
               { prostgles_registration: { email, token, enabled: true } },
             );
-            const API_Key = btoa(token);
-            await dbs.llm_credentials.insert({
-              config: {
-                Provider: "Prostgles",
-                API_Key,
+            const api_key = btoa(token);
+            await dbs.llm_providers.update(
+              {
+                id: "Prostgles",
               },
-              endpoint: `${host}/rest-api/cloud/methods/askLLM`,
+              {
+                api_url: `${host}/rest-api/cloud/methods/askLLM`,
+              },
+            );
+            await dbs.llm_credentials.insert({
+              provider_id: "Prostgles",
+              api_key,
               user_id: undefined as any,
             });
           } catch (err) {

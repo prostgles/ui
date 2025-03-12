@@ -21,6 +21,7 @@ import { useProjectDb } from "./useProjectDb";
 import { FlexCol } from "../../components/Flex";
 import { useNavigate } from "react-router-dom";
 import type { Command } from "../../Testing";
+import type { DBS } from "../../dashboard/Dashboard/DBS";
 
 export type Connections = DBSSchema["connections"];
 export type ProjectProps = {
@@ -30,7 +31,7 @@ export type ProjectProps = {
 
 export type FullExtraProps = ExtraProps & {
   projectPath?: string;
-  dbProject: DBHandlerClient;
+  dbProject: DBHandlerClient | DBS;
   dbMethods: MethodHandler;
   dbTables: CommonWindowProps["tables"];
 };

@@ -1,12 +1,11 @@
 import type { JSONB, ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
-import SmartFormField from "../../dashboard/SmartForm/SmartFormField/SmartFormField";
+import { getInputType } from "../../dashboard/SmartForm/SmartFormField/fieldUtils";
 import type { FormFieldProps } from "../FormField/FormField";
 import FormField from "../FormField/FormField";
 import type { FullOption } from "../Select/Select";
 import type { JSONBSchemaCommonProps } from "./JSONBSchema";
 import { isCompleteJSONB } from "./isCompleteJSONB";
-import { type } from "os";
 
 type Schema = JSONB.BasicType | JSONB.EnumType;
 type P = JSONBSchemaCommonProps & {
@@ -124,7 +123,7 @@ export const JSONBSchemaPrimitive = ({
     };
   }
 
-  const inputType = SmartFormField.getInputType({
+  const inputType = getInputType({
     ...transformedType,
     name: schema.title ?? "text",
   });

@@ -5,10 +5,10 @@ import { Table } from "../components/Table/Table";
 import type { ColumnSort } from "./W_Table/ColumnMenu/ColumnMenu";
 import type { ProstglesColumn } from "./W_Table/W_Table";
 import RTComp from "./RTComp";
-import { getSmartGroupFilter } from "./SmartFilter/SmartFilter";
-import type {
-  DetailedFilterBase,
-  SmartGroupFilter,
+import {
+  getSmartGroupFilter,
+  type DetailedFilterBase,
+  type SmartGroupFilter,
 } from "../../../commonTypes/filterUtils";
 import { SmartFilterBar } from "./SmartFilterBar/SmartFilterBar";
 import SmartForm from "./SmartForm/SmartForm";

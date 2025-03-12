@@ -368,13 +368,13 @@ export type DBGeneratedSchema = {
     columns: {
       api_key?: string;
       created?: null | string;
+      default_model_name?: null | string;
       extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';  };
       extra_headers?: null | Record<string, string>
       id?: number;
       is_default?: null | boolean;
       name?: null | string;
       provider_id: string;
-      result_path?: null | string[];
       user_id: string;
     };
   };

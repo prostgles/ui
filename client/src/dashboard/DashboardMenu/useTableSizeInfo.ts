@@ -5,9 +5,10 @@ import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { useMemo } from "react";
 import { bytesToSize } from "../Backup/BackupsControls";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
+import type { DBS } from "../Dashboard/DBS";
 
 type Args = Pick<DashboardMenuProps, "workspace" | "tables"> & {
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
 };
 export type TablesWithInfo = (DBSchemaTablesWJoins[number] & {
   endText: string;

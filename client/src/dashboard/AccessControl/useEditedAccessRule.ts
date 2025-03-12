@@ -134,7 +134,6 @@ export const useEditedAccessRule = ({
       rule: undefined,
       contextData: !user ? undefined : { user },
     };
-    //@ts-ignore
   }, [getIsMounted, action, dbs.access_control, dbs.users]);
 
   const wspTables = usePromise(async () => {
@@ -229,10 +228,9 @@ const getRuleErrorMessage = (
         ).length
       : !!dbPermissions.allowAllTables.length;
 
-    /** Disabled because sometimes only server functions are needed */
-    // if (!allowedTables) {
-    //   return "Empty rule. Must allow at least one table";
-    // }
+    if (!allowedTables && !newRule.access_control_methods?.length) {
+      return "Empty rule. Must allow at least one table or server function";
+    }
   } else if (dbPermissions?.type === "Run SQL" && !dbPermissions.allowSQL) {
     return `Must tick "Run SQL" checkbox`;
   }

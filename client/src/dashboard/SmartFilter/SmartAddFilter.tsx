@@ -15,7 +15,7 @@ import Popup from "../../components/Popup/Popup";
 import SearchList from "../../components/SearchList/SearchList";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { JoinV2 } from "../Dashboard/dashboardUtils";
-import { getColumnDataColor } from "../SmartForm/SmartFormField/SmartFormField";
+import { getColumnDataColor } from "../SmartForm/SmartFormField/RenderValue";
 import { AddJoinFilter } from "./AddJoinFilter";
 import { getFilterableCols } from "./SmartSearch/SmartSearch";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";

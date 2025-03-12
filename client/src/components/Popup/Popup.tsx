@@ -404,7 +404,7 @@ export const Footer = ({ children, className, style, error }: FooterProps) => {
           error={error}
           style={{ maxHeight: "150px", minHeight: 0, overflow: "auto" }}
         />
-        <FlexRow>{children}</FlexRow>
+        <FlexRow className="f-1">{children}</FlexRow>
       </footer>
     </ErrorTrap>
   );

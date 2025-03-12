@@ -19,7 +19,7 @@ export const AddLLMPromptForm = ({
       }
       render={(pClose) => (
         <SmartForm
-          db={dbs as any}
+          db={dbs}
           tableName="llm_prompts"
           tables={dbsTables}
           methods={{}}

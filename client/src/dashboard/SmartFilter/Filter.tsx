@@ -1,5 +1,5 @@
 import { mdiCog, mdiFormatLetterMatches } from "@mdi/js";
-import { omitKeys, isEqual, isDefined } from "prostgles-types";
+import { isDefined, isEqual, omitKeys } from "prostgles-types";
 import React from "react";
 import type { SimpleFilter } from "../../../../commonTypes/filterUtils";
 import {
@@ -14,8 +14,8 @@ import PopupMenu from "../../components/PopupMenu";
 import Select from "../../components/Select/Select";
 import { ContextDataSelector } from "../AccessControl/ContextDataSelector";
 import RTComp from "../RTComp";
-import SmartFormField from "../SmartForm/SmartFormField/SmartFormField";
-import { colIs } from "../W_Table/ColumnMenu/ColumnSelect";
+import { colIs, getInputType } from "../SmartForm/SmartFormField/fieldUtils";
+import { getTableSelect } from "../W_Table/tableUtils/getTableSelect";
 import { AgeFilter, AgeFilterTypes } from "./AgeFilter";
 import { FilterWrapper, type FilterWrapperProps } from "./FilterWrapper";
 import { GeoFilter, GeoFilterTypes } from "./GeoFilter";
@@ -23,7 +23,6 @@ import { ListFilter } from "./ListFilter/ListFilter";
 import { NumberOrDateFilter } from "./NumberOrDateFilter";
 import type { BaseFilterProps } from "./SmartFilter";
 import { SmartSearch } from "./SmartSearch/SmartSearch";
-import { getTableSelect } from "../W_Table/tableUtils/getTableSelect";
 
 type FilterProps = BaseFilterProps &
   Pick<FilterWrapperProps, "rootFilter" | "selectedColumns"> & {
@@ -270,7 +269,7 @@ export class Filter extends RTComp<FilterProps, { error?: any }> {
           <NumberOrDateFilter
             {...filterProps}
             type={column.tsDataType.toLowerCase() as any}
-            inputType={SmartFormField.getInputType(column)}
+            inputType={getInputType(column)}
           />
         );
 

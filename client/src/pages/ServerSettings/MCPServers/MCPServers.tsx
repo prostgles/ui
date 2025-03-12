@@ -72,7 +72,7 @@ export const MCPServers = (props: ServerSettingsProps) => {
       >
         <SmartCardList
           theme={theme}
-          db={dbs as any}
+          db={dbs}
           methods={dbsMethods}
           {...(mcp_servers_disabled && {
             className: "no-interaction",

@@ -277,7 +277,7 @@ export const BackupsControls = ({
       </div>
       <SmartCardList
         theme={theme}
-        db={dbs as any}
+        db={dbs}
         methods={dbsMethods}
         tableName="backups"
         btnColor="gray"
@@ -340,7 +340,7 @@ export const BackupsControls = ({
       />
 
       <SmartCardList
-        db={dbs as any}
+        db={dbs}
         theme={theme}
         methods={dbsMethods}
         tableName="backups"
@@ -408,7 +408,7 @@ export const BackupsControls = ({
           </div>
         }
         onSetData={(items) => sethasBackups(!!items.length)}
-        db={dbs as any}
+        db={dbs}
         methods={dbsMethods}
         tableName="backups"
         tables={dbsTables}

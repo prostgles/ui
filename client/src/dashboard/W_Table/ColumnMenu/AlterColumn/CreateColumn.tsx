@@ -10,8 +10,8 @@ import { SQLSmartEditor } from "../../../SQLEditor/SQLSmartEditor";
 import type { ColumnOptions } from "./ColumnEditor";
 import { ColumnEditor } from "./ColumnEditor";
 import { getAlterFkeyQuery } from "./ReferenceEditor";
-import { colIs } from "../ColumnSelect";
 import { t } from "../../../../i18n/i18nUtils";
+import { colIs } from "../../../SmartForm/SmartFormField/fieldUtils";
 
 export type CreateColumnProps = Pick<CommonWindowProps, "suggestions"> & {
   table: DBSchemaTable;

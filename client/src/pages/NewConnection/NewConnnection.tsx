@@ -390,7 +390,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                       <JoinedRecords
                         theme={prglState.theme}
                         style={{ padding: 0 }}
-                        db={prglState.dbs as any}
+                        db={prglState.dbs}
                         rowFilter={[{ fieldName: "id", value: this.conId }]}
                         showRelated="descendants"
                         tableName={"connections"}

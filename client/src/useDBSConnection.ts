@@ -14,8 +14,8 @@ import { getTables } from "./dashboard/Dashboard/Dashboard";
 import { useEffectAsync } from "./dashboard/DashboardMenu/DashboardMenuSettings";
 import { pageReload } from "./components/Loading";
 import { API_PATH_SUFFIXES, SPOOF_TEST_VALUE } from "../../commonTypes/utils";
-import { isPlaywrightTest } from "./pages/ProjectConnection/useProjectDb";
 import { playwrightTestLogs } from "./utils";
+import { isPlaywrightTest } from "./i18n/i18nUtils";
 
 export const useDBSConnection = (
   onDisconnect: (isDisconnected: boolean) => void,

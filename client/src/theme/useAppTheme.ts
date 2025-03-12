@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import type { AppState, Theme } from "../App";
-import { appTheme } from "../App";
+import { appTheme, type AppState, type Theme } from "../App";
 
 const THEMES = ["light", "dark", "from-system"] as const;
 const THEME_SETTING_NAME = "theme" as const;

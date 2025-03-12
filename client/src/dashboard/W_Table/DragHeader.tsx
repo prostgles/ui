@@ -1,13 +1,13 @@
 import RTComp from "../RTComp";
 import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import { getDistanceBetweenBoxes } from "../SilverGrid/SilverGridChild";
-import { getSmartGroupFilter } from "../SmartFilter/SmartFilter";
 import type { CardViewProps, CardViewState, IndexedRow } from "./CardView";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { Pan } from "../../components/Table/Table";
 import { getRowFilter } from "./tableUtils/getEditColumn";
 import React from "react";
 import { isEmpty } from "../../utils";
+import { getSmartGroupFilter } from "../../../../commonTypes/filterUtils";
 
 type DragHeaderProps = Pick<
   CardViewProps,

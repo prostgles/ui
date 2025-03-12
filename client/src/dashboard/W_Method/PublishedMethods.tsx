@@ -39,7 +39,7 @@ export const PublishedMethods = ({
   const functionList = (
     <SmartCardList
       theme={prgl.theme}
-      db={dbs as any}
+      db={dbs}
       methods={dbsMethods}
       tables={dbsTables}
       tableName="published_methods"
@@ -64,33 +64,39 @@ export const PublishedMethods = ({
                   (m) => m.published_method_id === row.id,
                 )
               }
+              label={{
+                children: (
+                  <FlexCol className="gap-p5">
+                    <FlexRow className="gap-p25">
+                      <div>{row.name}</div>
+                      <div className="text-2">
+                        {!row.arguments.length ?
+                          " ()"
+                        : ` ({ ${row.arguments.map((a) => `${a.name}: ${a.type}`).join("; ")} })`
+                        }
+                      </div>
+                    </FlexRow>
+                    {!!row.description.trim() && (
+                      <div className="text-2">{row.description}</div>
+                    )}
+                  </FlexCol>
+                ),
+              }}
               onChange={(checked) => {
-                if (!checked) {
-                  editedRule?.onChange({
-                    access_control_methods:
-                      editedRule.rule?.access_control_methods.filter(
+                const access_control_methods =
+                  editedRule?.newRule?.access_control_methods ?? [];
+
+                editedRule?.onChange({
+                  access_control_methods:
+                    checked ?
+                      [
+                        ...access_control_methods,
+                        { published_method_id: row.id },
+                      ]
+                    : access_control_methods.filter(
                         (a) => a.published_method_id !== row.id,
                       ),
-                  });
-                } else {
-                  editedRule?.onChange({
-                    access_control_methods: [
-                      ...(editedRule.rule?.access_control_methods ?? []),
-                      { published_method_id: row.id },
-                    ],
-                  });
-                }
-                // if (!checked) {
-                //   dbs.access_control_methods.delete({
-                //     published_method_id: row.id,
-                //     access_control_id: accessRuleId,
-                //   });
-                // } else {
-                //   dbs.access_control_methods.insert({
-                //     published_method_id: row.id,
-                //     access_control_id: accessRuleId,
-                //   });
-                // }
+                });
               }}
             />
           ),
@@ -101,20 +107,6 @@ export const PublishedMethods = ({
           className: "f-1 ",
           render: (v, row: DBSSchema["published_methods"]) => (
             <FlexRow className="noselect w-full">
-              <FlexCol className="gap-p5">
-                <FlexRow className="gap-p25">
-                  <div>{row.name}</div>
-                  <div className="text-2">
-                    {!row.arguments.length ?
-                      " ()"
-                    : ` ({ ${row.arguments.map((a) => `${a.name}: ${a.type}`).join("; ")} })`
-                    }
-                  </div>
-                </FlexRow>
-                {!!row.description.trim() && (
-                  <div className="text-2">{row.description}</div>
-                )}
-              </FlexCol>
               <div className="ml-auto flex-row ai-center show-on-trigger-hover">
                 <Btn
                   title="Edit function"
@@ -200,17 +192,9 @@ export const PublishedMethods = ({
 
   return (
     <FlexCol className={className} style={style}>
-      <SectionHeader
-        icon={isDefined(accessRuleId) ? mdiLanguageTypescript : undefined}
-      >
-        Functions
-      </SectionHeader>
-      {!isDefined(accessRuleId) && (
+      <SectionHeader icon={mdiLanguageTypescript}>Functions</SectionHeader>
+      <div className={`flex-col gap-1 pl-2 `}>
         <p className="p-0 m-0">Server-side user triggered functions</p>
-      )}
-      <div
-        className={`flex-col gap-1 ${isDefined(accessRuleId) ? "pl-2" : ""}`}
-      >
         {functionList}
         <div className="flex-col f-1">
           {action && (

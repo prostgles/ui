@@ -4,16 +4,14 @@ import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import Chip from "../../components/Chip";
 import { FlexCol, FlexRow } from "../../components/Flex";
+import FormField from "../../components/FormField/FormField";
 import PopupMenu from "../../components/PopupMenu";
 import { SwitchToggle } from "../../components/SwitchToggle";
-import { isDefined } from "../../utils";
 import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
 import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAccessRule";
 import SmartForm from "../SmartForm/SmartForm";
 import { SetupLLMCredentials } from "./SetupLLMCredentials";
 import { useLLMSetupState } from "./useLLMSetupState";
-import { Section } from "../../components/Section";
-import FormField from "../../components/FormField/FormField";
 
 type P = Prgl & {
   accessRuleId: number | undefined;
@@ -49,9 +47,7 @@ export const AskLLMAccessControl = ({
 
   return (
     <FlexCol className={className} style={style}>
-      <SectionHeader icon={isDefined(accessRuleId) ? mdiAssistant : undefined}>
-        AI Assistant
-      </SectionHeader>
+      <SectionHeader icon={mdiAssistant}>AI Assistant</SectionHeader>
       <FlexCol className={"pl-2"}>
         <PopupMenu
           positioning="center"
@@ -108,7 +104,7 @@ export const AskLLMAccessControl = ({
                 credentials must be specified
               </div>
               <FlexCol className="gap-0 ta-left bold my-1">
-                <div className="px-p25 mb-1">
+                <div className="mb-1">
                   Allowed Prompts and APIs ({allowedItems?.length ?? 0})
                 </div>
 
@@ -140,13 +136,17 @@ export const AskLLMAccessControl = ({
                 {allowedItems?.map((a, i) => {
                   return (
                     <FlexRow key={i}>
-                      <Chip label="API" variant="naked">
+                      <Chip label="Key name" variant="header">
                         {a.llm_credential?.name}
                       </Chip>
-                      <Chip label="Prompt" variant="naked">
+                      <Chip label="Provider" variant="header">
+                        {a.llm_credential?.provider_id}
+                      </Chip>
+                      <Chip label="Prompt" variant="header">
                         {a.llm_prompt?.name}
                       </Chip>
                       <Btn
+                        className="ml-auto"
                         iconPath={mdiClose}
                         onClick={() => {
                           editedRule?.onChange({
@@ -174,17 +174,14 @@ export const AskLLMAccessControl = ({
                   />
                 )}
               </FlexCol>
-              <Section
-                className="gap-1"
-                title="Allow custom pairs"
-                titleIconPath=""
-              >
+              <FlexCol className="gap-1">
+                <div className="bold ta-start">Add custom pair</div>
                 <SmartForm
                   label=""
                   key={addFormKey}
                   contentClassname="flex-row px-0 p-p25"
                   tableName="access_control_allowed_llm"
-                  db={dbs as any}
+                  db={dbs}
                   methods={{}}
                   tables={dbsTables}
                   theme={prgl.theme}
@@ -241,7 +238,7 @@ export const AskLLMAccessControl = ({
                 >
                   Add
                 </Btn>
-              </Section>
+              </FlexCol>
             </>
           }
         </PopupMenu>

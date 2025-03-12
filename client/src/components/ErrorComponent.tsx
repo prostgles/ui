@@ -22,6 +22,11 @@ type P = TestSelectors & {
   color?: "warning" | "action" | "info";
   onClear?: VoidFunction;
   children?: ReactNode;
+  /**
+   * Auto scroll into view when error is shown
+   * Default: true
+   */
+  autoScrollIntoView?: boolean;
 };
 export default class ErrorComponent extends React.Component<P> {
   ref?: any;
@@ -54,8 +59,8 @@ export default class ErrorComponent extends React.Component<P> {
   };
 
   scrollIntoView = () => {
-    const { error } = this.props;
-    if (error && this.ref && this.ref.scrollIntoView) {
+    const { error, autoScrollIntoView = true } = this.props;
+    if (error && autoScrollIntoView && this.ref && this.ref.scrollIntoView) {
       if (this.ref.scrollIntoViewIfNeeded) {
         this.ref.scrollIntoViewIfNeeded();
       } else this.ref.scrollIntoView();
@@ -76,6 +81,7 @@ export default class ErrorComponent extends React.Component<P> {
       findMsg = false,
       withIcon = false,
       maxTextLength = 1000,
+      autoScrollIntoView,
       title,
       noScroll = false,
       variant,

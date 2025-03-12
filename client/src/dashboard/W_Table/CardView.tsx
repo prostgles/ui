@@ -1,18 +1,18 @@
 import type { AnyObject } from "prostgles-types";
 import { _PG_date } from "prostgles-types";
 import React from "react";
+import { matchObj } from "../../../../commonTypes/utils";
+import { FlexCol, FlexRowWrap } from "../../components/Flex";
 import type { PaginationProps } from "../../components/Table/Pagination";
 import { Pagination } from "../../components/Table/Pagination";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import RTComp from "../RTComp";
-import SmartFormField from "../SmartForm/SmartFormField/SmartFormField";
+import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
+import { DragHeader, DragHeaderHeight } from "./DragHeader";
 import type { W_TableProps, W_TableState } from "./W_Table";
 import type { OnClickEditRow } from "./tableUtils/getEditColumn";
 import { getEditColumn } from "./tableUtils/getEditColumn";
-import { DragHeader, DragHeaderHeight } from "./DragHeader";
 import type { ProstglesTableColumn } from "./tableUtils/getTableCols";
-import { FlexCol, FlexRowWrap } from "../../components/Flex";
-import { matchObj } from "../../../../commonTypes/utils";
 
 export type CardViewProps = {
   props: W_TableProps;
@@ -266,7 +266,7 @@ export class CardView extends RTComp<CardViewProps, CardViewState> {
                           rowIndex: ri,
                           nextRow: rows[ri + 1],
                           prevRow: rows[ri - 1],
-                        }) ?? SmartFormField.renderValue(c, row[c.name])}
+                        }) ?? <RenderValue column={c} value={row[c.name]} />}
                       </div>
                     </div>
                   ))}

@@ -1,14 +1,11 @@
 import React, { useMemo, useState } from "react";
 import type { Prgl, PrglState } from "../../../App";
 import { FlexCol } from "../../../components/Flex";
+import { FormFieldDebounced } from "../../../components/FormField/FormFieldDebounced";
 import { getActiveTokensFilter } from "../../../pages/Account/Sessions";
 import { APIDetailsHttp } from "./APIDetailsHttp";
 import { APIDetailsTokens } from "./APIDetailsTokens";
 import { APIDetailsWs } from "./APIDetailsWs";
-import { JSONBSchema } from "../../../components/JSONBSchema/JSONBSchema";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import SmartFormField from "../../SmartForm/SmartFormField/SmartFormField";
-import { FormFieldDebounced } from "../../../components/FormField/FormFieldDebounced";
 
 export type APIDetailsProps = PrglState & {
   connection: Prgl["connection"];

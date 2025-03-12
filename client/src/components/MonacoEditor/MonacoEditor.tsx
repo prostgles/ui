@@ -1,19 +1,18 @@
+import React, { useEffect, useMemo } from "react";
 import {
   useAsyncEffectQueue,
   usePromise,
 } from "prostgles-client/dist/react-hooks";
-import { getKeys, isEqual, pickKeys } from "prostgles-types";
-import React, { useEffect, useMemo } from "react";
-import { appTheme, useReactiveState } from "../../App";
+import { getKeys, isEqual, isObject, pickKeys } from "prostgles-types";
+import { appTheme, useReactiveState } from "../../appUtils";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
-import { hackyFixOptionmatchOnWordStartOnly } from "../../dashboard/SQLEditor/SQLCompletion/registerSuggestions";
 import {
   customLightThemeMonaco,
   getMonaco,
 } from "../../dashboard/SQLEditor/SQLEditor";
 import type { editor } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
-import { KeyCode } from "monaco-editor";
+
 export type MonacoEditorProps = {
   language: string;
   value: string;
@@ -197,4 +196,27 @@ const hackyShowDocumentationBecauseStorageServiceIsBrokenSinceV42 = (
       // suggestWidget._persistedSize.store({width: 200, height: 256});
     }
   }
+};
+
+const hackyFixOptionmatchOnWordStartOnly = (
+  editor: editor.IStandaloneCodeEditor,
+) => {
+  try {
+    const indexOfConfig = 118; // 119 for version 0.52.0
+    // ensure typing name matches relname
+    // suggestModel.js:420
+    //@ts-ignore
+    const confObj = editor._configuration?.options?._values?.[indexOfConfig];
+    if (!isObject(confObj)) {
+      console.error(
+        "new monaco version might have broken hackyFixOptionmatchOnWordStartOnly again",
+      );
+    }
+    if (confObj && "matchOnWordStartOnly" in confObj) {
+      //@ts-ignore
+      editor._configuration.options._values[
+        indexOfConfig
+      ].matchOnWordStartOnly = false;
+    }
+  } catch (e) {}
 };

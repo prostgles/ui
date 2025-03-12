@@ -1,17 +1,14 @@
-import { mdiCrossBolnisi, mdiOpenInNew, mdiPencilOutline } from "@mdi/js";
-import type { AnyObject } from "prostgles-types";
-
 import React from "react";
-
+import { mdiOpenInNew, mdiPencilOutline } from "@mdi/js";
+import type { ValidatedColumnInfo, AnyObject } from "prostgles-types";
 import { isEmpty } from "../../../utils";
-// const sanitizeHtml = _sanitizeHtml as any;
-
 import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
-import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import Btn from "../../../components/Btn";
 
-import type { DetailedFilterBase } from "../../../../../commonTypes/filterUtils";
-import { getSmartGroupFilter } from "../../SmartFilter/SmartFilter";
+import {
+  getSmartGroupFilter,
+  type DetailedFilterBase,
+} from "../../../../../commonTypes/filterUtils";
 import type { AddColumnMenuProps } from "../ColumnMenu/AddColumnMenu";
 import { AddColumnMenu } from "../ColumnMenu/AddColumnMenu";
 import type { ProstglesColumn } from "../W_Table";

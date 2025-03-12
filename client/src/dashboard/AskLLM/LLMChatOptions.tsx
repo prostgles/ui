@@ -54,7 +54,7 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
                   created: 1,
                 }}
                 jsonbSchemaWithControls={true}
-                db={dbs as any}
+                db={dbs}
                 tables={dbsTables}
                 methods={{}}
                 rowFilter={[{ fieldName: "id", value: activeChatId }]}

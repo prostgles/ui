@@ -5,7 +5,7 @@ import {
   type TypeAutoOpts,
 } from "../dashboard/W_SQL/getDemoUtils";
 import { VIDEO_DEMO_DB_NAME } from "../dashboard/W_SQL/TestSQL";
-import { tout } from "../pages/ElectronSetup";
+import { tout } from "../utils";
 import { closeAllViews } from "./dashboardDemo";
 import { click, getElement, movePointer, waitForElement } from "./demoUtils";
 
