@@ -21,7 +21,7 @@ import PopupMenu from "../../components/PopupMenu";
 import SmartCardList from "../../dashboard/SmartCard/SmartCardList";
 import {
   StyledInterval,
-  renderInterval,
+  getPGIntervalAsText,
 } from "../../dashboard/W_SQL/customRenderers";
 import { Icon } from "../../components/Icon/Icon";
 import { t } from "../../i18n/i18nUtils";
@@ -171,7 +171,7 @@ export const Sessions = ({
           name: "createdd",
           select: { $ageNow: ["created", null, "second"] },
           label: t.Sessions.Created,
-          renderValue: (v) => renderInterval(v, true, true),
+          renderValue: (v) => getPGIntervalAsText(v, true, true),
         },
         {
           name: "expiress",
@@ -179,7 +179,7 @@ export const Sessions = ({
           label: t.Sessions.Expires,
           hideIf: (_, row) => !row.active,
           renderValue: (v) => {
-            return renderInterval(v, true, true);
+            return getPGIntervalAsText(v, true, true);
           },
         },
         {

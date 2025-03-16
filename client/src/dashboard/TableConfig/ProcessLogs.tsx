@@ -7,7 +7,7 @@ import Chip from "../../components/Chip";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import Loading from "../../components/Loading";
 import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
-import { renderInterval } from "../W_SQL/customRenderers";
+import { getPGIntervalAsText } from "../W_SQL/customRenderers";
 import type { editor } from "../W_SQL/monacoEditorTypes";
 import { Label } from "../../components/Label";
 
@@ -119,7 +119,7 @@ export const ProcessLogs = ({ dbsMethods, connectionId, dbs, type }: P) => {
                 <Chip variant="naked" label="Uptime">
                   {!procStats ?
                     " "
-                  : renderInterval(
+                  : getPGIntervalAsText(
                       getAgeFromDiff(Math.round(procStats.uptime) * 1e3),
                       true,
                       undefined,

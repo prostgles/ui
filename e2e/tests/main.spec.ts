@@ -55,13 +55,12 @@ test.describe("Main test", () => {
   test.beforeAll(async () => {
     ({ getEmails } = startMockSMTPServer());
     console.log("getEmails", getEmails());
-
     return { getEmails };
   });
+
   test.beforeEach(async ({ page }) => {
     page.on("console", console.log);
     page.on("pageerror", console.error);
-
     await page.waitForTimeout(200);
   });
 

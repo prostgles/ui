@@ -38,6 +38,8 @@ type E =
   | React.KeyboardEvent<HTMLButtonElement>
   | React.ChangeEvent<HTMLInputElement>
   | React.ChangeEvent<HTMLSelectElement>
+  | React.KeyboardEvent
+  | React.ChangeEvent
   | KeyboardEvent;
 
 // type P<O extends FullOption, Multi extends boolean = false> = {

@@ -1,8 +1,9 @@
 import { mdiPencil, mdiResize } from "@mdi/js";
-import type {
-  AnyObject,
-  TableInfo,
-  ValidatedColumnInfo,
+import {
+  isDefined,
+  type AnyObject,
+  type TableInfo,
+  type ValidatedColumnInfo,
 } from "prostgles-types";
 import React from "react";
 import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
@@ -78,7 +79,7 @@ export type SmartCardCommonProps = {};
 
 export type SmartCardProps<T extends AnyObject = any> = Pick<
   Prgl,
-  "db" | "tables" | "methods" | "theme"
+  "db" | "tables" | "methods"
 > &
   Pick<SmartCardListProps<T>, "tableName"> & {
     defaultData: AnyObject;
@@ -112,7 +113,6 @@ export type SmartCardProps<T extends AnyObject = any> = Pick<
     footer?: (row: AnyObject) => React.ReactNode;
 
     enableInsert?: boolean;
-    includeMedia?: boolean;
 
     /**
      * If true then will not displaye fields with null values
@@ -193,6 +193,7 @@ const getDefaultFieldConfig = (
               className="flex-col"
               target="_blank"
               href={`https://www.google.com/maps/search/${addr}`}
+              rel="noreferrer"
             >
               <span>
                 <RenderValue column={c} value={addr} />
@@ -307,7 +308,6 @@ export default class SmartCard<T extends AnyObject> extends RTComp<
       db,
       tables,
       methods,
-      theme,
       tableName,
       onChange,
       className = "",
@@ -317,7 +317,6 @@ export default class SmartCard<T extends AnyObject> extends RTComp<
       fieldConfigs: _fieldConfigs,
       footer = null,
       enableInsert = true,
-      includeMedia,
       title,
       showViewEditBtn = true,
       smartFormProps = {},
@@ -370,7 +369,6 @@ export default class SmartCard<T extends AnyObject> extends RTComp<
       popup = (
         <SmartForm
           db={db}
-          theme={theme}
           tables={tables}
           methods={methods}
           asPopup={true}
@@ -380,7 +378,6 @@ export default class SmartCard<T extends AnyObject> extends RTComp<
           confirmUpdates={true}
           hideChangesOptions={true}
           enableInsert={enableInsert}
-          includeMedia={includeMedia}
           onSuccess={onChanged}
           {...smartFormProps}
           onClose={() => {
@@ -416,7 +413,9 @@ export default class SmartCard<T extends AnyObject> extends RTComp<
       .filter(
         ({ name, fc }) =>
           !fc?.hideIf?.(defaultData[name], defaultData) &&
-          (fc?.render || !excludeNulls || defaultData[name] !== null),
+          (fc?.render ||
+            !excludeNulls ||
+            (defaultData[name] !== null && isDefined(defaultData[name]))),
       )
       .map(({ name, fc, col: c }, i) => {
         const labelText =

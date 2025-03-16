@@ -284,7 +284,7 @@ export async function getTableData(
 
           const newName =
             showCounts ?
-              `${w.table_name} - ${(rowCount ?? "??").toLocaleString()} records`
+              `${w.table_name} ${(rowCount ?? "??").toLocaleString()}`
             : w.table_name;
           if (newName !== w.name) {
             w.$update({ name: newName });

@@ -103,7 +103,6 @@ export const MapBasemapOptions = ({ w, prgl, className, asPopup }: P) => {
                   render={(pClose) => {
                     return (
                       <SmartTable
-                        theme={prgl.theme}
                         title="Click row to select"
                         db={prgl.db}
                         tableName={mediaTable.name}

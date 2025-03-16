@@ -2,7 +2,7 @@ import React from "react";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { isObject, _PG_date, _PG_numbers } from "prostgles-types";
 import { ShorterText } from "../../../components/ShorterText";
-import { renderInterval } from "../../W_SQL/customRenderers";
+import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import { dateAsYMD_Time } from "../../Charts";
 import { sliceText } from "../../../../../commonTypes/utils";
 
@@ -113,7 +113,7 @@ export const RenderValue = ({
     );
   }
   if (c?.udt_name === "interval") {
-    return <>{renderInterval(value)}</>;
+    return <>{getPGIntervalAsText(value)}</>;
   }
 
   if (value && ["geography", "geometry"].includes(c?.udt_name ?? "")) {

@@ -16,7 +16,7 @@ const SHORT_NAMES = [
 
 type PG_Interval = Partial<Record<(typeof SHORT_NAMES)[number][0], number>>;
 
-export const renderInterval = (
+export const getPGIntervalAsText = (
   v: AnyObject = {},
   shortVersion = false,
   withAgoText?: boolean,

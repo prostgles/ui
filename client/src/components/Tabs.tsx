@@ -6,7 +6,7 @@ import RTComp from "../dashboard/RTComp";
 import Btn from "./Btn";
 import { classOverride } from "./Flex";
 import { Icon } from "./Icon/Icon";
-import type { MenuListitem } from "./MenuList";
+import type { MenuListitem } from "./MenuListItem";
 import { MenuList } from "./MenuList";
 import { useConnectionConfigSearchParams } from "../dashboard/ConnectionConfig/useConnectionConfigSearchParams";
 import { getKeys } from "../utils";
@@ -229,12 +229,13 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<
               listClassName,
             )}
             variant={
-              controlsCollapsed ? "dropdown" : (
-                (variant?.replace("horizontal", "horizontal-tabs") as any)
-              )
+              controlsCollapsed ? "dropdown"
+              : variant === "horizontal" ?
+                "horizontal-tabs"
+              : variant
             }
             compactMode={this.props.compactMode === "hide-label"}
-            activeKey={activeKey as any}
+            activeKey={activeKey}
             items={Object.keys(items)
               .filter((k) => !items[k]!.hide)
               .map((key) => ({
@@ -243,7 +244,7 @@ export default class Tabs<T extends TabItems = TabItems> extends RTComp<
                 leftIconPath: items[key]?.leftIconPath,
                 disabledText: items[key]?.disabledText,
                 style: {
-                  ...(key === activeKey ? activeItemStyle : itemStyle),
+                  // ...(key === activeKey ? activeItemStyle : itemStyle),
                   ...(items[key]?.style || {}),
                 },
                 listProps: items[key]?.listProps,

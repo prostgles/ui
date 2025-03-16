@@ -19,9 +19,12 @@ export const SvgIcon = ({
   const iconPath = `/icons/${icon}.svg`;
   const [svg, setSvg] = React.useState(cachedSvgs.get(iconPath));
   useEffect(() => {
-    const iconNameContainsOnlyLetters = /^[a-zA-Z]+$/.test(icon);
-    if (!iconNameContainsOnlyLetters) {
-      console.error(`Icon name "${icon}" must contain only letters`);
+    const iconNameContainsOnlyLettersAndMaybeEndWithDigits =
+      /^[a-zA-Z]+(\d+)?$/.test(icon);
+    if (!iconNameContainsOnlyLettersAndMaybeEndWithDigits) {
+      console.error(
+        `Icon name "${icon}" iconNameContainsOnlyLettersAndMaybeEndWithDigits`,
+      );
       return;
     }
     const cached = cachedSvgs.get(iconPath);

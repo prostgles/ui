@@ -33,9 +33,10 @@ import {
 import "./FilterWrapper.css";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
 import { colIs } from "../SmartForm/SmartFormField/fieldUtils";
+import type { DBS } from "../Dashboard/DBS";
 
 export type FilterWrapperProps = {
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   tableName: string;
   onChange: (filter?: DetailedFilterBase) => void;
   filter?: DetailedFilterBase;

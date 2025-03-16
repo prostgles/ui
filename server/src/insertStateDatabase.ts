@@ -1,5 +1,5 @@
 import type { DB } from "prostgles-server/dist/Prostgles";
-import { tryCatch } from "prostgles-types";
+import { tryCatchV2 } from "prostgles-types";
 import type { DBS } from ".";
 import type { DBSConnectionInfo } from "./electronConfig";
 import { upsertConnection } from "./upsertConnection";
@@ -8,11 +8,11 @@ import { upsertConnection } from "./upsertConnection";
 export const insertStateDatabase = async (
   db: DBS,
   _db: DB,
-  con: DBSConnectionInfo | Partial<DBSConnectionInfo>,
+  con: DBSConnectionInfo,
 ) => {
   const connectionCount = await db.connections.count();
   if (!connectionCount) {
-    const { state_db, error } = await tryCatch(async () => {
+    const { data: state_db, error } = await tryCatchV2(async () => {
       const { connection: state_db } = await upsertConnection(
         {
           ...con,
@@ -20,14 +20,49 @@ export const insertStateDatabase = async (
           name: "Prostgles UI state",
           type: !con.db_conn ? "Standard" : "Connection URI",
           db_port: con.db_port || 5432,
-          db_ssl: con.db_ssl || "disable",
+          db_ssl: con.db_ssl, // || "disable",
           is_state_db: true,
-        } as any,
+          table_options: {
+            users: {
+              icon: "Account",
+            },
+            backups: {
+              icon: "BackupRestore",
+            },
+            sessions: {
+              icon: "Laptop",
+            },
+            llm_chats: {
+              icon: "Assistant",
+            },
+            workspaces: {
+              icon: "ViewGrid",
+            },
+            connections: {
+              icon: "Database",
+            },
+            magic_links: {
+              icon: "Link",
+            },
+            llm_messages: {
+              icon: "MessageReplyTextOutline",
+            },
+            access_control: {
+              icon: "AccountMultiple",
+            },
+            global_settings: {
+              icon: "ServerSecurity",
+            },
+            published_methods: {
+              icon: "LanguageTypescript",
+            },
+          },
+        },
         null,
         db,
       );
 
-      return { state_db };
+      return state_db;
     });
 
     if (error) {

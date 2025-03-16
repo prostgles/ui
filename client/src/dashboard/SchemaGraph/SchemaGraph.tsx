@@ -6,9 +6,10 @@ import React from "react";
 import Select from "../../components/Select/Select";
 import RTComp from "../RTComp";
 import { drawSchema } from "./drawSchema";
+import type { DBS } from "../Dashboard/DBS";
 
 type P = {
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   onClickTable: (tableName: string) => any;
 };
 type Text = { label: string; color: string };

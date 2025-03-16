@@ -26,9 +26,10 @@ import { FlexRow } from "../../components/Flex";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import { getJoinPathLabel } from "../W_Table/ColumnMenu/JoinPathSelectorV2";
 import { getDefaultAgeFilter } from "./AgeFilter";
+import type { DBS } from "../Dashboard/DBS";
 
 export type SmartAddFilterProps = {
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   tableName: string;
   tables: CommonWindowProps["tables"];
   selectedColumns: ColumnConfig[] | undefined;

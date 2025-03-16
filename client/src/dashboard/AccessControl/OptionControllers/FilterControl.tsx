@@ -139,7 +139,6 @@ export const FilterControl = (props: ForcedFilterControlProps) => {
           }
           render={(pClose) => (
             <SmartTable
-              theme={theme}
               title={({ filteredRows, totalRows }) => (
                 <div className="flex-row ai-center gap-p25 ws-pre jc-center bg-color-2 p-1">
                   <div className="bold">

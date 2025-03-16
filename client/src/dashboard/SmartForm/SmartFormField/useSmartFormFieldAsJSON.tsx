@@ -4,6 +4,13 @@ import { JSONBSchemaA } from "../../../components/JSONBSchema/JSONBSchema";
 import type { SmartFormFieldProps } from "./SmartFormField";
 import { getJSONBSchemaAsJSONSchema, isEmpty, isObject } from "prostgles-types";
 
+type P = Pick<
+  SmartFormFieldProps,
+  "column" | "tableName" | "jsonbSchemaWithControls" | "db" | "tables" | "value"
+> & {
+  onCheckAndChange: (newValue: any) => void;
+};
+
 export const useSmartFormFieldAsJSON = ({
   column,
   tableName,
@@ -12,9 +19,7 @@ export const useSmartFormFieldAsJSON = ({
   tables,
   value,
   onCheckAndChange,
-}: SmartFormFieldProps & {
-  onCheckAndChange: (newValue: any) => void;
-}) => {
+}: P) => {
   let asJSON: FormFieldProps["asJSON"];
   if (column.udt_name.startsWith("json") && tableName) {
     if (jsonbSchemaWithControls && column.jsonbSchema) {

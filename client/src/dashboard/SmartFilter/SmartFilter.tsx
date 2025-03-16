@@ -26,11 +26,12 @@ import {
   DEFAULT_VALIDATED_COLUMN_INFO,
   type FilterColumn,
 } from "./smartFilterUtils";
+import type { DBS } from "../Dashboard/DBS";
 export * from "./smartFilterUtils";
 
 type Operand = "AND" | "OR";
 export type SmartFilterProps = Pick<FilterWrapperProps, "variant"> & {
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   tableName: string;
   tables: CommonWindowProps["tables"];
   onChange: (filter: SmartGroupFilter) => void;

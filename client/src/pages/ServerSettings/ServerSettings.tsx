@@ -25,10 +25,12 @@ import { MCPServers } from "./MCPServers/MCPServers";
 
 export type ServerSettingsProps = Pick<
   Prgl,
-  "dbsMethods" | "dbs" | "dbsTables" | "auth" | "theme"
->;
+  "dbsMethods" | "dbs" | "dbsTables" | "auth"
+> & {
+  connection?: Prgl["connection"];
+};
 export const ServerSettings = (props: ServerSettingsProps) => {
-  const { theme, dbsMethods, dbs, dbsTables } = props;
+  const { connection, dbsMethods, dbs, dbsTables } = props;
   const [testCIDR, setCIDR] = useState<{ cidr?: string }>({});
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
@@ -78,11 +80,11 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                 content: (
                   <FlexCol style={{ opacity: settingsLoaded ? 1 : 0 }}>
                     <SmartForm
-                      theme={theme}
                       className="bg-color-0 shadow "
                       label=""
                       db={dbs}
                       methods={dbsMethods}
+                      connection={connection}
                       tableName="global_settings"
                       columns={
                         {
@@ -116,7 +118,6 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                           setCIDR({ cidr });
                         }}
                         placeholder="127.1.1.1/32"
-                        asColumn={true}
                         hint={
                           t.ServerSettings[
                             "Enter a value to see the allowed IP ranges"
@@ -174,7 +175,6 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                 label: t.ServerSettings["Cloud credentials"],
                 content: (
                   <SmartCardList
-                    theme={theme}
                     db={dbs}
                     methods={dbsMethods}
                     tableName="credentials"

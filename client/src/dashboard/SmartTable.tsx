@@ -21,7 +21,7 @@ import { quickClone } from "../utils";
 import type { PaginationProps } from "../components/Table/Pagination";
 import { FlexCol } from "../components/Flex";
 
-type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods" | "theme"> & {
+type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods"> & {
   filter?: SmartGroupFilter;
   tableName: string;
   tableCols?: ProstglesColumn[];
@@ -214,7 +214,6 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       noDataComponent,
       titlePrefix,
       title,
-      theme,
     } = this.props;
     const {
       filter,
@@ -261,7 +260,6 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
         {editRowFilter && (
           <SmartForm
             asPopup={true}
-            theme={this.props.theme}
             confirmUpdates={true}
             hideChangesOptions={true}
             db={db}
@@ -279,7 +277,6 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
         )}
 
         <SmartFilterBar
-          theme={theme}
           className="p-1 bg-color-2 min-h-fit"
           rowCount={totalRows}
           db={db}

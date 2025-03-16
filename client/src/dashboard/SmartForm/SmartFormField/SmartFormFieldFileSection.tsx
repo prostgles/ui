@@ -1,9 +1,9 @@
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import type { DBSchemaTable } from "prostgles-types";
 import React from "react";
-import type { Media } from "../../components/FileInput/FileInput";
-import FileInput from "../../components/FileInput/FileInput";
-import type { SmartFormProps } from "./SmartForm";
+import type { Media } from "../../../components/FileInput/FileInput";
+import FileInput from "../../../components/FileInput/FileInput";
+import type { SmartFormProps } from "../SmartForm";
 
 type P = {
   table: DBSchemaTable;

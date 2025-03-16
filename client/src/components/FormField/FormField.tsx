@@ -1,9 +1,9 @@
 import React from "react";
 import "./FormField.css";
 
-import { mdiAlertCircleOutline, mdiClose, mdiFullscreen } from "@mdi/js";
+import { mdiClose, mdiFullscreen } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
-import { isDefined, isObject } from "prostgles-types";
+import { isDefined } from "prostgles-types";
 import type {
   CodeEditorJsonSchema,
   CodeEditorProps,
@@ -14,22 +14,16 @@ import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValu
 import type { TestSelectors } from "../../Testing";
 import Btn, { FileBtn } from "../Btn";
 import Checkbox from "../Checkbox";
-import ErrorComponent from "../ErrorComponent";
 import { generateUniqueID } from "../FileInput/FileInput";
 import { classOverride } from "../Flex";
-import { Icon } from "../Icon/Icon";
-import { InfoRow } from "../InfoRow";
 import type { LabelProps } from "../Label";
-import { Label } from "../Label";
 import List from "../List";
 import Popup from "../Popup/Popup";
 import type { FullOption } from "../Select/Select";
 import Select from "../Select/Select";
 import { FormFieldCodeEditor } from "./FormFieldCodeEditor";
+import { FormFieldSkeleton } from "./FormFieldSkeleton";
 import { onFormFieldKeyDown } from "./onFormFieldKeyDown";
-
-const INPUT_HINT_WRAPPER_CLASS = "input-hint-wrapper";
-const INPUT_WRAPPER_CLASS = "input-wrapper";
 
 export type FormFieldProps = TestSelectors & {
   onChange?: (val: string | number | any, e?: any) => void;
@@ -58,7 +52,6 @@ export type FormFieldProps = TestSelectors & {
   options?: readonly (string | number | null)[];
   fullOptions?: readonly FullOption[];
   autoComplete?: string;
-  asColumn?: boolean;
   accept?: string;
   asTextArea?: boolean;
   asJSON?: {
@@ -87,7 +80,6 @@ export type FormFieldProps = TestSelectors & {
   >;
   hideClearButton?: boolean;
   maxWidth?: React.CSSProperties["maxWidth"];
-  labelClass?: string;
   labelStyle?: React.CSSProperties;
 
   disabledInfo?: string;
@@ -115,10 +107,10 @@ export default class FormField extends React.Component<
   setResizer = () => {
     const { asTextArea, autoResize = true } = this.props;
     if (this.rootDiv && asTextArea && autoResize && !this.textArea) {
-      const ta = this.rootDiv.querySelector("textarea");
-      if (ta) {
-        this.textArea = ta;
-        ta.addEventListener("input", this.resize, false);
+      const textArea = this.rootDiv.querySelector("textarea");
+      if (textArea) {
+        this.textArea = textArea;
+        textArea.addEventListener("input", this.resize, false);
         setTimeout(() => {
           this.resize();
         }, 10);
@@ -255,7 +247,6 @@ export default class FormField extends React.Component<
       asJSON,
       accept,
       onInput,
-      asColumn = true,
       rightIcons = null,
       rightContent = null,
       title,
@@ -270,7 +261,6 @@ export default class FormField extends React.Component<
       hideClearButton = false,
       maxWidth = "400px",
       rawValue: rval,
-      labelClass = "",
       labelStyle = {},
       disabledInfo,
       arrayType,
@@ -505,10 +495,7 @@ export default class FormField extends React.Component<
           style={inputFinalStyle}
         />;
 
-    let rightIcons1, rightIcons2;
-    if (rightIcons) {
-      rightIcons1 = rightIcons;
-    }
+    let extraRightIcons: React.ReactNode = null;
     if (
       !readOnly &&
       !disabledInfo &&
@@ -517,7 +504,7 @@ export default class FormField extends React.Component<
       !hideClearButton
     ) {
       if (nullable && optional) {
-        rightIcons2 = (
+        extraRightIcons = (
           <Select
             btnProps={{
               iconPath: mdiClose,
@@ -537,7 +524,7 @@ export default class FormField extends React.Component<
         (rawValue !== undefined && optional) ||
         (rawValue !== null && nullable)
       ) {
-        rightIcons2 = (
+        extraRightIcons = (
           <Btn
             data-command="FormField.clear"
             title="Set to null"
@@ -550,14 +537,12 @@ export default class FormField extends React.Component<
             onClick={(e) => {
               onChange(optional ? undefined : null, e);
             }}
-            disabledInfo="nothing to clear"
             className="rounded-r"
           />
         );
       }
     }
 
-    const labelString = isObject(label) ? label.label : label;
     const isEditableSelect = !readOnly && Array.isArray(options ?? fullOptions);
 
     if (this.state.fullScreen && asJSON) {
@@ -575,228 +560,347 @@ export default class FormField extends React.Component<
     }
 
     return (
-      <div
-        className={`form-field trigger-hover min-w-0 ${className} ${disabledInfo ? "disabled" : ""}`}
-        data-command={isEditableSelect ? undefined : this.props["data-command"]}
-        data-label={labelString}
-        data-key={this.props["data-key"]}
-        style={style}
+      <FormFieldSkeleton
+        id={id}
+        title={title}
         ref={(e) => {
           if (e) this.rootDiv = e;
         }}
+        data-command={isEditableSelect ? undefined : this.props["data-command"]}
+        data-key={this.props["data-key"]}
+        className={className}
+        disabledInfo={disabledInfo}
+        style={style}
         onBlur={() => {
           if (suggestions) {
             this.setState({ suggestions: undefined });
           }
         }}
-        title={disabledInfo}
         onKeyDown={(e) => onFormFieldKeyDown.bind(this)(e, selectSuggestion)}
-      >
-        <div
-          className={`trigger-hover ${(type !== "checkbox" && !asColumn ? " ai-center " : " ") + (!asColumn ? " flex-row-wrap " : " flex-col ")}`}
-          title={title}
-          style={{
-            ...(asJSON && { minWidth: "min(400px, 90vw)" }),
-            ...(disabledInfo && { pointerEvents: "none" }),
-          }}
-        >
-          {!!label && isObject(label) ?
-            <Label
-              className="mb-p25"
-              {...label}
-              htmlFor={id}
-              variant="normal"
-              style={{ zIndex: 1 }}
+        hintWrapperStyle={{
+          ...(asJSON && { minWidth: "min(400px, 90vw)" }),
+        }}
+        label={label}
+        labelStyle={labelStyle}
+        labelRightContent={
+          asJSON && (
+            <Btn
+              title="Click to toggle full screen"
+              className="show-on-trigger-hover"
+              iconPath={mdiFullscreen}
+              onClick={() => {
+                this.setState({ fullScreen: !this.state.fullScreen });
+              }}
             />
-          : <label
-              htmlFor={id}
-              className={
-                "main-label ta-left noselect text-1 flex-row ai-center " +
-                (id ? " pointer " : " ") +
-                labelClass
-              }
-              style={{
-                flex: 0.5,
-                justifyContent: "space-between",
-                ...labelStyle,
-              }}
-            >
-              {label}
-              {asJSON && (
-                <Btn
-                  title="Click to toggle full screen"
-                  className="show-on-trigger-hover"
-                  iconPath={mdiFullscreen}
-                  onClick={() => {
-                    this.setState({ fullScreen: !this.state.fullScreen });
-                  }}
-                />
-              )}
-            </label>
-          }
-
-          <div className={" flex-row f-1 ai-center min-w-0 gap-p25 "}>
-            <div
-              className={`${INPUT_HINT_WRAPPER_CLASS} ${type !== "checkbox" ? "flex-col" : "flex-row"} gap-p5 min-w-0 ${isEditableSelect ? "" : "f-1"}`}
-              style={{
-                maxWidth: "100%",
-              }}
-            >
-              <div
-                className={
-                  INPUT_WRAPPER_CLASS +
-                  (type === "checkbox" ? " ai-center " : "") +
-                  (type === "checkbox" ? " " : " focus-border  ") +
-                  " h-fit flex-row relative  f-0 " +
-                  (options || fullOptions ? "w-fit" : "w-full") +
-                  (error ? " error " : "")
+          )
+        }
+        errorWrapperClassname={`${type !== "checkbox" ? "flex-col" : "flex-row"} gap-p5 min-w-0 ${isEditableSelect ? "" : "f-1"}`}
+        inputWrapperClassname={
+          (type === "checkbox" ? " ai-center " : "") +
+          (type === "checkbox" ? " focus-border-unset " : " ") +
+          (options || fullOptions ? "w-fit" : "w-full")
+        }
+        inputWrapperStyle={{
+          ...wrapperStyle,
+          ...(type !== "checkbox" && {
+            backgroundColor: "var(--input-bg-color)",
+          }),
+          maxWidth: asTextArea ? "100%" : maxWidth,
+          ...(asJSON && { minHeight: "42px" }),
+          ...(readOnly && !asJSON && { border: "unset", boxShadow: "unset" }),
+          ...this.props.wrapperStyle,
+        }}
+        rightIconsShowBorder={Boolean(
+          type !== "checkbox" && !asTextArea && !inputContent,
+        )}
+        error={error}
+        hideErrorRightIcon={Boolean(
+          type.toLowerCase().includes("date") || inputContent,
+        )}
+        warning={numLockAlert ? "NumLock is off" : undefined}
+        rightIcons={
+          Boolean(rightIcons || extraRightIcons) && (
+            <>
+              {rightIcons}
+              {extraRightIcons}
+            </>
+          )
+        }
+        hint={hint}
+        rightContent={rightContent}
+        rightContentAlwaysShow={rightContentAlwaysShow}
+      >
+        {isEditableSelect ?
+          <Select
+            className="FormField_Select noselect f-1 bg-color-0"
+            style={{
+              fontSize: "16px",
+              fontWeight: 500,
+              paddingLeft: "6px",
+            }}
+            data-command={this.props["data-command"]}
+            variant="div"
+            fullOptions={options?.map((key) => ({ key })) ?? fullOptions ?? []}
+            onChange={
+              !onChange ? undefined : (
+                (val) => {
+                  onChange(val);
                 }
-                ref={(e) => {
-                  if (e) this.refWrapper = e;
-                }}
-                style={{
-                  ...wrapperStyle,
-                  ...(type !== "checkbox" && {
-                    backgroundColor: "var(--input-bg-color)",
-                  }),
-                  maxWidth: asTextArea ? "100%" : maxWidth,
-                  ...(asJSON && { minHeight: "42px" }),
-                  ...(readOnly &&
-                    !asJSON && { border: "unset", boxShadow: "unset" }),
-                  ...this.props.wrapperStyle,
-                }}
-              >
-                {isEditableSelect ?
-                  <Select
-                    className="FormField_Select noselect f-1 bg-color-0"
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: 500,
-                      paddingLeft: "6px",
-                    }}
-                    data-command={this.props["data-command"]}
-                    variant="div"
-                    fullOptions={
-                      options?.map((key) => ({ key })) ?? fullOptions ?? []
-                    }
-                    onChange={
-                      !onChange ? undefined : (
-                        (val) => {
-                          onChange(val);
-                        }
-                      )
-                    }
-                    value={rawValue}
-                    required={required}
-                    multiSelect={multiSelect}
-                    labelAsValue={labelAsValue}
-                    btnProps={{
-                      id,
-                    }}
-                  />
-                : inputNode}
-                {!this.props.onSuggest || !suggestions ? null : (
-                  <List
-                    anchorRef={this.refWrapper}
-                    selectedValue={suggestions[activeSuggestionIdx]}
-                    items={suggestions.map((key) => ({
-                      key,
-                      node:
-                        (key as any) === null ? <i>NULL</i>
-                        : key.trim() === "" ? <i>Empty</i>
-                        : null,
-                      onPress: (e) => {
-                        selectSuggestion(key);
-                      },
-                    }))}
-                    onClose={() => {
-                      this.setState({ suggestions: undefined });
-                    }}
-                  />
-                )}
-
-                {Boolean(rightIcons1 || rightIcons2) && (
-                  <div
-                    className={
-                      `RightIcons ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} flex-row ai-start jc-center ` +
-                      (type !== "checkbox" && !asTextArea && !inputContent ?
-                        "  bl b-color "
-                      : " ")
-                    }
-                    style={{
-                      right: "2px",
-                      top: 0,
-                      bottom: 0,
-                    }}
-                  >
-                    {rightIcons1}
-                    {rightIcons2}
-                  </div>
-                )}
-                {!!error &&
-                  !type.toLowerCase().includes("date") && ( // do not show for date types because it occludes the picker drop down trigger
-                    <Icon
-                      className="text-danger absolute bg-color-0"
-                      path={mdiAlertCircleOutline}
-                      style={{
-                        width: "1.5rem",
-                        top: "2px",
-                        bottom: "2px",
-                        height: "calc(100% - 4px)",
-                        right: "6px",
-                        pointerEvents: "none",
-                      }}
-                    />
-                  )}
-              </div>
-
-              {(hint || error || numLockAlert) && (
-                <div className={"flex-col jc-center "}>
-                  {numLockAlert && (
-                    <InfoRow
-                      variant="naked"
-                      className="font-10"
-                      iconSize={0.75}
-                    >
-                      NumLock is off
-                    </InfoRow>
-                  )}
-                  {error ?
-                    <ErrorComponent
-                      error={error}
-                      style={{ padding: 0 }}
-                      findMsg={true}
-                    />
-                  : null}
-                </div>
-              )}
-            </div>
-            {!rightContent ? null : (
-              <div
-                className={`RightContent  ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} f-0 `}
-                style={{ alignSelf: "start" }}
-              >
-                {rightContent}
-              </div>
-            )}
-          </div>
-          {hint && (
-            <p
-              className="ta-left text-2 m-0 text-sm noselect ws-pre-line"
-              onClick={(e) => {
-                const input = e.currentTarget
-                  .closest(`.${INPUT_HINT_WRAPPER_CLASS}`)
-                  ?.querySelector<HTMLInputElement>(
-                    `.${INPUT_WRAPPER_CLASS} > *`,
-                  );
-                input?.click();
-              }}
-            >
-              {hint}
-            </p>
-          )}
-        </div>
-      </div>
+              )
+            }
+            value={rawValue}
+            required={required}
+            multiSelect={multiSelect}
+            labelAsValue={labelAsValue}
+            btnProps={{
+              id,
+            }}
+          />
+        : inputNode}
+        {!this.props.onSuggest || !suggestions ? null : (
+          <List
+            anchorRef={this.refWrapper}
+            selectedValue={suggestions[activeSuggestionIdx]}
+            items={suggestions.map((key) => ({
+              key,
+              node:
+                (key as any) === null ? <i>NULL</i>
+                : key.trim() === "" ? <i>Empty</i>
+                : null,
+              onPress: (e) => {
+                selectSuggestion(key);
+              },
+            }))}
+            onClose={() => {
+              this.setState({ suggestions: undefined });
+            }}
+          />
+        )}
+      </FormFieldSkeleton>
     );
+
+    // return (
+    //   <div
+    //     className={`form-field trigger-hover min-w-0 ${className} ${disabledInfo ? "disabled" : ""}`}
+    //     data-command={isEditableSelect ? undefined : this.props["data-command"]}
+    //     data-label={labelString}
+    //     data-key={this.props["data-key"]}
+    //     style={style}
+    //     ref={(e) => {
+    //       if (e) this.rootDiv = e;
+    //     }}
+    //     onBlur={() => {
+    //       if (suggestions) {
+    //         this.setState({ suggestions: undefined });
+    //       }
+    //     }}
+    //     title={disabledInfo}
+    //     onKeyDown={(e) => onFormFieldKeyDown.bind(this)(e, selectSuggestion)}
+    //   >
+    //     <div
+    //       className={`trigger-hover ${(type !== "checkbox" && !asColumn ? " ai-center " : " ") + (!asColumn ? " flex-row-wrap " : " flex-col ")}`}
+    //       title={title}
+    //       style={{
+    //         ...(asJSON && { minWidth: "min(400px, 90vw)" }),
+    //         ...(disabledInfo && { pointerEvents: "none" }),
+    //       }}
+    //     >
+    //       {!!label && isObject(label) ?
+    //         <Label
+    //           className="mb-p25"
+    //           {...label}
+    //           htmlFor={id}
+    //           variant="normal"
+    //           style={{ zIndex: 1 }}
+    //         />
+    //       : <label
+    //           htmlFor={id}
+    //           className={
+    //             "main-label ta-left noselect text-1 flex-row ai-center " +
+    //             (id ? " pointer " : " ")
+    //           }
+    //           style={{
+    //             flex: 0.5,
+    //             justifyContent: "space-between",
+    //             ...labelStyle,
+    //           }}
+    //         >
+    //           {label}
+    //           {asJSON && (
+    //             <Btn
+    //               title="Click to toggle full screen"
+    //               className="show-on-trigger-hover"
+    //               iconPath={mdiFullscreen}
+    //               onClick={() => {
+    //                 this.setState({ fullScreen: !this.state.fullScreen });
+    //               }}
+    //             />
+    //           )}
+    //         </label>
+    //       }
+
+    //       <div className={" flex-row f-1 ai-center min-w-0 gap-p25 "}>
+    //         <div
+    //           className={`${INPUT_HINT_WRAPPER_CLASS} ${type !== "checkbox" ? "flex-col" : "flex-row"} gap-p5 min-w-0 ${isEditableSelect ? "" : "f-1"}`}
+    //           style={{
+    //             maxWidth: "100%",
+    //           }}
+    //         >
+    //           <div
+    //             className={
+    //               INPUT_WRAPPER_CLASS +
+    //               (type === "checkbox" ? " ai-center " : "") +
+    //               (type === "checkbox" ? " " : " focus-border  ") +
+    //               " h-fit flex-row relative  f-0 " +
+    //               (options || fullOptions ? "w-fit" : "w-full") +
+    //               (error ? " error " : "")
+    //             }
+    //             ref={(e) => {
+    //               if (e) this.refWrapper = e;
+    //             }}
+    //             style={{
+    //               ...wrapperStyle,
+    //               ...(type !== "checkbox" && {
+    //                 backgroundColor: "var(--input-bg-color)",
+    //               }),
+    //               maxWidth: asTextArea ? "100%" : maxWidth,
+    //               ...(asJSON && { minHeight: "42px" }),
+    //               ...(readOnly &&
+    //                 !asJSON && { border: "unset", boxShadow: "unset" }),
+    //               ...this.props.wrapperStyle,
+    //             }}
+    //           >
+    //             {isEditableSelect ?
+    //               <Select
+    //                 className="FormField_Select noselect f-1 bg-color-0"
+    //                 style={{
+    //                   fontSize: "16px",
+    //                   fontWeight: 500,
+    //                   paddingLeft: "6px",
+    //                 }}
+    //                 data-command={this.props["data-command"]}
+    //                 variant="div"
+    //                 fullOptions={
+    //                   options?.map((key) => ({ key })) ?? fullOptions ?? []
+    //                 }
+    //                 onChange={
+    //                   !onChange ? undefined : (
+    //                     (val) => {
+    //                       onChange(val);
+    //                     }
+    //                   )
+    //                 }
+    //                 value={rawValue}
+    //                 required={required}
+    //                 multiSelect={multiSelect}
+    //                 labelAsValue={labelAsValue}
+    //                 btnProps={{
+    //                   id,
+    //                 }}
+    //               />
+    //             : inputNode}
+    //             {!this.props.onSuggest || !suggestions ? null : (
+    //               <List
+    //                 anchorRef={this.refWrapper}
+    //                 selectedValue={suggestions[activeSuggestionIdx]}
+    //                 items={suggestions.map((key) => ({
+    //                   key,
+    //                   node:
+    //                     (key as any) === null ? <i>NULL</i>
+    //                     : key.trim() === "" ? <i>Empty</i>
+    //                     : null,
+    //                   onPress: (e) => {
+    //                     selectSuggestion(key);
+    //                   },
+    //                 }))}
+    //                 onClose={() => {
+    //                   this.setState({ suggestions: undefined });
+    //                 }}
+    //               />
+    //             )}
+
+    //             {Boolean(rightIcons1 || rightIcons2) && (
+    //               <div
+    //                 className={
+    //                   `RightIcons ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} flex-row ai-start jc-center ` +
+    //                   (type !== "checkbox" && !asTextArea && !inputContent ?
+    //                     "  bl b-color "
+    //                   : " ")
+    //                 }
+    //                 style={{
+    //                   right: "2px",
+    //                   top: 0,
+    //                   bottom: 0,
+    //                 }}
+    //               >
+    //                 {rightIcons1}
+    //                 {rightIcons2}
+    //               </div>
+    //             )}
+    //             {!!error &&
+    //               !type.toLowerCase().includes("date") && ( // do not show for date types because it covers the picker drop down trigger
+    //                 <Icon
+    //                   className="text-danger absolute bg-color-0"
+    //                   path={mdiAlertCircleOutline}
+    //                   style={{
+    //                     width: "1.5rem",
+    //                     top: "2px",
+    //                     bottom: "2px",
+    //                     height: "calc(100% - 4px)",
+    //                     right: "6px",
+    //                     pointerEvents: "none",
+    //                   }}
+    //                 />
+    //               )}
+    //           </div>
+
+    //           {(hint || error || numLockAlert) && (
+    //             <div className={"flex-col jc-center "}>
+    //               {numLockAlert && (
+    //                 <InfoRow
+    //                   variant="naked"
+    //                   className="font-10"
+    //                   iconSize={0.75}
+    //                 >
+    //                   NumLock is off
+    //                 </InfoRow>
+    //               )}
+    //               {error ?
+    //                 <ErrorComponent
+    //                   error={error}
+    //                   style={{ padding: 0 }}
+    //                   findMsg={true}
+    //                 />
+    //               : null}
+    //             </div>
+    //           )}
+    //         </div>
+    //         {!rightContent ? null : (
+    //           <div
+    //             className={`RightContent  ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} f-0 `}
+    //             style={{ alignSelf: "start" }}
+    //           >
+    //             {rightContent}
+    //           </div>
+    //         )}
+    //       </div>
+    //       {hint && (
+    //         <p
+    //           className="ta-left text-2 m-0 text-sm noselect ws-pre-line"
+    //           onClick={(e) => {
+    //             const input = e.currentTarget
+    //               .closest(`.${INPUT_HINT_WRAPPER_CLASS}`)
+    //               ?.querySelector<HTMLInputElement>(
+    //                 `.${INPUT_WRAPPER_CLASS} > *`,
+    //               );
+    //             input?.click();
+    //           }}
+    //         >
+    //           {hint}
+    //         </p>
+    //       )}
+    //     </div>
+    //   </div>
+    // );
   }
 }

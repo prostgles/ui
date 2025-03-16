@@ -17,6 +17,7 @@ import type { ContextDataSchema } from "../AccessControl/OptionControllers/Filte
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { FilterWrapperProps } from "./FilterWrapper";
 import type { ColumnConfig } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { DBS } from "../Dashboard/DBS";
 
 export const testFilter = (
   f: SimpleFilter,
@@ -64,7 +65,7 @@ type ComputedColumn = Pick<
 export type FilterColumn = TableColumn | ComputedColumn;
 
 export type BaseFilterProps = Pick<FilterWrapperProps, "variant"> & {
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   tableName: string;
   onChange: (filter?: SimpleFilter) => void;
   tables: CommonWindowProps["tables"];

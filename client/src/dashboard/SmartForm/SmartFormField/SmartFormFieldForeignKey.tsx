@@ -1,21 +1,30 @@
+import { mdiClose } from "@mdi/js";
 import { useIsMounted } from "prostgles-client/dist/prostgles";
-import { isDefined, type ValidatedColumnInfo } from "prostgles-types";
-import React, { useCallback, useEffect, useState } from "react";
+import { isDefined, isObject, type ValidatedColumnInfo } from "prostgles-types";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Btn from "../../../components/Btn";
+import FileInput from "../../../components/FileInput/FileInput";
+import { FlexRow } from "../../../components/Flex";
 import Select, { type FullOption } from "../../../components/Select/Select";
+import type { ColumnData } from "../SmartForm";
 import { renderNull } from "./RenderValue";
-import type { SmartFormFieldProps } from "./SmartFormField";
+import type { SmartColumnInfo, SmartFormFieldProps } from "./SmartFormField";
+import { type SmartFormFieldLinkedDataInsertState } from "./SmartFormFieldLinkedData";
 import { fetchForeignKeyOptions } from "./fetchForeignKeyOptions";
+import { sliceText } from "../../../../../commonTypes/utils";
 
 export type SmartFormFieldForeignKeyProps = Pick<
   SmartFormFieldProps,
-  "rawValue" | "db" | "tables" | "row" | "tableName"
-> & {
-  column: ValidatedColumnInfo & {
-    references: NonNullable<ValidatedColumnInfo["references"]>;
+  "value" | "db" | "tables" | "row" | "tableName" | "tableInfo"
+> &
+  SmartFormFieldLinkedDataInsertState & {
+    column: SmartColumnInfo & {
+      references: NonNullable<ValidatedColumnInfo["references"]>;
+    };
+    onChange: (newValue: ColumnData) => Promise<void> | void;
+    readOnly: boolean;
+    newValue: ColumnData | undefined;
   };
-  onChange: (newValue: string | number | null) => Promise<void>;
-  readOnly: boolean;
-};
 
 export const SmartFormFieldForeignKey = ({
   column,
@@ -23,9 +32,12 @@ export const SmartFormFieldForeignKey = ({
   onChange,
   tables,
   tableName,
-  rawValue,
+  value,
   row,
   readOnly,
+  newValue,
+  tableInfo,
+  setShowNestedInsertForm,
 }: SmartFormFieldForeignKeyProps) => {
   const [fullOptions, setFullOptions] = useState<FullOption[]>();
   const getuseIsMounted = useIsMounted();
@@ -47,7 +59,7 @@ export const SmartFormFieldForeignKey = ({
 
   useEffect(() => {
     onSearchOptions("");
-  }, [rawValue, onSearchOptions]);
+  }, [value, onSearchOptions]);
 
   const valueStyle = {
     fontSize: "16px",
@@ -55,10 +67,10 @@ export const SmartFormFieldForeignKey = ({
     paddingLeft: "6px 0",
   };
 
-  const selectedOption = fullOptions?.find((o) => o.key === rawValue);
+  const selectedOption = fullOptions?.find((o) => o.key === value);
   const valueNode = (
     <div className="text-ellipsis max-w-fit" style={valueStyle}>
-      {renderNull(rawValue, {}, true) ?? rawValue}
+      {renderNull(value, {}, true) ?? (value as string)}
     </div>
   );
 
@@ -92,14 +104,80 @@ export const SmartFormFieldForeignKey = ({
     return displayValue;
   }
 
+  const referencedInsertData =
+    newValue?.type === "nested-column" ? newValue.value : undefined;
+
+  if (referencedInsertData) {
+    if (column.file) {
+      const media =
+        newValue?.type === "nested-file-column" && newValue.value ?
+          [newValue.value]
+        : [];
+      return (
+        <FileInput
+          className={"mt-p5 f-0 " + (tableInfo.isFileTable ? "mt-2" : "")}
+          label={column.label}
+          media={media}
+          minSize={470}
+          maxFileCount={1}
+          onAdd={([value]) => {
+            onChange({
+              type: "nested-file-column",
+              value,
+            });
+          }}
+          onDelete={async (mediaItem) => {
+            onChange({
+              type: "nested-file-column",
+              value: undefined,
+            });
+          }}
+        />
+      );
+    }
+
+    const newDataText = sliceText(
+      Object.entries(referencedInsertData)
+        .map(([k, v]) =>
+          isObject(v) ? `{ ${k} }`
+          : Array.isArray(v) ? `[{ ${k} }]`
+          : v?.toString(),
+        )
+        .join(", "),
+      60,
+    );
+
+    return (
+      <FlexRow className="gap-0">
+        <Btn
+          className=" bg-color-0"
+          color="action"
+          title="View insert data"
+          onClick={() => {
+            setShowNestedInsertForm(true);
+          }}
+        >
+          {newDataText}
+        </Btn>
+        <Btn
+          title="Remove nested insert"
+          iconPath={mdiClose}
+          onClick={() => {
+            onChange({ type: "nested-column", value: undefined });
+          }}
+        />
+      </FlexRow>
+    );
+  }
+
   return (
     <Select
       className="SmartFormFieldForeignKey FormField_Select noselect bg-color-0"
       variant="div"
       fullOptions={fullOptions ?? []}
       onSearch={onSearchOptions}
-      onChange={onChange}
-      value={rawValue}
+      onChange={(newVal) => onChange({ type: "column", value: newVal })}
+      value={value}
       labelAsValue={true}
       btnProps={{
         children: displayValue,

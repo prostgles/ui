@@ -3,7 +3,9 @@ import { parseValue } from "./fieldUtils";
 import type { SmartFormFieldProps } from "./SmartFormField";
 import type { AnyObject } from "prostgles-types";
 
-export const useSmartFormFieldOnChange = (props: SmartFormFieldProps) => {
+export const useSmartFormFieldOnChange = (
+  props: Pick<SmartFormFieldProps, "onChange" | "column" | "tableInfo">,
+) => {
   const { onChange, column, tableInfo } = props;
   const [error, setError] = useState<any>();
 
@@ -46,7 +48,7 @@ export const useSmartFormFieldOnChange = (props: SmartFormFieldProps) => {
       }
 
       try {
-        await onChange?.(newValue);
+        await onChange({ type: "column", value: newValue });
       } catch (err: any) {
         error = err.toString();
       }

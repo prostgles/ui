@@ -28,7 +28,7 @@ import { classOverride, FlexCol } from "../../components/Flex";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
-  "db" | "tables" | "methods" | "theme"
+  "db" | "tables" | "methods"
 > & {
   tableName:
     | string
@@ -182,7 +182,7 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<
     }
 
     if ("data" in this.props) {
-      this.setState({ items: this.props.data });
+      this.setState({ items: this.props.data, loading: false, loaded: true });
     } else {
       const { fieldConfigs, throttle = 0 } = this.props;
       const filter = (this.props.filter ?? {}) as AnyObject;
@@ -201,7 +201,9 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<
 
       const setData = async () => {
         if ("data" in this.props) {
-          this.setState({ items: this.props.data });
+          this.setState({
+            items: this.props.data,
+          });
           return;
         }
 
@@ -303,7 +305,6 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<
       tables,
       className = "",
       style = {},
-      theme,
       disableVariantToggle = true,
       popupFixedStyle,
       fieldConfigs: _fieldConfigs,
@@ -357,7 +358,6 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<
           <SmartCard
             contentClassname={rowProps?.className}
             contentStyle={rowProps?.style}
-            theme={theme}
             db={db as any}
             methods={methods}
             tables={tables}
@@ -455,7 +455,6 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<
 
               {showInsert && (
                 <InsertButton
-                  theme={theme}
                   buttonProps={{}}
                   db={db}
                   tables={tables}

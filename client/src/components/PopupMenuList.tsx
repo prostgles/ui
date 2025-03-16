@@ -1,7 +1,7 @@
 import React from "react";
 import type { BtnProps } from "./Btn";
 import Btn from "./Btn";
-import type { MenuListitem } from "./MenuList";
+import type { MenuListitem } from "./MenuListItem";
 import { MenuList } from "./MenuList";
 import PopupMenu from "./PopupMenu";
 

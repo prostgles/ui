@@ -27,8 +27,7 @@ export const W_TableMenu_Constraints = ({
         Constraints set rules on the type of data that can be stored in columns
       </div>
       <SmartCardList
-        theme={prgl.theme}
-        db={prgl.db as any}
+        db={prgl.db}
         tableName={{
           dataAge: prgl.dbKey,
           sqlQuery: `

@@ -1,9 +1,10 @@
 import { mdiDotsHorizontal } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type {
-  AnyObject,
-  TableInfo,
-  ValidatedColumnInfo,
+import {
+  isObject,
+  type AnyObject,
+  type TableInfo,
+  type ValidatedColumnInfo,
 } from "prostgles-types";
 import React, { useState } from "react";
 import Btn from "../../../components/Btn";
@@ -11,9 +12,9 @@ import type { FormFieldProps } from "../../../components/FormField/FormField";
 import FormField from "../../../components/FormField/FormField";
 import type { DBS } from "../../Dashboard/DBS";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
-import { renderInterval } from "../../W_SQL/customRenderers";
-import type { ColumnDisplayConfig } from "../SmartForm";
-import { SmartFormFieldFileSection } from "../SmartFormFieldFileSection";
+import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
+import type { ColumnData, ColumnDisplayConfig } from "../SmartForm";
+import { SmartFormFieldFileSection } from "./SmartFormFieldFileSection";
 import { SmartFormFieldForeignKey } from "./SmartFormFieldForeignKey";
 import { getSmartFormFieldRightButtons } from "./SmartFormFieldRightButtons";
 import {
@@ -25,6 +26,11 @@ import {
 } from "./fieldUtils";
 import { useSmartFormFieldAsJSON } from "./useSmartFormFieldAsJSON";
 import { useSmartFormFieldOnChange } from "./useSmartFormFieldOnChange";
+import {
+  SmartFormFieldLinkedData,
+  useSmartFormFieldForeignDataState,
+} from "./SmartFormFieldLinkedData";
+import type { Prgl } from "../../../App";
 
 type SmartFormFieldValue =
   | string
@@ -36,60 +42,69 @@ type SmartFormFieldValue =
   | null;
 
 export type SmartFormFieldProps = {
-  id?: string;
   db: DBHandlerClient | DBS;
+  methods: Prgl["methods"];
   tableName: string;
   maxWidth?: string;
-  value?: SmartFormFieldValue;
+  value: SmartFormFieldValue | undefined;
+  newValue: ColumnData | undefined;
   row?: AnyObject;
-  rawValue?: any;
-  onChange?: (newValue: SmartFormFieldValue) => void;
+  onChange: (newValue: ColumnData) => void;
   action?: "update" | "insert" | "view";
-  column: ValidatedColumnInfo;
+  column: SmartColumnInfo;
   tableInfo: TableInfo;
   style?: React.CSSProperties;
   inputStyle?: React.CSSProperties;
   placeholder?: string;
-  variant?: "compact" | "column";
   /**
    * If true then will render jsonbSchema columns using controls instead of code editor
    */
   jsonbSchemaWithControls?: boolean;
   multiSelect?: boolean;
-
   error?: any;
-
   rightContentAlwaysShow?: boolean;
   rightContent?: React.ReactNode;
   hideNullBtn?: boolean;
-
   sectionHeader?: string;
   tables: CommonWindowProps["tables"];
+  table: CommonWindowProps["tables"][number];
+  enableInsert: boolean;
 };
-
 export type SmartColumnInfo = ValidatedColumnInfo & ColumnDisplayConfig;
 
+/**
+ * Allows displaying and editing a single column from a SmartForm based on table schema and config
+ */
 export const SmartFormField = (props: SmartFormFieldProps) => {
   const {
     action,
     value,
     inputStyle = {},
     placeholder = "",
-    variant,
     multiSelect,
     column,
-    rightContent,
+    newValue,
     hideNullBtn,
     sectionHeader,
     style,
     tableName,
     maxWidth = "100vw",
     db,
+    row,
     tables,
+    table,
     rightContentAlwaysShow,
+    jsonbSchemaWithControls,
+    onChange,
+    tableInfo,
+    enableInsert,
   } = props;
 
-  const { onCheckAndChange, error } = useSmartFormFieldOnChange(props);
+  const { onCheckAndChange, error } = useSmartFormFieldOnChange({
+    onChange,
+    column,
+    tableInfo,
+  });
   const [showDateInput, setShowDateInput] = useState(true);
 
   let rightIcons: React.ReactNode = getSmartFormFieldRightButtons({
@@ -102,10 +117,29 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   });
   const [collapsed, setCollapsed] = useState(true);
 
-  const asJSONResult = useSmartFormFieldAsJSON({ ...props, onCheckAndChange });
-  if (asJSONResult.type === "component") return asJSONResult.content;
+  const asJSONResult = useSmartFormFieldAsJSON({
+    column,
+    tableName,
+    jsonbSchemaWithControls,
+    db,
+    tables,
+    value,
+    onCheckAndChange,
+  });
 
   const readOnly = columnIsReadOnly(action, column);
+  const foreignDataState = useSmartFormFieldForeignDataState({
+    readOnly,
+    row,
+    column,
+    action,
+    db,
+    enableInsert,
+    tables,
+  });
+
+  if (asJSONResult.type === "component") return asJSONResult.content;
+
   if (readOnly) rightIcons = null;
   let hint = column.hint;
   if (
@@ -129,36 +163,20 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
     }
   }
 
-  let rawValue = "rawValue" in props ? props.rawValue : value;
-  let i_value;
+  let parsedValue;
   try {
-    i_value = parseValue(column, value);
+    parsedValue = parseValue(column, value);
   } catch (e: any) {
-    i_value = value;
+    parsedValue = value;
   }
-  if (readOnly && column.udt_name === "interval") {
-    i_value = renderInterval(rawValue);
-    rawValue = i_value;
+  if (readOnly && column.udt_name === "interval" && isObject(value)) {
+    parsedValue = getPGIntervalAsText(value);
   }
 
   let type = getInputType(column).toLowerCase();
-  if (type.startsWith("date") && !showDateInput) type = "text";
-  const autoComplete = getInputAutocomplete(column);
-
-  const cantUpdate = readOnly && action === "update";
-
-  const header =
-    !sectionHeader ? null : (
-      <h4
-        className="noselect"
-        style={{
-          marginBottom: "0.5em",
-          // marginTop: "2em",
-        }}
-      >
-        {sectionHeader}
-      </h4>
-    );
+  if (type.startsWith("date") && !showDateInput) {
+    type = "text";
+  }
 
   let arrayType: FormFieldProps["arrayType"];
   if (column.tsDataType.endsWith("[]") && !column.tsDataType.includes("any")) {
@@ -169,26 +187,20 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
     };
   }
 
-  const fkeyControl = !!column.references?.length && !column.is_pkey && (
-    <SmartFormFieldForeignKey
-      key={column.name}
-      column={column as any}
-      db={db}
-      readOnly={readOnly}
-      onChange={onCheckAndChange}
-      tables={tables}
-      rawValue={rawValue}
-      row={props.row}
-      tableName={tableName}
-    />
-  );
-  const table = tables.find((t) => t.name === tableName);
+  const cantUpdate = readOnly && action === "update";
 
-  const isCompact = variant === "compact";
   return (
     <>
-      {header}
-      {/* {!loaded && <Loading variant="cover" />} */}
+      {sectionHeader && (
+        <h4
+          className="noselect"
+          style={{
+            marginBottom: "0.5em",
+          }}
+        >
+          {sectionHeader}
+        </h4>
+      )}
       <FormField
         id={tableName + "-" + column.name}
         data-key={column.name}
@@ -199,18 +211,33 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         inputStyle={{
           ...inputStyle,
           minWidth: 0,
-          ...(type === "checkbox" ? { padding: "1px" }
-          : isCompact ? { padding: "2px 6px" }
-          : {}),
+          ...(type === "checkbox" ? { padding: "1px" } : {}),
         }}
-        inputContent={fkeyControl}
+        inputContent={
+          foreignDataState?.showSmartFormFieldForeignKey && (
+            <SmartFormFieldForeignKey
+              {...foreignDataState}
+              key={column.name}
+              column={{ ...column, references: column.references! }}
+              db={db}
+              readOnly={readOnly}
+              onChange={onChange}
+              tables={tables}
+              value={value}
+              row={row}
+              tableName={tableName}
+              newValue={newValue}
+              tableInfo={tableInfo}
+            />
+          )
+        }
         key={column.name}
         placeholder={placeholder}
         type={type}
-        autoComplete={autoComplete}
-        label={isCompact ? undefined : column.label}
-        value={i_value}
-        rawValue={rawValue}
+        autoComplete={getInputAutocomplete(column)}
+        label={column.label}
+        value={parsedValue}
+        rawValue={value}
         title={cantUpdate ? "You are not allowed to update this field" : ""}
         asJSON={asJSONResult.asJSON}
         asTextArea={
@@ -223,19 +250,38 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         onChange={onCheckAndChange}
         error={props.error || error}
         arrayType={arrayType}
-        /** Check added to prevent Select width flicker */
         rightIcons={rightIcons}
-        rightContent={rightContent}
+        rightContent={
+          foreignDataState?.insertAndSearchState &&
+          action &&
+          row && (
+            <SmartFormFieldLinkedData
+              {...props}
+              state={foreignDataState.insertAndSearchState}
+              action={action}
+              row={row}
+              column={column}
+              tableInfo={tableInfo}
+              jsonbSchemaWithControls={jsonbSchemaWithControls}
+              hideNullBtn={hideNullBtn}
+              setData={onChange}
+              readOnly={readOnly}
+            />
+          )
+        }
         rightContentAlwaysShow={rightContentAlwaysShow}
         labelAsValue={true}
         nullable={column.is_nullable}
         inputProps={{ min: column.min, max: column.max }}
         hint={hint}
         hideClearButton={hideNullBtn}
-        asColumn={variant === "column"}
       />
-      {column.file && table && (
-        <SmartFormFieldFileSection db={db} table={table} mediaId={rawValue} />
+      {column.file && (
+        <SmartFormFieldFileSection
+          db={db}
+          table={table}
+          mediaId={typeof value === "string" ? value : undefined}
+        />
       )}
     </>
   );

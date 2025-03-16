@@ -1,4 +1,3 @@
-import { mdiClose } from "@mdi/js";
 import { quickClone } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import type {
@@ -17,26 +16,19 @@ import {
 import type { Prgl } from "../../App";
 import type { Command } from "../../Testing";
 import { SuccessMessage } from "../../components/Animations";
-import Btn from "../../components/Btn";
 import Checkbox from "../../components/Checkbox";
 import ErrorComponent from "../../components/ErrorComponent";
-import FileInput from "../../components/FileInput/FileInput";
-import { classOverride, FlexCol } from "../../components/Flex";
-import { Label } from "../../components/Label";
+import { classOverride } from "../../components/Flex";
 import Loading from "../../components/Loading";
 import { filterObj, ifEmpty, isDefined } from "../../utils";
 import RTComp from "../RTComp";
 import type { SmartColumnInfo } from "./SmartFormField/SmartFormField";
-import { SmartFormField } from "./SmartFormField/SmartFormField";
-import { SmartFormFieldOptions } from "./SmartFormField/SmartFormFieldOptions";
-import {
-  columnIsReadOnly,
-  parseDefaultValue,
-} from "./SmartFormField/fieldUtils";
-import { SmartFormFileSection } from "./SmartFormFileSection";
+import { parseDefaultValue } from "./SmartFormField/fieldUtils";
+import { SmartFormFieldList } from "./SmartFormFieldList";
 import { SmartFormFooterButtons } from "./SmartFormFooterButtons";
 import { SmartFormPopup } from "./SmartFormPopup/SmartFormPopup";
 import { SmartFormUpperFooter } from "./SmartFormUpperFooter";
+import type { Media } from "../../components/FileInput/FileInput";
 
 export type getErrorsHook = (
   cb: (newRow: AnyObject) => SmartFormState["error"] | undefined,
@@ -56,10 +48,7 @@ export type ColumnDisplayConfig = {
   onRender?: (value: any, setValue: (newValue: any) => void) => React.ReactNode;
 };
 
-export type SmartFormProps = Pick<
-  Prgl,
-  "db" | "tables" | "methods" | "theme"
-> & {
+export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods"> & {
   tableName: string;
   connection?: Prgl["connection"];
 
@@ -84,11 +73,6 @@ export type SmartFormProps = Pick<
    *
    */
   getRef?: GetRefCB;
-
-  /**
-   * True by default. If true then it will allow inserting media
-   */
-  includeMedia?: boolean;
 
   defaultData?: AnyObject;
 
@@ -208,7 +192,14 @@ export type ColumnData =
        * Added from the fkey column
        */
       type: "nested-column";
-      value: AnyObject;
+      value: AnyObject | undefined;
+    }
+  | {
+      /**
+       * References the file table
+       */
+      type: "nested-file-column";
+      value: Media | undefined;
     }
   | {
       /**
@@ -248,7 +239,6 @@ export type SmartFormState = {
     col: ValidatedColumnInfo;
   };
 
-  // referencedInsertData?: Record<string, any>;
   referencedInsertShowFormForColumn?: string;
   action: FormAction;
 };
@@ -365,15 +355,6 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     return defaultColumnData;
   }
 
-  get mediaTableInfo() {
-    const { includeMedia = true, tables } = this.props;
-
-    const tableInfo = this.table?.info;
-    if (tableInfo?.hasFiles && tableInfo.fileTableName && includeMedia) {
-      return tables.find((t) => t.info.isFileTable)?.info;
-    }
-  }
-
   get newRow() {
     return Object.fromEntries(
       Object.entries(this.state.newRowData ?? {}).map(([key, { value }]) => [
@@ -392,13 +373,11 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     const {
       // newRow = {},
       defaultColumnData = {},
-      // referencedInsertData = {},
     } = this.state;
     let data = {
       ...defaultColumnData,
       ...defaultData,
       ...this.newRow,
-      // ...referencedInsertData,
     };
     let _errors: AnyObject | undefined;
 
@@ -564,16 +543,14 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
 
   onUnmount = async () => {
     if (this.rowSub) await this.rowSub.unsubscribe();
-    // throw "allow ctrl + z to undo"
   };
 
   getSelect = async () => {
-    const { tableName, db, includeMedia = true } = this.props;
+    const { tableName, db } = this.props;
     const tableInfo = this.table?.info;
     const select = { $rowhash: 1, "*": 1 } as const;
 
     if (
-      includeMedia &&
       tableInfo?.fileTableName &&
       tableInfo.fileTableName !== tableName &&
       tableInfo.hasFiles &&
@@ -608,22 +585,6 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
     //     throw "Row has since changed. Could not update"
     // }
   };
-
-  // setReferencedInsertData = (
-  //   column: Pick<ValidatedColumnInfo, "is_pkey" | "name">,
-  //   newVal: any,
-  // ) => {
-  //   const { referencedInsertData = {} } = this.state;
-  //   this.setState({
-  //     errors: undefined,
-  //     error: undefined,
-  //     referencedInsertShowFormForColumn: undefined,
-  //     referencedInsertData: {
-  //       ...referencedInsertData,
-  //       [column.name]: newVal,
-  //     },
-  //   });
-  // };
 
   setColumnData = async (
     column: Pick<ValidatedColumnInfo, "is_pkey" | "name" | "tsDataType">,
@@ -883,19 +844,8 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
       onChange,
       label,
       hideChangesOptions = false,
-      jsonbSchemaWithControls,
-      includeMedia = true,
       asPopup,
-      enableInsert = true,
-      db,
-      tables,
-      methods,
       className = "",
-      onPrevOrNext,
-      prevNext,
-      contentClassname,
-      theme,
-      connection,
     } = this.props;
 
     const {
@@ -906,37 +856,14 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
       action,
     } = this.state;
 
-    const hideNullBtn = action.type === "view" || this.props.hideNullBtn;
-
     const row = this.getThisRow();
     const tableInfo = this.table?.info;
 
-    let fileManagerTop: React.ReactNode = null;
-    if (
-      this.table &&
-      tableInfo?.isFileTable &&
-      includeMedia &&
-      tableInfo.fileTableName
-    ) {
-      fileManagerTop = (
-        <SmartFormFileSection
-          {...this.props}
-          table={this.table}
-          setNewRow={(newRowData) => this.setState({ newRowData })}
-          row={row}
-          action={action}
-          getThisRow={this.getThisRow}
-          setData={(col, files) =>
-            this.setColumnData(col, { type: "column", value: files })
-          }
-          mediaTableInfo={this.mediaTableInfo}
-          mediaTableName={tableInfo.fileTableName}
-        />
-      );
-    }
-
     if (!tableInfo) {
       return <>Table {tableName} not found.</>;
+    }
+    if (action.dataItemLoaded === false) {
+      return null;
     }
 
     const headerText =
@@ -956,16 +883,12 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
         </h4>
       : null;
 
-    if (action.dataItemLoaded === false) {
-      return null;
-    }
-
     const maxWidth = "max-w-650" as const;
     const renderResult = (
       <div
-        style={asPopup ? { minWidth: "350px" } : {}}
-        data-key={tableName}
         data-command={"SmartForm" satisfies Command}
+        data-key={tableName}
+        style={asPopup ? { minWidth: "350px" } : {}}
         className={classOverride(
           "SmartForm " +
             (asPopup ? "" : maxWidth) +
@@ -977,172 +900,20 @@ export default class SmartForm extends RTComp<SmartFormProps, SmartFormState> {
         {action.loading && <Loading variant="cover" />}
 
         {formHeader}
-        <div
-          className={classOverride(
-            "SmartFormContent flex-col f-1 o-auto min-h-0 min-w-0 pb-1 gap-1 px-2",
-            contentClassname,
-          )}
-        >
-          {fileManagerTop}
-          {this.getDisplayedColumns().map((c, i) => {
-            const rawValue = row[c.name];
-
-            const formFieldStyle: React.CSSProperties =
-              !c.sectionHeader ? {} : { marginTop: "1em" };
-            const referencedInsertData =
-              this.state.newRowData?.[c.name]?.type === "nested-column" ?
-                this.state.newRowData[c.name]?.value
-              : undefined;
-            const showNestedInsertForm =
-              this.state.referencedInsertShowFormForColumn === c.name;
-            const rightContent =
-              columnIsReadOnly(action.type, c) ? undefined : (
-                <SmartFormFieldOptions
-                  {...this.props}
-                  showNestedInsertForm={showNestedInsertForm}
-                  setShowNestedInsertForm={(show) => {
-                    this.setState({
-                      referencedInsertShowFormForColumn:
-                        show ? c.name : undefined,
-                    });
-                  }}
-                  action={action.type}
-                  row={row}
-                  column={c}
-                  tableInfo={tableInfo}
-                  enableInsert={enableInsert}
-                  jsonbSchemaWithControls={jsonbSchemaWithControls}
-                  hideNullBtn={hideNullBtn}
-                  referencedInsertData={referencedInsertData}
-                  setData={this.setColumnData}
-                  setReferencedInsertData={() => {
-                    throw "Not used";
-                  }}
-                />
-              );
-
-            if (referencedInsertData) {
-              if (c.file) {
-                return (
-                  <FileInput
-                    key={i}
-                    className={
-                      "mt-p5 f-0 " + (tableInfo.isFileTable ? "mt-2" : "")
-                    }
-                    label={c.label}
-                    media={[referencedInsertData]}
-                    minSize={470}
-                    maxFileCount={1}
-                    onAdd={(files) => {
-                      // this.setReferencedInsertData(c, files[0]);
-                      this.setColumnData(c, {
-                        type: "nested-column",
-                        value: files[0]!,
-                      });
-                    }}
-                    onDelete={async (media) => {
-                      // this.setColumnData(c, undefined);
-                      this.setState({
-                        newRowData: omitKeys(this.state.newRowData ?? {}, [
-                          c.name,
-                        ]),
-                      });
-                    }}
-                  />
-                );
-              }
-              return (
-                <div
-                  key={i}
-                  className="form-field flex-col min-w-0 mt-1"
-                  style={formFieldStyle}
-                >
-                  <label
-                    className=" main-label ta-left noselect text-1p5  pointer "
-                    style={{ flex: `0.5 1 0%` }}
-                  >
-                    {c.label}
-                  </label>
-                  <div className={"flex-row gap-1 ai-center  f-1"}>
-                    <Btn
-                      className="mr-auto  bg-color-0"
-                      variant="outline"
-                      color="action"
-                      title="View insert data"
-                      onClick={() => {
-                        this.setState({
-                          referencedInsertShowFormForColumn: c.name,
-                        });
-                      }}
-                    >
-                      New data
-                    </Btn>
-                    <Btn
-                      title="Remove nested insert"
-                      iconPath={mdiClose}
-                      onClick={() => {
-                        this.setState({
-                          newRowData: omitKeys(this.state.newRowData ?? {}, [
-                            c.name,
-                          ]),
-                        });
-                        // this.setReferencedInsertData(c, undefined);
-                      }}
-                    />
-                    {showNestedInsertForm && rightContent}
-                  </div>
-                </div>
-              );
-            }
-
-            if (c.onRender) {
-              const columnNode = c.onRender(rawValue, (newVal) =>
-                this.setColumnData(c, newVal),
-              );
-              return (
-                <FlexCol
-                  key={c.name}
-                  style={formFieldStyle}
-                  className="gap-p25"
-                >
-                  <Label variant="normal">{c.label}</Label>
-                  {columnNode}
-                </FlexCol>
-              );
-            }
-
-            return (
-              <SmartFormField
-                key={i}
-                tableInfo={tableInfo}
-                tables={tables}
-                db={db}
-                tableName={tableName}
-                action={action.type}
-                column={c}
-                value={rawValue || ""}
-                rawValue={rawValue}
-                row={row}
-                jsonbSchemaWithControls={jsonbSchemaWithControls}
-                onChange={(newVal) =>
-                  this.setColumnData(c, { type: "column", value: newVal })
-                }
-                error={
-                  errors[c.name] ??
-                  (isObject(error) && error.column === c.name ?
-                    error
-                  : undefined)
-                }
-                rightContentAlwaysShow={false}
-                rightContent={rightContent}
-                hideNullBtn={hideNullBtn}
-                sectionHeader={c.sectionHeader}
-                style={formFieldStyle}
-                variant="column"
-              />
-            );
-          })}
-        </div>
+        <SmartFormFieldList
+          {...this.props}
+          displayedColumns={this.getDisplayedColumns()}
+          action={action}
+          row={row}
+          table={this.table}
+          setColumnData={this.setColumnData}
+          errors={errors}
+          error={error}
+          newRowData={this.state.newRowData}
+          setNewRowData={(newRowData) => {
+            this.setState({ newRowData });
+          }}
+        />
 
         {hideChangesOptions || action.type === "view" ? null : (
           <>

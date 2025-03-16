@@ -12,7 +12,7 @@ import {
   isObject,
   TS_PG_Types,
 } from "prostgles-types";
-import { renderInterval } from "../../W_SQL/customRenderers";
+import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import type { FilterColumn } from "../../SmartFilter/smartFilterUtils";
 import { getComputedColumnSelect } from "../../W_Table/tableUtils/getTableSelect";
 import type { DBS } from "../../Dashboard/DBS";
@@ -127,7 +127,7 @@ export const parseValue = (
 
   if (value) {
     if (c.udt_name === "interval" && typeof value !== "string") {
-      return renderInterval(value);
+      return getPGIntervalAsText(value);
     }
 
     const parseDateStr = (v: string | number, withTimeZone = false) => {

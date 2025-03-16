@@ -17,7 +17,6 @@ import type {
   SmartFormState,
 } from "./SmartForm";
 import { RenderValue } from "./SmartFormField/RenderValue";
-import { SmartFormNestedInserts } from "./SmartFormNestedInserts";
 
 export type SmartFormUpperFooterProps = Omit<SmartFormProps, "columns"> & {
   onSetNestedInsertData:
@@ -40,8 +39,8 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
     onSetNestedInsertData,
     tables,
     table,
-    theme,
     columns,
+    connection,
     onRemoveUpdate,
     state,
     row,
@@ -111,7 +110,6 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
       }}
     >
       <W_MethodControls
-        theme={theme}
         method_name={method.name}
         fixedRowArgument={{
           argName: method.argName,
@@ -126,22 +124,6 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
         w={undefined}
       />
     </Popup>
-  );
-
-  const joinedRecords = showJoinedTables && (
-    <JoinedRecords
-      theme={theme}
-      action={action.type}
-      db={db as any}
-      tables={tables}
-      methods={methods}
-      rowFilter={rowFilter}
-      newRowData={state.newRowData}
-      tableName={tableName}
-      onSetNestedInsertData={onSetNestedInsertData}
-      onToggle={setexpandJoinedRecords}
-      onSuccess={props.onSuccess}
-    />
   );
 
   const changesNode = !!showChanges && (
@@ -264,7 +246,8 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
     </div>
   );
 
-  if (!(methodNode || joinedRecords || changesNode || methodsNode)) return null;
+  if (!(methodNode || showJoinedTables || changesNode || methodsNode))
+    return null;
 
   return (
     <div
@@ -275,15 +258,29 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
         boxShadow: "0px 3px 9px 0px var(--shadow0)",
         clipPath: "inset(-10px 1px 0px 1px)",
         minHeight: "1px",
+        /** Expand full allowed height to prevent size change when toggling joined records sections */
         ...(expandJoinedRecords && {
-          flex: 4,
-          maxHeight: "fit-content",
+          flex: 1,
+          // maxHeight: "fit-content",
         }),
       }}
     >
       {methodNode}
-      {joinedRecords}
-      <SmartFormNestedInserts {...props} />
+      {showJoinedTables && (
+        <JoinedRecords
+          action={action.type}
+          db={db}
+          tables={tables}
+          methods={methods}
+          rowFilter={rowFilter}
+          newRowData={state.newRowData}
+          tableName={tableName}
+          onSetNestedInsertData={onSetNestedInsertData}
+          onToggle={setexpandJoinedRecords}
+          onSuccess={props.onSuccess}
+          connection={connection}
+        />
+      )}
       {changesNode}
       {methodsNode}
     </div>

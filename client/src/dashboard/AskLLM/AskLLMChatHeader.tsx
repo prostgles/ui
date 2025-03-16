@@ -3,7 +3,7 @@ import React from "react";
 import Btn from "../../components/Btn";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import Select from "../../components/Select/Select";
-import { renderInterval } from "../W_SQL/customRenderers";
+import { getPGIntervalAsText } from "../W_SQL/customRenderers";
 import { LLMChatOptions, type LLMChatOptionsProps } from "./LLMChatOptions";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
 import type { LLMChatState } from "./useLLMChat";
@@ -50,7 +50,7 @@ export const AskLLMChatHeader = (
             latestChats?.map((c) => ({
               key: c.id,
               label: c.name,
-              subLabel: renderInterval(c.created_ago, true, true, true),
+              subLabel: getPGIntervalAsText(c.created_ago, true, true, true),
             })) ?? []
           }
           value={activeChatId}

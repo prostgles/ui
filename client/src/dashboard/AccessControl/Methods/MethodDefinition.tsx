@@ -19,7 +19,6 @@ export type MethodDefinitionProps = {
   | "tables"
   | "dbsTables"
   | "db"
-  | "theme"
   | "connectionId"
   | "dbsMethods"
   | "dbKey"

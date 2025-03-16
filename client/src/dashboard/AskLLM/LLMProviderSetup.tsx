@@ -12,8 +12,7 @@ export const LLMProviderSetup = ({
   dbs,
   dbsMethods,
   dbsTables,
-  theme,
-}: Pick<Prgl, "dbs" | "dbsMethods" | "dbsTables" | "theme">) => {
+}: Pick<Prgl, "dbs" | "dbsMethods" | "dbsTables">) => {
   const [addCreds, setAddCreds] = React.useState(false);
 
   const addCredsForm = addCreds && (
@@ -31,7 +30,6 @@ export const LLMProviderSetup = ({
           db={dbs}
           methods={dbsMethods}
           tables={dbsTables}
-          theme={theme}
           onChange={console.log}
         />
       </FlexCol>
@@ -46,7 +44,6 @@ export const LLMProviderSetup = ({
         tableName={"llm_credentials"}
         methods={dbsMethods}
         tables={dbsTables}
-        theme={theme}
         showTopBar={true}
         orderByfields={[]}
         noDataComponent={

@@ -12,8 +12,6 @@ import type { SmartFormProps, SmartFormState } from "./SmartForm";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 
 type P = {
-  mediaTableInfo: TableInfo | undefined;
-  getThisRow: () => AnyObject;
   row: AnyObject;
   mediaTableName: string;
   setNewRow: (newRow: AnyObject) => void;
@@ -35,7 +33,6 @@ export const SmartFormFileSection = ({
   defaultData,
   action,
   onSuccess,
-  getThisRow,
   mediaTableName,
   row,
   setData,
@@ -50,7 +47,7 @@ export const SmartFormFileSection = ({
       if (defaultData && isObject(defaultData) && !newRowData) {
         return [defaultData as Media];
       } else {
-        return getThisRow()[mediaTableName] ?? [];
+        return row[mediaTableName] ?? [];
       }
     } else {
       return newRowData?.[tableName]?.value ?? [row as Media];
@@ -58,7 +55,6 @@ export const SmartFormFileSection = ({
   }, [
     row,
     mediaTableName,
-    getThisRow,
     action.type,
     defaultData,
     isFileTable,
@@ -94,7 +90,7 @@ export const SmartFormFileSection = ({
               setNewRow({ [tableName]: [] });
             } else {
               if (db[mediaTableName]?.update) {
-                const res = await db[mediaTableName]?.update!(
+                const res = await db[mediaTableName].update!(
                   { id: media.id },
                   { deleted: true },
                   onSuccess ? { returning: "*" } : {},

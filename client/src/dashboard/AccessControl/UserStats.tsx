@@ -63,7 +63,6 @@ export const UserStats = ({
           style={{ minWidth: "250px" }}
         >
           <SmartTable
-            theme={theme}
             key={"selectedRuleId"}
             db={dbs}
             methods={dbsMethods}

@@ -104,7 +104,7 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
           onClose={() => setOpen(false)}
         >
           <FlexCol
-            className="f-1 min-s-0 o-auto p-1"
+            className="f-1 min-s-0 o-auto p-1 ai-center"
             style={{
               maxWidth: "min(99vw, 1200px)",
             }}
@@ -149,9 +149,10 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
               totalRows={displayedItemsFull.length}
               pageSize={50}
               page={page}
-              onPageSizeChange={console.error}
+              onPageSizeChange={() => {
+                console.error("onPageSizeChange disabled for performance");
+              }}
               onPageChange={(newPage) => {
-                console.warn(newPage);
                 setPage(newPage);
               }}
             />

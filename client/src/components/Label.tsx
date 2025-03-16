@@ -8,9 +8,6 @@ import { classOverride } from "./Flex";
 import "./Label.css";
 
 export type NormalLabelProps = {
-  /**
-   * @default "normal"
-   */
   variant: "normal";
   iconPath?: undefined;
   toggle?: {

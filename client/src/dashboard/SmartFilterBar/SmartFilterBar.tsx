@@ -27,7 +27,6 @@ import { SmartFilterBarRightActions } from "./SmartFilterBarRightActions";
 import { Label } from "../../components/Label";
 
 export type SmartFilterBarProps = PrglCore & {
-  theme: Theme;
   className?: string;
   innerClassname?: string;
   style?: React.CSSProperties;

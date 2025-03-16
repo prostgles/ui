@@ -3,19 +3,18 @@ import {
   type DBHandlerClient,
   useAsyncEffectQueue,
 } from "prostgles-client/dist/prostgles";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Socket } from "socket.io-client";
 import io from "socket.io-client";
 import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
+import { API_PATH_SUFFIXES, SPOOF_TEST_VALUE } from "../../commonTypes/utils";
 import type { AppState } from "./App";
+import { pageReload } from "./components/Loading";
 import type { DBS } from "./dashboard/Dashboard/DBS";
 import { getTables } from "./dashboard/Dashboard/Dashboard";
-import { useEffectAsync } from "./dashboard/DashboardMenu/DashboardMenuSettings";
-import { pageReload } from "./components/Loading";
-import { API_PATH_SUFFIXES, SPOOF_TEST_VALUE } from "../../commonTypes/utils";
-import { playwrightTestLogs } from "./utils";
 import { isPlaywrightTest } from "./i18n/i18nUtils";
+import { playwrightTestLogs } from "./utils";
 
 export const useDBSConnection = (
   onDisconnect: (isDisconnected: boolean) => void,
@@ -172,7 +171,7 @@ export const useDBSConnection = (
     }
   };
 
-  useEffectAsync(async () => {
+  useEffect(() => {
     init();
   }, []);
 

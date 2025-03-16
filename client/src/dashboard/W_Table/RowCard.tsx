@@ -50,7 +50,6 @@ export const RowCard = ({
 
   return (
     <SmartForm
-      theme={prgl.theme}
       connection={prgl.connection}
       asPopup={true}
       confirmUpdates={true}

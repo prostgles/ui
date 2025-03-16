@@ -44,11 +44,13 @@ type ConfirmationPopup = {
 };
 
 export const SmartFormFooterButtons = (p: P): JSX.Element => {
-  const { props, state, action } = p;
+  const { props: formProps, state: formState, action } = p;
 
-  const { error } = state;
+  const { error } = formState;
   const newRow =
-    getNewRow(state.newRowData) ?? props.defaultData ?? props.fixedData;
+    getNewRow(formState.newRowData) ??
+    formProps.defaultData ??
+    formProps.fixedData;
   const {
     db,
     tableName,
@@ -57,7 +59,7 @@ export const SmartFormFooterButtons = (p: P): JSX.Element => {
     onBeforeInsert,
     confirmUpdates,
     onChange,
-  } = props;
+  } = formProps;
 
   const tableHandler = db[tableName];
 
@@ -69,7 +71,7 @@ export const SmartFormFooterButtons = (p: P): JSX.Element => {
   const btnProps = { ...p, useConfirmPopup, getIsMounted };
 
   /** Showing Success animation. Will close soon */
-  if (state.action.success) {
+  if (formState.action.success) {
     return <></>;
   }
 
@@ -120,7 +122,7 @@ export const SmartFormFooterButtons = (p: P): JSX.Element => {
         !disabledActions?.includes("clone"),
     };
 
-    const errorMsg = state.error ? "Must fix error first" : undefined;
+    const errorMsg = formState.error ? "Must fix error first" : undefined;
 
     const footerExtraButtons =
       action === "view" ? null
@@ -186,14 +188,14 @@ export const SmartFormFooterButtons = (p: P): JSX.Element => {
       : null;
 
     const showExtraBtns = !!(
-      footerExtraButtons && !(state.action.success && !error)
+      footerExtraButtons && !(formState.action.success && !error)
     );
 
     footerContent =
       !(showExtraBtns || onClose) ?
         <></>
       : <Footer>
-          {props.onClose && (
+          {formProps.onClose && (
             <Btn
               className=" bg-color-0 mr-auto"
               {...dataCommand("SmartForm.close")}
@@ -228,15 +230,8 @@ const onClickInsert = async ({
   setError,
   tableInfo,
 }: ButtonProps) => {
-  const {
-    db,
-    tableName,
-    includeMedia = true,
-    onInserted,
-    onSuccess,
-    onBeforeInsert,
-  } = props;
-  const { referencedInsertData = {}, action, newRowData } = state;
+  const { db, tableName, onInserted, onSuccess, onBeforeInsert } = props;
+  const { action, newRowData } = state;
   const tableHandler = db[tableName];
 
   if (action.type !== "insert") return;
@@ -249,7 +244,7 @@ const onClickInsert = async ({
 
       let extraKeys: string[] = [];
 
-      if (tableInfo?.hasFiles && includeMedia && tableInfo.fileTableName) {
+      if (tableInfo?.hasFiles && tableInfo.fileTableName) {
         const mTblName = tableInfo.fileTableName;
         extraKeys = [mTblName];
       }
@@ -266,9 +261,7 @@ const onClickInsert = async ({
         );
         dataForInsert = {
           ...dataForInsert,
-          // ...nestedInsertData,
           ...getNewRow(newRowData ?? {}),
-          ...referencedInsertData,
         };
       }
 

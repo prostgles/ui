@@ -1,29 +1,26 @@
-import { mdiPlus, mdiTable } from "@mdi/js";
-import { isDefined, type AnyObject } from "prostgles-types";
+import { mdiTable } from "@mdi/js";
+import { type AnyObject } from "prostgles-types";
 import React from "react";
 import {
-  getSmartGroupFilter,
   type DetailedFilterBase,
+  type SmartGroupFilter,
 } from "../../../../../commonTypes/filterUtils";
 import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";
 import { FlexCol, FlexRow, classOverride } from "../../../components/Flex";
 import Loading from "../../../components/Loading";
-import { MediaViewer } from "../../../components/MediaViewer";
-import type { Command } from "../../../Testing";
-import RTComp from "../../RTComp";
-import SmartCardList from "../../SmartCard/SmartCardList";
+import Tabs, { type TabItem } from "../../../components/Tabs";
 import SmartTable from "../../SmartTable";
-import type { TargetPath } from "../../W_Table/tableUtils/getJoinPaths";
 import type { SmartFormProps, SmartFormState } from "../SmartForm";
-import { getJoinFilter } from "./getJoinFilter";
-import { prepareJoinedRecordsSections } from "./prepareJoinedRecordsSections";
-import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
 import type { SmartFormUpperFooterProps } from "../SmartFormUpperFooter";
+import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
+import { JoinedRecordsSection } from "./JoinedRecordsSection";
+import { useJoinedRecordsSections } from "./useJoinedRecordsSections";
+import { SvgIcon } from "../../../components/SvgIcon";
 
 export type JoinedRecordsProps = Pick<
   Prgl,
-  "db" | "tables" | "methods" | "theme"
+  "db" | "tables" | "methods" | "connection"
 > &
   Pick<SmartFormProps, "onSuccess"> & {
     className?: string;
@@ -40,136 +37,124 @@ export type JoinedRecordsProps = Pick<
     expanded?: boolean;
   };
 
-export type JoinedRecordsState = {
-  expanded: boolean;
-  isLoadingSections?: boolean;
-  sections: {
-    label: string;
-    tableName: string;
-    path: string[];
-    expanded?: boolean;
-    existingDataCount: number;
-    canInsert?: boolean;
-    error?: string;
-  }[];
-  // insert?: {
-  //   table: string;
-  //   data: AnyObject;
-  // };
-
-  quickView?: {
-    tableName: string;
-    path: string[];
-  };
-  extraSectionPaths: TargetPath[];
-
-  // nestedInsertTable?: string;
+export type JoinedRecordSection = {
+  label: string;
+  tableName: string;
+  path: string[];
+  expanded?: boolean;
+  existingDataCount: number;
+  canInsert?: boolean;
+  error?: string;
+  joinFilter: AnyObject;
+  detailedJoinFilter: SmartGroupFilter;
+  count: number;
 };
-export class JoinedRecords extends RTComp<
-  JoinedRecordsProps,
-  JoinedRecordsState
-> {
-  state: JoinedRecordsState = {
-    sections: [],
-    expanded: false,
-    extraSectionPaths: [],
-  };
 
-  getDataSignature = () => {
-    const { tableName, rowFilter } = this.props;
-    return JSON.stringify({
-      tableName,
-      rowFilter,
-      extraSectionPaths: this.state.extraSectionPaths,
-    });
-  };
-
-  getDetailedFilter = getJoinFilter.bind(this);
-
-  getJoinFilter(path: string[]) {
-    return getSmartGroupFilter(this.getDetailedFilter(path));
-  }
-
-  dataSignature?: string;
-  prepareSections = prepareJoinedRecordsSections.bind(this);
-
-  async onDelta() {
-    this.prepareSections();
-  }
-
-  get tableHandler() {
-    const { db, tableName } = this.props;
-    return db[tableName];
-  }
-
-  render(): React.ReactNode {
-    const { sections, quickView, isLoadingSections } = this.state;
-    const {
-      db,
-      tables,
-      methods,
-      tableName,
-      newRowData,
-      onSetNestedInsertData,
-      rowFilter,
-      theme,
-      showRelated,
-      style,
-      className = "",
-      action,
-      expanded = this.state.expanded,
-      onSuccess,
-    } = this.props;
-    let quickViewPopup: React.ReactNode = null;
-    if (quickView) {
-      quickViewPopup = (
-        <SmartTable
-          theme={theme}
-          db={db}
-          methods={methods}
-          tableName={quickView.tableName}
-          tables={tables}
-          filter={this.getDetailedFilter(quickView.path)}
-          onClosePopup={() => {
-            this.setState({ quickView: undefined });
-          }}
-        />
-      );
-    }
-
-    if (isLoadingSections) {
-      return <Loading className="m-1 as-center" />;
-    } else if (!sections.length) {
-      return null;
-    }
-
-    if (action === "insert" && sections.every((s) => !s.canInsert)) {
-      return null;
-    }
-
-    const dencendants = tables.filter((t) =>
-      t.columns.some((c) => c.references?.some((r) => r.ftable === tableName)),
+export const JoinedRecords = (props: JoinedRecordsProps) => {
+  const res = useJoinedRecordsSections(props);
+  const { sections = [], isLoadingSections, descendants, isInsert } = res;
+  const [quickView, setQuickView] = React.useState<JoinedRecordSection>();
+  const {
+    db,
+    tables,
+    methods,
+    style,
+    className = "",
+    action,
+    connection,
+  } = props;
+  let quickViewPopup: React.ReactNode = null;
+  if (quickView) {
+    quickViewPopup = (
+      <SmartTable
+        db={db}
+        methods={methods}
+        tableName={quickView.tableName}
+        tables={tables}
+        filter={quickView.detailedJoinFilter}
+        onClosePopup={() => {
+          setQuickView(undefined);
+        }}
+      />
     );
-    const descendantInsertTables = dencendants
-      .filter((t) => db[t.name]?.insert)
-      .map((t) => t.name);
+  }
 
-    const nestedInsertData = Object.fromEntries(
-      Object.entries(newRowData ?? {})
-        .map(([k, d]) => (d.type === "nested-table" ? [k, d.value] : undefined))
-        .filter(isDefined),
-    );
+  if (isLoadingSections) {
+    return <Loading className="m-1 as-center" />;
+  } else if (!sections.length) {
+    return null;
+  }
 
-    return (
-      <FlexCol
-        data-command="JoinedRecords"
-        className={classOverride(
-          "gap-0 bt b-color min-h-0 bg-inherit ",
-          className,
+  if (action === "insert" && sections.every((s) => !s.canInsert)) {
+    return null;
+  }
+
+  return (
+    <FlexCol
+      data-command="JoinedRecords"
+      className={classOverride(
+        "gap-0 bt b-color min-h-0 bg-inherit ",
+        className,
+      )}
+      style={style}
+    >
+      <Tabs
+        contentClass="o-auto"
+        items={Object.fromEntries(
+          sections.map((section) => {
+            const { label, path, count, tableName } = section;
+            const countNode = (
+              <span
+                className="text-1p5 font-18"
+                style={{ fontWeight: "lighter" }}
+              >
+                {section.count.toLocaleString()}
+              </span>
+            );
+            const showCountNode = !(isInsert && !count);
+            const icon = connection?.table_options?.[tableName]?.icon;
+            return [
+              path.join("."),
+              {
+                label: (
+                  <FlexRow className="gap-p5">
+                    {icon && <SvgIcon icon={icon} />}
+                    <div>{label}</div>
+                    {showCountNode && countNode}
+                  </FlexRow>
+                ),
+                content: (
+                  <FlexCol>
+                    <FlexRow className="show-on-parent-hover gap-0">
+                      <Btn
+                        iconPath={mdiTable}
+                        title="Open in table"
+                        disabledInfo={!count ? "No records to show" : undefined}
+                        onClick={async () => {
+                          setQuickView(section);
+                        }}
+                      />
+                      <JoinedRecordsAddRow {...props} section={section} />
+                    </FlexRow>
+
+                    <JoinedRecordsSection
+                      {...props}
+                      section={section}
+                      descendants={descendants}
+                      isInsert={isInsert}
+                    />
+                  </FlexCol>
+                ),
+              } satisfies TabItem,
+            ];
+          }),
         )}
-        style={style}
-      >
-        <h4
+        onChange={(activeKey) => {
+          props.onToggle?.(true);
+        }}
+      />
+      {quickViewPopup}
+      {/* <h4
           title="Toggle section"
           data-command={"JoinedRecords.toggle" satisfies Command}
           onClick={() => {
@@ -188,8 +173,10 @@ export class JoinedRecords extends RTComp<
             </span>
           )}
 
-          {/* TODO allow customising Related data section */}
-          {/* <JoinPathSelectorV2 
+        </h4> */}
+
+      {/* TODO allow customising Related data section */}
+      {/* <JoinPathSelectorV2 
           onChange={path => {
             this.setState({ extraSectionPaths: [ path, ...this.state.extraSectionPaths] });
           }}
@@ -205,186 +192,102 @@ export class JoinedRecords extends RTComp<
             color: "action",
           }}          
         /> */}
-        </h4>
-        {quickViewPopup}
-        {expanded && (
+      {/* {expanded && (
           <FlexCol className="gap-0 o-auto f-1 px-1 bg-inherit">
-            {sections
-              .filter(
-                (s) =>
-                  !showRelated ||
-                  dencendants.some((t) => t.name === s.tableName),
-              )
-              .map((s, i) => {
-                const onToggle: React.MouseEventHandler = ({
-                  currentTarget,
-                }) => {
-                  const newSections = sections.map((_s) => ({
-                    ..._s,
-                    expanded:
-                      _s.path.join() === s.path.join() ?
-                        !_s.expanded
-                      : _s.expanded,
-                  }));
+            {sections.map((s, i) => {
+              const onToggle: React.MouseEventHandler = ({ currentTarget }) => {
+                const newSections = sections.map((_s) => ({
+                  ..._s,
+                  expanded:
+                    _s.path.join() === s.path.join() ?
+                      !_s.expanded
+                    : _s.expanded,
+                }));
 
-                  this.setState({
-                    sections: newSections,
-                  });
+                this.setState({
+                  sections: newSections,
+                });
 
-                  setTimeout(() => {
-                    currentTarget.scrollIntoView({ behavior: "smooth" });
-                  }, 300);
-                };
-                const isInsert = !!onSetNestedInsertData && !rowFilter;
-                const count =
-                  (isInsert ?
-                    nestedInsertData?.[s.tableName]?.length
-                  : s.existingDataCount) ?? 0;
-                const disabledInfo = !count ? "No records to show" : undefined;
-                let countNode: React.ReactNode = (
-                  <span
-                    className="ws-pre text-1p5 font-18"
-                    style={{ fontWeight: "normal" }}
+                setTimeout(() => {
+                  currentTarget.scrollIntoView({ behavior: "smooth" });
+                }, 300);
+              };
+              const isInsert = this.isInsert;
+              const count =
+                (isInsert ?
+                  this.nestedInsertData?.[s.tableName]?.length
+                : s.existingDataCount) ?? 0;
+              const disabledInfo = !count ? "No records to show" : undefined;
+              let countNode: React.ReactNode = (
+                <span
+                  className="ws-pre text-1p5 font-18"
+                  style={{ fontWeight: "normal" }}
+                >
+                  {" "}
+                  {count.toLocaleString()}
+                </span>
+              );
+              if (isInsert && !count) {
+                countNode = null;
+              }
+ 
+
+              const key = s.path.join(".") + this.dataSignature;
+              return (
+                <div
+                  key={key}
+                  data-key={s.path.join(".")}
+                  className="flex-col min-h-0 f-0 relative bg-inherit"
+                >
+                  <div
+                    className="flex-row ai-center noselect pointer f-0 bg-inherit bt b-color"
+                    style={
+                      !s.expanded ? undefined : (
+                        {
+                          position: "sticky",
+                          top: 0,
+                          zIndex: 432432,
+                          marginBottom: ".5em",
+                        }
+                      )
+                    }
                   >
-                    {" "}
-                    {count.toLocaleString()}
-                  </span>
-                );
-                if (isInsert && !count) {
-                  countNode = null;
-                }
+                    <Btn
+                      className="f-1 p-p5 ta-left font-20 bold jc-start"
+                      variant="text"
+                      data-label="Expand section"
+                      title="Expand section"
+                      disabledInfo={s.error ?? disabledInfo}
+                      color={s.error ? "warn" : "action"}
+                      onClick={onToggle}
+                    >
+                      {s.path.join(".")}
+                      {countNode}
+                    </Btn>
 
-                let content: React.ReactNode = null;
-                const limit = 20;
-                if (isInsert) {
-                  if (descendantInsertTables.includes(s.tableName)) {
-                    // const { nestedInsertData } = this.state;
-                    content = (
-                      <SmartCardList
-                        theme={theme}
-                        key={s.path.join(".")}
-                        db={db as any}
-                        methods={methods}
-                        tableName={s.tableName}
-                        tables={tables}
-                        className="px-1"
-                        // variant="row"
-                        onSuccess={onSuccess}
-                        data={nestedInsertData?.[s.tableName] ?? []}
-                        onChange={(newData) => {
-                          this.setState(
-                            {
-                              // nestedInsertData: {
-                              //   ...this.state.nestedInsertData,
-                              //   [s.tableName]: newData,
-                              // },
+                    <FlexRow className="show-on-parent-hover gap-0">
+                      <Btn
+                        iconPath={mdiTable}
+                        title="Open in table"
+                        disabledInfo={disabledInfo}
+                        onClick={async () => {
+                          this.setState({
+                            quickView: {
+                              tableName: s.tableName,
+                              path: s.path,
                             },
-                            () => {
-                              onSetNestedInsertData(s.tableName, newData);
-                            },
-                          );
+                          });
                         }}
                       />
-                    );
-                  } else {
-                    return null;
-                  }
-                } else {
-                  content = (
-                    <div className="flex-col py-1">
-                      {count > 20 && <div>Showing top {limit} records</div>}
-                      <SmartCardList
-                        theme={theme}
-                        key={s.path.join(".")}
-                        db={db as any}
-                        tables={tables}
-                        methods={methods}
-                        tableName={s.tableName}
-                        filter={this.getJoinFilter(s.path)}
-                        className="px-1"
-                        onSuccess={onSuccess}
-                        fieldConfigs={
-                          (
-                            tables.some(
-                              (t) =>
-                                t.info.isFileTable && t.name === s.tableName,
-                            )
-                          ) ?
-                            [
-                              {
-                                name: "url",
-                                render: (url, row) => (
-                                  <MediaViewer
-                                    style={{ maxWidth: "300px" }}
-                                    url={url}
-                                  />
-                                ),
-                              },
-                            ]
-                          : undefined
-                        }
-                      />
-                    </div>
-                  );
-                }
-
-                const key = s.path.join(".") + this.dataSignature;
-                return (
-                  <div
-                    key={key}
-                    data-key={s.path.join(".")}
-                    className="flex-col min-h-0 f-0 relative bg-inherit"
-                  >
-                    <div
-                      className="flex-row ai-center noselect pointer f-0 bg-inherit bt b-color"
-                      style={
-                        !s.expanded ? undefined : (
-                          {
-                            position: "sticky",
-                            top: 0,
-                            zIndex: 432432,
-                            marginBottom: ".5em",
-                          }
-                        )
-                      }
-                    >
-                      <Btn
-                        className="f-1 p-p5 ta-left font-20 bold jc-start"
-                        variant="text"
-                        data-label="Expand section"
-                        title="Expand section"
-                        disabledInfo={s.error ?? disabledInfo}
-                        color={s.error ? "warn" : "action"}
-                        onClick={onToggle}
-                      >
-                        {s.path.join(".")}
-                        {countNode}
-                      </Btn>
-
-                      <FlexRow className="show-on-parent-hover gap-0">
-                        <Btn
-                          iconPath={mdiTable}
-                          title="Open in table"
-                          disabledInfo={disabledInfo}
-                          onClick={async () => {
-                            this.setState({
-                              quickView: {
-                                tableName: s.tableName,
-                                path: s.path,
-                              },
-                            });
-                          }}
-                        />
-                        <JoinedRecordsAddRow {...this.props} section={s} />
-                      </FlexRow>
-                    </div>
-                    {s.expanded && content}
+                      <JoinedRecordsAddRow {...this.props} section={s} />
+                    </FlexRow>
                   </div>
-                );
-              })}
+                  {s.expanded && content}
+                </div>
+              );
+            })}
           </FlexCol>
-        )}
-      </FlexCol>
-    );
-  }
-}
+        )} */}
+    </FlexCol>
+  );
+};

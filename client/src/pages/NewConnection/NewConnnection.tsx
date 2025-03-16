@@ -388,7 +388,6 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                       onClickClose={false}
                     >
                       <JoinedRecords
-                        theme={prglState.theme}
                         style={{ padding: 0 }}
                         db={prglState.dbs}
                         rowFilter={[{ fieldName: "id", value: this.conId }]}
@@ -398,6 +397,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                         methods={prglState.dbsMethods}
                         expanded={true}
                         showOnlyFKeyTables={true}
+                        newRowData={undefined}
                       />
                     </PopupMenu>
                     <SwitchToggle

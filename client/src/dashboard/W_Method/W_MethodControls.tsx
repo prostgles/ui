@@ -18,7 +18,7 @@ import { FlexCol, FlexRow } from "../../components/Flex";
 import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
 import { prgl_R } from "../../WithPrgl";
 
-type P = Pick<Prgl, "db" | "methods" | "tables" | "theme"> & {
+type P = Pick<Prgl, "db" | "methods" | "tables"> & {
   method_name: string;
   state: {
     args?: AnyObject;
@@ -41,7 +41,6 @@ export const W_MethodControls = ({
   methods,
   method_name,
   fixedRowArgument,
-  theme,
   ...otherProps
 }: P) => {
   const { state: prgl } = useReactiveState(prgl_R);
@@ -141,7 +140,6 @@ export const W_MethodControls = ({
           db={db}
           tables={tables}
           method={method}
-          theme={theme}
           onChange={(code) => {
             dbs.published_methods.update({ id: method.id }, { run: code.run });
           }}
@@ -264,7 +262,6 @@ export const W_MethodControls = ({
             <SmartTable
               title=""
               db={db}
-              theme={theme}
               methods={methods}
               tableName={m.outputTable}
               tables={tables}

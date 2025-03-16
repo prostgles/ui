@@ -1,12 +1,14 @@
-import type { SmartGroupFilter } from "../../../../../commonTypes/filterUtils";
+import type {
+  DetailedFilterBase,
+  SmartGroupFilter,
+} from "../../../../../commonTypes/filterUtils";
 import { isDefined } from "../../../utils";
-import type { JoinedRecords } from "./JoinedRecords";
 
 export const getJoinFilter = function (
-  this: JoinedRecords,
   path: string[],
+  tableName: string,
+  rowFilter: DetailedFilterBase[] = [],
 ): SmartGroupFilter {
-  const { tableName, rowFilter = [] } = this.props;
   const f: SmartGroupFilter = rowFilter.map(({ fieldName, type, value }) => {
     const filter = {
       fieldName,

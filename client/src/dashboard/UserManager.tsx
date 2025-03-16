@@ -53,7 +53,6 @@ export default class UserManager extends RTComp<ExtraProps, S> {
     } else {
       content = (
         <SmartTable
-          theme={theme}
           className="w-full"
           db={dbs}
           methods={dbsMethods}
