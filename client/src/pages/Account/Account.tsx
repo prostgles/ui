@@ -6,7 +6,7 @@ import type { ExtraProps } from "../../App";
 import Tabs from "../../components/Tabs";
 import { PasswordlessSetup } from "../../dashboard/AccessControl/PasswordlessSetup";
 import { APIDetails } from "../../dashboard/ConnectionConfig/APIDetails/APIDetails";
-import SmartForm from "../../dashboard/SmartForm/SmartForm";
+import { SmartForm } from "../../dashboard/SmartForm/SmartForm";
 import { Sessions } from "./Sessions";
 import { Setup2FA } from "./Setup2FA";
 import { FlexRow } from "../../components/Flex";
@@ -62,14 +62,12 @@ export const Account = (props: AccountProps) => {
       leftIconPath: mdiAccount,
       content: (
         <SmartForm
-          theme={theme}
           label=""
           db={dbs}
           methods={dbsMethods}
           tableName="users"
           tables={dbsTables}
           rowFilter={[{ fieldName: "id", value: user.id }]}
-          hideChangesOptions={true}
           confirmUpdates={true}
           columnFilter={(c) => allowedColumns.includes(c.name)}
           // onChange={console.log}

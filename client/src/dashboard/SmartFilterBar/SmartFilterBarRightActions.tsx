@@ -18,7 +18,7 @@ import PopupMenu from "../../components/PopupMenu";
 import { pluralise } from "../../pages/Connections/Connection";
 import { CodeConfirmation } from "../Backup/CodeConfirmation";
 import { InsertButton } from "../SmartForm/InsertButton";
-import SmartForm from "../SmartForm/SmartForm";
+import { SmartForm } from "../SmartForm/SmartForm";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
 import { SmartFilterBarSort } from "./SmartFilterBarSort";
 
@@ -31,7 +31,6 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
     showInsertUpdateDelete = {},
     rowCount,
     methods: dbMethods,
-    theme,
     fixedData,
   } = props;
 
@@ -156,7 +155,6 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
                 render={(pClose) => (
                   <>
                     <SmartForm
-                      theme={theme}
                       label={`Update ${rowCount} rows`}
                       db={db}
                       rowFilter={[]}
@@ -200,7 +198,6 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
 
         {showinsert && (
           <InsertButton
-            theme={theme}
             buttonProps={commonBtnProps}
             db={db}
             methods={dbMethods}

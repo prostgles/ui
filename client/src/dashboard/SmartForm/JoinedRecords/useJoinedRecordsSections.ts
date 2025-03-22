@@ -5,6 +5,16 @@ import { isDefined } from "../../../utils";
 import { getJoinFilter } from "./getJoinFilter";
 import type { JoinedRecordSection, JoinedRecordsProps } from "./JoinedRecords";
 
+const getAllParentTableNames = (
+  parentForm: JoinedRecordsProps["parentForm"],
+): string[] => {
+  if (!parentForm?.table) return [];
+  return [
+    parentForm.table.name,
+    ...getAllParentTableNames(parentForm.parentForm),
+  ];
+};
+
 export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
   const {
     tables,
@@ -12,23 +22,28 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
     tableName,
     showLookupTables = true,
     showOnlyFKeyTables,
-    action,
+    modeType: action,
     showRelated,
     newRowData,
     rowFilter,
-    onSetNestedInsertData,
+    parentForm,
   } = props;
   const [isLoadingSections, setIsLoadingSections] = useState(false);
 
+  const parentFormTableNames = useMemo(
+    () => getAllParentTableNames(parentForm),
+    [parentForm],
+  );
+
   const currentSections = useRef<JoinedRecordSection[]>([]);
-  const isInsert = !!onSetNestedInsertData && !rowFilter;
+  const isInsert = !rowFilter;
 
   const { diplayedTables, descendants, nestedInsertData } = useMemo(() => {
     const tableJoins =
       tables
         .find((t) => t.name === tableName)
         ?.joins.filter((j) => j.hasFkeys || !showOnlyFKeyTables) ?? [];
-    const diplayedTables = tableJoins.slice(0, 0).map((d) => ({
+    let diplayedTables = tableJoins.slice(0, 0).map((d) => ({
       ...d,
       path: undefined as string[] | undefined,
     }));
@@ -68,18 +83,32 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
         diplayedTables.unshift({ ...j, path: undefined });
       }
     });
+    diplayedTables = diplayedTables.filter(
+      (t) => !parentFormTableNames.includes(t.tableName),
+    );
 
     const descendants = tables.filter((t) =>
       t.columns.some((c) => c.references?.some((r) => r.ftable === tableName)),
     );
-
+    const rowData = newRowData;
+    // parentForm?.type === "insert" && parentForm.columnData ?
+    //   parentForm.columnData.value
+    // : newRowData;
     const nestedInsertData = Object.fromEntries(
-      Object.entries(newRowData ?? {})
+      Object.entries(rowData ?? {})
         .map(([k, d]) => (d.type === "nested-table" ? [k, d.value] : undefined))
         .filter(isDefined),
     );
+
     return { diplayedTables, descendants, nestedInsertData };
-  }, [tables, tableName, showLookupTables, showOnlyFKeyTables, newRowData]);
+  }, [
+    tables,
+    tableName,
+    showLookupTables,
+    showOnlyFKeyTables,
+    newRowData,
+    parentFormTableNames,
+  ]);
 
   const sections = usePromise(async () => {
     setIsLoadingSections(true);

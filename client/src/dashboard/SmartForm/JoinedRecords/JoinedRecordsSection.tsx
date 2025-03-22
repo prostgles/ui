@@ -3,6 +3,7 @@ import React from "react";
 import { MediaViewer } from "../../../components/MediaViewer";
 import SmartCardList from "../../SmartCard/SmartCardList";
 import type { JoinedRecordSection, JoinedRecordsProps } from "./JoinedRecords";
+import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 
 export const JoinedRecordsSection = (
   props: JoinedRecordsProps & {
@@ -15,13 +16,12 @@ export const JoinedRecordsSection = (
     db,
     tables,
     methods,
-    tableName,
     newRowData,
-    onSetNestedInsertData,
     onSuccess,
     section: s,
     isInsert,
     descendants,
+    newRowDataHandler,
   } = props;
 
   const descendantInsertTables = descendants
@@ -30,7 +30,16 @@ export const JoinedRecordsSection = (
 
   const nestedInsertData = Object.fromEntries(
     Object.entries(newRowData ?? {})
-      .map(([k, d]) => (d.type === "nested-table" ? [k, d.value] : undefined))
+      .map(([k, d]) =>
+        d.type === "nested-table" ?
+          [
+            k,
+            d.value.map((_v) =>
+              _v instanceof NewRowDataHandler ? _v.getRow() : _v,
+            ),
+          ]
+        : undefined,
+      )
       .filter(isDefined),
   );
 
@@ -75,7 +84,7 @@ export const JoinedRecordsSection = (
           onSuccess={onSuccess}
           data={nestedInsertData?.[s.tableName] ?? []}
           onChange={(newData) => {
-            onSetNestedInsertData!(s.tableName, newData);
+            newRowDataHandler.setNestedTable(s.tableName, newData);
           }}
         />
       );
@@ -95,6 +104,7 @@ export const JoinedRecordsSection = (
           filter={s.joinFilter}
           className="px-1"
           onSuccess={onSuccess}
+          excludeNulls={true}
           noDataComponent={<>hey</>}
           noDataComponentMode="hide-all"
           fieldConfigs={

@@ -30,7 +30,7 @@ import { getMapDataExtent } from "./getMapDataExtent";
 import type { HoveredObject } from "./onMapHover";
 import { onMapHover } from "./onMapHover";
 import { fetchMapLayerData } from "./fetchMapLayerData";
-import SmartForm from "../SmartForm/SmartForm";
+import { SmartForm } from "../SmartForm/SmartForm";
 import { isObject } from "../../../../commonTypes/publishUtils";
 import { getMapFilter } from "./getMapData";
 
@@ -532,10 +532,8 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
         form =
           !filter ? null : (
             <SmartForm
-              theme={prgl.theme}
               asPopup={true}
               confirmUpdates={true}
-              hideChangesOptions={true}
               db={prgl.db}
               methods={prgl.methods}
               tables={prgl.tables}

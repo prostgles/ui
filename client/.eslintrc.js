@@ -12,6 +12,8 @@ module.exports = {
     "react/no-unused-prop-types": "warn",
     "react/display-name": "off",
     "react/no-children-prop": "off",
+    "react/prop-types": "off",
+    "react/no-unused-prop-types": "off",
     "react-hooks/exhaustive-deps": [
       "warn",
       {

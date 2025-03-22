@@ -5,7 +5,7 @@ import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol } from "../../components/Flex";
 import Popup from "../../components/Popup/Popup";
-import SmartForm from "../SmartForm/SmartForm";
+import { SmartForm } from "../SmartForm/SmartForm";
 import { t } from "../../i18n/i18nUtils";
 
 export type LLMChatOptionsProps = Pick<Prgl, "dbs" | "dbsTables" | "theme"> & {
@@ -58,8 +58,6 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
                 tables={dbsTables}
                 methods={{}}
                 rowFilter={[{ fieldName: "id", value: activeChatId }]}
-                hideChangesOptions={true}
-                // showJoinedTables={false}
               />
             </FlexCol>
           }

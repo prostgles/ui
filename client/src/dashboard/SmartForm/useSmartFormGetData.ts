@@ -153,21 +153,7 @@ const getErrors: getErrorsHook = async (cb) => {
     });
 
   if (!_errors) {
-    let verr;
-    if (this.props.onValidateValue) {
-      await Promise.all(
-        columns.map(async (c) => {
-          const err = await this.props.onValidateValue?.(data[c.name], data, c);
-          if (err) {
-            verr = verr || {};
-            verr = { ...verr, [c.name]: err };
-          }
-        }),
-      );
-    } else if (this.props.onValidate) {
-      verr = await this.props.onValidate(data, columns);
-    }
-    const errors = verr || (await cb(data));
+    const errors = await cb(data);
 
     if (errors && !isEmpty(errors)) {
       this.setState({ errors });

@@ -1,6 +1,6 @@
 import { mdiTable } from "@mdi/js";
-import { type AnyObject } from "prostgles-types";
-import React from "react";
+import { isDefined, type AnyObject } from "prostgles-types";
+import React, { useEffect } from "react";
 import {
   type DetailedFilterBase,
   type SmartGroupFilter,
@@ -9,32 +9,32 @@ import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";
 import { FlexCol, FlexRow, classOverride } from "../../../components/Flex";
 import Loading from "../../../components/Loading";
+import { SvgIcon } from "../../../components/SvgIcon";
 import Tabs, { type TabItem } from "../../../components/Tabs";
 import SmartTable from "../../SmartTable";
-import type { SmartFormProps, SmartFormState } from "../SmartForm";
-import type { SmartFormUpperFooterProps } from "../SmartFormUpperFooter";
+import type { SmartFormProps } from "../SmartForm";
+import type { NewRow, NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
 import { JoinedRecordsSection } from "./JoinedRecordsSection";
 import { useJoinedRecordsSections } from "./useJoinedRecordsSections";
-import { SvgIcon } from "../../../components/SvgIcon";
 
 export type JoinedRecordsProps = Pick<
   Prgl,
   "db" | "tables" | "methods" | "connection"
 > &
-  Pick<SmartFormProps, "onSuccess"> & {
+  Pick<SmartFormProps, "onSuccess" | "parentForm"> & {
     className?: string;
     style?: React.CSSProperties;
     tableName: string;
     rowFilter?: DetailedFilterBase[];
-    newRowData: SmartFormState["newRowData"];
-    onSetNestedInsertData?: SmartFormUpperFooterProps["onSetNestedInsertData"];
+    newRowData: NewRow | undefined;
+    newRowDataHandler: NewRowDataHandler;
     showLookupTables?: boolean;
     showRelated?: "descendants";
-    action?: "update" | "insert" | "view";
-    onToggle?: (expanded: boolean) => void;
+    modeType?: "update" | "insert" | "view";
+    onTabChange: (tabKey: string | undefined) => void;
+    activeTabKey: string | undefined;
     showOnlyFKeyTables?: boolean;
-    expanded?: boolean;
   };
 
 export type JoinedRecordSection = {
@@ -56,28 +56,16 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
   const [quickView, setQuickView] = React.useState<JoinedRecordSection>();
   const {
     db,
+    tableName,
     tables,
     methods,
     style,
     className = "",
-    action,
+    modeType: action,
     connection,
+    activeTabKey,
+    onTabChange,
   } = props;
-  let quickViewPopup: React.ReactNode = null;
-  if (quickView) {
-    quickViewPopup = (
-      <SmartTable
-        db={db}
-        methods={methods}
-        tableName={quickView.tableName}
-        tables={tables}
-        filter={quickView.detailedJoinFilter}
-        onClosePopup={() => {
-          setQuickView(undefined);
-        }}
-      />
-    );
-  }
 
   if (isLoadingSections) {
     return <Loading className="m-1 as-center" />;
@@ -93,13 +81,18 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
     <FlexCol
       data-command="JoinedRecords"
       className={classOverride(
-        "gap-0 bt b-color min-h-0 bg-inherit ",
+        "gap-0 bt b-color min-h-0 bg-inherit f-1",
         className,
       )}
       style={style}
     >
       <Tabs
-        contentClass="o-auto"
+        className="f-1"
+        contentClass="o-auto f-1"
+        activeKey={activeTabKey}
+        onChange={(activeKey) => {
+          onTabChange(activeKey);
+        }}
         items={Object.fromEntries(
           sections.map((section) => {
             const { label, path, count, tableName } = section;
@@ -125,7 +118,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
                 ),
                 content: (
                   <FlexCol>
-                    <FlexRow className="show-on-parent-hover gap-0">
+                    <FlexRow className="gap-0">
                       <Btn
                         iconPath={mdiTable}
                         title="Open in table"
@@ -149,11 +142,19 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
             ];
           }),
         )}
-        onChange={(activeKey) => {
-          props.onToggle?.(true);
-        }}
       />
-      {quickViewPopup}
+      {quickView && (
+        <SmartTable
+          db={db}
+          methods={methods}
+          tableName={quickView.tableName}
+          tables={tables}
+          filter={quickView.detailedJoinFilter}
+          onClosePopup={() => {
+            setQuickView(undefined);
+          }}
+        />
+      )}
       {/* <h4
           title="Toggle section"
           data-command={"JoinedRecords.toggle" satisfies Command}

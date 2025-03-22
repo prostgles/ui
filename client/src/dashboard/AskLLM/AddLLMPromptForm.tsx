@@ -2,7 +2,7 @@ import React from "react";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import PopupMenu from "../../components/PopupMenu";
-import SmartForm from "../SmartForm/SmartForm";
+import { SmartForm } from "../SmartForm/SmartForm";
 import { mdiPlus } from "@mdi/js";
 
 export const AddLLMPromptForm = ({
@@ -23,8 +23,7 @@ export const AddLLMPromptForm = ({
           tableName="llm_prompts"
           tables={dbsTables}
           methods={{}}
-          theme={theme}
-          onInserted={pClose}
+          onSuccess={pClose}
         />
       )}
     />

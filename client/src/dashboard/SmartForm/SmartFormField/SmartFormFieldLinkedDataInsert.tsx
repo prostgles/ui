@@ -2,11 +2,12 @@ import { mdiFilePlusOutline, mdiPlus } from "@mdi/js";
 import { CONTENT_TYPE_TO_EXT, getKeys } from "prostgles-types";
 import React, { useMemo } from "react";
 import Btn from "../../../components/Btn";
-import SmartForm from "../SmartForm";
+import { SmartForm } from "../SmartForm";
 import type {
   SmartFormFieldLinkedDataInsertState,
   SmartFormFieldLinkedDataProps,
 } from "./SmartFormFieldLinkedData";
+import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 
 type P = Pick<
   SmartFormFieldLinkedDataProps,
@@ -20,19 +21,20 @@ type P = Pick<
   | "row"
   | "hideNullBtn"
   | "jsonbSchemaWithControls"
-  | "setData"
   | "onSuccess"
+  | "rowFilter"
 > &
   SmartFormFieldLinkedDataInsertState & {
     ftable: string;
     fcol: string;
+    newRowDataHandler: NewRowDataHandler;
   };
 
 export const SmartFormFieldLinkedDataInsert = ({
   db,
   ftable: canInsertFTableName,
   fcol,
-  column: c,
+  column,
   action,
   tables,
   methods,
@@ -40,27 +42,29 @@ export const SmartFormFieldLinkedDataInsert = ({
   row,
   hideNullBtn,
   jsonbSchemaWithControls,
-  setData,
   onSuccess,
   setShowNestedInsertForm,
   showNestedInsertForm,
   newValue,
+  rowFilter,
+  newRowDataHandler,
 }: P) => {
+  const columnFile = column.file;
   const fileInsert = useMemo(() => {
-    if (!(c.file && ["insert"].includes(action))) {
+    if (!(columnFile && ["insert"].includes(action))) {
       return;
     }
 
     let inputAccept: string | undefined;
     if (
-      "acceptedContent" in c.file &&
-      Array.isArray(c.file.acceptedContent) &&
-      c.file.acceptedContent.length
+      "acceptedContent" in columnFile &&
+      Array.isArray(columnFile.acceptedContent) &&
+      columnFile.acceptedContent.length
     ) {
       inputAccept =
-        c.file.acceptedContent.map((c) => `${c}/*`).join() +
+        columnFile.acceptedContent.map((c) => `${c}/*`).join() +
         "," +
-        c.file.acceptedContent
+        columnFile.acceptedContent
           .flatMap((type) =>
             getKeys(CONTENT_TYPE_TO_EXT)
               .filter((k) => k.startsWith(type))
@@ -70,11 +74,11 @@ export const SmartFormFieldLinkedDataInsert = ({
           .map((type) => `.${type}`)
           .join(",");
     } else if (
-      "acceptedContentType" in c.file &&
-      Array.isArray(c.file.acceptedContentType) &&
-      c.file.acceptedContentType.length
+      "acceptedContentType" in columnFile &&
+      Array.isArray(columnFile.acceptedContentType) &&
+      columnFile.acceptedContentType.length
     ) {
-      inputAccept = c.file.acceptedContentType
+      inputAccept = columnFile.acceptedContentType
         .flatMap((type) =>
           getKeys(CONTENT_TYPE_TO_EXT)
             .filter((k) => k === type)
@@ -84,23 +88,21 @@ export const SmartFormFieldLinkedDataInsert = ({
         .map((type) => `.${type}`)
         .join(",");
     } else if (
-      "acceptedFileTypes" in c.file &&
-      Array.isArray(c.file.acceptedFileTypes) &&
-      c.file.acceptedFileTypes.length
+      "acceptedFileTypes" in columnFile &&
+      Array.isArray(columnFile.acceptedFileTypes) &&
+      columnFile.acceptedFileTypes.length
     ) {
-      inputAccept = `${c.file.acceptedFileTypes.map((type) => `.${type}`).join(",")}`;
+      inputAccept = `${columnFile.acceptedFileTypes.map((type) => `.${type}`).join(",")}`;
     }
 
     const onInputChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
       const file = e.currentTarget.files?.[0];
-      setData({ type: "nested-column", value: file });
+      newRowDataHandler.setNestedColumn(column.name, file);
     };
 
     return { inputAccept, onInputChange };
-  }, [action, c, setData]);
+  }, [action, columnFile, newRowDataHandler, column.name]);
 
-  const referencedInsertData =
-    newValue?.type === "nested-column" ? newValue.value : undefined;
   return (
     <>
       {!fileInsert ?
@@ -148,40 +150,44 @@ export const SmartFormFieldLinkedDataInsert = ({
           methods={methods}
           hideNullBtn={hideNullBtn}
           tableName={canInsertFTableName}
-          hideChangesOptions={true}
           onClose={() => {
             setShowNestedInsertForm(false);
           }}
           jsonbSchemaWithControls={jsonbSchemaWithControls}
-          isReferencedInsert={{
-            tableName,
-            columnName: c.name,
-            pkeyColumns:
-              tables
-                .find((t) => t.name === tableName)
-                ?.columns.filter((c) => c.is_pkey)
-                .map((c) => c.name) ?? [],
-            row,
-          }}
           onInserted={(newRowOrRows) => {
             const newRow =
               Array.isArray(newRowOrRows) ? newRowOrRows[0] : newRowOrRows;
             if (newRow) {
-              setData({ type: "column", value: newRow[fcol!] });
+              newRowDataHandler.setColumnData(column.name, newRow[fcol!]);
             }
-            onSuccess?.("insert", newRow);
           }}
-          onSuccess={onSuccess}
-          {...(action === "insert" ?
-            {
-              defaultData: referencedInsertData,
-              onBeforeInsert: (newRowOrRows) => {
-                const newRow =
-                  Array.isArray(newRowOrRows) ? newRowOrRows[0] : newRowOrRows;
-                setData({ type: "nested-column", value: newRow });
-              },
-            }
-          : {})}
+          onSuccess={(r) => {
+            onSuccess?.(r);
+          }}
+          parentForm={{
+            table: tables.find((t) => t.name === tableName)!,
+            ...(action === "insert" ?
+              {
+                type: "insert",
+                newRowDataHandler:
+                  (
+                    newValue?.type === "nested-column" &&
+                    newValue.value instanceof NewRowDataHandler
+                  ) ?
+                    newValue.value
+                  : undefined,
+                setColumnData: (newRow) => {
+                  newRowDataHandler.setNestedColumn(column.name, newRow);
+                  setShowNestedInsertForm(false);
+                },
+              }
+            : {
+                type: "update",
+                column: column,
+                rowFilter,
+                row,
+              }),
+          }}
         />
       )}
     </>

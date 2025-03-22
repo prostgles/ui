@@ -5,10 +5,14 @@ import type {
 } from "prostgles-types";
 import { getPossibleNestedInsert } from "prostgles-types";
 import React, { useMemo, useState } from "react";
-import type { ColumnData, SmartFormProps } from "../SmartForm";
+import type { SmartFormProps } from "../SmartForm";
 import type { SmartFormFieldProps } from "./SmartFormField";
 import { SmartFormFieldLinkedDataInsert } from "./SmartFormFieldLinkedDataInsert";
 import { SmartFormFieldLinkedDataSearch } from "./SmartFormFieldLinkedDataSearch";
+import type {
+  ColumnData,
+  NewRowDataHandler,
+} from "../SmartFormNewRowDataHandler";
 
 export type SmartFormFieldLinkedDataProps = Pick<
   SmartFormProps,
@@ -19,6 +23,7 @@ export type SmartFormFieldLinkedDataProps = Pick<
   | "enableInsert"
   | "onSuccess"
   | "tableName"
+  | "rowFilter"
   | "jsonbSchemaWithControls"
 > &
   Pick<SmartFormFieldProps, "newValue"> & {
@@ -26,7 +31,7 @@ export type SmartFormFieldLinkedDataProps = Pick<
     row: AnyObject;
     tableInfo: TableInfo;
     action: "update" | "insert" | "view";
-    setData: (newVal: ColumnData) => void;
+    newRowDataHandler: NewRowDataHandler;
   };
 
 export const SmartFormFieldLinkedData = (
@@ -35,14 +40,17 @@ export const SmartFormFieldLinkedData = (
     readOnly: boolean;
   },
 ) => {
-  const { setData, state, db, tables, methods, readOnly } = props;
+  const { newRowDataHandler, state, db, tables, methods, readOnly, column } =
+    props;
 
   if (!state) return null;
   return (
     <div className="SmartFormFieldOptions flex-row">
       {state.showSearchState && (
         <SmartFormFieldLinkedDataSearch
-          setData={setData}
+          onChange={(newValue) =>
+            newRowDataHandler.setColumnData(column.name, newValue)
+          }
           tables={tables}
           methods={methods}
           db={db}
@@ -81,8 +89,10 @@ const useSmartFieldForeignKeyOptionsState = ({
       ftable && column.references?.length ? db[ftable] : undefined;
     const fcol = ref?.fcols[ref.cols.indexOf(column.name)];
     if (!ftable || !fcol) return undefined;
+
+    /** Show insert if can insert to ftable AND can update column that references ftable */
     const showInsertState =
-      enableInsert && ftableHandler?.insert ?
+      column.update && enableInsert && ftableHandler?.insert ?
         {
           ftable,
           fcol,

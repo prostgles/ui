@@ -11,7 +11,7 @@ import {
   type SmartGroupFilter,
 } from "../../../commonTypes/filterUtils";
 import { SmartFilterBar } from "./SmartFilterBar/SmartFilterBar";
-import SmartForm from "./SmartForm/SmartForm";
+import { SmartForm } from "./SmartForm/SmartForm";
 import ErrorComponent from "../components/ErrorComponent";
 import { getEditColumn } from "./W_Table/tableUtils/getEditColumn";
 import type { AnyObject, SubscriptionHandler } from "prostgles-types";
@@ -261,7 +261,6 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           <SmartForm
             asPopup={true}
             confirmUpdates={true}
-            hideChangesOptions={true}
             db={db}
             methods={this.props.methods}
             tables={tables}

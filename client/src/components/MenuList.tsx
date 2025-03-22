@@ -33,7 +33,6 @@ export const MenuList = (props: MenuListProps) => {
   }, [items]);
 
   const refList = React.useRef<HTMLUListElement>(null);
-  useScrollFade({ ref: refList });
   const { localVariant } = useMemo(() => {
     const isDropDown = variant === "dropdown";
     const localVariant = variant && !isDropDown ? variant : "vertical";
@@ -96,6 +95,8 @@ export const MenuList = (props: MenuListProps) => {
   }, []);
 
   const isVertical = localVariant === "vertical";
+  const overflows = useScrollFade({ ref: refList });
+  const showSelect = !isVertical && overflows.x;
 
   return (
     <MenuListPopupWrapper
@@ -143,7 +144,7 @@ export const MenuList = (props: MenuListProps) => {
             );
           })}
         </ul>
-        {!isVertical && (
+        {showSelect && (
           <Select
             fullOptions={visibleItems.map(({ key, label }, i) => ({
               key: key ?? i,

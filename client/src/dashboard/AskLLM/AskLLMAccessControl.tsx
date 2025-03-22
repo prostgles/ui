@@ -9,7 +9,7 @@ import PopupMenu from "../../components/PopupMenu";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
 import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAccessRule";
-import SmartForm from "../SmartForm/SmartForm";
+import { SmartForm } from "../SmartForm/SmartForm";
 import { SetupLLMCredentials } from "./SetupLLMCredentials";
 import { useLLMSetupState } from "./useLLMSetupState";
 
@@ -184,7 +184,6 @@ export const AskLLMAccessControl = ({
                   db={dbs}
                   methods={{}}
                   tables={dbsTables}
-                  theme={prgl.theme}
                   columnFilter={(c) =>
                     ["llm_prompt_id", "llm_credential_id"].includes(c.name)
                   }

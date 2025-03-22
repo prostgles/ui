@@ -6,7 +6,7 @@ import { AddLLMCredentialForm } from "./AddLLMCredentialForm";
 import Popup from "../../components/Popup/Popup";
 import Btn from "../../components/Btn";
 import { FlexCol } from "../../components/Flex";
-import SmartForm from "../SmartForm/SmartForm";
+import { SmartForm } from "../SmartForm/SmartForm";
 
 export const LLMProviderSetup = ({
   dbs,
@@ -25,7 +25,6 @@ export const LLMProviderSetup = ({
         <SmartForm
           label=""
           showJoinedTables={false}
-          hideChangesOptions={true}
           tableName="llm_credentials"
           db={dbs}
           methods={dbsMethods}

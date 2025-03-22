@@ -6,12 +6,15 @@ import Btn from "../../../components/Btn";
 import FileInput from "../../../components/FileInput/FileInput";
 import { FlexRow } from "../../../components/Flex";
 import Select, { type FullOption } from "../../../components/Select/Select";
-import type { ColumnData } from "../SmartForm";
 import { renderNull } from "./RenderValue";
 import type { SmartColumnInfo, SmartFormFieldProps } from "./SmartFormField";
 import { type SmartFormFieldLinkedDataInsertState } from "./SmartFormFieldLinkedData";
 import { fetchForeignKeyOptions } from "./fetchForeignKeyOptions";
 import { sliceText } from "../../../../../commonTypes/utils";
+import {
+  type ColumnData,
+  NewRowDataHandler,
+} from "../SmartFormNewRowDataHandler";
 
 export type SmartFormFieldForeignKeyProps = Pick<
   SmartFormFieldProps,
@@ -23,7 +26,7 @@ export type SmartFormFieldForeignKeyProps = Pick<
     };
     onChange: (newValue: ColumnData) => Promise<void> | void;
     readOnly: boolean;
-    newValue: ColumnData | undefined;
+    newRowDataHandler: NewRowDataHandler;
   };
 
 export const SmartFormFieldForeignKey = ({
@@ -35,14 +38,17 @@ export const SmartFormFieldForeignKey = ({
   value,
   row,
   readOnly,
-  newValue,
+  newRowDataHandler,
   tableInfo,
   setShowNestedInsertForm,
 }: SmartFormFieldForeignKeyProps) => {
   const [fullOptions, setFullOptions] = useState<FullOption[]>();
   const getuseIsMounted = useIsMounted();
+  const newValue = newRowDataHandler.getNewRow()[column.name];
+  const hasNewValue = isDefined(newValue);
   const onSearchOptions = useCallback(
     async (term: string) => {
+      if (hasNewValue) return;
       const options = await fetchForeignKeyOptions({
         column,
         db,
@@ -54,7 +60,7 @@ export const SmartFormFieldForeignKey = ({
       if (!getuseIsMounted()) return;
       setFullOptions(options);
     },
-    [column, db, tableName, tables, row, getuseIsMounted],
+    [column, db, tableName, tables, row, getuseIsMounted, hasNewValue],
   );
 
   useEffect(() => {
@@ -136,8 +142,12 @@ export const SmartFormFieldForeignKey = ({
       );
     }
 
+    const referencedInsertDataObj =
+      referencedInsertData instanceof NewRowDataHandler ?
+        referencedInsertData.getRow()
+      : referencedInsertData;
     const newDataText = sliceText(
-      Object.entries(referencedInsertData)
+      Object.entries(referencedInsertDataObj ?? {})
         .map(([k, v]) =>
           isObject(v) ? `{ ${k} }`
           : Array.isArray(v) ? `[{ ${k} }]`
@@ -148,7 +158,10 @@ export const SmartFormFieldForeignKey = ({
     );
 
     return (
-      <FlexRow className="gap-0">
+      <FlexRow
+        className="gap-0 f-1"
+        style={{ justifyContent: "space-between" }}
+      >
         <Btn
           className=" bg-color-0"
           color="action"
@@ -182,7 +195,9 @@ export const SmartFormFieldForeignKey = ({
       btnProps={{
         children: displayValue,
         style: {
-          padding: "0",
+          paddingTop: "0",
+          paddingBottom: "0",
+          paddingLeft: "0",
           justifyContent: "space-between",
           flex: 1,
         },

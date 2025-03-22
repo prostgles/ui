@@ -160,6 +160,11 @@ export const publish = async (
       insert: {
         fields: { id: 0 },
         forcedData,
+        postValidate: async ({ row }) => {
+          if (row.type !== "s3") {
+            throw "Only s3 is supported";
+          }
+        },
       },
       update: "*",
     },

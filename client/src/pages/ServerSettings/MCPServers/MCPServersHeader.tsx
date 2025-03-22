@@ -5,11 +5,10 @@ import Btn from "../../../components/Btn";
 import { FlexRow } from "../../../components/Flex";
 import PopupMenu from "../../../components/PopupMenu";
 import Select from "../../../components/Select/Select";
-import SmartForm from "../../../dashboard/SmartForm/SmartForm";
+import { SmartForm } from "../../../dashboard/SmartForm/SmartForm";
 import type { ServerSettingsProps } from "../ServerSettings";
 
 export const MCPServersHeader = ({
-  theme,
   dbsMethods,
   dbs,
   dbsTables,
@@ -37,7 +36,6 @@ export const MCPServersHeader = ({
         >
           <SmartForm
             label=""
-            theme={theme}
             db={dbs}
             methods={dbsMethods}
             columnFilter={(c) =>
@@ -53,9 +51,7 @@ export const MCPServersHeader = ({
             tableName="mcp_servers"
             tables={dbsTables}
             showJoinedTables={false}
-            showLocalChanges={false}
             confirmUpdates={false}
-            hideChangesOptions={true}
           />
         </PopupMenu>
         <Btn

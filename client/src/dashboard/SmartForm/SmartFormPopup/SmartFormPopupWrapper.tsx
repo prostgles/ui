@@ -15,7 +15,7 @@ import { SvgIcon } from "../../../components/SvgIcon";
 
 type P = Pick<
   SmartFormProps,
-  "onPrevOrNext" | "prevNext" | "connection" | "tableName"
+  "onPrevOrNext" | "prevNext" | "connection" | "tableName" | "asPopup"
 > & {
   rowFilterObj: AnyObject | undefined;
   displayedColumns: Pick<
@@ -27,7 +27,7 @@ type P = Pick<
   maxWidth: string;
   onClose: () => void;
 };
-export const SmartFormPopup = ({
+export const SmartFormPopupWrapper = ({
   onPrevOrNext,
   prevNext,
   rowFilterObj,
@@ -38,6 +38,7 @@ export const SmartFormPopup = ({
   maxWidth,
   tableName,
   onClose,
+  asPopup,
 }: P) => {
   const prevNextClass = "smartformprevnext";
 
@@ -113,10 +114,13 @@ export const SmartFormPopup = ({
     return { subTitle };
   }, [displayedColumns, rowFilterObj]);
 
+  if (!asPopup) {
+    return children;
+  }
   return (
     <Popup
       title={
-        <FlexRow>
+        <FlexRow className="gap-p25">
           {connection?.table_options?.[tableName]?.icon && (
             <SvgIcon
               size={34}

@@ -7,12 +7,19 @@ import React from "react";
 import { classOverride, FlexCol } from "../../components/Flex";
 import { Label } from "../../components/Label";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
-import type { ColumnData, SmartFormProps, SmartFormState } from "./SmartForm";
+import type { SmartFormProps } from "./SmartForm";
 import {
   SmartFormField,
   type SmartColumnInfo,
 } from "./SmartFormField/SmartFormField";
 import { SmartFormFileSection } from "./SmartFormFileSection";
+import type {
+  ColumnData,
+  NewRow,
+  NewRowDataHandler,
+} from "./SmartFormNewRowDataHandler";
+import type { SmartFormState } from "./useSmartForm";
+import type { SmartFormModeState } from "./useSmartFormMode";
 
 type P = Pick<
   SmartFormProps,
@@ -27,17 +34,13 @@ type P = Pick<
   | "hideNullBtn"
   | "methods"
 > &
+  SmartFormModeState &
   Pick<SmartFormState, "error" | "errors"> & {
-    newRowData: Record<string, ColumnData> | undefined;
-    setNewRowData: (newRowData: Record<string, ColumnData>) => void;
+    newRowDataHandler: NewRowDataHandler;
+    newRow: NewRow | undefined;
     row: AnyObject;
     table: DBSchemaTablesWJoins[number];
-    action: SmartFormState["action"];
     displayedColumns: SmartColumnInfo[];
-    setColumnData: (
-      column: Pick<ValidatedColumnInfo, "name" | "is_pkey" | "tsDataType">,
-      newVal: ColumnData,
-    ) => void;
   };
 export const SmartFormFieldList = (props: P) => {
   const {
@@ -47,19 +50,19 @@ export const SmartFormFieldList = (props: P) => {
     db,
     tables,
     contentClassname,
-    newRowData,
+    newRowDataHandler,
     table,
     row,
-    action,
+    mode,
     displayedColumns,
     error,
     errors,
-    setColumnData,
-    setNewRowData,
+    modeType,
     methods,
+    newRow,
   } = props;
 
-  const hideNullBtn = action.type === "view" || props.hideNullBtn;
+  const hideNullBtn = mode.type === "view" || props.hideNullBtn;
 
   const tableInfo = table.info;
 
@@ -69,12 +72,9 @@ export const SmartFormFieldList = (props: P) => {
       <SmartFormFileSection
         {...props}
         table={table}
-        setNewRow={(newRowData) => setNewRowData(newRowData)}
+        newRowDataHandler={newRowDataHandler}
         row={row}
-        action={action}
-        setData={(col, files) =>
-          setColumnData(col, { type: "column", value: files })
-        }
+        action={mode}
         mediaTableName={tableInfo.fileTableName}
       />
     );
@@ -90,13 +90,16 @@ export const SmartFormFieldList = (props: P) => {
       {fileManagerTop}
       {displayedColumns.map((c, i) => {
         const rawValue = row[c.name];
-        const newValue = newRowData?.[c.name];
+        const newValue = newRow?.[c.name];
         const formFieldStyle: React.CSSProperties =
           !c.sectionHeader ? {} : { marginTop: "1em" };
 
         if (c.onRender) {
           const columnNode = c.onRender(rawValue, (newVal) =>
-            setColumnData(c, newVal),
+            newRowDataHandler.setColumnData(c.name, {
+              type: "column",
+              value: newVal,
+            }),
           );
           return (
             <FlexCol key={c.name} style={formFieldStyle} className="gap-p25">
@@ -114,15 +117,17 @@ export const SmartFormFieldList = (props: P) => {
             db={db}
             tableName={tableName}
             table={table}
-            action={action.type}
+            action={modeType}
             column={c}
             value={rawValue}
             newValue={newValue}
             row={row}
             jsonbSchemaWithControls={jsonbSchemaWithControls}
-            onChange={(newVal) => setColumnData(c, newVal)}
+            onChange={(newColData) =>
+              newRowDataHandler.setColumnData(c.name, newColData)
+            }
             error={
-              errors?.[c.name] ??
+              errors[c.name] ??
               (isObject(error) && error.column === c.name ? error : undefined)
             }
             rightContentAlwaysShow={false}
@@ -131,6 +136,7 @@ export const SmartFormFieldList = (props: P) => {
             sectionHeader={c.sectionHeader}
             style={formFieldStyle}
             enableInsert={enableInsert}
+            newRowDataHandler={newRowDataHandler}
           />
         );
       })}

@@ -10,7 +10,7 @@ import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { DBS, DBSMethods } from "../Dashboard/DBS";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import { getMonaco } from "../SQLEditor/SQLEditor";
-import SmartForm from "../SmartForm/SmartForm";
+import { SmartForm } from "../SmartForm/SmartForm";
 
 type P = {
   pickFirst?: boolean;
@@ -81,22 +81,14 @@ export function CredentialSelector({
         contentStyle={{ padding: 0 }}
         render={(popupClose) => (
           <SmartForm
-            theme={theme}
             methods={dbsMethods}
             db={dbs}
             label="Add Cloud credentials"
             tableName="credentials"
-            // columns={dbsTables.find(t => t.name === "credentials")?.columns.filter(c => !["id", "connection_id"].includes(c.name))}
             tables={dbsTables}
             showJoinedTables={false}
-            hideChangesOptions={true}
             defaultData={{ type: "s3" }}
             onClose={popupClose}
-            onValidate={(row, cols) => {
-              if (row.type !== "s3") {
-                return { type: "The only allowed value is: s3" };
-              }
-            }}
           />
         )}
       />

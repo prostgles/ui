@@ -5,7 +5,7 @@ import ErrorComponent from "../../components/ErrorComponent";
 import { InfoRow } from "../../components/InfoRow";
 import Select from "../../components/Select/Select";
 import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
-import SmartForm from "../SmartForm/SmartForm";
+import { SmartForm } from "../SmartForm/SmartForm";
 import type { LayerTable, W_MapProps } from "../W_Map/W_Map";
 import type { GeoJSONFeature, GeoJsonLayerProps } from "./DeckGLMap";
 import type { DeckGlLibs, DeckWrapped } from "./DeckGLWrapped";
@@ -313,7 +313,6 @@ export const DeckGLFeatureEditor = ({
         : undefined;
       return (
         <SmartForm
-          theme={edit.theme}
           asPopup={true}
           tableName={editMode.tableName}
           rowFilter={filter}
@@ -323,7 +322,6 @@ export const DeckGLFeatureEditor = ({
           defaultData={defaultData}
           onSuccess={() => clearEditMode(true)}
           onClose={clearEditMode}
-          hideChangesOptions={true}
           confirmUpdates={true}
         />
       );

@@ -5,7 +5,7 @@ import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";
 import FileInput from "../../components/FileInput/FileInput";
 import type { SmartFormProps } from "./SmartForm";
-import SmartForm from "./SmartForm";
+import { SmartForm } from "./SmartForm";
 import { t } from "../../i18n/i18nUtils";
 
 type InsertButtonProps = {
@@ -62,7 +62,6 @@ export const InsertButton = ({
         <SmartForm
           asPopup={true}
           confirmUpdates={true}
-          hideChangesOptions={true}
           defaultData={defaultData}
           db={db}
           tables={tables}

@@ -1,14 +1,14 @@
+import { mdiPlus } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
 import React, { useCallback, useState } from "react";
-import Popup from "../../../components/Popup/Popup";
-import SmartForm, { type GetRefHooks } from "../SmartForm";
-import type { JoinedRecordsProps, JoinedRecordsState } from "./JoinedRecords";
-import Btn from "../../../components/Btn";
-import { mdiPlus } from "@mdi/js";
 import { getSmartGroupFilter } from "../../../../../commonTypes/filterUtils";
+import Btn from "../../../components/Btn";
+import { type GetRefHooks, SmartForm } from "../SmartForm";
+import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
+import type { JoinedRecordSection, JoinedRecordsProps } from "./JoinedRecords";
 
 type P = JoinedRecordsProps & {
-  section: JoinedRecordsState["sections"][number];
+  section: JoinedRecordSection;
 };
 export const JoinedRecordsAddRow = (props: P) => {
   const {
@@ -17,9 +17,8 @@ export const JoinedRecordsAddRow = (props: P) => {
     tableName,
     methods,
     onSuccess,
-    theme,
     section,
-    onSetNestedInsertData,
+    newRowDataHandler,
     rowFilter,
     newRowData,
   } = props;
@@ -46,70 +45,56 @@ export const JoinedRecordsAddRow = (props: P) => {
   }, []);
   if (insert?.type === "manual") {
     const fcols = tables.find((t) => t.name === insert.table)?.columns;
+    const existingColumnData = newRowData?.[insert.table];
+    const existingRowData =
+      existingColumnData?.type === "nested-column" ?
+        existingColumnData.value
+      : undefined;
+    const defaultNewRow =
+      existingRowData instanceof NewRowDataHandler ? existingRowData : (
+        undefined
+      );
     popupForm = (
-      <Popup
-        title={`Insert ${insert.table} record`}
-        positioning="right-panel"
-        onClose={() => {
-          // setNestedInsert({ nestedInsertData, nestedInsertTable: undefined });
-          onClose();
+      <SmartForm
+        tableName={insert.table}
+        getRef={(r) => {
+          refNestedForm.current = r;
         }}
-        contentStyle={{
-          padding: 0,
+        db={db}
+        methods={methods}
+        tables={tables}
+        asPopup={true}
+        columns={fcols
+          ?.filter((c) => !c.references?.some((r) => r.ftable === tableName))
+          .reduce((a, v) => ({ ...a, [v.name]: 1 }), {})}
+        connection={props.connection}
+        parentForm={{
+          type: "insert",
+          newRowDataHandler: defaultNewRow,
+          table: tables.find((t) => t.name === tableName)!,
+          setColumnData: (newColData) => {
+            newRowDataHandler.setNestedTable(insert.table, [newColData]);
+            onClose();
+          },
+          parentForm: props.parentForm,
         }}
-        footerButtons={[
-          {
-            label: "Cancel",
-            onClickClose: true,
-          },
-          {
-            label: "Add",
-            variant: "filled",
-            className: "ml-auto",
-            color: "action",
-            onClick: () => {
-              refNestedForm.current?.getErrors((newRow) => {
-                insert.onChange(newRow);
-                onClose();
-              });
-            },
-          },
-        ]}
-      >
-        <SmartForm
-          theme={theme}
-          tableName={insert.table}
-          getRef={(r) => {
-            refNestedForm.current = r;
-          }}
-          db={db}
-          methods={methods}
-          tables={tables}
-          label=" "
-          onChange={() => {}}
-          // onSuccess={onSuccess}
-          columns={fcols
-            ?.filter((c) => !c.references?.some((r) => r.ftable === tableName))
-            .reduce((a, v) => ({ ...a, [v.name]: 1 }), {})}
-        />
-      </Popup>
+        onClose={onClose}
+      />
     );
   } else if (insert?.type === "auto") {
     popupForm = (
       <SmartForm
-        theme={theme}
         db={db}
         tableName={insert.table}
         tables={tables}
         methods={methods}
         label={`Insert ${insert.table} record`}
-        hideChangesOptions={true}
-        showLocalChanges={false}
         asPopup={true}
         defaultData={insert.data}
         onInserted={onClose}
         onClose={onClose}
         onSuccess={onSuccess}
+        connection={props.connection}
       />
     );
   }
@@ -119,15 +104,9 @@ export const JoinedRecordsAddRow = (props: P) => {
    */
   if (section.path.length > 1) return null;
 
-  const isDescendantTableAndCanInsert = tables.some(
-    (t) =>
-      t.columns.some((c) =>
-        c.references?.some((r) => r.ftable === section.tableName),
-      ) && db[t.name]?.insert,
-  );
   const tableHandler = db[tableName];
-  const isInsert = !!onSetNestedInsertData && !rowFilter;
-  if (isInsert && isDescendantTableAndCanInsert) {
+  const isInsert = !rowFilter;
+  if (isInsert) {
     if (!db[section.tableName]) return null;
     return (
       <>
@@ -142,10 +121,14 @@ export const JoinedRecordsAddRow = (props: P) => {
               type: "manual",
               table: section.tableName,
               onChange: (newRow) => {
-                onSetNestedInsertData(section.tableName, [
+                const value = [
                   ...(newRowData?.[section.tableName]?.value ?? []),
                   newRow,
-                ]);
+                ];
+                newRowDataHandler.setColumnData(section.tableName, {
+                  type: "nested-table",
+                  value,
+                });
               },
             });
           }}
@@ -163,6 +146,8 @@ export const JoinedRecordsAddRow = (props: P) => {
         disabledInfo={
           !section.canInsert ?
             `Cannot reference more than one ${JSON.stringify(section.tableName)}`
+            // : !isDescendantTableAndCanInsert ?
+            //   "Cannot insert into this table"
           : undefined
         }
         onClick={async () => {

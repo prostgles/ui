@@ -15,7 +15,7 @@ import { Label } from "../../components/Label";
 import Loading from "../../components/Loading";
 import RTComp from "../RTComp";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
-import SmartForm from "../SmartForm/SmartForm";
+import { SmartForm } from "../SmartForm/SmartForm";
 import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
 import type { SmartCardListProps } from "./SmartCardList";
 import { getSmartCardColumns } from "./getSmartCardColumns";
@@ -23,12 +23,7 @@ import { getSmartCardColumns } from "./getSmartCardColumns";
 type NestedSmartCardProps = Pick<SmartCardProps, "footer" | "excludeNulls">;
 type NestedSmartFormProps = Pick<
   SmartFormProps,
-  | "hideNullBtn"
-  | "cannotBeNullMessage"
-  | "enableInsert"
-  | "insertBtnText"
-  | "label"
-  | "onSuccess"
+  "hideNullBtn" | "enableInsert" | "insertBtnText" | "label" | "onSuccess"
 >;
 
 export type FieldConfigTable = FieldConfigBase & {
@@ -376,7 +371,6 @@ export default class SmartCard<T extends AnyObject> extends RTComp<
           onChange={onChange}
           rowFilter={rowFilter}
           confirmUpdates={true}
-          hideChangesOptions={true}
           enableInsert={enableInsert}
           onSuccess={onChanged}
           {...smartFormProps}

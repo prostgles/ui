@@ -13,7 +13,7 @@ import FormField from "../../../components/FormField/FormField";
 import type { DBS } from "../../Dashboard/DBS";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
-import type { ColumnData, ColumnDisplayConfig } from "../SmartForm";
+import type { ColumnDisplayConfig } from "../SmartForm";
 import { SmartFormFieldFileSection } from "./SmartFormFieldFileSection";
 import { SmartFormFieldForeignKey } from "./SmartFormFieldForeignKey";
 import { getSmartFormFieldRightButtons } from "./SmartFormFieldRightButtons";
@@ -31,6 +31,10 @@ import {
   useSmartFormFieldForeignDataState,
 } from "./SmartFormFieldLinkedData";
 import type { Prgl } from "../../../App";
+import type {
+  ColumnData,
+  NewRowDataHandler,
+} from "../SmartFormNewRowDataHandler";
 
 type SmartFormFieldValue =
   | string
@@ -69,6 +73,7 @@ export type SmartFormFieldProps = {
   tables: CommonWindowProps["tables"];
   table: CommonWindowProps["tables"][number];
   enableInsert: boolean;
+  newRowDataHandler: NewRowDataHandler;
 };
 export type SmartColumnInfo = ValidatedColumnInfo & ColumnDisplayConfig;
 
@@ -98,6 +103,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
     onChange,
     tableInfo,
     enableInsert,
+    newRowDataHandler,
   } = props;
 
   const { onCheckAndChange, error } = useSmartFormFieldOnChange({
@@ -226,7 +232,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
               value={value}
               row={row}
               tableName={tableName}
-              newValue={newValue}
+              newRowDataHandler={newRowDataHandler}
               tableInfo={tableInfo}
             />
           )
@@ -264,7 +270,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
               tableInfo={tableInfo}
               jsonbSchemaWithControls={jsonbSchemaWithControls}
               hideNullBtn={hideNullBtn}
-              setData={onChange}
+              newRowDataHandler={newRowDataHandler}
               readOnly={readOnly}
             />
           )

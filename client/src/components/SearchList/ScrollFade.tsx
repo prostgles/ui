@@ -4,6 +4,7 @@ import { classOverride, type DivProps } from "../Flex";
 import { useResizeObserver } from "./useResizeObserver";
 import { fixIndent, getEntries } from "../../../../commonTypes/utils";
 import { isDefined } from "../../utils";
+import { isEqual } from "prostgles-types";
 
 type P = TestSelectors &
   DivProps & {
@@ -36,6 +37,7 @@ export const useScrollFade = ({
 }: {
   ref: React.RefObject<HTMLElement>;
 }) => {
+  const [overflows, setOverflows] = React.useState({ x: false, y: false });
   const el = ref.current;
   const onScroll = useCallback(() => {
     const elem = ref.current;
@@ -80,13 +82,25 @@ export const useScrollFade = ({
     return () => el.removeEventListener("scroll", onScroll);
   }, [el, onScroll]);
 
+  const onResize = useCallback(() => {
+    onScroll();
+    if (!el) return;
+    const newOverflows = {
+      x: el.scrollWidth > el.clientWidth,
+      y: el.scrollHeight > el.clientHeight,
+    };
+    if (!isEqual(newOverflows, overflows)) {
+      setOverflows(newOverflows);
+    }
+  }, [onScroll, el, overflows]);
+
   useResizeObserver({
     ref,
     box: "border-box",
-    onResize: () => {
-      onScroll();
-    },
+    onResize,
   });
+
+  return overflows;
 };
 
 const getGradient = (side: keyof Sides) => {

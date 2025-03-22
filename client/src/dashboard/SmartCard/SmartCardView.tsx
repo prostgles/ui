@@ -19,7 +19,7 @@ export const SmartCardView = () => {
 // import { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 
 // type NestedSmartCardProps = Pick<SmartCardProps, "footer" | "excludeNulls">;
-// type NestedSmartFormProps = Pick<SmartFormProps, "hideNullBtn" | "cannotBeNullMessage" | "enableInsert" | "columns" | "insertBtnText" | "label">;
+// type NestedSmartFormProps = Pick<SmartFormProps, "hideNullBtn" | "enableInsert" | "columns" | "insertBtnText" | "label">;
 
 // export type FieldConfigTable = FieldConfigBase & {
 //   fieldConfigs: FieldConfigNested[];

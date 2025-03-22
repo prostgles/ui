@@ -4,17 +4,15 @@ import Btn from "../../../components/Btn";
 import SmartTable from "../../SmartTable";
 import type { SmartFormFieldLinkedDataProps } from "./SmartFormFieldLinkedData";
 
-type P = Pick<
-  SmartFormFieldLinkedDataProps,
-  "setData" | "db" | "methods" | "tables"
-> & {
+type P = Pick<SmartFormFieldLinkedDataProps, "db" | "methods" | "tables"> & {
   ftable: string;
   fcol: string;
   readOnly: boolean;
+  onChange: (newData: any) => void;
 };
 
 export const SmartFormFieldLinkedDataSearch = ({
-  setData,
+  onChange,
   tables,
   methods,
   db,
@@ -45,7 +43,7 @@ export const SmartFormFieldLinkedDataSearch = ({
             if (readOnly) {
               alert("Cannot change value. This field is read only");
             } else {
-              setData({ type: "column", value: row[fcol] });
+              onChange(row[fcol]);
             }
             setShow(false);
           }}
