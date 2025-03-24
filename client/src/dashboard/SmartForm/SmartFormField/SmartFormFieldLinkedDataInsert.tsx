@@ -97,11 +97,25 @@ export const SmartFormFieldLinkedDataInsert = ({
 
     const onInputChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
       const file = e.currentTarget.files?.[0];
-      newRowDataHandler.setNestedColumn(column.name, file);
+      newRowDataHandler.setNestedColumn(
+        column.name,
+        file && {
+          name: file.name,
+          data: file,
+        },
+      );
     };
 
     return { inputAccept, onInputChange };
   }, [action, columnFile, newRowDataHandler, column.name]);
+
+  const parentFormNewRowDataHandler =
+    (
+      newValue?.type === "nested-column" &&
+      newValue.value instanceof NewRowDataHandler
+    ) ?
+      newValue.value
+    : undefined;
 
   return (
     <>
@@ -169,20 +183,14 @@ export const SmartFormFieldLinkedDataInsert = ({
             ...(action === "insert" ?
               {
                 type: "insert",
-                newRowDataHandler:
-                  (
-                    newValue?.type === "nested-column" &&
-                    newValue.value instanceof NewRowDataHandler
-                  ) ?
-                    newValue.value
-                  : undefined,
+                newRowDataHandler: parentFormNewRowDataHandler,
                 setColumnData: (newRow) => {
                   newRowDataHandler.setNestedColumn(column.name, newRow);
                   setShowNestedInsertForm(false);
                 },
               }
             : {
-                type: "update",
+                type: "insert-and-update",
                 column: column,
                 rowFilter,
                 row,

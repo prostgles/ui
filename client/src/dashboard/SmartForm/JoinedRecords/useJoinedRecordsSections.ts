@@ -27,6 +27,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
     newRowData,
     rowFilter,
     parentForm,
+    errors,
   } = props;
   const [isLoadingSections, setIsLoadingSections] = useState(false);
 
@@ -120,15 +121,15 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
         const detailedJoinFilter = getJoinFilter(path, tableName, rowFilter);
         const joinFilter = getSmartGroupFilter(detailedJoinFilter);
         let countStr = "0";
-        let error: string | undefined;
+        let countError: string | undefined;
         try {
           if (!isInsert) {
             countStr =
               (await db[j.tableName]?.count?.(joinFilter))?.toString() ?? "0";
           }
         } catch (err) {
-          error = `Failed to db.${j.tableName}.count(${JSON.stringify(joinFilter)})`;
-          console.error(error);
+          countError = `Failed to db.${j.tableName}.count(${JSON.stringify(joinFilter)})`;
+          console.error(countError);
         }
         const existingDataCount = isInsert ? 0 : parseInt(countStr);
 
@@ -143,7 +144,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
           existingDataCount,
           canInsert,
           path,
-          error,
+          error: errors[j.tableName] || countError,
           joinFilter,
           detailedJoinFilter,
           count,
@@ -173,6 +174,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
     nestedInsertData,
     descendants,
     showRelated,
+    errors,
   ]);
 
   currentSections.current = sections ?? [];

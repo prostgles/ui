@@ -174,6 +174,7 @@ export const COMMANDS = {
   "AddChartMenu.Timechart": "",
   W_TimeChart: "",
   "W_TimeChart.ActiveRow": "",
+  SmartFormField: "",
 
   "CloseSaveSQLPopup.delete": "",
 
@@ -235,6 +236,7 @@ export const COMMANDS = {
   "ConnectionServer.withNewOwnerToggle": "",
   "W_Table.TableNotFound": "",
   JoinedRecords: "",
+  "JoinedRecords.AddRow": "",
   "SmartCard.viewEditRow": "",
   "TimeChartLayerOptions.yAxis": "",
   "TimeChartLayerOptions.aggFunc": "",

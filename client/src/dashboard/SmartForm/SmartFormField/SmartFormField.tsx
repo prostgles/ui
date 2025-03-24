@@ -88,7 +88,6 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
     placeholder = "",
     multiSelect,
     column,
-    newValue,
     hideNullBtn,
     sectionHeader,
     style,
@@ -210,6 +209,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
       <FormField
         id={tableName + "-" + column.name}
         data-key={column.name}
+        data-command="SmartFormField"
         style={style}
         className={cantUpdate ? " cursor-default " : ""}
         inputClassName={cantUpdate ? " cursor-default " : ""}

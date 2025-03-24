@@ -48,7 +48,6 @@ export const FileTableConfigControls = ({
         dbs={dbs}
         dbsTables={dbsTables}
         dbProject={db}
-        theme={theme}
       />
 
       <FileStorageReferencedTablesConfig

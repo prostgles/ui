@@ -1,5 +1,5 @@
 import { mdiTable } from "@mdi/js";
-import { isDefined, type AnyObject } from "prostgles-types";
+import { isDefined, isEmpty, type AnyObject } from "prostgles-types";
 import React, { useEffect } from "react";
 import {
   type DetailedFilterBase,
@@ -17,6 +17,7 @@ import type { NewRow, NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
 import { JoinedRecordsSection } from "./JoinedRecordsSection";
 import { useJoinedRecordsSections } from "./useJoinedRecordsSections";
+import ErrorComponent from "../../../components/ErrorComponent";
 
 export type JoinedRecordsProps = Pick<
   Prgl,
@@ -35,6 +36,7 @@ export type JoinedRecordsProps = Pick<
     onTabChange: (tabKey: string | undefined) => void;
     activeTabKey: string | undefined;
     showOnlyFKeyTables?: boolean;
+    errors: AnyObject;
   };
 
 export type JoinedRecordSection = {
@@ -56,7 +58,6 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
   const [quickView, setQuickView] = React.useState<JoinedRecordSection>();
   const {
     db,
-    tableName,
     tables,
     methods,
     style,
@@ -66,6 +67,14 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
     activeTabKey,
     onTabChange,
   } = props;
+
+  /** Open errored section */
+  useEffect(() => {
+    const erroredSection = sections.find((s) => s.error);
+    if (erroredSection && erroredSection.tableName !== activeTabKey) {
+      onTabChange(erroredSection.tableName);
+    }
+  }, [sections, onTabChange, activeTabKey]);
 
   if (isLoadingSections) {
     return <Loading className="m-1 as-center" />;
@@ -117,19 +126,29 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
                   </FlexRow>
                 ),
                 content: (
-                  <FlexCol>
-                    <FlexRow className="gap-0">
-                      <Btn
-                        iconPath={mdiTable}
-                        title="Open in table"
-                        disabledInfo={!count ? "No records to show" : undefined}
-                        onClick={async () => {
-                          setQuickView(section);
-                        }}
-                      />
+                  <FlexCol className="p-p25">
+                    <FlexRow className=" p-p25 jc-end">
+                      {section.error && (
+                        <ErrorComponent
+                          error={section.error}
+                          variant="outlined"
+                          className=" f-1"
+                        />
+                      )}
+                      {!isInsert && (
+                        <Btn
+                          iconPath={mdiTable}
+                          title="Open in table"
+                          disabledInfo={
+                            !count ? "No records to show" : undefined
+                          }
+                          onClick={async () => {
+                            setQuickView(section);
+                          }}
+                        />
+                      )}
                       <JoinedRecordsAddRow {...props} section={section} />
                     </FlexRow>
-
                     <JoinedRecordsSection
                       {...props}
                       section={section}

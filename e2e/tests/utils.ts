@@ -1,5 +1,5 @@
 import { Page as PG, Locator, expect } from "@playwright/test";
-import { Command } from "./Testing";
+import { Command, dataCommand } from "./Testing";
 import * as path from "path";
 
 type FuncNamesReturningLocatorObj = {
@@ -140,41 +140,65 @@ export const runSql = async (page: PageWIds, query: string) => {
 export const fillSmartFormAndInsert = async (
   page: PageWIds,
   tableName: string,
-  values: Record<string, string>,
-  opts: { isNestedInsert: boolean } = { isNestedInsert: false },
+  values: Record<string, string | Record<string, any> | Record<string, any>[]>,
 ) => {
-  if (opts.isNestedInsert) {
-    await page
-      .locator(
-        getTestId("SmartFormFieldOptions.NestedInsert") + getDataKey(tableName),
-      )
-      .click();
-  }
-  for (const [key, value] of Object.entries(values)) {
+  const smartFormLocator = `${getTestId("SmartForm")}${getDataKey(tableName)}`;
+  for (const [key, valueOrRowOrRows] of Object.entries(values)) {
     const unescapedSelector = `${tableName}-${key}`;
     const escapedSelector = await page.evaluate(
       (unescapedSelector) => CSS.escape(unescapedSelector),
       unescapedSelector,
     );
-    const elem = await page.locator("input#" + escapedSelector);
-    await elem.fill(value);
-    const selectElem = await page.locator(
-      `[data-key=${JSON.stringify(key)}] .FormField_Select`,
-    );
-    if (await selectElem.isVisible()) {
-      await selectElem.click();
-      await page
-        .getByTestId("SearchList.List")
-        .locator(`[data-key=${JSON.stringify(value)}]`)
-        .click();
+    if (typeof valueOrRowOrRows === "string") {
+      const value = valueOrRowOrRows;
+      const elem = await page.locator("input#" + escapedSelector);
+      await elem.fill(value);
+      const selectElem = await page.locator(
+        `[data-key=${JSON.stringify(key)}] .FormField_Select`,
+      );
+      if (await selectElem.isVisible()) {
+        await selectElem.click();
+        await page
+          .getByTestId("SearchList.List")
+          .locator(`[data-key=${JSON.stringify(value)}]`)
+          .click();
+      }
+      /** Joined records */
+    } else if (Array.isArray(valueOrRowOrRows)) {
+      const nestedTableName = key;
+
+      const tabItem = await page.locator(
+        `${smartFormLocator} ${getTestId("MenuList")} ${getDataKey(nestedTableName)}`,
+      );
+      const isActive = await tabItem.getAttribute("aria-current");
+      if (isActive !== "true") {
+        await tabItem.click();
+      }
+      for (const nestedRow of valueOrRowOrRows) {
+        await page
+          .locator(
+            `${getTestId("JoinedRecords.AddRow")}${getDataKey(nestedTableName)}`,
+          )
+          .click();
+        await fillSmartFormAndInsert(page, nestedTableName, nestedRow);
+      }
+
+      /** Nested insert into fkey */
+    } else if (typeof valueOrRowOrRows === "object") {
+      const nestedInsertBtn = await page
+        .locator(
+          `${getTestId("SmartFormField")}${getDataKey(key)} ${getTestId("SmartFormFieldOptions.NestedInsert")}`,
+        )
+        .first();
+      const nestedTableName = await nestedInsertBtn.getAttribute("data-key");
+      if (!nestedTableName) throw `nestedTableName not found for ${key}`;
+      await nestedInsertBtn.click();
+      await fillSmartFormAndInsert(page, nestedTableName, valueOrRowOrRows);
     }
   }
   await page.waitForTimeout(200);
   // await page.getByRole("button", { name: "Insert", exact: true }).click();
-  await page
-    .locator(`${getTestId("SmartForm")}${getDataKey(tableName)}`)
-    .getByTestId("SmartForm.insert")
-    .click();
+  await page.locator(smartFormLocator).getByTestId("SmartForm.insert").click();
   await page.waitForTimeout(200);
 };
 
@@ -726,32 +750,21 @@ export const enableAskLLM = async (
     //   .getByTestId("AddLLMCredentialForm.Provider")
     //   .locator(`[data-key="Custom"]`)
     //   .click();
-    await fillSmartFormAndInsert(
-      page,
-      "llm_providers",
-      {
+    await fillSmartFormAndInsert(page, "llm_credentials", {
+      name: "my credential",
+      api_key: "nothing",
+      provider_id: {
         id: "Custom",
         api_url: "http://localhost:3004/mocked-llm",
+        llm_models: [
+          {
+            name: "mymodel",
+          },
+        ],
       },
-      { isNestedInsert: true },
-    );
-    await fillSmartFormAndInsert(
-      page,
-      "llm_providers",
-      {
-        id: "Custom",
-        api_url: "http://localhost:3004/mocked-llm",
-      },
-      { isNestedInsert: true },
-    );
+    });
     // await page.locator(`#endpoint`).fill("http://localhost:3004/mocked-llm");
     // await page.getByTestId("AddLLMCredentialForm.Save").click();
-
-    await fillSmartFormAndInsert(page, "llm_credentials", {
-      name: "Custom",
-      api_key: "nothing",
-    });
-    await page.waitForTimeout(1e3);
   }
   await page.getByTestId("AskLLMAccessControl.AllowAll").click();
   await page.waitForTimeout(1e3);

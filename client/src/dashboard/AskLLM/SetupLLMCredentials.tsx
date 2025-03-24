@@ -77,7 +77,7 @@ export const SetupLLMCredentials = (props: SetupLLMCredentialsProps) => {
             <InfoRow color="info" variant="filled">
               No existing prompts
             </InfoRow>
-            <AddLLMPromptForm theme={theme} dbs={dbs} dbsTables={dbsTables} />
+            <AddLLMPromptForm dbs={dbs} dbsTables={dbsTables} />
           </FlexCol>
         )}
       </FlexCol>;

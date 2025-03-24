@@ -164,7 +164,7 @@ export const SmartForm = (props: SmartFormProps) => {
   const { tableName } = props;
 
   const stateOrError = useSmartForm(props);
-  const { mode, error, table, loading } = stateOrError;
+  const { mode, error, table } = stateOrError;
   const tableInfo = table?.info;
 
   if (!tableInfo) {

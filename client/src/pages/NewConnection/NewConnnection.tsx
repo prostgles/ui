@@ -393,9 +393,10 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                         rowFilter={[{ fieldName: "id", value: this.conId }]}
                         showRelated="descendants"
                         tableName={"connections"}
+                        connection={c}
                         tables={prglState.dbsTables}
                         methods={prglState.dbsMethods}
-                        expanded={true}
+                        errors={{}}
                         showOnlyFKeyTables={true}
                         newRowData={undefined}
                       />

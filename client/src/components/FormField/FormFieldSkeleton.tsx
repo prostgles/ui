@@ -36,7 +36,6 @@ type FormFieldSkeletonProps = TestSelectors &
     id: string;
     warning?: string;
     errorWrapperClassname: string;
-    hideErrorRightIcon: boolean;
     inputWrapperClassname: string;
     children: React.ReactNode;
     rightIconsShowBorder: boolean;
@@ -59,7 +58,6 @@ export const FormFieldSkeleton = React.forwardRef(
       inputWrapperStyle,
       warning,
       errorWrapperClassname,
-      hideErrorRightIcon,
       rightIcons = null,
       rightIconsShowBorder,
       rightContent = null,
@@ -164,20 +162,6 @@ export const FormFieldSkeleton = React.forwardRef(
                   >
                     {rightIcons}
                   </div>
-                )}
-                {Boolean(error && !hideErrorRightIcon) && (
-                  <Icon
-                    className="text-danger absolute bg-color-0"
-                    path={mdiAlertCircleOutline}
-                    style={{
-                      width: "1.5rem",
-                      top: "2px",
-                      bottom: "2px",
-                      height: "calc(100% - 4px)",
-                      right: "6px",
-                      pointerEvents: "none",
-                    }}
-                  />
                 )}
               </div>
 

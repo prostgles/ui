@@ -45,7 +45,7 @@ type S = {
   id?: string;
   isOverflowing?: boolean;
 };
-export default class FileInput extends RTComp<
+export class FileInput extends RTComp<
   {
     id?: string;
     className?: string;
@@ -229,7 +229,7 @@ export default class FileInput extends RTComp<
           {focused ?
             null
           : !name ?
-            <a href={url} target="_blank" className="p-5 f-0">
+            <a href={url} target="_blank" className="p-5 f-0" rel="noreferrer">
               {url}
             </a>
           : <div

@@ -3,7 +3,7 @@ import type { AnyObject } from "prostgles-types";
 import React, { useState } from "react";
 import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";
-import FileInput from "../../components/FileInput/FileInput";
+import { FileInput } from "../../components/FileInput/FileInput";
 import type { SmartFormProps } from "./SmartForm";
 import { SmartForm } from "./SmartForm";
 import { t } from "../../i18n/i18nUtils";

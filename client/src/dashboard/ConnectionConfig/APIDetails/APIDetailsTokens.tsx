@@ -36,7 +36,6 @@ export const APIDetailsTokens = ({
       </div>
       <FlexCol className="w-fit  ">
         <Sessions
-          theme={theme}
           dbs={dbs}
           dbsTables={dbsTables}
           dbsMethods={dbsMethods}

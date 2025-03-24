@@ -113,6 +113,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
           className="ml-p25"
           href="https://www.postgresql.org/docs/current/tutorial-fk.html"
           target="_blank"
+          rel="noreferrer"
         >
           FOREIGN KEY
         </a>
@@ -244,7 +245,6 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
             {table && currentColumn.nested && (
               <>
                 <SmartFilterBar
-                  theme={theme}
                   innerClassname="mt-1 px-0"
                   filter={currentColumn.nested.detailedFilter}
                   having={currentColumn.nested.detailedHaving}

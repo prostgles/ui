@@ -19,7 +19,7 @@ export const MCPServers = (props: ServerSettingsProps) => {
   const [serverConfig, setServerConfig] = React.useState<{
     name: string;
   }>();
-  const { theme, dbsMethods, dbs, dbsTables } = props;
+  const { dbsMethods, dbs, dbsTables } = props;
   const serverInfo = dbs.mcp_servers.useSubscribeOne(
     {
       name: serverConfig?.name,
@@ -71,7 +71,6 @@ export const MCPServers = (props: ServerSettingsProps) => {
         })}
       >
         <SmartCardList
-          theme={theme}
           db={dbs}
           methods={dbsMethods}
           {...(mcp_servers_disabled && {

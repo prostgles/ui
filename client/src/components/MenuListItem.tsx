@@ -6,7 +6,7 @@ import type { MenuListProps } from "./MenuList";
 
 export type MenuListitem = {
   key?: string;
-  label: React.ReactNode;
+  label: React.ReactElement | string;
   contentRight?: React.ReactNode;
   leftIconPath?: string;
   disabledText?: string;
@@ -38,6 +38,7 @@ export const MenuListItem = ({
 }: Props) => {
   const canPress = !!(item.onPress && !item.disabledText && !noClick);
 
+  const isActive = (item.key ?? item.label) === activeKey;
   const { labelVariantStyle, ...itemProps } = useMemo(() => {
     const variantStyle: React.CSSProperties =
       variant === "horizontal-tabs" ?
@@ -51,7 +52,7 @@ export const MenuListItem = ({
           borderBottomWidth: "4px",
           flex: 1,
           color: "var(--text-0)",
-          ...(activeKey === (item.key ?? item.label) && {
+          ...(isActive && {
             borderColor: "var(--active)",
             backgroundColor: "var(--bg-color-0)",
           }),
@@ -86,7 +87,7 @@ export const MenuListItem = ({
       onKeyUp,
       labelVariantStyle,
     };
-  }, [canPress, activeKey, item, variant]);
+  }, [canPress, isActive, item, variant]);
 
   return (
     <li
@@ -95,8 +96,9 @@ export const MenuListItem = ({
       role="listitem"
       tabIndex={canPress ? 0 : undefined}
       title={item.disabledText || item.title}
-      className={`flex-row  p-p5  bg-li ${!item.disabledText && item.onPress ? " pointer " : " "} ${item.key === activeKey ? " selected " : ""}`}
+      className={`flex-row  p-p5  bg-li ${!item.disabledText && item.onPress ? " pointer " : " "} ${isActive ? " selected " : ""}`}
       {...itemProps}
+      aria-current={isActive ? "true" : undefined}
     >
       <label
         className="mr-p5 f-1 flex-row ai-center noselect"

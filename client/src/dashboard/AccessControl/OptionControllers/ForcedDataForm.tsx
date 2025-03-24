@@ -69,7 +69,6 @@
 //         const userCtxCols = ctxTable?.columns.filter(cc => cc.tsDataType === c.tsDataType);
 
 //         return <SmartFormField
-//           theme={theme}
 //           variant="column"
 //           style={{
 //             // marginRight: "1em",

@@ -26,10 +26,7 @@ import {
 import { Icon } from "../../components/Icon/Icon";
 import { t } from "../../i18n/i18nUtils";
 
-type SessionsProps = Pick<
-  Prgl,
-  "dbs" | "dbsTables" | "user" | "dbsMethods" | "theme"
-> & {
+type SessionsProps = Pick<Prgl, "dbs" | "dbsTables" | "user" | "dbsMethods"> & {
   displayType: "web_session" | "api_token";
   className?: string;
 };
@@ -52,7 +49,6 @@ export const Sessions = ({
   displayType,
   className = "",
   dbsMethods,
-  theme,
 }: SessionsProps) => {
   if (!user) return null;
 
@@ -64,7 +60,6 @@ export const Sessions = ({
     <SmartCardList
       title={tokenMode ? undefined : ({ count }) => `${sessionLabel} ${count}`}
       db={dbs}
-      theme={theme}
       methods={dbsMethods}
       tableName="sessions"
       tables={dbsTables}

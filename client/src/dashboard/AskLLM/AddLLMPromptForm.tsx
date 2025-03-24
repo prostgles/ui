@@ -6,10 +6,9 @@ import { SmartForm } from "../SmartForm/SmartForm";
 import { mdiPlus } from "@mdi/js";
 
 export const AddLLMPromptForm = ({
-  theme,
   dbs,
   dbsTables,
-}: Pick<Prgl, "theme" | "dbs" | "dbsTables">) => {
+}: Pick<Prgl, "dbs" | "dbsTables">) => {
   return (
     <PopupMenu
       button={

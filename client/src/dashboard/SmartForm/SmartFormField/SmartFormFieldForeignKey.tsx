@@ -3,7 +3,7 @@ import { useIsMounted } from "prostgles-client/dist/prostgles";
 import { isDefined, isObject, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Btn from "../../../components/Btn";
-import FileInput from "../../../components/FileInput/FileInput";
+import { FileInput } from "../../../components/FileInput/FileInput";
 import { FlexRow } from "../../../components/Flex";
 import Select, { type FullOption } from "../../../components/Select/Select";
 import { renderNull } from "./RenderValue";

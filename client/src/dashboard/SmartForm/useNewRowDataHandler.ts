@@ -33,6 +33,7 @@ type Args = {
     | "confirmUpdates"
     | "onChange"
     | "onSuccess"
+    | "parentForm"
   >;
 
 export const useNewRowDataHandler = (args: Args) => {
@@ -48,6 +49,7 @@ export const useNewRowDataHandler = (args: Args) => {
     mode,
     table,
     setLocalRowFilter,
+    parentForm,
   } = args;
   const [error, setError] = useState<any>();
   const [errors, setErrors] = useState<AnyObject>({});
@@ -60,7 +62,6 @@ export const useNewRowDataHandler = (args: Args) => {
   }, [columns]);
 
   const [newRowData, setNewRowData] = useState<NewRow>();
-
   const parseError = useCallback(
     (error: ProstglesError) => {
       let newError: any =
@@ -189,12 +190,24 @@ export const useNewRowDataHandler = (args: Args) => {
   useEffect(() => {
     const newRow = newRowDataHandler.getRow();
     setNewRow(newRow);
+    setErrors({});
+    setError(undefined);
   }, [newRowData, newRowDataHandler]);
 
   const clonedRow = mode?.type === "insert" ? mode.clonedRow : undefined;
 
   useEffect(() => {
-    if (mode?.type !== "insert") return;
+    if (mode?.type !== "insert") {
+      return;
+    }
+    /** Set existing data from parentForm */
+    if (parentForm?.type === "insert") {
+      const existingData = parentForm.newRowDataHandler?.getNewRow();
+      if (existingData) {
+        newRowDataHandler.setNewRow(existingData);
+        return;
+      }
+    }
     const defaultColumnData = Object.fromEntries(
       columns
         .map((c) => {
@@ -223,6 +236,7 @@ export const useNewRowDataHandler = (args: Args) => {
     defaultData,
     clonedRow,
     newRowDataHandler,
+    parentForm,
   ]);
 
   const row = useMemo(() => {
@@ -244,8 +258,7 @@ export const useNewRowDataHandler = (args: Args) => {
   const getErrors: getErrorsHook = useCallback(
     async (cb) => {
       const cannotBeNullMessage = "Must not be empty";
-      let data = {
-        ...defaultData,
+      const data = {
         ...newRow,
         ...fixedData,
       };
@@ -284,16 +297,29 @@ export const useNewRowDataHandler = (args: Args) => {
           /** Ensure json fields are not string */
           if (c.udt_name.startsWith("json") && typeof val === "string") {
             try {
-              data = {
-                ...data,
-                [c.name]: JSON.parse(val),
-              };
+              data[c.name] = JSON.parse(val);
             } catch (error) {
               _errors ??= {};
               _errors[c.name] = "Must be a valid json";
             }
           }
         });
+
+      table?.info.requiredNestedInserts?.forEach(
+        ({ ftable, maxRows, minRows }) => {
+          const ftableData = data[ftable];
+          if (!ftableData || !Array.isArray(ftableData) || !ftableData.length) {
+            _errors ??= {};
+            _errors[ftable] = "Required";
+          } else if (minRows && ftableData.length < minRows) {
+            _errors ??= {};
+            _errors[ftable] = `Must have at least ${minRows} rows`;
+          } else if (maxRows && ftableData.length > maxRows) {
+            _errors ??= {};
+            _errors[ftable] = `Must have at most ${maxRows} rows`;
+          }
+        },
+      );
 
       if (!_errors) {
         const errors = await cb(data);
@@ -305,7 +331,7 @@ export const useNewRowDataHandler = (args: Args) => {
         setErrors(_errors);
       }
     },
-    [defaultData, fixedData, rowFilter, table, newRow, displayedColumns],
+    [fixedData, rowFilter, table, newRow, displayedColumns],
   );
 
   return {

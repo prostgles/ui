@@ -7,8 +7,6 @@ import { W_MethodControls } from "../W_Method/W_MethodControls";
 import { JoinedRecords } from "./JoinedRecords/JoinedRecords";
 import { useActiveJoinedRecordsTab } from "./JoinedRecords/useActiveJoinedRecordsTab";
 import type { SmartFormProps } from "./SmartForm";
-import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
-import type { SmartFormModeState } from "./useSmartFormMode";
 import type { SmartFormState } from "./useSmartForm";
 
 export type SmartFormUpperFooterProps = Omit<SmartFormProps, "columns"> &
@@ -144,6 +142,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
           onSuccess={props.onSuccess}
           connection={connection}
           parentForm={props.parentForm}
+          errors={props.errors}
         />
       )}
       {showMethods && (
@@ -154,7 +153,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
               lookup?.type !== "data" ? undefined : lookup.showInRowCard;
             return (
               <Btn
-                key={i}
+                key={methodName}
                 color={showInRowCard?.actionColor ?? "action"}
                 variant="filled"
                 onClick={() => {
@@ -170,101 +169,3 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
     </div>
   );
 };
-
-// const changesNode = !!showChanges && (
-//   <>
-//     <div
-//       className={
-//         "noselect flex-row ai-center pointer  " +
-//         (collapseChanges ? " " : "  mb-p5 ")
-//       }
-//       style={{ borderTop: "1px solid #cecece" }}
-//       onClick={() => setcollapseChanges(!collapseChanges)}
-//     >
-//       <h4 className="noselect  f-1 px-1">
-//         Changes ({Object.keys(newRowData || {}).length}):
-//       </h4>
-//       <Btn
-//         className="f-0 "
-//         iconPath={
-//           !collapseChanges ? mdiUnfoldLessHorizontal : mdiUnfoldMoreHorizontal
-//         }
-//         title="Collapse/Expand changes"
-//         size="small"
-//       />
-//     </div>
-//     {!collapseChanges && (
-//       <div
-//         className={
-//           "flex-col w-full ai-start " + (showChanges ? " p-1 " : " ")
-//         }
-//       >
-//         {Object.keys(newRowData ?? {}).map((key) => {
-//           if (!newRowData) return null;
-//           const c = columns.find((c) => c.name === key);
-
-//           /**
-//            * What happens when the key is of a joined table (media) ????
-//            */
-//           let newVal: React.ReactNode = null,
-//             oldVal: React.ReactNode = null;
-//           if (
-//             !c &&
-//             table.info.fileTableName === key &&
-//             Array.isArray(newRowData[key]?.value)
-//           ) {
-//             oldVal =
-//               !currentRow ? undefined : (
-//                 JSON.stringify([currentRow[key].map((m) => m.name)]).slice(
-//                   1,
-//                   -1,
-//                 )
-//               );
-//             newVal = JSON.stringify([
-//               newRowData[key].value.map((m) => m.name),
-//             ]).slice(1, -1);
-//           } else {
-//             oldVal =
-//               !currentRow ? undefined : (
-//                 <RenderValue column={c} value={currentRow[key]} />
-//               );
-//             newVal = (
-//               <RenderValue column={c} value={newRowData[key]?.value} />
-//             );
-//           }
-
-//           return (
-//             <div key={key} className="flex-row mb-p5 ai-center w-full">
-//               <div className="flex-col mb-p5 ta-left o-auto ">
-//                 <div className="text-1p5 font-14 mb-p25">
-//                   {c?.label || key}:{" "}
-//                 </div>
-//                 {!!currentRow && (
-//                   <div
-//                     title="Old value"
-//                     className=" text-danger o-auto"
-//                     style={{ maxHeight: "100px" }}
-//                   >
-//                     {oldVal}
-//                   </div>
-//                 )}
-//                 <div
-//                   title="New value"
-//                   className=" text-green o-auto"
-//                   style={{ maxHeight: "100px" }}
-//                 >
-//                   {newVal}
-//                 </div>
-//               </div>
-//               <Btn
-//                 iconPath={mdiDelete}
-//                 title="Remove update"
-//                 onClick={() => onRemoveUpdate(key)}
-//               />
-//             </div>
-//           );
-//         })}
-//       </div>
-//     )}
-//   </>
-// );

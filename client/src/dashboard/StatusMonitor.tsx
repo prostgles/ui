@@ -216,7 +216,6 @@ export const StatusMonitor = ({
     <div className="ws-pre">{shellResult}</div> */}
 
       <SmartCardList
-        theme={theme}
         db={dbs}
         methods={dbsMethods}
         tables={dbsTables}

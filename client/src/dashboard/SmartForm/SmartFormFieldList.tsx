@@ -1,8 +1,4 @@
-import {
-  isObject,
-  type AnyObject,
-  type ValidatedColumnInfo,
-} from "prostgles-types";
+import { isObject, type AnyObject } from "prostgles-types";
 import React from "react";
 import { classOverride, FlexCol } from "../../components/Flex";
 import { Label } from "../../components/Label";
@@ -13,11 +9,7 @@ import {
   type SmartColumnInfo,
 } from "./SmartFormField/SmartFormField";
 import { SmartFormFileSection } from "./SmartFormFileSection";
-import type {
-  ColumnData,
-  NewRow,
-  NewRowDataHandler,
-} from "./SmartFormNewRowDataHandler";
+import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import type { SmartFormState } from "./useSmartForm";
 import type { SmartFormModeState } from "./useSmartFormMode";
 
@@ -37,11 +29,12 @@ type P = Pick<
   SmartFormModeState &
   Pick<SmartFormState, "error" | "errors"> & {
     newRowDataHandler: NewRowDataHandler;
-    newRow: NewRow | undefined;
+    newRowData: NewRow | undefined;
     row: AnyObject;
     table: DBSchemaTablesWJoins[number];
     displayedColumns: SmartColumnInfo[];
   };
+
 export const SmartFormFieldList = (props: P) => {
   const {
     tableName,
@@ -59,26 +52,12 @@ export const SmartFormFieldList = (props: P) => {
     errors,
     modeType,
     methods,
-    newRow,
+    newRowData,
   } = props;
 
   const hideNullBtn = mode.type === "view" || props.hideNullBtn;
 
   const tableInfo = table.info;
-
-  let fileManagerTop: React.ReactNode = null;
-  if (tableInfo.isFileTable && tableInfo.fileTableName) {
-    fileManagerTop = (
-      <SmartFormFileSection
-        {...props}
-        table={table}
-        newRowDataHandler={newRowDataHandler}
-        row={row}
-        action={mode}
-        mediaTableName={tableInfo.fileTableName}
-      />
-    );
-  }
 
   return (
     <div
@@ -87,10 +66,19 @@ export const SmartFormFieldList = (props: P) => {
         contentClassname,
       )}
     >
-      {fileManagerTop}
+      {tableInfo.isFileTable && tableInfo.fileTableName && (
+        <SmartFormFileSection
+          {...props}
+          table={table}
+          newRowDataHandler={newRowDataHandler}
+          row={row}
+          mode={mode}
+          mediaTableName={tableInfo.fileTableName}
+        />
+      )}
       {displayedColumns.map((c, i) => {
         const rawValue = row[c.name];
-        const newValue = newRow?.[c.name];
+        const newValue = newRowData?.[c.name];
         const formFieldStyle: React.CSSProperties =
           !c.sectionHeader ? {} : { marginTop: "1em" };
 

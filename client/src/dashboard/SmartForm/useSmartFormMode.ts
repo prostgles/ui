@@ -37,7 +37,7 @@ export type SmartFormMode =
     }
   | ({
       type: "insert";
-      tableHandlerInsert: TableHandlerClient["insert"];
+      tableHandlerInsert: TableHandlerClient["insert"] | undefined;
     } & (
       | {
           clonedRow: AnyObject;
@@ -164,12 +164,13 @@ export const useSmartFormMode = ({
         tableHandlerGetColumns,
       } satisfies ModeOrError;
     } else {
+      if (isManuallyControlled) {
+        return {
+          type: "insert",
+          tableHandlerInsert,
+        } satisfies ModeOrError;
+      }
       if (!tableHandlerInsert) {
-        if (isManuallyControlled) {
-          return {
-            type: "manual",
-          } satisfies ModeOrError;
-        }
         return "Cannot insert. Check longs";
       }
       return {
@@ -233,12 +234,7 @@ export const useSmartFormMode = ({
   const error = typeof modeOrError === "string" ? modeOrError : undefined;
   return {
     mode,
-    modeType:
-      mode?.type !== "manual" ?
-        mode?.type === "multiUpdate" ?
-          "update"
-        : mode?.type
-      : undefined,
+    modeType: mode?.type === "multiUpdate" ? "update" : mode?.type,
     error,
     setLocalRowFilter,
     localRowFilter,

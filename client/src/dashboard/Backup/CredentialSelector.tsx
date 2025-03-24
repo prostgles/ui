@@ -20,7 +20,6 @@ type P = {
   dbsMethods: DBSMethods;
   selectedId?: number | null;
   onChange: (credentialId: number) => void;
-  theme: Theme;
 };
 
 export function CredentialSelector({
@@ -31,7 +30,6 @@ export function CredentialSelector({
   pickFirst,
   dbsMethods,
   pickFirstIfNoOthers,
-  theme,
 }: P) {
   const { data: credentials } = dbs.credentials.useSubscribe({ type: "s3" });
 

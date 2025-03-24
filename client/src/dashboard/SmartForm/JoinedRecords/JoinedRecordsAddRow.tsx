@@ -113,8 +113,11 @@ export const JoinedRecordsAddRow = (props: P) => {
         {popupForm}
         <Btn
           key={section.tableName}
+          data-command="JoinedRecords.AddRow"
+          data-key={section.tableName}
           title="Add referenced record"
           color="action"
+          variant="filled"
           iconPath={mdiPlus}
           onClick={() => {
             setInsert({
@@ -141,6 +144,9 @@ export const JoinedRecordsAddRow = (props: P) => {
     <>
       {popupForm}
       <Btn
+        data-command="JoinedRecords.AddRow"
+        data-key={section.tableName}
+        variant="filled"
         iconPath={mdiPlus}
         title="Add new record"
         disabledInfo={

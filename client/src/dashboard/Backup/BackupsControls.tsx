@@ -236,7 +236,6 @@ export const BackupsControls = ({
           render={(popupClose) => (
             <div className="flex-col gap-1 f-1 min-s-0 bg-inherit">
               <DumpOptions
-                theme={theme}
                 connectionId={connection_id}
                 dbsMethods={dbsMethods}
                 dbs={dbs}
@@ -253,7 +252,6 @@ export const BackupsControls = ({
         {serverState.isElectron ?
           <></>
         : <AutomaticBackups
-            theme={theme}
             dbs={dbs}
             db={db}
             dbsTables={dbsTables}
@@ -276,7 +274,6 @@ export const BackupsControls = ({
         />
       </div>
       <SmartCardList
-        theme={theme}
         db={dbs}
         methods={dbsMethods}
         tableName="backups"
@@ -341,7 +338,6 @@ export const BackupsControls = ({
 
       <SmartCardList
         db={dbs}
-        theme={theme}
         methods={dbsMethods}
         tableName="backups"
         btnColor="gray"
@@ -391,7 +387,6 @@ export const BackupsControls = ({
       />
 
       <SmartCardList
-        theme={theme}
         btnColor="gray"
         title={
           <div className="mt-1 flex-col gap-1">

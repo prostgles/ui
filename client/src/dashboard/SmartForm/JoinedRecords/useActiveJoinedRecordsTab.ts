@@ -26,12 +26,14 @@ export const useActiveJoinedRecordsTab = ({
     const clickAwayListener: EventListener = (e) => {
       const rootDiv = rootDivRef.current;
       if (!rootDiv) return;
-      const parentForm = rootDiv.closest(".SmartForm");
+      const parentFormFields = rootDiv
+        .closest(".SmartForm")
+        ?.querySelector(".SmartFormFieldList");
       const clickPath = e.composedPath();
       if (
-        parentForm &&
+        parentFormFields &&
         !clickPath.includes(rootDiv) &&
-        clickPath.includes(parentForm)
+        clickPath.includes(parentFormFields)
       ) {
         setActiveJoinedRecordsTab("");
       }

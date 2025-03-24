@@ -23,7 +23,7 @@ export type FullOption<O extends OptionKey = string> = Pick<
   "ranking"
 > & {
   key: O;
-  label?: string;
+  label?: string | React.ReactElement;
   subLabel?: string;
   checked?: boolean;
   disabledInfo?: string;

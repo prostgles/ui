@@ -1,11 +1,9 @@
-import { type ValidatedColumnInfo } from "prostgles-types";
 import { useCallback, useMemo, useState } from "react";
 import { getSmartGroupFilter } from "../../../../../commonTypes/filterUtils";
 import type { ConfirmDialogProps } from "../../../components/ConfirmationDialog";
 import type { SmartFormProps } from "../SmartForm";
 import type { SmartFormNewRowState } from "../useNewRowDataHandler";
 import type { SmartFormState } from "../useSmartForm";
-import type { SmartFormMode } from "../useSmartFormMode";
 
 type ConfirmationPopup = Pick<
   ConfirmDialogProps,
@@ -39,6 +37,7 @@ export const useSmartFormActions = ({
   onInserted,
   setError,
   setErrors,
+  getErrors,
   parseError,
   confirmUpdates,
 }: Args): {
@@ -89,51 +88,53 @@ export const useSmartFormActions = ({
     if (mode.type === "insert") {
       return {
         onClickInsert: async () => {
-          return performAction(async () => {
-            if (!newRow) throw "No row data to insert";
-            if (parentForm?.type === "insert") {
-              parentForm.setColumnData(newRowDataHandler);
-              return;
-            }
-
-            const doInsert = async () => {
-              if (table.info.isFileTable && parentForm) {
-                const { table: parentTable, rowFilter: parentRowFilter } =
-                  parentForm;
-                const pkeyColumns = parentTable.columns
-                  .filter((c) => c.is_pkey)
-                  .map((c) => c.name);
-                if (!pkeyColumns.length) {
-                  throw (
-                    "No primary key columns found in parent form table " +
-                    parentForm.table.name
-                  );
-                }
-                const parentTableName = parentTable.name;
-                const parentTableHandler = db[parentTableName];
-                if (!parentTableHandler?.update) {
-                  throw "Not allowed to update referenced table";
-                }
-                const filter = getSmartGroupFilter(parentRowFilter);
-                const count = await parentTableHandler.count?.(filter);
-                if (+(count ?? 0) !== 1) {
-                  throw "Could not match to exactly 1 row";
-                }
-                return parentTableHandler.update(filter, {
-                  [parentForm.column.name]: newRow,
-                });
+          getErrors(async () => {
+            return performAction(async () => {
+              if (!newRow) throw "No row data to insert";
+              if (parentForm?.type === "insert") {
+                parentForm.setColumnData(newRowDataHandler);
+                return;
               }
 
-              return mode.tableHandlerInsert(
-                newRow,
-                onInserted || onSuccess ? { returning: "*" } : {},
-              );
-            };
-            const result = await doInsert();
-            onSuccess?.("insert", result);
-            onInserted?.(result);
+              const doInsert = async () => {
+                if (table.info.isFileTable && parentForm) {
+                  const { table: parentTable, rowFilter: parentRowFilter } =
+                    parentForm;
+                  const pkeyColumns = parentTable.columns
+                    .filter((c) => c.is_pkey)
+                    .map((c) => c.name);
+                  if (!pkeyColumns.length) {
+                    throw (
+                      "No primary key columns found in parent form table " +
+                      parentForm.table.name
+                    );
+                  }
+                  const parentTableName = parentTable.name;
+                  const parentTableHandler = db[parentTableName];
+                  if (!parentTableHandler?.update) {
+                    throw "Not allowed to update referenced table";
+                  }
+                  const filter = getSmartGroupFilter(parentRowFilter);
+                  const count = await parentTableHandler.count?.(filter);
+                  if (+(count ?? 0) !== 1) {
+                    throw "Could not match to exactly 1 row";
+                  }
+                  return parentTableHandler.update(filter, {
+                    [parentForm.column.name]: newRow,
+                  });
+                }
 
-            setSuccessMessage("Inserted");
+                return mode.tableHandlerInsert!(
+                  newRow,
+                  onInserted || onSuccess ? { returning: "*" } : {},
+                );
+              };
+              const result = await doInsert();
+              onSuccess?.("insert", result);
+              onInserted?.(result);
+
+              setSuccessMessage("Inserted");
+            });
           });
         },
       };
@@ -228,6 +229,7 @@ export const useSmartFormActions = ({
     setSuccessMessage,
     newRowWithUpdates,
     confirmUpdates,
+    getErrors,
   ]);
 
   return { successMessage, setSuccessMessage, confirmPopup, buttons };

@@ -148,7 +148,7 @@ export const MenuList = (props: MenuListProps) => {
           <Select
             fullOptions={visibleItems.map(({ key, label }, i) => ({
               key: key ?? i,
-              // label: label!,
+              label: textContent(label),
             }))}
             value={props.activeKey}
             btnProps={{
@@ -219,3 +219,17 @@ const MenuListPopupWrapper = ({
     </PopupMenu>
   );
 };
+
+function textContent(elem: React.ReactElement | string): string {
+  if (!elem) {
+    return "";
+  }
+  if (typeof elem === "string") {
+    return elem;
+  }
+  const children = elem.props && elem.props.children;
+  if (children instanceof Array) {
+    return children.map(textContent).join(" ");
+  }
+  return textContent(children);
+}

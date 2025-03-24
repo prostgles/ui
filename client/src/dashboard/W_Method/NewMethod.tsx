@@ -109,7 +109,6 @@ export const NewMethod = ({
         tables={tables}
         dbsTables={dbsTables}
         db={db}
-        theme={theme}
         onChange={setNewMethod}
       />
     </Popup>
