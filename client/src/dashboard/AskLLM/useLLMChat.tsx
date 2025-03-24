@@ -1,6 +1,7 @@
 import { mdiPlus } from "@mdi/js";
 import { useEffectDeep } from "prostgles-client/dist/prostgles";
 import React, { useCallback, useState } from "react";
+import { getLLMMessageText } from "../../../../commonTypes/llmUtils";
 import { isObject } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
@@ -8,11 +9,9 @@ import type { Message } from "../../components/Chat/Chat";
 import type { MarkedProps } from "../../components/Chat/Marked";
 import Loading from "../../components/Loading";
 import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
+import { AskLLMTokenUsage } from "./AskLLMTokenUsage";
 import { loadGeneratedWorkspaces } from "./loadGeneratedWorkspaces";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
-import { getLLMMessageText } from "../../../../commonTypes/llmUtils";
-import Chip from "../../components/Chip";
-import { AskLLMTokenUsage } from "./AskLLMTokenUsage";
 
 type P = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId"> & {

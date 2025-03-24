@@ -181,6 +181,14 @@ export const publish = async (
       update: "*",
       delete: "*",
     },
+    llm_models:
+      isAdmin ? "*" : (
+        {
+          select: {
+            fields: "*",
+          },
+        }
+      ),
     llm_credentials: {
       select: {
         fields: isAdmin ? { api_key: 0 } : { id: 1, name: 1 },
