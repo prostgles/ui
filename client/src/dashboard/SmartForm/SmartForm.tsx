@@ -38,7 +38,7 @@ export type ColumnDisplayConfig = {
 
 export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods"> & {
   tableName: string;
-  connection?: Prgl["connection"];
+  connection?: Pick<Partial<Prgl["connection"]>, "table_options">;
 
   label?: string;
   /**
@@ -156,9 +156,6 @@ type SmartFormColumnConfig =
       columnFilter?: (c: ValidatedColumnInfo) => boolean;
       columns?: never;
     };
-
-export type Unpromise<T extends Promise<any>> =
-  T extends Promise<infer U> ? U : never;
 
 export const SmartForm = (props: SmartFormProps) => {
   const { tableName } = props;

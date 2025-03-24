@@ -119,7 +119,6 @@ export const W_MethodMenu = (
                 connectionId={connectionId}
                 dbsMethods={props.prgl.dbsMethods}
                 method={{ ...(editedMethod ?? method) }}
-                theme={props.prgl.theme}
                 dbsTables={props.prgl.dbsTables}
                 tables={props.tables}
                 onChange={(v) => setEditedMethod(v as any)}

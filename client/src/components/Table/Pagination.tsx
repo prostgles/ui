@@ -113,7 +113,6 @@ export const Pagination = (props: PaginationProps) => {
       {!onPageSizeChange ? null : (
         <FormField
           title="Page size"
-          asColumn={true}
           value={pageSize}
           options={PAGE_SIZES.map((s) => `${s}`)}
           onChange={(e) => {

@@ -76,8 +76,7 @@ export const W_TableMenu_Policies = ({ tableMeta, onSetQuery, prgl, w }: P) => {
         />
       </FlexRowWrap>
       <SmartCardList
-        theme={prgl.theme}
-        db={prgl.db as any}
+        db={prgl.db}
         methods={prgl.methods}
         tables={prgl.tables}
         tableName={{

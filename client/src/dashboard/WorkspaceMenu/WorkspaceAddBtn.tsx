@@ -77,7 +77,6 @@ export const WorkspaceAddBtn = ({
         <div>
           <FormField
             label="New workspace name"
-            asColumn={true}
             value={name}
             onChange={(name) => {
               setName(name);

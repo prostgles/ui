@@ -406,7 +406,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
                 );
               }}
             >
-              Ok, don't show again
+              Ok, don&apos;t show again
             </Btn>
           </div>
         </div>

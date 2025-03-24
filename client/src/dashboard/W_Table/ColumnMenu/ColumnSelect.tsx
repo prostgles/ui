@@ -38,7 +38,6 @@ export const ColumnSelect = ({
     <div className="flex-row ai-end">
       <FormField
         {...testSelectors}
-        asColumn={true}
         label={label}
         value={value}
         fullOptions={items}

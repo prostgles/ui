@@ -16,7 +16,10 @@ import type { Prgl } from "../App";
 import ButtonGroup from "../components/ButtonGroup";
 import Loading from "../components/Loading";
 import Popup from "../components/Popup/Popup";
-import type { SearchListProps } from "../components/SearchList/SearchList";
+import type {
+  SearchListItem,
+  SearchListProps,
+} from "../components/SearchList/SearchList";
 import SearchList from "../components/SearchList/SearchList";
 import Select from "../components/Select/Select";
 import type { TableColumn } from "../components/Table/Table";
@@ -291,7 +294,7 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
 
             if (term === this.searchTerm && this.searchType === "rows") {
               const { onOpen, onClose } = this.props;
-              const items: SearchListProps["items"] = _matches.map((m, i) => ({
+              const items: SearchListItem[] = _matches.map((m, i) => ({
                 ...m,
                 key: m.$rowhash + i,
                 label: m.table,

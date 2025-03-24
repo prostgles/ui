@@ -144,7 +144,6 @@ export const FileColumnConfigEditor = ({
   return (
     <FlexCol className="f-1 min-h-0 gap-2">
       <FormField
-        asColumn={true}
         type="number"
         label="Maximum file size in megabytes"
         value={colConfig.maxFileSizeMB ?? 1}

@@ -229,7 +229,8 @@ export const AccessControlRuleEditor = ({
                   </span>
                   <span>
                     This is the same level of access to the database as the
-                    current user <strong>"{currentSQLUser}"</strong>
+                    current user{" "}
+                    <strong>{JSON.stringify(currentSQLUser)}</strong>
                   </span>
                 </FlexCol>
               : dbPermissions.type === "All views/tables" ?

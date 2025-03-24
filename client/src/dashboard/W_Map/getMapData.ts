@@ -8,6 +8,7 @@ import type { LayerSQL, LayerTable } from "./W_Map";
 import type { GeoJSONFeature } from "../Map/DeckGLMap";
 import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
 import type { LinkSyncItem } from "../Dashboard/dashboardUtils";
+import type { DBS } from "../Dashboard/DBS";
 
 export const WITH_LAST_SELECT_ALIAS = "prostgles_chart_data";
 const rowHashQuery =
@@ -49,7 +50,7 @@ export type MapDataResult = {
 
 export const getSQLData = async (
   layer: LayerSQL,
-  db: DBHandlerClient,
+  db: DBHandlerClient | DBS,
   AGG_LIMIT: number,
 ): Promise<{ $rowhash: string; l: AnyObject }[]> => {
   const { parameters, geomColumn } = layer;
@@ -140,7 +141,7 @@ export const getMapFilter = (
 
 export const getSQLHoverRow = async (
   q: LayerSQL,
-  db: DBHandlerClient,
+  db: DBHandlerClient | DBS,
   $rowhash: string,
 ): Promise<{ $rowhash: string; d: AnyObject } | undefined> => {
   const { parameters, geomColumn } = q;

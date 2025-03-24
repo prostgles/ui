@@ -24,6 +24,7 @@ import { CreateColumn } from "./AlterColumn/CreateColumn";
 import { t } from "../../../i18n/i18nUtils";
 import { LinkedColumn } from "./LinkedColumn/LinkedColumn";
 import type { NestedColumnOpts } from "./getNestedColumnTable";
+import type { DBS } from "../../Dashboard/DBS";
 
 const options = [
   {
@@ -57,7 +58,7 @@ const options = [
 export type AddColumnMenuProps = {
   w: WindowSyncItem<"table">;
   tables: DBSchemaTablesWJoins;
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   suggestions: LoadedSuggestions | undefined;
   variant?: "detailed";
   nestedColumnOpts: NestedColumnOpts | undefined;

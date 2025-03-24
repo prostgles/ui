@@ -98,7 +98,7 @@ export type PrglProject = PrglCore & {
   connectionId: string;
   databaseId: number;
   projectPath: string;
-  connection: DBSSchema["connections"] | undefined;
+  connection: DBSSchema["connections"];
 };
 export type Prgl = PrglState & PrglProject;
 

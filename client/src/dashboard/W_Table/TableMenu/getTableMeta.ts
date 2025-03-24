@@ -43,7 +43,7 @@ export type W_TableInfo = {
 };
 
 export const getTableMeta = async (
-  db: DBHandlerClient,
+  db: DBHandlerClient | DBS,
   dbs: DBS,
   database_id: number,
   tableName: string,

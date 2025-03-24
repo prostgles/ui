@@ -7,6 +7,7 @@ import {
   getTextColumnPotentialDataTypes,
   type SuggestedColumnDataType,
 } from "./checkCSVColumnDataTypes";
+import type { DBS } from "../Dashboard/DBS";
 
 export type ImportProgress = {
   importedRows: number;
@@ -29,7 +30,7 @@ type Args = Pick<
   | "streamColDelimiter"
   | "inferAndApplyDataTypes"
 > & {
-  db: DBHandler;
+  db: DBHandler | DBS;
   onError: (err: any) => void;
   onProgress: (stats: ImportProgress) => { canContinue: boolean };
 };

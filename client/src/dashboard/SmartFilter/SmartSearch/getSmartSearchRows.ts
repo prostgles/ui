@@ -15,12 +15,13 @@ import {
   getTableSelect,
 } from "../../W_Table/tableUtils/getTableSelect";
 import type { DashboardState } from "../../Dashboard/Dashboard";
+import type { DBS } from "../../Dashboard/DBS";
 
 type Args = {
   currentlySearchedColumn: string;
   term: string;
   matchCase: boolean;
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   tableName: string;
   columns: Pick<ValidatedColumnInfo, "name" | "is_pkey" | "udt_name">[];
   detailedFilter: SmartGroupFilter;

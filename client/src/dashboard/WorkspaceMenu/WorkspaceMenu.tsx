@@ -190,7 +190,6 @@ export const WorkspaceMenu = (props: P) => {
                         <>
                           <WorkspaceSettings
                             w={w}
-                            theme={props.prgl.theme}
                             dbs={props.prgl.dbs}
                             dbsTables={dbsTables}
                             dbsMethods={dbsMethods}

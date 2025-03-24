@@ -1,5 +1,5 @@
 import { mdiTable } from "@mdi/js";
-import { isDefined, isEmpty, type AnyObject } from "prostgles-types";
+import { type AnyObject } from "prostgles-types";
 import React, { useEffect } from "react";
 import {
   type DetailedFilterBase,
@@ -7,6 +7,7 @@ import {
 } from "../../../../../commonTypes/filterUtils";
 import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";
+import ErrorComponent from "../../../components/ErrorComponent";
 import { FlexCol, FlexRow, classOverride } from "../../../components/Flex";
 import Loading from "../../../components/Loading";
 import { SvgIcon } from "../../../components/SvgIcon";
@@ -17,13 +18,9 @@ import type { NewRow, NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
 import { JoinedRecordsSection } from "./JoinedRecordsSection";
 import { useJoinedRecordsSections } from "./useJoinedRecordsSections";
-import ErrorComponent from "../../../components/ErrorComponent";
 
-export type JoinedRecordsProps = Pick<
-  Prgl,
-  "db" | "tables" | "methods" | "connection"
-> &
-  Pick<SmartFormProps, "onSuccess" | "parentForm"> & {
+export type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods"> &
+  Pick<SmartFormProps, "onSuccess" | "parentForm" | "connection"> & {
     className?: string;
     style?: React.CSSProperties;
     tableName: string;
@@ -174,26 +171,6 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
           }}
         />
       )}
-      {/* <h4
-          title="Toggle section"
-          data-command={"JoinedRecords.toggle" satisfies Command}
-          onClick={() => {
-            this.props.onToggle?.(!expanded);
-            this.setState({ expanded: !expanded });
-          }}
-          className="m-0 pointer noselect ta-left f-0 ws-pre flex-row ai-center gap-1 p-1 text-1p5"
-        >
-          <div className="">Related data </div>
-          {!!sections.length && (
-            <span
-              className="text-1p5 font-18"
-              style={{ fontWeight: "lighter" }}
-            >
-              {sections.reduce((a, v) => a + v.existingDataCount, 0)}
-            </span>
-          )}
-
-        </h4> */}
 
       {/* TODO allow customising Related data section */}
       {/* <JoinPathSelectorV2 
@@ -212,102 +189,6 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
             color: "action",
           }}          
         /> */}
-      {/* {expanded && (
-          <FlexCol className="gap-0 o-auto f-1 px-1 bg-inherit">
-            {sections.map((s, i) => {
-              const onToggle: React.MouseEventHandler = ({ currentTarget }) => {
-                const newSections = sections.map((_s) => ({
-                  ..._s,
-                  expanded:
-                    _s.path.join() === s.path.join() ?
-                      !_s.expanded
-                    : _s.expanded,
-                }));
-
-                this.setState({
-                  sections: newSections,
-                });
-
-                setTimeout(() => {
-                  currentTarget.scrollIntoView({ behavior: "smooth" });
-                }, 300);
-              };
-              const isInsert = this.isInsert;
-              const count =
-                (isInsert ?
-                  this.nestedInsertData?.[s.tableName]?.length
-                : s.existingDataCount) ?? 0;
-              const disabledInfo = !count ? "No records to show" : undefined;
-              let countNode: React.ReactNode = (
-                <span
-                  className="ws-pre text-1p5 font-18"
-                  style={{ fontWeight: "normal" }}
-                >
-                  {" "}
-                  {count.toLocaleString()}
-                </span>
-              );
-              if (isInsert && !count) {
-                countNode = null;
-              }
- 
-
-              const key = s.path.join(".") + this.dataSignature;
-              return (
-                <div
-                  key={key}
-                  data-key={s.path.join(".")}
-                  className="flex-col min-h-0 f-0 relative bg-inherit"
-                >
-                  <div
-                    className="flex-row ai-center noselect pointer f-0 bg-inherit bt b-color"
-                    style={
-                      !s.expanded ? undefined : (
-                        {
-                          position: "sticky",
-                          top: 0,
-                          zIndex: 432432,
-                          marginBottom: ".5em",
-                        }
-                      )
-                    }
-                  >
-                    <Btn
-                      className="f-1 p-p5 ta-left font-20 bold jc-start"
-                      variant="text"
-                      data-label="Expand section"
-                      title="Expand section"
-                      disabledInfo={s.error ?? disabledInfo}
-                      color={s.error ? "warn" : "action"}
-                      onClick={onToggle}
-                    >
-                      {s.path.join(".")}
-                      {countNode}
-                    </Btn>
-
-                    <FlexRow className="show-on-parent-hover gap-0">
-                      <Btn
-                        iconPath={mdiTable}
-                        title="Open in table"
-                        disabledInfo={disabledInfo}
-                        onClick={async () => {
-                          this.setState({
-                            quickView: {
-                              tableName: s.tableName,
-                              path: s.path,
-                            },
-                          });
-                        }}
-                      />
-                      <JoinedRecordsAddRow {...this.props} section={s} />
-                    </FlexRow>
-                  </div>
-                  {s.expanded && content}
-                </div>
-              );
-            })}
-          </FlexCol>
-        )} */}
     </FlexCol>
   );
 };

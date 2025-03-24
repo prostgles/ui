@@ -206,7 +206,6 @@ export class Filter extends RTComp<FilterProps, { error?: any }> {
       if (textFilterType) {
         content = (
           <FormFieldDebounced
-            asColumn={true}
             className="m-p5"
             type="text"
             autoComplete="off"

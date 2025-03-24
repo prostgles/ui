@@ -40,7 +40,7 @@ import { t } from "../../i18n/i18nUtils";
 
 type P = {
   tableName?: string;
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   dbs: DBS;
   onAddChart?: OnAddChart;
   w: WindowSyncItem<"sql">;
@@ -164,7 +164,6 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
             <FormField
               label={t.W_SQLMenu["Query name"]}
               value={w.name}
-              asColumn={true}
               type="text"
               onChange={(newVal) => {
                 w.$update(

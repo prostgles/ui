@@ -36,7 +36,7 @@ export const includes = <T extends string, ArrV extends T>(
 
 export type W_SQLBottomBarProps = {
   killQuery: (terminate: boolean) => void;
-  db: DBHandler;
+  db: DBHandler | DBS;
   dbs: DBS;
   dbsMethods: DBSMethods;
   connectionId: Prgl["connectionId"];

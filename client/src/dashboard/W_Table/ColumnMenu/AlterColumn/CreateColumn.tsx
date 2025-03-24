@@ -12,11 +12,12 @@ import { ColumnEditor } from "./ColumnEditor";
 import { getAlterFkeyQuery } from "./ReferenceEditor";
 import { t } from "../../../../i18n/i18nUtils";
 import { colIs } from "../../../SmartForm/SmartFormField/fieldUtils";
+import type { DBS } from "../../../Dashboard/DBS";
 
 export type CreateColumnProps = Pick<CommonWindowProps, "suggestions"> & {
   table: DBSchemaTable;
   field: string | undefined;
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   tables: DBSchemaTablesWJoins;
   onClose: VoidFunction;
 };

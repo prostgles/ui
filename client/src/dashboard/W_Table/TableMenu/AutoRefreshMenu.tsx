@@ -5,6 +5,7 @@ import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
 import type { RefreshOptions } from "./W_TableMenu";
 import React from "react";
 import FormField from "../../../components/FormField/FormField";
+import type { DBS } from "../../Dashboard/DBS";
 
 export const AutoRefreshMenu = ({
   w,
@@ -15,7 +16,7 @@ export const AutoRefreshMenu = ({
     | WindowSyncItem<"map">
     | WindowSyncItem<"table">
     | WindowSyncItem<"timechart">;
-  db?: DBHandlerClient;
+  db?: DBHandlerClient | DBS;
 }) => {
   const { refresh } = w.options;
   const {

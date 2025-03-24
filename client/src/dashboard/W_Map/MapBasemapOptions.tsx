@@ -87,7 +87,6 @@ export const MapBasemapOptions = ({ w, prgl, className, asPopup }: P) => {
             type="text"
             label="Basemap Image URL"
             autoComplete="off"
-            asColumn={true}
             value={basemapImage?.url}
             onChange={setBaseImageURL}
             rightIcons={
@@ -135,7 +134,6 @@ export const MapBasemapOptions = ({ w, prgl, className, asPopup }: P) => {
             type="text"
             label="Attribution"
             autoComplete="off"
-            asColumn={true}
             value={tileAttribution?.title}
             onChange={(title) => {
               updateOptions({
@@ -151,7 +149,6 @@ export const MapBasemapOptions = ({ w, prgl, className, asPopup }: P) => {
             type="url"
             label="Attribution URL"
             autoComplete="off"
-            asColumn={true}
             value={tileAttribution?.url}
             onChange={(url) => {
               updateOptions({
@@ -202,7 +199,6 @@ export const MapBasemapOptions = ({ w, prgl, className, asPopup }: P) => {
           />
           <FormField
             label="Tile size"
-            asColumn={true}
             value={tileSize || 256}
             options={[16, 32, 64, 128, 256, 512, 1024]}
             onChange={(tileSize) => {

@@ -23,6 +23,7 @@ import {
   type TimeChartLayerWithBin,
   type TimeChartLayerWithBinOrError,
 } from "./getTimeChartLayersWithBins";
+import type { DBS } from "../Dashboard/DBS";
 
 export const getTimeLayerDataSignature = (
   l: ProstglesTimeChartLayer,
@@ -109,7 +110,7 @@ type getTChartLayerArgs = Pick<
     bin: FetchedLayerData["binSize"] | undefined;
     binSize: FetchedLayerData["binSize"] | "auto";
     desiredBinCount: number;
-    db: DBHandlerClient;
+    db: DBHandlerClient | DBS;
     w: SyncDataItem<Required<WindowData<"timechart">>, true>;
   };
 async function getTChartLayer({

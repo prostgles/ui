@@ -22,6 +22,7 @@ import { bytesToSize } from "../Backup/BackupsControls";
 import { FlexCol } from "../../components/Flex";
 import SearchList from "../../components/SearchList/SearchList";
 import { ApplySuggestedDataTypes } from "./checkCSVColumnDataTypes";
+import type { DBS } from "../Dashboard/DBS";
 
 type Papa = typeof import("papaparse");
 export const getPapa = () =>
@@ -52,7 +53,7 @@ const camel_to_snake = (str) => {
 const fix_name = (str) => camel_to_snake(str); //.replace(/[\W_]+/g," ").trim().replace(/\s\s+/g, ' ').replace(/[\W_]+/g,"_"));
 
 export type FileImporterProps = {
-  db: DBHandlerClient;
+  db: DBHandlerClient | DBS;
   onClose: Function;
   openTable: (tableName: string) => void;
   style?: object;
@@ -404,7 +405,6 @@ export default class FileImporter extends RTComp<
           ) ?
             null
           : <FormField
-              asColumn={true}
               className="mb-1 "
               label="File (csv/txt/json/geojson)"
               type="file"
@@ -420,7 +420,6 @@ export default class FileImporter extends RTComp<
           {selectedFile && (
             <>
               <FormField
-                asColumn={true}
                 key={"new-table-name"}
                 readOnly={readonlyName}
                 className="mb-1 "
@@ -456,7 +455,6 @@ export default class FileImporter extends RTComp<
               {!importing?.finished && (
                 <>
                   <FormField
-                    asColumn={true}
                     readOnly={readonlyName}
                     className="mb-1 "
                     label="Drop table if exists"
@@ -467,7 +465,6 @@ export default class FileImporter extends RTComp<
                     }}
                   />
                   <FormField
-                    asColumn={true}
                     readOnly={readonlyName}
                     className="mb-1 "
                     label="Try to infer and apply column data types"
@@ -480,7 +477,6 @@ export default class FileImporter extends RTComp<
 
                   {selectedFile.type !== "csv" && (
                     <FormField
-                      asColumn={true}
                       className="mb-1 "
                       label="Insert as"
                       value={insertAs}
@@ -493,7 +489,6 @@ export default class FileImporter extends RTComp<
 
                   {selectedFile.type === "geojson" && (
                     <FormField
-                      asColumn={true}
                       type="text"
                       className="mb-1 "
                       label="SRID"

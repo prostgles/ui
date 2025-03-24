@@ -63,7 +63,6 @@ export const CloseSaveSQLPopup = ({
           <div className="flex-col">
             <FormField
               type="text"
-              asColumn={true}
               label="Name"
               defaultValue={namePopupWindow.name}
               required={true}

@@ -38,7 +38,6 @@ export const PublishedMethods = ({
 
   const functionList = (
     <SmartCardList
-      theme={prgl.theme}
       db={dbs}
       methods={dbsMethods}
       tables={dbsTables}
