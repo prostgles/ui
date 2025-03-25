@@ -12,7 +12,7 @@ export type Method = DBSSchema["published_methods"] & {
 
 type P = Pick<
   Prgl,
-  "dbs" | "db" | "tables" | "dbsTables" | "dbsMethods" | "theme" | "dbKey"
+  "dbs" | "db" | "tables" | "dbsTables" | "dbsMethods" | "dbKey"
 > & {
   /** If undefined then it's a new method */
   methodId: number | undefined;
@@ -22,7 +22,6 @@ type P = Pick<
 };
 export const NewMethod = ({
   dbKey,
-  theme,
   db,
   dbs,
   methodId,

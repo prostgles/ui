@@ -1,9 +1,12 @@
-import { usePromise } from "prostgles-client/dist/prostgles";
+import { useMemoDeep, usePromise } from "prostgles-client/dist/prostgles";
 import { isDefined } from "../../../utils";
 import type { LanguageConfig, TSLibrary } from "../../CodeEditor/CodeEditor";
 import { dboLib, pgPromiseDb } from "../../CodeEditor/monacoTsLibs";
 import type { MethodDefinitionProps } from "./MethodDefinition";
 import { fixIndent } from "../../../demo/sqlVideoDemo";
+import { useWhyDidYouUpdate } from "../../../components/MonacoEditor/useWhyDidYouUpdate";
+import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import { useRef } from "react";
 
 type Args = Pick<
   MethodDefinitionProps,
@@ -23,13 +26,29 @@ export const useCodeEditorTsTypes = (
     return dbSchemaTypes;
   }, [dbsMethods, connectionId]);
 
+  /**
+   * Reduce re-renders
+   */
+  const newMethodId = useRef("new_method_" + Date.now().toString());
+  const methodOpts = useMemoDeep(() => {
+    if (!method) return undefined;
+    return {
+      id: method.id ?? newMethodId,
+      args: method.arguments,
+      desc: method.description,
+    };
+  }, [method]);
+
   const tsLibrariesAndModelName = usePromise(async () => {
     if (dbSchemaTypes && dbsMethods.getNodeTypes && connectionId && dbKey) {
-      const methodTsLib = await fetchMethodDefinitionTypes({
-        dbs,
-        method,
-        tables,
-      });
+      const methodTsLib =
+        methodOpts &&
+        (await fetchMethodDefinitionTypes({
+          dbs,
+          arguments: methodOpts.args ?? [],
+          description: methodOpts.desc ?? "",
+          tables,
+        }));
       const libs = nodeLibs ?? (await dbsMethods.getNodeTypes());
       nodeLibs = libs;
       const tsLibraries: TSLibrary[] = [
@@ -67,10 +86,13 @@ export const useCodeEditorTsTypes = (
         /**
          * Using the same name for onmount and method will result in all editors showing the same content (first value)
          */
-        modelFileName: method ? `${method.name}` : `onMount_${connectionId}`,
+        modelFileName:
+          methodOpts ?
+            `method_${connectionId}${methodOpts.id}`
+          : `onMount_${connectionId}`,
       };
     }
-  }, [dbsMethods, connectionId, dbKey, method, tables, dbs, dbSchemaTypes]);
+  }, [dbsMethods, connectionId, dbKey, tables, dbs, dbSchemaTypes, methodOpts]);
 
   if (!tsLibrariesAndModelName) return;
 
@@ -80,14 +102,16 @@ export const useCodeEditorTsTypes = (
   };
 };
 
+type FetchMethodDefinitionTypesArgs = Pick<Args, "tables" | "dbs"> &
+  Pick<DBSSchema["published_methods"], "arguments" | "description">;
 const fetchMethodDefinitionTypes = async ({
   tables,
-  method,
+  arguments: args,
+  description,
   dbs,
-}: Pick<Args, "tables" | "method" | "dbs">) => {
-  if (!method) return;
+}: FetchMethodDefinitionTypesArgs) => {
   const userTypes = await dbs.user_types.find();
-  const argumentTypes = method.arguments?.map((a) => {
+  const argumentTypes = args.map((a) => {
     let type: string = a.type;
     if (a.type === "Lookup" && (a.lookup as any)) {
       const refT = tables.find((t) => t.name === a.lookup.table);
@@ -105,13 +129,13 @@ const fetchMethodDefinitionTypes = async ({
     return `    ${a.name}${a.optional ? "?" : ""}: ${type};\n`;
   });
   const argumentType =
-    argumentTypes?.length ? `{ \n${argumentTypes.join("")} \n}` : "never";
+    argumentTypes.length ? `{ \n${argumentTypes.join("")} \n}` : "never";
 
   const userTypesTs = userTypes.map((t) => JSON.stringify(t.id)).join(" | ");
   const tsMethodDef = fixIndent(`
     /**
      * Server-side function
-     * ${method.description}
+     * ${description}
      */
     type ProstglesMethod = (
       args: ${argumentType},
