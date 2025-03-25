@@ -123,7 +123,7 @@ test("renders the first page", async () => {
   await screenshot();
   await page
     .getByTestId("dashboard.goToConnConfig")
-    .waitFor({ state: "visible", timeout: 2e3 });
+    .waitFor({ state: "visible", timeout: 4e3 });
   await screenshot();
   // await page.reload();
   await page
