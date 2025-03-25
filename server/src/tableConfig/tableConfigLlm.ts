@@ -82,13 +82,8 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       api_docs_url: `TEXT`,
       api_pricing_url: `TEXT`,
       logo_base64: `TEXT`,
-      // default_chat_model: "TEXT",
       ...extraRequestData,
     },
-    // constraints: {
-    //   default_chat_model:
-    //     "FOREIGN KEY (id, default_chat_model) REFERENCES llm_models(provider_id, name)",
-    // },
   },
   llm_models: {
     columns: {
