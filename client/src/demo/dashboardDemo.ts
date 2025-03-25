@@ -86,8 +86,6 @@ export const dashboardDemo = async () => {
     nth: 0,
     noTimeToWait: true,
   });
-  await click("JoinedRecords.toggle");
-  await tout(1e3);
   await click(
     "JoinedRecords",
     `[data-key="orders"] button[data-label="Expand section"]`,
@@ -96,8 +94,6 @@ export const dashboardDemo = async () => {
   await click("JoinedRecords", `[data-command="SmartCard.viewEditRow"]`, {
     nth: 0,
   });
-  await tout(1e3);
-  await click("JoinedRecords.toggle");
   await tout(1e3);
   await click(
     "JoinedRecords",

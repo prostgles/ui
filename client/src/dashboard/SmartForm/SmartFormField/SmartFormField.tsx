@@ -193,7 +193,6 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   }
 
   const cantUpdate = readOnly && action === "update";
-
   return (
     <>
       {sectionHeader && (
@@ -242,7 +241,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         type={type}
         autoComplete={getInputAutocomplete(column)}
         label={column.label}
-        value={parsedValue}
+        value={parsedValue ?? null}
         rawValue={value}
         title={cantUpdate ? "You are not allowed to update this field" : ""}
         asJSON={asJSONResult.asJSON}

@@ -1,3 +1,7 @@
+import type {
+  TableHandlerClient,
+  ViewHandlerClient,
+} from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import { useMemo, useRef, useState } from "react";
 import { getSmartGroupFilter } from "../../../../../commonTypes/filterUtils";
@@ -122,10 +126,13 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
         const joinFilter = getSmartGroupFilter(detailedJoinFilter);
         let countStr = "0";
         let countError: string | undefined;
+        const tableHandler = db[j.tableName] as
+          | undefined
+          | Partial<TableHandlerClient | ViewHandlerClient>;
         try {
           if (!isInsert) {
             countStr =
-              (await db[j.tableName]?.count?.(joinFilter))?.toString() ?? "0";
+              (await tableHandler?.count?.(joinFilter))?.toString() ?? "0";
           }
         } catch (err) {
           countError = `Failed to db.${j.tableName}.count(${JSON.stringify(joinFilter)})`;
@@ -137,6 +144,9 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
           (isInsert ?
             nestedInsertData?.[j.tableName]?.length
           : existingDataCount) ?? 0;
+
+        const table = tables.find((t) => t.name === j.tableName);
+        if (!table) return;
 
         const res: JoinedRecordSection = {
           label: j.tableName,
@@ -151,6 +161,8 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
           expanded: currentSections.current.find(
             (s) => s.tableName === j.tableName,
           )?.expanded,
+          table,
+          tableHandler,
         };
 
         return res;
@@ -175,6 +187,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
     descendants,
     showRelated,
     errors,
+    tables,
   ]);
 
   currentSections.current = sections ?? [];

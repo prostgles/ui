@@ -227,7 +227,6 @@ export const COMMANDS = {
   "DashboardMenuHeader.togglePinned": "",
   "BackupControls.DeleteAll": "",
   "BackupControls.DeleteAll.Confirm": "",
-  "JoinedRecords.toggle": "",
   "ProjectConnection.error": "",
   NotFound: "",
   "NotFound.goHome": "",

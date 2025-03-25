@@ -388,6 +388,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                       onClickClose={false}
                     >
                       <JoinedRecords
+                        newRowDataHandler={undefined}
                         style={{ padding: 0 }}
                         db={prglState.dbs}
                         rowFilter={[{ fieldName: "id", value: this.conId }]}

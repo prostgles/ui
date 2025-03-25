@@ -49,7 +49,7 @@ export const MenuListItem = ({
           cursor: "pointer",
           borderColor: "var(--b-default)",
           borderBottomStyle: "solid",
-          borderBottomWidth: "4px",
+          borderBottomWidth: activeKey ? "4px" : "1px",
           flex: 1,
           color: "var(--text-0)",
           ...(isActive && {

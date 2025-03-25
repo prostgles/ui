@@ -1,8 +1,8 @@
 import { mdiPlus } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { getSmartGroupFilter } from "../../../../../commonTypes/filterUtils";
-import Btn from "../../../components/Btn";
+import Btn, { type BtnProps } from "../../../components/Btn";
 import { type GetRefHooks, SmartForm } from "../SmartForm";
 import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import type { JoinedRecordSection, JoinedRecordsProps } from "./JoinedRecords";
@@ -39,10 +39,14 @@ export const JoinedRecordsAddRow = (props: P) => {
       }
   >();
 
+  const { tableHandler } = db[tableName];
+  const isInsert = !rowFilter;
+
   let popupForm: React.ReactNode = null;
   const onClose = useCallback(() => {
     setInsert(undefined);
   }, []);
+
   if (insert?.type === "manual") {
     const fcols = tables.find((t) => t.name === insert.table)?.columns;
     const existingColumnData = newRowData?.[insert.table];
@@ -99,27 +103,12 @@ export const JoinedRecordsAddRow = (props: P) => {
     );
   }
 
-  /** Cannot insert if nested table
-   * TODO: allow insert if path.length === 2 and first path is a mapping table
-   */
-  if (section.path.length > 1) return null;
-
-  const tableHandler = db[tableName];
-  const isInsert = !rowFilter;
-  if (isInsert) {
-    if (!db[section.tableName]) return null;
-    return (
-      <>
-        {popupForm}
-        <Btn
-          key={section.tableName}
-          data-command="JoinedRecords.AddRow"
-          data-key={section.tableName}
-          title="Add referenced record"
-          color="action"
-          variant="filled"
-          iconPath={mdiPlus}
-          onClick={() => {
+  const btnProps: Pick<BtnProps, "onClick" | "title" | "disabledInfo"> =
+    useMemo(() => {
+      if (isInsert) {
+        return {
+          title: "Add referenced record",
+          onClick: async () => {
             setInsert({
               type: "manual",
               table: section.tableName,
@@ -134,29 +123,12 @@ export const JoinedRecordsAddRow = (props: P) => {
                 });
               },
             });
-          }}
-        />
-      </>
-    );
-  }
-
-  return (
-    <>
-      {popupForm}
-      <Btn
-        data-command="JoinedRecords.AddRow"
-        data-key={section.tableName}
-        variant="filled"
-        iconPath={mdiPlus}
-        title="Add new record"
-        disabledInfo={
-          !section.canInsert ?
-            `Cannot reference more than one ${JSON.stringify(section.tableName)}`
-            // : !isDescendantTableAndCanInsert ?
-            //   "Cannot insert into this table"
-          : undefined
-        }
-        onClick={async () => {
+          },
+        };
+      }
+      return {
+        title: "Add new record",
+        onClick: async () => {
           const parentRow = await tableHandler?.findOne?.(
             getSmartGroupFilter(rowFilter),
           );
@@ -171,7 +143,48 @@ export const JoinedRecordsAddRow = (props: P) => {
             });
             setInsert({ type: "auto", table: section.tableName, data });
           }
-        }}
+        },
+        disabledInfo:
+          !section.canInsert ?
+            section.table.info.isView ? "Cannot insert into a view"
+            : section.tableHandler?.insert ? "Cannot insert into this table"
+            : `Cannot reference more than one ${JSON.stringify(section.tableName)}`
+            // : !isDescendantTableAndCanInsert ?
+            //   "Cannot insert into this table"
+          : undefined,
+      };
+    }, [
+      isInsert,
+      section.canInsert,
+      section.table.info.isView,
+      section.tableName,
+      section.tableHandler,
+      rowFilter,
+      newRowData,
+      newRowDataHandler,
+      tableHandler,
+      tableName,
+      tables,
+    ]);
+
+  /** Cannot insert if nested table
+   * TODO: allow insert if path.length === 2 and first path is a mapping table
+   */
+  if (section.path.length > 1) return null;
+
+  if (isInsert && !section.tableHandler) return null;
+
+  return (
+    <>
+      {popupForm}
+      <Btn
+        data-command="JoinedRecords.AddRow"
+        data-key={section.tableName}
+        variant="filled"
+        color="action"
+        iconPath={mdiPlus}
+        title="Add new record"
+        {...btnProps}
       />
     </>
   );

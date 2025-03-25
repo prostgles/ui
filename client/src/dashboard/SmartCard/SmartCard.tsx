@@ -435,7 +435,7 @@ export default class SmartCard<T extends AnyObject> extends RTComp<
             : null}
             {/* <div className="font-12 text-2 noselect" title={c?.udt_name || ""}>{fc?.label || c?.label}</div> */}
             {fc?.render?.(defaultData[name], defaultData) || (
-              <div className="font-16 text-0 mt-p5 o-auto">
+              <div className="font-16 text-0 mt-dp5 o-auto">
                 {fc?.renderValue?.(defaultData[name], defaultData) ??
                   (c && <RenderValue column={c} value={defaultData[name]} />)}
               </div>

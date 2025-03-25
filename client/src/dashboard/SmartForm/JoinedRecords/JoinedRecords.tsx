@@ -1,4 +1,5 @@
 import { mdiTable } from "@mdi/js";
+import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import { type AnyObject } from "prostgles-types";
 import React, { useEffect } from "react";
 import {
@@ -12,6 +13,7 @@ import { FlexCol, FlexRow, classOverride } from "../../../components/Flex";
 import Loading from "../../../components/Loading";
 import { SvgIcon } from "../../../components/SvgIcon";
 import Tabs, { type TabItem } from "../../../components/Tabs";
+import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import SmartTable from "../../SmartTable";
 import type { SmartFormProps } from "../SmartForm";
 import type { NewRow, NewRowDataHandler } from "../SmartFormNewRowDataHandler";
@@ -47,6 +49,8 @@ export type JoinedRecordSection = {
   joinFilter: AnyObject;
   detailedJoinFilter: SmartGroupFilter;
   count: number;
+  table: DBSchemaTableWJoins;
+  tableHandler: Partial<TableHandlerClient> | undefined;
 };
 
 export const JoinedRecords = (props: JoinedRecordsProps) => {

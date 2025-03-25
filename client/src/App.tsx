@@ -88,6 +88,7 @@ export type PrglState = Pick<
 > & {
   setTitle: (content: ReactChild) => void;
 };
+
 export type PrglCore = {
   db: DBHandlerClient | DBS;
   methods: MethodHandler;

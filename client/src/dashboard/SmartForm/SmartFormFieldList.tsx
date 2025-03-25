@@ -1,4 +1,4 @@
-import { isObject, type AnyObject } from "prostgles-types";
+import { isDefined, isObject, type AnyObject } from "prostgles-types";
 import React from "react";
 import { classOverride, FlexCol } from "../../components/Flex";
 import { Label } from "../../components/Label";
@@ -12,6 +12,7 @@ import { SmartFormFileSection } from "./SmartFormFileSection";
 import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import type { SmartFormState } from "./useSmartForm";
 import type { SmartFormModeState } from "./useSmartFormMode";
+import { DeckGLMap } from "../Map/DeckGLMap";
 
 type P = Pick<
   SmartFormProps,
@@ -59,6 +60,17 @@ export const SmartFormFieldList = (props: P) => {
 
   const tableInfo = table.info;
 
+  // const geographyData = displayedColumns
+  //   .map((c) => {
+  //     if (c.udt_name === "geography") {
+  //       return {
+  //         column: c,
+  //         value: row[c.name],
+  //       };
+  //     }
+  //   })
+  //   .filter(isDefined);
+
   return (
     <div
       className={classOverride(
@@ -66,6 +78,22 @@ export const SmartFormFieldList = (props: P) => {
         contentClassname,
       )}
     >
+      {/* {!!geographyData.length && (
+        <DeckGLMap
+          geoJsonLayers={geographyData.map((d) => {
+            return {
+              features: d.value,
+              id: d.column.name,
+              label: d.column.name,
+            };
+          })}
+          basemapDesaturate={0}
+          basemapOpacity={1}
+          dataOpacity={1}
+          edit={undefined}
+          geoJsonLayersDataFilterSignature=""
+        />
+      )} */}
       {tableInfo.isFileTable && tableInfo.fileTableName && (
         <SmartFormFileSection
           {...props}

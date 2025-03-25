@@ -4,6 +4,7 @@ import { MediaViewer } from "../../../components/MediaViewer";
 import SmartCardList from "../../SmartCard/SmartCardList";
 import type { JoinedRecordSection, JoinedRecordsProps } from "./JoinedRecords";
 import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
+import { InfoRow } from "../../../components/InfoRow";
 
 export const JoinedRecordsSection = (
   props: JoinedRecordsProps & {
@@ -93,7 +94,7 @@ export const JoinedRecordsSection = (
     return null;
   } else {
     return (
-      <div className="flex-col py-1">
+      <div className="flex-col">
         {count > 20 && <div>Showing top {limit} records</div>}
         <SmartCardList
           key={s.path.join(".")}
@@ -105,7 +106,11 @@ export const JoinedRecordsSection = (
           className="px-1"
           onSuccess={onSuccess}
           excludeNulls={true}
-          noDataComponent={<>hey</>}
+          noDataComponent={
+            <InfoRow className="mx-1" color="info" variant="filled">
+              No records
+            </InfoRow>
+          }
           noDataComponentMode="hide-all"
           fieldConfigs={
             tables.some((t) => t.info.isFileTable && t.name === s.tableName) ?
