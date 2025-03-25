@@ -133,7 +133,8 @@ export async function getTableData(
             this.dataSub = await tableHandler.subscribe?.(
               _f,
               {
-                select: selectWithoutData,
+                /** Stale schema bug fix */
+                ...(!isEmpty(selectWithoutData) && selectWithoutData),
                 limit: 0,
                 throttle: throttleSeconds * 1000,
               },
