@@ -28,7 +28,7 @@ export type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods"> &
     tableName: string;
     rowFilter?: DetailedFilterBase[];
     newRowData: NewRow | undefined;
-    newRowDataHandler: NewRowDataHandler;
+    newRowDataHandler: NewRowDataHandler | undefined;
     showLookupTables?: boolean;
     showRelated?: "descendants";
     modeType?: "update" | "insert" | "view";
@@ -148,7 +148,13 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
                           }}
                         />
                       )}
-                      <JoinedRecordsAddRow {...props} section={section} />
+                      {props.newRowDataHandler && (
+                        <JoinedRecordsAddRow
+                          {...props}
+                          section={section}
+                          newRowDataHandler={props.newRowDataHandler}
+                        />
+                      )}
                     </FlexRow>
                     <JoinedRecordsSection
                       {...props}

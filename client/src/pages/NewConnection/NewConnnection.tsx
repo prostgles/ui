@@ -111,6 +111,7 @@ type NewConnectionState = {
   mode: "clone" | "edit" | "insert" | "loading";
   wasEdited: boolean;
   dropDatabase: boolean;
+  activeTabKey?: string;
 };
 
 class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
@@ -388,7 +389,12 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                       onClickClose={false}
                     >
                       <JoinedRecords
+                        activeTabKey={this.state.activeTabKey}
+                        onTabChange={(activeTabKey) =>
+                          this.setState({ activeTabKey })
+                        }
                         newRowDataHandler={undefined}
+                        newRowData={undefined}
                         style={{ padding: 0 }}
                         db={prglState.dbs}
                         rowFilter={[{ fieldName: "id", value: this.conId }]}
@@ -399,7 +405,6 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                         methods={prglState.dbsMethods}
                         errors={{}}
                         showOnlyFKeyTables={true}
-                        newRowData={undefined}
                       />
                     </PopupMenu>
                     <SwitchToggle

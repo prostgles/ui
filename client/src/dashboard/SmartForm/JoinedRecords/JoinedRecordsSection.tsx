@@ -84,9 +84,12 @@ export const JoinedRecordsSection = (
           // variant="row"
           onSuccess={onSuccess}
           data={nestedInsertData?.[s.tableName] ?? []}
-          onChange={(newData) => {
-            newRowDataHandler.setNestedTable(s.tableName, newData);
-          }}
+          onChange={
+            newRowDataHandler &&
+            ((newData) => {
+              newRowDataHandler.setNestedTable(s.tableName, newData);
+            })
+          }
         />
       );
     }

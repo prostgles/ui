@@ -323,6 +323,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     await page.getByText("Create function").click();
     await page.locator("input#function_name").fill("askLLM");
+    await page.waitForTimeout(1e3);
     await monacoType(page, ".MethodDefinition", "dbo.t", {
       deleteAll: false,
     });

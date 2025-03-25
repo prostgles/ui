@@ -7,7 +7,8 @@ import { type GetRefHooks, SmartForm } from "../SmartForm";
 import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import type { JoinedRecordSection, JoinedRecordsProps } from "./JoinedRecords";
 
-type P = JoinedRecordsProps & {
+type P = Omit<JoinedRecordsProps, "newRowDataHandler"> & {
+  newRowDataHandler: NewRowDataHandler;
   section: JoinedRecordSection;
 };
 export const JoinedRecordsAddRow = (props: P) => {
@@ -22,7 +23,6 @@ export const JoinedRecordsAddRow = (props: P) => {
     rowFilter,
     newRowData,
   } = props;
-  const refNestedForm = React.useRef<GetRefHooks>();
 
   const [insert, setInsert] = useState<
     | {
@@ -61,9 +61,6 @@ export const JoinedRecordsAddRow = (props: P) => {
     popupForm = (
       <SmartForm
         tableName={insert.table}
-        getRef={(r) => {
-          refNestedForm.current = r;
-        }}
         db={db}
         methods={methods}
         tables={tables}
