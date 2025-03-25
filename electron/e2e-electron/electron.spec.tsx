@@ -141,7 +141,9 @@ test("renders the first page", async () => {
   await page.getByTestId("dashboard.goToConnections").click();
   await createDatabase("crypto", page, true);
   await screenshot();
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(5e3);
+  await screenshot();
+  await page.waitForTimeout(5e3);
   await screenshot();
   await page.getByTestId("dashboard.goToConnConfig").click();
   await screenshot();
