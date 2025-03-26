@@ -9,16 +9,10 @@ import {
   FORKED_PROC_ENV_NAME,
   type ProcStats,
 } from "../../../commonTypes/utils";
+import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 
 export const getError = (rawError: any) => {
-  return rawError instanceof Error ?
-      Object.fromEntries(
-        Object.getOwnPropertyNames(rawError).map((key) => [
-          key,
-          (rawError as any)[key],
-        ]),
-      )
-    : rawError;
+  return rawError instanceof Error ? getErrorAsObject(rawError) : rawError;
 };
 const initForkedProc = () => {
   let _prglParams: OnReadyParamsBasic | undefined;
@@ -40,7 +34,7 @@ const initForkedProc = () => {
     process.send?.({
       lastMsgId,
       type: "error",
-      error: getError(error),
+      error: getErrorAsObject(error),
     } satisfies ForkedProcMessageError);
   };
   process.on("unhandledRejection", (reason: any, p) => {
@@ -135,7 +129,7 @@ const initForkedProc = () => {
             cb(undefined, methodResult);
           }
         } catch (rawError: any) {
-          const error = getError(rawError);
+          const error = getErrorAsObject(rawError);
           console.error("forkedProcess error", error);
           cb(error);
         }

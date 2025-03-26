@@ -2,6 +2,8 @@
 #!/bin/bash
 
 rm -rf ./ui/*
+rm -rf ./electron/ui/
+
 mkdir -p ./ui/server/src
 mkdir -p ./ui/server/dist
 mkdir -p ./ui/server/connection_dbo
@@ -11,9 +13,9 @@ mkdir -p ./ui/electron
 
 cp -R ./.github ./ui/
 
-cd ./server
-npm run build
-cd ..
+# cd ./server
+# npm run build
+# cd ..
 
 cp -R ./electron/*.json ./ui/electron/
 
@@ -23,12 +25,15 @@ cp -R ./server/sample_schemas ./ui/server/
 cp -R ./commonTypes ./ui/
 cp ./server/tsconfig.json ./ui/server/
 cp ./server/.gitignore ./ui/server/
-cp ./server/tslint.json ./ui/server/
-cp ./server/LICENSE ./ui/server/
+cp ./server/tslint.json ./ui/server/ 
 cp ./server/licenses.json ./ui/server/
 cp ./server/package.json ./ui/server/
 cp ./server/package-lock.json ./ui/server/
 cp ./server/build.sh ./ui/server/
+
+cd ./ui/server/
+npm run build
+cd ../../
 
 cd ./client
 npm run build
@@ -48,10 +53,7 @@ cp ./README.md ./ui/
 cp ./PRIVACY ./ui/
 cp ./server/.gitignore ./ui/
 cp ./Dockerfile ./ui/
-cp ./.env ./ui/
-
-mkdir -p ./ui/.github/ISSUE_TEMPLATE
-cp -R ./.github/ISSUE_TEMPLATE ./ui/.github/
+cp ./.env ./ui/ 
 
 mv ./ui ./electron
 

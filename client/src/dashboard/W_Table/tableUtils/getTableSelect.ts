@@ -1,6 +1,7 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import { isDefined } from "prostgles-types";
+import { getSmartGroupFilter } from "../../../../../commonTypes/filterUtils";
 import { isEmpty } from "../../../utils";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowData } from "../../Dashboard/dashboardUtils";
@@ -12,8 +13,6 @@ import {
 import type { ColumnConfig } from "../ColumnMenu/ColumnMenu";
 import type { MinMax, MinMaxVals } from "../W_Table";
 import { getFullColumnConfig } from "./tableUtils";
-import type { DBS } from "../../Dashboard/DBS";
-import { getSmartGroupFilter } from "../../../../../commonTypes/filterUtils";
 
 export const getTableSelect = async (
   w: Pick<WindowData<"table">, "columns" | "table_name">,

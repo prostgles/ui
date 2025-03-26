@@ -251,7 +251,8 @@ export class ForkedPrglProcRunner {
       const forkedPath = path.join(__dirname, "forkedProcess.js");
       const proc = fork(forkedPath, {
         ...forkOpts,
-        execArgv: ["--inspect-brk"],
+        //@ts-ignore
+        // execArgv: console.error("REMOVE") || ["--inspect-brk"],
         silent: true,
         env: {
           ...(pass_process_env_vars_to_server_side_functions ?

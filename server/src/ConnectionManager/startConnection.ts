@@ -104,7 +104,6 @@ export const startConnection = async function (
       maxHttpBufferSize: 1e8,
       cors: this.withOrigin,
     });
-    log(creatingPref, "io started");
     try {
       const global_settings = await dbs.global_settings.findOne();
       const hotReloadConfig = await getHotReloadConfigs(this, con, dbConf, dbs);
@@ -138,6 +137,7 @@ export const startConnection = async function (
         dbConf.table_config_ts,
         dbConf.table_config_ts_disabled,
       ).catch((e) => {
+        console.error("setTableConfig error", e);
         dbs.alerts.insert({
           severity: "error",
           message: "Table config was disabled due to error",
@@ -271,6 +271,7 @@ export const startConnection = async function (
       };
       this.setSyncUserSub();
     } catch (e) {
+      console.error("failed to start " + con.db_name, e);
       reject(e);
       this.prglConnections[con.id] = {
         io: _io,
