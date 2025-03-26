@@ -25,6 +25,7 @@ import {
 } from "../../dashboard/W_SQL/customRenderers";
 import { Icon } from "../../components/Icon/Icon";
 import { t } from "../../i18n/i18nUtils";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 type SessionsProps = Pick<Prgl, "dbs" | "dbsTables" | "user" | "dbsMethods"> & {
   displayType: "web_session" | "api_token";
@@ -59,7 +60,7 @@ export const Sessions = ({
   return (
     <SmartCardList
       title={tokenMode ? undefined : ({ count }) => `${sessionLabel} ${count}`}
-      db={dbs}
+      db={dbs as DBHandlerClient}
       methods={dbsMethods}
       tableName="sessions"
       tables={dbsTables}

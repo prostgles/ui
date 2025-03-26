@@ -13,6 +13,7 @@ import { FlexRow } from "../../components/Flex";
 import { ChangePassword } from "./ChangePassword";
 import { InfoRow } from "../../components/InfoRow";
 import { t } from "../../i18n/i18nUtils";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 type AccountProps = ExtraProps;
 
@@ -63,7 +64,7 @@ export const Account = (props: AccountProps) => {
       content: (
         <SmartForm
           label=""
-          db={dbs}
+          db={dbs as DBHandlerClient}
           methods={dbsMethods}
           tableName="users"
           tables={dbsTables}

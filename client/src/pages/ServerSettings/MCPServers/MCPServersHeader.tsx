@@ -7,6 +7,7 @@ import PopupMenu from "../../../components/PopupMenu";
 import Select from "../../../components/Select/Select";
 import { SmartForm } from "../../../dashboard/SmartForm/SmartForm";
 import type { ServerSettingsProps } from "../ServerSettings";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 export const MCPServersHeader = ({
   dbsMethods,
@@ -36,7 +37,7 @@ export const MCPServersHeader = ({
         >
           <SmartForm
             label=""
-            db={dbs}
+            db={dbs as DBHandlerClient}
             methods={dbsMethods}
             columnFilter={(c) =>
               [

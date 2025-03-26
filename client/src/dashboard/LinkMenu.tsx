@@ -17,7 +17,7 @@ import { JoinPathSelectorV2 } from "./W_Table/ColumnMenu/JoinPathSelectorV2";
 import { getLinkColorV2 } from "./W_Map/getMapLayerQueries";
 
 type P = {
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   dbs: DBS;
   onClose: VoidFunction;
 

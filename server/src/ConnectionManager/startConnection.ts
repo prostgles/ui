@@ -59,6 +59,7 @@ export const startConnection = async function (
 
   const socket_path = getConnectionPaths(con).ws;
 
+  const creatingPref = "creating prgl " + con.db_name;
   try {
     const prglInstance = this.prglConnections[con.id];
     if (prglInstance) {
@@ -78,7 +79,7 @@ export const startConnection = async function (
         return socket_path;
       }
     }
-    log("creating prgl", con.db_name);
+    log(creatingPref);
     this.prglConnections[con.id] = {
       io: undefined,
       socket_path,
@@ -103,6 +104,7 @@ export const startConnection = async function (
       maxHttpBufferSize: 1e8,
       cors: this.withOrigin,
     });
+    log(creatingPref, "io started");
     try {
       const global_settings = await dbs.global_settings.findOne();
       const hotReloadConfig = await getHotReloadConfigs(this, con, dbConf, dbs);

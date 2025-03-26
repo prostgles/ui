@@ -31,7 +31,7 @@ export * from "./smartFilterUtils";
 
 type Operand = "AND" | "OR";
 export type SmartFilterProps = Pick<FilterWrapperProps, "variant"> & {
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   tableName: string;
   tables: CommonWindowProps["tables"];
   onChange: (filter: SmartGroupFilter) => void;

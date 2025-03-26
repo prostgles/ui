@@ -34,7 +34,7 @@ type P = {
     | {
         prgl: Prgl;
         w: SyncDataItem<Required<WindowData<"table">>, true>;
-        db: DBHandlerClient | DBS;
+        db: DBHandlerClient;
         suggestions: LoadedSuggestions | undefined;
         table: DBSchemaTablesWJoins[number];
         tables: DBSchemaTablesWJoins;

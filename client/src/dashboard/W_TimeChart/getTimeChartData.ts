@@ -110,7 +110,7 @@ type getTChartLayerArgs = Pick<
     bin: FetchedLayerData["binSize"] | undefined;
     binSize: FetchedLayerData["binSize"] | "auto";
     desiredBinCount: number;
-    db: DBHandlerClient | DBS;
+    db: DBHandlerClient;
     w: SyncDataItem<Required<WindowData<"timechart">>, true>;
   };
 async function getTChartLayer({

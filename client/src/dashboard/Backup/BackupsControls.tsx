@@ -33,6 +33,7 @@ import { CodeConfirmation } from "./CodeConfirmation";
 import { DEFAULT_DUMP_OPTS, DumpOptions } from "./DumpOptions";
 import { RestoreOptions } from "./RestoreOptions";
 import { usePromise } from "prostgles-client/dist/react-hooks";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 const BACKUP_FILTER_OPTS = [
   { key: "This connection" },
@@ -274,7 +275,7 @@ export const BackupsControls = ({
         />
       </div>
       <SmartCardList
-        db={dbs}
+        db={dbs as DBHandlerClient}
         methods={dbsMethods}
         tableName="backups"
         btnColor="gray"
@@ -337,7 +338,7 @@ export const BackupsControls = ({
       />
 
       <SmartCardList
-        db={dbs}
+        db={dbs as DBHandlerClient}
         methods={dbsMethods}
         tableName="backups"
         btnColor="gray"
@@ -403,7 +404,7 @@ export const BackupsControls = ({
           </div>
         }
         onSetData={(items) => sethasBackups(!!items.length)}
-        db={dbs}
+        db={dbs as DBHandlerClient}
         methods={dbsMethods}
         tableName="backups"
         tables={dbsTables}

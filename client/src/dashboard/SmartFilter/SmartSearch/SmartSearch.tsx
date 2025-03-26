@@ -35,7 +35,7 @@ export type SmartSearchOnChangeArgs = {
 
 type P = {
   id?: string;
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   tableName: string;
   columns?: string[];
   column?: string | ColumnConfig;

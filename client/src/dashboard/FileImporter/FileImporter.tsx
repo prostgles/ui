@@ -53,7 +53,7 @@ const camel_to_snake = (str) => {
 const fix_name = (str) => camel_to_snake(str); //.replace(/[\W_]+/g," ").trim().replace(/\s\s+/g, ' ').replace(/[\W_]+/g,"_"));
 
 export type FileImporterProps = {
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   onClose: Function;
   openTable: (tableName: string) => void;
   style?: object;

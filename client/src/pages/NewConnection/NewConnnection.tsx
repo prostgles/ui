@@ -32,6 +32,7 @@ import { Icon } from "../../components/Icon/Icon";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
 import { t } from "../../i18n/i18nUtils";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 export const getSqlErrorText = (e: any) => {
   let objDetails: [string, any][] = [];
@@ -396,7 +397,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                         newRowDataHandler={undefined}
                         newRowData={undefined}
                         style={{ padding: 0 }}
-                        db={prglState.dbs}
+                        db={prglState.dbs as DBHandlerClient}
                         rowFilter={[{ fieldName: "id", value: this.conId }]}
                         showRelated="descendants"
                         tableName={"connections"}

@@ -257,6 +257,7 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
               { database: anotherDatabaseName.datname, ...superUser },
               true,
             );
+            await connMgr.disconnect(con.id);
             const killDbConnections = () => {
               return acdb.manyOrNone(
                 `
@@ -276,7 +277,6 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
             `,
               con,
             );
-            await connMgr.disconnect(con.id);
           }
           const conFilter = { connection_id: id };
           await t.workspaces.delete(conFilter);

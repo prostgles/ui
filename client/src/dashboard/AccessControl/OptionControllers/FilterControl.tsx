@@ -35,7 +35,7 @@ export type SingleGroupFilter =
 
 export type ForcedFilterControlProps = {
   detailedFilter?: SingleGroupFilter;
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   methods: MethodHandler;
   tables: DBSchemaTablesWJoins;
   tableName: string;

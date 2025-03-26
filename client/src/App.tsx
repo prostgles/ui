@@ -26,6 +26,7 @@ import type { AuthHandler } from "prostgles-client/dist/Auth";
 import {
   type DBHandlerClient,
   type MethodHandler,
+  type TableHandlerClient,
 } from "prostgles-client/dist/prostgles";
 import { type Socket } from "socket.io-client";
 import type { ServerState } from "../../commonTypes/electronInit";
@@ -90,7 +91,7 @@ export type PrglState = Pick<
 };
 
 export type PrglCore = {
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   methods: MethodHandler;
   tables: CommonWindowProps["tables"];
 };

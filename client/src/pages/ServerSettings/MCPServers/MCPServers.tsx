@@ -14,6 +14,7 @@ import type { ServerSettingsProps } from "../ServerSettings";
 import { MCPServerConfig, MCPServerConfigButton } from "./MCPServerConfig";
 import { MCPServersHeader } from "./MCPServersHeader";
 import { MCPServersInstall } from "./MCPServersInstall";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 export const MCPServers = (props: ServerSettingsProps) => {
   const [serverConfig, setServerConfig] = React.useState<{
@@ -71,7 +72,7 @@ export const MCPServers = (props: ServerSettingsProps) => {
         })}
       >
         <SmartCardList
-          db={dbs}
+          db={dbs as DBHandlerClient}
           methods={dbsMethods}
           {...(mcp_servers_disabled && {
             className: "no-interaction",

@@ -58,7 +58,7 @@ const options = [
 export type AddColumnMenuProps = {
   w: WindowSyncItem<"table">;
   tables: DBSchemaTablesWJoins;
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   suggestions: LoadedSuggestions | undefined;
   variant?: "detailed";
   nestedColumnOpts: NestedColumnOpts | undefined;

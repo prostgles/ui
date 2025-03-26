@@ -9,6 +9,7 @@ import type {
   Workspace,
 } from "../Dashboard/dashboardUtils";
 import { SmartForm } from "../SmartForm/SmartForm";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 type WorkspaceSettingsProps = Pick<Prgl, "dbs" | "dbsMethods"> & {
   w: Workspace;
@@ -62,7 +63,7 @@ export const WorkspaceSettings = ({
       render={(popupClose) => (
         <div className="flex-col gap-p5  min-h-0">
           <SmartForm
-            db={dbs}
+            db={dbs as DBHandlerClient}
             showJoinedTables={false}
             label=""
             tableName="workspaces"

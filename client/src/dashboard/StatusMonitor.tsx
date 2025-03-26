@@ -30,6 +30,7 @@ import type { SmartCardListProps } from "./SmartCard/SmartCardList";
 import SmartCardList from "./SmartCard/SmartCardList";
 import { StatusMonitorConnections } from "./StatusMonitor/StatusMonitorConnections";
 import { StyledInterval } from "./W_SQL/customRenderers";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 export type StatusMonitorProps = Pick<
   PrglState,
@@ -216,7 +217,7 @@ export const StatusMonitor = ({
     <div className="ws-pre">{shellResult}</div> */}
 
       <SmartCardList
-        db={dbs}
+        db={dbs as DBHandlerClient}
         methods={dbsMethods}
         tables={dbsTables}
         tableName="stats"

@@ -74,7 +74,7 @@ export type StyleColumnProps = Pick<Prgl, "db" | "tables"> & {
 };
 
 type DefaultConditionalStyleArgs = {
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   tableName: string;
   columnName: string;
   filter?: any;

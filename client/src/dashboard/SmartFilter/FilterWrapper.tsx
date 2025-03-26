@@ -36,7 +36,7 @@ import { colIs } from "../SmartForm/SmartFormField/fieldUtils";
 import type { DBS } from "../Dashboard/DBS";
 
 export type FilterWrapperProps = {
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   tableName: string;
   onChange: (filter?: DetailedFilterBase) => void;
   filter?: DetailedFilterBase;

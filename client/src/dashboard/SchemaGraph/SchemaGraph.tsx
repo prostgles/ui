@@ -9,7 +9,7 @@ import { drawSchema } from "./drawSchema";
 import type { DBS } from "../Dashboard/DBS";
 
 type P = {
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   onClickTable: (tableName: string) => any;
 };
 type Text = { label: string; color: string };

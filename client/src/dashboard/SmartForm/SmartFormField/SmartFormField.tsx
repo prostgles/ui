@@ -46,7 +46,7 @@ type SmartFormFieldValue =
   | null;
 
 export type SmartFormFieldProps = {
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   methods: Prgl["methods"];
   tableName: string;
   maxWidth?: string;

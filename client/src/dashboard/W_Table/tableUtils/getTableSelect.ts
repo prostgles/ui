@@ -18,7 +18,7 @@ import { getSmartGroupFilter } from "../../../../../commonTypes/filterUtils";
 export const getTableSelect = async (
   w: Pick<WindowData<"table">, "columns" | "table_name">,
   tables: CommonWindowProps["tables"],
-  db: DBHandlerClient | DBS,
+  db: DBHandlerClient,
   filter: AnyObject,
   withoutData = false,
 ): Promise<{ barchartVals?: AnyObject; select: AnyObject }> => {
@@ -108,7 +108,7 @@ export const getComputedColumnSelect = (
 
 export const getNestedColumnSelect = async (
   c: ColumnConfig,
-  db: DBHandlerClient | DBS,
+  db: DBHandlerClient,
   tables: CommonWindowProps["tables"],
   withoutData = false,
 ): Promise<{ select: AnyObject; dateExtent?: MinMax<Date> } | undefined> => {

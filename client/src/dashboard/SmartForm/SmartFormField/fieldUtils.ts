@@ -20,7 +20,7 @@ import type { DBS } from "../../Dashboard/DBS";
 export const OPTIONS_LIMIT = 20;
 export const getSuggestions = async (args: {
   table: string;
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   column: FilterColumn;
   term?: string;
   groupBy?: boolean;

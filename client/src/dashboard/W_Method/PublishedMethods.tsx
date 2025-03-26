@@ -14,6 +14,7 @@ import { ProcessLogs } from "../TableConfig/ProcessLogs";
 import { NewMethod } from "./NewMethod";
 import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAccessRule";
 import ConfirmationDialog from "../../components/ConfirmationDialog";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 type P = {
   className?: string;
@@ -38,7 +39,7 @@ export const PublishedMethods = ({
 
   const functionList = (
     <SmartCardList
-      db={dbs}
+      db={dbs as DBHandlerClient}
       methods={dbsMethods}
       tables={dbsTables}
       tableName="published_methods"

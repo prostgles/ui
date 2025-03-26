@@ -23,7 +23,7 @@ import type { DBS } from "../../../Dashboard/DBS";
 
 export type LinkedColumnProps = {
   tables: DBSchemaTablesWJoins;
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   w: WindowSyncItem<"table">;
   column: ColumnConfigWInfo | undefined;
   onClose: VoidFunction | undefined;

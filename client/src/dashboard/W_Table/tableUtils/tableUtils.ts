@@ -213,7 +213,7 @@ export const getSort = (
 export const getJoinedTables = (
   tables: DBSchemaTable[],
   tableName: string,
-  db: DBHandlerClient | DBS,
+  db: DBHandlerClient,
 ): { joins: Join[]; joinsV2: JoinV2[] } => {
   const myCols = tables.find((t) => t.name === tableName)?.columns;
   const upsertJoin = (joins: Join[], upsertedJoin: Join) => {

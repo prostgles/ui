@@ -633,7 +633,7 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<
 export const getTables = async (
   schemaTables: DBSchemaTable[],
   workspace: WorkspaceSyncItem | undefined,
-  db: DBHandlerClient | DBS,
+  db: DBHandlerClient,
 ): Promise<
   | { tables: DBSchemaTablesWJoins; error?: undefined }
   | { error: any; tables?: undefined }

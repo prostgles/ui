@@ -17,7 +17,7 @@ import type { DBS } from "../../../Dashboard/DBS";
 export type CreateColumnProps = Pick<CommonWindowProps, "suggestions"> & {
   table: DBSchemaTable;
   field: string | undefined;
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   tables: DBSchemaTablesWJoins;
   onClose: VoidFunction;
 };

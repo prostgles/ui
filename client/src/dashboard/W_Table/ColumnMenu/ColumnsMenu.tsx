@@ -47,7 +47,7 @@ import { getColumnDataColor } from "../../SmartForm/SmartFormField/RenderValue";
 import type { DBS } from "../../Dashboard/DBS";
 
 type P = {
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   w: WindowSyncItem<"table">;
   nestedColumnOpts: NestedColumnOpts | undefined;
   tables: CommonWindowProps["tables"];

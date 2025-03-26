@@ -199,52 +199,48 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
       message: {
         jsonbSchema: {
-          oneOf: [
-            {
-              arrayOf: {
-                oneOf: [
-                  {
-                    type: {
-                      type: {
-                        enum: ["text"],
-                      },
-                      text: "string",
-                    },
+          arrayOf: {
+            oneOf: [
+              {
+                type: {
+                  type: {
+                    enum: ["text"],
                   },
-                  {
-                    type: {
-                      type: {
-                        enum: ["image"],
-                      },
-                      source: {
-                        type: {
-                          type: { enum: ["base64"] },
-                          media_type: "string",
-                          data: "string",
-                        },
-                      },
-                    },
-                  },
-                  {
-                    type: {
-                      type: { enum: ["tool_result"] },
-                      tool_use_id: "string",
-                      content: toolUseContent,
-                      is_error: { optional: true, type: "boolean" },
-                    },
-                  },
-                  {
-                    type: {
-                      type: { enum: ["tool_use"] },
-                      id: "string",
-                      name: "string",
-                      input: "any",
-                    },
-                  },
-                ],
+                  text: "string",
+                },
               },
-            },
-          ],
+              {
+                type: {
+                  type: {
+                    enum: ["image"],
+                  },
+                  source: {
+                    type: {
+                      type: { enum: ["base64"] },
+                      media_type: "string",
+                      data: "string",
+                    },
+                  },
+                },
+              },
+              {
+                type: {
+                  type: { enum: ["tool_result"] },
+                  tool_use_id: "string",
+                  content: toolUseContent,
+                  is_error: { optional: true, type: "boolean" },
+                },
+              },
+              {
+                type: {
+                  type: { enum: ["tool_use"] },
+                  id: "string",
+                  name: "string",
+                  input: "any",
+                },
+              },
+            ],
+          },
         },
       },
       meta: "JSONB",

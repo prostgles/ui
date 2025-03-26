@@ -31,7 +31,7 @@ export type ProjectProps = {
 
 export type FullExtraProps = ExtraProps & {
   projectPath?: string;
-  dbProject: DBHandlerClient | DBS;
+  dbProject: DBHandlerClient;
   dbMethods: MethodHandler;
   dbTables: CommonWindowProps["tables"];
 };

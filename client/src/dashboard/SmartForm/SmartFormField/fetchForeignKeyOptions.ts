@@ -115,7 +115,7 @@ type Args = {
   textColumn: string | undefined;
   tableName: string;
   filter: AnyObject | undefined;
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
 };
 const fetchSearchResults = async ({
   mainColumn,

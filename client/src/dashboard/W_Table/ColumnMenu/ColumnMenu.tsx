@@ -117,7 +117,7 @@ export type ColumnConfig = {
 };
 
 type P = Pick<CommonWindowProps, "suggestions" | "tables" | "prgl"> & {
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   dbs: DBS;
   w: WindowSyncItem<"table">;
   columnMenuState: W_Table["columnMenuState"];

@@ -65,7 +65,7 @@ type ComputedColumn = Pick<
 export type FilterColumn = TableColumn | ComputedColumn;
 
 export type BaseFilterProps = Pick<FilterWrapperProps, "variant"> & {
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   tableName: string;
   onChange: (filter?: SimpleFilter) => void;
   tables: CommonWindowProps["tables"];

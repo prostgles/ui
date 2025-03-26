@@ -50,7 +50,7 @@ export type MapDataResult = {
 
 export const getSQLData = async (
   layer: LayerSQL,
-  db: DBHandlerClient | DBS,
+  db: DBHandlerClient,
   AGG_LIMIT: number,
 ): Promise<{ $rowhash: string; l: AnyObject }[]> => {
   const { parameters, geomColumn } = layer;
@@ -141,7 +141,7 @@ export const getMapFilter = (
 
 export const getSQLHoverRow = async (
   q: LayerSQL,
-  db: DBHandlerClient | DBS,
+  db: DBHandlerClient,
   $rowhash: string,
 ): Promise<{ $rowhash: string; d: AnyObject } | undefined> => {
   const { parameters, geomColumn } = q;

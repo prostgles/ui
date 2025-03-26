@@ -22,6 +22,7 @@ import { SmartForm } from "../../dashboard/SmartForm/SmartForm";
 import { t } from "../../i18n/i18nUtils";
 import { AuthProviderSetup } from "./AuthProvidersSetup";
 import { MCPServers } from "./MCPServers/MCPServers";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 export type ServerSettingsProps = Pick<
   Prgl,
@@ -82,7 +83,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                     <SmartForm
                       className="bg-color-0 shadow "
                       label=""
-                      db={dbs}
+                      db={dbs as DBHandlerClient}
                       methods={dbsMethods}
                       connection={connection}
                       tableName="global_settings"
@@ -173,7 +174,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                 label: t.ServerSettings["Cloud credentials"],
                 content: (
                   <SmartCardList
-                    db={dbs}
+                    db={dbs as DBHandlerClient}
                     methods={dbsMethods}
                     tableName="credentials"
                     tables={dbsTables}

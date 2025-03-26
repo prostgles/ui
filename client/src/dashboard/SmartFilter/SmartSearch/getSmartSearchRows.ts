@@ -21,7 +21,7 @@ type Args = {
   currentlySearchedColumn: string;
   term: string;
   matchCase: boolean;
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   tableName: string;
   columns: Pick<ValidatedColumnInfo, "name" | "is_pkey" | "udt_name">[];
   detailedFilter: SmartGroupFilter;

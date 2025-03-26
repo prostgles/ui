@@ -7,6 +7,7 @@ import { FlexCol } from "../../components/Flex";
 import Popup from "../../components/Popup/Popup";
 import { SmartForm } from "../SmartForm/SmartForm";
 import { t } from "../../i18n/i18nUtils";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 export type LLMChatOptionsProps = Pick<Prgl, "dbs" | "dbsTables" | "theme"> & {
   prompts: DBSSchema["llm_prompts"][] | undefined;
@@ -33,15 +34,15 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
       />
       {anchorEl && (
         <Popup
-          contentStyle={{ padding: 0 }}
+          contentStyle={{ padding: 0, maxWidth: "min(100vw, 600px)" }}
           onClickClose={false}
           onClose={() => setAnchorEl(undefined)}
           anchorEl={chatRootDiv}
-          positioning="left"
+          positioning="right-panel"
           clickCatchStyle={{ opacity: 1 }}
           title={t.AskLLMChatHeader["Chat settings"]}
           content={
-            <FlexCol>
+            <FlexCol className="f-1 min-s-0">
               <SmartForm
                 {...props}
                 label=""
@@ -54,7 +55,7 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
                   created: 1,
                 }}
                 jsonbSchemaWithControls={true}
-                db={dbs}
+                db={dbs as DBHandlerClient}
                 tables={dbsTables}
                 methods={{}}
                 rowFilter={[{ fieldName: "id", value: activeChatId }]}

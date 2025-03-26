@@ -11,6 +11,7 @@ import type { DBS, DBSMethods } from "../Dashboard/DBS";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import { getMonaco } from "../SQLEditor/SQLEditor";
 import { SmartForm } from "../SmartForm/SmartForm";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 type P = {
   pickFirst?: boolean;
@@ -80,7 +81,7 @@ export function CredentialSelector({
         render={(popupClose) => (
           <SmartForm
             methods={dbsMethods}
-            db={dbs}
+            db={dbs as DBHandlerClient}
             label="Add Cloud credentials"
             tableName="credentials"
             tables={dbsTables}

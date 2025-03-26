@@ -12,6 +12,7 @@ import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAcces
 import { SmartForm } from "../SmartForm/SmartForm";
 import { SetupLLMCredentials } from "./SetupLLMCredentials";
 import { useLLMSetupState } from "./useLLMSetupState";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 type P = Prgl & {
   accessRuleId: number | undefined;
@@ -181,7 +182,7 @@ export const AskLLMAccessControl = ({
                   key={addFormKey}
                   contentClassname="flex-row px-0 p-p25"
                   tableName="access_control_allowed_llm"
-                  db={dbs}
+                  db={dbs as DBHandlerClient}
                   methods={{}}
                   tables={dbsTables}
                   columnFilter={(c) =>

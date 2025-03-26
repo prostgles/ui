@@ -30,7 +30,7 @@ type Args = Pick<
   | "streamColDelimiter"
   | "inferAndApplyDataTypes"
 > & {
-  db: DBHandler | DBS;
+  db: DBHandler;
   onError: (err: any) => void;
   onProgress: (stats: ImportProgress) => { canContinue: boolean };
 };

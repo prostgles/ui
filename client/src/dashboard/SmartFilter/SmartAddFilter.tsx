@@ -29,7 +29,7 @@ import { getDefaultAgeFilter } from "./AgeFilter";
 import type { DBS } from "../Dashboard/DBS";
 
 export type SmartAddFilterProps = {
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   tableName: string;
   tables: CommonWindowProps["tables"];
   selectedColumns: ColumnConfig[] | undefined;

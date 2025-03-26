@@ -16,7 +16,7 @@ export const AutoRefreshMenu = ({
     | WindowSyncItem<"map">
     | WindowSyncItem<"table">
     | WindowSyncItem<"timechart">;
-  db?: DBHandlerClient | DBS;
+  db?: DBHandlerClient;
 }) => {
   const { refresh } = w.options;
   const {

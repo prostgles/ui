@@ -1,5 +1,6 @@
 import {
   useProstglesClient,
+  type DBHandlerClient,
   type UseProstglesClientProps,
 } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
@@ -140,7 +141,7 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
             connectionId: con.id,
             connection: connection ?? con,
             databaseId: dbConf.id,
-            db: thisIstheStateDB ? dbs : db,
+            db: thisIstheStateDB ? (dbs as DBHandlerClient) : db,
             tables: thisIstheStateDB ? dbsTables : dbTables,
             methods: methods ?? {},
             projectPath: path,

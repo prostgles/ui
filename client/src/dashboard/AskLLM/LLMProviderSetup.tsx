@@ -7,6 +7,7 @@ import Popup from "../../components/Popup/Popup";
 import Btn from "../../components/Btn";
 import { FlexCol } from "../../components/Flex";
 import { SmartForm } from "../SmartForm/SmartForm";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 export const LLMProviderSetup = ({
   dbs,
@@ -26,7 +27,7 @@ export const LLMProviderSetup = ({
           label=""
           showJoinedTables={false}
           tableName="llm_credentials"
-          db={dbs}
+          db={dbs as DBHandlerClient}
           methods={dbsMethods}
           tables={dbsTables}
           onChange={console.log}
@@ -39,7 +40,7 @@ export const LLMProviderSetup = ({
     <>
       <SmartCardList
         className="mb-1"
-        db={dbs}
+        db={dbs as DBHandlerClient}
         tableName={"llm_credentials"}
         methods={dbsMethods}
         tables={dbsTables}

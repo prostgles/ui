@@ -8,7 +8,7 @@ import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import type { DBS } from "../Dashboard/DBS";
 
 type Args = Pick<DashboardMenuProps, "workspace" | "tables"> & {
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
 };
 export type TablesWithInfo = (DBSchemaTablesWJoins[number] & {
   endText: string;

@@ -26,7 +26,7 @@ export type AlterColumnProps = Pick<CommonWindowProps, "suggestions"> & {
   prgl: Prgl;
   table: DBSchemaTable;
   field: string;
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   tables: DBSchemaTablesWJoins;
   onClose: VoidFunction;
 };

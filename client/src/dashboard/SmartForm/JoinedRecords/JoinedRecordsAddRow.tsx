@@ -39,7 +39,7 @@ export const JoinedRecordsAddRow = (props: P) => {
       }
   >();
 
-  const { tableHandler } = db[tableName];
+  const tableHandler = db[tableName];
   const isInsert = !rowFilter;
 
   let popupForm: React.ReactNode = null;

@@ -40,7 +40,7 @@ import { t } from "../../i18n/i18nUtils";
 
 type P = {
   tableName?: string;
-  db: DBHandlerClient | DBS;
+  db: DBHandlerClient;
   dbs: DBS;
   onAddChart?: OnAddChart;
   w: WindowSyncItem<"sql">;
