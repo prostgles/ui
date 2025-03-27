@@ -316,7 +316,7 @@ export const setupMCPServerHub = async (dbs: DBS) => {
       })),
     );
   }
-  for await (const sub of Object.values(mcpSubscriptions)) {
+  for (const sub of Object.values(mcpSubscriptions)) {
     await sub?.unsubscribe();
   }
 

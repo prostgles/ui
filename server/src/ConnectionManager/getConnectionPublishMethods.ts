@@ -63,7 +63,7 @@ export const getConnectionPublishMethods = ({
               /**
                * Validate args
                */
-              for await (const arg of m.arguments) {
+              for (const arg of m.arguments) {
                 let argType = omitKeys(arg, ["name"]);
                 if (arg.type === "Lookup" || arg.type === "Lookup[]") {
                   argType = {

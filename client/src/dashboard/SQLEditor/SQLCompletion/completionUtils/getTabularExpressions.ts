@@ -30,6 +30,7 @@ const tablePrecedingKeywords = [
   "update",
   /**
    * comma is may be used as an alias for CROSS JOIN
+   * Only valid if we already have a tabular expression
    */
   ",",
 ] as const;
@@ -176,6 +177,11 @@ const getExpressions = (
     };
   };
 
+  const withParentCbExpressions =
+    parentCb && parentCb.tokens[0]?.textLC === "with" ?
+      getTabularExpressions({ cb: parentCb, ss }, "table")
+    : [];
+
   const expressions: TabularExpression[] = [];
   const isWith = tokens[0]?.textLC === "with";
   const isPolicy = tokens[1]?.textLC === "policy";
@@ -193,7 +199,8 @@ const getExpressions = (
       : indexOrPolicy ? policyTablePrecedingKeywords
       : isWith && !isWithAsSectionFinished ? withTablePrecedingKeywords
       : []),
-    ];
+    ].filter((tk) => expressions.length || tk !== ",");
+
     if (!isWithAsSectionFinished && t.textLC === "select" && !t.nestingId) {
       isWithAsSectionFinished = true;
     }
@@ -318,7 +325,7 @@ const getExpressions = (
       } else if (t.type === "identifier.sql" && !t.nestingId) {
         const [matchingTable, ...otherTables] = ss.filter((s) => {
           return (
-            ["table", "view", "mview"].includes(s.type) &&
+            (["table", "view", "mview"] as const).some((t) => s.type === t) &&
             matchTableFromSuggestions(s as any, t)
           );
         });
@@ -347,8 +354,16 @@ const getExpressions = (
             });
           }
           /** CTE alias */
-        } else if (!matchingTable && isWith && isWithAsSectionFinished) {
-          const matchingWith = expressions.find(
+        } else if (
+          !matchingTable &&
+          ((isWith && isWithAsSectionFinished) ||
+            withParentCbExpressions.length)
+        ) {
+          const withExpressions =
+            isWith && isWithAsSectionFinished ? expressions : (
+              withParentCbExpressions
+            );
+          const matchingWith = withExpressions.find(
             (e) => e.alias === t.text && e.kwd === "as",
           );
           if (matchingWith) {

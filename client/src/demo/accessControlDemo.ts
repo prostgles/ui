@@ -14,7 +14,7 @@ export const accessControlDemo = async () => {
     await click("config.ac.removeRule");
   }
 
-  for await (const { selector, timestamp } of videoDemoAccessControlScripts) {
+  for (const { selector, timestamp } of videoDemoAccessControlScripts) {
     await click("", selector);
     console.log(selector);
     await tout(450);

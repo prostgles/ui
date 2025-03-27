@@ -284,9 +284,7 @@ export class ConnectionManager {
       {},
       { throttle: 1e3 },
       async (users) => {
-        for await (const [connId, prglCon] of Object.entries(
-          this.prglConnections,
-        )) {
+        for (const [connId, prglCon] of Object.entries(this.prglConnections)) {
           const db = prglCon.prgl?.db;
           const dbUsersHandler = db?.users;
           const dbConf = await this.dbs?.database_configs.findOne({

@@ -285,7 +285,7 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
             await t.backups.update(conFilter, { connection_id: null });
           } else {
             const bkps = await t.backups.find(conFilter);
-            for await (const b of bkps) {
+            for (const b of bkps) {
               await bkpManager.bkpDelete(b.id, true);
             }
             await t.backups.delete(conFilter);

@@ -59,7 +59,7 @@ export default class BackupManager {
           database_configs: { "backups_config->>enabled": "true" },
         },
       } as any);
-      for await (const con of connections) {
+      for (const con of connections) {
         await this.checkAutomaticBackup(con);
       }
     };

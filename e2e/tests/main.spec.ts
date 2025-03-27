@@ -759,7 +759,7 @@ test.describe("Main test", () => {
     await login(page);
     /** Delete previous user */
     await page.goto("localhost:3004/users", { waitUntil: "networkidle" });
-    for await (const username of [USERS.default_user, USERS.public_user]) {
+    for (const username of [USERS.default_user, USERS.public_user]) {
       await page.locator(`#search-all`).fill(username);
       await page.waitForTimeout(1e3);
       // await page.keyboard.press("ArrowDown");
@@ -842,7 +842,7 @@ test.describe("Main test", () => {
     /** Test sql key bindings */
     await page.keyboard.press("Alt+KeyE");
     const keybindings = ["Alt+KeyE", "Control+KeyE", "Control+Enter", "F5"];
-    for await (const key of keybindings) {
+    for (const key of keybindings) {
       const text = `hello${key}`;
       await monacoType(page, `.ProstglesSQL`, `SELECT '${text}'`);
       await page.keyboard.press(key);
@@ -1484,7 +1484,7 @@ test.describe("Main test", () => {
     await page.getByTestId("dashboard.window.menu").click();
     await page.getByText("General").click();
 
-    for await (const _ of new Array(5).fill(1)) {
+    for (const _ of new Array(5).fill(1)) {
       await page.getByText("TEST", { exact: true }).click();
       await page.waitForTimeout(100);
     }

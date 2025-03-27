@@ -250,8 +250,7 @@ export const ConnectionServer = ({
       action.applySchema?.type === "dir" &&
       action.applySchema.workspaceConfig
     ) {
-      for await (const workspace of action.applySchema.workspaceConfig
-        .workspaces) {
+      for (const workspace of action.applySchema.workspaceConfig.workspaces) {
         await dbs.sql?.(`DELETE FROM workspaces WHERE name = $1`, [
           workspace.name,
         ]);

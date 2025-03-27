@@ -46,13 +46,13 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
     return;
   }
 
-  for await (const l of this.props.myLinks) {
+  for (const l of this.props.myLinks) {
     const opts = l.options;
     if (opts.type === "map" && opts.mapIcons) {
       if (opts.mapIcons.type === "fixed") {
         await getIcon(opts.mapIcons.iconPath);
       } else {
-        for await (const c of opts.mapIcons.conditions) {
+        for (const c of opts.mapIcons.conditions) {
           await getIcon(c.iconPath);
         }
       }

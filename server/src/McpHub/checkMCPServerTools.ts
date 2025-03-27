@@ -8,7 +8,7 @@ import type { McpTool } from "./McpTypes";
  * Check if enabled server tools are not in the mcp schema
  * */
 export const checkMCPServerTools = async (mcpHub: McpHub) => {
-  for await (const serverName of Object.keys(mcpHub.connections)) {
+  for (const serverName of Object.keys(mcpHub.connections)) {
     await tryCatchV2(async () => {
       const actualTools = await mcpHub.fetchToolsList(serverName);
       const savedTools =

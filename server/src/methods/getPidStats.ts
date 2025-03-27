@@ -185,7 +185,7 @@ const getPidStatsMode = async (
 
   let mode: PidStatMode | undefined;
   const available: PidStatProgs[] = [];
-  for await (const [program, method] of Object.entries(pidStatsMethods) as [
+  for (const [program, method] of Object.entries(pidStatsMethods) as [
     PidStatProgs,
     (typeof pidStatsMethods)[keyof typeof pidStatsMethods],
   ][]) {
@@ -195,7 +195,7 @@ const getPidStatsMode = async (
         mode ??= program;
         available.push(program);
       } else {
-      /** TODO - ensure ps & proc output same values as top for cpu */
+        /** TODO - ensure ps & proc output same values as top for cpu */
         const [which] = await execPSQLBash(db, connId, `which ${program}`);
         if (which) {
           await method(db, connId);

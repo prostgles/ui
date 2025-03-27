@@ -19,6 +19,35 @@ export const testBugs: DemoScript = async (args) => {
     runSQL,
   } = args;
 
+  const nestedSubQueryInWith = fixIndent(`
+    WITH cols AS (
+        SELECT *
+        FROM information_schema.columns c
+      )
+    SELECT
+      t.table_schema,
+      t.table_name,
+      c.*
+    FROM information_schema.tables t
+    LEFT JOIN LATERAL (
+      SELECT
+        t.table_schema,
+        t.table_name,
+        jsonb_agg(to_jsonb(c.*) ORDER BY c.)
+      FROM
+        cols c
+      WHERE t.table_schema = c.table_schema AND t.table_name = c.table_name
+      GROUP BY 1, 2
+    ) c ON TRUE`);
+  fromBeginning(false, nestedSubQueryInWith);
+  await moveCursor.up(5);
+  await moveCursor.lineEnd();
+  await moveCursor.left();
+  await typeAuto(`pos`);
+  testResult(
+    nestedSubQueryInWith.replace("ORDER BY c.", "ORDER BY c.ordinal_position"),
+  );
+
   const alterTable3TknsBug = fixIndent`
     ALTER TABLE pg_catalog.pg_transform`;
   fromBeginning(false, alterTable3TknsBug);
@@ -99,7 +128,7 @@ export const testBugs: DemoScript = async (args) => {
     `CREATE TABLE IF NOT EXISTS my_p_table (id1 serial PRIMARY KEY, name1 text);`,
   );
   const publicSchemaPrefix = "SELECT * FROM public.my_p_table WHERE";
-  for await (const script of [
+  for (const script of [
     publicSchemaPrefix,
     publicSchemaPrefix.replace("public", "PUBLIC"),
   ]) {
@@ -110,7 +139,7 @@ export const testBugs: DemoScript = async (args) => {
 
   /** Create index public schema prefix */
   const publicSchemaPrefixIndex = "CREATE INDEX ON public.my_p_table (  )";
-  for await (const script of [
+  for (const script of [
     publicSchemaPrefixIndex,
     publicSchemaPrefixIndex.replace("public", "PUBLIC"),
   ]) {
@@ -465,7 +494,7 @@ FROM geography_columns
     ) t
   )
   SELECT *`;
-  for await (const cteScript of [cteScriptCompressed, cteScriptSpaced]) {
+  for (const cteScript of [cteScriptCompressed, cteScriptSpaced]) {
     fromBeginning(false, cteScript);
     await typeAuto(" ");
     await typeAuto(" ");

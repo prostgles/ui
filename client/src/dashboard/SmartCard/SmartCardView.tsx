@@ -154,7 +154,7 @@ export const SmartCardView = () => {
 //         let fcs = fieldConfigs.slice(0);
 //         let finalSelect = {};
 
-//         for await (const fc of fcs) {
+//         for (const fc of fcs) {
 //           if ("fieldConfigs" in fc) {
 //             if (fc.name === tableInfo.fileTableName) {
 //               finalSelect[fc.name] = {

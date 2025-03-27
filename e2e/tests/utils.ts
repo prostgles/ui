@@ -786,7 +786,7 @@ export const getLLMResponses = async (page: PageWIds, questions: string[]) => {
     isOk: boolean;
   }[] = [];
 
-  for await (const question of questions) {
+  for (const question of questions) {
     await page.getByTestId("AskLLM.popup").locator("textarea").fill(question);
     await page.getByTestId("AskLLM.popup").getByTestId("Chat.send").click();
     await page.waitForTimeout(2e3);
