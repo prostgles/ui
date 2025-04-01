@@ -5,7 +5,7 @@ import {
   type TableHandlerClient,
 } from "prostgles-client/dist/prostgles";
 import { isObject, type AnyObject } from "prostgles-types";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getSmartGroupFilter,
   type DetailedFilterBase,
@@ -68,9 +68,10 @@ export const useSmartFormMode = ({
   table,
   onChange,
   parentForm,
+  onLoaded,
 }: Pick<
   SmartFormProps,
-  "tableName" | "db" | "rowFilter" | "onChange" | "parentForm"
+  "tableName" | "db" | "rowFilter" | "onChange" | "parentForm" | "onLoaded"
 > & {
   table: DBSchemaTableWJoins | undefined;
 }) => {
@@ -86,6 +87,12 @@ export const useSmartFormMode = ({
     row: AnyObject;
     tableName: string;
   }>();
+
+  useEffect(() => {
+    if (currentRowInfo) {
+      onLoaded?.();
+    }
+  }, [currentRowInfo, onLoaded]);
 
   const tableHandlerUpdate = tableHandler?.update;
   const tableHandlerDelete = tableHandler?.delete;

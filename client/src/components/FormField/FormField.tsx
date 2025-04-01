@@ -531,7 +531,7 @@ export default class FormField extends React.Component<
             style={{
               /** To ensure it's centered with the rest of the content */
               height: "100%",
-              // background: "var(--input-bg-color)",
+              ...(type === "checkbox" ? { padding: "0" } : {}),
             }}
             iconPath={mdiClose}
             onClick={(e) => {

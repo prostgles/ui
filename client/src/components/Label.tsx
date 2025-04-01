@@ -33,7 +33,7 @@ export type LabelProps = React.DetailedHTMLProps<
 } & (NormalLabelProps | HeaderLabelProps);
 
 export const Label = ({
-  info,
+  info = null,
   variant = "header",
   iconPath = mdiHelp,
   label,
@@ -45,46 +45,57 @@ export const Label = ({
   ...otherProps
 }: LabelProps) => {
   const isHeader = variant === "header";
-  let IconBtn: React.ReactNode = null;
 
-  if (info) {
-    IconBtn = (
-      <PopupMenu
-        title={popupTitle ?? label ?? "Information"}
-        positioning="beneath-center"
-        clickCatchStyle={{ opacity: 0.3 }}
-        rootStyle={{
-          maxWidth: "500px",
-        }}
-        className={isHeader ? undefined : "show-on-parent-hover"}
-        contentClassName="p-1"
-        button={
-          !isHeader ?
-            <Btn iconPath={mdiHelp} size="micro" />
-          : <Btn
-              iconPath={iconPath}
-              className="Label_QuestionButton text-2  relative ai-center"
-              title="Click for more information"
-            />
-        }
-      >
-        <div className="flex-row ta-left">
-          <Icon
-            path={mdiInformationOutline}
-            size={1}
-            className="f-0 text-2 mr-1"
+  const ensureInfoBtnKeepsCardLayoutCellsConsistent = Boolean(
+    !isHeader && info,
+  );
+
+  const IconBtn = info && (
+    <PopupMenu
+      title={popupTitle ?? label ?? "Information"}
+      positioning="beneath-center"
+      clickCatchStyle={{ opacity: 0.3 }}
+      rootStyle={{
+        maxWidth: "500px",
+      }}
+      className={isHeader ? undefined : "show-on-parent-hover"}
+      contentClassName="p-1"
+      style={
+        ensureInfoBtnKeepsCardLayoutCellsConsistent ?
+          {
+            position: "absolute",
+            top: "-.5em",
+            right: 0,
+            overflow: "visible",
+          }
+        : {}
+      }
+      button={
+        !isHeader ?
+          <Btn iconPath={mdiHelp} size="micro" />
+        : <Btn
+            iconPath={iconPath}
+            className="Label_QuestionButton text-2  relative ai-center"
+            title="Click for more information"
           />
-          {info}
-        </div>
-      </PopupMenu>
-    );
-  }
+      }
+    >
+      <div className="flex-row ta-left">
+        <Icon
+          path={mdiInformationOutline}
+          size={1}
+          className="f-0 text-2 mr-1"
+        />
+        {info}
+      </div>
+    </PopupMenu>
+  );
 
-  const labelNode = (
+  return (
     <label
       {...otherProps}
       className={classOverride(
-        " Label noselect flex-row ai-center " +
+        `Label variant:${variant} relative noselect flex-row ai-center ` +
           (toggle ? " pointer gap-p5 " : " gap-p25 ") +
           (otherProps.htmlFor ? " pointer " : " ") +
           "w-fit",
@@ -101,6 +112,10 @@ export const Label = ({
           : 400,
         color: size === "small" ? "var(--text-1)" : "var(--text-1)",
         ...otherProps.style,
+        ...(ensureInfoBtnKeepsCardLayoutCellsConsistent &&
+          IconBtn && {
+            paddingRight: "2em",
+          }),
       }}
     >
       {isHeader && IconBtn}
@@ -115,6 +130,4 @@ export const Label = ({
       {!isHeader && IconBtn}
     </label>
   );
-
-  return labelNode;
 };

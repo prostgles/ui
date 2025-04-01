@@ -79,14 +79,27 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                 label: t.ServerSettings["Security"],
                 leftIconPath: mdiSecurity,
                 content: (
-                  <FlexCol style={{ opacity: settingsLoaded ? 1 : 0 }}>
+                  <FlexCol
+                    style={{ opacity: settingsLoaded ? 1 : 0 }}
+                    className="p-1 pt-0"
+                  >
+                    <InfoRow
+                      className="mb-1"
+                      variant="naked"
+                      color="info"
+                      iconPath=""
+                    >
+                      Configure domain access, IP restrictions, session
+                      duration, and login rate limits to enhance security.
+                    </InfoRow>
                     <SmartForm
-                      className="bg-color-0 shadow "
+                      className="bg-color-0 "
                       label=""
                       db={dbs as DBHandlerClient}
                       methods={dbsMethods}
                       connection={connection}
                       tableName="global_settings"
+                      contentClassname="px-p25  "
                       columns={
                         {
                           allowed_origin: 1,
@@ -173,24 +186,35 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                 leftIconPath: mdiCloudKeyOutline,
                 label: t.ServerSettings["Cloud credentials"],
                 content: (
-                  <SmartCardList
-                    db={dbs as DBHandlerClient}
-                    methods={dbsMethods}
-                    tableName="credentials"
-                    tables={dbsTables}
-                    filter={{}}
-                    realtime={true}
-                    noDataComponentMode="hide-all"
-                    noDataComponent={
-                      <InfoRow color="info" className="m-1 h-fit">
-                        {
-                          t.ServerSettings[
-                            "No cloud credentials. Credentials can be added for file storage"
-                          ]
-                        }
-                      </InfoRow>
-                    }
-                  />
+                  <FlexCol>
+                    {" "}
+                    <InfoRow
+                      className="mx-1"
+                      variant="naked"
+                      color="info"
+                      iconPath=""
+                    >
+                      Configure AWS S3 cloud credentials for file storage
+                    </InfoRow>
+                    <SmartCardList
+                      db={dbs as DBHandlerClient}
+                      methods={dbsMethods}
+                      tableName="credentials"
+                      tables={dbsTables}
+                      filter={{}}
+                      realtime={true}
+                      noDataComponentMode="hide-all"
+                      noDataComponent={
+                        <InfoRow color="info" className="m-1 h-fit">
+                          {
+                            t.ServerSettings[
+                              "No cloud credentials. Credentials can be added for file storage"
+                            ]
+                          }
+                        </InfoRow>
+                      }
+                    />
+                  </FlexCol>
                 ),
               },
               mcpServers: {
@@ -202,7 +226,10 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                 leftIconPath: mdiAssistant,
                 label: "LLM Providers",
                 content: (
-                  <FlexCol className="p-1">
+                  <FlexCol className="p-1 pt-0">
+                    <InfoRow variant="naked" color="info" iconPath="">
+                      Configure LLM provider credentials used in Ask AI chat.
+                    </InfoRow>
                     <LLMProviderSetup {...props} />
                   </FlexCol>
                 ),

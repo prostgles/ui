@@ -144,7 +144,7 @@ export const JoinedRecordsAddRow = (props: P) => {
         disabledInfo:
           !section.canInsert ?
             section.table.info.isView ? "Cannot insert into a view"
-            : section.tableHandler?.insert ? "Cannot insert into this table"
+            : !section.tableHandler?.insert ? "Cannot insert into this table"
             : `Cannot reference more than one ${JSON.stringify(section.tableName)}`
             // : !isDescendantTableAndCanInsert ?
             //   "Cannot insert into this table"

@@ -372,7 +372,7 @@ export type DBGeneratedSchema = {
       extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';  };
       extra_headers?: null | Record<string, string>
       id?: number;
-      is_default?: null | boolean;
+      is_default?: boolean;
       name?: null | string;
       provider_id: string;
       user_id: string;
@@ -505,21 +505,6 @@ export type DBGeneratedSchema = {
       user_id: string;
     };
   };
-  mcp_install_logs: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
-    columns: {
-      created?: null | string;
-      error?: null | string;
-      finished?: null | string;
-      id: string;
-      last_updated?: null | string;
-      log: string;
-    };
-  };
   mcp_server_configs: {
     is_view: false;
     select: true;
@@ -579,7 +564,7 @@ export type DBGeneratedSchema = {
  |  {  type: 'arg';  title?: string;  optional?: boolean;  description?: string;  index?: number; }>
       created?: null | string;
       cwd: string;
-      enabled?: null | boolean;
+      enabled?: boolean;
       env?: null | Record<string, string>
       env_from_main_process?: null | string[];
       info?: null | string;

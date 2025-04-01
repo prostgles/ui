@@ -4,6 +4,7 @@ import type { ConfirmDialogProps } from "../../../components/ConfirmationDialog"
 import type { SmartFormProps } from "../SmartForm";
 import type { SmartFormNewRowState } from "../useNewRowDataHandler";
 import type { SmartFormState } from "../useSmartForm";
+import { areEqual } from "../../../utils";
 
 type ConfirmationPopup = Pick<
   ConfirmDialogProps,
@@ -73,13 +74,23 @@ export const useSmartFormActions = ({
   );
 
   const newRowWithUpdates = useMemo(() => {
-    return (
-      newRow && {
-        ...newRow,
-        ...fixedData,
-      }
-    );
-  }, [fixedData, newRow]);
+    const res = newRow && {
+      ...newRow,
+      ...fixedData,
+    };
+
+    const nothingToUpdate =
+      mode.type === "update" &&
+      res &&
+      mode.currentRow &&
+      areEqual(mode.currentRow, res, Object.keys(res));
+
+    if (nothingToUpdate) {
+      return undefined;
+    }
+
+    return res;
+  }, [fixedData, newRow, mode]);
 
   const buttons = useMemo(() => {
     if (mode.type === "manual") {
@@ -119,15 +130,21 @@ export const useSmartFormActions = ({
                   if (+(count ?? 0) !== 1) {
                     throw "Could not match to exactly 1 row";
                   }
-                  return parentTableHandler.update(filter, {
-                    [parentForm.column.name]: newRow,
-                  });
+                  await parentTableHandler.update(
+                    filter,
+                    {
+                      [parentForm.column.name]: newRow,
+                    },
+                    { returning: "*" },
+                  );
+                  return newRow;
                 }
 
-                return mode.tableHandlerInsert!(
+                await mode.tableHandlerInsert!(
                   newRow,
                   onInserted || onSuccess ? { returning: "*" } : {},
                 );
+                return newRow;
               };
               const result = await doInsert();
               onSuccess?.("insert", result);

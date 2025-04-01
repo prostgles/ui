@@ -123,18 +123,12 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
         const { dbo: db, methods, auth, tableSchema, socket } = dbPrgl;
         const { dbs, dbsTables } = prglState;
         const thisIstheStateDB = auth?.user?.state_db_id === con.id;
-        const { tables: dbTables = [], error } = await getTables(
-          tableSchema ?? [],
-          undefined,
-          db,
-        );
+        const { tables: dbTables = [] } = getTables(tableSchema ?? [], db);
         const dbConf = await dbs.database_configs.findOne({
           $existsJoined: { connections: { id: con.id } },
         });
         if (!dbConf) {
           return { state: "error", error: "Dbconf not found" } as const;
-        } else if (error) {
-          return { error, state: "error" } as const;
         } else {
           const prglProject: PrglProject = {
             dbKey: "db-onReady-" + Date.now(),

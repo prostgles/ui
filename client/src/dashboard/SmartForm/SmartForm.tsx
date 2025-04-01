@@ -215,6 +215,7 @@ const SmartFormWithNoError = ({
   const onCloseWrapped = useCallback(() => {
     onClose?.(true);
   }, [onClose]);
+
   const actionsState = useSmartFormActions({
     ...props,
     ...state,

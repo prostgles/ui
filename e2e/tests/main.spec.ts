@@ -117,6 +117,13 @@ test.describe("Main test", () => {
 
     await login(page);
     await goTo(page, "/server-settings");
+
+    /** SmartForm onLoaded bug */
+    await page.locator(`[data-key="security"]`).click();
+    await page
+      .getByLabel("Allowed IPs and subnets", { exact: true })
+      .waitFor({ state: "visible" });
+
     await page.locator(`[data-key="auth"]`).click();
     await page.getByTestId("EmailAuthSetup").locator("button").click();
     await page.getByTestId("EmailAuthSetup.SignupType").click();

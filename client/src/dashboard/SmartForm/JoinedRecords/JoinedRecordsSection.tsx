@@ -44,20 +44,6 @@ export const JoinedRecordsSection = (
       .filter(isDefined),
   );
 
-  // const onToggle: React.MouseEventHandler = ({ currentTarget }) => {
-  //   const newSections = sections.map((_s) => ({
-  //     ..._s,
-  //     expanded: _s.path.join() === s.path.join() ? !_s.expanded : _s.expanded,
-  //   }));
-
-  //   this.setState({
-  //     sections: newSections,
-  //   });
-
-  //   setTimeout(() => {
-  //     currentTarget.scrollIntoView({ behavior: "smooth" });
-  //   }, 300);
-  // };
   const { count } = s;
   let countNode: React.ReactNode = (
     <span className="ws-pre text-1p5 font-18" style={{ fontWeight: "normal" }}>

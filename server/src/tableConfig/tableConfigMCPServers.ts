@@ -67,7 +67,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         },
       },
       env_from_main_process: `TEXT[]`,
-      enabled: `BOOLEAN DEFAULT FALSE`,
+      enabled: `BOOLEAN NOT NULL DEFAULT FALSE`,
       created: `TIMESTAMP DEFAULT NOW()`,
       installed: `TIMESTAMP`,
       last_updated: `TIMESTAMP DEFAULT NOW()`,

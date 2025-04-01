@@ -86,7 +86,7 @@ export const MCPServers = (props: ServerSettingsProps) => {
           }
           realtime={true}
           showTopBar={false}
-          showEdit={false}
+          // showEdit={false}
           noDataComponentMode="hide-all"
           noDataComponent={
             <InfoRow color="info" className="m-1 h-fit">
@@ -98,7 +98,7 @@ export const MCPServers = (props: ServerSettingsProps) => {
             {
               name: "name",
               label: "",
-              className: "bold",
+              className: "bold mx-p25",
             },
             {
               name: "mcp_server_configs",

@@ -19,7 +19,7 @@ export type SmartFormState = {
   SmartFormColumnState &
   SmartFormNewRowState;
 export const useSmartForm = (props: SmartFormProps) => {
-  const { db, tables, tableName, fixedData, rowFilter, defaultData } = props;
+  const { db, tables, tableName } = props;
 
   const table = useMemo(() => {
     return tables.find((t) => t.name === tableName);

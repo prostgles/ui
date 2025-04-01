@@ -1,15 +1,14 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect } from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 import { FlexCol } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
 import Loading from "../../components/Loading";
-import { EmailAuthSetup } from "./EmailAuthSetup";
-import { OAuthProviderSetup } from "./OAuthProviderSetup";
-import { useAsyncEffectQueue } from "prostgles-client/dist/prostgles";
 import Select from "../../components/Select/Select";
 import { t } from "../../i18n/i18nUtils";
+import { EmailAuthSetup } from "./EmailAuthSetup";
+import { OAuthProviderSetup } from "./OAuthProviderSetup";
 
 export type AuthProvidersConfig = Extract<
   DBSSchema["global_settings"]["auth_providers"],
@@ -61,33 +60,37 @@ export const AuthProviderSetup = ({
   );
   const { data: global_settings } = dbs.global_settings.useSubscribeOne();
   const { data: userTypes } = dbs.user_types.useFind();
-  const updateAuth = async (
-    auth: Partial<DBSSchema["global_settings"]["auth_providers"]>,
-  ) => {
-    await dbs.global_settings.update(
-      {},
-      {
-        auth_providers:
-          !auth ? undefined : (
-            {
-              website_url:
-                global_settings?.auth_providers?.website_url ??
-                window.location.origin,
-              ...global_settings?.auth_providers,
-              ...auth,
-            }
-          ),
-      },
-    );
-  };
-  useAsyncEffectQueue(async () => {
-    if (!global_settings) return;
-    if (!global_settings.auth_providers?.website_url) {
-      updateAuth({
+  const updateAuth = useCallback(
+    async (auth: Partial<DBSSchema["global_settings"]["auth_providers"]>) => {
+      await dbs.global_settings.update(
+        {},
+        {
+          auth_providers:
+            !auth ? undefined : (
+              {
+                website_url:
+                  global_settings?.auth_providers?.website_url ??
+                  window.location.origin,
+                ...global_settings?.auth_providers,
+                ...auth,
+              }
+            ),
+        },
+      );
+    },
+    [dbs.global_settings, global_settings],
+  );
+
+  const settingsLoaded = !!global_settings;
+  const { website_url } = global_settings?.auth_providers ?? {};
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    if (!website_url) {
+      void updateAuth({
         website_url: window.location.origin,
       });
     }
-  }, [global_settings]);
+  }, [updateAuth, settingsLoaded, website_url]);
 
   const authProps = useProviderProps({
     auth_providers: global_settings?.auth_providers,
@@ -111,7 +114,11 @@ export const AuthProviderSetup = ({
   const { auth_providers } = global_settings;
 
   return (
-    <FlexCol className="p-1 f-1">
+    <FlexCol className="AuthProviderSetup f-1">
+      <InfoRow className="mx-1" variant="naked" color="info" iconPath="">
+        Manage user authentication methods, default user roles, and third-party
+        login providers to control access.
+      </InfoRow>
       <FlexCol className="p-1 gap-2">
         <FormField
           label={t.AuthProviderSetup["Website URL"]}

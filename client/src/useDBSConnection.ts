@@ -123,26 +123,22 @@ export const useDBSConnection = (
             (window as any).dbsMethods = dbsMethods;
             (window as any).auth = auth;
             const uType = auth.user?.type;
-            const { tables: dbsTables = [], error } = await getTables(
+            const { tables: dbsTables = [] } = getTables(
               tableSchema ?? [],
-              undefined,
               dbs as DBHandlerClient,
             );
-            if (error) {
-              resolve({ error });
-            } else {
-              resolve({
-                dbsWsApiPath: serverState.dbsWsApiPath,
-                dbs: dbs as DBS,
-                dbsMethods,
-                dbsTables,
-                auth,
-                isAdminOrSupport: ["admin", "support"].includes(uType),
-                dbsSocket: socket,
-                user: await dbs.users?.findOne({ id: auth.user?.id }),
-                sid: auth.user?.sid,
-              });
-            }
+
+            resolve({
+              dbsWsApiPath: serverState.dbsWsApiPath,
+              dbs: dbs as DBS,
+              dbsMethods,
+              dbsTables,
+              auth,
+              isAdminOrSupport: ["admin", "support"].includes(uType),
+              dbsSocket: socket,
+              user: await dbs.users?.findOne({ id: auth.user?.id }),
+              sid: auth.user?.sid,
+            });
           },
         }).catch((error) => {
           resolve({ error });

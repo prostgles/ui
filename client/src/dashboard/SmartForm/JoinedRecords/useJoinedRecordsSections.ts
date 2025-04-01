@@ -96,9 +96,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
       t.columns.some((c) => c.references?.some((r) => r.ftable === tableName)),
     );
     const rowData = newRowData;
-    // parentForm?.type === "insert" && parentForm.columnData ?
-    //   parentForm.columnData.value
-    // : newRowData;
+
     const nestedInsertData = Object.fromEntries(
       Object.entries(rowData ?? {})
         .map(([k, d]) => (d.type === "nested-table" ? [k, d.value] : undefined))

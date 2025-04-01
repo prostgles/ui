@@ -134,7 +134,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       api_key: `TEXT NOT NULL DEFAULT ''`,
       ...extraRequestData,
       is_default: {
-        sqlDefinition: `BOOLEAN DEFAULT FALSE`,
+        sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE`,
         info: {
           hint: "If true then this is the default credential used in new AI Assistant chats",
         },

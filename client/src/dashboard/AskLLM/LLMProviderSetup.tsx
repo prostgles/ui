@@ -8,6 +8,7 @@ import Btn from "../../components/Btn";
 import { FlexCol } from "../../components/Flex";
 import { SmartForm } from "../SmartForm/SmartForm";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import Chip from "../../components/Chip";
 
 export const LLMProviderSetup = ({
   dbs,
@@ -16,30 +17,10 @@ export const LLMProviderSetup = ({
 }: Pick<Prgl, "dbs" | "dbsMethods" | "dbsTables">) => {
   const [addCreds, setAddCreds] = React.useState(false);
 
-  const addCredsForm = addCreds && (
-    <Popup
-      title="Add LLM Provider"
-      onClose={() => setAddCreds(false)}
-      onClickClose={false}
-    >
-      <FlexCol>
-        <SmartForm
-          label=""
-          showJoinedTables={false}
-          tableName="llm_credentials"
-          db={dbs as DBHandlerClient}
-          methods={dbsMethods}
-          tables={dbsTables}
-          onChange={console.log}
-        />
-      </FlexCol>
-    </Popup>
-  );
-
   return (
     <>
       <SmartCardList
-        className="mb-1"
+        className="mb-1 w-fit"
         db={dbs as DBHandlerClient}
         tableName={"llm_credentials"}
         methods={dbsMethods}
@@ -49,21 +30,48 @@ export const LLMProviderSetup = ({
         noDataComponent={
           <InfoRow color="info" variant="filled">
             No existing credentials{" "}
-            <Btn onClick={() => setAddCreds(true)}>Add credentials</Btn>
+            <Btn
+              variant="filled"
+              color="action"
+              onClick={() => setAddCreds(true)}
+            >
+              Add credentials
+            </Btn>
           </InfoRow>
         }
         fieldConfigs={[
           {
             name: "name",
+            label: "",
           },
           {
             name: "is_default",
             className: "o-visible",
+            render: (is_default) =>
+              is_default ? <Chip color="blue">default</Chip> : " ",
           },
         ]}
       />
       <AddLLMCredentialForm dbs={dbs} />
-      {addCredsForm}
+      {addCreds && (
+        <Popup
+          title="Add LLM Provider"
+          onClose={() => setAddCreds(false)}
+          onClickClose={false}
+        >
+          <FlexCol>
+            <SmartForm
+              label=""
+              showJoinedTables={false}
+              tableName="llm_credentials"
+              db={dbs as DBHandlerClient}
+              methods={dbsMethods}
+              tables={dbsTables}
+              onChange={console.log}
+            />
+          </FlexCol>
+        </Popup>
+      )}
     </>
   );
 };

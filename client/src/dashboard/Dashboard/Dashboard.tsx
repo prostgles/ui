@@ -135,11 +135,7 @@ export class _Dashboard extends RTComp<
         onRenew: () => this.loadSchema(true),
       };
 
-      const { tables = [], error } = await getTables(
-        dbSchemaTables,
-        workspace,
-        db,
-      );
+      const { tables = [] } = getTables(dbSchemaTables, db);
 
       const ns: Pick<
         DashboardState,
@@ -147,7 +143,7 @@ export class _Dashboard extends RTComp<
       > = {
         tables,
         loading: false,
-        error,
+        error: undefined,
         suggestions: undefined,
       };
 
@@ -630,38 +626,21 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<
   active_row: ActiveRow | undefined;
 } & Pick<ViewRendererProps, "searchParams" | "setSearchParams">;
 
-export const getTables = async (
+export const getTables = (
   schemaTables: DBSchemaTable[],
-  workspace: WorkspaceSyncItem | undefined,
   db: DBHandlerClient,
-): Promise<
-  | { tables: DBSchemaTablesWJoins; error?: undefined }
-  | { error: any; tables?: undefined }
-> => {
-  try {
-    const tables = await Promise.all(
-      schemaTables.map(async (t) => {
-        // const countRequestedAndAllowed = workspace?.options.tableListEndInfo === "count" && db[t.name]?.count;
-        // const tableHasColumnsAndWillNotError = !!t.columns.length;
-        // const shouldGetCount = countRequestedAndAllowed && tableHasColumnsAndWillNotError;
-        // const count = (shouldGetCount? await db[t.name]?.count?.() ?? "" : "").toString();
-        return {
-          ...t,
-          // count,
-          ...getJoinedTables(schemaTables, t.name, db),
-        };
-      }),
-    ).catch((e) => {
-      console.error(e);
-      throw e;
-    });
-    return { tables };
-  } catch (error: any) {
-    console.error(error);
+): { tables: DBSchemaTablesWJoins } => {
+  const tables = schemaTables.map((t) => {
+    // const countRequestedAndAllowed = workspace?.options.tableListEndInfo === "count" && db[t.name]?.count;
+    // const tableHasColumnsAndWillNotError = !!t.columns.length;
+    // const shouldGetCount = countRequestedAndAllowed && tableHasColumnsAndWillNotError;
+    // const count = (shouldGetCount? await db[t.name]?.count?.() ?? "" : "").toString();
     return {
-      error,
+      ...t,
+      ...getJoinedTables(schemaTables, t.name, db),
     };
-  }
+  });
+  return { tables };
 };
 
 export const getIsPinnedMenu = (workspace: WorkspaceSyncItem) => {
