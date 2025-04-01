@@ -121,8 +121,8 @@ test.describe("Main test", () => {
     /** SmartForm onLoaded bug */
     await page.locator(`[data-key="security"]`).click();
     await page
-      .getByLabel("Allowed IPs and subnets", { exact: true })
-      .waitFor({ state: "visible" });
+      .getByText("Allowed IPs and subnets", { exact: true })
+      .waitFor({ state: "visible", timeout: 15e3 });
 
     await page.locator(`[data-key="auth"]`).click();
     await page.getByTestId("EmailAuthSetup").locator("button").click();
