@@ -80,7 +80,12 @@ export const ChatMessage = ({
       key={id}
     >
       {isLoading ?
-        <Loading className="m-1" />
+        <div
+          className="content-wrapper"
+          style={{ height: "80px", width: "80px" }}
+        >
+          <Loading className="m-1" sizePx={22} />
+        </div>
       : <>
           {messageTopContent}
           <div className="content-wrapper">{content}</div>

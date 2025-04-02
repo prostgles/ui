@@ -8,6 +8,7 @@ import type {
   SmartFormFieldLinkedDataProps,
 } from "./SmartFormFieldLinkedData";
 import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
+import { useNestedInsertDefaultData } from "./useNestedInsertDefaultData";
 
 type P = Pick<
   SmartFormFieldLinkedDataProps,
@@ -117,6 +118,13 @@ export const SmartFormFieldLinkedDataInsert = ({
       newValue.value
     : undefined;
 
+  const defaultData = useNestedInsertDefaultData({
+    ftable: canInsertFTableName,
+    tables,
+    tableName,
+    row,
+  });
+
   return (
     <>
       {!fileInsert ?
@@ -167,6 +175,7 @@ export const SmartFormFieldLinkedDataInsert = ({
           onClose={() => {
             setShowNestedInsertForm(false);
           }}
+          defaultData={defaultData}
           jsonbSchemaWithControls={jsonbSchemaWithControls}
           onInserted={(newRowOrRows) => {
             const newRow =

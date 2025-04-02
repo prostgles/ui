@@ -36,6 +36,7 @@ export type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods"> &
     activeTabKey: string | undefined;
     showOnlyFKeyTables?: boolean;
     errors: AnyObject;
+    row?: AnyObject;
   };
 
 export type JoinedRecordSection = {

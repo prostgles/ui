@@ -1,21 +1,20 @@
 import { mdiClose } from "@mdi/js";
 import { useIsMounted } from "prostgles-client/dist/prostgles";
 import { isDefined, isObject, type ValidatedColumnInfo } from "prostgles-types";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { sliceText } from "../../../../../commonTypes/utils";
 import Btn from "../../../components/Btn";
 import { FileInput } from "../../../components/FileInput/FileInput";
 import { FlexRow } from "../../../components/Flex";
 import Select, { type FullOption } from "../../../components/Select/Select";
-import { renderNull } from "./RenderValue";
-import type { SmartColumnInfo, SmartFormFieldProps } from "./SmartFormField";
-import { type SmartFormFieldLinkedDataInsertState } from "./SmartFormFieldLinkedData";
-import { fetchForeignKeyOptions } from "./fetchForeignKeyOptions";
-import { sliceText } from "../../../../../commonTypes/utils";
 import {
   type ColumnData,
   NewRowDataHandler,
 } from "../SmartFormNewRowDataHandler";
-import { useWhyDidYouUpdate } from "../../../components/MonacoEditor/useWhyDidYouUpdate";
+import { renderNull } from "./RenderValue";
+import type { SmartColumnInfo, SmartFormFieldProps } from "./SmartFormField";
+import { type SmartFormFieldLinkedDataInsertState } from "./SmartFormFieldLinkedData";
+import { fetchForeignKeyOptions } from "./fetchForeignKeyOptions";
 
 export type SmartFormFieldForeignKeyProps = Pick<
   SmartFormFieldProps,
@@ -46,7 +45,7 @@ export const SmartFormFieldForeignKey = (
     tableInfo,
     setShowNestedInsertForm,
   } = props;
-  useWhyDidYouUpdate(props);
+
   const [fullOptions, setFullOptions] = useState<FullOption[]>();
   const getuseIsMounted = useIsMounted();
   const newValue = newRowDataHandler.getNewRow()[column.name];

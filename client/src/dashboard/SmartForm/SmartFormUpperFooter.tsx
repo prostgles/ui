@@ -143,6 +143,7 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
           connection={connection}
           parentForm={props.parentForm}
           errors={props.errors}
+          row={row}
         />
       )}
       {showMethods && (

@@ -167,7 +167,8 @@ export default class Loading extends RTComp<P, S> {
           className={"top-bar-loader " + className}
         ></div>
       );
-    } else if (variant === "cover") {
+    }
+    if (variant === "cover") {
       return (
         <>
           <div
@@ -179,8 +180,6 @@ export default class Loading extends RTComp<P, S> {
               height: "100%",
               ...commonStyle,
               ...(!className.includes("bg-") && {
-                // background:  "var(--bg-color-0)",
-                // opacity: coverOpacity
                 background: "rgba(255, 255, 255, .5)",
               }),
               ...style,

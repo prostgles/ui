@@ -17,7 +17,6 @@ import { type NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import { SmartFormPopupWrapper } from "./SmartFormPopup/SmartFormPopupWrapper";
 import { SmartFormUpperFooter } from "./SmartFormUpperFooter";
 import { useSmartForm, type SmartFormState } from "./useSmartForm";
-import { useWhyDidYouUpdate } from "../../components/MonacoEditor/useWhyDidYouUpdate";
 
 export type getErrorsHook = (
   cb: (newRow: AnyObject) => SmartFormState["error"] | undefined,
