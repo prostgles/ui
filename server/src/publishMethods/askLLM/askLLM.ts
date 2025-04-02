@@ -21,6 +21,7 @@ export const getLLMChatModel = async (
 };
 
 export const askLLM = async (
+  connectionId: string,
   userMessage: DBSSchema["llm_messages"]["message"],
   schema: string,
   chatId: number,
@@ -115,6 +116,7 @@ export const askLLM = async (
     {
       user_id: null as any,
       chat_id: chatId,
+      is_loading: true,
       message: [{ type: "text", text: "" }],
     },
     { returning: "*" },
@@ -126,12 +128,13 @@ export const askLLM = async (
 
     /** Tools are not used with Dashboarding due to induced errors */
     const tools =
-      promptObj.name === "Dashboarding" ?
+      promptObj.options?.disable_tools ?
         undefined
       : await getLLMTools({
           dbs,
           chatId,
           provider: llm_credential.provider_id,
+          connectionId,
         });
 
     const modelData = await dbs.llm_models.findOne(
@@ -179,7 +182,11 @@ export const askLLM = async (
     });
     await dbs.llm_messages.update(
       { id: aiResponseMessage.id },
-      { message: llmResponseMessage, meta },
+      {
+        is_loading: false,
+        message: llmResponseMessage,
+        meta,
+      },
     );
   } catch (err) {
     console.error(err);
@@ -191,6 +198,7 @@ export const askLLM = async (
       { id: aiResponseMessage.id },
       {
         message: [{ type: "text", text: messageText }],
+        is_loading: false,
       },
     );
   }

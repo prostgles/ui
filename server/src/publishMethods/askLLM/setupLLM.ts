@@ -24,6 +24,9 @@ export const setupLLM = async (dbs: DBS) => {
         name: "Dashboards",
         description: "Create dashboards. Claude Sonnet recommended",
         user_id,
+        options: {
+          disable_tools: true,
+        },
         prompt: [
           "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
           "Assist user with any queries they might have.",
@@ -116,15 +119,18 @@ export const setupLLM = async (dbs: DBS) => {
           {
             name: "claude-3-7-sonnet-20250219",
             pricing_info: { input: 3, output: 15 },
+            mcp_tool_support: true,
           },
           {
             name: "claude-3-5-sonnet-20241022",
             pricing_info: { input: 3, output: 15 },
             chat_suitability_rank: "1",
+            mcp_tool_support: true,
           },
           {
             name: "claude-3-5-sonnet-20240620",
             pricing_info: { input: 3, output: 15 },
+            mcp_tool_support: true,
           },
           {
             name: "claude-3-sonnet-20240229",
@@ -147,10 +153,20 @@ export const setupLLM = async (dbs: DBS) => {
         api_url:
           "https://generativelanguage.googleapis.com/v1beta/models/$MODEL:generateContent?key=$KEY",
         llm_models: [
+          // {
+          //   name: "gemini-2.5-pro-exp-03-25",
+          //   pricing_info: { input: 0.1, output: 0.4 },
+          //   chat_suitability_rank: "3",
+          // },
           {
             name: "gemini-2.0-flash",
             pricing_info: { input: 0.1, output: 0.4 },
             chat_suitability_rank: "3",
+          },
+          {
+            name: "gemini-2.0-flash-lite",
+            pricing_info: { input: 0.075, output: 0.3 },
+            chat_suitability_rank: "7",
           },
           {
             name: "gemini-1.5-flash",

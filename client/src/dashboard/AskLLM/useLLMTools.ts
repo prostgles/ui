@@ -9,6 +9,7 @@ import { getMCPToolNameParts } from "../../../../commonTypes/mcp";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 import type { DBSMethods } from "../Dashboard/DBS";
+import { getErrorMessage } from "../../components/ErrorComponent";
 
 type Args = {
   messages: DBSSchema["llm_messages"][];
@@ -42,6 +43,7 @@ export const useLLMTools = ({
     const results = await Promise.all(
       toolUse.map(async (tu) => {
         const toolResult = await getToolUseResult(
+          lastMessage.chat_id,
           methods,
           callMCPServerTool,
           tu.name,
@@ -79,6 +81,7 @@ const reachedMaximumNumberOfConsecutiveToolRequests = (
 };
 
 const getToolUseResult = async (
+  chatId: number,
   methods: MethodHandler,
   callMCPServerTool: DBSMethods["callMCPServerTool"],
   funcName: string,
@@ -115,11 +118,17 @@ const getToolUseResult = async (
           is_error: true,
         };
       }
+
       const { content, isError } = await callMCPServerTool(
+        chatId,
         serverName,
         toolName,
         input,
-      );
+      ).catch((e) => ({
+        content: e instanceof Error ? e.message : JSON.stringify(e),
+        isError: true,
+      }));
+
       return {
         content,
         ...(isError && {

@@ -304,6 +304,21 @@ export type DBGeneratedSchema = {
       workspace_id?: null | string;
     };
   };
+  llm_api_keys: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      api_key?: string;
+      created?: null | string;
+      id?: number;
+      name?: string;
+      provider_id: number;
+      user_id: string;
+    };
+  };
   llm_chats: {
     is_view: false;
     select: true;
@@ -311,6 +326,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
+      connection_id?: null | string;
       created?: null | string;
       disabled_message?: null | string;
       disabled_until?: null | string;
@@ -329,6 +345,7 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       chat_id: number;
+      connection_id: string;
       server_function_id: number;
     };
   };
@@ -339,9 +356,9 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
+      allowed_inputs?: null |  ( any )[]
       chat_id: number;
-      mcp_server_name: string;
-      mcp_tool_name: string;
+      tool_id?: null | number;
     };
   };
   llm_credentials: {
@@ -373,6 +390,7 @@ export type DBGeneratedSchema = {
       chat_id: number;
       created?: null | string;
       id?: string;
+      is_loading?: null | boolean;
       message:  ( 
  |  {  type: 'text';  text: string; }
  |  {  type: 'image';  source: {  type: 'base64';  media_type: string;  data: string; }; }
@@ -393,6 +411,7 @@ export type DBGeneratedSchema = {
       extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';  };
       extra_headers?: null | Record<string, string>
       id?: number;
+      mcp_tool_support?: null | boolean;
       model_created?: null | string;
       name: string;
       pricing_info?: null | {    input: number;   output: number;   cachedInput?: number;   threshold?: {  tokenLimit: number;  input: number;  output: number; };  };
@@ -410,6 +429,7 @@ export type DBGeneratedSchema = {
       description?: null | string;
       id?: number;
       name?: string;
+      options?: null | {    disable_tools?: boolean;  };
       prompt: string;
       user_id?: null | string;
     };
@@ -518,6 +538,25 @@ export type DBGeneratedSchema = {
       last_updated?: null | string;
       log: string;
       server_name: string;
+    };
+  };
+  mcp_server_tool_calls: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      called?: null | string;
+      chat_id?: null | number;
+      duration: { years?: number; months?: number; days?: number; hours?: number; minutes?: number; seconds?: number; milliseconds?: number; };
+      error?: null | any;
+      id?: number;
+      input?: null | any;
+      mcp_server_name: string;
+      mcp_tool_name: string;
+      output?: null | any;
+      user_id?: null | string;
     };
   };
   mcp_server_tools: {

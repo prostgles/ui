@@ -32,6 +32,7 @@ import {
   ServersConfig,
 } from "./McpTypes";
 import { checkMCPServerTools } from "./checkMCPServerTools";
+import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 
 export type McpConnection = {
   server: McpServer;
@@ -249,7 +250,10 @@ const mcpHub = new McpHub();
 
 let mcpHubInitializing = false;
 let mcpHubReInitializingRequested = false;
-export const startMcpHub = async (dbs: DBS, restart = false): Promise<void> => {
+export const startMcpHub = async (
+  dbs: DBS,
+  restart = false,
+): Promise<McpHub> => {
   mcpHubReInitializingRequested = mcpHubInitializing;
   mcpHubInitializing = true;
   const result = await tryCatchV2(async () => {
@@ -261,13 +265,14 @@ export const startMcpHub = async (dbs: DBS, restart = false): Promise<void> => {
     if (serverNames.length) {
       console.log(`McpHub started with ${serverNames.length} enabled servers`);
     }
+    return mcpHub;
   });
   mcpHubInitializing = false;
   if (mcpHubReInitializingRequested) {
     mcpHubReInitializingRequested = false;
     startMcpHub(dbs);
   }
-  if (result.error) {
+  if (result.hasError) {
     throw result.error;
   }
   return result.data;
@@ -287,17 +292,6 @@ export const reloadMcpServerTools = async (dbs: DBS, serverName: string) => {
     );
   });
   return tools.length;
-};
-
-export const callMCPServerTool = async (
-  dbs: DBS,
-  serverName: string,
-  toolName: string,
-  toolArguments?: Record<string, unknown>,
-): Promise<McpToolCallResponse> => {
-  await startMcpHub(dbs);
-  const res = await mcpHub.callTool(serverName, toolName, toolArguments);
-  return res;
 };
 
 const mcpSubscriptions: Record<string, SubscriptionHandler | undefined> = {

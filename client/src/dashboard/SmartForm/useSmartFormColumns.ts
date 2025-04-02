@@ -1,11 +1,11 @@
+import { usePromise } from "prostgles-client/dist/react-hooks";
 import { quickClone } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import { getKeys, isDefined, type ValidatedColumnInfo } from "prostgles-types";
+import { getKeys, isDefined } from "prostgles-types";
 import { useMemo } from "react";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 import type { SmartFormProps } from "./SmartForm";
 import type { SmartColumnInfo } from "./SmartFormField/SmartFormField";
 import type { useSmartFormMode } from "./useSmartFormMode";
-import { usePromise } from "prostgles-client/dist/react-hooks";
 
 type UseSmartFormColumnsProps = Pick<
   SmartFormProps,

@@ -46,12 +46,7 @@ const toolUseContent: JSONB.FieldType = {
   ],
 };
 
-const extraRequestData: Record<
-  string,
-  ColumnConfig<{
-    en: 1;
-  }>
-> = {
+const extraRequestData = {
   extra_headers: {
     nullable: true,
     jsonbSchema: {
@@ -72,7 +67,12 @@ const extraRequestData: Record<
       },
     },
   },
-};
+} as const satisfies Record<
+  string,
+  ColumnConfig<{
+    en: 1;
+  }>
+>;
 
 export const tableConfigLLM: TableConfig<{ en: 1 }> = {
   llm_providers: {
@@ -109,6 +109,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       },
       chat_suitability_rank: "NUMERIC",
       model_created: `TIMESTAMP DEFAULT NOW()`,
+      mcp_tool_support: `BOOLEAN DEFAULT FALSE`,
       ...extraRequestData,
     },
     indexes: {
@@ -161,6 +162,12 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       description: `TEXT DEFAULT ''`,
       user_id: `UUID REFERENCES users(id) ON DELETE SET NULL`,
       prompt: `TEXT NOT NULL CHECK(LENGTH(btrim(prompt)) > 0)`,
+      options: {
+        nullable: true,
+        jsonbSchemaType: {
+          disable_tools: { type: "boolean", optional: true },
+        },
+      },
       created: `TIMESTAMP DEFAULT NOW()`,
     },
     indexes: {
@@ -175,6 +182,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       id: `INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       name: `TEXT NOT NULL DEFAULT 'New chat'`,
       user_id: `UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE`,
+      connection_id: `UUID REFERENCES connections(id) ON DELETE CASCADE`,
       model: `INTEGER  REFERENCES llm_models(id)`,
       llm_prompt_id: {
         label: "Prompt",
@@ -190,13 +198,19 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         info: { hint: "If set then chat is disabled until this time" },
       },
     },
-    constraints: {},
+    indexes: {
+      unique_chat_for_connection: {
+        columns: "id, connection_id",
+        unique: true,
+      },
+    },
   },
   llm_messages: {
     columns: {
       id: `int8 PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
+      is_loading: `BOOLEAN DEFAULT FALSE`,
       message: {
         jsonbSchema: {
           arrayOf: {
@@ -248,9 +262,11 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
     },
   },
   llm_chats_allowed_functions: {
+    dropIfExists: true,
     columns: {
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
-      server_function_id: `INTEGER NOT NULL REFERENCES published_methods(id) ON DELETE CASCADE`,
+      connection_id: `UUID NOT NULL, FOREIGN KEY(chat_id, connection_id) REFERENCES llm_chats(id, connection_id) ON DELETE CASCADE`,
+      server_function_id: `INTEGER NOT NULL, FOREIGN KEY(server_function_id, connection_id) REFERENCES published_methods(id, connection_id) ON DELETE CASCADE`,
     },
     indexes: {
       unique_chat_tool: {

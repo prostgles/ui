@@ -54,7 +54,7 @@ export const fetchForeignKeyOptions = async ({
   if (fMainColumn) {
     const fullForeignTableFilter = {};
     const foreignTableFilter = {};
-    if (row) {
+    if (row && !isEmpty(row)) {
       cols.forEach((col, i) => {
         const fCol = fcols[i];
         if (fCol && row[col] !== null) {

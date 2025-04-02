@@ -2,16 +2,13 @@ import type { ChildProcess, ForkOptions } from "child_process";
 import { fork } from "child_process";
 import * as path from "path";
 import type { ProstglesInitOptions } from "prostgles-server/dist/ProstglesTypes";
-import { type AnyObject, tryCatchV2 } from "prostgles-types";
-import { isObject } from "prostgles-types";
+import { type AnyObject, isObject } from "prostgles-types";
 import type { DBS } from "..";
 import {
   FORKED_PROC_ENV_NAME,
   type ProcStats,
 } from "../../../commonTypes/utils";
 import { getError } from "./forkedProcess";
-import { callMCPServerTool } from "../McpHub/McpHub";
-import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 
 type ForkedProcMessageCommon = {
   id: string;
@@ -60,15 +57,15 @@ export type ForkedProcMessageResult =
       result: any;
       error?: any;
     }
-  | ForkedProcMessageError
-  | {
-      id: string;
-      callId: number;
-      type: "toolCall";
-      serverName: string;
-      toolName: string;
-      args?: any;
-    };
+  | ForkedProcMessageError;
+// | {
+//     id: string;
+//     callId: number;
+//     type: "toolCall";
+//     serverName: string;
+//     toolName: string;
+//     args?: any;
+//   };
 
 type Opts = {
   prglInitOpts: PrglInitOptions;
@@ -173,29 +170,29 @@ export class ForkedPrglProcRunner {
     });
     this.proc.on("message", (msg: ForkedProcMessageResult) => {
       if ("type" in msg) {
-        if (msg.type === "toolCall") {
-          const { id, callId, serverName, toolName, args } = msg;
-          (async () => {
-            const result = await tryCatchV2(
-              async () =>
-                await callMCPServerTool(
-                  this.opts.dbs,
-                  serverName,
-                  toolName,
-                  args,
-                ),
-            );
+        // if (msg.type === "toolCall") {
+        //   const { id, callId, serverName, toolName, args } = msg;
+        //   (async () => {
+        //     const result = await tryCatchV2(
+        //       async () =>
+        //         await callMCPServerTool(
+        //           this.opts.dbs,
+        //           serverName,
+        //           toolName,
+        //           args,
+        //         ),
+        //     );
 
-            this.proc.send({
-              callId,
-              result: result.data,
-              error: getErrorAsObject(result.error),
-              type: "mcpResult",
-              id,
-            } satisfies ForkedProcMCPResult);
-          })();
-          return;
-        }
+        //     this.proc.send({
+        //       callId,
+        //       result: result.data,
+        //       error: getErrorAsObject(result.error),
+        //       type: "mcpResult",
+        //       id,
+        //     } satisfies ForkedProcMCPResult);
+        //   })();
+        //   return;
+        // }
 
         console.error("ForkedPrglProc error ", msg.error);
         updateLogs(getError(msg.error));

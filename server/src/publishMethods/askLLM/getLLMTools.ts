@@ -6,11 +6,18 @@ type Args = {
   chatId: number;
   dbs: DBS;
   provider: string;
+  connectionId: string;
 };
-export const getLLMTools = async ({ dbs, provider, chatId }: Args) => {
+export const getLLMTools = async ({
+  dbs,
+  provider,
+  chatId,
+  connectionId,
+}: Args) => {
   const canUseTools = provider === "Prostgles" || provider === "Anthropic";
   if (!canUseTools) return undefined;
   const published_methods = await dbs.published_methods.find({
+    connection_id: connectionId,
     $existsJoined: {
       llm_chats_allowed_functions: {
         chat_id: chatId,

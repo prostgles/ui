@@ -612,6 +612,10 @@ export default class SearchList<M extends boolean = false> extends RTComp<
           )
           .slice(0, (term ? 2 : 1) * limit);
 
+    const notAllItemsShown =
+      renderedItems.length &&
+      renderedItems.length < items.length &&
+      !searchTerm;
     const renderedSelected = renderedItems.filter(
       (d) => !d.disabledInfo && d.checked,
     );
@@ -818,6 +822,11 @@ export default class SearchList<M extends boolean = false> extends RTComp<
                 );
               })
             }
+            {notAllItemsShown && (
+              <div className="p-p5 pl-1 noselect text-2">
+                Not all items shown...
+              </div>
+            )}
           </ul>
         </ScrollFade>;
 

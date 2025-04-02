@@ -1,4 +1,4 @@
-import { isDefined, isObject, type AnyObject } from "prostgles-types";
+import { isObject, type AnyObject } from "prostgles-types";
 import React from "react";
 import { classOverride, FlexCol } from "../../components/Flex";
 import { Label } from "../../components/Label";
@@ -12,7 +12,6 @@ import { SmartFormFileSection } from "./SmartFormFileSection";
 import type { NewRow, NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import type { SmartFormState } from "./useSmartForm";
 import type { SmartFormModeState } from "./useSmartFormMode";
-import { DeckGLMap } from "../Map/DeckGLMap";
 
 type P = Pick<
   SmartFormProps,
@@ -139,9 +138,6 @@ export const SmartFormFieldList = (props: P) => {
             newValue={newValue}
             row={row}
             jsonbSchemaWithControls={jsonbSchemaWithControls}
-            onChange={(newColData) =>
-              newRowDataHandler.setColumnData(c.name, newColData)
-            }
             error={
               errors[c.name] ??
               (isObject(error) && error.column === c.name ? error : undefined)

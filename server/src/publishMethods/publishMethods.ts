@@ -45,7 +45,6 @@ import {
   getMCPServersStatus,
   installMCPServer,
 } from "../McpHub/installMCPServer";
-import { callMCPServerTool, reloadMcpServerTools } from "../McpHub/McpHub";
 import { getStatus } from "../methods/getPidStats";
 import { killPID } from "../methods/statusMonitorUtils";
 import { initBackupManager, statePrgl } from "../startProstgles";
@@ -53,6 +52,8 @@ import { upsertConnection } from "../upsertConnection";
 import { askLLM } from "./askLLM/askLLM";
 import { getNodeTypes } from "./getNodeTypes";
 import { prostglesSignup } from "./prostglesSignup";
+import { reloadMcpServerTools } from "../McpHub/McpHub";
+import { callMCPServerTool } from "../McpHub/callMCPServerTool";
 
 export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   params,
@@ -512,11 +513,19 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
     },
     getMCPServersStatus: (serverName) => getMCPServersStatus(dbs, serverName),
     callMCPServerTool: async (
+      chatId: number,
       serverName: string,
       toolName: string,
       args: any,
     ) => {
-      const res = await callMCPServerTool(dbs, serverName, toolName, args);
+      const res = await callMCPServerTool(
+        user,
+        chatId,
+        dbs,
+        serverName,
+        toolName,
+        args,
+      );
       return res;
     },
     reloadMcpServerTools: async (serverName: string) =>
@@ -535,11 +544,13 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   const userMethods = {
     ...((allowedLLMCreds || isAdmin) && {
       askLLM: async (
+        connectionId: string,
         userMessage: LLMMessage["message"],
         schema: string,
         chatId: number,
       ) => {
         await askLLM(
+          connectionId,
           userMessage,
           schema,
           chatId,

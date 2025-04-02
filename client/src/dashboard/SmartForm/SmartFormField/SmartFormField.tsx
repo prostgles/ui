@@ -6,7 +6,7 @@ import {
   type TableInfo,
   type ValidatedColumnInfo,
 } from "prostgles-types";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import Btn from "../../../components/Btn";
 import type { FormFieldProps } from "../../../components/FormField/FormField";
 import FormField from "../../../components/FormField/FormField";
@@ -53,7 +53,6 @@ export type SmartFormFieldProps = {
   value: SmartFormFieldValue | undefined;
   newValue: ColumnData | undefined;
   row?: AnyObject;
-  onChange: (newValue: ColumnData) => void;
   action?: "update" | "insert" | "view";
   column: SmartColumnInfo;
   tableInfo: TableInfo;
@@ -99,11 +98,17 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
     table,
     rightContentAlwaysShow,
     jsonbSchemaWithControls,
-    onChange,
     tableInfo,
     enableInsert,
     newRowDataHandler,
   } = props;
+
+  const onChange = useCallback(
+    (newColData: ColumnData) => {
+      newRowDataHandler.setColumnData(column.name, newColData);
+    },
+    [newRowDataHandler, column.name],
+  );
 
   const { onCheckAndChange, error } = useSmartFormFieldOnChange({
     onChange,

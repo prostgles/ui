@@ -94,6 +94,7 @@ export const JoinedRecordsSection = (
           filter={s.joinFilter}
           className="px-1"
           onSuccess={onSuccess}
+          realtime={true}
           excludeNulls={true}
           noDataComponent={
             <InfoRow className="mx-1" color="info" variant="filled">

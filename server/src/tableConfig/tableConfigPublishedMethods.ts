@@ -110,6 +110,10 @@ export const tableConfigPublishedMethods: TableConfig<{ en: 1 }> = {
     },
     indexes: {
       unique_name: { unique: true, columns: "connection_id, name" },
+      unique_func_per_connection: {
+        unique: true,
+        columns: "id, connection_id",
+      },
     },
   },
 };

@@ -152,6 +152,20 @@ export const publish = async (
     /* DASHBOARD */
     ...(dashboardMainTables as object),
     access_control_user_types: isAdmin && "*",
+    published_methods:
+      isAdmin ? "*" : (
+        {
+          select: {
+            fields: {
+              id: 1,
+              name: 1,
+              description: 1,
+              arguments: 1,
+              connection_id: 1,
+            },
+          },
+        }
+      ),
     credentials: isAdmin && {
       select: {
         fields: { key_secret: 0 },
@@ -258,7 +272,7 @@ export const publish = async (
         forcedData,
       },
       update: {
-        fields: { created: 0, user_id: 0 },
+        fields: { created: 0, user_id: 0, connection_id: 0 },
         forcedData,
         forcedFilter,
       },

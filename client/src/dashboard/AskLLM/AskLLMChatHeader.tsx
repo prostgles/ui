@@ -1,16 +1,20 @@
-import { mdiPlus, mdiScript } from "@mdi/js";
-import React from "react";
+import { mdiPlus, mdiScript, mdiWrench } from "@mdi/js";
+import React, { useMemo } from "react";
+import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol, FlexRow } from "../../components/Flex";
-import Select from "../../components/Select/Select";
+import Select, { type FullOption } from "../../components/Select/Select";
+import { t } from "../../i18n/i18nUtils";
 import { getPGIntervalAsText } from "../W_SQL/customRenderers";
 import { LLMChatOptions, type LLMChatOptionsProps } from "./LLMChatOptions";
-import type { LLMSetupStateReady } from "./useLLMSetupState";
 import type { LLMChatState } from "./useLLMChat";
-import { t } from "../../i18n/i18nUtils";
+import type { LLMSetupStateReady } from "./useLLMSetupState";
 
 export const AskLLMChatHeader = (
-  props: LLMChatState & LLMSetupStateReady & LLMChatOptionsProps,
+  props: LLMChatState &
+    LLMSetupStateReady &
+    LLMChatOptionsProps &
+    Pick<Prgl, "connectionId">,
 ) => {
   const {
     activeChat,
@@ -23,8 +27,108 @@ export const AskLLMChatHeader = (
     setActiveChat,
     prompts,
     chatRootDiv,
+    connectionId,
     ...prgl
   } = props;
+
+  const { dbs } = prgl;
+
+  const chatPrompt = useMemo(() => {
+    return activeChat?.llm_prompt_id ?
+        prompts.find((p) => p.id === activeChat.llm_prompt_id)
+      : undefined;
+  }, [activeChat, prompts]);
+
+  const { data: chatAllowedServerFuncs } =
+    dbs.llm_chats_allowed_functions.useSubscribe({ chat_id: activeChatId });
+  const { data: serverFuncs } = dbs.published_methods.useFind({
+    connection_id: connectionId,
+    $existsJoined: {
+      llm_chats_allowed_functions: {
+        chat_id: activeChatId,
+      },
+    },
+  });
+
+  const { data: chatAllowedMcpTools } =
+    dbs.llm_chats_allowed_mcp_tools.useSubscribe({ chat_id: activeChatId });
+  const { data: mcpTools } = dbs.mcp_server_tools.useFind();
+
+  const toolSelectProps = useMemo(() => {
+    const PREF = {
+      func: "func",
+      tool: "tool",
+    } as const;
+    const value = [
+      ...(chatAllowedServerFuncs?.map(
+        (f) => `${PREF.func}${f.server_function_id}`,
+      ) ?? []),
+      ...(chatAllowedMcpTools?.map((t) => `${PREF.tool}${t.tool_id}`) ?? []),
+    ];
+    const tools: FullOption[] = [
+      ...(serverFuncs ?? []).map((f) => ({
+        id: f.id.toString(),
+        key: `${PREF.func}${f.id}`,
+        label: f.name,
+        subLabel: f.description,
+      })),
+      ...(mcpTools ?? []).map((t) => ({
+        id: t.id.toString(),
+        key: `${PREF.tool}${t.id}`,
+        label: `${t.server_name} ${t.name}`,
+        subLabel: t.description,
+      })),
+    ];
+    const onChange = (selectedKeys: string[]) => {
+      const selectedOpts = tools.filter((t) => selectedKeys.includes(t.key));
+      const selectedFuncs = selectedOpts.filter(({ key }) => {
+        return key.startsWith(PREF.func);
+      });
+      const chat_id = activeChatId;
+      if (!chat_id) return;
+      dbs.llm_chats_allowed_functions.delete({
+        chat_id: activeChatId,
+      });
+      if (selectedFuncs.length) {
+        dbs.llm_chats_allowed_functions.insert(
+          selectedFuncs.map(({ id }) => ({
+            chat_id,
+            connection_id: connectionId,
+            server_function_id: id!,
+          })),
+        );
+      }
+      const selectedTools = selectedOpts.filter(({ key }) => {
+        return key.startsWith(PREF.tool);
+      });
+      dbs.llm_chats_allowed_mcp_tools.delete({
+        chat_id,
+      });
+      if (selectedTools.length) {
+        dbs.llm_chats_allowed_mcp_tools.insert(
+          selectedTools.map(({ id }) => ({
+            chat_id,
+            tool_id: id!,
+          })),
+        );
+      }
+    };
+
+    return {
+      fullOptions: tools,
+      onChange,
+      value,
+    };
+  }, [
+    serverFuncs,
+    mcpTools,
+    chatAllowedMcpTools,
+    chatAllowedServerFuncs,
+    activeChatId,
+    connectionId,
+    dbs,
+  ]);
+
   return (
     <FlexRow className="AskLLMChatHeader">
       <FlexRow className="gap-p25">
@@ -77,7 +181,7 @@ export const AskLLMChatHeader = (
           onClickPromise={async () => {
             if (!preferredPromptId)
               throw new Error(t.AskLLMChatHeader["No prompt found"]);
-            createNewChat(defaultCredential.id, preferredPromptId);
+            createNewChat(preferredPromptId);
           }}
         />
         <Select
@@ -99,6 +203,14 @@ export const AskLLMChatHeader = (
             );
           }}
         />
+        {chatPrompt && !chatPrompt.options?.disable_tools && (
+          <Select
+            title="Tools allowed in this chat"
+            multiSelect={true}
+            {...toolSelectProps}
+            iconPath={mdiWrench}
+          />
+        )}
       </FlexRow>
     </FlexRow>
   );

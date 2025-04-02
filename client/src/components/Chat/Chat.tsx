@@ -16,6 +16,7 @@ export type Message = {
   markdown?: string;
   sender_id: number | string;
   incoming: boolean;
+  isLoading?: boolean;
   sent: Date;
   media?: {
     url: string;

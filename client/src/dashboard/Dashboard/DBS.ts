@@ -26,6 +26,7 @@ export type DBSMethods = Partial<{
     otpCode: string,
   ) => Promise<{ token: string; host: string; hasError?: boolean; error: any }>;
   askLLM: (
+    connectionId: string,
     userMessage: LLMMessage["message"],
     schema: string,
     chatId: number,
@@ -147,6 +148,7 @@ export type DBSMethods = Partial<{
     message: string;
   }>;
   callMCPServerTool: (
+    chat_id: number,
     serverName: string,
     toolName: string,
     args: any,

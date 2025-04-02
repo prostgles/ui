@@ -63,14 +63,18 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
   const sendQuery = useCallback(
     async (msg: LLMMessage["message"] | undefined) => {
       if (!msg || !activeChatId) return;
-      await askLLM(msg, schemaStr, activeChatId).catch((error) => {
-        const errorText = error?.message || error;
-        alert(
-          typeof errorText === "string" ? errorText : JSON.stringify(errorText),
-        );
-      });
+      await askLLM(connectionId, msg, schemaStr, activeChatId).catch(
+        (error) => {
+          const errorText = error?.message || error;
+          alert(
+            typeof errorText === "string" ? errorText : (
+              JSON.stringify(errorText)
+            ),
+          );
+        },
+      );
     },
-    [askLLM, schemaStr, activeChatId],
+    [askLLM, schemaStr, activeChatId, connectionId],
   );
 
   const sendMessage = useCallback(
@@ -110,6 +114,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
         <AskLLMChatHeader
           {...setupState}
           {...chatState}
+          connectionId={connectionId}
           dbs={dbs}
           dbsTables={dbsTables}
           theme={prgl.theme}
@@ -148,9 +153,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       )}
       {latestChats && !activeChat && (
         <Btn
-          onClickPromise={async () =>
-            createNewChat(defaultCredential.id, preferredPromptId)
-          }
+          onClickPromise={async () => createNewChat(preferredPromptId)}
           className="m-2"
           color="action"
           variant="faded"

@@ -1,6 +1,6 @@
 import { mdiPlus } from "@mdi/js";
 import { useEffectDeep } from "prostgles-client/dist/prostgles";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { getLLMMessageText } from "../../../../commonTypes/llmUtils";
 import { isObject } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
@@ -22,14 +22,17 @@ export type LLMChatState = ReturnType<typeof useLLMChat>;
 export const useLLMChat = (props: P) => {
   const { dbs, user, credentials, firstPromptId, defaultCredential, prompts } =
     props;
+  const chatsFilter = useMemo(() => {
+    return {
+      /** TODO: fix $in: [string, null] types */
+      connection_id: { $in: [props.connectionId, null as any] },
+    };
+  }, [props.connectionId]);
   const [selectedChatId, setSelectedChat] = useState<number>();
-  const { data: latestChats } = dbs.llm_chats.useSubscribe(
-    {},
-    {
-      select: { "*": 1, created_ago: { $ageNow: ["created"] } },
-      orderBy: { created: -1 },
-    },
-  );
+  const { data: latestChats } = dbs.llm_chats.useSubscribe(chatsFilter, {
+    select: { "*": 1, created_ago: { $ageNow: ["created"] } },
+    orderBy: { created: -1 },
+  });
   const latestChat = latestChats?.[0];
   /**
    * Always show the selected chat if it exists otherwise show latest
@@ -41,12 +44,11 @@ export const useLLMChat = (props: P) => {
 
   const preferredPromptId = activeChat?.llm_prompt_id ?? firstPromptId;
   const createNewChat = async (
-    credentialId: number,
     promptId: number,
     ifNoOtherChatsExist = false,
   ) => {
     if (ifNoOtherChatsExist) {
-      const chat = await dbs.llm_chats.findOne();
+      const chat = await dbs.llm_chats.findOne(chatsFilter);
       if (chat) {
         console.warn("Chat already exists", chat);
         return;
@@ -56,22 +58,21 @@ export const useLLMChat = (props: P) => {
       console.warn("No prompt found", { prompts });
       return;
     }
-    const newChat = await dbs.llm_chats.insert(
+    await dbs.llm_chats.insert(
       {
         name: "New chat",
         user_id: undefined as any,
-        // model: undefined as any,
+        connection_id: props.connectionId,
         llm_prompt_id: promptId,
       },
       { returning: "*" },
     );
-    console.log("Created new chat", newChat);
     setSelectedChat(undefined);
   };
 
   useEffectDeep(() => {
     if (latestChats && !latestChats.length && preferredPromptId) {
-      createNewChat(defaultCredential.id, preferredPromptId, true);
+      createNewChat(preferredPromptId, true);
     }
   }, [latestChats, preferredPromptId, defaultCredential]);
 
@@ -84,10 +85,11 @@ export const useLLMChat = (props: P) => {
   const { data: models } = dbs.llm_models.useFind();
 
   const actualMessages: Message[] =
-    llmMessages?.map(({ id, user_id, created, message, meta }) => ({
+    llmMessages?.map(({ id, user_id, created, message, meta, is_loading }) => ({
       id,
       incoming: user_id !== user?.id,
       message: null,
+      isLoading: !!is_loading,
       messageTopContent: (
         <AskLLMTokenUsage message={{ user_id, meta }} models={models ?? []} />
       ),
@@ -114,13 +116,13 @@ export const useLLMChat = (props: P) => {
           incoming: true,
           sent: new Date("2024-01-01"),
           sender_id: "ai",
-        },
+        } as const,
       ].map((m) => {
         const incoming = m.sender_id !== user?.id;
         return {
           ...m,
           incoming,
-          message: incoming && !m.message ? <Loading /> : m.message,
+          message: m.message,
         };
       })
     )).concat(

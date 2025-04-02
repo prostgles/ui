@@ -95,30 +95,30 @@ const initForkedProc = () => {
           } else if (msg.type === "run") {
             const { code, validatedArgs, user, id } = msg;
             const { run } = eval(code + "\n\n exports;");
-            const callMCPServerTool = async (
-              serverName: string,
-              toolName: string,
-              args?: any,
-            ) => {
-              return new Promise((resolve, reject) => {
-                const callId = lastToolCallId++;
-                toolCalls[callId] = {
-                  cb: (err, res) => (err ? reject(err) : resolve(res)),
-                };
-                process.send?.({
-                  id,
-                  callId,
-                  type: "toolCall",
-                  serverName,
-                  toolName,
-                  args,
-                } satisfies ForkedProcMessageResult);
-              });
-            };
+            // const callMCPServerTool = async (
+            //   serverName: string,
+            //   toolName: string,
+            //   args?: any,
+            // ) => {
+            //   return new Promise((resolve, reject) => {
+            //     const callId = lastToolCallId++;
+            //     toolCalls[callId] = {
+            //       cb: (err, res) => (err ? reject(err) : resolve(res)),
+            //     };
+            //     process.send?.({
+            //       id,
+            //       callId,
+            //       type: "toolCall",
+            //       serverName,
+            //       toolName,
+            //       args,
+            //     } satisfies ForkedProcMessageResult);
+            //   });
+            // };
             const methodResult = await run(validatedArgs, {
               ...prglParams,
               user,
-              callMCPServerTool,
+              // callMCPServerTool,
             });
             cb(undefined, methodResult);
           } else {

@@ -109,4 +109,40 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       last_updated: `TIMESTAMP DEFAULT NOW()`,
     },
   },
+  mcp_server_tool_calls: {
+    columns: {
+      id: `SERIAL PRIMARY KEY`,
+      chat_id: `INTEGER REFERENCES llm_chats(id) ON DELETE SET NULL`,
+      user_id: `UUID REFERENCES users(id) ON DELETE SET NULL`,
+      mcp_server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE SET NULL`,
+      mcp_tool_name: `TEXT NOT NULL, FOREIGN KEY  (mcp_server_name, mcp_tool_name) REFERENCES mcp_server_tools(server_name, name) ON DELETE SET NULL`,
+      input: `JSONB`,
+      output: `JSONB`,
+      error: `JSON`,
+      called: `TIMESTAMP DEFAULT NOW()`,
+      duration: `INTERVAL NOT NULL`,
+    },
+  },
+  llm_chats_allowed_mcp_tools: {
+    dropIfExists: true,
+    columns: {
+      chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
+      tool_id: `INTEGER REFERENCES mcp_server_tools(id) ON DELETE CASCADE`,
+      allowed_inputs: {
+        info: {
+          hint: "If empty, all inputs are allowed. Otherwise only the listed inputs are allowed.",
+        },
+        nullable: true,
+        jsonbSchema: {
+          arrayOf: "any",
+        },
+      },
+    },
+    indexes: {
+      unique_chat_allowed_tool: {
+        unique: true,
+        columns: "chat_id, tool_id",
+      },
+    },
+  },
 };

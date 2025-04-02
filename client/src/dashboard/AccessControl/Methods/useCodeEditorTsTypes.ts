@@ -1,12 +1,11 @@
 import { useMemoDeep, usePromise } from "prostgles-client/dist/prostgles";
+import { useRef } from "react";
+import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import { fixIndent } from "../../../demo/sqlVideoDemo";
 import { isDefined } from "../../../utils";
 import type { LanguageConfig, TSLibrary } from "../../CodeEditor/CodeEditor";
 import { dboLib, pgPromiseDb } from "../../CodeEditor/monacoTsLibs";
 import type { MethodDefinitionProps } from "./MethodDefinition";
-import { fixIndent } from "../../../demo/sqlVideoDemo";
-import { useWhyDidYouUpdate } from "../../../components/MonacoEditor/useWhyDidYouUpdate";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
-import { useRef } from "react";
 
 type Args = Pick<
   MethodDefinitionProps,

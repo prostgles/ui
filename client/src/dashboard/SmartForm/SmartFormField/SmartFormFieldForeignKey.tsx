@@ -15,6 +15,7 @@ import {
   type ColumnData,
   NewRowDataHandler,
 } from "../SmartFormNewRowDataHandler";
+import { useWhyDidYouUpdate } from "../../../components/MonacoEditor/useWhyDidYouUpdate";
 
 export type SmartFormFieldForeignKeyProps = Pick<
   SmartFormFieldProps,
@@ -29,19 +30,23 @@ export type SmartFormFieldForeignKeyProps = Pick<
     newRowDataHandler: NewRowDataHandler;
   };
 
-export const SmartFormFieldForeignKey = ({
-  column,
-  db,
-  onChange,
-  tables,
-  tableName,
-  value,
-  row,
-  readOnly,
-  newRowDataHandler,
-  tableInfo,
-  setShowNestedInsertForm,
-}: SmartFormFieldForeignKeyProps) => {
+export const SmartFormFieldForeignKey = (
+  props: SmartFormFieldForeignKeyProps,
+) => {
+  const {
+    column,
+    db,
+    onChange,
+    tables,
+    tableName,
+    value,
+    row,
+    readOnly,
+    newRowDataHandler,
+    tableInfo,
+    setShowNestedInsertForm,
+  } = props;
+  useWhyDidYouUpdate(props);
   const [fullOptions, setFullOptions] = useState<FullOption[]>();
   const getuseIsMounted = useIsMounted();
   const newValue = newRowDataHandler.getNewRow()[column.name];
