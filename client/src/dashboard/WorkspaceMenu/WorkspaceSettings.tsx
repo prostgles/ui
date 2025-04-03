@@ -10,6 +10,7 @@ import type {
 } from "../Dashboard/dashboardUtils";
 import { SmartForm } from "../SmartForm/SmartForm";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { dbsConnection } from "../../../../commonTypes/dbsConnection";
 
 type WorkspaceSettingsProps = Pick<Prgl, "dbs" | "dbsMethods"> & {
   w: Workspace;
@@ -67,6 +68,7 @@ export const WorkspaceSettings = ({
             showJoinedTables={false}
             label=""
             tableName="workspaces"
+            connection={dbsConnection}
             tables={dbsTables}
             methods={dbsMethods}
             confirmUpdates={true}

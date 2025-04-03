@@ -532,6 +532,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
         form =
           !filter ? null : (
             <SmartForm
+              connection={this.props.prgl.connection}
               asPopup={true}
               confirmUpdates={true}
               db={prgl.db}
@@ -566,6 +567,7 @@ export default class W_Map extends RTComp<W_MapProps, W_MapState, D> {
           >
             {infoSection}
             <DeckGLMap
+              connection={this.props.prgl.connection}
               onLoad={(map) => {
                 this.setLayerData(this.state.dataAge);
                 this.map = map;

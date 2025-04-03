@@ -11,7 +11,12 @@ import type { GeoJsonLayer } from "deck.gl";
 
 type P = Pick<
   DecKGLMapProps,
-  "tileAttribution" | "onOptionsChange" | "topLeftContent" | "options" | "edit"
+  | "tileAttribution"
+  | "onOptionsChange"
+  | "topLeftContent"
+  | "options"
+  | "edit"
+  | "connection"
 > & {
   deckGlLibs: DeckGlLibs;
   fitBounds: VoidFunction;
@@ -28,6 +33,7 @@ export const InMapControls = ({
   fitBounds,
   deckW,
   onRenderLayer,
+  connection,
 }: P) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [showCursorCoords, setShowCursorCoords] = useState(false);
@@ -75,7 +81,7 @@ export const InMapControls = ({
             padding: "4px",
           }}
         >
-          <a href={tileAttribution.url} target="_blank">
+          <a href={tileAttribution.url} target="_blank" rel="noreferrer">
             {tileAttribution.title}
           </a>
         </div>
@@ -131,6 +137,7 @@ export const InMapControls = ({
             deckW={deckW}
             onRenderLayer={onRenderDrawnLayer}
             deckGlLibs={deckGlLibs}
+            connection={connection}
           />
         )}
       </FlexRow>

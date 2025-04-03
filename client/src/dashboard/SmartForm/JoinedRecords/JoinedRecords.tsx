@@ -176,6 +176,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
         <SmartTable
           db={db}
           methods={methods}
+          connection={connection}
           tableName={quickView.tableName}
           tables={tables}
           filter={quickView.detailedJoinFilter}

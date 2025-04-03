@@ -28,11 +28,9 @@ import { dbsConnection } from "../../../../commonTypes/dbsConnection";
 export type ServerSettingsProps = Pick<
   Prgl,
   "dbsMethods" | "dbs" | "dbsTables" | "auth"
-> & {
-  connection?: Prgl["connection"];
-};
+>;
 export const ServerSettings = (props: ServerSettingsProps) => {
-  const { connection, dbsMethods, dbs, dbsTables } = props;
+  const { dbsMethods, dbs, dbsTables } = props;
   const [testCIDR, setCIDR] = useState<{ cidr?: string }>({});
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
@@ -98,7 +96,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                       label=""
                       db={dbs as DBHandlerClient}
                       methods={dbsMethods}
-                      connection={connection}
+                      connection={dbsConnection}
                       tableName="global_settings"
                       contentClassname="px-p25  "
                       columns={

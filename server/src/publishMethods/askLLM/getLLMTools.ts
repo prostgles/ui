@@ -28,8 +28,8 @@ export const getLLMTools = async ({
   const mcpTools = (
     await dbs.mcp_server_tools.find({
       $existsJoined: {
-        mcp_servers: {
-          enabled: true,
+        llm_chats_allowed_mcp_tools: {
+          chat_id: chatId,
         },
       },
     })

@@ -6,13 +6,10 @@ import type {
 import { getPossibleNestedInsert } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import type { SmartFormProps } from "../SmartForm";
+import type { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import type { SmartFormFieldProps } from "./SmartFormField";
 import { SmartFormFieldLinkedDataInsert } from "./SmartFormFieldLinkedDataInsert";
 import { SmartFormFieldLinkedDataSearch } from "./SmartFormFieldLinkedDataSearch";
-import type {
-  ColumnData,
-  NewRowDataHandler,
-} from "../SmartFormNewRowDataHandler";
 
 export type SmartFormFieldLinkedDataProps = Pick<
   SmartFormProps,

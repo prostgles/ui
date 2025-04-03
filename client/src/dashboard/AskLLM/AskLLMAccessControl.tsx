@@ -13,6 +13,7 @@ import { SmartForm } from "../SmartForm/SmartForm";
 import { SetupLLMCredentials } from "./SetupLLMCredentials";
 import { useLLMSetupState } from "./useLLMSetupState";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { dbsConnection } from "../../../../commonTypes/dbsConnection";
 
 type P = Prgl & {
   accessRuleId: number | undefined;
@@ -180,6 +181,7 @@ export const AskLLMAccessControl = ({
                 <SmartForm
                   label=""
                   key={addFormKey}
+                  connection={dbsConnection}
                   contentClassname="flex-row px-0 p-p25"
                   tableName="access_control_allowed_llm"
                   db={dbs as DBHandlerClient}

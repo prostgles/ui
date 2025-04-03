@@ -11,7 +11,7 @@ import {
   type SmartGroupFilter,
 } from "../../../commonTypes/filterUtils";
 import { SmartFilterBar } from "./SmartFilterBar/SmartFilterBar";
-import { SmartForm } from "./SmartForm/SmartForm";
+import { SmartForm, type SmartFormProps } from "./SmartForm/SmartForm";
 import ErrorComponent from "../components/ErrorComponent";
 import { getEditColumn } from "./W_Table/tableUtils/getEditColumn";
 import type { AnyObject, SubscriptionHandler } from "prostgles-types";
@@ -21,27 +21,28 @@ import { quickClone } from "../utils";
 import type { PaginationProps } from "../components/Table/Pagination";
 import { FlexCol } from "../components/Flex";
 
-type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods"> & {
-  filter?: SmartGroupFilter;
-  tableName: string;
-  tableCols?: ProstglesColumn[];
-  onClosePopup?: () => void;
-  onClickRow?: (row?: AnyObject) => void;
-  title?:
-    | React.ReactNode
-    | ((dataCounts: {
-        totalRows: number;
-        filteredRows: number;
-      }) => React.ReactNode);
-  titlePrefix?: string;
-  showInsert?: boolean;
-  allowEdit?: boolean;
-  className?: string;
-  noDataComponent?: React.ReactNode;
-  onFilterChange?: (filter: SmartGroupFilter) => void;
-  filterOperand?: "and" | "or";
-  realtime?: { throttle?: number };
-};
+type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods"> &
+  Pick<SmartFormProps, "connection"> & {
+    filter?: SmartGroupFilter;
+    tableName: string;
+    tableCols?: ProstglesColumn[];
+    onClosePopup?: () => void;
+    onClickRow?: (row?: AnyObject) => void;
+    title?:
+      | React.ReactNode
+      | ((dataCounts: {
+          totalRows: number;
+          filteredRows: number;
+        }) => React.ReactNode);
+    titlePrefix?: string;
+    showInsert?: boolean;
+    allowEdit?: boolean;
+    className?: string;
+    noDataComponent?: React.ReactNode;
+    onFilterChange?: (filter: SmartGroupFilter) => void;
+    filterOperand?: "and" | "or";
+    realtime?: { throttle?: number };
+  };
 
 type S = {
   error?: any;
@@ -262,6 +263,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
             asPopup={true}
             confirmUpdates={true}
             db={db}
+            connection={this.props.connection}
             methods={this.props.methods}
             tables={tables}
             tableName={tableName}

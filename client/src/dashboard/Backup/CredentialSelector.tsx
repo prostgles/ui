@@ -12,6 +12,7 @@ import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import { getMonaco } from "../SQLEditor/SQLEditor";
 import { SmartForm } from "../SmartForm/SmartForm";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { dbsConnection } from "../../../../commonTypes/dbsConnection";
 
 type P = {
   pickFirst?: boolean;
@@ -83,6 +84,7 @@ export function CredentialSelector({
             methods={dbsMethods}
             db={dbs as DBHandlerClient}
             label="Add Cloud credentials"
+            connection={dbsConnection}
             tableName="credentials"
             tables={dbsTables}
             showJoinedTables={false}

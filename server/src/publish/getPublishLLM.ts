@@ -168,6 +168,14 @@ export const getPublishLLM = (
       insert: "*",
       delete: false,
     },
+    mcp_server_tools:
+      isAdmin ? "*" : (
+        {
+          select: {
+            fields: "*",
+          },
+        }
+      ),
     mcp_server_configs: isAdmin && {
       insert: {
         fields: "*",

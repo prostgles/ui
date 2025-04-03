@@ -49,6 +49,7 @@ import type { Feature } from "geojson";
 import type { MapExtent } from "../Dashboard/dashboardUtils";
 import type { MAP_SELECT_COLUMNS } from "../W_Map/getMapData";
 import { InMapControls } from "./InMapControls";
+import type { SmartFormProps } from "../SmartForm/SmartForm";
 
 export type DeckGlColor =
   | [number, number, number]
@@ -145,7 +146,7 @@ export const MapExtentBehavior = [
 
 export type MapExtentBehavior = (typeof MapExtentBehavior)[number]["key"];
 
-export type DecKGLMapProps = {
+export type DecKGLMapProps = Pick<SmartFormProps, "connection"> & {
   basemapOpacity: number;
   basemapDesaturate: number;
   dataOpacity: number;
