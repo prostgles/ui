@@ -3,6 +3,7 @@ import { tryCatchV2 } from "prostgles-types";
 import type { DBS } from ".";
 import type { DBSConnectionInfo } from "./electronConfig";
 import { upsertConnection } from "./upsertConnection";
+import type { DBSSchema } from "../../commonTypes/publishUtils";
 
 /** Add state db if missing */
 export const insertStateDatabase = async (
@@ -23,14 +24,20 @@ export const insertStateDatabase = async (
           db_ssl: con.db_ssl, // || "disable",
           is_state_db: true,
           table_options: {
+            alerts: {
+              icon: "BellBadgeOutline",
+            },
             users: {
               icon: "Account",
             },
             backups: {
-              icon: "BackupRestore",
+              icon: "DatabaseSync",
             },
             sessions: {
               icon: "Laptop",
+            },
+            mcp_server_tools: {
+              icon: "Tools",
             },
             llm_chats: {
               icon: "Assistant",
@@ -56,7 +63,7 @@ export const insertStateDatabase = async (
             published_methods: {
               icon: "LanguageTypescript",
             },
-          },
+          } satisfies Partial<Record<keyof DBSSchema, { icon: string }>>,
         },
         null,
         db,

@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { sliceText } from "../../../../../commonTypes/utils";
 import Btn from "../../../components/Btn";
 import { FileInput } from "../../../components/FileInput/FileInput";
-import { FlexRow } from "../../../components/Flex";
+import { FlexRow, FlexRowWrap } from "../../../components/Flex";
 import Select, { type FullOption } from "../../../components/Select/Select";
 import {
   type ColumnData,
@@ -86,11 +86,10 @@ export const SmartFormFieldForeignKey = (
 
   const paddingValue = isDefined(selectedOption?.subLabel) ? "6px" : "12px";
   const displayValue = (
-    <div
-      className={"flex-col gap-p5 min-w-0"}
+    <FlexRowWrap
+      className={"gap-p5 min-w-0"}
       style={{
-        padding: readOnly ? `${paddingValue} 0` : paddingValue,
-        // border: "1px solid var(--b-default)"
+        padding: `${paddingValue} 0`,
       }}
     >
       {valueNode}
@@ -107,7 +106,7 @@ export const SmartFormFieldForeignKey = (
           {selectedOption.subLabel}
         </div>
       )}
-    </div>
+    </FlexRowWrap>
   );
 
   if (readOnly) {
@@ -199,9 +198,6 @@ export const SmartFormFieldForeignKey = (
       btnProps={{
         children: displayValue,
         style: {
-          paddingTop: "0",
-          paddingBottom: "0",
-          paddingLeft: "0",
           justifyContent: "space-between",
           flex: 1,
         },

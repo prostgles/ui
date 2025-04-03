@@ -21,7 +21,7 @@ import type { DBSConnectionInfo } from "./electronConfig";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { DBS_CONNECTION_INFO } from "./envVars";
 import { insertStateDatabase } from "./insertStateDatabase";
-import { publish } from "./publish";
+import { publish } from "./publish/publish";
 import { setupLLM } from "./publishMethods/askLLM/setupLLM";
 import { publishMethods } from "./publishMethods/publishMethods";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";

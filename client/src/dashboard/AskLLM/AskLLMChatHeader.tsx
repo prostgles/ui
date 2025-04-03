@@ -131,7 +131,11 @@ export const AskLLMChatHeader = (
 
   return (
     <FlexRow className="AskLLMChatHeader">
-      <FlexRow className="gap-p25">
+      <FlexCol className="gap-p25">
+        <div>{t.AskLLMChatHeader["Ask AI Assistan"]}t</div>
+        <span className="text-2 font-14">({t.common.experimental})</span>
+      </FlexCol>
+      <FlexRow className="gap-p25 min-w-0">
         <LLMChatOptions
           dbs={prgl.dbs}
           dbsTables={prgl.dbsTables}
@@ -142,12 +146,6 @@ export const AskLLMChatHeader = (
           credentials={credentials}
           chatRootDiv={chatRootDiv}
         />
-        <FlexCol className="gap-p25">
-          <div>{t.AskLLMChatHeader["Ask AI Assistan"]}t</div>
-          <span className="text-2 font-14">({t.common.experimental})</span>
-        </FlexCol>
-      </FlexRow>
-      <FlexRow className="gap-p25 min-w-0">
         <Select
           title={t.AskLLMChatHeader.Chat}
           fullOptions={

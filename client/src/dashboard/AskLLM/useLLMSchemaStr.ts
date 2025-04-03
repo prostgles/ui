@@ -41,27 +41,29 @@ export const useLLMSchemaStr = ({ db, connection, tables }: P) => {
   }, [db, connection.db_schema_filter]);
 
   const schemaStr = useMemoDeep(() => {
+    if (!tableConstraints) return "";
     const res = tables
       .map((t) => {
-        const constraints =
-          tableConstraints?.filter((c) => c.table_name === t.name) ?? [];
-        return `CREATE TABLE ${t.name} (\n${t.columns
+        const constraints = tableConstraints.filter(
+          (c) => c.table_name === t.name,
+        );
+
+        const colDefs = t.columns
+          .sort((a, b) => a.ordinal_position - b.ordinal_position)
           .map((c) => {
             return [
               `  ${c.name} ${c.udt_name}`,
-              c.is_pkey ? "PRIMARY KEY"
-              : c.is_nullable ? ""
-              : "NOT NULL",
+              !c.is_pkey && !c.is_nullable ? "NOT NULL" : "",
               !c.is_pkey && c.has_default ? `DEFAULT ${c.column_default}` : "",
-              c.references ?
-                c.references.map((r) => `REFERENCES ${r.ftable} (${r.fcols})`)
-              : "",
             ]
               .filter((v) => v)
               .join(" ");
           })
-          .concat(constraints.map((con) => con.definition))
-          .join(",\n ")}\n)`;
+          .concat(
+            constraints.map((c) => `CONSTRAINT ${c.conname} ${c.definition}`),
+          )
+          .join(",\n ");
+        return `CREATE TABLE ${t.name} (\n${colDefs}\n)`;
       })
       .join(";\n");
 
