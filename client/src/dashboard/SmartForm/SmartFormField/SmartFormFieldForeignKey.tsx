@@ -52,7 +52,7 @@ export const SmartFormFieldForeignKey = (
   const hasNewValue = isDefined(newValue);
   const onSearchOptions = useCallback(
     async (term: string) => {
-      if (hasNewValue) return;
+      // if (hasNewValue) return;
       const options = await fetchForeignKeyOptions({
         column,
         db,
@@ -64,7 +64,7 @@ export const SmartFormFieldForeignKey = (
       if (!getuseIsMounted()) return;
       setFullOptions(options);
     },
-    [column, db, tableName, tables, row, getuseIsMounted, hasNewValue],
+    [column, db, tableName, tables, row, getuseIsMounted],
   );
 
   useEffect(() => {
