@@ -139,7 +139,6 @@ export const AskLLMChatHeader = (
         <LLMChatOptions
           dbs={prgl.dbs}
           dbsTables={prgl.dbsTables}
-          theme={prgl.theme}
           prompts={props.prompts}
           activeChat={activeChat}
           activeChatId={activeChatId}

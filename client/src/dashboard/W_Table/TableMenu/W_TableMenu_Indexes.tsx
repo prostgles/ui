@@ -29,6 +29,7 @@ export const W_TableMenu_Indexes = ({
         An index improves the speed of data retrieval operations on a table
       </div>
       <SmartCardList
+        connection={undefined}
         db={prgl.db}
         tableName={{
           sqlQuery: `
@@ -81,9 +82,10 @@ export const W_TableMenu_Indexes = ({
                           REINDEX is similar to a drop and recreate of the index
                           in that the index contents are rebuilt from scratch.
                           <br></br>
-                          If "CONCURRENTLY" is used PostgreSQL will rebuild the
-                          index without taking any locks that prevent concurrent
-                          inserts, updates, or deletes on the table
+                          If &quot;CONCURRENTLY&quot; is used PostgreSQL will
+                          rebuild the index without taking any locks that
+                          prevent concurrent inserts, updates, or deletes on the
+                          table
                         </>
                       ),
                       sql: `REINDEX INDEX ${asName(indexname)}`,

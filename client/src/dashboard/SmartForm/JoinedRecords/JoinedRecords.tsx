@@ -104,7 +104,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
             <Section
               key={path.join(".")}
               title={
-                <FlexRow>
+                <FlexRow data-key={path.join(".")}>
                   <div>{label}</div>
                   <div className="text-2" style={{ fontWeight: "normal" }}>
                     {count}

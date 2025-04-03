@@ -15,6 +15,7 @@ import { NewMethod } from "./NewMethod";
 import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAccessRule";
 import ConfirmationDialog from "../../components/ConfirmationDialog";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { dbsConnection } from "../../../../commonTypes/dbsConnection";
 
 type P = {
   className?: string;
@@ -43,6 +44,7 @@ export const PublishedMethods = ({
       methods={dbsMethods}
       tables={dbsTables}
       tableName="published_methods"
+      connection={dbsConnection}
       realtime={true}
       filter={{ connection_id: connectionId }}
       showEdit={false}

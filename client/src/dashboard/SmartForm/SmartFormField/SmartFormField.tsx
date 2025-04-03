@@ -7,15 +7,23 @@ import {
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import React, { useCallback, useState } from "react";
+import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";
 import type { FormFieldProps } from "../../../components/FormField/FormField";
 import FormField from "../../../components/FormField/FormField";
-import type { DBS } from "../../Dashboard/DBS";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
-import type { ColumnDisplayConfig } from "../SmartForm";
+import type { ColumnDisplayConfig, SmartFormProps } from "../SmartForm";
+import type {
+  ColumnData,
+  NewRowDataHandler,
+} from "../SmartFormNewRowDataHandler";
 import { SmartFormFieldFileSection } from "./SmartFormFieldFileSection";
 import { SmartFormFieldForeignKey } from "./SmartFormFieldForeignKey";
+import {
+  SmartFormFieldLinkedData,
+  useSmartFormFieldForeignDataState,
+} from "./SmartFormFieldLinkedData";
 import { getSmartFormFieldRightButtons } from "./SmartFormFieldRightButtons";
 import {
   columnIsReadOnly,
@@ -26,15 +34,6 @@ import {
 } from "./fieldUtils";
 import { useSmartFormFieldAsJSON } from "./useSmartFormFieldAsJSON";
 import { useSmartFormFieldOnChange } from "./useSmartFormFieldOnChange";
-import {
-  SmartFormFieldLinkedData,
-  useSmartFormFieldForeignDataState,
-} from "./SmartFormFieldLinkedData";
-import type { Prgl } from "../../../App";
-import type {
-  ColumnData,
-  NewRowDataHandler,
-} from "../SmartFormNewRowDataHandler";
 
 type SmartFormFieldValue =
   | string
@@ -45,24 +44,20 @@ type SmartFormFieldValue =
     }[]
   | null;
 
-export type SmartFormFieldProps = {
-  db: DBHandlerClient;
-  methods: Prgl["methods"];
-  tableName: string;
+export type SmartFormFieldProps = Pick<
+  SmartFormProps,
+  "connection" | "db" | "methods" | "tableName" | "jsonbSchemaWithControls"
+> & {
   maxWidth?: string;
   value: SmartFormFieldValue | undefined;
   newValue: ColumnData | undefined;
-  row?: AnyObject;
+  row: AnyObject | undefined;
   action?: "update" | "insert" | "view";
   column: SmartColumnInfo;
   tableInfo: TableInfo;
   style?: React.CSSProperties;
   inputStyle?: React.CSSProperties;
   placeholder?: string;
-  /**
-   * If true then will render jsonbSchema columns using controls instead of code editor
-   */
-  jsonbSchemaWithControls?: boolean;
   multiSelect?: boolean;
   error?: any;
   rightContentAlwaysShow?: boolean;
@@ -228,7 +223,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
             <SmartFormFieldForeignKey
               {...foreignDataState}
               key={column.name}
-              column={{ ...column, references: column.references! }}
+              column={column as any}
               db={db}
               readOnly={readOnly}
               onChange={onChange}

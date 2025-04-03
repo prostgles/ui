@@ -1,7 +1,12 @@
 import { mdiClose } from "@mdi/js";
-import { useIsMounted } from "prostgles-client/dist/prostgles";
-import { isDefined, isObject, type ValidatedColumnInfo } from "prostgles-types";
-import React, { useCallback, useEffect, useState } from "react";
+import { useIsMounted, useMemoDeep } from "prostgles-client/dist/prostgles";
+import {
+  isDefined,
+  isObject,
+  pickKeys,
+  type ValidatedColumnInfo,
+} from "prostgles-types";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { sliceText } from "../../../../../commonTypes/utils";
 import Btn from "../../../components/Btn";
 import { FileInput } from "../../../components/FileInput/FileInput";
@@ -49,22 +54,31 @@ export const SmartFormFieldForeignKey = (
   const [fullOptions, setFullOptions] = useState<FullOption[]>();
   const getuseIsMounted = useIsMounted();
   const newValue = newRowDataHandler.getNewRow()[column.name];
-  const hasNewValue = isDefined(newValue);
+
+  const rowWithFkeyVals = useMemo(() => {
+    if (!row) return;
+    const fkeyColNames = column.references.flatMap((r) => r.cols);
+    return pickKeys(row, fkeyColNames);
+  }, [row, column]);
+
+  const rowWithFkeyValsMemo = useMemoDeep(
+    () => rowWithFkeyVals,
+    [rowWithFkeyVals],
+  );
   const onSearchOptions = useCallback(
     async (term: string) => {
-      // if (hasNewValue) return;
       const options = await fetchForeignKeyOptions({
         column,
         db,
         tableName,
         tables,
-        row,
+        row: rowWithFkeyValsMemo,
         term,
       });
       if (!getuseIsMounted()) return;
       setFullOptions(options);
     },
-    [column, db, tableName, tables, row, getuseIsMounted],
+    [column, db, tableName, tables, rowWithFkeyValsMemo, getuseIsMounted],
   );
 
   useEffect(() => {
@@ -85,11 +99,13 @@ export const SmartFormFieldForeignKey = (
   );
 
   const paddingValue = isDefined(selectedOption?.subLabel) ? "6px" : "12px";
+  const isNullOrEmpty = value === null || value === undefined;
   const displayValue = (
     <FlexRowWrap
       className={"gap-p5 min-w-0"}
       style={{
-        padding: `${paddingValue} 0`,
+        /** Empty values too tall */
+        padding: isNullOrEmpty && !readOnly ? 0 : `${paddingValue} 0`,
       }}
     >
       {valueNode}

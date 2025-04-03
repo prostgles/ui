@@ -9,6 +9,7 @@ import { FlexCol } from "../../components/Flex";
 import { SmartForm } from "../SmartForm/SmartForm";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import Chip from "../../components/Chip";
+import { dbsConnection } from "../../../../commonTypes/dbsConnection";
 
 export const LLMProviderSetup = ({
   dbs,
@@ -22,6 +23,7 @@ export const LLMProviderSetup = ({
       <SmartCardList
         className="mb-1 w-fit"
         db={dbs as DBHandlerClient}
+        connection={dbsConnection}
         tableName={"llm_credentials"}
         methods={dbsMethods}
         tables={dbsTables}
@@ -29,14 +31,7 @@ export const LLMProviderSetup = ({
         orderByfields={[]}
         noDataComponent={
           <InfoRow color="info" variant="filled">
-            No existing credentials{" "}
-            <Btn
-              variant="filled"
-              color="action"
-              onClick={() => setAddCreds(true)}
-            >
-              Add credentials
-            </Btn>
+            No LLM providers
           </InfoRow>
         }
         fieldConfigs={[
@@ -61,6 +56,7 @@ export const LLMProviderSetup = ({
         >
           <FlexCol>
             <SmartForm
+              connection={dbsConnection}
               label=""
               showJoinedTables={false}
               tableName="llm_credentials"

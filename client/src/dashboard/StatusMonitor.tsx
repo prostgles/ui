@@ -31,6 +31,7 @@ import SmartCardList from "./SmartCard/SmartCardList";
 import { StatusMonitorConnections } from "./StatusMonitor/StatusMonitorConnections";
 import { StyledInterval } from "./W_SQL/customRenderers";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { dbsConnection } from "../../../commonTypes/dbsConnection";
 
 export type StatusMonitorProps = Pick<
   PrglState,
@@ -221,6 +222,7 @@ export const StatusMonitor = ({
         methods={dbsMethods}
         tables={dbsTables}
         tableName="stats"
+        connection={dbsConnection}
         showEdit={false}
         showTopBar={{ sort: true }}
         orderBy={{ cpu: false }}

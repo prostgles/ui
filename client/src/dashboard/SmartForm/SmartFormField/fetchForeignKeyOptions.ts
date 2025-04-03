@@ -1,56 +1,18 @@
 import { type DBHandlerClient } from "prostgles-client/dist/prostgles";
 import {
-  getPossibleNestedInsert,
   isDefined,
   isEmpty,
-  reverseJoinOn,
   type AnyObject,
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import { type FullOption } from "../../../components/Select/Select";
 import type { SmartFormFieldForeignKeyProps } from "./SmartFormFieldForeignKey";
-import type { JoinV2 } from "../../Dashboard/dashboardUtils";
 
 type FetchForeignKeyOptionsArgs = Pick<
   SmartFormFieldForeignKeyProps,
   "column" | "db" | "row" | "tableName" | "tables"
 > & {
   term: string;
-};
-
-const recursivellyFind = <T>(
-  arr: T[],
-  cb: (elem: T) => T | T[] | undefined,
-): T | undefined => {
-  for (const elem of arr) {
-    const found = cb(elem);
-    if (found && Array.isArray(found)) {
-      return recursivellyFind(found, cb);
-    }
-    return found;
-  }
-  return undefined;
-};
-
-const getFkeySuggestionsFtable = ({
-  tables,
-  column,
-  tableName,
-  db,
-}: Pick<
-  FetchForeignKeyOptionsArgs,
-  "column" | "tableName" | "tables" | "db"
->) => {
-  const fKey = getPossibleNestedInsert(column, tables) ?? column.references[0];
-  if (!tableName || !fKey) return;
-  const { ftable } = fKey;
-
-  const tableHandler = db[tableName];
-  const fTableHandler = db[ftable];
-  const tableInfo = tables.find((t) => t.name === tableName);
-  if (!tableInfo || !tableHandler?.find || !fTableHandler?.find) return;
-
-  return fKey;
 };
 
 type GetRootFkeyTableArgs = Pick<
@@ -86,7 +48,7 @@ const getRootFkeyTable = ({
       tables,
       tableName,
       prevPath.length !== 1 ?
-        []
+        [column.name]
       : prevPath.flatMap(({ on }) => on.map((o) => o[0])),
     );
     return {
@@ -129,15 +91,14 @@ const getRootFkeyTable = ({
     .find((d) => d);
 };
 
-export const fetchForeignKeyOptions = async ({
+const getFtableSearchOpts = ({
   column,
   tableName,
   db,
   tables,
   row,
-  term,
-}: FetchForeignKeyOptionsArgs): Promise<FullOption[]> => {
-  if (!tableName) return [];
+}: FetchForeignKeyOptionsArgs) => {
+  if (!tableName) return;
   const rootFkeyTable = getRootFkeyTable({
     columnName: column.name,
     prevPath: [],
@@ -145,22 +106,22 @@ export const fetchForeignKeyOptions = async ({
     tables,
     db,
   });
+  if (!rootFkeyTable) return;
 
-  const mainColumn = column.name;
+  let filterFilterWithoutCurrentValue = {};
 
-  const fMainColumn = rootFkeyTable?.column.name;
-  const fTextColumn = rootFkeyTable?.bestTextCol;
-  if (fMainColumn) {
-    const rootFilter = {};
-    const rootFilterWithoutCurrentValue = {};
-    if (row && !isEmpty(row)) {
-      rootFkeyTable.prevPath[0]?.on.forEach(([col]) => {
-        if (col !== column.name) {
-          rootFilterWithoutCurrentValue[col] = row[col];
-        }
-        rootFilter[col] = row[col];
-      });
-    }
+  const tableJoin = rootFkeyTable.prevPath[0];
+
+  /**
+   * If we have a current row AND the fkey relationship is on multiple columns we add other column values into the filter
+   */
+  if (row && !isEmpty(row) && tableJoin && tableJoin.on.length > 1) {
+    const nextTableFilter = {};
+    tableJoin.on.forEach(([col, fcol]) => {
+      if (col !== column.name) {
+        nextTableFilter[fcol] = row[col];
+      }
+    });
     const path = rootFkeyTable.prevPath
       .map((p, i) => {
         return {
@@ -172,46 +133,69 @@ export const fetchForeignKeyOptions = async ({
       .reverse()
       .map((p) => ({ table: p.tableName, on: p.on }));
 
-    const fullForeignTableFilter = {
-      $existsJoined: {
-        path,
-        filter: rootFilter,
-      },
-    };
-    const foreignTableFilter = {
-      $existsJoined: {
-        path,
-        filter: rootFilterWithoutCurrentValue,
-      },
-    };
+    filterFilterWithoutCurrentValue =
+      path.length > 1 ?
+        {
+          $existsJoined: {
+            path: path.slice(0, -1),
+            filter: nextTableFilter,
+          },
+        }
+      : nextTableFilter;
+  }
+  return {
+    mainColumn: rootFkeyTable.column.name,
+    textColumn: rootFkeyTable.bestTextCol,
+    tableName: rootFkeyTable.tableName,
+    filterFilterWithoutCurrentValue,
+  };
+};
 
+export const fetchForeignKeyOptions = async ({
+  column,
+  tableName,
+  db,
+  tables,
+  row,
+  term,
+}: FetchForeignKeyOptionsArgs): Promise<FullOption[]> => {
+  if (!tableName) return [];
+  const rootFkeyTable = getFtableSearchOpts({
+    column,
+    tableName,
+    tables,
+    db,
+    term,
+    row,
+  });
+
+  if (rootFkeyTable) {
+    const { filterFilterWithoutCurrentValue } = rootFkeyTable;
     const result = await fetchSearchResults({
-      mainColumn: fMainColumn,
-      textColumn: fTextColumn,
+      ...rootFkeyTable,
       db,
-      tableName: rootFkeyTable.tableName,
       term,
-      filter: foreignTableFilter,
+      filter: filterFilterWithoutCurrentValue,
     });
 
     /** We must add current value */
-    const currentValue = row?.[mainColumn];
+    const currentValue = row?.[column.name];
     if (
       row &&
       isDefined(currentValue) &&
       currentValue !== null &&
       !result.some((o) => o.key === currentValue)
     ) {
-      const [currentValue] = await fetchSearchResults({
-        mainColumn: fMainColumn,
-        textColumn: fTextColumn,
+      const [currentValueOption] = await fetchSearchResults({
+        ...rootFkeyTable,
         db,
-        tableName: rootFkeyTable.tableName,
         term: "",
-        filter: fullForeignTableFilter,
+        filter: {
+          [rootFkeyTable.mainColumn]: currentValue,
+        },
       });
-      if (currentValue) {
-        result.unshift(currentValue);
+      if (currentValueOption) {
+        result.unshift(currentValueOption);
       }
     }
 
@@ -219,7 +203,7 @@ export const fetchForeignKeyOptions = async ({
   }
 
   return fetchSearchResults({
-    mainColumn,
+    mainColumn: column.name,
     textColumn: undefined,
     db,
     tableName,
@@ -279,23 +263,16 @@ const isTextColumn = (col: ValidatedColumnInfo) =>
  * to make it easier for the user to pick a value
  */
 const getBestTextColumns = (
-  // column: SmartFormFieldForeignKeyProps["column"],
   tables: SmartFormFieldForeignKeyProps["tables"],
   tableName: string,
-  // fMainColumn: string | undefined,
-  // fcols: string[],
   excludeCols: string[],
 ) => {
-  // const fTableName = column.references[0]?.ftable;
   const fTable = tables.find((t) => t.name === tableName);
   if (!fTable) return;
-  /** Ignore non unique columns to prevent duplicate options */
-  // if (isTextColumn(column) && !column.is_pkey) return;
 
   const fTableTextColumns = fTable.columns
     .filter(isTextColumn)
     .filter((c) => c.select)
-    // .filter((c) => c.name !== fMainColumn)
     .filter((c) => !excludeCols.includes(c.name))
     .map((c) => {
       const shortestUnique = fTable.info.uniqueColumnGroups
@@ -309,14 +286,6 @@ const getBestTextColumns = (
     })
     .sort((a, b) => a.shortestUniqueLength - b.shortestUniqueLength);
   return fTableTextColumns;
-  /**
-   * Given that the other fkey columns will be present in the form.
-   * Try to show a field that is from the foreign table but not in the form
-   * */
-  // const nonFkeyColumns = fTableTextColumns.filter(
-  //   (c) => !fcols.includes(c.name),
-  // );
-  // return nonFkeyColumns[0]?.name ?? fTableTextColumns[0]?.name;
 };
 
 const OPTIONS_LIMIT = 20;

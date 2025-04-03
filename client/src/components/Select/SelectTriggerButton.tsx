@@ -18,7 +18,7 @@ type P<
   popupAnchor: HTMLElement | null;
   setState: (newState: SelectState) => void;
   setRef: (ref: HTMLButtonElement) => void;
-  btnLabel: string;
+  btnLabel: string | undefined;
   showSelectedIcon: string | undefined;
 };
 export const SelectTriggerButton = <
@@ -150,7 +150,7 @@ export const SelectTriggerButton = <
               style={{ lineHeight: "18px" }}
             >
               {!labelAsValue ?
-                btnLabel
+                (btnLabel ?? emptyLabel)
               : <RenderValue
                   column={undefined}
                   value={btnLabel}

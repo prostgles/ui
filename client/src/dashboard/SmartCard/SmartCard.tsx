@@ -76,7 +76,7 @@ export type SmartCardProps<T extends AnyObject = any> = Pick<
   Prgl,
   "db" | "tables" | "methods"
 > &
-  Pick<SmartCardListProps<T>, "tableName"> & {
+  Pick<SmartCardListProps<T>, "tableName" | "connection"> & {
     defaultData: AnyObject;
     rowFilter?: DetailedFilterBase[];
 
@@ -316,6 +316,7 @@ export default class SmartCard<T extends AnyObject> extends RTComp<
       showViewEditBtn = true,
       smartFormProps = {},
       excludeNulls,
+      connection,
       onChanged,
       defaultData,
       contentClassname = "",
@@ -374,6 +375,7 @@ export default class SmartCard<T extends AnyObject> extends RTComp<
           enableInsert={enableInsert}
           onSuccess={onChanged}
           {...smartFormProps}
+          connection={connection}
           onClose={() => {
             this.setState({ editMode: false });
           }}

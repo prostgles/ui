@@ -27,6 +27,7 @@ const JoinedRecordsSectionCardList = (
     section: s,
     isInsert,
     descendants,
+    connection,
     newRowDataHandler,
   } = props;
 
@@ -72,7 +73,7 @@ const JoinedRecordsSectionCardList = (
           tables={tables}
           className="px-1"
           excludeNulls={true}
-          // variant="row"
+          connection={connection}
           onSuccess={onSuccess}
           data={nestedInsertData?.[s.tableName] ?? []}
           onChange={
@@ -92,6 +93,7 @@ const JoinedRecordsSectionCardList = (
         {count > 20 && <div>Showing top {limit} records</div>}
         <SmartCardList
           key={s.path.join(".")}
+          connection={connection}
           db={db}
           tables={tables}
           methods={methods}
@@ -191,7 +193,7 @@ export const JoinedRecordsSection = ({
   descendants: JoinedRecordsProps["tables"];
   onSetQuickView: VoidFunction;
 }) => {
-  const { label, path, count, tableName } = section;
+  const { count } = section;
   return (
     <FlexCol className=" p-1 ">
       <FlexRow className="jc-end">

@@ -168,7 +168,7 @@ export const fillSmartFormAndInsert = async (
       const nestedTableName = key;
 
       const tabItem = await page.locator(
-        `${smartFormLocator} ${getTestId("MenuList")} ${getDataKey(nestedTableName)}`,
+        `${smartFormLocator} ${getTestId("JoinedRecords")} ${getDataKey(nestedTableName)}`,
       );
       const isActive = await tabItem.getAttribute("aria-current");
       if (isActive !== "true") {

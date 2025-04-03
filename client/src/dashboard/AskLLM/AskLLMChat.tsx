@@ -11,7 +11,6 @@ import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
 import { useLLMTools } from "./useLLMTools";
-// import { useLocalLLM } from "./useLocalLLM";
 
 export type AskLLMChatProps = {
   prgl: Omit<Prgl, "dbsMethods">;
@@ -97,8 +96,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     };
   }, []);
 
-  // useLocalLLM({});
-
   return (
     <Popup
       data-command="AskLLM.popup"
@@ -118,7 +115,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           connection={connection}
           dbs={dbs}
           dbsTables={dbsTables}
-          theme={prgl.theme}
           chatRootDiv={rootDiv}
         />
       )}

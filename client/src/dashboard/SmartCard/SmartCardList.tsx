@@ -26,60 +26,62 @@ import { getSmartCardColumns } from "./getSmartCardColumns";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
 import { classOverride, FlexCol } from "../../components/Flex";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { getSelectForFieldConfigs } from "./getSelectForFieldConfigs";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
   "db" | "tables" | "methods"
-> & {
-  tableName:
-    | string
-    | {
-        sqlQuery: string;
-        dataAge?: string | number;
-        args?: Record<string, any>;
-      };
-  columns?: ValidatedColumnInfo[];
+> &
+  Pick<SmartFormProps, "connection"> & {
+    tableName:
+      | string
+      | {
+          sqlQuery: string;
+          dataAge?: string | number;
+          args?: Record<string, any>;
+        };
+    columns?: ValidatedColumnInfo[];
 
-  className?: string;
-  style?: React.CSSProperties;
-  variant?: "row" | "col" | "row-wrap";
-  disableVariantToggle?: boolean;
-
-  hideColumns?: string[];
-
-  /**
-   * Used in:
-   * Changing how table columns are displayed
-   * Displaying additional custom computed columns
-   */
-  fieldConfigs?: FieldConfig<T>[] | string[];
-
-  title?: React.ReactNode | ((args: { count: number }) => React.ReactNode);
-  getRowFooter?: (row: AnyObject | any) => React.ReactNode;
-  footer?: React.ReactNode;
-
-  /**
-   * If true then will not displaye fields with null values
-   * */
-  excludeNulls?: boolean;
-
-  tables: CommonWindowProps["tables"];
-  popupFixedStyle?: React.CSSProperties;
-  noDataComponent?: React.ReactNode;
-  /**
-   * If no data AND set to "hide-all" will return only noDataComponent (or nothing)
-   * */
-  noDataComponentMode?: "hide-all";
-
-  btnColor?: "gray";
-
-  showTopBar?: boolean | { insert?: boolean; sort?: boolean };
-  rowProps?: {
-    style?: React.CSSProperties;
     className?: string;
-  };
-  onSuccess?: SmartFormProps["onSuccess"];
-} & (
+    style?: React.CSSProperties;
+    variant?: "row" | "col" | "row-wrap";
+    disableVariantToggle?: boolean;
+
+    hideColumns?: string[];
+
+    /**
+     * Used in:
+     * Changing how table columns are displayed
+     * Displaying additional custom computed columns
+     */
+    fieldConfigs?: FieldConfig<T>[] | string[];
+
+    title?: React.ReactNode | ((args: { count: number }) => React.ReactNode);
+    getRowFooter?: (row: AnyObject | any) => React.ReactNode;
+    footer?: React.ReactNode;
+
+    /**
+     * If true then will not displaye fields with null values
+     * */
+    excludeNulls?: boolean;
+
+    tables: CommonWindowProps["tables"];
+    popupFixedStyle?: React.CSSProperties;
+    noDataComponent?: React.ReactNode;
+    /**
+     * If no data AND set to "hide-all" will return only noDataComponent (or nothing)
+     * */
+    noDataComponentMode?: "hide-all";
+
+    btnColor?: "gray";
+
+    showTopBar?: boolean | { insert?: boolean; sort?: boolean };
+    rowProps?: {
+      style?: React.CSSProperties;
+      className?: string;
+    };
+    onSuccess?: SmartFormProps["onSuccess"];
+  } & (
     | {
         /**
          * Show top N records
@@ -114,48 +116,6 @@ type S = PaginationProps & {
   loaded?: boolean;
   dataAge: number;
   orderBy?: Record<string, boolean>;
-};
-
-const getSelectForFieldConfigs = (
-  fcs?: FieldConfig<any>[],
-  columns?: ValidatedColumnInfo[],
-) => {
-  if (!fcs) return "*";
-  const result = fcs
-    .filter((f) => {
-      if (columns) {
-        if (
-          columns.some((c) =>
-            typeof f === "string" ?
-              c.name === f
-            : f.select || f.name === c.name,
-          )
-        ) {
-          return true;
-        }
-        console.warn("Bad/invalid column name provided: ", f);
-        return false;
-      }
-      return true;
-    })
-    .reduce(
-      (a, v) => ({
-        ...a,
-        [typeof v === "string" ? v : v.name]:
-          typeof v === "string" || !v.select ? 1 : v.select,
-      }),
-      {},
-    );
-
-  const pKeyCols = columns?.filter((c) => c.is_pkey);
-  if (pKeyCols?.length) {
-    return {
-      ...Object.fromEntries(pKeyCols.map(({ name }) => [name, 1])),
-      ...result,
-    };
-  }
-
-  return result;
 };
 
 export default class SmartCardList<T extends AnyObject> extends RTComp<
@@ -318,6 +278,7 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<
       title,
       noDataComponent,
       onSuccess,
+      connection,
     } = this.props;
 
     const { columns, loading, items, error, loaded } = this.state;
@@ -350,12 +311,7 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<
         );
       }
       return (
-        <div
-          key={getKey(defaultData)}
-          className="relative"
-          // className={`${rowProps?.className ?? ""} relative`}
-          // style={rowProps?.style}
-        >
+        <div key={getKey(defaultData)} className="relative">
           <SmartCard
             contentClassname={rowProps?.className}
             contentStyle={rowProps?.style}
@@ -373,6 +329,7 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<
               this.dataSignature = "z";
               this.forceUpdate();
             }}
+            connection={connection}
             footer={getRowFooter}
             smartFormProps={{ onSuccess }}
             showViewEditBtn={
@@ -461,6 +418,7 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<
                   tables={tables}
                   methods={methods}
                   tableName={tableName}
+                  connection={this.props.connection}
                   // onSuccess={showInsertUpdateDelete.onSuccess}
                 />
               )}

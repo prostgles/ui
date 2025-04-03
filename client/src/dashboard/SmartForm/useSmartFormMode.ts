@@ -1,11 +1,10 @@
 import {
   useAsyncEffectQueue,
   useEffectDeep,
-  usePromise,
   type TableHandlerClient,
 } from "prostgles-client/dist/prostgles";
-import { isObject, type AnyObject } from "prostgles-types";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type AnyObject } from "prostgles-types";
+import { useEffect, useMemo, useState } from "react";
 import {
   getSmartGroupFilter,
   type DetailedFilterBase,
@@ -61,20 +60,16 @@ export type SmartFormModeState = Omit<
   mode: SmartFormMode;
   modeType: "view" | "update" | "insert" | undefined;
 };
-export const useSmartFormMode = ({
-  tableName,
-  rowFilter,
-  db,
-  table,
-  onChange,
-  parentForm,
-  onLoaded,
-}: Pick<
-  SmartFormProps,
-  "tableName" | "db" | "rowFilter" | "onChange" | "parentForm" | "onLoaded"
-> & {
-  table: DBSchemaTableWJoins | undefined;
-}) => {
+export const useSmartFormMode = (
+  props: Pick<
+    SmartFormProps,
+    "tableName" | "db" | "rowFilter" | "onChange" | "parentForm" | "onLoaded"
+  > & {
+    table: DBSchemaTableWJoins | undefined;
+  },
+) => {
+  const { tableName, rowFilter, db, table, onChange, parentForm, onLoaded } =
+    props;
   const [loading, setLoading] = useState(false);
   const tableHandler = db[tableName] as Partial<TableHandlerClient> | undefined;
   const tableInfo = table?.info;

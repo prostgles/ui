@@ -299,7 +299,7 @@ export default class Select<
         }, 2);
       };
 
-      let btnLabel = "Select...";
+      let btnLabel: string | undefined = "Select...";
       if (Array.isArray(value)) {
         if (value.length) {
           selectedFullOptions = fullOptions.filter((o) =>

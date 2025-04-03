@@ -11,6 +11,7 @@ import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { NavLink } from "react-router-dom";
 import { API_PATH_SUFFIXES } from "../../../commonTypes/utils";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { dbsConnection } from "../../../commonTypes/dbsConnection";
 
 export const Alerts = (prgl: Prgl) => {
   const { connectionId, dbs } = prgl;
@@ -52,6 +53,7 @@ export const Alerts = (prgl: Prgl) => {
           methods={prgl.dbsMethods}
           tables={prgl.dbsTables}
           tableName={"alerts"}
+          connection={dbsConnection}
           realtime={true}
           filter={{
             $existsJoined: {

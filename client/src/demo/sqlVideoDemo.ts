@@ -279,7 +279,7 @@ const sqlVideoDemo: DemoScript = async (args) => {
   });
 
   await showScript(`Schema extracts with related objects`, "", async () => {
-    await typeQuick(`a`, { msPerChar: 40, waitAccept, waitBeforeAccept });
+    await typeQuick(`al`, { msPerChar: 40, waitAccept, waitBeforeAccept });
     await typeQuick(` ta`, { msPerChar: 40 });
     await typeQuick(` us`, { msPerChar: 40, waitAccept, waitBeforeAccept });
     await typeQuick(`\nalt`);

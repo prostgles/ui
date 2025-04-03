@@ -38,7 +38,7 @@ export type ColumnDisplayConfig = {
 
 export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods"> & {
   tableName: string;
-  connection?: Pick<Partial<Prgl["connection"]>, "table_options">;
+  connection: undefined | Pick<Partial<Prgl["connection"]>, "table_options">;
 
   label?: string;
   /**
@@ -71,6 +71,9 @@ export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods"> & {
   enableInsert?: boolean;
   insertBtnText?: string;
   hideNullBtn?: boolean;
+  /**
+   * If true then will render jsonbSchema columns using controls instead of code editor
+   */
   jsonbSchemaWithControls?: boolean;
 
   /**
@@ -159,7 +162,6 @@ type SmartFormColumnConfig =
 
 export const SmartForm = (props: SmartFormProps) => {
   const { tableName } = props;
-
   const stateOrError = useSmartForm(props);
   const { mode, error, table } = stateOrError;
   const tableInfo = table?.info;

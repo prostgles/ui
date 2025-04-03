@@ -1,56 +1,80 @@
 import { mdiSearchWeb } from "@mdi/js";
 import React, { useState } from "react";
 import Btn from "../../../components/Btn";
-import SmartTable from "../../SmartTable";
+import Popup from "../../../components/Popup/Popup";
+import SmartCardList from "../../SmartCard/SmartCardList";
 import type { SmartFormFieldLinkedDataProps } from "./SmartFormFieldLinkedData";
 
-type P = Pick<SmartFormFieldLinkedDataProps, "db" | "methods" | "tables"> & {
+type P = Pick<
+  SmartFormFieldLinkedDataProps,
+  "db" | "methods" | "tables" | "row" | "column" | "connection"
+> & {
   ftable: string;
   fcol: string;
   readOnly: boolean;
-  onChange: (newData: any) => void;
 };
 
 export const SmartFormFieldLinkedDataSearch = ({
-  onChange,
   tables,
   methods,
   db,
   ftable,
   fcol,
-  readOnly,
+  row,
+  column,
+  connection,
 }: P) => {
-  const [show, setShow] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement>();
 
   return (
     <>
       <Btn
         iconPath={mdiSearchWeb}
         title="Find record"
-        onClick={() => setShow(true)}
+        onClick={({ currentTarget }) => setAnchorEl(currentTarget)}
       />
-      {show && (
-        <SmartTable
-          allowEdit={true}
+      {anchorEl && (
+        <Popup
           title={`Find ${ftable} record`}
-          db={db}
-          methods={methods}
-          tables={tables}
-          tableName={ftable}
-          onClickRow={(row) => {
-            if (!row) return;
+          anchorEl={anchorEl}
+          onClose={() => setAnchorEl(undefined)}
+          onClickClose={false}
+          positioning="beneath-left"
+          clickCatchStyle={{ opacity: 1 }}
+        >
+          <SmartCardList
+            connection={connection}
+            showTopBar={true}
+            db={db}
+            methods={methods}
+            tables={tables}
+            tableName={ftable}
+            filter={{
+              [fcol]: row[column.name],
+            }}
+          />
+          {/* <SmartTable
+            allowEdit={true}
+            title={`Find ${ftable} record`}
+            db={db}
+            methods={methods}
+            tables={tables}
+            tableName={ftable}
+            onClickRow={(row) => {
+              if (!row) return;
 
-            if (readOnly) {
-              alert("Cannot change value. This field is read only");
-            } else {
-              onChange(row[fcol]);
-            }
-            setShow(false);
-          }}
-          onClosePopup={() => {
-            setShow(false);
-          }}
-        />
+              if (readOnly) {
+                alert("Cannot change value. This field is read only");
+              } else {
+                onChange(row[fcol]);
+              }
+              setShow(false);
+            }}
+            onClosePopup={() => {
+              setShow(false);
+            }}
+          /> */}
+        </Popup>
       )}
     </>
   );

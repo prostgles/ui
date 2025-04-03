@@ -28,6 +28,7 @@ export const W_TableMenu_Constraints = ({
       </div>
       <SmartCardList
         db={prgl.db}
+        connection={undefined}
         tableName={{
           dataAge: prgl.dbKey,
           sqlQuery: `

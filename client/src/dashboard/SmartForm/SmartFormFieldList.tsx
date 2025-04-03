@@ -25,6 +25,7 @@ type P = Pick<
   | "jsonbSchemaWithControls"
   | "hideNullBtn"
   | "methods"
+  | "connection"
 > &
   SmartFormModeState &
   Pick<SmartFormState, "error" | "errors"> & {
@@ -53,6 +54,7 @@ export const SmartFormFieldList = (props: P) => {
     modeType,
     methods,
     newRowData,
+    connection,
   } = props;
 
   const hideNullBtn = mode.type === "view" || props.hideNullBtn;
@@ -137,6 +139,7 @@ export const SmartFormFieldList = (props: P) => {
             value={rawValue}
             newValue={newValue}
             row={row}
+            connection={connection}
             jsonbSchemaWithControls={jsonbSchemaWithControls}
             error={
               errors[c.name] ??

@@ -65,6 +65,7 @@ export const W_TableMenu_Triggers = ({ tableMeta, onSetQuery, w, prgl }: P) => {
 
       <SmartCardList
         db={prgl.db}
+        connection={undefined}
         tableName={{
           dataAge: prgl.dbKey,
           sqlQuery: ` 

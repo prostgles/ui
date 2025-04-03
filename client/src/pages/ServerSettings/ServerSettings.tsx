@@ -23,6 +23,7 @@ import { t } from "../../i18n/i18nUtils";
 import { AuthProviderSetup } from "./AuthProvidersSetup";
 import { MCPServers } from "./MCPServers/MCPServers";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { dbsConnection } from "../../../../commonTypes/dbsConnection";
 
 export type ServerSettingsProps = Pick<
   Prgl,
@@ -200,6 +201,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                       db={dbs as DBHandlerClient}
                       methods={dbsMethods}
                       tableName="credentials"
+                      connection={dbsConnection}
                       tables={dbsTables}
                       filter={{}}
                       realtime={true}

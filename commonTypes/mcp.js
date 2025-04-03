@@ -133,7 +133,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "read_multiple_files",
@@ -152,7 +151,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "write_file",
@@ -171,7 +169,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "edit_file",
@@ -210,7 +207,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "create_directory",
@@ -226,7 +222,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "list_directory",
@@ -242,7 +237,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "directory_tree",
@@ -258,7 +252,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "move_file",
@@ -277,7 +270,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "search_files",
@@ -303,7 +295,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "get_file_info",
@@ -319,7 +310,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "list_allowed_directories",
@@ -329,7 +319,6 @@ export const DefaultMCPServers = {
                     properties: {},
                     required: [],
                 },
-                autoApprove: false,
             },
         ],
     },
@@ -397,7 +386,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "search_repositories",
@@ -422,7 +410,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "create_repository",
@@ -451,7 +438,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "get_file_contents",
@@ -480,7 +466,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "push_files",
@@ -526,7 +511,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "create_issue",
@@ -566,7 +550,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "create_pull_request",
@@ -611,7 +594,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "fork_repository",
@@ -636,7 +618,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "create_branch",
@@ -665,7 +646,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "list_commits",
@@ -693,7 +673,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "list_issues",
@@ -739,7 +718,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "update_issue",
@@ -786,7 +764,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "add_issue_comment",
@@ -811,7 +788,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "search_code",
@@ -840,7 +816,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "search_issues",
@@ -885,7 +860,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "search_users",
@@ -918,7 +892,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "get_issue",
@@ -940,7 +913,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
         ],
     },
@@ -1005,7 +977,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "search_repositories",
@@ -1030,7 +1001,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "create_repository",
@@ -1060,7 +1030,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "get_file_contents",
@@ -1085,7 +1054,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "push_files",
@@ -1129,7 +1097,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "create_issue",
@@ -1172,7 +1139,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "create_merge_request",
@@ -1213,7 +1179,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "fork_repository",
@@ -1234,7 +1199,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
             {
                 name: "create_branch",
@@ -1259,7 +1223,6 @@ export const DefaultMCPServers = {
                     additionalProperties: false,
                     $schema: "http://json-schema.org/draft-07/schema#",
                 },
-                autoApprove: false,
             },
         ],
     },
@@ -1290,7 +1253,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["address"],
                 },
-                autoApprove: false,
             },
             {
                 name: "maps_reverse_geocode",
@@ -1309,7 +1271,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["latitude", "longitude"],
                 },
-                autoApprove: false,
             },
             {
                 name: "maps_search_places",
@@ -1340,7 +1301,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["query"],
                 },
-                autoApprove: false,
             },
             {
                 name: "maps_place_details",
@@ -1355,7 +1315,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["place_id"],
                 },
-                autoApprove: false,
             },
             {
                 name: "maps_distance_matrix",
@@ -1385,7 +1344,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["origins", "destinations"],
                 },
-                autoApprove: false,
             },
             {
                 name: "maps_elevation",
@@ -1412,7 +1370,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["locations"],
                 },
-                autoApprove: false,
             },
             {
                 name: "maps_directions",
@@ -1436,7 +1393,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["origin", "destination"],
                 },
-                autoApprove: false,
             },
         ],
     },
@@ -1477,7 +1433,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["entities"],
                 },
-                autoApprove: false,
             },
             {
                 name: "create_relations",
@@ -1509,7 +1464,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["relations"],
                 },
-                autoApprove: false,
             },
             {
                 name: "add_observations",
@@ -1540,7 +1494,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["observations"],
                 },
-                autoApprove: false,
             },
             {
                 name: "delete_entities",
@@ -1558,7 +1511,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["entityNames"],
                 },
-                autoApprove: false,
             },
             {
                 name: "delete_observations",
@@ -1589,7 +1541,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["deletions"],
                 },
-                autoApprove: false,
             },
             {
                 name: "delete_relations",
@@ -1622,7 +1573,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["relations"],
                 },
-                autoApprove: false,
             },
             {
                 name: "read_graph",
@@ -1631,7 +1581,6 @@ export const DefaultMCPServers = {
                     type: "object",
                     properties: {},
                 },
-                autoApprove: false,
             },
             {
                 name: "search_nodes",
@@ -1646,7 +1595,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["query"],
                 },
-                autoApprove: false,
             },
             {
                 name: "open_nodes",
@@ -1664,25 +1612,24 @@ export const DefaultMCPServers = {
                     },
                     required: ["names"],
                 },
-                autoApprove: false,
             },
         ],
     },
-    postgres: {
-        command: "npx",
-        args: [
-            "-y",
-            "@modelcontextprotocol/server-postgres",
-            "${text:postgresql://localhost/mydb}",
-        ],
-        config_schema: {
-            DATABASE_URL: {
-                title: "Database URL",
-                description: "URL for the PostgreSQL database",
-                type: "arg",
-            },
-        },
-    },
+    // postgres: {
+    //   command: "npx",
+    //   args: [
+    //     "-y",
+    //     "@modelcontextprotocol/server-postgres",
+    //     "${text:postgresql://localhost/mydb}",
+    //   ],
+    //   config_schema: {
+    //     DATABASE_URL: {
+    //       title: "Database URL",
+    //       description: "URL for the PostgreSQL database",
+    //       type: "arg",
+    //     },
+    //   },
+    // },
     puppeteer: {
         command: "npx",
         args: ["-y", "@modelcontextprotocol/server-puppeteer"],
@@ -1831,7 +1778,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["issue_id_or_url"],
                 },
-                autoApprove: false,
             },
         ],
     },
@@ -1872,7 +1818,6 @@ export const DefaultMCPServers = {
                         },
                     },
                 },
-                autoApprove: false,
             },
             {
                 name: "slack_post_message",
@@ -1891,7 +1836,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["channel_id", "text"],
                 },
-                autoApprove: false,
             },
             {
                 name: "slack_reply_to_thread",
@@ -1914,7 +1858,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["channel_id", "thread_ts", "text"],
                 },
-                autoApprove: false,
             },
             {
                 name: "slack_add_reaction",
@@ -1937,7 +1880,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["channel_id", "timestamp", "reaction"],
                 },
-                autoApprove: false,
             },
             {
                 name: "slack_get_channel_history",
@@ -1957,7 +1899,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["channel_id"],
                 },
-                autoApprove: false,
             },
             {
                 name: "slack_get_thread_replies",
@@ -1976,7 +1917,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["channel_id", "thread_ts"],
                 },
-                autoApprove: false,
             },
             {
                 name: "slack_get_users",
@@ -1995,7 +1935,6 @@ export const DefaultMCPServers = {
                         },
                     },
                 },
-                autoApprove: false,
             },
             {
                 name: "slack_get_user_profile",
@@ -2010,7 +1949,6 @@ export const DefaultMCPServers = {
                     },
                     required: ["user_id"],
                 },
-                autoApprove: false,
             },
         ],
     },

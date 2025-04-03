@@ -1,11 +1,10 @@
 import { mdiPlus } from "@mdi/js";
 import React, { useCallback, useMemo, useState } from "react";
-import { getSmartGroupFilter } from "../../../../../commonTypes/filterUtils";
 import Btn from "../../../components/Btn";
 import { SmartForm, type SmartFormProps } from "../SmartForm";
+import { useNestedInsertDefaultData } from "../SmartFormField/useNestedInsertDefaultData";
 import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import type { JoinedRecordSection, JoinedRecordsProps } from "./JoinedRecords";
-import { useNestedInsertDefaultData } from "../SmartFormField/useNestedInsertDefaultData";
 
 type P = Omit<JoinedRecordsProps, "newRowDataHandler"> & {
   newRowDataHandler: NewRowDataHandler;
@@ -23,6 +22,7 @@ export const JoinedRecordsAddRow = (props: P) => {
     rowFilter,
     newRowData,
     row,
+    connection,
   } = props;
 
   const [insert, setInsert] = useState<{
@@ -159,7 +159,7 @@ export const JoinedRecordsAddRow = (props: P) => {
           methods={methods}
           tables={tables}
           asPopup={true}
-          connection={props.connection}
+          connection={connection}
           onClose={onClose}
           {...insert.smartFormProps}
         />

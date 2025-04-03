@@ -1,5 +1,5 @@
 import { mdiCogOutline } from "@mdi/js";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
@@ -8,10 +8,11 @@ import Popup from "../../components/Popup/Popup";
 import { SmartForm } from "../SmartForm/SmartForm";
 import { t } from "../../i18n/i18nUtils";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { dbsConnection } from "../../../../commonTypes/dbsConnection";
 
 export type LLMChatOptionsProps = Pick<
   Prgl,
-  "dbs" | "dbsTables" | "theme" | "connection"
+  "dbs" | "dbsTables" | "connection"
 > & {
   prompts: DBSSchema["llm_prompts"][] | undefined;
   activeChat: DBSSchema["llm_chats"] | undefined;
@@ -19,9 +20,24 @@ export type LLMChatOptionsProps = Pick<
   activeChatId: number | undefined;
   chatRootDiv: HTMLDivElement;
 };
+
 export const LLMChatOptions = (props: LLMChatOptionsProps) => {
   const { chatRootDiv, dbs, activeChatId, dbsTables } = props;
   const [anchorEl, setAnchorEl] = useState<HTMLDivElement>();
+
+  const formProps = useMemo(() => {
+    return {
+      columns: {
+        name: 1,
+        llm_prompt_id: 1,
+        model: 1,
+        created: 1,
+      } as const,
+      methods: {},
+      rowFilter: [{ fieldName: "id", value: activeChatId }],
+    };
+  }, [activeChatId]);
+
   return (
     <>
       <Btn
@@ -47,21 +63,14 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
           content={
             <FlexCol className="f-1 min-s-0">
               <SmartForm
-                {...props}
                 label=""
                 tableName="llm_chats"
                 contentClassname="p-1 pt-1"
-                columns={{
-                  name: 1,
-                  llm_prompt_id: 1,
-                  model: 1,
-                  created: 1,
-                }}
+                {...formProps}
+                connection={dbsConnection}
                 jsonbSchemaWithControls={true}
                 db={dbs as DBHandlerClient}
                 tables={dbsTables}
-                methods={{}}
-                rowFilter={[{ fieldName: "id", value: activeChatId }]}
               />
             </FlexCol>
           }
