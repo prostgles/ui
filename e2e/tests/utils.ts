@@ -77,7 +77,7 @@ type KeyPress = "Control" | "Shift";
 type InputKey = KeyPress | "Enter" | "Escape" | "Tab" | "Backspace" | "Delete";
 type ArrowKey = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
 type ArrowKeyCombinations = `${KeyPress}+${ArrowKey}`;
-type KeyPressOrCombination = InputKey | ArrowKeyCombinations;
+type KeyPressOrCombination = InputKey | ArrowKeyCombinations | ArrowKey;
 
 /**
  * Will overwrite all previous content

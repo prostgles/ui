@@ -333,6 +333,7 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     await monacoType(page, ".MethodDefinition", "dbo.t", {
       deleteAll: false,
+      pressBeforeTyping: ["ArrowLeft", "ArrowRight"],
     });
     await page.keyboard.press("Tab");
 
