@@ -86,13 +86,13 @@ export const dashboardDemo = async () => {
     nth: 0,
     noTimeToWait: true,
   });
-  await click("JoinedRecords", `li[data-key="orders"] `);
+  await click("JoinedRecords", `[data-key="orders"] `);
   await tout(2e3);
   await click("JoinedRecords", `[data-command="SmartCard.viewEditRow"]`, {
     nth: 0,
   });
   await tout(1e3);
-  await click("JoinedRecords", `li[data-key="order_items"] `);
+  await click("JoinedRecords", `[data-key="order_items"] `);
   await tout(2e3);
   await click("Popup.close");
   await click("Popup.close");
