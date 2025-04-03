@@ -185,6 +185,20 @@ export const getPublishLLM = (
       select: "*",
       delete: "*",
     },
+    llm_chats_allowed_mcp_tools: {
+      select: {
+        fields: "*",
+        forcedFilter: userOwnsRelatedChat,
+      },
+      insert: {
+        fields: "*",
+        checkFilter: userOwnsRelatedChat,
+      },
+      delete: {
+        filterFields: "*",
+        forcedFilter: userOwnsRelatedChat,
+      },
+    },
     llm_chats_allowed_functions:
       isAdmin ? "*" : (
         {

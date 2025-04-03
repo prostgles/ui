@@ -8,6 +8,7 @@ import React from "react";
 import Btn from "../Btn";
 import { FlexCol, FlexRow } from "../Flex";
 import { POPUP_CLASSES, type PopupProps } from "./Popup";
+import { ErrorTrap } from "../ErrorComponent";
 
 type PopupHeaderProps = PopupProps & {
   collapsed: boolean;
@@ -62,16 +63,18 @@ export const PopupHeader = ({
         }
         onClick={collapsible ? toggleContent : undefined}
       >
-        <h4
-          className="m-0"
-          style={{
-            justifyItems: "start",
-            ...(collapsible ? { paddingLeft: 0 } : {}),
-          }}
-          title={typeof title === "string" ? title : undefined}
-        >
-          {titleContent}
-        </h4>
+        <ErrorTrap>
+          <h4
+            className="m-0"
+            style={{
+              justifyItems: "start",
+              ...(collapsible ? { paddingLeft: 0 } : {}),
+            }}
+            title={typeof title === "string" ? title : undefined}
+          >
+            {titleContent}
+          </h4>
+        </ErrorTrap>
         {subTitle && (
           <h6
             title={subTitle}
@@ -83,7 +86,7 @@ export const PopupHeader = ({
         )}
       </FlexCol>
       <FlexRow className="Popup-header-actions gap-0">
-        {headerRightContent}
+        <ErrorTrap>{headerRightContent}</ErrorTrap>
         {showFullscreenToggle && (
           <Btn
             className="f-0"

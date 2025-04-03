@@ -9,7 +9,10 @@ import { SmartForm } from "../SmartForm/SmartForm";
 import { t } from "../../i18n/i18nUtils";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
-export type LLMChatOptionsProps = Pick<Prgl, "dbs" | "dbsTables" | "theme"> & {
+export type LLMChatOptionsProps = Pick<
+  Prgl,
+  "dbs" | "dbsTables" | "theme" | "connection"
+> & {
   prompts: DBSSchema["llm_prompts"][] | undefined;
   activeChat: DBSSchema["llm_chats"] | undefined;
   credentials: DBSSchema["llm_credentials"][] | undefined;

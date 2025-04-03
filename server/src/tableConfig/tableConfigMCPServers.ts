@@ -124,7 +124,9 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
     },
   },
   llm_chats_allowed_mcp_tools: {
-    dropIfExists: true,
+    info: {
+      label: "Allowed MCP tools",
+    },
     columns: {
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
       tool_id: `INTEGER REFERENCES mcp_server_tools(id) ON DELETE CASCADE`,

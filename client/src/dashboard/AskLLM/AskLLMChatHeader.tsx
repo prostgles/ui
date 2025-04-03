@@ -14,7 +14,7 @@ export const AskLLMChatHeader = (
   props: LLMChatState &
     LLMSetupStateReady &
     LLMChatOptionsProps &
-    Pick<Prgl, "connectionId">,
+    Pick<Prgl, "connectionId" | "connection">,
 ) => {
   const {
     activeChat,
@@ -145,6 +145,7 @@ export const AskLLMChatHeader = (
           activeChatId={activeChatId}
           credentials={credentials}
           chatRootDiv={chatRootDiv}
+          connection={prgl.connection}
         />
         <Select
           title={t.AskLLMChatHeader.Chat}

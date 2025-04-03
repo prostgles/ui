@@ -58,7 +58,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     markdownCodeHeader,
     llmMessages,
   } = chatState;
-  const { defaultCredential, preferredPromptId, createNewChat } = chatState;
+  const { preferredPromptId, createNewChat } = chatState;
 
   const sendQuery = useCallback(
     async (msg: LLMMessage["message"] | undefined) => {
@@ -115,6 +115,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           {...setupState}
           {...chatState}
           connectionId={connectionId}
+          connection={connection}
           dbs={dbs}
           dbsTables={dbsTables}
           theme={prgl.theme}

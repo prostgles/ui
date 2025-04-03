@@ -1,4 +1,3 @@
-import { mdiTable } from "@mdi/js";
 import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import { type AnyObject } from "prostgles-types";
 import React, { useEffect } from "react";
@@ -7,17 +6,15 @@ import {
   type SmartGroupFilter,
 } from "../../../../../commonTypes/filterUtils";
 import type { Prgl } from "../../../App";
-import Btn from "../../../components/Btn";
-import ErrorComponent from "../../../components/ErrorComponent";
 import { FlexCol, FlexRow, classOverride } from "../../../components/Flex";
 import Loading from "../../../components/Loading";
+import { Section } from "../../../components/Section";
 import { SvgIcon } from "../../../components/SvgIcon";
 import Tabs, { type TabItem } from "../../../components/Tabs";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import SmartTable from "../../SmartTable";
 import type { SmartFormProps } from "../SmartForm";
 import type { NewRow, NewRowDataHandler } from "../SmartFormNewRowDataHandler";
-import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
 import { JoinedRecordsSection } from "./JoinedRecordsSection";
 import { useJoinedRecordsSections } from "./useJoinedRecordsSections";
 
@@ -37,6 +34,7 @@ export type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods"> &
     showOnlyFKeyTables?: boolean;
     errors: AnyObject;
     row?: AnyObject;
+    variant?: "inline";
   };
 
 export type JoinedRecordSection = {
@@ -68,6 +66,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
     connection,
     activeTabKey,
     onTabChange,
+    variant,
   } = props;
 
   /** Open errored section */
@@ -97,79 +96,82 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
       )}
       style={style}
     >
-      <Tabs
-        className="f-1"
-        contentClass="o-auto f-1"
-        activeKey={activeTabKey}
-        onChange={(activeKey) => {
-          onTabChange(activeKey);
-        }}
-        items={Object.fromEntries(
-          sections.map((section) => {
-            const { label, path, count, tableName } = section;
-            const countNode = (
-              <span
-                className="text-1p5 font-18"
-                style={{ fontWeight: "lighter" }}
-              >
-                {section.count.toLocaleString()}
-              </span>
-            );
-            const showCountNode = !(isInsert && !count);
-            const icon = connection?.table_options?.[tableName]?.icon;
-            return [
-              path.join("."),
-              {
-                label: (
-                  <FlexRow className="gap-p5">
-                    {icon && <SvgIcon icon={icon} />}
-                    <div>{label}</div>
-                    {showCountNode && countNode}
-                  </FlexRow>
-                ),
-                content: (
-                  <FlexCol className="p-p25">
-                    <FlexRow className=" p-p25 jc-end">
-                      {section.error && (
-                        <ErrorComponent
-                          error={section.error}
-                          variant="outlined"
-                          className=" f-1"
-                        />
-                      )}
-                      {!isInsert && (
-                        <Btn
-                          iconPath={mdiTable}
-                          title="Open in table"
-                          disabledInfo={
-                            !count ? "No records to show" : undefined
-                          }
-                          onClick={async () => {
-                            setQuickView(section);
-                          }}
-                        />
-                      )}
-                      {props.newRowDataHandler && (
-                        <JoinedRecordsAddRow
-                          {...props}
-                          section={section}
-                          newRowDataHandler={props.newRowDataHandler}
-                        />
-                      )}
+      {variant === "inline" ?
+        sections.map((section) => {
+          const { label, path, count, tableName } = section;
+          const icon = connection?.table_options?.[tableName]?.icon;
+          return (
+            <Section
+              key={path.join(".")}
+              title={
+                <FlexRow>
+                  <div>{label}</div>
+                  <div className="text-2" style={{ fontWeight: "normal" }}>
+                    {count}
+                  </div>
+                </FlexRow>
+              }
+              titleIcon={icon && <SvgIcon icon={icon} />}
+            >
+              <JoinedRecordsSection
+                {...props}
+                section={section}
+                descendants={descendants}
+                isInsert={isInsert}
+                onSetQuickView={() => {
+                  setQuickView(section);
+                }}
+              />
+            </Section>
+          );
+        })
+      : <Tabs
+          className="f-1"
+          contentClass="o-auto f-1"
+          activeKey={activeTabKey}
+          onChange={(activeKey) => {
+            onTabChange(activeKey);
+          }}
+          items={Object.fromEntries(
+            sections.map((section) => {
+              const { label, path, count, tableName } = section;
+              const countNode = (
+                <span
+                  className="text-1p5 font-18"
+                  style={{ fontWeight: "lighter" }}
+                >
+                  {section.count.toLocaleString()}
+                </span>
+              );
+              const showCountNode = !(isInsert && !count);
+              const icon = connection?.table_options?.[tableName]?.icon;
+              return [
+                path.join("."),
+                {
+                  label: (
+                    <FlexRow className="gap-p5">
+                      {icon && <SvgIcon icon={icon} />}
+                      <div>{label}</div>
+                      {showCountNode && countNode}
                     </FlexRow>
+                  ),
+                  content: (
                     <JoinedRecordsSection
                       {...props}
                       section={section}
                       descendants={descendants}
                       isInsert={isInsert}
+                      onSetQuickView={() => {
+                        setQuickView(section);
+                      }}
                     />
-                  </FlexCol>
-                ),
-              } satisfies TabItem,
-            ];
-          }),
-        )}
-      />
+                  ),
+                } satisfies TabItem,
+              ];
+            }),
+          )}
+        />
+      }
       {quickView && (
         <SmartTable
           db={db}
@@ -182,24 +184,6 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
           }}
         />
       )}
-
-      {/* TODO allow customising Related data section */}
-      {/* <JoinPathSelectorV2 
-          onChange={path => {
-            this.setState({ extraSectionPaths: [ path, ...this.state.extraSectionPaths] });
-          }}
-          tableName={tableName}
-          tables={tables}
-          value={undefined}
-          btnProps={{
-            className: "ml-auto",
-            iconPath: mdiPlus,
-            size: "small",
-            children: "",
-            variant: undefined,
-            color: "action",
-          }}          
-        /> */}
     </FlexCol>
   );
 };

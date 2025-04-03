@@ -180,7 +180,13 @@ export class ErrorTrap extends React.Component<
       };
     }
     if (error)
-      return <ErrorComponent error={errVal} className="bg-color-0 p-2" />;
+      return (
+        <ErrorComponent
+          error={errVal}
+          className="bg-color-0 p-2"
+          style={{ maxHeight: "400px" }}
+        />
+      );
 
     return this.props.children;
   }

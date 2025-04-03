@@ -25,6 +25,7 @@ import type { Prgl } from "../../App";
 import { getSmartCardColumns } from "./getSmartCardColumns";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
 import { classOverride, FlexCol } from "../../components/Flex";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
@@ -358,7 +359,7 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<
           <SmartCard
             contentClassname={rowProps?.className}
             contentStyle={rowProps?.style}
-            db={db as any}
+            db={db as DBHandlerClient}
             methods={methods}
             tables={tables}
             tableName={tableName}

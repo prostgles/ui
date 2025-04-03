@@ -174,7 +174,7 @@ export type DBGeneratedSchema = {
       ssl_client_certificate?: null | string;
       ssl_client_certificate_key?: null | string;
       ssl_reject_unauthorized?: null | boolean;
-      table_options?: null | Partial<Record<string,  {  icon?: string; }>>
+      table_options?: null | Partial<Record<string,  {  icon?: string;  card?: {  relatedDataSections?: string; }; }>>
       type: "Standard" | "Connection URI" | "Prostgles"
       url_path?: null | string;
       user_id?: null | string;

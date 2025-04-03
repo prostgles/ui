@@ -5,8 +5,13 @@ import SmartCardList from "../../SmartCard/SmartCardList";
 import type { JoinedRecordSection, JoinedRecordsProps } from "./JoinedRecords";
 import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import { InfoRow } from "../../../components/InfoRow";
+import { FlexCol, FlexRow } from "../../../components/Flex";
+import ErrorComponent from "../../../components/ErrorComponent";
+import { mdiTable } from "@mdi/js";
+import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
+import Btn from "../../../components/Btn";
 
-export const JoinedRecordsSection = (
+const JoinedRecordsSectionCardList = (
   props: JoinedRecordsProps & {
     section: JoinedRecordSection;
     isInsert: boolean;
@@ -97,7 +102,7 @@ export const JoinedRecordsSection = (
           realtime={true}
           excludeNulls={true}
           noDataComponent={
-            <InfoRow className="mx-1" color="info" variant="filled">
+            <InfoRow className=" " color="info" variant="filled">
               No records
             </InfoRow>
           }
@@ -172,4 +177,53 @@ export const JoinedRecordsSection = (
   //     {s.expanded && content}
   //   </div>
   // );
+};
+
+export const JoinedRecordsSection = ({
+  section,
+  descendants,
+  onSetQuickView,
+  isInsert,
+  ...props
+}: JoinedRecordsProps & {
+  section: JoinedRecordSection;
+  isInsert: boolean;
+  descendants: JoinedRecordsProps["tables"];
+  onSetQuickView: VoidFunction;
+}) => {
+  const { label, path, count, tableName } = section;
+  return (
+    <FlexCol className=" p-1 ">
+      <FlexRow className="jc-end">
+        {section.error && (
+          <ErrorComponent
+            error={section.error}
+            variant="outlined"
+            className=" f-1"
+          />
+        )}
+        {!isInsert && (
+          <Btn
+            iconPath={mdiTable}
+            title="Open in table"
+            disabledInfo={!count ? "No records to show" : undefined}
+            onClick={onSetQuickView}
+          />
+        )}
+        {props.newRowDataHandler && (
+          <JoinedRecordsAddRow
+            {...props}
+            section={section}
+            newRowDataHandler={props.newRowDataHandler}
+          />
+        )}
+      </FlexRow>
+      <JoinedRecordsSectionCardList
+        {...props}
+        section={section}
+        descendants={descendants}
+        isInsert={isInsert}
+      />
+    </FlexCol>
+  );
 };

@@ -2,9 +2,12 @@ import { useCallback, useState } from "react";
 import { parseValue } from "./fieldUtils";
 import type { SmartFormFieldProps } from "./SmartFormField";
 import type { AnyObject } from "prostgles-types";
+import type { ColumnData } from "../SmartFormNewRowDataHandler";
 
 export const useSmartFormFieldOnChange = (
-  props: Pick<SmartFormFieldProps, "onChange" | "column" | "tableInfo">,
+  props: Pick<SmartFormFieldProps, "column" | "tableInfo"> & {
+    onChange: (newColData: ColumnData) => void;
+  },
 ) => {
   const { onChange, column, tableInfo } = props;
   const [error, setError] = useState<any>();

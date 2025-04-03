@@ -170,6 +170,7 @@ export const JoinedRecordsAddRow = (props: P) => {
         variant="filled"
         color="action"
         iconPath={mdiPlus}
+        children="Add"
         {...btnProps}
       />
     </>

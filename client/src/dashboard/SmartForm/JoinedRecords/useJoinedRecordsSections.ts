@@ -8,6 +8,7 @@ import { getSmartGroupFilter } from "../../../../../commonTypes/filterUtils";
 import { isDefined } from "../../../utils";
 import { getJoinFilter } from "./getJoinFilter";
 import type { JoinedRecordSection, JoinedRecordsProps } from "./JoinedRecords";
+import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 
 const getAllParentTableNames = (
   parentForm: JoinedRecordsProps["parentForm"],
@@ -34,6 +35,14 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
     errors,
   } = props;
   const [isLoadingSections, setIsLoadingSections] = useState(false);
+
+  const tablesMap = useMemo(() => {
+    const map = new Map<string, DBSchemaTableWJoins>();
+    tables.forEach((t) => {
+      map.set(t.name, t);
+    });
+    return map;
+  }, [tables]);
 
   const parentFormTableNames = useMemo(
     () => getAllParentTableNames(parentForm),
@@ -143,11 +152,11 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
             nestedInsertData?.[j.tableName]?.length
           : existingDataCount) ?? 0;
 
-        const table = tables.find((t) => t.name === j.tableName);
+        const table = tablesMap.get(j.tableName);
         if (!table) return;
 
         const res: JoinedRecordSection = {
-          label: j.tableName,
+          label: table.info.info?.label ?? j.tableName,
           tableName: j.tableName,
           existingDataCount,
           canInsert,
@@ -185,7 +194,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
     descendants,
     showRelated,
     errors,
-    tables,
+    tablesMap,
   ]);
 
   currentSections.current = sections ?? [];
