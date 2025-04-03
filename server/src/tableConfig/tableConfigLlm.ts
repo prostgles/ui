@@ -258,7 +258,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         },
       },
       meta: "JSONB",
-      created: `TIMESTAMP DEFAULT NOW()`,
+      created: `TIMESTAMP DEFAULT NOW() `,
     },
   },
   llm_chats_allowed_functions: {
