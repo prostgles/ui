@@ -8,7 +8,6 @@ import {
 } from "prostgles-types";
 import { type FullOption } from "../../../components/Select/Select";
 import type { SmartFormFieldForeignKeyProps } from "./SmartFormFieldForeignKey";
-import type { DBS } from "../../Dashboard/DBS";
 
 type FetchForeignKeyOptionsArgs = Pick<
   SmartFormFieldForeignKeyProps,
@@ -17,7 +16,7 @@ type FetchForeignKeyOptionsArgs = Pick<
   term: string;
 };
 
-export const getFkeySuggestionsFtable = ({
+const getFkeySuggestionsFtable = ({
   tables,
   column,
   tableName,
