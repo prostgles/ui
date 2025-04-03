@@ -16,6 +16,24 @@ type FetchForeignKeyOptionsArgs = Pick<
   term: string;
 };
 
+const recursivellyFind = <T>(
+  arr: T[],
+  cb: (elem: T) => T | T[] | undefined,
+): T | undefined => {
+  for (const elem of arr) {
+    const found = cb(elem);
+    if (found && Array.isArray(found)) {
+      return recursivellyFind(found, cb);
+    }
+    return found;
+  }
+  return undefined;
+};
+
+/**
+ * Given a column that is a foreign key, we want to find the best table reference chain to extract a suitable text column to help the user
+ * pick a value from the foreign table.
+ */
 const getFkeySuggestionsFtable = ({
   tables,
   column,
@@ -31,7 +49,11 @@ const getFkeySuggestionsFtable = ({
 
   const tableHandler = db[tableName];
   const fTableHandler = db[ftable];
-  if (!tableHandler?.find || !fTableHandler?.find) return;
+  const tableInfo = tables.find((t) => t.name === tableName);
+  if (!tableInfo || !tableHandler?.find || !fTableHandler?.find) return;
+  const pkey = recursivellyFind(tableInfo.joinsV2, (join) => {
+    if(join.)
+  });
   return fKey;
 };
 
