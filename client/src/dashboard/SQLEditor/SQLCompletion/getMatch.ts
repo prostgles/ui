@@ -13,7 +13,7 @@ import { MatchReassign } from "./MatchReassign";
 import { MatchWith } from "./MatchWith";
 import { MatchGrant } from "./MatchGrant";
 import type { SQLMatchContext } from "./registerSuggestions";
-import { MatchVacuum } from "./MatchVacuum";
+import { MatchVacuumOrAnalyze } from "./MatchVacuum";
 import { MatchReindex } from "./MatchReindex";
 import { MatchPublication } from "./MatchPublication";
 import { MatchSubscription } from "./MatchSubscription";
@@ -36,7 +36,7 @@ export const SQLMatchers = {
   MatchComment,
   MatchReassign,
   MatchLast,
-  MatchVacuum,
+  MatchVacuum: MatchVacuumOrAnalyze,
   MatchReindex,
 } as const;
 type MatchFilter = (keyof typeof SQLMatchers)[];

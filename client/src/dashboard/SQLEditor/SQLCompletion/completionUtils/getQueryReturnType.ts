@@ -66,7 +66,8 @@ const getQueryReturnTypeForDuplicateCols = async (
   const cols: ColType[] = result.fields.map((f) => {
     return {
       column_name: f.name,
-      escaped_column_name: asName(f.name),
+      escaped_column_name:
+        /^[a-z_][a-z0-9_$]*$/.test(f.name) ? f.name : asName(f.name),
       data_type: f.dataType,
       udt_name: f.dataType,
       schema: "public",
@@ -97,7 +98,7 @@ export const getTableExpressionReturnType = async (
     let colTypes = result.data?.colTypes;
     const { error } = result;
     if (!colTypes) {
-      if ((error as any)?.code === "42701") {
+      if (["42701", "42P16"].includes((error as any)?.code)) {
         colTypes = await getQueryReturnTypeForDuplicateCols(expression, sql);
       }
     }

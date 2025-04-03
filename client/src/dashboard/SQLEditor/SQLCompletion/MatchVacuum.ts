@@ -4,12 +4,14 @@ import type { SQLMatcher } from "./registerSuggestions";
 import { getKind } from "./registerSuggestions";
 import type { KWD } from "./withKWDs";
 import { withKWDs } from "./withKWDs";
+import { pickKeys } from "prostgles-types";
 
-export const MatchVacuum: SQLMatcher = {
-  match: (cb) => cb.ftoken?.textLC === "vacuum",
+export const MatchVacuumOrAnalyze: SQLMatcher = {
+  match: (cb) => ["vacuum", "analyze"].includes(cb.ftoken?.textLC ?? ""),
   result: async ({ cb, ss, setS, sql }) => {
+    const command = cb.ftoken?.textLC ?? "vacuum";
     const func = getParentFunction(cb);
-    if (func?.func.textLC === "vacuum") {
+    if (func?.func.textLC === command) {
       return withKWDs(
         Object.entries(options).map(([kwd, docs]) => ({ kwd, docs })),
         { cb, ss, setS, sql, opts: { notOrdered: true } },
@@ -21,25 +23,46 @@ export const MatchVacuum: SQLMatcher = {
     }
 
     return withKWDs(
-      [
-        {
-          kwd: "VACUUM",
-          expects: ["table"],
-          options: [
-            {
-              label: "(options...)",
-              insertText: "($0)",
-              docs: Object.keys(options).join("\n\n"),
-              kind: getKind("snippet"),
-            },
-          ],
-        },
-        {
-          kwd: "VACUUM FULL",
-          expects: ["table"],
-          excludeIf: ["VACUUM"],
-        },
-      ] satisfies KWD[],
+      command === "analyze" ?
+        [
+          {
+            kwd: "ANALYZE",
+            expects: ["table"],
+            options: [
+              {
+                label: "(options...)",
+                insertText: "($0)",
+                docs: Object.keys(
+                  pickKeys(options, [
+                    "VERBOSE",
+                    "SKIP_LOCKED",
+                    "BUFFER_USAGE_LIMIT",
+                  ]),
+                ).join("\n\n"),
+                kind: getKind("snippet"),
+              },
+            ],
+          },
+        ]
+      : ([
+          {
+            kwd: "VACUUM",
+            expects: ["table"],
+            options: [
+              {
+                label: "(options...)",
+                insertText: "($0)",
+                docs: Object.keys(options).join("\n\n"),
+                kind: getKind("snippet"),
+              },
+            ],
+          },
+          {
+            kwd: "VACUUM FULL",
+            expects: ["table"],
+            excludeIf: ["VACUUM"],
+          },
+        ] satisfies KWD[]),
       { cb, ss, setS, sql },
     ).getSuggestion();
   },
