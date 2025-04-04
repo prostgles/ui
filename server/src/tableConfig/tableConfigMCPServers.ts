@@ -139,6 +139,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
           arrayOf: "any",
         },
       },
+      auto_approve: `BOOLEAN DEFAULT FALSE`,
     },
     indexes: {
       unique_chat_allowed_tool: {

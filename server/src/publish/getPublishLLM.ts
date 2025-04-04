@@ -1,25 +1,9 @@
-import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
-import type {
-  Publish,
-  PublishParams,
-} from "prostgles-server/dist/PublishParser/PublishParser";
-import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
-import { getKeys } from "prostgles-types";
-import { connectionChecker } from "..";
+import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import { isDefined } from "../../../commonTypes/filterUtils";
-import {
-  getMagicLinkEmailFromTemplate,
-  getVerificationEmailFromTemplate,
-  MOCK_SMTP_HOST,
-} from "../../../commonTypes/OAuthUtils";
-import { getPasswordHash } from "../authConfig/authUtils";
-import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailSenderWithMockTest";
-import { getACRules } from "../ConnectionManager/ConnectionManager";
-import { testMCPServerConfig } from "../McpHub/McpHub";
-import { fetchLLMResponse } from "../publishMethods/askLLM/fetchLLMResponse";
-import { getLLMChatModel } from "../publishMethods/askLLM/askLLM";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import { testMCPServerConfig } from "../McpHub/McpHub";
+import { getLLMChatModel } from "../publishMethods/askLLM/askLLM";
+import { fetchLLMResponse } from "../publishMethods/askLLM/fetchLLMResponse";
 
 export const getPublishLLM = (
   user_id: string,
@@ -200,6 +184,11 @@ export const getPublishLLM = (
       },
       insert: {
         fields: "*",
+        checkFilter: userOwnsRelatedChat,
+      },
+      update: {
+        fields: "*",
+        forcedFilter: userOwnsRelatedChat,
         checkFilter: userOwnsRelatedChat,
       },
       delete: {

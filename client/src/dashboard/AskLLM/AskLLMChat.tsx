@@ -10,7 +10,8 @@ import { AskLLMChatHeader } from "./AskLLMChatHeader";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
-import { useLLMTools } from "./useLLMTools";
+import { useLLMTools } from "./Tools/useLLMTools";
+import { AskLLMTools } from "./Tools/AskLLMTools";
 
 export type AskLLMChatProps = {
   prgl: Omit<Prgl, "dbsMethods">;
@@ -82,13 +83,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     [sendQuery],
   );
 
-  useLLMTools({
-    messages: llmMessages ?? [],
-    methods,
-    sendQuery,
-    callMCPServerTool,
-  });
-
   const chatStyle = useMemo(() => {
     return {
       minWidth: `min(${CHAT_WIDTH}px, 100%)`,
@@ -131,7 +125,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       }}
       rootChildClassname="AskLLMChat"
     >
-      {messages && (
+      {messages && activeChat && (
         <FlexCol
           className="min-h-0 f-1"
           style={{
@@ -141,9 +135,17 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           <Chat
             style={chatStyle}
             messages={messages}
-            disabledInfo={activeChat?.disabled_message ?? undefined}
+            disabledInfo={activeChat.disabled_message ?? undefined}
             onSend={sendMessage}
             markdownCodeHeader={markdownCodeHeader}
+          />
+          <AskLLMTools
+            dbs={dbs}
+            activeChatId={activeChat.id}
+            messages={llmMessages ?? []}
+            methods={methods}
+            sendQuery={sendQuery}
+            callMCPServerTool={callMCPServerTool}
           />
         </FlexCol>
       )}

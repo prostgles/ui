@@ -4,31 +4,39 @@ import { useRef } from "react";
 import {
   getLLMMessageToolUse,
   type LLMMessage,
-} from "../../../../commonTypes/llmUtils";
-import { getMCPToolNameParts } from "../../../../commonTypes/mcp";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import type { Prgl } from "../../App";
-import type { DBSMethods } from "../Dashboard/DBS";
-import { getErrorMessage } from "../../components/ErrorComponent";
-
-type Args = {
-  messages: DBSSchema["llm_messages"][];
-  sendQuery: (
-    msg: DBSSchema["llm_messages"]["message"] | undefined,
-  ) => Promise<void>;
-  callMCPServerTool: Prgl["dbsMethods"]["callMCPServerTool"];
-} & Pick<Prgl, "methods">;
+} from "../../../../../commonTypes/llmUtils";
+import {
+  getMCPFullToolName,
+  getMCPToolNameParts,
+} from "../../../../../commonTypes/mcp";
+import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { DBSMethods } from "../../Dashboard/DBS";
+import type { AskLLMToolsProps } from "./AskLLMTools";
 
 /**
  * https://docs.anthropic.com/en/docs/build-with-claude/tool-use
  */
 export const useLLMTools = ({
+  dbs,
+  activeChatId,
   messages,
   methods,
   sendQuery,
   callMCPServerTool,
-}: Args) => {
+  requestApproval,
+}: AskLLMToolsProps & {
+  requestApproval: (
+    tool: DBSSchema["mcp_server_tools"],
+    input: any,
+  ) => Promise<{ approved: boolean }>;
+}) => {
   const fetchingForMessageId = useRef<string>();
+  const { data: allowedTools } = dbs.llm_chats_allowed_mcp_tools.useSubscribe(
+    {
+      chat_id: activeChatId,
+    },
+    { select: { "*": 1, mcp_server_tools: "*" } },
+  );
   usePromise(async () => {
     const lastMessage = messages.at(-1);
     if (!isAssistantMessageRequestingToolUse(lastMessage)) return;
@@ -42,6 +50,41 @@ export const useLLMTools = ({
     fetchingForMessageId.current = lastMessage.id;
     const results = await Promise.all(
       toolUse.map(async (tu) => {
+        const sendError = (error: string) => {
+          return {
+            type: "tool_result",
+            tool_use_id: tu.id,
+            is_error: true,
+            content: error,
+          } satisfies LLMMessage["message"][number];
+        };
+
+        const isAllowedWithoutApproval = allowedTools?.some((tool) => {
+          return (
+            tool.auto_approve &&
+            tu.name === getMCPFullToolName(tool.mcp_server_tools[0])
+          );
+        });
+
+        if (!isAllowedWithoutApproval) {
+          const nameParts = getMCPToolNameParts(tu.name);
+          if (!nameParts) {
+            return sendError("Tool not found");
+          }
+          const tool = await dbs.mcp_server_tools.findOne({
+            name: nameParts.toolName,
+            server_name: nameParts.serverName,
+          });
+          if (!tool) {
+            return sendError("Tool not found");
+          }
+          const { approved } = await requestApproval(tool, tu.input);
+
+          if (!approved) {
+            return sendError("Tool use not approved by user");
+          }
+        }
+
         const toolResult = await getToolUseResult(
           lastMessage.chat_id,
           methods,
@@ -58,11 +101,19 @@ export const useLLMTools = ({
       }),
     );
     await sendQuery(results);
-  }, [messages, methods, sendQuery, callMCPServerTool]);
+  }, [
+    messages,
+    methods,
+    sendQuery,
+    callMCPServerTool,
+    allowedTools,
+    requestApproval,
+    dbs,
+  ]);
 };
 
 const reachedMaximumNumberOfConsecutiveToolRequests = (
-  messages: Args["messages"],
+  messages: AskLLMToolsProps["messages"],
   limit: number,
 ): boolean => {
   const count =
