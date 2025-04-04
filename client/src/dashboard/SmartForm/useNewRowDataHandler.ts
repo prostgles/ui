@@ -248,6 +248,11 @@ export const useNewRowDataHandler = (args: Args) => {
         ...fixedData,
       };
     }
+    if (mode.type === "view") {
+      return {
+        ...mode.currentRow,
+      };
+    }
     return {
       ...(mode.type === "update" ? mode.currentRow : {}),
       ...newRow,

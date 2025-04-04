@@ -136,6 +136,7 @@ const CUSTOM_ATTRS: OmmitedKeys[] = [
   "iconStyle",
   "titleAsLabel",
   "clickConfirmation",
+  "label",
 ];
 
 export type BtnProps<HREF extends string | void = void> = TestSelectors &

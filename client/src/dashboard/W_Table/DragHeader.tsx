@@ -4,10 +4,11 @@ import { getDistanceBetweenBoxes } from "../SilverGrid/SilverGridChild";
 import type { CardViewProps, CardViewState, IndexedRow } from "./CardView";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { Pan } from "../../components/Table/Table";
-import { getRowFilter } from "./tableUtils/getEditColumn";
+import { getRowFilter } from "./tableUtils/getRowFilter";
 import React from "react";
 import { isEmpty } from "../../utils";
 import { getSmartGroupFilter } from "../../../../commonTypes/filterUtils";
+import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
 
 type DragHeaderProps = Pick<
   CardViewProps,
@@ -22,6 +23,7 @@ type DragHeaderProps = Pick<
   orderByColumn: ValidatedColumnInfo | undefined;
   columns: ValidatedColumnInfo[];
   tableHandler: Partial<TableHandlerClient>;
+  table: DBSchemaTableWJoins;
 };
 export const DragHeaderHeight = 30;
 export class DragHeader extends RTComp<DragHeaderProps> {
@@ -133,6 +135,7 @@ export class DragHeader extends RTComp<DragHeaderProps> {
             ) {
               const { error, filter } = await getRowFilter(
                 isMoving.data,
+                this.props.table,
                 this.props.columns,
                 this.props.tableHandler,
               );
@@ -161,6 +164,7 @@ export class DragHeader extends RTComp<DragHeaderProps> {
                   try {
                     const targetSiblingFilter = await getRowFilter(
                       isMoving.target.data,
+                      this.props.table,
                       this.props.columns,
                       this.props.tableHandler,
                     );

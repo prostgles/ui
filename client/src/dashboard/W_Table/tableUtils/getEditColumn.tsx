@@ -1,17 +1,15 @@
-import React from "react";
 import { mdiOpenInNew, mdiPencilOutline } from "@mdi/js";
-import type { ValidatedColumnInfo, AnyObject } from "prostgles-types";
-import { isEmpty } from "../../../utils";
 import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
+import type { AnyObject, ValidatedColumnInfo } from "prostgles-types";
+import React from "react";
 import Btn from "../../../components/Btn";
 
-import {
-  getSmartGroupFilter,
-  type DetailedFilterBase,
-} from "../../../../../commonTypes/filterUtils";
+import { type DetailedFilterBase } from "../../../../../commonTypes/filterUtils";
+import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { AddColumnMenuProps } from "../ColumnMenu/AddColumnMenu";
 import { AddColumnMenu } from "../ColumnMenu/AddColumnMenu";
 import type { ProstglesColumn } from "../W_Table";
+import { getRowFilter } from "./getRowFilter";
 
 export const getUnknownColInfo = (
   key: string,
@@ -43,16 +41,18 @@ export type OnClickEditRow = (
 ) => void;
 
 type GetMenuColumnArgs = {
-  columns: ValidatedColumnInfo[];
   tableHandler: Partial<TableHandlerClient>;
   onClickRow: OnClickEditRow;
+  table: DBSchemaTableWJoins;
+  columnConfig: { name: string }[] | undefined;
   addColumnProps?: AddColumnMenuProps;
 };
 export const getEditColumn = ({
-  columns,
   tableHandler,
   onClickRow,
   addColumnProps,
+  table,
+  columnConfig,
 }: GetMenuColumnArgs): ProstglesColumn => {
   const viewOnly = !tableHandler.update;
   const title = viewOnly ? "View row" : "View/Edit row",
@@ -83,7 +83,8 @@ export const getEditColumn = ({
           setM({ loading: 1 });
           const { error, filter } = await getRowFilter(
             row,
-            columns,
+            table,
+            columnConfig,
             tableHandler,
           );
           if (error) {
@@ -92,7 +93,8 @@ export const getEditColumn = ({
             const siblingData = await getRowSiblingData(
               [prevRow, row, nextRow],
               1,
-              columns,
+              table,
+              columnConfig,
               tableHandler,
             );
             onClickRow(filter, siblingData, rowIndex);
@@ -106,7 +108,7 @@ export const getEditColumn = ({
   return res;
 };
 
-type CoreColInfo = Pick<
+export type CoreColInfo = Pick<
   ValidatedColumnInfo,
   "filter" | "is_pkey" | "name" | "tsDataType" | "udt_name"
 >;
@@ -114,7 +116,8 @@ type CoreColInfo = Pick<
 export const getRowSiblingData = async (
   rows: (AnyObject | undefined)[],
   rowIndex: number,
-  columns: CoreColInfo[],
+  table: DBSchemaTableWJoins,
+  columns: GetMenuColumnArgs["columnConfig"],
   tableHandler: Partial<TableHandlerClient<AnyObject, void>>,
 ) => {
   const prevRow = rows[rowIndex - 1];
@@ -124,103 +127,15 @@ export const getRowSiblingData = async (
   let nextRowFilter: undefined | DetailedFilterBase[];
   try {
     if (prevRow)
-      prevRowFilter = (await getRowFilter(prevRow, columns, tableHandler))
-        .filter;
+      prevRowFilter = (
+        await getRowFilter(prevRow, table, columns, tableHandler)
+      ).filter;
     if (nextRow)
-      nextRowFilter = (await getRowFilter(nextRow, columns, tableHandler))
-        .filter;
+      nextRowFilter = (
+        await getRowFilter(nextRow, table, columns, tableHandler)
+      ).filter;
   } catch (e) {
     console.error(e);
   }
   return { nextRow, prevRow, prevRowFilter, nextRowFilter };
-};
-
-export const getRowFilter = async (
-  row: AnyObject,
-  columns: CoreColInfo[],
-  tableHandler: Partial<TableHandlerClient<AnyObject, void>>,
-): Promise<
-  | { filter: DetailedFilterBase[]; error: undefined }
-  | { filter: undefined; error: string }
-> => {
-  let rowFilter: DetailedFilterBase[] | undefined;
-  const pkeys = columns.filter((c) => c.filter && c.is_pkey);
-  if (pkeys.length) {
-    pkeys.map((pkey) => {
-      rowFilter ??= [];
-      rowFilter.push({
-        fieldName: pkey.name,
-        value: row[pkey.name],
-      });
-    });
-  } else {
-    const dissallowedUdtTypes = ["interval"];
-    const filterCols = columns.filter(
-      (c) =>
-        !dissallowedUdtTypes.includes(c.udt_name) &&
-        c.filter &&
-        (["number", "string", "boolean", "Date"].includes(c.tsDataType) ||
-          c.udt_name === "jsonb"),
-    );
-
-    /** Trim value if too long to avoid btrim error */
-    const getSlicedValue = (v) => {
-      if (typeof v === "string" && v.length > 400) {
-        return { $like: `${v.slice(0, 400)}%` };
-      }
-
-      return v;
-    };
-
-    rowFilter = filterCols.map((c) => {
-      const val = row[c.name];
-      return {
-        fieldName: c.name,
-        value:
-          (
-            c.udt_name.startsWith("json") &&
-            typeof val === "string" &&
-            !val.startsWith('"')
-          ) ?
-            JSON.stringify(val)
-          : getSlicedValue(val),
-      };
-    });
-    rowFilter = rowFilter.filter((f, i, arr) => {
-      const filterStrLen = JSON.stringify(
-        getSmartGroupFilter(arr.slice(0, i + 1)),
-      ).length;
-      return filterStrLen * 4 < 2104;
-    });
-  }
-
-  const _rowFilter = getSmartGroupFilter(rowFilter);
-  /** This check is needed for subscriptions */
-  if (JSON.stringify(_rowFilter).length * 4 > 2704 || isEmpty(_rowFilter)) {
-    return {
-      filter: undefined,
-      error:
-        "Could not create filter for record" +
-        (!pkeys.length ? ". Create a primary key to fix this issue" : ""),
-    };
-  }
-
-  const [firstRecord, secondRecord] =
-    (await tableHandler.find?.(_rowFilter, { select: "", limit: 2 })) ?? [];
-  if (!firstRecord) {
-    console.log(_rowFilter);
-    return {
-      filter: undefined,
-      error: "Could not create a single row filter. Record not found.",
-    };
-  } else if (secondRecord) {
-    return {
-      filter: undefined,
-      error:
-        "Could not create a single row filter. More than one record returned" +
-        (!pkeys.length ? ". Create a primary key to fix this issue" : ""),
-    };
-  } else {
-    return { filter: rowFilter ?? [], error: undefined };
-  }
 };

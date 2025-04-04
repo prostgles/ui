@@ -19,6 +19,7 @@ import {
   getMonacoEditorBySelector,
   getMonacoValue,
   getSearchListItem,
+  getSelector,
   getTableWindow,
   goTo,
   insertRow,
@@ -109,6 +110,27 @@ test.describe("Main test", () => {
 
     /** Expect the workspace to have users table open */
     await goToWorkspace(false);
+
+    /** SmartForm view mode shows correct data */
+    await openTable(page, "login_attempts");
+    await page.getByTestId("dashboard.window.viewEditRow").last().click();
+    await page.waitForTimeout(2e3);
+    const formField = await page.locator(
+      getSelector({ testid: "SmartFormField", dataKey: "username" }),
+    );
+    const userTypeField = await formField.textContent();
+    expect(userTypeField).toEqual(`Username${USERS.test_user}`);
+    await page.getByTestId("SmartForm.close").waitFor({ state: "visible" });
+    await page.getByTestId("SmartForm.close").click();
+
+    await closeWorkspaceWindows(page);
+
+    /** SmartForm view mode shows correct buttons */
+    await openTable(page, "user_types");
+    await page.getByTestId("dashboard.window.viewEditRow").last().click();
+    await page.getByTestId("SmartForm.close").waitFor({ state: "visible" });
+    await page.getByTestId("SmartForm.delete").waitFor({ state: "visible" });
+    await page.getByTestId("SmartForm.close").click();
   });
 
   test("Email password registrations", async ({ page: p, browser }) => {
@@ -333,7 +355,17 @@ test.describe("Main test", () => {
     await page.waitForTimeout(1e3);
     await monacoType(page, ".MethodDefinition", "dbo.t", {
       deleteAll: false,
-      pressBeforeTyping: ["ArrowLeft", "ArrowRight"],
+      /** This helps with flaky tests done on workers */
+      pressAfterTyping: [
+        "Backspace",
+        "Backspace",
+        "Backspace",
+        "Backspace",
+        "Backspace",
+      ],
+    });
+    await monacoType(page, ".MethodDefinition", "dbo.t", {
+      deleteAll: false,
     });
     await page.keyboard.press("Tab");
 

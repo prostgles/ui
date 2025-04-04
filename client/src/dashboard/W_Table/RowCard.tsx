@@ -75,13 +75,14 @@ export const RowCard = ({
               // alert("Reached end");
               return;
             }
-            const cols = prgl.tables.find((t) => t.name === tableName)?.columns;
-            if (!cols) return;
+            const table = prgl.tables.find((t) => t.name === tableName);
+            if (!table) return;
 
             const siblingData = await getRowSiblingData(
               rows,
               newRowIndex,
-              cols,
+              table,
+              undefined,
               tableHandler,
             );
             const newRowPanel: RowPanelProps = {

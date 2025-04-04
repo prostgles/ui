@@ -156,8 +156,8 @@ export const useSmartFormActions = ({
         },
       };
     }
+    const { tableHandlerUpdate, tableHandlerDelete } = mode;
     if (mode.type === "update" || mode.type === "multiUpdate") {
-      const { tableHandlerUpdate, tableHandlerDelete } = mode;
       if (
         !(
           !confirmUpdates ||
@@ -197,41 +197,41 @@ export const useSmartFormActions = ({
           },
         };
       }
-      return {
-        onClickDelete:
-          !tableHandlerDelete || disabledActions?.includes("delete") ?
-            undefined
-          : async () => {
-              setConfirmPopup({
-                message: "Are you sure you want to delete this?",
-                acceptBtn: {
-                  dataCommand: "SmartForm.delete.confirm",
-                  text: "Delete!",
-                  color: "danger",
-                },
-                onAccept: async () => {
-                  setConfirmPopup(undefined);
-                  await performAction(async () => {
-                    await tableHandlerDelete(mode.rowFilterObj);
-                    onSuccess?.("delete");
-                    setSuccessMessage("Deleted");
-                  });
-                },
-                onClose: () => {
-                  setConfirmPopup(undefined);
-                },
-              });
-            },
-        onClickClone:
-          (
-            mode.type !== "update" ||
-            !mode.clone ||
-            disabledActions?.includes("clone")
-          ) ?
-            undefined
-          : mode.clone,
-      };
     }
+    return {
+      onClickDelete:
+        !tableHandlerDelete || disabledActions?.includes("delete") ?
+          undefined
+        : async () => {
+            setConfirmPopup({
+              message: "Are you sure you want to delete this?",
+              acceptBtn: {
+                dataCommand: "SmartForm.delete.confirm",
+                text: "Delete!",
+                color: "danger",
+              },
+              onAccept: async () => {
+                setConfirmPopup(undefined);
+                await performAction(async () => {
+                  await tableHandlerDelete(mode.rowFilterObj);
+                  onSuccess?.("delete");
+                  setSuccessMessage("Deleted");
+                });
+              },
+              onClose: () => {
+                setConfirmPopup(undefined);
+              },
+            });
+          },
+      onClickClone:
+        (
+          mode.type !== "update" ||
+          !mode.clone ||
+          disabledActions?.includes("clone")
+        ) ?
+          undefined
+        : mode.clone,
+    };
   }, [
     mode,
     performAction,

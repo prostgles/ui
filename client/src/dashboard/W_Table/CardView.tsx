@@ -66,7 +66,8 @@ export class CardView extends RTComp<CardViewProps, CardViewState> {
     const rows = _rows.map((data, index) => ({ data, index }));
     const { joinFilter, activeRowColor, activeRow, prgl, tables } = props;
     const tableHandler = prgl.db[w!.table_name!];
-    const columns = tables.find((t) => t.name === w?.table_name)?.columns;
+    const table = tables.find((t) => t.name === w?.table_name);
+    const columns = table?.columns;
     if (!columns) {
       return <div>Cols missing</div>;
     }
@@ -179,6 +180,7 @@ export class CardView extends RTComp<CardViewProps, CardViewState> {
                     onChange={(isMoving) => {
                       this.setState({ isMoving });
                     }}
+                    table={table}
                     allIndexedRows={rows}
                     columns={columns}
                     onDataChanged={onDataChanged}
@@ -195,7 +197,8 @@ export class CardView extends RTComp<CardViewProps, CardViewState> {
                     }}
                   >
                     {getEditColumn({
-                      columns,
+                      table,
+                      columnConfig: w?.columns || undefined,
                       tableHandler,
                       onClickRow: (...args) => {
                         if (this.state.isMoving) return;

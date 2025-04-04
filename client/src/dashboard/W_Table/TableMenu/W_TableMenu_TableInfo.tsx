@@ -22,7 +22,7 @@ export const W_TableMenu_TableInfo = ({
 
   return (
     <FlexCol className="f-1 ai-start o-auto ">
-      <div className="f-1 flex-row mr-1 ai-center">
+      <div className=" flex-row mr-1 ai-center">
         <Chip className=" " variant="header" label={"Name"} value={tableName} />
         <Btn
           iconPath={mdiPencil}
@@ -34,7 +34,7 @@ export const W_TableMenu_TableInfo = ({
           }}
         />
       </div>
-      <div className="f-1  flex-row mr-1 ai-center">
+      <div className=" flex-row mr-1 ai-center">
         <Chip
           className=" "
           variant="header"

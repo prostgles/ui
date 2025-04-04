@@ -325,9 +325,22 @@ export const closeWorkspaceWindows = async (page: PageWIds) => {
   await page.waitForTimeout(100);
 };
 
-const getDataKey = (key: string) => `[data-key=${JSON.stringify(key)}]`;
-const getTestId = (testid: Command) =>
+export const getDataKey = (key: string) => `[data-key=${JSON.stringify(key)}]`;
+export const getTestId = (testid: Command) =>
   `[data-command=${JSON.stringify(testid)}]`;
+export const getSelector = ({
+  testid,
+  dataKey,
+}: {
+  testid: Command | undefined;
+  dataKey: string | undefined;
+}) =>
+  [
+    testid && `[data-command=${JSON.stringify(testid)}]`,
+    dataKey && `[data-key=${JSON.stringify(dataKey)}]`,
+  ]
+    .filter(Boolean)
+    .join("");
 
 type FFilter = { fieldName: string; value: string }[];
 type FData = Record<string, string>;

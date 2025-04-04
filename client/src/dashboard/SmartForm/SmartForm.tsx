@@ -235,9 +235,10 @@ const SmartFormWithNoError = ({
       headerText={headerText}
       rowFilterObj={"rowFilterObj" in mode ? mode.rowFilterObj : undefined}
     >
-      <div
-        data-command={"SmartForm" satisfies Command}
+      <form
+        data-command={isLoading ? undefined : ("SmartForm" satisfies Command)}
         data-key={tableName}
+        aria-disabled={isLoading}
         style={asPopup ? { minWidth: "350px" } : {}}
         className={classOverride(
           "SmartForm " +
@@ -285,7 +286,7 @@ const SmartFormWithNoError = ({
         )}
 
         <SmartFormFooterButtons {...props} {...state} {...actionsState} />
-      </div>
+      </form>
     </SmartFormPopupWrapper>
   );
 };

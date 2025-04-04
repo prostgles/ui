@@ -47,9 +47,7 @@ const getRootFkeyTable = ({
     const bestTextCols = getBestTextColumns(
       tables,
       tableName,
-      prevPath.length !== 1 ?
-        [column.name]
-      : prevPath.flatMap(({ on }) => on.map((o) => o[0])),
+      prevPath.flatMap(({ on }) => on.map((o) => o[1])),
     );
     return {
       column,
