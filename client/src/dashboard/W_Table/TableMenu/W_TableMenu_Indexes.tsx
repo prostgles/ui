@@ -29,7 +29,6 @@ export const W_TableMenu_Indexes = ({
         An index improves the speed of data retrieval operations on a table
       </div>
       <SmartCardList
-        connection={undefined}
         db={prgl.db}
         tableName={{
           sqlQuery: `

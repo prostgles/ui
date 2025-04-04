@@ -1,21 +1,20 @@
 import { mdiDelete, mdiLanguageTypescript, mdiPencil, mdiPlus } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { isDefined } from "prostgles-types";
 import React, { useState } from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
+import ConfirmationDialog from "../../components/ConfirmationDialog";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import { InfoRow } from "../../components/InfoRow";
 import PopupMenu from "../../components/PopupMenu";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
+import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAccessRule";
 import SmartCardList from "../SmartCard/SmartCardList";
 import { ProcessLogs } from "../TableConfig/ProcessLogs";
 import { NewMethod } from "./NewMethod";
-import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAccessRule";
-import ConfirmationDialog from "../../components/ConfirmationDialog";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { dbsConnection } from "../../../../commonTypes/dbsConnection";
 
 type P = {
   className?: string;
@@ -44,7 +43,6 @@ export const PublishedMethods = ({
       methods={dbsMethods}
       tables={dbsTables}
       tableName="published_methods"
-      connection={dbsConnection}
       realtime={true}
       filter={{ connection_id: connectionId }}
       showEdit={false}

@@ -426,6 +426,8 @@ export type Join = {
 };
 export type JoinV2 = Omit<Join, "on"> & { on: [string, string][][] };
 export type DBSchemaTableWJoins = DBSchemaTable & {
+  label: string;
+  icon: string | undefined;
   joins: Join[];
   joinsV2: JoinV2[];
 };

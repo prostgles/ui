@@ -1,15 +1,13 @@
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
 import type { Prgl } from "../../App";
-import { InfoRow } from "../../components/InfoRow";
-import SmartCardList from "../SmartCard/SmartCardList";
-import { AddLLMCredentialForm } from "./AddLLMCredentialForm";
-import Popup from "../../components/Popup/Popup";
-import Btn from "../../components/Btn";
-import { FlexCol } from "../../components/Flex";
-import { SmartForm } from "../SmartForm/SmartForm";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import Chip from "../../components/Chip";
-import { dbsConnection } from "../../../../commonTypes/dbsConnection";
+import { FlexCol } from "../../components/Flex";
+import { InfoRow } from "../../components/InfoRow";
+import Popup from "../../components/Popup/Popup";
+import SmartCardList from "../SmartCard/SmartCardList";
+import { SmartForm } from "../SmartForm/SmartForm";
+import { AddLLMCredentialForm } from "./AddLLMCredentialForm";
 
 export const LLMProviderSetup = ({
   dbs,
@@ -23,7 +21,6 @@ export const LLMProviderSetup = ({
       <SmartCardList
         className="mb-1 w-fit"
         db={dbs as DBHandlerClient}
-        connection={dbsConnection}
         tableName={"llm_credentials"}
         methods={dbsMethods}
         tables={dbsTables}
@@ -56,7 +53,6 @@ export const LLMProviderSetup = ({
         >
           <FlexCol>
             <SmartForm
-              connection={dbsConnection}
               label=""
               showJoinedTables={false}
               tableName="llm_credentials"

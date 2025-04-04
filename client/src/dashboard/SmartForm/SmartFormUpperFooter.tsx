@@ -21,7 +21,6 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
     showJoinedTables = true,
     newRowDataHandler,
     tables,
-    connection,
     newRowData,
     mode,
     row,
@@ -75,7 +74,8 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
 
   if (
     !(
-      showJoinedTables && tables.find((t) => t.name === tableName)?.joins.length
+      showJoinedTables &&
+      tables.find((t) => t.name === tableName)?.joinsV2.length
     ) &&
     !showChanges &&
     !dbMethodActions.length
@@ -141,7 +141,6 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
           onTabChange={setActiveJoinedRecordsTab}
           activeTabKey={activeJoinedRecordsTab}
           onSuccess={props.onSuccess}
-          connection={connection}
           parentForm={props.parentForm}
           errors={props.errors}
           row={row}

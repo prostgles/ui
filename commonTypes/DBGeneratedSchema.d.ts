@@ -174,7 +174,7 @@ export type DBGeneratedSchema = {
       ssl_client_certificate?: null | string;
       ssl_client_certificate_key?: null | string;
       ssl_reject_unauthorized?: null | boolean;
-      table_options?: null | Partial<Record<string,  {  icon?: string;  card?: {  relatedDataSections?: string; }; }>>
+      table_options?: null | Partial<Record<string,  {  icon?: string;  label?: string;  card?: {  relatedDataSections?: string; }; }>>
       type: "Standard" | "Connection URI" | "Prostgles"
       url_path?: null | string;
       user_id?: null | string;
@@ -302,6 +302,21 @@ export type DBGeneratedSchema = {
       w1_id: string;
       w2_id: string;
       workspace_id?: null | string;
+    };
+  };
+  llm_api_keys: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      api_key?: string;
+      created?: null | string;
+      id?: number;
+      name?: string;
+      provider_id: number;
+      user_id: string;
     };
   };
   llm_chats: {
@@ -774,7 +789,7 @@ export type DBGeneratedSchema = {
       sql_options?: {    executeOptions?: 'full' | 'block' | 'smallest-block';   errorMessageDisplay?: 'tooltip' | 'bottom' | 'both';   tabSize?: number;   lineNumbers?: 'on' | 'off';   renderMode?: 'table' | 'csv' | 'JSON';   minimap?: {  enabled: boolean; };   acceptSuggestionOnEnter?: 'on' | 'smart' | 'off';   expandSuggestionDocs?: boolean;   maxCharsPerCell?: number;   theme?: 'vs' | 'vs-dark' | 'hc-black' | 'hc-light';   showRunningQueryStats?: boolean;  };
       table_name?: null | string;
       table_oid?: null | number;
-      type?: null | string;
+      type?: null | "map" | "sql" | "table" | "timechart" | "card" | "method"
       user_id: string;
       workspace_id?: null | string;
     };

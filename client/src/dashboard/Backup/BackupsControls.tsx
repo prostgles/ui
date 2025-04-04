@@ -8,6 +8,8 @@ import {
   mdiRefreshAuto,
   mdiStop,
 } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { usePromise } from "prostgles-client/dist/react-hooks";
 import type { AnyObject } from "prostgles-types";
 import React, { useState } from "react";
 import type { PGDumpParams } from "../../../../commonTypes/utils";
@@ -25,16 +27,13 @@ import { ProgressBar } from "../../components/ProgressBar";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { DBS, DBSMethods } from "../Dashboard/DBS";
 import type { Backups } from "../Dashboard/dashboardUtils";
-import { StyledInterval } from "../W_SQL/customRenderers";
 import type { FieldConfig, FieldConfigRender } from "../SmartCard/SmartCard";
 import SmartCardList from "../SmartCard/SmartCardList";
+import { StyledInterval } from "../W_SQL/customRenderers";
 import { AutomaticBackups } from "./AutomaticBackups";
 import { CodeConfirmation } from "./CodeConfirmation";
 import { DEFAULT_DUMP_OPTS, DumpOptions } from "./DumpOptions";
 import { RestoreOptions } from "./RestoreOptions";
-import { usePromise } from "prostgles-client/dist/react-hooks";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { dbsConnection } from "../../../../commonTypes/dbsConnection";
 
 const BACKUP_FILTER_OPTS = [
   { key: "This connection" },
@@ -277,7 +276,6 @@ export const BackupsControls = ({
       </div>
       <SmartCardList
         db={dbs as DBHandlerClient}
-        connection={dbsConnection}
         methods={dbsMethods}
         tableName="backups"
         btnColor="gray"
@@ -343,7 +341,6 @@ export const BackupsControls = ({
         db={dbs as DBHandlerClient}
         methods={dbsMethods}
         tableName="backups"
-        connection={dbsConnection}
         btnColor="gray"
         style={{ minHeight: "250px" }}
         title="Backup in progress:"
@@ -406,7 +403,6 @@ export const BackupsControls = ({
             </div>
           </div>
         }
-        connection={dbsConnection}
         onSetData={(items) => sethasBackups(!!items.length)}
         db={dbs as DBHandlerClient}
         methods={dbsMethods}

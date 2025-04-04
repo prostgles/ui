@@ -7,7 +7,7 @@ import type { SmartFormFieldLinkedDataProps } from "./SmartFormFieldLinkedData";
 
 type P = Pick<
   SmartFormFieldLinkedDataProps,
-  "db" | "methods" | "tables" | "row" | "column" | "connection"
+  "db" | "methods" | "tables" | "row" | "column"
 > & {
   ftable: string;
   fcol: string;
@@ -22,7 +22,6 @@ export const SmartFormFieldLinkedDataSearch = ({
   fcol,
   row,
   column,
-  connection,
 }: P) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement>();
 
@@ -43,7 +42,6 @@ export const SmartFormFieldLinkedDataSearch = ({
           clickCatchStyle={{ opacity: 1 }}
         >
           <SmartCardList
-            connection={connection}
             showTopBar={true}
             db={db}
             methods={methods}

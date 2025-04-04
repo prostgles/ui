@@ -16,7 +16,7 @@ import type { GeoJsonLayer } from "deck.gl";
 import { isDefined } from "../../utils";
 import { scaleLinear } from "d3-scale";
 
-export type DeckGLFeatureEditorProps = Pick<SmartFormProps, "connection"> & {
+export type DeckGLFeatureEditorProps = {
   deckW: DeckWrapped;
   edit: Pick<W_MapProps, "layerQueries"> &
     Pick<FullExtraProps, "dbProject" | "dbTables" | "dbMethods" | "theme"> & {
@@ -49,7 +49,6 @@ export const DeckGLFeatureEditor = ({
   edit,
   deckGlLibs,
   deckW,
-  connection,
 }: DeckGLFeatureEditorProps) => {
   const {
     dbProject,
@@ -316,7 +315,6 @@ export const DeckGLFeatureEditor = ({
         <SmartForm
           asPopup={true}
           tableName={editMode.tableName}
-          connection={connection}
           rowFilter={filter}
           db={dbProject}
           tables={dbTables}

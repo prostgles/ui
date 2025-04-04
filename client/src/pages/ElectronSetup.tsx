@@ -100,7 +100,7 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
             <h3>PRIVACY</h3>
             <section className="ta-left  font-18">
               The only data we collect is the information you send us through
-              the "Send feedback" button.
+              the &quot;Send feedback&quot; button.
             </section>
           </div>
         : step === 1 ?

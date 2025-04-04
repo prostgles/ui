@@ -50,7 +50,7 @@ export const loadTable = async (args: LoadTableArgs): Promise<string> => {
     }
   }
 
-  const r: WindowData = (await dbs.windows.insert(
+  const r = await dbs.windows.insert(
     {
       sql,
       filter,
@@ -62,8 +62,10 @@ export const loadTable = async (args: LoadTableArgs): Promise<string> => {
       method_name,
       fullscreen: false,
       workspace_id,
-    } as any,
+      last_updated: undefined as any,
+      user_id: undefined as any,
+    },
     { returning: "*" },
-  )) as any;
+  );
   return r.id;
 };

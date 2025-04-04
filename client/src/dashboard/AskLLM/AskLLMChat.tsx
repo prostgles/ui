@@ -112,7 +112,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           {...setupState}
           {...chatState}
           connectionId={connectionId}
-          connection={connection}
           dbs={dbs}
           dbsTables={dbsTables}
           chatRootDiv={rootDiv}

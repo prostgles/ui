@@ -21,28 +21,27 @@ import { quickClone } from "../utils";
 import type { PaginationProps } from "../components/Table/Pagination";
 import { FlexCol } from "../components/Flex";
 
-type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods"> &
-  Pick<SmartFormProps, "connection"> & {
-    filter?: SmartGroupFilter;
-    tableName: string;
-    tableCols?: ProstglesColumn[];
-    onClosePopup?: () => void;
-    onClickRow?: (row?: AnyObject) => void;
-    title?:
-      | React.ReactNode
-      | ((dataCounts: {
-          totalRows: number;
-          filteredRows: number;
-        }) => React.ReactNode);
-    titlePrefix?: string;
-    showInsert?: boolean;
-    allowEdit?: boolean;
-    className?: string;
-    noDataComponent?: React.ReactNode;
-    onFilterChange?: (filter: SmartGroupFilter) => void;
-    filterOperand?: "and" | "or";
-    realtime?: { throttle?: number };
-  };
+type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods"> & {
+  filter?: SmartGroupFilter;
+  tableName: string;
+  tableCols?: ProstglesColumn[];
+  onClosePopup?: () => void;
+  onClickRow?: (row?: AnyObject) => void;
+  title?:
+    | React.ReactNode
+    | ((dataCounts: {
+        totalRows: number;
+        filteredRows: number;
+      }) => React.ReactNode);
+  titlePrefix?: string;
+  showInsert?: boolean;
+  allowEdit?: boolean;
+  className?: string;
+  noDataComponent?: React.ReactNode;
+  onFilterChange?: (filter: SmartGroupFilter) => void;
+  filterOperand?: "and" | "or";
+  realtime?: { throttle?: number };
+};
 
 type S = {
   error?: any;
@@ -105,10 +104,11 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           }),
         }));
 
-      if (allowEdit && tableHandler) {
+      if (allowEdit && tableHandler && table) {
         _tableCols.unshift(
           getEditColumn({
-            columns: cols,
+            table,
+            columnConfig: cols,
             tableHandler: tableHandler as any,
             onClickRow: onClickEditRow,
           }),
@@ -263,7 +263,6 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
             asPopup={true}
             confirmUpdates={true}
             db={db}
-            connection={this.props.connection}
             methods={this.props.methods}
             tables={tables}
             tableName={tableName}

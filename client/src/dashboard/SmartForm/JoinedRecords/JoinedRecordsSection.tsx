@@ -27,7 +27,6 @@ const JoinedRecordsSectionCardList = (
     section: s,
     isInsert,
     descendants,
-    connection,
     newRowDataHandler,
   } = props;
 
@@ -73,7 +72,6 @@ const JoinedRecordsSectionCardList = (
           tables={tables}
           className="px-1"
           excludeNulls={true}
-          connection={connection}
           onSuccess={onSuccess}
           data={nestedInsertData?.[s.tableName] ?? []}
           onChange={
@@ -93,7 +91,6 @@ const JoinedRecordsSectionCardList = (
         {count > 20 && <div>Showing top {limit} records</div>}
         <SmartCardList
           key={s.path.join(".")}
-          connection={connection}
           db={db}
           tables={tables}
           methods={methods}

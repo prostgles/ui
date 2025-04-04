@@ -38,7 +38,6 @@ export type ColumnDisplayConfig = {
 
 export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods"> & {
   tableName: string;
-  connection: undefined | Pick<Partial<Prgl["connection"]>, "table_options">;
 
   label?: string;
   /**
@@ -229,13 +228,14 @@ const SmartFormWithNoError = ({
   return (
     <SmartFormPopupWrapper
       {...props}
+      table={table}
       onClose={onCloseWrapped}
       maxWidth={maxWidth}
       displayedColumns={displayedColumns}
       headerText={headerText}
       rowFilterObj={"rowFilterObj" in mode ? mode.rowFilterObj : undefined}
     >
-      <form
+      <div
         data-command={isLoading ? undefined : ("SmartForm" satisfies Command)}
         data-key={tableName}
         aria-disabled={isLoading}
@@ -286,7 +286,7 @@ const SmartFormWithNoError = ({
         )}
 
         <SmartFormFooterButtons {...props} {...state} {...actionsState} />
-      </form>
+      </div>
     </SmartFormPopupWrapper>
   );
 };

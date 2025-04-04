@@ -96,6 +96,7 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
             values: {
               type: {
                 icon: { type: "string", optional: true },
+                label: { type: "string", optional: true },
                 card: {
                   optional: true,
                   type: {

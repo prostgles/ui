@@ -10,23 +10,22 @@ import {
   mdiMicrosoftEdge,
   mdiMicrosoftWindows,
 } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import type { DivProps } from "../../components/Flex";
 import { classOverride, FlexRow } from "../../components/Flex";
+import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
 import PopupMenu from "../../components/PopupMenu";
 import SmartCardList from "../../dashboard/SmartCard/SmartCardList";
 import {
-  StyledInterval,
   getPGIntervalAsText,
+  StyledInterval,
 } from "../../dashboard/W_SQL/customRenderers";
-import { Icon } from "../../components/Icon/Icon";
 import { t } from "../../i18n/i18nUtils";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { dbsConnection } from "../../../../commonTypes/dbsConnection";
 
 type SessionsProps = Pick<Prgl, "dbs" | "dbsTables" | "user" | "dbsMethods"> & {
   displayType: "web_session" | "api_token";
@@ -63,7 +62,6 @@ export const Sessions = ({
       title={tokenMode ? undefined : ({ count }) => `${sessionLabel} ${count}`}
       db={dbs as DBHandlerClient}
       methods={dbsMethods}
-      connection={dbsConnection}
       tableName="sessions"
       tables={dbsTables}
       filter={getActiveTokensFilter(displayType, user.id) as AnyObject}

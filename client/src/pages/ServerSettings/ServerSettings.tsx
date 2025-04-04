@@ -5,6 +5,7 @@ import {
   mdiLaptop,
   mdiSecurity,
 } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useState } from "react";
 import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
@@ -22,8 +23,6 @@ import { SmartForm } from "../../dashboard/SmartForm/SmartForm";
 import { t } from "../../i18n/i18nUtils";
 import { AuthProviderSetup } from "./AuthProvidersSetup";
 import { MCPServers } from "./MCPServers/MCPServers";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { dbsConnection } from "../../../../commonTypes/dbsConnection";
 
 export type ServerSettingsProps = Pick<
   Prgl,
@@ -96,7 +95,6 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                       label=""
                       db={dbs as DBHandlerClient}
                       methods={dbsMethods}
-                      connection={dbsConnection}
                       tableName="global_settings"
                       contentClassname="px-p25  "
                       columns={
@@ -199,7 +197,6 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                       db={dbs as DBHandlerClient}
                       methods={dbsMethods}
                       tableName="credentials"
-                      connection={dbsConnection}
                       tables={dbsTables}
                       filter={{}}
                       realtime={true}

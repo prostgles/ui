@@ -12,11 +12,9 @@ import { sliceText } from "../../../../../commonTypes/utils";
 import Popup from "../../../components/Popup/Popup";
 import { FlexRow } from "../../../components/Flex";
 import { SvgIcon } from "../../../components/SvgIcon";
+import type { SmartFormState } from "../useSmartForm";
 
-type P = Pick<
-  SmartFormProps,
-  "onPrevOrNext" | "prevNext" | "connection" | "tableName" | "asPopup"
-> & {
+type P = Pick<SmartFormProps, "onPrevOrNext" | "prevNext" | "asPopup"> & {
   rowFilterObj: AnyObject | undefined;
   displayedColumns: Pick<
     ValidatedColumnInfo,
@@ -26,19 +24,19 @@ type P = Pick<
   children: React.ReactNode;
   maxWidth: string;
   onClose: () => void;
+  table: SmartFormState["table"];
 };
 export const SmartFormPopupWrapper = ({
   onPrevOrNext,
   prevNext,
   rowFilterObj,
   displayedColumns,
-  connection,
   headerText,
   children,
   maxWidth,
-  tableName,
   onClose,
   asPopup,
+  table,
 }: P) => {
   const prevNextClass = "smartformprevnext";
 
@@ -121,12 +119,7 @@ export const SmartFormPopupWrapper = ({
     <Popup
       title={
         <FlexRow className="gap-p25">
-          {connection?.table_options?.[tableName]?.icon && (
-            <SvgIcon
-              size={34}
-              icon={connection!.table_options![tableName]!.icon!}
-            />
-          )}
+          {table.icon && <SvgIcon size={34} icon={table.icon} />}
           {headerText}
         </FlexRow>
       }

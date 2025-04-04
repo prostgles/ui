@@ -1,7 +1,7 @@
 import { mdiInformationOutline, mdiPlus } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useCallback, useEffect, useRef } from "react";
-import type { Theme } from "../../App";
 import Btn from "../../components/Btn";
 import { Icon } from "../../components/Icon/Icon";
 import PopupMenu from "../../components/PopupMenu";
@@ -11,8 +11,6 @@ import type { DBS, DBSMethods } from "../Dashboard/DBS";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import { getMonaco } from "../SQLEditor/SQLEditor";
 import { SmartForm } from "../SmartForm/SmartForm";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { dbsConnection } from "../../../../commonTypes/dbsConnection";
 
 type P = {
   pickFirst?: boolean;
@@ -84,7 +82,6 @@ export function CredentialSelector({
             methods={dbsMethods}
             db={dbs as DBHandlerClient}
             label="Add Cloud credentials"
-            connection={dbsConnection}
             tableName="credentials"
             tables={dbsTables}
             showJoinedTables={false}

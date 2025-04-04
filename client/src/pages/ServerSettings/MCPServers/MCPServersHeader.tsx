@@ -1,4 +1,5 @@
 import { mdiFilter, mdiMagnify, mdiPlus } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import Btn from "../../../components/Btn";
@@ -7,8 +8,6 @@ import PopupMenu from "../../../components/PopupMenu";
 import Select from "../../../components/Select/Select";
 import { SmartForm } from "../../../dashboard/SmartForm/SmartForm";
 import type { ServerSettingsProps } from "../ServerSettings";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { dbsConnection } from "../../../../../commonTypes/dbsConnection";
 
 export const MCPServersHeader = ({
   dbsMethods,
@@ -40,7 +39,6 @@ export const MCPServersHeader = ({
             label=""
             db={dbs as DBHandlerClient}
             methods={dbsMethods}
-            connection={dbsConnection}
             columnFilter={(c) =>
               [
                 "name",

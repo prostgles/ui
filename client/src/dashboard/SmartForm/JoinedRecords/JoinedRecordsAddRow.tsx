@@ -22,7 +22,6 @@ export const JoinedRecordsAddRow = (props: P) => {
     rowFilter,
     newRowData,
     row,
-    connection,
   } = props;
 
   const [insert, setInsert] = useState<{
@@ -159,7 +158,6 @@ export const JoinedRecordsAddRow = (props: P) => {
           methods={methods}
           tables={tables}
           asPopup={true}
-          connection={connection}
           onClose={onClose}
           {...insert.smartFormProps}
         />

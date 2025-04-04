@@ -339,7 +339,9 @@ export const ColumnMenu = (props: P) => {
       style: column.nested ? { color: "var(--active)" } : {},
       leftIconPath: mdiLinkPlus,
       disabledText:
-        !table?.joins.length ? "No foreign keys to/from this table" : undefined,
+        !table?.joinsV2.length ?
+          "No foreign keys to/from this table"
+        : undefined,
       label: `${column.nested ? "Edit" : "Add"} Linked Columns`,
       content: (
         <LinkedColumn

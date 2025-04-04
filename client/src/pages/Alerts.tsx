@@ -1,17 +1,16 @@
 import { mdiBellBadgeOutline, mdiDelete } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
+import { NavLink } from "react-router-dom";
+import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import { API_PATH_SUFFIXES } from "../../../commonTypes/utils";
 import type { Prgl } from "../App";
 import Btn from "../components/Btn";
+import { FlexCol, FlexRow } from "../components/Flex";
 import { InfoRow } from "../components/InfoRow";
 import PopupMenu from "../components/PopupMenu";
 import SmartCardList from "../dashboard/SmartCard/SmartCardList";
-import { FlexCol, FlexRow } from "../components/Flex";
 import { StyledInterval } from "../dashboard/W_SQL/customRenderers";
-import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import { NavLink } from "react-router-dom";
-import { API_PATH_SUFFIXES } from "../../../commonTypes/utils";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { dbsConnection } from "../../../commonTypes/dbsConnection";
 
 export const Alerts = (prgl: Prgl) => {
   const { connectionId, dbs } = prgl;
@@ -53,7 +52,6 @@ export const Alerts = (prgl: Prgl) => {
           methods={prgl.dbsMethods}
           tables={prgl.dbsTables}
           tableName={"alerts"}
-          connection={dbsConnection}
           realtime={true}
           filter={{
             $existsJoined: {

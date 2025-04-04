@@ -46,7 +46,7 @@ type SmartFormFieldValue =
 
 export type SmartFormFieldProps = Pick<
   SmartFormProps,
-  "connection" | "db" | "methods" | "tableName" | "jsonbSchemaWithControls"
+  "db" | "methods" | "tableName" | "jsonbSchemaWithControls"
 > & {
   maxWidth?: string;
   value: SmartFormFieldValue | undefined;

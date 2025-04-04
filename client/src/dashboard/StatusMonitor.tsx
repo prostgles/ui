@@ -5,6 +5,7 @@ import {
   mdiFilter,
   mdiStopCircleOutline,
 } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import React, { useEffect, useState } from "react";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
@@ -30,8 +31,6 @@ import type { SmartCardListProps } from "./SmartCard/SmartCardList";
 import SmartCardList from "./SmartCard/SmartCardList";
 import { StatusMonitorConnections } from "./StatusMonitor/StatusMonitorConnections";
 import { StyledInterval } from "./W_SQL/customRenderers";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { dbsConnection } from "../../../commonTypes/dbsConnection";
 
 export type StatusMonitorProps = Pick<
   PrglState,
@@ -222,7 +221,6 @@ export const StatusMonitor = ({
         methods={dbsMethods}
         tables={dbsTables}
         tableName="stats"
-        connection={dbsConnection}
         showEdit={false}
         showTopBar={{ sort: true }}
         orderBy={{ cpu: false }}

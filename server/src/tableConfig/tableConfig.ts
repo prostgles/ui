@@ -886,7 +886,11 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       user_id: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,
       /*   ON DELETE SET NULL is used to ensure we don't delete saved SQL queries */
       workspace_id: `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,
-      type: `TEXT CHECK(type IN ('map', 'sql', 'table', 'timechart', 'card', 'method'))`,
+      // type: `TEXT NOT NULL CHECK(type IN ('map', 'sql', 'table', 'timechart', 'card', 'method'))`,
+      type: {
+        nullable: true,
+        enum: ["map", "sql", "table", "timechart", "card", "method"],
+      },
       table_name: `TEXT`,
       method_name: `TEXT`,
       table_oid: `INTEGER`,

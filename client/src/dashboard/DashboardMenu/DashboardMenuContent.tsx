@@ -50,9 +50,7 @@ export const DashboardMenuContent = (props: P) => {
     methods,
     theme,
     user,
-    connection,
     dbsMethods: { reloadSchema },
-    connectionId,
   } = prgl;
   const closedQueries = queries.filter((q) => q.closed);
 
@@ -227,7 +225,6 @@ export const DashboardMenuContent = (props: P) => {
             </FlexRow>
           )}
           items={tablesWithInfo.map((t, i) => {
-            const icon = connection.table_options?.[t.name]?.icon;
             return {
               contentLeft: (
                 <div
@@ -236,8 +233,8 @@ export const DashboardMenuContent = (props: P) => {
                     dataCommand("dashboard.menu.fileTable")
                   : {})}
                 >
-                  {icon ?
-                    <SvgIcon icon={icon} />
+                  {t.icon ?
+                    <SvgIcon icon={t.icon} />
                   : <Icon
                       path={
                         t.info.isFileTable ? mdiFile
@@ -251,14 +248,14 @@ export const DashboardMenuContent = (props: P) => {
                 </div>
               ),
               key: t.name,
-              label: t.name,
+              label: t.label,
               contentRight: t.endText.length > 0 && (
                 <span title={t.endTitle} className="text-2 ml-auto">
                   {t.endText}
                 </span>
               ),
               onPress: () => {
-                loadTable({ type: "table", table: t.name });
+                loadTable({ type: "table", table: t.name, name: t.label });
                 onClose?.();
               },
             };

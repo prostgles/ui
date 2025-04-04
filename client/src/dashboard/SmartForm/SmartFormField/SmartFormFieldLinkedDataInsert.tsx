@@ -24,7 +24,6 @@ type P = Pick<
   | "jsonbSchemaWithControls"
   | "onSuccess"
   | "rowFilter"
-  | "connection"
 > &
   SmartFormFieldLinkedDataInsertState & {
     ftable: string;
@@ -50,7 +49,6 @@ export const SmartFormFieldLinkedDataInsert = ({
   newValue,
   rowFilter,
   newRowDataHandler,
-  connection,
 }: P) => {
   const columnFile = column.file;
   const fileInsert = useMemo(() => {
@@ -170,7 +168,6 @@ export const SmartFormFieldLinkedDataInsert = ({
           key="referenced-insert"
           asPopup={true}
           db={db}
-          connection={connection}
           tables={tables}
           methods={methods}
           hideNullBtn={hideNullBtn}

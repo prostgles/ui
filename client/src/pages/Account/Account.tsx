@@ -67,7 +67,6 @@ export const Account = (props: AccountProps) => {
           db={dbs as DBHandlerClient}
           methods={dbsMethods}
           tableName="users"
-          connection={dbsConnection}
           tables={dbsTables}
           rowFilter={[{ fieldName: "id", value: user.id }]}
           confirmUpdates={true}

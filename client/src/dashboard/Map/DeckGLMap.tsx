@@ -146,7 +146,7 @@ export const MapExtentBehavior = [
 
 export type MapExtentBehavior = (typeof MapExtentBehavior)[number]["key"];
 
-export type DecKGLMapProps = Pick<SmartFormProps, "connection"> & {
+export type DecKGLMapProps = {
   basemapOpacity: number;
   basemapDesaturate: number;
   dataOpacity: number;

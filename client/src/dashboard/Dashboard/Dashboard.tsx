@@ -47,6 +47,7 @@ import { cloneWorkspace } from "./cloneWorkspace";
 import { getWorkspacePath } from "../WorkspaceMenu/WorkspaceMenu";
 import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
 import type { DBS } from "./DBS";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -118,7 +119,12 @@ export class _Dashboard extends RTComp<
 
   loadingSchema: DashboardState["suggestions"];
   loadSchema = async (force = false): Promise<void> => {
-    const { db, connectionId, tables: dbSchemaTables } = this.props.prgl;
+    const {
+      db,
+      connectionId,
+      tables: dbSchemaTables,
+      connection,
+    } = this.props.prgl;
     const workspace = this.d.workspace;
     const dbKey =
       force ? `${FORCED_REFRESH_PREFIX}${Date.now()}` : this.props.prgl.dbKey;
@@ -135,7 +141,11 @@ export class _Dashboard extends RTComp<
         onRenew: () => this.loadSchema(true),
       };
 
-      const { tables = [] } = getTables(dbSchemaTables, db);
+      const { tables = [] } = getTables(
+        dbSchemaTables,
+        connection.table_options,
+        db,
+      );
 
       const ns: Pick<
         DashboardState,
@@ -628,6 +638,7 @@ export type CommonWindowProps<T extends ChartType = ChartType> = Pick<
 
 export const getTables = (
   schemaTables: DBSchemaTable[],
+  connectionTableOptions: DBSSchema["connections"]["table_options"],
   db: DBHandlerClient,
 ): { tables: DBSchemaTablesWJoins } => {
   const tables = schemaTables.map((t) => {
@@ -636,6 +647,8 @@ export const getTables = (
     // const shouldGetCount = countRequestedAndAllowed && tableHasColumnsAndWillNotError;
     // const count = (shouldGetCount? await db[t.name]?.count?.() ?? "" : "").toString();
     return {
+      label: connectionTableOptions?.[t.name]?.label ?? t.name,
+      icon: connectionTableOptions?.[t.name]?.icon,
       ...t,
       ...getJoinedTables(schemaTables, t.name, db),
     };

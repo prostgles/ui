@@ -31,57 +31,56 @@ import { getSelectForFieldConfigs } from "./getSelectForFieldConfigs";
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
   "db" | "tables" | "methods"
-> &
-  Pick<SmartFormProps, "connection"> & {
-    tableName:
-      | string
-      | {
-          sqlQuery: string;
-          dataAge?: string | number;
-          args?: Record<string, any>;
-        };
-    columns?: ValidatedColumnInfo[];
+> & {
+  tableName:
+    | string
+    | {
+        sqlQuery: string;
+        dataAge?: string | number;
+        args?: Record<string, any>;
+      };
+  columns?: ValidatedColumnInfo[];
 
-    className?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  variant?: "row" | "col" | "row-wrap";
+  disableVariantToggle?: boolean;
+
+  hideColumns?: string[];
+
+  /**
+   * Used in:
+   * Changing how table columns are displayed
+   * Displaying additional custom computed columns
+   */
+  fieldConfigs?: FieldConfig<T>[] | string[];
+
+  title?: React.ReactNode | ((args: { count: number }) => React.ReactNode);
+  getRowFooter?: (row: AnyObject | any) => React.ReactNode;
+  footer?: React.ReactNode;
+
+  /**
+   * If true then will not displaye fields with null values
+   * */
+  excludeNulls?: boolean;
+
+  tables: CommonWindowProps["tables"];
+  popupFixedStyle?: React.CSSProperties;
+  noDataComponent?: React.ReactNode;
+  /**
+   * If no data AND set to "hide-all" will return only noDataComponent (or nothing)
+   * */
+  noDataComponentMode?: "hide-all";
+
+  btnColor?: "gray";
+
+  showTopBar?: boolean | { insert?: boolean; sort?: boolean };
+  rowProps?: {
     style?: React.CSSProperties;
-    variant?: "row" | "col" | "row-wrap";
-    disableVariantToggle?: boolean;
-
-    hideColumns?: string[];
-
-    /**
-     * Used in:
-     * Changing how table columns are displayed
-     * Displaying additional custom computed columns
-     */
-    fieldConfigs?: FieldConfig<T>[] | string[];
-
-    title?: React.ReactNode | ((args: { count: number }) => React.ReactNode);
-    getRowFooter?: (row: AnyObject | any) => React.ReactNode;
-    footer?: React.ReactNode;
-
-    /**
-     * If true then will not displaye fields with null values
-     * */
-    excludeNulls?: boolean;
-
-    tables: CommonWindowProps["tables"];
-    popupFixedStyle?: React.CSSProperties;
-    noDataComponent?: React.ReactNode;
-    /**
-     * If no data AND set to "hide-all" will return only noDataComponent (or nothing)
-     * */
-    noDataComponentMode?: "hide-all";
-
-    btnColor?: "gray";
-
-    showTopBar?: boolean | { insert?: boolean; sort?: boolean };
-    rowProps?: {
-      style?: React.CSSProperties;
-      className?: string;
-    };
-    onSuccess?: SmartFormProps["onSuccess"];
-  } & (
+    className?: string;
+  };
+  onSuccess?: SmartFormProps["onSuccess"];
+} & (
     | {
         /**
          * Show top N records
@@ -278,7 +277,6 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<
       title,
       noDataComponent,
       onSuccess,
-      connection,
     } = this.props;
 
     const { columns, loading, items, error, loaded } = this.state;
@@ -329,7 +327,6 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<
               this.dataSignature = "z";
               this.forceUpdate();
             }}
-            connection={connection}
             footer={getRowFooter}
             smartFormProps={{ onSuccess }}
             showViewEditBtn={
@@ -418,7 +415,6 @@ export default class SmartCardList<T extends AnyObject> extends RTComp<
                   tables={tables}
                   methods={methods}
                   tableName={tableName}
-                  connection={this.props.connection}
                   // onSuccess={showInsertUpdateDelete.onSuccess}
                 />
               )}

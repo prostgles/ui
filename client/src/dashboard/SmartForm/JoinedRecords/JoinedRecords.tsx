@@ -19,7 +19,7 @@ import { JoinedRecordsSection } from "./JoinedRecordsSection";
 import { useJoinedRecordsSections } from "./useJoinedRecordsSections";
 
 export type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods"> &
-  Pick<SmartFormProps, "onSuccess" | "parentForm" | "connection"> & {
+  Pick<SmartFormProps, "onSuccess" | "parentForm"> & {
     className?: string;
     style?: React.CSSProperties;
     tableName: string;
@@ -63,7 +63,6 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
     style,
     className = "",
     modeType: action,
-    connection,
     activeTabKey,
     onTabChange,
     variant,
@@ -98,8 +97,8 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
     >
       {variant === "inline" ?
         sections.map((section) => {
-          const { label, path, count, tableName } = section;
-          const icon = connection?.table_options?.[tableName]?.icon;
+          const { label, path, count, tableName, table } = section;
+          const icon = table.icon;
           return (
             <Section
               key={path.join(".")}
@@ -134,7 +133,8 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
           }}
           items={Object.fromEntries(
             sections.map((section) => {
-              const { label, path, count, tableName } = section;
+              const { label, path, count, table } = section;
+              const icon = table.icon;
               const countNode = (
                 <span
                   className="text-1p5 font-18"
@@ -144,7 +144,6 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
                 </span>
               );
               const showCountNode = !(isInsert && !count);
-              const icon = connection?.table_options?.[tableName]?.icon;
               return [
                 path.join("."),
                 {
@@ -176,7 +175,6 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
         <SmartTable
           db={db}
           methods={methods}
-          connection={connection}
           tableName={quickView.tableName}
           tables={tables}
           filter={quickView.detailedJoinFilter}

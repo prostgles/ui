@@ -6,15 +6,19 @@ import {
 import { useEffect, useState } from "react";
 import type { Socket } from "socket.io-client";
 import io from "socket.io-client";
-import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
-import type { DBSSchema } from "../../commonTypes/publishUtils";
-import { API_PATH_SUFFIXES, SPOOF_TEST_VALUE } from "../../commonTypes/utils";
-import type { AppState } from "./App";
-import { pageReload } from "./components/Loading";
-import type { DBS } from "./dashboard/Dashboard/DBS";
-import { getTables } from "./dashboard/Dashboard/Dashboard";
-import { isPlaywrightTest } from "./i18n/i18nUtils";
-import { playwrightTestLogs } from "./utils";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
+import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import {
+  API_PATH_SUFFIXES,
+  SPOOF_TEST_VALUE,
+} from "../../../commonTypes/utils";
+import type { AppState } from "../App";
+import { pageReload } from "../components/Loading";
+import type { DBS } from "../dashboard/Dashboard/DBS";
+import { getTables } from "../dashboard/Dashboard/Dashboard";
+import { isPlaywrightTest } from "../i18n/i18nUtils";
+import { playwrightTestLogs } from "../utils";
+import { dbsConnectionOptions } from "./dbsConnectionOptions";
 
 export const useDBSConnection = (
   onDisconnect: (isDisconnected: boolean) => void,
@@ -125,6 +129,7 @@ export const useDBSConnection = (
             const uType = auth.user?.type;
             const { tables: dbsTables = [] } = getTables(
               tableSchema ?? [],
+              dbsConnectionOptions.table_options,
               dbs as DBHandlerClient,
             );
 

@@ -1,19 +1,15 @@
 import { mdiCogOutline } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo, useState } from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol } from "../../components/Flex";
 import Popup from "../../components/Popup/Popup";
-import { SmartForm } from "../SmartForm/SmartForm";
 import { t } from "../../i18n/i18nUtils";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { dbsConnection } from "../../../../commonTypes/dbsConnection";
+import { SmartForm } from "../SmartForm/SmartForm";
 
-export type LLMChatOptionsProps = Pick<
-  Prgl,
-  "dbs" | "dbsTables" | "connection"
-> & {
+export type LLMChatOptionsProps = Pick<Prgl, "dbs" | "dbsTables"> & {
   prompts: DBSSchema["llm_prompts"][] | undefined;
   activeChat: DBSSchema["llm_chats"] | undefined;
   credentials: DBSSchema["llm_credentials"][] | undefined;
@@ -67,7 +63,6 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
                 tableName="llm_chats"
                 contentClassname="p-1 pt-1"
                 {...formProps}
-                connection={dbsConnection}
                 jsonbSchemaWithControls={true}
                 db={dbs as DBHandlerClient}
                 tables={dbsTables}

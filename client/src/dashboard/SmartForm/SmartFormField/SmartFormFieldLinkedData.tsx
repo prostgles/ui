@@ -22,7 +22,6 @@ export type SmartFormFieldLinkedDataProps = Pick<
   | "tableName"
   | "rowFilter"
   | "jsonbSchemaWithControls"
-  | "connection"
 > &
   Pick<SmartFormFieldProps, "newValue"> & {
     column: ValidatedColumnInfo;
@@ -38,15 +37,13 @@ export const SmartFormFieldLinkedData = (
     readOnly: boolean;
   },
 ) => {
-  const { row, state, db, tables, methods, readOnly, column, connection } =
-    props;
+  const { row, state, db, tables, methods, readOnly, column } = props;
 
   if (!state) return null;
   return (
     <div className="SmartFormFieldOptions flex-row">
       {state.showSearchState && (
         <SmartFormFieldLinkedDataSearch
-          connection={connection}
           tables={tables}
           methods={methods}
           db={db}

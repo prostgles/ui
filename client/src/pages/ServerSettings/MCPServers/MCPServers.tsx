@@ -1,4 +1,5 @@
 import { mdiReload } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import React from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
@@ -14,8 +15,6 @@ import type { ServerSettingsProps } from "../ServerSettings";
 import { MCPServerConfig, MCPServerConfigButton } from "./MCPServerConfig";
 import { MCPServersHeader } from "./MCPServersHeader";
 import { MCPServersInstall } from "./MCPServersInstall";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { dbsConnection } from "../../../../../commonTypes/dbsConnection";
 
 export const MCPServers = (props: ServerSettingsProps) => {
   const [serverConfig, setServerConfig] = React.useState<{
@@ -78,7 +77,6 @@ export const MCPServers = (props: ServerSettingsProps) => {
           {...(mcp_servers_disabled && {
             className: "no-interaction",
           })}
-          connection={dbsConnection}
           tableName="mcp_servers"
           tables={dbsTables}
           filter={

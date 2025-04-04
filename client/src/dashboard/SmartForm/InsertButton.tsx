@@ -12,7 +12,7 @@ type InsertButtonProps = {
   buttonProps?: BtnProps<void>;
 } & Pick<
   SmartFormProps,
-  "db" | "tables" | "methods" | "tableName" | "onSuccess" | "connection"
+  "db" | "tables" | "methods" | "tableName" | "onSuccess"
 >;
 
 export const InsertButton = ({
@@ -22,7 +22,6 @@ export const InsertButton = ({
   methods,
   tableName,
   onSuccess,
-  connection,
 }: InsertButtonProps) => {
   const [open, setOpen] = useState(false);
   const [defaultData, setDefaultData] = useState<AnyObject>();
@@ -68,7 +67,6 @@ export const InsertButton = ({
           methods={methods}
           tableName={tableName}
           onSuccess={onSuccess}
-          connection={connection}
           onClose={() => setOpen(false)}
         />
       )}

@@ -45,7 +45,7 @@ import { Login } from "./pages/Login/Login";
 import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { ThemeSelector } from "./theme/ThemeSelector";
 import { useAppTheme } from "./theme/useAppTheme";
-import { useDBSConnection } from "./useDBSConnection";
+import { useDBSConnection } from "./useDBSConnection/useDBSConnection";
 import { isDefined } from "./utils";
 import { API_PATH_SUFFIXES } from "../../commonTypes/utils";
 
