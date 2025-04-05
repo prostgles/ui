@@ -1,6 +1,9 @@
-import type { MethodHandler } from "prostgles-client/dist/prostgles";
-import { usePromise } from "prostgles-client/dist/react-hooks";
-import { useRef } from "react";
+import type {
+  DBHandlerClient,
+  MethodHandler,
+} from "prostgles-client/dist/prostgles";
+import { useMemoDeep, usePromise } from "prostgles-client/dist/react-hooks";
+import { useMemo, useRef } from "react";
 import {
   getLLMMessageToolUse,
   type LLMMessage,
@@ -8,35 +11,99 @@ import {
 import {
   getMCPFullToolName,
   getMCPToolNameParts,
+  PROSTGLES_MCP_TOOLS,
 } from "../../../../../commonTypes/mcp";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import type { DBSMethods } from "../../Dashboard/DBS";
 import type { AskLLMToolsProps } from "./AskLLMTools";
+import { isDefined } from "../../../utils";
+
+export type ApproveRequest =
+  | {
+      name: string;
+      type: "mcp";
+      auto_approve: boolean;
+      tool: Required<DBSSchema["mcp_server_tools"]>;
+    }
+  | {
+      name: string;
+      type: "function";
+      auto_approve: boolean;
+      tool: Required<DBSSchema["published_methods"]>;
+    }
+  | {
+      name: string;
+      type: "db";
+      auto_approve: boolean;
+      tool: (typeof PROSTGLES_MCP_TOOLS)[number];
+    };
 
 /**
  * https://docs.anthropic.com/en/docs/build-with-claude/tool-use
  */
 export const useLLMTools = ({
   dbs,
-  activeChatId,
+  activeChat,
   messages,
   methods,
   sendQuery,
   callMCPServerTool,
   requestApproval,
+  db,
 }: AskLLMToolsProps & {
   requestApproval: (
-    tool: DBSSchema["mcp_server_tools"],
+    tool: ApproveRequest,
     input: any,
   ) => Promise<{ approved: boolean }>;
 }) => {
+  const activeChatId = activeChat.id;
   const fetchingForMessageId = useRef<string>();
-  const { data: allowedTools } = dbs.llm_chats_allowed_mcp_tools.useSubscribe(
-    {
-      chat_id: activeChatId,
-    },
-    { select: { "*": 1, mcp_server_tools: "*" } },
+  const chatDBPermissions = useMemoDeep(
+    () => activeChat.db_data_permissions,
+    [activeChat.db_data_permissions],
   );
+  const { data: allowedMCPTools } =
+    dbs.llm_chats_allowed_mcp_tools.useSubscribe(
+      {
+        chat_id: activeChatId,
+      },
+      { select: { "*": 1, mcp_server_tools: "*" } },
+    );
+  const { data: allowedFunctions } =
+    dbs.llm_chats_allowed_functions.useSubscribe(
+      {
+        chat_id: activeChatId,
+      },
+      { select: { "*": 1, published_methods: "*" } },
+    );
+
+  const allowedTools = useMemo(() => {
+    if (!allowedMCPTools || !allowedFunctions) return [];
+    const tools: ApproveRequest[] = [
+      ...allowedMCPTools.map((tool) => ({
+        tool,
+        name: getMCPFullToolName(tool.mcp_server_tools[0]),
+        auto_approve: !!tool.auto_approve,
+        type: "mcp" as const,
+      })),
+      ...allowedFunctions.map((tool) => ({
+        tool,
+        name: tool.published_methods[0].name,
+        auto_approve: !!tool.auto_approve,
+        type: "function" as const,
+      })),
+      chatDBPermissions?.type === "Run SQL" ?
+        {
+          tool: PROSTGLES_MCP_TOOLS[0],
+          name: PROSTGLES_MCP_TOOLS[0].name,
+          auto_approve: !!chatDBPermissions.auto_approve,
+          type: "sql" as const,
+        }
+      : undefined,
+    ].filter(isDefined);
+    return tools;
+  }, [allowedMCPTools, allowedFunctions, chatDBPermissions]);
+
   usePromise(async () => {
     const lastMessage = messages.at(-1);
     if (!isAssistantMessageRequestingToolUse(lastMessage)) return;
@@ -59,26 +126,22 @@ export const useLLMTools = ({
           } satisfies LLMMessage["message"][number];
         };
 
-        const isAllowedWithoutApproval = allowedTools?.some((tool) => {
-          return (
-            tool.auto_approve &&
-            tu.name === getMCPFullToolName(tool.mcp_server_tools[0])
-          );
+        const matchedTool = allowedTools.find((tool) => {
+          return tu.name === tool.name;
         });
 
+        if (!matchedTool) {
+          return sendError(`Tool ${tu.name} was not found`);
+        }
+
+        const isAllowedWithoutApproval = matchedTool.auto_approve;
         if (!isAllowedWithoutApproval) {
           const nameParts = getMCPToolNameParts(tu.name);
           if (!nameParts) {
-            return sendError("Tool not found");
+            return sendError("Invalid tool name");
           }
-          const tool = await dbs.mcp_server_tools.findOne({
-            name: nameParts.toolName,
-            server_name: nameParts.serverName,
-          });
-          if (!tool) {
-            return sendError("Tool not found");
-          }
-          const { approved } = await requestApproval(tool, tu.input);
+
+          const { approved } = await requestApproval(matchedTool, tu.input);
 
           if (!approved) {
             return sendError("Tool use not approved by user");
@@ -87,6 +150,7 @@ export const useLLMTools = ({
 
         const toolResult = await getToolUseResult(
           lastMessage.chat_id,
+          db,
           methods,
           callMCPServerTool,
           tu.name,
@@ -108,7 +172,7 @@ export const useLLMTools = ({
     callMCPServerTool,
     allowedTools,
     requestApproval,
-    dbs,
+    db,
   ]);
 };
 
@@ -131,8 +195,12 @@ const reachedMaximumNumberOfConsecutiveToolRequests = (
   return false;
 };
 
+/**
+ * Get tool result without checking if the tool is allowed for the chat
+ */
 const getToolUseResult = async (
   chatId: number,
+  db: DBHandlerClient,
   methods: MethodHandler,
   callMCPServerTool: DBSMethods["callMCPServerTool"],
   funcName: string,
@@ -144,58 +212,80 @@ const getToolUseResult = async (
   >["content"];
   is_error?: true;
 }> => {
-  const method = methods[funcName];
-  const parseResult = (func: Promise<any>) => {
-    return func
+  const parseResult = (func: () => Promise<any>) => {
+    return func()
       .then((content: string) => ({ content }))
       .catch((e) => ({
         content: JSON.stringify(e),
         is_error: true as const,
       }));
   };
-  if (!method) {
-    const mcpToolName = getMCPToolNameParts(funcName);
-    if (mcpToolName) {
-      const { serverName, toolName } = mcpToolName;
-      if (!callMCPServerTool) {
-        return {
-          content: "callMCPServerTool not allowed",
-          is_error: true,
-        };
-      }
-      if (!serverName || !toolName) {
-        return {
-          content: "Invalid serverName or toolName",
-          is_error: true,
-        };
+
+  const method = methods[funcName];
+  if (method) {
+    const methodFunc = typeof method === "function" ? method : method.run;
+    const result = parseResult(() => methodFunc(input));
+    return result;
+  }
+
+  const dbTool = PROSTGLES_MCP_TOOLS.find((t) => {
+    return t.name === funcName;
+  });
+  if (dbTool) {
+    return parseResult(async () => {
+      const sql = db.sql;
+      if (!sql) throw new Error("Executing SQL not allowed to this user");
+      if (typeof input.sql !== "string") {
+        throw new Error("input.sql must be a string");
       }
 
-      const { content, isError } = await callMCPServerTool(
-        chatId,
-        serverName,
-        toolName,
-        input,
-      ).catch((e) => ({
-        content: e instanceof Error ? e.message : JSON.stringify(e),
-        isError: true,
-      }));
+      const { rows } = await sql(
+        input.sql,
+        {},
+        { returnType: "default-with-rollback" },
+      );
+      return JSON.stringify(rows);
+    });
+  }
 
+  const mcpToolName = getMCPToolNameParts(funcName);
+  if (mcpToolName) {
+    const { serverName, toolName } = mcpToolName;
+    if (!callMCPServerTool) {
       return {
-        content,
-        ...(isError && {
-          is_error: isError,
-        }),
+        content: "callMCPServerTool not allowed",
+        is_error: true,
+      };
+    }
+    if (!serverName || !toolName) {
+      return {
+        content: "Invalid serverName or toolName",
+        is_error: true,
       };
     }
 
+    const { content, isError } = await callMCPServerTool(
+      chatId,
+      serverName,
+      toolName,
+      input,
+    ).catch((e) => ({
+      content: e instanceof Error ? e.message : JSON.stringify(e),
+      isError: true,
+    }));
+
     return {
-      content: "Method not found or not allowed",
-      is_error: true,
+      content,
+      ...(isError && {
+        is_error: isError,
+      }),
     };
   }
-  const methodFunc = typeof method === "function" ? method : method.run;
-  const result = parseResult(methodFunc(input));
-  return result;
+
+  return {
+    content: "Method not found or not allowed",
+    is_error: true,
+  };
 };
 
 const isAssistantMessageRequestingToolUse = (

@@ -83,6 +83,8 @@ export function Section(props: SectionProps) {
               position: "sticky",
               top: 0,
               zIndex: 1,
+              borderBottom: "unset",
+              borderTop: "1px solid var(--b-color)",
               marginBottom: ".5em",
             }
           )

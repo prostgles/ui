@@ -3,7 +3,7 @@ export type MCPServerInfo = Omit<DBSSchemaForInsert["mcp_servers"], "id" | "cwd"
     mcp_server_tools?: Omit<DBSSchemaForInsert["mcp_server_tools"], "id" | "server_name">[];
 };
 export declare const DefaultMCPServers: Record<string, MCPServerInfo>;
-export declare const getMCPFullToolName: ({ server_name, name, }: Pick<DBSSchema["mcp_server_tools"], "server_name" | "name">) => string;
+export declare const getMCPFullToolName: ({ server_name, name, }: Pick<DBSSchema["mcp_server_tools"], "server_name" | "name">) => `${string}_-_${string}`;
 export declare const getMCPToolNameParts: (fullName: string) => {
     serverName: string;
     toolName: string;
@@ -28,3 +28,18 @@ export type McpToolCallResponse = {
     }>;
     isError?: boolean;
 };
+export declare const PROSTGLES_MCP_TOOLS: readonly [{
+    readonly name: `${string}_-_${string}`;
+    readonly description: "Run SQL query";
+    readonly inputSchema: {
+        readonly type: "object";
+        readonly properties: {
+            readonly sql: {
+                readonly type: "string";
+                readonly description: "SQL query to execute";
+            };
+        };
+        readonly required: readonly ["sql"];
+        readonly additionalProperties: false;
+    };
+}];

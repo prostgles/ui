@@ -1,21 +1,50 @@
-import { getJSONBSchemaAsJSONSchema, type JSONB } from "prostgles-types";
+import {
+  getJSONBSchemaAsJSONSchema,
+  isDefined,
+  type JSONB,
+} from "prostgles-types";
 import type { DBS } from "../..";
-import { getMCPFullToolName } from "../../../../commonTypes/mcp";
+import {
+  getMCPFullToolName,
+  PROSTGLES_MCP_TOOLS,
+} from "../../../../commonTypes/mcp";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 
 type Args = {
-  chatId: number;
+  chat: DBSSchema["llm_chats"];
   dbs: DBS;
   provider: string;
   connectionId: string;
 };
+
+type MCPToolSchema = {
+  name: string;
+  description: string;
+  input_schema: ReturnType<typeof getJSONBSchemaAsJSONSchema>;
+};
+
 export const getLLMTools = async ({
   dbs,
   provider,
-  chatId,
+  chat,
   connectionId,
-}: Args) => {
+}: Args): Promise<undefined | MCPToolSchema[]> => {
   const canUseTools = provider === "Prostgles" || provider === "Anthropic";
   if (!canUseTools) return undefined;
+  const { id: chatId } = chat;
+
+  const dbTool: MCPToolSchema | undefined =
+    chat.db_data_permissions?.type === "Run SQL" ?
+      {
+        ...PROSTGLES_MCP_TOOLS[0],
+        input_schema: getJSONBSchemaAsJSONSchema("prostgles", "execute_sql", {
+          type: {
+            sql: "string",
+          },
+        }),
+      }
+    : undefined;
+
   const published_methods = await dbs.published_methods.find({
     connection_id: connectionId,
     $existsJoined: {
@@ -68,7 +97,20 @@ export const getLLMTools = async ({
       ),
     };
   });
-  const allTools = [...mcpTools, ...serverSideFuncTools];
+
+  const tools: Record<string, MCPToolSchema> = {};
+
+  /** Check for name collisions */
+  [...mcpTools, ...serverSideFuncTools, dbTool].forEach((tool) => {
+    if (!tool) return;
+    const { name } = tool;
+    if (tools[name]) {
+      throw new Error(
+        `Tool name collision: ${name} is used by both MCP tool and/or other function`,
+      );
+    }
+    tools[name] = tool;
+  });
   // if (Provider === "OpenAI") {
   //   return allTools.map(({ input_schema, ...func }) => {
   //     return {
@@ -78,5 +120,5 @@ export const getLLMTools = async ({
   //     };
   //   });
   // }
-  return allTools;
+  return Object.values(tools);
 };

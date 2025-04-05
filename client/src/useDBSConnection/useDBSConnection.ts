@@ -131,6 +131,7 @@ export const useDBSConnection = (
               tableSchema ?? [],
               dbsConnectionOptions.table_options,
               dbs as DBHandlerClient,
+              true,
             );
 
             resolve({

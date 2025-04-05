@@ -640,20 +640,39 @@ export const getTables = (
   schemaTables: DBSchemaTable[],
   connectionTableOptions: DBSSchema["connections"]["table_options"],
   db: DBHandlerClient,
+  capitaliseMissingTableNames = false,
 ): { tables: DBSchemaTablesWJoins } => {
   const tables = schemaTables.map((t) => {
-    // const countRequestedAndAllowed = workspace?.options.tableListEndInfo === "count" && db[t.name]?.count;
-    // const tableHasColumnsAndWillNotError = !!t.columns.length;
-    // const shouldGetCount = countRequestedAndAllowed && tableHasColumnsAndWillNotError;
-    // const count = (shouldGetCount? await db[t.name]?.count?.() ?? "" : "").toString();
+    const {
+      label = capitaliseMissingTableNames ?
+        convertSnakeToReadable(t.name)
+      : t.name,
+      icon,
+    } = connectionTableOptions?.[t.name] ?? {};
     return {
-      label: connectionTableOptions?.[t.name]?.label ?? t.name,
-      icon: connectionTableOptions?.[t.name]?.icon,
+      label,
+      icon,
       ...t,
       ...getJoinedTables(schemaTables, t.name, db),
     };
   });
   return { tables };
+};
+
+const convertSnakeToReadable = (str: string) => {
+  // ^[a-z0-9]+    : Starts with one or more lowercase letters or digits
+  // (?:_[a-z0-9]+)* : Followed by zero or more groups of an underscore and one or more lowercase letters/digits
+  // $             : Ends the string
+  const snakeCaseRegex = /^[a-z0-9]+(?:_[a-z0-9]+)*$/;
+
+  if (str && snakeCaseRegex.test(str)) {
+    const words = str.split("_");
+    const readableWords = words.map((word) => {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    });
+    return readableWords.join(" ");
+  }
+  return str;
 };
 
 export const getIsPinnedMenu = (workspace: WorkspaceSyncItem) => {

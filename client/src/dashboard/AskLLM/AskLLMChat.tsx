@@ -42,7 +42,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     dbsTables,
     methods,
   } = prgl;
-  const { schemaStr } = useLLMSchemaStr({ tables, db, connection });
   const chatState = useLLMChat({
     ...setupState,
     dbs,
@@ -59,6 +58,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     llmMessages,
   } = chatState;
   const { preferredPromptId, createNewChat } = chatState;
+  const { schemaStr } = useLLMSchemaStr({ tables, db, connection, activeChat });
 
   const sendQuery = useCallback(
     async (msg: LLMMessage["message"] | undefined) => {
@@ -141,11 +141,12 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           />
           <AskLLMTools
             dbs={dbs}
-            activeChatId={activeChat.id}
+            activeChat={activeChat}
             messages={llmMessages ?? []}
             methods={methods}
             sendQuery={sendQuery}
             callMCPServerTool={callMCPServerTool}
+            db={db}
           />
         </FlexCol>
       )}
@@ -154,7 +155,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           onClickPromise={async () => createNewChat(preferredPromptId)}
           className="m-2"
           color="action"
-          variant="faded"
+          variant="filled"
         >
           Start new chat
         </Btn>

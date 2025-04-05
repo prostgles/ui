@@ -66,6 +66,7 @@ export const NewMethod = ({
         {
           onClickClose: true,
           label: "Close",
+          className: "mr-auto",
         },
         {
           label: !isNewMethod ? "Update function" : "Add function",

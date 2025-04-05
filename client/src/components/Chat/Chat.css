@@ -51,6 +51,7 @@
   text-align: start;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 .chat-container.chat-component .message:not(.incoming) {
   margin-left: auto;

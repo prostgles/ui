@@ -15,6 +15,7 @@ import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAcces
 import SmartCardList from "../SmartCard/SmartCardList";
 import { ProcessLogs } from "../TableConfig/ProcessLogs";
 import { NewMethod } from "./NewMethod";
+import { FunctionLabel } from "./FunctionLabel";
 
 type P = {
   className?: string;
@@ -50,59 +51,49 @@ export const PublishedMethods = ({
       rowProps={{
         className: "trigger-hover",
       }}
-      noDataComponent={<InfoRow color="info">No functions</InfoRow>}
+      noDataComponent={
+        <InfoRow color="info" variant="filled">
+          No functions
+        </InfoRow>
+      }
       fieldConfigs={[
         { name: "description", hide: true },
-        { name: "id", hide: true },
+        { name: "arguments", hide: true },
         {
           name: "name",
           label: " ",
-          render: (v, row) => (
-            <SwitchToggle
-              checked={
-                !!editedRule?.newRule?.access_control_methods?.some(
-                  (m) => m.published_method_id === row.id,
-                )
-              }
-              label={{
-                children: (
-                  <FlexCol className="gap-p5">
-                    <FlexRow className="gap-p25">
-                      <div>{row.name}</div>
-                      <div className="text-2">
-                        {!row.arguments.length ?
-                          " ()"
-                        : ` ({ ${row.arguments.map((a) => `${a.name}: ${a.type}`).join("; ")} })`
-                        }
-                      </div>
-                    </FlexRow>
-                    {!!row.description.trim() && (
-                      <div className="text-2">{row.description}</div>
-                    )}
-                  </FlexCol>
-                ),
-              }}
-              onChange={(checked) => {
-                const access_control_methods =
-                  editedRule?.newRule?.access_control_methods ?? [];
+          render: (v, row: DBSSchema["published_methods"]) =>
+            !editedRule ?
+              <FunctionLabel {...row} />
+            : <SwitchToggle
+                checked={
+                  !!editedRule.newRule?.access_control_methods?.some(
+                    (m) => m.published_method_id === row.id,
+                  )
+                }
+                label={{
+                  children: <FunctionLabel {...row} />,
+                }}
+                onChange={(checked) => {
+                  const access_control_methods =
+                    editedRule.newRule?.access_control_methods ?? [];
 
-                editedRule?.onChange({
-                  access_control_methods:
-                    checked ?
-                      [
-                        ...access_control_methods,
-                        { published_method_id: row.id },
-                      ]
-                    : access_control_methods.filter(
-                        (a) => a.published_method_id !== row.id,
-                      ),
-                });
-              }}
-            />
-          ),
+                  editedRule.onChange({
+                    access_control_methods:
+                      checked ?
+                        [
+                          ...access_control_methods,
+                          { published_method_id: row.id },
+                        ]
+                      : access_control_methods.filter(
+                          (a) => a.published_method_id !== row.id,
+                        ),
+                  });
+                }}
+              />,
         },
         {
-          name: "arguments",
+          name: "id",
           label: " ",
           className: "f-1 ",
           render: (v, row: DBSSchema["published_methods"]) => (
@@ -143,14 +134,6 @@ export const PublishedMethods = ({
                     />
                   )}
                 />
-                {/* <Btn
-                  title="Delete function"
-                  iconPath={mdiDelete}
-                  color="danger"
-                  onClick={async () => {
-                    await dbs.published_methods.delete({ id: row.id });
-                  }}
-                /> */}
               </div>
             </FlexRow>
           ),

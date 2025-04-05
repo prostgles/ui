@@ -20,7 +20,7 @@ export const getLLMMessageText = ({
     toolsUsed.length ? `**Tools used: ${toolsUsed.join(", ")}**` : null,
     toolsResponse ?
       (toolsResponse.is_error ? `**Tool use error**` : (
-        `**Tool result response**`
+        `**Tool ${toolsUsed.join(", ")} response**`
       )) + `\n\n${toolResponseText}`
     : null,
     text,

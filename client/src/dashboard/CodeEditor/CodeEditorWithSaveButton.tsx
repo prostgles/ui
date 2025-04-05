@@ -100,6 +100,7 @@ export const CodeEditorWithSaveButton = (props: P) => {
       footerButtons={[
         {
           label: "Cancel",
+          className: "mr-auto",
           onClick: () => {
             localValueRef.current = value;
             setDidChange(false);
@@ -148,6 +149,13 @@ export const CodeEditorWithSaveButton = (props: P) => {
           "relative f-1 gap-0 ",
           `${fullScreen ? "min-h-0" : ""}`,
         )}
+        style={
+          codePlaceholder && !value && !localValueRef.current ?
+            {
+              opacity: 0.5,
+            }
+          : {}
+        }
       >
         <CodeEditor
           className={codeEditorClassName}

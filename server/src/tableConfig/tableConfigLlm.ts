@@ -197,6 +197,93 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         sqlDefinition: `TIMESTAMPTZ`,
         info: { hint: "If set then chat is disabled until this time" },
       },
+      db_schema_permissions: {
+        label: "Schema read access",
+        nullable: true,
+        info: {
+          hint: "Controls which table and column definitions are used in the prompt",
+        },
+        jsonbSchema: {
+          oneOfType: [
+            {
+              type: {
+                enum: ["Full"],
+                title: "Type",
+                description: "All tables and columns",
+              },
+            },
+            {
+              type: {
+                enum: ["Custom"],
+                title: "Type",
+                description: "Specific tables",
+              },
+              tables: {
+                type: "Lookup[]",
+                lookup: {
+                  type: "schema",
+                  object: "table",
+                },
+              },
+            },
+          ],
+        },
+      },
+      db_data_permissions: {
+        label: "Data access",
+        nullable: true,
+        info: {
+          hint: "Controls how the assistant is allowed to view/interact with the data found in the database. Same permissions are used as for the current user",
+        },
+        jsonbSchema: {
+          oneOfType: [
+            {
+              type: {
+                title: "Type",
+                description: "Cannot interact with any data from the database",
+                enum: ["None"],
+              },
+            },
+            {
+              type: {
+                title: "Type",
+                enum: ["Run SQL"],
+                description: "Can run SQL queries",
+              },
+              commit: {
+                type: "boolean",
+                title: "Allow commiting",
+                optional: true,
+                description:
+                  "Allows commiting changes to the database. By default the queries are rolled-back. Use with caution",
+              },
+              auto_approve: {
+                type: "boolean",
+                title: "Auto approve",
+                optional: true,
+                description:
+                  "If true then the assistant can run queries without asking for approval",
+              },
+            },
+            // {
+            //   type: {
+            //     title: "Type",
+            //     enum: ["Custom"],
+            //     description: "Can only access specific tables",
+            //   },
+            //   tables: {
+            //     title: "Tables",
+            //     description: "Tables the assistant can access",
+            //     type: "Lookup[]",
+            //     lookup: {
+            //       type: "schema",
+            //       object: "column",
+            //     },
+            //   },
+            // },
+          ],
+        },
+      },
     },
     indexes: {
       unique_chat_for_connection: {
@@ -269,6 +356,12 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
       connection_id: `UUID NOT NULL, FOREIGN KEY(chat_id, connection_id) REFERENCES llm_chats(id, connection_id) ON DELETE CASCADE`,
       server_function_id: `INTEGER NOT NULL, FOREIGN KEY(server_function_id, connection_id) REFERENCES published_methods(id, connection_id) ON DELETE CASCADE`,
+      auto_approve: {
+        info: {
+          hint: "If true then the function call request is automatically approved",
+        },
+        sqlDefinition: `BOOLEAN DEFAULT FALSE`,
+      },
     },
     indexes: {
       unique_chat_tool: {

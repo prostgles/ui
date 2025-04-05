@@ -35,11 +35,13 @@ export const SmartFormFieldLinkedDataSearch = ({
       {anchorEl && (
         <Popup
           title={`Find ${ftable} record`}
-          anchorEl={anchorEl}
           onClose={() => setAnchorEl(undefined)}
           onClickClose={false}
-          positioning="beneath-left"
+          positioning="top-center"
           clickCatchStyle={{ opacity: 1 }}
+          rootStyle={{
+            maxWidth: "min(100vw, 600px)",
+          }}
         >
           <SmartCardList
             showTopBar={true}

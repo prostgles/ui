@@ -27,6 +27,8 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
         name: 1,
         llm_prompt_id: 1,
         model: 1,
+        db_schema_permissions: 1,
+        db_data_permissions: 1,
         created: 1,
       } as const,
       methods: {},

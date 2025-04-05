@@ -70,7 +70,7 @@ export const Marked = (props: MarkedProps) => {
   return (
     <Markdown
       {...divProps}
-      className={classOverride("Marked", divProps.className)}
+      className={classOverride("Marked min-w-0 max-w-full", divProps.className)}
       components={{
         pre: React.Fragment as any,
         code: CodeComponent,

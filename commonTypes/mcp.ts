@@ -2047,7 +2047,7 @@ export const getMCPFullToolName = ({
   server_name,
   name,
 }: Pick<DBSSchema["mcp_server_tools"], "server_name" | "name">) => {
-  return `${server_name}${MCP_TOOL_NAME_SEPARATOR}${name}`;
+  return `${server_name}${MCP_TOOL_NAME_SEPARATOR}${name}` as const;
 };
 export const getMCPToolNameParts = (fullName: string) => {
   const [serverName, toolName] = fullName.split(MCP_TOOL_NAME_SEPARATOR);
@@ -2079,3 +2079,24 @@ export type McpToolCallResponse = {
   >;
   isError?: boolean;
 };
+
+export const PROSTGLES_MCP_TOOLS = [
+  {
+    name: getMCPFullToolName({
+      server_name: "prostgles",
+      name: "execute_sql",
+    } as const),
+    description: "Run SQL query on the current database",
+    input_schema: {
+      type: "object",
+      properties: {
+        sql: {
+          type: "string",
+          description: "SQL query to execute",
+        },
+      },
+      required: ["sql"],
+      additionalProperties: false,
+    },
+  },
+] as const;

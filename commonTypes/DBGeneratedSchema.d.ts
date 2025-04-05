@@ -328,6 +328,14 @@ export type DBGeneratedSchema = {
     columns: {
       connection_id?: null | string;
       created?: null | string;
+      db_data_permissions?: 
+       | null
+       |  {  type: 'None'; }
+       |  {  type: 'Run SQL';  commit?: boolean;  auto_approve?: boolean; }
+      db_schema_permissions?: 
+       | null
+       |  {  type: 'Full'; }
+       |  {  type: 'Custom';  tables: Lookup[]; }
       disabled_message?: null | string;
       disabled_until?: null | string;
       id?: number;
@@ -344,6 +352,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
+      auto_approve?: null | boolean;
       chat_id: number;
       connection_id: string;
       server_function_id: number;

@@ -25,6 +25,7 @@ export const useSmartFormFieldAsJSON = ({
     if (jsonbSchemaWithControls && column.jsonbSchema) {
       const content = (
         <JSONBSchemaA
+          className="m-p5"
           db={db}
           schema={column.jsonbSchema}
           tables={tables}

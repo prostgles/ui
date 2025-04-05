@@ -143,8 +143,6 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
     tables,
   });
 
-  if (asJSONResult.type === "component") return asJSONResult.content;
-
   if (readOnly) rightIcons = null;
   let hint = column.hint;
   if (
@@ -219,22 +217,24 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
           ...(type === "checkbox" ? { padding: "1px" } : {}),
         }}
         inputContent={
-          foreignDataState?.showSmartFormFieldForeignKey && (
-            <SmartFormFieldForeignKey
-              {...foreignDataState}
-              key={column.name}
-              column={column as any}
-              db={db}
-              readOnly={readOnly}
-              onChange={onChange}
-              tables={tables}
-              value={value}
-              row={row}
-              tableName={tableName}
-              newRowDataHandler={newRowDataHandler}
-              tableInfo={tableInfo}
-            />
-          )
+          asJSONResult.type === "component" ?
+            asJSONResult.content
+          : foreignDataState?.showSmartFormFieldForeignKey && (
+              <SmartFormFieldForeignKey
+                {...foreignDataState}
+                key={column.name}
+                column={column as any}
+                db={db}
+                readOnly={readOnly}
+                onChange={onChange}
+                tables={tables}
+                value={value}
+                row={row}
+                tableName={tableName}
+                newRowDataHandler={newRowDataHandler}
+                tableInfo={tableInfo}
+              />
+            )
         }
         key={column.name}
         placeholder={placeholder}

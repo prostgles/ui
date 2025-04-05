@@ -1988,3 +1988,23 @@ export const getMCPToolNameParts = (fullName) => {
         return { serverName, toolName };
     }
 };
+export const PROSTGLES_MCP_TOOLS = [
+    {
+        name: getMCPFullToolName({
+            server_name: "prostgles",
+            name: "execute_sql",
+        }),
+        description: "Run SQL query",
+        inputSchema: {
+            type: "object",
+            properties: {
+                sql: {
+                    type: "string",
+                    description: "SQL query to execute",
+                },
+            },
+            required: ["sql"],
+            additionalProperties: false,
+        },
+    },
+];

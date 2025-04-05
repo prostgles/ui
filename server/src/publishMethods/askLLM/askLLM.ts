@@ -132,7 +132,7 @@ export const askLLM = async (
         undefined
       : await getLLMTools({
           dbs,
-          chatId,
+          chat,
           provider: llm_credential.provider_id,
           connectionId,
         });

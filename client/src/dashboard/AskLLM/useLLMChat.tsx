@@ -7,7 +7,6 @@ import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import type { Message } from "../../components/Chat/Chat";
 import type { MarkedProps } from "../../components/Chat/Marked";
-import Loading from "../../components/Loading";
 import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
 import { AskLLMTokenUsage } from "./AskLLMTokenUsage";
 import { loadGeneratedWorkspaces } from "./loadGeneratedWorkspaces";

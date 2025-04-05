@@ -1,8 +1,17 @@
 import { useMemoDeep, usePromise } from "prostgles-client/dist/prostgles";
+import { useMemo } from "react";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 
-type P = Pick<Prgl, "connection" | "db" | "tables">;
-export const useLLMSchemaStr = ({ db, connection, tables }: P) => {
+type P = Pick<Prgl, "connection" | "db" | "tables"> & {
+  activeChat: DBSSchema["llm_chats"] | undefined;
+};
+export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
+  const { db_schema_permissions } = activeChat ?? {};
+  const cachedSchemaPermissions = useMemoDeep(
+    () => db_schema_permissions || undefined,
+    [db_schema_permissions],
+  );
   const tableConstraints = usePromise(async () => {
     if (!db.sql) return;
 
@@ -40,9 +49,14 @@ export const useLLMSchemaStr = ({ db, connection, tables }: P) => {
     return res;
   }, [db, connection.db_schema_filter]);
 
-  const schemaStr = useMemoDeep(() => {
-    if (!tableConstraints) return "";
-    const res = tables
+  const schemaStr = useMemo(() => {
+    if (!tableConstraints || !cachedSchemaPermissions) return "";
+    const allowedTables =
+      cachedSchemaPermissions.type === "Full" ? tables : tables;
+    // .filter((t) => {
+    //     return cachedSchemaPermissions.tables?.some((l) => l.hehe === t.name);
+    //   });
+    const res = allowedTables
       .map((t) => {
         const constraints = tableConstraints.filter(
           (c) => c.table_name === t.name,
@@ -68,7 +82,7 @@ export const useLLMSchemaStr = ({ db, connection, tables }: P) => {
       .join(";\n");
 
     return res;
-  }, [tables, tableConstraints]);
+  }, [tables, tableConstraints, cachedSchemaPermissions]);
 
   return { schemaStr };
 };
