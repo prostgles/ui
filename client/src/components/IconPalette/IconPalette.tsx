@@ -124,7 +124,7 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
                 background: "var(--text-2)",
               }}
             ></div>
-            <ScrollFade className="text-color-1 min-s-0 o-auto flex-row-wrap gap-1">
+            <ScrollFade className="text-1 min-s-0 o-auto flex-row-wrap gap-1">
               {displayedItems.map(({ name, node }) => {
                 return (
                   <FlexCol

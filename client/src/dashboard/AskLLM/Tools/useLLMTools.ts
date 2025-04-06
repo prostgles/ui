@@ -20,22 +20,29 @@ import { isDefined } from "../../../utils";
 
 export type ApproveRequest =
   | {
+      id: number;
+      server_name: string;
+      tool_name: string;
+      description: string;
       name: string;
       type: "mcp";
       auto_approve: boolean;
-      tool: Required<DBSSchema["mcp_server_tools"]>;
+      // tool: Required<DBSSchema["mcp_server_tools"]>;
     }
   | {
+      id: number;
       name: string;
       type: "function";
       auto_approve: boolean;
-      tool: Required<DBSSchema["published_methods"]>;
+      description: string;
+      // tool: Required<DBSSchema["published_methods"]>;
     }
   | {
-      name: string;
+      name: (typeof PROSTGLES_MCP_TOOLS)[number]["name"];
       type: "db";
       auto_approve: boolean;
-      tool: (typeof PROSTGLES_MCP_TOOLS)[number];
+      description: string;
+      // tool: (typeof PROSTGLES_MCP_TOOLS)[number];
     };
 
 /**
@@ -81,14 +88,18 @@ export const useLLMTools = ({
     if (!allowedMCPTools || !allowedFunctions) return [];
     const tools: ApproveRequest[] = [
       ...allowedMCPTools.map((tool) => ({
-        tool,
+        id: tool.tool_id,
+        server_name: tool.mcp_server_tools[0].server_name,
+        tool_name: tool.mcp_server_tools[0].name,
+        description: tool.mcp_server_tools[0].description || "",
         name: getMCPFullToolName(tool.mcp_server_tools[0]),
         auto_approve: !!tool.auto_approve,
         type: "mcp" as const,
       })),
       ...allowedFunctions.map((tool) => ({
-        tool,
+        id: tool.server_function_id,
         name: tool.published_methods[0].name,
+        description: tool.published_methods[0].description || "",
         auto_approve: !!tool.auto_approve,
         type: "function" as const,
       })),
@@ -96,8 +107,9 @@ export const useLLMTools = ({
         {
           tool: PROSTGLES_MCP_TOOLS[0],
           name: PROSTGLES_MCP_TOOLS[0].name,
+          description: PROSTGLES_MCP_TOOLS[0].description,
           auto_approve: !!chatDBPermissions.auto_approve,
-          type: "sql" as const,
+          type: "db" as const,
         }
       : undefined,
     ].filter(isDefined);

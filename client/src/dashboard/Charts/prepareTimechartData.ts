@@ -10,7 +10,7 @@ export const prepareTimechartData = function (this: TimeChart) {
         coords: [this.ref!.offsetWidth / 2, this.ref!.offsetHeight / 2],
         id: "2111r",
         type: "text",
-        fillStyle: getCssVariableValue("--text-color-1"),
+        fillStyle: getCssVariableValue("--text-1"),
         textAlign: "center",
         font: "18px arial",
         background: {

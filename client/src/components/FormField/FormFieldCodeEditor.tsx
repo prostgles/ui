@@ -1,26 +1,37 @@
-import React, { useCallback } from "react";
-import type { FormFieldProps } from "./FormField";
+import React, { useCallback, useMemo } from "react";
 import { CodeEditor } from "../../dashboard/CodeEditor/CodeEditor";
+import type { AsJSON } from "../../dashboard/SmartForm/SmartFormField/useSmartFormFieldAsJSON";
+import type { FormFieldProps } from "./FormField";
+import { isObject } from "../../../../commonTypes/publishUtils";
 
-type P = Pick<
-  FormFieldProps,
-  "value" | "disabledInfo" | "onChange" | "readOnly"
-> & {
+type P = Pick<FormFieldProps, "value" | "onChange" | "readOnly"> & {
   className?: string;
   style?: React.CSSProperties;
-  asJSON: NonNullable<FormFieldProps["asJSON"]>;
+  asJSON: AsJSON;
 };
 export const FormFieldCodeEditor = ({
   asJSON,
-  value,
-  disabledInfo,
+  value: valueAsStringOrObjectOrNull,
   onChange,
   className,
   style,
   readOnly,
 }: P) => {
+  const validatedSchemaId =
+    asJSON.schemas?.length ? asJSON.schemas[0]!.id : undefined;
+
+  const valueAsString = useMemo(() => {
+    if (valueAsStringOrObjectOrNull && isObject(valueAsStringOrObjectOrNull)) {
+      return JSON.stringify(valueAsStringOrObjectOrNull, null, 2);
+    }
+    if (typeof valueAsStringOrObjectOrNull === "string") {
+      return valueAsStringOrObjectOrNull;
+    }
+    return "";
+  }, [valueAsStringOrObjectOrNull]);
+
   const localOnChange = useCallback(
-    (v) => {
+    (v: string) => {
       try {
         if (!onChange) return;
         const jsonValue = JSON.parse(v);
@@ -32,10 +43,10 @@ export const FormFieldCodeEditor = ({
 
   return (
     <CodeEditor
-      key={asJSON.schemas?.length ? asJSON.schemas[0]!.id : undefined}
+      key={validatedSchemaId}
       className={className}
       style={{
-        minHeight: value?.toString().length ? "100px" : "26px",
+        minHeight: valueAsString.toString().length ? "100px" : "26px",
         minWidth: "200px",
         borderRadius: ".5em",
         flex: 1,
@@ -54,14 +65,12 @@ export const FormFieldCodeEditor = ({
         lineNumbers: "off",
         automaticLayout: true,
       }}
-      value={value}
+      value={valueAsString}
       language={{
         lang: "json",
         jsonSchemas: asJSON.schemas,
       }}
-      onChange={
-        readOnly || disabledInfo || !onChange ? undefined : localOnChange
-      }
+      onChange={readOnly || !onChange ? undefined : localOnChange}
     />
   );
 };

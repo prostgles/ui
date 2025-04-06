@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import {
   useAsyncEffectQueue,
   usePromise,
@@ -10,13 +10,17 @@ import {
   customLightThemeMonaco,
   getMonaco,
 } from "../../dashboard/SQLEditor/SQLEditor";
-import type { editor } from "../../dashboard/W_SQL/monacoEditorTypes";
+import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
 
 export type MonacoEditorProps = {
   language: string;
   value: string;
-  onChange?: (value: string) => void;
+  onChange?: (
+    value: string,
+    editor: editor.IStandaloneCodeEditor,
+    monaco: undefined | Monaco,
+  ) => void;
   className?: string;
   /**
    * @default true
@@ -51,6 +55,8 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   const valueRef = React.useRef(value);
 
+  const monacoRef = useRef<Awaited<ReturnType<typeof getMonaco>>>();
+
   const fullOptions = useMemo(() => {
     const theme =
       options?.theme && options.theme !== "vs" ? options.theme
@@ -66,6 +72,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
   useAsyncEffectQueue(async () => {
     if (!container.current) return;
     const monaco = await getMonaco();
+    monacoRef.current = monaco;
     const editorOptions: editor.IStandaloneEditorConstructionOptions = {
       value: valueRef.current,
       language,
@@ -108,7 +115,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       editor.onDidChangeModelContent(() => {
         const newValue = editor.getValue();
         if (valueRef.current === newValue) return;
-        onChange(newValue);
+        onChange(newValue, editor, monacoRef.current);
       });
     }
   }, [editor, onChange]);

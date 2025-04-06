@@ -70,10 +70,15 @@ export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods"> & {
   enableInsert?: boolean;
   insertBtnText?: string;
   hideNullBtn?: boolean;
+
   /**
-   * If true then will render jsonbSchema columns using controls instead of code editor
+   * If truthy then will render jsonbSchema columns using controls instead of code editor
    */
-  jsonbSchemaWithControls?: boolean;
+  jsonbSchemaWithControls?:
+    | boolean
+    | {
+        variant?: "no-labels";
+      };
 
   /**
    * Fired after a successful update/insert

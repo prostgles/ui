@@ -11,6 +11,53 @@ type P = JSONBSchemaCommonProps & {
   schema: Schema;
   onChange: (newValue: JSONB.GetType<Schema>) => void;
 };
+
+export const JSONBSchemaAllowedOptionsMatch = (
+  s: JSONB.JSONBSchema,
+): s is JSONB.BasicType => !!getFullOptions(s);
+
+export const JSONBSchemaAllowedOptions = ({
+  value,
+  schema,
+  onChange,
+  showErrors,
+  noLabels,
+}: P) => {
+  const o = getFullOptions(schema);
+  if (!o) {
+    return (
+      <>
+        Could not render JSONBSchemaAllowedOptions schema:{" "}
+        {JSON.stringify(schema)}
+      </>
+    );
+  }
+
+  const error =
+    showErrors && !isCompleteJSONB(value, schema) ? "Required" : undefined;
+
+  return (
+    <FormField
+      name={schema.title}
+      label={
+        noLabels ? undefined : (
+          { children: schema.title, info: schema.description }
+        )
+      }
+      className={"JSONBSchemaAllowedOptions"}
+      value={value}
+      optional={schema.optional}
+      nullable={schema.nullable}
+      fullOptions={o.fullOptions}
+      multiSelect={o.isMulti}
+      onChange={(newVal) => {
+        onChange(newVal);
+      }}
+      error={error}
+    />
+  );
+};
+
 /**
  * To construct a fullOptions select use this schema:
  * {
@@ -45,43 +92,4 @@ const getFullOptions = (
   }
 
   return undefined;
-};
-export const JSONBSchemaAllowedOptionsMatch = (
-  s: JSONB.JSONBSchema,
-): s is JSONB.BasicType => !!getFullOptions(s);
-export const JSONBSchemaAllowedOptions = ({
-  value,
-  schema,
-  onChange,
-  showErrors,
-}: P) => {
-  const o = getFullOptions(schema);
-  if (!o) {
-    return (
-      <>
-        Could not render JSONBSchemaAllowedOptions schema:{" "}
-        {JSON.stringify(schema)}
-      </>
-    );
-  }
-
-  const error =
-    showErrors && !isCompleteJSONB(value, schema) ? "Required" : undefined;
-
-  return (
-    <FormField
-      name={schema.title}
-      label={{ children: schema.title, info: schema.description }}
-      className={"JSONBSchemaAllowedOptions"}
-      value={value}
-      optional={schema.optional}
-      nullable={schema.nullable}
-      fullOptions={o.fullOptions}
-      multiSelect={o.isMulti}
-      onChange={(newVal) => {
-        onChange(newVal);
-      }}
-      error={error}
-    />
-  );
 };

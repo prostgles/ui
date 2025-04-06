@@ -145,7 +145,7 @@ export const SelectTriggerButton = <
             <div
               className={
                 " text-ellipsis " +
-                (value !== undefined ? "text-color-0" : "text-color-1")
+                (value !== undefined ? "text-color-0" : "text-1")
               }
               style={{ lineHeight: "18px" }}
             >

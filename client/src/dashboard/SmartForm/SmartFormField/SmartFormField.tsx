@@ -1,5 +1,4 @@
 import { mdiDotsHorizontal } from "@mdi/js";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import {
   isObject,
   type AnyObject,
@@ -7,7 +6,6 @@ import {
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import React, { useCallback, useState } from "react";
-import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";
 import type { FormFieldProps } from "../../../components/FormField/FormField";
 import FormField from "../../../components/FormField/FormField";
@@ -19,7 +17,10 @@ import type {
   NewRowDataHandler,
 } from "../SmartFormNewRowDataHandler";
 import { SmartFormFieldFileSection } from "./SmartFormFieldFileSection";
-import { SmartFormFieldForeignKey } from "./SmartFormFieldForeignKey";
+import {
+  SmartFormFieldForeignKey,
+  type SmartFormFieldForeignKeyProps,
+} from "./SmartFormFieldForeignKey";
 import {
   SmartFormFieldLinkedData,
   useSmartFormFieldForeignDataState,
@@ -34,6 +35,8 @@ import {
 } from "./fieldUtils";
 import { useSmartFormFieldAsJSON } from "./useSmartFormFieldAsJSON";
 import { useSmartFormFieldOnChange } from "./useSmartFormFieldOnChange";
+import { JSONBSchemaA } from "../../../components/JSONBSchema/JSONBSchema";
+import { FormFieldCodeEditor } from "../../../components/FormField/FormFieldCodeEditor";
 
 type SmartFormFieldValue =
   | string
@@ -122,14 +125,11 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   });
   const [collapsed, setCollapsed] = useState(true);
 
-  const asJSONResult = useSmartFormFieldAsJSON({
+  const renderAsJSON = useSmartFormFieldAsJSON({
     column,
     tableName,
     jsonbSchemaWithControls,
-    db,
-    tables,
     value,
-    onCheckAndChange,
   });
 
   const readOnly = columnIsReadOnly(action, column);
@@ -216,14 +216,30 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
           minWidth: 0,
           ...(type === "checkbox" ? { padding: "1px" } : {}),
         }}
+        asJSON={renderAsJSON?.component}
         inputContent={
-          asJSONResult.type === "component" ?
-            asJSONResult.content
+          renderAsJSON?.component === "JSONBSchema" ?
+            <JSONBSchemaA
+              className={renderAsJSON.noLabels ? "" : "m-p5"}
+              noLabels={renderAsJSON.noLabels}
+              db={db}
+              schema={renderAsJSON.jsonbSchema}
+              tables={tables}
+              value={value}
+              onChange={onCheckAndChange}
+            />
+          : renderAsJSON?.component === "codeEditor" ?
+            <FormFieldCodeEditor
+              asJSON={renderAsJSON}
+              value={value}
+              onChange={onCheckAndChange}
+              readOnly={readOnly}
+            />
           : foreignDataState?.showSmartFormFieldForeignKey && (
               <SmartFormFieldForeignKey
                 {...foreignDataState}
                 key={column.name}
-                column={column as any}
+                column={column as SmartFormFieldForeignKeyProps["column"]}
                 db={db}
                 readOnly={readOnly}
                 onChange={onChange}
@@ -235,6 +251,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
                 tableInfo={tableInfo}
               />
             )
+
         }
         key={column.name}
         placeholder={placeholder}
@@ -244,7 +261,6 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         value={parsedValue ?? null}
         rawValue={value}
         title={cantUpdate ? "You are not allowed to update this field" : ""}
-        asJSON={asJSONResult.asJSON}
         asTextArea={
           column.tsDataType === "string" &&
           typeof value === "string" &&

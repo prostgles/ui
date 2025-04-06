@@ -41,19 +41,19 @@ export const AskLLMTools = (props: AskLLMToolsProps) => {
             if (mode === "for-chat") {
               if (req.type === "mcp") {
                 await dbs.llm_chats_allowed_mcp_tools.upsert(
-                  { chat_id: activeChatId, tool_id: req.tool.id },
+                  { chat_id: activeChatId, tool_id: req.id },
                   {
                     chat_id: activeChatId,
-                    tool_id: req.tool.id,
+                    tool_id: req.id,
                     auto_approve: true,
                   },
                 );
               } else if (req.type === "function") {
                 await dbs.llm_chats_allowed_functions.upsert(
-                  { chat_id: activeChatId, server_function_id: req.tool.id },
+                  { chat_id: activeChatId, server_function_id: req.id },
                   {
                     chat_id: activeChatId,
-                    server_function_id: req.tool.id,
+                    server_function_id: req.id,
                     auto_approve: true,
                   },
                 );
@@ -90,13 +90,13 @@ export const AskLLMTools = (props: AskLLMToolsProps) => {
 
   if (!mustApprove) return null;
 
-  const { tool, input } = mustApprove;
+  const { input, name, description } = mustApprove;
 
   return (
     <Popup
       title={
         mustApprove.type === "mcp" ?
-          `Allow tool from ${mustApprove.tool.server_name} to run?`
+          `Allow tool from ${mustApprove.server_name} to run?`
         : `Allow function to run?`
       }
       onClose={() => {
@@ -141,11 +141,11 @@ export const AskLLMTools = (props: AskLLMToolsProps) => {
       <FlexCol>
         <h4 className="mb-0 ta-start">
           {mustApprove.type === "mcp" ?
-            `Run ${mustApprove.tool.name} from ${mustApprove.tool.server_name}`
-          : `Run ${tool.name}`}
+            `Run ${mustApprove.name} from ${mustApprove.server_name}`
+          : `Run ${name}`}
         </h4>
         <InfoRow variant="naked" iconPath="">
-          {tool.description}
+          {description}
         </InfoRow>
         {input && !isEmpty(input) && (
           <CodeEditor value={JSON.stringify(input, null, 2)} language="json" />

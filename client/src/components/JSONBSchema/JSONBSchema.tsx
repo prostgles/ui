@@ -1,6 +1,6 @@
 import type { JSONB } from "prostgles-types";
 import { isObject } from "prostgles-types";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { areEqual } from "../../utils";
 import { isCompleteJSONB } from "./isCompleteJSONB";
 import {
@@ -13,13 +13,14 @@ import { JSONBSchemaObject, JSONBSchemaObjectMatch } from "./JSONBSchemaObject";
 import {
   JSONBSchemaOneOfTypeMatch,
   JSONBSchemaOneOfType,
-} from "./JSONBSchemaOneOf";
+} from "./JSONBSchemaOneOfType";
 import {
   JSONBSchemaPrimitive,
   JSONBSchemaPrimitiveMatch,
 } from "./JSONBSchemaPrimitive";
 import { JSONBSchemaRecord, JSONBSchemaRecordMatch } from "./JSONBSchemaRecord";
 import type { Prgl } from "../../App";
+import { useWhyDidYouUpdate } from "../MonacoEditor/useWhyDidYouUpdate";
 
 type Schema = JSONB.JSONBSchema & { optional?: boolean };
 export type JSONBSchemaCommonProps = Pick<Prgl, "db" | "tables"> & {
@@ -30,31 +31,42 @@ export type JSONBSchemaCommonProps = Pick<Prgl, "db" | "tables"> & {
   showErrors?: boolean;
   isNested?: boolean;
   allowIncomplete?: boolean;
+  noLabels?: boolean;
 };
 
 type P<S extends Schema> = JSONBSchemaCommonProps & {
   schema: S;
   onChange: (newValue: JSONB.GetType<S>) => void;
 };
-export const JSONBSchema = <S extends Schema>({
-  style,
-  className = "",
-  value,
-  schema,
-  onChange,
-  setHasErrors,
-  ...otherProps
-}: P<S>) => {
+export const JSONBSchema = <S extends Schema>(props: P<S>) => {
+  const {
+    style,
+    className = "",
+    value,
+    schema,
+    onChange,
+    setHasErrors,
+    ...otherProps
+  } = props;
   const [_localValueRaw, setlocalValue] = useState<any>();
   const localValueRaw = _localValueRaw ?? value;
   const localValue = otherProps.isNested ? value : localValueRaw;
-  const setLocalValue = (newlocalValue) => {
-    if (otherProps.isNested) {
-      onChange(newlocalValue);
-      return;
-    }
-    setlocalValue(newlocalValue);
-  };
+  const setLocalValue = useCallback(
+    (newlocalValue) => {
+      if (otherProps.isNested) {
+        onChange(newlocalValue);
+        return;
+      }
+      setlocalValue(newlocalValue);
+    },
+    [onChange, otherProps.isNested, setlocalValue],
+  );
+
+  useEffect(() => {
+    setlocalValue(value);
+  }, [value]);
+
+  useWhyDidYouUpdate({ schema, value, localValue });
 
   const hasError = !isCompleteJSONB(value, schema);
   useEffect(() => {
@@ -175,5 +187,6 @@ export const JSONBSchemaA = (
     onChange: (newValue: any) => void;
   },
 ) => {
+  useWhyDidYouUpdate(p);
   return <JSONBSchema {...(p as any)} />;
 };

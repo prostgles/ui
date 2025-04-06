@@ -129,7 +129,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
     },
     columns: {
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
-      tool_id: `INTEGER REFERENCES mcp_server_tools(id) ON DELETE CASCADE`,
+      tool_id: `INTEGER NOT NULL REFERENCES mcp_server_tools(id) ON DELETE CASCADE`,
       allowed_inputs: {
         info: {
           hint: "If empty, all inputs are allowed. Otherwise only the listed inputs are allowed.",

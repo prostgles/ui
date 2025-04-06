@@ -116,8 +116,9 @@ export type CodeEditorProps = Pick<MonacoEditorProps, "options" | "value"> & {
   onMount?: (editor: editor.IStandaloneCodeEditor) => void;
 };
 
-const getSelectedText = (editor) =>
-  editor.getModel().getValueInRange(editor.getSelection());
+const getSelectedText = (
+  editor: editor.IStandaloneCodeEditor | editor.ICodeEditor,
+) => editor.getModel()?.getValueInRange(editor.getSelection()!);
 
 export const CodeEditor = (props: CodeEditorProps) => {
   const {

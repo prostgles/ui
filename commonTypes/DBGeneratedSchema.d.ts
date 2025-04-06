@@ -368,7 +368,7 @@ export type DBGeneratedSchema = {
       allowed_inputs?: null |  ( any )[]
       auto_approve?: null | boolean;
       chat_id: number;
-      tool_id?: null | number;
+      tool_id: number;
     };
   };
   llm_credentials: {

@@ -4,10 +4,6 @@ import "./FormField.css";
 import { mdiClose, mdiFullscreen } from "@mdi/js";
 import type { ValidatedColumnInfo } from "prostgles-types";
 import { isDefined } from "prostgles-types";
-import type {
-  CodeEditorJsonSchema,
-  CodeEditorProps,
-} from "../../dashboard/CodeEditor/CodeEditor";
 import { ChipArrayEditor } from "../../dashboard/SmartForm/ChipArrayEditor";
 import { getInputType } from "../../dashboard/SmartForm/SmartFormField/fieldUtils";
 import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";
@@ -21,9 +17,9 @@ import List from "../List";
 import Popup from "../Popup/Popup";
 import type { FullOption } from "../Select/Select";
 import Select from "../Select/Select";
-import { FormFieldCodeEditor } from "./FormFieldCodeEditor";
 import { FormFieldSkeleton } from "./FormFieldSkeleton";
 import { onFormFieldKeyDown } from "./onFormFieldKeyDown";
+import type { AsJSON } from "../../dashboard/SmartForm/SmartFormField/useSmartFormFieldAsJSON";
 
 export type FormFieldProps = TestSelectors & {
   onChange?: (val: string | number | any, e?: any) => void;
@@ -54,10 +50,6 @@ export type FormFieldProps = TestSelectors & {
   autoComplete?: string;
   accept?: string;
   asTextArea?: boolean;
-  asJSON?: {
-    schemas?: CodeEditorJsonSchema[];
-    options?: Omit<CodeEditorProps, "language" | "value">;
-  };
   rightContentAlwaysShow?: boolean;
   rightIcons?: React.ReactNode;
   rightContent?: React.ReactNode;
@@ -83,7 +75,7 @@ export type FormFieldProps = TestSelectors & {
   labelStyle?: React.CSSProperties;
 
   disabledInfo?: string;
-
+  asJSON?: AsJSON["component"];
   arrayType?: Pick<ValidatedColumnInfo, "udt_name" | "tsDataType">;
 };
 
@@ -244,7 +236,6 @@ export default class FormField extends React.Component<
       style = {},
       inputStyle = {},
       asTextArea = false,
-      asJSON,
       accept,
       onInput,
       rightIcons = null,
@@ -265,6 +256,7 @@ export default class FormField extends React.Component<
       disabledInfo,
       arrayType,
       rightContentAlwaysShow,
+      asJSON,
     } = this.props;
 
     this.id ??= this.props.id ?? generateUniqueID();
@@ -464,16 +456,6 @@ export default class FormField extends React.Component<
 
     const inputNode =
       inputContent ? inputContent
-      : asJSON ?
-        <FormFieldCodeEditor
-          asJSON={asJSON}
-          value={value}
-          disabledInfo={disabledInfo}
-          onChange={onChange}
-          className={inputProps.className}
-          style={inputProps.style}
-          readOnly={readOnly}
-        />
       : type === "file" ? <FileBtn {...(inputProps as any)} />
       : type === "checkbox" ? <Checkbox {...(inputProps as any)} />
       : readOnly ?
@@ -588,6 +570,8 @@ export default class FormField extends React.Component<
               title="Click to toggle full screen"
               className="show-on-trigger-hover"
               iconPath={mdiFullscreen}
+              size="small"
+              style={{ padding: "0" }}
               onClick={() => {
                 this.setState({ fullScreen: !this.state.fullScreen });
               }}
@@ -597,7 +581,9 @@ export default class FormField extends React.Component<
         errorWrapperClassname={`${type !== "checkbox" ? "flex-col" : "flex-row"} gap-p5 min-w-0 ${isEditableSelect ? "" : "f-1"}`}
         inputWrapperClassname={
           (type === "checkbox" ? " ai-center " : "") +
-          (type === "checkbox" ? " focus-border-unset " : " ") +
+          (type === "checkbox" || asJSON === "JSONBSchema" ?
+            " focus-border-unset "
+          : " ") +
           (options || fullOptions ? "w-fit" : "w-full")
         }
         inputWrapperStyle={{
@@ -607,7 +593,14 @@ export default class FormField extends React.Component<
           }),
           maxWidth: asTextArea ? "100%" : maxWidth,
           ...(asJSON && { minHeight: "42px" }),
-          ...(readOnly && !asJSON && { border: "unset", boxShadow: "unset" }),
+          ...((readOnly || asJSON === "JSONBSchema") && {
+            border: "unset",
+            boxShadow: "unset",
+            /**
+             * To ensure focus-border on select controls is visible
+             */
+            overflow: asJSON === "JSONBSchema" ? "visible" : undefined,
+          }),
           ...this.props.wrapperStyle,
         }}
         rightIconsShowBorder={Boolean(

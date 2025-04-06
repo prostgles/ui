@@ -7,7 +7,7 @@ import Btn from "../../components/Btn";
 import { FlexCol } from "../../components/Flex";
 import Popup from "../../components/Popup/Popup";
 import { t } from "../../i18n/i18nUtils";
-import { SmartForm } from "../SmartForm/SmartForm";
+import { SmartForm, type SmartFormProps } from "../SmartForm/SmartForm";
 
 export type LLMChatOptionsProps = Pick<Prgl, "dbs" | "dbsTables"> & {
   prompts: DBSSchema["llm_prompts"][] | undefined;
@@ -33,7 +33,13 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
       } as const,
       methods: {},
       rowFilter: [{ fieldName: "id", value: activeChatId }],
-    };
+      jsonbSchemaWithControls: {
+        variant: "no-labels",
+      },
+    } satisfies Pick<
+      SmartFormProps,
+      "jsonbSchemaWithControls" | "columns" | "methods" | "rowFilter"
+    >;
   }, [activeChatId]);
 
   return (
@@ -65,7 +71,6 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
                 tableName="llm_chats"
                 contentClassname="p-1 pt-1"
                 {...formProps}
-                jsonbSchemaWithControls={true}
                 db={dbs as DBHandlerClient}
                 tables={dbsTables}
               />

@@ -107,7 +107,7 @@ export const FormFieldSkeleton = React.forwardRef(
           : <label
               htmlFor={id}
               className={
-                "main-label ta-left noselect text-1 flex-row ai-center " +
+                "main-label ta-left noselect text-1 flex-row ai-end " +
                 (id ? " pointer " : " ")
               }
               style={{
@@ -154,11 +154,6 @@ export const FormFieldSkeleton = React.forwardRef(
                       `RightIcons ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} flex-row ai-start jc-center ` +
                       (rightIconsShowBorder ? "  bl b-color " : " ")
                     }
-                    style={{
-                      right: "2px",
-                      top: 0,
-                      bottom: 0,
-                    }}
                   >
                     {rightIcons}
                   </div>

@@ -180,16 +180,6 @@ export const ColumnEditor = ({
           }}
           type="text"
           autoComplete="off"
-          // asJSON={!col?.udt_name.startsWith("json")? undefined :
-          //   {
-          //     schemas: [
-          //       {
-          //         id : `wsp.${col.name}`,
-          //         schema: getJSONBSchemaAsJSONSchema(tableName, col.name, col.jsonbSchema ?? {} )
-          //       }
-          //     ]
-          //   }
-          // }
           value={defaultValue}
           optional={true}
           onChange={(defaultValue) => {
