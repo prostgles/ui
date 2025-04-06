@@ -7,19 +7,19 @@ import { isDefined } from "prostgles-types";
 import { ChipArrayEditor } from "../../dashboard/SmartForm/ChipArrayEditor";
 import { getInputType } from "../../dashboard/SmartForm/SmartFormField/fieldUtils";
 import { RenderValue } from "../../dashboard/SmartForm/SmartFormField/RenderValue";
+import type { AsJSON } from "../../dashboard/SmartForm/SmartFormField/useSmartFormFieldAsJSON";
 import type { TestSelectors } from "../../Testing";
 import Btn, { FileBtn } from "../Btn";
 import Checkbox from "../Checkbox";
 import { generateUniqueID } from "../FileInput/FileInput";
 import { classOverride } from "../Flex";
-import type { LabelProps, LabelPropsNormal } from "../Label";
+import { Label, type LabelPropsNormal } from "../Label";
 import List from "../List";
 import Popup from "../Popup/Popup";
 import type { FullOption } from "../Select/Select";
 import Select from "../Select/Select";
 import { FormFieldSkeleton } from "./FormFieldSkeleton";
 import { onFormFieldKeyDown } from "./onFormFieldKeyDown";
-import type { AsJSON } from "../../dashboard/SmartForm/SmartFormField/useSmartFormFieldAsJSON";
 
 export type FormFieldProps = TestSelectors & {
   onChange?: (val: string | number | any, e?: any) => void;
@@ -28,6 +28,7 @@ export type FormFieldProps = TestSelectors & {
   type?: string;
   className?: string;
   label?: string | Omit<LabelPropsNormal, "variant">;
+  labelAsString?: string;
   id?: string;
   readOnly?: boolean;
   /**
@@ -78,6 +79,7 @@ export type FormFieldProps = TestSelectors & {
   asJSON?: AsJSON["component"];
   arrayType?: Pick<ValidatedColumnInfo, "udt_name" | "tsDataType">;
   leftIcon?: React.ReactNode;
+  showFullScreenToggle?: boolean;
 };
 
 type FormFieldState = {
@@ -246,6 +248,7 @@ export default class FormField extends React.Component<
       optional = false,
       multiSelect,
       labelAsValue,
+      labelAsString,
       options = this.state.options,
       fullOptions,
       name = this.props.type,
@@ -258,6 +261,7 @@ export default class FormField extends React.Component<
       arrayType,
       rightContentAlwaysShow,
       asJSON,
+      showFullScreenToggle,
       leftIcon,
     } = this.props;
 
@@ -511,11 +515,11 @@ export default class FormField extends React.Component<
         extraRightIcons = (
           <Btn
             data-command="FormField.clear"
-            title="Set to null"
+            title={`Set ${JSON.stringify(labelAsString)} to null`}
             style={{
               /** To ensure it's centered with the rest of the content */
               height: "100%",
-              ...(type === "checkbox" ? { padding: "0" } : {}),
+              ...(type === "checkbox" ? { padding: "0" } : { paddingLeft: 0 }),
             }}
             iconPath={mdiClose}
             onClick={(e) => {
@@ -532,7 +536,11 @@ export default class FormField extends React.Component<
     if (this.state.fullScreen && asJSON) {
       return (
         <Popup
-          title={typeof label === "string" ? label : undefined}
+          title={
+            typeof label === "string" ? label : (
+              <Label variant="normal" {...label} />
+            )
+          }
           positioning="fullscreen"
           onClose={() => {
             this.setState({ fullScreen: false });
@@ -568,7 +576,7 @@ export default class FormField extends React.Component<
         label={label}
         labelStyle={labelStyle}
         labelRightContent={
-          asJSON && (
+          showFullScreenToggle && (
             <Btn
               title="Click to toggle full screen"
               className="show-on-trigger-hover"

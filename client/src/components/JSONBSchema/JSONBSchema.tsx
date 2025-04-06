@@ -1,5 +1,5 @@
 import type { JSONB } from "prostgles-types";
-import { isObject } from "prostgles-types";
+import { isEqual, isObject } from "prostgles-types";
 import React, { useCallback, useEffect, useState } from "react";
 import type { Prgl } from "../../App";
 import { areEqual } from "../../utils";
@@ -47,18 +47,19 @@ export const JSONBSchema = <S extends Schema>(props: P<S>) => {
     setHasErrors,
     ...otherProps
   } = props;
+  const { allowIncomplete, isNested } = otherProps;
   const [_localValueRaw, setlocalValue] = useState<any>();
   const localValueRaw = _localValueRaw ?? value;
-  const localValue = otherProps.isNested ? value : localValueRaw;
+  const localValue = isNested ? value : localValueRaw;
   const setLocalValue = useCallback(
     (newlocalValue) => {
-      if (otherProps.isNested) {
+      if (isNested) {
         onChange(newlocalValue);
-        return;
+      } else {
+        setlocalValue(newlocalValue);
       }
-      setlocalValue(newlocalValue);
     },
-    [onChange, otherProps.isNested, setlocalValue],
+    [onChange, isNested, setlocalValue],
   );
 
   const hasError = !isCompleteJSONB(value, schema);
@@ -67,24 +68,29 @@ export const JSONBSchema = <S extends Schema>(props: P<S>) => {
   }, [hasError, setHasErrors]);
 
   useEffect(() => {
-    if (otherProps.isNested) return;
+    if (isNested) return;
+
     /** Fire onchange if data is complete */
     const shouldFireOnChange =
-      otherProps.allowIncomplete || isCompleteJSONB(localValue, schema);
-    const valueHasChanged = !areEqual(localValue ?? {}, value ?? {});
+      allowIncomplete || isCompleteJSONB(localValue, schema);
+    const valueHasChanged = !isEqual(localValue, value);
     // console.log({ shouldFireOnChange, valueHasChanged, localValue, value });
     if (shouldFireOnChange && valueHasChanged) {
       onChange(localValue);
       setlocalValue(undefined);
     }
-  }, [
-    localValue,
-    value,
-    otherProps.allowIncomplete,
-    otherProps.isNested,
-    onChange,
-    schema,
-  ]);
+  }, [localValue, value, allowIncomplete, isNested, onChange, schema]);
+
+  if (JSONBSchemaLookupMatch(schema)) {
+    return (
+      <JSONBSchemaLookup
+        value={localValue}
+        schema={schema}
+        onChange={setLocalValue}
+        {...otherProps}
+      />
+    );
+  }
 
   let node: React.ReactNode = null;
   if (JSONBSchemaAllowedOptionsMatch(schema)) {
@@ -136,15 +142,6 @@ export const JSONBSchema = <S extends Schema>(props: P<S>) => {
   } else if (JSONBSchemaArrayMatch(schema)) {
     node = (
       <JSONBSchemaArray
-        value={localValue}
-        schema={schema}
-        onChange={setLocalValue}
-        {...otherProps}
-      />
-    );
-  } else if (JSONBSchemaLookupMatch(schema)) {
-    return (
-      <JSONBSchemaLookup
         value={localValue}
         schema={schema}
         onChange={setLocalValue}

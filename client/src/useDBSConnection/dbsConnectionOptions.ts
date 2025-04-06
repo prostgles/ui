@@ -37,6 +37,14 @@ export const dbsConnectionOptions = {
     llm_chats: {
       label: "LLM Chats",
       icon: "Assistant",
+      columns: {
+        db_schema_permissions: {
+          icon: "DatabaseEye",
+        },
+        db_data_permissions: {
+          icon: "TableEye",
+        },
+      },
     },
     llm_models: {
       label: "LLM Models",
@@ -82,5 +90,11 @@ export const dbsConnectionOptions = {
       icon: "Server",
       label: "MCP Servers",
     },
-  } satisfies Partial<Record<keyof DBSSchema, { icon: string; label: string }>>, //satisfies DBSSchema["connections"]["table_options"]
+  } satisfies Partial<{
+    [tableKey in keyof DBSSchema]: {
+      icon: string;
+      label: string;
+      columns?: Partial<Record<keyof DBSSchema[tableKey], { icon?: string }>>;
+    };
+  }>, //satisfies DBSSchema["connections"]["table_options"]
 };

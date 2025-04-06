@@ -38,6 +38,7 @@ import { useSmartFormFieldOnChange } from "./useSmartFormFieldOnChange";
 import { JSONBSchemaA } from "../../../components/JSONBSchema/JSONBSchema";
 import { FormFieldCodeEditor } from "../../../components/FormField/FormFieldCodeEditor";
 import { SvgIcon } from "../../../components/SvgIcon";
+import type { DBSchemaTableColumn } from "../../Dashboard/dashboardUtils";
 
 type SmartFormFieldValue =
   | string
@@ -73,7 +74,7 @@ export type SmartFormFieldProps = Pick<
   enableInsert: boolean;
   newRowDataHandler: NewRowDataHandler;
 };
-export type SmartColumnInfo = ValidatedColumnInfo & ColumnDisplayConfig;
+export type SmartColumnInfo = DBSchemaTableColumn & ColumnDisplayConfig;
 
 /**
  * Allows displaying and editing a single column from a SmartForm based on table schema and config
@@ -194,6 +195,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   const cantUpdate = readOnly && action === "update";
 
   const ftableIcon =
+    column.icon ??
     foreignDataState?.insertAndSearchState?.showInsertState?.ftableInfo?.icon;
 
   return (
@@ -213,10 +215,11 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         data-key={column.name}
         leftIcon={
           ftableIcon && (
-            <SvgIcon className="text-1 mt-p25 mr-p25" icon={ftableIcon} />
+            <SvgIcon className="f-0 text-1 mt-p25 mr-p5" icon={ftableIcon} />
           )
         }
         label={column.label}
+        labelAsString={column.label}
         data-command="SmartFormField"
         style={style}
         className={cantUpdate ? " cursor-default " : ""}
@@ -228,6 +231,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
           ...(type === "checkbox" ? { padding: "1px" } : {}),
         }}
         asJSON={renderAsJSON?.component}
+        showFullScreenToggle={renderAsJSON?.component === "codeEditor"}
         inputContent={
           renderAsJSON?.component === "JSONBSchema" ?
             <JSONBSchemaA

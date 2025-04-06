@@ -21,7 +21,6 @@ export type HeaderLabelProps = {
   variant?: "header";
   iconPath?: string;
   leftIcon?: undefined;
-  s;
   toggle?: undefined;
 };
 

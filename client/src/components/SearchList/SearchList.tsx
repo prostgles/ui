@@ -822,7 +822,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<
                 );
               })
             }
-            {notAllItemsShown && (
+            {!!notAllItemsShown && (
               <div className="p-p5 pl-1 noselect text-2">
                 Not all items shown...
               </div>

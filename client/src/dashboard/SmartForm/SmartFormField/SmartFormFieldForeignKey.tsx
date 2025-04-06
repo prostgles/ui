@@ -216,6 +216,7 @@ export const SmartFormFieldForeignKey = (
         style: {
           justifyContent: "space-between",
           flex: 1,
+          paddingLeft: "6px",
         },
       }}
     />

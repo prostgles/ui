@@ -106,15 +106,7 @@ export const useNewRowDataHandler = (args: Args) => {
   const onSetColumnData = useCallback(
     async (newRow: NewRow, columnName: string, newVal: ColumnData) => {
       const column = columnMap.get(columnName);
-      /** Exclude no changes */
-      if (
-        newRow[columnName]?.type === "column" &&
-        newVal.type === "column" &&
-        isEqual(newRow[columnName].value, newVal.value)
-      ) {
-        return newRow;
-      }
-      newRow[columnName] = newVal;
+
       if (!mode) throw "unexpected";
       /* Remove updates that change nothing */
       if (mode.type === "update" && mode.currentRow) {

@@ -2,6 +2,7 @@ import {
   getObjectEntries,
   isDefined,
   isEmpty,
+  isEqual,
   type AnyObject,
 } from "prostgles-types";
 import type { Media } from "../../components/FileInput/FileInput";
@@ -35,8 +36,12 @@ export class NewRowDataHandler {
 
   setColumnData = async (columnName: string, newData: ColumnData) => {
     this.newRow ??= {};
+
     if (newData.value === undefined) {
       delete this.newRow[columnName];
+    } else if (isEqual(this.newRow[columnName], newData)) {
+      /** Exclude no changes */
+      return;
     } else {
       this.newRow[columnName] = newData;
     }

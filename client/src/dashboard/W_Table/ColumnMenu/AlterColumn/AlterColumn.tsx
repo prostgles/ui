@@ -2,6 +2,7 @@ import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { DBSchemaTable } from "prostgles-types";
 import { asName, getKeys } from "prostgles-types";
 import React from "react";
+import type { Prgl } from "../../../../App";
 import Btn from "../../../../components/Btn";
 import ErrorComponent from "../../../../components/ErrorComponent";
 import { FlexCol, FlexRow } from "../../../../components/Flex";
@@ -12,15 +13,14 @@ import { debounce } from "../../../Map/DeckGLWrapped";
 import type { DeltaOf } from "../../../RTComp";
 import RTComp from "../../../RTComp";
 import { SQLSmartEditor } from "../../../SQLEditor/SQLSmartEditor";
-import { ColumnEditor } from "./ColumnEditor";
-import { getAlterFkeyQuery } from "./ReferenceEditor";
 import { AlterColumnFileOptions } from "./AlterColumnFileOptions";
-import type { Prgl } from "../../../../App";
 import {
   type ColumnConstraint,
   getColumnConstraints,
 } from "./alterColumnUtilts";
-import type { DBS } from "../../../Dashboard/DBS";
+import { ColumnEditor } from "./ColumnEditor";
+import { getAlterFkeyQuery } from "./ReferenceEditor";
+import { IconPalette } from "../../../../components/IconPalette/IconPalette";
 
 export type AlterColumnProps = Pick<CommonWindowProps, "suggestions"> & {
   prgl: Prgl;
@@ -338,9 +338,38 @@ export class AlterColumn extends RTComp<AlterColumnProps, S> {
               {...prgl}
             />
           )}
+          <IconPalette
+            label={{ label: "Icon" }}
+            iconName={
+              prgl.connection.table_options?.[tableName]?.columns?.[col.name]
+                ?.icon
+            }
+            onChange={async (iconName) => {
+              await prgl.dbs.connections.update(
+                {
+                  id: prgl.connection.id,
+                },
+                {
+                  table_options: {
+                    $merge: [
+                      {
+                        [tableName]: {
+                          columns: {
+                            [col.name]: {
+                              icon: iconName,
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              );
+            }}
+          />
           <FlexRow>
             <Btn onClick={this.props.onClose} variant="outline">
-              Cancel
+              Close
             </Btn>
             <Btn
               color="danger"

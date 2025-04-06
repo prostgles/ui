@@ -116,6 +116,7 @@ export const ColumnList = ({
                     <PopupMenu
                       positioning="center"
                       title={`Alter ${c.name}`}
+                      clickCatchStyle={{ opacity: 1 }}
                       button={
                         <Btn
                           iconPath={mdiPencil}
@@ -125,6 +126,7 @@ export const ColumnList = ({
                         />
                       }
                       onClickClose={false}
+                      contentClassName="p-1"
                     >
                       <AlterColumn {...mainMenuProps} field={c.name} />
                     </PopupMenu>

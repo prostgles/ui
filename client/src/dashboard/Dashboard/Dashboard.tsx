@@ -654,6 +654,10 @@ export const getTables = (
       icon,
       ...t,
       ...getJoinedTables(schemaTables, t.name, db),
+      columns: t.columns.map((c) => ({
+        ...c,
+        icon: connectionTableOptions?.[t.name]?.columns?.[c.name]?.icon,
+      })),
     };
   });
   return { tables };

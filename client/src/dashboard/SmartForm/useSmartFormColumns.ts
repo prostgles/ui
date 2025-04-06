@@ -54,9 +54,7 @@ export const useSmartFormColumns = (props: UseSmartFormColumnsProps) => {
 
   const smartCols: SmartColumnInfo[] = useMemo(() => {
     if (!mode) return [];
-    let validatedCols = quickClone(
-      dynamicValidatedColumns || table?.columns || [],
-    );
+    let validatedCols = quickClone(table?.columns || []);
     if (fixedData) {
       const fixedFields = getKeys(fixedData);
       validatedCols = validatedCols.map((c) => ({

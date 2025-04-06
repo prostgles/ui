@@ -425,10 +425,16 @@ export type Join = {
   on: [string, string][];
 };
 export type JoinV2 = Omit<Join, "on"> & { on: [string, string][][] };
-export type DBSchemaTableWJoins = DBSchemaTable & {
+
+export type DBSchemaTableColumn = ValidatedColumnInfo & {
+  icon: string | undefined;
+  label: string;
+};
+export type DBSchemaTableWJoins = Omit<DBSchemaTable, "columns"> & {
   label: string;
   icon: string | undefined;
   joins: Join[];
   joinsV2: JoinV2[];
+  columns: DBSchemaTableColumn[];
 };
 export type DBSchemaTablesWJoins = DBSchemaTableWJoins[];
