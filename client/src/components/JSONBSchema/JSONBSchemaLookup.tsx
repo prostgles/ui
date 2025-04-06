@@ -80,7 +80,7 @@ export const JSONBSchemaLookup = ({
 
     const selector = (
       <Select
-        label={schema.title}
+        label={oProps.noLabels ? undefined : schema.title}
         value={selectedValue}
         optional={schema.optional}
         fullOptions={fullOptions}
@@ -195,7 +195,7 @@ export const JSONBSchemaLookup = ({
 
   return (
     <SmartSearch
-      label={schema.title}
+      label={oProps.noLabels ? undefined : schema.title}
       // error={paramError?.[argName]}
       // disabledInfo={} // Must disallow changing the fixedRowArgument
       variant="search-no-shadow"

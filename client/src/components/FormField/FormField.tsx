@@ -12,7 +12,7 @@ import Btn, { FileBtn } from "../Btn";
 import Checkbox from "../Checkbox";
 import { generateUniqueID } from "../FileInput/FileInput";
 import { classOverride } from "../Flex";
-import type { LabelProps } from "../Label";
+import type { LabelProps, LabelPropsNormal } from "../Label";
 import List from "../List";
 import Popup from "../Popup/Popup";
 import type { FullOption } from "../Select/Select";
@@ -27,7 +27,7 @@ export type FormFieldProps = TestSelectors & {
   error?: any;
   type?: string;
   className?: string;
-  label?: string | Omit<Extract<LabelProps, { variant: "normal" }>, "variant">;
+  label?: string | Omit<LabelPropsNormal, "variant">;
   id?: string;
   readOnly?: boolean;
   /**
@@ -77,6 +77,7 @@ export type FormFieldProps = TestSelectors & {
   disabledInfo?: string;
   asJSON?: AsJSON["component"];
   arrayType?: Pick<ValidatedColumnInfo, "udt_name" | "tsDataType">;
+  leftIcon?: React.ReactNode;
 };
 
 type FormFieldState = {
@@ -257,6 +258,7 @@ export default class FormField extends React.Component<
       arrayType,
       rightContentAlwaysShow,
       asJSON,
+      leftIcon,
     } = this.props;
 
     this.id ??= this.props.id ?? generateUniqueID();
@@ -548,6 +550,7 @@ export default class FormField extends React.Component<
         ref={(e) => {
           if (e) this.rootDiv = e;
         }}
+        leftIcon={leftIcon}
         data-command={isEditableSelect ? undefined : this.props["data-command"]}
         data-key={this.props["data-key"]}
         className={className}

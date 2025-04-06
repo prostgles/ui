@@ -233,7 +233,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         label: "Data access",
         nullable: true,
         info: {
-          hint: "Controls how the assistant is allowed to view/interact with the data found in the database. Same permissions are used as for the current user",
+          hint: "Controls how the assistant is allowed to view/interact with the data found in the database. Same connection and permissions are used as for the current user",
         },
         jsonbSchema: {
           oneOfType: [

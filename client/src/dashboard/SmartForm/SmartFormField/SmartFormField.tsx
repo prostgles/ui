@@ -5,7 +5,7 @@ import {
   type TableInfo,
   type ValidatedColumnInfo,
 } from "prostgles-types";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import Btn from "../../../components/Btn";
 import type { FormFieldProps } from "../../../components/FormField/FormField";
 import FormField from "../../../components/FormField/FormField";
@@ -37,6 +37,7 @@ import { useSmartFormFieldAsJSON } from "./useSmartFormFieldAsJSON";
 import { useSmartFormFieldOnChange } from "./useSmartFormFieldOnChange";
 import { JSONBSchemaA } from "../../../components/JSONBSchema/JSONBSchema";
 import { FormFieldCodeEditor } from "../../../components/FormField/FormFieldCodeEditor";
+import { SvgIcon } from "../../../components/SvgIcon";
 
 type SmartFormFieldValue =
   | string
@@ -191,6 +192,10 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   }
 
   const cantUpdate = readOnly && action === "update";
+
+  const ftableIcon =
+    foreignDataState?.insertAndSearchState?.showInsertState?.ftableInfo?.icon;
+
   return (
     <>
       {sectionHeader && (
@@ -206,6 +211,12 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
       <FormField
         id={tableName + "-" + column.name}
         data-key={column.name}
+        leftIcon={
+          ftableIcon && (
+            <SvgIcon className="text-1 mt-p25 mr-p25" icon={ftableIcon} />
+          )
+        }
+        label={column.label}
         data-command="SmartFormField"
         style={style}
         className={cantUpdate ? " cursor-default " : ""}
@@ -257,7 +268,6 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         placeholder={placeholder}
         type={type}
         autoComplete={getInputAutocomplete(column)}
-        label={column.label}
         value={parsedValue ?? null}
         rawValue={value}
         title={cantUpdate ? "You are not allowed to update this field" : ""}

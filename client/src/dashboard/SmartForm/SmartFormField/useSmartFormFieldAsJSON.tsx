@@ -54,9 +54,7 @@ export const useSmartFormFieldAsJSON = ({
     if (column.udt_name === "geography" && valueIsNonEmptyObject) {
       return {
         component: "codeEditor",
-        options: {
-          // value: JSON.stringify(value, null, 2),
-        },
+        options: {},
       };
     }
 
@@ -76,12 +74,7 @@ export const useSmartFormFieldAsJSON = ({
         column.jsonbSchema &&
         getJSONBSchemaAsJSONSchema(tableName, column.name, column.jsonbSchema);
       return {
-        options: {
-          // value:
-          //   (typeof value !== "string" && value ?
-          //     JSON.stringify(value, null, 2)
-          //   : value?.toString()) ?? "",
-        },
+        options: {},
         ...(column.jsonbSchema && {
           schemas: [
             {
@@ -95,50 +88,3 @@ export const useSmartFormFieldAsJSON = ({
     }
   }, [column, tableName, jsonbSchemaWithControls, valueIsNonEmptyObject]);
 };
-
-// const setTitleToEmpty = <
-//   S extends JSONB.FieldType | JSONB.JSONBSchema<JSONB.FieldTypeObj> | undefined,
-// >(
-//   jsonbSchema: S,
-// ): S => {
-//   if (
-//     !jsonbSchema ||
-//     typeof jsonbSchema === "string" ||
-//     !isObject(jsonbSchema)
-//   ) {
-//     return jsonbSchema;
-//   }
-
-//   const withNested = (s: JSONB.JSONBSchema<JSONB.FieldTypeObj>) => {
-//     if (s.oneOf) {
-//       return Object.assign({}, s, {
-//         oneOf: s.oneOf.map(setTitleToEmpty),
-//       });
-//     } else if (s.oneOfType) {
-//       return Object.assign({}, s, {
-//         oneOfType: s.oneOfType.map((ot) => {
-//           const { type } = setTitleToEmpty({ type: ot });
-//           return type;
-//         }),
-//       });
-//     } else if (s.arrayOfType) {
-//       return Object.assign({}, s, {
-//         arrayOfType: setTitleToEmpty(s.arrayOfType),
-//       });
-//     } else if (isObject(s.type)) {
-//       return Object.assign({}, s, {
-//         type: Object.entries(s.type).reduce((acc, [k, v]) => {
-//           const withoutTitle = setTitleToEmpty(v);
-//           acc[k] = withoutTitle;
-//           return acc;
-//         }, {} as JSONB.JSONBSchema<JSONB.FieldTypeObj>),
-//       });
-//     }
-//     return s;
-//   };
-
-//   const res = withNested(jsonbSchema);
-//   return Object.assign({}, res, {
-//     title: "",
-//   }) as S;
-// };

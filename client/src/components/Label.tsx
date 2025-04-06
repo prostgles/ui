@@ -2,14 +2,15 @@ import { mdiHelp, mdiInformationOutline } from "@mdi/js";
 import React from "react";
 import Btn from "./Btn";
 import Checkbox from "./Checkbox";
-import { Icon } from "./Icon/Icon";
-import PopupMenu from "./PopupMenu";
 import { classOverride } from "./Flex";
+import { Icon } from "./Icon/Icon";
 import "./Label.css";
+import PopupMenu from "./PopupMenu";
 
 export type NormalLabelProps = {
   variant: "normal";
   iconPath?: undefined;
+  leftIcon?: React.ReactNode;
   toggle?: {
     checked?: boolean;
     onChange: (checked: boolean) => void;
@@ -19,10 +20,12 @@ export type NormalLabelProps = {
 export type HeaderLabelProps = {
   variant?: "header";
   iconPath?: string;
+  leftIcon?: undefined;
+  s;
   toggle?: undefined;
 };
 
-export type LabelProps = React.DetailedHTMLProps<
+type LabelPropsCommon = React.DetailedHTMLProps<
   React.LabelHTMLAttributes<HTMLLabelElement>,
   HTMLLabelElement
 > & {
@@ -30,7 +33,21 @@ export type LabelProps = React.DetailedHTMLProps<
   info?: React.ReactNode;
   popupTitle?: React.ReactNode;
   size?: "small";
-} & (NormalLabelProps | HeaderLabelProps);
+};
+
+export type LabelPropsNormal = LabelPropsCommon & NormalLabelProps;
+export type LabelPropsHeader = LabelPropsCommon & HeaderLabelProps;
+
+export type LabelProps = LabelPropsNormal | LabelPropsHeader;
+// export type LabelProps = React.DetailedHTMLProps<
+//   React.LabelHTMLAttributes<HTMLLabelElement>,
+//   HTMLLabelElement
+// > & {
+//   label?: string;
+//   info?: React.ReactNode;
+//   popupTitle?: React.ReactNode;
+//   size?: "small";
+// } & (NormalLabelProps | HeaderLabelProps);
 
 export const Label = ({
   info = null,
@@ -42,6 +59,7 @@ export const Label = ({
   toggle,
   children,
   size,
+  leftIcon,
   ...otherProps
 }: LabelProps) => {
   const isHeader = variant === "header";
@@ -119,6 +137,7 @@ export const Label = ({
       }}
     >
       {isHeader && IconBtn}
+      {leftIcon}
       {label ?? children}
       {toggle && (
         <Checkbox

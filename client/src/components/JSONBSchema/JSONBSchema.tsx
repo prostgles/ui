@@ -1,6 +1,7 @@
 import type { JSONB } from "prostgles-types";
 import { isObject } from "prostgles-types";
 import React, { useCallback, useEffect, useState } from "react";
+import type { Prgl } from "../../App";
 import { areEqual } from "../../utils";
 import { isCompleteJSONB } from "./isCompleteJSONB";
 import {
@@ -11,16 +12,14 @@ import { JSONBSchemaArray, JSONBSchemaArrayMatch } from "./JSONBSchemaArray";
 import { JSONBSchemaLookup, JSONBSchemaLookupMatch } from "./JSONBSchemaLookup";
 import { JSONBSchemaObject, JSONBSchemaObjectMatch } from "./JSONBSchemaObject";
 import {
-  JSONBSchemaOneOfTypeMatch,
   JSONBSchemaOneOfType,
+  JSONBSchemaOneOfTypeMatch,
 } from "./JSONBSchemaOneOfType";
 import {
   JSONBSchemaPrimitive,
   JSONBSchemaPrimitiveMatch,
 } from "./JSONBSchemaPrimitive";
 import { JSONBSchemaRecord, JSONBSchemaRecordMatch } from "./JSONBSchemaRecord";
-import type { Prgl } from "../../App";
-import { useWhyDidYouUpdate } from "../MonacoEditor/useWhyDidYouUpdate";
 
 type Schema = JSONB.JSONBSchema & { optional?: boolean };
 export type JSONBSchemaCommonProps = Pick<Prgl, "db" | "tables"> & {
@@ -62,12 +61,6 @@ export const JSONBSchema = <S extends Schema>(props: P<S>) => {
     [onChange, otherProps.isNested, setlocalValue],
   );
 
-  useEffect(() => {
-    setlocalValue(value);
-  }, [value]);
-
-  useWhyDidYouUpdate({ schema, value, localValue });
-
   const hasError = !isCompleteJSONB(value, schema);
   useEffect(() => {
     setHasErrors?.(hasError);
@@ -82,6 +75,7 @@ export const JSONBSchema = <S extends Schema>(props: P<S>) => {
     // console.log({ shouldFireOnChange, valueHasChanged, localValue, value });
     if (shouldFireOnChange && valueHasChanged) {
       onChange(localValue);
+      setlocalValue(undefined);
     }
   }, [
     localValue,
@@ -181,12 +175,10 @@ export const JSONBSchema = <S extends Schema>(props: P<S>) => {
   );
 };
 
-export const JSONBSchemaA = (
-  p: JSONBSchemaCommonProps & {
+// @ts-ignore
+export const JSONBSchemaA = JSONBSchema as (
+  props: JSONBSchemaCommonProps & {
     schema: any;
     onChange: (newValue: any) => void;
   },
-) => {
-  useWhyDidYouUpdate(p);
-  return <JSONBSchema {...(p as any)} />;
-};
+) => React.JSX.Element;

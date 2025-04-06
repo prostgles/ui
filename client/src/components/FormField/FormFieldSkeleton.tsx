@@ -42,6 +42,7 @@ type FormFieldSkeletonProps = TestSelectors &
     hintWrapperStyle: React.CSSProperties;
     labelRightContent: React.ReactNode;
     inputWrapperStyle: React.CSSProperties;
+    leftIcon: React.ReactNode;
   };
 
 export const FormFieldSkeleton = React.forwardRef(
@@ -70,6 +71,7 @@ export const FormFieldSkeleton = React.forwardRef(
       onBlur,
       onKeyDown,
       hintWrapperStyle,
+      leftIcon,
     } = props;
 
     const refWrapper = React.useRef<HTMLDivElement>(null);
@@ -78,7 +80,7 @@ export const FormFieldSkeleton = React.forwardRef(
 
     return (
       <div
-        className={`form-field trigger-hover min-w-0 ${className} ${disabledInfo ? "disabled" : ""}`}
+        className={`form-field trigger-hover flex-row min-w-0 ${className} ${disabledInfo ? "disabled" : ""}`}
         data-command={props["data-command"]}
         data-label={labelString}
         data-key={props["data-key"]}
@@ -88,6 +90,7 @@ export const FormFieldSkeleton = React.forwardRef(
         title={disabledInfo}
         onKeyDown={onKeyDown}
       >
+        {leftIcon}
         <div
           className={`form-field__hint-wrapper trigger-hover flex-col`}
           title={title}

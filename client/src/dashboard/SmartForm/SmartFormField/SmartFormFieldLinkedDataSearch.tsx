@@ -29,7 +29,7 @@ export const SmartFormFieldLinkedDataSearch = ({
     <>
       <Btn
         iconPath={mdiSearchWeb}
-        title="Find record"
+        title="View more"
         onClick={({ currentTarget }) => setAnchorEl(currentTarget)}
       />
       {anchorEl && (

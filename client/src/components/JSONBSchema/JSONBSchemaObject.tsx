@@ -39,9 +39,10 @@ export const JSONBSchemaObject = ({
         }
         style={oProps.style}
       >
-        <Label variant="normal">{schema.title}</Label>
+        {!oProps.noLabels && <Label variant="normal">{schema.title}</Label>}
         <Btn
           iconPath={mdiDotsHorizontal}
+          title={schema.title}
           variant="faded"
           onClick={() => {
             setShowOptional(true);
@@ -75,24 +76,42 @@ export const JSONBSchemaObject = ({
             title: propName,
             ...(typeof ps === "string" ? { type: ps } : ps),
           };
+          // return (
+          //   <div key={propName} className="flex-row gap-1">
+          //     <JSONBSchema
+          //       value={(value as any)?.[propName] as any}
+          //       schema={propSchema as any}
+          //       isNested={true}
+          //       onChange={
+          //         ((newVal) => {
+          //           onChange(
+          //             (newVal === undefined ?
+          //               omitKeys(value ?? {}, [propName])
+          //             : { ...value, [propName]: newVal }) as any,
+          //           );
+          //         }) as any
+          //       }
+          //       {...oProps}
+          //     />
+          //   </div>
+          // );
           return (
-            <div key={propName} className="flex-row gap-1">
-              <JSONBSchema
-                value={(value as any)?.[propName] as any}
-                schema={propSchema as any}
-                isNested={true}
-                onChange={
-                  ((newVal) => {
-                    onChange(
-                      (newVal === undefined ?
-                        omitKeys(value ?? {}, [propName])
-                      : { ...value, [propName]: newVal }) as any,
-                    );
-                  }) as any
-                }
-                {...oProps}
-              />
-            </div>
+            <JSONBSchema
+              key={propName}
+              value={(value as any)?.[propName] as any}
+              schema={propSchema as any}
+              isNested={true}
+              onChange={
+                ((newVal) => {
+                  onChange(
+                    (newVal === undefined ?
+                      omitKeys(value ?? {}, [propName])
+                    : { ...value, [propName]: newVal }) as any,
+                  );
+                }) as any
+              }
+              {...oProps}
+            />
           );
         })}
       {!showOptional && !!optionalProps.length && (

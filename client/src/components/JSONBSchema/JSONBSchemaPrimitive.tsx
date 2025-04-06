@@ -27,6 +27,7 @@ export const JSONBSchemaPrimitive = ({
   schema,
   onChange,
   showErrors,
+  noLabels,
 }: P) => {
   let fullOptions: FullOption[] | undefined = undefined;
   if (schema.enum?.length || schema.allowedValues?.length) {
@@ -134,7 +135,15 @@ export const JSONBSchemaPrimitive = ({
   return (
     <FormField
       name={schema.title}
-      label={{ children: schema.title, info: schema.description }}
+      label={
+        /**
+         * Hacky. TODO: find a better approach showing JSONB controls within a form with existing top label and bottom hint.
+         * Should the main column label be removed?!
+         */
+        noLabels && schema.type !== "boolean" ?
+          undefined
+        : { children: schema.title, info: schema.description }
+      }
       value={value}
       className={"JSONBSchemaPrimitive"}
       type={inputType}

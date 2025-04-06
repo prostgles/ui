@@ -78,8 +78,9 @@ const useSmartFieldForeignKeyOptionsState = ({
     const fileTableName = tables[0]?.info.fileTableName;
     const ftable =
       ref?.ftable ?? (column.file && fileTableName ? fileTableName : undefined);
-    const fTableCols =
-      ftable ? tables.find((t) => t.name === ftable)?.columns : undefined;
+    const ftableInfo =
+      ftable ? tables.find((t) => t.name === ftable) : undefined;
+    const fTableCols = ftableInfo?.columns;
     const ftableHandler =
       ftable && column.references?.length ? db[ftable] : undefined;
     const fcol = ref?.fcols[ref.cols.indexOf(column.name)];
@@ -90,6 +91,7 @@ const useSmartFieldForeignKeyOptionsState = ({
       column.update && enableInsert && ftableHandler?.insert ?
         {
           ftable,
+          ftableInfo,
           fcol,
           setShowNestedInsertForm,
           showNestedInsertForm,
