@@ -8,9 +8,15 @@ import { type usePagination } from "../../components/Table/Pagination";
 import { getSelectForFieldConfigs } from "../SmartCard/getSelectForFieldConfigs";
 import { getSmartCardColumns } from "../SmartCard/getSmartCardColumns";
 import type { SmartCardListProps } from "./SmartCardList";
+import { useWhyDidYouUpdate } from "../../components/MonacoEditor/useWhyDidYouUpdate";
 
 export const useSmartCardListState = (
-  props: SmartCardListProps,
+  {
+    /** Removed to reduced re-renders */
+    footer,
+    noDataComponent,
+    ...props
+  }: SmartCardListProps,
   paginationState: ReturnType<typeof usePagination>,
   stateOrderBy: Record<string, boolean> | undefined,
 ) => {
@@ -148,6 +154,7 @@ export const useSmartCardListState = (
     }
   }, [smartProps, columns, page, pageSize, stateOrderBy, tableHandler]);
 
+  useWhyDidYouUpdate(props);
   /** Table data */
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useAsyncEffectQueue(async () => {
