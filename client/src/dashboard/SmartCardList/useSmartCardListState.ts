@@ -199,17 +199,25 @@ export const useSmartCardListState = (
     if (!tableDataHandlers) return;
     const { setData, realtime, filter, throttle, select } = tableDataHandlers;
     if (realtime) {
-      if (!tableHandler?.subscribe) {
-        throw new Error("tableHandler.subscribe missing");
+      try {
+        if (!tableHandler?.subscribe) {
+          throw new Error("tableHandler.subscribe missing");
+        }
+        /** This is to not wait for the subscription to start */
+        setData();
+        const sub = await tableHandler.subscribe(
+          filter,
+          { limit: 0, select, throttle },
+          () => {
+            setData();
+          },
+        );
+        return sub.unsubscribe;
+      } catch (error) {
+        setError(error);
+        setLoading(false);
+        return;
       }
-      const sub = await tableHandler.subscribe(
-        filter,
-        { limit: 0, select, throttle },
-        () => {
-          setData();
-        },
-      );
-      return sub.unsubscribe;
     } else {
       setData();
     }
