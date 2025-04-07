@@ -17,7 +17,7 @@ import RTComp from "../RTComp";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
 import { SmartForm } from "../SmartForm/SmartForm";
 import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
-import type { SmartCardListProps } from "./SmartCardList";
+import type { SmartCardListProps } from "../SmartCardList/SmartCardList";
 import { getSmartCardColumns } from "./getSmartCardColumns";
 
 type NestedSmartCardProps = Pick<SmartCardProps, "footer" | "excludeNulls">;
@@ -278,7 +278,9 @@ export default class SmartCard<T extends AnyObject> extends RTComp<
   onDelta = async () => {
     const { tableName, db, columns, rowFilter } = this.props;
     if (!this.state.columns) {
-      this.setState({ columns: await getSmartCardColumns(this.props) });
+      this.setState({
+        columns: columns ?? (await getSmartCardColumns(this.props)),
+      });
     }
 
     if (typeof tableName === "string") {

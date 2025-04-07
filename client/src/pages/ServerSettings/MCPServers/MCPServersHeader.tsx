@@ -22,39 +22,57 @@ export const MCPServersHeader = ({
   const { data: tools } = dbs.mcp_server_tools.useFind();
   const globalSettings = dbs.global_settings.useSubscribeOne();
 
+  const [showAddServer, setShowAddServer] = React.useState(false);
+
   return (
     <>
+      {showAddServer && (
+        <SmartForm
+          asPopup={true}
+          label="Add MCP Server"
+          db={dbs as DBHandlerClient}
+          methods={dbsMethods}
+          onClose={() => setShowAddServer(false)}
+          columnFilter={(c) =>
+            [
+              "name",
+              "info",
+              "config_schema",
+              "command",
+              "env",
+              "args",
+            ].includes(c.name)
+          }
+          tableName="mcp_servers"
+          tables={dbsTables}
+          showJoinedTables={false}
+          // confirmUpdates={false}
+        />
+      )}
       <FlexRow>
-        <PopupMenu
+        {/* <PopupMenu
           button={
-            <Btn variant="filled" color="action" iconPath={mdiPlus}>
+            <Btn
+              variant="filled"
+              color="action"
+              iconPath={mdiPlus}
+              onClick={() => setShowAddServer(true)}
+            >
               Add MCP Server
             </Btn>
           }
           title="Add MCP Server"
           onClickClose={false}
           clickCatchStyle={{ opacity: 1 }}
+        ></PopupMenu> */}
+        <Btn
+          variant="filled"
+          color="action"
+          iconPath={mdiPlus}
+          onClick={() => setShowAddServer(true)}
         >
-          <SmartForm
-            label=""
-            db={dbs as DBHandlerClient}
-            methods={dbsMethods}
-            columnFilter={(c) =>
-              [
-                "name",
-                "info",
-                "config_schema",
-                "command",
-                "env",
-                "args",
-              ].includes(c.name)
-            }
-            tableName="mcp_servers"
-            tables={dbsTables}
-            showJoinedTables={false}
-            confirmUpdates={false}
-          />
-        </PopupMenu>
+          Add MCP Server
+        </Btn>
         <Btn
           color="action"
           variant="faded"

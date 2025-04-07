@@ -181,33 +181,6 @@ export const AskLLMChatHeader = (
             createNewChat(preferredPromptId);
           }}
         />
-        <Select
-          className="ml-1"
-          title={t.AskLLMChatHeader.Prompt}
-          btnProps={{
-            iconPath: mdiScript,
-          }}
-          fullOptions={prompts.map((p) => ({
-            key: p.id,
-            label: p.name,
-            subLabel: p.description || undefined,
-          }))}
-          value={activeChat?.llm_prompt_id}
-          onChange={(promptId) => {
-            prgl.dbs.llm_chats.update(
-              { id: activeChatId },
-              { llm_prompt_id: promptId },
-            );
-          }}
-        />
-        {chatPrompt && !chatPrompt.options?.disable_tools && (
-          <Select
-            title="Tools allowed in this chat"
-            multiSelect={true}
-            {...toolSelectProps}
-            iconPath={mdiWrench}
-          />
-        )}
       </FlexRow>
     </FlexRow>
   );

@@ -34,6 +34,9 @@ export const MCPServerConfig = ({
       title={`Configure and enable ${JSON.stringify(serverName)} MCP server`}
       positioning="center"
       onClose={onDone}
+      rootStyle={{
+        maxWidth: "min(600px, 100vw)",
+      }}
       clickCatchStyle={{ opacity: 1 }}
       footerButtons={[
         {
@@ -45,6 +48,7 @@ export const MCPServerConfig = ({
           disabledInfo: onSave ? undefined : "No changes",
           variant: "filled",
           color: "action",
+          className: "ml-auto",
           onClickPromise: async () => {
             await onSave?.(async () => {
               if (existingConfig) {
@@ -68,8 +72,11 @@ export const MCPServerConfig = ({
                   { enabled: true },
                 );
               }
-            });
-            onDone();
+            })
+              .then(() => {
+                onDone();
+              })
+              .catch((e) => {});
           },
         },
       ]}

@@ -12,7 +12,7 @@ import PopupMenu from "../../components/PopupMenu";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import { SectionHeader } from "../AccessControl/AccessControlRuleEditor";
 import type { ValidEditedAccessRuleState } from "../AccessControl/useEditedAccessRule";
-import SmartCardList from "../SmartCard/SmartCardList";
+import { SmartCardList } from "../SmartCardList/SmartCardList";
 import { ProcessLogs } from "../TableConfig/ProcessLogs";
 import { NewMethod } from "./NewMethod";
 import { FunctionLabel } from "./FunctionLabel";

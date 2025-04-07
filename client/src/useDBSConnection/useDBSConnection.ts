@@ -29,6 +29,8 @@ export const useDBSConnection = (
     >();
   const [user, setUser] = useState<DBSSchema["users"]>();
   const { dbs, auth } = state?.prglState ?? {};
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useAsyncEffectQueue(async () => {
     if (!dbs || !auth?.user?.id) return;
 

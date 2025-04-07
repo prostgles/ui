@@ -146,11 +146,13 @@ export const getPublishLLM = (
       select: "*",
       update: {
         fields: {
+          args: 1,
+          env: 1,
           enabled: 1,
         },
       },
       insert: "*",
-      delete: false,
+      delete: "*",
     },
     mcp_server_tools:
       isAdmin ? "*" : (
@@ -193,6 +195,12 @@ export const getPublishLLM = (
       },
       delete: {
         filterFields: "*",
+        forcedFilter: userOwnsRelatedChat,
+      },
+    },
+    mcp_server_tool_calls: {
+      select: {
+        fields: "*",
         forcedFilter: userOwnsRelatedChat,
       },
     },

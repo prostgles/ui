@@ -648,15 +648,18 @@ export const getTables = (
         convertSnakeToReadable(t.name)
       : t.name,
       icon,
+      columns,
+      card,
     } = connectionTableOptions?.[t.name] ?? {};
     return {
       label,
       icon,
+      card,
       ...t,
       ...getJoinedTables(schemaTables, t.name, db),
       columns: t.columns.map((c) => ({
         ...c,
-        icon: connectionTableOptions?.[t.name]?.columns?.[c.name]?.icon,
+        icon: columns?.[c.name]?.icon,
       })),
     };
   });

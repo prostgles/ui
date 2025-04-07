@@ -9,7 +9,7 @@ import Btn from "../components/Btn";
 import { FlexCol, FlexRow } from "../components/Flex";
 import { InfoRow } from "../components/InfoRow";
 import PopupMenu from "../components/PopupMenu";
-import SmartCardList from "../dashboard/SmartCard/SmartCardList";
+import { SmartCardList } from "../dashboard/SmartCardList/SmartCardList";
 import { StyledInterval } from "../dashboard/W_SQL/customRenderers";
 
 export const Alerts = (prgl: Prgl) => {

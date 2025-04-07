@@ -533,7 +533,7 @@ export default class FormField extends React.Component<
 
     const isEditableSelect = !readOnly && Array.isArray(options ?? fullOptions);
 
-    if (this.state.fullScreen && asJSON) {
+    if (this.state.fullScreen && showFullScreenToggle) {
       return (
         <Popup
           title={
@@ -571,6 +571,7 @@ export default class FormField extends React.Component<
         }}
         onKeyDown={(e) => onFormFieldKeyDown.bind(this)(e, selectSuggestion)}
         hintWrapperStyle={{
+          flex: 1,
           ...(asJSON && { minWidth: "min(400px, 90vw)" }),
         }}
         label={label}
@@ -592,7 +593,7 @@ export default class FormField extends React.Component<
         errorWrapperClassname={`${type !== "checkbox" ? "flex-col" : "flex-row"} gap-p5 min-w-0 ${isEditableSelect ? "" : "f-1"}`}
         inputWrapperClassname={
           (type === "checkbox" ? " ai-center " : "") +
-          (type === "checkbox" || asJSON === "JSONBSchema" ?
+          (type === "checkbox" || asJSON === "JSONBSchema" || arrayEditor ?
             " focus-border-unset "
           : " ") +
           (options || fullOptions ? "w-fit" : "w-full")
@@ -603,8 +604,9 @@ export default class FormField extends React.Component<
             backgroundColor: "var(--input-bg-color)",
           }),
           maxWidth: asTextArea ? "100%" : maxWidth,
-          ...(asJSON && { minHeight: "42px" }),
-          ...((readOnly || asJSON === "JSONBSchema") && {
+          ...(asJSON === "codeEditor" && { minHeight: "42px" }),
+          ...(((readOnly && asJSON !== "codeEditor") ||
+            asJSON === "JSONBSchema") && {
             border: "unset",
             boxShadow: "unset",
             /**

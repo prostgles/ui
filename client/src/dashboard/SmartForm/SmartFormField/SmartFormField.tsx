@@ -73,6 +73,7 @@ export type SmartFormFieldProps = Pick<
   table: CommonWindowProps["tables"][number];
   enableInsert: boolean;
   newRowDataHandler: NewRowDataHandler;
+  someColumnsHaveIcons: boolean;
 };
 export type SmartColumnInfo = DBSchemaTableColumn & ColumnDisplayConfig;
 
@@ -101,6 +102,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
     tableInfo,
     enableInsert,
     newRowDataHandler,
+    someColumnsHaveIcons,
   } = props;
 
   const onChange = useCallback(
@@ -214,9 +216,17 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         id={tableName + "-" + column.name}
         data-key={column.name}
         leftIcon={
-          ftableIcon && (
+          ftableIcon ?
             <SvgIcon className="f-0 text-1 mt-p25 mr-p5" icon={ftableIcon} />
-          )
+          : someColumnsHaveIcons && (
+              <div
+                className="mt-p25 mr-p5"
+                style={{
+                  width: "24px",
+                  height: "24px",
+                }}
+              />
+            )
         }
         label={column.label}
         labelAsString={column.label}

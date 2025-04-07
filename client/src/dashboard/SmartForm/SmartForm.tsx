@@ -200,7 +200,17 @@ const SmartFormWithNoError = ({
   const tableInfo = table.info;
 
   const isLoading = loading || ("loading" in mode ? mode.loading : false);
-  const headerText = label ?? (tableInfo.comment || tableName);
+  const headerFromCardConfig =
+    (
+      table.card?.headerColumn &&
+      "currentRow" in mode &&
+      mode.currentRow &&
+      table.card.headerColumn in mode.currentRow
+    ) ?
+      mode.currentRow[table.card.headerColumn]
+    : undefined;
+  const headerText =
+    label ?? (headerFromCardConfig || tableInfo.comment || tableName);
 
   const formHeader =
     asPopup ? null

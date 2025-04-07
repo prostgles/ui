@@ -5,7 +5,7 @@ import Chip from "../../components/Chip";
 import { FlexCol } from "../../components/Flex";
 import { InfoRow } from "../../components/InfoRow";
 import Popup from "../../components/Popup/Popup";
-import SmartCardList from "../SmartCard/SmartCardList";
+import { SmartCardList } from "../SmartCardList/SmartCardList";
 import { SmartForm } from "../SmartForm/SmartForm";
 import { AddLLMCredentialForm } from "./AddLLMCredentialForm";
 

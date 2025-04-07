@@ -1,10 +1,10 @@
-import { t } from "./i18n/i18nUtils";
 import type { ReactChild } from "react";
 import React, { useState } from "react";
 import { NavLink, Navigate, Route, Routes as Switch } from "react-router-dom";
 import "./App.css";
 import Loading from "./components/Loading";
 import type { CommonWindowProps } from "./dashboard/Dashboard/Dashboard";
+import { t } from "./i18n/i18nUtils";
 import { Connections } from "./pages/Connections/Connections";
 import NewConnnection from "./pages/NewConnection/NewConnnection";
 import { NotFound } from "./pages/NotFound";
@@ -26,11 +26,11 @@ import type { AuthHandler } from "prostgles-client/dist/Auth";
 import {
   type DBHandlerClient,
   type MethodHandler,
-  type TableHandlerClient,
 } from "prostgles-client/dist/prostgles";
 import { type Socket } from "socket.io-client";
 import type { ServerState } from "../../commonTypes/electronInit";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
+import { API_PATH_SUFFIXES } from "../../commonTypes/utils";
 import { createReactiveState, useReactiveState } from "./appUtils";
 import Btn from "./components/Btn";
 import { FlexCol, FlexRow } from "./components/Flex";
@@ -47,7 +47,6 @@ import { ThemeSelector } from "./theme/ThemeSelector";
 import { useAppTheme } from "./theme/useAppTheme";
 import { useDBSConnection } from "./useDBSConnection/useDBSConnection";
 import { isDefined } from "./utils";
-import { API_PATH_SUFFIXES } from "../../commonTypes/utils";
 
 export type ClientUser = {
   sid: string;

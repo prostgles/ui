@@ -1,7 +1,7 @@
 import { isDefined } from "prostgles-types";
 import React from "react";
 import { MediaViewer } from "../../../components/MediaViewer";
-import SmartCardList from "../../SmartCard/SmartCardList";
+import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { JoinedRecordSection, JoinedRecordsProps } from "./JoinedRecords";
 import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import { InfoRow } from "../../../components/InfoRow";

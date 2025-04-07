@@ -118,7 +118,7 @@ export const SmartFormPopupWrapper = ({
   return (
     <Popup
       title={
-        <FlexRow className="gap-p25">
+        <FlexRow className="gap-1">
           {table.icon && <SvgIcon size={34} icon={table.icon} />}
           {headerText}
         </FlexRow>

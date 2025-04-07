@@ -436,5 +436,8 @@ export type DBSchemaTableWJoins = Omit<DBSchemaTable, "columns"> & {
   joins: Join[];
   joinsV2: JoinV2[];
   columns: DBSchemaTableColumn[];
+  card: NonNullable<
+    NonNullable<DBSSchema["connections"]["table_options"]>[string]
+  >["card"];
 };
 export type DBSchemaTablesWJoins = DBSchemaTableWJoins[];

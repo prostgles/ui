@@ -174,7 +174,7 @@ export type DBGeneratedSchema = {
       ssl_client_certificate?: null | string;
       ssl_client_certificate_key?: null | string;
       ssl_reject_unauthorized?: null | boolean;
-      table_options?: null | Partial<Record<string,  {  icon?: string;  label?: string;  columns?: Partial<Record<string,  {  icon?: string; }>>; }>>
+      table_options?: null | Partial<Record<string,  {  icon?: string;  label?: string;  columns?: Partial<Record<string,  {  icon?: string; }>>;  card?: {  headerColumn?: string; }; }>>
       type: "Standard" | "Connection URI" | "Prostgles"
       url_path?: null | string;
       user_id?: null | string;
@@ -592,12 +592,12 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       args?: null | string[];
-      command: "npx" | "npm" | "uvx" | "uv"
+      command: "npx" | "npm" | "uvx" | "uv" | "docker"
       config_schema?: null | Record<string, 
  |  {  type: 'env';  title?: string;  optional?: boolean;  description?: string; }
  |  {  type: 'arg';  title?: string;  optional?: boolean;  description?: string;  index?: number; }>
       created?: null | string;
-      cwd: string;
+      cwd?: null | string;
       enabled?: boolean;
       env?: null | Record<string, string>
       env_from_main_process?: null | string[];

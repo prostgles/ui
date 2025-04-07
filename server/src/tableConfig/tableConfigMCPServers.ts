@@ -30,7 +30,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
           ],
         },
       },
-      command: { enum: ["npx", "npm", "uvx", "uv"] },
+      command: { enum: ["npx", "npm", "uvx", "uv", "docker"] },
       config_schema: {
         jsonbSchema: {
           record: {
@@ -55,7 +55,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
         },
         nullable: true,
       },
-      cwd: `TEXT NOT NULL`,
+      cwd: `TEXT`,
       args: `TEXT[]`,
       stderr: "TEXT",
       env: {

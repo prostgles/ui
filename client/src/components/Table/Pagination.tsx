@@ -12,13 +12,11 @@ import { classOverride, FlexRow } from "../Flex";
 import type { Command } from "../../Testing";
 
 export type PaginationProps = {
-  pageSize?: (typeof PAGE_SIZES)[number];
+  pageSize?: number;
   page?: number;
   totalRows?: number;
   onPageChange?: (newPage: number) => any;
-  onPageSizeChange?: (
-    newPageSize: Required<PaginationProps>["pageSize"],
-  ) => any;
+  onPageSizeChange?: (newPageSize: number) => any;
   className?: string;
 };
 export const Pagination = (props: PaginationProps) => {
@@ -123,4 +121,19 @@ export const Pagination = (props: PaginationProps) => {
       {pageCountInfoNode}
     </FlexRow>
   );
+};
+
+export const usePagination = ({
+  page: defaultPage = 1,
+  pageSize: defaultPageSize = PAGE_SIZES[0],
+}: Pick<PaginationProps, "page" | "pageSize">) => {
+  const [page, setPage] = React.useState(defaultPage);
+  const [pageSize, setPageSize] = React.useState<number>(defaultPageSize);
+
+  return {
+    page,
+    pageSize,
+    onPageChange: setPage,
+    onPageSizeChange: setPageSize,
+  };
 };

@@ -57,6 +57,38 @@ export const ChipArrayEditor = ({
             elemUdtName={elemUdtName}
             inputType={inputType}
             value={value}
+            onPaste={
+              renderedValues.length === 1 ?
+                (e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  const clipboardData = e.clipboardData;
+                  const pastedData = clipboardData.getData("Text").trim();
+
+                  const parseArray = (v: string) => {
+                    try {
+                      const parsedData = JSON.parse(v);
+                      if (Array.isArray(parsedData) && parsedData.length) {
+                        onChange(parsedData);
+                        return;
+                      }
+                    } catch (e) {}
+                  };
+
+                  /** If pasting a valid json array then fill it nicely */
+                  if (pastedData.startsWith("[") && pastedData.endsWith("]")) {
+                    return parseArray(pastedData);
+                  }
+                  if (
+                    pastedData.startsWith(`"`) &&
+                    pastedData.endsWith(`"`) &&
+                    pastedData.includes(",")
+                  ) {
+                    return parseArray(`[${pastedData}]`);
+                  }
+                }
+              : undefined
+            }
             {...(isLastNew ?
               {
                 placeholder: "add item...",
@@ -83,6 +115,7 @@ export const ChipArrayEditor = ({
 type InputChipProps = Pick<P, "elemTsType" | "elemUdtName" | "inputType"> & {
   value: any;
   onChange: (newVal) => void;
+  onPaste?: (e: React.ClipboardEvent<HTMLInputElement>) => void;
   onRemove?: VoidFunction;
   placeholder?: string;
 };
@@ -94,6 +127,7 @@ const InputChip = ({
   inputType,
   elemTsType,
   elemUdtName,
+  onPaste,
 }: InputChipProps) => {
   const numberOfChars =
     Math.max(2, (((value as any)?.toString() || placeholder) ?? "").length) + 2;
@@ -125,6 +159,7 @@ const InputChip = ({
         onChange={({ target: { value } }) => {
           onChange(value);
         }}
+        onPaste={onPaste}
       />
     </Chip>
   );

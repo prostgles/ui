@@ -162,6 +162,7 @@ export class McpHub {
           };
           await this.connectToServer(name, config, eventOptions);
         } catch (error) {
+          onLog("error", JSON.stringify(getErrorAsObject(error)), "");
           if (isRunningDifferentConfig) {
             console.error(
               `Failed to connect to new MCP server ${name}:`,
@@ -283,13 +284,14 @@ export const reloadMcpServerTools = async (dbs: DBS, serverName: string) => {
   const tools = await mcpHub.fetchToolsList(serverName);
   await dbs.tx(async (tx) => {
     await tx.mcp_server_tools.delete({ server_name: serverName });
-    await tx.mcp_server_tools.insert(
-      tools.map((tool) => ({
-        ...tool,
-        description: tool.description ?? "",
-        server_name: serverName,
-      })),
-    );
+    tools.length &&
+      (await tx.mcp_server_tools.insert(
+        tools.map((tool) => ({
+          ...tool,
+          description: tool.description ?? "",
+          server_name: serverName,
+        })),
+      ));
   });
   return tools.length;
 };

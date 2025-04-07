@@ -20,7 +20,7 @@ import { classOverride, FlexRow } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
 import PopupMenu from "../../components/PopupMenu";
-import SmartCardList from "../../dashboard/SmartCard/SmartCardList";
+import { SmartCardList } from "../../dashboard/SmartCardList/SmartCardList";
 import {
   getPGIntervalAsText,
   StyledInterval,

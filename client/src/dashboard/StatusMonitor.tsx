@@ -27,8 +27,8 @@ import { bytesToSize } from "./Backup/BackupsControls";
 import { useIsMounted } from "./Backup/CredentialSelector";
 import CodeExample from "./CodeExample";
 import type { DBSMethods } from "./Dashboard/DBS";
-import type { SmartCardListProps } from "./SmartCard/SmartCardList";
-import SmartCardList from "./SmartCard/SmartCardList";
+import type { SmartCardListProps } from "./SmartCardList/SmartCardList";
+import { SmartCardList } from "./SmartCardList/SmartCardList";
 import { StatusMonitorConnections } from "./StatusMonitor/StatusMonitorConnections";
 import { StyledInterval } from "./W_SQL/customRenderers";
 

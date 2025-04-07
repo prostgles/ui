@@ -16,9 +16,6 @@ import {
 import { getPasswordHash } from "../authConfig/authUtils";
 import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailSenderWithMockTest";
 import { getACRules } from "../ConnectionManager/ConnectionManager";
-import { testMCPServerConfig } from "../McpHub/McpHub";
-import { fetchLLMResponse } from "../publishMethods/askLLM/fetchLLMResponse";
-import { getLLMChatModel } from "../publishMethods/askLLM/askLLM";
 import { getPublishLLM } from "./getPublishLLM";
 
 export const publish = async (
@@ -211,11 +208,18 @@ export const publish = async (
               ],
             },
       },
-      update: user.type === "admin" && {
+      update: isAdmin && {
         fields: {
           name: 1,
           url_path: 1,
           table_options: 1,
+        },
+        validate: async ({ update, dbx, filter }) => {
+          const row = await dbx.connections.findOne(filter);
+          if (row?.is_state_db && update.table_options) {
+            throw "Table options are not supported yet";
+          }
+          return update;
         },
       },
     },

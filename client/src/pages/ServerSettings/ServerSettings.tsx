@@ -18,7 +18,7 @@ import FormField from "../../components/FormField/FormField";
 import { InfoRow } from "../../components/InfoRow";
 import { TabsWithDefaultStyle } from "../../components/Tabs";
 import { LLMProviderSetup } from "../../dashboard/AskLLM/LLMProviderSetup";
-import SmartCardList from "../../dashboard/SmartCard/SmartCardList";
+import { SmartCardList } from "../../dashboard/SmartCardList/SmartCardList";
 import { SmartForm } from "../../dashboard/SmartForm/SmartForm";
 import { t } from "../../i18n/i18nUtils";
 import { AuthProviderSetup } from "./AuthProvidersSetup";

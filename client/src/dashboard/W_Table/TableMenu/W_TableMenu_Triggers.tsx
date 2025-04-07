@@ -6,7 +6,7 @@ import Btn from "../../../components/Btn";
 import { FlexCol, FlexRow } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
 import { SwitchToggle } from "../../../components/SwitchToggle";
-import SmartCardList from "../../SmartCard/SmartCardList";
+import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
 import type { W_TableInfo } from "./getTableMeta";
 

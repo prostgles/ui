@@ -1,16 +1,15 @@
-import React from "react";
-import type { W_TableInfo } from "./getTableMeta";
-import type { AnyObject } from "prostgles-types";
-import { asName } from "prostgles-types";
 import { mdiDelete, mdiPencil, mdiPlus } from "@mdi/js";
+import type { AnyObject } from "prostgles-types";
+import React from "react";
 import Btn from "../../../components/Btn";
-import SmartCardList from "../../SmartCard/SmartCardList";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../../components/Flex";
-import type { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
+import { FlexCol, FlexRowWrap } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
-import { SwitchToggle } from "../../../components/SwitchToggle";
 import Select from "../../../components/Select/Select";
+import { SwitchToggle } from "../../../components/SwitchToggle";
+import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
+import type { W_TableInfo } from "./getTableMeta";
+import type { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
 
 type P = W_TableMenuProps & {
   tableMeta: W_TableInfo | undefined;

@@ -108,6 +108,12 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
                     },
                   },
                 },
+                card: {
+                  optional: true,
+                  type: {
+                    headerColumn: { type: "string", optional: true },
+                  },
+                },
               },
             },
           },

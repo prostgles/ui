@@ -1,5 +1,9 @@
-import { isObject, type AnyObject } from "prostgles-types";
-import React from "react";
+import {
+  getPossibleNestedInsert,
+  isObject,
+  type AnyObject,
+} from "prostgles-types";
+import React, { useMemo } from "react";
 import { classOverride, FlexCol } from "../../components/Flex";
 import { Label } from "../../components/Label";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
@@ -59,16 +63,15 @@ export const SmartFormFieldList = (props: P) => {
 
   const tableInfo = table.info;
 
-  // const geographyData = displayedColumns
-  //   .map((c) => {
-  //     if (c.udt_name === "geography") {
-  //       return {
-  //         column: c,
-  //         value: row[c.name],
-  //       };
-  //     }
-  //   })
-  //   .filter(isDefined);
+  const someColumnsHaveIcons = useMemo(() => {
+    return displayedColumns.some((c) => {
+      if (c.icon) return true;
+      const ref = getPossibleNestedInsert(c, tables);
+      return Boolean(
+        ref && tables.some((t) => t.name === ref.ftable && t.icon),
+      );
+    });
+  }, [displayedColumns, tables]);
 
   return (
     <div
@@ -149,6 +152,7 @@ export const SmartFormFieldList = (props: P) => {
             style={formFieldStyle}
             enableInsert={enableInsert}
             newRowDataHandler={newRowDataHandler}
+            someColumnsHaveIcons={someColumnsHaveIcons}
           />
         );
       })}

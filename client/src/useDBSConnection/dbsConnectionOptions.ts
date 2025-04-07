@@ -29,6 +29,9 @@ export const dbsConnectionOptions = {
     mcp_server_tools: {
       label: "MCP Tools",
       icon: "Tools",
+      card: {
+        headerColumn: "name",
+      },
     },
     mcp_server_tool_calls: {
       label: "MCP Tool Calls",
@@ -94,6 +97,9 @@ export const dbsConnectionOptions = {
     [tableKey in keyof DBSSchema]: {
       icon: string;
       label: string;
+      card?: {
+        headerColumn?: string;
+      };
       columns?: Partial<Record<keyof DBSSchema[tableKey], { icon?: string }>>;
     };
   }>, //satisfies DBSSchema["connections"]["table_options"]

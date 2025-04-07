@@ -2,7 +2,7 @@ import { mdiSearchWeb } from "@mdi/js";
 import React, { useState } from "react";
 import Btn from "../../../components/Btn";
 import Popup from "../../../components/Popup/Popup";
-import SmartCardList from "../../SmartCard/SmartCardList";
+import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import type { SmartFormFieldLinkedDataProps } from "./SmartFormFieldLinkedData";
 
 type P = Pick<
@@ -36,8 +36,9 @@ export const SmartFormFieldLinkedDataSearch = ({
         <Popup
           title={`Find ${ftable} record`}
           onClose={() => setAnchorEl(undefined)}
+          anchorEl={anchorEl}
           onClickClose={false}
-          positioning="top-center"
+          positioning="left"
           clickCatchStyle={{ opacity: 1 }}
           rootStyle={{
             maxWidth: "min(100vw, 600px)",

@@ -32,6 +32,7 @@ export const connectToMCPServer = (
         throw new Error(
           parsedConfig.error.errors.map((e) => e.message).join("\n"),
         );
+      /** Clear previous logs and errors */
       await onLog("stderr", "", log);
       await onLog("error", "", log);
       // Each MCP server requires its own transport connection and has unique capabilities, configurations, and error handling.

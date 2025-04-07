@@ -28,7 +28,7 @@ import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { DBS, DBSMethods } from "../Dashboard/DBS";
 import type { Backups } from "../Dashboard/dashboardUtils";
 import type { FieldConfig, FieldConfigRender } from "../SmartCard/SmartCard";
-import SmartCardList from "../SmartCard/SmartCardList";
+import { SmartCardList } from "../SmartCardList/SmartCardList";
 import { StyledInterval } from "../W_SQL/customRenderers";
 import { AutomaticBackups } from "./AutomaticBackups";
 import { CodeConfirmation } from "./CodeConfirmation";

@@ -10,9 +10,10 @@ import type { McpTool } from "./McpTypes";
 export const checkMCPServerTools = async (mcpHub: McpHub) => {
   for (const serverName of Object.keys(mcpHub.connections)) {
     await tryCatchV2(async () => {
-      const actualTools = await mcpHub.fetchToolsList(serverName);
-      const savedTools =
-        getProperty(DefaultMCPServers, serverName)?.mcp_server_tools ?? [];
+      const actualTools = (await mcpHub.fetchToolsList(serverName))?.map((t) =>
+        omitKeys(t, ["autoApprove"]),
+      );
+      const savedTools = DefaultMCPServers[serverName]?.mcp_server_tools ?? [];
       if (
         !isEqual(
           prepareToolsForCompare(actualTools),
