@@ -1,6 +1,6 @@
 import { mdiBellBadgeOutline, mdiDelete } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React from "react";
+import React, { useMemo } from "react";
 import { NavLink } from "react-router-dom";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { API_PATH_SUFFIXES } from "../../../commonTypes/utils";
@@ -13,13 +13,101 @@ import { SmartCardList } from "../dashboard/SmartCardList/SmartCardList";
 import { StyledInterval } from "../dashboard/W_SQL/customRenderers";
 
 export const Alerts = (prgl: Prgl) => {
-  const { connectionId, dbs } = prgl;
+  const { connectionId, dbs, user } = prgl;
+  const user_id = user?.id;
+  const alertsFilter = useMemo(() => {
+    return {
+      $existsJoined: { "database_configs.connections": { id: connectionId } },
+      $notExistsJoined: { alert_viewed_by: { user_id } },
+    } as Record<string, any>;
+  }, [connectionId, user_id]);
+  const { data: alerts } = dbs.alerts.useSubscribe(alertsFilter);
 
-  const { data: alerts } = dbs.alerts.useSubscribe({
-    //@ts-ignore
-    $existsJoined: { "database_configs.connections": { id: connectionId } },
-    $notExistsJoined: { alert_viewed_by: { user_id: prgl.user?.id } },
-  });
+  const listProps = useMemo(() => {
+    const fieldConfigs = [
+      {
+        name: "severity",
+        hide: true,
+      },
+      {
+        name: "age",
+        select: {
+          $ageNow: ["created"],
+        },
+        hide: true,
+      },
+      {
+        name: "section",
+        hide: true,
+      },
+      {
+        name: "connection_id",
+        hide: true,
+      },
+      {
+        name: "message",
+        render: (
+          message,
+          {
+            severity,
+            title,
+            age,
+            id: alert_id,
+            connection_id,
+            section,
+          }: DBSSchema["alerts"] & { age: any },
+        ) => (
+          <FlexRow className="ai-start">
+            <InfoRow
+              variant="naked"
+              color={
+                severity === "error" ? "danger"
+                : severity === "warning" ?
+                  "warning"
+                : "info"
+              }
+            >
+              <FlexCol>
+                <StyledInterval
+                  value={age}
+                  style={{ color: "var(--text-0)" }}
+                />
+                {title && <div className="bold">{title}</div>}
+                <div>{message}</div>
+                {connection_id && section && (
+                  <NavLink
+                    to={`${API_PATH_SUFFIXES.CONFIG}/${connection_id}?section=${section}`}
+                  >
+                    Go to issue
+                  </NavLink>
+                )}
+              </FlexCol>
+            </InfoRow>
+            <Btn
+              iconPath={mdiDelete}
+              onClickPromise={() =>
+                dbs.alert_viewed_by.insert({
+                  alert_id,
+                  user_id,
+                })
+              }
+            />
+          </FlexRow>
+        ),
+      },
+      {
+        name: "id",
+        hide: true,
+      },
+    ];
+    const rowProps = {
+      className: "ai-center",
+    };
+    return {
+      fieldConfigs,
+      rowProps,
+    };
+  }, [dbs, user_id]);
 
   if (!alerts?.length) return null;
 
@@ -53,92 +141,9 @@ export const Alerts = (prgl: Prgl) => {
           tables={prgl.dbsTables}
           tableName={"alerts"}
           realtime={true}
-          filter={{
-            $existsJoined: {
-              "database_configs.connections": { id: connectionId },
-            },
-            $notExistsJoined: { alert_viewed_by: { user_id: prgl.user?.id } },
-          }}
+          filter={alertsFilter}
           showEdit={false}
-          rowProps={{
-            className: "ai-center",
-          }}
-          fieldConfigs={[
-            {
-              name: "severity",
-              hide: true,
-            },
-            {
-              name: "age",
-              select: {
-                $ageNow: ["created"],
-              },
-              hide: true,
-            },
-            {
-              name: "section",
-              hide: true,
-            },
-            {
-              name: "connection_id",
-              hide: true,
-            },
-            {
-              name: "message",
-              render: (
-                message,
-                {
-                  severity,
-                  title,
-                  age,
-                  id: alert_id,
-                  connection_id,
-                  section,
-                }: DBSSchema["alerts"] & { age: any },
-              ) => (
-                <FlexRow className="ai-start">
-                  <InfoRow
-                    variant="naked"
-                    color={
-                      severity === "error" ? "danger"
-                      : severity === "warning" ?
-                        "warning"
-                      : "info"
-                    }
-                  >
-                    <FlexCol>
-                      <StyledInterval
-                        value={age}
-                        style={{ color: "var(--text-0)" }}
-                      />
-                      {title && <div className="bold">{title}</div>}
-                      <div>{message}</div>
-                      {connection_id && section && (
-                        <NavLink
-                          to={`${API_PATH_SUFFIXES.CONFIG}/${connection_id}?section=${section}`}
-                        >
-                          Go to issue
-                        </NavLink>
-                      )}
-                    </FlexCol>
-                  </InfoRow>
-                  <Btn
-                    iconPath={mdiDelete}
-                    onClickPromise={() =>
-                      dbs.alert_viewed_by.insert({
-                        alert_id,
-                        user_id: prgl.user?.id,
-                      })
-                    }
-                  />
-                </FlexRow>
-              ),
-            },
-            {
-              name: "id",
-              hide: true,
-            },
-          ]}
+          {...listProps}
         />
       )}
     </PopupMenu>

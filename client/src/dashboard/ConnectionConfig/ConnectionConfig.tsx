@@ -25,7 +25,7 @@ import { useAccessControlSearchParams } from "../AccessControl/useAccessControlS
 import { BackupsControls } from "../Backup/BackupsControls";
 import { APIDetails } from "../ConnectionConfig/APIDetails/APIDetails";
 import { FileTableConfigControls } from "../FileTableControls/FileTableConfigControls";
-import { StatusMonitor } from "../StatusMonitor";
+import { StatusMonitor } from "../StatusMonitor/StatusMonitor";
 import { TableConfig } from "../TableConfig/TableConfig";
 import { PublishedMethods } from "../W_Method/PublishedMethods";
 import { OnMountFunction } from "./OnMountFunction";

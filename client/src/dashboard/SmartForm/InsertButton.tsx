@@ -1,6 +1,6 @@
 import { mdiPlus } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";
 import { FileInput } from "../../components/FileInput/FileInput";
@@ -24,6 +24,9 @@ export const InsertButton = ({
   onSuccess,
 }: InsertButtonProps) => {
   const [open, setOpen] = useState(false);
+  const onClose = useCallback(() => {
+    setOpen(false);
+  }, []);
   const [defaultData, setDefaultData] = useState<AnyObject>();
   if (!db[tableName]?.insert) {
     return null;
@@ -67,7 +70,7 @@ export const InsertButton = ({
           methods={methods}
           tableName={tableName}
           onSuccess={onSuccess}
-          onClose={() => setOpen(false)}
+          onClose={onClose}
         />
       )}
     </>

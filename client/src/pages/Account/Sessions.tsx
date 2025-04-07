@@ -12,7 +12,7 @@ import {
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject } from "prostgles-types";
-import React from "react";
+import React, { useMemo } from "react";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import type { DivProps } from "../../components/Flex";
@@ -51,38 +51,21 @@ export const Sessions = ({
   className = "",
   dbsMethods,
 }: SessionsProps) => {
-  if (!user) return null;
-
   const tokenMode = displayType === "api_token";
   const sessionLabel =
     tokenMode ? t.Sessions["API tokens"] : t.Sessions["Sessions"];
 
-  return (
-    <SmartCardList
-      title={tokenMode ? undefined : ({ count }) => `${sessionLabel} ${count}`}
-      db={dbs as DBHandlerClient}
-      methods={dbsMethods}
-      tableName="sessions"
-      tables={dbsTables}
-      filter={getActiveTokensFilter(displayType, user.id) as AnyObject}
-      realtime={true}
-      style={{
+  const listProps = useMemo(
+    () => ({
+      title: tokenMode ? undefined : ({ count }) => `${sessionLabel} ${count}`,
+      filter: getActiveTokensFilter(displayType, user?.id) as AnyObject,
+      style: {
         maxHeight: "40vh",
-      }}
-      className={"min-h-0 f-1 " + className}
-      noDataComponent={
-        <InfoRow color="info" style={{ alignItems: "center" }}>
-          {t.Sessions["No active "]}
-          {sessionLabel}
-        </InfoRow>
-      }
-      noDataComponentMode="hide-all"
-      orderBy={{
+      },
+      orderBy: {
         id_num: false,
-      }}
-      limit={10}
-      showEdit={false}
-      fieldConfigs={[
+      },
+      fieldConfigs: [
         { name: "is_connected", hide: true },
         {
           name: "active",
@@ -196,7 +179,30 @@ export const Sessions = ({
               />
             ),
         },
-      ]}
+      ],
+    }),
+    [dbs.sessions, displayType, sessionLabel, tokenMode, user?.id],
+  );
+  if (!user) return null;
+
+  return (
+    <SmartCardList
+      className={"min-h-0 f-1 " + className}
+      db={dbs as DBHandlerClient}
+      methods={dbsMethods}
+      tableName="sessions"
+      tables={dbsTables}
+      realtime={true}
+      showEdit={false}
+      limit={10}
+      noDataComponentMode="hide-all"
+      noDataComponent={
+        <InfoRow color="info" style={{ alignItems: "center" }}>
+          {t.Sessions["No active "]}
+          {sessionLabel}
+        </InfoRow>
+      }
+      {...listProps}
     />
   );
 };

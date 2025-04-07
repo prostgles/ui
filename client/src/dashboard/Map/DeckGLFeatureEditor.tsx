@@ -289,11 +289,14 @@ export const DeckGLFeatureEditor = ({
     renderShapes(undefined);
   }, [editMode?.geometry, renderShapes]);
 
-  const wasUpdated =
-    (isUpdate &&
-      JSON.stringify(editMode.initialGeometry) !==
-        JSON.stringify(editMode.geometry)) ||
-    editMode?.geometry;
+  const wasUpdated = useMemo(() => {
+    return (
+      (isUpdate &&
+        JSON.stringify(editMode.initialGeometry) !==
+          JSON.stringify(editMode.geometry)) ||
+      editMode?.geometry
+    );
+  }, [editMode?.geometry, editMode?.initialGeometry, isUpdate]);
 
   const layerTables: LayerTable[] = (
     layerQueries?.filter((l) => "tableName" in l) as LayerTable[]
@@ -301,26 +304,34 @@ export const DeckGLFeatureEditor = ({
     .map((l) => ({ ...l, rootTable: l.path?.at(-1) ?? l.tableName }))
     .filter((l) => dbProject[l.tableName]?.update);
 
+  const closeEditMode = useCallback(() => {
+    clearEditMode(true);
+  }, [clearEditMode]);
+
+  const editModeFilter = useMemo(() => {
+    const filter =
+      editMode?.$rowhash ?
+        [{ fieldName: "$rowhash", value: editMode.$rowhash }]
+      : undefined;
+    return filter;
+  }, [editMode?.$rowhash]);
+
   if (!layerTables.length) {
     return null;
   }
 
   if (editMode) {
     if (editMode.finished && editMode.geometry) {
-      const filter =
-        editMode.$rowhash ?
-          [{ fieldName: "$rowhash", value: editMode.$rowhash }]
-        : undefined;
       return (
         <SmartForm
           asPopup={true}
           tableName={editMode.tableName}
-          rowFilter={filter}
+          rowFilter={editModeFilter}
           db={dbProject}
           tables={dbTables}
           methods={dbMethods}
           defaultData={defaultData}
-          onSuccess={() => clearEditMode(true)}
+          onSuccess={closeEditMode}
           onClose={clearEditMode}
           confirmUpdates={true}
         />

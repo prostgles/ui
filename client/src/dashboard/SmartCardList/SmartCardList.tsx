@@ -23,7 +23,6 @@ import {
   useSmartCardListControls,
 } from "./SmartCardListControls";
 import { useSmartCardListState } from "./useSmartCardListState";
-import { useWhyDidYouUpdate } from "../../components/MonacoEditor/useWhyDidYouUpdate";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
@@ -77,6 +76,7 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
     className?: string;
   };
   onSuccess?: SmartFormProps["onSuccess"];
+  enableListAnimations?: boolean;
 } & (
     | {
         /**
@@ -98,7 +98,7 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
       }
     | {
         data: AnyObject[];
-        onChange?: (newData: AnyObject[]) => void;
+        onChange: (newData: AnyObject[]) => void;
       }
   );
 
@@ -122,6 +122,7 @@ export const SmartCardList = <T extends AnyObject>(
     noDataComponentMode,
     noDataComponent,
     onSuccess,
+    enableListAnimations = false,
   } = props;
 
   const paginationState = usePagination({
@@ -189,7 +190,10 @@ export const SmartCardList = <T extends AnyObject>(
           state={controlsState}
         />
       )}
-      <FlipMove className="flex-col gap-p5 relative">
+      <MaybeFlipMove
+        className="flex-col gap-p5 relative"
+        flipMove={enableListAnimations}
+      >
         {showNoDataComponent ?
           noDataComponent
         : items.map((defaultData, i) => {
@@ -225,7 +229,7 @@ export const SmartCardList = <T extends AnyObject>(
                     className="absolute"
                     style={{ top: "5px", right: "5px" }}
                     onClick={() => {
-                      if ("onChange" in props && props.onChange) {
+                      if ("onChange" in props) {
                         props.onChange(props.data.filter((_, di) => di !== i));
                       }
                     }}
@@ -235,11 +239,26 @@ export const SmartCardList = <T extends AnyObject>(
             );
           })
         }
-      </FlipMove>
+      </MaybeFlipMove>
       <Pagination {...paginationState} totalRows={totalRows} />
       {footer}
     </FlexCol>
   );
+};
+
+const MaybeFlipMove = ({
+  children,
+  flipMove,
+  className,
+}: {
+  children: React.ReactNode;
+  flipMove: boolean;
+  className?: string;
+}) => {
+  if (flipMove) {
+    return <FlipMove className={className}>{children}</FlipMove>;
+  }
+  return children;
 };
 
 const getCols = (cols: ValidatedColumnInfo[], row: AnyObject) => {

@@ -21,6 +21,7 @@ type P = {
   selectedId?: number | null;
   onChange: (credentialId: number) => void;
 };
+const defaultCredentialsData = { type: "s3" };
 
 export function CredentialSelector({
   selectedId,
@@ -85,7 +86,7 @@ export function CredentialSelector({
             tableName="credentials"
             tables={dbsTables}
             showJoinedTables={false}
-            defaultData={{ type: "s3" }}
+            defaultData={defaultCredentialsData}
             onClose={popupClose}
           />
         )}

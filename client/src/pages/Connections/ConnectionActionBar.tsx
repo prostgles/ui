@@ -10,7 +10,7 @@ import React from "react";
 import Btn from "../../components/Btn";
 import { FlexRow } from "../../components/Flex";
 import PopupMenu from "../../components/PopupMenu";
-import { StatusMonitor } from "../../dashboard/StatusMonitor";
+import { StatusMonitor } from "../../dashboard/StatusMonitor/StatusMonitor";
 import { StatusDotCircleIcon } from "../Account/Sessions";
 import type { ConnectionProps } from "./Connection";
 import { t } from "../../i18n/i18nUtils";

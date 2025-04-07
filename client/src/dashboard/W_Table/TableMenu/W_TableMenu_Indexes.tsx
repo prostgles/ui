@@ -1,6 +1,6 @@
 import { mdiDatabaseRefreshOutline, mdiDelete, mdiPlus } from "@mdi/js";
 import { asName } from "prostgles-types";
-import React from "react";
+import React, { useMemo } from "react";
 import Btn from "../../../components/Btn";
 import { FlexCol, FlexRow } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
@@ -21,6 +21,73 @@ export const W_TableMenu_Indexes = ({
   prgl,
 }: P) => {
   const tableName = w.table_name;
+
+  const listProps = useMemo(() => {
+    return {
+      tableName: {
+        sqlQuery: `
+      SELECT tablename, indexname, indexdef
+      FROM pg_indexes
+      WHERE schemaname = current_schema() AND format('%I', tablename) = \${tableName}
+    `,
+        dataAge: prgl.dbKey,
+        args: { tableName },
+      },
+      fieldConfigs: [
+        {
+          name: "indexdef",
+          label: "",
+          render: (def) => (
+            <div className="ws-pre-line">
+              {def.replace(" ON ", " \nON ").replace(" USING ", " \nUSING ")}
+            </div>
+          ),
+        },
+        {
+          name: "indexname",
+          label: "",
+          className: "show-on-parent-hover ml-auto",
+          render: (indexname) => (
+            <FlexRow className="">
+              <Btn
+                title="Drop index..."
+                color="danger"
+                variant="faded"
+                iconPath={mdiDelete}
+                onClick={() => {
+                  onSetQuery({
+                    sql: `DROP INDEX ${JSON.stringify(indexname)}`,
+                  });
+                }}
+              />
+              <Btn
+                title="Reindex"
+                iconPath={mdiDatabaseRefreshOutline}
+                variant="faded"
+                onClick={() => {
+                  onSetQuery({
+                    title: "Reindex",
+                    contentTop: (
+                      <>
+                        REINDEX is similar to a drop and recreate of the index
+                        in that the index contents are rebuilt from scratch.
+                        <br></br>
+                        If &quot;CONCURRENTLY&quot; is used PostgreSQL will
+                        rebuild the index without taking any locks that prevent
+                        concurrent inserts, updates, or deletes on the table
+                      </>
+                    ),
+                    sql: `REINDEX INDEX ${asName(indexname)}`,
+                  });
+                }}
+              />
+            </FlexRow>
+          ),
+        },
+      ],
+    };
+  }, [tableName, onSetQuery, prgl.dbKey]);
+
   if (!tableMeta || !tableName) return null;
 
   return (
@@ -30,71 +97,10 @@ export const W_TableMenu_Indexes = ({
       </div>
       <SmartCardList
         db={prgl.db}
-        tableName={{
-          sqlQuery: `
-          SELECT tablename, indexname, indexdef
-          FROM pg_indexes
-          WHERE schemaname = current_schema() AND format('%I', tablename) = \${tableName}
-        `,
-          dataAge: prgl.dbKey,
-          args: { tableName },
-        }}
         methods={prgl.methods}
         tables={prgl.tables}
         noDataComponent={<InfoRow color="info">No indexes</InfoRow>}
-        fieldConfigs={[
-          {
-            name: "indexdef",
-            label: "",
-            render: (def) => (
-              <div className="ws-pre-line">
-                {def.replace(" ON ", " \nON ").replace(" USING ", " \nUSING ")}
-              </div>
-            ),
-          },
-          {
-            name: "indexname",
-            label: "",
-            className: "show-on-parent-hover ml-auto",
-            render: (indexname) => (
-              <FlexRow className="">
-                <Btn
-                  title="Drop index..."
-                  color="danger"
-                  variant="faded"
-                  iconPath={mdiDelete}
-                  onClick={() => {
-                    onSetQuery({
-                      sql: `DROP INDEX ${JSON.stringify(indexname)}`,
-                    });
-                  }}
-                />
-                <Btn
-                  title="Reindex"
-                  iconPath={mdiDatabaseRefreshOutline}
-                  variant="faded"
-                  onClick={() => {
-                    onSetQuery({
-                      title: "Reindex",
-                      contentTop: (
-                        <>
-                          REINDEX is similar to a drop and recreate of the index
-                          in that the index contents are rebuilt from scratch.
-                          <br></br>
-                          If &quot;CONCURRENTLY&quot; is used PostgreSQL will
-                          rebuild the index without taking any locks that
-                          prevent concurrent inserts, updates, or deletes on the
-                          table
-                        </>
-                      ),
-                      sql: `REINDEX INDEX ${asName(indexname)}`,
-                    });
-                  }}
-                />
-              </FlexRow>
-            ),
-          },
-        ]}
+        {...listProps}
       />
       <FlexRow className="ai-center ml-p5 f-0">
         <Select

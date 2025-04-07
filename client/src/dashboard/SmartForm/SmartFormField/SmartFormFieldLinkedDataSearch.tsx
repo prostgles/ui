@@ -1,5 +1,5 @@
 import { mdiSearchWeb } from "@mdi/js";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Btn from "../../../components/Btn";
 import Popup from "../../../components/Popup/Popup";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
@@ -25,6 +25,11 @@ export const SmartFormFieldLinkedDataSearch = ({
 }: P) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement>();
 
+  const filter = useMemo(() => {
+    return {
+      [fcol]: row[column.name],
+    };
+  }, [row, column.name, fcol]);
   return (
     <>
       <Btn
@@ -50,9 +55,7 @@ export const SmartFormFieldLinkedDataSearch = ({
             methods={methods}
             tables={tables}
             tableName={ftable}
-            filter={{
-              [fcol]: row[column.name],
-            }}
+            filter={filter}
           />
           {/* <SmartTable
             allowEdit={true}

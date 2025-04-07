@@ -1,0 +1,265 @@
+import { mdiCancel, mdiStopCircleOutline } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { usePromise } from "prostgles-client/dist/react-hooks";
+import React, { useMemo, useState } from "react";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import type { PrglState } from "../../App";
+import Btn from "../../components/Btn";
+import Chip from "../../components/Chip";
+import { FlexRow } from "../../components/Flex";
+import { InfoRow } from "../../components/InfoRow";
+import PopupMenu from "../../components/PopupMenu";
+import CodeExample from "../CodeExample";
+import type { SmartCardListProps } from "../SmartCardList/SmartCardList";
+import { SmartCardList } from "../SmartCardList/SmartCardList";
+import { StyledInterval } from "../W_SQL/customRenderers";
+import type { StatusMonitorProps } from "./StatusMonitor";
+import { StatusMonitorProcListHeader } from "./StatusMonitorProcListHeader";
+
+export const StatusMonitorViewTypes = [
+  "Queries",
+  "Active queries",
+  "Blocked queries",
+] as const;
+export type StatusMonitorViewType = (typeof StatusMonitorViewTypes)[number];
+
+export const StatusMonitorProcList = ({
+  connectionId,
+  dbs,
+  dbsMethods,
+  dbsTables,
+  runConnectionQuery,
+  refreshRate,
+  setRefreshRate,
+  noBash,
+}: StatusMonitorProps & {
+  refreshRate: number;
+  setRefreshRate: (rate: number) => void;
+  noBash: boolean | undefined;
+}) => {
+  const [viewType, setViewType] = useState<StatusMonitorViewType>(
+    StatusMonitorViewTypes[1],
+  );
+
+  const [toggledFields, setToggledFields] = useState<string[]>([]);
+  const { fieldConfigs, excludedFields } = useStatusMonitorProcListProps(
+    dbsMethods,
+    toggledFields,
+    connectionId,
+    noBash ?? true,
+  );
+  const allToggledFields = useMemo(
+    () =>
+      fieldConfigs
+        .filter(
+          (f) =>
+            typeof f === "string" || (!(f as any).hide && !(f as any).hideIf),
+        )
+        .map((f) => (typeof f === "string" ? f : f.name)),
+    [fieldConfigs],
+  );
+
+  const [datidFilter, setDatidFilter] = useState<number | undefined>();
+
+  usePromise(async () => {
+    const datids = await runConnectionQuery(
+      connectionId,
+      `SELECT datid
+      FROM pg_catalog.pg_stat_database
+      WHERE datname = current_database()
+    `,
+    );
+    if (datids.length === 1) {
+      setDatidFilter(datids[0]?.datid);
+    }
+  }, [runConnectionQuery, connectionId]);
+
+  const filter = useMemo(() => {
+    return {
+      $and: [
+        {
+          connection_id: connectionId,
+          ...(datidFilter ? { datid: datidFilter } : {}),
+          ...(viewType === "Blocked queries" ? { blocked_by_num: { ">": 0 } }
+          : viewType === "Active queries" ? { state: "active" }
+          : {}),
+          // state: { "<>": "idle" }
+        },
+        ...(viewType === "Blocked queries" ?
+          [{ blocked_by_num: { ">": 0 } }]
+        : []),
+      ],
+    };
+  }, [datidFilter, viewType, connectionId]);
+
+  return (
+    <SmartCardList
+      db={dbs as DBHandlerClient}
+      methods={dbsMethods}
+      tables={dbsTables}
+      tableName="stats"
+      showEdit={false}
+      showTopBar={{ sort: true }}
+      orderBy={{ cpu: false }}
+      rowProps={{
+        style: {
+          borderRadius: 0,
+        },
+      }}
+      noDataComponent={
+        <InfoRow color="info" variant="filled">
+          No {viewType}
+        </InfoRow>
+      }
+      title={
+        <StatusMonitorProcListHeader
+          allToggledFields={allToggledFields}
+          excludedFields={excludedFields}
+          setToggledFields={setToggledFields}
+          dbsTables={dbsTables}
+          datidFilter={datidFilter}
+          setDatidFilter={setDatidFilter}
+          viewType={viewType}
+          setViewType={setViewType}
+          refreshRate={refreshRate}
+          setRefreshRate={setRefreshRate}
+        />
+      }
+      realtime={true}
+      throttle={500}
+      filter={filter}
+      fieldConfigs={fieldConfigs}
+    />
+  );
+};
+
+type FieldConfigs = Required<SmartCardListProps>["fieldConfigs"];
+
+const useStatusMonitorProcListProps = (
+  dbsMethods: PrglState["dbsMethods"],
+  toggledFields: string[],
+  connectionId: string,
+  noBash: boolean,
+) => {
+  return useMemo(() => {
+    const actionRow = {
+      name: "id_query_hash",
+      className: "ml-auto show-on-parent-hover",
+      label: "",
+      render: (id_query_hash, row) =>
+        !dbsMethods.killPID ?
+          <div></div>
+        : <FlexRow className="">
+            <Btn
+              title="Cancel this query"
+              iconPath={mdiStopCircleOutline}
+              color="danger"
+              onClickPromise={() =>
+                dbsMethods.killPID!(connectionId, id_query_hash, "cancel")
+              }
+            />
+            <Btn
+              title="Terminate this query"
+              iconPath={mdiCancel}
+              color="danger"
+              onClickPromise={() =>
+                dbsMethods.killPID!(connectionId, id_query_hash, "terminate")
+              }
+            />
+          </FlexRow>,
+    } satisfies FieldConfigs[number];
+
+    const hideOverflowStyle = { style: { overflow: "hidden" } };
+    const fixedFields = [
+      {
+        name: "cpu",
+        hide: noBash,
+        ...hideOverflowStyle,
+        renderValue: (v: number) => <span className="">{v}%</span>,
+      },
+      {
+        name: "mem",
+        hide: noBash,
+        ...hideOverflowStyle,
+        renderValue: (v: number) => <span className="">{v}%</span>,
+      },
+      {
+        name: "state",
+        ...hideOverflowStyle,
+        label: "State",
+        render: (state) => {
+          return (
+            <Chip
+              className="mt-p25"
+              color={
+                state === "idle" ? "yellow"
+                : state === "active" ?
+                  "blue"
+                : undefined
+              }
+            >
+              {state ?? "unknown"}
+            </Chip>
+          );
+        },
+      },
+      {
+        name: "blocked_by",
+        ...hideOverflowStyle,
+        label: "Blocked by pids",
+        hideIf: (value) => !value?.length,
+        render: (pids, row) => (
+          <FlexRow>
+            {pids?.map((pid, i) => (
+              <Chip key={pid} className="mt-p25" color="red">
+                {pid}
+              </Chip>
+            ))}
+          </FlexRow>
+        ),
+      },
+      {
+        name: "running_time",
+        ...hideOverflowStyle,
+        label: "Running time",
+        select: { $ageNow: ["query_start"] },
+        renderValue: (value) => <StyledInterval value={value} mode="pg_stat" />,
+      },
+      { name: "pid" },
+      actionRow,
+      {
+        name: "query",
+        className: "w-full",
+        renderValue: (query, row) => (
+          <PopupMenu
+            key={row.pid}
+            button={<div>{query}</div>}
+            positioning="center"
+            title={`PID: ${row.pid}`}
+          >
+            <CodeExample
+              value={query}
+              language="sql"
+              style={{
+                minWidth: "450px",
+                minHeight: "450px",
+              }}
+            />
+          </PopupMenu>
+        ),
+      },
+    ] satisfies FieldConfigs;
+
+    const excludedFields: (keyof DBSSchema["stats"])[] = fixedFields
+      .filter((f) => (f as any).render || (f as any).renderValue)
+      .map((f) => f.name)
+      .concat(["connection_id"]) as any;
+
+    const fieldConfigs = [
+      ...fixedFields.filter((ff) => !toggledFields.includes(ff.name)),
+      ...toggledFields,
+    ];
+
+    return { fieldConfigs, excludedFields };
+  }, [dbsMethods, toggledFields, connectionId, noBash]);
+};

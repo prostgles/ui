@@ -1,6 +1,6 @@
 import { mdiDelete, mdiPencil, mdiPlus } from "@mdi/js";
 import type { AnyObject } from "prostgles-types";
-import React from "react";
+import React, { useMemo } from "react";
 import Btn from "../../../components/Btn";
 import { FlexCol, FlexRowWrap } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
@@ -17,6 +17,83 @@ type P = W_TableMenuProps & {
 };
 export const W_TableMenu_Policies = ({ tableMeta, onSetQuery, prgl, w }: P) => {
   const tableName = w.table_name;
+
+  const listProps = useMemo(() => {
+    return {
+      tableName: {
+        dataAge: prgl.dbKey,
+        sqlQuery: PG_OBJECT_QUERIES.policies.sql(tableName),
+        args: { tableName },
+      },
+      fieldConfigs: [
+        {
+          name: "definition",
+          label: "",
+          render: (v) => <div className="ws-pre-line">{v}</div>,
+        },
+        {
+          name: "tablename",
+          label: "",
+          className: "show-on-parent-hover",
+          render: (v, row: AnyObject) => (
+            <FlexCol>
+              <Select
+                title="Alter this policy..."
+                btnProps={{
+                  iconPath: mdiPencil,
+                  variant: "faded",
+                  children: "",
+                }}
+                fullOptions={[
+                  {
+                    key: "RENAME TO",
+                    subLabel: "Change the name of the policy",
+                  },
+                  {
+                    key: "TO",
+                    subLabel: "Change who the policy applies to",
+                  },
+                  {
+                    key: "USING",
+                    subLabel:
+                      "Change which rows (or the condition) the policy applies to",
+                  },
+                  {
+                    key: "WITH CHECK",
+                    subLabel:
+                      "Change condition used to validate INSERT and UPDATE queries",
+                  },
+                ]}
+                onChange={(val) => {
+                  onSetQuery({
+                    sql:
+                      `ALTER POLICY ${row.escaped_identifier} ON ${tableName}\n${val} ` +
+                      (val === "WITH CHECK" ? row.with_check
+                      : val === "USING" ? (row.using ?? "")
+                      : val === "TO" ? (row.roles ?? "")
+                      : ""),
+                    title: "Alter policy",
+                  });
+                }}
+              />
+              <Btn
+                title="Delete this policy..."
+                iconPath={mdiDelete}
+                color="danger"
+                variant="faded"
+                onClick={() =>
+                  onSetQuery({
+                    sql: `DROP POLICY ${row.escaped_identifier} ON ${tableName}`,
+                  })
+                }
+              />
+            </FlexCol>
+          ),
+        },
+      ],
+    };
+  }, [tableName, prgl.dbKey, onSetQuery]);
+
   if (!tableMeta || !tableName) return null;
   const AlterQuery = `ALTER TABLE ${tableName}`;
   return (
@@ -78,78 +155,8 @@ export const W_TableMenu_Policies = ({ tableMeta, onSetQuery, prgl, w }: P) => {
         db={prgl.db}
         methods={prgl.methods}
         tables={prgl.tables}
-        tableName={{
-          dataAge: prgl.dbKey,
-          sqlQuery: PG_OBJECT_QUERIES.policies.sql(tableName),
-          args: { tableName },
-        }}
         noDataComponent={<InfoRow color="info">No policies</InfoRow>}
-        fieldConfigs={[
-          {
-            name: "definition",
-            label: "",
-            render: (v) => <div className="ws-pre-line">{v}</div>,
-          },
-          {
-            name: "tablename",
-            label: "",
-            className: "show-on-parent-hover",
-            render: (v, row: AnyObject) => (
-              <FlexCol>
-                <Select
-                  title="Alter this policy..."
-                  btnProps={{
-                    iconPath: mdiPencil,
-                    variant: "faded",
-                    children: "",
-                  }}
-                  fullOptions={[
-                    {
-                      key: "RENAME TO",
-                      subLabel: "Change the name of the policy",
-                    },
-                    {
-                      key: "TO",
-                      subLabel: "Change who the policy applies to",
-                    },
-                    {
-                      key: "USING",
-                      subLabel:
-                        "Change which rows (or the condition) the policy applies to",
-                    },
-                    {
-                      key: "WITH CHECK",
-                      subLabel:
-                        "Change condition used to validate INSERT and UPDATE queries",
-                    },
-                  ]}
-                  onChange={(val) => {
-                    onSetQuery({
-                      sql:
-                        `ALTER POLICY ${row.escaped_identifier} ON ${tableName}\n${val} ` +
-                        (val === "WITH CHECK" ? row.with_check
-                        : val === "USING" ? (row.using ?? "")
-                        : val === "TO" ? (row.roles ?? "")
-                        : ""),
-                      title: "Alter policy",
-                    });
-                  }}
-                />
-                <Btn
-                  title="Delete this policy..."
-                  iconPath={mdiDelete}
-                  color="danger"
-                  variant="faded"
-                  onClick={() =>
-                    onSetQuery({
-                      sql: `DROP POLICY ${row.escaped_identifier} ON ${tableName}`,
-                    })
-                  }
-                />
-              </FlexCol>
-            ),
-          },
-        ]}
+        {...listProps}
       />
       <Btn
         color="action"

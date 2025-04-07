@@ -1,5 +1,5 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import React from "react";
+import React, { useMemo, useState } from "react";
 import type { Prgl } from "../../App";
 import Chip from "../../components/Chip";
 import { FlexCol } from "../../components/Flex";
@@ -14,7 +14,22 @@ export const LLMProviderSetup = ({
   dbsMethods,
   dbsTables,
 }: Pick<Prgl, "dbs" | "dbsMethods" | "dbsTables">) => {
-  const [addCreds, setAddCreds] = React.useState(false);
+  const [addCreds, setAddCreds] = useState(false);
+
+  const fieldConfigs = useMemo(() => {
+    return [
+      {
+        name: "name",
+        label: "",
+      },
+      {
+        name: "is_default",
+        className: "o-visible",
+        render: (is_default) =>
+          is_default ? <Chip color="blue">default</Chip> : " ",
+      },
+    ];
+  }, []);
 
   return (
     <>
@@ -24,45 +39,27 @@ export const LLMProviderSetup = ({
         tableName={"llm_credentials"}
         methods={dbsMethods}
         tables={dbsTables}
-        showTopBar={true}
-        orderByfields={[]}
+        showTopBar={{ sort: false }}
         noDataComponent={
           <InfoRow color="info" variant="filled">
             No LLM providers
           </InfoRow>
         }
-        fieldConfigs={[
-          {
-            name: "name",
-            label: "",
-          },
-          {
-            name: "is_default",
-            className: "o-visible",
-            render: (is_default) =>
-              is_default ? <Chip color="blue">default</Chip> : " ",
-          },
-        ]}
+        fieldConfigs={fieldConfigs}
       />
       <AddLLMCredentialForm dbs={dbs} />
       {addCreds && (
-        <Popup
-          title="Add LLM Provider"
+        <SmartForm
+          asPopup={true}
+          label="Add LLM Provider"
+          showJoinedTables={false}
+          tableName="llm_credentials"
+          db={dbs as DBHandlerClient}
+          methods={dbsMethods}
+          tables={dbsTables}
+          onChange={console.log}
           onClose={() => setAddCreds(false)}
-          onClickClose={false}
-        >
-          <FlexCol>
-            <SmartForm
-              label=""
-              showJoinedTables={false}
-              tableName="llm_credentials"
-              db={dbs as DBHandlerClient}
-              methods={dbsMethods}
-              tables={dbsTables}
-              onChange={console.log}
-            />
-          </FlexCol>
-        </Popup>
+        />
       )}
     </>
   );

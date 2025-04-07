@@ -70,9 +70,7 @@ export const MCPServers = (props: ServerSettingsProps) => {
         <SmartCardList
           db={dbs as DBHandlerClient}
           methods={dbsMethods}
-          {...(mcp_servers_disabled && {
-            className: "no-interaction",
-          })}
+          className={mcp_servers_disabled ? "no-interaction" : undefined}
           tableName="mcp_servers"
           realtime={true}
           showTopBar={false}
@@ -86,6 +84,7 @@ export const MCPServers = (props: ServerSettingsProps) => {
           filter={filter}
           orderBy={orderBy}
           fieldConfigs={fieldConfigs}
+          enableListAnimations={true}
           getRowFooter={(
             r: DBSSchema["mcp_servers"] & {
               mcp_server_configs: DBSSchema["mcp_server_configs"][];

@@ -161,7 +161,7 @@ export type W_SQLState = {
 
   queryEnded?: number;
   page: number;
-  pageSize: PageSize;
+  pageSize: number;
   loadingSuggestions: boolean;
 };
 
