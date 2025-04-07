@@ -95,10 +95,20 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
         orderByfields?: string[];
         showEdit?: boolean;
         onSetData?: (items: AnyObject[]) => void;
+        data?: undefined;
+        onChange?: undefined;
       }
     | {
         data: AnyObject[];
         onChange: (newData: AnyObject[]) => void;
+        limit?: undefined;
+        filter?: undefined;
+        orderBy?: undefined;
+        realtime?: undefined;
+        throttle?: undefined;
+        orderByfields?: undefined;
+        showEdit?: undefined;
+        onSetData?: undefined;
       }
   );
 
@@ -123,17 +133,36 @@ export const SmartCardList = <T extends AnyObject>(
     noDataComponent,
     onSuccess,
     enableListAnimations = false,
+    onChange,
+    onSetData,
+    data,
+    filter,
+    throttle,
+    realtime,
+    columns: propsColumns,
   } = props;
 
   const paginationState = usePagination({
-    pageSize: "limit" in props ? props.limit : 25,
+    pageSize: "limit" in props && props.limit ? props.limit : 25,
   });
 
   const [stateOrderBy, setOrderBy] = useState<Record<string, boolean>>(
     "data" in props ? {} : (props.orderBy ?? {}),
   );
   const state = useSmartCardListState(
-    props as SmartCardListProps,
+    {
+      db,
+      data,
+      tableName,
+      columns: propsColumns,
+      fieldConfigs: _fieldConfigs as FieldConfig[],
+      filter,
+      throttle,
+      limit: paginationState.pageSize,
+      realtime,
+      orderBy: stateOrderBy,
+      onSetData,
+    },
     paginationState,
     stateOrderBy,
   );
@@ -222,16 +251,14 @@ export const SmartCardList = <T extends AnyObject>(
                     "showEdit" in props ? props.showEdit : undefined
                   }
                 />
-                {"onChange" in props && (
+                {onChange && (
                   <Btn
                     iconPath={mdiDelete}
                     color="danger"
                     className="absolute"
                     style={{ top: "5px", right: "5px" }}
                     onClick={() => {
-                      if ("onChange" in props) {
-                        props.onChange(props.data.filter((_, di) => di !== i));
-                      }
+                      onChange(props.data.filter((_, di) => di !== i));
                     }}
                   />
                 )}

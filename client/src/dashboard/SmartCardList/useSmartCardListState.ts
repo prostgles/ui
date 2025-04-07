@@ -8,19 +8,40 @@ import { type usePagination } from "../../components/Table/Pagination";
 import { getSelectForFieldConfigs } from "../SmartCard/getSelectForFieldConfigs";
 import { getSmartCardColumns } from "../SmartCard/getSmartCardColumns";
 import type { SmartCardListProps } from "./SmartCardList";
-import { useWhyDidYouUpdate } from "../../components/MonacoEditor/useWhyDidYouUpdate";
 
 export const useSmartCardListState = (
-  {
-    /** Removed to reduced re-renders */
-    footer,
-    noDataComponent,
-    ...props
-  }: SmartCardListProps,
+  props: Pick<
+    SmartCardListProps,
+    | "db"
+    | "tableName"
+    | "columns"
+    | "onChange"
+    | "onSetData"
+    | "fieldConfigs"
+    | "filter"
+    | "throttle"
+    | "limit"
+    | "realtime"
+    | "orderBy"
+    | "data"
+  >,
   paginationState: ReturnType<typeof usePagination>,
   stateOrderBy: Record<string, boolean> | undefined,
 ) => {
-  const { tableName, db, columns: columnsFromProps } = props;
+  const {
+    tableName,
+    db,
+    columns: columnsFromProps,
+    data,
+    filter,
+    throttle,
+    limit,
+    realtime,
+    fieldConfigs,
+    orderBy,
+    onSetData,
+    onChange,
+  } = props;
 
   const fetchedColumns = usePromise(async () => {
     if (columnsFromProps) {
@@ -41,24 +62,42 @@ export const useSmartCardListState = (
     typeof tableName === "string" ? db[tableName] : undefined;
 
   const smartProps = useMemo(() => {
-    if ("data" in props) {
+    if (data) {
       return {
         type: "fixed",
-        data: props.data,
-        onChange: props.onChange,
+        data,
+        onChange,
       } as const;
     }
-    if (isObject(props.tableName)) {
+    if (isObject(tableName)) {
       return {
         type: "sql",
-        ...props.tableName,
+        ...tableName,
       } as const;
     }
     return {
       type: "table",
-      ...props,
+      tableName,
+      filter,
+      throttle,
+      limit,
+      realtime,
+      fieldConfigs,
+      orderBy,
+      onSetData,
     } as const;
-  }, [props]);
+  }, [
+    data,
+    onChange,
+    tableName,
+    filter,
+    throttle,
+    limit,
+    realtime,
+    fieldConfigs,
+    orderBy,
+    onSetData,
+  ]);
 
   /** Fixed data */
   useEffect(() => {
@@ -154,7 +193,6 @@ export const useSmartCardListState = (
     }
   }, [smartProps, columns, page, pageSize, stateOrderBy, tableHandler]);
 
-  useWhyDidYouUpdate(props);
   /** Table data */
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useAsyncEffectQueue(async () => {
@@ -177,7 +215,7 @@ export const useSmartCardListState = (
     }
   }, [tableDataHandlers, tableHandler]);
 
-  return {
+  const state = {
     columns: columns ?? fetchedColumns,
     loading,
     items,
@@ -186,4 +224,6 @@ export const useSmartCardListState = (
     totalRows,
     setTotalRows,
   };
+
+  return state;
 };
