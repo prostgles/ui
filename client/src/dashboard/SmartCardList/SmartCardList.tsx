@@ -19,9 +19,9 @@ import type { FieldConfig } from "../SmartCard/SmartCard";
 import SmartCard from "../SmartCard/SmartCard";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
 import {
-  SmartCardListControls,
+  SmartCardListHeaderControls,
   useSmartCardListControls,
-} from "./SmartCardListControls";
+} from "./SmartCardListHeaderControls";
 import { useSmartCardListState } from "./useSmartCardListState";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
@@ -70,7 +70,7 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
 
   btnColor?: "gray";
 
-  showTopBar?: boolean | { insert?: boolean; sort?: boolean };
+  showTopBar?: boolean | { insert?: true; sort?: true };
   rowProps?: {
     style?: React.CSSProperties;
     className?: string;
@@ -182,7 +182,7 @@ export const SmartCardList = <T extends AnyObject>(
       {loading && <Loading variant="cover" />}
 
       {controlsState && (
-        <SmartCardListControls
+        <SmartCardListHeaderControls
           {...(props as SmartCardListProps)}
           itemsLength={items.length}
           totalRows={totalRows}

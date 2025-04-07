@@ -5,7 +5,7 @@ import SortByControl from "../SmartFilter/SortByControl";
 import { InsertButton } from "../SmartForm/InsertButton";
 import type { SmartCardListProps } from "./SmartCardList";
 
-export const SmartCardListControls = (
+export const SmartCardListHeaderControls = (
   props: SmartCardListProps & {
     totalRows: number | undefined;
     itemsLength: number | undefined;
@@ -58,7 +58,9 @@ export const SmartCardListControls = (
 
       {insertTableName && (
         <InsertButton
-          buttonProps={{}}
+          buttonProps={{
+            children: "Add",
+          }}
           db={db}
           tables={tables}
           methods={methods}
@@ -82,7 +84,7 @@ export const useSmartCardListControls = (
     title,
     itemsLength,
     tableName,
-    showTopBar = (itemsLength ?? 0) > 30,
+    showTopBar, // = (itemsLength ?? 0) > 30,
     tables,
     stateOrderBy,
     setOrderBy,
