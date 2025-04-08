@@ -123,11 +123,8 @@ export const Pagination = (props: PaginationProps) => {
   );
 };
 
-export const usePagination = ({
-  page: defaultPage = 1,
-  pageSize: defaultPageSize = PAGE_SIZES[0],
-}: Pick<PaginationProps, "page" | "pageSize">) => {
-  const [page, setPage] = React.useState(defaultPage);
+export const usePagination = (defaultPageSize: number = PAGE_SIZES[0]) => {
+  const [page, setPage] = React.useState(0);
   const [pageSize, setPageSize] = React.useState<number>(defaultPageSize);
 
   return {
@@ -135,5 +132,7 @@ export const usePagination = ({
     pageSize,
     onPageChange: setPage,
     onPageSizeChange: setPageSize,
+    limit: pageSize,
+    offset: Math.max(0, (page - 1) * pageSize),
   };
 };

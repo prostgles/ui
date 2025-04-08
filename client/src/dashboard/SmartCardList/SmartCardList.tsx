@@ -142,9 +142,9 @@ export const SmartCardList = <T extends AnyObject>(
     columns: propsColumns,
   } = props;
 
-  const paginationState = usePagination({
-    pageSize: "limit" in props && props.limit ? props.limit : 25,
-  });
+  const paginationState = usePagination(
+    "limit" in props && props.limit ? props.limit : 25,
+  );
 
   const [stateOrderBy, setOrderBy] = useState<Record<string, boolean>>(
     "data" in props ? {} : (props.orderBy ?? {}),
@@ -158,12 +158,12 @@ export const SmartCardList = <T extends AnyObject>(
       fieldConfigs: _fieldConfigs as FieldConfig[],
       filter,
       throttle,
-      limit: paginationState.pageSize,
+      limit: paginationState.limit,
+      offset: paginationState.offset,
       realtime,
       orderBy: stateOrderBy,
       onSetData,
     },
-    paginationState,
     stateOrderBy,
   );
   const { columns, loading, items, error, loaded, totalRows } = state;

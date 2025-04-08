@@ -13,23 +13,11 @@ export type FetchLLMResponseArgs = {
   llm_credential: DBSSchema["llm_credentials"];
   tools:
     | undefined
-    | ({
+    | {
         name: string;
         description: string;
-      } & (
-        | {
-            /**
-             * Anthropic
-             */
-            input_schema: AnyObject;
-          }
-        | {
-            /**
-             * Google/OpenAI
-             */
-            parameters: AnyObject;
-          }
-      ))[];
+        input_schema: AnyObject;
+      }[];
   messages: LLMMessage[];
 };
 
@@ -82,9 +70,23 @@ export const parseLLMResponseObject = ({
     const { candidates, ...meta } = responseData as GoogleResponse;
     const content = candidates.flatMap((c) => {
       return c.content.parts.map((p) => {
+        if ("text" in p) {
+          return {
+            type: "text",
+            text: p.text,
+          } satisfies LLMMessage["content"][number];
+        }
+        if ("functionCall" in p) {
+          return {
+            type: "tool_use",
+            id: `${Date.now()}-${Math.random()}`,
+            name: p.functionCall.name,
+            input: p.functionCall.args,
+          } satisfies LLMMessage["content"][number];
+        }
         return {
           type: "text",
-          text: p.text,
+          text: "INTERNAL ERROR: Unexpected response from LLM",
         } satisfies LLMMessage["content"][number];
       });
     });
@@ -114,6 +116,30 @@ export const parseLLMResponseObject = ({
       })
       .filter(isDefined);
     return { content, meta };
+  } else if (provider === "OpenAI") {
+    const { choices, ...meta } = responseData as OpenAIResponse;
+    const content: LLMMessage["content"] = [];
+    choices.map((c) => {
+      if (c.message.tool_calls?.length) {
+        c.message.tool_calls.forEach((toolCall) => {
+          content.push({
+            type: "tool_use",
+            id: toolCall.id,
+            name: toolCall.function.name,
+            input: JSON.parse(toolCall.function.arguments),
+          });
+        });
+      } else {
+        content.push({
+          type: "text",
+          text: c.message.content ?? "",
+        });
+      }
+    });
+    return {
+      content,
+      meta,
+    };
   } else {
     const path = ["choices", 0, "message", "content"];
     const messageText = parsePath(responseData ?? {}, path);
@@ -168,9 +194,17 @@ type AnthropicResponse = {
 type GoogleResponse = {
   candidates: {
     content: {
-      parts: {
-        text: string;
-      }[];
+      parts: (
+        | {
+            text: string;
+          }
+        | {
+            functionCall: {
+              name: string;
+              args: AnyObject | undefined;
+            };
+          }
+      )[];
       role: "model";
     };
     finishReason: "STOP";
@@ -182,4 +216,48 @@ type GoogleResponse = {
     totalTokenCount: number;
   };
   modelVersion: "gemini-1.5-flash";
+};
+
+type OpenAIResponse = {
+  id: string;
+  object: "chat.completion";
+  created: number;
+  model: string;
+  choices: {
+    index: number;
+    message: {
+      role: "assistant";
+      content: string | null;
+      tool_calls?:
+        | null
+        | {
+            id: string;
+            type: "function";
+            function: {
+              name: string;
+              arguments: string;
+            };
+          }[];
+      refusal: null;
+      annotations: [];
+    };
+    finish_reason: "tool_calls" | string;
+  }[];
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+    prompt_tokens_details: {
+      cached_tokens: number;
+      audio_tokens: number;
+    };
+    completion_tokens_details: {
+      reasoning_tokens: number;
+      audio_tokens: number;
+      accepted_prediction_tokens: number;
+      rejected_prediction_tokens: number;
+    };
+  };
+  service_tier: "default";
+  system_fingerprint: null;
 };

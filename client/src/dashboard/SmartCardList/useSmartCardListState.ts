@@ -4,7 +4,6 @@ import {
 } from "prostgles-client/dist/react-hooks";
 import { isObject, type AnyObject } from "prostgles-types";
 import { useEffect, useMemo, useState } from "react";
-import { type usePagination } from "../../components/Table/Pagination";
 import { getSelectForFieldConfigs } from "../SmartCard/getSelectForFieldConfigs";
 import { getSmartCardColumns } from "../SmartCard/getSmartCardColumns";
 import type { SmartCardListProps } from "./SmartCardList";
@@ -24,8 +23,9 @@ export const useSmartCardListState = (
     | "realtime"
     | "orderBy"
     | "data"
-  >,
-  paginationState: ReturnType<typeof usePagination>,
+  > & {
+    offset: number;
+  },
   stateOrderBy: Record<string, boolean> | undefined,
 ) => {
   const {
@@ -36,6 +36,7 @@ export const useSmartCardListState = (
     filter,
     throttle,
     limit,
+    offset,
     realtime,
     fieldConfigs,
     orderBy,
@@ -132,9 +133,8 @@ export const useSmartCardListState = (
           setLoading(false);
         });
     }
-  }, [smartProps, db, paginationState]);
+  }, [smartProps, db]);
 
-  const { page = 1, pageSize } = paginationState;
   const tableDataHandlers = useMemo(() => {
     if (smartProps.type === "table") {
       const {
@@ -164,10 +164,10 @@ export const useSmartCardListState = (
           }
 
           const items = await tableHandler.find(filter, {
-            limit: pageSize,
+            limit,
             orderBy,
             select,
-            offset: (page - 1) * pageSize,
+            offset,
           });
 
           setItems(items);
@@ -191,7 +191,7 @@ export const useSmartCardListState = (
         orderBy,
       };
     }
-  }, [smartProps, columns, page, pageSize, stateOrderBy, tableHandler]);
+  }, [smartProps, columns, offset, stateOrderBy, tableHandler]);
 
   /** Table data */
   // eslint-disable-next-line react-hooks/exhaustive-deps

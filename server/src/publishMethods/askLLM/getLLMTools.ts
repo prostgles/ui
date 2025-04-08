@@ -29,7 +29,11 @@ export const getLLMTools = async ({
   chat,
   connectionId,
 }: Args): Promise<undefined | MCPToolSchema[]> => {
-  const canUseTools = provider === "Prostgles" || provider === "Anthropic";
+  const canUseTools =
+    provider === "Prostgles" ||
+    provider === "Anthropic" ||
+    provider === "OpenAI" ||
+    provider === "Google";
   if (!canUseTools) return undefined;
   const { id: chatId } = chat;
 
@@ -111,14 +115,7 @@ export const getLLMTools = async ({
     }
     tools[name] = tool;
   });
-  // if (Provider === "OpenAI") {
-  //   return allTools.map(({ input_schema, ...func }) => {
-  //     return {
-  //       type: "function",
-  //       function: func,
-  //       parameters: input_schema,
-  //     };
-  //   });
-  // }
-  return Object.values(tools);
+  const toolList = Object.values(tools);
+
+  return toolList;
 };

@@ -132,6 +132,7 @@ export const useLLMTools = ({
         const sendError = (error: string) => {
           return {
             type: "tool_result",
+            tool_name: tu.name,
             tool_use_id: tu.id,
             is_error: true,
             content: error,

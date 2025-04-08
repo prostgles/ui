@@ -162,8 +162,8 @@ const useMarkdownCodeHeader = ({ workspaceId, dbs, connectionId }: P) => {
     ({ language, codeString }) => {
       if (language !== "json") return null;
       try {
-        const json = JSON.parse(codeString);
-        if (Array.isArray(json.prostglesWorkspaces)) {
+        const json = isMaybeProstglesWorkspaces(codeString);
+        if (json) {
           return (
             <Btn
               color="action"
@@ -202,4 +202,16 @@ const useMarkdownCodeHeader = ({ workspaceId, dbs, connectionId }: P) => {
   );
 
   return { markdownCodeHeader };
+};
+
+const isMaybeProstglesWorkspaces = (
+  codeString: string,
+): { prostglesWorkspaces: any[] } | undefined => {
+  try {
+    const json = JSON.parse(codeString);
+    return Array.isArray(json.prostglesWorkspaces) ? json : undefined;
+  } catch (e) {
+    console.error(e);
+  }
+  return undefined;
 };

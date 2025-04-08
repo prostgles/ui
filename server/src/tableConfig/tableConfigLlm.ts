@@ -329,6 +329,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
                 type: {
                   type: { enum: ["tool_result"] },
                   tool_use_id: "string",
+                  tool_name: { type: "string", optional: true },
                   content: toolUseContent,
                   is_error: { optional: true, type: "boolean" },
                 },

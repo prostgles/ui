@@ -30,6 +30,7 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
         db_schema_permissions: 1,
         db_data_permissions: 1,
         created: 1,
+        id: 1,
       } as const,
       methods: {},
       rowFilter: [{ fieldName: "id", value: activeChatId }],

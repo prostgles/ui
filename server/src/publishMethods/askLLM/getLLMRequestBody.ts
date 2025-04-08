@@ -1,4 +1,4 @@
-import { isDefined } from "prostgles-types";
+import { isDefined, isObject, omitKeys } from "prostgles-types";
 import type { FetchLLMResponseArgs } from "./fetchLLMResponse";
 
 export const getLLMRequestBody = ({
@@ -83,16 +83,57 @@ export const getLLMRequestBody = ({
         /**
          * https://ai.google.dev/gemini-api/docs/text-generation?lang=rest
          */
-        contents: messages.map((m) => ({
-          role: m.role,
+        contents: messages.map((m, i, arr) => ({
+          role:
+            m.content.some((c) => c.type === "tool_result") ? "function"
+            : m.content.some((c) => c.type === "tool_use") ? "model"
+            : m.role,
           parts: m.content
-            .map((c) => (c.type === "text" ? { text: c.text } : undefined))
+            .map((c) => {
+              if (c.type === "text") return { text: c.text };
+              if (c.type === "tool_use") {
+                return {
+                  functionCall: {
+                    name: c.name,
+                    args: c.input,
+                  },
+                };
+              }
+              if (c.type === "tool_result") {
+                const resultText =
+                  typeof c.content === "string" ?
+                    c.content
+                  : c.content
+                      .map((c) => {
+                        c.type === "text" ? c.text : undefined;
+                      })
+                      .find(isDefined);
+                const funcName = arr[i - 1]?.content
+                  ?.map((c) =>
+                    c.type === "tool_use" && c.name ? c.name : undefined,
+                  )
+                  .find(isDefined);
+                return {
+                  functionResponse: {
+                    name: funcName,
+                    response: {
+                      name: funcName,
+                      content: JSON.parse(resultText ?? "{}"),
+                    },
+                  },
+                };
+              }
+            })
             .filter(isDefined),
         })),
         ...(tools && {
           tools: [
             {
-              functionDeclarations: tools,
+              functionDeclarations: tools.map((t) => ({
+                name: t.name,
+                description: t.description,
+                parameters: omitKeys(t.input_schema, ["$schema", "$id"]),
+              })),
             },
           ],
         }),
@@ -100,8 +141,24 @@ export const getLLMRequestBody = ({
     : /**  "OpenAI"  */
       {
         model,
-        messages,
-        tools,
+        messages: messages.map((m) => {
+          if (m.content.some((c) => c.type === "tool_result")) {
+            return {
+              ...m,
+              name: m.content,
+              role: "tool",
+            };
+          }
+          return m;
+        }),
+        tools: tools?.map((t) => ({
+          type: "function",
+          function: {
+            name: t.name,
+            description: t.description,
+            parameters: omitKeys(t.input_schema, ["$schema", "$id"]),
+          },
+        })),
       };
 
   const bodyWithExtras = {
