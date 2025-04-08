@@ -7,13 +7,14 @@ import Select from "../../components/Select/Select";
 import RTComp from "../RTComp";
 import { drawSchema } from "./drawSchema";
 import type { DBS } from "../Dashboard/DBS";
+// import { drawSchema } from "./drawSchema2";
 
 type P = {
   db: DBHandlerClient;
   onClickTable: (tableName: string) => any;
 };
 type Text = { label: string; color: string };
-interface Node extends SimulationNodeDatum {
+export interface Node extends SimulationNodeDatum {
   id: string;
   header: Text;
   text: Text[];
@@ -22,7 +23,7 @@ interface Node extends SimulationNodeDatum {
   hasLinks: boolean;
   cluster: number;
 }
-interface Link extends SimulationLinkDatum<Node> {
+export interface Link extends SimulationLinkDatum<Node> {
   id: string;
   sourceNode: Node;
   targetNode: Node;
@@ -257,79 +258,3 @@ export class SchemaGraph extends RTComp<P, SchemaGraphState> {
 export const getSchemaTableColY = (i, height) => {
   return (!i ? 8 : 16) + i * 20 - height / 2;
 };
-
-function forceCollide() {
-  let nodes;
-
-  function force(alpha) {
-    const padding = 95;
-    const quad = d3.quadtree(
-      nodes,
-      (d: any) => d.x,
-      (d) => d.y,
-    );
-    for (const d of nodes) {
-      quad.visit((q: any, x1, y1, x2, y2) => {
-        let updated = false;
-        if (q.data && q.data !== d) {
-          let x = d.x - q.data.x,
-            y = d.y - q.data.y;
-          const xSpacing = padding + (q.data.width + d.width) / 2;
-          const ySpacing = padding + (q.data.height + d.height) / 2;
-          const absX = Math.abs(x);
-          const absY = Math.abs(y);
-          let l;
-          let lx;
-          let ly;
-
-          if (absX < xSpacing && absY < ySpacing) {
-            l = Math.sqrt(x * x + y * y);
-
-            lx = (absX - xSpacing) / l;
-            ly = (absY - ySpacing) / l;
-
-            // the one that's barely within the bounds probably triggered the collision
-            if (Math.abs(lx) > Math.abs(ly)) {
-              lx = 0;
-            } else {
-              ly = 0;
-            }
-            d.x -= x *= lx;
-            d.y -= y *= ly;
-            q.data.x += x;
-            q.data.y += y;
-
-            updated = true;
-          }
-        }
-        return updated;
-      });
-    }
-  }
-
-  force.initialize = (_) => (nodes = _);
-
-  return force;
-}
-
-function zoomFit(svgNode, zoomHandler) {
-  const bounds = svgNode.node().getBBox();
-  const parent = svgNode.node().parentElement;
-  const fullWidth = parent.clientWidth || parent.parentNode.clientWidth,
-    fullHeight = parent.clientHeight || parent.parentNode.clientHeight;
-  const width = bounds.width,
-    height = bounds.height;
-  const midX = bounds.x + width / 2,
-    midY = bounds.y + height / 2;
-  if (width == 0 || height == 0) return; // nothing to fit
-  const scale = 0.85 / Math.max(width / fullWidth, height / fullHeight);
-  const translate = [
-    fullWidth / 2 - scale * midX,
-    fullHeight / 2 - scale * midY,
-  ];
-
-  console.trace("zoomFit", translate, scale);
-
-  zoomHandler.scaleTo(svgNode, scale);
-  zoomHandler.translateTo(svgNode, ...translate);
-}

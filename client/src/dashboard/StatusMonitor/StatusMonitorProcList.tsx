@@ -23,6 +23,10 @@ export const StatusMonitorViewTypes = [
 ] as const;
 export type StatusMonitorViewType = (typeof StatusMonitorViewTypes)[number];
 
+const orderByCPU = {
+  key: "cpu",
+  asc: false,
+} as const;
 export const StatusMonitorProcList = ({
   connectionId,
   dbs,
@@ -100,7 +104,7 @@ export const StatusMonitorProcList = ({
       tableName="stats"
       showEdit={false}
       showTopBar={{ sort: true }}
-      orderBy={{ cpu: false }}
+      orderBy={orderByCPU}
       rowProps={{
         style: {
           borderRadius: 0,

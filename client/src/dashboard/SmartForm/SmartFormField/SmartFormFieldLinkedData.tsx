@@ -6,7 +6,7 @@ import type {
 import { getPossibleNestedInsert } from "prostgles-types";
 import React, { useMemo, useState } from "react";
 import type { SmartFormProps } from "../SmartForm";
-import type { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
+import { type NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import type { SmartFormFieldProps } from "./SmartFormField";
 import { SmartFormFieldLinkedDataInsert } from "./SmartFormFieldLinkedDataInsert";
 import { SmartFormFieldLinkedDataSearch } from "./SmartFormFieldLinkedDataSearch";
@@ -37,7 +37,16 @@ export const SmartFormFieldLinkedData = (
     readOnly: boolean;
   },
 ) => {
-  const { row, state, db, tables, methods, readOnly, column } = props;
+  const {
+    row,
+    state,
+    db,
+    tables,
+    methods,
+    readOnly,
+    column,
+    newRowDataHandler,
+  } = props;
 
   if (!state) return null;
   return (
@@ -51,6 +60,9 @@ export const SmartFormFieldLinkedData = (
           row={row}
           column={column}
           {...state.showSearchState}
+          onChange={(value) => {
+            newRowDataHandler.setColumn(column.name, value);
+          }}
         />
       )}
       {state.showInsertState && (

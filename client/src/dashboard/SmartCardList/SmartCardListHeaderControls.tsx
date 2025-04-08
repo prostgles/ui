@@ -1,9 +1,13 @@
 import { getKeys, isObject, type ValidatedColumnInfo } from "prostgles-types";
 import React, { useMemo } from "react";
 import { FlexRowWrap } from "../../components/Flex";
+import { SmartSearch } from "../SmartFilter/SmartSearch/SmartSearch";
 import SortByControl from "../SmartFilter/SortByControl";
 import { InsertButton } from "../SmartForm/InsertButton";
 import type { SmartCardListProps } from "./SmartCardList";
+import type { SmartCardListState } from "./useSmartCardListState";
+import { SmartFilterBar } from "../SmartFilterBar/SmartFilterBar";
+import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 
 export const SmartCardListHeaderControls = (
   props: SmartCardListProps & {
@@ -11,10 +15,18 @@ export const SmartCardListHeaderControls = (
     itemsLength: number | undefined;
     columns: ValidatedColumnInfo[];
     state: ReturnType<typeof useSmartCardListControls>;
-  },
+  } & Pick<SmartCardListState, "tableControls">,
 ) => {
-  const { title, totalRows, db, tables, methods, columns, state } = props;
-
+  const {
+    title,
+    totalRows,
+    db,
+    tables,
+    methods,
+    columns,
+    state,
+    tableControls,
+  } = props;
   if (!state) return null;
   const { sorting, insertTableName } = state;
 
@@ -39,21 +51,40 @@ export const SmartCardListHeaderControls = (
             }
             fields={sorting.orderByFields ?? undefined}
             columns={columns}
-            value={
-              sorting.orderBy ?
-                {
-                  key: getKeys(sorting.orderBy)[0]!,
-                  asc: Object.values(sorting.orderBy)[0],
-                }
-              : undefined
-            }
-            onChange={(newSort) => {
-              sorting.setOrderBy(
-                !newSort ? {} : { [newSort.key]: !!newSort.asc },
-              );
-            }}
+            value={sorting.orderBy}
+            onChange={sorting.setOrderBy}
           />
         </>
+      )}
+
+      {tableControls && (
+        <SmartFilterBar
+          className="p-1 bg-color-2 min-h-fit"
+          rowCount={totalRows ?? 0}
+          db={db}
+          methods={{}}
+          table_name={tableControls.tableName}
+          tables={tables}
+          filter={tableControls.localFilter}
+          onChange={(filter) => {
+            tableControls.setLocalFilter(filter);
+          }}
+          onHavingChange={() => {
+            console.warn("Having change not implemented");
+          }}
+          // sort={sorting?.orderBy}
+          onSortChange={sorting?.setOrderBy}
+        />
+        // <SmartSearch
+        //   db={db}
+        //   tableName={tableControls.tableName}
+        //   tables={tables}
+        //   onChange={(maybeFilter) => {
+        //     tableControls.setLocalFilter(maybeFilter?.filter);
+        //   }}
+        //   selectedColumns={columns}
+        //   extraFilters={[]}
+        // />
       )}
 
       {insertTableName && (
@@ -74,15 +105,13 @@ export const SmartCardListHeaderControls = (
 export const useSmartCardListControls = (
   props: SmartCardListProps & {
     totalRows: number | undefined;
-    itemsLength: number | undefined;
     columns: ValidatedColumnInfo[];
-    stateOrderBy: Record<string, boolean> | undefined;
-    setOrderBy: (orders: Record<string, boolean>) => void;
+    stateOrderBy: ColumnSort | undefined;
+    setOrderBy: (orders: ColumnSort | undefined) => void;
   },
 ) => {
   const {
     title,
-    itemsLength,
     tableName,
     showTopBar, // = (itemsLength ?? 0) > 30,
     tables,

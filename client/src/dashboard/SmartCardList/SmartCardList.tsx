@@ -23,6 +23,7 @@ import {
   useSmartCardListControls,
 } from "./SmartCardListHeaderControls";
 import { useSmartCardListState } from "./useSmartCardListState";
+import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
@@ -77,40 +78,24 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   };
   onSuccess?: SmartFormProps["onSuccess"];
   enableListAnimations?: boolean;
-} & (
-    | {
-        /**
-         * Show top N records
-         * Defaults to 20
-         */
-        limit?: number;
-        filter?:
-          | AnyObject
-          | FilterItem<T & AnyObject>
-          | { $and: FilterItem<T & AnyObject>[] }
-          | { $or: FilterItem<T & AnyObject>[] };
-        orderBy?: Record<string, boolean>;
-        realtime?: boolean;
-        throttle?: number;
-        orderByfields?: string[];
-        showEdit?: boolean;
-        onSetData?: (items: AnyObject[]) => void;
-        data?: undefined;
-        onChange?: undefined;
-      }
-    | {
-        data: AnyObject[];
-        onChange: (newData: AnyObject[]) => void;
-        limit?: undefined;
-        filter?: undefined;
-        orderBy?: undefined;
-        realtime?: undefined;
-        throttle?: undefined;
-        orderByfields?: undefined;
-        showEdit?: undefined;
-        onSetData?: undefined;
-      }
-  );
+  onClickRow?: (row: AnyObject) => void;
+  /**
+   * Show top N records
+   * Defaults to 20
+   */
+  limit?: number;
+  filter?:
+    | AnyObject
+    | FilterItem<T & AnyObject>
+    | { $and: FilterItem<T & AnyObject>[] }
+    | { $or: FilterItem<T & AnyObject>[] };
+  orderBy?: ColumnSort;
+  realtime?: boolean;
+  throttle?: number;
+  orderByfields?: string[];
+  showEdit?: boolean;
+  onSetData?: (items: AnyObject[]) => void;
+};
 
 export const SmartCardList = <T extends AnyObject>(
   props: SmartCardListProps<T>,
@@ -133,26 +118,24 @@ export const SmartCardList = <T extends AnyObject>(
     noDataComponent,
     onSuccess,
     enableListAnimations = false,
-    onChange,
     onSetData,
-    data,
     filter,
     throttle,
     realtime,
     columns: propsColumns,
+    onClickRow,
   } = props;
 
   const paginationState = usePagination(
     "limit" in props && props.limit ? props.limit : 25,
   );
 
-  const [stateOrderBy, setOrderBy] = useState<Record<string, boolean>>(
-    "data" in props ? {} : (props.orderBy ?? {}),
+  const [stateOrderBy, setOrderBy] = useState<ColumnSort | undefined>(
+    props.orderBy,
   );
   const state = useSmartCardListState(
     {
       db,
-      data,
       tableName,
       columns: propsColumns,
       fieldConfigs: _fieldConfigs as FieldConfig[],
@@ -167,15 +150,16 @@ export const SmartCardList = <T extends AnyObject>(
     stateOrderBy,
   );
   const { columns, loading, items, error, loaded, totalRows } = state;
-  const { keyCols } = useGetKeyCols(columns ?? [], items?.[0] ?? {});
+  const { keyCols } = useGetRowKeyCols(columns ?? [], items?.[0] ?? {});
   const controlsState = useSmartCardListControls({
     ...(props as SmartCardListProps),
-    itemsLength: items?.length,
     totalRows,
     columns: columns ?? [],
     stateOrderBy,
     setOrderBy,
   });
+
+  const smartCardListStyle = useSmartCardListStyle(style);
 
   if (error) return <ErrorComponent error={error} />;
 
@@ -198,15 +182,7 @@ export const SmartCardList = <T extends AnyObject>(
         className,
       )}
       data-command="SmartCardList"
-      style={{
-        ...style,
-        /**
-         * To ensure shadow is not clipped by parent
-         */
-        padding: "2px",
-        margin: "-2px",
-        flex: "0 1 auto", // Allow the body to grow with content, ensuring height is always not greater than content
-      }}
+      style={smartCardListStyle}
     >
       {loading && <Loading variant="cover" />}
 
@@ -217,6 +193,7 @@ export const SmartCardList = <T extends AnyObject>(
           totalRows={totalRows}
           columns={columns}
           state={controlsState}
+          tableControls={state.tableControls}
         />
       )}
       <MaybeFlipMove
@@ -227,7 +204,18 @@ export const SmartCardList = <T extends AnyObject>(
           noDataComponent
         : items.map((defaultData, i) => {
             return (
-              <div key={getKey(defaultData, keyCols)} className="relative">
+              <div
+                key={getKeyForRowData(defaultData, keyCols)}
+                className={`relative ${onClickRow ? "pointer" : ""}`}
+                onClick={
+                  onClickRow &&
+                  ((e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onClickRow(defaultData);
+                  })
+                }
+              >
                 <SmartCard
                   contentClassname={rowProps?.className}
                   contentStyle={rowProps?.style}
@@ -251,17 +239,6 @@ export const SmartCardList = <T extends AnyObject>(
                     "showEdit" in props ? props.showEdit : undefined
                   }
                 />
-                {onChange && (
-                  <Btn
-                    iconPath={mdiDelete}
-                    color="danger"
-                    className="absolute"
-                    style={{ top: "5px", right: "5px" }}
-                    onClick={() => {
-                      onChange(props.data.filter((_, di) => di !== i));
-                    }}
-                  />
-                )}
               </div>
             );
           })
@@ -302,12 +279,18 @@ const getCols = (cols: ValidatedColumnInfo[], row: AnyObject) => {
   });
 };
 
-const getKey = (row: AnyObject, keyCols: ValidatedColumnInfo[]) =>
+export const getKeyForRowData = (
+  row: AnyObject,
+  keyCols: ValidatedColumnInfo[],
+) =>
   !keyCols.length ?
     JSON.stringify(row)
   : keyCols.map((c) => row[c.name]?.toString()).join("-");
 
-const useGetKeyCols = (cols: ValidatedColumnInfo[], row: AnyObject) => {
+export const useGetRowKeyCols = (
+  cols: ValidatedColumnInfo[],
+  row: AnyObject,
+) => {
   return useMemo(() => {
     const keyCols = getCols(cols, row);
     return {
@@ -315,3 +298,17 @@ const useGetKeyCols = (cols: ValidatedColumnInfo[], row: AnyObject) => {
     };
   }, [cols, row]);
 };
+
+export const useSmartCardListStyle = (style: React.CSSProperties) =>
+  useMemo(
+    () => ({
+      ...style,
+      /**
+       * To ensure shadow is not clipped by parent
+       */
+      padding: "2px",
+      margin: "-2px",
+      flex: "0 1 auto", // Allow the body to grow with content, ensuring height is always not greater than content
+    }),
+    [style],
+  );

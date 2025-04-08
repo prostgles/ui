@@ -10,6 +10,8 @@ import ErrorComponent from "../../../components/ErrorComponent";
 import { mdiTable } from "@mdi/js";
 import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
 import Btn from "../../../components/Btn";
+import { SmartCardListJoinedNewRecords } from "../../SmartCardList/SmartCardListJoinedNewRecords";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 const JoinedRecordsSectionCardList = (
   props: JoinedRecordsProps & {
@@ -64,22 +66,19 @@ const JoinedRecordsSectionCardList = (
   if (isInsert) {
     if (descendantInsertTables.includes(s.tableName)) {
       return (
-        <SmartCardList
+        <SmartCardListJoinedNewRecords
           key={s.path.join(".")}
-          db={db as any}
+          db={db as DBHandlerClient}
           methods={methods}
-          tableName={s.tableName}
+          table={s.table}
           tables={tables}
           className="px-1"
           excludeNulls={true}
           onSuccess={onSuccess}
           data={nestedInsertData?.[s.tableName] ?? []}
-          onChange={
-            newRowDataHandler &&
-            ((newData) => {
-              newRowDataHandler.setNestedTable(s.tableName, newData);
-            })
-          }
+          onChange={(newData) => {
+            newRowDataHandler?.setNestedTable(s.tableName, newData);
+          }}
         />
       );
     }

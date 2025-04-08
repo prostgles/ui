@@ -283,6 +283,7 @@ export default class Select<
       const { popupAnchor, defaultSearch, fixedBtnWidth } = this.state;
 
       const closeDropDown = (e: E) => {
+        this.props.onSearch?.("");
         if (this.state.multiSelection && _onChange) {
           _onChange(this.state.multiSelection as any, e, undefined);
         }

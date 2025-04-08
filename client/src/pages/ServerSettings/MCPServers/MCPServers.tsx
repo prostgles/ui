@@ -11,6 +11,12 @@ import { MCPServerConfig } from "./MCPServerConfig";
 import { MCPServerFooterActions } from "./MCPServerFooterActions";
 import { MCPServersHeader } from "./MCPServersHeader";
 
+const orderByEnabledAndName = {
+  // enabled: false,
+  // name: true
+  key: "enabled",
+  asc: false,
+} as const;
 export const MCPServers = (props: ServerSettingsProps) => {
   const [serverConfig, setServerConfig] = React.useState<{
     name: string;
@@ -45,7 +51,7 @@ export const MCPServers = (props: ServerSettingsProps) => {
         </a>
       </>
     : "";
-  const { selectedTool, setSelectedTool, filter, orderBy, fieldConfigs } =
+  const { selectedTool, setSelectedTool, filter, fieldConfigs } =
     useListProps();
 
   return (
@@ -82,7 +88,7 @@ export const MCPServers = (props: ServerSettingsProps) => {
           }
           tables={dbsTables}
           filter={filter}
-          orderBy={orderBy}
+          orderBy={orderByEnabledAndName}
           fieldConfigs={fieldConfigs}
           enableListAnimations={true}
           getRowFooter={(
@@ -126,7 +132,6 @@ const useListProps = () => {
     );
   }, [selectedTool]);
 
-  const orderBy = useMemo(() => ({ enabled: false, name: true }), []);
   const fieldConfigs = useMemo(
     () => [
       {
@@ -202,7 +207,6 @@ const useListProps = () => {
     selectedTool,
     setSelectedTool,
     filter,
-    orderBy,
     fieldConfigs,
     // getRowFooter,
   };

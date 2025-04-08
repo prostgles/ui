@@ -4,17 +4,22 @@ import {
 } from "prostgles-client/dist/react-hooks";
 import { isObject, type AnyObject } from "prostgles-types";
 import { useEffect, useMemo, useState } from "react";
+import {
+  getSmartGroupFilter,
+  type SmartGroupFilter,
+} from "../../../../commonTypes/filterUtils";
 import { getSelectForFieldConfigs } from "../SmartCard/getSelectForFieldConfigs";
 import { getSmartCardColumns } from "../SmartCard/getSmartCardColumns";
+import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 import type { SmartCardListProps } from "./SmartCardList";
 
+export type SmartCardListState = ReturnType<typeof useSmartCardListState>;
 export const useSmartCardListState = (
   props: Pick<
     SmartCardListProps,
     | "db"
     | "tableName"
     | "columns"
-    | "onChange"
     | "onSetData"
     | "fieldConfigs"
     | "filter"
@@ -22,17 +27,15 @@ export const useSmartCardListState = (
     | "limit"
     | "realtime"
     | "orderBy"
-    | "data"
   > & {
     offset: number;
   },
-  stateOrderBy: Record<string, boolean> | undefined,
+  stateOrderBy: ColumnSort | undefined,
 ) => {
   const {
     tableName,
     db,
     columns: columnsFromProps,
-    data,
     filter,
     throttle,
     limit,
@@ -41,8 +44,9 @@ export const useSmartCardListState = (
     fieldConfigs,
     orderBy,
     onSetData,
-    onChange,
   } = props;
+
+  const [localFilter, setLocalFilter] = useState<SmartGroupFilter>();
 
   const fetchedColumns = usePromise(async () => {
     if (columnsFromProps) {
@@ -63,23 +67,22 @@ export const useSmartCardListState = (
     typeof tableName === "string" ? db[tableName] : undefined;
 
   const smartProps = useMemo(() => {
-    if (data) {
-      return {
-        type: "fixed",
-        data,
-        onChange,
-      } as const;
-    }
     if (isObject(tableName)) {
       return {
         type: "sql",
         ...tableName,
       } as const;
     }
+
+    const fullFilter =
+      localFilter ?
+        getSmartGroupFilter(localFilter, filter && { filters: [filter] })
+      : filter;
     return {
       type: "table",
       tableName,
       filter,
+      fullFilter,
       throttle,
       limit,
       realtime,
@@ -88,8 +91,6 @@ export const useSmartCardListState = (
       onSetData,
     } as const;
   }, [
-    data,
-    onChange,
     tableName,
     filter,
     throttle,
@@ -98,16 +99,8 @@ export const useSmartCardListState = (
     fieldConfigs,
     orderBy,
     onSetData,
+    localFilter,
   ]);
-
-  /** Fixed data */
-  useEffect(() => {
-    if (smartProps.type === "fixed") {
-      setItems(smartProps.data);
-      setLoaded(true);
-      setLoading(false);
-    }
-  }, [smartProps]);
 
   /** SQL data */
   useEffect(() => {
@@ -140,7 +133,7 @@ export const useSmartCardListState = (
       const {
         fieldConfigs,
         throttle = 0,
-        filter = {},
+        fullFilter,
         limit = 25,
         realtime,
       } = smartProps;
@@ -158,12 +151,12 @@ export const useSmartCardListState = (
 
           let totalRows = -1;
           try {
-            totalRows = (await tableHandler.count?.(filter)) ?? -1;
+            totalRows = (await tableHandler.count?.(fullFilter)) ?? -1;
           } catch (error) {
             console.error(error);
           }
 
-          const items = await tableHandler.find(filter, {
+          const items = await tableHandler.find(fullFilter, {
             limit,
             orderBy,
             select,
@@ -186,9 +179,9 @@ export const useSmartCardListState = (
         select,
         realtime,
         throttle,
-        filter,
         limit,
         orderBy,
+        fullFilter,
       };
     }
   }, [smartProps, columns, offset, stateOrderBy, tableHandler]);
@@ -197,7 +190,13 @@ export const useSmartCardListState = (
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useAsyncEffectQueue(async () => {
     if (!tableDataHandlers) return;
-    const { setData, realtime, filter, throttle, select } = tableDataHandlers;
+    const {
+      setData,
+      realtime,
+      throttle,
+      select,
+      fullFilter = {},
+    } = tableDataHandlers;
     if (realtime) {
       try {
         if (!tableHandler?.subscribe) {
@@ -206,7 +205,7 @@ export const useSmartCardListState = (
         /** This is to not wait for the subscription to start */
         setData();
         const sub = await tableHandler.subscribe(
-          filter,
+          fullFilter,
           { limit: 0, select, throttle },
           () => {
             setData();
@@ -231,6 +230,15 @@ export const useSmartCardListState = (
     loaded,
     totalRows,
     setTotalRows,
+    tableControls:
+      smartProps.type === "table" ?
+        {
+          tableName: smartProps.tableName,
+          localFilter,
+          setLocalFilter,
+          filter: smartProps.filter,
+        }
+      : undefined,
   };
 
   return state;

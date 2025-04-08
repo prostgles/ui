@@ -142,6 +142,7 @@ export const DashboardMenuContent = (props: P) => {
         <Popup
           title="Schema diagram"
           positioning="top-center"
+          clickCatchStyle={{ opacity: 1 }}
           onClose={() => setShowSchemaDiagram(false)}
         >
           <SchemaGraph
@@ -303,21 +304,22 @@ export const DashboardMenuContent = (props: P) => {
           }}
         />
 
-        {/* {tables.length > 1 && 
-        <Btn iconPath={mdiRelationManyToMany}
-          className="fit "
-          style={{ opacity: 0.05 }}
-          title="Show schema diagram"
-          data-command="schema-diagram"
-          variant="outline"
-          onClick={() => {
-            setShowSchemaDiagram(true);
-            onClose?.();
-          }}
-        >
-          Schema diagram
-        </Btn>
-      }   */}
+        {/* {tables.length > 1 && (
+          <Btn
+            iconPath={mdiRelationManyToMany}
+            className="fit "
+            style={{ opacity: 0.05 }}
+            title="Show schema diagram"
+            data-command="schema-diagram"
+            variant="outline"
+            onClick={() => {
+              setShowSchemaDiagram(true);
+              onClose?.();
+            }}
+          >
+            Schema diagram
+          </Btn>
+        )} */}
       </FlexRowWrap>
     </FlexCol>
   );

@@ -12,6 +12,7 @@ type P = Pick<
   ftable: string;
   fcol: string;
   readOnly: boolean;
+  onChange: (value: any) => void;
 };
 
 export const SmartFormFieldLinkedDataSearch = ({
@@ -22,6 +23,8 @@ export const SmartFormFieldLinkedDataSearch = ({
   fcol,
   row,
   column,
+  readOnly,
+  onChange,
 }: P) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement>();
 
@@ -55,7 +58,16 @@ export const SmartFormFieldLinkedDataSearch = ({
             methods={methods}
             tables={tables}
             tableName={ftable}
-            filter={filter}
+            excludeNulls={true}
+            onClickRow={
+              readOnly ? undefined : (
+                (row) => {
+                  onChange(row[fcol]);
+                  setAnchorEl(undefined);
+                }
+              )
+            }
+            // filter={filter}
           />
           {/* <SmartTable
             allowEdit={true}

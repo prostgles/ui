@@ -41,6 +41,12 @@ const BACKUP_FILTER_OPTS = [
   { key: "All connections" },
 ] as const;
 
+const orderByCreated = {
+  key: "created",
+  asc: false,
+  // created: false,
+} as const;
+
 export const BackupsControls = ({
   prgl: { connectionId, serverState, dbs, dbsTables, dbsMethods, theme, db },
 }: {
@@ -297,9 +303,7 @@ export const BackupsControls = ({
         }}
         realtime={true}
         className="mt-2"
-        orderBy={{
-          created: false,
-        }}
+        orderBy={orderByCreated}
         excludeNulls={true}
         fieldConfigs={
           [
@@ -348,9 +352,7 @@ export const BackupsControls = ({
         filter={{ $and: [backupFilter, { "status->ok": null }] }}
         realtime={true}
         className="mt-2"
-        orderBy={{
-          created: false,
-        }}
+        orderBy={orderByCreated}
         excludeNulls={true}
         fieldConfigs={
           [
@@ -411,9 +413,7 @@ export const BackupsControls = ({
         filter={completedBackupsFilter}
         realtime={true}
         // className="mt-2"
-        orderBy={{
-          created: false,
-        }}
+        orderBy={orderByCreated}
         excludeNulls={true}
         fieldConfigs={[
           { name: "id", hide: true },

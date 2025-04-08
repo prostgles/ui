@@ -394,47 +394,6 @@ export const drawSchema = (args: GraphParams) => {
 
   // Create a function to update link positions
   function updateLinks() {
-    // Helper to check if a point is inside a table's bounds
-    function isPointNearTable(x: number, y: number, node: Node, padding = 20) {
-      const left = node.x - node.width / 2 - padding;
-      const right = node.x + node.width / 2 + padding;
-      const top = node.y - node.height / 2 - padding;
-      const bottom = node.y + node.height / 2 + padding;
-
-      return x >= left && x <= right && y >= top && y <= bottom;
-    }
-
-    // Helper to find tables that intersect with a line segment
-    function findIntersectingTables(
-      x1: number,
-      y1: number,
-      x2: number,
-      y2: number,
-      excludeNodes: Node[],
-    ) {
-      return data.nodes.filter((node) => {
-        if (excludeNodes.includes(node)) return false;
-
-        // Check if line segment intersects with table bounds
-        const left = node.x - node.width / 2 - 20;
-        const right = node.x + node.width / 2 + 20;
-        const top = node.y - node.height / 2 - 20;
-        const bottom = node.y + node.height / 2 + 20;
-
-        // Simple line-box intersection test
-        const minX = Math.min(x1, x2);
-        const maxX = Math.max(x1, x2);
-        const minY = Math.min(y1, y2);
-        const maxY = Math.max(y1, y2);
-
-        if (maxX < left || minX > right || maxY < top || minY > bottom) {
-          return false;
-        }
-
-        return true;
-      });
-    }
-
     link.attr("d", (l: Link) => {
       const sourceId = typeof l.source === "string" ? l.source : l.source.id;
       const targetId = typeof l.target === "string" ? l.target : l.target.id;
@@ -444,74 +403,89 @@ export const drawSchema = (args: GraphParams) => {
 
       if (!source || !target) return "";
 
-      const sourceX = source.x + source.width / 2;
-      const sourceY =
-        source.y + getSchemaTableColY(l.sourceColIndex, source.height);
-      const targetX = target.x - target.width / 2;
-      const targetY =
-        target.y + getSchemaTableColY(l.targetColIndex, target.height);
+      // Node dimensions
+      const sourceWidth = source.width;
+      const sourceHeight = source.height;
+      const targetWidth = target.width;
+      const targetHeight = target.height;
 
-      // Find path around obstacles
-      const dx = targetX - sourceX;
-      const dy = targetY - sourceY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
+      // Calculate centers
+      const sourceX = source.x || 0;
+      const sourceY = source.y || 0;
+      const targetX = target.x || 0;
+      const targetY = target.y || 0;
 
-      // Try different vertical offsets until we find a clear path
-      const baseOffset = Math.min(100, distance / 3);
-      const offsets = [
-        0,
-        baseOffset,
-        -baseOffset,
-        baseOffset * 2,
-        -baseOffset * 2,
-      ];
+      // Determine exit and entry points based on relative positions
+      let startX, startY, endX, endY;
 
-      for (const offset of offsets) {
-        // Try a path with this offset
-        const cp1x = sourceX + distance / 4;
-        const cp1y = sourceY + offset;
-        const cp2x = sourceX + (distance * 3) / 4;
-        const cp2y = targetY + offset;
+      // Calculate angle between nodes to determine exit/entry sides
+      const angle = Math.atan2(targetY - sourceY, targetX - sourceX);
+      const PI = Math.PI;
 
-        // Check if this path intersects any tables
-        const intersections = findIntersectingTables(
-          sourceX,
-          sourceY,
-          cp1x,
-          cp1y,
-          [source, target],
-        )
-          .concat(
-            findIntersectingTables(cp1x, cp1y, cp2x, cp2y, [source, target]),
-          )
-          .concat(
-            findIntersectingTables(cp2x, cp2y, targetX, targetY, [
-              source,
-              target,
-            ]),
-          );
-
-        if (intersections.length === 0) {
-          // Found a clear path
-          return [
-            `M ${sourceX},${sourceY}`,
-            `C ${cp1x},${cp1y}`,
-            `  ${cp2x},${cp2y}`,
-            `  ${targetX},${targetY}`,
-          ].join(" ");
-        }
+      // Determine source exit point
+      if (angle >= -PI / 4 && angle < PI / 4) {
+        // Exit from right side of source
+        startX = sourceX + sourceWidth / 2;
+        startY = sourceY;
+      } else if (angle >= PI / 4 && angle < (3 * PI) / 4) {
+        // Exit from bottom of source
+        startX = sourceX;
+        startY = sourceY + sourceHeight / 2;
+      } else if (
+        (angle >= (3 * PI) / 4 && angle <= PI) ||
+        (angle >= -PI && angle < (-3 * PI) / 4)
+      ) {
+        // Exit from left side of source
+        startX = sourceX - sourceWidth / 2;
+        startY = sourceY;
+      } else {
+        // Exit from top of source
+        startX = sourceX;
+        startY = sourceY - sourceHeight / 2;
       }
 
-      // If no clear path found, use a path with maximum offset
-      const fallbackOffset = Math.max(150, distance / 2);
-      const sign = sourceY > targetY ? -1 : 1;
+      // Determine target entry point
+      if (angle >= -PI / 4 && angle < PI / 4) {
+        // Enter from left side of target
+        endX = targetX - targetWidth / 2;
+        endY = targetY;
+      } else if (angle >= PI / 4 && angle < (3 * PI) / 4) {
+        // Enter from top of target
+        endX = targetX;
+        endY = targetY - targetHeight / 2;
+      } else if (
+        (angle >= (3 * PI) / 4 && angle <= PI) ||
+        (angle >= -PI && angle < (-3 * PI) / 4)
+      ) {
+        // Enter from right side of target
+        endX = targetX + targetWidth / 2;
+        endY = targetY;
+      } else {
+        // Enter from bottom of target
+        endX = targetX;
+        endY = targetY + targetHeight / 2;
+      }
 
-      return [
-        `M ${sourceX},${sourceY}`,
-        `C ${sourceX + distance / 4},${sourceY + sign * fallbackOffset}`,
-        `  ${sourceX + (distance * 3) / 4},${targetY + sign * fallbackOffset}`,
-        `  ${targetX},${targetY}`,
-      ].join(" ");
+      // Create control points for curve
+      // Calculate midpoint with some offset for better curves
+      const midX = (startX + endX) / 2;
+      const midY = (startY + endY) / 2;
+
+      // Add some curvature based on the angle
+      const curveOffset =
+        Math.min(sourceWidth, sourceHeight, targetWidth, targetHeight) * 0.75;
+
+      // Calculate control points for the curve
+      const controlPoint1X = startX + (midX - startX) / 2;
+      const controlPoint1Y = startY + (midY - startY) / 2;
+      const controlPoint2X = midX + (endX - midX) / 2;
+      const controlPoint2Y = midY + (endY - midY) / 2;
+
+      // Construct the SVG path
+      return `M ${startX},${startY} 
+          C ${controlPoint1X},${controlPoint1Y} 
+            ${controlPoint2X},${controlPoint2Y} 
+            ${endX},${endY}`;
     });
   }
 
