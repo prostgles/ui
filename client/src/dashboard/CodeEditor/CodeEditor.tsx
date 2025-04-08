@@ -114,6 +114,7 @@ export type CodeEditorProps = Pick<MonacoEditorProps, "options" | "value"> & {
   className?: string;
   markers?: editor.IMarkerData[];
   onMount?: (editor: editor.IStandaloneCodeEditor) => void;
+  onTSLibraryChange?: (tsLibraries: TSLibrary[]) => void;
 };
 
 const getSelectedText = (
@@ -132,6 +133,7 @@ export const CodeEditor = (props: CodeEditorProps) => {
     style,
     className = "",
     error,
+    onTSLibraryChange,
   } = props;
   const language =
     isObject(languageOrConf) ? languageOrConf.lang : languageOrConf;
@@ -149,7 +151,13 @@ export const CodeEditor = (props: CodeEditorProps) => {
   }, [languageOrConf]);
 
   useSetMonacoJsonSchemas(editor, value, languageObj);
-  useSetMonacoTsLibraries(editor, languageObj, monaco, value);
+  useSetMonacoTsLibraries(
+    editor,
+    languageObj,
+    monaco,
+    value,
+    onTSLibraryChange,
+  );
 
   useEffect(() => {
     if (!editor) return;

@@ -95,8 +95,6 @@ export const useCodeEditorTsTypes = (
     }
   }, [dbsMethods, connectionId, dbKey, tables, dbs, dbSchemaTypes, methodOpts]);
 
-  useWhyDidYouUpdate(tsLibrariesAndModelName);
-
   if (!tsLibrariesAndModelName) return;
 
   return {

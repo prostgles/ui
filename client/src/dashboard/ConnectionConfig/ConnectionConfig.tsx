@@ -31,6 +31,7 @@ import { PublishedMethods } from "../W_Method/PublishedMethods";
 import { OnMountFunction } from "./OnMountFunction";
 import { useConnectionConfigSearchParams } from "./useConnectionConfigSearchParams";
 import { t } from "../../i18n/i18nUtils";
+import { ServerSideFunctions } from "./ServerSideFunctions";
 
 type ConnectionConfigProps = Pick<
   React.HTMLAttributes<HTMLDivElement>,
@@ -142,16 +143,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           ),
           listProps: dataCommand("config.methods"),
           leftIconPath: mdiLanguageTypescript,
-          content: (
-            <FlexCol className="w-full" style={{ gap: "2em" }}>
-              <OnMountFunction {...prgl} />
-              <PublishedMethods
-                prgl={prgl}
-                editedRule={undefined}
-                accessRuleId={undefined}
-              />
-            </FlexCol>
-          ),
+          content: <ServerSideFunctions {...prgl} />,
         },
       }) as const satisfies Record<
         (typeof CONNECTION_CONFIG_SECTIONS)[number],

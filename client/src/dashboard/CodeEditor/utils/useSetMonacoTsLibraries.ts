@@ -1,5 +1,5 @@
 import type { editor } from "monaco-editor";
-import type { LanguageConfig } from "../CodeEditor";
+import type { CodeEditorProps, LanguageConfig } from "../CodeEditor";
 import { useEffect } from "react";
 import { useIsMounted } from "../../Backup/CredentialSelector";
 import { useEffectDeep } from "prostgles-client/dist/react-hooks";
@@ -11,6 +11,7 @@ export const useSetMonacoTsLibraries = async (
   languageObj: LanguageConfig | undefined,
   monaco: MonacoEditor | undefined,
   value: string,
+  onTSLibraryChange: CodeEditorProps["onTSLibraryChange"],
 ) => {
   const getIsMounted = useIsMounted();
   useEffect(() => {
@@ -42,7 +43,8 @@ export const useSetMonacoTsLibraries = async (
     } catch (e) {
       console.error(e);
     }
-  }, [editor, monaco, languageObj]);
+    onTSLibraryChange?.(tsLibraries);
+  }, [editor, monaco, languageObj, onTSLibraryChange]);
 };
 
 const setTSoptions = async (monaco: MonacoEditor) => {

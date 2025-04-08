@@ -6,8 +6,8 @@ import { useCodeEditorTsTypes } from "../AccessControl/Methods/useCodeEditorTsTy
 import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
 import { ProcessLogs } from "../TableConfig/ProcessLogs";
 
-export const OnMountFunction = (props: Prgl) => {
-  const { dbsMethods, dbs, connectionId, dbKey, tables } = props;
+export const OnMountFunction = (props: Prgl & { onLoaded: VoidFunction }) => {
+  const { dbsMethods, dbs, connectionId, dbKey, tables, onLoaded } = props;
   const { data: connection } = dbs.connections.useSubscribeOne({
     id: connectionId,
   });
@@ -50,22 +50,25 @@ export const OnMountFunction = (props: Prgl) => {
         />
       </FlexRow>
       {languageObj && (
-        <CodeEditorWithSaveButton
-          key={dbKey}
-          label="Server-side function executed after the table is created and server started or schema changed"
-          language={languageObj}
-          codePlaceholder={example}
-          value={connection?.on_mount_ts}
-          onSave={onSave}
-        />
+        <>
+          <CodeEditorWithSaveButton
+            key={dbKey}
+            label="Server-side function executed after the table is created and server started or schema changed"
+            language={languageObj}
+            codePlaceholder={example}
+            value={connection?.on_mount_ts}
+            onSave={onSave}
+            onTSLibraryChange={onLoaded}
+          />
+          <ProcessLogs
+            key={dbKey + "logs"}
+            connectionId={connectionId}
+            dbsMethods={dbsMethods}
+            type="onMount"
+            dbs={dbs}
+          />
+        </>
       )}
-      <ProcessLogs
-        key={dbKey + "logs"}
-        connectionId={connectionId}
-        dbsMethods={dbsMethods}
-        type="onMount"
-        dbs={dbs}
-      />
     </FlexCol>
   );
 };
