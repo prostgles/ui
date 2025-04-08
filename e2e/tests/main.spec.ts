@@ -349,7 +349,6 @@ test.describe("Main test", () => {
     await page.getByTestId("config.methods").click();
 
     /** This timeout is crucial in ensuring monaco editor shows suggestions */
-    await page.waitForTimeout(1e3);
     await page.getByText("Create function").click({ timeout: 10e3 });
     await page.locator("input#function_name").fill("askLLM");
     await page.waitForTimeout(1e3);
