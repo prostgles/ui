@@ -83,8 +83,8 @@ export const useLLMChat = (props: P) => {
 
   const { data: models } = dbs.llm_models.useFind();
 
-  const actualMessages: Message[] =
-    llmMessages?.map(({ id, user_id, created, message, meta, is_loading }) => ({
+  const actualMessages: Message[] | undefined = llmMessages?.map(
+    ({ id, user_id, created, message, meta, is_loading }) => ({
       id,
       incoming: user_id !== user?.id,
       message: null,
@@ -95,7 +95,8 @@ export const useLLMChat = (props: P) => {
       markdown: getLLMMessageText({ message }),
       sender_id: user_id || "ai",
       sent: new Date(created || new Date()),
-    })) ?? [];
+    }),
+  );
 
   const disabled_message =
     (
@@ -107,7 +108,7 @@ export const useLLMChat = (props: P) => {
     : undefined;
 
   const messages: Message[] = (
-    actualMessages.length ? actualMessages : (
+    actualMessages?.length ? actualMessages : (
       [
         {
           id: "first",
@@ -146,7 +147,7 @@ export const useLLMChat = (props: P) => {
     createNewChat,
     preferredPromptId,
     llmMessages,
-    messages: activeChat ? messages : undefined,
+    messages: activeChat && actualMessages ? messages : undefined,
     latestChats,
     setActiveChat: setSelectedChat,
     credentials,

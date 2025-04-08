@@ -153,11 +153,24 @@ export const setupLLM = async (dbs: DBS) => {
         api_url:
           "https://generativelanguage.googleapis.com/v1beta/models/$MODEL:generateContent?key=$KEY",
         llm_models: [
-          // {
-          //   name: "gemini-2.5-pro-exp-03-25",
-          //   pricing_info: { input: 0.1, output: 0.4 },
-          //   chat_suitability_rank: "3",
-          // },
+          {
+            name: "gemini-2.5-pro-exp-03-25",
+            pricing_info: {
+              input: 1.25,
+              output: 10,
+              threshold: { tokenLimit: 200_000, input: 2.5, output: 15 },
+            },
+            chat_suitability_rank: "3",
+          },
+          {
+            name: "gemini-2.5-pro-preview-03-25",
+            pricing_info: {
+              input: 1.25,
+              output: 10,
+              threshold: { tokenLimit: 200_000, input: 2.5, output: 15 },
+            },
+            chat_suitability_rank: "3",
+          },
           {
             name: "gemini-2.0-flash",
             pricing_info: { input: 0.1, output: 0.4 },

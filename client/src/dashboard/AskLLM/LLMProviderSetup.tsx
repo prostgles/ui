@@ -5,7 +5,6 @@ import Chip from "../../components/Chip";
 import { InfoRow } from "../../components/InfoRow";
 import { SmartCardList } from "../SmartCardList/SmartCardList";
 import { SmartForm } from "../SmartForm/SmartForm";
-import { AddLLMCredentialForm } from "./AddLLMCredentialForm";
 
 export const LLMProviderSetup = ({
   dbs,
@@ -47,7 +46,6 @@ export const LLMProviderSetup = ({
         }
         {...listProps}
       />
-      <AddLLMCredentialForm dbs={dbs} />
       {addCreds && (
         <SmartForm
           asPopup={true}

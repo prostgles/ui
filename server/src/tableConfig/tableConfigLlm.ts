@@ -203,6 +203,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         info: {
           hint: "Controls which table and column definitions are used in the prompt",
         },
+        defaultValue: { type: "Full" },
         jsonbSchema: {
           oneOfType: [
             {

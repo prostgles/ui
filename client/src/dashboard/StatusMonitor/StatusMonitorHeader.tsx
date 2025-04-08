@@ -1,4 +1,4 @@
-import { mdiChartLine } from "@mdi/js";
+import { mdiChartLine, mdiChip } from "@mdi/js";
 import React, { useEffect, useState } from "react";
 import type { ConnectionStatus } from "../../../../commonTypes/utils";
 import Btn from "../../components/Btn";
@@ -117,7 +117,7 @@ export const StatusMonitorHeader = (
             positioning="center"
             clickCatchStyle={{ opacity: 0.5 }}
             contentClassName="flex-col gap-1 p-1"
-            button={<Btn title="Server information" iconPath={mdiChartLine} />}
+            button={<Btn title="Server information" iconPath={mdiChip} />}
           >
             <Chip label={"CPU Model"} variant="header">
               <span className="ws-pre">

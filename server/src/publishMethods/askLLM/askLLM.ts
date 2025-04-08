@@ -153,6 +153,7 @@ export const askLLM = async (
       ...llm_model
     } = modelData;
     if (!llm_provider) throw "Provider not found";
+    const gemini25BreakingChanges = llm_model.name.includes("gemini-2.5");
     const { content: llmResponseMessage, meta } = await fetchLLMResponse({
       llm_model,
       llm_provider,
@@ -170,7 +171,10 @@ export const askLLM = async (
           .map(
             (m) =>
               ({
-                role: m.user_id ? "user" : "assistant",
+                role:
+                  m.user_id ? "user"
+                  : gemini25BreakingChanges ? ("model" as any)
+                  : "assistant",
                 content: m.message,
               }) satisfies LLMMessage,
           ),

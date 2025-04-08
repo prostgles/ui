@@ -51,7 +51,14 @@ export const getLLMRequestBody = ({
     provider === "Anthropic" ?
       {
         model,
-        system: systemMessageObj.content,
+        system: systemMessageObj.content.map((c, i, arr) =>
+          i === arr.length - 1 ?
+            {
+              ...c,
+              cache_control: { type: "ephemeral" },
+            }
+          : c,
+        ),
         messages,
         tools,
       }

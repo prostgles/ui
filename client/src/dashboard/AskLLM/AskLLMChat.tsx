@@ -7,11 +7,10 @@ import { FlexCol } from "../../components/Flex";
 import Popup from "../../components/Popup/Popup";
 import { CHAT_WIDTH } from "./AskLLM";
 import { AskLLMChatHeader } from "./AskLLMChatHeader";
+import { AskLLMTools } from "./Tools/AskLLMTools";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
-import { useLLMTools } from "./Tools/useLLMTools";
-import { AskLLMTools } from "./Tools/AskLLMTools";
 
 export type AskLLMChatProps = {
   prgl: Omit<Prgl, "dbsMethods">;
@@ -90,6 +89,9 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     };
   }, []);
 
+  /* Prevents flickering when popup is opened */
+  if (!messages) return;
+
   return (
     <Popup
       data-command="AskLLM.popup"
@@ -125,7 +127,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       }}
       rootChildClassname="AskLLMChat"
     >
-      {messages && activeChat && (
+      {activeChat && (
         <FlexCol
           className="min-h-0 f-1"
           style={{

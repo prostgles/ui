@@ -67,17 +67,14 @@ export const fetchLLMResponse = async (
   return parseLLMResponseObject({
     provider,
     responseData,
-    llm_credential,
   });
 };
 
 type ParseResponseObjectArgs = {
   provider: string;
   responseData: AnyObject | undefined;
-  llm_credential: DBSSchema["llm_credentials"];
 };
 export const parseLLMResponseObject = ({
-  llm_credential,
   provider,
   responseData,
 }: ParseResponseObjectArgs): LLMParsedResponse => {
