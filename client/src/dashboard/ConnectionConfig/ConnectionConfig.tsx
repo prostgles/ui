@@ -8,7 +8,7 @@ import {
   mdiPencil,
   mdiTableEdit,
 } from "@mdi/js";
-import React from "react";
+import React, { useMemo } from "react";
 import type { CONNECTION_CONFIG_SECTIONS } from "../../../../commonTypes/utils";
 import type { Prgl } from "../../App";
 import { dataCommand } from "../../Testing";
@@ -49,108 +49,126 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
     : t.ConnectionConfig["Must be admin to access this"];
   const { isElectron } = serverState;
   const acParams = useAccessControlSearchParams();
-  const sectionItems = {
-    details: {
-      label: t.ConnectionConfig["Connection details"],
-      leftIconPath: mdiPencil,
+  const sectionItems = useMemo(
+    () =>
+      ({
+        details: {
+          label: t.ConnectionConfig["Connection details"],
+          leftIconPath: mdiPencil,
+          disabledText,
+          listProps: dataCommand("config.details"),
+          content: (
+            <NewConnection
+              showTitle={false}
+              prglState={props.prgl}
+              contentOnly={true}
+              db={db}
+              connectionId={connectionId}
+            />
+          ),
+        },
+        status: {
+          label: t.ConnectionConfig["Status monitor"],
+          listProps: dataCommand("config.status"),
+          leftIconPath: mdiChartLine,
+          disabledText:
+            !dbsMethods.getStatus ? "Must be admin to access this" : undefined,
+          content:
+            !dbsMethods.getStatus || !dbsMethods.runConnectionQuery ?
+              null
+            : <StatusMonitor
+                {...prgl}
+                getStatus={dbsMethods.getStatus}
+                runConnectionQuery={dbsMethods.runConnectionQuery}
+              />,
+        },
+        access_control: {
+          label: t.ConnectionConfig["Access control"],
+          listProps: dataCommand("config.ac"),
+          leftIconPath: mdiAccountMultiple,
+          disabledText:
+            disabledText ||
+            (isElectron ? "Not available for desktop" : undefined),
+          content: (
+            <AccessControl className="min-h-0" prgl={prgl} {...acParams} />
+          ),
+        },
+        file_storage: {
+          label: t.ConnectionConfig["File storage"],
+          listProps: dataCommand("config.files"),
+          leftIconPath: mdiImage,
+          disabledText:
+            disabledText ||
+            (isElectron ? "Not available for desktop" : undefined),
+          content: <FileTableConfigControls {...props} />,
+        },
+        backups: {
+          label: t.ConnectionConfig["Backup/Restore"],
+          listProps: dataCommand("config.bkp"),
+          leftIconPath: mdiDatabaseSync,
+          disabledText,
+          content: <BackupsControls {...props} />,
+        },
+        API: {
+          label: t.ConnectionConfig["API"],
+          listProps: dataCommand("config.api"),
+          leftIconPath: mdiApplicationBracesOutline,
+          disabledText:
+            disabledText ||
+            (isElectron ? "Not available for desktop" : undefined),
+          content: <APIDetails {...props.prgl} />,
+        },
+        table_config: {
+          label: (
+            <>
+              {t.ConnectionConfig["Table config"]}{" "}
+              <span className="text-2 font-14">
+                {t.ConnectionConfig.experimental}
+              </span>
+            </>
+          ),
+          listProps: dataCommand("config.tableConfig"),
+          leftIconPath: mdiTableEdit,
+          content: <TableConfig {...props} />,
+        },
+        methods: {
+          label: (
+            <>
+              {t.ConnectionConfig["Server-side functions"]}{" "}
+              <span className="text-2 font-14">
+                ({t.ConnectionConfig.experimental})
+              </span>
+            </>
+          ),
+          listProps: dataCommand("config.methods"),
+          leftIconPath: mdiLanguageTypescript,
+          content: (
+            <FlexCol className="w-full" style={{ gap: "2em" }}>
+              <OnMountFunction {...prgl} />
+              <PublishedMethods
+                prgl={prgl}
+                editedRule={undefined}
+                accessRuleId={undefined}
+              />
+            </FlexCol>
+          ),
+        },
+      }) as const satisfies Record<
+        (typeof CONNECTION_CONFIG_SECTIONS)[number],
+        TabItem
+      >,
+    [
+      acParams,
+      connectionId,
+      db,
+      dbsMethods.getStatus,
+      dbsMethods.runConnectionQuery,
       disabledText,
-      listProps: dataCommand("config.details"),
-      content: (
-        <NewConnection
-          showTitle={false}
-          prglState={props.prgl}
-          contentOnly={true}
-          db={db}
-          connectionId={connectionId}
-        />
-      ),
-    },
-    status: {
-      label: t.ConnectionConfig["Status monitor"],
-      listProps: dataCommand("config.status"),
-      leftIconPath: mdiChartLine,
-      disabledText:
-        !dbsMethods.getStatus ? "Must be admin to access this" : undefined,
-      content:
-        !dbsMethods.getStatus || !dbsMethods.runConnectionQuery ?
-          null
-        : <StatusMonitor
-            {...prgl}
-            theme={prgl.theme}
-            getStatus={dbsMethods.getStatus}
-            runConnectionQuery={dbsMethods.runConnectionQuery}
-          />,
-    },
-    access_control: {
-      label: t.ConnectionConfig["Access control"],
-      listProps: dataCommand("config.ac"),
-      leftIconPath: mdiAccountMultiple,
-      disabledText:
-        disabledText || (isElectron ? "Not available for desktop" : undefined),
-      content: <AccessControl className="min-h-0" prgl={prgl} {...acParams} />,
-    },
-    file_storage: {
-      label: t.ConnectionConfig["File storage"],
-      listProps: dataCommand("config.files"),
-      leftIconPath: mdiImage,
-      disabledText:
-        disabledText || (isElectron ? "Not available for desktop" : undefined),
-      content: <FileTableConfigControls {...props} />,
-    },
-    backups: {
-      label: t.ConnectionConfig["Backup/Restore"],
-      listProps: dataCommand("config.bkp"),
-      leftIconPath: mdiDatabaseSync,
-      disabledText,
-      content: <BackupsControls {...props} />,
-    },
-    API: {
-      label: t.ConnectionConfig["API"],
-      listProps: dataCommand("config.api"),
-      leftIconPath: mdiApplicationBracesOutline,
-      disabledText:
-        disabledText || (isElectron ? "Not available for desktop" : undefined),
-      content: <APIDetails {...props.prgl} />,
-    },
-    table_config: {
-      label: (
-        <>
-          {t.ConnectionConfig["Table config"]}{" "}
-          <span className="text-2 font-14">
-            {t.ConnectionConfig.experimental}
-          </span>
-        </>
-      ),
-      listProps: dataCommand("config.tableConfig"),
-      leftIconPath: mdiTableEdit,
-      content: <TableConfig {...props} />,
-    },
-    methods: {
-      label: (
-        <>
-          {t.ConnectionConfig["Server-side functions"]}{" "}
-          <span className="text-2 font-14">
-            ({t.ConnectionConfig.experimental})
-          </span>
-        </>
-      ),
-      listProps: dataCommand("config.methods"),
-      leftIconPath: mdiLanguageTypescript,
-      content: (
-        <FlexCol className="w-full" style={{ gap: "2em" }}>
-          <OnMountFunction {...prgl} />
-          <PublishedMethods
-            prgl={prgl}
-            editedRule={undefined}
-            accessRuleId={undefined}
-          />
-        </FlexCol>
-      ),
-    },
-  } as const satisfies Record<
-    (typeof CONNECTION_CONFIG_SECTIONS)[number],
-    TabItem
-  >;
+      isElectron,
+      prgl,
+      props,
+    ],
+  );
   const { activeSection, setSection } = useConnectionConfigSearchParams(
     getKeys(sectionItems),
   );

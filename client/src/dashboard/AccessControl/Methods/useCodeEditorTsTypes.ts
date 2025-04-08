@@ -6,8 +6,9 @@ import { isDefined } from "../../../utils";
 import type { LanguageConfig, TSLibrary } from "../../CodeEditor/CodeEditor";
 import { dboLib, pgPromiseDb } from "../../CodeEditor/monacoTsLibs";
 import type { MethodDefinitionProps } from "./MethodDefinition";
+import { useWhyDidYouUpdate } from "../../../components/MonacoEditor/useWhyDidYouUpdate";
 
-type Args = Pick<
+type Props = Pick<
   MethodDefinitionProps,
   "dbsMethods" | "connectionId" | "dbKey" | "tables" | "dbs"
 > & {
@@ -17,9 +18,9 @@ type Args = Pick<
 let nodeLibs: TSLibrary[] | undefined;
 
 export const useCodeEditorTsTypes = (
-  args: Args,
+  props: Props,
 ): LanguageConfig | undefined => {
-  const { connectionId, dbsMethods, dbKey, method, tables, dbs } = args;
+  const { connectionId, dbsMethods, dbKey, method, tables, dbs } = props;
   const dbSchemaTypes = usePromise(async () => {
     const dbSchemaTypes = await dbsMethods.getConnectionDBTypes?.(connectionId);
     return dbSchemaTypes;
@@ -29,14 +30,15 @@ export const useCodeEditorTsTypes = (
    * Reduce re-renders
    */
   const newMethodId = useRef("new_method_" + Date.now().toString());
+  const { id, arguments: args, description: desc } = method ?? {};
   const methodOpts = useMemoDeep(() => {
     if (!method) return undefined;
     return {
-      id: method.id ?? newMethodId,
-      args: method.arguments,
-      desc: method.description,
+      id: id ?? newMethodId,
+      args,
+      desc,
     };
-  }, [method]);
+  }, [id, args, desc]);
 
   const tsLibrariesAndModelName = usePromise(async () => {
     if (dbSchemaTypes && dbsMethods.getNodeTypes && connectionId && dbKey) {
@@ -93,6 +95,8 @@ export const useCodeEditorTsTypes = (
     }
   }, [dbsMethods, connectionId, dbKey, tables, dbs, dbSchemaTypes, methodOpts]);
 
+  useWhyDidYouUpdate(tsLibrariesAndModelName);
+
   if (!tsLibrariesAndModelName) return;
 
   return {
@@ -101,7 +105,7 @@ export const useCodeEditorTsTypes = (
   };
 };
 
-type FetchMethodDefinitionTypesArgs = Pick<Args, "tables" | "dbs"> &
+type FetchMethodDefinitionTypesArgs = Pick<Props, "tables" | "dbs"> &
   Pick<DBSSchema["published_methods"], "arguments" | "description">;
 const fetchMethodDefinitionTypes = async ({
   tables,
