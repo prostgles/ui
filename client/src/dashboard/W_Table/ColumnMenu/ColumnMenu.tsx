@@ -123,11 +123,14 @@ type P = Pick<CommonWindowProps, "suggestions" | "tables" | "prgl"> & {
   columnMenuState: W_Table["columnMenuState"];
 };
 
-export type ColumnSort = {
+export type ColumnSortSQL = {
   key: string | number;
-  asc?: boolean | null;
-  nulls?: "first" | "last" | null;
+  asc?: boolean;
+  nulls?: "first" | "last";
   nullEmpty?: boolean;
+};
+export type ColumnSort = Omit<ColumnSortSQL, "key"> & {
+  key: string;
 };
 
 export const ColumnMenu = (props: P) => {
@@ -139,14 +142,16 @@ export const ColumnMenu = (props: P) => {
   const { state, setState } = useReactiveState(props.columnMenuState);
   const colName = state?.column;
   const getIsMounted = useIsMounted();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffectAsync(async () => {
-    const wSub = await w.$cloneSync(async (w) => {
+    const wSub = await props.w.$cloneSync(async (wdata) => {
       if (!getIsMounted()) return;
-      setW(w);
+      setW(wdata);
     });
     return wSub.$unsync;
-  }, [setW]);
+  }, [setW, getIsMounted, props.w]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffectAsync(async () => {
     if (!w.columns || !Array.isArray(w.columns)) {
       updateWCols(w, await getAndFixWColumnsConfig(tables, w));
@@ -160,7 +165,7 @@ export const ColumnMenu = (props: P) => {
         setColumn(column);
       }
     }
-  }, [w, colName]);
+  }, [w, colName, tables]);
 
   const onUpdate = (nc: Partial<ColumnConfig>) => {
     if (!column) return;

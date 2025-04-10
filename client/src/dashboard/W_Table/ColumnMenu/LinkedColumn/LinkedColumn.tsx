@@ -257,7 +257,7 @@ export const LinkedColumn = (props: LinkedColumnProps) => {
                   showInsertUpdateDelete={{
                     showupdate: false,
                     showdelete: false,
-                    showinsert: false,
+                    showInsert: false,
                   }}
                   sort={currentColumn.nested.sort}
                   onSortChange={(sort) => updateNested({ sort })}

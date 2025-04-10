@@ -4,15 +4,15 @@ import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";
 import Select from "../../components/Select/Select";
 import type { ValidatedColumnInfo } from "prostgles-types";
-import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
 
 type SortByControlProps = Pick<
   React.HTMLAttributes<HTMLDivElement>,
   "className" | "style"
 > & {
-  onChange: (val: ColumnSort | undefined) => void | Promise<any>;
+  onChange: (val: ColumnSortSQL | undefined) => void | Promise<any>;
   columns: ValidatedColumnInfo[];
-  value?: ColumnSort;
+  value?: ColumnSortSQL;
   fields?: string[];
   buttonClassName?: string;
   btnProps?: BtnProps<void>;
@@ -32,7 +32,7 @@ function SortByControl({
       onChange(undefined);
       return;
     }
-    const newSort: ColumnSort = {
+    const newSort: ColumnSortSQL = {
       key: orderByKey,
       asc: orderAsc,
     };

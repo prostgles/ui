@@ -1,4 +1,4 @@
-import { mdiFormatLetterCase } from "@mdi/js";
+import type { Primitive } from "d3";
 import type { AnyObject } from "prostgles-types";
 import React from "react";
 import type { Command, TestSelectors } from "../../Testing";
@@ -10,15 +10,13 @@ import { DraggableLI } from "../DraggableLI";
 import ErrorComponent from "../ErrorComponent";
 import { generateUniqueID } from "../FileInput/FileInput";
 import { classOverride } from "../Flex";
-import { Input } from "../Input";
 import { Label } from "../Label";
 import "../List.css";
-import Loading from "../Loading";
 import Popup, { POPUP_CLASSES } from "../Popup/Popup";
-import "./SearchList.css";
 import type { OptionKey } from "../Select/Select";
-import type { Primitive } from "d3";
 import { ScrollFade } from "./ScrollFade";
+import { SearchInput } from "./SearchInput";
+import "./SearchList.css";
 
 export type SearchListItemContent =
   | {
@@ -91,7 +89,7 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   checkboxed?: boolean;
   placeholder?: string;
   autoFocus?: boolean;
-  inputProps?: React.HTMLProps<HTMLInputElement> & TestSelectors;
+  inputProps?: Pick<React.HTMLProps<HTMLInputElement>, "type"> & TestSelectors;
 
   /**
    * If provided then allows toggling all values
@@ -144,8 +142,6 @@ export type SearchListProps<M extends boolean = false> = TestSelectors & {
   inputStyle?: React.CSSProperties;
 
   onNoResultsContent?: (searchTerm: string) => React.ReactNode;
-
-  size?: "small";
 
   rowStyleVariant?: "row-wrap";
 };
@@ -532,7 +528,6 @@ export default class SearchList<M extends boolean = false> extends RTComp<
       onPressEnter,
       searchStyle = {},
       searchEmpty = false,
-      size = window.isLowWidthScreen ? "small" : undefined,
       rowStyleVariant,
       inputProps,
       wrapperStyle = {},
@@ -637,7 +632,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<
 
     const noList =
       (!renderedItems.length && !searchTerm) || (isSearch && searchClosed);
-    const list =
+    const listNode =
       error ? <ErrorComponent error={error} />
       : noList ? null
       : <ScrollFade
@@ -939,106 +934,62 @@ export default class SearchList<M extends boolean = false> extends RTComp<
                 {allSelected.length || 0} selected
               </div>
             : null
-          : <div
-              ref={(inputWrapper) => {
+          : <SearchInput
+              id={this.props.inputID}
+              withShadow={isSearch && !noShadow}
+              inputRef={(r) => {
+                if (r) {
+                  this.refInput = r;
+                }
+              }}
+              inputWrapperRef={(inputWrapper) => {
                 if (inputWrapper) {
                   this.inputWrapper = inputWrapper;
                 }
               }}
-              className={
-                "SearchList_InputWrapper bg-color-0 flex-row h-fit f-1 relative o-hidden relative rounded focus-border b b-color " +
-                (isSearch && !noShadow ? " shadow " : " ")
-              }
-              style={{
-                ...wrapperStyle,
-                ...(isSearch ? { zIndex: !list ? "unset" : 2 }
-                : isSelect ? { margin: "8px", marginBottom: "2px" }
-                : {
-                    margin: "8px",
-                    // margin: "8px",
-                    // marginTop: "12px"
-                  }),
-              }}
-              onClick={() => {
-                if (!list && searchEmpty) {
+              onClickWrapper={() => {
+                if (!listNode && searchEmpty) {
                   this.onSetTerm(searchTerm || "", {});
                 }
               }}
-            >
-              <Input
-                autoCorrect="off"
-                autoCapitalize="off"
-                type="text"
-                {...inputProps}
-                ref={(r) => {
-                  if (r) {
-                    this.refInput = r;
+              wrapperStyle={wrapperStyle}
+              className={inputClass}
+              {...inputProps}
+              placeholder={placeholder}
+              title={"Search"}
+              value={searchTerm}
+              onChange={(e) => {
+                const searchTerm = e.currentTarget.value;
+                this.onSetTerm(searchTerm, e);
+              }}
+              mode={
+                isSearch ?
+                  {
+                    search: {
+                      "!listNode": !listNode,
+                      "!noList": !noList,
+                    },
                   }
-                }}
-                id={this.props.inputID}
-                style={{
-                  ...(isSearch && !noList ?
-                    {
-                      borderBottomLeftRadius: 0,
-                      borderBottomRightRadius: 0,
-                      zIndex: 3,
-                    }
-                  : {}),
-                  ...(!this.props.matchCase?.hide ?
-                    {
-                      borderTopRightRadius: 0,
-                      borderBottomRightRadius: 0,
-                    }
-                  : {}),
-                  ...this.props.inputStyle,
-                  ...(size !== "small" && {
-                    padding: "8px 1em",
-                    paddingRight: 0,
-                  }),
-                }}
-                placeholder={placeholder}
-                autoComplete="off"
-                className={inputClass + " f-1 w-full "}
-                title={"Search"}
-                value={searchTerm}
-                onChange={(e) => {
-                  const searchTerm = e.currentTarget.value;
-                  this.onSetTerm(searchTerm, e);
-                }}
-              />
-              <div
-                className="relative rounded f-0 ai-center jc-center flex-row bg-color-0 "
-                style={{
-                  borderRadius: "3px",
-                  overflow: "visible",
-                  margin: "0px",
-                }}
-              >
-                {isSearch && searchingItems && (
-                  <Loading
-                    className="noselect mr-p5 bg-color-0"
-                    sizePx={24}
-                    variant="cover"
-                  />
-                )}
-
-                {!this.props.matchCase?.hide && (
-                  <Btn
-                    title={"Match case"}
-                    iconPath={mdiFormatLetterCase}
-                    style={{ margin: "1px" }}
-                    color={matchCase ? "action" : undefined}
-                    onClick={() => {
+                : isSelect ?
+                  { select: true }
+                : undefined
+              }
+              matchCase={
+                this.props.matchCase?.hide ?
+                  undefined
+                : {
+                    value: !!matchCase,
+                    onChange: (matchCase) => {
                       if (this.props.matchCase?.onChange) {
-                        this.props.matchCase.onChange(!matchCase);
+                        this.props.matchCase.onChange(matchCase);
                       } else {
-                        this.setState({ matchCase: !matchCase });
+                        this.setState({ matchCase });
                       }
-                    }}
-                  />
-                )}
-              </div>
-            </div>
+                    },
+                  }
+              }
+              isLoading={isSearch && searchingItems}
+            />
           }
           {!!multiSelect && (
             <Checkbox
@@ -1076,7 +1027,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<
             />
           )}
         </div>
-        {list}
+        {listNode}
       </div>
     );
 

@@ -33,6 +33,7 @@ import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
 import { t } from "../../i18n/i18nUtils";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { Section } from "../../components/Section";
 
 export const getSqlErrorText = (e: any) => {
   let objDetails: [string, any][] = [];
@@ -372,22 +373,20 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                   </Btn>
                 }
                 message={
-                  <div className="flex-col h-fit gap-1">
-                    <InfoRow variant="naked" iconPath="">
+                  <FlexCol className="w-fit h-fit gap-1">
+                    <InfoRow className="max-w-fit">
                       {
                         t.NewConnection[
                           "Any related dashboard content will also be deleted"
                         ]
                       }
                     </InfoRow>
-
-                    <PopupMenu
-                      title={t.common["Related data"]}
-                      button={
-                        <Btn variant="outline">{t.common["Related data"]}</Btn>
-                      }
-                      clickCatchStyle={{ opacity: 0 }}
-                      onClickClose={false}
+                    <Section
+                      title={t.NewConnection["Related data"]}
+                      disableFullScreen={true}
+                      style={{
+                        maxWidth: "min(100%, 600px)",
+                      }}
                     >
                       <JoinedRecords
                         activeTabKey={this.state.activeTabKey}
@@ -404,9 +403,8 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                         tables={prglState.dbsTables}
                         methods={prglState.dbsMethods}
                         errors={{}}
-                        showOnlyFKeyTables={true}
                       />
-                    </PopupMenu>
+                    </Section>
                     <SwitchToggle
                       data-command="Connection.edit.delete.dropDatabase"
                       label={t.NewConnection["Drop database as well"]}
@@ -416,7 +414,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                       }
                     />
                     <InfoRow
-                      className="ws-pre"
+                      className="ws-pre max-w-fit"
                       style={{ opacity: dropDatabase ? 1 : 0 }}
                     >
                       {t.NewConnection["You are about to drop"]}{" "}
@@ -429,7 +427,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                       }
                     </InfoRow>
                     <ErrorComponent error={error} />
-                  </div>
+                  </FlexCol>
                 }
                 confirmButton={(popupClose) => (
                   <Btn

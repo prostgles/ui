@@ -6,7 +6,7 @@ import { Table } from "../../components/Table/Table";
 import type { WindowData } from "../Dashboard/dashboardUtils";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
 import { onRenderColumn } from "../W_Table/tableUtils/onRenderColumn";
-import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
 
 type W_SQLResultsProps = Pick<
   W_SQLState,
@@ -24,7 +24,7 @@ type W_SQLResultsProps = Pick<
   Pick<W_SQLProps, "childWindow" | "tables"> & {
     w: SyncDataItem<Required<WindowData<"sql">>, true>;
     onResize: (newCols: W_SQLState["cols"]) => void;
-    onSort: (newSort: ColumnSort[]) => any;
+    onSort: (newSort: ColumnSortSQL[]) => any;
     onPageChange: (newPage: number) => any;
     onPageSizeChange: (newPageSize: W_SQLState["pageSize"]) => any;
   };

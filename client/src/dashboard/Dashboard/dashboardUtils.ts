@@ -20,7 +20,7 @@ import type { OmitDistributive } from "../../../../commonTypes/utils";
 import type { Extent, MapExtentBehavior } from "../Map/DeckGLMap";
 import type {
   ColumnConfig,
-  ColumnSort,
+  ColumnSortSQL,
 } from "../W_Table/ColumnMenu/ColumnMenu";
 import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
 const getRandomElement = <Arr>(
@@ -144,7 +144,7 @@ export type Query = {
   id: string;
   tableName: string;
   filter?: any;
-  sort?: ColumnSort;
+  sort?: ColumnSortSQL;
   geo?: {
     field: string;
     filterField: string;
@@ -362,7 +362,7 @@ export type WindowData<CType extends ChartType = ChartType> = Omit<
   >;
   user_id: string;
   limit: number | null;
-  sort: null | ColumnSort[];
+  sort: null | ColumnSortSQL[];
 };
 
 export const windowIs = <T extends ChartType>(

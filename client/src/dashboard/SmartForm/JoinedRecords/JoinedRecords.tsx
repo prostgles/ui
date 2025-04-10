@@ -16,7 +16,13 @@ import SmartTable from "../../SmartTable";
 import type { SmartFormProps } from "../SmartForm";
 import type { NewRow, NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import { JoinedRecordsSection } from "./JoinedRecordsSection";
-import { useJoinedRecordsSections } from "./useJoinedRecordsSections";
+import {
+  useJoinedRecordsSections,
+  type JoinedRecordSection,
+} from "./useJoinedRecordsSections";
+import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
+import Btn from "../../../components/Btn";
+import { mdiTable } from "@mdi/js";
 
 export type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods"> &
   Pick<SmartFormProps, "onSuccess" | "parentForm"> & {
@@ -31,26 +37,9 @@ export type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods"> &
     modeType?: "update" | "insert" | "view";
     onTabChange: (tabKey: string | undefined) => void;
     activeTabKey: string | undefined;
-    showOnlyFKeyTables?: boolean;
     errors: AnyObject;
     row?: AnyObject;
-    variant?: "inline";
   };
-
-export type JoinedRecordSection = {
-  label: string;
-  tableName: string;
-  path: string[];
-  expanded?: boolean;
-  existingDataCount: number;
-  canInsert?: boolean;
-  error?: string;
-  joinFilter: AnyObject;
-  detailedJoinFilter: SmartGroupFilter;
-  count: number;
-  table: DBSchemaTableWJoins;
-  tableHandler: Partial<TableHandlerClient> | undefined;
-};
 
 export const JoinedRecords = (props: JoinedRecordsProps) => {
   const res = useJoinedRecordsSections(props);
@@ -65,7 +54,6 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
     modeType: action,
     activeTabKey,
     onTabChange,
-    variant,
   } = props;
 
   /** Open errored section */
@@ -95,82 +83,57 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
       )}
       style={style}
     >
-      {variant === "inline" ?
-        sections.map((section) => {
-          const { label, path, count, tableName, table } = section;
-          const icon = table.icon;
-          return (
-            <Section
-              key={path.join(".")}
-              title={
-                <FlexRow data-key={path.join(".")}>
-                  <div>{label}</div>
-                  <div className="text-2" style={{ fontWeight: "normal" }}>
-                    {count}
-                  </div>
-                </FlexRow>
-              }
-              titleIcon={icon && <SvgIcon icon={icon} />}
-            >
-              <JoinedRecordsSection
-                {...props}
-                section={section}
-                descendants={descendants}
-                isInsert={isInsert}
-                onSetQuickView={() => {
-                  setQuickView(section);
-                }}
-              />
-            </Section>
-          );
-        })
-      : <Tabs
-          className="f-1"
-          contentClass="o-auto f-1"
-          activeKey={activeTabKey}
-          onChange={(activeKey) => {
-            onTabChange(activeKey);
-          }}
-          items={Object.fromEntries(
-            sections.map((section) => {
-              const { label, path, count, table } = section;
-              const icon = table.icon;
-              const countNode = (
-                <span
-                  className="text-1p5 font-18"
-                  style={{ fontWeight: "lighter" }}
-                >
-                  {section.count.toLocaleString()}
-                </span>
-              );
-              const showCountNode = !(isInsert && !count);
-              return [
-                path.join("."),
-                {
-                  label: (
-                    <FlexRow className="gap-p5">
-                      {icon && <SvgIcon icon={icon} />}
-                      <div>{label}</div>
-                      {showCountNode && countNode}
-                    </FlexRow>
-                  ),
-                  content: (
-                    <JoinedRecordsSection
-                      {...props}
-                      section={section}
-                      descendants={descendants}
-                      isInsert={isInsert}
-                      onSetQuickView={() => {
+      {sections.map((section) => {
+        const { label, path, count, table } = section;
+        const icon = table.icon;
+        return (
+          <Section
+            key={path.join(".")}
+            className="trigger-hover"
+            titleIcon={icon && <SvgIcon icon={icon} />}
+            title={
+              <FlexRow data-key={path.join(".")}>
+                <div>{label}</div>
+                <div className="text-2" style={{ fontWeight: "normal" }}>
+                  {count}
+                </div>
+              </FlexRow>
+            }
+            titleRightContent={
+              props.newRowDataHandler && (
+                <FlexRow className="show-on-trigger-hover">
+                  {!isInsert && (
+                    <Btn
+                      iconPath={mdiTable}
+                      title="Open in table"
+                      disabledInfo={!count ? "No records to show" : undefined}
+                      onClick={() => {
                         setQuickView(section);
                       }}
                     />
-                  ),
-                } satisfies TabItem,
-              ];
-            }),
-          )}
-        />
-      }
+                  )}
+                  <JoinedRecordsAddRow
+                    {...props}
+                    btnProps={{ size: "small" }}
+                    section={section}
+                    newRowDataHandler={props.newRowDataHandler}
+                  />
+                </FlexRow>
+              )
+            }
+          >
+            <JoinedRecordsSection
+              {...props}
+              section={section}
+              descendants={descendants}
+              isInsert={isInsert}
+              onSetQuickView={() => {
+                setQuickView(section);
+              }}
+            />
+          </Section>
+        );
+      })}
       {quickView && (
         <SmartTable
           db={db}
@@ -186,3 +149,53 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
     </FlexCol>
   );
 };
+
+/* {variant === "inline" ? */
+
+// : <Tabs
+//     className="f-1"
+//     contentClass="o-auto f-1"
+//     activeKey={activeTabKey}
+//     onChange={(activeKey) => {
+//       onTabChange(activeKey);
+//     }}
+//     items={Object.fromEntries(
+//       sections.map((section) => {
+//         const { label, path, count, table } = section;
+//         const icon = table.icon;
+//         const countNode = (
+//           <span
+//             className="text-1p5 font-18"
+//             style={{ fontWeight: "lighter" }}
+//           >
+//             {section.count.toLocaleString()}
+//           </span>
+//         );
+//         const showCountNode = !(isInsert && !count);
+//         return [
+//           path.join("."),
+//           {
+//             label: (
+//               <FlexRow className="gap-p5">
+//                 {icon && <SvgIcon icon={icon} />}
+//                 <div>{label}</div>
+//                 {showCountNode && countNode}
+//               </FlexRow>
+//             ),
+//             content: (
+//               <JoinedRecordsSection
+//                 {...props}
+//                 section={section}
+//                 descendants={descendants}
+//                 isInsert={isInsert}
+//                 onSetQuickView={() => {
+//                   setQuickView(section);
+//                 }}
+//               />
+//             ),
+//           } satisfies TabItem,
+//         ];
+//       }),
+//     )}
+//   />
+// }

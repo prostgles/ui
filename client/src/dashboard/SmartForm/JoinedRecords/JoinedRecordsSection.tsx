@@ -1,8 +1,8 @@
 import { isDefined } from "prostgles-types";
-import React from "react";
+import React, { useMemo } from "react";
 import { MediaViewer } from "../../../components/MediaViewer";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
-import type { JoinedRecordSection, JoinedRecordsProps } from "./JoinedRecords";
+import type { JoinedRecordsProps } from "./JoinedRecords";
 import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import { InfoRow } from "../../../components/InfoRow";
 import { FlexCol, FlexRow } from "../../../components/Flex";
@@ -12,6 +12,7 @@ import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
 import Btn from "../../../components/Btn";
 import { SmartCardListJoinedNewRecords } from "../../SmartCardList/SmartCardListJoinedNewRecords";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { JoinedRecordSection } from "./useJoinedRecordsSections";
 
 const JoinedRecordsSectionCardList = (
   props: JoinedRecordsProps & {
@@ -32,35 +33,31 @@ const JoinedRecordsSectionCardList = (
     newRowDataHandler,
   } = props;
 
-  const descendantInsertTables = descendants
-    .filter((t) => db[t.name]?.insert)
-    .map((t) => t.name);
+  const descendantInsertTables = useMemo(
+    () => descendants.filter((t) => db[t.name]?.insert).map((t) => t.name),
+    [db, descendants],
+  );
 
-  const nestedInsertData = Object.fromEntries(
-    Object.entries(newRowData ?? {})
-      .map(([k, d]) =>
-        d.type === "nested-table" ?
-          [
-            k,
-            d.value.map((_v) =>
-              _v instanceof NewRowDataHandler ? _v.getRow() : _v,
-            ),
-          ]
-        : undefined,
-      )
-      .filter(isDefined),
+  const nestedInsertData = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(newRowData ?? {})
+          .map(([k, d]) =>
+            d.type === "nested-table" ?
+              [
+                k,
+                d.value.map((_v) =>
+                  _v instanceof NewRowDataHandler ? _v.getRow() : _v,
+                ),
+              ]
+            : undefined,
+          )
+          .filter(isDefined),
+      ),
+    [newRowData],
   );
 
   const { count } = s;
-  let countNode: React.ReactNode = (
-    <span className="ws-pre text-1p5 font-18" style={{ fontWeight: "normal" }}>
-      {" "}
-      {count.toLocaleString()}
-    </span>
-  );
-  if (isInsert && !count) {
-    countNode = null;
-  }
 
   const limit = 20;
   if (isInsert) {
@@ -121,60 +118,6 @@ const JoinedRecordsSectionCardList = (
       </div>
     );
   }
-
-  // const key = s.path.join(".") + dataSignature;
-  // return (
-  //   <div
-  //     key={key}
-  //     data-key={s.path.join(".")}
-  //     className="flex-col min-h-0 f-0 relative bg-inherit"
-  //   >
-  //     <div
-  //       className="flex-row ai-center noselect pointer f-0 bg-inherit bt b-color"
-  //       style={
-  //         !s.expanded ? undefined : (
-  //           {
-  //             position: "sticky",
-  //             top: 0,
-  //             zIndex: 432432,
-  //             marginBottom: ".5em",
-  //           }
-  //         )
-  //       }
-  //     >
-  //       <Btn
-  //         className="f-1 p-p5 ta-left font-20 bold jc-start"
-  //         variant="text"
-  //         data-label="Expand section"
-  //         title="Expand section"
-  //         disabledInfo={s.error ?? disabledInfo}
-  //         color={s.error ? "warn" : "action"}
-  //         onClick={onToggle}
-  //       >
-  //         {s.path.join(".")}
-  //         {countNode}
-  //       </Btn>
-
-  //       <FlexRow className="show-on-parent-hover gap-0">
-  //         <Btn
-  //           iconPath={mdiTable}
-  //           title="Open in table"
-  //           disabledInfo={disabledInfo}
-  //           onClick={async () => {
-  //             this.setState({
-  //               quickView: {
-  //                 tableName: s.tableName,
-  //                 path: s.path,
-  //               },
-  //             });
-  //           }}
-  //         />
-  //         <JoinedRecordsAddRow {...props} section={s} />
-  //       </FlexRow>
-  //     </div>
-  //     {s.expanded && content}
-  //   </div>
-  // );
 };
 
 export const JoinedRecordsSection = ({
@@ -187,7 +130,7 @@ export const JoinedRecordsSection = ({
   section: JoinedRecordSection;
   isInsert: boolean;
   descendants: JoinedRecordsProps["tables"];
-  onSetQuickView: VoidFunction;
+  onSetQuickView: VoidFunction | undefined;
 }) => {
   const { count } = section;
   return (
@@ -200,7 +143,7 @@ export const JoinedRecordsSection = ({
             className=" f-1"
           />
         )}
-        {!isInsert && (
+        {!isInsert && onSetQuickView && (
           <Btn
             iconPath={mdiTable}
             title="Open in table"

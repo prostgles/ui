@@ -10,7 +10,6 @@ import {
 } from "../../../../commonTypes/filterUtils";
 import { getSelectForFieldConfigs } from "../SmartCard/getSelectForFieldConfigs";
 import { getSmartCardColumns } from "../SmartCard/getSmartCardColumns";
-import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 import type { SmartCardListProps } from "./SmartCardList";
 
 export type SmartCardListState = ReturnType<typeof useSmartCardListState>;
@@ -27,12 +26,15 @@ export const useSmartCardListState = (
     | "limit"
     | "realtime"
     | "orderBy"
+    | "showTopBar"
+    | "orderByfields"
+    | "tables"
   > & {
     offset: number;
   },
-  stateOrderBy: ColumnSort | undefined,
 ) => {
   const {
+    orderByfields,
     tableName,
     db,
     columns: columnsFromProps,
@@ -44,8 +46,11 @@ export const useSmartCardListState = (
     fieldConfigs,
     orderBy,
     onSetData,
+    showTopBar,
+    tables,
   } = props;
 
+  const [localOrderBy, setLocalOrderBy] = useState(orderBy);
   const [localFilter, setLocalFilter] = useState<SmartGroupFilter>();
 
   const fetchedColumns = usePromise(async () => {
@@ -78,6 +83,16 @@ export const useSmartCardListState = (
       localFilter ?
         getSmartGroupFilter(localFilter, filter && { filters: [filter] })
       : filter;
+
+    const table = tables.find((t) => t.name === tableName);
+    const showInsert = isObject(showTopBar) ? showTopBar.insert : showTopBar;
+    const willShowInsert =
+      showInsert &&
+      typeof tableName === "string" &&
+      table?.columns.some((c) => c.insert);
+
+    const showSort = isObject(showTopBar) ? showTopBar.sort : showTopBar;
+    const willShowSort = showSort && orderByfields?.length !== 0;
     return {
       type: "table",
       tableName,
@@ -87,8 +102,12 @@ export const useSmartCardListState = (
       limit,
       realtime,
       fieldConfigs,
-      orderBy,
+      orderBy: localOrderBy ?? orderBy,
+      localOrderBy,
       onSetData,
+      table,
+      willShowInsert,
+      willShowSort,
     } as const;
   }, [
     tableName,
@@ -97,9 +116,13 @@ export const useSmartCardListState = (
     limit,
     realtime,
     fieldConfigs,
-    orderBy,
     onSetData,
     localFilter,
+    orderBy,
+    localOrderBy,
+    tables,
+    showTopBar,
+    orderByfields?.length,
   ]);
 
   /** SQL data */
@@ -136,8 +159,8 @@ export const useSmartCardListState = (
         fullFilter,
         limit = 25,
         realtime,
+        orderBy,
       } = smartProps;
-      const orderBy = stateOrderBy ?? smartProps.orderBy;
       const select = getSelectForFieldConfigs(fieldConfigs, columns);
 
       const setData = async () => {
@@ -184,7 +207,7 @@ export const useSmartCardListState = (
         fullFilter,
       };
     }
-  }, [smartProps, columns, offset, stateOrderBy, tableHandler]);
+  }, [smartProps, columns, offset, tableHandler]);
 
   /** Table data */
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -231,12 +254,13 @@ export const useSmartCardListState = (
     totalRows,
     setTotalRows,
     tableControls:
-      smartProps.type === "table" ?
+      smartProps.type === "table" && smartProps.table ?
         {
-          tableName: smartProps.tableName,
+          ...smartProps,
           localFilter,
           setLocalFilter,
-          filter: smartProps.filter,
+          localOrderBy,
+          setLocalOrderBy,
         }
       : undefined,
   };

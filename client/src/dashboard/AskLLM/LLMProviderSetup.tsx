@@ -34,7 +34,7 @@ export const LLMProviderSetup = ({
   return (
     <>
       <SmartCardList
-        className="mb-1 w-fit"
+        className="mb-1 w-fit min-w-0"
         db={dbs as DBHandlerClient}
         tableName={"llm_credentials"}
         methods={dbsMethods}

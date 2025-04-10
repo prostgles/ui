@@ -1,7 +1,7 @@
 import React from "react";
 import { FlexCol } from "../../../components/Flex";
 import Select from "../../../components/Select/Select";
-import type { ColumnSort } from "./ColumnMenu";
+import type { ColumnSortSQL } from "./ColumnMenu";
 import type { ColumnConfigWInfo } from "../W_Table";
 import type {
   DBSchemaTablesWJoins,
@@ -27,7 +27,7 @@ export type ColumnSortMenuProps = {
   tables: DBSchemaTablesWJoins;
 };
 
-export const getDefaultSort = (columnName: string): ColumnSort => {
+export const getDefaultSort = (columnName: string): ColumnSortSQL => {
   return {
     key: columnName,
     asc: true,
@@ -44,14 +44,14 @@ export const ColumnSortMenu = ({ column, w }: ColumnSortMenuProps) => {
       `${s.key}`.startsWith(`${column.name}.`)
     : s.key === column.name,
   );
-  const sort: ColumnSort = existingSort || {
+  const sort: ColumnSortSQL = existingSort || {
     ...getDefaultSort(column.name),
     asc: null,
   };
   const colIsText =
     column.info?.tsDataType === "string" ||
     column.computedConfig?.funcDef.outType.tsDataType === "string";
-  const updateSort = (newColSort: ColumnSort) => {
+  const updateSort = (newColSort: ColumnSortSQL) => {
     let matched = false;
     let newSort = (w.sort || []).map((s) => {
       if (s.key === existingSort?.key) {

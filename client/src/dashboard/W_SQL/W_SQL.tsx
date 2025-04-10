@@ -35,7 +35,7 @@ import type {
 import type { DBEventHandles, ValidatedColumnInfo } from "prostgles-types/lib";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
-import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
 
 import { useIsMounted } from "prostgles-client/dist/react-hooks";
 import { createReactiveState } from "../../appUtils";
@@ -107,7 +107,7 @@ type SQLResultCols = Required<W_SQLProps>["w"]["options"]["sqlResultCols"];
 
 export type W_SQLState = {
   table?: TableProps & Query;
-  sort: ColumnSort[];
+  sort: ColumnSortSQL[];
   loading: boolean;
   currentCodeBlockChartColumns?: ChartableSQL;
   isSelect: boolean;
@@ -338,7 +338,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
     });
   };
   hashedSQL?: string;
-  sort?: ColumnSort[];
+  sort?: ColumnSortSQL[];
   runSQL = runSQL.bind(this);
 
   sqlRef?: SQLEditorRef;

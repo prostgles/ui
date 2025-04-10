@@ -22,7 +22,7 @@ import type { SingleSyncHandles } from "prostgles-client/dist/SyncedTable/Synced
 import type { ValidatedColumnInfo } from "prostgles-types/lib";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
-import type { ColumnConfig, ColumnSort } from "./ColumnMenu/ColumnMenu";
+import type { ColumnConfig, ColumnSortSQL } from "./ColumnMenu/ColumnMenu";
 import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
 
 import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
@@ -122,7 +122,7 @@ export type W_TableState = {
   rowCount: number;
   rowsLoaded: number;
   table?: (TableProps & Query) | any;
-  sort?: ColumnSort[];
+  sort?: ColumnSortSQL[];
   loading: boolean;
 
   rows?: AnyObject[];
@@ -472,7 +472,7 @@ export default class W_Table extends RTComp<
     );
   };
 
-  onSort = async (sort: ColumnSort[]) => {
+  onSort = async (sort: ColumnSortSQL[]) => {
     const { tables, db } = this.props.prgl;
     const { w } = this.d;
     if (!w) return null;

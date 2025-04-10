@@ -2,7 +2,7 @@ import React from "react";
 import Loading from "../components/Loading";
 import Popup from "../components/Popup/Popup";
 import { Table } from "../components/Table/Table";
-import type { ColumnSort } from "./W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "./W_Table/ColumnMenu/ColumnMenu";
 import type { ProstglesColumn } from "./W_Table/W_Table";
 import RTComp from "./RTComp";
 import {
@@ -46,7 +46,7 @@ type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods"> & {
 type S = {
   error?: any;
   rows: AnyObject[];
-  sort: ColumnSort[];
+  sort: ColumnSortSQL[];
   filter?: SmartGroupFilter;
   editRowFilter?: DetailedFilterBase[];
   loadedData: boolean;
@@ -167,7 +167,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
 
   getData = async (
     filter: SmartGroupFilter = this.filter,
-    sort: ColumnSort[] = this.state.sort,
+    sort: ColumnSortSQL[] = this.state.sort,
     page: number = this.state.page,
     pageSize: PaginationProps["pageSize"] = this.state.pageSize,
   ) => {

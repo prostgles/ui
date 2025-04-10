@@ -2,12 +2,12 @@ import { mdiSortReverseVariant, mdiSortVariant } from "@mdi/js";
 import React from "react";
 import Btn from "../../components/Btn";
 import Select from "../../components/Select/Select";
-import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
-import type { SmartFilterBarProps } from "./SmartFilterBar";
 import type {
   DBSchemaTableWJoins,
   WindowSyncItem,
 } from "../Dashboard/dashboardUtils";
+import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { SmartFilterBarProps } from "./SmartFilterBar";
 
 type P = SmartFilterBarProps & {
   table: DBSchemaTableWJoins;

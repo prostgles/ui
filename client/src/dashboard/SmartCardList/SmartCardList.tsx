@@ -1,6 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 
-import { mdiDelete } from "@mdi/js";
 import { type DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type {
   AnyObject,
@@ -9,7 +8,6 @@ import type {
 } from "prostgles-types";
 import FlipMove from "react-flip-move";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
 import { classOverride, FlexCol } from "../../components/Flex";
 import Loading from "../../components/Loading";
@@ -18,12 +16,9 @@ import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { FieldConfig } from "../SmartCard/SmartCard";
 import SmartCard from "../SmartCard/SmartCard";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
-import {
-  SmartCardListHeaderControls,
-  useSmartCardListControls,
-} from "./SmartCardListHeaderControls";
-import { useSmartCardListState } from "./useSmartCardListState";
 import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
+import { SmartCardListHeaderControls } from "./SmartCardListHeaderControls";
+import { useSmartCardListState } from "./useSmartCardListState";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
@@ -124,40 +119,32 @@ export const SmartCardList = <T extends AnyObject>(
     realtime,
     columns: propsColumns,
     onClickRow,
+    orderBy,
+    showTopBar,
   } = props;
 
   const paginationState = usePagination(
     "limit" in props && props.limit ? props.limit : 25,
   );
 
-  const [stateOrderBy, setOrderBy] = useState<ColumnSort | undefined>(
-    props.orderBy,
-  );
-  const state = useSmartCardListState(
-    {
-      db,
-      tableName,
-      columns: propsColumns,
-      fieldConfigs: _fieldConfigs as FieldConfig[],
-      filter,
-      throttle,
-      limit: paginationState.limit,
-      offset: paginationState.offset,
-      realtime,
-      orderBy: stateOrderBy,
-      onSetData,
-    },
-    stateOrderBy,
-  );
-  const { columns, loading, items, error, loaded, totalRows } = state;
-  const { keyCols } = useGetRowKeyCols(columns ?? [], items?.[0] ?? {});
-  const controlsState = useSmartCardListControls({
-    ...(props as SmartCardListProps),
-    totalRows,
-    columns: columns ?? [],
-    stateOrderBy,
-    setOrderBy,
+  const state = useSmartCardListState({
+    db,
+    tableName,
+    columns: propsColumns,
+    fieldConfigs: _fieldConfigs as FieldConfig[],
+    filter,
+    throttle,
+    limit: paginationState.limit,
+    offset: paginationState.offset,
+    realtime,
+    onSetData,
+    tables,
+    showTopBar,
+    orderBy,
   });
+  const { columns, loading, items, error, loaded, totalRows, tableControls } =
+    state;
+  const { keyCols } = useGetRowKeyCols(columns ?? [], items?.[0] ?? {});
 
   const smartCardListStyle = useSmartCardListStyle(style);
 
@@ -178,7 +165,7 @@ export const SmartCardList = <T extends AnyObject>(
   return (
     <FlexCol
       className={classOverride(
-        "SmartCardList o-auto gap-p5 relative ",
+        "SmartCardList o-auto gap-p5 relative max-w-full",
         className,
       )}
       data-command="SmartCardList"
@@ -186,13 +173,12 @@ export const SmartCardList = <T extends AnyObject>(
     >
       {loading && <Loading variant="cover" />}
 
-      {controlsState && (
+      {tableControls && (
         <SmartCardListHeaderControls
           {...(props as SmartCardListProps)}
           itemsLength={items.length}
           totalRows={totalRows}
           columns={columns}
-          state={controlsState}
           tableControls={state.tableControls}
         />
       )}

@@ -129,7 +129,6 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
       )}
       {showJoinedTables && (
         <JoinedRecords
-          variant="inline"
           modeType={modeType}
           db={db}
           tables={tables}

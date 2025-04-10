@@ -4,7 +4,7 @@ import {
   mdiDelete,
   mdiPencilOutline,
 } from "@mdi/js";
-import type { AnyObject } from "prostgles-types";
+import { isObject, type AnyObject } from "prostgles-types";
 import React, { useState } from "react";
 import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
 import {
@@ -58,14 +58,14 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
 
   const {
     showdelete = true,
-    showinsert = true,
+    showInsert = true,
     showupdate = true,
   } = showInsertUpdateDelete;
   const hideUpdateDelete = [showdelete, showupdate].every((v) => v === false);
   const canUpdateOrDelete =
     !hideUpdateDelete && (tableHandler?.delete || tableHandler?.update);
 
-  if (hideSort && rightContent && !showdelete && !showinsert && !showupdate)
+  if (hideSort && rightContent && !showdelete && !showInsert && !showupdate)
     return <></>;
 
   return (
@@ -196,9 +196,12 @@ export const SmartFilterBarRightActions = (props: SmartFilterBarProps) => {
           </ExpandSection>
         )}
 
-        {showinsert && (
+        {showInsert && (
           <InsertButton
-            buttonProps={commonBtnProps}
+            buttonProps={{
+              ...commonBtnProps,
+              ...(isObject(showInsert) && showInsert),
+            }}
             db={db}
             methods={dbMethods}
             tables={tables}

@@ -2,7 +2,7 @@ import React, { memo, useEffect, useRef, useState } from "react";
 import "./Table.css";
 
 import type { AnyObject } from "prostgles-types";
-import type { ColumnSort } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSortSQL } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 import type { ColumnSortMenuProps } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
 import type { ProstglesColumn } from "../../dashboard/W_Table/W_Table";
 import type { PanListeners } from "../../dashboard/setPan";
@@ -86,8 +86,8 @@ export type TableProps = {
   cols: ProstglesColumn[];
   onColumnReorder?: (newOrder: ProstglesColumn[]) => void;
   whiteHeader?: boolean;
-  onSort?: (newSort: ColumnSort[]) => any;
-  sort?: ColumnSort[];
+  onSort?: (newSort: ColumnSortSQL[]) => any;
+  sort?: ColumnSortSQL[];
   onRowHover?: (row: any, e: React.MouseEvent<HTMLDivElement>) => any;
   onRowClick?: (
     row: AnyObject | undefined,

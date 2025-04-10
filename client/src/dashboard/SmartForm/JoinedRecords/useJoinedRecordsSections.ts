@@ -4,11 +4,15 @@ import type {
 } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import { useMemo, useRef, useState } from "react";
-import { getSmartGroupFilter } from "../../../../../commonTypes/filterUtils";
+import {
+  getSmartGroupFilter,
+  type SmartGroupFilter,
+} from "../../../../../commonTypes/filterUtils";
 import { isDefined } from "../../../utils";
 import { getJoinFilter } from "./getJoinFilter";
-import type { JoinedRecordSection, JoinedRecordsProps } from "./JoinedRecords";
+import type { JoinedRecordsProps } from "./JoinedRecords";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
+import type { AnyObject } from "prostgles-types";
 
 const getAllParentTableNames = (
   parentForm: JoinedRecordsProps["parentForm"],
@@ -20,13 +24,25 @@ const getAllParentTableNames = (
   ];
 };
 
+export type JoinedRecordSection = {
+  label: string;
+  tableName: string;
+  path: string[];
+  expanded?: boolean;
+  existingDataCount: number;
+  canInsert?: boolean;
+  error?: string;
+  joinFilter: AnyObject;
+  detailedJoinFilter: SmartGroupFilter;
+  count: number;
+  table: DBSchemaTableWJoins;
+  tableHandler: Partial<TableHandlerClient> | undefined;
+};
 export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
   const {
     tables,
     db,
     tableName,
-    showLookupTables = true,
-    showOnlyFKeyTables,
     modeType: action,
     showRelated,
     newRowData,
@@ -55,8 +71,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
   const isInsert = !rowFilter;
 
   const { diplayedTables, descendants } = useMemo(() => {
-    const tableJoins =
-      table?.joins.filter((j) => j.hasFkeys || !showOnlyFKeyTables) ?? [];
+    const tableJoins = table?.joins.filter((j) => j.hasFkeys) ?? [];
     // let diplayedTables = tableJoins.slice(0, 0).map((d) => ({
     //   ...d,
     //   path: undefined as string[] | undefined,
@@ -109,14 +124,7 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
     );
 
     return { diplayedTables, descendants };
-  }, [
-    tables,
-    tableName,
-    showLookupTables,
-    showOnlyFKeyTables,
-    parentFormTableNames,
-    table?.joins,
-  ]);
+  }, [tables, tableName, parentFormTableNames, table?.joins]);
 
   const nestedInsertData = useMemo(
     () =>

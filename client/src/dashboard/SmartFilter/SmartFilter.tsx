@@ -26,10 +26,9 @@ import {
   DEFAULT_VALIDATED_COLUMN_INFO,
   type FilterColumn,
 } from "./smartFilterUtils";
-import type { DBS } from "../Dashboard/DBS";
 export * from "./smartFilterUtils";
 
-type Operand = "AND" | "OR";
+export type Operand = "AND" | "OR";
 export type SmartFilterProps = Pick<FilterWrapperProps, "variant"> & {
   db: DBHandlerClient;
   tableName: string;

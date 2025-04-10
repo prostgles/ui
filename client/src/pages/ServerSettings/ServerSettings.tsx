@@ -223,7 +223,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                 leftIconPath: mdiAssistant,
                 label: "LLM Providers",
                 content: (
-                  <FlexCol className="p-1 pt-0">
+                  <FlexCol className="p-1 pt-0 min-w-0">
                     <InfoRow variant="naked" color="info" iconPath="">
                       Configure LLM provider credentials used in Ask AI chat.
                     </InfoRow>

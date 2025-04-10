@@ -39,7 +39,7 @@ type SectionProps = TestSelectors & {
       }
   );
 
-export function Section(props: SectionProps) {
+export const Section = (props: SectionProps) => {
   const {
     children,
     title,
@@ -113,6 +113,7 @@ export function Section(props: SectionProps) {
         >
           {title}
         </Btn>
+        {titleRightContent}
         {!disableFullScreen && (
           <Btn
             className={fullscreen ? "" : "show-on-parent-hover"}
@@ -121,7 +122,6 @@ export function Section(props: SectionProps) {
             color={fullscreen ? "action" : undefined}
           />
         )}
-        {titleRightContent}
       </div>
 
       {(open || fullscreen) && (
@@ -146,4 +146,4 @@ export function Section(props: SectionProps) {
   }
 
   return content;
-}
+};

@@ -8,7 +8,7 @@ import type {
   WindowData,
   WindowSyncItem,
 } from "../../Dashboard/dashboardUtils";
-import type { ColumnConfig, ColumnSort } from "../ColumnMenu/ColumnMenu";
+import type { ColumnConfig, ColumnSortSQL } from "../ColumnMenu/ColumnMenu";
 import type { ColumnConfigWInfo } from "../W_Table";
 import { getColWInfo } from "./getColWInfo";
 import { getColWidth } from "./getColWidth";
@@ -153,7 +153,7 @@ export const updateWCols = (
 };
 
 export const getSortColumn = (
-  sort: ColumnSort,
+  sort: ColumnSortSQL,
   columns: ColumnConfig[],
 ): ColumnConfig | undefined => {
   return columns.find((c) => {
@@ -174,12 +174,12 @@ export const getSortColumn = (
 export const getSort = (
   tables: CommonWindowProps["tables"],
   w: Pick<WindowSyncItem<"table">, "sort" | "columns" | "table_name">,
-): ColumnSort[] => {
+): ColumnSortSQL[] => {
   const { sort } = w;
 
   if (!sort) return [];
 
-  let _sort: ColumnSort[] = sort.map((s) => ({ ...s }));
+  let _sort: ColumnSortSQL[] = sort.map((s) => ({ ...s }));
 
   const cols = tables.find((t) => t.name === w.table_name)?.columns;
   if (!cols) return [];

@@ -14,9 +14,9 @@ import {
   PROSTGLES_MCP_TOOLS,
 } from "../../../../../commonTypes/mcp";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import { isDefined } from "../../../utils";
 import type { DBSMethods } from "../../Dashboard/DBS";
 import type { AskLLMToolsProps } from "./AskLLMTools";
-import { isDefined } from "../../../utils";
 
 export type ApproveRequest =
   | {
@@ -27,7 +27,6 @@ export type ApproveRequest =
       name: string;
       type: "mcp";
       auto_approve: boolean;
-      // tool: Required<DBSSchema["mcp_server_tools"]>;
     }
   | {
       id: number;
@@ -35,14 +34,16 @@ export type ApproveRequest =
       type: "function";
       auto_approve: boolean;
       description: string;
-      // tool: Required<DBSSchema["published_methods"]>;
     }
   | {
       name: (typeof PROSTGLES_MCP_TOOLS)[number]["name"];
       type: "db";
       auto_approve: boolean;
       description: string;
-      // tool: (typeof PROSTGLES_MCP_TOOLS)[number];
+      chatDBPermissions: Extract<
+        DBSSchema["llm_chats"]["db_data_permissions"],
+        { type: "Run SQL" }
+      >;
     };
 
 /**
@@ -109,6 +110,7 @@ export const useLLMTools = ({
           name: PROSTGLES_MCP_TOOLS[0].name,
           description: PROSTGLES_MCP_TOOLS[0].description,
           auto_approve: !!chatDBPermissions.auto_approve,
+          chatDBPermissions,
           type: "db" as const,
         }
       : undefined,
@@ -162,6 +164,7 @@ export const useLLMTools = ({
         }
 
         const toolResult = await getToolUseResult(
+          matchedTool,
           lastMessage.chat_id,
           db,
           methods,
@@ -208,10 +211,19 @@ const reachedMaximumNumberOfConsecutiveToolRequests = (
   return false;
 };
 
+const parseToolResultToMessage = (func: () => Promise<any>) => {
+  return func()
+    .then((content: string) => ({ content }))
+    .catch((e) => ({
+      content: JSON.stringify(e),
+      is_error: true as const,
+    }));
+};
 /**
  * Get tool result without checking if the tool is allowed for the chat
  */
 const getToolUseResult = async (
+  matchedTool: ApproveRequest,
   chatId: number,
   db: DBHandlerClient,
   methods: MethodHandler,
@@ -225,78 +237,78 @@ const getToolUseResult = async (
   >["content"];
   is_error?: true;
 }> => {
-  const parseResult = (func: () => Promise<any>) => {
-    return func()
-      .then((content: string) => ({ content }))
-      .catch((e) => ({
-        content: JSON.stringify(e),
-        is_error: true as const,
-      }));
-  };
-
-  const method = methods[funcName];
-  if (method) {
-    const methodFunc = typeof method === "function" ? method : method.run;
-    const result = parseResult(() => methodFunc(input));
-    return result;
-  }
-
-  const dbTool = PROSTGLES_MCP_TOOLS.find((t) => {
-    return t.name === funcName;
-  });
-  if (dbTool) {
-    return parseResult(async () => {
-      const sql = db.sql;
-      if (!sql) throw new Error("Executing SQL not allowed to this user");
-      if (typeof input.sql !== "string") {
-        throw new Error("input.sql must be a string");
+  if (matchedTool.type === "function") {
+    const method = methods[funcName];
+    if (method) {
+      const methodFunc = typeof method === "function" ? method : method.run;
+      const result = parseToolResultToMessage(() => methodFunc(input));
+      return result;
+    }
+  } else if (matchedTool.type === "db") {
+    const dbTool = PROSTGLES_MCP_TOOLS.find((t) => {
+      return t.name === funcName;
+    });
+    if (dbTool) {
+      return parseToolResultToMessage(async () => {
+        const sql = db.sql;
+        if (!sql) throw new Error("Executing SQL not allowed to this user");
+        const query = input.sql;
+        if (typeof query !== "string") {
+          throw new Error("input.sql must be a string");
+        }
+        const { query_timeout = 0 } = matchedTool.chatDBPermissions;
+        const finalQuery =
+          query_timeout && Number.isInteger(query_timeout) ?
+            [`SET LOCAL statement_timeout to '${query_timeout}s'`, query].join(
+              ";\n",
+            )
+          : query;
+        const { rows } = await sql(
+          finalQuery,
+          {},
+          { returnType: "default-with-rollback" },
+        );
+        return JSON.stringify(rows);
+      });
+    }
+  } else {
+    const mcpToolName = getMCPToolNameParts(funcName);
+    if (mcpToolName) {
+      const { serverName, toolName } = mcpToolName;
+      if (!callMCPServerTool) {
+        return {
+          content: "callMCPServerTool not allowed",
+          is_error: true,
+        };
+      }
+      if (!serverName || !toolName) {
+        return {
+          content: "Invalid serverName or toolName",
+          is_error: true,
+        };
       }
 
-      const { rows } = await sql(
-        input.sql,
-        {},
-        { returnType: "default-with-rollback" },
-      );
-      return JSON.stringify(rows);
-    });
-  }
+      const { content, isError } = await callMCPServerTool(
+        chatId,
+        serverName,
+        toolName,
+        input,
+      ).catch((e) => ({
+        content: e instanceof Error ? e.message : JSON.stringify(e),
+        isError: true,
+      }));
 
-  const mcpToolName = getMCPToolNameParts(funcName);
-  if (mcpToolName) {
-    const { serverName, toolName } = mcpToolName;
-    if (!callMCPServerTool) {
       return {
-        content: "callMCPServerTool not allowed",
-        is_error: true,
+        content,
+        ...(isError && {
+          is_error: isError,
+        }),
       };
     }
-    if (!serverName || !toolName) {
-      return {
-        content: "Invalid serverName or toolName",
-        is_error: true,
-      };
-    }
-
-    const { content, isError } = await callMCPServerTool(
-      chatId,
-      serverName,
-      toolName,
-      input,
-    ).catch((e) => ({
-      content: e instanceof Error ? e.message : JSON.stringify(e),
-      isError: true,
-    }));
-
-    return {
-      content,
-      ...(isError && {
-        is_error: isError,
-      }),
-    };
   }
 
   return {
-    content: "Method not found or not allowed",
+    content: `LLM Tool ${JSON.stringify(funcName)} not found or not allowed`,
     is_error: true,
   };
 };

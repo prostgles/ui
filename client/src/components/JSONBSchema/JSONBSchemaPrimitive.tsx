@@ -145,6 +145,7 @@ export const JSONBSchemaPrimitive = ({
         : { children: schema.title, info: schema.description }
       }
       value={value}
+      placeholder={noLabels ? schema.title : undefined}
       className={"JSONBSchemaPrimitive"}
       type={inputType}
       nullable={schema.nullable}

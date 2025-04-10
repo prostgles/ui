@@ -249,7 +249,8 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
               type: {
                 title: "Type",
                 enum: ["Run SQL"],
-                description: "Can run SQL queries",
+                description:
+                  "Can run SQL queries (if the current user is allowed)",
               },
               commit: {
                 type: "boolean",
@@ -257,6 +258,12 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
                 optional: true,
                 description:
                   "Allows commiting changes to the database. By default the queries are rolled-back. Use with caution",
+              },
+              query_timeout: {
+                type: "integer",
+                title: "Query timeout (s)",
+                optional: true,
+                description: "Timeout in seconds for the queries.",
               },
               auto_approve: {
                 type: "boolean",
