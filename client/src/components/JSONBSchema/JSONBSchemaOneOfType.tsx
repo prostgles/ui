@@ -104,6 +104,7 @@ export const JSONBSchemaOneOfType = ({
          * If matching a different schema then keep only common properties
          */
         const newSchemaIdx = getOneOfSchemaIndex(newValue);
+        //@ts-ignore
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (newValue && newSchemaIdx !== matchingOneOfSchemaIdx) {
           //@ts-ignore

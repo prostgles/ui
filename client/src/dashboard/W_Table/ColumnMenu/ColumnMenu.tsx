@@ -125,8 +125,8 @@ type P = Pick<CommonWindowProps, "suggestions" | "tables" | "prgl"> & {
 
 export type ColumnSortSQL = {
   key: string | number;
-  asc?: boolean;
-  nulls?: "first" | "last";
+  asc?: boolean | null;
+  nulls?: "first" | "last" | null;
   nullEmpty?: boolean;
 };
 export type ColumnSort = Omit<ColumnSortSQL, "key"> & {

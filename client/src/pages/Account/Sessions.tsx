@@ -63,7 +63,8 @@ export const Sessions = ({
         maxHeight: "40vh",
       },
       orderBy: {
-        id_num: false,
+        key: "id_num",
+        asc: false,
       },
       fieldConfigs: [
         { name: "is_connected", hide: true },

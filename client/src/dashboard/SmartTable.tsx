@@ -291,6 +291,7 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
           onHavingChange={() => {
             console.warn("Having change not implemented");
           }}
+          onSortChange={undefined}
           hideSort={true}
           showInsertUpdateDelete={{
             onSuccess: () => this.getData(),

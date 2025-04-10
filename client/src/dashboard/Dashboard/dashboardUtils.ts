@@ -5,24 +5,25 @@ import type { SearchAllProps } from "../SearchAll";
 
 import type {
   MissingBinsOption,
-  TimechartRenderStyle,
+  ShowBinLabelsMode,
   StatType,
   TimeChartBinSize,
+  TimechartRenderStyle,
   TooltipPosition,
-  ShowBinLabelsMode,
 } from "../W_TimeChart/W_TimeChartMenu";
 
 import type { SQLSuggestion } from "../SQLEditor/SQLEditor";
 import type { RefreshOptions } from "../W_Table/TableMenu/W_TableMenu";
 
+import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
 import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
 import type { OmitDistributive } from "../../../../commonTypes/utils";
 import type { Extent, MapExtentBehavior } from "../Map/DeckGLMap";
 import type {
   ColumnConfig,
+  ColumnSort,
   ColumnSortSQL,
 } from "../W_Table/ColumnMenu/ColumnMenu";
-import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
 const getRandomElement = <Arr>(
   items: Arr[],
 ): { elem: Arr | undefined; index: number } => {
@@ -362,7 +363,7 @@ export type WindowData<CType extends ChartType = ChartType> = Omit<
   >;
   user_id: string;
   limit: number | null;
-  sort: null | ColumnSortSQL[];
+  sort: null | ColumnSort[];
 };
 
 export const windowIs = <T extends ChartType>(

@@ -45,7 +45,7 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
    * Changing how table columns are displayed
    * Displaying additional custom computed columns
    */
-  fieldConfigs?: FieldConfig<T>[] | string[];
+  fieldConfigs?: FieldConfig<T>[];
 
   title?: React.ReactNode | ((args: { count: number }) => React.ReactNode);
   getRowFooter?: (row: AnyObject | any) => React.ReactNode | React.JSX.Element;
@@ -113,34 +113,17 @@ export const SmartCardList = <T extends AnyObject>(
     noDataComponent,
     onSuccess,
     enableListAnimations = false,
-    onSetData,
-    filter,
-    throttle,
-    realtime,
-    columns: propsColumns,
     onClickRow,
-    orderBy,
-    showTopBar,
+    limit = 25,
   } = props;
 
-  const paginationState = usePagination(
-    "limit" in props && props.limit ? props.limit : 25,
-  );
+  const paginationState = usePagination(limit);
 
   const state = useSmartCardListState({
-    db,
-    tableName,
-    columns: propsColumns,
-    fieldConfigs: _fieldConfigs as FieldConfig[],
-    filter,
-    throttle,
+    ...props,
+    fieldConfigs: _fieldConfigs as FieldConfig<AnyObject>[],
     limit: paginationState.limit,
     offset: paginationState.offset,
-    realtime,
-    onSetData,
-    tables,
-    showTopBar,
-    orderBy,
   });
   const { columns, loading, items, error, loaded, totalRows, tableControls } =
     state;
