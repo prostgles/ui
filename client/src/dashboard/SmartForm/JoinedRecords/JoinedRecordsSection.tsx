@@ -76,6 +76,12 @@ const JoinedRecordsSectionCardList = (
           onChange={(newData) => {
             newRowDataHandler?.setNestedTable(s.tableName, newData);
           }}
+          noDataComponent={
+            <InfoRow className=" " color="info" variant="filled">
+              No records
+            </InfoRow>
+          }
+          noDataComponentMode="hide-all"
         />
       );
     }
@@ -96,6 +102,7 @@ const JoinedRecordsSectionCardList = (
           onSuccess={onSuccess}
           realtime={true}
           excludeNulls={true}
+          showTopBar={false}
           noDataComponent={
             <InfoRow className=" " color="info" variant="filled">
               No records
@@ -135,14 +142,14 @@ export const JoinedRecordsSection = ({
   const { count } = section;
   return (
     <FlexCol className=" p-1 ">
-      <FlexRow className="jc-end">
-        {section.error && (
-          <ErrorComponent
-            error={section.error}
-            variant="outlined"
-            className=" f-1"
-          />
-        )}
+      {section.error && (
+        <ErrorComponent
+          error={section.error}
+          variant="outlined"
+          className=" f-1"
+        />
+      )}
+      {/* <FlexRow className="jc-end">
         {!isInsert && onSetQuickView && (
           <Btn
             iconPath={mdiTable}
@@ -158,7 +165,7 @@ export const JoinedRecordsSection = ({
             newRowDataHandler={props.newRowDataHandler}
           />
         )}
-      </FlexRow>
+      </FlexRow> */}
       <JoinedRecordsSectionCardList
         {...props}
         section={section}

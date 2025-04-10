@@ -14,18 +14,20 @@ import {
   getKeyForRowData,
   useGetRowKeyCols,
   useSmartCardListStyle,
+  type SmartCardListProps,
 } from "./SmartCardList";
 
-export type P = Pick<Prgl, "db" | "tables" | "methods"> & {
-  className?: string;
-  style?: React.CSSProperties;
-  excludeNulls?: boolean;
-  tables: CommonWindowProps["tables"];
-  onSuccess: SmartFormProps["onSuccess"];
-  table: DBSchemaTableWJoins;
-  data: AnyObject[];
-  onChange: (newData: AnyObject[]) => void;
-};
+export type P = Pick<Prgl, "db" | "tables" | "methods"> &
+  Pick<SmartCardListProps, "noDataComponent" | "noDataComponentMode"> & {
+    className?: string;
+    style?: React.CSSProperties;
+    excludeNulls?: boolean;
+    tables: CommonWindowProps["tables"];
+    onSuccess: SmartFormProps["onSuccess"];
+    table: DBSchemaTableWJoins;
+    data: AnyObject[];
+    onChange: (newData: AnyObject[]) => void;
+  };
 
 export const SmartCardListJoinedNewRecords = (props: P) => {
   const {
@@ -39,10 +41,18 @@ export const SmartCardListJoinedNewRecords = (props: P) => {
     onChange,
     data,
     table,
+    noDataComponent,
+    noDataComponentMode,
   } = props;
   const smartCardListStyle = useSmartCardListStyle(style);
 
   const { keyCols } = useGetRowKeyCols(table.columns, data[0] ?? {});
+
+  /** Used to prevent subsequent flickers during filter change if no items */
+  const showNoDataComponent = noDataComponent && !data.length;
+  if (showNoDataComponent && noDataComponentMode === "hide-all") {
+    return noDataComponent;
+  }
 
   return (
     <FlexCol

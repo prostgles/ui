@@ -40,7 +40,7 @@ export const SmartCardListHeaderControls = (
           tableName={tableControls.tableName}
         />
       )}
-      {tableControls && (
+      {tableControls && Boolean(totalRows && totalRows > 8) && (
         <SmartFilterBarSearch
           db={db}
           tableName={tableControls.tableName}
@@ -48,32 +48,11 @@ export const SmartCardListHeaderControls = (
           onFilterChange={tableControls.setLocalFilter}
           filter={tableControls.localFilter ?? []}
           extraFilters={tableControls.localFilter}
+          style={{
+            width: "unset",
+            margin: "unset",
+          }}
         />
-        // <SmartFilterBar
-        //   className="p-1 bg-color-2 min-h-fit min-w-0"
-        //   rowCount={totalRows ?? 0}
-        //   db={db}
-        //   methods={{}}
-        //   table_name={tableControls.tableName}
-        //   tables={tables}
-        //   filter={tableControls.localFilter}
-        //   onChange={(filter) => {
-        //     tableControls.setLocalFilter(filter);
-        //   }}
-        //   columns={sorting?.orderByFields?.map((f) => ({
-        //     name: f,
-        //     show: true,
-        //   }))}
-        //   sort={sorting?.orderBy}
-        //   onSortChange={sorting?.setOrderBy}
-        //   showInsertUpdateDelete={{
-        //     showdelete: false,
-        //     showupdate: false,
-        //     showInsert: {
-        //       children: "Add",
-        //     },
-        //   }}
-        // />
       )}
     </FlexRowWrap>
   );

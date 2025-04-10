@@ -11,7 +11,7 @@ import { SmartSearch } from "../SmartFilter/SmartSearch/SmartSearch";
 import type { SmartFilterBarProps } from "./SmartFilterBar";
 import { colIs } from "../SmartForm/SmartFormField/fieldUtils";
 
-type P = Pick<SmartFilterBarProps, "db" | "tables"> & {
+type P = Pick<SmartFilterBarProps, "db" | "tables" | "style"> & {
   tableName: string;
   filter: SmartGroupFilter;
   extraFilters: AnyObject[] | undefined;
@@ -25,6 +25,7 @@ export const SmartFilterBarSearch = ({
   filter,
   extraFilters,
   onFilterChange,
+  style,
 }: P) => {
   const table = useMemoDeep(
     () => tables.find((t) => t.name === tableName),
@@ -41,6 +42,7 @@ export const SmartFilterBarSearch = ({
         alignSelf: "center",
         width: "500px",
         maxWidth: "80vw",
+        ...style,
       }}
       className="m-auto"
       tableName={tableName}

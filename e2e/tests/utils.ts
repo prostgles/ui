@@ -167,13 +167,13 @@ export const fillSmartFormAndInsert = async (
     } else if (Array.isArray(valueOrRowOrRows)) {
       const nestedTableName = key;
 
-      const tabItem = await page.locator(
-        `${smartFormLocator} ${getTestId("JoinedRecords")} ${getDataKey(nestedTableName)}`,
-      );
-      const isActive = await tabItem.getAttribute("aria-current");
-      if (isActive !== "true") {
-        await tabItem.click();
-      }
+      // const tabItem = await page.locator(
+      //   `${smartFormLocator} ${getTestId("JoinedRecords")} ${getDataKey(nestedTableName)}`,
+      // );
+      // const isActive = await tabItem.getAttribute("aria-current");
+      // if (isActive !== "true") {
+      //   await tabItem.click();
+      // }
       for (const nestedRow of valueOrRowOrRows) {
         await page
           .locator(
