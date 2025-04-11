@@ -196,7 +196,10 @@ const CommonChartLinkOpts = {
           description:
             "Shows data from postgres table not connected to any window (w1_id === w2_id === current chart window). Custom filters can be added",
         },
-        localTableName: { type: "string" },
+        localTableName: {
+          type: "string",
+          description: "Local layer (w1_id === w2_id === current chart window)",
+        },
         smartGroupFilter: filter,
       },
     ],

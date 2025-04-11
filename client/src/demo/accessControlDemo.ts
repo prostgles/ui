@@ -12,6 +12,7 @@ export const accessControlDemo = async () => {
     existingRule.click();
     await tout(200);
     await click("config.ac.removeRule");
+    await click("Btn.ClickConfirmation.Confirm");
   }
 
   for (const { selector, timestamp } of videoDemoAccessControlScripts) {

@@ -211,15 +211,11 @@ export class _Dashboard extends RTComp<
           deleted: true,
         }));
 
-        const insertedWsp = await workspaces.insert(
-          {
-            connection_id: connectionId,
-            name: !defaultIsDeleted ? "default" : `default ${Date.now()}`,
-            ...({} as Pick<WorkspaceSchema, "user_id" | "last_updated">),
-          },
-          { returning: "*" },
-        );
-        console.log(insertedWsp);
+        await workspaces.insert({
+          connection_id: connectionId,
+          name: !defaultIsDeleted ? "default" : `default ${Date.now()}`,
+          ...({} as Pick<WorkspaceSchema, "user_id" | "last_updated">),
+        });
       }
       let wsp: Workspace | undefined;
       try {

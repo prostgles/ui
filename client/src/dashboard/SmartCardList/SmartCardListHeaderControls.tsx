@@ -18,16 +18,20 @@ export const SmartCardListHeaderControls = (
 ) => {
   const { title, totalRows, db, tables, methods, tableControls } = props;
 
+  const titleNode =
+    typeof title === "string" ? <h4 className="m-0">{title}</h4>
+    : typeof title === "function" ? title({ count: totalRows ?? -1 })
+    : title;
+  const showSearch = tableControls && Boolean(totalRows && totalRows > 8);
+  if (!titleNode && !showSearch && !tableControls?.willShowInsert) {
+    return null;
+  }
   return (
     <FlexRowWrap
       className="SmartCardListControls gap-p5 ai-end py-p25"
       style={{ justifyContent: "space-between" }}
     >
-      {typeof title === "string" ?
-        <h4 className="m-0">{title}</h4>
-      : typeof title === "function" ?
-        title({ count: totalRows ?? -1 })
-      : title}
+      {}
 
       {tableControls?.willShowInsert && (
         <InsertButton
@@ -40,7 +44,7 @@ export const SmartCardListHeaderControls = (
           tableName={tableControls.tableName}
         />
       )}
-      {tableControls && Boolean(totalRows && totalRows > 8) && (
+      {showSearch && (
         <SmartFilterBarSearch
           db={db}
           tableName={tableControls.tableName}

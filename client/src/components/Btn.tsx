@@ -511,6 +511,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
         </button>
         {clickConfirmation && showClickConfirmation && (
           <Popup
+            data-command="Btn.ClickConfirmation"
             onClickClose={false}
             onClose={() => this.setState({ showClickConfirmation: false })}
             clickCatchStyle={{ opacity: 1 }}
@@ -522,6 +523,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
               {
                 label: clickConfirmation.buttonText,
                 color: clickConfirmation.color,
+                "data-command": "Btn.ClickConfirmation.Confirm",
                 variant: "filled",
                 className: "ml-auto",
                 onClick,

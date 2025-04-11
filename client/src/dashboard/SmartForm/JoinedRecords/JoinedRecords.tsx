@@ -90,6 +90,10 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
           <Section
             key={path.join(".")}
             className="trigger-hover"
+            btnProps={{
+              ["data-command"]: "JoinedRecords.SectionToggle",
+              ["data-key"]: path.join("."),
+            }}
             titleIcon={icon && <SvgIcon icon={icon} />}
             title={
               <FlexRow data-key={path.join(".")}>

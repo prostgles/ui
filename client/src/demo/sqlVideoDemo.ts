@@ -16,14 +16,13 @@ const sqlVideoDemo: DemoScript = async (args) => {
     fromBeginning,
     typeAuto,
     moveCursor,
-    triggerParamHints,
     getEditor,
     actions,
     testResult,
-    triggerSuggest,
     runSQL,
     newLine,
   } = args;
+
   const hasTable = await runDbSQL(
     `SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = current_schema() AND tablename = 'chats'`,
     {},
@@ -92,7 +91,7 @@ const sqlVideoDemo: DemoScript = async (args) => {
     logic: () => Promise<void>,
   ) => {
     fromBeginning(false, `/* ${title} */\n${script}`);
-    await tout(1000);
+    await tout(1e3);
     await logic();
     await tout(1e3);
   };
@@ -305,13 +304,24 @@ const sqlVideoDemo: DemoScript = async (args) => {
     await moveCursor.left(1);
     await typeAuto(`,`, { waitAccept: 1e3, nth: -1 });
     await typeAuto(`1,`, { waitAccept: 1e3, nth: -1 });
+    testResult(
+      fixIndent(`
+        /* Argument hints */
+        INSERT INTO users (id, status, username, password, type, passwordless_admin, created, last_updated, options, "2fa", has_2fa_enabled)
+        VALUES(DEFAULT,1,)`),
+    );
   });
 
   await showScript(`Settings details`, "", async () => {
-    await typeQuick(`SET`);
+    await typeQuick(`st`);
     await typeQuick(` wm`, { waitBeforeAccept: 2e3 });
     await typeQuick(` `);
-    await typeQuick(` `, { waitBeforeAccept: 1e3 });
+    await typeQuick(` `, { waitBeforeAccept: 1e3, nth: 2 });
+    testResult(
+      fixIndent(`
+      /* Settings details */
+      SET work_mem TO DEFAULT`),
+    );
   });
 
   // await tout(1e3);

@@ -94,6 +94,7 @@ export const click = async (
   const latestElem = getElement<HTMLButtonElement>(testId, endSelector, opts);
   (latestElem ?? elem).click();
 };
+// window._click = click;
 
 export const type = async (
   value: string,
