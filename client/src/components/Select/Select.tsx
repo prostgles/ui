@@ -154,14 +154,6 @@ export default class Select<
 
     const value = this.state.multiSelection ?? _value;
 
-    const DropDownIcon = (
-      <Icon
-        path={mdiMenuDown}
-        size={1}
-        style={{ color: "#cacaca", pointerEvents: "none", touchAction: "none" }}
-      />
-    );
-
     let fullOptions: FullOption[] = [];
 
     if ("options" in this.props) {
@@ -513,7 +505,16 @@ export default class Select<
               </option>
             ))}
           </select>
-          {DropDownIcon}
+          <Icon
+            path={mdiMenuDown}
+            size={1}
+            className="text-2"
+            style={{
+              // color: "#cacaca",
+              pointerEvents: "none",
+              touchAction: "none",
+            }}
+          />
         </div>
       );
     }

@@ -8,7 +8,7 @@ import Btn from "../../components/Btn";
 import { classOverride, FlexCol } from "../../components/Flex";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
-import SmartCard from "../SmartCard/SmartCard";
+import { SmartCard } from "../SmartCard/SmartCard";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
 import {
   getKeyForRowData,

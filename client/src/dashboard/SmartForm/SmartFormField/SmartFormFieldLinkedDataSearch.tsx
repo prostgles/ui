@@ -2,8 +2,12 @@ import { mdiSearchWeb } from "@mdi/js";
 import React, { useMemo, useState } from "react";
 import Btn from "../../../components/Btn";
 import Popup from "../../../components/Popup/Popup";
-import { SmartCardList } from "../../SmartCardList/SmartCardList";
+import {
+  SmartCardList,
+  type SmartCardListProps,
+} from "../../SmartCardList/SmartCardList";
 import type { SmartFormFieldLinkedDataProps } from "./SmartFormFieldLinkedData";
+import type { SmartGroupFilter } from "../../../../../commonTypes/filterUtils";
 
 type P = Pick<
   SmartFormFieldLinkedDataProps,
@@ -27,12 +31,32 @@ export const SmartFormFieldLinkedDataSearch = ({
   onChange,
 }: P) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement>();
+  const [loaded, setLoaded] = useState(false);
 
-  const filter = useMemo(() => {
+  const listProps = useMemo(() => {
     return {
-      [fcol]: row[column.name],
-    };
-  }, [row, column.name, fcol]);
+      onClickRow:
+        readOnly ? undefined : (
+          (row) => {
+            onChange(row[fcol]);
+            setAnchorEl(undefined);
+          }
+        ),
+      searchFilter: [
+        {
+          fieldName: fcol,
+          value: row[column.name],
+        },
+      ],
+      onSetData: () => {
+        setLoaded(true);
+      },
+    } satisfies Pick<
+      SmartCardListProps,
+      "searchFilter" | "onClickRow" | "onSetData"
+    >;
+  }, [row, column.name, fcol, onChange, readOnly]);
+
   return (
     <>
       <Btn
@@ -50,6 +74,7 @@ export const SmartFormFieldLinkedDataSearch = ({
           clickCatchStyle={{ opacity: 1 }}
           rootStyle={{
             maxWidth: "min(100vw, 600px)",
+            visibility: loaded ? "visible" : "hidden",
           }}
         >
           <SmartCardList
@@ -59,15 +84,7 @@ export const SmartFormFieldLinkedDataSearch = ({
             tables={tables}
             tableName={ftable}
             excludeNulls={true}
-            onClickRow={
-              readOnly ? undefined : (
-                (row) => {
-                  onChange(row[fcol]);
-                  setAnchorEl(undefined);
-                }
-              )
-            }
-            // filter={filter}
+            {...listProps}
           />
           {/* <SmartTable
             allowEdit={true}

@@ -16,7 +16,7 @@ import {
   type ColumnData,
   NewRowDataHandler,
 } from "../SmartFormNewRowDataHandler";
-import { renderNull } from "./RenderValue";
+import { renderNull, RenderValue } from "./RenderValue";
 import type { SmartColumnInfo, SmartFormFieldProps } from "./SmartFormField";
 import { type SmartFormFieldLinkedDataInsertState } from "./SmartFormFieldLinkedData";
 import { fetchForeignKeyOptions } from "./fetchForeignKeyOptions";
@@ -94,7 +94,13 @@ export const SmartFormFieldForeignKey = (
   const selectedOption = fullOptions?.find((o) => o.key === value);
   const valueNode = (
     <div className="text-ellipsis max-w-fit" style={valueStyle}>
-      {renderNull(value, {}, true) ?? (value as string)}
+      {/* {renderNull(value, {}, true) ?? (value as string)} */}
+      <RenderValue
+        value={value}
+        column={column}
+        showTitle={false}
+        maxLength={30}
+      />
     </div>
   );
 

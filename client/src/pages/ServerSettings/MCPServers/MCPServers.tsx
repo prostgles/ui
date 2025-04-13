@@ -10,13 +10,18 @@ import type { ServerSettingsProps } from "../ServerSettings";
 import { MCPServerConfig } from "./MCPServerConfig";
 import { MCPServerFooterActions } from "./MCPServerFooterActions";
 import { MCPServersHeader } from "./MCPServersHeader";
+import type { ColumnSort } from "../../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 
-const orderByEnabledAndName = {
-  // enabled: false,
-  // name: true
-  key: "enabled",
-  asc: false,
-} as const;
+const orderByEnabledAndName = [
+  {
+    key: "enabled",
+    asc: false,
+  },
+  {
+    key: "name",
+    asc: true,
+  },
+] satisfies ColumnSort[];
 export const MCPServers = (props: ServerSettingsProps) => {
   const [serverConfig, setServerConfig] = React.useState<{
     name: string;

@@ -172,12 +172,14 @@ export const AuthProviderSetup = ({
           </InfoRow>
         )}
       </FlexCol>
-      <EmailAuthSetup {...authProps} />
-      <OAuthProviderSetup provider="google" {...authProps} />
-      <OAuthProviderSetup provider="github" {...authProps} />
-      <OAuthProviderSetup provider="microsoft" {...authProps} />
-      <OAuthProviderSetup provider="facebook" {...authProps} />
-      <OAuthProviderSetup provider="customOAuth" {...authProps} />
+      <FlexCol className="gap-0">
+        <EmailAuthSetup {...authProps} />
+        <OAuthProviderSetup provider="google" {...authProps} />
+        <OAuthProviderSetup provider="github" {...authProps} />
+        <OAuthProviderSetup provider="microsoft" {...authProps} />
+        <OAuthProviderSetup provider="facebook" {...authProps} />
+        <OAuthProviderSetup provider="customOAuth" {...authProps} />
+      </FlexCol>
     </FlexCol>
   );
 };

@@ -3,7 +3,10 @@ import React, { useMemo, useState } from "react";
 import type { Prgl } from "../../App";
 import Chip from "../../components/Chip";
 import { InfoRow } from "../../components/InfoRow";
-import { SmartCardList } from "../SmartCardList/SmartCardList";
+import {
+  SmartCardList,
+  type SmartCardListProps,
+} from "../SmartCardList/SmartCardList";
 import { SmartForm } from "../SmartForm/SmartForm";
 
 export const LLMProviderSetup = ({
@@ -15,7 +18,7 @@ export const LLMProviderSetup = ({
 
   const listProps = useMemo(() => {
     return {
-      showTopBar: { insert: true as const },
+      showTopBar: { insert: true },
       fieldConfigs: [
         {
           name: "name",
@@ -28,7 +31,7 @@ export const LLMProviderSetup = ({
             is_default ? <Chip color="blue">default</Chip> : " ",
         },
       ],
-    };
+    } satisfies Pick<SmartCardListProps, "fieldConfigs" | "showTopBar">;
   }, []);
 
   return (

@@ -198,7 +198,6 @@ export const ServerSettings = (props: ServerSettingsProps) => {
                       methods={dbsMethods}
                       tableName="credentials"
                       tables={dbsTables}
-                      filter={{}}
                       realtime={true}
                       noDataComponentMode="hide-all"
                       noDataComponent={

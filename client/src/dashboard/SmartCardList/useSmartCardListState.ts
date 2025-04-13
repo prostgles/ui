@@ -4,10 +4,7 @@ import {
 } from "prostgles-client/dist/react-hooks";
 import { isObject, type AnyObject } from "prostgles-types";
 import { useEffect, useMemo, useState } from "react";
-import {
-  getSmartGroupFilter,
-  type SmartGroupFilter,
-} from "../../../../commonTypes/filterUtils";
+import { getSmartGroupFilter } from "../../../../commonTypes/filterUtils";
 import { getSelectForFieldConfigs } from "../SmartCard/getSelectForFieldConfigs";
 import { getSmartCardColumns } from "../SmartCard/getSmartCardColumns";
 import type { SmartCardListProps } from "./SmartCardList";
@@ -29,6 +26,7 @@ export const useSmartCardListState = (
     | "showTopBar"
     | "orderByfields"
     | "tables"
+    | "searchFilter"
   > & {
     offset: number;
   },
@@ -48,10 +46,13 @@ export const useSmartCardListState = (
     onSetData,
     showTopBar,
     tables,
+    searchFilter,
   } = props;
 
-  const [localOrderBy, setLocalOrderBy] = useState(orderBy);
-  const [localFilter, setLocalFilter] = useState<SmartGroupFilter>();
+  const [localOrderBy, setLocalOrderBy] = useState(
+    Array.isArray(orderBy) ? undefined : orderBy,
+  );
+  const [localFilter, setLocalFilter] = useState(searchFilter);
 
   const fetchedColumns = usePromise(async () => {
     if (columnsFromProps) {

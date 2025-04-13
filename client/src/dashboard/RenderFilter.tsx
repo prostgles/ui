@@ -23,6 +23,7 @@ type RenderFilterProps = {
   mode?: "micro" | "compact" | "minimised";
   itemName: "filter" | "condition";
   selectedColumns: ColumnConfig[] | undefined;
+  hideOperand?: boolean;
 } & Pick<ForcedFilterControlProps, "db" | "tableName" | "tables">;
 
 export const RenderFilter = (props: RenderFilterProps) => {
@@ -67,6 +68,7 @@ export const RenderFilter = (props: RenderFilterProps) => {
           "tableName",
           "tables",
           "selectedColumns",
+          "hideOperand",
         ])}
         operand={isAnd ? "AND" : "OR"}
         detailedFilter={simpleFilters}

@@ -210,7 +210,8 @@ const SmartFormWithNoError = ({
       mode.currentRow[table.card.headerColumn]
     : undefined;
   const headerText =
-    label ?? (headerFromCardConfig || tableInfo.comment || tableName);
+    label ??
+    (headerFromCardConfig || table.label || tableInfo.comment || tableName);
 
   const formHeader =
     asPopup ? null

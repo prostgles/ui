@@ -1,18 +1,18 @@
 import { mdiSortReverseVariant, mdiSortVariant } from "@mdi/js";
+import type { ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
 import type { BtnProps } from "../../components/Btn";
 import Btn from "../../components/Btn";
 import Select from "../../components/Select/Select";
-import type { ValidatedColumnInfo } from "prostgles-types";
-import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
+import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 
 type SortByControlProps = Pick<
   React.HTMLAttributes<HTMLDivElement>,
   "className" | "style"
 > & {
-  onChange: (val: ColumnSortSQL | undefined) => void | Promise<any>;
+  onChange: (val: ColumnSort | undefined) => void | Promise<any>;
   columns: ValidatedColumnInfo[];
-  value?: ColumnSortSQL;
+  value?: ColumnSort;
   fields?: string[];
   buttonClassName?: string;
   btnProps?: BtnProps<void>;
@@ -32,7 +32,7 @@ function SortByControl({
       onChange(undefined);
       return;
     }
-    const newSort: ColumnSortSQL = {
+    const newSort: ColumnSort = {
       key: orderByKey,
       asc: orderAsc,
     };

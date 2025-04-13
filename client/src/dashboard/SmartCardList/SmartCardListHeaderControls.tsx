@@ -1,12 +1,12 @@
 import { isObject, type ValidatedColumnInfo } from "prostgles-types";
-import React, { useMemo } from "react";
-import { FlexRowWrap } from "../../components/Flex";
-import { SmartFilterBar } from "../SmartFilterBar/SmartFilterBar";
+import React from "react";
+import { FlexCol, FlexRow } from "../../components/Flex";
+import { RenderFilter } from "../RenderFilter";
+import { SmartFilterBarSearch } from "../SmartFilterBar/SmartFilterBarSearch";
 import { InsertButton } from "../SmartForm/InsertButton";
-import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 import type { SmartCardListProps } from "./SmartCardList";
 import type { SmartCardListState } from "./useSmartCardListState";
-import { SmartFilterBarSearch } from "../SmartFilterBar/SmartFilterBarSearch";
+import SortByControl from "../SmartFilter/SortByControl";
 
 export const SmartCardListHeaderControls = (
   props: SmartCardListProps & {
@@ -16,48 +16,80 @@ export const SmartCardListHeaderControls = (
     tableControls: SmartCardListState["tableControls"];
   },
 ) => {
-  const { title, totalRows, db, tables, methods, tableControls } = props;
+  const { title, totalRows, db, tables, methods, tableControls, showTopBar } =
+    props;
 
   const titleNode =
     typeof title === "string" ? <h4 className="m-0">{title}</h4>
     : typeof title === "function" ? title({ count: totalRows ?? -1 })
     : title;
-  const showSearch = tableControls && Boolean(totalRows && totalRows > 8);
-  if (!titleNode && !showSearch && !tableControls?.willShowInsert) {
+  const showSearch =
+    tableControls?.localFilter?.length ?
+      true
+    : tableControls && Boolean(totalRows && totalRows > 8);
+
+  const showSort = isObject(showTopBar) ? showTopBar.sort : showTopBar;
+  if (
+    !showTopBar ||
+    (!titleNode && !showSearch && !tableControls?.willShowInsert)
+  ) {
     return null;
   }
   return (
-    <FlexRowWrap
-      className="SmartCardListControls gap-p5 ai-end py-p25"
-      style={{ justifyContent: "space-between" }}
-    >
-      {}
+    <FlexCol className="SmartCardListControls gap-p5 aid-end py-p25">
+      {titleNode}
 
-      {tableControls?.willShowInsert && (
-        <InsertButton
-          buttonProps={{
-            children: "Add",
-          }}
+      <FlexRow className=" ">
+        {tableControls?.willShowInsert && (
+          <InsertButton
+            buttonProps={{
+              children: "Add",
+            }}
+            db={db}
+            tables={tables}
+            methods={methods}
+            tableName={tableControls.tableName}
+          />
+        )}
+        {showSearch && tableControls && (
+          <SmartFilterBarSearch
+            db={db}
+            tableName={tableControls.tableName}
+            tables={tables}
+            onFilterChange={tableControls.setLocalFilter}
+            filter={tableControls.localFilter ?? []}
+            extraFilters={undefined}
+            style={{
+              width: "unset",
+              margin: "unset",
+            }}
+          />
+        )}
+        {tableControls?.setLocalOrderBy && showSort && (
+          <SortByControl
+            value={tableControls.localOrderBy}
+            columns={props.columns}
+            onChange={tableControls.setLocalOrderBy}
+          />
+        )}
+      </FlexRow>
+
+      {!!tableControls?.localFilter?.length && (
+        <RenderFilter
           db={db}
-          tables={tables}
-          methods={methods}
+          contextData={undefined}
           tableName={tableControls.tableName}
+          tables={tables}
+          selectedColumns={undefined}
+          filter={{ $and: tableControls.localFilter }}
+          itemName={"filter"}
+          hideOperand={true}
+          onChange={(newf) => {
+            const items = "$and" in newf ? newf.$and : newf.$or;
+            tableControls.setLocalFilter(items);
+          }}
         />
       )}
-      {showSearch && (
-        <SmartFilterBarSearch
-          db={db}
-          tableName={tableControls.tableName}
-          tables={tables}
-          onFilterChange={tableControls.setLocalFilter}
-          filter={tableControls.localFilter ?? []}
-          extraFilters={tableControls.localFilter}
-          style={{
-            width: "unset",
-            margin: "unset",
-          }}
-        />
-      )}
-    </FlexRowWrap>
+    </FlexCol>
   );
 };

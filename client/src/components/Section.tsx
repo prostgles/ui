@@ -78,16 +78,17 @@ export const Section = (props: SectionProps) => {
       <div
         className="Section__Header flex-row ai-center noselect pointer f-0 bb b-color bg-inherit"
         style={
-          !open ? undefined : (
+          !open ?
             {
+              borderBottom: "1px solid var(--b-color)",
+            }
+          : {
               position: "sticky",
               top: 0,
               zIndex: 1,
               borderBottom: "unset",
-              borderTop: "1px solid var(--b-color)",
               marginBottom: ".5em",
             }
-          )
         }
       >
         <Btn

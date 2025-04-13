@@ -14,11 +14,12 @@ import Loading from "../../components/Loading";
 import { Pagination, usePagination } from "../../components/Table/Pagination";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type { FieldConfig } from "../SmartCard/SmartCard";
-import SmartCard from "../SmartCard/SmartCard";
+import { SmartCard } from "../SmartCard/SmartCard";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
 import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
 import { SmartCardListHeaderControls } from "./SmartCardListHeaderControls";
 import { useSmartCardListState } from "./useSmartCardListState";
+import type { SmartGroupFilter } from "../../../../commonTypes/filterUtils";
 
 export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
@@ -84,7 +85,8 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
     | FilterItem<T & AnyObject>
     | { $and: FilterItem<T & AnyObject>[] }
     | { $or: FilterItem<T & AnyObject>[] };
-  orderBy?: ColumnSort;
+  searchFilter?: SmartGroupFilter;
+  orderBy?: ColumnSort | ColumnSort[];
   realtime?: boolean;
   throttle?: number;
   orderByfields?: string[];

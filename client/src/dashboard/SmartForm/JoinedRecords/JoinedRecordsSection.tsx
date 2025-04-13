@@ -1,17 +1,14 @@
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { isDefined } from "prostgles-types";
 import React, { useMemo } from "react";
+import ErrorComponent from "../../../components/ErrorComponent";
+import { FlexCol } from "../../../components/Flex";
+import { InfoRow } from "../../../components/InfoRow";
 import { MediaViewer } from "../../../components/MediaViewer";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
-import type { JoinedRecordsProps } from "./JoinedRecords";
-import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
-import { InfoRow } from "../../../components/InfoRow";
-import { FlexCol, FlexRow } from "../../../components/Flex";
-import ErrorComponent from "../../../components/ErrorComponent";
-import { mdiTable } from "@mdi/js";
-import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
-import Btn from "../../../components/Btn";
 import { SmartCardListJoinedNewRecords } from "../../SmartCardList/SmartCardListJoinedNewRecords";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
+import type { JoinedRecordsProps } from "./JoinedRecords";
 import type { JoinedRecordSection } from "./useJoinedRecordsSections";
 
 const JoinedRecordsSectionCardList = (

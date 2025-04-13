@@ -37,6 +37,7 @@ export type SmartFilterProps = Pick<FilterWrapperProps, "variant"> & {
   detailedFilter?: SmartGroupFilter;
   operand?: Operand;
   onOperandChange?: (operand: Operand) => any;
+  hideOperand?: boolean;
   className?: string;
   style?: React.CSSProperties;
   filterClassName?: string;
@@ -71,6 +72,7 @@ export const SmartFilter = (props: SmartFilterProps) => {
     extraFilters,
     showNoFilterInfoRow = false,
     itemName,
+    hideOperand,
   } = props;
 
   const tableColumns = tables.find((t) => t.name === tableName)?.columns;
@@ -229,7 +231,11 @@ export const SmartFilter = (props: SmartFilterProps) => {
             />
           );
 
-          if (detailedFilter.length > 1 && di < detailedFilter.length - 1) {
+          if (
+            detailedFilter.length > 1 &&
+            di < detailedFilter.length - 1 &&
+            !hideOperand
+          ) {
             return (
               <React.Fragment key={"o" + di}>
                 {filterNode}

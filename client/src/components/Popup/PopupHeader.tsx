@@ -41,7 +41,7 @@ export const PopupHeader = ({
     typeof title === "function" ? rootDiv && title(rootDiv) : title;
   return (
     <header
-      className={`${POPUP_CLASSES.title} ${positioning === "right-panel" ? "ml-2" : "pl-1"} py-p5 pr-p5 flex-row ai-center bb b-color gap-1`}
+      className={`${POPUP_CLASSES.title} ${positioning === "right-panel" ? "pl-2" : "pl-1"} py-p5 pr-p5 flex-row ai-center bb b-color gap-1`}
     >
       {collapsible && (
         <Btn
