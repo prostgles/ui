@@ -126,6 +126,11 @@ export const useSmartCardListState = (
     orderByfields?.length,
   ]);
 
+  useEffect(() => {
+    if (!items || smartProps.type !== "table") return;
+    smartProps.onSetData?.(items);
+  }, [smartProps, items]);
+
   /** SQL data */
   useEffect(() => {
     if (smartProps.type === "sql") {
@@ -190,8 +195,6 @@ export const useSmartCardListState = (
           setItems(items);
           setLoaded(true);
           setTotalRows(totalRows);
-
-          smartProps.onSetData?.(items);
         } catch (error: any) {
           setError(error);
         }

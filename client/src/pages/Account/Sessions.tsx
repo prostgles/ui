@@ -26,6 +26,7 @@ import {
   StyledInterval,
 } from "../../dashboard/W_SQL/customRenderers";
 import { t } from "../../i18n/i18nUtils";
+import type { FieldConfig } from "../../dashboard/SmartCard/SmartCard";
 
 type SessionsProps = Pick<Prgl, "dbs" | "dbsTables" | "user" | "dbsMethods"> & {
   displayType: "web_session" | "api_token";
@@ -71,6 +72,7 @@ export const Sessions = ({
         {
           name: "active",
           label: " ",
+          renderMode: "valueNode",
           render: (v) => (
             <StatusDotCircleIcon
               className="my-p5"
@@ -82,6 +84,7 @@ export const Sessions = ({
         {
           name: "user_agent",
           hide: displayType === "api_token",
+          renderMode: "valueNode",
           render: (v, row) => {
             const os = (
               v.match(/Windows|Linux|Mac|Android|iOS/i)?.[0] ?? ""
@@ -144,21 +147,21 @@ export const Sessions = ({
           name: "last_usedd",
           select: { $ageNow: ["last_used", null, "second"] },
           label: t.Sessions["Last used"],
-          renderValue: (value) => <StyledInterval value={value} />,
+          render: (value) => <StyledInterval value={value} />,
         },
         { name: "ip_address", hide: displayType === "api_token" },
         {
           name: "createdd",
           select: { $ageNow: ["created", null, "second"] },
           label: t.Sessions.Created,
-          renderValue: (v) => getPGIntervalAsText(v, true, true),
+          render: (v) => getPGIntervalAsText(v, true, true),
         },
         {
           name: "expiress",
           select: { $ageNow: ["expires", null, "hour"] },
           label: t.Sessions.Expires,
           hideIf: (_, row) => !row.active,
-          renderValue: (v) => {
+          render: (v) => {
             return getPGIntervalAsText(v, true, true);
           },
         },
@@ -166,6 +169,7 @@ export const Sessions = ({
           name: "id_num",
           label: " ",
           style: { marginLeft: "auto" },
+          renderMode: "valueNode",
           render: (v) =>
             !!v && (
               <Btn
@@ -180,7 +184,7 @@ export const Sessions = ({
               />
             ),
         },
-      ],
+      ] satisfies FieldConfig[],
     }),
     [dbs.sessions, displayType, sessionLabel, tokenMode, user?.id],
   );

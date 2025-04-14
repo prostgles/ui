@@ -156,7 +156,7 @@ export const BackupsControls = ({
 
   const restoreLogsFConf: FieldConfig<Backups> = {
     name: "restore_logs",
-    renderValue: (logs, row) =>
+    render: (logs, row) =>
       renderLogs({
         logs,
         completed: !(row.restore_status as any)?.loading,
@@ -165,7 +165,7 @@ export const BackupsControls = ({
   };
   const dumpLogsFConf: FieldConfig<Backups> = {
     name: "dump_logs",
-    renderValue: (logs, row) =>
+    render: (logs, row) =>
       renderLogs({
         logs,
         completed: !(row.status as any)?.loading,
@@ -310,13 +310,13 @@ export const BackupsControls = ({
             { name: "id", hide: true },
             {
               name: "restore_status",
-              renderValue: renderStatus,
+              render: renderStatus,
             },
             {
               name: "restore_start",
               label: "Started",
               select: { $ageNow: ["restore_start", null, "second"] },
-              renderValue: renderInterval,
+              render: renderInterval,
             },
             restoreLogsFConf,
           ] as FieldConfig[]
@@ -360,13 +360,13 @@ export const BackupsControls = ({
             {
               name: "status",
               label: "Dump status",
-              renderValue: renderStatus,
+              render: renderStatus,
             },
             {
               name: "created_ago",
               label: "Started",
               select: { $ageNow: ["created", null, "second"] },
-              renderValue: renderInterval,
+              render: renderInterval,
             },
             dumpLogsFConf,
           ] as FieldConfig[]
@@ -420,7 +420,7 @@ export const BackupsControls = ({
           {
             name: "initiator",
             label: " ",
-            renderValue: (v) => (
+            render: (v) => (
               <div title={v}>
                 {v === "automatic_backups" ?
                   <Icon path={mdiRefreshAuto} size={1} />
@@ -434,7 +434,7 @@ export const BackupsControls = ({
             name: "uploaded_",
             label: "Created",
             select: { $ageNow: ["created", null, "second"] },
-            renderValue: renderInterval,
+            render: renderInterval,
           },
           // "connection_id",
           // "credential_id",
@@ -445,11 +445,11 @@ export const BackupsControls = ({
           // {
           //   name: "Upload Duration", label: "Upload Duration",
           //   select: { $age: ["uploaded", "created"] },
-          //   renderValue: renderInterval
+          //   render: renderInterval
           // },
           {
             name: "sizeInBytes",
-            renderValue: (val) => (
+            render: (val) => (
               <span title={(+val || 0).toLocaleString() + " Bytes"}>
                 {bytesToSize(+val || 0)}
               </span>
@@ -459,19 +459,19 @@ export const BackupsControls = ({
           {
             name: "status",
             label: "Dump status",
-            renderValue: renderStatus,
+            render: renderStatus,
           },
           dumpLogsFConf,
           // "restore_command",
           // {
           //   name: "restore_status",
-          //   renderValue: renderStatus
+          //   render: renderStatus
           // },
           {
             name: "restored_",
             label: "Last restored",
             select: { $ageNow: ["restore_end", null, "second"] },
-            renderValue: renderInterval,
+            render: renderInterval,
           },
           restoreLogsFConf,
         ]}
@@ -674,7 +674,7 @@ export function bytesToSize(bytes, _precision = 2) {
 // {
 //   name: "Restore Duration", label: "Restore Duration",
 //   select: { $age: ["restore_end", "restore_start"] },
-//   renderValue: val => !val? "" : getKeys(val).map(k => `${val[k]} ${k}`).join(", ")
+//   render: val => !val? "" : getKeys(val).map(k => `${val[k]} ${k}`).join(", ")
 
 // },
 // { name: "last_updated", hide: true},
@@ -682,5 +682,5 @@ export function bytesToSize(bytes, _precision = 2) {
 //   name: "last_updated_ago",
 //   label: "Last updated",
 //   select: { $ageNow: ["last_updated", null, "second"] },
-//   renderValue: (val, row) => <span title={row.last_updated.toString()}>{renderInterval(val, row)}</span>
+//   render: (val, row) => <span title={row.last_updated.toString()}>{renderInterval(val, row)}</span>
 // }

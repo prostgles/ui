@@ -40,7 +40,6 @@ export const StyledTableColumn = ({
         textColor={c.style.textColor}
         value={value}
         message={kFormatter(value)}
-        // message={SmartFormField.renderValue(c, row[c.name], undefined, maxCellChars)}
       />
     );
   } else if (c.style?.type !== "None") {

@@ -183,6 +183,10 @@ export const SmartCardList = <T extends AnyObject>(
                   ((e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    const clickedANestedPopup = !e.currentTarget.contains(
+                      e.target as Node,
+                    );
+                    if (clickedANestedPopup) return;
                     onClickRow(defaultData);
                   })
                 }

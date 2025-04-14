@@ -60,6 +60,7 @@ export const SmartFormFieldLinkedData = (
           row={row}
           column={column}
           {...state.showSearchState}
+          ftable={state.showSearchState.ftableInfo}
           onChange={(value) => {
             newRowDataHandler.setColumn(column.name, value);
           }}
@@ -114,7 +115,7 @@ const useSmartFieldForeignKeyOptionsState = ({
     /** No point showing full table search when there is only 1 column */
     const showSearchState =
       action !== "view" && ftableHandler?.find && hasMultipleCols ?
-        { ftable, fcol }
+        { ftable, ftableInfo, fcol }
       : undefined;
 
     if (!showInsertState && !showSearchState) {

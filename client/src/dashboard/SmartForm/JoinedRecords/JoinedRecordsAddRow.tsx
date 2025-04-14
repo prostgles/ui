@@ -114,7 +114,6 @@ export const JoinedRecordsAddRow = (props: P) => {
             setInsert({
               type: "auto",
               smartFormProps: {
-                label: `Insert ${section.tableName} record`,
                 defaultData,
                 onInserted: onClose,
                 onSuccess: onSuccess,

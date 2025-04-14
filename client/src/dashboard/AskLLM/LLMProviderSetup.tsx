@@ -27,6 +27,7 @@ export const LLMProviderSetup = ({
         {
           name: "is_default",
           className: "o-visible",
+          renderMode: "valueNode",
           render: (is_default) =>
             is_default ? <Chip color="blue">default</Chip> : " ",
         },

@@ -10,6 +10,7 @@ import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
 import type { W_TableInfo } from "./getTableMeta";
 import type { W_TableMenuProps, W_TableMenuState } from "./W_TableMenu";
+import type { FieldConfig } from "../../SmartCard/SmartCard";
 
 type P = W_TableMenuProps & {
   tableMeta: W_TableInfo | undefined;
@@ -29,12 +30,14 @@ export const W_TableMenu_Policies = ({ tableMeta, onSetQuery, prgl, w }: P) => {
         {
           name: "definition",
           label: "",
+          renderMode: "valueNode",
           render: (v) => <div className="ws-pre-line">{v}</div>,
         },
         {
           name: "tablename",
           label: "",
           className: "show-on-parent-hover",
+          renderMode: "valueNode",
           render: (v, row: AnyObject) => (
             <FlexCol>
               <Select
@@ -90,7 +93,7 @@ export const W_TableMenu_Policies = ({ tableMeta, onSetQuery, prgl, w }: P) => {
             </FlexCol>
           ),
         },
-      ],
+      ] satisfies FieldConfig[],
     };
   }, [tableName, prgl.dbKey, onSetQuery]);
 

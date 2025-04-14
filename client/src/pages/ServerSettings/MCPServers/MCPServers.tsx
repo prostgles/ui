@@ -11,6 +11,7 @@ import { MCPServerConfig } from "./MCPServerConfig";
 import { MCPServerFooterActions } from "./MCPServerFooterActions";
 import { MCPServersHeader } from "./MCPServersHeader";
 import type { ColumnSort } from "../../../dashboard/W_Table/ColumnMenu/ColumnMenu";
+import type { FieldConfig } from "../../../dashboard/SmartCard/SmartCard";
 
 const orderByEnabledAndName = [
   {
@@ -138,56 +139,58 @@ const useListProps = () => {
   }, [selectedTool]);
 
   const fieldConfigs = useMemo(
-    () => [
-      {
-        name: "name",
-        label: "",
-        className: "bold mx-p25 w-full",
-      },
-      {
-        name: "mcp_server_configs",
-        select: "*",
-        hide: true,
-      },
-      {
-        name: "mcp_server_logs",
-        select: "*",
-        hide: true,
-      },
-      {
-        name: "mcp_server_tools",
-        select: {
-          name: 1,
-          description: 1,
+    () =>
+      [
+        {
+          name: "name",
+          label: "",
+          className: "bold mx-p25 w-full",
         },
-        render: (tools) => {
-          return (
-            <FlexRowWrap className="gap-p25">
-              {tools.map((tool, i) => (
-                <Chip
-                  key={`${tool.name}${i}`}
-                  title={tool.description}
-                  className="pointer"
-                  color={
-                    selectedTool && selectedTool.name === tool.name ?
-                      "blue"
-                    : undefined
-                  }
-                >
-                  {tool.name}
-                </Chip>
-              ))}
-            </FlexRowWrap>
-          );
-        },
-      },
-      ...["installed", "config_schema", "enabled", "source", "command"].map(
-        (name) => ({
-          name,
+        {
+          name: "mcp_server_configs",
+          select: "*",
           hide: true,
-        }),
-      ),
-    ],
+        },
+        {
+          name: "mcp_server_logs",
+          select: "*",
+          hide: true,
+        },
+        {
+          name: "mcp_server_tools",
+          select: {
+            name: 1,
+            description: 1,
+          },
+          renderMode: "valueNode",
+          render: (tools) => {
+            return (
+              <FlexRowWrap className="gap-p25">
+                {tools.map((tool, i) => (
+                  <Chip
+                    key={`${tool.name}${i}`}
+                    title={tool.description}
+                    className="pointer"
+                    color={
+                      selectedTool && selectedTool.name === tool.name ?
+                        "blue"
+                      : undefined
+                    }
+                  >
+                    {tool.name}
+                  </Chip>
+                ))}
+              </FlexRowWrap>
+            );
+          },
+        },
+        ...["installed", "config_schema", "enabled", "source", "command"].map(
+          (name) => ({
+            name,
+            hide: true,
+          }),
+        ),
+      ] satisfies FieldConfig[],
     [selectedTool],
   );
   // const getRowFooter: SmartCardListProps["getRowFooter"] = useCallback(

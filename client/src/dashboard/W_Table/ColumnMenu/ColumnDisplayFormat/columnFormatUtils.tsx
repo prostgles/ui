@@ -264,6 +264,7 @@ const HREFRender: FormattedColRender<any>["render"] = (v, r, c) => (
       : "") + removeQuotes(v)
     }
     target="_blank"
+    rel="noreferrer"
   >
     {removeQuotes(v)}
   </a>

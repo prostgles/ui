@@ -21,6 +21,7 @@ import type { SmartCardListProps } from "../SmartCardList/SmartCardList";
 import { getSmartCardColumns } from "./getSmartCardColumns";
 import { getDefaultFieldConfig, parseFieldConfigs } from "./parseFieldConfigs";
 import { usePromise } from "prostgles-client/dist/react-hooks";
+import { SmartCardColumn } from "./SmartCardColumn";
 
 type NestedSmartCardProps = Pick<SmartCardProps, "footer" | "excludeNulls">;
 type NestedSmartFormProps = Pick<
@@ -65,7 +66,10 @@ export type ParsedFieldConfig<T extends AnyObject = AnyObject> =
     select?: number | AnyObject | string;
     hideIf?: (value, row) => boolean;
     render?: FieldConfigRender<T>;
-    renderValue?: FieldConfigRender<T>;
+    /**
+     * Defaults to "value"
+     */
+    renderMode?: "valueNode" | "value" | "full";
   };
 
 export type FieldConfig<T extends AnyObject = AnyObject> =
@@ -301,33 +305,21 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
     .map(({ name, fc, col: c }, i) => {
       const labelText =
         (fc?.render ? fc.label : (fc?.label ?? c?.label ?? c?.name)) ?? null;
+
+      const valueNode =
+        fc?.render?.(defaultData[name], defaultData) ||
+        (c && <RenderValue column={c} value={defaultData[name]} />);
       return (
-        <div
+        <SmartCardColumn
           key={`${fc?.name ?? c?.name ?? labelText}`}
-          className={
-            "SmartCardCol flex-col o-auto ai-start text-1 ta-left " +
-            (fc?.className || "")
-          }
-          style={{ maxHeight: "250px", ...fc?.style }}
-        >
-          {labelText?.length ?
-            <Label
-              size="small"
-              variant="normal"
-              title={c?.udt_name || ""}
-              info={c?.hint}
-            >
-              {labelText}
-            </Label>
-          : null}
-          {/* <div className="font-12 text-2 noselect" title={c?.udt_name || ""}>{fc?.label || c?.label}</div> */}
-          {fc?.render?.(defaultData[name], defaultData) || (
-            <div className="font-16 text-0 mt-dp5 o-auto">
-              {fc?.renderValue?.(defaultData[name], defaultData) ??
-                (c && <RenderValue column={c} value={defaultData[name]} />)}
-            </div>
-          )}
-        </div>
+          className={fc?.className}
+          style={fc?.style}
+          labelText={labelText}
+          valueNode={valueNode}
+          renderMode={fc?.renderMode}
+          labelTitle={c?.udt_name || ""}
+          info={c?.hint}
+        />
       );
     });
 

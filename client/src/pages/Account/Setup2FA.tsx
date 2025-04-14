@@ -133,7 +133,7 @@ export const Setup2FA = ({
                 <>
                   <div>
                     {t.Setup2FA.Scan}{" "}
-                    <a href={OTP.url} target="_blank">
+                    <a href={OTP.url} target="_blank" rel="noreferrer">
                       {t.Setup2FA[" or tap "]}
                     </a>{" "}
                     {

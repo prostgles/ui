@@ -4,12 +4,12 @@ import React, { useMemo } from "react";
 import ErrorComponent from "../../../components/ErrorComponent";
 import { FlexCol } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
-import { MediaViewer } from "../../../components/MediaViewer";
 import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import { SmartCardListJoinedNewRecords } from "../../SmartCardList/SmartCardListJoinedNewRecords";
 import { NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import type { JoinedRecordsProps } from "./JoinedRecords";
 import type { JoinedRecordSection } from "./useJoinedRecordsSections";
+import { useJoinedSectionFieldConfigs } from "./useJoinedSectionFieldConfigs";
 
 const JoinedRecordsSectionCardList = (
   props: JoinedRecordsProps & {
@@ -28,6 +28,7 @@ const JoinedRecordsSectionCardList = (
     isInsert,
     descendants,
     newRowDataHandler,
+    tableName,
   } = props;
 
   const descendantInsertTables = useMemo(
@@ -53,6 +54,12 @@ const JoinedRecordsSectionCardList = (
       ),
     [newRowData],
   );
+
+  const fieldConfigs = useJoinedSectionFieldConfigs({
+    sectionTable: s.table,
+    tables,
+    tableName,
+  });
 
   const { count } = s;
 
@@ -106,18 +113,7 @@ const JoinedRecordsSectionCardList = (
             </InfoRow>
           }
           noDataComponentMode="hide-all"
-          fieldConfigs={
-            tables.some((t) => t.info.isFileTable && t.name === s.tableName) ?
-              [
-                {
-                  name: "url",
-                  render: (url, row) => (
-                    <MediaViewer style={{ maxWidth: "300px" }} url={url} />
-                  ),
-                },
-              ]
-            : undefined
-          }
+          fieldConfigs={fieldConfigs}
         />
       </div>
     );
@@ -127,16 +123,13 @@ const JoinedRecordsSectionCardList = (
 export const JoinedRecordsSection = ({
   section,
   descendants,
-  onSetQuickView,
   isInsert,
   ...props
 }: JoinedRecordsProps & {
   section: JoinedRecordSection;
   isInsert: boolean;
   descendants: JoinedRecordsProps["tables"];
-  onSetQuickView: VoidFunction | undefined;
 }) => {
-  const { count } = section;
   return (
     <FlexCol className=" p-1 ">
       {section.error && (
@@ -146,23 +139,6 @@ export const JoinedRecordsSection = ({
           className=" f-1"
         />
       )}
-      {/* <FlexRow className="jc-end">
-        {!isInsert && onSetQuickView && (
-          <Btn
-            iconPath={mdiTable}
-            title="Open in table"
-            disabledInfo={!count ? "No records to show" : undefined}
-            onClick={onSetQuickView}
-          />
-        )}
-        {props.newRowDataHandler && (
-          <JoinedRecordsAddRow
-            {...props}
-            section={section}
-            newRowDataHandler={props.newRowDataHandler}
-          />
-        )}
-      </FlexRow> */}
       <JoinedRecordsSectionCardList
         {...props}
         section={section}

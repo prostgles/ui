@@ -77,7 +77,7 @@ export const NestedColumnRender = ({
     );
   }
   const shownNestedColumns = nestedColumns.filter((c) => c.show);
-  const renderValue = ({ key, value }: { key: string; value: any }) => {
+  const render = ({ key, value }: { key: string; value: any }) => {
     const columnWInfo = nestedColumns.find((c) => c.name === key);
     const datType =
       columnWInfo?.info ?? columnWInfo?.computedConfig?.funcDef.outType;
@@ -92,7 +92,7 @@ export const NestedColumnRender = ({
   const isSingleValue = shownNestedColumns.length === 1;
   if (isSingleValue && !isMedia && firstValue && !rest.length) {
     const [key, value] = Object.entries(firstValue)[0]!;
-    return <>{renderValue({ key, value })}</>;
+    return <>{render({ key, value })}</>;
   }
   const content = valueList.slice(0, NESTED_LIMIT).map((nestedObj, idx) => {
     if (!nestedObj) return null;
@@ -123,7 +123,7 @@ export const NestedColumnRender = ({
               {displayMode !== "no-headers" && (
                 <div className="text-2 font-12">{key}</div>
               )}
-              <div>{renderValue({ key, value })}</div>
+              <div>{render({ key, value })}</div>
             </div>
           );
         })}

@@ -72,52 +72,9 @@ export const useJoinedRecordsSections = (props: JoinedRecordsProps) => {
 
   const { diplayedTables, descendants } = useMemo(() => {
     const tableJoins = table?.joins.filter((j) => j.hasFkeys) ?? [];
-    // let diplayedTables = tableJoins.slice(0, 0).map((d) => ({
-    //   ...d,
-    //   path: undefined as string[] | undefined,
-    // }));
-    // tableJoins.forEach((j) => {
-    //   const jtable = tables.find((t) => t.name === j.tableName);
-    //   if (!jtable) return;
-
-    //   const joinCols = j.on.flatMap((j) => j[1]);
-
-    //   /** Is only used for joining and has no other data */
-    //   const nextJoiningTables = jtable.joins.filter((nextJoin) => {
-    //     const nextJoinCols = nextJoin.on.flatMap((j) => j[0]);
-    //     const isNotAlreadyAjoinOrThisTable = !(
-    //       nextJoin.tableName === tableName
-    //     );
-    //     const allColumnsAreJoinColumns =
-    //       Array.from(new Set([...nextJoinCols, ...joinCols])).length ===
-    //       jtable.columns.length;
-    //     return isNotAlreadyAjoinOrThisTable && allColumnsAreJoinColumns;
-    //   });
-
-    //   nextJoiningTables.forEach((nextTable) => {
-    //     diplayedTables.unshift({
-    //       ...j,
-    //       tableName: nextTable.tableName,
-    //       path: [j.tableName, nextTable.tableName],
-    //     });
-    //   });
-
-    //   /** Only joins to this table */
-    //   const isLookupTable =
-    //     !nextJoiningTables.length &&
-    //     jtable.columns.every((c) => j.on.some((o) => o[1] === c.name));
-    //   if (isLookupTable) {
-    //     if (showLookupTables) diplayedTables.push({ ...j, path: undefined });
-    //   } else {
-    //     diplayedTables.unshift({ ...j, path: undefined });
-    //   }
-    // });
-    const diplayedTables = tableJoins
-      .map((j) => ({
-        ...j,
-        // path: undefined,
-      }))
-      .filter((t) => !parentFormTableNames.includes(t.tableName));
+    const diplayedTables = tableJoins.filter(
+      (t) => !parentFormTableNames.includes(t.tableName),
+    );
 
     const descendants = tables.filter((t) =>
       t.columns.some((c) => c.references?.some((r) => r.ftable === tableName)),

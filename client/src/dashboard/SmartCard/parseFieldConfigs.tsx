@@ -79,7 +79,7 @@ export const getDefaultFieldConfig = (
   const getColConfig = (c: (typeof cols)[number]) => ({
     name: c.name,
     label: c.label,
-    renderValue:
+    render:
       ["postcode", "post_code"].includes(c.name) ?
         (addr: string) =>
           !addr ?

@@ -11,6 +11,7 @@ import { InfoRow } from "../components/InfoRow";
 import PopupMenu from "../components/PopupMenu";
 import { SmartCardList } from "../dashboard/SmartCardList/SmartCardList";
 import { StyledInterval } from "../dashboard/W_SQL/customRenderers";
+import type { FieldConfig } from "../dashboard/SmartCard/SmartCard";
 
 export const Alerts = (prgl: Prgl) => {
   const { connectionId, dbs, user } = prgl;
@@ -46,60 +47,61 @@ export const Alerts = (prgl: Prgl) => {
       },
       {
         name: "message",
-        render: (
-          message,
-          {
+        renderMode: "valueNode",
+        render: (message, row) => {
+          const {
             severity,
             title,
             age,
             id: alert_id,
             connection_id,
             section,
-          }: DBSSchema["alerts"] & { age: any },
-        ) => (
-          <FlexRow className="ai-start">
-            <InfoRow
-              variant="naked"
-              color={
-                severity === "error" ? "danger"
-                : severity === "warning" ?
-                  "warning"
-                : "info"
-              }
-            >
-              <FlexCol>
-                <StyledInterval
-                  value={age}
-                  style={{ color: "var(--text-0)" }}
-                />
-                {title && <div className="bold">{title}</div>}
-                <div>{message}</div>
-                {connection_id && section && (
-                  <NavLink
-                    to={`${API_PATH_SUFFIXES.CONFIG}/${connection_id}?section=${section}`}
-                  >
-                    Go to issue
-                  </NavLink>
-                )}
-              </FlexCol>
-            </InfoRow>
-            <Btn
-              iconPath={mdiDelete}
-              onClickPromise={() =>
-                dbs.alert_viewed_by.insert({
-                  alert_id,
-                  user_id,
-                })
-              }
-            />
-          </FlexRow>
-        ),
+          } = row as DBSSchema["alerts"] & { age: any };
+          return (
+            <FlexRow className="ai-start">
+              <InfoRow
+                variant="naked"
+                color={
+                  severity === "error" ? "danger"
+                  : severity === "warning" ?
+                    "warning"
+                  : "info"
+                }
+              >
+                <FlexCol>
+                  <StyledInterval
+                    value={age}
+                    style={{ color: "var(--text-0)" }}
+                  />
+                  {title && <div className="bold">{title}</div>}
+                  <div>{message}</div>
+                  {connection_id && section && (
+                    <NavLink
+                      to={`${API_PATH_SUFFIXES.CONFIG}/${connection_id}?section=${section}`}
+                    >
+                      Go to issue
+                    </NavLink>
+                  )}
+                </FlexCol>
+              </InfoRow>
+              <Btn
+                iconPath={mdiDelete}
+                onClickPromise={() =>
+                  dbs.alert_viewed_by.insert({
+                    alert_id,
+                    user_id,
+                  })
+                }
+              />
+            </FlexRow>
+          );
+        },
       },
       {
         name: "id",
         hide: true,
       },
-    ];
+    ] satisfies FieldConfig[];
     const rowProps = {
       className: "ai-center",
     };

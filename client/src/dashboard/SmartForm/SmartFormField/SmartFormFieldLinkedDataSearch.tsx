@@ -7,13 +7,15 @@ import {
   type SmartCardListProps,
 } from "../../SmartCardList/SmartCardList";
 import type { SmartFormFieldLinkedDataProps } from "./SmartFormFieldLinkedData";
+import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { SmartGroupFilter } from "../../../../../commonTypes/filterUtils";
+import type { AnyObject } from "prostgles-types";
 
 type P = Pick<
   SmartFormFieldLinkedDataProps,
   "db" | "methods" | "tables" | "row" | "column"
 > & {
-  ftable: string;
+  ftable: DBSchemaTableWJoins;
   fcol: string;
   readOnly: boolean;
   onChange: (value: any) => void;
@@ -30,16 +32,12 @@ export const SmartFormFieldLinkedDataSearch = ({
   readOnly,
   onChange,
 }: P) => {
-  const [anchorEl, setAnchorEl] = useState<HTMLElement>();
-  const [loaded, setLoaded] = useState(false);
-
   const listProps = useMemo(() => {
     return {
       onClickRow:
         readOnly ? undefined : (
           (row) => {
             onChange(row[fcol]);
-            setAnchorEl(undefined);
           }
         ),
       searchFilter: [
@@ -48,14 +46,53 @@ export const SmartFormFieldLinkedDataSearch = ({
           value: row[column.name],
         },
       ],
+    } satisfies Pick<SmartCardListProps, "searchFilter" | "onClickRow">;
+  }, [row, column.name, fcol, onChange, readOnly]);
+
+  return (
+    <ViewMoreSmartCardList
+      db={db}
+      tables={tables}
+      methods={methods}
+      ftable={ftable}
+      {...listProps}
+    />
+  );
+};
+
+type ViewMoreSmartCardListProps = Pick<
+  SmartFormFieldLinkedDataProps,
+  "db" | "methods" | "tables"
+> & {
+  ftable: DBSchemaTableWJoins;
+  searchFilter: SmartGroupFilter | undefined;
+  onClickRow: ((row: AnyObject) => void) | undefined;
+};
+export const ViewMoreSmartCardList = ({
+  db,
+  methods,
+  ftable,
+  tables,
+  searchFilter,
+  onClickRow,
+}: ViewMoreSmartCardListProps) => {
+  const [anchorEl, setAnchorEl] = useState<HTMLElement>();
+  const [loaded, setLoaded] = useState(false);
+
+  const listProps = useMemo(() => {
+    return {
+      onClickRow:
+        onClickRow ?
+          (row) => {
+            onClickRow(row);
+            setAnchorEl(undefined);
+          }
+        : undefined,
       onSetData: () => {
         setLoaded(true);
       },
-    } satisfies Pick<
-      SmartCardListProps,
-      "searchFilter" | "onClickRow" | "onSetData"
-    >;
-  }, [row, column.name, fcol, onChange, readOnly]);
+    } satisfies Pick<SmartCardListProps, "onSetData" | "onClickRow">;
+  }, [onClickRow]);
 
   return (
     <>
@@ -66,7 +103,7 @@ export const SmartFormFieldLinkedDataSearch = ({
       />
       {anchorEl && (
         <Popup
-          title={`Find ${ftable} record`}
+          title={ftable.label}
           onClose={() => setAnchorEl(undefined)}
           anchorEl={anchorEl}
           onClickClose={false}
@@ -74,6 +111,7 @@ export const SmartFormFieldLinkedDataSearch = ({
           clickCatchStyle={{ opacity: 1 }}
           rootStyle={{
             maxWidth: "min(100vw, 600px)",
+            transition: "opacity .15s ease-in-out",
             visibility: loaded ? "visible" : "hidden",
           }}
         >
@@ -82,31 +120,11 @@ export const SmartFormFieldLinkedDataSearch = ({
             db={db}
             methods={methods}
             tables={tables}
-            tableName={ftable}
+            tableName={ftable.name}
             excludeNulls={true}
+            searchFilter={searchFilter}
             {...listProps}
           />
-          {/* <SmartTable
-            allowEdit={true}
-            title={`Find ${ftable} record`}
-            db={db}
-            methods={methods}
-            tables={tables}
-            tableName={ftable}
-            onClickRow={(row) => {
-              if (!row) return;
-
-              if (readOnly) {
-                alert("Cannot change value. This field is read only");
-              } else {
-                onChange(row[fcol]);
-              }
-              setShow(false);
-            }}
-            onClosePopup={() => {
-              setShow(false);
-            }}
-          /> */}
         </Popup>
       )}
     </>

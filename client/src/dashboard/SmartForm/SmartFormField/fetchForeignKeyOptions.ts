@@ -7,6 +7,7 @@ import {
 } from "prostgles-types";
 import { type FullOption } from "../../../components/Select/Select";
 import type { SmartFormFieldForeignKeyProps } from "./SmartFormFieldForeignKey";
+import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 
 type FetchForeignKeyOptionsArgs = Pick<
   SmartFormFieldForeignKeyProps,
@@ -45,15 +46,14 @@ const getRootFkeyTable = ({
   if (!table || !column || !db[table.name]?.find) return;
   if (column.is_pkey) {
     const bestTextCols = getBestTextColumns(
-      tables,
-      tableName,
+      table,
       prevPath.flatMap(({ on }) => on.map((o) => o[1])),
     );
     return {
       column,
       tableName,
       prevPath,
-      bestTextCol: bestTextCols?.[0]?.name,
+      bestTextCol: bestTextCols[0]?.name,
     };
   }
   const fcolsInfo =
@@ -260,20 +260,17 @@ const isTextColumn = (col: ValidatedColumnInfo) =>
  * we want to try and show the most representative text column of that table
  * to make it easier for the user to pick a value
  */
-const getBestTextColumns = (
-  tables: SmartFormFieldForeignKeyProps["tables"],
-  tableName: string,
+export const getBestTextColumns = (
+  table: DBSchemaTableWJoins,
   excludeCols: string[],
 ) => {
-  const fTable = tables.find((t) => t.name === tableName);
-  if (!fTable) return;
-
-  const fTableTextColumns = fTable.columns
+  const nonSelectableNullableTextCols = table.columns
     .filter(isTextColumn)
-    .filter((c) => c.select)
+    .filter((c) => c.select);
+  const fTableTextColumns = nonSelectableNullableTextCols
     .filter((c) => !excludeCols.includes(c.name))
     .map((c) => {
-      const shortestUnique = fTable.info.uniqueColumnGroups
+      const shortestUnique = table.info.uniqueColumnGroups
         ?.filter((g) => g.includes(c.name))
         .sort((a, b) => a.length - b.length)[0];
       return {

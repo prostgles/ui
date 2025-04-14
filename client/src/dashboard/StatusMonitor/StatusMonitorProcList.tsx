@@ -150,6 +150,7 @@ const useStatusMonitorProcListProps = (
       name: "id_query_hash",
       className: "ml-auto show-on-parent-hover",
       label: "",
+      renderMode: "valueNode",
       render: (id_query_hash, row) =>
         !dbsMethods.killPID ?
           <div></div>
@@ -179,18 +180,19 @@ const useStatusMonitorProcListProps = (
         name: "cpu",
         hide: noBash,
         ...hideOverflowStyle,
-        renderValue: (v: number) => <span className="">{v}%</span>,
+        render: (v: number) => <span className="">{v}%</span>,
       },
       {
         name: "mem",
         hide: noBash,
         ...hideOverflowStyle,
-        renderValue: (v: number) => <span className="">{v}%</span>,
+        render: (v: number) => <span className="">{v}%</span>,
       },
       {
         name: "state",
         ...hideOverflowStyle,
         label: "State",
+        renderMode: "valueNode",
         render: (state) => {
           return (
             <Chip
@@ -212,6 +214,7 @@ const useStatusMonitorProcListProps = (
         ...hideOverflowStyle,
         label: "Blocked by pids",
         hideIf: (value) => !value?.length,
+        renderMode: "valueNode",
         render: (pids, row) => (
           <FlexRow>
             {pids?.map((pid, i) => (
@@ -227,14 +230,14 @@ const useStatusMonitorProcListProps = (
         ...hideOverflowStyle,
         label: "Running time",
         select: { $ageNow: ["query_start"] },
-        renderValue: (value) => <StyledInterval value={value} mode="pg_stat" />,
+        render: (value) => <StyledInterval value={value} mode="pg_stat" />,
       },
       { name: "pid" },
       actionRow,
       {
         name: "query",
         className: "w-full",
-        renderValue: (query, row) => (
+        render: (query, row) => (
           <PopupMenu
             key={row.pid}
             button={<div>{query}</div>}
@@ -255,7 +258,7 @@ const useStatusMonitorProcListProps = (
     ] satisfies FieldConfigs;
 
     const excludedFields: (keyof DBSSchema["stats"])[] = fixedFields
-      .filter((f) => (f as any).render || (f as any).renderValue)
+      .filter((f) => (f as any).render)
       .map((f) => f.name)
       .concat(["connection_id"]) as any;
 
