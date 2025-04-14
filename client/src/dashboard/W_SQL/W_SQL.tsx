@@ -106,7 +106,7 @@ export type W_SQL_ActiveQuery = {
 type SQLResultCols = Required<W_SQLProps>["w"]["options"]["sqlResultCols"];
 
 export type W_SQLState = {
-  table?: TableProps & Query;
+  table?: TableProps<ColumnSortSQL> & Query;
   sort: ColumnSortSQL[];
   loading: boolean;
   currentCodeBlockChartColumns?: ChartableSQL;
