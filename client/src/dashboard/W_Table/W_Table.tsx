@@ -71,7 +71,7 @@ export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   setLinkMenu: ProstglesQuickMenuProps["setLinkMenu"];
   childWindow: React.ReactNode | undefined;
   onLinkTable?: (tableName: string, path: ParsedJoinPath[]) => any | void;
-  onClickRow?: TableProps["onRowClick"];
+  onClickRow?: TableProps<ColumnSort>["onRowClick"];
   filter?: any;
   joinFilter?: AnyObject;
   externalFilters: AnyObject[];
@@ -125,7 +125,7 @@ export type ProstglesColumn = TableColumn & { computed?: boolean } & Pick<
 export type W_TableState = {
   rowCount: number;
   rowsLoaded: number;
-  table?: (TableProps & Query) | any;
+  table?: (TableProps<ColumnSort> & Query) | any;
   sort?: ColumnSortSQL[];
   loading: boolean;
 
@@ -151,7 +151,7 @@ export type W_TableState = {
         fixedUpdateData?: AnyObject;
       };
   rowDelta?: any;
-  onRowClick?: TableProps["onRowClick"];
+  onRowClick?: TableProps<ColumnSort>["onRowClick"];
 
   filterPopup?: boolean;
 

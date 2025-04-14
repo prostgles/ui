@@ -15,15 +15,14 @@ import type { PopupProps } from "../Popup/Popup";
 import Popup from "../Popup/Popup";
 import { classOverride } from "../Flex";
 import { getSortColumn } from "../../dashboard/W_Table/tableUtils/tableUtils";
+import type {
+  ColumnSort,
+  ColumnSortSQL,
+} from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 
-type TableHeaderProps = Pick<
-  TableProps,
-  | "cols"
-  | "sort"
-  | "onSort"
-  | "whiteHeader"
-  | "onColumnReorder"
-  | "showSubLabel"
+type TableHeaderProps<Sort extends ColumnSort | ColumnSortSQL> = Pick<
+  TableProps<Sort>,
+  "cols" | "sort" | "onSort" | "onColumnReorder" | "showSubLabel"
 > & {
   setDraggedCol: (newCol: TableState["draggedCol"]) => void;
   rootRef?: HTMLDivElement | null;
@@ -35,27 +34,20 @@ export type TableHeaderState = Pick<TableState, "draggedCol"> & {
     anchorEl: HTMLElement;
   } & ColumnSortMenuProps;
 };
-export class TableHeader extends React.Component<
-  TableHeaderProps,
-  TableHeaderState
-> {
+export class TableHeader<
+  Sort extends ColumnSort | ColumnSortSQL,
+> extends React.Component<TableHeaderProps<Sort>, TableHeaderState> {
   state: Readonly<TableHeaderState> = {
     draggedCol: undefined,
   };
 
   render(): React.ReactNode {
-    const {
-      cols,
-      sort: s = [],
-      onColumnReorder,
-      onSort,
-      whiteHeader = false,
-    } = this.props;
+    const { cols, sort: s = [], onColumnReorder, onSort } = this.props;
     const setDraggedCol = (draggedCol: TableHeaderState["draggedCol"]) =>
       this.setState({ draggedCol });
     const { draggedCol, showNestedSortOptions, popup } = this.state;
 
-    let sort: Required<TableProps>["sort"] = [];
+    let sort: Required<TableProps<Sort>>["sort"] = [];
     if (Array.isArray(s)) {
       sort = s.map((s) => ({ ...s }));
     }
@@ -102,7 +94,6 @@ export class TableHeader extends React.Component<
               "flex-col h-full min-w-0 px-p5 py-p5 text-left font-14 relative " +
               " font-medium text-0 tracking-wider to-ellipsis jc-center " +
               (onSort && col.sortable ? " pointer " : "") +
-              // (whiteHeader? " " : " bg-color-1  ") +
               (col.onContextMenu ? " contextmenu " : "") +
               (col.width ? " f-0 " : " f-1 ");
 
@@ -218,7 +209,9 @@ export class TableHeader extends React.Component<
                             ) ?? [];
                           const onlyOneActiveColumn = col1 && !col2;
                           if (onlyOneActiveColumn) {
-                            newSort = getDefaultSort(`${col.key}.${col1.name}`); // { key: `${col.key}.${onlyOneActiveColumn.name}`, asc: true };
+                            newSort = getDefaultSort(
+                              `${col.key}.${col1.name}`,
+                            ) as Sort; // { key: `${col.key}.${onlyOneActiveColumn.name}`, asc: true };
                           } else {
                             this.setState({
                               showNestedSortOptions: {
@@ -229,7 +222,7 @@ export class TableHeader extends React.Component<
                             return;
                           }
                         } else {
-                          newSort = getDefaultSort(col.key as string);
+                          newSort = getDefaultSort(col.key as string) as Sort;
                         }
                       } else if (newSort.asc) newSort.asc = false;
                       else newSort = undefined;

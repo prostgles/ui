@@ -83,14 +83,13 @@ export type TableColumn = {
   flex?: number;
 };
 
-export type TableProps = {
+export type TableProps<Sort extends ColumnSort | ColumnSortSQL> = {
   rowKeys?: string[];
   rows: AnyObject[];
   cols: ProstglesColumn[];
   onColumnReorder?: (newOrder: ProstglesColumn[]) => void;
-  whiteHeader?: boolean;
-  onSort?: (newSort: ColumnSort[]) => any;
-  sort?: ColumnSort[];
+  onSort?: (newSort: Sort[]) => any;
+  sort?: Sort[];
   onRowHover?: (row: any, e: React.MouseEvent<HTMLDivElement>) => any;
   onRowClick?: (
     row: AnyObject | undefined,
@@ -118,8 +117,8 @@ export type TableProps = {
 export type TableState = {
   draggedCol?: { node: HTMLDivElement; idx: number; targetIdx?: number };
 };
-export const Table = (
-  props: TableProps & React.HTMLAttributes<HTMLDivElement>,
+export const Table = <Sort extends ColumnSort | ColumnSortSQL>(
+  props: TableProps<Sort> & React.HTMLAttributes<HTMLDivElement>,
 ) => {
   const {
     rows = [],
