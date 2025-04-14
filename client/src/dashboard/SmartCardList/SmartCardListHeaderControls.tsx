@@ -23,10 +23,7 @@ export const SmartCardListHeaderControls = (
     typeof title === "string" ? <h4 className="m-0">{title}</h4>
     : typeof title === "function" ? title({ count: totalRows ?? -1 })
     : title;
-  const showSearch =
-    tableControls?.localFilter?.length ?
-      true
-    : tableControls && Boolean(totalRows && totalRows > 8);
+  const showSearch = tableControls?.localFilter?.length ? true : tableControls; //&& Boolean(totalRows && totalRows > 8)
 
   const showSort = isObject(showTopBar) ? showTopBar.sort : showTopBar;
   if (

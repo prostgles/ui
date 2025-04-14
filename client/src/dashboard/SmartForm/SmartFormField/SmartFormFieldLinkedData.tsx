@@ -46,6 +46,7 @@ export const SmartFormFieldLinkedData = (
     readOnly,
     column,
     newRowDataHandler,
+    tableName,
   } = props;
 
   if (!state) return null;
@@ -59,6 +60,7 @@ export const SmartFormFieldLinkedData = (
           readOnly={readOnly}
           row={row}
           column={column}
+          tableName={tableName}
           {...state.showSearchState}
           ftable={state.showSearchState.ftableInfo}
           onChange={(value) => {

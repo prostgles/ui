@@ -14,15 +14,14 @@ export const useJoinedSectionFieldConfigs = ({
   tableName,
 }: {
   sectionTable: DBSchemaTableWJoins;
-} & Pick<JoinedRecordsProps, "tables" | "tableName">):
-  | FieldConfig[]
-  | undefined => {
+  tableName: string | undefined;
+} & Pick<JoinedRecordsProps, "tables">): FieldConfig[] | undefined => {
   const fileTable = useMemo(
     () => tables.find((t) => t.info.isFileTable),
     [tables],
   );
   const rootTable = useMemo(
-    () => tables.find((t) => t.name === tableName),
+    () => (!tableName ? undefined : tables.find((t) => t.name === tableName)),
     [tables, tableName],
   );
   return useMemo(() => {

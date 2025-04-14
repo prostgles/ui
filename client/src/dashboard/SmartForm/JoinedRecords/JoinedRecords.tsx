@@ -6,16 +6,12 @@ import { FlexCol, FlexRow, classOverride } from "../../../components/Flex";
 import Loading from "../../../components/Loading";
 import { Section } from "../../../components/Section";
 import { SvgIcon } from "../../../components/SvgIcon";
-import SmartTable from "../../SmartTable";
 import type { SmartFormProps } from "../SmartForm";
-import { ViewMoreSmartCardList } from "../SmartFormField/SmartFormFieldLinkedDataSearch";
+import { ViewMoreSmartCardList } from "../SmartFormField/ViewMoreSmartCardList";
 import type { NewRow, NewRowDataHandler } from "../SmartFormNewRowDataHandler";
 import { JoinedRecordsAddRow } from "./JoinedRecordsAddRow";
 import { JoinedRecordsSection } from "./JoinedRecordsSection";
-import {
-  useJoinedRecordsSections,
-  type JoinedRecordSection,
-} from "./useJoinedRecordsSections";
+import { useJoinedRecordsSections } from "./useJoinedRecordsSections";
 
 export type JoinedRecordsProps = Pick<Prgl, "db" | "tables" | "methods"> &
   Pick<SmartFormProps, "onSuccess" | "parentForm"> & {
@@ -106,6 +102,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
                       searchFilter={section.detailedJoinFilter}
                       onClickRow={undefined}
                       tables={tables}
+                      rootTableName={table.name}
                     />
                   )}
                   <JoinedRecordsAddRow

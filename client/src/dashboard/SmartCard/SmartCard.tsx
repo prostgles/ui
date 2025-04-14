@@ -309,6 +309,10 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
       const valueNode =
         fc?.render?.(defaultData[name], defaultData) ||
         (c && <RenderValue column={c} value={defaultData[name]} />);
+
+      if (fc?.renderMode === "full") {
+        return valueNode;
+      }
       return (
         <SmartCardColumn
           key={`${fc?.name ?? c?.name ?? labelText}`}

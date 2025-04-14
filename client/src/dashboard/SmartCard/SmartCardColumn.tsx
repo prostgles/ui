@@ -10,7 +10,7 @@ type SmartCardColumnProps = {
   info: React.ReactNode | undefined;
   labelTitle: string | undefined;
   valueNode: React.ReactNode;
-  renderMode: ParsedFieldConfig["renderMode"];
+  renderMode: Exclude<ParsedFieldConfig["renderMode"], "full">;
 };
 export const SmartCardColumn = ({
   labelText,
@@ -21,9 +21,6 @@ export const SmartCardColumn = ({
   valueNode,
   renderMode = "value",
 }: SmartCardColumnProps) => {
-  if (renderMode === "full") {
-    return valueNode;
-  }
   const valueNodeWrapped = renderMode === "value";
   return (
     <div
