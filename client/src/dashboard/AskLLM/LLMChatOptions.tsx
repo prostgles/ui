@@ -1,4 +1,4 @@
-import { mdiCogOutline } from "@mdi/js";
+import { mdiCogOutline, mdiTools } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo, useState } from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
@@ -6,10 +6,15 @@ import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol } from "../../components/Flex";
 import Popup from "../../components/Popup/Popup";
+import PopupMenu from "../../components/PopupMenu";
 import { t } from "../../i18n/i18nUtils";
+import { MCPServers } from "../../pages/ServerSettings/MCPServers/MCPServers";
 import { SmartForm, type SmartFormProps } from "../SmartForm/SmartForm";
 
-export type LLMChatOptionsProps = Pick<Prgl, "dbs" | "dbsTables"> & {
+export type LLMChatOptionsProps = Pick<
+  Prgl,
+  "dbs" | "dbsTables" | "dbsMethods"
+> & {
   prompts: DBSSchema["llm_prompts"][] | undefined;
   activeChat: DBSSchema["llm_chats"] | undefined;
   credentials: DBSSchema["llm_credentials"][] | undefined;
@@ -45,6 +50,24 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
 
   return (
     <>
+      <PopupMenu
+        title="MCP Tools"
+        contentClassName="p-0 py-1"
+        clickCatchStyle={{ opacity: 1 }}
+        onClickClose={false}
+        data-command="LLMChatOptions.MCPTools"
+        button={
+          <Btn
+            variant="icon"
+            iconPath={mdiTools}
+            disabledInfo={
+              !props.dbsMethods.getMcpHostInfo ? "Must be admin" : undefined
+            }
+          />
+        }
+      >
+        <MCPServers {...props} />
+      </PopupMenu>
       <Btn
         title={t.AskLLMChatHeader["Chat settings"]}
         variant="icon"

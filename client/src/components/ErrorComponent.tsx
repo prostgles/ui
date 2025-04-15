@@ -31,33 +31,6 @@ type P = TestSelectors & {
 export default class ErrorComponent extends React.Component<P> {
   ref?: any;
 
-  static parsedError = (val, findMsg?: boolean): string => {
-    let res = "";
-
-    if (typeof val === "string") res = val;
-    else if (Array.isArray(val)) {
-      res = val.map((v) => ErrorComponent.parsedError(v)).join("\n");
-    } else if (val && !isEmpty(val) && Object.keys(val).length) {
-      if (findMsg) {
-        res = getErrorMessage(val);
-      }
-      if (!res)
-        res = Object.keys(val)
-          .map((k) => `${k}: ${JSON.stringify(val[k], null, 2)}`)
-          .join("\n");
-    } else if (val?.toString) res = val.toString();
-    else res = JSON.stringify(val);
-
-    if (typeof res === "string" && res.length) {
-      res = res.trim();
-      if (res.startsWith('"') && res.endsWith('"')) res = res.slice(1, -1);
-      if (res.toLowerCase().startsWith("error: ")) res = res.slice(7);
-      // res = res.replace(/['"]+/g, '');
-      res = res.replace(/\\"/g, '"');
-    }
-    return res;
-  };
-
   scrollIntoView = () => {
     const { error, autoScrollIntoView = true } = this.props;
     if (error && autoScrollIntoView && this.ref && this.ref.scrollIntoView) {
@@ -126,18 +99,11 @@ export default class ErrorComponent extends React.Component<P> {
         }}
       >
         {withIcon && (
-          <Icon
-            size={1}
-            className="as-start"
-            path={mdiAlertCircleOutline}
-          />
+          <Icon size={1} className="as-start" path={mdiAlertCircleOutline} />
         )}
         <FlexCol className={"gap-1 " + (noScroll ? "ws-break" : "o-auto")}>
           {title && <div className="font-18 bold">{title}</div>}
-          {(ErrorComponent.parsedError(error, findMsg) + "").slice(
-            0,
-            maxTextLength,
-          )}
+          {(parsedError(error, findMsg) + "").slice(0, maxTextLength)}
         </FlexCol>
         {onClear && (
           <Btn
@@ -206,7 +172,53 @@ export const getErrorMessage = (e: any) => {
     const errorMessage = msgFields.find(
       (f) => typeof (e[f] ?? e.err?.[f]) === "string",
     );
-    if (errorMessage) return e[errorMessage] ?? e.err?.[errorMessage];
+
+    /**
+     * Postgres error code for unique constraint violation.
+     * Detail is more useful than message in this case.
+     */
+    if (
+      e.code === "23505" &&
+      typeof e.message === "string" &&
+      e.message.includes("duplicate key") &&
+      typeof e.detail === "string"
+    ) {
+      return e.detail;
+    }
+
+    if (errorMessage) {
+      return e[errorMessage] ?? e.err?.[errorMessage];
+    }
   }
   return e ? JSON.stringify(e) : "Error";
+};
+
+/**
+ * Return a more human readable error message if it's an object
+ */
+export const parsedError = (val, findMsg?: boolean): string => {
+  let res = "";
+
+  if (typeof val === "string") res = val;
+  else if (Array.isArray(val)) {
+    res = val.map((v) => parsedError(v)).join("\n");
+  } else if (val && !isEmpty(val) && Object.keys(val).length) {
+    if (findMsg) {
+      res = getErrorMessage(val);
+    }
+    if (!res)
+      res = Object.keys(val)
+        .map((k) => `${k}: ${JSON.stringify(val[k], null, 2)}`)
+        .join("\n");
+  } else if (val?.toString) res = val.toString();
+  else res = JSON.stringify(val);
+
+  if (typeof res === "string" && res.length) {
+    res = res.trim();
+    if (res.startsWith('"') && res.endsWith('"')) res = res.slice(1, -1);
+    if (res.toLowerCase().startsWith("error: ")) res = res.slice(7);
+    // res = res.replace(/['"]+/g, '');
+    res = res.replace(/\\"/g, '"');
+  }
+  return res;
 };

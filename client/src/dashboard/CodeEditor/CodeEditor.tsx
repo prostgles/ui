@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
 import { isObject } from "../../../../commonTypes/publishUtils";
@@ -218,6 +224,8 @@ export const CodeEditor = (props: CodeEditorProps) => {
     [onMount],
   );
 
+  const latestValueRef = useRef(value);
+  latestValueRef.current = value;
   const onFocus = useCallback(() => {
     const allCodeEditors = document.querySelectorAll(".CodeEditor");
     if (allCodeEditors.length === 1) {
@@ -226,7 +234,7 @@ export const CodeEditor = (props: CodeEditorProps) => {
     }
 
     /** This is needed to ensure jsonschema works. Otherwise only the first editor schema will work */
-    setMonacoEditorJsonSchemas(editor, value, languageObj);
+    setMonacoEditorJsonSchemas(editor, latestValueRef.current, languageObj);
   }, [editor, languageObj]);
 
   const monacoOptions = useMemo(() => {

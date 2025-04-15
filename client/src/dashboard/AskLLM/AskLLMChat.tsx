@@ -13,7 +13,7 @@ import { useLLMSchemaStr } from "./useLLMSchemaStr";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
 
 export type AskLLMChatProps = {
-  prgl: Omit<Prgl, "dbsMethods">;
+  prgl: Prgl;
   askLLM: Required<Prgl["dbsMethods"]>["askLLM"];
   callMCPServerTool: Prgl["dbsMethods"]["callMCPServerTool"];
   setupState: LLMSetupStateReady;
@@ -109,6 +109,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           {...chatState}
           connectionId={connectionId}
           dbs={dbs}
+          dbsMethods={prgl.dbsMethods}
           dbsTables={dbsTables}
           chatRootDiv={rootDiv}
         />

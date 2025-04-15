@@ -137,6 +137,7 @@ export const AskLLMChatHeader = (
       </FlexCol>
       <FlexRow className="gap-p25 min-w-0">
         <LLMChatOptions
+          dbsMethods={prgl.dbsMethods}
           dbs={prgl.dbs}
           dbsTables={prgl.dbsTables}
           prompts={props.prompts}

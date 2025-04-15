@@ -15,12 +15,14 @@ import {
   fileName,
   fillLoginFormAndSubmit,
   forEachLocator,
+  getDataKey,
   getLLMResponses,
   getMonacoEditorBySelector,
   getMonacoValue,
   getSearchListItem,
   getSelector,
   getTableWindow,
+  getTestId,
   goTo,
   insertRow,
   localNoAuthSetup,
@@ -1629,5 +1631,54 @@ test.describe("Main test", () => {
     const [response1, response2] = await getLLMResponses(page, ["hey", "hey"]);
     expect(response1.isOk).toBe(true);
     expect(response2.isOk).toBe(false);
+  });
+
+  test("MCP Servers", async ({ page: p }) => {
+    const page = p as PageWIds;
+    await login(page, USERS.test_user, "localhost:3004/login");
+    await page.getByRole("link", { name: "Connections" }).click();
+    await page.getByRole("link", { name: TEST_DB_NAME }).click();
+
+    await page.getByTestId("AskLLM").click();
+    await page.getByTestId("AskLLM.popup").waitFor({ state: "visible" });
+    await page.getByTestId("LLMChatOptions.MCPTools").click();
+    await page.getByTestId("AddMCPServer.Open").click();
+    await monacoType(
+      page,
+      ".ProstglesSQL",
+      JSON.stringify(
+        {
+          mcpServers: {
+            myServer: {
+              command: "npx",
+              args: [
+                "@modelcontextprotocol/server-filesystem",
+                "$GITHUB_PERSONAL_ACCESS_TOKEN",
+              ],
+              env: {
+                GITHUB_PERSONAL_ACCESS_TOKEN: "<YOUR_TOKEN>",
+              },
+            },
+          },
+        },
+        null,
+        2,
+      ),
+    );
+
+    await page.locator("GITHUB_PERSONAL_ACCESS_TOKEN").click();
+    await page.getByTestId("AddMCPServer.Add").click();
+    await page
+      .getByTestId("SmartCardList")
+      .locator(getDataKey("myServer"))
+      .getByTitle("Press to enable")
+      .click();
+
+    await page.getByLabel("GITHUB_PERSONAL_ACCESS_TOKEN").fill("mytoken");
+    await page.getByText("Enable").click();
+
+    await page.evaluate(async () => {
+      await await (window as any).dbsMethods.callMCPServerTool("myServer");
+    });
   });
 });

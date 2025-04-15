@@ -5,13 +5,13 @@ import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import Chip from "../../../components/Chip";
 import { FlexCol, FlexRowWrap } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
+import type { FieldConfig } from "../../../dashboard/SmartCard/SmartCard";
 import { SmartCardList } from "../../../dashboard/SmartCardList/SmartCardList";
+import type { ColumnSort } from "../../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 import type { ServerSettingsProps } from "../ServerSettings";
 import { MCPServerConfig } from "./MCPServerConfig";
 import { MCPServerFooterActions } from "./MCPServerFooterActions";
 import { MCPServersHeader } from "./MCPServersHeader";
-import type { ColumnSort } from "../../../dashboard/W_Table/ColumnMenu/ColumnMenu";
-import type { FieldConfig } from "../../../dashboard/SmartCard/SmartCard";
 
 const orderByEnabledAndName = [
   {
@@ -23,7 +23,8 @@ const orderByEnabledAndName = [
     asc: true,
   },
 ] satisfies ColumnSort[];
-export const MCPServers = (props: ServerSettingsProps) => {
+export type MCPServersProps = Omit<ServerSettingsProps, "auth">;
+export const MCPServers = (props: MCPServersProps) => {
   const [serverConfig, setServerConfig] = React.useState<{
     name: string;
   }>();
@@ -61,7 +62,7 @@ export const MCPServers = (props: ServerSettingsProps) => {
     useListProps();
 
   return (
-    <FlexCol className="p-1 pt-0 min-w-0 f-1">
+    <FlexCol className="p-1 pt-0 min-w-0 f-1 max-w-800">
       <InfoRow className="mb-1" variant="naked" color="info" iconPath="">
         Pre-built integrations that can be used through the Ask AI chat and
         server-side functions. For more information visit{" "}

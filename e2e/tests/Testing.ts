@@ -236,6 +236,7 @@ export const COMMANDS = {
   "W_Table.TableNotFound": "",
   JoinedRecords: "",
   "JoinedRecords.AddRow": "",
+  "JoinedRecords.SectionToggle": "",
   "SmartCard.viewEditRow": "",
   "TimeChartLayerOptions.yAxis": "",
   "TimeChartLayerOptions.aggFunc": "",
@@ -270,6 +271,13 @@ export const COMMANDS = {
   "ProstglesSignup.continue": "",
   "PublishedMethods.deleteFunction": "",
   "SmartFormFieldOptions.NestedInsert": "",
+
+  "Btn.ClickConfirmation": "",
+  "Btn.ClickConfirmation.Confirm": "",
+  AddMCPServer: "",
+  "AddMCPServer.Open": "",
+  "AddMCPServer.Add": "",
+  "LLMChatOptions.MCPTools": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

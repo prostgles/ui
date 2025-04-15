@@ -66,20 +66,23 @@ export const CodeEditorWithSaveButton = (props: P) => {
 
   const onClickSave = !onSave || autoSave ? undefined : onSaveMonaco;
 
-  const titleNode = (
-    <FlexRow className={fullScreen ? "" : "bg-color-1"} style={{ zIndex: 1 }}>
-      <Label className=" px-p25 f-1 " variant="normal">
-        {label}
-      </Label>
-      <FlexRow className="gap-0">
-        {headerButtons}
-        <Btn
-          iconPath={mdiFullscreen}
-          onClick={() => setFullScreen(!fullScreen)}
-        />
-      </FlexRow>
-    </FlexRow>
-  );
+  const titleNode =
+    !label && !headerButtons ?
+      null
+    : <FlexRow className={fullScreen ? "" : "bg-color-1"} style={{ zIndex: 1 }}>
+        {
+          <Label className=" px-p25 f-1 " variant="normal">
+            {label}
+          </Label>
+        }
+        <FlexRow className="gap-0">
+          {headerButtons}
+          <Btn
+            iconPath={mdiFullscreen}
+            onClick={() => setFullScreen(!fullScreen)}
+          />
+        </FlexRow>
+      </FlexRow>;
 
   const footerNode = didChange && onClickSave && (
     <FooterButtons

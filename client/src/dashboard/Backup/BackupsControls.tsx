@@ -19,7 +19,7 @@ import { dataCommand } from "../../Testing";
 import Btn from "../../components/Btn";
 import ButtonGroup from "../../components/ButtonGroup";
 import Chip from "../../components/Chip";
-import ErrorComponent from "../../components/ErrorComponent";
+import { parsedError } from "../../components/ErrorComponent";
 import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
 import PopupMenu from "../../components/PopupMenu";
@@ -91,7 +91,7 @@ export const BackupsControls = ({
         <Chip
           style={commonChipStyle}
           color="red"
-          value={ErrorComponent.parsedError(status.err)}
+          value={parsedError(status.err)}
         />
       : status.loading ?
         <div className="text-1p5">

@@ -1,20 +1,20 @@
-import React, { useState } from "react";
-import { omitKeys } from "prostgles-types";
-import Loading from "./Loading";
-import "./Btn.css";
-import RTComp from "../dashboard/RTComp";
-import ErrorComponent from "./ErrorComponent";
-import { generateUniqueID } from "./FileInput/FileInput";
-import { NavLink } from "react-router-dom";
 import { mdiAlert, mdiCheck, mdiUpload } from "@mdi/js";
+import { omitKeys } from "prostgles-types";
+import React, { useState } from "react";
+import { NavLink } from "react-router-dom";
+import RTComp from "../dashboard/RTComp";
+import type { TestSelectors } from "../Testing";
+import { tout } from "../utils";
+import "./Btn.css";
+import Chip from "./Chip";
+import { parsedError } from "./ErrorComponent";
+import { generateUniqueID } from "./FileInput/FileInput";
+import { classOverride } from "./Flex";
 import type { IconProps } from "./Icon/Icon";
 import { Icon } from "./Icon/Icon";
-import Chip from "./Chip";
-import { classOverride } from "./Flex";
-import type { TestSelectors } from "../Testing";
 import { Label, type LabelProps } from "./Label";
+import Loading from "./Loading";
 import Popup from "./Popup/Popup";
-import { tout } from "../utils";
 
 type ClickMessage = (
   | { err: any }
@@ -186,7 +186,7 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       this.setState({
         clickMessage: {
           type: "err",
-          msg: ErrorComponent.parsedError(msg.err, true),
+          msg: parsedError(msg.err, true),
         },
       });
     } else if ("ok" in msg) {

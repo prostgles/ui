@@ -304,21 +304,6 @@ export type DBGeneratedSchema = {
       workspace_id?: null | string;
     };
   };
-  llm_api_keys: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
-    columns: {
-      api_key?: string;
-      created?: null | string;
-      id?: number;
-      name?: string;
-      provider_id: number;
-      user_id: string;
-    };
-  };
   llm_chats: {
     is_view: false;
     select: true;
@@ -603,7 +588,6 @@ export type DBGeneratedSchema = {
       env_from_main_process?: null | string[];
       info?: null | string;
       installed?: null | string;
-      last_updated?: null | string;
       name: string;
       source?: 
        | null

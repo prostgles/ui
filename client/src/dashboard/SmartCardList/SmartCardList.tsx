@@ -174,9 +174,11 @@ export const SmartCardList = <T extends AnyObject>(
         {showNoDataComponent ?
           noDataComponent
         : items.map((defaultData, i) => {
+            const key = getKeyForRowData(defaultData, keyCols);
             return (
               <div
-                key={getKeyForRowData(defaultData, keyCols)}
+                key={key}
+                data-key={key}
                 className={`relative ${onClickRow ? "pointer" : ""}`}
                 onClick={
                   onClickRow &&

@@ -274,6 +274,10 @@ export const COMMANDS = {
 
   "Btn.ClickConfirmation": "",
   "Btn.ClickConfirmation.Confirm": "",
+  AddMCPServer: "",
+  "AddMCPServer.Open": "",
+  "AddMCPServer.Add": "",
+  "LLMChatOptions.MCPTools": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 
