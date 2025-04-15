@@ -70,7 +70,6 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
       enabled: `BOOLEAN NOT NULL DEFAULT FALSE`,
       created: `TIMESTAMP DEFAULT NOW()`,
       installed: `TIMESTAMP`,
-      last_updated: `TIMESTAMP DEFAULT NOW()`,
     },
   },
   mcp_server_configs: {
@@ -102,7 +101,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
     columns: {
       id: `SERIAL PRIMARY KEY`,
       server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE CASCADE`,
-      log: `TEXT NOT NULL`,
+      log: `TEXT NOT NULL DEFAULT ''`,
       error: `TEXT`,
       install_log: `TEXT`,
       install_error: `TEXT`,

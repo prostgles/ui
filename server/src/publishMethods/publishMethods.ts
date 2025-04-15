@@ -47,7 +47,7 @@ import {
 } from "../McpHub/installMCPServer";
 import { getStatus } from "../methods/getPidStats";
 import { killPID } from "../methods/statusMonitorUtils";
-import { initBackupManager, statePrgl } from "../startProstgles";
+import { initBackupManager, statePrgl } from "../init/startProstgles";
 import { upsertConnection } from "../upsertConnection";
 import { askLLM } from "./askLLM/askLLM";
 import { getNodeTypes } from "./getNodeTypes";

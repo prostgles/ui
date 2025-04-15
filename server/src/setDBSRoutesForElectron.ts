@@ -3,9 +3,12 @@ import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
 import type { Express } from "express";
 import { getElectronConfig } from "./electronConfig";
-import { getInitState, tryStartProstgles } from "./startProstgles";
+import { getInitState, tryStartProstgles } from "./init/tryStartProstgles";
 import type { Server } from "socket.io";
 
+/**
+ * Used in Electron to set the DB connection and show any connection errors
+ */
 export const setDBSRoutesForElectron = (
   app: Express,
   io: Server,

@@ -2,7 +2,7 @@ import { mdiAlertCircleOutline, mdiCancel, mdiClose } from "@mdi/js";
 import type { ReactNode } from "react";
 import React from "react";
 import { isEmpty } from "../utils";
-import { classOverride } from "./Flex";
+import { classOverride, FlexCol, FlexRow } from "./Flex";
 import { Icon } from "./Icon/Icon";
 import { isObject } from "../../../commonTypes/publishUtils";
 import Btn from "./Btn";
@@ -96,12 +96,12 @@ export default class ErrorComponent extends React.Component<P> {
     }
     const colorClass = color ? `text-${color}` : "text-danger";
     return (
-      <div
+      <FlexRow
         ref={(e) => {
           if (e) this.ref = e;
         }}
         className={classOverride(
-          `ErrorComponent relative flex-row ai-center text-danger p-1 o-auto min-w-0 min-h-0 o-auto ${colorClass} ${pre ? " ws-pre " : ""}`,
+          `ErrorComponent relative p-p5 gap-1 ai-center text-danger p-1 o-auto min-w-0 min-h-0 o-auto variant:${variant} ${colorClass} ${pre ? " ws-pre " : ""}`,
           className,
         )}
         {...testSelectors}
@@ -109,6 +109,7 @@ export default class ErrorComponent extends React.Component<P> {
           whiteSpace: "pre-line",
           textAlign: "left",
           display: !error ? "none" : "flex",
+          maxWidth: "min(600px, 100vw)",
           ...(!className.includes("p-") && { padding: "0 4px" }),
           ...style,
           minWidth: "150px", // To ensure it shows on mobile
@@ -127,20 +128,19 @@ export default class ErrorComponent extends React.Component<P> {
         {withIcon && (
           <Icon
             size={1}
-            className="mr-1 as-start"
+            className="as-start"
             path={mdiAlertCircleOutline}
           />
         )}
-        <div className={"flex-col gap-1 " + (noScroll ? "ws-break" : "o-auto")}>
+        <FlexCol className={"gap-1 " + (noScroll ? "ws-break" : "o-auto")}>
           {title && <div className="font-18 bold">{title}</div>}
           {(ErrorComponent.parsedError(error, findMsg) + "").slice(
             0,
             maxTextLength,
           )}
-        </div>
+        </FlexCol>
         {onClear && (
           <Btn
-            className="ml-p5"
             onClick={onClear}
             iconPath={mdiClose}
             variant="faded"
@@ -148,7 +148,7 @@ export default class ErrorComponent extends React.Component<P> {
             size="small"
           />
         )}
-      </div>
+      </FlexRow>
     );
   }
 }

@@ -6,7 +6,15 @@ import { DefaultMCPServers } from "../../../commonTypes/mcp";
 import { getRootDir } from "../electronConfig";
 import { runShellCommand } from "./runShellCommand";
 
-export const MCP_DIR = path.resolve(path.join(getRootDir(), `/prostgles_mcp`));
+let createdMCPDirectory = "";
+export const getMCPDirectory = () => {
+  if (!createdMCPDirectory) {
+    const MCP_DIR = path.resolve(path.join(getRootDir(), `/prostgles_mcp`));
+    fs.mkdirSync(MCP_DIR, { recursive: true });
+    createdMCPDirectory = MCP_DIR;
+  }
+  return createdMCPDirectory;
+};
 
 export const installMCPServer = async (dbs: DBS, name: string) => {
   const serverInfo = DefaultMCPServers[name];
@@ -36,7 +44,6 @@ export const installMCPServer = async (dbs: DBS, name: string) => {
   });
 
   await addLog("Creating MCP servers folder...");
-  fs.mkdirSync(MCP_DIR, { recursive: true });
   if (source.type === "github") {
     throw new Error("Not implemented");
     // await addLog("Cloning MCP servers...");
@@ -61,7 +68,7 @@ export const installMCPServer = async (dbs: DBS, name: string) => {
     //   return addLog("Failed to install MCP servers", true, res2.err);
     // }
   } else {
-    const installationPath = path.join(MCP_DIR, name);
+    const installationPath = path.join(getMCPDirectory(), name);
     if (fs.existsSync(installationPath)) {
       await addLog("MCP servers already installed. Reinstalling...");
       fs.rmSync(installationPath, { recursive: true });
@@ -105,7 +112,7 @@ export const getMCPServersStatus = async (
   ok: boolean;
   message?: string;
 }> => {
-  const folderExists = fs.existsSync(MCP_DIR);
+  const folderExists = fs.existsSync(getMCPDirectory());
   if (!folderExists) {
     return { ok: false, message: "No MCP servers installed" };
   }

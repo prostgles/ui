@@ -50,7 +50,7 @@ export const getElectronConfig = () => {
   }
 
   const electronConfigPath = path.resolve(
-    `${getRootDir()}/.electron-auth.json`,
+    `${getRootDir()}/.prostgles-desktop-config.json`,
   );
   const getCredentials = (): DBSConnectionInfo | undefined => {
     try {

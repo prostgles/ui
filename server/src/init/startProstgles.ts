@@ -5,29 +5,26 @@ import prostgles from "prostgles-server";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
-import { pickKeys } from "prostgles-types";
 import type { Server } from "socket.io";
-import type { DBS } from ".";
-import { connMgr, connectionChecker, dbsWsApiPath, isTesting } from ".";
-import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
-import type { ProstglesInitState } from "../../commonTypes/electronInit";
-import BackupManager from "./BackupManager/BackupManager";
-import { addLog, setLoggerDBS } from "./Logger";
-import { setupMCPServerHub } from "./McpHub/McpHub";
-import { getAuth } from "./authConfig/getAuth";
-import { setAuthReloader } from "./authConfig/setAuthReloader";
-import { testDBConnection } from "./connectionUtils/testDBConnection";
-import type { DBSConnectionInfo } from "./electronConfig";
-import { actualRootDir, getElectronConfig } from "./electronConfig";
-import { DBS_CONNECTION_INFO } from "./envVars";
-import { insertStateDatabase } from "./insertStateDatabase";
-import { publish } from "./publish/publish";
-import { setupLLM } from "./publishMethods/askLLM/setupLLM";
-import { publishMethods } from "./publishMethods/publishMethods";
-import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
-import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
-import { tableConfig } from "./tableConfig/tableConfig";
-import { cleanupTestDatabases } from "./cleanupTestDatabases";
+import type { DBS } from "..";
+import { connMgr, connectionChecker } from "..";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
+import BackupManager from "../BackupManager/BackupManager";
+import { addLog, setLoggerDBS } from "../Logger";
+import { setupMCPServerHub } from "../McpHub/McpHub";
+import { getAuth } from "../authConfig/getAuth";
+import { setAuthReloader } from "../authConfig/setAuthReloader";
+import { testDBConnection } from "../connectionUtils/testDBConnection";
+import type { DBSConnectionInfo } from "../electronConfig";
+import { actualRootDir, getElectronConfig } from "../electronConfig";
+import { DBS_CONNECTION_INFO } from "../envVars";
+import { insertStateDatabase } from "../insertStateDatabase";
+import { publish } from "../publish/publish";
+import { setupLLM } from "../publishMethods/askLLM/setupLLM";
+import { publishMethods } from "../publishMethods/publishMethods";
+import { startDevHotReloadNotifier } from "../startDevHotReloadNotifier";
+import { tableConfig } from "../tableConfig/tableConfig";
+import { getInitState } from "./tryStartProstgles";
 
 type StartArguments = {
   app: Express;
@@ -43,11 +40,13 @@ export const initBackupManager = async (db: DB, dbs: DBS) => {
   return bkpManager;
 };
 
+export const getBackupManager = () => bkpManager;
+
 export let statePrgl: InitResult | undefined;
 
-type ProstglesStartupState =
-  | { ok: true; init?: undefined; conn?: undefined; dbs: DBS }
-  | { ok?: undefined; init?: any; conn?: any };
+export type ProstglesStartupState =
+  | { ok: true; initError?: undefined; connectionError?: undefined; dbs: DBS }
+  | { ok?: undefined; initError: any; connectionError: any };
 
 export const startProstgles = async ({
   app,
@@ -58,7 +57,7 @@ export const startProstgles = async ({
 }: StartArguments): Promise<ProstglesStartupState> => {
   try {
     if (!con.db_conn && !con.db_user && !con.db_name) {
-      const conn = `
+      const connectionError = `
         Make sure .env file contains superuser postgres credentials:
           POSTGRES_URL
           or
@@ -78,7 +77,7 @@ export const startProstgles = async ({
 
       `;
 
-      return { conn };
+      return { connectionError, initError: undefined };
     }
 
     let validatedDbConnection: pg.IConnectionParameters<pg.IClient> | undefined;
@@ -89,7 +88,10 @@ export const startProstgles = async ({
       }
       validatedDbConnection = tested.connectionInfo;
     } catch (connError) {
-      return { conn: getErrorAsObject(connError) };
+      return {
+        connectionError: getErrorAsObject(connError),
+        initError: undefined,
+      };
     }
     const IS_PROD = process.env.NODE_ENV === "production";
 
@@ -224,7 +226,7 @@ export const startProstgles = async ({
         await connectionChecker.destroy();
         await connectionChecker.init(db, _db);
 
-        await insertStateDatabase(db, _db, con);
+        await insertStateDatabase(db, _db, con, getInitState().isElectron);
         await setupLLM(db);
         await setupMCPServerHub(db);
 
@@ -243,107 +245,6 @@ export const startProstgles = async ({
     startDevHotReloadNotifier({ io, port, host });
     return { ok: true, dbs: prgl.db as DBS };
   } catch (err) {
-    return { init: err };
+    return { initError: err, connectionError: undefined };
   }
-};
-
-const _initState: Pick<
-  ProstglesInitState,
-  "initError" | "connectionError" | "electronIssue"
-> & {
-  ok: boolean;
-  loading: boolean;
-  loaded: boolean;
-  httpListening?: {
-    port: number;
-  };
-  dbs: DBS | undefined;
-} = {
-  ok: false,
-  loading: false,
-  loaded: false,
-  dbs: undefined,
-};
-
-export type InitState = typeof _initState;
-
-let connHistory: string[] = [];
-export const tryStartProstgles = async ({
-  app,
-  io,
-  port,
-  host,
-  con = DBS_CONNECTION_INFO,
-}: StartArguments): Promise<
-  Pick<ProstglesInitState, "ok" | "initError" | "connectionError">
-> => {
-  /** Cleanup state for local tests */
-  await cleanupTestDatabases(con);
-
-  const maxTries = 2;
-  return new Promise((resolve, reject) => {
-    let tries = 0;
-
-    _initState.connectionError = null;
-    _initState.loading = true;
-    const interval = setInterval(async () => {
-      const connHistoryItem = JSON.stringify(con);
-      if (connHistory.includes(connHistoryItem)) {
-        console.error("DUPLICATE UNFINISHED CONNECTION");
-        return;
-      }
-      connHistory.push(connHistoryItem);
-      try {
-        const status = await startProstgles({ app, io, con, port, host });
-        if (status.ok) {
-          _initState.dbs = status.dbs;
-        }
-
-        const databaseDoesNotExist = status.conn?.code === "3D000";
-        if (status.ok || databaseDoesNotExist) {
-          tries = maxTries + 1;
-        } else {
-          tries++;
-        }
-      } catch (err) {
-        console.error("startProstgles fail: ", err);
-        _initState.initError = err;
-        tries++;
-      }
-      connHistory = connHistory.filter((v) => v !== connHistoryItem);
-
-      const error = _initState.connectionError || _initState.initError;
-      _initState.ok = !error;
-      const result = pickKeys(_initState, [
-        "ok",
-        "connectionError",
-        "initError",
-      ]);
-
-      if (tries > maxTries) {
-        clearInterval(interval);
-        setDBSRoutesForElectron(app, io, port, host);
-        _initState.loading = false;
-        _initState.loaded = true;
-
-        if (!_initState.ok) {
-          reject(result);
-        } else {
-          resolve(result);
-        }
-        return;
-      }
-    }, 10000);
-  });
-};
-
-export const getInitState = (): typeof _initState & ProstglesInitState => {
-  const eConfig = getElectronConfig();
-  return {
-    isElectron: !!eConfig?.isElectron,
-    electronCredsProvided: !!eConfig?.hasCredentials(),
-    dbsWsApiPath,
-    ..._initState,
-    canDumpAndRestore: bkpManager?.installedPrograms,
-  };
 };

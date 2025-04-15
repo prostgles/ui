@@ -12,7 +12,6 @@ import {
   ReadResourceResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { isEqual, SubscriptionHandler, tryCatchV2 } from "prostgles-types";
-import { z } from "zod";
 import { DBS } from "..";
 import {
   DefaultMCPServers,
@@ -21,7 +20,7 @@ import {
 import { DBSSchema } from "../../../commonTypes/publishUtils";
 import { connectToMCPServer } from "./connectToMCPServer";
 import { fetchMCPServerConfigs } from "./fetchMCPServerConfigs";
-import { MCP_DIR } from "./installMCPServer";
+import { getMCPDirectory } from "./installMCPServer";
 import {
   McpResource,
   McpResourceResponse,
@@ -307,7 +306,7 @@ export const setupMCPServerHub = async (dbs: DBS) => {
     await dbs.mcp_servers.insert(
       Object.entries(DefaultMCPServers).map(([name, server]) => ({
         name,
-        cwd: MCP_DIR,
+        cwd: getMCPDirectory(),
         ...server,
       })),
     );

@@ -15,7 +15,7 @@ import { actualRootDir } from "../electronConfig";
 import { PROSTGLES_STRICT_COOKIE } from "../envVars";
 import type { DBS, Users } from "../index";
 import { connectionChecker, MEDIA_ROUTE_PREFIX } from "../index";
-import { initBackupManager } from "../startProstgles";
+import { initBackupManager } from "../init/startProstgles";
 import { getEmailAuthProvider } from "./emailProvider/getEmailAuthProvider";
 import { getActiveSession } from "./getActiveSession";
 import { getLogin } from "./getLogin";

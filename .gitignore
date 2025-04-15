@@ -5,6 +5,8 @@ prostgles_certificates
 prostgles_mcp
 .electron-auth.json
 **/.electron-auth.json
+.prostgles-desktop-config.json
+**/.prostgles-desktop-config.json
 
 demo_utils/dist
 client/build

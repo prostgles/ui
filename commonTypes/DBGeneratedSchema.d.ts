@@ -546,7 +546,7 @@ export type DBGeneratedSchema = {
       install_error?: null | string;
       install_log?: null | string;
       last_updated?: null | string;
-      log: string;
+      log?: string;
       server_name: string;
     };
   };

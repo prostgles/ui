@@ -17,7 +17,7 @@ export const tableConfigPublishedMethods: TableConfig<{ en: 1 }> = {
       name: `TEXT NOT NULL DEFAULT 'Method name'`,
       description: `TEXT NOT NULL DEFAULT 'Method description'`,
       connection_id: {
-        sqlDefinition: `UUID REFERENCES connections(id) ON DELETE SET NULL`,
+        sqlDefinition: `UUID REFERENCES connections(id) ON DELETE SET NULL ON UPDATE SET NULL`,
         info: { hint: "If null then connection was deleted" },
       },
       arguments: {

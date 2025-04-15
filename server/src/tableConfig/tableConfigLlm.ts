@@ -364,7 +364,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
     columns: {
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
       connection_id: `UUID NOT NULL, FOREIGN KEY(chat_id, connection_id) REFERENCES llm_chats(id, connection_id) ON DELETE CASCADE`,
-      server_function_id: `INTEGER NOT NULL, FOREIGN KEY(server_function_id, connection_id) REFERENCES published_methods(id, connection_id) ON DELETE CASCADE`,
+      server_function_id: `INTEGER NOT NULL, FOREIGN KEY(server_function_id, connection_id) REFERENCES published_methods(id, connection_id) ON UPDATE CASCADE ON DELETE CASCADE`,
       auto_approve: {
         info: {
           hint: "If true then the function call request is automatically approved",

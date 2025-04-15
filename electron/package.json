@@ -6,7 +6,7 @@
   "main": "build/main.js",
   "icon": "images/icon.ico",
   "scripts": {
-    "dev": "NODE_OPTIONS='--max-old-space-size=2048' npm i && tsc-watch  --onSuccess \"electron --inspect-brk=9228 ./build/main.js \"",
+    "dev": "DEBUG=* && NODE_OPTIONS='--max-old-space-size=2048' npm i && tsc-watch  --onSuccess \"electron --inspect-brk=9228 ./build/main.js \"",
     "start": "tsc && electron ./build/main.js .",
     "package": "electron-forge package",
     "postinstall": "electron-builder install-app-deps",

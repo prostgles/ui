@@ -9,6 +9,7 @@ export const insertStateDatabase = async (
   db: DBS,
   _db: DB,
   con: DBSConnectionInfo,
+  isElectron: boolean,
 ) => {
   const connectionCount = await db.connections.count();
   if (!connectionCount) {
@@ -17,7 +18,7 @@ export const insertStateDatabase = async (
         {
           ...con,
           user_id: null,
-          name: "Prostgles UI state",
+          name: isElectron ? "Prostgles Desktop state" : "Prostgles UI state",
           type: !con.db_conn ? "Standard" : "Connection URI",
           db_port: con.db_port || 5432,
           db_ssl: con.db_ssl, // || "disable",

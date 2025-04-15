@@ -16,14 +16,14 @@ import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
 import type { OnServerReadyCallback } from "./electronConfig";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
-import {
-  getInitState,
-  type InitState,
-  tryStartProstgles,
-} from "./startProstgles";
 import { API_PATH_SUFFIXES, SPOOF_TEST_VALUE } from "../../commonTypes/utils";
 import helmet from "helmet";
 import { omitKeys } from "prostgles-types";
+import {
+  getInitState,
+  tryStartProstgles,
+  type InitState,
+} from "./init/tryStartProstgles";
 
 const app = express();
 app.use(

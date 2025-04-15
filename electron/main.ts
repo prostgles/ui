@@ -85,7 +85,9 @@ function initApp() {
     console.log("Electron app ready, starting express server...");
     console.log(
       "State db auth file: " +
-        path.resolve(`${app.getPath("userData")}/.electron-auth.json`),
+        path.resolve(
+          `${app.getPath("userData")}/.prostgles-desktop-config.json`,
+        ),
     );
 
     let port: number;
