@@ -1645,7 +1645,7 @@ test.describe("Main test", () => {
     await page.getByTestId("AddMCPServer.Open").click();
     await monacoType(
       page,
-      ".ProstglesSQL",
+      ".SmartCodeEditor",
       JSON.stringify(
         {
           mcpServers: {

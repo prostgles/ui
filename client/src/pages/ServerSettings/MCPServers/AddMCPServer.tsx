@@ -38,6 +38,7 @@ export const AddMCPServer = ({ dbs }: { dbs: DBS }) => {
           contentStyle={{
             minWidth: "min(600px, 100vw)",
             minHeight: "min(500px, 100vh)",
+            paddingTop: 0,
           }}
           contentClassName="f-1 p-2"
           onClose={() => setShowAddServer(false)}
