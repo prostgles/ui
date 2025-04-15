@@ -29,6 +29,7 @@ jobs:
           pg_container_name=$(docker ps --format '{{.Names}}\t{{.Image}}' | grep 'prostgles' | head -1 | awk '{print $1}')
           echo $pg_container_name
           eval "docker logs $pg_container_name"
+          curl -b -i -L  -v  localhost:3004
           curl -b -i -L  -v  localhost:3004 | grep -q "Prostgles UI"; echo $?
 
       - name: Docker stop
