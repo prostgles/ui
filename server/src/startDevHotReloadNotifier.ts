@@ -13,6 +13,7 @@ export const startDevHotReloadNotifier = ({
   port: number;
   host: string;
 }) => {
+  console.log("startDevHotReloadNotifier. Starting dev hot reload notifier");
   const showMessage = () => {
     if (showedMessage) return;
     console.log(`\n\n${RELOAD_NOTIFICATION}:\n\n http://${host}:${port}`);

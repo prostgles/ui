@@ -47,12 +47,7 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
     <>
       <Btn
         title={t.AskLLMChatHeader["Chat settings"]}
-        size="large"
         variant="icon"
-        iconProps={{
-          size: 1.25,
-          path: mdiCogOutline,
-        }}
         iconPath={mdiCogOutline}
         onClick={() => setAnchorEl(anchorEl ? undefined : chatRootDiv)}
       />
