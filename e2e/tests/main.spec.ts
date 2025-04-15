@@ -1665,7 +1665,7 @@ test.describe("Main test", () => {
         2,
       ),
       {
-        deleteAll: true,
+        deleteAllAndFill: true,
       },
     );
 
