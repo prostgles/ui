@@ -44,4 +44,5 @@ jobs:
           sleep 5
           docker ps 
           result=$(curl localhost:3004) 
+          echo $result
           echo $result | grep -q "Prostgles UI"; echo $?
