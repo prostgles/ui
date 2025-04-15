@@ -88,11 +88,13 @@ export const monacoType = async (
   text: string,
   {
     deleteAll,
+    deleteAllAndFill,
     pressBeforeTyping,
     pressAfterTyping,
     keyPressDelay = 100,
   }: {
     deleteAll?: boolean;
+    deleteAllAndFill?: boolean;
     pressBeforeTyping?: KeyPressOrCombination[];
     pressAfterTyping?: KeyPressOrCombination[];
     keyPressDelay?: number;
@@ -102,10 +104,14 @@ export const monacoType = async (
   await monacoEditor.click();
   await page.waitForTimeout(500);
 
-  if (deleteAll) {
+  if (deleteAll || deleteAllAndFill) {
     await page.keyboard.press("Control+A");
     await page.waitForTimeout(500);
     await page.keyboard.press("Delete");
+  }
+  if (deleteAllAndFill) {
+    await page.keyboard.insertText(text);
+    return;
   }
   await page.waitForTimeout(500);
   await monacoEditor.click();
