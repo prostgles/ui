@@ -6,16 +6,14 @@ import {
 import type { DB } from "prostgles-server/dist/initProstgles";
 import type { Users } from "..";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import { makeMagicLink } from "../ConnectionChecker";
 import { log } from "../index";
 import { getPasswordHash } from "./authUtils";
 import { createSession } from "./createSession";
+import { getEmailSenderWithMockTest } from "./emailProvider/getEmailSenderWithMockTest";
+import { getRandomSixDigitCode } from "./emailProvider/onEmailRegistration";
 import type { SUser } from "./getAuth";
 import { loginWithProvider } from "./OAuthProviders/loginWithProvider";
 import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
-import { getEmailSenderWithMockTest } from "./emailProvider/getEmailSenderWithMockTest";
-import { YEAR } from "../../../commonTypes/utils";
-import { getRandomSixDigitCode } from "./emailProvider/onEmailRegistration";
 
 export const getLogin = async (
   auth_providers: DBGeneratedSchema["global_settings"]["columns"]["auth_providers"],
