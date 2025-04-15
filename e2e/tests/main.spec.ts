@@ -1664,6 +1664,9 @@ test.describe("Main test", () => {
         null,
         2,
       ),
+      {
+        deleteAll: true,
+      },
     );
 
     await page.locator("GITHUB_PERSONAL_ACCESS_TOKEN").click();
