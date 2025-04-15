@@ -29,7 +29,7 @@ jobs:
           pg_container_name=$(docker ps --format '{{.Names}}\t{{.Image}}' | grep 'prostgles' | head -1 | awk '{print $1}')
           echo $pg_container_name
           eval "docker logs $pg_container_name"
-          result=$(curl  -i -L  -v  localhost:3004)
+          result=$(curl -b -i -L  -v  localhost:3004)
           echo $result
           echo $result | grep -q "Prostgles UI"; echo $?
 
@@ -43,6 +43,6 @@ jobs:
         run: |
           sleep 5
           docker ps 
-          result=$(curl  -i -L  -v  localhost:3004) 
+          result=$(curl -b -i -L  -v  localhost:3004) 
           echo $result
           echo $result | grep -q "Prostgles UI"; echo $?
