@@ -9,8 +9,12 @@ import PopupMenu from "../components/PopupMenu";
 import { FlexCol } from "../components/Flex";
 import type { Prgl } from "../App";
 import { t } from "../i18n/i18nUtils";
+import { tout } from "../utils";
+import type { DBS } from "./Dashboard/DBS";
+import { useWhyDidYouUpdate } from "../components/MonacoEditor/useWhyDidYouUpdate";
 
-export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
+export const Feedback = (props: Pick<Prgl, "dbsMethods" | "dbs">) => {
+  const { dbsMethods, dbs } = props;
   const getIsMounted = useIsMounted();
   const { sendFeedback } = dbsMethods;
   const [feedback, setFeedBack] = useState<{
@@ -72,12 +76,11 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
                   setFeedBack({ ...feedback, sending: true });
                   await sendFeedback(feedback);
                   setFeedBack({ ...feedback, success: true });
-                  setTimeout(() => {
-                    if (getIsMounted()) {
-                      setFeedBack({ email: "", details: "" });
-                      pClose?.(e);
-                    }
-                  }, 3000);
+                  await tout(3000);
+                  if (getIsMounted()) {
+                    setFeedBack({ email: "", details: "" });
+                    pClose?.(e);
+                  }
                 } catch (error) {
                   setFeedBack({ ...feedback, error });
                 }
@@ -86,6 +89,7 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
           ]
       }
     >
+      <DELETETHIS dbs={dbs} />
       <FlexCol>
         {feedback.success ?
           <>
@@ -122,6 +126,7 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
               <a
                 target="_blank"
                 href="https://github.com/prostgles/ui/issues/new/choose"
+                rel="noreferrer"
               >
                 {t.Feedback["open an issue"]}
               </a>{" "}
@@ -135,4 +140,13 @@ export const Feedback = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
       </FlexCol>
     </PopupMenu>
   );
+};
+
+const DELETETHIS = (props: { dbs: DBS }) => {
+  const { dbs } = props;
+  const data = dbs.credentials.useSubscribe({ type: "s3" });
+  console.log(data);
+
+  useWhyDidYouUpdate({ props, data });
+  return <></>;
 };
