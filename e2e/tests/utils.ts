@@ -109,10 +109,6 @@ export const monacoType = async (
     await page.waitForTimeout(500);
     await page.keyboard.press("Delete");
   }
-  if (deleteAllAndFill) {
-    await page.keyboard.insertText(text);
-    return;
-  }
   await page.waitForTimeout(500);
   await monacoEditor.click();
   await monacoEditor.blur();
@@ -124,7 +120,11 @@ export const monacoType = async (
     await page.keyboard.press(key);
     await page.waitForTimeout(50);
   }
-  await page.keyboard.type(text, { delay: keyPressDelay });
+  if (deleteAllAndFill) {
+    await page.keyboard.insertText(text);
+  } else {
+    await page.keyboard.type(text, { delay: keyPressDelay });
+  }
   for (const key of pressAfterTyping ?? []) {
     await page.keyboard.press(key);
     await page.waitForTimeout(50);

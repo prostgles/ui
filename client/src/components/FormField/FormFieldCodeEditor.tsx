@@ -21,7 +21,11 @@ export const FormFieldCodeEditor = ({
     asJSON.schemas?.length ? asJSON.schemas[0]!.id : undefined;
 
   const valueAsString = useMemo(() => {
-    if (valueAsStringOrObjectOrNull && isObject(valueAsStringOrObjectOrNull)) {
+    if (
+      valueAsStringOrObjectOrNull &&
+      (isObject(valueAsStringOrObjectOrNull) ||
+        Array.isArray(valueAsStringOrObjectOrNull))
+    ) {
       return JSON.stringify(valueAsStringOrObjectOrNull, null, 2);
     }
     if (typeof valueAsStringOrObjectOrNull === "string") {

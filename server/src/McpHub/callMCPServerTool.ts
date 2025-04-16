@@ -4,6 +4,7 @@ import type { McpToolCallResponse } from "../../../commonTypes/mcp";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { startMcpHub } from "./McpHub";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
+import { getJSONBObjectSchemaValidationError } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
 
 export const callMCPServerTool = async (
   user: DBSSchema["users"],
@@ -14,10 +15,22 @@ export const callMCPServerTool = async (
   toolArguments?: Record<string, unknown>,
 ): Promise<McpToolCallResponse> => {
   const start = new Date();
+  const argErrors = getJSONBObjectSchemaValidationError(
+    {
+      serverName: "string",
+      toolName: "string",
+      chat_id: "integer",
+    },
+    {
+      serverName,
+      toolName,
+      chat_id,
+    },
+    "",
+    false,
+  );
+  if (argErrors.error) throw new Error(argErrors.error);
   const result = await tryCatchV2(async () => {
-    if (typeof serverName !== "string") throw new Error("Invalid serverName");
-    if (typeof toolName !== "string") throw new Error("Invalid toolName");
-    if (!Number.isInteger(chat_id)) throw new Error("Invalid chat_id");
     const chat = await dbs.llm_chats.findOne({ id: chat_id, user_id: user.id });
     if (!chat) {
       throw new Error("Chat not found");

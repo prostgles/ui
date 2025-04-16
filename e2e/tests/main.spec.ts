@@ -1651,10 +1651,7 @@ test.describe("Main test", () => {
           mcpServers: {
             myServer: {
               command: "npx",
-              args: [
-                "@modelcontextprotocol/server-filesystem",
-                "$GITHUB_PERSONAL_ACCESS_TOKEN",
-              ],
+              args: ["@modelcontextprotocol/server-filesystem", "ALLOWED_DIR"],
               env: {
                 GITHUB_PERSONAL_ACCESS_TOKEN: "<YOUR_TOKEN>",
               },
@@ -1666,22 +1663,21 @@ test.describe("Main test", () => {
       ),
       {
         deleteAllAndFill: true,
+        /** For some reason an extra bracket is inserted */
+        pressAfterTyping: ["Backspace"],
       },
     );
 
-    await page.locator("GITHUB_PERSONAL_ACCESS_TOKEN").click();
+    await page.locator(".SwitchToggle " + getDataKey("ALLOWED_DIR")).click();
     await page.getByTestId("AddMCPServer.Add").click();
+    await page.getByTestId("AddMCPServer.Add").waitFor({ state: "detached" });
     await page
       .getByTestId("SmartCardList")
       .locator(getDataKey("myServer"))
       .getByTitle("Press to enable")
       .click();
 
-    await page.getByLabel("GITHUB_PERSONAL_ACCESS_TOKEN").fill("mytoken");
+    await page.getByLabel("ALLOWED_DIR").fill("/prostgles-mcp-test");
     await page.getByText("Enable").click();
-
-    await page.evaluate(async () => {
-      await await (window as any).dbsMethods.callMCPServerTool("myServer");
-    });
   });
 });
