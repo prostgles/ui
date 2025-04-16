@@ -1,17 +1,15 @@
 import { mdiMessageBookmarkOutline } from "@mdi/js";
 import React, { useState } from "react";
+import type { Prgl } from "../App";
 import { Success } from "../components/Animations";
 import Btn from "../components/Btn";
 import ErrorComponent from "../components/ErrorComponent";
-import FormField from "../components/FormField/FormField";
-import { useIsMounted } from "./Backup/CredentialSelector";
-import PopupMenu from "../components/PopupMenu";
 import { FlexCol } from "../components/Flex";
-import type { Prgl } from "../App";
+import FormField from "../components/FormField/FormField";
+import PopupMenu from "../components/PopupMenu";
 import { t } from "../i18n/i18nUtils";
 import { tout } from "../utils";
-import type { DBS } from "./Dashboard/DBS";
-import { useWhyDidYouUpdate } from "../components/MonacoEditor/useWhyDidYouUpdate";
+import { useIsMounted } from "./Backup/CredentialSelector";
 
 export const Feedback = (props: Pick<Prgl, "dbsMethods" | "dbs">) => {
   const { dbsMethods, dbs } = props;
@@ -89,7 +87,6 @@ export const Feedback = (props: Pick<Prgl, "dbsMethods" | "dbs">) => {
           ]
       }
     >
-      <DELETETHIS dbs={dbs} />
       <FlexCol>
         {feedback.success ?
           <>
@@ -140,13 +137,4 @@ export const Feedback = (props: Pick<Prgl, "dbsMethods" | "dbs">) => {
       </FlexCol>
     </PopupMenu>
   );
-};
-
-const DELETETHIS = (props: { dbs: DBS }) => {
-  const { dbs } = props;
-  const data = dbs.credentials.useSubscribe({ type: "s3" });
-  console.log(data);
-
-  useWhyDidYouUpdate({ props, data });
-  return <></>;
 };
