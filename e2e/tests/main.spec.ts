@@ -1678,6 +1678,6 @@ test.describe("Main test", () => {
       .click();
 
     await page.getByLabel("ALLOWED_DIR").fill("/prostgles-mcp-test");
-    await page.getByText("Enable").click();
+    await page.getByText("Enable", { exact: true }).click();
   });
 });

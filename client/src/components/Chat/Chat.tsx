@@ -6,23 +6,21 @@ import Btn from "../Btn";
 import { classOverride, FlexRow } from "../Flex";
 import { Icon } from "../Icon/Icon";
 import { ChatMessage } from "./ChatMessage";
-import { type MarkedProps } from "./Marked";
 import { useAudioRecorder } from "./utils/AudioRecorder";
 
 export type Message = {
   id: number | string;
   messageTopContent?: React.ReactNode;
   message: React.ReactNode;
-  markdown?: string;
   sender_id: number | string;
   incoming: boolean;
   isLoading?: boolean;
   sent: Date;
-  media?: {
-    url: string;
-    content_type: string;
-    name: string;
-  };
+  // media?: {
+  //   url: string;
+  //   content_type: string;
+  //   name: string;
+  // };
 };
 
 export type ChatProps = {
@@ -35,7 +33,6 @@ export type ChatProps = {
     mediaContentType?: string,
   ) => Promise<any | void>;
   messages: Message[];
-  markdownCodeHeader: MarkedProps["codeHeader"];
   allowedMessageTypes?: Partial<{
     audio: boolean;
     file: boolean;
@@ -54,7 +51,6 @@ export const Chat = (props: ChatProps) => {
       audio: false,
       file: false,
     },
-    markdownCodeHeader,
   } = props;
 
   const [scrollRef, setScrollRef] = useState<HTMLDivElement>();
@@ -114,11 +110,7 @@ export const Chat = (props: ChatProps) => {
         }}
       >
         {messages.map((message) => (
-          <ChatMessage
-            key={message.id}
-            message={message}
-            markdownCodeHeader={markdownCodeHeader}
-          />
+          <ChatMessage key={message.id} message={message} />
         ))}
       </div>
 

@@ -10,6 +10,7 @@ export declare const getLLMMessageToolUse: ({ message, }: Pick<LLMMessage, "mess
 export declare const getLLMMessageToolUseResult: ({ message, }: Pick<LLMMessage, "message">) => {
     type: "tool_result";
     tool_use_id: string;
+    tool_name?: string | undefined;
     content: string | ({
         type: "text";
         text: string;
@@ -29,5 +30,7 @@ export declare const getLLMMessageToolUseResult: ({ message, }: Pick<LLMMessage,
     is_error?: boolean | undefined;
 }[];
 type FilterMatch<T, U> = T extends U ? T : never;
+type FilterUnMatch<T, U> = T extends U ? never : T;
 export declare const filterArr: <T, U extends Partial<T>>(arr: T[], pattern: U) => FilterMatch<T, U>[];
+export declare const filterArrInverse: <T, U extends Partial<T>>(arr: T[], pattern: U) => FilterUnMatch<T, U>[];
 export {};

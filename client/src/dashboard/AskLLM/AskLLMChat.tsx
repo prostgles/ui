@@ -140,7 +140,6 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
             messages={messages}
             disabledInfo={activeChat.disabled_message ?? undefined}
             onSend={sendMessage}
-            markdownCodeHeader={markdownCodeHeader}
           />
           <AskLLMTools
             dbs={dbs}

@@ -1,17 +1,16 @@
-import React, { useEffect, useMemo, useRef } from "react";
-import {
-  useAsyncEffectQueue,
-  usePromise,
-} from "prostgles-client/dist/react-hooks";
+import { usePromise } from "prostgles-client/dist/react-hooks";
 import { getKeys, isEqual, isObject, pickKeys } from "prostgles-types";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { appTheme, useReactiveState } from "../../appUtils";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
+
 import {
   customLightThemeMonaco,
   getMonaco,
 } from "../../dashboard/SQLEditor/SQLEditor";
 import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
+import { useWhyDidYouUpdate } from "./useWhyDidYouUpdate";
 
 export type MonacoEditorProps = {
   language: string;
@@ -30,6 +29,23 @@ export type MonacoEditorProps = {
   onMount?: (editor: editor.IStandaloneCodeEditor) => void;
   style?: React.CSSProperties;
   loadedSuggestions: LoadedSuggestions | undefined;
+};
+
+let monacoPromise: Promise<Monaco> | undefined;
+let monacoResolved: Monaco | undefined;
+const useMonacoSingleton = () => {
+  const [monaco, setMonaco] = useState(monacoResolved);
+  useEffect(() => {
+    if (!monacoResolved) {
+      (async () => {
+        monacoPromise ??= getMonaco();
+        monacoResolved = await monacoPromise;
+        setMonaco(monacoResolved);
+      })();
+    }
+  }, []);
+
+  return { monaco };
 };
 
 export const MonacoEditor = (props: MonacoEditorProps) => {
@@ -55,7 +71,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   const valueRef = React.useRef(value);
 
-  const monacoRef = useRef<Awaited<ReturnType<typeof getMonaco>>>();
+  const monacoRef = useRef<Monaco>();
 
   const fullOptions = useMemo(() => {
     const theme =
@@ -68,10 +84,11 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     };
   }, [_appTheme, options]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useAsyncEffectQueue(async () => {
-    if (!container.current) return;
-    const monaco = await getMonaco();
+  const { monaco } = useMonacoSingleton();
+
+  useEffect(() => {
+    if (!container.current || !monaco) return;
+
     monacoRef.current = monaco;
     const editorOptions: editor.IStandaloneEditorConstructionOptions = {
       value: valueRef.current,
@@ -97,7 +114,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
     return () => {
       newEditor.dispose();
     };
-  }, [language, container, fullOptions, expandSuggestionDocs]);
+  }, [monaco, language, container, fullOptions, expandSuggestionDocs]);
 
   useEffect(() => {
     if (!editor) return;

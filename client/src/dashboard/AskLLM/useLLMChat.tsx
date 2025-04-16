@@ -1,16 +1,18 @@
-import { mdiPlus } from "@mdi/js";
 import { useEffectDeep } from "prostgles-client/dist/prostgles";
-import React, { useCallback, useMemo, useState } from "react";
-import { getLLMMessageText } from "../../../../commonTypes/llmUtils";
-import { isObject } from "../../../../commonTypes/publishUtils";
+import React, { useMemo, useState } from "react";
+import {
+  filterArr,
+  filterArrInverse,
+  getLLMMessageText,
+} from "../../../../commonTypes/llmUtils";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
 import type { Message } from "../../components/Chat/Chat";
-import type { MarkedProps } from "../../components/Chat/Marked";
-import { useSetNewWorkspace } from "../WorkspaceMenu/WorkspaceMenu";
+import { Marked } from "../../components/Chat/Marked";
 import { AskLLMTokenUsage } from "./AskLLMTokenUsage";
-import { loadGeneratedWorkspaces } from "./loadGeneratedWorkspaces";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
+import { useMarkdownCodeHeader } from "./useMarkdownCodeHeader";
+import { isDefined } from "../../utils";
+import { MediaViewer } from "../../components/MediaViewer";
 
 type P = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId"> & {
@@ -83,20 +85,81 @@ export const useLLMChat = (props: P) => {
 
   const { data: models } = dbs.llm_models.useFind();
 
-  const actualMessages: Message[] | undefined = llmMessages?.map(
-    ({ id, user_id, created, message, meta, is_loading }) => ({
-      id,
-      incoming: user_id !== user?.id,
-      message: null,
-      isLoading: !!is_loading,
-      messageTopContent: (
-        <AskLLMTokenUsage message={{ user_id, meta }} models={models ?? []} />
-      ),
-      markdown: getLLMMessageText({ message }),
-      sender_id: user_id || "ai",
-      sent: new Date(created || new Date()),
-    }),
-  );
+  // const messagesWithToolResponsesMerged = llmMessages?.map((messageRow) => {
+  //   const { message } = messageRow;
+  //   const messagesWithoutToolResponses = filterArrInverse(message, {
+  //     type: "tool_use",
+  //   } as const);
+  //   // .filter(
+  //   //   (m) => m.type !== "tool_response",
+  //   // );
+  //   return message;
+  // });
+
+  const { markdownCodeHeader } = useMarkdownCodeHeader(props);
+
+  const actualMessages: Message[] | undefined = llmMessages
+    ?.map(
+      ({ id, user_id, created, message, meta, is_loading }, llmMessageIdx) => {
+        const messagesWithoutToolResponses = filterArrInverse(message, {
+          type: "tool_use",
+        } as const);
+        if (!messagesWithoutToolResponses.length) {
+          return undefined;
+        }
+
+        const messageNode = messagesWithoutToolResponses.map((m, idx) => {
+          if (m.type === "text") {
+            return (
+              <Marked
+                key={`${id}-text-${idx}`}
+                codeHeader={markdownCodeHeader}
+                content={m.text}
+              />
+            );
+          }
+          if (m.type === "image") {
+            return (
+              <MediaViewer key={`${id}-image-${idx}`} url={m.source.data} />
+            );
+          }
+
+          if (m.type !== "tool_result") {
+            return <>Unexpected message content type</>;
+          }
+
+          const toolUseResult = llmMessages.slice(llmMessageIdx).find((trm) => {
+            const toolResults = filterArr(trm.message, {
+              type: "tool_result",
+            } as const);
+            if (toolResults.length) {
+              return toolResults;
+            }
+          });
+        });
+
+        return {
+          id,
+          incoming: user_id !== user?.id,
+          messageTopContent: (
+            <AskLLMTokenUsage
+              message={{ user_id, meta }}
+              models={models ?? []}
+            />
+          ),
+          message: (
+            <Marked
+              codeHeader={markdownCodeHeader}
+              content={getLLMMessageText({ message })}
+            />
+          ),
+          isLoading: !!is_loading,
+          sender_id: user_id || "ai",
+          sent: new Date(created || new Date()),
+        };
+      },
+    )
+    .filter(isDefined);
 
   const disabled_message =
     (
@@ -139,8 +202,6 @@ export const useLLMChat = (props: P) => {
     : [],
   );
 
-  const { markdownCodeHeader } = useMarkdownCodeHeader(props);
-
   return {
     markdownCodeHeader,
     activeChatId,
@@ -156,62 +217,4 @@ export const useLLMChat = (props: P) => {
   };
 };
 
-const useMarkdownCodeHeader = ({ workspaceId, dbs, connectionId }: P) => {
-  const { setWorkspace } = useSetNewWorkspace(workspaceId);
-  const markdownCodeHeader: MarkedProps["codeHeader"] = useCallback(
-    ({ language, codeString }) => {
-      if (language !== "json") return null;
-      try {
-        const json = isMaybeProstglesWorkspaces(codeString);
-        if (json) {
-          return (
-            <Btn
-              color="action"
-              iconPath={mdiPlus}
-              variant="faded"
-              size="small"
-              onClick={() => {
-                loadGeneratedWorkspaces(json.prostglesWorkspaces, {
-                  dbs,
-                  connectionId,
-                })
-                  .then((insertedWorkspaces) => {
-                    const [first] = insertedWorkspaces;
-                    if (first) {
-                      setWorkspace(first);
-                    }
-                  })
-                  .catch((error) => {
-                    if (isObject(error) && error.code === "23505") {
-                      alert(
-                        `Workspace with this name already exists. Must delete or rename the clashing workspaces: \n${json.prostglesWorkspaces.map((w) => w.name).join(", ")}`,
-                      );
-                    }
-                  });
-              }}
-            >
-              Load workspaces
-            </Btn>
-          );
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    [connectionId, dbs, setWorkspace],
-  );
-
-  return { markdownCodeHeader };
-};
-
-const isMaybeProstglesWorkspaces = (
-  codeString: string,
-): { prostglesWorkspaces: any[] } | undefined => {
-  try {
-    const json = JSON.parse(codeString);
-    return Array.isArray(json.prostglesWorkspaces) ? json : undefined;
-  } catch (e) {
-    console.error(e);
-  }
-  return undefined;
-};
+const getToolUseResult = () => {};

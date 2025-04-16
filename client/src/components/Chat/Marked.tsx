@@ -1,11 +1,12 @@
-import { mdiContentCopy } from "@mdi/js";
+import { mdiContentCopy, mdiFullscreen } from "@mdi/js";
 import type { editor } from "monaco-editor";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import Markdown from "react-markdown";
 import { CHAT_WIDTH } from "../../dashboard/AskLLM/AskLLM";
 import Btn from "../Btn";
 import { classOverride, FlexCol, FlexRow, type DivProps } from "../Flex";
 import { MonacoEditor } from "../MonacoEditor/MonacoEditor";
+import Popup from "../Popup/Popup";
 import "./Marked.css";
 
 export type MarkedProps = DivProps & {
@@ -15,16 +16,6 @@ export type MarkedProps = DivProps & {
     codeString: string;
   }) => React.ReactNode;
 };
-
-const monacoOptions = {
-  minimap: { enabled: false },
-  lineNumbers: "off",
-  tabSize: 2,
-  padding: { top: 10 },
-  scrollBeyondLastLine: false,
-  automaticLayout: true,
-  lineHeight: 19,
-} satisfies editor.IStandaloneEditorConstructionOptions;
 
 export const Marked = (props: MarkedProps) => {
   const { content, codeHeader, ...divProps } = props;
@@ -45,6 +36,7 @@ export const Marked = (props: MarkedProps) => {
       const match = /language-(\w+)/.exec(className || "");
       const language = match ? match[1] : "";
       const codeString = props.children?.toString() ?? "";
+
       if (!codeString || !className || !language) {
         return <code {...props} />;
       }
@@ -58,6 +50,7 @@ export const Marked = (props: MarkedProps) => {
       }
       return (
         <MarkdownMonacoCode
+          key={codeString}
           codeHeader={codeHeader}
           language={language}
           codeString={codeString}
@@ -81,14 +74,31 @@ export const Marked = (props: MarkedProps) => {
   );
 };
 
-const MarkdownMonacoCode = ({
-  codeHeader,
-  language,
-  codeString,
-}: Pick<MarkedProps, "codeHeader"> & {
-  language: string;
-  codeString: string;
-}) => {
+const MarkdownMonacoCode = (
+  props: Pick<MarkedProps, "codeHeader"> & {
+    language: string;
+    codeString: string;
+  },
+) => {
+  const { codeHeader, language, codeString } = props;
+  const [fullscreen, setFullscreen] = React.useState(false);
+
+  const monacoOptions = useMemo(() => {
+    return {
+      minimap: { enabled: false },
+      lineNumbers: fullscreen ? "on" : "off",
+      tabSize: 2,
+      padding: { top: 10 },
+      scrollBeyondLastLine: false,
+      automaticLayout: true,
+      lineHeight: 19,
+    } satisfies editor.IStandaloneEditorConstructionOptions;
+  }, [fullscreen]);
+
+  const onExit = useCallback(() => {
+    setFullscreen(false);
+  }, []);
+
   return (
     <FlexCol
       className="Marked relative b b-color-1 rounded gap-0 b-color-2 f-0 o-hidden"
@@ -112,13 +122,52 @@ const MarkdownMonacoCode = ({
         >
           Copy
         </Btn>
+        <Btn
+          iconPath={mdiFullscreen}
+          onClick={() => setFullscreen(!fullscreen)}
+        />
       </FlexRow>
-      <MonacoEditor
-        loadedSuggestions={undefined}
-        value={codeString}
-        language={language}
-        options={monacoOptions}
-      />
+      <FullscreenWrapper
+        key={codeString}
+        isFullscreen={fullscreen}
+        title={language}
+        onExit={onExit}
+      >
+        <MonacoEditor
+          key={codeString}
+          className={fullscreen ? "f-1" : ""}
+          loadedSuggestions={undefined}
+          value={codeString}
+          language={language}
+          options={monacoOptions}
+        />
+      </FullscreenWrapper>
     </FlexCol>
+  );
+};
+
+const FullscreenWrapper = (props: {
+  isFullscreen: boolean;
+  onExit: VoidFunction;
+  children: React.ReactNode;
+  title: string;
+}) => {
+  const { children, isFullscreen, onExit, title } = props;
+
+  if (!isFullscreen) {
+    return children;
+  }
+  return (
+    <Popup
+      title={title}
+      positioning="fullscreen"
+      onClickClose={false}
+      onClose={onExit}
+      contentStyle={{
+        overflow: "visible",
+      }}
+    >
+      {children}
+    </Popup>
   );
 };

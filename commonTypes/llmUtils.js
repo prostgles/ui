@@ -12,7 +12,7 @@ export const getLLMMessageText = ({ message, }) => {
     return [
         toolsUsed.length ? `**Tools used: ${toolsUsed.join(", ")}**` : null,
         toolsResponse ?
-            (toolsResponse.is_error ? `**Tool use error**` : (`**Tool result response**`)) + `\n\n${toolResponseText}`
+            (toolsResponse.is_error ? `**Tool use error**` : (`**Tool ${toolsUsed.join(", ")} response**`)) + `\n\n${toolResponseText}`
             : null,
         text,
     ]
@@ -33,5 +33,11 @@ export const filterArr = (arr, pattern) => {
     const patternEntries = Object.entries(pattern);
     return arr.filter((item) => {
         return patternEntries.every(([key, value]) => item[key] === value);
+    });
+};
+export const filterArrInverse = (arr, pattern) => {
+    const patternEntries = Object.entries(pattern);
+    return arr.filter((item) => {
+        return patternEntries.every(([key, value]) => item[key] !== value);
     });
 };

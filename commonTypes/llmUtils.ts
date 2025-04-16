@@ -44,6 +44,7 @@ export const getLLMMessageToolUseResult = ({
 };
 
 type FilterMatch<T, U> = T extends U ? T : never;
+type FilterUnMatch<T, U> = T extends U ? never : T;
 
 export const filterArr = <T, U extends Partial<T>>(
   arr: T[],
@@ -55,4 +56,16 @@ export const filterArr = <T, U extends Partial<T>>(
       ([key, value]) => item[key as keyof T] === value,
     );
   }) as FilterMatch<T, U>[];
+};
+
+export const filterArrInverse = <T, U extends Partial<T>>(
+  arr: T[],
+  pattern: U,
+): FilterUnMatch<T, U>[] => {
+  const patternEntries = Object.entries(pattern);
+  return arr.filter((item) => {
+    return patternEntries.every(
+      ([key, value]) => item[key as keyof T] !== value,
+    );
+  }) as FilterUnMatch<T, U>[];
 };

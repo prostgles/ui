@@ -10,7 +10,7 @@ export const ContentTypes = ["image", "video", "audio"] as const;
 type ValidContentType = (typeof ContentTypes)[number];
 
 type P = {
-  url?: string;
+  url: string;
 
   /**
    * Request prev or next media
@@ -46,39 +46,6 @@ export class MediaViewer extends RTComp<P, S> {
     url: undefined,
   };
 
-  static getMimeFromURL(
-    url: string,
-  ): (typeof ContentTypes)[number] | undefined {
-    if (url && typeof url === "string") {
-      const images = {
-        jpg: 1,
-        jpeg: 1,
-        png: 1,
-        tiff: 1,
-        gif: 1,
-        svg: 1,
-        ico: 1,
-      };
-      const audio = {
-        mp3: 1,
-        wav: 1,
-      };
-      const video = {
-        mp4: 1,
-        avi: 1,
-        ogg: 1,
-        webm: 1,
-        mov: 1,
-      };
-      const extension = url.split(".").slice(-1)[0]?.toLowerCase();
-      if (!extension) return undefined;
-      if (images[extension]) return "image";
-      if (audio[extension]) return "audio";
-      if (video[extension]) return "video";
-    }
-    return undefined;
-  }
-
   rawURL?: string;
 
   onKeyDown = (e: KeyboardEvent) => {
@@ -98,7 +65,7 @@ export class MediaViewer extends RTComp<P, S> {
     const { content_type } = this.props;
     let contentType: string | undefined = content_type;
     if (!content_type) {
-      const mime = await getMimeFromURL(url);
+      const mime = await fetchMimeFromURLHead(url);
       contentType = mime?.split(";")?.[0]?.trim();
     }
 
@@ -232,6 +199,7 @@ export class MediaViewer extends RTComp<P, S> {
                   target="_blank"
                   className="p-1 f-0 text-1p5"
                   style={{ fontWeight: 400 }}
+                  rel="noreferrer"
                 >
                   {url.validated}
                 </a>
@@ -263,7 +231,9 @@ export class MediaViewer extends RTComp<P, S> {
   }
 }
 
-export const getMimeFromURL = async (url: string): Promise<string | null> => {
+export const fetchMimeFromURLHead = async (
+  url: string,
+): Promise<string | null> => {
   try {
     const resp = await fetch(url, { method: "HEAD" });
     if (resp.status >= 400) return null;
@@ -299,3 +269,36 @@ const ToggleBtn = (isLeft: boolean, onClick: VoidFunction) => {
     </div>
   );
 };
+
+// const getMimeFromURL = (
+//   url: string,
+// ): (typeof ContentTypes)[number] | undefined => {
+//   if (url && typeof url === "string") {
+//     const images = {
+//       jpg: 1,
+//       jpeg: 1,
+//       png: 1,
+//       tiff: 1,
+//       gif: 1,
+//       svg: 1,
+//       ico: 1,
+//     };
+//     const audio = {
+//       mp3: 1,
+//       wav: 1,
+//     };
+//     const video = {
+//       mp4: 1,
+//       avi: 1,
+//       ogg: 1,
+//       webm: 1,
+//       mov: 1,
+//     };
+//     const extension = url.split(".").slice(-1)[0]?.toLowerCase();
+//     if (!extension) return undefined;
+//     if (images[extension]) return "image";
+//     if (audio[extension]) return "audio";
+//     if (video[extension]) return "video";
+//   }
+//   return undefined;
+// };

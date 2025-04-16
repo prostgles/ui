@@ -30,8 +30,8 @@ export type McpToolCallResponse = {
 };
 export declare const PROSTGLES_MCP_TOOLS: readonly [{
     readonly name: `${string}_-_${string}`;
-    readonly description: "Run SQL query";
-    readonly inputSchema: {
+    readonly description: "Run SQL query on the current database";
+    readonly input_schema: {
         readonly type: "object";
         readonly properties: {
             readonly sql: {
