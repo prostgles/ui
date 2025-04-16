@@ -1,4 +1,4 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
+import { useEffectDeep, usePromise } from "prostgles-client/dist/react-hooks";
 import { getKeys, isEqual, isObject, pickKeys } from "prostgles-types";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { appTheme, useReactiveState } from "../../appUtils";
@@ -86,7 +86,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
 
   const { monaco } = useMonacoSingleton();
 
-  useEffect(() => {
+  useEffectDeep(() => {
     if (!container.current || !monaco) return;
 
     monacoRef.current = monaco;

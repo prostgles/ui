@@ -20,6 +20,7 @@ import {
   useSetMonacoJsonSchemas,
 } from "./utils/useSetMonacoJsonSchemas";
 import { useSetMonacoTsLibraries } from "./utils/useSetMonacoTsLibraries";
+import { useWhyDidYouUpdate } from "../../components/MonacoEditor/useWhyDidYouUpdate";
 export type Suggestion = {
   type: "table" | "column" | "function";
   label: string;
@@ -141,6 +142,8 @@ export const CodeEditor = (props: CodeEditorProps) => {
     error,
     onTSLibraryChange,
   } = props;
+
+  useWhyDidYouUpdate(props);
   const language =
     isObject(languageOrConf) ? languageOrConf.lang : languageOrConf;
 
