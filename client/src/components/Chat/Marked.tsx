@@ -123,6 +123,7 @@ const MarkdownMonacoCode = (
           Copy
         </Btn>
         <Btn
+          title="Toggle Fullscreen"
           iconPath={mdiFullscreen}
           onClick={() => setFullscreen(!fullscreen)}
         />
