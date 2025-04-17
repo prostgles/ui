@@ -109,7 +109,10 @@ export const askLLM = async (
   const isFirstUserMessage = !pastMessages.some((m) => m.user_id === user.id);
   if (isFirstUserMessage) {
     const questionText = getLLMMessageText({ message: userMessage });
-    dbs.llm_chats.update({ id: chatId }, { name: sliceText(questionText, 25) });
+    dbs.llm_chats.update(
+      { id: chatId },
+      { name: sliceText(questionText, 25)?.replaceAll("\n", " ") },
+    );
   }
 
   const aiResponseMessage = await dbs.llm_messages.insert(
@@ -126,16 +129,14 @@ export const askLLM = async (
       .replace("${schema}", schema)
       .replace("${dashboardTypes}", dashboardTypes);
 
-    /** Tools are not used with Dashboarding due to induced errors */
-    const tools =
-      promptObj.options?.disable_tools ?
-        undefined
-      : await getLLMTools({
-          dbs,
-          chat,
-          provider: llm_credential.provider_id,
-          connectionId,
-        });
+    const tools = await getLLMTools({
+      isAdmin: user.type === "admin",
+      dbs,
+      chat,
+      provider: llm_credential.provider_id,
+      connectionId,
+      prompt: promptObj,
+    });
 
     const modelData = await dbs.llm_models.findOne(
       { id: chat.model! },

@@ -28,10 +28,15 @@ export const SmartFormFieldLinkedDataSearch = ({
 }: P) => {
   const listProps = useMemo(() => {
     return {
-      onClickRow:
+      getOnClickRow:
         readOnly ? undefined : (
-          (row) => {
-            onChange(row[fcol]);
+          (clickedRow) => {
+            const currentValue = row[column.name];
+            const newValue = clickedRow[fcol];
+            if (currentValue === newValue) return undefined;
+            return () => {
+              onChange(newValue);
+            };
           }
         ),
       searchFilter: [
@@ -40,7 +45,7 @@ export const SmartFormFieldLinkedDataSearch = ({
           value: row[column.name],
         },
       ],
-    } satisfies Pick<SmartCardListProps, "searchFilter" | "onClickRow">;
+    } satisfies Pick<SmartCardListProps, "searchFilter" | "getOnClickRow">;
   }, [row, column.name, fcol, onChange, readOnly]);
 
   return (

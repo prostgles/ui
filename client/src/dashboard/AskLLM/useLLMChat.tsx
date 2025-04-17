@@ -1,18 +1,8 @@
 import { useEffectDeep } from "prostgles-client/dist/prostgles";
-import React, { useMemo, useState } from "react";
-import {
-  filterArr,
-  filterArrInverse,
-  getLLMMessageText,
-} from "../../../../commonTypes/llmUtils";
+import { useMemo, useState } from "react";
 import type { Prgl } from "../../App";
-import type { Message } from "../../components/Chat/Chat";
-import { Marked } from "../../components/Chat/Marked";
-import { AskLLMTokenUsage } from "./AskLLMTokenUsage";
+import { useLLMChatMessages } from "./useLLMChatMessages";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
-import { useMarkdownCodeHeader } from "./useMarkdownCodeHeader";
-import { isDefined } from "../../utils";
-import { MediaViewer } from "../../components/MediaViewer";
 
 type P = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId"> & {
@@ -21,8 +11,7 @@ type P = LLMSetupStateReady &
 
 export type LLMChatState = ReturnType<typeof useLLMChat>;
 export const useLLMChat = (props: P) => {
-  const { dbs, user, credentials, firstPromptId, defaultCredential, prompts } =
-    props;
+  const { dbs, credentials, firstPromptId, defaultCredential, prompts } = props;
   const chatsFilter = useMemo(() => {
     return {
       /** TODO: fix $in: [string, null] types */
@@ -77,138 +66,17 @@ export const useLLMChat = (props: P) => {
     }
   }, [latestChats, preferredPromptId, defaultCredential]);
 
-  const { data: llmMessages } = dbs.llm_messages.useSubscribe(
-    { chat_id: activeChatId },
-    { orderBy: { created: 1 } },
-    { skip: !activeChatId },
-  );
-
-  const { data: models } = dbs.llm_models.useFind();
-
-  // const messagesWithToolResponsesMerged = llmMessages?.map((messageRow) => {
-  //   const { message } = messageRow;
-  //   const messagesWithoutToolResponses = filterArrInverse(message, {
-  //     type: "tool_use",
-  //   } as const);
-  //   // .filter(
-  //   //   (m) => m.type !== "tool_response",
-  //   // );
-  //   return message;
-  // });
-
-  const { markdownCodeHeader } = useMarkdownCodeHeader(props);
-
-  const actualMessages: Message[] | undefined = llmMessages
-    ?.map(
-      ({ id, user_id, created, message, meta, is_loading }, llmMessageIdx) => {
-        const messagesWithoutToolResponses = filterArrInverse(message, {
-          type: "tool_use",
-        } as const);
-        if (!messagesWithoutToolResponses.length) {
-          return undefined;
-        }
-
-        const messageNode = messagesWithoutToolResponses.map((m, idx) => {
-          if (m.type === "text") {
-            return (
-              <Marked
-                key={`${id}-text-${idx}`}
-                codeHeader={markdownCodeHeader}
-                content={m.text}
-              />
-            );
-          }
-          if (m.type === "image") {
-            return (
-              <MediaViewer key={`${id}-image-${idx}`} url={m.source.data} />
-            );
-          }
-
-          if (m.type !== "tool_result") {
-            return <>Unexpected message content type</>;
-          }
-
-          const toolUseResult = llmMessages.slice(llmMessageIdx).find((trm) => {
-            const toolResults = filterArr(trm.message, {
-              type: "tool_result",
-            } as const);
-            if (toolResults.length) {
-              return toolResults;
-            }
-          });
-        });
-
-        return {
-          id,
-          incoming: user_id !== user?.id,
-          messageTopContent: (
-            <AskLLMTokenUsage
-              message={{ user_id, meta }}
-              models={models ?? []}
-            />
-          ),
-          message: (
-            <Marked
-              codeHeader={markdownCodeHeader}
-              content={getLLMMessageText({ message })}
-            />
-          ),
-          isLoading: !!is_loading,
-          sender_id: user_id || "ai",
-          sent: new Date(created || new Date()),
-        };
-      },
-    )
-    .filter(isDefined);
-
-  const disabled_message =
-    (
-      activeChat?.disabled_until &&
-      new Date(activeChat.disabled_until) > new Date() &&
-      activeChat.disabled_message
-    ) ?
-      activeChat.disabled_message
-    : undefined;
-
-  const messages: Message[] = (
-    actualMessages?.length ? actualMessages : (
-      [
-        {
-          id: "first",
-          message: "Hello, I am the AI assistant. How can I help you?",
-          incoming: true,
-          sent: new Date("2024-01-01"),
-          sender_id: "ai",
-        } as const,
-      ].map((m) => {
-        const incoming = m.sender_id !== user?.id;
-        return {
-          ...m,
-          incoming,
-          message: m.message,
-        };
-      })
-    )).concat(
-    disabled_message ?
-      [
-        {
-          id: "disabled-last",
-          incoming: true,
-          message: disabled_message,
-          sender_id: "ai",
-          sent: new Date(),
-        },
-      ]
-    : [],
-  );
+  const { llmMessages, messages } = useLLMChatMessages({
+    ...props,
+    activeChat,
+  });
 
   return {
-    markdownCodeHeader,
     activeChatId,
     createNewChat,
     preferredPromptId,
     llmMessages,
-    messages: activeChat && actualMessages ? messages : undefined,
+    messages,
     latestChats,
     setActiveChat: setSelectedChat,
     credentials,
@@ -216,5 +84,3 @@ export const useLLMChat = (props: P) => {
     activeChat,
   };
 };
-
-const getToolUseResult = () => {};

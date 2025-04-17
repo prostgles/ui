@@ -48,20 +48,15 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     connectionId,
     workspaceId,
   });
-  const {
-    messages,
-    activeChat,
-    activeChatId,
-    latestChats,
-    markdownCodeHeader,
-    llmMessages,
-  } = chatState;
+  const { messages, activeChat, activeChatId, latestChats, llmMessages } =
+    chatState;
   const { preferredPromptId, createNewChat } = chatState;
   const { schemaStr } = useLLMSchemaStr({ tables, db, connection, activeChat });
 
   const sendQuery = useCallback(
     async (msg: LLMMessage["message"] | undefined) => {
       if (!msg || !activeChatId) return;
+      /** TODO: move schemaStr to server-side */
       await askLLM(connectionId, msg, schemaStr, activeChatId).catch(
         (error) => {
           const errorText = error?.message || error;

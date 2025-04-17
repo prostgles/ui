@@ -90,10 +90,27 @@ const getMeta = (rawMeta: any, models: P["models"]) => {
 const getCost = (meta: ReturnType<typeof getMeta>) => {
   if (!meta) return null;
   if (!meta.model?.pricing_info) return null;
-  const { input, output, threshold } = meta.model.pricing_info;
+  const {
+    input,
+    output,
+    threshold,
+    cachedInput = 0,
+    cachedOutput = 0,
+  } = meta.model.pricing_info;
+
+  const cacheReadTokens =
+    meta.type === "openai" ? meta.meta.usage.prompt_tokens_details.cached_tokens
+    : meta.type === "anthropic" ? meta.meta.usage.cache_read_input_tokens
+    : 0;
+  const cacheWriteTokens =
+    meta.type === "anthropic" ? meta.meta.usage.cache_creation_input_tokens : 0;
+
   const inputCount =
     meta.type === "gemini" ? meta.meta.usageMetadata.promptTokenCount
-    : meta.type === "openai" ? meta.meta.usage.prompt_tokens
+      /**
+       * https://community.openai.com/t/will-cached-prompt-be-charged-in-each-api-call/977999/2
+       */
+    : meta.type === "openai" ? meta.meta.usage.prompt_tokens - cacheReadTokens
     : meta.meta.usage.input_tokens;
   const outputCount =
     meta.type === "gemini" ? meta.meta.usageMetadata.candidatesTokenCount
@@ -104,5 +121,14 @@ const getCost = (meta: ReturnType<typeof getMeta>) => {
     threshold && inputCount > threshold.tokenLimit ? threshold.input : input;
   const outputPrice =
     threshold && outputCount > threshold.tokenLimit ? threshold.output : output;
-  return (inputPrice / 1e6) * inputCount + (outputPrice / 1e6) * outputCount;
+
+  const cachePrice =
+    (cacheReadTokens / 1e6) * cachedInput +
+    (cacheWriteTokens / 1e6) * cachedOutput;
+
+  return (
+    cachePrice +
+    (inputPrice / 1e6) * inputCount +
+    (outputPrice / 1e6) * outputCount
+  );
 };

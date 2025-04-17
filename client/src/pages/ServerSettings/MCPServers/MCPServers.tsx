@@ -66,7 +66,11 @@ export const MCPServers = (props: MCPServersProps) => {
       <InfoRow className="mb-1" variant="naked" color="info" iconPath="">
         Pre-built integrations that can be used through the Ask AI chat and
         server-side functions. For more information visit{" "}
-        <a href="https://modelcontextprotocol.io/">Model Context Protocol</a>
+        <a href="https://modelcontextprotocol.io/">Model Context Protocol</a>.
+        <br></br>
+        <br></br>
+        Enabled MCP servers are available to chats after adding them in the
+        &quot;Allowed MCP Tools&quot; section of the chat settings.
       </InfoRow>
       {missing && <InfoRow>{missing}</InfoRow>}
       <MCPServersHeader

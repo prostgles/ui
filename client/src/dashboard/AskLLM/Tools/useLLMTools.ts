@@ -9,42 +9,20 @@ import {
   type LLMMessage,
 } from "../../../../../commonTypes/llmUtils";
 import {
+  execute_sql_tool,
+  getChoose_tools_for_task,
   getMCPFullToolName,
   getMCPToolNameParts,
   PROSTGLES_MCP_TOOLS,
 } from "../../../../../commonTypes/mcp";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import { isDefined } from "../../../utils";
-import type { DBSMethods } from "../../Dashboard/DBS";
+import type { DBS, DBSMethods } from "../../Dashboard/DBS";
 import type { AskLLMToolsProps } from "./AskLLMTools";
-
-export type ApproveRequest =
-  | {
-      id: number;
-      server_name: string;
-      tool_name: string;
-      description: string;
-      name: string;
-      type: "mcp";
-      auto_approve: boolean;
-    }
-  | {
-      id: number;
-      name: string;
-      type: "function";
-      auto_approve: boolean;
-      description: string;
-    }
-  | {
-      name: (typeof PROSTGLES_MCP_TOOLS)[number]["name"];
-      type: "db";
-      auto_approve: boolean;
-      description: string;
-      chatDBPermissions: Extract<
-        DBSSchema["llm_chats"]["db_data_permissions"],
-        { type: "Run SQL" }
-      >;
-    };
+import {
+  useLLMChatAllowedTools,
+  type ApproveRequest,
+} from "./useLLMChatAllowedTools";
 
 /**
  * https://docs.anthropic.com/en/docs/build-with-claude/tool-use
@@ -64,59 +42,12 @@ export const useLLMTools = ({
     input: any,
   ) => Promise<{ approved: boolean }>;
 }) => {
-  const activeChatId = activeChat.id;
   const fetchingForMessageId = useRef<string>();
-  const chatDBPermissions = useMemoDeep(
-    () => activeChat.db_data_permissions,
-    [activeChat.db_data_permissions],
-  );
-  const { data: allowedMCPTools } =
-    dbs.llm_chats_allowed_mcp_tools.useSubscribe(
-      {
-        chat_id: activeChatId,
-      },
-      { select: { "*": 1, mcp_server_tools: "*" } },
-    );
-  const { data: allowedFunctions } =
-    dbs.llm_chats_allowed_functions.useSubscribe(
-      {
-        chat_id: activeChatId,
-      },
-      { select: { "*": 1, published_methods: "*" } },
-    );
 
-  const allowedTools = useMemo(() => {
-    if (!allowedMCPTools || !allowedFunctions) return [];
-    const tools: ApproveRequest[] = [
-      ...allowedMCPTools.map((tool) => ({
-        id: tool.tool_id,
-        server_name: tool.mcp_server_tools[0].server_name,
-        tool_name: tool.mcp_server_tools[0].name,
-        description: tool.mcp_server_tools[0].description || "",
-        name: getMCPFullToolName(tool.mcp_server_tools[0]),
-        auto_approve: !!tool.auto_approve,
-        type: "mcp" as const,
-      })),
-      ...allowedFunctions.map((tool) => ({
-        id: tool.server_function_id,
-        name: tool.published_methods[0].name,
-        description: tool.published_methods[0].description || "",
-        auto_approve: !!tool.auto_approve,
-        type: "function" as const,
-      })),
-      chatDBPermissions?.type === "Run SQL" ?
-        {
-          tool: PROSTGLES_MCP_TOOLS[0],
-          name: PROSTGLES_MCP_TOOLS[0].name,
-          description: PROSTGLES_MCP_TOOLS[0].description,
-          auto_approve: !!chatDBPermissions.auto_approve,
-          chatDBPermissions,
-          type: "db" as const,
-        }
-      : undefined,
-    ].filter(isDefined);
-    return tools;
-  }, [allowedMCPTools, allowedFunctions, chatDBPermissions]);
+  const { allowedTools } = useLLMChatAllowedTools({
+    activeChat,
+    dbs,
+  });
 
   usePromise(async () => {
     const lastMessage = messages.at(-1);
@@ -164,9 +95,11 @@ export const useLLMTools = ({
         }
 
         const toolResult = await getToolUseResult(
+          allowedTools,
           matchedTool,
           lastMessage.chat_id,
           db,
+          dbs,
           methods,
           callMCPServerTool,
           tu.name,
@@ -189,6 +122,7 @@ export const useLLMTools = ({
     allowedTools,
     requestApproval,
     db,
+    dbs,
   ]);
 };
 
@@ -223,9 +157,11 @@ const parseToolResultToMessage = (func: () => Promise<any>) => {
  * Get tool result without checking if the tool is allowed for the chat
  */
 const getToolUseResult = async (
+  allowedTools: ApproveRequest[],
   matchedTool: ApproveRequest,
   chatId: number,
   db: DBHandlerClient,
+  dbs: DBS,
   methods: MethodHandler,
   callMCPServerTool: DBSMethods["callMCPServerTool"],
   funcName: string,
@@ -248,7 +184,7 @@ const getToolUseResult = async (
     const dbTool = PROSTGLES_MCP_TOOLS.find((t) => {
       return t.name === funcName;
     });
-    if (dbTool) {
+    if (dbTool?.name === execute_sql_tool.name) {
       return parseToolResultToMessage(async () => {
         const sql = db.sql;
         if (!sql) throw new Error("Executing SQL not allowed to this user");
@@ -269,6 +205,27 @@ const getToolUseResult = async (
           { returnType: "default-with-rollback" },
         );
         return JSON.stringify(rows);
+      });
+    }
+    if (dbTool?.name === getChoose_tools_for_task().name) {
+      return parseToolResultToMessage(async () => {
+        const data = input as { suggested_tools: { tool_name: string }[] };
+        const suggestedToolNames = data.suggested_tools.map((t) => t.tool_name);
+        await dbs.llm_chats_allowed_mcp_tools.delete({
+          chat_id: chatId,
+        });
+        await dbs.llm_chats_allowed_mcp_tools.insert(
+          allowedTools
+            .map((t) => {
+              if (t.type !== "mcp" || !suggestedToolNames.includes(t.name))
+                return;
+              return {
+                chat_id: chatId,
+                tool_id: t.id,
+              };
+            })
+            .filter(isDefined),
+        );
       });
     }
   } else {

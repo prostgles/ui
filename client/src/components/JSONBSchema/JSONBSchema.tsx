@@ -2,7 +2,6 @@ import type { JSONB } from "prostgles-types";
 import { isEqual, isObject } from "prostgles-types";
 import React, { useCallback, useEffect, useState } from "react";
 import type { Prgl } from "../../App";
-import { areEqual } from "../../utils";
 import { isCompleteJSONB } from "./isCompleteJSONB";
 import {
   JSONBSchemaAllowedOptions,

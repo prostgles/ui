@@ -20,7 +20,6 @@ import {
   useSetMonacoJsonSchemas,
 } from "./utils/useSetMonacoJsonSchemas";
 import { useSetMonacoTsLibraries } from "./utils/useSetMonacoTsLibraries";
-import { useWhyDidYouUpdate } from "../../components/MonacoEditor/useWhyDidYouUpdate";
 export type Suggestion = {
   type: "table" | "column" | "function";
   label: string;
@@ -122,6 +121,7 @@ export type CodeEditorProps = Pick<MonacoEditorProps, "options" | "value"> & {
   markers?: editor.IMarkerData[];
   onMount?: (editor: editor.IStandaloneCodeEditor) => void;
   onTSLibraryChange?: (tsLibraries: TSLibrary[]) => void;
+  contentTop?: React.ReactNode;
 };
 
 const getSelectedText = (
@@ -141,9 +141,9 @@ export const CodeEditor = (props: CodeEditorProps) => {
     className = "",
     error,
     onTSLibraryChange,
+    contentTop,
   } = props;
 
-  useWhyDidYouUpdate(props);
   const language =
     isObject(languageOrConf) ? languageOrConf.lang : languageOrConf;
 
@@ -268,7 +268,7 @@ export const CodeEditor = (props: CodeEditorProps) => {
       style={style}
       onFocus={onFocus}
     >
-      {/* {!isReady && <Loading variant="cover" />} */}
+      {contentTop}
       <MonacoEditor
         className="f-1 min-h-0"
         language={language}

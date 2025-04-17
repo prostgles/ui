@@ -36,76 +36,6 @@ export const JSONBSchemaPrimitive = ({
     }));
   }
 
-  const schemaTypeToColType: Record<
-    Required<typeof schema>["type"],
-    Pick<ValidatedColumnInfo, "udt_name" | "tsDataType">
-  > = {
-    Date: {
-      tsDataType: "string",
-      udt_name: "date",
-    },
-    "Date[]": {
-      tsDataType: "string",
-      udt_name: "date",
-    },
-    boolean: {
-      tsDataType: "boolean",
-      udt_name: "bool",
-    },
-    "boolean[]": {
-      tsDataType: "boolean[]",
-      udt_name: "bool",
-    },
-    integer: {
-      tsDataType: "number",
-      udt_name: "int4",
-    },
-    "integer[]": {
-      tsDataType: "number[]",
-      udt_name: "int4",
-    },
-    time: {
-      tsDataType: "string",
-      udt_name: "time",
-    },
-    "time[]": {
-      tsDataType: "string[]",
-      udt_name: "time",
-    },
-    timestamp: {
-      tsDataType: "string",
-      udt_name: "timestamp",
-    },
-    "timestamp[]": {
-      tsDataType: "string[]",
-      udt_name: "timestamp",
-    },
-    string: {
-      tsDataType: "string",
-      udt_name: "text",
-    },
-    "string[]": {
-      tsDataType: "string[]",
-      udt_name: "text",
-    },
-    number: {
-      tsDataType: "number",
-      udt_name: "numeric",
-    },
-    "number[]": {
-      tsDataType: "number[]",
-      udt_name: "numeric",
-    },
-    any: {
-      tsDataType: "any",
-      udt_name: "text",
-    },
-    "any[]": {
-      tsDataType: "any",
-      udt_name: "text",
-    },
-  };
-
   const transformedType = {
     ...(schemaTypeToColType[schema.type as any] ?? {
       tsDataType: "string",
@@ -173,6 +103,76 @@ export const JSONBSchemaPrimitive = ({
       error={error}
     />
   );
+};
+
+const schemaTypeToColType: Record<
+  Required<Schema>["type"],
+  Pick<ValidatedColumnInfo, "udt_name" | "tsDataType">
+> = {
+  Date: {
+    tsDataType: "string",
+    udt_name: "date",
+  },
+  "Date[]": {
+    tsDataType: "string",
+    udt_name: "date",
+  },
+  boolean: {
+    tsDataType: "boolean",
+    udt_name: "bool",
+  },
+  "boolean[]": {
+    tsDataType: "boolean[]",
+    udt_name: "bool",
+  },
+  integer: {
+    tsDataType: "number",
+    udt_name: "int4",
+  },
+  "integer[]": {
+    tsDataType: "number[]",
+    udt_name: "int4",
+  },
+  time: {
+    tsDataType: "string",
+    udt_name: "time",
+  },
+  "time[]": {
+    tsDataType: "string[]",
+    udt_name: "time",
+  },
+  timestamp: {
+    tsDataType: "string",
+    udt_name: "timestamp",
+  },
+  "timestamp[]": {
+    tsDataType: "string[]",
+    udt_name: "timestamp",
+  },
+  string: {
+    tsDataType: "string",
+    udt_name: "text",
+  },
+  "string[]": {
+    tsDataType: "string[]",
+    udt_name: "text",
+  },
+  number: {
+    tsDataType: "number",
+    udt_name: "numeric",
+  },
+  "number[]": {
+    tsDataType: "number[]",
+    udt_name: "numeric",
+  },
+  any: {
+    tsDataType: "any",
+    udt_name: "text",
+  },
+  "any[]": {
+    tsDataType: "any",
+    udt_name: "text",
+  },
 };
 
 const parseNumber = (str: string) =>

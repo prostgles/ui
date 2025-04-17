@@ -74,7 +74,7 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   };
   onSuccess?: SmartFormProps["onSuccess"];
   enableListAnimations?: boolean;
-  onClickRow?: (row: AnyObject) => void;
+  getOnClickRow?: (row: AnyObject) => ((row: AnyObject) => void) | undefined;
   /**
    * Show top N records
    * Defaults to 20
@@ -115,7 +115,7 @@ export const SmartCardList = <T extends AnyObject>(
     noDataComponent,
     onSuccess,
     enableListAnimations = false,
-    onClickRow,
+    getOnClickRow,
     limit = 25,
   } = props;
 
@@ -175,6 +175,7 @@ export const SmartCardList = <T extends AnyObject>(
           noDataComponent
         : items.map((defaultData, i) => {
             const key = getKeyForRowData(defaultData, keyCols);
+            const onClickRow = getOnClickRow?.(defaultData);
             return (
               <div
                 key={key}

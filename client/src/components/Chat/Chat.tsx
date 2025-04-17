@@ -7,6 +7,7 @@ import { classOverride, FlexRow } from "../Flex";
 import { Icon } from "../Icon/Icon";
 import { ChatMessage } from "./ChatMessage";
 import { useAudioRecorder } from "./utils/AudioRecorder";
+import { tryCatchV2 } from "../../dashboard/WindowControls/TimeChartLayerOptions";
 
 export type Message = {
   id: number | string;
@@ -96,6 +97,47 @@ export const Chat = (props: ChatProps) => {
     }
   };
 
+  const handleOnPaste = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const files = e.clipboardData.files;
+      for (const file of files) {
+        e.preventDefault();
+        onSend("", file, file.name, file.type);
+      }
+      if (!files.length) {
+        const types = e.clipboardData.types;
+        const vsCodeTypes = [
+          "application/vnd.code.copymetadata",
+          "vscode-editor-data",
+        ];
+        if (vsCodeTypes.some((vsType) => types.includes(vsType))) {
+          e.preventDefault();
+          const text = e.clipboardData.getData("text/plain");
+          const vsData = e.clipboardData.getData("vscode-editor-data");
+          const { data: languageRaw = "" } = tryCatchV2(() => {
+            const result = JSON.parse(vsData).mode;
+            return result as string;
+          });
+          const language =
+            (
+              {
+                typescriptreact: "tsx",
+              } as const
+            )[languageRaw] ?? languageRaw;
+
+          const codeSnippetText = ["```" + language, text, "```"].join("\n");
+          /** If existing text then place correctly */
+          if (ref.current) {
+            insertCodeSnippetAtCursor(ref.current, codeSnippetText);
+          } else {
+            setCurrentMessage(codeSnippetText);
+          }
+        }
+      }
+    },
+    [onSend],
+  );
+
   return (
     <div
       className={classOverride("chat-container chat-component ", className)}
@@ -125,6 +167,7 @@ export const Chat = (props: ChatProps) => {
           className="no-scroll-bar bg-color-2 text-0"
           rows={1}
           defaultValue={getCurrentMessage()}
+          onPaste={handleOnPaste}
           onKeyDown={(e) => {
             if (
               ref.current &&
@@ -181,4 +224,28 @@ export const Chat = (props: ChatProps) => {
       </div>
     </div>
   );
+};
+
+// Function to insert text at cursor position
+const insertCodeSnippetAtCursor = (
+  textarea: HTMLTextAreaElement,
+  text: string,
+) => {
+  const startPos = textarea.selectionStart;
+  const endPos = textarea.selectionEnd;
+  let beforeText = textarea.value.substring(0, startPos);
+  let afterText = textarea.value.substring(endPos);
+
+  if (beforeText.length) {
+    beforeText = beforeText + "\n";
+  }
+  if (afterText.length) {
+    afterText = "\n" + afterText;
+  }
+  // Set the new value with the pasted text inserted
+  textarea.value = beforeText + text + afterText;
+
+  // Move the cursor to after the inserted text
+  const newCursorPos = startPos + text.length;
+  textarea.setSelectionRange(newCursorPos, newCursorPos);
 };

@@ -18,7 +18,7 @@ type ViewMoreSmartCardListProps = Pick<
 > & {
   ftable: DBSchemaTableWJoins;
   searchFilter: SmartGroupFilter | undefined;
-  onClickRow: ((row: AnyObject) => void) | undefined;
+  getOnClickRow: SmartCardListProps["getOnClickRow"];
   rootTableName?: string;
 };
 export const ViewMoreSmartCardList = ({
@@ -27,7 +27,7 @@ export const ViewMoreSmartCardList = ({
   ftable,
   tables,
   searchFilter,
-  onClickRow,
+  getOnClickRow,
   rootTableName,
 }: ViewMoreSmartCardListProps) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement>();
@@ -40,18 +40,21 @@ export const ViewMoreSmartCardList = ({
   });
   const listProps = useMemo(() => {
     return {
-      onClickRow:
-        onClickRow ?
+      getOnClickRow:
+        getOnClickRow ?
           (row) => {
-            onClickRow(row);
-            setAnchorEl(undefined);
+            const res = getOnClickRow(row);
+            if (res) {
+              setAnchorEl(undefined);
+              return res;
+            }
           }
         : undefined,
       onSetData: () => {
         setLoaded(true);
       },
-    } satisfies Pick<SmartCardListProps, "onSetData" | "onClickRow">;
-  }, [onClickRow]);
+    } satisfies Pick<SmartCardListProps, "onSetData" | "getOnClickRow">;
+  }, [getOnClickRow]);
 
   return (
     <>

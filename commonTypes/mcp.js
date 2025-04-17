@@ -1397,7 +1397,7 @@ export const DefaultMCPServers = {
         },
     },
 };
-const MCP_TOOL_NAME_SEPARATOR = "_-_";
+const MCP_TOOL_NAME_SEPARATOR = "-";
 export const getMCPFullToolName = ({ server_name, name, }) => {
     return `${server_name}${MCP_TOOL_NAME_SEPARATOR}${name}`;
 };
@@ -1407,23 +1407,50 @@ export const getMCPToolNameParts = (fullName) => {
         return { serverName, toolName };
     }
 };
-export const PROSTGLES_MCP_TOOLS = [
-    {
-        name: getMCPFullToolName({
-            server_name: "prostgles",
-            name: "execute_sql",
-        }),
-        description: "Run SQL query on the current database",
-        input_schema: {
-            type: "object",
-            properties: {
-                sql: {
-                    type: "string",
-                    description: "SQL query to execute",
+export const execute_sql_tool = {
+    name: getMCPFullToolName({
+        server_name: "prostgles",
+        name: "execute_sql",
+    }),
+    description: "Run SQL query on the current database",
+    input_schema: {
+        type: "object",
+        properties: {
+            sql: {
+                type: "string",
+                description: "SQL query to execute",
+            },
+        },
+        required: ["sql"],
+        additionalProperties: false,
+    },
+};
+export const getChoose_tools_for_task = (toolNames = []) => ({
+    name: getMCPFullToolName({
+        server_name: "prostgles",
+        name: "choose_tools_for_task",
+    }),
+    description: "For a given task description and the provided tools, returns a list of tools that can be used to complete the task.",
+    input_schema: {
+        $id: "prostgles.task",
+        $schema: "https://json-schema.org/draft/2020-12/schema",
+        type: "object",
+        required: ["suggested_tools"],
+        properties: {
+            suggested_tools: {
+                type: "array",
+                items: {
+                    type: "object",
+                    required: ["tool_name"],
+                    properties: {
+                        tool_name: Object.assign({ type: "string" }, (toolNames.length ? { enum: toolNames } : {})),
+                    },
                 },
             },
-            required: ["sql"],
-            additionalProperties: false,
         },
     },
+});
+export const PROSTGLES_MCP_TOOLS = [
+    execute_sql_tool,
+    getChoose_tools_for_task(),
 ];

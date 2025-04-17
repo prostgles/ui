@@ -98,7 +98,16 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         jsonbSchemaType: {
           input: "number",
           output: "number",
-          cachedInput: { type: "number", optional: true },
+          cachedInput: {
+            type: "number",
+            description: "Prompt caching write",
+            optional: true,
+          },
+          cachedOutput: {
+            type: "number",
+            description: "Prompt caching read",
+            optional: true,
+          },
           threshold: {
             description:
               "Some providers charge more for tokens above a certain limit",
@@ -166,6 +175,12 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         nullable: true,
         jsonbSchemaType: {
           disable_tools: { type: "boolean", optional: true },
+          prompt_type: {
+            enum: ["chat", "dashboards", "tasks"],
+            optional: true,
+            description:
+              "Internal prompt type used in controlling chat context. Some tools may not be available for all types",
+          },
         },
       },
       created: `TIMESTAMP DEFAULT NOW()`,

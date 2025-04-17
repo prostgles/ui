@@ -11,6 +11,9 @@ export const setupLLM = async (dbs: DBS) => {
         name: "Chat",
         description: "Basic chat",
         user_id,
+        options: {
+          prompt_type: "chat",
+        },
         prompt: [
           "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
           "Assist user with any queries they might have. Do not add empty lines in your sql response.",
@@ -26,6 +29,7 @@ export const setupLLM = async (dbs: DBS) => {
         user_id,
         options: {
           disable_tools: true,
+          prompt_type: "dashboards",
         },
         prompt: [
           "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
@@ -39,6 +43,23 @@ export const setupLLM = async (dbs: DBS) => {
           "Return valid json, markdown compatible and in a clearly delimited section with a json code block.",
           "",
           "${dashboardTypes}",
+        ].join("\n"),
+      },
+      {
+        name: "Tasks",
+        description: "Create tasks. Claude Sonnet recommended",
+        user_id,
+        options: {
+          prompt_type: "tasks",
+        },
+        prompt: [
+          "You are an assistant for a PostgreSQL based software called Prostgles Desktop.",
+          "Assist the user with any queries they might have in their current task mode.",
+          "They expect you to look at the schema and the tools available to them and return a list of tools and configurations they should use to accomplish.",
+          "Below is the database schema they're currently working with:",
+          "",
+          "${schema}",
+          "",
         ].join("\n"),
       },
     ]);
@@ -111,25 +132,40 @@ export const setupLLM = async (dbs: DBS) => {
         id: "Anthropic",
         api_url: "https://api.anthropic.com/v1/messages",
         api_docs_url: "https://docs.anthropic.com/en/api/getting-started",
-        api_pricing_url: "https://www.anthropic.com/pricing#anthropic-api",
+        api_pricing_url: "https://www.anthropic.com/pricing#api",
         extra_body: {
           max_tokens: 2048,
         },
         llm_models: [
           {
             name: "claude-3-7-sonnet-20250219",
-            pricing_info: { input: 3, output: 15 },
+            pricing_info: {
+              input: 3,
+              output: 15,
+              cachedInput: 3.75,
+              cachedOutput: 0.3,
+            },
             mcp_tool_support: true,
           },
           {
             name: "claude-3-5-sonnet-20241022",
-            pricing_info: { input: 3, output: 15 },
+            pricing_info: {
+              input: 3,
+              output: 15,
+              cachedInput: 1,
+              cachedOutput: 0.08,
+            },
             chat_suitability_rank: "1",
             mcp_tool_support: true,
           },
           {
             name: "claude-3-5-sonnet-20240620",
-            pricing_info: { input: 3, output: 15 },
+            pricing_info: {
+              input: 3,
+              output: 15,
+              cachedInput: 1,
+              cachedOutput: 0.08,
+            },
             mcp_tool_support: true,
           },
           {
@@ -138,11 +174,21 @@ export const setupLLM = async (dbs: DBS) => {
           },
           {
             name: "claude-3-5-haiku-20241022",
-            pricing_info: { input: 0.8, output: 4 },
+            pricing_info: {
+              input: 0.8,
+              output: 4,
+              cachedInput: 1,
+              cachedOutput: 0.08,
+            },
           },
           {
             name: "claude-3-opus-20240229",
-            pricing_info: { input: 15, output: 75 },
+            pricing_info: {
+              input: 15,
+              output: 75,
+              cachedInput: 18.75,
+              cachedOutput: 1.5,
+            },
           },
         ],
       },
@@ -173,7 +219,12 @@ export const setupLLM = async (dbs: DBS) => {
           },
           {
             name: "gemini-2.0-flash",
-            pricing_info: { input: 0.1, output: 0.4 },
+            pricing_info: {
+              input: 0.1,
+              output: 0.4,
+              cachedInput: 1,
+              cachedOutput: 0.025,
+            },
             chat_suitability_rank: "3",
           },
           {
@@ -295,7 +346,7 @@ type ModelInfo = {
 );
 
 /**
- * https://www.anthropic.com/pricing#anthropic-api
+ * https://www.anthropic.com/pricing#api
  */
 export const AnthropicModels = [
   { id: "claude-3-7-sonnet-20250219", input: 3, output: 15 },

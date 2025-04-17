@@ -58,6 +58,7 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
         data-command="LLMChatOptions.MCPTools"
         button={
           <Btn
+            title="MCP Tools"
             variant="icon"
             iconPath={mdiTools}
             disabledInfo={

@@ -424,7 +424,7 @@ export type DBGeneratedSchema = {
       mcp_tool_support?: null | boolean;
       model_created?: null | string;
       name: string;
-      pricing_info?: null | {    input: number;   output: number;   cachedInput?: number;   threshold?: {  tokenLimit: number;  input: number;  output: number; };  };
+      pricing_info?: null | {    input: number;   output: number;   cachedInput?: number;   cachedOutput?: number;   threshold?: {  tokenLimit: number;  input: number;  output: number; };  };
       provider_id: string;
     };
   };
@@ -439,7 +439,7 @@ export type DBGeneratedSchema = {
       description?: null | string;
       id?: number;
       name?: string;
-      options?: null | {    disable_tools?: boolean;  };
+      options?: null | {    disable_tools?: boolean;   prompt_type?: 'chat' | 'dashboards' | 'tasks';  };
       prompt: string;
       user_id?: null | string;
     };

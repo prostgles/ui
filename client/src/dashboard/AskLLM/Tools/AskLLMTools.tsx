@@ -7,8 +7,9 @@ import Popup from "../../../components/Popup/Popup";
 import { isEmpty } from "../../../utils";
 import { CodeEditor } from "../../CodeEditor/CodeEditor";
 import type { DBS } from "../../Dashboard/DBS";
-import { useLLMTools, type ApproveRequest } from "./useLLMTools";
+import { useLLMTools } from "./useLLMTools";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { ApproveRequest } from "./useLLMChatAllowedTools";
 
 export type AskLLMToolsProps = {
   dbs: DBS;
