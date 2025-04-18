@@ -41,6 +41,7 @@ jobs:
         if: success() # Ensure version comparison passed
         run: |
           set -x # Print commands and their arguments as they are executed.
+          git fetch origin ${{ github.base_ref }} --depth=0
 
           cd electron 
           pr_version=$(cat pr_version.txt) 
