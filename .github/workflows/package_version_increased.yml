@@ -29,8 +29,7 @@ jobs:
         run: |
           cd electron
           current_version=$(cat current_version.txt)
-          pr_version=$(cat pr_version.txt)
-          echo "pr_version=$pr_version" >> $GITHUB_OUTPUT # Store PR version for later steps
+          pr_version=$(cat pr_version.txt) 
           if [ "$(printf '%s\n' "$current_version" "$pr_version" | sort -V | head -n1)" = "$pr_version" ]; then
             echo "Version in package.json is not greater than the version in the base branch: $current_version <= $pr_version"
             exit 1
