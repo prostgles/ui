@@ -43,7 +43,7 @@ jobs:
       - name: Check Release File and Generate Changelog
         if: success() # Ensure version comparison passed
         run: |
-          set -x # Print commands and their arguments as they are executed.
+          #set -x # Print commands and their arguments as they are executed.
 
           cd electron 
           pr_version=$(cat pr_version.txt) 
@@ -66,7 +66,7 @@ jobs:
 
             # Generate changelog using commits unique to the PR branch
             # Format: '- Subject (hash)'
-            changelog=$(git log --pretty=format:'- %s (%h)' ${merge_base}..HEAD)
+            changelog=$(git log --pretty=format:'- %s (%h)' origin/${base_ref}..HEAD)
 
             if [ -z "$changelog" ]; then
               echo "No distinct commits found between origin/${merge_base} and this PR head to generate changelog."
