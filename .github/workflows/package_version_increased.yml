@@ -41,7 +41,7 @@ jobs:
       - name: Check Release File and Generate Changelog
         if: success() # Ensure version comparison passed
         run: |
-          pr_version="${{ steps.get-versions.outputs.pr_version }}"
+          pr_version=$(cat pr_version.txt)
           base_ref="${{ github.base_ref }}"
           release_file_path="./releases/v${pr_version}"
 
