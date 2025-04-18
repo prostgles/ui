@@ -45,6 +45,9 @@ jobs:
           base_ref="${{ github.base_ref }}"
           release_file_path="./releases/v${pr_version}"
 
+          # Find the point where the PR branch diverged from the base branch
+          merge_base=$(git merge-base origin/${base_ref} HEAD)
+
           echo "Checking for release file: ${release_file_path}"
 
           if [ -f "$release_file_path" ]; then
@@ -52,8 +55,6 @@ jobs:
             echo "::warning::Release notes file for version v${pr_version} already exists. Ensure this is intended."
           else
 
-            # Find the point where the PR branch diverged from the base branch
-            merge_base=$(git merge-base origin/${base_ref} HEAD)
 
             echo "Release file not found for v${pr_version}."
             echo "Generating potential changelog from commits between origin/${merge_base} and PR head..."
