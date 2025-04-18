@@ -14,6 +14,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          # Fetch all history for all branches and tags
+          fetch-depth: 0
 
       - name: Get versions
         id: pr-version
@@ -41,7 +44,6 @@ jobs:
         if: success() # Ensure version comparison passed
         run: |
           set -x # Print commands and their arguments as they are executed.
-          git fetch origin ${{ github.base_ref }} --depth=0
 
           cd electron 
           pr_version=$(cat pr_version.txt) 
