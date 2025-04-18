@@ -30,9 +30,42 @@ jobs:
           cd electron
           current_version=$(cat current_version.txt)
           pr_version=$(cat pr_version.txt)
+          echo "pr_version=$pr_version" >> $GITHUB_OUTPUT # Store PR version for later steps
           if [ "$(printf '%s\n' "$current_version" "$pr_version" | sort -V | head -n1)" = "$pr_version" ]; then
             echo "Version in package.json is not greater than the version in the base branch: $current_version <= $pr_version"
             exit 1
           else
             echo "Version check passed: $current_version <= $pr_version"
+          fi
+
+      - name: Check Release File and Generate Changelog
+        if: success() # Ensure version comparison passed
+        run: |
+          pr_version="${{ steps.get-versions.outputs.pr_version }}"
+          base_ref="${{ github.base_ref }}"
+          release_file_path="./releases/v${pr_version}"
+
+          echo "Checking for release file: ${release_file_path}"
+
+          if [ -f "$release_file_path" ]; then
+            echo "Release file found: ${release_file_path}"
+            echo "::warning::Release notes file for version v${pr_version} already exists. Ensure this is intended."
+          else
+            echo "Release file not found for v${pr_version}."
+            echo "Generating potential changelog from commits between origin/${base_ref} and PR head..."
+
+            # Generate changelog using commits unique to the PR branch
+            # Format: '- Subject (hash)'
+            changelog=$(git log --pretty=format:'- %s (%h)' origin/${base_ref}..HEAD)
+
+            if [ -z "$changelog" ]; then
+              echo "No distinct commits found between origin/${base_ref} and this PR head to generate changelog."
+            else
+              echo "--------------------------------------------------"
+              echo "Generated Changelog for v${pr_version}:"
+              echo "$changelog"
+              echo "--------------------------------------------------"
+              echo "::notice::Please create the release file '${release_file_path}' with appropriate notes based on these changes."
+            fi
+            exit 1
           fi
