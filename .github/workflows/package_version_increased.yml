@@ -24,7 +24,7 @@ jobs:
           git fetch origin ${{ github.base_ref }} --depth=1
           git checkout origin/${{ github.base_ref }} -- package.json
           cat package.json | jq -r .version > current_version.txt
-          cat pr_version.txt >> $GITHUB_OUTPUT # Store PR version for later steps
+          echo "pr_version=$(cat pr_version.txt)" >> $GITHUB_OUTPUT # Store PR version for later steps
 
       - name: Compare versions
         run: |
