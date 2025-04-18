@@ -60,7 +60,7 @@ jobs:
 
             # Generate changelog using commits unique to the PR branch
             # Format: '- Subject (hash)'
-            changelog=$(git log --pretty=format:'- %s (%h)' origin/${merge_base}..HEAD)
+            changelog=$(git log --pretty=format:'- %s (%h)' ${merge_base}..HEAD)
 
             if [ -z "$changelog" ]; then
               echo "No distinct commits found between origin/${merge_base} and this PR head to generate changelog."
