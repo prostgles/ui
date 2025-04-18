@@ -72,5 +72,6 @@ jobs:
               echo "--------------------------------------------------"
               echo "::notice::Please create the release file '${release_file_path}' with appropriate notes based on these changes."
             fi
+            sleep 5
             exit 1
           fi
