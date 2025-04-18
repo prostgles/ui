@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Get versions
-        id: pr_version
+        id: pr-version
         run: |
           sudo apt  install jq
           cd electron
@@ -24,7 +24,6 @@ jobs:
           git fetch origin ${{ github.base_ref }} --depth=1
           git checkout origin/${{ github.base_ref }} -- package.json
           cat package.json | jq -r .version > current_version.txt
-          echo "pr_version=$(cat pr_version.txt)" >> $GITHUB_OUTPUT # Store PR version for later steps
 
       - name: Compare versions
         run: |
@@ -41,7 +40,8 @@ jobs:
       - name: Check Release File and Generate Changelog
         if: success() # Ensure version comparison passed
         run: |
-          pr_version="${{ steps.get-versions.outputs.pr_version }}"
+          cd electron 
+          pr_version=$(cat pr_version.txt) 
           base_ref="${{ github.base_ref }}"
           release_file_path="./releases/v${pr_version}"
 
@@ -51,15 +51,19 @@ jobs:
             echo "Release file found: ${release_file_path}"
             echo "::warning::Release notes file for version v${pr_version} already exists. Ensure this is intended."
           else
+
+            # Find the point where the PR branch diverged from the base branch
+            merge_base=$(git merge-base origin/${base_ref} HEAD)
+
             echo "Release file not found for v${pr_version}."
-            echo "Generating potential changelog from commits between origin/${base_ref} and PR head..."
+            echo "Generating potential changelog from commits between origin/${merge_base} and PR head..."
 
             # Generate changelog using commits unique to the PR branch
             # Format: '- Subject (hash)'
-            changelog=$(git log --pretty=format:'- %s (%h)' origin/${base_ref}..HEAD)
+            changelog=$(git log --pretty=format:'- %s (%h)' origin/${merge_base}..HEAD)
 
             if [ -z "$changelog" ]; then
-              echo "No distinct commits found between origin/${base_ref} and this PR head to generate changelog."
+              echo "No distinct commits found between origin/${merge_base} and this PR head to generate changelog."
             else
               echo "--------------------------------------------------"
               echo "Generated Changelog for v${pr_version}:"
