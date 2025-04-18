@@ -40,6 +40,8 @@ jobs:
       - name: Check Release File and Generate Changelog
         if: success() # Ensure version comparison passed
         run: |
+          set -x # Print commands and their arguments as they are executed.
+
           cd electron 
           pr_version=$(cat pr_version.txt) 
           base_ref="${{ github.base_ref }}"
