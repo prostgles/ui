@@ -3,11 +3,12 @@ import "./Chat.css";
 
 import { mdiAttachment, mdiMicrophone, mdiSend, mdiStop } from "@mdi/js";
 import Btn from "../Btn";
-import { classOverride, FlexRow } from "../Flex";
+import { classOverride, FlexCol, FlexRow } from "../Flex";
 import { Icon } from "../Icon/Icon";
 import { ChatMessage } from "./ChatMessage";
+import { useChatOnPaste } from "./useChatOnPaste";
 import { useAudioRecorder } from "./utils/AudioRecorder";
-import { tryCatchV2 } from "../../dashboard/WindowControls/TimeChartLayerOptions";
+import { useDropZone } from "../FileInput/DropZone";
 
 export type Message = {
   id: number | string;
@@ -39,6 +40,7 @@ export type ChatProps = {
     file: boolean;
   }>;
   disabledInfo?: string;
+  actionBar?: React.ReactNode;
 };
 
 export const Chat = (props: ChatProps) => {
@@ -52,6 +54,7 @@ export const Chat = (props: ChatProps) => {
       audio: false,
       file: false,
     },
+    actionBar,
   } = props;
 
   const [scrollRef, setScrollRef] = useState<HTMLDivElement>();
@@ -72,7 +75,10 @@ export const Chat = (props: ChatProps) => {
 
   useEffect(() => {
     if (scrollRef) {
-      scrollRef.scrollTo(0, scrollRef.scrollHeight);
+      setTimeout(() => {
+        scrollRef.scrollTo(0, scrollRef.scrollHeight);
+        /** Wait for base64 images to load and resize */
+      }, 10);
     }
   }, [messages, scrollRef]);
 
@@ -97,46 +103,17 @@ export const Chat = (props: ChatProps) => {
     }
   };
 
-  const handleOnPaste = useCallback(
-    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-      const files = e.clipboardData.files;
-      for (const file of files) {
-        e.preventDefault();
-        onSend("", file, file.name, file.type);
-      }
-      if (!files.length) {
-        const types = e.clipboardData.types;
-        const vsCodeTypes = [
-          "application/vnd.code.copymetadata",
-          "vscode-editor-data",
-        ];
-        if (vsCodeTypes.some((vsType) => types.includes(vsType))) {
-          e.preventDefault();
-          const text = e.clipboardData.getData("text/plain");
-          const vsData = e.clipboardData.getData("vscode-editor-data");
-          const { data: languageRaw = "" } = tryCatchV2(() => {
-            const result = JSON.parse(vsData).mode;
-            return result as string;
-          });
-          const language =
-            (
-              {
-                typescriptreact: "tsx",
-              } as const
-            )[languageRaw] ?? languageRaw;
+  const { handleOnPaste } = useChatOnPaste({
+    textAreaRef: ref,
+    onSend,
+    setCurrentMessage,
+  });
 
-          const codeSnippetText = ["```" + language, text, "```"].join("\n");
-          /** If existing text then place correctly */
-          if (ref.current) {
-            insertCodeSnippetAtCursor(ref.current, codeSnippetText);
-          } else {
-            setCurrentMessage(codeSnippetText);
-          }
-        }
-      }
-    },
-    [onSend],
-  );
+  const { isEngaged, ...divHandlers } = useDropZone(([file]) => {
+    if (file) {
+      onSend("", file, file.name, file.type);
+    }
+  });
 
   return (
     <div
@@ -162,23 +139,32 @@ export const Chat = (props: ChatProps) => {
           (sendingMsg || disabledInfo ? "no-interaction not-allowed" : "")
         }
       >
-        <textarea
-          ref={ref}
-          className="no-scroll-bar bg-color-2 text-0"
-          rows={1}
-          defaultValue={getCurrentMessage()}
-          onPaste={handleOnPaste}
-          onKeyDown={(e) => {
-            if (
-              ref.current &&
-              !e.shiftKey &&
-              e.key.toLocaleLowerCase() === "enter"
-            ) {
-              e.preventDefault();
-              sendMsg(ref.current.value);
-            }
-          }}
-        />
+        <FlexCol
+          className={
+            "f-1 rounded ml-1 p-p5 " +
+            (isEngaged ? "active-shadow bg-action" : "bg-color-2 ")
+          }
+          {...divHandlers}
+        >
+          <textarea
+            ref={ref}
+            className="no-scroll-bar text-0 bg-transparent"
+            rows={1}
+            defaultValue={getCurrentMessage()}
+            onPaste={handleOnPaste}
+            onKeyDown={(e) => {
+              if (
+                ref.current &&
+                !e.shiftKey &&
+                e.key.toLocaleLowerCase() === "enter"
+              ) {
+                e.preventDefault();
+                sendMsg(ref.current.value);
+              }
+            }}
+          />
+          {actionBar}
+        </FlexCol>
         <FlexRow className="as-end gap-p5 p-p5">
           <Btn
             iconPath={mdiSend}
@@ -224,28 +210,4 @@ export const Chat = (props: ChatProps) => {
       </div>
     </div>
   );
-};
-
-// Function to insert text at cursor position
-const insertCodeSnippetAtCursor = (
-  textarea: HTMLTextAreaElement,
-  text: string,
-) => {
-  const startPos = textarea.selectionStart;
-  const endPos = textarea.selectionEnd;
-  let beforeText = textarea.value.substring(0, startPos);
-  let afterText = textarea.value.substring(endPos);
-
-  if (beforeText.length) {
-    beforeText = beforeText + "\n";
-  }
-  if (afterText.length) {
-    afterText = "\n" + afterText;
-  }
-  // Set the new value with the pasted text inserted
-  textarea.value = beforeText + text + afterText;
-
-  // Move the cursor to after the inserted text
-  const newCursorPos = startPos + text.length;
-  textarea.setSelectionRange(newCursorPos, newCursorPos);
 };

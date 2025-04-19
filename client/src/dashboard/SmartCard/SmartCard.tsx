@@ -1,4 +1,4 @@
-import { mdiPencil, mdiResize } from "@mdi/js";
+import { usePromise } from "prostgles-client/dist/react-hooks";
 import {
   isDefined,
   type AnyObject,
@@ -8,20 +8,15 @@ import {
 import React, { useMemo, useState } from "react";
 import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
 import type { Prgl } from "../../App";
-import Btn from "../../components/Btn";
-import Checkbox from "../../components/Checkbox";
 import { classOverride } from "../../components/Flex";
-import { Label } from "../../components/Label";
 import Loading from "../../components/Loading";
-import RTComp from "../RTComp";
-import type { SmartFormProps } from "../SmartForm/SmartForm";
-import { SmartForm } from "../SmartForm/SmartForm";
-import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
 import type { SmartCardListProps } from "../SmartCardList/SmartCardList";
+import type { SmartFormProps } from "../SmartForm/SmartForm";
+import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
 import { getSmartCardColumns } from "./getSmartCardColumns";
 import { getDefaultFieldConfig, parseFieldConfigs } from "./parseFieldConfigs";
-import { usePromise } from "prostgles-client/dist/react-hooks";
 import { SmartCardColumn } from "./SmartCardColumn";
+import { SmartCardActions } from "./SmartCardActions";
 
 type NestedSmartCardProps = Pick<SmartCardProps, "footer" | "excludeNulls">;
 type NestedSmartFormProps = Pick<
@@ -112,6 +107,7 @@ export type SmartCardProps<T extends AnyObject = any> = Pick<
 
     title?: React.ReactNode;
     footer?: (row: AnyObject) => React.ReactNode;
+    getActions?: (row: AnyObject) => React.ReactNode;
 
     enableInsert?: boolean;
 
@@ -128,155 +124,46 @@ export type SmartCardProps<T extends AnyObject = any> = Pick<
   };
 
 const DEFAULT_VARIANT = "row-wrap";
-type S = {
-  editMode: boolean;
-  columns?: Pick<
-    ValidatedColumnInfo,
-    | "name"
-    | "label"
-    | "udt_name"
-    | "is_nullable"
-    | "has_default"
-    | "tsDataType"
-    | "is_pkey"
-    | "references"
-    | "hint"
-  >[];
-  variant?: SmartCardProps<any>["variant"];
-  tableInfo?: TableInfo;
-  item?: AnyObject;
-};
 
 export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
-  // extends RTComp<
-  //   SmartCardProps<T>,
-  //   S
-  // > {
-  //   state: S = {
-  //     editMode: false,
-  //     columns: undefined,
-  //     variant: undefined,
-  //   };
-
-  //   _rowFilter?: DetailedFilterBase[];
-  //   onDelta = async () => {
-  //     const { tableName, db, columns, rowFilter } = this.props;
-  //     if (!this.state.columns) {
-  //       this.setState({
-  //         columns: columns ?? (await getSmartCardColumns(this.props)),
-  //       });
-  //     }
-
-  //     if (typeof tableName === "string") {
-  //       const tableHandler = db[tableName];
-  //       if (
-  //         rowFilter &&
-  //         JSON.stringify(rowFilter !== this._rowFilter) &&
-  //         tableHandler?.find
-  //       ) {
-  //         const items = await tableHandler.find(rowFilter, { limit: 2 });
-  //         if (items.length !== 1) {
-  //           console.error("Expected exactly one item");
-  //         } else {
-  //           this.setState({ item: items[0] });
-  //         }
-  //       }
-  //     }
-  //   };
-
-  //   render() {
   const {
     db,
-    tables,
-    methods,
     tableName,
-    onChange,
     className = "",
     style = {},
     disableVariantToggle = false,
     hideColumns,
     fieldConfigs: _fieldConfigs,
     footer = null,
-    enableInsert = true,
     title,
-    showViewEditBtn = true,
-    smartFormProps = {},
     excludeNulls,
-    onChanged,
     defaultData,
     contentClassname = "",
     contentStyle = {},
     columns: columnsFromProps,
-    rowFilter,
+    showViewEditBtn = true,
+    enableInsert = true,
   } = props;
-  const [editMode, setEditMode] = useState(false);
   const [variant, setVariant] = useState(props.variant ?? DEFAULT_VARIANT);
   const fetchedColumns = usePromise(async () => {
     if (columnsFromProps) return undefined;
     return await getSmartCardColumns({ tableName, db });
   }, [columnsFromProps, tableName, db]);
-  const columns = columnsFromProps ?? fetchedColumns;
+  const cardColumns = columnsFromProps ?? fetchedColumns;
 
-  const localRowFilter = useMemo(() => {
-    if (rowFilter || !columns) return rowFilter;
-    const hasPkeys = columns.some((c) => c.is_pkey);
-    const pkeyCols = columns.filter(
-      (c) =>
-        (hasPkeys ? c.is_pkey : c.references?.length) && defaultData[c.name],
-    );
-    if (pkeyCols.some((c) => defaultData[c.name])) {
-      return pkeyCols.map((c) => ({
-        fieldName: c.name,
-        value: defaultData[c.name],
-      }));
-    }
-    return rowFilter;
-  }, [columns, defaultData, rowFilter]);
-
-  if (!columns) {
+  if (!cardColumns) {
     return <Loading />;
   }
-
-  const tableHandler =
-    typeof tableName === "string" ? db[tableName] : undefined;
-  const allowedActions = {
-    view: showViewEditBtn && Boolean(tableHandler?.find && localRowFilter),
-    delete: showViewEditBtn && Boolean(tableHandler?.delete && localRowFilter),
-    update:
-      showViewEditBtn &&
-      (Boolean(onChange) || Boolean(tableHandler?.update && localRowFilter)),
-    insert: Boolean(tableHandler?.insert),
-  };
 
   const variantClass =
     variant === "row-wrap" ? "flex-row-wrap ai-start"
     : variant === "row" ? "flex-row ai-start"
     : "flex-col ai-start ";
 
-  let popup;
-  if (editMode && typeof tableName === "string") {
-    popup = (
-      <SmartForm
-        db={db}
-        tables={tables}
-        methods={methods}
-        asPopup={true}
-        tableName={tableName}
-        onChange={onChange}
-        rowFilter={localRowFilter}
-        confirmUpdates={true}
-        enableInsert={enableInsert}
-        onSuccess={onChanged}
-        {...smartFormProps}
-        onClose={() => {
-          setEditMode(false);
-        }}
-      />
-    );
-  }
-
   const displayedColumns =
-    hideColumns ? columns.filter((c) => hideColumns.includes(c.name)) : columns;
+    hideColumns ?
+      cardColumns.filter((c) => hideColumns.includes(c.name))
+    : cardColumns;
 
   const fieldConfigs =
     parseFieldConfigs(_fieldConfigs) || getDefaultFieldConfig(displayedColumns);
@@ -284,7 +171,7 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
   const cols: {
     name: string;
     fc?: ParsedFieldConfig;
-    col?: (typeof columns)[number];
+    col?: (typeof cardColumns)[number];
   }[] = fieldConfigs
     .filter((fc) => !fc.hide)
     .map((fc: ParsedFieldConfig) => ({
@@ -328,61 +215,47 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
     });
 
   return (
-    <>
-      {popup}
-      <div
-        className={classOverride(
-          `SmartCard card bg-color-0 relative ${variantClass} ${disableVariantToggle ? "" : " pointer "}`,
-          className,
-        )}
-        style={{ padding: ".25em", ...style }}
-        onClick={
-          disableVariantToggle ? undefined : (
-            () => {
-              const v = variant;
-              setVariant(
-                v === "row" ? "col"
-                : v === "col" ? DEFAULT_VARIANT
-                : "row",
-              );
-            }
-          )
-        }
-      >
-        <div className="flex-col min-w-0 min-h-0 f-1">
-          <div className="f-0">{title}</div>
-          <div
-            className={classOverride(
-              `SmartCardContent o-auto f-1 min-w-0 min-h-0 gap-p5 p-p5 parent-hover ${variantClass}`,
-              contentClassname,
-            )}
-            style={{ columnGap: "1em", ...contentStyle }}
-          >
-            {content}
-          </div>
-          {footer?.(defaultData)}
+    <div
+      className={classOverride(
+        `SmartCard card bg-color-0 relative ${variantClass} ${disableVariantToggle ? "" : " pointer "}`,
+        className,
+      )}
+      style={{ padding: ".25em", ...style }}
+      onClick={
+        disableVariantToggle ? undefined : (
+          () => {
+            const v = variant;
+            setVariant(
+              v === "row" ? "col"
+              : v === "col" ? DEFAULT_VARIANT
+              : "row",
+            );
+          }
+        )
+      }
+    >
+      <div className="flex-col min-w-0 min-h-0 f-1">
+        <div className="f-0">{title}</div>
+        <div
+          className={classOverride(
+            `SmartCardContent o-auto f-1 min-w-0 min-h-0 gap-p5 p-p5 parent-hover ${variantClass}`,
+            contentClassname,
+          )}
+          style={{ columnGap: "1em", ...contentStyle }}
+        >
+          {content}
         </div>
-        {allowedActions.update || allowedActions.delete || allowedActions.view ?
-          <Btn
-            className="f-0 show-on-parent-hover"
-            data-command="SmartCard.viewEditRow"
-            style={{ top: "0.25em", right: "0.25em" }}
-            iconPath={
-              allowedActions.update || allowedActions.delete ?
-                mdiPencil
-              : mdiResize
-            }
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setEditMode(true);
-            }}
-          />
-        : null}
+        {footer?.(defaultData)}
       </div>
-    </>
+      <SmartCardActions
+        {...props}
+        enableInsert={enableInsert}
+        showViewEditBtn={showViewEditBtn}
+        cardColumns={cardColumns}
+        defaultData={defaultData}
+      />
+    </div>
   );
-  // }
 };
 
 export function nFormatter(num: number, digits: number): string {

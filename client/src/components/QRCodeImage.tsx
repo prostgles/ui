@@ -35,7 +35,7 @@ export const QRCodeImage = ({ size, url, variant }: QRCodeImageProps) => {
   if (variant === "canvas-only") return canvas;
 
   const wrappedCanvas = (
-    <a href={url} target={"_blank"}>
+    <a href={url} target={"_blank"} rel="noreferrer">
       {/* {window.isMobileDevice && <div>Tap image</div>} */}
       {canvas}
     </a>

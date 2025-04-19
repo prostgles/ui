@@ -1,5 +1,6 @@
 import { isDefined, isObject, omitKeys } from "prostgles-types";
 import type { FetchLLMResponseArgs } from "./fetchLLMResponse";
+import { filterArr } from "../../../../commonTypes/llmUtils";
 
 export const getLLMRequestBody = ({
   llm_provider,
@@ -59,7 +60,20 @@ export const getLLMRequestBody = ({
             }
           : c,
         ),
-        messages,
+        messages: messages.map((m) => ({
+          ...m,
+          content: m.content.map((c) => {
+            return c.type === "image" ?
+                {
+                  type: "image",
+                  source: {
+                    ...c.source,
+                    data: removeBase64Prefix(c.source.data),
+                  },
+                }
+              : c;
+          }),
+        })),
         tools,
       }
     : provider === "Prostgles" ?
@@ -90,6 +104,14 @@ export const getLLMRequestBody = ({
             : m.role,
           parts: m.content
             .map((c) => {
+              // if (c.type === "image") {
+              //   return {
+              //     inlineData: {
+              //       mimeType: c.source.media_type,
+              //       data: removeBase64Prefix(c.source.data),
+              //     },
+              //   };
+              // }
               if (c.type === "text") return { text: c.text };
               if (c.type === "tool_use") {
                 return {
@@ -142,14 +164,62 @@ export const getLLMRequestBody = ({
       {
         model,
         messages: messages.map((m) => {
-          if (m.content.some((c) => c.type === "tool_result")) {
+          const isToolUse = filterArr(m.content, { type: "tool_use" as const });
+          if (isToolUse.length) {
             return {
-              ...m,
-              name: m.content,
-              role: "tool",
+              role: "assistant",
+              content: null,
+              tool_calls: isToolUse.map((tc) => ({
+                id: tc.id,
+                type: "function",
+                function: {
+                  name: tc.name,
+                  arguments: JSON.stringify(tc.input),
+                },
+              })),
             };
           }
-          return m;
+          const [isToolUseResult] = filterArr(m.content, {
+            type: "tool_result" as const,
+          });
+          if (isToolUseResult) {
+            const [firstContent] = isToolUseResult.content;
+            return {
+              role: "tool",
+              tool_call_id: isToolUseResult.tool_use_id,
+              content:
+                typeof firstContent === "string" ? firstContent
+                : firstContent?.type === "text" ? firstContent.text
+                : "?? Internal issue in tool result parsing in prostgles ui",
+            };
+          }
+          return {
+            ...m,
+            content: m.content.map((c) => {
+              if (c.type === "image") {
+                return {
+                  type: "image_url",
+                  image_url: { url: c.source.data },
+                };
+              }
+              if (c.type === "tool_result") {
+                return {
+                  type: "function_call_output",
+                  call_id: c.tool_use_id,
+                  output:
+                    typeof c.content === "string" ?
+                      c.content
+                    : (filterArr(c.content, { type: "text" as const })[0]
+                        ?.text ??
+                      "?? Internal issue in tool result parsing in prostgles ui"),
+                };
+              }
+              return c;
+            }),
+            ...(m.content.some((c) => c.type === "tool_result") && {
+              role: "tool",
+            }),
+          };
         }),
         tools: tools?.map((t) => ({
           type: "function",
@@ -178,4 +248,12 @@ export const getLLMRequestBody = ({
       ...llm_model.extra_headers,
     },
   };
+};
+
+const removeBase64Prefix = (data: string) => {
+  const base64Prefix = "base64,";
+  if (data.includes(base64Prefix)) {
+    return data.substring(data.indexOf("base64,") + 7);
+  }
+  return data;
 };

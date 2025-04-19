@@ -1,15 +1,20 @@
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback } from "react";
+import {
+  executeSQLTool,
+  getSuggestedTaskTools,
+} from "../../../../../commonTypes/mcp";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../../App";
-import { FlexCol } from "../../../components/Flex";
+import { FlexCol, FlexRow } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
 import Popup from "../../../components/Popup/Popup";
 import { isEmpty } from "../../../utils";
 import { CodeEditor } from "../../CodeEditor/CodeEditor";
 import type { DBS } from "../../Dashboard/DBS";
+import { type ApproveRequest } from "./useLLMChatAllowedTools";
 import { useLLMTools } from "./useLLMTools";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import type { ApproveRequest } from "./useLLMChatAllowedTools";
+import Loading from "../../../components/Loading";
 
 export type AskLLMToolsProps = {
   dbs: DBS;
@@ -21,8 +26,9 @@ export type AskLLMToolsProps = {
   ) => Promise<void>;
   callMCPServerTool: Prgl["dbsMethods"]["callMCPServerTool"];
 } & Pick<Prgl, "methods">;
+const taskTool = getSuggestedTaskTools();
 
-export const AskLLMTools = (props: AskLLMToolsProps) => {
+export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
   const { dbs, activeChat } = props;
   const activeChatId = activeChat.id;
   const [mustApprove, setMustApprove] = React.useState<
@@ -32,7 +38,7 @@ export const AskLLMTools = (props: AskLLMToolsProps) => {
     } & ApproveRequest
   >();
 
-  const requestApproval = useCallback(
+  const onRequestToolUse = useCallback(
     async (req: ApproveRequest, input: any) => {
       return new Promise<{ approved: boolean }>((resolve) => {
         setMustApprove({
@@ -58,7 +64,7 @@ export const AskLLMTools = (props: AskLLMToolsProps) => {
                     auto_approve: true,
                   },
                 );
-              } else {
+              } else if (req.name === executeSQLTool.name) {
                 await dbs.llm_chats.update(
                   {
                     id: activeChatId,
@@ -69,6 +75,12 @@ export const AskLLMTools = (props: AskLLMToolsProps) => {
                       auto_approve: true,
                     },
                   },
+                );
+              } else if (req.name === taskTool.name) {
+                // Task tool cannot be auto-approved
+              } else {
+                throw new Error(
+                  `Unexpected tool use request ${req.name} (${req.type})`,
                 );
               }
             }
@@ -87,7 +99,7 @@ export const AskLLMTools = (props: AskLLMToolsProps) => {
     ],
   );
 
-  useLLMTools({ ...props, requestApproval });
+  useLLMTools({ ...props, requestApproval: onRequestToolUse });
 
   if (!mustApprove) return null;
 
@@ -108,6 +120,7 @@ export const AskLLMTools = (props: AskLLMToolsProps) => {
       rootStyle={{
         maxWidth: "min(600px, 100vw)",
       }}
+      contentClassName="p-1"
       footerButtons={[
         {
           label: "Deny",
@@ -140,12 +153,11 @@ export const AskLLMTools = (props: AskLLMToolsProps) => {
       ]}
     >
       <FlexCol>
-        <h4 className="mb-0 ta-start">
-          {mustApprove.type === "mcp" ?
-            `Run ${mustApprove.name} from ${mustApprove.server_name}`
-          : `Run ${name}`}
-        </h4>
-        <InfoRow variant="naked" iconPath="">
+        <FlexRow>
+          Run <strong>{mustApprove.name}</strong>
+          {mustApprove.type === "mcp" && <>from {mustApprove.server_name}</>}
+        </FlexRow>
+        <InfoRow variant="naked" iconPath="" color="info">
           {description}
         </InfoRow>
         {input && !isEmpty(input) && (

@@ -7,15 +7,21 @@ import PopupMenu from "../../../components/PopupMenu";
 import { SwitchToggle } from "../../../components/SwitchToggle";
 import { CodeEditor } from "../../../dashboard/CodeEditor/CodeEditor";
 import type { ServerSettingsProps } from "../ServerSettings";
-import { MCPServerConfigButton } from "./MCPServerConfig";
+import {
+  MCPServerConfig,
+  MCPServerConfigButton,
+  useMCPServerEnable,
+} from "./MCPServerConfig";
 import { MCPServersInstall } from "./MCPServersInstall";
 
-type P = Pick<ServerSettingsProps, "dbs" | "dbsMethods"> & {
-  r: DBSSchema["mcp_servers"] & {
+export type MCPServerFooterActionsProps = Pick<
+  ServerSettingsProps,
+  "dbs" | "dbsMethods"
+> & {
+  mcp_server: DBSSchema["mcp_servers"] & {
     mcp_server_configs: DBSSchema["mcp_server_configs"][];
     mcp_server_logs: DBSSchema["mcp_server_logs"][];
   };
-  setServerConfig: (arg: { name: string } | undefined) => void;
   envInfo:
     | {
         os: string;
@@ -25,26 +31,36 @@ type P = Pick<ServerSettingsProps, "dbs" | "dbsMethods"> & {
     | undefined;
 };
 export const MCPServerFooterActions = ({
-  r,
+  mcp_server,
   dbs,
   dbsMethods,
-  setServerConfig,
   envInfo,
-}: P) => {
+}: MCPServerFooterActionsProps) => {
   const { reloadMcpServerTools } = dbsMethods;
-  const { mcp_server_configs, config_schema } = r;
+  const { mcp_server_configs, config_schema } = mcp_server;
   const config: DBSSchema["mcp_server_configs"] | undefined =
     mcp_server_configs[0];
   const logItem: DBSSchema["mcp_server_logs"] | undefined =
-    r.mcp_server_logs[0];
+    mcp_server.mcp_server_logs[0];
+
+  const { onToggle, setShowServerConfig, showServerConfig } =
+    useMCPServerEnable({
+      dbs,
+      mcp_server,
+    });
+
   return (
     <FlexRow className="jc-end">
-      {r.source && (
-        <MCPServersInstall name={r.name} dbs={dbs} dbsMethods={dbsMethods} />
+      {mcp_server.source && (
+        <MCPServersInstall
+          name={mcp_server.name}
+          dbs={dbs}
+          dbsMethods={dbsMethods}
+        />
       )}
       {logItem && (
         <PopupMenu
-          title={`MCP Server ${JSON.stringify(r.name)} stderr logs`}
+          title={`MCP Server ${JSON.stringify(mcp_server.name)} stderr logs`}
           positioning="center"
           className="mr-auto ml-p25"
           button={
@@ -74,38 +90,49 @@ export const MCPServerFooterActions = ({
           dbs={dbs}
           schema={config_schema}
           existingConfig={{ id: config.id, value: config.config }}
-          serverName={r.name}
+          serverName={mcp_server.name}
         />
       )}
       {reloadMcpServerTools && (
         <Btn
           iconPath={mdiReload}
-          disabledInfo={r.enabled ? undefined : "Must enable server first"}
+          disabledInfo={
+            mcp_server.enabled ? undefined : "Must enable server first"
+          }
           title={"Reload tools"}
           onClickPromise={async () => {
-            const toolCount = await reloadMcpServerTools(r.name);
+            const toolCount = await reloadMcpServerTools(mcp_server.name);
             alert(`Reloaded ${toolCount || 0} tools`);
           }}
         />
       )}
       <SwitchToggle
-        title={!r.enabled ? "Press to enable" : "Press to disable"}
+        title={!mcp_server.enabled ? "Press to enable" : "Press to disable"}
         disabledInfo={
-          (r.command === "npx" || r.command === "npm") && !envInfo?.npmVersion ?
+          (
+            (mcp_server.command === "npx" || mcp_server.command === "npm") &&
+            !envInfo?.npmVersion
+          ) ?
             "Must install npm"
-          : r.command === "uvx" && !envInfo?.uvxVersion ?
+          : mcp_server.command === "uvx" && !envInfo?.uvxVersion ?
             "Must install uvx"
           : undefined
         }
-        checked={!!r.enabled}
-        onChange={(enabled) => {
-          if (!r.enabled && r.config_schema && !r.mcp_server_configs.length) {
-            setServerConfig({ name: r.name });
-          } else {
-            dbs.mcp_servers.update({ name: r.name }, { enabled });
-          }
-        }}
+        checked={!!mcp_server.enabled}
+        onChange={onToggle}
       />
+
+      {showServerConfig && (
+        <MCPServerConfig
+          existingConfig={undefined}
+          dbs={dbs}
+          onDone={() => {
+            showServerConfig();
+            setShowServerConfig(false);
+          }}
+          serverName={mcp_server.name}
+        />
+      )}
     </FlexRow>
   );
 };

@@ -1,10 +1,9 @@
 import { mdiChevronLeft } from "@mdi/js";
-import React from "react";
-import RTComp from "../dashboard/RTComp";
-import Popup from "./Popup/Popup";
-import { Icon } from "./Icon/Icon";
-import { FlexCol } from "./Flex";
+import React, { useCallback, useEffect } from "react";
 import Chip from "./Chip";
+import { FlexCol } from "./Flex";
+import { Icon } from "./Icon/Icon";
+import Popup from "./Popup/Popup";
 
 export const ContentTypes = ["image", "video", "audio"] as const;
 type ValidContentType = (typeof ContentTypes)[number];
@@ -29,207 +28,221 @@ type P = {
   content_type?: ValidContentType;
 };
 
-type S = {
-  isFocused: boolean;
+export const MediaViewer = (props: P) => {
+  const { onPrevOrNext, style, content_type, url, allowedHostnames } = props;
+  const [isFocused, setIsFocused] = React.useState(false);
+  const [urlInfo, setUrlInfo] = React.useState<UrlInfo | undefined>(
+    content_type && url ?
+      {
+        raw: url,
+        validated: url,
+        type: content_type,
+        content_type,
+      }
+    : undefined,
+  );
 
-  url?: {
-    raw: string;
-    validated: string;
-    content_type?: string; // If undefined then show as URL
-    type?: ValidContentType;
-  };
-};
+  const setURL = useCallback(
+    async (url: string) => {
+      if (!url) return;
 
-export class MediaViewer extends RTComp<P, S> {
-  state: S = {
-    isFocused: false,
-    url: undefined,
-  };
+      let contentType: string | undefined = content_type;
+      if (!content_type) {
+        const mime = await fetchMimeFromURLHead(url);
+        contentType = mime?.split(";")?.[0]?.trim();
+      }
 
-  rawURL?: string;
-
-  onKeyDown = (e: KeyboardEvent) => {
-    const { onPrevOrNext } = this.props;
-    if (e.key === "ArrowRight") {
-      e.preventDefault();
-      onPrevOrNext?.(1);
-    } else if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      onPrevOrNext?.(-1);
-    }
-  };
-
-  setURL = async (url: string) => {
-    if (!url) return;
-
-    const { content_type } = this.props;
-    let contentType: string | undefined = content_type;
-    if (!content_type) {
-      const mime = await fetchMimeFromURLHead(url);
-      contentType = mime?.split(";")?.[0]?.trim();
-    }
-
-    this.setState({
-      url: {
+      setUrlInfo({
         raw: url,
         validated: url,
         type: ContentTypes.find((ct) => contentType?.startsWith(ct)),
         content_type: contentType,
-      },
-    });
-  };
+      });
+    },
+    [content_type],
+  );
 
-  onDelta(dP) {
-    const { url, allowedHostnames } = this.props;
-
-    if (dP?.url && url && this.rawURL !== url) {
-      this.rawURL = url;
-      if (allowedHostnames) {
-        try {
-          const u = new URL(url);
-          if (!allowedHostnames.includes(u.hostname)) {
-            throw `Hostname ${u.hostname} is not allowed. Allowed hostnames: ${allowedHostnames}`;
-          }
-          this.setURL(url);
-        } catch (e) {
-          console.error("Could check media URL", e);
+  useEffect(() => {
+    if (!url) return;
+    if (allowedHostnames) {
+      try {
+        const u = new URL(url);
+        if (!allowedHostnames.includes(u.hostname)) {
+          throw `Hostname ${u.hostname} is not allowed. Allowed hostnames: ${allowedHostnames}`;
         }
-      } else {
-        this.setURL(url);
+        setURL(url);
+      } catch (e) {
+        console.error("Could check media URL", e);
       }
+    } else {
+      setURL(url);
     }
-  }
+  }, []);
 
-  renderMedia = (contentOnly = false) => {
-    if (!this.state.url) return null;
-
-    const { isFocused } = this.state;
-    const { validated: url, type = "", content_type } = this.state.url;
-    let mediaContent: React.ReactNode = null;
-    if (url) {
-      const commonProps = {
-        style: {
-          minHeight: 0,
-          flex:
-            type === "audio" ? "none"
-            : type === "image" ? undefined
-            : 1,
-          maxWidth: "100%",
-          maxHeight: "100%",
-          objectFit: "contain",
-          ...(isFocused && contentOnly ? {} : this.props.style),
-          ...(type === "audio" &&
-            isFocused && {
-              margin: "2em",
-              border: "unset",
-            }),
-        },
-        // className: "b b-color "
-      } as const;
-      if (type === "image") {
-        mediaContent = <img loading="lazy" src={url} {...commonProps}></img>;
-      } else if (type === "video") {
-        mediaContent = (
-          <video {...commonProps} controls src={url} preload="metadata"></video>
-        );
-      } else if (type === "audio") {
-        mediaContent = <audio {...commonProps} controls src={url}></audio>;
-      } else if (!isFocused && url) {
-        mediaContent = (
-          <FlexCol className="f-0 p-p5 gap-p25">
-            {/* <a href={url} target="_blank" className="f-0">{url}</a>  */}
-            <Chip value={content_type ?? "Not found"} />
-          </FlexCol>
-        );
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        onPrevOrNext?.(1);
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        onPrevOrNext?.(-1);
       }
-    }
+    },
+    [onPrevOrNext],
+  );
 
-    if (!contentOnly) {
-      return (
-        <div
-          className="MediaViewer relative f-1 noselect flex-row min-h-0"
-          style={this.props.style}
-        >
-          {mediaContent}
-          <div
-            className={"absolute w-full h-full pointer"}
-            style={{ zIndex: 1, inset: 0 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              this.setState({ isFocused: true });
-            }}
-          ></div>
-        </div>
-      );
-    }
-    return mediaContent;
-  };
-
-  render() {
-    const { url, isFocused } = this.state;
-    const { onPrevOrNext } = this.props;
-
-    if (isFocused) {
-      const toggleClick =
-        !onPrevOrNext ? undefined : (
-          (increment: 1 | -1) => {
-            const { url } = onPrevOrNext(increment);
-            if (url) {
-              this.setURL(url);
-            }
+  const toggleClick =
+    !onPrevOrNext ? undefined : (
+      (increment: 1 | -1) => {
+        const { url } = onPrevOrNext(increment);
+        if (url) {
+          setURL(url);
+        }
+      }
+    );
+  return (
+    <>
+      <RenderMedia
+        isFocused={isFocused}
+        setIsFocused={setIsFocused}
+        style={style}
+        urlInfo={urlInfo}
+        contentOnly={false}
+      />
+      {isFocused && (
+        <Popup
+          rootStyle={{ padding: 0, borderRadius: 0 }}
+          clickCatchStyle={{ opacity: 0.2 }}
+          contentClassName="o-hidden"
+          onClose={() => {
+            setIsFocused(false);
+          }}
+          autoFocusFirst={"content"}
+          focusTrap={true}
+          title={
+            !urlInfo ? "" : (
+              <a
+                href={urlInfo.validated}
+                target="_blank"
+                className="p-1 f-0 text-1p5"
+                style={{ fontWeight: 400 }}
+                rel="noreferrer"
+              >
+                {urlInfo.validated}
+              </a>
+            )
           }
-        );
-      return (
-        <>
-          {this.renderMedia()}
-          <Popup
-            rootStyle={{ padding: 0, borderRadius: 0 }}
-            clickCatchStyle={{ opacity: 0.2 }}
-            contentClassName="o-hidden"
-            onClose={() => {
-              this.setState({ isFocused: false });
-            }}
-            autoFocusFirst={"content"}
-            focusTrap={true}
-            title={
-              !url ? "" : (
-                <a
-                  href={url.validated}
-                  target="_blank"
-                  className="p-1 f-0 text-1p5"
-                  style={{ fontWeight: 400 }}
-                  rel="noreferrer"
-                >
-                  {url.validated}
-                </a>
-              )
+          onKeyDown={!onPrevOrNext ? undefined : onKeyDown}
+        >
+          <div
+            className={
+              (
+                "MEDIAVIEWER relative flex-col f-1 o-auto noselect ai-center " +
+                  urlInfo?.type ===
+                "image"
+              ) ?
+                ""
+              : " p-1"
             }
-            onKeyDown={!onPrevOrNext ? undefined : this.onKeyDown}
           >
-            <div
-              className={
-                (
-                  "MEDIAVIEWER relative flex-col f-1 o-auto noselect ai-center " +
-                    url?.type ===
-                  "image"
-                ) ?
-                  ""
-                : " p-1"
-              }
-            >
-              {toggleClick && ToggleBtn(true, () => toggleClick(-1))}
-              {this.renderMedia(true)}
-              {toggleClick && ToggleBtn(false, () => toggleClick(1))}
-            </div>
-          </Popup>
-        </>
+            {toggleClick && ToggleBtn(true, () => toggleClick(-1))}
+            <RenderMedia
+              isFocused={isFocused}
+              setIsFocused={setIsFocused}
+              style={style}
+              urlInfo={urlInfo}
+              contentOnly={true}
+            />
+            {toggleClick && ToggleBtn(false, () => toggleClick(1))}
+          </div>
+        </Popup>
+      )}
+    </>
+  );
+};
+type UrlInfo = {
+  raw: string;
+  validated: string;
+  content_type?: string; // If undefined then show as URL
+  type?: ValidContentType;
+};
+const RenderMedia = ({
+  contentOnly = false,
+  isFocused,
+  setIsFocused,
+  urlInfo,
+  style,
+}: {
+  contentOnly: boolean;
+  urlInfo: UrlInfo | undefined;
+  isFocused: boolean;
+  style: React.CSSProperties | undefined;
+  setIsFocused: (isFocused: boolean) => void;
+}) => {
+  if (!urlInfo) return null;
+
+  const { validated: url, type = "", content_type } = urlInfo;
+  let mediaContent: React.ReactNode = null;
+  if (url) {
+    const commonProps = {
+      style: {
+        minHeight: 0,
+        flex:
+          type === "audio" ? "none"
+          : type === "image" ? undefined
+          : 1,
+        maxWidth: "100%",
+        maxHeight: "100%",
+        objectFit: "contain",
+        ...(isFocused && contentOnly ? {} : style),
+        ...(type === "audio" &&
+          isFocused && {
+            margin: "2em",
+            border: "unset",
+          }),
+      },
+      // className: "b b-color "
+    } as const;
+    if (type === "image") {
+      mediaContent = <img loading="lazy" src={url} {...commonProps}></img>;
+    } else if (type === "video") {
+      mediaContent = (
+        <video {...commonProps} controls src={url} preload="metadata"></video>
+      );
+    } else if (type === "audio") {
+      mediaContent = <audio {...commonProps} controls src={url}></audio>;
+    } else if (!isFocused && url) {
+      mediaContent = (
+        <FlexCol className="f-0 p-p5 gap-p25">
+          {/* <a href={url} target="_blank" className="f-0">{url}</a>  */}
+          <Chip value={content_type ?? "Not found"} />
+        </FlexCol>
       );
     }
-
-    return this.renderMedia();
   }
-}
+
+  if (!contentOnly) {
+    return (
+      <div
+        className="MediaViewer relative f-1 noselect flex-row min-h-0"
+        style={style}
+      >
+        {mediaContent}
+        <div
+          className={"absolute w-full h-full pointer"}
+          style={{ zIndex: 1, inset: 0 }}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setIsFocused(true);
+          }}
+        ></div>
+      </div>
+    );
+  }
+  return mediaContent;
+};
 
 export const fetchMimeFromURLHead = async (
   url: string,

@@ -14,7 +14,6 @@ export const getJoinFilter = function (
       fieldName,
       value,
       type,
-      minimised: true,
     };
 
     /** Why hide self joins? */
@@ -26,7 +25,6 @@ export const getJoinFilter = function (
       type: "$existsJoined",
       path: [...path.slice(0, -1), tableName].filter(isDefined),
       filter,
-      minimised: true,
     };
   });
   return f;

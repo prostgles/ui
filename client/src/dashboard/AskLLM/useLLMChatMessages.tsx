@@ -57,7 +57,11 @@ export const useLLMChatMessages = (props: P) => {
               }
               if (m.type === "image") {
                 return (
-                  <MediaViewer key={`${id}-image-${idx}`} url={m.source.data} />
+                  <MediaViewer
+                    key={`${id}-image-${idx}`}
+                    url={m.source.data}
+                    content_type="image"
+                  />
                 );
               }
 

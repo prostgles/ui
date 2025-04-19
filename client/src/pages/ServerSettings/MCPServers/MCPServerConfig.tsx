@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useState } from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import Btn from "../../../components/Btn";
 import ErrorComponent from "../../../components/ErrorComponent";
@@ -11,23 +11,67 @@ import { useEditableData } from "../useEditableData";
 type P = {
   dbs: DBS;
   serverName: string;
-  schema: NonNullable<DBSSchema["mcp_servers"]["config_schema"]>;
   existingConfig: { id: number; value: Record<string, string> } | undefined;
   onDone: () => void;
 };
-export const MCPServerConfig = ({
-  serverName,
-  existingConfig,
-  schema,
+
+export const useMCPServerEnable = ({
+  mcp_server,
   dbs,
-  onDone,
-}: P) => {
+}: {
+  dbs: DBS;
+  mcp_server: DBSSchema["mcp_servers"] & {
+    mcp_server_configs: DBSSchema["mcp_server_configs"][];
+  };
+}) => {
+  const { enabled, config_schema, mcp_server_configs } = mcp_server;
+  const [showServerConfig, setShowServerConfig] = useState<
+    false | (() => void)
+  >(false);
+  const onToggle = useCallback(async () => {
+    const newEnabled = !enabled;
+    if (newEnabled && config_schema && !mcp_server_configs.length) {
+      return new Promise<void>((onEnabledCallback) => {
+        setShowServerConfig(onEnabledCallback);
+      });
+    } else {
+      return dbs.mcp_servers.update(
+        { name: mcp_server.name },
+        { enabled: newEnabled },
+      );
+    }
+  }, [
+    config_schema,
+    dbs.mcp_servers,
+    enabled,
+    mcp_server.name,
+    mcp_server_configs.length,
+  ]);
+  return {
+    onToggle,
+    showServerConfig,
+    setShowServerConfig,
+  };
+};
+
+export const MCPServerConfig = (props: P) => {
+  const { serverName, existingConfig, dbs, onDone } = props;
   const {
     error,
     onSave,
     setValue,
     value: config,
   } = useEditableData(existingConfig?.value ?? {});
+
+  const serverInfo = dbs.mcp_servers.useSubscribeOne(
+    {
+      name: serverName,
+    },
+    {},
+    { skip: !serverName },
+  );
+  const schema = serverInfo.data?.config_schema;
+  if (!schema) return null;
 
   return (
     <Popup
@@ -102,7 +146,11 @@ export const MCPServerConfig = ({
   );
 };
 
-export const MCPServerConfigButton = (props: Omit<P, "onDone">) => {
+export const MCPServerConfigButton = (
+  props: Omit<P, "onDone" | "variant"> & {
+    schema: NonNullable<DBSSchema["mcp_servers"]["config_schema"]>;
+  },
+) => {
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement>();
   const { schema, existingConfig } = props;
   return (
@@ -117,7 +165,6 @@ export const MCPServerConfigButton = (props: Omit<P, "onDone">) => {
             title={schema.title ?? key}
             className="font-12 gap-p5 text-ellipsis ji-start"
           >
-            {/* <div className="font-10">{schema.title ?? key}</div> */}
             <div className="bold">{existingConfig?.value[key]}</div>
           </FlexRow>
         ))}

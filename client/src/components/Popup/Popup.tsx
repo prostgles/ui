@@ -106,6 +106,10 @@ export type PopupProps = TestSelectors & {
     getStyle?: (fullscreen: boolean) => React.CSSProperties;
   };
   persistInitialSize?: boolean;
+  /**
+   * Callback for when the popup content finished resizing
+   */
+  onContentFinishedResizing?: VoidFunction;
 };
 
 const FOCUSABLE_ELEMS_SELECTOR =
@@ -242,6 +246,7 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
     /** Used for "center-fixed-top-left" positioning */
     xMin: number;
     yMin: number;
+    opacity: number;
   };
   /**
    * Used to prevent size change jiggle and things moving
@@ -249,6 +254,16 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
   prevSize?: {
     width: number;
     height: number;
+  };
+
+  /**
+   * Allow the content to grow within the first 250ms before setting opacity to 1
+   */
+  mountedAt = Date.now();
+  checkPositionOpacity = {
+    started: Date.now(),
+    done: false,
+    timeout: undefined as ReturnType<typeof setTimeout> | undefined,
   };
   checkPosition = popupCheckPosition.bind(this);
   prevStateStyles: PopupState["stateStyle"][] = [];
@@ -293,7 +308,8 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
 
     const result = (
       <>
-        {onClose && (
+        {/* Used to improve UX for onWaitForContentFinish */}
+        {onClose && style.opacity !== 0 && (
           <ClickCatchOverlay
             style={{
               position: "fixed",

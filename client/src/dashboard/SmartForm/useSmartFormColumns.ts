@@ -17,7 +17,7 @@ type UseSmartFormColumnsProps = Pick<
 export const useSmartFormColumns = (props: UseSmartFormColumnsProps) => {
   const {
     fixedData,
-    columns,
+    columns: columnsConfig,
     columnFilter,
     table,
     mode,
@@ -30,15 +30,26 @@ export const useSmartFormColumns = (props: UseSmartFormColumnsProps) => {
     const result =
       mode.type !== "update" ?
         table?.columns
-      : await mode.tableHandlerGetColumns(lang, {
-          rule: "update",
-          filter: mode.rowFilterObj,
-        });
+      : (
+          await mode.tableHandlerGetColumns(lang, {
+            rule: "update",
+            filter: mode.rowFilterObj,
+          })
+        )
+          .map((vc) => {
+            const col = table?.columns.find((c) => c.name === vc.name);
+            if (!col) return undefined;
+            return {
+              ...col,
+              ...vc,
+            };
+          })
+          .filter(isDefined);
 
     const invalidColumns =
-      columns &&
+      columnsConfig &&
       result &&
-      Object.keys(columns).filter(
+      Object.keys(columnsConfig).filter(
         (colName) => !result.some((_c) => _c.name === colName),
       );
     const warning =
@@ -50,11 +61,11 @@ export const useSmartFormColumns = (props: UseSmartFormColumnsProps) => {
       console.error(warning);
     }
     return result;
-  }, [mode, table?.columns, lang, columns]);
+  }, [mode, table?.columns, lang, columnsConfig]);
 
   const smartCols: SmartColumnInfo[] = useMemo(() => {
     if (!mode) return [];
-    let validatedCols = quickClone(table?.columns || []);
+    let validatedCols = quickClone(dynamicValidatedColumns || []);
     if (fixedData) {
       const fixedFields = getKeys(fixedData);
       validatedCols = validatedCols.map((c) => ({
@@ -64,9 +75,9 @@ export const useSmartFormColumns = (props: UseSmartFormColumnsProps) => {
     }
     let displayedCols = validatedCols as SmartColumnInfo[];
 
-    if (columns) {
+    if (columnsConfig) {
       /** Add headers */
-      displayedCols = Object.entries(columns)
+      displayedCols = Object.entries(columnsConfig)
         .map(([colName, colConf]) => {
           if (colConf === 1) {
             return validatedCols.find((c) => c.name === colName);
@@ -87,7 +98,7 @@ export const useSmartFormColumns = (props: UseSmartFormColumnsProps) => {
     }
 
     return displayedCols;
-  }, [columns, columnFilter, dynamicValidatedColumns, table, mode, fixedData]);
+  }, [columnsConfig, columnFilter, dynamicValidatedColumns, mode, fixedData]);
 
   const modeType = mode?.type;
   const displayedColumns = useMemo(() => {

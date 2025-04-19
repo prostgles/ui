@@ -49,7 +49,7 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
     return res;
   }, [db, connection.db_schema_filter]);
 
-  const schemaStr = useMemo(() => {
+  const dbSchemaForPrompt = useMemo(() => {
     if (!tableConstraints || !cachedSchemaPermissions) return "";
     const allowedTables =
       cachedSchemaPermissions.type === "Full" ? tables : tables;
@@ -84,5 +84,5 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
     return res;
   }, [tables, tableConstraints, cachedSchemaPermissions]);
 
-  return { schemaStr };
+  return { dbSchemaForPrompt };
 };

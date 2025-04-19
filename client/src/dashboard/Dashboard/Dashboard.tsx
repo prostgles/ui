@@ -647,17 +647,22 @@ export const getTables = (
       columns,
       card,
     } = connectionTableOptions?.[t.name] ?? {};
-    return {
+    const result = {
       label,
       icon,
       card,
       ...t,
       ...getJoinedTables(schemaTables, t.name, db),
-      columns: t.columns.map((c) => ({
-        ...c,
-        icon: columns?.[c.name]?.icon,
-      })),
+      columns: t.columns
+        .map((c) => ({
+          ...c,
+          icon: columns?.[c.name]?.icon,
+        }))
+        .sort((a, b) => {
+          return a.ordinal_position - b.ordinal_position;
+        }),
     };
+    return result;
   });
   return { tables };
 };

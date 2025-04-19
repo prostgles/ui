@@ -1489,7 +1489,7 @@ export type McpToolCallResponse = {
   isError?: boolean;
 };
 
-export const execute_sql_tool = {
+export const executeSQLTool = {
   name: getMCPFullToolName({
     server_name: "prostgles",
     name: "execute_sql",
@@ -1508,7 +1508,7 @@ export const execute_sql_tool = {
   },
 } as const;
 
-export const getChoose_tools_for_task = (toolNames: string[] = []) => ({
+export const getSuggestedTaskTools = (toolNames: string[] = []) => ({
   name: getMCPFullToolName({
     server_name: "prostgles",
     name: "choose_tools_for_task",
@@ -1516,7 +1516,6 @@ export const getChoose_tools_for_task = (toolNames: string[] = []) => ({
   description:
     "For a given task description and the provided tools, returns a list of tools that can be used to complete the task.",
   input_schema: {
-    $id: "prostgles.task",
     $schema: "https://json-schema.org/draft/2020-12/schema",
     type: "object",
     required: ["suggested_tools"],
@@ -1539,6 +1538,6 @@ export const getChoose_tools_for_task = (toolNames: string[] = []) => ({
 });
 
 export const PROSTGLES_MCP_TOOLS = [
-  execute_sql_tool,
-  getChoose_tools_for_task(),
+  executeSQLTool,
+  getSuggestedTaskTools(),
 ] as const;

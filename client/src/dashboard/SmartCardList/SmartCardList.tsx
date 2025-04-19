@@ -13,7 +13,7 @@ import { classOverride, FlexCol } from "../../components/Flex";
 import Loading from "../../components/Loading";
 import { Pagination, usePagination } from "../../components/Table/Pagination";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
-import type { FieldConfig } from "../SmartCard/SmartCard";
+import type { FieldConfig, SmartCardProps } from "../SmartCard/SmartCard";
 import { SmartCard } from "../SmartCard/SmartCard";
 import type { SmartFormProps } from "../SmartForm/SmartForm";
 import type { ColumnSort } from "../W_Table/ColumnMenu/ColumnMenu";
@@ -74,7 +74,7 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
   };
   onSuccess?: SmartFormProps["onSuccess"];
   enableListAnimations?: boolean;
-  getOnClickRow?: (row: AnyObject) => ((row: AnyObject) => void) | undefined;
+  getActions?: SmartCardProps<T>["getActions"];
   /**
    * Show top N records
    * Defaults to 20
@@ -115,7 +115,7 @@ export const SmartCardList = <T extends AnyObject>(
     noDataComponent,
     onSuccess,
     enableListAnimations = false,
-    getOnClickRow,
+    getActions,
     limit = 25,
   } = props;
 
@@ -175,26 +175,12 @@ export const SmartCardList = <T extends AnyObject>(
           noDataComponent
         : items.map((defaultData, i) => {
             const key = getKeyForRowData(defaultData, keyCols);
-            const onClickRow = getOnClickRow?.(defaultData);
+            /** SmartCard wrapped in div to ensure MaybeFlipMove works */
             return (
-              <div
-                key={key}
-                data-key={key}
-                className={`relative ${onClickRow ? "pointer" : ""}`}
-                onClick={
-                  onClickRow &&
-                  ((e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const clickedANestedPopup = !e.currentTarget.contains(
-                      e.target as Node,
-                    );
-                    if (clickedANestedPopup) return;
-                    onClickRow(defaultData);
-                  })
-                }
-              >
+              <div className="relative" key={key}>
                 <SmartCard
+                  key={key}
+                  data-key={key}
                   contentClassname={rowProps?.className}
                   contentStyle={rowProps?.style}
                   db={db as DBHandlerClient}
@@ -212,6 +198,7 @@ export const SmartCardList = <T extends AnyObject>(
                     // this.forceUpdate();
                   }}
                   footer={getRowFooter}
+                  getActions={getActions}
                   smartFormProps={{ onSuccess }}
                   showViewEditBtn={
                     "showEdit" in props ? props.showEdit : undefined

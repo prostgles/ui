@@ -1,7 +1,7 @@
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
 import { type DBS } from "../..";
-import { contentOfThisFile as dashboardTypes } from "../../../../commonTypes/DashboardTypes";
+import { dashboardTypes } from "../../../../commonTypes/DashboardTypes";
 import { getLLMMessageText } from "../../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { checkLLMLimit } from "./checkLLMLimit";
@@ -109,9 +109,16 @@ export const askLLM = async (
   const isFirstUserMessage = !pastMessages.some((m) => m.user_id === user.id);
   if (isFirstUserMessage) {
     const questionText = getLLMMessageText({ message: userMessage });
+    const isOnlyImage =
+      !questionText && userMessage.some((m) => m.type === "image");
     dbs.llm_chats.update(
       { id: chatId },
-      { name: sliceText(questionText, 25)?.replaceAll("\n", " ") },
+      {
+        name:
+          isOnlyImage ? "[Attached image]" : (
+            sliceText(questionText, 25)?.replaceAll("\n", " ")
+          ),
+      },
     );
   }
 

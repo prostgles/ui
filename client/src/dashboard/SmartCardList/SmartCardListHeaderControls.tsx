@@ -1,12 +1,12 @@
 import { isObject, type ValidatedColumnInfo } from "prostgles-types";
-import React from "react";
+import React, { useMemo } from "react";
 import { FlexCol, FlexRow } from "../../components/Flex";
-import { RenderFilter } from "../RenderFilter";
+import { RenderFilter, type RenderFilterProps } from "../RenderFilter";
+import SortByControl from "../SmartFilter/SortByControl";
 import { SmartFilterBarSearch } from "../SmartFilterBar/SmartFilterBarSearch";
 import { InsertButton } from "../SmartForm/InsertButton";
 import type { SmartCardListProps } from "./SmartCardList";
 import type { SmartCardListState } from "./useSmartCardListState";
-import SortByControl from "../SmartFilter/SortByControl";
 
 export const SmartCardListHeaderControls = (
   props: SmartCardListProps & {
@@ -24,6 +24,18 @@ export const SmartCardListHeaderControls = (
     : typeof title === "function" ? title({ count: totalRows ?? -1 })
     : title;
   const showSearch = tableControls?.localFilter?.length ? true : tableControls; //&& Boolean(totalRows && totalRows > 8)
+
+  const filterProps = useMemo(() => {
+    if (!tableControls || !tableControls.localFilter?.length) return;
+    return {
+      tableName: tableControls.tableName,
+      filter: { $and: tableControls.localFilter },
+      onChange: (newf) => {
+        const items = "$and" in newf ? newf.$and : newf.$or;
+        tableControls.setLocalFilter(items);
+      },
+    } satisfies Pick<RenderFilterProps, "filter" | "onChange" | "tableName">;
+  }, [tableControls]);
 
   const showSort = isObject(showTopBar) ? showTopBar.sort : showTopBar;
   if (
@@ -71,20 +83,15 @@ export const SmartCardListHeaderControls = (
         )}
       </FlexRow>
 
-      {!!tableControls?.localFilter?.length && (
+      {filterProps && (
         <RenderFilter
           db={db}
           contextData={undefined}
-          tableName={tableControls.tableName}
           tables={tables}
           selectedColumns={undefined}
-          filter={{ $and: tableControls.localFilter }}
           itemName={"filter"}
           hideOperand={true}
-          onChange={(newf) => {
-            const items = "$and" in newf ? newf.$and : newf.$or;
-            tableControls.setLocalFilter(items);
-          }}
+          {...filterProps}
         />
       )}
     </FlexCol>

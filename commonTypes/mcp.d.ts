@@ -28,7 +28,7 @@ export type McpToolCallResponse = {
     }>;
     isError?: boolean;
 };
-export declare const execute_sql_tool: {
+export declare const executeSQLTool: {
     readonly name: `${string}-${string}`;
     readonly description: "Run SQL query on the current database";
     readonly input_schema: {
@@ -43,30 +43,10 @@ export declare const execute_sql_tool: {
         readonly additionalProperties: false;
     };
 };
-export declare const getChoose_tools_for_task: (toolNames?: string[]) => {
+export declare const getSuggestedTaskTools: (toolNames?: string[]) => {
     name: `${string}-${string}`;
     description: string;
-    input_schema: {
-        $id: string;
-        $schema: string;
-        type: string;
-        required: string[];
-        properties: {
-            suggested_tools: {
-                type: string;
-                items: {
-                    type: string;
-                    required: string[];
-                    properties: {
-                        tool_name: {
-                            enum?: string[] | undefined;
-                            type: string;
-                        };
-                    };
-                };
-            };
-        };
-    };
+    input_schema: any;
 };
 export declare const PROSTGLES_MCP_TOOLS: readonly [{
     readonly name: `${string}-${string}`;
@@ -85,25 +65,5 @@ export declare const PROSTGLES_MCP_TOOLS: readonly [{
 }, {
     name: `${string}-${string}`;
     description: string;
-    input_schema: {
-        $id: string;
-        $schema: string;
-        type: string;
-        required: string[];
-        properties: {
-            suggested_tools: {
-                type: string;
-                items: {
-                    type: string;
-                    required: string[];
-                    properties: {
-                        tool_name: {
-                            enum?: string[] | undefined;
-                            type: string;
-                        };
-                    };
-                };
-            };
-        };
-    };
+    input_schema: any;
 }];

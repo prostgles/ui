@@ -1749,9 +1749,6 @@ button.toggle:focus {
 .border-action {
   border-color: var(--blue-500);
 }
-.bg-action {
-  background-color: var(--blue-500);
-}
 
 h1,
 h2,

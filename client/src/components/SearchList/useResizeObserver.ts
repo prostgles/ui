@@ -53,7 +53,7 @@ export function useResizeObserver<T extends HTMLElement = HTMLElement>(
         previousSize.current.width = newWidth;
         previousSize.current.height = newHeight;
 
-        if (onResize.current) {
+        if (onResize.current && ref.current) {
           onResize.current(newSize);
         } else {
           if (getIsMounted()) {

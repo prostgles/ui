@@ -1,7 +1,7 @@
 import { getJSONBSchemaAsJSONSchema, type JSONB } from "prostgles-types";
 import type { DBS } from "../..";
 import {
-  getChoose_tools_for_task,
+  getSuggestedTaskTools,
   getMCPFullToolName,
   PROSTGLES_MCP_TOOLS,
 } from "../../../../commonTypes/mcp";
@@ -50,7 +50,7 @@ export const getLLMTools = async ({
     const { serverSideFuncTools } = await getPublishedMethodsTools(dbs, {});
     const { mcpTools } = await getMCPServerTools(dbs, {});
     return [
-      getChoose_tools_for_task(
+      getSuggestedTaskTools(
         [...serverSideFuncTools, ...mcpTools].map((t) => t.name),
       ) as MCPToolSchema,
     ];

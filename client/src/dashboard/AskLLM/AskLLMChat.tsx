@@ -2,15 +2,18 @@ import React, { useCallback, useMemo } from "react";
 import type { LLMMessage } from "../../../../commonTypes/llmUtils";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
-import { Chat } from "../../components/Chat/Chat";
+import { Chat, type ChatProps } from "../../components/Chat/Chat";
 import { FlexCol } from "../../components/Flex";
 import Popup from "../../components/Popup/Popup";
 import { CHAT_WIDTH } from "./AskLLM";
+import { AskLLMChatActionBar } from "./AskLLMChatActionBar";
 import { AskLLMChatHeader } from "./AskLLMChatHeader";
-import { AskLLMTools } from "./Tools/AskLLMTools";
+import { AskLLMToolApprover } from "./Tools/AskLLMToolApprover";
 import { useLLMChat } from "./useLLMChat";
 import { useLLMSchemaStr } from "./useLLMSchemaStr";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import { isDefined } from "../../utils";
 
 export type AskLLMChatProps = {
   prgl: Prgl;
@@ -51,13 +54,18 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
   const { messages, activeChat, activeChatId, latestChats, llmMessages } =
     chatState;
   const { preferredPromptId, createNewChat } = chatState;
-  const { schemaStr } = useLLMSchemaStr({ tables, db, connection, activeChat });
+  const { dbSchemaForPrompt } = useLLMSchemaStr({
+    tables,
+    db,
+    connection,
+    activeChat,
+  });
 
   const sendQuery = useCallback(
     async (msg: LLMMessage["message"] | undefined) => {
       if (!msg || !activeChatId) return;
-      /** TODO: move schemaStr to server-side */
-      await askLLM(connectionId, msg, schemaStr, activeChatId).catch(
+      /** TODO: move dbSchemaForPrompt to server-side */
+      await askLLM(connectionId, msg, dbSchemaForPrompt, activeChatId).catch(
         (error) => {
           const errorText = error?.message || error;
           alert(
@@ -68,12 +76,18 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
         },
       );
     },
-    [askLLM, schemaStr, activeChatId, connectionId],
+    [askLLM, dbSchemaForPrompt, activeChatId, connectionId],
   );
 
-  const sendMessage = useCallback(
-    (msg: string | undefined) =>
-      sendQuery(msg ? [{ type: "text", text: msg }] : undefined),
+  const sendMessage: ChatProps["onSend"] = useCallback(
+    async (msg: string | undefined, file) => {
+      return sendQuery(
+        [
+          msg ? ({ type: "text", text: msg } as const) : undefined,
+          file instanceof File ? await toMediaMessage(file) : undefined,
+        ].filter(isDefined),
+      );
+    },
     [sendQuery],
   );
 
@@ -135,8 +149,16 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
             messages={messages}
             disabledInfo={activeChat.disabled_message ?? undefined}
             onSend={sendMessage}
+            actionBar={
+              <AskLLMChatActionBar
+                prgl={prgl}
+                activeChat={activeChat}
+                setupState={setupState}
+                dbSchemaForPrompt={dbSchemaForPrompt}
+              />
+            }
           />
-          <AskLLMTools
+          <AskLLMToolApprover
             dbs={dbs}
             activeChat={activeChat}
             messages={llmMessages ?? []}
@@ -159,4 +181,27 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       )}
     </Popup>
   );
+};
+const toBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+  });
+
+const toMediaMessage = async (
+  file: File,
+): Promise<
+  Extract<DBSSchema["llm_messages"]["message"][number], { type: "image" }>
+> => {
+  const base64 = await toBase64(file);
+  return {
+    type: "image",
+    source: {
+      type: "base64",
+      media_type: file.type,
+      data: base64,
+    },
+  };
 };

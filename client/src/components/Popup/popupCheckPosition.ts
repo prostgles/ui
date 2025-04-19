@@ -1,6 +1,6 @@
 import type Popup from "./Popup";
 import type { PopupState } from "./Popup";
-import { POPUP_CLASSES, POPUP_ZINDEX } from "./Popup";
+import { POPUP_ZINDEX } from "./Popup";
 import { getPopupPosition, getPopupSize } from "./getPopupPosition";
 
 const rightPanelStyle: React.CSSProperties = {
@@ -18,6 +18,22 @@ const rightPanelStyle: React.CSSProperties = {
 export const popupCheckPosition = function (this: Popup) {
   if (!this.mounted || !this.el.isConnected) return;
 
+  const contentCanShow = this.checkPositionOpacity.done;
+  let canShow = contentCanShow;
+  if (!contentCanShow) {
+    const shouldStop = Date.now() - this.checkPositionOpacity.started >= 400;
+    clearTimeout(this.checkPositionOpacity.timeout);
+    if (shouldStop) {
+      this.checkPositionOpacity.done = true;
+      canShow = true;
+      this.props.onContentFinishedResizing?.();
+    } else {
+      this.checkPositionOpacity.timeout = setTimeout(() => {
+        this.checkPositionOpacity.done = true;
+        this.checkPosition();
+      }, 50);
+    }
+  }
   const {
     anchorEl,
     anchorPadding = 0,
@@ -33,11 +49,11 @@ export const popupCheckPosition = function (this: Popup) {
     );
   };
 
-  const commonState: React.CSSProperties = {
-    opacity: 1,
+  const commonState = {
+    opacity: canShow ? 1 : 0,
     zIndex: POPUP_ZINDEX,
     position: "fixed",
-  };
+  } satisfies React.CSSProperties;
 
   /**
    * Center positioning if nothing specified
@@ -206,8 +222,13 @@ export const popupCheckPosition = function (this: Popup) {
     y = PADDING_Y;
   }
 
-  if (this.position?.x !== x || this.position.y !== y || bottom) {
-    this.position ??= { x, y, xMin: x, yMin: y };
+  if (
+    this.position?.x !== x ||
+    this.position.y !== y ||
+    this.position.opacity !== commonState.opacity ||
+    bottom
+  ) {
+    this.position ??= { x, y, xMin: x, yMin: y, opacity: commonState.opacity };
     // This makes popup height grow to max
     if (fixedTopLeft) {
       this.position.xMin = Math.round(Math.min(this.position.xMin, x));

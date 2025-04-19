@@ -1,24 +1,24 @@
 import { mdiSearchWeb } from "@mdi/js";
-import type { AnyObject } from "prostgles-types";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import type { SmartGroupFilter } from "../../../../../commonTypes/filterUtils";
 import Btn from "../../../components/Btn";
+import { InfoRow } from "../../../components/InfoRow";
 import Popup from "../../../components/Popup/Popup";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
-import {
-  SmartCardList,
-  type SmartCardListProps,
-} from "../../SmartCardList/SmartCardList";
-import type { SmartFormFieldLinkedDataProps } from "./SmartFormFieldLinkedData";
+import { SmartCardList } from "../../SmartCardList/SmartCardList";
 import { useJoinedSectionFieldConfigs } from "../JoinedRecords/useJoinedSectionFieldConfigs";
+import type { SmartFormFieldLinkedDataProps } from "./SmartFormFieldLinkedData";
+import type { AnyObject } from "prostgles-types";
 
-type ViewMoreSmartCardListProps = Pick<
+export type ViewMoreSmartCardListProps = Pick<
   SmartFormFieldLinkedDataProps,
   "db" | "methods" | "tables"
 > & {
   ftable: DBSchemaTableWJoins;
   searchFilter: SmartGroupFilter | undefined;
-  getOnClickRow: SmartCardListProps["getOnClickRow"];
+  getActions:
+    | ((row: AnyObject, onClosePopup: VoidFunction) => React.ReactNode)
+    | undefined;
   rootTableName?: string;
 };
 export const ViewMoreSmartCardList = ({
@@ -27,34 +27,16 @@ export const ViewMoreSmartCardList = ({
   ftable,
   tables,
   searchFilter,
-  getOnClickRow,
+  getActions,
   rootTableName,
 }: ViewMoreSmartCardListProps) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement>();
-  const [loaded, setLoaded] = useState(false);
 
   const fieldConfigs = useJoinedSectionFieldConfigs({
     sectionTable: ftable,
     tables,
     tableName: rootTableName,
   });
-  const listProps = useMemo(() => {
-    return {
-      getOnClickRow:
-        getOnClickRow ?
-          (row) => {
-            const res = getOnClickRow(row);
-            if (res) {
-              setAnchorEl(undefined);
-              return res;
-            }
-          }
-        : undefined,
-      onSetData: () => {
-        setLoaded(true);
-      },
-    } satisfies Pick<SmartCardListProps, "onSetData" | "getOnClickRow">;
-  }, [getOnClickRow]);
 
   return (
     <>
@@ -73,8 +55,6 @@ export const ViewMoreSmartCardList = ({
           clickCatchStyle={{ opacity: 1 }}
           rootStyle={{
             maxWidth: "min(100vw, 600px)",
-            transition: "opacity .15s ease-in-out",
-            visibility: loaded ? "visible" : "hidden",
           }}
         >
           <SmartCardList
@@ -85,8 +65,17 @@ export const ViewMoreSmartCardList = ({
             tableName={ftable.name}
             excludeNulls={true}
             searchFilter={searchFilter}
-            {...listProps}
+            getActions={
+              getActions ?
+                (row) => getActions(row, () => setAnchorEl(undefined))
+              : undefined
+            }
             fieldConfigs={fieldConfigs}
+            noDataComponent={
+              <InfoRow className=" " color="info" variant="filled">
+                No records
+              </InfoRow>
+            }
           />
         </Popup>
       )}

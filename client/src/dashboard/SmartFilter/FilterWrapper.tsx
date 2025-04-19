@@ -298,7 +298,7 @@ export class FilterWrapper extends RTComp<
         >
           <FlexRowWrap
             style={rowVariant ? { flex: "none" } : {}}
-            className="FilterWrapper__TypeLabelContainer gap-dp5 f-1 font-medium noselect pointer noselect  ai-center"
+            className="FilterWrapper__TypeLabelContainer gap-0 f-1 font-medium noselect pointer noselect  ai-center"
           >
             <FlexRow className="FilterWrapper__LabelContainer gap-0">
               {disabledToggle}

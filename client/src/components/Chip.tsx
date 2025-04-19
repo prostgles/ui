@@ -22,6 +22,7 @@ type ChipProps = TestSelectors &
     onDelete?: React.MouseEventHandler<HTMLButtonElement>;
     leftIcon?: {
       path: string;
+      size?: 0.75 | 0.5;
       onClick?: React.MouseEventHandler<HTMLButtonElement>;
       style?: React.CSSProperties;
       className?: string;
@@ -93,7 +94,7 @@ export default class Chip extends React.Component<ChipProps> {
           : <Icon
               path={leftIcon.path}
               className={classOverride("mr-p5 round", leftIcon.className)}
-              size={1}
+              size={leftIcon.size ?? 1}
               style={leftIcon.style}
             />
 

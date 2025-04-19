@@ -1,17 +1,16 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
-import React, { useMemo } from "react";
+import React from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
-import Chip from "../../../components/Chip";
-import { FlexCol, FlexRowWrap } from "../../../components/Flex";
+import { FlexCol } from "../../../components/Flex";
 import { InfoRow } from "../../../components/InfoRow";
-import type { FieldConfig } from "../../../dashboard/SmartCard/SmartCard";
 import { SmartCardList } from "../../../dashboard/SmartCardList/SmartCardList";
 import type { ColumnSort } from "../../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 import type { ServerSettingsProps } from "../ServerSettings";
 import { MCPServerConfig } from "./MCPServerConfig";
 import { MCPServerFooterActions } from "./MCPServerFooterActions";
 import { MCPServersHeader } from "./MCPServersHeader";
+import { useMCPServersListProps } from "./useMCPServersListProps";
 
 const orderByEnabledAndName = [
   {
@@ -23,19 +22,11 @@ const orderByEnabledAndName = [
     asc: true,
   },
 ] satisfies ColumnSort[];
-export type MCPServersProps = Omit<ServerSettingsProps, "auth">;
+export type MCPServersProps = Omit<ServerSettingsProps, "auth"> & {
+  chatId: number | undefined;
+};
 export const MCPServers = (props: MCPServersProps) => {
-  const [serverConfig, setServerConfig] = React.useState<{
-    name: string;
-  }>();
-  const { dbsMethods, dbs, dbsTables } = props;
-  const serverInfo = dbs.mcp_servers.useSubscribeOne(
-    {
-      name: serverConfig?.name,
-    },
-    {},
-    { skip: !serverConfig?.name },
-  );
+  const { dbsMethods, dbs, dbsTables, chatId } = props;
 
   const { getMcpHostInfo } = dbsMethods;
   const globalSettings = dbs.global_settings.useSubscribeOne();
@@ -59,10 +50,18 @@ export const MCPServers = (props: MCPServersProps) => {
       </>
     : "";
   const { selectedTool, setSelectedTool, filter, fieldConfigs } =
-    useListProps();
+    useMCPServersListProps(chatId, dbs);
+
+  const [loaded, setLoaded] = React.useState(false);
 
   return (
-    <FlexCol className="p-1 pt-0 min-w-0 f-1 max-w-800">
+    <FlexCol
+      className="p-1 pt-0 min-w-0 f-1 max-w-800"
+      style={{
+        opacity: loaded ? 1 : 0,
+        transition: "opacity 0.2s ease-in-out",
+      }}
+    >
       <InfoRow className="mb-1" variant="naked" color="info" iconPath="">
         Pre-built integrations that can be used through the Ask AI chat and
         server-side functions. For more information visit{" "}
@@ -102,6 +101,9 @@ export const MCPServers = (props: MCPServersProps) => {
           orderBy={orderByEnabledAndName}
           fieldConfigs={fieldConfigs}
           enableListAnimations={true}
+          onSetData={() => {
+            setLoaded(true);
+          }}
           getRowFooter={(
             r: DBSSchema["mcp_servers"] & {
               mcp_server_configs: DBSSchema["mcp_server_configs"][];
@@ -109,118 +111,14 @@ export const MCPServers = (props: MCPServersProps) => {
             },
           ) => (
             <MCPServerFooterActions
-              r={r}
+              mcp_server={r}
               dbs={dbs}
               dbsMethods={dbsMethods}
               envInfo={envInfo}
-              setServerConfig={setServerConfig}
             />
           )}
         />
-        {serverInfo.data?.config_schema && serverConfig && (
-          <MCPServerConfig
-            existingConfig={undefined}
-            schema={serverInfo.data.config_schema}
-            dbs={dbs}
-            onDone={() => setServerConfig(undefined)}
-            serverName={serverConfig.name}
-          />
-        )}
       </FlexCol>
     </FlexCol>
   );
-};
-
-const useListProps = () => {
-  const [selectedTool, setSelectedTool] =
-    React.useState<DBSSchema["mcp_server_tools"]>();
-
-  const filter = useMemo(() => {
-    return (
-      selectedTool && {
-        name: selectedTool.server_name,
-      }
-    );
-  }, [selectedTool]);
-
-  const fieldConfigs = useMemo(
-    () =>
-      [
-        {
-          name: "name",
-          label: "",
-          className: "bold mx-p25 w-full",
-        },
-        {
-          name: "mcp_server_configs",
-          select: "*",
-          hide: true,
-        },
-        {
-          name: "mcp_server_logs",
-          select: "*",
-          hide: true,
-        },
-        {
-          name: "mcp_server_tools",
-          select: {
-            name: 1,
-            description: 1,
-          },
-          renderMode: "valueNode",
-          render: (tools) => {
-            return (
-              <FlexRowWrap className="gap-p25">
-                {tools.map((tool, i) => (
-                  <Chip
-                    key={`${tool.name}${i}`}
-                    title={tool.description}
-                    className="pointer"
-                    color={
-                      selectedTool && selectedTool.name === tool.name ?
-                        "blue"
-                      : undefined
-                    }
-                  >
-                    {tool.name}
-                  </Chip>
-                ))}
-              </FlexRowWrap>
-            );
-          },
-        },
-        ...["installed", "config_schema", "enabled", "source", "command"].map(
-          (name) => ({
-            name,
-            hide: true,
-          }),
-        ),
-      ] satisfies FieldConfig[],
-    [selectedTool],
-  );
-  // const getRowFooter: SmartCardListProps["getRowFooter"] = useCallback(
-  //   () =>
-  //     (
-  //       r: DBSSchema["mcp_servers"] & {
-  //         mcp_server_configs: DBSSchema["mcp_server_configs"][];
-  //         mcp_server_logs: DBSSchema["mcp_server_logs"][];
-  //       },
-  //     ) => (
-  //       <MCPServerFooterActions
-  //         r={r}
-  //         dbs={dbs}
-  //         dbsMethods={dbsMethods}
-  //         envInfo={envInfo}
-  //         setServerConfig={setServerConfig}
-  //       />
-  //     ),
-  //   [],
-  // );
-  return {
-    selectedTool,
-    setSelectedTool,
-    filter,
-    fieldConfigs,
-    // getRowFooter,
-  };
 };

@@ -3,6 +3,7 @@ import "./Loading.css";
 import RTComp from "../dashboard/RTComp";
 import { classOverride, FlexRow } from "./Flex";
 import { tout } from "../utils";
+import { SpinnerV2 } from "./SpinnerV2";
 export const pageReload = async (reason: string) => {
   console.log("pageReload due to: ", reason);
   await tout(200);
@@ -116,7 +117,7 @@ export default class Loading extends RTComp<P, S> {
       className = "",
       variant,
       sizePx = 30,
-      colorAnimation = true,
+      colorAnimation = false,
     } = this.props;
     const { show = this.show } = this.props;
     const size = sizePx + "px";
@@ -129,26 +130,6 @@ export default class Loading extends RTComp<P, S> {
       display: !show ? "none" : undefined,
       cursor: "wait",
     };
-
-    const spinner = (
-      <svg
-        className="spinner f-0"
-        width={size}
-        height={size}
-        viewBox="0 0 66 66"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <circle
-          className={"path " + (colorAnimation ? " color-animation " : "")}
-          fill="none"
-          strokeWidth="6"
-          strokeLinecap="round"
-          cx="33"
-          cy="33"
-          r="30"
-        ></circle>
-      </svg>
-    );
 
     if (variant === "top-bar") {
       return (
@@ -190,7 +171,7 @@ export default class Loading extends RTComp<P, S> {
             )}
           >
             <FlexRow className="bg-color-0 rounded p-1 shadow">
-              {spinner}
+              <Spinner size={size} colorAnimation={colorAnimation} />
               {message}
             </FlexRow>
           </div>
@@ -209,9 +190,37 @@ export default class Loading extends RTComp<P, S> {
           className,
         )}
       >
-        {spinner}
+        <Spinner size={size} colorAnimation={colorAnimation} />
         {message}
       </div>
     );
   }
 }
+
+const Spinner = ({
+  size,
+  colorAnimation,
+}: {
+  size: string;
+  colorAnimation: boolean;
+}) => <SpinnerV2 size={size} />;
+// CPU usage is too high for css animation used below
+//   (
+//   <svg
+//     className="spinner f-0"
+//     width={size}
+//     height={size}
+//     viewBox="0 0 66 66"
+//     xmlns="http://www.w3.org/2000/svg"
+//   >
+//     <circle
+//       className={"path " + (colorAnimation ? " color-animation " : "")}
+//       fill="none"
+//       strokeWidth="6"
+//       strokeLinecap="round"
+//       cx="33"
+//       cy="33"
+//       r="30"
+//     ></circle>
+//   </svg>
+// );

@@ -39,7 +39,8 @@ export const useJoinedSectionFieldConfigs = ({
     if (!rootTable) return;
 
     const nonJoinColumnsToShow = sectionTable.columns.filter(
-      (c) => !c.references?.some((r) => r.ftable === rootTable.name),
+      (c) =>
+        c.select && !c.references?.some((r) => r.ftable === rootTable.name),
     );
     const extraColumnsToShow: FieldConfig[] = sectionTable.joinsV2
       .filter((j) => j.tableName !== rootTable.name)

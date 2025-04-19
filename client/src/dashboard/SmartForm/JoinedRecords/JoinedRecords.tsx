@@ -100,7 +100,7 @@ export const JoinedRecords = (props: JoinedRecordsProps) => {
                       methods={methods}
                       ftable={table}
                       searchFilter={section.detailedJoinFilter}
-                      onClickRow={undefined}
+                      getActions={undefined}
                       tables={tables}
                       rootTableName={table.name}
                     />

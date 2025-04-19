@@ -104,7 +104,7 @@ export const SmartFormFieldForeignKey = (
     </div>
   );
 
-  const paddingValue = isDefined(selectedOption?.subLabel) ? "6px" : "12px";
+  const paddingValue = 0; // isDefined(selectedOption?.subLabel) ? "6px" :  "12px";
   const isNullOrEmpty = value === null || value === undefined;
   const displayValue = (
     <FlexRowWrap

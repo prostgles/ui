@@ -4,9 +4,9 @@ import React, { useMemo } from "react";
 import { filterArr } from "../../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import Btn from "../../components/Btn";
+import { MarkdownMonacoCode } from "../../components/Chat/MarkdownMonacoCode";
 import { FlexCol } from "../../components/Flex";
 import { MediaViewer } from "../../components/MediaViewer";
-import { CodeEditor } from "../CodeEditor/CodeEditor";
 
 type ToolUseMessageProps = {
   messages: DBSSchema["llm_messages"][];
@@ -53,16 +53,14 @@ export const ToolUseChatMessage = ({
       {open && (
         <FlexCol className={" p-1 rounded"}>
           {m.input && !isEmpty(m.input) && (
-            <CodeEditor
+            <MarkdownMonacoCode
               key={`${m.type}-input`}
-              contentTop={<div className="p-p5 bg-color-1">Arguments:</div>}
-              value={
+              title="Arguments:"
+              codeString={
                 tryCatchV2(() => JSON.stringify(m.input, null, 2)).data ?? ""
               }
               language="json"
-              options={{
-                lineNumbers: "off",
-              }}
+              codeHeader={undefined}
             />
           )}
           {toolUseResult && <ContentRender toolUseResult={toolUseResult} />}
@@ -104,21 +102,16 @@ const ContentRender = ({
             JSON_START_CHARS.some((c) => value.trim().startsWith(c)) ? "json"
             : "text";
           return (
-            <CodeEditor
+            <MarkdownMonacoCode
               key={`${m.type}${idx}`}
-              contentTop={
-                <div className="p-p5 bg-color-1">
-                  {toolUseResult?.toolUseResultMessage.is_error ?
-                    "Error"
-                  : "Output"}
-                  :
-                </div>
+              title={
+                toolUseResult?.toolUseResultMessage.is_error ?
+                  "Error"
+                : "Output"
               }
-              value={value}
+              codeString={value}
               language={language}
-              options={{
-                lineNumbers: "off",
-              }}
+              codeHeader={undefined}
             />
           );
         }
@@ -127,7 +120,13 @@ const ContentRender = ({
           return <>Unsupported message type: {m.type}</>;
         }
 
-        return <MediaViewer key={`image-${idx}`} url={m.data} />;
+        return (
+          <MediaViewer
+            key={`image-${idx}`}
+            content_type={"image"}
+            url={m.data}
+          />
+        );
       })}
     </>
   );

@@ -170,8 +170,6 @@ export const useSmartCardListState = (
       const select = getSelectForFieldConfigs(fieldConfigs, columns);
 
       const setData = async () => {
-        const select = getSelectForFieldConfigs(fieldConfigs, columns);
-
         setLoading(true);
         try {
           if (!tableHandler?.find) {
@@ -249,15 +247,8 @@ export const useSmartCardListState = (
     }
   }, [tableDataHandlers, tableHandler]);
 
-  const state = {
-    columns: columns ?? fetchedColumns,
-    loading,
-    items,
-    error,
-    loaded,
-    totalRows,
-    setTotalRows,
-    tableControls:
+  const tableControls = useMemo(
+    () =>
       smartProps.type === "table" && smartProps.table ?
         {
           ...smartProps,
@@ -267,6 +258,18 @@ export const useSmartCardListState = (
           setLocalOrderBy,
         }
       : undefined,
+    [localFilter, localOrderBy, smartProps],
+  );
+
+  const state = {
+    columns,
+    loading,
+    items,
+    error,
+    loaded,
+    totalRows,
+    setTotalRows,
+    tableControls,
   };
 
   return state;

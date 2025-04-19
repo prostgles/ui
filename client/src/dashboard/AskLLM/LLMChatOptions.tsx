@@ -50,25 +50,6 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
 
   return (
     <>
-      <PopupMenu
-        title="MCP Tools"
-        contentClassName="p-0 py-1"
-        clickCatchStyle={{ opacity: 1 }}
-        onClickClose={false}
-        data-command="LLMChatOptions.MCPTools"
-        button={
-          <Btn
-            title="MCP Tools"
-            variant="icon"
-            iconPath={mdiTools}
-            disabledInfo={
-              !props.dbsMethods.getMcpHostInfo ? "Must be admin" : undefined
-            }
-          />
-        }
-      >
-        <MCPServers {...props} />
-      </PopupMenu>
       <Btn
         title={t.AskLLMChatHeader["Chat settings"]}
         variant="icon"
