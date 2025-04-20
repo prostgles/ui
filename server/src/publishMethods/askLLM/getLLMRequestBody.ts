@@ -1,6 +1,6 @@
-import { isDefined, isObject, omitKeys } from "prostgles-types";
-import type { FetchLLMResponseArgs } from "./fetchLLMResponse";
+import { isDefined, omitKeys } from "prostgles-types";
 import { filterArr } from "../../../../commonTypes/llmUtils";
+import type { FetchLLMResponseArgs } from "./fetchLLMResponse";
 
 export const getLLMRequestBody = ({
   llm_provider,
@@ -8,6 +8,7 @@ export const getLLMRequestBody = ({
   messages: maybeEmptyMessages,
   tools,
   llm_model,
+  llm_chat,
 }: FetchLLMResponseArgs) => {
   const nonEmptyMessages = maybeEmptyMessages
     .map((m) => {
@@ -63,7 +64,8 @@ export const getLLMRequestBody = ({
         messages: messages.map((m) => ({
           ...m,
           content: m.content.map((c) => {
-            return c.type === "image" ?
+            return (
+              c.type === "image" ?
                 {
                   type: "image",
                   source: {
@@ -71,7 +73,9 @@ export const getLLMRequestBody = ({
                     data: removeBase64Prefix(c.source.data),
                   },
                 }
-              : c;
+              : c.type === "tool_result" ? omitKeys(c, ["tool_name"])
+              : c
+            );
           }),
         })),
         tools,
@@ -236,6 +240,7 @@ export const getLLMRequestBody = ({
     ...llm_provider.extra_body,
     ...llm_credential.extra_body,
     ...llm_model.extra_body,
+    ...llm_chat.extra_body,
   };
   return {
     body: JSON.stringify(
@@ -246,6 +251,7 @@ export const getLLMRequestBody = ({
       ...llm_provider.extra_headers,
       ...llm_credential.extra_headers,
       ...llm_model.extra_headers,
+      ...llm_chat.extra_headers,
     },
   };
 };

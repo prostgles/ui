@@ -159,6 +159,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
             }
           />
           <AskLLMToolApprover
+            connection={connection}
             dbs={dbs}
             activeChat={activeChat}
             messages={llmMessages ?? []}

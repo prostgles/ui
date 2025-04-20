@@ -13,6 +13,7 @@ type ToolUseMessageProps = {
   messageIndex: number;
   toolUseMessageIndex: number;
 };
+
 export const ToolUseChatMessage = ({
   messages,
   toolUseMessageIndex,
@@ -31,7 +32,9 @@ export const ToolUseChatMessage = ({
   );
 
   return (
-    <FlexCol className={"ToolUseMessage gap-0 " + (open ? "bg-color-2" : "")}>
+    <FlexCol
+      className={"ToolUseMessage gap-0 " + (open ? "bg-color-2 rounded" : "")}
+    >
       <Btn
         iconPath={mdiTools}
         style={open ? { width: "100%" } : {}}
@@ -106,8 +109,8 @@ const ContentRender = ({
               key={`${m.type}${idx}`}
               title={
                 toolUseResult?.toolUseResultMessage.is_error ?
-                  "Error"
-                : "Output"
+                  "Error:"
+                : "Output:"
               }
               codeString={value}
               language={language}

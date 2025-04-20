@@ -14,7 +14,6 @@ import { CodeEditor } from "../../CodeEditor/CodeEditor";
 import type { DBS } from "../../Dashboard/DBS";
 import { type ApproveRequest } from "./useLLMChatAllowedTools";
 import { useLLMTools } from "./useLLMTools";
-import Loading from "../../../components/Loading";
 
 export type AskLLMToolsProps = {
   dbs: DBS;
@@ -25,7 +24,7 @@ export type AskLLMToolsProps = {
     msg: DBSSchema["llm_messages"]["message"] | undefined,
   ) => Promise<void>;
   callMCPServerTool: Prgl["dbsMethods"]["callMCPServerTool"];
-} & Pick<Prgl, "methods">;
+} & Pick<Prgl, "methods" | "connection">;
 const taskTool = getSuggestedTaskTools();
 
 export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
@@ -103,7 +102,7 @@ export const AskLLMToolApprover = (props: AskLLMToolsProps) => {
 
   if (!mustApprove) return null;
 
-  const { input, name, description } = mustApprove;
+  const { input, description } = mustApprove;
 
   return (
     <Popup

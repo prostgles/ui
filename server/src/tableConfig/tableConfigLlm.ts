@@ -307,6 +307,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
           ],
         },
       },
+      ...extraRequestData,
     },
     indexes: {
       unique_chat_for_connection: {

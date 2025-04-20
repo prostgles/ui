@@ -7,12 +7,10 @@ import PopupMenu from "../../../components/PopupMenu";
 import { SwitchToggle } from "../../../components/SwitchToggle";
 import { CodeEditor } from "../../../dashboard/CodeEditor/CodeEditor";
 import type { ServerSettingsProps } from "../ServerSettings";
-import {
-  MCPServerConfig,
-  MCPServerConfigButton,
-  useMCPServerEnable,
-} from "./MCPServerConfig";
+import { MCPServerConfig } from "./MCPServerConfig/MCPServerConfig";
 import { MCPServersInstall } from "./MCPServersInstall";
+import { useMCPServerEnable } from "./MCPServerConfig/useMCPServerEnable";
+import { MCPServerConfigButton } from "./MCPServerConfig/MCPServerConfigButton";
 
 export type MCPServerFooterActionsProps = Pick<
   ServerSettingsProps,
@@ -127,7 +125,7 @@ export const MCPServerFooterActions = ({
           existingConfig={undefined}
           dbs={dbs}
           onDone={() => {
-            showServerConfig();
+            showServerConfig.onFinished();
             setShowServerConfig(false);
           }}
           serverName={mcp_server.name}

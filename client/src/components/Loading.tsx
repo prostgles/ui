@@ -204,8 +204,15 @@ const Spinner = ({
   size: string;
   colorAnimation: boolean;
 }) => <SpinnerV2 size={size} />;
+
 // CPU usage is too high for css animation used below
-//   (
+// const Spinner = ({
+//   size,
+//   colorAnimation,
+// }: {
+//   size: string;
+//   colorAnimation: boolean;
+// }) => (
 //   <svg
 //     className="spinner f-0"
 //     width={size}

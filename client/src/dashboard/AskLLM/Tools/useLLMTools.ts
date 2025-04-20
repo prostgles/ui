@@ -25,6 +25,7 @@ export const useLLMTools = ({
   callMCPServerTool,
   requestApproval,
   db,
+  connection,
 }: AskLLMToolsProps & {
   requestApproval: (
     tool: ApproveRequest,
@@ -37,6 +38,8 @@ export const useLLMTools = ({
     activeChat,
     dbs,
   });
+
+  const { is_state_db } = connection;
 
   usePromise(async () => {
     const lastMessage = messages.at(-1);
@@ -84,6 +87,7 @@ export const useLLMTools = ({
         }
 
         const toolResult = await getLLMToolUseResult(
+          !!is_state_db,
           allToolsForTask,
           matchedTool,
           lastMessage.chat_id,

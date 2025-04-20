@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { useResizeObserver } from "./SearchList/useResizeObserver";
-import { getCssVariableValue } from "../dashboard/Charts/onRenderTimechart";
 
 /**
  * Used to reduce CPU load
@@ -34,8 +33,8 @@ export const SpinnerV2 = ({ size }: { size: string }) => {
 
     // Spinner properties
     const radius = Math.max(1, (Math.min(width, height) / 2) * 0.8); // Ensure radius is at least 1
-    const lineWidth = Math.max(3, Math.min(width, height) * 0.05); // Scale line width, minimum 1px
-    const color = getCssVariableValue("--text-2") || "#888";
+    const lineWidth = 2;
+    const color = getComputedStyle(canvas).color; // getCssVariableValue("--text-2") || "#888";
     const rotationSpeed = 0.08;
     const arcLength = Math.PI * 1.5; // 270 degrees
 

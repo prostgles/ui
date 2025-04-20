@@ -80,6 +80,7 @@ export const useLLMChatMessages = (props: P) => {
               incoming: user_id !== user?.id,
               messageTopContent: (
                 <AskLLMTokenUsage
+                  className="ml-p5"
                   message={{ user_id, meta }}
                   models={models ?? []}
                 />

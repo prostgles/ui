@@ -21,6 +21,7 @@ const taskTool = getSuggestedTaskTools();
  * Get tool result without checking if the tool is allowed for the chat
  */
 export const getLLMToolUseResult = async (
+  is_state_db: boolean,
   allToolsForTask: ReturnType<typeof useLLMChatAllowedTools>["allToolsForTask"],
   matchedTool: ApproveRequest,
   chatId: number,
@@ -50,13 +51,19 @@ export const getLLMToolUseResult = async (
     });
     if (dbTool?.name === executeSQLTool.name) {
       return parseToolResultToMessage(async () => {
+        if (is_state_db) {
+          throw new Error(
+            "Executing SQL on Prostgles UI state database is not allowed for security reasons",
+          );
+        }
         const sql = db.sql;
         if (!sql) throw new Error("Executing SQL not allowed to this user");
         const query = input.sql;
         if (typeof query !== "string") {
           throw new Error("input.sql must be a string");
         }
-        const { query_timeout = 0 } = matchedTool.chatDBPermissions;
+        const { query_timeout = 0, commit = false } =
+          matchedTool.chatDBPermissions;
         const finalQuery =
           query_timeout && Number.isInteger(query_timeout) ?
             [`SET LOCAL statement_timeout to '${query_timeout}s'`, query].join(
@@ -66,7 +73,7 @@ export const getLLMToolUseResult = async (
         const { rows } = await sql(
           finalQuery,
           {},
-          { returnType: "default-with-rollback" },
+          { returnType: commit ? "rows" : "default-with-rollback" },
         );
         return JSON.stringify(rows);
       });
@@ -137,7 +144,7 @@ export const getLLMToolUseResult = async (
 
 const parseToolResultToMessage = (func: () => Promise<any>) => {
   return func()
-    .then((content: string) => ({ content }))
+    .then((content: string) => ({ content: content ?? "" }))
     .catch((e) => ({
       content: JSON.stringify(e),
       is_error: true as const,

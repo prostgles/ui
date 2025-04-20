@@ -5,10 +5,12 @@ import Chip from "../../components/Chip";
 type P = {
   message: Pick<DBSSchema["llm_messages"], "meta" | "user_id">;
   models: DBSSchema["llm_models"][];
+  className?: string;
 };
 
 export const AskLLMTokenUsage = ({
   models,
+  className,
   message: { meta: rawMeta, user_id },
 }: P) => {
   const meta = getMeta(rawMeta, models);
@@ -16,7 +18,10 @@ export const AskLLMTokenUsage = ({
   const cost = getCost(meta);
 
   return (
-    <Chip title={JSON.stringify({ cost, ...meta }, null, 2)}>
+    <Chip
+      className={className}
+      title={JSON.stringify({ cost, ...meta }, null, 2)}
+    >
       {cost ? `$${cost.toFixed(2)}` : ""}
     </Chip>
   );

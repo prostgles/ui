@@ -8,6 +8,7 @@ export type LLMMessage = {
   content: DBSSchema["llm_messages"]["message"];
 };
 export type FetchLLMResponseArgs = {
+  llm_chat: Pick<DBSSchema["llm_chats"], "extra_body" | "extra_headers">;
   llm_model: DBSSchema["llm_models"];
   llm_provider: DBSSchema["llm_providers"];
   llm_credential: DBSSchema["llm_credentials"];

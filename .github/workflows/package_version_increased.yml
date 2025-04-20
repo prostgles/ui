@@ -14,9 +14,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          # Fetch all history for all branches and tags
-          fetch-depth: 0
 
       - name: Get versions
         id: pr-version
@@ -50,9 +47,6 @@ jobs:
           base_ref="${{ github.base_ref }}"
           release_file_path="./releases/v${pr_version}"
 
-          # Find the point where the PR branch diverged from the base branch
-          merge_base=$(git merge-base origin/${base_ref} HEAD)
-
           echo "Checking for release file: ${release_file_path}"
 
           if [ -f "$release_file_path" ]; then
@@ -60,23 +54,8 @@ jobs:
             echo "::warning::Release notes file for version v${pr_version} already exists. Ensure this is intended."
           else
 
-
             echo "Release file not found for v${pr_version}."
-            echo "Generating potential changelog from commits between origin/${merge_base} and PR head..."
+            echo "Ensure this file exists: ${release_file_path}"
 
-            # Generate changelog using commits unique to the PR branch
-            # Format: '- Subject (hash)'
-            changelog=$(git log --pretty=format:'- %s (%h)' origin/${base_ref}..HEAD)
-
-            if [ -z "$changelog" ]; then
-              echo "No distinct commits found between origin/${merge_base} and this PR head to generate changelog."
-            else
-              echo "--------------------------------------------------"
-              echo "Generated Changelog for v${pr_version}:"
-              echo "$changelog"
-              echo "--------------------------------------------------"
-              echo "::notice::Please create the release file '${release_file_path}' with appropriate notes based on these changes."
-            fi
-            sleep 5
             exit 1
           fi

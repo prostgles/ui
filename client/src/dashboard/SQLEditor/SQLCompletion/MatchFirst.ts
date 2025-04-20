@@ -36,6 +36,15 @@ export const MatchFirst = async ({
   if (isCommenting) {
     return { suggestions: [] };
   }
+
+  if ([ltoken, currToken].some((t) => t?.text === "::")) {
+    return {
+      suggestions: ss
+        .filter((s) => s.type === "dataType")
+        .map((s) => ({ ...s, sortText: s.dataTypeInfo!.priority! })),
+    };
+  }
+
   const _suggestKWD = (vals: string[], sortText?: string) =>
     suggestKWD(getKind, vals, sortText);
 
@@ -240,14 +249,6 @@ export const MatchFirst = async ({
             filterText: `${c.cmd} ${c.desc}`,
           }) as MonacoSuggestion,
       ),
-    };
-  }
-
-  if ([ltoken, currToken].some((t) => t?.text === "::")) {
-    return {
-      suggestions: ss
-        .filter((s) => s.type === "dataType")
-        .map((s) => ({ ...s, sortText: s.dataTypeInfo!.priority! })),
     };
   }
 

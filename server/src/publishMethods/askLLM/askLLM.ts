@@ -163,6 +163,7 @@ export const askLLM = async (
     if (!llm_provider) throw "Provider not found";
     const gemini25BreakingChanges = llm_model.name.includes("gemini-2.5");
     const { content: llmResponseMessage, meta } = await fetchLLMResponse({
+      llm_chat: chat,
       llm_model,
       llm_provider,
       llm_credential,

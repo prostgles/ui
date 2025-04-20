@@ -1,12 +1,12 @@
-import React, { useState } from "react";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
-import { FlexRowWrap } from "../../../components/Flex";
-import Chip from "../../../components/Chip";
 import { mdiCheck } from "@mdi/js";
+import React from "react";
+import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import Chip from "../../../components/Chip";
+import { FlexRowWrap } from "../../../components/Flex";
 import type { DBS } from "../../../dashboard/Dashboard/DBS";
-import Popup from "../../../components/Popup/Popup";
-import { InfoRow } from "../../../components/InfoRow";
-import { MCPServerConfig, useMCPServerEnable } from "./MCPServerConfig";
+import { MCPServerConfig } from "./MCPServerConfig/MCPServerConfig";
+import { useMCPServerEnable } from "./MCPServerConfig/useMCPServerEnable";
+import { ScrollFade } from "../../../components/SearchList/ScrollFade";
 
 export const MCPServerTools = ({
   server,
@@ -36,7 +36,7 @@ export const MCPServerTools = ({
     });
 
   return (
-    <FlexRowWrap className="gap-p25">
+    <ScrollFade className="gap-p25 flex-row-wrap">
       {tools.map((tool, i) => {
         const isAllowed = llm_chats_allowed_mcp_tools?.some(
           (at) => at.tool_id === tool.id,
@@ -54,9 +54,7 @@ export const MCPServerTools = ({
                 }
               )
             }
-            color={
-              isAllowed || selectedToolName === tool.name ? "blue" : undefined
-            }
+            color={isAllowed ? "blue" : undefined}
             onClick={
               !chatId ? undefined : (
                 async () => {
@@ -88,6 +86,6 @@ export const MCPServerTools = ({
           onDone={() => setShowServerConfig(false)}
         />
       )}
-    </FlexRowWrap>
+    </ScrollFade>
   );
 };

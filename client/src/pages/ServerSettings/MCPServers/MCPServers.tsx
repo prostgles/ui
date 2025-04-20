@@ -7,7 +7,7 @@ import { InfoRow } from "../../../components/InfoRow";
 import { SmartCardList } from "../../../dashboard/SmartCardList/SmartCardList";
 import type { ColumnSort } from "../../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 import type { ServerSettingsProps } from "../ServerSettings";
-import { MCPServerConfig } from "./MCPServerConfig";
+import { MCPServerConfig } from "./MCPServerConfig/MCPServerConfig";
 import { MCPServerFooterActions } from "./MCPServerFooterActions";
 import { MCPServersHeader } from "./MCPServersHeader";
 import { useMCPServersListProps } from "./useMCPServersListProps";

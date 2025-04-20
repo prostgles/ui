@@ -69,6 +69,10 @@ export const getPublishLLM = (
           });
           if (!provider) throw "Provider not found";
           await fetchLLMResponse({
+            llm_chat: {
+              extra_body: {},
+              extra_headers: {},
+            },
             llm_model: preferredModel,
             llm_provider: provider,
             llm_credential: row,
