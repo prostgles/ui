@@ -24,7 +24,7 @@ import { get } from "../../utils";
 import { getServerInfo } from "../Connections/Connections";
 import { NewConnectionForm } from "./NewConnectionForm";
 import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
-import { getOS } from "../ElectronSetup";
+import { getOS } from "../ElectronSetup/ElectronSetup";
 import { FlexCol } from "../../components/Flex";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import PopupMenu from "../../components/PopupMenu";

@@ -15,7 +15,7 @@ import {
 } from "../Login/SocialIcons";
 import type { AuthProviderProps } from "./AuthProvidersSetup";
 import { OAuthProviderOptions } from "../../../../commonTypes/OAuthUtils";
-import { tout } from "../ElectronSetup";
+import { tout } from "../ElectronSetup/ElectronSetup";
 import { Icon } from "../../components/Icon/Icon";
 import { t } from "../../i18n/i18nUtils";
 

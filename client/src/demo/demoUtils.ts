@@ -1,5 +1,5 @@
 import { type Command, getCommandElemSelector } from "../Testing";
-import { tout } from "../pages/ElectronSetup";
+import { tout } from "../pages/ElectronSetup/ElectronSetup";
 
 let pointer: HTMLDivElement | null = null;
 

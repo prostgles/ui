@@ -23,7 +23,7 @@ type ValidatedConnectionDetails = Required<ConnectionDefaults> & {
 };
 
 export type ConnectionInfo = Partial<
-  DBSConnectionInfo & Connections & ConnectionInsert
+  DBSConnectionInfo | Connections | ConnectionInsert
 >;
 
 export const validateConnection = <C extends ConnectionInfo>(

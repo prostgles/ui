@@ -1,6 +1,6 @@
 import { click, getElement, waitForElement } from "../../../demo/demoUtils";
 import { fixIndent, shouldBeEqual } from "../../../demo/sqlVideoDemo";
-import { tout } from "../../../pages/ElectronSetup";
+import { tout } from "../../../pages/ElectronSetup/ElectronSetup";
 import type { DemoScript } from "../getDemoUtils";
 
 export const testSqlCharts: DemoScript = async ({

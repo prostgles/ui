@@ -1,15 +1,15 @@
-import { getConnectionDetails } from "./getConnectionDetails";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
+import { getConnectionDetails } from "./getConnectionDetails";
 import { type ConnectionInfo, validateConnection } from "./validateConnection";
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
 import pgPromise from "pg-promise";
+import type pg from "pg-promise/typescript/pg-subset";
+import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
+import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
+import { pickKeys, tryCatchV2 } from "prostgles-types";
 const pgpNoWarnings = pgPromise({ noWarnings: true });
 const pgp = pgPromise();
-import type pg from "pg-promise/typescript/pg-subset";
-import { pickKeys, tryCatch } from "prostgles-types";
-import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
-import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 
 const NO_SSL_SUPPORT_ERROR = "The server does not support SSL connections";
 
@@ -61,13 +61,13 @@ export const testDBConnection = (
         }
         await check?.(c);
 
-        const { prostglesSchemaVersion } = await tryCatch(async () => {
+        const { data: prostglesSchemaVersion } = await tryCatchV2(async () => {
           const prostglesSchemaVersion = (
             await c.oneOrNone("SELECT version FROM prostgles.versions")
           ).version as string;
-          return { prostglesSchemaVersion };
+          return prostglesSchemaVersion;
         });
-        const { canCreateDb } = await tryCatch(async () => {
+        const { data: canCreateDb } = await tryCatchV2(async () => {
           const canCreateDb = (
             await c.oneOrNone(`
             SELECT rolcreatedb OR rolsuper as can_create_db
@@ -75,7 +75,7 @@ export const testDBConnection = (
             WHERE rolname = "current_user"();
           `)
           ).can_create_db as boolean;
-          return { canCreateDb };
+          return canCreateDb;
         });
 
         resolve({

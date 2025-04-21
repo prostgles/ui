@@ -1,0 +1,116 @@
+import React from "react";
+import { DEFAULT_ELECTRON_CONNECTION } from "../../../../commonTypes/electronInit";
+import { FlexCol } from "../../components/Flex";
+import FormField from "../../components/FormField/FormField";
+import Tabs from "../../components/Tabs";
+import { t } from "../../i18n/i18nUtils";
+import { NewConnectionForm } from "../NewConnection/NewConnectionForm";
+import type { useElectronSetup } from "./useElectronSetup";
+import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
+
+export const ElectronSetupStateDB = ({
+  state,
+}: {
+  state: ReturnType<typeof useElectronSetup>;
+}) => {
+  const {
+    c,
+    validationWarning,
+    updateConnection,
+    isQuickMode,
+    setIsQuickMode,
+    os,
+  } = state;
+
+  return (
+    <FlexCol className="px-p25 min-s-0">
+      <h2>State database</h2>
+      <section className="ta-left font-18">
+        <strong>Prostgles Desktop</strong> requires full access to a postgres
+        database.
+        <p>
+          This database will be used to manage and store all connection and
+          state data (database connection details, sql queries, workspaces,
+          etc).
+        </p>
+        <p className="m-0 mt-p5">
+          For best experience we recommend using a locally installed database
+        </p>
+        <div className="flex-row-wrap gap-2 f-1 mt-1">
+          <PostgresInstallationInstructions os={os} placement="state-db-quick-setup" />
+        </div>
+      </section>
+      <Tabs
+        className="mt-2"
+        activeKey={isQuickMode ? "quick" : "manual"}
+        onChange={(key) => {
+          setIsQuickMode(key === "quick");
+        }}
+        contentClass="ta-left p-2"
+        items={{
+          quick: {
+            label: "Quick setup",
+            content: (
+              <FlexCol>
+                <div>
+                  Will create a{" "}
+                  <strong>{DEFAULT_ELECTRON_CONNECTION.db_user}</strong>{" "}
+                  superuser and a{" "}
+                  <strong>{DEFAULT_ELECTRON_CONNECTION.db_name}</strong> state
+                  database if missing on <strong>{c.db_host}:{c.db_port}</strong><br></br>
+                </div>
+                {c.db_user !== DEFAULT_ELECTRON_CONNECTION.db_user && <div>
+                  *If <strong>{DEFAULT_ELECTRON_CONNECTION.db_user}</strong>{" "}
+                  user exists will overwrite password with a random one
+                </div>}
+
+                <FormField
+                  id="u"
+                  value={c.db_user}
+                  label={t.NewConnectionForm["User"]}
+                  type="text"
+                  autoComplete="off"
+                  onChange={(db_user) => updateConnection({ db_user })}
+                />
+                <FormField
+                  id="pass"
+                  value={c.db_pass}
+                  label={t.NewConnectionForm["Password"]}
+                  type="text"
+                  autoComplete="off"
+                  onChange={(db_pass) => updateConnection({ db_pass })}
+                />
+              </FlexCol>
+            ),
+          },
+          manual: {
+            label: "Manual setup",
+            content: (
+              <FlexCol className="px-p25 min-s-0">
+                <div>
+                  Provide the connection details to an existing database that
+                  will be used as the state database
+                </div>
+                <FlexCol className="min-s-0 o-auto px-p5">
+                  <NewConnectionForm
+                    mode="insert"
+                    warning={validationWarning}
+                    c={c}
+                    nameErr={""}
+                    isForStateDB={true}
+                    updateConnection={updateConnection}
+                    test={{
+                      status: "",
+                      statusOK: false,
+                    }}
+                    dbProps={undefined}
+                  />
+                </FlexCol>
+              </FlexCol>
+            ),
+          },
+        }}
+      />
+    </FlexCol>
+  );
+};

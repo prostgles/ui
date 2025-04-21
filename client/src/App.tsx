@@ -40,7 +40,7 @@ import type { DBS, DBSMethods } from "./dashboard/Dashboard/DBS";
 import { MousePointer } from "./demo/MousePointer";
 import { LanguageSelector } from "./i18n/LanguageSelector";
 import { ComponentList } from "./pages/ComponentList";
-import { ElectronSetup } from "./pages/ElectronSetup";
+import { ElectronSetup } from "./pages/ElectronSetup/ElectronSetup";
 import { Login } from "./pages/Login/Login";
 import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { ThemeSelector } from "./theme/ThemeSelector";

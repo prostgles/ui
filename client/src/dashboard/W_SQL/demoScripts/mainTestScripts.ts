@@ -1,5 +1,5 @@
 import { fixIndent } from "../../../demo/sqlVideoDemo";
-import { tout } from "../../../pages/ElectronSetup";
+import { tout } from "../../../pages/ElectronSetup/ElectronSetup";
 import type { DemoScript } from "../getDemoUtils";
 
 export const mainTestScripts: DemoScript = async ({

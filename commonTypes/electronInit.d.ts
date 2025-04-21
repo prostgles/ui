@@ -25,3 +25,10 @@ export type ProstglesInitState = {
     } | undefined;
 };
 export type ServerState = ProstglesInitState;
+export declare const DEFAULT_ELECTRON_CONNECTION: {
+    readonly type: "Standard";
+    readonly db_host: "localhost";
+    readonly db_port: 5432;
+    readonly db_user: "prostgles_desktop";
+    readonly db_name: "prostgles_desktop_db";
+};

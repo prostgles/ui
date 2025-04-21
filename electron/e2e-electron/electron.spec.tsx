@@ -92,10 +92,13 @@ test("renders the first page", async () => {
   await page.waitForTimeout(1000);
   await screenshot();
   await page.getByTestId("PostgresInstallationInstructions.Close").click();
-  await page.getByTestId("ElectronSetup.Next").click();
+  // await page.getByTestId("ElectronSetup.Next").click();
 
   /** State db connection details */
   await page.waitForTimeout(1000);
+  await screenshot();
+  await page.getByText("Manual setup").click();
+  await page.waitForTimeout(200);
   await screenshot();
   await page.getByLabel("user").fill("usr");
   await page.getByLabel("password").fill("psw");
@@ -110,11 +113,7 @@ test("renders the first page", async () => {
   await page.waitForTimeout(1000);
 
   await screenshot();
-  // let passed = false;
-  // setInterval(() => {
-  //   if(passed) return;
-  //   screenshot();
-  // }, 2e3);
+
   await page
     .getByTestId("ConnectionServer.add")
     .waitFor({ state: "visible", timeout: 60e3 });
@@ -125,7 +124,7 @@ test("renders the first page", async () => {
     .getByTestId("dashboard.goToConnConfig")
     .waitFor({ state: "visible", timeout: 4e3 });
   await screenshot();
-  // await page.reload();
+
   await page
     .getByTestId("dashboard.goToConnConfig")
     .waitFor({ state: "visible", timeout: 2e3 });
