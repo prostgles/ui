@@ -3,7 +3,7 @@ import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo } from "react";
 import { NavLink } from "react-router-dom";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import { API_PATH_SUFFIXES } from "../../../commonTypes/utils";
+import { ROUTES } from "../../../commonTypes/utils";
 import type { Prgl } from "../App";
 import Btn from "../components/Btn";
 import { FlexCol, FlexRow } from "../components/Flex";
@@ -77,7 +77,7 @@ export const Alerts = (prgl: Prgl) => {
                   <div>{message}</div>
                   {connection_id && section && (
                     <NavLink
-                      to={`${API_PATH_SUFFIXES.CONFIG}/${connection_id}?section=${section}`}
+                      to={`${ROUTES.CONFIG}/${connection_id}?section=${section}`}
                     >
                       Go to issue
                     </NavLink>

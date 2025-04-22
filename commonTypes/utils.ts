@@ -317,19 +317,37 @@ export const getConnectionPaths = ({
   url_path: string | null;
 }) => {
   return {
-    rest: `${API_PATH_SUFFIXES.REST}/${url_path || id}`,
-    ws: `${API_PATH_SUFFIXES.WS}/${url_path || id}`,
-    dashboard: `${API_PATH_SUFFIXES.DASHBOARD}/${id}`,
-    config: `${API_PATH_SUFFIXES.CONFIG}/${id}`,
+    rest: `${API_ENDPOINTS.REST}/${url_path || id}`,
+    ws: `${API_ENDPOINTS.WS_DB}/${url_path || id}`,
+    dashboard: `${ROUTES.DASHBOARD}/${id}`,
+    config: `${ROUTES.CONFIG}/${id}`,
   };
 };
 
-export const API_PATH_SUFFIXES = {
+export const API_ENDPOINTS = {
   REST: "/rest-api",
-  WS: "/ws-api-db",
+  WS_DB: "/ws-api-db",
+  WS_DBS: "/ws-api-dbs",
+} as const;
+
+export const ROUTES = {
+  MAGIC_LINK: "/magic-link",
+  LOGIN: "/login",
+  LOGOUT: "/logout",
+  ACCOUNT: "/account",
   DASHBOARD: "/connections",
   CONFIG: "/connection-config",
 } as const;
+
+const testForDuplicateValues = <T extends AnyObject>(obj: T, name: string) => {
+  if (new Set(Object.values(obj)).size !== Object.keys(obj).length) {
+    throw new Error(
+      `${name} must not have duplicate values: ${Object.values(obj)}`,
+    );
+  }
+};
+testForDuplicateValues(API_ENDPOINTS, "API_ENDPOINTS");
+testForDuplicateValues(ROUTES, "ROUTES");
 
 export const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
 

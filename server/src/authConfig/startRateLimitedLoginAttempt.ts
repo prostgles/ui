@@ -1,14 +1,14 @@
 import type { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { type AuthResponse, isEmpty, pickKeys } from "prostgles-types";
-import { connectionChecker, tout } from "..";
+import { securityManager, tout } from "..";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import { HOUR } from "../../../commonTypes/utils";
 
 const getGlobalSettings = async () => {
-  let gs = connectionChecker.config.global_setting;
+  let gs = securityManager.config.global_setting;
   do {
-    gs = connectionChecker.config.global_setting;
+    gs = securityManager.config.global_setting;
     if (!gs) {
       console.warn("Delaying user request until GlobalSettings area available");
       await tout(500);

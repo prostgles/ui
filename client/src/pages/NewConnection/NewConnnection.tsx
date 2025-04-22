@@ -5,6 +5,7 @@ import {
   mdiDeleteOutline,
   mdiPlus,
 } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React from "react";
 import { NavLink, useNavigate, useParams } from "react-router-dom";
 import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
@@ -15,25 +16,23 @@ import Btn from "../../components/Btn";
 import ErrorComponent, {
   getErrorMessage,
 } from "../../components/ErrorComponent";
+import { FlexCol } from "../../components/Flex";
+import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
 import Loading from "../../components/Loading";
+import { Section } from "../../components/Section";
+import { SwitchToggle } from "../../components/SwitchToggle";
 import { CodeConfirmation } from "../../dashboard/Backup/CodeConfirmation";
 import RTComp from "../../dashboard/RTComp";
 import { JoinedRecords } from "../../dashboard/SmartForm/JoinedRecords/JoinedRecords";
+import { t } from "../../i18n/i18nUtils";
 import { get } from "../../utils";
 import { getServerInfo } from "../Connections/Connections";
-import { NewConnectionForm } from "./NewConnectionForm";
-import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
 import { getOS } from "../ElectronSetup/ElectronSetup";
-import { FlexCol } from "../../components/Flex";
-import { SwitchToggle } from "../../components/SwitchToggle";
-import PopupMenu from "../../components/PopupMenu";
-import { Icon } from "../../components/Icon/Icon";
+import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
-import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
-import { t } from "../../i18n/i18nUtils";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { Section } from "../../components/Section";
+import { NewConnectionForm } from "./NewConnectionForm";
+import { ROUTES } from "../../../../commonTypes/utils";
 
 export const getSqlErrorText = (e: any) => {
   let objDetails: [string, any][] = [];
@@ -292,7 +291,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
         {!contentOnly && (
           <NavLink
             className="p-1 text-1 round flex-row ai-center"
-            to={API_PATH_SUFFIXES.DASHBOARD}
+            to={ROUTES.DASHBOARD}
           >
             <Icon path={mdiArrowLeft} size={1} />
             <div className="ml-p5">{t.NewConnection.Connections}</div>
@@ -537,7 +536,7 @@ export default (props: NewConnectionProps) => {
         navigate("/");
       }}
       onUpserted={({ id }) => {
-        navigate(API_PATH_SUFFIXES.DASHBOARD + "/" + id);
+        navigate(ROUTES.DASHBOARD + "/" + id);
       }}
     />
   );

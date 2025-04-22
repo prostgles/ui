@@ -5,7 +5,7 @@ import type {
 } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { getKeys } from "prostgles-types";
-import { connectionChecker } from "..";
+import { securityManager } from "..";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import { isDefined } from "../../../commonTypes/filterUtils";
 import {
@@ -362,7 +362,7 @@ export const publish = async (
           // )
 
           if (row.allowed_ips_enabled) {
-            const { isAllowed, ip } = await connectionChecker.checkClientIP({
+            const { isAllowed, ip } = await securityManager.checkClientIP({
               ...clientReq,
               dbsTX,
             });

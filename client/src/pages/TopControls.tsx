@@ -17,7 +17,7 @@ import type {
   FullExtraProps,
 } from "./ProjectConnection/ProjectConnection";
 import { AskLLM } from "../dashboard/AskLLM/AskLLM";
-import { API_PATH_SUFFIXES } from "../../../commonTypes/utils";
+import { ROUTES } from "../../../commonTypes/utils";
 import { t } from "../i18n/i18nUtils";
 
 type TopControlsProps = {
@@ -40,7 +40,7 @@ export const TopControls = (props: TopControlsProps) => {
         ...dataCommand("config.goToConnDashboard"),
         title: t.TopControls["Go to workspace"],
         asNavLink: true,
-        href: `${API_PATH_SUFFIXES.DASHBOARD}/${connectionId}`,
+        href: `${ROUTES.DASHBOARD}/${connectionId}`,
       }
     : {
         ...dataCommand("dashboard.menu"),
@@ -99,7 +99,7 @@ export const TopControls = (props: TopControlsProps) => {
             <Btn
               data-command="dashboard.goToConnections"
               title={t.TopControls["Go to Connections"]}
-              href={API_PATH_SUFFIXES.DASHBOARD}
+              href={ROUTES.DASHBOARD}
               variant="faded"
               asNavLink={true}
               iconPath={mdiArrowLeft}
@@ -140,8 +140,8 @@ export const ConnectionConfigBtn = ({
         iconPath={mdiDatabaseCog}
         href={
           isOnWorkspace ?
-            `${API_PATH_SUFFIXES.CONFIG}/${connection.id}`
-          : `${API_PATH_SUFFIXES.DASHBOARD}/${connection.id}`
+            `${ROUTES.CONFIG}/${connection.id}`
+          : `${ROUTES.DASHBOARD}/${connection.id}`
         }
         asNavLink={true}
         disabledInfo={

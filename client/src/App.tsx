@@ -30,7 +30,7 @@ import {
 import { type Socket } from "socket.io-client";
 import type { ServerState } from "../../commonTypes/electronInit";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
-import { API_PATH_SUFFIXES } from "../../commonTypes/utils";
+import { ROUTES } from "../../commonTypes/utils";
 import { createReactiveState, useReactiveState } from "./appUtils";
 import Btn from "./components/Btn";
 import { FlexCol, FlexRow } from "./components/Flex";
@@ -109,7 +109,6 @@ export type AppState = {
    */
   dbsKey?: string;
   prglState?: {
-    dbsWsApiPath: string;
     dbs: DBS;
     dbsTables: CommonWindowProps["tables"];
     dbsMethods: any;
@@ -208,7 +207,7 @@ export const App = () => {
             : [
                 {
                   label: t["App"]["Connections"],
-                  to: API_PATH_SUFFIXES.DASHBOARD,
+                  to: ROUTES.DASHBOARD,
                   iconPath: mdiServerNetwork,
                 },
                 {
@@ -282,14 +281,12 @@ export const App = () => {
       )}
       <NonHTTPSWarning {...prglState} />
       <Switch>
+        <Route path="/" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
         <Route
-          path="/"
-          element={<Navigate to={API_PATH_SUFFIXES.DASHBOARD} replace />}
-        />
-        <Route
-          path={API_PATH_SUFFIXES.DASHBOARD}
+          path={ROUTES.DASHBOARD}
           element={withNavBar(<Connections {...extraProps} />, true)}
         />
+        ,
         <Route
           key="1"
           path="/users"
@@ -298,13 +295,13 @@ export const App = () => {
         ,
         <Route
           key="2"
-          path="/account"
+          path={ROUTES.ACCOUNT}
           element={withNavBar(<Account {...extraProps} />)}
         />
         ,
         <Route
           key="3"
-          path={`${API_PATH_SUFFIXES.DASHBOARD}/:cid`}
+          path={`${ROUTES.DASHBOARD}/:cid`}
           element={<ProjectConnection prglState={extraProps} />}
         />
         ,
@@ -336,7 +333,7 @@ export const App = () => {
         ,
         <Route
           key="10"
-          path="/connection-config/:cid"
+          path={`${ROUTES.CONFIG}/:cid"`}
           element={
             <ProjectConnection
               prglState={extraProps}
@@ -347,15 +344,18 @@ export const App = () => {
         ,
         <Route
           key="11"
-          path="/server-settings"
+          path={"/server-settings"}
           element={withNavBar(<ServerSettings {...extraProps} />, true)}
         />
+        ,
         <Route
           key="12"
           path="/component-list"
           element={withNavBar(<ComponentList />, false)}
         />
-        <Route path="/login" element={<Login {...extraProps} />} />
+        ,
+        <Route path={ROUTES.LOGIN} element={<Login {...extraProps} />} />
+        ,
         <Route path="*" element={<NotFound />} />
       </Switch>
     </FlexCol>

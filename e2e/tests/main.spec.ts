@@ -83,6 +83,31 @@ test.describe("Main test", () => {
     }
   };
 
+  test("Connecting with an existing sid to a fresh instance will ignore the sid IF passwordless admin did not claim a session yet", async ({
+    page: p,
+  }) => {
+    const page = p as PageWIds;
+    const url = new URL("http://localhost:3004");
+    await page.context().addCookies([
+      {
+        name: "sid_token",
+        value: "randoms-sid",
+        domain: url.hostname,
+        path: "/",
+        httpOnly: true,
+        secure: url.protocol.startsWith("https"),
+        sameSite: "Lax",
+      },
+    ]);
+
+    await goTo(page, "/login");
+
+    await page.getByRole("link", { name: "Connections" }).click();
+    await page.getByRole("link", { name: "Prostgles UI state" }).click();
+
+    throw new Error("Test not implemented");
+  });
+
   test("Can disable passwordless admin by creating a new admin user. User data is reassigned and accessible to the new user", async ({
     page: p,
   }) => {

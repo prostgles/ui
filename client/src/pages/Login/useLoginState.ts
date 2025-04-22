@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { EMAIL_CONFIRMED_SEARCH_PARAM } from "../../../../commonTypes/OAuthUtils";
 import type { LoginFormProps } from "./Login";
+import { ROUTES } from "../../../../commonTypes/utils";
 
 type PasswordLoginDataAndFunc = {
   onCall: PasswordLogin;
@@ -128,7 +129,7 @@ export const useLoginState = ({ auth }: LoginFormProps) => {
         emailVerificationCode,
         setEmailVerificationCode,
         onCall: () =>
-          authRequest(`/magic-link`, {
+          authRequest(ROUTES.MAGIC_LINK, {
             email: username,
             code: emailVerificationCode,
           }),

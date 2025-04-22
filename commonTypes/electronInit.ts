@@ -14,7 +14,6 @@ export type ProstglesInitState = {
   electronIssue?: {
     type: "Older schema";
   };
-  dbsWsApiPath: string;
   initError?: any;
   connectionError?: any;
   ok: boolean;

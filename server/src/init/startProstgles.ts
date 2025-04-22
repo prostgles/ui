@@ -7,7 +7,7 @@ import type { DB } from "prostgles-server/dist/Prostgles";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { Server } from "socket.io";
 import type { DBS } from "..";
-import { connMgr, connectionChecker } from "..";
+import { connMgr, securityManager } from "..";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import BackupManager from "../BackupManager/BackupManager";
 import { addLog, setLoggerDBS } from "../Logger";
@@ -119,7 +119,7 @@ export const startProstgles = async ({
         const userId = user.user?.id;
         const sid = user.sid;
 
-        await connectionChecker.onSocketConnected({
+        await securityManager.onSocketConnected({
           sid,
         });
 
@@ -223,8 +223,8 @@ export const startProstgles = async ({
         setLoggerDBS(params.dbo);
 
         /* Update stale data */
-        await connectionChecker.destroy();
-        await connectionChecker.init(db, _db);
+        await securityManager.destroy();
+        await securityManager.init(db, _db);
 
         await insertStateDatabase(db, _db, con, getInitState().isElectron);
         await setupLLM(db);

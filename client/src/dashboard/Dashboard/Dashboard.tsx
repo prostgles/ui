@@ -14,6 +14,7 @@ import { mdiArrowLeft } from "@mdi/js";
 import { isEmpty } from "prostgles-types";
 import type { NavigateFunction } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../App";
 import { createReactiveState } from "../../appUtils";
 import Btn from "../../components/Btn";
@@ -23,12 +24,14 @@ import { TopControls } from "../../pages/TopControls";
 import { DashboardMenu } from "../DashboardMenu/DashboardMenu";
 import type { ActiveRow } from "../W_Table/W_Table";
 import { getJoinedTables } from "../W_Table/tableUtils/tableUtils";
+import { getWorkspacePath } from "../WorkspaceMenu/WorkspaceMenu";
 import type { LocalSettings } from "../localSettings";
 import { useLocalSettings } from "../localSettings";
 import { CloseSaveSQLPopup } from "./CloseSaveSQLPopup";
 import { DashboardCenteredLayoutResizer } from "./DashboardCenteredLayoutResizer";
 import type { ViewRendererProps } from "./ViewRenderer";
 import { ViewRendererWrapped } from "./ViewRenderer";
+import { cloneWorkspace } from "./cloneWorkspace";
 import type {
   ChartType,
   DBSchemaTablesWJoins,
@@ -43,11 +46,7 @@ import type {
 } from "./dashboardUtils";
 import { TopHeaderClassName } from "./dashboardUtils";
 import { loadTable, type LoadTableArgs } from "./loadTable";
-import { cloneWorkspace } from "./cloneWorkspace";
-import { getWorkspacePath } from "../WorkspaceMenu/WorkspaceMenu";
-import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
-import type { DBS } from "./DBS";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
+import { ROUTES } from "../../../../commonTypes/utils";
 
 const FORCED_REFRESH_PREFIX = "force-" as const;
 export const CENTERED_WIDTH_CSS_VAR = "--centered-width";
@@ -421,7 +420,7 @@ export class _Dashboard extends RTComp<
               color="action"
               variant="filled"
               asNavLink={true}
-              href={`${API_PATH_SUFFIXES.DASHBOARD}/${connectionId}`}
+              href={`${ROUTES.DASHBOARD}/${connectionId}`}
               iconPath={mdiArrowLeft}
             >
               Go back

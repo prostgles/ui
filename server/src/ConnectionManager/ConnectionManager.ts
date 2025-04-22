@@ -14,7 +14,10 @@ import type { SubscriptionHandler } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import type { ConnectionChecker, WithOrigin } from "../ConnectionChecker";
+import type {
+  SecurityManager,
+  WithOrigin,
+} from "../SecurityManager/SecurityManager";
 import { getDbConnection } from "../connectionUtils/testDBConnection";
 import { getRootDir } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
@@ -30,10 +33,7 @@ import {
 import { startConnection } from "./startConnection";
 import type { DefaultEventsMap, Server } from "socket.io";
 import { saveCertificates } from "./saveCertificates";
-import {
-  API_PATH_SUFFIXES,
-  getConnectionPaths,
-} from "../../../commonTypes/utils";
+import { API_ENDPOINTS, getConnectionPaths } from "../../../commonTypes/utils";
 export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
 
@@ -106,13 +106,13 @@ export class ConnectionManager {
   db?: DB;
   connections?: Connections[];
   database_configs?: DatabaseConfigs[];
-  connectionChecker: ConnectionChecker;
+  securityManager: SecurityManager;
 
-  constructor(http: any, app: Express, connectionChecker: ConnectionChecker) {
+  constructor(http: any, app: Express, securityManager: SecurityManager) {
     this.http = http;
     this.app = app;
-    this.connectionChecker = connectionChecker;
-    this.withOrigin = connectionChecker.withOrigin;
+    this.securityManager = securityManager;
+    this.withOrigin = securityManager.withOrigin;
 
     this.setUpWSS();
   }
@@ -402,7 +402,7 @@ export class ConnectionManager {
       const { url } = req;
       if (
         this.connections &&
-        url.startsWith(API_PATH_SUFFIXES.WS) &&
+        url.startsWith(API_ENDPOINTS.WS_DB) &&
         !Object.keys(this.prglConnections).some((connId) =>
           url.includes(connId),
         )

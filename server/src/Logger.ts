@@ -33,8 +33,7 @@ export const setLoggerDBS = (dbs: DBS) => {
 };
 
 const shouldExclude = (e: EventInfo, isStateDb: boolean) => {
-  if (!connMgr.connectionChecker.config.global_setting?.enable_logs)
-    return true;
+  if (!connMgr.securityManager.config.global_setting?.enable_logs) return true;
   if (
     isStateDb &&
     e.type === "table" &&

@@ -14,6 +14,7 @@ import { ChangePassword } from "./ChangePassword";
 import { InfoRow } from "../../components/InfoRow";
 import { t } from "../../i18n/i18nUtils";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import { API_ENDPOINTS } from "../../../../commonTypes/utils";
 
 type AccountProps = ExtraProps;
 
@@ -102,7 +103,7 @@ export const Account = (props: AccountProps) => {
           {dbsConnection ?
             <APIDetails
               {...props}
-              projectPath={props.serverState.dbsWsApiPath}
+              projectPath={API_ENDPOINTS.WS_DBS}
               connection={dbsConnection}
             />
           : notAllowedBanner}

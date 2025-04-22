@@ -8,10 +8,7 @@ import type { Socket } from "socket.io-client";
 import io from "socket.io-client";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import {
-  API_PATH_SUFFIXES,
-  SPOOF_TEST_VALUE,
-} from "../../../commonTypes/utils";
+import { API_ENDPOINTS, SPOOF_TEST_VALUE } from "../../../commonTypes/utils";
 import type { AppState } from "../App";
 import { pageReload } from "../components/Loading";
 import type { DBS } from "../dashboard/Dashboard/DBS";
@@ -70,7 +67,6 @@ export const useDBSConnection = (
         initError,
         isElectron: false,
         canDumpAndRestore: undefined,
-        dbsWsApiPath: "",
       };
       console.error(initError);
     }
@@ -82,10 +78,10 @@ export const useDBSConnection = (
         serverState,
       });
       return;
-    } else if (serverState?.ok && serverState.dbsWsApiPath) {
+    } else if (serverState?.ok) {
       socket = io({
         transports: ["websocket"],
-        path: serverState.dbsWsApiPath,
+        path: API_ENDPOINTS.WS_DBS,
         reconnection: true,
         reconnectionDelay: 2000,
         reconnectionAttempts: 5,
@@ -111,9 +107,7 @@ export const useDBSConnection = (
           onReconnect: () => {
             onDisconnect(false);
             if (
-              window.location.pathname.startsWith(
-                API_PATH_SUFFIXES.DASHBOARD + "/",
-              )
+              window.location.pathname.startsWith(API_ENDPOINTS.DASHBOARD + "/")
             ) {
               pageReload("sync reconnect bug");
             }
@@ -137,7 +131,6 @@ export const useDBSConnection = (
             );
 
             resolve({
-              dbsWsApiPath: serverState.dbsWsApiPath,
               dbs: dbs as DBS,
               dbsMethods,
               dbsTables,

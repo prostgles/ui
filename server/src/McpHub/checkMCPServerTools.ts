@@ -22,9 +22,9 @@ export const checkMCPServerTools = async (mcpHub: McpHub) => {
       ) {
         console.error(
           `DefaultMCPServers tools for ${serverName} do not match latest fetchToolsList result.\n Saved tools: `,
-          savedTools,
-          "Actual tools",
-          JSON.stringify(actualTools, null, 2),
+          // savedTools,
+          // "Actual tools",
+          // JSON.stringify(actualTools, null, 2),
         );
       }
     });

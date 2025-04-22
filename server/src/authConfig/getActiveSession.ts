@@ -1,6 +1,6 @@
 import { type AuthResponse } from "prostgles-types";
 import type { DBS } from "../index";
-import { connectionChecker } from "../index";
+import { securityManager } from "../index";
 import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
 import type { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
 import type { Sessions } from "./getAuth";
@@ -45,7 +45,7 @@ export const getActiveSession = async (
   /**
    * Always maintain a valid session for passwordless admin
    */
-  const passwordlessAdmin = connectionChecker.passwordlessAdmin;
+  const passwordlessAdmin = securityManager.passwordlessAdmin;
   if (passwordlessAdmin && !validSession) {
     const anyPasswordlessSession = await db.sessions.findOne({
       user_id: passwordlessAdmin.id,

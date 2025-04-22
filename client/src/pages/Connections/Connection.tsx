@@ -9,7 +9,7 @@ import { InfoRow } from "../../components/InfoRow";
 import { WspIconPath } from "../../dashboard/AccessControl/ExistingAccessRules";
 import { ConnectionActionBar } from "./ConnectionActionBar";
 import type { AdminConnectionModel, BasicConnectionModel } from "./Connections";
-import { API_PATH_SUFFIXES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../commonTypes/utils";
 import { t } from "../../i18n/i18nUtils";
 
 export type ConnectionProps = (
@@ -27,7 +27,7 @@ export type ConnectionProps = (
   };
 
 const getConnectionPath = (cid: string, wid?: string) =>
-  `${API_PATH_SUFFIXES.DASHBOARD}/${cid}` + (wid ? `?workspaceId=${wid}` : "");
+  `${ROUTES.DASHBOARD}/${cid}` + (wid ? `?workspaceId=${wid}` : "");
 
 export const Connection = (props: ConnectionProps) => {
   const { c, isAdmin } = props;

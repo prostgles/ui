@@ -3,10 +3,7 @@ import { asName } from "prostgles-client/dist/prostgles";
 import { pickKeys } from "prostgles-types";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  API_PATH_SUFFIXES,
-  type SampleSchema,
-} from "../../../../commonTypes/utils";
+import { ROUTES, type SampleSchema } from "../../../../commonTypes/utils";
 import type { PrglState } from "../../App";
 import ErrorComponent from "../../components/ErrorComponent";
 import { FlexCol, FlexRow } from "../../components/Flex";
@@ -260,7 +257,7 @@ export const ConnectionServer = ({
         });
       }
     }
-    navigate(`${API_PATH_SUFFIXES.DASHBOARD}/${newConnection.id}`);
+    navigate(`${ROUTES.DASHBOARD}/${newConnection.id}`);
   };
 
   const cannotCreateDb =

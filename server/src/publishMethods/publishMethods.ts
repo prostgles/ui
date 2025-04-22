@@ -6,7 +6,7 @@ import path from "path";
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBS } from "../index";
-import { connectionChecker, connMgr } from "../index";
+import { securityManager, connMgr } from "../index";
 
 export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
@@ -24,7 +24,7 @@ import { getPasswordHash } from "../authConfig/authUtils";
 import { createSessionSecret } from "../authConfig/getAuth";
 import type { Backups } from "../BackupManager/BackupManager";
 import { getInstalledPrograms } from "../BackupManager/getInstalledPrograms";
-import { getPasswordlessAdmin } from "../ConnectionChecker";
+import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
 import type { ConnectionTableConfig } from "../ConnectionManager/ConnectionManager";
 import {
   DB_TRANSACTION_KEY,
@@ -134,7 +134,7 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
     },
     getMyIP: () => {
       if (!socket) throw "Socket missing";
-      return connectionChecker.checkClientIP({ socket });
+      return securityManager.checkClientIP({ socket });
     },
     getConnectedIds: async (): Promise<string[]> => {
       return Object.keys(connMgr.getConnections());

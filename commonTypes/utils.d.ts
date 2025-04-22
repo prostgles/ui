@@ -181,9 +181,16 @@ export declare const getConnectionPaths: ({ id, url_path, }: {
     dashboard: string;
     config: string;
 };
-export declare const API_PATH_SUFFIXES: {
+export declare const API_ENDPOINTS: {
     readonly REST: "/rest-api";
-    readonly WS: "/ws-api-db";
+    readonly WS_DB: "/ws-api-db";
+    readonly WS_DBS: "/ws-api-dbs";
+};
+export declare const ROUTES: {
+    readonly MAGIC_LINK: "/magic-link";
+    readonly LOGIN: "/login";
+    readonly LOGOUT: "/logout";
+    readonly ACCOUNT: "/account";
     readonly DASHBOARD: "/connections";
     readonly CONFIG: "/connection-config";
 };

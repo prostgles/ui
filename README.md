@@ -42,7 +42,7 @@ cd ui
 Docker setup. By default the app will be accessible at [localhost:3004](http://localhost:3004)
 
 ```docker-compose.sh
-docker compose up
+docker compose up -d
 ```
 
 To use a custom port (3099 for example) and/or a custom binding address (0.0.0.0 for example):

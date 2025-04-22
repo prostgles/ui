@@ -487,8 +487,8 @@ export class SQLEditor extends RTComp<P, S> {
       activeCodeBlockButtonsNode,
     } = this.props;
 
-    const { canExecuteBlocks } = this;
-    const glyphPlayBtnElem = document.querySelector(
+    const { canExecuteBlocks, rootRef } = this;
+    const glyphPlayBtnElem = rootRef?.querySelector(
       `.${playButtonglyphMarginClassName}`,
     );
     if (glyphPlayBtnElem && glyphPlayBtnElem.children.length > 1) {

@@ -11,12 +11,12 @@ import { Server } from "socket.io";
 import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import type { ServerState } from "../../commonTypes/electronInit";
 import { isObject } from "../../commonTypes/publishUtils";
-import { ConnectionChecker } from "./ConnectionChecker";
+import { SecurityManager } from "./SecurityManager/SecurityManager";
 import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
 import type { OnServerReadyCallback } from "./electronConfig";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
-import { API_PATH_SUFFIXES, SPOOF_TEST_VALUE } from "../../commonTypes/utils";
+import { API_ENDPOINTS, SPOOF_TEST_VALUE } from "../../commonTypes/utils";
 import helmet from "helmet";
 import { omitKeys } from "prostgles-types";
 import {
@@ -126,25 +126,14 @@ app.use(cookieParser());
 
 export const MEDIA_ROUTE_PREFIX = `/prostgles_media`;
 
-export const connectionChecker = new ConnectionChecker(app);
-
-export const dbsWsApiPath = process.env.PRGL_IOPATH || "/ws-api-dbs";
-if (
-  Object.values(API_PATH_SUFFIXES).some((suffix) =>
-    suffix.startsWith(dbsWsApiPath),
-  )
-) {
-  throw new Error(
-    `dbsWsApiPath cannot start with: ${Object.values(API_PATH_SUFFIXES)}`,
-  );
-}
+export const securityManager = new SecurityManager(app);
 const io = new Server(http, {
-  path: dbsWsApiPath,
+  path: API_ENDPOINTS.WS_DBS,
   maxHttpBufferSize: 100e100,
-  cors: connectionChecker.withOrigin,
+  cors: securityManager.withOrigin,
 });
 
-export const connMgr = new ConnectionManager(http, app, connectionChecker);
+export const connMgr = new ConnectionManager(http, app, securityManager);
 
 const electronConfig = getElectronConfig();
 const PORT =
@@ -195,7 +184,7 @@ app.get("/dbs", (req, res) => {
   }
   /** Alert admin if x-real-ip is spoofable */
   let xRealIpSpoofable = false;
-  const { global_setting } = connMgr.connectionChecker.config;
+  const { global_setting } = connMgr.securityManager.config;
   if (
     req.headers["x-real-ip"] === SPOOF_TEST_VALUE &&
     global_setting?.login_rate_limit_enabled &&

@@ -1,20 +1,19 @@
 import type { Express } from "express";
-import { pickKeys } from "prostgles-types";
 import type { Server } from "socket.io";
 import type { DBS } from "..";
-import { dbsWsApiPath, tout } from "..";
+import { tout } from "..";
 import type { ProstglesInitState } from "../../../commonTypes/electronInit";
 import { cleanupTestDatabases } from "../cleanupTestDatabases";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { getElectronConfig } from "../electronConfig";
 import { DBS_CONNECTION_INFO } from "../envVars";
 import { setDBSRoutesForElectron } from "../setDBSRoutesForElectron";
+import { isRetryableError } from "./isRetryableError";
 import {
   getBackupManager,
   startProstgles,
   type ProstglesStartupState,
 } from "./startProstgles";
-import { isRetryableError } from "./isRetryableError";
 
 type StartArguments = {
   app: Express;
@@ -158,7 +157,6 @@ export const getInitState = (): typeof _initState & ProstglesInitState => {
   return {
     isElectron: !!eConfig?.isElectron,
     electronCredsProvided: !!eConfig?.hasCredentials(),
-    dbsWsApiPath,
     ..._initState,
     canDumpAndRestore: bkpManager?.installedPrograms,
   };
