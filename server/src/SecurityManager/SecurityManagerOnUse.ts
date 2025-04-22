@@ -29,7 +29,7 @@ export const securityManagerOnUse: NonNullable<OnUse> = async function (
       "Delaying user request until server is ready. originalUrl: " +
         req.originalUrl,
     );
-    await tout(3000);
+    await tout(2000);
     res.redirect(req.originalUrl);
     return;
   }

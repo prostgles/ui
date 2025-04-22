@@ -126,7 +126,7 @@ app.use(cookieParser());
 
 export const MEDIA_ROUTE_PREFIX = `/prostgles_media`;
 
-export const securityManager = new SecurityManager(app);
+export const securityManager = SecurityManager.create(app);
 const io = new Server(http, {
   path: API_ENDPOINTS.WS_DBS,
   maxHttpBufferSize: 100e100,

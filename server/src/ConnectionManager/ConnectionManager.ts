@@ -12,12 +12,11 @@ import type {
 import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
 import type { SubscriptionHandler } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
+import type { DefaultEventsMap, Server } from "socket.io";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import type {
-  SecurityManager,
-  WithOrigin,
-} from "../SecurityManager/SecurityManager";
+import { API_ENDPOINTS, getConnectionPaths } from "../../../commonTypes/utils";
+import type { SecurityManager } from "../SecurityManager/SecurityManager";
 import { getDbConnection } from "../connectionUtils/testDBConnection";
 import { getRootDir } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
@@ -30,10 +29,8 @@ import {
   getTableConfig,
   parseTableConfig,
 } from "./connectionManagerUtils";
-import { startConnection } from "./startConnection";
-import type { DefaultEventsMap, Server } from "socket.io";
 import { saveCertificates } from "./saveCertificates";
-import { API_ENDPOINTS, getConnectionPaths } from "../../../commonTypes/utils";
+import { startConnection } from "./startConnection";
 export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
 
@@ -101,7 +98,6 @@ export class ConnectionManager {
   http: httpServer;
   app: Express;
   // wss?: WebSocket.Server<WebSocket.WebSocket>;
-  withOrigin: WithOrigin;
   dbs?: DBS;
   db?: DB;
   connections?: Connections[];
@@ -112,9 +108,12 @@ export class ConnectionManager {
     this.http = http;
     this.app = app;
     this.securityManager = securityManager;
-    this.withOrigin = securityManager.withOrigin;
 
     this.setUpWSS();
+  }
+
+  get withOrigin() {
+    return this.securityManager.withOrigin;
   }
 
   destroy = async () => {

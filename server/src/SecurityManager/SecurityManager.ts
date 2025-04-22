@@ -4,10 +4,8 @@ import { getClientRequestIPsInfo } from "prostgles-server/dist/Auth/AuthHandler"
 import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { SubscriptionHandler } from "prostgles-types";
-import { PASSWORDLESS_ADMIN_USERNAME } from "../../../commonTypes/OAuthUtils";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { getElectronConfig } from "../electronConfig";
-import { PRGL_PASSWORD, PRGL_USERNAME } from "../envVars";
 import type { DBS } from "../index";
 import { tableConfig } from "../tableConfig/tableConfig";
 import {
@@ -24,6 +22,7 @@ export type WithOrigin = {
 };
 
 export class SecurityManager {
+  static #instance: SecurityManager;
   app: Express;
   passwordlessAdmin?: DBSSchema["users"];
   dbs?: DBS;
@@ -39,18 +38,21 @@ export class SecurityManager {
 
   usersSub?: SubscriptionHandler;
   configSub?: SubscriptionHandler;
+
+  private constructor(app: Express) {
+    this.app = app;
+    app.use(cors(this.withOrigin));
+  }
+  public static create(app: Express): SecurityManager {
+    SecurityManager.#instance ??= new SecurityManager(app);
+    return SecurityManager.#instance;
+  }
+
   init = async (db: DBS, _db: DB) => {
     this.dbs = db;
     this._db = _db;
-    await initUsers(db, _db);
-    await this.withConfig();
+    await this.loadConfig();
   };
-
-  constructor(app: Express) {
-    this.app = app;
-
-    app.use(cors(this.withOrigin));
-  }
 
   destroy = async () => {
     await this.configSub?.unsubscribe();
@@ -59,7 +61,7 @@ export class SecurityManager {
 
   onSocketConnected = async ({ sid }: { sid?: string }) => {
     /** Ensure that only 1 session is allowed for the passwordless admin */
-    await this.withConfig();
+    await this.loadConfig();
     if (this.passwordlessAdmin) {
       const electronConfig = getElectronConfig();
 
@@ -82,83 +84,10 @@ export class SecurityManager {
     }
   };
 
-  initialised = {
-    users: false,
-    config: false,
-  };
-  withConfig = async () => {
-    const { dbs: db } = this;
-    if (!db) throw "dbs missing";
-
-    if (this.config.loaded) return this.config;
-
-    console.error("return new Promise ");
-    return new Promise(async (resolve, reject) => {
-      /** Add cors config if missing */
-      if (!(await db.global_settings.count())) {
-        await db.global_settings.insert({
-          /** Origin "*" is required to enable API access */
-          allowed_origin: this.passwordlessAdmin ? null : "*",
-          // allowed_ips_enabled: this.noPasswordAdmin? true : false,
-          allowed_ips_enabled: false,
-          allowed_ips: ["::ffff:127.0.0.1"],
-          tableConfig,
-        });
-      }
-
-      let resolved = false;
-      const initialise = (what: "users" | "config") => {
-        if (what === "users") this.initialised.users = true;
-        if (what === "config") this.initialised.config = true;
-        const { users, config } = this.initialised;
-        if (users && config && !resolved) {
-          resolved = true;
-          resolve(this.config);
-        }
-      };
-
-      await this.usersSub?.unsubscribe();
-      const setPasswordlessAdmin = async () => {
-        this.passwordlessAdmin = await getPasswordlessAdmin(this.dbs!);
-        initialise("users");
-      };
-      await setPasswordlessAdmin();
-      let skippedFirst = false;
-      this.usersSub = await db.users.subscribe({}, { limit: 1 }, async () => {
-        if (skippedFirst) {
-          await setPasswordlessAdmin();
-        } else {
-          skippedFirst = true;
-        }
-      });
-
-      await this.configSub?.unsubscribe();
-      this.configSub = await db.global_settings.subscribeOne(
-        {},
-        {},
-        async (gconfigs) => {
-          this.config.global_setting = gconfigs;
-          this.config.loaded = true;
-
-          this.app.set(
-            "trust proxy",
-            this.config.global_setting?.trust_proxy ?? false,
-          );
-
-          // const cidrRequests = (gconfigs.allowed_ips ?? []).map(cidr =>
-          //   db.sql!(
-          //     getCIDRRangesQuery({ cidr, returns: ["from", "to"]  }),
-          //     { cidr },
-          //     { returnType: "row" }
-          //   )
-          //  ) as any
-
-          // this.ipRanges = await Promise.all(cidrRequests);
-
-          initialise("config");
-        },
-      );
-    });
+  loadingConfig: Promise<void> | undefined;
+  loadConfig = async () => {
+    this.loadingConfig ??= loadConfig.bind(this)();
+    await this.loadingConfig;
   };
 
   onUse = securityManagerOnUse.bind(this);
@@ -197,3 +126,81 @@ export class SecurityManager {
     },
   };
 }
+
+const setupGlobalSettings = async (db: DBS, hasPasswordlessAdmin: boolean) => {
+  /** Add cors config if missing */
+  if (!(await db.global_settings.count())) {
+    await db.global_settings.insert({
+      /** Origin "*" is required to enable API access */
+      allowed_origin: hasPasswordlessAdmin ? null : "*",
+      // allowed_ips_enabled: this.noPasswordAdmin? true : false,
+      allowed_ips_enabled: false,
+      allowed_ips: ["::ffff:127.0.0.1"],
+      tableConfig,
+    });
+  }
+};
+
+const loadConfig = async function (this: SecurityManager): Promise<void> {
+  const { dbs: db, _db } = this;
+  if (!db) throw "dbs missing";
+  if (!_db) throw "_dbs missing";
+
+  if (this.config.loaded) return;
+
+  await initUsers(db, _db);
+  await this.usersSub?.unsubscribe();
+  const { sub: usersSub, data: passwordlessAdmin } =
+    await resolveSubscriptionData<DBSSchema["users"] | undefined>(
+      (resolveData) => {
+        return db.users.subscribe({}, { limit: 1 }, async () => {
+          this.passwordlessAdmin = await getPasswordlessAdmin(this.dbs!);
+          resolveData(this.passwordlessAdmin);
+        });
+      },
+    );
+  this.usersSub = usersSub;
+
+  await setupGlobalSettings(db, !!passwordlessAdmin);
+
+  await this.configSub?.unsubscribe();
+  const { sub: configSub } = await resolveSubscriptionData((resolveData) => {
+    return db.global_settings.subscribeOne({}, {}, async (gconfigs) => {
+      this.config.global_setting = gconfigs;
+      this.config.loaded = true;
+
+      this.app.set(
+        "trust proxy",
+        this.config.global_setting?.trust_proxy ?? false,
+      );
+
+      // const cidrRequests =  (gconfigs.allowed_ips ?? []).map(cidr =>
+      //   db.sql!(
+      //     getCIDRRangesQuery({ cidr, returns: ["from", "to"]  }),
+      //     { cidr },
+      //     { returnType:  "row" }
+      //   )
+      //  ) as any
+
+      // this.ipRanges = await Promise.all(cidrRequests);
+
+      resolveData(gconfigs);
+    });
+  });
+  this.configSub = configSub;
+};
+
+const resolveSubscriptionData = async <D>(
+  subInitialisation: (
+    dataResolved: (data: D) => void,
+  ) => Promise<SubscriptionHandler>,
+): Promise<{ sub: SubscriptionHandler; data: D }> => {
+  return new Promise(async (resolve, reject) => {
+    const sub = await subInitialisation((data) => {
+      resolve({ sub, data });
+    }).catch((err) => {
+      reject(err);
+      return Promise.reject(err);
+    });
+  });
+};
