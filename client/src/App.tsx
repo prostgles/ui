@@ -28,7 +28,10 @@ import {
   type MethodHandler,
 } from "prostgles-client/dist/prostgles";
 import { type Socket } from "socket.io-client";
-import type { ServerState } from "../../commonTypes/electronInit";
+import type {
+  ProstglesInitState,
+  ProstglesState,
+} from "../../commonTypes/electronInit";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import { ROUTES } from "../../commonTypes/utils";
 import { createReactiveState, useReactiveState } from "./appUtils";
@@ -119,9 +122,7 @@ export type AppState = {
     sid: string;
   };
   prglStateErr?: any;
-  serverState?: {
-    ok: boolean;
-  } & ServerState;
+  serverState?: ProstglesState;
   title: React.ReactNode;
   isConnected: boolean;
 };
@@ -142,10 +143,13 @@ export const App = () => {
     return <ElectronSetup serverState={state.serverState} />;
   }
 
+  const { initState } = state.serverState ?? {};
+  const unknownErrorMessage =
+    "Something went wrong with initialising the server. Check console for more details";
   const error =
-    state.serverState?.connectionError ||
-    state.serverState?.initError ||
-    state.prglStateErr;
+    initState?.state === "error" ?
+      initState.error || unknownErrorMessage || state.prglStateErr
+    : undefined;
 
   if (!error && (!state.dbsKey || !state.prglState)) {
     return (
@@ -155,23 +159,23 @@ export const App = () => {
     );
   }
 
+  const initStateError = initState?.state === "error" ? initState : undefined;
   if (error || !state.prglState) {
     return (
-      <div className="flex-col m-auto ai-center jc-center  p-2">
-        {state.serverState?.connectionError && (
-          <div className="ml-1 text-lg font-bold mb-1 pre">
-            Could not connect to state database. Ensure /server/.env file (or
-            environment variables) point to a running and accessible postgres
-            server database
-          </div>
-        )}
-        {state.serverState?.initError && (
-          <div className="ml-1 text-lg font-bold mb-1 pre">
-            Failed to start Prostgles
-          </div>
-        )}
-        <ErrorComponent error={error} withIcon={true} />
-      </div>
+      <FlexCol className="m-auto ai-center jc-center max-w-700 p-2">
+        <ErrorComponent error={error} />
+        <InfoRow color="warning" variant="filled">
+          {initStateError?.errorType === "connection" ?
+            <>
+              Could not connect to state database. Ensure /server/.env file (or
+              environment variables) point to a running and accessible postgres
+              server database
+            </>
+          : initStateError?.errorType === "init" ?
+            <>Failed to start Prostgles</>
+          : null}
+        </InfoRow>
+      </FlexCol>
     );
   }
   const { dbsKey, prglState, serverState } = state;
@@ -212,13 +216,13 @@ export const App = () => {
                 },
                 {
                   label: t["App"]["Users"],
-                  to: "/users",
+                  to: ROUTES.USERS,
                   forAdmin: true,
                   iconPath: mdiAccountMultiple,
                 },
                 {
                   label: t["App"]["Server settings"],
-                  to: "/server-settings",
+                  to: ROUTES.SERVER_SETTINGS,
                   forAdmin: true,
                   iconPath: mdiServerSecurity,
                 },
@@ -266,7 +270,9 @@ export const App = () => {
             <InfoRow>
               Failed login rate limiting is based on x-real-ip header which can
               be spoofed based on your current connection.{" "}
-              <NavLink to="/server-settings">{t["App"]["Settings"]}</NavLink>
+              <NavLink to={ROUTES.SERVER_SETTINGS}>
+                {t["App"]["Settings"]}
+              </NavLink>
             </InfoRow>
           }
         />
@@ -281,59 +287,63 @@ export const App = () => {
       )}
       <NonHTTPSWarning {...prglState} />
       <Switch>
-        <Route path="/" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
+        {/* <Route
+          key="-1"
+          path="/connection-config/:cid"
+          element={<div>dwadwa</div>}
+        /> */}
         <Route
+          key="0"
+          path="/"
+          element={<Navigate to={ROUTES.DASHBOARD} replace />}
+        />
+        <Route
+          key="1"
           path={ROUTES.DASHBOARD}
           element={withNavBar(<Connections {...extraProps} />, true)}
         />
-        ,
-        <Route
-          key="1"
-          path="/users"
-          element={withNavBar(<UserManager {...extraProps} />)}
-        />
-        ,
         <Route
           key="2"
+          path={ROUTES.USERS}
+          element={withNavBar(<UserManager {...extraProps} />)}
+        />
+        <Route
+          key="3"
           path={ROUTES.ACCOUNT}
           element={withNavBar(<Account {...extraProps} />)}
         />
-        ,
         <Route
-          key="3"
+          key="4"
           path={`${ROUTES.DASHBOARD}/:cid`}
           element={<ProjectConnection prglState={extraProps} />}
         />
-        ,
+        <Route
+          key="5"
+          path={ROUTES.NEW_CONNECTION}
+          element={
+            <NewConnnection
+              connectionId={undefined}
+              db={undefined}
+              prglState={extraProps}
+              showTitle={true}
+            />
+          }
+        />
+        <Route
+          key="6"
+          path={`${ROUTES.EDIT_CONNECTION}/:id`}
+          element={
+            <NewConnnection
+              connectionId={undefined}
+              db={undefined}
+              prglState={extraProps}
+              showTitle={true}
+            />
+          }
+        />
         <Route
           key="7"
-          path="/new-connection"
-          element={
-            <NewConnnection
-              connectionId={undefined}
-              db={undefined}
-              prglState={extraProps}
-              showTitle={true}
-            />
-          }
-        />
-        ,
-        <Route
-          key="8"
-          path="/edit-connection/:id"
-          element={
-            <NewConnnection
-              connectionId={undefined}
-              db={undefined}
-              prglState={extraProps}
-              showTitle={true}
-            />
-          }
-        />
-        ,
-        <Route
-          key="10"
-          path={`${ROUTES.CONFIG}/:cid"`}
+          path={`${ROUTES.CONFIG}/:cid`}
           element={
             <ProjectConnection
               prglState={extraProps}
@@ -341,22 +351,22 @@ export const App = () => {
             />
           }
         />
-        ,
         <Route
-          key="11"
-          path={"/server-settings"}
+          key="8"
+          path={ROUTES.SERVER_SETTINGS}
           element={withNavBar(<ServerSettings {...extraProps} />, true)}
         />
-        ,
         <Route
-          key="12"
-          path="/component-list"
+          key="9"
+          path={ROUTES.COMPONENT_LIST}
           element={withNavBar(<ComponentList />, false)}
         />
-        ,
-        <Route path={ROUTES.LOGIN} element={<Login {...extraProps} />} />
-        ,
-        <Route path="*" element={<NotFound />} />
+        <Route
+          key="10"
+          path={ROUTES.LOGIN}
+          element={<Login {...extraProps} />}
+        />
+        <Route key="11" path="*" element={<NotFound />} />
       </Switch>
     </FlexCol>
   );

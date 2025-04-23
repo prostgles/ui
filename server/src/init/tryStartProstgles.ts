@@ -1,8 +1,8 @@
 import type { Express } from "express";
+import { isEqual } from "prostgles-types";
 import type { Server } from "socket.io";
-import type { DBS } from "..";
 import { tout } from "..";
-import type { ProstglesInitState } from "../../../commonTypes/electronInit";
+import type { ProstglesState } from "../../../commonTypes/electronInit";
 import { cleanupTestDatabases } from "../cleanupTestDatabases";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { getElectronConfig } from "../electronConfig";
@@ -12,7 +12,8 @@ import { isRetryableError } from "./isRetryableError";
 import {
   getBackupManager,
   startProstgles,
-  type ProstglesStartupState,
+  type InitExtra,
+  type ProstglesInitStateWithDBS,
 } from "./startProstgles";
 
 type StartArguments = {
@@ -23,25 +24,9 @@ type StartArguments = {
   host: string;
 };
 
-const _initState: Pick<
-  ProstglesInitState,
-  "initError" | "connectionError" | "electronIssue"
-> & {
-  ok: boolean;
-  loading: boolean;
-  loaded: boolean;
-  httpListening?: {
-    port: number;
-  };
-  dbs: DBS | undefined;
-} = {
-  ok: false,
-  loading: false,
-  loaded: false,
-  dbs: undefined,
+let _initState: ProstglesInitStateWithDBS = {
+  state: "loading",
 };
-
-export type InitState = typeof _initState;
 
 const RETRY_CONFIG = {
   maxAttempts: 3, // Maximum number of attempts
@@ -51,33 +36,54 @@ const RETRY_CONFIG = {
   jitterFactor: 0.3, // Percentage of delay to use for jitter (0 to 1)
 };
 
+export let startingProstglesResult:
+  | {
+      args: StartArguments;
+      result: ReturnType<typeof tryStartProstgles>;
+    }
+  | undefined = undefined;
+
 let connHistory: string[] = [];
-export const tryStartProstgles = async ({
+export const tryStartProstgles = async (
+  args: StartArguments,
+): Promise<Exclude<ProstglesInitStateWithDBS, { state: "loading" }>> => {
+  const config = startingProstglesResult;
+  if (
+    config &&
+    (await config.result).state === "error" &&
+    !isEqual(args, config.args)
+  ) {
+    startingProstglesResult = undefined;
+  }
+  startingProstglesResult ??= { args, result: _tryStartProstgles(args) };
+  return (await startingProstglesResult).result;
+};
+
+const _tryStartProstgles = async ({
   app,
   io,
   port,
   host,
   con = DBS_CONNECTION_INFO,
 }: StartArguments): Promise<
-  Pick<ProstglesInitState, "ok" | "initError" | "connectionError">
+  Exclude<ProstglesInitStateWithDBS, { state: "loading" }>
 > => {
   /** Cleanup state for local tests */
   await cleanupTestDatabases(con);
 
   setDBSRoutesForElectron(app, io, port, host);
 
-  let lastError: Exclude<ProstglesStartupState, { ok: true }> | undefined =
+  let lastError: Exclude<ProstglesInitStateWithDBS, { ok: true }> | undefined =
     undefined;
   let attempt = 0;
-  _initState.connectionError = null;
-  _initState.loading = true;
 
   const connHistoryItem = JSON.stringify(con);
   if (connHistory.includes(connHistoryItem)) {
     console.error("DUPLICATE UNFINISHED CONNECTION");
     return {
-      ok: false,
-      initError: "Duplicate connection attempt",
+      state: "error",
+      error: "Duplicate connection attempt",
+      errorType: "init",
     };
   }
   connHistory.push(connHistoryItem);
@@ -86,6 +92,9 @@ export const tryStartProstgles = async ({
     attempt++;
 
     try {
+      console.log(
+        `Attempt ${attempt} to connect to state database ${con.db_host}...`,
+      );
       const attemptResult = await startProstgles({
         app,
         io,
@@ -93,18 +102,9 @@ export const tryStartProstgles = async ({
         port,
         host,
       });
-      if (attemptResult.ok) {
-        _initState.dbs = attemptResult.dbs;
-        _initState.ok = true;
-        _initState.loading = false;
-        _initState.loaded = true;
-        _initState.initError = undefined;
-        _initState.connectionError = undefined;
-        return {
-          ok: true,
-          initError: undefined,
-          connectionError: undefined,
-        };
+      if (attemptResult.state === "ok") {
+        _initState = attemptResult;
+        return attemptResult;
       }
 
       lastError = attemptResult;
@@ -125,39 +125,39 @@ export const tryStartProstgles = async ({
       await tout(waitTime);
     } catch (err) {
       console.error("startProstgles fail: ", err);
-      _initState.ok = false;
-      _initState.initError = err;
+      _initState = {
+        state: "error",
+        errorType: "init",
+        error: err,
+      };
       break;
     }
   }
 
-  _initState.ok = false;
-  _initState.dbs = undefined;
-  _initState.loading = false;
-  _initState.loaded = true;
-
-  if (lastError && getInitState().isElectron) {
-    _initState.connectionError = lastError.connectionError;
-    _initState.initError = lastError.initError;
-  } else {
-    console.error("Failed to start prostgles: ", lastError);
-    _initState.initError = "Failed to start prostgles. Check logs";
-  }
-
-  return {
-    ok: false,
-    initError: _initState.initError,
-    connectionError: _initState.connectionError,
+  const {
+    errorType = "init",
+    error = "Failed to start prostgles. Check logs",
+  } = lastError ?? {};
+  _initState = {
+    state: "error",
+    errorType: errorType,
+    error,
   };
+
+  console.error("Failed to start prostgles: ", lastError);
+
+  return _initState;
 };
 
-export const getInitState = (): typeof _initState & ProstglesInitState => {
+export const getProstglesState = (): ProstglesState<InitExtra> => {
   const eConfig = getElectronConfig();
   const bkpManager = getBackupManager();
+  const { installedPrograms } = bkpManager || {};
+  const isElectron = Boolean(eConfig?.isElectron);
   return {
-    isElectron: !!eConfig?.isElectron,
-    electronCredsProvided: !!eConfig?.hasCredentials(),
-    ..._initState,
-    canDumpAndRestore: bkpManager?.installedPrograms,
+    initState: _initState,
+    isElectron,
+    electronCredsProvided: Boolean(eConfig?.hasCredentials()),
+    canDumpAndRestore: installedPrograms as any,
   };
 };

@@ -60,9 +60,9 @@ export const useElectronSetup = ({ serverState }: ElectronSetup) => {
 
   const [step, setStep] = useState<"1-privacy" | "2-setup">("1-privacy");
 
-  const { electronCredsProvided, connectionError, initError, electronCreds } =
-    serverState || {};
-  const error = connectionError || initError;
+  const { electronCredsProvided, initState, electronCreds } = serverState || {};
+  const error =
+    initState?.state === "error" ? (initState.error ?? "Init error") : null;
   useEffect(() => {
     if (electronCredsProvided) {
       setStep("2-setup");
@@ -73,7 +73,7 @@ export const useElectronSetup = ({ serverState }: ElectronSetup) => {
         }));
       }
     }
-  }, [electronCredsProvided, setConnection, connectionError, electronCreds]);
+  }, [electronCredsProvided, setConnection, error, electronCreds]);
 
   const onPressDone = async () => {
     setLoading(true);

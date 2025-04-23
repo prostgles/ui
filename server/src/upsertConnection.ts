@@ -1,7 +1,4 @@
-import {
-  omitKeys,
-  pickKeys,
-} from "prostgles-server/dist/PubSubManager/PubSubManager";
+import { omitKeys, pickKeys } from "prostgles-types";
 import type { Connections, DBS, Users } from ".";
 import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import { testDBConnection } from "./connectionUtils/testDBConnection";

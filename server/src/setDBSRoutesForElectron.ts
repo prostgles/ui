@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import type { Express } from "express";
+import type { Express, RequestHandler } from "express";
 import { removeExpressRoute } from "prostgles-server/dist/FileManager/FileManager";
 import { assertJSONBObjectAgainstSchema } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
 import { pickKeys, tryCatchV2 } from "prostgles-types";
@@ -8,7 +8,7 @@ import { DEFAULT_ELECTRON_CONNECTION } from "../../commonTypes/electronInit";
 import { testDBConnection } from "./connectionUtils/testDBConnection";
 import { validateConnection } from "./connectionUtils/validateConnection";
 import { getElectronConfig } from "./electronConfig";
-import { getInitState, tryStartProstgles } from "./init/tryStartProstgles";
+import { getProstglesState, tryStartProstgles } from "./init/tryStartProstgles";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 
 /**
@@ -20,7 +20,7 @@ export const setDBSRoutesForElectron = (
   port: number,
   host: string,
 ) => {
-  const initState = getInitState();
+  const initState = getProstglesState();
   if (!initState.isElectron) return;
 
   const ele = getElectronConfig();
@@ -29,7 +29,12 @@ export const setDBSRoutesForElectron = (
   }
 
   removeExpressRoute(app, ["/dbs"], "post");
-  app.post("/dbs", async (req, res) => {
+  app.post("/dbs", onPostDBSRequestHandler(app, io, port, host));
+};
+
+const onPostDBSRequestHandler =
+  (app: Express, io: Server, port: number, host: string): RequestHandler =>
+  async (req, res) => {
     const electronConfig = getElectronConfig();
     try {
       const data = pickKeys(req.body, ["connection", "mode"]);
@@ -147,7 +152,7 @@ export const setDBSRoutesForElectron = (
         host,
       });
 
-      if (!startup.ok) {
+      if (startup.state === "error") {
         throw startup;
       }
       electronConfig?.setCredentials(creds);
@@ -156,5 +161,4 @@ export const setDBSRoutesForElectron = (
       res.json({ warning: getErrorAsObject(err) });
       electronConfig?.setCredentials(undefined);
     }
-  });
-};
+  };

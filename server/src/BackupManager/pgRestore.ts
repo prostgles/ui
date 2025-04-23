@@ -1,5 +1,4 @@
-import { omitKeys } from "prostgles-server/dist/PubSubManager/PubSubManager";
-import { asName } from "prostgles-types";
+import { asName, omitKeys } from "prostgles-types";
 import type { Readable } from "stream";
 import { throttle } from "../../../commonTypes/utils";
 import type BackupManager from "./BackupManager";

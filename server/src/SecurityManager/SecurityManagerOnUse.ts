@@ -3,18 +3,18 @@ import {
   HTTP_FAIL_CODES,
 } from "prostgles-server/dist/Auth/AuthHandler";
 import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
+import type { DB } from "prostgles-server/dist/Prostgles";
 import { tryCatchV2 } from "prostgles-types";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import { DAY, ROUTES, YEAR } from "../../../commonTypes/utils";
+import { getPasswordHash } from "../authConfig/authUtils";
 import { getActiveSession } from "../authConfig/getActiveSession";
 import type { SUser } from "../authConfig/getAuth";
 import { sidKeyName } from "../authConfig/getAuth";
 import { getElectronConfig } from "../electronConfig";
 import { connMgr, tout, type DBS, type Users } from "../index";
-import { type SecurityManager } from "./SecurityManager";
-import { getPasswordHash } from "../authConfig/authUtils";
-import type { DB } from "prostgles-server/dist/Prostgles";
 import { getPasswordlessAdmin } from "./initUsers";
+import { type SecurityManager } from "./SecurityManager";
 
 type OnUse = Required<
   AuthConfig<DBGeneratedSchema, SUser>
@@ -24,7 +24,7 @@ export const securityManagerOnUse: NonNullable<OnUse> = async function (
   this: SecurityManager,
   { req, res, next },
 ) {
-  if (!this.config.loaded || !this.dbs) {
+  if (!this.global_setting || !this.dbs) {
     console.warn(
       "Delaying user request until server is ready. originalUrl: " +
         req.originalUrl,
@@ -48,6 +48,18 @@ export const securityManagerOnUse: NonNullable<OnUse> = async function (
     const isAccessingMagicLink = req.originalUrl.startsWith(
       ROUTES.MAGIC_LINK + "/",
     );
+    /** This is to prevent a fresh setup (passwordless admin has not been assigned yet) redirecting users with existing session cookies to login */
+    if (
+      sid &&
+      this.passwordlessAdmin &&
+      !this.passwordlessAdminActiveSessionCount &&
+      !this.deletedSidFromCookie
+    ) {
+      this.deletedSidFromCookie = sid;
+      res.clearCookie(sidKeyName);
+      res.redirect(req.originalUrl);
+      return;
+    }
     if (this.passwordlessAdmin && !sid && !isAccessingMagicLink) {
       // need to ensure that only 1 session is allowed for the passwordless admin
       const {
@@ -67,7 +79,7 @@ export const securityManagerOnUse: NonNullable<OnUse> = async function (
       }
     }
 
-    if (this.config.global_setting?.allowed_ips_enabled) {
+    if (this.global_setting?.allowed_ips_enabled) {
       const ipCheck = await this.checkClientIP({ httpReq: req });
       if (!ipCheck.isAllowed) {
         res.status(403).json({ error: "Your IP is not allowed" });
@@ -133,7 +145,7 @@ const getPasswordlessMagicLink = async (dbs: DBS) => {
           : undefined,
       } as const;
     }
-    // if (existingMagicLink) throw PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR;
+
     const mlink = await makeMagicLink(maybePasswordlessAdmin, dbs, "/", {
       session_expires: Date.now() + 10 * YEAR,
     });

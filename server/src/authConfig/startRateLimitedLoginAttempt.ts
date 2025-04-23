@@ -6,9 +6,9 @@ import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import { HOUR } from "../../../commonTypes/utils";
 
 const getGlobalSettings = async () => {
-  let gs = securityManager.config.global_setting;
+  let gs = securityManager.global_setting;
   do {
-    gs = securityManager.config.global_setting;
+    gs = securityManager.global_setting;
     if (!gs) {
       console.warn("Delaying user request until GlobalSettings area available");
       await tout(500);

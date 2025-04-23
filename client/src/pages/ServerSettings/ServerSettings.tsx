@@ -216,7 +216,7 @@ export const ServerSettings = (props: ServerSettingsProps) => {
               mcpServers: {
                 leftIconPath: mdiLaptop,
                 label: "MCP Servers",
-                content: <MCPServers {...props} />,
+                content: <MCPServers {...props} chatId={undefined} />,
               },
               llmProviders: {
                 leftIconPath: mdiAssistant,

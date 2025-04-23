@@ -104,6 +104,7 @@ export const getLLMTools = async ({
 
 const getMCPServerTools = async (
   dbs: DBS,
+  //@ts-ignore
   filter: Parameters<typeof dbs.mcp_server_tools.find>[0],
 ): Promise<{ mcpTools: MCPToolSchema[] }> => {
   const mcpTools = (await dbs.mcp_server_tools.find(filter)).map((t) => {

@@ -1,5 +1,4 @@
 import { mdiArrowLeft, mdiArrowRight, mdiConnection } from "@mdi/js";
-import { pickKeys } from "prostgles-types";
 import React from "react";
 import type { AppState } from "../../App";
 import Btn from "../../components/Btn";
@@ -7,7 +6,6 @@ import ErrorComponent from "../../components/ErrorComponent";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import Loading from "../../components/Loading";
 import type { OS } from "../PostgresInstallationInstructions";
-import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
 import { ElectronSetupStateDB } from "./ElectronSetupStateDB";
 import { useElectronSetup } from "./useElectronSetup";
 
@@ -59,19 +57,15 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
                 className="rounded f-0"
                 style={{ background: "#fde8e8" }}
                 withIcon={true}
-                error={pickKeys(
-                  serverState!,
-                  ["connectionError", "initError"],
-                  true,
-                )}
+                error={
+                  serverState?.initState.state === "error" ? error : undefined
+                }
               />
             )}
           </FlexCol>
         }
 
-        <FlexRow
-          style={{ justifyContent: "space-between" }}
-        >
+        <FlexRow style={{ justifyContent: "space-between" }}>
           <Btn
             data-command="ElectronSetup.Back"
             onClick={() => {

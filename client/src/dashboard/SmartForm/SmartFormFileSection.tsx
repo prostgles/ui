@@ -95,8 +95,9 @@ export const SmartFormFileSection = ({
               [tableName]: { type: "nested-table", value: [] },
             });
           } else {
-            if (db[mediaTableName]?.update) {
-              const res = await db[mediaTableName].update!(
+            const mediaTableHandler = db[mediaTableName];
+            if (mediaTableHandler?.update) {
+              const res = await mediaTableHandler.update(
                 { id: media.id },
                 { deleted: true },
                 onSuccess ? { returning: "*" } : {},

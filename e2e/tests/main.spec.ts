@@ -100,12 +100,12 @@ test.describe("Main test", () => {
       },
     ]);
 
-    await goTo(page, "/login");
+    await goTo(page);
 
     await page.getByRole("link", { name: "Connections" }).click();
     await page.getByRole("link", { name: "Prostgles UI state" }).click();
-
-    throw new Error("Test not implemented");
+    await runDbsSql(page, "DELETE FROM magic_links");
+    await runDbsSql(page, "DELETE FROM sessions");
   });
 
   test("Can disable passwordless admin by creating a new admin user. User data is reassigned and accessible to the new user", async ({

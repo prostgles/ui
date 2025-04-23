@@ -4,26 +4,30 @@ logOutgoingHttpRequests(false);
 import cookieParser from "cookie-parser";
 import type { NextFunction, Request, Response } from "express";
 import express, { json, urlencoded } from "express";
+import helmet from "helmet";
 import _http from "http";
 import path from "path";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import { getKeys, omitKeys } from "prostgles-types";
 import { Server } from "socket.io";
 import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
-import type { ServerState } from "../../commonTypes/electronInit";
+import type { ProstglesState } from "../../commonTypes/electronInit";
 import { isObject } from "../../commonTypes/publishUtils";
-import { SecurityManager } from "./SecurityManager/SecurityManager";
+import { API_ENDPOINTS, SPOOF_TEST_VALUE } from "../../commonTypes/utils";
 import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
 import type { OnServerReadyCallback } from "./electronConfig";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
-import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
-import { API_ENDPOINTS, SPOOF_TEST_VALUE } from "../../commonTypes/utils";
-import helmet from "helmet";
-import { omitKeys } from "prostgles-types";
 import {
-  getInitState,
+  getProstglesState,
+  startingProstglesResult,
   tryStartProstgles,
-  type InitState,
 } from "./init/tryStartProstgles";
+import { SecurityManager } from "./SecurityManager/SecurityManager";
+import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
+import type {
+  InitExtra,
+  ProstglesInitStateWithDBS,
+} from "./init/startProstgles";
 
 const app = express();
 app.use(
@@ -146,30 +150,54 @@ const HOST =
 setDBSRoutesForElectron(app, io, PORT, HOST);
 
 /** Make client wait for everything to load before serving page */
-const awaitInit = (): Promise<InitState> => {
-  return new Promise((resolve) => {
-    const _initState = getInitState();
+export const waitForInitialisation =
+  async (): Promise<ProstglesInitStateWithDBS> => {
+    const { initState, isElectron, electronCredsProvided } =
+      getProstglesState();
+
+    // Return immediately if not in loading state or if in Electron without credentials
     if (
-      !_initState.loaded &&
-      (!_initState.isElectron || _initState.electronCredsProvided)
+      initState.state !== "loading" ||
+      (isElectron && !electronCredsProvided)
     ) {
-      const interval = setInterval(() => {
-        if (getInitState().loaded) {
-          resolve(_initState);
-          clearInterval(interval);
-        }
-      }, 200);
-    } else {
-      resolve(_initState);
+      return initState;
     }
-  });
-};
+
+    await startingProstglesResult?.result;
+    await tout(200);
+    return waitForInitialisation();
+  };
 
 /**
  * Serve prostglesInitState
  */
 app.get("/dbs", (req, res) => {
-  const serverState: ServerState = omitKeys(getInitState(), ["dbs"]);
+  const prostglesState = getProstglesState();
+  const { initState } = prostglesState;
+  const nonSerialiseableOrNotNeededKeys = getKeys({
+    dbs: 1,
+    httpListening: 1,
+  } satisfies Record<keyof InitExtra, 1>);
+  const serverState: ProstglesState = {
+    ...prostglesState,
+    initState:
+      /**
+       * Do not send full error details to the client if it's not Electron.
+       * Electron can only be accessed locally so we can safely send full error details
+       * */
+      initState.state === "error" && !prostglesState.isElectron ?
+        {
+          ...initState,
+          error:
+            initState.errorType === "init" ?
+              "Failed to start prostgles. Check logs"
+            : "Could not connect to the state database. Check logs",
+        }
+      : initState.state === "ok" ?
+        omitKeys(initState, nonSerialiseableOrNotNeededKeys)
+      : initState,
+  };
+
   const electronCreds =
     electronConfig?.isElectron && electronConfig.hasCredentials() ?
       electronConfig.getCredentials()
@@ -177,14 +205,16 @@ app.get("/dbs", (req, res) => {
   /** Provide credentials if there is a connection error so the user can rectify it */
   if (
     electronCreds &&
-    isObject(serverState.connectionError) &&
+    serverState.initState.state === "error" &&
+    serverState.initState.errorType === "connection" &&
     req.cookies["sid_token"] === electronConfig?.sidConfig.electronSid
   ) {
-    serverState.electronCreds = electronCreds as any;
+    serverState.electronCreds =
+      electronCreds as typeof serverState.electronCreds;
   }
   /** Alert admin if x-real-ip is spoofable */
   let xRealIpSpoofable = false;
-  const { global_setting } = connMgr.securityManager.config;
+  const { global_setting } = connMgr.securityManager;
   if (
     req.headers["x-real-ip"] === SPOOF_TEST_VALUE &&
     global_setting?.login_rate_limit_enabled &&
@@ -196,22 +226,18 @@ app.get("/dbs", (req, res) => {
 });
 
 /* Must provide index.html if there is an error OR prostgles is loading */
-const serveIndexIfNoCredentials = async (
+const serveIndexIfNoCredentialsOrInitError = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
+  await waitForInitialisation();
   const {
     isElectron,
-    ok,
+    initState: { state },
     electronCredsProvided,
-    connectionError,
-    initError,
-    loading,
-  } = getInitState();
-  const error = connectionError || initError;
-  if (error || (isElectron && !electronCredsProvided) || loading) {
-    await awaitInit();
+  } = getProstglesState();
+  if (state !== "ok" || (isElectron && !electronCredsProvided)) {
     if (req.method === "GET" && !req.path.startsWith("/dbs")) {
       res.sendFile(path.resolve(actualRootDir + "/../client/build/index.html"));
       return;
@@ -220,7 +246,7 @@ const serveIndexIfNoCredentials = async (
 
   next();
 };
-app.use(serveIndexIfNoCredentials);
+app.use(serveIndexIfNoCredentialsOrInitError);
 
 /** Startup procedure
  * If electron:
@@ -236,23 +262,27 @@ app.use(serveIndexIfNoCredentials);
  *  - try start prostgles
  *  - If failed to connect then also serve index
  */
-if (electronConfig) {
-  const creds = electronConfig.getCredentials();
-  if (creds) {
-    tryStartProstgles({ app, io, con: creds, port: PORT, host: HOST });
+const startProstgles = (ddd: { host: string; port: number }) => {
+  const host = HOST;
+  const port = PORT;
+  if (electronConfig) {
+    const creds = electronConfig.getCredentials();
+    if (creds) {
+      tryStartProstgles({ app, io, con: creds, host, port });
+    } else {
+      console.log("Electron: No credentials");
+    }
+    setDBSRoutesForElectron(app, io, port, host);
   } else {
-    console.log("Electron: No credentials");
+    tryStartProstgles({ app, io, host, port, con: undefined });
   }
-  setDBSRoutesForElectron(app, io, PORT, HOST);
-} else {
-  tryStartProstgles({ app, io, port: PORT, host: HOST, con: undefined });
-}
+};
 
 const onServerReadyListeners: OnServerReadyCallback[] = [];
 export const onServerReady = async (cb: OnServerReadyCallback) => {
-  const _initState = getInitState();
-  if (_initState.httpListening) {
-    cb(_initState.httpListening.port, _initState.dbs!);
+  const { initState } = getProstglesState();
+  if (initState.state === "ok" && initState.httpListening) {
+    cb(initState.httpListening.port, initState.dbs);
   } else {
     onServerReadyListeners.push(cb);
   }
@@ -262,14 +292,19 @@ const server = http.listen(PORT, HOST, () => {
   const address = server.address();
   const port = isObject(address) ? address.port : PORT;
   const host = isObject(address) ? address.address : HOST;
-  const _initState = getInitState();
-  _initState.httpListening = {
-    port,
-  };
 
-  awaitInit().then(({ dbs }) => {
+  // const _initState = getProstglesState();
+  // _initState.httpListening = {
+  //   port,
+  // };
+  startProstgles({ host, port });
+
+  waitForInitialisation().then((initState) => {
+    if (initState.state !== "ok") {
+      return;
+    }
     onServerReadyListeners.forEach((cb) => {
-      cb(port, dbs!);
+      cb(port, initState.dbs);
     });
   });
   console.log(`\n\nexpress listening on port ${port} (${host}:${port})\n\n`);

@@ -14,6 +14,7 @@ import { StatusMonitor } from "../../dashboard/StatusMonitor/StatusMonitor";
 import { StatusDotCircleIcon } from "../Account/Sessions";
 import type { ConnectionProps } from "./Connection";
 import { t } from "../../i18n/i18nUtils";
+import { ROUTES } from "../../../../commonTypes/utils";
 
 export const ConnectionActionBar = (props: ConnectionProps) => {
   const { dbsMethods, c, dbs, isAdmin } = props;
@@ -89,7 +90,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
 
       {isAdmin && !c.is_state_db && (
         <Btn
-          href={"/connection-config/" + c.id}
+          href={ROUTES.CONFIG + "/" + c.id}
           title={t.common["Configure"]}
           titleAsLabel={isMobile}
           className=" "
@@ -102,7 +103,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
       {isAdmin && (
         <Btn
           data-command="Connection.edit"
-          href={"/edit-connection/" + c.id}
+          href={ROUTES.EDIT_CONNECTION + "/" + c.id}
           title={t.ConnectionActionBar["Edit connection"]}
           titleAsLabel={isMobile}
           className="  "

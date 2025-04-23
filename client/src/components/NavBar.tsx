@@ -4,7 +4,10 @@ import "./NavBar.css";
 
 import { mdiArrowLeft, mdiClose, mdiMenu } from "@mdi/js";
 import { useNavigate } from "react-router-dom";
-import type { ServerState } from "../../../commonTypes/electronInit";
+import type {
+  ProstglesInitState,
+  ProstglesState,
+} from "../../../commonTypes/electronInit";
 import type { ClientUser, Prgl } from "../App";
 import { AccountMenu } from "../pages/AccountMenu";
 import ClickCatch from "./ClickCatch";
@@ -20,22 +23,14 @@ type P = {
     iconPath?: string;
   }[];
   user: ClientUser | undefined;
-  serverState?: ServerState;
+  serverState: ProstglesState | undefined;
   endContent?: React.ReactNode;
 } & Pick<Partial<Prgl>, "dbsMethods" | "dbs">;
 
 export const NavBar = (props: P) => {
   const [navCollapsed, setNavCollapsed] = useState(true);
   const navigate = useNavigate();
-  const {
-    options = [],
-    title,
-    user,
-    serverState,
-    dbsMethods,
-    dbs,
-    endContent,
-  } = props;
+  const { options = [], title, user, serverState, endContent } = props;
   const endContentWrapped =
     endContent ?
       <div

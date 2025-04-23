@@ -95,14 +95,15 @@ export const W_MethodControls = ({
   const inputSchema = m?.input ?? {};
   const mArgs = getKeys(inputSchema).reduce((a, k) => {
     const v: keyof typeof inputSchema = k;
+    const arg = inputSchema[v];
     return {
       ...a,
       [v]:
-        inputSchema[v]?.lookup?.type === "data-def" ?
+        arg?.lookup?.type === "data-def" ?
           {
-            ...inputSchema[v],
+            ...arg,
             lookup: {
-              ...inputSchema[v].lookup,
+              ...arg.lookup,
               type: "data",
             },
           }

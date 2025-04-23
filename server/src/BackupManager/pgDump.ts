@@ -1,8 +1,4 @@
 import type { ChildProcess } from "child_process";
-import {
-  omitKeys,
-  pickKeys,
-} from "prostgles-server/dist/PubSubManager/PubSubManager";
 import type { DumpOpts, PGDumpParams } from "../../../commonTypes/utils";
 import { getSSLEnvVars } from "../ConnectionManager/saveCertificates";
 import type BackupManager from "./BackupManager";
@@ -14,6 +10,7 @@ import {
   getFileMgr,
   makeLogs,
 } from "./utils";
+import { omitKeys, pickKeys } from "prostgles-types";
 
 export async function pgDump(
   this: BackupManager,

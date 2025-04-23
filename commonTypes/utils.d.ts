@@ -193,6 +193,12 @@ export declare const ROUTES: {
     readonly ACCOUNT: "/account";
     readonly DASHBOARD: "/connections";
     readonly CONFIG: "/connection-config";
+    readonly SERVER_SETTINGS: "/server-settings";
+    readonly COMPONENT_LIST: "/component-list";
+    readonly EDIT_CONNECTION: "/edit-connection";
+    readonly NEW_CONNECTION: "/new-connection";
+    readonly USERS: "/users";
+    readonly BACKUPS: "/prostgles_backups";
 };
 export declare const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
 export declare const FORKED_PROC_ENV_NAME: "IS_FORKED_PROC";

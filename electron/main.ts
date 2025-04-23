@@ -8,6 +8,7 @@ import {
   Tray,
   shell,
   nativeImage,
+  type SafeStorage,
 } from "electron";
 import * as path from "path";
 import * as fs from "fs";
@@ -20,9 +21,9 @@ let localCreds: any;
  * Safe storage encryption works only with a launched browser (electron.launch without "--no-sandbox") and launch without xvfb-run
  * but this does not work within containers
  */
-const safeStorage =
+const safeStorage: SafeStorageHandles =
   process.env.TEST_MODE === "true" ?
-    {
+    ({
       encryptString: (str: string) => {
         localCreds = str;
         console.log("encryptString", { str });
@@ -32,10 +33,25 @@ const safeStorage =
         console.log("decryptString", { str, localCreds });
         return localCreds;
       },
-    }
+    } as unknown as SafeStorageHandles)
   : ss;
 
-const expressApp = require("../ui/server/dist/server/src/electronConfig");
+type SafeStorageHandles = Pick<SafeStorage, "encryptString" | "decryptString">;
+
+type StartParams = {
+  safeStorage: SafeStorageHandles;
+  args: {
+    rootDir: string;
+    port: number;
+    electronSid: string;
+    onSidWasSet: () => void;
+    openPath: (path: string, isFile?: boolean) => void;
+  };
+  onReady: (port: number) => void;
+};
+const expressApp = require("../ui/server/dist/server/src/electronConfig") as {
+  start: (params: StartParams) => Promise<void>;
+};
 const iconPath = path.join(__dirname, "/../images/icon.ico");
 
 // const protocolHandler = getProtocolHandler({
@@ -92,9 +108,9 @@ function initApp() {
 
     let port: number;
     expressApp
-      .start(
+      .start({
         safeStorage,
-        {
+        args: {
           rootDir: app.getPath("userData"),
           port: 0,
           electronSid,
@@ -111,7 +127,7 @@ function initApp() {
             }
           },
         },
-        (actualPort: number) => {
+        onReady: (actualPort: number) => {
           console.log("Express server started on port " + actualPort);
           port = actualPort;
           tryOpenBrowser(actualPort, electronSid);
@@ -129,7 +145,7 @@ function initApp() {
           //   }
           // })
         },
-      )
+      })
       .catch((err: any) => {
         console.error("Failed to start expressApp.start", err);
       });

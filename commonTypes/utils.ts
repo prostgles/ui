@@ -337,6 +337,12 @@ export const ROUTES = {
   ACCOUNT: "/account",
   DASHBOARD: "/connections",
   CONFIG: "/connection-config",
+  SERVER_SETTINGS: "/server-settings",
+  COMPONENT_LIST: "/component-list",
+  EDIT_CONNECTION: "/edit-connection",
+  NEW_CONNECTION: "/new-connection",
+  USERS: "/users",
+  BACKUPS: "/prostgles_backups",
 } as const;
 
 const testForDuplicateValues = <T extends AnyObject>(obj: T, name: string) => {

@@ -10,18 +10,17 @@ import type { DB } from "prostgles-server/dist/Prostgles";
 import { omitKeys } from "prostgles-types";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import { BKP_PREFFIX } from "../BackupManager/BackupManager";
+import { API_ENDPOINTS, ROUTES } from "../../../commonTypes/utils";
 import { actualRootDir } from "../electronConfig";
 import { PROSTGLES_STRICT_COOKIE } from "../envVars";
 import type { DBS, Users } from "../index";
-import { securityManager, MEDIA_ROUTE_PREFIX } from "../index";
+import { MEDIA_ROUTE_PREFIX, securityManager } from "../index";
 import { initBackupManager } from "../init/startProstgles";
 import { getEmailAuthProvider } from "./emailProvider/getEmailAuthProvider";
 import { getActiveSession } from "./getActiveSession";
 import { getLogin } from "./getLogin";
-import { onMagicLinkOrOTP } from "./onMagicLinkOrOTP";
 import { getOAuthLoginProviders } from "./OAuthProviders/getOAuthLoginProviders";
-import { API_ENDPOINTS } from "../../../commonTypes/utils";
+import { onMagicLinkOrOTP } from "./onMagicLinkOrOTP";
 
 const authCookieOpts =
   process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_COOKIE ?
@@ -67,7 +66,6 @@ export const makeSession = async (
       },
       { returning: "*" },
     );
-    ("auth_providers");
 
     return parseAsBasicSession(session);
   } else {
@@ -184,7 +182,7 @@ export const getAuth = async (app: Express, dbs: DBS | undefined) => {
       use: securityManager.onUse,
       publicRoutes: ["/manifest.json", "/favicon.ico", API_ENDPOINTS.WS_DB],
       onGetRequestOK: async (req, res, { getUser, db, dbo: dbs }) => {
-        if (req.path.startsWith(BKP_PREFFIX)) {
+        if (req.path.startsWith(ROUTES.BACKUPS)) {
           const userData = await getUser();
           await (
             await initBackupManager(db, dbs)

@@ -2,24 +2,17 @@ import { execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import type { ProstglesInitState } from "../../../commonTypes/electronInit";
+import type { InstalledPrograms } from "../../../commonTypes/electronInit";
 import type { WithUndef } from "../../../commonTypes/utils";
 import { isDefined } from "prostgles-types";
 
-let installedPrograms: WithUndef<ProstglesInitState["canDumpAndRestore"]> = {
+let installedPrograms: WithUndef<InstalledPrograms> | undefined = {
   psql: undefined,
   pg_dump: undefined,
   pg_restore: undefined,
+  filePath: undefined,
+  os: undefined,
 };
-
-type OS = "Windows" | "Linux" | "Mac" | "";
-
-export type InstalledPrograms =
-  | (ProstglesInitState["canDumpAndRestore"] & {
-      os: OS;
-      filePath: string;
-    })
-  | undefined;
 
 const getDataDirectory = async (db: DB) => {
   const dataDir = (await db.oneOrNone("SHOW data_directory"))
@@ -80,7 +73,7 @@ const getWindowsPsqlBinPath = async (db: DB) => {
 
 export const getInstalledPrograms = async (
   db: DB,
-): Promise<InstalledPrograms> => {
+): Promise<InstalledPrograms | undefined> => {
   const os =
     process.platform === "win32" ? "Windows"
     : process.platform === "linux" ? "Linux"
@@ -92,6 +85,8 @@ export const getInstalledPrograms = async (
       filePath = await getWindowsPsqlBinPath(db);
       const ext = ".exe";
       installedPrograms = {
+        os,
+        filePath,
         psql: execSync(
           JSON.stringify(`${filePath}psql${ext}`) + ` --version`,
         ).toString(),
@@ -146,6 +141,8 @@ export const getInstalledPrograms = async (
         }
         if (filePath) {
           installedPrograms = {
+            os,
+            filePath,
             psql: execSync(`${filePath}psql --version`).toString(),
             pg_dump: execSync(`${filePath}pg_dump --version`).toString(),
             pg_restore: execSync(`${filePath}pg_restore --version`).toString(),
@@ -153,6 +150,8 @@ export const getInstalledPrograms = async (
         }
       } else {
         installedPrograms = {
+          os,
+          filePath,
           psql:
             execSync("which psql").toString() &&
             execSync("psql --version").toString(),

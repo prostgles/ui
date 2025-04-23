@@ -18,6 +18,7 @@ import { pickKeys } from "prostgles-types";
 import { Connection } from "./Connection";
 import { ConnectionServer } from "./ConnectionServer";
 import { t } from "../../i18n/i18nUtils";
+import { ROUTES } from "../../../../commonTypes/utils";
 
 type CommonConnectionInfo = Pick<DBSSchema["connections"], "created"> & {
   access_control: { count: number }[];
@@ -257,7 +258,7 @@ export class Connections extends RTComp<PrglState, S> {
           )}
           {isAdmin && (
             <Btn
-              href="/new-connection"
+              href={ROUTES.NEW_CONNECTION}
               asNavLink={true}
               title={t.Connections["Create new connection"]}
               iconPath={mdiPlus}

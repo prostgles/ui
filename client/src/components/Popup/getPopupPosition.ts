@@ -2,12 +2,13 @@ import { isDefined } from "../../utils";
 import type Popup from "./Popup";
 import { POPUP_CLASSES, type PopupProps } from "./Popup";
 
-type Args = Pick<PopupProps, "positioning"> & {
+type Args = {
   anchorX: number;
   anchorY: number;
   anchorHeight: number;
   anchorWidth: number;
   popup: Popup;
+  opacity: number;
 };
 
 export const getPopupSize = (popup: Popup) => {
@@ -66,7 +67,7 @@ export const getPopupSize = (popup: Popup) => {
 };
 
 export const getPopupPosition = ({
-  positioning,
+  opacity,
   anchorX,
   anchorY,
   anchorHeight,
@@ -109,6 +110,7 @@ export const getPopupPosition = ({
 
   if (!popup.state.fullScreen && !justToggledFullScreen) {
     popup.position ??= {
+      opacity,
       x,
       y,
       xMin: x,

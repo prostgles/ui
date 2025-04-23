@@ -1,4 +1,15 @@
-export type ProstglesInitState = {
+export type ProstglesInitState<T extends Record<string, unknown> = Record<string, unknown>> = {
+    error?: undefined;
+    state: "loading";
+} | ({
+    error?: undefined;
+    state: "ok";
+} & T) | {
+    error: any;
+    state: "error";
+    errorType: "init" | "connection";
+};
+export type ProstglesState<T extends Record<string, unknown> = Record<string, unknown>> = {
     isElectron: boolean;
     xRealIpSpoofable?: boolean;
     electronCredsProvided?: boolean;
@@ -11,19 +22,17 @@ export type ProstglesInitState = {
         db_pass: string;
         db_ssl: string;
     };
-    electronIssue?: {
-        type: "Older schema";
-    };
-    initError?: any;
-    connectionError?: any;
-    ok: boolean;
-    canDumpAndRestore: {
-        psql: string;
-        pg_dump: string;
-        pg_restore: string;
-    } | undefined;
+    canDumpAndRestore: InstalledPrograms | undefined;
+    initState: ProstglesInitState<T>;
 };
-export type ServerState = ProstglesInitState;
+type OS = "Windows" | "Linux" | "Mac" | "";
+export type InstalledPrograms = {
+    os: OS;
+    filePath: string;
+    psql: string;
+    pg_dump: string;
+    pg_restore: string;
+};
 export declare const DEFAULT_ELECTRON_CONNECTION: {
     readonly type: "Standard";
     readonly db_host: "localhost";
@@ -31,3 +40,4 @@ export declare const DEFAULT_ELECTRON_CONNECTION: {
     readonly db_user: "prostgles_desktop";
     readonly db_name: "prostgles_desktop_db";
 };
+export {};

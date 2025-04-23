@@ -8,7 +8,11 @@ import type { Socket } from "socket.io-client";
 import io from "socket.io-client";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import { API_ENDPOINTS, SPOOF_TEST_VALUE } from "../../../commonTypes/utils";
+import {
+  API_ENDPOINTS,
+  ROUTES,
+  SPOOF_TEST_VALUE,
+} from "../../../commonTypes/utils";
 import type { AppState } from "../App";
 import { pageReload } from "../components/Loading";
 import type { DBS } from "../dashboard/Dashboard/DBS";
@@ -54,7 +58,7 @@ export const useDBSConnection = (
       });
       serverState = await resp.json();
       window.document.title = `Prostgles ${serverState?.isElectron ? "Desktop" : "UI"}`;
-      if (serverState?.connectionError) {
+      if (serverState?.initState.state === "error") {
         setState({
           prglStateErr: undefined,
           serverState,
@@ -63,8 +67,11 @@ export const useDBSConnection = (
       }
     } catch (initError) {
       serverState = {
-        ok: false,
-        initError,
+        initState: {
+          state: "error",
+          error: initError,
+          errorType: "init",
+        },
         isElectron: false,
         canDumpAndRestore: undefined,
       };
@@ -78,7 +85,7 @@ export const useDBSConnection = (
         serverState,
       });
       return;
-    } else if (serverState?.ok) {
+    } else if (serverState?.initState.state === "ok") {
       socket = io({
         transports: ["websocket"],
         path: API_ENDPOINTS.WS_DBS,
@@ -106,9 +113,7 @@ export const useDBSConnection = (
           onDebug: !isPlaywrightTest ? undefined : playwrightTestLogs,
           onReconnect: () => {
             onDisconnect(false);
-            if (
-              window.location.pathname.startsWith(API_ENDPOINTS.DASHBOARD + "/")
-            ) {
+            if (window.location.pathname.startsWith(ROUTES.DASHBOARD + "/")) {
               pageReload("sync reconnect bug");
             }
           },
@@ -145,7 +150,7 @@ export const useDBSConnection = (
           resolve({ error });
         });
       });
-    } else if (!serverState?.connectionError) {
+    } else if (serverState?.initState.state !== "error") {
       /** Maybe loading, try again */
       console.warn("Prostgles could not connect. Retrying in 1 second");
       setTimeout(() => {

@@ -1,22 +1,22 @@
-import type { ProstglesStartupState } from "./startProstgles";
+import type { ProstglesInitStateWithDBS } from "./startProstgles";
 
 export const isRetryableError = (
-  error: Exclude<ProstglesStartupState, { ok: true }>,
+  errorState: Extract<ProstglesInitStateWithDBS, { state: "error" }>,
 ): boolean => {
-  if (!error) return false;
+  if (!errorState) return false;
 
   // Explicitly non-retryable Prostgles init errors
-  if (error.initError) {
+  if (errorState.errorType === "init") {
     console.warn(
       "Non-retryable Prostgles Initialization Error detected.",
-      error.initError,
+      errorState.error,
     );
     return false;
   }
 
-  // Explicitly non-retryable connection errors (customize based on common pg error codes)
-  if (error.connectionError) {
-    const code = error.connectionError.code;
+  // Explicitly non-retryable connection errors (customise based on common pg error codes)
+  if (errorState.error) {
+    const code = errorState.error.code;
     // Examples:
     if (code === "3D000") {
       // Database does not exist
@@ -36,7 +36,7 @@ export const isRetryableError = (
     // If it's not explicitly non-retryable, assume it might be transient
     console.warn(
       "Potentially retryable DB connection error encountered:",
-      error.connectionError,
+      errorState.error,
     );
     return true; // Assume other connection errors might be temporary
   }
@@ -44,7 +44,7 @@ export const isRetryableError = (
   // Unexpected errors during startProstgles execution (outside the expected return structure)
   console.error(
     "Unexpected error during startProstgles execution, considering non-retryable:",
-    error,
+    errorState,
   );
   return false;
 };

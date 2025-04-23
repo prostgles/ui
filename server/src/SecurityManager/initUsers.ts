@@ -12,13 +12,14 @@ const EMPTY_PASSWORD = "";
 const NoInitialAdminPasswordProvided = Boolean(
   !PRGL_USERNAME || !PRGL_PASSWORD,
 );
+export const activePasswordlessAdminFilter = {
+  username: PASSWORDLESS_ADMIN_USERNAME,
+  status: "active",
+  passwordless_admin: true,
+};
 export const getPasswordlessAdmin = async (db: DBS) => {
   if (NoInitialAdminPasswordProvided) {
-    return await db.users.findOne({
-      username: PASSWORDLESS_ADMIN_USERNAME,
-      status: "active",
-      passwordless_admin: true,
-    });
+    return await db.users.findOne(activePasswordlessAdminFilter);
   }
   return undefined;
 };

@@ -166,7 +166,7 @@ export const popupCheckPosition = function (this: Popup) {
   ) {
     if (positioning === "beneath-left") {
       return getPopupPosition({
-        positioning,
+        opacity: commonState.opacity,
         anchorX,
         anchorHeight,
         anchorWidth,

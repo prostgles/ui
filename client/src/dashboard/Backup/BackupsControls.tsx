@@ -13,7 +13,7 @@ import { usePromise } from "prostgles-client/dist/react-hooks";
 import type { AnyObject } from "prostgles-types";
 import React, { useState } from "react";
 import type { PGDumpParams } from "../../../../commonTypes/utils";
-import { sliceText } from "../../../../commonTypes/utils";
+import { ROUTES, sliceText } from "../../../../commonTypes/utils";
 import type { Prgl } from "../../App";
 import { dataCommand } from "../../Testing";
 import Btn from "../../components/Btn";
@@ -518,7 +518,7 @@ export const BackupsControls = ({
 
             <Btn
               iconPath={mdiDownload}
-              href={"/prostgles_backups/" + row.id}
+              href={ROUTES.BACKUPS + "/" + row.id}
               color="action"
               title="Right click and 'Save link as...' to download"
               download

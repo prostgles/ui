@@ -33,9 +33,7 @@ export const getEmailSenderWithMockTest = async (
   if (!email || !website_url) return undefined;
   const { smtp: smtpWithoutTLS, emailTemplate } = email;
   const smtp = getSMTPWithTLS(smtpWithoutTLS);
-  let sendEmail:
-    | Awaited<ReturnType<typeof getEmailSender>>["sendEmail"]
-    | undefined;
+  let sendEmail: Awaited<ReturnType<typeof getEmailSender>>["sendEmail"];
 
   /**
    * Mock email sending for testing
@@ -48,6 +46,9 @@ export const getEmailSenderWithMockTest = async (
     };
   } else {
     ({ sendEmail } = await getEmailSender(smtp, website_url));
+  }
+  if (!sendEmail) {
+    throw new Error("sendEmail function is not defined");
   }
   return {
     sendEmail,

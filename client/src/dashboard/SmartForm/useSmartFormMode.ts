@@ -180,6 +180,7 @@ export const useSmartFormMode = (
         tableHandlerInsert,
       } satisfies ModeOrError;
     }
+    //@ts-ignore
   }, [
     tableInfo,
     rowFilter,

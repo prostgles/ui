@@ -24,7 +24,8 @@ import { setupLLM } from "../publishMethods/askLLM/setupLLM";
 import { publishMethods } from "../publishMethods/publishMethods";
 import { startDevHotReloadNotifier } from "../startDevHotReloadNotifier";
 import { tableConfig } from "../tableConfig/tableConfig";
-import { getInitState } from "./tryStartProstgles";
+import { getProstglesState } from "./tryStartProstgles";
+import type { ProstglesInitState } from "../../../commonTypes/electronInit";
 
 type StartArguments = {
   app: Express;
@@ -43,10 +44,13 @@ export const initBackupManager = async (db: DB, dbs: DBS) => {
 export const getBackupManager = () => bkpManager;
 
 export let statePrgl: InitResult | undefined;
-
-export type ProstglesStartupState =
-  | { ok: true; initError?: undefined; connectionError?: undefined; dbs: DBS }
-  | { ok?: undefined; initError: any; connectionError: any };
+export type InitExtra = {
+  dbs: DBS;
+  httpListening?: {
+    port: number;
+  };
+};
+export type ProstglesInitStateWithDBS = ProstglesInitState<InitExtra>;
 
 export const startProstgles = async ({
   app,
@@ -54,10 +58,12 @@ export const startProstgles = async ({
   host,
   io,
   con = DBS_CONNECTION_INFO,
-}: StartArguments): Promise<ProstglesStartupState> => {
+}: StartArguments): Promise<
+  Exclude<ProstglesInitStateWithDBS, { state: "loading" }>
+> => {
   try {
     if (!con.db_conn && !con.db_user && !con.db_name) {
-      const connectionError = `
+      const error = `
         Make sure .env file contains superuser postgres credentials:
           POSTGRES_URL
           or
@@ -77,7 +83,7 @@ export const startProstgles = async ({
 
       `;
 
-      return { connectionError, initError: undefined };
+      return { state: "error", error, errorType: "connection" };
     }
 
     let validatedDbConnection: pg.IConnectionParameters<pg.IClient> | undefined;
@@ -89,8 +95,9 @@ export const startProstgles = async ({
       validatedDbConnection = tested.connectionInfo;
     } catch (connError) {
       return {
-        connectionError: getErrorAsObject(connError),
-        initError: undefined,
+        state: "error",
+        error: getErrorAsObject(connError),
+        errorType: "connection",
       };
     }
     const IS_PROD = process.env.NODE_ENV === "production";
@@ -226,7 +233,7 @@ export const startProstgles = async ({
         await securityManager.destroy();
         await securityManager.init(db, _db);
 
-        await insertStateDatabase(db, _db, con, getInitState().isElectron);
+        await insertStateDatabase(db, _db, con, getProstglesState().isElectron);
         await setupLLM(db);
         await setupMCPServerHub(db);
 
@@ -243,8 +250,8 @@ export const startProstgles = async ({
     statePrgl = prgl;
 
     startDevHotReloadNotifier({ io, port, host });
-    return { ok: true, dbs: prgl.db as DBS };
+    return { state: "ok", dbs: prgl.db as DBS };
   } catch (err) {
-    return { initError: err, connectionError: undefined };
+    return { state: "error", error: err, errorType: "init" };
   }
 };

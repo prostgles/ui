@@ -12,7 +12,8 @@ import {
   PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR,
   securityManagerOnUse,
 } from "./SecurityManagerOnUse";
-import { getPasswordlessAdmin, initUsers } from "./initUsers";
+import { activePasswordlessAdminFilter, initUsers } from "./initUsers";
+import { getActiveSessionFilter } from "../authConfig/getActiveSession";
 
 export type WithOrigin = {
   origin?: (
@@ -25,19 +26,15 @@ export class SecurityManager {
   static #instance: SecurityManager;
   app: Express;
   passwordlessAdmin?: DBSSchema["users"];
+  passwordlessAdminActiveSessionCount?: number;
   dbs?: DBS;
   _db?: DB;
 
-  config: {
-    loaded: boolean;
-    global_setting: DBSSchema["global_settings"] | undefined;
-  } = {
-    loaded: false,
-    global_setting: undefined,
-  };
+  global_setting: DBSSchema["global_settings"] | undefined;
 
   usersSub?: SubscriptionHandler;
   configSub?: SubscriptionHandler;
+  deletedSidFromCookie?: string;
 
   private constructor(app: Express) {
     this.app = app;
@@ -100,7 +97,7 @@ export class SecurityManager {
   ) => {
     const { ip_address, ip_address_remote, x_real_ip } =
       getClientRequestIPsInfo(args);
-    const { groupBy } = this.config.global_setting?.login_rate_limit ?? {};
+    const { groupBy } = this.global_setting?.login_rate_limit ?? {};
     const ipValue =
       groupBy === "x-real-ip" ? x_real_ip
       : groupBy === "remote_ip" ? ip_address_remote
@@ -122,7 +119,7 @@ export class SecurityManager {
 
   withOrigin: WithOrigin = {
     origin: (origin, cb) => {
-      cb(null, this.config.global_setting?.allowed_origin ?? undefined);
+      cb(null, this.global_setting?.allowed_origin ?? undefined);
     },
   };
 }
@@ -146,33 +143,41 @@ const loadConfig = async function (this: SecurityManager): Promise<void> {
   if (!db) throw "dbs missing";
   if (!_db) throw "_dbs missing";
 
-  if (this.config.loaded) return;
-
   await initUsers(db, _db);
   await this.usersSub?.unsubscribe();
   const { sub: usersSub, data: passwordlessAdmin } =
     await resolveSubscriptionData<DBSSchema["users"] | undefined>(
       (resolveData) => {
-        return db.users.subscribe({}, { limit: 1 }, async () => {
-          this.passwordlessAdmin = await getPasswordlessAdmin(this.dbs!);
-          resolveData(this.passwordlessAdmin);
-        });
+        return db.users.subscribe(
+          activePasswordlessAdminFilter,
+          { limit: 1 },
+          async ([passwordlessAdmin]) => {
+            this.passwordlessAdmin = passwordlessAdmin;
+            resolveData(passwordlessAdmin);
+          },
+        );
       },
     );
   this.usersSub = usersSub;
+
+  if (passwordlessAdmin) {
+    const activeSessions = await db.sessions.find(
+      getActiveSessionFilter({
+        user_id: passwordlessAdmin.id,
+      }),
+    );
+    console.log("Active sessions for passwordless admin: ", activeSessions);
+    this.passwordlessAdminActiveSessionCount = activeSessions.length;
+  }
 
   await setupGlobalSettings(db, !!passwordlessAdmin);
 
   await this.configSub?.unsubscribe();
   const { sub: configSub } = await resolveSubscriptionData((resolveData) => {
     return db.global_settings.subscribeOne({}, {}, async (gconfigs) => {
-      this.config.global_setting = gconfigs;
-      this.config.loaded = true;
+      this.global_setting = gconfigs;
 
-      this.app.set(
-        "trust proxy",
-        this.config.global_setting?.trust_proxy ?? false,
-      );
+      this.app.set("trust proxy", this.global_setting?.trust_proxy ?? false);
 
       // const cidrRequests =  (gconfigs.allowed_ips ?? []).map(cidr =>
       //   db.sql!(

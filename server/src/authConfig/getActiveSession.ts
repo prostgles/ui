@@ -1,10 +1,10 @@
+import type { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
 import { type AuthResponse } from "prostgles-types";
+import { YEAR } from "../../../commonTypes/utils";
 import type { DBS } from "../index";
 import { securityManager } from "../index";
-import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
-import type { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
 import type { Sessions } from "./getAuth";
-import { YEAR } from "../../../commonTypes/utils";
+import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
 
 type AuthType =
   | {
@@ -16,7 +16,13 @@ type AuthType =
       type: "login-success";
       filter: { user_id: string; type: "web"; user_agent: string };
     };
-
+export const getActiveSessionFilter = (
+  filter: AuthType["filter"] | { user_id: string },
+) => ({
+  ...filter,
+  "expires.>": Date.now(),
+  active: true,
+});
 export const getActiveSession = async (
   db: DBS,
   authType: AuthType,
@@ -36,11 +42,9 @@ export const getActiveSession = async (
       },
     };
   }
-  const validSession = await db.sessions.findOne({
-    ...authType.filter,
-    "expires.>": Date.now(),
-    active: true,
-  });
+  const validSession = await db.sessions.findOne(
+    getActiveSessionFilter(authType.filter),
+  );
 
   /**
    * Always maintain a valid session for passwordless admin

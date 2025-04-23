@@ -6,7 +6,6 @@ import type { DBS } from ".";
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DBSConnectionInfo = Pick<
   Required<Connections>,
-  | "type"
   | "db_conn"
   | "db_name"
   | "db_user"
@@ -96,16 +95,17 @@ export const getElectronConfig = () => {
   };
 };
 
-export const start = async (
-  sStorage: SafeStorage,
+export const start = async (params: {
+  safeStorage: SafeStorage;
   args: {
     port: number;
     electronSid: string;
     onSidWasSet: () => void;
     rootDir: string;
-  },
-  onReady: OnServerReadyCallback,
-) => {
+  };
+  onReady: OnServerReadyCallback;
+}) => {
+  const { args, onReady } = params;
   isElectron = true;
   port = args.port;
   if (!Number.isInteger(args.port)) {
@@ -126,7 +126,7 @@ export const start = async (
     electronSid: args.electronSid,
     onSidWasSet: args.onSidWasSet,
   };
-  safeStorage = sStorage;
+  safeStorage = params.safeStorage;
   const { onServerReady } = await import("./index");
   onServerReady((port, dbs) => {
     const [token] = prostglesTokens;

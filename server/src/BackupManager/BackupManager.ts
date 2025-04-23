@@ -1,14 +1,10 @@
-import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import path from "path";
 import { PassThrough } from "stream";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
+import { getInstalledPrograms } from "./getInstalledPrograms";
 import { pgDump } from "./pgDump";
 import { pgRestore } from "./pgRestore";
 import { getBkp, getFileMgr } from "./utils";
-import type { InstalledPrograms } from "./getInstalledPrograms";
-import { getInstalledPrograms } from "./getInstalledPrograms";
-
-export const BACKUP_FOLDERNAME = "prostgles_backups";
-export const BKP_PREFFIX = "/" + BACKUP_FOLDERNAME;
 
 export type Backups = Required<DBGeneratedSchema["backups"]>["columns"];
 type DumpOpts = Backups["options"];
@@ -20,14 +16,16 @@ type DBS = DBOFullyTyped<DBGeneratedSchema>;
 
 import checkDiskSpace from "check-disk-space";
 import type { Request, Response } from "express";
-import type { SUser } from "../authConfig/getAuth";
-import { getRootDir } from "../electronConfig";
-import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
-import type { DB } from "prostgles-server/dist/Prostgles";
-import { checkAutomaticBackup } from "./checkAutomaticBackup";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { bytesToSize } from "prostgles-server/dist/FileManager/FileManager";
+import type { DB } from "prostgles-server/dist/Prostgles";
 import type { SubscriptionHandler } from "prostgles-types";
+import type { InstalledPrograms } from "../../../commonTypes/electronInit";
+import { ROUTES } from "../../../commonTypes/utils";
+import type { SUser } from "../authConfig/getAuth";
+import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
+import { getRootDir } from "../electronConfig";
+import { checkAutomaticBackup } from "./checkAutomaticBackup";
 
 export const HOUR = 3600 * 1000;
 
@@ -46,7 +44,7 @@ export default class BackupManager {
     db: DB,
     dbs: DBS,
     connMgr: ConnectionManager,
-    installedPrograms: InstalledPrograms,
+    installedPrograms: InstalledPrograms | undefined,
   ) {
     this.db = db;
     this.dbs = dbs;
@@ -195,7 +193,7 @@ export default class BackupManager {
     if (userData?.user.type !== "admin") {
       res.sendStatus(401);
     } else {
-      const bkpId = req.path.slice(BKP_PREFFIX.length + 1);
+      const bkpId = req.path.slice(ROUTES.BACKUPS.length + 1);
       if (!bkpId) {
         res.sendStatus(404);
       } else {
@@ -220,7 +218,7 @@ export default class BackupManager {
               res.type(bkp.content_type);
               res.sendFile(
                 path.resolve(
-                  path.join(getRootDir() + BKP_PREFFIX + "/" + bkp.id),
+                  path.join(getRootDir() + ROUTES.BACKUPS + "/" + bkp.id),
                 ),
               );
             } catch (err) {
