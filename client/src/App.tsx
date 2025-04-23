@@ -287,11 +287,6 @@ export const App = () => {
       )}
       <NonHTTPSWarning {...prglState} />
       <Switch>
-        {/* <Route
-          key="-1"
-          path="/connection-config/:cid"
-          element={<div>dwadwa</div>}
-        /> */}
         <Route
           key="0"
           path="/"

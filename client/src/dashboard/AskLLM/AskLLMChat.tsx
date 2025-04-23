@@ -60,6 +60,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     connection,
     activeChat,
   });
+  const isAdmin = user?.type === "admin";
 
   const sendQuery = useCallback(
     async (msg: LLMMessage["message"] | undefined) => {
@@ -150,12 +151,14 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
             disabledInfo={activeChat.disabled_message ?? undefined}
             onSend={sendMessage}
             actionBar={
-              <AskLLMChatActionBar
-                prgl={prgl}
-                activeChat={activeChat}
-                setupState={setupState}
-                dbSchemaForPrompt={dbSchemaForPrompt}
-              />
+              isAdmin && (
+                <AskLLMChatActionBar
+                  prgl={prgl}
+                  activeChat={activeChat}
+                  setupState={setupState}
+                  dbSchemaForPrompt={dbSchemaForPrompt}
+                />
+              )
             }
           />
           <AskLLMToolApprover

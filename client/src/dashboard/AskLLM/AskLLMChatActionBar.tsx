@@ -28,7 +28,7 @@ export const AskLLMChatActionBar = (
   const promptContent = useMemo(() => {
     if (!prompt) return "";
     return prompt.prompt
-      .replaceAll(`\${schema}`, dbSchemaForPrompt)
+      .replaceAll("${schema}", dbSchemaForPrompt)
       .replaceAll("${dashboardTypes}", dashboardTypes);
   }, [dbSchemaForPrompt, prompt]);
   const { data: models } = dbs.llm_models.useFind(
