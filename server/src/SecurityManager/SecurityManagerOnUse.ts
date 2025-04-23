@@ -49,18 +49,22 @@ export const securityManagerOnUse: NonNullable<OnUse> = async function (
       ROUTES.MAGIC_LINK + "/",
     );
     /** This is to prevent a fresh setup (passwordless admin has not been assigned yet) redirecting users with existing session cookies to login */
+    let clearedExistingSid = false;
     if (
       sid &&
       this.passwordlessAdmin &&
       !this.passwordlessAdminActiveSessionCount &&
+      !isAccessingMagicLink &&
       !this.deletedSidFromCookie
     ) {
-      this.deletedSidFromCookie = sid;
-      res.clearCookie(sidKeyName);
-      res.redirect(req.originalUrl);
-      return;
+      this.deletedSidFromCookie = true;
+      clearedExistingSid = true;
     }
-    if (this.passwordlessAdmin && !sid && !isAccessingMagicLink) {
+    if (
+      this.passwordlessAdmin &&
+      (!sid || clearedExistingSid) &&
+      !isAccessingMagicLink
+    ) {
       // need to ensure that only 1 session is allowed for the passwordless admin
       const {
         data: magicLinkPaswordless,

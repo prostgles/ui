@@ -34,7 +34,7 @@ export class SecurityManager {
 
   usersSub?: SubscriptionHandler;
   configSub?: SubscriptionHandler;
-  deletedSidFromCookie?: string;
+  deletedSidFromCookie = false;
 
   private constructor(app: Express) {
     this.app = app;
