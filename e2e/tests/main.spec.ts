@@ -86,6 +86,7 @@ test.describe("Main test", () => {
   test("Connecting with an existing sid to a fresh instance will ignore the sid IF passwordless admin did not claim a session yet", async ({
     page: p,
   }) => {
+    // throw "TODO: fix this test ";
     const page = p as PageWIds;
     const url = new URL("http://localhost:3004");
     await page.context().addCookies([

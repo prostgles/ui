@@ -33,7 +33,7 @@ import type {
   ProstglesState,
 } from "../../commonTypes/electronInit";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
-import { ROUTES } from "../../commonTypes/utils";
+import { fixIndent, ROUTES } from "../../commonTypes/utils";
 import { createReactiveState, useReactiveState } from "./appUtils";
 import Btn from "./components/Btn";
 import { FlexCol, FlexRow } from "./components/Flex";
@@ -147,9 +147,10 @@ export const App = () => {
   const unknownErrorMessage =
     "Something went wrong with initialising the server. Check console for more details";
   const error =
-    initState?.state === "error" ?
-      initState.error || unknownErrorMessage || state.prglStateErr
-    : undefined;
+    state.prglStateErr ||
+    (initState?.state === "error" ?
+      initState.error || unknownErrorMessage
+    : undefined);
 
   if (!error && (!state.dbsKey || !state.prglState)) {
     return (
@@ -161,20 +162,16 @@ export const App = () => {
 
   const initStateError = initState?.state === "error" ? initState : undefined;
   if (error || !state.prglState) {
+    const hint =
+      initStateError?.errorType && errorHints[initStateError.errorType];
     return (
       <FlexCol className="m-auto ai-center jc-center max-w-700 p-2">
         <ErrorComponent error={error} />
-        <InfoRow color="warning" variant="filled">
-          {initStateError?.errorType === "connection" ?
-            <>
-              Could not connect to state database. Ensure /server/.env file (or
-              environment variables) point to a running and accessible postgres
-              server database
-            </>
-          : initStateError?.errorType === "init" ?
-            <>Failed to start Prostgles</>
-          : null}
-        </InfoRow>
+        {hint && (
+          <InfoRow color="warning" variant="filled">
+            {hint}
+          </InfoRow>
+        )}
       </FlexCol>
     );
   }
@@ -365,6 +362,14 @@ export const App = () => {
       </Switch>
     </FlexCol>
   );
+};
+
+const errorHints = {
+  connection: fixIndent(`
+    Could not connect to state database. Ensure /server/.env file (or
+    environment variables) point to a running and accessible postgres
+    server database`),
+  init: "Failed to start Prostgles",
 };
 
 export * from "./appUtils";

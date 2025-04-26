@@ -5,7 +5,6 @@ import type {
 } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import { getKeys } from "prostgles-types";
-import { securityManager } from "..";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import { isDefined } from "../../../commonTypes/filterUtils";
 import {
@@ -17,6 +16,7 @@ import { getPasswordHash } from "../authConfig/authUtils";
 import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailSenderWithMockTest";
 import { getACRules } from "../ConnectionManager/ConnectionManager";
 import { getPublishLLM } from "./getPublishLLM";
+import { checkClientIP } from "../authConfig/sessionUtils";
 
 export const publish = async (
   params: PublishParams<DBGeneratedSchema>,
@@ -362,10 +362,13 @@ export const publish = async (
           // )
 
           if (row.allowed_ips_enabled) {
-            const { isAllowed, ip } = await securityManager.checkClientIP({
-              ...clientReq,
+            const { isAllowed, ip } = await checkClientIP(
               dbsTX,
-            });
+              {
+                ...clientReq,
+              },
+              await dbsTX.global_settings.findOne(),
+            );
             if (!isAllowed)
               throw `Cannot update to a rule that will block your current IP.  \n Must allow ${ip} within Allowed IPs`;
           }

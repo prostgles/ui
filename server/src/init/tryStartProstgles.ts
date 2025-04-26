@@ -92,9 +92,7 @@ const _tryStartProstgles = async ({
     attempt++;
 
     try {
-      console.log(
-        `Attempt ${attempt} to connect to state database ${con.db_host}...`,
-      );
+      console.log(`Attempt ${attempt} to connect to state database...`);
       const attemptResult = await startProstgles({
         app,
         io,

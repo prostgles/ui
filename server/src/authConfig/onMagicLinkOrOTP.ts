@@ -1,6 +1,6 @@
 import type { LoginSignupConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import { makeSession, type SUser } from "./getAuth";
+import { makeSession, type SUser } from "./sessionUtils";
 import type { AuthResponse } from "prostgles-types";
 import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
 import type { Users } from "..";

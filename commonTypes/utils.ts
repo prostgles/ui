@@ -343,6 +343,7 @@ export const ROUTES = {
   NEW_CONNECTION: "/new-connection",
   USERS: "/users",
   BACKUPS: "/prostgles_backups",
+  STORAGE: "/prostgles_storage",
 } as const;
 
 const testForDuplicateValues = <T extends AnyObject>(obj: T, name: string) => {
@@ -369,3 +370,22 @@ export const getProperty = <
 ): ValueOf<O> | undefined => {
   return o[k] as ValueOf<O> | undefined;
 };
+
+export function debouncePromise<Args extends any[], T>(
+  promiseFuncDef: (...args: Args) => Promise<T>,
+): (...args: Args) => Promise<T> {
+  let currentPromise: Promise<any> | undefined;
+
+  return function (...args: Args): Promise<T> {
+    // If there's no active promise, create a new one
+    if (!currentPromise) {
+      currentPromise = promiseFuncDef(...args).finally(() => {
+        currentPromise = undefined;
+      });
+      return currentPromise;
+    }
+
+    // Otherwise, wait for the current promise to finish, then run the new one
+    return currentPromise.then(() => promiseFuncDef(...args));
+  };
+}

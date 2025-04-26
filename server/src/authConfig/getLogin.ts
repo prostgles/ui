@@ -11,7 +11,7 @@ import { getPasswordHash } from "./authUtils";
 import { createSession } from "./createSession";
 import { getEmailSenderWithMockTest } from "./emailProvider/getEmailSenderWithMockTest";
 import { getRandomSixDigitCode } from "./emailProvider/onEmailRegistration";
-import type { SUser } from "./getAuth";
+import type { SUser } from "./sessionUtils";
 import { loginWithProvider } from "./OAuthProviders/loginWithProvider";
 import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
 
@@ -192,5 +192,5 @@ export const getLogin = async (
     return { session, response: { success: true } };
   };
 
-  return { login };
+  return login;
 };

@@ -1,20 +1,18 @@
 import type { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { type AuthResponse, isEmpty, pickKeys } from "prostgles-types";
-import { securityManager, tout } from "..";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import { HOUR } from "../../../commonTypes/utils";
+import { tout } from "..";
+import { authSetupData } from "./onAuthSetupDataChange";
+import type { DBSSchema } from "../../../commonTypes/publishUtils";
 
 const getGlobalSettings = async () => {
-  let gs = securityManager.global_setting;
-  do {
-    gs = securityManager.global_setting;
-    if (!gs) {
-      console.warn("Delaying user request until GlobalSettings area available");
-      await tout(500);
-    }
-  } while (!gs);
-  return gs;
+  while (!authSetupData?.globalSettings) {
+    console.warn("Delaying user request until GlobalSettings area available");
+    await tout(500);
+  }
+  return authSetupData.globalSettings;
 };
 
 type FailedAttemptsInfo =
@@ -37,34 +35,13 @@ export const getFailedTooManyTimes = async (
   db: DBOFullyTyped<DBGeneratedSchema>,
   clientInfo: LoginClientInfo,
 ): Promise<FailedAttemptsInfo | AuthResponse.AuthFailure> => {
-  const { ip_address } = clientInfo;
-  const globalSettings = await getGlobalSettings();
   const lastHour = new Date(Date.now() - 1 * HOUR).toISOString();
-  const {
-    login_rate_limit: { groupBy },
-    login_rate_limit_enabled,
-  } = globalSettings;
-  if (!login_rate_limit_enabled) {
-    return {
-      ip:
-        ip_address ||
-        clientInfo.ip_address_remote ||
-        clientInfo.x_real_ip ||
-        "",
-      failedTooManyTimes: false,
-      disabled: true,
-    };
-  }
-  const matchByFilterKey = (
-    {
-      ip: "ip_address",
-      "x-real-ip": "x_real_ip",
-      remote_ip: "ip_address_remote",
-    } as const
-  )[groupBy];
-
-  const ip = clientInfo[matchByFilterKey] ?? ip_address;
-  if (!clientInfo[matchByFilterKey]) {
+  const globalSettings = await getGlobalSettings();
+  const { ip, ipFromMatchByFilterKey, matchByFilterKey } = getIPsFromClientInfo(
+    clientInfo,
+    globalSettings,
+  );
+  if (!ipFromMatchByFilterKey) {
     return {
       success: false,
       code: "something-went-wrong",
@@ -193,4 +170,37 @@ export const startRateLimitedLoginAttempt = async (
       }
     },
   };
+};
+
+export const getIPsFromClientInfo = (
+  clientInfo: LoginClientInfo,
+  globalSettings: DBSSchema["global_settings"],
+) => {
+  const { ip_address } = clientInfo;
+  const {
+    login_rate_limit: { groupBy },
+    login_rate_limit_enabled,
+  } = globalSettings;
+  if (!login_rate_limit_enabled) {
+    return {
+      ip:
+        ip_address ||
+        clientInfo.ip_address_remote ||
+        clientInfo.x_real_ip ||
+        "",
+      failedTooManyTimes: false,
+      disabled: true,
+    };
+  }
+  const matchByFilterKey = (
+    {
+      ip: "ip_address",
+      "x-real-ip": "x_real_ip",
+      remote_ip: "ip_address_remote",
+    } as const
+  )[groupBy];
+
+  const ipFromMatchByFilterKey = clientInfo[matchByFilterKey];
+  const ip = ipFromMatchByFilterKey ?? ip_address;
+  return { ip, ipFromMatchByFilterKey, matchByFilterKey };
 };

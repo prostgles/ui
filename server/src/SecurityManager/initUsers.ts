@@ -4,7 +4,7 @@ import type { DBS, Users } from "..";
 import { PASSWORDLESS_ADMIN_USERNAME } from "../../../commonTypes/OAuthUtils";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { getElectronConfig } from "../electronConfig";
-import { makeSession } from "../authConfig/getAuth";
+import { makeSession } from "../authConfig/sessionUtils";
 import { YEAR } from "../../../commonTypes/utils";
 
 const EMPTY_PASSWORD = "";

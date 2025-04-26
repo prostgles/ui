@@ -8,7 +8,6 @@ import { Server } from "socket.io";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { addLog } from "../Logger";
-import { getAuth } from "../authConfig/getAuth";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc } from "../index";
 import type { ConnectionManager, User } from "./ConnectionManager";
@@ -18,6 +17,7 @@ import { alertIfReferencedFileColumnsRemoved } from "./connectionManagerUtils";
 import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionPublishMethods } from "./getConnectionPublishMethods";
 import { getConnectionPaths } from "../../../commonTypes/utils";
+import { setAuthReloader, withOrigin } from "../authConfig/getAuth";
 
 export const startConnection = async function (
   this: ConnectionManager,
@@ -99,15 +99,17 @@ export const startConnection = async function (
   }
 
   return new Promise(async (resolve, reject) => {
+    const global_settings = await dbs.global_settings.findOne();
+    if (!global_settings) {
+      throw new Error("global_settings not found");
+    }
     const _io = new Server(http, {
       path: socket_path,
       maxHttpBufferSize: 1e8,
-      cors: this.withOrigin,
+      cors: withOrigin,
     });
     try {
-      const global_settings = await dbs.global_settings.findOne();
       const hotReloadConfig = await getHotReloadConfigs(this, con, dbConf, dbs);
-      const auth = await getAuth(this.app, dbs);
       const watchSchema = con.db_watch_shema ? "*" : false;
       const getForkedProcRunner = async () => {
         if (!this.prglConnections[con.id]?.methodRunner) {
@@ -169,13 +171,6 @@ export const startConnection = async function (
       const prgl = await prostgles({
         dbConnection: connectionInfo,
         io: _io,
-        auth: {
-          sidKeyName: auth.sidKeyName,
-          getUser: (sid, __, _, cl) => auth.getUser(sid, dbs, _dbs, cl),
-          cacheSession: {
-            getSession: (sid) => auth.cacheSession.getSession(sid, dbs),
-          },
-        },
         ...hotReloadConfig,
         watchSchema,
         disableRealtime: con.disable_realtime ?? undefined,
@@ -208,6 +203,19 @@ export const startConnection = async function (
         },
         onReady: async (params) => {
           const { dbo: db, db: _db, reason, tables } = params;
+
+          setAuthReloader(this.app, dbs, (auth) => {
+            prgl.update({
+              auth: auth && {
+                sidKeyName: auth.sidKeyName,
+                getUser: (sid, __, _, cl, reqInfo) =>
+                  auth.getUser(sid, dbs, _dbs, cl, reqInfo),
+                cacheSession: {
+                  getSession: (sid) => auth.cacheSession.getSession(sid, dbs),
+                },
+              },
+            });
+          });
           if (this.prglConnections[con.id]) {
             if (this.prglConnections[con.id]!.prgl) {
               this.prglConnections[con.id]!.prgl!._db = _db;

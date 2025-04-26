@@ -22,7 +22,7 @@ import type { DB } from "prostgles-server/dist/Prostgles";
 import type { SubscriptionHandler } from "prostgles-types";
 import type { InstalledPrograms } from "../../../commonTypes/electronInit";
 import { ROUTES } from "../../../commonTypes/utils";
-import type { SUser } from "../authConfig/getAuth";
+import type { SUser } from "../authConfig/sessionUtils";
 import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
 import { getRootDir } from "../electronConfig";
 import { checkAutomaticBackup } from "./checkAutomaticBackup";
@@ -192,39 +192,39 @@ export default class BackupManager {
   ) => {
     if (userData?.user.type !== "admin") {
       res.sendStatus(401);
+      return;
+    }
+    const bkpId = req.path.slice(ROUTES.BACKUPS.length + 1);
+    if (!bkpId) {
+      res.sendStatus(404);
+      return;
+    }
+    const bkp = await this.dbs.backups.findOne({ id: bkpId });
+    if (!bkp) {
+      res.sendStatus(404);
     } else {
-      const bkpId = req.path.slice(ROUTES.BACKUPS.length + 1);
-      if (!bkpId) {
-        res.sendStatus(404);
-      } else {
-        const bkp = await this.dbs.backups.findOne({ id: bkpId });
-        if (!bkp) {
+      const { fileMgr } = await getFileMgr(this.dbs, bkp.credential_id);
+      if (bkp.credential_id) {
+        /* Allow access to file for a period equivalent to a download rate of 50KBps */
+        const presignedURL = await fileMgr.getFileCloudDownloadURL(
+          bkp.id,
+          +(bkp.sizeInBytes ?? 1e6) / 50,
+        );
+        if (!presignedURL) {
           res.sendStatus(404);
         } else {
-          const { fileMgr } = await getFileMgr(this.dbs, bkp.credential_id);
-          if (bkp.credential_id) {
-            /* Allow access to file for a period equivalent to a download rate of 50KBps */
-            const presignedURL = await fileMgr.getFileCloudDownloadURL(
-              bkp.id,
-              +(bkp.sizeInBytes ?? 1e6) / 50,
-            );
-            if (!presignedURL) {
-              res.sendStatus(404);
-            } else {
-              res.redirect(presignedURL);
-            }
-          } else {
-            try {
-              res.type(bkp.content_type);
-              res.sendFile(
-                path.resolve(
-                  path.join(getRootDir() + ROUTES.BACKUPS + "/" + bkp.id),
-                ),
-              );
-            } catch (err) {
-              res.sendStatus(404);
-            }
-          }
+          res.redirect(presignedURL);
+        }
+      } else {
+        try {
+          res.type(bkp.content_type);
+          res.sendFile(
+            path.resolve(
+              path.join(getRootDir() + ROUTES.BACKUPS + "/" + bkp.id),
+            ),
+          );
+        } catch (err) {
+          res.sendStatus(404);
         }
       }
     }

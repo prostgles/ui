@@ -2,9 +2,9 @@ import type { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
 import { type AuthResponse } from "prostgles-types";
 import { YEAR } from "../../../commonTypes/utils";
 import type { DBS } from "../index";
-import { securityManager } from "../index";
-import type { Sessions } from "./getAuth";
+import type { Sessions } from "./sessionUtils";
 import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
+import { authSetupData } from "./onAuthSetupDataChange";
 
 type AuthType =
   | {
@@ -16,6 +16,7 @@ type AuthType =
       type: "login-success";
       filter: { user_id: string; type: "web"; user_agent: string };
     };
+
 export const getActiveSessionFilter = (
   filter: AuthType["filter"] | { user_id: string },
 ) => ({
@@ -23,11 +24,13 @@ export const getActiveSessionFilter = (
   "expires.>": Date.now(),
   active: true,
 });
+
 export const getActiveSession = async (
   db: DBS,
   authType: AuthType,
 ): Promise<{
   validSession: Sessions | undefined;
+  expiredSession: Sessions | undefined;
   failedTooManyTimes: boolean;
   error?: AuthResponse.AuthFailure;
 }> => {
@@ -35,6 +38,7 @@ export const getActiveSession = async (
     return {
       validSession: undefined,
       failedTooManyTimes: false,
+      expiredSession: undefined,
       error: {
         success: false,
         code: "server-error",
@@ -46,27 +50,10 @@ export const getActiveSession = async (
     getActiveSessionFilter(authType.filter),
   );
 
-  /**
-   * Always maintain a valid session for passwordless admin
-   */
-  const passwordlessAdmin = securityManager.passwordlessAdmin;
-  if (passwordlessAdmin && !validSession) {
-    const anyPasswordlessSession = await db.sessions.findOne({
-      user_id: passwordlessAdmin.id,
-    });
-    if (anyPasswordlessSession) {
-      const renewedSession = await db.sessions.update(
-        { id: anyPasswordlessSession.id },
-        { active: true, expires: Date.now() + 1 * YEAR },
-        { returning: "*", multi: false },
-      );
-      return { validSession: renewedSession, failedTooManyTimes: false };
-    }
-  }
-
   let failedTooManyTimes = false;
-  if (!passwordlessAdmin && authType.type === "session-id" && !validSession) {
-    const expiredSession = await db.sessions.findOne({ ...authType.filter });
+  let expiredSession: Sessions | undefined;
+  if (authType.type === "session-id" && !validSession) {
+    expiredSession = await db.sessions.findOne({ ...authType.filter });
     if (!expiredSession) {
       const { ip_address, ip_address_remote, user_agent, x_real_ip } =
         authType.client;
@@ -79,6 +66,7 @@ export const getActiveSession = async (
         return {
           validSession: undefined,
           failedTooManyTimes: true,
+          expiredSession,
           error: failedInfo,
         };
       }
@@ -86,5 +74,5 @@ export const getActiveSession = async (
     }
   }
 
-  return { validSession, failedTooManyTimes };
+  return { validSession, failedTooManyTimes, expiredSession };
 };

@@ -7,13 +7,13 @@ import type { DB } from "prostgles-server/dist/Prostgles";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { Server } from "socket.io";
 import type { DBS } from "..";
-import { connMgr, securityManager } from "..";
+import { connMgr } from "..";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
+import type { ProstglesInitState } from "../../../commonTypes/electronInit";
 import BackupManager from "../BackupManager/BackupManager";
 import { addLog, setLoggerDBS } from "../Logger";
 import { setupMCPServerHub } from "../McpHub/McpHub";
-import { getAuth } from "../authConfig/getAuth";
-import { setAuthReloader } from "../authConfig/setAuthReloader";
+import { setAuthReloader } from "../authConfig/getAuth";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { actualRootDir, getElectronConfig } from "../electronConfig";
@@ -25,7 +25,7 @@ import { publishMethods } from "../publishMethods/publishMethods";
 import { startDevHotReloadNotifier } from "../startDevHotReloadNotifier";
 import { tableConfig } from "../tableConfig/tableConfig";
 import { getProstglesState } from "./tryStartProstgles";
-import type { ProstglesInitState } from "../../../commonTypes/electronInit";
+import { initUsers } from "../SecurityManager/initUsers";
 
 type StartArguments = {
   app: Express;
@@ -108,7 +108,6 @@ export const startProstgles = async ({
         undefined
       : path.join(actualRootDir + "/../commonTypes/");
     const watchSchema = !!tsGeneratedTypesDir;
-    const auth = await getAuth(app, undefined);
 
     const prgl = await prostgles<DBGeneratedSchema>({
       dbConnection: {
@@ -126,28 +125,28 @@ export const startProstgles = async ({
         const userId = user.user?.id;
         const sid = user.sid;
 
-        await securityManager.onSocketConnected({
-          sid,
-        });
+        // await securityManager.onSocketConnected({
+        //   sid,
+        // });
 
-        if (sid) {
-          const s = await dbo.sessions.findOne({ id: sid });
-          if (!s) {
-            /** Can happen to deleted sessions */
-            // console.log("onSocketConnect session missing ?!");
-          } else if (Date.now() > +new Date(+s.expires)) {
-            console.log("onSocketConnect session expired ?!", s.id, Date.now());
-          } else {
-            await dbo.sessions.update(
-              { id: sid },
-              {
-                last_used: new Date(),
-                is_connected: true,
-                socket_id: socket.id,
-              },
-            );
-          }
-        }
+        // if (sid) {
+        //   const s = await dbo.sessions.findOne({ id: sid });
+        //   if (!s) {
+        //     /** Can happen to deleted sessions */
+        //     // console.log("onSocketConnect session missing ?!");
+        //   } else if (Date.now() > +new Date(+s.expires)) {
+        //     console.log("onSocketConnect session expired ?!", s.id, Date.now());
+        //   } else {
+        //     await dbo.sessions.update(
+        //       { id: sid },
+        //       {
+        //         last_used: new Date(),
+        //         is_connected: true,
+        //         socket_id: socket.id,
+        //       },
+        //     );
+        //   }
+        // }
 
         if (userId) {
           /** Delete:
@@ -219,7 +218,6 @@ export const startProstgles = async ({
         const { user } = params;
         return Boolean(user && user.type === "admin");
       },
-      auth: auth as any,
       publishMethods,
       publish: (params) => publish(params) as any,
       joins: "inferred",
@@ -230,8 +228,9 @@ export const startProstgles = async ({
         setLoggerDBS(params.dbo);
 
         /* Update stale data */
-        await securityManager.destroy();
-        await securityManager.init(db, _db);
+        // await securityManager.destroy();
+        // await securityManager.init(db, _db);
+        await initUsers(db, _db);
 
         await insertStateDatabase(db, _db, con, getProstglesState().isElectron);
         await setupLLM(db);
@@ -243,7 +242,7 @@ export const startProstgles = async ({
         await bkpManager?.destroy();
         bkpManager ??= await BackupManager.create(_db, db, connMgr);
 
-        setAuthReloader(app, db, prgl);
+        setAuthReloader(app, db, (auth) => prgl.update({ auth: auth as any }));
       },
     });
 

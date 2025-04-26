@@ -15,12 +15,16 @@ import { pickKeys } from "prostgles-types";
 import type { DefaultEventsMap, Server } from "socket.io";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import { API_ENDPOINTS, getConnectionPaths } from "../../../commonTypes/utils";
-import type { SecurityManager } from "../SecurityManager/SecurityManager";
+import {
+  API_ENDPOINTS,
+  ROUTES,
+  getConnectionPaths,
+} from "../../../commonTypes/utils";
+import type { AuthSetupData } from "../authConfig/onAuthSetupDataChange";
 import { getDbConnection } from "../connectionUtils/testDBConnection";
 import { getRootDir } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
-import { MEDIA_ROUTE_PREFIX, connMgr } from "../index";
+import { connMgr } from "../index";
 import { UNIQUE_DB_COLS } from "../tableConfig/tableConfig";
 import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
 import {
@@ -102,18 +106,13 @@ export class ConnectionManager {
   db?: DB;
   connections?: Connections[];
   database_configs?: DatabaseConfigs[];
-  securityManager: SecurityManager;
+  authSetupData: AuthSetupData | undefined;
 
-  constructor(http: any, app: Express, securityManager: SecurityManager) {
+  constructor(http: any, app: Express) {
     this.http = http;
     this.app = app;
-    this.securityManager = securityManager;
 
     this.setUpWSS();
-  }
-
-  get withOrigin() {
-    return this.securityManager.withOrigin;
   }
 
   destroy = async () => {
@@ -481,7 +480,7 @@ export class ConnectionManager {
   }
 
   async getFileFolderPath(conId?: string) {
-    const rootPath = path.resolve(`${getRootDir()}/${MEDIA_ROUTE_PREFIX}`);
+    const rootPath = path.resolve(`${getRootDir()}${ROUTES.STORAGE}`);
     if (!conId) return rootPath;
     const conn = await this.connections?.find((c) => c.id === conId);
     if (!conn) throw "Connection not found";

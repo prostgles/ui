@@ -3,6 +3,7 @@
 node_modules
 **/prostgles_backups
 **/prostgles_media
+**/prostgles_storage
 **/prostgles_mcp
 e2e
 .github

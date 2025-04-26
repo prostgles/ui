@@ -6,7 +6,7 @@ import path from "path";
 import type { PublishMethods } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBS } from "../index";
-import { securityManager, connMgr } from "../index";
+import { connMgr } from "../index";
 
 export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
@@ -21,7 +21,7 @@ import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { isObject } from "../../../commonTypes/publishUtils";
 import type { SampleSchema } from "../../../commonTypes/utils";
 import { getPasswordHash } from "../authConfig/authUtils";
-import { createSessionSecret } from "../authConfig/getAuth";
+import { checkClientIP, createSessionSecret } from "../authConfig/sessionUtils";
 import type { Backups } from "../BackupManager/BackupManager";
 import { getInstalledPrograms } from "../BackupManager/getInstalledPrograms";
 import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
@@ -132,9 +132,13 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
         dbSchema,
       };
     },
-    getMyIP: () => {
+    getMyIP: async () => {
       if (!socket) throw "Socket missing";
-      return securityManager.checkClientIP({ socket });
+      return checkClientIP(
+        dbs,
+        { socket },
+        await dbs.global_settings.findOne(),
+      );
     },
     getConnectedIds: async (): Promise<string[]> => {
       return Object.keys(connMgr.getConnections());

@@ -22,12 +22,12 @@ import {
   startingProstglesResult,
   tryStartProstgles,
 } from "./init/tryStartProstgles";
-import { SecurityManager } from "./SecurityManager/SecurityManager";
 import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import type {
   InitExtra,
   ProstglesInitStateWithDBS,
 } from "./init/startProstgles";
+import { withOrigin } from "./authConfig/getAuth";
 
 const app = express();
 app.use(
@@ -128,16 +128,21 @@ app.use(
 
 app.use(cookieParser());
 
-export const MEDIA_ROUTE_PREFIX = `/prostgles_media`;
+app.use((req, res, next) => {
+  console.log(
+    `${new Date().toISOString()} ${req.method} ${res.statusCode} ${req.url}`,
+    req.headers["x-real-ip"] || req.ip,
+  );
+  next();
+});
 
-export const securityManager = SecurityManager.create(app);
 const io = new Server(http, {
   path: API_ENDPOINTS.WS_DBS,
   maxHttpBufferSize: 100e100,
-  cors: securityManager.withOrigin,
+  cors: withOrigin,
 });
 
-export const connMgr = new ConnectionManager(http, app, securityManager);
+export const connMgr = new ConnectionManager(http, app);
 
 const electronConfig = getElectronConfig();
 const PORT =
@@ -214,11 +219,11 @@ app.get("/dbs", (req, res) => {
   }
   /** Alert admin if x-real-ip is spoofable */
   let xRealIpSpoofable = false;
-  const { global_setting } = connMgr.securityManager;
+  const { globalSettings } = connMgr.authSetupData ?? {};
   if (
     req.headers["x-real-ip"] === SPOOF_TEST_VALUE &&
-    global_setting?.login_rate_limit_enabled &&
-    global_setting.login_rate_limit.groupBy === "x-real-ip"
+    globalSettings?.login_rate_limit_enabled &&
+    globalSettings.login_rate_limit.groupBy === "x-real-ip"
   ) {
     xRealIpSpoofable = true;
   }

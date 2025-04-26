@@ -6,7 +6,7 @@ import type {
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
 import { createSession } from "../createSession";
-import type { SUser } from "../getAuth";
+import type { SUser } from "../sessionUtils";
 import { startRateLimitedLoginAttempt } from "../startRateLimitedLoginAttempt";
 
 type LoginReturnType = ReturnType<

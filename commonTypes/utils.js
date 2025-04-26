@@ -146,6 +146,7 @@ export const ROUTES = {
     NEW_CONNECTION: "/new-connection",
     USERS: "/users",
     BACKUPS: "/prostgles_backups",
+    STORAGE: "/prostgles_storage",
 };
 const testForDuplicateValues = (obj, name) => {
     if (new Set(Object.values(obj)).size !== Object.keys(obj).length) {
@@ -159,3 +160,17 @@ export const FORKED_PROC_ENV_NAME = "IS_FORKED_PROC";
 export const getProperty = (o, k) => {
     return o[k];
 };
+export function debouncePromise(promiseFuncDef) {
+    let currentPromise;
+    return function (...args) {
+        // If there's no active promise, create a new one
+        if (!currentPromise) {
+            currentPromise = promiseFuncDef(...args).finally(() => {
+                currentPromise = undefined;
+            });
+            return currentPromise;
+        }
+        // Otherwise, wait for the current promise to finish, then run the new one
+        return currentPromise.then(() => promiseFuncDef(...args));
+    };
+}

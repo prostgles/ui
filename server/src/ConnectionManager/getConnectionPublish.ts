@@ -7,7 +7,7 @@ import type {
 import { parseTableRules } from "../../../commonTypes/publishUtils";
 import { getACRule } from "./startConnection";
 import type { Publish } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
-import type { SUser } from "../authConfig/getAuth";
+import type { SUser } from "../authConfig/sessionUtils";
 import type { DBS } from "..";
 
 type Args = {

@@ -28,13 +28,13 @@
     "express": "^4.21.2",
     "helmet": "^7.1.0",
     "otplib": "^12.0.1",
-    "prostgles-server": "^4.2.267",
+    "prostgles-server": "^4.2.272",
     "prostgles-types": "^4.0.89",
     "qrcode": "^1.5.1",
     "simple-git": "^3.27.0",
     "smtp-server": "^3.13.6",
     "socket.io": "^4.7.5",
-    "typescript": "^5.4.5",
+    "typescript": "^5.8.3",
     "ws": "^8.17.1"
   },
   "devDependencies": {

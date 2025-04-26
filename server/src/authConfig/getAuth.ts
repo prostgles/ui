@@ -1,170 +1,101 @@
-import * as crypto from "crypto";
+import cors from "cors";
+import type e from "express";
 import type { Express } from "express";
 import path from "path";
-import type {
-  AuthConfig,
-  BasicSession,
-} from "prostgles-server/dist/Auth/AuthTypes";
-import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
+import { upsertNamedExpressMiddleware } from "prostgles-server/dist/Auth/utils/upsertNamedExpressMiddleware";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import { omitKeys } from "prostgles-types";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { API_ENDPOINTS, ROUTES } from "../../../commonTypes/utils";
 import { actualRootDir } from "../electronConfig";
-import { PROSTGLES_STRICT_COOKIE } from "../envVars";
-import type { DBS, Users } from "../index";
-import { MEDIA_ROUTE_PREFIX, securityManager } from "../index";
+import type { DBS } from "../index";
 import { initBackupManager } from "../init/startProstgles";
 import { getEmailAuthProvider } from "./emailProvider/getEmailAuthProvider";
-import { getActiveSession } from "./getActiveSession";
 import { getLogin } from "./getLogin";
+import { getGetUser } from "./getUser";
 import { getOAuthLoginProviders } from "./OAuthProviders/getOAuthLoginProviders";
+import {
+  onAuthSetupDataChange,
+  type AuthSetupData,
+} from "./onAuthSetupDataChange";
 import { onMagicLinkOrOTP } from "./onMagicLinkOrOTP";
+import { getOnUseOrSocketConnected } from "./onUseOrSocketConnected";
+import {
+  authCookieOpts,
+  parseAsBasicSession,
+  sidKeyName,
+  type SUser,
+} from "./sessionUtils";
 
-const authCookieOpts =
-  process.env.PROSTGLES_STRICT_COOKIE || PROSTGLES_STRICT_COOKIE ?
-    {}
-  : {
-      secure: false,
-      sameSite: "lax", //  "none"
-    };
+let authSetupData: AuthSetupData | undefined;
 
-export type Sessions = DBSSchema["sessions"];
-export const parseAsBasicSession = (s: Sessions): BasicSession => {
-  // TODO send sid and set id as hash of sid
-  return {
-    ...s,
-    sid: s.id,
-    expires: +s.expires,
-    onExpiration: s.type === "api_token" ? "show_error" : "redirect",
-  };
-};
-
-export const createSessionSecret = () => {
-  return crypto.randomBytes(48).toString("hex");
-};
-
-export const makeSession = async (
-  user: Users | undefined,
-  client: Pick<Sessions, "user_agent" | "ip_address" | "type"> & {
-    sid?: string;
+export const withOrigin: WithOrigin = {
+  origin: (origin, cb) => {
+    cb(null, authSetupData?.globalSettings?.allowed_origin ?? undefined);
   },
-  dbo: DBOFullyTyped<DBGeneratedSchema>,
-  expires = 0,
-): Promise<BasicSession> => {
-  if (user) {
-    const session = await dbo.sessions.insert(
-      {
-        id: client.sid ?? createSessionSecret(),
-        user_id: user.id,
-        user_type: user.type,
-        expires,
-        type: client.type,
-        ip_address: client.ip_address,
-        user_agent: client.user_agent,
-      },
-      { returning: "*" },
-    );
-
-    return parseAsBasicSession(session);
-  } else {
-    throw "Invalid user";
-  }
 };
 
-export type AuthProviders = DBSSchema["global_settings"]["auth_providers"];
-
-export type SUser = {
-  sid: string;
-  user: Users;
-  clientUser: {
-    sid: string;
-    uid: string;
-    state_db_id?: string;
-    has_2fa: boolean;
-  } & Omit<Users, "password" | "2fa">;
-  isAnonymous: boolean;
+export const setAuthReloader = async (
+  app: e.Express,
+  dbs: DBS,
+  onChange: (auth: Awaited<ReturnType<typeof getAuth>>) => void,
+) => {
+  await onAuthSetupDataChange(dbs, async (context) => {
+    authSetupData = context;
+    const auth = await getAuth(app, dbs, context);
+    onChange(auth);
+  });
 };
-export const sidKeyName = "sid_token" as const;
 
-export const getAuth = async (app: Express, dbs: DBS | undefined) => {
-  const { auth_providers } = (await dbs?.global_settings.findOne()) || {};
+type WithOrigin = {
+  origin?: (
+    requestOrigin: string | undefined,
+    callback: (err: Error | null, origin?: string) => void,
+  ) => void;
+};
 
-  const { login } = await getLogin(auth_providers);
+const setExpressAppOptions = (
+  app: e.Express,
+  { globalSettings }: Pick<AuthSetupData, "globalSettings">,
+) => {
+  const withOrigin: WithOrigin = {
+    origin: (origin, cb) => {
+      cb(null, globalSettings?.allowed_origin ?? undefined);
+    },
+  };
+
+  const corsMiddleware = cors(withOrigin);
+  upsertNamedExpressMiddleware(app, corsMiddleware, "corsMiddleware");
+  app.set("trust proxy", globalSettings?.trust_proxy ?? false);
+};
+
+export type GetAuthResult = Awaited<ReturnType<typeof getAuth>>;
+
+const getAuth = async (
+  app: Express,
+  dbs: DBS,
+  authSetupData: AuthSetupData,
+) => {
+  const { globalSettings } = authSetupData;
+  setExpressAppOptions(app, { globalSettings });
+  const authProviders = globalSettings?.auth_providers;
   const auth = {
     sidKeyName,
-    getUser: async (sid, db, _db: DB, client) => {
-      if (!sid) return undefined;
-
-      const { validSession, failedTooManyTimes, error } =
-        await getActiveSession(db, {
-          type: "session-id",
-          client,
-          filter: { id: sid },
-        });
-      if (error) return error;
-      if (failedTooManyTimes) return "rate-limit-exceeded";
-      if (!validSession) {
-        const expiredSession = await db.sessions.findOne({ id: sid });
-        if (expiredSession) {
-          const user = await db.users.findOne({ id: expiredSession.user_id });
-          if (user?.status === "active") {
-            return {
-              preferredLogin:
-                user.registration?.type === "OAuth" ? user.registration.provider
-                : user.registration ? "email"
-                : user.password ? "email+password"
-                : undefined,
-            };
-          }
-        }
-        return undefined;
-      }
-
-      const user = await db.users.findOne({ id: validSession.user_id });
-      if (!user) return undefined;
-
-      const state_db = await db.connections.findOne({ is_state_db: true });
-      if (!state_db) {
-        return {
-          success: false,
-          code: "server-error",
-          message: "Internal error: Statedb missing ",
-        };
-      }
-
-      const suser: SUser = {
-        sid: validSession.id,
-        user,
-        isAnonymous: user.type === "public",
-        clientUser: {
-          sid: validSession.id,
-          uid: user.id,
-
-          /** For security reasons provide state_db_id only to admin users */
-          state_db_id: user.type === "admin" ? state_db.id : undefined,
-
-          has_2fa: !!user["2fa"]?.enabled,
-          ...omitKeys(user, ["password", "2fa"]),
-        },
-      };
-
-      return suser;
-    },
-
+    onUseOrSocketConnected: getOnUseOrSocketConnected(dbs, authSetupData),
+    getUser: getGetUser(authSetupData, dbs),
     cacheSession: {
       getSession: async (sid, db) => {
+        if (!sid) return undefined;
         const s = await db.sessions.findOne({ id: sid });
-        if (s) return parseAsBasicSession(s);
-        return undefined as any;
+        if (!s) return undefined;
+        return parseAsBasicSession(s);
       },
     },
 
     loginSignupConfig: {
       app,
 
-      login,
+      login: await getLogin(authProviders),
 
       logout: async (sid, db, _db: DB) => {
         if (!sid) throw "err";
@@ -179,7 +110,7 @@ export const getAuth = async (app: Express, dbs: DBS | undefined) => {
         await db.sessions.update({ id: sid }, { active: false });
         /** Keep last 20 sessions */
       },
-      use: securityManager.onUse,
+      // use: securityManager.onUse,
       publicRoutes: ["/manifest.json", "/favicon.ico", API_ENDPOINTS.WS_DB],
       onGetRequestOK: async (req, res, { getUser, db, dbo: dbs }) => {
         if (req.path.startsWith(ROUTES.BACKUPS)) {
@@ -191,7 +122,7 @@ export const getAuth = async (app: Express, dbs: DBS | undefined) => {
             !userData.user ? undefined : userData,
             req,
           );
-        } else if (req.path.startsWith(MEDIA_ROUTE_PREFIX)) {
+        } else if (req.path.startsWith(ROUTES.STORAGE)) {
           req.next?.();
 
           /* Must be socket io reconnecting */
@@ -207,13 +138,13 @@ export const getAuth = async (app: Express, dbs: DBS | undefined) => {
       onMagicLinkOrOTP,
       localLoginMode:
         (
-          auth_providers?.email?.signupType === "withMagicLink" &&
-          auth_providers.email.enabled
+          authProviders?.email?.signupType === "withMagicLink" &&
+          authProviders.email.enabled
         ) ?
           "email"
         : "email+password",
-      signupWithEmail: await getEmailAuthProvider(auth_providers, dbs),
-      loginWithOAuth: getOAuthLoginProviders(auth_providers),
+      signupWithEmail: await getEmailAuthProvider(authProviders, dbs),
+      loginWithOAuth: getOAuthLoginProviders(authProviders),
     },
   } satisfies AuthConfig<DBGeneratedSchema, SUser>;
   return auth;
