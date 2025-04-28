@@ -3,8 +3,8 @@ import path from "path";
 import { pgp } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import { getRootDir } from "./electronConfig";
-// import { faker } from "@faker-js/faker";
-const { faker } = require("@faker-js/faker");
+import { faker } from "@faker-js/faker";
+// const { faker } = require("@faker-js/faker");
 
 const SAMPLE_DB_NAMES = [
   "cleaning",
@@ -30,7 +30,7 @@ export const demoDataSetup = async (_db: DB, dbName: string) => {
   if (!SAMPLE_DB_NAMES.includes(dbName)) {
     throw (
       "Invalid db name. Expecting one of: " +
-      SAMPLE_DB_NAMES +
+      SAMPLE_DB_NAMES.join(", ") +
       " \n But got: " +
       dbName
     );

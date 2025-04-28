@@ -19,13 +19,14 @@ import type { Request, Response } from "express";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { bytesToSize } from "prostgles-server/dist/FileManager/FileManager";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import type { SubscriptionHandler } from "prostgles-types";
+import type { FilterItem, SubscriptionHandler } from "prostgles-types";
 import type { InstalledPrograms } from "../../../commonTypes/electronInit";
 import { ROUTES } from "../../../commonTypes/utils";
 import type { SUser } from "../authConfig/sessionUtils";
 import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";
 import { getRootDir } from "../electronConfig";
 import { checkAutomaticBackup } from "./checkAutomaticBackup";
+import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 
 export const HOUR = 3600 * 1000;
 
@@ -56,20 +57,20 @@ export default class BackupManager {
         $existsJoined: {
           database_configs: { "backups_config->>enabled": "true" },
         },
-      } as any);
+      } as FilterItem);
       for (const con of connections) {
         await this.checkAutomaticBackup(con);
       }
     };
-    this.automaticBackupInterval = setInterval(checkAutomaticBkps, HOUR / 4);
-    (async () => {
+    this.automaticBackupInterval = setInterval(() => {
+      void checkAutomaticBkps();
+    }, HOUR / 4);
+    void (async () => {
       await this.dbConfSub?.unsubscribe();
       this.dbConfSub = await dbs.database_configs.subscribe(
         {},
         { select: "", limit: 0 },
-        () => {
-          checkAutomaticBkps();
-        },
+        checkAutomaticBkps,
       );
     })();
   }
@@ -113,7 +114,7 @@ export default class BackupManager {
     const db = await this.connMgr.getNewConnectionDb(conId, {
       allowExitOnIdle: true,
     });
-    const { size: result } = await db.oneOrNone(
+    const { size: result } = await db.one<{ size: number }>(
       "SELECT pg_database_size(current_database()) as size  ",
     );
     await db.$pool.end();
@@ -160,7 +161,7 @@ export default class BackupManager {
       chunkSum += chunk.length;
       if (Date.now() - lastChunk > 1000) {
         lastChunk = Date.now();
-        this.dbs.backups.update(
+        void this.dbs.backups.update(
           { id: bkp.id },
           {
             restore_status: { loading: { total: sizeBytes, loaded: chunkSum } },
@@ -286,7 +287,7 @@ export default class BackupManager {
       /* If not updated in last 5 minutes then consider it dead */
       // last_updated: { ">": new Date(Date.now() - HOUR/12)  }
       $filter: [{ $ageNow: ["last_updated"] }, "<", "2 seconds"],
-    } as any);
+    } as Filter);
 
   checkAutomaticBackup = checkAutomaticBackup.bind(this);
 }

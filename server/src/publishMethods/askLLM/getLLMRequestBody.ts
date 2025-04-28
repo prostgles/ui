@@ -135,7 +135,7 @@ export const getLLMRequestBody = ({
                       })
                       .find(isDefined);
                 const funcName = arr[i - 1]?.content
-                  ?.map((c) =>
+                  .map((c) =>
                     c.type === "tool_use" && c.name ? c.name : undefined,
                   )
                   .find(isDefined);
@@ -144,7 +144,10 @@ export const getLLMRequestBody = ({
                     name: funcName,
                     response: {
                       name: funcName,
-                      content: JSON.parse(resultText ?? "{}"),
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                      content: JSON.parse(
+                        (resultText as string | undefined) ?? "{}",
+                      ),
                     },
                   },
                 };

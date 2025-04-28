@@ -13,9 +13,7 @@ const loadSampleSchema = async (
   sampleSchemaName: string,
   connId: string,
 ) => {
-  const schema = (await getSampleSchemas()).find(
-    (s) => s.name === sampleSchemaName,
-  );
+  const schema = getSampleSchemas().find((s) => s.name === sampleSchemaName);
   if (!schema) {
     throw "Sample schema not found: " + sampleSchemaName;
   }

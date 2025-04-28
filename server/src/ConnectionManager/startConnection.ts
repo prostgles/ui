@@ -7,7 +7,10 @@ import { pickKeys } from "prostgles-types";
 import { Server } from "socket.io";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import { getConnectionPaths } from "../../../commonTypes/utils";
 import { addLog } from "../Logger";
+import { getAuth, withOrigin } from "../authConfig/getAuth";
+import { subscribeToAuthSetupChanges } from "../authConfig/subscribeToAuthSetupChanges";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { log, restartProc } from "../index";
 import type { ConnectionManager, User } from "./ConnectionManager";
@@ -16,8 +19,6 @@ import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
 import { alertIfReferencedFileColumnsRemoved } from "./connectionManagerUtils";
 import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionPublishMethods } from "./getConnectionPublishMethods";
-import { getConnectionPaths } from "../../../commonTypes/utils";
-import { setAuthReloader, withOrigin } from "../authConfig/getAuth";
 
 export const startConnection = async function (
   this: ConnectionManager,
@@ -31,13 +32,13 @@ export const startConnection = async function (
 
   if (this.prglConnections[con_id]) {
     if (restartIfExists) {
-      await this.prglConnections[con_id]?.prgl?.destroy();
+      await this.prglConnections[con_id].prgl?.destroy();
       delete this.prglConnections[con_id];
     } else {
-      if (this.prglConnections[con_id]?.error) {
-        throw this.prglConnections[con_id]?.error;
+      if (this.prglConnections[con_id].error) {
+        throw this.prglConnections[con_id].error;
       }
-      return this.prglConnections[con_id]?.socket_path;
+      return this.prglConnections[con_id].socket_path;
     }
   }
 
@@ -71,7 +72,7 @@ export const startConnection = async function (
 
         if (prglInstance.prgl) {
           log("destroying prgl", Object.keys(prglInstance));
-          prglInstance.prgl.destroy();
+          await prglInstance.prgl.destroy();
         }
       } else {
         log("reusing prgl", Object.keys(prglInstance));
@@ -92,13 +93,15 @@ export const startConnection = async function (
       tableConfigRunner: undefined,
       lastRestart: 0,
       isSuperUser: undefined,
+      authSetupDataListener: undefined,
     };
   } catch (e) {
     console.error(e);
     throw e;
   }
 
-  return new Promise(async (resolve, reject) => {
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  return new Promise<string>(async (resolve, reject) => {
     const global_settings = await dbs.global_settings.findOne();
     if (!global_settings) {
       throw new Error("global_settings not found");
@@ -108,6 +111,7 @@ export const startConnection = async function (
       maxHttpBufferSize: 1e8,
       cors: withOrigin,
     });
+
     try {
       const hotReloadConfig = await getHotReloadConfigs(this, con, dbConf, dbs);
       const watchSchema = con.db_watch_shema ? "*" : false;
@@ -117,8 +121,7 @@ export const startConnection = async function (
             type: "run",
             dbConfId: dbConf.id,
             pass_process_env_vars_to_server_side_functions:
-              global_settings?.pass_process_env_vars_to_server_side_functions ??
-              false,
+              global_settings.pass_process_env_vars_to_server_side_functions,
             dbs,
             prglInitOpts: {
               dbConnection: {
@@ -139,14 +142,14 @@ export const startConnection = async function (
         dbConf.table_config_ts,
         dbConf.table_config_ts_disabled,
       ).catch((e) => {
-        dbs.alerts.insert({
+        void dbs.alerts.insert({
           severity: "error",
           message: "Table config was disabled due to error",
           database_config_id: dbConf.id,
           connection_id: con.id,
           section: "table_config",
         });
-        dbs.database_configs.update(
+        void dbs.database_configs.update(
           { id: dbConf.id },
           { table_config_ts_disabled: true },
         );
@@ -156,7 +159,7 @@ export const startConnection = async function (
         con.on_mount_ts,
         con.on_mount_ts_disabled,
       ).catch((e) => {
-        dbs.alerts.insert({
+        void dbs.alerts.insert({
           severity: "error",
           message:
             "On mount was disabled due to error" +
@@ -165,7 +168,10 @@ export const startConnection = async function (
           connection_id: con.id,
           section: "methods",
         });
-        dbs.connections.update({ id: con.id }, { on_mount_ts_disabled: true });
+        void dbs.connections.update(
+          { id: con.id },
+          { on_mount_ts_disabled: true },
+        );
       });
 
       const prgl = await prostgles({
@@ -176,7 +182,7 @@ export const startConnection = async function (
         disableRealtime: con.disable_realtime ?? undefined,
         transactions: true,
         joins: "inferred",
-        publish: getConnectionPublish({ dbs, dbConf, connectionId: con.id }),
+        publish: getConnectionPublish({ dbs, dbConf, connection: con }),
         publishMethods: getConnectionPublishMethods({
           dbConf,
           dbs,
@@ -198,24 +204,31 @@ export const startConnection = async function (
           }
           return false;
         },
-        onLog: async (e) => {
+        onLog: (e) => {
           addLog(e, con_id);
         },
-        onReady: async (params) => {
+        onReady: (params) => {
           const { dbo: db, db: _db, reason, tables } = params;
 
-          setAuthReloader(this.app, dbs, (auth) => {
-            prgl.update({
-              auth: auth && {
-                sidKeyName: auth.sidKeyName,
-                getUser: (sid, __, _, cl, reqInfo) =>
-                  auth.getUser(sid, dbs, _dbs, cl, reqInfo),
-                cacheSession: {
-                  getSession: (sid) => auth.cacheSession.getSession(sid, dbs),
+          const newAuthSetupDataListener = subscribeToAuthSetupChanges(
+            dbs,
+            async (authData) => {
+              const auth = await getAuth(this.app, dbs, authData);
+              void prgl.update({
+                auth: {
+                  sidKeyName: auth.sidKeyName,
+                  getUser: (sid, __, _, cl, reqInfo) =>
+                    auth.getUser(sid, dbs, _dbs, cl, reqInfo),
+                  cacheSession: {
+                    getSession: (sid) => auth.cacheSession.getSession(sid, dbs),
+                  },
                 },
-              },
-            });
-          });
+              });
+            },
+            this.prglConnections[con.id]?.authSetupDataListener,
+          );
+          this.prglConnections[con.id]!.authSetupDataListener =
+            newAuthSetupDataListener;
           if (this.prglConnections[con.id]) {
             if (this.prglConnections[con.id]!.prgl) {
               this.prglConnections[con.id]!.prgl!._db = _db;
@@ -227,7 +240,7 @@ export const startConnection = async function (
             this.onConnectionReload(con.id, dbConf.id);
           }
 
-          alertIfReferencedFileColumnsRemoved.bind(this)({
+          void alertIfReferencedFileColumnsRemoved.bind(this)({
             reason,
             tables,
             connId: con.id,
@@ -244,15 +257,15 @@ export const startConnection = async function (
             });
             sameDbs.forEach(({ id }) => {
               if (this.prglConnections[id]) {
-                this.prglConnections[id]!.isReady = false;
-                this.prglConnections[id]?.prgl?.restart();
+                this.prglConnections[id].isReady = false;
+                void this.prglConnections[id].prgl?.restart();
               }
             });
           };
           //@ts-ignore
           const isNotRecursive = reason.type !== "prgl.restart";
           if (this.prglConnections[con.id]?.isReady && isNotRecursive) {
-            refreshSamedatabaseForOtherUsers();
+            void refreshSamedatabaseForOtherUsers();
           }
 
           resolve(socket_path);
@@ -275,8 +288,10 @@ export const startConnection = async function (
         tableConfigRunner: this.prglConnections[con.id]?.tableConfigRunner,
         isSuperUser: await getIsSuperUser(prgl._db),
         lastRestart: Date.now(),
+        authSetupDataListener:
+          this.prglConnections[con.id]?.authSetupDataListener,
       };
-      this.setSyncUserSub();
+      void this.setSyncUserSub();
     } catch (e) {
       reject(e);
       this.prglConnections[con.id] = {
@@ -292,6 +307,7 @@ export const startConnection = async function (
         tableConfigRunner: undefined,
         lastRestart: 0,
         isSuperUser: undefined,
+        authSetupDataListener: undefined,
       };
     }
   });

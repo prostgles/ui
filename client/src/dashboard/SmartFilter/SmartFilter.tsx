@@ -26,7 +26,6 @@ import {
   DEFAULT_VALIDATED_COLUMN_INFO,
   type FilterColumn,
 } from "./smartFilterUtils";
-import { useWhyDidYouUpdate } from "../../components/MonacoEditor/useWhyDidYouUpdate";
 export * from "./smartFilterUtils";
 
 export type Operand = "AND" | "OR";

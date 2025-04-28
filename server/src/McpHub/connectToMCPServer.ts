@@ -24,6 +24,7 @@ export const connectToMCPServer = (
   config: StdioServerParameters,
   { onLog, onTransportClose }: McpServerEvents,
 ): Promise<McpConnection> => {
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   return new Promise(async (resolve, reject) => {
     let log = "";
     try {
@@ -59,13 +60,13 @@ export const connectToMCPServer = (
         stderr: "pipe", // necessary for stderr to be available
       });
 
-      transport.onerror = async (error) => {
+      transport.onerror = (error) => {
         const errMsg = `Transport error: ${error.message}`;
         log += errMsg;
-        onLog("error", errMsg, log);
+        void onLog("error", errMsg, log);
         reject(errMsg);
       };
-      transport.onclose = async () => {
+      transport.onclose = () => {
         onTransportClose();
         reject(new Error(`Transport closed`));
       };
@@ -95,10 +96,11 @@ export const connectToMCPServer = (
       await transport.start();
       const stderrStream = transport.stderr;
       if (stderrStream) {
-        stderrStream.on("data", async (data: Buffer) => {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        stderrStream.on("data", (data: Buffer) => {
           const errorOutput = data.toString();
           log += errorOutput;
-          onLog("stderr", errorOutput, log);
+          void onLog("stderr", errorOutput, log);
         });
       } else {
         console.error(`No stderr stream for ${name}`);
@@ -114,6 +116,7 @@ export const connectToMCPServer = (
       connection.server.error = "";
       resolve(connection);
     } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       reject({ error: getErrorAsObject(error), log });
     }
   });

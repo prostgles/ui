@@ -81,7 +81,11 @@ export interface McpDownloadResponse {
 }
 
 export type McpServerEvents = {
-  onLog: (type: "stderr" | "error", data: string, fullLog: string) => void;
+  onLog: (
+    type: "stderr" | "error",
+    data: string,
+    fullLog: string,
+  ) => void | Promise<void>;
   onTransportClose: () => void;
 };
 

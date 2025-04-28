@@ -35,7 +35,7 @@ const getS3CloudClient = (s3Config: S3Config): CloudClient => {
     objectKey: string,
     file: string | Buffer | Readable,
     contentType: string,
-    onFinish: (error: any, result: UploadedCloudFile) => void,
+    onFinish: FileUploadArgs["onFinish"],
     onProgress?: (bytesUploaded: number) => void,
   ): Promise<void> => {
     const stream = file instanceof Readable ? file : Readable.from(file);
@@ -74,25 +74,27 @@ const getS3CloudClient = (s3Config: S3Config): CloudClient => {
 
       onFinish(undefined, uploadedFile);
     } catch (error: unknown) {
-      onFinish(error ?? new Error("Error"), undefined as any);
+      //@ts-ignore
+      onFinish(error ?? new Error("Error"), undefined);
     }
   };
 
   return {
     upload: (file: FileUploadArgs) =>
       new Promise((resolve, reject) => {
-        uploadToS3(
+        void uploadToS3(
           bucket.Bucket,
           file.fileName,
           file.file,
           file.contentType,
-          (error, result) => {
+          (...args) => {
+            const [error, result] = args;
             if (error) {
               reject(error);
             } else {
               resolve();
             }
-            file.onFinish(error, result);
+            file.onFinish(...args);
           },
           file.onProgress,
         );

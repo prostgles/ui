@@ -6,7 +6,6 @@ import { isDefined } from "../../../utils";
 import type { LanguageConfig, TSLibrary } from "../../CodeEditor/CodeEditor";
 import { dboLib, pgPromiseDb } from "../../CodeEditor/monacoTsLibs";
 import type { MethodDefinitionProps } from "./MethodDefinition";
-import { useWhyDidYouUpdate } from "../../../components/MonacoEditor/useWhyDidYouUpdate";
 
 type Props = Pick<
   MethodDefinitionProps,

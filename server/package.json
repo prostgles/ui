@@ -8,7 +8,7 @@
     "start": "npm run build && node dist/server/src/index.js",
     "rollup": "rollup -c",
     "lint": "eslint . --ext .ts --quiet --fix",
-    "dev": "export NODE_ENV='development' && NODE_OPTIONS='--max-old-space-size=4048' && npm i && tsc-watch --onSuccess \"node --trace-warnings --inspect dist/server/src/index.js\""
+    "dev": "export NODE_ENV='development' && NODE_OPTIONS='--max-old-space-size=4048' && npm i && tsc-watch --onSuccess \"node --trace-warnings --inspect dist/server/src/index.js\" --onFailure \"echo 'exiting'\""
   },
   "author": "",
   "license": "ISC",
@@ -21,33 +21,33 @@
     "@types/cookie-parser": "^1.4.2",
     "body-parser": "^1.20.3",
     "check-disk-space": "^3.3.1",
-    "connection-string": "^4.3.5",
+    "connection-string": "^4.4.0",
     "cookie-parser": "^1.4.5",
     "dotenv": "^10.0.0",
     "engine.io": "^6.5.5",
     "express": "^4.21.2",
     "helmet": "^7.1.0",
     "otplib": "^12.0.1",
-    "prostgles-server": "^4.2.272",
+    "prostgles-server": "^4.2.290",
     "prostgles-types": "^4.0.89",
     "qrcode": "^1.5.1",
     "simple-git": "^3.27.0",
     "smtp-server": "^3.13.6",
-    "socket.io": "^4.7.5",
+    "socket.io": "^4.8.1",
     "typescript": "^5.8.3",
     "ws": "^8.17.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.25.1",
     "@types/express": "^4.17.21",
-    "@types/node": "^20.9.1",
+    "@types/node": "^22.15.2",
     "@types/smtp-server": "^3.5.10",
     "@types/ws": "^8.5.3",
-    "@typescript-eslint/eslint-plugin": "^5.62.0",
-    "@typescript-eslint/parser": "^5.62.0",
     "dts-bundle-generator": "^9.0.0",
-    "eslint": "^8.57.0",
+    "eslint": "^9.25.1",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-security": "^3.0.1",
-    "tsc-watch": "^6.2.0"
+    "tsc-watch": "^6.2.1",
+    "typescript-eslint": "^8.31.0"
   }
 }

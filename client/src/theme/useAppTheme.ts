@@ -4,11 +4,8 @@ import { appTheme, type AppState, type Theme } from "../App";
 const THEMES = ["light", "dark", "from-system"] as const;
 const THEME_SETTING_NAME = "theme" as const;
 
-export const useAppTheme = (state: Omit<AppState, "title" | "isConnected">) => {
-  const user = state.prglState?.user ?? state.prglState?.auth.user;
-  const userThemeOption = user?.options?.theme as
-    | (typeof THEMES)[number]
-    | undefined;
+export const useAppTheme = (state: Pick<AppState, "serverState" | "user">) => {
+  const userThemeOption = state.user?.options?.theme;
   const userTheme = getTheme(userThemeOption);
   const [theme, setTheme] = useState(userTheme);
   useEffect(() => {
@@ -32,11 +29,11 @@ export const useAppTheme = (state: Omit<AppState, "title" | "isConnected">) => {
   }, [userTheme]);
 
   useEffect(() => {
-    if (!user?.options?.theme) return;
+    if (!userThemeOption) return;
     if (theme !== userTheme) {
       setTheme(userTheme);
     }
-  }, [user, userTheme, theme]);
+  }, [userThemeOption, userTheme, theme]);
 
   useEffect(() => {
     document.documentElement.classList.remove("dark-theme", "light-theme");

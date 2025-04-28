@@ -5,7 +5,11 @@ export const runShellCommand = (
   args: ReadonlyArray<string>,
   opts: SpawnOptions,
   onData: (data: string, source: "stdout" | "stderr") => void,
-): Promise<{ err: any | undefined; fullLog: string; code?: number }> => {
+): Promise<{
+  err: Error | string | undefined;
+  fullLog: string;
+  code?: number;
+}> => {
   const proc = spawn(command, args, opts);
   const getUTFText = (v: string) => v.toString();
 

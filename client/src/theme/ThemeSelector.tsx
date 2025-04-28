@@ -4,8 +4,9 @@ import type { ExtraProps } from "../App";
 import Select from "../components/Select/Select";
 import { t } from "../i18n/i18nUtils";
 
+export type ThemeOption = "light" | "dark" | "from-system";
 type P = Pick<ExtraProps, "dbs"> & {
-  userThemeOption: "light" | "dark" | "from-system";
+  userThemeOption: ThemeOption;
   serverState: undefined | ExtraProps["serverState"];
   userId: string | undefined;
 };

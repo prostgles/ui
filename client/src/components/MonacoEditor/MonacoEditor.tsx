@@ -10,7 +10,6 @@ import {
 } from "../../dashboard/SQLEditor/SQLEditor";
 import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
-import { useWhyDidYouUpdate } from "./useWhyDidYouUpdate";
 
 export type MonacoEditorProps = {
   language: string;

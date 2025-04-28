@@ -14,10 +14,6 @@ import { getEmailAuthProvider } from "./emailProvider/getEmailAuthProvider";
 import { getLogin } from "./getLogin";
 import { getGetUser } from "./getUser";
 import { getOAuthLoginProviders } from "./OAuthProviders/getOAuthLoginProviders";
-import {
-  onAuthSetupDataChange,
-  type AuthSetupData,
-} from "./onAuthSetupDataChange";
 import { onMagicLinkOrOTP } from "./onMagicLinkOrOTP";
 import { getOnUseOrSocketConnected } from "./onUseOrSocketConnected";
 import {
@@ -26,26 +22,27 @@ import {
   sidKeyName,
   type SUser,
 } from "./sessionUtils";
+import { type AuthSetupData } from "./subscribeToAuthSetupChanges";
 
-let authSetupData: AuthSetupData | undefined;
+let globalSettings: AuthSetupData["globalSettings"] | undefined;
 
 export const withOrigin: WithOrigin = {
   origin: (origin, cb) => {
-    cb(null, authSetupData?.globalSettings?.allowed_origin ?? undefined);
+    cb(null, globalSettings?.allowed_origin ?? undefined);
   },
 };
 
-export const setAuthReloader = async (
-  app: e.Express,
-  dbs: DBS,
-  onChange: (auth: Awaited<ReturnType<typeof getAuth>>) => void,
-) => {
-  await onAuthSetupDataChange(dbs, async (context) => {
-    authSetupData = context;
-    const auth = await getAuth(app, dbs, context);
-    onChange(auth);
-  });
-};
+// export const setAuthReloader = async (
+//   app: e.Express,
+//   dbs: DBS,
+//   onChange: (auth: Awaited<ReturnType<typeof getAuth>>) => void,
+// ) => {
+//   await subscribeToAuthSetupChanges(dbs, async (newAuthSetupData) => {
+//     authSetupData = newAuthSetupData;
+//     const auth = await getAuth(app, dbs, newAuthSetupData);
+//     onChange(auth);
+//   });
+// };
 
 type WithOrigin = {
   origin?: (
@@ -56,13 +53,9 @@ type WithOrigin = {
 
 const setExpressAppOptions = (
   app: e.Express,
-  { globalSettings }: Pick<AuthSetupData, "globalSettings">,
+  authData: Pick<AuthSetupData, "globalSettings">,
 ) => {
-  const withOrigin: WithOrigin = {
-    origin: (origin, cb) => {
-      cb(null, globalSettings?.allowed_origin ?? undefined);
-    },
-  };
+  globalSettings = authData.globalSettings;
 
   const corsMiddleware = cors(withOrigin);
   upsertNamedExpressMiddleware(app, corsMiddleware, "corsMiddleware");
@@ -71,7 +64,7 @@ const setExpressAppOptions = (
 
 export type GetAuthResult = Awaited<ReturnType<typeof getAuth>>;
 
-const getAuth = async (
+export const getAuth = async (
   app: Express,
   dbs: DBS,
   authSetupData: AuthSetupData,

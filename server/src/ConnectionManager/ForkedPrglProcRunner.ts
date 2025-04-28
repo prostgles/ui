@@ -134,20 +134,24 @@ export class ForkedPrglProcRunner {
       delete this.runQueue[id];
     });
     console.log(`${logName} restarting ...`);
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     setTimeout(async () => {
       console.log(`${logName} restarted`);
       const newProc = await ForkedPrglProcRunner.createProc(this.opts);
       this.proc = newProc;
       this.initProc();
       if (this.opts.type === "onMount") {
-        this.run({ type: "onMount", code: this.opts.on_mount_ts_compiled });
+        void this.run({
+          type: "onMount",
+          code: this.opts.on_mount_ts_compiled,
+        });
       }
       this.isRestarting = false;
     }, 1e3);
   }, 400);
 
   private initProc = () => {
-    const updateLogs = (dataOrError: any) => {
+    const updateLogs = (dataOrError: Buffer | Error) => {
       const stringMessage =
         Buffer.isBuffer(dataOrError) ? dataOrError.toString()
         : isObject(dataOrError) ? JSON.stringify(dataOrError, null, 2) + "\n"
@@ -156,6 +160,7 @@ export class ForkedPrglProcRunner {
       this.logs = this.logs.slice(-500);
       const { type } = this.opts;
       const logs = this.logs.map((v) => v.toString()).join("");
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       this.opts.dbs.database_config_logs.update(
         { id: this.opts.dbConfId },
         {
@@ -228,7 +233,7 @@ export class ForkedPrglProcRunner {
       this.restartProc(error);
     });
 
-    this.opts.dbs.database_config_logs.insert(
+    void this.opts.dbs.database_config_logs.insert(
       { id: this.opts.dbConfId },
       { onConflict: "DoNothing" },
     );

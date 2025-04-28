@@ -1,5 +1,5 @@
 function requestLogger(httpModule: any) {
-  var original = httpModule.request;
+  const original = httpModule.request;
   httpModule.request = function (options: any, callback: any) {
     console.log(
       (options.href || options.proto) + "://" + options.host + options.path,

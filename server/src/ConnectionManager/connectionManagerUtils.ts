@@ -12,6 +12,7 @@ import type { Connections, DatabaseConfigs, DBS } from "..";
 import { getConnectionPaths, ROUTES } from "../../../commonTypes/utils";
 import { getCloudClient } from "../cloudClients/cloudClients";
 import type { ConnectionManager } from "./ConnectionManager";
+import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 
 export const getDatabaseConfigFilter = (c: Connections) =>
   pickKeys(c, ["db_name", "db_host", "db_port"]);
@@ -101,7 +102,7 @@ export const parseTableConfig = async ({
           {
             localConfig: {
               /* Use path.resolve when using a relative path. Otherwise will get 403 forbidden */
-              localFolderPath: await conMgr.getFileFolderPath(connectionId),
+              localFolderPath: conMgr.getFileFolderPath(connectionId),
             },
           }
         : { cloudClient }),
@@ -155,8 +156,10 @@ type TableDbConfig = Pick<DatabaseConfigs, "table_config" | "table_config_ts">;
 export const getCompiledTableConfig = ({
   table_config,
   table_config_ts,
-}: TableDbConfig): undefined | { tableConfig: any; dashboardConfig?: any } => {
-  if (table_config) return { tableConfig: table_config };
+}: TableDbConfig):
+  | undefined
+  | { tableConfig: TableConfig; dashboardConfig?: any } => {
+  if (table_config) return { tableConfig: table_config as TableConfig };
   if (!table_config_ts) return undefined;
 
   const res = getEvaledExports(table_config_ts);

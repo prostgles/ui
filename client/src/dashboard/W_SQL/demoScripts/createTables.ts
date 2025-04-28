@@ -39,7 +39,6 @@ export const createTables: DemoScript = async ({
     goToNextSnipPos();
 
     for (const [idx, col] of cols.entries()) {
-      // if(col.text.includes("cre")) debugger
       await typeAuto(col.text, {
         triggerMode: "firstChar",
         msPerChar: 120,

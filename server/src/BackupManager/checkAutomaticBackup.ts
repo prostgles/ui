@@ -106,7 +106,7 @@ export async function checkAutomaticBackup(
 
     if (shouldDump) {
       await this.pgDump(con.id, null, {
-        options: { ...bkpConf.dump_options! },
+        options: { ...bkpConf.dump_options },
         destination: bkpConf.cloudConfig ? "Cloud" : "Local",
         credentialID: bkpConf.cloudConfig?.credential_id,
         initiator: AUTO_INITIATOR,

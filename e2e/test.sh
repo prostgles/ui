@@ -1,6 +1,11 @@
+set -e
 
+# Ensure any ts errors are caught
 cd client
 npx tsc
+cd ../server
+npx tsc
+
 cd ..
 
 cat ./client/configs/last_compiled.txt

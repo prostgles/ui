@@ -1,10 +1,8 @@
 import type { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
 import { type AuthResponse } from "prostgles-types";
-import { YEAR } from "../../../commonTypes/utils";
 import type { DBS } from "../index";
 import type { Sessions } from "./sessionUtils";
 import { startRateLimitedLoginAttempt } from "./startRateLimitedLoginAttempt";
-import { authSetupData } from "./onAuthSetupDataChange";
 
 type AuthType =
   | {

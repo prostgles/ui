@@ -1,22 +1,25 @@
 import type {
+  AuthClientRequest,
   BasicSession,
   LoginClientInfo,
 } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBS } from "..";
 import { debouncePromise, YEAR } from "../../../commonTypes/utils";
-import type { AuthSetupData } from "./onAuthSetupDataChange";
+import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
 import { getIPsFromClientInfo } from "./startRateLimitedLoginAttempt";
 import { makeSession } from "./sessionUtils";
+import { activePasswordlessAdminFilter } from "../SecurityManager/initUsers";
+import type { NewRedirectSession } from "./getUser";
 
 export const createPasswordlessAdminSessionIfNeeded = debouncePromise(
   async (
     authSetupData: AuthSetupData,
     dbs: DBS,
     client: LoginClientInfo,
-    sid: string | undefined,
-  ): Promise<{ type: "new-session"; session: BasicSession } | undefined> => {
+    reqInfo: AuthClientRequest,
+  ): Promise<NewRedirectSession | undefined> => {
     const { passwordlessAdmin, globalSettings } = authSetupData;
-    if (!passwordlessAdmin || !globalSettings) {
+    if (!passwordlessAdmin || !globalSettings || !reqInfo.httpReq) {
       return;
     }
 
@@ -32,7 +35,7 @@ export const createPasswordlessAdminSessionIfNeeded = debouncePromise(
           user_id: passwordlessAdmin.id,
         });
         if (anyPasswordlessSession) {
-          const renewedSession = await dbs.sessions.update(
+          await dbs.sessions.update(
             { id: anyPasswordlessSession.id },
             { active: true, expires: Date.now() + 1 * YEAR },
             { returning: "*", multi: false },
@@ -43,20 +46,42 @@ export const createPasswordlessAdminSessionIfNeeded = debouncePromise(
     }
 
     const { ip } = getIPsFromClientInfo(client, globalSettings);
-    const session = await makeSession(
-      authSetupData.passwordlessAdmin,
-      {
-        ip_address: ip,
-        user_agent: client.user_agent || null,
-        type: "web",
-      },
-      dbs,
-      Date.now() + Number(10 * YEAR),
-    );
+    /** Ensure multiple passwordlessAdmin sessions are not allowed */
+    const session = await dbs.tx(async (dbsTx) => {
+      const isStillActive = await dbsTx.users.findOne(
+        activePasswordlessAdminFilter,
+      );
+      if (!isStillActive) {
+        return undefined;
+      }
+      await dbsTx.sessions.delete({
+        user_id: passwordlessAdmin.id,
+      });
+      console.log(
+        "createPasswordlessAdminSessionIfNeeded: creating new session",
+        passwordlessAdmin.id,
+      );
+      return makeSession(
+        authSetupData.passwordlessAdmin,
+        {
+          ip_address: ip,
+          user_agent: client.user_agent || null,
+          type: "web",
+        },
+        dbsTx as DBS,
+        Date.now() + Number(10 * YEAR),
+      );
+    });
+
+    /** Potential race condition between authSetupData and actual data */
+    if (!session) {
+      return undefined;
+    }
 
     return {
       type: "new-session",
       session,
+      reqInfo,
     };
   },
 );

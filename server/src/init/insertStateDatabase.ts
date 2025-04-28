@@ -1,8 +1,8 @@
 import type { DB } from "prostgles-server/dist/Prostgles";
 import { tryCatchV2 } from "prostgles-types";
-import type { DBS } from ".";
-import type { DBSConnectionInfo } from "./electronConfig";
-import { upsertConnection } from "./upsertConnection";
+import type { DBS } from "..";
+import type { DBSConnectionInfo } from "../electronConfig";
+import { upsertConnection } from "../upsertConnection";
 
 /** Add state db if missing */
 export const insertStateDatabase = async (

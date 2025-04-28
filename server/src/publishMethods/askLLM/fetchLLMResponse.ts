@@ -180,7 +180,10 @@ type AnthropicResponse = {
   id: string;
   type: "message";
   role: "assistant";
-  model: "claude-3-5-sonnet-20240620" | string;
+  /**
+   * "claude-3-5-sonnet-20240620" |
+   */
+  model: string;
   content: (AnthropicTextResponse | AnthropicToolUseResponse)[];
   stop_reason: "tool_use";
   stop_sequence: null;
@@ -242,7 +245,10 @@ type OpenAIResponse = {
       refusal: null;
       annotations: [];
     };
-    finish_reason: "tool_calls" | string;
+    /**
+     * "tool_calls" |
+     */
+    finish_reason: string;
   }[];
   usage: {
     prompt_tokens: number;

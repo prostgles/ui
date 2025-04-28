@@ -1,27 +1,24 @@
 import type {
+  AuthClientRequest,
   AuthConfig,
   BasicSession,
-  LoginClientInfo,
 } from "prostgles-server/dist/Auth/AuthTypes";
-import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DB } from "prostgles-server/dist/initProstgles";
 import { omitKeys } from "prostgles-types";
+import type { DBS } from "..";
+import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
+import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
+import { createPasswordlessAdminSessionIfNeeded } from "./createPasswordlessAdminSessionIfNeeded";
 import { getActiveSession } from "./getActiveSession";
+import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
 import {
-  makeSession,
   PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR,
   type SUser,
 } from "./sessionUtils";
-import type { AuthSetupData } from "./onAuthSetupDataChange";
-import { getElectronConfig } from "../electronConfig";
-import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
-import type { DBS } from "..";
-import { debouncePromise, YEAR } from "../../../commonTypes/utils";
-import { getIPsFromClientInfo } from "./startRateLimitedLoginAttempt";
-import { createPasswordlessAdminSessionIfNeeded } from "./createPasswordlessAdminSessionIfNeeded";
+import { createPublicUserSessionIfAllowed } from "./createPublicUserSessionIfAllowed";
 
 console.error(
-  `/** This is to prevent a fresh setup (passwordless admin has not been assigned yet) redirecting users with existing session cookies to login */`,
+  `/**      This is to prevent a fresh setup (passwordless admin has not been assigned yet) redirecting users with existing session cookies to login */`,
 );
 type GetUser = NonNullable<AuthConfig<DBGeneratedSchema, SUser>["getUser"]>;
 export const getGetUser = (authSetupData: AuthSetupData, dbs: DBS) => {
@@ -34,6 +31,7 @@ export const getGetUser = (authSetupData: AuthSetupData, dbs: DBS) => {
           filter: { id: sid },
         })
       );
+
     if (sessionInfo) {
       const { validSession, expiredSession, failedTooManyTimes, error } =
         sessionInfo;
@@ -72,13 +70,6 @@ export const getGetUser = (authSetupData: AuthSetupData, dbs: DBS) => {
       }
     }
 
-    const res = await createPasswordlessAdminSessionIfNeeded(
-      authSetupData,
-      dbs,
-      client,
-      sid,
-    );
-
     if (authSetupData.passwordlessAdmin?.activeSessions.length) {
       return {
         success: false,
@@ -87,8 +78,32 @@ export const getGetUser = (authSetupData: AuthSetupData, dbs: DBS) => {
       };
     }
 
-    return res;
+    const passwordlessAdminSession =
+      await createPasswordlessAdminSessionIfNeeded(
+        authSetupData,
+        dbs,
+        client,
+        req,
+      );
+
+    if (!passwordlessAdminSession) {
+      const newPublicUserSession = await createPublicUserSessionIfAllowed(
+        authSetupData,
+        dbs,
+        client,
+        req,
+      );
+      return newPublicUserSession;
+    }
+
+    return passwordlessAdminSession;
   };
 
   return getUser;
+};
+
+export type NewRedirectSession = {
+  type: "new-session";
+  session: BasicSession;
+  reqInfo: Exclude<AuthClientRequest, { socket: any }>;
 };

@@ -1,97 +1,122 @@
-import { omitKeys } from "prostgles-types";
 import type {
-  CustomTableRules,
-  DBSSchema,
-  TableRules,
-} from "../../../commonTypes/publishUtils";
-import { parseTableRules } from "../../../commonTypes/publishUtils";
-import { getACRule } from "./startConnection";
-import type { Publish } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
-import type { SUser } from "../authConfig/sessionUtils";
+  Publish,
+  PublishObject,
+} from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
+import { isDefined, omitKeys } from "prostgles-types";
 import type { DBS } from "..";
+import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import { parseTableRules } from "../../../commonTypes/publishUtils";
+import { getEntries } from "../../../commonTypes/utils";
+import type { SUser } from "../authConfig/sessionUtils";
+import { getACRule } from "./startConnection";
+import { publish } from "../publish/publish";
 
 type Args = {
   dbs: DBS;
   dbConf: DBSSchema["database_configs"];
-  connectionId: string;
+  connection: DBSSchema["connections"];
 };
-export const getConnectionPublish = ({ dbs, dbConf, connectionId }: Args) => {
-  const publish: Publish<void, SUser> = async ({ user, dbo, tables }) => {
-    if (user) {
-      if (user.type === "admin") {
-        return "*";
-      }
 
-      const ac = await getACRule(dbs, user, dbConf.id, connectionId);
-
-      if (ac) {
-        const { dbPermissions } = ac;
-
-        if (dbPermissions.type === "Run SQL" && dbPermissions.allowSQL) {
-          return "*" as const;
-        } else if (
-          dbPermissions.type === "All views/tables" &&
-          dbPermissions.allowAllTables.length
-        ) {
-          return Object.keys(dbo)
-            .filter((k) => dbo[k]!.find)
-            .reduce(
-              (a, v) => ({
-                ...a,
-                [v]: {
-                  select:
-                    dbPermissions.allowAllTables.includes("select") ?
-                      "*"
-                    : undefined,
-                  ...(dbo[v]?.is_view ?
-                    {}
-                  : {
-                      update:
-                        dbPermissions.allowAllTables.includes("update") ?
-                          "*"
-                        : undefined,
-                      insert:
-                        dbPermissions.allowAllTables.includes("insert") ?
-                          "*"
-                        : undefined,
-                      delete:
-                        dbPermissions.allowAllTables.includes("delete") ?
-                          "*"
-                        : undefined,
-                    }),
-                },
-              }),
-              {},
-            );
-        } else if (dbPermissions.type === "Custom") {
-          type ParsedTableRules = Record<string, TableRules>;
-          const publish = dbPermissions.customTables
-            .filter((t: any) => dbo[t.tableName])
-            .reduce((a: any, _v) => {
-              const v = _v as CustomTableRules["customTables"][number];
-              const table = tables.find(({ name }) => name === v.tableName);
-              if (!table) return {};
-
-              const ptr: ParsedTableRules = {
-                ...a,
-                [v.tableName]: parseTableRules(
-                  omitKeys(v, ["tableName"]),
-                  dbo[v.tableName]!.is_view,
-                  table.columns.map((c: any) => c.name),
-                  { user: user as DBSSchema["users"] },
-                ),
-              };
-              return ptr;
-            }, {} as ParsedTableRules);
-
-          return publish;
-        } else {
-          console.error("Unexpected access control rule: ", (ac as any).rule);
-        }
-      }
+export const getConnectionPublish = ({
+  dbs,
+  dbConf,
+  connection,
+}: Args): Publish<void, SUser> | undefined => {
+  if (connection.is_state_db) {
+    // throw new Error(
+    //   "Cannot publish state database. Must be used from useDBSConnection",
+    // );
+    return publish as Publish<void, SUser>;
+  }
+  const connectionId = connection.id;
+  const connectionPublish: Publish<void, SUser> = async ({
+    user,
+    dbo,
+    tables,
+  }) => {
+    if (!user) {
+      return null;
     }
-    return undefined;
+
+    if (user.type === "admin") {
+      return "*";
+    }
+
+    const accessRule = await getACRule(dbs, user, dbConf.id, connectionId);
+    if (!accessRule) {
+      return null;
+    }
+
+    const { dbPermissions } = accessRule;
+
+    if (dbPermissions.type === "Run SQL" && dbPermissions.allowSQL) {
+      return "*" as const;
+    } else if (
+      dbPermissions.type === "All views/tables" &&
+      dbPermissions.allowAllTables.length
+    ) {
+      const { allowAllTables } = dbPermissions;
+      const res = getEntries(dbo)
+        .filter((entry) => {
+          const [_, t] = entry;
+          return Boolean("find" in t && t.find);
+        })
+        .reduce(
+          (acc, [tableName, tableHandler]) => ({
+            ...acc,
+            [tableName]: {
+              select: allowAllTables.includes("select") ? "*" : undefined,
+              ...(!tableHandler.is_view && {
+                update: allowAllTables.includes("update") ? "*" : undefined,
+                insert: allowAllTables.includes("insert") ? "*" : undefined,
+                delete: allowAllTables.includes("delete") ? "*" : undefined,
+              }),
+            } satisfies PublishObject[string],
+          }),
+          {} as PublishObject,
+        );
+      return res;
+    } else if (dbPermissions.type === "Custom") {
+      const customTableList = dbPermissions.customTables
+        .map((rule) => {
+          const tableHandler = dbo[rule.tableName];
+          if (!tableHandler) return undefined;
+          const table = tables.find(({ name }) => name === rule.tableName);
+          if (!table) return undefined;
+          return {
+            rule,
+            table,
+            tableHandler,
+          };
+        })
+        .filter(isDefined);
+
+      const publish: PublishObject = customTableList.reduce(
+        (acc, { table, rule, tableHandler }) => {
+          const parsedRule = parseTableRules(
+            omitKeys(rule, ["tableName"]),
+            tableHandler.is_view,
+            table.columns.map((c) => c.name),
+            { user },
+          );
+
+          if (!parsedRule) return acc;
+
+          const ptr = {
+            ...acc,
+            [rule.tableName]: parsedRule,
+          };
+          return ptr;
+        },
+        {} as PublishObject,
+      );
+
+      return publish;
+    } else {
+      console.error("Unexpected access control rule: ", dbPermissions);
+    }
+    return null;
   };
 
-  return publish;
+  return connectionPublish;
 };

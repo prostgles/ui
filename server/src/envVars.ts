@@ -25,8 +25,8 @@ export const {
   ...process.env,
 } as Record<string, string>;
 
-const db_ssl: DBSConnectionInfo["db_ssl"] =
-  DB_SSL_ENUM[DB_SSL_ENUM.indexOf(POSTGRES_SSL?.trim().toLowerCase() as any)] ??
+const db_ssl: DBSConnectionInfo["db_ssl"] = //@ts-ignore
+  DB_SSL_ENUM[DB_SSL_ENUM.indexOf(POSTGRES_SSL?.trim().toLowerCase())] ??
   "prefer";
 export const DBS_CONNECTION_INFO = validateConnection({
   name: "Prostgles UI state",

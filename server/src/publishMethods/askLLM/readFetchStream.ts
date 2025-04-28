@@ -38,7 +38,7 @@ export const readFetchStream = async (response: Response) => {
       buffer += decodedChunk;
     }
   } finally {
-    reader.cancel();
+    await reader.cancel();
   }
 
   return JSON.parse(buffer);

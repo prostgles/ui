@@ -70,8 +70,8 @@ export const fetchMCPServerConfigs = async (
           env,
           stderr: undefined,
           cwd: server.cwd ?? undefined,
-          onLog: async (type, data, log) => {
-            dbs.mcp_server_logs.upsert(
+          onLog: (type, data, log) => {
+            void dbs.mcp_server_logs.upsert(
               { server_name: server.name },
               type === "stderr" ?
                 {

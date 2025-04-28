@@ -372,7 +372,7 @@ export const getProperty = <
 };
 
 export function debouncePromise<Args extends any[], T>(
-  promiseFuncDef: (...args: Args) => Promise<T>,
+  promiseFuncDef: (...pArgs: Args) => Promise<T>,
 ): (...args: Args) => Promise<T> {
   let currentPromise: Promise<any> | undefined;
 
@@ -389,3 +389,13 @@ export function debouncePromise<Args extends any[], T>(
     return currentPromise.then(() => promiseFuncDef(...args));
   };
 }
+
+export const getCaller = () => {
+  //@ts-ignore
+  // Error.stackTraceLimit = 30;
+
+  const error = new Error();
+  const stackLines = error.stack?.split("\n") ?? [];
+  const callerLine = stackLines[2] ?? "";
+  return stackLines;
+};

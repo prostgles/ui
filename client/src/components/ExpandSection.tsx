@@ -38,7 +38,7 @@ export const ExpandSection = ({
       title={title}
       iconPath={typeof iconPath === "string" ? iconPath : iconPath(collapsed)}
       children={label}
-      {...(buttonProps as any)}
+      {...(buttonProps as BtnProps<void>)}
       onClick={() => {
         setCollapsed(!collapsed);
       }}

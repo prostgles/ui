@@ -8,6 +8,7 @@ import { checkLLMLimit } from "./checkLLMLimit";
 import { fetchLLMResponse, type LLMMessage } from "./fetchLLMResponse";
 import { getLLMTools } from "./getLLMTools";
 import { sliceText } from "../../../../commonTypes/utils";
+import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 
 export const getLLMChatModel = async (
   dbs: DBS,
@@ -26,7 +27,7 @@ export const askLLM = async (
   schema: string,
   chatId: number,
   dbs: DBS,
-  user: DBSSchema["users"],
+  user: Pick<DBSSchema["users"], "id" | "type">,
   allowedLLMCreds: DBSSchema["access_control_allowed_llm"][] | undefined,
   accessRules: DBSSchema["access_control"][] | undefined,
 ) => {
@@ -40,8 +41,8 @@ export const askLLM = async (
     const preferredChatModel = await getLLMChatModel(dbs, {
       $existsJoined: {
         "llm_providers.llm_credentials": {},
-      } as any,
-    });
+      },
+    } as Filter);
     await dbs.llm_chats.update(
       { id: chatId },
       { model: preferredChatModel.id },
@@ -52,10 +53,10 @@ export const askLLM = async (
   const llm_credential = await dbs.llm_credentials.findOne({
     $existsJoined: {
       "llm_providers.llm_models": {
-        id: chat.model!,
+        id: chat.model,
       },
-    } as any,
-  });
+    },
+  } as Filter);
   if (!llm_prompt_id) throw "Chat missing prompt";
   if (!llm_credential) throw "LLM credentials missing";
   const promptObj = await dbs.llm_prompts.findOne({ id: llm_prompt_id });
@@ -111,7 +112,7 @@ export const askLLM = async (
     const questionText = getLLMMessageText({ message: userMessage });
     const isOnlyImage =
       !questionText && userMessage.some((m) => m.type === "image");
-    dbs.llm_chats.update(
+    void dbs.llm_chats.update(
       { id: chatId },
       {
         name:
@@ -146,7 +147,7 @@ export const askLLM = async (
     });
 
     const modelData = await dbs.llm_models.findOne(
-      { id: chat.model! },
+      { id: chat.model },
       {
         select: {
           "*": 1,

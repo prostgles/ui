@@ -1,14 +1,14 @@
-import { isTesting } from ".";
-import { testDBConnection } from "./connectionUtils/testDBConnection";
-import type { DBSConnectionInfo } from "./electronConfig";
+import { testDBConnection } from "../connectionUtils/testDBConnection";
+import type { DBSConnectionInfo } from "../electronConfig";
+import { isTesting } from "./initExpressAndIOServers";
 
 export const cleanupTestDatabases = async (con: DBSConnectionInfo) => {
   if (!isTesting) return;
 
   await testDBConnection({ ...con, db_name: "postgres" }, false, async (c) => {
-    const existingDbs: { datname: string }[] = await c.any(
-      "SELECT datname FROM pg_database WHERE datistemplate = false;",
-    );
+    // const existingDbs: { datname: string }[] = await c.any(
+    //   "SELECT datname FROM pg_database WHERE datistemplate = false;",
+    // );
     const commands = [
       "drop database db; ",
       "drop database cloud; ",

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { chromium, expect, test } from "@playwright/test";
 import { authenticator } from "otplib";
 import {
   PageWIds,
@@ -86,13 +86,12 @@ test.describe("Main test", () => {
   test("Connecting with an existing sid to a fresh instance will ignore the sid IF passwordless admin did not claim a session yet", async ({
     page: p,
   }) => {
-    // throw "TODO: fix this test ";
     const page = p as PageWIds;
     const url = new URL("http://localhost:3004");
     await page.context().addCookies([
       {
         name: "sid_token",
-        value: "randoms-sid",
+        value: "1random-sid",
         domain: url.hostname,
         path: "/",
         httpOnly: true,
@@ -105,8 +104,36 @@ test.describe("Main test", () => {
 
     await page.getByRole("link", { name: "Connections" }).click();
     await page.getByRole("link", { name: "Prostgles UI state" }).click();
-    await runDbsSql(page, "DELETE FROM magic_links");
-    await runDbsSql(page, "DELETE FROM sessions");
+
+    const browser2 = await chromium.launch();
+    const newPage = await browser2.newPage();
+
+    await newPage.context().addCookies([
+      {
+        name: "sid_token",
+        value: "2random-sid",
+        domain: url.hostname,
+        path: "/",
+        httpOnly: true,
+        secure: url.protocol.startsWith("https"),
+        sameSite: "Lax",
+      },
+    ]);
+    await goTo(newPage);
+    expect(await newPage.textContent("body")).toContain(
+      "Only 1 session is allowed for the passwordless admin",
+    );
+    await browser2.close();
+    await newPage.close();
+
+    await runDbsSql(
+      page,
+      `
+      SELECT pg_sleep(1); 
+      DELETE FROM magic_links; 
+      DELETE FROM sessions; 
+      DELETE FROM login_attempts`,
+    );
   });
 
   test("Can disable passwordless admin by creating a new admin user. User data is reassigned and accessible to the new user", async ({
@@ -146,6 +173,7 @@ test.describe("Main test", () => {
     const formField = await page.locator(
       getSelector({ testid: "SmartFormField", dataKey: "username" }),
     );
+
     const userTypeField = await formField.textContent();
     expect(userTypeField).toEqual(`Username${USERS.test_user}`);
     await page.getByTestId("SmartForm.close").waitFor({ state: "visible" });
@@ -161,9 +189,8 @@ test.describe("Main test", () => {
     await page.getByTestId("SmartForm.close").click();
   });
 
-  test("Email password registrations", async ({ page: p, browser }) => {
-    const newPage = p as PageWIds;
-    const page = await browser.newPage();
+  test("Email password registration setup", async ({ page: p, browser }) => {
+    const page = p as PageWIds;
 
     await login(page);
     await goTo(page, "/server-settings");
@@ -178,16 +205,35 @@ test.describe("Main test", () => {
     await page.getByTestId("EmailAuthSetup").locator("button").click();
     await page.getByTestId("EmailAuthSetup.SignupType").click();
     await page.locator(`[data-key="withPassword"]`).click();
-    await page.getByTestId("EmailSMTPAndTemplateSetup").click();
-    await page.getByText("Email Provider").click();
-    await page.locator(`[data-label="Host"] input`).fill("prostgles-test-mock");
-    await page.getByText("Test and Save").click();
-    await page.waitForTimeout(1500);
-    await page.getByText("Enable").click();
+    const fillHostAndTest = async (hostVal: string) => {
+      await page.getByTestId("EmailSMTPAndTemplateSetup").click();
+      await page.getByText("Email Provider").click();
+      await page.locator(`[data-label="Host"] input`).fill(hostVal);
+      await page
+        .getByTestId("EmailSMTPAndTemplateSetup")
+        .getByText("Save")
+        .click();
+    };
+    await fillHostAndTest("invalid___prostgles-test-mock");
+    await page.getByText("Enabled").click();
     await page.getByText("Save").click();
+    // await page.waitForTimeout(1500);
+    // await page.getByText("Enable").click();
+    // await page.getByText("Save").click();
+    const errNode = await page.getByTestId("EmailAuthSetup.error");
+    expect(await errNode.textContent()).toContain(
+      "getaddrinfo ENOTFOUND invalid___prostgles-test-mock",
+    );
+    await fillHostAndTest("prostgles-test-mock");
     await page.waitForTimeout(1500);
-    const errNodeCount = await page.getByTestId("EmailAuthSetup.error").count();
-    expect(errNodeCount).toBe(0);
+    const errNode1 = await page.getByTestId("EmailAuthSetup.error");
+    expect(await errNode1.count()).toBe(0);
+  });
+
+  test("Email password registration", async ({ page: p, browser }) => {
+    const page = await browser.newPage();
+    const newPage = p as PageWIds;
+    await login(page);
 
     await goTo(newPage, "/login");
 
@@ -200,9 +246,7 @@ test.describe("Main test", () => {
     expect(Date.now() - start).toBeGreaterThan(499);
     await newPage.reload();
 
-    /**
-     * Passwords do not match registration check
-     */
+    /** Passwords do not match registration check */
     await newPage.getByTestId("Login.toggle").click();
     await newPage.locator("#username").fill(USERS.new_user);
     await newPage.locator("#password").fill(USERS.new_user);

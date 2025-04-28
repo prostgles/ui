@@ -1,146 +1,34 @@
-import { logOutgoingHttpRequests } from "./logOutgoingHttpRequests";
-logOutgoingHttpRequests(false);
+process.on("unhandledRejection", (reason, p) => {
+  console.trace("Unhandled Rejection at: Promise", p, "reason:", reason);
+});
 
-import cookieParser from "cookie-parser";
-import type { NextFunction, Request, Response } from "express";
-import express, { json, urlencoded } from "express";
-import helmet from "helmet";
-import _http from "http";
+import { spawn } from "child_process";
+import type { NextFunction, Request, RequestHandler, Response } from "express";
 import path from "path";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
-import { getKeys, omitKeys } from "prostgles-types";
-import { Server } from "socket.io";
+import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
+import { getKeys, omitKeys, type AnyObject } from "prostgles-types";
 import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
 import type { ProstglesState } from "../../commonTypes/electronInit";
-import { isObject } from "../../commonTypes/publishUtils";
-import { API_ENDPOINTS, SPOOF_TEST_VALUE } from "../../commonTypes/utils";
+import { isObject, type DBSSchema } from "../../commonTypes/publishUtils";
+import { SPOOF_TEST_VALUE } from "../../commonTypes/utils";
+import { sidKeyName } from "./authConfig/sessionUtils";
 import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
 import type { OnServerReadyCallback } from "./electronConfig";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
+import { initExpressAndIOServers } from "./init/initExpressAndIOServers";
+import type {
+  InitExtra,
+  ProstglesInitStateWithDBS,
+} from "./init/startProstgles";
 import {
   getProstglesState,
   startingProstglesResult,
   tryStartProstgles,
 } from "./init/tryStartProstgles";
-import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
-import type {
-  InitExtra,
-  ProstglesInitStateWithDBS,
-} from "./init/startProstgles";
-import { withOrigin } from "./authConfig/getAuth";
+import { setDBSRoutesForElectron } from "./init/setDBSRoutesForElectron";
 
-const app = express();
-app.use(
-  helmet({
-    crossOriginResourcePolicy: false,
-    referrerPolicy: false,
-  }),
-);
-
-export const isTesting = !!process.env.PRGL_TEST;
-if (isTesting) {
-  app.use((req, res, next) => {
-    res.on("finish", () => {
-      console.log(
-        `${new Date().toISOString()} ${req.method} ${res.statusCode} ${req.url} ${res.statusCode === 302 ? res.getHeader("Location") : ""}`,
-      );
-    });
-    next();
-  });
-}
-
-/**
- * Required to ensure xenova/transformators works
- */
-const localLLMHeaders = ""; // `'unsafe-eval' 'wasm-unsafe-eval'`;
-// console.error("REMOVE CSP", localLLMHeaders);
-app.use(json({ limit: "100mb" }));
-app.use(urlencoded({ extended: true, limit: "100mb" }));
-app.use(function (req, res, next) {
-  /* data import (papaparse) requires: worker-src blob: 'self' */
-  res.setHeader(
-    "Content-Security-Policy",
-    ` script-src 'self' ${localLLMHeaders}; frame-src 'self'; worker-src blob: 'self';`,
-  );
-  next();
-});
-
-process.on("unhandledRejection", (reason, p) => {
-  console.trace("Unhandled Rejection at: Promise", p, "reason:", reason);
-});
-
-const http = _http.createServer(app);
-
-export type BareConnectionDetails = Pick<
-  Connections,
-  | "type"
-  | "db_conn"
-  | "db_host"
-  | "db_name"
-  | "db_pass"
-  | "db_port"
-  | "db_user"
-  | "db_ssl"
-  | "ssl_certificate"
->;
-export type DBS = DBOFullyTyped<DBGeneratedSchema>;
-export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
-export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
-export type DatabaseConfigs = Required<
-  DBGeneratedSchema["database_configs"]["columns"]
->;
-
-export const log = (msg: string, extra?: any) => {
-  console.log(
-    ...[`(server): ${new Date().toISOString()} ` + msg, extra].filter((v) => v),
-  );
-};
-
-app.use(
-  express.static(path.resolve(actualRootDir + "/../client/build"), {
-    index: false,
-    cacheControl: false,
-  }),
-);
-app.use(
-  express.static(path.resolve(actualRootDir + "/../client/static"), {
-    index: false,
-    cacheControl: false,
-  }),
-);
-app.use(
-  express.static("/icons", {
-    cacheControl: true,
-    index: false,
-    maxAge: 31536000,
-  }),
-);
-
-/** Needed to load MVT tiles worker */
-app.use(
-  express.static(
-    path.resolve(
-      actualRootDir + "/../client/node_modules/@loaders.gl/mvt/dist/",
-    ),
-    { index: false, extensions: ["js"] },
-  ),
-);
-
-app.use(cookieParser());
-
-app.use((req, res, next) => {
-  console.log(
-    `${new Date().toISOString()} ${req.method} ${res.statusCode} ${req.url}`,
-    req.headers["x-real-ip"] || req.ip,
-  );
-  next();
-});
-
-const io = new Server(http, {
-  path: API_ENDPOINTS.WS_DBS,
-  maxHttpBufferSize: 100e100,
-  cors: withOrigin,
-});
+const { app, http, io } = initExpressAndIOServers();
 
 export const connMgr = new ConnectionManager(http, app);
 
@@ -212,7 +100,8 @@ app.get("/dbs", (req, res) => {
     electronCreds &&
     serverState.initState.state === "error" &&
     serverState.initState.errorType === "connection" &&
-    req.cookies["sid_token"] === electronConfig?.sidConfig.electronSid
+    (req.cookies as AnyObject)[sidKeyName] ===
+      electronConfig?.sidConfig.electronSid
   ) {
     serverState.electronCreds =
       electronCreds as typeof serverState.electronCreds;
@@ -251,6 +140,8 @@ const serveIndexIfNoCredentialsOrInitError = async (
 
   next();
 };
+
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 app.use(serveIndexIfNoCredentialsOrInitError);
 
 /** Startup procedure
@@ -267,24 +158,24 @@ app.use(serveIndexIfNoCredentialsOrInitError);
  *  - try start prostgles
  *  - If failed to connect then also serve index
  */
-const startProstgles = (ddd: { host: string; port: number }) => {
-  const host = HOST;
-  const port = PORT;
+const startProstgles = ({ host, port }: { host: string; port: number }) => {
+  // const host = HOST;
+  // const port = PORT     ;
   if (electronConfig) {
     const creds = electronConfig.getCredentials();
     if (creds) {
-      tryStartProstgles({ app, io, con: creds, host, port });
+      void tryStartProstgles({ app, io, host, port, con: creds });
     } else {
       console.log("Electron: No credentials");
     }
     setDBSRoutesForElectron(app, io, port, host);
   } else {
-    tryStartProstgles({ app, io, host, port, con: undefined });
+    void tryStartProstgles({ app, io, host, port, con: undefined });
   }
 };
 
 const onServerReadyListeners: OnServerReadyCallback[] = [];
-export const onServerReady = async (cb: OnServerReadyCallback) => {
+export const onServerReady = (cb: OnServerReadyCallback) => {
   const { initState } = getProstglesState();
   if (initState.state === "ok" && initState.httpListening) {
     cb(initState.httpListening.port, initState.dbs);
@@ -293,6 +184,45 @@ export const onServerReady = async (cb: OnServerReadyCallback) => {
   }
 };
 
+// const redirected =  true;
+io.use((socket, next) => {
+  const currCookieStr = socket.request.headers.cookie;
+  console.log({ currCookieStr });
+  socket.data.user = { fuck: "you" };
+  next();
+  // next(new  Error("ddddddnot authorized"));
+});
+// // io.removeAllListeners ();
+// // io.engine.removeAll Listeners();
+// debugger;
+// io.use((socket, next) => {
+//   const currCookieStr = socket.request.headers.cookie;
+//   console.log({ currCookieStr });
+//   socket.data.user = { fuck: "you" };
+//   // next();
+//   next(new Error("ddddddnot authorized22"));
+// });
+// io.engine.use(((req,  res, next) => {
+//   const currCookieStr = req.headers.cookie ;
+//   console.log(currCookieStr);
+//   // if (!redirected) {
+//   //   redirected = true;
+//   //   // this.authHandler?.setCookieAndGoToReturnURLIFSet(
+//   //   //   { expires: Date.now() + 221000, sid: "heehe" },
+//   //   //   { req, res }
+//   //   // );
+//   //   // Set cookie manually on raw HTTP response
+//   //   const cookieStr = `${this.authHandler?.sidKeyName}=hehehe; Path=/; Expires=${new Date(Date.now() + 221000).toUTCString()}; HttpOnly`;
+//   //   res.setHeader("Set-Cookie", cookieStr);
+
+//   //   // Handle redirection
+//   //   res.statusCode = 302;
+//   //   res.setHeader("Location", "/");
+//   //   res.end();
+//   //   return;
+//   // }
+//   next();
+// }) satisfies RequestHandler);
 const server = http.listen(PORT, HOST, () => {
   const address = server.address();
   const port = isObject(address) ? address.port : PORT;
@@ -304,7 +234,7 @@ const server = http.listen(PORT, HOST, () => {
   // };
   startProstgles({ host, port });
 
-  waitForInitialisation().then((initState) => {
+  void waitForInitialisation().then((initState) => {
     if (initState.state !== "ok") {
       return;
     }
@@ -315,8 +245,7 @@ const server = http.listen(PORT, HOST, () => {
   console.log(`\n\nexpress listening on port ${port} (${host}:${port})\n\n`);
 });
 
-const spawn = require("child_process").spawn;
-export function restartProc(cb?: Function) {
+export function restartProc(cb?: VoidFunction) {
   console.warn("Restarting process");
   if (process.env.process_restarting) {
     delete process.env.process_restarting;
@@ -329,8 +258,13 @@ export function restartProc(cb?: Function) {
   }
 
   // Restart process ...
-  spawn(process.argv[0], process.argv.slice(1), {
-    env: { process_restarting: 1 },
+  const command = process.argv[0];
+  if (!command) {
+    throw new Error("No command found to restart process");
+  }
+  const args = process.argv.slice(1);
+  spawn(command, args, {
+    env: { process_restarting: "1" },
     stdio: "ignore",
   }).unref();
 }
@@ -341,4 +275,27 @@ export const tout = (timeout: number) => {
       resolve(true);
     }, timeout);
   });
+};
+
+export type BareConnectionDetails = Pick<
+  Connections,
+  | "type"
+  | "db_conn"
+  | "db_host"
+  | "db_name"
+  | "db_pass"
+  | "db_port"
+  | "db_user"
+  | "db_ssl"
+  | "ssl_certificate"
+>;
+export type DBS = DBOFullyTyped<DBGeneratedSchema>;
+export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
+export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
+export type DatabaseConfigs = DBSSchema["database_configs"];
+
+export const log = (msg: string, extra?: any) => {
+  console.log(
+    ...[`(server): ${new Date().toISOString()} ` + msg, extra].filter((v) => v),
+  );
 };

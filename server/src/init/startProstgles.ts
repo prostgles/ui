@@ -13,19 +13,24 @@ import type { ProstglesInitState } from "../../../commonTypes/electronInit";
 import BackupManager from "../BackupManager/BackupManager";
 import { addLog, setLoggerDBS } from "../Logger";
 import { setupMCPServerHub } from "../McpHub/McpHub";
-import { setAuthReloader } from "../authConfig/getAuth";
+import { initUsers } from "../SecurityManager/initUsers";
+import { getAuth } from "../authConfig/getAuth";
+import type { SUser } from "../authConfig/sessionUtils";
+import {
+  subscribeToAuthSetupChanges,
+  type AuthSetupDataListener,
+} from "../authConfig/subscribeToAuthSetupChanges";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { actualRootDir, getElectronConfig } from "../electronConfig";
 import { DBS_CONNECTION_INFO } from "../envVars";
-import { insertStateDatabase } from "../insertStateDatabase";
 import { publish } from "../publish/publish";
 import { setupLLM } from "../publishMethods/askLLM/setupLLM";
 import { publishMethods } from "../publishMethods/publishMethods";
-import { startDevHotReloadNotifier } from "../startDevHotReloadNotifier";
 import { tableConfig } from "../tableConfig/tableConfig";
+import { insertStateDatabase } from "./insertStateDatabase";
+import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { getProstglesState } from "./tryStartProstgles";
-import { initUsers } from "../SecurityManager/initUsers";
 
 type StartArguments = {
   app: Express;
@@ -43,7 +48,7 @@ export const initBackupManager = async (db: DB, dbs: DBS) => {
 
 export const getBackupManager = () => bkpManager;
 
-export let statePrgl: InitResult | undefined;
+export let statePrgl: InitResult<DBGeneratedSchema, SUser> | undefined;
 export type InitExtra = {
   dbs: DBS;
   httpListening?: {
@@ -51,6 +56,7 @@ export type InitExtra = {
   };
 };
 export type ProstglesInitStateWithDBS = ProstglesInitState<InitExtra>;
+let authSetupDataListener: AuthSetupDataListener | undefined;
 
 export const startProstgles = async ({
   app,
@@ -109,7 +115,7 @@ export const startProstgles = async ({
       : path.join(actualRootDir + "/../commonTypes/");
     const watchSchema = !!tsGeneratedTypesDir;
 
-    const prgl = await prostgles<DBGeneratedSchema>({
+    const prgl = await prostgles<DBGeneratedSchema, SUser>({
       dbConnection: {
         ...validatedDbConnection,
         connectionTimeoutMillis: 10 * 1000,
@@ -186,7 +192,7 @@ export const startProstgles = async ({
       //     console.error(err, ctx?.client?.processID, ctx?.query);
       //   }
       // },
-      onLog: async (e) => {
+      onLog: (e) => {
         addLog(e, null);
       },
       tableConfig,
@@ -214,12 +220,12 @@ export const startProstgles = async ({
           }
         },
       },
-      publishRawSQL: async (params) => {
+      publishRawSQL: (params) => {
         const { user } = params;
         return Boolean(user && user.type === "admin");
       },
       publishMethods,
-      publish: (params) => publish(params) as any,
+      publish,
       joins: "inferred",
       onReady: async (params) => {
         const { dbo: db } = params;
@@ -227,9 +233,6 @@ export const startProstgles = async ({
 
         setLoggerDBS(params.dbo);
 
-        /* Update stale data */
-        // await securityManager.destroy();
-        // await securityManager.init(db, _db);
         await initUsers(db, _db);
 
         await insertStateDatabase(db, _db, con, getProstglesState().isElectron);
@@ -242,7 +245,17 @@ export const startProstgles = async ({
         await bkpManager?.destroy();
         bkpManager ??= await BackupManager.create(_db, db, connMgr);
 
-        setAuthReloader(app, db, (auth) => prgl.update({ auth: auth as any }));
+        const newAuthSetupDataListener = subscribeToAuthSetupChanges(
+          db,
+          async (authData) => {
+            const auth = await getAuth(app, db, authData);
+            void prgl.update({
+              auth,
+            });
+          },
+          authSetupDataListener,
+        );
+        authSetupDataListener = newAuthSetupDataListener;
       },
     });
 

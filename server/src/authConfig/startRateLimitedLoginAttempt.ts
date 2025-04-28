@@ -2,18 +2,9 @@ import type { LoginClientInfo } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { type AuthResponse, isEmpty, pickKeys } from "prostgles-types";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import { HOUR } from "../../../commonTypes/utils";
-import { tout } from "..";
-import { authSetupData } from "./onAuthSetupDataChange";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
-
-const getGlobalSettings = async () => {
-  while (!authSetupData?.globalSettings) {
-    console.warn("Delaying user request until GlobalSettings area available");
-    await tout(500);
-  }
-  return authSetupData.globalSettings;
-};
+import { HOUR } from "../../../commonTypes/utils";
+import { waitForGlobalSettings } from "./subscribeToAuthSetupChanges";
 
 type FailedAttemptsInfo =
   | {
@@ -36,7 +27,7 @@ export const getFailedTooManyTimes = async (
   clientInfo: LoginClientInfo,
 ): Promise<FailedAttemptsInfo | AuthResponse.AuthFailure> => {
   const lastHour = new Date(Date.now() - 1 * HOUR).toISOString();
-  const globalSettings = await getGlobalSettings();
+  const globalSettings = await waitForGlobalSettings();
   const { ip, ipFromMatchByFilterKey, matchByFilterKey } = getIPsFromClientInfo(
     clientInfo,
     globalSettings,
@@ -134,6 +125,7 @@ export const startRateLimitedLoginAttempt = async (
   return {
     ip,
     failedTooManyTimes,
+    loginAttemptId: loginAttempt.id,
     onSuccess: async () => {
       await db.login_attempts.update(
         { id: loginAttempt.id },

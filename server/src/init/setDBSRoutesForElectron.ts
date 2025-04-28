@@ -1,15 +1,15 @@
 import { randomBytes } from "crypto";
 import type { Express, RequestHandler } from "express";
-import { removeExpressRoute } from "prostgles-server/dist/FileManager/FileManager";
 import { assertJSONBObjectAgainstSchema } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
 import { pickKeys, tryCatchV2 } from "prostgles-types";
 import type { Server } from "socket.io";
-import { DEFAULT_ELECTRON_CONNECTION } from "../../commonTypes/electronInit";
-import { testDBConnection } from "./connectionUtils/testDBConnection";
-import { validateConnection } from "./connectionUtils/validateConnection";
-import { getElectronConfig } from "./electronConfig";
-import { getProstglesState, tryStartProstgles } from "./init/tryStartProstgles";
+import { DEFAULT_ELECTRON_CONNECTION } from "../../../commonTypes/electronInit";
+import { testDBConnection } from "../connectionUtils/testDBConnection";
+import { validateConnection } from "../connectionUtils/validateConnection";
+import { getElectronConfig } from "../electronConfig";
+import { getProstglesState, tryStartProstgles } from "./tryStartProstgles";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
+import { removeExpressRoute } from "prostgles-server/dist/Auth/AuthHandler";
 
 /**
  * Used in Electron to set the DB connection and show any connection errors
@@ -82,7 +82,8 @@ const onPostDBSRequestHandler =
 
       if (mode === "validate") {
         const connection = validateConnection(creds);
-        return res.json({ connection });
+        res.json({ connection });
+        return;
       }
 
       if (!creds.db_conn || !creds.db_host) {
@@ -104,7 +105,7 @@ const onPostDBSRequestHandler =
           { ...creds, db_name: "postgres" },
           undefined,
           async (c) => {
-            const userExists = await c.oneOrNone(
+            const userExists = await c.oneOrNone<{ usename: string }>(
               `SELECT usename FROM pg_catalog.pg_user WHERE usename = $1`,
               [db_user],
             );
@@ -122,7 +123,7 @@ const onPostDBSRequestHandler =
             } else {
               db_pass = creds.db_pass;
             }
-            const dbExists = await c.oneOrNone(
+            const dbExists = await c.oneOrNone<{ datname: string }>(
               `SELECT datname FROM pg_catalog.pg_database WHERE datname = $1`,
               [db_name],
             );
@@ -156,7 +157,8 @@ const onPostDBSRequestHandler =
         throw startup;
       }
       electronConfig?.setCredentials(creds);
-      return res.json({ msg: "DBS changed. Restart system" });
+      res.json({ msg: "DBS changed. Restart system" });
+      return;
     } catch (err) {
       res.json({ warning: getErrorAsObject(err) });
       electronConfig?.setCredentials(undefined);

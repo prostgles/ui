@@ -41,9 +41,8 @@ export const getElectronConfig = () => {
 
   if (
     !safeStorage ||
-    ![safeStorage.encryptString, safeStorage.decryptString].every(
-      (v) => typeof v === "function",
-    )
+    typeof safeStorage.encryptString !== "function" ||
+    typeof safeStorage.decryptString !== "function"
   ) {
     throw "Invalid safeStorage provided. encryptString or decryptString is not a function";
   }
@@ -59,7 +58,7 @@ export const getElectronConfig = () => {
         : fs.readFileSync(electronConfigPath);
       const decrypted = file ? safeStorage!.decryptString(file) : undefined;
       if (decrypted) {
-        return JSON.parse(decrypted);
+        return JSON.parse(decrypted) as DBSConnectionInfo;
       }
     } catch (e) {
       console.error(e);
@@ -132,7 +131,7 @@ export const start = async (params: {
     const [token] = prostglesTokens;
     if (token) {
       console.log("Setting prostgles tokens");
-      dbs.global_settings.update(
+      void dbs.global_settings.update(
         {},
         { prostgles_registration: { email: "", enabled: true, token } },
       );
@@ -145,7 +144,7 @@ export const start = async (params: {
  * Prostgles token granted after registration
  */
 const prostglesTokens: string[] = [];
-export const setProstglesToken = async (token: string) => {
+export const setProstglesToken = (token: string) => {
   prostglesTokens.push(token);
   setInterval(() => {
     console.log("Prostgles token: " + token);

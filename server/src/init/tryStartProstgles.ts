@@ -3,11 +3,11 @@ import { isEqual } from "prostgles-types";
 import type { Server } from "socket.io";
 import { tout } from "..";
 import type { ProstglesState } from "../../../commonTypes/electronInit";
-import { cleanupTestDatabases } from "../cleanupTestDatabases";
+import { cleanupTestDatabases } from "./cleanupTestDatabases";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { getElectronConfig } from "../electronConfig";
 import { DBS_CONNECTION_INFO } from "../envVars";
-import { setDBSRoutesForElectron } from "../setDBSRoutesForElectron";
+import { setDBSRoutesForElectron } from "./setDBSRoutesForElectron";
 import { isRetryableError } from "./isRetryableError";
 import {
   getBackupManager,
@@ -43,7 +43,7 @@ export let startingProstglesResult:
     }
   | undefined = undefined;
 
-let connHistory: string[] = [];
+const connHistory: string[] = [];
 export const tryStartProstgles = async (
   args: StartArguments,
 ): Promise<Exclude<ProstglesInitStateWithDBS, { state: "loading" }>> => {
@@ -56,7 +56,7 @@ export const tryStartProstgles = async (
     startingProstglesResult = undefined;
   }
   startingProstglesResult ??= { args, result: _tryStartProstgles(args) };
-  return (await startingProstglesResult).result;
+  return await startingProstglesResult.result;
 };
 
 const _tryStartProstgles = async ({
@@ -156,6 +156,6 @@ export const getProstglesState = (): ProstglesState<InitExtra> => {
     initState: _initState,
     isElectron,
     electronCredsProvided: Boolean(eConfig?.hasCredentials()),
-    canDumpAndRestore: installedPrograms as any,
+    canDumpAndRestore: installedPrograms,
   };
 };

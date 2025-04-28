@@ -1,10 +1,8 @@
+import type { SessionUser } from "prostgles-server/dist/Auth/AuthTypes";
 import { verifySMTPConfig } from "prostgles-server/dist/Prostgles";
-import type {
-  Publish,
-  PublishParams,
-} from "prostgles-server/dist/PublishParser/PublishParser";
+import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser";
 import type { ValidateUpdateRow } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
-import { getKeys } from "prostgles-types";
+import { getKeys, type FilterItem } from "prostgles-types";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import { isDefined } from "../../../commonTypes/filterUtils";
 import {
@@ -14,13 +12,14 @@ import {
 } from "../../../commonTypes/OAuthUtils";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { getSMTPWithTLS } from "../authConfig/emailProvider/getEmailSenderWithMockTest";
+import { checkClientIP } from "../authConfig/sessionUtils";
 import { getACRules } from "../ConnectionManager/ConnectionManager";
 import { getPublishLLM } from "./getPublishLLM";
-import { checkClientIP } from "../authConfig/sessionUtils";
+import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 
-export const publish = async (
-  params: PublishParams<DBGeneratedSchema>,
-): Promise<Publish<DBGeneratedSchema>> => {
+export const publish: Publish<DBGeneratedSchema, SessionUser> = async (
+  params,
+) => {
   const { dbo: db, user, db: _db, clientReq } = params;
 
   if (!user || !user.id) {
@@ -172,7 +171,7 @@ export const publish = async (
       insert: {
         fields: { id: 0 },
         forcedData,
-        postValidate: async ({ row }) => {
+        postValidate: ({ row }) => {
           if (row.type !== "s3") {
             throw "Only s3 is supported";
           }
@@ -191,7 +190,7 @@ export const publish = async (
       ),
     connections: {
       select: {
-        fields: isAdmin ? "*" : { id: 1, name: 1, created: 1 },
+        fields: isAdmin ? "*" : { id: 1, name: 1, created: 1, is_state_db: 1 },
         orderByFields: { db_conn: 1, created: 1 },
         forcedFilter:
           isAdmin ?
@@ -376,7 +375,7 @@ export const publish = async (
           const { email } = row.auth_providers ?? {};
           if (
             email?.enabled &&
-            !(email.smtp.type === "smtp" && email.smtp.host === MOCK_SMTP_HOST)
+            (email.smtp.type !== "smtp" || email.smtp.host !== MOCK_SMTP_HOST)
           ) {
             const smtp = getSMTPWithTLS(email.smtp);
             await verifySMTPConfig(smtp);

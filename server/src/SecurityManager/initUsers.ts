@@ -16,8 +16,11 @@ export const activePasswordlessAdminFilter = {
   username: PASSWORDLESS_ADMIN_USERNAME,
   status: "active",
   passwordless_admin: true,
-};
-export const getPasswordlessAdmin = async (db: DBS) => {
+} as const;
+
+export const getPasswordlessAdmin = async (
+  db: DBS | Omit<DBS, "tx" | "sql">,
+) => {
   if (NoInitialAdminPasswordProvided) {
     return await db.users.findOne(activePasswordlessAdminFilter);
   }

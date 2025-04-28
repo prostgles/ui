@@ -3,8 +3,6 @@ import type { ProstglesInitStateWithDBS } from "./startProstgles";
 export const isRetryableError = (
   errorState: Extract<ProstglesInitStateWithDBS, { state: "error" }>,
 ): boolean => {
-  if (!errorState) return false;
-
   // Explicitly non-retryable Prostgles init errors
   if (errorState.errorType === "init") {
     console.warn(

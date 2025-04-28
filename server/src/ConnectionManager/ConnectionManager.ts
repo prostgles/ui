@@ -4,6 +4,7 @@ import path from "path";
 import type pg from "pg-promise/typescript/pg-subset";
 import type prostgles from "prostgles-server";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
+import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type {
   FileTableConfig,
@@ -11,7 +12,7 @@ import type {
 } from "prostgles-server/dist/ProstglesTypes";
 import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
 import type { SubscriptionHandler } from "prostgles-types";
-import { pickKeys } from "prostgles-types";
+import { isEqual, pickKeys } from "prostgles-types";
 import type { DefaultEventsMap, Server } from "socket.io";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
@@ -20,7 +21,10 @@ import {
   ROUTES,
   getConnectionPaths,
 } from "../../../commonTypes/utils";
-import type { AuthSetupData } from "../authConfig/onAuthSetupDataChange";
+import type {
+  AuthSetupData,
+  AuthSetupDataListener,
+} from "../authConfig/subscribeToAuthSetupChanges";
 import { getDbConnection } from "../connectionUtils/testDBConnection";
 import { getRootDir } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
@@ -35,6 +39,9 @@ import {
 } from "./connectionManagerUtils";
 import { saveCertificates } from "./saveCertificates";
 import { startConnection } from "./startConnection";
+import type { InitResult } from "prostgles-server/dist/initProstgles";
+import type { SUser } from "../authConfig/sessionUtils";
+import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
 
@@ -54,6 +61,8 @@ export const getACRules = async (
   });
 };
 
+type DBWithUsers = { users?: Partial<DBS["users"]> };
+
 type PRGLInstance = {
   socket_path: string;
   io:
@@ -61,7 +70,7 @@ type PRGLInstance = {
     | undefined;
   con: Connections;
   dbConf: DatabaseConfigs;
-  prgl?: Unpromise<ReturnType<typeof prostgles>>;
+  prgl?: InitResult<void, SUser>;
   error?: any;
   connectionInfo: pg.IConnectionParameters<pg.IClient>;
   methodRunner: ForkedPrglProcRunner | undefined;
@@ -70,6 +79,7 @@ type PRGLInstance = {
   isReady: boolean;
   lastRestart: number;
   isSuperUser: boolean | undefined;
+  authSetupDataListener: AuthSetupDataListener | undefined;
 };
 
 export const getHotReloadConfigs = async (
@@ -108,7 +118,7 @@ export class ConnectionManager {
   database_configs?: DatabaseConfigs[];
   authSetupData: AuthSetupData | undefined;
 
-  constructor(http: any, app: Express) {
+  constructor(http: httpServer, app: Express) {
     this.http = http;
     this.app = app;
 
@@ -119,7 +129,9 @@ export class ConnectionManager {
     await this.conSub?.unsubscribe();
     await this.dbConfSub?.unsubscribe();
     await this.userSub?.unsubscribe();
-    await this.accessControlListeners?.forEach((l) => l.unsubscribe());
+    await Promise.all(
+      this.accessControlListeners?.map((l) => l.unsubscribe()) ?? [],
+    );
   };
 
   getConnectionsWithPublicAccess = () => {
@@ -133,20 +145,18 @@ export class ConnectionManager {
    * restart all other related connections that did not get this event
    *
    */
-  onConnectionReload = async (conId: string, dbConfId: number) => {
+  onConnectionReload = (conId: string, dbConfId: number) => {
     const delay = 1000;
     setTimeout(() => {
-      Object.entries(this.prglConnections).forEach(
-        async ([_conId, prglCon]) => {
-          if (
-            conId !== _conId &&
-            prglCon.dbConf.id === dbConfId &&
-            prglCon.lastRestart < Date.now() - delay
-          ) {
-            prglCon.prgl?.restart();
-          }
-        },
-      );
+      Object.entries(this.prglConnections).forEach(([_conId, prglCon]) => {
+        if (
+          conId !== _conId &&
+          prglCon.dbConf.id === dbConfId &&
+          prglCon.lastRestart < Date.now() - delay
+        ) {
+          void prglCon.prgl?.restart();
+        }
+      });
     }, delay);
   };
 
@@ -172,7 +182,7 @@ export class ConnectionManager {
       { table_config_logs: null },
     );
     if (table_config_ts) {
-      const tableConfig = await getTableConfig({
+      const tableConfig = getTableConfig({
         table_config_ts,
         table_config: null,
       });
@@ -181,7 +191,7 @@ export class ConnectionManager {
         type: "tableConfig",
         pass_process_env_vars_to_server_side_functions: false,
         table_config_ts,
-        dbConfId: prglCon.dbConf.id!,
+        dbConfId: prglCon.dbConf.id,
         prglInitOpts: {
           dbConnection: {
             ...prglCon.connectionInfo,
@@ -219,7 +229,7 @@ export class ConnectionManager {
     );
     if (on_mount_ts) {
       prglCon.onMountRunner = await ForkedPrglProcRunner.create({
-        dbs: this.dbs!,
+        dbs: this.dbs,
         type: "onMount",
         on_mount_ts,
         on_mount_ts_compiled: getCompiledTS(on_mount_ts),
@@ -240,9 +250,9 @@ export class ConnectionManager {
   };
 
   syncUsers = async (
-    db: DBOFullyTyped,
+    db: DBWithUsers,
     userTypes: string[],
-    syncableColumns: string[],
+    syncableColumns: (keyof DBSSchema["users"])[],
   ) => {
     if (!db.users || !this.dbs || !syncableColumns.length) return;
     const lastUpdateDb = await db.users.findOne?.(
@@ -254,23 +264,23 @@ export class ConnectionManager {
       { select: { last_updated: 1 }, orderBy: { last_updated: -1 } },
     );
     if (
-      (lastUpdateDbs?.last_updated && !lastUpdateDb) ||
+      (lastUpdateDbs?.last_updated && !lastUpdateDb?.last_updated) ||
       (lastUpdateDbs?.last_updated &&
-        +lastUpdateDb?.last_updated < +lastUpdateDbs.last_updated)
+        +(lastUpdateDb?.last_updated || 0) < +lastUpdateDbs.last_updated)
     ) {
       const newUsers = await this.dbs.users.find(
         {
           "type.$in": userTypes,
           "last_updated.>": lastUpdateDb?.last_updated ?? 0,
-        },
+        } as Filter,
         { limit: 1000, orderBy: { last_updated: 1 } },
       );
       if (newUsers.length) {
         await db.users.insert?.(
-          newUsers.map((u) => pickKeys(u, syncableColumns as any)),
+          newUsers.map((u) => pickKeys(u, syncableColumns)),
           { onConflict: "DoUpdate" },
         );
-        this.syncUsers(db, userTypes, syncableColumns);
+        void this.syncUsers(db, userTypes, syncableColumns);
       }
     }
   };
@@ -282,8 +292,8 @@ export class ConnectionManager {
       {},
       { throttle: 1e3 },
       async (users) => {
-        for (const [connId, prglCon] of Object.entries(this.prglConnections)) {
-          const db = prglCon.prgl?.db;
+        for (const prglCon of Object.values(this.prglConnections)) {
+          const db = prglCon.prgl?.db as DBWithUsers | undefined;
           const dbUsersHandler = db?.users;
           const dbConf = await this.dbs?.database_configs.findOne({
             id: prglCon.dbConf.id,
@@ -303,7 +313,7 @@ export class ConnectionManager {
             const dbCols = await dbUsersHandler.getColumns?.();
             const dbsCols = await this.dbs?.users.getColumns();
             if (!dbCols || !dbsCols) return;
-            const requiredColumns = ["id", "last_updated"];
+            const requiredColumns = ["id", "last_updated"] as const;
             const excludedColumns = ["password"];
             const syncableColumns = dbsCols
               .filter((c) =>
@@ -315,12 +325,14 @@ export class ConnectionManager {
                 ),
               )
               .map((c) => c.name)
-              .filter((c) => !excludedColumns.includes(c));
+              .filter(
+                (c) => !excludedColumns.includes(c),
+              ) as (keyof DBSSchema["users"])[];
             if (
               userTypes &&
               requiredColumns.every((c) => syncableColumns.includes(c))
             ) {
-              this.syncUsers(db, userTypes, syncableColumns);
+              void this.syncUsers(db, userTypes, syncableColumns);
             }
           }
         }
@@ -329,7 +341,7 @@ export class ConnectionManager {
   };
   conSub?: SubscriptionHandler | undefined;
   dbConfSub?: SubscriptionHandler | undefined;
-  dbConfigs: (Pick<DBSSchema["database_configs"], "id"> & {
+  dbConfigs: (DBSSchema["database_configs"] & {
     connections: { id: string }[];
     access_control_user_types: {
       user_type: string;
@@ -373,12 +385,12 @@ export class ConnectionManager {
           access_control_user_types: "*",
         },
       },
-      (dbConfigs) => {
+      async (dbConfigs: typeof this.dbConfigs) => {
         this.dbConfigs = dbConfigs;
-        dbConfigs.forEach((conf) => {
-          conf.connections.forEach(async (c: { id: string }) => {
+        for (const conf of dbConfigs) {
+          for (const c of conf.connections) {
             const prglCon = this.prglConnections[c.id];
-            if (prglCon?.prgl) {
+            if (prglCon?.prgl && !prglCon.con.is_state_db) {
               const con = await this.getConnectionData(c.id);
               const hotReloadConfig = await getHotReloadConfigs(
                 this,
@@ -386,16 +398,24 @@ export class ConnectionManager {
                 conf,
                 dbs,
               );
-              prglCon.prgl.update(hotReloadConfig);
-              this.setSyncUserSub();
+              /** Can happen due to error in onMount */
+              await prglCon.prgl.update(hotReloadConfig).catch((e) => {
+                console.error(
+                  `Error updating connection ${con.id} with hot reload config`,
+                  e,
+                  { hotReloadConfig },
+                );
+              });
+              await this.setSyncUserSub();
             }
-          });
-        });
+          }
+        }
         this.database_configs = dbConfigs;
       },
     );
 
     /** Start connections if accessed */
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     this.app.use(async (req, res, next) => {
       const { url } = req;
       if (
@@ -415,7 +435,7 @@ export class ConnectionManager {
       next();
     });
 
-    this.accessControlHotReload();
+    await this.accessControlHotReload();
   };
 
   accessControlSkippedFirst = false;
@@ -428,12 +448,14 @@ export class ConnectionManager {
         return;
       }
       console.log("onAccessChange");
-      connIds.forEach((connection_id) => {
-        this.prglConnections[connection_id]?.prgl?.restart();
-      });
+      return Promise.all(
+        connIds.map((connection_id) => {
+          return this.prglConnections[connection_id]?.prgl?.restart();
+        }),
+      );
     };
     this.accessControlListeners = [
-      (await this.dbs.access_control.subscribe(
+      await this.dbs.access_control.subscribe(
         {},
         {
           select: {
@@ -449,15 +471,16 @@ export class ConnectionManager {
         async (connections) => {
           const dbIds = Array.from(
             new Set(connections.map((c) => c.database_id)),
-          ) as number[];
-          const d = await this.dbs?.connections.findOne(
-            { $existsJoined: { database_configs: { id: { $in: dbIds } } } },
-            { select: { connIds: { $array_agg: ["id"] } } },
           );
-          onAccessChange(d?.connIds ?? []);
-          this.setSyncUserSub();
+          const d: { connIds?: string[] } | undefined =
+            await this.dbs?.connections.findOne(
+              { $existsJoined: { database_configs: { id: { $in: dbIds } } } },
+              { select: { connIds: { $array_agg: ["id"] } } },
+            );
+          await onAccessChange(d?.connIds ?? []);
+          await this.setSyncUserSub();
         },
-      )) as SubscriptionHandler,
+      ),
     ];
   };
 
@@ -479,10 +502,10 @@ export class ConnectionManager {
     // return this.wss;
   }
 
-  async getFileFolderPath(conId?: string) {
+  getFileFolderPath(conId?: string) {
     const rootPath = path.resolve(`${getRootDir()}${ROUTES.STORAGE}`);
     if (!conId) return rootPath;
-    const conn = await this.connections?.find((c) => c.id === conId);
+    const conn = this.connections?.find((c) => c.id === conId);
     if (!conn) throw "Connection not found";
     const conPath = UNIQUE_DB_COLS.map((f) => conn[f]).join("_");
     return `${rootPath}/${conPath}`;
@@ -518,7 +541,7 @@ export class ConnectionManager {
   async disconnect(conId: string): Promise<boolean> {
     await cdbCache[conId]?.destroy();
     if (this.prglConnections[conId]) {
-      await this.prglConnections[conId]?.prgl?.destroy();
+      await this.prglConnections[conId].prgl?.destroy();
       delete this.prglConnections[conId];
       return true;
     }
@@ -559,7 +582,7 @@ export const cdbCache: Record<
     db: DB;
     isSuperUser?: boolean;
     hasSuperUser?: boolean;
-    destroy: VoidFunction;
+    destroy: () => Promise<void>;
   }
 > = {};
 export const getCDB = async (
@@ -567,8 +590,8 @@ export const getCDB = async (
   opts?: pg.IConnectionParameters<pg.IClient>,
   isTemporary = false,
 ) => {
-  if (!cdbCache[connId] || cdbCache[connId]?.db.$pool.ending || isTemporary) {
-    const destroy = async () => {
+  if (!cdbCache[connId] || cdbCache[connId].db.$pool.ending || isTemporary) {
+    const destroy: () => Promise<void> = async () => {
       await db.$pool.end();
       delete cdbCache[connId];
     };
@@ -582,12 +605,8 @@ export const getCDB = async (
       destroy,
     };
   }
-  const result = cdbCache[connId];
-  if (!result) {
-    throw `Something went wrong: sql handler missing`;
-  }
 
-  return result;
+  return cdbCache[connId];
 };
 export const getSuperUserCDB = async (connId: string, dbs: DBS) => {
   const dbInfo = await getCDB(connId);
@@ -637,7 +656,7 @@ export const getSuperUserCDB = async (connId: string, dbs: DBS) => {
       hasSuperUser: true,
     };
     cdbCache[connId]!.hasSuperUser = true;
-    return cdbCache[connIdSuperUser]!;
+    return cdbCache[connIdSuperUser];
   }
   cdbCache[connId]!.hasSuperUser = false;
   cdbCache[connId]!.isSuperUser = false;

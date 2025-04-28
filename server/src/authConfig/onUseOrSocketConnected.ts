@@ -1,5 +1,5 @@
 import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
-import type { AuthSetupData } from "./onAuthSetupDataChange";
+import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
 import { connMgr, tout, type DBS } from "..";
 import { getElectronConfig } from "../electronConfig";
 import {
@@ -47,20 +47,14 @@ export const getOnUseOrSocketConnected = (
       }
       return;
     }
-    // await createPasswordlessAdminSessionIfNeeded(
-    //   authSetupData,
-    //   dbs,
-    //   client,
-    //   sid,
-    // );
 
     /** Ensure that only 1 session is allowed for the passwordless admin */
     // if (passwordlessAdmin) {
     //   const pwdLessSession = await dbs.sessions.findOne({
-    //     user_id: passwordlessAdmin.id,
+    //     user_id: passwordlessAdmin.id  ,
     //     active: true,
     //   });
-    //   if (pwdLessSession && pwdLessSession.id !== sid) {
+    //   if (pwdLessSession && pwdLessSession.id !== sid)  {
     //     if (
     //       electronConfig?.isElectron &&
     //       electronConfig.sidConfig.electronSid === sid

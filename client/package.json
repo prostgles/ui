@@ -13,7 +13,7 @@
     "marked": "^14.1.2",
     "monaco-editor": "^0.50.0",
     "papaparse": "^5.4.1",
-    "prostgles-client": "^4.0.232",
+    "prostgles-client": "^4.0.238",
     "qrcode": "^1.5.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -22,7 +22,7 @@
     "react-router-dom": "^7.5.2",
     "resolve": "1.15.0",
     "sanitize-html": "^2.13.0",
-    "socket.io-client": "^4.7.5",
+    "socket.io-client": "^4.8.1",
     "sql-formatter": "^15.3.2"
   },
   "scripts": {
@@ -31,7 +31,7 @@
     "start": "node scripts/start.js --no-cache",
     "build-start": "rm -rf ./build && webpack --config=configs/prod.js && npm prune --omit=dev",
     "build": "bash ./build.sh",
-    "dev": "npm i --quiet && NODE_OPTIONS='--max-old-space-size=4048' webpack --watch --config=configs/dev.js",
+    "dev": "npm i --quiet && NODE_OPTIONS='--max-old-space-size=4048' && webpack --watch --config=configs/dev.js",
     "lib": "rm -rf ./dist && tsc --project tsconfig_lib.json && npm run copyf",
     "copyf": "cd ./src && find . -name '*.css' -type f -exec cp --parents {} ../dist/ \\; ",
     "copyf2": "find ./src/. -name '*.css' | cpio -pdm ./dist/",

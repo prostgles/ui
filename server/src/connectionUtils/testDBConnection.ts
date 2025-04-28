@@ -6,7 +6,8 @@ export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 import pgPromise from "pg-promise";
 import type pg from "pg-promise/typescript/pg-subset";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
-import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
+import type { DB } from "prostgles-server/dist/initProstgles";
+import { getIsSuperUser, type DBorTx } from "prostgles-server/dist/Prostgles";
 import { pickKeys, tryCatchV2 } from "prostgles-types";
 const pgpNoWarnings = pgPromise({ noWarnings: true });
 const pgp = pgPromise();
@@ -46,14 +47,15 @@ export const testDBConnection = (
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   return new Promise(async (resolve, reject) => {
-    const connOpts = getConnectionDetails(con as any);
+    const connOpts = getConnectionDetails(con as Connections);
     const db = pgpNoWarnings({ ...connOpts });
     return db
       .connect()
-      .then(async function (c: pgPromise.IConnected<{}, pg.IClient>) {
+      .then(async function (c) {
         if (expectSuperUser) {
-          const usessuper = await getIsSuperUser(c as any);
+          const usessuper = await getIsSuperUser(c as unknown as DBorTx);
           if (!usessuper) {
             reject("Provided user must be a superuser");
             return;

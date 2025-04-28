@@ -4,6 +4,7 @@ import type {
   ConnectionStatus,
   IOStats,
   PG_STAT_ACTIVITY,
+  PG_STAT_DATABASE,
   ServerStatus,
 } from "../../../commonTypes/utils";
 import { getPidStatsFromProc } from "./getPidStatsFromProc";
@@ -90,7 +91,7 @@ const ioStatMethods = {
     });
 
     const deviceRows = ioInfo.filter(
-      (r) => r.minorNumber === 0 && !r.deviceName?.startsWith("loop"),
+      (r) => r.minorNumber === 0 && !r.deviceName.startsWith("loop"),
     );
     return deviceRows;
   },
@@ -108,7 +109,7 @@ const pidStatsMethods = {
         const [pid, usr, pr, ni, virt, res, shr, s, cpu, mem, time, cmd = ""] =
           shell.trim().replace(/  +/g, " ").split(" ");
         const mhz =
-          pidStatsWithMhz?.pidStats.find((p) => p.pid! == (pid as any))?.mhz ||
+          pidStatsWithMhz?.pidStats.find((p) => p.pid == (pid as any))?.mhz ||
           "";
         return parsePidStats({ pid, cpu, mem, cmd, mhz });
       })
@@ -234,15 +235,20 @@ export const getPidStats = async (
         getPidStatsErrors: { proc: getErrorAsObject(error) },
       } as const),
   );
-  const { mode } = connectionBashStatus[connId] ?? {};
-  if (!mode || mode === "off") return undefined;
+  const { mode } = connectionBashStatus[connId];
+  if (mode === "off") return undefined;
   return pidStatsMethods[mode](db, connId);
 };
 
 export const getStatus = async (connId: string, dbs: DBS) => {
   const { db: cdb } = await getSuperUserCDB(connId, dbs);
+  const { maxConnections } = await cdb.one<{ maxConnections: number }>(`
+    SELECT setting::numeric as "maxConnections"
+    FROM pg_catalog.pg_settings
+    WHERE name = 'max_connections'
+  `);
   const result: ConnectionStatus = {
-    queries: (await cdb.any(
+    queries: await cdb.any(
       `
       /* ${IGNORE_QUERY} */
       SELECT 
@@ -257,22 +263,19 @@ export const getStatus = async (connId: string, dbs: DBS) => {
       WHERE pid <> pg_backend_pid() -- query NOT ILIKE '%' || \${queryName} || '%'
     `,
       { queryName: IGNORE_QUERY },
-    )) as PG_STAT_ACTIVITY[],
+    ),
     blockedQueries: [],
     topQueries: [],
-    getPidStatsErrors: connectionBashStatus[connId]?.getPidStatsErrors,
+    getPidStatsErrors: connectionBashStatus[connId]
+      ?.getPidStatsErrors as Partial<Record<string, any>>,
     noBash: connectionBashStatus[connId]?.mode === "off",
-    connections: (await cdb.any(`
+    connections: await cdb.any<PG_STAT_DATABASE>(`
       /* ${IGNORE_QUERY} */
       SELECT *
       FROM pg_stat_database
       WHERE numbackends > 0;
-    `)) as any,
-    ...((await cdb.one(`
-      SELECT setting::numeric as "maxConnections"
-      FROM pg_catalog.pg_settings
-      WHERE name = 'max_connections'
-    `)) as any),
+    `),
+    maxConnections,
   };
 
   let procInfo: ServerLoadStats | undefined;
@@ -288,7 +291,7 @@ export const getStatus = async (connId: string, dbs: DBS) => {
     procInfo.serverStatus.ioInfo = await ioStatMethods.diskstats(cdb, connId);
   }
 
-  await dbs.tx!(async (tx) => {
+  await dbs.tx(async (tx) => {
     await tx.stats.delete({ connection_id: connId });
     await tx.stats.insert(
       result.queries.map((q) => ({
@@ -308,7 +311,7 @@ export const getStatus = async (connId: string, dbs: DBS) => {
             ...otherFields,
             memPretty: bytesToSize(
               (+otherFields.mem / 100) *
-                procInfo!.serverStatus.total_memoryKb *
+                procInfo.serverStatus.total_memoryKb *
                 1024,
             ),
           },

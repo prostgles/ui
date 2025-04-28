@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import type { Prgl } from "../../App";
 import { SuccessMessage } from "../../components/Animations";
 import Btn from "../../components/Btn";
 import Chip from "../../components/Chip";
@@ -9,20 +10,17 @@ import { InfoRow } from "../../components/InfoRow";
 import PopupMenu from "../../components/PopupMenu";
 import { QRCodeImage } from "../../components/QRCodeImage";
 import type { UserData } from "../../dashboard/Dashboard/dashboardUtils";
-import type { Prgl } from "../../App";
 import { t } from "../../i18n/i18nUtils";
 
-export const Setup2FA = ({
-  user,
-  dbsMethods,
-  onChange,
-}: Pick<Prgl, "dbsMethods"> & { user: UserData; onChange: VoidFunction }) => {
+export const Setup2FA = (
+  props: Pick<Prgl, "dbsMethods"> & { user: UserData; onChange: VoidFunction },
+) => {
+  const { user, dbsMethods, onChange } = props;
   const [OTP, setOTP] = useState<{
     url: string;
     secret: string;
     recoveryCode: string;
   }>();
-
   const [err, setErr] = useState<any>();
   const [codeConfirm, setCodeConfirm] = useState();
   const [enabled, setEnabled] = useState(false);

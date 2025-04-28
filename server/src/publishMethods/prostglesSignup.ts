@@ -1,6 +1,5 @@
-import type { AnyObject } from "prostgles-types";
-import { isTesting } from "..";
 import { PROSTGLES_CLOUD_URL, ROUTES } from "../../../commonTypes/utils";
+import { isTesting } from "../init/initExpressAndIOServers";
 
 export const prostglesSignup = async (email: string, code: string) => {
   const host = isTesting ? "http://localhost:3004" : PROSTGLES_CLOUD_URL;
@@ -23,6 +22,6 @@ export const prostglesSignup = async (email: string, code: string) => {
       .catch(() => rawResp.statusText);
     return { error, hasError: true };
   }
-  const { token } = (await rawResp.json()) as AnyObject;
+  const { token } = (await rawResp.json()) as { token: string };
   return { token, host };
 };

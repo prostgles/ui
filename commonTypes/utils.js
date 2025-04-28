@@ -174,3 +174,12 @@ export function debouncePromise(promiseFuncDef) {
         return currentPromise.then(() => promiseFuncDef(...args));
     };
 }
+export const getCaller = () => {
+    //@ts-ignore
+    // Error.stackTraceLimit = 30;
+    var _a, _b, _c;
+    const error = new Error();
+    const stackLines = (_b = (_a = error.stack) === null || _a === void 0 ? void 0 : _a.split("\n")) !== null && _b !== void 0 ? _b : [];
+    const callerLine = (_c = stackLines[2]) !== null && _c !== void 0 ? _c : "";
+    return stackLines;
+};

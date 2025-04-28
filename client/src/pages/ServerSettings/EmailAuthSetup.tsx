@@ -154,15 +154,24 @@ export const EmailAuthSetup = ({
         value={localAuth}
         onChange={async (newConfig) => {
           if (!localAuth) throw "Local auth not found";
-          await doUpdate({
-            ...authProviders,
-            email: {
+          if (localAuth.enabled) {
+            await doUpdate({
+              ...authProviders,
+              email: {
+                ...localAuth,
+                ...newConfig,
+              },
+            });
+            setError(undefined);
+            setLocalAuth(undefined);
+          } else {
+            setLocalAuth({
               ...localAuth,
-              ...newConfig,
-            },
-          });
-          setError(undefined);
-          setLocalAuth(undefined);
+              emailTemplate: newConfig.emailTemplate,
+              smtp: newConfig.smtp,
+              emailConfirmationEnabled: newConfig.emailConfirmationEnabled,
+            });
+          }
         }}
       />
       {error && (

@@ -7,7 +7,7 @@ import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUti
 import { getJSONBObjectSchemaValidationError } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
 
 export const callMCPServerTool = async (
-  user: DBSSchema["users"],
+  user: Pick<DBSSchema["users"], "id">,
   chat_id: number,
   dbs: DBS,
   serverName: string,

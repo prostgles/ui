@@ -18,7 +18,7 @@ const initForkedProc = () => {
   let _prglParams: OnReadyParamsBasic | undefined;
   let prglParams: OnReadyParamsBasic | undefined;
 
-  let lastToolCallId = 0;
+  const lastToolCallId = 0;
   const toolCalls: Record<number, { cb: (err: any, res: any) => void }> = {};
   const setProxy = (params: OnReadyParamsBasic) => {
     _prglParams = params as any;
@@ -49,6 +49,7 @@ const initForkedProc = () => {
   if (!process.send) {
     console.error("No process.send");
   }
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   process.on("message", async (msg: ForkedProcMessage) => {
     try {
       if ("id" in msg) lastMsgId = msg.id;

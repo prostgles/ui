@@ -161,7 +161,7 @@ export class McpHub {
           };
           await this.connectToServer(name, config, eventOptions);
         } catch (error) {
-          onLog("error", JSON.stringify(getErrorAsObject(error)), "");
+          void onLog("error", JSON.stringify(getErrorAsObject(error)), "");
           if (isRunningDifferentConfig) {
             console.error(
               `Failed to connect to new MCP server ${name}:`,
@@ -270,7 +270,7 @@ export const startMcpHub = async (
   mcpHubInitializing = false;
   if (mcpHubReInitializingRequested) {
     mcpHubReInitializingRequested = false;
-    startMcpHub(dbs);
+    void startMcpHub(dbs);
   }
   if (result.hasError) {
     throw result.error;
@@ -324,7 +324,7 @@ export const setupMCPServerHub = async (dbs: DBS) => {
       globalSettingsCallbackCount++;
     }
     if (serversCallbackCount && globalSettingsCallbackCount) {
-      startMcpHub(dbs);
+      void startMcpHub(dbs);
     }
   };
 
@@ -349,7 +349,7 @@ export const testMCPServerConfig = async (
   config: DBSSchema["mcp_server_configs"],
 ) => {
   const mcpConfig = await fetchMCPServerConfigs(dbs, config);
-  (
+  return (
     await connectToMCPServer(
       config.server_name,
       mcpConfig[config.server_name]!,

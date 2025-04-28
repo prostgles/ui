@@ -7,7 +7,7 @@ import type { DBS, Users } from "../index";
 import { PROSTGLES_STRICT_COOKIE } from "../envVars";
 import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { getClientRequestIPsInfo } from "prostgles-server/dist/Auth/AuthHandler";
-import type { AuthSetupData } from "./onAuthSetupDataChange";
+import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
 import type { Request } from "express";
 import { DAY, ROUTES, YEAR } from "../../../commonTypes/utils";
 import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
@@ -92,7 +92,7 @@ export const checkClientIP = async (
     groupBy === "x-real-ip" ? x_real_ip
     : groupBy === "remote_ip" ? ip_address_remote
     : ip_address;
-  const isAllowed = (await dbsOrTx.sql!(
+  const isAllowed = (await dbsOrTx.sql(
     "SELECT inet ${ip} <<= any (allowed_ips::inet[]) FROM global_settings ",
     { ip: ipValue },
     { returnType: "value" },
@@ -171,17 +171,17 @@ export const makeMagicLink = async (
 };
 
 export const insertUser = async (
-  db: DBS,
-  _db: DB,
+  db: Pick<DBS, "users">,
   u: Parameters<typeof db.users.insert>[0] & { password: string },
 ) => {
   const user = (await db.users.insert(u, { returning: "*" })) as Users;
   if (!user.id) throw "User id missing";
   if (typeof user.password !== "string") throw "Password missing";
   const hashedPassword = getPasswordHash(user, user.password);
-  await _db.any(
-    "UPDATE users SET password = ${hashedPassword} WHERE id = ${id};",
-    { id: user.id, hashedPassword },
-  );
-  return db.users.findOne({ id: user.id })!;
+  // await _db.any(
+  //   "UPDATE users SET password = ${hashedPassword} WHERE id = ${id};",
+  //   { id: user.id, hashedPassword },
+  // );
+  await db.users.update({ id: user.id }, { password: hashedPassword });
+  return db.users.findOne({ id: user.id });
 };

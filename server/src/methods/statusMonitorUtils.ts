@@ -70,7 +70,7 @@ export const getServerStatus = async (
   } catch (e) {
     /** Set from mhz array */
     const mhzNumArr = cpu_cores_mhz_arr.map((v) => +v).filter((v) => v);
-    if (mhzNumArr.length && mhzNumArr.every((v) => Number.isFinite)) {
+    if (mhzNumArr.length && mhzNumArr.every((v) => Number.isFinite(v))) {
       cpu_mhz = [
         "CPU min MHz: " + Math.max(...mhzNumArr),
         "CPU max MHz: " + Math.max(...mhzNumArr),

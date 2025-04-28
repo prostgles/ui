@@ -1,7 +1,7 @@
 import path from "path";
 import * as fs from "fs";
 import type { InitResult } from "prostgles-server/dist/initProstgles";
-import { RELOAD_NOTIFICATION } from "../../commonTypes/utils";
+import { RELOAD_NOTIFICATION } from "../../../commonTypes/utils";
 
 let showedMessage = false;
 export const startDevHotReloadNotifier = ({
@@ -9,7 +9,7 @@ export const startDevHotReloadNotifier = ({
   port,
   host,
 }: {
-  io: InitResult["io"];
+  io: NonNullable<InitResult["io"]>;
   port: number;
   host: string;
 }) => {
@@ -20,14 +20,15 @@ export const startDevHotReloadNotifier = ({
     showedMessage = true;
   };
   if (process.env.NODE_ENV === "development") {
-    fs.watchFile(
-      path.join(__dirname, "../../../../client/configs/last_compiled.txt"),
-      { interval: 100 },
-      (eventType, filename) => {
-        io.emit("server-restart-request");
-        showMessage();
-      },
+    const lastCompiledPath = path.join(
+      __dirname,
+      "../../../../../client/configs/last_compiled.txt",
     );
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
+    fs.watchFile(lastCompiledPath, { interval: 100 }, (eventType, filename) => {
+      io.emit("server-restart-request");
+      showMessage();
+    });
   } else {
     showMessage();
   }

@@ -148,7 +148,8 @@ export const useProjectDb = ({ prglState, connId }: P): PrglProjectState => {
         const { con, path } = pathInfo;
         const { dbo: db, methods, auth, tableSchema, socket } = dbPrgl;
         const { dbs, dbsTables } = prglState;
-        const thisIstheStateDB = auth?.user?.state_db_id === con.id;
+        // const thisIstheStateDB = auth?.user?.state_db_id === con.id;
+        const thisIstheStateDB = con.is_state_db;
         const { tables: dbTables = [] } = getTables(
           tableSchema ?? [],
           con.table_options,

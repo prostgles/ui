@@ -1,29 +1,29 @@
 import { mdiAccount, mdiApplicationBracesOutline, mdiSecurity } from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { getKeys } from "prostgles-types";
 import React from "react";
 import { useSearchParams } from "react-router-dom";
+import { API_ENDPOINTS } from "../../../../commonTypes/utils";
 import type { ExtraProps } from "../../App";
+import { FlexRow } from "../../components/Flex";
+import { InfoRow } from "../../components/InfoRow";
 import Tabs from "../../components/Tabs";
 import { PasswordlessSetup } from "../../dashboard/AccessControl/PasswordlessSetup";
 import { APIDetails } from "../../dashboard/ConnectionConfig/APIDetails/APIDetails";
 import { SmartForm } from "../../dashboard/SmartForm/SmartForm";
+import { t } from "../../i18n/i18nUtils";
+import { ChangePassword } from "./ChangePassword";
 import { Sessions } from "./Sessions";
 import { Setup2FA } from "./Setup2FA";
-import { FlexRow } from "../../components/Flex";
-import { ChangePassword } from "./ChangePassword";
-import { InfoRow } from "../../components/InfoRow";
-import { t } from "../../i18n/i18nUtils";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
-import { API_ENDPOINTS } from "../../../../commonTypes/utils";
 
 type AccountProps = ExtraProps;
 
 export const Account = (props: AccountProps) => {
-  const { dbs, dbsTables, dbsMethods, user, auth, theme } = props;
+  const { dbs, dbsTables, dbsMethods, user, auth } = props;
 
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: dbsConnection } = dbs.connections.useFindOne({
-    id: auth.user?.state_db_id,
+    is_state_db: true,
   });
 
   const notAllowedBanner = (

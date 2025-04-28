@@ -86,10 +86,16 @@ export const installMCPServer = async (dbs: DBS, name: string) => {
       "npm",
       ["install"],
       { cwd: installationPath },
-      (chunk) => addLog(chunk),
+      (chunk) => {
+        void addLog(chunk);
+      },
     );
     if (npmI.err) {
-      return addLog("Failed to install MCP server", true, npmI.err);
+      return addLog(
+        "Failed to install MCP server",
+        true,
+        npmI.err instanceof Error ? npmI.err.message : npmI.err,
+      );
     }
   }
 

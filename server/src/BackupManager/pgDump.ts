@@ -1,4 +1,6 @@
 import type { ChildProcess } from "child_process";
+import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
+import { omitKeys, pickKeys } from "prostgles-types";
 import type { DumpOpts, PGDumpParams } from "../../../commonTypes/utils";
 import { getSSLEnvVars } from "../ConnectionManager/saveCertificates";
 import type BackupManager from "./BackupManager";
@@ -10,7 +12,6 @@ import {
   getFileMgr,
   makeLogs,
 } from "./utils";
-import { omitKeys, pickKeys } from "prostgles-types";
 
 export async function pgDump(
   this: BackupManager,
@@ -28,10 +29,13 @@ export async function pgDump(
   let proc: ChildProcess | undefined;
 
   const setError = (err: any) => {
-    console.error(new Date() + " pg_dump err for connection " + conId, err);
+    console.error(
+      new Date().toISOString() + " pg_dump err for connection " + conId,
+      err,
+    );
     proc?.kill();
     if (backup_id) {
-      this.dbs.backups.update(
+      void this.dbs.backups.update(
         { id: backup_id },
         { status: { err }, last_updated: new Date() },
       );
@@ -63,7 +67,7 @@ export async function pgDump(
     dumpAll ?
       {
         command: this.getCmd("pg_dumpall"),
-        opts: addOptions(
+        args: addOptions(
           ["-d", uri],
           [
             [o.clean, "--clean"],
@@ -80,7 +84,7 @@ export async function pgDump(
     : {
         command: this.getCmd("pg_dump"),
         // opts: addOptions([uri_NOT_SAFE_-> VISIBLE TO ps aux], [
-        opts: addOptions(
+        args: addOptions(
           [],
           [
             [!!o.format, ["--format", o.format]],
@@ -116,7 +120,7 @@ export async function pgDump(
           envToStr(ENV_VARS) +
           dumpCommand.command +
           " " +
-          dumpCommand.opts.join(" "),
+          dumpCommand.args.join(" "),
         status: { loading: { loaded: 0, total: 0 } },
         options: omitKeys(o as any, ["credentialID"]) as DumpOpts,
         content_type,
@@ -137,39 +141,40 @@ export async function pgDump(
     const destStream = fileMgr.uploadStream(
       backup_id,
       content_type,
-      async (loadingRaw) => {
+      (loadingRaw) => {
         /** S3 is adding some extra fields while total is missing */
         const loading = pickKeys(loadingRaw, ["total", "loaded"]);
-        this.dbs.backups.update(
+        void this.dbs.backups.update(
           {
             $and: [
               { id: backup_id },
               { "status->>ok": null },
               { "status->>err": null },
-            ] as any,
+            ] as Filter[],
           },
           { status: { loading }, last_updated: new Date() },
         );
       },
       setError,
-      async (item) => {
-        const bkp = await getBkp();
-        if (bkp && "err" in bkp.status) {
-          try {
-            await fileMgr.deleteFile(bkp.id);
-          } catch (err) {}
-        } else {
-          this.dbs.backups.update(
-            { id: backup_id },
-            {
-              sizeInBytes: item.content_length,
-              uploaded: new Date(),
-              status: { ok: "1" },
-              last_updated: new Date(),
-              local_filepath: item.filePath,
-            },
-          );
-        }
+      (item) => {
+        void getBkp().then(async (bkp) => {
+          if (bkp && "err" in bkp.status) {
+            try {
+              await fileMgr.deleteFile(bkp.id);
+            } catch {}
+          } else {
+            void this.dbs.backups.update(
+              { id: backup_id },
+              {
+                sizeInBytes: item.content_length,
+                uploaded: new Date(),
+                status: { ok: "1" },
+                last_updated: new Date(),
+                local_filepath: item.filePath,
+              },
+            );
+          }
+        });
       },
     );
 
@@ -187,7 +192,7 @@ export async function pgDump(
       },
       onStdout:
         !o.keepLogs ? undefined : (
-          async ({ chunk: _dump_logs, pipedLength }, isStdErr) => {
+          async ({ chunk: _dump_logs }, isStdErr) => {
             if (!isStdErr) return;
             const currBkp = await this.dbs.backups.findOne({ id: backup_id });
             if (!currBkp || "err" in currBkp.status) {
@@ -197,10 +202,10 @@ export async function pgDump(
             const dump_logs = makeLogs(
               _dump_logs,
               currBkp.dump_logs,
-              currBkp.created as any,
+              currBkp.created,
             );
-            this.dbs.backups.update(
-              { id: backup_id, "status->>ok": null } as any,
+            void this.dbs.backups.update(
+              { id: backup_id, "status->>ok": null } as Filter,
               {
                 dump_logs,
                 last_updated: new Date(),
@@ -208,9 +213,9 @@ export async function pgDump(
             );
           }
         ),
-      useExec: false,
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     const interval = setInterval(async () => {
       const bkp = await this.dbs.backups.findOne({ id: backup_id });
       if (!bkp || "err" in bkp.status) {

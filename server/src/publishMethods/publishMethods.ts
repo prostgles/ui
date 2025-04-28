@@ -58,10 +58,8 @@ import { callMCPServerTool } from "../McpHub/callMCPServerTool";
 export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   params,
 ) => {
-  const { dbo: dbs, clientReq, db: _dbs } = params;
+  const { dbo: dbs, clientReq, db: _dbs, user } = params;
   const { socket } = clientReq;
-
-  const user: DBSSchema["users"] | undefined = params.user as any;
 
   const bkpManager = await initBackupManager(_dbs, dbs);
   if (!user || !user.id) {
@@ -117,16 +115,16 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       /** Terminate all sessions */
       await dbs.sessions.delete({});
     },
-    getConnectionDBTypes: async (conId: string) => {
+    getConnectionDBTypes: (conId: string) => {
       /** Maybe state connection */
       // const con = await dbs.connections.findOne({ id: conId, is_state_db: true });
       if (!statePrgl) throw "statePrgl missing";
       // if(con){
       //   return statePrgl.getTSSchema()
       // }
-      const dbsSchema = await statePrgl.getTSSchema();
+      const dbsSchema = statePrgl.getTSSchema();
       const c = connMgr.getConnection(conId);
-      const dbSchema = await c.prgl.getTSSchema();
+      const dbSchema = c.prgl.getTSSchema();
       return {
         dbsSchema,
         dbSchema,
@@ -140,23 +138,23 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
         await dbs.global_settings.findOne(),
       );
     },
-    getConnectedIds: async (): Promise<string[]> => {
+    getConnectedIds: () => {
       return Object.keys(connMgr.getConnections());
     },
     getDBSize: async (conId: string) => {
       const c = connMgr.getConnection(conId);
-      const size: string = await c.prgl.db.sql(
+      const size = (await c.prgl.db.sql(
         "SELECT pg_size_pretty( pg_database_size(current_database()) ) ",
         {},
         { returnType: "value" },
-      );
+      )) as string;
       return size;
     },
     getIsSuperUser: async (conId: string) => {
       const c = connMgr.getConnection(conId);
       return getIsSuperUser(c.prgl._db);
     },
-    getFileFolderSizeInBytes: async (conId?: string) => {
+    getFileFolderSizeInBytes: (conId?: string) => {
       const dirSize = (directory: string): number => {
         if (!fs.existsSync(directory)) return 0;
         const files = fs.readdirSync(directory);
@@ -175,11 +173,11 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       if (conId && typeof conId !== "string") {
         throw "Invalid/Inexisting connection id provided";
       }
-      const dir = await connMgr.getFileFolderPath(conId);
+      const dir = connMgr.getFileFolderPath(conId);
       return dirSize(dir);
     },
     testDBConnection,
-    validateConnection: async (c: Connections) => {
+    validateConnection: (c: Connections) => {
       const connection = validateConnection(c);
       return { connection, warn: "" };
     },
@@ -206,13 +204,13 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       opts?: { keepBackups: boolean; dropDatabase: boolean },
     ) => {
       try {
-        return dbs.tx!(async (t) => {
+        return dbs.tx(async (t) => {
           const con = await t.connections.findOne({ id });
           if (con?.is_state_db)
             throw "Cannot delete a prostgles state database connection";
-          await connMgr.prglConnections[id]?.methodRunner?.destroy();
-          await connMgr.prglConnections[id]?.onMountRunner?.destroy();
-          await connMgr.prglConnections[id]?.tableConfigRunner?.destroy();
+          connMgr.prglConnections[id]?.methodRunner?.destroy();
+          connMgr.prglConnections[id]?.onMountRunner?.destroy();
+          connMgr.prglConnections[id]?.tableConfigRunner?.destroy();
           if (opts?.dropDatabase) {
             if (!con?.db_name) throw "Unexpected: Database name missing";
             const { db: cdb, destroy: destroyCdb } = await getCDB(
@@ -320,7 +318,7 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       c: "start" | "chunk" | "end",
       id: null | string,
       conId: string | null,
-      chunk: any | undefined,
+      chunk: string | undefined,
       sizeBytes: number | undefined,
       restore_options: Backups["restore_options"],
     ) => {
@@ -419,7 +417,7 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
                 throw "Unexpected error. fileTable handler not found";
               }
 
-              await fileTableHandler.delete!({});
+              await fileTableHandler.delete({});
             }
             if (!opts?.keepFileTable) {
               await dbTX.sql!("DROP TABLE ${fileTable:name} CASCADE", {
@@ -448,7 +446,7 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
     getStatus: (connId: string) => getStatus(connId, dbs),
     runConnectionQuery,
     getSampleSchemas,
-    getCompiledTS: async (ts: string) => {
+    getCompiledTS: (ts: string) => {
       return getCompiledTS(ts);
     },
     killPID,
@@ -728,7 +726,7 @@ const tryReadFile = (path: string) => {
     return undefined;
   }
 };
-export const getSampleSchemas = async (): Promise<SampleSchema[]> => {
+export const getSampleSchemas = (): SampleSchema[] => {
   const path = actualRootDir + `/sample_schemas`;
   const files = fs.readdirSync(path).filter((name) => !name.startsWith("_"));
   return files
