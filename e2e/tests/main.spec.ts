@@ -129,7 +129,6 @@ test.describe("Main test", () => {
     await runDbsSql(
       page,
       `
-      SELECT pg_sleep(1); 
       DELETE FROM magic_links; 
       DELETE FROM sessions; 
       DELETE FROM login_attempts`,
@@ -1705,6 +1704,7 @@ test.describe("Main test", () => {
 
   test("MCP Servers", async ({ page: p }) => {
     const page = p as PageWIds;
+    // await goTo(page, "localhost:3004/login");
     await login(page, USERS.test_user, "localhost:3004/login");
     await page.getByRole("link", { name: "Connections" }).click();
     await page.getByRole("link", { name: TEST_DB_NAME }).click();

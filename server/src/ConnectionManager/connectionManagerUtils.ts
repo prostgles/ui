@@ -94,10 +94,10 @@ export const parseTableConfig = async ({
   const fileTable =
     !tableConfig?.fileTable || !tableConfigOk ?
       undefined
-    : {
+    : ({
         tableName: tableConfig.fileTable,
         expressApp: conMgr.app,
-        fileServeRoute: `${ROUTES.STORAGE}/${connectionId}`,
+        fileServePath: `${ROUTES.STORAGE}/${connectionId}`,
         ...(tableConfig.storageType.type === "local" ?
           {
             localConfig: {
@@ -107,7 +107,7 @@ export const parseTableConfig = async ({
           }
         : { cloudClient }),
         referencedTables: tableConfig.referencedTables,
-      };
+      } satisfies FileTableConfig);
 
   return { tableConfigOk, fileTable };
 };
@@ -137,7 +137,7 @@ export const getRestApiConfig = (
     dbConf.rest_api_enabled ?
       {
         expressApp: conMgr.app,
-        routePrefix: getConnectionPaths(con).rest,
+        path: getConnectionPaths(con).rest,
       }
     : undefined;
 

@@ -7,15 +7,14 @@ import type { DB } from "prostgles-server/dist/initProstgles";
 import { omitKeys } from "prostgles-types";
 import type { DBS } from "..";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
 import { createPasswordlessAdminSessionIfNeeded } from "./createPasswordlessAdminSessionIfNeeded";
+import { createPublicUserSessionIfAllowed } from "./createPublicUserSessionIfAllowed";
 import { getActiveSession } from "./getActiveSession";
-import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
 import {
   PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR,
   type SUser,
 } from "./sessionUtils";
-import { createPublicUserSessionIfAllowed } from "./createPublicUserSessionIfAllowed";
+import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
 
 console.error(
   `/**      This is to prevent a fresh setup (passwordless admin has not been assigned yet) redirecting users with existing session cookies to login */`,
@@ -24,13 +23,12 @@ type GetUser = NonNullable<AuthConfig<DBGeneratedSchema, SUser>["getUser"]>;
 export const getGetUser = (authSetupData: AuthSetupData, dbs: DBS) => {
   const getUser: GetUser = async (sid, db, _db: DB, client, req) => {
     const sessionInfo =
-      !sid ? undefined : (
-        await getActiveSession(db, {
-          type: "session-id",
-          client,
-          filter: { id: sid },
-        })
-      );
+      sid &&
+      (await getActiveSession(db, {
+        type: "session-id",
+        client,
+        filter: { id: sid },
+      }));
 
     if (sessionInfo) {
       const { validSession, expiredSession, failedTooManyTimes, error } =

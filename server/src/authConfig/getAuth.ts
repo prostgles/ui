@@ -32,18 +32,6 @@ export const withOrigin: WithOrigin = {
   },
 };
 
-// export const setAuthReloader = async (
-//   app: e.Express,
-//   dbs: DBS,
-//   onChange: (auth: Awaited<ReturnType<typeof getAuth>>) => void,
-// ) => {
-//   await subscribeToAuthSetupChanges(dbs, async (newAuthSetupData) => {
-//     authSetupData = newAuthSetupData;
-//     const auth = await getAuth(app, dbs, newAuthSetupData);
-//     onChange(auth);
-//   });
-// };
-
 type WithOrigin = {
   origin?: (
     requestOrigin: string | undefined,
@@ -103,7 +91,6 @@ export const getAuth = async (
         await db.sessions.update({ id: sid }, { active: false });
         /** Keep last 20 sessions */
       },
-      // use: securityManager.onUse,
       publicRoutes: ["/manifest.json", "/favicon.ico", API_ENDPOINTS.WS_DB],
       onGetRequestOK: async (req, res, { getUser, db, dbo: dbs }) => {
         if (req.path.startsWith(ROUTES.BACKUPS)) {

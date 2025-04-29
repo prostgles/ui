@@ -531,7 +531,7 @@ export class ConnectionManager {
     if (!c?.prgl) {
       throw "Connection not found";
     }
-    return c as any;
+    return c as PRGLInstance & Pick<Required<PRGLInstance>, "prgl">;
   }
 
   getConnections() {

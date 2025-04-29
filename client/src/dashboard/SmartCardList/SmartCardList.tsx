@@ -175,12 +175,11 @@ export const SmartCardList = <T extends AnyObject>(
           noDataComponent
         : items.map((defaultData, i) => {
             const key = getKeyForRowData(defaultData, keyCols);
-            /** SmartCard wrapped in div to ensure MaybeFlipMove works */
             return (
-              <div className="relative" key={key}>
+              /** SmartCard wrapped in div to ensure MaybeFlipMove works */
+              <div className="relative" key={key} data-key={key}>
                 <SmartCard
                   key={key}
-                  data-key={key}
                   contentClassname={rowProps?.className}
                   contentStyle={rowProps?.style}
                   db={db as DBHandlerClient}
