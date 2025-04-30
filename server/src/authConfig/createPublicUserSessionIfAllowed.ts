@@ -19,28 +19,6 @@ export const createPublicUserSessionIfAllowed = async (
   const { globalSettings } = authSetupData;
   if (!publicConnections.length || !globalSettings || !reqInfo.httpReq) {
     return;
-    // const isLoggingIn =
-    //   isAccessingMagicLink || req.originalUrl.startsWith(ROUTES.LOGIN);
-    // const client = getClientRequestIPsInfo({ httpReq: req });
-    // let hasNoActiveSession = !sid;
-    // if (sid) {
-    //   const activeSessionInfo = await getActiveSession(dbs, {
-    //     type: "session-id",
-    //     client,
-    //     filter: { id: sid },
-    //   });
-    //   if (activeSessionInfo.error) {
-    //     res.status(HTTP_FAIL_CODES.BAD_REQUEST).json(activeSessionInfo.error);
-    //     return;
-    //   }
-    //   hasNoActiveSession = !activeSessionInfo.validSession;
-    // }
-
-    /** If no sid then create a public account */
-    // const mlink = await makeMagicLink(newRandomUser, dbs, "/", {
-    //   session_expires: Date.now() + DAY * 2,
-    // });
-    // res.redirect(mlink.magic_login_link_redirect);
   }
   const { ip } = getIPsFromClientInfo(client, globalSettings);
   const session = await dbs.tx(async (dbsTx) => {

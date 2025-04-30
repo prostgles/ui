@@ -45,13 +45,8 @@ export const subscribeToAuthSetupChanges = async (
       isEqual(oldContext, newContext) ||
       newKeyCount !== totalContextKeys.length
     ) {
-      console.warn(
-        "onAuthSetupDataChange: context changed but no keys changed",
-        { oldContext, newContext },
-      );
       return;
     }
-    console.error("onAuthSetupDataChange", context);
     authSetupData = { ...context } as AuthSetupData;
 
     void onChange(context as AuthSetupData);

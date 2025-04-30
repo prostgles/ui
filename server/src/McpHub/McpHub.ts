@@ -263,7 +263,7 @@ export const startMcpHub = async (
     await checkMCPServerTools(mcpHub);
     const serverNames = Object.keys(mcpHub.connections);
     if (serverNames.length) {
-      console.log(`McpHub started with ${serverNames.length} enabled servers`);
+      console.log(`McpHub started enabled servers: ${serverNames.length}`);
     }
     return mcpHub;
   });

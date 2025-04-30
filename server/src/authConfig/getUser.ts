@@ -16,9 +16,6 @@ import {
 } from "./sessionUtils";
 import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
 
-console.error(
-  `/**      This is to prevent a fresh setup (passwordless admin has not been assigned yet) redirecting users with existing session cookies to login */`,
-);
 type GetUser = NonNullable<AuthConfig<DBGeneratedSchema, SUser>["getUser"]>;
 export const getGetUser = (authSetupData: AuthSetupData, dbs: DBS) => {
   const getUser: GetUser = async (sid, db, _db: DB, client, req) => {
@@ -75,7 +72,9 @@ export const getGetUser = (authSetupData: AuthSetupData, dbs: DBS) => {
         message: PASSWORDLESS_ADMIN_ALREADY_EXISTS_ERROR,
       };
     }
-
+    /**
+     * This is to prevent a fresh setup (passwordless admin has not been assigned yet) redirecting users with existing session cookies to login
+     * */
     const passwordlessAdminSession =
       await createPasswordlessAdminSessionIfNeeded(
         authSetupData,

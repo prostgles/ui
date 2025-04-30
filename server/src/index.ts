@@ -3,7 +3,7 @@ process.on("unhandledRejection", (reason, p) => {
 });
 
 import { spawn } from "child_process";
-import type { NextFunction, Request, RequestHandler, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import path from "path";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
@@ -17,6 +17,7 @@ import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
 import type { OnServerReadyCallback } from "./electronConfig";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { initExpressAndIOServers } from "./init/initExpressAndIOServers";
+import { setDBSRoutesForElectron } from "./init/setDBSRoutesForElectron";
 import type {
   InitExtra,
   ProstglesInitStateWithDBS,
@@ -26,7 +27,6 @@ import {
   startingProstglesResult,
   tryStartProstgles,
 } from "./init/tryStartProstgles";
-import { setDBSRoutesForElectron } from "./init/setDBSRoutesForElectron";
 
 const { app, http, io } = initExpressAndIOServers();
 
@@ -184,45 +184,6 @@ export const onServerReady = (cb: OnServerReadyCallback) => {
   }
 };
 
-// const redirected =  true;
-io.use((socket, next) => {
-  const currCookieStr = socket.request.headers.cookie;
-  console.log({ currCookieStr });
-  socket.data.user = { fuck: "you" };
-  next();
-  // next(new  Error("ddddddnot authorized"));
-});
-// // io.removeAllListeners ();
-// // io.engine.removeAll Listeners();
-// debugger;
-// io.use((socket, next) => {
-//   const currCookieStr = socket.request.headers.cookie;
-//   console.log({ currCookieStr });
-//   socket.data.user = { fuck: "you" };
-//   // next();
-//   next(new Error("ddddddnot authorized22"));
-// });
-// io.engine.use(((req,  res, next) => {
-//   const currCookieStr = req.headers.cookie ;
-//   console.log(currCookieStr);
-//   // if (!redirected) {
-//   //   redirected = true;
-//   //   // this.authHandler?.setCookieAndGoToReturnURLIFSet(
-//   //   //   { expires: Date.now() + 221000, sid: "heehe" },
-//   //   //   { req, res }
-//   //   // );
-//   //   // Set cookie manually on raw HTTP response
-//   //   const cookieStr = `${this.authHandler?.sidKeyName}=hehehe; Path=/; Expires=${new Date(Date.now() + 221000).toUTCString()}; HttpOnly`;
-//   //   res.setHeader("Set-Cookie", cookieStr);
-
-//   //   // Handle redirection
-//   //   res.statusCode = 302;
-//   //   res.setHeader("Location", "/");
-//   //   res.end();
-//   //   return;
-//   // }
-//   next();
-// }) satisfies RequestHandler);
 const server = http.listen(PORT, HOST, () => {
   const address = server.address();
   const port = isObject(address) ? address.port : PORT;
