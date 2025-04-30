@@ -242,6 +242,7 @@ export type DBGeneratedSchema = {
  |  {  columns: Record<string,  | string |  {  hint?: string;  nullable?: boolean;  isText?: boolean;  trimmed?: boolean;  defaultValue?: any; } |  {  jsonbSchema: |  {  type: 'string' | 'number' | 'boolean' | 'Date' | 'time' | 'timestamp' | 'string[]' | 'number[]' | 'boolean[]' | 'Date[]' | 'time[]' | 'timestamp[]';  optional?: boolean;  description?: string; } |  {  type: 'Lookup' | 'Lookup[]';  optional?: boolean;  description?: string; } |  {  type: 'object';  optional?: boolean;  description?: string; }; }>; }>
       table_config_ts?: null | string;
       table_config_ts_disabled?: null | boolean;
+      table_schema_positions?: null | Partial<Record<string,  {  x: number;  y: number; }>>
     };
   };
   database_stats: {
@@ -302,6 +303,21 @@ export type DBGeneratedSchema = {
       w1_id: string;
       w2_id: string;
       workspace_id?: null | string;
+    };
+  };
+  llm_api_keys: {
+    is_view: false;
+    select: true;
+    insert: true;
+    update: true;
+    delete: true;
+    columns: {
+      api_key?: string;
+      created?: null | string;
+      id?: number;
+      name?: string;
+      provider_id: number;
+      user_id: string;
     };
   };
   llm_chats: {
@@ -550,8 +566,8 @@ export type DBGeneratedSchema = {
       error?: null | any;
       id?: number;
       input?: null | any;
-      mcp_server_name?: null | string;
-      mcp_tool_name?: null | string;
+      mcp_server_name: string;
+      mcp_tool_name: string;
       output?: null | any;
       user_id?: null | string;
     };
@@ -590,6 +606,7 @@ export type DBGeneratedSchema = {
       env_from_main_process?: null | string[];
       info?: null | string;
       installed?: null | string;
+      last_updated?: null | string;
       name: string;
       source?: 
        | null

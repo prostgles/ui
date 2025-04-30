@@ -346,6 +346,20 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
           hint: `If true then Table configurations will not be executed`,
         },
       },
+      table_schema_positions: {
+        nullable: true,
+        jsonbSchema: {
+          record: {
+            partial: true,
+            values: {
+              type: {
+                x: "number",
+                y: "number",
+              },
+            },
+          },
+        },
+      },
       file_table_config: {
         info: { hint: `File storage configurations` },
         nullable: true,
