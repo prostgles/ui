@@ -8,7 +8,6 @@ npx tsc
 
 cd ..
 
-cat ./client/configs/last_compiled.txt
 rm -f ./client/configs/last_compiled.txt
 PRGL_TEST=true ./start.sh &
 

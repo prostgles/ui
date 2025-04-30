@@ -143,9 +143,7 @@ export const useSchemaShapes = ({
           const fcolIdx = ftbl.data.columns.findIndex(
             (c) => c.ordinal_position === fkeyPos,
           );
-          // if ([t1.data.name, t2.data.name].includes("user_types")) {
-          //   debugger;
-          // }
+
           return {
             id: `${tbl.id}-link-${ftbl.id}`,
             type: "linkline",
