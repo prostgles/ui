@@ -1,10 +1,9 @@
 import { usePromise } from "prostgles-client/dist/react-hooks";
+import { includes } from "prostgles-types";
+import type { ProstglesState } from "../../../commonTypes/electronInitTypes";
 import { SPOOF_TEST_VALUE } from "../../../commonTypes/utils";
 import type { AppState } from "../App";
-import React from "react";
 import { tout } from "../utils";
-import { includes } from "prostgles-types";
-import type { ProstglesState } from "../../../commonTypes/electronInit";
 
 /**
  * Check if state database is setup
@@ -40,7 +39,7 @@ export const useServerState = () => {
       return {
         initState: {
           state: "error",
-          error: initError,
+          error: initError as Error,
           errorType: "init",
         },
         isElectron: false,

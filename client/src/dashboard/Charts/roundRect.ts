@@ -1,3 +1,5 @@
+import { getCssVariableValue } from "./onRenderTimechart";
+
 /**
  * Draws a rounded rectangle using the current state of the canvas.
  * If you omit the last three params, it will draw a rectangle
@@ -29,15 +31,12 @@ export function roundRect(
     offsetX?: number;
     offsetY?: number;
   } = {
-    color: "rgba(73, 56, 56, 0.5)",
+    color: getCssVariableValue("--shadow1"), //"rgba(73, 56, 56, 0.5)",
     blur: 15,
     offsetX: 3,
     offsetY: 3,
   },
 ) {
-  if (typeof radius === "undefined") {
-    radius = 5;
-  }
   if (typeof radius === "number") {
     radius = { tl: radius, tr: radius, br: radius, bl: radius };
   } else {
@@ -57,32 +56,37 @@ export function roundRect(
     ctx.shadowOffsetY = shadow.offsetY ?? 12;
   }
 
-  const initialLineWidth = ctx.lineWidth;
-  const curvedLineWidth = ctx.lineWidth + 1;
   ctx.beginPath();
-  ctx.moveTo(x + radius.tl, y);
-  ctx.lineTo(x + width - radius.tr, y);
-  ctx.lineWidth = curvedLineWidth;
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
-  ctx.lineWidth = initialLineWidth;
-  ctx.lineTo(x + width, y + height - radius.br);
-  ctx.lineWidth = curvedLineWidth;
-  ctx.quadraticCurveTo(
-    x + width,
-    y + height,
-    x + width - radius.br,
-    y + height,
-  );
-  ctx.lineWidth = initialLineWidth;
-  ctx.lineTo(x + radius.bl, y + height);
-  ctx.lineWidth = curvedLineWidth;
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
-  ctx.lineWidth = initialLineWidth;
-  ctx.lineTo(x, y + radius.tl);
-  ctx.lineWidth = curvedLineWidth;
-  ctx.quadraticCurveTo(x, y, x + radius.tl, y);
-  ctx.lineWidth = initialLineWidth;
+  ctx.roundRect(x, y, width, height, radius.tl);
   ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // const initialLineWidth = ctx.lineWidth;
+  // const curvedLineWidth = ctx.lineWidth + 1;
+  // ctx.beginPath();
+  // ctx.moveTo(x + radius.tl, y);
+  // ctx.lineTo(x + width - radius.tr, y);
+  // ctx.lineWidth = curvedLineWidth;
+  // ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+  // ctx.lineWidth = initialLineWidth;
+  // ctx.lineTo(x + width, y + height - radius.br);
+  // ctx.lineWidth = curvedLineWidth;
+  // ctx.quadraticCurveTo(
+  //   x + width,
+  //   y + height,
+  //   x + width - radius.br,
+  //   y + height,
+  // );
+  // ctx.lineWidth = initialLineWidth;
+  // ctx.lineTo(x + radius.bl, y + height);
+  // ctx.lineWidth = curvedLineWidth;
+  // ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+  // ctx.lineWidth = initialLineWidth;
+  // ctx.lineTo(x, y + radius.tl);
+  // ctx.lineWidth = curvedLineWidth;
+  // ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+  // ctx.lineWidth = initialLineWidth;
+  // ctx.closePath();
 
   // Restore the context state
   ctx.restore();

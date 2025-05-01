@@ -9,12 +9,11 @@ import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
 import { getKeys, omitKeys, type AnyObject } from "prostgles-types";
 import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
-import type { ProstglesState } from "../../commonTypes/electronInit";
+import type { ProstglesState } from "../../commonTypes/electronInitTypes";
 import { isObject, type DBSSchema } from "../../commonTypes/publishUtils";
 import { SPOOF_TEST_VALUE } from "../../commonTypes/utils";
 import { sidKeyName } from "./authConfig/sessionUtils";
 import { ConnectionManager } from "./ConnectionManager/ConnectionManager";
-import type { OnServerReadyCallback } from "./electronConfig";
 import { actualRootDir, getElectronConfig } from "./electronConfig";
 import { initExpressAndIOServers } from "./init/initExpressAndIOServers";
 import { setDBSRoutesForElectron } from "./init/setDBSRoutesForElectron";
@@ -27,16 +26,14 @@ import {
   startingProstglesResult,
   tryStartProstgles,
 } from "./init/tryStartProstgles";
+import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 
 const { app, http, io } = initExpressAndIOServers();
 
 export const connMgr = new ConnectionManager(http, app);
 
 const electronConfig = getElectronConfig();
-const PORT =
-  electronConfig ?
-    (electronConfig.port ?? 3099)
-  : +(process.env.PROSTGLES_UI_PORT ?? 3004);
+const PORT = electronConfig ? 0 : +(process.env.PROSTGLES_UI_PORT ?? 3004);
 const LOCALHOST = "127.0.0.1";
 const HOST =
   electronConfig ? LOCALHOST : process.env.PROSTGLES_UI_HOST || LOCALHOST;
@@ -69,7 +66,6 @@ app.get("/dbs", (req, res) => {
   const { initState } = prostglesState;
   const nonSerialiseableOrNotNeededKeys = getKeys({
     dbs: 1,
-    httpListening: 1,
   } satisfies Record<keyof InitExtra, 1>);
   const serverState: ProstglesState = {
     ...prostglesState,
@@ -108,7 +104,7 @@ app.get("/dbs", (req, res) => {
   }
   /** Alert admin if x-real-ip is spoofable */
   let xRealIpSpoofable = false;
-  const { globalSettings } = connMgr.authSetupData ?? {};
+  const { globalSettings } = getAuthSetupData();
   if (
     req.headers["x-real-ip"] === SPOOF_TEST_VALUE &&
     globalSettings?.login_rate_limit_enabled &&
@@ -159,8 +155,6 @@ app.use(serveIndexIfNoCredentialsOrInitError);
  *  - If failed to connect then also serve index
  */
 const startProstgles = ({ host, port }: { host: string; port: number }) => {
-  // const host = HOST;
-  // const port = PORT     ;
   if (electronConfig) {
     const creds = electronConfig.getCredentials();
     if (creds) {
@@ -173,38 +167,6 @@ const startProstgles = ({ host, port }: { host: string; port: number }) => {
     void tryStartProstgles({ app, io, host, port, con: undefined });
   }
 };
-
-const onServerReadyListeners: OnServerReadyCallback[] = [];
-export const onServerReady = (cb: OnServerReadyCallback) => {
-  const { initState } = getProstglesState();
-  if (initState.state === "ok" && initState.httpListening) {
-    cb(initState.httpListening.port, initState.dbs);
-  } else {
-    onServerReadyListeners.push(cb);
-  }
-};
-
-const server = http.listen(PORT, HOST, () => {
-  const address = server.address();
-  const port = isObject(address) ? address.port : PORT;
-  const host = isObject(address) ? address.address : HOST;
-
-  // const _initState = getProstglesState();
-  // _initState.httpListening = {
-  //   port,
-  // };
-  startProstgles({ host, port });
-
-  void waitForInitialisation().then((initState) => {
-    if (initState.state !== "ok") {
-      return;
-    }
-    onServerReadyListeners.forEach((cb) => {
-      cb(port, initState.dbs);
-    });
-  });
-  console.log(`\n\nexpress listening on port ${port} (${host}:${port})\n\n`);
-});
 
 export function restartProc(cb?: VoidFunction) {
   console.warn("Restarting process");
@@ -257,6 +219,46 @@ export type DatabaseConfigs = DBSSchema["database_configs"];
 
 export const log = (msg: string, extra?: any) => {
   console.log(
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     ...[`(server): ${new Date().toISOString()} ` + msg, extra].filter((v) => v),
   );
 };
+
+type OnServerReadyResult = {
+  // dbs: DBS;
+  port: number;
+};
+
+export const startServer = async (
+  initialPort: number,
+  onReady?: (result: OnServerReadyResult) => void | Promise<void>,
+) => {
+  const actualPort = await new Promise<number>((resolve) => {
+    const server = http.listen(PORT, HOST, () => {
+      const address = server.address();
+      const port = isObject(address) ? address.port : initialPort;
+      const host = isObject(address) ? address.address : HOST;
+
+      startProstgles({ host, port });
+
+      console.log(
+        `\n\nexpress listening on port ${port} (${host}:${port})\n\n`,
+      );
+
+      resolve(port);
+    });
+  });
+
+  await waitForInitialisation();
+  void onReady?.({ port: actualPort });
+};
+
+/**
+ * Start the server if not electron
+ * Otherwise it will be started from electron/main.ts
+ */
+if (require.main === module) {
+  void startServer(PORT, (result) => {
+    console.log("Server started", result);
+  });
+}

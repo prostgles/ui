@@ -4,7 +4,7 @@ import {
 } from "prostgles-client/dist/prostgles";
 import { useEffect, useMemo } from "react";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import type { ProstglesState } from "../../../commonTypes/electronInit";
+import type { ProstglesState } from "../../../commonTypes/electronInitTypes";
 import { API_ENDPOINTS, ROUTES } from "../../../commonTypes/utils";
 import type { ClientUser } from "../App";
 import { pageReload } from "../components/Loading";

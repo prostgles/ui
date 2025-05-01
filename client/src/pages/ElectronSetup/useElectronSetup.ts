@@ -1,6 +1,6 @@
 import { omitKeys, type AnyObject } from "prostgles-types";
 import { useEffect, useState } from "react";
-import { DEFAULT_ELECTRON_CONNECTION } from "../../../../commonTypes/electronInit";
+import { DEFAULT_ELECTRON_CONNECTION } from "../../../../commonTypes/electronInitTypes";
 import type { AppState } from "../../App";
 import { pageReload } from "../../components/Loading";
 import type { Connection } from "../NewConnection/NewConnnection";

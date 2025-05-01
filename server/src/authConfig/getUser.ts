@@ -18,10 +18,10 @@ import type { AuthSetupData } from "./subscribeToAuthSetupChanges";
 
 type GetUser = NonNullable<AuthConfig<DBGeneratedSchema, SUser>["getUser"]>;
 export const getGetUser = (authSetupData: AuthSetupData, dbs: DBS) => {
-  const getUser: GetUser = async (sid, db, _db: DB, client, req) => {
+  const getUser: GetUser = async (sid, _, __, client, req) => {
     const sessionInfo =
       sid &&
-      (await getActiveSession(db, {
+      (await getActiveSession(dbs, {
         type: "session-id",
         client,
         filter: { id: sid },
@@ -33,7 +33,7 @@ export const getGetUser = (authSetupData: AuthSetupData, dbs: DBS) => {
       if (error) return error;
       if (failedTooManyTimes) return "rate-limit-exceeded";
       if (validSession) {
-        const user = await db.users.findOne({ id: validSession.user_id });
+        const user = await dbs.users.findOne({ id: validSession.user_id });
         if (!user) return undefined;
 
         const suser: SUser = {
@@ -52,7 +52,7 @@ export const getGetUser = (authSetupData: AuthSetupData, dbs: DBS) => {
         return suser;
       }
       if (expiredSession) {
-        const user = await db.users.findOne({ id: expiredSession.user_id });
+        const user = await dbs.users.findOne({ id: expiredSession.user_id });
         if (user?.status === "active") {
           return {
             preferredLogin:

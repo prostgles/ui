@@ -8,7 +8,7 @@ import React from "react";
 import Btn from "../components/Btn";
 import { ExpandSection } from "../components/ExpandSection";
 import PopupMenu from "../components/PopupMenu";
-import { DEFAULT_ELECTRON_CONNECTION } from "../../../commonTypes/electronInit";
+import { DEFAULT_ELECTRON_CONNECTION } from "../../../commonTypes/electronInitTypes";
 
 const OPERATING_SYSTEMS = [
   { key: "linux", label: "Linux", icon: mdiLinux },
@@ -85,17 +85,17 @@ export const PostgresInstallationInstructions = ({
             </ExpandSection>
             <ExpandSection label="Windows" expanded={os === "windows"}>
               <p>
-                PowerShell command. Change "15" to your actual postgres version
-                number
+                PowerShell command. Change &quot;15&quot; to your actual
+                postgres version number
               </p>
               <code className="bg-terminal text-white p-1 flex-col ta-left">
-                & 'C:\Program Files\PostgreSQL\15\bin\createuser.exe' -U
-                postgres -P --superuser {db_user}
+                & &apos;C:\Program Files\PostgreSQL\15\bin\createuser.exe&apos;
+                -U postgres -P --superuser {db_user}
               </code>
               {placement !== "state-db-quick-setup" && (
                 <code className="bg-terminal text-white p-1 flex-col ta-left">
-                  & 'C:\Program Files\PostgreSQL\15\bin\createdb.exe' -U
-                  postgres -O {db_user} {db_name}
+                  & &apos;C:\Program Files\PostgreSQL\15\bin\createdb.exe&apos;
+                  -U postgres -O {db_user} {db_name}
                 </code>
               )}
             </ExpandSection>

@@ -1,6 +1,6 @@
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { isDefined } from "../../../utils";
+import { isDefined, isEmpty } from "../../../utils";
 import type {
   ChartedText,
   LinkLine,
@@ -34,8 +34,34 @@ export const useSchemaShapes = ({
   });
 
   const tablesWithPositions = useMemo(() => {
+    const { clientHeight, clientWidth } =
+      canvasRef.current ?? window.document.body;
+    let existingPositions = dbConf?.table_schema_positions;
+    if (!existingPositions || isEmpty(existingPositions)) {
+      let prevPosition = { x: 0, y: 0 };
+      existingPositions = tables.reduce((acc, t) => {
+        const newY = prevPosition.y + 300;
+        const newX = prevPosition.x + 300;
+        const tablePosition =
+          newY > clientHeight ?
+            {
+              x: newX,
+              y: 0,
+            }
+          : {
+              x: prevPosition.x,
+              y: newY,
+            };
+        prevPosition = tablePosition;
+        return {
+          ...acc,
+          [t.name]: tablePosition,
+        };
+      }, {});
+    }
+
     return tables.map((t) => {
-      const position = dbConf?.table_schema_positions?.[t.name];
+      const position = existingPositions[t.name];
       return {
         ...t,
         position,
@@ -101,9 +127,9 @@ export const useSchemaShapes = ({
           w: widestText + 2 * PADDING,
           h: (cols.length + 1) * COL_SPACING + 2 * PADDING,
           fillStyle: getCssVariableValue("--bg-color-0"),
-          strokeStyle: "black",
+          strokeStyle: getCssVariableValue("--text-2"),
           lineWidth: 1,
-          borderRadius: 10,
+          borderRadius: 12,
           children: [header, ...cols],
           data: table,
           // elevation: 10,

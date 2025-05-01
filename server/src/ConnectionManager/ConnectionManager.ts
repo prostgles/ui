@@ -116,7 +116,6 @@ export class ConnectionManager {
   db?: DB;
   connections?: Connections[];
   database_configs?: DatabaseConfigs[];
-  authSetupData: AuthSetupData | undefined;
 
   constructor(http: httpServer, app: Express) {
     this.http = http;

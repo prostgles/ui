@@ -9,7 +9,7 @@ import type { Server } from "socket.io";
 import type { DBS } from "..";
 import { connMgr } from "..";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import type { ProstglesInitState } from "../../../commonTypes/electronInit";
+import type { ProstglesInitState } from "../../../commonTypes/electronInitTypes";
 import BackupManager from "../BackupManager/BackupManager";
 import { addLog, setLoggerDBS } from "../Logger";
 import { setupMCPServerHub } from "../McpHub/McpHub";
@@ -51,9 +51,6 @@ export const getBackupManager = () => bkpManager;
 export let statePrgl: InitResult<DBGeneratedSchema, SUser> | undefined;
 export type InitExtra = {
   dbs: DBS;
-  httpListening?: {
-    port: number;
-  };
 };
 export type ProstglesInitStateWithDBS = ProstglesInitState<InitExtra>;
 let authSetupDataListener: AuthSetupDataListener | undefined;
@@ -264,6 +261,6 @@ export const startProstgles = async ({
     startDevHotReloadNotifier({ io, port, host });
     return { state: "ok", dbs: prgl.db as DBS };
   } catch (err) {
-    return { state: "error", error: err, errorType: "init" };
+    return { state: "error", error: err as Error, errorType: "init" };
   }
 };

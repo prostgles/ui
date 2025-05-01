@@ -3,7 +3,7 @@ import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useState } from "react";
 import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
-import { FlexCol } from "../../components/Flex";
+import { FlexCol, FlexRow } from "../../components/Flex";
 import Popup from "../../components/Popup/Popup";
 import Select from "../../components/Select/Select";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
@@ -25,9 +25,10 @@ const DISPLAY_MODES = [
 export type SchemaGraphDisplayMode = (typeof DISPLAY_MODES)[number]["key"];
 
 export const SchemaGraph = (props: SchemaGraphProps) => {
-  const { tables } = props;
+  const { tables, connectionId, dbs } = props;
   const [showSchemaDiagram, setShowSchemaDiagram] = useState(false);
   const [displayMode, setDisplayMode] = useState<SchemaGraphDisplayMode>("all");
+  const [schemaKey, setSchemaKey] = useState<number>(0);
 
   if (!tables.length) return null;
 
@@ -51,19 +52,62 @@ export const SchemaGraph = (props: SchemaGraphProps) => {
           title="Schema diagram"
           positioning="fullscreen"
           clickCatchStyle={{ opacity: 1 }}
-          contentClassName="o-visible p-1 "
+          contentClassName="o-visible relative "
           onClose={() => setShowSchemaDiagram(false)}
         >
-          <FlexCol className=" f-1 relative w-full h-full bg-color-1">
+          <FlexRow
+            className="p-1  f-1 relative s-fit"
+            style={{
+              position: "absolute",
+              top: "0",
+              left: "0",
+              backdropFilter: "blur(2px)",
+            }}
+          >
             <Select
               value={displayMode}
-              label="Display"
+              // label="Display"
               variant="pill"
+              btnProps={{
+                className: "shadow",
+                style: {
+                  backgroundColor: "var(--bg-color-0)",
+                },
+              }}
               fullOptions={DISPLAY_MODES}
               onChange={setDisplayMode}
             />
-            <ERDSchema {...props} displayMode={displayMode} />
-          </FlexCol>
+          </FlexRow>
+          <FlexRow
+            className="p-1  f-1 relative s-fit"
+            style={{
+              position: "absolute",
+              top: "0",
+              right: "0",
+              backdropFilter: "blur(2px)",
+            }}
+          >
+            <Btn
+              onClickPromise={async () => {
+                await dbs.database_configs.update(
+                  {
+                    $existsJoined: {
+                      connections: {
+                        id: connectionId,
+                      },
+                    },
+                  },
+                  {
+                    table_schema_positions: null,
+                  },
+                );
+                setSchemaKey((k) => k + 1);
+              }}
+            >
+              Reset layout
+            </Btn>
+          </FlexRow>
+          <ERDSchema key={schemaKey} {...props} displayMode={displayMode} />
         </Popup>
       )}
     </>

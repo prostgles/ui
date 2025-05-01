@@ -22,7 +22,7 @@ import {
   type MethodHandler,
 } from "prostgles-client/dist/prostgles";
 import { type Socket } from "socket.io-client";
-import type { ProstglesState } from "../../commonTypes/electronInit";
+import type { ProstglesState } from "../../commonTypes/electronInitTypes";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import { fixIndent, ROUTES } from "../../commonTypes/utils";
 import { createReactiveState, useReactiveState } from "./appUtils";

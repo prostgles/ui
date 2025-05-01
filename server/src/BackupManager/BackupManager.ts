@@ -20,7 +20,7 @@ import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import { bytesToSize } from "prostgles-server/dist/FileManager/FileManager";
 import type { DB } from "prostgles-server/dist/Prostgles";
 import type { FilterItem, SubscriptionHandler } from "prostgles-types";
-import type { InstalledPrograms } from "../../../commonTypes/electronInit";
+import type { InstalledPrograms } from "../../../commonTypes/electronInitTypes";
 import { ROUTES } from "../../../commonTypes/utils";
 import type { SUser } from "../authConfig/sessionUtils";
 import type { ConnectionManager } from "../ConnectionManager/ConnectionManager";

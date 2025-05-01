@@ -86,27 +86,26 @@ export const drawLinkLine = (
     p5_endOnRect, // 5: Touch target box (horizontal)
   ];
 
-  // Filter out consecutive duplicate points (can happen if padding is 0 or rects overlap weirdly)
-  const uniqueLinePoints = linePoints.filter((p, i, arr) => {
-    if (i === 0) return true;
-    // Check both x and y coordinates
-    const prev = arr[i - 1];
-    // Use a small tolerance for floating point comparisons if necessary
-    // const tolerance = 0.01;
-    // return Math.abs(p[0] - prev[0]) > tolerance || Math.abs(p[1] - prev[1]) > tolerance;
-    return p[0] !== prev![0] || p[1] !== prev![1];
-  });
-
-  // --- Drawing ---
+  const coords = [
+    getTranslatedCoords(p0_startOnRect),
+    getTranslatedCoords(p1_startAway),
+    ...splitLine({
+      start: getTranslatedCoords(p1_startAway),
+      end: getTranslatedCoords(p4_endNear),
+    }),
+    getTranslatedCoords(p4_endNear),
+    getTranslatedCoords(p5_endOnRect),
+  ];
 
   drawShapes(
     [
       {
         id,
         type: "multiline",
-        coords: uniqueLinePoints.map(getTranslatedCoords), // Apply transformations
-        lineWidth: lineWidth || 1,
+        coords: linePoints.map(getTranslatedCoords), // Apply transformations
+        lineWidth: 4,
         strokeStyle: strokeStyle || "black",
+        variant: "smooth",
       },
       // Optional markers (uncomment to add)
       /*
@@ -129,4 +128,35 @@ export const drawLinkLine = (
     canvas,
     { ...opts, isChild: true },
   );
+};
+
+const LINK_SEGMENT_LENGTH = 50;
+const splitLine = ({ end, start }: { start: Point; end: Point }): Point[] => {
+  const [x1, y1] = start;
+  const [x2, y2] = end;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const numSegments = Math.max(2, Math.ceil(distance / LINK_SEGMENT_LENGTH)); // At least 2 segments
+
+  const currentNodes: Point[] = [start]; // Start with source table reference
+
+  for (let i = 1; i < numSegments; i++) {
+    const t = i / numSegments;
+    // const node = {
+    //   x: x1 + dx * t,
+    //   y: y1 + dy * t,
+    //   vx: 0, // Initial velocity
+    //   vy: 0,
+    //   type: "linkNode",
+    //   linkId, // Reference to the original link
+    //   sourceId,
+    //   targetId,
+    //   isIntermediate: true, // Flag for easy identification
+    // };
+    // linkNodes.push(node);
+    currentNodes.push([x1 + dx * t, y1 + dy * t]);
+  }
+  currentNodes.push(end); // End with target table reference
+  return currentNodes;
 };

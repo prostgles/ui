@@ -201,6 +201,10 @@ test.describe("Main test", () => {
       .waitFor({ state: "visible", timeout: 15e3 });
 
     await page.locator(`[data-key="auth"]`).click();
+    /** The url will be updated automatically and this will page trigger a reload */
+    await page.waitForTimeout(1e3);
+    const input = await page.getByLabel("Website URL");
+    expect(await input.getAttribute("value")).toEqual("http://localhost:3004");
     await page.getByTestId("EmailAuthSetup").locator("button").click();
     await page.getByTestId("EmailAuthSetup.SignupType").click();
     await page.locator(`[data-key="withPassword"]`).click();

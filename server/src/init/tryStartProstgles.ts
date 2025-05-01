@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { isEqual } from "prostgles-types";
 import type { Server } from "socket.io";
 import { tout } from "..";
-import type { ProstglesState } from "../../../commonTypes/electronInit";
+import type { ProstglesState } from "../../../commonTypes/electronInitTypes";
 import { cleanupTestDatabases } from "./cleanupTestDatabases";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { getElectronConfig } from "../electronConfig";
@@ -24,8 +24,31 @@ type StartArguments = {
   host: string;
 };
 
-let _initState: ProstglesInitStateWithDBS = {
-  state: "loading",
+type FinishedState = Exclude<ProstglesInitStateWithDBS, { state: "loading" }>;
+type StateListener = (state: FinishedState) => void;
+
+export const startupState: {
+  listeners: StateListener[];
+  state: ProstglesInitStateWithDBS;
+  set: (state: FinishedState) => void;
+  onReady: (cb: StateListener) => void;
+} = {
+  listeners: [],
+  state: {
+    state: "loading",
+  },
+  set: (state: FinishedState) => {
+    startupState.state = state;
+    startupState.listeners.forEach((listener) => listener(state));
+    startupState.listeners = [];
+  },
+  onReady: (cb: StateListener) => {
+    if (startupState.state.state !== "loading") {
+      cb(startupState.state as FinishedState);
+      return;
+    }
+    startupState.listeners.push(cb);
+  },
 };
 
 const RETRY_CONFIG = {
@@ -46,7 +69,7 @@ export let startingProstglesResult:
 const connHistory: string[] = [];
 export const tryStartProstgles = async (
   args: StartArguments,
-): Promise<Exclude<ProstglesInitStateWithDBS, { state: "loading" }>> => {
+): Promise<FinishedState> => {
   const config = startingProstglesResult;
   if (
     config &&
@@ -65,16 +88,15 @@ const _tryStartProstgles = async ({
   port,
   host,
   con = DBS_CONNECTION_INFO,
-}: StartArguments): Promise<
-  Exclude<ProstglesInitStateWithDBS, { state: "loading" }>
-> => {
+}: StartArguments): Promise<FinishedState> => {
   /** Cleanup state for local tests */
   await cleanupTestDatabases(con);
 
   setDBSRoutesForElectron(app, io, port, host);
 
-  let lastError: Exclude<ProstglesInitStateWithDBS, { ok: true }> | undefined =
-    undefined;
+  let lastError:
+    | Extract<ProstglesInitStateWithDBS, { state: "error" }>
+    | undefined = undefined;
   let attempt = 0;
 
   const connHistoryItem = JSON.stringify(con);
@@ -101,7 +123,7 @@ const _tryStartProstgles = async ({
         host,
       });
       if (attemptResult.state === "ok") {
-        _initState = attemptResult;
+        startupState.set(attemptResult);
         return attemptResult;
       }
 
@@ -121,30 +143,28 @@ const _tryStartProstgles = async ({
 
       console.log(`Attempt ${attempt} failed. Retrying in ${waitTime}ms...`);
       await tout(waitTime);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("startProstgles fail: ", err);
-      _initState = {
+      lastError = {
         state: "error",
         errorType: "init",
-        error: err,
+        error: err as Error,
       };
       break;
     }
   }
 
-  const {
-    errorType = "init",
-    error = "Failed to start prostgles. Check logs",
-  } = lastError ?? {};
-  _initState = {
+  const erroredState = {
     state: "error",
-    errorType: errorType,
-    error,
-  };
+    errorType: lastError?.errorType ?? "init",
+    error: lastError?.error ?? "Failed to start prostgles. Check logs",
+  } satisfies FinishedState;
+
+  startupState.set(erroredState);
 
   console.error("Failed to start prostgles: ", lastError);
 
-  return _initState;
+  return erroredState;
 };
 
 export const getProstglesState = (): ProstglesState<InitExtra> => {
@@ -153,7 +173,7 @@ export const getProstglesState = (): ProstglesState<InitExtra> => {
   const { installedPrograms } = bkpManager || {};
   const isElectron = Boolean(eConfig?.isElectron);
   return {
-    initState: _initState,
+    initState: { ...startupState.state },
     isElectron,
     electronCredsProvided: Boolean(eConfig?.hasCredentials()),
     canDumpAndRestore: installedPrograms,

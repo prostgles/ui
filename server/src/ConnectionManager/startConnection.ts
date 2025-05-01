@@ -10,15 +10,22 @@ import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { getConnectionPaths } from "../../../commonTypes/utils";
 import { addLog } from "../Logger";
 import { getAuth, withOrigin } from "../authConfig/getAuth";
-import { subscribeToAuthSetupChanges } from "../authConfig/subscribeToAuthSetupChanges";
+import {
+  getAuthSetupData,
+  subscribeToAuthSetupChanges,
+  type AuthSetupData,
+} from "../authConfig/subscribeToAuthSetupChanges";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
-import { log, restartProc } from "../index";
+import { log, restartProc, type DBS } from "../index";
 import type { ConnectionManager, User } from "./ConnectionManager";
 import { getHotReloadConfigs } from "./ConnectionManager";
 import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
 import { alertIfReferencedFileColumnsRemoved } from "./connectionManagerUtils";
 import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionPublishMethods } from "./getConnectionPublishMethods";
+import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
+import type { SUser } from "../authConfig/sessionUtils";
+import type e from "express";
 
 export const startConnection = async function (
   this: ConnectionManager,
@@ -178,6 +185,7 @@ export const startConnection = async function (
         dbConnection: connectionInfo,
         io: _io,
         ...hotReloadConfig,
+        auth: await getConnectionAuth(this.app, dbs, _dbs, getAuthSetupData()),
         watchSchema,
         disableRealtime: con.disable_realtime ?? undefined,
         transactions: true,
@@ -213,16 +221,14 @@ export const startConnection = async function (
           const newAuthSetupDataListener = subscribeToAuthSetupChanges(
             dbs,
             async (authData) => {
-              const auth = await getAuth(this.app, dbs, authData);
+              const auth = await getConnectionAuth(
+                this.app,
+                dbs,
+                _dbs,
+                authData,
+              );
               void prgl.update({
-                auth: {
-                  sidKeyName: auth.sidKeyName,
-                  getUser: (sid, __, _, cl, reqInfo) =>
-                    auth.getUser(sid, dbs, _dbs, cl, reqInfo),
-                  cacheSession: {
-                    getSession: (sid) => auth.cacheSession.getSession(sid, dbs),
-                  },
-                },
+                auth,
               });
             },
             this.prglConnections[con.id]?.authSetupDataListener,
@@ -339,4 +345,21 @@ export const getACRule = async (
       },
     ],
   });
+};
+
+const getConnectionAuth = async (
+  app: e.Express,
+  dbs: DBS,
+  _dbs: DB,
+  authData: AuthSetupData,
+) => {
+  const auth = await getAuth(app, dbs, authData);
+  return {
+    sidKeyName: auth.sidKeyName,
+    getUser: (sid, __, _, cl, reqInfo) =>
+      auth.getUser(sid, dbs, _dbs, cl, reqInfo),
+    cacheSession: {
+      getSession: (sid) => auth.cacheSession.getSession(sid, dbs),
+    },
+  } satisfies AuthConfig<void, SUser>;
 };

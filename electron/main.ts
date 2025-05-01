@@ -40,13 +40,9 @@ type SafeStorageHandles = Pick<SafeStorage, "encryptString" | "decryptString">;
 
 type StartParams = {
   safeStorage: SafeStorageHandles;
-  args: {
-    rootDir: string;
-    port: number;
-    electronSid: string;
-    onSidWasSet: () => void;
-    openPath: (path: string, isFile?: boolean) => void;
-  };
+  rootDir: string;
+  electronSid: string;
+  openPath: (path: string, isFile?: boolean) => void;
   onReady: (port: number) => void;
 };
 const expressApp = require("../ui/server/dist/server/src/electronConfig") as {
@@ -110,22 +106,19 @@ function initApp() {
     expressApp
       .start({
         safeStorage,
-        args: {
-          rootDir: app.getPath("userData"),
-          port: 0,
-          electronSid,
-          onSidWasSet: () => {
-            console.log("Express server ready, onSidWasSet, reloading...");
-            tryOpenBrowser(port ?? 0, electronSid, 0);
-          },
-          openPath: (path: string, isFile?: boolean) => {
-            // Show the given file in a file manager. If possible, select the file.
-            if (isFile) {
-              shell.showItemInFolder(path);
-            } else {
-              shell.openPath(path);
-            }
-          },
+        rootDir: app.getPath("userData"),
+        electronSid,
+        // onSidWasSet: () => {
+        //   console.log("Express server ready, onSidWasSet, reloading...");
+        //   tryOpenBrowser(port ?? 0, electronSid, 0);
+        // },
+        openPath: (path: string, isFile?: boolean) => {
+          // Show the given file in a file manager. If possible, select the file.
+          if (isFile) {
+            shell.showItemInFolder(path);
+          } else {
+            shell.openPath(path);
+          }
         },
         onReady: (actualPort: number) => {
           console.log("Express server started on port " + actualPort);

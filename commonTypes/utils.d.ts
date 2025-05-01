@@ -205,6 +205,6 @@ export declare const PROSTGLES_CLOUD_URL = "https://cloud1.prostgles.com";
 export declare const FORKED_PROC_ENV_NAME: "IS_FORKED_PROC";
 type ValueOf<T> = T[keyof T];
 export declare const getProperty: <O extends AnyObject, K extends string | (keyof O & string)>(o: O, k: K) => ValueOf<O> | undefined;
-export declare function debouncePromise<Args extends any[], T>(promiseFuncDef: (...args: Args) => Promise<T>): (...args: Args) => Promise<T>;
+export declare function debouncePromise<Args extends any[], T>(promiseFuncDef: (...pArgs: Args) => Promise<T>): (...args: Args) => Promise<T>;
 export declare const getCaller: () => string[];
 export {};

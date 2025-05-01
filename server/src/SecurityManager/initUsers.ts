@@ -81,7 +81,10 @@ export const initUsers = async (db: DBS, _db: DB) => {
 
     const addedUser = await db.users.find({ username });
 
-    console.warn("Added users: ", addedUser);
+    console.log(
+      "Added admin users: ",
+      addedUser.map((u) => u.username),
+    );
   }
 
   const electron = getElectronConfig();
@@ -100,6 +103,5 @@ export const initUsers = async (db: DBS, _db: DB) => {
       db,
       Date.now() + 10 * YEAR,
     );
-    electron.sidConfig.onSidWasSet();
   }
 };

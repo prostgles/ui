@@ -3,7 +3,7 @@ import type { Express, RequestHandler } from "express";
 import { assertJSONBObjectAgainstSchema } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
 import { pickKeys, tryCatchV2 } from "prostgles-types";
 import type { Server } from "socket.io";
-import { DEFAULT_ELECTRON_CONNECTION } from "../../../commonTypes/electronInit";
+import { DEFAULT_ELECTRON_CONNECTION } from "../../../commonTypes/electronInitTypes";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
 import { getElectronConfig } from "../electronConfig";

@@ -1,5 +1,5 @@
 import React from "react";
-import { DEFAULT_ELECTRON_CONNECTION } from "../../../../commonTypes/electronInit";
+import { DEFAULT_ELECTRON_CONNECTION } from "../../../../commonTypes/electronInitTypes";
 import { FlexCol } from "../../components/Flex";
 import FormField from "../../components/FormField/FormField";
 import Tabs from "../../components/Tabs";
@@ -37,7 +37,10 @@ export const ElectronSetupStateDB = ({
           For best experience we recommend using a locally installed database
         </p>
         <div className="flex-row-wrap gap-2 f-1 mt-1">
-          <PostgresInstallationInstructions os={os} placement="state-db-quick-setup" />
+          <PostgresInstallationInstructions
+            os={os}
+            placement="state-db-quick-setup"
+          />
         </div>
       </section>
       <Tabs
@@ -57,12 +60,18 @@ export const ElectronSetupStateDB = ({
                   <strong>{DEFAULT_ELECTRON_CONNECTION.db_user}</strong>{" "}
                   superuser and a{" "}
                   <strong>{DEFAULT_ELECTRON_CONNECTION.db_name}</strong> state
-                  database if missing on <strong>{c.db_host}:{c.db_port}</strong><br></br>
+                  database if missing on{" "}
+                  <strong>
+                    {c.db_host}:{c.db_port}
+                  </strong>
+                  <br></br>
                 </div>
-                {c.db_user !== DEFAULT_ELECTRON_CONNECTION.db_user && <div>
-                  *If <strong>{DEFAULT_ELECTRON_CONNECTION.db_user}</strong>{" "}
-                  user exists will overwrite password with a random one
-                </div>}
+                {c.db_user !== DEFAULT_ELECTRON_CONNECTION.db_user && (
+                  <div>
+                    *If <strong>{DEFAULT_ELECTRON_CONNECTION.db_user}</strong>{" "}
+                    user exists will overwrite password with a random one
+                  </div>
+                )}
 
                 <FormField
                   id="u"

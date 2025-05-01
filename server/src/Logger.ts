@@ -2,6 +2,7 @@ import type { EventInfo } from "prostgles-server/dist/Logging";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { pickKeys } from "prostgles-types";
 import { connMgr, type DBS } from ".";
+import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 
 export const loggerTableConfig: TableConfig<{ en: 1 }> = {
   logs: {
@@ -33,7 +34,7 @@ export const setLoggerDBS = (dbs: DBS) => {
 };
 
 const shouldExclude = (e: EventInfo, isStateDb: boolean) => {
-  if (!connMgr.authSetupData?.globalSettings?.enable_logs) return true;
+  if (!getAuthSetupData().globalSettings?.enable_logs) return true;
   if (
     isStateDb &&
     e.type === "table" &&

@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import type {
   ProstglesInitState,
   ProstglesState,
-} from "../../../../commonTypes/electronInit";
+} from "../../../../commonTypes/electronInitTypes";
 import type { ClientUser, Prgl } from "../../App";
 import { AccountMenu } from "../../pages/AccountMenu";
 import ClickCatch from "../ClickCatch";

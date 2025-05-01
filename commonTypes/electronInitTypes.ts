@@ -10,7 +10,7 @@ export type ProstglesInitState<
       state: "ok";
     } & T)
   | {
-      error: any;
+      error: Error | string | Record<string, any>;
       state: "error";
       errorType: "init" | "connection";
     };

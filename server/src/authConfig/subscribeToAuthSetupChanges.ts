@@ -112,3 +112,12 @@ export const waitForGlobalSettings = async () => {
   }
   return authSetupData.globalSettings;
 };
+
+export const getAuthSetupData = () => {
+  return (
+    authSetupData ?? {
+      globalSettings: undefined,
+      passwordlessAdmin: undefined,
+    }
+  );
+};

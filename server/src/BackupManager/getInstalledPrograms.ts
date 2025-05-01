@@ -2,7 +2,7 @@ import { execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import type { DB } from "prostgles-server/dist/Prostgles";
-import type { InstalledPrograms } from "../../../commonTypes/electronInit";
+import type { InstalledPrograms } from "../../../commonTypes/electronInitTypes";
 import type { WithUndef } from "../../../commonTypes/utils";
 import { isDefined } from "prostgles-types";
 

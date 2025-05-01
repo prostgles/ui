@@ -1,7 +1,7 @@
+/* eslint-disable security/detect-non-literal-fs-filename */
 import * as fs from "fs";
 import * as path from "path";
 import type { DBGeneratedSchema } from "../../commonTypes/DBGeneratedSchema";
-import type { DBS } from ".";
 
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 export type DBSConnectionInfo = Pick<
@@ -15,7 +15,7 @@ export type DBSConnectionInfo = Pick<
   | "db_ssl"
   | "type"
 >;
-export type OnServerReadyCallback = (portNumber: number, dbs: DBS) => void;
+export type OnServerReadyCallback = (portNumber: number) => void;
 
 interface SafeStorage extends NodeJS.EventEmitter {
   decryptString(encrypted: Buffer): string;
@@ -23,13 +23,17 @@ interface SafeStorage extends NodeJS.EventEmitter {
   isEncryptionAvailable(): boolean;
 }
 
-let isElectron = false;
-let safeStorage: SafeStorage | undefined;
 let port: number | undefined;
 
-let sidConfig = {
+const electronConfig: {
+  isElectron: boolean;
+  electronSid: string;
+  safeStorage: SafeStorage | undefined;
+} = {
+  isElectron: false,
   electronSid: "",
-  onSidWasSet: () => {},
+  safeStorage: undefined,
+  // onReady: (actualPort: number) => {},
 };
 
 export const actualRootDir = path.join(__dirname, "/../../..");
@@ -37,6 +41,7 @@ let rootDir = actualRootDir;
 export const getRootDir = () => rootDir;
 
 export const getElectronConfig = () => {
+  const { isElectron, safeStorage } = electronConfig;
   if (!isElectron) return undefined;
 
   if (
@@ -56,7 +61,7 @@ export const getElectronConfig = () => {
         !fs.existsSync(electronConfigPath) ?
           undefined
         : fs.readFileSync(electronConfigPath);
-      const decrypted = file ? safeStorage!.decryptString(file) : undefined;
+      const decrypted = file ? safeStorage.decryptString(file) : undefined;
       if (decrypted) {
         return JSON.parse(decrypted) as DBSConnectionInfo;
       }
@@ -70,7 +75,7 @@ export const getElectronConfig = () => {
   return {
     isElectron: true,
     port,
-    sidConfig,
+    sidConfig: electronConfig,
     hasCredentials: () => !!getCredentials(),
     getCredentials,
     setCredentials: (connection?: DBSConnectionInfo) => {
@@ -83,7 +88,7 @@ export const getElectronConfig = () => {
           console.log("Writing auth file: " + electronConfigPath);
           fs.writeFileSync(
             electronConfigPath,
-            safeStorage!.encryptString(JSON.stringify(connection)),
+            safeStorage.encryptString(JSON.stringify(connection)),
           );
         } catch (err) {
           console.error("Failed writing auth file: " + electronConfigPath, err);
@@ -96,47 +101,41 @@ export const getElectronConfig = () => {
 
 export const start = async (params: {
   safeStorage: SafeStorage;
-  args: {
-    port: number;
-    electronSid: string;
-    onSidWasSet: () => void;
-    rootDir: string;
-  };
-  onReady: OnServerReadyCallback;
+  electronSid: string;
+  rootDir: string;
+  onReady: (actualPort: number) => void;
 }) => {
-  const { args, onReady } = params;
-  isElectron = true;
-  port = args.port;
-  if (!Number.isInteger(args.port)) {
-    throw `Must provide a valid port`;
-  }
-  if (!args.rootDir || typeof args.rootDir !== "string") {
+  const { electronSid, onReady } = params;
+  if (!params.rootDir || typeof params.rootDir !== "string") {
     throw `Must provide a valid rootDir`;
   }
+  rootDir = params.rootDir;
   if (
-    !args.electronSid ||
-    typeof args.electronSid !== "string" ||
-    typeof args.onSidWasSet !== "function"
+    !electronSid ||
+    typeof electronSid !== "string" ||
+    typeof onReady !== "function"
   ) {
     throw "Must provide a valid electronSid: string and onSidWasSet: ()=>void";
   }
-  rootDir = args.rootDir;
-  sidConfig = {
-    electronSid: args.electronSid,
-    onSidWasSet: args.onSidWasSet,
-  };
-  safeStorage = params.safeStorage;
-  const { onServerReady } = await import("./index");
-  onServerReady((port, dbs) => {
-    const [token] = prostglesTokens;
-    if (token) {
-      console.log("Setting prostgles tokens");
-      void dbs.global_settings.update(
-        {},
-        { prostgles_registration: { email: "", enabled: true, token } },
-      );
-    }
-    return onReady(port, dbs);
+  electronConfig.isElectron = true;
+  electronConfig.electronSid = params.electronSid;
+  electronConfig.safeStorage = params.safeStorage;
+  const { startServer } = await import("./index");
+  void startServer(0, async ({ port: actualPort }) => {
+    // const [token] = prostglesTokens;
+    // if (token) {
+    //   console.log("Setting prostgles tokens");
+    //   void dbs.global_settings.update(
+    //     {},
+    //     { prostgles_registration: { email: "", enabled: true, token } },
+    //   );
+    // }
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(true);
+      }, 1000);
+    });
+    return onReady(actualPort);
   });
 };
 

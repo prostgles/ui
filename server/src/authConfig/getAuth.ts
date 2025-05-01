@@ -65,9 +65,9 @@ export const getAuth = async (
     onUseOrSocketConnected: getOnUseOrSocketConnected(dbs, authSetupData),
     getUser: getGetUser(authSetupData, dbs),
     cacheSession: {
-      getSession: async (sid, db) => {
+      getSession: async (sid, _) => {
         if (!sid) return undefined;
-        const s = await db.sessions.findOne({ id: sid });
+        const s = await dbs.sessions.findOne({ id: sid });
         if (!s) return undefined;
         return parseAsBasicSession(s);
       },

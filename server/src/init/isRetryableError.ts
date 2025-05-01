@@ -1,3 +1,4 @@
+import type { AnyObject } from "prostgles-types";
 import type { ProstglesInitStateWithDBS } from "./startProstgles";
 
 export const isRetryableError = (
@@ -14,7 +15,8 @@ export const isRetryableError = (
 
   // Explicitly non-retryable connection errors (customise based on common pg error codes)
   if (errorState.error) {
-    const code = errorState.error.code;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const code = (errorState.error as AnyObject).code;
     // Examples:
     if (code === "3D000") {
       // Database does not exist
