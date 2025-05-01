@@ -79,6 +79,6 @@ export const drawLinkLine = (
       },
     ],
     canvas,
-    opts,
+    { ...opts, isChild: true },
   );
 };

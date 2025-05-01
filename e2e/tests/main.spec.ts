@@ -221,7 +221,11 @@ test.describe("Main test", () => {
     // await page.getByText("Save").click();
     const errNode = await page.getByTestId("EmailAuthSetup.error");
     expect(await errNode.textContent()).toContain(
-      "getaddrinfo ENOTFOUND invalid___prostgles-test-mock",
+      // "getaddrinfo ENOTFOUND invalid___prostgles-test-mock", // EAI_AGAIN in worker, ENOTFOUND locally
+      "getaddrinfo ENOT",
+    );
+    expect(await errNode.textContent()).toContain(
+      "invalid___prostgles-test-mock",
     );
     await fillHostAndTest("prostgles-test-mock");
     await page.waitForTimeout(1500);

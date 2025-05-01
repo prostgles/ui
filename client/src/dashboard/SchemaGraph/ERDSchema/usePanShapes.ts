@@ -38,8 +38,24 @@ export const useSetPanShapes = ({
 
     let startPanCoords: { screenX: number; screenY: number } | undefined;
     let startPanPosition: { x: number; y: number } | undefined;
-
-    const setPanShape = (ev: Pick<PanEvent, "xNode" | "yNode">) => {
+    const setPanShapeAndDraw = (newPanShape: Rectangle | undefined) => {
+      if (newPanShape === panShape) {
+        return;
+      }
+      if (panShape) {
+        panShape.strokeStyle = "black";
+      }
+      panShape = newPanShape;
+      panShapeInitial = panShape && quickClone(panShape);
+      if (panShape) {
+        node.style.cursor = "grabbing";
+        panShape.strokeStyle = "red";
+      } else {
+        node.style.cursor = "";
+      }
+      onRenderShapes();
+    };
+    const findAndsetPanShape = (ev: Pick<PanEvent, "xNode" | "yNode">) => {
       const [xStart, yStart] = screenToWorld([ev.xNode, ev.yNode]);
 
       const shapes = shapesRef.current;
@@ -52,38 +68,28 @@ export const useSetPanShapes = ({
         } = s;
         return pointInRect([xStart, yStart], { x, y, w, h });
       });
-      if (currPanShape !== panShape) {
-        if (panShape) {
-          panShape.strokeStyle = panShapeInitial?.strokeStyle ?? "";
-        }
-        panShape = currPanShape;
-        panShapeInitial = panShape && quickClone(panShape);
-        if (panShape) {
-          node.style.cursor = "grabbing";
-          panShape.strokeStyle = "red";
-        } else {
-          node.style.cursor = "";
-        }
-        onRenderShapes();
-      }
+      setPanShapeAndDraw(currPanShape);
     };
 
     return setPan(node, {
       onPointerMove: (ev) => {
-        setPanShape(ev);
+        findAndsetPanShape(ev);
       },
       onPanStart: (ev) => {
         startPanCoords = { screenX: ev.xNode, screenY: ev.yNode };
         startPanPosition = { ...positionRef.current };
 
         const shapes = shapesRef.current;
-        setPanShape(ev);
+        findAndsetPanShape(ev);
         if (panShape) {
           moveToEnd(shapes, shapes.indexOf(panShape));
         }
       },
       onPan: (ev) => {
-        if (!startPanCoords || !startPanPosition) return;
+        if (!startPanCoords || !startPanPosition) {
+          setPanShapeAndDraw(undefined);
+          return;
+        }
 
         const currentScreenX = ev.xNode;
         const currentScreenY = ev.yNode;
@@ -119,9 +125,7 @@ export const useSetPanShapes = ({
         if (panShape) {
           panShape.strokeStyle = "black";
         }
-        onRenderShapes();
-        panShape = undefined;
-        panShapeInitial = undefined;
+        setPanShapeAndDraw(undefined);
         onPanEnded();
       },
       threshold: 1,

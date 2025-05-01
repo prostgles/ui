@@ -3,7 +3,7 @@ import type { LinkLine, Rectangle, Shape } from "../CanvasChart";
 import { drawMonotoneXCurve } from "../drawMonotoneXCurve";
 import { measureText } from "../measureText";
 import { roundRect } from "../roundRect";
-import { drawLinkLine } from "./drawLinkLine";
+import { drawLinkLine } from "./dd";
 export type ShapeV2 = Shape | LinkLine;
 const getWH = (canvas: HTMLCanvasElement) => {
   return {

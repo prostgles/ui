@@ -51,10 +51,10 @@ export const SchemaGraph = (props: SchemaGraphProps) => {
           title="Schema diagram"
           positioning="fullscreen"
           clickCatchStyle={{ opacity: 1 }}
-          contentClassName="o-visible p-1"
+          contentClassName="o-visible p-1 "
           onClose={() => setShowSchemaDiagram(false)}
         >
-          <FlexCol className=" f-1 relative w-full h-full">
+          <FlexCol className=" f-1 relative w-full h-full bg-color-1">
             <Select
               value={displayMode}
               label="Display"
