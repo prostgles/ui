@@ -38,7 +38,7 @@ export const SchemaGraph = (props: SchemaGraphProps) => {
         iconPath={mdiRelationManyToMany}
         className="fit "
         title="Show schema diagram"
-        data-command="schema-diagram"
+        data-command="SchemaGraph"
         variant="outline"
         onClick={() => {
           setShowSchemaDiagram(true);

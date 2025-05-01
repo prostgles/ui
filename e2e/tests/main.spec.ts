@@ -186,6 +186,13 @@ test.describe("Main test", () => {
     await page.getByTestId("SmartForm.close").waitFor({ state: "visible" });
     await page.getByTestId("SmartForm.delete").waitFor({ state: "visible" });
     await page.getByTestId("SmartForm.close").click();
+
+    /** Schema diagram works */
+    await page.getByTestId("SchemaGraph").click();
+
+    await page
+      .getByText("Reset layout")
+      .waitFor({ state: "visible", timeout: 15e3 });
   });
 
   test("Email password registration setup", async ({ page: p, browser }) => {
@@ -220,13 +227,10 @@ test.describe("Main test", () => {
     await fillHostAndTest("invalid___prostgles-test-mock");
     await page.getByText("Enabled").click();
     await page.getByText("Save").click();
-    // await page.waitForTimeout(1500);
-    // await page.getByText("Enable").click();
-    // await page.getByText("Save").click();
     const errNode = await page.getByTestId("EmailAuthSetup.error");
     expect(await errNode.textContent()).toContain(
-      // "getaddrinfo ENOTFOUND invalid___prostgles-test-mock", // EAI_AGAIN in worker, ENOTFOUND locally
-      "getaddrinfo ENOT",
+      // "getaddrinfo ENOTFOUND invalid___prostgles-test-mock", // or EAI_AGAIN
+      "getaddrinfo E",
     );
     expect(await errNode.textContent()).toContain(
       "invalid___prostgles-test-mock",

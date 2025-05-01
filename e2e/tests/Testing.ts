@@ -178,7 +178,7 @@ export const COMMANDS = {
 
   "CloseSaveSQLPopup.delete": "",
 
-  "schema-diagram": "",
+  SchemaGraph: "",
   AddColumnReference: "",
   "SmartFormFieldOptions.AttachFile": "",
   RuleToggle: "",
