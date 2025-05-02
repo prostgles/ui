@@ -188,7 +188,6 @@ export default class W_Table extends RTComp<
   ref?: HTMLElement;
   refRowCount?: HTMLElement;
 
-  rowPanelData: any;
   state: W_TableState = {
     barchartVals: {},
     rowsLoaded: 0,
@@ -639,9 +638,11 @@ export default class W_Table extends RTComp<
               suggestions={this.props.suggestions}
               w={w}
             />
-            {cols.length > 50 && !this.state.tooManyColumnsWarningWasShown && (
+            {!this.state.tooManyColumnsWarningWasShown && (
               <TooManyColumnsWarning
                 w={w}
+                numberOfCols={cols.length}
+                numberOfRows={rows.length}
                 onHide={() => {
                   this.setState({ tooManyColumnsWarningWasShown: true });
                 }}

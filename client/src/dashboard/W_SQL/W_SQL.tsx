@@ -176,7 +176,6 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
   refResize?: HTMLElement;
   ref?: HTMLElement & { sqlRef?: SQLEditorRef | undefined };
 
-  rowPanelData: any;
   state: W_SQLState = {
     sql: "",
     loading: false,
@@ -255,27 +254,6 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
       // window.open('data:text/csv;charset=utf-8,' + w.sql);
       download(this.d.w.sql, `${this.d.w.name || "Query"}.sql`, "text/sql");
     }
-  }
-
-  /**
-   * To reduce the number of unnecessary data requests let's save the query signature and allow new queries only if different
-   */
-  currentDataRequestSignature = "";
-  static getDataRequestSignature(
-    args:
-      | {
-          select?: AnyObject;
-          filter?: AnyObject;
-          orderBy?: AnyObject;
-          limit?: number;
-          offset?: number;
-        }
-      | { sql: string },
-  ) {
-    if ("sql" in args) return args.sql;
-
-    const { filter, select, limit, offset } = args;
-    return JSON.stringify({ filter, select, limit, offset });
   }
 
   dataSub?: any;
@@ -570,7 +548,7 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
           />
         </div>
 
-        {!popup ? null : (
+        {popup && (
           <Popup
             rootStyle={popup.style}
             anchorEl={popup.anchorEl}

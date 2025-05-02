@@ -33,7 +33,21 @@ export const useSchemaShapes = ({
     },
   });
 
+  const fkeys = usePromise(async () => {
+    const constraints =
+      !db.sql ?
+        []
+      : ((await db.sql(
+          PG_OBJECT_QUERIES.constraints.sql,
+          {},
+          { returnType: "rows" },
+        )) as (typeof PG_OBJECT_QUERIES.constraints.type)[]);
+
+    return constraints.filter((c) => c.contype === "f");
+  }, [db]);
+
   const tablesWithPositions = useMemo(() => {
+    if (!fkeys) return [];
     const { clientHeight, clientWidth } =
       canvasRef.current ?? window.document.body;
     let existingPositions = dbConf?.table_schema_positions;
@@ -60,27 +74,32 @@ export const useSchemaShapes = ({
       }, {});
     }
 
-    return tables.map((t) => {
-      const position = existingPositions[t.name];
-      return {
-        ...t,
-        position,
-      };
-    });
-  }, [tables, dbConf]);
-
-  const fkeys = usePromise(async () => {
-    const constraints =
-      !db.sql ?
-        []
-      : ((await db.sql(
-          PG_OBJECT_QUERIES.constraints.sql,
-          {},
-          { returnType: "rows" },
-        )) as (typeof PG_OBJECT_QUERIES.constraints.type)[]);
-
-    return constraints.filter((c) => c.contype === "f");
-  });
+    const getRefs = (
+      tableName: string,
+      relType: "references" | "referencedBy",
+    ) => {
+      const referencedBy = fkeys.filter(
+        ({ table_name, ftable_name }) =>
+          (relType === "referencedBy" ? ftable_name : table_name) === tableName,
+      );
+      return referencedBy;
+    };
+    return tables
+      .sort((a, b) => {
+        /** Most referenced tables first */
+        return (
+          getRefs(b.name, "referencedBy").length -
+          getRefs(a.name, "referencedBy").length
+        );
+      })
+      .map((t) => {
+        const position = existingPositions[t.name];
+        return {
+          ...t,
+          position,
+        };
+      });
+  }, [canvasRef, dbConf?.table_schema_positions, tables, fkeys]);
 
   const dbConfId = dbConf?.id;
   useEffect(() => {

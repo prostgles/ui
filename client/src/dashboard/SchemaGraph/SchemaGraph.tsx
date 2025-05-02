@@ -43,9 +43,7 @@ export const SchemaGraph = (props: SchemaGraphProps) => {
         onClick={() => {
           setShowSchemaDiagram(true);
         }}
-      >
-        Schema diagram
-      </Btn>
+      />
 
       {showSchemaDiagram && (
         <Popup
