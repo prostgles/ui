@@ -1,3 +1,4 @@
+import { useMemoDeep } from "prostgles-client/dist/react-hooks";
 import { useCallback, useEffect } from "react";
 
 type RowNodeWithInfo = HTMLDivElement & {
@@ -14,7 +15,8 @@ type P = {
  * Given a table body with rows, render only visible
  * VERY experimental. react-virtuoso not used because scrolling is not smooth
  * */
-export const useVirtualisedRows = ({ scrollBodyRef, rows }: P) => {
+export const useVirtualisedRows = ({ scrollBodyRef, rows: nonMemoRows }: P) => {
+  const rows = useMemoDeep(() => nonMemoRows, [nonMemoRows]);
   const getParentNodes = useCallback(() => {
     const xScrollParent =
       scrollBodyRef.current?.closest<HTMLDivElement>(".table-component");
@@ -33,79 +35,79 @@ export const useVirtualisedRows = ({ scrollBodyRef, rows }: P) => {
     const offsetTop = scrollBody.getBoundingClientRect().top;
     const offsetLeft = xScrollParent.getBoundingClientRect().left;
     const threshold = 100;
-    const setRectAndSize = (node: RowNodeWithInfo) => {
+    const setRectAndSize = (node: RowNodeWithInfo, isRow: boolean) => {
       const nodeRect = node.getBoundingClientRect();
       node.nodeRect = nodeRect;
       node.initialStyle = { ...node.style };
       node.style.width = `${nodeRect.width}px`;
       node.style.height = `${nodeRect.height}px`;
-      node.style.top = `${nodeRect.top - offsetTop}px`;
+      node.style.top = !isRow ? "0px" : `${nodeRect.top - offsetTop}px`;
       node.style.left = `${nodeRect.left - offsetLeft}px`;
       node.style.position = "absolute";
     };
-    const checkNodeRect = (node: RowNodeWithInfo) => {
-      const nodeRect = node.nodeRect || node.getBoundingClientRect();
-      if (!("nodeRect" in node) || !node.initialStyle) {
-        setRectAndSize(node);
-        // Array.from(node.children as unknown as RowNodeWithInfo[])
-        //   .slice(0)
-        //   .reverse()
-        //   .forEach((child) => {
-        //     setRectAndSize(child);
-        //   });
-        return;
-      }
+    const checkChildNodes = (parentNode: HTMLDivElement, isRow = true) => {
+      Array.from(parentNode.children as unknown as RowNodeWithInfo[])
+        .slice(0)
+        .reverse() // This is to ensure changing to absolute position does not affect the previous rows
+        .forEach((node, i) => {
+          const nodeRect = node.nodeRect || node.getBoundingClientRect();
+          if (!("nodeRect" in node) || !node.initialStyle) {
+            setRectAndSize(node, isRow);
+            if (isRow) {
+              checkChildNodes(node, false);
+            }
+            return;
+          }
 
-      const isTooUp =
-        nodeRect.bottom - offsetTop < scrollBody.scrollTop - threshold;
-      const isTooDown =
-        nodeRect.top - offsetTop >
-        scrollBody.scrollTop + scrollBody.clientHeight + threshold;
-      const isOutOfView = isTooUp || isTooDown;
+          const isTooUp =
+            nodeRect.bottom - offsetTop < scrollBody.scrollTop - threshold;
+          const isTooDown =
+            nodeRect.top - offsetTop >
+            scrollBody.scrollTop + scrollBody.clientHeight + threshold;
+          const isOutOfView = isTooUp || isTooDown;
 
-      const rowDisplay = isOutOfView ? "none" : node.initialStyle.display;
-      if (rowDisplay !== node.style.display) {
-        node.style.display = rowDisplay;
-        if (isOutOfView) {
-          // Array.from(node.children as unknown as RowNodeWithInfo[]).forEach(
-          //   (child) => {
-          //     child.style.display = child.initialStyle!.display;
-          //   },
-          // );
-          return;
-        }
-      }
+          const rowDisplay = isOutOfView ? "none" : node.initialStyle.display;
+          if (rowDisplay !== node.style.display) {
+            node.style.display = rowDisplay;
+            if (isOutOfView && isRow) {
+              // Array.from(node.children as unknown as RowNodeWithInfo[]).forEach(
+              //   (child) => {
+              //     child.style.display = child.initialStyle!.display;
+              //   },
+              // );
+              return;
+            }
+          }
 
-      // Array.from(node.children as unknown as RowNodeWithInfo[]).forEach(
-      //   (child) => {
-      //     const childRect = child.nodeRect!;
-      //     const isTooLeftOfView =
-      //       childRect.right - offsetLeft < xScrollParent.scrollLeft - threshold;
-      //     const isTooRightOfView =
-      //       childRect.left - offsetLeft >
-      //       xScrollParent.scrollLeft + xScrollParent.clientWidth + threshold;
-      //     const cellIsOutOfView = isTooLeftOfView || isTooRightOfView;
+          if (!isRow) return;
+          Array.from(node.children as unknown as RowNodeWithInfo[]).forEach(
+            (child) => {
+              const childRect = child.nodeRect!;
+              const isTooLeftOfView =
+                childRect.right - offsetLeft <
+                xScrollParent.scrollLeft - threshold;
+              const isTooRightOfView =
+                childRect.left - offsetLeft >
+                xScrollParent.scrollLeft +
+                  xScrollParent.clientWidth +
+                  threshold;
+              const cellIsOutOfView = isTooLeftOfView || isTooRightOfView;
 
-      //     const display = cellIsOutOfView ? "none" : node.initialStyle!.display;
-      //     if (child.style.display !== display) {
-      //       child.style.display = display;
-      //       if (!cellIsOutOfView) {
-      //         node.style.position = "absolute";
-      //         node.style.top = "0px"; //`${nodeRect.top - offsetTop}px`;
-      //         node.style.left = `${nodeRect.left - offsetLeft}px`;
-      //       }
-      //     }
-      //   },
-      // );
+              const display =
+                cellIsOutOfView ? "none" : node.initialStyle!.display;
+              if (child.style.display !== display) {
+                child.style.display = display;
+                // if (!cellIsOutOfView) {
+                //   node.style.position = "absolute";
+                //   node.style.top = "0px"; //`${nodeRect.top - offsetTop}px`;
+                //   node.style.left = `${nodeRect.left - offsetLeft}px`;
+                // }
+              }
+            },
+          );
+        });
     };
-    const rowNodes = Array.from(
-      scrollContentWrapper.children as unknown as RowNodeWithInfo[],
-    )
-      .slice(0)
-      .reverse(); // This is to ensure changing to absolute position does not affect the previous rows
-    rowNodes.forEach((node, i) => {
-      checkNodeRect(node);
-    });
+    checkChildNodes(scrollContentWrapper);
   }, [getParentNodes]);
 
   useEffect(() => {
