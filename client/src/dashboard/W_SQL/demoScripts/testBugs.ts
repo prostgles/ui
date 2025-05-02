@@ -127,6 +127,7 @@ export const testBugs: DemoScript = async (args) => {
   await runDbSQL(
     `CREATE TABLE IF NOT EXISTS my_p_table (id1 serial PRIMARY KEY, name1 text);`,
   );
+  await tout(1e3);
   const publicSchemaPrefix = "SELECT * FROM public.my_p_table WHERE";
   for (const script of [
     publicSchemaPrefix,
