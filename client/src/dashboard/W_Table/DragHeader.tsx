@@ -3,12 +3,12 @@ import type { TableHandlerClient } from "prostgles-client/dist/prostgles";
 import { getDistanceBetweenBoxes } from "../SilverGrid/SilverGridChild";
 import type { CardViewProps, CardViewState, IndexedRow } from "./CardView";
 import type { ValidatedColumnInfo } from "prostgles-types";
-import { Pan } from "../../components/Table/Table";
 import { getRowFilter } from "./tableUtils/getRowFilter";
 import React from "react";
 import { isEmpty } from "../../utils";
 import { getSmartGroupFilter } from "../../../../commonTypes/filterUtils";
 import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
+import { Pan } from "../../components/Pan";
 
 type DragHeaderProps = Pick<
   CardViewProps,

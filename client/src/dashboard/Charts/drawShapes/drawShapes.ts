@@ -1,10 +1,10 @@
 import type { Point } from "../../Charts";
-import type { LinkLine, Rectangle, Shape } from "../CanvasChart";
+import type { Image, LinkLine, Shape } from "../CanvasChart";
 import { drawMonotoneXCurve } from "../drawMonotoneXCurve";
 import { measureText } from "../measureText";
 import { roundRect } from "../roundRect";
-import { drawLinkLine } from "./dd";
-export type ShapeV2 = Shape | LinkLine;
+import { drawLinkLine } from "./shortestLinkLineV2";
+export type ShapeV2<T = void> = Shape<T> | LinkLine<T> | Image<T>;
 const getWH = (canvas: HTMLCanvasElement) => {
   return {
     w: canvas.offsetWidth,
@@ -14,8 +14,10 @@ const getWH = (canvas: HTMLCanvasElement) => {
 export const getCtx = (canvas: HTMLCanvasElement) => {
   return canvas.getContext("2d");
 };
+
+let lastDrawn = {};
 export const drawShapes = (
-  shapes: (Shape | LinkLine)[],
+  shapes: ShapeV2[],
   canvas: HTMLCanvasElement,
   opts?: {
     scale?: number;
@@ -26,7 +28,11 @@ export const drawShapes = (
   const { w, h } = getWH(canvas);
   const ctx = getCtx(canvas);
   if (!ctx) return;
-
+  lastDrawn = {
+    shapes,
+    canvas,
+    opts,
+  };
   if (!opts?.isChild) {
     ctx.clearRect(0, 0, w, h);
   }
@@ -44,7 +50,9 @@ export const drawShapes = (
 
   shapes.forEach((s) => {
     ctx.lineJoin = "bevel";
-    if (s.type === "linkline") {
+    if (s.type === "image") {
+      ctx.drawImage(s.image, ...s.coords, s.w, s.h);
+    } else if (s.type === "linkline") {
       drawLinkLine(shapes, canvas, s, opts);
     } else if (s.type === "rectangle") {
       const {

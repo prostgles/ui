@@ -1,7 +1,6 @@
 import type { Point } from "../../Charts";
 import type { LinkLine, Rectangle, Shape } from "../CanvasChart";
 import { drawShapes } from "./drawShapes";
-export type ShapeV2 = Shape | LinkLine;
 
 export const getCtx = (canvas: HTMLCanvasElement) => {
   return canvas.getContext("2d");

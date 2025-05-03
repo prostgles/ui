@@ -201,9 +201,7 @@ export const createDatabase = async (
   await page.getByTestId("ConnectionServer.add.confirm").click();
   /* Wait until db is created */
   const databaseCreationTime = (fromTemplates ? 4 : 1) * MINUTE;
-  const workspaceCreationAndLoatTime = 3 * MINUTE;
   await page
     .getByTestId("ConnectionServer.add.confirm")
     .waitFor({ state: "detached", timeout: databaseCreationTime });
-  // await page.getByTestId("dashboard.menu").waitFor({ state: "visible", timeout: workspaceCreationAndLoatTime });
 };

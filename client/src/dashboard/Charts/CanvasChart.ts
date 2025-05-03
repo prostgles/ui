@@ -3,7 +3,7 @@ import type { PanListeners } from "../setPan";
 import { setPan } from "../setPan";
 import { createHiPPICanvas } from "./createHiPPICanvas";
 import { drawMonotoneXCurve } from "./drawMonotoneXCurve";
-import { allLowerCase } from "./drawShapes/drawShapes";
+import { allLowerCase, type ShapeV2 } from "./drawShapes/drawShapes";
 import { roundRect } from "./roundRect";
 import type { XYFunc } from "./TimeChart";
 
@@ -35,7 +35,7 @@ export type Rectangle<T = any, C = void> = ShapeBase<T> &
     h: number;
     borderRadius?: number;
     coords: Point;
-    children?: Shape<C>[];
+    children?: Exclude<ShapeV2<C>, LinkLine>[];
   };
 
 export type ChartedText<T = any> = ShapeBase<T> &
@@ -67,6 +67,13 @@ export type LinkLine<T = any> = ShapeBase<T> &
     targetYOffset: number;
     variant?: "smooth";
   };
+export type Image<T = any> = ShapeBase<T> & {
+  type: "image";
+  coords: Point;
+  w: number;
+  h: number;
+  image: CanvasImageSource;
+};
 
 export type Polygon<T = any> = ShapeBase<T> &
   StrokeProps &

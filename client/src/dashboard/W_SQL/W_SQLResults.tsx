@@ -121,6 +121,7 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
             maxCharsPerCell={maxCharsPerCell || 1000}
             sort={sort}
             onSort={onSort}
+            enableExperimentalVirtualisation={true}
             showSubLabel={true}
             cols={cols.map((c, i) => ({
               ...c,

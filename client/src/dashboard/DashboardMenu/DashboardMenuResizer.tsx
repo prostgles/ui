@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import type { DashboardMenuProps } from "./DashboardMenu";
-import { Pan } from "../../components/Table/Table";
 import { useLocalSettings } from "../localSettings";
+import { Pan } from "../../components/Pan";
 
 type P = {
   dashboardMenuRef: HTMLDivElement | null;

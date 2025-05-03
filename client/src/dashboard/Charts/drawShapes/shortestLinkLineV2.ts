@@ -1,14 +1,14 @@
 import type { Point } from "../../Charts";
-import type { LinkLine, Rectangle, Shape } from "../CanvasChart";
-import { drawShapes } from "./drawShapes";
-export type ShapeV2 = Shape | LinkLine;
+import type { Image, LinkLine, Rectangle, Shape } from "../CanvasChart";
+import { drawShapes, type ShapeV2 } from "./drawShapes";
+import { findShortestPathAroundRectangles } from "./findShortestPathAroundRectangles";
 
 export const getCtx = (canvas: HTMLCanvasElement) => {
   return canvas.getContext("2d");
 };
 
-export const drawLinkLine = (
-  shapes: (Shape | LinkLine)[],
+export const drawLinkLine = <T = void>(
+  shapes: ShapeV2<T>[],
   canvas: HTMLCanvasElement,
   linkLine: LinkLine,
   opts?: {
@@ -80,8 +80,8 @@ export const drawLinkLine = (
   const linePoints: Point[] = [
     p0_startOnRect, // 0: Touch source box
     p1_startAway, // 1: A bit out (horizontal)
-    p2_corner1, // 2: Up/down to midpoint Y (vertical)
-    p3_corner2, // 3: Across horizontally at midpoint Y
+    // p2_corner1, // 2: Up/down to midpoint Y (vertical)
+    // p3_corner2, // 3: Across horizontally at midpoint Y
     p4_endNear, // 4: Up/down to target Y level (vertical)
     p5_endOnRect, // 5: Touch target box (horizontal)
   ];
@@ -97,12 +97,33 @@ export const drawLinkLine = (
     getTranslatedCoords(p5_endOnRect),
   ];
 
+  // const coordToPoint = ([x, y]: Point) => ({ x, y });
+  // const pointToCoord = ({ x, y }: { x: number; y: number }) => [x, y] as Point;
+  // const shortestPath = findShortestPathAroundRectangles(
+  //   coordToPoint(p1_startAway),
+  //   coordToPoint(p4_endNear),
+  //   shapes
+  //     .filter((s): s is Rectangle => s.type === "rectangle")
+  //     .map(({ id, coords, w, h }) => ({
+  //       id,
+  //       width: w,
+  //       height: h,
+  //       ...coordToPoint(coords),
+  //     })),
+  //   20,
+  // );
+  // const shortestPathAroundRectangles = [
+  //   getTranslatedCoords(p0_startOnRect),
+  //   ...shortestPath.map(pointToCoord).map(getTranslatedCoords),
+  //   getTranslatedCoords(p5_endOnRect),
+  // ];
+
   drawShapes(
     [
       {
         id,
         type: "multiline",
-        coords: linePoints.map(getTranslatedCoords), // Apply transformations
+        coords: coords,
         lineWidth: 4,
         strokeStyle: strokeStyle || "black",
         variant: "smooth",

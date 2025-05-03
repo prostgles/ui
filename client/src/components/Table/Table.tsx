@@ -2,15 +2,12 @@ import React, { useRef, useState } from "react";
 import "./Table.css";
 
 import type { AnyObject } from "prostgles-types";
-import type { TestSelectors } from "../../Testing";
 import type {
   ColumnSort,
   ColumnSortSQL,
 } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 import type { ColumnSortMenuProps } from "../../dashboard/W_Table/ColumnMenu/ColumnSortMenu";
 import type { ProstglesColumn } from "../../dashboard/W_Table/W_Table";
-import type { PanListeners } from "../../dashboard/setPan";
-import { setPan } from "../../dashboard/setPan";
 import { classOverride } from "../Flex";
 import type { PaginationProps } from "./Pagination";
 import { TableBody } from "./TableBody";
@@ -110,6 +107,7 @@ export type TableProps<Sort extends ColumnSort | ColumnSortSQL> = {
    * Used to render add row button
    */
   afterLastRowContent?: React.ReactNode;
+  enableExperimentalVirtualisation?: boolean;
 };
 
 export type TableState = {
@@ -150,7 +148,7 @@ export const Table = <Sort extends ColumnSort | ColumnSortSQL>(
       >
         <TableHeader
           {...props}
-          rootRef={ref.current}
+          rootRef={ref}
           setDraggedCol={(draggedCol) => setDraggedCol(draggedCol)}
         />
         <TableBody
@@ -169,61 +167,14 @@ export const Table = <Sort extends ColumnSort | ColumnSortSQL>(
           onRowHover={props.onRowHover}
           draggedCol={draggedCol}
           pagination={props.pagination}
+          enableExperimentalVirtualisation={
+            props.enableExperimentalVirtualisation
+          }
         />
       </div>
     </div>
   );
 };
-
-type PanProps = TestSelectors &
-  PanListeners & {
-    style?: React.CSSProperties;
-    className?: string;
-    threshold?: number;
-    children?: React.ReactNode;
-  };
-
-export class Pan extends React.Component<PanProps> {
-  componentDidMount() {
-    this.setListeners();
-  }
-
-  setListeners = () => {
-    if (this.ref) {
-      setPan(this.ref, {
-        onPanStart: this.props.onPanStart,
-        onPan: this.props.onPan,
-        onPanEnd: this.props.onPanEnd,
-        onRelease: this.props.onRelease,
-        onPress: this.props.onPress,
-        threshold: this.props.threshold,
-        onDoubleTap: this.props.onDoubleTap,
-      });
-    }
-  };
-
-  ref?: HTMLDivElement;
-  render() {
-    const { style = {}, className = "", children } = this.props;
-
-    return (
-      <div
-        ref={(e) => {
-          if (e) {
-            this.ref = e;
-          }
-        }}
-        id={this.props.id}
-        data-command={this.props["data-command"]}
-        data-key={this.props["data-key"]}
-        style={style}
-        className={className}
-      >
-        {children}
-      </div>
-    );
-  }
-}
 
 export function closest<Num extends number>(
   v: number,

@@ -56,10 +56,10 @@ export const prepareColsForRender = (
               console.error(e);
             }
           }
-          return _c;
+          return { ..._c };
         });
         w.$update({
-          columns: newCols,
+          columns: JSON.parse(JSON.stringify(newCols)),
         });
       },
     }));

@@ -20,6 +20,7 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
       .map(([k, v]) => k);
     if (!schemas.includes("public")) schemas.push("public");
     const query = `SELECT conname,
+      quote_ident(conname) as escaped_conname,
       conkey ,  
       pg_get_constraintdef(c.oid) as definition, 
       contype, 
@@ -38,6 +39,7 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
 
     const res = (await db.sql(query, { schemas }, { returnType: "rows" })) as {
       conname: string;
+      escaped_conname: string;
       conkey: number[];
       definition: string;
       contype: string;
@@ -66,7 +68,7 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
           .sort((a, b) => a.ordinal_position - b.ordinal_position)
           .map((c) => {
             return [
-              `  ${c.name} ${c.udt_name}`,
+              `  ${JSON.stringify(c.name)} ${c.udt_name}`,
               !c.is_pkey && !c.is_nullable ? "NOT NULL" : "",
               !c.is_pkey && c.has_default ? `DEFAULT ${c.column_default}` : "",
             ]
@@ -74,11 +76,24 @@ export const useLLMSchemaStr = ({ db, connection, tables, activeChat }: P) => {
               .join(" ");
           })
           .concat(
-            constraints.map((c) => `CONSTRAINT ${c.conname} ${c.definition}`),
+            constraints.map(
+              (c) => `CONSTRAINT ${c.escaped_conname} ${c.definition}`,
+            ),
           )
           .join(",\n ");
-        return `CREATE TABLE ${t.name} (\n${colDefs}\n)`;
+        const query = `CREATE TABLE ${t.name} (\n${colDefs}\n)`;
+        return {
+          query,
+          constraints,
+        };
       })
+      /** Tables will least fkeys first */
+      .sort((a, b) => {
+        const aFkeys = a.constraints.filter((c) => c.contype === "f");
+        const bFkeys = b.constraints.filter((c) => c.contype === "f");
+        return aFkeys.length - bFkeys.length;
+      })
+      .map((t) => t.query)
       .join(";\n");
 
     return res;

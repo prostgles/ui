@@ -1,7 +1,6 @@
 import React from "react";
 import type { TableProps, TableState } from "./Table";
-import { Pan, TableRootClassname, onWheelScroll } from "./Table";
-import type { AnyObject } from "prostgles-types";
+import { TableRootClassname, onWheelScroll } from "./Table";
 import { isObject } from "prostgles-types";
 import { vibrateFeedback } from "../../dashboard/Dashboard/dashboardUtils";
 import { quickClone } from "../../utils";
@@ -19,13 +18,14 @@ import type {
   ColumnSort,
   ColumnSortSQL,
 } from "../../dashboard/W_Table/ColumnMenu/ColumnMenu";
+import { Pan } from "../Pan";
 
 type TableHeaderProps<Sort extends ColumnSort | ColumnSortSQL> = Pick<
   TableProps<Sort>,
   "cols" | "sort" | "onSort" | "onColumnReorder" | "showSubLabel"
 > & {
   setDraggedCol: (newCol: TableState["draggedCol"]) => void;
-  rootRef?: HTMLDivElement | null;
+  rootRef: React.RefObject<HTMLDivElement>;
 } & Pick<TableState, "draggedCol">;
 
 export type TableHeaderState = Pick<TableState, "draggedCol"> & {
@@ -283,14 +283,16 @@ export class TableHeader<
                     }}
                     onDoubleTap={(_, __, node) => {
                       const tableBody = node.closest(`.table-component`);
-                      const colh: HTMLDivElement | null = node.closest(
+                      const headerCell: HTMLDivElement | null = node.closest(
                         `[role="columnheader"]`,
                       );
-                      if (colh && col.onResize && tableBody) {
+                      if (headerCell && col.onResize && tableBody) {
                         const [firstNode, ...otherRowNodes] =
                           tableBody.querySelectorAll<HTMLElement>(
                             `div[role="rowgroup"] [role="row"] > *:nth-child(${iCol + 1})`,
                           );
+
+                        console.log({ firstNode, otherRowNodes });
                         if (firstNode) {
                           const font = window.getComputedStyle(firstNode).font;
                           const max = [firstNode, ...otherRowNodes].reduce(
@@ -323,20 +325,19 @@ export class TableHeader<
                       }
                     }}
                     onPan={(opts, ev) => {
-                      const colh: HTMLDivElement | null = opts.node.closest(
-                        `[role="columnheader"]`,
-                      );
-                      if (colh) {
+                      const headerCell: HTMLDivElement | null =
+                        opts.node.closest(`[role="columnheader"]`);
+                      if (headerCell) {
                         const { xDiff } = opts;
                         const w_px = Math.max(
                           30,
                           (opts.node as any)._w + xDiff,
                         );
-                        colh.style.width = `${w_px}px`;
-                        colh.style.flex = "none";
+                        headerCell.style.width = `${w_px}px`;
+                        headerCell.style.flex = "none";
 
                         const tableBody =
-                          this.props.rootRef?.querySelector(
+                          this.props.rootRef.current?.querySelector(
                             `[role="rowgroup"]`,
                           );
                         const rowCols =

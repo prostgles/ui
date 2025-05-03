@@ -33,23 +33,23 @@ export const useSetPanShapes = ({
 
   useEffect(() => {
     if (!node || !canvas) return;
-    let panShapeInitial: Rectangle | undefined;
+    let panShapeInitialCoords: Rectangle["coords"] | undefined;
     let panShape: Rectangle | undefined;
 
     let startPanCoords: { screenX: number; screenY: number } | undefined;
     let startPanPosition: { x: number; y: number } | undefined;
     const setPanShapeAndDraw = (newPanShape: Rectangle | undefined) => {
-      if (newPanShape === panShape) {
+      if (newPanShape?.id === panShape?.id) {
         return;
       }
       if (panShape) {
-        panShape.strokeStyle = "black";
+        // panShape.strokeStyle = "black";
       }
       panShape = newPanShape;
-      panShapeInitial = panShape && quickClone(panShape);
+      panShapeInitialCoords = panShape && quickClone(panShape.coords);
       if (panShape) {
         node.style.cursor = "grabbing";
-        panShape.strokeStyle = "red";
+        // panShape.strokeStyle = "red";
       } else {
         node.style.cursor = "";
       }
@@ -99,7 +99,7 @@ export const useSetPanShapes = ({
         const deltaScreenY = currentScreenY - startPanCoords.screenY;
 
         /** Move whole canvas */
-        if (!panShape || !panShapeInitial) {
+        if (!panShape || !panShapeInitialCoords) {
           setScaleAndPosition({
             position: {
               x: startPanPosition.x + deltaScreenX,
@@ -116,15 +116,12 @@ export const useSetPanShapes = ({
         const deltaWorldY = deltaScreenY / scale;
 
         panShape.coords = [
-          panShapeInitial.coords[0] + deltaWorldX,
-          panShapeInitial.coords[1] + deltaWorldY,
+          panShapeInitialCoords[0] + deltaWorldX,
+          panShapeInitialCoords[1] + deltaWorldY,
         ];
         onRenderShapes();
       },
       onPanEnd: () => {
-        if (panShape) {
-          panShape.strokeStyle = "black";
-        }
         setPanShapeAndDraw(undefined);
         onPanEnded();
       },

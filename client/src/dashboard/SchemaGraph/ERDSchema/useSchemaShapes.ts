@@ -1,160 +1,137 @@
-import { usePromise } from "prostgles-client/dist/react-hooks";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { isDefined, isEmpty } from "../../../utils";
+import { useEffect, useRef, useState } from "react";
+import { isDefined } from "../../../utils";
 import type {
   ChartedText,
+  Image,
   LinkLine,
   Rectangle,
 } from "../../Charts/CanvasChart";
+import type { ShapeV2 } from "../../Charts/drawShapes/drawShapes";
 import { measureText } from "../../Charts/measureText";
 import { getCssVariableValue } from "../../Charts/onRenderTimechart";
-import type { ShapeV2 } from "../../Charts/drawShapes/drawShapes";
-import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
 import type { SchemaGraphDisplayMode, SchemaGraphProps } from "../SchemaGraph";
+import { useFetchSchemaForDiagram } from "./useFetchSchemaForDiagram";
 
-export const useSchemaShapes = ({
-  tables,
-  db,
-  dbs,
-  connectionId,
-  canvasRef,
-  displayMode,
-}: SchemaGraphProps & {
-  canvasRef: React.RefObject<HTMLCanvasElement>;
-  displayMode: SchemaGraphDisplayMode;
-}) => {
+export const useSchemaShapes = (
+  props: SchemaGraphProps & {
+    canvasRef: React.RefObject<HTMLCanvasElement>;
+    displayMode: SchemaGraphDisplayMode;
+  },
+) => {
+  const { canvasRef, displayMode } = props;
   const shapesRef = useRef<ShapeV2[]>([]);
   const [shapesVersion, setShapesVersion] = useState(0);
-  const { data: dbConf } = dbs.database_configs.useFindOne({
-    $existsJoined: {
-      connections: {
-        id: connectionId,
-      },
-    },
-  });
 
-  const fkeys = usePromise(async () => {
-    const constraints =
-      !db.sql ?
-        []
-      : ((await db.sql(
-          PG_OBJECT_QUERIES.constraints.sql,
-          {},
-          { returnType: "rows" },
-        )) as (typeof PG_OBJECT_QUERIES.constraints.type)[]);
+  const { schemaInfo, dbConfId } = useFetchSchemaForDiagram(props);
 
-    return constraints.filter((c) => c.contype === "f");
-  }, [db]);
-
-  const tablesWithPositions = useMemo(() => {
-    if (!fkeys) return [];
-    const { clientHeight, clientWidth } =
-      canvasRef.current ?? window.document.body;
-    let existingPositions = dbConf?.table_schema_positions;
-    if (!existingPositions || isEmpty(existingPositions)) {
-      let prevPosition = { x: 0, y: 0 };
-      existingPositions = tables.reduce((acc, t) => {
-        const newY = prevPosition.y + 300;
-        const newX = prevPosition.x + 300;
-        const tablePosition =
-          newY > clientHeight ?
-            {
-              x: newX,
-              y: 0,
-            }
-          : {
-              x: prevPosition.x,
-              y: newY,
-            };
-        prevPosition = tablePosition;
-        return {
-          ...acc,
-          [t.name]: tablePosition,
-        };
-      }, {});
-    }
-
-    const getRefs = (
-      tableName: string,
-      relType: "references" | "referencedBy",
-    ) => {
-      const referencedBy = fkeys.filter(
-        ({ table_name, ftable_name }) =>
-          (relType === "referencedBy" ? ftable_name : table_name) === tableName,
-      );
-      return referencedBy;
-    };
-    return tables
-      .sort((a, b) => {
-        /** Most referenced tables first */
-        return (
-          getRefs(b.name, "referencedBy").length -
-          getRefs(a.name, "referencedBy").length
-        );
-      })
-      .map((t) => {
-        const position = existingPositions[t.name];
-        return {
-          ...t,
-          position,
-        };
-      });
-  }, [canvasRef, dbConf?.table_schema_positions, tables, fkeys]);
-
-  const dbConfId = dbConf?.id;
   useEffect(() => {
-    if (!fkeys) return;
+    if (!schemaInfo) return;
+    const { fkeys, tablesWithPositions } = schemaInfo;
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) {
       return;
     }
     const COL_SPACING = 30;
+    const ICON_SIZE = 30;
     const PADDING = 10;
     const nodeShapes = tablesWithPositions
-      .flatMap((table, i) => {
+      .map((table, i) => {
         const offset = 50 * i;
         const x = table.position?.x ?? offset;
         const y = table.position?.y ?? offset;
-        const header: ChartedText = {
+
+        const getMeasuredChartedText = (
+          node: ChartedText,
+        ): ChartedText<{ width: number }> => ({
+          ...node,
+          data: { width: measureText(node, ctx, false).width },
+        });
+
+        const icon: Image | undefined = table.iconImage && {
+          id: `${table.name}-icon`,
+          type: "image",
+          coords: [PADDING / 2, PADDING / 2],
+          w: ICON_SIZE,
+          h: ICON_SIZE,
+          image: table.iconImage,
+        };
+        const header = getMeasuredChartedText({
           id: table.name + "-header",
           type: "text",
           text: table.label,
-          coords: [PADDING, COL_SPACING],
+          coords: [
+            !icon ? PADDING : icon.coords[0] + icon.w + PADDING / 2,
+            COL_SPACING,
+          ],
           font: "bold 22px Courier",
-          fillStyle: getCssVariableValue("--text-1"),
-        };
-        const cols: ChartedText[] = table.columns.map((c, i) => {
+          fillStyle: getCssVariableValue("--text-0"),
+        });
+
+        const colsAndDataTypes = table.columns.map((c, i) => {
           const colYOffset = COL_SPACING * (i + 2);
-          return {
+
+          const colName = getMeasuredChartedText({
             id: `${table.name}-${c.name}-col`,
             type: "text",
             coords: [PADDING, colYOffset],
             text: c.name,
-            fillStyle: getCssVariableValue("--text-1"),
+            fillStyle: getCssVariableValue("--text-0"),
+            font: "18px sans-serif",
+          });
+
+          const colDatatype = getMeasuredChartedText({
+            id: `${table.name}-${c.name}-col-datatype`,
+            type: "text",
+            coords: [PADDING * 2 + colName.data.width, colYOffset],
+            text: c.udt_name,
+            fillStyle: getCssVariableValue("--text-2"),
             font: "16px sans-serif",
-          } satisfies ChartedText;
+          });
+
+          return [colName, colDatatype] as const;
         });
 
-        const widestText = [...cols, header].reduce((acc, v) => {
-          return Math.max(acc, measureText(v, ctx, false).width);
-        }, 0);
+        const widestColContent = colsAndDataTypes.reduce(
+          (acc, [col, colDataType]) => {
+            return Math.max(
+              acc,
+              col.data.width + colDataType.data.width + 2 * PADDING,
+            );
+          },
+          0,
+        );
+        const rectangleContentWidth = Math.max(
+          header.data.width + header.coords[0] - PADDING,
+          widestColContent,
+        );
 
-        const box: Rectangle<typeof table> = {
+        const cols = colsAndDataTypes.flatMap(([colName]) => colName);
+        const colsDataTypes = colsAndDataTypes.flatMap(
+          ([colName, colDatatype]) => ({
+            ...colDatatype,
+            coords: [
+              rectangleContentWidth - colDatatype.data.width + PADDING,
+              colName.coords[1],
+            ] satisfies [number, number],
+          }),
+        );
+
+        const box: Rectangle<typeof table, { width: number } | undefined> = {
           id: table.name,
           type: "rectangle",
           coords: [x - PADDING, y - COL_SPACING - PADDING],
-          w: widestText + 2 * PADDING,
+          w: rectangleContentWidth + 2 * PADDING,
           h: (cols.length + 1) * COL_SPACING + 2 * PADDING,
           fillStyle: getCssVariableValue("--bg-color-0"),
           strokeStyle: getCssVariableValue("--text-2"),
           lineWidth: 1,
           borderRadius: 12,
-          children: [header, ...cols],
+          children: [icon, header, ...cols, ...colsDataTypes].filter(isDefined),
           data: table,
           // elevation: 10,
         };
 
-        return [box];
+        return box;
       })
       .filter(isDefined)
       .filter((t) => {
@@ -204,14 +181,14 @@ export const useSchemaShapes = ({
       .filter(isDefined);
 
     const shapes = [...linkShapes, ...nodeShapes];
-    shapesRef.current = shapes;
+    shapesRef.current = shapes as ShapeV2[];
     setShapesVersion((v) => v + 1);
-  }, [canvasRef, fkeys, tablesWithPositions, displayMode]);
+  }, [canvasRef, schemaInfo, displayMode]);
 
   return {
     shapesRef,
-    dbConfId,
-    fkeys,
+    schemaInfo,
     shapesVersion,
+    dbConfId,
   };
 };

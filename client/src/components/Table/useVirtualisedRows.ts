@@ -1,5 +1,5 @@
 import { useMemoDeep } from "prostgles-client/dist/react-hooks";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 type RowNodeWithInfo = HTMLDivElement & {
   nodeRect?: DOMRect | undefined;
@@ -9,13 +9,18 @@ type RowNodeWithInfo = HTMLDivElement & {
 type P = {
   scrollBodyRef: React.RefObject<HTMLDivElement>;
   rows: any[];
+  mode: "auto" | "off";
 };
 
 /**
  * Given a table body with rows, render only visible
  * VERY experimental. react-virtuoso not used because scrolling is not smooth
  * */
-export const useVirtualisedRows = ({ scrollBodyRef, rows: nonMemoRows }: P) => {
+export const useVirtualisedRows = ({
+  scrollBodyRef,
+  rows: nonMemoRows,
+  mode,
+}: P) => {
   const rows = useMemoDeep(() => nonMemoRows, [nonMemoRows]);
   const getParentNodes = useCallback(() => {
     const xScrollParent =
@@ -45,19 +50,28 @@ export const useVirtualisedRows = ({ scrollBodyRef, rows: nonMemoRows }: P) => {
       node.style.left = `${nodeRect.left - offsetLeft}px`;
       node.style.position = "absolute";
     };
-    const checkChildNodes = (parentNode: HTMLDivElement, isRow = true) => {
+    const checkChildNodes = (
+      parentNode: HTMLDivElement,
+      isRow = true,
+    ): boolean => {
+      let isFirstRun = false;
       Array.from(parentNode.children as unknown as RowNodeWithInfo[])
         .slice(0)
         .reverse() // This is to ensure changing to absolute position does not affect the previous rows
         .forEach((node, i) => {
-          const nodeRect = node.nodeRect || node.getBoundingClientRect();
+          if (
+            (isRow && node.role !== "row") ||
+            (!isRow && node.role !== "cell")
+          )
+            return;
           if (!("nodeRect" in node) || !node.initialStyle) {
             setRectAndSize(node, isRow);
             if (isRow) {
               checkChildNodes(node, false);
             }
-            return;
+            isFirstRun = true;
           }
+          const nodeRect = node.nodeRect || node.getBoundingClientRect();
 
           const isTooUp =
             nodeRect.bottom - offsetTop < scrollBody.scrollTop - threshold;
@@ -66,15 +80,10 @@ export const useVirtualisedRows = ({ scrollBodyRef, rows: nonMemoRows }: P) => {
             scrollBody.scrollTop + scrollBody.clientHeight + threshold;
           const isOutOfView = isTooUp || isTooDown;
 
-          const rowDisplay = isOutOfView ? "none" : node.initialStyle.display;
+          const rowDisplay = isOutOfView ? "none" : node.initialStyle!.display;
           if (rowDisplay !== node.style.display) {
             node.style.display = rowDisplay;
             if (isOutOfView && isRow) {
-              // Array.from(node.children as unknown as RowNodeWithInfo[]).forEach(
-              //   (child) => {
-              //     child.style.display = child.initialStyle!.display;
-              //   },
-              // );
               return;
             }
           }
@@ -97,41 +106,45 @@ export const useVirtualisedRows = ({ scrollBodyRef, rows: nonMemoRows }: P) => {
                 cellIsOutOfView ? "none" : node.initialStyle!.display;
               if (child.style.display !== display) {
                 child.style.display = display;
-                // if (!cellIsOutOfView) {
-                //   node.style.position = "absolute";
-                //   node.style.top = "0px"; //`${nodeRect.top - offsetTop}px`;
-                //   node.style.left = `${nodeRect.left - offsetLeft}px`;
-                // }
               }
             },
           );
         });
+      return isFirstRun;
     };
-    checkChildNodes(scrollContentWrapper);
+    const sizeWasSet = checkChildNodes(scrollContentWrapper);
+    if (sizeWasSet) {
+      checkChildNodes(scrollContentWrapper);
+    }
   }, [getParentNodes]);
 
-  useEffect(() => {
-    const disable = rows.length < 20 && Object.keys(rows[0] ?? {}).length < 30;
+  const disabled = useMemo(() => {
+    const disabled =
+      mode === "off" ||
+      (rows.length < 20 && Object.keys(rows[0] ?? {}).length < 30);
+    return disabled;
+  }, [rows, mode]);
 
-    if (disable) {
+  useEffect(() => {
+    if (disabled) {
       return;
     }
-    onScroll();
     const pNodes = getParentNodes();
     if (!pNodes) {
       return;
     }
     const { xScrollParent, scrollContentWrapper, scrollBody } = pNodes;
     scrollContentWrapper.style.height = scrollBody.scrollHeight + "px";
+    onScroll();
     xScrollParent.addEventListener("scroll", onScroll, {
       passive: true,
     });
     return () => {
       xScrollParent.removeEventListener("scroll", onScroll);
     };
-  }, [rows, onScroll, getParentNodes]);
+  }, [rows, disabled, onScroll, getParentNodes]);
 
   return {
-    onScroll,
+    onScroll: disabled ? undefined : onScroll,
   };
 };

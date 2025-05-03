@@ -29,6 +29,7 @@ export const TableBody = <Sort extends ColumnSort | ColumnSortSQL>(
     | "bodyClass"
     | "rowKeys"
     | "afterLastRowContent"
+    | "enableExperimentalVirtualisation"
   > &
     Pick<TableState, "draggedCol">,
 ) => {
@@ -49,6 +50,7 @@ export const TableBody = <Sort extends ColumnSort | ColumnSortSQL>(
     rowKeys,
     afterLastRowContent = null,
     draggedCol,
+    enableExperimentalVirtualisation,
   } = props;
 
   const scrollBodyRef = useRef<HTMLDivElement>(null);
@@ -80,6 +82,7 @@ export const TableBody = <Sort extends ColumnSort | ColumnSortSQL>(
   const { onScroll } = useVirtualisedRows({
     rows: _rows,
     scrollBodyRef,
+    mode: enableExperimentalVirtualisation ? "auto" : "off",
   });
 
   return (
