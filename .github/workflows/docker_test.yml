@@ -7,6 +7,18 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
+  test_docker_build_on_windows:
+    name: Run test suite
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Execute docker run script
+        run: |
+          npm run build && cd ../server && npm run build
+
   test_docker:
     name: Run test suite
     runs-on: ubuntu-latest
