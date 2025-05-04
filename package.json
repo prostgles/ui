@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "dev": "bash ./scripts/start.sh",
+    "start": "bash ./scripts/start-prod.sh",
+    "test": "bash ./scripts/test.sh"
+  },
   "devDependencies": {
     "prettier": "^3.4.2",
     "typescript": "^5.8.3"

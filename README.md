@@ -97,7 +97,7 @@ Your server will be running on [localhost:3004](http://localhost:3004).
 
 #### 3. Start app in dev mode (will install npm packages)
 
-    ./start.sh
+    npm run dev
 
 ### Testing
 

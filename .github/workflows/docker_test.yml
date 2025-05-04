@@ -17,7 +17,6 @@ jobs:
 
       - name: Docker run
         run: |
-          perl -p -e 's/\n/\r\n/' < ./client/build.sh > ./client/build.sh
           docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres
           TEST_SCRIPT=$(awk '/```docker-run.sh/{f=1;next} /```/{f=0} f' README.md)
           echo $TEST_SCRIPT
