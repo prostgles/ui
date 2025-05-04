@@ -8,7 +8,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   test_docker_build_on_windows:
-    name: Run test suite
+    name: Test RUN command from Dockerfile on Windows bash. It tends to fail due to clrf
     runs-on: windows-latest
 
     steps:
@@ -16,12 +16,13 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Execute docker run script
+        shell: cmd
         run: |
           cd client
           npm run build && cd ../server && npm run build
 
   test_docker:
-    name: Run test suite
+    name: Test docker scripts
     runs-on: ubuntu-latest
 
     steps:
