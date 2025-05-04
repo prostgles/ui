@@ -17,6 +17,7 @@ jobs:
 
       - name: Execute docker run script
         run: |
+          cd client
           npm run build && cd ../server && npm run build
 
   test_docker:
