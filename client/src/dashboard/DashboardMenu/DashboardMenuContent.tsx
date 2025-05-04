@@ -25,7 +25,6 @@ import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuResizer } from "./DashboardMenuResizer";
 import { NewTableMenu } from "./NewTableMenu";
 import type { TablesWithInfo } from "./useTableSizeInfo";
-import { useWhyDidYouUpdate } from "../../components/MonacoEditor/useWhyDidYouUpdate";
 
 type P = DashboardMenuProps & {
   onClose: undefined | VoidFunction;

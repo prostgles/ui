@@ -40,7 +40,7 @@ import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { SmartFilterBar } from "../SmartFilterBar/SmartFilterBar";
 import type { ProstglesQuickMenuProps } from "../W_QuickMenu";
 import Window from "../Window";
-import { CardView } from "./CardView";
+import { CardView } from "./CardView/CardView";
 import { NodeCountChecker } from "./NodeCountChecker";
 import type { RowPanelProps } from "./RowCard";
 import { RowCard } from "./RowCard";
@@ -531,15 +531,7 @@ export default class W_Table extends RTComp<
     );
 
     const { w } = this.d;
-    if (!w) {
-      if (
-        this.props.w.table_name &&
-        !this.props.prgl.db[this.props.w.table_name]
-      ) {
-        return showTableNotFound(this.props.w.table_name);
-      }
-      return null;
-    }
+    const tableName = w?.table_name ?? this.props.w.table_name;
     const {
       setLinkMenu,
       joinFilter,
@@ -550,6 +542,13 @@ export default class W_Table extends RTComp<
       childWindow,
     } = this.props;
     const { tables, db, dbs } = prgl;
+    const tableHandler = db[tableName];
+    if (!w) {
+      if (tableName && !tableHandler) {
+        return showTableNotFound(tableName);
+      }
+      return null;
+    }
     const activeRowStyle: React.CSSProperties =
       this.activeRowStr === JSON.stringify(joinFilter || {}) ?
         { background: activeRowColor }
@@ -586,9 +585,9 @@ export default class W_Table extends RTComp<
     const cardOpts =
       w.options.viewAs?.type === "card" ? w.options.viewAs : undefined;
     let content: React.ReactNode = null;
-    if (w.table_name && !db[w.table_name]) {
-      content = showTableNotFound(w.table_name);
-    } else if (loading || (w.table_name && !db[w.table_name])) {
+    if (tableName && !tableHandler) {
+      content = showTableNotFound(tableName);
+    } else if (loading || (tableName && !tableHandler)) {
       content = FirstLoadCover;
     } else {
       if (!rows) {
@@ -606,8 +605,6 @@ export default class W_Table extends RTComp<
         columnMenuState: this.columnMenuState,
       });
 
-      const { table_name: tableName } = w;
-
       let activeRowIndex = -1;
       if (activeRow?.row_filter) {
         activeRowIndex = rows.findIndex((r) =>
@@ -615,7 +612,6 @@ export default class W_Table extends RTComp<
         );
       }
 
-      const tableHandler = db[tableName];
       const canInsert = Boolean(tableHandler?.insert);
       const pkeys = cols
         .map((c) => (c.show && c.info?.is_pkey ? c.info.name : undefined))
@@ -697,6 +693,8 @@ export default class W_Table extends RTComp<
                   state={this.state}
                   props={this.props}
                   w={this.d.w}
+                  cardOpts={cardOpts}
+                  tableHandler={tableHandler!}
                   paginationProps={{ ...this.getPaginationProps() }}
                   onEditClickRow={this.onClickEditRow}
                   onDataChanged={() => {
@@ -747,7 +745,7 @@ export default class W_Table extends RTComp<
                       <Btn
                         iconPath={mdiPlus}
                         data-command="dashboard.window.rowInsert"
-                        data-key={w.table_name}
+                        data-key={tableName}
                         title={t.W_Table["Insert row"]}
                         className="shadow w-fit h-fit mt-1"
                         color="action"

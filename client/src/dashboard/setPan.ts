@@ -309,10 +309,6 @@ export function setPan(node: HTMLDivElement, evs: PanListeners) {
 
   /* Required for pointerup to fire */
   node.style.touchAction = "none";
-
-  // if (!panEventsAreSet) {
-  //   panEventsAreSet = true;
-
   window.document.body.style.touchAction = "none";
 
   /* Prevent chrome back/forward nav */
@@ -324,9 +320,8 @@ export function setPan(node: HTMLDivElement, evs: PanListeners) {
     _onRelease,
   );
   const onMoveCleanup = addEvent(window.document.body, "pointermove", onMove);
-  // }
 
-  const onPointerdownCleanup = addEvent(node, "pointerdown", _onPress);
+  const onPointerDownCleanup = addEvent(node, "pointerdown", _onPress);
   panEvents.push({
     node,
     events: evs,
@@ -334,7 +329,7 @@ export function setPan(node: HTMLDivElement, evs: PanListeners) {
   });
 
   return function () {
-    onPointerdownCleanup();
+    onPointerDownCleanup();
     onReleaseCleanup();
     onMoveCleanup();
     panEvents = panEvents.filter(
