@@ -7,20 +7,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
-  test_docker_build_on_windows:
-    name: Test RUN command from Dockerfile on Windows bash. It tends to fail due to clrf
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Execute docker run script
-        shell: cmd
-        run: |
-          cd client
-          npm run build && cd ../server && npm run build
-
   test_docker:
     name: Test docker scripts
     runs-on: ubuntu-latest
@@ -31,6 +17,7 @@ jobs:
 
       - name: Docker run
         run: |
+          perl -p -e 's/\n/\r\n/' < ./client/build.sh > ./client/build.sh
           docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres
           TEST_SCRIPT=$(awk '/```docker-run.sh/{f=1;next} /```/{f=0} f' README.md)
           echo $TEST_SCRIPT
