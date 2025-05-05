@@ -21,6 +21,7 @@ module.exports = merge(commonConfig, {
     minimize: true,
     minimizer: [
       new TerserPlugin({
+        parallel: false,
         terserOptions: {
           keep_classnames: true,
         },

@@ -11,7 +11,7 @@ export const LANG = "sql";
  */
 export const getMonaco = async () => {
   const monaco = await import(
-    /* webpackChunkName: "monaco_editorr" */ /*  webpackPrefetchNot */ "monaco-editor/esm/vs/editor/editor.api.js"
+    /* webpackChunkName: "monaco_editor" */ /*  webpackPrefetchNot */ "monaco-editor/esm/vs/editor/editor.api.js"
   );
   return monaco;
 };

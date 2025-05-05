@@ -1,4 +1,3 @@
-import * as d3 from "d3";
 import type { AnyObject, SelectParams } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
 import { getIcon } from "../../components/SvgIcon";
@@ -12,6 +11,7 @@ import type W_Map from "./W_Map";
 import type { W_MapState } from "./W_Map";
 import { MAP_SELECT_COLUMNS, getMapSelect, getSQLData } from "./getMapData";
 import { getMapFeatureStyle } from "./getMapFeatureStyle";
+import { scaleLinear } from "d3";
 
 export const DEFAULT_GET_COLOR: Pick<
   GeoJsonLayerProps,
@@ -201,13 +201,8 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                 // && (oneRow?.c?.coordinates || []).flat().flat().flat().length > 30){
                 const scale =
                   zoom > 7 ?
-                    d3
-                      .scaleLinear()
-                      .range([0, 0.005])
-                      .domain([9, 7])
-                      .clamp(true)
-                  : d3
-                      .scaleLinear()
+                    scaleLinear().range([0, 0.005]).domain([9, 7]).clamp(true)
+                  : scaleLinear()
                       .range([0.005, 0.05])
                       .domain([7, 1])
                       .clamp(true);
@@ -258,12 +253,10 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
               }
 
               if (willAggregate) {
-                const radiusRangeScale = d3
-                  .scaleLinear()
+                const radiusRangeScale = scaleLinear()
                   .range([20, 250])
                   .domain([0.001, 0.1]);
-                const scale = d3
-                  .scaleLinear()
+                const scale = scaleLinear()
                   .range([0.07, 0.0005])
                   .domain([0.886, 0.007166]);
                 /** TODO: fix point bad agg cluster positioning at low zoom  */
@@ -289,8 +282,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                   maxCount = Math.max(maxCount ?? +c, +c);
                 });
                 const maxRange = radiusRangeScale(minDelta);
-                const radiusScale = d3
-                  .scaleLinear()
+                const radiusScale = scaleLinear()
                   .range([1, maxRange])
                   .domain([minCount, maxCount]);
 
@@ -299,8 +291,7 @@ export const fetchMapLayerData = async function (this: W_Map, dataAge: number) {
                   radius: radiusScale(+a.c),
                 }));
               } else {
-                const scale = d3
-                  .scaleLinear()
+                const scale = scaleLinear()
                   .range([1, 10, 80, 100])
                   .domain([20, 14, 10, 1])
                   .clamp(true);

@@ -1,20 +1,20 @@
 import { mdiPencil, mdiPlus } from "@mdi/js";
+import { scaleLinear } from "d3";
+import type { GeoJsonLayer } from "deck.gl";
+import type { Feature } from "geojson";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
 import { InfoRow } from "../../components/InfoRow";
 import Select from "../../components/Select/Select";
 import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
-import { SmartForm, type SmartFormProps } from "../SmartForm/SmartForm";
+import { isDefined } from "../../utils";
+import { SmartForm } from "../SmartForm/SmartForm";
 import type { LayerTable, W_MapProps } from "../W_Map/W_Map";
 import type { GeoJSONFeature, GeoJsonLayerProps } from "./DeckGLMap";
 import type { DeckGlLibs, DeckWrapped } from "./DeckGLWrapped";
 import type { AllDrawModes } from "./mapDrawUtils";
 import { DrawModes, geometryToGeoEWKT } from "./mapDrawUtils";
-import type { Feature } from "geojson";
-import type { GeoJsonLayer } from "deck.gl";
-import { isDefined } from "../../utils";
-import { scaleLinear } from "d3-scale";
 
 export type DeckGLFeatureEditorProps = {
   deckW: DeckWrapped;

@@ -1,4 +1,4 @@
-import { scaleLinear } from "d3-scale";
+import { scaleLinear } from "d3";
 import type { TimeChart, TimeChartLayer } from "./TimeChart";
 import { getCssVariableValue } from "./onRenderTimechart";
 
@@ -102,8 +102,8 @@ export const prepareTimechartData = function (this: TimeChart) {
     return l;
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     minDate === null ||
     maxDate === null ||
     maxVal === null ||
