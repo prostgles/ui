@@ -31,4 +31,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: prostgles/ui:latest,prostgles/ui:${{ github.ref_name }}
+          tags: prostgles/ui:latest,prostgles/ui:v1
