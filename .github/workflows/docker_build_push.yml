@@ -7,10 +7,19 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
-  build_ui_image:
+  build_image:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     # if: startsWith(github.ref, 'refs/tags/v')
+    strategy:
+      fail-fast: false # Optional: Prevent other matrix jobs from being cancelled if one fails
+      matrix:
+        include: # Define the specific combinations you need
+          - image_name: ui
+            dockerfile: Dockerfile
+          - image_name: ui-db
+            dockerfile: DB-Dockerfile
+          # Add more entries here if you have more images to build
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,34 +39,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile
+          file: ${{ matrix.dockerfile }} # Use matrix variable for Dockerfile
           platforms: linux/amd64
           push: true
-          tags: prostgles/ui:latest,prostgles/ui-db:v1.01
-  build_ui_db:
-    timeout-minutes: 20
-    runs-on: ubuntu-latest
-    # if: startsWith(github.ref, 'refs/tags/v')
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push ui-db
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: DB-Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: prostgles/ui-db:latest,prostgles/ui-db:v1.01
+          # Construct tags dynamically using the matrix variable
+          tags: |
+            prostgles/${{ matrix.image_name }}:latest
+            prostgles/${{ matrix.image_name }}:v1.01
