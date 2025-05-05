@@ -29,7 +29,7 @@
     "prod": "NODE_ENV=production BABEL_ENV=production webpack",
     "devOld": "NODE_ENV=development BABEL_ENV=development webpack --stats none --watch  ",
     "start": "node scripts/start.js --no-cache",
-    "build-start": "rm -rf ./build && webpack --config=configs/prod.js && npm prune --omit=dev",
+    "build-start": "rm -rf ./build && webpack --config=configs/prod.js && rm -rf ./node_modules",
     "build": "bash ./build.sh",
     "dev": "npm i --quiet && NODE_OPTIONS='--max-old-space-size=4048' && webpack --watch --config=configs/dev.js",
     "lib": "rm -rf ./dist && tsc --project tsconfig_lib.json && npm run copyf",

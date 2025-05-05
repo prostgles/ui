@@ -26,9 +26,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push
+      - name: Build and push ui
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: prostgles/ui:latest,prostgles/ui:v1
+          tags: prostgles/ui:latest,prostgles/ui-db:v1
+      - name: Build and push ui-db
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: DB-Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: prostgles/ui-db:latest,prostgles/ui-db:v1

@@ -4,11 +4,11 @@ name: prostgles
 services:
   db:
     image: prostgles/ui-db:latest
+    container_name: prostgles-ui-db
+    restart: unless-stopped
     build:
       context: .
       dockerfile: DB-Dockerfile 
-    container_name: prostgles-ui-db
-    restart: unless-stopped
 
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
