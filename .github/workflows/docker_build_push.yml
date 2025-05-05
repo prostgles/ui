@@ -33,7 +33,7 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64
           push: true
-          tags: prostgles/ui:latest,prostgles/ui-db:v1
+          tags: prostgles/ui:latest,prostgles/ui-db:v1.01
       - name: Build and push ui-db
         uses: docker/build-push-action@v6
         with:
@@ -41,4 +41,4 @@ jobs:
           file: DB-Dockerfile
           platforms: linux/amd64
           push: true
-          tags: prostgles/ui-db:latest,prostgles/ui-db:v1
+          tags: prostgles/ui-db:latest,prostgles/ui-db:v1.01
