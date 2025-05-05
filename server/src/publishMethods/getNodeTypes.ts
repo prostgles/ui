@@ -1,9 +1,9 @@
 import * as ts from "typescript";
 import * as path from "path";
 
-export const getNodeTypes = async () => {
+export const getNodeTypes = () => {
   const pathToProject = path.resolve(__dirname + "/../../../..");
-  const files = await extractInstalledPackageTypes(pathToProject);
+  const files = extractInstalledPackageTypes(pathToProject);
   return files.map((file) => ({
     ...file,
     filePath: file.filePath.split(pathToProject).pop(),

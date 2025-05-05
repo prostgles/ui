@@ -5,14 +5,15 @@ WORKDIR /usr/src/app
 
 
 COPY . .
-# Install latest pg_dump  (psql v16)
+
+# Install latest pg_dump (psql v17) to ensure backup/restore works
 RUN apt-get update && \
     apt-get install -y lsb-release && apt-get clean all && \
     apt-get upgrade -y && \
     sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'  && \
     wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
     apt-get -y update && \
-    apt-get -y install postgresql-16
+    apt-get -y install postgresql-17
 
 WORKDIR /usr/src/app/client
 

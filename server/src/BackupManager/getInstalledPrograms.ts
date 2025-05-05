@@ -71,7 +71,7 @@ const getWindowsPsqlBinPath = async (db: DB) => {
   return "";
 };
 
-export const getInstalledPrograms = async (
+export const getInstalledPsqlVersions = async (
   db: DB,
 ): Promise<InstalledPrograms | undefined> => {
   const os =

@@ -1,6 +1,22 @@
 {
+  "name": "prostgles-ui",
+  "version": "2.2.0",
+  "homepage": "https://prostgles.com/ui",
+  "description": "Realtime Dashboard and SQL editor for PostgreSQL",
+  "author": "Prostgles LTD <office@prostgles.com>",
+  "projectUrl": "https://github.com/prostgles/ui",
+  "keywords": [
+    "postgres",
+    "postgis",
+    "sql",
+    "PostgreSQL",
+    "electron",
+    "react",
+    "typescript",
+    "dashboard"
+  ],
   "scripts": {
-    "dev": "bash ./scripts/start.sh",
+    "dev": "bash ./scripts/start-dev.sh",
     "start": "bash ./scripts/start-prod.sh",
     "test": "bash ./scripts/test.sh"
   },

@@ -169,13 +169,10 @@ const _tryStartProstgles = async ({
 
 export const getProstglesState = (): ProstglesState<InitExtra> => {
   const eConfig = getElectronConfig();
-  const bkpManager = getBackupManager();
-  const { installedPrograms } = bkpManager || {};
   const isElectron = Boolean(eConfig?.isElectron);
   return {
-    initState: { ...startupState.state },
     isElectron,
+    initState: { ...startupState.state },
     electronCredsProvided: Boolean(eConfig?.hasCredentials()),
-    canDumpAndRestore: installedPrograms,
   };
 };

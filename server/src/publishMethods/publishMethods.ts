@@ -23,7 +23,7 @@ import type { SampleSchema } from "../../../commonTypes/utils";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { checkClientIP, createSessionSecret } from "../authConfig/sessionUtils";
 import type { Backups } from "../BackupManager/BackupManager";
-import { getInstalledPrograms } from "../BackupManager/getInstalledPrograms";
+import { getInstalledPsqlVersions } from "../BackupManager/getInstalledPrograms";
 import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
 import type { ConnectionTableConfig } from "../ConnectionManager/ConnectionManager";
 import {
@@ -181,8 +181,8 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       const connection = validateConnection(c);
       return { connection, warn: "" };
     },
-    getPsqlVersions: () => {
-      return getInstalledPrograms(_dbs);
+    getInstalledPsqlVersions: () => {
+      return getInstalledPsqlVersions(_dbs);
     },
     createConnection: async (con: Connections, sampleSchemaName?: string) => {
       const res = await upsertConnection(con, user.id, dbs, sampleSchemaName);

@@ -91,7 +91,12 @@ export const getAuth = async (
         await db.sessions.update({ id: sid }, { active: false });
         /** Keep last 20 sessions */
       },
-      publicRoutes: ["/manifest.json", "/favicon.ico", API_ENDPOINTS.WS_DB],
+      publicRoutes: [
+        "/manifest.json",
+        "/favicon.ico",
+        "/robots.txt",
+        API_ENDPOINTS.WS_DB,
+      ],
       onGetRequestOK: async (req, res, { getUser, db, dbo: dbs }) => {
         if (req.path.startsWith(ROUTES.BACKUPS)) {
           const userData = await getUser();

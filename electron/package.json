@@ -1,8 +1,20 @@
 {
   "name": "prostgles-desktop",
-  "version": "2.2.0-alpha",
+  "version": "2.2.0",
   "homepage": "https://prostgles.com/desktop",
   "description": "Realtime Dashboard and SQL editor for PostgreSQL",
+  "author": "Prostgles LTD  <office@prostgles.com>",
+  "projectUrl": "https://github.com/prostgles/ui",
+  "keywords": [
+    "postgres",
+    "postgis",
+    "sql",
+    "PostgreSQL",
+    "electron",
+    "react",
+    "typescript",
+    "dashboard"
+  ],
   "main": "build/main.js",
   "icon": "images/icon.ico",
   "scripts": {
@@ -25,18 +37,6 @@
     "test-linux": "bash ./build.sh && bash ./test-linux.sh",
     "test-macos": "bash ./build.sh && bash ./test-linux-macos.sh"
   },
-  "author": "Prostgles  <office@prostgles.com>",
-  "projectUrl": "https://github.com/prostgles/ui-desktop",
-  "keywords": [
-    "postgres",
-    "postgis",
-    "sql",
-    "PostgreSQL",
-    "electron",
-    "react",
-    "typescript",
-    "dashboard"
-  ],
   "bugs": {
     "url": "https://github.com/prostgles/ui/issues/new/choose"
   },

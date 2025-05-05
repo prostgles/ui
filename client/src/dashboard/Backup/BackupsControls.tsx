@@ -10,7 +10,7 @@ import {
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { usePromise } from "prostgles-client/dist/react-hooks";
-import type { AnyObject } from "prostgles-types";
+import { isEmpty, type AnyObject } from "prostgles-types";
 import React, { useState } from "react";
 import type { PGDumpParams } from "../../../../commonTypes/utils";
 import { ROUTES, sliceText } from "../../../../commonTypes/utils";
@@ -48,10 +48,12 @@ const orderByCreated = {
 } as const;
 
 export const BackupsControls = ({
-  prgl: { connectionId, serverState, dbs, dbsTables, dbsMethods, theme, db },
+  prgl: { connectionId, serverState, dbs, dbsTables, dbsMethods, db },
 }: {
   prgl: Prgl;
 }) => {
+  const { getInstalledPsqlVersions, getDBSize, pgDump, pgRestore, bkpDelete } =
+    dbsMethods;
   const connection_id = connectionId;
 
   const [backupsFilterType, setBackupsFilterType] = useState<
@@ -61,7 +63,14 @@ export const BackupsControls = ({
   const [dumpOpts, setDumpOpts] = useState<PGDumpParams>(DEFAULT_DUMP_OPTS);
   const [hasBackups, sethasBackups] = useState(false);
 
-  const dbSize = usePromise(async () => dbsMethods.getDBSize?.(connection_id));
+  const dbSize = usePromise(
+    async () => getDBSize?.(connection_id),
+    [getDBSize, connection_id],
+  );
+
+  const installedPrograms = usePromise(async () => {
+    return (await getInstalledPsqlVersions?.()) ?? "none";
+  }, [getInstalledPsqlVersions]);
 
   const renderStatus: FieldConfigRender<Backups> = (
     status: Backups["status"] | undefined,
@@ -173,7 +182,11 @@ export const BackupsControls = ({
       }),
   };
 
-  if (!serverState.canDumpAndRestore) {
+  if (!installedPrograms) {
+    return null;
+  }
+
+  if (installedPrograms === "none") {
     return (
       <div className="flex-col p-1 gap-1 f-1 min-h-0 w-fit">
         <InfoRow>
@@ -225,7 +238,7 @@ export const BackupsControls = ({
               ...dataCommand("config.bkp.create.start"),
               onClickPromise: async (e) => {
                 try {
-                  await dbsMethods.pgDump!(
+                  await pgDump!(
                     connection_id,
                     dumpOpts.destination === "Cloud" ?
                       dumpOpts.credentialID
@@ -496,9 +509,7 @@ export const BackupsControls = ({
                     iconPath={mdiDelete}
                     variant="outline"
                     color="danger"
-                    onClickPromise={() =>
-                      dbsMethods.bkpDelete!(row.id).then(popupClose)
-                    }
+                    onClickPromise={() => bkpDelete!(row.id).then(popupClose)}
                   >
                     Delete
                   </Btn>
@@ -507,7 +518,7 @@ export const BackupsControls = ({
                     variant="outline"
                     color="danger"
                     onClickPromise={() =>
-                      dbsMethods.bkpDelete!(row.id, true).then(popupClose)
+                      bkpDelete!(row.id, true).then(popupClose)
                     }
                   >
                     Force delete
@@ -549,7 +560,7 @@ export const BackupsControls = ({
                   variant="filled"
                   color="action"
                   onClickPromise={() =>
-                    dbsMethods.pgRestore!(
+                    pgRestore!(
                       { bkpId: row.id, connId: connectionId },
                       restoreOpts,
                     ).then(popupClose)

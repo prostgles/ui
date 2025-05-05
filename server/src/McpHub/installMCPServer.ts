@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-non-literal-fs-filename */
 import * as fs from "fs";
 import * as path from "path";
 import { simpleGit, type SimpleGit } from "simple-git";

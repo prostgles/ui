@@ -1,55 +1,59 @@
 # docker-compose.yml
 
-# version: "3.7"
+name: prostgles
 services:
-  postgres:
-    image: postgis/postgis:16-3.4
-
-    # Survive server reboot
-    restart: always
+  db:
+    image: prostgles/ui-db:latest
+    build:
+      context: .
+      dockerfile: DB-Dockerfile 
+    container_name: prostgles-ui-db
+    restart: unless-stopped
 
     environment:
-      POSTGRES_DB: "POSTGRES_DB"
-      POSTGRES_USER: "POSTGRES_USER"
-      POSTGRES_PASSWORD: "POSTGRES_PASSWORD"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
-    # Used to allow creating pg_stat_statements extension to track query performance
-    command:
-      postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all -c max_connections=200 && \
-      apt-get update && apt-get install -y procps
+    command: >
+      postgres 
+      -c shared_preload_libraries=pg_stat_statements  
+      -c max_connections=200
 
     ports:
       - 5432/tcp
 
-    # This affects user creation. Comment out to ensure user (POSTGRES_USER) is created
     volumes:
-      - prgl-db:/var/lib/postgresql/data
+      - db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "sleep 1 && pg_isready"]
+      test:
+        [
+          "CMD-SHELL",
+          "sleep 1 && pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}",
+        ]
       timeout: 3s
       retries: 5
 
-  prgl:
-    image: prgl
-
-    # Survive server reboot
-    restart: always
+  ui:
+    image: prostgles/ui:latest
+    container_name: prostgles-ui
+    restart: unless-stopped
 
     build:
       context: .
       dockerfile: Dockerfile
 
     environment:
-      POSTGRES_DB: "POSTGRES_DB"
-      POSTGRES_USER: "POSTGRES_USER"
-      POSTGRES_PASSWORD: "POSTGRES_PASSWORD"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       PROSTGLES_UI_HOST: "0.0.0.0"
-      POSTGRES_HOST: postgres
+      POSTGRES_HOST: db
       IS_DOCKER: "yes"
       NODE_ENV: "production"
 
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
 
     ## Used to allow connecting to a database from the host
@@ -65,4 +69,4 @@ services:
       # - '${PRGL_DOCKER_IP:-127.0.0.1}:9229:9229'
 
 volumes:
-  prgl-db:
+  db:

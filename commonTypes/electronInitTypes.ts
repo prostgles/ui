@@ -30,7 +30,6 @@ export type ProstglesState<
     db_pass: string;
     db_ssl: string;
   };
-  canDumpAndRestore: InstalledPrograms | undefined;
   initState: ProstglesInitState<T>;
 };
 

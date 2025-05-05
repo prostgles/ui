@@ -11,7 +11,7 @@
     "dev": "export NODE_ENV='development' && NODE_OPTIONS='--max-old-space-size=4048' && npm i && tsc-watch --onSuccess \"node --trace-warnings --inspect dist/server/src/index.js\" --onFailure \"echo 'exiting'\""
   },
   "author": "",
-  "license": "ISC",
+  "license": "",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.627.0",
     "@aws-sdk/lib-storage": "^3.627.0",

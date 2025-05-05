@@ -43,7 +43,6 @@ export const useServerState = () => {
           errorType: "init",
         },
         isElectron: false,
-        canDumpAndRestore: undefined,
       } satisfies ProstglesState;
     }
   });

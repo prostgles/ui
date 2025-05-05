@@ -22,7 +22,6 @@ export type ProstglesState<T extends Record<string, unknown> = Record<string, un
         db_pass: string;
         db_ssl: string;
     };
-    canDumpAndRestore: InstalledPrograms | undefined;
     initState: ProstglesInitState<T>;
 };
 type OS = "Windows" | "Linux" | "Mac" | "";

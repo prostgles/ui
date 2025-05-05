@@ -1,7 +1,7 @@
 import path from "path";
 import { PassThrough } from "stream";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
-import { getInstalledPrograms } from "./getInstalledPrograms";
+import { getInstalledPsqlVersions } from "./getInstalledPrograms";
 import { pgDump } from "./pgDump";
 import { pgRestore } from "./pgRestore";
 import { getBkp, getFileMgr } from "./utils";
@@ -86,7 +86,7 @@ export default class BackupManager {
   };
 
   static create = async (db: DB, dbs: DBS, connMgr: ConnectionManager) => {
-    const installedPrograms = await getInstalledPrograms(db);
+    const installedPrograms = await getInstalledPsqlVersions(db);
     return new BackupManager(db, dbs, connMgr, installedPrograms);
   };
 
