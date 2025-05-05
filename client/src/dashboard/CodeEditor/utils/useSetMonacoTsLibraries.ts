@@ -4,12 +4,12 @@ import { useEffect } from "react";
 import { useIsMounted } from "../../Backup/CredentialSelector";
 import { useEffectDeep } from "prostgles-client/dist/react-hooks";
 
-type MonacoEditor = typeof import("monaco-editor");
+export type MonacoEditorImport = typeof import("monaco-editor");
 
 export const useSetMonacoTsLibraries = async (
   editor: editor.IStandaloneCodeEditor | undefined,
   languageObj: LanguageConfig | undefined,
-  monaco: MonacoEditor | undefined,
+  monaco: MonacoEditorImport | undefined,
   value: string,
   onTSLibraryChange: CodeEditorProps["onTSLibraryChange"],
 ) => {
@@ -47,7 +47,7 @@ export const useSetMonacoTsLibraries = async (
   }, [editor, monaco, languageObj, onTSLibraryChange]);
 };
 
-const setTSoptions = async (monaco: MonacoEditor) => {
+const setTSoptions = async (monaco: MonacoEditorImport) => {
   monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true);
 
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({

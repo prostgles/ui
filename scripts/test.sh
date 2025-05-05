@@ -9,7 +9,7 @@ npx tsc
 cd ..
 
 rm -f ./client/configs/last_compiled.txt
-PRGL_TEST=true ./scripts/start.sh &
+PRGL_TEST=true npm run dev &
 START_SCRIPT_PID=$!
 
 # Ensure the process is killed even if the script exits early (e.g., due to set -e or Ctrl+C)

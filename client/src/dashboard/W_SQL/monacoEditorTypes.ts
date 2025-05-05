@@ -1,5 +1,5 @@
 export type Monaco =
-  typeof import(/* webpackChunkName: "monaco-editor/esm/vs/editor/editor.api.js" */ /*  webpackPrefetch: true */ "monaco-editor/esm/vs/editor/editor.api.js");
+  typeof import(/* webpackChunkName: "monaco-editor-api" */ /*  webpackPrefetch: 98 */ "monaco-editor/esm/vs/editor/editor.api.js");
 export type {
   IRange,
   languages,

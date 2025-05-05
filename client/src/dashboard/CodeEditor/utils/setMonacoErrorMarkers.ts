@@ -1,9 +1,10 @@
 import type { editor } from "monaco-editor";
 import type { CodeEditorProps } from "../CodeEditor";
+import type { MonacoEditorImport } from "./useSetMonacoTsLibraries";
 
 export const setMonacoErrorMarkers = (
   editor: editor.IStandaloneCodeEditor,
-  monaco: typeof import("monaco-editor"),
+  monaco: MonacoEditorImport,
   data:
     | { error: CodeEditorProps["error"] }
     | { markers: CodeEditorProps["markers"] },

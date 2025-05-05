@@ -1,14 +1,8 @@
-import { mdiContentCopy, mdiFullscreen } from "@mdi/js";
-import type { editor } from "monaco-editor";
-import React, { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useEffect } from "react";
 import Markdown from "react-markdown";
-import { CHAT_WIDTH } from "../../dashboard/AskLLM/AskLLM";
-import Btn from "../Btn";
-import { classOverride, FlexCol, FlexRow, type DivProps } from "../Flex";
-import { MonacoEditor } from "../MonacoEditor/MonacoEditor";
-import Popup from "../Popup/Popup";
-import "./Marked.css";
+import { classOverride, type DivProps } from "../Flex";
 import { MarkdownMonacoCode } from "./MarkdownMonacoCode";
+import "./Marked.css";
 
 export type MarkedProps = DivProps & {
   content: string;
