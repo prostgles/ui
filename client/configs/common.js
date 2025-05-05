@@ -139,13 +139,13 @@ module.exports = {
       chunkFilename: "static/css/[name].[contenthash:8].chunk.css",
     }),
     new MonacoWebpackPlugin({
-      languages: ["sql", "pgsql", "json"], // "typescript", "javascript",
+      languages: ["typescript", "javascript", "sql", "pgsql", "json"],
     }),
     new webpack.ProgressPlugin({
       activeModules: true,
       entries: true,
       // handler(percentage, message, ...args) {
-      //   console.log(percentage)
+      //   console.log(percentage, message, args);
       // },
       modules: true,
       modulesCount: 5000,
