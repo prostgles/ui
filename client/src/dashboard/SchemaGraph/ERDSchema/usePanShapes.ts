@@ -42,18 +42,14 @@ export const useSetPanShapes = ({
       if (newPanShape?.id === panShape?.id) {
         return;
       }
-      if (panShape) {
-        // panShape.strokeStyle = "black";
-      }
       panShape = newPanShape;
       panShapeInitialCoords = panShape && quickClone(panShape.coords);
       if (panShape) {
         node.style.cursor = "grabbing";
-        // panShape.strokeStyle = "red";
       } else {
         node.style.cursor = "";
       }
-      onRenderShapes();
+      onRenderShapes(panShape);
     };
     const findAndsetPanShape = (ev: Pick<PanEvent, "xNode" | "yNode">) => {
       const [xStart, yStart] = screenToWorld([ev.xNode, ev.yNode]);
@@ -119,7 +115,7 @@ export const useSetPanShapes = ({
           panShapeInitialCoords[0] + deltaWorldX,
           panShapeInitialCoords[1] + deltaWorldY,
         ];
-        onRenderShapes();
+        onRenderShapes(panShape);
       },
       onPanEnd: () => {
         setPanShapeAndDraw(undefined);

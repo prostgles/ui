@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
 import { isDefined } from "../../../utils";
-import { drawShapes } from "../../Charts/drawShapes/drawShapes";
-import type { useSchemaShapes } from "./useSchemaShapes";
+import { drawShapes, type ShapeV2 } from "../../Charts/drawShapes/drawShapes";
+import type { SchemaShape, useSchemaShapes } from "./useSchemaShapes";
+import type { LinkLine, Rectangle } from "../../Charts/CanvasChart";
+import { getCssVariableValue } from "../../Charts/onRenderTimechart";
+import type { ColumnColorMode } from "./ERDSchema";
 
 export const minScale = 0.1;
 export const maxScale = 5;
@@ -18,35 +21,77 @@ export const useDrawSchemaShapes = (
     "shapesRef" | "shapesVersion"
   > & {
     canvasRef: React.RefObject<HTMLCanvasElement>;
+    columnColorMode: ColumnColorMode;
   },
 ) => {
-  const { shapesRef, canvasRef, shapesVersion } = props;
+  const { shapesRef, canvasRef, shapesVersion, columnColorMode } = props;
   const positionRef = useRef({ x: 0, y: 0 });
   const scaleRef = useRef(1);
 
-  const onRenderShapes = useCallback(() => {
-    const render = () => {
-      if (!canvasRef.current) {
-        return;
-      }
-      const ctx = canvasRef.current.getContext("2d");
-      if (!ctx) {
-        return;
-      }
-      const shapes = shapesRef.current;
-      const { width: w, height: h } = canvasRef.current.getBoundingClientRect();
-      ctx.canvas.width = w;
-      ctx.canvas.height = h;
-      const canvas = canvasRef.current;
-      // createHiPPICanvas(canvas, w, h);
+  const onRenderShapes = useCallback(
+    (hoveredRectangle?: Rectangle) => {
+      const render = () => {
+        if (!canvasRef.current) {
+          return;
+        }
+        const ctx = canvasRef.current.getContext("2d");
+        if (!ctx) {
+          return;
+        }
+        const shapes = shapesRef.current;
+        const { width: w, height: h } =
+          canvasRef.current.getBoundingClientRect();
+        ctx.canvas.width = w;
+        ctx.canvas.height = h;
+        const canvas = canvasRef.current;
+        // createHiPPICanvas(canvas, w, h);
 
-      drawShapes(shapes, canvas, {
-        scale: scaleRef.current,
-        translate: positionRef.current,
-      });
-    };
-    requestAnimationFrame(render);
-  }, [shapesRef, canvasRef]);
+        let drawnShapes = shapes.slice(0);
+        if (hoveredRectangle) {
+          const relatedShapes: SchemaShape[] = [];
+          const otherShapes: SchemaShape[] = [];
+          const hoveredRectangleLinks = shapes.filter(
+            (s): s is LinkLine =>
+              s.type === "linkline" &&
+              [s.sourceId, s.targetId].includes(hoveredRectangle.id),
+          );
+          shapes.forEach((s) => {
+            if (
+              /** Needed to ensure rectangles without links are matched */
+              s.id === hoveredRectangle.id ||
+              (s.type === "rectangle" &&
+                hoveredRectangleLinks.some((l) =>
+                  [l.sourceId, l.targetId].includes(s.id),
+                )) ||
+              /** Is a link starting or ending from the hovered rectangle */
+              (s.type === "linkline" &&
+                [s.sourceId, s.targetId].includes(hoveredRectangle.id))
+            ) {
+              relatedShapes.push({
+                ...s,
+                strokeStyle:
+                  columnColorMode !== "default" ?
+                    s.strokeStyle
+                  : getCssVariableValue("--active"),
+              });
+            } else {
+              otherShapes.push({
+                ...s,
+                opacity: 0.4,
+              });
+            }
+          });
+          drawnShapes = [...otherShapes, ...relatedShapes];
+        }
+        drawShapes(drawnShapes as ShapeV2[], canvas, {
+          scale: scaleRef.current,
+          translate: positionRef.current,
+        });
+      };
+      requestAnimationFrame(render);
+    },
+    [canvasRef, shapesRef, columnColorMode],
+  );
 
   useEffect(() => {
     onRenderShapes();

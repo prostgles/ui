@@ -15,7 +15,7 @@ import { isObject } from "../../../../../commonTypes/publishUtils";
 import { mdiPalette } from "@mdi/js";
 
 export type RGBA = [number, number, number, number];
-const COLOR_PALETTE = [
+export const COLOR_PALETTE = [
   "#F79800",
   "#ff004a",
   "#CB11F0",

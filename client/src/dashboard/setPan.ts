@@ -183,7 +183,7 @@ export function setPan(node: HTMLDivElement, evs: PanListeners) {
     },
     onMove = (ev: React.PointerEvent<HTMLDivElement>) => {
       if (!currEv || !lastPress) {
-        if (evs.onPointerMove) {
+        if (evs.onPointerMove && node.contains(ev.target as any)) {
           const rect = node.getBoundingClientRect();
           const { clientX: x, clientY: y } = ev;
           const [xOffset, yOffset] = [rect.x, rect.y];

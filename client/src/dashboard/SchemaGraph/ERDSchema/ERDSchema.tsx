@@ -6,15 +6,22 @@ import { useDrawSchemaShapes } from "./useDrawSchemaShapes";
 import { useSetPanShapes } from "./usePanShapes";
 import { useSchemaShapes } from "./useSchemaShapes";
 
+export type ColumnDisplayMode = "none" | "all" | "references";
+export type ColumnColorMode = "default" | "root" | "on-update" | "on-delete";
+export type ERDSchemaProps = SchemaGraphProps & {
+  displayMode: SchemaGraphDisplayMode;
+  columnDisplayMode: ColumnDisplayMode;
+  columnColorMode: ColumnColorMode;
+};
 export const ERDSchema = ({
   tables,
   db,
   dbs,
   connectionId,
   displayMode,
-}: SchemaGraphProps & {
-  displayMode: SchemaGraphDisplayMode;
-}) => {
+  columnDisplayMode,
+  columnColorMode,
+}: ERDSchemaProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
 
@@ -25,6 +32,8 @@ export const ERDSchema = ({
     connectionId,
     canvasRef,
     displayMode,
+    columnDisplayMode,
+    columnColorMode,
   });
 
   const { onRenderShapes, positionRef, scaleRef, setScaleAndPosition } =
@@ -32,6 +41,7 @@ export const ERDSchema = ({
       shapesRef,
       canvasRef,
       shapesVersion,
+      columnColorMode,
     });
 
   const { handleWheel } = useCanvasPanZoom({
@@ -47,6 +57,7 @@ export const ERDSchema = ({
     positionRef,
     scaleRef,
     canvas: canvasRef.current,
+    //@ts-ignore
     shapesRef,
     node: divRef.current,
     onRenderShapes,

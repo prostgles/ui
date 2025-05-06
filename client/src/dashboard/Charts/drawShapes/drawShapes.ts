@@ -3,7 +3,8 @@ import type { Image, LinkLine, Shape } from "../CanvasChart";
 import { drawMonotoneXCurve } from "../drawMonotoneXCurve";
 import { measureText } from "../measureText";
 import { roundRect } from "../roundRect";
-import { drawLinkLine } from "./shortestLinkLineV2";
+import { drawLinkLine } from "./drawLinkLine";
+// import { drawLinkLine } from "./shortestLinkLineV2";
 export type ShapeV2<T = void> = Shape<T> | LinkLine<T> | Image<T>;
 const getWH = (canvas: HTMLCanvasElement) => {
   return {
@@ -17,7 +18,7 @@ export const getCtx = (canvas: HTMLCanvasElement) => {
 
 let lastDrawn = {};
 export const drawShapes = (
-  shapes: ShapeV2[],
+  shapes: ShapeV2<any>[],
   canvas: HTMLCanvasElement,
   opts?: {
     scale?: number;
@@ -49,18 +50,26 @@ export const drawShapes = (
   }
 
   shapes.forEach((s) => {
+    if ("fillStyle" in s) {
+      ctx.fillStyle = s.fillStyle;
+    }
+    if ("strokeStyle" in s) {
+      ctx.strokeStyle = s.strokeStyle;
+    }
+    if ("lineWidth" in s) {
+      ctx.lineWidth = s.lineWidth;
+    }
+
+    ctx.globalAlpha = s.opacity ?? 1;
     ctx.lineJoin = "bevel";
     if (s.type === "image") {
       ctx.drawImage(s.image, ...s.coords, s.w, s.h);
     } else if (s.type === "linkline") {
-      drawLinkLine(shapes, canvas, s, opts);
+      drawLinkLine(shapes, ctx, s);
     } else if (s.type === "rectangle") {
       const {
         coords: [x1, y1],
       } = s;
-      ctx.fillStyle = s.fillStyle;
-      ctx.lineWidth = s.lineWidth;
-      ctx.strokeStyle = s.strokeStyle;
       const x2 = s.w + x1;
       const w = x2 - x1;
       if (s.borderRadius) {
@@ -89,6 +98,7 @@ export const drawShapes = (
             // }
             return {
               ...cs,
+              opacity: (cs.opacity ?? 1) * (s.opacity ?? 1),
               coords: [cs.coords[0] + x1, cs.coords[1] + y1],
             };
           }),
@@ -102,9 +112,6 @@ export const drawShapes = (
       const {
         coords: [x1, y1],
       } = s;
-      ctx.fillStyle = s.fillStyle;
-      ctx.lineWidth = s.lineWidth;
-      ctx.strokeStyle = s.strokeStyle;
       ctx.beginPath();
       ctx.arc(x1, y1, s.r, 0, 2 * Math.PI);
       ctx.fill();
@@ -112,8 +119,6 @@ export const drawShapes = (
     } else if (s.type === "multiline") {
       const { coords } = s;
       ctx.lineCap = "round";
-      ctx.lineWidth = s.lineWidth;
-      ctx.strokeStyle = s.strokeStyle;
 
       if (s.variant === "smooth" && coords.length > 2) {
         drawMonotoneXCurve(ctx, coords);
@@ -130,9 +135,6 @@ export const drawShapes = (
       }
     } else if (s.type === "polygon") {
       const { coords } = s;
-      ctx.fillStyle = s.fillStyle;
-      ctx.lineWidth = s.lineWidth;
-      ctx.strokeStyle = s.strokeStyle;
       ctx.beginPath();
       coords.map(([x, y], i) => {
         if (!i) {

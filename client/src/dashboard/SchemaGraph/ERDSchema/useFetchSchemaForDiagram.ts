@@ -4,6 +4,7 @@ import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
 import { isEmpty } from "../../../utils";
 import { fetchNamedSVG } from "../../../components/SvgIcon";
 import { getCssVariableValue } from "../../Charts/onRenderTimechart";
+import { COLOR_PALETTE } from "../../W_Table/ColumnMenu/ColorPicker";
 
 export const useFetchSchemaForDiagram = ({
   db,
@@ -70,14 +71,17 @@ export const useFetchSchemaForDiagram = ({
       );
       return referencedBy;
     };
+    const availableColors = [...COLOR_PALETTE];
     const tablesWithPositions = await Promise.all(
       tables
+        .map((t) => ({
+          ...t,
+          rootColor: availableColors.pop(),
+          referencedBy: getRefs(t.name, "referencedBy"),
+        }))
         .sort((a, b) => {
           /** Most referenced tables first */
-          return (
-            getRefs(b.name, "referencedBy").length -
-            getRefs(a.name, "referencedBy").length
-          );
+          return b.referencedBy.length - a.referencedBy.length;
         })
         .map(async (t) => {
           const position = existingPositions[t.name];

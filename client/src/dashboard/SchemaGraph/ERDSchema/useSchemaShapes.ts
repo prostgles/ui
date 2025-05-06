@@ -6,20 +6,24 @@ import type {
   LinkLine,
   Rectangle,
 } from "../../Charts/CanvasChart";
-import type { ShapeV2 } from "../../Charts/drawShapes/drawShapes";
 import { measureText } from "../../Charts/measureText";
 import { getCssVariableValue } from "../../Charts/onRenderTimechart";
-import type { SchemaGraphDisplayMode, SchemaGraphProps } from "../SchemaGraph";
+import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
+import type { ERDSchemaProps } from "./ERDSchema";
 import { useFetchSchemaForDiagram } from "./useFetchSchemaForDiagram";
+import { CASCADE_LEGEND } from "../SchemaGraph";
+
+export type SchemaShape =
+  | Rectangle<DBSchemaTableWJoins, { width: number } | undefined>
+  | LinkLine;
 
 export const useSchemaShapes = (
-  props: SchemaGraphProps & {
+  props: ERDSchemaProps & {
     canvasRef: React.RefObject<HTMLCanvasElement>;
-    displayMode: SchemaGraphDisplayMode;
   },
 ) => {
-  const { canvasRef, displayMode } = props;
-  const shapesRef = useRef<ShapeV2[]>([]);
+  const { canvasRef, displayMode, columnDisplayMode, columnColorMode } = props;
+  const shapesRef = useRef<SchemaShape[]>([]);
   const [shapesVersion, setShapesVersion] = useState(0);
 
   const { schemaInfo, dbConfId } = useFetchSchemaForDiagram(props);
@@ -67,7 +71,17 @@ export const useSchemaShapes = (
           fillStyle: getCssVariableValue("--text-0"),
         });
 
-        const colsAndDataTypes = table.columns.map((c, i) => {
+        const columns = table.columns.filter((c) =>
+          columnDisplayMode === "none" ? false
+          : columnDisplayMode === "references" ?
+            fkeys.some(
+              (fcons) =>
+                fcons.conkey?.includes(c.ordinal_position) ||
+                fcons.confkey?.includes(c.ordinal_position),
+            )
+          : true,
+        );
+        const colsAndDataTypes = columns.map((c, i) => {
           const colYOffset = COL_SPACING * (i + 2);
 
           const colName = getMeasuredChartedText({
@@ -127,7 +141,7 @@ export const useSchemaShapes = (
           lineWidth: 1,
           borderRadius: 12,
           children: [icon, header, ...cols, ...colsDataTypes].filter(isDefined),
-          data: table,
+          data: { ...table, columns },
           // elevation: 10,
         };
 
@@ -151,7 +165,9 @@ export const useSchemaShapes = (
           (n) => n.id === fkCons.ftable_name && fkCons.schema === "public",
         );
         if (!tbl || !ftbl) {
-          console.warn("link not found", fkCons);
+          if (displayMode !== "leaf") {
+            console.warn("link not found", fkCons);
+          }
           return undefined;
         }
         return fkCons.conkey?.map((key, i) => {
@@ -174,16 +190,23 @@ export const useSchemaShapes = (
             sourceYOffset: PADDING + COL_SPACING * (1 + fcolIdx + 0.5),
             targetYOffset: PADDING + COL_SPACING * (1 + colIdx + 0.5),
             lineWidth: 3,
-            strokeStyle: getCssVariableValue("--text-2"),
+            strokeStyle:
+              columnColorMode === "root" ?
+                (ftbl.data.rootColor ?? getCssVariableValue("--text-2"))
+              : columnColorMode === "on-delete" ?
+                CASCADE_LEGEND[fkCons.on_delete_action ?? "NOACTION"]
+              : columnColorMode === "on-update" ?
+                CASCADE_LEGEND[fkCons.on_update_action ?? "NOACTION"]
+              : getCssVariableValue("--text-2"),
           } satisfies LinkLine;
         });
       })
       .filter(isDefined);
 
     const shapes = [...linkShapes, ...nodeShapes];
-    shapesRef.current = shapes as ShapeV2[];
+    shapesRef.current = shapes;
     setShapesVersion((v) => v + 1);
-  }, [canvasRef, schemaInfo, displayMode]);
+  }, [canvasRef, schemaInfo, displayMode, columnDisplayMode, columnColorMode]);
 
   return {
     shapesRef,

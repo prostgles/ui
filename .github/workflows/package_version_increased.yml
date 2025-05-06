@@ -19,7 +19,6 @@ jobs:
         id: pr-version
         run: |
           sudo apt  install jq
-          cd electron
           cat package.json | jq -r .version > pr_version.txt
           git fetch origin ${{ github.base_ref }} --depth=1
           git checkout origin/${{ github.base_ref }} -- package.json
@@ -27,7 +26,6 @@ jobs:
 
       - name: Compare versions
         run: |
-          cd electron
           current_version=$(cat current_version.txt)
           pr_version=$(cat pr_version.txt) 
           if [ "$(printf '%s\n' "$current_version" "$pr_version" | sort -V | head -n1)" = "$pr_version" ]; then
@@ -40,9 +38,6 @@ jobs:
       - name: Check Release File and Generate Changelog
         if: success() # Ensure version comparison passed
         run: |
-          #set -x # Print commands and their arguments as they are executed.
-
-          cd electron 
           pr_version=$(cat pr_version.txt) 
           base_ref="${{ github.base_ref }}"
           release_file_path="./releases/v${pr_version}"

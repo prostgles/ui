@@ -19,6 +19,13 @@ export type PGDatabase = {
   IsCurrent: boolean;
   escaped_identifier: string;
 };
+
+type CASCADE =
+  | "CASCADE"
+  | "RESTRICT"
+  | "SET NULL"
+  | "SET DEFAULT"
+  | "NO ACTION";
 export type PGConstraint = {
   conname: string;
   definition: string;
@@ -31,6 +38,8 @@ export type PGConstraint = {
   schema: string;
   escaped_identifier: string;
   contype: "c" | "f" | "p" | "u" | "e";
+  on_update_action: CASCADE | null;
+  on_delete_action: CASCADE | null;
   table_oid: number;
 };
 
@@ -914,7 +923,23 @@ export const PG_OBJECT_QUERIES = {
       format('%I', rel.relname) as escaped_table_name,
       frel.relname as ftable_name,
       CASE WHEN frel.relname IS NOT NULL THEN format('%I', frel.relname) END as escaped_ftable_name,
-      nspname as schema,
+      nspname as schema, 
+      CASE c.confdeltype
+          WHEN 'a' THEN 'NO ACTION'
+          WHEN 'r' THEN 'RESTRICT'
+          WHEN 'c' THEN 'CASCADE'
+          WHEN 'n' THEN 'SET NULL'
+          WHEN 'd' THEN 'SET DEFAULT'
+          ELSE NULL -- Should only be relevant for FKs
+      END as on_delete_action,
+      CASE c.confupdtype
+          WHEN 'a' THEN 'NO ACTION'
+          WHEN 'r' THEN 'RESTRICT'
+          WHEN 'c' THEN 'CASCADE'
+          WHEN 'n' THEN 'SET NULL'
+          WHEN 'd' THEN 'SET DEFAULT'
+          ELSE NULL -- Should only be relevant for FKs
+      END as on_update_action ,
       c.conrelid as table_oid
       FROM pg_catalog.pg_constraint c
       INNER JOIN pg_catalog.pg_class rel

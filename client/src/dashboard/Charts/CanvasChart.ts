@@ -17,6 +17,7 @@ export type FillProps = {
 export type ShapeBase<T = void> = {
   id: string | number;
   elevation?: number;
+  opacity?: number;
 } & (T extends void ? { data?: T } : { data: T });
 
 export type Circle<T = any> = ShapeBase<T> &
