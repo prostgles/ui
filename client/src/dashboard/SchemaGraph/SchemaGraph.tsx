@@ -82,7 +82,7 @@ export const SchemaGraph = (props: SchemaGraphProps) => {
           title={
             <FlexRow className="w-full">
               <div>Schema diagram</div>
-              <FlexRow
+              <FlexRowWrap
                 className="font-16   f-1 relative s-fit"
                 style={{ fontWeight: "normal" }}
                 // style={{
@@ -96,8 +96,10 @@ export const SchemaGraph = (props: SchemaGraphProps) => {
                   value={displayMode}
                   label="Tables"
                   variant="pill"
+                  // size="small"
                   btnProps={{
                     className: "shadow",
+                    size: "small",
                     style: {
                       backgroundColor: "var(--bg-color-0)",
                     },
@@ -140,16 +142,7 @@ export const SchemaGraph = (props: SchemaGraphProps) => {
                     ))}
                   </FlexRowWrap>
                 )}
-              </FlexRow>
-              <FlexRow
-                className="p-1  f-1 relative s-fit"
-                // style={{
-                //   position: "absolute",
-                //   top: "0",
-                //   right: "0",
-                //   backdropFilter: "blur(2px)",
-                // }}
-              >
+
                 <Btn
                   className="ml-auto"
                   size="small"
@@ -171,7 +164,7 @@ export const SchemaGraph = (props: SchemaGraphProps) => {
                 >
                   Reset layout
                 </Btn>
-              </FlexRow>
+              </FlexRowWrap>
             </FlexRow>
           }
           positioning="fullscreen"

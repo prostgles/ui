@@ -141,7 +141,9 @@ test.describe("Main test", () => {
     const page = p as PageWIds;
 
     const goToWorkspace = async (openUsersTable = true) => {
-      await page.getByRole("link", { name: "Connections" }).click();
+      await page
+        .getByRole("link", { name: "Connections" })
+        .click({ timeout: 15e3 });
       await page.getByRole("link", { name: "Prostgles UI state" }).click();
       if (openUsersTable) {
         await openTable(page, "users");

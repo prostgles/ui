@@ -59,6 +59,7 @@ export const useSchemaShapes = (
           h: ICON_SIZE,
           image: table.iconImage,
         };
+        const headerfillStyle = getCssVariableValue("--text-0");
         const header = getMeasuredChartedText({
           id: table.name + "-header",
           type: "text",
@@ -68,7 +69,10 @@ export const useSchemaShapes = (
             COL_SPACING,
           ],
           font: "bold 22px Courier",
-          fillStyle: getCssVariableValue("--text-0"),
+          fillStyle:
+            columnColorMode === "root" ?
+              (table.rootColor ?? headerfillStyle)
+            : headerfillStyle,
         });
 
         const columns = table.columns.filter((c) =>

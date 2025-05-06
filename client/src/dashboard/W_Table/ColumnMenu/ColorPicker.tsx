@@ -1,31 +1,26 @@
+import { mdiPalette } from "@mdi/js";
 import React from "react";
-import Btn from "../../../components/Btn";
+import { isObject } from "../../../../../commonTypes/publishUtils";
 import type { BtnProps } from "../../../components/Btn";
-import {
-  FlexCol,
-  FlexRow,
-  FlexRowWrap,
-  classOverride,
-} from "../../../components/Flex";
+import Btn from "../../../components/Btn";
+import { FlexRow, FlexRowWrap, classOverride } from "../../../components/Flex";
 import FormField from "../../../components/FormField/FormField";
 import { FormFieldDebounced } from "../../../components/FormField/FormFieldDebounced";
+import { type LabelProps } from "../../../components/Label";
 import Popup from "../../../components/Popup/Popup";
-import { Label, type LabelProps } from "../../../components/Label";
-import { isObject } from "../../../../../commonTypes/publishUtils";
-import { mdiPalette } from "@mdi/js";
 
 export type RGBA = [number, number, number, number];
 export const COLOR_PALETTE = [
-  "#F79800",
-  "#ff004a",
-  "#CB11F0",
-  "#7430F0",
-  "#ffffff",
-  "#174CFA",
-  "#0AA1FA",
-  "#36E00B",
-  "rgb(143 143 143)",
-];
+  "#0AA1FA", // blue
+  "#36E00B", // green
+  "#F79800", // orange
+  "#ff004a", // red
+  "#CB11F0", // purple
+  "#7430F0", // purple
+  "#ffffff", // white
+  "#174CFA", // blue
+  "rgb(143 143 143)", // gray
+] as const;
 
 type S = {
   anchorEl: Element | null;
