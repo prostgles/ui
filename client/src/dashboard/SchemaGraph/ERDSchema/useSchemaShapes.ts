@@ -11,7 +11,7 @@ import { getCssVariableValue } from "../../Charts/onRenderTimechart";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import type { ERDSchemaProps } from "./ERDSchema";
 import { useFetchSchemaForDiagram } from "./useFetchSchemaForDiagram";
-import { CASCADE_LEGEND } from "../SchemaGraph";
+import { CASCADE_LEGEND } from "../SchemaGraphControls";
 
 export type SchemaShape =
   | Rectangle<DBSchemaTableWJoins, { width: number } | undefined>
@@ -37,7 +37,9 @@ export const useSchemaShapes = (
     }
     const COL_SPACING = 30;
     const ICON_SIZE = 30;
+    const COL_ICON_SIZE = 20;
     const PADDING = 10;
+    const RECT_PADDING = 10;
     const nodeShapes = tablesWithPositions
       .map((table, i) => {
         const offset = 50 * i;
@@ -106,14 +108,41 @@ export const useSchemaShapes = (
             font: "16px sans-serif",
           });
 
-          return [colName, colDatatype] as const;
+          const { fkey, nullable, pkey, unqiue } =
+            schemaInfo.columnConstraintIcons;
+          const colIconImage =
+            c.is_pkey ? pkey
+            : c.references?.length ? fkey
+            : c.is_nullable ? nullable
+            : (
+              table.info.uniqueColumnGroups?.some(
+                (ug) => ug.length === 1 && ug.includes(c.name),
+              )
+            ) ?
+              unqiue
+            : undefined;
+
+          const colIcon =
+            colIconImage &&
+            ({
+              id: `${table.name}-${c.name}-col-icon`,
+              type: "image",
+              coords: [PADDING * 2 + colName.data.width, colYOffset],
+              image: colIconImage,
+              h: COL_ICON_SIZE,
+              w: COL_ICON_SIZE,
+            } satisfies Image);
+          return [colName, colDatatype, colIcon] as const;
         });
 
         const widestColContent = colsAndDataTypes.reduce(
-          (acc, [col, colDataType]) => {
+          (acc, [col, colDataType, colIcon]) => {
             return Math.max(
               acc,
-              col.data.width + colDataType.data.width + 2 * PADDING,
+              col.data.width +
+                colDataType.data.width +
+                (colIcon?.w ?? 0) +
+                3 * PADDING,
             );
           },
           0,
@@ -125,14 +154,26 @@ export const useSchemaShapes = (
 
         const cols = colsAndDataTypes.flatMap(([colName]) => colName);
         const colsDataTypes = colsAndDataTypes.flatMap(
-          ([colName, colDatatype]) => ({
+          ([colName, colDatatype, colIcon]) => ({
             ...colDatatype,
             coords: [
-              rectangleContentWidth - colDatatype.data.width + PADDING,
+              rectangleContentWidth - colDatatype.data.width - 2 * PADDING,
               colName.coords[1],
             ] satisfies [number, number],
           }),
         );
+        const colsIcons = colsAndDataTypes
+          .flatMap(
+            ([colName, colDatatype, colIcon]) =>
+              colIcon && {
+                ...colIcon,
+                coords: [
+                  rectangleContentWidth - colIcon.w + PADDING,
+                  colName.coords[1] - colIcon.h + 4,
+                ] satisfies [number, number],
+              },
+          )
+          .filter(isDefined);
 
         const box: Rectangle<typeof table, { width: number } | undefined> = {
           id: table.name,
@@ -144,7 +185,13 @@ export const useSchemaShapes = (
           strokeStyle: getCssVariableValue("--text-2"),
           lineWidth: 1,
           borderRadius: 12,
-          children: [icon, header, ...cols, ...colsDataTypes].filter(isDefined),
+          children: [
+            icon,
+            header,
+            ...cols,
+            ...colsDataTypes,
+            ...colsIcons,
+          ].filter(isDefined),
           data: { ...table, columns },
           // elevation: 10,
         };
@@ -155,9 +202,9 @@ export const useSchemaShapes = (
       .filter((t) => {
         if (displayMode === "all") return true;
         if (displayMode === "relations") {
-          return fkeys.some((fk) => fk.table_name === t.id);
+          return t.data.references.length || t.data.referencedBy.length;
         }
-        return !fkeys.some((fk) => fk.table_name === t.id);
+        return !t.data.references.length && !t.data.referencedBy.length;
       });
 
     const linkShapes: LinkLine[] = fkeys

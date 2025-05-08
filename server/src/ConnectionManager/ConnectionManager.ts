@@ -12,7 +12,7 @@ import type {
 } from "prostgles-server/dist/ProstglesTypes";
 import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
 import type { SubscriptionHandler } from "prostgles-types";
-import { isEqual, pickKeys } from "prostgles-types";
+import { getKeys, isEqual, pickKeys } from "prostgles-types";
 import type { DefaultEventsMap, Server } from "socket.io";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
@@ -82,17 +82,16 @@ type PRGLInstance = {
   authSetupDataListener: AuthSetupDataListener | undefined;
 };
 
+export type HotReloadConfigOptions = Pick<
+  ProstglesInitOptions,
+  "fileTable" | "restApi" | "schemaFilter" // "tableConfig" |
+>;
 export const getHotReloadConfigs = async (
   conMgr: ConnectionManager,
   c: Connections,
   conf: DatabaseConfigs,
   dbs: DBS,
-): Promise<
-  Pick<
-    ProstglesInitOptions,
-    "fileTable" | "tableConfig" | "restApi" | "schemaFilter"
-  >
-> => {
+): Promise<HotReloadConfigOptions> => {
   const restApi = getRestApiConfig(conMgr, c, conf);
   const { fileTable } = await parseTableConfig({
     type: "saved",
@@ -103,7 +102,8 @@ export const getHotReloadConfigs = async (
   return {
     restApi,
     fileTable,
-    schemaFilter: c.db_schema_filter || undefined,
+    /** TODO */
+    schemaFilter: c.db_schema_filter ?? { public: 1 },
   };
 };
 

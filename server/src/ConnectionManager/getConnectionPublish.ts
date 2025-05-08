@@ -66,7 +66,7 @@ export const getConnectionPublish = ({
             ...acc,
             [tableName]: {
               select: allowAllTables.includes("select") ? "*" : undefined,
-              ...(!tableHandler.is_view && {
+              ...(!(tableHandler.is_view as boolean) && {
                 update: allowAllTables.includes("update") ? "*" : undefined,
                 insert: allowAllTables.includes("insert") ? "*" : undefined,
                 delete: allowAllTables.includes("delete") ? "*" : undefined,

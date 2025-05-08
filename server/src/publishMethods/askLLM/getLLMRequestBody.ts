@@ -1,4 +1,9 @@
-import { isDefined, omitKeys } from "prostgles-types";
+import {
+  isDefined,
+  omitKeys,
+  tryCatchV2,
+  type AnyObject,
+} from "prostgles-types";
 import { filterArr } from "../../../../commonTypes/llmUtils";
 import type { FetchLLMResponseArgs } from "./fetchLLMResponse";
 
@@ -85,7 +90,6 @@ export const getLLMRequestBody = ({
         messages,
         tools,
       }
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     : provider === "Google" ?
       {
         system_instruction: {
@@ -139,15 +143,23 @@ export const getLLMRequestBody = ({
                     c.type === "tool_use" && c.name ? c.name : undefined,
                   )
                   .find(isDefined);
+                const resultObject = tryCatchV2(
+                  () => JSON.parse(resultText || "{}") as AnyObject,
+                );
                 return {
                   functionResponse: {
                     name: funcName,
                     response: {
                       name: funcName,
                       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                      content: JSON.parse(
-                        (resultText as string | undefined) ?? "{}",
-                      ),
+                      content: resultObject.data ?? {
+                        parsingError: "Could not parse tool result as JSON",
+                        toolResult: resultText,
+                      },
+
+                      // JSON.parse(
+                      //   (resultText as string | undefined) ?? "{}",
+                      // ),
                     },
                   },
                 };

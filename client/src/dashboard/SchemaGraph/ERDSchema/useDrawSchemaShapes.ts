@@ -5,6 +5,7 @@ import type { SchemaShape, useSchemaShapes } from "./useSchemaShapes";
 import type { LinkLine, Rectangle } from "../../Charts/CanvasChart";
 import { getCssVariableValue } from "../../Charts/onRenderTimechart";
 import type { ColumnColorMode } from "./ERDSchema";
+import { replayTableRelationships } from "./replayTableRelationships";
 
 export const minScale = 0.1;
 export const maxScale = 5;

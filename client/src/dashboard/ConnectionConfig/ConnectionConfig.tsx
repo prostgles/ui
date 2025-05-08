@@ -42,13 +42,18 @@ type ConnectionConfigProps = Pick<
 };
 
 export const ConnectionConfig = (props: ConnectionConfigProps) => {
-  const { className = "", style = {}, prgl } = props;
+  const { className = "", style = {}, prgl, connection } = props;
   const { serverState, dbs, connectionId, db, dbsMethods } = prgl;
   const disabledText =
     (dbs.access_control as any)?.update ?
       undefined
     : t.ConnectionConfig["Must be admin to access this"];
+  const stateDisabledInfo =
+    connection.is_state_db ?
+      t.TopControls["Not allowed for state database"]
+    : undefined;
   const { isElectron } = serverState;
+
   const acParams = useAccessControlSearchParams();
   const sectionItems = useMemo(
     () =>
@@ -56,7 +61,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
         details: {
           label: t.ConnectionConfig["Connection details"],
           leftIconPath: mdiPencil,
-          disabledText,
+          disabledText: disabledText || stateDisabledInfo,
           listProps: dataCommand("config.details"),
           content: (
             <NewConnection
@@ -89,6 +94,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           leftIconPath: mdiAccountMultiple,
           disabledText:
             disabledText ||
+            stateDisabledInfo ||
             (isElectron ? "Not available for desktop" : undefined),
           content: (
             <AccessControl className="min-h-0" prgl={prgl} {...acParams} />
@@ -100,6 +106,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           leftIconPath: mdiImage,
           disabledText:
             disabledText ||
+            stateDisabledInfo ||
             (isElectron ? "Not available for desktop" : undefined),
           content: <FileTableConfigControls {...props} />,
         },
@@ -128,6 +135,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
               </span>
             </>
           ),
+          disabledText: disabledText || stateDisabledInfo,
           listProps: dataCommand("config.tableConfig"),
           leftIconPath: mdiTableEdit,
           content: <TableConfig {...props} />,
@@ -141,6 +149,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
               </span>
             </>
           ),
+          disabledText: disabledText || stateDisabledInfo,
           listProps: dataCommand("config.methods"),
           leftIconPath: mdiLanguageTypescript,
           content: <ServerSideFunctions {...prgl} />,
@@ -159,6 +168,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
       isElectron,
       prgl,
       props,
+      stateDisabledInfo,
     ],
   );
   const { activeSection, setSection } = useConnectionConfigSearchParams(

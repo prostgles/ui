@@ -15,13 +15,9 @@ import Btn from "../../components/Btn";
 
 import { useParams, useSearchParams } from "react-router-dom";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import { InfoRow } from "../../components/InfoRow";
+import type { Command } from "../../Testing";
 import { ConnectionConfig } from "../../dashboard/ConnectionConfig/ConnectionConfig";
 import { useProjectDb } from "./useProjectDb";
-import { FlexCol } from "../../components/Flex";
-import { useNavigate } from "react-router-dom";
-import type { Command } from "../../Testing";
-import type { DBS } from "../../dashboard/Dashboard/DBS";
 
 export type Connections = DBSSchema["connections"];
 export type ProjectProps = {
@@ -38,16 +34,15 @@ export type FullExtraProps = ExtraProps & {
 
 export const ProjectConnection = (props: ProjectProps) => {
   const [sParams] = useSearchParams();
-  const navigate = useNavigate();
   const workspaceId = sParams.get("workspaceId") ?? undefined;
   const params = useParams();
   const { prglState, showConnectionConfig } = props;
-  const { error, prglProject, state, connNotFound } = useProjectDb({
+  const projectDb = useProjectDb({
     prglState,
     connId: params.cid,
   });
 
-  if (state === "loading") {
+  if (projectDb.state === "loading") {
     return (
       <Loading
         id="main"
@@ -59,13 +54,14 @@ export const ProjectConnection = (props: ProjectProps) => {
     );
   }
 
-  if (state === "error") {
+  if (projectDb.state === "error") {
+    const error = projectDb.error;
     return (
       <div
         className="flex-col w-full h-full ai-center jc-center p-2 gap-1"
         data-command={"ProjectConnection.error" satisfies Command}
       >
-        {connNotFound && (
+        {projectDb.errorType === "connNotFound" && (
           <div className="p-1">
             This project was not found or you are not allowed to access it
           </div>
@@ -94,30 +90,12 @@ export const ProjectConnection = (props: ProjectProps) => {
 
   const prgl: Prgl = {
     ...prglState,
-    ...prglProject,
+    ...projectDb,
   };
 
   const connectionId = params.cid;
-  const { connection } = prglProject;
+  const { connection } = projectDb;
   if (showConnectionConfig && connectionId) {
-    if (connection.is_state_db) {
-      return (
-        <FlexCol className="w-full h-full ai-center jc-center">
-          <InfoRow className="h-fit w-fit ">
-            This configuration page is not supported for Prostgles state
-            database
-          </InfoRow>
-          <Btn
-            onClick={() => navigate(-1)}
-            variant="filled"
-            iconPath={mdiArrowLeft}
-            color="action"
-          >
-            Go back
-          </Btn>
-        </FlexCol>
-      );
-    }
     return <ConnectionConfig prgl={prgl} connection={connection} />;
   }
 
@@ -137,10 +115,7 @@ export const ProjectConnection = (props: ProjectProps) => {
           key={workspaceId}
           prgl={prgl}
           workspaceId={workspaceId}
-          onLoaded={() => {
-            // if (!this.state.dashboardLoading) return;
-            // this.setState({ dashboardLoading: false })
-          }}
+          onLoaded={() => {}}
         />
       </div>
     </div>

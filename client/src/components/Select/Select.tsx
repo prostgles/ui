@@ -71,7 +71,13 @@ export type SelectProps<
   showSelectedSublabel?: boolean;
   showIconOnly?: boolean;
   title?: string;
-  variant?: "search-list-only" | "div" | "pill" | "chips" | "chips-lg";
+  variant?:
+    | "search-list-only"
+    | "div"
+    | "pill"
+    | "chips"
+    | "chips-lg"
+    | "compact";
   multiSelect?: Multi;
   labelAsValue?: boolean;
   emptyLabel?: string;

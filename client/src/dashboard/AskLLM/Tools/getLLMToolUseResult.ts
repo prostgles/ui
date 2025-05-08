@@ -15,6 +15,7 @@ import {
   type useLLMChatAllowedTools,
   type ApproveRequest,
 } from "./useLLMChatAllowedTools";
+import { getSerialisableError } from "prostgles-types";
 
 const taskTool = getSuggestedTaskTools();
 /**
@@ -144,9 +145,9 @@ export const getLLMToolUseResult = async (
 
 const parseToolResultToMessage = (func: () => Promise<any>) => {
   return func()
-    .then((content: string) => ({ content: content ?? "" }))
+    .then((content: string | undefined) => ({ content: content ?? "" }))
     .catch((e) => ({
-      content: JSON.stringify(e),
+      content: JSON.stringify(getSerialisableError(e)),
       is_error: true as const,
     }));
 };

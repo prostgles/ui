@@ -144,11 +144,6 @@ export const ConnectionConfigBtn = ({
           : `${ROUTES.DASHBOARD}/${connection.id}`
         }
         asNavLink={true}
-        disabledInfo={
-          connection.is_state_db ?
-            t.TopControls["Not allowed for state database"]
-          : undefined
-        }
         children={
           isOnWorkspace ? null : t.TopControls["Connection configuration"]
         }

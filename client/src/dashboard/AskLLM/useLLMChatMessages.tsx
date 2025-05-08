@@ -10,6 +10,7 @@ import { AskLLMTokenUsage } from "./AskLLMTokenUsage";
 import { ToolUseChatMessage } from "./ToolUseChatMessage";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
 import { useMarkdownCodeHeader } from "./useMarkdownCodeHeader";
+import { FlexCol } from "../../components/Flex";
 
 type P = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId"> & {
@@ -85,7 +86,7 @@ export const useLLMChatMessages = (props: P) => {
                   models={models ?? []}
                 />
               ),
-              message: messageNode,
+              message: <FlexCol>{messageNode}</FlexCol>,
               isLoading: !!is_loading,
               sender_id: user_id || "ai",
               sent: new Date(created || new Date()),

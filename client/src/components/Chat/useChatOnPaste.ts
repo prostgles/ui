@@ -25,13 +25,17 @@ export const useChatOnPaste = ({
           "vscode-editor-data",
         ];
         if (vsCodeTypes.some((vsType) => types.includes(vsType))) {
-          e.preventDefault();
           const text = e.clipboardData.getData("text/plain");
           const vsData = e.clipboardData.getData("vscode-editor-data");
           const { data: languageRaw = "" } = tryCatchV2(() => {
             const result = JSON.parse(vsData).mode;
             return result as string;
           });
+          /** Ignore single line of text */
+          if (text.trim().split("\n").length < 2) {
+            return;
+          }
+          e.preventDefault();
           const language =
             (
               {
@@ -53,7 +57,7 @@ export const useChatOnPaste = ({
         }
       }
     },
-    [onSend],
+    [onSend, setCurrentMessage, textAreaRef],
   );
   return {
     handleOnPaste,

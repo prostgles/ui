@@ -1,27 +1,30 @@
 import { usePromise } from "prostgles-client/dist/react-hooks";
-import type { SchemaGraphProps } from "../SchemaGraph";
-import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
-import { isEmpty } from "../../../utils";
 import { fetchNamedSVG } from "../../../components/SvgIcon";
+import { isEmpty } from "../../../utils";
 import { getCssVariableValue } from "../../Charts/onRenderTimechart";
+import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
 import { COLOR_PALETTE } from "../../W_Table/ColumnMenu/ColorPicker";
+import type { ERDSchemaProps } from "./ERDSchema";
+const COLOR_PALETTE_WITHOUT_WHITE = [
+  ...COLOR_PALETTE.filter((c) => c !== "#ffffff"),
+];
 
-export const useFetchSchemaForDiagram = ({
-  db,
-  dbs,
-  connectionId,
-  tables,
-  canvasRef,
-}: SchemaGraphProps & {
-  canvasRef: React.RefObject<HTMLCanvasElement>;
-}) => {
-  const { data: dbConf } = dbs.database_configs.useFindOne({
-    $existsJoined: {
-      connections: {
-        id: connectionId,
+export const useFetchSchemaForDiagram = (
+  props: ERDSchemaProps & {
+    canvasRef: React.RefObject<HTMLCanvasElement>;
+  },
+) => {
+  const { db, dbs, connectionId, tables, columnColorMode } = props;
+  const { data: dbConf } = dbs.database_configs.useFindOne(
+    {
+      $existsJoined: {
+        connections: {
+          id: connectionId,
+        },
       },
     },
-  });
+    {},
+  );
 
   const schemaInfo = usePromise(async () => {
     const constraints =
@@ -33,77 +36,156 @@ export const useFetchSchemaForDiagram = ({
           { returnType: "rows" },
         )) as (typeof PG_OBJECT_QUERIES.constraints.type)[]);
 
+    const defaultIconColor = getCssVariableValue("--text-2");
+    const columnConstraintIcons = {
+      pkey: await fetchSVGImage("Key", defaultIconColor),
+      fkey: await fetchSVGImage("KeyLink", defaultIconColor),
+      unqiue: await fetchSVGImage("AlphaU", defaultIconColor),
+      nullable: await fetchSVGImage("AlphaN", defaultIconColor),
+    };
+
     const fkeys = constraints.filter((c) => c.contype === "f");
     const getRefs = (
       tableName: string,
       relType: "references" | "referencedBy",
     ) => {
-      const referencedBy = fkeys.filter(
-        ({ table_name, ftable_name }) =>
-          (relType === "referencedBy" ? ftable_name : table_name) === tableName,
-      );
-      return referencedBy;
+      return fkeys
+        .filter(
+          ({ table_name, ftable_name }) =>
+            (relType === "referencedBy" ? ftable_name : table_name) ===
+            tableName,
+        )
+        .map((c) =>
+          relType === "referencedBy" ? c.table_name! : c.ftable_name!,
+        );
     };
-    const tablesWithRefInfo = tables
+
+    const allTableMostReferencedTop = tables
       .map((t) => ({
         ...t,
         references: getRefs(t.name, "references"),
         referencedBy: getRefs(t.name, "referencedBy"),
       }))
+      .map((t, i, tablesWithRefs) => ({
+        ...t,
+        referenceType:
+          t.references.length ? ("linked" as const)
+          : t.referencedBy.length ? ("root" as const)
+          : ("orphan" as const),
+        nextReferencedBy: tablesWithRefs
+          .filter((lt) => t.referencedBy.includes(lt.name))
+          .flatMap((lt) => lt.referencedBy),
+      }))
       .sort((a, b) => {
-        /** Least references */
-        const leastReferences = a.references.length - b.references.length;
         const mostReferenced = b.referencedBy.length - a.referencedBy.length;
-        return leastReferences || mostReferenced;
+        return mostReferenced;
       });
 
-    const { clientHeight, clientWidth } =
-      canvasRef.current ?? window.document.body;
-    let existingPositions = dbConf?.table_schema_positions;
-    if (!existingPositions || isEmpty(existingPositions)) {
-      let prevPosition = { x: 0, y: 0 };
-      existingPositions = tablesWithRefInfo.reduce((acc, t) => {
-        const newY = prevPosition.y + 300;
-        const newX = prevPosition.x + 300;
-        const tablePosition =
-          newY > clientHeight ?
-            {
-              x: newX,
-              y: 0,
-            }
-          : {
-              x: prevPosition.x,
-              y: newY,
-            };
-        prevPosition = tablePosition;
-        return {
-          ...acc,
-          [t.name]: tablePosition,
-        };
-      }, {});
-    }
+    const colors = COLOR_PALETTE_WITHOUT_WHITE.slice(0);
+    const allTablesWithRootColor = allTableMostReferencedTop.map((t) => ({
+      ...t,
+      /** Root color assigned to top most referenced tables  */
+      rootColor: colors.shift(),
+    }));
 
-    const availableColors = [...COLOR_PALETTE.filter((c) => c !== "#ffffff")]; //exclude white
-    const tablesWithPositions = await Promise.all(
-      tablesWithRefInfo.map(async (t) => {
-        const position = existingPositions[t.name];
-
+    const allTables = await Promise.all(
+      allTablesWithRootColor.map(async (t) => {
         return {
           ...t,
-          rootColor: availableColors.shift(),
           iconImage:
             !t.icon ? undefined : (
-              await fetchSVGImage(t.icon, getCssVariableValue("--text-2"))
+              await fetchSVGImage(
+                t.icon,
+                columnColorMode === "root" ?
+                  (t.rootColor ?? defaultIconColor)
+                : defaultIconColor,
+              )
             ),
-          position,
         };
       }),
     );
+
+    const topRootTables = allTables
+      .filter((t) => t.referenceType === "root")
+      .sort((a, b) => {
+        const mostReferenced =
+          b.nextReferencedBy.length - a.nextReferencedBy.length;
+        return mostReferenced;
+      });
+    const topLinkedTables = allTables
+      .filter((t) => t.referenceType === "linked")
+      .sort((a, b) => {
+        const mostReferenced =
+          b.nextReferencedBy.length +
+          b.referencedBy.length -
+          (a.nextReferencedBy.length + a.referencedBy.length);
+        return mostReferenced;
+      });
+    const getNextTables = (prevColTableName: string) => {
+      const result = topLinkedTables.slice(0, 0);
+      const indexesToRemove: number[] = [];
+      topLinkedTables.forEach((t, i) => {
+        if (!t.references.includes(prevColTableName)) return;
+        // if (result.length >= limit) return;
+        result.push(t);
+        indexesToRemove.push(i);
+      });
+      indexesToRemove.reverse().forEach((i) => {
+        topLinkedTables.splice(i, 1);
+      });
+      return result;
+    };
+    const schemaColumns = [topRootTables];
+    while (topLinkedTables.length) {
+      const prevColTables = schemaColumns.at(-1);
+      if (!prevColTables) break;
+      const nextTables = prevColTables.flatMap((t) => getNextTables(t.name));
+      schemaColumns.push(nextTables);
+    }
+
+    schemaColumns.push(allTables.filter((t) => t.referenceType === "orphan"));
+
+    const INITIAL_CHART_MAX_HEIGHT = 3000;
+    let tablePositions = dbConf?.table_schema_positions ?? {};
+
+    if (isEmpty(tablePositions)) {
+      let x = 0;
+      let y = 0;
+      /**
+       * Place in columns. If the column is too tall, move to next column.
+       */
+      schemaColumns.forEach((colTables) => {
+        y = 0;
+        const colTablePositions = colTables.reduce((acc, t) => {
+          y += 300;
+          if (y > INITIAL_CHART_MAX_HEIGHT) {
+            y = 0;
+            x += 300;
+          }
+          return {
+            ...acc,
+            [t.name]: { x, y },
+          };
+        }, {});
+        x += 300;
+        tablePositions = {
+          ...tablePositions,
+          ...colTablePositions,
+        };
+      });
+    }
+
+    const tablesWithPositions = allTables.map((t) => ({
+      ...t,
+      position: tablePositions[t.name],
+    }));
+
     return {
       tablesWithPositions,
       fkeys,
+      columnConstraintIcons,
     };
-  }, [canvasRef, db, dbConf?.table_schema_positions, tables]);
+  }, [columnColorMode, db, dbConf?.table_schema_positions, tables]);
 
   return { schemaInfo, dbConfId: dbConf?.id };
 };

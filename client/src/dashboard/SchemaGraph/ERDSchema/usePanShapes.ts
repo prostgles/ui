@@ -5,21 +5,25 @@ import type { ShapeV2 } from "../../Charts/drawShapes/drawShapes";
 import { setPan, type PanEvent } from "../../setPan";
 import type { useDrawSchemaShapes } from "./useDrawSchemaShapes";
 
-export const useSetPanShapes = ({
-  node,
-  canvas,
-  shapesRef,
-  onPanEnded,
-  onRenderShapes,
-  scaleRef,
-  positionRef,
-  setScaleAndPosition,
-}: {
-  node: HTMLDivElement | null;
-  canvas: HTMLCanvasElement | null;
-  shapesRef: React.MutableRefObject<ShapeV2[]>;
-  onPanEnded: () => void;
-} & ReturnType<typeof useDrawSchemaShapes>) => {
+export const useSetPanShapes = (
+  props: {
+    node: HTMLDivElement | null;
+    canvas: HTMLCanvasElement | null;
+    shapesRef: React.MutableRefObject<ShapeV2[]>;
+    onPanEnded: () => void;
+  } & ReturnType<typeof useDrawSchemaShapes>,
+) => {
+  const {
+    node,
+    canvas,
+    shapesRef,
+    onPanEnded,
+    onRenderShapes,
+    scaleRef,
+    positionRef,
+    setScaleAndPosition,
+  } = props;
+
   const screenToWorld = useCallback(
     ([screenX, screenY]: [number, number]) => {
       const position = positionRef.current;

@@ -143,7 +143,7 @@ test.describe("Main test", () => {
     const goToWorkspace = async (openUsersTable = true) => {
       await page
         .getByRole("link", { name: "Connections" })
-        .click({ timeout: 15e3 });
+        .click({ timeout: 6e3 });
       await page.getByRole("link", { name: "Prostgles UI state" }).click();
       if (openUsersTable) {
         await openTable(page, "users");

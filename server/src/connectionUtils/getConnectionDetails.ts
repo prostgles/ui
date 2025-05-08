@@ -49,7 +49,7 @@ export const getConnectionDetails = (c: Connections): ConnectionDetails => {
     } = params;
     const conn = {
       application_name,
-      host: cs.hosts![0]!.name!,
+      host: cs.hosts![0]!.name ?? c.db_host, // fallback to db_host for pg_dump state_db
       port: cs.hosts![0]!.port!,
       user: cs.user!,
       password: cs.password!,

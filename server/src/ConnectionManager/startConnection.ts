@@ -1,4 +1,6 @@
+import type e from "express";
 import prostgles from "prostgles-server";
+import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
@@ -10,6 +12,7 @@ import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { getConnectionPaths } from "../../../commonTypes/utils";
 import { addLog } from "../Logger";
 import { getAuth, withOrigin } from "../authConfig/getAuth";
+import type { SUser } from "../authConfig/sessionUtils";
 import {
   getAuthSetupData,
   subscribeToAuthSetupChanges,
@@ -23,9 +26,6 @@ import { ForkedPrglProcRunner } from "./ForkedPrglProcRunner";
 import { alertIfReferencedFileColumnsRemoved } from "./connectionManagerUtils";
 import { getConnectionPublish } from "./getConnectionPublish";
 import { getConnectionPublishMethods } from "./getConnectionPublishMethods";
-import type { AuthConfig } from "prostgles-server/dist/Auth/AuthTypes";
-import type { SUser } from "../authConfig/sessionUtils";
-import type e from "express";
 
 export const startConnection = async function (
   this: ConnectionManager,

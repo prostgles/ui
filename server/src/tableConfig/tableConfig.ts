@@ -826,6 +826,7 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
   workspaces: {
     columns: {
       id: `UUID PRIMARY KEY DEFAULT gen_random_uuid()`,
+      parent_workspace_id: `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,
       user_id: `UUID NOT NULL REFERENCES users(id)  ON DELETE CASCADE`,
       connection_id: `UUID NOT NULL REFERENCES connections(id)  ON DELETE CASCADE`,
       name: `TEXT NOT NULL DEFAULT 'default workspace'`,
@@ -876,7 +877,6 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       last_used: `TIMESTAMP NOT NULL DEFAULT now()`,
       deleted: `BOOLEAN NOT NULL DEFAULT FALSE`,
       url_path: `TEXT`,
-      parent_workspace_id: `UUID REFERENCES workspaces(id) ON DELETE SET NULL`,
       published: {
         sqlDefinition: `BOOLEAN NOT NULL DEFAULT FALSE, CHECK(parent_workspace_id IS NULL OR published = FALSE)`,
         info: {
