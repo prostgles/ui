@@ -230,7 +230,13 @@ export const Setup2FA = (
                 </Btn>
               )}
 
-              {err && <ErrorComponent error={err} findMsg={true} />}
+              {err && (
+                <ErrorComponent
+                  data-command="Setup2FA.error"
+                  error={err}
+                  findMsg={true}
+                />
+              )}
             </div>
         }
       />;

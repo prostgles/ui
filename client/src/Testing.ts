@@ -224,6 +224,7 @@ export const COMMANDS = {
   "Setup2FA.Enable.ConfirmCode": "",
   "Setup2FA.Enable.Confirm": "",
   "Setup2FA.Disable": "",
+  "Setup2FA.error": "",
   "DashboardMenuHeader.togglePinned": "",
   "BackupControls.DeleteAll": "",
   "BackupControls.DeleteAll.Confirm": "",

@@ -58,7 +58,7 @@ export type FieldConfigRender<T extends AnyObject = AnyObject> = (
 
 export type ParsedFieldConfig<T extends AnyObject = AnyObject> =
   FieldConfigBase<T> & {
-    select?: number | AnyObject | string;
+    select?: number | AnyObject | keyof T;
     hideIf?: (value, row) => boolean;
     render?: FieldConfigRender<T>;
     /**

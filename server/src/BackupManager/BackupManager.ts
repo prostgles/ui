@@ -69,7 +69,7 @@ export default class BackupManager {
       await this.dbConfSub?.unsubscribe();
       this.dbConfSub = await dbs.database_configs.subscribe(
         {},
-        { select: "", limit: 0 },
+        { select: { backups_config: 1 }, limit: 0 },
         checkAutomaticBkps,
       );
     })();

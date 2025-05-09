@@ -189,7 +189,6 @@ export const useSmartCardListState = (
             select,
             offset,
           });
-
           setItems(items);
           setLoaded(true);
           setTotalRows(totalRows);

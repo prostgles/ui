@@ -34,6 +34,9 @@ import { AutomaticBackups } from "./AutomaticBackups";
 import { CodeConfirmation } from "./CodeConfirmation";
 import { DEFAULT_DUMP_OPTS, DumpOptions } from "./DumpOptions";
 import { RestoreOptions } from "./RestoreOptions";
+import { BackupsInProgress } from "./BackupsInProgress";
+import { RenderBackupLogs } from "./RenderBackupLogs";
+import { RenderBackupStatus } from "./RenderBackupStatus";
 
 const BACKUP_FILTER_OPTS = [
   { key: "This connection" },
@@ -41,17 +44,14 @@ const BACKUP_FILTER_OPTS = [
   { key: "All connections" },
 ] as const;
 
-const orderByCreated = {
+export const orderByCreated = {
   key: "created",
   asc: false,
   // created: false,
 } as const;
 
-export const BackupsControls = ({
-  prgl: { connectionId, serverState, dbs, dbsTables, dbsMethods, db },
-}: {
-  prgl: Prgl;
-}) => {
+export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
+  const { connectionId, serverState, dbs, dbsTables, dbsMethods, db } = prgl;
   const { getInstalledPsqlVersions, getDBSize, pgDump, pgRestore, bkpDelete } =
     dbsMethods;
   const connection_id = connectionId;
@@ -72,114 +72,20 @@ export const BackupsControls = ({
     return (await getInstalledPsqlVersions?.()) ?? "none";
   }, [getInstalledPsqlVersions]);
 
-  const renderStatus: FieldConfigRender<Backups> = (
-    status: Backups["status"] | undefined,
-    row,
-  ) => {
-    const commonChipStyle: React.CSSProperties = {
-      padding: 0,
-      background: "unset",
-      border: "unset",
-    };
-    const total = +(
-      (status as any)?.loading?.total ||
-      row.sizeInBytes ||
-      +row.dbSizeInBytes ||
-      0
-    );
-    return (
-      !status ? null
-      : "ok" in status ?
-        <Chip
-          style={commonChipStyle}
-          className="font-12"
-          color="green"
-          value={"Completed"}
-        />
-      : "err" in status ?
-        <Chip
-          style={commonChipStyle}
-          color="red"
-          value={parsedError(status.err)}
-        />
-      : status.loading ?
-        <div className="text-1p5">
-          <ProgressBar
-            message={
-              !status.loading.loaded ?
-                "Preparing..."
-              : `Processed ${bytesToSize(status.loading.loaded || 0)}/${total ? bytesToSize(total) : "unknown"}`
-            }
-            value={status.loading.loaded || 0}
-            totalValue={status.loading.total || 0}
-          />
-        </div>
-      : null
-    );
-  };
-
-  const renderInterval: FieldConfigRender = (value, row) => (
-    <StyledInterval value={value} />
-  );
-
-  const renderLogs = ({
-    logs,
-    completed,
-    type,
-  }: {
-    logs: string;
-    completed: boolean;
-    type: "restore" | "dump";
-  }) => (
-    <PopupMenu
-      showFullscreenToggle={{}}
-      title="Logs"
-      button={
-        !logs ?
-          <div></div>
-        : <Btn className="w-full" variant="outline" size="small">
-            {completed ?
-              "..."
-            : sliceText(
-                (logs || "").split("\n").at(-1)!.slice(15).split(":")[1] ?? "",
-                40,
-                "...",
-              )
-            }
-          </Btn>
-      }
-      onClickClose={false}
-      positioning="top-center"
-    >
-      <CodeEditor
-        style={{ minWidth: "80vw", minHeight: "80vh" }}
-        value={logs}
-        options={{
-          minimap: { enabled: false },
-          lineNumbers: "off",
-        }}
-        language="bash"
-      />
-    </PopupMenu>
-  );
-
   const restoreLogsFConf: FieldConfig<Backups> = {
     name: "restore_logs",
-    render: (logs, row) =>
-      renderLogs({
-        logs,
-        completed: !(row.restore_status as any)?.loading,
-        type: "restore",
-      }),
+    render: (logs, row) => (
+      <RenderBackupLogs
+        logs={logs}
+        completed={!(row.restore_status as any)?.loading}
+      />
+    ),
   };
   const dumpLogsFConf: FieldConfig<Backups> = {
     name: "dump_logs",
-    render: (logs, row) =>
-      renderLogs({
-        logs,
-        completed: !(row.status as any)?.loading,
-        type: "dump",
-      }),
+    render: (logs, row) => (
+      <RenderBackupLogs logs={logs} completed={!(row.status as any)?.loading} />
+    ),
   };
 
   if (!installedPrograms) {
@@ -323,16 +229,18 @@ export const BackupsControls = ({
             { name: "id", hide: true },
             {
               name: "restore_status",
-              render: renderStatus,
+              render: (val, row) => (
+                <RenderBackupStatus row={row} status={val} />
+              ),
             },
             {
               name: "restore_start",
               label: "Started",
               select: { $ageNow: ["restore_start", null, "second"] },
-              render: renderInterval,
+              render: (value) => <StyledInterval value={value} />,
             },
             restoreLogsFConf,
-          ] as FieldConfig[]
+          ] satisfies FieldConfig<Backups>[]
         }
         getRowFooter={(row) => (
           <div className="flex-row-wrap gap-1 jc-end ai-center">
@@ -354,53 +262,7 @@ export const BackupsControls = ({
         noDataComponentMode="hide-all"
       />
 
-      <SmartCardList
-        db={dbs as DBHandlerClient}
-        methods={dbsMethods}
-        tableName="backups"
-        btnColor="gray"
-        style={{ minHeight: "250px" }}
-        title="Backup in progress:"
-        tables={dbsTables}
-        filter={{ $and: [backupFilter, { "status->ok": null }] }}
-        realtime={true}
-        className="mt-2"
-        orderBy={orderByCreated}
-        excludeNulls={true}
-        fieldConfigs={
-          [
-            { name: "id", hide: true },
-            {
-              name: "status",
-              label: "Dump status",
-              render: renderStatus,
-            },
-            {
-              name: "created_ago",
-              label: "Started",
-              select: { $ageNow: ["created", null, "second"] },
-              render: renderInterval,
-            },
-            dumpLogsFConf,
-          ] as FieldConfig[]
-        }
-        getRowFooter={(row) => (
-          <div className="flex-row-wrap gap-1 jc-end ai-center">
-            <Btn
-              iconPath={mdiStop}
-              variant="outline"
-              color="danger"
-              onClickPromise={async () => {
-                await dbsMethods.bkpDelete!(row.id, true);
-              }}
-            >
-              Stop & delete
-            </Btn>
-          </div>
-        )}
-        noDataComponent={<></>}
-        noDataComponentMode="hide-all"
-      />
+      <BackupsInProgress {...prgl} backupFilter={backupFilter} />
 
       <SmartCardList
         btnColor="gray"
@@ -447,7 +309,7 @@ export const BackupsControls = ({
             name: "uploaded_",
             label: "Created",
             select: { $ageNow: ["created", null, "second"] },
-            render: renderInterval,
+            render: (value) => <StyledInterval value={value} />,
           },
           // "connection_id",
           // "credential_id",
@@ -472,7 +334,7 @@ export const BackupsControls = ({
           {
             name: "status",
             label: "Dump status",
-            render: renderStatus,
+            render: (val, row) => <RenderBackupStatus row={row} status={val} />,
           },
           dumpLogsFConf,
           // "restore_command",
@@ -484,7 +346,7 @@ export const BackupsControls = ({
             name: "restored_",
             label: "Last restored",
             select: { $ageNow: ["restore_end", null, "second"] },
-            render: renderInterval,
+            render: (value) => <StyledInterval value={value} />,
           },
           restoreLogsFConf,
         ]}

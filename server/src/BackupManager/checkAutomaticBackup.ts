@@ -9,7 +9,7 @@ export async function checkAutomaticBackup(
 ) {
   const AUTO_INITIATOR = "automatic_backups";
   const dbConf = await this.dbs.database_configs.findOne(
-    getDatabaseConfigFilter(con) as any,
+    getDatabaseConfigFilter(con),
   );
   const bkpConf = dbConf?.backups_config;
   if (!bkpConf?.dump_options) return;

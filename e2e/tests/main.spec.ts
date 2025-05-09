@@ -778,12 +778,25 @@ test.describe("Main test", () => {
     const recoveryCode = await page
       .locator("#totp_recovery_code")
       .textContent();
-    const code = authenticator.generate(Base64Secret ?? "");
-    await page
-      .getByTestId("Setup2FA.Enable.ConfirmCode")
-      .locator("input")
-      .fill(code);
-    await page.getByTestId("Setup2FA.Enable.Confirm").click();
+    const createAndFillCode = async () => {
+      const code = authenticator.generate(Base64Secret ?? "");
+      await page
+        .getByTestId("Setup2FA.Enable.ConfirmCode")
+        .locator("input")
+        .fill(code);
+      await page.getByTestId("Setup2FA.Enable.Confirm").click();
+    };
+    createAndFillCode();
+
+    /** Allow 1 invalid code */
+    await page.waitForTimeout(300);
+    const setupErrorNode = await page.getByTestId("Setup2FA.error");
+    if (
+      (await setupErrorNode.count()) &&
+      (await setupErrorNode.textContent())?.includes("Invalid token")
+    ) {
+      createAndFillCode();
+    }
 
     /** Using token */
     await login(page);

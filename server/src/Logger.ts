@@ -1,7 +1,7 @@
 import type { EventInfo } from "prostgles-server/dist/Logging";
 import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 import { pickKeys } from "prostgles-types";
-import { connMgr, type DBS } from ".";
+import { type DBS } from ".";
 import { getAuthSetupData } from "./authConfig/subscribeToAuthSetupChanges";
 
 export const loggerTableConfig: TableConfig<{ en: 1 }> = {

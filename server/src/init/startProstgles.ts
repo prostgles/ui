@@ -192,6 +192,7 @@ export const startProstgles = async ({
       onLog: (e) => {
         addLog(e, null);
       },
+      // DEBUG_MODE: true,
       tableConfig,
       tableConfigMigrations: {
         silentFail: false,

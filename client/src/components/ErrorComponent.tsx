@@ -1,12 +1,12 @@
-import { mdiAlertCircleOutline, mdiCancel, mdiClose } from "@mdi/js";
+import { mdiAlertCircleOutline, mdiClose } from "@mdi/js";
 import type { ReactNode } from "react";
 import React from "react";
+import { isObject } from "../../../commonTypes/publishUtils";
+import type { TestSelectors } from "../Testing";
 import { isEmpty } from "../utils";
+import Btn from "./Btn";
 import { classOverride, FlexCol, FlexRow } from "./Flex";
 import { Icon } from "./Icon/Icon";
-import { isObject } from "../../../commonTypes/publishUtils";
-import Btn from "./Btn";
-import type { TestSelectors } from "../Testing";
 
 type P = TestSelectors & {
   error: any;
