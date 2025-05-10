@@ -1,25 +1,22 @@
 import React, { useMemo } from "react";
 import { filterArrInverse } from "../../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import type { Prgl } from "../../App";
 import type { Message } from "../../components/Chat/Chat";
 import { Marked } from "../../components/Chat/Marked";
+import { FlexCol } from "../../components/Flex";
 import { MediaViewer } from "../../components/MediaViewer";
 import { isDefined } from "../../utils";
 import { AskLLMTokenUsage } from "./AskLLMTokenUsage";
 import { ToolUseChatMessage } from "./ToolUseChatMessage";
-import type { LLMSetupStateReady } from "./useLLMSetupState";
+import type { UseLLMChatProps } from "./useLLMChat";
 import { useMarkdownCodeHeader } from "./useMarkdownCodeHeader";
-import { FlexCol } from "../../components/Flex";
 
-type P = LLMSetupStateReady &
-  Pick<Prgl, "dbs" | "user" | "connectionId"> & {
-    workspaceId: string | undefined;
-    activeChat: DBSSchema["llm_chats"] | undefined;
-  };
+type P = UseLLMChatProps & {
+  activeChat: DBSSchema["llm_chats"] | undefined;
+};
 
 export const useLLMChatMessages = (props: P) => {
-  const { dbs, user, activeChat } = props;
+  const { dbs, user, activeChat, db } = props;
 
   const { data: llmMessages } = dbs.llm_messages.useSubscribe(
     { chat_id: activeChat?.id },
@@ -30,6 +27,7 @@ export const useLLMChatMessages = (props: P) => {
   const { data: models } = dbs.llm_models.useFind();
 
   const { markdownCodeHeader } = useMarkdownCodeHeader(props);
+  const sqlHandler = db.sql;
 
   const actualMessages: Message[] | undefined = useMemo(
     () =>
@@ -53,6 +51,7 @@ export const useLLMChatMessages = (props: P) => {
                     key={`${id}-text-${idx}`}
                     codeHeader={markdownCodeHeader}
                     content={m.text}
+                    sqlHandler={sqlHandler}
                   />
                 );
               }
@@ -72,6 +71,7 @@ export const useLLMChatMessages = (props: P) => {
                   messageIndex={llmMessageIdx}
                   messages={llmMessages}
                   toolUseMessageIndex={idx}
+                  sqlHandler={sqlHandler}
                 />
               );
             });
@@ -94,7 +94,7 @@ export const useLLMChatMessages = (props: P) => {
           },
         )
         .filter(isDefined),
-    [llmMessages, markdownCodeHeader, models, user?.id],
+    [sqlHandler, llmMessages, markdownCodeHeader, models, user?.id],
   );
 
   const disabled_message =

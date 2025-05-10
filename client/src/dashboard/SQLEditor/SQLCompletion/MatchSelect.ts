@@ -346,7 +346,7 @@ export const MatchSelect: SQLMatcher = {
     const COND_KWDS = ["WHERE", "HAVING"] as const;
     const conditionIsComplete =
       ltoken &&
-      ltoken.type !== "operator.sql" &&
+      (ltoken.type !== "operator.sql" || ltoken.textLC === "null") && // for some reason null is an operator
       !COND_KWDS.includes(ltoken.textLC as any);
 
     const extraOptions: MinimalSnippet[] = [];

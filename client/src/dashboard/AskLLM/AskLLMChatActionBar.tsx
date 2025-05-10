@@ -136,6 +136,7 @@ export const AskLLMChatActionBar = (
           codeString={promptContent}
           language="text"
           codeHeader={undefined}
+          sqlHandler={undefined}
         />
       </PopupMenu>
       <Select

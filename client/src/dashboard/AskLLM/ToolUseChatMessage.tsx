@@ -4,7 +4,10 @@ import React, { useMemo } from "react";
 import { filterArr } from "../../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import Btn from "../../components/Btn";
-import { MarkdownMonacoCode } from "../../components/Chat/MarkdownMonacoCode";
+import {
+  MarkdownMonacoCode,
+  type MarkdownMonacoCodeProps,
+} from "../../components/Chat/MarkdownMonacoCode";
 import { FlexCol } from "../../components/Flex";
 import { MediaViewer } from "../../components/MediaViewer";
 
@@ -12,12 +15,13 @@ type ToolUseMessageProps = {
   messages: DBSSchema["llm_messages"][];
   messageIndex: number;
   toolUseMessageIndex: number;
-};
+} & Pick<MarkdownMonacoCodeProps, "sqlHandler">;
 
 export const ToolUseChatMessage = ({
   messages,
   toolUseMessageIndex,
   messageIndex,
+  sqlHandler,
 }: ToolUseMessageProps) => {
   const [open, setOpen] = React.useState(false);
 
@@ -64,9 +68,15 @@ export const ToolUseChatMessage = ({
               }
               language="json"
               codeHeader={undefined}
+              sqlHandler={undefined}
             />
           )}
-          {toolUseResult && <ContentRender toolUseResult={toolUseResult} />}
+          {toolUseResult && (
+            <ContentRender
+              toolUseResult={toolUseResult}
+              sqlHandler={sqlHandler}
+            />
+          )}
         </FlexCol>
       )}
     </FlexCol>
@@ -75,8 +85,10 @@ export const ToolUseChatMessage = ({
 
 const ContentRender = ({
   toolUseResult,
+  sqlHandler,
 }: {
   toolUseResult: ReturnType<typeof getToolUseResult>;
+  sqlHandler: MarkdownMonacoCodeProps["sqlHandler"];
 }) => {
   const content = useMemo(() => {
     if (!toolUseResult) return undefined;
@@ -115,6 +127,7 @@ const ContentRender = ({
               codeString={value}
               language={language}
               codeHeader={undefined}
+              sqlHandler={sqlHandler}
             />
           );
         }

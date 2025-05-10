@@ -78,7 +78,7 @@ type BtnCustomProps = (
    * If provided then will display a confirmation dialog before running any onClick function
    */
   clickConfirmation?: {
-    color: "danger" | "action";
+    color: "danger" | "action" | "warn";
     message: React.ReactNode;
     buttonText: string;
   };
@@ -418,6 +418,11 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
       const { onClickMessage } = this.props;
       onClick = (e) => {
         !needsConfirmation() && onClickMessage(e, this.clickMessage);
+      };
+    } else if (this.props.onClick) {
+      onClick = (e) => {
+        if (needsConfirmation()) return;
+        this.props.onClick?.(e);
       };
     }
 

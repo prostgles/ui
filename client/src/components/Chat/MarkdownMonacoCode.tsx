@@ -1,26 +1,43 @@
-import { mdiContentCopy, mdiFullscreen } from "@mdi/js";
+import { mdiContentCopy, mdiDownload, mdiFullscreen, mdiPlay } from "@mdi/js";
 import type { editor } from "monaco-editor";
-import React, { useCallback, useMemo } from "react";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import React, { useCallback, useMemo, useState } from "react";
 import { CHAT_WIDTH } from "../../dashboard/AskLLM/AskLLM";
 import Btn from "../Btn";
+import ErrorComponent from "../ErrorComponent";
 import { FlexCol, FlexRow } from "../Flex";
 import { MonacoEditor } from "../MonacoEditor/MonacoEditor";
 import Popup from "../Popup/Popup";
-import type { MarkedProps } from "./Marked";
+import { Table } from "../Table/Table";
+import { SuccessMessage } from "../Animations";
+import { getFieldsWithActions } from "../../dashboard/W_SQL/parseSqlResultCols";
+import { getSQLResultTableColumns } from "../../dashboard/W_SQL/getSQLResultTableColumns";
+import { download } from "../../dashboard/W_SQL/W_SQL";
+import Select from "../Select/Select";
 
 const LANGUAGE_FALLBACK = {
   tsx: "typescript",
   ts: "typescript",
 };
 
-export const MarkdownMonacoCode = (props: {
+type SQLResult =
+  | { state: "ok"; rows: any[]; columns: any[] }
+  | { state: "ok-command-result"; commandResult: string }
+  | { state: "error"; error: any }
+  | { state: "loading" };
+
+export type MarkdownMonacoCodeProps = {
   title?: string;
   language: string;
   codeString: string;
-  codeHeader: MarkedProps["codeHeader"] | undefined;
-}) => {
-  const { codeHeader, language, codeString, title } = props;
-  const [fullscreen, setFullscreen] = React.useState(false);
+  codeHeader:
+    | undefined
+    | ((opts: { language: string; codeString: string }) => React.ReactNode);
+  sqlHandler: DBHandlerClient["sql"];
+};
+export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
+  const { codeHeader, language, codeString, title, sqlHandler } = props;
+  const [fullscreen, setFullscreen] = useState(false);
 
   const monacoOptions = useMemo(() => {
     return {
@@ -38,6 +55,48 @@ export const MarkdownMonacoCode = (props: {
     setFullscreen(false);
   }, []);
 
+  const [sqlResult, setSqlResult] = useState<SQLResult | undefined>(undefined);
+  const [commitMode, setCommitMode] = useState(false);
+  const onRunSQL = useCallback(() => {
+    setSqlResult({ state: "loading" });
+    sqlHandler!(codeString, undefined, {
+      returnType: commitMode ? "arrayMode" : "default-with-rollback",
+    })
+      .then((data) => {
+        if (!data.fields.length) {
+          setSqlResult({
+            state: "ok-command-result",
+            commandResult: `${data.command || "sql"} executed successfully`,
+          });
+          setTimeout(() => {
+            setSqlResult(undefined);
+          }, 2000);
+          return;
+        }
+        const cols = getFieldsWithActions(
+          data.fields,
+          data.command.toLowerCase() === "select",
+        );
+        const columns =
+          !commitMode ? cols : (
+            getSQLResultTableColumns({
+              cols,
+              tables: [],
+              maxCharsPerCell: undefined,
+              onResize: () => {},
+            })
+          );
+        setSqlResult({
+          state: "ok",
+          rows: data.rows,
+          columns,
+        });
+      })
+      .catch((err) => {
+        setSqlResult({ state: "error", error: err });
+      });
+  }, [codeString, commitMode, sqlHandler]);
+
   return (
     <FlexCol
       className="MarkdownMonacoCode relative o-dvisible min-w-600 b b-color-1 rounded gap-0 b-color-2 f-0 o-hidden"
@@ -50,19 +109,68 @@ export const MarkdownMonacoCode = (props: {
           {title ?? language}
         </div>
         {codeHeader && codeHeader({ language, codeString })}
-        <Btn
-          size="small"
-          iconPath={mdiContentCopy}
-          style={{
-            marginLeft: "auto",
-            flex: "none",
-          }}
-          onClick={() => {
-            navigator.clipboard.writeText(codeString);
-          }}
-        >
-          Copy
-        </Btn>
+        {sqlResult && sqlResult.state !== "loading" ?
+          <Btn onClick={() => setSqlResult(undefined)}>Close result</Btn>
+        : <>
+            {language === "sql" && sqlHandler && (
+              <FlexRow className="gap-p25">
+                <Select
+                  fullOptions={[
+                    {
+                      key: "default",
+                      label: "Rollback",
+                      subLabel:
+                        "(Recommended)\nAny changes made by this query will be canceled",
+                    },
+                    {
+                      key: "commit",
+                      label: "Commit",
+                      subLabel: "Any changes made by this query are permanent",
+                    },
+                  ]}
+                  value={commitMode ? "commit" : "default"}
+                  onChange={(v) => {
+                    setCommitMode(v === "commit");
+                  }}
+                  btnProps={{
+                    size: "micro",
+                    // iconPath: "",
+                  }}
+                />
+                <Btn
+                  title={
+                    "Execute SQL " +
+                    (commitMode ? "(commited)" : "(With rollback)")
+                  }
+                  iconPath={mdiPlay}
+                  size="small"
+                  color={commitMode ? "action" : undefined}
+                  loading={sqlResult?.state === "loading"}
+                  onClick={onRunSQL}
+                />
+              </FlexRow>
+            )}
+            <Btn
+              size="small"
+              iconPath={mdiContentCopy}
+              style={{
+                marginLeft: "auto",
+                flex: "none",
+              }}
+              onClick={() => {
+                navigator.clipboard.writeText(codeString);
+              }}
+              title="Copy code to clipboard"
+            />
+            <Btn
+              title="Download"
+              iconPath={mdiDownload}
+              onClick={() => {
+                download(codeString, `code.${language}`, "text");
+              }}
+            />
+          </>
+        }
         <Btn
           title="Toggle Fullscreen"
           iconPath={mdiFullscreen}
@@ -75,14 +183,25 @@ export const MarkdownMonacoCode = (props: {
         title={language}
         onExit={onExit}
       >
-        <MonacoEditor
-          key={codeString}
-          className={fullscreen ? "f-1" : ""}
-          loadedSuggestions={undefined}
-          value={codeString}
-          language={LANGUAGE_FALLBACK[language] ?? language}
-          options={monacoOptions}
-        />
+        {sqlResult?.state === "ok-command-result" ?
+          <SuccessMessage message={sqlResult.commandResult} />
+        : sqlResult?.state === "error" ?
+          <ErrorComponent error={sqlResult.error} />
+        : sqlResult?.state === "ok" ?
+          <Table
+            tableStyle={{ maxHeight: "400px" }}
+            rows={sqlResult.rows}
+            cols={sqlResult.columns}
+          />
+        : <MonacoEditor
+            key={codeString}
+            className={fullscreen ? "f-1" : ""}
+            loadedSuggestions={undefined}
+            value={codeString}
+            language={LANGUAGE_FALLBACK[language] ?? language}
+            options={monacoOptions}
+          />
+        }
       </FullscreenWrapper>
     </FlexCol>
   );

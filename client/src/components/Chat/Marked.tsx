@@ -1,19 +1,19 @@
 import React, { useCallback, useEffect } from "react";
 import Markdown from "react-markdown";
 import { classOverride, type DivProps } from "../Flex";
-import { MarkdownMonacoCode } from "./MarkdownMonacoCode";
+import {
+  MarkdownMonacoCode,
+  type MarkdownMonacoCodeProps,
+} from "./MarkdownMonacoCode";
 import "./Marked.css";
 
-export type MarkedProps = DivProps & {
-  content: string;
-  codeHeader: (opts: {
-    language: string;
-    codeString: string;
-  }) => React.ReactNode;
-};
+export type MarkedProps = DivProps &
+  Pick<MarkdownMonacoCodeProps, "codeHeader" | "sqlHandler"> & {
+    content: string;
+  };
 
 export const Marked = (props: MarkedProps) => {
-  const { content, codeHeader, ...divProps } = props;
+  const { content, codeHeader, sqlHandler, ...divProps } = props;
   useEffect(() => {
     if (!content) return;
     window.localStorage.setItem("content", content);
@@ -49,10 +49,11 @@ export const Marked = (props: MarkedProps) => {
           codeHeader={codeHeader}
           language={language}
           codeString={codeString}
+          sqlHandler={sqlHandler}
         />
       );
     },
-    [codeHeader],
+    [codeHeader, sqlHandler],
   );
 
   return (

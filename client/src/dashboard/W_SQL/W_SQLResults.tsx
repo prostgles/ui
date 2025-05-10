@@ -9,7 +9,7 @@ import { onRenderColumn } from "../W_Table/tableUtils/onRenderColumn";
 import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
 import { TooManyColumnsWarning } from "../W_Table/TooManyColumnsWarning";
 
-type W_SQLResultsProps = Pick<
+export type W_SQLResultsProps = Pick<
   W_SQLState,
   | "sqlResult"
   | "rows"
@@ -29,6 +29,7 @@ type W_SQLResultsProps = Pick<
     onPageChange: (newPage: number) => any;
     onPageSizeChange: (newPageSize: W_SQLState["pageSize"]) => any;
   };
+import { getSQLResultTableColumns } from "./getSQLResultTableColumns";
 
 export const W_SQLResults = (props: W_SQLResultsProps) => {
   const {
@@ -51,6 +52,7 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
     onPageSizeChange,
   } = props;
   const o: WindowData<"sql">["options"] = w.options;
+  const { renderMode = "table", maxCharsPerCell } = w.sql_options;
   const {
     commandResult = undefined,
     rowCount = undefined,
@@ -61,13 +63,47 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
     ((o.hideTable && !notices && !notifEventSub) ||
       (!rows.length && !sqlResult && activeQuery?.state !== "running"));
 
+  const isExplainResult = (info?.command || "").toLowerCase() === "explain";
   const [tooManyColumnsWarningWasShown, setTooManyColumnsWarningWasShown] =
     React.useState(false);
 
+  const tableColumns = React.useMemo(() => {
+    return getSQLResultTableColumns({
+      cols,
+      tables,
+      maxCharsPerCell,
+      onResize,
+    });
+    // return cols.map((c, i) => ({
+    //   ...c,
+    //   key: i,
+    //   label: c.name,
+    //   filter: false,
+    //   /* Align numbers to right for an easier read */
+    //   headerClassname: c.tsDataType === "number" ? " jc-end  " : " ",
+    //   className: c.tsDataType === "number" ? " ta-right " : " ",
+    //   onRender: onRenderColumn({
+    //     c: { ...c, name: i.toString(), format: undefined },
+    //     table: undefined,
+    //     tables,
+    //     barchartVals: undefined,
+    //     maxCellChars: maxCharsPerCell || 1000,
+    //     maximumFractionDigits: 12,
+    //   }),
+    //   onResize: async (width) => {
+    //     const newCols = cols.map((_c) => {
+    //       if (_c.key === c.key) {
+    //         _c.width = width;
+    //       }
+    //       return _c;
+    //     });
+    //     onResize(newCols);
+    //   },
+    // }));
+  }, [cols, tables, maxCharsPerCell, onResize]);
   if (activeQuery?.state === "running" && !rows.length) {
     return null;
   }
-  const { renderMode = "table", maxCharsPerCell } = w.sql_options;
 
   const paginatedRows =
     renderMode === "table" ?
@@ -123,40 +159,15 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
             onSort={onSort}
             enableExperimentalVirtualisation={true}
             showSubLabel={true}
-            cols={cols.map((c, i) => ({
-              ...c,
-              key: i,
-              label: c.name,
-              filter: false,
-              /* Align numbers to right for an easier read */
-              headerClassname: c.tsDataType === "number" ? " jc-end  " : " ",
-              className: c.tsDataType === "number" ? " ta-right " : " ",
-              onRender: onRenderColumn({
-                c: { ...c, name: i.toString(), format: undefined },
-                table: undefined,
-                tables,
-                barchartVals: undefined,
-                maxCellChars: maxCharsPerCell || 1000,
-                maximumFractionDigits: 12,
-              }),
-              onResize: async (width) => {
-                const newCols = cols.map((_c) => {
-                  if (_c.key === c.key) {
-                    _c.width = width;
-                  }
-                  return _c;
-                });
-                onResize(newCols);
-              },
-            }))}
+            cols={tableColumns}
             rows={paginatedRows}
             style={{ flex: 1, boxShadow: "unset" }}
             tableStyle={{
               borderRadius: "unset",
               border: "unset",
-              ...((info?.command || "").toLowerCase() === "explain" ?
-                { whiteSpace: "pre" }
-              : {}),
+              ...(isExplainResult && {
+                whiteSpace: "pre",
+              }),
             }}
             pagination={
               !isSelect ? undefined : (

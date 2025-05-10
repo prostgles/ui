@@ -50,6 +50,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     user,
     connectionId,
     workspaceId,
+    db,
   });
   const { messages, activeChat, activeChatId, latestChats, llmMessages } =
     chatState;

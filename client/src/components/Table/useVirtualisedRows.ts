@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo } from "react";
 
 type RowNodeWithInfo = HTMLDivElement & {
   nodeRect?: DOMRect | undefined;
-  initialStyle: CSSStyleDeclaration | undefined;
+  initialStyle: Pick<CSSStyleDeclaration, "display"> | undefined;
 };
 
 type P = {
@@ -43,7 +43,8 @@ export const useVirtualisedRows = ({
     const setRectAndSize = (node: RowNodeWithInfo, isRow: boolean) => {
       const nodeRect = node.getBoundingClientRect();
       node.nodeRect = nodeRect;
-      node.initialStyle = { ...node.style };
+      const display = node.style.display;
+      node.initialStyle = { display };
       node.style.width = `${nodeRect.width}px`;
       node.style.height = `${nodeRect.height}px`;
       node.style.top = !isRow ? "0px" : `${nodeRect.top - offsetTop}px`;
@@ -67,6 +68,14 @@ export const useVirtualisedRows = ({
           if (!("nodeRect" in node) || !node.initialStyle) {
             setRectAndSize(node, isRow);
             if (isRow) {
+              /** Prevent items resizing due to flex */
+              Array.from(node.children as unknown as RowNodeWithInfo[]).forEach(
+                (child) => {
+                  const childRect = child.getBoundingClientRect();
+                  child.style.maxWidth = `${childRect.width}px`;
+                  child.style.width = `${childRect.width}px`;
+                },
+              );
               checkChildNodes(node, false);
             }
             isFirstRun = true;
@@ -135,6 +144,7 @@ export const useVirtualisedRows = ({
     }
     const { xScrollParent, scrollContentWrapper, scrollBody } = pNodes;
     scrollContentWrapper.style.height = scrollBody.scrollHeight + "px";
+    scrollContentWrapper.style.width = scrollBody.scrollWidth + "px";
     onScroll();
     xScrollParent.addEventListener("scroll", onScroll, {
       passive: true,

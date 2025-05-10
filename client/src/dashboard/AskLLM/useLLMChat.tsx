@@ -4,13 +4,13 @@ import type { Prgl } from "../../App";
 import { useLLMChatMessages } from "./useLLMChatMessages";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
 
-type P = LLMSetupStateReady &
-  Pick<Prgl, "dbs" | "user" | "connectionId"> & {
+export type UseLLMChatProps = LLMSetupStateReady &
+  Pick<Prgl, "dbs" | "user" | "connectionId" | "db"> & {
     workspaceId: string | undefined;
   };
 
 export type LLMChatState = ReturnType<typeof useLLMChat>;
-export const useLLMChat = (props: P) => {
+export const useLLMChat = (props: UseLLMChatProps) => {
   const { dbs, credentials, firstPromptId, defaultCredential, prompts } = props;
   const chatsFilter = useMemo(() => {
     return {

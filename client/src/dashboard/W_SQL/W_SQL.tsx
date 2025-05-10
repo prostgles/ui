@@ -598,7 +598,11 @@ export class W_SQL extends RTComp<W_SQLProps, W_SQLState, D> {
 }
 
 // Function to download data to a file
-export function download(data, filename: string, type: string) {
+export function download(
+  data,
+  filename: string,
+  type: BlobPropertyBag["type"],
+) {
   const file = new Blob([data], { type });
   const navigator = window.navigator as any;
   if (navigator.msSaveOrOpenBlob) {

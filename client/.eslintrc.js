@@ -9,6 +9,7 @@ module.exports = {
   ],
   rules: {
     ...commonConfig.rules,
+    "react/no-unescaped-entities": "off",
     "react/no-unused-prop-types": "warn",
     "react/display-name": "off",
     "react/no-children-prop": "off",
