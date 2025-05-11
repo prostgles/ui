@@ -59,7 +59,6 @@ export type SmartFormFieldProps = Pick<
   row: AnyObject | undefined;
   action?: "update" | "insert" | "view";
   column: SmartColumnInfo;
-  tableInfo: TableInfo;
   style?: React.CSSProperties;
   inputStyle?: React.CSSProperties;
   placeholder?: string;
@@ -99,7 +98,6 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
     table,
     rightContentAlwaysShow,
     jsonbSchemaWithControls,
-    tableInfo,
     enableInsert,
     newRowDataHandler,
     someColumnsHaveIcons,
@@ -115,7 +113,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   const { onCheckAndChange, error } = useSmartFormFieldOnChange({
     onChange,
     column,
-    tableInfo,
+    tableInfo: table.info,
   });
   const [showDateInput, setShowDateInput] = useState(true);
 
@@ -271,9 +269,8 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
                 tables={tables}
                 value={value}
                 row={row}
-                tableName={tableName}
                 newRowDataHandler={newRowDataHandler}
-                tableInfo={tableInfo}
+                table={table}
               />
             )
 
@@ -306,7 +303,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
               action={action}
               row={row}
               column={column}
-              tableInfo={tableInfo}
+              tableInfo={table.info}
               jsonbSchemaWithControls={jsonbSchemaWithControls}
               hideNullBtn={hideNullBtn}
               newRowDataHandler={newRowDataHandler}

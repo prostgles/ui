@@ -1,7 +1,11 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { AnyObject } from "prostgles-types/lib";
 import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";
+import type { InstalledPrograms } from "../../../../commonTypes/electronInitTypes";
+import type { LLMMessage } from "../../../../commonTypes/llmUtils";
+import type { McpToolCallResponse } from "../../../../commonTypes/mcp";
+import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type {
-  ColType,
   ConnectionStatus,
   PGDumpParams,
   ProcStats,
@@ -11,11 +15,6 @@ import type { Connection } from "../../pages/NewConnection/NewConnnection";
 import type { FileTableConfigReferences } from "../FileTableControls/FileColumnConfigControls";
 import type { ConnectionTableConfig } from "../FileTableControls/FileTableConfigControls";
 import type { Backups } from "./dashboardUtils";
-import type { AnyObject } from "prostgles-types/lib";
-import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import type { LLMMessage } from "../../../../commonTypes/llmUtils";
-import type { McpToolCallResponse } from "../../../../commonTypes/mcp";
-import type { InstalledPrograms } from "../../../../commonTypes/electronInitTypes";
 
 export type DBSMethods = Partial<{
   sendFeedback: (feedback: {

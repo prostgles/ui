@@ -1,5 +1,5 @@
-import { mdiTools } from "@mdi/js";
-import type { DetailedJoinSelect } from "prostgles-types";
+import { mdiDatabase, mdiTools } from "@mdi/js";
+import type { DetailedJoinSelect, FilterItem } from "prostgles-types";
 import React, { useMemo } from "react";
 import { dashboardTypes } from "../../../../commonTypes/DashboardTypes";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
@@ -10,6 +10,8 @@ import PopupMenu from "../../components/PopupMenu";
 import Select from "../../components/Select/Select";
 import { MCPServers } from "../../pages/ServerSettings/MCPServers/MCPServers";
 import type { AskLLMChatProps } from "./AskLLMChat";
+import { SmartForm } from "../SmartForm/SmartForm";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 
 export const AskLLMChatActionBar = (
   props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
@@ -51,8 +53,8 @@ export const AskLLMChatActionBar = (
         "llm_chats_allowed_mcp_tools.llm_chats": {
           id: activeChatId,
         },
-      } as any,
-    },
+      },
+    } as FilterItem,
     {
       select: {
         name: 1,
@@ -77,14 +79,10 @@ export const AskLLMChatActionBar = (
                 `: \n\n${allowedTools.map((t) => t.name).join("\n")}`
               : ""
             }`}
-            variant="icon"
-            size="small"
+            {...btnStyleProps}
             color={allowedTools?.length ? "action" : undefined}
             iconPath={mdiTools}
             loading={loading}
-            style={{
-              opacity: 0.75,
-            }}
             disabledInfo={
               !prgl.dbsMethods.getMcpHostInfo ? "Must be admin" : undefined
             }
@@ -95,18 +93,42 @@ export const AskLLMChatActionBar = (
         <MCPServers {...props.prgl} chatId={activeChat.id} />
       </PopupMenu>
       <PopupMenu
+        title="Database access"
+        button={
+          <Btn
+            iconPath={mdiDatabase}
+            {...btnStyleProps}
+            color={
+              activeChat.db_data_permissions?.type === "Run SQL" ?
+                "action"
+              : undefined
+            }
+          />
+        }
+        onClickClose={false}
+      >
+        <SmartForm
+          db={dbs as DBHandlerClient}
+          tableName="llm_chats"
+          rowFilter={[{ fieldName: "id", value: activeChatId }]}
+          tables={prgl.dbsTables}
+          methods={prgl.dbsMethods}
+          columns={{
+            db_schema_permissions: 1,
+            db_data_permissions: 1,
+          }}
+          showJoinedTables={false}
+          jsonbSchemaWithControls={true}
+        />
+      </PopupMenu>
+      <PopupMenu
         title="Prompt"
         positioning="center"
         clickCatchStyle={{ opacity: 1 }}
         onClickClose={false}
         contentClassName="p-2 flex-col gap-1"
         button={
-          <Btn
-            title="Prompt"
-            variant="icon"
-            size="small"
-            style={{ opacity: 0.75 }}
-          >
+          <Btn title="Prompt" {...btnStyleProps}>
             {prompt?.name}
           </Btn>
         }
@@ -151,11 +173,8 @@ export const AskLLMChatActionBar = (
         }
         size="small"
         btnProps={{
-          variant: "icon",
+          ...btnStyleProps,
           iconPath: "",
-          style: {
-            opacity: 0.75,
-          },
         }}
         title="Model"
         emptyLabel="Select model..."
@@ -175,3 +194,9 @@ export const AskLLMChatActionBar = (
     </FlexRow>
   );
 };
+
+const btnStyleProps = {
+  variant: "icon",
+  size: "small",
+  style: { opacity: 0.75 },
+} as const;

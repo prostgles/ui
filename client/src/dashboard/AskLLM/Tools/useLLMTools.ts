@@ -109,14 +109,15 @@ export const useLLMTools = ({
     await sendQuery(results);
   }, [
     messages,
-    methods,
     sendQuery,
-    callMCPServerTool,
     allowedTools,
+    is_state_db,
     allToolsForTask,
-    requestApproval,
     db,
     dbs,
+    methods,
+    callMCPServerTool,
+    requestApproval,
   ]);
 };
 

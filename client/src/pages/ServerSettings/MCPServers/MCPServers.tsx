@@ -50,7 +50,7 @@ export const MCPServers = (props: MCPServersProps) => {
       </>
     : "";
   const { selectedTool, setSelectedTool, filter, fieldConfigs } =
-    useMCPServersListProps(chatId, dbs);
+    useMCPServersListProps(chatId, dbs, dbsMethods);
 
   const [loaded, setLoaded] = React.useState(false);
 

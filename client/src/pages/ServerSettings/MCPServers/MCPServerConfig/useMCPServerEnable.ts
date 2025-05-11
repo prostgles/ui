@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
 import type { DBS } from "../../../../dashboard/Dashboard/DBS";
+import type { Prgl } from "../../../../App";
 
 /**
  * Enabling an MCP server might require configuration
@@ -8,12 +9,13 @@ import type { DBS } from "../../../../dashboard/Dashboard/DBS";
 export const useMCPServerEnable = ({
   mcp_server,
   dbs,
+  dbsMethods,
 }: {
   dbs: DBS;
   mcp_server: DBSSchema["mcp_servers"] & {
     mcp_server_configs: DBSSchema["mcp_server_configs"][];
   };
-}) => {
+} & Pick<Prgl, "dbs" | "dbsMethods">) => {
   const { enabled, config_schema, mcp_server_configs } = mcp_server;
   const [showServerConfig, setShowServerConfig] = useState<
     false | { onFinished: () => void }
@@ -26,18 +28,25 @@ export const useMCPServerEnable = ({
         setShowServerConfig({ onFinished });
       });
     } else {
-      return dbs.mcp_servers.update(
+      await dbs.mcp_servers.update(
         { name: mcp_server.name },
         { enabled: newEnabled },
       );
+      const toolCount = await dbs.mcp_server_tools.count({
+        server_name: mcp_server.name,
+      });
+      if (!toolCount) {
+        await dbsMethods.reloadMcpServerTools?.(mcp_server.name);
+      }
     }
   }, [
     config_schema,
+    dbs.mcp_server_tools,
     dbs.mcp_servers,
+    dbsMethods,
     enabled,
     mcp_server.name,
     mcp_server_configs.length,
-    setShowServerConfig,
   ]);
   return {
     onToggle,

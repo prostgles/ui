@@ -8,17 +8,18 @@ import {
 import { type FullOption } from "../../../components/Select/Select";
 import type { SmartFormFieldForeignKeyProps } from "./SmartFormFieldForeignKey";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
+import React from "react";
 
 type FetchForeignKeyOptionsArgs = Pick<
   SmartFormFieldForeignKeyProps,
-  "column" | "db" | "row" | "tableName" | "tables"
+  "column" | "db" | "row" | "table" | "tables"
 > & {
   term: string;
 };
 
 type GetRootFkeyTableArgs = Pick<
   FetchForeignKeyOptionsArgs,
-  "tableName" | "tables" | "db"
+  "table" | "tables" | "db"
 > & {
   prevPath: { tableName: string; on: [string, string][] }[];
   columnName: string;
@@ -31,19 +32,18 @@ type GetRootFkeyTableArgs = Pick<
 const getRootFkeyTable = ({
   tables,
   columnName,
-  tableName,
+  table,
   db,
   prevPath = [],
 }: GetRootFkeyTableArgs):
   | undefined
-  | (Pick<GetRootFkeyTableArgs, "tableName" | "prevPath"> & {
+  | (Pick<GetRootFkeyTableArgs, "table" | "prevPath"> & {
       column: ValidatedColumnInfo;
       bestTextCol: string | undefined;
+      table: DBSchemaTableWJoins;
     }) => {
-  const table = tables.find((t) => t.name === tableName);
-
-  const column = table?.columns.find((c) => c.name === columnName);
-  if (!table || !column || !db[table.name]?.find) return;
+  const column = table.columns.find((c) => c.name === columnName);
+  if (!column || !db[table.name]?.find) return;
   if (column.is_pkey) {
     const bestTextCols = getBestTextColumns(
       table,
@@ -51,7 +51,7 @@ const getRootFkeyTable = ({
     );
     return {
       column,
-      tableName,
+      table,
       prevPath,
       bestTextCol: bestTextCols[0]?.name,
     };
@@ -74,10 +74,12 @@ const getRootFkeyTable = ({
 
   return fcolsInfo
     .flatMap((fcolInfo) => {
+      const ftable = tables.find((t) => t.name === fcolInfo.ftable);
+      if (!ftable) return;
       const res = getRootFkeyTable({
         tables,
         columnName: fcolInfo.fcol,
-        tableName: fcolInfo.ftable,
+        table: ftable,
         prevPath: [
           ...prevPath,
           { on: fcolInfo.on, tableName: fcolInfo.ftable },
@@ -91,16 +93,15 @@ const getRootFkeyTable = ({
 
 const getFtableSearchOpts = ({
   column,
-  tableName,
+  table,
   db,
   tables,
   row,
 }: FetchForeignKeyOptionsArgs) => {
-  if (!tableName) return;
   const rootFkeyTable = getRootFkeyTable({
     columnName: column.name,
     prevPath: [],
-    tableName,
+    table,
     tables,
     db,
   });
@@ -120,6 +121,7 @@ const getFtableSearchOpts = ({
         nextTableFilter[fcol] = row[col];
       }
     });
+    const tableName = table.name;
     const path = rootFkeyTable.prevPath
       .map((p, i) => {
         return {
@@ -144,77 +146,76 @@ const getFtableSearchOpts = ({
   return {
     mainColumn: rootFkeyTable.column.name,
     textColumn: rootFkeyTable.bestTextCol,
-    tableName: rootFkeyTable.tableName,
+    table: rootFkeyTable.table,
     filterFilterWithoutCurrentValue,
   };
 };
 
 export const fetchForeignKeyOptions = async ({
   column,
-  tableName,
+  table,
   db,
   tables,
   row,
   term,
 }: FetchForeignKeyOptionsArgs): Promise<FullOption[]> => {
-  if (!tableName) return [];
   const rootFkeyTable = getFtableSearchOpts({
     column,
-    tableName,
+    table,
     tables,
     db,
     term,
     row,
   });
 
-  if (rootFkeyTable) {
-    const { filterFilterWithoutCurrentValue } = rootFkeyTable;
-    const result = await fetchSearchResults({
-      ...rootFkeyTable,
+  if (!rootFkeyTable) {
+    return fetchSearchResults({
+      mainColumn: column.name,
+      textColumn: undefined,
       db,
+      table,
       term,
-      filter: filterFilterWithoutCurrentValue,
+      filter: undefined,
     });
-
-    /** We must add current value */
-    const currentValue = row?.[column.name];
-    if (
-      row &&
-      isDefined(currentValue) &&
-      currentValue !== null &&
-      !result.some((o) => o.key === currentValue)
-    ) {
-      const [currentValueOption] = await fetchSearchResults({
-        ...rootFkeyTable,
-        db,
-        term: "",
-        filter: {
-          [rootFkeyTable.mainColumn]: currentValue,
-        },
-      });
-      if (currentValueOption) {
-        result.unshift(currentValueOption);
-      }
-    }
-
-    return result;
   }
 
-  return fetchSearchResults({
-    mainColumn: column.name,
-    textColumn: undefined,
+  const { filterFilterWithoutCurrentValue } = rootFkeyTable;
+  const result = await fetchSearchResults({
+    ...rootFkeyTable,
     db,
-    tableName,
     term,
-    filter: undefined,
+    filter: filterFilterWithoutCurrentValue,
   });
+
+  /** We must add current value */
+  const currentValue = row?.[column.name];
+  if (
+    row &&
+    isDefined(currentValue) &&
+    currentValue !== null &&
+    !result.some((o) => o.key === currentValue)
+  ) {
+    const [currentValueOption] = await fetchSearchResults({
+      ...rootFkeyTable,
+      db,
+      term: "",
+      filter: {
+        [rootFkeyTable.mainColumn]: currentValue,
+      },
+    });
+    if (currentValueOption) {
+      result.unshift(currentValueOption);
+    }
+  }
+
+  return result;
 };
 
 type Args = {
   term: string;
   mainColumn: string;
   textColumn: string | undefined;
-  tableName: string;
+  table: DBSchemaTableWJoins;
   filter: AnyObject | undefined;
   db: DBHandlerClient;
 };
@@ -223,30 +224,47 @@ const fetchSearchResults = async ({
   textColumn,
   db,
   filter,
-  tableName,
+  table,
   term,
 }: Args): Promise<FullOption[]> => {
+  const { name: tableName, rowIconColumn } = table;
+  const extraColumns = rowIconColumn ? [rowIconColumn] : [];
   const tableHandler = db[tableName];
   if (!tableHandler?.find) return [];
-  const columns = [mainColumn, textColumn].filter(isDefined);
+  const filterColumns = [mainColumn, textColumn].filter(isDefined);
 
   const termFilter =
     term ?
-      { $or: columns.map((col) => ({ [col]: { $ilike: `%${term}%` } })) }
+      { $or: filterColumns.map((col) => ({ [col]: { $ilike: `%${term}%` } })) }
     : {};
   const finalFilter = {
     $and: [filter, termFilter].filter((v) => !isEmpty(v)),
   };
 
   const res = await tableHandler.find(finalFilter, {
-    select: columns,
+    select: [...filterColumns, ...extraColumns],
     groupBy: true,
     limit: OPTIONS_LIMIT,
   });
-  return res.map((row) => ({
-    key: row[mainColumn],
-    subLabel: textColumn && row[textColumn],
-  }));
+  return res.map((row) => {
+    const rowIconSrc = rowIconColumn && row[rowIconColumn];
+    return {
+      leftContent: rowIconSrc && (
+        <div
+          className="mr-p25 text-0"
+          style={{
+            width: "32px",
+            height: "32px",
+            backgroundColor: "currentColor",
+            maskImage: `url(${JSON.stringify(rowIconSrc)})`,
+            maskSize: "cover",
+          }}
+        />
+      ),
+      key: row[mainColumn],
+      subLabel: textColumn && row[textColumn],
+    } satisfies FullOption;
+  });
 };
 
 const isTextColumn = (col: ValidatedColumnInfo) =>

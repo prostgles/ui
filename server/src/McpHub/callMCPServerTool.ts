@@ -1,10 +1,9 @@
-import { isEqual, tryCatchV2 } from "prostgles-types";
+import { getJSONBObjectSchemaValidationError } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
+import { getSerialisableError, isEqual, tryCatchV2 } from "prostgles-types";
 import type { DBS } from "..";
 import type { McpToolCallResponse } from "../../../commonTypes/mcp";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { startMcpHub } from "./McpHub";
-import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
-import { getJSONBObjectSchemaValidationError } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
 
 export const callMCPServerTool = async (
   user: Pick<DBSSchema["users"], "id">,
@@ -67,7 +66,7 @@ export const callMCPServerTool = async (
     mcp_tool_name: toolName,
     input: toolArguments,
     output: result.data,
-    error: getErrorAsObject(result.error) || null,
+    error: getSerialisableError(result.error) || null,
     chat_id,
     user_id: user.id,
   });

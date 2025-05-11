@@ -81,7 +81,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       api_url: `TEXT NOT NULL`,
       api_docs_url: `TEXT`,
       api_pricing_url: `TEXT`,
-      logo_base64: `TEXT`,
+      logo_url: `TEXT`,
       ...extraRequestData,
     },
   },

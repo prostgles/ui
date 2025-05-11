@@ -125,7 +125,7 @@ export const askLLM = async (
 
   const aiResponseMessage = await dbs.llm_messages.insert(
     {
-      user_id: null as any,
+      user_id: null,
       chat_id: chatId,
       is_loading: true,
       message: [{ type: "text", text: "" }],

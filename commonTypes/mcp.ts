@@ -1451,7 +1451,7 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
   },
 };
 
-const MCP_TOOL_NAME_SEPARATOR = "-";
+const MCP_TOOL_NAME_SEPARATOR = "--";
 export const getMCPFullToolName = ({
   server_name,
   name,

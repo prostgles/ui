@@ -76,6 +76,7 @@ export const setupLLM = async (dbs: DBS) => {
         api_pricing_url: "https://platform.openai.com/docs/pricing",
         api_docs_url: "https://platform.openai.com/docs/api-reference",
         api_url: "https://api.openai.com/v1/chat/completions",
+        logo_url: "/logos/openai.svg",
         llm_models: [
           {
             name: "o1",
@@ -133,6 +134,7 @@ export const setupLLM = async (dbs: DBS) => {
         api_url: "https://api.anthropic.com/v1/messages",
         api_docs_url: "https://docs.anthropic.com/en/api/getting-started",
         api_pricing_url: "https://www.anthropic.com/pricing#api",
+        logo_url: "/logos/anthropic.svg",
         extra_body: {
           max_tokens: 4048,
         },
@@ -278,6 +280,7 @@ export const setupLLM = async (dbs: DBS) => {
       {
         id: "Prostgles",
         api_url: "https://cloud.prostgles.com/api/v1",
+        logo_url: "/v2.svg",
         llm_models: [
           {
             name: "claude-3-5-sonnet-20241022",

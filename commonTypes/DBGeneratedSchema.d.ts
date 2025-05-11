@@ -174,7 +174,7 @@ export type DBGeneratedSchema = {
       ssl_client_certificate?: null | string;
       ssl_client_certificate_key?: null | string;
       ssl_reject_unauthorized?: null | boolean;
-      table_options?: null | Partial<Record<string,  {  icon?: string;  label?: string;  columns?: Partial<Record<string,  {  icon?: string; }>>;  card?: {  headerColumn?: string; }; }>>
+      table_options?: null | Partial<Record<string,  {  icon?: string;  label?: string;  rowIconColumn?: string;  columns?: Partial<Record<string,  {  icon?: string; }>>;  card?: {  headerColumn?: string; }; }>>
       type: "Standard" | "Connection URI" | "Prostgles"
       url_path?: null | string;
       user_id?: null | string;
@@ -445,7 +445,7 @@ export type DBGeneratedSchema = {
       extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';  };
       extra_headers?: null | Record<string, string>
       id: string;
-      logo_base64?: null | string;
+      logo_url?: null | string;
     };
   };
   login_attempts: {

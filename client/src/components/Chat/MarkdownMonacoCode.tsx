@@ -13,7 +13,6 @@ import { SuccessMessage } from "../Animations";
 import { getFieldsWithActions } from "../../dashboard/W_SQL/parseSqlResultCols";
 import { getSQLResultTableColumns } from "../../dashboard/W_SQL/getSQLResultTableColumns";
 import { download } from "../../dashboard/W_SQL/W_SQL";
-import Select from "../Select/Select";
 
 const LANGUAGE_FALLBACK = {
   tsx: "typescript",
@@ -56,46 +55,49 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
   }, []);
 
   const [sqlResult, setSqlResult] = useState<SQLResult | undefined>(undefined);
-  const [commitMode, setCommitMode] = useState(false);
-  const onRunSQL = useCallback(() => {
-    setSqlResult({ state: "loading" });
-    sqlHandler!(codeString, undefined, {
-      returnType: commitMode ? "arrayMode" : "default-with-rollback",
-    })
-      .then((data) => {
-        if (!data.fields.length) {
-          setSqlResult({
-            state: "ok-command-result",
-            commandResult: `${data.command || "sql"} executed successfully`,
-          });
-          setTimeout(() => {
-            setSqlResult(undefined);
-          }, 2000);
-          return;
-        }
-        const cols = getFieldsWithActions(
-          data.fields,
-          data.command.toLowerCase() === "select",
-        );
-        const columns =
-          !commitMode ? cols : (
-            getSQLResultTableColumns({
-              cols,
-              tables: [],
-              maxCharsPerCell: undefined,
-              onResize: () => {},
-            })
-          );
-        setSqlResult({
-          state: "ok",
-          rows: data.rows,
-          columns,
-        });
+
+  const onRunSQL = useCallback(
+    (withCommit: boolean) => {
+      setSqlResult({ state: "loading" });
+      sqlHandler!(codeString, undefined, {
+        returnType: withCommit ? "arrayMode" : "default-with-rollback",
       })
-      .catch((err) => {
-        setSqlResult({ state: "error", error: err });
-      });
-  }, [codeString, commitMode, sqlHandler]);
+        .then((data) => {
+          if (!data.fields.length) {
+            setSqlResult({
+              state: "ok-command-result",
+              commandResult: `${data.command || "sql"} executed successfully`,
+            });
+            setTimeout(() => {
+              setSqlResult(undefined);
+            }, 2000);
+            return;
+          }
+          const cols = getFieldsWithActions(
+            data.fields,
+            data.command.toLowerCase() === "select",
+          );
+          const columns =
+            !withCommit ? cols : (
+              getSQLResultTableColumns({
+                cols,
+                tables: [],
+                maxCharsPerCell: undefined,
+                onResize: () => {},
+              })
+            );
+          setSqlResult({
+            state: "ok",
+            rows: data.rows,
+            columns,
+          });
+        })
+        .catch((err) => {
+          setSqlResult({ state: "error", error: err });
+        });
+    },
+    [codeString, sqlHandler],
+  );
 
   return (
     <FlexCol
@@ -105,7 +107,7 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
       }}
     >
       <FlexRow className="bg-color-2 p-p25">
-        <div className="text-sm text-color-4 f-1 px-1 ">
+        <div className="text-sm text-color-4 f-1 px-1 ta-start">
           {title ?? language}
         </div>
         {codeHeader && codeHeader({ language, codeString })}
@@ -113,42 +115,31 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
           <Btn onClick={() => setSqlResult(undefined)}>Close result</Btn>
         : <>
             {language === "sql" && sqlHandler && (
-              <FlexRow className="gap-p25">
-                <Select
-                  fullOptions={[
-                    {
-                      key: "default",
-                      label: "Rollback",
-                      subLabel:
-                        "(Recommended)\nAny changes made by this query will be canceled",
-                    },
-                    {
-                      key: "commit",
-                      label: "Commit",
-                      subLabel: "Any changes made by this query are permanent",
-                    },
-                  ]}
-                  value={commitMode ? "commit" : "default"}
-                  onChange={(v) => {
-                    setCommitMode(v === "commit");
-                  }}
-                  btnProps={{
-                    size: "micro",
-                    // iconPath: "",
-                  }}
+              <>
+                <Btn
+                  title="Execute SQL (Commited)"
+                  iconPath={mdiPlay}
+                  variant="faded"
+                  size="small"
+                  // clickConfirmation={{
+                  //   buttonText: "Execute and Never Ask Again",
+                  //   color: "danger",
+                  //   message:
+                  //     "This query will COMMIT (permanently save) changes. Double-check before running",
+                  // }}
+                  loading={sqlResult?.state === "loading"}
+                  onClick={() => onRunSQL(true)}
                 />
                 <Btn
-                  title={
-                    "Execute SQL " +
-                    (commitMode ? "(commited)" : "(With rollback)")
-                  }
+                  title="Execute SQL (With rollback)"
                   iconPath={mdiPlay}
+                  color="action"
+                  variant="faded"
                   size="small"
-                  color={commitMode ? "action" : undefined}
                   loading={sqlResult?.state === "loading"}
-                  onClick={onRunSQL}
+                  onClick={() => onRunSQL(false)}
                 />
-              </FlexRow>
+              </>
             )}
             <Btn
               size="small"

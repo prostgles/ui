@@ -53,6 +53,11 @@ export const dbsConnectionOptions = {
       label: "LLM Models",
       icon: "Atom",
     },
+    llm_providers: {
+      label: "LLM Providers",
+      icon: "CloudKeyOutline",
+      rowIconColumn: "logo_url",
+    },
     llm_prompts: {
       label: "LLM Prompts",
       icon: "MessageCogOutline",
@@ -96,6 +101,7 @@ export const dbsConnectionOptions = {
   } satisfies Partial<{
     [tableKey in keyof DBSSchema]: {
       icon: string;
+      rowIconColumn?: string;
       label: string;
       card?: {
         headerColumn?: string;

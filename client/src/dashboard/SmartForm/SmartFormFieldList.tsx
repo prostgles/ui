@@ -130,7 +130,6 @@ export const SmartFormFieldList = (props: P) => {
         return (
           <SmartFormField
             key={i}
-            tableInfo={tableInfo}
             tables={tables}
             db={db}
             tableName={tableName}

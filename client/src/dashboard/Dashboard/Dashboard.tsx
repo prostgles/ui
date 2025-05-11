@@ -638,18 +638,13 @@ export const getTables = (
   capitaliseMissingTableNames = false,
 ): { tables: DBSchemaTablesWJoins } => {
   const tables = schemaTables.map((t) => {
-    const {
-      label = capitaliseMissingTableNames ?
-        convertSnakeToReadable(t.name)
-      : t.name,
-      icon,
-      columns,
-      card,
-    } = connectionTableOptions?.[t.name] ?? {};
+    const { columns, label, ...tableOpts } =
+      connectionTableOptions?.[t.name] ?? {};
     const result = {
-      label,
-      icon,
-      card,
+      ...tableOpts,
+      label:
+        label ||
+        (capitaliseMissingTableNames ? convertSnakeToReadable(t.name) : t.name),
       ...t,
       ...getJoinedTables(schemaTables, t.name, db),
       columns: t.columns

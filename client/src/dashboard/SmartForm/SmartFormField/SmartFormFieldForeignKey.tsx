@@ -16,14 +16,14 @@ import {
   type ColumnData,
   NewRowDataHandler,
 } from "../SmartFormNewRowDataHandler";
-import { renderNull, RenderValue } from "./RenderValue";
+import { RenderValue } from "./RenderValue";
 import type { SmartColumnInfo, SmartFormFieldProps } from "./SmartFormField";
 import { type SmartFormFieldLinkedDataInsertState } from "./SmartFormFieldLinkedData";
 import { fetchForeignKeyOptions } from "./fetchForeignKeyOptions";
 
 export type SmartFormFieldForeignKeyProps = Pick<
   SmartFormFieldProps,
-  "value" | "db" | "tables" | "row" | "tableName" | "tableInfo"
+  "value" | "db" | "tables" | "row" | "table"
 > &
   SmartFormFieldLinkedDataInsertState & {
     column: SmartColumnInfo & {
@@ -42,12 +42,11 @@ export const SmartFormFieldForeignKey = (
     db,
     onChange,
     tables,
-    tableName,
     value,
     row,
     readOnly,
     newRowDataHandler,
-    tableInfo,
+    table,
     setShowNestedInsertForm,
   } = props;
 
@@ -70,7 +69,7 @@ export const SmartFormFieldForeignKey = (
       const options = await fetchForeignKeyOptions({
         column,
         db,
-        tableName,
+        table,
         tables,
         row: rowWithFkeyValsMemo,
         term,
@@ -78,7 +77,7 @@ export const SmartFormFieldForeignKey = (
       if (!getuseIsMounted()) return;
       setFullOptions(options);
     },
-    [column, db, tableName, tables, rowWithFkeyValsMemo, getuseIsMounted],
+    [column, db, table, tables, rowWithFkeyValsMemo, getuseIsMounted],
   );
 
   useEffect(() => {
@@ -146,7 +145,7 @@ export const SmartFormFieldForeignKey = (
         : [];
       return (
         <FileInput
-          className={"mt-p5 f-0 " + (tableInfo.isFileTable ? "mt-2" : "")}
+          className={"mt-p5 f-0 " + (table.info.isFileTable ? "mt-2" : "")}
           label={column.label}
           media={media}
           minSize={470}

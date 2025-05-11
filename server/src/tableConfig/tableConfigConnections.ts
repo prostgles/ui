@@ -97,6 +97,7 @@ export const tableConfigConnections: TableConfig<{ en: 1 }> = {
               type: {
                 icon: { type: "string", optional: true },
                 label: { type: "string", optional: true },
+                rowIconColumn: { type: "string", optional: true },
                 columns: {
                   optional: true,
                   record: {

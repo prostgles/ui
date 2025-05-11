@@ -475,7 +475,7 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
         .concat(
           !objTypesToSearch.includes("actions") ?
             []
-          : (Object.entries(this.props.methods as Record<string, MethodFullDef>)
+          : Object.entries(this.props.methods as Record<string, MethodFullDef>)
               .filter(([k, v]) => isObject(v) && (v as any).run)
               .map(([methodKey, method]) => ({
                 key: methodKey,
@@ -494,7 +494,7 @@ export class SearchAll extends RTComp<SearchAllProps, S> {
                   this.props.onClose();
                   this.props.onOpenDBObject(undefined, methodKey);
                 },
-              })) as any),
+              })),
         );
     } else if (sType === "commands") {
       items = SQL_SNIPPETS.map((c) => {

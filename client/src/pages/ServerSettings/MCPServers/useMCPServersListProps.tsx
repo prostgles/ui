@@ -3,10 +3,12 @@ import type { DBS } from "../../../dashboard/Dashboard/DBS";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import { MCPServerTools } from "./MCPServerTools";
 import type { FieldConfig } from "../../../dashboard/SmartCard/SmartCard";
+import type { Prgl } from "../../../App";
 
 export const useMCPServersListProps = (
   chatId: number | undefined,
   dbs: DBS,
+  dbsMethods: Prgl["dbsMethods"],
 ) => {
   const [selectedTool, setSelectedTool] =
     React.useState<DBSSchema["mcp_server_tools"]>();
@@ -68,6 +70,7 @@ export const useMCPServersListProps = (
                 selectedToolName={selectedTool?.name}
                 chatId={chatId}
                 dbs={dbs}
+                dbsMethods={dbsMethods}
               />
             );
           },

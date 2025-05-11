@@ -45,6 +45,7 @@ export const MCPServerFooterActions = ({
     useMCPServerEnable({
       dbs,
       mcp_server,
+      dbsMethods,
     });
 
   return (

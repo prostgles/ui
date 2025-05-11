@@ -27,8 +27,17 @@ export type FullOption<O extends OptionKey = string> = Pick<
   subLabel?: string;
   checked?: boolean;
   disabledInfo?: string;
-  iconPath?: string;
-} & TestSelectors;
+} & TestSelectors &
+  (
+    | {
+        iconPath?: string;
+        leftContent?: undefined;
+      }
+    | {
+        iconPath?: undefined;
+        leftContent?: React.ReactNode;
+      }
+  );
 
 type E =
   | React.MouseEvent<HTMLDivElement, MouseEvent>
@@ -413,6 +422,7 @@ export default class Select<
               disabledInfo,
               ranking,
               iconPath,
+              leftContent,
               ...selectorProps
             }) => {
               return {
@@ -421,7 +431,8 @@ export default class Select<
                 subLabel,
                 ranking,
                 contentLeft:
-                  iconPath ?
+                  leftContent ? leftContent
+                  : iconPath ?
                     <Icon size={1} path={iconPath} className="text-1 mr-p5" />
                   : undefined,
                 styles: {

@@ -113,7 +113,10 @@ export const useAddMCPServer = (showAddServer: boolean) => {
   }, [value]);
 
   return {
-    mcpServer: mcpServer && { ...mcpServer, config_schema: configSchema },
+    mcpServer: mcpServer && {
+      ...mcpServer,
+      config_schema: isEmpty(configSchema) ? null : configSchema,
+    },
     configSchemas,
     setConfigSchemas,
     value,
@@ -149,6 +152,8 @@ const getPotentialConfigSchemas = (config: MCPConfig): ArgDef[] => {
   const envs: ArgDef[] = [];
   const args: ArgDef[] = [];
   config.args?.forEach((arg, argIndex) => {
+    /** Ignore first argument because it should just be the tool package name */
+    if (!argIndex) return;
     args.push({
       type: "arg",
       name: arg,

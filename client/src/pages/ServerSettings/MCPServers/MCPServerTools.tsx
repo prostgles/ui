@@ -1,12 +1,11 @@
 import { mdiCheck } from "@mdi/js";
 import React from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
+import type { Prgl } from "../../../App";
 import Chip from "../../../components/Chip";
-import { FlexRowWrap } from "../../../components/Flex";
-import type { DBS } from "../../../dashboard/Dashboard/DBS";
+import { ScrollFade } from "../../../components/SearchList/ScrollFade";
 import { MCPServerConfig } from "./MCPServerConfig/MCPServerConfig";
 import { useMCPServerEnable } from "./MCPServerConfig/useMCPServerEnable";
-import { ScrollFade } from "../../../components/SearchList/ScrollFade";
 
 export const MCPServerTools = ({
   server,
@@ -15,6 +14,7 @@ export const MCPServerTools = ({
   selectedToolName,
   chatId,
   dbs,
+  dbsMethods,
 }: {
   server: DBSSchema["mcp_servers"] & {
     mcp_server_configs: DBSSchema["mcp_server_configs"][];
@@ -27,12 +27,12 @@ export const MCPServerTools = ({
     | undefined;
   selectedToolName: string | undefined;
   chatId: number | undefined;
-  dbs: DBS;
-}) => {
+} & Pick<Prgl, "dbs" | "dbsMethods">) => {
   const { onToggle, setShowServerConfig, showServerConfig } =
     useMCPServerEnable({
       dbs,
       mcp_server: server,
+      dbsMethods,
     });
 
   return (

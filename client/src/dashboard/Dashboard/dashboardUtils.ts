@@ -431,14 +431,18 @@ export type DBSchemaTableColumn = ValidatedColumnInfo & {
   icon: string | undefined;
   label: string;
 };
+
+type TableOptions = NonNullable<
+  NonNullable<DBSSchema["connections"]["table_options"]>[string]
+>;
 export type DBSchemaTableWJoins = Omit<DBSchemaTable, "columns"> & {
   label: string;
-  icon: string | undefined;
+  // icon: string | undefined;
   joins: Join[];
   joinsV2: JoinV2[];
   columns: DBSchemaTableColumn[];
-  card: NonNullable<
-    NonNullable<DBSSchema["connections"]["table_options"]>[string]
-  >["card"];
-};
+  // card: NonNullable<
+  //   NonNullable<DBSSchema["connections"]["table_options"]>[string]
+  // >["card"];
+} & Omit<TableOptions, "label" | "columns">;
 export type DBSchemaTablesWJoins = DBSchemaTableWJoins[];
