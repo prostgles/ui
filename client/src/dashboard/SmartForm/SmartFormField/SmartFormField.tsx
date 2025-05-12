@@ -113,7 +113,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   const { onCheckAndChange, error } = useSmartFormFieldOnChange({
     onChange,
     column,
-    tableInfo: table.info,
+    table,
   });
   const [showDateInput, setShowDateInput] = useState(true);
 

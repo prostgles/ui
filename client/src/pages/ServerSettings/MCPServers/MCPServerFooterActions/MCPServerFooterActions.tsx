@@ -1,16 +1,16 @@
 import { mdiReload } from "@mdi/js";
 import React from "react";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
-import Btn from "../../../components/Btn";
-import { FlexRow } from "../../../components/Flex";
-import PopupMenu from "../../../components/PopupMenu";
-import { SwitchToggle } from "../../../components/SwitchToggle";
-import { CodeEditor } from "../../../dashboard/CodeEditor/CodeEditor";
-import type { ServerSettingsProps } from "../ServerSettings";
-import { MCPServerConfig } from "./MCPServerConfig/MCPServerConfig";
+import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import Btn from "../../../../components/Btn";
+import { FlexRow } from "../../../../components/Flex";
+import PopupMenu from "../../../../components/PopupMenu";
+import { SwitchToggle } from "../../../../components/SwitchToggle";
+import { CodeEditor } from "../../../../dashboard/CodeEditor/CodeEditor";
+import type { ServerSettingsProps } from "../../ServerSettings";
+import { MCPServerConfig } from "../MCPServerConfig/MCPServerConfig";
 import { MCPServersInstall } from "./MCPServersInstall";
-import { useMCPServerEnable } from "./MCPServerConfig/useMCPServerEnable";
-import { MCPServerConfigButton } from "./MCPServerConfig/MCPServerConfigButton";
+import { useMCPServerEnable } from "../MCPServerConfig/useMCPServerEnable";
+import { MCPServerConfigButton } from "../MCPServerConfig/MCPServerConfigButton";
 
 export type MCPServerFooterActionsProps = Pick<
   ServerSettingsProps,
@@ -49,7 +49,7 @@ export const MCPServerFooterActions = ({
     });
 
   return (
-    <FlexRow className="jc-end">
+    <FlexRow className="jc-end pl-p5">
       {mcp_server.source && (
         <MCPServersInstall
           name={mcp_server.name}

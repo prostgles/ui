@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import {
   isObject,
   type DBSSchema,
-} from "../../../../../commonTypes/publishUtils";
-import { isEmpty } from "../../../utils";
+} from "../../../../../../commonTypes/publishUtils";
+import { isEmpty } from "../../../../utils";
 
 type NewMCPServer = Pick<
   DBSSchema["mcp_servers"],

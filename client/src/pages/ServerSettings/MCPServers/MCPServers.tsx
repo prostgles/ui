@@ -7,9 +7,8 @@ import { InfoRow } from "../../../components/InfoRow";
 import { SmartCardList } from "../../../dashboard/SmartCardList/SmartCardList";
 import type { ColumnSort } from "../../../dashboard/W_Table/ColumnMenu/ColumnMenu";
 import type { ServerSettingsProps } from "../ServerSettings";
-import { MCPServerConfig } from "./MCPServerConfig/MCPServerConfig";
-import { MCPServerFooterActions } from "./MCPServerFooterActions";
-import { MCPServersHeader } from "./MCPServersHeader";
+import { MCPServerFooterActions } from "./MCPServerFooterActions/MCPServerFooterActions";
+import { MCPServersToolbar } from "./MCPServersToolbar/MCPServersToolbar";
 import { useMCPServersListProps } from "./useMCPServersListProps";
 
 const orderByEnabledAndName = [
@@ -72,7 +71,7 @@ export const MCPServers = (props: MCPServersProps) => {
         &quot;Allowed MCP Tools&quot; section of the chat settings.
       </InfoRow>
       {missing && <InfoRow>{missing}</InfoRow>}
-      <MCPServersHeader
+      <MCPServersToolbar
         {...props}
         selectedTool={selectedTool}
         setSelectedTool={setSelectedTool}
@@ -92,7 +91,7 @@ export const MCPServers = (props: MCPServersProps) => {
           showTopBar={false}
           noDataComponentMode="hide-all"
           noDataComponent={
-            <InfoRow color="info" className="m-1 h-fit">
+            <InfoRow color="info" className="h-fit">
               No MCP servers. MCP servers can be added to allow LLM tool usage
             </InfoRow>
           }

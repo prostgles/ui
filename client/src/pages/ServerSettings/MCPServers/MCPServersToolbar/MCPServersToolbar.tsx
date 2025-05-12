@@ -1,13 +1,13 @@
 import { mdiFilter, mdiMagnify } from "@mdi/js";
 import React from "react";
-import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
-import Btn from "../../../components/Btn";
-import { FlexRow } from "../../../components/Flex";
-import Select from "../../../components/Select/Select";
+import type { DBSSchema } from "../../../../../../commonTypes/publishUtils";
+import Btn from "../../../../components/Btn";
+import { FlexRow } from "../../../../components/Flex";
+import Select from "../../../../components/Select/Select";
 import { AddMCPServer } from "./AddMCPServer";
-import type { MCPServersProps } from "./MCPServers";
+import type { MCPServersProps } from "../MCPServers";
 
-export const MCPServersHeader = ({
+export const MCPServersToolbar = ({
   dbs,
   selectedTool,
   setSelectedTool,

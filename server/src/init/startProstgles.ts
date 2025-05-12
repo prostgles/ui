@@ -189,10 +189,10 @@ export const startProstgles = async ({
       //     console.error(err, ctx?.client?.processID, ctx?.query);
       //   }
       // },
+      // DEBUG_MODE: true,
       onLog: (e) => {
         addLog(e, null);
       },
-      // DEBUG_MODE: true,
       tableConfig,
       tableConfigMigrations: {
         silentFail: false,

@@ -2,8 +2,9 @@ import type { Publish } from "prostgles-server/dist/PublishParser/PublishParser"
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import { testMCPServerConfig } from "../McpHub/McpHub";
-import { getLLMChatModel } from "../publishMethods/askLLM/askLLM";
+import { getBestLLMChatModel } from "../publishMethods/askLLM/askLLM";
 import { fetchLLMResponse } from "../publishMethods/askLLM/fetchLLMResponse";
+import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 
 export const getPublishLLM = (
   user_id: string,
@@ -64,10 +65,10 @@ export const getPublishLLM = (
           const provider = await dbx.llm_providers.findOne({
             id: row.provider_id,
           });
-          const preferredModel = await getLLMChatModel(dbx, {
+          if (!provider) throw "Provider not found";
+          const preferredModel = await getBestLLMChatModel(dbx, {
             provider_id: row.provider_id,
           });
-          if (!provider) throw "Provider not found";
           await fetchLLMResponse({
             llm_chat: {
               extra_body: {},
@@ -122,6 +123,19 @@ export const getPublishLLM = (
       insert: {
         fields: "*",
         forcedData,
+        preValidate: async ({ row, dbx }) => {
+          if (row.model) return row;
+
+          const preferredChatModel = await getBestLLMChatModel(dbx, {
+            $existsJoined: {
+              "llm_providers.llm_credentials": {},
+            },
+          } as Filter);
+          return {
+            ...row,
+            model: preferredChatModel.id,
+          };
+        },
       },
       update: {
         fields: { created: 0, user_id: 0, connection_id: 0 },

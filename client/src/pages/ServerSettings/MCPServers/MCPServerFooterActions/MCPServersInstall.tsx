@@ -1,11 +1,11 @@
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import React from "react";
-import Btn from "../../../components/Btn";
-import ErrorComponent from "../../../components/ErrorComponent";
-import { FlexRow } from "../../../components/Flex";
-import PopupMenu from "../../../components/PopupMenu";
-import { CodeEditor } from "../../../dashboard/CodeEditor/CodeEditor";
-import type { ServerSettingsProps } from "../ServerSettings";
+import Btn from "../../../../components/Btn";
+import ErrorComponent from "../../../../components/ErrorComponent";
+import { FlexRow } from "../../../../components/Flex";
+import PopupMenu from "../../../../components/PopupMenu";
+import { CodeEditor } from "../../../../dashboard/CodeEditor/CodeEditor";
+import type { ServerSettingsProps } from "../../ServerSettings";
 
 export const MCPServersInstall = ({
   name,

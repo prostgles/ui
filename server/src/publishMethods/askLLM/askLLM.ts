@@ -10,7 +10,7 @@ import { getLLMTools } from "./getLLMTools";
 import { sliceText } from "../../../../commonTypes/utils";
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 
-export const getLLMChatModel = async (
+export const getBestLLMChatModel = async (
   dbs: DBS,
   filter: Parameters<DBS["llm_models"]["findOne"]>[0],
 ) => {
@@ -38,7 +38,7 @@ export const askLLM = async (
   if (!chat) throw "Chat not found";
   const { llm_prompt_id } = chat;
   if (!chat.model) {
-    const preferredChatModel = await getLLMChatModel(dbs, {
+    const preferredChatModel = await getBestLLMChatModel(dbs, {
       $existsJoined: {
         "llm_providers.llm_credentials": {},
       },
@@ -146,7 +146,7 @@ export const askLLM = async (
       prompt: promptObj,
     });
 
-    const modelData = await dbs.llm_models.findOne(
+    const modelData = (await dbs.llm_models.findOne(
       { id: chat.model },
       {
         select: {
@@ -154,7 +154,11 @@ export const askLLM = async (
           llm_providers: "*",
         },
       },
-    );
+    )) as
+      | (DBSSchema["llm_models"] & {
+          llm_providers: DBSSchema["llm_providers"][];
+        })
+      | undefined;
 
     if (!modelData) throw "Model not found";
     const {
@@ -183,7 +187,7 @@ export const askLLM = async (
               ({
                 role:
                   m.user_id ? "user"
-                  : gemini25BreakingChanges ? ("model" as any)
+                  : gemini25BreakingChanges ? "model"
                   : "assistant",
                 content: m.message,
               }) satisfies LLMMessage,

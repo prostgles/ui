@@ -22,7 +22,7 @@ export const SmartCardActions = (
     methods,
     smartFormProps,
     enableInsert,
-    onChanged,
+    // onChanged,
     defaultData,
     rowFilter,
     cardColumns,
@@ -94,7 +94,7 @@ export const SmartCardActions = (
           rowFilter={localRowFilter}
           confirmUpdates={true}
           enableInsert={enableInsert}
-          onSuccess={onChanged}
+          // onSuccess={onChanged}
           {...smartFormProps}
           onClose={() => {
             setEditMode(false);

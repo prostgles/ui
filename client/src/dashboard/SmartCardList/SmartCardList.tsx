@@ -192,10 +192,10 @@ export const SmartCardList = <T extends AnyObject>(
                   excludeNulls={excludeNulls}
                   popupFixedStyle={popupFixedStyle}
                   fieldConfigs={_fieldConfigs}
-                  onChanged={() => {
-                    // this.dataSignature = "z";
-                    // this.forceUpdate();
-                  }}
+                  // onChanged={() => {
+                  //   // this.dataSignature = "z";
+                  //   // this.forceUpdate();
+                  // }}
                   footer={getRowFooter}
                   getActions={getActions}
                   smartFormProps={{ onSuccess }}

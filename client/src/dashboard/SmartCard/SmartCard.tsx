@@ -94,7 +94,7 @@ export type SmartCardProps<T extends AnyObject = any> = Pick<
     showLocalChanges?: boolean;
 
     onChange?: (newData: AnyObject) => any;
-    onChanged?: () => any;
+    // onChanged?: () => any;
 
     hideColumns?: string[];
 
@@ -105,7 +105,7 @@ export type SmartCardProps<T extends AnyObject = any> = Pick<
      */
     fieldConfigs?: FieldConfig<T>[] | string[];
 
-    title?: React.ReactNode;
+    title?: (row: AnyObject) => React.ReactNode;
     footer?: (row: AnyObject) => React.ReactNode;
     getActions?: (row: AnyObject) => React.ReactNode;
 
@@ -235,7 +235,7 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
       }
     >
       <div className="flex-col min-w-0 min-h-0 f-1">
-        <div className="f-0">{title}</div>
+        {title?.(defaultData)}
         <div
           className={classOverride(
             `SmartCardContent o-auto f-1 min-w-0 min-h-0 gap-p5 p-p5 parent-hover ${variantClass}`,

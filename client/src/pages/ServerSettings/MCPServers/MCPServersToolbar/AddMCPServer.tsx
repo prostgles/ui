@@ -1,13 +1,13 @@
 import { mdiPlus } from "@mdi/js";
 import React from "react";
-import Btn from "../../../components/Btn";
-import { FlexRow } from "../../../components/Flex";
-import FormField from "../../../components/FormField/FormField";
-import Popup from "../../../components/Popup/Popup";
-import { ScrollFade } from "../../../components/SearchList/ScrollFade";
-import { SwitchToggle } from "../../../components/SwitchToggle";
-import { CodeEditorWithSaveButton } from "../../../dashboard/CodeEditor/CodeEditorWithSaveButton";
-import type { DBS } from "../../../dashboard/Dashboard/DBS";
+import Btn from "../../../../components/Btn";
+import { FlexRow } from "../../../../components/Flex";
+import FormField from "../../../../components/FormField/FormField";
+import Popup from "../../../../components/Popup/Popup";
+import { ScrollFade } from "../../../../components/SearchList/ScrollFade";
+import { SwitchToggle } from "../../../../components/SwitchToggle";
+import { CodeEditorWithSaveButton } from "../../../../dashboard/CodeEditor/CodeEditorWithSaveButton";
+import type { DBS } from "../../../../dashboard/Dashboard/DBS";
 import {
   useAddMCPServer,
   type MCPServerConfig as MCPServerJSONConfig,

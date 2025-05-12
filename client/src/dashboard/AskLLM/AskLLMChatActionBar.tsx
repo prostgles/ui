@@ -117,6 +117,8 @@ export const AskLLMChatActionBar = (
             db_schema_permissions: 1,
             db_data_permissions: 1,
           }}
+          contentClassname="p-1"
+          confirmUpdates={false}
           showJoinedTables={false}
           jsonbSchemaWithControls={true}
         />

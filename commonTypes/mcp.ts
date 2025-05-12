@@ -12,6 +12,51 @@ export type MCPServerInfo = Omit<
 };
 
 export const DefaultMCPServers: Record<string, MCPServerInfo> = {
+  "duckduckgo-search": {
+    command: "uvx",
+    args: ["duckduckgo-mcp-server"],
+    mcp_server_tools: [
+      {
+        name: "search",
+        description:
+          "\n    Search DuckDuckGo and return formatted results.\n\n    Args:\n        query: The search query string\n        max_results: Maximum number of results to return (default: 10)\n        ctx: MCP context for logging\n    ",
+
+        inputSchema: {
+          type: "object",
+          title: "searchArguments",
+          required: ["query"],
+          properties: {
+            query: {
+              type: "string",
+              title: "Query",
+            },
+            max_results: {
+              type: "integer",
+              title: "Max Results",
+              default: 10,
+            },
+          },
+        },
+      },
+      {
+        name: "fetch_content",
+        description:
+          "\n    Fetch and parse content from a webpage URL.\n\n    Args:\n        url: The webpage URL to fetch content from\n        ctx: MCP context for logging\n    ",
+
+        inputSchema: {
+          type: "object",
+          title: "fetch_contentArguments",
+          required: ["url"],
+          properties: {
+            url: {
+              type: "string",
+              title: "Url",
+            },
+          },
+        },
+      },
+    ],
+  },
   "brave-search": {
     command: "npx",
     args: ["-y", "@modelcontextprotocol/server-brave-search"],

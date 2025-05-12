@@ -5,11 +5,15 @@ import type { AnyObject } from "prostgles-types";
 import type { ColumnData } from "../SmartFormNewRowDataHandler";
 
 export const useSmartFormFieldOnChange = (
-  props: Pick<SmartFormFieldProps, "column" | "tableInfo"> & {
+  props: Pick<SmartFormFieldProps, "column" | "table"> & {
     onChange: (newColData: ColumnData) => void;
   },
 ) => {
-  const { onChange, column, tableInfo } = props;
+  const {
+    onChange,
+    column,
+    table: { info: tableInfo },
+  } = props;
   const [error, setError] = useState<any>();
 
   const onCheckAndChange = useCallback(
@@ -29,7 +33,7 @@ export const useSmartFormFieldOnChange = (
 
       let error = null;
       try {
-        newValue = parseValue(column, _newValue as any, true);
+        newValue = parseValue(column, _newValue, true);
       } catch (err: any) {
         error = err;
       }

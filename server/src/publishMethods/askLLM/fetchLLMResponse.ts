@@ -4,7 +4,7 @@ import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { readFetchStream } from "./readFetchStream";
 import { getLLMRequestBody } from "./getLLMRequestBody";
 export type LLMMessage = {
-  role: "system" | "user" | "assistant";
+  role: "system" | "user" | "assistant" | "model";
   content: DBSSchema["llm_messages"]["message"];
 };
 export type FetchLLMResponseArgs = {
