@@ -25,7 +25,7 @@ export const ShorterText = ({ value: guid, column, style }: P) => {
               color: getColumnDataColor(
                 column ?? { tsDataType: "string", udt_name: "uuid" },
               ),
-              ...(style ?? {}),
+              ...style,
             }}
             title="Click to copy value"
             onClick={() => {

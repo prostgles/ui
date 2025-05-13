@@ -9,6 +9,7 @@ import { type FullOption } from "../../../components/Select/Select";
 import type { SmartFormFieldForeignKeyProps } from "./SmartFormFieldForeignKey";
 import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
 import React from "react";
+import { SvgIconFromURL } from "../../../components/SvgIcon";
 
 type FetchForeignKeyOptionsArgs = Pick<
   SmartFormFieldForeignKeyProps,
@@ -250,14 +251,13 @@ const fetchSearchResults = async ({
     const rowIconSrc = rowIconColumn && row[rowIconColumn];
     return {
       leftContent: rowIconSrc && (
-        <div
-          className="mr-p25 text-0"
+        <SvgIconFromURL
+          className="mr-p5 text-0"
+          url={rowIconSrc}
+          mode="background"
           style={{
-            width: "32px",
-            height: "32px",
-            backgroundColor: "currentColor",
-            maskImage: `url(${JSON.stringify(rowIconSrc)})`,
-            maskSize: "cover",
+            width: "24px",
+            height: "24px",
           }}
         />
       ),

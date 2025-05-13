@@ -14,6 +14,7 @@ import { useLLMSchemaStr } from "./useLLMSchemaStr";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { isDefined } from "../../utils";
+import { MINUTE } from "../../../../commonTypes/utils";
 
 export type AskLLMChatProps = {
   prgl: Prgl;
@@ -67,7 +68,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     async (msg: LLMMessage["message"] | undefined) => {
       if (!msg || !activeChatId) return;
       /** TODO: move dbSchemaForPrompt to server-side */
-      await askLLM(connectionId, msg, dbSchemaForPrompt, activeChatId).catch(
+      void askLLM(connectionId, msg, dbSchemaForPrompt, activeChatId).catch(
         (error) => {
           const errorText = error?.message || error;
           alert(
@@ -102,7 +103,9 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
 
   /* Prevents flickering when popup is opened */
   if (!messages) return;
-
+  const chatIsLoading =
+    activeChat?.is_loading &&
+    new Date(activeChat.is_loading) > new Date(Date.now() - 15 * MINUTE);
   return (
     <Popup
       data-command="AskLLM.popup"
@@ -149,7 +152,11 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           <Chat
             style={chatStyle}
             messages={messages}
-            disabledInfo={activeChat.disabled_message ?? undefined}
+            disabledInfo={
+              chatIsLoading ?
+                "Waiting for response"
+              : (activeChat.disabled_message ?? undefined)
+            }
             onSend={sendMessage}
             actionBar={
               isAdmin && (

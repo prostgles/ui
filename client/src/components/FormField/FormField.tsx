@@ -483,7 +483,7 @@ export default class FormField extends React.Component<
           style={inputFinalStyle}
         />;
 
-    let extraRightIcons: React.ReactNode = null;
+    let clearButton: React.ReactNode = null;
     if (
       !readOnly &&
       !disabledInfo &&
@@ -492,7 +492,7 @@ export default class FormField extends React.Component<
       !hideClearButton
     ) {
       if (nullable && optional) {
-        extraRightIcons = (
+        clearButton = (
           <Select
             btnProps={{
               iconPath: mdiClose,
@@ -512,19 +512,20 @@ export default class FormField extends React.Component<
         (rawValue !== undefined && optional) ||
         (rawValue !== null && nullable)
       ) {
-        extraRightIcons = (
+        clearButton = (
           <Btn
             data-command="FormField.clear"
             title={`Set ${JSON.stringify(labelAsString)} to null`}
             style={{
               /** To ensure it's centered with the rest of the content */
               height: "100%",
-              ...(type === "checkbox" ? { padding: "0" } : { paddingLeft: 0 }),
+              ...(type === "checkbox" ? { padding: "0" } : {}), // paddingLeft: 0
             }}
             iconPath={mdiClose}
             onClick={(e) => {
               onChange(optional ? undefined : null, e);
             }}
+            size="small"
             className="rounded-r"
           />
         );
@@ -590,13 +591,15 @@ export default class FormField extends React.Component<
             />
           )
         }
-        errorWrapperClassname={`${type !== "checkbox" ? "flex-col" : "flex-row"} gap-p5 min-w-0 ${isEditableSelect ? "" : "f-1"}`}
+        errorWrapperClassname={`${type !== "checkbox" ? "flex-col" : "flex-row"} gap-p5 min-w-0 ${isEditableSelect || inputContent ? "" : "f-1"}`}
         inputWrapperClassname={
           (type === "checkbox" ? " ai-center " : "") +
           (type === "checkbox" || asJSON === "JSONBSchema" || arrayEditor ?
             " focus-border-unset "
           : " ") +
-          (options || fullOptions ? "w-fit" : "w-full")
+          (options || fullOptions || asJSON === "JSONBSchema" ?
+            "w-fit"
+          : "w-full")
         }
         inputWrapperStyle={{
           ...wrapperStyle,
@@ -621,16 +624,16 @@ export default class FormField extends React.Component<
         )}
         error={error}
         warning={numLockAlert ? "NumLock is off" : undefined}
-        rightIcons={
-          Boolean(rightIcons || extraRightIcons) && (
+        rightIcons={Boolean(rightIcons) && <>{rightIcons}</>}
+        hint={hint}
+        rightContent={
+          Boolean(rightContent || clearButton) && (
             <>
-              {rightIcons}
-              {extraRightIcons}
+              {clearButton}
+              {rightContent}
             </>
           )
         }
-        hint={hint}
-        rightContent={rightContent}
         rightContentAlwaysShow={rightContentAlwaysShow}
       >
         {isEditableSelect ?

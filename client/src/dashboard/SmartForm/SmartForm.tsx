@@ -48,7 +48,7 @@ export type SmartFormProps = Pick<Prgl, "db" | "tables" | "methods"> & {
 
   rowFilter?: DetailedFilterBase[];
   /**
-   * If true will not show bottom bar and changes will be applied immediately
+   * If true will not "Update" button in bottom bar and changes will be applied immediately
    */
   confirmUpdates?: boolean;
   onClose?: (dataChanged: boolean) => void;

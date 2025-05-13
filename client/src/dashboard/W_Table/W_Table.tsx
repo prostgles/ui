@@ -207,7 +207,7 @@ export default class W_Table extends RTComp<
     joinFilterStr: undefined,
   };
   d: ProstglesTableD = {
-    page: 1,
+    page: 0,
     pageSize:
       closest(Math.round((1.2 * window.innerHeight) / 55) || 25, PAGE_SIZES) ??
       25,
@@ -353,7 +353,7 @@ export default class W_Table extends RTComp<
         (key) => delta.w?.options && key in delta.w.options,
       )
     ) {
-      ns = ns || ({} as any);
+      ns = ns || {};
     }
 
     /** This is done to prevent errors due to renamed/altered columns */
@@ -374,8 +374,8 @@ export default class W_Table extends RTComp<
     }
 
     /** This is done to prevent empty result due to page offset */
-    if ((delta.w?.filter || delta.w?.having) && this.d.page !== 1) {
-      this.setData({ page: 1 });
+    if ((delta.w?.filter || delta.w?.having) && this.d.page !== 0) {
+      this.setData({ page: 0 });
     }
 
     /** Trigger count on hideCount toggle */
@@ -409,7 +409,7 @@ export default class W_Table extends RTComp<
         (changedOpts.length &&
           rerenderOPTS.some((k) => changedOpts.includes(k))))
     ) {
-      ns ??= {} as any;
+      ns ??= {};
     }
 
     if (ns) {
@@ -448,7 +448,7 @@ export default class W_Table extends RTComp<
     const { pageSize, page } = this.d;
     return {
       limit: pageSize,
-      offset: this.props.joinFilter ? 0 : (page - 1) * pageSize,
+      offset: this.props.joinFilter ? 0 : page * pageSize,
     };
   }
 

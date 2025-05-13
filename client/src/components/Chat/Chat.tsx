@@ -134,6 +134,7 @@ export const Chat = (props: ChatProps) => {
       </div>
 
       <div
+        title={disabledInfo}
         className={
           "send-wrapper relative " +
           (sendingMsg || disabledInfo ? "no-interaction not-allowed" : "")

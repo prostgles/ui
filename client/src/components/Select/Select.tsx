@@ -158,7 +158,6 @@ export default class Select<
       disabledInfo,
       optional = false,
       showSelectedSublabel = false,
-      showIconOnly,
     } = this.props;
 
     const value = this.state.multiSelection ?? _value;
@@ -332,9 +331,7 @@ export default class Select<
           setRef={(r) => {
             this.btnRef = r;
           }}
-          showSelectedIcon={
-            showIconOnly ? selectedFullOptions[0]?.iconPath : undefined
-          }
+          selectedFullOptions={selectedFullOptions}
           onChange={onChange}
           optional={optional}
           selectClass={selectClass}
@@ -521,7 +518,6 @@ export default class Select<
             size={1}
             className="text-2"
             style={{
-              // color: "#cacaca",
               pointerEvents: "none",
               touchAction: "none",
             }}
@@ -531,7 +527,6 @@ export default class Select<
     }
 
     const [selectedFullOption] = selectedFullOptions;
-
     if (!label) return select;
     else {
       return (

@@ -320,6 +320,7 @@ export type DBGeneratedSchema = {
        |  {  type: 'Run SQL';  commit?: boolean;  query_timeout?: number;  auto_approve?: boolean; }
       db_schema_permissions?: 
        | null
+       |  {  type: 'None'; }
        |  {  type: 'Full'; }
        |  {  type: 'Custom';  tables: Lookup[]; }
       disabled_message?: null | string;
@@ -327,6 +328,7 @@ export type DBGeneratedSchema = {
       extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';  };
       extra_headers?: null | Record<string, string>
       id?: number;
+      is_loading?: null | string;
       llm_prompt_id?: null | number;
       model?: null | number;
       name?: string;
@@ -368,7 +370,6 @@ export type DBGeneratedSchema = {
     columns: {
       api_key?: string;
       created?: null | string;
-      default_model_name?: null | string;
       extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';  };
       extra_headers?: null | Record<string, string>
       id?: number;
@@ -388,7 +389,6 @@ export type DBGeneratedSchema = {
       chat_id: number;
       created?: null | string;
       id?: string;
-      is_loading?: null | boolean;
       message:  ( 
  |  {  type: 'text';  text: string; }
  |  {  type: 'image';  source: {  type: 'base64';  media_type: string;  data: string; }; }

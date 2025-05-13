@@ -19,6 +19,7 @@ export type PaginationProps = {
   onPageSizeChange?: (newPageSize: number) => any;
   className?: string;
 };
+
 export const Pagination = (props: PaginationProps) => {
   const {
     onPageChange: onPC,
@@ -28,24 +29,26 @@ export const Pagination = (props: PaginationProps) => {
     totalRows,
     className = "",
   } = props;
-  const oneBasedPage = zeroBasedPage + 1;
   const onPageChange = (newPage) => {
     if (zeroBasedPage !== newPage) onPC?.(newPage);
   };
 
   let maxPage = 0;
   if (totalRows) {
-    maxPage = Math.floor(totalRows / pageSize);
+    maxPage = Math.ceil(totalRows / pageSize) - 1;
   }
 
   if (!maxPage) return null;
 
-  const noPrev = oneBasedPage === 1 ? "Already at first page" : undefined;
-  const noNext = oneBasedPage === maxPage ? "Already at last page" : undefined;
-  const totalPages = +maxPage;
+  const noPrev = zeroBasedPage === 0 ? "Already at first page" : undefined;
+  const noNext = zeroBasedPage === maxPage ? "Already at last page" : undefined;
+  const totalPages = maxPage + 1;
   const totalRowCount = +(totalRows ?? 0);
   const pageCountInfoNode = (
-    <div className="text-2 text-sm p-p5 noselect">
+    <div
+      className="text-2 text-sm p-p5 noselect"
+      data-command={"Pagination.pageCountInfo" satisfies Command}
+    >
       {totalPages.toLocaleString()} page{totalPages === 1 ? "" : "s"}{" "}
       {` (${totalRowCount.toLocaleString()} rows)`}
     </div>
@@ -58,22 +61,25 @@ export const Pagination = (props: PaginationProps) => {
       </FlexRow>
     );
   }
+  const displayPage = zeroBasedPage + 1;
   return (
     <FlexRow
       className={classOverride("gap-0 p-p5 mt-auto ai-center", className)}
     >
       <Btn
+        data-command="Pagination.firstPage"
         iconPath={mdiPageFirst}
         disabledInfo={noPrev}
-        onClick={(e) => {
-          onPageChange(1);
+        onClick={() => {
+          onPageChange(0);
         }}
       />
       <Btn
+        data-command="Pagination.prevPage"
         iconPath={mdiChevronLeft}
         disabledInfo={noPrev}
-        onClick={(e) => {
-          onPageChange(Math.max(1, zeroBasedPage - 1));
+        onClick={() => {
+          onPageChange(Math.max(0, zeroBasedPage - 1));
         }}
       />
 
@@ -82,39 +88,52 @@ export const Pagination = (props: PaginationProps) => {
         type="number"
         className="h-fit min-w-0 p-p5"
         style={{
-          width: `${(oneBasedPage || 0).toString().length + 5}ch`,
+          width: `${(displayPage || 0).toString().length + 5}ch`,
         }}
-        value={oneBasedPage}
+        value={displayPage}
+        min={1}
+        max={maxPage + 1}
         onChange={(e) => {
           const p = +e.target.value - 1;
-          if (p > 0 && p <= maxPage) {
+          if (p >= 0 && p <= maxPage) {
             onPageChange(p);
           }
         }}
       />
 
       <Btn
+        data-command="Pagination.nextPage"
         iconPath={mdiChevronRight}
         disabledInfo={noNext}
-        onClick={(e) => {
+        onClick={() => {
           onPageChange(Math.min(maxPage, zeroBasedPage + 1));
         }}
       />
       <Btn
+        data-command="Pagination.lastPage"
         iconPath={mdiPageLast}
         disabledInfo={noNext}
-        onClick={(e) => {
+        onClick={() => {
           onPageChange(maxPage);
         }}
       />
 
-      {!onPageSizeChange ? null : (
+      {onPageSizeChange && (
         <FormField
           title="Page size"
           value={pageSize}
+          data-command="Pagination.pageSize"
           options={PAGE_SIZES.map((s) => `${s}`)}
           onChange={(e) => {
-            onPageSizeChange(+e as any);
+            const newPageSize = +e;
+            if (newPageSize === pageSize) return;
+            /**
+             * Re-adjust current page if it will become out of bounds
+             */
+            if (newPageSize * (zeroBasedPage + 1) > totalRowCount) {
+              onPageChange(Math.ceil(totalRowCount / newPageSize) - 1);
+            }
+            onPageSizeChange(newPageSize);
           }}
         />
       )}
@@ -133,6 +152,6 @@ export const usePagination = (defaultPageSize: number = PAGE_SIZES[0]) => {
     onPageChange: setPage,
     onPageSizeChange: setPageSize,
     limit: pageSize,
-    offset: Math.max(0, (page - 1) * pageSize),
+    offset: Math.max(0, page * pageSize),
   };
 };

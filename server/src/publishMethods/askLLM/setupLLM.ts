@@ -200,6 +200,7 @@ export const setupLLM = async (dbs: DBS) => {
         api_docs_url: "https://ai.google.dev/gemini-api/docs",
         api_url:
           "https://generativelanguage.googleapis.com/v1beta/models/$MODEL:generateContent?key=$KEY",
+        logo_url: "/logos/google.svg",
         llm_models: [
           {
             name: "gemini-2.5-pro-exp-03-25",
@@ -257,6 +258,7 @@ export const setupLLM = async (dbs: DBS) => {
         id: "Ollama",
         api_url: "http://localhost:11434/api/chat",
         api_docs_url: "https://github.com/ollama/ollama/blob/main/docs/api.md",
+        logo_url: "/logos/ollama.svg",
         llm_models: [],
       },
       {
@@ -268,6 +270,7 @@ export const setupLLM = async (dbs: DBS) => {
         extra_body: {
           max_tokens: 4048,
         },
+        logo_url: "/logos/openrouter.svg",
         llm_models: [
           {
             name: "deepseek/deepseek-r1:free",

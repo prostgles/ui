@@ -160,7 +160,7 @@ export const SmartCardList = <T extends AnyObject>(
 
       {tableControls && (
         <SmartCardListHeaderControls
-          {...(props as SmartCardListProps)}
+          {...props}
           itemsLength={items.length}
           totalRows={totalRows}
           columns={columns}
@@ -192,10 +192,6 @@ export const SmartCardList = <T extends AnyObject>(
                   excludeNulls={excludeNulls}
                   popupFixedStyle={popupFixedStyle}
                   fieldConfigs={_fieldConfigs}
-                  // onChanged={() => {
-                  //   // this.dataSignature = "z";
-                  //   // this.forceUpdate();
-                  // }}
                   footer={getRowFooter}
                   getActions={getActions}
                   smartFormProps={{ onSuccess }}

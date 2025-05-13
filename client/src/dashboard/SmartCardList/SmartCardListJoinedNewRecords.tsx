@@ -74,9 +74,6 @@ export const SmartCardListJoinedNewRecords = (props: P) => {
               defaultData={defaultData}
               columns={table.columns}
               excludeNulls={excludeNulls}
-              // onChanged={() => {
-              //   // this.forceUpdate();
-              // }}
               smartFormProps={{ onSuccess }}
             />
             <Btn

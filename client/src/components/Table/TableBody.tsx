@@ -62,9 +62,8 @@ export const TableBody = <Sort extends ColumnSort | ColumnSortSQL>(
 
   const visibleCols = c.filter((c) => !c.hidden);
   const pagination = rawPagination === "virtual" ? undefined : rawPagination;
-  const { page = 1 } = pagination || {};
-  let { pageSize = 15 } = pagination || {};
-  pageSize = closest(pageSize, PAGE_SIZES) || 25;
+  const { page = 0 } = pagination || {};
+  const pageSize = closest(pagination?.pageSize ?? 15, PAGE_SIZES) || 25;
 
   let rowIndexOffset = 0;
   let _rows = rows.map((r) => ({ ...r }));

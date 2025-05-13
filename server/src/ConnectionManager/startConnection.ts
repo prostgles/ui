@@ -5,7 +5,7 @@ import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { PRGLIOSocket } from "prostgles-server/dist/DboBuilder/DboBuilder";
 import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { getIsSuperUser, type DB } from "prostgles-server/dist/Prostgles";
-import { pickKeys } from "prostgles-types";
+import { pickKeys, type AnyObject } from "prostgles-types";
 import { Server } from "socket.io";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
@@ -199,6 +199,18 @@ export const startConnection = async function (
           getForkedProcRunner,
         }),
         // DEBUG_MODE: true,
+        onConnectionError: (error) => {
+          const nonReconnectableErrorCodes = {
+            "3D000": "Database does not exist",
+            "28P01": "Invalid authentication credentials",
+          };
+          console.error("onConnectionError", error);
+          const errorCode = (error as AnyObject | undefined)?.code as string;
+          if (errorCode && errorCode in nonReconnectableErrorCodes) {
+            // void this.startConnection(con.id, dbs, _dbs, undefined, true);
+            void this.disconnect(con.id);
+          }
+        },
         publishRawSQL: async ({ user }) => {
           if (user?.type === "admin") {
             return true;

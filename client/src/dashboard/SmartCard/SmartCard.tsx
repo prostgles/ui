@@ -5,7 +5,7 @@ import {
   type TableInfo,
   type ValidatedColumnInfo,
 } from "prostgles-types";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
 import type { Prgl } from "../../App";
 import { classOverride } from "../../components/Flex";
@@ -15,8 +15,9 @@ import type { SmartFormProps } from "../SmartForm/SmartForm";
 import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
 import { getSmartCardColumns } from "./getSmartCardColumns";
 import { getDefaultFieldConfig, parseFieldConfigs } from "./parseFieldConfigs";
-import { SmartCardColumn } from "./SmartCardColumn";
 import { SmartCardActions } from "./SmartCardActions";
+import { SmartCardColumn } from "./SmartCardColumn";
+import { useFieldConfigParser } from "./useFieldConfigParser";
 
 type NestedSmartCardProps = Pick<SmartCardProps, "footer" | "excludeNulls">;
 type NestedSmartFormProps = Pick<
@@ -39,8 +40,6 @@ export type FieldConfigNested = FieldConfig<any> | FieldConfigTable;
 
 export type ParsedNestedFieldConfig = ParsedFieldConfig | FieldConfigTable;
 
-// export type BasicMedia = { content_type: string; name: string; url: string }
-
 export type FieldConfigBase<T extends AnyObject | void = void> = {
   /* Is the column or table name */
   name: T extends AnyObject ? keyof T | string : string;
@@ -58,7 +57,7 @@ export type FieldConfigRender<T extends AnyObject = AnyObject> = (
 
 export type ParsedFieldConfig<T extends AnyObject = AnyObject> =
   FieldConfigBase<T> & {
-    select?: number | AnyObject | keyof T;
+    select?: number | AnyObject | (keyof T & string);
     hideIf?: (value, row) => boolean;
     render?: FieldConfigRender<T>;
     /**
@@ -73,11 +72,11 @@ export type FieldConfig<T extends AnyObject = AnyObject> =
 
 export type SmartCardCommonProps = {};
 
-export type SmartCardProps<T extends AnyObject = any> = Pick<
+export type SmartCardProps<T extends AnyObject = AnyObject> = Pick<
   Prgl,
   "db" | "tables" | "methods"
 > &
-  Pick<SmartCardListProps<T>, "tableName"> & {
+  Pick<SmartCardListProps<T>, "tableName" | "tables"> & {
     defaultData: AnyObject;
     rowFilter?: DetailedFilterBase[];
 
@@ -94,7 +93,6 @@ export type SmartCardProps<T extends AnyObject = any> = Pick<
     showLocalChanges?: boolean;
 
     onChange?: (newData: AnyObject) => any;
-    // onChanged?: () => any;
 
     hideColumns?: string[];
 
@@ -127,93 +125,31 @@ const DEFAULT_VARIANT = "row-wrap";
 
 export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
   const {
-    db,
-    tableName,
     className = "",
     style = {},
     disableVariantToggle = false,
-    hideColumns,
     fieldConfigs: _fieldConfigs,
     footer = null,
     title,
-    excludeNulls,
     defaultData,
     contentClassname = "",
     contentStyle = {},
-    columns: columnsFromProps,
     showViewEditBtn = true,
     enableInsert = true,
   } = props;
-  const [variant, setVariant] = useState(props.variant ?? DEFAULT_VARIANT);
-  const fetchedColumns = usePromise(async () => {
-    if (columnsFromProps) return undefined;
-    return await getSmartCardColumns({ tableName, db });
-  }, [columnsFromProps, tableName, db]);
-  const cardColumns = columnsFromProps ?? fetchedColumns;
 
-  if (!cardColumns) {
+  const [variant, setVariant] = useState(props.variant ?? DEFAULT_VARIANT);
+  const parsedFields = useFieldConfigParser(props as SmartCardProps);
+
+  if (!parsedFields) {
     return <Loading />;
   }
+  const { cardColumns, fieldConfigsWithColumns } = parsedFields;
 
   const variantClass =
     variant === "row-wrap" ? "flex-row-wrap ai-start"
     : variant === "row" ? "flex-row ai-start"
     : "flex-col ai-start ";
-
-  const displayedColumns =
-    hideColumns ?
-      cardColumns.filter((c) => hideColumns.includes(c.name))
-    : cardColumns;
-
-  const fieldConfigs =
-    parseFieldConfigs(_fieldConfigs) || getDefaultFieldConfig(displayedColumns);
-
-  const cols: {
-    name: string;
-    fc?: ParsedFieldConfig;
-    col?: (typeof cardColumns)[number];
-  }[] = fieldConfigs
-    .filter((fc) => !fc.hide)
-    .map((fc: ParsedFieldConfig) => ({
-      name: fc.name.toString(),
-      col: displayedColumns.find((c) => fc.name === c.name),
-      fc,
-    }));
-
-  const content = cols
-    /** Do not render if has nulls and no render and excludeNulls is true  */
-    .filter(
-      ({ name, fc }) =>
-        !fc?.hideIf?.(defaultData[name], defaultData) &&
-        (fc?.render ||
-          !excludeNulls ||
-          (defaultData[name] !== null && isDefined(defaultData[name]))),
-    )
-    .map(({ name, fc, col: c }, i) => {
-      const labelText =
-        (fc?.render ? fc.label : (fc?.label ?? c?.label ?? c?.name)) ?? null;
-
-      const valueNode =
-        fc?.render?.(defaultData[name], defaultData) ||
-        (c && <RenderValue column={c} value={defaultData[name]} />);
-
-      if (fc?.renderMode === "full") {
-        return valueNode;
-      }
-      return (
-        <SmartCardColumn
-          key={`${fc?.name ?? c?.name ?? labelText}`}
-          className={fc?.className}
-          style={fc?.style}
-          labelText={labelText}
-          valueNode={valueNode}
-          renderMode={fc?.renderMode}
-          labelTitle={c?.udt_name || ""}
-          info={c?.hint}
-        />
-      );
-    });
-
   return (
     <div
       className={classOverride(
@@ -243,7 +179,34 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
           )}
           style={{ columnGap: "1em", ...contentStyle }}
         >
-          {content}
+          {fieldConfigsWithColumns.map(({ name, fc, col: column }, i) => {
+            const labelText =
+              (fc.render ?
+                fc.label
+              : (fc.label ?? column?.label ?? column?.name)) ?? null;
+
+            const valueNode =
+              fc.render?.(defaultData[name], defaultData) ||
+              (column && (
+                <RenderValue column={column} value={defaultData[name]} />
+              ));
+
+            if (fc.renderMode === "full") {
+              return valueNode;
+            }
+            return (
+              <SmartCardColumn
+                key={`${fc.name}`} //  ?? labelText
+                className={fc.className}
+                style={fc.style}
+                labelText={labelText}
+                valueNode={valueNode}
+                renderMode={fc.renderMode}
+                labelTitle={column?.udt_name || ""}
+                info={column?.hint}
+              />
+            );
+          })}
         </div>
         {footer?.(defaultData)}
       </div>
@@ -257,25 +220,3 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
     </div>
   );
 };
-
-export function nFormatter(num: number, digits: number): string {
-  const lookup = [
-    { value: 1, symbol: "" },
-    { value: 1e3, symbol: "k" },
-    { value: 1e6, symbol: "M" },
-    { value: 1e9, symbol: "G" },
-    { value: 1e12, symbol: "T" },
-    { value: 1e15, symbol: "P" },
-    { value: 1e18, symbol: "E" },
-  ];
-  const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
-  const item = lookup
-    .slice()
-    .reverse()
-    .find(function (item) {
-      return num >= item.value;
-    });
-  return item ?
-      (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol
-    : "0";
-}

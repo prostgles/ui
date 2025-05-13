@@ -8,6 +8,7 @@ import { Footer } from "../../../components/Popup/Popup";
 import { type SmartFormProps } from "../SmartForm";
 import type { SmartFormState } from "../useSmartForm";
 import { type SmartFormActionsState } from "./useSmartFormActions";
+import { getEntries } from "../../../../../commonTypes/utils";
 
 type P = SmartFormState &
   SmartFormActionsState &
@@ -49,7 +50,7 @@ export const SmartFormFooterButtons = (props: P): JSX.Element => {
       </>
     );
   }
-  if (!buttons) {
+  if (!buttons || (getEntries(buttons).every(([_, b]) => !b) && !onClose)) {
     return <></>;
   }
 

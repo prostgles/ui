@@ -92,7 +92,7 @@ export const getPublishLLM = (
         },
       },
       update: isAdmin && {
-        fields: { created: 0 },
+        fields: { created: 0, provider_id: 0 },
       },
     },
     llm_prompts: {

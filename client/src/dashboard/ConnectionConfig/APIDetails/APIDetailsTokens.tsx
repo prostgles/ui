@@ -1,15 +1,15 @@
-import { mdiContentCopy, mdiPlus } from "@mdi/js";
+import { mdiPlus } from "@mdi/js";
 import React from "react";
 import Btn from "../../../components/Btn";
+import { CopyToClipboardBtn } from "../../../components/CopyToClipboardBtn";
 import { FlexCol, FlexRow } from "../../../components/Flex";
 import FormField from "../../../components/FormField/FormField";
 import PopupMenu from "../../../components/PopupMenu";
+import { t } from "../../../i18n/i18nUtils";
 import { Sessions } from "../../../pages/Account/Sessions";
 import type { APIDetailsProps } from "./APIDetails";
-import { t } from "../../../i18n/i18nUtils";
 
 export const APIDetailsTokens = ({
-  theme,
   dbs,
   dbsMethods,
   dbsTables,
@@ -130,15 +130,7 @@ const TokenCopy = ({ token, label }: { token: string; label: string }) => {
       <div className="text-1">{label}</div>
       <div className="b b-color flex-row ai-center rounded w-fit">
         <div className="p-p5 w-fit ">{token}</div>
-        <Btn
-          variant="faded"
-          color="action"
-          iconPath={mdiContentCopy}
-          onClickMessage={(e, setM) => {
-            navigator.clipboard.writeText(token);
-            setM({ ok: t.common["Copied!"], duration: 2e3 });
-          }}
-        />
+        <CopyToClipboardBtn variant="faded" color="action" content={token} />
       </div>
     </div>
   );

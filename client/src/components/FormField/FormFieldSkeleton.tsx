@@ -5,7 +5,7 @@ import { mdiAlertCircleOutline } from "@mdi/js";
 import { isObject } from "prostgles-types";
 import type { TestSelectors } from "../../Testing";
 import ErrorComponent from "../ErrorComponent";
-import { classOverride, type DivProps } from "../Flex";
+import { classOverride, FlexRow, type DivProps } from "../Flex";
 import { Icon } from "../Icon/Icon";
 import { InfoRow } from "../InfoRow";
 import { Label } from "../Label";
@@ -152,14 +152,14 @@ export const FormFieldSkeleton = React.forwardRef(
                 {children}
 
                 {Boolean(rightIcons) && (
-                  <div
+                  <FlexRow
                     className={
-                      `RightIcons ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} flex-row ai-start jc-center ` +
+                      `RightIcons ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} h-fit as-end gap-0 ai-start jc-center ` +
                       (rightIconsShowBorder ? "  bl b-color " : " ")
                     }
                   >
                     {rightIcons}
-                  </div>
+                  </FlexRow>
                 )}
               </div>
 
@@ -185,12 +185,13 @@ export const FormFieldSkeleton = React.forwardRef(
               )}
             </div>
             {Boolean(rightContent) && (
-              <div
-                className={`RightContent  ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} f-0 `}
-                style={{ alignSelf: "start" }}
+              <FlexRow
+                className={`RightContent  ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} f-0 gap-0`}
+                // style={{ alignSelf: "start" }}
+                style={{ alignSelf: "center" }} // So it looks better for asJONB=JSONBSchema
               >
                 {rightContent}
-              </div>
+              </FlexRow>
             )}
           </div>
           {Boolean(hint) && (

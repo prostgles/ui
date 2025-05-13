@@ -1,6 +1,7 @@
 import { useIsMounted } from "prostgles-client/dist/prostgles";
 import React, { useEffect } from "react";
 import sanitizeHtml from "sanitize-html";
+import { classOverride, type DivProps } from "./Flex";
 
 export const cachedSvgs = new Map<string, string>();
 
@@ -83,4 +84,41 @@ export const getIcon = async (icon: string) => {
     return res;
   }
   return cachedSvgs.get(iconPath)!;
+};
+
+type SvgIconFromURLProps = DivProps & {
+  url: string;
+  /**
+   * @default "mask"
+   * mask = uses currentColor
+   * background = maintains original colours
+   */
+  mode?: "background" | "mask";
+};
+export const SvgIconFromURL = ({
+  url,
+  className,
+  style,
+  mode = "mask",
+  ...divProps
+}: SvgIconFromURLProps) => {
+  return (
+    <div
+      {...divProps}
+      className={classOverride("SvgIconFromURL", className)}
+      style={{
+        ...style,
+        ...(mode === "mask" ?
+          {
+            backgroundColor: "currentColor",
+            maskImage: `url(${JSON.stringify(url)})`,
+            maskSize: "cover",
+          }
+        : {
+            backgroundImage: `url(${JSON.stringify(url)})`,
+            backgroundSize: "cover",
+          }),
+      }}
+    />
+  );
 };

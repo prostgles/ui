@@ -188,7 +188,7 @@ export const AskLLMAccessControl = ({
                   columnFilter={(c) =>
                     ["llm_prompt_id", "llm_credential_id"].includes(c.name)
                   }
-                  jsonbSchemaWithControls={true}
+                  jsonbSchemaWithControls={{ variant: "no-labels" }}
                   onChange={(row) => {
                     if ("llm_credential_id" in row) {
                       setLocalCredentialId(row.llm_credential_id);

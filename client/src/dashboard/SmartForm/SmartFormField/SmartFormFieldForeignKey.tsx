@@ -91,19 +91,8 @@ export const SmartFormFieldForeignKey = (
   };
 
   const selectedOption = fullOptions?.find((o) => o.key === value);
-  const valueNode = (
-    <div className="text-ellipsis max-w-fit" style={valueStyle}>
-      {/* {renderNull(value, {}, true) ?? (value as string)} */}
-      <RenderValue
-        value={value}
-        column={column}
-        showTitle={false}
-        maxLength={30}
-      />
-    </div>
-  );
 
-  const paddingValue = 0; // isDefined(selectedOption?.subLabel) ? "6px" :  "12px";
+  const paddingValue = 0;
   const isNullOrEmpty = value === null || value === undefined;
   const displayValue = (
     <FlexRowWrap
@@ -113,7 +102,15 @@ export const SmartFormFieldForeignKey = (
         padding: isNullOrEmpty && !readOnly ? 0 : `${paddingValue} 0`,
       }}
     >
-      {valueNode}
+      {selectedOption?.leftContent}
+      <div className="text-ellipsis max-w-fit" style={valueStyle}>
+        <RenderValue
+          value={value}
+          column={column}
+          showTitle={false}
+          maxLength={30}
+        />
+      </div>
       {isDefined(selectedOption?.subLabel) && (
         <div
           className="SmartFormFieldForeignKey.subLabel ta-left text-ellipsis"

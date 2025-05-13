@@ -19,7 +19,7 @@ type P<
   setState: (newState: SelectState) => void;
   setRef: (ref: HTMLButtonElement) => void;
   btnLabel: string | undefined;
-  showSelectedIcon: string | undefined;
+  selectedFullOptions: FullOption<string>[];
 };
 export const SelectTriggerButton = <
   O extends OptionKey,
@@ -43,7 +43,7 @@ export const SelectTriggerButton = <
     disabledInfo,
     optional = false,
     onOpen,
-    showSelectedIcon,
+    showIconOnly,
     fullOptions,
     multiSelection,
     fixedBtnWidth,
@@ -54,6 +54,7 @@ export const SelectTriggerButton = <
     setState,
     setRef,
     btnLabel,
+    selectedFullOptions,
   } = props;
 
   const value = multiSelection ?? _value;
@@ -62,6 +63,10 @@ export const SelectTriggerButton = <
     !options.length || (options.length === 1 && value === options[0]);
 
   if (!onChange) return null;
+
+  const showSelectedIcon =
+    showIconOnly ? selectedFullOptions[0]?.iconPath : undefined;
+
   const triggerButton = (
     <Btn
       title={title}

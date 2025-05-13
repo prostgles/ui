@@ -1,15 +1,14 @@
 import { mdiDotsHorizontal } from "@mdi/js";
-import {
-  isObject,
-  type AnyObject,
-  type TableInfo,
-  type ValidatedColumnInfo,
-} from "prostgles-types";
-import React, { useCallback, useMemo, useState } from "react";
+import { isObject, type AnyObject } from "prostgles-types";
+import React, { useCallback, useState } from "react";
 import Btn from "../../../components/Btn";
 import type { FormFieldProps } from "../../../components/FormField/FormField";
 import FormField from "../../../components/FormField/FormField";
+import { FormFieldCodeEditor } from "../../../components/FormField/FormFieldCodeEditor";
+import { JSONBSchemaA } from "../../../components/JSONBSchema/JSONBSchema";
+import { SvgIcon } from "../../../components/SvgIcon";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
+import type { DBSchemaTableColumn } from "../../Dashboard/dashboardUtils";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import type { ColumnDisplayConfig, SmartFormProps } from "../SmartForm";
 import type {
@@ -35,10 +34,6 @@ import {
 } from "./fieldUtils";
 import { useSmartFormFieldAsJSON } from "./useSmartFormFieldAsJSON";
 import { useSmartFormFieldOnChange } from "./useSmartFormFieldOnChange";
-import { JSONBSchemaA } from "../../../components/JSONBSchema/JSONBSchema";
-import { FormFieldCodeEditor } from "../../../components/FormField/FormFieldCodeEditor";
-import { SvgIcon } from "../../../components/SvgIcon";
-import type { DBSchemaTableColumn } from "../../Dashboard/dashboardUtils";
 
 type SmartFormFieldValue =
   | string
@@ -60,7 +55,6 @@ export type SmartFormFieldProps = Pick<
   action?: "update" | "insert" | "view";
   column: SmartColumnInfo;
   style?: React.CSSProperties;
-  inputStyle?: React.CSSProperties;
   placeholder?: string;
   multiSelect?: boolean;
   error?: any;
@@ -83,7 +77,6 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   const {
     action,
     value,
-    inputStyle = {},
     placeholder = "",
     multiSelect,
     column,
@@ -195,8 +188,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
   const cantUpdate = readOnly && action === "update";
 
   const ftableIcon =
-    column.icon ??
-    foreignDataState?.insertAndSearchState?.showInsertState?.ftableInfo?.icon;
+    column.icon ?? foreignDataState?.insertAndSearchState?.ftableInfo?.icon;
 
   return (
     <>
@@ -234,7 +226,6 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         inputClassName={cantUpdate ? " cursor-default " : ""}
         maxWidth={maxWidth}
         inputStyle={{
-          ...inputStyle,
           minWidth: 0,
           ...(type === "checkbox" ? { padding: "1px" } : {}),
         }}
@@ -243,7 +234,7 @@ export const SmartFormField = (props: SmartFormFieldProps) => {
         inputContent={
           renderAsJSON?.component === "JSONBSchema" ?
             <JSONBSchemaA
-              className={renderAsJSON.noLabels ? "" : "m-p5"}
+              // className={renderAsJSON.noLabels ? "" : "m-p5"}
               noLabels={renderAsJSON.noLabels}
               db={db}
               schema={renderAsJSON.jsonbSchema}

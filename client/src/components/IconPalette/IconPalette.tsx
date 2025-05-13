@@ -114,7 +114,7 @@ export const IconPalette = ({ iconName, onChange, label }: P) => {
               value={searchTerm}
               onChange={(newTerm) => {
                 setSearchTerm(newTerm);
-                setPage(1);
+                setPage(0);
               }}
             />
             <div

@@ -48,8 +48,8 @@ export function ifEmpty(v: any, replaceValue: any) {
   return isEmpty(v) ? replaceValue : v;
 }
 
-export function nFormatter(num, digits) {
-  const si = [
+export function nFormatter(num: number, digits: number): string {
+  const lookup = [
     { value: 1, symbol: "" },
     { value: 1e3, symbol: "k" },
     { value: 1e6, symbol: "M" },
@@ -59,13 +59,15 @@ export function nFormatter(num, digits) {
     { value: 1e18, symbol: "E" },
   ];
   const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
-  let i;
-  for (i = si.length - 1; i > 0; i--) {
-    if (num >= si[i]!.value) {
-      break;
-    }
-  }
-  return (num / si[i]!.value).toFixed(digits).replace(rx, "$1") + si[i]!.symbol;
+  const item = lookup
+    .slice()
+    .reverse()
+    .find(function (item) {
+      return num >= item.value;
+    });
+  return item ?
+      (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol
+    : "0";
 }
 
 type StrFormat = {

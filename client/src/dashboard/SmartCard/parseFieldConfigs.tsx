@@ -1,4 +1,9 @@
-import { type ValidatedColumnInfo } from "prostgles-types";
+import {
+  isDefined,
+  isObject,
+  type AnyObject,
+  type ValidatedColumnInfo,
+} from "prostgles-types";
 import type {
   FieldConfigNested,
   ParsedFieldConfig,
@@ -7,25 +12,54 @@ import type {
 import React from "react";
 import { RenderValue } from "../SmartForm/SmartFormField/RenderValue";
 import Checkbox from "../../components/Checkbox";
+import type { DBSchemaTableWJoins } from "../Dashboard/dashboardUtils";
+import { SvgIconFromURL } from "../../components/SvgIcon";
 export const parseFieldConfigs = (
   configs?: FieldConfigNested[],
   cols?: ValidatedColumnInfo[],
+  tables: DBSchemaTableWJoins[] = [],
+  // table: DBSchemaTableWJoins,
 ): undefined | ParsedFieldConfig[] | ParsedNestedFieldConfig[] => {
   if (configs) {
     if ((configs as any) === "*") configs = ["*"];
     if (!Array.isArray(configs)) throw "Expecting an array of fieldConfigs";
-    let result: ParsedFieldConfig[] | ParsedNestedFieldConfig[] = [];
-    configs.slice(0).forEach((fc) => {
-      if (typeof fc === "string") {
-        if (cols) {
-          result = result.concat(getDefaultFieldConfig(cols, [fc]) as any);
+    const result: ParsedFieldConfig[] | ParsedNestedFieldConfig[] = configs
+      .slice(0)
+      .flatMap((fc) => {
+        if (typeof fc === "string") {
+          if (cols) {
+            return getDefaultFieldConfig(cols, [fc]);
+          } else {
+            return { name: fc };
+          }
         } else {
-          result.push({ name: fc });
+          const { select, hide, render, ...restdw } = fc;
+          if (!hide && !render && isObject(select) && tables.length) {
+            const ftable = tables.find((t) => t.name === fc.name);
+            if (ftable) {
+              const { rowIconColumn } = ftable;
+              if (rowIconColumn && select[rowIconColumn] === 1) {
+                return {
+                  ...(fc as ParsedFieldConfig),
+                  render: (ftableRows: AnyObject[]) => {
+                    const logo_url = ftableRows[0]?.[rowIconColumn];
+                    if (!logo_url) return null;
+                    return (
+                      <SvgIconFromURL
+                        url={logo_url}
+                        mode="background"
+                        style={{ width: "32px", height: "32px" }}
+                      />
+                    );
+                  },
+                };
+              }
+            }
+          }
+          return fc as ParsedFieldConfig;
         }
-      } else {
-        result.push(fc as any);
-      }
-    });
+      })
+      .filter(isDefined);
     const duplicate = result.find((f, i) =>
       result.find((_f, _i) => f.name === _f.name && i !== _i),
     );

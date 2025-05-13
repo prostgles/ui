@@ -1391,6 +1391,33 @@ test.describe("Main test", () => {
 
     await getSearchListItem(page, { dataKey: "users" }).click();
     const usersTable = await getTableWindow(page, "users");
+
+    /** Test pagination */
+    const pageInput = await usersTable.getByTestId("Pagination.page");
+    expect(await pageInput.inputValue()).toBe("1");
+    expect(await pageInput.getAttribute("min")).toBe("1");
+    expect(await pageInput.getAttribute("max")).toBe("7");
+    expect(
+      await usersTable.getByTestId("Pagination.pageCountInfo").textContent(),
+    ).toBe(`7 pages  (100 rows)`);
+    await usersTable.getByTestId("Pagination.lastPage").click();
+    await pageInput.scrollIntoViewIfNeeded();
+    expect(await pageInput.inputValue()).toBe("7");
+    await usersTable.getByTestId("Pagination.firstPage").click();
+    expect(await pageInput.inputValue()).toBe("1");
+    await usersTable.getByTestId("Pagination.nextPage").click();
+    expect(await pageInput.inputValue()).toBe("2");
+    await usersTable.getByTestId("Pagination.lastPage").click();
+    await usersTable.getByTestId("Pagination.pageSize").click();
+    await page
+      .getByTestId("Pagination.pageSize")
+      .locator(getDataKey("50"))
+      .click();
+    expect(await pageInput.inputValue()).toBe("2");
+    expect(
+      await usersTable.getByTestId("Pagination.pageCountInfo").textContent(),
+    ).toBe(`2 pages  (100 rows)`);
+
     await usersTable.getByTestId("AddColumnMenu").click();
     await getSearchListItem(page.getByTestId("AddColumnMenu"), {
       dataKey: "Referenced",
@@ -1568,7 +1595,6 @@ test.describe("Main test", () => {
         .first()
         .getByTitle("id")
         .textContent();
-      console.log({ draggedText, newTargetText });
       return { draggedText, newTargetText };
     };
 

@@ -130,6 +130,7 @@ export const SmartFormFieldLinkedDataInsert = ({
       {!fileInsert ?
         <Btn
           data-command="SmartFormFieldOptions.NestedInsert"
+          title="Insert new record"
           data-key={canInsertFTableName}
           iconPath={mdiPlus}
           onClick={() => {

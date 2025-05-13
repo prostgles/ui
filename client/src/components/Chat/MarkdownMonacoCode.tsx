@@ -1,18 +1,19 @@
-import { mdiContentCopy, mdiDownload, mdiFullscreen, mdiPlay } from "@mdi/js";
+import { mdiDownload, mdiFullscreen, mdiPlay } from "@mdi/js";
 import type { editor } from "monaco-editor";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback, useMemo, useState } from "react";
 import { CHAT_WIDTH } from "../../dashboard/AskLLM/AskLLM";
+import { getSQLResultTableColumns } from "../../dashboard/W_SQL/getSQLResultTableColumns";
+import { getFieldsWithActions } from "../../dashboard/W_SQL/parseSqlResultCols";
+import { download } from "../../dashboard/W_SQL/W_SQL";
+import { SuccessMessage } from "../Animations";
 import Btn from "../Btn";
+import { CopyToClipboardBtn } from "../CopyToClipboardBtn";
 import ErrorComponent from "../ErrorComponent";
 import { FlexCol, FlexRow } from "../Flex";
 import { MonacoEditor } from "../MonacoEditor/MonacoEditor";
 import Popup from "../Popup/Popup";
 import { Table } from "../Table/Table";
-import { SuccessMessage } from "../Animations";
-import { getFieldsWithActions } from "../../dashboard/W_SQL/parseSqlResultCols";
-import { getSQLResultTableColumns } from "../../dashboard/W_SQL/getSQLResultTableColumns";
-import { download } from "../../dashboard/W_SQL/W_SQL";
 
 const LANGUAGE_FALLBACK = {
   tsx: "typescript",
@@ -75,7 +76,7 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
           }
           const cols = getFieldsWithActions(
             data.fields,
-            data.command.toLowerCase() === "select",
+            data.command?.toLowerCase() === "select",
           );
           const columns =
             !withCommit ? cols : (
@@ -141,17 +142,13 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
                 />
               </>
             )}
-            <Btn
+            <CopyToClipboardBtn
               size="small"
-              iconPath={mdiContentCopy}
               style={{
                 marginLeft: "auto",
                 flex: "none",
               }}
-              onClick={() => {
-                navigator.clipboard.writeText(codeString);
-              }}
-              title="Copy code to clipboard"
+              content={codeString}
             />
             <Btn
               title="Download"

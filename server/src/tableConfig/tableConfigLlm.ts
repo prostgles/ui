@@ -137,10 +137,6 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         label: "Provider",
         sqlDefinition: `TEXT NOT NULL REFERENCES llm_providers(id) ON DELETE CASCADE`,
       },
-      default_model_name: {
-        label: "Default model",
-        sqlDefinition: `TEXT`,
-      },
       api_key: `TEXT NOT NULL DEFAULT ''`,
       ...extraRequestData,
       is_default: {
@@ -152,9 +148,6 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       created: {
         sqlDefinition: `TIMESTAMP DEFAULT NOW()`,
       },
-    },
-    constraints: {
-      default_model_fkey: `FOREIGN KEY (default_model_name, provider_id) REFERENCES llm_models(name, provider_id)`,
     },
     indexes: {
       unique_default: {
@@ -212,6 +205,10 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         sqlDefinition: `TIMESTAMPTZ`,
         info: { hint: "If set then chat is disabled until this time" },
       },
+      is_loading: {
+        sqlDefinition: `TIMESTAMPTZ`,
+        info: { hint: "Timestamp since started waiting for LLM response" },
+      },
       db_schema_permissions: {
         label: "Schema read access",
         nullable: true,
@@ -223,16 +220,24 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
           oneOfType: [
             {
               type: {
+                enum: ["None"],
+                title: "Type",
+                description: "No schema information is provided",
+              },
+            },
+            {
+              type: {
                 enum: ["Full"],
                 title: "Type",
-                description: "All tables and columns",
+                description: "All tables, columns and constraints",
               },
             },
             {
               type: {
                 enum: ["Custom"],
                 title: "Type",
-                description: "Specific tables",
+                description:
+                  "Specific tables and their columns and constraints",
               },
               tables: {
                 type: "Lookup[]",
@@ -249,7 +254,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
         label: "Data access",
         nullable: true,
         info: {
-          hint: "Controls how the assistant is allowed to view/interact with the data found in the database. Same connection and permissions are used as for the current user",
+          hint: "Controls how the assistant is allowed to view/interact with the data found in the database. \nSame connection and permissions are used as for the current user",
         },
         jsonbSchema: {
           oneOfType: [
@@ -321,7 +326,6 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       id: `int8 PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
-      is_loading: `BOOLEAN DEFAULT FALSE`,
       message: {
         jsonbSchema: {
           arrayOf: {

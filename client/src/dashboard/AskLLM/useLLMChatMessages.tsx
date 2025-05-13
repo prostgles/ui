@@ -1,11 +1,14 @@
 import React, { useMemo } from "react";
-import { filterArrInverse } from "../../../../commonTypes/llmUtils";
+import { filterArr, filterArrInverse } from "../../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { Message } from "../../components/Chat/Chat";
 import { Marked } from "../../components/Chat/Marked";
+import { CopyToClipboardBtn } from "../../components/CopyToClipboardBtn";
 import { FlexCol } from "../../components/Flex";
+import Loading from "../../components/Loading";
 import { MediaViewer } from "../../components/MediaViewer";
 import { isDefined } from "../../utils";
+import { Counter } from "../W_SQL/W_SQL";
 import { AskLLMTokenUsage } from "./AskLLMTokenUsage";
 import { ToolUseChatMessage } from "./ToolUseChatMessage";
 import type { UseLLMChatProps } from "./useLLMChat";
@@ -17,7 +20,7 @@ type P = UseLLMChatProps & {
 
 export const useLLMChatMessages = (props: P) => {
   const { dbs, user, activeChat, db } = props;
-
+  const { is_loading } = activeChat ?? {};
   const { data: llmMessages } = dbs.llm_messages.useSubscribe(
     { chat_id: activeChat?.id },
     { orderBy: { created: 1 } },
@@ -32,69 +35,97 @@ export const useLLMChatMessages = (props: P) => {
   const actualMessages: Message[] | undefined = useMemo(
     () =>
       llmMessages
-        ?.map(
-          (
-            { id, user_id, created, message, meta, is_loading },
-            llmMessageIdx,
-          ) => {
-            const messagesWithoutToolResponses = filterArrInverse(message, {
-              type: "tool_result",
-            } as const);
-            if (!messagesWithoutToolResponses.length) {
-              return undefined;
-            }
+        ?.map(({ id, user_id, created, message, meta }, llmMessageIdx) => {
+          const isLastMessage = llmMessages.length - 1 === llmMessageIdx;
+          const messagesWithoutToolResponses = filterArrInverse(message, {
+            type: "tool_result",
+          } as const);
+          if (!messagesWithoutToolResponses.length) {
+            return undefined;
+          }
 
-            const messageNode = messagesWithoutToolResponses.map((m, idx) => {
-              if (m.type === "text") {
-                return (
-                  <Marked
-                    key={`${id}-text-${idx}`}
-                    codeHeader={markdownCodeHeader}
-                    content={m.text}
-                    sqlHandler={sqlHandler}
-                  />
-                );
-              }
-              if (m.type === "image") {
-                return (
-                  <MediaViewer
-                    key={`${id}-image-${idx}`}
-                    url={m.source.data}
-                    content_type="image"
-                  />
-                );
-              }
-
+          const messageNode = messagesWithoutToolResponses.map((m, idx) => {
+            if (m.type === "text") {
               return (
-                <ToolUseChatMessage
-                  key={`${id}-tool-${idx}`}
-                  messageIndex={llmMessageIdx}
-                  messages={llmMessages}
-                  toolUseMessageIndex={idx}
+                <Marked
+                  key={`${id}-text-${idx}`}
+                  codeHeader={markdownCodeHeader}
+                  content={m.text}
                   sqlHandler={sqlHandler}
                 />
               );
-            });
+            }
+            if (m.type === "image") {
+              return (
+                <MediaViewer
+                  key={`${id}-image-${idx}`}
+                  url={m.source.data}
+                  content_type="image"
+                />
+              );
+            }
 
-            return {
-              id,
-              incoming: user_id !== user?.id,
-              messageTopContent: (
+            return (
+              <ToolUseChatMessage
+                key={`${id}-tool-${idx}`}
+                messageIndex={llmMessageIdx}
+                messages={llmMessages}
+                toolUseMessageIndex={idx}
+                sqlHandler={sqlHandler}
+              />
+            );
+          });
+
+          const textMessages = filterArr(message, {
+            type: "text",
+          } as const);
+          const textMessageToCopy =
+            textMessages.length && textMessages.length === message.length ?
+              textMessages.map((m) => m.text).join("\n")
+            : undefined;
+
+          const isLoading = Boolean(isLastMessage && is_loading);
+          return {
+            id,
+            incoming: user_id !== user?.id,
+            messageTopContent: (
+              <>
                 <AskLLMTokenUsage
                   className="ml-p5"
                   message={{ user_id, meta }}
                   models={models ?? []}
                 />
-              ),
-              message: <FlexCol>{messageNode}</FlexCol>,
-              isLoading: !!is_loading,
-              sender_id: user_id || "ai",
-              sent: new Date(created || new Date()),
-            };
-          },
-        )
+                {textMessageToCopy && (
+                  <CopyToClipboardBtn
+                    className="show-on-parent-hover"
+                    content={textMessageToCopy}
+                    size="micro"
+                    style={{
+                      top: "0.25em",
+                      right: "0.25em",
+                      position: "absolute",
+                    }}
+                  />
+                )}
+              </>
+            ),
+            message: (
+              <FlexCol>
+                {messageNode}
+                {isLoading && (
+                  <>
+                    <Loading /> <Counter from={new Date(is_loading!)} />
+                  </>
+                )}
+              </FlexCol>
+            ),
+            // isLoading,
+            sender_id: user_id || "ai",
+            sent: new Date(created || new Date()),
+          };
+        })
         .filter(isDefined),
-    [sqlHandler, llmMessages, markdownCodeHeader, models, user?.id],
+    [llmMessages, user?.id, models, is_loading, sqlHandler, markdownCodeHeader],
   );
 
   const disabled_message =

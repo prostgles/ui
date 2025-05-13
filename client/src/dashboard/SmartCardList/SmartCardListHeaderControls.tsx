@@ -1,4 +1,8 @@
-import { isObject, type ValidatedColumnInfo } from "prostgles-types";
+import {
+  isObject,
+  type AnyObject,
+  type ValidatedColumnInfo,
+} from "prostgles-types";
 import React, { useMemo } from "react";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import { RenderFilter, type RenderFilterProps } from "../RenderFilter";
@@ -8,8 +12,8 @@ import { InsertButton } from "../SmartForm/InsertButton";
 import type { SmartCardListProps } from "./SmartCardList";
 import type { SmartCardListState } from "./useSmartCardListState";
 
-export const SmartCardListHeaderControls = (
-  props: SmartCardListProps & {
+export const SmartCardListHeaderControls = <T extends AnyObject>(
+  props: SmartCardListProps<T> & {
     totalRows: number | undefined;
     itemsLength: number | undefined;
     columns: ValidatedColumnInfo[];

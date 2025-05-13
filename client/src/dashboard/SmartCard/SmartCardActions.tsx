@@ -6,8 +6,8 @@ import { FlexCol } from "../../components/Flex";
 import { SmartForm } from "../SmartForm/SmartForm";
 import type { SmartCardProps } from "./SmartCard";
 
-export const SmartCardActions = (
-  props: SmartCardProps & {
+export const SmartCardActions = <T extends AnyObject>(
+  props: SmartCardProps<T> & {
     defaultData: AnyObject;
     cardColumns: ValidatedColumnInfo[];
   },
@@ -22,7 +22,6 @@ export const SmartCardActions = (
     methods,
     smartFormProps,
     enableInsert,
-    // onChanged,
     defaultData,
     rowFilter,
     cardColumns,
@@ -94,7 +93,6 @@ export const SmartCardActions = (
           rowFilter={localRowFilter}
           confirmUpdates={true}
           enableInsert={enableInsert}
-          // onSuccess={onChanged}
           {...smartFormProps}
           onClose={() => {
             setEditMode(false);

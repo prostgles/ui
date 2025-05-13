@@ -95,9 +95,11 @@ export const SilverGridChildHeader = (props: P) => {
         </div>
       )}
 
-      <div
-        className=" flex-row f-1 min-w-0 ws-nowrap ai-center text-ellipsiss ml-p25 o-auto  no-scroll-bar"
-        style={{ gap: "2px" }}
+      <FlexRow
+        className="SilverGridChildHeader_tabs flex-row f-1 min-w-0 ws-nowrap ai-end text-ellipsiss ml-p25 o-auto  no-scroll-bar"
+        style={{
+          gap: "2px",
+        }}
         onWheel={(e) => {
           e.currentTarget.scrollLeft += e.deltaY;
         }}
@@ -149,6 +151,8 @@ export const SilverGridChildHeader = (props: P) => {
                 height: `${height}px`,
                 lineHeight: `${lineHeight + 2}px`,
                 marginTop: "2px",
+                /** Used to prevent unexpected scroll of tab headers */
+                overflowY: "hidden",
                 maxWidth: "max(300px, 40%)",
               }}
             >
@@ -162,7 +166,7 @@ export const SilverGridChildHeader = (props: P) => {
             </FlexRow>
           );
         })}
-      </div>
+      </FlexRow>
 
       {!hideButtons.minimize && (
         <Btn

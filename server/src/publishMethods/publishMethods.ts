@@ -188,7 +188,7 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       const res = await upsertConnection(con, user.id, dbs, sampleSchemaName);
       const el = getElectronConfig();
       if (res.connection.is_state_db && el?.isElectron) {
-        await el.setCredentials(res.connection);
+        el.setCredentials(res.connection);
       }
       return res;
     },

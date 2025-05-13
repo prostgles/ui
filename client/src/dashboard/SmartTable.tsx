@@ -60,7 +60,7 @@ type S = {
 export default class SmartTable extends RTComp<SmartTableProps, S> {
   state: S = {
     rows: [],
-    page: 1,
+    page: 0,
     pageSize: 25,
     totalRows: 0,
     filteredRows: 0,
@@ -188,8 +188,8 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       const filteredRows = await tableHandler.count!(_filter);
       const rows = await tableHandler.find!(_filter, {
         limit: pageSize,
-        orderBy: sort as any,
-        offset: (page - 1) * pageSize,
+        orderBy: sort,
+        offset: page * pageSize,
       });
       this.setState({
         rows,

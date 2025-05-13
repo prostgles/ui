@@ -3,7 +3,7 @@ export type MCPServerInfo = Omit<DBSSchemaForInsert["mcp_servers"], "id" | "cwd"
     mcp_server_tools?: Omit<DBSSchemaForInsert["mcp_server_tools"], "id" | "server_name">[];
 };
 export declare const DefaultMCPServers: Record<string, MCPServerInfo>;
-export declare const getMCPFullToolName: ({ server_name, name, }: Pick<DBSSchema["mcp_server_tools"], "server_name" | "name">) => `${string}-${string}`;
+export declare const getMCPFullToolName: ({ server_name, name, }: Pick<DBSSchema["mcp_server_tools"], "server_name" | "name">) => `${string}--${string}`;
 export declare const getMCPToolNameParts: (fullName: string) => {
     serverName: string;
     toolName: string;
@@ -29,7 +29,7 @@ export type McpToolCallResponse = {
     isError?: boolean;
 };
 export declare const executeSQLTool: {
-    readonly name: `${string}-${string}`;
+    readonly name: `${string}--${string}`;
     readonly description: "Run SQL query on the current database";
     readonly input_schema: {
         readonly type: "object";
@@ -44,12 +44,12 @@ export declare const executeSQLTool: {
     };
 };
 export declare const getSuggestedTaskTools: (toolNames?: string[]) => {
-    name: `${string}-${string}`;
+    name: `${string}--${string}`;
     description: string;
     input_schema: any;
 };
 export declare const PROSTGLES_MCP_TOOLS: readonly [{
-    readonly name: `${string}-${string}`;
+    readonly name: `${string}--${string}`;
     readonly description: "Run SQL query on the current database";
     readonly input_schema: {
         readonly type: "object";
@@ -63,7 +63,7 @@ export declare const PROSTGLES_MCP_TOOLS: readonly [{
         readonly additionalProperties: false;
     };
 }, {
-    name: `${string}-${string}`;
+    name: `${string}--${string}`;
     description: string;
     input_schema: any;
 }];

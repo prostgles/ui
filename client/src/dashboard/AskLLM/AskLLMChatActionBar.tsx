@@ -1,4 +1,4 @@
-import { mdiDatabase, mdiTools } from "@mdi/js";
+import { mdiDatabase, mdiPlus, mdiTools } from "@mdi/js";
 import type { DetailedJoinSelect, FilterItem } from "prostgles-types";
 import React, { useMemo } from "react";
 import { dashboardTypes } from "../../../../commonTypes/DashboardTypes";
@@ -94,6 +94,8 @@ export const AskLLMChatActionBar = (
       </PopupMenu>
       <PopupMenu
         title="Database access"
+        contentClassName="p-1"
+        positioning="above-center"
         button={
           <Btn
             iconPath={mdiDatabase}
@@ -109,6 +111,7 @@ export const AskLLMChatActionBar = (
       >
         <SmartForm
           db={dbs as DBHandlerClient}
+          label=""
           tableName="llm_chats"
           rowFilter={[{ fieldName: "id", value: activeChatId }]}
           tables={prgl.dbsTables}
@@ -117,18 +120,19 @@ export const AskLLMChatActionBar = (
             db_schema_permissions: 1,
             db_data_permissions: 1,
           }}
-          contentClassname="p-1"
           confirmUpdates={false}
+          disabledActions={["delete", "clone", "update"]}
           showJoinedTables={false}
-          jsonbSchemaWithControls={true}
+          contentClassname="p-0"
+          jsonbSchemaWithControls={{ variant: "no-labels" }}
         />
       </PopupMenu>
       <PopupMenu
         title="Prompt"
-        positioning="center"
+        positioning="above-center"
         clickCatchStyle={{ opacity: 1 }}
         onClickClose={false}
-        contentClassName="p-2 flex-col gap-1"
+        contentClassName="p-1 flex-col gap-1"
         button={
           <Btn title="Prompt" {...btnStyleProps}>
             {prompt?.name}
@@ -165,13 +169,15 @@ export const AskLLMChatActionBar = (
       </PopupMenu>
       <Select
         fullOptions={
-          models?.map(({ id, name, provider_id, llm_credentials }) => ({
-            key: id,
-            label: name,
-            subLabel: provider_id,
-            disabledInfo:
-              !llm_credentials.length ? "No credentials" : undefined,
-          })) ?? []
+          models?.map(({ id, name, provider_id, llm_credentials }) => {
+            const noCredentials = !llm_credentials.length;
+            return {
+              key: id,
+              label: name,
+              subLabel: provider_id,
+              disabledInfo: noCredentials ? "No credentials" : undefined,
+            };
+          }) ?? []
         }
         size="small"
         btnProps={{

@@ -17,7 +17,9 @@ export const ChatMessage = ({ message: m }: ChatMessageProps) => {
 
   return (
     <FlexCol
-      className={"message gap-0 ai-start " + (m.incoming ? "incoming" : "")}
+      className={
+        "message gap-0 ai-start relative " + (m.incoming ? "incoming" : "")
+      }
       key={id}
     >
       {isLoading ?
@@ -29,7 +31,9 @@ export const ChatMessage = ({ message: m }: ChatMessageProps) => {
         </div>
       : <>
           {messageTopContent}
-          <div className="content-wrapper">{m.message}</div>
+          <div className="content-wrapper" style={{ paddingRight: "2em" }}>
+            {m.message}
+          </div>
         </>
       }
     </FlexCol>

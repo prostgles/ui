@@ -103,7 +103,11 @@ const useSmartFieldForeignKeyOptionsState = ({
 
     /** Show insert if can insert to ftable AND can update column that references ftable */
     const showInsertState =
-      column.update && enableInsert && ftableHandler?.insert ?
+      (
+        (action === "insert" || (action === "update" && column.update)) &&
+        enableInsert &&
+        ftableHandler?.insert
+      ) ?
         {
           ftable,
           ftableInfo,
@@ -127,6 +131,7 @@ const useSmartFieldForeignKeyOptionsState = ({
     return {
       showSearchState,
       showInsertState,
+      ftableInfo,
     };
   }, [
     column,

@@ -122,12 +122,16 @@ export const askLLM = async (
       },
     );
   }
-
+  await dbs.llm_chats.update(
+    { id: chatId },
+    {
+      is_loading: new Date(),
+    },
+  );
   const aiResponseMessage = await dbs.llm_messages.insert(
     {
       user_id: null,
       chat_id: chatId,
-      is_loading: true,
       message: [{ type: "text", text: "" }],
     },
     { returning: "*" },
@@ -201,7 +205,6 @@ export const askLLM = async (
     await dbs.llm_messages.update(
       { id: aiResponseMessage.id },
       {
-        is_loading: false,
         message: llmResponseMessage,
         meta,
       },
@@ -216,8 +219,14 @@ export const askLLM = async (
       { id: aiResponseMessage.id },
       {
         message: [{ type: "text", text: messageText }],
-        is_loading: false,
       },
     );
   }
+
+  await dbs.llm_chats.update(
+    { id: chatId },
+    {
+      is_loading: null,
+    },
+  );
 };

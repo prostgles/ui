@@ -2,23 +2,23 @@ import type { ValidatedColumnInfo } from "prostgles-types";
 import type { FieldConfig } from "./SmartCard";
 
 export const getSelectForFieldConfigs = (
-  fcs?: FieldConfig<any>[],
+  fieldConfigs?: FieldConfig<any>[],
   columns?: ValidatedColumnInfo[],
 ) => {
-  if (!fcs) return "*";
-  const result = fcs
-    .filter((f) => {
+  if (!fieldConfigs) return "*";
+  const result = fieldConfigs
+    .filter((fieldConfig) => {
       if (columns) {
         if (
           columns.some((c) =>
-            typeof f === "string" ?
-              c.name === f
-            : f.select || f.name === c.name,
+            typeof fieldConfig === "string" ?
+              c.name === fieldConfig
+            : fieldConfig.select || fieldConfig.name === c.name,
           )
         ) {
           return true;
         }
-        console.warn("Bad/invalid column name provided: ", f);
+        console.warn("Bad/invalid column name provided: ", fieldConfig);
         return false;
       }
       return true;
