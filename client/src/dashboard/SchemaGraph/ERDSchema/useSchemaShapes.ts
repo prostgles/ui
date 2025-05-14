@@ -8,7 +8,10 @@ import type {
 } from "../../Charts/CanvasChart";
 import { measureText } from "../../Charts/measureText";
 import { getCssVariableValue } from "../../Charts/onRenderTimechart";
-import type { DBSchemaTableWJoins } from "../../Dashboard/dashboardUtils";
+import type {
+  DBSchemaTableColumn,
+  DBSchemaTableWJoins,
+} from "../../Dashboard/dashboardUtils";
 import type { ERDSchemaProps } from "./ERDSchema";
 import { useFetchSchemaForDiagram } from "./useFetchSchemaForDiagram";
 import { CASCADE_LEGEND } from "../SchemaGraphControls";
@@ -39,7 +42,6 @@ export const useSchemaShapes = (
     const ICON_SIZE = 30;
     const COL_ICON_SIZE = 20;
     const PADDING = 10;
-    const RECT_PADDING = 10;
     const nodeShapes = tablesWithPositions
       .map((table, i) => {
         const offset = 50 * i;
@@ -90,12 +92,18 @@ export const useSchemaShapes = (
         const colsAndDataTypes = columns.map((c, i) => {
           const colYOffset = COL_SPACING * (i + 2);
 
+          let textFillStyle = getCssVariableValue("--text-0");
+          if (columnColorMode === "root" && c.references?.length) {
+            textFillStyle =
+              getRootTable(c.references, tablesWithPositions)?.rootColor ??
+              textFillStyle;
+          }
           const colName = getMeasuredChartedText({
             id: `${table.name}-${c.name}-col`,
             type: "text",
             coords: [PADDING, colYOffset],
             text: c.name,
-            fillStyle: getCssVariableValue("--text-0"),
+            fillStyle: textFillStyle,
             font: "18px sans-serif",
           });
 
@@ -208,7 +216,7 @@ export const useSchemaShapes = (
       });
 
     const linkShapes: LinkLine[] = fkeys
-      .flatMap((fkCons, i) => {
+      .flatMap((fkCons) => {
         const tbl = nodeShapes.find(
           (n) => n.id === fkCons.table_name && fkCons.schema === "public",
         );
@@ -265,4 +273,48 @@ export const useSchemaShapes = (
     shapesVersion,
     dbConfId,
   };
+};
+
+import type { ValidatedColumnInfo } from "prostgles-types";
+const getRootTable = <T extends DBSchemaTableWJoins>(
+  references: ValidatedColumnInfo["references"],
+  tables: T[],
+  prevTables: string[] = [],
+): T | undefined => {
+  if (!references) return;
+  const nextReferences: ValidatedColumnInfo["references"][] = [];
+  for (const ref of references) {
+    const table = tables.find((t) => t.name === ref.ftable);
+    if (!table) continue;
+    const referencedColumns = table.columns.filter(({ name }) =>
+      ref.fcols.includes(name),
+    );
+    if (referencedColumns.some(({ is_pkey }) => is_pkey)) {
+      return table;
+    }
+    referencedColumns.forEach((c) => {
+      nextReferences.push(c.references);
+    });
+    if (
+      referencedColumns.every(
+        (c) =>
+          c.is_pkey ||
+          (!c.references &&
+            table.info.uniqueColumnGroups?.some((cg) => cg.includes(c.name))),
+      )
+    ) {
+      return table;
+    }
+  }
+  for (const ref1 of nextReferences) {
+    for (const ref2 of ref1 ?? []) {
+      const result = getRootTable([ref2], tables, [
+        ...prevTables,
+        ...ref2.ftable,
+      ]);
+      if (result) {
+        return result;
+      }
+    }
+  }
 };

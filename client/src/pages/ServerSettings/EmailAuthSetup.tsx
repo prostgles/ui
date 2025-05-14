@@ -55,6 +55,7 @@ export const EmailAuthSetup = ({
         <SwitchToggle
           className="ml-auto"
           checked={!!authProviders.email?.enabled}
+          data-command="EmailAuthSetup.toggle"
           disabledInfo={
             !onToggle &&
             t.EmailAuthSetup["Must configure the email provider first"]

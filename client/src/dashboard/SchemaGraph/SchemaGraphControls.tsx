@@ -98,7 +98,7 @@ export const SchemaGraphControls = ({
   );
 };
 
-export const useSchemaGraphControls = (props: SchemaGraphProps) => {
+export const useSchemaGraphControls = () => {
   const [displayMode, setDisplayMode] = useState<SchemaGraphDisplayMode>("all");
   const [columnDisplayMode, setColumnDisplayMode] =
     useState<ColumnDisplayMode>("all");

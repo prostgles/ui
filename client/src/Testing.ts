@@ -129,13 +129,20 @@ export const COMMANDS = {
   "TablePermissionControls.close": "",
   "TablePermissionControls.done": "",
 
-  "connections.add": "add",
+  Connections: "",
+  "Connections.add": "add",
+  "Connections.new": " ",
 
+  "Connection.closeAllWindows": "",
+  "Connection.statusMonitor": "",
+  "Connection.configure": "",
   "Connection.edit": "",
   "Connection.edit.updateOrCreateConfirm": "",
   "Connection.edit.delete": "",
   "Connection.edit.delete.dropDatabase": "",
   "Connection.edit.delete.confirm": "",
+
+  "Connection.disconnect": "",
 
   "ConnectionServer.add": "",
   "ConnectionServer.add.newDatabase": "",
@@ -272,7 +279,9 @@ export const COMMANDS = {
   "EmailAuthSetup.SignupType": "",
   EmailAuthSetup: "",
   "EmailAuthSetup.error": "",
+  "EmailAuthSetup.toggle": "",
   EmailSMTPAndTemplateSetup: "",
+  "EmailSMTPAndTemplateSetup.save": "",
   "Login.toggle": "",
   AuthNotifPopup: "",
   "ProstglesSignup.continue": "",
@@ -285,6 +294,14 @@ export const COMMANDS = {
   "AddMCPServer.Open": "",
   "AddMCPServer.Add": "",
   "LLMChatOptions.MCPTools": "",
+  ConnectionsOptions: "",
+  "ConnectionsOptions.showStateDatabase": "",
+  "ConnectionsOptions.showDatabaseNames": "",
+  "AuthProviderSetup.websiteURL": "",
+  "AuthProviderSetup.defaultUserType": "",
+  "AuthProviders.list": "",
+  EmailSMTPSetup: "",
+  EmailTemplateSetup: "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 
@@ -299,4 +316,7 @@ export const dataCommand = (cmd: Command): { "data-command": Command } => ({
 });
 export const getCommandElemSelector = (cmd: Command) => {
   return `[data-command=${JSON.stringify(cmd)}]`;
+};
+export const getDataKeyElemSelector = (key: string) => {
+  return `[data-key=${JSON.stringify(key)}]`;
 };

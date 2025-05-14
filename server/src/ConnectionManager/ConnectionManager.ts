@@ -2,7 +2,6 @@ import type { Express } from "express";
 import type { Server as httpServer } from "http";
 import path from "path";
 import type pg from "pg-promise/typescript/pg-subset";
-import type prostgles from "prostgles-server";
 import type { DBOFullyTyped } from "prostgles-server/dist/DBSchemaBuilder";
 import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import type { DB } from "prostgles-server/dist/Prostgles";
@@ -10,9 +9,9 @@ import type {
   FileTableConfig,
   ProstglesInitOptions,
 } from "prostgles-server/dist/ProstglesTypes";
-import type { VoidFunction } from "prostgles-server/dist/SchemaWatch/SchemaWatch";
+import type { InitResult } from "prostgles-server/dist/initProstgles";
 import type { SubscriptionHandler } from "prostgles-types";
-import { getKeys, isEqual, pickKeys } from "prostgles-types";
+import { pickKeys } from "prostgles-types";
 import type { DefaultEventsMap, Server } from "socket.io";
 import type { DBGeneratedSchema } from "../../../commonTypes/DBGeneratedSchema";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
@@ -21,10 +20,8 @@ import {
   ROUTES,
   getConnectionPaths,
 } from "../../../commonTypes/utils";
-import type {
-  AuthSetupData,
-  AuthSetupDataListener,
-} from "../authConfig/subscribeToAuthSetupChanges";
+import type { SUser } from "../authConfig/sessionUtils";
+import type { AuthSetupDataListener } from "../authConfig/subscribeToAuthSetupChanges";
 import { getDbConnection } from "../connectionUtils/testDBConnection";
 import { getRootDir } from "../electronConfig";
 import type { Connections, DBS, DatabaseConfigs } from "../index";
@@ -39,9 +36,6 @@ import {
 } from "./connectionManagerUtils";
 import { saveCertificates } from "./saveCertificates";
 import { startConnection } from "./startConnection";
-import type { InitResult } from "prostgles-server/dist/initProstgles";
-import type { SUser } from "../authConfig/sessionUtils";
-import type { TableConfig } from "prostgles-server/dist/TableConfig/TableConfig";
 export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
 

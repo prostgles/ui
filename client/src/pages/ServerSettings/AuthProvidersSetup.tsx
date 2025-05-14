@@ -121,6 +121,7 @@ export const AuthProviderSetup = ({
       </InfoRow>
       <FlexCol className="p-1 gap-2">
         <FormField
+          data-command="AuthProviderSetup.websiteURL"
           label={t.AuthProviderSetup["Website URL"]}
           hint={t.AuthProviderSetup["Used for redirect uri"]}
           value={global_settings.auth_providers?.website_url}
@@ -133,6 +134,7 @@ export const AuthProviderSetup = ({
         />
         <Select
           label={t.AuthProviderSetup["Default user type"]}
+          data-command="AuthProviderSetup.defaultUserType"
           value={auth_providers?.created_user_type ?? "default"}
           fullOptions={
             userTypes?.map((ut) => ({
@@ -172,7 +174,7 @@ export const AuthProviderSetup = ({
           </InfoRow>
         )}
       </FlexCol>
-      <FlexCol className="gap-0">
+      <FlexCol data-command="AuthProviders.list" className="gap-0">
         <EmailAuthSetup {...authProps} />
         <OAuthProviderSetup provider="google" {...authProps} />
         <OAuthProviderSetup provider="github" {...authProps} />

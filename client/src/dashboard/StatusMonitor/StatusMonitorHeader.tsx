@@ -7,12 +7,12 @@ import ErrorComponent from "../../components/ErrorComponent";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import { InfoRow } from "../../components/InfoRow";
 import PopupMenu from "../../components/PopupMenu";
-import { getServerCoreInfoStr } from "../../pages/Connections/Connections";
 import { isEmpty } from "../../utils";
 import { bytesToSize } from "../Backup/BackupsControls";
 import { useIsMounted } from "../Backup/CredentialSelector";
 import type { StatusMonitorProps } from "./StatusMonitor";
 import { StatusMonitorConnections } from "./StatusMonitorConnections";
+import { getServerCoreInfoStr } from "../../pages/Connections/useConnectionServersList";
 
 export const StatusMonitorHeader = (
   props: StatusMonitorProps & {

@@ -20,11 +20,12 @@ import {
   useCreatePostgresUser,
 } from "./CreatePostgresUser";
 import { t } from "../../i18n/i18nUtils";
+import type { IConnection } from "./useConnections";
 
 type ConnectionServerProps = {
   name: string;
   dbsMethods: PrglState["dbsMethods"];
-  connections: { id: string; db_name: string }[];
+  connections: IConnection[];
   dbs: DBS;
   showCreateText: boolean;
 };
@@ -126,7 +127,7 @@ export const ConnectionServer = ({
       ...serverInfo,
       sampleSchemas,
       databases: databases.map((d) => d.datname),
-      usedDatabases: connections.map((c) => c.db_name),
+      usedDatabases: connections.map((c) => c.db_name).filter(isDefined),
       mainConnection,
       existingConnectionNames: existingConnections
         .map((c) => c.name)

@@ -27,7 +27,6 @@ import RTComp from "../../dashboard/RTComp";
 import { JoinedRecords } from "../../dashboard/SmartForm/JoinedRecords/JoinedRecords";
 import { t } from "../../i18n/i18nUtils";
 import { get } from "../../utils";
-import { getServerInfo } from "../Connections/Connections";
 import { getOS } from "../ElectronSetup/ElectronSetup";
 import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
@@ -539,5 +538,18 @@ export default (props: NewConnectionProps) => {
         navigate(ROUTES.DASHBOARD + "/" + id);
       }}
     />
+  );
+};
+
+const getServerInfo = (
+  c: Pick<DBSSchema["connections"], "db_host" | "db_port" | "db_name">,
+) => {
+  return (
+    <>
+      <div className="shrink-label">
+        {c.db_host || "localhost"}:{c.db_port || "5432"}/{c.db_name}
+      </div>
+      {/* <div>User: {c.db_user}</div> */}
+    </>
   );
 };

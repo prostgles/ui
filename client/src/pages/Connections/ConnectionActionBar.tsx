@@ -27,6 +27,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
       disabledInfo={
         !c.isConnected ? t.ConnectionActionBar["Not connected"] : undefined
       }
+      data-command="Connection.disconnect"
       disabledVariant="no-fade"
       color={c.isConnected ? "green" : undefined}
       className={c.isConnected ? "" : "show-on-trigger-hover"}
@@ -46,6 +47,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
     <>
       <Btn
         title={t.ConnectionActionBar["Close all windows"]}
+        data-command="Connection.closeAllWindows"
         titleAsLabel={isMobile}
         iconPath={mdiLadybug}
         onClickPromise={async () => {
@@ -70,6 +72,8 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
         <PopupMenu
           positioning="fullscreen"
           onClickClose={false}
+          title={t.ConnectionConfig["Status monitor"]}
+          data-command="Connection.statusMonitor"
           button={
             <Btn
               title={t.ConnectionConfig["Status monitor"]}
@@ -92,6 +96,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
         <Btn
           href={ROUTES.CONFIG + "/" + c.id}
           title={t.common["Configure"]}
+          data-command="Connection.configure"
           titleAsLabel={isMobile}
           className=" "
           iconPath={mdiCog}

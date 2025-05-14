@@ -57,11 +57,11 @@ export const ERDSchema = ({
     const newPositions = shapesRef.current
       .filter((s) => s.type === "rectangle")
       .reduce(
-        (acc, s) => ({
+        (acc, { id, coords: [x, y] }) => ({
           ...acc,
-          [s.id as string]: {
-            x: s.coords[0],
-            y: s.coords[1],
+          [id as string]: {
+            x,
+            y,
           },
         }),
         {} as Record<string, { x: number; y: number }>,

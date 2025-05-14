@@ -85,6 +85,7 @@ export const EmailSMTPAndTemplateSetup = (props: P) => {
             className={"w-full"}
             contentClassName="p-1"
             disableFullScreen={true}
+            data-command="EmailSMTPSetup"
           >
             <EmailSMTPSetup
               value={value?.smtp}
@@ -97,6 +98,7 @@ export const EmailSMTPAndTemplateSetup = (props: P) => {
             className={"w-full"}
             contentClassName="p-1"
             disableFullScreen={true}
+            data-command="EmailTemplateSetup"
           >
             <EmailTemplateSetup
               defaultBody={
@@ -126,6 +128,7 @@ export const EmailSMTPAndTemplateSetup = (props: P) => {
         { label: t.common.Cancel, variant: "faded", onClickClose: true },
         {
           label: enabled ? t.common["Test and Save"] : t.common.Save,
+          "data-command": "EmailSMTPAndTemplateSetup.save",
           color: "action",
           variant: "filled",
           disabledInfo: didChange ? undefined : t.common["No changes"],

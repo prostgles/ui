@@ -1,10 +1,10 @@
+import { mdiDatabase } from "@mdi/js";
 import React from "react";
 import Select from "../components/Select/Select";
-import { getServerInfoStr } from "../pages/Connections/Connections";
-import { mdiDatabase } from "@mdi/js";
+import { t } from "../i18n/i18nUtils";
 import type { Connection } from "../pages/NewConnection/NewConnnection";
 import type { DBS } from "./Dashboard/DBS";
-import { t } from "../i18n/i18nUtils";
+import type { DBSSchema } from "../../../commonTypes/publishUtils";
 
 type P = {
   dbs: DBS;
@@ -42,4 +42,9 @@ export const ConnectionSelector = ({ connection, dbs, location }: P) => {
       }}
     />
   );
+};
+
+const getServerInfoStr = (c: DBSSchema["connections"], showuser = false) => {
+  const userInfo = showuser && c.db_user ? `${c.db_user}@` : "";
+  return `${userInfo}${c.db_host || "localhost"}:${c.db_port || "5432"}/${c.db_name}`;
 };

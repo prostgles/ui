@@ -14,7 +14,15 @@ export const useFetchSchemaForDiagram = (
     canvasRef: React.RefObject<HTMLCanvasElement>;
   },
 ) => {
-  const { db, dbs, connectionId, tables, columnColorMode } = props;
+  const {
+    db,
+    dbs,
+    connectionId,
+    tables,
+    columnColorMode,
+    columnDisplayMode,
+    displayMode,
+  } = props;
   const { data: dbConf } = dbs.database_configs.useFindOne(
     {
       $existsJoined: {
@@ -24,6 +32,7 @@ export const useFetchSchemaForDiagram = (
       },
     },
     {},
+    { deps: [columnDisplayMode, displayMode, columnColorMode] },
   );
 
   const schemaInfo = usePromise(async () => {

@@ -1,6 +1,6 @@
 import type { ReactChild } from "react";
 import React, { useMemo, useState } from "react";
-import { Navigate, NavLink, Route, Routes as Switch } from "react-router-dom";
+import { Navigate, Route, Routes as Switch } from "react-router-dom";
 import "./App.css";
 import Loading from "./components/Loading";
 import type { CommonWindowProps } from "./dashboard/Dashboard/Dashboard";
@@ -10,7 +10,6 @@ import NewConnnection from "./pages/NewConnection/NewConnnection";
 import { NotFound } from "./pages/NotFound";
 import { ProjectConnection } from "./pages/ProjectConnection/ProjectConnection";
 
-import { mdiAlertOutline } from "@mdi/js";
 import ErrorComponent from "./components/ErrorComponent";
 import UserManager from "./dashboard/UserManager";
 import { Account } from "./pages/Account/Account";
@@ -26,11 +25,10 @@ import type { ProstglesState } from "../../commonTypes/electronInitTypes";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import { fixIndent, ROUTES } from "../../commonTypes/utils";
 import { createReactiveState, useReactiveState } from "./appUtils";
-import Btn from "./components/Btn";
+import { CommandSearch } from "./app/CommandSearch";
 import { FlexCol } from "./components/Flex";
 import { InfoRow } from "./components/InfoRow";
 import { NavBarWrapper } from "./components/NavBar/NavBarWrapper";
-import PopupMenu from "./components/PopupMenu";
 import type { DBS, DBSMethods } from "./dashboard/Dashboard/DBS";
 import { MousePointer } from "./demo/MousePointer";
 import { ComponentList } from "./pages/ComponentList";
@@ -39,6 +37,7 @@ import { Login } from "./pages/Login/Login";
 import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./theme/useAppTheme";
 import { useAppState } from "./useAppState/useAppState";
+import { XRealIpSpoofableAlert } from "./app/XRealIpSpoofableAlert";
 
 export type ClientUser = {
   sid: string;
@@ -161,31 +160,11 @@ export const App = () => {
       </FlexCol>
     );
   }
-  const user = state.user;
 
   return (
     <FlexCol key={prglState.dbsKey} className={`App gap-0 f-1 min-h-0`}>
-      {serverState.xRealIpSpoofable && user?.type === "admin" && (
-        <PopupMenu
-          button={
-            <Btn color="danger" iconPath={mdiAlertOutline} variant="filled">
-              {t["App"]["Security issue"]}
-            </Btn>
-          }
-          style={{ position: "fixed", right: 0, top: 0, zIndex: 999999 }}
-          positioning="beneath-left-minfill"
-          clickCatchStyle={{ opacity: 0.5 }}
-          content={
-            <InfoRow>
-              Failed login rate limiting is based on x-real-ip header which can
-              be spoofed based on your current connection.{" "}
-              <NavLink to={ROUTES.SERVER_SETTINGS}>
-                {t["App"]["Settings"]}
-              </NavLink>
-            </InfoRow>
-          }
-        />
-      )}
+      <CommandSearch />
+      <XRealIpSpoofableAlert {...state} />
       {demoStarted && <MousePointer />}
       {isDisconnected && (
         <Loading
