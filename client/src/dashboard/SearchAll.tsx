@@ -39,30 +39,6 @@ export const SEARCH_TYPES = [
   { key: "commands", label: "SQL Snippets" },
 ] as const;
 
-function triggerCommand(attrPath: string[]) {
-  const elem = document.querySelector<HTMLElement>(
-    `[data-command="${attrPath[0]}"]`,
-  );
-  if (elem) {
-    elem.focus();
-    setTimeout(() => {
-      elem.click();
-      attrPath.shift();
-      if (attrPath.length) {
-        triggerCommand(attrPath);
-      }
-    }, 500);
-  } else {
-    console.error("Could not find command trigger elem", attrPath);
-  }
-}
-
-type COMMAND = {
-  label: string;
-  info: string;
-  trigger: () => void;
-};
-
 export type DBObject = {
   name: string;
   info: string;

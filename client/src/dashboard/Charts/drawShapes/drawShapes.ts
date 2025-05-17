@@ -93,9 +93,6 @@ export const drawShapes = (
                 ),
               };
             }
-            // if (cs.type === "linkline") {
-            //   throw new Error("linkline not supported in child shapes");
-            // }
             return {
               ...cs,
               opacity: (cs.opacity ?? 1) * (s.opacity ?? 1),

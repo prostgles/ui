@@ -1,4 +1,4 @@
-import { mdiAlertCircleOutline, mdiClose } from "@mdi/js";
+import { mdiAlertCircleOutline, mdiAlertOutline, mdiClose } from "@mdi/js";
 import type { ReactNode } from "react";
 import React from "react";
 import { isObject } from "../../../commonTypes/publishUtils";
@@ -99,9 +99,11 @@ export default class ErrorComponent extends React.Component<P> {
         }}
       >
         {withIcon && (
-          <Icon size={1} className="as-start" path={mdiAlertCircleOutline} />
+          <Icon size={1} className="as-start" path={mdiAlertOutline} />
         )}
-        <FlexCol className={"gap-1 " + (noScroll ? "ws-break" : "o-auto")}>
+        <FlexCol
+          className={"gap-1 as-center " + (noScroll ? "ws-break" : "o-auto")}
+        >
           {title && <div className="font-18 bold">{title}</div>}
           {(parsedError(error, findMsg) + "").slice(0, maxTextLength)}
         </FlexCol>

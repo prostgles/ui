@@ -261,7 +261,8 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
             {
               type: {
                 title: "Type",
-                description: "Cannot interact with any data from the database",
+                description:
+                  "Cannot interact with any data from the database. This excludes the schema read access which is controlled separately",
                 enum: ["None"],
               },
             },

@@ -31,6 +31,7 @@ import { tableConfig } from "../tableConfig/tableConfig";
 import { insertStateDatabase } from "./insertStateDatabase";
 import { startDevHotReloadNotifier } from "./startDevHotReloadNotifier";
 import { getProstglesState } from "./tryStartProstgles";
+import { getSerialisableError } from "prostgles-types";
 
 type StartArguments = {
   app: Express;
@@ -99,7 +100,8 @@ export const startProstgles = async ({
     } catch (connError) {
       return {
         state: "error",
-        error: getErrorAsObject(connError),
+        error:
+          getSerialisableError(connError) ?? "State database connection error",
         errorType: "connection",
       };
     }
@@ -127,7 +129,6 @@ export const startProstgles = async ({
         const user = await getUser();
         const userId = user.user?.id;
         const sid = user.sid;
-
         // await securityManager.onSocketConnected({
         //   sid,
         // });

@@ -5,68 +5,73 @@ export const connectionsUIDoc = {
   type: "page",
   path: "connections",
   title: "Connections",
-  description: "Connections",
+  description:
+    "Manage your database connections. View, add, or edit connections to your databases.",
   children: [
     {
       type: "link",
       title: "New connection",
+      description: "Opens the form to add a new database connection.",
       selector: getCommandElemSelector("Connections.new"),
-      description: "Add a new database connection",
-      children: [],
+      pagePath: "/new-connection",
     },
     {
       type: "popup",
-      title: "",
+      title: "Display options",
+      description:
+        "Customize how the list of connections is displayed (e.g., show/hide state database, show database names).",
       selector: getCommandElemSelector("ConnectionsOptions"),
-      description: "Connections list display/filter options",
       children: [
         {
           type: "input",
           title: "Show state connection",
+          description:
+            "If checked, displays the internal 'Prostgles UI state' connection which stores application metadata and dashboard data.",
           selector: getCommandElemSelector(
             "ConnectionsOptions.showStateDatabase",
           ),
           inputType: "checkbox",
-          description: "Show state connection",
         },
         {
           type: "input",
           title: "Show database names",
+          description:
+            "If checked, displays the specific database name along with the connection name.",
           selector: getCommandElemSelector(
             "ConnectionsOptions.showDatabaseNames",
           ),
           inputType: "checkbox",
-          description: "Show database names",
         },
       ],
     },
     {
       type: "list",
-      title: "Connections list",
+      title: "List",
+      description: "List of available connections",
       selector: getCommandElemSelector("Connections") + " .Connections_list",
-      description: "List of connections",
       itemSelector: ".Connection",
       itemContent: [
         {
           type: "link",
           selector: "a",
-          title: "Connection",
-          description: "Connection list item",
-          children: [],
+          title: "Open Connection",
+          description:
+            "Opens the selected database connection on the default workspace.",
+          pagePath: "/connections/:connectionId",
         },
         {
           type: "button",
-          title: "Close all windows",
+          title: "Debug: Close All Windows",
           selector: getCommandElemSelector("Connection.closeAllWindows"),
           description:
-            "Used in rare cases when there is an issue/bug crashing the workspace. Closes all windows for all workspaces in this connection",
+            "Force-closes all windows/tabs for this connection. Use if the workspace becomes unresponsive or encounters a bug.",
         },
         {
           type: "popup",
           title: "Status monitor",
           selector: getCommandElemSelector("Connection.statusMonitor"),
           description:
-            "Shows running queries, system load and information CPU/RAM/Disk usage, etc.",
+            "View real-time statistics, running queries, and system resource usage (CPU, RAM, Disk) for this connection.",
           children: [],
         },
         {
@@ -74,23 +79,23 @@ export const connectionsUIDoc = {
           title: "Configuration page",
           selector: getCommandElemSelector("Connection.configure"),
           description:
-            "Connection configuration (access control, file storage, backup/restore, server-side functions)",
-          children: [],
+            "Access and modify settings for this connection, such as access control, file storage, backup/restore options, and server-side functions.",
+          pagePath: "/connection-config/:connectionId",
         },
         {
           type: "link",
-          title: "Connection details",
+          title: "Edit connection details",
           selector: getCommandElemSelector("Connection.edit"),
           description:
-            "Connection details edit (database name, host, port, etc.). Can also be used to delete or clone the connection",
-          children: [],
+            "Modify the connection parameters (e.g., display name, database details like host and port). Also allows deleting or cloning the connection.",
+          pagePath: "/edit-connection/:connectionId",
         },
         {
           type: "button",
           title: "Status indicator/Disconnect",
           selector: getCommandElemSelector("Connection.disconnect"),
           description:
-            "Status indicator. Green = connected, can click to disconnect",
+            "Shows the current connection status (green indicates connected). Click to disconnect from the database.",
         },
       ],
     },

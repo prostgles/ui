@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { getFileText } from "../W_SQL/W_SQLMenu";
 import type { DashboardMenuProps, DashboardMenuState } from "./DashboardMenu";
 import { getKeys } from "../../utils";
+import { includes } from "../W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 
 type P = Pick<DashboardMenuProps, "loadTable"> & {
   setShowSearchAll: React.Dispatch<
@@ -15,7 +16,7 @@ export const DashboardMenuHotkeys = ({ loadTable, setShowSearchAll }: P) => {
     const onKeyDown = (e) => {
       const term = window.getSelection()?.toString()?.trim();
       const mode = getHotkey(e);
-      if (mode && mode !== "rows" && mode !== "open file") {
+      if (mode && !includes(mode, ["rows", "open file", "commands"])) {
         e.preventDefault();
         setShowSearchAll({ mode, term });
       }

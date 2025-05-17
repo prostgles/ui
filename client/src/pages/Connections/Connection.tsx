@@ -1,24 +1,27 @@
 import { mdiAccountMultiple } from "@mdi/js";
 import React from "react";
 import { NavLink } from "react-router-dom";
-import type { ExtraProps, Prgl } from "../../App";
+import { ROUTES } from "../../../../commonTypes/utils";
+import type { ExtraProps } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol, FlexRowWrap } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
 import { WspIconPath } from "../../dashboard/AccessControl/ExistingAccessRules";
-import { ConnectionActionBar } from "./ConnectionActionBar";
-import type { AdminConnectionModel, BasicConnectionModel } from "./Connections";
-import { ROUTES } from "../../../../commonTypes/utils";
 import { t } from "../../i18n/i18nUtils";
+import { ConnectionActionBar } from "./ConnectionActionBar";
+import type {
+  AdminConnectionModel,
+  BasicConnectionModel,
+} from "./useConnections";
 
 export type ConnectionProps = (
   | {
-      c: AdminConnectionModel;
+      connection: AdminConnectionModel;
       isAdmin: true;
     }
   | {
-      c: BasicConnectionModel;
+      connection: BasicConnectionModel;
       isAdmin: false;
     }
 ) &
@@ -30,14 +33,14 @@ const getConnectionPath = (cid: string, wid?: string) =>
   `${ROUTES.DASHBOARD}/${cid}` + (wid ? `?workspaceId=${wid}` : "");
 
 export const Connection = (props: ConnectionProps) => {
-  const { c, isAdmin } = props;
+  const { connection, isAdmin } = props;
   const noWorkspaceAndCannotCreateOne =
-    !c.workspaces.length && !(props.dbs.workspaces as any).insert;
+    !connection.workspaces.length && !(props.dbs.workspaces as any).insert;
 
   if (noWorkspaceAndCannotCreateOne) {
     return (
       <InfoRow className="shadow bg-color-0">
-        <strong>{c.id}</strong>
+        <strong>{connection.id}</strong>
         <div>
           Issue with connection permissions: No published workspace and not
           allowed to create workspaces
@@ -47,47 +50,47 @@ export const Connection = (props: ConnectionProps) => {
   }
 
   const showWorkspaces =
-    !!c.workspaces.length &&
-    c.workspaces.map((w) => w.name).join("") !== "default";
+    !!connection.workspaces.length &&
+    connection.workspaces.map((w) => w.name).join("") !== "default";
 
-  const showAccessInfo = isAdmin && c.access_control.length > 0;
+  const showAccessInfo = isAdmin && connection.access_control.length > 0;
 
   /** Remove published workspaces that have been cloned */
-  const workspaces = c.workspaces.filter((w) => {
-    return !c.workspaces.some(
+  const workspaces = connection.workspaces.filter((w) => {
+    return !connection.workspaces.some(
       (pw) => pw.id === w.parent_workspace_id && pw.name === w.name,
     );
   });
 
   return (
     <FlexCol
-      key={c.id}
+      key={connection.id}
       className={"Connection gap-0 bg-color-0 text-black shadow trigger-hover "}
       style={{ minWidth: "250px" }}
-      data-key={c.name}
+      data-key={connection.name}
     >
       <div className="Connection_TOP-CONNECTION-INFO_ACTIONS flex-row  ">
         <NavLink
-          key={c.id}
+          key={connection.id}
           className={
             "LEFT-CONNECTIONINFO no-decor flex-col min-w-0 text-ellipsis f-1 text-active-hover "
           }
-          to={getConnectionPath(c.id)}
+          to={getConnectionPath(connection.id)}
         >
           <div className="flex-col gap-p5 p-1 h-full">
             <FlexRowWrap className="gap-1">
               <div
                 className="text-ellipsis font-20 text-0"
-                title={(isAdmin ? c.db_name : c.name) || ""}
+                title={(isAdmin ? connection.db_name : connection.name) || ""}
               >
-                {isAdmin ? c.name : c.name || c.id}
+                {isAdmin ? connection.name : connection.name || connection.id}
               </div>
               {isAdmin && !!props.showDbName && (
                 <div
                   title="Database name"
                   className="text-2 text-ellipsis font-16"
                 >
-                  {c.db_name}
+                  {connection.db_name}
                 </div>
               )}
             </FlexRowWrap>
@@ -98,7 +101,7 @@ export const Connection = (props: ConnectionProps) => {
             {c.db_user}
           </InfoRow>} */}
 
-            {isAdmin && c.is_state_db && (
+            {isAdmin && connection.is_state_db && (
               <InfoRow variant="naked" iconPath="" color="warning">
                 {
                   t.Connection[
@@ -131,7 +134,7 @@ export const Connection = (props: ConnectionProps) => {
                   className="w-fit"
                   color="action"
                   asNavLink={true}
-                  href={getConnectionPath(c.id, w.id)}
+                  href={getConnectionPath(connection.id, w.id)}
                 >
                   {w.name || <em>Workspace</em>}
                 </Btn>
@@ -142,14 +145,14 @@ export const Connection = (props: ConnectionProps) => {
           {showAccessInfo && (
             <Btn
               className="as-end ml-auto"
-              title={`${t.Connections["Access granted to "]}${pluralisePreffixed(c.allowedUsers, "user")} `}
+              title={`${t.Connections["Access granted to "]}${pluralisePreffixed(connection.allowedUsers, "user")} `}
               iconPath={mdiAccountMultiple}
               iconPosition="right"
               color="action"
               asNavLink={true}
-              href={`/connection-config/${c.id}?section=access_control`}
+              href={`/connection-config/${connection.id}?section=access_control`}
             >
-              {c.allowedUsers}
+              {connection.allowedUsers}
             </Btn>
           )}
         </FlexRowWrap>

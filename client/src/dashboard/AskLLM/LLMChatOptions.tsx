@@ -1,4 +1,4 @@
-import { mdiCogOutline, mdiTools } from "@mdi/js";
+import { mdiCogOutline } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useMemo, useState } from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
@@ -6,9 +6,7 @@ import type { Prgl } from "../../App";
 import Btn from "../../components/Btn";
 import { FlexCol } from "../../components/Flex";
 import Popup from "../../components/Popup/Popup";
-import PopupMenu from "../../components/PopupMenu";
 import { t } from "../../i18n/i18nUtils";
-import { MCPServers } from "../../pages/ServerSettings/MCPServers/MCPServers";
 import { SmartForm, type SmartFormProps } from "../SmartForm/SmartForm";
 
 export type LLMChatOptionsProps = Pick<
@@ -57,6 +55,7 @@ export const LLMChatOptions = (props: LLMChatOptionsProps) => {
         variant="icon"
         iconPath={mdiCogOutline}
         onClick={() => setAnchorEl(anchorEl ? undefined : chatRootDiv)}
+        data-command="LLMChatOptions.toggle"
       />
       {anchorEl && (
         <Popup

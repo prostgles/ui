@@ -20,7 +20,7 @@ export type SchemaGraphProps = Pick<Prgl, "connectionId"> & {
 
 export const SchemaGraph = (props: SchemaGraphProps) => {
   const [showSchemaDiagram, setShowSchemaDiagram] = useState(false);
-  const controlState = useSchemaGraphControls(props);
+  const controlState = useSchemaGraphControls();
   return (
     <>
       <Btn

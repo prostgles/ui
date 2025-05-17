@@ -187,6 +187,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           className="m-2"
           color="action"
           variant="filled"
+          data-command="AskLLMChat.NewChat"
         >
           Start new chat
         </Btn>

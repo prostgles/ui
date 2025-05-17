@@ -5,7 +5,7 @@ export type ProstglesInitState<T extends Record<string, unknown> = Record<string
     error?: undefined;
     state: "ok";
 } & T) | {
-    error: Error | string | Record<string, any>;
+    error: Error | string | number | bigint | Record<string, any>;
     state: "error";
     errorType: "init" | "connection";
 };

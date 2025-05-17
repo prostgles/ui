@@ -1,6 +1,7 @@
 import { Page as PG, Locator, expect } from "@playwright/test";
 import { Command, dataCommand } from "./Testing";
 import * as path from "path";
+import * as fs from "fs";
 
 type FuncNamesReturningLocatorObj = {
   [prop in keyof PG as PG[prop] extends (...args: any) => any ?
@@ -821,4 +822,15 @@ export const getLLMResponses = async (page: PageWIds, questions: string[]) => {
   }
   await page.getByTestId("Popup.close").click();
   return result;
+};
+
+export const saveSVGScreenshot = async (page: PageWIds, fileName: string) => {
+  const svg = await page.evaluate(() => {
+    //@ts-ignore
+    return window.toSVG(document.body);
+  });
+  if (!svg) throw "SVG not found";
+  const filePath = path.join(__dirname, "../../docs", fileName + ".svg");
+  fs.writeFileSync(filePath, svg, { encoding: "utf8" });
+  return svg;
 };

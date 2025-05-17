@@ -63,12 +63,13 @@ export const Connections = (props: PrglState) => {
             />
             <div className="flex-col gap-p5 ">
               {conns.map((c) => (
+                //@ts-ignore
                 <Connection
                   key={c.id}
                   {...props}
-                  c={c}
+                  connection={c}
                   showDbName={showDbNames}
-                  isAdmin={isAdmin as any}
+                  isAdmin={isAdmin}
                 />
               ))}
             </div>

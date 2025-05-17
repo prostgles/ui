@@ -29,6 +29,8 @@ export const WorkspaceSettings = ({
       }}
       clickCatchStyle={{ opacity: 1 }}
       onClickClose={false}
+      positioning="top-center"
+      data-command="WorkspaceSettings"
       button={
         <Btn
           title="Workspace settings"

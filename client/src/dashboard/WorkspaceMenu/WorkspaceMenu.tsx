@@ -21,6 +21,7 @@ import "./WorkspaceMenu.css";
 import { WorkspaceSettings } from "./WorkspaceSettings";
 import { cloneWorkspace } from "../Dashboard/cloneWorkspace";
 import { ROUTES } from "../../../../commonTypes/utils";
+import type { Command } from "../../Testing";
 
 type P = {
   workspace: WorkspaceSyncItem;
@@ -251,6 +252,7 @@ export const WorkspaceMenu = (props: P) => {
       <ul
         className={"o-auto f-1 min-w-0 max-w-fit flex-row no-scroll-bar ai-end"}
         onWheel={onWheelScroll()}
+        data-command={"WorkspaceMenu.list" satisfies Command}
       >
         {renderedWorkspaces.map((w) => (
           <li

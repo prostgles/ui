@@ -52,7 +52,7 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
               />
             : <ElectronSetupStateDB state={state} />}
 
-            {!loading && error && (
+            {Boolean(!loading && error) && (
               <ErrorComponent
                 className="rounded f-0"
                 style={{ background: "#fde8e8" }}

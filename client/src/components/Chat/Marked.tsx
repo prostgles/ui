@@ -14,10 +14,6 @@ export type MarkedProps = DivProps &
 
 export const Marked = (props: MarkedProps) => {
   const { content, codeHeader, sqlHandler, ...divProps } = props;
-  useEffect(() => {
-    if (!content) return;
-    window.localStorage.setItem("content", content);
-  }, [content]);
 
   const CodeComponent = useCallback(
     ({

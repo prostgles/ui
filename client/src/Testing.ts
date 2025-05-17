@@ -302,6 +302,11 @@ export const COMMANDS = {
   "AuthProviders.list": "",
   EmailSMTPSetup: "",
   EmailTemplateSetup: "",
+  "WorkspaceMenu.list": "",
+  WorkspaceSettings: "",
+  "LLMChatOptions.toggle": "",
+  "LLMChat.select": "",
+  "AskLLMChat.NewChat": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

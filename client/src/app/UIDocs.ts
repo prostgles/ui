@@ -1,3 +1,5 @@
+import { isDefined } from "../utils";
+import { domToSVG } from "./domToSVG/domToSVG";
 import { connectionsUIDoc } from "./ui-docs/connectionsUIDoc";
 import { serverSettingsUIDoc } from "./ui-docs/serverSettingsUIDoc";
 
@@ -25,12 +27,19 @@ export type UIDocElement =
       itemContent: UIDocElement[];
     }>
   | UIDocBase<{
+      type: "select-list";
+    }>
+  | UIDocBase<{
       type: "link";
-      children: UIDocElement[];
+      pagePath: string;
     }>
   | UIDocBase<{
       type: "popup";
       children: UIDocElement[];
+    }>
+  | UIDocBase<{
+      type: "smartform-popup";
+      tableName: string;
     }>
   | UIDocBase<{
       type: "tab" | "accordion-item";
@@ -60,37 +69,52 @@ export const UIDocs = [
 
 const getFlatDocs = (
   doc: UIDocContainers | UIDocElement | undefined,
-  prevDocs: (UIDocContainers | UIDocElement)[] = [],
+  parentDocs: (UIDocContainers | UIDocElement)[] = [],
 ):
   | ({
-      prevTitles: string[];
+      parentTitles: string[];
+      parentDocs: (UIDocContainers | UIDocElement)[];
     } & (UIDocContainers | UIDocElement))[]
   | undefined => {
   if (!doc) return [];
-  const prevTitles = [...prevDocs.map((d) => d.title), doc.title];
+  const parentTitles = parentDocs.map((d) => d.title);
   const children =
     "children" in doc ? doc.children
     : "itemContent" in doc ? doc.itemContent
     : undefined;
-  if (!children) {
+  if (!children?.length) {
     return [
       {
-        prevTitles,
+        parentTitles,
         ...doc,
+        parentDocs,
       },
     ];
   }
-  return children.flatMap((childDoc: UIDocContainers | UIDocElement) => {
-    const flatChildren = getFlatDocs(childDoc, [...prevDocs, doc]) ?? [];
-    return [
-      {
-        prevTitles,
-        ...doc,
-      },
-      ...flatChildren,
-    ];
-  });
+
+  const nextParentDocs = [...parentDocs, doc];
+  const flatChildren = children.flatMap(
+    (childDoc: UIDocContainers | UIDocElement) => {
+      const flatChildren = getFlatDocs(childDoc, nextParentDocs) ?? [];
+      return flatChildren;
+    },
+  );
+  return [
+    {
+      parentTitles,
+      ...doc,
+      parentDocs,
+    },
+    ...flatChildren,
+  ];
 };
 
-export const flatDocs = UIDocs.map((doc) => getFlatDocs(doc));
-console.log(flatDocs);
+export const flatDocs = UIDocs.map((doc) => getFlatDocs(doc))
+  .filter(isDefined)
+  .flat();
+
+window.onkeydown = (e: KeyboardEvent) => {
+  if (!e.shiftKey) return;
+  e.preventDefault();
+  domToSVG(document.body, true);
+};

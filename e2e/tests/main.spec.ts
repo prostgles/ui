@@ -33,6 +33,7 @@ import {
   runDbSql,
   runDbsSql,
   runSql,
+  saveSVGScreenshot,
   selectAndInsertFile,
   setTableRule,
   setWspColLayout,
@@ -163,6 +164,7 @@ test.describe("Main test", () => {
       await disablePwdlessAdminAndCreateUser(page);
     }
     await login(page);
+    await saveSVGScreenshot(page, "connections");
 
     /** Expect the workspace to have users table open */
     await goToWorkspace(false);
@@ -189,9 +191,13 @@ test.describe("Main test", () => {
     await page.getByTestId("SmartForm.delete").waitFor({ state: "visible" });
     await page.getByTestId("SmartForm.close").click();
 
+    await saveSVGScreenshot(page, "dashboard");
+
     /** Schema diagram works */
     await page.getByTestId("SchemaGraph").click();
-
+    await page.waitForTimeout(1e3);
+    const svgstr = await saveSVGScreenshot(page, "schema_diagram");
+    expect(svgstr).toEqual("Prostgles");
     await page
       .getByText("Reset layout")
       .waitFor({ state: "visible", timeout: 15e3 });

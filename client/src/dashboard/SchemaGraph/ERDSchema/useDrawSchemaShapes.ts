@@ -6,6 +6,7 @@ import type { LinkLine, Rectangle } from "../../Charts/CanvasChart";
 import { getCssVariableValue } from "../../Charts/onRenderTimechart";
 import type { ColumnColorMode } from "./ERDSchema";
 import { replayTableRelationships } from "./replayTableRelationships";
+import { drawShapesOnSVG } from "../../Charts/drawShapes/drawShapesOnSVG";
 
 export const minScale = 0.1;
 export const maxScale = 5;
@@ -22,6 +23,7 @@ export const useDrawSchemaShapes = (
     "shapesRef" | "shapesVersion"
   > & {
     canvasRef: React.RefObject<HTMLCanvasElement>;
+    svgRef: React.RefObject<SVGSVGElement>;
     columnColorMode: ColumnColorMode;
   },
 ) => {
@@ -88,6 +90,12 @@ export const useDrawSchemaShapes = (
           scale: scaleRef.current,
           translate: positionRef.current,
         });
+        const _drawn = {
+          shapes: drawnShapes as ShapeV2[],
+          scale: scaleRef.current,
+          translate: positionRef.current,
+        };
+        canvas._drawn = _drawn;
       };
       requestAnimationFrame(render);
     },
@@ -122,3 +130,13 @@ export const useDrawSchemaShapes = (
 
   return { onRenderShapes, positionRef, scaleRef, setScaleAndPosition };
 };
+
+declare global {
+  interface HTMLCanvasElement {
+    _drawn?: {
+      shapes: ShapeV2[];
+      scale: number;
+      translate: { x: number; y: number };
+    };
+  }
+}

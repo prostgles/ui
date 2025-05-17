@@ -50,6 +50,7 @@ export const AskLLMChatHeader = (
         />
         <Select
           title={t.AskLLMChatHeader.Chat}
+          data-command="LLMChat.select"
           fullOptions={
             latestChats?.map((c) => ({
               key: c.id,
@@ -71,6 +72,7 @@ export const AskLLMChatHeader = (
         <Btn
           iconPath={mdiPlus}
           title={t.AskLLMChatHeader["New chat"]}
+          data-command="AskLLMChat.NewChat"
           variant="faded"
           color="action"
           disabledInfo={

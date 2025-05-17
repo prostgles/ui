@@ -204,7 +204,6 @@ export const startConnection = async function (
             "3D000": "Database does not exist",
             "28P01": "Invalid authentication credentials",
           };
-          console.error("onConnectionError", error);
           const errorCode = (error as AnyObject | undefined)?.code as string;
           if (errorCode && errorCode in nonReconnectableErrorCodes) {
             // void this.startConnection(con.id, dbs, _dbs, undefined, true);

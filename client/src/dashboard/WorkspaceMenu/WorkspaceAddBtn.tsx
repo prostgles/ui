@@ -63,6 +63,7 @@ export const WorkspaceAddBtn = ({
       }}
       autoFocusFirst={"content"}
       positioning="inside"
+      data-command="WorkspaceAddBtn"
       button={
         <Btn
           title="Add new workspace"

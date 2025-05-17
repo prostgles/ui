@@ -148,12 +148,19 @@ export const App = () => {
   const initStateError = initState?.state === "error" ? initState : undefined;
   if (error || !prglState || !serverState || !extraProps) {
     const hint =
-      initStateError?.errorType && errorHints[initStateError.errorType];
+      state.dbsClientError ?
+        errorHints.dbsClientError
+      : initStateError?.errorType && errorHints[initStateError.errorType];
     return (
       <FlexCol className="m-auto ai-center jc-center max-w-700 p-2">
-        <ErrorComponent error={error} />
+        <ErrorComponent
+          error={error}
+          variant="outlined"
+          className="p-2"
+          withIcon={true}
+        />
         {hint && (
-          <InfoRow color="warning" variant="filled">
+          <InfoRow color="warning" variant="naked">
             {hint}
           </InfoRow>
         )}
@@ -301,6 +308,8 @@ const errorHints = {
     environment variables) point to a running and accessible postgres
     server database`),
   init: "Failed to start Prostgles",
+  dbsClientError:
+    "Failed to connect to state database. Try refreshing the page or restarting the app.",
 };
 
 export * from "./appUtils";
