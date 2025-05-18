@@ -31,11 +31,8 @@ const CloseButton = ({
   if (!onClose || !tabId) return null;
   return (
     <Btn
-      className="SilverGridChild_CloseButton show-on-parent-hover"
-      style={{
-        width: "22px",
-        height: "22px",
-      }}
+      className="SilverGridChild_CloseButton show-on-parent-hover f-0"
+      size="micro"
       iconProps={{
         size: 0.75,
         path: mdiClose,
@@ -150,6 +147,8 @@ export const SilverGridChildHeader = (props: P) => {
               style={{
                 height: `${height}px`,
                 lineHeight: `${lineHeight + 2}px`,
+                /** Prevent total collapse when there is not enough space */
+                minWidth: "120px",
                 marginTop: "2px",
                 /** Used to prevent unexpected scroll of tab headers */
                 overflowY: "hidden",

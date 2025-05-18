@@ -2,12 +2,13 @@ import type { SVGContext } from "../../../app/domToSVG/elementToSVG";
 import { addImageFromDataURL } from "../../../app/domToSVG/imgToSVG";
 import type { Point } from "../../Charts";
 import type { LinkLine, Rectangle } from "../CanvasChart";
+import { DEFAULT_SHADOW } from "../roundRect";
 import type { ShapeV2 } from "./drawShapes";
 
 export const drawShapesOnSVG = (
   shapes: ShapeV2<any>[],
   context: SVGContext,
-  mainGroup: SVGGElement,
+  g: SVGGElement,
   opts?: {
     scale?: number;
     translate?: { x: number; y: number };
@@ -21,7 +22,7 @@ export const drawShapesOnSVG = (
   if (opts?.scale) {
     transform += ` scale(${opts.scale})`;
   }
-  mainGroup.setAttribute("transform", transform);
+  g.setAttribute("transform", transform);
 
   shapes.forEach((s) => {
     const opacity = s.opacity !== undefined ? s.opacity : 1;
@@ -29,29 +30,23 @@ export const drawShapesOnSVG = (
     if (s.type === "image") {
       const [x, y] = s.coords;
       const localCanvas = document.createElement("canvas");
+      localCanvas.width = s.w;
+      localCanvas.height = s.h;
       const ctx = localCanvas.getContext("2d");
       if (!ctx) throw new Error("Failed to get canvas context");
+      ctx.canvas.width = s.w;
+      ctx.canvas.height = s.h;
       ctx.drawImage(s.image, 0, 0, s.w, s.h);
       const dataURL = localCanvas.toDataURL();
-      addImageFromDataURL(mainGroup, dataURL, context, {
+      addImageFromDataURL(g, dataURL, context, {
         style: {} as CSSStyleDeclaration,
         height: s.h,
         width: s.w,
         x,
         y,
       });
-      // const imgElement = createSvgElement("image", {
-      //   x: x.toString(),
-      //   y: y.toString(),
-      //   width: s.w.toString(),
-      //   height: s.h.toString(),
-      //   opacity: opacity.toString(),
-      //   href: dataURL,
-      // }) as SVGImageElement;
-
-      // mainGroup.appendChild(imgElement);
     } else if (s.type === "linkline") {
-      drawSvgLinkLine(shapes, mainGroup as SVGElement, s);
+      drawSvgLinkLine(shapes, g as SVGElement, s);
     } else if (s.type === "rectangle") {
       const [x, y] = s.coords;
       const width = s.w;
@@ -73,6 +68,12 @@ export const drawShapesOnSVG = (
           height: height.toString(),
         });
       }
+      if (s.elevation !== 0) {
+        rectElement.setAttribute(
+          "filter",
+          `drop-shadow(${DEFAULT_SHADOW.offsetX}px ${DEFAULT_SHADOW.offsetY}px ${DEFAULT_SHADOW.blur} ${DEFAULT_SHADOW.color})`,
+        );
+      }
 
       if (s.fillStyle) {
         rectElement.setAttribute("fill", s.fillStyle);
@@ -86,7 +87,7 @@ export const drawShapesOnSVG = (
       rectElement.setAttribute("opacity", opacity.toString());
       rectElement.setAttribute("stroke-linejoin", "bevel");
 
-      mainGroup.appendChild(rectElement);
+      g.appendChild(rectElement);
 
       // Handle children
       if (s.children?.length) {
@@ -113,7 +114,7 @@ export const drawShapesOnSVG = (
           { isChild: true },
         );
 
-        mainGroup.appendChild(childGroup);
+        g.appendChild(childGroup);
       }
     } else if (s.type === "circle") {
       const [cx, cy] = s.coords;
@@ -134,7 +135,7 @@ export const drawShapesOnSVG = (
       }
       circleElement.setAttribute("opacity", opacity.toString());
 
-      mainGroup.appendChild(circleElement);
+      g.appendChild(circleElement);
     } else if (s.type === "multiline") {
       const pathElement = createSvgElement("path");
 
@@ -162,7 +163,7 @@ export const drawShapesOnSVG = (
       pathElement.setAttribute("opacity", opacity.toString());
       pathElement.setAttribute("stroke-linecap", "round");
 
-      mainGroup.appendChild(pathElement);
+      g.appendChild(pathElement);
     } else if (s.type === "polygon") {
       const pathElement = createSvgElement("path");
 
@@ -189,7 +190,7 @@ export const drawShapesOnSVG = (
       }
       pathElement.setAttribute("opacity", opacity.toString());
 
-      mainGroup.appendChild(pathElement);
+      g.appendChild(pathElement);
     } else if ((s.type as any) === "text") {
       const [x, y] = s.coords;
       const textElement = createSvgElement("text", {
@@ -202,7 +203,12 @@ export const drawShapesOnSVG = (
       });
 
       if (s.font) {
-        textElement.setAttribute("font", s.font);
+        const span = document.createElement("span");
+        span.style.font = s.font;
+        const { fontSize, fontWeight, fontFamily } = span.style;
+        textElement.setAttribute("font-family", fontFamily);
+        textElement.setAttribute("font-size", fontSize);
+        textElement.setAttribute("font-weight", fontWeight);
       }
       if (s.fillStyle) {
         textElement.setAttribute("fill", s.fillStyle);
@@ -251,10 +257,10 @@ export const drawShapesOnSVG = (
         }
         rectBg.setAttribute("opacity", opacity.toString());
 
-        mainGroup.appendChild(rectBg);
+        g.appendChild(rectBg);
       }
 
-      mainGroup.appendChild(textElement);
+      g.appendChild(textElement);
     } else {
       console.error("Unexpected shape type:", (s as any).type);
     }

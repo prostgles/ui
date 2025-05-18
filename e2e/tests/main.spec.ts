@@ -37,6 +37,7 @@ import {
   selectAndInsertFile,
   setTableRule,
   setWspColLayout,
+  svgScreenshotsCompleteReferenced,
   typeConfirmationCode,
   uploadFile,
 } from "./utils";
@@ -196,8 +197,7 @@ test.describe("Main test", () => {
     /** Schema diagram works */
     await page.getByTestId("SchemaGraph").click();
     await page.waitForTimeout(1e3);
-    const svgstr = await saveSVGScreenshot(page, "schema_diagram");
-    expect(svgstr).toEqual("Prostgles");
+    await saveSVGScreenshot(page, "schema_diagram");
     await page
       .getByText("Reset layout")
       .waitFor({ state: "visible", timeout: 15e3 });
@@ -1808,5 +1808,9 @@ test.describe("Main test", () => {
 
     await page.getByLabel("ALLOWED_DIR").fill("/prostgles-mcp-test");
     await page.getByText("Enable", { exact: true }).click();
+  });
+
+  test("All screenshots have been done and exist in docs", async () => {
+    await svgScreenshotsCompleteReferenced();
   });
 });

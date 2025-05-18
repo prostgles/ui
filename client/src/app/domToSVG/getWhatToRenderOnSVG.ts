@@ -16,15 +16,12 @@ export const getWhatToRenderOnSVG = async (
   element: HTMLElement,
   context: SVGContext,
 ) => {
-  const style = window.getComputedStyle(element);
-  const bbox = element.getBoundingClientRect();
-
+  const { isVisible, style, bbox } = isElementVisible(element);
   // Calculate absolute position
   const x = bbox.left + context.offsetX;
   const y = bbox.top + context.offsetY;
   const width = bbox.width;
   const height = bbox.height;
-  const isVisible = isElementVisible(element);
   const elemInfo = {
     x,
     y,

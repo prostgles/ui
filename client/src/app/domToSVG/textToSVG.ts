@@ -1,9 +1,12 @@
+import { tout } from "../../utils";
 import { SVG_NAMESPACE } from "./domToSVG";
 const _singleLineEllipsis = "_singleLineEllipsis" as const;
 const TEXT_WIDTH_ATTR = "data-text-width";
 const TEXT_HEIGHT_ATTR = "data-text-height";
 
 const getLineBreakParts = (content: string) => content.split(/[\s\-–—]+/);
+const getLineBreakPartsWithDelimiters = (content: string) =>
+  content.split(/([\s\-–—:]+)/);
 
 export const textToSVG = (
   g: SVGGElement,
@@ -28,7 +31,7 @@ export const textToSVG = (
   textNode.setAttribute("font-size", style.fontSize);
   textNode.setAttribute("font-weight", style.fontWeight);
   textNode.setAttribute("text-decoration", style.textDecoration);
-
+  textNode.style.lineHeight = style.lineHeight;
   if (
     style.textOverflow === "ellipsis" &&
     (style.whiteSpace === "nowrap" || getLineBreakParts(content).length === 1)
@@ -44,7 +47,6 @@ export const textToSVG = (
 
 const tolerance = 2;
 const wrapTextIfOverflowing = (
-  defs: SVGDefsElement,
   textNode: SVGTextElement,
   width: number,
   height: number,
@@ -66,36 +68,36 @@ const wrapTextIfOverflowing = (
   textNode.textContent = "";
   let line: string[] = [];
   let lineNumber = -1;
-  const words = getLineBreakParts(content);
-  const lineHeight = 1.1;
+  const wordsWithDelimiters = getLineBreakPartsWithDelimiters(content);
+  const fontSize = textNode.getAttribute("font-size") || "16";
+  const lineHeightPx =
+    parseFloat(textNode.style.lineHeight) || 1.1 * parseFloat(fontSize);
   const x = textNode.getAttribute("x") || "0";
   const y = textNode.getAttribute("y") || "0";
-  const fontSize = textNode.getAttribute("font-size") || "16";
-  const maxLines = Math.floor(height / (lineHeight * parseFloat(fontSize)));
+  const maxLines = Math.floor(height / lineHeightPx);
   let tspan = document.createElementNS(SVG_NAMESPACE, "tspan");
   tspan.setAttribute("x", x);
   tspan.setAttribute("y", y);
   textNode.appendChild(tspan);
-
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i]!;
+  for (let i = 0; i < wordsWithDelimiters.length; i++) {
+    const word = wordsWithDelimiters[i]!;
     line.push(word);
 
-    tspan.textContent = line.join(" ");
+    tspan.textContent = line.join("");
     const textLen = tspan.getComputedTextLength();
 
     if (textLen > width + tolerance) {
       line.pop(); // Remove the word that caused overflow
 
       // Set content for current tspan
-      tspan.textContent = line.join(" ");
+      tspan.textContent = line.join("");
 
       // Move to next line if possible
       lineNumber++;
-      if (lineNumber + 1 >= maxLines) {
+      if (lineNumber >= maxLines) {
         // Add ellipsis to indicate truncation if there's room
         if (tspan.textContent && tspan.getComputedTextLength() < width - 10) {
-          tspan.textContent = tspan.textContent + "...";
+          tspan.textContent += "...";
           textNode.removeChild(tspan);
         }
         return;
@@ -105,20 +107,10 @@ const wrapTextIfOverflowing = (
       line = [word];
       tspan = document.createElementNS(SVG_NAMESPACE, "tspan");
       tspan.setAttribute("x", x);
-      tspan.setAttribute("dy", lineHeight + "em");
+      tspan.setAttribute("dy", lineHeightPx + "px");
       textNode.appendChild(tspan);
       tspan.textContent = word;
     }
-  }
-
-  if (line.length) {
-    const g = textNode.closest<SVGGElement>("g");
-    addClipPathToMimickOverflowHidden(defs, g!, {
-      x,
-      y: textNode.getBBox().y,
-      width,
-      height,
-    });
   }
 };
 
@@ -142,57 +134,33 @@ const unnestRedundantGElements = (svg: SVGElement) => {
   return svg;
 };
 
-export const wrapAllSVGText = (svg: SVGElement) => {
-  setTimeout(() => {
-    unnestRedundantGElements(svg);
-    svg.querySelectorAll("text").forEach((text) => {
-      const parentG = text.closest<SVGGElement>(`g[${TEXT_WIDTH_ATTR}]`);
-      const textWidth = parentG?.getAttribute(TEXT_WIDTH_ATTR);
-      const textHeight = parentG?.getAttribute(TEXT_HEIGHT_ATTR);
-      // console.log(parentG?.getAttribute(TEXT_WIDTH_ATTR), text.textContent);
-      if (!text.textContent || !parentG || !textWidth || !textHeight) return;
-      const defs = svg.querySelector("defs");
-      wrapTextIfOverflowing(
-        defs as SVGDefsElement,
-        text,
-        +textWidth,
-        +textHeight,
-        text.textContent || "",
-      );
-    });
-  }, 2); // Allow time for the SVG to be rendered
-};
+export const wrapAllSVGText = async (svg: SVGElement) => {
+  /** Must render svg to ensure the text length calcs work */
+  if (!svg.isConnected) {
+    svg.style.position = "absolute";
+    svg.style.left = "0";
+    svg.style.top = "0";
+    svg.style.zIndex = "9999";
+    document.body.appendChild(svg);
+  }
 
-let clipPathCounter = 0;
-const addClipPathToMimickOverflowHidden = (
-  defs: SVGDefsElement,
-  g: SVGGElement,
-  {
-    x,
-    y,
-    width,
-    height,
-  }: { x: string; y: string | number; width: number; height: number },
-) => {
-  // Create a unique ID for the clip path
-  const clipId = `clip-${clipPathCounter++}`;
+  unnestRedundantGElements(svg);
+  svg.querySelectorAll("text").forEach((text) => {
+    const parentG = text.closest<SVGGElement>(`g[${TEXT_WIDTH_ATTR}]`);
+    const textWidth = parentG?.getAttribute(TEXT_WIDTH_ATTR);
+    const textHeight = parentG?.getAttribute(TEXT_HEIGHT_ATTR);
+    if (!text.textContent || !parentG || !textWidth || !textHeight) return;
 
-  // Create clip path element
-  const clipPath = document.createElementNS(SVG_NAMESPACE, "clipPath");
-  clipPath.setAttribute("id", clipId);
+    wrapTextIfOverflowing(
+      text,
+      +textWidth,
+      +textHeight,
+      text.textContent || "",
+    );
+  });
 
-  // Create a rectangle with the dimensions
-  const clipRect = document.createElementNS(SVG_NAMESPACE, "rect");
-  clipRect.setAttribute("x", x);
-  clipRect.setAttribute("y", y);
-  clipRect.setAttribute("width", width);
-  clipRect.setAttribute("height", height);
-
-  // Add the rectangle to the clip path
-  clipPath.appendChild(clipRect);
-
-  defs.appendChild(clipPath);
-
-  // Apply the clip path to the parent G element
-  g.setAttribute("clip-path", `url(#${clipId})`);
+  await tout(3000);
+  if (svg.isConnected) {
+    svg.remove();
+  }
 };

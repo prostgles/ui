@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
 import { isDefined } from "../../../utils";
-import { drawShapes, type ShapeV2 } from "../../Charts/drawShapes/drawShapes";
-import type { SchemaShape, useSchemaShapes } from "./useSchemaShapes";
 import type { LinkLine, Rectangle } from "../../Charts/CanvasChart";
+import { drawShapes, type ShapeV2 } from "../../Charts/drawShapes/drawShapes";
 import { getCssVariableValue } from "../../Charts/onRenderTimechart";
 import type { ColumnColorMode } from "./ERDSchema";
-import { replayTableRelationships } from "./replayTableRelationships";
-import { drawShapesOnSVG } from "../../Charts/drawShapes/drawShapesOnSVG";
+import type { SchemaShape, useSchemaShapes } from "./useSchemaShapes";
 
 export const minScale = 0.1;
 export const maxScale = 5;
@@ -23,7 +21,6 @@ export const useDrawSchemaShapes = (
     "shapesRef" | "shapesVersion"
   > & {
     canvasRef: React.RefObject<HTMLCanvasElement>;
-    svgRef: React.RefObject<SVGSVGElement>;
     columnColorMode: ColumnColorMode;
   },
 ) => {

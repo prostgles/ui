@@ -1,11 +1,13 @@
 import { drawShapesOnSVG } from "../../dashboard/Charts/drawShapes/drawShapesOnSVG";
 import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import { isDefined } from "../../utils";
 import { addBackground, addBorders } from "./bgAndBorderToSVG";
 import { SVG_NAMESPACE } from "./domToSVG";
 import { fontIconToSVG } from "./fontIconToSVG";
 import { getWhatToRenderOnSVG } from "./getWhatToRenderOnSVG";
 import { imgToSVG } from "./imgToSVG";
-import { isElementNode } from "./isElementVisible";
+import { isElementNode, isElementVisible } from "./isElementVisible";
+import { getBoxShadowAsDropShadow } from "./shadowToSVG";
 import { textToSVG } from "./textToSVG";
 
 export type SVGContext = {
@@ -34,7 +36,9 @@ export const elementToSVG = async (
   );
   const { x, y, width, height, style, isVisible } = elemInfo;
 
-  if (!isVisible) return whatToRender;
+  if (!isVisible) {
+    return whatToRender;
+  }
 
   const g = document.createElementNS(SVG_NAMESPACE, "g");
   let rectNode: SVGRectElement | undefined;
@@ -66,6 +70,11 @@ export const elementToSVG = async (
     addBackground(makeRect, g, style);
   }
 
+  const shadow = getBoxShadowAsDropShadow(style);
+  if (shadow) {
+    makeRect().style.filter = shadow.filter;
+  }
+
   if (whatToRender.border) {
     addBorders(makeRect, g, x, y, width, height, style);
   }
@@ -90,7 +99,10 @@ export const elementToSVG = async (
     element._drawn?.shapes.length
   ) {
     const { shapes, scale, translate } = element._drawn;
-    drawShapesOnSVG(shapes, context, g, { scale, translate });
+    const transformedG = document.createElementNS(SVG_NAMESPACE, "g");
+    g.setAttribute("transform", `translate(${x}, ${y})`);
+    g.appendChild(transformedG);
+    drawShapesOnSVG(shapes, context, transformedG, { scale, translate });
   }
 
   if (whatToRender.image?.type === "foreignObject") {
@@ -110,19 +122,8 @@ export const elementToSVG = async (
   }
 
   if (g.childNodes.length) {
-    /**
-     * If overflow is set to hidden, we need to add a clip path to the group
-     */
-    const elementIsOverflowing =
-      element.scrollHeight > element.clientHeight ||
-      element.scrollWidth > element.clientWidth;
-    if (
-      (includes(style.overflow, ["hidden", "auto", "scroll"]) &&
-        elementIsOverflowing) ||
-      element instanceof HTMLCanvasElement
-    ) {
-      addOverflowClipPath(g, makeRect(), context);
-    }
+    addOverflowClipPath(element, style, g, makeRect(), context);
+    g._domElement = element;
     parentSvg.appendChild(g);
   }
 
@@ -138,19 +139,56 @@ const getChildrenSortedByZIndex = (element: HTMLElement): HTMLElement[] => {
   });
 };
 
+const mustAddClipPath = (element: HTMLElement, style: CSSStyleDeclaration) => {
+  if (element instanceof HTMLCanvasElement) return true;
+  if (!includes(style.overflow, ["hidden", "auto", "scroll"])) return false;
+  const elementIsOverflowing =
+    element.scrollHeight > element.clientHeight ||
+    element.scrollWidth > element.clientWidth;
+  if (!elementIsOverflowing) return false;
+  return Array.from(element.children).some(
+    (child) => isElementVisible(child).isVisible,
+  );
+};
+
 export const addOverflowClipPath = (
+  element: HTMLElement,
+  style: CSSStyleDeclaration,
   g: SVGGElement,
   clipRect: SVGRectElement,
   context: SVGContext,
 ) => {
+  /**
+   * If overflow is set to hidden, we need to add a clip path to the group
+   */
+  if (!mustAddClipPath(element, style)) return;
   const clipPath = document.createElementNS(SVG_NAMESPACE, "clipPath");
   const clipPathId = `clip-${context.idCounter++}`;
   clipPath.setAttribute("id", clipPathId);
-  // clipRect.setAttribute("x", x);
-  // clipRect.setAttribute("y", y);
-  // clipRect.setAttribute("width", width);
-  // clipRect.setAttribute("height", height);
+  const transform = g.getAttribute("transform");
+  const transformParts = transform?.split(")");
+  const translate = transformParts
+    ?.map((part) => {
+      if (!part.startsWith("translate")) return;
+      const [xStr, yStr] = part.split(",");
+      if (!xStr || !yStr) return;
+      const x = parseFloat(xStr.split("(")[1]!);
+      const y = parseFloat(yStr.trim());
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+      return [x, y] as [number, number];
+    })
+    .find(isDefined);
+  if (translate) {
+    const [x, y] = translate;
+    clipRect.setAttribute("transform", `translate(${-x}, ${-y})`);
+  }
   clipPath.appendChild(clipRect);
   g.appendChild(clipPath);
   g.setAttribute("clip-path", `url(#${clipPathId})`);
 };
+
+declare global {
+  interface SVGGElement {
+    _domElement?: HTMLElement;
+  }
+}

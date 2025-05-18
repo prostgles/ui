@@ -1,23 +1,12 @@
 import { getCssVariableValue } from "./onRenderTimechart";
 
-/**
- * Draws a rounded rectangle using the current state of the canvas.
- * If you omit the last three params, it will draw a rectangle
- * outline with a 5 pixel border radius
- * @param {CanvasRenderingContext2D} ctx
- * @param {Number} x The top left x coordinate
- * @param {Number} y The top left y coordinate
- * @param {Number} width The width of the rectangle
- * @param {Number} height The height of the rectangle
- * @param {Number} [radius = 5] The corner radius; It can also be an object
- *                 to specify different radii for corners
- * @param {Number} [radius.tl = 0] Top left
- * @param {Number} [radius.tr = 0] Top right
- * @param {Number} [radius.br = 0] Bottom right
- * @param {Number} [radius.bl = 0] Bottom left
- * @param {Boolean} [fill = false] Whether to fill the rectangle.
- * @param {Boolean} [stroke = true] Whether to stroke the rectangle.
- */
+export const DEFAULT_SHADOW = {
+  color: getCssVariableValue("--shadow1"), //"rgba(73, 56, 56, 0.5)",
+  blur: 15,
+  offsetX: 3,
+  offsetY: 3,
+};
+
 export function roundRect(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -30,12 +19,7 @@ export function roundRect(
     blur?: number;
     offsetX?: number;
     offsetY?: number;
-  } = {
-    color: getCssVariableValue("--shadow1"), //"rgba(73, 56, 56, 0.5)",
-    blur: 15,
-    offsetX: 3,
-    offsetY: 3,
-  },
+  } = DEFAULT_SHADOW,
 ) {
   if (typeof radius === "number") {
     radius = { tl: radius, tr: radius, br: radius, bl: radius };
