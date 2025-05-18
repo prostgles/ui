@@ -889,7 +889,7 @@ export const svgScreenshotsCompleteReferenced = async () => {
       .map((v) => v.split(`"`)[0])
       .forEach((src) => {
         if (!usedSrcValues.includes(src)) {
-          usedSrcValues.push(src.slice(0, -4));
+          usedSrcValues.push(src.slice(2, -4));
         }
       });
   }
