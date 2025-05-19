@@ -76,7 +76,7 @@ export const tableConfigMCPServers: TableConfig<{ en: 1 }> = {
     columns: {
       id: `SERIAL PRIMARY KEY`,
       server_name: `TEXT NOT NULL REFERENCES mcp_servers(name) ON DELETE CASCADE`,
-      config: `JSONB NOT NULL`,
+      config: { jsonbSchema: { record: { values: "any" } } },
       created: `TIMESTAMP DEFAULT NOW()`,
       last_updated: `TIMESTAMP DEFAULT NOW()`,
     },

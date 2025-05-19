@@ -602,6 +602,15 @@ export class CanvasChart {
         // })
       } else throw "Unexpected shape type: " + (s as any).type;
     });
+
+    const { canvas } = this.opts ?? {};
+    if (canvas) {
+      canvas._drawn = {
+        shapes,
+        scale: 1,
+        translate: { x: 0, y: 0 },
+      };
+    }
   }
 }
 

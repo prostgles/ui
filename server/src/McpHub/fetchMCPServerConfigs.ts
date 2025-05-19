@@ -23,7 +23,7 @@ export const fetchMCPServerConfigs = async (
 
   const serversConfig: ServersConfig = Object.fromEntries(
     mcpServers.map((server) => {
-      const { config_schema, ...rest } = server;
+      const { config_schema } = server;
       const mcp_server_configs: DBSSchema["mcp_server_configs"][] =
         server.mcp_server_configs ?? [];
       const config =
@@ -45,14 +45,14 @@ export const fetchMCPServerConfigs = async (
         Object.entries(config_schema).forEach(
           ([key, configItem], itemIndex) => {
             if (configItem.type === "env") {
-              env[key] = config[key];
+              env[key] = config?.[key];
             } else {
               const dollarArgIndexes = args
                 .map((a, i) => (a.startsWith("${") ? i : undefined))
                 .filter(isDefined);
               const argIndex = dollarArgIndexes[configItem.index ?? itemIndex];
               if (argIndex) {
-                args[argIndex] = config[key];
+                args[argIndex] = config?.[key];
               } else {
                 console.error(
                   `Invalid index for arg "${key}" in server "${server.name}"`,

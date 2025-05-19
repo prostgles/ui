@@ -15,6 +15,7 @@ const attributesToKeep = ["data-command", "data-key", "data-label"] as const;
 export const getWhatToRenderOnSVG = async (
   element: HTMLElement,
   context: SVGContext,
+  parentSvg: SVGElement | SVGGElement,
 ) => {
   const { isVisible, style, bbox } = isElementVisible(element);
   // Calculate absolute position
@@ -46,6 +47,18 @@ export const getWhatToRenderOnSVG = async (
   );
 
   const background = getBackgroundColor(style);
+  const parentBackground =
+    background &&
+    element.parentElement &&
+    getBackgroundColor(getComputedStyle(element.parentElement));
+  /**
+   * Used to prevent drawing over rounded input border corners
+   */
+  const backgroundSameAsRenderedParent =
+    background &&
+    background === parentBackground &&
+    (parentSvg as SVGGElement)._domElement === element.parentElement;
+
   const border = hasBorder(style);
   const childAffectingStyles: Partial<CSSStyleDeclaration> = {};
   if (style.opacity !== "1") {
@@ -75,7 +88,7 @@ export const getWhatToRenderOnSVG = async (
   return {
     elemInfo,
     attributeData,
-    background,
+    background: backgroundSameAsRenderedParent ? undefined : background,
     border,
     childAffectingStyles,
     image,

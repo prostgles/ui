@@ -5,7 +5,7 @@ import { addBackground, addBorders } from "./bgAndBorderToSVG";
 import { SVG_NAMESPACE } from "./domToSVG";
 import { fontIconToSVG } from "./fontIconToSVG";
 import { getWhatToRenderOnSVG } from "./getWhatToRenderOnSVG";
-import { imgToSVG } from "./imgToSVG";
+import { addImageFromDataURL, imgToSVG } from "./imgToSVG";
 import { isElementNode, isElementVisible } from "./isElementVisible";
 import { getBoxShadowAsDropShadow } from "./shadowToSVG";
 import { textToSVG } from "./textToSVG";
@@ -27,12 +27,13 @@ export type SVGNodeLayout = {
 
 export const elementToSVG = async (
   element: HTMLElement,
-  parentSvg: SVGElement,
+  parentSvg: SVGElement | SVGGElement,
   context: SVGContext,
 ) => {
   const { elemInfo, ...whatToRender } = await getWhatToRenderOnSVG(
     element,
     context,
+    parentSvg,
   );
   const { x, y, width, height, style, isVisible } = elemInfo;
 
@@ -41,13 +42,17 @@ export const elementToSVG = async (
   }
 
   const g = document.createElementNS(SVG_NAMESPACE, "g");
+  g._domElement = element;
   let rectNode: SVGRectElement | undefined;
   const makeRect = () => {
-    rectNode ??= document.createElementNS(SVG_NAMESPACE, "rect");
-    rectNode.setAttribute("x", x);
-    rectNode.setAttribute("y", y);
-    rectNode.setAttribute("width", width.toString());
-    rectNode.setAttribute("height", height.toString());
+    if (rectNode) return rectNode;
+    rectNode = document.createElementNS(SVG_NAMESPACE, "rect");
+    rectNode.setAttribute("x", Math.round(x));
+    rectNode.setAttribute("y", Math.round(y));
+    rectNode.setAttribute("width", Math.round(width).toString());
+    rectNode.setAttribute("height", Math.round(height).toString());
+    /** This is required to make backgroundSameAsRenderedParent work as expected */
+    rectNode.setAttribute("fill", "transparent");
 
     return rectNode;
   };
@@ -79,9 +84,21 @@ export const elementToSVG = async (
     addBorders(makeRect, g, x, y, width, height, style);
   }
 
+  /** Ensure button edges are crisp */
+  if (rectNode) {
+    if (rectNode.getAttribute("stroke") !== "rgba(0, 0, 0, 0)") {
+      rectNode.setAttribute("x", Math.round(x) + 0.5);
+      rectNode.setAttribute("y", Math.round(y) + 0.5);
+    } else {
+      rectNode.setAttribute("x", Math.round(x));
+      rectNode.setAttribute("y", Math.round(y));
+    }
+  }
+
   if (whatToRender.text?.length) {
     whatToRender.text.forEach((textInfo) => {
       textToSVG(
+        element,
         g,
         textInfo.textContent,
         textInfo.x,
@@ -95,14 +112,21 @@ export const elementToSVG = async (
 
   if (
     element.tagName.toLowerCase() === "canvas" &&
-    element instanceof HTMLCanvasElement &&
-    element._drawn?.shapes.length
+    element instanceof HTMLCanvasElement
   ) {
-    const { shapes, scale, translate } = element._drawn;
-    const transformedG = document.createElementNS(SVG_NAMESPACE, "g");
-    g.setAttribute("transform", `translate(${x}, ${y})`);
-    g.appendChild(transformedG);
-    drawShapesOnSVG(shapes, context, transformedG, { scale, translate });
+    if (element._drawn?.shapes.length) {
+      const { shapes, scale, translate } = element._drawn;
+      const transformedG = document.createElementNS(SVG_NAMESPACE, "g");
+      g.setAttribute("transform", `translate(${x}, ${y})`);
+      g.appendChild(transformedG);
+      drawShapesOnSVG(shapes, context, transformedG, { scale, translate });
+    } else {
+      element._deckgl?.redraw("screenshot");
+      const dataURL =
+        element._deckgl?.getCanvas()?.toDataURL("image/png") ??
+        element.toDataURL("image/png");
+      addImageFromDataURL(g, dataURL, context, elemInfo);
+    }
   }
 
   if (whatToRender.image?.type === "foreignObject") {
@@ -123,7 +147,6 @@ export const elementToSVG = async (
 
   if (g.childNodes.length) {
     addOverflowClipPath(element, style, g, makeRect(), context);
-    g._domElement = element;
     parentSvg.appendChild(g);
   }
 

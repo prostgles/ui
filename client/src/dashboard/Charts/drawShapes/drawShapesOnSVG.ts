@@ -2,6 +2,7 @@ import type { SVGContext } from "../../../app/domToSVG/elementToSVG";
 import { addImageFromDataURL } from "../../../app/domToSVG/imgToSVG";
 import type { Point } from "../../Charts";
 import type { LinkLine, Rectangle } from "../CanvasChart";
+import { measureText } from "../measureText";
 import { DEFAULT_SHADOW } from "../roundRect";
 import type { ShapeV2 } from "./drawShapes";
 
@@ -219,13 +220,10 @@ export const drawShapesOnSVG = (
       // Handle background if present
       if (s.background) {
         const txtSize = measureSvgText(s.text, s.font || "");
-        const txtPadding = s.background.padding || 6;
+        const txtPadding = 2; //s.background.padding || 0;
 
         let bgX = x - txtSize.width / 2 - txtPadding;
-        const bgY =
-          y -
-          (allLowerCase(s.text) ? 1 : 1) * txtSize.actualHeight -
-          txtPadding;
+        const bgY = y - txtSize.actualHeight;
 
         if (["left", "start"].includes(s.textAlign || "")) {
           bgX = x - txtPadding;

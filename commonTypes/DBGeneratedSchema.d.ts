@@ -515,7 +515,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
-      config: any;
+      config:  Record<string, any>
       created?: null | string;
       id?: number;
       last_updated?: null | string;

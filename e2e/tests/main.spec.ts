@@ -33,15 +33,17 @@ import {
   runDbSql,
   runDbsSql,
   runSql,
-  saveSVGScreenshot,
   selectAndInsertFile,
   setTableRule,
   setWspColLayout,
-  svgScreenshotsCompleteReferenced,
   typeConfirmationCode,
   uploadFile,
 } from "./utils";
 import { startMockSMTPServer } from "./mockSMTPServer";
+import {
+  saveSVGScreenshot,
+  svgScreenshotsCompleteReferenced,
+} from "./docScreenshotUtils";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -165,7 +167,12 @@ test.describe("Main test", () => {
       await disablePwdlessAdminAndCreateUser(page);
     }
     await login(page);
+    await page.waitForTimeout(500);
     await saveSVGScreenshot(page, "connections");
+    await goTo(page, "/new-connection");
+    await page.waitForTimeout(500);
+    await saveSVGScreenshot(page, "new_connection");
+    await goTo(page);
 
     /** Expect the workspace to have users table open */
     await goToWorkspace(false);
@@ -1028,7 +1035,7 @@ test.describe("Main test", () => {
     await page
       .getByTestId("dashboard.menu.createTable.tableName")
       .getByRole("textbox")
-      .type("my_table");
+      .fill("my_table");
     const addColumn = async (
       colName: string,
       dataType: string,
@@ -1099,6 +1106,7 @@ test.describe("Main test", () => {
     await page
       .getByRole("button", { name: "Start backup", exact: true })
       .click();
+    await saveSVGScreenshot(page, "backups");
     await page.getByText("Completed");
 
     /** Delete row */

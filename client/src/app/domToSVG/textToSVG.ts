@@ -9,6 +9,7 @@ const getLineBreakPartsWithDelimiters = (content: string) =>
   content.split(/([\s\-–—:]+)/);
 
 export const textToSVG = (
+  element: HTMLElement,
   g: SVGGElement,
   content: string,
   x: number,
@@ -24,7 +25,15 @@ export const textToSVG = (
   const textNode = document.createElementNS(SVG_NAMESPACE, "text");
 
   textNode.setAttribute("x", x);
-  textNode.setAttribute("y", y + parseFloat(style.fontSize));
+  const fontSize = parseFloat(style.fontSize);
+  const inputYFix =
+    (
+      element.tagName.toLowerCase() === "input" &&
+      content !== (element as HTMLInputElement).placeholder
+    ) ?
+      fontSize * 0.25
+    : 0;
+  textNode.setAttribute("y", y + fontSize + inputYFix);
 
   textNode.setAttribute("fill", style.color);
   textNode.setAttribute("font-family", style.fontFamily);

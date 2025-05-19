@@ -5,6 +5,7 @@ import { drawShapes, type ShapeV2 } from "../../Charts/drawShapes/drawShapes";
 import { getCssVariableValue } from "../../Charts/onRenderTimechart";
 import type { ColumnColorMode } from "./ERDSchema";
 import type { SchemaShape, useSchemaShapes } from "./useSchemaShapes";
+import type { Deck, MapView, OrthographicView } from "deck.gl";
 
 export const minScale = 0.1;
 export const maxScale = 5;
@@ -135,5 +136,6 @@ declare global {
       scale: number;
       translate: { x: number; y: number };
     };
+    _deckgl?: Deck<OrthographicView[] | MapView[]>;
   }
 }
