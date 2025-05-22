@@ -192,8 +192,11 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
 
     if (w.parent_window_id) {
       return (
-        <FlexCol className="f-1 gap-0 min-s-0 o-hidden">
-          <FlexRow className="p-p5">
+        <FlexCol
+          data-command="W_SQLResults.Chart"
+          className="f-1 gap-0 min-s-0 o-hidden"
+        >
+          <FlexRow data-command="W_SQLResults.Chart.toolbar" className="p-p5">
             <Btn
               className="f-0"
               title={t.Window["Open menu"]}

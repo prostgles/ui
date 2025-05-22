@@ -1,17 +1,27 @@
-import { mdiDatabase, mdiPlus, mdiTools } from "@mdi/js";
+import {
+  mdiAccountKey,
+  mdiCheck,
+  mdiCircleOutline,
+  mdiDatabase,
+  mdiTools,
+} from "@mdi/js";
+import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { DetailedJoinSelect, FilterItem } from "prostgles-types";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { dashboardTypes } from "../../../../commonTypes/DashboardTypes";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import Btn from "../../components/Btn";
-import { MarkdownMonacoCode } from "../../components/Chat/MarkdownMonacoCode";
-import { FlexRow } from "../../components/Flex";
+import { FlexCol, FlexRow } from "../../components/Flex";
 import PopupMenu from "../../components/PopupMenu";
-import Select from "../../components/Select/Select";
+import Select, { type FullOption } from "../../components/Select/Select";
+import { SvgIconFromURL } from "../../components/SvgIcon";
 import { MCPServers } from "../../pages/ServerSettings/MCPServers/MCPServers";
-import type { AskLLMChatProps } from "./AskLLMChat";
+import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
+import { SmartCardList } from "../SmartCardList/SmartCardList";
 import { SmartForm } from "../SmartForm/SmartForm";
-import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { AskLLMChatProps } from "./AskLLMChat";
+import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
+import Tabs from "../../components/Tabs";
 
 export const AskLLMChatActionBar = (
   props: Pick<AskLLMChatProps, "prgl" | "setupState"> & {
@@ -38,6 +48,9 @@ export const AskLLMChatActionBar = (
     {
       select: {
         "*": 1,
+        llm_providers: {
+          logo_url: 1,
+        },
         llm_credentials: {
           $leftJoin: [{ table: "llm_providers" }, { table: "llm_credentials" }],
           select: "*",
@@ -63,11 +76,28 @@ export const AskLLMChatActionBar = (
     },
   );
 
+  const [addProviderCredentials, setAddProviderCredentials] = useState("");
+
   return (
     <FlexRow className="gap-p5 pr-1">
+      {addProviderCredentials && (
+        <SmartForm
+          label={"Add LLM credentials for " + addProviderCredentials}
+          asPopup={true}
+          tableName="llm_credentials"
+          db={dbs as DBHandlerClient}
+          methods={prgl.dbsMethods}
+          defaultData={{
+            provider_id: addProviderCredentials,
+          }}
+          onClose={() => setAddProviderCredentials("")}
+          tables={prgl.dbsTables}
+          showJoinedTables={false}
+        />
+      )}
       <PopupMenu
         title="MCP Tools"
-        contentClassName="p-0 py-1"
+        contentClassName="p-2"
         clickCatchStyle={{ opacity: 1 }}
         onClickClose={false}
         data-command="LLMChatOptions.MCPTools"
@@ -94,7 +124,8 @@ export const AskLLMChatActionBar = (
       </PopupMenu>
       <PopupMenu
         title="Database access"
-        contentClassName="p-1"
+        data-command="LLMChatOptions.DatabaseAccess"
+        contentClassName="p-2"
         positioning="above-center"
         button={
           <Btn
@@ -128,56 +159,149 @@ export const AskLLMChatActionBar = (
         />
       </PopupMenu>
       <PopupMenu
-        title="Prompt"
+        title="Prompt settings"
         positioning="above-center"
+        data-command="LLMChatOptions.Prompt"
+        showFullscreenToggle={{}}
         clickCatchStyle={{ opacity: 1 }}
         onClickClose={false}
-        contentClassName="p-1 flex-col gap-1"
+        contentClassName="p-2 flex-col gap-1"
         button={
           <Btn title="Prompt" {...btnStyleProps}>
             {prompt?.name}
           </Btn>
         }
       >
-        <Select
-          fullOptions={setupState.prompts.map((p) => ({
-            key: p.id,
-            label: p.name,
-            subLabel: p.description || "",
-          }))}
-          variant="search-list-only"
-          title={"Prompt selection"}
-          multiSelect={false}
-          value={activeChat.llm_prompt_id}
-          onChange={(llm_prompt_id) => {
-            if (!activeChatId) return;
-            dbs.llm_chats.update(
-              { id: activeChatId },
-              {
-                llm_prompt_id,
-              },
-            );
+        <SmartCardList
+          style={{
+            maxWidth: "min(600px, 100vw)",
           }}
+          showTopBar={{ insert: true }}
+          fieldConfigs={[
+            {
+              name: "name",
+              render: (name, { id, description }) => {
+                const isActive = activeChat.llm_prompt_id === id;
+                return (
+                  <Btn
+                    className={"p-0 text-0 ta-start"}
+                    style={{ padding: 0 }}
+                    variant="text"
+                    iconPath={isActive ? mdiCheck : mdiCircleOutline}
+                    iconStyle={isActive ? { opacity: 1 } : { opacity: 0 }}
+                    onClick={async () => {
+                      if (!activeChatId) return;
+                      dbs.llm_chats.update(
+                        { id: activeChatId },
+                        {
+                          llm_prompt_id: id,
+                        },
+                      );
+                    }}
+                  >
+                    <FlexCol className="gap-p25">
+                      <div style={{ fontWeight: "bold" }}>{name}</div>
+                      <div style={{ fontWeight: "normal" }}>{description}</div>
+                    </FlexCol>
+                  </Btn>
+                );
+              },
+            },
+            {
+              name: "id",
+              hide: true,
+            },
+            {
+              name: "description",
+              hide: true,
+            },
+          ]}
+          tableName={"llm_prompts"}
+          db={dbs as DBHandlerClient}
+          methods={prgl.dbsMethods}
+          tables={prgl.dbsTables}
         />
-        <MarkdownMonacoCode
-          title="Prompt"
-          codeString={promptContent}
-          language="text"
-          codeHeader={undefined}
-          sqlHandler={undefined}
-        />
+        {prompt && (
+          <Tabs
+            defaultActiveKey="editable"
+            contentClass="py-1"
+            items={{
+              editable: {
+                label: "Edit prompt",
+                content: (
+                  <CodeEditorWithSaveButton
+                    key={prompt.id}
+                    value={prompt.prompt}
+                    label=""
+                    language={"text"}
+                    onSave={async (v) => {
+                      await dbs.llm_prompts.update(
+                        { id: prompt.id },
+                        {
+                          prompt: v,
+                        },
+                      );
+                    }}
+                  />
+                ),
+              },
+              preview: {
+                label: "Preview",
+                iconPath: mdiCircleOutline,
+                content: (
+                  <MonacoEditor
+                    value={promptContent}
+                    language="text"
+                    loadedSuggestions={undefined}
+                  />
+                ),
+              },
+            }}
+          />
+        )}
       </PopupMenu>
       <Select
+        data-command="LLMChatOptions.Model"
         fullOptions={
-          models?.map(({ id, name, provider_id, llm_credentials }) => {
-            const noCredentials = !llm_credentials.length;
-            return {
-              key: id,
-              label: name,
-              subLabel: provider_id,
-              disabledInfo: noCredentials ? "No credentials" : undefined,
-            };
-          }) ?? []
+          models
+            ?.map(
+              ({ id, name, provider_id, llm_credentials, llm_providers }) => {
+                const noCredentials = !llm_credentials.length;
+                const iconUrl = llm_providers[0]?.logo_url;
+                return {
+                  key: id,
+                  label: name,
+                  subLabel: provider_id,
+                  leftContent:
+                    !iconUrl ? undefined : (
+                      <SvgIconFromURL
+                        url={iconUrl}
+                        className="mr-p5 text-0"
+                        style={{
+                          width: "24px",
+                          height: "24px",
+                        }}
+                      />
+                    ),
+                  rightContent:
+                    noCredentials ?
+                      <Btn
+                        title="Add provider API Key"
+                        onClick={() => setAddProviderCredentials(provider_id)}
+                        color="action"
+                        iconPath={mdiAccountKey}
+                      />
+                    : undefined,
+                  disabledInfo: noCredentials ? "No credentials" : undefined,
+                } satisfies FullOption<number>;
+              },
+            )
+            .slice()
+            .sort(
+              (a, b) =>
+                (a.disabledInfo?.length ?? 0) - (b.disabledInfo?.length ?? 0) ||
+                a.label.localeCompare(b.label),
+            ) ?? []
         }
         size="small"
         btnProps={{

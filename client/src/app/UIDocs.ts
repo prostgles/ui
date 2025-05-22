@@ -1,11 +1,23 @@
+import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import { isPlaywrightTest } from "../i18n/i18nUtils";
+import type { Command } from "../Testing";
 import { isDefined } from "../utils";
 import { domToSVG } from "./domToSVG/domToSVG";
-import { connectionsUIDoc } from "./ui-docs/connectionsUIDoc";
-import { serverSettingsUIDoc } from "./ui-docs/serverSettingsUIDoc";
+import { connectionUIDoc } from "./UIDocs/connection/connectionUIDoc";
+import { connectionsUIDoc } from "./UIDocs/connectionsUIDoc";
+import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
 
-type UIDocBase<T> = {
+type UIDocBase<T> = (
+  | {
+      selector: string;
+      selectorCommand?: undefined;
+    }
+  | {
+      selector?: undefined;
+      selectorCommand: Command;
+    }
+) & {
   title: string;
-  selector: string;
   description: string;
 } & T;
 
@@ -14,12 +26,15 @@ export type UIDocElement =
       type: "button";
     }>
   | UIDocBase<{
+      type: "drag-handle";
+      direction: "x" | "y";
+    }>
+  | UIDocBase<{
       type: "input";
-      inputType: "text" | "number" | "checkbox" | "select";
+      inputType: "text" | "number" | "checkbox" | "select" | "file";
     }>
   | UIDocBase<{
       type: "text";
-      content: string;
     }>
   | UIDocBase<{
       type: "list";
@@ -27,7 +42,7 @@ export type UIDocElement =
       itemContent: UIDocElement[];
     }>
   | UIDocBase<{
-      type: "select-list";
+      type: "select";
     }>
   | UIDocBase<{
       type: "link";
@@ -38,10 +53,6 @@ export type UIDocElement =
       children: UIDocElement[];
     }>
   | UIDocBase<{
-      type: "smartform-popup";
-      tableName: string;
-    }>
-  | UIDocBase<{
       type: "tab" | "accordion-item";
       children: UIDocElement[];
     }>
@@ -50,13 +61,17 @@ export type UIDocElement =
       children: UIDocElement[];
     }>
   | UIDocBase<{
-      type: "smartform";
+      type: "smartform" | "smartform-popup";
       tableName: string;
+      fieldNames?: string[];
     }>;
 
 export type UIDocContainers = {
   type: "page";
   path: string;
+  pathItem?: {
+    tableName: keyof DBSSchema;
+  };
   title: string;
   description: string;
   children: UIDocElement[];
@@ -64,6 +79,7 @@ export type UIDocContainers = {
 
 export const UIDocs = [
   connectionsUIDoc,
+  connectionUIDoc,
   serverSettingsUIDoc,
 ] satisfies UIDocContainers[];
 
@@ -113,8 +129,12 @@ export const flatDocs = UIDocs.map((doc) => getFlatDocs(doc))
   .filter(isDefined)
   .flat();
 
-window.onkeydown = (e: KeyboardEvent) => {
-  if (!e.shiftKey) return;
-  e.preventDefault();
-  domToSVG(document.body, true);
-};
+if (isPlaywrightTest) {
+  //@ts-ignore
+  window.toSVG = domToSVG;
+}
+// window.onkeydown = (e: KeyboardEvent) => {
+//   if (!e.shiftKey) return;
+//   e.preventDefault();
+//   domToSVG(document.body, true);
+// };

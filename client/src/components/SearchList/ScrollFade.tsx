@@ -84,10 +84,11 @@ export const useScrollFade = ({
 
   const onResize = useCallback(() => {
     onScroll();
+    const thresholdPx = 2;
     if (!el) return;
     const newOverflows = {
-      x: el.scrollWidth > el.clientWidth,
-      y: el.scrollHeight > el.clientHeight,
+      x: el.scrollWidth > el.clientWidth + thresholdPx,
+      y: el.scrollHeight > el.clientHeight + thresholdPx,
     };
     if (!isEqual(newOverflows, overflows)) {
       setOverflows(newOverflows);

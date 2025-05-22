@@ -1030,7 +1030,7 @@ test.describe("Main test", () => {
     await page.getByTestId("config.goToConnDashboard").click();
 
     /** Create table */
-    await page.getByTestId("dashboard.menu.createTable").click();
+    await page.getByTestId("dashboard.menu.create").click();
     await page.getByText("Create table").click();
     await page
       .getByTestId("dashboard.menu.createTable.tableName")

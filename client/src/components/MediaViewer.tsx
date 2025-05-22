@@ -77,7 +77,7 @@ export const MediaViewer = (props: P) => {
     } else {
       setURL(url);
     }
-  }, []);
+  }, [allowedHostnames, setURL, url]);
 
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -118,6 +118,7 @@ export const MediaViewer = (props: P) => {
           onClose={() => {
             setIsFocused(false);
           }}
+          positioning="fullscreen"
           autoFocusFirst={"content"}
           focusTrap={true}
           title={
@@ -143,7 +144,7 @@ export const MediaViewer = (props: P) => {
                 "image"
               ) ?
                 ""
-              : " p-1"
+              : " p-1 f-1 w-full h-full flex-col"
             }
           >
             {toggleClick && ToggleBtn(true, () => toggleClick(-1))}
@@ -205,7 +206,19 @@ const RenderMedia = ({
       // className: "b b-color "
     } as const;
     if (type === "image") {
-      mediaContent = <img loading="lazy" src={url} {...commonProps}></img>;
+      mediaContent = (
+        <img
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setIsFocused(!isFocused);
+          }}
+          className="pointer"
+          loading="lazy"
+          src={url}
+          {...commonProps}
+        ></img>
+      );
     } else if (type === "video") {
       mediaContent = (
         <video {...commonProps} controls src={url} preload="metadata"></video>
@@ -229,15 +242,17 @@ const RenderMedia = ({
         style={style}
       >
         {mediaContent}
-        <div
-          className={"absolute w-full h-full pointer"}
-          style={{ zIndex: 1, inset: 0 }}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setIsFocused(true);
-          }}
-        ></div>
+        {type !== "image" && (
+          <div
+            className={"absolute w-full h-full pointer"}
+            style={{ zIndex: 1, inset: 0 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setIsFocused(true);
+            }}
+          />
+        )}
       </div>
     );
   }

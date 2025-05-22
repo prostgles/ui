@@ -1,4 +1,4 @@
-import { mdiCheck } from "@mdi/js";
+import { mdiCheck, mdiCheckboxBlankOutline } from "@mdi/js";
 import React from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../../App";
@@ -11,7 +11,6 @@ export const MCPServerTools = ({
   server,
   tools,
   llm_chats_allowed_mcp_tools,
-  selectedToolName,
   chatId,
   dbs,
   dbsMethods,
@@ -36,7 +35,10 @@ export const MCPServerTools = ({
     });
 
   return (
-    <ScrollFade className="gap-p25 flex-row-wrap">
+    <ScrollFade
+      data-command="MCPServerTools"
+      className="gap-p25 flex-row-wrap o-auto"
+    >
       {tools.map((tool, i) => {
         const isAllowed = llm_chats_allowed_mcp_tools?.some(
           (at) => at.tool_id === tool.id,
@@ -47,13 +49,24 @@ export const MCPServerTools = ({
             title={tool.description}
             className={"pointer " + (isAllowed ? "bdb-active noselect" : "")}
             leftIcon={
-              !isAllowed ? undefined : (
+              isAllowed ?
                 {
                   path: mdiCheck,
+                  style: {
+                    marginRight: "0.25rem",
+                  },
                   size: 0.75,
                 }
-              )
+              : {
+                  path: mdiCheckboxBlankOutline,
+                  style: {
+                    marginRight: "0.25rem",
+                    opacity: 0.25,
+                  },
+                  size: 0.75,
+                }
             }
+            aria-checked={isAllowed}
             color={isAllowed ? "blue" : undefined}
             onClick={
               !chatId ? undefined : (

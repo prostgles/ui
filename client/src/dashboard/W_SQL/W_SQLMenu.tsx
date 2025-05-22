@@ -163,6 +163,7 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
           <div className="flex-col ai-start gap-1">
             <FormField
               label={t.W_SQLMenu["Query name"]}
+              data-command="W_SQLMenu.name"
               value={w.name}
               type="text"
               onChange={(newVal) => {
@@ -175,6 +176,7 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
 
             <FormField
               label={t.W_SQLMenu["Result display mode"]}
+              data-command="W_SQLMenu.renderDisplayMode"
               fullOptions={[
                 { key: "table", label: "Table", iconPath: mdiTable },
                 { key: "csv", label: "CSV", iconPath: mdiListBoxOutline },
@@ -188,6 +190,7 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
 
             <Btn
               title={t.W_SQLMenu["Save query as file"]}
+              data-command="W_SQLMenu.saveQuery"
               iconPath={mdiDownload}
               onClick={this.saveQuery}
               variant="faded"
@@ -198,6 +201,8 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
             <Btn
               iconPath={mdiUpload}
               variant="faded"
+              title={t.W_SQLMenu["Open query from file"]}
+              data-command="W_SQLMenu.openSQLFile"
               onClick={({ currentTarget }) => {
                 currentTarget.querySelector("input")?.click();
               }}
@@ -214,7 +219,8 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
                   if (e.currentTarget.files && e.currentTarget.files[0]) {
                     const myFile = e.currentTarget.files[0];
                     getFileText(myFile).then((sql) => {
-                      w.$update({ sql, show_menu: false });
+                      w.$update({ sql, show_menu: false, closed: true });
+                      w.$update({ closed: false });
                     });
                   }
                 }}
@@ -223,6 +229,7 @@ export class ProstglesSQLMenu extends RTComp<P, S, D> {
 
             <Btn
               title={t.W_SQLMenu["Delete query"]}
+              data-command="W_SQLMenu.deleteQuery"
               color="danger"
               variant="faded"
               iconPath={mdiDelete}

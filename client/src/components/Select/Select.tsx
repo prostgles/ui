@@ -27,6 +27,7 @@ export type FullOption<O extends OptionKey = string> = Pick<
   subLabel?: string;
   checked?: boolean;
   disabledInfo?: string;
+  rightContent?: React.ReactNode;
 } & TestSelectors &
   (
     | {
@@ -420,6 +421,7 @@ export default class Select<
               ranking,
               iconPath,
               leftContent,
+              rightContent,
               ...selectorProps
             }) => {
               return {
@@ -432,6 +434,7 @@ export default class Select<
                   : iconPath ?
                     <Icon size={1} path={iconPath} className="text-1 mr-p5" />
                   : undefined,
+                contentRight: rightContent,
                 styles: {
                   subLabel: {
                     whiteSpace: "pre-wrap",

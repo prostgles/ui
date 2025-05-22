@@ -1,4 +1,4 @@
-import { LANG, customLightThemeMonaco, getMonaco } from "./SQLEditor";
+import { LANG, customLightThemeMonaco, getMonaco } from "./W_SQLEditor";
 
 let themeWasSet = false;
 export const defineCustomSQLTheme = async (): Promise<boolean> => {

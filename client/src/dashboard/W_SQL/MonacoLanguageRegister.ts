@@ -2,7 +2,7 @@
 import { isDefined, tout } from "../../utils";
 import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 import { STARTING_KEYWORDS } from "../SQLEditor/SQLCompletion/CommonMatchImports";
-import { getMonaco } from "../SQLEditor/SQLEditor";
+import { getMonaco } from "../SQLEditor/W_SQLEditor";
 import type { languages } from "./monacoEditorTypes";
 
 export const monacoSQLConfig = {

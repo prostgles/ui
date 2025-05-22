@@ -16,6 +16,7 @@ export const MCPServerConfigButton = (
       <Btn
         onClick={({ currentTarget }) => setAnchorEl(currentTarget)}
         style={{ flexShrink: 1 }}
+        data-command="MCPServerConfigButton"
       >
         {Object.entries(schema).map(([key, schema]) => (
           <FlexRow

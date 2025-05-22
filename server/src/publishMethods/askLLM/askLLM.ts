@@ -62,7 +62,6 @@ export const askLLM = async (
   const promptObj = await dbs.llm_prompts.findOne({ id: llm_prompt_id });
   if (!promptObj) throw "Prompt not found";
   const { prompt } = promptObj;
-  if (!prompt) throw "Prompt is empty";
   const pastMessages = await dbs.llm_messages.find(
     { chat_id: chatId },
     { orderBy: { created: 1 } },

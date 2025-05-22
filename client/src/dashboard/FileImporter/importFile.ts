@@ -7,7 +7,6 @@ import {
   getTextColumnPotentialDataTypes,
   type SuggestedColumnDataType,
 } from "./checkCSVColumnDataTypes";
-import type { DBS } from "../Dashboard/DBS";
 
 export type ImportProgress = {
   importedRows: number;

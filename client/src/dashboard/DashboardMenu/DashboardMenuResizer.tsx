@@ -21,6 +21,7 @@ export const DashboardMenuResizer = ({ dashboardMenuRef, workspace }: P) => {
   return (
     <Pan
       key={"wsp"}
+      data-command="dashboard.menu.resize"
       style={{
         position: "absolute",
         right: 0,

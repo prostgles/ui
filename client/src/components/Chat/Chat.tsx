@@ -9,6 +9,7 @@ import { ChatMessage } from "./ChatMessage";
 import { useChatOnPaste } from "./useChatOnPaste";
 import { useAudioRecorder } from "./utils/AudioRecorder";
 import { useDropZone } from "../FileInput/DropZone";
+import { t } from "../../i18n/i18nUtils";
 
 export type Message = {
   id: number | string;
@@ -122,6 +123,7 @@ export const Chat = (props: ChatProps) => {
     >
       <div
         className="message-list "
+        data-command="Chat.messageList"
         ref={(e) => {
           if (e) {
             setScrollRef(e);
@@ -135,6 +137,7 @@ export const Chat = (props: ChatProps) => {
 
       <div
         title={disabledInfo}
+        data-command="Chat.sendWrapper"
         className={
           "send-wrapper relative " +
           (sendingMsg || disabledInfo ? "no-interaction not-allowed" : "")
@@ -149,6 +152,7 @@ export const Chat = (props: ChatProps) => {
         >
           <textarea
             ref={ref}
+            data-command={"Chat.textarea"}
             className="no-scroll-bar text-0 bg-transparent"
             rows={1}
             defaultValue={getCurrentMessage()}
@@ -170,6 +174,7 @@ export const Chat = (props: ChatProps) => {
           <Btn
             iconPath={mdiSend}
             loading={sendingMsg}
+            title={t.common.Send}
             data-command="Chat.send"
             disabledInfo={disabledInfo}
             onClick={async (e) => {

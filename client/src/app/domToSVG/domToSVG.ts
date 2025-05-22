@@ -1,6 +1,4 @@
-import { isPlaywrightTest } from "../../i18n/i18nUtils";
 import { elementToSVG } from "./elementToSVG";
-import { recordDomChanges } from "./recordDomChanges";
 import { wrapAllSVGText } from "./textToSVG";
 
 export const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
@@ -51,11 +49,6 @@ export const domToSVG = async (node: HTMLElement, debug = false) => {
   // recordDomChanges(node);
   return svgString;
 };
-
-if (isPlaywrightTest) {
-  //@ts-ignore
-  window.toSVG = domToSVG;
-}
 
 declare global {
   interface Element {

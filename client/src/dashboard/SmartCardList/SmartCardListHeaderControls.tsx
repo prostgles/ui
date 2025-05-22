@@ -12,8 +12,8 @@ import { InsertButton } from "../SmartForm/InsertButton";
 import type { SmartCardListProps } from "./SmartCardList";
 import type { SmartCardListState } from "./useSmartCardListState";
 
-export const SmartCardListHeaderControls = <T extends AnyObject>(
-  props: SmartCardListProps<T> & {
+export const SmartCardListHeaderControls = (
+  props: SmartCardListProps & {
     totalRows: number | undefined;
     itemsLength: number | undefined;
     columns: ValidatedColumnInfo[];

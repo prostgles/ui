@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Theme } from "./App";
+import type { Command } from "./Testing";
 
 type Unsubscribe = {
   unsubscribe: () => void;

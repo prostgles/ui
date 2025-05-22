@@ -4,6 +4,8 @@ import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import { MCPServerTools } from "./MCPServerTools";
 import type { FieldConfig } from "../../../dashboard/SmartCard/SmartCard";
 import type { Prgl } from "../../../App";
+import { FlexRow } from "../../../components/Flex";
+import Checkbox from "../../../components/Checkbox";
 
 export const useMCPServersListProps = (
   chatId: number | undefined,
@@ -23,7 +25,6 @@ export const useMCPServersListProps = (
           tool_id: 1,
         },
       },
-      { skip: !chatId },
     );
   const filter = useMemo(() => {
     return (
@@ -39,7 +40,42 @@ export const useMCPServersListProps = (
         {
           name: "name",
           label: "",
-          className: "bold mx-p25 w-full",
+          renderMode: "full",
+          render: (name: string, mcpServer) => {
+            const mcpServerTools =
+              mcpServer.mcp_server_tools as DBSSchema["mcp_server_tools"][];
+            const someToolsAllowed = !!llm_chats_allowed_mcp_tools?.some((at) =>
+              mcpServerTools.some((t) => t.id === at.tool_id),
+            );
+
+            return (
+              <FlexRow className="bold mx-p25 w-full">
+                {chatId && llm_chats_allowed_mcp_tools ?
+                  <Checkbox
+                    variant="header"
+                    title="Toggle all tools"
+                    className="m-0"
+                    label={name}
+                    checked={someToolsAllowed}
+                    onChange={() => {
+                      if (someToolsAllowed) {
+                        dbs.llm_chats_allowed_mcp_tools.delete({
+                          chat_id: chatId,
+                        });
+                      } else {
+                        dbs.llm_chats_allowed_mcp_tools.insert(
+                          mcpServerTools.map((t) => ({
+                            chat_id: chatId,
+                            tool_id: t.id,
+                          })),
+                        );
+                      }
+                    }}
+                  />
+                : name}
+              </FlexRow>
+            );
+          },
         },
         {
           name: "mcp_server_configs",
@@ -61,6 +97,7 @@ export const useMCPServersListProps = (
             // llm_chats_allowed_mcp_tools: "*",
           },
           renderMode: "valueNode",
+          className: "o-unset",
           render: (tools: DBSSchema["mcp_server_tools"][], server) => {
             return (
               <MCPServerTools
@@ -82,7 +119,14 @@ export const useMCPServersListProps = (
           }),
         ),
       ] satisfies FieldConfig[],
-    [chatId, dbs, llm_chats_allowed_mcp_tools, selectedTool?.name],
+    [
+      chatId,
+      dbs,
+      dbsMethods,
+      llm_chats_allowed_mcp_tools,
+      selectedTool?.id,
+      selectedTool?.name,
+    ],
   );
   return {
     selectedTool,

@@ -1,5 +1,5 @@
 import { useEffectDeep } from "prostgles-client/dist/prostgles";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { Prgl } from "../../App";
 import { useLLMChatMessages } from "./useLLMChatMessages";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
@@ -33,32 +33,42 @@ export const useLLMChat = (props: UseLLMChatProps) => {
   const activeChatId = activeChat?.id;
 
   const preferredPromptId = activeChat?.llm_prompt_id ?? firstPromptId;
-  const createNewChat = async (
-    promptId: number,
-    ifNoOtherChatsExist = false,
-  ) => {
-    if (ifNoOtherChatsExist) {
-      const chat = await dbs.llm_chats.findOne(chatsFilter);
-      if (chat) {
-        console.warn("Chat already exists", chat);
+  const lastModelId = activeChat?.model;
+  const createNewChat = useCallback(
+    async (promptId: number, ifNoOtherChatsExist = false) => {
+      if (ifNoOtherChatsExist) {
+        const chat = await dbs.llm_chats.findOne(chatsFilter);
+        if (chat) {
+          console.warn("Chat already exists", chat);
+          return;
+        }
+      }
+      if (!preferredPromptId) {
+        console.warn("No prompt found", { prompts });
         return;
       }
-    }
-    if (!preferredPromptId) {
-      console.warn("No prompt found", { prompts });
-      return;
-    }
-    await dbs.llm_chats.insert(
-      {
-        name: "New chat",
-        user_id: undefined as any,
-        connection_id: props.connectionId,
-        llm_prompt_id: promptId,
-      },
-      { returning: "*" },
-    );
-    setSelectedChat(undefined);
-  };
+      await dbs.llm_chats.insert(
+        {
+          name: "New chat",
+          //@ts-ignore
+          user_id: undefined,
+          connection_id: props.connectionId,
+          llm_prompt_id: promptId,
+          model: lastModelId,
+        },
+        { returning: "*" },
+      );
+      setSelectedChat(undefined);
+    },
+    [
+      chatsFilter,
+      dbs.llm_chats,
+      lastModelId,
+      preferredPromptId,
+      prompts,
+      props.connectionId,
+    ],
+  );
 
   useEffectDeep(() => {
     if (latestChats && !latestChats.length && preferredPromptId) {

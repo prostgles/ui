@@ -29,7 +29,6 @@ export const getLLMRequestBody = ({
 
   const systemMessage = nonEmptyMessages.filter((m) => m.role === "system");
   const [systemMessageObj, ...otherSM] = systemMessage;
-  if (!systemMessageObj) throw "Prompt not found";
   if (otherSM.length) throw "Multiple prompts found";
   const { api_key } = llm_credential;
   const model = llm_model.name;
@@ -58,7 +57,7 @@ export const getLLMRequestBody = ({
     provider === "Anthropic" ?
       {
         model,
-        system: systemMessageObj.content.map((c, i, arr) =>
+        system: systemMessageObj?.content.map((c, i, arr) =>
           i === arr.length - 1 ?
             {
               ...c,
@@ -92,7 +91,7 @@ export const getLLMRequestBody = ({
       }
     : provider === "Google" ?
       {
-        system_instruction: {
+        system_instruction: systemMessageObj && {
           parts: systemMessageObj.content
             .map((c) => {
               if (c.type !== "text") return undefined;

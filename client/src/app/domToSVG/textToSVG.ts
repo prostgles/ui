@@ -41,6 +41,7 @@ export const textToSVG = (
   textNode.setAttribute("font-weight", style.fontWeight);
   textNode.setAttribute("text-decoration", style.textDecoration);
   textNode.style.lineHeight = style.lineHeight;
+  textNode.style.whiteSpace = style.whiteSpace;
   if (
     style.textOverflow === "ellipsis" &&
     (style.whiteSpace === "nowrap" || getLineBreakParts(content).length === 1)

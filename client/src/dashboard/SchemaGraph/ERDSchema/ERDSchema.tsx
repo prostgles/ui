@@ -5,7 +5,8 @@ import type { useSchemaGraphControls } from "../SchemaGraphControls";
 import { useCanvasPanZoom } from "./useCanvasPanZoom";
 import { useDrawSchemaShapes } from "./useDrawSchemaShapes";
 import { useSetPanShapes } from "./usePanShapes";
-import { useSchemaShapes } from "./useSchemaShapes";
+import { useSchemaShapes, type SchemaShape } from "./useSchemaShapes";
+import type { Rectangle } from "../../Charts/CanvasChart";
 
 export type ColumnDisplayMode = "none" | "all" | "references";
 export type ColumnColorMode = "default" | "root" | "on-update" | "on-delete";
@@ -55,7 +56,10 @@ export const ERDSchema = ({
 
   const onPanEnded = useCallback(() => {
     const newPositions = shapesRef.current
-      .filter((s) => s.type === "rectangle")
+      .filter(
+        (s): s is Extract<SchemaShape, { type: "rectangle" }> =>
+          s.type === "rectangle",
+      )
       .reduce(
         (acc, { id, coords: [x, y] }) => ({
           ...acc,

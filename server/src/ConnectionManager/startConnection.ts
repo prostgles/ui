@@ -67,7 +67,7 @@ export const startConnection = async function (
 
   const socket_path = getConnectionPaths(con).ws;
 
-  const creatingPref = "creating prgl " + con.db_name;
+  const creatingPref = "connecting to " + con.db_name;
   try {
     const prglInstance = this.prglConnections[con.id];
     if (prglInstance) {
@@ -78,11 +78,11 @@ export const startConnection = async function (
         });
 
         if (prglInstance.prgl) {
-          log("destroying prgl", Object.keys(prglInstance));
+          log("disconnecting from ", Object.keys(prglInstance.con.db_name));
           await prglInstance.prgl.destroy();
         }
       } else {
-        log("reusing prgl", Object.keys(prglInstance));
+        log("reusing ", Object.keys(prglInstance));
         if (prglInstance.error) throw prglInstance.error;
         return socket_path;
       }

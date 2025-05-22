@@ -8,6 +8,7 @@ import React from "react";
 import Btn from "../Btn";
 import { FlexCol, FlexRow } from "../Flex";
 import { POPUP_CLASSES, type PopupProps } from "./Popup";
+import { t } from "../../i18n/i18nUtils";
 
 type PopupHeaderProps = PopupProps & {
   collapsed: boolean;
@@ -42,6 +43,7 @@ export const PopupHeader = ({
   return (
     <header
       className={`${POPUP_CLASSES.title} ${positioning === "right-panel" ? "pl-2" : "pl-1"} py-p5 pr-p5 flex-row ai-center bb b-color gap-1`}
+      data-command="Popup.header"
     >
       {collapsible && (
         <Btn
@@ -92,6 +94,8 @@ export const PopupHeader = ({
             iconPath={mdiFullscreen}
             color={fullScreen ? "action" : undefined}
             onClick={onToggleFullscreen}
+            title={t.common["Toggle fullscreen"]}
+            data-command="Popup.toggleFullscreen"
           />
         )}
         <Btn
@@ -102,6 +106,7 @@ export const PopupHeader = ({
           style={{ margin: "1px" }}
           iconPath={mdiClose}
           onClick={onClose}
+          title={t.common.Close}
         />
       </FlexRow>
     </header>

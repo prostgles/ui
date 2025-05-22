@@ -27,7 +27,7 @@ import type { _Dashboard } from "./Dashboard/Dashboard";
 import type { ChartOptions, WindowData } from "./Dashboard/dashboardUtils";
 import { SQL_SNIPPETS } from "./W_SQL/SQLSnippets";
 import RTComp from "./RTComp";
-import type { SQLSuggestion } from "./SQLEditor/SQLEditor";
+import type { SQLSuggestion } from "./SQLEditor/W_SQLEditor";
 import type { AnyObject } from "prostgles-types";
 import { Icon } from "../components/Icon/Icon";
 import { sliceText } from "../../../commonTypes/utils";

@@ -62,6 +62,7 @@ export const MCPServerFooterActions = ({
           title={`MCP Server ${JSON.stringify(mcp_server.name)} stderr logs`}
           positioning="center"
           className="mr-auto ml-p25"
+          data-command="MCPServerFooterActions.logs"
           button={
             <Btn
               color={logItem.error ? "danger" : "default"}
@@ -106,6 +107,7 @@ export const MCPServerFooterActions = ({
         />
       )}
       <SwitchToggle
+        data-command="MCPServerFooterActions.enableToggle"
         title={!mcp_server.enabled ? "Press to enable" : "Press to disable"}
         disabledInfo={
           (

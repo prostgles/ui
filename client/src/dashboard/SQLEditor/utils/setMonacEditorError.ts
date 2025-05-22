@@ -1,5 +1,5 @@
 import type { editor, IRange } from "monaco-editor";
-import type { MonacoError } from "../SQLEditor";
+import type { MonacoError } from "../W_SQLEditor";
 import type { CodeBlock } from "../SQLCompletion/completionUtils/getCodeBlock";
 import { scrollToLineIfNeeded } from "./scrollToLineIfNeeded";
 import type { WindowData } from "../../Dashboard/dashboardUtils";

@@ -2,7 +2,7 @@ import { getCommandElemSelector } from "../../Testing";
 import { tout } from "../../utils";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { triggerCharacters } from "../SQLEditor/SQLCompletion/registerSuggestions";
-import type { SQLEditorRef } from "../SQLEditor/SQLEditor";
+import type { SQLEditorRef } from "../SQLEditor/W_SQLEditor";
 import type { SQLHandler } from "prostgles-types";
 
 export type TypeOpts = {

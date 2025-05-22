@@ -39,6 +39,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
       title={`Configure and enable ${JSON.stringify(serverName)} MCP server`}
       positioning="center"
       onClose={onDone}
+      data-command="MCPServerConfig"
       rootStyle={{
         maxWidth: "min(600px, 100vw)",
       }}
@@ -50,6 +51,7 @@ export const MCPServerConfig = (props: MCPServerConfigProps) => {
         },
         {
           label: existingConfig ? "Update" : "Enable",
+          "data-command": "MCPServerConfig.save",
           disabledInfo: onSave ? undefined : "No changes",
           variant: "filled",
           color: "action",

@@ -1,4 +1,4 @@
-import type { SQLSuggestion } from "../SQLEditor";
+import type { SQLSuggestion } from "../W_SQLEditor";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import { getTableExpressionSuggestions } from "./completionUtils/getTableExpressionReturnTypes";
 import { getJoinSuggestions } from "./getJoinSuggestions";

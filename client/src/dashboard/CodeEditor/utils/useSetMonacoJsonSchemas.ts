@@ -1,6 +1,6 @@
 import type { editor } from "monaco-editor";
 import { useEffectDeep } from "prostgles-client/dist/react-hooks";
-import { getMonaco } from "../../SQLEditor/SQLEditor";
+import { getMonaco } from "../../SQLEditor/W_SQLEditor";
 import type { LanguageConfig } from "../CodeEditor";
 import { getMonacoJsonSchemas } from "./getMonacoJsonSchemas";
 

@@ -163,7 +163,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       name: `TEXT NOT NULL DEFAULT 'New prompt'`,
       description: `TEXT DEFAULT ''`,
       user_id: `UUID REFERENCES users(id) ON DELETE SET NULL`,
-      prompt: `TEXT NOT NULL CHECK(LENGTH(btrim(prompt)) > 0)`,
+      prompt: `TEXT NOT NULL `, // CHECK(LENGTH(prompt) > 0)
       options: {
         nullable: true,
         jsonbSchemaType: {

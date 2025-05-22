@@ -47,7 +47,6 @@ export const parseFieldConfigs = (
                     return (
                       <SvgIconFromURL
                         url={logo_url}
-                        mode="background"
                         style={{ width: "32px", height: "32px" }}
                       />
                     );

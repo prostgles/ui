@@ -25,6 +25,7 @@ export const DashboardCenteredLayoutResizer = () => {
   return (
     <Pan
       key={"wsp-centered-resize"}
+      data-command="dashboard.centered-layout.resize"
       style={{
         height: "100%",
         width: "25px",

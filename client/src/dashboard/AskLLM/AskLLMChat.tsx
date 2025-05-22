@@ -114,6 +114,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           isFullscreen ?
             {}
           : {
+              width: `${CHAT_WIDTH}px`,
               maxWidth: `${CHAT_WIDTH}px`,
             },
       }}
@@ -133,7 +134,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
       onClickClose={false}
       onClose={onClose}
       anchorEl={anchorEl}
-      contentClassName="p-0 f-1"
+      contentClassName="p-0 f-1 ai-center"
       rootStyle={{
         flex: 1,
       }}
@@ -147,6 +148,8 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
           className="min-h-0 f-1"
           style={{
             whiteSpace: "pre-line",
+            width: `${CHAT_WIDTH}px`,
+            maxWidth: `${CHAT_WIDTH}px`,
           }}
         >
           <Chat

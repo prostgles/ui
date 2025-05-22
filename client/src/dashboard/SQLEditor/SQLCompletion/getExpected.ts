@@ -1,6 +1,6 @@
 import { isDefined } from "prostgles-types";
-import type { SQLSuggestion } from "../SQLEditor";
-import { SUGGESTION_TYPES } from "../SQLEditor";
+import type { SQLSuggestion } from "../W_SQLEditor";
+import { SUGGESTION_TYPES } from "../W_SQLEditor";
 import { suggestSnippets } from "./CommonMatchImports";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import { getJoinSuggestions } from "./getJoinSuggestions";

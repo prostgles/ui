@@ -1,5 +1,5 @@
 import type { Monaco, Token } from "../../../W_SQL/monacoEditorTypes";
-import { LANG } from "../../SQLEditor";
+import { LANG } from "../../W_SQLEditor";
 import { getTokenNesting } from "../getPrevTokensNoParantheses";
 
 export type TokenInfo = Pick<Token, "offset"> & {

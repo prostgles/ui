@@ -182,6 +182,7 @@ export const CopyResultBtn = (props: {
 
   return (
     <PopupMenuList
+      data-command="W_SQLBottomBar.copyResults"
       button={
         <Btn
           title={`Copy result (${rawValues.length} rows)`}

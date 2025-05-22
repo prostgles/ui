@@ -1,6 +1,8 @@
 import {
   mdiFile,
+  mdiFilter,
   mdiFunction,
+  mdiRefresh,
   mdiScriptTextPlay,
   mdiTable,
   mdiTableEdit,
@@ -25,6 +27,8 @@ import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuResizer } from "./DashboardMenuResizer";
 import { NewTableMenu } from "./NewTableMenu";
 import type { TablesWithInfo } from "./useTableSizeInfo";
+import { SmartSelect } from "../SmartSelect";
+import { ROUTES } from "../../../../commonTypes/utils";
 
 type P = DashboardMenuProps & {
   onClose: undefined | VoidFunction;
@@ -51,7 +55,6 @@ export const DashboardMenuContent = (props: P) => {
     dbsMethods: { reloadSchema },
     dbs,
   } = prgl;
-  const closedQueries = queries.filter((q) => q.closed);
 
   const pinnedMenu = getIsPinnedMenu(workspace);
   const isPublishedReadonlyWorkspace =
@@ -78,7 +81,7 @@ export const DashboardMenuContent = (props: P) => {
   const { setWorkspace } = useSetNewWorkspace(workspace.id);
 
   const ref = useRef<HTMLDivElement>(null);
-  const ensureFadeDoesNotShowForOneItem = { minHeight: "180px" };
+  const ensureFadeDoesNotShowForOneItem = { minHeight: "120px" } as const;
   const bgColorClass =
     theme === "light" || !pinnedMenu ? "bg-color-0" : "bg-color-1";
 
@@ -148,15 +151,22 @@ export const DashboardMenuContent = (props: P) => {
         />
       )}
 
-      {!closedQueries.length ? null : (
+      {Boolean(queries.length) && (
         <SearchList
           id="search-list-queries"
+          data-command="dashboard.menu.savedQueriesList"
           className={" b-t f-1 min-h-0 "}
-          style={{ ...ensureFadeDoesNotShowForOneItem, maxHeight: "30vh" }}
-          placeholder={`${closedQueries.length} saved queries`}
-          noSearchLimit={3}
-          items={closedQueries
-            .sort((a, b) => +b.last_updated - +a.last_updated)
+          style={{
+            ...ensureFadeDoesNotShowForOneItem,
+            maxHeight: "fit-content",
+          }}
+          placeholder={`${queries.length} saved queries`}
+          noSearchLimit={0}
+          items={queries
+            .sort(
+              (a, b) =>
+                +b.closed - +a.closed || +b.last_updated - +a.last_updated,
+            )
             .map((t, i) => ({
               key: i,
               contentLeft: (
@@ -165,6 +175,7 @@ export const DashboardMenuContent = (props: P) => {
                 </div>
               ),
               label: t.name,
+              disabledInfo: !t.closed ? "Already opened" : undefined,
               contentRight: (
                 <span className="text-2 ml-auto italic">
                   {t.sql.trim().slice(0, 10)}...
@@ -189,8 +200,10 @@ export const DashboardMenuContent = (props: P) => {
           inputProps={dataCommand("dashboard.menu.tablesSearchListInput")}
           placeholder={`${tables.length} tables/views`}
           onNoResultsContent={(_term) => (
-            <FlexRow>
-              Table/view not found.
+            <FlexCol>
+              <InfoRow color="info" variant="filled">
+                Table/view not found.
+              </InfoRow>
               <Btn
                 variant="faded"
                 color="action"
@@ -198,10 +211,20 @@ export const DashboardMenuContent = (props: P) => {
                 onClickPromise={async () => {
                   reloadSchema!(props.prgl.connectionId);
                 }}
+                iconPath={mdiRefresh}
               >
-                refresh schema
+                Refresh schema
               </Btn>
-            </FlexRow>
+              <Btn
+                asNavLink={true}
+                variant="faded"
+                color="action"
+                iconPath={mdiFilter}
+                href={`${ROUTES.CONFIG}/${props.prgl.connectionId}`}
+              >
+                Edit schema list (in "More options ...")
+              </Btn>
+            </FlexCol>
           )}
           items={tablesWithInfo.map((t, i) => {
             return {
@@ -245,6 +268,7 @@ export const DashboardMenuContent = (props: P) => {
         <SearchList
           limit={100}
           noSearchLimit={0}
+          data-command="dashboard.menu.serverSideFunctionsList"
           className={"search-list-functions b-t f-1 min-h-0 max-h-fit "}
           style={ensureFadeDoesNotShowForOneItem}
           placeholder={"Search " + detailedMethods.length + " functions"}

@@ -136,7 +136,11 @@ export const getWhatToRenderOnSVG = async (
 
           if (textRect.width > 0 && textRect.height > 0) {
             return {
-              style: undefined,
+              style: {
+                ...style,
+                /** This is done to preserve leading spaces */
+                whiteSpace: "pre",
+              },
               textContent,
               x: textRect.x,
               y: textRect.y,

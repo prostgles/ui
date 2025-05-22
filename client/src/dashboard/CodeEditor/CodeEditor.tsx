@@ -11,7 +11,7 @@ import { isObject } from "../../../../commonTypes/publishUtils";
 import { classOverride } from "../../components/Flex";
 import type { MonacoEditorProps } from "../../components/MonacoEditor/MonacoEditor";
 import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
-import { getMonaco } from "../SQLEditor/SQLEditor";
+import { getMonaco } from "../SQLEditor/W_SQLEditor";
 import { type editor, type Uri } from "../W_SQL/monacoEditorTypes";
 import { registerLogLang } from "./registerLogLang";
 import { setMonacoErrorMarkers } from "./utils/setMonacoErrorMarkers";

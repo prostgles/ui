@@ -9,7 +9,7 @@ import {
   getPGObjects,
 } from "./SQLCompletion/getPGObjects";
 import type { ParsedSQLSuggestion } from "./SQLCompletion/registerSuggestions";
-import type { SQLSuggestion } from "./SQLEditor";
+import type { SQLSuggestion } from "./W_SQLEditor";
 import { SQL_SNIPPETS } from "./SQL_SNIPPETS";
 import { tryCatchV2 } from "../WindowControls/TimeChartLayerOptions";
 

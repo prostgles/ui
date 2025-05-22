@@ -12,7 +12,7 @@ import type {
   TooltipPosition,
 } from "../W_TimeChart/W_TimeChartMenu";
 
-import type { SQLSuggestion } from "../SQLEditor/SQLEditor";
+import type { SQLSuggestion } from "../SQLEditor/W_SQLEditor";
 import type { RefreshOptions } from "../W_Table/TableMenu/W_TableMenu";
 
 import type { DBGeneratedSchema } from "../../../../commonTypes/DBGeneratedSchema";

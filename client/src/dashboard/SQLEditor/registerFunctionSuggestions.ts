@@ -1,8 +1,8 @@
 import { getCurrentCodeBlock } from "./SQLCompletion/completionUtils/getCodeBlock";
 import { asSQL } from "./SQLCompletion/KEYWORDS";
 import { getParentFunction } from "./SQLCompletion/MatchSelect";
-import type { SQLSuggestion } from "./SQLEditor";
-import { LANG } from "./SQLEditor";
+import type { SQLSuggestion } from "./W_SQLEditor";
+import { LANG } from "./W_SQLEditor";
 import type { PG_Function } from "./SQLCompletion/getPGObjects";
 import type {
   IDisposable,

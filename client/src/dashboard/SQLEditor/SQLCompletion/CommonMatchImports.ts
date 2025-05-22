@@ -6,7 +6,7 @@ import type {
 } from "./registerSuggestions";
 import type { IRange } from "../../W_SQL/monacoEditorTypes";
 import type { TokenInfo } from "./completionUtils/getTokens";
-import type { SQLSuggestion } from "../SQLEditor";
+import type { SQLSuggestion } from "../W_SQLEditor";
 const asSQL = (v: string, lang = "sql") => "```" + lang + "\n" + v + "\n```";
 
 export type MinimalSnippet = {

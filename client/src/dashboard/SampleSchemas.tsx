@@ -2,7 +2,7 @@ import React from "react";
 import Select from "../components/Select/Select";
 import type { DBSMethods } from "./Dashboard/DBS";
 import { FlexCol } from "../components/Flex";
-import { SQLEditor } from "./SQLEditor/SQLEditor";
+import { W_SQLEditor } from "./SQLEditor/W_SQLEditor";
 import CodeExample from "./CodeExample";
 import type { SampleSchema } from "../../../commonTypes/utils";
 import { usePromise } from "prostgles-client/dist/react-hooks";
@@ -30,7 +30,7 @@ export const SampleSchemas = ({ dbsMethods, onChange, name, title }: P) => {
       {!schema ?
         null
       : schema.type === "sql" ?
-        <SQLEditor
+        <W_SQLEditor
           value={schema.file}
           sqlOptions={{ lineNumbers: "off" }}
           style={{

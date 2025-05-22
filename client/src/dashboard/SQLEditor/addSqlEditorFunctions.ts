@@ -1,6 +1,6 @@
 import type { editor } from "../W_SQL/monacoEditorTypes";
 import { getCurrentCodeBlock } from "./SQLCompletion/completionUtils/getCodeBlock";
-import { getMonaco } from "./SQLEditor";
+import { getMonaco } from "./W_SQLEditor";
 export const addSqlEditorFunctions = async (
   editor: editor.IStandaloneCodeEditor,
   smallestBlock: boolean,

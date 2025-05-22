@@ -3,7 +3,7 @@ import {
   getMonaco,
   SUGGESTION_TYPE_DOCS,
   SUGGESTION_TYPES,
-} from "../SQLEditor";
+} from "../W_SQLEditor";
 import { suggestSnippets } from "./CommonMatchImports";
 import { getExpected } from "./getExpected";
 import { asSQL, TOP_KEYWORDS } from "./KEYWORDS";

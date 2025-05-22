@@ -47,6 +47,7 @@ export const translations = {
     "Copy to clipboard": undefined,
     Send: undefined,
     experimental: undefined,
+    "Toggle fullscreen": undefined,
   },
   App: {
     Connections: undefined,

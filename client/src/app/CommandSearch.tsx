@@ -1,15 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Popup from "../components/Popup/Popup";
 import SearchList from "../components/SearchList/SearchList";
-import { flatDocs } from "./UIDocs";
+import { flatDocs, type UIDocContainers, type UIDocElement } from "./UIDocs";
 import Markdown from "react-markdown";
 import { FlexCol } from "../components/Flex";
+import { useNavigate } from "react-router-dom";
+import { click, waitForElement } from "../demo/demoUtils";
 
 /**
- * By pressing Ctrl+K, the user can open a command search dialog.
- * This dialog allows the user to search and execute commands within the current context
+ * By pressing Ctrl+K, the user to search and go to functionality in the UI.
  */
 export const CommandSearch = () => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState<"commands" | "docs">();
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -32,11 +34,43 @@ export const CommandSearch = () => {
     };
   }, [open]);
 
+  const goToUI = useCallback(
+    async (doc: UIDocContainers | UIDocElement) => {
+      if (doc.type === "page") {
+        const { pathname } = window.location;
+        const path = `/${doc.path}`;
+        let isOnPage = pathname.startsWith(path);
+        if (doc.pathItem) {
+          const currentPathItem = pathname
+            .slice(path.length + 1)
+            .split("/")
+            .pop();
+          isOnPage = isOnPage && !!currentPathItem;
+        }
+        if (!isOnPage) {
+          navigate(path);
+        }
+      } else if (
+        doc.type === "popup" ||
+        doc.type === "tab" ||
+        doc.type === "accordion-item" ||
+        doc.type === "link" ||
+        doc.type === "smartform-popup"
+      ) {
+        await click("", doc.selector);
+      } else {
+        const elem = await waitForElement<HTMLDivElement>("", doc.selector);
+        elem.focus();
+      }
+    },
+    [navigate],
+  );
+
   if (!open) return null;
   return (
     <Popup
       title={open === "commands" ? undefined : "Documentation"}
-      clickCatchStyle={{ opacity: 0.5 }}
+      clickCatchStyle={{ opacity: 1 }}
       positioning={open === "commands" ? "top-center" : "fullscreen"}
       onClose={() => setOpen(undefined)}
       contentClassName="flex-col gap-2 p-1"
@@ -58,8 +92,19 @@ export const CommandSearch = () => {
           items={flatDocs.map((data) => ({
             key: data.parentTitles.join(" > ") + " > " + data.title,
             subLabel: data.description,
-            onPress: () => {
+            onPress: async () => {
               console.log("Selected:", data);
+              const page = data.parentDocs[0] ?? data;
+              if (page.type !== "page") {
+                console.warn("Selected item is not a page");
+                return;
+              }
+              await goToUI(page);
+              const prevParents = data.parentDocs.slice(1);
+              for (const parent of prevParents) {
+                await goToUI(parent);
+              }
+              await goToUI(data);
             },
             data,
           }))}

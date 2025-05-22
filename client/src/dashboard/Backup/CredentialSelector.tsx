@@ -9,7 +9,7 @@ import Select from "../../components/Select/Select";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { DBS, DBSMethods } from "../Dashboard/DBS";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
-import { getMonaco } from "../SQLEditor/SQLEditor";
+import { getMonaco } from "../SQLEditor/W_SQLEditor";
 import { SmartForm } from "../SmartForm/SmartForm";
 
 type P = {

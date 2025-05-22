@@ -117,6 +117,7 @@ export const ColumnList = ({
                       positioning="center"
                       title={`Alter ${c.name}`}
                       clickCatchStyle={{ opacity: 1 }}
+                      data-command="W_TableMenu_ColumnList.alter"
                       button={
                         <Btn
                           iconPath={mdiPencil}
@@ -134,6 +135,7 @@ export const ColumnList = ({
                   {c.nested && (
                     <PopupMenu
                       title="Edit Linked Field"
+                      data-command="W_TableMenu_ColumnList.linkedColumnOptions"
                       button={
                         <Btn
                           color="action"
@@ -160,6 +162,7 @@ export const ColumnList = ({
                   )}
                   {!!computedRemove && (
                     <Btn
+                      data-command="W_TableMenu_ColumnList.removeComputedColumn"
                       className="mr-1"
                       color="danger"
                       title={computedRemove}

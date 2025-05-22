@@ -1,9 +1,15 @@
-import { getCommandElemSelector } from "../../Testing";
-import type { UIDocContainers } from "../UIDocs";
+import { getCommandElemSelector } from "../../../Testing";
+import type { UIDocContainers } from "../../UIDocs";
+import { askAIUIDoc } from "./askAIUIDoc";
+import { dashboardMenuUIDoc } from "./dashboard/dashboardMenuUIDoc";
+import { dashboardUIDoc } from "./dashboard/dashboardUIDoc";
 
-export const connectionsUIDoc = {
+export const connectionUIDoc = {
   type: "page",
-  path: "connections/:connectionId",
+  path: "connections",
+  pathItem: {
+    tableName: "connections",
+  },
   title: "Database Workspace",
   description:
     "Main interface for interacting with a selected database connection. Browse data, execute SQL queries, manage database objects, and access various tools.",
@@ -29,7 +35,7 @@ export const connectionsUIDoc = {
       selector: getCommandElemSelector("ConnectionSelector"),
     },
     {
-      type: "select-list",
+      type: "select",
       title: "Workspaces",
       description:
         "List of available workspaces for the selected connection. Each workspace represents a separate environment for data analysis",
@@ -111,36 +117,23 @@ export const connectionsUIDoc = {
         },
       ],
     },
+    askAIUIDoc,
     {
       type: "popup",
-      selector: getCommandElemSelector("AskLLM"),
-      title: "Ask AI",
+      selector: getCommandElemSelector("Feedback"),
+      title: "Feedback",
       description:
-        "Opens an AI assistant to help generate SQL queries, understand database schema, or perform other tasks.",
-      children: [
-        {
-          type: "smartform-popup",
-          selector: getCommandElemSelector("LLMChatOptions.toggle"),
-          title: "Chat settings",
-          tableName: "llm_chats",
-          description:
-            "Allows editing all chat settings and data as well deleting or cloning the current chat.",
-        },
-        {
-          type: "input",
-          inputType: "select",
-          selector: getCommandElemSelector("LLMChat.select"),
-          title: "Select chat",
-          description:
-            "Selects a chat from the list of available chats. Each chat represents a separate conversation with the AI assistant.",
-        },
-        {
-          type: "button",
-          selector: getCommandElemSelector("AskLLMChat.NewChat"),
-          title: "New chat",
-          description: "Creates a new chat with the AI assistant.",
-        },
-      ],
+        "Opens the feedback form, allowing you to provide feedback about the application.",
+      children: [],
     },
+    {
+      type: "link",
+      selector: getCommandElemSelector("dashboard.goToConnections"),
+      title: "Go to connections",
+      description: "Opens the connections list page.",
+      pagePath: "connections",
+    },
+    dashboardMenuUIDoc,
+    dashboardUIDoc,
   ],
 } satisfies UIDocContainers;

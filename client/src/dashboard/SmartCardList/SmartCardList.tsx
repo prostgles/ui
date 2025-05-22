@@ -160,7 +160,7 @@ export const SmartCardList = <T extends AnyObject>(
 
       {tableControls && (
         <SmartCardListHeaderControls
-          {...props}
+          {...(props as SmartCardListProps)}
           itemsLength={items.length}
           totalRows={totalRows}
           columns={columns}

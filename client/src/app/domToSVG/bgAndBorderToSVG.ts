@@ -11,9 +11,11 @@ export function hasBorder(style) {
 function parseBorderRadius(borderRadiusValue) {
   if (!borderRadiusValue || borderRadiusValue === "0px") return "0";
 
-  // Extract just the first value for simplicity
-  const match = borderRadiusValue.match(/^(\d+(\.\d+)?[a-z%]*)/);
-  return match ? match[1] : "0";
+  const borderRadiusValues: number[] = borderRadiusValue
+    .split(" ")
+    .map((value) => parseFloat(value));
+  const maxRadius = Math.max(...borderRadiusValues);
+  return maxRadius;
 }
 
 export const addBorders = (

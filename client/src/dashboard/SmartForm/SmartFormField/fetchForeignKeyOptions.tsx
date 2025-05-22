@@ -254,7 +254,6 @@ const fetchSearchResults = async ({
         <SvgIconFromURL
           className="mr-p5 text-0"
           url={rowIconSrc}
-          mode="background"
           style={{
             width: "24px",
             height: "24px",

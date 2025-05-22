@@ -1,4 +1,4 @@
-import { getMonaco } from "../../SQLEditor";
+import { getMonaco } from "../../W_SQLEditor";
 import {
   CREATE_OR_REPLACE,
   CREATE_SNIPPETS,

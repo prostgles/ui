@@ -44,6 +44,7 @@ export const Feedback = (props: Pick<Prgl, "dbsMethods" | "dbs">) => {
         <Btn
           title={t.Feedback["Leave feedback"]}
           variant="faded"
+          data-command="Feedback"
           iconPath={mdiMessageBookmarkOutline}
         >
           {window.isMediumWidthScreen ? null : t.Feedback.Feedback}

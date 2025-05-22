@@ -1,5 +1,5 @@
 import React from "react";
-import "./SQLEditor.css";
+import "./W_SQLEditor.css";
 
 import ReactDOM from "react-dom";
 import type { MonacoSuggestion } from "./SQLCompletion/registerSuggestions";
@@ -178,7 +178,10 @@ import type { SQLHandler } from "prostgles-types";
 import Btn from "../../components/Btn";
 import { getDataTransferFiles } from "../../components/FileInput/DropZone";
 import { FlexCol } from "../../components/Flex";
-import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
+import {
+  MonacoEditor,
+  type MonacoEditorProps,
+} from "../../components/MonacoEditor/MonacoEditor";
 import { isEmpty, omitKeys } from "prostgles-types";
 import { SECOND } from "../Charts";
 import type { DashboardState } from "../Dashboard/Dashboard";
@@ -252,7 +255,7 @@ type S = {
   themeAge: number;
 };
 
-export class SQLEditor extends RTComp<P, S> {
+export class W_SQLEditor extends RTComp<P, S> {
   ref?: HTMLElement;
   editor?: editor.IStandaloneCodeEditor;
   error?: MonacoError;
@@ -435,11 +438,11 @@ export class SQLEditor extends RTComp<P, S> {
       ]),
 
       ...(canExecuteBlocks && {
-        /** Needed for play button */
+        /** Needed for play button and chart buttons */
         glyphMargin: true,
         lineNumbersMinChars: 3,
       }),
-    };
+    } satisfies MonacoEditorProps["options"];
   }
 
   onMonacoEditorMount = (editor: editor.IStandaloneCodeEditor) => {
@@ -509,6 +512,7 @@ export class SQLEditor extends RTComp<P, S> {
               iconPath={mdiPlay}
               size="micro"
               onClick={this.onRun}
+              data-command="W_SQLEditor.executeStatement"
               color="action"
               title={`Run this statement**\n\nOnly this section of the script will be executed unless text is selected. This behaviour can be changed in options\n\nExecute hot keys: ctrl+e, alt+e`}
             />
@@ -526,11 +530,7 @@ export class SQLEditor extends RTComp<P, S> {
         ref={(e) => {
           if (e) this.rootRef = e;
         }}
-        style={{
-          ...style,
-          /** Needed to ensure add timechart chart select btn outline is visible */
-          paddingLeft: canExecuteBlocks ? "4px" : undefined,
-        }}
+        style={style}
         onDragOver={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -576,7 +576,7 @@ export class SQLEditor extends RTComp<P, S> {
 }
 
 const setActiveCodeBlock = async function (
-  this: SQLEditor,
+  this: W_SQLEditor,
   e: editor.ICursorPositionChangedEvent | undefined,
 ) {
   const editor = this.editor;
@@ -668,7 +668,7 @@ const removePlayDecoration = ({ editor, value, EOL }: Args) => {
 
 const setActions = async (
   editor: editor.IStandaloneCodeEditor,
-  comp: SQLEditor,
+  comp: W_SQLEditor,
 ) => {
   const monaco = await getMonaco();
 

@@ -1,5 +1,5 @@
 import type { SQLHandler } from "prostgles-types";
-import type { SQLSuggestion } from "../SQLEditor/SQLEditor";
+import type { SQLSuggestion } from "../SQLEditor/W_SQLEditor";
 import { isObject } from "../../../../commonTypes/publishUtils";
 import { parseError } from "./runSQL";
 

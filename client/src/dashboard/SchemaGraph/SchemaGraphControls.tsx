@@ -10,6 +10,7 @@ import {
   type ColumnDisplayMode,
 } from "./ERDSchema/ERDSchema";
 import type { SchemaGraphProps } from "./SchemaGraph";
+import { title } from "process";
 
 export const SchemaGraphControls = ({
   columnColorMode,
@@ -25,13 +26,18 @@ export const SchemaGraphControls = ({
 }: ReturnType<typeof useSchemaGraphControls> &
   Pick<SchemaGraphProps, "dbs" | "connectionId">) => {
   return (
-    <FlexRow className="w-full" key={schemaKey}>
+    <FlexRow
+      className="w-full"
+      key={schemaKey}
+      data-command="SchemaGraph.TopControls"
+    >
       <div className="f-0">Schema diagram</div>
       <FlexRowWrap
         className="font-16   f-1 relative s-fit"
         style={{ fontWeight: "normal" }}
       >
         <Select
+          data-command="SchemaGraph.TopControls.tableRelationsFilter"
           value={displayMode}
           label="Tables"
           asRow={true}
@@ -40,6 +46,7 @@ export const SchemaGraphControls = ({
           onChange={setDisplayMode}
         />
         <Select
+          data-command="SchemaGraph.TopControls.columnRelationsFilter"
           value={columnDisplayMode}
           label="Columns"
           asRow={true}
@@ -48,6 +55,7 @@ export const SchemaGraphControls = ({
           onChange={setColumnDisplayMode}
         />
         <Select
+          data-command="SchemaGraph.TopControls.linkColorMode"
           value={columnColorMode}
           label="Color mode"
           asRow={true}
@@ -58,8 +66,8 @@ export const SchemaGraphControls = ({
         {["on-delete", "on-update"].includes(columnColorMode) && (
           <FlexRowWrap>
             {" "}
-            {getEntries(CASCADE_LEGEND).map(([label, color]) => (
-              <Chip key={label} style={{ color }}>
+            {getEntries(CASCADE_LEGEND).map(([label, { color, title }]) => (
+              <Chip key={label} style={{ color }} title={title}>
                 {label}
               </Chip>
             ))}
@@ -67,6 +75,7 @@ export const SchemaGraphControls = ({
         )}
 
         <Btn
+          data-command="SchemaGraph.TopControls.resetLayout"
           clickConfirmation={{
             buttonText: "Reset",
             color: "danger",
@@ -142,11 +151,31 @@ const COLUMN_FILTER = [
 ] as const;
 
 export const CASCADE_LEGEND = {
-  CASCADE: getCssVariableValue("--text-danger"),
-  RESTRICT: getCssVariableValue("--text-warning"),
-  NOACTION: getCssVariableValue("--text-warning"),
-  "SET NULL": getCssVariableValue("--text-1"),
-  "SET DEFAULT": getCssVariableValue("--color-number"),
+  CASCADE: {
+    color: getCssVariableValue("--text-danger"),
+    title:
+      "Automatically deletes or updates related rows in the child table when a row in the parent table is deleted or updated",
+  },
+  RESTRICT: {
+    color: getCssVariableValue("--text-warning"),
+    title:
+      "Prevents deletion or update of a parent row if there are dependent rows in the child table",
+  },
+  NOACTION: {
+    color: getCssVariableValue("--text-warning"),
+    title:
+      "Similar to RESTRICT, but the check is deferred until the end of the transaction (this is the default)",
+  },
+  "SET NULL": {
+    color: getCssVariableValue("--text-1"),
+    title:
+      "Sets the foreign key columns to NULL when the referenced row is deleted or updated",
+  },
+  "SET DEFAULT": {
+    color: getCssVariableValue("--color-number"),
+    title:
+      "Sets the foreign key columns to their default values when the referenced row is deleted or updated",
+  },
 } as const;
 
 export type SchemaGraphDisplayMode = (typeof DISPLAY_MODES)[number]["key"];

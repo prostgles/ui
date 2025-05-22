@@ -564,6 +564,7 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
+      annotations?: null | any;
       autoApprove?: null | boolean;
       description: string;
       id?: number;

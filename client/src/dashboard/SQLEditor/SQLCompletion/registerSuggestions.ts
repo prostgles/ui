@@ -10,8 +10,8 @@ import type {
   Monaco,
   Position,
 } from "../../W_SQL/monacoEditorTypes";
-import type { SQLSuggestion } from "../SQLEditor";
-import { LANG } from "../SQLEditor";
+import type { SQLSuggestion } from "../W_SQLEditor";
+import { LANG } from "../W_SQLEditor";
 import { getKeywordDocumentation } from "../SQLEditorSuggestions";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import { getCurrentCodeBlock } from "./completionUtils/getCodeBlock";

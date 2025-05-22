@@ -10,8 +10,8 @@ export const isElementVisible = (element: Element) => {
     return { isVisible: !!element.textContent?.trim().length, style, bbox };
   }
   const mightBeVisible = element.checkVisibility({
-    opacityProperty: true,
-    visibilityProperty: true,
+    checkOpacity: true,
+    checkVisibilityCSS: true,
   });
 
   if (!mightBeVisible) return { isVisible: false, style, bbox };

@@ -192,7 +192,7 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
               ));
 
             if (fc.renderMode === "full") {
-              return valueNode;
+              return <React.Fragment key={fc.name}>{valueNode}</React.Fragment>;
             }
             return (
               <SmartCardColumn

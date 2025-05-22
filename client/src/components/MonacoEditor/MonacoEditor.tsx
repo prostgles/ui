@@ -7,7 +7,7 @@ import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils
 import {
   customLightThemeMonaco,
   getMonaco,
-} from "../../dashboard/SQLEditor/SQLEditor";
+} from "../../dashboard/SQLEditor/W_SQLEditor";
 import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
 
@@ -102,13 +102,18 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       newEditor,
       expandSuggestionDocs,
     );
-    newEditor.addCommand(
-      monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyR,
-      () => {
-        // Disable refactor command
-        return null;
+    /** Remove these keybindings from monaco */
+    monaco.editor.addKeybindingRules([
+      {
+        keybinding:
+          monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyR,
+        command: null,
       },
-    );
+      {
+        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK,
+        command: null,
+      },
+    ]);
     setEditor(newEditor);
     return () => {
       newEditor.dispose();
@@ -177,6 +182,7 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
       key={`${!!language.length}`}
       ref={container}
       style={monacoStyle}
+      data-command="MonacoEditor"
       className={`MonacoEditor  ${className}`}
     />
   );

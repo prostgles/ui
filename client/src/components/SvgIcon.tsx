@@ -1,4 +1,4 @@
-import { useIsMounted } from "prostgles-client/dist/prostgles";
+import { useIsMounted, usePromise } from "prostgles-client/dist/prostgles";
 import React, { useEffect } from "react";
 import sanitizeHtml from "sanitize-html";
 import { classOverride, type DivProps } from "./Flex";
@@ -93,15 +93,29 @@ type SvgIconFromURLProps = DivProps & {
    * mask = uses currentColor
    * background = maintains original colours
    */
-  mode?: "background" | "mask";
+  mode?: "background" | "mask" | "auto";
 };
 export const SvgIconFromURL = ({
   url,
   className,
   style,
-  mode = "mask",
+  mode: propsMode = "auto",
   ...divProps
 }: SvgIconFromURLProps) => {
+  const modeOverride = usePromise(async () => {
+    if (propsMode !== "auto") return;
+    const res = await fetch(url);
+    const contentType = res.headers.get("content-type");
+    if (contentType?.includes("image/svg+xml")) {
+      const svg = await res.text();
+      if (svg.includes("currentColor")) {
+        return "mask";
+      }
+    }
+    return "background";
+  }, [propsMode, url]);
+  const mode = propsMode === "auto" ? modeOverride : propsMode;
+
   return (
     <div
       {...divProps}

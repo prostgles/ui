@@ -25,6 +25,7 @@ export const MCPServersToolbar = ({
         <Btn
           color="action"
           variant="faded"
+          data-command="MCPServersToolbar.disableAllToggle"
           onClick={() => {
             dbs.global_settings.update(
               {},
@@ -35,13 +36,15 @@ export const MCPServersToolbar = ({
             );
           }}
         >
-          {globalSettings.data?.mcp_servers_disabled ? "Enable" : "Disable"} all
-          MCP Servers
+          {globalSettings.data?.mcp_servers_disabled ?
+            "Enable all MCP Servers"
+          : "Disable all MCP Servers"}
         </Btn>
 
         <Select
           className="min-w-0 ml-auto"
           emptyLabel={"Search tools"}
+          data-command="MCPServersToolbar.searchTools"
           btnProps={{
             iconPath: selectedTool ? mdiFilter : mdiMagnify,
             color: selectedTool ? "action" : "default",

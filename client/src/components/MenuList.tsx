@@ -110,7 +110,7 @@ export const MenuList = (props: MenuListProps) => {
             (isVertical ? " f-1 max-w-fit min-w-fit " : "flex-row"),
           className,
         )}
-        data-command={props["data-command"] ?? ("MenuList" satisfies Command)}
+        data-command={props["data-command"] ?? "MenuList"}
         style={rootStyle}
         onKeyDown={onKeyDownFocusSiblings}
       >

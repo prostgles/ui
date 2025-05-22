@@ -111,6 +111,7 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
     : rows;
   return (
     <div
+      data-command="W_SQLResults"
       className={
         "W_SQLResults flex-col oy-auto relative bt b-color " +
         (commandResult ? " f-0 " : " f-1 ") +

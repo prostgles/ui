@@ -1140,6 +1140,10 @@ export const DefaultMCPServers: Record<string, MCPServerInfo> = {
   //     },
   //   },
   // },
+  playwright: {
+    command: "npx",
+    args: ["@playwright/mcp@latest"],
+  },
   puppeteer: {
     command: "npx",
     args: ["-y", "@modelcontextprotocol/server-puppeteer"],

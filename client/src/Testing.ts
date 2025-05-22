@@ -39,11 +39,34 @@ export const COMMANDS = {
 
   "dashboard.window.rowInsert": "Open row insert panel",
   "dashboard.window.rowInsertTop": "Open row insert panel from top filter bar",
-  "dashboard.window.runQuery":
+
+  "W_SQLMenu.name": "",
+  "W_SQLMenu.renderDisplayMode": "",
+  "W_SQLMenu.saveQuery": "",
+  "W_SQLMenu.openSQLFile": "",
+  "W_SQLMenu.deleteQuery": "",
+
+  "W_SQLEditor.executeStatement": "Executes the current SQL statement",
+  W_SQLEditor: "",
+  W_SQLBottomBar: "",
+  "W_SQLBottomBar.runQuery":
     "Executes the current query (selected, block or full)",
-  "dashboard.window.cancelQuery": "Cancels the current query",
-  "dashboard.window.terminateQuery": "Terminates the current query",
-  "dashboard.window.stopListen": "Terminates the current LISTEN query",
+  "W_SQLBottomBar.limit": "",
+  "W_SQLBottomBar.queryDuration": "",
+  "W_SQLBottomBar.cancelQuery": "Cancels the current query",
+  "W_SQLBottomBar.terminateQuery": "Terminates the current query",
+  "W_SQLBottomBar.stopListen": "Terminates the current LISTEN query",
+  "W_SQLBottomBar.toggleTable": "",
+  "W_SQLBottomBar.toggleCodeEditor": "",
+  "W_SQLBottomBar.toggleNotices": "",
+  "W_SQLBottomBar.stopLoopQuery": "Stop loop query",
+  "W_SQLBottomBar.copyResults": "Copy results",
+  "W_SQLBottomBar.rowCount": "Row count",
+  "W_SQLBottomBar.sqlError": "SQL error",
+
+  W_SQLResults: "",
+  "W_SQLResults.Chart": "",
+  "W_SQLResults.Chart.toolbar": "",
 
   "dashboard.window.fullscreen": "fullscreen",
   "dashboard.window.close": "close",
@@ -64,14 +87,35 @@ export const COMMANDS = {
   "dashboard.menu.settings": "",
   "dashboard.menu": "",
   "dashboard.menu.sqlEditor": "",
+  "dashboard.menu.quickSearch": "",
+  "dashboard.menu.resize": "",
+  "dashboard.centered-layout.resize": "",
   "dashboard.menu.fileTable": "",
+  "dashboard.menu.savedQueriesList": "",
   "dashboard.menu.tablesSearchList": "",
   "dashboard.menu.tablesSearchListInput": "",
+  "dashboard.menu.serverSideFunctionsList": "",
+  "dashboard.menu.create": "",
   "dashboard.menu.createTable": "",
   "dashboard.menu.createTable.tableName": "",
   "dashboard.menu.createTable.addColumn": "",
   "dashboard.menu.createTable.addColumn.confirm": "",
   "dashboard.menu.createTable.confirm": "",
+
+  "W_TableMenu_TableInfo.name": "",
+  "W_TableMenu_TableInfo.comment": "",
+  "W_TableMenu_TableInfo.oid": "",
+  "W_TableMenu_TableInfo.type": "",
+  "W_TableMenu_TableInfo.owner": "",
+  "W_TableMenu_TableInfo.sizeInfo": "",
+  "W_TableMenu_TableInfo.viewDefinition": "",
+  "W_TableMenu_TableInfo.vacuum": "",
+  "W_TableMenu_TableInfo.vacuumFull": "",
+  "W_TableMenu_TableInfo.drop": "",
+
+  "W_TableMenu_ColumnList.alter": "",
+  "W_TableMenu_ColumnList.linkedColumnOptions": "",
+  "W_TableMenu_ColumnList.removeComputedColumn": "",
 
   "FormField.clear": "Clear a FormField",
 
@@ -174,8 +218,10 @@ export const COMMANDS = {
   "SummariseColumn.toggle": "",
   FunctionSelector: "",
   "SummariseColumn.apply": "",
+  "Popup.header": "",
   "Popup.close": "",
   "Popup.content": "",
+  "Popup.toggleFullscreen": "",
   "LinkedColumn.ColumnListMenu": "",
   "AddChartMenu.Map": "",
   "AddChartMenu.Timechart": "",
@@ -186,6 +232,11 @@ export const COMMANDS = {
   "CloseSaveSQLPopup.delete": "",
 
   SchemaGraph: "",
+  "SchemaGraph.TopControls": "",
+  "SchemaGraph.TopControls.tableRelationsFilter": "",
+  "SchemaGraph.TopControls.columnRelationsFilter": "",
+  "SchemaGraph.TopControls.linkColorMode": "",
+  "SchemaGraph.TopControls.resetLayout": "",
   AddColumnReference: "",
   "SmartFormFieldOptions.AttachFile": "",
   RuleToggle: "",
@@ -257,7 +308,10 @@ export const COMMANDS = {
   SchemaFilter: "",
   AskLLMAccessControl: "",
   "AskLLMAccessControl.AllowAll": "",
+  "Chat.messageList": "",
+  "Chat.sendWrapper": "",
   "Chat.send": "",
+  "Chat.textarea": "",
   AskLLM: "",
   "AskLLM.popup": "",
   SetupLLMCredentials: "",
@@ -294,6 +348,9 @@ export const COMMANDS = {
   "AddMCPServer.Open": "",
   "AddMCPServer.Add": "",
   "LLMChatOptions.MCPTools": "",
+  "LLMChatOptions.DatabaseAccess": "",
+  "MCPServersToolbar.disableAllToggle": "",
+  "MCPServersToolbar.searchTools": "",
   ConnectionsOptions: "",
   "ConnectionsOptions.showStateDatabase": "",
   "ConnectionsOptions.showDatabaseNames": "",
@@ -306,7 +363,19 @@ export const COMMANDS = {
   WorkspaceSettings: "",
   "LLMChatOptions.toggle": "",
   "LLMChat.select": "",
+  "LLMChatOptions.Prompt": "",
+  "LLMChatOptions.Model": "",
   "AskLLMChat.NewChat": "",
+  MonacoEditor: "",
+  MCPServerTools: "",
+  "MCPServerFooterActions.logs": "",
+  "MCPServerFooterActions.config": "",
+  "MCPServerFooterActions.enableToggle": "",
+  MCPServerConfigButton: "",
+  MCPServerConfig: "",
+  "MCPServerConfig.save": "",
+  Feedback: "",
+  "FileImporterFooter.import": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 
@@ -325,3 +394,12 @@ export const getCommandElemSelector = (cmd: Command) => {
 export const getDataKeyElemSelector = (key: string) => {
   return `[data-key=${JSON.stringify(key)}]`;
 };
+export const getDataLabelElemSelector = (key: string) => {
+  return `[data-label=${JSON.stringify(key)}]`;
+};
+
+declare module "react" {
+  interface HTMLAttributes<T> {
+    "data-command"?: Command;
+  }
+}

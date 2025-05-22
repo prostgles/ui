@@ -64,9 +64,15 @@ export const COMMANDS = {
   "dashboard.menu.settings": "",
   "dashboard.menu": "",
   "dashboard.menu.sqlEditor": "",
+  "dashboard.menu.quickSearch": "",
+  "dashboard.menu.resize": "",
+  "dashboard.centered-layout.resize": "",
   "dashboard.menu.fileTable": "",
+  "dashboard.menu.savedQueriesList": "",
   "dashboard.menu.tablesSearchList": "",
   "dashboard.menu.tablesSearchListInput": "",
+  "dashboard.menu.serverSideFunctionsList": "",
+  "dashboard.menu.create": "",
   "dashboard.menu.createTable": "",
   "dashboard.menu.createTable.tableName": "",
   "dashboard.menu.createTable.addColumn": "",
@@ -174,8 +180,10 @@ export const COMMANDS = {
   "SummariseColumn.toggle": "",
   FunctionSelector: "",
   "SummariseColumn.apply": "",
+  "Popup.header": "",
   "Popup.close": "",
   "Popup.content": "",
+  "Popup.toggleFullscreen": "",
   "LinkedColumn.ColumnListMenu": "",
   "AddChartMenu.Map": "",
   "AddChartMenu.Timechart": "",
@@ -257,7 +265,10 @@ export const COMMANDS = {
   SchemaFilter: "",
   AskLLMAccessControl: "",
   "AskLLMAccessControl.AllowAll": "",
+  "Chat.messageList": "",
+  "Chat.sendWrapper": "",
   "Chat.send": "",
+  "Chat.textarea": "",
   AskLLM: "",
   "AskLLM.popup": "",
   SetupLLMCredentials: "",
@@ -294,6 +305,9 @@ export const COMMANDS = {
   "AddMCPServer.Open": "",
   "AddMCPServer.Add": "",
   "LLMChatOptions.MCPTools": "",
+  "LLMChatOptions.DatabaseAccess": "",
+  "MCPServersToolbar.disableAllToggle": "",
+  "MCPServersToolbar.searchTools": "",
   ConnectionsOptions: "",
   "ConnectionsOptions.showStateDatabase": "",
   "ConnectionsOptions.showDatabaseNames": "",
@@ -306,7 +320,18 @@ export const COMMANDS = {
   WorkspaceSettings: "",
   "LLMChatOptions.toggle": "",
   "LLMChat.select": "",
+  "LLMChatOptions.Prompt": "",
+  "LLMChatOptions.Model": "",
   "AskLLMChat.NewChat": "",
+  MonacoEditor: "",
+  MCPServerTools: "",
+  "MCPServerFooterActions.logs": "",
+  "MCPServerFooterActions.config": "",
+  "MCPServerFooterActions.enableToggle": "",
+  MCPServerConfigButton: "",
+  MCPServerConfig: "",
+  "MCPServerConfig.save": "",
+  Feedback: "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 
@@ -325,3 +350,9 @@ export const getCommandElemSelector = (cmd: Command) => {
 export const getDataKeyElemSelector = (key: string) => {
   return `[data-key=${JSON.stringify(key)}]`;
 };
+
+declare module "react" {
+  interface HTMLAttributes<T> {
+    "data-command"?: Command;
+  }
+}
