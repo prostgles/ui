@@ -84,6 +84,7 @@ export class TableHeader<
           </Popup>
         )}
         <div
+          data-command="TableHeader"
           role="row"
           className="noselect f-0 flex-row shadow bg-color-1"
           onWheel={onWheelScroll(TableRootClassname)}
@@ -271,6 +272,7 @@ export class TableHeader<
                 {iCol <= cols.length - 1 ?
                   <Pan
                     className="resize-handle noselect"
+                    data-command="TableHeader.resizeHandle"
                     style={{
                       position: "absolute",
                       right: 0,

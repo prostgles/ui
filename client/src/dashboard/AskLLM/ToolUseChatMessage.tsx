@@ -1,5 +1,5 @@
 import { mdiTools } from "@mdi/js";
-import { isEmpty, tryCatchV2 } from "prostgles-types";
+import { isEmpty, isObject, tryCatchV2 } from "prostgles-types";
 import React, { useMemo } from "react";
 import { filterArr } from "../../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
@@ -10,6 +10,7 @@ import {
 } from "../../components/Chat/MarkdownMonacoCode";
 import { FlexCol } from "../../components/Flex";
 import { MediaViewer } from "../../components/MediaViewer";
+import { sliceText } from "../../../../commonTypes/utils";
 
 type ToolUseMessageProps = {
   messages: DBSSchema["llm_messages"][];
@@ -26,6 +27,28 @@ export const ToolUseChatMessage = ({
   const [open, setOpen] = React.useState(false);
 
   const m = messages[messageIndex]?.message[toolUseMessageIndex];
+  const inputTextSummary = useMemo(() => {
+    if (m?.type !== "tool_use" || !m.input) return undefined;
+    const maxLength = 50;
+    if (isObject(m.input)) {
+      const keys = Object.keys(m.input);
+      const selectedKeys = keys.slice(0, 5);
+      const args = selectedKeys
+        .map((key) => {
+          const value = m.input[key];
+          const valueString =
+            Array.isArray(value) || isObject(value) ?
+              JSON.stringify(value)
+            : value.toString();
+
+          return `${key}: ${sliceText(valueString, Math.round(maxLength / selectedKeys.length), undefined, true)}`;
+        })
+        .join(", ");
+      return ` ${args}`;
+    }
+    return sliceText(JSON.stringify(m.input), maxLength, undefined, true);
+  }, [m]);
+
   if (m?.type !== "tool_use") {
     return <>Unexpected message tool use message</>;
   }
@@ -56,6 +79,11 @@ export const ToolUseChatMessage = ({
         loading={!toolUseResult}
       >
         {m.name}
+        {inputTextSummary && (
+          <span style={{ fontWeight: "normal", opacity: 0.75 }}>
+            {inputTextSummary}
+          </span>
+        )}
       </Btn>
       {open && (
         <FlexCol className={" p-1 rounded"}>

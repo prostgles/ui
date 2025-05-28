@@ -13,13 +13,15 @@ import { useIsMounted } from "../Backup/CredentialSelector";
 import type { StatusMonitorProps } from "./StatusMonitor";
 import { StatusMonitorConnections } from "./StatusMonitorConnections";
 import { getServerCoreInfoStr } from "../../pages/Connections/useConnectionServersList";
+import { FormFieldDebounced } from "../../components/FormField/FormFieldDebounced";
 
 export const StatusMonitorHeader = (
   props: StatusMonitorProps & {
-    refreshRate: number;
+    samplingRate: number;
     statusError: any;
     setStatusError: (e: any) => void;
     setNoBash: (noBash: boolean) => void;
+    setSamplingRate: (rate: number) => void;
   },
 ) => {
   const {
@@ -27,10 +29,11 @@ export const StatusMonitorHeader = (
     connectionId,
     dbs,
     dbsMethods,
-    refreshRate,
+    samplingRate,
     statusError,
     setStatusError,
     setNoBash,
+    setSamplingRate,
   } = props;
 
   const [c, setc] = useState<ConnectionStatus>();
@@ -50,14 +53,15 @@ export const StatusMonitorHeader = (
         if (!isEmpty(c.getPidStatsErrors)) {
           console.error(c.getPidStatsErrors);
         }
+        setStatusError(undefined);
       } catch (e) {
         console.error(e);
         setStatusError(e);
       }
-    }, refreshRate * 1e3);
+    }, samplingRate * 1e3);
 
     return () => clearInterval(interval);
-  }, [refreshRate, connectionId, getStatus, getIsMounted, setStatusError]);
+  }, [samplingRate, connectionId, getStatus, getIsMounted, setStatusError]);
 
   // const [shellResult, setShellResult] = useState("");
   // const setShell = async (v: string) => {
@@ -117,7 +121,15 @@ export const StatusMonitorHeader = (
             positioning="center"
             clickCatchStyle={{ opacity: 0.5 }}
             contentClassName="flex-col gap-1 p-1"
-            button={<Btn title="Server information" iconPath={mdiChip} />}
+            button={
+              <Btn
+                title="Server information"
+                iconPath={mdiChip}
+                variant="faded"
+              >
+                Server info
+              </Btn>
+            }
           >
             <Chip label={"CPU Model"} variant="header">
               <span className="ws-pre">
@@ -159,6 +171,22 @@ export const StatusMonitorHeader = (
             )}
           </PopupMenu>
         )}
+
+        <FormFieldDebounced
+          label={"Sampling rate (s)"}
+          type="number"
+          className="w-fit f-0  ml-auto"
+          value={samplingRate}
+          inputStyle={{
+            maxWidth: "4rem",
+          }}
+          wrapperStyle={{ flexDirection: "row" }}
+          onChange={(v) => {
+            if (v < 0.1) return;
+            setSamplingRate(v);
+          }}
+          inputProps={{ min: 0.1, max: 100, step: 0.1 }}
+        />
       </FlexRow>
     </>
   );

@@ -1,9 +1,6 @@
-import React, { useEffect, useState } from "react";
-import type { ConnectionStatus } from "../../../../commonTypes/utils";
+import React, { useState } from "react";
 import type { PrglState } from "../../App";
 import { FlexCol } from "../../components/Flex";
-import { isEmpty } from "../../utils";
-import { useIsMounted } from "../Backup/CredentialSelector";
 import type { DBSMethods } from "../Dashboard/DBS";
 import { StatusMonitorHeader } from "./StatusMonitorHeader";
 import { StatusMonitorProcList } from "./StatusMonitorProcList";
@@ -18,7 +15,7 @@ export type StatusMonitorProps = Pick<
 };
 
 export const StatusMonitor = (props: StatusMonitorProps) => {
-  const [refreshRate, setRefreshRate] = useState(1);
+  const [samplingRate, setSamplingRate] = useState(0.5);
   const [statusError, setStatusError] = useState<any>();
   const [noBash, setNoBash] = useState(false);
 
@@ -31,19 +28,19 @@ export const StatusMonitor = (props: StatusMonitorProps) => {
   // }
 
   return (
-    <FlexCol className="StatusMonitor f-1 min-w-0 jc-start">
+    <FlexCol className="StatusMonitor w-fit min-w-0 jc-start ">
       <StatusMonitorHeader
         {...props}
-        refreshRate={refreshRate}
+        samplingRate={samplingRate}
         statusError={statusError}
         setStatusError={setStatusError}
         setNoBash={setNoBash}
+        setSamplingRate={setSamplingRate}
       />
 
       <StatusMonitorProcList
         {...props}
-        refreshRate={refreshRate}
-        setRefreshRate={setRefreshRate}
+        samplingRate={samplingRate}
         noBash={noBash}
       />
     </FlexCol>

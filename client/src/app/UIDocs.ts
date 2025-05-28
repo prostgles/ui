@@ -7,6 +7,11 @@ import { connectionUIDoc } from "./UIDocs/connection/connectionUIDoc";
 import { connectionsUIDoc } from "./UIDocs/connectionsUIDoc";
 import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
 
+/**
+ * UI Documentation system for generating interactive element guides and documentation.
+ * Defines structured metadata for UI elements including selectors, types, and hierarchical relationships.
+ * Used for automated testing, user guidance, and generating SVG documentation from DOM elements.
+ */
 type UIDocBase<T> = (
   | {
       selector: string;
@@ -14,6 +19,9 @@ type UIDocBase<T> = (
     }
   | {
       selector?: undefined;
+      /**
+       * data-command attribute of the element to be selected.
+       */
       selectorCommand: Command;
     }
 ) & {
@@ -28,6 +36,9 @@ export type UIDocElement =
   | UIDocBase<{
       type: "drag-handle";
       direction: "x" | "y";
+    }>
+  | UIDocBase<{
+      type: "canvas";
     }>
   | UIDocBase<{
       type: "input";

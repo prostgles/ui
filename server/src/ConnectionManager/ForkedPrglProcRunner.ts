@@ -9,6 +9,7 @@ import {
   type ProcStats,
 } from "../../../commonTypes/utils";
 import { getError } from "./forkedProcess";
+import { getInitiatedPostgresqlPIDs } from "./getInitiatedPostgresqlPIDs";
 
 type ForkedProcMessageCommon = {
   id: string;
@@ -120,6 +121,7 @@ export class ForkedPrglProcRunner {
   destroy = (databaseNotFound = false) => {
     this.destroyed = true;
     this.databaseNotFound = databaseNotFound;
+    getInitiatedPostgresqlPIDs(process.pid);
     this.proc.kill("SIGKILL");
   };
 
@@ -253,12 +255,12 @@ export class ForkedPrglProcRunner {
       const forkedPath = path.join(__dirname, "forkedProcess.js");
       const proc = fork(forkedPath, {
         ...forkOpts,
+        /** Prevent inheriting execArgv */
+        execArgv: [],
         // execArgv: console.error("REMOVE") || ["--inspect-brk"],
         silent: true,
         env: {
-          ...(pass_process_env_vars_to_server_side_functions ?
-            process.env
-          : {}),
+          ...(pass_process_env_vars_to_server_side_functions && process.env),
           [FORKED_PROC_ENV_NAME]: "true",
         },
       });

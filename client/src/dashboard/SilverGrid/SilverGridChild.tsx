@@ -362,7 +362,7 @@ export class SilverGridChild extends RTComp<
         data-box-id={layout.id}
         data-box-type="item"
         data-table-name={layout.tableName}
-        data-view-type={layout.tableName ? "table" : "sql"}
+        data-view-type={layout.viewType}
         /** Some content is overflowing over sibling windows. Ensure this overflow is visible */
         onClick={({ target }) => {
           if (isMyContent(target)) {

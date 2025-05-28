@@ -685,8 +685,8 @@ export type DBGeneratedSchema = {
       client_hostname?: null | string;
       client_port?: null | number;
       cmd?: null | string;
-      connection_id: string;
       cpu?: null | string;
+      database_id: number;
       datid?: null | number;
       datname?: null | string;
       id_query_hash?: null | string;
@@ -696,6 +696,7 @@ export type DBGeneratedSchema = {
       pid: number;
       query?: null | string;
       query_start?: null | string;
+      sampled_at?: string;
       state?: null | string;
       state_change?: null | string;
       usename?: null | string;

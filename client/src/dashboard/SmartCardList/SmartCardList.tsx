@@ -67,7 +67,9 @@ export type SmartCardListProps<T extends AnyObject = AnyObject> = Pick<
 
   btnColor?: "gray";
 
-  showTopBar?: boolean | { insert?: true; sort?: true };
+  showTopBar?:
+    | boolean
+    | { leftContent?: React.ReactNode; insert?: true; sort?: true };
   rowProps?: {
     style?: React.CSSProperties;
     className?: string;

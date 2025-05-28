@@ -36,6 +36,7 @@ export const SmartFilterBarFilters = ({
       {hasHavingFilters && (
         <FlexCol
           key="having"
+          data-key={"having"}
           className={`gap-p5 min-h-0 f-0 relative ai-start my-p5 ${hasFilters ? "bb b-color" : ""} pb-p5`}
         >
           <Label
@@ -64,6 +65,7 @@ export const SmartFilterBarFilters = ({
       {!!filter.length && (
         <FlexCol
           key="where"
+          data-key={"where"}
           className={"gap-p5 min-h-0 f-0 relative ai-start my-p5"}
         >
           {hasHavingFilters && (

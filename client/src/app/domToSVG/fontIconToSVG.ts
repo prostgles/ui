@@ -48,6 +48,9 @@ export const fontIconToSVG = async (
   g.appendChild(textEl);
 };
 
+/**
+ * TODO: extract used icons only using opentype.js
+ */
 const addFontFamily = async (familyName: string, context: SVGContext) => {
   if (context.fontFamilies.includes(familyName)) {
     return;

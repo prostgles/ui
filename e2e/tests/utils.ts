@@ -135,11 +135,9 @@ export const monacoType = async (
 export const runSql = async (page: PageWIds, query: string) => {
   await monacoType(page, `.ProstglesSQL`, query);
   await page.waitForTimeout(300);
-  await page.getByTestId("dashboard.window.runQuery").click();
+  await page.getByTestId("W_SQLBottomBar.runQuery").click();
   await page.waitForTimeout(200);
-  await page
-    .getByTestId("dashboard.window.runQuery")
-    .isEnabled({ timeout: 5e3 });
+  await page.getByTestId("W_SQLBottomBar.runQuery").isEnabled({ timeout: 5e3 });
   await page.waitForTimeout(1e3);
 };
 

@@ -65,8 +65,9 @@ export const COMMANDS = {
   "W_SQLBottomBar.sqlError": "SQL error",
 
   W_SQLResults: "",
-  "W_SQLResults.Chart": "",
-  "W_SQLResults.Chart.toolbar": "",
+  "Window.W_QuickMenu": "Quick menu for the current window",
+  "Window.ChildChart": "",
+  "Window.ChildChart.toolbar": "",
 
   "dashboard.window.fullscreen": "fullscreen",
   "dashboard.window.close": "close",
@@ -116,6 +117,9 @@ export const COMMANDS = {
   "W_TableMenu_ColumnList.alter": "",
   "W_TableMenu_ColumnList.linkedColumnOptions": "",
   "W_TableMenu_ColumnList.removeComputedColumn": "",
+
+  TableHeader: "",
+  "TableHeader.resizeHandle": "",
 
   "FormField.clear": "Clear a FormField",
 
@@ -176,6 +180,7 @@ export const COMMANDS = {
   Connections: "",
   "Connections.add": "add",
   "Connections.new": " ",
+  "Connections.openConnection": "Open connection",
 
   "Connection.closeAllWindows": "",
   "Connection.statusMonitor": "",
@@ -227,6 +232,7 @@ export const COMMANDS = {
   "AddChartMenu.Timechart": "",
   W_TimeChart: "",
   "W_TimeChart.ActiveRow": "",
+  "W_TimeChart.AddTimeChartFilter": "",
   SmartFormField: "",
 
   "CloseSaveSQLPopup.delete": "",
@@ -273,7 +279,17 @@ export const COMMANDS = {
   "AutomaticBackups.frequency": "",
   "AutomaticBackups.hourOfDay": "",
   "WorkspaceAddBtn.Create": "",
+  MapOpacityMenu: "",
+  MapBasemapOptions: "",
+  "InMapControls.goToDataBounds": "",
+  "InMapControls.showCursorCoords": "",
+  LayerColorPicker: "",
+  "W_TimeChart.resetExtent": "",
+  TimeChartFilter: "",
+  "ChartLayerManager.toggleLayer": "",
+  "ChartLayerManager.removeLayer": "",
   "ChartLayerManager.AddChartLayer.addLayer": "",
+  "ChartLayerManager.AddChartLayer.addOSMLayer": "",
   ConnectionSelector: "",
   "Setup2FA.Enable": "",
   "Setup2FA.Enable.GenerateQR": "",
@@ -318,6 +334,15 @@ export const COMMANDS = {
   "SetupLLMCredentials.free": "",
   "SetupLLMCredentials.api": "",
   "AskLLMAccessControl.llm_daily_limit": "",
+
+  DeckGLFeatureEditor: "",
+  "MapBasemapOptions.Projection": "",
+
+  SmartFilterBar: "",
+  SearchList: "",
+  "SearchList.MatchCase": "",
+  AddJoinFilter: "",
+  Pagination: "",
   "Pagination.page": "",
   "Pagination.lastPage": "",
   "Pagination.nextPage": "",

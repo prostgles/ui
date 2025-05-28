@@ -12,19 +12,18 @@ export type Users = Required<DBGeneratedSchema["users"]["columns"]>;
 export type Connections = Required<DBGeneratedSchema["connections"]["columns"]>;
 
 import type { DBHandlerServer } from "prostgles-server/dist/DboBuilder/DboBuilder";
+import { assertJSONBObjectAgainstSchema } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
 import { getIsSuperUser } from "prostgles-server/dist/Prostgles";
 import type { AnyObject } from "prostgles-types";
 import { asName, isEmpty, pickKeys } from "prostgles-types";
 import { isDefined } from "../../../commonTypes/filterUtils";
 import type { LLMMessage } from "../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import { isObject } from "../../../commonTypes/publishUtils";
 import type { SampleSchema } from "../../../commonTypes/utils";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { checkClientIP, createSessionSecret } from "../authConfig/sessionUtils";
 import type { Backups } from "../BackupManager/BackupManager";
 import { getInstalledPsqlVersions } from "../BackupManager/getInstalledPrograms";
-import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
 import type { ConnectionTableConfig } from "../ConnectionManager/ConnectionManager";
 import {
   DB_TRANSACTION_KEY,
@@ -40,20 +39,21 @@ import {
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
 import { actualRootDir, getElectronConfig } from "../electronConfig";
+import { initBackupManager, statePrgl } from "../init/startProstgles";
+import { callMCPServerTool } from "../McpHub/callMCPServerTool";
 import {
   getMcpHostInfo,
   getMCPServersStatus,
   installMCPServer,
 } from "../McpHub/installMCPServer";
+import { reloadMcpServerTools } from "../McpHub/McpHub";
 import { getStatus } from "../methods/getPidStats";
 import { killPID } from "../methods/statusMonitorUtils";
-import { initBackupManager, statePrgl } from "../init/startProstgles";
+import { getPasswordlessAdmin } from "../SecurityManager/initUsers";
 import { upsertConnection } from "../upsertConnection";
 import { askLLM } from "./askLLM/askLLM";
 import { getNodeTypes } from "./getNodeTypes";
 import { prostglesSignup } from "./prostglesSignup";
-import { reloadMcpServerTools } from "../McpHub/McpHub";
-import { callMCPServerTool } from "../McpHub/callMCPServerTool";
 
 export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   params,
@@ -66,8 +66,17 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
     return {};
   }
 
-  const getConnectionAndDbConf = async (connId: string) => {
-    checkIf({ connId }, "connId", "string");
+  const getConnectionAndDbConf = async (arg0: unknown) => {
+    const arg = { connId: arg0 };
+    assertJSONBObjectAgainstSchema(
+      {
+        connId: "string",
+      },
+      arg,
+      "connId",
+      false,
+    );
+    const { connId } = arg;
     const c = await dbs.connections.findOne({ id: connId });
     if (!c) throw "Connection not found";
     const dbConf = await dbs.database_configs.findOne(
@@ -364,7 +373,12 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       /** Enable file storage */
       if (tableConfig) {
         if (typeof tableConfig.referencedTables !== "undefined") {
-          checkIf(tableConfig, "referencedTables", "object");
+          assertJSONBObjectAgainstSchema(
+            { referencedTables: { record: { values: "any", partial: true } } },
+            tableConfig,
+            "referencedTables",
+            false,
+          );
         }
         if (
           tableConfig.referencedTables &&
@@ -373,11 +387,27 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
           if (!dbConf.file_table_config) throw "Must enable file storage first";
           newTableConfig = { ...dbConf.file_table_config, ...tableConfig };
         } else {
-          checkIf(tableConfig, "fileTable", "string");
-          checkIf(tableConfig, "storageType", "object");
+          assertJSONBObjectAgainstSchema(
+            {
+              fileTable: "string",
+              storageType: {
+                oneOfType: [
+                  {
+                    type: { enum: ["S3"] },
+                    credential_id: "number",
+                  },
+                  {
+                    type: { enum: ["local"] },
+                  },
+                ],
+              },
+            },
+            tableConfig as any,
+            "tableConfig",
+            false,
+          );
           const { storageType } = tableConfig;
 
-          checkIf(storageType, "type", "oneOf", ["local", "S3"]);
           if (storageType.type === "S3") {
             if (
               !(await dbs.credentials.findOne({
@@ -390,8 +420,9 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
           const KEYS = ["fileTable", "storageType"] as const;
           if (
             dbConf.file_table_config &&
-            JSON.stringify(pickKeys(dbConf.file_table_config, KEYS as any)) !==
-              JSON.stringify(pickKeys(tableConfig, KEYS as any))
+            JSON.stringify(
+              pickKeys(dbConf.file_table_config, KEYS.slice(0)),
+            ) !== JSON.stringify(pickKeys(tableConfig, KEYS.slice(0)))
           ) {
             throw "Cannot update " + KEYS.join("or");
           }
@@ -680,45 +711,10 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   };
 };
 
-function getTSFiles(dirPath: string) {
-  return fs
-    .readdirSync(dirPath)
-    .map((path) => {
-      if (path.endsWith(".d.ts")) {
-        const content = fs.readFileSync(dirPath + "/" + path, {
-          encoding: "utf8",
-        });
-        console.log(path, content);
-        return { path, content };
-      }
-    })
-    .filter(isDefined);
-}
-
 process.on("exit", (code) => {
   console.log(code);
 });
 
-export const is = {
-  string: (v: any, notEmtpy = true): v is string =>
-    typeof v === "string" && (notEmtpy ? !!v.length : true),
-  integer: (v: any): v is number => Number.isInteger(v),
-  number: (v: any): v is number => Number.isFinite(v),
-  object: (v: any): v is Record<string, any> => isObject(v),
-  oneOf: <T>(v: any, vals: T[]): v is T => vals.includes(v),
-} as const;
-
-export const checkIf = <Obj, isType extends keyof typeof is>(
-  obj: Obj,
-  key: keyof Obj,
-  isType: isType,
-  arg1?: Parameters<(typeof is)[isType]>[1],
-): true => {
-  const isOk = is[isType](obj[key], arg1 as any);
-  if (!isOk)
-    throw `${key.toString()} is not of type ${isType}${isType === "oneOf" ? `(${arg1})` : ""}. Source object: ${JSON.stringify(obj, null, 2)}`;
-  return true;
-};
 const tryReadFile = (path: string) => {
   try {
     return fs.readFileSync(path, "utf8");

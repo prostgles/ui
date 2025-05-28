@@ -69,12 +69,13 @@ export const Connection = (props: ConnectionProps) => {
       style={{ minWidth: "250px" }}
       data-key={connection.name}
     >
-      <div className="Connection_TOP-CONNECTION-INFO_ACTIONS flex-row  ">
+      <div className="Connection_TOP-CONNECTION-INFO_ACTIONS flex-row">
         <NavLink
           key={connection.id}
           className={
-            "LEFT-CONNECTIONINFO no-decor flex-col min-w-0 text-ellipsis f-1 text-active-hover "
+            "no-decor flex-col min-w-0 text-ellipsis f-1 text-active-hover "
           }
+          data-command="Connections.openConnection"
           to={getConnectionPath(connection.id)}
         >
           <div className="flex-col gap-p5 p-1 h-full">

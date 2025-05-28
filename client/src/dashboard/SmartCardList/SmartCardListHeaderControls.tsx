@@ -4,7 +4,7 @@ import {
   type ValidatedColumnInfo,
 } from "prostgles-types";
 import React, { useMemo } from "react";
-import { FlexCol, FlexRow } from "../../components/Flex";
+import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
 import { RenderFilter, type RenderFilterProps } from "../RenderFilter";
 import SortByControl from "../SmartFilter/SortByControl";
 import { SmartFilterBarSearch } from "../SmartFilterBar/SmartFilterBarSearch";
@@ -52,7 +52,8 @@ export const SmartCardListHeaderControls = (
     <FlexCol className="SmartCardListControls gap-p5 aid-end py-p25">
       {titleNode}
 
-      <FlexRow className=" ">
+      <FlexRowWrap className=" ">
+        {isObject(showTopBar) && showTopBar.leftContent}
         {tableControls?.willShowInsert && (
           <InsertButton
             buttonProps={{
@@ -85,7 +86,7 @@ export const SmartCardListHeaderControls = (
             onChange={tableControls.setLocalOrderBy}
           />
         )}
-      </FlexRow>
+      </FlexRowWrap>
 
       {filterProps && (
         <RenderFilter

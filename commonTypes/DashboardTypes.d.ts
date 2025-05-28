@@ -6,6 +6,7 @@ export type LayoutItem = {
     type: "item";
     title?: string;
     tableName: string | null;
+    viewType: "table" | "map" | "timechart" | "sql";
     /**
      * Flex size of the item
      */

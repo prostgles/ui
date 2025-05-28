@@ -36,6 +36,7 @@ export const CodeEditorWithSaveButton = (props: P) => {
     headerButtons,
     ...codeEditorProps
   } = props;
+  const isReadonly = !onSave && !autoSave;
   const localValueRef = useRef<string | null | undefined>(value);
   const propsValueRef = useRef<string | null | undefined>(value);
   propsValueRef.current = value;
@@ -49,7 +50,7 @@ export const CodeEditorWithSaveButton = (props: P) => {
     ) {
       localValueRef.current = value;
     }
-  }, [value]);
+  }, [value, isReadonly]);
 
   const [didChange, setDidChange] = React.useState(false);
 
@@ -163,7 +164,11 @@ export const CodeEditorWithSaveButton = (props: P) => {
         <CodeEditor
           className={codeEditorClassName}
           {...codeEditorProps}
-          value={localValueRef.current || value || (codePlaceholder ?? "")}
+          value={
+            (isReadonly ? value : localValueRef.current) ||
+            value ||
+            (codePlaceholder ?? "")
+          }
           onChange={onChange}
           onSave={onClickSave}
         />

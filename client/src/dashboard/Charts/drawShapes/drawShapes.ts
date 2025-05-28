@@ -16,7 +16,6 @@ export const getCtx = (canvas: HTMLCanvasElement) => {
   return canvas.getContext("2d");
 };
 
-let lastDrawn = {};
 export const drawShapes = (
   shapes: ShapeV2<any>[],
   canvas: HTMLCanvasElement,
@@ -29,11 +28,7 @@ export const drawShapes = (
   const { w, h } = getWH(canvas);
   const ctx = getCtx(canvas);
   if (!ctx) return;
-  lastDrawn = {
-    shapes,
-    canvas,
-    opts,
-  };
+
   if (!opts?.isChild) {
     ctx.clearRect(0, 0, w, h);
   }

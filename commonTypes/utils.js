@@ -5,7 +5,8 @@ export const HOUR = MINUTE * 60;
 export const DAY = HOUR * 24;
 export const MONTH = DAY * 30;
 export const YEAR = DAY * 365;
-export const QUERY_WATCH_IGNORE = "prostgles internal query that should be excluded from schema watch ";
+export const EXCLUDE_FROM_SCHEMA_WATCH = "prostgles internal query that should be excluded from schema watch ";
+export const STATUS_MONITOR_IGNORE_QUERY = "prostgles-status-monitor-query";
 export const getAgeFromDiff = (millisecondDiff) => {
     const roundFunc = millisecondDiff > 0 ? Math.floor : Math.ceil;
     const years = roundFunc(millisecondDiff / YEAR);

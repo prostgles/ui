@@ -188,7 +188,6 @@ export const ConnectionServer = ({
 
     if (newDbOwnerCredentials && newPgUser.permissions.type === "custom") {
       const escapedUserName = asName(newUser.newPgUser.name);
-      // console.log(await runConnectionQuery(connId, "SELECT current_user"));
 
       const rulesObj = pickKeys(newPgUser.permissions, [
         "select",

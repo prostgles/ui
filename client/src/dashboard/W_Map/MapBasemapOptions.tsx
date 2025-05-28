@@ -72,8 +72,12 @@ export const MapBasemapOptions = ({ w, prgl, className, asPopup }: P) => {
   );
 
   const content = (
-    <FlexCol className={className}>
+    <FlexCol
+      className={className}
+      data-command={!asPopup ? "MapBasemapOptions" : undefined}
+    >
       <ButtonGroup
+        data-command="MapBasemapOptions.Projection"
         label={{ label: "Projection", variant: "normal" }}
         options={MAP_PROJECTIONS}
         value={projection}
@@ -222,6 +226,7 @@ export const MapBasemapOptions = ({ w, prgl, className, asPopup }: P) => {
       onClickClose={false}
       positioning="center"
       contentClassName="p-1"
+      data-command="MapBasemapOptions"
       button={
         <Btn iconPath={mdiMap} color="action" variant="faded">
           Basemap config

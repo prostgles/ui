@@ -148,7 +148,8 @@ export const SilverGridChildHeader = (props: P) => {
                 height: `${height}px`,
                 lineHeight: `${lineHeight + 2}px`,
                 /** Prevent total collapse when there is not enough space */
-                minWidth: "120px",
+                minWidth: "80px",
+                justifyContent: "space-between",
                 marginTop: "2px",
                 /** Used to prevent unexpected scroll of tab headers */
                 overflowY: "hidden",

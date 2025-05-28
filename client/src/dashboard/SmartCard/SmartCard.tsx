@@ -150,6 +150,7 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
     variant === "row-wrap" ? "flex-row-wrap ai-start"
     : variant === "row" ? "flex-row ai-start"
     : "flex-col ai-start ";
+
   return (
     <div
       className={classOverride(
@@ -180,10 +181,7 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
           style={{ columnGap: "1em", ...contentStyle }}
         >
           {fieldConfigsWithColumns.map(({ name, fc, col: column }, i) => {
-            const labelText =
-              (fc.render ?
-                fc.label
-              : (fc.label ?? column?.label ?? column?.name)) ?? null;
+            const labelText = fc.label ?? column?.label ?? column?.name ?? null;
 
             const valueNode =
               fc.render?.(defaultData[name], defaultData) ||
@@ -196,12 +194,12 @@ export const SmartCard = <T extends AnyObject>(props: SmartCardProps<T>) => {
             }
             return (
               <SmartCardColumn
-                key={`${fc.name}`} //  ?? labelText
+                key={`${fc.name}`}
                 className={fc.className}
                 style={fc.style}
                 labelText={labelText}
                 valueNode={valueNode}
-                renderMode={fc.renderMode}
+                renderMode={fc.renderMode ?? "value"}
                 labelTitle={column?.udt_name || ""}
                 info={column?.hint}
               />

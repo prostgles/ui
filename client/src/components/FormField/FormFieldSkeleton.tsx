@@ -92,7 +92,7 @@ export const FormFieldSkeleton = React.forwardRef(
       >
         {leftIcon}
         <div
-          className={`form-field__hint-wrapper trigger-hover flex-col`}
+          className={`form-field__hint-wrapper trigger-hover flex-col gap-p5`}
           title={title}
           style={{
             ...hintWrapperStyle,
@@ -110,7 +110,7 @@ export const FormFieldSkeleton = React.forwardRef(
           : <label
               htmlFor={id}
               className={
-                "main-label ta-left noselect text-1 flex-row ai-end " +
+                "main-label ta-left noselect text-1 flex-row " +
                 (id ? " pointer " : " ")
               }
               style={{

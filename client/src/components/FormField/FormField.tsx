@@ -80,6 +80,8 @@ export type FormFieldProps = TestSelectors & {
   arrayType?: Pick<ValidatedColumnInfo, "udt_name" | "tsDataType">;
   leftIcon?: React.ReactNode;
   showFullScreenToggle?: boolean;
+
+  variant?: "row";
 };
 
 type FormFieldState = {
@@ -261,6 +263,7 @@ export default class FormField extends React.Component<
       arrayType,
       rightContentAlwaysShow,
       asJSON,
+      variant,
       showFullScreenToggle,
       leftIcon,
     } = this.props;
@@ -573,6 +576,7 @@ export default class FormField extends React.Component<
         onKeyDown={(e) => onFormFieldKeyDown.bind(this)(e, selectSuggestion)}
         hintWrapperStyle={{
           flex: 1,
+          ...(variant === "row" && { flexDirection: "row" }),
           ...(asJSON && { minWidth: "min(400px, 90vw)" }),
         }}
         label={label}

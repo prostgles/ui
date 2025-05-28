@@ -188,9 +188,9 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
   const sqlAction = async (type: "kill-query" | "stop-listen" | "run") => {
     await tout(50);
     const selector =
-      type === "stop-listen" ? "dashboard.window.stopListen"
-      : type === "kill-query" ? "dashboard.window.cancelQuery"
-      : "dashboard.window.runQuery";
+      type === "stop-listen" ? "W_SQLBottomBar.stopListen"
+      : type === "kill-query" ? "W_SQLBottomBar.cancelQuery"
+      : "W_SQLBottomBar.runQuery";
     const button = getEditor().editor.querySelector<HTMLButtonElement>(
       getCommandElemSelector(selector),
     );

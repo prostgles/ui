@@ -155,7 +155,7 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
         {menuPortal}
         <div
           key={w.id + "-content"}
-          className="flex-col f-1 min-h-0 min-w-0 relative"
+          className="Window flex-col f-1 min-h-0 min-w-0 relative"
           ref={(e) => {
             if (e) {
               let forceUpdate;
@@ -193,10 +193,10 @@ export default class Window<W extends WindowSyncItem> extends RTComp<
     if (w.parent_window_id) {
       return (
         <FlexCol
-          data-command="W_SQLResults.Chart"
+          data-command="Window.ChildChart"
           className="f-1 gap-0 min-s-0 o-hidden"
         >
-          <FlexRow data-command="W_SQLResults.Chart.toolbar" className="p-p5">
+          <FlexRow data-command="Window.ChildChart.toolbar" className="p-p5">
             <Btn
               className="f-0"
               title={t.Window["Open menu"]}

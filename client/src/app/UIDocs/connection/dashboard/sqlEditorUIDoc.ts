@@ -3,6 +3,7 @@ import {
   getDataKeyElemSelector,
 } from "../../../../Testing";
 import type { UIDocElement } from "../../../UIDocs";
+import { getCommonViewHeaderUIDoc } from "../getCommonViewHeaderUIDoc";
 
 export const sqlEditorUIDoc = {
   type: "section",
@@ -11,153 +12,159 @@ export const sqlEditorUIDoc = {
   description:
     "The SQL editor allows users to write and execute SQL queries against the selected database. It provides a user-friendly interface for interacting with the database.",
   children: [
-    {
-      type: "section",
-      selector: ".silver-grid-item-header",
-      title: "View header",
-      description:
-        "The header of the SQL editor, containing the title and quick actions.",
-      children: [
-        {
-          type: "section",
-          selector: ".W_QuickMenu",
-          title: "SQL editor quick actions",
-          description:
-            "Quick actions for the SQL editor, providing easy access to charting.",
-          children: [
-            {
-              type: "button",
-              selectorCommand: "AddChartMenu.Timechart",
-              title: "Add timechart",
-              description:
-                "Adds a timechart visualization based on the current SQL statement. Visible only when the last executed statement returned at least one timestamp column.",
-            },
-            {
-              type: "button",
-              selectorCommand: "AddChartMenu.Map",
-              title: "Add map",
-              description:
-                "Adds a map visualization based on the current SQL statement. Visible only when the last executed statement returned at least one geometry/geography column (postgis extension must be enabled).",
-            },
-          ],
-        },
-        {
-          type: "text",
-          selector: ".silver-grid-item-header--title",
-          title: "SQL editor title",
-          description:
-            "The name of the SQL view. Can be changed in menu > general > Query name.",
-        },
-        {
-          selectorCommand: "dashboard.window.collapse",
-          type: "button",
-          title: "Collapse SQL editor",
-          description:
-            "Collapses the SQL editor, minimizing it to temporarily save space on the dashboard. ",
-        },
-        {
-          selectorCommand: "dashboard.window.fullscreen",
-          type: "button",
-          title: "Fullscreen SQL editor",
-          description: "Expands the SQL editor to fill the entire screen.",
-        },
-        {
-          selectorCommand: "dashboard.window.close",
-          type: "button",
-          title: "Close SQL editor",
-          description:
-            "Closes the SQL editor. If there are unsaved changes, a confirmation dialog will appear.",
-        },
-        {
-          selectorCommand: "dashboard.window.menu",
-          type: "popup",
-          title: "SQL editor menu",
-          description:
-            "The SQL editor menu provides access to various options and settings for the SQL editor.",
-          children: [
-            {
-              type: "tab",
-              selector:
-                getCommandElemSelector("MenuList") +
-                " " +
-                getDataKeyElemSelector("General"),
-              title: "General",
-              description: "General settings for the SQL editor.",
-              children: [
-                {
-                  type: "input",
-                  inputType: "text",
-                  selectorCommand: "W_SQLMenu.name",
-                  title: "Query name",
-                  description:
-                    "The name of the current SQL query. This is used for saving and managing queries.",
-                },
-                {
-                  type: "select",
-                  selectorCommand: "W_SQLMenu.renderDisplayMode",
-                  title: "Result display mode",
-                  description:
-                    "The mode in which the results of the SQL query will be displayed. Options include table, JSON, and CSV.",
-                },
-                {
-                  type: "button",
-                  selectorCommand: "W_SQLMenu.saveQuery",
-                  title: "Save query as file",
-                  description:
-                    "Saves the current SQL query to a file. This can also be accomplished by pressing Ctrl+S.",
-                },
-                {
-                  type: "button",
-                  selectorCommand: "W_SQLMenu.openSQLFile",
-                  title: "Open SQL file",
-                  description:
-                    "This allows loading the contents of an SQL file into the current query.",
-                },
-                {
-                  selectorCommand: "W_SQLMenu.deleteQuery",
-                  type: "button",
-                  title: "Delete query",
-                  description:
-                    "Deletes the current SQL query. If it has contents a confirmation dialog will appear.",
-                },
-              ],
-            },
-            {
-              type: "tab",
-              selector:
-                getCommandElemSelector("MenuList") +
-                " " +
-                getDataKeyElemSelector("Editor options"),
-              title: "Editor options",
-              description:
-                "Settings for the SQL editor's appearance and behavior.",
-              children: [
-                {
-                  type: "smartform",
-                  tableName: "windows",
-                  fieldNames: ["sql_options"],
-                  title: "Editor settings",
-                  selector: "",
-                  description:
-                    "Settings for the SQL editor's appearance and behavior. This includes font size, theme, and other preferences.",
-                },
-              ],
-            },
-            {
-              type: "tab",
-              selector:
-                getCommandElemSelector("MenuList") +
-                " " +
-                getDataKeyElemSelector("Hotkeys"),
-              title: "Hotkeys",
-              description:
-                "Keyboard shortcuts for common actions in the SQL editor. This includes executing queries, saving files, and more.",
-              children: [],
-            },
-          ],
-        },
-      ],
-    },
+    getCommonViewHeaderUIDoc(
+      "SQL editor query name, editable in the menu.",
+      {
+        description:
+          "The SQL editor menu provides access to various options and settings for the SQL editor.",
+        children: [
+          {
+            type: "tab",
+            selector:
+              getCommandElemSelector("MenuList") +
+              " " +
+              getDataKeyElemSelector("General"),
+            title: "General",
+            description: "General settings for the SQL editor.",
+            children: [
+              {
+                type: "input",
+                inputType: "text",
+                selectorCommand: "W_SQLMenu.name",
+                title: "Query name",
+                description:
+                  "The name of the current SQL query. This is used for saving and managing queries.",
+              },
+              {
+                type: "select",
+                selectorCommand: "W_SQLMenu.renderDisplayMode",
+                title: "Result display mode",
+                description:
+                  "The mode in which the results of the SQL query will be displayed. Options include table, JSON, and CSV.",
+              },
+              {
+                type: "button",
+                selectorCommand: "W_SQLMenu.saveQuery",
+                title: "Save query as file",
+                description:
+                  "Saves the current SQL query to a file. This can also be accomplished by pressing Ctrl+S.",
+              },
+              {
+                type: "button",
+                selectorCommand: "W_SQLMenu.openSQLFile",
+                title: "Open SQL file",
+                description:
+                  "This allows loading the contents of an SQL file into the current query.",
+              },
+              {
+                selectorCommand: "W_SQLMenu.deleteQuery",
+                type: "button",
+                title: "Delete query",
+                description:
+                  "Deletes the current SQL query. If it has contents a confirmation dialog will appear.",
+              },
+            ],
+          },
+          {
+            type: "tab",
+            selector:
+              getCommandElemSelector("MenuList") +
+              " " +
+              getDataKeyElemSelector("Editor options"),
+            title: "Editor options",
+            description:
+              "Settings for the SQL editor's appearance and behavior.",
+            children: [
+              {
+                type: "smartform",
+                tableName: "windows",
+                fieldNames: ["sql_options"],
+                title: "Editor settings",
+                selector: "",
+                description:
+                  "Settings for the SQL editor's appearance and behavior. This includes font size, theme, and other preferences.",
+              },
+            ],
+          },
+          {
+            type: "tab",
+            selector:
+              getCommandElemSelector("MenuList") +
+              " " +
+              getDataKeyElemSelector("Hotkeys"),
+            title: "Hotkeys",
+            description:
+              "Keyboard shortcuts for common actions in the SQL editor. This includes executing queries, saving files, and more.",
+            children: [],
+          },
+        ],
+      },
+      "sql",
+    ),
+    // {
+    //   type: "section",
+    //   selector: ".silver-grid-item-header",
+    //   title: "View header",
+    //   description:
+    //     "The header of the SQL editor, containing the title and quick actions.",
+    //   children: [
+    //     {
+    //       type: "section",
+    //       selector: ".W_QuickMenu",
+    //       title: "SQL editor quick actions",
+    //       description:
+    //         "Quick actions for the SQL editor, providing easy access to charting.",
+    //       children: [
+    //         {
+    //           type: "button",
+    //           selectorCommand: "AddChartMenu.Timechart",
+    //           title: "Add timechart",
+    //           description:
+    //             "Adds a timechart visualization based on the current SQL statement. Visible only when the last executed statement returned at least one timestamp column.",
+    //         },
+    //         {
+    //           type: "button",
+    //           selectorCommand: "AddChartMenu.Map",
+    //           title: "Add map",
+    //           description:
+    //             "Adds a map visualization based on the current SQL statement. Visible only when the last executed statement returned at least one geometry/geography column (postgis extension must be enabled).",
+    //         },
+    //       ],
+    //     },
+    //     {
+    //       type: "text",
+    //       selector: ".silver-grid-item-header--title",
+    //       title: "SQL editor title",
+    //       description:
+    //         "The name of the SQL view. Can be changed in menu > general > Query name.",
+    //     },
+    //     {
+    //       selectorCommand: "dashboard.window.collapse",
+    //       type: "button",
+    //       title: "Collapse SQL editor",
+    //       description:
+    //         "Collapses the SQL editor, minimizing it to temporarily save space on the dashboard. ",
+    //     },
+    //     {
+    //       selectorCommand: "dashboard.window.fullscreen",
+    //       type: "button",
+    //       title: "Fullscreen SQL editor",
+    //       description: "Expands the SQL editor to fill the entire screen.",
+    //     },
+    //     {
+    //       selectorCommand: "dashboard.window.close",
+    //       type: "button",
+    //       title: "Close SQL editor",
+    //       description:
+    //         "Closes the SQL editor. If there are unsaved changes, a confirmation dialog will appear.",
+    //     },
+    //     {
+    //       selectorCommand: "dashboard.window.menu",
+    //       type: "popup",
+    //       title: "SQL editor menu",
+    //     },
+    //   ],
+    // },
     {
       type: "section",
       selectorCommand: "W_SQLEditor",
@@ -308,33 +315,10 @@ export const sqlEditorUIDoc = {
         },
         {
           type: "section",
-          selectorCommand: "W_SQLResults.Chart",
+          selectorCommand: "Window.ChildChart",
           title: "Chart",
           description: "Timechart/Map visualization of the SQL query results.",
           children: [],
-        },
-        {
-          type: "section",
-          selectorCommand: "W_SQLResults.Chart.toolbar",
-          title: "Chart toolbar",
-          description:
-            "The chart toolbar provides access to the chart menu and window management.",
-          children: [
-            {
-              selectorCommand: "dashboard.window.chartMenu",
-              title: "Chart menu",
-              type: "button",
-              description:
-                "Opens the chart menu, allowing users to customize the chart settings.",
-            },
-            {
-              selectorCommand: "dashboard.window.collapseChart",
-              title: "Collapse chart",
-              type: "button",
-              description:
-                "Collapses the chart window, minimizing it to save space on the dashboard. It can then be restored by clicking the chart icon in the SQL editor top left quick actions section.",
-            },
-          ],
         },
       ],
     },

@@ -64,6 +64,7 @@ export const Pagination = (props: PaginationProps) => {
   const displayPage = zeroBasedPage + 1;
   return (
     <FlexRow
+      data-command={"Pagination"}
       className={classOverride("gap-0 p-p5 mt-auto ai-center", className)}
     >
       <Btn

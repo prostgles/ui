@@ -8,6 +8,7 @@ import FormField from "../../../components/FormField/FormField";
 import { FormFieldDebounced } from "../../../components/FormField/FormFieldDebounced";
 import { type LabelProps } from "../../../components/Label";
 import Popup from "../../../components/Popup/Popup";
+import type { Command } from "../../../Testing";
 
 export type RGBA = [number, number, number, number];
 export const COLOR_PALETTE = [
@@ -37,6 +38,7 @@ export class ColorPicker extends React.Component<
     required?: boolean;
     title?: string;
     variant?: "legend";
+    "data-command": Command;
   },
   S
 > {
@@ -100,6 +102,7 @@ export class ColorPicker extends React.Component<
 
     return (
       <FlexRow
+        data-command={this.props["data-command"]}
         className={classOverride("gap-p5 ai-center ", className)}
         style={style}
       >
@@ -123,15 +126,20 @@ export class ColorPicker extends React.Component<
           >
             <FlexRowWrap>
               {COLOR_PALETTE.map((c, ci) => (
-                <div
+                <Btn
                   key={ci}
-                  className={"round pointer mr-1 mb-1 shadow"}
-                  style={{ width: "24px", height: "24px", backgroundColor: c }}
+                  className={"pointer shadow"}
+                  style={{
+                    width: "24px",
+                    height: "24px",
+                    backgroundColor: c,
+                    borderRadius: "1000%",
+                  }}
                   onClick={(e) => {
                     onChange(asHex(c), asRGB(c), asRGB(c, "255"));
                     this.setState({ anchorEl: null });
                   }}
-                ></div>
+                />
               ))}
             </FlexRowWrap>
             <FlexRow>

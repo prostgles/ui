@@ -85,6 +85,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
   return (
     <>
       <div
+        data-command="Window.W_QuickMenu"
         className={
           "W_QuickMenu flex-row ai-center rounded b b-color h-fit w-fit m-auto f-1 min-w-0 " +
           bgColorClass

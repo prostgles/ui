@@ -3,7 +3,7 @@ import { tryCatch } from "prostgles-types";
 import type { TopKeyword } from "./KEYWORDS";
 import { TOP_KEYWORDS, asSQL } from "./KEYWORDS";
 import { missingKeywordDocumentation } from "../SQLEditorSuggestions";
-import { QUERY_WATCH_IGNORE } from "../../../../../commonTypes/utils";
+import { EXCLUDE_FROM_SCHEMA_WATCH } from "../../../../../commonTypes/utils";
 import { fixIndent } from "../../../demo/sqlVideoDemo";
 
 export type PGDatabase = {
@@ -1108,7 +1108,7 @@ export const PG_OBJECT_QUERIES = {
       )::text[]`;
 
       return `
-      /*  ${QUERY_WATCH_IGNORE} */
+      /*  ${EXCLUDE_FROM_SCHEMA_WATCH} */
       ${searchSchemaQuery}
       SELECT *, 
         concat_ws( 

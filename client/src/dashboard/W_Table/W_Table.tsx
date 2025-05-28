@@ -29,12 +29,15 @@ import type {
 } from "./ColumnMenu/ColumnMenu";
 import { ColumnMenu } from "./ColumnMenu/ColumnMenu";
 
+import { isDefined, isEqual, pickKeys } from "prostgles-types";
 import type { DetailedFilterBase } from "../../../../commonTypes/filterUtils";
 import { matchObj } from "../../../../commonTypes/utils";
+import type { Command } from "../../Testing";
 import { createReactiveState } from "../../appUtils";
+import { ClickCatchOverlayZIndex } from "../../components/ClickCatchOverlay";
 import { Icon } from "../../components/Icon/Icon";
 import type { PaginationProps } from "../../components/Table/Pagination";
-import { isDefined, pickKeys } from "prostgles-types";
+import { t } from "../../i18n/i18nUtils";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import { SmartFilterBar } from "../SmartFilterBar/SmartFilterBar";
@@ -45,7 +48,9 @@ import { NodeCountChecker } from "./NodeCountChecker";
 import type { RowPanelProps } from "./RowCard";
 import { RowCard } from "./RowCard";
 import { W_TableMenu } from "./TableMenu/W_TableMenu";
+import { getAndFixWColumnsConfig } from "./TableMenu/getAndFixWColumnsConfig";
 import { TooManyColumnsWarning } from "./TooManyColumnsWarning";
+import { W_Table_Content } from "./W_Table_Content";
 import { getTableData } from "./getTableData";
 import type {
   OnClickEditRow,
@@ -60,11 +65,6 @@ import {
   getSortColumn,
   updateWCols,
 } from "./tableUtils/tableUtils";
-import { W_Table_Content } from "./W_Table_Content";
-import { getAndFixWColumnsConfig } from "./TableMenu/getAndFixWColumnsConfig";
-import { isEqual } from "prostgles-types";
-import type { Command } from "../../Testing";
-import { t } from "../../i18n/i18nUtils";
 
 export type W_TableProps = Omit<CommonWindowProps, "w"> & {
   w: WindowSyncItem<"table">;
@@ -754,7 +754,8 @@ export default class W_Table extends RTComp<
                           position: "sticky",
                           left: "15px",
                           bottom: "15px",
-                          zIndex: 1,
+                          /** Below the filter search clickcatch */
+                          zIndex: ClickCatchOverlayZIndex - 1,
                         }}
                         onClick={async () => {
                           this.rowPanelRState.set({ type: "insert" });

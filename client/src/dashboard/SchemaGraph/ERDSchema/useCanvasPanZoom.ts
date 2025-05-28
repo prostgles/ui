@@ -42,7 +42,6 @@ export const useCanvasPanZoom = (
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
 
-      // Calculate zoom factor based on wheel delta
       const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
       const newScale = scaleRef.current * zoomFactor;
 

@@ -1,4 +1,4 @@
-import { QUERY_WATCH_IGNORE } from "../../../../../commonTypes/utils";
+import { EXCLUDE_FROM_SCHEMA_WATCH } from "../../../../../commonTypes/utils";
 import { tout } from "../../../pages/ElectronSetup/ElectronSetup";
 import type { DemoScript, TypeAutoOpts } from "../getDemoUtils";
 import { SQL_TESTING_SCRIPTS, type SqlTestingScripts } from "./mainTestScripts";
@@ -225,7 +225,7 @@ const initScript =
     .map((v) => `DROP TABLE IF EXISTS ${v} CASCADE;`)
     .join("") +
   `
-/* ${QUERY_WATCH_IGNORE}  */
+/* ${EXCLUDE_FROM_SCHEMA_WATCH}  */
 DROP USER IF EXISTS user1;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS postgis;

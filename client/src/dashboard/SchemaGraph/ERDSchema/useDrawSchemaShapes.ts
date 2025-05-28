@@ -1,11 +1,12 @@
+import type { Deck, MapView, OrthographicView } from "deck.gl";
 import { useCallback, useEffect, useRef } from "react";
 import { isDefined } from "../../../utils";
 import type { LinkLine, Rectangle } from "../../Charts/CanvasChart";
 import { drawShapes, type ShapeV2 } from "../../Charts/drawShapes/drawShapes";
 import { getCssVariableValue } from "../../Charts/onRenderTimechart";
 import type { ColumnColorMode } from "./ERDSchema";
+import { getInitialPlacement } from "./getInitialPlacement";
 import type { SchemaShape, useSchemaShapes } from "./useSchemaShapes";
-import type { Deck, MapView, OrthographicView } from "deck.gl";
 
 export const minScale = 0.1;
 export const maxScale = 5;
@@ -101,6 +102,9 @@ export const useDrawSchemaShapes = (
   );
 
   useEffect(() => {
+    // shapesRef.current = getInitialPlacement(shapesRef.current.slice(0));
+    // /** Move links to end */
+    // shapesRef.current.sort((a, b) => a.type.localeCompare(b.type));
     onRenderShapes();
   }, [shapesRef, onRenderShapes, shapesVersion]);
 

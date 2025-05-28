@@ -829,6 +829,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<
 
     const content = (
       <div
+        data-command="SearchList"
         className={"SearchList list-comp ta-left flex-col min-h-0 " + className}
         ref={(e) => {
           if (e) {

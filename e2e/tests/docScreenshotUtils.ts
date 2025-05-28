@@ -8,7 +8,7 @@ const SVG_SCREENSHOT_NAMES = {
   dashboard: 1,
   schema_diagram: 1,
 } as const;
-const SVG_SCREENSHOT_DIR = path.join(__dirname, "../../docs");
+const SVG_SCREENSHOT_DIR = path.join(__dirname, "../../docs/screenshots");
 export const saveSVGScreenshot = async (
   page: PageWIds,
   fileName: keyof typeof SVG_SCREENSHOT_NAMES,

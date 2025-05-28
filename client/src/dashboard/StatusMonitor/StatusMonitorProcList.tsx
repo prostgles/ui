@@ -15,34 +15,44 @@ import { SmartCardList } from "../SmartCardList/SmartCardList";
 import { StyledInterval } from "../W_SQL/customRenderers";
 import type { StatusMonitorProps } from "./StatusMonitor";
 import { StatusMonitorProcListHeader } from "./StatusMonitorProcListHeader";
+import { STATUS_MONITOR_IGNORE_QUERY } from "../../../../commonTypes/utils";
 
 export const StatusMonitorViewTypes = [
-  "Queries",
-  "Active queries",
-  "Blocked queries",
+  { key: "All Queries", subLabel: "No filtering applied" },
+  {
+    key: "Active queries",
+    subLabel:
+      "All queries with 'active' state excluding the queries used to create this view",
+  },
+  {
+    key: "Blocked queries",
+    subLabel: "Queries that have are blocked by other queries",
+  },
 ] as const;
-export type StatusMonitorViewType = (typeof StatusMonitorViewTypes)[number];
+export type StatusMonitorViewType =
+  (typeof StatusMonitorViewTypes)[number]["key"];
 
 const orderByCPU = {
   key: "cpu",
   asc: false,
 } as const;
-export const StatusMonitorProcList = ({
-  connectionId,
-  dbs,
-  dbsMethods,
-  dbsTables,
-  runConnectionQuery,
-  refreshRate,
-  setRefreshRate,
-  noBash,
-}: StatusMonitorProps & {
-  refreshRate: number;
-  setRefreshRate: (rate: number) => void;
-  noBash: boolean | undefined;
-}) => {
+export const StatusMonitorProcList = (
+  props: StatusMonitorProps & {
+    samplingRate: number;
+    noBash: boolean | undefined;
+  },
+) => {
+  const {
+    connectionId,
+    dbs,
+    dbsMethods,
+    dbsTables,
+    runConnectionQuery,
+    samplingRate,
+    noBash,
+  } = props;
   const [viewType, setViewType] = useState<StatusMonitorViewType>(
-    StatusMonitorViewTypes[1],
+    StatusMonitorViewTypes[1].key,
   );
 
   const [toggledFields, setToggledFields] = useState<string[]>([]);
@@ -82,19 +92,18 @@ export const StatusMonitorProcList = ({
     return {
       $and: [
         {
-          connection_id: connectionId,
           ...(datidFilter ? { datid: datidFilter } : {}),
           ...(viewType === "Blocked queries" ? { blocked_by_num: { ">": 0 } }
-          : viewType === "Active queries" ? { state: "active" }
+          : viewType === "Active queries" ?
+            {
+              state: "active",
+              query: { $nilike: `%${STATUS_MONITOR_IGNORE_QUERY}%` },
+            }
           : {}),
-          // state: { "<>": "idle" }
         },
-        ...(viewType === "Blocked queries" ?
-          [{ blocked_by_num: { ">": 0 } }]
-        : []),
       ],
     };
-  }, [datidFilter, viewType, connectionId]);
+  }, [datidFilter, viewType]);
 
   return (
     <SmartCardList
@@ -103,7 +112,23 @@ export const StatusMonitorProcList = ({
       tables={dbsTables}
       tableName="stats"
       showEdit={false}
-      showTopBar={{ sort: true }}
+      showTopBar={{
+        sort: true,
+        leftContent: (
+          <StatusMonitorProcListHeader
+            {...props}
+            allToggledFields={allToggledFields}
+            excludedFields={excludedFields}
+            setToggledFields={setToggledFields}
+            dbsTables={dbsTables}
+            datidFilter={datidFilter}
+            setDatidFilter={setDatidFilter}
+            viewType={viewType}
+            setViewType={setViewType}
+            samplingRate={samplingRate}
+          />
+        ),
+      }}
       orderBy={orderByCPU}
       rowProps={{
         style: {
@@ -114,20 +139,6 @@ export const StatusMonitorProcList = ({
         <InfoRow color="info" variant="filled">
           No {viewType}
         </InfoRow>
-      }
-      title={
-        <StatusMonitorProcListHeader
-          allToggledFields={allToggledFields}
-          excludedFields={excludedFields}
-          setToggledFields={setToggledFields}
-          dbsTables={dbsTables}
-          datidFilter={datidFilter}
-          setDatidFilter={setDatidFilter}
-          viewType={viewType}
-          setViewType={setViewType}
-          refreshRate={refreshRate}
-          setRefreshRate={setRefreshRate}
-        />
       }
       realtime={true}
       throttle={500}
@@ -185,6 +196,7 @@ const useStatusMonitorProcListProps = (
       {
         name: "mem",
         hide: noBash,
+        renderMode: "value",
         ...hideOverflowStyle,
         render: (v: number) => <span className="">{v}%</span>,
       },
@@ -233,6 +245,7 @@ const useStatusMonitorProcListProps = (
         render: (value) => <StyledInterval value={value} mode="pg_stat" />,
       },
       { name: "pid" },
+      { name: "backend_xid" },
       actionRow,
       {
         name: "query",

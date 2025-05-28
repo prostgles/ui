@@ -98,6 +98,7 @@ export const AddChartLayer = (props: MapLayerManagerProps) => {
         <PopupMenu
           title="Add OSM Layer"
           contentClassName="p-1"
+          data-command="ChartLayerManager.AddChartLayer.addOSMLayer"
           button={
             <Btn iconPath={mdiPlus} variant="faded" color="action">
               Add OSM Layer

@@ -40,7 +40,7 @@ export type Unpromise<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
 
 export type ConnectionTableConfig = Pick<FileTableConfig, "referencedTables"> &
-  DatabaseConfigs["file_table_config"];
+  Omit<Exclude<DatabaseConfigs["file_table_config"], null>, "referencedTables">;
 
 export const DB_TRANSACTION_KEY = "dbTransactionProstgles" as const;
 
@@ -221,11 +221,12 @@ export class ConnectionManager {
       { on_mount_logs: null },
     );
     if (on_mount_ts) {
+      const compiledCode = getCompiledTS(on_mount_ts);
       prglCon.onMountRunner = await ForkedPrglProcRunner.create({
         dbs: this.dbs,
         type: "onMount",
         on_mount_ts,
-        on_mount_ts_compiled: getCompiledTS(on_mount_ts),
+        on_mount_ts_compiled: compiledCode,
         pass_process_env_vars_to_server_side_functions: false,
         dbConfId: prglCon.dbConf.id,
         prglInitOpts: {
@@ -235,9 +236,10 @@ export class ConnectionManager {
           },
         },
       });
-      return prglCon.onMountRunner.run({
+      /** Not awaited not block opening the connection */
+      void prglCon.onMountRunner.run({
         type: "onMount",
-        code: getCompiledTS(on_mount_ts),
+        code: compiledCode,
       });
     }
   };
@@ -534,6 +536,7 @@ export class ConnectionManager {
   async disconnect(conId: string): Promise<boolean> {
     await cdbCache[conId]?.destroy();
     if (this.prglConnections[conId]) {
+      //TODO: fix re-started connection not working. Might need to use ws instead of socket.io
       await this.prglConnections[conId].prgl?.destroy();
       delete this.prglConnections[conId];
       return true;
@@ -589,7 +592,7 @@ export const getCDB = async (
       delete cdbCache[connId];
     };
     const db = await connMgr.getNewConnectionDb(connId, {
-      application_name: "getCDB temp",
+      application_name: "prostgles getCDB",
       ...opts,
     });
     if (isTemporary) return { db, destroy };

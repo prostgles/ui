@@ -3,6 +3,7 @@ import type { PrglState } from "../../App";
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { Workspace } from "../../dashboard/Dashboard/dashboardUtils";
+import type { FilterItem } from "prostgles-types";
 
 type CommonConnectionInfo = Pick<DBSSchema["connections"], "created"> & {
   access_control: { count: number }[];
@@ -56,7 +57,7 @@ export const useConnections = (props: PrglState) => {
   const connections = usePromise(async () => {
     if (!_connections) return;
 
-    const cons = await dbsMethods.getConnectedIds?.();
+    const connectedConnectionIds = await dbsMethods.getConnectedIds?.();
 
     const connections = await Promise.all(
       (_connections as IConnection[]).map(async (c) => {
@@ -67,7 +68,7 @@ export const useConnections = (props: PrglState) => {
               "user_types.access_control_user_types.access_control.database_configs.connections":
                 { id: c.id },
             },
-          } as any);
+          } as FilterItem);
         }
 
         return c;
@@ -76,7 +77,8 @@ export const useConnections = (props: PrglState) => {
 
     return connections.map((c) => ({
       ...c,
-      isConnected: !cons || cons.includes(c.id),
+      isConnected:
+        !connectedConnectionIds || connectedConnectionIds.includes(c.id),
     }));
   }, [_connections, dbs.users, dbsMethods]);
 

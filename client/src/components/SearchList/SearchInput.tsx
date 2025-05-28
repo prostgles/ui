@@ -5,6 +5,9 @@ import Btn from "../Btn";
 import type { TestSelectors } from "../../Testing";
 import { mdiFormatLetterCase } from "@mdi/js";
 import Loading from "../Loading";
+
+export const SearchInputZIndex = 2;
+
 type SearchInputProps = Pick<
   React.HTMLProps<HTMLInputElement>,
   "type" | "title"
@@ -60,12 +63,11 @@ export const SearchInput = (props: SearchInputProps) => {
       }
       style={{
         ...wrapperStyle,
-        ...(mode?.search ? { zIndex: mode.search["!listNode"] ? "unset" : 2 }
+        ...(mode?.search ?
+          { zIndex: mode.search["!listNode"] ? "unset" : SearchInputZIndex }
         : mode?.select ? { margin: "8px", marginBottom: "2px" }
         : {
             margin: "8px",
-            // margin: "8px",
-            // marginTop: "12px"
           }),
       }}
       onClick={onClickWrapper}
@@ -114,6 +116,7 @@ export const SearchInput = (props: SearchInputProps) => {
 
         {matchCase && (
           <Btn
+            data-command="SearchList.MatchCase"
             title={"Match case"}
             iconPath={mdiFormatLetterCase}
             style={{ margin: "1px" }}

@@ -14,7 +14,8 @@ export type AGE = {
     seconds?: number;
     milliseconds?: number;
 };
-export declare const QUERY_WATCH_IGNORE = "prostgles internal query that should be excluded from schema watch ";
+export declare const EXCLUDE_FROM_SCHEMA_WATCH = "prostgles internal query that should be excluded from schema watch ";
+export declare const STATUS_MONITOR_IGNORE_QUERY = "prostgles-status-monitor-query";
 export declare const getAgeFromDiff: (millisecondDiff: number) => {
     years: number;
     months: number;

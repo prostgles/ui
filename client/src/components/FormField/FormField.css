@@ -76,8 +76,7 @@
 } */
 
 .form-field label.main-label {
-  flex: 1;
-  line-height: 2em;
+  flex: 1; 
   min-width: 80px;
 }
 

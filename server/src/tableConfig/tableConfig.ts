@@ -1145,17 +1145,10 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
     },
   },
 
-  database_stats: {
-    columns: {
-      database_config_id:
-        "INTEGER REFERENCES database_configs(id) ON DELETE SET NULL",
-    },
-  },
-
   stats: {
-    // dropIfExists: true,
+    dropIfExistsCascade: true,
     columns: {
-      connection_id: `UUID NOT NULL REFERENCES connections(id) ON DELETE CASCADE`,
+      database_id: `INTEGER NOT NULL REFERENCES database_configs(id) ON DELETE CASCADE`,
 
       datid: "INTEGER",
       datname: "TEXT",
@@ -1286,9 +1279,13 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
         sqlDefinition: "TEXT",
         info: { hint: `Command with all its arguments as a string` },
       },
+      sampled_at: {
+        sqlDefinition: "TIMESTAMP NOT NULL DEFAULT NOW()",
+        info: { hint: `When the statistics were collected` },
+      },
     },
     constraints: {
-      stats_pkey: "PRIMARY KEY(pid, connection_id)",
+      stats_pkey: "PRIMARY KEY(pid, database_id)",
     },
   },
   ...tableConfigLLM,

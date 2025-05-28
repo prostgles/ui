@@ -39,11 +39,34 @@ export const COMMANDS = {
 
   "dashboard.window.rowInsert": "Open row insert panel",
   "dashboard.window.rowInsertTop": "Open row insert panel from top filter bar",
-  "dashboard.window.runQuery":
+
+  "W_SQLMenu.name": "",
+  "W_SQLMenu.renderDisplayMode": "",
+  "W_SQLMenu.saveQuery": "",
+  "W_SQLMenu.openSQLFile": "",
+  "W_SQLMenu.deleteQuery": "",
+
+  "W_SQLEditor.executeStatement": "Executes the current SQL statement",
+  W_SQLEditor: "",
+  W_SQLBottomBar: "",
+  "W_SQLBottomBar.runQuery":
     "Executes the current query (selected, block or full)",
-  "dashboard.window.cancelQuery": "Cancels the current query",
-  "dashboard.window.terminateQuery": "Terminates the current query",
-  "dashboard.window.stopListen": "Terminates the current LISTEN query",
+  "W_SQLBottomBar.limit": "",
+  "W_SQLBottomBar.queryDuration": "",
+  "W_SQLBottomBar.cancelQuery": "Cancels the current query",
+  "W_SQLBottomBar.terminateQuery": "Terminates the current query",
+  "W_SQLBottomBar.stopListen": "Terminates the current LISTEN query",
+  "W_SQLBottomBar.toggleTable": "",
+  "W_SQLBottomBar.toggleCodeEditor": "",
+  "W_SQLBottomBar.toggleNotices": "",
+  "W_SQLBottomBar.stopLoopQuery": "Stop loop query",
+  "W_SQLBottomBar.copyResults": "Copy results",
+  "W_SQLBottomBar.rowCount": "Row count",
+  "W_SQLBottomBar.sqlError": "SQL error",
+
+  W_SQLResults: "",
+  "Window.ChildChart": "",
+  "Window.ChildChart.toolbar": "",
 
   "dashboard.window.fullscreen": "fullscreen",
   "dashboard.window.close": "close",
@@ -78,6 +101,24 @@ export const COMMANDS = {
   "dashboard.menu.createTable.addColumn": "",
   "dashboard.menu.createTable.addColumn.confirm": "",
   "dashboard.menu.createTable.confirm": "",
+
+  "W_TableMenu_TableInfo.name": "",
+  "W_TableMenu_TableInfo.comment": "",
+  "W_TableMenu_TableInfo.oid": "",
+  "W_TableMenu_TableInfo.type": "",
+  "W_TableMenu_TableInfo.owner": "",
+  "W_TableMenu_TableInfo.sizeInfo": "",
+  "W_TableMenu_TableInfo.viewDefinition": "",
+  "W_TableMenu_TableInfo.vacuum": "",
+  "W_TableMenu_TableInfo.vacuumFull": "",
+  "W_TableMenu_TableInfo.drop": "",
+
+  "W_TableMenu_ColumnList.alter": "",
+  "W_TableMenu_ColumnList.linkedColumnOptions": "",
+  "W_TableMenu_ColumnList.removeComputedColumn": "",
+
+  TableHeader: "",
+  "TableHeader.resizeHandle": "",
 
   "FormField.clear": "Clear a FormField",
 
@@ -138,6 +179,7 @@ export const COMMANDS = {
   Connections: "",
   "Connections.add": "add",
   "Connections.new": " ",
+  "Connections.openConnection": "Open connection",
 
   "Connection.closeAllWindows": "",
   "Connection.statusMonitor": "",
@@ -194,6 +236,11 @@ export const COMMANDS = {
   "CloseSaveSQLPopup.delete": "",
 
   SchemaGraph: "",
+  "SchemaGraph.TopControls": "",
+  "SchemaGraph.TopControls.tableRelationsFilter": "",
+  "SchemaGraph.TopControls.columnRelationsFilter": "",
+  "SchemaGraph.TopControls.linkColorMode": "",
+  "SchemaGraph.TopControls.resetLayout": "",
   AddColumnReference: "",
   "SmartFormFieldOptions.AttachFile": "",
   RuleToggle: "",
@@ -230,7 +277,17 @@ export const COMMANDS = {
   "AutomaticBackups.frequency": "",
   "AutomaticBackups.hourOfDay": "",
   "WorkspaceAddBtn.Create": "",
+  MapOpacityMenu: "",
+  MapBasemapOptions: "",
+  "InMapControls.goToDataBounds": "",
+  "InMapControls.showCursorCoords": "",
+  LayerColorPicker: "",
+  "W_TimeChart.resetExtent": "",
+  TimeChartFilter: "",
+  "ChartLayerManager.toggleLayer": "",
+  "ChartLayerManager.removeLayer": "",
   "ChartLayerManager.AddChartLayer.addLayer": "",
+  "ChartLayerManager.AddChartLayer.addOSMLayer": "",
   ConnectionSelector: "",
   "Setup2FA.Enable": "",
   "Setup2FA.Enable.GenerateQR": "",
@@ -275,6 +332,15 @@ export const COMMANDS = {
   "SetupLLMCredentials.free": "",
   "SetupLLMCredentials.api": "",
   "AskLLMAccessControl.llm_daily_limit": "",
+
+  DeckGLFeatureEditor: "",
+  "MapBasemapOptions.Projection": "",
+
+  SmartFilterBar: "",
+  SearchList: "",
+  "SearchList.MatchCase": "",
+  AddJoinFilter: "",
+  Pagination: "",
   "Pagination.page": "",
   "Pagination.lastPage": "",
   "Pagination.nextPage": "",
@@ -332,6 +398,7 @@ export const COMMANDS = {
   MCPServerConfig: "",
   "MCPServerConfig.save": "",
   Feedback: "",
+  "FileImporterFooter.import": "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 
@@ -349,6 +416,9 @@ export const getCommandElemSelector = (cmd: Command) => {
 };
 export const getDataKeyElemSelector = (key: string) => {
   return `[data-key=${JSON.stringify(key)}]`;
+};
+export const getDataLabelElemSelector = (key: string) => {
+  return `[data-label=${JSON.stringify(key)}]`;
 };
 
 declare module "react" {

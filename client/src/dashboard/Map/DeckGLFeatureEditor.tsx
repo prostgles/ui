@@ -485,6 +485,7 @@ export const DeckGLFeatureEditor = ({
   if (firstTable) {
     return (
       <Select
+        data-command="DeckGLFeatureEditor"
         title="Select shape type"
         fullOptions={Object.entries(DrawModes).map(
           ([key, { label, iconPath }]) => ({

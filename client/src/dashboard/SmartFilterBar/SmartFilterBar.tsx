@@ -100,6 +100,7 @@ export const SmartFilterBar = (props: SmartFilterBarProps) => {
         className,
       )}
       style={style}
+      data-command="SmartFilterBar"
     >
       {leftContent}
 
