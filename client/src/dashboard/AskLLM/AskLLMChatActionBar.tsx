@@ -180,6 +180,7 @@ export const AskLLMChatActionBar = (
           fieldConfigs={[
             {
               name: "name",
+              renderMode: "full",
               render: (name, { id, description }) => {
                 const isActive = activeChat.llm_prompt_id === id;
                 return (

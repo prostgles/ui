@@ -1,12 +1,17 @@
+import { fixIndent } from "../../../demo/sqlVideoDemo";
 import { getCommandElemSelector } from "../../../Testing";
 import type { UIDocElement } from "../../UIDocs";
 
 export const askAIUIDoc = {
   type: "popup",
-  selector: getCommandElemSelector("AskLLM"),
+  selectorCommand: "AskLLM",
   title: "Ask AI",
   description:
     "Opens an AI assistant to help generate SQL queries, understand database schema, or perform other tasks.",
+  docs: fixIndent(`
+    The AI assistant allows you to interact with an AI model to generate SQL queries, understand database schema, and perform various tasks related to your database.
+    <img src="/screenshots/ask-ai.svg" alt="AI assistant popup screenshot" />
+  `),
   children: [
     {
       type: "section",

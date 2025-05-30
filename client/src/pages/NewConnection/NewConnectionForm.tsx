@@ -112,6 +112,7 @@ export const NewConnectionForm = ({
     <>
       {!isForStateDB && (
         <FormField
+          data-command="NewConnectionForm.connectionName"
           label={t.NewConnectionForm["Connection name"]}
           hint={t.NewConnectionForm.Optional}
           type="text"
@@ -123,18 +124,18 @@ export const NewConnectionForm = ({
         />
       )}
 
-      <div className="flex-col gap-p5 ta-left">
-        <label className="m-0 text-1 ">
-          {t.NewConnectionForm["Connection type"]}
-        </label>
-        <ButtonGroup
-          value={type}
-          options={["Standard", "Connection URI"]}
-          onChange={(type) => {
-            updateConnection({ type });
-          }}
-        />
-      </div>
+      <ButtonGroup
+        label={{
+          label: t.NewConnectionForm["Connection type"],
+          variant: "normal",
+        }}
+        data-command="NewConnectionForm.connectionType"
+        value={type}
+        options={["Standard", "Connection URI"]}
+        onChange={(type) => {
+          updateConnection({ type });
+        }}
+      />
 
       {type === "Prostgles" ?
         <>
@@ -162,6 +163,7 @@ export const NewConnectionForm = ({
         <>
           <FormFieldDebounced
             label={t.NewConnectionForm["Connection URI"]}
+            data-command="NewConnectionForm.db_conn"
             type="text"
             hint="postgres://user:pass@host:port/database?sslmode=require"
             required={true}
@@ -176,6 +178,7 @@ export const NewConnectionForm = ({
             id="h"
             value={c.db_host}
             label={t.NewConnectionForm["Host"]}
+            data-command="NewConnectionForm.db_host"
             type="text"
             autoComplete="off"
             onChange={(db_host) => updateConnection({ db_host })}
@@ -184,6 +187,7 @@ export const NewConnectionForm = ({
             id="p"
             value={c.db_port}
             label={t.NewConnectionForm["Port"]}
+            data-command="NewConnectionForm.db_port"
             type="number"
             autoComplete="off"
             onChange={(db_port) => updateConnection({ db_port })}
@@ -195,6 +199,7 @@ export const NewConnectionForm = ({
               key: rolname,
               subLabel: rolsuper ? "Superuser" : "",
             }))}
+            data-command="NewConnectionForm.db_user"
             label={t.NewConnectionForm["User"]}
             type="text"
             autoComplete="off"
@@ -204,6 +209,7 @@ export const NewConnectionForm = ({
             id="pass"
             value={c.db_pass}
             label={t.NewConnectionForm["Password"]}
+            data-command="NewConnectionForm.db_pass"
             type="text"
             autoComplete="off"
             onChange={(db_pass) => updateConnection({ db_pass })}
@@ -213,6 +219,7 @@ export const NewConnectionForm = ({
             id="d"
             value={c.db_name}
             label={t.NewConnectionForm.Database}
+            data-command="NewConnectionForm.db_name"
             type="text"
             options={suggestions?.databases}
             autoComplete="off"
@@ -315,7 +322,7 @@ export const NewConnectionForm = ({
               variant: undefined,
               color: "action",
               iconPath: mdiDotsHorizontal,
-              "data-command": "MoreOptionsToggle",
+              "data-command": "NewConnectionForm.MoreOptionsToggle",
             }}
           >
             <FormField
@@ -323,7 +330,7 @@ export const NewConnectionForm = ({
               label={t.NewConnectionForm["Schema list"]}
               optional={true}
               multiSelect={true}
-              data-command="SchemaFilter"
+              data-command="NewConnectionForm.schemaFilter"
               fullOptions={
                 suggestions?.schemas?.map((s) => ({
                   key: s.schema_name,
@@ -359,6 +366,7 @@ export const NewConnectionForm = ({
             <FormField
               id="timeout"
               label={t.NewConnectionForm["Connection timeout (ms)"]}
+              data-command="NewConnectionForm.connectionTimeout"
               optional={true}
               value={c.db_connection_timeout}
               onChange={(db_connection_timeout) => {
@@ -368,6 +376,7 @@ export const NewConnectionForm = ({
             <FormField
               id="ssl_mode"
               label={t.NewConnectionForm["SSL Mode"]}
+              data-command="NewConnectionForm.sslMode"
               fullOptions={SSL_MODES}
               required={true}
               value={c.db_ssl}
@@ -454,6 +463,7 @@ export const NewConnectionForm = ({
                       "Will refresh the dashboard and API on schema change. Requires superuser for best experience"
                     ],
                   }}
+                  data-command="NewConnectionForm.watchSchema"
                   checked={!!c.db_watch_shema}
                   onChange={(db_watch_shema) => {
                     updateConnection({ db_watch_shema });
@@ -476,6 +486,7 @@ export const NewConnectionForm = ({
                     "Needed to allow realtime data view. Requires superuser"
                   ],
                 }}
+                data-command="NewConnectionForm.realtime"
                 checked={!c.disable_realtime}
                 onChange={(disable_realtime) => {
                   updateConnection({ disable_realtime: !disable_realtime });
@@ -502,6 +513,7 @@ export const NewConnectionForm = ({
             {test.onTest && (
               <Btn
                 variant="faded"
+                data-command="NewConnectionForm.testConnection"
                 color="default"
                 iconPath={mdiConnection}
                 onClickPromise={test.onTest}

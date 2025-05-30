@@ -420,7 +420,7 @@ export class _Dashboard extends RTComp<
               color="action"
               variant="filled"
               asNavLink={true}
-              href={`${ROUTES.DASHBOARD}/${connectionId}`}
+              href={`${ROUTES.CONNECTIONS}/${connectionId}`}
               iconPath={mdiArrowLeft}
             >
               Go back

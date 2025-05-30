@@ -30,7 +30,7 @@ export type ConnectionProps = (
   };
 
 const getConnectionPath = (cid: string, wid?: string) =>
-  `${ROUTES.DASHBOARD}/${cid}` + (wid ? `?workspaceId=${wid}` : "");
+  `${ROUTES.CONNECTIONS}/${cid}` + (wid ? `?workspaceId=${wid}` : "");
 
 export const Connection = (props: ConnectionProps) => {
   const { connection, isAdmin } = props;
@@ -75,7 +75,7 @@ export const Connection = (props: ConnectionProps) => {
           className={
             "no-decor flex-col min-w-0 text-ellipsis f-1 text-active-hover "
           }
-          data-command="Connections.openConnection"
+          data-command="Connection.openConnection"
           to={getConnectionPath(connection.id)}
         >
           <div className="flex-col gap-p5 p-1 h-full">
@@ -95,13 +95,6 @@ export const Connection = (props: ConnectionProps) => {
                 </div>
               )}
             </FlexRowWrap>
-            {/* {isAdmin && <InfoRow className="text-1p5 font-18" variant="naked" iconPath={mdiDatabase} iconSize={.75}>
-            {getServerInfo(c)}
-          </InfoRow>} */}
-            {/* {isAdmin && <InfoRow className="text-1p5 font-18" variant="naked" iconPath={mdiAccount} iconSize={.75}>
-            {c.db_user}
-          </InfoRow>} */}
-
             {isAdmin && connection.is_state_db && (
               <InfoRow variant="naked" iconPath="" color="warning">
                 {
@@ -120,6 +113,7 @@ export const Connection = (props: ConnectionProps) => {
       {(showWorkspaces || showAccessInfo) && (
         <FlexRowWrap
           title={t.common["Workspaces"]}
+          data-command="Connection.workspaceList"
           className="ConnectionWorkspaceList  pl-1 p-p25 pt-0 ai-center gap-0"
         >
           {showWorkspaces && (
@@ -133,6 +127,7 @@ export const Connection = (props: ConnectionProps) => {
                 <Btn
                   key={w.id}
                   className="w-fit"
+                  data-key={w.name}
                   color="action"
                   asNavLink={true}
                   href={getConnectionPath(connection.id, w.id)}
@@ -151,7 +146,7 @@ export const Connection = (props: ConnectionProps) => {
               iconPosition="right"
               color="action"
               asNavLink={true}
-              href={`/connection-config/${connection.id}?section=access_control`}
+              href={`${ROUTES.CONFIG}/${connection.id}?section=access_control`}
             >
               {connection.allowedUsers}
             </Btn>

@@ -1,11 +1,20 @@
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
+import type { ROUTES } from "../../../commonTypes/utils";
 import { isPlaywrightTest } from "../i18n/i18nUtils";
 import type { Command } from "../Testing";
 import { isDefined } from "../utils";
 import { domToSVG } from "./domToSVG/domToSVG";
-import { connectionUIDoc } from "./UIDocs/connection/connectionUIDoc";
+import { accountUIDoc } from "./UIDocs/accountUIDoc";
+import { auhtenticationUIDoc } from "./UIDocs/auhtenticationUIDoc";
+import { commandSearchUIDoc } from "./UIDocs/commandSearchUIDoc";
+import { askAIUIDoc } from "./UIDocs/connection/askAIUIDoc";
+import { dashboardUIDoc } from "./UIDocs/connection/dashboardUIDoc";
 import { connectionsUIDoc } from "./UIDocs/connectionsUIDoc";
+import { editConnectionUIDoc } from "./UIDocs/editConnectionUIDoc";
+import { navbarUIDoc } from "./UIDocs/navbarUIDoc";
 import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
+
+type Route = (typeof ROUTES)[keyof typeof ROUTES];
 
 /**
  * UI Documentation system for generating interactive element guides and documentation.
@@ -27,6 +36,7 @@ type UIDocBase<T> = (
 ) & {
   title: string;
   description: string;
+  docs?: string;
 } & T;
 
 export type UIDocElement =
@@ -57,7 +67,13 @@ export type UIDocElement =
     }>
   | UIDocBase<{
       type: "link";
-      pagePath: string;
+      pagePath: Route;
+      /**
+       * If defined this means that the final url is `${pagePath}/pathItemRow.id`
+       */
+      pathItem?: {
+        tableName: keyof DBSSchema;
+      };
     }>
   | UIDocBase<{
       type: "popup";
@@ -77,31 +93,52 @@ export type UIDocElement =
       fieldNames?: string[];
     }>;
 
-export type UIDocContainers = {
-  type: "page";
-  path: string;
-  pathItem?: {
-    tableName: keyof DBSSchema;
-  };
-  title: string;
-  description: string;
+export type UIDocContainers =
+  | {
+      type: "page";
+      path: Route;
+      pathItem?: {
+        tableName: keyof DBSSchema;
+      };
+      title: string;
+      description: string;
+      docs?: string;
+      children: UIDocElement[];
+    }
+  | UIDocBase<{
+      type: "hotkey-popup";
+      hotkey: string;
+      children: UIDocElement[];
+    }>;
+
+export type UIDocNavbar = UIDocBase<{
+  type: "navbar";
+  docs?: string;
   children: UIDocElement[];
-};
+  paths: Route[];
+}>;
 
 export const UIDocs = [
+  navbarUIDoc,
   connectionsUIDoc,
-  connectionUIDoc,
+  dashboardUIDoc,
+  askAIUIDoc,
+  editConnectionUIDoc,
   serverSettingsUIDoc,
-] satisfies UIDocContainers[];
+  accountUIDoc,
+  auhtenticationUIDoc,
+  commandSearchUIDoc,
+] satisfies (UIDocContainers | UIDocNavbar | UIDocElement)[];
 
+export type UIDoc = UIDocContainers | UIDocElement | UIDocNavbar;
 const getFlatDocs = (
-  doc: UIDocContainers | UIDocElement | undefined,
-  parentDocs: (UIDocContainers | UIDocElement)[] = [],
+  doc: UIDoc | undefined,
+  parentDocs: UIDoc[] = [],
 ):
   | ({
       parentTitles: string[];
-      parentDocs: (UIDocContainers | UIDocElement)[];
-    } & (UIDocContainers | UIDocElement))[]
+      parentDocs: UIDoc[];
+    } & UIDoc)[]
   | undefined => {
   if (!doc) return [];
   const parentTitles = parentDocs.map((d) => d.title);

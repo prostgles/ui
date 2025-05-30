@@ -25,7 +25,7 @@ import type { ProstglesState } from "../../commonTypes/electronInitTypes";
 import type { DBSSchema } from "../../commonTypes/publishUtils";
 import { fixIndent, ROUTES } from "../../commonTypes/utils";
 import { createReactiveState, useReactiveState } from "./appUtils";
-import { CommandSearch } from "./app/CommandSearch";
+import { CommandSearch } from "./app/CommandSearch/CommandSearch";
 import { FlexCol } from "./components/Flex";
 import { InfoRow } from "./components/InfoRow";
 import { NavBarWrapper } from "./components/NavBar/NavBarWrapper";
@@ -185,11 +185,11 @@ export const App = () => {
         <Route
           key="0"
           path="/"
-          element={<Navigate to={ROUTES.DASHBOARD} replace />}
+          element={<Navigate to={ROUTES.CONNECTIONS} replace />}
         />
         <Route
           key="1"
-          path={ROUTES.DASHBOARD}
+          path={ROUTES.CONNECTIONS}
           element={
             <NavBarWrapper
               extraProps={extraProps}
@@ -228,7 +228,7 @@ export const App = () => {
         />
         <Route
           key="4"
-          path={`${ROUTES.DASHBOARD}/:cid`}
+          path={`${ROUTES.CONNECTIONS}/:cid`}
           element={<ProjectConnection prglState={extraProps} />}
         />
         <Route

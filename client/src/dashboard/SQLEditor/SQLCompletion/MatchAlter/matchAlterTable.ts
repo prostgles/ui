@@ -1,4 +1,3 @@
-import { tout } from "../../../../pages/ElectronSetup/ElectronSetup";
 import { suggestSnippets } from "../CommonMatchImports";
 import {
   ALTER_COL_ACTIONS,
@@ -6,7 +5,6 @@ import {
   REFERENCE_CONSTRAINT_OPTIONS_KWDS,
   TABLE_CONS_TYPES,
 } from "../TableKWDs";
-import { getExpected } from "../getExpected";
 import {
   type ParsedSQLSuggestion,
   type SQLMatchContext,

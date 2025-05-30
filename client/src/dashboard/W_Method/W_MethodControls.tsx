@@ -17,6 +17,7 @@ import SmartTable from "../SmartTable";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
 import { prgl_R } from "../../WithPrgl";
+import { ProcessLogs } from "../TableConfig/ProcessLogs";
 
 type P = Pick<Prgl, "db" | "methods" | "tables"> & {
   method_name: string;
@@ -124,7 +125,7 @@ export const W_MethodControls = ({
 
   const outputTableInfo =
     m?.outputTable ? tables.find((t) => t.name === m.outputTable) : undefined;
-  const { showCode = true } = w?.options ?? {};
+  const { showCode = false, showLogs } = w?.options ?? {};
 
   if (!prgl) {
     return <>prgl missing</>;
@@ -228,15 +229,25 @@ export const W_MethodControls = ({
             )}
 
             {w && (
-              <SwitchToggle
-                label="Show code"
-                className="ml-auto"
-                checked={!!showCode}
-                onChange={(showCode) => {
-                  w.$update({ options: { showCode } }, { deepMerge: true });
-                }}
-                variant="row"
-              />
+              <>
+                <SwitchToggle
+                  label="Show code"
+                  className="ml-auto"
+                  checked={!!showCode}
+                  onChange={(showCode) => {
+                    w.$update({ options: { showCode } }, { deepMerge: true });
+                  }}
+                  variant="row"
+                />
+                <SwitchToggle
+                  label="Show logs"
+                  checked={!!showLogs}
+                  onChange={(showLogs) => {
+                    w.$update({ options: { showLogs } }, { deepMerge: true });
+                  }}
+                  variant="row"
+                />
+              </>
             )}
 
             <SwitchToggle
@@ -278,7 +289,14 @@ export const W_MethodControls = ({
           : null}
         </div>
       )}
-
+      {showLogs && (
+        <ProcessLogs
+          connectionId={connectionId}
+          dbs={dbs}
+          dbsMethods={prgl.dbsMethods}
+          type="methods"
+        />
+      )}
       <ErrorComponent
         error={error}
         findMsg={true}

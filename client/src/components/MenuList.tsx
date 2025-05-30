@@ -115,7 +115,7 @@ export const MenuList = (props: MenuListProps) => {
         onKeyDown={onKeyDownFocusSiblings}
       >
         <ul
-          className={`relative f-1 o-auto min-h-0 min-w-0 ${isCompactMode ? "trigger-hover" : ""} ${isVertical ? " flex-col ws-nowrap " : "flex-row no-scroll-bar oy-hidden "}`}
+          className={`no-decor relative f-1 o-auto min-h-0 min-w-0 ${isCompactMode ? "trigger-hover" : ""} ${isVertical ? " flex-col ws-nowrap " : "flex-row no-scroll-bar oy-hidden "}`}
           role="list"
           ref={refList}
           style={{ padding: 0 }}

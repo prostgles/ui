@@ -32,6 +32,7 @@ import { PostgresInstallationInstructions } from "../PostgresInstallationInstruc
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import { NewConnectionForm } from "./NewConnectionForm";
 import { ROUTES } from "../../../../commonTypes/utils";
+import { ScrollFade } from "../../components/SearchList/ScrollFade";
 
 export const getSqlErrorText = (e: any) => {
   let objDetails: [string, any][] = [];
@@ -290,7 +291,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
         {!contentOnly && (
           <NavLink
             className="p-1 text-1 round flex-row ai-center"
-            to={ROUTES.DASHBOARD}
+            to={ROUTES.CONNECTIONS}
           >
             <Icon path={mdiArrowLeft} size={1} />
             <div className="ml-p5">{t.NewConnection.Connections}</div>
@@ -303,7 +304,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
           }
           style={{ maxWidth: "100%" }}
         >
-          <div
+          <ScrollFade
             className="flex-col gap-1 f-1 o-auto min-h-0 p-p25 no-scroll-bar"
             style={{
               margin: "-.25em" /* Used to ensure focus border is visible */,
@@ -317,7 +318,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
             )}
             {showTitle && (
               <h2 className="m-0 p-0 mb-1">
-                {mode === "edit" ? "Edit" : "Add"} connection
+                {mode === "edit" ? "Edit connection" : "Add connection"}
               </h2>
             )}
             {mode === "insert" && (
@@ -348,7 +349,7 @@ class NewConnection extends RTComp<NewConnectionProps, NewConnectionState> {
                 statusOK,
               }}
             />
-          </div>
+          </ScrollFade>
           <ErrorComponent
             error={error}
             style={{ background: "white", padding: "1em" }}
@@ -535,7 +536,7 @@ export default (props: NewConnectionProps) => {
         navigate("/");
       }}
       onUpserted={({ id }) => {
-        navigate(ROUTES.DASHBOARD + "/" + id);
+        navigate(ROUTES.CONNECTIONS + "/" + id);
       }}
     />
   );

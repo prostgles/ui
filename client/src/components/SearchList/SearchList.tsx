@@ -646,7 +646,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<
           {isSearch && !!renderedItems.length && <ClickCatchOverlay />}
           <ul
             className={
-              "f-1 max-h-fit o-auto min-h-0 min-w-0 ul-search-list " +
+              "no-decor f-1 max-h-fit o-auto min-h-0 min-w-0 ul-search-list " +
               (isSearch ? " no-scroll-bar shadow bg-color-0 " : "")
             }
             role="list"

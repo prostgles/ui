@@ -257,7 +257,7 @@ export const ConnectionServer = ({
         });
       }
     }
-    navigate(`${ROUTES.DASHBOARD}/${newConnection.id}`);
+    navigate(`${ROUTES.CONNECTIONS}/${newConnection.id}`);
   };
 
   const cannotCreateDb =
@@ -413,6 +413,7 @@ export const ConnectionServer = ({
               <Select
                 label={t.ConnectionServer["Database"]}
                 value={action.existingDatabaseName}
+                data-command="ConnectionServer.add.existingDatabase"
                 fullOptions={serverInfo.databases
                   .map((key) => ({
                     key,

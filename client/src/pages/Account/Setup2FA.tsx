@@ -94,6 +94,7 @@ export const Setup2FA = (
                   onChange={(codeConfirm) => {
                     setCodeConfirm(codeConfirm);
                   }}
+                  rightContentAlwaysShow={true}
                   rightContent={
                     <Btn
                       variant="filled"

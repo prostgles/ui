@@ -41,7 +41,7 @@ export const NavBarWrapper = (props: NavBarWrapperProps) => {
           : [
               {
                 label: t["App"]["Connections"],
-                to: ROUTES.DASHBOARD,
+                to: ROUTES.CONNECTIONS,
                 iconPath: mdiServerNetwork,
               },
               {

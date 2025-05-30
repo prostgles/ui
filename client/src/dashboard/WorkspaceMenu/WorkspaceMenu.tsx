@@ -32,7 +32,7 @@ type P = {
 export const getWorkspacePath = (
   w: Pick<Workspace, "id" | "connection_id">,
 ) => {
-  return [ROUTES.DASHBOARD, `${w.connection_id}?workspaceId=${w.id}`]
+  return [ROUTES.CONNECTIONS, `${w.connection_id}?workspaceId=${w.id}`]
     .filter((v) => v)
     .join("/");
 };
@@ -250,7 +250,9 @@ export const WorkspaceMenu = (props: P) => {
       }}
     >
       <ul
-        className={"o-auto f-1 min-w-0 max-w-fit flex-row no-scroll-bar ai-end"}
+        className={
+          "no-decor o-auto f-1 min-w-0 max-w-fit flex-row no-scroll-bar ai-end"
+        }
         onWheel={onWheelScroll()}
         data-command={"WorkspaceMenu.list" satisfies Command}
       >

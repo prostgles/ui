@@ -87,6 +87,7 @@ export const CreatePostgresUser = ({
             onChange={(password) => setNewPgUser({ ...newPgUser, password })}
           />
           <ButtonGroup
+            data-command="ConnectionServer.NewUserPermissionType"
             fullOptions={PermissionTypes}
             value={newPgUser.permissions.type}
             label={"Permission type"}

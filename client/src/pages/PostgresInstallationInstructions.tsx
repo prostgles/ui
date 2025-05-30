@@ -51,7 +51,7 @@ export const PostgresInstallationInstructions = ({
         <div className="flex-col p-2 font-18 gap-2 ta-left">
           <div>
             <h3>Postgres installation instructions:</h3>
-            <ul className="flex-row gap-1 jc-start">
+            <ul className="no-decor flex-row gap-1 jc-start">
               {OPERATING_SYSTEMS.map(({ key, label, icon }) => (
                 <li key={key}>
                   <Btn

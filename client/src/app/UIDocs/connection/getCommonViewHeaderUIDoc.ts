@@ -79,9 +79,11 @@ export const getCommonViewHeaderUIDoc = (
       {
         selectorCommand: "dashboard.window.close",
         type: "button",
-        title: "Close SQL editor",
+        title: "Close view",
         description:
-          "Closes the SQL editor. If there are unsaved changes, a confirmation dialog will appear.",
+          viewType === "sql" ?
+            "Closes the SQL editor. If there are unsaved changes, a confirmation dialog will appear."
+          : "Closes the view.",
       },
       viewType !== "chart" ? undefined : (
         {
@@ -110,7 +112,7 @@ export const getCommonViewHeaderUIDoc = (
               title: "Detach chart",
               type: "button",
               description:
-                "Detaches the chart from the SQL editor view, allowing it to be moved and resized independently. It keeps the connection the originating table view to cross filter it.",
+                "Detaches the chart from the parent view, allowing it to be moved and resized independently. It keeps the connection the originating table view to cross filter it.",
             },
             {
               selectorCommand: "dashboard.window.closeChart",

@@ -65,7 +65,7 @@ export const WorkspaceDeleteBtn = ({
             try {
               await dbs.workspaces.update({ id: w.id }, { deleted: true });
               if (w.id === activeWorkspaceId) {
-                const path = [ROUTES.DASHBOARD, w.connection_id]
+                const path = [ROUTES.CONNECTIONS, w.connection_id]
                   .filter((v) => v)
                   .join("/");
                 window.location.href = path;

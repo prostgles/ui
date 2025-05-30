@@ -1,11 +1,17 @@
 import React, { useCallback, useEffect, useState } from "react";
-import Popup from "../components/Popup/Popup";
-import SearchList from "../components/SearchList/SearchList";
-import { flatDocs, type UIDocContainers, type UIDocElement } from "./UIDocs";
+import Popup from "../../components/Popup/Popup";
+import SearchList from "../../components/SearchList/SearchList";
+import {
+  flatDocs,
+  type UIDoc,
+  type UIDocContainers,
+  type UIDocElement,
+} from "../UIDocs";
 import Markdown from "react-markdown";
-import { FlexCol } from "../components/Flex";
+import { FlexCol } from "../../components/Flex";
 import { useNavigate } from "react-router-dom";
-import { click, waitForElement } from "../demo/demoUtils";
+import { click, waitForElement } from "../../demo/demoUtils";
+import { Documentation, documentation } from "./Documentation";
 
 /**
  * By pressing Ctrl+K, the user to search and go to functionality in the UI.
@@ -35,10 +41,10 @@ export const CommandSearch = () => {
   }, [open]);
 
   const goToUI = useCallback(
-    async (doc: UIDocContainers | UIDocElement) => {
+    async (doc: UIDoc) => {
       if (doc.type === "page") {
         const { pathname } = window.location;
-        const path = `/${doc.path}`;
+        const { path } = doc;
         let isOnPage = pathname.startsWith(path);
         if (doc.pathItem) {
           const currentPathItem = pathname
@@ -70,6 +76,7 @@ export const CommandSearch = () => {
   return (
     <Popup
       title={open === "commands" ? undefined : "Documentation"}
+      data-command="CommandSearch"
       clickCatchStyle={{ opacity: 1 }}
       positioning={open === "commands" ? "top-center" : "fullscreen"}
       onClose={() => setOpen(undefined)}
@@ -109,18 +116,7 @@ export const CommandSearch = () => {
             data,
           }))}
         />
-      : <FlexCol>
-          <Markdown>{documentation}</Markdown>
-          <img src="/hehe3.svg" alt="PostgreSQL logo" />
-        </FlexCol>
-      }
+      : <Documentation />}
     </Popup>
   );
 };
-
-const documentation = flatDocs
-  .map((doc) => {
-    const title = `${"#".repeat(doc.parentTitles.length + 1)} ${doc.title}`;
-    return [title, doc.description].join("\n\n");
-  })
-  .join("\n\n");

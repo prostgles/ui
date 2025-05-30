@@ -72,7 +72,6 @@ export const Account = (props: AccountProps) => {
           rowFilter={[{ fieldName: "id", value: user.id }]}
           confirmUpdates={true}
           columnFilter={(c) => allowedColumns.includes(c.name)}
-          // onChange={console.log}
           disabledActions={["clone", "delete"]}
         />
       ),

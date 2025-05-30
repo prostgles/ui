@@ -1,4 +1,20 @@
 export const COMMANDS = {
+  "NewConnectionForm.connectionName": "Connection name input field",
+  "NewConnectionForm.connectionType": "Connection type select field",
+  "NewConnectionForm.db_conn": "Database connection input field",
+  "NewConnectionForm.db_host": "Database host input field",
+  "NewConnectionForm.db_port": "Database port input field",
+  "NewConnectionForm.db_user": "Database user input field",
+  "NewConnectionForm.db_pass": "Database password input field",
+  "NewConnectionForm.db_name": "Database name input field",
+  "NewConnectionForm.MoreOptionsToggle": "",
+  "NewConnectionForm.schemaFilter": "",
+  "NewConnectionForm.connectionTimeout": "Connection timeout input field",
+  "NewConnectionForm.sslMode": "SSL mode select field",
+  "NewConnectionForm.watchSchema": "Watch schema toggle",
+  "NewConnectionForm.realtime": "Realtime toggle",
+  "NewConnectionForm.testConnection": "Test connection button",
+
   "config.goToConnDashboard": "Go to connection workspace ",
   "config.details": "",
   "config.bkp": "",
@@ -180,7 +196,8 @@ export const COMMANDS = {
   Connections: "",
   "Connections.add": "add",
   "Connections.new": " ",
-  "Connections.openConnection": "Open connection",
+  "Connection.openConnection": "Open connection",
+  "Connection.workspaceList": "Connection workspace list",
 
   "Connection.closeAllWindows": "",
   "Connection.statusMonitor": "",
@@ -195,6 +212,7 @@ export const COMMANDS = {
 
   "ConnectionServer.add": "",
   "ConnectionServer.add.newDatabase": "",
+  "ConnectionServer.add.existingDatabase": "",
   "ConnectionServer.NewDbName": "",
   "ConnectionServer.add.confirm": "",
 
@@ -307,6 +325,7 @@ export const COMMANDS = {
   "NotFound.goHome": "",
   "ConnectionServer.NewUserName": "",
   "ConnectionServer.NewUserPassword": "",
+  "ConnectionServer.NewUserPermissionType": "",
   "ConnectionServer.withNewOwnerToggle": "",
   "W_Table.TableNotFound": "",
   JoinedRecords: "",
@@ -321,7 +340,6 @@ export const COMMANDS = {
   "AgeFilter.comparator": "",
   "AgeFilter.argsLeftToRight": "",
   "Login.error": "",
-  SchemaFilter: "",
   AskLLMAccessControl: "",
   "AskLLMAccessControl.AllowAll": "",
   "Chat.messageList": "",
@@ -401,6 +419,13 @@ export const COMMANDS = {
   "MCPServerConfig.save": "",
   Feedback: "",
   "FileImporterFooter.import": "",
+
+  Sessions: "Active sessions list",
+  "Account.ChangePassword": "Change password",
+  NavBar: "",
+  "NavBar.mobileMenuToggle": "",
+  "NavBar.logout": "",
+  CommandSearch: "",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

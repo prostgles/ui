@@ -72,6 +72,7 @@ export const AccountMenu = ({ user, forNavBar }: P) => {
             ></form>
             <a
               key={"logout"}
+              data-command="NavBar.logout"
               href="#"
               onClick={() => {
                 (

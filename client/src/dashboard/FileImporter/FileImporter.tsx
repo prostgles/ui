@@ -1,5 +1,6 @@
-import { mdiAlertCircleOutline, mdiClose, mdiFormatText } from "@mdi/js";
+import { mdiAlertCircleOutline, mdiFormatText } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
+import type { AnyObject } from "prostgles-types";
 import React from "react";
 import Btn from "../../components/Btn";
 import ErrorComponent from "../../components/ErrorComponent";
@@ -8,21 +9,17 @@ import Loading from "../../components/Loading";
 import Popup from "../../components/Popup/Popup";
 import PopupMenu from "../../components/PopupMenu";
 import { Table } from "../../components/Table/Table";
+import { bytesToSize } from "../Backup/BackupsControls";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
+import RTComp from "../RTComp";
 import type { ProstglesColumn } from "../W_SQL/W_SQL";
 import { getFileText } from "../W_SQL/W_SQLMenu";
-import RTComp from "../RTComp";
+import { ApplySuggestedDataTypes } from "./checkCSVColumnDataTypes";
 import { FileImporterFooter } from "./FileImporterFooter";
 import { importFile, type ImportProgress } from "./importFile";
 import { setFile } from "./setFile";
 const streamColumnDataTypes = ["TEXT", "JSON", "JSONB"] as const;
-import type { AnyObject } from "prostgles-types";
-import { bytesToSize } from "../Backup/BackupsControls";
-import { FlexCol } from "../../components/Flex";
-import SearchList from "../../components/SearchList/SearchList";
-import { ApplySuggestedDataTypes } from "./checkCSVColumnDataTypes";
-import type { DBS } from "../Dashboard/DBS";
 
 type Papa = typeof import("papaparse");
 export const getPapa = () =>

@@ -10,6 +10,7 @@ import {
 } from "../../../commonTypes/utils";
 import { getError } from "./forkedProcess";
 import { getInitiatedPostgresqlPIDs } from "./getInitiatedPostgresqlPIDs";
+import pidusage from "pidusage";
 
 type ForkedProcMessageCommon = {
   id: string;
@@ -31,9 +32,6 @@ type ForkedProcRunArgs =
   | {
       type: "onMount";
       code: string;
-    }
-  | {
-      type: "procStats";
     };
 type ForkedProcMessageRun = ForkedProcMessageCommon & ForkedProcRunArgs;
 type ForkedProcMCPResult = ForkedProcMessageCommon & {
@@ -77,9 +75,6 @@ type Opts = {
 } & (
   | {
       type: "run";
-    }
-  | {
-      type: "procStats";
     }
   | {
       type: "onMount";
@@ -132,7 +127,9 @@ export class ForkedPrglProcRunner {
     this.isRestarting = true;
     console.error(`${logName} restartProc. error:`, error);
     Object.entries(this.runQueue).forEach(([id, { cb }]) => {
-      cb("Forked process error");
+      cb(
+        "Forked process error. Check logs: \n" + this.logs.slice(-3).join("\n"),
+      );
       delete this.runQueue[id];
     });
     console.log(`${logName} restarting ...`);
@@ -290,7 +287,7 @@ export class ForkedPrglProcRunner {
     return new ForkedPrglProcRunner(proc, opts);
   };
 
-  run = async (runProps: ForkedProcRunArgs) => {
+  run = async <T>(runProps: ForkedProcRunArgs): Promise<T> => {
     this.currentRunId++;
     const id = this.currentRunId.toString();
     return new Promise((resolve, reject) => {
@@ -314,7 +311,17 @@ export class ForkedPrglProcRunner {
   };
 
   getProcStats = async (): Promise<ProcStats> => {
-    return this.run({ type: "procStats" }).then((v) => v as ProcStats);
+    const { pid } = this.proc;
+    if (!pid) {
+      throw new Error("Process PID is not available");
+    }
+    const res = await pidusage(pid);
+    return {
+      cpu: res.cpu,
+      mem: res.memory,
+      pid: res.pid,
+      uptime: res.elapsed / 1000, // Convert milliseconds to seconds
+    };
   };
 }
 

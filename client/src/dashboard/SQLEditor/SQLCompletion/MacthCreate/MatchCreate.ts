@@ -2,13 +2,15 @@ import { getMonaco } from "../../W_SQLEditor";
 import {
   CREATE_OR_REPLACE,
   CREATE_SNIPPETS,
-  type MinimalSnippet,
   PG_OBJECTS,
   createStatements,
   suggestSnippets,
 } from "../CommonMatchImports";
-import { getUserOpts } from "../MatchAlter/MatchAlter";
-import { MatchSelect } from "../MatchSelect";
+import {
+  getUserOpts,
+  matchCreateOrAlterUser,
+  ROLE_OPTIONS,
+} from "../MatchAlter/matchCreateOrAlterUser";
 import { ENCODINGS } from "../PSQL";
 import { getExpected } from "../getExpected";
 import { getKind, type SQLMatcher } from "../registerSuggestions";
@@ -160,10 +162,7 @@ export const MatchCreate: SQLMatcher = {
       return await matchCreateTable({ cb, setS, sql, ss });
     }
     if (prevLC.includes("create role") || prevLC.includes("create user")) {
-      if (prevTokens.length <= 2) {
-        return suggestSnippets([{ label: "$user_name" }]);
-      }
-      return getUserOpts(prevLC, ss, getKind("keyword"));
+      return matchCreateOrAlterUser({ cb, ss, sql, setS });
     }
 
     if (cb.prevLC === "create") {

@@ -19,8 +19,7 @@ input.custom-input {
   box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.151);
 }
 
-.list-comp ul,
-ul {
+.list-comp ul, ul.no-decor {
   padding: 0;
   margin: 0;
   text-decoration: none;

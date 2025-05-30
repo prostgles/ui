@@ -199,6 +199,7 @@ export type ChartOptions<CType extends ChartType = "table"> =
       disabledArgs?: string[];
       hiddenArgs?: string[];
       showCode?: boolean;
+      showLogs?: boolean;
     }
   : CType extends "card" ?
 

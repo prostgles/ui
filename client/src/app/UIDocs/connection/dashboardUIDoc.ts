@@ -1,16 +1,17 @@
+import { ROUTES } from "../../../../../commonTypes/utils";
 import { getCommandElemSelector } from "../../../Testing";
 import type { UIDocContainers } from "../../UIDocs";
 import { askAIUIDoc } from "./askAIUIDoc";
 import { dashboardMenuUIDoc } from "./dashboard/dashboardMenuUIDoc";
-import { dashboardUIDoc } from "./dashboard/dashboardUIDoc";
+import { dashboardContentUIDoc } from "./dashboard/dashboardContentUIDoc";
 
-export const connectionUIDoc = {
+export const dashboardUIDoc = {
   type: "page",
-  path: "connections",
+  path: ROUTES.CONNECTIONS,
   pathItem: {
     tableName: "connections",
   },
-  title: "Database Workspace",
+  title: "Dashboard",
   description:
     "Main interface for interacting with a selected database connection. Browse data, execute SQL queries, manage database objects, and access various tools.",
   children: [
@@ -117,7 +118,12 @@ export const connectionUIDoc = {
         },
       ],
     },
-    askAIUIDoc,
+    {
+      type: "button",
+      title: askAIUIDoc.title,
+      description: askAIUIDoc.description,
+      selectorCommand: askAIUIDoc.selectorCommand,
+    },
     {
       type: "popup",
       selector: getCommandElemSelector("Feedback"),
@@ -131,9 +137,9 @@ export const connectionUIDoc = {
       selector: getCommandElemSelector("dashboard.goToConnections"),
       title: "Go to connections",
       description: "Opens the connections list page.",
-      pagePath: "connections",
+      pagePath: ROUTES.CONNECTIONS,
     },
     dashboardMenuUIDoc,
-    dashboardUIDoc,
+    dashboardContentUIDoc,
   ],
 } satisfies UIDocContainers;

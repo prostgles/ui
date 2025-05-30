@@ -60,14 +60,7 @@ const initForkedProc = () => {
           result,
         } satisfies ForkedProcMessageResult);
       };
-      if (msg.type === "procStats") {
-        cb(undefined, {
-          pid: process.pid,
-          cpu: await getCpuPercentage(),
-          mem: process.memoryUsage().heapUsed,
-          uptime: process.uptime(),
-        } satisfies ProcStats);
-      } else if (msg.type === "start") {
+      if (msg.type === "start") {
         if (prglParams) throw "Already started";
 
         //@ts-ignore
@@ -146,29 +139,6 @@ if (process.env[FORKED_PROC_ENV_NAME]) {
   initForkedProc();
   checkForImportBug();
 }
-
-const getCpuPercentage = async () => {
-  const interval = 1000;
-  const getTotal = (prevUsage?: NodeJS.CpuUsage) => {
-    const { system, user } = process.cpuUsage(prevUsage);
-    const total = system + user;
-    return { total, system, user };
-  };
-  const start = getTotal();
-  await tout(interval);
-  const end = getTotal(start);
-  const delta = end.total / 1000;
-  const percentage = 100 * (delta / interval);
-  return percentage;
-};
-
-const tout = (timeout: number) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(true);
-    }, timeout);
-  });
-};
 
 function checkForImportBug() {
   const ESMFiles = module.children.map((m) => ({

@@ -529,7 +529,7 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
     },
     getForkedProcStats: async (connId: string) => {
       const prgl = connMgr.getConnection(connId);
-      return {
+      const res = {
         server: {
           // cpu: os.cpus(),
           mem: os.totalmem(),
@@ -539,6 +539,7 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
         onMountRunner: await prgl.onMountRunner?.getProcStats(),
         tableConfigRunner: await prgl.tableConfigRunner?.getProcStats(),
       };
+      return res;
     },
     getNodeTypes,
     installMCPServer: async (name) => {

@@ -727,9 +727,9 @@ test.describe("Main test", () => {
     );
     await page.getByTestId("dashboard.goToConnConfig").click();
     await page.getByTestId("MoreOptionsToggle").click();
-    await page.getByTestId("SchemaFilter").click();
+    await page.getByTestId("NewConnectionForm.schemaFilter").click();
     await page
-      .getByTestId("SchemaFilter")
+      .getByTestId("NewConnectionForm.schemaFilter")
       .locator(`[data-key="MySchema"]`)
       .click();
     await page.keyboard.press("Escape");

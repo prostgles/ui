@@ -9,7 +9,7 @@ SQL Editor and internal tool builder for Postgres
 [More](https://prostgles.com/ui)
 
 <p float="left">
-  <img src="https://prostgles.com/static/images/screenshot_crypto.png" width="100%%"/>  
+  <img src="https://prostgles.com/static/images/screenshot_crypto.png" width="100%"/>  
 </p>
 
 ### Features

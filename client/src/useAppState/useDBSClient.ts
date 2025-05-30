@@ -32,7 +32,7 @@ export const useDBSClient = (
       onDebug: !isPlaywrightTest ? undefined : playwrightTestLogs,
       onReconnect: () => {
         onDisconnect(false);
-        if (window.location.pathname.startsWith(ROUTES.DASHBOARD + "/")) {
+        if (window.location.pathname.startsWith(ROUTES.CONNECTIONS + "/")) {
           pageReload("sync reconnect bug");
         }
       },

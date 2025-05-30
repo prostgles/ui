@@ -2,7 +2,7 @@ import { getCommandElemSelector } from "../../../../Testing";
 import type { UIDocElement } from "../../../UIDocs";
 import { getCommonViewHeaderUIDoc } from "../getCommonViewHeaderUIDoc";
 
-export const mapUIDoc = {
+export const timechartUIDoc = {
   type: "section",
   selector: `.SilverGridChild[data-view-type="timechart"]`,
   title: "Timechart view",

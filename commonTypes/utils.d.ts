@@ -192,7 +192,7 @@ export declare const ROUTES: {
     readonly LOGIN: "/login";
     readonly LOGOUT: "/logout";
     readonly ACCOUNT: "/account";
-    readonly DASHBOARD: "/connections";
+    readonly CONNECTIONS: "/connections";
     readonly CONFIG: "/connection-config";
     readonly SERVER_SETTINGS: "/server-settings";
     readonly COMPONENT_LIST: "/component-list";

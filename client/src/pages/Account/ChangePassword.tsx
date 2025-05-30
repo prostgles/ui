@@ -22,6 +22,7 @@ export const ChangePassword = ({ dbsMethods }: Pick<Prgl, "dbsMethods">) => {
   return (
     <PopupMenu
       title={t.ChangePassword["Change password"]}
+      data-command="Account.ChangePassword"
       positioning="center"
       button={
         <Btn color="action" variant="filled">

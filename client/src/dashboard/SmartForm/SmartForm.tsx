@@ -255,7 +255,7 @@ const SmartFormWithNoError = ({
       rowFilterObj={"rowFilterObj" in mode ? mode.rowFilterObj : undefined}
     >
       <div
-        data-command={isLoading ? undefined : ("SmartForm" satisfies Command)}
+        data-command={isLoading ? undefined : "SmartForm"}
         data-key={tableName}
         aria-disabled={isLoading}
         style={asPopup ? { minWidth: "350px" } : {}}

@@ -8,7 +8,7 @@ export const backupDemo = async () => {
     "",
     getDataKeyElemSelector("prostgles_video_demo") +
       " " +
-      getCommandElemSelector("Connections.openConnection"),
+      getCommandElemSelector("Connection.openConnection"),
   );
   await click("dashboard.goToConnConfig");
   await tout(1e3);

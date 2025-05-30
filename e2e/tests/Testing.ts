@@ -179,7 +179,7 @@ export const COMMANDS = {
   Connections: "",
   "Connections.add": "add",
   "Connections.new": " ",
-  "Connections.openConnection": "Open connection",
+  "Connection.openConnection": "Open connection",
 
   "Connection.closeAllWindows": "",
   "Connection.statusMonitor": "",
@@ -319,7 +319,8 @@ export const COMMANDS = {
   "AgeFilter.comparator": "",
   "AgeFilter.argsLeftToRight": "",
   "Login.error": "",
-  SchemaFilter: "",
+  "NewConnectionForm.schemaFilter": "",
+  "NewConnectionForm.MoreOptionsToggle": "",
   AskLLMAccessControl: "",
   "AskLLMAccessControl.AllowAll": "",
   "Chat.messageList": "",

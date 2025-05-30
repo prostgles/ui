@@ -1,9 +1,10 @@
+import { ROUTES } from "../../../../commonTypes/utils";
 import { getCommandElemSelector, getDataKeyElemSelector } from "../../Testing";
 import type { UIDocContainers } from "../UIDocs";
 
 export const serverSettingsUIDoc = {
   type: "page",
-  path: "server-settings",
+  path: ROUTES.SERVER_SETTINGS,
   title: "Server Settings",
   description:
     "Server Settings. Configure security, authentication, and LLM settings.",

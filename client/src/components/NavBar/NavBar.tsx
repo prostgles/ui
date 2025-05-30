@@ -4,10 +4,7 @@ import "./NavBar.css";
 
 import { mdiArrowLeft, mdiClose, mdiMenu } from "@mdi/js";
 import { useNavigate } from "react-router-dom";
-import type {
-  ProstglesInitState,
-  ProstglesState,
-} from "../../../../commonTypes/electronInitTypes";
+import type { ProstglesState } from "../../../../commonTypes/electronInitTypes";
 import type { ClientUser, Prgl } from "../../App";
 import { AccountMenu } from "../../pages/AccountMenu";
 import ClickCatch from "../ClickCatch";
@@ -46,6 +43,7 @@ export const NavBar = (props: P) => {
 
   const MenuButton = !title && (
     <button
+      data-command="NavBar.mobileMenuToggle"
       className="hamburger hidden ml-auto text-0"
       style={{
         alignSelf: "flex-end",
@@ -54,9 +52,7 @@ export const NavBar = (props: P) => {
         setNavCollapsed(!navCollapsed);
       }}
     >
-      {navCollapsed ?
-        <Icon path={mdiMenu} size={1.5} />
-      : <Icon path={mdiClose} size={1.5} />}
+      <Icon path={navCollapsed ? mdiMenu : mdiClose} size={1.5} />
     </button>
   );
 
@@ -69,6 +65,7 @@ export const NavBar = (props: P) => {
         />
       )}
       <nav
+        data-command="NavBar"
         className={
           "flex-row jc-center noselect w-full text-1p5 shadow-l bg-color-0 " +
           (navCollapsed ? " mobile-collapsed " : " mobile-expanded pb-1 ")

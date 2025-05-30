@@ -40,7 +40,7 @@ export const TopControls = (props: TopControlsProps) => {
         ...dataCommand("config.goToConnDashboard"),
         title: t.TopControls["Go to workspace"],
         asNavLink: true,
-        href: `${ROUTES.DASHBOARD}/${connectionId}`,
+        href: `${ROUTES.CONNECTIONS}/${connectionId}`,
       }
     : {
         ...dataCommand("dashboard.menu"),
@@ -99,7 +99,7 @@ export const TopControls = (props: TopControlsProps) => {
             <Btn
               data-command="dashboard.goToConnections"
               title={t.TopControls["Go to Connections"]}
-              href={ROUTES.DASHBOARD}
+              href={ROUTES.CONNECTIONS}
               variant="faded"
               asNavLink={true}
               iconPath={mdiArrowLeft}
@@ -141,7 +141,7 @@ export const ConnectionConfigBtn = ({
         href={
           isOnWorkspace ?
             `${ROUTES.CONFIG}/${connection.id}`
-          : `${ROUTES.DASHBOARD}/${connection.id}`
+          : `${ROUTES.CONNECTIONS}/${connection.id}`
         }
         asNavLink={true}
         children={

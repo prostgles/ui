@@ -320,7 +320,7 @@ export const getConnectionPaths = ({
   return {
     rest: `${API_ENDPOINTS.REST}/${url_path || id}`,
     ws: `${API_ENDPOINTS.WS_DB}/${url_path || id}`,
-    dashboard: `${ROUTES.DASHBOARD}/${id}`,
+    dashboard: `${ROUTES.CONNECTIONS}/${id}`,
     config: `${ROUTES.CONFIG}/${id}`,
   };
 };
@@ -336,7 +336,7 @@ export const ROUTES = {
   LOGIN: "/login",
   LOGOUT: "/logout",
   ACCOUNT: "/account",
-  DASHBOARD: "/connections",
+  CONNECTIONS: "/connections",
   CONFIG: "/connection-config",
   SERVER_SETTINGS: "/server-settings",
   COMPONENT_LIST: "/component-list",

@@ -118,7 +118,7 @@ test("renders the first page", async () => {
     .getByTestId("ConnectionServer.add")
     .waitFor({ state: "visible", timeout: 60e3 });
   await screenshot();
-  await page.getByTestId("Connections.openConnection").click();
+  await page.getByTestId("Connection.openConnection").click();
   await screenshot();
   await page
     .getByTestId("dashboard.goToConnConfig")
