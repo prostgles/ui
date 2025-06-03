@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from "react";
 import Markdown from "react-markdown";
-import { classOverride, type DivProps } from "../Flex";
+import { classOverride, FlexCol, type DivProps } from "../Flex";
 import {
   MarkdownMonacoCode,
   type MarkdownMonacoCodeProps,
@@ -53,15 +53,18 @@ export const Marked = (props: MarkedProps) => {
   );
 
   return (
-    <Markdown
+    <FlexCol
       {...divProps}
       className={classOverride("Marked min-w-0 max-w-full", divProps.className)}
-      components={{
-        pre: React.Fragment as any,
-        code: CodeComponent,
-      }}
     >
-      {content}
-    </Markdown>
+      <Markdown
+        components={{
+          pre: React.Fragment as any,
+          code: CodeComponent,
+        }}
+      >
+        {content}
+      </Markdown>
+    </FlexCol>
   );
 };

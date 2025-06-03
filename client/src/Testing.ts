@@ -291,7 +291,6 @@ export const COMMANDS = {
   PostgresInstallationInstructions: "",
   "PostgresInstallationInstructions.Close": "",
   "ElectronSetup.Done": "",
-  MoreOptionsToggle: "",
   SmartCardList: "",
   "AutomaticBackups.destination": "",
   "AutomaticBackups.frequency": "",

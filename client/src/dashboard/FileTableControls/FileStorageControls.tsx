@@ -11,7 +11,7 @@ import { InfoRow } from "../../components/InfoRow";
 import Select from "../../components/Select/Select";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import { pickKeys } from "prostgles-types";
-import { CredentialSelector } from "../Backup/CredentialSelector";
+import { CredentialSelector } from "../BackupAndRestore/CredentialSelector";
 import { FileStorageDelete } from "./FileStorageDelete";
 import type { FullExtraProps } from "../../pages/ProjectConnection/ProjectConnection";
 

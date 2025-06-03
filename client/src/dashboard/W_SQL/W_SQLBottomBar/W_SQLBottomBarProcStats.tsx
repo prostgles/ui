@@ -4,6 +4,7 @@ import type { W_SQLBottomBarProps } from "./W_SQLBottomBar";
 import { useIsMounted } from "prostgles-client/dist/react-hooks";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import Chip from "../../../components/Chip";
+import type { FilterItem } from "prostgles-types";
 
 export const W_SQLBottomBarProcStats = ({
   dbsMethods,
@@ -20,9 +21,15 @@ export const W_SQLBottomBarProcStats = ({
     const interval = setInterval(async () => {
       await getStatus(connectionId);
       const procInfo = await dbs.stats.findOne({
-        connection_id: connectionId,
+        database_id: {
+          $existsJoined: {
+            connections: {
+              connectionId,
+            },
+          },
+        },
         pid,
-      });
+      } as FilterItem);
       if (!getIsMounted()) return clearInterval(interval);
       setProcStats(procInfo);
     }, 1e3);

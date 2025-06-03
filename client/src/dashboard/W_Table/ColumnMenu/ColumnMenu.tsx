@@ -38,7 +38,7 @@ import type {
 } from "../../../../../commonTypes/filterUtils";
 import { useReactiveState } from "../../../appUtils";
 import Popup from "../../../components/Popup/Popup";
-import { useIsMounted } from "../../Backup/CredentialSelector";
+import { useIsMounted } from "../../BackupAndRestore/CredentialSelector";
 import type { DBS } from "../../Dashboard/DBS";
 import type { CommonWindowProps } from "../../Dashboard/Dashboard";
 import type { WindowSyncItem } from "../../Dashboard/dashboardUtils";
@@ -481,7 +481,10 @@ const getDefaultFilter = async (
   );
   const nf: SimpleFilter = {
     fieldName: col.name,
-    type: isNumeric ? "$between" : "$in",
+    type:
+      col.info?.is_pkey || col.info?.references?.length ? "="
+      : isNumeric ? "$between"
+      : "$in",
   };
 
   return nf;

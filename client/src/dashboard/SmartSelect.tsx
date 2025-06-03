@@ -15,7 +15,7 @@ import SearchList, {
   type SearchListItemContent,
   type SearchListItem,
 } from "../components/SearchList/SearchList";
-import { useIsMounted } from "./Backup/CredentialSelector";
+import { useIsMounted } from "./BackupAndRestore/CredentialSelector";
 import { InfoRow } from "../components/InfoRow";
 
 type SmartSelectProps<

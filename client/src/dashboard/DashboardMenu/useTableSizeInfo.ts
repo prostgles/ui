@@ -3,7 +3,7 @@ import type { DashboardMenuProps } from "./DashboardMenu";
 import { kFormatter } from "../W_Table/W_Table";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import { useMemo } from "react";
-import { bytesToSize } from "../Backup/BackupsControls";
+import { bytesToSize } from "../BackupAndRestore/BackupsControls";
 import type { DBSchemaTablesWJoins } from "../Dashboard/dashboardUtils";
 import type { DBS } from "../Dashboard/DBS";
 

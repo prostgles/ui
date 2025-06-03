@@ -93,7 +93,7 @@ export const MenuListItem = ({
     <li
       {...item.listProps}
       data-key={item.key}
-      role="listitem"
+      role="option"
       tabIndex={canPress ? 0 : undefined}
       title={item.disabledText || item.title}
       className={`flex-row  p-p5  bg-li ${!item.disabledText && item.onPress ? " pointer " : " "} ${isActive ? " selected " : ""}`}

@@ -726,7 +726,7 @@ test.describe("Main test", () => {
     `,
     );
     await page.getByTestId("dashboard.goToConnConfig").click();
-    await page.getByTestId("MoreOptionsToggle").click();
+    await page.getByTestId("NewConnectionForm.MoreOptionsToggle").click();
     await page.getByTestId("NewConnectionForm.schemaFilter").click();
     await page
       .getByTestId("NewConnectionForm.schemaFilter")
@@ -1078,10 +1078,7 @@ test.describe("Main test", () => {
     await page.getByTestId("SQLSmartEditor.Run").click();
 
     /** Insert records into new table */
-    await page
-      .getByRole("listitem")
-      .getByText("my_table")
-      .click({ delay: 200 });
+    await page.getByRole("option").getByText("my_table").click({ delay: 200 });
     await insertRow(page, "my_table", { name: "some text" });
     const deletedRowName = "some more text";
     await insertRow(page, "my_table", { name: deletedRowName });
@@ -1089,7 +1086,7 @@ test.describe("Main test", () => {
     /** Search row */
     await page.getByTestId("dashboard.window.toggleFilterBar").click();
     await page.locator("input#search-all").fill("2");
-    await page.getByRole("listitem", { name: "2" }).click();
+    await page.getByRole("option", { name: "2" }).click();
     /** This should work as well!!! */
     // await page.keyboard.press("ArrowDown", { delay: 300 });
     // await page.keyboard.press("Enter", { delay: 300 });
@@ -1461,7 +1458,7 @@ test.describe("Main test", () => {
     await usersTable.getByTestId("AddChartMenu.Map").click();
     await page
       .getByTestId("AddChartMenu.Map")
-      .getByRole("listitem")
+      .getByRole("option")
       .filter({ hasText: "> orders (delivery_address)" })
       .click();
     await page.waitForTimeout(3e3);
@@ -1470,7 +1467,7 @@ test.describe("Main test", () => {
     await usersTable.getByTestId("AddChartMenu.Timechart").click();
     await page
       .getByTestId("AddChartMenu.Timechart")
-      .getByRole("listitem")
+      .getByRole("option")
       .getByText("> orders (created_at)", { exact: true })
       .click();
     await page.waitForTimeout(3e3);

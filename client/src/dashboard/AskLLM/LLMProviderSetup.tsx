@@ -24,19 +24,24 @@ export const LLMProviderSetup = ({
           label: "",
         },
         {
+          name: "provider_id",
+          hide: true,
+        },
+        {
           name: "name",
           label: "",
+          render: (name, row) => name || row.provider_id,
         },
         {
           name: "is_default",
           className: "o-visible",
-          renderMode: "valueNode",
+          renderMode: "full",
           render: (is_default) =>
             is_default ? <Chip color="blue">default</Chip> : " ",
         },
       ],
     } satisfies Pick<
-      SmartCardListProps<DBSSchema["llm_providers"]>,
+      SmartCardListProps<DBSSchema["llm_credentials"]>,
       "fieldConfigs" | "showTopBar"
     >;
   }, []);

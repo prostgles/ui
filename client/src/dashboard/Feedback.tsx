@@ -9,7 +9,7 @@ import FormField from "../components/FormField/FormField";
 import PopupMenu from "../components/PopupMenu";
 import { t } from "../i18n/i18nUtils";
 import { tout } from "../utils";
-import { useIsMounted } from "./Backup/CredentialSelector";
+import { useIsMounted } from "./BackupAndRestore/CredentialSelector";
 
 export const Feedback = (props: Pick<Prgl, "dbsMethods" | "dbs">) => {
   const { dbsMethods, dbs } = props;

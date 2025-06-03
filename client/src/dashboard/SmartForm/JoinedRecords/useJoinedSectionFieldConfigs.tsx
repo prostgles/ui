@@ -75,7 +75,7 @@ export const useJoinedSectionFieldConfigs = ({
                   labelText={[fTable.label, c.label || c.name].join(".")}
                   info={undefined}
                   labelTitle={c.label || c.name}
-                  renderMode={undefined}
+                  renderMode={"value"}
                   valueNode={
                     <RenderValue
                       key={fTable.name + c.name}

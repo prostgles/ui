@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import ErrorComponent from "../../components/ErrorComponent";
 import { InfoRow } from "../../components/InfoRow";
 import Popup from "../../components/Popup/Popup";
-import { useIsMounted } from "../Backup/CredentialSelector";
+import { useIsMounted } from "../BackupAndRestore/CredentialSelector";
 import type { DashboardState } from "../Dashboard/Dashboard";
 import { W_SQLEditor } from "./W_SQLEditor";
 import { FlexCol, FlexRow } from "../../components/Flex";

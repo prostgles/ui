@@ -9,7 +9,7 @@ import Loading from "../../components/Loading";
 import Popup from "../../components/Popup/Popup";
 import PopupMenu from "../../components/PopupMenu";
 import { Table } from "../../components/Table/Table";
-import { bytesToSize } from "../Backup/BackupsControls";
+import { bytesToSize } from "../BackupAndRestore/BackupsControls";
 import { CodeEditor } from "../CodeEditor/CodeEditor";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import RTComp from "../RTComp";
@@ -24,30 +24,6 @@ const streamColumnDataTypes = ["TEXT", "JSON", "JSONB"] as const;
 type Papa = typeof import("papaparse");
 export const getPapa = () =>
   import(/* webpackChunkName: "papaparse" */ "papaparse");
-const camel_to_snake = (str) => {
-  // str[0].toLowerCase() + str.slice(1, str.length).replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-
-  let res = "";
-  const _s = str.trim();
-  const arr = _s.split("");
-  arr.map((k, i) => {
-    if (
-      i &&
-      res.slice(-1) !== "_" &&
-      (!arr[i - 1].match(/[A-Z]/) || k.match(/[\W_]+/))
-    ) {
-      res += "_";
-    }
-
-    if (!k.match(/[\W_]+/)) {
-      res += k.toLowerCase();
-    }
-  });
-
-  return res;
-};
-
-const fix_name = (str) => camel_to_snake(str); //.replace(/[\W_]+/g," ").trim().replace(/\s\s+/g, ' ').replace(/[\W_]+/g,"_"));
 
 export type FileImporterProps = {
   db: DBHandlerClient;
@@ -439,7 +415,7 @@ export default class FileImporter extends RTComp<
                         this.setState({
                           destination: {
                             ...destination,
-                            newTableName: fix_name(tblName),
+                            newTableName: toSnakeCase(tblName ?? ""),
                           },
                         })
                       }
@@ -692,6 +668,26 @@ export const getCSVFirstChunk = (
   });
 };
 
+const toSnakeCase = (str: string) => {
+  let res = "";
+  const _s = str.trim();
+  const arr = _s.split("");
+  arr.map((k, i) => {
+    if (
+      i &&
+      res.slice(-1) !== "_" &&
+      (!arr[i - 1]!.match(/[A-Z]/) || k.match(/[\W_]+/))
+    ) {
+      res += "_";
+    }
+
+    if (!k.match(/[\W_]+/)) {
+      res += k.toLowerCase();
+    }
+  });
+
+  return res;
+};
 // rowsToJson = (_results: any) => {
 //   const { config, headerType, customHeaders = "" } = this.state;
 

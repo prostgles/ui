@@ -59,9 +59,7 @@ export const ToolUseChatMessage = ({
   );
 
   return (
-    <FlexCol
-      className={"ToolUseMessage gap-0 " + (open ? "bg-color-2 rounded" : "")}
-    >
+    <FlexCol className={"ToolUseMessage gap-p5 "}>
       <Btn
         iconPath={mdiTools}
         style={open ? { width: "100%" } : {}}
@@ -86,7 +84,7 @@ export const ToolUseChatMessage = ({
         )}
       </Btn>
       {open && (
-        <FlexCol className={" p-1 rounded"}>
+        <>
           {m.input && !isEmpty(m.input) && (
             <MarkdownMonacoCode
               key={`${m.type}-input`}
@@ -105,7 +103,7 @@ export const ToolUseChatMessage = ({
               sqlHandler={sqlHandler}
             />
           )}
-        </FlexCol>
+        </>
       )}
     </FlexCol>
   );

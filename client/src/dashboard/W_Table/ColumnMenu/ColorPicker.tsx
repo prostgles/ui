@@ -38,7 +38,7 @@ export class ColorPicker extends React.Component<
     required?: boolean;
     title?: string;
     variant?: "legend";
-    "data-command": Command;
+    "data-command"?: Command;
   },
   S
 > {

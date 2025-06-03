@@ -1,6 +1,7 @@
 import { fixIndent, ROUTES } from "../../../../commonTypes/utils";
 import { getCommandElemSelector, getDataKeyElemSelector } from "../../Testing";
 import type { UIDocContainers, UIDocElement } from "../UIDocs";
+import { connectionConfigUIDoc } from "./connection/connectionConfigUIDoc";
 import { editConnectionUIDoc } from "./editConnectionUIDoc";
 
 const newOwnerOrUserOptions = [
@@ -197,7 +198,7 @@ export const connectionsUIDoc = {
         },
         {
           type: "link",
-          title: "Configuration page",
+          title: "Connection configuration",
           selectorCommand: "Connection.configure",
           description:
             "Access and modify settings for this connection, such as access control, file storage, backup/restore options, and server-side functions.",
@@ -205,6 +206,8 @@ export const connectionsUIDoc = {
           pathItem: {
             tableName: "connections",
           },
+          docs: connectionConfigUIDoc.docs,
+          pageContent: connectionConfigUIDoc.children,
         },
         {
           type: "link",

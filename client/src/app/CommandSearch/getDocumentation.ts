@@ -1,46 +1,99 @@
-import { flatDocs, UIDocs, type UIDoc, type UIDocElement } from "../UIDocs";
-
-const maxDepthForMarkdown = 6;
-export const documentation = flatDocs
-  .map((doc) => {
-    const depth = Math.min(maxDepthForMarkdown, doc.parentTitles.length + 1);
-    const title = `${"#".repeat(depth)} ${doc.title}`;
-    return [title, doc.docs ?? doc.description].join("\n\n");
-  })
-  .join("\n\n");
+import { UIDocs, type UIDoc, type UIDocElement } from "../UIDocs";
 
 type SeparatePage = { doc: UIDoc; parentDocs: UIDoc[]; depth: number };
-const separatePages: SeparatePage[] = [];
 
 const asList = (
   children: UIDocElement[],
   parentDocs: UIDoc[],
-  separatePage: SeparatePage | undefined,
+  separatePageDepth: number | undefined,
 ) => {
   const depth = parentDocs.length;
-  const listItemDepth = depth - (separatePage?.depth ?? 1);
-  return children
+  const listItemDepth = depth - (separatePageDepth ?? 1);
+
+  const separatePages: SeparatePage[] = [];
+
+  const listContent: string = children
     .map((child) => {
-      /** This one must be within the AI section */
-      if (child.title.includes("Message input and footer actions")) {
-        debugger;
-      }
-      // const willSeparatelyRender = !separatePage && child.docs;
       const willSeparatelyRender = child.docs;
       if (willSeparatelyRender) {
-        if (separatePage) {
-          console.log(separatePage.doc.title, ">", child.title);
-        }
         separatePages.push({ doc: child, depth, parentDocs });
       }
-      let result = `${"  ".repeat(listItemDepth)}- **${child.title}**: ${child.description}  `;
-      const items = willSeparatelyRender ? [] : getItemChildren(child);
-      if (items.length) {
-        result += "\n" + asList(items, [...parentDocs, child], separatePage);
+
+      const title = `${"  ".repeat(listItemDepth)}- **${child.title}**: ${child.description}  `;
+      if (willSeparatelyRender) {
+        return title;
       }
-      return result;
+      const items = getItemChildren(child);
+      if (items.length) {
+        const nestedList = asList(
+          items,
+          [...parentDocs, child],
+          separatePageDepth,
+        );
+        nestedList.separatePages.forEach((sp) => separatePages.push(sp));
+        return title + "\n" + nestedList.listContent;
+      }
+      return title;
     })
     .join("\n");
+
+  // const separatePageContent = separatePages
+  //   .map((sp) => getUIDocAsMarkdown(sp.doc, sp.parentDocs, sp.depth))
+  //   .join("\n");
+
+  // return (
+  //   listContent + (separatePageContent ? `\n\n${separatePageContent}` : "")
+  // );
+  return {
+    listContent,
+    separatePages,
+  };
+};
+
+const getUIDocAsMarkdown = (
+  doc: UIDoc,
+  parentDocs: UIDoc[],
+  separatePageDepth: number | undefined,
+): string => {
+  const depth = Math.min(3, parentDocs.length);
+  const parentPathTitle = parentDocs.map((d) => d.title).join(" > ");
+  const subTitle = parentPathTitle ? `*${parentPathTitle}*  \n  ` : "";
+  if (doc.title === "Connection list") {
+    debugger;
+  }
+
+  const { listContent: childrenContent, separatePages } = asList(
+    getItemChildren(doc),
+    [...parentDocs, doc],
+    separatePageDepth,
+  );
+
+  const separatePageContent = separatePages
+    .map((sp) => getUIDocAsMarkdown(sp.doc, sp.parentDocs, sp.depth))
+    .join("\n");
+
+  return [
+    `#${"#".repeat(depth)} ${doc.title}`,
+    subTitle,
+    `${doc.docs ?? doc.description}\n`,
+    childrenContent,
+    separatePageContent,
+  ].join("\n");
+};
+
+export const getDocumentation = () => {
+  const documentationPages = UIDocs.map((doc) => {
+    const docItem = getUIDocAsMarkdown(doc, [], undefined);
+    const text = docItem + "\n\n";
+
+    const snakeCaseTitle = doc.title.toLowerCase().trim().replaceAll(/ /g, "_");
+    return {
+      title: snakeCaseTitle,
+      text,
+    };
+  });
+
+  return documentationPages;
 };
 
 const getItemChildren = (doc: UIDoc) =>
@@ -49,41 +102,6 @@ const getItemChildren = (doc: UIDoc) =>
   : "pageContent" in doc ? (doc.pageContent ?? [])
   : [];
 
-const getUIDocAsMarkdown = (
-  doc: UIDoc,
-  parentDocs: UIDoc[],
-  separatePage: SeparatePage | undefined,
-): string => {
-  const depth = parentDocs.length;
-  const parentPathTitle = parentDocs.map((d) => d.title).join(" > ");
-  const title =
-    parentPathTitle ? `${parentPathTitle} > ${doc.title}` : doc.title;
-  return [
-    `#${"#".repeat(depth)} ${doc.title}`,
-    parentPathTitle ? `*${parentPathTitle}*  \n  ` : "",
-    `${doc.docs ?? doc.description}\n`,
-    asList(getItemChildren(doc), [...parentDocs, doc], separatePage),
-  ].join("\n");
-};
-
-export const getDocumentation = () => {
-  let docs2 = "";
-
-  UIDocs.forEach((doc) => {
-    do {
-      const separatePage = separatePages.shift();
-      if (separatePage) {
-        docs2 +=
-          getUIDocAsMarkdown(
-            separatePage.doc,
-            separatePage.parentDocs,
-            separatePage,
-          ) + "\n\n";
-      }
-    } while (separatePages.length);
-    const docItem = getUIDocAsMarkdown(doc, [], undefined);
-    docs2 += docItem + "\n\n";
-  });
-  console.log({ docs2 });
-  return docs2;
-};
+export const documentation = getDocumentation()
+  .map(({ text }) => text)
+  .join("\n\n");

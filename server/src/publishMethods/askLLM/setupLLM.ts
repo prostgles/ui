@@ -263,7 +263,7 @@ export const setupLLM = async (dbs: DBS) => {
       },
       {
         id: "OpenRouter",
-        api_url: "https://openrouter.ai/api/v1",
+        api_url: "https://openrouter.ai/api/v1/chat/completions",
         api_docs_url: "https://openrouter.ai/docs/quickstart",
         api_pricing_url:
           "https://openrouter.ai/docs/api-reference/list-available-models",
@@ -277,6 +277,17 @@ export const setupLLM = async (dbs: DBS) => {
             pricing_info: null,
             model_created: "2025-03-07 12:19:04.913961",
             chat_suitability_rank: "5",
+          },
+          {
+            name: "anthropic/claude-sonnet-4",
+            pricing_info: {
+              input: 3,
+              output: 15,
+              cachedInput: 1,
+              cachedOutput: 0.08,
+            },
+            model_created: "2024-10-22 12:00:00",
+            chat_suitability_rank: "1",
           },
         ],
       },

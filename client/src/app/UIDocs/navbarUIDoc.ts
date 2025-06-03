@@ -16,7 +16,7 @@ export const navbarUIDoc = {
       pagePath: ROUTES.CONNECTIONS,
       selector: ".prgl-brand-icon",
       title: "Home",
-      description: "Navigate to the home page. ",
+      description: "Navigate to the home page (connection list). ",
     },
     {
       type: "link",

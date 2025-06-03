@@ -28,11 +28,6 @@ export const W_MethodMenu = (
   const isAdmin = user?.type === "admin";
   const { hiddenArgs = [] } = w.options;
 
-  const functionCol = useMemo(() => {
-    return dbsTables
-      .find((t) => t.name === "windows")
-      ?.columns.find((c) => c.name === "function_options");
-  }, []);
   if (!method || isEmpty(method)) return null;
 
   return (
@@ -43,25 +38,6 @@ export const W_MethodMenu = (
       // defaultActiveKey={isAdmin? "edit" : undefined}
       defaultActiveKey={"args"}
       items={{
-        display: {
-          label: "Display",
-          leftIconPath: mdiCog,
-          content: (
-            <div className="flex-col o-auto f-1 min-s-0 p-1 gap-1">
-              {functionCol?.jsonbSchema && (
-                <JSONBSchemaA
-                  schema={functionCol.jsonbSchema}
-                  db={props.prgl.db}
-                  tables={props.tables}
-                  onChange={(v) => {
-                    w.$update({ function_options: v });
-                  }}
-                  value={w.function_options}
-                />
-              )}
-            </div>
-          ),
-        },
         args: {
           label: "Arguments",
           leftIconPath: mdiFormatListCheckbox,

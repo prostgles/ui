@@ -21,7 +21,7 @@ const toolUseContent: JSONB.FieldType = {
           {
             type: {
               type: {
-                enum: ["image"],
+                enum: ["image", "audio"],
               },
               mimeType: "string",
               data: "string",

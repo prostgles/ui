@@ -727,7 +727,7 @@ export const createAccessRule = async (
 
   /** Setting user type to default */
   await page.getByTestId("config.ac.edit.user").click();
-  await page.getByRole("listitem").getByText(userType).click();
+  await page.getByRole("option").getByText(userType).click();
   await page.getByRole("button", { name: "Done", exact: true }).click();
 
   /** Setting AC Type to custom */

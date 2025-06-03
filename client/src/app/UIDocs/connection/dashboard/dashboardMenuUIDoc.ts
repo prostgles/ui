@@ -1,6 +1,5 @@
 import { fixIndent } from "../../../../demo/sqlVideoDemo";
 import {
-  getCommandElemSelector,
   getDataKeyElemSelector,
   getDataLabelElemSelector,
 } from "../../../../Testing";
@@ -21,14 +20,13 @@ export const dashboardMenuUIDoc = {
   children: [
     {
       type: "button",
-      selector: getCommandElemSelector("dashboard.menu.sqlEditor"),
+      selectorCommand: "dashboard.menu.sqlEditor",
       title: "SQL editor",
-      description:
-        "Opens the SQL editor for executing SQL queries against the selected database.",
+      description: "Opens an SQL editor view in the workspace area.",
     },
     {
       type: "popup",
-      selector: getCommandElemSelector("dashboard.menu.quickSearch"),
+      selectorCommand: "dashboard.menu.quickSearch",
       title: "Quick search",
       description:
         "Opens the quick search menu for searching across all available tables and views from the current database.",
@@ -38,14 +36,14 @@ export const dashboardMenuUIDoc = {
       type: "smartform-popup",
       tableName: "workspaces",
       fieldNames: ["options"],
-      selector: getCommandElemSelector("dashboard.menu.settings"),
+      selectorCommand: "dashboard.menu.settings",
       title: "Settings",
       description:
         "Opens the settings menu for configuring dashboard layout preferences.",
     },
     {
       type: "button",
-      selector: getCommandElemSelector("DashboardMenuHeader.togglePinned"),
+      selectorCommand: "DashboardMenuHeader.togglePinned",
       title: "Pin/Unpin menu",
       description:
         "Toggles the pinning of the dashboard menu. Pinned menus remain open until unpinned or accessing from a low width screen.",
@@ -56,12 +54,12 @@ export const dashboardMenuUIDoc = {
       title: "Resize menu",
       description:
         "Allows resizing the dashboard menu. Drag to adjust the width of the menu.",
-      selector: getCommandElemSelector("dashboard.menu.resize"),
+      selectorCommand: "dashboard.menu.resize",
     },
     {
       type: "drag-handle",
       direction: "x",
-      selector: getCommandElemSelector("dashboard.centered-layout.resize"),
+      selectorCommand: "dashboard.centered-layout.resize",
       title: "Resize centered layout",
       description:
         "Allows resizing the workspace area when centered layout is enabled. Drag to adjust the width of the centered layout.",
@@ -69,7 +67,7 @@ export const dashboardMenuUIDoc = {
 
     {
       type: "list",
-      selector: getCommandElemSelector("dashboard.menu.savedQueriesList"),
+      selectorCommand: "dashboard.menu.savedQueriesList",
       title: "Saved queries",
       description:
         "List of saved queries of the current user from the current workspace. Click to open a saved query.",
@@ -78,7 +76,7 @@ export const dashboardMenuUIDoc = {
     },
     {
       type: "list",
-      selector: getCommandElemSelector("dashboard.menu.tablesSearchList"),
+      selectorCommand: "dashboard.menu.tablesSearchList",
       title: "Tables and views",
       description:
         "List of tables and views from the current database. Click to open a table or view. By default only the tables from the public schema are shown. Schema list from the connection settings controls which schemas are shown.",
@@ -87,9 +85,7 @@ export const dashboardMenuUIDoc = {
     },
     {
       type: "list",
-      selector: getCommandElemSelector(
-        "dashboard.menu.serverSideFunctionsList",
-      ),
+      selectorCommand: "dashboard.menu.serverSideFunctionsList",
       title: "Server-side functions",
       description:
         "List of server-side functions for the current database. Click to open a function.",
@@ -98,7 +94,7 @@ export const dashboardMenuUIDoc = {
     },
     {
       type: "popup",
-      selector: getCommandElemSelector("dashboard.menu.create"),
+      selectorCommand: "dashboard.menu.create",
       title: "Create/Import",
       description:
         "Opens the menu for creating new tables, server-side functions or importing csv/json files.",
@@ -115,9 +111,7 @@ export const dashboardMenuUIDoc = {
             {
               type: "input",
               inputType: "text",
-              selector: getCommandElemSelector(
-                "dashboard.menu.createTable.tableName",
-              ),
+              selectorCommand: "dashboard.menu.createTable.tableName",
               title: "Table name",
               description:
                 "Input field for entering the name of the new table. Must be unique within the database.",
@@ -134,7 +128,7 @@ export const dashboardMenuUIDoc = {
             {
               type: "input",
               inputType: "file",
-              selector: getCommandElemSelector("FileBtn"),
+              selectorCommand: "FileBtn",
               title: "Import file",
               description:
                 "Input field for selecting a file to import. Supported types: csv/geojson/json.",
@@ -174,7 +168,7 @@ export const dashboardMenuUIDoc = {
             },
             {
               type: "button",
-              selector: getCommandElemSelector("FileImporterFooter.import"),
+              selectorCommand: "FileImporterFooter.import",
               title: "Import",
               description:
                 "Button to initiate the import process. Click to start importing the selected file into the specified table.",
@@ -193,7 +187,7 @@ export const dashboardMenuUIDoc = {
     },
     {
       type: "popup",
-      selector: getCommandElemSelector("SchemaGraph"),
+      selectorCommand: "SchemaGraph",
       title: "Schema graph",
       description:
         "Opens the schema graph for visualizing the relationships between tables and views in the current database.",
@@ -210,22 +204,18 @@ export const dashboardMenuUIDoc = {
           title: "Top controls",
           description:
             "Controls for managing the schema graph view and layout.",
-          selector: getCommandElemSelector("SchemaGraph.TopControls"),
+          selectorCommand: "SchemaGraph.TopControls",
           children: [
             {
               type: "select",
-              selector: getCommandElemSelector(
-                "SchemaGraph.TopControls.tableRelationsFilter",
-              ),
+              selectorCommand: "SchemaGraph.TopControls.tableRelationsFilter",
               title: "Table relationship filter",
               description:
                 "Display tables based on their relationship type. Options include: all, linked (with relationships), orphaned (without relationships).",
             },
             {
               type: "select",
-              selector: getCommandElemSelector(
-                "SchemaGraph.TopControls.columnRelationsFilter",
-              ),
+              selectorCommand: "SchemaGraph.TopControls.columnRelationsFilter",
               title: "Column relationship filter",
               description:
                 "Display columns based on their relationship type. Options include: all, references (with relationships), none (no columns/only table names will be shown).",
@@ -233,24 +223,20 @@ export const dashboardMenuUIDoc = {
             {
               type: "select",
               title: "Link colour mode",
-              selector: getCommandElemSelector(
-                "SchemaGraph.TopControls.linkColorMode",
-              ),
+              selectorCommand: "SchemaGraph.TopControls.linkColorMode",
               description:
                 "Colour links by: default (fixed colour), root table (the colour of the table the relationship tree originates from), on-delete/on-update (colour based on constraint referential action).",
             },
             {
               type: "button",
-              selector: getCommandElemSelector(
-                "SchemaGraph.TopControls.resetLayout",
-              ),
+              selectorCommand: "SchemaGraph.TopControls.resetLayout",
               title: "Reset layout",
               description:
                 "Moving tables is persisted the state database. Clicking this resets the schema graph layout to its initial state.",
             },
             {
               type: "button",
-              selector: getCommandElemSelector("Popup.close"),
+              selectorCommand: "Popup.close",
               title: "Close schema graph",
               description:
                 "Closes the schema graph and returns to the dashboard menu.",

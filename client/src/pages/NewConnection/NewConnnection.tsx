@@ -22,7 +22,7 @@ import { InfoRow } from "../../components/InfoRow";
 import Loading from "../../components/Loading";
 import { Section } from "../../components/Section";
 import { SwitchToggle } from "../../components/SwitchToggle";
-import { CodeConfirmation } from "../../dashboard/Backup/CodeConfirmation";
+import { CodeConfirmation } from "../../dashboard/BackupAndRestore/CodeConfirmation";
 import RTComp from "../../dashboard/RTComp";
 import { JoinedRecords } from "../../dashboard/SmartForm/JoinedRecords/JoinedRecords";
 import { t } from "../../i18n/i18nUtils";

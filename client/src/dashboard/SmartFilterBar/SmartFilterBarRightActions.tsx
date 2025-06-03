@@ -16,7 +16,7 @@ import { ExpandSection } from "../../components/ExpandSection";
 import { Footer } from "../../components/Popup/Popup";
 import PopupMenu from "../../components/PopupMenu";
 import { pluralise } from "../../pages/Connections/Connection";
-import { CodeConfirmation } from "../Backup/CodeConfirmation";
+import { CodeConfirmation } from "../BackupAndRestore/CodeConfirmation";
 import { InsertButton } from "../SmartForm/InsertButton";
 import { SmartForm } from "../SmartForm/SmartForm";
 import type { SmartFilterBarProps } from "./SmartFilterBar";

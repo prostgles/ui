@@ -3,7 +3,7 @@ import type { ValidatedColumnInfo } from "prostgles-types";
 import React from "react";
 import { SwitchToggle } from "../../components/SwitchToggle";
 import { isDefined } from "../../utils";
-import { useIsMounted } from "../Backup/CredentialSelector";
+import { useIsMounted } from "../BackupAndRestore/CredentialSelector";
 import type { DBS } from "../Dashboard/DBS";
 import type { CommonWindowProps } from "../Dashboard/Dashboard";
 import type {

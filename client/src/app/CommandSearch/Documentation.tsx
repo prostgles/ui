@@ -1,10 +1,9 @@
 import React, { useMemo } from "react";
 import Markdown from "react-markdown";
 import { FlexCol } from "../../components/Flex";
-import { getDocumentation } from "./getDocumentation";
+import { documentation } from "./getDocumentation";
 
 export const Documentation = () => {
-  const docs = useMemo(() => getDocumentation(), []);
   return (
     <FlexCol
       style={{
@@ -13,7 +12,7 @@ export const Documentation = () => {
         gap: 0,
       }}
     >
-      <Markdown>{docs}</Markdown>
+      <Markdown>{documentation}</Markdown>
     </FlexCol>
   );
 };

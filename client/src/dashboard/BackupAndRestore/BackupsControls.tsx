@@ -33,7 +33,7 @@ import { StyledInterval } from "../W_SQL/customRenderers";
 import { AutomaticBackups } from "./AutomaticBackups";
 import { CodeConfirmation } from "./CodeConfirmation";
 import { DEFAULT_DUMP_OPTS, DumpOptions } from "./DumpOptions";
-import { RestoreOptions } from "./RestoreOptions";
+import { Restore } from "./Restore/Restore";
 import { BackupsInProgress } from "./BackupsInProgress";
 import { RenderBackupLogs } from "./RenderBackupLogs";
 import { RenderBackupStatus } from "./RenderBackupStatus";
@@ -186,7 +186,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
           />
         }
 
-        <RestoreOptions
+        <Restore
           db={db}
           dbs={dbs}
           connectionId={connection_id}
@@ -399,7 +399,7 @@ export const BackupsControls = ({ prgl }: { prgl: Prgl }) => {
               Download
             </Btn>
 
-            <RestoreOptions
+            <Restore
               dbs={dbs}
               db={db}
               backupId={row.id}

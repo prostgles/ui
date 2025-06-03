@@ -12,26 +12,24 @@ import React, { useMemo } from "react";
 import type { CONNECTION_CONFIG_SECTIONS } from "../../../../commonTypes/utils";
 import type { Prgl } from "../../App";
 import { dataCommand } from "../../Testing";
-import { FlexCol, FlexRow } from "../../components/Flex";
+import { FlexRow } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
 import type { TabItem } from "../../components/Tabs";
 import Tabs from "../../components/Tabs";
+import { t } from "../../i18n/i18nUtils";
 import NewConnection from "../../pages/NewConnection/NewConnnection";
 import type { Connections } from "../../pages/ProjectConnection/ProjectConnection";
 import { TopControls } from "../../pages/TopControls";
 import { getKeys } from "../../utils";
 import { AccessControl } from "../AccessControl/AccessControl";
 import { useAccessControlSearchParams } from "../AccessControl/useAccessControlSearchParams";
-import { BackupsControls } from "../Backup/BackupsControls";
+import { BackupsControls } from "../BackupAndRestore/BackupsControls";
 import { APIDetails } from "../ConnectionConfig/APIDetails/APIDetails";
 import { FileTableConfigControls } from "../FileTableControls/FileTableConfigControls";
 import { StatusMonitor } from "../StatusMonitor/StatusMonitor";
 import { TableConfig } from "../TableConfig/TableConfig";
-import { PublishedMethods } from "../W_Method/PublishedMethods";
-import { OnMountFunction } from "./OnMountFunction";
-import { useConnectionConfigSearchParams } from "./useConnectionConfigSearchParams";
-import { t } from "../../i18n/i18nUtils";
 import { ServerSideFunctions } from "./ServerSideFunctions";
+import { useConnectionConfigSearchParams } from "./useConnectionConfigSearchParams";
 
 type ConnectionConfigProps = Pick<
   React.HTMLAttributes<HTMLDivElement>,

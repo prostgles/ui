@@ -8,13 +8,11 @@ import { domToSVG } from "./domToSVG/domToSVG";
 import { accountUIDoc } from "./UIDocs/accountUIDoc";
 import { authenticationUIDoc } from "./UIDocs/authenticationUIDoc";
 import { commandSearchUIDoc } from "./UIDocs/commandSearchUIDoc";
-import { askAIUIDoc } from "./UIDocs/connection/askAIUIDoc";
 import { dashboardUIDoc } from "./UIDocs/connection/dashboardUIDoc";
 import { connectionsUIDoc } from "./UIDocs/connectionsUIDoc";
-import { editConnectionUIDoc } from "./UIDocs/editConnectionUIDoc";
+import { gettingStarted } from "./UIDocs/gettingStarted";
 import { navbarUIDoc } from "./UIDocs/navbarUIDoc";
 import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
-import { gettingStarted } from "./UIDocs/gettingStarted";
 
 type Route = (typeof ROUTES)[keyof typeof ROUTES];
 

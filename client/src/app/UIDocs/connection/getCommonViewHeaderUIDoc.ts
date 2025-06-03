@@ -9,7 +9,7 @@ export const getCommonViewHeaderUIDoc = (
     docs: string;
     title: string;
   },
-  viewType: "table" | "sql" | "chart",
+  viewType: "table" | "sql" | "chart" | "method",
 ): UIDocElement => ({
   type: "section",
   selector: ".silver-grid-item-header",

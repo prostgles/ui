@@ -2,11 +2,7 @@ import type { MinimalSnippet } from "../CommonMatchImports";
 import { PG_OBJECTS, suggestSnippets } from "../CommonMatchImports";
 import { cleanExpect, getExpected } from "../getExpected";
 import { getParentFunction } from "../MatchSelect";
-import {
-  getKind,
-  type ParsedSQLSuggestion,
-  type SQLMatcher,
-} from "../registerSuggestions";
+import { getKind, type SQLMatcher } from "../registerSuggestions";
 import { suggestColumnLike } from "../suggestColumnLike";
 import { getNewColumnDefinitions, PG_COLUMN_CONSTRAINTS } from "../TableKWDs";
 import { withKWDs } from "../withKWDs";
@@ -136,7 +132,8 @@ export const MatchAlter: SQLMatcher = {
     }
 
     const userFields = ["role", "user"];
-    if (userFields.includes(cb.tokens[1]!.textLC)) {
+    const secondToken = cb.tokens[1];
+    if (secondToken && userFields.includes(secondToken.textLC)) {
       return matchCreateOrAlterUser({ cb, ss, setS, sql });
     }
 
