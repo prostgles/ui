@@ -1,3 +1,4 @@
+import { fixIndent } from "../../../../demo/sqlVideoDemo";
 import {
   getCommandElemSelector,
   getDataKeyElemSelector,
@@ -11,10 +12,22 @@ export const mapUIDoc = {
   title: "Map view",
   description:
     "Displays a map visualization based on the Table/SQL query results.",
+  docs: fixIndent(`
+    The map view allows you to visualize geographical data from your database.
+    It requires the [PostGIS](https://postgis.net/) extension to be installed on your PostgreSQL database.
+    It can display points, lines, and polygons based on geometry or geography columns in your tables or views.
+    It supports multiple layers, custom basemaps, and various map controls for interaction.
+    <img src="/screenshots/map.svg" alt="Map view screenshot" />
+  `),
   children: [
     getCommonViewHeaderUIDoc(
       "Shows the table/view name together with the geometry/geography column name used for the map visualization.",
       {
+        title: "Map view menu",
+        docs: fixIndent(`
+          The map view menu provides options for configuring the map visualization, including data refresh, basemap settings, and layer management.
+          <img src="/screenshots/map-menu.svg" alt="Map view menu screenshot" />
+        `),
         description: "Data refresh and display options.",
         children: [
           {
@@ -78,6 +91,11 @@ export const mapUIDoc = {
       title: "Map window with controls",
       description:
         "Map visualization and controls for interacting with the map.",
+      docs: fixIndent(`
+        The map window contains the map visualization and controls for interacting with the map.
+        It allows you to add layers, set the map extent behavior, and toggle cursor coordinates display.
+        <img src="/screenshots/map-window.svg" alt="Map window screenshot" />
+      `),
       children: [
         {
           type: "popup",

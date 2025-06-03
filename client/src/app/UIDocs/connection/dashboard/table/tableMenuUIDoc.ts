@@ -1,3 +1,4 @@
+import { fixIndent } from "../../../../../demo/sqlVideoDemo";
 import {
   getCommandElemSelector,
   getDataKeyElemSelector,
@@ -9,6 +10,9 @@ export const tableMenuUIDoc = {
   type: "popup",
   title: "Table menu",
   description: "Opens the table menu, allowing users to manage the table view.",
+  docs: fixIndent(`
+    The table menu provides options for managing the table view, including viewing table info, editing columns, and managing data refresh rates.
+  `),
   children: [
     {
       type: "tab",

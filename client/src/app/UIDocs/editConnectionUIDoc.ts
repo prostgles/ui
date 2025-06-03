@@ -8,8 +8,9 @@ export const editConnectionUIDoc = {
   description:
     "Modify the details of an existing database connection. Update connection settings, credentials, and more.",
   docs: fixIndent(`
-    The Edit Connection page allows you to modify the details of an existing database connection.
+    Modify the details of an existing database connection.
     You can update connection settings, credentials, and other parameters to ensure your connection is configured correctly.
+    
     <img src="/screenshots/edit-connection.svg" alt="Edit Connection page screenshot" />`),
   children: [
     {
@@ -31,7 +32,8 @@ export const editConnectionUIDoc = {
       inputType: "text",
       selectorCommand: "NewConnectionForm.connectionType",
       title: "Connection Type",
-      description: "",
+      description:
+        "Allows you change the connection details format: standard or connection string.",
     },
     {
       type: "input",

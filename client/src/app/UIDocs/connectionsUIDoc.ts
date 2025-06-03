@@ -1,6 +1,7 @@
 import { fixIndent, ROUTES } from "../../../../commonTypes/utils";
 import { getCommandElemSelector, getDataKeyElemSelector } from "../../Testing";
 import type { UIDocContainers, UIDocElement } from "../UIDocs";
+import { editConnectionUIDoc } from "./editConnectionUIDoc";
 
 const newOwnerOrUserOptions = [
   {
@@ -54,6 +55,13 @@ export const connectionsUIDoc = {
       description: "Opens the form to add a new database connection.",
       selectorCommand: "Connections.new",
       pagePath: ROUTES.NEW_CONNECTION,
+      docs: fixIndent(`
+        Use the **New Connection** button to add a new database connection.
+        This will open a form where you can enter the connection details such as host, port, database name, user, and password.
+        
+        <img src="/screenshots/new-connection.svg" alt="New connection form screenshot" />
+      `),
+      pageContent: editConnectionUIDoc.children,
     },
     {
       type: "popup",
@@ -82,8 +90,10 @@ export const connectionsUIDoc = {
     },
     {
       type: "list",
-      title: "List of available connections",
+      title: "Connection list",
       description: "Controls to open and manage your database connections.",
+      docs: fixIndent(`
+        The connection list displays all your database connections grouped by database host, port and user.`),
       selector: getCommandElemSelector("Connections") + " .Connections_list",
       itemSelector: ".Connection",
       itemContent: [
@@ -96,8 +106,15 @@ export const connectionsUIDoc = {
             {
               type: "popup",
               selectorCommand: "ConnectionServer.add.newDatabase",
-              title: "New Database",
+              title: "Create new database",
               description: "Create a new database within the server.",
+              docs: fixIndent(`
+                Allows you to create a new database in the selected server.
+                It will use the first connection details from the group connection.
+                If no adequate account is found (no superuser or rolcreatedb), it will be greyed out with with an appropriate explanation tooltip text.
+
+                <img src="/screenshots/create-database.svg" alt="Add database popup screenshot" />
+              `),
               children: [
                 {
                   type: "input",
@@ -122,29 +139,33 @@ export const connectionsUIDoc = {
                 },
               ],
             },
-          ],
-        },
-        {
-          type: "popup",
-          selector: getDataKeyElemSelector(
-            "Select a database from this server",
-          ),
-          title: "Connect to an existing database",
-          description: "Selects a database from the server to connect to. ",
-          children: [
             {
-              type: "select",
-              title: "Select Database",
-              description: "Choose a database from the server.",
-              selectorCommand: "ConnectionServer.add.existingDatabase",
-            },
-            ...newOwnerOrUserOptions,
-            {
-              selectorCommand: "ConnectionServer.add.confirm",
-              type: "button",
-              title: "Save and connect",
-              description:
-                "Connects to the selected database with the new owner.",
+              type: "popup",
+              selector: getDataKeyElemSelector("Select existing database"),
+              title: "Connect to an existing database",
+              description: "Selects a database from the server to connect to. ",
+              docs: fixIndent(`
+                Allows you to connect to an existing database in the selected server.
+                It will use the first connection details from the group connection. 
+
+                <img src="/screenshots/connect-existing-database.svg" alt="Connect existing database popup screenshot" />
+              `),
+              children: [
+                {
+                  type: "select",
+                  title: "Select Database",
+                  description: "Choose a database from the server.",
+                  selectorCommand: "ConnectionServer.add.existingDatabase",
+                },
+                ...newOwnerOrUserOptions,
+                {
+                  selectorCommand: "ConnectionServer.add.confirm",
+                  type: "button",
+                  title: "Save and connect",
+                  description:
+                    "Connects to the selected database with the new owner.",
+                },
+              ],
             },
           ],
         },
@@ -191,10 +212,12 @@ export const connectionsUIDoc = {
           selectorCommand: "Connection.edit",
           description:
             "Modify the connection parameters (e.g., display name, database details like host and port). Also allows deleting or cloning the connection.",
+          docs: editConnectionUIDoc.docs,
           pagePath: ROUTES.EDIT_CONNECTION,
           pathItem: {
             tableName: "connections",
           },
+          pageContent: editConnectionUIDoc.children,
         },
         {
           type: "button",

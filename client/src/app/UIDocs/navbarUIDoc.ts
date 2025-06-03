@@ -1,12 +1,15 @@
 import type { UIDocNavbar } from "../UIDocs";
-import { ROUTES } from "../../../../commonTypes/utils";
+import { fixIndent, ROUTES } from "../../../../commonTypes/utils";
 
 export const navbarUIDoc = {
   type: "navbar",
   selectorCommand: "NavBar",
   title: "Navigation Bar",
-  description:
-    "Quick access to various sections, including connections, users, server settings, and account management. It also includes theme and language selectors for customization.",
+  description: fixIndent(`
+    The main navigation bar provides quick access to all major sections of Prostgles UI. 
+    Located at the top of the interface, it allows you to switch between database connections, manage users and server settings, and access your account preferences. 
+    The navigation adapts to your user role, showing admin-only sections like Users and Server Settings only to authorized users.
+`),
   children: [
     {
       type: "link",
@@ -69,7 +72,7 @@ export const navbarUIDoc = {
     },
   ],
   paths: [
-    ROUTES.CONNECTIONS,
+    { route: ROUTES.CONNECTIONS, exact: true },
     ROUTES.USERS,
     ROUTES.SERVER_SETTINGS,
     ROUTES.ACCOUNT,

@@ -1,3 +1,4 @@
+import { fixIndent } from "../../../../demo/sqlVideoDemo";
 import {
   getCommandElemSelector,
   getDataKeyElemSelector,
@@ -11,6 +12,12 @@ export const dashboardMenuUIDoc = {
   title: "Dashboard menu",
   description:
     "Main menu for navigating and managing the database tables and views.",
+  docs: fixIndent(`
+    The dashboard menu provides access to various tools and features for managing your database tables and views.
+    It includes options for executing SQL queries, searching for tables and views, managing saved queries, and configuring dashboard settings.
+    You can also pin the menu to keep it open, resize it, and access server-side functions.
+    The menu is designed to be user-friendly and provides quick access to essential features for efficient database management.
+    `),
   children: [
     {
       type: "button",
@@ -95,6 +102,8 @@ export const dashboardMenuUIDoc = {
       title: "Create/Import",
       description:
         "Opens the menu for creating new tables, server-side functions or importing csv/json files.",
+      docs: fixIndent(`
+        Create new tables, server-side functions or import files into the current database.`),
       children: [
         {
           type: "popup",
@@ -188,6 +197,13 @@ export const dashboardMenuUIDoc = {
       title: "Schema graph",
       description:
         "Opens the schema graph for visualizing the relationships between tables and views in the current database.",
+      docs: fixIndent(`
+        The schema graph provides a visual representation of the relationships between tables and views in the current database.
+        It allows you to explore the schema structure, view table relationships, and manage the layout of the schema graph.
+        You can filter tables and columns based on their relationship types, reset the layout, and close the schema graph to return to the dashboard menu.
+        
+        <img src="/screenshots/schema-graph.svg" alt="Schema graph screenshot" />
+      `),
       children: [
         {
           type: "section",

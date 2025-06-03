@@ -1,3 +1,4 @@
+import { fixIndent } from "../../../../demo/sqlVideoDemo";
 import {
   getCommandElemSelector,
   getDataKeyElemSelector,
@@ -11,12 +12,19 @@ export const sqlEditorUIDoc = {
   title: "SQL editor",
   description:
     "The SQL editor allows users to write and execute SQL queries against the selected database. It provides a user-friendly interface for interacting with the database.",
+  docs: fixIndent(`
+    The SQL editor is a powerful tool for executing SQL queries against your database. It supports syntax highlighting, auto-completion, and various options for managing queries.
+    <img src="/screenshots/sqlEditor.svg" alt="SQL editor screenshot" />
+  `),
   children: [
     getCommonViewHeaderUIDoc(
       "SQL editor query name, editable in the menu.",
       {
+        title: "SQL editor menu",
         description:
           "The SQL editor menu provides access to various options and settings for the SQL editor.",
+        docs: fixIndent(`
+          The SQL editor menu provides access to various options and settings for the SQL editor.`),
         children: [
           {
             type: "tab",

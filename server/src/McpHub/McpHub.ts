@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/consistent-type-imports */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import {
   StdioClientTransport,
@@ -6,11 +5,9 @@ import {
 } from "@modelcontextprotocol/sdk/client/stdio.js";
 import {
   CallToolResultSchema,
-  ListResourcesResultSchema,
-  ListResourceTemplatesResultSchema,
-  ListToolsResultSchema,
   ReadResourceResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
 import { isEqual, SubscriptionHandler, tryCatchV2 } from "prostgles-types";
 import { DBS } from "..";
 import {
@@ -18,25 +15,29 @@ import {
   McpToolCallResponse,
 } from "../../../commonTypes/mcp";
 import { DBSSchema } from "../../../commonTypes/publishUtils";
+import { checkMCPServerTools } from "./checkMCPServerTools";
 import { connectToMCPServer } from "./connectToMCPServer";
+import { fetchMCPResourcesList } from "./fetchMCPResourcesList";
+import { fetchMCPResourceTemplatesList } from "./fetchMCPResourceTemplatesList";
 import { fetchMCPServerConfigs } from "./fetchMCPServerConfigs";
+import { fetchMCPToolsList } from "./fetchMCPToolsList";
 import { getMCPDirectory } from "./installMCPServer";
 import {
-  McpResource,
   McpResourceResponse,
-  McpResourceTemplate,
   McpServer,
   McpServerEvents,
-  McpTool,
   ServersConfig,
 } from "./McpTypes";
-import { checkMCPServerTools } from "./checkMCPServerTools";
-import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
+import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
 export type McpConnection = {
   server: McpServer;
   client: Client;
-  transport: StdioClientTransport;
+  transport:
+    | StdioClientTransport
+    | SSEClientTransport
+    | StreamableHTTPClientTransport;
   destroy: () => Promise<void>;
 };
 
@@ -58,66 +59,22 @@ export class McpHub {
     config: StdioServerParameters,
     evs: McpServerEvents,
   ): Promise<void> {
-    // Remove existing connection if it exists (should never happen, the connection should be deleted beforehand)
     delete this.connections[name];
     const { data: connection, error } = await tryCatchV2(
       async () => await connectToMCPServer(name, config, evs),
     );
     if (connection) {
-      // Initial fetch of tools and resources
-      connection.server.tools = await this.fetchToolsList(name);
-      connection.server.resources = await this.fetchResourcesList(name);
-      connection.server.resourceTemplates =
-        await this.fetchResourceTemplatesList(name);
+      connection.server.tools = await fetchMCPToolsList(connection.client);
+      connection.server.resources = await fetchMCPResourcesList(
+        connection.client,
+      );
+      connection.server.resourceTemplates = await fetchMCPResourceTemplatesList(
+        connection.client,
+      );
       this.connections[name] = connection;
     } else {
       delete this.connections[name];
       throw error;
-    }
-  }
-
-  async fetchToolsList(serverName: string): Promise<McpTool[]> {
-    try {
-      const response = await this.connections[serverName]?.client.request(
-        { method: "tools/list" },
-        ListToolsResultSchema,
-      );
-
-      const autoApproveConfig: string[] = [];
-      const tools = (response?.tools || []).map((tool) => ({
-        ...tool,
-        description: tool.description ?? "",
-        autoApprove: autoApproveConfig.includes(tool.name),
-      }));
-      return tools;
-    } catch (error) {
-      return [];
-    }
-  }
-
-  private async fetchResourcesList(serverName: string): Promise<McpResource[]> {
-    try {
-      const response = await this.connections[serverName]?.client.request(
-        { method: "resources/list" },
-        ListResourcesResultSchema,
-      );
-      return response?.resources || [];
-    } catch (error) {
-      return [];
-    }
-  }
-
-  private async fetchResourceTemplatesList(
-    serverName: string,
-  ): Promise<McpResourceTemplate[]> {
-    try {
-      const response = await this.connections[serverName]?.client.request(
-        { method: "resources/templates/list" },
-        ListResourceTemplatesResultSchema,
-      );
-      return response?.resourceTemplates || [];
-    } catch (error) {
-      return [];
     }
   }
 
@@ -282,7 +239,13 @@ export const startMcpHub = async (
 
 export const reloadMcpServerTools = async (dbs: DBS, serverName: string) => {
   await startMcpHub(dbs);
-  const tools = await mcpHub.fetchToolsList(serverName);
+  const client = mcpHub.connections[serverName]?.client;
+  if (!client) {
+    throw new Error(
+      `No connection found for MCP server: ${serverName}. Make sure it is enabled`,
+    );
+  }
+  const tools = await fetchMCPToolsList(client);
   await dbs.tx(async (tx) => {
     await tx.mcp_server_tools.delete({ server_name: serverName });
     tools.length &&
@@ -294,6 +257,8 @@ export const reloadMcpServerTools = async (dbs: DBS, serverName: string) => {
         })),
       ));
   });
+  const resources = await fetchMCPResourcesList(client);
+  console.log(resources);
   return tools.length;
 };
 

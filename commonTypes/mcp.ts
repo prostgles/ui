@@ -1521,7 +1521,7 @@ export type McpToolCallResponse = {
         text: string;
       }
     | {
-        type: "image";
+        type: "image" | "audio";
         data: string;
         mimeType: string;
       }

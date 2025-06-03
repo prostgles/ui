@@ -426,6 +426,7 @@ export const COMMANDS = {
   "NavBar.mobileMenuToggle": "",
   "NavBar.logout": "",
   CommandSearch: "",
+  "Window.W_QuickMenu.addCrossFilteredTable": "Add cross-filtered table",
 } as const;
 export type Command = keyof typeof COMMANDS;
 

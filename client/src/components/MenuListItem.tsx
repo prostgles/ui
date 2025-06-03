@@ -87,7 +87,7 @@ export const MenuListItem = ({
       onKeyUp,
       labelVariantStyle,
     };
-  }, [canPress, isActive, item, variant]);
+  }, [activeKey, canPress, isActive, item, variant]);
 
   return (
     <li

@@ -152,6 +152,7 @@ export const W_QuickMenu = (props: ProstglesQuickMenuProps) => {
         {showLinks && !window.isMobileDevice && !!setLinkMenu && (
           <Btn
             title={t.W_QuickMenu["Cross filter tables"]}
+            data-command="Window.W_QuickMenu.addCrossFilteredTable"
             className={bgColorClass}
             size="small"
             iconPath={mdiSetLeftCenter}

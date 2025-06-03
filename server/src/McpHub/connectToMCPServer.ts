@@ -3,11 +3,11 @@ import {
   StdioClientTransport,
   type StdioServerParameters,
 } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { getSerialisableError } from "prostgles-types";
 import { z } from "zod";
-import type { McpServerEvents } from "./McpTypes";
-import type { McpConnection } from "./McpHub";
 import { tout } from "..";
-import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
+import type { McpConnection } from "./McpHub";
+import type { McpServerEvents } from "./McpTypes";
 
 const AutoApproveSchema = z.array(z.string()).default([]);
 
@@ -96,7 +96,6 @@ export const connectToMCPServer = (
       await transport.start();
       const stderrStream = transport.stderr;
       if (stderrStream) {
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         stderrStream.on("data", (data: Buffer) => {
           const errorOutput = data.toString();
           log += errorOutput;
@@ -117,7 +116,7 @@ export const connectToMCPServer = (
       resolve(connection);
     } catch (error) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      reject({ error: getErrorAsObject(error), log });
+      reject({ error: getSerialisableError(error), log });
     }
   });
 };

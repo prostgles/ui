@@ -1,3 +1,4 @@
+import type { Route } from "react-router-dom";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
 import type { ROUTES } from "../../../commonTypes/utils";
 import { isPlaywrightTest } from "../i18n/i18nUtils";
@@ -5,7 +6,7 @@ import type { Command } from "../Testing";
 import { isDefined } from "../utils";
 import { domToSVG } from "./domToSVG/domToSVG";
 import { accountUIDoc } from "./UIDocs/accountUIDoc";
-import { auhtenticationUIDoc } from "./UIDocs/auhtenticationUIDoc";
+import { authenticationUIDoc } from "./UIDocs/authenticationUIDoc";
 import { commandSearchUIDoc } from "./UIDocs/commandSearchUIDoc";
 import { askAIUIDoc } from "./UIDocs/connection/askAIUIDoc";
 import { dashboardUIDoc } from "./UIDocs/connection/dashboardUIDoc";
@@ -13,8 +14,15 @@ import { connectionsUIDoc } from "./UIDocs/connectionsUIDoc";
 import { editConnectionUIDoc } from "./UIDocs/editConnectionUIDoc";
 import { navbarUIDoc } from "./UIDocs/navbarUIDoc";
 import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
+import { gettingStarted } from "./UIDocs/gettingStarted";
 
 type Route = (typeof ROUTES)[keyof typeof ROUTES];
+
+type UIDocCommon = {
+  title: string;
+  description: string;
+  docs?: string;
+};
 
 /**
  * UI Documentation system for generating interactive element guides and documentation.
@@ -33,11 +41,9 @@ type UIDocBase<T> = (
        */
       selectorCommand: Command;
     }
-) & {
-  title: string;
-  description: string;
-  docs?: string;
-} & T;
+) &
+  UIDocCommon &
+  T;
 
 export type UIDocElement =
   | UIDocBase<{
@@ -74,6 +80,7 @@ export type UIDocElement =
       pathItem?: {
         tableName: keyof DBSSchema;
       };
+      pageContent?: UIDocElement[];
     }>
   | UIDocBase<{
       type: "popup";
@@ -94,17 +101,16 @@ export type UIDocElement =
     }>;
 
 export type UIDocContainers =
-  | {
+  | (UIDocCommon & {
       type: "page";
       path: Route;
       pathItem?: {
         tableName: keyof DBSSchema;
+        selectorCommand?: Command;
+        selector?: string;
       };
-      title: string;
-      description: string;
-      docs?: string;
       children: UIDocElement[];
-    }
+    })
   | UIDocBase<{
       type: "hotkey-popup";
       hotkey: string;
@@ -115,18 +121,17 @@ export type UIDocNavbar = UIDocBase<{
   type: "navbar";
   docs?: string;
   children: UIDocElement[];
-  paths: Route[];
+  paths: (Route | { route: Route; exact: true })[];
 }>;
 
 export const UIDocs = [
+  gettingStarted,
   navbarUIDoc,
   connectionsUIDoc,
   dashboardUIDoc,
-  askAIUIDoc,
-  editConnectionUIDoc,
   serverSettingsUIDoc,
   accountUIDoc,
-  auhtenticationUIDoc,
+  authenticationUIDoc,
   commandSearchUIDoc,
 ] satisfies (UIDocContainers | UIDocNavbar | UIDocElement)[];
 

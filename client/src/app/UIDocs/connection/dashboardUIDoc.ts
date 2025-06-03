@@ -1,4 +1,4 @@
-import { ROUTES } from "../../../../../commonTypes/utils";
+import { fixIndent, ROUTES } from "../../../../../commonTypes/utils";
 import { getCommandElemSelector } from "../../../Testing";
 import type { UIDocContainers } from "../../UIDocs";
 import { askAIUIDoc } from "./askAIUIDoc";
@@ -10,14 +10,16 @@ export const dashboardUIDoc = {
   path: ROUTES.CONNECTIONS,
   pathItem: {
     tableName: "connections",
+    selectorCommand: "Connection.openConnection",
   },
-  title: "Dashboard",
+  title: "Connection dashboard",
   description:
     "Main interface for interacting with a selected database connection. Browse data, execute SQL queries, manage database objects, and access various tools.",
   children: [
+    dashboardMenuUIDoc,
     {
       type: "button",
-      title: "Toogle menu",
+      title: "Toggle dashboard menu",
       description:
         "Opens or closes the dashboard menu unless the menu is pinned.",
       selector: getCommandElemSelector("dashboard.menu"),
@@ -48,6 +50,14 @@ export const dashboardUIDoc = {
       title: "Workspaces menu",
       description:
         "Opens the workspaces menu, allowing you to create, manage, and switch between workspaces.",
+      docs: fixIndent(`
+        Workspaces are a powerful feature that allows you to organize your work within a connection.
+        The opened views and their layout is saved to the workspace, so you can switch between different sets of data and configurations without losing your progress.
+
+        The workspaces menu provides access to all available workspaces for the selected connection. You can create new workspaces, switch between existing ones, and manage workspace settings.
+        Each workspace allows you to work with a separate set of data and configurations, making it easier to organize your work and collaborate with others.
+        The menu also includes options to clone existing workspaces and delete them if they are no longer needed.
+      `),
       children: [
         {
           type: "list",
@@ -118,12 +128,8 @@ export const dashboardUIDoc = {
         },
       ],
     },
-    {
-      type: "button",
-      title: askAIUIDoc.title,
-      description: askAIUIDoc.description,
-      selectorCommand: askAIUIDoc.selectorCommand,
-    },
+    dashboardContentUIDoc,
+    askAIUIDoc,
     {
       type: "popup",
       selector: getCommandElemSelector("Feedback"),
@@ -139,7 +145,5 @@ export const dashboardUIDoc = {
       description: "Opens the connections list page.",
       pagePath: ROUTES.CONNECTIONS,
     },
-    dashboardMenuUIDoc,
-    dashboardContentUIDoc,
   ],
 } satisfies UIDocContainers;

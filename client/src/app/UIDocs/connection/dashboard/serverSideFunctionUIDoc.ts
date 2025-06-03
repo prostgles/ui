@@ -3,26 +3,23 @@ import { getCommandElemSelector } from "../../../../Testing";
 import type { UIDocElement } from "../../../UIDocs";
 import { getCommonViewHeaderUIDoc } from "../getCommonViewHeaderUIDoc";
 
-export const timechartUIDoc = {
+export const serverSideFunctionUIDoc = {
   type: "section",
-  selector: `.SilverGridChild[data-view-type="timechart"]`,
-  title: "Timechart view",
-  description: "Displays a timechart based on the Table/SQL query results.",
+  selector: `.SilverGridChild[data-view-type="method"]`,
+  title: "Server-side function view",
+  description: "Allows executing server-side functions and viewing results.",
   docs: fixIndent(`
-    The timechart view allows you to visualize time-series data from your database.
-    It supports multiple layers, each with its own data source and style.
-    You can add filters to the timechart to narrow down the data displayed.
-    <img src="/screenshots/timechart.svg" alt="Timechart view screenshot" />
-  `),
+    The server-side functions is an experimental feature that allows you to specify and execute server-side Typescript functions directly from the dashboard.`),
   children: [
     getCommonViewHeaderUIDoc(
-      "Shows the table/view name together with the number of records matching the current filters.",
+      "Function name.",
       {
         description: "Timechart view menu",
         children: [],
-        title: "Timechart view menu",
+        title: "Server-side function view menu",
         docs: fixIndent(`
-          The timechart view menu provides options for configuring the timechart.
+          The server-side function view menu provides options for executing the function, viewing results, and managing function parameters.
+          <img src="/screenshots/server-side-function-menu.svg" alt="Server-side function view menu screenshot" />
         `),
       },
       "chart",

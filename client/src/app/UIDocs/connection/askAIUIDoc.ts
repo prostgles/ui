@@ -9,8 +9,15 @@ export const askAIUIDoc = {
   description:
     "Opens an AI assistant to help generate SQL queries, understand database schema, or perform other tasks.",
   docs: fixIndent(`
-    The AI assistant allows you to interact with an AI model to generate SQL queries, understand database schema, and perform various tasks related to your database.
+    The AI assistant is an intelligent companion that helps you work more efficiently with your PostgreSQL databases. 
+    It can generate SQL queries, explain database schemas, analyze data patterns, and assist with various database-related tasks through a conversational interface.
+    MCP Servers can be used to extend the AI capabilities with custom tools and integrations.
+
     <img src="/screenshots/ask-ai.svg" alt="AI assistant popup screenshot" />
+ 
+    Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, and Local Models. 
+
+    *Note: AI providers are configured by administrators in Server Settings > LLM Providers*
   `),
   children: [
     {
@@ -69,6 +76,11 @@ export const askAIUIDoc = {
       title: "Message input and footer actions",
       description:
         "Input field for entering messages to the AI assistant and quick actions.",
+      docs: fixIndent(`
+        The message input area allows you to input messages or media to the AI assistant as well as well as control the chat settings. 
+
+        <img src="/screenshots/ask-ai-message-input.svg" alt="AI assistant message input screenshot" />
+      `),
       selector: getCommandElemSelector("Chat.sendWrapper"),
       children: [
         {

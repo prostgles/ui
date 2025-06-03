@@ -1,11 +1,19 @@
+import { fixIndent } from "../../../../../demo/sqlVideoDemo";
 import { getDataKeyElemSelector } from "../../../../../Testing";
 import type { UIDocElement } from "../../../../UIDocs";
 
 export const smartFilterBarUIDoc = {
   type: "section",
   selectorCommand: "SmartFilterBar",
-  title: "Top Bar",
-  description: "A powerful filtering interface for database tables and views.",
+  title: "Table Toolbar",
+  description:
+    "Filtering and data add/edit interface for database tables and views.",
+  docs: fixIndent(`
+    Table toolbar can be toggled through the show/hide filtering button (top left corner). 
+    It provides a user-friendly interface to add filters, search for data, and perform various actions on the table data.
+    
+    <img src="/screenshots/smart-filter-bar.svg" alt="Smart Filter Bar screenshot" />
+  `),
   children: [
     {
       type: "popup",

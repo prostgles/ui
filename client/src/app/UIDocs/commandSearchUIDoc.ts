@@ -1,10 +1,10 @@
-import { UIDocContainers } from "../UIDocs";
+import type { UIDocContainers } from "../UIDocs";
 
 export const commandSearchUIDoc = {
   type: "hotkey-popup",
   hotkey: "Ctrl+K",
   title: "Command Search",
-  description: "Search for a command",
+  description: "Search and go to command/action quickly",
   selectorCommand: "CommandSearch",
   children: [
     {

@@ -770,7 +770,6 @@ export type DBGeneratedSchema = {
       deleted?: null | boolean;
       filter?: any;
       fullscreen?: null | boolean;
-      function_options?: null | {    showDefinition?: boolean;  };
       having?: any;
       id?: string;
       last_updated: string;

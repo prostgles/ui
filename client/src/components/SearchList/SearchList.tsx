@@ -649,14 +649,12 @@ export default class SearchList<M extends boolean = false> extends RTComp<
               "no-decor f-1 max-h-fit o-auto min-h-0 min-w-0 ul-search-list " +
               (isSearch ? " no-scroll-bar shadow bg-color-0 " : "")
             }
-            role="list"
+            role="listbox"
             ref={(r) => {
               if (r) this.refList = r;
             }}
-            data-command={"SearchList.List" satisfies Command}
+            data-command={"SearchList.List"}
             style={{
-              // padding: "0.5em",
-              // padding: "0 6px"
               padding: 0,
               ...(!isSearch ?
                 {}
@@ -763,10 +761,12 @@ export default class SearchList<M extends boolean = false> extends RTComp<
                 return (
                   <DraggableLI
                     key={i}
-                    role="listitem"
+                    role={onPress ? "option" : "listitem"}
                     data-command={d["data-command"]}
                     data-key={asStringIfPossible(d.key)}
                     data-label={asStringIfPossible(d.label)}
+                    aria-disabled={!!d.disabledInfo}
+                    aria-selected={!!d.selected}
                     title={d.disabledInfo ?? d.title}
                     style={{
                       ...d.rowStyle,
@@ -779,7 +779,7 @@ export default class SearchList<M extends boolean = false> extends RTComp<
                         }
                       : {}),
                     }}
-                    tabIndex={0}
+                    tabIndex={-1}
                     idx={i}
                     items={items.slice(0)}
                     onReorder={onReorder}

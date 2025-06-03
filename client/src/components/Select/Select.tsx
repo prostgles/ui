@@ -81,7 +81,7 @@ export type SelectProps<
   showSelectedSublabel?: boolean;
   showIconOnly?: boolean;
   title?: string;
-  variant?: "search-list-only" | "div" | "pill" | "chips" | "chips-lg";
+  variant?: "search-list-only" | "div" | "chips" | "chips-lg";
   multiSelect?: Multi;
   labelAsValue?: boolean;
   emptyLabel?: string;
@@ -251,31 +251,7 @@ export default class Select<
     };
 
     let select: React.ReactNode = null;
-    if (variant === "pill") {
-      select = (
-        <div
-          style={selectStyle}
-          className={classOverride(
-            "flex-row rounded o-hidden b b-color bg-color-2",
-            selectClass,
-          )}
-        >
-          {fullOptions.map((o, i) => (
-            <Btn
-              key={o.key}
-              color={value === o.key ? "action" : "default"}
-              variant={value === o.key ? "filled" : undefined}
-              style={{ borderRadius: 0 }}
-              onClick={(e) => {
-                toggleOne(o.key, e);
-              }}
-            >
-              {o.label ?? o.key}
-            </Btn>
-          ))}
-        </div>
-      );
-    } else if (
+    if (
       variant === "div" ||
       variant === "search-list-only" ||
       onSearch ||
@@ -294,6 +270,7 @@ export default class Select<
           fixedBtnWidth: undefined,
           defaultSearch: "",
         });
+        /** Maintain the same form element focused for convenience */
         setTimeout(() => {
           if (document.activeElement !== document.body) {
             this.btnRef?.focus();
@@ -342,8 +319,14 @@ export default class Select<
           selectStyle={selectStyle}
           multiSelection={this.state.multiSelection}
           popupAnchor={popupAnchor}
-          setState={(newState) => {
-            this.setState(newState);
+          onPress={(btn, defaultSearch) => {
+            const maxBtnWidth = btn.getBoundingClientRect().width;
+            this.props.onOpen?.(btn);
+            this.setState({
+              popupAnchor: btn,
+              defaultSearch,
+              fixedBtnWidth: maxBtnWidth,
+            });
           }}
           btnLabel={btnLabel}
         />
@@ -368,7 +351,7 @@ export default class Select<
                 key={key}
                 color="blue"
                 style={
-                  variant.endsWith("-lg") ?
+                  variant === "chips-lg" ?
                     {
                       fontSize: "18px",
                     }
@@ -463,7 +446,7 @@ export default class Select<
       select = (
         <>
           {chips || trigger}
-          {popupAnchor ?
+          {popupAnchor && (
             <Popup
               rootStyle={{
                 padding: 0,
@@ -479,7 +462,7 @@ export default class Select<
             >
               {searchList}
             </Popup>
-          : null}
+          )}
         </>
       );
     } else {

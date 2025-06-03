@@ -45,7 +45,7 @@ type FormFieldSkeletonProps = TestSelectors &
     leftIcon: React.ReactNode;
   };
 
-export const FormFieldSkeleton = React.forwardRef(
+export const FormFieldSkeleton = forwardRef(
   (props: FormFieldSkeletonProps, ref: Ref<HTMLDivElement>) => {
     const {
       id,
@@ -187,7 +187,6 @@ export const FormFieldSkeleton = React.forwardRef(
             {Boolean(rightContent) && (
               <FlexRow
                 className={`RightContent  ${rightContentAlwaysShow ? "" : "show-on-trigger-hover"} f-0 gap-0`}
-                // style={{ alignSelf: "start" }}
                 style={{ alignSelf: "center" }} // So it looks better for asJONB=JSONBSchema
               >
                 {rightContent}
@@ -195,7 +194,7 @@ export const FormFieldSkeleton = React.forwardRef(
             )}
           </div>
           {Boolean(hint) && (
-            <p className="ta-left text-2 m-0 mt-p25 text-sm noselect ws-pre-line">
+            <p className="ta-left text-2 m-0 text-sm noselect ws-pre-line">
               {hint}
             </p>
           )}

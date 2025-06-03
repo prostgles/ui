@@ -927,16 +927,6 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
       filter: `JSONB NOT NULL DEFAULT '[]'::jsonb`,
       having: `JSONB NOT NULL DEFAULT '[]'::jsonb`,
       options: `JSONB NOT NULL DEFAULT '{}'::jsonb`,
-      function_options: {
-        nullable: true,
-        jsonbSchemaType: {
-          showDefinition: {
-            type: "boolean",
-            optional: true,
-            description: "Show the function definition",
-          },
-        },
-      },
       sql_options: {
         defaultValue: {
           executeOptions: "block",
@@ -1146,7 +1136,6 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
   },
 
   stats: {
-    dropIfExistsCascade: true,
     columns: {
       database_id: `INTEGER NOT NULL REFERENCES database_configs(id) ON DELETE CASCADE`,
 

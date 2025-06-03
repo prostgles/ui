@@ -1,16 +1,16 @@
 import { isEqual, omitKeys, tryCatchV2 } from "prostgles-types";
 import { DefaultMCPServers } from "../../../commonTypes/mcp";
-import { getProperty } from "../../../commonTypes/utils";
 import type { McpHub } from "./McpHub";
 import type { McpTool } from "./McpTypes";
+import { fetchMCPToolsList } from "./fetchMCPToolsList";
 
 /**
  * Check if enabled server tools are not in the mcp schema
  * */
 export const checkMCPServerTools = async (mcpHub: McpHub) => {
-  for (const serverName of Object.keys(mcpHub.connections)) {
+  for (const [serverName, { client }] of Object.entries(mcpHub.connections)) {
     await tryCatchV2(async () => {
-      const actualTools = (await mcpHub.fetchToolsList(serverName)).map((t) =>
+      const actualTools = (await fetchMCPToolsList(client)).map((t) =>
         omitKeys(t, ["autoApprove"]),
       );
       const savedTools = DefaultMCPServers[serverName]?.mcp_server_tools ?? [];

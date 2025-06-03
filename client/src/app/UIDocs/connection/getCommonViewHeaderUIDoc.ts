@@ -6,6 +6,8 @@ export const getCommonViewHeaderUIDoc = (
   menu: {
     description: string;
     children: UIDocElement[];
+    docs: string;
+    title: string;
   },
   viewType: "table" | "sql" | "chart",
 ): UIDocElement => ({
@@ -34,6 +36,16 @@ export const getCommonViewHeaderUIDoc = (
                     "Shows or hides the filter bar, allowing users to filter the data displayed in the table.",
                 }
               ),
+              viewType === "sql" ? undefined : (
+                {
+                  selectorCommand: "Window.W_QuickMenu.addCrossFilteredTable",
+                  type: "button",
+                  title: "Add cross-filtered table",
+                  description:
+                    "Adds a new table view that is cross-filtered by the current table. This allows you to explore related data in a new table view.",
+                }
+              ),
+
               {
                 type: "button",
                 selectorCommand: "AddChartMenu.Timechart",
@@ -127,7 +139,6 @@ export const getCommonViewHeaderUIDoc = (
       {
         selectorCommand: "dashboard.window.menu",
         type: "popup",
-        title: "Menu",
         ...menu,
       },
     ] satisfies (UIDocElement | undefined)[]

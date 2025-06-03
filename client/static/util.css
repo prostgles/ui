@@ -77,7 +77,8 @@
 
   --focus-color: rgb(0, 183, 255);
 
-  --li-hover-bg: var(--gray-200);
+  --li-hover-bg: #e5e7eb69;
+  --li-focus-bg: #e5e7eb;
 
   --color-uuid: rgb(87, 8, 63);
   --color-number: rgb(0, 110, 0);
@@ -135,7 +136,8 @@
 }
 
 :root.dark-theme {
-  --li-hover-bg: #5b5a5a;
+  --li-hover-bg: #55555582;
+  --li-focus-bg: #5b5a5a;
   --color-uuid: rgb(216, 99, 181);
   --color-number: rgb(52, 192, 52);
   --color-text: #fb9b9b;
