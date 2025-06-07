@@ -199,3 +199,4 @@ if (isPlaywrightTest) {
   //@ts-ignore
   window.toSVG = domToSVG;
 }
+// window.toSVG = domToSVG;

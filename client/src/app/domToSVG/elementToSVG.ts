@@ -1,12 +1,17 @@
 import { drawShapesOnSVG } from "../../dashboard/Charts/drawShapes/drawShapesOnSVG";
 import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 import { isDefined } from "../../utils";
-import { addBackground, addBorders } from "./bgAndBorderToSVG";
+import {
+  addSpecificBorders,
+  getBackgroundColor,
+  roundedRectPath,
+} from "./bgAndBorderToSVG";
 import { SVG_NAMESPACE } from "./domToSVG";
 import { fontIconToSVG } from "./fontIconToSVG";
 import { getWhatToRenderOnSVG } from "./getWhatToRenderOnSVG";
 import { addImageFromDataURL, imgToSVG } from "./imgToSVG";
 import { isElementNode, isElementVisible } from "./isElementVisible";
+import { encodeQuadtree } from "./quadTree";
 import { getBoxShadowAsDropShadow } from "./shadowToSVG";
 import { textToSVG } from "./textToSVG";
 
@@ -44,18 +49,55 @@ export const elementToSVG = async (
 
   const g = document.createElementNS(SVG_NAMESPACE, "g");
   g._domElement = element;
-  let rectNode: SVGRectElement | undefined;
+  let rectNodePath: SVGPathElement | undefined;
   const makeRect = () => {
-    if (rectNode) return rectNode;
-    rectNode = document.createElementNS(SVG_NAMESPACE, "rect");
-    rectNode.setAttribute("x", Math.round(x));
-    rectNode.setAttribute("y", Math.round(y));
-    rectNode.setAttribute("width", Math.round(width).toString());
-    rectNode.setAttribute("height", Math.round(height).toString());
-    /** This is required to make backgroundSameAsRenderedParent work as expected */
-    rectNode.setAttribute("fill", "transparent");
+    if (rectNodePath) return rectNodePath;
+    const roundedPosition = {
+      x: Math.round(x),
+      y: Math.round(y),
+      width: Math.round(width),
+      height: Math.round(height),
+    };
+    // console.log(
+    //   encodeQuadtree(roundedPosition, {
+    //     maxX: window.screen.width,
+    //     maxY: window.screen.height,
+    //   }),
+    // );
 
-    return rectNode;
+    const path = document.createElementNS(SVG_NAMESPACE, "path");
+    const minDimension = Math.min(width, height);
+    const [rtl = 0, rtr = 0, rbr = 0, rbl = 0] = [
+      style.borderTopLeftRadius,
+      style.borderTopRightRadius,
+      style.borderBottomRightRadius,
+      style.borderBottomLeftRadius,
+    ].map((r) => {
+      return r.includes("%") ?
+          (Math.min(100, parseFloat(r)) / 100) * minDimension
+        : parseFloat(r);
+    });
+
+    const showBorder =
+      whatToRender.border &&
+      whatToRender.border.borderColor !== "rgba(0, 0, 0, 0)";
+    const borderWidth = 0; // parseFloat(style.borderWidth);
+    path.setAttribute(
+      "d",
+      roundedRectPath(
+        /** Ensure button edges are crisp */
+        roundedPosition.x + -borderWidth / 2 + (showBorder ? 0.5 : 0),
+        roundedPosition.y + -borderWidth / 2 + (showBorder ? 0.5 : 0),
+        roundedPosition.width,
+        roundedPosition.height,
+        [rtl, rtr, rbr, rbl],
+      ),
+    );
+    /** This is required to make backgroundSameAsRenderedParent work as expected */
+    path.setAttribute("fill", "transparent");
+    rectNodePath = path;
+    g.appendChild(rectNodePath);
+    return rectNodePath;
   };
 
   Object.entries(whatToRender.attributeData ?? {}).forEach(([key, value]) => {
@@ -73,7 +115,7 @@ export const elementToSVG = async (
   );
 
   if (whatToRender.background) {
-    addBackground(makeRect, g, style, element, context);
+    makeRect().setAttribute("fill", style.backgroundColor);
   }
 
   const shadow = getBoxShadowAsDropShadow(style);
@@ -82,20 +124,20 @@ export const elementToSVG = async (
   }
 
   if (whatToRender.border) {
-    addBorders(makeRect, g, x, y, width, height, style);
-  }
-
-  /** Ensure button edges are crisp */
-  if (rectNode) {
-    if (rectNode.getAttribute("stroke") !== "rgba(0, 0, 0, 0)") {
-      rectNode.setAttribute("x", Math.round(x) + 0.5);
-      rectNode.setAttribute("y", Math.round(y) + 0.5);
-    } else {
-      rectNode.setAttribute("x", Math.round(x));
-      rectNode.setAttribute("y", Math.round(y));
+    if (!getBackgroundColor(style)) {
+      makeRect().setAttribute("fill", "none");
     }
-  }
 
+    if (style.border) {
+      makeRect().setAttribute(
+        "stroke-width",
+        whatToRender.border.borderWidth + "px",
+      );
+    } else {
+      addSpecificBorders(g, x, y, width, height, style);
+    }
+    makeRect().setAttribute("stroke", whatToRender.border.borderColor);
+  }
   if (whatToRender.text?.length) {
     whatToRender.text.forEach((textInfo) => {
       textToSVG(
@@ -180,7 +222,7 @@ export const addOverflowClipPath = (
   element: HTMLElement,
   style: CSSStyleDeclaration,
   g: SVGGElement,
-  clipRect: SVGRectElement,
+  clipRect: SVGPathElement,
   context: SVGContext,
 ) => {
   /**

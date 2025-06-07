@@ -59,7 +59,30 @@ export const getWhatToRenderOnSVG = async (
     background === parentBackground &&
     (parentSvg as SVGGElement)._domElement === element.parentElement;
 
-  const border = hasBorder(style);
+  // Use the most prominent border properties
+  const borderWidth = Math.max(
+    parseFloat(style.borderTopWidth) || 0,
+    parseFloat(style.borderRightWidth) || 0,
+    parseFloat(style.borderBottomWidth) || 0,
+    parseFloat(style.borderLeftWidth) || 0,
+  );
+  // Use the most prominent color or first available
+  let borderColor = style.borderTopColor;
+  if (style.borderTopWidth === "0px") {
+    if (style.borderRightWidth !== "0px") borderColor = style.borderRightColor;
+    else if (style.borderBottomWidth !== "0px")
+      borderColor = style.borderBottomColor;
+    else if (style.borderLeftWidth !== "0px")
+      borderColor = style.borderLeftColor;
+  }
+
+  const border =
+    borderWidth ?
+      {
+        borderWidth,
+        borderColor,
+      }
+    : undefined;
   const childAffectingStyles: Partial<CSSStyleDeclaration> = {};
   if (style.opacity !== "1") {
     childAffectingStyles.opacity = style.opacity;
@@ -93,13 +116,6 @@ export const getWhatToRenderOnSVG = async (
     childAffectingStyles,
     image,
     text: (() => {
-      const elemParentRect = element.parentElement?.getBoundingClientRect();
-      const width = Math.min(
-        // element.parentElement?.clientWidth ?? 0,
-        elemParentRect?.width ?? 0,
-        bbox.width,
-      );
-      const height = Math.min(elemParentRect?.height ?? 0, bbox.height);
       if (isTextNode(element)) {
         throw new Error("Not expecting this to be honest");
       }
@@ -144,8 +160,8 @@ export const getWhatToRenderOnSVG = async (
               textContent,
               x: textRect.x,
               y: textRect.y,
-              width,
-              height,
+              width: textRect.width,
+              height: textRect.height,
             };
           }
         })

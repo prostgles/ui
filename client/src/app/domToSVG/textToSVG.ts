@@ -21,9 +21,9 @@ export const textToSVG = (
   context: SVGContext,
 ) => {
   if (!content.trim()) return;
-  g.setAttribute(TEXT_WIDTH_ATTR, width.toString());
-  g.setAttribute(TEXT_HEIGHT_ATTR, height.toString());
   const textNode = document.createElementNS(SVG_NAMESPACE, "text");
+  textNode.setAttribute(TEXT_WIDTH_ATTR, width.toString());
+  textNode.setAttribute(TEXT_HEIGHT_ATTR, height.toString());
 
   textNode.setAttribute("x", x);
   const fontSize = parseFloat(style.fontSize);
@@ -40,6 +40,7 @@ export const textToSVG = (
   textNode.setAttribute("font-family", style.fontFamily);
   textNode.setAttribute("font-size", style.fontSize);
   textNode.setAttribute("font-weight", style.fontWeight);
+  textNode.setAttribute("letter-spacing", style.letterSpacing);
   textNode.setAttribute("text-decoration", style.textDecoration);
   textNode.style.lineHeight = style.lineHeight;
   textNode.style.whiteSpace = style.whiteSpace;
@@ -101,7 +102,7 @@ const wrapTextIfOverflowing = (
       line.pop(); // Remove the word that caused overflow
 
       // Set content for current tspan
-      tspan.textContent = line.join("");
+      tspan.textContent = line.join("").trimStart();
 
       // Move to next line if possible
       lineNumber++;
@@ -156,19 +157,20 @@ export const wrapAllSVGText = async (svg: SVGElement) => {
   }
 
   unnestRedundantGElements(svg);
-  svg.querySelectorAll("text").forEach((text) => {
-    const parentG = text.closest<SVGGElement>(`g[${TEXT_WIDTH_ATTR}]`);
-    const textWidth = parentG?.getAttribute(TEXT_WIDTH_ATTR);
-    const textHeight = parentG?.getAttribute(TEXT_HEIGHT_ATTR);
-    if (!text.textContent || !parentG || !textWidth || !textHeight) return;
+  svg
+    .querySelectorAll<SVGTextElement>(`text[${TEXT_WIDTH_ATTR}]`)
+    .forEach((text) => {
+      const textWidth = text.getAttribute(TEXT_WIDTH_ATTR);
+      const textHeight = text.getAttribute(TEXT_HEIGHT_ATTR);
+      if (!text.textContent || !textWidth || !textHeight) return;
 
-    wrapTextIfOverflowing(
-      text,
-      +textWidth,
-      +textHeight,
-      text.textContent || "",
-    );
-  });
+      wrapTextIfOverflowing(
+        text,
+        +textWidth,
+        +textHeight,
+        text.textContent || "",
+      );
+    });
 
   if (svg.isConnected) {
     await tout(1000);

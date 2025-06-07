@@ -33,7 +33,7 @@ export const SVG_SCREENSHOT_DIR = path.join(DOCS_DIR, SCREENSHOTS_PATH);
 type ScreenshotName = keyof typeof SVG_SCREENSHOT_NAMES;
 
 const saveSVGScreenshot = async (page: PageWIds, fileName: ScreenshotName) => {
-  const svg = await page.evaluate(() => {
+  const svg: string = await page.evaluate(() => {
     //@ts-ignore
     return window.toSVG(document.body);
   });
@@ -47,7 +47,7 @@ const saveSVGScreenshot = async (page: PageWIds, fileName: ScreenshotName) => {
           encoding: "utf8",
         })
       : undefined;
-    if (existingFile !== svg) {
+    if (existingFile?.trim() !== svg.trim()) {
       throw new Error(
         `SVG file ${fileName}.svg has changed. Please update the docs.`,
       );
