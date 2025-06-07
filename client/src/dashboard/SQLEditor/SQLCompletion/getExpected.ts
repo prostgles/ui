@@ -4,8 +4,8 @@ import { SUGGESTION_TYPES } from "../W_SQLEditor";
 import { suggestSnippets } from "./CommonMatchImports";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import { getJoinSuggestions } from "./getJoinSuggestions";
-import type { ParsedSQLSuggestion } from "./registerSuggestions";
-import { getKind } from "./registerSuggestions";
+import type { ParsedSQLSuggestion } from "./monacoSQLSetup/registerSuggestions";
+import { getKind } from "./monacoSQLSetup/registerSuggestions";
 import { matchTableFromSuggestions } from "./completionUtils/getTabularExpressions";
 
 export type RawExpect = string | string[] | readonly string[];

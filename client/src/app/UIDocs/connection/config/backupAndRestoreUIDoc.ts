@@ -1,10 +1,17 @@
+import { fixIndent } from "../../../../demo/sqlVideoDemo";
 import type { UIDoc } from "../../../UIDocs";
 
 export const backupAndRestoreUIDoc = {
   type: "tab",
   selectorCommand: "config.bkp",
-  title: "Backup/Restore",
+  title: "Backup and Restore",
   description: "Manage database backups and restore operations.",
+  asSeparateFile: true,
+  docs: fixIndent(`
+    Manage database backups and restore operations for this connection.
+
+    <img src="/screenshots/backup_and_restore.svg" alt="Backup and Restore" />
+  `),
   children: [
     {
       type: "button",

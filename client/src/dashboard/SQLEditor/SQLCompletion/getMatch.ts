@@ -12,7 +12,7 @@ import { MatchDelete } from "./MathDelete";
 import { MatchReassign } from "./MatchReassign";
 import { MatchWith } from "./MatchWith";
 import { MatchGrant } from "./MatchGrant";
-import type { SQLMatchContext } from "./registerSuggestions";
+import type { SQLMatchContext } from "./monacoSQLSetup/registerSuggestions";
 import { MatchVacuumOrAnalyze } from "./MatchVacuum";
 import { MatchReindex } from "./MatchReindex";
 import { MatchPublication } from "./MatchPublication";

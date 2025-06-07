@@ -1,6 +1,6 @@
 import React from "react";
 import type { ValidatedColumnInfo } from "prostgles-types";
-import { isObject, _PG_date, _PG_numbers } from "prostgles-types";
+import { isObject, _PG_date, _PG_numbers, includes } from "prostgles-types";
 import { ShorterText } from "../../../components/ShorterText";
 import { getPGIntervalAsText } from "../../W_SQL/customRenderers";
 import { dateAsYMD_Time } from "../../Charts";
@@ -82,7 +82,7 @@ export const RenderValue = ({
   if (
     tsDataType === "number" &&
     udt_name &&
-    _PG_numbers.includes(udt_name as any) &&
+    includes(_PG_numbers, udt_name) &&
     value !== undefined &&
     value !== null
   ) {

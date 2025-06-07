@@ -60,7 +60,7 @@ export const connectionsUIDoc = {
         Use the **New Connection** button to add a new database connection.
         This will open a form where you can enter the connection details such as host, port, database name, user, and password.
         
-        <img src="/screenshots/new-connection.svg" alt="New connection form screenshot" />
+        <img src="/screenshots/new_connection.svg" alt="New connection form screenshot" />
       `),
       pageContent: editConnectionUIDoc.children,
     },
@@ -94,7 +94,10 @@ export const connectionsUIDoc = {
       title: "Connection list",
       description: "Controls to open and manage your database connections.",
       docs: fixIndent(`
-        The connection list displays all your database connections grouped by database host, port and user.`),
+        The connection list displays all your database connections grouped by database host, port and user.
+        
+        <img src="/screenshots/connections.svg" alt="Connections list screenshot" />
+        `),
       selector: getCommandElemSelector("Connections") + " .Connections_list",
       itemSelector: ".Connection",
       itemContent: [
@@ -114,7 +117,6 @@ export const connectionsUIDoc = {
                 It will use the first connection details from the group connection.
                 If no adequate account is found (no superuser or rolcreatedb), it will be greyed out with with an appropriate explanation tooltip text.
 
-                <img src="/screenshots/create-database.svg" alt="Add database popup screenshot" />
               `),
               children: [
                 {
@@ -149,7 +151,7 @@ export const connectionsUIDoc = {
                 Allows you to connect to an existing database in the selected server.
                 It will use the first connection details from the group connection. 
 
-                <img src="/screenshots/connect-existing-database.svg" alt="Connect existing database popup screenshot" />
+                <img src="/screenshots/connect_existing_database.svg" alt="Connect existing database popup screenshot" />
               `),
               children: [
                 {

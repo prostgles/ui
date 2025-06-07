@@ -2,8 +2,8 @@ import React from "react";
 import "./W_SQLEditor.css";
 
 import ReactDOM from "react-dom";
-import type { MonacoSuggestion } from "./SQLCompletion/registerSuggestions";
-import { registerSuggestions } from "./SQLCompletion/registerSuggestions";
+import type { MonacoSuggestion } from "./SQLCompletion/monacoSQLSetup/registerSuggestions";
+import { registerSuggestions } from "./SQLCompletion/monacoSQLSetup/registerSuggestions";
 
 export const LANG = "sql";
 /**

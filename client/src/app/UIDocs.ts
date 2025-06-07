@@ -6,20 +6,30 @@ import type { Command } from "../Testing";
 import { isDefined } from "../utils";
 import { domToSVG } from "./domToSVG/domToSVG";
 import { accountUIDoc } from "./UIDocs/accountUIDoc";
-import { authenticationUIDoc } from "./UIDocs/authenticationUIDoc";
+import { authenticationOverviewUIDoc } from "./UIDocs/authenticationOverviewUIDoc";
 import { commandSearchUIDoc } from "./UIDocs/commandSearchUIDoc";
 import { dashboardUIDoc } from "./UIDocs/connection/dashboardUIDoc";
 import { connectionsUIDoc } from "./UIDocs/connectionsUIDoc";
 import { gettingStarted } from "./UIDocs/gettingStarted";
 import { navbarUIDoc } from "./UIDocs/navbarUIDoc";
 import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
+import { desktopInstallationUIDoc } from "./UIDocs/desktopInstallation";
+import { overviewUIDoc } from "./UIDocs/overview";
 
 type Route = (typeof ROUTES)[keyof typeof ROUTES];
 
 type UIDocCommon = {
   title: string;
   description: string;
+  /**
+   * If defined, this will be used to generate a separate section in the documentation.
+   */
   docs?: string;
+  /**
+   * If true AND docs is defined, this will be saved as a separate file in the documentation.
+   * By default, a single file is generated for each root UIDoc.
+   */
+  asSeparateFile?: boolean;
 };
 
 /**
@@ -96,7 +106,10 @@ export type UIDocElement =
       type: "smartform" | "smartform-popup";
       tableName: string;
       fieldNames?: string[];
-    }>;
+    }>
+  | (UIDocCommon & {
+      type: "info";
+    });
 
 export type UIDocContainers =
   | (UIDocCommon & {
@@ -123,13 +136,15 @@ export type UIDocNavbar = UIDocBase<{
 }>;
 
 export const UIDocs = [
+  overviewUIDoc,
+  desktopInstallationUIDoc,
   gettingStarted,
+  authenticationOverviewUIDoc,
   navbarUIDoc,
   connectionsUIDoc,
   dashboardUIDoc,
   serverSettingsUIDoc,
   accountUIDoc,
-  authenticationUIDoc,
   commandSearchUIDoc,
 ] satisfies (UIDocContainers | UIDocNavbar | UIDocElement)[];
 
@@ -184,8 +199,3 @@ if (isPlaywrightTest) {
   //@ts-ignore
   window.toSVG = domToSVG;
 }
-// window.onkeydown = (e: KeyboardEvent) => {
-//   if (!e.shiftKey) return;
-//   e.preventDefault();
-//   domToSVG(document.body, true);
-// };

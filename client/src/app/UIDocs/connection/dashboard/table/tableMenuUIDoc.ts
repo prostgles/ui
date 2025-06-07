@@ -18,7 +18,7 @@ export const tableMenuUIDoc = {
       type: "tab",
       selector: getDataKeyElemSelector("Table info"),
       title: "Table info",
-      description: "Shows the table info.",
+      description: "Postgres specific table/view details.",
       children: [
         {
           type: "section",

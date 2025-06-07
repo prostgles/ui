@@ -84,7 +84,6 @@ export const getInitialPlacement = (shapes: Shape[]): Shape[] => {
       "link",
       forceLink(d3Links)
         .id((d: any) => d.id)
-        .distance(150) // Ideal link distance
         .strength(0.5),
     )
     .force(

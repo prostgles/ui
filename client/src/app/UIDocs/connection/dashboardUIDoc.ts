@@ -1,7 +1,7 @@
 import { fixIndent, ROUTES } from "../../../../../commonTypes/utils";
 import { getCommandElemSelector } from "../../../Testing";
 import type { UIDocContainers } from "../../UIDocs";
-import { askAIUIDoc } from "./askAIUIDoc";
+import { AIAssistantUIDoc } from "./AIAssistantUIDoc";
 import { dashboardMenuUIDoc } from "./dashboard/dashboardMenuUIDoc";
 import { dashboardContentUIDoc } from "./dashboard/dashboardContentUIDoc";
 
@@ -12,7 +12,7 @@ export const dashboardUIDoc = {
     tableName: "connections",
     selectorCommand: "Connection.openConnection",
   },
-  title: "Connection dashboard",
+  title: "Dashboard",
   description: fixIndent(`
     Main interface for interacting with a selected database connection. 
     Browse data, execute SQL queries, manage database objects, and access various tools.
@@ -133,7 +133,7 @@ export const dashboardUIDoc = {
       ],
     },
     dashboardContentUIDoc,
-    askAIUIDoc,
+    AIAssistantUIDoc,
     {
       type: "popup",
       selector: getCommandElemSelector("Feedback"),

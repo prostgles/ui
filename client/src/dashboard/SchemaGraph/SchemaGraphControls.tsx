@@ -10,7 +10,6 @@ import {
   type ColumnDisplayMode,
 } from "./ERDSchema/ERDSchema";
 import type { SchemaGraphProps } from "./SchemaGraph";
-import { title } from "process";
 
 export const SchemaGraphControls = ({
   columnColorMode,
@@ -95,6 +94,7 @@ export const SchemaGraphControls = ({
               },
               {
                 table_schema_positions: null,
+                table_schema_transform: null,
               },
             );
             setSchemaKey((k) => k + 1);

@@ -46,7 +46,7 @@ export const AskLLM = (props: P) => {
           : undefined
         }
       >
-        {window.isMediumWidthScreen ? null : t.AskLLM["Ask AI"]}
+        {window.isMediumWidthScreen ? null : t.AskLLM["AI Assistant"]}
       </Btn>
 
       {!anchorEl || !askLLM ?

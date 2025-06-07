@@ -1,3 +1,4 @@
+import { fixIndent } from "../../../../demo/sqlVideoDemo";
 import type { UIDoc } from "../../../UIDocs";
 
 export const fileStorageUIDoc = {
@@ -6,6 +7,12 @@ export const fileStorageUIDoc = {
   title: "File storage",
   description:
     "Configure file upload and storage settings for this connection.",
+  asSeparateFile: true,
+  docs: fixIndent(`
+    Configure file upload and storage settings for this connection.
+
+    <img src="/screenshots/file_storage.svg" alt="File Storage Configuration" />
+  `),
   children: [
     {
       type: "input",

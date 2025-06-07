@@ -28,11 +28,10 @@ export const useSchemaShapes = (
   const { canvasRef, displayMode, columnDisplayMode, columnColorMode } = props;
   const shapesRef = useRef<SchemaShape[]>([]);
   const [shapesVersion, setShapesVersion] = useState(0);
-
-  const { schemaInfo, dbConfId } = useFetchSchemaForDiagram(props);
+  const { schemaInfo, dbConfId, dbConf } = useFetchSchemaForDiagram(props);
 
   useEffect(() => {
-    if (!schemaInfo) return;
+    if (!schemaInfo || !dbConf) return;
     const { fkeys, tablesWithPositions } = schemaInfo;
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) {
@@ -265,13 +264,22 @@ export const useSchemaShapes = (
     const shapes = [...linkShapes, ...nodeShapes];
     shapesRef.current = shapes;
     setShapesVersion((v) => v + 1);
-  }, [canvasRef, schemaInfo, displayMode, columnDisplayMode, columnColorMode]);
+  }, [
+    canvasRef,
+    schemaInfo,
+    displayMode,
+    columnDisplayMode,
+    columnColorMode,
+    dbConf,
+  ]);
 
   return {
     shapesRef,
     schemaInfo,
     shapesVersion,
     dbConfId,
+    dbConf,
+    canAutoPosition: dbConf && !dbConf.table_schema_positions,
   };
 };
 

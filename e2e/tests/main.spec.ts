@@ -1,5 +1,6 @@
 import { chromium, expect, test } from "@playwright/test";
 import { authenticator } from "otplib";
+import { startMockSMTPServer } from "./mockSMTPServer";
 import {
   PageWIds,
   TEST_DB_NAME,
@@ -22,7 +23,6 @@ import {
   getSearchListItem,
   getSelector,
   getTableWindow,
-  getTestId,
   goTo,
   insertRow,
   localNoAuthSetup,
@@ -39,11 +39,6 @@ import {
   typeConfirmationCode,
   uploadFile,
 } from "./utils";
-import { startMockSMTPServer } from "./mockSMTPServer";
-import {
-  saveSVGScreenshot,
-  svgScreenshotsCompleteReferenced,
-} from "./docScreenshotUtils";
 
 const DB_NAMES = {
   test: TEST_DB_NAME,
@@ -168,10 +163,9 @@ test.describe("Main test", () => {
     }
     await login(page);
     await page.waitForTimeout(500);
-    await saveSVGScreenshot(page, "connections");
+
     await goTo(page, "/new-connection");
     await page.waitForTimeout(500);
-    await saveSVGScreenshot(page, "new_connection");
     await goTo(page);
 
     /** Expect the workspace to have users table open */
@@ -199,12 +193,9 @@ test.describe("Main test", () => {
     await page.getByTestId("SmartForm.delete").waitFor({ state: "visible" });
     await page.getByTestId("SmartForm.close").click();
 
-    await saveSVGScreenshot(page, "dashboard");
-
     /** Schema diagram works */
     await page.getByTestId("SchemaGraph").click();
     await page.waitForTimeout(1e3);
-    await saveSVGScreenshot(page, "schema_diagram");
     await page
       .getByText("Reset layout")
       .waitFor({ state: "visible", timeout: 15e3 });
@@ -408,6 +399,17 @@ test.describe("Main test", () => {
       undefined,
       { returnType: "row" },
     );
+  });
+
+  test("System theme works as expected", async ({ page: p }) => {
+    const page = p as PageWIds;
+    await page.emulateMedia({ colorScheme: "dark" });
+    await goTo(page);
+    await page.locator("html.dark-theme").waitFor({ state: "visible" });
+    const backgroundColor = await page.evaluate(() => {
+      return getComputedStyle(document.body).backgroundColor;
+    });
+    expect(backgroundColor).toBe("rgb(36, 36, 36)"); // dark theme bg color
   });
 
   test("Free LLM assistant signup & Disable signups", async ({ page: p }) => {
@@ -1103,7 +1105,6 @@ test.describe("Main test", () => {
     await page
       .getByRole("button", { name: "Start backup", exact: true })
       .click();
-    await saveSVGScreenshot(page, "backups");
     await page.getByText("Completed");
 
     /** Delete row */
@@ -1813,9 +1814,5 @@ test.describe("Main test", () => {
 
     await page.getByLabel("ALLOWED_DIR").fill("/prostgles-mcp-test");
     await page.getByText("Enable", { exact: true }).click();
-  });
-
-  test("All screenshots have been done and exist in docs", async () => {
-    await svgScreenshotsCompleteReferenced();
   });
 });

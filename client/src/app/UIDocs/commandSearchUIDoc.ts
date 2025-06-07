@@ -17,7 +17,8 @@ export const commandSearchUIDoc = {
     {
       type: "list",
       title: "Search results",
-      description: "List of matching commands and actions",
+      description:
+        "List of matching commands and actions. Press Enter to execute/go to the selected command.",
       selectorCommand: "SearchList.List",
       itemSelector: "[data-key]",
       itemContent: [],

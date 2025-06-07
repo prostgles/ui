@@ -2,7 +2,7 @@ import { getParentFunction, preSubQueryKwds } from "../MatchSelect";
 import type {
   ParsedSQLSuggestion,
   SQLMatchContext,
-} from "../registerSuggestions";
+} from "../monacoSQLSetup/registerSuggestions";
 import type { CodeBlock } from "./getCodeBlock";
 import type { GetTableExpressionSuggestionsArgs } from "./getTableExpressionReturnTypes";
 import type { TokenInfo } from "./getTokens";

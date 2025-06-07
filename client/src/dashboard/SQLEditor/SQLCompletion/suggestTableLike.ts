@@ -5,7 +5,7 @@ import { getJoinSuggestions } from "./getJoinSuggestions";
 import type {
   ParsedSQLSuggestion,
   SQLMatchContext,
-} from "./registerSuggestions";
+} from "./monacoSQLSetup/registerSuggestions";
 
 export const suggestTableLike = async (
   args: Pick<SQLMatchContext, "cb" | "ss" | "sql"> & {

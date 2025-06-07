@@ -1,3 +1,4 @@
+import { fixIndent } from "../../demo/sqlVideoDemo";
 import { UIDocs, type UIDoc, type UIDocElement } from "../UIDocs";
 
 type SeparatePage = { doc: UIDoc; parentDocs: UIDoc[]; depth: number };
@@ -19,9 +20,13 @@ const asList = (
         separatePages.push({ doc: child, depth, parentDocs });
       }
 
-      const title = `${"  ".repeat(listItemDepth)}- **${child.title}**: ${child.description}  `;
+      const listTitle =
+        willSeparatelyRender ?
+          `<a href=${JSON.stringify(`#${toSnakeCase(child.title)}`)}>${child.title}</a>`
+        : `**${child.title}**`;
+      const listItem = `${"  ".repeat(listItemDepth)}- ${listTitle}: ${child.description}  `;
       if (willSeparatelyRender) {
-        return title;
+        return listItem;
       }
       const items = getItemChildren(child);
       if (items.length) {
@@ -31,19 +36,12 @@ const asList = (
           separatePageDepth,
         );
         nestedList.separatePages.forEach((sp) => separatePages.push(sp));
-        return title + "\n" + nestedList.listContent;
+        return listItem + "\n" + nestedList.listContent;
       }
-      return title;
+      return listItem;
     })
     .join("\n");
 
-  // const separatePageContent = separatePages
-  //   .map((sp) => getUIDocAsMarkdown(sp.doc, sp.parentDocs, sp.depth))
-  //   .join("\n");
-
-  // return (
-  //   listContent + (separatePageContent ? `\n\n${separatePageContent}` : "")
-  // );
   return {
     listContent,
     separatePages,
@@ -54,13 +52,12 @@ const getUIDocAsMarkdown = (
   doc: UIDoc,
   parentDocs: UIDoc[],
   separatePageDepth: number | undefined,
-): string => {
+): {
+  title: string;
+  content: string;
+  doc: UIDoc;
+}[] => {
   const depth = Math.min(3, parentDocs.length);
-  const parentPathTitle = parentDocs.map((d) => d.title).join(" > ");
-  const subTitle = parentPathTitle ? `*${parentPathTitle}*  \n  ` : "";
-  if (doc.title === "Connection list") {
-    debugger;
-  }
 
   const { listContent: childrenContent, separatePages } = asList(
     getItemChildren(doc),
@@ -68,33 +65,66 @@ const getUIDocAsMarkdown = (
     separatePageDepth,
   );
 
-  const separatePageContent = separatePages
-    .map((sp) => getUIDocAsMarkdown(sp.doc, sp.parentDocs, sp.depth))
-    .join("\n");
+  const separatePagesWithContent = separatePages.flatMap((sp) =>
+    getUIDocAsMarkdown(sp.doc, sp.parentDocs, sp.depth),
+  );
+
+  const hDepth = depth + 1;
+  const content = [
+    `<h${hDepth} id=${JSON.stringify(toSnakeCase(doc.title))}> ${doc.title} </h${hDepth}> \n`,
+    `${doc.docs ? fixIndent(doc.docs) : doc.description}\n`,
+    childrenContent,
+  ].join("\n");
 
   return [
-    `#${"#".repeat(depth)} ${doc.title}`,
-    subTitle,
-    `${doc.docs ?? doc.description}\n`,
-    childrenContent,
-    separatePageContent,
-  ].join("\n");
+    {
+      title: doc.title,
+      doc,
+      content,
+    },
+  ].concat(separatePagesWithContent);
 };
 
-export const getDocumentation = () => {
-  const documentationPages = UIDocs.map((doc) => {
-    const docItem = getUIDocAsMarkdown(doc, [], undefined);
-    const text = docItem + "\n\n";
+type DocumentationFile = {
+  fileName: string;
+  text: string;
+};
+export const getDocumentationFiles = () => {
+  const documentationPages: DocumentationFile[] = [];
+  UIDocs.forEach((doc) => {
+    const docItems = getUIDocAsMarkdown(doc, [], undefined);
 
-    const snakeCaseTitle = doc.title.toLowerCase().trim().replaceAll(/ /g, "_");
-    return {
-      title: snakeCaseTitle,
-      text,
+    const pushFile = (title: string, text: string) => {
+      const index = documentationPages.length + 1;
+      documentationPages.push({
+        fileName: `${index.toString().padStart(2, "0")}_${toSnakeCase(title)}.md`,
+        text,
+      });
     };
+    if (documentationPages.length) {
+      pushFile(doc.title, "");
+    }
+    do {
+      const lastFile = documentationPages.at(-1);
+      const currDocItem = docItems.shift();
+      if (!currDocItem) {
+        continue;
+      }
+      if (!lastFile || currDocItem.doc.asSeparateFile) {
+        const title =
+          currDocItem.doc.asSeparateFile ? currDocItem.doc.title : doc.title;
+        pushFile(title, currDocItem.content + "\n\n");
+      } else {
+        lastFile.text += currDocItem.content + "\n\n";
+      }
+    } while (docItems.length);
   });
 
   return documentationPages;
 };
+
+const toSnakeCase = (str: string) =>
+  str.toLowerCase().trim().replaceAll(/ /g, "_");
 
 const getItemChildren = (doc: UIDoc) =>
   "children" in doc ? doc.children
@@ -102,6 +132,10 @@ const getItemChildren = (doc: UIDoc) =>
   : "pageContent" in doc ? (doc.pageContent ?? [])
   : [];
 
-export const documentation = getDocumentation()
+const documentation = getDocumentationFiles();
+//@ts-ignore
+window.documentation = documentation;
+
+export const documentationText = documentation
   .map(({ text }) => text)
   .join("\n\n");

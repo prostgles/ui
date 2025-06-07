@@ -9,8 +9,9 @@ export const accessControlUIDoc = {
     "Manage user permissions and access rules for this database connection.",
   docs: fixIndent(`
     Manage user permissions and access rules for this database connection.
-    <img src="/screenshots/accessControl.svg" alt="Access control" />
+    <img src="/screenshots/access_control.svg" alt="Access control" />
   `),
+  asSeparateFile: true,
   children: [
     {
       type: "button",

@@ -16,17 +16,14 @@ export const useAppTheme = (state: Pick<AppState, "serverState" | "user">) => {
 
   useEffect(() => {
     const listener = () => {
-      setTheme(userTheme);
+      setTheme(getTheme(userThemeOption));
     };
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", listener);
 
-    return () =>
-      window
-        .matchMedia("(prefers-color-scheme: dark)")
-        .removeEventListener("change", listener);
-  }, [userTheme]);
+    const matcher = window.matchMedia("(prefers-color-scheme: dark)");
+    matcher.addEventListener("change", listener);
+
+    return () => matcher.removeEventListener("change", listener);
+  }, [userThemeOption]);
 
   useEffect(() => {
     if (!userThemeOption) return;

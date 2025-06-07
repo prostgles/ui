@@ -7,12 +7,12 @@ import { getTableExpressionSuggestions } from "./completionUtils/getTableExpress
 import type { TokenInfo } from "./completionUtils/getTokens";
 import { jsonbPathSuggest } from "./jsonbPathSuggest";
 import {
-  KNDS,
+  KNDS as KindMap,
   getKind,
   type SQLMatchContext,
   type SQLMatcherResultArgs,
   type SQLMatcherResultType,
-} from "./registerSuggestions";
+} from "./monacoSQLSetup/registerSuggestions";
 import { suggestColumnLike } from "./suggestColumnLike";
 import { suggestFuncArgs } from "./suggestFuncArgs";
 
@@ -270,7 +270,11 @@ export const suggestCondition = async (
         .filter(isDefined);
       if (values?.length) {
         return suggestSnippets(
-          values.map((v) => ({ label: v, type: "value", kind: KNDS.Constant })),
+          values.map((v) => ({
+            label: v,
+            type: "value",
+            kind: KindMap.Constant,
+          })),
         );
       }
     }

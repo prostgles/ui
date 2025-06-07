@@ -93,7 +93,7 @@ export const ConnectionActionBar = (props: ConnectionProps) => {
         </PopupMenu>
       )}
 
-      {isAdmin && !connection.is_state_db && (
+      {isAdmin && (
         <Btn
           href={ROUTES.CONFIG + "/" + connection.id}
           title={t.common["Configure"]}

@@ -2,7 +2,10 @@ import type { MinimalSnippet } from "../CommonMatchImports";
 import { PG_OBJECTS, suggestSnippets } from "../CommonMatchImports";
 import { cleanExpect, getExpected } from "../getExpected";
 import { getParentFunction } from "../MatchSelect";
-import { getKind, type SQLMatcher } from "../registerSuggestions";
+import {
+  getKind,
+  type SQLMatcher,
+} from "../monacoSQLSetup/registerSuggestions";
 import { suggestColumnLike } from "../suggestColumnLike";
 import { getNewColumnDefinitions, PG_COLUMN_CONSTRAINTS } from "../TableKWDs";
 import { withKWDs } from "../withKWDs";

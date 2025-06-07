@@ -243,16 +243,7 @@ export type DBGeneratedSchema = {
       table_config_ts?: null | string;
       table_config_ts_disabled?: null | boolean;
       table_schema_positions?: null | Partial<Record<string,  {  x: number;  y: number; }>>
-    };
-  };
-  database_stats: {
-    is_view: false;
-    select: true;
-    insert: true;
-    update: true;
-    delete: true;
-    columns: {
-      database_config_id?: null | number;
+      table_schema_transform?: null | {    translate: {  x: number;  y: number; };   scale: number;  };
     };
   };
   global_settings: {

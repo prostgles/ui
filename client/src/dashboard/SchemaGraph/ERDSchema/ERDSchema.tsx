@@ -27,16 +27,17 @@ export const ERDSchema = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
 
-  const { shapesRef, dbConfId, shapesVersion } = useSchemaShapes({
-    tables,
-    db,
-    dbs,
-    connectionId,
-    canvasRef,
-    displayMode,
-    columnDisplayMode,
-    columnColorMode,
-  });
+  const { shapesRef, dbConfId, shapesVersion, canAutoPosition, dbConf } =
+    useSchemaShapes({
+      tables,
+      db,
+      dbs,
+      connectionId,
+      canvasRef,
+      displayMode,
+      columnDisplayMode,
+      columnColorMode,
+    });
 
   const { onRenderShapes, positionRef, scaleRef, setScaleAndPosition } =
     useDrawSchemaShapes({
@@ -44,6 +45,8 @@ export const ERDSchema = ({
       canvasRef,
       shapesVersion,
       columnColorMode,
+      canAutoPosition,
+      dbConf,
     });
 
   const { handleWheel } = useCanvasPanZoom({
@@ -77,9 +80,13 @@ export const ERDSchema = ({
       },
       {
         table_schema_positions: newPositions,
+        table_schema_transform: {
+          scale: scaleRef.current,
+          translate: positionRef.current,
+        },
       },
     );
-  }, [dbConfId, dbs.database_configs, shapesRef]);
+  }, [dbConfId, dbs.database_configs, positionRef, scaleRef, shapesRef]);
 
   useSetPanShapes({
     setScaleAndPosition,

@@ -14,8 +14,10 @@ export const sqlEditorUIDoc = {
     "The SQL editor allows users to write and execute SQL queries against the selected database. It provides a user-friendly interface for interacting with the database.",
   docs: fixIndent(`
     The SQL editor is a powerful tool for executing SQL queries against your database. It supports syntax highlighting, auto-completion, and various options for managing queries.
-    <img src="/screenshots/sqlEditor.svg" alt="SQL editor screenshot" />
+
+    <img src="/screenshots/sql_editor.svg" alt="SQL editor screenshot" />
   `),
+  asSeparateFile: true,
   children: [
     getCommonViewHeaderUIDoc(
       "SQL editor query name, editable in the menu.",

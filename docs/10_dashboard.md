@@ -1,0 +1,46 @@
+<h1 id="dashboard"> Dashboard </h1> 
+
+Main interface for interacting with a selected database connection. 
+Browse data, execute SQL queries, manage database objects, and access various tools.
+
+<img src="/screenshots/dashboard.svg" alt="Connection dashboard" />
+
+- <a href="#dashboard_menu">Dashboard menu</a>: Main menu for navigating and managing the database tables and views.  
+- **Toggle dashboard menu**: Opens or closes the dashboard menu unless the menu is pinned.  
+- **Go to configuration**: Opens the configuration page for the selected connection.  
+- **Change connection**: Changes the current connection.  
+- **Workspaces**: List of available workspaces for the selected connection. Each workspace represents a separate environment for data analysis  
+- <a href="#workspaces_menu">Workspaces menu</a>: Opens the workspaces menu, allowing you to create, manage, and switch between workspaces.  
+- <a href="#workspace_area">Workspace area</a>: Main content area of the dashboard, where the SQL editor and other components are displayed.  
+- <a href="#ai_assistant">AI Assistant</a>: Opens an AI assistant to help generate SQL queries, understand database schema, or perform other tasks.  
+- **Feedback**: Opens the feedback form, allowing you to provide feedback about the application.  
+- **Go to connections**: Opens the connections list page.  
+
+<h2 id="dashboard_menu"> Dashboard menu </h2> 
+
+The dashboard menu provides access to various tools and features for managing your database tables and views.
+It includes options for executing SQL queries, searching for tables and views, managing saved queries, and configuring dashboard settings.
+You can also pin the menu to keep it open, resize it, and access server-side functions.
+The menu is designed to be user-friendly and provides quick access to essential features for efficient database management.
+
+  - **SQL editor**: Opens an SQL editor view in the workspace area.  
+  - **Quick search**: Opens the quick search menu for searching across all available tables and views from the current database.  
+  - **Settings**: Opens the settings menu for configuring dashboard layout preferences.  
+  - **Pin/Unpin menu**: Toggles the pinning of the dashboard menu. Pinned menus remain open until unpinned or accessing from a low width screen.  
+  - **Resize menu**: Allows resizing the dashboard menu. Drag to adjust the width of the menu.  
+  - **Resize centered layout**: Allows resizing the workspace area when centered layout is enabled. Drag to adjust the width of the centered layout.  
+  - **Saved queries**: List of saved queries of the current user from the current workspace. Click to open a saved query.  
+  - **Tables and views**: List of tables and views from the current database. Click to open a table or view. By default only the tables from the public schema are shown. Schema list from the connection settings controls which schemas are shown.  
+  - **Server-side functions**: List of server-side functions for the current database. Click to open a function.  
+  - <a href="#create/import">Create/Import</a>: Opens the menu for creating new tables, server-side functions or importing csv/json files.  
+  - <a href="#schema_graph">Schema graph</a>: Opens the schema graph for visualizing the relationships between tables and views in the current database.  
+
+<h3 id="create/import"> Create/Import </h3> 
+
+Create new tables, server-side functions or import files into the current database.
+
+  - **Create new table**: Opens the form to create a new table in the current database.  
+    - **Table name**: Input field for entering the name of the new table. Must be unique within the database.  
+  - <a href="#import_file">Import file</a>: Opens the form to import a file into the current database.  
+  - **Create TS Function**: Opens the form to create a new server-side TypeScript function for the current database.  
+

@@ -8,7 +8,8 @@ export const gettingStarted = {
   description: "A guide to help you get started with the application.",
   children: [],
   docs: fixIndent(`
-    Prostgles UI is a comprehensive database administration and analytics tool for PostgreSQL. It provides a web-based interface for managing connections, executing queries, visualizing data, and collaborating with team members.
+    Prostgles UI is a comprehensive database administration and analytics tool for PostgreSQL. 
+    It provides a web-based interface for managing connections, executing queries, visualizing data, and collaborating with team members.
     
     ## Quick Start
 

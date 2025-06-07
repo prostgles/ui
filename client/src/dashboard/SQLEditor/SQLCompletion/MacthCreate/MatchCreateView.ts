@@ -1,7 +1,7 @@
 import { getMonaco } from "../../W_SQLEditor";
 import { suggestSnippets, type MinimalSnippet } from "../CommonMatchImports";
 import { MatchSelect } from "../MatchSelect";
-import type { SQLMatcherResultArgs } from "../registerSuggestions";
+import type { SQLMatcherResultArgs } from "../monacoSQLSetup/registerSuggestions";
 import { withKWDs, type KWD } from "../withKWDs";
 import { getUserSchemaNames } from "./matchCreateTable";
 

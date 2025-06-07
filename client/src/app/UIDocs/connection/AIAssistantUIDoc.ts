@@ -2,10 +2,10 @@ import { fixIndent } from "../../../demo/sqlVideoDemo";
 import { getCommandElemSelector } from "../../../Testing";
 import type { UIDocElement } from "../../UIDocs";
 
-export const askAIUIDoc = {
+export const AIAssistantUIDoc = {
   type: "popup",
   selectorCommand: "AskLLM",
-  title: "Ask AI",
+  title: "AI Assistant",
   description:
     "Opens an AI assistant to help generate SQL queries, understand database schema, or perform other tasks.",
   docs: fixIndent(`
@@ -13,12 +13,13 @@ export const askAIUIDoc = {
     It can generate SQL queries, explain database schemas, analyze data patterns, and assist with various database-related tasks through a conversational interface.
     MCP Servers can be used to extend the AI capabilities with custom tools and integrations.
 
-    <img src="/screenshots/ask-ai.svg" alt="AI assistant popup screenshot" />
+    <img src="/screenshots/ai_assistant.svg" alt="AI assistant popup screenshot" />
  
     Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, and Local Models. 
 
     *Note: AI providers are configured by administrators in Server Settings > LLM Providers*
   `),
+  asSeparateFile: true,
   children: [
     {
       type: "section",
@@ -79,7 +80,6 @@ export const askAIUIDoc = {
       docs: fixIndent(`
         The message input area allows you to input messages or media to the AI assistant as well as well as control the chat settings. 
 
-        <img src="/screenshots/ask-ai-message-input.svg" alt="AI assistant message input screenshot" />
       `),
       selector: getCommandElemSelector("Chat.sendWrapper"),
       children: [

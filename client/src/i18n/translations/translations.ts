@@ -343,10 +343,9 @@ export const translations = {
   AskLLM: {
     "Chat to an AI Assistant to get help with your queries": undefined,
     "AI assistant not available. Talk to the admin": undefined,
-    "Ask AI": undefined,
+    "AI Assistant": undefined,
   },
   AskLLMChatHeader: {
-    "Ask AI Assistant": undefined,
     Chat: undefined,
     "New chat": undefined,
     "No prompt found": undefined,

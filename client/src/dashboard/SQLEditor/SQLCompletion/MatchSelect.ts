@@ -15,7 +15,7 @@ import {
   getKind,
   type ParsedSQLSuggestion,
   type SQLMatcher,
-} from "./registerSuggestions";
+} from "./monacoSQLSetup/registerSuggestions";
 import { suggestColumnLike } from "./suggestColumnLike";
 import { suggestTableLike } from "./suggestTableLike";
 import type { KWD } from "./withKWDs";

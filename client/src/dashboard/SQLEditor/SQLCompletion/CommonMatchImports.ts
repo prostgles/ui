@@ -3,7 +3,7 @@ import type { CodeBlock } from "./completionUtils/getCodeBlock";
 import type {
   MonacoSuggestion,
   ParsedSQLSuggestion,
-} from "./registerSuggestions";
+} from "./monacoSQLSetup/registerSuggestions";
 import type { IRange } from "../../W_SQL/monacoEditorTypes";
 import type { TokenInfo } from "./completionUtils/getTokens";
 import type { SQLSuggestion } from "../W_SQLEditor";

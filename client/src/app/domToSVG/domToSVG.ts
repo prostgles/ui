@@ -1,10 +1,11 @@
-import { elementToSVG } from "./elementToSVG";
+import { elementToSVG, type SVGContext } from "./elementToSVG";
 import { wrapAllSVGText } from "./textToSVG";
 
 export const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
-export const domToSVG = async (node: HTMLElement, debug = false) => {
+export const domToSVG = async (node: HTMLElement) => {
   const svg = document.createElementNS(SVG_NAMESPACE, "svg");
+  const cssDeclarations = new Map<string, string>();
 
   // Get dimensions and position
   const nodeBBox = node.getBoundingClientRect();
@@ -33,14 +34,21 @@ export const domToSVG = async (node: HTMLElement, debug = false) => {
     svg.appendChild(bgRect);
   }
 
-  const context = {
+  const context: SVGContext = {
     offsetX: -nodeBBox.left,
     offsetY: -nodeBBox.top,
     defs: defs,
     idCounter: 0,
+    cssDeclarations,
     fontFamilies: [],
   };
   await elementToSVG(node, svg, context);
+  const style = document.createElementNS(SVG_NAMESPACE, "style");
+  style.setAttribute("type", "text/css");
+  defs.appendChild(style);
+  style.textContent = Array.from(cssDeclarations.entries())
+    .map(([_selector, declaration]) => declaration)
+    .join("\n");
   await wrapAllSVGText(svg);
 
   const xmlSerializer = new XMLSerializer();

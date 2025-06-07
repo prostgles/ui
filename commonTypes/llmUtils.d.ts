@@ -15,7 +15,7 @@ export declare const getLLMMessageToolUseResult: ({ message, }: Pick<LLMMessage,
         type: "text";
         text: string;
     } | {
-        type: "image";
+        type: "image" | "audio";
         mimeType: string;
         data: string;
     } | {

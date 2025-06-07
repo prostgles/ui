@@ -1,22 +1,21 @@
 import type { SQLHandler } from "prostgles-types";
 import { format } from "sql-formatter";
-import { isObject } from "../../../../../commonTypes/publishUtils";
-import { isDefined } from "../../../utils";
-import { debounce } from "../../Map/DeckGLWrapped";
+import { debounce } from "../../../Map/DeckGLWrapped";
 import type {
   editor,
   IDisposable,
   languages,
   Monaco,
   Position,
-} from "../../W_SQL/monacoEditorTypes";
-import type { SQLSuggestion } from "../W_SQLEditor";
-import { LANG } from "../W_SQLEditor";
-import { getKeywordDocumentation } from "../SQLEditorSuggestions";
-import type { CodeBlock } from "./completionUtils/getCodeBlock";
-import { getCurrentCodeBlock } from "./completionUtils/getCodeBlock";
-import { getStartingLetters, removeQuotes } from "./getJoinSuggestions";
-import { getMatch } from "./getMatch";
+} from "../../../W_SQL/monacoEditorTypes";
+import type { SQLSuggestion } from "../../W_SQLEditor";
+import { LANG } from "../../W_SQLEditor";
+import { getKeywordDocumentation } from "../../SQLEditorSuggestions";
+import type { CodeBlock } from "../completionUtils/getCodeBlock";
+import { getCurrentCodeBlock } from "../completionUtils/getCodeBlock";
+import { getStartingLetters, removeQuotes } from "../getJoinSuggestions";
+import { getMatch } from "../getMatch";
+import { registerHover } from "./registerHover";
 
 export const triggerCharacters = [
   ".",
@@ -225,8 +224,7 @@ const getRespectedSortText = (
     suggestions: fixedSuggestions,
   };
 };
-
-export let KNDS: Kind = {} as any;
+export let KNDS = {} as Kind;
 
 export function registerSuggestions(args: Args) {
   const { suggestions, settingSuggestions, sql, monaco, editor } = args;
@@ -238,7 +236,11 @@ export function registerSuggestions(args: Args) {
     position: Position,
     context: languages.CompletionContext,
   ): Promise<{
-    suggestions: (MonacoSuggestion | languages.CompletionItem)[];
+    suggestions: (
+      | MonacoSuggestion
+      | languages.CompletionItem
+      | ParsedSQLSuggestion
+    )[];
   }> => {
     /* TODO Add type checking within for func arg types && table cols && func return types*/
     function parseSuggestions(sugests: SQLSuggestion[]): ParsedSQLSuggestion[] {
@@ -310,7 +312,7 @@ export function registerSuggestions(args: Args) {
   sqlFormattingProvider?.dispose();
   sqlFormattingProvider =
     monaco.languages.registerDocumentFormattingEditProvider(LANG, {
-      displayName: "SQL",
+      displayName: LANG.toUpperCase(),
       provideDocumentFormattingEdits: async (model) => {
         // const newText = await getFormattedSql(model);
 
@@ -332,109 +334,11 @@ export function registerSuggestions(args: Args) {
       },
     });
   sqlHoverProvider?.dispose();
-  sqlHoverProvider = monaco.languages.registerHoverProvider(LANG, {
-    provideHover: async function (model, position, token, context) {
-      const curWord = model.getWordAtPosition(position);
-
-      if (curWord && sqlSuggestions.length) {
-        const startOfWordPosition = new monaco.Position(
-          position.lineNumber,
-          curWord.startColumn,
-        );
-        const justAfterStartOfWordPosition = new monaco.Position(
-          position.lineNumber,
-          curWord.startColumn + 1,
-        );
-        const offset = model.getOffsetAt(startOfWordPosition);
-        const modelValue = model.getValue();
-        /* set current word to empty string to get all suggestions */
-        const val =
-          modelValue.slice(0, offset) +
-          " " +
-          modelValue.slice(offset + curWord.word.length);
-        const newModel = monaco.editor.createModel(val, LANG);
-        const { suggestions } = await provideCompletionItems(
-          newModel,
-          justAfterStartOfWordPosition,
-          {
-            triggerKind: monaco.languages.CompletionTriggerKind.Invoke,
-            triggerCharacter: " ",
-          },
-        );
-        newModel.dispose();
-        let matches = suggestions.filter(
-          (s) =>
-            s.insertText === curWord.word ||
-            s.insertText.toLowerCase() === curWord.word.toLowerCase() ||
-            (s as ParsedSQLSuggestion).escapedIdentifier === curWord.word,
-        );
-        if (!matches.length) {
-          matches = suggestions.filter(
-            (s) =>
-              (s as ParsedSQLSuggestion).escapedIdentifier?.startsWith(`"`) &&
-              (s as ParsedSQLSuggestion).escapedIdentifier?.includes(
-                curWord.word,
-              ),
-          );
-        }
-
-        const [_matchingSuggestion, ...otherMatches] = matches;
-        // TODO ensure escapeIdentifier works ("table name" ends up as two words (in curWord) and doesn't always match)
-        // console.log(curWord.word, _matchingSuggestion, other);
-        let matchingSuggestion = _matchingSuggestion;
-        if (otherMatches.length && matchingSuggestion) {
-          /** Matched many similar functions. Pick first*/
-          if (
-            otherMatches.every(
-              (s) =>
-                matchingSuggestion &&
-                "type" in s &&
-                "type" in matchingSuggestion &&
-                "name" in s &&
-                "name" in matchingSuggestion &&
-                s.type === matchingSuggestion.type &&
-                s.type === "function" &&
-                s.name === matchingSuggestion.name,
-            )
-          ) {
-          } else {
-            matchingSuggestion = undefined;
-          }
-        }
-        const sm =
-          matchingSuggestion ??
-          sqlSuggestions.find(
-            (s) =>
-              s.type === "keyword" && s.name === curWord.word.toUpperCase(),
-          );
-
-        if (sm) {
-          const detail = "detail" in sm ? sm.detail : "";
-          const documentationText =
-            isObject(sm.documentation) ? sm.documentation.value
-            : typeof sm.documentation === "string" ? sm.documentation
-            : "";
-          return {
-            range: new monaco.Range(
-              position.lineNumber,
-              curWord.startColumn,
-              position.lineNumber,
-              curWord.endColumn,
-            ),
-            contents: [
-              !detail ? undefined : { value: `**${detail}**` },
-              { value: documentationText },
-              // { value: '![my image](https://fdvsdfffdgdgdfg.com/favicon.ico)' }
-            ].filter(isDefined),
-          };
-        }
-
-        return {
-          contents: [],
-        };
-      }
-    },
-  });
+  sqlHoverProvider = registerHover(
+    monaco,
+    sqlSuggestions,
+    provideCompletionItems,
+  );
 
   sqlCompletionProvider?.dispose();
   sqlCompletionProvider = monaco.languages.registerCompletionItemProvider(
@@ -494,42 +398,45 @@ export function registerSuggestions(args: Args) {
   //   }
   // });
 }
-export const getKind = (type: SQLSuggestion["type"]): number => {
+export const getKind = (
+  type: SQLSuggestion["type"],
+  KindMap = KNDS,
+): number => {
   // return KNDS.Text
   if (type === "function") {
-    return KNDS.Function;
+    return KindMap.Function;
   } else if (type === "column") {
-    return KNDS.Field;
+    return KindMap.Field;
   } else if (type === "table") {
-    return KNDS.EnumMember;
+    return KindMap.EnumMember;
   } else if (type === "view" || type === "mview") {
-    return KNDS.Value; // return KNDS.Constant
+    return KindMap.Value; // return KNDS.Constant
   } else if (type === "dataType") {
-    return KNDS.Variable;
+    return KindMap.Variable;
   } else if (type === "operator") {
-    return KNDS.Operator;
+    return KindMap.Operator;
   } else if (type === "keyword") {
-    return KNDS.Keyword;
+    return KindMap.Keyword;
   } else if (type === "extension") {
-    return KNDS.Module;
+    return KindMap.Module;
   } else if (type === "schema") {
-    return KNDS.Folder;
+    return KindMap.Folder;
   } else if (type === "setting") {
-    return KNDS.Property;
+    return KindMap.Property;
   } else if (type === "folder") {
-    return KNDS.Folder;
+    return KindMap.Folder;
   } else if (type === "file") {
-    return KNDS.File;
+    return KindMap.File;
   } else if (type === "snippet") {
-    return KNDS.Snippet;
+    return KindMap.Snippet;
   } else if (type === "database") {
-    return KNDS.Struct;
+    return KindMap.Struct;
   } else if (type === "role" || type === "policy") {
-    return KNDS.User;
+    return KindMap.User;
   } else if (type === "trigger" || type === "eventTrigger") {
-    return KNDS.Event;
+    return KindMap.Event;
   }
-  return KNDS.Keyword;
+  return KindMap.Keyword;
 };
 
 export function isUpperCase(str) {

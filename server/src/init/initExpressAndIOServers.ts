@@ -80,6 +80,12 @@ export const initExpressAndIOServers = () => {
     }),
   );
   app.use(
+    express.static(path.resolve(actualRootDir + "/../docs"), {
+      index: false,
+      cacheControl: false,
+    }),
+  );
+  app.use(
     express.static("/icons", {
       cacheControl: true,
       index: false,

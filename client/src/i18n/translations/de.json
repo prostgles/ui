@@ -293,10 +293,9 @@
   "AskLLM": {
     "Chat to an AI Assistant to get help with your queries": "Chatte mit einem KI-Assistenten, um Hilfe bei deinen Anfragen zu erhalten",
     "AI assistant not available. Talk to the admin": "KI-Assistent nicht verfügbar. Wende dich an den Administrator",
-    "Ask AI": "KI fragen"
+    "AI Assistant": "KI fragen"
   },
   "AskLLMChatHeader": {
-    "Ask AI Assistant": "KI-Assistent fragen",
     "Chat": "Chat",
     "New chat": "Neuer Chat",
     "No prompt found": "Keine Eingabeaufforderung gefunden",

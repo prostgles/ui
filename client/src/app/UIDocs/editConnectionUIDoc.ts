@@ -11,7 +11,7 @@ export const editConnectionUIDoc = {
     Modify the details of an existing database connection.
     You can update connection settings, credentials, and other parameters to ensure your connection is configured correctly.
     
-    <img src="/screenshots/edit-connection.svg" alt="Edit Connection page screenshot" />`),
+    `),
   children: [
     {
       type: "popup",

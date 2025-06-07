@@ -300,10 +300,9 @@
   "AskLLM": {
     "Chat to an AI Assistant to get help with your queries": "अपनी क्वेरी में सहायता प्राप्त करने के लिए AI सहायक से चैट करें",
     "AI assistant not available. Talk to the admin": "AI सहायक उपलब्ध नहीं है। व्यवस्थापक से बात करें",
-    "Ask AI": "AI से पूछें"
+    "AI Assistant": "AI से पूछें"
   },
   "AskLLMChatHeader": {
-    "Ask AI Assistant": "AI सहायक से पूछें",
     "Chat": "बात करना",
     "New chat": "नई चैट",
     "No prompt found": "कोई संकेत नहीं मिला",

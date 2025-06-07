@@ -1,6 +1,6 @@
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import type { AnyObject, SQLHandler } from "prostgles-types";
-import { getKeys, tryCatch } from "prostgles-types";
+import { getKeys } from "prostgles-types";
 import { isDefined, omitKeys, pickKeys } from "prostgles-types";
 import { TOP_KEYWORDS, asSQL } from "./SQLCompletion/KEYWORDS";
 import {
@@ -8,7 +8,7 @@ import {
   PRIORITISED_OPERATORS,
   getPGObjects,
 } from "./SQLCompletion/getPGObjects";
-import type { ParsedSQLSuggestion } from "./SQLCompletion/registerSuggestions";
+import type { ParsedSQLSuggestion } from "./SQLCompletion/monacoSQLSetup/registerSuggestions";
 import type { SQLSuggestion } from "./W_SQLEditor";
 import { SQL_SNIPPETS } from "./SQL_SNIPPETS";
 import { tryCatchV2 } from "../WindowControls/TimeChartLayerOptions";

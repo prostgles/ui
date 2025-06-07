@@ -1,5 +1,4 @@
 import { fixIndent, ROUTES } from "../../../../../commonTypes/utils";
-import { getCommandElemSelector } from "../../../Testing";
 import type { UIDocContainers } from "../../UIDocs";
 import { editConnectionUIDoc } from "../editConnectionUIDoc";
 import { accessControlUIDoc } from "./config/accessControlUIDoc";
@@ -18,7 +17,7 @@ export const connectionConfigUIDoc = {
     "Configure the selected database connection. Set connection details, manage users, and customize settings.",
   docs: fixIndent(`
     Configure the selected database connection. Set connection details, manage users, and customize settings.
-    <img src="/screenshots/connectionConfig.svg" alt="Connection configuration" />
+    <img src="/screenshots/connection_config.svg" alt="Connection configuration" />
   `),
   children: [
     {

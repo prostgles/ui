@@ -8,7 +8,7 @@ import {
   type GetKind,
   type ParsedSQLSuggestion,
   type SQLMatcher,
-} from "./registerSuggestions";
+} from "./monacoSQLSetup/registerSuggestions";
 import type { KWD } from "./withKWDs";
 import { withKWDs } from "./withKWDs";
 import type { CodeBlock } from "./completionUtils/getCodeBlock";

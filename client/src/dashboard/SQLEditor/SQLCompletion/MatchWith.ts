@@ -11,7 +11,7 @@ import {
   getKind,
   type SQLMatchContext,
   type SQLMatcher,
-} from "./registerSuggestions";
+} from "./monacoSQLSetup/registerSuggestions";
 import { suggestKWD } from "./withKWDs";
 import { SQLMatchers } from "./getMatch";
 import { isObject } from "../../../../../commonTypes/publishUtils";

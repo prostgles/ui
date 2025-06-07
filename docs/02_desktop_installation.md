@@ -1,3 +1,5 @@
+<h1 id="desktop_installation"> Desktop Installation </h1> 
+
 [Prostgles Desktop](/desktop) is a cross-platform database management tool designed exclusively for PostgreSQL databases.
 Whether you're a novice or an experienced SQL developer, Prostgles Desktop offers an intuitive and user-friendly interface that simplifies database management, query execution and data visualization.
 With its robust feature set, it empowers users to interact with their databases more efficiently and effectively, making it an essential tool for anyone working with PostgreSQL.
@@ -24,4 +26,7 @@ You'll need to complete two initial setup steps:
 
 Prostgles Desktop stores its state and configuration data in a PostgreSQL database.
 To maintain a secure and responsive environment, we highly recommend [installing Postgres](https://www.postgresql.org/download/) on your local machine.
-You’ll need to create a dedicated database and superuser account with a strong password for Prostgles Desktop.
+You will need to create a dedicated database and superuser account with a strong password for Prostgles Desktop.
+
+
+

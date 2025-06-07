@@ -18,7 +18,7 @@ export const serverSideFunctionUIDoc = {
         description: "Server-side function menu",
         docs: fixIndent(`
           The server-side function view menu provides options for executing the function, viewing results, and managing function parameters.
-          <img src="/screenshots/server-side-function-menu.svg" alt="Server-side function view menu screenshot" />
+          
         `),
       },
       "method",

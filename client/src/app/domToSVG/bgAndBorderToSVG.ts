@@ -1,4 +1,5 @@
 import { SVG_NAMESPACE } from "./domToSVG";
+import type { SVGContext } from "./elementToSVG";
 
 export function hasBorder(style) {
   return (
@@ -126,9 +127,14 @@ export function getBackgroundColor(style: CSSStyleDeclaration) {
     : undefined;
 }
 
-export const addBackground = (makeRect: () => SVGRectElement, g, style) => {
+export const addBackground = (
+  makeRect: () => SVGRectElement,
+  g: SVGGElement,
+  style: CSSStyleDeclaration,
+  element: HTMLElement,
+  context: SVGContext,
+) => {
   const rect = makeRect();
-
   if (style.borderRadius && style.borderRadius !== "0px") {
     const simplifiedRadius = parseBorderRadius(style.borderRadius);
     rect.setAttribute("rx", simplifiedRadius);

@@ -16,6 +16,7 @@ export type SVGContext = {
   defs: SVGDefsElement;
   idCounter: number;
   fontFamilies: string[];
+  cssDeclarations: Map<string, string>;
 };
 export type SVGNodeLayout = {
   x: number;
@@ -72,7 +73,7 @@ export const elementToSVG = async (
   );
 
   if (whatToRender.background) {
-    addBackground(makeRect, g, style);
+    addBackground(makeRect, g, style, element, context);
   }
 
   const shadow = getBoxShadowAsDropShadow(style);
@@ -106,6 +107,7 @@ export const elementToSVG = async (
         textInfo.width,
         textInfo.height,
         textInfo.style ?? style,
+        context,
       );
     });
   }

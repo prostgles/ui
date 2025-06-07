@@ -17,12 +17,18 @@ import { SmartFilterBar } from "./SmartFilterBar/SmartFilterBar";
 import { SmartForm, type SmartFormProps } from "./SmartForm/SmartForm";
 import ErrorComponent from "../components/ErrorComponent";
 import { getEditColumn } from "./W_Table/tableUtils/getEditColumn";
-import type { AnyObject, SubscriptionHandler } from "prostgles-types";
+import {
+  _PG_numbers,
+  includes,
+  type AnyObject,
+  type SubscriptionHandler,
+} from "prostgles-types";
 import { onRenderColumn } from "./W_Table/tableUtils/onRenderColumn";
 import type { Prgl } from "../App";
 import { quickClone } from "../utils";
 import type { PaginationProps } from "../components/Table/Pagination";
 import { FlexCol } from "../components/Flex";
+import { isNumericColumn } from "./W_SQL/getSQLResultTableColumns";
 
 type SmartTableProps = Pick<Prgl, "db" | "tables" | "methods"> & {
   filter?: SmartGroupFilter;
@@ -91,21 +97,24 @@ export default class SmartTable extends RTComp<SmartTableProps, S> {
       const cols = table?.columns ?? [];
       _tableCols = cols
         .filter((c) => c.select)
-        .map((c) => ({
-          key: c.name,
-          sortable: true,
-          subLabel: c.data_type,
-          ...c,
-          /* Align numbers to right for an easier read */
-          headerClassname: c.tsDataType === "number" ? " jc-end  " : " ",
-          className: c.tsDataType === "number" ? " ta-right " : " ",
-          onRender: onRenderColumn({
-            c,
-            table,
-            tables,
-            barchartVals: undefined,
-          }),
-        }));
+        .map((c) => {
+          const isNumeric = isNumericColumn(c);
+          return {
+            key: c.name,
+            sortable: true,
+            subLabel: c.data_type,
+            ...c,
+            /* Align numbers to right for an easier read */
+            headerClassname: isNumeric ? " jc-end  " : " ",
+            className: isNumeric ? " ta-right " : " ",
+            onRender: onRenderColumn({
+              c,
+              table,
+              tables,
+              barchartVals: undefined,
+            }),
+          };
+        });
 
       if (allowEdit && tableHandler && table) {
         _tableCols.unshift(

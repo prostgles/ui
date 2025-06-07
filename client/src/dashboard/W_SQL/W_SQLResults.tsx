@@ -1,13 +1,14 @@
-import React from "react";
-import type { W_SQLProps, W_SQLState } from "./W_SQL";
-import { CSVRender } from "./CSVRender";
-import { CodeEditor } from "../CodeEditor/CodeEditor";
-import { Table } from "../../components/Table/Table";
-import type { WindowData } from "../Dashboard/dashboardUtils";
 import type { SyncDataItem } from "prostgles-client/dist/SyncedTable/SyncedTable";
-import { onRenderColumn } from "../W_Table/tableUtils/onRenderColumn";
+import React, { useMemo, useState } from "react";
+import type { PaginationProps } from "../../components/Table/Pagination";
+import { Table } from "../../components/Table/Table";
+import { CodeEditor } from "../CodeEditor/CodeEditor";
+import type { WindowData } from "../Dashboard/dashboardUtils";
 import type { ColumnSortSQL } from "../W_Table/ColumnMenu/ColumnMenu";
 import { TooManyColumnsWarning } from "../W_Table/TooManyColumnsWarning";
+import { CSVRender } from "./CSVRender";
+import { getSQLResultTableColumns } from "./getSQLResultTableColumns";
+import type { W_SQLProps, W_SQLState } from "./W_SQL";
 
 export type W_SQLResultsProps = Pick<
   W_SQLState,
@@ -29,7 +30,6 @@ export type W_SQLResultsProps = Pick<
     onPageChange: (newPage: number) => any;
     onPageSizeChange: (newPageSize: W_SQLState["pageSize"]) => any;
   };
-import { getSQLResultTableColumns } from "./getSQLResultTableColumns";
 
 export const W_SQLResults = (props: W_SQLResultsProps) => {
   const {
@@ -65,45 +65,30 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
 
   const isExplainResult = (info?.command || "").toLowerCase() === "explain";
   const [tooManyColumnsWarningWasShown, setTooManyColumnsWarningWasShown] =
-    React.useState(false);
+    useState(false);
 
-  const tableColumns = React.useMemo(() => {
+  const tableColumns = useMemo(() => {
     return getSQLResultTableColumns({
       cols,
       tables,
       maxCharsPerCell,
       onResize,
     });
-    // return cols.map((c, i) => ({
-    //   ...c,
-    //   key: i,
-    //   label: c.name,
-    //   filter: false,
-    //   /* Align numbers to right for an easier read */
-    //   headerClassname: c.tsDataType === "number" ? " jc-end  " : " ",
-    //   className: c.tsDataType === "number" ? " ta-right " : " ",
-    //   onRender: onRenderColumn({
-    //     c: { ...c, name: i.toString(), format: undefined },
-    //     table: undefined,
-    //     tables,
-    //     barchartVals: undefined,
-    //     maxCellChars: maxCharsPerCell || 1000,
-    //     maximumFractionDigits: 12,
-    //   }),
-    //   onResize: async (width) => {
-    //     const newCols = cols.map((_c) => {
-    //       if (_c.key === c.key) {
-    //         _c.width = width;
-    //       }
-    //       return _c;
-    //     });
-    //     onResize(newCols);
-    //   },
-    // }));
   }, [cols, tables, maxCharsPerCell, onResize]);
-  if (activeQuery?.state === "running" && !rows.length) {
-    return null;
-  }
+  // if (activeQuery?.state === "running" && !rows.length) {
+  //   return null;
+  // }
+
+  const pagination = useMemo(() => {
+    if (!isSelect) return;
+    return {
+      page,
+      pageSize,
+      totalRows: rowCount,
+      onPageChange,
+      onPageSizeChange,
+    } satisfies PaginationProps;
+  }, [isSelect, onPageChange, onPageSizeChange, page, pageSize, rowCount]);
 
   const paginatedRows =
     renderMode === "table" ?
@@ -170,17 +155,7 @@ export const W_SQLResults = (props: W_SQLResultsProps) => {
                 whiteSpace: "pre",
               }),
             }}
-            pagination={
-              !isSelect ? undefined : (
-                {
-                  page,
-                  pageSize,
-                  totalRows: rowCount,
-                  onPageChange,
-                  onPageSizeChange,
-                }
-              )
-            }
+            pagination={pagination}
           />
         </>
       }

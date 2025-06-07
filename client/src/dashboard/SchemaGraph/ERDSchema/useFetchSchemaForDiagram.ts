@@ -1,6 +1,6 @@
 import { usePromise } from "prostgles-client/dist/react-hooks";
 import { fetchNamedSVG } from "../../../components/SvgIcon";
-import { isEmpty } from "../../../utils";
+import { isEmpty } from "prostgles-types";
 import { getCssVariableValue } from "../../Charts/onRenderTimechart";
 import { PG_OBJECT_QUERIES } from "../../SQLEditor/SQLCompletion/getPGObjects";
 import { COLOR_PALETTE } from "../../W_Table/ColumnMenu/ColorPicker";
@@ -36,6 +36,7 @@ export const useFetchSchemaForDiagram = (
   );
 
   const schemaInfo = usePromise(async () => {
+    if (!dbConf) return;
     const constraints =
       !db.sql ?
         []
@@ -155,7 +156,7 @@ export const useFetchSchemaForDiagram = (
     schemaColumns.push(allTables.filter((t) => t.referenceType === "orphan"));
 
     const INITIAL_CHART_MAX_HEIGHT = 3000;
-    let tablePositions = dbConf?.table_schema_positions ?? {};
+    let tablePositions = dbConf.table_schema_positions ?? {};
 
     if (isEmpty(tablePositions)) {
       let x = 0;
@@ -194,9 +195,9 @@ export const useFetchSchemaForDiagram = (
       fkeys,
       columnConstraintIcons,
     };
-  }, [columnColorMode, db, dbConf?.table_schema_positions, tables]);
+  }, [columnColorMode, db, dbConf, tables]);
 
-  return { schemaInfo, dbConfId: dbConf?.id };
+  return { schemaInfo, dbConfId: dbConf?.id, dbConf };
 };
 
 const fetchSVGImage = (iconName: string, currentcolor: string) => {

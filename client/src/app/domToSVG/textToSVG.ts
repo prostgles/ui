@@ -1,5 +1,6 @@
 import { tout } from "../../utils";
 import { SVG_NAMESPACE } from "./domToSVG";
+import type { SVGContext } from "./elementToSVG";
 const _singleLineEllipsis = "_singleLineEllipsis" as const;
 const TEXT_WIDTH_ATTR = "data-text-width";
 const TEXT_HEIGHT_ATTR = "data-text-height";
@@ -17,9 +18,9 @@ export const textToSVG = (
   width: number,
   height: number,
   style: CSSStyleDeclaration,
+  context: SVGContext,
 ) => {
   if (!content.trim()) return;
-
   g.setAttribute(TEXT_WIDTH_ATTR, width.toString());
   g.setAttribute(TEXT_HEIGHT_ATTR, height.toString());
   const textNode = document.createElementNS(SVG_NAMESPACE, "text");
@@ -169,8 +170,8 @@ export const wrapAllSVGText = async (svg: SVGElement) => {
     );
   });
 
-  await tout(3000);
   if (svg.isConnected) {
+    await tout(1000);
     svg.remove();
   }
 };

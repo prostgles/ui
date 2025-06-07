@@ -298,10 +298,9 @@
   "AskLLM": {
     "Chat to an AI Assistant to get help with your queries": "Chatea con un asistente de IA para obtener ayuda con tus consultas",
     "AI assistant not available. Talk to the admin": "Asistente de IA no disponible. Habla con el administrador",
-    "Ask AI": "Preguntar a la IA"
+    "AI Assistant": "Preguntar a la IA"
   },
   "AskLLMChatHeader": {
-    "Ask AI Assistant": "Preguntar al asistente de IA",
     "Chat": "Chat",
     "New chat": "Nuevo chat",
     "No prompt found": "No se encontró ningún prompt",

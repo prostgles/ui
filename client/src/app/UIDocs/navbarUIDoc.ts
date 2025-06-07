@@ -67,7 +67,7 @@ export const navbarUIDoc = {
     {
       type: "button",
       selector: ".hamburger",
-      title: "Mobile Menu",
+      title: "Toggle Menu (visible on small screens)",
       description: "Toggle the mobile navigation menu on smaller screens",
     },
   ],

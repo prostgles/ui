@@ -20,13 +20,20 @@ export const clamp = (value: number, min: number, max: number) => {
 export const useDrawSchemaShapes = (
   props: Pick<
     ReturnType<typeof useSchemaShapes>,
-    "shapesRef" | "shapesVersion"
+    "shapesRef" | "shapesVersion" | "canAutoPosition" | "dbConf"
   > & {
     canvasRef: React.RefObject<HTMLCanvasElement>;
     columnColorMode: ColumnColorMode;
   },
 ) => {
-  const { shapesRef, canvasRef, shapesVersion, columnColorMode } = props;
+  const {
+    shapesRef,
+    canvasRef,
+    shapesVersion,
+    columnColorMode,
+    canAutoPosition,
+    dbConf,
+  } = props;
   const positionRef = useRef({ x: 0, y: 0 });
   const scaleRef = useRef(1);
 
@@ -101,12 +108,26 @@ export const useDrawSchemaShapes = (
     [canvasRef, shapesRef, columnColorMode],
   );
 
+  const prevdbConf = useRef(dbConf);
   useEffect(() => {
-    // shapesRef.current = getInitialPlacement(shapesRef.current.slice(0));
-    // /** Move links to end */
-    // shapesRef.current.sort((a, b) => a.type.localeCompare(b.type));
+    if (dbConf && !prevdbConf.current) {
+      const { table_schema_transform } = dbConf;
+      if (table_schema_transform) {
+        positionRef.current = table_schema_transform.translate;
+        scaleRef.current = table_schema_transform.scale;
+        onRenderShapes();
+      }
+    }
+  }, [dbConf, onRenderShapes]);
+
+  useEffect(() => {
+    if (canAutoPosition) {
+      shapesRef.current = getInitialPlacement(shapesRef.current.slice(0));
+      /** Move links to end */
+      shapesRef.current.sort((a, b) => a.type.localeCompare(b.type));
+    }
     onRenderShapes();
-  }, [shapesRef, onRenderShapes, shapesVersion]);
+  }, [shapesRef, onRenderShapes, shapesVersion, canAutoPosition]);
 
   const setScaleAndPosition = useCallback(
     ({

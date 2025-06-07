@@ -1,27 +1,77 @@
 import * as fs from "fs";
 import * as path from "path";
 import { MINUTE, type PageWIds } from "./utils";
+
+const IS_PIPELINE = process.env.CI === "true";
+
 const SVG_SCREENSHOT_NAMES = {
   new_connection: 1,
   connections: 1,
-  backups: 1,
   dashboard: 1,
   schema_diagram: 1,
+  sql_editor: 1,
+  table: 1,
+  smart_filter_bar: 1,
+  map: 1,
+  timechart: 1,
+  ai_assistant: 1,
+  file_storage: 1,
+  file_importer: 1,
+  backup_and_restore: 1,
+  access_control: 1,
+  server_settings: 1,
+  connect_existing_database: 1,
+  connection_config: 1,
 } as const;
-const SVG_SCREENSHOT_DIR = path.join(__dirname, "../../docs/screenshots");
-export const saveSVGScreenshot = async (
-  page: PageWIds,
-  fileName: keyof typeof SVG_SCREENSHOT_NAMES,
-) => {
+
+export const DOCS_DIR = path.join(__dirname, "../../docs/");
+
+const SCREENSHOTS_PATH = "/screenshots";
+
+export const SVG_SCREENSHOT_DIR = path.join(DOCS_DIR, SCREENSHOTS_PATH);
+
+type ScreenshotName = keyof typeof SVG_SCREENSHOT_NAMES;
+
+const saveSVGScreenshot = async (page: PageWIds, fileName: ScreenshotName) => {
   const svg = await page.evaluate(() => {
     //@ts-ignore
     return window.toSVG(document.body);
   });
   if (!svg) throw "SVG empty";
-  fs.writeFileSync(path.join(SVG_SCREENSHOT_DIR, fileName + ".svg"), svg, {
-    encoding: "utf8",
-  });
+
+  const filePath = path.join(SVG_SCREENSHOT_DIR, fileName + ".svg");
+  if (IS_PIPELINE) {
+    const existingFile =
+      fs.existsSync(filePath) ?
+        fs.readFileSync(filePath, {
+          encoding: "utf8",
+        })
+      : undefined;
+    if (existingFile !== svg) {
+      throw new Error(
+        `SVG file ${fileName}.svg has changed. Please update the docs.`,
+      );
+    }
+  } else {
+    fs.writeFileSync(filePath, svg, {
+      encoding: "utf8",
+    });
+  }
   return svg;
+};
+
+export const saveSVGScreenshots = async (
+  page: PageWIds,
+  onBefore: (name: ScreenshotName) => Promise<void>,
+) => {
+  const svgFiles = Object.keys(SVG_SCREENSHOT_NAMES);
+  for (const fileName of svgFiles) {
+    await onBefore(fileName as ScreenshotName);
+    await page.waitForTimeout(500);
+    await saveSVGScreenshot(page, fileName as ScreenshotName);
+    console.log(`Saved SVG screenshot: ${fileName}.svg`);
+  }
+  await page.waitForTimeout(100);
 };
 
 export const svgScreenshotsCompleteReferenced = async () => {
@@ -48,10 +98,10 @@ export const svgScreenshotsCompleteReferenced = async () => {
       .join(", ")}`;
   }
   const docMarkdownFiles = fs
-    .readdirSync(SVG_SCREENSHOT_DIR)
+    .readdirSync(DOCS_DIR)
     .filter((file) => file.endsWith(".md"))
     .map((fileName) => {
-      const filePath = path.join(SVG_SCREENSHOT_DIR, fileName);
+      const filePath = path.join(DOCS_DIR, fileName);
       return {
         fileName,
         filePath,
@@ -68,7 +118,7 @@ export const svgScreenshotsCompleteReferenced = async () => {
       .map((v) => v.split(`"`)[0])
       .forEach((src) => {
         if (!usedSrcValues.includes(src)) {
-          usedSrcValues.push(src.slice(2, -4));
+          usedSrcValues.push(src.slice(SCREENSHOTS_PATH.length + 1, -4));
         }
       });
   }

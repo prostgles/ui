@@ -141,6 +141,7 @@ export const ROUTES = {
     ACCOUNT: "/account",
     CONNECTIONS: "/connections",
     CONFIG: "/connection-config",
+    DOCUMENTATION: "/documentation",
     SERVER_SETTINGS: "/server-settings",
     COMPONENT_LIST: "/component-list",
     EDIT_CONNECTION: "/edit-connection",

@@ -38,6 +38,8 @@ import { NonHTTPSWarning } from "./pages/NonHTTPSWarning";
 import { useAppTheme } from "./theme/useAppTheme";
 import { useAppState } from "./useAppState/useAppState";
 import { XRealIpSpoofableAlert } from "./app/XRealIpSpoofableAlert";
+import { Documentation } from "./app/CommandSearch/Documentation";
+import { ScrollFade } from "./components/SearchList/ScrollFade";
 
 export type ClientUser = {
   sid: string;
@@ -296,7 +298,22 @@ export const App = () => {
           path={ROUTES.LOGIN}
           element={<Login {...extraProps} />}
         />
-        <Route key="11" path="*" element={<NotFound />} />
+        <Route
+          key="11"
+          path={ROUTES.DOCUMENTATION}
+          element={
+            <NavBarWrapper
+              extraProps={extraProps}
+              needsUser={false}
+              userThemeOption={userThemeOption}
+            >
+              <ScrollFade className="o-auto f-1 w-full ai-center flex-col bg-color-0">
+                <Documentation />
+              </ScrollFade>
+            </NavBarWrapper>
+          }
+        />
+        <Route key="12" path="*" element={<NotFound />} />
       </Switch>
     </FlexCol>
   );

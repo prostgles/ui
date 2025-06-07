@@ -3,7 +3,7 @@ import {
   getKind,
   type ParsedSQLSuggestion,
   type SQLMatchContext,
-} from "../registerSuggestions";
+} from "../monacoSQLSetup/registerSuggestions";
 import { type KWD, withKWDs } from "../withKWDs";
 
 export const matchCreateOrAlterUser = async ({

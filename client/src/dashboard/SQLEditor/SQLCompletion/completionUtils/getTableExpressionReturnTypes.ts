@@ -5,7 +5,7 @@ import {
   getKind,
   type ParsedSQLSuggestion,
   type SQLMatchContext,
-} from "../registerSuggestions";
+} from "../monacoSQLSetup/registerSuggestions";
 import { getTableExpressionReturnType } from "./getQueryReturnType";
 import {
   getTabularExpressions,

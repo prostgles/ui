@@ -13,7 +13,7 @@ import {
   type MonacoSuggestion,
   type SQLMatchContext,
   type SuggestionItem,
-} from "./registerSuggestions";
+} from "./monacoSQLSetup/registerSuggestions";
 import { suggestColumnLike } from "./suggestColumnLike";
 import { suggestCondition } from "./suggestCondition";
 import { suggestTableLike } from "./suggestTableLike";

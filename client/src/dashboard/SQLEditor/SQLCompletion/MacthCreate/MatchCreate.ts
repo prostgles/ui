@@ -13,7 +13,10 @@ import {
 } from "../MatchAlter/matchCreateOrAlterUser";
 import { ENCODINGS } from "../PSQL";
 import { getExpected } from "../getExpected";
-import { getKind, type SQLMatcher } from "../registerSuggestions";
+import {
+  getKind,
+  type SQLMatcher,
+} from "../monacoSQLSetup/registerSuggestions";
 import { withKWDs, type KWD } from "../withKWDs";
 import { matchCreateView } from "./MatchCreateView";
 import { matchCreateIndex } from "./matchCreateIndex";

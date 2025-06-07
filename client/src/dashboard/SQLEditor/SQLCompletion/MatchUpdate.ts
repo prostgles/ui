@@ -1,6 +1,6 @@
 import { suggestSnippets } from "./CommonMatchImports";
 import { getExpected } from "./getExpected";
-import type { SQLMatcher } from "./registerSuggestions";
+import type { SQLMatcher } from "./monacoSQLSetup/registerSuggestions";
 import { suggestColumnLike } from "./suggestColumnLike";
 import { suggestCondition } from "./suggestCondition";
 import { type KWD, withKWDs, suggestKWD } from "./withKWDs";

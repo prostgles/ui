@@ -1,7 +1,9 @@
-import React, { useMemo } from "react";
+import React from "react";
 import Markdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+
 import { FlexCol } from "../../components/Flex";
-import { documentation } from "./getDocumentation";
+import { documentationText } from "./getDocumentation";
 
 export const Documentation = () => {
   return (
@@ -12,7 +14,7 @@ export const Documentation = () => {
         gap: 0,
       }}
     >
-      <Markdown>{documentation}</Markdown>
+      <Markdown rehypePlugins={[rehypeRaw]}>{documentationText}</Markdown>
     </FlexCol>
   );
 };

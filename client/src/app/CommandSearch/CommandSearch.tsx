@@ -60,6 +60,8 @@ export const CommandSearch = () => {
   );
   const goToUI = useCallback(
     async (doc: UIDoc) => {
+      if (doc.type === "info") return;
+
       if (doc.type === "page" || doc.type === "navbar") {
         const { isOnPage, paths } = getDocPagePath(doc);
         if (!isOnPage) {
@@ -100,9 +102,9 @@ export const CommandSearch = () => {
       title={open === "commands" ? undefined : "Documentation"}
       data-command="CommandSearch"
       clickCatchStyle={{ opacity: 1 }}
-      positioning={open === "commands" ? "top-center" : "fullscreen"}
+      positioning={open === "commands" ? "top-center" : "center"}
       onClose={() => setOpen(undefined)}
-      contentClassName="flex-col gap-2 p-1"
+      contentClassName={"flex-col gap-2 " + (open === "docs" ? " p-2" : "p-1")}
       contentStyle={
         open === "docs" ?
           {

@@ -15,7 +15,7 @@ export const getCommonViewHeaderUIDoc = (
   selector: ".silver-grid-item-header",
   title: "View header",
   description:
-    "The header of the view, containing menu button, the title and window minimise/fullscreen controls.",
+    "Contains menu button, title and window minimise/fullscreen controls.",
   children: (
     [
       viewType === "chart" ? undefined : (

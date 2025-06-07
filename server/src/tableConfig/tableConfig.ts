@@ -360,6 +360,18 @@ export const tableConfig: TableConfig<{ en: 1 }> = {
           },
         },
       },
+      table_schema_transform: {
+        nullable: true,
+        jsonbSchemaType: {
+          translate: {
+            type: {
+              x: "number",
+              y: "number",
+            },
+          },
+          scale: "number",
+        },
+      },
       file_table_config: {
         info: { hint: `File storage configurations` },
         nullable: true,

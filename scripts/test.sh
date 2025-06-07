@@ -1,6 +1,6 @@
 set -e
 
-# Ensure any ts errors are caught
+# Compile TS to Ensure any errors are caught
 cd client
 npx tsc
 cd ../server

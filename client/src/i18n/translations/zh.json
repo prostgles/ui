@@ -296,10 +296,9 @@
   "AskLLM": {
     "Chat to an AI Assistant to get help with your queries": "与 AI 助手聊天以获取查询帮助",
     "AI assistant not available. Talk to the admin": "AI 助手不可用。请联系管理员",
-    "Ask AI": "询问 AI"
+    "AI Assistant": "询问 AI"
   },
   "AskLLMChatHeader": {
-    "Ask AI Assistant": "询问 AI 助手",
     "Chat": "聊天",
     "New chat": "新聊天",
     "No prompt found": "未找到提示",

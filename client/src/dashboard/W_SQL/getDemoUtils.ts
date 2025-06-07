@@ -1,7 +1,7 @@
 import { getCommandElemSelector } from "../../Testing";
 import { tout } from "../../utils";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
-import { triggerCharacters } from "../SQLEditor/SQLCompletion/registerSuggestions";
+import { triggerCharacters } from "../SQLEditor/SQLCompletion/monacoSQLSetup/registerSuggestions";
 import type { SQLEditorRef } from "../SQLEditor/W_SQLEditor";
 import type { SQLHandler } from "prostgles-types";
 

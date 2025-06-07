@@ -10,7 +10,7 @@ import {
   type GetKind,
   type ParsedSQLSuggestion,
   type SQLMatchContext,
-} from "./registerSuggestions";
+} from "./monacoSQLSetup/registerSuggestions";
 import { suggestFuncArgs } from "./suggestFuncArgs";
 import { suggestColumnLike } from "./suggestColumnLike";
 
