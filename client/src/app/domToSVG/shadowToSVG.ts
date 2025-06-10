@@ -26,10 +26,18 @@ export const getBoxShadowAsDropShadow = (style: CSSStyleDeclaration) => {
 
   const filter = parsedBoxShadows
     .slice()
-    .reverse()
     .map(
       ({ color, offsets }) =>
-        `drop-shadow(${offsets.slice(0, 3).join(" ")} ${color})`,
+        `drop-shadow(${offsets
+          .slice(0, 3)
+          .map((part, index) => {
+            if (index === 2 && part.endsWith("px")) {
+              // reduce blur radius due to SVG rendering differences
+              return `${(parseFloat(part) * 0.5).toFixed(1)}px`;
+            }
+            return part;
+          })
+          .join(" ")} ${color})`,
     )
     .join(" ");
   return { filter };

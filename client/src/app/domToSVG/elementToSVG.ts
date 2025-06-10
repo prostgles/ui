@@ -7,11 +7,11 @@ import {
   roundedRectPath,
 } from "./bgAndBorderToSVG";
 import { SVG_NAMESPACE } from "./domToSVG";
+import { getBBoxCode, type SVGScreenshotNodeType } from "./domToThemeAwareSVG";
 import { fontIconToSVG } from "./fontIconToSVG";
 import { getWhatToRenderOnSVG } from "./getWhatToRenderOnSVG";
 import { addImageFromDataURL, imgToSVG } from "./imgToSVG";
 import { isElementNode, isElementVisible } from "./isElementVisible";
-import { encodeQuadtree } from "./quadTree";
 import { getBoxShadowAsDropShadow } from "./shadowToSVG";
 import { textToSVG } from "./textToSVG";
 
@@ -49,23 +49,28 @@ export const elementToSVG = async (
 
   const g = document.createElementNS(SVG_NAMESPACE, "g");
   g._domElement = element;
-  let rectNodePath: SVGPathElement | undefined;
+  //set opacity
+  if (style.opacity !== "1") {
+    g.setAttribute("opacity", style.opacity.toString());
+  }
+  let rectNodePath: SVGScreenshotNodeType | undefined;
+
+  const roundedPosition = {
+    x: Math.round(x),
+    y: Math.round(y),
+    width: Math.round(width),
+    height: Math.round(height),
+  };
+  const bboxCode = getBBoxCode(element, roundedPosition);
+  (g as SVGScreenshotNodeType)._bboxCode = bboxCode;
   const makeRect = () => {
     if (rectNodePath) return rectNodePath;
-    const roundedPosition = {
-      x: Math.round(x),
-      y: Math.round(y),
-      width: Math.round(width),
-      height: Math.round(height),
-    };
-    // console.log(
-    //   encodeQuadtree(roundedPosition, {
-    //     maxX: window.screen.width,
-    //     maxY: window.screen.height,
-    //   }),
-    // );
 
-    const path = document.createElementNS(SVG_NAMESPACE, "path");
+    const path = document.createElementNS(
+      SVG_NAMESPACE,
+      "path",
+    ) as SVGScreenshotNodeType;
+
     const minDimension = Math.min(width, height);
     const [rtl = 0, rtr = 0, rbr = 0, rbl = 0] = [
       style.borderTopLeftRadius,
@@ -81,18 +86,26 @@ export const elementToSVG = async (
     const showBorder =
       whatToRender.border &&
       whatToRender.border.borderColor !== "rgba(0, 0, 0, 0)";
-    const borderWidth = 0; // parseFloat(style.borderWidth);
+
+    const borderWidth = parseFloat(style.borderWidth);
+    const actualBorderWidth = showBorder ? borderWidth : 0;
     path.setAttribute(
       "d",
       roundedRectPath(
-        /** Ensure button edges are crisp */
-        roundedPosition.x + -borderWidth / 2 + (showBorder ? 0.5 : 0),
-        roundedPosition.y + -borderWidth / 2 + (showBorder ? 0.5 : 0),
-        roundedPosition.width,
-        roundedPosition.height,
+        /** This is to ensure the new-connection connection type radio buttons are aligned */
+        x + (!showBorder ? borderWidth / 2 : 0),
+        y + (!showBorder ? borderWidth / 2 : 0),
+        width,
+        height,
         [rtl, rtr, rbr, rbl],
+        actualBorderWidth,
       ),
     );
+    path._domElement = element;
+
+    path._bboxCode = bboxCode;
+    path._purpose = "bg";
+
     /** This is required to make backgroundSameAsRenderedParent work as expected */
     path.setAttribute("fill", "transparent");
     rectNodePath = path;
@@ -100,19 +113,15 @@ export const elementToSVG = async (
     return rectNodePath;
   };
 
-  Object.entries(whatToRender.attributeData ?? {}).forEach(([key, value]) => {
+  Object.entries({
+    ...whatToRender.attributeData,
+    ...whatToRender.childAffectingStyles,
+  }).forEach(([key, value]) => {
     if (value) {
+      //@ts-ignore
       g.setAttribute(key, value);
     }
   });
-  Object.entries(whatToRender.childAffectingStyles ?? {}).forEach(
-    ([key, value]) => {
-      if (value) {
-        //@ts-ignore
-        g.setAttribute(key, value);
-      }
-    },
-  );
 
   if (whatToRender.background) {
     makeRect().setAttribute("fill", style.backgroundColor);
@@ -148,8 +157,9 @@ export const elementToSVG = async (
         textInfo.y,
         textInfo.width,
         textInfo.height,
-        textInfo.style ?? style,
-        context,
+        textInfo.style,
+        style,
+        bboxCode,
       );
     });
   }
@@ -175,6 +185,9 @@ export const elementToSVG = async (
 
   if (whatToRender.image?.type === "foreignObject") {
     parentSvg.appendChild(whatToRender.image.foreignObject);
+
+    (whatToRender.image.foreignObject as SVGScreenshotNodeType)._bboxCode =
+      bboxCode;
     return;
   }
   if (whatToRender.image?.type === "fontIcon") {
@@ -222,7 +235,7 @@ export const addOverflowClipPath = (
   element: HTMLElement,
   style: CSSStyleDeclaration,
   g: SVGGElement,
-  clipRect: SVGPathElement,
+  clipRect: SVGScreenshotNodeType,
   context: SVGContext,
 ) => {
   /**

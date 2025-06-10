@@ -32,7 +32,7 @@ test.describe("Create docs", () => {
 
   test("Create docs", async ({ page: p }) => {
     const page = p as PageWIds;
-    await page.emulateMedia({ colorScheme: "dark" });
+
     await login(page, USERS.test_user, "/login");
 
     if (!IS_PIPELINE) {
@@ -65,7 +65,6 @@ test.describe("Create docs", () => {
       }
       await page.waitForTimeout(100);
     }
-    // await createDatabase("sample_database", page, false);
 
     const openConnection = async (
       connectionName:
@@ -90,32 +89,53 @@ test.describe("Create docs", () => {
         await goTo(page, "/connections");
         await page.getByTestId("Connection.configure").first().click();
         await page.getByTestId("config.bkp").click();
+        await page.getByTestId("config.bkp.create").click();
+        await page.getByTestId("config.bkp.create.start").click();
       } else if (fileName === "dashboard") {
         await openConnection("prostgles_video_demo");
       } else if (fileName === "new_connection") {
         await goTo(page, "/connections");
         await page.getByTestId("Connections.new").click();
       } else if (fileName === "schema_diagram") {
-        await goTo(page, "/connections");
         await openConnection("prostgles_video_demo");
         await page.getByTestId("SchemaGraph").click();
       } else if (fileName === "sql_editor") {
-        await goTo(page, "/connections");
         await openConnection("prostgles_video_demo");
         await page.getByTestId("dashboard.menu.sqlEditor").click();
-        // await page
-        //   .getByRole("button", { name: "Ok, don't show again", exact: true })
-        //   .click();
-        await monacoType(page, `.ProstglesSQL`, `SELECT * FROM tabl`);
+        await monacoType(page, `.ProstglesSQL`, `SELECT * FROM t`);
+        await page.waitForTimeout(2000);
         // await page.keyboard.press("Ctrl+Enter");
       } else if (fileName === "ai_assistant") {
-        await goTo(page, "/connections");
         await openConnection("prostgles_video_demo");
         await page.getByTestId("AskLLM").click();
+      } else if (fileName === "file_storage") {
+        await openConnection("prostgles_video_demo");
+        await page.getByTestId("dashboard.goToConnConfig").click();
+        await page.getByTestId("config.files").click();
+      } else if (fileName === "file_importer") {
+        await openConnection("prostgles_video_demo");
+        await page.getByTestId("dashboard.menu.create").click();
+        await page
+          .getByTestId("dashboard.menu.create")
+          .locator(getDataKeyElemSelector("new table"))
+          .click();
+      } else if (fileName === "access_control") {
+        await openConnection("prostgles_video_demo");
+        await page.getByTestId("dashboard.goToConnConfig").click();
+        await page.getByTestId("config.ac").click();
+      } else if (fileName === "server_settings") {
+        await goTo(page, "/server-settings");
+      } else if (fileName === "connect_existing_database") {
+        await goTo(page, "/connections");
+        await page.getByTestId("ConnectionServer.add").click();
+        await page
+          .locator(getDataKeyElemSelector("Select a database from this server"))
+          .click();
+      } else if (fileName === "connection_config") {
+        await openConnection("prostgles_video_demo");
+        await page.getByTestId("dashboard.goToConnConfig").click();
       }
     });
-    // await page.emulateMedia({ colorScheme: "light" });
-    // await goTo(page);
 
     await svgScreenshotsCompleteReferenced();
   });

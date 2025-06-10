@@ -3,7 +3,7 @@ import { tout } from "../../utils";
 import type { WindowSyncItem } from "../Dashboard/dashboardUtils";
 import { triggerCharacters } from "../SQLEditor/SQLCompletion/monacoSQLSetup/registerSuggestions";
 import type { SQLEditorRef } from "../SQLEditor/W_SQLEditor";
-import type { SQLHandler } from "prostgles-types";
+import { includes, type SQLHandler } from "prostgles-types";
 
 export type TypeOpts = {
   msPerChar?: number;
@@ -57,7 +57,7 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
   const getEditor = () => {
     const editor = getEditors()[0];
     if (!editor) throw "Editor not found";
-    const e = ((editor as any).sqlRef as SQLEditorRef).editor;
+    const e = editor.sqlRef!.editor;
     return { editor, e };
   };
 
@@ -115,9 +115,7 @@ export const getDemoUtils = (w: Pick<WindowSyncItem<"sql">, "id">) => {
       } else {
         getEditor().e.trigger("keyboard", "type", { text: char });
         if (
-          (!triggered &&
-            !triggerMode &&
-            triggerCharacters.includes(char as any)) ||
+          (!triggered && !triggerMode && includes(triggerCharacters, char)) ||
           (!triggered &&
             triggerMode === "firstChar" &&
             char?.match(/^[a-z0-9]+$/i))

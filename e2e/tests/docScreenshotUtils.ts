@@ -67,7 +67,7 @@ export const saveSVGScreenshots = async (
   const svgFiles = Object.keys(SVG_SCREENSHOT_NAMES);
   for (const fileName of svgFiles) {
     await onBefore(fileName as ScreenshotName);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(2000);
     await saveSVGScreenshot(page, fileName as ScreenshotName);
     console.log(`Saved SVG screenshot: ${fileName}.svg`);
   }

@@ -4,12 +4,10 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { appTheme, useReactiveState } from "../../appUtils";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
 
-import {
-  customLightThemeMonaco,
-  getMonaco,
-} from "../../dashboard/SQLEditor/W_SQLEditor";
+import { getMonaco } from "../../dashboard/SQLEditor/W_SQLEditor";
 import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
+import { CUSTOM_MONACO_SQL_THEMES } from "../../dashboard/SQLEditor/defineCustomSQLTheme";
 
 export type MonacoEditorProps = {
   language: string;
@@ -73,10 +71,12 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
   const monacoRef = useRef<Monaco>();
 
   const fullOptions = useMemo(() => {
+    const themeFromOptions = options?.theme;
     const theme =
-      options?.theme && options.theme !== "vs" ? options.theme
-      : _appTheme === "dark" ? "vs-dark"
-      : (customLightThemeMonaco as any);
+      themeFromOptions && themeFromOptions !== "vs" ? themeFromOptions
+      : _appTheme === "dark" ?
+        CUSTOM_MONACO_SQL_THEMES.dark // "vs-dark"
+      : CUSTOM_MONACO_SQL_THEMES.light;
     return {
       ...options,
       theme,

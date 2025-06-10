@@ -12,7 +12,7 @@ import {
   useSchemaGraphControls,
 } from "./SchemaGraphControls";
 
-export type SchemaGraphProps = Pick<Prgl, "connectionId"> & {
+export type SchemaGraphProps = Pick<Prgl, "connectionId" | "theme"> & {
   db: DBHandlerClient;
   dbs: DBS;
   tables: DBSchemaTablesWJoins;
@@ -43,7 +43,7 @@ export const SchemaGraph = (props: SchemaGraphProps) => {
           onClose={() => setShowSchemaDiagram(false)}
         >
           <ERDSchema
-            key={controlState.schemaKey}
+            key={controlState.schemaKey + props.theme}
             {...props}
             {...controlState}
           />

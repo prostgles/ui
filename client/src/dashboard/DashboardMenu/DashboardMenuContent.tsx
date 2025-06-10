@@ -10,9 +10,10 @@ import {
 import type { MethodFullDef } from "prostgles-types";
 import { isObject } from "prostgles-types";
 import React, { useRef } from "react";
+import { ROUTES } from "../../../../commonTypes/utils";
 import { dataCommand } from "../../Testing";
 import Btn from "../../components/Btn";
-import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
+import { FlexCol, FlexRowWrap } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
 import SearchList from "../../components/SearchList/SearchList";
@@ -27,8 +28,6 @@ import { DashboardMenuHeader } from "./DashboardMenuHeader";
 import { DashboardMenuResizer } from "./DashboardMenuResizer";
 import { NewTableMenu } from "./NewTableMenu";
 import type { TablesWithInfo } from "./useTableSizeInfo";
-import { SmartSelect } from "../SmartSelect";
-import { ROUTES } from "../../../../commonTypes/utils";
 
 type P = DashboardMenuProps & {
   onClose: undefined | VoidFunction;
@@ -308,6 +307,7 @@ export const DashboardMenuContent = (props: P) => {
           connectionId={props.prgl.connectionId}
           dbs={dbs}
           db={db}
+          theme={theme}
         />
       </FlexRowWrap>
     </FlexCol>

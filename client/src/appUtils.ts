@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Theme } from "./App";
 import type { Command } from "./Testing";
+import type { SQLEditorRef } from "./dashboard/SQLEditor/W_SQLEditor";
 
 type Unsubscribe = {
   unsubscribe: () => void;
@@ -101,6 +102,11 @@ declare global {
     isMediumWidthScreen: boolean;
     isIOSDevice: boolean;
     isMobile: boolean;
+    toSVG: (node: HTMLElement) => Promise<string>;
+  }
+
+  interface HTMLDivElement {
+    sqlRef?: SQLEditorRef;
   }
 }
 

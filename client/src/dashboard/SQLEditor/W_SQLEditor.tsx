@@ -162,8 +162,6 @@ export type SQLSuggestion = {
   ruleInfo?: PG_Rule;
 };
 
-export const customLightThemeMonaco = "myCustomTheme";
-
 export type MonacoError = Pick<
   editor.IMarkerData,
   "code" | "message" | "severity" | "relatedInformation"

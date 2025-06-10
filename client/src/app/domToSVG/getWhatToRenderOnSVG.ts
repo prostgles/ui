@@ -131,7 +131,7 @@ export const getWhatToRenderOnSVG = async (
             style:
               isPlaceholder ?
                 getComputedStyle(element, "::placeholder")
-              : undefined,
+              : style,
             textContent,
             x: inputRect.x + paddingLeft,
             y: inputRect.y + paddingTop,
@@ -151,6 +151,12 @@ export const getWhatToRenderOnSVG = async (
           const textRect = range.getBoundingClientRect();
 
           if (textRect.width > 0 && textRect.height > 0) {
+            const maxX = x + width;
+            const maxY = y + height;
+            const textMaxX = textRect.x + textRect.width;
+            const textMaxY = textRect.y + textRect.height;
+            const textxMaxWidth = Math.min(textMaxX, maxX) - textRect.x;
+            const textyMaxHeight = Math.min(textMaxY, maxY) - textRect.y;
             return {
               style: {
                 ...style,
@@ -160,8 +166,9 @@ export const getWhatToRenderOnSVG = async (
               textContent,
               x: textRect.x,
               y: textRect.y,
-              width: textRect.width,
-              height: textRect.height,
+              /** This ensures the actual visible/non overflown size of text is used */
+              width: Math.min(textRect.width, textxMaxWidth),
+              height: Math.min(textRect.height, textyMaxHeight),
             };
           }
         })

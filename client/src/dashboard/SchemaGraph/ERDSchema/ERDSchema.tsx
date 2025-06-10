@@ -6,11 +6,10 @@ import { useCanvasPanZoom } from "./useCanvasPanZoom";
 import { useDrawSchemaShapes } from "./useDrawSchemaShapes";
 import { useSetPanShapes } from "./usePanShapes";
 import { useSchemaShapes, type SchemaShape } from "./useSchemaShapes";
-import type { Rectangle } from "../../Charts/CanvasChart";
 
 export type ColumnDisplayMode = "none" | "all" | "references";
 export type ColumnColorMode = "default" | "root" | "on-update" | "on-delete";
-export type ERDSchemaProps = SchemaGraphProps &
+export type ERDSchemaProps = Omit<SchemaGraphProps, "theme"> &
   Pick<
     ReturnType<typeof useSchemaGraphControls>,
     "displayMode" | "columnDisplayMode" | "columnColorMode"

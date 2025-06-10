@@ -1,6 +1,7 @@
+import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 import { tout } from "../../utils";
 import { SVG_NAMESPACE } from "./domToSVG";
-import type { SVGContext } from "./elementToSVG";
+import type { SVGScreenshotNodeType } from "./domToThemeAwareSVG";
 const _singleLineEllipsis = "_singleLineEllipsis" as const;
 const TEXT_WIDTH_ATTR = "data-text-width";
 const TEXT_HEIGHT_ATTR = "data-text-height";
@@ -17,16 +18,32 @@ export const textToSVG = (
   y: number,
   width: number,
   height: number,
-  style: CSSStyleDeclaration,
-  context: SVGContext,
+  placeholderOrElementStyle: CSSStyleDeclaration,
+  elementStyle: CSSStyleDeclaration,
+  bboxCode: string,
 ) => {
+  const style = placeholderOrElementStyle;
   if (!content.trim()) return;
   const textNode = document.createElementNS(SVG_NAMESPACE, "text");
+  (textNode as SVGScreenshotNodeType)._bboxCode = bboxCode;
   textNode.setAttribute(TEXT_WIDTH_ATTR, width.toString());
   textNode.setAttribute(TEXT_HEIGHT_ATTR, height.toString());
-
   textNode.setAttribute("x", x);
-  const fontSize = parseFloat(style.fontSize);
+
+  /** In firefox it seems the text nodes don't have font size */
+  const textNodeStyle = {
+    color: style.color || elementStyle.color,
+    fontFamily: style.fontFamily || elementStyle.fontFamily,
+    fontSize: style.fontSize || elementStyle.fontSize,
+    fontWeight: style.fontWeight || elementStyle.fontWeight,
+    letterSpacing: style.letterSpacing || elementStyle.letterSpacing,
+    textDecoration: style.textDecoration || elementStyle.textDecoration,
+    lineHeight: style.lineHeight || elementStyle.lineHeight,
+    whiteSpace: style.whiteSpace || elementStyle.whiteSpace,
+    textOverflow: style.textOverflow || elementStyle.textOverflow,
+    textTransform: style.textTransform || elementStyle.textTransform,
+  };
+  const fontSize = parseFloat(textNodeStyle.fontSize);
   const inputYFix =
     (
       element.tagName.toLowerCase() === "input" &&
@@ -35,18 +52,20 @@ export const textToSVG = (
       fontSize * 0.25
     : 0;
   textNode.setAttribute("y", y + fontSize + inputYFix);
-
-  textNode.setAttribute("fill", style.color);
-  textNode.setAttribute("font-family", style.fontFamily);
-  textNode.setAttribute("font-size", style.fontSize);
-  textNode.setAttribute("font-weight", style.fontWeight);
-  textNode.setAttribute("letter-spacing", style.letterSpacing);
-  textNode.setAttribute("text-decoration", style.textDecoration);
-  textNode.style.lineHeight = style.lineHeight;
-  textNode.style.whiteSpace = style.whiteSpace;
+  textNode.setAttribute("fill", textNodeStyle.color);
+  textNode.setAttribute("font-family", textNodeStyle.fontFamily);
+  textNode.setAttribute("font-size", textNodeStyle.fontSize);
+  textNode.setAttribute("font-weight", textNodeStyle.fontWeight);
+  textNode.setAttribute("letter-spacing", textNodeStyle.letterSpacing);
+  textNode.setAttribute("text-decoration", textNodeStyle.textDecoration);
+  textNode.style.lineHeight = textNodeStyle.lineHeight;
+  textNode.style.whiteSpace = textNodeStyle.whiteSpace;
+  textNode.style.textTransform = textNodeStyle.textTransform;
+  const nonWrappingWhiteSpaces = ["nowrap", "pre", "reverse", "reverse-wrap"];
   if (
-    style.textOverflow === "ellipsis" &&
-    (style.whiteSpace === "nowrap" || getLineBreakParts(content).length === 1)
+    textNodeStyle.textOverflow === "ellipsis" &&
+    (includes(textNodeStyle.whiteSpace, nonWrappingWhiteSpaces) ||
+      getLineBreakParts(content).length === 1)
   ) {
     textNode[_singleLineEllipsis] = true;
   }
@@ -95,14 +114,17 @@ const wrapTextIfOverflowing = (
     const word = wordsWithDelimiters[i]!;
     line.push(word);
 
-    tspan.textContent = line.join("");
+    const setTextContent = () => {
+      tspan.textContent = line.join("").trimStart();
+    };
+
+    setTextContent();
     const textLen = tspan.getComputedTextLength();
 
     if (textLen > width + tolerance) {
       line.pop(); // Remove the word that caused overflow
 
-      // Set content for current tspan
-      tspan.textContent = line.join("").trimStart();
+      setTextContent();
 
       // Move to next line if possible
       lineNumber++;

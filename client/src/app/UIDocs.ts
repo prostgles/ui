@@ -4,7 +4,6 @@ import type { ROUTES } from "../../../commonTypes/utils";
 import { isPlaywrightTest } from "../i18n/i18nUtils";
 import type { Command } from "../Testing";
 import { isDefined } from "../utils";
-import { domToSVG } from "./domToSVG/domToSVG";
 import { accountUIDoc } from "./UIDocs/accountUIDoc";
 import { authenticationOverviewUIDoc } from "./UIDocs/authenticationOverviewUIDoc";
 import { commandSearchUIDoc } from "./UIDocs/commandSearchUIDoc";
@@ -15,6 +14,8 @@ import { navbarUIDoc } from "./UIDocs/navbarUIDoc";
 import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
 import { desktopInstallationUIDoc } from "./UIDocs/desktopInstallation";
 import { overviewUIDoc } from "./UIDocs/overview";
+import { localSettings } from "../dashboard/localSettings";
+import { domToThemeAwareSVG } from "./domToSVG/domToThemeAwareSVG";
 
 type Route = (typeof ROUTES)[keyof typeof ROUTES];
 
@@ -195,8 +196,6 @@ export const flatDocs = UIDocs.map((doc) => getFlatDocs(doc))
   .filter(isDefined)
   .flat();
 
-if (isPlaywrightTest) {
-  //@ts-ignore
-  window.toSVG = domToSVG;
+if (isPlaywrightTest || true) {
+  window.toSVG = domToThemeAwareSVG;
 }
-// window.toSVG = domToSVG;

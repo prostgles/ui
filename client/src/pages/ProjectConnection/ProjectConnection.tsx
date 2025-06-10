@@ -1,4 +1,4 @@
-import { mdiArrowLeft } from "@mdi/js";
+import { mdiArrowLeft, mdiLogin } from "@mdi/js";
 import React from "react";
 import ErrorComponent from "../../components/ErrorComponent";
 import Loading from "../../components/Loading";
@@ -18,6 +18,9 @@ import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import type { Command } from "../../Testing";
 import { ConnectionConfig } from "../../dashboard/ConnectionConfig/ConnectionConfig";
 import { useProjectDb } from "./useProjectDb";
+import { ROUTES } from "../../../../commonTypes/utils";
+import { FlexRow } from "../../components/Flex";
+import { t } from "../../i18n/i18nUtils";
 
 export type Connections = DBSSchema["connections"];
 export type ProjectProps = {
@@ -54,6 +57,8 @@ export const ProjectConnection = (props: ProjectProps) => {
     );
   }
 
+  const canLogin =
+    !prglState.auth.user || prglState.auth.user.type === "public";
   if (projectDb.state === "error") {
     const error = projectDb.error;
     return (
@@ -73,17 +78,37 @@ export const ProjectConnection = (props: ProjectProps) => {
           </>
         )}
 
-        <Btn
-          style={{ fontSize: "18px", fontWeight: "bold" }}
-          className="mt-1"
-          variant="outline"
-          asNavLink={true}
-          href={`/`}
-          iconPath={mdiArrowLeft}
-          color="action"
-        >
-          Connections
-        </Btn>
+        <FlexRow>
+          <Btn
+            style={{ fontSize: "18px", fontWeight: "bold" }}
+            className="mt-1"
+            variant="outline"
+            asNavLink={true}
+            href={`/`}
+            iconPath={mdiArrowLeft}
+            color="action"
+          >
+            {t.App.Connections}
+          </Btn>
+          {canLogin && (
+            <Btn
+              style={{ fontSize: "18px", fontWeight: "bold" }}
+              className="mt-1"
+              variant="filled"
+              asNavLink={true}
+              href={
+                ROUTES.LOGIN +
+                (!params.cid ? "" : (
+                  `?returnURL=${encodeURIComponent(window.location.pathname + window.location.search)}`
+                ))
+              }
+              iconPath={mdiLogin}
+              color="action"
+            >
+              {t.common.Login}
+            </Btn>
+          )}
+        </FlexRow>
       </div>
     );
   }

@@ -1,13 +1,22 @@
 import { useEffect, useState } from "react";
 import { appTheme, type AppState, type Theme } from "../App";
+import { useLocalSettings } from "../dashboard/localSettings";
 
 const THEMES = ["light", "dark", "from-system"] as const;
 const THEME_SETTING_NAME = "theme" as const;
 
 export const useAppTheme = (state: Pick<AppState, "serverState" | "user">) => {
   const userThemeOption = state.user?.options?.theme;
-  const userTheme = getTheme(userThemeOption);
+
+  const { themeOverride } = useLocalSettings();
+  const userTheme = getTheme(themeOverride ?? userThemeOption);
   const [theme, setTheme] = useState(userTheme);
+
+  useEffect(() => {
+    if (!themeOverride) return;
+    setTheme(themeOverride);
+  }, [themeOverride]);
+
   useEffect(() => {
     /** We persist the theme to localSettings to ensure theme persists after logging out */
     localStorage.setItem(THEME_SETTING_NAME, theme);

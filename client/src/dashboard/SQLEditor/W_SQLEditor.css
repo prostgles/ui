@@ -12,13 +12,4 @@
 .MonacoEditor .monaco-editor {
   outline: none !important;
 }
-
-/** string token. defineTheme for dark theme not working */
-.dark-theme .mtk20 {
-  color: #dd7575 !important;
-}
-
-/** function token */
-.dark-theme .mtk18 {
-  color: #df77df !important;
-}
+ 
