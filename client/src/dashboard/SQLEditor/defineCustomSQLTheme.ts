@@ -59,12 +59,12 @@ export const defineCustomSQLTheme = async (): Promise<boolean> => {
 
   monaco.editor.defineTheme(CUSTOM_MONACO_SQL_THEMES.dark, {
     base: "vs-dark", // can also be vs-dark or hc-black or vs
-    inherit: true, // can also be false to completely replace the builtin rules
+    inherit: true,
     colors: {},
     rules: getRules(
       {
         string: "#db5050",
-        identifiersInclComplex: "#fb9ffb",
+        identifiersInclComplex: "#f5b9f5",
         inbuiltFuncs: "#f90af9",
       },
       true,

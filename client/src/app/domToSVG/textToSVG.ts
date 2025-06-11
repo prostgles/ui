@@ -2,6 +2,7 @@ import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
 import { tout } from "../../utils";
 import { SVG_NAMESPACE } from "./domToSVG";
 import type { SVGScreenshotNodeType } from "./domToThemeAwareSVG";
+import type { TextForSVG } from "./getTextForSVG";
 const _singleLineEllipsis = "_singleLineEllipsis" as const;
 const TEXT_WIDTH_ATTR = "data-text-width";
 const TEXT_HEIGHT_ATTR = "data-text-height";
@@ -13,21 +14,27 @@ const getLineBreakPartsWithDelimiters = (content: string) =>
 export const textToSVG = (
   element: HTMLElement,
   g: SVGGElement,
-  content: string,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  placeholderOrElementStyle: CSSStyleDeclaration,
+  textInfo: TextForSVG,
   elementStyle: CSSStyleDeclaration,
   bboxCode: string,
 ) => {
+  const {
+    textIndent,
+    height,
+    style: placeholderOrElementStyle,
+    textContent: content,
+    width,
+    x,
+    y,
+    isSingleLine,
+  } = textInfo;
   const style = placeholderOrElementStyle;
   if (!content.trim()) return;
   const textNode = document.createElementNS(SVG_NAMESPACE, "text");
   (textNode as SVGScreenshotNodeType)._bboxCode = bboxCode;
-  textNode.setAttribute(TEXT_WIDTH_ATTR, width.toString());
-  textNode.setAttribute(TEXT_HEIGHT_ATTR, height.toString());
+  (textNode as SVGScreenshotNodeType)._textInfo = textInfo;
+  textNode.setAttribute(TEXT_WIDTH_ATTR, width);
+  textNode.setAttribute(TEXT_HEIGHT_ATTR, height);
   textNode.setAttribute("x", x);
 
   /** In firefox it seems the text nodes don't have font size */
@@ -64,64 +71,75 @@ export const textToSVG = (
   const nonWrappingWhiteSpaces = ["nowrap", "pre", "reverse", "reverse-wrap"];
   if (
     textNodeStyle.textOverflow === "ellipsis" &&
-    (includes(textNodeStyle.whiteSpace, nonWrappingWhiteSpaces) ||
-      getLineBreakParts(content).length === 1)
+    (includes(textNodeStyle.whiteSpace, nonWrappingWhiteSpaces) || isSingleLine)
   ) {
     textNode[_singleLineEllipsis] = true;
   }
   textNode.setAttribute("text-anchor", "start");
 
-  textNode.textContent = content;
+  // Ensures overflowing text is wrapped correctly
+  textNode.textContent = content.trimEnd();
 
   g.appendChild(textNode);
 };
 
 const tolerance = 2;
 const wrapTextIfOverflowing = (
-  textNode: SVGTextElement,
+  textNode: Extract<SVGScreenshotNodeType, SVGTextElement>,
   width: number,
   height: number,
   content: string,
 ) => {
   const currTextLength = textNode.getComputedTextLength();
-  if (currTextLength <= width + tolerance) {
+  const { textIndent = 0, isSingleLine } = textNode._textInfo ?? {};
+
+  if (currTextLength <= width + tolerance && !textIndent) {
     return;
   } else if (textNode[_singleLineEllipsis]) {
-    do {
-      content = content.slice(0, -1);
-      textNode.textContent = content + "...";
-    } while (
+    while (
       textNode.getComputedTextLength() > width + tolerance &&
       content.length
-    );
+    ) {
+      content = content.slice(0, -1);
+      textNode.textContent = content + "...";
+    }
     return;
   }
   textNode.textContent = "";
   let line: string[] = [];
   let lineNumber = -1;
-  const wordsWithDelimiters = getLineBreakPartsWithDelimiters(content);
+  const wordsWithDelimiters = getLineBreakPartsWithDelimiters(content).filter(
+    (w) => w !== "",
+  );
   const fontSize = textNode.getAttribute("font-size") || "16";
   const lineHeightPx =
     parseFloat(textNode.style.lineHeight) || 1.1 * parseFloat(fontSize);
-  const x = textNode.getAttribute("x") || "0";
-  const y = textNode.getAttribute("y") || "0";
+  const x = parseFloat(textNode.getAttribute("x") || "0");
+  const y = parseFloat(textNode.getAttribute("y") || "0");
   const maxLines = Math.floor(height / lineHeightPx);
   let tspan = document.createElementNS(SVG_NAMESPACE, "tspan");
-  tspan.setAttribute("x", x);
+  tspan.setAttribute("x", x + textIndent);
   tspan.setAttribute("y", y);
   textNode.appendChild(tspan);
-  for (let i = 0; i < wordsWithDelimiters.length; i++) {
-    const word = wordsWithDelimiters[i]!;
+
+  if (isSingleLine) {
+    return;
+  }
+  for (let wordIndex = 0; wordIndex < wordsWithDelimiters.length; wordIndex++) {
+    const isFirstLine = lineNumber === -1;
+    const currentLineWidth = isFirstLine ? width - textIndent : width;
+    const word = wordsWithDelimiters[wordIndex]!;
     line.push(word);
 
     const setTextContent = () => {
-      tspan.textContent = line.join("").trimStart();
+      tspan.textContent =
+        isFirstLine ? line.join("") : line.join("").trimStart();
     };
 
     setTextContent();
     const textLen = tspan.getComputedTextLength();
 
-    if (textLen > width + tolerance) {
+    if (textLen > currentLineWidth + tolerance) {
       line.pop(); // Remove the word that caused overflow
 
       setTextContent();
@@ -130,7 +148,10 @@ const wrapTextIfOverflowing = (
       lineNumber++;
       if (lineNumber >= maxLines) {
         // Add ellipsis to indicate truncation if there's room
-        if (tspan.textContent && tspan.getComputedTextLength() < width - 10) {
+        if (
+          tspan.textContent &&
+          tspan.getComputedTextLength() < currentLineWidth - 10
+        ) {
           tspan.textContent += "...";
           textNode.removeChild(tspan);
         }

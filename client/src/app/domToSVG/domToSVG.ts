@@ -53,7 +53,6 @@ export const domToSVG = async (node: HTMLElement) => {
 
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svg);
-  console.log("SVG created\n", svgString);
   // recordDomChanges(node);
   return { svgString, svg };
 };

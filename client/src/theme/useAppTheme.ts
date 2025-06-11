@@ -18,10 +18,11 @@ export const useAppTheme = (state: Pick<AppState, "serverState" | "user">) => {
   }, [themeOverride]);
 
   useEffect(() => {
-    /** We persist the theme to localSettings to ensure theme persists after logging out */
-    localStorage.setItem(THEME_SETTING_NAME, theme);
     appTheme.set(theme);
-  }, [theme]);
+    if (!userThemeOption || userThemeOption === "from-system") return;
+    /** We persist the theme to localSettings to ensure theme persists after logging out */
+    localStorage.setItem(THEME_SETTING_NAME, userThemeOption);
+  }, [theme, userThemeOption]);
 
   useEffect(() => {
     const listener = () => {

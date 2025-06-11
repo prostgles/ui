@@ -406,10 +406,18 @@ test.describe("Main test", () => {
     await page.emulateMedia({ colorScheme: "dark" });
     await goTo(page);
     await page.locator("html.dark-theme").waitFor({ state: "visible" });
-    const backgroundColor = await page.evaluate(() => {
+    const darkBackgroundColor = await page.evaluate(() => {
       return getComputedStyle(document.body).backgroundColor;
     });
-    expect(backgroundColor).toBe("rgb(36, 36, 36)"); // dark theme bg color
+    expect(darkBackgroundColor).toBe("rgb(36, 36, 36)");
+
+    await page.emulateMedia({ colorScheme: "light" });
+    await goTo(page);
+    await page.locator("html.light-theme").waitFor({ state: "visible" });
+    const lightBackgroundColor = await page.evaluate(() => {
+      return getComputedStyle(document.body).backgroundColor;
+    });
+    expect(lightBackgroundColor).toBe("rgb(244, 245, 247)");
   });
 
   test("Free LLM assistant signup & Disable signups", async ({ page: p }) => {

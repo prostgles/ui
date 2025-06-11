@@ -1,5 +1,6 @@
 import { domToSVG } from "./domToSVG";
 import { getCorrespondingDarkNode } from "./getCorrespondingDarkNode";
+import type { TextForSVG } from "./getTextForSVG";
 import { setThemeForSVGScreenshot } from "./setThemeForSVGScreenshot";
 
 export const domToThemeAwareSVG = async (node: HTMLElement) => {
@@ -184,9 +185,12 @@ export const domToThemeAwareSVG = async (node: HTMLElement) => {
   const xmlSerializer = new XMLSerializer();
   const svgString = xmlSerializer.serializeToString(svgLight);
   document.body.removeChild(svgDark);
-  await setThemeForSVGScreenshot("light");
+  await setThemeForSVGScreenshot(undefined);
   console.log(svgString);
-  return svgString;
+  return {
+    light: svgString,
+    dark: xmlSerializer.serializeToString(svgDark),
+  };
 };
 
 /** Interleave data */
@@ -219,6 +223,7 @@ export type SVGScreenshotNodeType = (
   _domElementId?: string;
   _domElementPath?: number[];
   _domElementPathString?: string;
+  _textInfo?: TextForSVG;
 };
 
 const getElementPath = (element: HTMLElement) => {

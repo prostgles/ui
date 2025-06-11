@@ -4,11 +4,10 @@ import * as path from "path";
 import {
   DOCS_DIR,
   saveSVGScreenshots,
-  SVG_SCREENSHOT_DIR,
   svgScreenshotsCompleteReferenced,
 } from "./docScreenshotUtils";
-import { goTo, login, monacoType, PageWIds, USERS } from "./utils";
 import { getDataKeyElemSelector } from "./Testing";
+import { goTo, login, monacoType, PageWIds, USERS } from "./utils";
 
 test.use({
   viewport: {
@@ -40,7 +39,7 @@ test.describe("Create docs", () => {
       if (fs.existsSync(DOCS_DIR)) {
         fs.rmSync(DOCS_DIR, { recursive: true, force: true });
       }
-      fs.mkdirSync(SVG_SCREENSHOT_DIR, { recursive: true });
+      fs.mkdirSync(DOCS_DIR, { recursive: true });
     }
 
     const files: { fileName: string; text: string }[] = await page.evaluate(
@@ -70,6 +69,7 @@ test.describe("Create docs", () => {
       connectionName:
         | "sample_database"
         | "cloud"
+        | "crypto"
         | "Prostgles UI state"
         | "prostgles_video_demo"
         | "Prostgles UI automated tests database",
@@ -89,10 +89,10 @@ test.describe("Create docs", () => {
         await goTo(page, "/connections");
         await page.getByTestId("Connection.configure").first().click();
         await page.getByTestId("config.bkp").click();
-        await page.getByTestId("config.bkp.create").click();
-        await page.getByTestId("config.bkp.create.start").click();
+        // await page.getByTestId("config.bkp.create").click();
+        // await page.getByTestId("config.bkp.create.start").click();
       } else if (fileName === "dashboard") {
-        await openConnection("prostgles_video_demo");
+        await openConnection("crypto");
       } else if (fileName === "new_connection") {
         await goTo(page, "/connections");
         await page.getByTestId("Connections.new").click();
@@ -138,5 +138,34 @@ test.describe("Create docs", () => {
     });
 
     await svgScreenshotsCompleteReferenced();
+  });
+
+  test("Docs have been regenerated within the last commit", async ({
+    page: p,
+  }) => {
+    // Check if docs are recent (generated within last commit)
+    const gitModifiedStr: string = require("child_process").execSync(
+      "git diff --name-only HEAD~1",
+      { encoding: "utf8" },
+    );
+    const editedFiles = gitModifiedStr
+      .split("\n")
+      .filter((f) => f.startsWith("docs/"));
+    const allGeneratedFilesRecursive = fs
+      .readdirSync(DOCS_DIR, { recursive: true })
+      .filter((f): f is string => {
+        return (
+          typeof f === "string" &&
+          /** Exclude dark screenshots */
+          (f.endsWith(".md") || (f.endsWith(".svg") && !f.includes("/dark/")))
+        );
+      });
+    if (allGeneratedFilesRecursive.length !== editedFiles.length) {
+      throw new Error(
+        `Docs have been generated, but not all files were committed. Committed: ${editedFiles.join(
+          ", ",
+        )}. Generated: ${allGeneratedFilesRecursive.join(", ")}`,
+      );
+    }
   });
 });

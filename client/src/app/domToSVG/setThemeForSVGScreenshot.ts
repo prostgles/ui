@@ -1,7 +1,7 @@
 import { localSettings } from "../../dashboard/localSettings";
 import { tout } from "../../utils";
 
-export const setThemeForSVGScreenshot = async (theme: "light" | "dark") => {
+export const setThemeForSVGScreenshot = async (theme: undefined | "dark") => {
   const resetUICallbacks: (() => void)[] = [];
 
   /** Ensure that any sql suggestion popups are opened back */
@@ -27,7 +27,11 @@ export const setThemeForSVGScreenshot = async (theme: "light" | "dark") => {
     }
   }
   localSettings.get().$set({ themeOverride: theme });
-  localStorage.setItem("theme", theme);
+  if (theme === "dark") {
+    localStorage.setItem("theme", theme);
+  } else {
+    localStorage.removeItem("theme");
+  }
   window.dispatchEvent(new Event("storage"));
   await tout(3000);
   for (const cb of resetUICallbacks) {

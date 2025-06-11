@@ -6,7 +6,6 @@ import type { Prgl } from "../../App";
 import Chip from "../../components/Chip";
 import { FlexCol, FlexRow } from "../../components/Flex";
 import { Label } from "../../components/Label";
-import { useWhyDidYouUpdate } from "../../components/MonacoEditor/useWhyDidYouUpdate";
 import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
 import { getPGIntervalAsText } from "../W_SQL/customRenderers";
 import type { editor } from "../W_SQL/monacoEditorTypes";
@@ -17,7 +16,6 @@ type P = Pick<Prgl, "dbsMethods" | "connectionId" | "dbs"> & {
 };
 export const ProcessLogs = (props: P) => {
   const { dbsMethods, connectionId, dbs, type } = props;
-  useWhyDidYouUpdate(props);
   const { data: conn } = dbs.connections.useSubscribeOne({ id: connectionId });
   const { data: dbConf } = dbs.database_configs.useSubscribeOne({
     $existsJoined: { connections: { id: connectionId } } as any,

@@ -32,32 +32,41 @@ export const SVG_SCREENSHOT_DIR = path.join(DOCS_DIR, SCREENSHOTS_PATH);
 
 type ScreenshotName = keyof typeof SVG_SCREENSHOT_NAMES;
 
+export const themes = [
+  { name: "light", dir: SVG_SCREENSHOT_DIR },
+  { name: "dark", dir: path.join(SVG_SCREENSHOT_DIR, "dark") },
+] as const;
 const saveSVGScreenshot = async (page: PageWIds, fileName: ScreenshotName) => {
-  const svg: string = await page.evaluate(() => {
-    //@ts-ignore
-    return window.toSVG(document.body);
-  });
-  if (!svg) throw "SVG empty";
+  const svgStrings: { light: string; dark: string } = await page.evaluate(
+    () => {
+      //@ts-ignore
+      return window.toSVG(document.body);
+    },
+  );
 
-  const filePath = path.join(SVG_SCREENSHOT_DIR, fileName + ".svg");
-  if (IS_PIPELINE) {
-    const existingFile =
-      fs.existsSync(filePath) ?
-        fs.readFileSync(filePath, {
-          encoding: "utf8",
-        })
-      : undefined;
-    if (existingFile?.trim() !== svg.trim()) {
-      throw new Error(
-        `SVG file ${fileName}.svg has changed. Please update the docs.`,
-      );
+  for (const theme of themes) {
+    const svg = svgStrings[theme.name];
+    if (!svg) throw "SVG missing";
+    fs.mkdirSync(theme.dir, { recursive: true });
+    const filePath = path.join(theme.dir, fileName + ".svg");
+    if (IS_PIPELINE) {
+      const existingFile =
+        fs.existsSync(filePath) ?
+          fs.readFileSync(filePath, {
+            encoding: "utf8",
+          })
+        : undefined;
+      if (existingFile?.trim() !== svg.trim()) {
+        throw new Error(
+          `SVG file ${fileName}.svg has changed. Please update the docs.`,
+        );
+      }
+    } else {
+      fs.writeFileSync(filePath, svg, {
+        encoding: "utf8",
+      });
     }
-  } else {
-    fs.writeFileSync(filePath, svg, {
-      encoding: "utf8",
-    });
   }
-  return svg;
 };
 
 export const saveSVGScreenshots = async (

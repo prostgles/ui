@@ -9,6 +9,7 @@ import { getBackgroundColor, hasBorder } from "./bgAndBorderToSVG";
 import { getFontIconElement } from "./fontIconToSVG";
 import { getForeignObject } from "./svgToSVG";
 import type { SVGContext } from "./elementToSVG";
+import { getTextForSVG } from "./getTextForSVG";
 
 const attributesToKeep = ["data-command", "data-key", "data-label"] as const;
 
@@ -115,64 +116,97 @@ export const getWhatToRenderOnSVG = async (
     border,
     childAffectingStyles,
     image,
-    text: (() => {
-      if (isTextNode(element)) {
-        throw new Error("Not expecting this to be honest");
-      }
-      if (isInputNode(element)) {
-        const inputRect = element.getBoundingClientRect();
-        const textContent = element.value || element.placeholder;
-        const isPlaceholder = !element.value;
-        if (!textContent) return;
-        const paddingLeft = parseFloat(style.paddingLeft);
-        const paddingTop = parseFloat(style.paddingTop);
-        return [
-          {
-            style:
-              isPlaceholder ?
-                getComputedStyle(element, "::placeholder")
-              : style,
-            textContent,
-            x: inputRect.x + paddingLeft,
-            y: inputRect.y + paddingTop,
-            width: inputRect.width - paddingLeft,
-            height: inputRect.height - paddingTop,
-          },
-        ];
-      }
+    text: getTextForSVG(element, style, {
+      x,
+      y,
+      width,
+      height,
+    }),
+    // (() => {
+    //   if (isTextNode(element)) {
+    //     throw new Error("Not expecting this to be honest");
+    //   }
+    //   if (isInputNode(element)) {
+    //     const inputRect = element.getBoundingClientRect();
+    //     const textContent = element.value || element.placeholder;
+    //     const isPlaceholder = !element.value;
+    //     if (!textContent) return;
+    //     const paddingLeft = parseFloat(style.paddingLeft);
+    //     const paddingTop = parseFloat(style.paddingTop);
+    //     const borderTop = parseFloat(style.borderTopWidth) || 0;
+    //     const borderLeft = parseFloat(style.borderLeftWidth) || 0;
+    //     return [
+    //       {
+    //         style:
+    //           isPlaceholder ?
+    //             getComputedStyle(element, "::placeholder")
+    //           : style,
+    //         textContent,
+    //         x: inputRect.x + paddingLeft + borderLeft,
+    //         y: inputRect.y + paddingTop - borderTop,
+    //         width: inputRect.width - paddingLeft,
+    //         height: inputRect.height - paddingTop,
+    //       },
+    //     ];
+    //   }
 
-      return Array.from(element.childNodes)
-        .filter(isTextNode)
-        .map((childTextNode) => {
-          const textContent = childTextNode.textContent;
-          if (!textContent) return;
-          const range = document.createRange();
-          range.selectNodeContents(childTextNode);
-          const textRect = range.getBoundingClientRect();
+    //   if (element.nodeName === "strong") {
+    //     // If the element is a strong tag, we can just return the text content
+    //     const textContent = element.textContent;
+    //     if (!textContent) return;
+    //     const range = document.createRange();
+    //     range.selectNodeContents(element);
+    //     const textRect = range.getBoundingClientRect();
+    //     return [
+    //       {
+    //         style: {
+    //           ...style,
+    //           fontWeight: "bold",
+    //           whiteSpace: "pre",
+    //         },
+    //         textContent,
+    //         x: textRect.x,
+    //         y: textRect.y,
+    //         width: textRect.width,
+    //         height: textRect.height,
+    //       },
+    //     ];
+    //   }
 
-          if (textRect.width > 0 && textRect.height > 0) {
-            const maxX = x + width;
-            const maxY = y + height;
-            const textMaxX = textRect.x + textRect.width;
-            const textMaxY = textRect.y + textRect.height;
-            const textxMaxWidth = Math.min(textMaxX, maxX) - textRect.x;
-            const textyMaxHeight = Math.min(textMaxY, maxY) - textRect.y;
-            return {
-              style: {
-                ...style,
-                /** This is done to preserve leading spaces */
-                whiteSpace: "pre",
-              },
-              textContent,
-              x: textRect.x,
-              y: textRect.y,
-              /** This ensures the actual visible/non overflown size of text is used */
-              width: Math.min(textRect.width, textxMaxWidth),
-              height: Math.min(textRect.height, textyMaxHeight),
-            };
-          }
-        })
-        .filter(isDefined);
-    })(),
+    //   return Array.from(element.childNodes)
+    //     .filter(isTextNode)
+    //     .map((childTextNode) => {
+    //       const textContent = childTextNode.textContent;
+    //       if (!textContent) return;
+    //       const range = document.createRange();
+    //       range.selectNodeContents(childTextNode);
+    //       const textRect = range.getBoundingClientRect();
+
+    //       const maxX = x + width;
+    //       const maxY = y + height;
+    //       const textMaxX = textRect.x + textRect.width;
+    //       const textMaxY = textRect.y + textRect.height;
+    //       const textxMaxWidth = Math.min(textMaxX, maxX) - textRect.x;
+    //       const textyMaxHeight = Math.min(textMaxY, maxY) - textRect.y;
+    //       const visibleTextWidth = Math.min(textRect.width, textxMaxWidth);
+    //       const visibleTextHeight = Math.min(textRect.height, textyMaxHeight);
+    //       if (visibleTextWidth && visibleTextHeight) {
+    //         return {
+    //           style: {
+    //             ...style,
+    //             /** This is done to preserve leading spaces */
+    //             whiteSpace: "pre",
+    //           },
+    //           textContent,
+    //           x: textRect.x,
+    //           y: textRect.y,
+    //           /** This ensures the actual visible/non overflown size of text is used */
+    //           width: visibleTextWidth,
+    //           height: visibleTextHeight,
+    //         };
+    //       }
+    //     })
+    //     .filter(isDefined);
+    // })(),
   };
 };

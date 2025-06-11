@@ -148,19 +148,8 @@ export const elementToSVG = async (
     makeRect().setAttribute("stroke", whatToRender.border.borderColor);
   }
   if (whatToRender.text?.length) {
-    whatToRender.text.forEach((textInfo) => {
-      textToSVG(
-        element,
-        g,
-        textInfo.textContent,
-        textInfo.x,
-        textInfo.y,
-        textInfo.width,
-        textInfo.height,
-        textInfo.style,
-        style,
-        bboxCode,
-      );
+    whatToRender.text.forEach((textForSVG) => {
+      textToSVG(element, g, textForSVG, style, bboxCode);
     });
   }
 
@@ -202,8 +191,11 @@ export const elementToSVG = async (
     }
   }
 
+  // if (g.textContent?.includes("Table config")) {
+  //   debugger;
+  // }
   if (g.childNodes.length) {
-    addOverflowClipPath(element, style, g, makeRect(), context);
+    addOverflowClipPath(element, style, g, { x, y, width, height }, context);
     parentSvg.appendChild(g);
   }
 
@@ -220,28 +212,60 @@ const getChildrenSortedByZIndex = (element: HTMLElement): HTMLElement[] => {
 };
 
 const mustAddClipPath = (element: HTMLElement, style: CSSStyleDeclaration) => {
-  if (element instanceof HTMLCanvasElement) return true;
-  if (!includes(style.overflow, ["hidden", "auto", "scroll"])) return false;
+  if (element instanceof HTMLCanvasElement) {
+    return true;
+  }
+  if (!includes(style.overflow, ["hidden", "auto", "scroll"])) {
+    return false;
+  }
   const elementIsOverflowing =
     element.scrollHeight > element.clientHeight ||
     element.scrollWidth > element.clientWidth;
-  if (!elementIsOverflowing) return false;
-  return Array.from(element.children).some(
-    (child) => isElementVisible(child).isVisible,
+  if (!elementIsOverflowing) {
+    return false;
+  }
+  if (!element.children.length && element.childNodes.length) {
+    return true;
+  }
+  const hasNormalFlowChildren = Array.from(element.children).some(
+    (child) =>
+      isElementNode(child) &&
+      !includes(getComputedStyle(child).position, ["absolute", "fixed"]),
   );
+  return hasNormalFlowChildren;
+  // return Array.from(element.children).some(
+  //   (child) => isElementVisible(child).isVisible,
+  // );
 };
 
 export const addOverflowClipPath = (
   element: HTMLElement,
   style: CSSStyleDeclaration,
   g: SVGGElement,
-  clipRect: SVGScreenshotNodeType,
+  {
+    x,
+    height,
+    width,
+    y,
+  }: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  },
   context: SVGContext,
 ) => {
   /**
    * If overflow is set to hidden, we need to add a clip path to the group
    */
   if (!mustAddClipPath(element, style)) return;
+  const clipRect = document.createElementNS(SVG_NAMESPACE, "rect");
+  clipRect.setAttribute("x", x);
+  clipRect.setAttribute("y", y);
+  clipRect.setAttribute("width", width);
+  clipRect.setAttribute("height", height);
+  clipRect.setAttribute("fill", "none");
+  clipRect.setAttribute("stroke", "none");
   const clipPath = document.createElementNS(SVG_NAMESPACE, "clipPath");
   const clipPathId = `clip-${context.idCounter++}`;
   clipPath.setAttribute("id", clipPathId);
