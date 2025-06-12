@@ -19,6 +19,7 @@ export const getInitiatedPostgresqlPIDs = (parentPid: number) => {
       };
     });
   console.log(`TCP connections for parent PID ${parentPid}:`, tcpConnections);
+  // then just ` sudo lsof -i :localPort `
   // try {
   //   // Get network connections for the parent process
   //   const netContent = readFileSync(`/proc/${parentPid}/net/tcp`, "utf8");

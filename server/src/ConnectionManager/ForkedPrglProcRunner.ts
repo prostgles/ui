@@ -116,7 +116,6 @@ export class ForkedPrglProcRunner {
   destroy = (databaseNotFound = false) => {
     this.destroyed = true;
     this.databaseNotFound = databaseNotFound;
-    getInitiatedPostgresqlPIDs(process.pid);
     this.proc.kill("SIGKILL");
   };
 

@@ -140,7 +140,8 @@ export type SampleSchema = {
 } & ({
     type: "sql";
     file: string;
-} | {
+} | SampleSchemaDir);
+export type SampleSchemaDir = {
     type: "dir";
     tableConfigTs: string;
     onMountTs: string;
@@ -148,7 +149,9 @@ export type SampleSchema = {
     workspaceConfig: {
         workspaces: DBSSchema["workspaces"][];
     } | undefined;
-});
+    connection: Pick<DBSSchema["connections"], "db_schema_filter" | "info" | "table_options"> | undefined;
+    databaseConfig: Pick<DBSSchema["database_configs"], "table_schema_positions" | "table_schema_transform"> | undefined;
+};
 export type ProcStats = {
     pid: number;
     cpu: number;

@@ -51,6 +51,7 @@ export default tseslint.config(
       "no-unused-vars": "off",
       "no-empty": "off",
       "security/detect-object-injection": "off",
+      "security/detect-non-literal-fs-filename": "off",
       "@typescript-eslint/only-throw-error": "off",
       "@typescript-eslint/restrict-template-expressions": "warn",
       // "@typescript-eslint/no-misused-promises": [

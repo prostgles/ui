@@ -19,7 +19,7 @@ import { asName, isEmpty, pickKeys } from "prostgles-types";
 import { isDefined } from "../../../commonTypes/filterUtils";
 import type { LLMMessage } from "../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import type { SampleSchema } from "../../../commonTypes/utils";
+import type { SampleSchema, SampleSchemaDir } from "../../../commonTypes/utils";
 import { getPasswordHash } from "../authConfig/authUtils";
 import { checkClientIP, createSessionSecret } from "../authConfig/sessionUtils";
 import type { Backups } from "../BackupManager/BackupManager";
@@ -54,6 +54,7 @@ import { upsertConnection } from "../upsertConnection";
 import { askLLM } from "./askLLM/askLLM";
 import { getNodeTypes } from "./getNodeTypes";
 import { prostglesSignup } from "./prostglesSignup";
+import { getSampleSchemas } from "./applySampleSchema";
 
 export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   params,
@@ -715,47 +716,6 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
 process.on("exit", (code) => {
   console.log(code);
 });
-
-const tryReadFile = (path: string) => {
-  try {
-    return fs.readFileSync(path, "utf8");
-  } catch (err) {
-    return undefined;
-  }
-};
-export const getSampleSchemas = (): SampleSchema[] => {
-  const path = actualRootDir + `/sample_schemas`;
-  const files = fs.readdirSync(path).filter((name) => !name.startsWith("_"));
-  return files
-    .map((name) => {
-      const schemaPath = `${path}/${name}`;
-      if (fs.statSync(`${schemaPath}`).isDirectory()) {
-        const workspaceConfigStr = tryReadFile(
-          `${schemaPath}/workspaceConfig.ts`,
-        );
-
-        return {
-          path,
-          name,
-          type: "dir" as const,
-          tableConfigTs: tryReadFile(`${schemaPath}/tableConfig.ts`) ?? "",
-          onMountTs: tryReadFile(`${schemaPath}/onMount.ts`) ?? "",
-          onInitSQL: tryReadFile(`${schemaPath}/onInit.sql`) ?? "",
-          workspaceConfig:
-            workspaceConfigStr ?
-              getEvaledExports(workspaceConfigStr).workspaceConfig
-            : undefined,
-        };
-      }
-      return {
-        name,
-        path,
-        type: "sql" as const,
-        file: tryReadFile(schemaPath) ?? "",
-      };
-    })
-    .filter(isDefined);
-};
 
 export const runConnectionQuery = async (
   connId: string,

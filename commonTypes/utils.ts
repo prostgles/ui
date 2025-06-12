@@ -196,14 +196,27 @@ export type SampleSchema = {
       type: "sql";
       file: string;
     }
-  | {
-      type: "dir";
-      tableConfigTs: string;
-      onMountTs: string;
-      onInitSQL: string;
-      workspaceConfig: { workspaces: DBSSchema["workspaces"][] } | undefined;
-    }
+  | SampleSchemaDir
 );
+export type SampleSchemaDir = {
+  type: "dir";
+  tableConfigTs: string;
+  onMountTs: string;
+  onInitSQL: string;
+  workspaceConfig: { workspaces: DBSSchema["workspaces"][] } | undefined;
+  connection:
+    | Pick<
+        DBSSchema["connections"],
+        "db_schema_filter" | "info" | "table_options"
+      >
+    | undefined;
+  databaseConfig:
+    | Pick<
+        DBSSchema["database_configs"],
+        "table_schema_positions" | "table_schema_transform"
+      >
+    | undefined;
+};
 
 export type ProcStats = {
   pid: number;

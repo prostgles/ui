@@ -3,13 +3,13 @@ import React from "react";
 import { ROUTES } from "../../../../commonTypes/utils";
 import type { PrglState } from "../../App";
 import Btn from "../../components/Btn";
-import { FlexCol } from "../../components/Flex";
+import { FlexCol, FlexRow } from "../../components/Flex";
 import { InfoRow } from "../../components/InfoRow";
 import Loading from "../../components/Loading";
 import { t } from "../../i18n/i18nUtils";
 import { Connection } from "./Connection";
-import { ConnectionServer } from "./ConnectionServer";
 import { ConnectionsOptions } from "./ConnectionsOptions";
+import { CreateConnection } from "./CreateConnection/CreateConnection";
 import { useConnections } from "./useConnections";
 import { useConnectionServersList } from "./useConnectionServersList";
 
@@ -19,6 +19,13 @@ export const Connections = (props: PrglState) => {
   const { connections, isAdmin, showDbNames } = state;
   const { serverUserGroupings } = useConnectionServersList(state);
   if (!user || !connections || !serverUserGroupings) return <Loading />;
+
+  const {
+    createConnection,
+    getSampleSchemas,
+    runConnectionQuery,
+    validateConnection,
+  } = dbsMethods;
 
   return (
     <FlexCol
@@ -48,33 +55,57 @@ export const Connections = (props: PrglState) => {
         <ConnectionsOptions {...props} {...state} />
       </div>
       <div className="Connections_list flex-col o-auto min-h-0 p-p5 pb-1 mt-1 gap-2 ai-center">
-        {serverUserGroupings.map(({ name, conns }, i) => (
-          <div key={i} className=" max-w-800 w-full">
-            <ConnectionServer
-              name={name}
-              dbsMethods={dbsMethods}
-              connections={conns}
-              dbs={dbs}
-              showCreateText={Boolean(
-                isAdmin &&
-                  serverUserGroupings.length <= 1 &&
-                  !conns.filter((c) => !c.is_state_db).length,
-              )}
-            />
-            <div className="flex-col gap-p5 ">
-              {conns.map((c) => (
-                //@ts-ignore
-                <Connection
-                  key={c.id}
-                  {...props}
-                  connection={c}
-                  showDbName={showDbNames}
-                  isAdmin={isAdmin}
-                />
-              ))}
+        {serverUserGroupings.map(({ name, conns }, i) => {
+          const firstConn = conns[0];
+          return (
+            <div key={i} className=" max-w-800 w-full">
+              <FlexRow
+                className="gap-p25 jc-end p-p5"
+                style={{ fontWeight: 400 }}
+              >
+                <h4
+                  title={t.ConnectionServer["Server info"]}
+                  className="m-0 flex-row gap-p5 p-p5 ai-center text-1p5 jc-end text-ellipsis"
+                >
+                  <div className="text-ellipsis">{name}</div>
+                </h4>
+                {firstConn &&
+                  createConnection &&
+                  getSampleSchemas &&
+                  runConnectionQuery &&
+                  validateConnection && (
+                    <CreateConnection
+                      connId={firstConn.id}
+                      createConnection={createConnection}
+                      getSampleSchemas={getSampleSchemas}
+                      runConnectionQuery={runConnectionQuery}
+                      validateConnection={validateConnection}
+                      connections={conns}
+                      connectionGroupKey={name}
+                      dbs={dbs}
+                      showCreateText={Boolean(
+                        isAdmin &&
+                          serverUserGroupings.length <= 1 &&
+                          !conns.filter((c) => !c.is_state_db).length,
+                      )}
+                    />
+                  )}
+              </FlexRow>
+              <div className="flex-col gap-p5 ">
+                {conns.map((c) => (
+                  //@ts-ignore
+                  <Connection
+                    key={c.id}
+                    {...props}
+                    connection={c}
+                    showDbName={showDbNames}
+                    isAdmin={isAdmin}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </FlexCol>
   );

@@ -5,7 +5,7 @@ import type {
 } from "prostgles-server/dist/ProstglesTypes";
 import type { DbTableInfo } from "prostgles-server/dist/PublishParser/publishTypesAndUtils";
 import type { DB, OnInitReason } from "prostgles-server/dist/initProstgles";
-import type { FileColumnConfig } from "prostgles-types";
+import type { AnyObject, FileColumnConfig } from "prostgles-types";
 import { pickKeys } from "prostgles-types";
 import ts, { ModuleKind, ModuleResolutionKind, ScriptTarget } from "typescript";
 import type { Connections, DatabaseConfigs, DBS } from "..";
@@ -143,27 +143,31 @@ export const getRestApiConfig = (
 
   return res;
 };
-export const getEvaledExports = (code: string) => {
+export const getEvaledExports = <T>(
+  code: string | undefined,
+): T | undefined => {
+  if (!code) return undefined;
   /**
    * This is needed to ensure all named exports are returned in eval
    */
   const ending = "\n\nexports;";
   const sourceCode = getCompiledTS(code + ending);
-  return eval(sourceCode);
+  // eslint-disable-next-line security/detect-eval-with-expression
+  const result = eval(sourceCode) as T;
+  return result;
 };
 
 type TableDbConfig = Pick<DatabaseConfigs, "table_config" | "table_config_ts">;
-export const getCompiledTableConfig = ({
+type CompiledTableConfig = { tableConfig: TableConfig; dashboardConfig?: any };
+const getCompiledTableConfig = ({
   table_config,
   table_config_ts,
-}: TableDbConfig):
-  | undefined
-  | { tableConfig: TableConfig; dashboardConfig?: any } => {
+}: TableDbConfig): undefined | CompiledTableConfig => {
   if (table_config) return { tableConfig: table_config as TableConfig };
   if (!table_config_ts) return undefined;
 
-  const res = getEvaledExports(table_config_ts);
-  if (!res.tableConfig)
+  const res = getEvaledExports<CompiledTableConfig>(table_config_ts);
+  if (!res?.tableConfig)
     throw "A table_config_ts must export a const named 'tableConfig' ";
   return res;
 };
@@ -185,7 +189,7 @@ type AlertIfReferencedFileColumnsRemovedArgs = {
 };
 export const alertIfReferencedFileColumnsRemoved = async function (
   this: ConnectionManager,
-  { connId, reason, tables, db }: AlertIfReferencedFileColumnsRemovedArgs,
+  { connId, reason, tables }: AlertIfReferencedFileColumnsRemovedArgs,
 ) {
   /** Remove dropped referenced file columns */
   const { dbConf, isSuperUser } = this.prglConnections[connId] ?? {};

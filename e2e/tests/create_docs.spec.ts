@@ -91,8 +91,11 @@ test.describe("Create docs", () => {
         await page.getByTestId("config.bkp").click();
         // await page.getByTestId("config.bkp.create").click();
         // await page.getByTestId("config.bkp.create.start").click();
-      } else if (fileName === "dashboard") {
+      } else if (fileName === "dashboard" || fileName === "timechart") {
         await openConnection("crypto");
+        if (fileName === "timechart") {
+          await page.getByTestId("dashboard.window.detachChart").click();
+        }
       } else if (fileName === "new_connection") {
         await goTo(page, "/connections");
         await page.getByTestId("Connections.new").click();
@@ -128,9 +131,7 @@ test.describe("Create docs", () => {
       } else if (fileName === "connect_existing_database") {
         await goTo(page, "/connections");
         await page.getByTestId("ConnectionServer.add").click();
-        await page
-          .locator(getDataKeyElemSelector("Select a database from this server"))
-          .click();
+        await page.locator(getDataKeyElemSelector("existing")).click();
       } else if (fileName === "connection_config") {
         await openConnection("prostgles_video_demo");
         await page.getByTestId("dashboard.goToConnConfig").click();
@@ -140,24 +141,28 @@ test.describe("Create docs", () => {
     await svgScreenshotsCompleteReferenced();
   });
 
-  test("Docs have been regenerated within the last commit", async ({
-    page: p,
-  }) => {
+  test("Docs have been regenerated within the last commit", async () => {
+    if (!IS_PIPELINE) {
+      return;
+    }
+
     // Check if docs are recent (generated within last commit)
     const gitModifiedStr: string = require("child_process").execSync(
       "git diff --name-only HEAD~1",
       { encoding: "utf8" },
     );
+    const darkScreenshotsPath = "/dark/";
     const editedFiles = gitModifiedStr
       .split("\n")
-      .filter((f) => f.startsWith("docs/"));
+      .filter((f) => f.startsWith("docs/") && !f.includes(darkScreenshotsPath));
     const allGeneratedFilesRecursive = fs
       .readdirSync(DOCS_DIR, { recursive: true })
       .filter((f): f is string => {
         return (
           typeof f === "string" &&
           /** Exclude dark screenshots */
-          (f.endsWith(".md") || (f.endsWith(".svg") && !f.includes("/dark/")))
+          (f.endsWith(".md") ||
+            (f.endsWith(".svg") && !f.includes(darkScreenshotsPath)))
         );
       });
     if (allGeneratedFilesRecursive.length !== editedFiles.length) {

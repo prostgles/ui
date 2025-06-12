@@ -535,9 +535,13 @@ export class ConnectionManager {
 
   async disconnect(conId: string): Promise<boolean> {
     await cdbCache[conId]?.destroy();
-    if (this.prglConnections[conId]) {
+    const conn = this.prglConnections[conId];
+    if (conn) {
+      conn.methodRunner?.destroy();
+      conn.tableConfigRunner?.destroy();
+      conn.onMountRunner?.destroy();
       //TODO: fix re-started connection not working. Might need to use ws instead of socket.io
-      await this.prglConnections[conId].prgl?.destroy();
+      await conn.prgl?.destroy();
       delete this.prglConnections[conId];
       return true;
     }
