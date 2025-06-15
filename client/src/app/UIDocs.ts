@@ -196,6 +196,6 @@ export const flatDocs = UIDocs.map((doc) => getFlatDocs(doc))
   .filter(isDefined)
   .flat();
 
-if (isPlaywrightTest || true) {
+if (isPlaywrightTest) {
   window.toSVG = domToThemeAwareSVG;
 }

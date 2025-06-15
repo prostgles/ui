@@ -34,7 +34,10 @@
     "Copy to clipboard": "क्लिपबोर्ड पर कॉपी करें",
     "Send": "भेजें",
     "Toggle fullscreen": "पूर्ण स्क्रीन टॉगल करें",
-    "experimental": "प्रायोगिक"
+    "experimental": "प्रायोगिक",
+    "Stop recording": "रिकॉर्डिंग रोकें",
+    "Speech to text": "वाणी से पाठ",
+    "Record audio": "ऑडियो रिकॉर्ड करें"
   },
   "App": {
     "Connections": "कनेक्शन",

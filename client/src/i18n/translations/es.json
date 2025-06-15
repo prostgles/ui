@@ -34,7 +34,10 @@
     "Copy to clipboard": "Copiar al portapapeles",
     "Send": "Enviar",
     "Toggle fullscreen": "Alternar pantalla completa",
-    "experimental": "experimental"
+    "experimental": "experimental",
+    "Stop recording": "Detener grabación",
+    "Speech to text": "Conversión de voz a texto",
+    "Record audio": "Grabar audio"
   },
   "App": {
     "Connections": "Conexiones",

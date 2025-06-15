@@ -34,7 +34,10 @@
     "Copy to clipboard": "In die Zwischenablage kopieren",
     "Send": "Senden",
     "Toggle fullscreen": "Vollbild umschalten",
-    "experimental": "experimentell"
+    "experimental": "experimentell",
+    "Stop recording": "Aufnahme stoppen",
+    "Speech to text": "Sprache zu Text",
+    "Record audio": "Audio aufnehmen"
   },
   "App": {
     "Connections": "Verbindungen",

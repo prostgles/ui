@@ -317,13 +317,13 @@ export default class Popup extends RTComp<PopupProps, PopupState> {
               zIndex: POPUP_ZINDEX,
               ...clickCatchStyle,
             }}
-            className="ClickCatchOverlay absolute inset-0 flex-col"
+            className="flex-col"
             onClick={onClose}
           />
         )}
 
         <div
-          className={`${POPUP_CLASSES.root} positioning:${positioning} card m-auto bg-popup${positioning === "right-panel" ? "-content" : ""} flex-col shadow-xl  o-hidden`}
+          className={`${POPUP_CLASSES.root} positioning_${positioning} card m-auto bg-popup${positioning === "right-panel" ? "-content" : ""} flex-col shadow-xl  o-hidden`}
           data-command={this.props["data-command"]}
           ref={(r) => {
             if (r) {

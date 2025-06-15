@@ -20,6 +20,7 @@ export const isElementVisible = (element: Element) => {
   const isOnParentScreen = isInParentViewport(element, bbox);
   return { isVisible: isOnParentScreen, style, bbox };
 };
+
 const isInViewport = (
   bbox: DOMRect,
   vport: Pick<DOMRect, "x" | "y" | "right" | "bottom">,

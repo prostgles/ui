@@ -49,6 +49,7 @@ export const domToSVG = async (node: HTMLElement) => {
   style.textContent = Array.from(cssDeclarations.entries())
     .map(([_selector, declaration]) => declaration)
     .join("\n");
+
   await wrapAllSVGText(svg);
 
   const xmlSerializer = new XMLSerializer();

@@ -34,7 +34,10 @@
     "Copy to clipboard": "复制到剪贴板",
     "Send": "发送",
     "Toggle fullscreen": "切换全屏",
-    "experimental": "实验性功能"
+    "experimental": "实验性功能",
+    "Stop recording": "停止录音",
+    "Speech to text": "语音转文本",
+    "Record audio": "录音"
   },
   "App": {
     "Connections": "连接",

@@ -382,7 +382,7 @@ export type DBGeneratedSchema = {
       id?: string;
       message:  ( 
  |  {  type: 'text';  text: string; }
- |  {  type: 'image';  source: {  type: 'base64';  media_type: string;  data: string; }; }
+ |  {  type: 'image' | 'audio' | 'video' | 'application' | 'text';  source: {  type: 'base64';  media_type: string;  data: string; }; }
  |  {  type: 'tool_result';  tool_use_id: string;  tool_name?: string;  content: | string |  (  |  {  type: 'text';  text: string; } |  {  type: 'image' | 'audio';  mimeType: string;  data: string; } |  {  type: 'resource';  resource: {  uri: string;  mimeType?: string;  text?: string;  blob?: string; }; } )[];  is_error?: boolean; }
  |  {  type: 'tool_use';  id: string;  name: string;  input: any; } )[]
       meta?: null | any;

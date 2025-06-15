@@ -96,7 +96,7 @@
 }
 
 /* .chat-container.chat-component .message:not(.incoming) video::-webkit-media-controls-panel, */
-.chat-container.chat-component
+/* .chat-container.chat-component
   .message:not(.incoming)
   audio::-webkit-media-controls-panel {
   background: rgb(5, 149, 252);
@@ -148,7 +148,7 @@
   color: white !important;
   fill: white !important;
   stroke: white !important;
-}
+} */
 
 .chat-container.chat-component .message.media {
   padding: 0;

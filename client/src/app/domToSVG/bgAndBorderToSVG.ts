@@ -110,59 +110,6 @@ export function getBackgroundColor(style: CSSStyleDeclaration) {
     : undefined;
 }
 
-// /**
-//  * Build a <path> “d” attribute for a rectangle with arbitrary corner radii.
-//  */
-// export const roundedRectPath = (
-//   x: number,
-//   y: number,
-//   w: number,
-//   h: number,
-//   [rtl, rtr, rbr, rbl]: [number, number, number, number],
-// ) => {
-//   /* Clamp radii so that they never overlap (same thing the browser does) */
-//   const sumH = rtl + rtr;
-//   const sumH2 = rbl + rbr;
-//   const sumV = rtl + rbl;
-//   const sumV2 = rtr + rbr;
-
-//   if (sumH > w) {
-//     const scale = w / sumH;
-//     rtl *= scale;
-//     rtr *= scale;
-//   }
-//   if (sumH2 > w) {
-//     const scale = w / sumH2;
-//     rbl *= scale;
-//     rbr *= scale;
-//   }
-//   if (sumV > h) {
-//     const scale = h / sumV;
-//     rtl *= scale;
-//     rbl *= scale;
-//   }
-//   if (sumV2 > h) {
-//     const scale = h / sumV2;
-//     rtr *= scale;
-//     rbr *= scale;
-//   }
-
-//   /* Path – clockwise, starting in the top-left corner */
-//   return [
-//     `M${x + rtl},${y}`, // start
-//     `H${x + w - rtr}`, // top
-//     rtr ? `A${rtr},${rtr} 0 0 1 ${x + w},${y + rtr}` : "",
-//     `V${y + h - rbr}`, // right
-//     rbr ? `A${rbr},${rbr} 0 0 1 ${x + w - rbr},${y + h}` : "",
-//     `H${x + rbl}`, // bottom
-//     rbl ? `A${rbl},${rbl} 0 0 1 ${x},${y + h - rbl}` : "",
-//     `V${y + rtl}`, // left
-//     rtl ? `A${rtl},${rtl} 0 0 1 ${x + rtl},${y}` : "",
-//     "Z",
-//   ]
-//     .filter(Boolean)
-//     .join(" ");
-// };
 /**
  * Build a <path> "d" attribute for a rectangle with arbitrary corner radii.
  * Accounts for border width and ensures crisp edges by using whole numbers
@@ -174,77 +121,45 @@ export const roundedRectPath = (
   w: number,
   h: number,
   [rtl, rtr, rbr, rbl]: [number, number, number, number],
-  borderWidth: number,
 ) => {
-  // Calculate the stroke offset (half the border width)
-  const strokeOffset = borderWidth / 2;
-
-  // Adjust bbox for stroke - stroke is centered on the path
-  const innerX = x + strokeOffset;
-  const innerY = y + strokeOffset;
-  const innerW = w - borderWidth;
-  const innerH = h - borderWidth;
-
-  // Ensure crisp edges by rounding coordinates and applying half-pixel offset if needed
-  const crispX =
-    borderWidth % 2 === 1 ? Math.round(innerX) + 0.5 : Math.round(innerX);
-  const crispY =
-    borderWidth % 2 === 1 ? Math.round(innerY) + 0.5 : Math.round(innerY);
-  const crispW = Math.round(innerW);
-  const crispH = Math.round(innerH);
-
-  // Adjust radii for border width (radii are measured from the stroke center)
-  let adjustedRtl = Math.max(0, rtl - strokeOffset);
-  let adjustedRtr = Math.max(0, rtr - strokeOffset);
-  let adjustedRbr = Math.max(0, rbr - strokeOffset);
-  let adjustedRbl = Math.max(0, rbl - strokeOffset);
-
   /* Clamp radii so that they never overlap (same thing the browser does) */
-  const sumH = adjustedRtl + adjustedRtr;
-  const sumH2 = adjustedRbl + adjustedRbr;
-  const sumV = adjustedRtl + adjustedRbl;
-  const sumV2 = adjustedRtr + adjustedRbr;
+  const sumH = rtl + rtr;
+  const sumH2 = rbl + rbr;
+  const sumV = rtl + rbl;
+  const sumV2 = rtr + rbr;
 
-  if (sumH > crispW) {
-    const scale = crispW / sumH;
-    adjustedRtl *= scale;
-    adjustedRtr *= scale;
+  if (sumH > w) {
+    const scale = w / sumH;
+    rtl *= scale;
+    rtr *= scale;
   }
-  if (sumH2 > crispW) {
-    const scale = crispW / sumH2;
-    adjustedRbl *= scale;
-    adjustedRbr *= scale;
+  if (sumH2 > w) {
+    const scale = w / sumH2;
+    rbl *= scale;
+    rbr *= scale;
   }
-  if (sumV > crispH) {
-    const scale = crispH / sumV;
-    adjustedRtl *= scale;
-    adjustedRbl *= scale;
+  if (sumV > h) {
+    const scale = h / sumV;
+    rtl *= scale;
+    rbl *= scale;
   }
-  if (sumV2 > crispH) {
-    const scale = crispH / sumV2;
-    adjustedRtr *= scale;
-    adjustedRbr *= scale;
+  if (sumV2 > h) {
+    const scale = h / sumV2;
+    rtr *= scale;
+    rbr *= scale;
   }
 
   /* Path – clockwise, starting in the top-left corner */
   return [
-    `M${crispX + adjustedRtl},${crispY}`, // start
-    `H${crispX + crispW - adjustedRtr}`, // top
-    adjustedRtr ?
-      `A${adjustedRtr},${adjustedRtr} 0 0 1 ${crispX + crispW},${crispY + adjustedRtr}`
-    : "",
-    `V${crispY + crispH - adjustedRbr}`, // right
-    adjustedRbr ?
-      `A${adjustedRbr},${adjustedRbr} 0 0 1 ${crispX + crispW - adjustedRbr},${crispY + crispH}`
-    : "",
-    `H${crispX + adjustedRbl}`, // bottom
-    adjustedRbl ?
-      `A${adjustedRbl},${adjustedRbl} 0 0 1 ${crispX},${crispY + crispH - adjustedRbl}`
-    : "",
-    `V${crispY + adjustedRtl}`, // left
-    adjustedRtl ?
-      `A${adjustedRtl},${adjustedRtl} 0 0 1 ${crispX + adjustedRtl},${crispY}`
-    : "",
+    `M${x + rtl},${y}`, // start
+    `H${x + w - rtr}`, // top
+    rtr ? `A${rtr},${rtr} 0 0 1 ${x + w},${y + rtr}` : "",
+    `V${y + h - rbr}`, // right
+    rbr ? `A${rbr},${rbr} 0 0 1 ${x + w - rbr},${y + h}` : "",
+    `H${x + rbl}`, // bottom
+    rbl ? `A${rbl},${rbl} 0 0 1 ${x},${y + h - rbl}` : "",
+    `V${y + rtl}`, // left
+    rtl ? `A${rtl},${rtl} 0 0 1 ${x + rtl},${y}` : "",
     "Z",
   ]
     .filter(Boolean)

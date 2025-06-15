@@ -34,7 +34,10 @@
     "Copy to clipboard": "Скопировать в буфер обмена",
     "Send": "Отправить",
     "Toggle fullscreen": "Переключить полноэкранный режим",
-    "experimental": "экспериментальный"
+    "experimental": "экспериментальный",
+    "Stop recording": "Остановить запись",
+    "Speech to text": "Речь в текст",
+    "Record audio": "Записать аудио"
   },
   "App": {
     "Connections": "Подключения",

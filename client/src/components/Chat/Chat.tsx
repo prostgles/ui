@@ -1,15 +1,19 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "./Chat.css";
 
-import { mdiAttachment, mdiMicrophone, mdiSend, mdiStop } from "@mdi/js";
+import { mdiAttachment, mdiSend } from "@mdi/js";
+import { usePromise } from "prostgles-client/dist/react-hooks";
+import { t } from "../../i18n/i18nUtils";
 import Btn from "../Btn";
+import Chip from "../Chip";
+import { useDropZone } from "../FileInput/DropZone";
 import { classOverride, FlexCol, FlexRow } from "../Flex";
 import { Icon } from "../Icon/Icon";
+import { MediaViewer } from "../MediaViewer";
+import { ScrollFade } from "../SearchList/ScrollFade";
 import { ChatMessage } from "./ChatMessage";
+import { ChatSpeech } from "./ChatSpeech/ChatSpeech";
 import { useChatOnPaste } from "./useChatOnPaste";
-import { useAudioRecorder } from "./utils/AudioRecorder";
-import { useDropZone } from "../FileInput/DropZone";
-import { t } from "../../i18n/i18nUtils";
 
 export type Message = {
   id: number | string;
@@ -19,25 +23,15 @@ export type Message = {
   incoming: boolean;
   isLoading?: boolean;
   sent: Date;
-  // media?: {
-  //   url: string;
-  //   content_type: string;
-  //   name: string;
-  // };
 };
 
 export type ChatProps = {
   style?: React.CSSProperties;
   className?: string;
-  onSend: (
-    msg?: string,
-    media?: Blob | ArrayBuffer | File,
-    mediaName?: string,
-    mediaContentType?: string,
-  ) => Promise<any | void>;
+  onSend: (msg?: string, files?: File[]) => Promise<any | void>;
   messages: Message[];
   allowedMessageTypes?: Partial<{
-    audio: boolean;
+    speech: { tts: boolean; audio: boolean };
     file: boolean;
   }>;
   disabledInfo?: string;
@@ -52,27 +46,22 @@ export const Chat = (props: ChatProps) => {
     onSend,
     disabledInfo,
     allowedMessageTypes = {
-      audio: false,
       file: false,
     },
     actionBar,
   } = props;
+  const speech = allowedMessageTypes.speech;
+
+  const [files, setFiles] = useState<File[]>([]);
+  const onAddFiles = useCallback(
+    (newFiles: File[]) => {
+      setFiles((prev) => [...prev, ...newFiles]);
+    },
+    [setFiles],
+  );
 
   const [scrollRef, setScrollRef] = useState<HTMLDivElement>();
   const ref = useRef<HTMLTextAreaElement>(null);
-
-  const onSendAudio = useCallback(
-    async (blob: Blob) => {
-      try {
-        await onSend("", blob, "recording.ogg", "audio/webm");
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    [onSend],
-  );
-  const { startRecording, stopRecording, isRecording } =
-    useAudioRecorder(onSendAudio);
 
   useEffect(() => {
     if (scrollRef) {
@@ -83,38 +72,76 @@ export const Chat = (props: ChatProps) => {
     }
   }, [messages, scrollRef]);
 
-  const getCurrentMessage = () => ref.current?.value ?? "";
-  const setCurrentMessage = (msg: string) => {
+  const getCurrentMessage = useCallback(() => ref.current?.value ?? "", []);
+  const setCurrentMessage = useCallback((msg: string) => {
     if (!ref.current) return;
     ref.current.value = msg;
-  };
+  }, []);
 
+  const onSpeech = useCallback(
+    async (audioOrTranscript: Blob | string, autoSend: boolean) => {
+      if (typeof audioOrTranscript === "string") {
+        if (autoSend) {
+          await onSend(audioOrTranscript, files);
+          setCurrentMessage("");
+        } else {
+          setCurrentMessage(audioOrTranscript);
+        }
+        return;
+      } else {
+        try {
+          const file = new File([audioOrTranscript], "recording.ogg", {
+            type: "audio/webm",
+            lastModified: Date.now(),
+          });
+          if (autoSend) {
+            await onSend("", [file]);
+          } else {
+            onAddFiles([file]);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    },
+    [files, onAddFiles, onSend, setCurrentMessage],
+  );
   const [sendingMsg, setSendingMsg] = useState(false);
 
-  const sendMsg = async (msg: string) => {
-    if (msg && msg.trim().length) {
-      setSendingMsg(true);
-      try {
-        await onSend(msg);
-        setCurrentMessage("");
-      } catch (e) {
-        console.error(e);
-      }
-      setSendingMsg(false);
+  const sendMsg = useCallback(async () => {
+    const msg = getCurrentMessage();
+
+    if (!msg.trim() && !files.length) {
+      return;
     }
-  };
+    setSendingMsg(true);
+    try {
+      await onSend(msg, files);
+      setCurrentMessage("");
+      setFiles([]);
+    } catch (e) {
+      console.error(e);
+    }
+    setSendingMsg(false);
+  }, [getCurrentMessage, onSend, setCurrentMessage, files]);
+
+  const filesAsBase64 = usePromise(async () => {
+    if (!files.length) return [];
+    return Promise.all(
+      files.map(async (file) => {
+        const base64Data = await blobToBase64(file);
+        return { file, base64Data };
+      }),
+    );
+  }, [files]);
 
   const { handleOnPaste } = useChatOnPaste({
     textAreaRef: ref,
-    onSend,
+    onAddFiles,
     setCurrentMessage,
   });
 
-  const { isEngaged, ...divHandlers } = useDropZone(([file]) => {
-    if (file) {
-      onSend("", file, file.name, file.type);
-    }
-  });
+  const { isEngaged, ...divHandlers } = useDropZone(onAddFiles);
 
   return (
     <div
@@ -150,6 +177,32 @@ export const Chat = (props: ChatProps) => {
           }
           {...divHandlers}
         >
+          {!!filesAsBase64?.length && (
+            <ScrollFade
+              data-command="Chat.attachedFiles"
+              className="flex-row-wrap gap-1 o-auto"
+              style={{ maxHeight: "40vh" }}
+            >
+              {filesAsBase64.map(({ file, base64Data }, index) => (
+                <Chip
+                  key={file.name + index}
+                  data-key={file.name}
+                  variant="outline"
+                  onDelete={() => {
+                    setFiles((prev) =>
+                      prev.filter((f, i) => f.name + i !== file.name + index),
+                    );
+                  }}
+                >
+                  {file.name}
+                  <MediaViewer
+                    url={base64Data}
+                    style={{ maxHeight: "100px" }}
+                  />
+                </Chip>
+              ))}
+            </ScrollFade>
+          )}
           <textarea
             ref={ref}
             data-command={"Chat.textarea"}
@@ -164,13 +217,38 @@ export const Chat = (props: ChatProps) => {
                 e.key.toLocaleLowerCase() === "enter"
               ) {
                 e.preventDefault();
-                sendMsg(ref.current.value);
+                sendMsg();
               }
             }}
           />
           {actionBar}
         </FlexCol>
-        <FlexRow className="as-end gap-p5 p-p5">
+        <FlexCol className="as-end gap-2 p-p5">
+          <FlexRow className="gap-0">
+            {allowedMessageTypes.file && (
+              <label
+                className="pointer button bg-transparent bg-active-hover"
+                style={{ background: "transparent", padding: ".5em" }}
+              >
+                <input
+                  type="file"
+                  multiple
+                  style={{ display: "none" }}
+                  onChange={async (e) => {
+                    onAddFiles(Array.from(e.target.files || []));
+                  }}
+                />
+                <Icon path={mdiAttachment} />
+              </label>
+            )}
+            {speech && (
+              <ChatSpeech
+                onFinished={onSpeech}
+                audio={speech.audio}
+                tts={speech.tts}
+              />
+            )}
+          </FlexRow>
           <Btn
             iconPath={mdiSend}
             loading={sendingMsg}
@@ -179,41 +257,23 @@ export const Chat = (props: ChatProps) => {
             disabledInfo={disabledInfo}
             onClick={async (e) => {
               if (!ref.current) return;
-              sendMsg(ref.current.value);
+              sendMsg();
             }}
           />
-          {allowedMessageTypes.file && (
-            <label
-              className="pointer button bg-transparent bg-active-hover"
-              style={{ background: "transparent", padding: ".5em" }}
-            >
-              <input
-                type="file"
-                style={{ display: "none" }}
-                onChange={async (e) => {
-                  console.log(e.target.files);
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    onSend("", file, file.name, file.type);
-                  }
-                }}
-              />
-              <Icon path={mdiAttachment} />
-            </label>
-          )}
-          {allowedMessageTypes.audio && (
-            <Btn
-              className=" bg-transparent"
-              onClick={async (e) => {
-                if (isRecording) stopRecording();
-                else startRecording();
-              }}
-              color={isRecording ? "action" : "default"}
-              iconPath={isRecording ? mdiStop : mdiMicrophone}
-            />
-          )}
-        </FlexRow>
+        </FlexCol>
       </div>
     </div>
   );
 };
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      // The result includes the data URL prefix (data:audio/ogg;base64,)
+      const base64String = reader.result?.toString() || "";
+      resolve(base64String);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}

@@ -251,7 +251,7 @@ export const asRGB = (color: string, maxOpacity?: "1" | "255"): RGBA => {
   return [r, g, b, a];
 };
 
-function rgba2hex(orig: string) {
+export function rgba2hex(orig: string) {
   let a;
   const rgb = orig
     .replace(/\s/g, "")

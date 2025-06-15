@@ -18,7 +18,7 @@ export const getLLMRequestBody = ({
   const nonEmptyMessages = maybeEmptyMessages
     .map((m) => {
       const nonEmptyMessageContent = m.content.filter(
-        (m) => m.type !== "text" || m.text.trim(),
+        (m) => m.type !== "text" || !("text" in m) || m.text.trim(),
       );
       return {
         ...m,
@@ -94,7 +94,7 @@ export const getLLMRequestBody = ({
         system_instruction: systemMessageObj && {
           parts: systemMessageObj.content
             .map((c) => {
-              if (c.type !== "text") return undefined;
+              if (c.type !== "text" || !("text" in c)) return undefined;
               return {
                 text: c.text,
               };
@@ -119,7 +119,7 @@ export const getLLMRequestBody = ({
               //     },
               //   };
               // }
-              if (c.type === "text") return { text: c.text };
+              if (c.type === "text" && "text" in c) return { text: c.text };
               if (c.type === "tool_use") {
                 return {
                   functionCall: {

@@ -2,7 +2,10 @@
 
 Manage database backups and restore operations for this connection.
 
+<picture>
+<source srcset="/screenshots/dark/backup_and_restore.svg" media="(prefers-color-scheme: dark)">
 <img src="/screenshots/backup_and_restore.svg" alt="Backup and Restore" />
+</picture>
 
   - **Create Backup**: Start a new database backup operation.  
   - **Start Backup**: Begin the backup process with the selected options.  

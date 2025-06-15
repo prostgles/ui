@@ -45,7 +45,7 @@ export const useLLMChatMessages = (props: P) => {
           }
 
           const messageNode = messagesWithoutToolResponses.map((m, idx) => {
-            if (m.type === "text") {
+            if (m.type === "text" && "text" in m) {
               return (
                 <Marked
                   key={`${id}-text-${idx}`}
@@ -55,12 +55,11 @@ export const useLLMChatMessages = (props: P) => {
                 />
               );
             }
-            if (m.type === "image") {
+            if (m.type !== "tool_use") {
               return (
                 <MediaViewer
-                  key={`${id}-image-${idx}`}
+                  key={`${id}-${m.type}-${idx}`}
                   url={m.source.data}
-                  content_type="image"
                 />
               );
             }

@@ -60,7 +60,26 @@ test.describe("Create docs", () => {
           );
         }
       } else {
-        fs.writeFileSync(filePath, file.text, "utf-8");
+        let fileContent = file.text;
+        const imgTags = file.text.split("<img");
+        // Must replace all img tags with theme aware src
+        if (imgTags.length > 1) {
+          imgTags.slice(1).forEach((imgTag, index) => {
+            const tagText = "<img" + imgTag.split("/>")[0] + "/>";
+            console.log({ tagText }, fileContent);
+            const src = imgTag.split('src="')[1]?.split('"')[0];
+            fileContent = fileContent.replaceAll(
+              tagText,
+              [
+                `<picture>`,
+                `<source srcset="${src.replace("screenshots/", "screenshots/dark/")}" media="(prefers-color-scheme: dark)">`,
+                tagText,
+                `</picture>`,
+              ].join("\n"),
+            );
+          });
+        }
+        fs.writeFileSync(filePath, fileContent, "utf-8");
       }
       await page.waitForTimeout(100);
     }
@@ -70,6 +89,7 @@ test.describe("Create docs", () => {
         | "sample_database"
         | "cloud"
         | "crypto"
+        | "food_delivery"
         | "Prostgles UI state"
         | "prostgles_video_demo"
         | "Prostgles UI automated tests database",
@@ -83,18 +103,21 @@ test.describe("Create docs", () => {
 
     await page.waitForTimeout(1100);
     await saveSVGScreenshots(page, async (fileName) => {
-      if (fileName === "connections") {
+      if (fileName === "map") {
+        await openConnection("food_delivery");
+      } else if (fileName === "connections") {
         await goTo(page, "/connections");
       } else if (fileName === "backup_and_restore") {
-        await goTo(page, "/connections");
-        await page.getByTestId("Connection.configure").first().click();
+        await openConnection("prostgles_video_demo");
+        await page.getByTestId("dashboard.goToConnConfig").click();
         await page.getByTestId("config.bkp").click();
         // await page.getByTestId("config.bkp.create").click();
         // await page.getByTestId("config.bkp.create.start").click();
       } else if (fileName === "dashboard" || fileName === "timechart") {
         await openConnection("crypto");
-        if (fileName === "timechart") {
-          await page.getByTestId("dashboard.window.detachChart").click();
+        const btn = await page.getByTestId("dashboard.window.detachChart");
+        if (fileName === "timechart" && (await btn.count())) {
+          await btn.click();
         }
       } else if (fileName === "new_connection") {
         await goTo(page, "/connections");
@@ -105,9 +128,14 @@ test.describe("Create docs", () => {
       } else if (fileName === "sql_editor") {
         await openConnection("prostgles_video_demo");
         await page.getByTestId("dashboard.menu.sqlEditor").click();
+        await page.getByTestId("dashboard.window.fullscreen").click();
+
         await monacoType(page, `.ProstglesSQL`, `SELECT * FROM t`);
-        await page.waitForTimeout(2000);
-        // await page.keyboard.press("Ctrl+Enter");
+        await page.waitForTimeout(500);
+        await page.reload();
+        await monacoType(page, `.ProstglesSQL`, `t`);
+        await page.keyboard.press("Backspace");
+        await page.waitForTimeout(500);
       } else if (fileName === "ai_assistant") {
         await openConnection("prostgles_video_demo");
         await page.getByTestId("AskLLM").click();

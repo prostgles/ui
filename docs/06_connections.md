@@ -3,7 +3,10 @@
 The Connections page is the main page and serves as the central hub within Prostgles UI for managing all your PostgreSQL database connections. 
 From here, you can establish new connections, modify existing ones, and gain an immediate overview of their status and associated workspaces. 
 
+<picture>
+<source srcset="/screenshots/dark/connections.svg" media="(prefers-color-scheme: dark)">
 <img src="/screenshots/connections.svg" alt="Connections page screenshot" />
+</picture>
 
 - <a href="#new_connection">New connection</a>: Opens the form to add a new database connection.  
 - **Display options**: Customize how the list of connections is displayed (e.g., show/hide state database, show database names).  
@@ -16,7 +19,10 @@ From here, you can establish new connections, modify existing ones, and gain an 
 Use the **New Connection** button to add a new database connection.
 This will open a form where you can enter the connection details such as host, port, database name, user, and password.
 
+<picture>
+<source srcset="/screenshots/dark/new_connection.svg" media="(prefers-color-scheme: dark)">
 <img src="/screenshots/new_connection.svg" alt="New connection form screenshot" />
+</picture>
 
   - **PostgreSQL Installation Instructions**: Instructions for installing PostgreSQL on your system.  
   - **Connection Name**: The name of the connection.  
@@ -39,7 +45,10 @@ This will open a form where you can enter the connection details such as host, p
 
 The connection list displays all your database connections grouped by database host, port and user.
 
+<picture>
+<source srcset="/screenshots/dark/connections.svg" media="(prefers-color-scheme: dark)">
 <img src="/screenshots/connections.svg" alt="Connections list screenshot" />
+</picture>
 
   - **Add or create a database within server**: Adds a new connection to the selected server.   
     - <a href="#create_new_database">Create new database</a>: Create a new database within the server.  
@@ -71,7 +80,10 @@ If no adequate account is found (no superuser or rolcreatedb), it will be greyed
 Allows you to connect to an existing database in the selected server.
 It will use the first connection details from the group connection. 
 
+<picture>
+<source srcset="/screenshots/dark/connect_existing_database.svg" media="(prefers-color-scheme: dark)">
 <img src="/screenshots/connect_existing_database.svg" alt="Connect existing database popup screenshot" />
+</picture>
 
   - **Select Database**: Choose a database from the server.  
   - **Create database owner**: If checked, a new owner will be created for the database. Useful for ensuring the database is owned by a non-superuser account.  
@@ -83,7 +95,10 @@ It will use the first connection details from the group connection.
 <h3 id="connection_configuration"> Connection configuration </h3> 
 
 Configure the selected database connection. Set connection details, manage users, and customize settings.
+<picture>
+<source srcset="/screenshots/dark/connection_config.svg" media="(prefers-color-scheme: dark)">
 <img src="/screenshots/connection_config.svg" alt="Connection configuration" />
+</picture>
 
   - <a href="#connection_details">Connection details</a>: Edit connection parameters such as host, port, database name, and other connection settings.  
   - **Status monitor**: View real-time connection status, running queries, and system resource usage.  

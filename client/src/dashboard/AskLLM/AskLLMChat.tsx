@@ -83,11 +83,14 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
   );
 
   const sendMessage: ChatProps["onSend"] = useCallback(
-    async (msg: string | undefined, file) => {
+    async (text: string | undefined, files) => {
+      const fileMessages = await Promise.all(
+        (files ?? []).map(async (file) => toMediaMessage(file)),
+      );
       return sendQuery(
         [
-          msg ? ({ type: "text", text: msg } as const) : undefined,
-          file instanceof File ? await toMediaMessage(file) : undefined,
+          text ? ({ type: "text", text } as const) : undefined,
+          ...fileMessages,
         ].filter(isDefined),
       );
     },
@@ -160,6 +163,13 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
                 "Waiting for response"
               : (activeChat.disabled_message ?? undefined)
             }
+            allowedMessageTypes={{
+              speech: {
+                audio: true,
+                tts: false,
+              },
+              file: true,
+            }}
             onSend={sendMessage}
             actionBar={
               isAdmin && (
@@ -209,11 +219,19 @@ const toBase64 = (file: File) =>
 const toMediaMessage = async (
   file: File,
 ): Promise<
-  Extract<DBSSchema["llm_messages"]["message"][number], { type: "image" }>
+  Extract<
+    DBSSchema["llm_messages"]["message"][number],
+    {
+      source: {
+        type: "base64";
+      };
+    }
+  >
 > => {
   const base64 = await toBase64(file);
+  const type = file.type.split("/")[0] as "image";
   return {
-    type: "image",
+    type,
     source: {
       type: "base64",
       media_type: file.type,

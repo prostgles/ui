@@ -342,7 +342,7 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
               {
                 type: {
                   type: {
-                    enum: ["image"],
+                    enum: ["image", "audio", "video", "application", "text"],
                   },
                   source: {
                     type: {

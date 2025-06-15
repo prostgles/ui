@@ -1,24 +1,24 @@
 import { useCallback } from "react";
-import type { ChatProps } from "./Chat";
 import { tryCatchV2 } from "../../dashboard/WindowControls/TimeChartLayerOptions";
 import { fixIndent } from "../../demo/sqlVideoDemo";
 
 export const useChatOnPaste = ({
-  onSend,
+  onAddFiles,
   textAreaRef,
   setCurrentMessage,
-}: Pick<ChatProps, "onSend"> & {
+}: {
   textAreaRef: React.RefObject<HTMLTextAreaElement>;
   setCurrentMessage: (msg: string) => void;
+  onAddFiles: (files: File[]) => void;
 }) => {
   const handleOnPaste = useCallback(
     (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
       const files = e.clipboardData.files;
-      for (const file of files) {
+      if (files.length) {
         e.preventDefault();
-        onSend("", file, file.name, file.type);
-      }
-      if (!files.length) {
+        // onSend("", file, file.name, file.type);
+        onAddFiles(Array.from(files));
+      } else {
         const types = e.clipboardData.types;
         const vsCodeTypes = [
           "application/vnd.code.copymetadata",
@@ -57,7 +57,7 @@ export const useChatOnPaste = ({
         }
       }
     },
-    [onSend, setCurrentMessage, textAreaRef],
+    [setCurrentMessage, textAreaRef, onAddFiles],
   );
   return {
     handleOnPaste,

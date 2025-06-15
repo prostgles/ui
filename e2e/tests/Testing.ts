@@ -1,3 +1,5 @@
+import type { SQLEditorRef } from "./dashboard/SQLEditor/W_SQLEditor";
+
 export const COMMANDS = {
   "NewConnectionForm.connectionName": "Connection name input field",
   "NewConnectionForm.connectionType": "Connection type select field",
@@ -451,5 +453,6 @@ export const getDataLabelElemSelector = (key: string) => {
 declare module "react" {
   interface HTMLAttributes<T> {
     "data-command"?: Command;
+    sqlRef?: SQLEditorRef;
   }
 }

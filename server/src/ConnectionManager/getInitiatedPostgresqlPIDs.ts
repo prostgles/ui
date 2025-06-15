@@ -1,5 +1,6 @@
 import { execSync } from "child_process";
 
+// TODO: just use a custom pg-client that can return the PIDs of all active connections
 export const getInitiatedPostgresqlPIDs = (parentPid: number) => {
   const tcpConnections = execSync(`ss -tpn | grep ${parentPid}`)
     .toString()

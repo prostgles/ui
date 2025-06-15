@@ -48,8 +48,12 @@ export const MediaViewer = (props: P) => {
 
       let contentType: string | undefined = content_type;
       if (!content_type) {
-        const mime = await fetchMimeFromURLHead(url);
-        contentType = mime?.split(";")?.[0]?.trim();
+        const mimeFromData =
+          url.startsWith("data:") ?
+            url.split(":")[1]?.split(";")[0]
+          : undefined;
+        const mime = mimeFromData ?? (await fetchMimeFromURLHead(url));
+        contentType = mimeFromData ?? mime?.split(";")?.[0]?.trim();
       }
 
       setUrlInfo({
@@ -168,7 +172,7 @@ type UrlInfo = {
   content_type?: string; // If undefined then show as URL
   type?: ValidContentType;
 };
-const RenderMedia = ({
+export const RenderMedia = ({
   contentOnly = false,
   isFocused,
   setIsFocused,
@@ -203,7 +207,6 @@ const RenderMedia = ({
             border: "unset",
           }),
       },
-      // className: "b b-color "
     } as const;
     if (type === "image") {
       mediaContent = (
@@ -217,7 +220,7 @@ const RenderMedia = ({
           loading="lazy"
           src={url}
           {...commonProps}
-        ></img>
+        />
       );
     } else if (type === "video") {
       mediaContent = (
@@ -228,21 +231,28 @@ const RenderMedia = ({
     } else if (!isFocused && url) {
       mediaContent = (
         <FlexCol className="f-0 p-p5 gap-p25">
-          {/* <a href={url} target="_blank" className="f-0">{url}</a>  */}
-          <Chip value={content_type ?? "Not found"} />
+          {content_type && renderableContentTypes.includes(content_type) ?
+            <iframe
+              src={url}
+              style={{
+                minHeight: 0,
+              }}
+            ></iframe>
+          : <Chip value={content_type ?? "Not found"} />}
         </FlexCol>
       );
     }
   }
 
   if (!contentOnly) {
+    const fullscreenTypes = ["video"];
     return (
       <div
         className="MediaViewer relative f-1 noselect flex-row min-h-0"
         style={style}
       >
         {mediaContent}
-        {type !== "image" && (
+        {type !== "image" && fullscreenTypes.includes(type) && (
           <div
             className={"absolute w-full h-full pointer"}
             style={{ zIndex: 1, inset: 0 }}
@@ -297,36 +307,33 @@ const ToggleBtn = (isLeft: boolean, onClick: VoidFunction) => {
     </div>
   );
 };
+const renderableContentTypes = [
+  // PDF Documents
+  "application/pdf",
 
-// const getMimeFromURL = (
-//   url: string,
-// ): (typeof ContentTypes)[number] | undefined => {
-//   if (url && typeof url === "string") {
-//     const images = {
-//       jpg: 1,
-//       jpeg: 1,
-//       png: 1,
-//       tiff: 1,
-//       gif: 1,
-//       svg: 1,
-//       ico: 1,
-//     };
-//     const audio = {
-//       mp3: 1,
-//       wav: 1,
-//     };
-//     const video = {
-//       mp4: 1,
-//       avi: 1,
-//       ogg: 1,
-//       webm: 1,
-//       mov: 1,
-//     };
-//     const extension = url.split(".").slice(-1)[0]?.toLowerCase();
-//     if (!extension) return undefined;
-//     if (images[extension]) return "image";
-//     if (audio[extension]) return "audio";
-//     if (video[extension]) return "video";
-//   }
-//   return undefined;
-// };
+  "text/plain",
+  "application/json",
+  "text/xml",
+  "application/xml",
+  "application/xhtml+xml",
+
+  // Office Documents (with plugins or modern browsers)
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+
+  // Rich Text
+  "application/rtf",
+  "text/rtf",
+
+  // 3D Models (modern browsers)
+  "model/gltf+json",
+  "model/gltf-binary",
+
+  // Markdown (some contexts)
+  "text/markdown",
+  "text/x-markdown",
+];

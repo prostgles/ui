@@ -4,7 +4,10 @@ The schema graph provides a visual representation of the relationships between t
 It allows you to explore the schema structure, view table relationships, and manage the layout of the schema graph.
 You can filter tables and columns based on their relationship types, reset the layout, and close the schema graph to return to the dashboard menu.
 
+<picture>
+<source srcset="/screenshots/dark/schema_diagram.svg" media="(prefers-color-scheme: dark)">
 <img src="/screenshots/schema_diagram.svg" alt="Schema graph screenshot" />
+</picture>
 
   - **Top controls**: Controls for managing the schema graph view and layout.  
     - **Table relationship filter**: Display tables based on their relationship type. Options include: all, linked (with relationships), orphaned (without relationships).  

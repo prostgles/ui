@@ -10,6 +10,7 @@ export type TextForSVG = {
   width: number;
   height: number;
   isSingleLine: boolean | undefined;
+  element: HTMLElement;
 };
 
 export const getTextForSVG = (
@@ -45,36 +46,14 @@ export const getTextForSVG = (
         height: inputRect.height - paddingTop,
         textIndent: 0,
         isSingleLine: undefined,
+        element,
       },
     ];
   }
 
-  // if (element.nodeName === "strong") {
-  //   // If the element is a strong tag, we can just return the text content
-  //   const textContent = element.textContent;
-  //   if (!textContent) return;
-  //   const range = document.createRange();
-  //   range.selectNodeContents(element);
-  //   const textRect = range.getBoundingClientRect();
-  //   return [
-  //     {
-  //       style: {
-  //         ...style,
-  //         fontWeight: "bold",
-  //         whiteSpace: "pre",
-  //       },
-  //       textContent,
-  //       x: textRect.x,
-  //       y: textRect.y,
-  //       width: textRect.width,
-  //       height: textRect.height,
-  //     },
-  //   ];
-  // }
-
   return Array.from(element.childNodes)
-    .filter(isTextNode)
-    .map((childTextNode) => {
+    .map((childTextNode, index) => {
+      if (!isTextNode(childTextNode)) return;
       const textContent = childTextNode.textContent;
       if (!textContent) return;
       const range = document.createRange();
@@ -95,8 +74,8 @@ export const getTextForSVG = (
         const res: TextForSVG = {
           style: {
             ...style,
-            /** This is done to preserve leading spaces */
-            whiteSpace: "pre",
+            /** This is done to preserve leading spaces between spans of the same text block */
+            whiteSpace: index ? "pre" : style.whiteSpace,
           },
           textContent,
           x: textRect.x,
@@ -107,6 +86,7 @@ export const getTextForSVG = (
           textIndent: Math.max(0, textIndent),
           isSingleLine:
             edgeRects.startCharRect.top === edgeRects.endCharRect.top,
+          element,
         };
         return res;
       }

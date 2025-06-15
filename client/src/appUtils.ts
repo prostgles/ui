@@ -102,7 +102,7 @@ declare global {
     isMediumWidthScreen: boolean;
     isIOSDevice: boolean;
     isMobile: boolean;
-    toSVG: (node: HTMLElement) => Promise<string>;
+    toSVG: (node: HTMLElement) => Promise<{ light: string; dark: string }>;
   }
 
   interface HTMLDivElement {

@@ -2,12 +2,13 @@ import React from "react";
 import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 
-import { FlexCol } from "../../components/Flex";
+import { ScrollFade } from "../../components/SearchList/ScrollFade";
 import { documentationText } from "./getDocumentation";
 
 export const Documentation = () => {
   return (
-    <FlexCol
+    <ScrollFade
+      className="oy-auto"
       style={{
         width: "min(100vw, 700px)",
         alignSelf: "center",
@@ -15,6 +16,6 @@ export const Documentation = () => {
       }}
     >
       <Markdown rehypePlugins={[rehypeRaw]}>{documentationText}</Markdown>
-    </FlexCol>
+    </ScrollFade>
   );
 };

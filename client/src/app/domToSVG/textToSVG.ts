@@ -7,7 +7,6 @@ const _singleLineEllipsis = "_singleLineEllipsis" as const;
 const TEXT_WIDTH_ATTR = "data-text-width";
 const TEXT_HEIGHT_ATTR = "data-text-height";
 
-const getLineBreakParts = (content: string) => content.split(/[\s\-–—]+/);
 const getLineBreakPartsWithDelimiters = (content: string) =>
   content.split(/([\s\-–—:]+)/);
 
@@ -49,6 +48,7 @@ export const textToSVG = (
     whiteSpace: style.whiteSpace || elementStyle.whiteSpace,
     textOverflow: style.textOverflow || elementStyle.textOverflow,
     textTransform: style.textTransform || elementStyle.textTransform,
+    fontStyle: style.fontStyle || elementStyle.fontStyle,
   };
   const fontSize = parseFloat(textNodeStyle.fontSize);
   const inputYFix =
@@ -63,6 +63,7 @@ export const textToSVG = (
   textNode.setAttribute("font-family", textNodeStyle.fontFamily);
   textNode.setAttribute("font-size", textNodeStyle.fontSize);
   textNode.setAttribute("font-weight", textNodeStyle.fontWeight);
+  textNode.setAttribute("font-style", textNodeStyle.fontStyle);
   textNode.setAttribute("letter-spacing", textNodeStyle.letterSpacing);
   textNode.setAttribute("text-decoration", textNodeStyle.textDecoration);
   textNode.style.lineHeight = textNodeStyle.lineHeight;
@@ -78,7 +79,8 @@ export const textToSVG = (
   textNode.setAttribute("text-anchor", "start");
 
   // Ensures overflowing text is wrapped correctly
-  textNode.textContent = content.trimEnd();
+  textNode.textContent =
+    textNodeStyle.whiteSpace === "pre" ? content.trimEnd() : content.trim();
 
   g.appendChild(textNode);
 };
@@ -91,7 +93,7 @@ const wrapTextIfOverflowing = (
   content: string,
 ) => {
   const currTextLength = textNode.getComputedTextLength();
-  const { textIndent = 0, isSingleLine } = textNode._textInfo ?? {};
+  const { textIndent = 0, isSingleLine, style } = textNode._textInfo ?? {};
 
   if (currTextLength <= width + tolerance && !textIndent) {
     return;
@@ -115,14 +117,17 @@ const wrapTextIfOverflowing = (
   const lineHeightPx =
     parseFloat(textNode.style.lineHeight) || 1.1 * parseFloat(fontSize);
   const x = parseFloat(textNode.getAttribute("x") || "0");
-  const y = parseFloat(textNode.getAttribute("y") || "0");
   const maxLines = Math.floor(height / lineHeightPx);
   let tspan = document.createElementNS(SVG_NAMESPACE, "tspan");
   tspan.setAttribute("x", x + textIndent);
-  tspan.setAttribute("y", y);
+  tspan.setAttribute("dy", 0);
+  tspan.textContent =
+    style?.whiteSpace === "pre" ? content : content.trimStart();
   textNode.appendChild(tspan);
 
-  if (isSingleLine) {
+  const willNotWrap =
+    isSingleLine || textNode._textInfo?.element instanceof HTMLInputElement;
+  if (willNotWrap) {
     return;
   }
   for (let wordIndex = 0; wordIndex < wordsWithDelimiters.length; wordIndex++) {
