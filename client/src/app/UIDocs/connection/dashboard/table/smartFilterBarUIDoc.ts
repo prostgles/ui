@@ -12,7 +12,7 @@ export const smartFilterBarUIDoc = {
     Table toolbar can be toggled through the show/hide filtering button (top left corner). 
     It provides a user-friendly interface to add filters, search for data, and perform various actions on the table data.
     
-    <img src="/screenshots/smart_filter_bar.svg" alt="Smart Filter Bar screenshot" />
+    <img src="./screenshots/smart_filter_bar.svg" alt="Smart Filter Bar screenshot" />
   `),
   children: [
     {

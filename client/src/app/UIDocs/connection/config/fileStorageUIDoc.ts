@@ -11,7 +11,7 @@ export const fileStorageUIDoc = {
   docs: fixIndent(`
     Configure file upload and storage settings for this connection.
 
-    <img src="/screenshots/file_storage.svg" alt="File Storage Configuration" />
+    <img src="./screenshots/file_storage.svg" alt="File Storage Configuration" />
   `),
   children: [
     {

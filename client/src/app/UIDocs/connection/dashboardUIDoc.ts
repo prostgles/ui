@@ -17,7 +17,7 @@ export const dashboardUIDoc = {
     Main interface for interacting with a selected database connection. 
     Browse data, execute SQL queries, manage database objects, and access various tools.
     
-    <img src="/screenshots/dashboard.svg" alt="Connection dashboard" />
+    <img src="./screenshots/dashboard.svg" alt="Connection dashboard" />
     `),
   children: [
     dashboardMenuUIDoc,

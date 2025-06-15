@@ -13,7 +13,7 @@ export const tableUIDoc = {
   docs: fixIndent(`
     The table view displays data from a database table or view, allowing users to interact with the data, including sorting, filtering, and editing.
     It supports computed columns, linked fields, and various actions for managing the data.
-    <img src="/screenshots/table.svg" alt="Table view screenshot" />`),
+    <img src="./screenshots/table.svg" alt="Table view screenshot" />`),
   asSeparateFile: true,
   children: [
     getCommonViewHeaderUIDoc(

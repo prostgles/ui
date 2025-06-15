@@ -10,7 +10,7 @@ export const backupAndRestoreUIDoc = {
   docs: fixIndent(`
     Manage database backups and restore operations for this connection.
 
-    <img src="/screenshots/backup_and_restore.svg" alt="Backup and Restore" />
+    <img src="./screenshots/backup_and_restore.svg" alt="Backup and Restore" />
   `),
   children: [
     {
