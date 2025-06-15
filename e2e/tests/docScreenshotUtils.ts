@@ -135,6 +135,6 @@ export const svgScreenshotsCompleteReferenced = async () => {
 
   const usedSrcValuesStr = usedSrcValues.sort().join(",");
   if (allSVGFileNamesStr !== usedSrcValuesStr) {
-    throw `SVG files from docs are not as expected: \n Actual: ${usedSrcValuesStr} \n Expected: ${allSVGFileNamesStr}`;
+    throw `SVG files from docs are not as expected: \nActual: ${usedSrcValuesStr} \n Expected: ${allSVGFileNamesStr}`;
   }
 };
