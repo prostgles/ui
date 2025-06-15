@@ -6,8 +6,8 @@ It can display points, lines, and polygons based on geometry or geography column
 It supports multiple layers, custom basemaps, and various map controls for interaction.
 
 <picture>
-<source srcset="/screenshots/dark/map.svg" media="(prefers-color-scheme: dark)">
-<img src="/screenshots/map.svg" alt="Map view screenshot" />
+<source srcset="./screenshots/dark/map.svg" media="(prefers-color-scheme: dark)">
+<img src="./screenshots/map.svg" alt="Map view screenshot" />
 </picture>
 
   - **View header**: Contains menu button, title and window minimise/fullscreen controls.  

@@ -5,8 +5,8 @@ It allows you to explore the schema structure, view table relationships, and man
 You can filter tables and columns based on their relationship types, reset the layout, and close the schema graph to return to the dashboard menu.
 
 <picture>
-<source srcset="/screenshots/dark/schema_diagram.svg" media="(prefers-color-scheme: dark)">
-<img src="/screenshots/schema_diagram.svg" alt="Schema graph screenshot" />
+<source srcset="./screenshots/dark/schema_diagram.svg" media="(prefers-color-scheme: dark)">
+<img src="./screenshots/schema_diagram.svg" alt="Schema graph screenshot" />
 </picture>
 
   - **Top controls**: Controls for managing the schema graph view and layout.  
