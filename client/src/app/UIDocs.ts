@@ -4,18 +4,16 @@ import type { ROUTES } from "../../../commonTypes/utils";
 import { isPlaywrightTest } from "../i18n/i18nUtils";
 import type { Command } from "../Testing";
 import { isDefined } from "../utils";
+import { domToThemeAwareSVG } from "./domToSVG/domToThemeAwareSVG";
 import { accountUIDoc } from "./UIDocs/accountUIDoc";
-import { authenticationOverviewUIDoc } from "./UIDocs/authenticationOverviewUIDoc";
 import { commandSearchUIDoc } from "./UIDocs/commandSearchUIDoc";
 import { dashboardUIDoc } from "./UIDocs/connection/dashboardUIDoc";
 import { connectionsUIDoc } from "./UIDocs/connectionsUIDoc";
-import { gettingStarted } from "./UIDocs/gettingStarted";
-import { navbarUIDoc } from "./UIDocs/navbarUIDoc";
-import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
 import { desktopInstallationUIDoc } from "./UIDocs/desktopInstallation";
+import { navbarUIDoc } from "./UIDocs/navbarUIDoc";
 import { overviewUIDoc } from "./UIDocs/overview";
-import { localSettings } from "../dashboard/localSettings";
-import { domToThemeAwareSVG } from "./domToSVG/domToThemeAwareSVG";
+import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
+import { UIInstallation } from "./UIDocs/UIInstallation";
 
 type Route = (typeof ROUTES)[keyof typeof ROUTES];
 
@@ -138,9 +136,8 @@ export type UIDocNavbar = UIDocBase<{
 
 export const UIDocs = [
   overviewUIDoc,
+  UIInstallation,
   desktopInstallationUIDoc,
-  gettingStarted,
-  authenticationOverviewUIDoc,
   navbarUIDoc,
   connectionsUIDoc,
   dashboardUIDoc,
@@ -196,6 +193,6 @@ export const flatDocs = UIDocs.map((doc) => getFlatDocs(doc))
   .filter(isDefined)
   .flat();
 
-if (isPlaywrightTest) {
+if (isPlaywrightTest || true) {
   window.toSVG = domToThemeAwareSVG;
 }

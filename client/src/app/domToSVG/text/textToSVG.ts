@@ -1,7 +1,7 @@
-import { includes } from "../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
-import { tout } from "../../utils";
-import { SVG_NAMESPACE } from "./domToSVG";
-import type { SVGScreenshotNodeType } from "./domToThemeAwareSVG";
+import { includes } from "../../../dashboard/W_SQL/W_SQLBottomBar/W_SQLBottomBar";
+import { tout } from "../../../utils";
+import { SVG_NAMESPACE } from "../domToSVG";
+import type { SVGScreenshotNodeType } from "../domToThemeAwareSVG";
 import type { TextForSVG } from "./getTextForSVG";
 const _singleLineEllipsis = "_singleLineEllipsis" as const;
 const TEXT_WIDTH_ATTR = "data-text-width";
@@ -18,7 +18,6 @@ export const textToSVG = (
   bboxCode: string,
 ) => {
   const {
-    textIndent,
     height,
     style: placeholderOrElementStyle,
     textContent: content,
@@ -51,14 +50,8 @@ export const textToSVG = (
     fontStyle: style.fontStyle || elementStyle.fontStyle,
   };
   const fontSize = parseFloat(textNodeStyle.fontSize);
-  const inputYFix =
-    (
-      element.tagName.toLowerCase() === "input" &&
-      content !== (element as HTMLInputElement).placeholder
-    ) ?
-      fontSize * 0.25
-    : 0;
-  textNode.setAttribute("y", y + fontSize + inputYFix);
+  const isInputElement = element instanceof HTMLInputElement;
+  textNode.setAttribute("y", isInputElement ? y : y + fontSize);
   textNode.setAttribute("fill", textNodeStyle.color);
   textNode.setAttribute("font-family", textNodeStyle.fontFamily);
   textNode.setAttribute("font-size", textNodeStyle.fontSize);

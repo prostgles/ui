@@ -101,7 +101,8 @@ export const SearchInput = (props: SearchInputProps) => {
       <FlexRow
         className="relative rounded f-0 ai-center jc-center gap-0 bg-color-0 "
         style={{
-          borderRadius: "3px",
+          borderTopLeftRadius: 0,
+          borderBottomLeftRadius: 0,
           overflow: "visible",
           margin: "0px",
         }}
@@ -119,7 +120,9 @@ export const SearchInput = (props: SearchInputProps) => {
             data-command="SearchList.MatchCase"
             title={"Match case"}
             iconPath={mdiFormatLetterCase}
-            style={{ margin: "1px" }}
+            style={{
+              margin: "1px",
+            }}
             color={matchCase.value ? "action" : undefined}
             onClick={() => {
               matchCase.onChange(!matchCase);

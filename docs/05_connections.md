@@ -5,7 +5,7 @@ From here, you can establish new connections, modify existing ones, and gain an 
 
 <picture>
 <source srcset="./screenshots/dark/connections.svg" media="(prefers-color-scheme: dark)">
-<img src="./screenshots/connections.svg" alt="Connections page screenshot" />
+<img src="./screenshots/connections.svg" alt="Connections page screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
 - <a href="#new_connection">New connection</a>: Opens the form to add a new database connection.  
@@ -21,7 +21,7 @@ This will open a form where you can enter the connection details such as host, p
 
 <picture>
 <source srcset="./screenshots/dark/new_connection.svg" media="(prefers-color-scheme: dark)">
-<img src="./screenshots/new_connection.svg" alt="New connection form screenshot" />
+<img src="./screenshots/new_connection.svg" alt="New connection form screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
   - **PostgreSQL Installation Instructions**: Instructions for installing PostgreSQL on your system.  
@@ -47,7 +47,7 @@ The connection list displays all your database connections grouped by database h
 
 <picture>
 <source srcset="./screenshots/dark/connections.svg" media="(prefers-color-scheme: dark)">
-<img src="./screenshots/connections.svg" alt="Connections list screenshot" />
+<img src="./screenshots/connections.svg" alt="Connections list screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
   - **Add or create a database within server**: Adds a new connection to the selected server.   
@@ -82,7 +82,7 @@ It will use the first connection details from the group connection.
 
 <picture>
 <source srcset="./screenshots/dark/connect_existing_database.svg" media="(prefers-color-scheme: dark)">
-<img src="./screenshots/connect_existing_database.svg" alt="Connect existing database popup screenshot" />
+<img src="./screenshots/connect_existing_database.svg" alt="Connect existing database popup screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
   - **Select Database**: Choose a database from the server.  
@@ -97,7 +97,7 @@ It will use the first connection details from the group connection.
 Configure the selected database connection. Set connection details, manage users, and customize settings.
 <picture>
 <source srcset="./screenshots/dark/connection_config.svg" media="(prefers-color-scheme: dark)">
-<img src="./screenshots/connection_config.svg" alt="Connection configuration" />
+<img src="./screenshots/connection_config.svg" alt="Connection configuration" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
   - <a href="#connection_details">Connection details</a>: Edit connection parameters such as host, port, database name, and other connection settings.  

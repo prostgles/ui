@@ -1,5 +1,5 @@
 import { elementToSVG, type SVGContext } from "./elementToSVG";
-import { wrapAllSVGText } from "./textToSVG";
+import { wrapAllSVGText } from "./text/textToSVG";
 
 export const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 

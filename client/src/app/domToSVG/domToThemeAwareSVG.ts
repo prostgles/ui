@@ -1,6 +1,6 @@
 import { domToSVG } from "./domToSVG";
 import { getCorrespondingDarkNode } from "./getCorrespondingDarkNode";
-import type { TextForSVG } from "./getTextForSVG";
+import type { TextForSVG } from "./text/getTextForSVG";
 import { setThemeForSVGScreenshot } from "./setThemeForSVGScreenshot";
 
 export const domToThemeAwareSVG = async (node: HTMLElement) => {

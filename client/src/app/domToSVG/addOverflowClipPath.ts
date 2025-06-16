@@ -31,6 +31,7 @@ export const addOverflowClipPath = (
    * If overflow is set to hidden, we need to add a clip path to the group
    */
   if (!mustAddClipPath(element, style)) return;
+
   const borderWidth =
     whatToRender.border?.type === "border" ?
       whatToRender.border.borderWidth

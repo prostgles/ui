@@ -4,7 +4,7 @@ Import files into the current database. Supported file types include CSV, GeoJSO
 The import process allows you to specify the table name, infer column data types, and choose how to insert JSON/GeoJSON data into the table.
 <picture>
 <source srcset="./screenshots/dark/file_importer.svg" media="(prefers-color-scheme: dark)">
-<img src="./screenshots/file_importer.svg" alt="File Importer screenshot" />
+<img src="./screenshots/file_importer.svg" alt="File Importer screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
   - **Import file**: Input field for selecting a file to import. Supported types: csv/geojson/json.  

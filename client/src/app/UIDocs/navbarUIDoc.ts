@@ -4,9 +4,27 @@ import { fixIndent, ROUTES } from "../../../../commonTypes/utils";
 export const navbarUIDoc = {
   type: "navbar",
   selectorCommand: "NavBar",
-  title: "Navigation Bar",
+  title: "Core concepts",
   description: fixIndent(`
-    The main navigation bar provides quick access to all major sections of Prostgles UI. 
+    After installation and initial setup, you will see main Prostgles UI interface where you can add and open connections.
+
+    ## Connections
+
+    A connection represents a unique postgres database instance (unique host, port, user and database name).
+    
+    ## Dashboard
+
+    Clicking a connection will take you to the dashboard page where you can explore and interact with the database throught 
+    the available views like SQL Editor, Table, Map, Schema Diagram, AI Assistant, and more.
+
+    ## Workspace
+    
+    The views you open in the dashboard are saved automatically to the current workspace.
+    This allows you to return to the same views later, even after closing the application.
+
+    ## Top Navigation Bar
+
+    The top navigation bar provides quick access to all major sections of Prostgles UI. 
     Located at the top of the interface, it allows you to switch between database connections, manage users and server settings, and access your account preferences. 
     The navigation adapts to your user role, showing admin-only sections like Users and Server Settings only to authorized users.
 `),

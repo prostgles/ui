@@ -6,7 +6,7 @@ You can filter tables and columns based on their relationship types, reset the l
 
 <picture>
 <source srcset="./screenshots/dark/schema_diagram.svg" media="(prefers-color-scheme: dark)">
-<img src="./screenshots/schema_diagram.svg" alt="Schema graph screenshot" />
+<img src="./screenshots/schema_diagram.svg" alt="Schema graph screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
   - **Top controls**: Controls for managing the schema graph view and layout.  

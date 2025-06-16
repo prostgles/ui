@@ -1,4 +1,23 @@
-<h1 id="authentication_overview"> Authentication Overview </h1> 
+<h1 id="installation"> Installation </h1> 
+
+The recommended way to run Prostgles UI is by using the Docker:
+
+Download the source code:
+
+```bash
+git clone https://github.com/prostgles/ui.git
+cd ui
+```
+
+Start the application:
+
+```docker-compose.sh
+docker compose up -d
+``` 
+
+Once running, the app will be accessible at [localhost:3004](http://localhost:3004)
+
+### Initial Setup & Authentication
 
 When first launching Prostgles UI, an admin user will be created automatically:
 - If `PRGL_USERNAME` and `PRGL_PASSWORD` environment variables are provided, an admin user is created with these credentials. 

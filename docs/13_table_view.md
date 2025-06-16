@@ -4,7 +4,7 @@ The table view displays data from a database table or view, allowing users to in
 It supports computed columns, linked fields, and various actions for managing the data.
 <picture>
 <source srcset="./screenshots/dark/table.svg" media="(prefers-color-scheme: dark)">
-<img src="./screenshots/table.svg" alt="Table view screenshot" />
+<img src="./screenshots/table.svg" alt="Table view screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
   - **View header**: Contains menu button, title and window minimise/fullscreen controls.  
@@ -77,7 +77,7 @@ It provides a user-friendly interface to add filters, search for data, and perfo
 
 <picture>
 <source srcset="./screenshots/dark/smart_filter_bar.svg" media="(prefers-color-scheme: dark)">
-<img src="./screenshots/smart_filter_bar.svg" alt="Smart Filter Bar screenshot" />
+<img src="./screenshots/smart_filter_bar.svg" alt="Smart Filter Bar screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
   - **Add Filter**: Allows adding a filter by chosing a column from the current table or from linked tables.  

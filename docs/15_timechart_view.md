@@ -5,7 +5,7 @@ It supports multiple layers, each with its own data source and style.
 You can add filters to the timechart to narrow down the data displayed.
 <picture>
 <source srcset="./screenshots/dark/timechart.svg" media="(prefers-color-scheme: dark)">
-<img src="./screenshots/timechart.svg" alt="Timechart view screenshot" />
+<img src="./screenshots/timechart.svg" alt="Timechart view screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
   - **View header**: Contains menu button, title and window minimise/fullscreen controls.  

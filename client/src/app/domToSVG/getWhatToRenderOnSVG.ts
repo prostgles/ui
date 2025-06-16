@@ -2,7 +2,7 @@ import { isDefined } from "../../utils";
 import { getBackgroundColor } from "./bgAndBorderToSVG";
 import type { SVGContext } from "./elementToSVG";
 import { getFontIconElement } from "./fontIconToSVG";
-import { getTextForSVG } from "./getTextForSVG";
+import { getTextForSVG } from "./text/getTextForSVG";
 import { isElementVisible, isImgNode } from "./isElementVisible";
 import { getForeignObject } from "./svgToSVG";
 
@@ -79,6 +79,12 @@ export const getWhatToRenderOnSVG = async (
         element,
       }
     : undefined;
+  const text = getTextForSVG(element, style, {
+    x,
+    y,
+    width,
+    height,
+  });
 
   return {
     elemInfo,
@@ -87,12 +93,7 @@ export const getWhatToRenderOnSVG = async (
     border: getBorderForSVG(style),
     childAffectingStyles,
     image,
-    text: getTextForSVG(element, style, {
-      x,
-      y,
-      width,
-      height,
-    }),
+    text,
   };
 };
 

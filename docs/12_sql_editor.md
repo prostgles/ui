@@ -4,7 +4,7 @@ The SQL editor is a powerful tool for executing SQL queries against your databas
 
 <picture>
 <source srcset="./screenshots/dark/sql_editor.svg" media="(prefers-color-scheme: dark)">
-<img src="./screenshots/sql_editor.svg" alt="SQL editor screenshot" />
+<img src="./screenshots/sql_editor.svg" alt="SQL editor screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
   - **View header**: Contains menu button, title and window minimise/fullscreen controls.  

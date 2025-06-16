@@ -250,7 +250,6 @@ type P = {
 type S = {
   value: string;
   editorMounted: boolean;
-  themeAge: number;
 };
 
 export class W_SQLEditor extends RTComp<P, S> {
@@ -264,15 +263,10 @@ export class W_SQLEditor extends RTComp<P, S> {
     this.state = {
       value: props.value ?? "",
       editorMounted: false,
-      themeAge: 0,
     };
   }
 
   async onMount() {
-    const didupdate = await defineCustomSQLTheme();
-    if (didupdate) {
-      this.setState({ themeAge: Date.now() });
-    }
     window.addEventListener(
       "beforeunload",
       async (e) => {

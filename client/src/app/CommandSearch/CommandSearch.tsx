@@ -10,6 +10,7 @@ import { tout } from "../../utils";
 import { flatDocs, type UIDoc } from "../UIDocs";
 import { Documentation } from "./Documentation";
 import { FlashMessage } from "../../components/FlashMessage";
+import { NavLink } from "react-router-dom";
 
 /**
  * By pressing Ctrl+K, the user to search and go to functionality in the UI.
@@ -99,7 +100,11 @@ export const CommandSearch = () => {
   if (!open) return null;
   return (
     <Popup
-      title={open === "commands" ? undefined : "Documentation"}
+      title={
+        open === "commands" ? undefined : (
+          <NavLink to={"/documentation"}>Documentation</NavLink>
+        )
+      }
       data-command="CommandSearch"
       clickCatchStyle={{ opacity: 1 }}
       positioning={open === "commands" ? "top-center" : "center"}

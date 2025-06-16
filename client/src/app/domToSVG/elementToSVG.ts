@@ -7,7 +7,7 @@ import { getWhatToRenderOnSVG } from "./getWhatToRenderOnSVG";
 import { addImageFromDataURL, imgToSVG } from "./imgToSVG";
 import { isElementNode } from "./isElementVisible";
 import { rectangleToSVG } from "./rectangleToSVG";
-import { textToSVG } from "./textToSVG";
+import { textToSVG } from "./text/textToSVG";
 
 export type SVGContext = {
   offsetX: number;
@@ -66,14 +66,6 @@ export const elementToSVG = async (
       g.setAttribute(key, value);
     }
   });
-
-  // if (
-  //   element.className ===
-  //   "SearchList_InputWrapper bg-color-0 gap-0 h-fit f-1 relative o-hidden relative rounded focus-border b b-color   FlexRow flex-row ai-center"
-  // ) {
-  //   debugger;
-  // }
-
   rectangleToSVG(g, element, style, elemInfo, whatToRender, bboxCode, context);
 
   if (whatToRender.text?.length) {

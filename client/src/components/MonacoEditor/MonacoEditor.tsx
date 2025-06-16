@@ -7,7 +7,10 @@ import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils
 import { getMonaco } from "../../dashboard/SQLEditor/W_SQLEditor";
 import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
-import { CUSTOM_MONACO_SQL_THEMES } from "../../dashboard/SQLEditor/defineCustomSQLTheme";
+import {
+  CUSTOM_MONACO_SQL_THEMES,
+  defineCustomSQLTheme,
+} from "../../dashboard/SQLEditor/defineCustomSQLTheme";
 
 export type MonacoEditorProps = {
   language: string;
@@ -37,6 +40,7 @@ const useMonacoSingleton = () => {
       (async () => {
         monacoPromise ??= getMonaco();
         monacoResolved = await monacoPromise;
+        await defineCustomSQLTheme();
         setMonaco(monacoResolved);
       })();
     }
@@ -73,10 +77,9 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
   const fullOptions = useMemo(() => {
     const themeFromOptions = options?.theme;
     const theme =
-      themeFromOptions && themeFromOptions !== "vs" ? themeFromOptions
-      : _appTheme === "dark" ?
-        CUSTOM_MONACO_SQL_THEMES.dark // "vs-dark"
-      : CUSTOM_MONACO_SQL_THEMES.light;
+      themeFromOptions && themeFromOptions !== "vs" ?
+        themeFromOptions
+      : CUSTOM_MONACO_SQL_THEMES[_appTheme];
     return {
       ...options,
       theme,

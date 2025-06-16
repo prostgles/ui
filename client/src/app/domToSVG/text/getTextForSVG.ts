@@ -1,5 +1,5 @@
-import { isDefined } from "../../utils";
-import { isElementNode, isInputNode, isTextNode } from "./isElementVisible";
+import { isDefined } from "../../../utils";
+import { isElementNode, isInputNode, isTextNode } from "../isElementVisible";
 
 export type TextForSVG = {
   style: CSSStyleDeclaration;
@@ -31,17 +31,27 @@ export const getTextForSVG = (
     const textContent = element.value || element.placeholder;
     const isPlaceholder = !element.value;
     if (!textContent) return;
-    const paddingLeft = parseFloat(style.paddingLeft);
-    const paddingTop = parseFloat(style.paddingTop);
-    const borderTop = parseFloat(style.borderTopWidth) || 0;
+    const paddingLeft = parseFloat(style.paddingLeft) || 0;
+    const paddingTop = parseFloat(style.paddingTop) || 0;
+    const paddingBottom = parseFloat(style.paddingBottom) || 0;
+    const borderTop = parseFloat(style.borderTop) || 0;
+    const borderBottom = parseFloat(style.borderBottom) || 0;
+    const contentHeight =
+      inputRect.height - paddingTop - paddingBottom - borderTop - borderBottom;
+    const actualStyle =
+      isPlaceholder ? getComputedStyle(element, "::placeholder") : style;
+    const fontSize = parseFloat(actualStyle.fontSize);
+    const fontYPadding = Math.max(0, contentHeight - fontSize);
     const borderLeft = parseFloat(style.borderLeftWidth) || 0;
-    return [
+
+    const yTextOffset = -paddingBottom - borderBottom - fontYPadding / 2 - 2;
+    const y = inputRect.y + inputRect.height + yTextOffset;
+    const result = [
       {
-        style:
-          isPlaceholder ? getComputedStyle(element, "::placeholder") : style,
+        style: actualStyle,
         textContent,
         x: inputRect.x + paddingLeft + borderLeft,
-        y: inputRect.y + paddingTop - borderTop,
+        y,
         width: inputRect.width - paddingLeft,
         height: inputRect.height - paddingTop,
         textIndent: 0,
@@ -49,6 +59,7 @@ export const getTextForSVG = (
         element,
       },
     ];
+    return result;
   }
 
   return Array.from(element.childNodes)
@@ -152,4 +163,38 @@ const getTextNodes = (
       }
     })
     .filter(isDefined);
+};
+
+const calculateVerticalPosition = (inputElement: HTMLInputElement) => {
+  const computedStyle = window.getComputedStyle(inputElement);
+
+  // Get dimensions
+  const inputHeight = inputElement.offsetHeight;
+  const fontSize = parseFloat(computedStyle.fontSize);
+  const lineHeight =
+    computedStyle.lineHeight === "normal" ?
+      fontSize * 1.2
+    : parseFloat(computedStyle.lineHeight);
+
+  // Get padding
+  const paddingTop = parseFloat(computedStyle.paddingTop);
+  const paddingBottom = parseFloat(computedStyle.paddingBottom);
+  const borderTop = parseFloat(computedStyle.borderTopWidth);
+  const borderBottom = parseFloat(computedStyle.borderBottomWidth);
+
+  // Calculate available content height
+  const contentHeight =
+    inputHeight - paddingTop - paddingBottom - borderTop - borderBottom;
+
+  // Calculate vertical center position
+  const textVerticalCenter =
+    paddingTop + borderTop + (contentHeight - lineHeight) / 2;
+
+  return {
+    textTop: textVerticalCenter,
+    textCenter: textVerticalCenter + lineHeight / 2,
+    textBottom: textVerticalCenter + lineHeight,
+    contentHeight: contentHeight,
+    lineHeight: lineHeight,
+  };
 };

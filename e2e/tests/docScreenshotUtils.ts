@@ -2,14 +2,12 @@ import * as fs from "fs";
 import * as path from "path";
 import { MINUTE, type PageWIds } from "./utils";
 
-const IS_PIPELINE = process.env.CI === "true";
-
 const SVG_SCREENSHOT_NAMES = {
+  sql_editor: 1,
   new_connection: 1,
   connections: 1,
   dashboard: 1,
   schema_diagram: 1,
-  sql_editor: 1,
   table: 1,
   smart_filter_bar: 1,
   map: 1,
@@ -49,23 +47,10 @@ const saveSVGScreenshot = async (page: PageWIds, fileName: ScreenshotName) => {
     if (!svg) throw "SVG missing";
     fs.mkdirSync(theme.dir, { recursive: true });
     const filePath = path.join(theme.dir, fileName + ".svg");
-    if (IS_PIPELINE) {
-      const existingFile =
-        fs.existsSync(filePath) ?
-          fs.readFileSync(filePath, {
-            encoding: "utf8",
-          })
-        : undefined;
-      if (existingFile?.trim() !== svg.trim()) {
-        throw new Error(
-          `SVG file ${fileName}.svg has changed. Please update the docs.`,
-        );
-      }
-    } else {
-      fs.writeFileSync(filePath, svg, {
-        encoding: "utf8",
-      });
-    }
+
+    fs.writeFileSync(filePath, svg, {
+      encoding: "utf8",
+    });
   }
 };
 

@@ -7,7 +7,7 @@ It supports multiple layers, custom basemaps, and various map controls for inter
 
 <picture>
 <source srcset="./screenshots/dark/map.svg" media="(prefers-color-scheme: dark)">
-<img src="./screenshots/map.svg" alt="Map view screenshot" />
+<img src="./screenshots/map.svg" alt="Map view screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
   - **View header**: Contains menu button, title and window minimise/fullscreen controls.  

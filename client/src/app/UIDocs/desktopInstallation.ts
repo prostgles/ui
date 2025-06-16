@@ -3,15 +3,9 @@ import type { UIDoc } from "../UIDocs";
 
 export const desktopInstallationUIDoc = {
   type: "info",
-  title: "Desktop Installation",
+  title: "Installation (Desktop Version)",
   description: "Instructions for installing Prostgles UI on your desktop.",
   docs: fixIndent(`
-    [Prostgles Desktop](/desktop) is a cross-platform database management tool designed exclusively for PostgreSQL databases.
-    Whether you're a novice or an experienced SQL developer, Prostgles Desktop offers an intuitive and user-friendly interface that simplifies database management, query execution and data visualization.
-    With its robust feature set, it empowers users to interact with their databases more efficiently and effectively, making it an essential tool for anyone working with PostgreSQL.
-
-    ## Installation
-
     To get started with Prostgles Desktop, download and install the binary file that's appropriate for your operating system (Windows, macOS, or Linux) from [our website](/desktop-download).
 
     - **Linux**: We provide **.deb**, **.rpm** or **.AppImage** files to suit your distribution,

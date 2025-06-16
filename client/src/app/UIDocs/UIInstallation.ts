@@ -1,11 +1,32 @@
-import { fixIndent } from "../../../../commonTypes/utils";
+import { fixIndent } from "../../demo/sqlVideoDemo";
 import type { UIDoc } from "../UIDocs";
 
-export const authenticationOverviewUIDoc = {
-  type: "info",
-  title: "Authentication Overview",
-  description: "Authentication and login page for accessing the application",
+export const UIInstallation = {
+  title: "Installation",
+  type: "section",
+  selector: "",
+  description: "A guide to help you get started with the application.",
+  children: [],
   docs: fixIndent(`
+    The recommended way to run Prostgles UI is by using the Docker:
+ 
+    Download the source code:
+
+    \`\`\`bash
+    git clone https://github.com/prostgles/ui.git
+    cd ui
+    \`\`\`
+
+    Start the application:
+
+    \`\`\`docker-compose.sh
+    docker compose up -d
+    \`\`\` 
+    
+    Once running, the app will be accessible at [localhost:3004](http://localhost:3004)
+
+    ### Initial Setup & Authentication
+
     When first launching Prostgles UI, an admin user will be created automatically:
     - If \`PRGL_USERNAME\` and \`PRGL_PASSWORD\` environment variables are provided, an admin user is created with these credentials. 
     - Otherwise, a passwordless admin user is created. 
@@ -18,5 +39,6 @@ export const authenticationOverviewUIDoc = {
     Users login using their username and password. Two-factor authentication is provided through TOTP (Time-based One-Time Password) and can be enabled in the account section.
 
     Email and third-party (OAuth) authentication can be configured in Server Settings section. It allows users to register and log in using their email address or third-party accounts like Google, GitHub, etc.
+   
     `),
 } satisfies UIDoc;
