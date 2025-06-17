@@ -32,8 +32,12 @@ const { app, http, io } = initExpressAndIOServers();
 
 export const connMgr = new ConnectionManager(http, app);
 
+const isTestingElectron = require.main?.filename.endsWith("testElectron.js");
 const electronConfig = getElectronConfig();
-const PORT = electronConfig ? 0 : +(process.env.PROSTGLES_UI_PORT ?? 3004);
+const PORT =
+  electronConfig && !isTestingElectron ? 0 : (
+    +(process.env.PROSTGLES_UI_PORT ?? 3004)
+  );
 const LOCALHOST = "127.0.0.1";
 const HOST =
   electronConfig ? LOCALHOST : process.env.PROSTGLES_UI_HOST || LOCALHOST;
@@ -230,13 +234,13 @@ type OnServerReadyResult = {
 };
 
 export const startServer = async (
-  initialPort: number,
+  initialPort: number | undefined,
   onReady?: (result: OnServerReadyResult) => void | Promise<void>,
 ) => {
   const actualPort = await new Promise<number>((resolve) => {
     const server = http.listen(PORT, HOST, () => {
       const address = server.address();
-      const port = isObject(address) ? address.port : initialPort;
+      const port = isObject(address) ? address.port : PORT;
       const host = isObject(address) ? address.address : HOST;
 
       startProstgles({ host, port });

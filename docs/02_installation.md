@@ -33,4 +33,3 @@ Users login using their username and password. Two-factor authentication is prov
 Email and third-party (OAuth) authentication can be configured in Server Settings section. It allows users to register and log in using their email address or third-party accounts like Google, GitHub, etc.
 
 
-

@@ -5,20 +5,28 @@ let safeStorage = {
   decryptString: (v) => v.toString(),
 };
 
+/*
+ {
+  safeStorage: SafeStorage;
+  electronSid: string;
+  rootDir: string;
+  onReady: (actualPort: number) => void;
+}
+
+*/
+
 /** Must set this manually in cookies */
 const electronSid =
   "1d1b8188-b199-435a-8c93-cf307d42cfe01d1b8188-b199-435a-8c93-cf307d42cfe0";
-start.start(
+start.start({
   safeStorage,
-  {
-    port: 3004,
-    electronSid,
-    rootDir: __dirname + "/server/",
-    onSidWasSet: () => {
-      console.log("onSidWasSet");
-    },
+  port: 3004,
+  electronSid,
+  rootDir: __dirname + "/server/",
+  onSidWasSet: () => {
+    console.log("onSidWasSet");
   },
-  (actualPort) => {
+  onReady: (actualPort) => {
     console.log(`http://localhost:${actualPort}?electronSid=${electronSid}`);
   },
-);
+});

@@ -1,4 +1,4 @@
-<h2 id="ai_assistant"> AI Assistant </h2> 
+<h1 id="ai_assistant"> AI Assistant </h1> 
 
 The AI assistant is an intelligent companion that helps you work more efficiently with your PostgreSQL databases. 
 It can generate SQL queries, explain database schemas, analyze data patterns, and assist with various database-related tasks through a conversational interface.

@@ -27,7 +27,7 @@ export const useElectronSetup = ({ serverState }: ElectronSetup) => {
     ...DEFAULT_ELECTRON_CONNECTION,
     name: "prostgles_desktop",
   });
-  const [validationWarning, setvalidationWarning] = useState<any>();
+  const [validationWarning, setValidationWarning] = useState<any>();
 
   const [loading, setLoading] = useState(false);
   const [isQuickMode, setIsQuickMode] = useState(true);
@@ -43,7 +43,7 @@ export const useElectronSetup = ({ serverState }: ElectronSetup) => {
 
     const { connection, warning } = res;
 
-    setvalidationWarning(warning);
+    setValidationWarning(warning);
     if (connection) {
       setConnection(connection);
     }
@@ -62,7 +62,7 @@ export const useElectronSetup = ({ serverState }: ElectronSetup) => {
 
   const { electronCredsProvided, initState, electronCreds } = serverState || {};
   const error =
-    initState?.state === "error" ? (initState.error ?? "Init error") : null;
+    initState?.state === "error" ? initState.error || "Init error" : null;
   useEffect(() => {
     if (electronCredsProvided) {
       setStep("2-setup");
@@ -80,13 +80,13 @@ export const useElectronSetup = ({ serverState }: ElectronSetup) => {
     try {
       const resp = await postConnection(c, isQuickMode ? "quick" : "manual");
       if (resp.warning) {
-        setvalidationWarning(resp.warning);
+        setValidationWarning(resp.warning);
       } else {
         await tout(3000);
         pageReload("ElectronSetup.Done");
       }
     } catch (err) {
-      setvalidationWarning(err);
+      setValidationWarning(err);
     }
     setLoading(false);
   };

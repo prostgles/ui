@@ -3,7 +3,11 @@ import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 
 import { ScrollFade } from "../../components/SearchList/ScrollFade";
-import { documentationText } from "./getDocumentation";
+import { getDocumentationFiles } from "./getDocumentation";
+
+export const documentationText = getDocumentationFiles()
+  .map(({ text }) => text)
+  .join("\n\n");
 
 export const Documentation = () => {
   return (

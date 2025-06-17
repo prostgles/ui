@@ -11,9 +11,9 @@ import { dashboardUIDoc } from "./UIDocs/connection/dashboardUIDoc";
 import { connectionsUIDoc } from "./UIDocs/connectionsUIDoc";
 import { desktopInstallationUIDoc } from "./UIDocs/desktopInstallation";
 import { navbarUIDoc } from "./UIDocs/navbarUIDoc";
-import { overviewUIDoc } from "./UIDocs/overview";
+import { overviewUIDoc } from "./UIDocs/overviewUIDoc";
 import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
-import { UIInstallation } from "./UIDocs/UIInstallation";
+import { UIInstallation } from "./UIDocs/UIInstallationUIDoc";
 
 type Route = (typeof ROUTES)[keyof typeof ROUTES];
 
@@ -29,6 +29,9 @@ type UIDocCommon = {
    * By default, a single file is generated for each root UIDoc.
    */
   asSeparateFile?: boolean;
+
+  /** If true then this is not available for Prostgles Desktop */
+  uiVersionOnly?: true;
 };
 
 /**
@@ -193,6 +196,6 @@ export const flatDocs = UIDocs.map((doc) => getFlatDocs(doc))
   .filter(isDefined)
   .flat();
 
-if (isPlaywrightTest || true) {
+if (isPlaywrightTest) {
   window.toSVG = domToThemeAwareSVG;
 }

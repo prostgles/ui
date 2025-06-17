@@ -4,6 +4,7 @@ import type { UIDoc } from "../../../UIDocs";
 export const accessControlUIDoc = {
   type: "tab",
   selectorCommand: "config.ac",
+  uiVersionOnly: true,
   title: "Access control",
   description:
     "Manage user permissions and access rules for this database connection.",

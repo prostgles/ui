@@ -17,11 +17,11 @@ export type DBSConnectionInfo = Pick<
 >;
 export type OnServerReadyCallback = (portNumber: number) => void;
 
-interface SafeStorage extends NodeJS.EventEmitter {
+type SafeStorage = {
   decryptString(encrypted: Buffer): string;
   encryptString(plainText: string): Buffer;
   isEncryptionAvailable(): boolean;
-}
+};
 
 let port: number | undefined;
 
@@ -104,6 +104,7 @@ export const start = async (params: {
   electronSid: string;
   rootDir: string;
   onReady: (actualPort: number) => void;
+  port?: number;
 }) => {
   const { electronSid, onReady } = params;
   if (!params.rootDir || typeof params.rootDir !== "string") {
@@ -121,7 +122,7 @@ export const start = async (params: {
   electronConfig.electronSid = params.electronSid;
   electronConfig.safeStorage = params.safeStorage;
   const { startServer } = await import("./index");
-  void startServer(0, async ({ port: actualPort }) => {
+  void startServer(params.port ?? 0, async ({ port: actualPort }) => {
     // const [token] = prostglesTokens;
     // if (token) {
     //   console.log("Setting prostgles tokens");

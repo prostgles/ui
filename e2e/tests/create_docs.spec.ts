@@ -69,6 +69,7 @@ test.describe("Create docs and screenshots", () => {
     await page.waitForTimeout(100);
     for (const file of files) {
       const filePath = path.join(DOCS_DIR, file.fileName);
+
       if (IS_PIPELINE) {
         const existingFile =
           fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf-8") : "";
@@ -84,7 +85,6 @@ test.describe("Create docs and screenshots", () => {
         if (imgTags.length > 1) {
           imgTags.slice(1).forEach((imgTag, index) => {
             const tagText = "<img" + imgTag.split("/>")[0] + "/>";
-            console.log({ tagText }, fileContent);
             const src = imgTag.split('src="')[1]?.split('"')[0];
             fileContent = fileContent.replaceAll(
               tagText,
@@ -103,6 +103,39 @@ test.describe("Create docs and screenshots", () => {
         fs.writeFileSync(filePath, fileContent, "utf-8");
       }
       await page.waitForTimeout(100);
+    }
+
+    /** Ensure all scripts exist in the readme to ensure we don't show non-tested scripts */
+    const uiInstallationFile = fs.readFileSync(
+      path.join(DOCS_DIR, "02_installation.md"),
+      "utf-8",
+    );
+    const mainReadmeFile = fs.readFileSync(
+      path.join(__dirname, "../../", "README.md"),
+      "utf-8",
+    );
+    const getScripts = (fileContent: string) => {
+      const scripts = fileContent
+        .split("```")
+        .slice(1)
+        .filter((_, index) => index % 2 === 0)
+        .map((script) => {
+          return script.split("```")[0].trim();
+        });
+      return scripts;
+    };
+    const docsScripts = getScripts(uiInstallationFile);
+    const readmeScripts = getScripts(mainReadmeFile);
+    if (!docsScripts.length) {
+      throw new Error("No scripts found in the installation file");
+    }
+
+    for (const script of docsScripts) {
+      if (!readmeScripts.includes(script)) {
+        throw new Error(
+          `Script "${script}" not found in the main README file. Please ensure all scripts are included.`,
+        );
+      }
     }
   });
 

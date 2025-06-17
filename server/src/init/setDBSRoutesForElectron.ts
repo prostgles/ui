@@ -1,15 +1,14 @@
 import { randomBytes } from "crypto";
 import type { Express, RequestHandler } from "express";
+import { removeExpressRoute } from "prostgles-server/dist/Auth/AuthHandler";
 import { assertJSONBObjectAgainstSchema } from "prostgles-server/dist/JSONBValidation/JSONBValidation";
-import { pickKeys, tryCatchV2 } from "prostgles-types";
+import { getSerialisableError, pickKeys, tryCatchV2 } from "prostgles-types";
 import type { Server } from "socket.io";
 import { DEFAULT_ELECTRON_CONNECTION } from "../../../commonTypes/electronInitTypes";
 import { testDBConnection } from "../connectionUtils/testDBConnection";
 import { validateConnection } from "../connectionUtils/validateConnection";
 import { getElectronConfig } from "../electronConfig";
 import { getProstglesState, tryStartProstgles } from "./tryStartProstgles";
-import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
-import { removeExpressRoute } from "prostgles-server/dist/Auth/AuthHandler";
 
 /**
  * Used in Electron to set the DB connection and show any connection errors
@@ -69,7 +68,7 @@ const onPostDBSRequestHandler =
 
       const { connection, mode } = data;
 
-      const creds = pickKeys(connection, [
+      const initialCredentials = pickKeys(connection, [
         "db_conn",
         "db_user",
         "db_pass",
@@ -81,19 +80,19 @@ const onPostDBSRequestHandler =
       ]);
 
       if (mode === "validate") {
-        const connection = validateConnection(creds);
+        const connection = validateConnection(initialCredentials);
         res.json({ connection });
         return;
       }
 
-      if (!creds.db_conn || !creds.db_host) {
+      if (!initialCredentials.db_conn || !initialCredentials.db_host) {
         throw "db_conn or db_host Missing";
       }
 
       const { data: validatedCreds, error } = await tryCatchV2(async () => {
         if (mode === "manual") {
-          await testDBConnection(creds);
-          return creds;
+          await testDBConnection(initialCredentials);
+          return initialCredentials;
         }
 
         const { db_user, db_name } = DEFAULT_ELECTRON_CONNECTION;
@@ -102,7 +101,7 @@ const onPostDBSRequestHandler =
          * Quick mode = login with provided credentials to ensure DEFAULT_ELECTRON_CONNECTION db and user exist
          * */
         await testDBConnection(
-          { ...creds, db_name: "postgres" },
+          { ...initialCredentials, db_name: "postgres" },
           undefined,
           async (c) => {
             const userExists = await c.oneOrNone<{ usename: string }>(
@@ -115,13 +114,13 @@ const onPostDBSRequestHandler =
                 [db_pass],
               );
               /** Overwrite password only if using different username */
-            } else if (creds.db_user !== db_user) {
+            } else if (initialCredentials.db_user !== db_user) {
               await c.none(
                 `ALTER USER ${db_user} WITH ENCRYPTED PASSWORD $1 SUPERUSER`,
                 [db_pass],
               );
             } else {
-              db_pass = creds.db_pass;
+              db_pass = initialCredentials.db_pass;
             }
             const dbExists = await c.oneOrNone<{ datname: string }>(
               `SELECT datname FROM pg_catalog.pg_database WHERE datname = $1`,
@@ -133,12 +132,14 @@ const onPostDBSRequestHandler =
           },
         );
 
-        return {
-          ...creds,
+        const newConnectionDetails = validateConnection({
+          ...initialCredentials,
+          type: "Standard",
           db_user,
           db_name,
           db_pass,
-        };
+        });
+        return newConnectionDetails;
       });
 
       if (error) {
@@ -156,11 +157,11 @@ const onPostDBSRequestHandler =
       if (startup.state === "error") {
         throw startup;
       }
-      electronConfig?.setCredentials(creds);
+      electronConfig?.setCredentials(validatedCreds);
       res.json({ msg: "DBS changed. Restart system" });
       return;
     } catch (err) {
-      res.json({ warning: getErrorAsObject(err) });
+      res.json({ warning: getSerialisableError(err) });
       electronConfig?.setCredentials(undefined);
     }
   };

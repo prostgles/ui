@@ -1,5 +1,5 @@
 import type { DB } from "prostgles-server/dist/Prostgles";
-import { tryCatchV2 } from "prostgles-types";
+import { pickKeys, tryCatchV2 } from "prostgles-types";
 import type { DBS } from "..";
 import type { DBSConnectionInfo } from "../electronConfig";
 import { upsertConnection } from "../upsertConnection";
@@ -11,8 +11,10 @@ export const insertStateDatabase = async (
   con: DBSConnectionInfo,
   isElectron: boolean,
 ) => {
-  const connectionCount = await db.connections.count();
-  if (!connectionCount) {
+  const stateConnectionCount = await db.connections.count(
+    pickKeys(con, ["db_name", "db_host", "db_port", "db_user"]),
+  );
+  if (!stateConnectionCount) {
     const { data: state_db, error } = await tryCatchV2(async () => {
       const { connection: state_db } = await upsertConnection(
         {

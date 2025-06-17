@@ -110,7 +110,11 @@ export const CreateConnection = (props: CreateConnectionProps) => {
         <Popup
           clickCatchStyle={{ opacity: 1 }}
           positioning="center"
-          title={action.type}
+          title={
+            action.type === "new" ?
+              t.ConnectionServer["Create a database"]
+            : t.ConnectionServer["Select a database from this server"]
+          }
           onClose={() => setAction(undefined)}
           autoFocusFirst={{ selector: "input" }}
           footerButtons={[

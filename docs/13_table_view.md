@@ -1,4 +1,4 @@
-<h3 id="table_view"> Table view </h3> 
+<h1 id="table_view"> Table view </h1> 
 
 The table view displays data from a database table or view, allowing users to interact with the data, including sorting, filtering, and editing.
 It supports computed columns, linked fields, and various actions for managing the data.

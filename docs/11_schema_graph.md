@@ -1,4 +1,4 @@
-<h3 id="schema_graph"> Schema graph </h3> 
+<h1 id="schema_graph"> Schema graph </h1> 
 
 The schema graph provides a visual representation of the relationships between tables and views in the current database.
 It allows you to explore the schema structure, view table relationships, and manage the layout of the schema graph.

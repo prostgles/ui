@@ -1,4 +1,4 @@
-<h3 id="sql_editor"> SQL editor </h3> 
+<h1 id="sql_editor"> SQL editor </h1> 
 
 The SQL editor is a powerful tool for executing SQL queries against your database. It supports syntax highlighting, auto-completion, and various options for managing queries.
 

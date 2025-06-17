@@ -1,4 +1,4 @@
-<h4 id="file_storage"> File storage </h4> 
+<h1 id="file_storage"> File storage </h1> 
 
 Configure file upload and storage settings for this connection.
 

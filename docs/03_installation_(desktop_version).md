@@ -23,4 +23,3 @@ To maintain a secure and responsive environment, we highly recommend [installing
 You will need to create a dedicated database and superuser account with a strong password for Prostgles Desktop.
 
 
-

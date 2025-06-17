@@ -2,6 +2,11 @@
 
 Prostgles UI is a powerful and user-friendly interface designed for creating internal tools as well as managing and exploring PostgreSQL databases.
 
+<picture>
+<source srcset="./screenshots/dark/overview.svg" media="(prefers-color-scheme: dark)">
+<img src="./screenshots/overview.svg" alt="Prostgles UI Overview" width="100%" style="border: 1px solid; margin: 1em 0;" />
+</picture>
+
 It comes in two versions: 
 
 ### 1. Prostgles UI 
@@ -20,6 +25,5 @@ Web-based application accessible through any modern browser with a complete feat
 Native desktop application for Linux, MacOS and Windows. 
 It has a subset of the core features from Prostgles UI for data exploration and database management. 
 Authentication, User Management and other multi-user focused features are not available in the desktop version.
-
 
 

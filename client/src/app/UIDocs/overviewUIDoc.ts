@@ -7,6 +7,8 @@ export const overviewUIDoc = {
   docs: `
     Prostgles UI is a powerful and user-friendly interface designed for creating internal tools as well as managing and exploring PostgreSQL databases.
 
+    <img src="./screenshots/overview.svg" alt="Prostgles UI Overview" width="100%" />
+
     It comes in two versions: 
 
     ### 1. Prostgles UI 
@@ -25,7 +27,6 @@ export const overviewUIDoc = {
     Native desktop application for Linux, MacOS and Windows. 
     It has a subset of the core features from Prostgles UI for data exploration and database management. 
     Authentication, User Management and other multi-user focused features are not available in the desktop version.
- 
   `,
   asSeparateFile: true,
 } as const satisfies UIDoc;

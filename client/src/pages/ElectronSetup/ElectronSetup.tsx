@@ -65,34 +65,34 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
           </FlexCol>
         }
 
-        <FlexRow style={{ justifyContent: "space-between" }}>
-          <Btn
-            data-command="ElectronSetup.Back"
-            onClick={() => {
-              setStep("1-privacy");
-            }}
-            iconPath={mdiArrowLeft}
-            variant="outline"
-            style={{ opacity: step === "2-setup" ? 1 : 0 }}
-          >
-            Back
-          </Btn>
-
-          {step === "1-privacy" ?
+        {!loading && (
+          <FlexRow style={{ justifyContent: "space-between" }}>
             <Btn
-              data-command="ElectronSetup.Next"
+              data-command="ElectronSetup.Back"
               onClick={() => {
-                setStep("2-setup");
+                setStep("1-privacy");
               }}
-              iconPosition="right"
-              iconPath={mdiArrowRight}
-              color="action"
-              variant="filled"
+              iconPath={mdiArrowLeft}
+              variant="outline"
+              style={{ opacity: step === "2-setup" ? 1 : 0 }}
             >
-              Next
+              Back
             </Btn>
-          : !loading && (
+
+            {step === "1-privacy" ?
               <Btn
+                data-command="ElectronSetup.Next"
+                onClick={() => {
+                  setStep("2-setup");
+                }}
+                iconPosition="right"
+                iconPath={mdiArrowRight}
+                color="action"
+                variant="filled"
+              >
+                Next
+              </Btn>
+            : <Btn
                 data-command="ElectronSetup.Done"
                 color="action"
                 variant="filled"
@@ -102,9 +102,9 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
               >
                 Done
               </Btn>
-            )
-          }
-        </FlexRow>
+            }
+          </FlexRow>
+        )}
       </div>
     </FlexCol>
   );

@@ -125,7 +125,11 @@ export const App = () => {
       },
     [state, theme, title],
   );
-  if (state.serverState?.isElectron && !state.prglState) {
+  if (
+    state.serverState?.isElectron &&
+    ((state.state !== "loading" && state.state !== "ok") ||
+      !state.serverState.electronCredsProvided)
+  ) {
     return <ElectronSetup serverState={state.serverState} />;
   }
 
@@ -138,8 +142,8 @@ export const App = () => {
       initState.error || unknownErrorMessage
     : undefined);
 
-  const { prglState, serverState } = state;
-  if (!error && (!prglState || !serverState)) {
+  const { prglState, serverState, state: _state } = state;
+  if (!error && (!prglState || !serverState || _state === "loading")) {
     return (
       <div className="flex-row m-auto ai-center jc-center  p-2">
         <Loading id="main" message="Connecting to state database..." />

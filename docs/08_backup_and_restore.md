@@ -1,4 +1,4 @@
-<h4 id="backup_and_restore"> Backup and Restore </h4> 
+<h1 id="backup_and_restore"> Backup and Restore </h1> 
 
 Manage database backups and restore operations for this connection.
 

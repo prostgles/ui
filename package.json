@@ -17,6 +17,7 @@
   ],
   "scripts": {
     "dev": "bash ./scripts/start-dev.sh",
+    "dev:electron": "bash ./scripts/start-dev-electron.sh",
     "start": "bash ./scripts/start-prod.sh",
     "test": "bash ./scripts/test.sh"
   },

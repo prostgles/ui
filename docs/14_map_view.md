@@ -1,4 +1,4 @@
-<h3 id="map_view"> Map view </h3> 
+<h1 id="map_view"> Map view </h1> 
 
 The map view allows you to visualize geographical data from your database.
 It requires the [PostGIS](https://postgis.net/) extension to be installed on your PostgreSQL database.

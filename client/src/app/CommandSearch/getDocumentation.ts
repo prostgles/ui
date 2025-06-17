@@ -1,4 +1,6 @@
+import { isObject } from "../../../../commonTypes/publishUtils";
 import { fixIndent } from "../../demo/sqlVideoDemo";
+import { COMMANDS } from "../../Testing";
 import { UIDocs, type UIDoc, type UIDocElement } from "../UIDocs";
 
 type SeparatePage = { doc: UIDoc; parentDocs: UIDoc[]; depth: number };
@@ -57,7 +59,7 @@ const getUIDocAsMarkdown = (
   content: string;
   doc: UIDoc;
 }[] => {
-  const depth = Math.min(3, parentDocs.length);
+  const depth = doc.asSeparateFile ? 0 : Math.min(3, parentDocs.length);
 
   const { listContent: childrenContent, separatePages } = asList(
     getItemChildren(doc),
@@ -69,12 +71,26 @@ const getUIDocAsMarkdown = (
     getUIDocAsMarkdown(sp.doc, sp.parentDocs, sp.depth),
   );
 
+  if (doc.uiVersionOnly) {
+    const sel = "selectorCommand" in doc ? doc.selectorCommand : undefined;
+    const cmdInfo = sel && COMMANDS[sel];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!cmdInfo || !isObject(cmdInfo) || !cmdInfo.uiOnly) {
+      throw new Error(
+        `UI Version Only documentation for "${doc.title}" does not have a valid selectorCommand.`,
+      );
+    }
+  }
+
   const hDepth = depth + 1;
   const content = [
     `<h${hDepth} id=${JSON.stringify(toSnakeCase(doc.title))}> ${doc.title} </h${hDepth}> \n`,
+    doc.uiVersionOnly ? `>  Not avaialable on Desktop version\n  ` : "",
     `${doc.docs ? fixIndent(doc.docs) : doc.description}\n`,
     childrenContent,
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   return [
     {
@@ -85,7 +101,7 @@ const getUIDocAsMarkdown = (
   ].concat(separatePagesWithContent);
 };
 
-type DocumentationFile = {
+export type DocumentationFile = {
   fileName: string;
   text: string;
 };
@@ -132,10 +148,4 @@ const getItemChildren = (doc: UIDoc) =>
   : "pageContent" in doc ? (doc.pageContent ?? [])
   : [];
 
-const documentation = getDocumentationFiles();
-//@ts-ignore
-window.documentation = documentation;
-
-export const documentationText = documentation
-  .map(({ text }) => text)
-  .join("\n\n");
+window.documentation = getDocumentationFiles();

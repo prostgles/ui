@@ -102,10 +102,7 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
           label: t.ConnectionConfig["File storage"],
           listProps: dataCommand("config.files"),
           leftIconPath: mdiImage,
-          disabledText:
-            disabledText ||
-            stateDisabledInfo ||
-            (isElectron ? "Not available for desktop" : undefined),
+          disabledText: disabledText || stateDisabledInfo,
           content: <FileTableConfigControls {...props} />,
         },
         backups: {

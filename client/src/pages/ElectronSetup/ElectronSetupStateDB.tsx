@@ -7,6 +7,8 @@ import { t } from "../../i18n/i18nUtils";
 import { NewConnectionForm } from "../NewConnection/NewConnectionForm";
 import type { useElectronSetup } from "./useElectronSetup";
 import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
+import ErrorComponent from "../../components/ErrorComponent";
+import { ScrollFade } from "../../components/SearchList/ScrollFade";
 
 export const ElectronSetupStateDB = ({
   state,
@@ -23,7 +25,7 @@ export const ElectronSetupStateDB = ({
   } = state;
 
   return (
-    <FlexCol className="px-p25 min-s-0">
+    <ScrollFade className="px-p25 min-s-0 flex-col f-1 oy-auto">
       <h2>State database</h2>
       <section className="ta-left font-18">
         <strong>Prostgles Desktop</strong> requires full access to a postgres
@@ -56,9 +58,17 @@ export const ElectronSetupStateDB = ({
             content: (
               <FlexCol>
                 <div>
+                  Provide superuser credentials for the locally running postgres
+                  server.
+                </div>
+                <div>
                   Will create a{" "}
-                  <strong>{DEFAULT_ELECTRON_CONNECTION.db_user}</strong>{" "}
-                  superuser and a{" "}
+                  {c.db_user !== DEFAULT_ELECTRON_CONNECTION.db_user && (
+                    <>
+                      <strong>{DEFAULT_ELECTRON_CONNECTION.db_user}</strong>{" "}
+                      superuser and a{" "}
+                    </>
+                  )}
                   <strong>{DEFAULT_ELECTRON_CONNECTION.db_name}</strong> state
                   database if missing on{" "}
                   <strong>
@@ -69,7 +79,8 @@ export const ElectronSetupStateDB = ({
                 {c.db_user !== DEFAULT_ELECTRON_CONNECTION.db_user && (
                   <div>
                     *If <strong>{DEFAULT_ELECTRON_CONNECTION.db_user}</strong>{" "}
-                    user exists will overwrite password with a random one
+                    user exists will overwrite password with a randomly
+                    generated one
                   </div>
                 )}
 
@@ -89,6 +100,12 @@ export const ElectronSetupStateDB = ({
                   autoComplete="off"
                   onChange={(db_pass) => updateConnection({ db_pass })}
                 />
+                {validationWarning && (
+                  <ErrorComponent
+                    error={validationWarning}
+                    style={{ minWidth: 0 }}
+                  />
+                )}
               </FlexCol>
             ),
           },
@@ -120,6 +137,6 @@ export const ElectronSetupStateDB = ({
           },
         }}
       />
-    </FlexCol>
+    </ScrollFade>
   );
 };

@@ -110,6 +110,7 @@ export const accountUIDoc = {
           title: "API Details",
           description: "View your API credentials and configuration.",
           selectorCommand: "config.api",
+          uiVersionOnly: true,
           children: [],
         },
       ],

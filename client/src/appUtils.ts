@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 import type { Theme } from "./App";
 import type { Command } from "./Testing";
 import type { SQLEditorRef } from "./dashboard/SQLEditor/W_SQLEditor";
+import {
+  getDocumentationFiles,
+  type DocumentationFile,
+} from "./app/CommandSearch/getDocumentation";
+import { domToThemeAwareSVG } from "./app/domToSVG/domToThemeAwareSVG";
+import { isPlaywrightTest } from "./i18n/i18nUtils";
 
 type Unsubscribe = {
   unsubscribe: () => void;
@@ -103,6 +109,7 @@ declare global {
     isIOSDevice: boolean;
     isMobile: boolean;
     toSVG: (node: HTMLElement) => Promise<{ light: string; dark: string }>;
+    documentation: DocumentationFile[];
   }
 
   interface HTMLDivElement {

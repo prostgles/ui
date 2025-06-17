@@ -1,4 +1,4 @@
-<h4 id="import_file"> Import file </h4> 
+<h1 id="import_file"> Import file </h1> 
 
 Import files into the current database. Supported file types include CSV, GeoJSON, and JSON.
 The import process allows you to specify the table name, infer column data types, and choose how to insert JSON/GeoJSON data into the table.

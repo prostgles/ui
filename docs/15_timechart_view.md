@@ -1,4 +1,4 @@
-<h3 id="timechart_view"> Timechart view </h3> 
+<h1 id="timechart_view"> Timechart view </h1> 
 
 The timechart view allows you to visualize time-series data from your database.
 It supports multiple layers, each with its own data source and style.
@@ -40,6 +40,5 @@ You can add filters to the timechart to narrow down the data displayed.
 <h4 id="timechart_view_menu"> Timechart view menu </h4> 
 
 The timechart view menu provides options for configuring the timechart.
-
 
 

@@ -19,8 +19,9 @@ export const useAppState = (
   const dbsClient = useDBSClient(onDisconnect, serverState);
   const [user, setUser] = useState<DBSSchema["users"]>();
 
+  const prglStateWaiting = dbsClient.hasError || dbsClient.isLoading;
   const prglState: AppState["prglState"] = useMemo(() => {
-    if (dbsClient.hasError || dbsClient.isLoading) return;
+    if (prglStateWaiting) return;
     const { dbo: dbs, methods, auth, tableSchema, socket } = dbsClient;
 
     const { tables: dbsTables = [] } = getTables(
@@ -43,7 +44,7 @@ export const useAppState = (
       sid: auth.user?.sid,
       dbsKey: Date.now() + "",
     };
-  }, [dbsClient]);
+  }, [dbsClient, prglStateWaiting]);
 
   const { dbs, auth } = prglState ?? {};
 
@@ -67,6 +68,7 @@ export const useAppState = (
 
   if (dbsClientError) {
     return {
+      state: "error" as const,
       dbsClientError,
       prglState: undefined,
       user: undefined,
@@ -75,6 +77,7 @@ export const useAppState = (
   }
 
   return {
+    state: prglStateWaiting ? ("loading" as const) : ("ok" as const),
     dbsClientError: undefined,
     prglState,
     user,

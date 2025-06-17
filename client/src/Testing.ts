@@ -25,7 +25,7 @@ export const COMMANDS = {
   "config.bkp.create.start": "",
   "config.bkp.AutomaticBackups": "",
   "config.bkp.AutomaticBackups.toggle": "",
-  "config.ac": "",
+  "config.ac": { desc: "", uiOnly: true },
   "config.status": "",
   "config.ac.create": "",
   "config.ac.save": "",
@@ -52,7 +52,7 @@ export const COMMANDS = {
   "config.files": "",
   "config.files.toggle": "",
   "config.files.toggle.confirm": "",
-  "config.api": "",
+  "config.api": { desc: "", uiOnly: true },
   "config.methods": "",
 
   "dashboard.window.rowInsert": "Open row insert panel",
@@ -429,7 +429,14 @@ export const COMMANDS = {
   CommandSearch: "",
   "Chat.attachedFiles": "",
   "Window.W_QuickMenu.addCrossFilteredTable": "Add cross-filtered table",
-} as const;
+} as const satisfies Record<
+  string,
+  | string
+  | {
+      desc: string;
+      uiOnly?: true;
+    }
+>;
 export type Command = keyof typeof COMMANDS;
 
 export type TestSelectors = {
