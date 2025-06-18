@@ -68,7 +68,7 @@
 .chat-container.chat-component .message { 
   margin-top: 2em;
   /* max-width: 70%; */
-  color: var(--text-1); 
+  color: var(--text-0); 
   flex: 0 0 auto;
   opacity: 1; 
 }

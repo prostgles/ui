@@ -204,7 +204,7 @@ export class FileInput extends RTComp<
 
           {!onDelete ? null : (
             <Btn
-              className={"shadow  b b-color-2"}
+              className={"shadow  b b-color"}
               style={{
                 position: "absolute",
                 top: "10px",

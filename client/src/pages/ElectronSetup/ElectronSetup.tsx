@@ -43,7 +43,7 @@ export const ElectronSetup = ({ serverState }: ElectronSetup) => {
               the &quot;Send feedback&quot; button.
             </section>
           </div>
-        : <FlexCol className="f-1 min-s-0 o-auto">
+        : <FlexCol className="f-1 min-s-0 ">
             {loading && !validationWarning ?
               <Loading
                 id="main"

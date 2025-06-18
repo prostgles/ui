@@ -1,5 +1,5 @@
 import type { AnyObject } from "prostgles-types";
-import { asName, getKeys, isDefined } from "prostgles-types";
+import { asName, getKeys, isDefined, isObject } from "prostgles-types";
 import { getFileText } from "../W_SQL/W_SQLMenu";
 import type FileImporter from "./FileImporter";
 import { getRowsPerBatch } from "./FileImporter";
@@ -112,37 +112,52 @@ async function parseJSONFile(file: File): Promise<{
 }> {
   let type: "json" | "geojson" = "json";
   const txt = await getFileText(file);
-  const obj = JSON.parse(txt);
+  let data = JSON.parse(txt);
+  if (isObject(data) && Object.values(data).length === 1) {
+    const firstValue = Object.values(data)[0];
+    if (Array.isArray(firstValue)) {
+      data = firstValue;
+    }
+  }
+
+  const pg_types = ["text", "geometry", "jsonb", "numeric"] as const;
+
   const actualBytesPerChar = txt.length / file.size;
   let rows: AnyObject[] = [];
   let srid;
-  let _cols: Record<string, "text" | "numeric" | "geometry"> = {};
+  let _cols: Record<string, (typeof pg_types)[number]> = {};
   let maxCharsPerRow = 0;
   const setCol = (row) => {
-    const getType = (v) => (typeof v === "number" ? "numeric" : "text");
+    const getType = (v) =>
+      typeof v === "number" ? "numeric"
+      : isObject(v) ? "jsonb"
+      : "text";
     Object.keys(row).map((k) => {
-      const actualType = getType(row[k]);
-      const type = _cols[k];
-      if (!type || (type === "numeric" && actualType === "text")) {
-        _cols[k] = actualType;
+      const currentValueType = getType(row[k]);
+      const columnType = _cols[k];
+      if (
+        !columnType ||
+        pg_types.indexOf(currentValueType) < pg_types.indexOf(columnType)
+      ) {
+        _cols[k] = currentValueType;
       }
     });
   };
   const getGeoJSONFeatures = (): undefined | GeoJSONFeature[] => {
     if (
-      obj.type === "FeatureCollection" &&
-      obj.features &&
-      Array.isArray(obj.features)
+      data.type === "FeatureCollection" &&
+      data.features &&
+      Array.isArray(data.features)
     ) {
-      return obj.features;
+      return data.features;
     } else if (
-      Array.isArray(obj) &&
-      obj.length &&
-      obj[0].type === "Feature" &&
-      typeof obj[0].geometry?.type === "string" &&
-      Array.isArray(obj[0].geometry.coordinates)
+      Array.isArray(data) &&
+      data.length &&
+      data[0].type === "Feature" &&
+      typeof data[0].geometry?.type === "string" &&
+      Array.isArray(data[0].geometry.coordinates)
     ) {
-      return obj;
+      return data;
     }
   };
 
@@ -197,12 +212,12 @@ async function parseJSONFile(file: File): Promise<{
         }
       })
       .filter(isDefined);
-  } else if (Array.isArray(obj)) {
-    obj.forEach((row) => {
+  } else if (Array.isArray(data)) {
+    data.forEach((row) => {
       setCol(row);
     });
     const colKeys = Object.keys(_cols);
-    rows = obj.map((row) => {
+    rows = data.map((row) => {
       colKeys.map((k) => {
         row[k] = row[k] ?? null;
       });

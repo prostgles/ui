@@ -318,7 +318,7 @@ export default class FormField extends React.Component<
     if (readOnly) valProp = { value };
     if (defaultValue) valProp = { defaultValue };
 
-    let inptClass = " font-semibold ";
+    let inptClass = " font-semibold formfield-bg-color ";
     if (type !== "checkbox") {
       wrapperStyle = {
         ...wrapperStyle,
@@ -607,9 +607,6 @@ export default class FormField extends React.Component<
         }
         inputWrapperStyle={{
           ...wrapperStyle,
-          ...(type !== "checkbox" && {
-            backgroundColor: "var(--input-bg-color)",
-          }),
           maxWidth: asTextArea ? "100%" : maxWidth,
           ...(asJSON === "codeEditor" && { minHeight: "42px" }),
           ...(((readOnly && asJSON !== "codeEditor") ||
@@ -642,7 +639,7 @@ export default class FormField extends React.Component<
       >
         {isEditableSelect ?
           <Select
-            className="FormField_Select noselect f-1 bg-color-0"
+            className="FormField_Select noselect f-1 formfield-bg-color"
             style={{
               fontSize: "16px",
               fontWeight: 500,

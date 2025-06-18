@@ -377,7 +377,7 @@ export const W_SQLBottomBar = (props: W_SQLBottomBarProps) => {
               min={1}
               max={1000}
               step={1}
-              className="text-0 b b-color-2 bg-color-2 rounded p-p25"
+              className="text-0 b b-color bg-color-2 rounded p-p25"
               defaultValue={w.limit ?? ""}
               onChange={({ target: { value } }) => {
                 const limit = value.length ? +value : -1;

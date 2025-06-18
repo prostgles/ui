@@ -3,6 +3,8 @@ import {
   mdiCheck,
   mdiCircleOutline,
   mdiDatabase,
+  mdiPlus,
+  mdiRefresh,
   mdiTools,
 } from "@mdi/js";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
@@ -11,14 +13,14 @@ import React, { useMemo, useState } from "react";
 import { dashboardTypes } from "../../../../commonTypes/DashboardTypes";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import Btn from "../../components/Btn";
-import { FlexCol, FlexRow } from "../../components/Flex";
+import { FlexCol, FlexRow, FlexRowWrap } from "../../components/Flex";
 import PopupMenu from "../../components/PopupMenu";
 import Select, { type FullOption } from "../../components/Select/Select";
 import { SvgIconFromURL } from "../../components/SvgIcon";
 import { MCPServers } from "../../pages/ServerSettings/MCPServers/MCPServers";
 import { CodeEditorWithSaveButton } from "../CodeEditor/CodeEditorWithSaveButton";
 import { SmartCardList } from "../SmartCardList/SmartCardList";
-import { SmartForm } from "../SmartForm/SmartForm";
+import { SmartForm, SmartFormPopup } from "../SmartForm/SmartForm";
 import type { AskLLMChatProps } from "./AskLLMChat";
 import { MonacoEditor } from "../../components/MonacoEditor/MonacoEditor";
 import Tabs from "../../components/Tabs";
@@ -32,7 +34,7 @@ export const AskLLMChatActionBar = (
   const { prgl, setupState, activeChat, dbSchemaForPrompt } = props;
   const activeChatId = activeChat.id;
   const { prompts } = setupState;
-  const { dbs } = prgl;
+  const { dbs, dbsMethods } = prgl;
   const prompt = useMemo(
     () => prompts.find(({ id }) => id === activeChat.llm_prompt_id),
     [prompts, activeChat.llm_prompt_id],
@@ -323,6 +325,37 @@ export const AskLLMChatActionBar = (
             },
           );
         }}
+        onNoResultsContent={() => (
+          <FlexCol className="p-1">
+            <div>No results. </div>
+            <FlexRowWrap>
+              <Btn
+                title="Refresh models"
+                iconPath={mdiRefresh}
+                onClickPromise={async () => await dbsMethods.refreshModels?.()}
+                color="action"
+                variant="faded"
+              >
+                Refresh models
+              </Btn>
+              <SmartFormPopup
+                asPopup={true}
+                label="Add model"
+                db={dbs as DBHandlerClient}
+                tableName="llm_models"
+                methods={prgl.dbsMethods}
+                tables={prgl.dbsTables}
+                triggerButton={{
+                  iconPath: mdiPlus,
+                  title: "Add model",
+                  color: "action",
+                  children: "Add model",
+                  variant: "faded",
+                }}
+              />
+            </FlexRowWrap>
+          </FlexCol>
+        )}
       />
     </FlexRow>
   );

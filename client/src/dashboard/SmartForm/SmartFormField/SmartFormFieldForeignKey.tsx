@@ -142,7 +142,10 @@ export const SmartFormFieldForeignKey = (
         : [];
       return (
         <FileInput
-          className={"mt-p5 f-0 " + (table.info.isFileTable ? "mt-2" : "")}
+          className={
+            "mt-p5 f-0 formfield-bg-color " +
+            (table.info.isFileTable ? "mt-2" : "")
+          }
           label={column.label}
           media={media}
           minSize={470}
@@ -184,7 +187,7 @@ export const SmartFormFieldForeignKey = (
         style={{ justifyContent: "space-between" }}
       >
         <Btn
-          className=" bg-color-0"
+          className="formfield-bg-color"
           color="action"
           title="View insert data"
           onClick={() => {
@@ -206,7 +209,7 @@ export const SmartFormFieldForeignKey = (
 
   return (
     <Select
-      className="SmartFormFieldForeignKey FormField_Select noselect bg-color-0"
+      className="SmartFormFieldForeignKey FormField_Select noselect formfield-bg-color"
       variant="div"
       fullOptions={fullOptions ?? []}
       onSearch={onSearchOptions}

@@ -140,6 +140,16 @@ export const setupLLM = async (dbs: DBS) => {
         },
         llm_models: [
           {
+            name: "claude-sonnet-4-20250514	",
+            pricing_info: {
+              input: 3,
+              output: 15,
+              cachedInput: 3.75,
+              cachedOutput: 0.3,
+            },
+            mcp_tool_support: true,
+          },
+          {
             name: "claude-3-7-sonnet-20250219",
             pricing_info: {
               input: 3,
@@ -302,6 +312,14 @@ export const setupLLM = async (dbs: DBS) => {
             chat_suitability_rank: "1",
           },
         ],
+      },
+      {
+        id: "Custom",
+        api_url: "",
+        api_docs_url: "",
+        api_pricing_url: "",
+        logo_url: "/icons/CloudQuestionOutline.svg",
+        llm_models: [],
       },
     ] satisfies (DBSSchemaForInsert["llm_providers"] & {
       llm_models: Omit<DBSSchemaForInsert["llm_models"], "provider_id">[];

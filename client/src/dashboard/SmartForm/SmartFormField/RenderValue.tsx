@@ -80,7 +80,7 @@ export const RenderValue = ({
   }
 
   if (
-    tsDataType === "number" &&
+    // tsDataType === "number" &&
     udt_name &&
     includes(_PG_numbers, udt_name) &&
     value !== undefined &&

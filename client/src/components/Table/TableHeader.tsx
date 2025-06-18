@@ -101,7 +101,7 @@ export class TableHeader<
             return (
               <div
                 key={iCol}
-                className={classOverride(className, "br b-gray-100")}
+                className={classOverride(className, "br b-color")}
                 {...(col.onContextMenu ? iosContextMenuPolyfill() : {})}
                 onContextMenu={
                   !col.onContextMenu ? undefined : (

@@ -10,7 +10,7 @@ import { Icon } from "../Icon/Icon";
 import type { LabelProps } from "../Label";
 import { Label } from "../Label";
 import Popup from "../Popup/Popup";
-import type { SearchListItem } from "../SearchList/SearchList";
+import type { SearchListItem, SearchListProps } from "../SearchList/SearchList";
 import SearchList from "../SearchList/SearchList";
 import "./Select.css";
 import { SelectTriggerButton } from "./SelectTriggerButton";
@@ -103,6 +103,7 @@ export type SelectProps<
   disabledInfo?: string;
   optional?: Optional;
   nullable?: boolean;
+  onNoResultsContent?: SearchListProps["onNoResultsContent"];
 } & (
     | {
         options: readonly O[];
@@ -151,6 +152,7 @@ export default class Select<
       variant = "div",
       onSearch,
       noSearchLimit = 15,
+      onNoResultsContent,
       multiSelect,
       asRow,
       limit,
@@ -380,6 +382,7 @@ export default class Select<
           data-key={this.props["data-key"]}
           autoFocus={true}
           // noSearch={!onSearch && options.length < 15}
+          onNoResultsContent={onNoResultsContent}
           onSearch={onSearch}
           onMultiToggle={
             multiSelect ?

@@ -17,6 +17,8 @@ import { type NewRowDataHandler } from "./SmartFormNewRowDataHandler";
 import { SmartFormPopupWrapper } from "./SmartFormPopup/SmartFormPopupWrapper";
 import { SmartFormUpperFooter } from "./SmartFormUpperFooter";
 import { useSmartForm, type SmartFormState } from "./useSmartForm";
+import type { BtnProps } from "../../components/Btn";
+import Btn from "../../components/Btn";
 
 export type getErrorsHook = (
   cb: (newRow: AnyObject) => SmartFormState["error"] | undefined,
@@ -307,5 +309,43 @@ const SmartFormWithNoError = ({
         <SmartFormFooterButtons {...props} {...state} {...actionsState} />
       </div>
     </SmartFormPopupWrapper>
+  );
+};
+
+export const SmartFormPopup = ({
+  triggerButton,
+  ...smartFormProps
+}: SmartFormProps & {
+  triggerButton: Pick<
+    BtnProps,
+    | "label"
+    | "children"
+    | "iconPath"
+    | "color"
+    | "variant"
+    | "title"
+    | "style"
+    | "className"
+  >;
+}) => {
+  const [anchorEl, setAnchorEl] = React.useState<HTMLElement>();
+  return (
+    <>
+      <Btn
+        {...triggerButton}
+        onClick={(e) => {
+          setAnchorEl(e.currentTarget);
+        }}
+      />
+      {anchorEl && (
+        <SmartForm
+          {...smartFormProps}
+          onClose={(e) => {
+            setAnchorEl(undefined);
+            smartFormProps.onClose?.(e);
+          }}
+        />
+      )}
+    </>
   );
 };

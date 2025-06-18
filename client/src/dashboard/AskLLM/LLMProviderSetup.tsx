@@ -8,6 +8,8 @@ import {
   SmartCardList,
   type SmartCardListProps,
 } from "../SmartCardList/SmartCardList";
+import Btn from "../../components/Btn";
+import { mdiRefresh } from "@mdi/js";
 
 export const LLMProviderSetup = ({
   dbs,
@@ -16,7 +18,9 @@ export const LLMProviderSetup = ({
 }: Pick<Prgl, "dbs" | "dbsMethods" | "dbsTables">) => {
   const listProps = useMemo(() => {
     return {
-      showTopBar: { insert: true },
+      showTopBar: {
+        insert: true,
+      },
       fieldConfigs: [
         {
           name: "llm_providers",
@@ -44,7 +48,7 @@ export const LLMProviderSetup = ({
       SmartCardListProps<DBSSchema["llm_credentials"]>,
       "fieldConfigs" | "showTopBar"
     >;
-  }, []);
+  }, [dbsMethods.refreshModels]);
 
   return (
     <>

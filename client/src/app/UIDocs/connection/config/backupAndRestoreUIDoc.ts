@@ -1,4 +1,3 @@
-import { fixIndent } from "../../../../demo/sqlVideoDemo";
 import type { UIDoc } from "../../../UIDocs";
 
 export const backupAndRestoreUIDoc = {
@@ -7,11 +6,16 @@ export const backupAndRestoreUIDoc = {
   title: "Backup and Restore",
   description: "Manage database backups and restore operations.",
   asSeparateFile: true,
-  docs: fixIndent(`
-    Manage database backups and restore operations for this connection.
+  docs: `
+    Manage database backups and restore operations for this PostgreSQL connection. 
+    Create reliable backups using PostgreSQL's native tools and restore 
+    your data when needed.
+
+    Backups can be saved to a local file system or to cloud storage to AWS S3.
+    Similarly, you can restore backups from local files or from AWS S3.
 
     <img src="./screenshots/backup_and_restore.svg" alt="Backup and Restore" />
-  `),
+  `,
   children: [
     {
       type: "button",

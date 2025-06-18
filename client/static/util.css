@@ -130,9 +130,12 @@
   --bg-color-4: var(--gray-300);
 
   --b-color: var(--gray-300);
+  --b-color-0: var(--gray-200);
+  --b-color-1: var(--gray-100);
+  --b-color-2: var(--gray-50);
 
   --bg-li-selected: var(--blue-100);
-  --input-bg-color: white;
+  --formfield-bg-color: var(--bg-color-0);
 }
 
 :root.dark-theme {
@@ -165,9 +168,9 @@
   --bg-danger: var(--red-600);
   --bg-default: var(--gray-600);
   --bg-action: #0071b3;
-  --bg-popup: #3b3b3b;
-  /* --bg-popup-content: #272727; */
-  --bg-popup-content: #3b3b3b;
+  --bg-popup: #2d2d2d;
+  /* --bg-popup-content: #272727;  #3b3b3b; */
+  --bg-popup-content: #2d2d2d;
 
   /* 
   --shadow0: rgba(77, 77, 78, 0.733);
@@ -188,13 +191,16 @@
   --bg-color-3: #1a1919;
   --bg-color-4: black;
   --b-color: var(--gray-500);
+  --b-color-0: var(--gray-600);
+  --b-color-1: var(--gray-800);
+  --b-color-2: var(--gray-900);
 
   --bg-li-selected: #2465d463;
-  --input-bg-color: var(--bg-color-2);
+  --formfield-bg-color: var(--bg-color-2);
 }
 
-.input-bg-color {
-  background-color: var(--input-bg-color);
+.formfield-bg-color {
+  background-color: var(--formfield-bg-color) !important;
 }
 
 .text-0 {
@@ -252,13 +258,13 @@
   border-color: var(--b-color);
 }
 .b-color-0 {
-  border-color: var(--text-0);
+  border-color: var(--b-color-0);
 }
 .b-color-1 {
-  border-color: var(--text-1);
+  border-color: var(--b-color-1);
 }
 .b-color-2 {
-  border-color: var(--text-2);
+  border-color: var(--b-color-2);
 }
 
 .bg-warning {
@@ -1024,13 +1030,6 @@ textarea:focus {
   border-bottom-width: 1px;
 }
 
-.b-gray-100 {
-  border-color: var(--gray-100);
-}
-.dark-theme .b-gray-100 {
-  border-color: var(--gray-600);
-}
-
 .bg-indigo-900-hover:hover {
   background-color: var(--indigo-900);
 }
@@ -1621,7 +1620,7 @@ button.toggle:focus {
 
 .dark-theme .card {
   /* Border used to make select options more visible when rendered on a popup (See access rules table options) */
-  border: 1px solid #696969;
+  border: 1px solid var(--b-color);
   /* box-shadow: 0 1px 3px 0 rgb(221 221 221 / 57%), 0 1px 2px 0 rgba(0, 0, 0, .06) */
   box-shadow:
     inset 0 0 0.5px 1px hsla(0, 0%, 100%, 0.075),

@@ -134,8 +134,7 @@ const InputChip = ({
 
   return (
     <Chip
-      className="focus-border  b b-color text-color-0"
-      style={{ background: "var(--input-bg-color)" }}
+      className="focus-border  b b-color text-color-0 formfield-bg-color"
       onDelete={onRemove}
       leftIcon={{
         path: mdiPan,

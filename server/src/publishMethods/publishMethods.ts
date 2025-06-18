@@ -55,6 +55,7 @@ import { askLLM } from "./askLLM/askLLM";
 import { getNodeTypes } from "./getNodeTypes";
 import { prostglesSignup } from "./prostglesSignup";
 import { getSampleSchemas } from "./applySampleSchema";
+import { refreshModels } from "./askLLM/refreshModels";
 
 export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
   params,
@@ -202,6 +203,7 @@ export const publishMethods: PublishMethods<DBGeneratedSchema> = async (
       }
       return res;
     },
+    refreshModels: () => refreshModels(dbs),
     reloadSchema: async (conId: string) => {
       const conn = connMgr.getConnection(conId);
       if (conId && typeof conId !== "string") {

@@ -102,7 +102,6 @@ function initApp() {
         ),
     );
 
-    let port: number;
     expressApp
       .start({
         safeStorage,
@@ -122,7 +121,6 @@ function initApp() {
         },
         onReady: (actualPort: number) => {
           console.log("Express server started on port " + actualPort);
-          port = actualPort;
           tryOpenBrowser(actualPort, electronSid);
           // try {
           //   new Tray(nativeImage.createFromPath(iconPath));

@@ -164,7 +164,7 @@ export const W_TableMenu_TableInfo = ({
           variant="faded"
           onClick={() => {
             onSetQuery({
-              sql: `DROP ${tableMeta.type.toUpperCase()} ${asName(tableName)} \n"remove this line to confirm"`,
+              sql: `DROP ${tableMeta.type.toUpperCase()} ${tableName} \n"remove this line to confirm"`,
               title: `${tableMeta.type} will be deleted from the database`,
               onSuccess: () => {
                 prgl.dbs.windows.update(

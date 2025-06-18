@@ -1,12 +1,10 @@
 import React, { forwardRef, type Ref } from "react";
 import "./FormField.css";
 
-import { mdiAlertCircleOutline } from "@mdi/js";
 import { isObject } from "prostgles-types";
 import type { TestSelectors } from "../../Testing";
 import ErrorComponent from "../ErrorComponent";
 import { classOverride, FlexRow, type DivProps } from "../Flex";
-import { Icon } from "../Icon/Icon";
 import { InfoRow } from "../InfoRow";
 import { Label } from "../Label";
 import type { FormFieldProps } from "./FormField";

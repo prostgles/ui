@@ -154,6 +154,7 @@ export type DBSMethods = Partial<{
     npmVersion: string;
     uvxVersion: string;
   }>;
+  refreshModels: () => Promise<void>;
 }>;
 
 const AdminTableNames = ["connections", "global_settings"] as const;

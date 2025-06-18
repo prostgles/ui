@@ -262,7 +262,7 @@ export const CodeEditor = (props: CodeEditorProps) => {
   return (
     <div
       className={classOverride(
-        "CodeEditor f-1 min-h-0 min-w-0 flex-col relative b b-color-2 relative",
+        "CodeEditor f-1 min-h-0 min-w-0 flex-col relative b b-color relative",
         className,
       )}
       style={style}

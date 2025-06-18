@@ -36,6 +36,9 @@ const onPostDBSRequestHandler =
   async (req, res) => {
     const electronConfig = getElectronConfig();
     try {
+      if (!electronConfig?.isElectron) {
+        throw "Not an electron app";
+      }
       const data = pickKeys(req.body, ["connection", "mode"]);
       assertJSONBObjectAgainstSchema(
         {
@@ -128,6 +131,11 @@ const onPostDBSRequestHandler =
             );
             if (!dbExists) {
               await c.none(`CREATE DATABASE ${db_name} WITH OWNER ${db_user} `);
+            } else {
+              /** If db exists, ensure user has access */
+              await c.none(
+                `GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO ${db_user}`,
+              );
             }
           },
         );
@@ -139,6 +147,7 @@ const onPostDBSRequestHandler =
           db_name,
           db_pass,
         });
+        await testDBConnection(newConnectionDetails, true);
         return newConnectionDetails;
       });
 
@@ -157,7 +166,7 @@ const onPostDBSRequestHandler =
       if (startup.state === "error") {
         throw startup;
       }
-      electronConfig?.setCredentials(validatedCreds);
+      electronConfig.setCredentials(validatedCreds);
       res.json({ msg: "DBS changed. Restart system" });
       return;
     } catch (err) {

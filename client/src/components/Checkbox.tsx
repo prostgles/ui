@@ -42,12 +42,12 @@ export default class Checkbox extends React.Component<P, any> {
     const tickColorClass = checked ? " text-action " : "text-2";
 
     const defaultInputClass =
-      " Checkbox_inner_label flex-row-wrap noselect relative checkbox pointer ai-center jc-center w-fit w-fit h-fit input-bg-color " +
+      " Checkbox_inner_label flex-row-wrap noselect relative checkbox pointer ai-center jc-center w-fit w-fit h-fit formfield-bg-color " +
       (!variant ? " b b-color " : "") +
       (variant === "micro" ? ""
       : variant === "minimal" ? " round "
       : " focusable ") +
-      (isBtn ? "bg-color-2 b-gray-100 p-p5 no-outline"
+      (isBtn ? "bg-color-2 b-color p-p5 no-outline"
       : isMiniOrMicro ? "bg-transparent b-unset no-outline"
       : "relative ");
     const checkbox = (
