@@ -20,11 +20,11 @@ Supported AI Providers: OpenAI, Anthropic, Google Gemini, OpenRouter, and Local 
     - **Toggle fullscreen**: Toggles the fullscreen mode for the AI assistant popup.  
     - **Close popup**: Closes the AI assistant popup.  
   - **Chat messages**: List of messages in the current chat.  
-  - <a href="#message_input_and_footer_actions">Message input and footer actions</a>: Input field for entering messages to the AI assistant and quick actions.  
+  - <a href="#message_input">Message input</a>: Input field for entering messages to the AI assistant and quick actions.  
 
-<h3 id="message_input_and_footer_actions"> Message input and footer actions </h3> 
+<h3 id="message_input"> Message input </h3> 
 
-The message input area allows you to input messages or media to the AI assistant as well as well as control the chat settings.
+The message input area allows you to write text, attach files and control other aspects of the AI assistant (change model, add/remove tools, speech to text).
 
   - **Message input**: Input field for entering messages to the AI assistant.  
   - **Send message**: Sends the entered message to the AI assistant.  

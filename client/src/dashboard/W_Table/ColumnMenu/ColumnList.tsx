@@ -11,7 +11,7 @@ import type { Prgl } from "../../../App";
 import Btn from "../../../components/Btn";
 import { FlexRow } from "../../../components/Flex";
 import PopupMenu from "../../../components/PopupMenu";
-import SearchList from "../../../components/SearchList/SearchList";
+import { SearchList } from "../../../components/SearchList/SearchList";
 import type {
   DBSchemaTablesWJoins,
   LoadedSuggestions,

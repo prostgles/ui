@@ -5,6 +5,7 @@ import { MINUTE, type PageWIds } from "./utils";
 const SVG_SCREENSHOT_NAMES = {
   sql_editor: 1,
   new_connection: 1,
+  command_search: 1,
   connections: 1,
   dashboard: 1,
   schema_diagram: 1,

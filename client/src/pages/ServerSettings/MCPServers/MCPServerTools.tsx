@@ -3,7 +3,7 @@ import React from "react";
 import type { DBSSchema } from "../../../../../commonTypes/publishUtils";
 import type { Prgl } from "../../../App";
 import Chip from "../../../components/Chip";
-import { ScrollFade } from "../../../components/SearchList/ScrollFade";
+import { ScrollFade } from "../../../components/ScrollFade/ScrollFade";
 import { MCPServerConfig } from "./MCPServerConfig/MCPServerConfig";
 import { useMCPServerEnable } from "./MCPServerConfig/useMCPServerEnable";
 

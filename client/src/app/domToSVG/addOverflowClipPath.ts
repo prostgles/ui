@@ -76,20 +76,23 @@ export const addOverflowClipPath = (
 
 const mustAddClipPath = (element: HTMLElement, style: CSSStyleDeclaration) => {
   if (
-    element instanceof HTMLInputElement ||
-    element instanceof HTMLTextAreaElement ||
     element instanceof HTMLSelectElement ||
     element instanceof HTMLButtonElement ||
     element instanceof HTMLLabelElement
   ) {
-    // Input elements are not clipped by overflow, so we don't need to add a clip path
     return false;
+  }
+  if (
+    element instanceof HTMLInputElement ||
+    element instanceof HTMLTextAreaElement
+  ) {
+    return true;
   }
 
   if (element instanceof HTMLCanvasElement) {
     return true;
   }
-  if (!includes(style.overflow, ["hidden", "auto", "scroll"])) {
+  if (!includes(style.overflow, ["hidden", "auto", "scroll", "clip"])) {
     return false;
   }
   if (!element.children.length && element.childNodes.length) {

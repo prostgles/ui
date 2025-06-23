@@ -28,13 +28,7 @@ type SearchInputProps = Pick<
     };
     inputWrapperRef?: React.LegacyRef<HTMLDivElement>;
     inputRef?: React.LegacyRef<HTMLInputElement>;
-    mode:
-      | undefined
-      | { select: boolean; search?: undefined }
-      | {
-          search: { "!listNode": boolean; "!noList": boolean };
-          select?: undefined;
-        };
+    mode: undefined | { "!listNode": boolean; "!noList": boolean };
   };
 export const SearchInput = (props: SearchInputProps) => {
   const {
@@ -63,9 +57,8 @@ export const SearchInput = (props: SearchInputProps) => {
       }
       style={{
         ...wrapperStyle,
-        ...(mode?.search ?
-          { zIndex: mode.search["!listNode"] ? "unset" : SearchInputZIndex }
-        : mode?.select ? { margin: "8px", marginBottom: "2px" }
+        ...(mode ?
+          { zIndex: mode["!listNode"] ? "unset" : SearchInputZIndex }
         : {
             margin: "8px",
           }),
@@ -79,7 +72,7 @@ export const SearchInput = (props: SearchInputProps) => {
         type={type}
         ref={inputRef}
         style={{
-          ...(mode?.search?.["!noList"] && {
+          ...(mode?.["!noList"] && {
             borderBottomLeftRadius: 0,
             borderBottomRightRadius: 0,
             zIndex: 3,

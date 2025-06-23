@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
 import {
@@ -6,7 +6,10 @@ import {
   saveSVGScreenshots,
   svgScreenshotsCompleteReferenced,
 } from "./docScreenshotUtils";
-import { getDataKeyElemSelector } from "./Testing";
+import {
+  COMMAND_SEARCH_ATTRIBUTE_NAME,
+  getDataKeyElemSelector,
+} from "./Testing";
 import { goTo, login, monacoType, PageWIds, USERS } from "./utils";
 
 test.use({
@@ -45,6 +48,41 @@ test.describe("Create docs and screenshots", () => {
     page.on("pageerror", console.error);
 
     await page.waitForTimeout(100);
+  });
+
+  test.describe.configure({ retries: 0 });
+  test("Test command search", async ({ page: p }) => {
+    const page = p as PageWIds;
+
+    await login(page, USERS.test_user, "/login");
+
+    await page.waitForTimeout(500);
+    const flatDocs = await page.evaluate(() => {
+      //@ts-ignore
+      return window.flatDocs;
+    });
+    if (!flatDocs.length) {
+      throw new Error("No docs found in the command search");
+    }
+    for (const doc of flatDocs) {
+      if (doc.title === "Logout") {
+        continue; // Skip logout as it will close the session
+      }
+      await page.keyboard.press("Control+KeyK", { delay: 100 });
+      await page.getByTestId("CommandSearch").locator("input").fill(doc.title);
+      await page.waitForTimeout(200);
+      await page.keyboard.press("Enter");
+
+      await expect(page.locator("body")).toHaveAttribute(
+        COMMAND_SEARCH_ATTRIBUTE_NAME,
+        doc.title,
+        { timeout: 15_000 },
+      );
+      /** Close any popups */
+      await page.keyboard.press("Escape", { delay: 100 });
+      await page.keyboard.press("Escape", { delay: 100 });
+      await page.waitForTimeout(100);
+    }
   });
 
   test("Create docs", async ({ page: p }) => {
@@ -218,6 +256,13 @@ test.describe("Create docs and screenshots", () => {
         } else if (fileName === "connection_config") {
           await open("prostgles_video_demo");
           await page.getByTestId("dashboard.goToConnConfig").click();
+        } else if (fileName === "command_search") {
+          await page.keyboard.press("Control+K");
+          await page
+            .getByTestId("Popup.content")
+            .locator("input")
+            .fill("access con");
+          await page.waitForTimeout(500);
         }
       });
     }

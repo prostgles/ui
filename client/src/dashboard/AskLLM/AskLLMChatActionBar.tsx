@@ -325,9 +325,9 @@ export const AskLLMChatActionBar = (
             },
           );
         }}
-        onNoResultsContent={() => (
+        endOfResultsContent={
           <FlexCol className="p-1">
-            <div>No results. </div>
+            <div className="text-1">End of results.</div>
             <FlexRowWrap>
               <Btn
                 title="Refresh models"
@@ -355,7 +355,7 @@ export const AskLLMChatActionBar = (
               />
             </FlexRowWrap>
           </FlexCol>
-        )}
+        }
       />
     </FlexRow>
   );

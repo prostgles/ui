@@ -11,7 +11,7 @@ import Btn from "../../components/Btn";
 import { FlexCol, FlexRow, classOverride } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
 import PopupMenu from "../../components/PopupMenu";
-import SearchList from "../../components/SearchList/SearchList";
+import { SearchList } from "../../components/SearchList/SearchList";
 import { SvgIcon } from "../../components/SvgIcon";
 import { onWheelScroll } from "../../components/Table/Table";
 import type { Workspace, WorkspaceSyncItem } from "../Dashboard/dashboardUtils";

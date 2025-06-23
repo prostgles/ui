@@ -19,7 +19,10 @@ export const useAppTheme = (state: Pick<AppState, "serverState" | "user">) => {
 
   useEffect(() => {
     appTheme.set(theme);
-    if (!userThemeOption || userThemeOption === "from-system") return;
+    if (!userThemeOption || userThemeOption === "from-system") {
+      localStorage.removeItem(THEME_SETTING_NAME);
+      return;
+    }
     /** We persist the theme to localSettings to ensure theme persists after logging out */
     localStorage.setItem(THEME_SETTING_NAME, userThemeOption);
   }, [theme, userThemeOption]);

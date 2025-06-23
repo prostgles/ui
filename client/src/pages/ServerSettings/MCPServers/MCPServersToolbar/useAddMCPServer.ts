@@ -184,24 +184,3 @@ const getPotentialConfigSchemas = (config: MCPConfig): ArgDef[] => {
     );
   });
 };
-
-// <SmartForm
-//   asPopup={true}
-//   label="Add MCP Server"
-//   db={dbs as DBHandlerClient}
-//   methods={dbsMethods}
-//   onClose={() => setShowAddServer(false)}
-//   columnFilter={(c) =>
-//     [
-//       "name",
-//       "info",
-//       "config_schema",
-//       "command",
-//       "env",
-//       "args",
-//     ].includes(c.name)
-//   }
-//   tableName="mcp_servers"
-//   tables={dbsTables}
-//   showJoinedTables={false}
-// />

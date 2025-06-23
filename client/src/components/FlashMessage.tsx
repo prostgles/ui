@@ -50,7 +50,7 @@ export const FlashMessage = (message: P) => {
 
   return (
     <div
-      className="text-warning"
+      className="text-warning bg-color-0 p-1 rounded b b-warning"
       style={{
         zIndex: 99,
         position: "absolute",

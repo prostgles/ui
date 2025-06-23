@@ -8,7 +8,7 @@ import { NewConnectionForm } from "../NewConnection/NewConnectionForm";
 import type { useElectronSetup } from "./useElectronSetup";
 import { PostgresInstallationInstructions } from "../PostgresInstallationInstructions";
 import ErrorComponent from "../../components/ErrorComponent";
-import { ScrollFade } from "../../components/SearchList/ScrollFade";
+import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
 
 export const ElectronSetupStateDB = ({
   state,

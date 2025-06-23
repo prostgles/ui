@@ -55,7 +55,7 @@ export const connectionsUIDoc = {
       title: "New connection",
       description: "Opens the form to add a new database connection.",
       selectorCommand: "Connections.new",
-      pagePath: ROUTES.NEW_CONNECTION,
+      path: ROUTES.NEW_CONNECTION,
       docs: fixIndent(`
         Use the **New Connection** button to add a new database connection.
         This will open a form where you can enter the connection details such as host, port, database name, user, and password.
@@ -104,7 +104,7 @@ export const connectionsUIDoc = {
         {
           type: "popup",
           selectorCommand: "ConnectionServer.add",
-          title: "Add or create a database within server",
+          title: "Add",
           description: "Adds a new connection to the selected server. ",
           children: [
             {
@@ -175,7 +175,7 @@ export const connectionsUIDoc = {
         {
           type: "link",
           selectorCommand: "Connection.openConnection",
-          pagePath: ROUTES.CONNECTIONS,
+          path: ROUTES.CONNECTIONS,
           title: "Open Connection",
           description:
             "Opens the selected database connection on the default workspace.",
@@ -204,12 +204,13 @@ export const connectionsUIDoc = {
           selectorCommand: "Connection.configure",
           description:
             "Access and modify settings for this connection, such as access control, file storage, backup/restore options, and server-side functions.",
-          pagePath: ROUTES.CONFIG,
+          path: ROUTES.CONFIG,
           pathItem: {
             tableName: "connections",
           },
-          docs: connectionConfigUIDoc.docs,
-          pageContent: connectionConfigUIDoc.children,
+          // TODO: we need to move shared pages to the end
+          // docs: connectionConfigUIDoc.docs,
+          // pageContent: connectionConfigUIDoc.children,
         },
         {
           type: "link",
@@ -218,7 +219,7 @@ export const connectionsUIDoc = {
           description:
             "Modify the connection parameters (e.g., display name, database details like host and port). Also allows deleting or cloning the connection.",
           docs: editConnectionUIDoc.docs,
-          pagePath: ROUTES.EDIT_CONNECTION,
+          path: ROUTES.EDIT_CONNECTION,
           pathItem: {
             tableName: "connections",
           },

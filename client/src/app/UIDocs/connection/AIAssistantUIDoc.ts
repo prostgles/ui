@@ -74,11 +74,11 @@ export const AIAssistantUIDoc = {
     },
     {
       type: "section",
-      title: "Message input and footer actions",
+      title: "Message input",
       description:
         "Input field for entering messages to the AI assistant and quick actions.",
       docs: fixIndent(`
-        The message input area allows you to input messages or media to the AI assistant as well as well as control the chat settings. 
+        The message input area allows you to write text, attach files and control other aspects of the AI assistant (change model, add/remove tools, speech to text). 
 
       `),
       selector: getCommandElemSelector("Chat.sendWrapper"),

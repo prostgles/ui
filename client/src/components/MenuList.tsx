@@ -7,7 +7,7 @@ import "./List.css";
 import { MenuListItem, type MenuListitem } from "./MenuListItem";
 import PopupMenu from "./PopupMenu";
 import Select from "./Select/Select";
-import { useScrollFade } from "./SearchList/ScrollFade";
+import { useScrollFade } from "./ScrollFade/ScrollFade";
 
 export type MenuListProps = TestSelectors & {
   items: MenuListitem[];

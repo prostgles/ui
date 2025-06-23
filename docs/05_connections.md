@@ -50,7 +50,7 @@ The connection list displays all your database connections grouped by database h
 <img src="./screenshots/connections.svg" alt="Connections list screenshot" style="border: 1px solid; margin: 1em 0;" />
 </picture>
 
-  - **Add or create a database within server**: Adds a new connection to the selected server.   
+  - **Add**: Adds a new connection to the selected server.   
     - <a href="#create_new_database">Create new database</a>: Create a new database within the server.  
     - <a href="#connect_to_an_existing_database">Connect to an existing database</a>: Selects a database from the server to connect to.   
   - **Open Connection**: Opens the selected database connection on the default workspace.  

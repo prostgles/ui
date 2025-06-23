@@ -7,7 +7,7 @@ import type { BtnProps } from "../Btn";
 import { FlexCol, FlexRow } from "../Flex";
 import { FormFieldDebounced } from "../FormField/FormFieldDebounced";
 import Popup from "../Popup/Popup";
-import { ScrollFade } from "../SearchList/ScrollFade";
+import { ScrollFade } from "../ScrollFade/ScrollFade";
 import { Pagination } from "../Table/Pagination";
 import { SvgIcon } from "../SvgIcon";
 

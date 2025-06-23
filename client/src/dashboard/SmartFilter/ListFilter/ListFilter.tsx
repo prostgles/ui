@@ -6,7 +6,7 @@ import type { FilterType } from "../../../../../commonTypes/filterUtils";
 import { FlexRow } from "../../../components/Flex";
 import Loading from "../../../components/Loading";
 import type { SearchListItem } from "../../../components/SearchList/SearchList";
-import SearchList from "../../../components/SearchList/SearchList";
+import { SearchList } from "../../../components/SearchList/SearchList";
 import RTComp from "../../RTComp";
 import type { BaseFilterProps } from "../SmartFilter";
 import { fetchListFilterOptions } from "./fetchListFilterOptions";
@@ -208,12 +208,12 @@ export class ListFilter extends RTComp<ListFilterProps, ListFilterState> {
               value: !vals.length ? undefined : vals.map((v) => v.key),
             });
           }}
-          onNoResultsContent={() => (
+          noResultsContent={
             <FlexRow>
               <div className="text-0p75">No matches</div>
               <div className="text-2">Press enter to add</div>
             </FlexRow>
-          )}
+          }
           onPressEnter={(term) => {
             const currentValues =
               Array.isArray(filter.value) ? filter.value : [];

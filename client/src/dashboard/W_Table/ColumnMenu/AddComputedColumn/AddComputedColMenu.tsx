@@ -11,7 +11,7 @@ import { Label } from "../../../../components/Label";
 import { FooterButtons } from "../../../../components/Popup/FooterButtons";
 import type { FooterButton } from "../../../../components/Popup/FooterButtons";
 import Popup from "../../../../components/Popup/Popup";
-import SearchList from "../../../../components/SearchList/SearchList";
+import { SearchList } from "../../../../components/SearchList/SearchList";
 import Select from "../../../../components/Select/Select";
 import { isEmpty } from "../../../../utils";
 import type {

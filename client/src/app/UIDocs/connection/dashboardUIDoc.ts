@@ -29,10 +29,14 @@ export const dashboardUIDoc = {
       selector: getCommandElemSelector("dashboard.menu"),
     },
     {
-      type: "button",
+      type: "link",
       title: "Go to configuration",
       description: "Opens the configuration page for the selected connection.",
       selector: getCommandElemSelector("dashboard.goToConnConfig"),
+      path: ROUTES.CONFIG,
+      pathItem: {
+        tableName: "connections",
+      },
     },
     {
       type: "input",
@@ -147,7 +151,7 @@ export const dashboardUIDoc = {
       selector: getCommandElemSelector("dashboard.goToConnections"),
       title: "Go to connections",
       description: "Opens the connections list page.",
-      pagePath: ROUTES.CONNECTIONS,
+      path: ROUTES.CONNECTIONS,
     },
   ],
 } satisfies UIDocContainers;

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef } from "react";
-import { useResizeObserver } from "./SearchList/useResizeObserver";
+import { useResizeObserver } from "./ScrollFade/useResizeObserver";
 
 /**
  * Used to reduce CPU load

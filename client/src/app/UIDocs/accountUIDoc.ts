@@ -10,7 +10,7 @@ export const accountUIDoc = {
     "Manage your account settings, security preferences, and API access.",
   children: [
     {
-      type: "section",
+      type: "tab",
       title: "Account details",
       selector: getDataKeyElemSelector("details"),
       description: "View and update your account information.",
@@ -26,7 +26,7 @@ export const accountUIDoc = {
       ],
     },
     {
-      type: "section",
+      type: "tab",
       title: "Security",
       selector: getDataKeyElemSelector("security"),
       description: "Manage your account security settings.",
@@ -100,7 +100,7 @@ export const accountUIDoc = {
       ],
     },
     {
-      type: "section",
+      type: "tab",
       title: "API",
       selector: getDataKeyElemSelector("api"),
       description: "View and manage your API access settings.",

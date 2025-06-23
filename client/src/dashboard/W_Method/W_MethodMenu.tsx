@@ -1,11 +1,10 @@
-import { mdiCog, mdiFormatListCheckbox, mdiPencil } from "@mdi/js";
+import { mdiFormatListCheckbox, mdiPencil } from "@mdi/js";
 import { isEmpty } from "prostgles-types";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import Btn from "../../components/Btn";
-import { JSONBSchemaA } from "../../components/JSONBSchema/JSONBSchema";
 import { pageReload } from "../../components/Loading";
-import SearchList from "../../components/SearchList/SearchList";
+import { SearchList } from "../../components/SearchList/SearchList";
 import Tabs from "../../components/Tabs";
 import { MethodDefinition } from "../AccessControl/Methods/MethodDefinition";
 import type { W_MethodProps } from "./W_Method";

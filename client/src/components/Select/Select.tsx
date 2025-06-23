@@ -11,7 +11,7 @@ import type { LabelProps } from "../Label";
 import { Label } from "../Label";
 import Popup from "../Popup/Popup";
 import type { SearchListItem, SearchListProps } from "../SearchList/SearchList";
-import SearchList from "../SearchList/SearchList";
+import { SearchList } from "../SearchList/SearchList";
 import "./Select.css";
 import { SelectTriggerButton } from "./SelectTriggerButton";
 import { sliceText } from "../../../../commonTypes/utils";
@@ -103,7 +103,7 @@ export type SelectProps<
   disabledInfo?: string;
   optional?: Optional;
   nullable?: boolean;
-  onNoResultsContent?: SearchListProps["onNoResultsContent"];
+  endOfResultsContent?: SearchListProps["endOfResultsContent"];
 } & (
     | {
         options: readonly O[];
@@ -152,7 +152,7 @@ export default class Select<
       variant = "div",
       onSearch,
       noSearchLimit = 15,
-      onNoResultsContent,
+      endOfResultsContent,
       multiSelect,
       asRow,
       limit,
@@ -382,7 +382,7 @@ export default class Select<
           data-key={this.props["data-key"]}
           autoFocus={true}
           // noSearch={!onSearch && options.length < 15}
-          onNoResultsContent={onNoResultsContent}
+          endOfResultsContent={endOfResultsContent}
           onSearch={onSearch}
           onMultiToggle={
             multiSelect ?

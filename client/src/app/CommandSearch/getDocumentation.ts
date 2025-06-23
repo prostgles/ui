@@ -1,7 +1,7 @@
 import { isObject } from "../../../../commonTypes/publishUtils";
 import { fixIndent } from "../../demo/sqlVideoDemo";
 import { COMMANDS } from "../../Testing";
-import { UIDocs, type UIDoc, type UIDocElement } from "../UIDocs";
+import { flatDocs, UIDocs, type UIDoc, type UIDocElement } from "../UIDocs";
 
 type SeparatePage = { doc: UIDoc; parentDocs: UIDoc[]; depth: number };
 
@@ -149,3 +149,4 @@ const getItemChildren = (doc: UIDoc) =>
   : [];
 
 window.documentation = getDocumentationFiles();
+window.flatDocs = flatDocs;

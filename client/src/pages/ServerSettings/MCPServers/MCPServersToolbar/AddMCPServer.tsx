@@ -4,7 +4,7 @@ import Btn from "../../../../components/Btn";
 import { FlexRow } from "../../../../components/Flex";
 import FormField from "../../../../components/FormField/FormField";
 import Popup from "../../../../components/Popup/Popup";
-import { ScrollFade } from "../../../../components/SearchList/ScrollFade";
+import { ScrollFade } from "../../../../components/ScrollFade/ScrollFade";
 import { SwitchToggle } from "../../../../components/SwitchToggle";
 import { CodeEditorWithSaveButton } from "../../../../dashboard/CodeEditor/CodeEditorWithSaveButton";
 import type { DBS } from "../../../../dashboard/Dashboard/DBS";

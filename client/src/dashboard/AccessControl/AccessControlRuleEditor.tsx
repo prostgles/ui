@@ -40,7 +40,7 @@ import { useAccessControlSearchParams } from "./useAccessControlSearchParams";
 import type { ValidEditedAccessRuleState } from "./useEditedAccessRule";
 import { useEditedAccessRule } from "./useEditedAccessRule";
 import { AskLLMAccessControl } from "../AskLLM/AskLLMAccessControl";
-import { ScrollFade } from "../../components/SearchList/ScrollFade";
+import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
 
 const ACCESS_TYPES = ["Custom", "All views/tables", "Run SQL"] as const;
 export type PermissionEditProps = Pick<

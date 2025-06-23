@@ -458,6 +458,8 @@ export const getDataLabelElemSelector = (key: string) => {
   return `[data-label=${JSON.stringify(key)}]`;
 };
 
+export const COMMAND_SEARCH_ATTRIBUTE_NAME = "data-command-search-ended";
+
 declare module "react" {
   interface HTMLAttributes<T> {
     "data-command"?: Command;

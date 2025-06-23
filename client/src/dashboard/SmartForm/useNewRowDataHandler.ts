@@ -65,10 +65,13 @@ export const useNewRowDataHandler = (args: Args) => {
   const [newRowData, setNewRowData] = useState<NewRow>();
   const parseError = useCallback(
     (error: ProstglesError) => {
-      let newError: any =
+      let newError: string =
         typeof error === "string" ? error : (
-          (error.table ? `${error.table}: ` : "") +
-          (error.message || error.txt || error.detail)
+          [
+            error.table ? `${error.table}: ` : "",
+            error.detail ? error.detail + "\n" : "",
+            error.message || error.txt,
+          ].join("\n") || "Unknown error"
         );
       const newErrors: AnyObject = {};
       if (isObject(error) && error.code === "23503" && error.table) {
@@ -96,7 +99,7 @@ export const useNewRowDataHandler = (args: Args) => {
       }
 
       if (Object.keys(newErrors).length) {
-        newError = error.message || error.detail;
+        newError = error.message || error.detail || "Unknown error";
         setErrors(newErrors);
       }
       setError(newError);

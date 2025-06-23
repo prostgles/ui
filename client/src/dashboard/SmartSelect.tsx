@@ -11,7 +11,8 @@ import type { LabelProps } from "../components/Label";
 import { Label } from "../components/Label";
 import Loading from "../components/Loading";
 import PopupMenu from "../components/PopupMenu";
-import SearchList, {
+import {
+  SearchList,
   type SearchListItemContent,
   type SearchListItem,
 } from "../components/SearchList/SearchList";
@@ -193,13 +194,11 @@ export const SmartSelect = <
             };
           })
           .sort((a, b) => +!!a.disabledInfo - +!!b.disabledInfo)}
-        onNoResultsContent={(searchTerm) => {
-          return (
-            <div className="flex-row ai-center">
-              <div className="p-p5">Not found</div>
-            </div>
-          );
-        }}
+        endOfResultsContent={
+          <div className="flex-row ai-center">
+            <div className="p-p5">Not found</div>
+          </div>
+        }
       />
     </PopupMenu>
   );

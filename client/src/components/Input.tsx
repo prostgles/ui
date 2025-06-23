@@ -18,9 +18,10 @@ export const Input = React.forwardRef<HTMLInputElement, P>((props, ref) => {
       style={style}
       className={"custom-input rounded " + className}
       ref={(e) => {
+        if (ref) {
+          typeof ref === "function" ? ref(e) : (ref.current = e);
+        }
         if (e) {
-          // @ts-ignore
-          if (ref) ref(e);
           setTimeout(() => {
             if (props.autoFocus && document.activeElement !== e) {
               e.focus();

@@ -20,7 +20,7 @@ import type {
   SearchListItem,
   SearchListProps,
 } from "../components/SearchList/SearchList";
-import SearchList from "../components/SearchList/SearchList";
+import { SearchList } from "../components/SearchList/SearchList";
 import Select from "../components/Select/Select";
 import type { TableColumn } from "../components/Table/Table";
 import type { _Dashboard } from "./Dashboard/Dashboard";

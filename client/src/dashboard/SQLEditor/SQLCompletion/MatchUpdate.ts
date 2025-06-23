@@ -39,7 +39,7 @@ export const MatchUpdate: SQLMatcher = {
 
     if (
       isSettingColumns &&
-      !cb.thisLineLC &&
+      !cb.thisLinePrevTokens.length &&
       ![",", "set"].includes(cb.ltoken?.textLC ?? "")
     ) {
       return withKWDs(KWDs.slice(3), args).getSuggestion();

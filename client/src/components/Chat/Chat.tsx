@@ -10,7 +10,7 @@ import { useDropZone } from "../FileInput/DropZone";
 import { classOverride, FlexCol, FlexRow } from "../Flex";
 import { Icon } from "../Icon/Icon";
 import { MediaViewer } from "../MediaViewer";
-import { ScrollFade } from "../SearchList/ScrollFade";
+import { ScrollFade } from "../ScrollFade/ScrollFade";
 import { ChatMessage } from "./ChatMessage";
 import { ChatSpeech } from "./ChatSpeech/ChatSpeech";
 import { useChatOnPaste } from "./useChatOnPaste";

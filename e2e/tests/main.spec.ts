@@ -131,7 +131,27 @@ test.describe("Main test", () => {
       DELETE FROM magic_links; 
       DELETE FROM sessions; 
       DELETE FROM login_attempts`,
-    );
+    ).catch(async (e) => {
+      if (e && e.code === "40P01") {
+        const info = await runDbsSql(
+          page,
+          `-- Get detailed information about locks on the specific relations
+          SELECT 
+            pid,
+            sa.usename,
+            sa.application_name,
+            sa.client_addr,
+            sa.query_start,
+            sa.state,
+            sa.query
+          FROM pg_stat_activity sa WHERE query <> ''`,
+          {},
+          { returnType: "rows" },
+        );
+        console.error("Deadlock detected:", info);
+      }
+      return Promise.reject(e);
+    });
   });
 
   test("Can disable passwordless admin by creating a new admin user. User data is reassigned and accessible to the new user", async ({

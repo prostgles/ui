@@ -11,6 +11,7 @@ export const connectionConfigUIDoc = {
   pathItem: {
     tableName: "connections",
     selectorCommand: "Connection.configure",
+    selectorPath: ROUTES.CONNECTIONS,
   },
   title: "Connection configuration",
   description:

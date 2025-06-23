@@ -57,6 +57,9 @@ export const serverSettingsUIDoc = {
           title: "Email signup",
           description: "Email signup/magic-link authentication setup.",
           selector: getCommandElemSelector("EmailAuthSetup"),
+          docs: `
+            Provide SMTP or AWS SES credentials to enable email signup and magic-link authentication. 
+            By default users authenticate using a password.`,
           children: [
             {
               type: "input",

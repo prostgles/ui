@@ -32,7 +32,7 @@ import { PostgresInstallationInstructions } from "../PostgresInstallationInstruc
 import type { FullExtraProps } from "../ProjectConnection/ProjectConnection";
 import { NewConnectionForm } from "./NewConnectionForm";
 import { ROUTES } from "../../../../commonTypes/utils";
-import { ScrollFade } from "../../components/SearchList/ScrollFade";
+import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
 
 export const getSqlErrorText = (e: any) => {
   let objDetails: [string, any][] = [];

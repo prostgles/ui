@@ -767,6 +767,7 @@ export const enableAskLLM = async (
     //   .getByTestId("AddLLMCredentialForm.Provider")
     //   .locator(`[data-key="Custom"]`)
     //   .click();
+    await runDbsSql(page, "DELETE FROM llm_providers WHERE id = 'Custom' ");
     await fillSmartFormAndInsert(page, "llm_credentials", {
       name: "my credential",
       api_key: "nothing",

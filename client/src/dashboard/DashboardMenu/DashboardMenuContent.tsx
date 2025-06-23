@@ -16,7 +16,7 @@ import Btn from "../../components/Btn";
 import { FlexCol, FlexRowWrap } from "../../components/Flex";
 import { Icon } from "../../components/Icon/Icon";
 import { InfoRow } from "../../components/InfoRow";
-import SearchList from "../../components/SearchList/SearchList";
+import { SearchList } from "../../components/SearchList/SearchList";
 import { SvgIcon } from "../../components/SvgIcon";
 import { getIsPinnedMenu } from "../Dashboard/Dashboard";
 import { SchemaGraph } from "../SchemaGraph/SchemaGraph";
@@ -198,7 +198,7 @@ export const DashboardMenuContent = (props: P) => {
           noSearchLimit={0}
           inputProps={dataCommand("dashboard.menu.tablesSearchListInput")}
           placeholder={`${tables.length} tables/views`}
-          onNoResultsContent={(_term) => (
+          noResultsContent={
             <FlexCol>
               <InfoRow color="info" variant="filled">
                 Table/view not found.
@@ -224,7 +224,7 @@ export const DashboardMenuContent = (props: P) => {
                 Edit schema list (in "More options ...")
               </Btn>
             </FlexCol>
-          )}
+          }
           items={tablesWithInfo.map((t, i) => {
             return {
               contentLeft: (

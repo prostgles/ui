@@ -1,13 +1,10 @@
-import { fixIndent } from "../../demo/sqlVideoDemo";
 import type { UIDoc } from "../UIDocs";
 
 export const UIInstallation = {
   title: "Installation",
-  type: "section",
-  selector: "",
+  type: "info",
   description: "A guide to help you get started with the application.",
-  children: [],
-  docs: fixIndent(`
+  docs: `
     The recommended way to run Prostgles UI is by using the Docker:
  
     Download the source code:
@@ -40,5 +37,5 @@ export const UIInstallation = {
 
     Email and third-party (OAuth) authentication can be configured in Server Settings section. It allows users to register and log in using their email address or third-party accounts like Google, GitHub, etc.
    
-    `),
+    `,
 } satisfies UIDoc;

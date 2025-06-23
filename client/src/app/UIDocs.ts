@@ -1,6 +1,6 @@
 import type { Route } from "react-router-dom";
 import type { DBSSchema } from "../../../commonTypes/publishUtils";
-import type { ROUTES } from "../../../commonTypes/utils";
+import { ROUTES } from "../../../commonTypes/utils";
 import { isPlaywrightTest } from "../i18n/i18nUtils";
 import type { Command } from "../Testing";
 import { isDefined } from "../utils";
@@ -14,6 +14,8 @@ import { navbarUIDoc } from "./UIDocs/navbarUIDoc";
 import { overviewUIDoc } from "./UIDocs/overviewUIDoc";
 import { serverSettingsUIDoc } from "./UIDocs/serverSettingsUIDoc";
 import { UIInstallation } from "./UIDocs/UIInstallationUIDoc";
+import { connectionConfigUIDoc } from "./UIDocs/connection/connectionConfigUIDoc";
+import { editConnectionUIDoc } from "./UIDocs/editConnectionUIDoc";
 
 type Route = (typeof ROUTES)[keyof typeof ROUTES];
 
@@ -83,7 +85,7 @@ export type UIDocElement =
     }>
   | UIDocBase<{
       type: "link";
-      pagePath: Route;
+      path: Route;
       /**
        * If defined this means that the final url is `${pagePath}/pathItemRow.id`
        */
@@ -113,17 +115,19 @@ export type UIDocElement =
       type: "info";
     });
 
+export type UIDocPage = UIDocCommon & {
+  type: "page";
+  path: Route;
+  pathItem?: {
+    tableName: keyof DBSSchema;
+    selectorCommand?: Command;
+    selector?: string;
+    selectorPath?: Route;
+  };
+  children: UIDocElement[];
+};
 export type UIDocContainers =
-  | (UIDocCommon & {
-      type: "page";
-      path: Route;
-      pathItem?: {
-        tableName: keyof DBSSchema;
-        selectorCommand?: Command;
-        selector?: string;
-      };
-      children: UIDocElement[];
-    })
+  | UIDocPage
   | UIDocBase<{
       type: "hotkey-popup";
       hotkey: string;
@@ -143,7 +147,13 @@ export const UIDocs = [
   desktopInstallationUIDoc,
   navbarUIDoc,
   connectionsUIDoc,
+  {
+    ...editConnectionUIDoc,
+    path: ROUTES.NEW_CONNECTION,
+    title: "New Connection",
+  },
   dashboardUIDoc,
+  connectionConfigUIDoc,
   serverSettingsUIDoc,
   accountUIDoc,
   commandSearchUIDoc,
@@ -164,7 +174,9 @@ const getFlatDocs = (
   const children =
     "children" in doc ? doc.children
     : "itemContent" in doc ? doc.itemContent
+    : "pageContent" in doc ? doc.pageContent
     : undefined;
+
   if (!children?.length) {
     return [
       {
@@ -191,10 +203,15 @@ const getFlatDocs = (
     ...flatChildren,
   ];
 };
-
-export const flatDocs = UIDocs.map((doc) => getFlatDocs(doc))
+export type UIDocNonInfo = Exclude<UIDoc, { type: "info" }>;
+export type UIDocFlat = UIDocNonInfo & {
+  parentTitles: string[];
+  parentDocs: UIDoc[];
+};
+export const flatDocs = UIDocs.filter((d) => d.type !== "info")
+  .map((doc) => getFlatDocs(doc))
   .filter(isDefined)
-  .flat();
+  .flat() as UIDocFlat[];
 
 if (isPlaywrightTest) {
   window.toSVG = domToThemeAwareSVG;

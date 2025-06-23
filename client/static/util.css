@@ -99,7 +99,7 @@
   /* --green-500: #0e9f6e; */
   --text-green: #057a55;
 
-  --b-warning: var(--yellow-700);
+  --b-warning: var(--yellow-400);
   --b-danger: var(--red-700);
   --b-default: var(--gray-200);
   --b-action: var(--active);
@@ -289,11 +289,18 @@
 .shadow-sm {
   box-shadow: 0 1px 2px 0 var(--shadow2);
 }
+
 .shadow {
   box-shadow:
     0 1px 3px 0 var(--shadow1),
     0 1px 2px 0 var(--shadow2);
 }
+
+.drop-shadow {
+  filter: drop-shadow(0 1px 2px var(--shadow1))
+    drop-shadow(0 1px 3px var(--shadow2));
+}
+
 .shadow-l {
   box-shadow: 0 1px 6px 0 var(--shadow0);
 }

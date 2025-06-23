@@ -181,6 +181,7 @@ export const playwrightTestLogs: InitOptions["onDebug"] = (ev) => {
     "llm_messages",
     "llm_prompts",
     "llm_credentials",
+    "table_name",
   ];
   if (ev.type === "table" && trackedTableNames.includes(ev.tableName)) {
     // if(ev.command === "unsubscribe") debugger;

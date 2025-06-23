@@ -39,7 +39,7 @@ import { useAppTheme } from "./theme/useAppTheme";
 import { useAppState } from "./useAppState/useAppState";
 import { XRealIpSpoofableAlert } from "./app/XRealIpSpoofableAlert";
 import { Documentation } from "./app/CommandSearch/Documentation";
-import { ScrollFade } from "./components/SearchList/ScrollFade";
+import { ScrollFade } from "./components/ScrollFade/ScrollFade";
 
 export type ClientUser = {
   sid: string;

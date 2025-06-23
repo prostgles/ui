@@ -1,13 +1,8 @@
 import { useEffect, useState } from "react";
 import type { Theme } from "./App";
-import type { Command } from "./Testing";
+import { type DocumentationFile } from "./app/CommandSearch/getDocumentation";
 import type { SQLEditorRef } from "./dashboard/SQLEditor/W_SQLEditor";
-import {
-  getDocumentationFiles,
-  type DocumentationFile,
-} from "./app/CommandSearch/getDocumentation";
-import { domToThemeAwareSVG } from "./app/domToSVG/domToThemeAwareSVG";
-import { isPlaywrightTest } from "./i18n/i18nUtils";
+import type { UIDoc } from "./app/UIDocs";
 
 type Unsubscribe = {
   unsubscribe: () => void;
@@ -110,6 +105,7 @@ declare global {
     isMobile: boolean;
     toSVG: (node: HTMLElement) => Promise<{ light: string; dark: string }>;
     documentation: DocumentationFile[];
+    flatDocs: UIDoc[];
   }
 
   interface HTMLDivElement {
