@@ -23,7 +23,7 @@ It supports computed columns, linked fields, and various actions for managing th
     - **Table header**: The header of the table, which contains the column names and allows users to sort the data by clicking on the column headers.  
       - **Add column menu**: Opens the column menu, allowing users to add computed columns, create new columns, add linked fields.  
       - **Column header**: Pressing the header will toggle sorting state (if the column is sortable). Right clicking (or long press on mobile) will open column menu. Dragging the header will allow reordering the columns.  
-      - **Drag handle**: Allows users to resize the column width by dragging the handle.  
+      - **Resize column**: Allows users to resize the column width by dragging the handle.  
       - **Edit row**: Opens the row edit menu, allowing users to view/edit/delete the selected row.  
       - **Insert row**: Opens the row insert menu, allowing users to add new rows to the table.  
   - **Pagination Controls**: Navigation controls for paginated data.  

@@ -105,6 +105,8 @@ export const FormFieldSkeleton = forwardRef(
               variant="normal"
               style={{ zIndex: 1 }}
             />
+          : !labelString ?
+            undefined
           : <label
               htmlFor={id}
               className={

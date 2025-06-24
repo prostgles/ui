@@ -1,8 +1,8 @@
-<h1 id="core_concepts"> Core concepts </h1> 
+<h1 id="navigation_and_core_concepts"> Navigation and core concepts </h1> 
 
 After installation and initial setup, you will see main Prostgles UI interface where you can add and open connections.
 
-## Connections
+## Connection
 
 A connection represents a unique postgres database instance (unique host, port, user and database name).
 
@@ -22,11 +22,16 @@ The top navigation bar provides quick access to all major sections of Prostgles 
 Located at the top of the interface, it allows you to switch between database connections, manage users and server settings, and access your account preferences. 
 The navigation adapts to your user role, showing admin-only sections like Users and Server Settings only to authorized users.
 
-- **Home**: Navigate to the home page (connection list).   
-- **Connections**: Manage database connections  
-- **Users**: Manage user accounts (admin only)  
-- **Server Settings**: Configure server settings (admin only)  
-- **Account**: Manage your account  
+- **Go to Homepage**: Navigate to the home page (connection list).   
+- **Go to Connections**: Manage database connections  
+- **Go to Users**: Manage user accounts (admin only)  
+  - **Search Users**: Search for users by name or email.  
+  - **Create User**: Create a new user account.  
+  - **User List**: List of all users in the system.  
+    - **Edit User**: Edit user details.  
+  - **Go to Last Page**: Navigate to the last page of the user list.  
+- **Go to Server Settings**: Configure server settings (admin only)  
+- **Go to Account**: Manage your account  
 - **Logout**: Logout of your account  
 - **Theme Selector**: Switch between light and dark themes  
 - **Language Selector**: Change the interface language  

@@ -28,7 +28,7 @@ export const connectionConfigUIDoc = {
       description:
         "Edit connection parameters such as host, port, database name, and other connection settings.",
       docs: editConnectionUIDoc.docs,
-      children: [], //editConnectionUIDoc.children,
+      children: [],
     },
     {
       type: "tab",

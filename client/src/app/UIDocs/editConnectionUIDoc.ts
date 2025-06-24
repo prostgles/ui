@@ -1,4 +1,4 @@
-import { fixIndent, ROUTES } from "../../../../commonTypes/utils";
+import { ROUTES } from "../../../../commonTypes/utils";
 import type { UIDocContainers } from "../UIDocs";
 
 export const editConnectionUIDoc = {
@@ -7,11 +7,11 @@ export const editConnectionUIDoc = {
   title: "Edit Connection",
   description:
     "Modify the details of an existing database connection. Update connection settings, credentials, and more.",
-  docs: fixIndent(`
+  docs: `
     Modify the details of an existing database connection.
     You can update connection settings, credentials, and other parameters to ensure your connection is configured correctly.
     
-    `),
+    `,
   children: [
     {
       type: "popup",

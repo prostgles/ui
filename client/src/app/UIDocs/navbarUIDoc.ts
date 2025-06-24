@@ -1,16 +1,16 @@
+import { ROUTES } from "../../../../commonTypes/utils";
 import type { UIDocNavbar } from "../UIDocs";
-import { fixIndent, ROUTES } from "../../../../commonTypes/utils";
 
 export const navbarUIDoc = {
   type: "navbar",
   selectorCommand: "NavBar",
-  title: "Core concepts",
+  title: "Navigation and core concepts",
   description:
     "There are three core concepts and UI sections in Prostgles UI: Connections, Dashboard, and Workspace.",
   docs: `
     After installation and initial setup, you will see main Prostgles UI interface where you can add and open connections.
 
-    ## Connections
+    ## Connection
 
     A connection represents a unique postgres database instance (unique host, port, user and database name).
     
@@ -35,21 +35,21 @@ export const navbarUIDoc = {
       type: "link",
       path: ROUTES.CONNECTIONS,
       selector: ".prgl-brand-icon",
-      title: "Home",
+      title: "Go to Homepage",
       description: "Navigate to the home page (connection list). ",
     },
     {
       type: "link",
       path: ROUTES.CONNECTIONS,
       selector: '[href="/connections"]',
-      title: "Connections",
+      title: "Go to Connections",
       description: "Manage database connections",
     },
     {
       type: "link",
       path: ROUTES.USERS,
       selector: '[href="/users"]',
-      title: "Users",
+      title: "Go to Users",
       description: "Manage user accounts (admin only)",
       pageContent: [
         {
@@ -82,19 +82,25 @@ export const navbarUIDoc = {
             },
           ],
         },
+        {
+          type: "button",
+          selectorCommand: "Pagination.lastPage",
+          title: "Go to Last Page",
+          description: "Navigate to the last page of the user list.",
+        },
       ],
     },
     {
       type: "link",
       path: ROUTES.SERVER_SETTINGS,
       selector: '[href="/server-settings"]',
-      title: "Server Settings",
+      title: "Go to Server Settings",
       description: "Configure server settings (admin only)",
     },
     {
       type: "link",
       path: ROUTES.ACCOUNT,
-      title: "Account",
+      title: "Go to Account",
       selector: '[href="/account"]',
       description: "Manage your account",
     },

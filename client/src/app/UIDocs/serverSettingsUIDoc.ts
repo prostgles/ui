@@ -24,7 +24,7 @@ export const serverSettingsUIDoc = {
           type: "smartform",
           title: "Server settings",
           description: "Configure server settings.",
-          selector: "",
+          selectorCommand: "SmartForm",
           tableName: "server_settings",
         },
       ],

@@ -90,7 +90,8 @@ export const sqlEditorUIDoc = {
                 tableName: "windows",
                 fieldNames: ["sql_options"],
                 title: "Editor settings",
-                selector: "",
+                selector:
+                  getCommandElemSelector("Popup.content") + " .MonacoEditor",
                 description:
                   "Settings for the SQL editor's appearance and behavior. This includes font size, theme, and other preferences.",
               },

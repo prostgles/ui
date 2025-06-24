@@ -28,6 +28,9 @@ export const useGoToUI = (
   const highlight = useCallback(
     async (doc: UIDocNonInfo, itemPosition: ItemPosition) => {
       const { items } = getUIDocElements(doc);
+      [...items].at(-1)?.scrollIntoView();
+      await tout(500);
+      const mustChooseOne = items.length > 1 && itemPosition !== "last";
       const highlights = Array.from(items).map((el) => {
         const rect = el.getBoundingClientRect();
         return {
@@ -36,13 +39,14 @@ export const useGoToUI = (
           width: rect.width,
           height: rect.height,
           borderRadius: getComputedStyle(el).borderRadius,
+          flickerSlow: itemPosition === "last" || mustChooseOne,
         };
       });
 
       const firstItem = highlights[0];
       setHighlights(highlights);
       let waitedForClick = false;
-      if (firstItem && highlights.length > 1 && itemPosition !== "last") {
+      if (firstItem && mustChooseOne) {
         const { left, top } = firstItem;
         setMessage({ text: "Chose one", left, top: top - 70 });
         if (isPlaywrightTest) {
@@ -103,6 +107,13 @@ export const useGoToUI = (
 
   const goToUI = useCallback(
     async (doc: UIDoc) => {
+      const nonIteractableContainers: UIDoc["type"][] = [
+        "info",
+        "list",
+        "page",
+        "navbar",
+        "section",
+      ];
       if (doc.type === "info") return;
 
       if (doc.type === "page" || doc.type === "navbar") {
@@ -115,10 +126,9 @@ export const useGoToUI = (
           }
           await tout(400);
         }
-        if (doc.type === "navbar") {
-          // await highlight(doc);
-        }
-      } else if (doc.type === "list") {
+      } else if (nonIteractableContainers.includes(doc.type)) {
+        // Do nothing for non-interactable types
+        return;
       } else if (
         doc.type === "popup" ||
         doc.type === "tab" ||
@@ -168,7 +178,6 @@ const getShorterPath = (
   const currentPageLinks = currentPage.children.filter(
     (child) => child.type === "link",
   );
-  // if (!prevParents.length || !currentPageLinks.length) return undefined;
   const shortcut = prevParents.slice().map((doc, index) => {
     if (doc.type === "page" || doc.type === "link") {
       const matchingLink = currentPageLinks.find((link) => {

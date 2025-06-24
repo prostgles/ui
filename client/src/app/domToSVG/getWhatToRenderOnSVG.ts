@@ -4,7 +4,7 @@ import type { SVGContext } from "./elementToSVG";
 import { getFontIconElement } from "./fontIconToSVG";
 import { getTextForSVG } from "./text/getTextForSVG";
 import { isElementVisible, isImgNode } from "./isElementVisible";
-import { getForeignObject } from "./svgToSVG";
+import { getForeignObject } from "./getForeignObject";
 
 const attributesToKeep = ["data-command", "data-key", "data-label"] as const;
 

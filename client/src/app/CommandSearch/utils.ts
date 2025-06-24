@@ -20,13 +20,20 @@ export const getUIDocElements = (doc: Exclude<UIDoc, { type: "info" }>) => {
   const { selectorCommand, selector = "" } = selectors ?? {};
 
   const childSelector = doc.type === "list" ? doc.itemSelector : "";
-  const items = document.querySelectorAll<HTMLDivElement>(
+  const fullSelector =
     (selectorCommand ? getCommandElemSelector(selectorCommand) : "") +
-      " " +
-      selector +
-      " " +
-      childSelector,
-  );
+    " " +
+    selector +
+    " " +
+    childSelector;
+  if (!fullSelector.trim() && doc.type === "page") {
+    return {
+      items: document.querySelectorAll<HTMLDivElement>("body"),
+      selectorCommand: undefined,
+      selector: "body",
+    };
+  }
+  const items = document.querySelectorAll<HTMLDivElement>(fullSelector);
   return { items, selectorCommand, selector };
 };
 

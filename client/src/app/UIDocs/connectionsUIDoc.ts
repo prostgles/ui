@@ -52,7 +52,7 @@ export const connectionsUIDoc = {
   children: [
     {
       type: "link",
-      title: "New connection",
+      title: "Go to New Connection form",
       description: "Opens the form to add a new database connection.",
       selectorCommand: "Connections.new",
       path: ROUTES.NEW_CONNECTION,

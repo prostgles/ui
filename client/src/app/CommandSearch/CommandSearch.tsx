@@ -30,12 +30,13 @@ export const CommandSearch = () => {
             height: `${h.height}px`,
             background: "var(--active-hover)",
             borderRadius: h.borderRadius,
-            opacity: 0.75,
             pointerEvents: "none",
             touchAction: "none",
-            border: "4px solid var(--b-warning)",
           }}
-          className="CommandSearch_Highlighter"
+          className={
+            "CommandSearch_Highlighter " +
+            (h.flickerSlow ? "flicker-slow" : "flicker")
+          }
         />
       ))}
       {message ?
@@ -99,6 +100,7 @@ export type CommandSearchHighlight = {
   width: number;
   height: number;
   borderRadius: string;
+  flickerSlow?: boolean;
 };
 
 const useOnKeyDown = () => {

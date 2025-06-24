@@ -90,13 +90,14 @@ export const SmartFormUpperFooter = (props: SmartFormUpperFooterProps) => {
   return (
     <div
       className={
-        "SmartFormUpperFooter f-1 max-h-fit flex-col o-auto min-h-0 min-w-0 w-full f-0 bg-popup-content"
+        "SmartFormUpperFooter max-h-fit flex-col o-auto min-h-0 min-w-0 w-full f-0 bg-popup-content"
       }
       ref={rootDivRef}
       style={{
         boxShadow: "0px 3px 9px 0px var(--shadow0)",
         clipPath: "inset(-10px 1px 0px 1px)",
         minHeight: "1px",
+        flex: 0.3,
         /** Expand full allowed height to prevent size change when toggling joined records sections */
         // ...(activeJoinedRecordsTab && {
         //   flex: 1,

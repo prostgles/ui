@@ -55,7 +55,7 @@ export const tableUIDoc = {
               type: "drag-handle",
               direction: "x",
               selectorCommand: "TableHeader.resizeHandle",
-              title: "Drag handle",
+              title: "Resize column",
               description:
                 "Allows users to resize the column width by dragging the handle.",
             },
