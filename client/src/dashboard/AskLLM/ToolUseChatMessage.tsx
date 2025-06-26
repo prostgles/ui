@@ -16,13 +16,14 @@ type ToolUseMessageProps = {
   messages: DBSSchema["llm_messages"][];
   messageIndex: number;
   toolUseMessageIndex: number;
-} & Pick<MarkdownMonacoCodeProps, "sqlHandler">;
+} & Pick<MarkdownMonacoCodeProps, "sqlHandler" | "loadedSuggestions">;
 
 export const ToolUseChatMessage = ({
   messages,
   toolUseMessageIndex,
   messageIndex,
   sqlHandler,
+  loadedSuggestions,
 }: ToolUseMessageProps) => {
   const [open, setOpen] = React.useState(false);
 
@@ -95,12 +96,14 @@ export const ToolUseChatMessage = ({
               language="json"
               codeHeader={undefined}
               sqlHandler={undefined}
+              loadedSuggestions={undefined}
             />
           )}
           {toolUseResult && (
             <ContentRender
               toolUseResult={toolUseResult}
               sqlHandler={sqlHandler}
+              loadedSuggestions={loadedSuggestions}
             />
           )}
         </>
@@ -112,10 +115,10 @@ export const ToolUseChatMessage = ({
 const ContentRender = ({
   toolUseResult,
   sqlHandler,
+  loadedSuggestions,
 }: {
   toolUseResult: ReturnType<typeof getToolUseResult>;
-  sqlHandler: MarkdownMonacoCodeProps["sqlHandler"];
-}) => {
+} & Pick<MarkdownMonacoCodeProps, "sqlHandler" | "loadedSuggestions">) => {
   const content = useMemo(() => {
     if (!toolUseResult) return undefined;
     const { content: contentRaw } = toolUseResult.toolUseResultMessage;
@@ -154,6 +157,7 @@ const ContentRender = ({
               language={language}
               codeHeader={undefined}
               sqlHandler={sqlHandler}
+              loadedSuggestions={loadedSuggestions}
             />
           );
         }

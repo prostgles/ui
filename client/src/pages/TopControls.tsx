@@ -7,7 +7,10 @@ import Btn from "../components/Btn";
 import { FlexRow } from "../components/Flex";
 import { ConnectionSelector } from "../dashboard/ConnectionSelector";
 import { getIsPinnedMenu } from "../dashboard/Dashboard/Dashboard";
-import type { WorkspaceSyncItem } from "../dashboard/Dashboard/dashboardUtils";
+import type {
+  LoadedSuggestions,
+  WorkspaceSyncItem,
+} from "../dashboard/Dashboard/dashboardUtils";
 import { Feedback } from "../dashboard/Feedback";
 import { WorkspaceMenu } from "../dashboard/WorkspaceMenu/WorkspaceMenu";
 import { AppVideoDemo } from "../demo/AppVideoDemo";
@@ -22,6 +25,7 @@ import { t } from "../i18n/i18nUtils";
 
 type TopControlsProps = {
   prgl: Prgl;
+  loadedSuggestions: LoadedSuggestions | undefined;
 } & (
   | {
       location: "workspace";
@@ -32,7 +36,7 @@ type TopControlsProps = {
   | { location: "config" }
 );
 export const TopControls = (props: TopControlsProps) => {
-  const { prgl, location } = props;
+  const { prgl, location, loadedSuggestions } = props;
   const { connectionId, connection: c } = prgl;
   const menuBtnProps: DashboardMenuBtnProps<any> =
     props.location === "config" ?
@@ -87,6 +91,7 @@ export const TopControls = (props: TopControlsProps) => {
             {prgl.dbsMethods.askLLM && (
               <AskLLM
                 {...prgl}
+                loadedSuggestions={loadedSuggestions}
                 workspaceId={
                   props.location === "workspace" ?
                     props.workspace.id

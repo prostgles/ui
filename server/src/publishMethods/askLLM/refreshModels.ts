@@ -3,6 +3,9 @@ import type { DBS } from "../..";
 import type { DBSSchemaForInsert } from "../../../../commonTypes/publishUtils";
 
 export const refreshModels = async (dbs: DBS) => {
+  /**
+   * https://openrouter.ai/docs/overview/models
+   */
   const models: ModelInfo[] = (await fetch(
     "https://openrouter.ai/api/v1/models",
   )
@@ -15,12 +18,11 @@ export const refreshModels = async (dbs: DBS) => {
 
   const insertData = models
     .map((m) => {
-      const provider_id = LLM_PROVIDERS.find(
-        (p) => p.toLowerCase() === m.canonical_slug.split("/")[0],
-      );
-      if (!provider_id) {
-        return;
-      }
+      const provider_id =
+        LLM_PROVIDERS.find(
+          (p) => p.toLowerCase() === m.canonical_slug.split("/")[0],
+        ) || "OpenRouter";
+
       const { prompt, completion, input_cache_read, input_cache_write } =
         m.pricing;
       return {
@@ -31,6 +33,10 @@ export const refreshModels = async (dbs: DBS) => {
           cachedInput: Number(input_cache_read || "0") * 1e6,
           cachedOutput: Number(input_cache_write || "0") * 1e6,
         },
+        architecture: m.architecture,
+        supported_parameters: m.supported_parameters,
+        context_length: m.context_length,
+        mcp_tool_support: m.supported_parameters.includes("tools"),
         provider_id,
       } satisfies DBSSchemaForInsert["llm_models"];
     })
@@ -46,30 +52,46 @@ export const refreshModels = async (dbs: DBS) => {
       },
       [] as DBSSchemaForInsert["llm_models"][],
     );
-  await dbs.llm_models.insert(insertData, { onConflict: "DoNothing" });
-  await dbs.llm_models.insert(
-    insertData.map((d) => ({
-      ...d,
-      provider_id: "OpenRouter",
-    })),
-    { onConflict: "DoUpdate" },
-  );
+
+  await dbs.tx(async (dbTx) => {
+    const existingModels = await dbTx.llm_models.find();
+    const nonOpenRouterModels = insertData.filter(
+      (m) => m.provider_id !== "OpenRouter",
+    );
+
+    const newModels = [
+      ...nonOpenRouterModels,
+      ...insertData.map((d) => ({
+        ...d,
+        provider_id: "OpenRouter",
+      })),
+    ].filter(
+      (m) =>
+        !existingModels.some(
+          (em) => em.name === m.name && em.provider_id === m.provider_id,
+        ),
+    );
+    if (newModels.length) {
+      await dbTx.llm_models.insert(newModels, { onConflict: "DoNothing" });
+    }
+  });
 };
 
 const LLM_PROVIDERS = ["OpenAI", "Anthropic", "Google"];
 
 type ModelInfo = {
   id: string;
-  canonical_slug: string;
+  canonical_slug: string; // Permanent slug for the model that never changes
   hugging_face_id: string | null;
   name: string;
-  created: number;
+  created: number; // Unix timestamp of when the model was added to OpenRouter
   description: string;
-  context_length: number;
+  context_length: number; // Maximum context window size in tokens
   architecture: {
-    input_modalities: ["text", "image"];
-    output_modalities: ["text"];
-    tokenizer: "GPT";
+    input_modalities: string[]; // Supported input types: ["file", "image", "text"]
+    output_modalities: string[]; // Supported output types: ["text"]
+    tokenizer: string; // Tokenization method used
+    instruct_type: string | null; // Instruction format type (null if not applicable)
   };
   pricing: {
     prompt: string; // Cost per input token
@@ -81,7 +103,11 @@ type ModelInfo = {
     input_cache_read: string; // Cost per cached input token read
     input_cache_write: string; // Cost per cached input token write
   };
-  top_provider: any;
+  top_provider: {
+    context_length: number; // Provider-specific context limit
+    max_completion_tokens: number; // Maximum tokens in response
+    is_moderated: boolean; // Whether content moderation is applied
+  };
   per_request_limits: string | null;
-  supported_parameters: string;
+  supported_parameters: string[]; // Array of supported API parameters for this model
 };

@@ -1,4 +1,5 @@
 import {
+  getSerialisableError,
   isDefined,
   isEmpty,
   isEqual,
@@ -71,7 +72,11 @@ export const useNewRowDataHandler = (args: Args) => {
             error.table ? `${error.table}: ` : "",
             error.detail ? error.detail + "\n" : "",
             error.message || error.txt,
-          ].join("\n") || "Unknown error"
+          ]
+            .filter(Boolean)
+            .join("\n") ||
+          JSON.stringify(getSerialisableError(error)) ||
+          "Unknown error"
         );
       const newErrors: AnyObject = {};
       if (isObject(error) && error.code === "23503" && error.table) {

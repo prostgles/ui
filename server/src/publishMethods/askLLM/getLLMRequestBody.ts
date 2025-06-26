@@ -1,4 +1,5 @@
 import {
+  includes,
   isDefined,
   omitKeys,
   tryCatchV2,
@@ -11,10 +12,15 @@ export const getLLMRequestBody = ({
   llm_provider,
   llm_credential,
   messages: maybeEmptyMessages,
-  tools,
+  tools: maybeEmptyTools,
   llm_model,
   llm_chat,
 }: FetchLLMResponseArgs) => {
+  /**
+   * Sending an empty array of tools or messages produces an error in openrouter: tool_choice may only be specified while providing tools
+   */
+  const tools =
+    maybeEmptyTools && maybeEmptyTools.length ? maybeEmptyTools : undefined;
   const nonEmptyMessages = maybeEmptyMessages
     .map((m) => {
       const nonEmptyMessageContent = m.content.filter(
@@ -32,11 +38,17 @@ export const getLLMRequestBody = ({
   if (otherSM.length) throw "Multiple prompts found";
   const { api_key } = llm_credential;
   const model = llm_model.name;
-  const provider = llm_provider.id;
+  const provider = llm_provider.id as
+    | "OpenAI"
+    | "Anthropic"
+    | "Google"
+    | "Prostgles"
+    | "OpenRouter"
+    | "Ollama";
   const messages =
-    provider === "OpenAI" ? nonEmptyMessages : (
-      nonEmptyMessages.filter((m) => m.role !== "system")
-    );
+    includes(["OpenAI", "OpenRouter", "Prostgles", "Ollama"], provider) ?
+      nonEmptyMessages
+    : nonEmptyMessages.filter((m) => m.role !== "system");
   const headers: RequestInit["headers"] =
     provider === "Anthropic" ?
       {
@@ -82,11 +94,6 @@ export const getLLMRequestBody = ({
             );
           }),
         })),
-        tools,
-      }
-    : provider === "Prostgles" ?
-      {
-        messages,
         tools,
       }
     : provider === "Google" ?
@@ -150,7 +157,6 @@ export const getLLMRequestBody = ({
                     name: funcName,
                     response: {
                       name: funcName,
-                      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                       content: resultObject.data ?? {
                         parsingError: "Could not parse tool result as JSON",
                         toolResult: resultText,
@@ -247,6 +253,9 @@ export const getLLMRequestBody = ({
             parameters: omitKeys(t.input_schema, ["$schema", "$id"]),
           },
         })),
+        ...(provider === "Ollama" && {
+          stream: false,
+        }),
       };
 
   const bodyWithExtras = {

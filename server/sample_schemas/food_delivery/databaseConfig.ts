@@ -103,7 +103,7 @@ const table_schema_positions = {
 const table_schema_transform = {
   scale: 1.1325289291376481,
   translate: {
-    x: 1751.738391,
+    x: 1951.738391,
     y: 1269.27963922513,
   },
 };

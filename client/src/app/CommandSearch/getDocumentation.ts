@@ -9,6 +9,7 @@ const asList = (
   children: UIDocElement[],
   parentDocs: UIDoc[],
   separatePageDepth: number | undefined,
+  isElectron: boolean,
 ) => {
   const depth = parentDocs.length;
   const listItemDepth = depth - (separatePageDepth ?? 1);
@@ -30,12 +31,13 @@ const asList = (
       if (willSeparatelyRender) {
         return listItem;
       }
-      const items = getItemChildren(child);
+      const items = getItemChildren(child, isElectron);
       if (items.length) {
         const nestedList = asList(
           items,
           [...parentDocs, child],
           separatePageDepth,
+          isElectron,
         );
         nestedList.separatePages.forEach((sp) => separatePages.push(sp));
         return listItem + "\n" + nestedList.listContent;
@@ -54,21 +56,25 @@ const getUIDocAsMarkdown = (
   doc: UIDoc,
   parentDocs: UIDoc[],
   separatePageDepth: number | undefined,
+  isElectron: boolean,
 ): {
   title: string;
   content: string;
   doc: UIDoc;
 }[] => {
   const depth = doc.asSeparateFile ? 0 : Math.min(3, parentDocs.length);
-
+  if (isElectron && doc.uiVersionOnly) {
+    return [];
+  }
   const { listContent: childrenContent, separatePages } = asList(
-    getItemChildren(doc),
+    getItemChildren(doc, isElectron),
     [...parentDocs, doc],
     separatePageDepth,
+    isElectron,
   );
 
   const separatePagesWithContent = separatePages.flatMap((sp) =>
-    getUIDocAsMarkdown(sp.doc, sp.parentDocs, sp.depth),
+    getUIDocAsMarkdown(sp.doc, sp.parentDocs, sp.depth, isElectron),
   );
 
   if (doc.uiVersionOnly) {
@@ -85,7 +91,7 @@ const getUIDocAsMarkdown = (
   const hDepth = depth + 1;
   const content = [
     `<h${hDepth} id=${JSON.stringify(toSnakeCase(doc.title))}> ${doc.title} </h${hDepth}> \n`,
-    doc.uiVersionOnly ? `>  Not avaialable on Desktop version\n  ` : "",
+    doc.uiVersionOnly ? `>  Not available on Desktop version\n  ` : "",
     `${doc.docs ? fixIndent(doc.docs) : doc.description}\n`,
     childrenContent,
   ]
@@ -105,10 +111,10 @@ export type DocumentationFile = {
   fileName: string;
   text: string;
 };
-export const getDocumentationFiles = () => {
+export const getDocumentationFiles = (isElectron: boolean) => {
   const documentationPages: DocumentationFile[] = [];
   UIDocs.forEach((doc) => {
-    const docItems = getUIDocAsMarkdown(doc, [], undefined);
+    const docItems = getUIDocAsMarkdown(doc, [], undefined, isElectron);
 
     const pushFile = (title: string, text: string) => {
       const index = documentationPages.length + 1;
@@ -142,11 +148,18 @@ export const getDocumentationFiles = () => {
 const toSnakeCase = (str: string) =>
   str.toLowerCase().trim().replaceAll(/ /g, "_");
 
-const getItemChildren = (doc: UIDoc) =>
-  "children" in doc ? doc.children
-  : "itemContent" in doc ? doc.itemContent
-  : "pageContent" in doc ? (doc.pageContent ?? [])
-  : [];
+const getItemChildren = (doc: UIDoc, isElectron: boolean) => {
+  const items =
+    "children" in doc ? doc.children
+    : "itemContent" in doc ? doc.itemContent
+    : "pageContent" in doc ? (doc.pageContent ?? [])
+    : [];
 
-window.documentation = getDocumentationFiles();
+  if (isElectron) {
+    return items.filter((item) => !item.uiVersionOnly);
+  }
+  return items;
+};
+
+window.documentation = getDocumentationFiles(false);
 window.flatDocs = flatDocs;

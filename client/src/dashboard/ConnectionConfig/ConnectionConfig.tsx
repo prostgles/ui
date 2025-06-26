@@ -172,7 +172,11 @@ export const ConnectionConfig = (props: ConnectionConfigProps) => {
 
   return (
     <div className={`flex-col f-1 min-s-0 ${className}`} style={style}>
-      <TopControls location="config" prgl={props.prgl} />
+      <TopControls
+        location="config"
+        prgl={props.prgl}
+        loadedSuggestions={undefined}
+      />
 
       <div className="flex-col f-1 min-h-0 as-center  bg-color-2 w-full pt-1">
         <Tabs

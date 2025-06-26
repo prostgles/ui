@@ -7,13 +7,17 @@ import { SetupLLMCredentials } from "./SetupLLMCredentials";
 import { useLLMSetupState } from "./useLLMSetupState";
 import Loading from "../../components/Loading";
 import { t } from "../../i18n/i18nUtils";
+import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 
 export const CHAT_WIDTH = 800;
 
-type P = Prgl & { workspaceId: string | undefined };
+type P = Prgl & {
+  workspaceId: string | undefined;
+  loadedSuggestions: LoadedSuggestions | undefined;
+};
 
 export const AskLLM = (props: P) => {
-  const { workspaceId, ...prgl } = props;
+  const { workspaceId, loadedSuggestions, ...prgl } = props;
   const { dbsMethods } = prgl;
   const { askLLM, callMCPServerTool } = dbsMethods;
 
@@ -59,6 +63,7 @@ export const AskLLM = (props: P) => {
           onClose={onClose}
         />
       : <AskLLMChat
+          loadedSuggestions={loadedSuggestions}
           prgl={prgl}
           callMCPServerTool={callMCPServerTool}
           askLLM={askLLM}

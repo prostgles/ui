@@ -3,10 +3,12 @@ import { useCallback, useMemo, useState } from "react";
 import type { Prgl } from "../../App";
 import { useLLMChatMessages } from "./useLLMChatMessages";
 import type { LLMSetupStateReady } from "./useLLMSetupState";
+import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 
 export type UseLLMChatProps = LLMSetupStateReady &
   Pick<Prgl, "dbs" | "user" | "connectionId" | "db"> & {
     workspaceId: string | undefined;
+    loadedSuggestions: LoadedSuggestions | undefined;
   };
 
 export type LLMChatState = ReturnType<typeof useLLMChat>;

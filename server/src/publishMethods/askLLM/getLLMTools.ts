@@ -31,16 +31,16 @@ export const getLLMTools = async ({
   prompt,
 }: Args): Promise<undefined | MCPToolSchema[]> => {
   const { disable_tools, prompt_type } = prompt.options ?? {};
-  const providerSupportsToolUse =
-    provider === "Prostgles" ||
-    provider === "Anthropic" ||
-    provider === "OpenAI" ||
-    provider === "Google";
-  const canUseTools =
-    providerSupportsToolUse &&
-    /** Tools are not used with Dashboarding due to induced errors */
-    !disable_tools;
-  if (!canUseTools) return undefined;
+  // const providerSupportsToolUse =
+  //   provider === "Prostgles" ||
+  //   provider === "Anthropic" ||
+  //   provider === "OpenAI" ||
+  //   provider === "Google";
+  // const canUseTools =
+  //   providerSupportsToolUse &&
+  //   !disable_tools;
+  /** Tools are not used with Dashboarding due to induced errors */
+  if (disable_tools) return undefined;
   const { id: chatId } = chat;
 
   if (prompt_type === "tasks") {

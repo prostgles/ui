@@ -11,7 +11,7 @@ import "./CommandSearch.css";
 /**
  * By pressing Ctrl+K, the user to search and go to functionality in the UI.
  */
-export const CommandSearch = () => {
+export const CommandSearch = ({ isElectron }: { isElectron: boolean }) => {
   const { showSection, setShowSection } = useOnKeyDown();
   const [highlights, setHighlights] = useState<CommandSearchHighlight[]>([]);
   const { message, setMessage, goToUIDocItem } = useGoToUI(setHighlights);
@@ -86,7 +86,7 @@ export const CommandSearch = () => {
                   };
                 })}
               />
-            : <Documentation />}
+            : <Documentation isElectron={isElectron} />}
           </Popup>
         )
       }

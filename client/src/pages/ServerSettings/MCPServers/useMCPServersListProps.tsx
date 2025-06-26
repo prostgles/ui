@@ -119,14 +119,7 @@ export const useMCPServersListProps = (
           }),
         ),
       ] satisfies FieldConfig[],
-    [
-      chatId,
-      dbs,
-      dbsMethods,
-      llm_chats_allowed_mcp_tools,
-      selectedTool?.id,
-      selectedTool?.name,
-    ],
+    [chatId, dbs, dbsMethods, llm_chats_allowed_mcp_tools, selectedTool?.name],
   );
   return {
     selectedTool,

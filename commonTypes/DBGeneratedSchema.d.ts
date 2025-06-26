@@ -316,7 +316,7 @@ export type DBGeneratedSchema = {
        |  {  type: 'Custom';  tables: Lookup[]; }
       disabled_message?: null | string;
       disabled_until?: null | string;
-      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';  };
+      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';   think?: boolean;   stream?: boolean;  };
       extra_headers?: null | Record<string, string>
       id?: number;
       is_loading?: null | string;
@@ -361,7 +361,7 @@ export type DBGeneratedSchema = {
     columns: {
       api_key?: string;
       created?: null | string;
-      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';  };
+      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';   think?: boolean;   stream?: boolean;  };
       extra_headers?: null | Record<string, string>
       id?: number;
       is_default?: boolean;
@@ -378,8 +378,10 @@ export type DBGeneratedSchema = {
     delete: true;
     columns: {
       chat_id: number;
+      cost?: string;
       created?: null | string;
       id?: string;
+      llm_model_id?: null | number;
       message:  ( 
  |  {  type: 'text';  text: string; }
  |  {  type: 'image' | 'audio' | 'video' | 'application' | 'text';  source: {  type: 'base64';  media_type: string;  data: string; }; }
@@ -396,8 +398,11 @@ export type DBGeneratedSchema = {
     update: true;
     delete: true;
     columns: {
+      architecture?: null | {    input_modalities: string[];   output_modalities: string[];   tokenizer: string;   instruct_type: | null
+ | string;  };
       chat_suitability_rank?: null | string;
-      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';  };
+      context_length?: number;
+      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';   think?: boolean;   stream?: boolean;  };
       extra_headers?: null | Record<string, string>
       id?: number;
       mcp_tool_support?: null | boolean;
@@ -405,6 +410,7 @@ export type DBGeneratedSchema = {
       name: string;
       pricing_info?: null | {    input: number;   output: number;   cachedInput?: number;   cachedOutput?: number;   threshold?: {  tokenLimit: number;  input: number;  output: number; };  };
       provider_id: string;
+      supported_parameters?: null |  ( string )[]
     };
   };
   llm_prompts: {
@@ -433,7 +439,7 @@ export type DBGeneratedSchema = {
       api_docs_url?: null | string;
       api_pricing_url?: null | string;
       api_url: string;
-      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';  };
+      extra_body?: null | {    temperature?: number;   frequency_penalty?: number;   max_completion_tokens?: number;   max_tokens?: number;   presence_penalty?: number;   response_format?: 'json' | 'text' | 'srt' | 'verbose_json' | 'vtt';   think?: boolean;   stream?: boolean;  };
       extra_headers?: null | Record<string, string>
       id: string;
       logo_url?: null | string;

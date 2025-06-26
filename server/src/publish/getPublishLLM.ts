@@ -45,13 +45,20 @@ export const getPublishLLM = (
       delete: "*",
     },
     llm_models:
-      isAdmin ? "*" : (
+      isAdmin ?
         {
+          select: "*",
+          update: {
+            fields: { name: 0, id: 0, provider_id: 0, model_created: 0 },
+          },
+          insert: "*",
+          delete: "*",
+        }
+      : {
           select: {
             fields: "*",
           },
-        }
-      ),
+        },
     llm_credentials: {
       select: {
         fields: isAdmin ? { api_key: 0 } : { id: 1, name: 1 },
@@ -77,7 +84,7 @@ export const getPublishLLM = (
             llm_model: preferredModel,
             llm_provider: provider,
             llm_credential: row,
-            tools: [],
+            tools: undefined,
             messages: [
               {
                 role: "system",

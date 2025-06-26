@@ -37,7 +37,7 @@ export const MCPServerTools = ({
   return (
     <ScrollFade
       data-command="MCPServerTools"
-      className="gap-p25 flex-row-wrap o-auto"
+      className="gap-p25 flex-row-wrap o-auto no-scroll-bar"
     >
       {tools.map((tool, i) => {
         const isAllowed = llm_chats_allowed_mcp_tools?.some(
@@ -49,7 +49,8 @@ export const MCPServerTools = ({
             title={tool.description}
             className={"pointer " + (isAllowed ? "bdb-active noselect" : "")}
             leftIcon={
-              isAllowed ?
+              !chatId ? undefined
+              : isAllowed ?
                 {
                   path: mdiCheck,
                   style: {
@@ -65,6 +66,7 @@ export const MCPServerTools = ({
                   },
                   size: 0.75,
                 }
+
             }
             aria-checked={isAllowed}
             color={isAllowed ? "blue" : undefined}

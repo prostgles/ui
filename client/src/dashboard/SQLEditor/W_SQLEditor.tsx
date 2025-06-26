@@ -177,6 +177,7 @@ import Btn from "../../components/Btn";
 import { getDataTransferFiles } from "../../components/FileInput/DropZone";
 import { FlexCol } from "../../components/Flex";
 import {
+  getSelectedText,
   MonacoEditor,
   type MonacoEditorProps,
 } from "../../components/MonacoEditor/MonacoEditor";
@@ -206,10 +207,7 @@ import type {
   PG_Table,
   PG_Trigger,
 } from "./SQLCompletion/getPGObjects";
-import {
-  addSqlEditorFunctions,
-  getSelectedText,
-} from "./addSqlEditorFunctions";
+import { addSqlEditorFunctions } from "./addSqlEditorFunctions";
 import { defineCustomSQLTheme } from "./defineCustomSQLTheme";
 import type { GetFuncs } from "./registerFunctionSuggestions";
 import { registerFunctionSuggestions } from "./registerFunctionSuggestions";

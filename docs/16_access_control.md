@@ -1,6 +1,6 @@
 <h1 id="access_control"> Access control </h1> 
 
->  Not avaialable on Desktop version
+>  Not available on Desktop version
   
 Manage user permissions and access rules for this database connection.
 <picture>

@@ -62,6 +62,12 @@ export const setupLLM = async (dbs: DBS) => {
           "",
         ].join("\n"),
       },
+      {
+        name: "Empty",
+        description: "Empty prompt",
+        user_id,
+        prompt: "",
+      },
     ]);
 
     const addedPrompts = await dbs.llm_prompts.find();
@@ -266,10 +272,29 @@ export const setupLLM = async (dbs: DBS) => {
       },
       {
         id: "Ollama",
-        api_url: "http://localhost:11434/api/chat",
+        api_url: "http://localhost:11434/v1/chat/completions",
         api_docs_url: "https://github.com/ollama/ollama/blob/main/docs/api.md",
         logo_url: "/logos/ollama.svg",
-        llm_models: [],
+        llm_models: [
+          {
+            name: "qwen2.5-coder:7b-instruct",
+            context_length: 128_000,
+            mcp_tool_support: true,
+          },
+          {
+            name: "deepseek-r1:8b",
+            context_length: 128_000,
+          },
+          {
+            name: "llama3.1:8b",
+            context_length: 128_000,
+            mcp_tool_support: true,
+          },
+        ],
+        extra_body: {
+          think: false,
+          stream: false,
+        },
       },
       {
         id: "OpenRouter",

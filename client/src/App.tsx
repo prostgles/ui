@@ -173,10 +173,10 @@ export const App = () => {
       </FlexCol>
     );
   }
-
+  const isElectron = !!serverState.isElectron;
   return (
     <FlexCol key={prglState.dbsKey} className={`App gap-0 f-1 min-h-0`}>
-      <CommandSearch />
+      <CommandSearch isElectron={isElectron} />
       <XRealIpSpoofableAlert {...state} />
       {demoStarted && <MousePointer />}
       {isDisconnected && (
@@ -312,7 +312,7 @@ export const App = () => {
               userThemeOption={userThemeOption}
             >
               <ScrollFade className="o-auto f-1 w-full ai-center flex-col bg-color-0">
-                <Documentation />
+                <Documentation isElectron={isElectron} />
               </ScrollFade>
             </NavBarWrapper>
           }

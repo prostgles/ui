@@ -6,7 +6,7 @@ import { Chat, type ChatProps } from "../../components/Chat/Chat";
 import { FlexCol } from "../../components/Flex";
 import Popup from "../../components/Popup/Popup";
 import { CHAT_WIDTH } from "./AskLLM";
-import { AskLLMChatActionBar } from "./AskLLMChatActionBar";
+import { AskLLMChatActionBar } from "./AskLLMChatActionBar/AskLLMChatActionBar";
 import { AskLLMChatHeader } from "./AskLLMChatHeader";
 import { AskLLMToolApprover } from "./Tools/AskLLMToolApprover";
 import { useLLMChat } from "./useLLMChat";
@@ -15,6 +15,7 @@ import type { LLMSetupStateReady } from "./useLLMSetupState";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
 import { isDefined } from "../../utils";
 import { MINUTE } from "../../../../commonTypes/utils";
+import type { LoadedSuggestions } from "../Dashboard/dashboardUtils";
 
 export type AskLLMChatProps = {
   prgl: Prgl;
@@ -24,6 +25,7 @@ export type AskLLMChatProps = {
   anchorEl: HTMLElement;
   onClose: VoidFunction;
   workspaceId: string | undefined;
+  loadedSuggestions: LoadedSuggestions | undefined;
 };
 export const AskLLMChat = (props: AskLLMChatProps) => {
   const {
@@ -34,6 +36,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
     setupState,
     workspaceId,
     callMCPServerTool,
+    loadedSuggestions,
   } = props;
   const {
     tables,
@@ -47,6 +50,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
   } = prgl;
   const chatState = useLLMChat({
     ...setupState,
+    loadedSuggestions,
     dbs,
     user,
     connectionId,
@@ -108,7 +112,7 @@ export const AskLLMChat = (props: AskLLMChatProps) => {
   if (!messages) return;
   const chatIsLoading =
     activeChat?.is_loading &&
-    new Date(activeChat.is_loading) > new Date(Date.now() - 15 * MINUTE);
+    new Date(activeChat.is_loading) > new Date(Date.now() - 1 * MINUTE);
   return (
     <Popup
       data-command="AskLLM.popup"

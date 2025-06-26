@@ -1,15 +1,21 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 
 import { ScrollFade } from "../../components/ScrollFade/ScrollFade";
 import { getDocumentationFiles } from "./getDocumentation";
 
-export const documentationText = getDocumentationFiles()
-  .map(({ text }) => text)
-  .join("\n\n");
-
-export const Documentation = () => {
+type P = {
+  isElectron: boolean;
+};
+export const Documentation = ({ isElectron }: P) => {
+  const documentationText = useMemo(
+    () =>
+      getDocumentationFiles(isElectron)
+        .map(({ text }) => text)
+        .join("\n\n"),
+    [isElectron],
+  );
   return (
     <ScrollFade
       className="oy-auto"

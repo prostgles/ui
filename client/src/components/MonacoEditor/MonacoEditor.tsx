@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { appTheme, useReactiveState } from "../../appUtils";
 import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
 
-import { getMonaco } from "../../dashboard/SQLEditor/W_SQLEditor";
+import { getMonaco, LANG } from "../../dashboard/SQLEditor/W_SQLEditor";
 import type { editor, Monaco } from "../../dashboard/W_SQL/monacoEditorTypes";
 import { loadPSQLLanguage } from "../../dashboard/W_SQL/MonacoLanguageRegister";
 import {
@@ -135,6 +135,35 @@ export const MonacoEditor = (props: MonacoEditorProps) => {
   useEffect(() => {
     if (!editor) return;
 
+    editor.addAction({
+      id: "googleSearch",
+      label: "Search with Google",
+      // keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KEY_V],
+      contextMenuGroupId: "navigation",
+      run: (editor) => {
+        window.open(
+          "https://www.google.com/search?q=" + getSelectedText(editor),
+        );
+      },
+    });
+
+    if (language !== LANG) return;
+    editor.addAction({
+      id: "googleSearchPG",
+      label: "Search with Google Postgres",
+      // keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KEY_V],
+      contextMenuGroupId: "navigation",
+      run: (editor) => {
+        window.open(
+          "https://www.google.com/search?q=postgres+" + getSelectedText(editor),
+        );
+      },
+    });
+  }, [editor, language]);
+
+  useEffect(() => {
+    if (!editor) return;
+
     if (onChange) {
       editor.onDidChangeModelContent(() => {
         const newValue = editor.getValue();
@@ -251,4 +280,14 @@ const hackyFixOptionmatchOnWordStartOnly = (
       ].matchOnWordStartOnly = false;
     }
   } catch (e) {}
+};
+
+export const getSelectedText = (
+  editor: editor.ICodeEditor | editor.IStandaloneCodeEditor | undefined,
+): string => {
+  if (!editor) return "";
+  const model = editor.getModel();
+  const selection = editor.getSelection();
+  if (!model || !selection) return "";
+  return model.getValueInRange(selection);
 };

@@ -26,7 +26,7 @@ It includes options for executing SQL queries, searching for tables and views, m
 You can also pin the menu to keep it open, resize it, and access server-side functions.
 The menu is designed to be user-friendly and provides quick access to essential features for efficient database management.
 
-  - **SQL editor**: Opens an SQL editor view in the workspace area.  
+  - **Open an SQL editor**: Opens an SQL editor view in the workspace area.  
   - **Quick search**: Opens the quick search menu for searching across all available tables and views from the current database.  
   - **Settings**: Opens the settings menu for configuring dashboard layout preferences.  
   - **Pin/Unpin menu**: Toggles the pinning of the dashboard menu. Pinned menus remain open until unpinned or accessing from a low width screen.  

@@ -545,6 +545,7 @@ export class _Dashboard extends RTComp<
             pinned={pinnedMenu}
             prgl={this.props.prgl}
             workspace={workspace}
+            loadedSuggestions={suggestions}
           />
         </div>
 

@@ -37,10 +37,12 @@ export const asListObject = (
     boldStyle,
   );
 
-export async function getSqlSuggestions(db: DB): Promise<{
+export const getSqlSuggestions = async (
+  db: DB,
+): Promise<{
   suggestions: SQLSuggestion[];
   settingSuggestions: SQLSuggestion[];
-}> {
+}> => {
   let suggestions: SQLSuggestion[] = [];
 
   try {
@@ -711,7 +713,7 @@ export async function getSqlSuggestions(db: DB): Promise<{
       suggestions: [],
     };
   }
-}
+};
 
 export const getColumnSuggestionLabel = (
   c: { udt_name: string; data_type: string; name: string },

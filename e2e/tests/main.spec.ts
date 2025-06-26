@@ -502,7 +502,7 @@ test.describe("Main test", () => {
     const funcCode = await getMonacoValue(page, ".MethodDefinition");
     expect(funcCode).toEqual(expectedCode);
     /** Add llm server side func */
-    const llmCode = `return { content: [{ type: "text", text: "free ai assistant" + args.messages.at(-1)?.content[0]?.text }] };//`;
+    const llmCode = `return { completion_tokens: 0, prompt_tokens: 0, total_tokens: 0, choices: [{ type: "text", message: { content: "free ai assistant" + args.messages.at(-1)?.content[0]?.text }  }] };//`;
     await monacoType(page, ".MethodDefinition", llmCode, {
       deleteAll: false,
       pressBeforeTyping: ["Control+ArrowLeft", "Control+ArrowLeft"],
@@ -568,8 +568,12 @@ test.describe("Main test", () => {
     await page.getByRole("link", { name: "cloud" }).click();
     const userMessage = "hey";
     const responses = await getLLMResponses(page, [userMessage]);
+    const messageCost = "$0";
     expect(responses).toEqual([
-      { isOk: false, response: "free ai assistant" + userMessage },
+      {
+        isOk: false,
+        response: messageCost + "free ai assistant" + userMessage,
+      },
     ]);
 
     /** Disable signups */

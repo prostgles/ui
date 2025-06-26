@@ -21,7 +21,7 @@ export const dashboardMenuUIDoc = {
     {
       type: "button",
       selectorCommand: "dashboard.menu.sqlEditor",
-      title: "SQL editor",
+      title: "Open an SQL editor",
       description: "Opens an SQL editor view in the workspace area.",
     },
     {

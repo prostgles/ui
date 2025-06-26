@@ -251,8 +251,8 @@ test.describe("Create docs and screenshots", () => {
           await goTo(page, "/connections");
           await page.getByTestId("Connections.new").click();
         } else if (fileName === "schema_diagram") {
-          await open("prostgles_video_demo");
-          await page.getByTestId("dashboard.menu").click();
+          await open("food_delivery");
+          // await page.getByTestId("dashboard.menu").click();
           await page.getByTestId("SchemaGraph").click();
         } else if (fileName === "ai_assistant") {
           await open("prostgles_video_demo");

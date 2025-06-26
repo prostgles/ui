@@ -169,22 +169,6 @@ export const CodeEditor = (props: CodeEditorProps) => {
   );
 
   useEffect(() => {
-    if (!editor) return;
-    /* Set google search contextmenu option */
-    editor.addAction({
-      id: "googleSearch",
-      label: "Search with Google",
-      // keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KEY_V],
-      contextMenuGroupId: "navigation",
-      run: (editor) => {
-        window.open(
-          "https://www.google.com/search?q=" + getSelectedText(editor),
-        );
-      },
-    });
-  }, [editor]);
-
-  useEffect(() => {
     if (monaco && language === "log") {
       registerLogLang(monaco);
     }

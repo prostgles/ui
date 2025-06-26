@@ -8,12 +8,16 @@ import {
 import "./Marked.css";
 
 export type MarkedProps = DivProps &
-  Pick<MarkdownMonacoCodeProps, "codeHeader" | "sqlHandler"> & {
+  Pick<
+    MarkdownMonacoCodeProps,
+    "codeHeader" | "sqlHandler" | "loadedSuggestions"
+  > & {
     content: string;
   };
 
 export const Marked = (props: MarkedProps) => {
-  const { content, codeHeader, sqlHandler, ...divProps } = props;
+  const { content, codeHeader, sqlHandler, loadedSuggestions, ...divProps } =
+    props;
 
   const CodeComponent = useCallback(
     ({
@@ -46,10 +50,11 @@ export const Marked = (props: MarkedProps) => {
           language={language}
           codeString={codeString}
           sqlHandler={sqlHandler}
+          loadedSuggestions={loadedSuggestions}
         />
       );
     },
-    [codeHeader, sqlHandler],
+    [codeHeader, sqlHandler, loadedSuggestions],
   );
 
   return (

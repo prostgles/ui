@@ -1,4 +1,4 @@
-import { mdiDownload, mdiFullscreen, mdiPlay } from "@mdi/js";
+import { mdiDownload, mdiFullscreen, mdiPlay, mdiStop } from "@mdi/js";
 import type { editor } from "monaco-editor";
 import type { DBHandlerClient } from "prostgles-client/dist/prostgles";
 import React, { useCallback, useMemo, useState } from "react";
@@ -14,6 +14,7 @@ import { FlexCol, FlexRow } from "../Flex";
 import { MonacoEditor } from "../MonacoEditor/MonacoEditor";
 import Popup from "../Popup/Popup";
 import { Table } from "../Table/Table";
+import type { LoadedSuggestions } from "../../dashboard/Dashboard/dashboardUtils";
 
 const LANGUAGE_FALLBACK = {
   tsx: "typescript",
@@ -24,7 +25,7 @@ type SQLResult =
   | { state: "ok"; rows: any[]; columns: any[] }
   | { state: "ok-command-result"; commandResult: string }
   | { state: "error"; error: any }
-  | { state: "loading" };
+  | { state: "loading"; query: string; withCommit: boolean };
 
 export type MarkdownMonacoCodeProps = {
   title?: string;
@@ -34,9 +35,17 @@ export type MarkdownMonacoCodeProps = {
     | undefined
     | ((opts: { language: string; codeString: string }) => React.ReactNode);
   sqlHandler: DBHandlerClient["sql"];
+  loadedSuggestions: LoadedSuggestions | undefined;
 };
 export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
-  const { codeHeader, language, codeString, title, sqlHandler } = props;
+  const {
+    codeHeader,
+    language,
+    codeString,
+    title,
+    sqlHandler,
+    loadedSuggestions,
+  } = props;
   const [fullscreen, setFullscreen] = useState(false);
 
   const monacoOptions = useMemo(() => {
@@ -48,6 +57,7 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
       scrollBeyondLastLine: false,
       automaticLayout: true,
       lineHeight: 19,
+      readOnly: true,
     } satisfies editor.IStandaloneEditorConstructionOptions;
   }, [fullscreen]);
 
@@ -59,8 +69,10 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
 
   const onRunSQL = useCallback(
     (withCommit: boolean) => {
-      setSqlResult({ state: "loading" });
-      sqlHandler!(codeString, undefined, {
+      const queryId = crypto.randomUUID();
+      const queryWithId = `--${queryId} prostgles_ui_query_id\n${codeString}`;
+      setSqlResult({ state: "loading", query: queryWithId, withCommit });
+      sqlHandler!(queryWithId, undefined, {
         returnType: withCommit ? "arrayMode" : "default-with-rollback",
       })
         .then((data) => {
@@ -99,7 +111,6 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
     },
     [codeString, sqlHandler],
   );
-
   return (
     <FlexCol
       className="MarkdownMonacoCode relative o-dvisible min-w-600 b b-color rounded gap-0 f-0 o-hidden"
@@ -122,14 +133,21 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
                   iconPath={mdiPlay}
                   variant="faded"
                   size="small"
-                  // clickConfirmation={{
-                  //   buttonText: "Execute and Never Ask Again",
-                  //   color: "danger",
-                  //   message:
-                  //     "This query will COMMIT (permanently save) changes. Double-check before running",
-                  // }}
-                  loading={sqlResult?.state === "loading"}
+                  clickConfirmation={{
+                    buttonText: "Execute",
+                    color: "action",
+                    message:
+                      "This query will COMMIT (permanently save) changes. Double-check before running",
+                  }}
                   onClick={() => onRunSQL(true)}
+                  disabledInfo={
+                    sqlResult?.state === "loading" && !sqlResult.withCommit ?
+                      "Already running query"
+                    : undefined
+                  }
+                  loading={
+                    sqlResult?.state === "loading" && sqlResult.withCommit
+                  }
                 />
                 <Btn
                   title="Execute SQL (With rollback)"
@@ -137,9 +155,31 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
                   color="action"
                   variant="faded"
                   size="small"
-                  loading={sqlResult?.state === "loading"}
                   onClick={() => onRunSQL(false)}
+                  disabledInfo={
+                    sqlResult?.state === "loading" && sqlResult.withCommit ?
+                      "Already running query"
+                    : undefined
+                  }
+                  loading={
+                    sqlResult?.state === "loading" && !sqlResult.withCommit
+                  }
                 />
+                {sqlResult?.state === "loading" && (
+                  <Btn
+                    title="Stop query (pg_terminate_backend)"
+                    iconPath={mdiStop}
+                    color="action"
+                    variant="faded"
+                    size="small"
+                    onClickPromise={async () => {
+                      await sqlHandler(
+                        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE query = $1",
+                        [sqlResult.query],
+                      );
+                    }}
+                  />
+                )}
               </>
             )}
             <CopyToClipboardBtn
@@ -184,7 +224,7 @@ export const MarkdownMonacoCode = (props: MarkdownMonacoCodeProps) => {
         : <MonacoEditor
             key={codeString}
             className={fullscreen ? "f-1" : ""}
-            loadedSuggestions={undefined}
+            loadedSuggestions={loadedSuggestions}
             value={codeString}
             language={LANGUAGE_FALLBACK[language] ?? language}
             options={monacoOptions}

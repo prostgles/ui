@@ -71,10 +71,6 @@ export const ProstglesSignup = ({
             }
             setDidSendCode(true);
             if (!token) return;
-            await dbs.global_settings.update(
-              {},
-              { prostgles_registration: { email, token, enabled: true } },
-            );
             const api_key = btoa(token);
             await dbs.llm_providers.update(
               {
@@ -89,6 +85,11 @@ export const ProstglesSignup = ({
               api_key,
               user_id: undefined as any,
             });
+            /** This will trigger a page reload. Keep it last to ensure any errors during token validation are shown */
+            await dbs.global_settings.update(
+              {},
+              { prostgles_registration: { email, token, enabled: true } },
+            );
           } catch (err) {
             if (isObject(err) && "code" in err) {
               setError(ERR_CODE_MESSAGES[err.code] ?? err);

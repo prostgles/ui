@@ -65,6 +65,8 @@ const extraRequestData = {
         enum: ["json", "text", "srt", "verbose_json", "vtt"],
         optional: true,
       },
+      think: { type: "boolean", optional: true },
+      stream: { type: "boolean", optional: true },
     },
   },
 } as const satisfies Record<
@@ -116,9 +118,45 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
           },
         },
       },
-      chat_suitability_rank: "NUMERIC",
+      chat_suitability_rank: {
+        sqlDefinition: `NUMERIC`,
+        info: { hint: "Lowest number is used in new chats" },
+      },
       model_created: `TIMESTAMP DEFAULT NOW()`,
       mcp_tool_support: `BOOLEAN DEFAULT FALSE`,
+      context_length: ` INTEGER NOT NULL DEFAULT 0`,
+      architecture: {
+        nullable: true,
+        jsonbSchemaType: {
+          input_modalities: "string[]", // Supported input types: ["file", "image", "text"]
+          output_modalities: "string[]", // Supported output types: ["text"]
+          tokenizer: "string", // Tokenization method used
+          instruct_type: { oneOf: ["string"], nullable: true }, // Instruction format type (null if not applicable)
+        },
+      },
+      supported_parameters: {
+        nullable: true,
+        jsonbSchema: {
+          arrayOf: {
+            type: "string",
+            allowedValues: [
+              "tools", // - Function calling capabilities
+              "tool_choice", // - Tool selection control
+              "max_tokens", // - Response length limiting
+              "temperature", // - Randomness control
+              "top_p", // - Nucleus sampling
+              "reasoning", // - Internal reasoning mode
+              "include_reasoning", // - Include reasoning in response
+              "structured_outputs", // - JSON schema enforcement
+              "response_format", // - Output format specification
+              "stop", // - Custom stop sequences
+              "frequency_penalty", // - Repetition reduction
+              "presence_penalty", // - Topic diversity
+              "seed", // - Deterministic outputs
+            ],
+          },
+        },
+      },
       ...extraRequestData,
     },
     indexes: {
@@ -327,6 +365,8 @@ export const tableConfigLLM: TableConfig<{ en: 1 }> = {
       id: `int8 PRIMARY KEY GENERATED ALWAYS AS IDENTITY`,
       chat_id: `INTEGER NOT NULL REFERENCES llm_chats(id) ON DELETE CASCADE`,
       user_id: `UUID REFERENCES users(id) ON DELETE CASCADE`,
+      llm_model_id: `INTEGER REFERENCES llm_models(id) ON DELETE SET NULL`,
+      cost: `NUMERIC NOT NULL DEFAULT 0`,
       message: {
         jsonbSchema: {
           arrayOf: {

@@ -16,6 +16,14 @@ import { isPlaywrightTest } from "../../i18n/i18nUtils";
 
 type ItemPosition = "mid" | "last";
 
+const getUIDocElementsAndAlertIfEmpty = (doc: UIDocNonInfo) => {
+  const result = getUIDocElements(doc);
+  if (!result.items.length) {
+    alert(`Could not find a ${JSON.stringify(doc.title)} item.`);
+  }
+  return result;
+};
+
 export const useGoToUI = (
   setHighlights: (h: CommandSearchHighlight[]) => void,
 ) => {
@@ -27,7 +35,7 @@ export const useGoToUI = (
   }>();
   const highlight = useCallback(
     async (doc: UIDocNonInfo, itemPosition: ItemPosition) => {
-      const { items } = getUIDocElements(doc);
+      const { items } = getUIDocElementsAndAlertIfEmpty(doc);
       [...items].at(-1)?.scrollIntoView();
       await tout(500);
       const mustChooseOne = items.length > 1 && itemPosition !== "last";
@@ -106,7 +114,7 @@ export const useGoToUI = (
   );
 
   const goToUI = useCallback(
-    async (doc: UIDoc) => {
+    async (doc: UIDoc): Promise<undefined | boolean> => {
       const nonIteractableContainers: UIDoc["type"][] = [
         "info",
         "list",
@@ -127,8 +135,9 @@ export const useGoToUI = (
           await tout(400);
         }
       } else if (nonIteractableContainers.includes(doc.type)) {
-        // Do nothing for non-interactable types
-        return;
+        // Do not highlight non-interactable container types
+        const { items } = getUIDocElementsAndAlertIfEmpty(doc);
+        return !items.length;
       } else if (
         doc.type === "popup" ||
         doc.type === "tab" ||
@@ -151,10 +160,12 @@ export const useGoToUI = (
         currentPage ? getShorterPath(currentPage, prevParents) : undefined;
       const pathItems = shortcut ?? prevParents;
       for (const parent of pathItems) {
-        await goToUI(parent);
+        const shouldStop = await goToUI(parent);
+        if (shouldStop) {
+          return;
+        }
         await tout(200);
       }
-      // await clickOneOrHighlight(data, "slow");
       await highlight(data, "last");
       window.document.body.setAttribute(
         COMMAND_SEARCH_ATTRIBUTE_NAME,

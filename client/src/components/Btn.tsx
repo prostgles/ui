@@ -531,7 +531,10 @@ export default class Btn<HREF extends string | void = void> extends RTComp<
                 "data-command": "Btn.ClickConfirmation.Confirm",
                 variant: "filled",
                 className: "ml-auto",
-                onClick,
+                onClick: (e) => {
+                  this.setState({ showClickConfirmation: false });
+                  onClick?.(e);
+                },
               },
             ]}
           >

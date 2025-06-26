@@ -1,14 +1,14 @@
-import { getErrorAsObject } from "prostgles-server/dist/DboBuilder/dboBuilderUtils";
+import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
 import { HOUR } from "prostgles-server/dist/FileManager/FileManager";
+import { getSerialisableError, isObject } from "prostgles-types";
 import { type DBS } from "../..";
 import { dashboardTypes } from "../../../../commonTypes/DashboardTypes";
 import { getLLMMessageText } from "../../../../commonTypes/llmUtils";
 import type { DBSSchema } from "../../../../commonTypes/publishUtils";
-import { checkLLMLimit } from "./checkLLMLimit";
-import { fetchLLMResponse, type LLMMessage } from "./fetchLLMResponse";
-import { getLLMTools } from "./getLLMTools";
 import { sliceText } from "../../../../commonTypes/utils";
-import type { Filter } from "prostgles-server/dist/DboBuilder/DboBuilderTypes";
+import { checkLLMLimit } from "./checkLLMLimit";
+import { fetchLLMResponse, type LLMMessageWithRole } from "./fetchLLMResponse";
+import { getLLMTools } from "./getLLMTools";
 
 export const getBestLLMChatModel = async (
   dbs: DBS,
@@ -17,7 +17,8 @@ export const getBestLLMChatModel = async (
   const preferredChatModel = await dbs.llm_models.findOne(filter, {
     orderBy: [{ key: "chat_suitability_rank", asc: true, nulls: "last" }],
   });
-  if (!preferredChatModel) throw "No LLM models found";
+  if (!preferredChatModel)
+    throw "No LLM models found for " + JSON.stringify(filter);
   return preferredChatModel;
 };
 
@@ -71,6 +72,7 @@ export const askLLM = async (
     user_id: user.id,
     chat_id: chatId,
     message: userMessage,
+    llm_model_id: chat.model,
   });
 
   const allowedUsedCreds = allowedLLMCreds?.filter(
@@ -132,6 +134,7 @@ export const askLLM = async (
       user_id: null,
       chat_id: chatId,
       message: [{ type: "text", text: "" }],
+      llm_model_id: chat.model,
     },
     { returning: "*" },
   );
@@ -170,7 +173,11 @@ export const askLLM = async (
     } = modelData;
     if (!llm_provider) throw "Provider not found";
     const gemini25BreakingChanges = llm_model.name.includes("gemini-2.5");
-    const { content: llmResponseMessage, meta } = await fetchLLMResponse({
+    const {
+      content: llmResponseMessage,
+      meta,
+      cost,
+    } = await fetchLLMResponse({
       llm_chat: chat,
       llm_model,
       llm_provider,
@@ -193,12 +200,12 @@ export const askLLM = async (
                   : gemini25BreakingChanges ? "model"
                   : "assistant",
                 content: m.message,
-              }) satisfies LLMMessage,
+              }) satisfies LLMMessageWithRole,
           ),
         {
           role: "user",
           content: userMessage,
-        } satisfies LLMMessage,
+        } satisfies LLMMessageWithRole,
       ],
     });
     await dbs.llm_messages.update(
@@ -206,14 +213,22 @@ export const askLLM = async (
       {
         message: llmResponseMessage,
         meta,
+        cost,
       },
     );
   } catch (err) {
     console.error(err);
     const isAdmin = user.type === "admin";
-    const errorText =
-      isAdmin ? JSON.stringify(getErrorAsObject(err), null, 2) : "";
-    const messageText = ["🔴 Something went wrong", errorText].join("\n");
+    const errorObjOrString = getSerialisableError(err);
+    const errorTextOrEmpty =
+      isObject(errorObjOrString) ?
+        JSON.stringify(errorObjOrString, null, 2)
+      : errorObjOrString;
+    const errorText = isAdmin ? `${errorTextOrEmpty}` : "";
+    const messageText = [
+      "🔴 Something went wrong",
+      "```json\n" + errorText + "\n```",
+    ].join("\n");
     await dbs.llm_messages.update(
       { id: aiResponseMessage.id },
       {

@@ -88,6 +88,7 @@ export const useSchemaShapes = (
             )
           : true,
         );
+        let hasColIcon = false;
         const colsAndDataTypes = columns.map((c, i) => {
           const colYOffset = COL_SPACING * (i + 2);
 
@@ -139,16 +140,17 @@ export const useSchemaShapes = (
               h: COL_ICON_SIZE,
               w: COL_ICON_SIZE,
             } satisfies Image);
+          hasColIcon = hasColIcon || !!colIcon;
           return [colName, colDatatype, colIcon] as const;
         });
 
         const widestColContent = colsAndDataTypes.reduce(
-          (acc, [col, colDataType, colIcon]) => {
+          (acc, [col, colDataType]) => {
             return Math.max(
               acc,
               col.data.width +
                 colDataType.data.width +
-                (colIcon?.w ?? 0) +
+                (hasColIcon ? COL_ICON_SIZE : 0) +
                 3 * PADDING,
             );
           },

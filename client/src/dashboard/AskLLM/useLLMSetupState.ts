@@ -7,8 +7,8 @@ export type LLMSetupStateReady = Extract<LLMSetupState, { state: "ready" }>;
 export const useLLMSetupState = (props: Pick<Prgl, "dbs" | "user">) => {
   const dbs = props.dbs as DbsByUserType;
   const { user } = props;
-  const isAdmin = user?.type === "admin";
   const { data: credentials } = dbs.llm_credentials.useSubscribe();
+  const isAdmin = user?.type === "admin";
   const globalSettings = dbs.global_settings?.useSubscribeOne?.();
 
   /** For backward compatibility pick last credential as default */
@@ -38,12 +38,14 @@ export const useLLMSetupState = (props: Pick<Prgl, "dbs" | "user">) => {
       };
     }
 
-    // const { data: { prostgles_registration } } = globalSettings;
-    // const { enabled, email, token } = prostgles_registration;
-    // if(enabled){
-    //   // const quota = await POST("/api/llm/quota", { token });
-    //   console.error("Finish this")
-    // }
+    const {
+      data: { prostgles_registration },
+    } = globalSettings;
+    if (prostgles_registration) {
+      const { enabled, email, token } = prostgles_registration;
+      // const quota = await POST("/api/llm/quota", { token });
+      console.error("Finish this");
+    }
   } else if (!defaultCredential || !credentials || !prompts || !firstPromptId) {
     return {
       state: "cannotSetupOrNotAllowed" as const,
